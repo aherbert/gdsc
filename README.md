@@ -5,8 +5,6 @@ The Genome Damage and Stability Centre (GDSC) plugins are a collection of
 analysis programs for microscopy images including colocalisation analysis and
 peak finding.
 
-Read the [SMLM User Manual](SMLM.odt) for full details.
-
 Find Foci
 ---------
 
@@ -15,7 +13,7 @@ The Find Foci plugins allow the identification of peak intensity regions within
 of peaks; comparison of marked points between images; and alignment of manually
 marked points to peak maxima.
 
-See the [FindFoci User Manual](FinFoci.odt) for full details.
+See the [FindFoci User Manual](FindFoci.odt) for full details.
 
 Colocalisation Analysis
 -----------------------
