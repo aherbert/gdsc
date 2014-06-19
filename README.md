@@ -46,10 +46,11 @@ Installation from source
 
 1. Clone the repository with a unique name (e.g. "gdsc")
 
-        git clone https://github.com/aherbert/gdsc.git gdsc
+        git clone https://github.com/aherbert/GDSC.git gdsc
 
 2. Build the code and package using Maven
 
+        cd gdsc
         mvn -P dist package
 
 This will produce a gdsc-[VERSION].jar file in the target directory. All 
