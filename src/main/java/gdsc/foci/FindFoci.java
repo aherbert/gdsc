@@ -2141,7 +2141,6 @@ public class FindFoci implements PlugIn
 		ImagePlus outImp = null;
 		if ((outputType & OUTPUT_MASK) != 0)
 		{
-			IJ.showStatus("Generating mask image...");
 			outImp = generateOutputMask(outputType, autoThresholdMethod, imageTitle, fractionParameter, image, types,
 					maxima, stats, resultsArray, nMaxima);
 		}

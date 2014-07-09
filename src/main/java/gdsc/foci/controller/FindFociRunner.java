@@ -227,6 +227,9 @@ public class FindFociRunner extends Thread
 
 		ImagePlus mask = WindowManager.getImage(maskImage);
 
+		
+		IJ.showStatus(FindFoci.FRAME_TITLE + " calculating ...");
+		
 		// Compare this model with the previously computed results and
 		// only update the parts that are necessary. 
 		FindFociState state = compareModels(model, previousModel);
@@ -238,13 +241,19 @@ public class FindFociRunner extends Thread
 		{
 			imp2 = FindFoci.applyBlur(imp, gaussianBlur);
 			if (imp2 == null)
+			{
+				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
 				return;
+			}
 		}
 		if (state.ordinal() <= FindFociState.FIND_MAXIMA.ordinal())
 		{
 			initArray = fp.findMaximaInit(imp, imp2, mask, backgroundMethod, thresholdMethod, options);
 			if (initArray == null)
+			{
+				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
 				return;
+			}
 		}
 		if (state.ordinal() <= FindFociState.SEARCH.ordinal())
 		{
@@ -252,7 +261,10 @@ public class FindFociRunner extends Thread
 			searchArray = fp.findMaximaSearch(searchInitArray, backgroundMethod, backgroundParameter, searchMethod,
 					searchParameter);
 			if (searchArray == null)
+			{
+				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
 				return;
+			}
 
 			if (listener != null)
 			{
@@ -266,7 +278,10 @@ public class FindFociRunner extends Thread
 			mergeArray = fp.findMaximaMerge(mergeInitArray, searchArray, minSize, peakMethod, peakParameter, options,
 					gaussianBlur);
 			if (mergeArray == null)
+			{
+				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
 				return;
+			}
 		}
 		if (state.ordinal() <= FindFociState.CALCULATE_RESULTS.ordinal())
 		{
@@ -274,7 +289,10 @@ public class FindFociRunner extends Thread
 			prelimResultsArray = fp.findMaximaPrelimResults(resultsInitArray, mergeArray, maxPeaks, sortMethod,
 					centreMethod, centreParameter);
 			if (prelimResultsArray == null)
+			{
+				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
 				return;
+			}
 		}
 		if (state.ordinal() <= FindFociState.CALCULATE_OUTPUT_MASK.ordinal())
 		{
@@ -282,7 +300,10 @@ public class FindFociRunner extends Thread
 			resultsArray = fp.findMaximaMaskResults(maskInitArray, mergeArray, prelimResultsArray, outputType,
 					thresholdMethod, imp.getTitle(), fractionParameter);
 			if (resultsArray == null)
+			{
+				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
 				return;
+			}
 		}
 		if (state.ordinal() <= FindFociState.SHOW_RESULTS.ordinal())
 		{
@@ -290,6 +311,8 @@ public class FindFociRunner extends Thread
 					minSize, peakMethod, peakParameter, outputType, sortMethod, options, resultsArray);
 		}
 
+		IJ.showStatus(FindFoci.FRAME_TITLE + " finished");
+		
 		previousModel = model;
 	}
 
