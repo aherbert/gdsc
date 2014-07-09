@@ -1495,14 +1495,18 @@ public class FindFoci implements PlugIn
 			ImageStack newStack = new ImageStack(stack.getWidth(), stack.getHeight(), stack.getSize());
 			int channel = imp.getChannel();
 			int frame = imp.getFrame();
+			int[] dim = imp.getDimensions();
+			// Copy the entire stack
 			for (int slice = 1; slice <= stack.getSize(); slice++)
+				newStack.setPixels(stack.getProcessor(slice).getPixels(), slice);
+			// Now blur the current channel and frame
+			for (int slice = 1; slice <= dim[3]; slice++)
 			{
 				int stackIndex = imp.getStackIndex(channel, slice, frame);
 				ImageProcessor ip = stack.getProcessor(stackIndex).duplicate();
 				gb.blurGaussian(ip, blur, blur, 0.0002);
-				newStack.setPixels(ip.getPixels(), slice);
+				newStack.setPixels(ip.getPixels(), stackIndex);
 			}
-			int[] dim = imp.getDimensions();
 			imp = new ImagePlus(null, newStack);
 			imp.setDimensions(dim[2], dim[3], dim[4]);
 		}
