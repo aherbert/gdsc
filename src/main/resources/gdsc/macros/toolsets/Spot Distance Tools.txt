@@ -1,0 +1,32 @@
+// Add tools used for identifying and measuring spots within marked regions.                                                         
+// Place in the ImageJ/macros/toolsets directory.                                                                                    
+                                                                                                                                     
+macro "Unused Tool -" {}                                                                                                             
+                             
+//macro 'Align Stacks Action Tool - C00fR0088C00dR3388C00aF6699' {                                                                     
+//   call('gdsc.utils.Align_Stacks.selfAlign');                                                                                        
+//};                                                                                                                                   
+                                                                                                                                     
+//macro 'Cell Outliner Action Tool - C009O0087O6968Ob366' {                                                                            
+//   doCommand('Cell Outliner');                                                                                                       
+//};                                                                                                                                   
+
+//macro 'Difference of Gaussians Action Tool - C00fT0911DT8f11G' {
+//   doCommand('Difference of Gaussians');
+//};
+             
+macro 'Spot Distance Action Tool - C00fo4233o6922oa644Cf00O00ff' {
+   doCommand('Spot Distance');
+};
+                                                                                                                                     
+macro 'Spot Distance (extra options) Action Tool - C999R00ffC00fo4233o6922oa644Cf00O00ff' {
+   call('gdsc.foci.SpotDistance.extra');
+};
+
+macro 'Redo Spot Distance (same parameters) Action Tool - C00fo4233o6922oa644C0f0O00ff' {
+   call('gdsc.foci.SpotDistance.redo');
+};
+
+macro 'Undo Spot Distance (delete last result) Action Tool - C999o4233o6922oa644O00ffCf00T0f18X' {
+   call('gdsc.foci.SpotDistance.undo');
+};

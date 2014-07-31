@@ -53,15 +53,18 @@ public class SpotDistance implements PlugIn
 	public static String FRAME_TITLE = "Spot Distance";
 	private static TextWindow resultsWindow = null;
 	private static TextWindow summaryWindow = null;
+	private static TextWindow distancesWindow = null;
 
 	private static int lastResultLineCount = 0;
 	private static int lastSummaryLineCount = 0;
+	private static int lastDistancesLineCount = 0;
 	private static boolean allowUndo = false;
 
 	private static String maskImage = "";
 	private static double smoothingSize = 1.5;
 	private static double featureSize = 4.5;
 
+	private static boolean autoThreshold = true;
 	private static double stdDevAboveBackground = 3;
 	private static int minPeakSize = 15;
 	private static double minPeakHeight = 5;
@@ -71,6 +74,7 @@ public class SpotDistance implements PlugIn
 	private static String[] OVERLAY = new String[] { "None", "Slice position", "Entire stack" };
 	private static boolean processFrames = false;
 	private static boolean showProjection = false;
+	private static boolean showDistances = false;
 	private static int regionCounter = 1;
 	private static boolean debug = false;
 
@@ -90,10 +94,17 @@ public class SpotDistance implements PlugIn
 
 	public void run(String arg)
 	{
+		boolean extraOptions = IJ.shiftKeyDown();
+		
 		if (arg != null && arg.equals("undo"))
 		{
 			undoLastResult();
 			return;
+		}
+		
+		if (arg != null && arg.equals("extra"))
+		{
+			extraOptions = true;
 		}
 
 		imp = WindowManager.getCurrentImage();
@@ -128,13 +139,12 @@ public class SpotDistance implements PlugIn
 
 			gd.addMessage("Detects spots within a mask/ROI region.\n(Hold shift for extra options)");
 
-			boolean extraOptions = IJ.shiftKeyDown();
-
 			gd.addChoice("Mask", maskImageList, maskImage);
 			gd.addNumericField("Smoothing", smoothingSize, 2);
 			gd.addNumericField("Feature_Size", featureSize, 2);
 			if (extraOptions)
 			{
+				gd.addCheckbox("Auto_threshold", autoThreshold);
 				gd.addNumericField("Background (SD > Av)", stdDevAboveBackground, 1);
 				gd.addNumericField("Min_peak_size", minPeakSize, 0);
 				gd.addNumericField("Min_peak_height", minPeakHeight, 2);
@@ -143,6 +153,7 @@ public class SpotDistance implements PlugIn
 			if (imp.getNFrames() != 1)
 				gd.addCheckbox("Process_frames", processFrames);
 			gd.addCheckbox("Show_projection", showProjection);
+			gd.addCheckbox("Show_distances", showDistances);
 			gd.addChoice("Show_overlay", OVERLAY, OVERLAY[showOverlay]);
 			gd.addNumericField("Region_counter", regionCounter, 0);
 			if (extraOptions)
@@ -160,6 +171,7 @@ public class SpotDistance implements PlugIn
 			featureSize = gd.getNextNumber();
 			if (extraOptions)
 			{
+				autoThreshold = gd.getNextBoolean();
 				stdDevAboveBackground = gd.getNextNumber();
 				minPeakSize = (int) gd.getNextNumber();
 				minPeakHeight = (int) gd.getNextNumber();
@@ -168,6 +180,7 @@ public class SpotDistance implements PlugIn
 			if (imp.getNFrames() != 1)
 				processFrames = gd.getNextBoolean();
 			showProjection = gd.getNextBoolean();
+			showDistances = gd.getNextBoolean();
 			showOverlay = gd.getNextChoiceIndex();
 			regionCounter = (int) gd.getNextNumber();
 			if (extraOptions)
@@ -257,12 +270,13 @@ public class SpotDistance implements PlugIn
 			allowUndo = false;
 			removeAfterLine(resultsWindow, lastResultLineCount);
 			removeAfterLine(summaryWindow, lastSummaryLineCount);
+			removeAfterLine(distancesWindow, lastDistancesLineCount);
 		}
 	}
 
 	private void removeAfterLine(TextWindow window, int line)
 	{
-		if (window != null)
+		if (window != null && line > 0)
 		{
 			TextPanel tp = window.getTextPanel();
 			int nLines = tp.getLineCount();
@@ -408,9 +422,17 @@ public class SpotDistance implements PlugIn
 			p.y += resultsWindow.getHeight();
 			summaryWindow.setLocation(p);
 		}
+		if (showDistances && (distancesWindow == null || !distancesWindow.isShowing()))
+		{
+			distancesWindow = new TextWindow(FRAME_TITLE + " Distances", createDistancesHeader(), "", 700, 300);
+			Point p = summaryWindow.getLocation();
+			p.y += summaryWindow.getHeight();
+			distancesWindow.setLocation(p);
+		}
 
 		lastResultLineCount = resultsWindow.getTextPanel().getLineCount();
 		lastSummaryLineCount = summaryWindow.getTextPanel().getLineCount();
+		lastDistancesLineCount = (showDistances) ? distancesWindow.getTextPanel().getLineCount() : 0;
 
 		// Create the image result prefix
 		StringBuilder sb = new StringBuilder();
@@ -438,7 +460,7 @@ public class SpotDistance implements PlugIn
 		sb.append("X\t");
 		sb.append("Y\t");
 		sb.append("Z\t");
-		sb.append("Circularity\t");
+		sb.append("Circularity");
 		return sb.toString();
 	}
 
@@ -452,7 +474,20 @@ public class SpotDistance implements PlugIn
 		sb.append("Spots\t");
 		sb.append("Min\t");
 		sb.append("Max\t");
-		sb.append("Av\t");
+		sb.append("Av");
+		return sb.toString();
+	}
+
+	private String createDistancesHeader()
+	{
+		StringBuilder sb = new StringBuilder();
+		sb.append("Image\t");
+		sb.append("Units\t");
+		sb.append("Frame\t");
+		sb.append("Region\t");
+		sb.append("X1\tY1\tZ1\t");
+		sb.append("X2\tY2\tZ2\t");
+		sb.append("Distance");
 		return sb.toString();
 	}
 
@@ -535,7 +570,8 @@ public class SpotDistance implements PlugIn
 		// - Bigger feature size for DoG?
 
 		FindFoci fp = new FindFoci();
-		int backgroundMethod = FindFoci.BACKGROUND_STD_DEV_ABOVE_MEAN;
+		int backgroundMethod = (autoThreshold) ? FindFoci.BACKGROUND_AUTO_THRESHOLD
+				: FindFoci.BACKGROUND_STD_DEV_ABOVE_MEAN;
 		double backgroundParameter = stdDevAboveBackground;
 		String autoThresholdMethod = "Otsu";
 		int searchMethod = FindFoci.SEARCH_ABOVE_BACKGROUND;
@@ -617,6 +653,10 @@ public class SpotDistance implements PlugIn
 
 					// TODO - This will not be valid if the units are not the same for all dimensions
 					double d = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
+
+					if (showDistances)
+						addDistanceResult(frame, region, r1, r2, d);
+
 					if (d < minD)
 						minD = d;
 					if (d > maxD)
@@ -989,6 +1029,25 @@ public class SpotDistance implements PlugIn
 		allowUndo = true;
 	}
 
+	private void addDistanceResult(int frame, int region, float[] r1, float[] r2, double d)
+	{
+		int x1 = bounds.x + (int) r1[0];
+		int y1 = bounds.y + (int) r1[1];
+		int z1 = (int) r1[2];
+		int x2 = bounds.x + (int) r2[0];
+		int y2 = bounds.y + (int) r2[1];
+		int z2 = (int) r2[2];
+		StringBuilder sb = new StringBuilder();
+		sb.append(resultEntry);
+		sb.append(frame).append("\t");
+		sb.append(region).append("\t");
+		sb.append(x1).append("\t").append(y1).append("\t").append(z1).append("\t");
+		sb.append(x2).append("\t").append(y2).append("\t").append(z2).append("\t");
+		sb.append(ImageJHelper.rounded(d));
+		distancesWindow.append(sb.toString());
+		allowUndo = true;
+	}
+
 	private void installTool()
 	{
 		StringBuffer sb = new StringBuffer();
@@ -1016,8 +1075,8 @@ public class SpotDistance implements PlugIn
 		new SpotDistance().run("undo");
 	}
 
-	public static void setOptions()
+	public static void extra()
 	{
-		IJ.showMessage(FRAME_TITLE, "Identify spots within marked regions and measure the inter-spot distances");
+		new SpotDistance().run("extra");
 	}
 }
