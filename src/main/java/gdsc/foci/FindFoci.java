@@ -1460,7 +1460,6 @@ public class FindFoci implements PlugIn
 		int[] image = new int[maxx_maxy_maxz];
 		int c = imp.getChannel();
 		int f = imp.getFrame();
-
 		for (int slice = 1, i = 0; slice <= maxz; slice++)
 		{
 			int stackIndex = imp.getStackIndex(c, slice, f);
@@ -1509,6 +1508,8 @@ public class FindFoci implements PlugIn
 			}
 			imp = new ImagePlus(null, newStack);
 			imp.setDimensions(dim[2], dim[3], dim[4]);
+			imp.setC(channel);
+			imp.setT(frame);
 		}
 		return imp;
 	}
