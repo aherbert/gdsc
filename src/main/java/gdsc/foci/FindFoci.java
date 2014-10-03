@@ -493,7 +493,7 @@ public class FindFoci implements PlugIn
 	private static boolean myShowMaskMaximaAsDots = true;
 	private static boolean myShowLogMessages = true;
 	private static boolean myRemoveEdgeMaxima = true;
-	private static String myResultsDirectory = null;
+	private static String myResultsDirectory = "";
 	private static double myGaussianBlur = 0;
 	private static int myCentreMethod = FindFoci.CENTRE_MAX_VALUE_SEARCH;
 	private static double myCentreParameter = 2;
