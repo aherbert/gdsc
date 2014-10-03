@@ -39,7 +39,8 @@ public class FindFociPlugin implements PlugIn, WindowListener, ImageListener, Pr
 {
 	private static FindFociView instance;
 	private FindFociModel model;
-	private int currentSlice = 0;
+	private int currentChannel = 0;
+	private int currentFrame = 0;
 
 	/*
 	 * (non-Javadoc)
@@ -177,19 +178,28 @@ public class FindFociPlugin implements PlugIn, WindowListener, ImageListener, Pr
 		// If the slice has changed then invalidate the model
 		if (imp.getTitle().equals(model.getSelectedImage()))
 		{
-			int oldCurrentSlice = currentSlice;
-			currentSlice = getCurrentSlice();
-			if (oldCurrentSlice != currentSlice)
+			int oldCurrentChannel = currentChannel;
+			int oldCurrentFrame = currentFrame;
+			getCurrentSlice();
+			if (oldCurrentChannel != currentChannel || oldCurrentFrame != currentFrame)
 			{
 				model.invalidate();
 			}
 		}
 	}
 
-	private int getCurrentSlice()
+	private void getCurrentSlice()
 	{
 		ImagePlus imp = WindowManager.getImage(model.getSelectedImage());
-		return (imp != null) ? imp.getCurrentSlice() : 0;
+		if (imp != null)
+		{
+			currentChannel = imp.getChannel();
+			currentFrame = imp.getFrame();
+		}
+		else
+		{
+			currentChannel = currentFrame = 0;
+		}
 	}
 
 	public void propertyChange(PropertyChangeEvent evt)
@@ -197,7 +207,7 @@ public class FindFociPlugin implements PlugIn, WindowListener, ImageListener, Pr
 		// Store the slice for the image when it changes.
 		if (evt.getPropertyName().equals("selectedImage"))
 		{
-			currentSlice = getCurrentSlice();
+			getCurrentSlice();
 		}
 	}
 }
