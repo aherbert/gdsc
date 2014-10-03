@@ -2786,9 +2786,11 @@ public class FindFoci implements PlugIn
 		StringBuilder sb = new StringBuilder();
 		sb.append(i).append("\t");
 		sb.append(id).append("\t");
+		// XY are pixel coordinates
 		sb.append(result[RESULT_X]).append("\t");
 		sb.append(result[RESULT_Y]).append("\t");
-		sb.append(result[RESULT_Z]).append("\t");
+		// Z should correspond to slice 
+		sb.append(result[RESULT_Z]+1).append("\t");
 		sb.append(result[RESULT_COUNT]).append("\t");
 		sb.append(result[RESULT_MAX_VALUE]).append("\t");
 		sb.append(result[RESULT_INTENSITY]).append("\t");
