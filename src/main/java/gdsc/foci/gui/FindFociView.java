@@ -1065,7 +1065,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		{
 			public void stateChanged(ChangeEvent e)
 			{
-				sliderMaxPeaks.firePropertyChange("value", 0, 1);
+				sliderFractionParam.firePropertyChange("value", 0, 1);
 			}
 		});
 		sliderFractionParam.setMinimum(1);
@@ -1303,6 +1303,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	{
 		if (evt.getPropertyName().equals("selectedImage") || evt.getPropertyName().equals("valid"))
 		{
+			System.out.println("End preview " + evt.getPropertyName());
 			endPreview();
 			chckbxPreview.setSelected(false);
 			updateImageLimits();
