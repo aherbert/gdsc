@@ -13,19 +13,20 @@ package gdsc.utils;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
-import java.io.File;
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.util.ArrayList;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
+import ij.io.DirectoryChooser;
 import ij.io.OpenDialog;
 import ij.plugin.HyperStackReducer;
 import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
+
+import java.io.File;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.ArrayList;
 
 /**
  * Adds helper functionality for ImageJ
@@ -247,6 +248,46 @@ public class ImageJHelper
 		return rounded(d, 4);
 	}
 
+	/**
+	 * Open a file selection dialog using the given title (and optionally the default path)
+	 * 
+	 * @param title
+	 *            The dialog title
+	 * @param filename
+	 *            The default path to start with
+	 * @return The path (or null if the dialog is cancelled)
+	 */
+	public static String getFilename(String title, String filename)
+	{
+		String[] path = decodePath(filename);
+		OpenDialog chooser = new OpenDialog(title, path[0], path[1]);
+		if (chooser.getFileName() != null)
+		{
+			return chooser.getDirectory() + chooser.getFileName();
+		}
+		return null;
+	}
+
+	/**
+	 * Open a directory selection dialog using the given title (and optionally the default directory)
+	 * 
+	 * @param title
+	 *            The dialog title
+	 * @param directory
+	 *            The default directory to start in
+	 * @return The directory (or null if the dialog is cancelled)
+	 */
+	public static String getDirectory(String title, String directory)
+	{
+		String defaultDir = OpenDialog.getDefaultDirectory();
+		if (directory != null && directory.length() > 0)
+			OpenDialog.setDefaultDirectory(directory);
+		DirectoryChooser chooser = new DirectoryChooser(title);
+		directory = chooser.getDirectory();
+		OpenDialog.setDefaultDirectory(defaultDir);
+		return directory;
+	}
+	
 	/**
 	 * Splits a full path into the directory and filename
 	 * 

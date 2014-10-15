@@ -13,19 +13,24 @@ package gdsc.foci;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
-import gdsc.utils.GaussianFit;
 import gdsc.threshold.Auto_Threshold;
+import gdsc.utils.GaussianFit;
 import gdsc.utils.ImageJHelper;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Macro;
+import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
+import ij.io.Opener;
 import ij.io.RoiEncoder;
+import ij.plugin.FolderOpener;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.GaussianBlur;
+import ij.plugin.frame.Recorder;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -36,10 +41,16 @@ import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Rectangle;
+import java.awt.TextField;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.geom.RoundRectangle2D;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -48,7 +59,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Vector;
 
 /**
  * Find the peak intensity regions of an image.
@@ -67,13 +80,243 @@ import java.util.LinkedList;
  * Stopping criteria for region growing routines are partly based on the options in PRIISM
  * (http://www.msg.ucsf.edu/IVE/index.html).
  */
-public class FindFoci implements PlugIn
+public class FindFoci implements PlugIn, MouseListener
 {
+	private class BatchParameters
+	{
+		String parameterOptions;
+		HashMap<String, String> map;
+
+		int backgroundMethod;
+		double backgroundParameter;
+		String autoThresholdMethod;
+		int searchMethod;
+		double searchParameter;
+		int maxPeaks;
+		int minSize;
+		int peakMethod;
+		double peakParameter;
+		int sortIndex;
+		double blur;
+		int centreMethod;
+		double centreParameter;
+		double fractionParameter;
+
+		int outputType;
+		int options;
+
+		public BatchParameters(String filename) throws Exception
+		{
+			readParameters(filename);
+
+			// Read all the parameters
+			backgroundMethod = findIndex("Background_method", backgroundMethods);
+			backgroundParameter = findDouble("Background_parameter");
+			autoThresholdMethod = findString("Auto_threshold");
+			String statisticsMode = findString("Statistics_mode");
+			searchMethod = findIndex("Search_method", searchMethods);
+			searchParameter = findDouble("Search_parameter");
+			minSize = findInteger("Minimum_size");
+			boolean minimumAboveSaddle = findBoolean("Minimum_above_saddle");
+			peakMethod = findIndex("Minimum_peak_height", peakMethods);
+			peakParameter = findDouble("Peak_parameter");
+			sortIndex = findIndex("Sort_method", sortIndexMethods);
+			maxPeaks = findInteger("Maximum_peaks");
+			int showMask = findIndex("Show_mask", maskOptions);
+			fractionParameter = findDouble("Fraction_parameter");
+			boolean showTable = findBoolean("Show_table");
+			boolean markMaxima = findBoolean("Mark_maxima");
+			boolean markROIMaxima = findBoolean("Mark_peak_maxima");
+			boolean showMaskMaximaAsDots = findBoolean("Show_peak_maxima_as_dots");
+			boolean showLogMessages = findBoolean("Show_log_messages");
+			boolean removeEdgeMaxima = findBoolean("Remove_edge_maxima");
+			blur = findDouble("Gaussian_blur");
+			centreMethod = findIndex("Centre_method", centreMethods);
+			centreParameter = findDouble("Centre_parameter");
+
+			outputType = getOutputMaskFlags(showMask);
+
+			if (showTable)
+				outputType += OUTPUT_RESULTS_TABLE;
+			if (markMaxima)
+				outputType += OUTPUT_ROI_SELECTION;
+			if (markROIMaxima)
+				outputType += OUTPUT_MASK_ROI_SELECTION;
+			if (!showMaskMaximaAsDots)
+				outputType += OUTPUT_MASK_NO_PEAK_DOTS;
+			if (showLogMessages)
+				outputType += OUTPUT_LOG_MESSAGES;
+
+			options = 0;
+			if (minimumAboveSaddle)
+				options |= OPTION_MINIMUM_ABOVE_SADDLE;
+			if (statisticsMode.equalsIgnoreCase("inside"))
+				options |= OPTION_STATS_INSIDE;
+			else if (statisticsMode.equalsIgnoreCase("outside"))
+				options |= OPTION_STATS_OUTSIDE;
+			if (removeEdgeMaxima)
+				options |= OPTION_REMOVE_EDGE_MAXIMA;
+		}
+
+		private void readParameters(String filename) throws IOException
+		{
+			ArrayList<String> parameters = new ArrayList<String>();
+			BufferedReader input = null;
+			try
+			{
+				FileInputStream fis = new FileInputStream(filename);
+				input = new BufferedReader(new InputStreamReader(fis));
+
+				String line;
+				while ((line = input.readLine()) != null)
+				{
+					// Only use lines that have key-value pairs
+					if (line.contains("="))
+						parameters.add(line);
+				}
+			}
+			finally
+			{
+				try
+				{
+					if (input != null)
+						input.close();
+				}
+				catch (IOException e)
+				{
+					// Ignore
+				}
+			}
+			if (parameters.isEmpty())
+				throw new RuntimeException("No key=value parameters in the file");
+			// Check if the parameters are macro options
+			if (parameters.size() == 1)
+			{
+				parameterOptions = parameters.get(0) + " ";
+			}
+			else
+			{
+				// Store key-value pairs. Lower-case the key
+				map = new HashMap<String, String>(parameters.size());
+				for (String line : parameters)
+				{
+					int index = line.indexOf('=');
+					String key = line.substring(0, index).trim().toLowerCase();
+					String value = line.substring(index + 1).trim();
+					map.put(key, value);
+				}
+			}
+		}
+
+		private String findString(String key)
+		{
+			String value;
+			key = key.toLowerCase();
+			if (parameterOptions != null)
+				value = Macro.getValue(parameterOptions, key, "");
+			else
+			{
+				value = map.get(key);
+			}
+			if (value == null || value.length() == 0)
+				throw new RuntimeException("Missing parameter: " + key);
+			return value;
+		}
+
+		private double findDouble(String key)
+		{
+			return Double.parseDouble(findString(key));
+		}
+
+		private int findInteger(String key)
+		{
+			return Integer.parseInt(findString(key));
+		}
+
+		private boolean findBoolean(String key)
+		{
+			if (parameterOptions != null)
+			{
+				return isMatch(parameterOptions, key.toLowerCase() + " ");
+			}
+			else
+			{
+				try
+				{
+					return Boolean.parseBoolean(findString(key));
+				}
+				catch (RuntimeException e)
+				{
+					return false;
+				}
+			}
+		}
+
+		/**
+		 * Returns true if s2 is in s1 and not in a bracketed literal (e.g., "[literal]")
+		 * <p>
+		 * Copied from ij.gui.GenericDialog since the recorder options do not show key=value pairs for booleans
+		 * 
+		 * @param s1
+		 * @param s2
+		 * @return
+		 */
+		boolean isMatch(String s1, String s2)
+		{
+			if (s1.startsWith(s2))
+				return true;
+			s2 = " " + s2;
+			int len1 = s1.length();
+			int len2 = s2.length();
+			boolean match, inLiteral = false;
+			char c;
+			for (int i = 0; i < len1 - len2 + 1; i++)
+			{
+				c = s1.charAt(i);
+				if (inLiteral && c == ']')
+					inLiteral = false;
+				else if (c == '[')
+					inLiteral = true;
+				if (c != s2.charAt(0) || inLiteral || (i > 1 && s1.charAt(i - 1) == '='))
+					continue;
+				match = true;
+				for (int j = 0; j < len2; j++)
+				{
+					if (s2.charAt(j) != s1.charAt(i + j))
+					{
+						match = false;
+						break;
+					}
+				}
+				if (match)
+					return true;
+			}
+			return false;
+		}
+
+		private int findIndex(String key, String[] options)
+		{
+			String value = findString(key);
+			for (int i = 0; i < options.length; i++)
+				if (options[i].equalsIgnoreCase(value))
+					return i;
+			throw new RuntimeException("Missing index for option: " + key + "=" + value);
+		}
+	}
+
 	public static String FRAME_TITLE = "FindFoci";
 	private static TextWindow resultsWindow = null;
 	private static ArrayList<int[]> lastResultsArray = null;
 	private static int isGaussianFitEnabled = 0;
 	private static String newLine = System.getProperty("line.separator");
+
+	private static String BATCH_INPUT_DIRECTORY = "findfoci.batchInputDirectory";
+	private static String BATCH_PARAMETER_FILE = "findfoci.batchParameterFile";
+	private static String BATCH_OUTPUT_DIRECTORY = "findfoci.batchOutputDirectory";
+	private static String batchInputDirectory = Prefs.get(BATCH_INPUT_DIRECTORY, "");
+	private static String batchParameterFile = Prefs.get(BATCH_PARAMETER_FILE, "");
+	private static String batchOutputDirectory = Prefs.get(BATCH_OUTPUT_DIRECTORY, "");
+	private TextField textParamFile;
 
 	/**
 	 * List of background threshold methods for the dialog
@@ -418,8 +661,8 @@ public class FindFoci implements PlugIn
 		isGaussianFitEnabled = (gf.isFittingEnabled()) ? 1 : -1;
 		if (!gf.isFittingEnabled())
 		{
-			centreMethods = Arrays.copyOf(centreMethods, centreMethods.length-2);
-			
+			centreMethods = Arrays.copyOf(centreMethods, centreMethods.length - 2);
+
 			// Debug the reason why fitting is disabled
 			if (IJ.shiftKeyDown())
 				IJ.log("Gaussian fitting is not enabled:" + newLine + gf.getErrorMessage());
@@ -539,23 +782,23 @@ public class FindFoci implements PlugIn
 	{
 		ImagePlus imp = WindowManager.getCurrentImage();
 
+		if ("batch".equals(arg))
+		{
+			runBatchMode();
+			return;
+		}
+
 		if (null == imp)
 		{
-			IJ.showMessage("There must be at least one image open");
+			IJ.error(FRAME_TITLE, "There must be at least one image open");
 			return;
 		}
 
 		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
 		{
-			IJ.showMessage("Error", "Only 8-bit and 16-bit images are supported");
+			IJ.error(FRAME_TITLE, "Only 8-bit and 16-bit images are supported");
 			return;
 		}
-
-		//if (imp.getNChannels() != 1 || imp.getNFrames() != 1)
-		//{
-		//	IJ.showMessage("Error", "Only single channel, single frame images are supported");
-		//	return;
-		//}
 
 		// Build a list of the open images
 		ArrayList<String> newImageList = buildMaskList(imp);
@@ -659,19 +902,7 @@ public class FindFoci implements PlugIn
 		myCentreMethod = gd.getNextChoiceIndex();
 		myCentreParameter = gd.getNextNumber();
 
-		int outputType = 0;
-		if (myShowMask == 1)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS;
-		if (myShowMask == 2)
-			outputType += FindFoci.OUTPUT_MASK_THRESHOLD;
-		if (myShowMask == 3)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_ABOVE_SADDLE;
-		if (myShowMask == 4)
-			outputType += FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_ABOVE_SADDLE;
-		if (myShowMask == 5)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_FRACTION_OF_INTENSITY;
-		if (myShowMask == 6)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_FRACTION_OF_HEIGHT;
+		int outputType = getOutputMaskFlags(myShowMask);
 
 		if (myShowTable)
 			outputType += OUTPUT_RESULTS_TABLE;
@@ -696,7 +927,7 @@ public class FindFoci implements PlugIn
 
 		if (outputType == 0)
 		{
-			IJ.showMessage("Error", "No results options chosen");
+			IJ.error(FRAME_TITLE, "No results options chosen");
 			return;
 		}
 
@@ -706,6 +937,35 @@ public class FindFoci implements PlugIn
 		exec(imp, mask, myBackgroundMethod, myBackgroundParameter, myThresholdMethod, mySearchMethod,
 				mySearchParameter, myMaxPeaks, myMinSize, myPeakMethod, myPeakParameter, outputType, mySortMethod,
 				options, myGaussianBlur, myCentreMethod, myCentreParameter, myFractionParameter);
+	}
+
+	/**
+	 * Get the output flags required for the specified index in the mask options
+	 * <p>
+	 * See {@link #maskOptions}
+	 * 
+	 * @param showMask
+	 * @return The output flags
+	 */
+	public static int getOutputMaskFlags(int showMask)
+	{
+		switch (showMask)
+		{
+			case 1:
+				return FindFoci.OUTPUT_MASK_PEAKS;
+			case 2:
+				return FindFoci.OUTPUT_MASK_THRESHOLD;
+			case 3:
+				return FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_ABOVE_SADDLE;
+			case 4:
+				return FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_ABOVE_SADDLE;
+			case 5:
+				return FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_FRACTION_OF_INTENSITY;
+			case 6:
+				return FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_FRACTION_OF_HEIGHT;
+			default:
+				return 0;
+		}
 	}
 
 	/**
@@ -776,13 +1036,13 @@ public class FindFoci implements PlugIn
 	{
 		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
 		{
-			IJ.showMessage("Error", "Only 8-bit and 16-bit images are supported");
+			IJ.error(FRAME_TITLE, "Only 8-bit and 16-bit images are supported");
 			return;
 		}
 		if ((centreMethod == CENTRE_GAUSSIAN_ORIGINAL || centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
 				isGaussianFitEnabled < 1)
 		{
-			IJ.showMessage("Error", "Gaussian fit is not currently enabled");
+			IJ.error(FRAME_TITLE, "Gaussian fit is not currently enabled");
 			return;
 		}
 
@@ -851,73 +1111,10 @@ public class FindFoci implements PlugIn
 		// Record all the results to file
 		if (resultsArray != null && resultsDirectory != null)
 		{
-			try
-			{
-				String expId = generateId(imp);
-
-				// Save results to file
-				FileOutputStream fos = new FileOutputStream(resultsDirectory + File.separatorChar + expId + ".xls");
-				OutputStreamWriter out = new OutputStreamWriter(fos, "UTF-8");
-				out.write(createResultsHeader(imp, stats));
-				int[] xpoints = new int[resultsArray.size()];
-				int[] ypoints = new int[resultsArray.size()];
-				for (int i = 0; i < resultsArray.size(); i++)
-				{
-					int[] result = resultsArray.get(i);
-					xpoints[i] = result[RESULT_X];
-					ypoints[i] = result[RESULT_Y];
-					out.write(buildResultEntry(i + 1, resultsArray.size() - i, result, stats[STATS_SUM],
-							stats[STATS_BACKGROUND], stats[STATS_SUM_ABOVE_BACKGROUND]));
-				}
-				out.close();
-
-				// Save roi to file
-				RoiEncoder roiEncoder = new RoiEncoder(resultsDirectory + File.separatorChar + expId + ".roi");
-				roiEncoder.write(new PointRoi(xpoints, ypoints, resultsArray.size()));
-
-				// Save parameters to file
-				fos = new FileOutputStream(resultsDirectory + File.separatorChar + expId + ".params");
-				out = new OutputStreamWriter(fos, "UTF-8");
-				writeParam(out, "Image", imp.getTitle());
-				if (imp.getOriginalFileInfo() != null)
-					writeParam(out, "File", imp.getOriginalFileInfo().directory + imp.getOriginalFileInfo().fileName);
-				if (mask != null)
-				{
-					writeParam(out, "Mask", mask.getTitle());
-					if (mask.getOriginalFileInfo() != null)
-						writeParam(out, "Mask File", mask.getOriginalFileInfo().directory +
-								mask.getOriginalFileInfo().fileName);
-				}
-				writeParam(out, "Background_method", backgroundMethods[backgroundMethod]);
-				writeParam(out, "Background_parameter", Double.toString(backgroundParameter));
-				writeParam(out, "Auto_threshold", autoThresholdMethod);
-				writeParam(out, "Search_method", searchMethods[searchMethod]);
-				writeParam(out, "Statistics_mode", getStatisticsMode(options));
-				writeParam(out, "Search_parameter", Double.toString(searchParameter));
-				writeParam(out, "Minimum_size", Integer.toString(minSize));
-				writeParam(out, "Minimum_above_saddle", ((options & OPTION_MINIMUM_ABOVE_SADDLE) != 0) ? "true"
-						: "false");
-				writeParam(out, "Minimum_peak_height", peakMethods[peakMethod]);
-				writeParam(out, "Peak_parameter", Double.toString(peakParameter));
-				writeParam(out, "Sort_method", sortIndexMethods[sortIndex]);
-				writeParam(out, "Maximum_peaks", Integer.toString(maxPeaks));
-				writeParam(out, "Show_mask", maskOptions[getMaskOption(outputType)]);
-				writeParam(out, "Show_table", ((outputType & OUTPUT_RESULTS_TABLE) != 0) ? "true" : "false");
-				writeParam(out, "Mark_maxima", ((outputType & OUTPUT_ROI_SELECTION) != 0) ? "true" : "false");
-				writeParam(out, "Mark_peak_maxima", ((outputType & OUTPUT_MASK_ROI_SELECTION) != 0) ? "true" : "false");
-				writeParam(out, "Show_peak_maxima_as_dots", ((outputType & OUTPUT_MASK_NO_PEAK_DOTS) == 0) ? "true"
-						: "false");
-				writeParam(out, "Show_log_messages", ((outputType & OUTPUT_LOG_MESSAGES) != 0) ? "true" : "false");
-				writeParam(out, "Results_directory", resultsDirectory);
-				writeParam(out, "Gaussian_blur", "" + blur);
-				writeParam(out, "Centre_method", centreMethods[centreMethod]);
-				writeParam(out, "Centre_parameter", "" + centreParameter);
-				out.close();
-			}
-			catch (Exception e)
-			{
-				logError(e.getMessage());
-			}
+			saveResults(generateId(imp), imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
+					searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
+					options, blur, centreMethod, centreParameter, fractionParameter, resultsArray, stats,
+					resultsDirectory);
 		}
 
 		// Update the mask image
@@ -982,6 +1179,82 @@ public class FindFoci implements PlugIn
 				maxImp.killRoi();
 			}
 		}
+	}
+
+	private String saveResults(String expId, ImagePlus imp, ImagePlus mask, int backgroundMethod,
+			double backgroundParameter, String autoThresholdMethod, int searchMethod, double searchParameter,
+			int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex,
+			int options, double blur, int centreMethod, double centreParameter, double fractionParameter,
+			ArrayList<int[]> resultsArray, double[] stats, String resultsDirectory)
+	{
+		try
+		{
+			// Save results to file
+			FileOutputStream fos = new FileOutputStream(resultsDirectory + File.separatorChar + expId + ".xls");
+			OutputStreamWriter out = new OutputStreamWriter(fos, "UTF-8");
+			out.write(createResultsHeader(imp, stats));
+			int[] xpoints = new int[resultsArray.size()];
+			int[] ypoints = new int[resultsArray.size()];
+			for (int i = 0; i < resultsArray.size(); i++)
+			{
+				int[] result = resultsArray.get(i);
+				xpoints[i] = result[RESULT_X];
+				ypoints[i] = result[RESULT_Y];
+				out.write(buildResultEntry(i + 1, resultsArray.size() - i, result, stats[STATS_SUM],
+						stats[STATS_BACKGROUND], stats[STATS_SUM_ABOVE_BACKGROUND]));
+			}
+			out.close();
+
+			// Save roi to file
+			RoiEncoder roiEncoder = new RoiEncoder(resultsDirectory + File.separatorChar + expId + ".roi");
+			roiEncoder.write(new PointRoi(xpoints, ypoints, resultsArray.size()));
+
+			// Save parameters to file
+			fos = new FileOutputStream(resultsDirectory + File.separatorChar + expId + ".params");
+			out = new OutputStreamWriter(fos, "UTF-8");
+			writeParam(out, "Image", imp.getTitle());
+			if (imp.getOriginalFileInfo() != null)
+				writeParam(out, "File", imp.getOriginalFileInfo().directory + imp.getOriginalFileInfo().fileName);
+			if (mask != null)
+			{
+				writeParam(out, "Mask", mask.getTitle());
+				if (mask.getOriginalFileInfo() != null)
+					writeParam(out, "Mask File", mask.getOriginalFileInfo().directory +
+							mask.getOriginalFileInfo().fileName);
+			}
+			writeParam(out, "Background_method", backgroundMethods[backgroundMethod]);
+			writeParam(out, "Background_parameter", Double.toString(backgroundParameter));
+			writeParam(out, "Auto_threshold", autoThresholdMethod);
+			writeParam(out, "Statistics_mode", getStatisticsMode(options));
+			writeParam(out, "Search_method", searchMethods[searchMethod]);
+			writeParam(out, "Search_parameter", Double.toString(searchParameter));
+			writeParam(out, "Minimum_size", Integer.toString(minSize));
+			writeParam(out, "Minimum_above_saddle", ((options & OPTION_MINIMUM_ABOVE_SADDLE) != 0) ? "true" : "false");
+			writeParam(out, "Minimum_peak_height", peakMethods[peakMethod]);
+			writeParam(out, "Peak_parameter", Double.toString(peakParameter));
+			writeParam(out, "Sort_method", sortIndexMethods[sortIndex]);
+			writeParam(out, "Maximum_peaks", Integer.toString(maxPeaks));
+			writeParam(out, "Show_mask", maskOptions[getMaskOption(outputType)]);
+			writeParam(out, "Fraction_parameter", "" + fractionParameter);
+			writeParam(out, "Show_table", ((outputType & OUTPUT_RESULTS_TABLE) != 0) ? "true" : "false");
+			writeParam(out, "Mark_maxima", ((outputType & OUTPUT_ROI_SELECTION) != 0) ? "true" : "false");
+			writeParam(out, "Mark_peak_maxima", ((outputType & OUTPUT_MASK_ROI_SELECTION) != 0) ? "true" : "false");
+			writeParam(out, "Show_peak_maxima_as_dots", ((outputType & OUTPUT_MASK_NO_PEAK_DOTS) == 0) ? "true"
+					: "false");
+			writeParam(out, "Show_log_messages", ((outputType & OUTPUT_LOG_MESSAGES) != 0) ? "true" : "false");
+			writeParam(out, "Remove_edge_maxima", ((outputType & OPTION_REMOVE_EDGE_MAXIMA) != 0) ? "true" : "false");
+			writeParam(out, "Results_directory", resultsDirectory);
+			writeParam(out, "Gaussian_blur", "" + blur);
+			writeParam(out, "Centre_method", centreMethods[centreMethod]);
+			writeParam(out, "Centre_parameter", "" + centreParameter);
+			out.close();
+			return expId;
+		}
+		catch (Exception e)
+		{
+			logError(e.getMessage());
+		}
+		return "";
 	}
 
 	public static String getStatisticsMode(int options)
@@ -1211,13 +1484,13 @@ public class FindFoci implements PlugIn
 
 		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
 		{
-			IJ.showMessage("Error", "Only 8-bit and 16-bit images are supported");
+			IJ.error(FRAME_TITLE, "Only 8-bit and 16-bit images are supported");
 			return null;
 		}
 		if ((centreMethod == CENTRE_GAUSSIAN_ORIGINAL || centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
 				isGaussianFitEnabled < 1)
 		{
-			IJ.showMessage("Error", "Gaussian fit is not currently enabled");
+			IJ.error(FRAME_TITLE, "Gaussian fit is not currently enabled");
 			return null;
 		}
 
@@ -1537,7 +1810,7 @@ public class FindFoci implements PlugIn
 
 		if (originalImp.getBitDepth() != 8 && originalImp.getBitDepth() != 16)
 		{
-			IJ.showMessage("Error", "Only 8-bit and 16-bit images are supported");
+			IJ.error(FRAME_TITLE, "Only 8-bit and 16-bit images are supported");
 			return null;
 		}
 
@@ -2790,7 +3063,7 @@ public class FindFoci implements PlugIn
 		sb.append(result[RESULT_X]).append("\t");
 		sb.append(result[RESULT_Y]).append("\t");
 		// Z should correspond to slice 
-		sb.append(result[RESULT_Z]+1).append("\t");
+		sb.append(result[RESULT_Z] + 1).append("\t");
 		sb.append(result[RESULT_COUNT]).append("\t");
 		sb.append(result[RESULT_MAX_VALUE]).append("\t");
 		sb.append(result[RESULT_INTENSITY]).append("\t");
@@ -5601,5 +5874,317 @@ public class FindFoci implements PlugIn
 	public static ArrayList<int[]> getResults()
 	{
 		return lastResultsArray;
+	}
+
+	/**
+	 * Runs a batch of FindFoci analysis. Asks for an input directory, parameter file and results directory.
+	 */
+	private void runBatchMode()
+	{
+		if (!showBatchDialog())
+			return;
+		String[] imageList = getBatchImages();
+		if (imageList == null || imageList.length == 0)
+		{
+			IJ.error(FRAME_TITLE, "No input images in folder: " + batchInputDirectory);
+			return;
+		}
+		BatchParameters parameters;
+		try
+		{
+			parameters = new BatchParameters(batchParameterFile);
+		}
+		catch (Exception e)
+		{
+			IJ.error(FRAME_TITLE, "Unable to read parameters file: " + e.getMessage());
+			return;
+		}
+		setResultsDirectory(batchOutputDirectory);
+		for (String image : imageList)
+		{
+			runBatch(image, parameters);
+		}
+	}
+
+	private boolean showBatchDialog()
+	{
+		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		gd.addMessage("Run " +
+				FRAME_TITLE +
+				" on a set of images.\n \nAll images in a directory will be processed.\n \nOptional mask images should be named:\n[image_name].mask.[ext]");
+		gd.addStringField("Input_directory", batchInputDirectory);
+		gd.addStringField("Parameter_file", batchParameterFile);
+		gd.addStringField("Output_directory", batchOutputDirectory);
+		gd.addMessage("[Note: Double-click a text field to open a selection dialog]");
+		@SuppressWarnings("unchecked")
+		Vector<TextField> texts = (Vector<TextField>) gd.getStringFields();
+		for (TextField tf : texts)
+		{
+			tf.addMouseListener(this);
+			tf.setColumns(50);
+		}
+		textParamFile = texts.get(1);
+
+		gd.showDialog();
+		if (gd.wasCanceled())
+			return false;
+		batchInputDirectory = gd.getNextString();
+		if (!new File(batchInputDirectory).isDirectory())
+		{
+			IJ.error(FRAME_TITLE, "Input directory is not a valid directory: " + batchInputDirectory);
+			return false;
+		}
+		batchParameterFile = gd.getNextString();
+		if (!new File(batchParameterFile).isFile())
+		{
+			IJ.error(FRAME_TITLE, "Parameter file is not a valid file: " + batchParameterFile);
+			return false;
+		}
+		batchOutputDirectory = gd.getNextString();
+		if (!new File(batchOutputDirectory).isDirectory())
+		{
+			IJ.error(FRAME_TITLE, "Output directory is not a valid directory: " + batchOutputDirectory);
+			return false;
+		}
+		Prefs.set(BATCH_INPUT_DIRECTORY, batchInputDirectory);
+		Prefs.set(BATCH_PARAMETER_FILE, batchParameterFile);
+		Prefs.set(BATCH_OUTPUT_DIRECTORY, batchOutputDirectory);
+		return true;
+	}
+
+	private String[] getBatchImages()
+	{
+		String directory = batchInputDirectory;
+		if (directory == null)
+			return null;
+
+		// Get a list of files
+		File[] fileList = (new File(directory)).listFiles();
+		if (fileList == null)
+			return null;
+
+		// Exclude directories
+		String[] list = new String[fileList.length];
+		int c = 0;
+		for (int i = 0; i < list.length; i++)
+			if (fileList[i].isFile())
+				list[c++] = fileList[i].getName();
+		list = Arrays.copyOf(list, c);
+
+		// Now exclude non-image files as per the ImageJ FolderOpener
+		FolderOpener fo = new FolderOpener();
+		list = fo.trimFileList(list);
+		if (list == null)
+			return null;
+
+		list = fo.sortFileList(list);
+
+		// Now exclude mask images
+		c = 0;
+		for (String name : list)
+		{
+			if (name.contains("mask."))
+				continue;
+			list[c++] = name;
+		}
+		return Arrays.copyOf(list, c);
+	}
+
+	private boolean runBatch(String image, BatchParameters parameters)
+	{
+		IJ.redirectErrorMessages();
+
+		String mask = getMaskImage(image);
+
+		// Open the image (and mask)
+		ImagePlus imp = openImage(image);
+		if (imp == null)
+		{
+			IJ.error(FRAME_TITLE, "File is not a valid image: " + image);
+			return false;
+		}
+		ImagePlus maskImp = openImage(mask);
+
+		// Run the algorithm
+		return execBatch(imp, maskImp, parameters.backgroundMethod, parameters.backgroundParameter,
+				parameters.autoThresholdMethod, parameters.searchMethod, parameters.searchParameter,
+				parameters.maxPeaks, parameters.minSize, parameters.peakMethod, parameters.peakParameter,
+				parameters.outputType, parameters.sortIndex, parameters.options, parameters.blur,
+				parameters.centreMethod, parameters.centreParameter, parameters.fractionParameter);
+	}
+
+	private String getMaskImage(String filename)
+	{
+		int index = filename.lastIndexOf('.');
+		if (index > 0)
+		{
+			String prefix = filename.substring(0, index);
+			String ext = filename.substring(index);
+			String maskFilename = prefix + ".mask" + ext;
+			if (new File(batchInputDirectory, maskFilename).exists())
+				return maskFilename;
+		}
+		return null;
+	}
+
+	private ImagePlus openImage(String filename)
+	{
+		if (filename == null)
+			return null;
+		Opener opener = new Opener();
+		opener.setSilentMode(true);
+		return opener.openImage(batchInputDirectory, filename);
+	}
+
+	/**
+	 * Truncated version of the exec() method that saves all results to the batch output directory
+	 * 
+	 * @param imp
+	 * @param mask
+	 * @param backgroundMethod
+	 * @param backgroundParameter
+	 * @param autoThresholdMethod
+	 * @param searchMethod
+	 * @param searchParameter
+	 * @param maxPeaks
+	 * @param minSize
+	 * @param peakMethod
+	 * @param peakParameter
+	 * @param outputType
+	 * @param sortIndex
+	 * @param options
+	 * @param blur
+	 * @param centreMethod
+	 * @param centreParameter
+	 * @param fractionParameter
+	 */
+	private boolean execBatch(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
+			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
+			int peakMethod, double peakParameter, int outputType, int sortIndex, int options, double blur,
+			int centreMethod, double centreParameter, double fractionParameter)
+	{
+		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
+		{
+			IJ.error(FRAME_TITLE, "Only 8-bit and 16-bit images are supported");
+			return false;
+		}
+		if ((centreMethod == CENTRE_GAUSSIAN_ORIGINAL || centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
+				isGaussianFitEnabled < 1)
+		{
+			IJ.error(FRAME_TITLE, "Gaussian fit is not currently enabled");
+			return false;
+		}
+
+		Object[] results = findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
+				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
+				options, blur, centreMethod, centreParameter, fractionParameter);
+
+		if (results == null)
+		{
+			IJ.showStatus("Cancelled.");
+			return false;
+		}
+
+		// Get the results
+		ImagePlus maximaImp = (ImagePlus) results[0];
+		@SuppressWarnings("unchecked")
+		ArrayList<int[]> resultsArray = (ArrayList<int[]>) results[1];
+		double[] stats = (double[]) results[2];
+
+		// Record all the results to file
+		String expId = saveResults(imp.getShortTitle(), imp, mask, backgroundMethod, backgroundParameter,
+				autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
+				outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter, resultsArray,
+				stats, batchOutputDirectory);
+
+		// Update the mask image
+		ImagePlus maxImp = null;
+		if (maximaImp != null && (outputType & OUTPUT_MASK) != 0)
+		{
+			ImageStack stack = maximaImp.getStack();
+
+			String outname = imp.getTitle() + " " + FRAME_TITLE;
+			maxImp = new ImagePlus(outname, stack);
+			// Adjust the contrast to show all the maxima
+			int maxValue = ((outputType & OUTPUT_MASK_THRESHOLD) != 0) ? 4 : resultsArray.size() + 1;
+			maxImp.setDisplayRange(0, maxValue);
+		}
+
+		// Add ROI crosses to original image
+		if ((outputType & (OUTPUT_ROI_SELECTION | OUTPUT_MASK_ROI_SELECTION)) != 0)
+		{
+			int nMaxima = resultsArray.size();
+
+			if (nMaxima > 0)
+			{
+				int[] xpoints = new int[nMaxima];
+				int[] ypoints = new int[nMaxima];
+				for (int i = 0; i < nMaxima; i++)
+				{
+					int[] xy = resultsArray.get(i);
+					xpoints[i] = xy[RESULT_X];
+					ypoints[i] = xy[RESULT_Y];
+				}
+
+				if ((outputType & OUTPUT_ROI_SELECTION) != 0)
+				{
+					imp.setRoi(new PointRoi(xpoints, ypoints, nMaxima));
+					IJ.saveAsTiff(imp, batchOutputDirectory + File.separator + expId + ".tiff");
+				}
+
+				if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
+					maxImp.setRoi(new PointRoi(xpoints, ypoints, nMaxima));
+			}
+		}
+
+		if (maxImp != null)
+		{
+			IJ.saveAsTiff(maxImp, batchOutputDirectory + File.separator + expId + ".mask.tiff");
+		}
+
+		return true;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
+	 */
+	public void mouseClicked(MouseEvent e)
+	{
+		if (e.getClickCount() > 1 && e.getSource() instanceof TextField) // Double-click
+		{
+			TextField tf = (TextField) e.getSource();
+			String path = tf.getText();
+			boolean recording = Recorder.record;
+			Recorder.record = false;
+			if (tf == textParamFile)
+			{
+				path = ImageJHelper.getFilename("Choose_a_parameter_file", path);
+			}
+			else
+			{
+				path = ImageJHelper.getDirectory("Choose_a_directory", path);
+			}
+			Recorder.record = recording;
+			if (path != null)
+				tf.setText(path);
+		}
+	}
+
+	public void mousePressed(MouseEvent paramMouseEvent)
+	{
+	}
+
+	public void mouseReleased(MouseEvent paramMouseEvent)
+	{
+	}
+
+	public void mouseEntered(MouseEvent paramMouseEvent)
+	{
+	}
+
+	public void mouseExited(MouseEvent paramMouseEvent)
+	{
 	}
 }

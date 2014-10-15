@@ -131,19 +131,7 @@ public class ImageJController extends FindFociController
 		double centreParameter = model.getCentreParameter();
 		double fractionParameter = model.getFractionParameter();
 
-		int outputType = 0;
-		if (showMask == 1)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS;
-		if (showMask == 2)
-			outputType += FindFoci.OUTPUT_MASK_THRESHOLD;
-		if (showMask == 3)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_ABOVE_SADDLE;
-		if (showMask == 4)
-			outputType += FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_ABOVE_SADDLE;
-		if (showMask == 5)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_FRACTION_OF_INTENSITY;
-		if (showMask == 6)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_FRACTION_OF_HEIGHT;
+		int outputType = FindFoci.getOutputMaskFlags(showMask);
 
 		if (showTable)
 			outputType += FindFoci.OUTPUT_RESULTS_TABLE;
@@ -192,6 +180,7 @@ public class ImageJController extends FindFociController
 			Recorder.recordOption("Sort_method", FindFoci.sortIndexMethods[sortMethod]);
 			Recorder.recordOption("Maximum_peaks", "" + maxPeaks);
 			Recorder.recordOption("Show_mask", FindFoci.maskOptions[showMask]);
+			Recorder.recordOption("Fraction_parameter", "" + fractionParameter);
 			if (showTable)
 				Recorder.recordOption("Show_table");
 			if (markMaxima)
@@ -209,7 +198,6 @@ public class ImageJController extends FindFociController
 			Recorder.recordOption("Gaussian_blur", "" + gaussianBlur);
 			Recorder.recordOption("Centre_method", FindFoci.getCentreMethods()[centreMethod]);
 			Recorder.recordOption("Centre_parameter", "" + centreParameter);
-			Recorder.recordOption("Fraction_parameter", "" + fractionParameter);
 			Recorder.saveCommand();
 		}
 
