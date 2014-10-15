@@ -124,7 +124,6 @@ public class FindFoci implements PlugIn, MouseListener
 			maxPeaks = findInteger("Maximum_peaks");
 			int showMask = findIndex("Show_mask", maskOptions);
 			fractionParameter = findDouble("Fraction_parameter");
-			boolean showTable = findBoolean("Show_table");
 			boolean markMaxima = findBoolean("Mark_maxima");
 			boolean markROIMaxima = findBoolean("Mark_peak_maxima");
 			boolean showMaskMaximaAsDots = findBoolean("Show_peak_maxima_as_dots");
@@ -136,8 +135,6 @@ public class FindFoci implements PlugIn, MouseListener
 
 			outputType = getOutputMaskFlags(showMask);
 
-			if (showTable)
-				outputType += OUTPUT_RESULTS_TABLE;
 			if (markMaxima)
 				outputType += OUTPUT_ROI_SELECTION;
 			if (markROIMaxima)
