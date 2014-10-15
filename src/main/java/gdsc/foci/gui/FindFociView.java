@@ -1303,7 +1303,6 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	{
 		if (evt.getPropertyName().equals("selectedImage") || evt.getPropertyName().equals("valid"))
 		{
-			System.out.println("End preview " + evt.getPropertyName());
 			endPreview();
 			chckbxPreview.setSelected(false);
 			updateImageLimits();
