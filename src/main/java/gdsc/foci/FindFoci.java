@@ -5880,7 +5880,7 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		if (!showBatchDialog())
 			return;
-		String[] imageList = getBatchImages();
+		String[] imageList = getBatchImages(batchInputDirectory);
 		if (imageList == null || imageList.length == 0)
 		{
 			IJ.error(FRAME_TITLE, "No input images in folder: " + batchInputDirectory);
@@ -5949,9 +5949,8 @@ public class FindFoci implements PlugIn, MouseListener
 		return true;
 	}
 
-	private String[] getBatchImages()
+	public static String[] getBatchImages(String directory)
 	{
-		String directory = batchInputDirectory;
 		if (directory == null)
 			return null;
 
@@ -5991,16 +5990,16 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		IJ.redirectErrorMessages();
 
-		String mask = getMaskImage(image);
+		String mask = getMaskImage(batchInputDirectory, image);
 
 		// Open the image (and mask)
-		ImagePlus imp = openImage(image);
+		ImagePlus imp = openImage(batchInputDirectory, image);
 		if (imp == null)
 		{
 			IJ.error(FRAME_TITLE, "File is not a valid image: " + image);
 			return false;
 		}
-		ImagePlus maskImp = openImage(mask);
+		ImagePlus maskImp = openImage(batchInputDirectory, mask);
 
 		// Run the algorithm
 		return execBatch(imp, maskImp, parameters.backgroundMethod, parameters.backgroundParameter,
@@ -6010,7 +6009,7 @@ public class FindFoci implements PlugIn, MouseListener
 				parameters.centreMethod, parameters.centreParameter, parameters.fractionParameter);
 	}
 
-	private String getMaskImage(String filename)
+	public static String getMaskImage(String directory, String filename)
 	{
 		int index = filename.lastIndexOf('.');
 		if (index > 0)
@@ -6018,19 +6017,19 @@ public class FindFoci implements PlugIn, MouseListener
 			String prefix = filename.substring(0, index);
 			String ext = filename.substring(index);
 			String maskFilename = prefix + ".mask" + ext;
-			if (new File(batchInputDirectory, maskFilename).exists())
+			if (new File(directory, maskFilename).exists())
 				return maskFilename;
 		}
 		return null;
 	}
 
-	private ImagePlus openImage(String filename)
+	public static ImagePlus openImage(String directory, String filename)
 	{
 		if (filename == null)
 			return null;
 		Opener opener = new Opener();
 		opener.setSilentMode(true);
-		return opener.openImage(batchInputDirectory, filename);
+		return opener.openImage(directory, filename);
 	}
 
 	/**
