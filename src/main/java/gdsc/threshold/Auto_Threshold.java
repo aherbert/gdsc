@@ -1225,7 +1225,7 @@ public class Auto_Threshold implements PlugIn
 		}
 
 		// Output the measure of separability. Requires BCVmax / BCVglobal
-		if (N > 0)
+		if (IJ.debugMode && N > 0)
 		{
 			// Calculate global variance
 			double sx = S;
@@ -1234,8 +1234,9 @@ public class Auto_Threshold implements PlugIn
 				ssx += k * k * data[k];
 			BCV = (ssx - sx * sx / N) / N;
 
-			if (IJ.debugMode)
-				IJ.log(String.format("Otsu separability @ %d: %f", kStar + minbin, (BCVmax / BCV)));
+			// Removed use of minbin to allow thread safe execution
+			//IJ.log(String.format("Otsu separability @ %d: %f", kStar + minbin, (BCVmax / BCV)));			
+			IJ.log(String.format("Otsu separability @ %d: %f", kStar, (BCVmax / BCV)));
 		}
 
 		// kStar += 1;	// Use QTI convention that intensity -> 1 if intensity >= k
@@ -1777,8 +1778,6 @@ public class Auto_Threshold implements PlugIn
 		return threshold;
 	}
 
-	private static int minbin; // Used in the Otsu method
-
 	public static int getThreshold(String myMethod, int[] data)
 	{
 		if (myMethod.equals("None") || data == null)
@@ -1787,7 +1786,7 @@ public class Auto_Threshold implements PlugIn
 		int threshold = -1;
 
 		// bracket the histogram to the range that holds data to make it quicker
-		minbin = 0;
+		int minbin = 0;
 		int maxbin = 0;
 		for (int i = 0; i < data.length; i++)
 		{
