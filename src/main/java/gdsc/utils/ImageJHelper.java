@@ -27,6 +27,9 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Adds helper functionality for ImageJ
@@ -90,7 +93,7 @@ public class ImageJHelper
 				continue;
 			if (ignoreImage(ignoreSuffix, imp))
 				continue;
-			
+
 			newImageList.add(imp.getTitle());
 		}
 
@@ -220,7 +223,7 @@ public class ImageJHelper
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Round the double to the specified significant digits
 	 * 
@@ -287,7 +290,7 @@ public class ImageJHelper
 		OpenDialog.setDefaultDirectory(defaultDir);
 		return directory;
 	}
-	
+
 	/**
 	 * Splits a full path into the directory and filename
 	 * 
@@ -313,5 +316,29 @@ public class ImageJHelper
 			result[1] = path;
 		}
 		return result;
+	}
+
+	/**
+	 * Waits for all threads to complete computation.
+	 * 
+	 * @param futures
+	 */
+	public static void waitForCompletion(List<Future<?>> futures)
+	{
+		try
+		{
+			for (Future<?> f : futures)
+			{
+				f.get();
+			}
+		}
+		catch (ExecutionException ex)
+		{
+			ex.printStackTrace();
+		}
+		catch (InterruptedException e)
+		{
+			e.printStackTrace();
+		}
 	}
 }
