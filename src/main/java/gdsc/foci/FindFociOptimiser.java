@@ -20,6 +20,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Prefs;
 import ij.WindowManager;
+import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
@@ -30,20 +31,21 @@ import ij.plugin.frame.Recorder;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 
+import java.awt.AWTEvent;
 import java.awt.Checkbox;
+import java.awt.Choice;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.TextField;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -65,7 +67,7 @@ import javax.swing.JFrame;
 /**
  * Runs the FindFoci plugin with various settings and compares the results to the reference image point ROI.
  */
-public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, WindowListener
+public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener, DialogListener
 {
 	private static OptimiserView instance;
 
@@ -77,20 +79,20 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 	private static boolean myBackgroundStdDevAboveMean = true;
 	private static boolean myBackgroundAuto = true;
 	private static boolean myBackgroundAbsolute = false;
-	private static String myBackgroundParameter = "2.5 , 3.5 , 0.5";
+	private static String myBackgroundParameter = "2.5, 3.5, 0.5";
 	private static String myThresholdMethod = "Otsu";
 	private static String myStatisticsMode = "Both";
 	private static boolean mySearchAboveBackground = true;
 	private static boolean mySearchFractionOfPeak = true;
 	private static String mySearchParameter = "0, 0.6, 0.2";
-	private static String myMinSizeParameter = "1 , 9 , 2";
+	private static String myMinSizeParameter = "1, 9, 2";
 	private static String[] saddleOptions = { "Yes", "No", "Both" };
 	private static int myMinimumAboveSaddle = 0;
 	private static int myPeakMethod = FindFoci.PEAK_RELATIVE_ABOVE_BACKGROUND;
 	private static String myPeakParameter = "0, 0.6, 0.2";
 	private static String mySortMethod = "" + FindFoci.SORT_INTENSITY;
-	private static int myMaxPeaks = 50;
-	private static String myGaussianBlur = "0,0.5,1";
+	private static int myMaxPeaks = 500;
+	private static String myGaussianBlur = "0, 0.5, 1";
 	private static String myCentreMethod = "" + FindFoci.CENTRE_MAX_VALUE_SEARCH;
 	private static String myCentreParameter = "2";
 
@@ -133,7 +135,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 	private final static int SORT_SCORE = 8;
 
 	private static double mySearchFraction = 0.05;
-	private static int myResultsSortMethod = SORT_F1;
+	private static int myResultsSortMethod = SORT_JACCARD;
 	private static double myBeta = 4.0;
 	private static int myMaxResults = 100;
 	private static boolean myShowScoreImages = false;
@@ -181,9 +183,10 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 	private static final int SCORE_Z = 2;
 	private static final int SCORE_RANK = 3;
 	private static int scoringMode = Prefs.getInt(SCORING_MODE, SCORE_RANK);
+	private static boolean reuseResults = true;
 
 	@SuppressWarnings("rawtypes")
-	private Vector checkboxes;
+	private Vector checkbox, choice;
 
 	// Stored to allow the display of any of the latest results from the result table
 	private ImagePlus lastImp, lastMask;
@@ -192,6 +195,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 
 	// The number of combinations
 	private int combinations;
+
+	private boolean increaseSpace = false;
 
 	/*
 	 * (non-Javadoc)
@@ -225,7 +230,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 		if (!showDialog(imp))
 			return;
 
-		if (imp == null)
+		if (multiMode)
 		{
 			// Get the list of images
 			String[] imageList = FindFoci.getBatchImages(inputDirectory);
@@ -235,8 +240,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 				return;
 			}
 
+			if (reuseResults && resultsExist(imageList))
+				IJ.log("Output directory contains existing results that will be re-used");
+
 			IJ.showStatus("Running optimiser ...");
-			
+
 			// For each image start an optimiser run:
 			// - Run the optimiser
 			// - save the results to the output directory
@@ -256,6 +264,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 
 			// Collect all the results
 			ImageJHelper.waitForCompletion(futures);
+			threadPool.shutdown();
 			IJ.showProgress(1);
 			IJ.showStatus("");
 
@@ -350,61 +359,132 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 
 				saveResults(imp, mask, results, predictedPoints, myResultFile);
 
-				// Check if a sub-optimal best result was obtained at the limit of the optimisation range
-				if (results.get(0).metrics[Result.F1] < 1.0)
-				{
-					StringBuilder sb = new StringBuilder();
-					if (backgroundMethodHasParameter(bestOptions.backgroundMethod))
-					{
-						if (bestOptions.backgroundParameter == myBackgroundParameterMin)
-							append(sb, "- Background parameter @ lower limit (%g)\n", bestOptions.backgroundParameter);
-						else if (bestOptions.backgroundParameter + myBackgroundParameterInterval > myBackgroundParameterMax)
-							append(sb, "- Background parameter @ upper limit (%g)\n", bestOptions.backgroundParameter);
-					}
-					if (searchMethodHasParameter(bestOptions.searchMethod))
-					{
-						if (bestOptions.searchParameter == mySearchParameterMin && mySearchParameterMin > 0)
-							append(sb, "- Search parameter @ lower limit (%g)\n", bestOptions.searchParameter);
-						else if (bestOptions.searchParameter + mySearchParameterInterval > mySearchParameterMax &&
-								mySearchParameterMax < 1)
-							append(sb, "- Search parameter @ upper limit (%g)\n", bestOptions.searchParameter);
-					}
-					if (bestOptions.minSize == myMinSizeMin && myMinSizeMin > 1)
-						append(sb, "- Min Size @ lower limit (%d)\n", bestOptions.minSize);
-					else if (bestOptions.minSize + myMinSizeInterval > myMinSizeMax)
-						append(sb, "- Min Size @ upper limit (%d)\n", bestOptions.minSize);
-
-					if (bestOptions.peakParameter == myPeakParameterMin && myPeakParameterMin > 0)
-						append(sb, "- Peak parameter @ lower limit (%g)\n", bestOptions.peakParameter);
-					else if (bestOptions.peakParameter + myPeakParameterInterval > myPeakParameterMax &&
-							myPeakParameterMax < 1)
-						append(sb, "- Peak parameter @ upper limit (%g)\n", bestOptions.peakParameter);
-
-					if (bestOptions.blur == blurArray[0] && blurArray[0] > 0)
-						append(sb, "- Gaussian blur @ lower limit (%g)\n", bestOptions.blur);
-					else if (bestOptions.blur == blurArray[blurArray.length - 1])
-						append(sb, "- Gaussian blur @ upper limit (%g)\n", bestOptions.blur);
-
-					if (bestOptions.maxPeaks == results.get(0).n)
-						append(sb, "- Total peaks == Maximum Peaks (%d)\n", bestOptions.maxPeaks);
-
-					if (sb.length() > 0)
-					{
-						sb.insert(0, "Optimal result (" + IJ.d2s(results.get(0).metrics[myResultsSortMethod - 1], 4) +
-								") obtained at the following limits:\n");
-						sb.append("You may want to increase the optimisation space.");
-
-						IJ.log("---");
-						IJ.log(sb.toString());
-
-						// Do not show duplicate messages when running in batch
-						if (!java.awt.GraphicsEnvironment.isHeadless())
-							IJ.showMessage(sb.toString());
-					}
-				}
+				checkOptimisationSpace(results);
 			}
 			IJ.showTime(imp, start, "Done ");
 		}
+	}
+
+	/**
+	 * Check if the output directory has any results already
+	 * 
+	 * @param imageList
+	 * @return true if results exist
+	 */
+	private boolean resultsExist(String[] imageList)
+	{
+		// List the results in the output directory
+		String[] results = new File(outputDirectory).list(new FilenameFilter()
+		{
+			public boolean accept(File dir, String name)
+			{
+				return name.endsWith(".results.xls");
+			}
+		});
+
+		if (results == null || results.length == 0)
+			return false;
+		for (String name : imageList)
+		{
+			name = getShortTitle(name);
+			for (String result : results)
+				if (result.startsWith(name))
+					return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Copied from ImagePlus.getShortTitle()
+	 * 
+	 * @param title
+	 * @return the title with no spaces or extension
+	 */
+	private String getShortTitle(String title)
+	{
+		int index = title.indexOf(' ');
+		if (index > -1)
+			title = title.substring(0, index);
+		index = title.lastIndexOf('.');
+		if (index > 0)
+			title = title.substring(0, index);
+		return title;
+	}
+
+	/**
+	 * Check if the optimal results was obtained at the edge of the optimisation search space
+	 * 
+	 * @param results
+	 */
+	private void checkOptimisationSpace(ArrayList<Result> results)
+	{
+		// Only show the message once (applied to multi-mode)
+		if (increaseSpace)
+			return;
+
+		Options bestOptions = results.get(0).options;
+
+		// Check if a sub-optimal best result was obtained at the limit of the optimisation range
+		if (results.get(0).metrics[Result.F1] < 1.0)
+		{
+			StringBuilder sb = new StringBuilder();
+			if (backgroundMethodHasParameter(bestOptions.backgroundMethod))
+			{
+				if (bestOptions.backgroundParameter == myBackgroundParameterMin)
+					append(sb, "- Background parameter @ lower limit (%g)\n", bestOptions.backgroundParameter);
+				else if (bestOptions.backgroundParameter + myBackgroundParameterInterval > myBackgroundParameterMax)
+					append(sb, "- Background parameter @ upper limit (%g)\n", bestOptions.backgroundParameter);
+			}
+			if (searchMethodHasParameter(bestOptions.searchMethod))
+			{
+				if (bestOptions.searchParameter == mySearchParameterMin && mySearchParameterMin > 0)
+					append(sb, "- Search parameter @ lower limit (%g)\n", bestOptions.searchParameter);
+				else if (bestOptions.searchParameter + mySearchParameterInterval > mySearchParameterMax &&
+						mySearchParameterMax < 1)
+					append(sb, "- Search parameter @ upper limit (%g)\n", bestOptions.searchParameter);
+			}
+			if (bestOptions.minSize == myMinSizeMin && myMinSizeMin > 1)
+				append(sb, "- Min Size @ lower limit (%d)\n", bestOptions.minSize);
+			else if (bestOptions.minSize + myMinSizeInterval > myMinSizeMax)
+				append(sb, "- Min Size @ upper limit (%d)\n", bestOptions.minSize);
+
+			if (bestOptions.peakParameter == myPeakParameterMin && myPeakParameterMin > 0)
+				append(sb, "- Peak parameter @ lower limit (%g)\n", bestOptions.peakParameter);
+			else if (bestOptions.peakParameter + myPeakParameterInterval > myPeakParameterMax && myPeakParameterMax < 1)
+				append(sb, "- Peak parameter @ upper limit (%g)\n", bestOptions.peakParameter);
+
+			if (bestOptions.blur == blurArray[0] && blurArray[0] > 0)
+				append(sb, "- Gaussian blur @ lower limit (%g)\n", bestOptions.blur);
+			else if (bestOptions.blur == blurArray[blurArray.length - 1])
+				append(sb, "- Gaussian blur @ upper limit (%g)\n", bestOptions.blur);
+
+			if (bestOptions.maxPeaks == results.get(0).n)
+				append(sb, "- Total peaks == Maximum Peaks (%d)\n", bestOptions.maxPeaks);
+
+			if (sb.length() > 0)
+			{
+				sb.insert(0, "Optimal result (" + IJ.d2s(results.get(0).metrics[myResultsSortMethod - 1], 4) +
+						") obtained at the following limits:\n");
+				sb.append("You may want to increase the optimisation space.");
+
+				showIncreaseSpaceMessage(sb);
+			}
+		}
+	}
+
+	private synchronized void showIncreaseSpaceMessage(StringBuilder sb)
+	{
+		// Only show the message once
+		if (increaseSpace)
+			return;
+		increaseSpace = true;
+
+		IJ.log("---");
+		IJ.log(sb.toString());
+
+		// Do not show messages when running in batch
+		if (!(java.awt.GraphicsEnvironment.isHeadless() || multiMode))
+			IJ.showMessage(sb.toString());
 	}
 
 	/**
@@ -553,7 +633,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 
 					for (double backgroundParameter = myBackgroundParameterMinArray[b]; backgroundParameter <= myBackgroundParameterMax; backgroundParameter += myBackgroundParameterInterval)
 					{
-						boolean logBackground = (blurCount == 0); // Log on first blur iteration
+						boolean logBackground = (blurCount == 0) && !multiMode; // Log on first blur iteration
 
 						for (int minSize = myMinSizeMin; minSize <= myMinSizeMax; minSize += myMinSizeInterval)
 							for (int s = 0; s < searchMethodArray.length; s++)
@@ -981,19 +1061,15 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 				+ "Input range fields accept 3 values: min,max,interval\n"
 				+ "Gaussian blur accepts comma-delimited values for the blur.");
 
-		if (multiMode)
+		createSettings();
+		gd.addChoice("Settings", SETTINGS, SETTINGS[0]);
+
+		if (!multiMode)
 			gd.addChoice("Mask", newImageList.toArray(new String[0]), myMaskImage);
 
 		// Do not allow background above mean and background absolute to both be enabled.
 		gd.addCheckbox("Background_SD_above_mean", myBackgroundStdDevAboveMean);
 		gd.addCheckbox("Background_Absolute", (myBackgroundStdDevAboveMean) ? false : myBackgroundAbsolute);
-
-		if (!java.awt.GraphicsEnvironment.isHeadless())
-		{
-			checkboxes = gd.getCheckboxes();
-			((Checkbox) checkboxes.get(0)).addItemListener(this);
-			((Checkbox) checkboxes.get(1)).addItemListener(this);
-		}
 
 		gd.addStringField("Background_parameter", myBackgroundParameter, 12);
 		gd.addCheckbox("Background_Auto_Threshold", myBackgroundAuto);
@@ -1028,13 +1104,25 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 		{
 			gd.addCheckbox("Show_score_images", myShowScoreImages);
 			gd.addStringField("Result_file", myResultFile, 35);
+
+			// Add a message about double clicking the result table to show the result
+			gd.addMessage("Note: Double-click an entry in the optimiser results table\n"
+					+ "to view the FindFoci output. This only works for the most recent\n"
+					+ "set of results in the table.");
 		}
 
-		// Add a message about double clicking the result table to show the result
-		gd.addMessage("Note: Double-click an entry in the optimiser results table\n"
-				+ "to view the FindFoci output. This only works for the most recent\n" + "set of results in the table.");
-
 		gd.addHelp(gdsc.help.URL.FIND_FOCI);
+
+		if (!java.awt.GraphicsEnvironment.isHeadless())
+		{
+			checkbox = gd.getCheckboxes();
+			choice = gd.getChoices();
+
+			saveCustomSettings(gd);
+
+			// Listen for changes 
+			gd.addDialogListener(this);
+		}
 
 		// Re-arrange the standard layout which has a GridBagLayout with 2 columns (label,field)
 		// to 4 columns: (label,field) x 2
@@ -1077,7 +1165,10 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 			return false;
 		}
 
-		if (multiMode)
+		// Ignore the settings field
+		gd.getNextChoiceIndex();
+
+		if (!multiMode)
 			myMaskImage = gd.getNextChoice();
 		myBackgroundStdDevAboveMean = gd.getNextBoolean();
 		myBackgroundAbsolute = gd.getNextBoolean();
@@ -1225,6 +1316,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 		gd.addStringField("Input_directory", inputDirectory);
 		gd.addStringField("Output_directory", outputDirectory);
 		gd.addChoice("Scoring_mode", SCORING_MODES, SCORING_MODES[scoringMode]);
+		gd.addCheckbox("Re-use_results", reuseResults);
 		gd.addMessage("[Note: Double-click a text field to open a selection dialog]");
 		@SuppressWarnings("unchecked")
 		Vector<TextField> texts = (Vector<TextField>) gd.getStringFields();
@@ -1250,6 +1342,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 			return false;
 		}
 		scoringMode = gd.getNextChoiceIndex();
+		reuseResults = gd.getNextBoolean();
 		Prefs.set(INPUT_DIRECTORY, inputDirectory);
 		Prefs.set(OUTPUT_DIRECTORY, outputDirectory);
 		Prefs.set(SCORING_MODE, scoringMode);
@@ -2304,12 +2397,18 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 		{
 			ImagePlus imp = FindFoci.openImage(inputDirectory, image);
 			ImagePlus mask = FindFoci.openImage(inputDirectory, FindFoci.getMaskImage(inputDirectory, image));
+			String resultFile = outputDirectory + File.separator + imp.getShortTitle();
+			if (reuseResults && new File(resultFile + ".results.xls").exists())
+			{
+				System.out.println("Reuse: " + resultFile);
+			}
 			results = runOptimiser(imp, mask, counter);
 			if (results != null)
 			{
-				saveResults(imp, mask, results, null, outputDirectory + File.separator + imp.getShortTitle());
+				saveResults(imp, mask, results, null, resultFile);
 				// Reset to the order defined by the ID
 				sortResults(results);
+				checkOptimisationSpace(results);
 			}
 		}
 	}
@@ -2466,27 +2565,288 @@ public class FindFociOptimiser implements PlugIn, MouseListener, ItemListener, W
 	{
 	}
 
-	public void itemStateChanged(ItemEvent e)
+	// ---------------------------------------------------------------------------
+	// Start preset values.
+	// The following code is for setting the dialog fields with preset values
+	// ---------------------------------------------------------------------------
+	private class DialogSettings
 	{
-		if (e != null)
+		String name;
+		ArrayList<String> text = new ArrayList<String>();
+		ArrayList<Boolean> option = new ArrayList<Boolean>();
+
+		public DialogSettings(String name)
 		{
-			if (e.getSource() instanceof Checkbox && checkboxes != null && checkboxes.size() > 1)
+			this.name = name;
+		}
+	}
+
+	private String[] SETTINGS;
+	private ArrayList<DialogSettings> settings;
+
+	private boolean updating = false;
+	private long lastTime = 0;
+	private boolean custom = true;
+
+	// Store the preset values for the Text fields, Choices, Numeric field.
+	// Preceed with a '-' character if the field is for single mode only.
+	private String[][] textPreset = new String[][] { { "Testing", // preset name 
+			// Text fields
+			"3", // Background_parameter
+			"Otsu", // Auto_threshold
+			"Both", // Statistics_mode
+			"0, 0.6, 0.2", // Search_parameter
+			"3, 9, 2", // Minimum_size
+			"0, 0.6, 0.2", // Peak_parameter
+			"1", // Sort_method
+			"1", // Gaussian_blur
+			"0", // Centre_method
+			"2", // Centre_parameter
+			// Choices
+			"-", // Mask
+			"Yes", // Minimum_above_saddle
+			"Relative above background", // Minimum_peak_height
+			"Jaccard", // Result_sort_method				
+			// Numeric fields
+			"500", // Maximum_peaks
+			"0.05", // Peak_match_search_fraction
+			"4.0", // F-beta
+			"100", // Maximum_results
+			"10000", // Step_limit
+	}, { "Default", // preset name 
+			// Text fields
+			"2.5, 3.5, 0.5", // Background_parameter
+			"Otsu", // Auto_threshold
+			"Both", // Statistics_mode
+			"0, 0.6, 0.2", // Search_parameter
+			"1, 19, 2", // Minimum_size
+			"0, 0.6, 0.2", // Peak_parameter
+			"1", // Sort_method
+			"0, 0.5, 1", // Gaussian_blur
+			"0", // Centre_method
+			"2", // Centre_parameter
+			// Choices
+			"-", // Mask
+			"Yes", // Minimum_above_saddle
+			"Relative above background", // Minimum_peak_height
+			"Jaccard", // Result_sort_method				
+			// Numeric fields
+			"500", // Maximum_peaks
+			"0.05", // Peak_match_search_fraction
+			"4.0", // F-beta
+			"100", // Maximum_results
+			"10000", // Step_limit
+	}, { "Benchmark", // preset name 
+			// Text fields
+			"0, 4.7, 0.667", // Background_parameter
+			"Otsu, RenyiEntropy, Triangle", // Auto_threshold
+			"Both", // Statistics_mode
+			"0, 0.8, 0.1", // Search_parameter
+			"1, 9, 2", // Minimum_size
+			"0, 0.8, 0.1", // Peak_parameter
+			"1", // Sort_method
+			"0, 0.5, 1, 2", // Gaussian_blur
+			"0", // Centre_method
+			"2", // Centre_parameter
+			// Choices
+			"-", // Mask
+			"Yes", // Minimum_above_saddle
+			"Relative above background", // Minimum_peak_height
+			"Jaccard", // Result_sort_method				
+			// Numeric fields
+			"500", // Maximum_peaks
+			"0.03", // Peak_match_search_fraction
+			"4.0", // F-beta
+			"100", // Maximum_results
+			"30000", // Step_limit
+	} };
+	// Store the preset values for the Checkboxes. 
+	// Use int so that the flags can be checked if they are for single mode only. 
+	private final int FLAG_FALSE = 0;
+	private final int FLAG_TRUE = 1;
+	private final int FLAG_SINGLE = 2;
+	private int[][] optionPreset = new int[][] { { FLAG_FALSE, // Background_SD_above_mean
+			FLAG_FALSE, // Background_Absolute
+			FLAG_TRUE, // Background_Auto_Threshold
+			FLAG_TRUE, // Search_above_background
+			FLAG_FALSE, // Search_fraction_of_peak
+			FLAG_FALSE + FLAG_SINGLE // Show_score_images
+	}, { FLAG_TRUE, // Background_SD_above_mean
+			FLAG_FALSE, // Background_Absolute
+			FLAG_TRUE, // Background_Auto_Threshold
+			FLAG_TRUE, // Search_above_background
+			FLAG_FALSE, // Search_fraction_of_peak
+			FLAG_FALSE + FLAG_SINGLE // Show_score_images
+	}, { FLAG_TRUE, // Background_SD_above_mean
+			FLAG_FALSE, // Background_Absolute
+			FLAG_TRUE, // Background_Auto_Threshold
+			FLAG_TRUE, // Search_above_background
+			FLAG_TRUE, // Search_fraction_of_peak
+			FLAG_FALSE + FLAG_SINGLE // Show_score_images
+	} };
+
+	private void createSettings()
+	{
+		settings = new ArrayList<FindFociOptimiser.DialogSettings>();
+
+		settings.add(new DialogSettings("Custom"));
+		for (int i = 0; i < textPreset.length; i++)
+		{
+			// First field is the name
+			DialogSettings s = new DialogSettings(textPreset[i][0]);
+			// We only need the rest of the settings if there is a dialog
+			if (!java.awt.GraphicsEnvironment.isHeadless())
 			{
-				Checkbox cb = (Checkbox) e.getSource();
-				// If just checked then we must uncheck the complementing checkbox
-				if (cb.getState())
+				for (int j = 1; j < textPreset[i].length; j++)
 				{
-					// Only checkbox 1 & 2 are complementary
-					if (cb.equals(checkboxes.get(0)))
+					if (textPreset[i][j].startsWith("-"))
 					{
-						((Checkbox) checkboxes.get(1)).setState(false);
+						if (multiMode)
+							continue;
+						textPreset[i][j] = textPreset[i][j].substring(1);
 					}
-					else if (cb.equals(checkboxes.get(1)))
+					s.text.add(textPreset[i][j]);
+				}
+				for (int j = 0; j < optionPreset[i].length; j++)
+				{
+					if (multiMode && (optionPreset[i][j] & FLAG_SINGLE) != 0)
 					{
-						((Checkbox) checkboxes.get(0)).setState(false);
+						continue;
+					}
+					s.option.add((optionPreset[i][j] & FLAG_TRUE) != 0);
+				}
+			}
+			settings.add(s);
+		}
+
+		SETTINGS = new String[settings.size()];
+		for (int i = 0; i < settings.size(); i++)
+			SETTINGS[i] = settings.get(i).name;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void saveCustomSettings(GenericDialog gd)
+	{
+		DialogSettings s = settings.get(0);
+		s.text.clear();
+		s.option.clear();
+		Vector<TextField> fields = (Vector<TextField>) gd.getStringFields();
+		// Optionally Ignore final text field (it is the result file field)
+		int stringFields = fields.size() - ((multiMode) ? 0 : 1);
+		for (int i = 0; i < stringFields; i++)
+			s.text.add(fields.get(i).getText());
+		// The first choice is the settings name which we ignore
+		Vector<Choice> cfields = (Vector<Choice>) gd.getChoices();
+		for (int i = 1; i < cfields.size(); i++)
+			s.text.add(cfields.get(i).getSelectedItem());
+		for (TextField field : (Vector<TextField>) gd.getNumericFields())
+			s.text.add(field.getText());
+		for (Checkbox field : (Vector<Checkbox>) gd.getCheckboxes())
+			s.option.add(field.getState());
+	}
+
+	@SuppressWarnings("unchecked")
+	private void applySettings(GenericDialog gd, DialogSettings s)
+	{
+		//System.out.println("Applying " + s.name + " " + updating);
+		lastTime = System.currentTimeMillis();
+		int index = 0, index2 = 0;
+		Vector<TextField> fields = (Vector<TextField>) gd.getStringFields();
+		// Optionally Ignore final text field (it is the result file field)
+		int stringFields = fields.size() - ((multiMode) ? 0 : 1);
+		for (int i = 0; i < stringFields; i++)
+			fields.get(i).setText(s.text.get(index++));
+		// The first choice is the settings name
+		Vector<Choice> cfields = (Vector<Choice>) gd.getChoices();
+		cfields.get(0).select(s.name);
+		for (int i = 1; i < cfields.size(); i++)
+			cfields.get(i).select(s.text.get(index++));
+		for (TextField field : (Vector<TextField>) gd.getNumericFields())
+			field.setText(s.text.get(index++));
+		for (Checkbox field : (Vector<Checkbox>) gd.getCheckboxes())
+			field.setState(s.option.get(index2++));
+		//System.out.println("Done Applying " + s.name + " " + updating);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog, java.awt.AWTEvent)
+	 */
+	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
+	{
+		if (e == null || e.getSource() == null || !aquireLock())
+			return true;
+
+		//System.out.println("changed " + e.getSource());
+
+		// Check if this is the settings checkbox
+		if (e.getSource() == choice.get(0))
+		{
+			Choice thisChoice = (Choice) choice.get(0);
+
+			// If the choice is currently custom save the current values so they can be restored
+			if (custom)
+				saveCustomSettings(gd);
+
+			// Update the other fields with preset values
+			int index = thisChoice.getSelectedIndex();
+			if (index != 0)
+				custom = false;
+			applySettings(gd, settings.get(index));
+		}
+		else
+		{
+			// This is a change to another field. Note that the dialogItemChanged method is called
+			// for each field modified in applySettings. This appears to happen after the applySettings
+			// method has ended (as if the dialogItemChanged events are in a queue or are delayed until
+			// the previous call to dialogItemChanged has ended).
+			// To prevent processing these events ignore anything that happens within x milliseconds
+			// of the call to applySettings
+			if (System.currentTimeMillis() - lastTime > 300)
+			{
+				// A change to any other field makes this a custom setting			
+				// => Set the settings drop-down to custom
+				Choice thisChoice = (Choice) choice.get(0);
+				if (thisChoice.getSelectedIndex() != 0)
+				{
+					custom = true;
+					thisChoice.select(0);
+				}
+
+				// Esnure that checkboxes 1 & 2 are complementary
+				if (e.getSource() instanceof Checkbox)
+				{
+					Checkbox cb = (Checkbox) e.getSource();
+					// If just checked then we must uncheck the complementing checkbox
+					if (cb.getState())
+					{
+						// Only checkbox 1 & 2 are complementary
+						if (cb.equals(checkbox.get(0)))
+						{
+							((Checkbox) checkbox.get(1)).setState(false);
+						}
+						else if (cb.equals(checkbox.get(1)))
+						{
+							((Checkbox) checkbox.get(0)).setState(false);
+						}
 					}
 				}
 			}
 		}
+
+		updating = false;
+		return true;
 	}
+
+	private synchronized boolean aquireLock()
+	{
+		if (updating)
+			return false;
+		updating = true;
+		return true;
+	}
+	// ---------------------------------------------------------------------------
+	// End preset values
+	// ---------------------------------------------------------------------------
 }
