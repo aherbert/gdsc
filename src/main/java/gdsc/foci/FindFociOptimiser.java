@@ -210,8 +210,6 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	// The number of combinations
 	private int combinations;
 
-	private boolean increaseSpace = false;
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -244,6 +242,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		if (!showDialog(imp))
 			return;
 
+		IJ.log("---\n" + FRAME_TITLE);
+		IJ.log(combinations + " combinations");
+		
 		if (multiMode)
 		{
 			// Get the list of images
@@ -349,9 +350,6 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 			long start = System.currentTimeMillis();
 
-			IJ.log("---\n" + FRAME_TITLE);
-			IJ.log(combinations + " combinations");
-
 			ArrayList<Result> results = runOptimiser(imp, mask, new StandardCounter(combinations));
 
 			if (results == null)
@@ -378,7 +376,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 				saveResults(imp, mask, results, predictedPoints, myResultFile);
 
-				checkOptimisationSpace(results);
+				checkOptimisationSpace(results, imp);
 			}
 			IJ.showTime(imp, start, "Done ");
 		}
@@ -434,13 +432,10 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	 * Check if the optimal results was obtained at the edge of the optimisation search space
 	 * 
 	 * @param results
+	 * @param imp 
 	 */
-	private void checkOptimisationSpace(ArrayList<Result> results)
+	private void checkOptimisationSpace(ArrayList<Result> results, ImagePlus imp)
 	{
-		// Only show the message once (applied to multi-mode)
-		if (increaseSpace)
-			return;
-
 		Options bestOptions = results.get(0).options;
 		if (bestOptions == null)
 			return;
@@ -485,7 +480,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			if (sb.length() > 0)
 			{
 				sb.insert(0, "Optimal result (" + IJ.d2s(results.get(0).metrics[myResultsSortMethod - 1], 4) +
-						") obtained at the following limits:\n");
+						") for " + imp.getShortTitle() + " obtained at the following limits:\n");
 				sb.append("You may want to increase the optimisation space.");
 
 				showIncreaseSpaceMessage(sb);
@@ -495,11 +490,6 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 	private synchronized void showIncreaseSpaceMessage(StringBuilder sb)
 	{
-		// Only show the message once
-		if (increaseSpace)
-			return;
-		increaseSpace = true;
-
 		IJ.log("---");
 		IJ.log(sb.toString());
 
@@ -794,7 +784,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 		try
 		{
-			out.write("#\n# Results\n# " + createResultsHeader(false));
+			out.write("#\n# Results\n# " + createResultsHeader(true));
 
 			// Output all results in ascending rank order
 			for (int i = 0; i < results.size(); i++)
@@ -814,6 +804,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				sb.append(IJ.d2s(result.metrics[Result.F1], 4)).append("\t");
 				sb.append(IJ.d2s(result.metrics[Result.F2], 4)).append("\t");
 				sb.append(IJ.d2s(result.metrics[Result.Fb], 4)).append("\t");
+				sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append("\t");
+				sb.append(IJ.d2s(result.metrics[Result.SCORE], 4)).append("\t");
 				sb.append(IJ.d2s(result.time / 1000000.0, 4)).append("\n");
 				out.write(sb.toString());
 			}
@@ -2214,9 +2206,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		int sortIndex = sortMethod - 1;
 		if (sortMethod != SORT_NONE)
 		{
-			Collections.sort(results, new ResultComparator(sortIndex, highestFirst));
+			ResultComparator c = new ResultComparator(sortIndex, highestFirst);
+			//c.tieMethod = 0;
+			Collections.sort(results, c);
 
-			// Cannot asign a rank if we have not sorted
+			// Cannot assign a rank if we have not sorted
 			int rank = 1;
 			int count = 0;
 			double score = results.get(0).metrics[sortIndex];
@@ -2388,6 +2382,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			if (o1.time > o2.time)
 				return 1;
 
+			System.out.println("Sort error");
 			return 0;
 		}
 
@@ -2591,11 +2586,18 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			if (results != null)
 			{
 				if (newResults)
+				{
 					saveResults(imp, mask, results, null, resultFile);
+					
+					// TODO - Fix this. When the results are not loaded from file the results are not repeatable.
+					// Q. Could this be due to round-off error in the scores?
+					results = loadResults(fullResultFile);
+				}
 
+				checkOptimisationSpace(results, imp);
+				
 				// Reset to the order defined by the ID
 				sortResults(results);
-				checkOptimisationSpace(results);
 			}
 		}
 	}
@@ -2641,7 +2643,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				int tp = Integer.parseInt(fields[1]);
 				int fp = Integer.parseInt(fields[2]);
 				int fn = Integer.parseInt(fields[3]);
-				long time = (long) (Double.parseDouble(fields[11]) * 1000000.0);
+				long time = (long) (Double.parseDouble(fields[fields.length-1]) * 1000000.0);
 
 				Result r = new Result(id, null, n, tp, fp, fn, time, myBeta);
 				// Do not count on the Options being parsed from the parameters.
@@ -2735,8 +2737,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		if (i == null)
 		{
 			i = new Integer(nextId++);
-			idMap.put(parameters, i);
+			// Ensure we have options for every ID
 			optionsMap.put(i, createOptions(parameters));
+			idMap.put(parameters, i);
 		}
 		return i;
 	}
