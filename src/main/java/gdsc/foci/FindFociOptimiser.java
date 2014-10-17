@@ -43,17 +43,22 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
@@ -61,6 +66,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 import javax.swing.JFrame;
 
@@ -126,13 +132,22 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	 */
 	public final static int SORT_F2 = 5;
 	/**
+	 * Sort the results using the F-beta score
+	 */
+	public final static int SORT_FBETA = 6;
+	/**
 	 * Sort the results using the Jaccard
 	 */
-	public final static int SORT_JACCARD = 6;
+	public final static int SORT_JACCARD = 7;
+	/**
+	 * Sort the results using the rank
+	 */
+	@SuppressWarnings("unused")
+	private final static int SORT_RANK = 8;
 	/**
 	 * Sort the results using the score. This field is used by the multiple image optimser.
 	 */
-	private final static int SORT_SCORE = 8;
+	private final static int SORT_SCORE = 9;
 
 	private static double mySearchFraction = 0.05;
 	private static int myResultsSortMethod = SORT_JACCARD;
@@ -241,7 +256,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			}
 
 			if (reuseResults && resultsExist(imageList))
-				IJ.log("Output directory contains existing results that will be re-used");
+				IJ.log("Output directory contains existing results that will be re-used if they have the correct number of combinations");
 
 			IJ.showStatus("Running optimiser ...");
 
@@ -314,6 +329,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				for (int i = 0; i < metrics.length; i++)
 					metrics[i] *= factor;
 			}
+			// Only when we score using rank do we want to have the lowest first
 			sortResults(results, SORT_SCORE, (scoringMode != SCORE_RANK));
 
 			// Output the combined results
@@ -423,6 +439,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			return;
 
 		Options bestOptions = results.get(0).options;
+		if (bestOptions == null)
+			return;
 
 		// Check if a sub-optimal best result was obtained at the limit of the optimisation range
 		if (results.get(0).metrics[Result.F1] < 1.0)
@@ -773,7 +791,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 		try
 		{
-			out.write("#\n# Results\n# " + createResultsHeader());
+			out.write("#\n# Results\n# " + createResultsHeader(false));
 
 			// Output all results in ascending rank order
 			for (int i = 0; i < results.size(); i++)
@@ -820,6 +838,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 	private synchronized void addFindFociCommand(OutputStreamWriter out, Options bestOptions) throws IOException
 	{
+		if (bestOptions == null)
+			return;
+
 		// This is the only way to clear the recorder. 
 		// It will save the current optimiser command to the recorder and then clear it.
 		Recorder.saveCommand();
@@ -1822,7 +1843,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		lastResults = results;
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
-			heading = createResultsHeader();
+			heading = createResultsHeader(true);
 			resultsWindow = new TextWindow(FRAME_TITLE + " Results", heading, "", 1000, 300);
 			if (resultsWindow.getTextPanel() != null)
 			{
@@ -1894,7 +1915,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		}
 	}
 
-	private String createResultsHeader()
+	private String createResultsHeader(boolean withRank)
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append("Rank\t");
@@ -1917,8 +1938,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		sb.append("F1\t");
 		sb.append("F2\t");
 		sb.append("F-beta\t");
-		sb.append("Rank\t");
-		sb.append("Score\t");
+		if (withRank)
+		{
+			sb.append("Rank\t");
+			sb.append("Score\t");
+		}
 		sb.append("mSec\n");
 		return sb.toString();
 	}
@@ -2082,6 +2106,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 		public int id;
 		public Options options;
+		public String parameters;
 		public int n, tp, fp, fn;
 		public long time;
 		public double[] metrics = new double[9];
@@ -2090,6 +2115,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		{
 			this.id = id;
 			this.options = options;
+			if (options != null)
+				this.parameters = options.createParameters();
 			this.n = n;
 			this.tp = tp;
 			this.fp = fp;
@@ -2132,7 +2159,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 		public String getParameters()
 		{
-			return options.createParameters();
+			return parameters;
 		}
 
 		/*
@@ -2174,7 +2201,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			if (o1.metrics[sortIndex] < o2.metrics[sortIndex])
 				return -highest;
 
-			if (tieMethod == 1)
+			if (tieMethod == 1 && o1.options != null && o2.options != null)
 			{
 				// Return method with most conservative settings
 				int[] result = new int[1];
@@ -2264,6 +2291,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 	private class Options
 	{
+		private String parameters = null;
 		public double blur;
 		public int backgroundMethod;
 		public double backgroundParameter;
@@ -2302,11 +2330,18 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			this.backgroundLevel = backgroundLevel;
 		}
 
+		/**
+		 * @return the string representation of the parameters (the value is computed once and cached)
+		 */
 		public String createParameters()
 		{
-			return FindFociOptimiser.createParameters(blur, backgroundMethod, autoThresholdMethod, backgroundParameter,
-					maxPeaks, minSize, searchMethod, searchParameter, peakMethod, peakParameter, sortIndex, options,
-					centreMethod, centreParameter);
+			if (parameters == null)
+			{
+				parameters = FindFociOptimiser.createParameters(blur, backgroundMethod, autoThresholdMethod,
+						backgroundParameter, maxPeaks, minSize, searchMethod, searchParameter, peakMethod,
+						peakParameter, sortIndex, options, centreMethod, centreParameter);
+			}
+			return parameters;
 		}
 	}
 
@@ -2395,22 +2430,171 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 		public void run()
 		{
-			ImagePlus imp = FindFoci.openImage(inputDirectory, image);
-			ImagePlus mask = FindFoci.openImage(inputDirectory, FindFoci.getMaskImage(inputDirectory, image));
-			String resultFile = outputDirectory + File.separator + imp.getShortTitle();
-			if (reuseResults && new File(resultFile + ".results.xls").exists())
+			final ImagePlus imp = FindFoci.openImage(inputDirectory, image);
+			final ImagePlus mask = FindFoci.openImage(inputDirectory, FindFoci.getMaskImage(inputDirectory, image));
+			final String resultFile = outputDirectory + File.separator + imp.getShortTitle();
+			final String fullResultFile = resultFile + ".results.xls";
+			boolean newResults = false;
+			if (reuseResults && new File(fullResultFile).exists())
 			{
-				System.out.println("Reuse: " + resultFile);
+				results = loadResults(fullResultFile);
+				if (results.size() == combinations)
+					IJ.log("Re-using results: " + fullResultFile);
+				else
+					results = null;
 			}
-			results = runOptimiser(imp, mask, counter);
+			if (results == null)
+			{
+				newResults = true;
+				results = runOptimiser(imp, mask, counter);
+			}
 			if (results != null)
 			{
-				saveResults(imp, mask, results, null, resultFile);
+				if (newResults)
+					saveResults(imp, mask, results, null, resultFile);
+
 				// Reset to the order defined by the ID
 				sortResults(results);
 				checkOptimisationSpace(results);
 			}
 		}
+	}
+
+	private static Pattern p = Pattern.compile("\t");
+
+	/**
+	 * Load the results from the specified file. We assign an arbitrary ID to each result using the unique combination
+	 * of parameters.
+	 * 
+	 * @param filename
+	 * @return The results
+	 */
+	private ArrayList<Result> loadResults(String filename)
+	{
+		ArrayList<Result> results = new ArrayList<FindFociOptimiser.Result>();
+
+		BufferedReader input = null;
+		try
+		{
+			FileInputStream fis = new FileInputStream(filename);
+			input = new BufferedReader(new InputStreamReader(fis));
+
+			String line;
+			while ((line = input.readLine()) != null)
+			{
+				if (line.length() == 0)
+					continue;
+				if (line.charAt(0) == '#')
+					continue;
+
+				// Code using split and parse
+				// # Rank	Blur	Background method	Max	Min	Search method	Peak method	Sort method	Centre method	N	TP	FP	FN	Jaccard	Precision	Recall	F0.5	F1	F2	F-beta	mSec
+				int endIndex = getIndex(line, 8) + 1; // include the final tab
+				String parameters = line.substring(line.indexOf('\t') + 1, endIndex);
+				String metrics = line.substring(endIndex);
+				String[] fields = p.split(metrics);
+
+				// Items we require
+				int id = getId(parameters);
+
+				int n = Integer.parseInt(fields[0]);
+				int tp = Integer.parseInt(fields[1]);
+				int fp = Integer.parseInt(fields[2]);
+				int fn = Integer.parseInt(fields[3]);
+				long time = (long) (Double.parseDouble(fields[11]) * 1000000.0);
+
+				Result r = new Result(id, null, n, tp, fp, fn, time, myBeta);
+				r.parameters = parameters;
+				results.add(r);
+			}
+			
+			// If the results were loaded then we must sort them to get a rank
+			sortResults(results, myResultsSortMethod, true);
+		}
+		catch (ArrayIndexOutOfBoundsException e)
+		{
+			return null;
+		}
+		catch (IOException e)
+		{
+			return null;
+		}
+		catch (NumberFormatException e)
+		{
+			return null;
+		}
+		finally
+		{
+			try
+			{
+				if (input != null)
+					input.close();
+			}
+			catch (IOException e)
+			{
+				// Ignore
+			}
+		}
+
+		return results;
+	}
+
+	/**
+	 * Get the index of the nth occurrence of the tab character
+	 * 
+	 * @param line
+	 * @param n
+	 * @return
+	 */
+	private int getIndex(String line, int n)
+	{
+		char[] value = line.toCharArray();
+		for (int i = 0; i < value.length; i++)
+		{
+			if (value[i] == '\t')
+			{
+				if (n-- <= 0)
+					return i;
+			}
+		}
+		return -1;
+	}
+
+	private HashMap<String, Integer> idMap = new HashMap<String, Integer>();
+	private int nextId = 1;
+
+	/**
+	 * Get a unique ID for the parameters string
+	 * 
+	 * @param parameters
+	 * @return the ID
+	 */
+	private int getId(String parameters)
+	{
+		Integer i = idMap.get(parameters);
+		if (i == null)
+		{
+			i = createId(parameters);
+		}
+		return i;
+	}
+
+	/**
+	 * Create a unique ID for the parameters string
+	 * 
+	 * @param parameters
+	 * @return the ID
+	 */
+	private synchronized Integer createId(String parameters)
+	{
+		// Check again in case another thread just created it
+		Integer i = idMap.get(parameters);
+		if (i == null)
+		{
+			i = new Integer(nextId++);
+			idMap.put(parameters, i);
+		}
+		return i;
 	}
 
 	/*
