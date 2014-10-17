@@ -53,7 +53,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -325,7 +324,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			final double factor = 1.0 / size;
 			for (int j = 0; j < results.size(); j++)
 			{
-				double[] metrics = results.get(j).metrics;
+				Result r1 = results.get(j);
+				// Do not use the background level for tied-score sorting since this is using the first arbitrary image
+				if (r1.options != null)
+					r1.options.backgroundLevel = 0;
+				double[] metrics = r1.metrics;
 				for (int i = 0; i < metrics.length; i++)
 					metrics[i] *= factor;
 			}
@@ -1968,6 +1971,25 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		return predictedPoints;
 	}
 
+	/**
+	 * Convert the FindFoci parameters into a text representation
+	 * 
+	 * @param blur
+	 * @param backgroundMethod
+	 * @param thresholdMethod
+	 * @param backgroundParameter
+	 * @param maxPeaks
+	 * @param minSize
+	 * @param searchMethod
+	 * @param searchParameter
+	 * @param peakMethod
+	 * @param peakParameter
+	 * @param sortMethod
+	 * @param options
+	 * @param centreMethod
+	 * @param centreParameter
+	 * @return
+	 */
 	static String createParameters(double blur, int backgroundMethod, String thresholdMethod,
 			double backgroundParameter, int maxPeaks, int minSize, int searchMethod, double searchParameter,
 			int peakMethod, double peakParameter, int sortMethod, int options, int centreMethod, double centreParameter)
@@ -2001,6 +2023,130 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			sb.append(spacer).append(IJ.d2s(centreParameter, 2));
 		sb.append("\t");
 		return sb.toString();
+	}
+
+	/**
+	 * Convert the FindFoci text representation into Options
+	 * 
+	 * @param parameters
+	 * @return the options
+	 */
+	private Options createOptions(String parameters)
+	{
+		String[] fields = p.split(parameters);
+		try
+		{
+			double blur = Double.parseDouble(fields[0]);
+			int backgroundMethod = -1;
+			for (int i = 0; i < FindFoci.backgroundMethods.length; i++)
+				if (fields[1].startsWith(FindFoci.backgroundMethods[i]))
+				{
+					backgroundMethod = i;
+					break;
+				}
+			if (backgroundMethod < 0)
+				throw new Exception("No background method");
+			int options = 0;
+			if (backgroundMethodHasStatisticsMode(backgroundMethod))
+			{
+				int first = fields[1].indexOf('(') + 1;
+				int last = fields[1].indexOf(')', first);
+				String mode = fields[1].substring(first, last);
+				if (mode.equals("Inside"))
+					options |= FindFoci.OPTION_STATS_INSIDE;
+				else if (mode.equals("Outside"))
+					options |= FindFoci.OPTION_STATS_OUTSIDE;
+				else
+					options |= FindFoci.OPTION_STATS_INSIDE | FindFoci.OPTION_STATS_OUTSIDE;
+			}
+			int index = fields[1].indexOf(" : ") + 3;
+			String thresholdMethod = fields[1].substring(index);
+			double backgroundParameter = 0;
+			if (backgroundMethodHasParameter(backgroundMethod))
+			{
+				backgroundParameter = Double.parseDouble(thresholdMethod);
+				thresholdMethod = "";
+			}
+			int maxPeaks = Integer.parseInt(fields[2]);
+			index = fields[3].indexOf(" ");
+			if (index > 0)
+			{
+				fields[3] = fields[3].substring(0, index);
+				options |= FindFoci.OPTION_MINIMUM_ABOVE_SADDLE;
+			}
+			int minSize = Integer.parseInt(fields[3]);
+			int searchMethod = -1;
+			for (int i = 0; i < FindFoci.searchMethods.length; i++)
+				if (fields[4].startsWith(FindFoci.searchMethods[i]))
+				{
+					searchMethod = i;
+					break;
+				}
+			if (searchMethod < 0)
+				throw new Exception("No search method");
+			double searchParameter = 0;
+			if (searchMethodHasParameter(searchMethod))
+			{
+				index = fields[4].indexOf(" : ") + 3;
+				searchParameter = Double.parseDouble(fields[4].substring(index));
+			}
+			int peakMethod = -1;
+			for (int i = 0; i < FindFoci.peakMethods.length; i++)
+				if (fields[5].startsWith(FindFoci.peakMethods[i]))
+				{
+					peakMethod = i;
+					break;
+				}
+			if (peakMethod < 0)
+				throw new Exception("No peak method");
+			index = fields[5].indexOf(" : ") + 3;
+			double peakParameter = Double.parseDouble(fields[5].substring(index));
+			int sortMethod = -1;
+			for (int i = 0; i < FindFoci.sortIndexMethods.length; i++)
+				if (fields[6].startsWith(FindFoci.sortIndexMethods[i]))
+				{
+					sortMethod = i;
+					break;
+				}
+			if (sortMethod < 0)
+				throw new Exception("No sort method");
+			int centreMethod = -1;
+			for (int i = 0; i < FindFoci.getCentreMethods().length; i++)
+				if (fields[7].startsWith(FindFoci.getCentreMethods()[i]))
+				{
+					centreMethod = i;
+					break;
+				}
+			if (centreMethod < 0)
+				throw new Exception("No centre method");
+			double centreParameter = 0;
+			if (centreMethodHasParameter(centreMethod))
+			{
+				index = fields[7].indexOf(" : ") + 3;
+				centreParameter = Double.parseDouble(fields[7].substring(index));
+			}
+			double backgroundLevel = 0; // Not used in multi-image optimisation
+
+			Options o = new Options(blur, backgroundMethod, backgroundParameter, thresholdMethod, searchMethod,
+					searchParameter, maxPeaks, minSize, peakMethod, peakParameter, sortMethod, options, centreMethod,
+					centreParameter, backgroundLevel);
+
+			// Debugging
+			if (!o.createParameters().equals(parameters))
+			{
+				System.out.printf("Error converting parameters to FindFoci options:\n%s\n%s\n", parameters,
+						o.createParameters());
+				o = null;
+			}
+
+			return o;
+		}
+		catch (Exception e)
+		{
+			System.out
+					.println("Error converting parameters to FindFoci options: " + parameters + "\n" + e.getMessage());
+			return null;
+		}
 	}
 
 	private static double calculateFScore(double precision, double recall, double beta)
@@ -2258,13 +2404,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 		private int compare(int value1, int value2, int[] result)
 		{
-			if (value1 < value2)
-				result[0] = -1;
-			else if (value1 > value2)
-				result[0] = 1;
-			else
-				result[0] = 0;
-			return result[0];
+			return result[0] = value1 - value2;
 		}
 
 		/**
@@ -2504,10 +2644,12 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				long time = (long) (Double.parseDouble(fields[11]) * 1000000.0);
 
 				Result r = new Result(id, null, n, tp, fp, fn, time, myBeta);
+				// Do not count on the Options being parsed from the parameters.
 				r.parameters = parameters;
+				r.options = optionsMap.get(id);
 				results.add(r);
 			}
-			
+
 			// If the results were loaded then we must sort them to get a rank
 			sortResults(results, myResultsSortMethod, true);
 		}
@@ -2561,6 +2703,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	}
 
 	private HashMap<String, Integer> idMap = new HashMap<String, Integer>();
+	private HashMap<Integer, Options> optionsMap = new HashMap<Integer, Options>();
 	private int nextId = 1;
 
 	/**
@@ -2593,6 +2736,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		{
 			i = new Integer(nextId++);
 			idMap.put(parameters, i);
+			optionsMap.put(i, createOptions(parameters));
 		}
 		return i;
 	}
