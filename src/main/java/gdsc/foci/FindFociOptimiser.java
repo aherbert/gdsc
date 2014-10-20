@@ -196,15 +196,17 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	private static String INPUT_DIRECTORY = "findfoci.optimiser.inputDirectory";
 	private static String OUTPUT_DIRECTORY = "findfoci.optimiser.outputDirectory";
 	private static String SCORING_MODE = "findfoci.optimiser.scoringMode";
+	private static String REUSE_RESULTS = "findfoci.optimiser.reuseResults";
 	private static String inputDirectory = Prefs.get(INPUT_DIRECTORY, "");
 	private static String outputDirectory = Prefs.get(OUTPUT_DIRECTORY, "");
-	private static String[] SCORING_MODES = new String[] { "Average", "Relative drop", "Z-score", "Rank" };
-	private static final int SCORE_AVERAGE = 0;
+	private static String[] SCORING_MODES = new String[] { "Raw score metric", "Relative (% drop from top)", "Z-score",
+			"Rank" };
+	private static final int SCORE_RAW = 0;
 	private static final int SCORE_RELATIVE = 1;
 	private static final int SCORE_Z = 2;
 	private static final int SCORE_RANK = 3;
 	private static int scoringMode = Prefs.getInt(SCORING_MODE, SCORE_RANK);
-	private static boolean reuseResults = true;
+	private static boolean reuseResults = Prefs.getBoolean(REUSE_RESULTS, true);
 
 	@SuppressWarnings("rawtypes")
 	private Vector checkbox, choice;
@@ -333,8 +335,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			final double factor = 1.0 / size;
 			for (int j = 0; j < results.size(); j++)
 			{
-				Result r1 = results.get(j);
-				double[] metrics = r1.metrics;
+				double[] metrics = results.get(j).metrics;
 				for (int i = 0; i < metrics.length; i++)
 					metrics[i] *= factor;
 			}
@@ -513,30 +514,32 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	private void getScore(ArrayList<Result> results)
 	{
 		// Extract the score from the results
-		double[] score = new double[results.size()];
+		final int scoreIndex;
 		switch (scoringMode)
 		{
-			case SCORE_AVERAGE:
+			case SCORE_RAW:
 			case SCORE_Z:
 			case SCORE_RELATIVE:
-				final int sortIndex = myResultsSortMethod - 1;
-				for (int i = 0; i < score.length; i++)
-					score[i] = results.get(i).metrics[sortIndex];
+				scoreIndex = myResultsSortMethod - 1;
 				break;
 
 			case SCORE_RANK:
 			default:
-				for (int i = 0; i < score.length; i++)
-					score[i] = results.get(i).metrics[Result.RANK];
+				scoreIndex = Result.RANK;
 		}
+
+		double[] score = new double[results.size()];
+		for (int i = 0; i < score.length; i++)
+			score[i] = results.get(i).metrics[scoreIndex];
 
 		// Perform additional score adjustment
 		if (scoringMode == SCORE_Z)
 		{
 			// Use the z-score
 			double[] stats = getStatistics(score);
-			double av = stats[0];
-			double sd = stats[1];
+			final double av = stats[0];
+			final double sd = stats[1];
+			System.out.printf("%f +/- %f\n", av, sd);
 			if (sd > 0)
 			{
 				final double factor = 1.0 / sd;
@@ -551,7 +554,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		else if (scoringMode == SCORE_RELATIVE)
 		{
 			// Use the relative (%) from the top score. Assumes the bottom score is zero.
-			final double top = score[0];
+			final double top = getTop(score);
 			final double factor = 100 / top;
 			for (int i = 0; i < score.length; i++)
 				score[i] = factor * (score[i] - top);
@@ -596,6 +599,21 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			stdDev = 0.0;
 
 		return new double[] { av, stdDev };
+	}
+
+	/**
+	 * Get the highest score. Assumes the lowest is zero
+	 * 
+	 * @param score
+	 * @return The top score
+	 */
+	private double getTop(double[] score)
+	{
+		double top = score[0];
+		for (int i = 1; i < score.length; i++)
+			if (top < score[i])
+				top = score[i];
+		return top;
 	}
 
 	/**
@@ -841,7 +859,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 	}
 
-	private synchronized void addFindFociCommand(OutputStreamWriter out, Options bestOptions) throws IOException
+	private synchronized void addFindFociCommand(OutputStreamWriter out, Options bestOptions, String maskTitle)
+			throws IOException
 	{
 		if (bestOptions == null)
 			return;
@@ -852,7 +871,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 		// Use the recorder to build the options for the FindFoci plugin
 		Recorder.setCommand("FindFoci");
-		Recorder.recordOption("mask", myMaskImage);
+		Recorder.recordOption("mask", maskTitle);
 		Recorder.recordOption("background_method", FindFoci.backgroundMethods[bestOptions.backgroundMethod]);
 		Recorder.recordOption("Background_parameter", "" + bestOptions.backgroundParameter);
 		Recorder.recordOption("Auto_threshold", bestOptions.autoThresholdMethod);
@@ -1349,9 +1368,10 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				" on a set of images.\n \nAll images in a directory will be processed.\n \nOptional mask images should be named:\n[image_name].mask.[ext]");
 		gd.addStringField("Input_directory", inputDirectory);
 		gd.addStringField("Output_directory", outputDirectory);
-		gd.addChoice("Scoring_mode", SCORING_MODES, SCORING_MODES[scoringMode]);
-		gd.addCheckbox("Re-use_results", reuseResults);
 		gd.addMessage("[Note: Double-click a text field to open a selection dialog]");
+		gd.addMessage("The score metric for each parameter combination is computed per image.\nThe scores are converted then averaged across all images.");
+		gd.addChoice("Score_conversion", SCORING_MODES, SCORING_MODES[scoringMode]);
+		gd.addCheckbox("Re-use_results", reuseResults);
 		@SuppressWarnings("unchecked")
 		Vector<TextField> texts = (Vector<TextField>) gd.getStringFields();
 		for (TextField tf : texts)
@@ -1360,10 +1380,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			tf.setColumns(50);
 		}
 
+		gd.addHelp(gdsc.help.URL.FIND_FOCI);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return false;
-		
+
 		inputDirectory = gd.getNextString();
 		if (!new File(inputDirectory).isDirectory())
 		{
@@ -1381,6 +1402,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		Prefs.set(INPUT_DIRECTORY, inputDirectory);
 		Prefs.set(OUTPUT_DIRECTORY, outputDirectory);
 		Prefs.set(SCORING_MODE, scoringMode);
+		Prefs.set(REUSE_RESULTS, reuseResults);
 		return true;
 	}
 
@@ -1884,18 +1906,22 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			FileOutputStream fos = new FileOutputStream(filename);
 			out = new OutputStreamWriter(fos, "UTF-8");
 
+			String maskTitle = "";
 			if (imp != null)
 			{
 				out.write("# ImageJ Script to repeat the optimiser and then run the optimal parameters\n#\n");
 				if (mask != null)
+				{
 					out.write("# open(\"" + getFilename(mask) + "\");\n");
+					maskTitle = mask.getTitle();
+				}
 				out.write("# open(\"" + getFilename(imp) + "\");\n");
 
 			}
 			// Write the ImageJ macro command
 			out.write(String.format("# run(\"FindFoci Optimiser\", \"%s\")\n", optimiserCommandOptions));
 
-			addFindFociCommand(out, bestOptions);
+			addFindFociCommand(out, bestOptions, maskTitle);
 
 			return out;
 		}
