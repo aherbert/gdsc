@@ -3102,7 +3102,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	@SuppressWarnings("unchecked")
 	private void addListeners(GenericDialog gd)
 	{
-		@SuppressWarnings("unchecked")
+		listenerGd = gd;
 		Vector<TextField> fields = (Vector<TextField>) gd.getStringFields();
 		// Optionally Ignore final text field (it is the result file field)
 		int stringFields = fields.size() - ((multiMode) ? 0 : 1);
