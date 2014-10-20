@@ -155,7 +155,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	 */
 	private final static int SORT_SCORE = 9;
 
-	private static double mySearchFraction = 0.05;
+	public final static String[] matchSearchMethods = { "Relative", "Absolute" };
+	private static int myMatchSearchMethod = 0;
+	private static double myMatchSearchDistance = 0.05;
 	private static int myResultsSortMethod = SORT_JACCARD;
 	private static double myBeta = 4.0;
 	private static int myMaxResults = 100;
@@ -632,7 +634,10 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		AssignedPoint[] roiPoints = extractRoiPoints(roi, imp, mask);
 
 		if (roiPoints.length == 0)
+		{
+			// TODO - Check if the same directory has a file named [image_title].csv and load points from that
 			return null;
+		}
 
 		ArrayList<Result> results = new ArrayList<Result>(combinations);
 
@@ -904,9 +909,10 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 	private double getDistanceThreshold(ImagePlus imp)
 	{
-		int length = (imp.getWidth() < imp.getHeight()) ? imp.getWidth() : imp.getHeight();
-		double dThreshold = Math.ceil(mySearchFraction * length);
-		return dThreshold;
+		if (myMatchSearchMethod == 1)
+			return myMatchSearchDistance;
+		final int length = (imp.getWidth() < imp.getHeight()) ? imp.getWidth() : imp.getHeight();
+		return Math.ceil(myMatchSearchDistance * length);
 	}
 
 	private void append(StringBuilder sb, String format, Object... args)
@@ -1146,7 +1152,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		gd.addStringField("Centre_parameter", myCentreParameter);
 
 		gd.addMessage("Optimisation options:");
-		gd.addNumericField("Peak_match_search_fraction", mySearchFraction, 2);
+		gd.addChoice("Match_search_method", matchSearchMethods, matchSearchMethods[myMatchSearchMethod]);
+		gd.addNumericField("Match_search_distance", myMatchSearchDistance, 2);
 		gd.addChoice("Result_sort_method", sortMethods, sortMethods[myResultsSortMethod]);
 		gd.addNumericField("F-beta", myBeta, 2);
 		gd.addNumericField("Maximum_results", myMaxResults, 0);
@@ -1240,7 +1247,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		myCentreMethod = gd.getNextString();
 		myCentreParameter = gd.getNextString();
 
-		mySearchFraction = gd.getNextNumber();
+		myMatchSearchMethod = gd.getNextChoiceIndex();
+		myMatchSearchDistance = gd.getNextNumber();
 		myResultsSortMethod = gd.getNextChoiceIndex();
 		myBeta = gd.getNextNumber();
 		myMaxResults = (int) gd.getNextNumber();
@@ -1341,6 +1349,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		if (!validMask(imp, mask))
 		{
 			statisticsModes = new String[] { "Both" };
+		}
+
+		if (myMatchSearchMethod == 1 && myMatchSearchDistance < 1)
+		{
+			IJ.log("WARNING: Absolute peak match distance is less than 1 pixel: " + myMatchSearchDistance);
 		}
 
 		// Count the number of options
@@ -2999,10 +3012,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			"-", // Mask
 			"Yes", // Minimum_above_saddle
 			"Relative above background", // Minimum_peak_height
+			"Relative", // Match_search_method				
 			"Jaccard", // Result_sort_method				
 			// Numeric fields
 			"500", // Maximum_peaks
-			"0.05", // Peak_match_search_fraction
+			"0.05", // Match_search_distance
 			"4.0", // F-beta
 			"100", // Maximum_results
 			"10000", // Step_limit
@@ -3022,10 +3036,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			"-", // Mask
 			"Yes", // Minimum_above_saddle
 			"Relative above background", // Minimum_peak_height
+			"Relative", // Match_search_method				
 			"Jaccard", // Result_sort_method				
 			// Numeric fields
 			"500", // Maximum_peaks
-			"0.05", // Peak_match_search_fraction
+			"0.05", // Match_search_distance
 			"4.0", // F-beta
 			"100", // Maximum_results
 			"10000", // Step_limit
@@ -3045,10 +3060,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			"-", // Mask
 			"Yes", // Minimum_above_saddle
 			"Relative above background", // Minimum_peak_height
+			"Relative", // Match_search_method				
 			"Jaccard", // Result_sort_method				
 			// Numeric fields
 			"500", // Maximum_peaks
-			"0.03", // Peak_match_search_fraction
+			"0.05", // Match_search_distance
 			"4.0", // F-beta
 			"100", // Maximum_results
 			"30000", // Step_limit
