@@ -30,7 +30,6 @@ import ij.plugin.PlugIn;
 import ij.plugin.frame.Recorder;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-import ij.util.Tools;
 
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
@@ -39,7 +38,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Scrollbar;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -344,7 +342,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			sortResults(results, SORT_SCORE, (scoringMode != SCORE_RANK));
 
 			// Output the combined results
-			saveResults(null, null, results, null, outputDirectory + File.separator + "all." + reuseResults);
+			saveResults(null, null, results, null, outputDirectory + File.separator + "all");
 
 			// Show in a table
 			showResults(null, null, results);
@@ -1071,8 +1069,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	{
 		// Ensure the Dialog options are recorded. These are used later to write to file.
 		boolean recorderOn = Recorder.record;
-		Recorder.record = true;
-		Recorder.saveCommand(); // Clear the old command options
+		if (!recorderOn)
+		{
+			Recorder.saveCommand(); // Clear the old command options
+			Recorder.record = true;
+		}
 
 		if (imp == null)
 		{
