@@ -539,7 +539,6 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			double[] stats = getStatistics(score);
 			final double av = stats[0];
 			final double sd = stats[1];
-			System.out.printf("%f +/- %f\n", av, sd);
 			if (sd > 0)
 			{
 				final double factor = 1.0 / sd;
