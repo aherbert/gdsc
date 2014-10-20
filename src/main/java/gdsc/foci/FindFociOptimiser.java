@@ -30,6 +30,7 @@ import ij.plugin.PlugIn;
 import ij.plugin.frame.Recorder;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
+import ij.util.Tools;
 
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
@@ -38,9 +39,15 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Scrollbar;
 import java.awt.TextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.TextEvent;
+import java.awt.event.TextListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.BufferedReader;
@@ -72,13 +79,15 @@ import javax.swing.JFrame;
 /**
  * Runs the FindFoci plugin with various settings and compares the results to the reference image point ROI.
  */
-public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener, DialogListener
+public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener, DialogListener, TextListener,
+		ItemListener
 {
 	private static OptimiserView instance;
 
 	private static String FRAME_TITLE = "FindFoci Optimiser";
 	private static TextWindow resultsWindow = null;
 	private static int STEP_LIMIT = 10000;
+	private static final int RESULT_PRECISION = 4;
 
 	private static String myMaskImage = "";
 	private static boolean myBackgroundStdDevAboveMean = true;
@@ -201,6 +210,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 	@SuppressWarnings("rawtypes")
 	private Vector checkbox, choice;
+	private GenericDialog listenerGd;
 
 	// Stored to allow the display of any of the latest results from the result table
 	private ImagePlus lastImp, lastMask;
@@ -244,7 +254,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 		IJ.log("---\n" + FRAME_TITLE);
 		IJ.log(combinations + " combinations");
-		
+
 		if (multiMode)
 		{
 			// Get the list of images
@@ -326,9 +336,6 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			for (int j = 0; j < results.size(); j++)
 			{
 				Result r1 = results.get(j);
-				// Do not use the background level for tied-score sorting since this is using the first arbitrary image
-				if (r1.options != null)
-					r1.options.backgroundLevel = 0;
 				double[] metrics = r1.metrics;
 				for (int i = 0; i < metrics.length; i++)
 					metrics[i] *= factor;
@@ -337,7 +344,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			sortResults(results, SORT_SCORE, (scoringMode != SCORE_RANK));
 
 			// Output the combined results
-			saveResults(null, null, results, null, outputDirectory + File.separator + "all");
+			saveResults(null, null, results, null, outputDirectory + File.separator + "all." + reuseResults);
 
 			// Show in a table
 			showResults(null, null, results);
@@ -432,7 +439,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	 * Check if the optimal results was obtained at the edge of the optimisation search space
 	 * 
 	 * @param results
-	 * @param imp 
+	 * @param imp
 	 */
 	private void checkOptimisationSpace(ArrayList<Result> results, ImagePlus imp)
 	{
@@ -645,10 +652,17 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 					for (double backgroundParameter = myBackgroundParameterMinArray[b]; backgroundParameter <= myBackgroundParameterMax; backgroundParameter += myBackgroundParameterInterval)
 					{
 						boolean logBackground = (blurCount == 0) && !multiMode; // Log on first blur iteration
+						// Use zero when there is no parameter
+						final double thisBackgroundParameter = (backgroundMethodHasParameter(backgroundMethodArray[b])) ? backgroundParameter
+								: 0;
 
 						for (int minSize = myMinSizeMin; minSize <= myMinSizeMax; minSize += myMinSizeInterval)
 							for (int s = 0; s < searchMethodArray.length; s++)
 								for (double searchParameter = mySearchParameterMinArray[s]; searchParameter <= mySearchParameterMax; searchParameter += mySearchParameterInterval)
+								{
+									// Use zero when there is no parameter
+									double thisSearchParameter = (searchMethodHasParameter(searchMethodArray[s])) ? searchParameter
+											: 0;
 									for (double peakParameter = myPeakParameterMin; peakParameter <= myPeakParameterMax; peakParameter += myPeakParameterInterval)
 										for (int options : optionsArray)
 										{
@@ -663,9 +677,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 														searchMethodArray[s], searchParameter, minSize, myPeakMethod,
 														peakParameter, sortMethod, options, blur);
 
-												double backgroundLevel = ((double[]) clonedInitArray[4])[FindFoci.STATS_BACKGROUND];
 												if (logBackground)
 												{
+													final double backgroundLevel = ((double[]) clonedInitArray[4])[FindFoci.STATS_BACKGROUND];
 													logBackground = false;
 													IJ.log(String
 															.format("Background level - %s %s: %s = %g",
@@ -701,12 +715,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 															ArrayList<int[]> resultsArray = (ArrayList<int[]>) peakResults[1];
 
 															Options runOptions = new Options(blur,
-																	backgroundMethodArray[b], backgroundParameter,
+																	backgroundMethodArray[b], thisBackgroundParameter,
 																	thresholdMethod, searchMethodArray[s],
-																	searchParameter, myMaxPeaks, minSize, myPeakMethod,
-																	peakParameter, sortMethod, options,
-																	centreMethodArray[c], centreParameter,
-																	backgroundLevel);
+																	thisSearchParameter, myMaxPeaks, minSize,
+																	myPeakMethod, peakParameter, sortMethod, options,
+																	centreMethodArray[c], centreParameter);
 															Result result = analyseResults(id, roiPoints, resultsArray,
 																	dThreshold, runOptions, time, myBeta);
 															results.add(result);
@@ -716,6 +729,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 												}
 											}
 										}
+								}
 					}
 				}
 			}
@@ -744,16 +758,16 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			sb.append(result.tp).append("\t");
 			sb.append(result.fp).append("\t");
 			sb.append(result.fn).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.JACCARD], 4)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.PRECISION], 4)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.RECALL], 4)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.F05], 4)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.F1], 4)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.F2], 4)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.Fb], 4)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.RANK], 4)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.SCORE], 4)).append("\t");
-			sb.append(IJ.d2s(result.time / 1000000.0, 4)).append("\n");
+			sb.append(IJ.d2s(result.metrics[Result.JACCARD], RESULT_PRECISION)).append("\t");
+			sb.append(IJ.d2s(result.metrics[Result.PRECISION], RESULT_PRECISION)).append("\t");
+			sb.append(IJ.d2s(result.metrics[Result.RECALL], RESULT_PRECISION)).append("\t");
+			sb.append(IJ.d2s(result.metrics[Result.F05], RESULT_PRECISION)).append("\t");
+			sb.append(IJ.d2s(result.metrics[Result.F1], RESULT_PRECISION)).append("\t");
+			sb.append(IJ.d2s(result.metrics[Result.F2], RESULT_PRECISION)).append("\t");
+			sb.append(IJ.d2s(result.metrics[Result.Fb], RESULT_PRECISION)).append("\t");
+			sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append("\t");
+			sb.append(IJ.d2s(result.metrics[Result.SCORE], RESULT_PRECISION)).append("\t");
+			sb.append(IJ.d2s(result.time / 1000000.0, RESULT_PRECISION)).append("\n");
 			resultsWindow.append(sb.toString());
 		}
 		resultsWindow.append("\n");
@@ -784,7 +798,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 		try
 		{
-			out.write("#\n# Results\n# " + createResultsHeader(true));
+			out.write("#\n# Results\n# " + createResultsHeader(true, false));
 
 			// Output all results in ascending rank order
 			for (int i = 0; i < results.size(); i++)
@@ -797,16 +811,16 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				sb.append(result.tp).append("\t");
 				sb.append(result.fp).append("\t");
 				sb.append(result.fn).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.JACCARD], 4)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.PRECISION], 4)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.RECALL], 4)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.F05], 4)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.F1], 4)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.F2], 4)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.Fb], 4)).append("\t");
+				sb.append(IJ.d2s(result.metrics[Result.JACCARD], RESULT_PRECISION)).append("\t");
+				sb.append(IJ.d2s(result.metrics[Result.PRECISION], RESULT_PRECISION)).append("\t");
+				sb.append(IJ.d2s(result.metrics[Result.RECALL], RESULT_PRECISION)).append("\t");
+				sb.append(IJ.d2s(result.metrics[Result.F05], RESULT_PRECISION)).append("\t");
+				sb.append(IJ.d2s(result.metrics[Result.F1], RESULT_PRECISION)).append("\t");
+				sb.append(IJ.d2s(result.metrics[Result.F2], RESULT_PRECISION)).append("\t");
+				sb.append(IJ.d2s(result.metrics[Result.Fb], RESULT_PRECISION)).append("\t");
 				sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.SCORE], 4)).append("\t");
-				sb.append(IJ.d2s(result.time / 1000000.0, 4)).append("\n");
+				sb.append(IJ.d2s(result.metrics[Result.SCORE], RESULT_PRECISION)).append("\t");
+				sb.append(result.time).append("\n");
 				out.write(sb.toString());
 			}
 
@@ -1055,16 +1069,20 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 	private boolean showDialog(ImagePlus imp)
 	{
+		// Ensure the Dialog options are recorded. These are used later to write to file.
+		boolean recorderOn = Recorder.record;
+		Recorder.record = true;
+		Recorder.saveCommand(); // Clear the old command options
+
 		if (imp == null)
 		{
 			multiMode = true;
 			if (!showMultiDialog())
+			{
+				Recorder.record = recorderOn; // Reset the recorder
 				return false;
+			}
 		}
-
-		// Ensure the Dialog options are recorded. These are used later to write to file.
-		boolean recorderOn = Recorder.record;
-		Recorder.record = true;
 
 		// Get the optimisation search settings
 		GenericDialog gd = new GenericDialog(FRAME_TITLE);
@@ -1136,8 +1154,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 			saveCustomSettings(gd);
 
-			// Listen for changes 
-			gd.addDialogListener(this);
+			// Listen for changes
+			addListeners(gd);
 		}
 
 		// Re-arrange the standard layout which has a GridBagLayout with 2 columns (label,field)
@@ -1217,6 +1235,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		}
 		Recorder.record = recorderOn; // Reset the recorder
 
+		// This only works if we do not attach as a dialogListener to the GenericDialog
 		optimiserCommandOptions = Recorder.getCommandOptions();
 
 		// Validate the chosen parameters
@@ -1345,6 +1364,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return false;
+		
 		inputDirectory = gd.getNextString();
 		if (!new File(inputDirectory).isDirectory())
 		{
@@ -1752,7 +1772,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		if (centreMethod == FindFoci.CENTRE_OF_MASS_SEARCH)
 			return myCentreParameterMin;
 
-		return myCentreParameterMax; // Other methods have no parameters
+		return 0; // Other methods have no parameters
 	}
 
 	private int[] createCentreMaxLimits()
@@ -1773,7 +1793,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		if (centreMethod == FindFoci.CENTRE_OF_MASS_SEARCH)
 			return myCentreParameterMax; // Limit can be any value above zero
 
-		return myCentreParameterMax; // Other methods have no parameters
+		return 0; // Other methods have no parameters
 	}
 
 	private int[] createCentreIntervals()
@@ -1838,7 +1858,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		lastResults = results;
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
-			heading = createResultsHeader(true);
+			heading = createResultsHeader(true, true);
 			resultsWindow = new TextWindow(FRAME_TITLE + " Results", heading, "", 1000, 300);
 			if (resultsWindow.getTextPanel() != null)
 			{
@@ -1910,7 +1930,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		}
 	}
 
-	private String createResultsHeader(boolean withRank)
+	private String createResultsHeader(boolean withRank, boolean milliSeconds)
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append("Rank\t");
@@ -1938,7 +1958,10 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			sb.append("Rank\t");
 			sb.append("Score\t");
 		}
-		sb.append("mSec\n");
+		if (milliSeconds)
+			sb.append("mSec\n");
+		else
+			sb.append("nanoSec\n");
 		return sb.toString();
 	}
 
@@ -2117,11 +2140,10 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				index = fields[7].indexOf(" : ") + 3;
 				centreParameter = Double.parseDouble(fields[7].substring(index));
 			}
-			double backgroundLevel = 0; // Not used in multi-image optimisation
 
 			Options o = new Options(blur, backgroundMethod, backgroundParameter, thresholdMethod, searchMethod,
 					searchParameter, maxPeaks, minSize, peakMethod, peakParameter, sortMethod, options, centreMethod,
-					centreParameter, backgroundLevel);
+					centreParameter);
 
 			// Debugging
 			if (!o.createParameters().equals(parameters))
@@ -2349,10 +2371,6 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				if (compare(o1.options.blur, o2.options.blur, result) != 0)
 					return result[0];
 
-				// Lowest background level is more general
-				if (compare(o1.options.backgroundLevel, o2.options.backgroundLevel, result) != 0)
-					return result[0];
-
 				// Higher background methods are more general
 				if (compare(o1.options.backgroundMethod, o2.options.backgroundMethod, result) != 0)
 					return -result[0];
@@ -2401,27 +2419,6 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		{
 			return result[0] = value1 - value2;
 		}
-
-		/**
-		 * Set the method to use when the results have the same metric: 1 - Most conservative settings; 0 - Fastest
-		 * 
-		 * @param tieMethod
-		 *            the tieMethod to set
-		 */
-		@SuppressWarnings("unused")
-		public void setTieMethod(int tieMethod)
-		{
-			this.tieMethod = tieMethod;
-		}
-
-		/**
-		 * @return the tieMethod
-		 */
-		@SuppressWarnings("unused")
-		public int getTieMethod()
-		{
-			return tieMethod;
-		}
 	}
 
 	private class Options
@@ -2441,12 +2438,10 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		public int options;
 		public int centreMethod;
 		public double centreParameter;
-		public double backgroundLevel;
 
 		public Options(double blur, int backgroundMethod, double backgroundParameter, String autoThresholdMethod,
 				int searchMethod, double searchParameter, int maxPeaks, int minSize, int peakMethod,
-				double peakParameter, int sortIndex, int options, int centreMethod, double centreParameter,
-				double backgroundLevel)
+				double peakParameter, int sortIndex, int options, int centreMethod, double centreParameter)
 		{
 			this.blur = blur;
 			this.backgroundMethod = backgroundMethod;
@@ -2462,7 +2457,6 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			this.options = options;
 			this.centreMethod = centreMethod;
 			this.centreParameter = centreParameter;
-			this.backgroundLevel = backgroundLevel;
 		}
 
 		/**
@@ -2588,14 +2582,10 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				if (newResults)
 				{
 					saveResults(imp, mask, results, null, resultFile);
-					
-					// TODO - Fix this. When the results are not loaded from file the results are not repeatable.
-					// Q. Could this be due to round-off error in the scores?
-					results = loadResults(fullResultFile);
 				}
 
 				checkOptimisationSpace(results, imp);
-				
+
 				// Reset to the order defined by the ID
 				sortResults(results);
 			}
@@ -2618,6 +2608,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		BufferedReader input = null;
 		try
 		{
+			if (countLines(filename) != combinations)
+				return null;
+
 			FileInputStream fis = new FileInputStream(filename);
 			input = new BufferedReader(new InputStreamReader(fis));
 
@@ -2643,7 +2636,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				int tp = Integer.parseInt(fields[1]);
 				int fp = Integer.parseInt(fields[2]);
 				int fn = Integer.parseInt(fields[3]);
-				long time = (long) (Double.parseDouble(fields[fields.length-1]) * 1000000.0);
+				long time = Long.parseLong(fields[fields.length - 1]);
 
 				Result r = new Result(id, null, n, tp, fp, fn, time, myBeta);
 				// Do not count on the Options being parsed from the parameters.
@@ -2681,6 +2674,51 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		}
 
 		return results;
+	}
+
+	/**
+	 * Count the number of valid lines in the file
+	 * 
+	 * @param filename
+	 * @return The number of lines
+	 */
+	private int countLines(String filename)
+	{
+		BufferedReader input = null;
+		try
+		{
+			int count = 0;
+
+			FileInputStream fis = new FileInputStream(filename);
+			input = new BufferedReader(new InputStreamReader(fis));
+
+			String line;
+			while ((line = input.readLine()) != null)
+			{
+				if (line.length() == 0)
+					continue;
+				if (line.charAt(0) == '#')
+					continue;
+				count++;
+			}
+			return count;
+		}
+		catch (IOException e)
+		{
+			return 0;
+		}
+		finally
+		{
+			try
+			{
+				if (input != null)
+					input.close();
+			}
+			catch (IOException e)
+			{
+				// Ignore
+			}
+		}
 	}
 
 	/**
@@ -3055,6 +3093,29 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			SETTINGS[i] = settings.get(i).name;
 	}
 
+	/**
+	 * Add our own custom listeners to the dialog. If we use dialogListerner in the GenericDialog then it turns the
+	 * macro recorder off before we read the fields.
+	 * 
+	 * @param gd
+	 */
+	@SuppressWarnings("unchecked")
+	private void addListeners(GenericDialog gd)
+	{
+		@SuppressWarnings("unchecked")
+		Vector<TextField> fields = (Vector<TextField>) gd.getStringFields();
+		// Optionally Ignore final text field (it is the result file field)
+		int stringFields = fields.size() - ((multiMode) ? 0 : 1);
+		for (int i = 0; i < stringFields; i++)
+			fields.get(i).addTextListener(this);
+		for (Choice field : (Vector<Choice>) gd.getChoices())
+			field.addItemListener(this);
+		for (TextField field : (Vector<TextField>) gd.getNumericFields())
+			field.addTextListener(this);
+		for (Checkbox field : (Vector<Checkbox>) gd.getCheckboxes())
+			field.addItemListener(this);
+	}
+
 	@SuppressWarnings("unchecked")
 	private void saveCustomSettings(GenericDialog gd)
 	{
@@ -3097,6 +3158,21 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		for (Checkbox field : (Vector<Checkbox>) gd.getCheckboxes())
 			field.setState(s.option.get(index2++));
 		//System.out.println("Done Applying " + s.name + " " + updating);
+	}
+
+	public void actionPerformed(ActionEvent e)
+	{
+		dialogItemChanged(listenerGd, e);
+	}
+
+	public void textValueChanged(TextEvent e)
+	{
+		dialogItemChanged(listenerGd, e);
+	}
+
+	public void itemStateChanged(ItemEvent e)
+	{
+		dialogItemChanged(listenerGd, e);
 	}
 
 	/*
