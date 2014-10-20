@@ -750,7 +750,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		{
 			Result result = results.get(i);
 			StringBuilder sb = new StringBuilder();
-			sb.append(i + 1).append("\t");
+			sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append("\t");
 			sb.append(result.getParameters());
 			sb.append(result.n).append("\t");
 			sb.append(result.tp).append("\t");
@@ -763,7 +763,6 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			sb.append(IJ.d2s(result.metrics[Result.F1], RESULT_PRECISION)).append("\t");
 			sb.append(IJ.d2s(result.metrics[Result.F2], RESULT_PRECISION)).append("\t");
 			sb.append(IJ.d2s(result.metrics[Result.Fb], RESULT_PRECISION)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append("\t");
 			sb.append(IJ.d2s(result.metrics[Result.SCORE], RESULT_PRECISION)).append("\t");
 			sb.append(IJ.d2s(result.time / 1000000.0, RESULT_PRECISION)).append("\n");
 			resultsWindow.append(sb.toString());
@@ -803,7 +802,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			{
 				Result result = results.get(i);
 				StringBuilder sb = new StringBuilder();
-				sb.append(i + 1).append("\t");
+				sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append("\t");
 				sb.append(result.getParameters());
 				sb.append(result.n).append("\t");
 				sb.append(result.tp).append("\t");
@@ -816,7 +815,6 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				sb.append(IJ.d2s(result.metrics[Result.F1], RESULT_PRECISION)).append("\t");
 				sb.append(IJ.d2s(result.metrics[Result.F2], RESULT_PRECISION)).append("\t");
 				sb.append(IJ.d2s(result.metrics[Result.Fb], RESULT_PRECISION)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append("\t");
 				sb.append(IJ.d2s(result.metrics[Result.SCORE], RESULT_PRECISION)).append("\t");
 				sb.append(result.time).append("\n");
 				out.write(sb.toString());
@@ -1931,7 +1929,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		}
 	}
 
-	private String createResultsHeader(boolean withRank, boolean milliSeconds)
+	private String createResultsHeader(boolean withScore, boolean milliSeconds)
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append("Rank\t");
@@ -1954,9 +1952,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		sb.append("F1\t");
 		sb.append("F2\t");
 		sb.append("F-beta\t");
-		if (withRank)
+		if (withScore)
 		{
-			sb.append("Rank\t");
 			sb.append("Score\t");
 		}
 		if (milliSeconds)
@@ -2239,10 +2236,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			double score = results.get(0).metrics[sortIndex];
 			for (Result r : results)
 			{
-				if (r.metrics[sortIndex] != score)
+				if (score != r.metrics[sortIndex])
 				{
 					rank += count;
 					count = 0;
+					score = r.metrics[sortIndex];
 				}
 				r.metrics[Result.RANK] = rank;
 				count++;
