@@ -209,7 +209,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	private static final int SCORE_RELATIVE = 1;
 	private static final int SCORE_Z = 2;
 	private static final int SCORE_RANK = 3;
-	private static int scoringMode = Prefs.getInt(SCORING_MODE, SCORE_RANK);
+	private static int scoringMode = Prefs.getInt(SCORING_MODE, SCORE_RAW);
 	private static boolean reuseResults = Prefs.getBoolean(REUSE_RESULTS, true);
 
 	@SuppressWarnings("rawtypes")
