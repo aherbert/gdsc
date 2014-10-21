@@ -196,10 +196,12 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	// For the multi-image mode
 	private boolean multiMode = false;
 	private static String INPUT_DIRECTORY = "findfoci.optimiser.inputDirectory";
+	private static String MASK_DIRECTORY = "findfoci.optimiser.maskDirectory";
 	private static String OUTPUT_DIRECTORY = "findfoci.optimiser.outputDirectory";
 	private static String SCORING_MODE = "findfoci.optimiser.scoringMode";
 	private static String REUSE_RESULTS = "findfoci.optimiser.reuseResults";
 	private static String inputDirectory = Prefs.get(INPUT_DIRECTORY, "");
+	private static String maskDirectory = Prefs.get(MASK_DIRECTORY, "");
 	private static String outputDirectory = Prefs.get(OUTPUT_DIRECTORY, "");
 	private static String[] SCORING_MODES = new String[] { "Raw score metric", "Relative (% drop from top)", "Z-score",
 			"Rank" };
@@ -1377,8 +1379,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		GenericDialog gd = new GenericDialog(FRAME_TITLE);
 		gd.addMessage("Run " +
 				FRAME_TITLE +
-				" on a set of images.\n \nAll images in a directory will be processed.\n \nOptional mask images should be named:\n[image_name].mask.[ext]");
+				" on a set of images.\n \nAll images in a directory will be processed.\n \nOptional mask images in the input directory should be named:\n[image_name].mask.[ext]\nor placed in the mask directory with the same name as the parent image.");
 		gd.addStringField("Input_directory", inputDirectory);
+		gd.addStringField("Mask_directory", maskDirectory);
 		gd.addStringField("Output_directory", outputDirectory);
 		gd.addMessage("[Note: Double-click a text field to open a selection dialog]");
 		gd.addMessage("The score metric for each parameter combination is computed per image.\nThe scores are converted then averaged across all images.");
@@ -1403,6 +1406,12 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			IJ.error(FRAME_TITLE, "Input directory is not a valid directory: " + inputDirectory);
 			return false;
 		}
+		maskDirectory = gd.getNextString();
+		if ((maskDirectory != null && maskDirectory.length() > 0) && !new File(maskDirectory).isDirectory())
+		{
+			IJ.error(FRAME_TITLE, "Mask directory is not a valid directory: " + maskDirectory);
+			return false;
+		}
 		outputDirectory = gd.getNextString();
 		if (!new File(outputDirectory).isDirectory())
 		{
@@ -1412,6 +1421,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		scoringMode = gd.getNextChoiceIndex();
 		reuseResults = gd.getNextBoolean();
 		Prefs.set(INPUT_DIRECTORY, inputDirectory);
+		Prefs.set(MASK_DIRECTORY, maskDirectory);
 		Prefs.set(OUTPUT_DIRECTORY, outputDirectory);
 		Prefs.set(SCORING_MODE, scoringMode);
 		Prefs.set(REUSE_RESULTS, reuseResults);
@@ -2597,7 +2607,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		public void run()
 		{
 			final ImagePlus imp = FindFoci.openImage(inputDirectory, image);
-			final ImagePlus mask = FindFoci.openImage(inputDirectory, FindFoci.getMaskImage(inputDirectory, image));
+			String[] maskPath = FindFoci.getMaskImage(inputDirectory, maskDirectory, image); 
+			final ImagePlus mask = FindFoci.openImage(maskPath[0], maskPath[1]);
 			final String resultFile = outputDirectory + File.separator + imp.getShortTitle();
 			final String fullResultFile = resultFile + ".results.xls";
 			boolean newResults = false;
@@ -3026,7 +3037,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			"Otsu", // Auto_threshold
 			"Both", // Statistics_mode
 			"0, 0.6, 0.2", // Search_parameter
-			"1, 19, 2", // Minimum_size
+			"1, 9, 2", // Minimum_size
 			"0, 0.6, 0.2", // Peak_parameter
 			"1", // Sort_method
 			"0, 0.5, 1", // Gaussian_blur
@@ -3084,7 +3095,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			FLAG_FALSE, // Background_Absolute
 			FLAG_TRUE, // Background_Auto_Threshold
 			FLAG_TRUE, // Search_above_background
-			FLAG_FALSE, // Search_fraction_of_peak
+			FLAG_TRUE, // Search_fraction_of_peak
 			FLAG_FALSE + FLAG_SINGLE // Show_score_images
 	}, { FLAG_TRUE, // Background_SD_above_mean
 			FLAG_FALSE, // Background_Absolute

@@ -308,9 +308,11 @@ public class FindFoci implements PlugIn, MouseListener
 	private static String newLine = System.getProperty("line.separator");
 
 	private static String BATCH_INPUT_DIRECTORY = "findfoci.batchInputDirectory";
+	private static String BATCH_MASK_DIRECTORY = "findfoci.batchMaskDirectory";
 	private static String BATCH_PARAMETER_FILE = "findfoci.batchParameterFile";
 	private static String BATCH_OUTPUT_DIRECTORY = "findfoci.batchOutputDirectory";
 	private static String batchInputDirectory = Prefs.get(BATCH_INPUT_DIRECTORY, "");
+	private static String batchMaskDirectory = Prefs.get(BATCH_MASK_DIRECTORY, "");
 	private static String batchParameterFile = Prefs.get(BATCH_PARAMETER_FILE, "");
 	private static String batchOutputDirectory = Prefs.get(BATCH_OUTPUT_DIRECTORY, "");
 	private TextField textParamFile;
@@ -5908,8 +5910,9 @@ public class FindFoci implements PlugIn, MouseListener
 		GenericDialog gd = new GenericDialog(FRAME_TITLE);
 		gd.addMessage("Run " +
 				FRAME_TITLE +
-				" on a set of images.\n \nAll images in a directory will be processed.\n \nOptional mask images should be named:\n[image_name].mask.[ext]");
+				" on a set of images.\n \nAll images in a directory will be processed.\n \nOptional mask images in the input directory should be named:\n[image_name].mask.[ext]\nor placed in the mask directory with the same name as the parent image.");
 		gd.addStringField("Input_directory", batchInputDirectory);
+		gd.addStringField("Mask_directory", batchMaskDirectory);
 		gd.addStringField("Parameter_file", batchParameterFile);
 		gd.addStringField("Output_directory", batchOutputDirectory);
 		gd.addMessage("[Note: Double-click a text field to open a selection dialog]");
@@ -5920,7 +5923,7 @@ public class FindFoci implements PlugIn, MouseListener
 			tf.addMouseListener(this);
 			tf.setColumns(50);
 		}
-		textParamFile = texts.get(1);
+		textParamFile = texts.get(2);
 
 		gd.showDialog();
 		if (gd.wasCanceled())
@@ -5929,6 +5932,13 @@ public class FindFoci implements PlugIn, MouseListener
 		if (!new File(batchInputDirectory).isDirectory())
 		{
 			IJ.error(FRAME_TITLE, "Input directory is not a valid directory: " + batchInputDirectory);
+			return false;
+		}
+		batchMaskDirectory = gd.getNextString();
+		if ((batchMaskDirectory != null && batchMaskDirectory.length() > 0) &&
+				!new File(batchMaskDirectory).isDirectory())
+		{
+			IJ.error(FRAME_TITLE, "Mask directory is not a valid directory: " + batchMaskDirectory);
 			return false;
 		}
 		batchParameterFile = gd.getNextString();
@@ -5944,6 +5954,7 @@ public class FindFoci implements PlugIn, MouseListener
 			return false;
 		}
 		Prefs.set(BATCH_INPUT_DIRECTORY, batchInputDirectory);
+		Prefs.set(BATCH_MASK_DIRECTORY, batchMaskDirectory);
 		Prefs.set(BATCH_PARAMETER_FILE, batchParameterFile);
 		Prefs.set(BATCH_OUTPUT_DIRECTORY, batchOutputDirectory);
 		return true;
@@ -5990,7 +6001,7 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		IJ.redirectErrorMessages();
 
-		String mask = getMaskImage(batchInputDirectory, image);
+		String[] mask = getMaskImage(batchInputDirectory, batchMaskDirectory, image);
 
 		// Open the image (and mask)
 		ImagePlus imp = openImage(batchInputDirectory, image);
@@ -5999,7 +6010,7 @@ public class FindFoci implements PlugIn, MouseListener
 			IJ.error(FRAME_TITLE, "File is not a valid image: " + image);
 			return false;
 		}
-		ImagePlus maskImp = openImage(batchInputDirectory, mask);
+		ImagePlus maskImp = openImage(mask[0], mask[1]);
 
 		// Run the algorithm
 		return execBatch(imp, maskImp, parameters.backgroundMethod, parameters.backgroundParameter,
@@ -6009,18 +6020,34 @@ public class FindFoci implements PlugIn, MouseListener
 				parameters.centreMethod, parameters.centreParameter, parameters.fractionParameter);
 	}
 
-	public static String getMaskImage(String directory, String filename)
+	/**
+	 * Look for the mask image for the given file. The mask will be named using the original filename in directory2 or
+	 * [image_name].mask.[ext] in either directory.
+	 * 
+	 * @param directory
+	 * @param directory2
+	 * @param filename
+	 * @return array of [directory, filename]
+	 */
+	public static String[] getMaskImage(String directory, String directory2, String filename)
 	{
 		int index = filename.lastIndexOf('.');
 		if (index > 0)
 		{
+			// Check for the mask using the original filename in the second directory
+			if (new File(directory2, filename).exists())
+				return new String[] { directory2, filename };
+
+			// Look for [image_name].mask.[ext] in either directory
 			String prefix = filename.substring(0, index);
 			String ext = filename.substring(index);
 			String maskFilename = prefix + ".mask" + ext;
 			if (new File(directory, maskFilename).exists())
-				return maskFilename;
+				return new String[] { directory, maskFilename };
+			if (new File(directory2, maskFilename).exists())
+				return new String[] { directory2, maskFilename };
 		}
-		return null;
+		return new String[2];
 	}
 
 	public static ImagePlus openImage(String directory, String filename)
