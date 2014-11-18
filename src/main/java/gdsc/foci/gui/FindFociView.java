@@ -573,6 +573,13 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
 		comboStatisticsMode = new JComboBox();
 		comboStatisticsMode.setToolTipText("Calculate background using area inside/outside the ROI/Masked region");
+		comboStatisticsMode.addItemListener(new ItemListener()
+		{
+			public void itemStateChanged(ItemEvent e)
+			{
+				comboStatisticsMode.firePropertyChange("selectedItem", 0, 1);
+			}
+		});
 		comboStatisticsMode.setModel(new DefaultComboBoxModel(FindFoci.statisticsModes));
 		GridBagConstraints gbc_comboStatisticsMode = new GridBagConstraints();
 		gbc_comboStatisticsMode.gridwidth = 2;
