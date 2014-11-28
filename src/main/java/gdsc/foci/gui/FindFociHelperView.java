@@ -81,7 +81,9 @@ import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
 import org.jdesktop.swingbinding.JComboBoxBinding;
 import org.jdesktop.swingbinding.SwingBindings;
+
 import javax.swing.JCheckBox;
+
 import gdsc.foci.converter.StringToBooleanConverter;
 import gdsc.foci.converter.SearchModeConverter;
 import gdsc.utils.ImageJHelper;
@@ -127,7 +129,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	private JPanel contentPane;
 	private JLabel lblImage;
-	private JComboBox comboImageList;
+	private JComboBox<String> comboImageList;
 	private JButton btnRun;
 	private JLabel labelPotentialMaxima;
 	private JLabel lblNumberOfPotential;
@@ -146,14 +148,14 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	private JLabel txtTotal;
 	private JButton btnStop;
 	private JLabel lblSearchMode;
-	private JComboBox comboSearchMode;
+	private JComboBox<String> comboSearchMode;
 	private JCheckBox chckbxAssigndragged;
 	private JLabel lblAssignDragged;
 	private JButton btnSaveResults;
 	private JToggleButton tglbtnOverlay;
 	private JButton btnHelp;
 	private JLabel lblMaskImage;
-	private JComboBox comboMaskImageList;
+	private JComboBox<String> comboMaskImageList;
 
 	/**
 	 * Launch the application.
@@ -221,7 +223,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		gbc_lblImage.gridy = 0;
 		contentPane.add(lblImage, gbc_lblImage);
 
-		comboImageList = new JComboBox();
+		comboImageList = new JComboBox<String>();
 		comboImageList.setToolTipText("Select the input image");
 		comboImageList.addItemListener(new ItemListener()
 		{
@@ -254,7 +256,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		gbc_lblMaskImage.gridy = 1;
 		contentPane.add(lblMaskImage, gbc_lblMaskImage);
 		
-		comboMaskImageList = new JComboBox();
+		comboMaskImageList = new JComboBox<String>();
 		comboMaskImageList.setToolTipText("Select the input mask image");
 		comboMaskImageList.addItemListener(new ItemListener()
 		{
@@ -357,7 +359,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		gbc_lblSearchMode.gridy = 5;
 		contentPane.add(lblSearchMode, gbc_lblSearchMode);
 
-		comboSearchMode = new JComboBox();
+		comboSearchMode = new JComboBox<String>();
 		comboSearchMode.addItemListener(new ItemListener()
 		{
 			public void itemStateChanged(ItemEvent e)
@@ -372,7 +374,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		gbc_comboSearchMode.fill = GridBagConstraints.HORIZONTAL;
 		gbc_comboSearchMode.gridx = 1;
 		gbc_comboSearchMode.gridy = 5;
-		comboSearchMode.setModel(new DefaultComboBoxModel(GridPointManager.SEARCH_MODES));
+		comboSearchMode.setModel(new DefaultComboBoxModel<String>(GridPointManager.SEARCH_MODES));
 		contentPane.add(comboSearchMode, gbc_comboSearchMode);
 
 		btnRun = new JButton("Start");
@@ -1516,6 +1518,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 		savedRoi = null;
 	}
+	@SuppressWarnings("rawtypes")
 	protected void initDataBindings() {
 		BeanProperty<FindFociModel, List<String>> findFociModelBeanProperty = BeanProperty.create("imageList");
 		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding = SwingBindings.createJComboBoxBinding(UpdateStrategy.READ, model, findFociModelBeanProperty, comboImageList);

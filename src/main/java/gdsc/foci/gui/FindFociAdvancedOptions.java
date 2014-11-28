@@ -74,7 +74,7 @@ public class FindFociAdvancedOptions extends JDialog
 	private JLabel lblResultsDirectory;
 	private JButton btnDirectoryPicker;
 	private JLabel lblCentreMethod;
-	private JComboBox comboBoxCentreMethod;
+	private JComboBox<String> comboBoxCentreMethod;
 	private JSlider sliderCentreParam;
 	private JLabel lblCentreParam;
 	private JFormattedTextField txtCentreParam;
@@ -236,7 +236,7 @@ public class FindFociAdvancedOptions extends JDialog
 			}
 		});
 		{
-			comboBoxCentreMethod = new JComboBox();
+			comboBoxCentreMethod = new JComboBox<String>();
 			comboBoxCentreMethod.setToolTipText("The method used to mark the origin of each peak");
 			comboBoxCentreMethod.addItemListener(new ItemListener()
 			{
@@ -245,7 +245,7 @@ public class FindFociAdvancedOptions extends JDialog
 					comboBoxCentreMethod.firePropertyChange("selectedItem", 0, 1);
 				}
 			});
-			comboBoxCentreMethod.setModel(new DefaultComboBoxModel(FindFoci.getCentreMethods()));
+			comboBoxCentreMethod.setModel(new DefaultComboBoxModel<String>(FindFoci.getCentreMethods()));
 			GridBagConstraints gbc_comboBoxCentreMethod = new GridBagConstraints();
 			gbc_comboBoxCentreMethod.gridwidth = 2;
 			gbc_comboBoxCentreMethod.insets = new Insets(0, 0, 5, 0);
@@ -445,8 +445,8 @@ public class FindFociAdvancedOptions extends JDialog
 		autoBinding_5.bind();
 		//
 		BeanProperty<FindFociModel, Integer> findFociModelBeanProperty_6 = BeanProperty.create("centreMethod");
-		BeanProperty<JComboBox, Object> jComboBoxBeanProperty = BeanProperty.create("selectedItem");
-		AutoBinding<FindFociModel, Integer, JComboBox, Object> autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_6, comboBoxCentreMethod, jComboBoxBeanProperty);
+		BeanProperty<JComboBox<String>, Object> jComboBoxBeanProperty = BeanProperty.create("selectedItem");
+		AutoBinding<FindFociModel, Integer, JComboBox<String>, Object> autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_6, comboBoxCentreMethod, jComboBoxBeanProperty);
 		autoBinding_6.setConverter(new CentreMethodConverter());
 		autoBinding_6.bind();
 		//

@@ -105,12 +105,12 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
 	private JPanel contentPane;
 	private JLabel lblBackgroundMethod;
-	private JComboBox comboBackgroundMethod;
-	private JComboBox comboThresholdMethod;
+	private JComboBox<String> comboBackgroundMethod;
+	private JComboBox<String> comboThresholdMethod;
 	private JLabel lblBackgroundParam;
 	private JLabel lblGaussianBlur;
 	private JLabel lblSearchMethod;
-	private JComboBox comboSearchMethod;
+	private JComboBox<String> comboSearchMethod;
 	private JLabel lblSearchParam;
 	private JSlider sliderSearchParam;
 	private JSeparator separator;
@@ -119,19 +119,19 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	private JLabel lblMinimumSize;
 	private JLabel lblPeakMethod;
 	private JLabel lblPeakParam;
-	private JComboBox comboImageList;
+	private JComboBox<String> comboImageList;
 	private JLabel lblThresholdMethod;
 	private JSlider sliderMinimumSize;
 	private JCheckBox chckbxNewCheckBox;
-	private JComboBox comboPeakMethod;
+	private JComboBox<String> comboPeakMethod;
 	private JSlider sliderPeakParam;
 	private JSeparator separator_4;
 	private JLabel lblSortMethod;
-	private JComboBox comboSortMethod;
+	private JComboBox<String> comboSortMethod;
 	private JLabel lblMaxPeaks;
 	private JSlider sliderMaxPeaks;
 	private JLabel lblShowMask;
-	private JComboBox comboShowMask;
+	private JComboBox<String> comboShowMask;
 	private JSlider sliderGaussianBlur;
 	private JSlider sliderBackgroundParam;
 	private JSlider sliderBackgroundParamAbsolute;
@@ -148,8 +148,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	private JSlider sliderPeakParamAbsolute;
 	private JCheckBox chckbxPreview;
 	private JLabel lblMaskImage;
-	private JComboBox comboMaskImageList;
-	private JComboBox comboStatisticsMode;
+	private JComboBox<String> comboMaskImageList;
+	private JComboBox<String> comboStatisticsMode;
 	private JLabel lblStatisticsMode;
 	private JButton btnHelp;
 	private JLabel lblFractionParam;
@@ -252,7 +252,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		gbc_lblName.gridy = 0;
 		contentPane.add(lblName, gbc_lblName);
 
-		comboImageList = new JComboBox();
+		comboImageList = new JComboBox<String>();
 		comboImageList.setToolTipText("Select the input image");
 		comboImageList.addItemListener(new ItemListener()
 		{
@@ -370,7 +370,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		contentPane.add(lblMaskImage, gbc_lblMaskImage);
 
 		// TODO - Add the bindings necessary to update the list 
-		comboMaskImageList = new JComboBox();
+		comboMaskImageList = new JComboBox<String>();
 		comboMaskImageList.setToolTipText("Select a mask defining the analysis area");
 		comboMaskImageList.addItemListener(new ItemListener()
 		{
@@ -410,7 +410,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		gbc_lblBackgroundMethod.gridy = 4;
 		contentPane.add(lblBackgroundMethod, gbc_lblBackgroundMethod);
 
-		comboBackgroundMethod = new JComboBox();
+		comboBackgroundMethod = new JComboBox<String>();
 		comboBackgroundMethod.setToolTipText("Specify the background threshold method");
 		comboBackgroundMethod.addItemListener(new ItemListener()
 		{
@@ -419,7 +419,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 				comboBackgroundMethod.firePropertyChange("selectedItem", 0, 1);
 			}
 		});
-		comboBackgroundMethod.setModel(new DefaultComboBoxModel(FindFoci.backgroundMethods));
+		comboBackgroundMethod.setModel(new DefaultComboBoxModel<String>(FindFoci.backgroundMethods));
 		comboBackgroundMethod.setSelectedIndex(3);
 		GridBagConstraints gbc_comboBackgroundMethod = new GridBagConstraints();
 		gbc_comboBackgroundMethod.fill = GridBagConstraints.HORIZONTAL;
@@ -544,7 +544,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		gbc_lblThresholdMethod.gridy = 6;
 		contentPane.add(lblThresholdMethod, gbc_lblThresholdMethod);
 
-		comboThresholdMethod = new JComboBox();
+		comboThresholdMethod = new JComboBox<String>();
 		comboThresholdMethod.setToolTipText("Method used for auto-thresholding");
 		comboThresholdMethod.addItemListener(new ItemListener()
 		{
@@ -553,7 +553,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 				comboThresholdMethod.firePropertyChange("selectedItem", 0, 1);
 			}
 		});
-		comboThresholdMethod.setModel(new DefaultComboBoxModel(FindFoci.autoThresholdMethods));
+		comboThresholdMethod.setModel(new DefaultComboBoxModel<String>(FindFoci.autoThresholdMethods));
 		comboThresholdMethod.setSelectedIndex(10);
 		GridBagConstraints gbc_comboThresholdMethod = new GridBagConstraints();
 		gbc_comboThresholdMethod.fill = GridBagConstraints.HORIZONTAL;
@@ -571,7 +571,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		gbc_lblStatisticsMode.gridy = 7;
 		contentPane.add(lblStatisticsMode, gbc_lblStatisticsMode);
 
-		comboStatisticsMode = new JComboBox();
+		comboStatisticsMode = new JComboBox<String>();
 		comboStatisticsMode.setToolTipText("Calculate background using area inside/outside the ROI/Masked region");
 		comboStatisticsMode.addItemListener(new ItemListener()
 		{
@@ -580,7 +580,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 				comboStatisticsMode.firePropertyChange("selectedItem", 0, 1);
 			}
 		});
-		comboStatisticsMode.setModel(new DefaultComboBoxModel(FindFoci.statisticsModes));
+		comboStatisticsMode.setModel(new DefaultComboBoxModel<String>(FindFoci.statisticsModes));
 		GridBagConstraints gbc_comboStatisticsMode = new GridBagConstraints();
 		gbc_comboStatisticsMode.gridwidth = 2;
 		gbc_comboStatisticsMode.insets = new Insets(0, 0, 5, 0);
@@ -620,7 +620,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		gbc_lblSearchMethod.gridy = 10;
 		contentPane.add(lblSearchMethod, gbc_lblSearchMethod);
 
-		comboSearchMethod = new JComboBox();
+		comboSearchMethod = new JComboBox<String>();
 		comboSearchMethod.setToolTipText("Specify the method used to expand maxima into peaks");
 		comboSearchMethod.addItemListener(new ItemListener()
 		{
@@ -629,7 +629,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 				comboSearchMethod.firePropertyChange("selectedItem", 0, 1);
 			}
 		});
-		comboSearchMethod.setModel(new DefaultComboBoxModel(FindFoci.searchMethods));
+		comboSearchMethod.setModel(new DefaultComboBoxModel<String>(FindFoci.searchMethods));
 		comboSearchMethod.setSelectedIndex(0);
 		GridBagConstraints gbc_comboSearchMethod = new GridBagConstraints();
 		gbc_comboSearchMethod.fill = GridBagConstraints.HORIZONTAL;
@@ -807,7 +807,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		gbc_lblPeakMethod.gridy = 15;
 		contentPane.add(lblPeakMethod, gbc_lblPeakMethod);
 
-		comboPeakMethod = new JComboBox();
+		comboPeakMethod = new JComboBox<String>();
 		comboPeakMethod.setToolTipText("Specify the required height for a peak");
 		comboPeakMethod.addItemListener(new ItemListener()
 		{
@@ -816,7 +816,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 				comboPeakMethod.firePropertyChange("selectedItem", 0, 1);
 			}
 		});
-		comboPeakMethod.setModel(new DefaultComboBoxModel(FindFoci.peakMethods));
+		comboPeakMethod.setModel(new DefaultComboBoxModel<String>(FindFoci.peakMethods));
 		comboPeakMethod.setSelectedIndex(2);
 		GridBagConstraints gbc_comboPeakMethod = new GridBagConstraints();
 		gbc_comboPeakMethod.gridwidth = 2;
@@ -946,7 +946,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		gbc_lblSortMethod.gridy = 18;
 		contentPane.add(lblSortMethod, gbc_lblSortMethod);
 
-		comboSortMethod = new JComboBox();
+		comboSortMethod = new JComboBox<String>();
 		comboSortMethod.setToolTipText("Metric used to sort the peaks");
 		comboSortMethod.addItemListener(new ItemListener()
 		{
@@ -958,7 +958,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		GridBagConstraints gbc_comboSortMethod = new GridBagConstraints();
 		gbc_comboSortMethod.gridwidth = 2;
 		gbc_comboSortMethod.insets = new Insets(0, 0, 5, 0);
-		comboSortMethod.setModel(new DefaultComboBoxModel(FindFoci.sortIndexMethods));
+		comboSortMethod.setModel(new DefaultComboBoxModel<String>(FindFoci.sortIndexMethods));
 		comboSortMethod.setSelectedIndex(1);
 		gbc_comboSortMethod.fill = GridBagConstraints.HORIZONTAL;
 		gbc_comboSortMethod.gridx = 1;
@@ -1040,7 +1040,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		gbc_lblShowMask.gridy = 20;
 		contentPane.add(lblShowMask, gbc_lblShowMask);
 
-		comboShowMask = new JComboBox();
+		comboShowMask = new JComboBox<String>();
 		comboShowMask.setToolTipText("Configure the output mask");
 		comboShowMask.addItemListener(new ItemListener()
 		{
@@ -1049,7 +1049,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 				comboShowMask.firePropertyChange("selectedItem", 0, 1);
 			}
 		});
-		comboShowMask.setModel(new DefaultComboBoxModel(FindFoci.maskOptions));
+		comboShowMask.setModel(new DefaultComboBoxModel<String>(FindFoci.maskOptions));
 		comboShowMask.setSelectedIndex(3);
 		GridBagConstraints gbc_comboShowMask = new GridBagConstraints();
 		gbc_comboShowMask.gridwidth = 2;
@@ -1349,6 +1349,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		}
 	}
 
+	@SuppressWarnings("rawtypes")
 	protected void initDataBindings()
 	{
 		BeanProperty<FindFociModel, Double> findFociBeanProperty_1 = BeanProperty.create("searchParameter");

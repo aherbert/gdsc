@@ -62,7 +62,7 @@ public class OptimiserView extends JFrame
 
 	private JPanel contentPane;
 	private JLabel lblImage;
-	private JComboBox comboImageList;
+	private JComboBox<String> comboImageList;
 	private JButton btnRun;
 	private JPanel panel;
 	private JButton btnHelp;
@@ -132,7 +132,7 @@ public class OptimiserView extends JFrame
 		gbc_lblImage.gridy = 0;
 		contentPane.add(lblImage, gbc_lblImage);
 
-		comboImageList = new JComboBox();
+		comboImageList = new JComboBox<String>();
 		comboImageList.setToolTipText("Select the input image");
 		comboImageList.addItemListener(new ItemListener()
 		{
@@ -207,6 +207,7 @@ public class OptimiserView extends JFrame
 		return runEnabled;
 	}
 
+	@SuppressWarnings("rawtypes")
 	protected void initDataBindings()
 	{
 		BeanProperty<FindFociModel, List<String>> findFociModelBeanProperty = BeanProperty.create("imageList");

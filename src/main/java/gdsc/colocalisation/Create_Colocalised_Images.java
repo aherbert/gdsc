@@ -147,8 +147,7 @@ public class Create_Colocalised_Images implements PlugIn
 		}
 
 		GaussianBlur gb = new GaussianBlur();
-		gb.setNPasses(3);
-		gb.blur(cp, 20);
+		gb.blurGaussian(cp, 20, 20, 0.02);
 
 		// Get all values above zero as the ROI
 		if (createMasks)
