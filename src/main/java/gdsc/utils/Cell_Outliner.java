@@ -45,12 +45,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import org.apache.commons.math3.analysis.DifferentiableMultivariateVectorFunction;
 import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
-import org.apache.commons.math3.optimization.ConvergenceChecker;
-import org.apache.commons.math3.optimization.PointVectorValuePair;
-import org.apache.commons.math3.optimization.SimplePointChecker;
-import org.apache.commons.math3.optimization.general.LevenbergMarquardtOptimizer;
+import org.apache.commons.math3.analysis.MultivariateVectorFunction;
+import org.apache.commons.math3.optim.ConvergenceChecker;
+import org.apache.commons.math3.optim.InitialGuess;
+import org.apache.commons.math3.optim.MaxEval;
+import org.apache.commons.math3.optim.MaxIter;
+import org.apache.commons.math3.optim.PointVectorValuePair;
+import org.apache.commons.math3.optim.SimplePointChecker;
+import org.apache.commons.math3.optim.nonlinear.vector.ModelFunction;
+import org.apache.commons.math3.optim.nonlinear.vector.ModelFunctionJacobian;
+import org.apache.commons.math3.optim.nonlinear.vector.Target;
+import org.apache.commons.math3.optim.nonlinear.vector.Weight;
+import org.apache.commons.math3.optim.nonlinear.vector.jacobian.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.util.Precision;
 
 /**
@@ -152,7 +159,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			debug = false;
 
 		gd.addHelp(gdsc.help.URL.UTILITY);
-		
+
 		gd.addPreviewCheckbox(pfr);
 		gd.addDialogListener(this);
 		gd.showDialog();
@@ -489,18 +496,18 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 			// Does not work in IJ 1.46+
 			//finalCell.setLocation(pos.x + bounds.x + pointBounds.x, pos.y + bounds.y + pointBounds.y);
-			
+
 			// Create a new Polygon with the correct coordinates. This is required since IJ 1.46
 			// since setting the location is not passed through when drawing an overlay
 			int[] xCoords = finalCell.getXCoordinates();
 			int[] yCoords = finalCell.getYCoordinates();
 			int nPoints = finalCell.getNCoordinates();
-			for (int i=0; i<nPoints; i++)
+			for (int i = 0; i < nPoints; i++)
 			{
 				xCoords[i] += pos.x + bounds.x + pointBounds.x;
 				yCoords[i] += pos.y + bounds.y + pointBounds.y;
 			}
-			
+
 			finalCell = new PolygonRoi(xCoords, yCoords, nPoints, Roi.POLYGON);
 
 			cells[n] = finalCell;
@@ -1252,7 +1259,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		startPoint = estimateStartPoint(roi, weightMap.getWidth(), weightMap.getHeight());
 
 		int maxEval = 2000;
-		DifferentiableEllipticalFitFunction func = new DifferentiableEllipticalFitFunction(roi, weightMap);
+		final DifferentiableEllipticalFitFunction func = new DifferentiableEllipticalFitFunction(roi, weightMap);
 
 		double relativeThreshold = 100 * Precision.EPSILON;
 		double absoluteThreshold = 100 * Precision.SAFE_MIN;
@@ -1263,16 +1270,26 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		double parRelativeTolerance = 1e-10;
 		double orthoTolerance = 1e-10;
 		double threshold = Precision.SAFE_MIN;
+
 		LevenbergMarquardtOptimizer optimiser = new LevenbergMarquardtOptimizer(initialStepBoundFactor, checker,
 				costRelativeTolerance, parRelativeTolerance, orthoTolerance, threshold);
 
 		try
 		{
-			PointVectorValuePair solution = optimiser.optimize(maxEval, func, func.calculateTarget(),
-					func.calculateWeights(), startPoint);
+			PointVectorValuePair solution = optimiser.optimize(new MaxIter(maxEval), new MaxEval(Integer.MAX_VALUE),
+					new ModelFunctionJacobian(new MultivariateMatrixFunction()
+					{
+						@Override
+						public double[][] value(double[] point) throws IllegalArgumentException
+						{
+							return func.jacobian(point);
+						}
+					}), new ModelFunction(func), new Target(func.calculateTarget()),
+					new Weight(func.calculateWeights()), new InitialGuess(startPoint));
+
 			if (debug)
-				IJ.log(String.format("Eval = %d (%d), RMS = %f", optimiser.getEvaluations(),
-						optimiser.getJacobianEvaluations(), optimiser.getRMS()));
+				IJ.log(String.format("Eval = %d (Iter = %d), RMS = %f", optimiser.getEvaluations(),
+						optimiser.getIterations(), optimiser.getRMS()));
 			return solution.getPointRef();
 		}
 		catch (Exception e)
@@ -1418,8 +1435,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see http://commons.apache.org/math/userguide/optimization.html
 	 */
-	public class DifferentiableEllipticalFitFunction extends EllipticalCell implements
-			DifferentiableMultivariateVectorFunction
+	public class DifferentiableEllipticalFitFunction extends EllipticalCell implements MultivariateVectorFunction
 	{
 		FloatProcessor weightMap;
 		int nPoints;
