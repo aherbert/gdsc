@@ -1279,7 +1279,6 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			PointVectorValuePair solution = optimiser.optimize(new MaxIter(maxEval), new MaxEval(Integer.MAX_VALUE),
 					new ModelFunctionJacobian(new MultivariateMatrixFunction()
 					{
-						@Override
 						public double[][] value(double[] point) throws IllegalArgumentException
 						{
 							return func.jacobian(point);
