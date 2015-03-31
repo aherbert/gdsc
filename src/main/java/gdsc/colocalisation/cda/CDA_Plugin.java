@@ -84,11 +84,12 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 {
 	private static final long serialVersionUID = 1L;
 	private static String FRAME_TITLE = "CDA Plugin";
-	private static String OPTION_NONE = "[None]";
+	private static String OPTION_NONE = "(None)";
 	private static String OPTION_MASK = "Use as mask";
 	private static String OPTION_MIN_VALUE = "Min Display Value";
 	private static String OPTION_USE_ROI = "Use ROI";
-	private static String CHANNEL_IMAGE = "[Channel image]";
+	private static String[] ROI_OPTIONS = { OPTION_NONE, OPTION_MIN_VALUE, OPTION_USE_ROI, OPTION_MASK };
+	private static String CHANNEL_IMAGE = "(Channel image)";
 
 	// Image titles
 	private static String channel1RGBTitle = "CDA Channel 1";
@@ -106,7 +107,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private static String plotM1Title = "CDA M1 samples";
 	private static String plotM2Title = "CDA M2 samples";
 	private static String plotRTitle = "CDA R samples";
-	
+
 	// Configuration options
 	private static String choiceChannel1 = "Channel 1";
 	private static String choiceChannel2 = "Channel 2";
@@ -207,6 +208,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private final String OPT_SUB_RANDOM_SAMPLES = "CDA.subRandomSamples";
 	private final String OPT_HISTOGRAM_BINS = "CDA.histogramBins";
 	private final String OPT_CLOSE_WINDOWS_ON_EXIT = "CDA.closeWindowsOnExit";
+	private final String OPT_SET_OPTIONS = "CDA.setOptions";
 
 	private final String OPT_SHOW_CHANNEL1_RGB = "CDA.showChannel1";
 	private final String OPT_SHOW_CHANNEL2_RGB = "CDA.showChannel2";
@@ -245,6 +247,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private boolean subRandomSamples = Prefs.get(OPT_SUB_RANDOM_SAMPLES, true);
 	private int histogramBins = (int) Prefs.get(OPT_HISTOGRAM_BINS, DEFAULT_HISTOGRAM_BINS);
 	private boolean closeWindowsOnExit = Prefs.get(OPT_CLOSE_WINDOWS_ON_EXIT, false);
+	private boolean setOptions = Prefs.get(OPT_SET_OPTIONS, false);
 
 	private boolean showChannel1RGB = Prefs.get(OPT_SHOW_CHANNEL1_RGB, false);
 	private boolean showChannel2RGB = Prefs.get(OPT_SHOW_CHANNEL2_RGB, false);
@@ -266,7 +269,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private int permutations = (int) Prefs.get(OPT_PERMUTATIONS, 200);
 
 	// Store the channels and frames to use from image stacks
-	private int[] sliceOptions = new int[10];
+	private static int[] sliceOptions = new int[10];
 
 	// Stores the list of images last used in the selection options
 	private ArrayList<String> imageList = new ArrayList<String>();
@@ -286,6 +289,12 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.showMessage("No images opened.");
+			return;
+		}
+
+		if ("macro".equals(arg))
+		{
+			runAsPlugin();
 			return;
 		}
 
@@ -347,7 +356,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		}
 		if ((Button) actioner == helpButton)
 		{
-			String macro = "run('URL...', 'url="+gdsc.help.URL.COLOCALISATION+"');";
+			String macro = "run('URL...', 'url=" + gdsc.help.URL.COLOCALISATION + "');";
 			new MacroRunner(macro);
 		}
 
@@ -367,61 +376,64 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			return;
 		}
 
-		// Assum 
 		if (setResultsOptionsCheckbox.getState())
 		{
 			setResultsOptionsCheckbox.setState(false);
-
-			GenericDialog gd = new GenericDialog("Set Results Options");
-
-			gd.addCheckbox("Show channel 1", showChannel1RGB);
-			gd.addCheckbox("Show channel 2", showChannel2RGB);
-			gd.addCheckbox("Show ROI 1", showSegmented1RGB);
-			gd.addCheckbox("Show ROI 2", showSegmented2RGB);
-			gd.addCheckbox("Show merged channel", showMergedChannelRGB);
-			gd.addCheckbox("Show merged ROI", showMergedSegmentedRGB);
-			gd.addCheckbox("Show merged channel max displacement", showMergedChannelDisplacementRGB);
-			gd.addCheckbox("Show merged ROI max displacement", showMergedSegmentedDisplacementRGB);
-			gd.addCheckbox("Show M1 plot", showM1PlotWindow);
-			gd.addCheckbox("Show M2 plot", showM2PlotWindow);
-			gd.addCheckbox("Show R plot", showRPlotWindow);
-			gd.addCheckbox("Show M1 statistics", showM1Statistics);
-			gd.addCheckbox("Show M2 statistics", showM2Statistics);
-			gd.addCheckbox("Show R statistics", showRStatistics);
-			gd.addCheckbox("Save results", saveResults);
-			gd.addStringField("Results directory", resultsDirectory);
-			gd.addNumericField("p-Value", pValue, 2);
-			gd.addNumericField("Permutations", permutations, 0);
-
-			gd.showDialog();
-
-			if (gd.wasCanceled())
-				return;
-
-			showChannel1RGB = gd.getNextBoolean();
-			showChannel2RGB = gd.getNextBoolean();
-			showSegmented1RGB = gd.getNextBoolean();
-			showSegmented2RGB = gd.getNextBoolean();
-			showMergedChannelRGB = gd.getNextBoolean();
-			showMergedSegmentedRGB = gd.getNextBoolean();
-			showMergedChannelDisplacementRGB = gd.getNextBoolean();
-			showMergedSegmentedDisplacementRGB = gd.getNextBoolean();
-			showM1PlotWindow = gd.getNextBoolean();
-			showM2PlotWindow = gd.getNextBoolean();
-			showRPlotWindow = gd.getNextBoolean();
-			showM1Statistics = gd.getNextBoolean();
-			showM2Statistics = gd.getNextBoolean();
-			showRStatistics = gd.getNextBoolean();
-			saveResults = gd.getNextBoolean();
-			resultsDirectory = gd.getNextString();
-			pValue = gd.getNextNumber();
-			permutations = (int) gd.getNextNumber();
-			if (permutations < 0)
-				permutations = 0;
-
-			checkResultsDirectory();
+			setResultsOptions();
 			updateNumberOfSamples();
 		}
+	}
+
+	public void setResultsOptions()
+	{
+		GenericDialog gd = new GenericDialog("Set Results Options");
+
+		gd.addCheckbox("Show channel 1", showChannel1RGB);
+		gd.addCheckbox("Show channel 2", showChannel2RGB);
+		gd.addCheckbox("Show ROI 1", showSegmented1RGB);
+		gd.addCheckbox("Show ROI 2", showSegmented2RGB);
+		gd.addCheckbox("Show merged channel", showMergedChannelRGB);
+		gd.addCheckbox("Show merged ROI", showMergedSegmentedRGB);
+		gd.addCheckbox("Show merged channel max displacement", showMergedChannelDisplacementRGB);
+		gd.addCheckbox("Show merged ROI max displacement", showMergedSegmentedDisplacementRGB);
+		gd.addCheckbox("Show M1 plot", showM1PlotWindow);
+		gd.addCheckbox("Show M2 plot", showM2PlotWindow);
+		gd.addCheckbox("Show R plot", showRPlotWindow);
+		gd.addCheckbox("Show M1 statistics", showM1Statistics);
+		gd.addCheckbox("Show M2 statistics", showM2Statistics);
+		gd.addCheckbox("Show R statistics", showRStatistics);
+		gd.addCheckbox("Save results", saveResults);
+		gd.addStringField("Results directory", resultsDirectory);
+		gd.addNumericField("p-Value", pValue, 2);
+		gd.addNumericField("Permutations", permutations, 0);
+
+		gd.showDialog();
+
+		if (gd.wasCanceled())
+			return;
+
+		showChannel1RGB = gd.getNextBoolean();
+		showChannel2RGB = gd.getNextBoolean();
+		showSegmented1RGB = gd.getNextBoolean();
+		showSegmented2RGB = gd.getNextBoolean();
+		showMergedChannelRGB = gd.getNextBoolean();
+		showMergedSegmentedRGB = gd.getNextBoolean();
+		showMergedChannelDisplacementRGB = gd.getNextBoolean();
+		showMergedSegmentedDisplacementRGB = gd.getNextBoolean();
+		showM1PlotWindow = gd.getNextBoolean();
+		showM2PlotWindow = gd.getNextBoolean();
+		showRPlotWindow = gd.getNextBoolean();
+		showM1Statistics = gd.getNextBoolean();
+		showM2Statistics = gd.getNextBoolean();
+		showRStatistics = gd.getNextBoolean();
+		saveResults = gd.getNextBoolean();
+		resultsDirectory = gd.getNextString();
+		pValue = gd.getNextNumber();
+		permutations = (int) gd.getNextNumber();
+		if (permutations < 0)
+			permutations = 0;
+
+		checkResultsDirectory();
 	}
 
 	private boolean checkResultsDirectory()
@@ -566,14 +578,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			return;
 		}
 
-		long startTime = System.currentTimeMillis();
 		IJ.showStatus(gettingConfigStatus);
-
-		ImageStack imageStack1;
-		ImageStack imageStack2;
-		ImageStack roiStack1;
-		ImageStack roiStack2;
-		ImageStack confinedStack;
 
 		// Stores these so that they can be reset later
 		channel1Index = channel1List.getSelectedIndex();
@@ -587,24 +592,40 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		expandConfinedCompartment = expandConfinedCheckbox.getState();
 		subRandomSamples = subRandomSamplesCheckbox.getState();
 
+		maximumRadius = getIntValue(maximumRadiusText.getText(), DEFAULT_MAXIMUM_RADIUS);
+		randomRadius = getIntValue(randomRadiusText.getText(), DEFAULT_RANDOM_RADIUS);
+		histogramBins = getIntValue(binsText.getText(), DEFAULT_HISTOGRAM_BINS);
+
+		closeWindowsOnExit = closeWindowsOnExitCheckbox.getState();
+
 		ImagePlus imp1 = WindowManager.getImage(channel1List.getSelectedItem());
 		ImagePlus imp2 = WindowManager.getImage(channel2List.getSelectedItem());
 		ImagePlus roi1 = getRoiSource(imp1, segmented1List, segmented1Option);
 		ImagePlus roi2 = getRoiSource(imp2, segmented2List, segmented2Option);
 		ImagePlus roi = getRoiSource(null, confinedList, confinedOption);
 
+		runCDA(imp1, imp2, roi1, roi2, roi);
+	}
+
+	private void runCDA(ImagePlus imp1, ImagePlus imp2, ImagePlus roi1, ImagePlus roi2, ImagePlus roi)
+	{
 		// Check for image stacks and get the channel and frame (if applicable)
 		if (!getStackOptions(imp1, imp2, roi1, roi2, roi))
 			return;
 
+		// TODO - Should the select channel/frames be saved (i.e. the slice options array)? 
+		saveOptions();
+
+		long startTime = System.currentTimeMillis();
+
 		// Extract images
-		imageStack1 = getStack(imp1, 0);
-		imageStack2 = getStack(imp2, 2);
+		ImageStack imageStack1 = getStack(imp1, 0);
+		ImageStack imageStack2 = getStack(imp2, 2);
 
 		// Get the ROIs
-		roiStack1 = createROI(imp1, roi1, 4, segmented1List, segmented1Option);
-		roiStack2 = createROI(imp2, roi2, 6, segmented2List, segmented2Option);
-		confinedStack = createROI(imp1, roi, 8, confinedList, confinedOption);
+		ImageStack roiStack1 = createROI(imp1, roi1, 4, segmented1OptionIndex);
+		ImageStack roiStack2 = createROI(imp2, roi2, 6, segmented2OptionIndex);
+		ImageStack confinedStack = createROI(imp1, roi, 8, confinedOptionIndex);
 
 		// The images and the masks should be the same size.
 		if (!checkDimensions(imageStack1, imageStack2, roiStack1, roiStack2, confinedStack))
@@ -616,15 +637,6 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			IJ.showMessage(FRAME_TITLE, "ROIs must be at the same width and height of the input images");
 			return;
 		}
-
-		maximumRadius = getIntValue(maximumRadiusText.getText(), DEFAULT_MAXIMUM_RADIUS);
-		randomRadius = getIntValue(randomRadiusText.getText(), DEFAULT_RANDOM_RADIUS);
-		histogramBins = getIntValue(binsText.getText(), DEFAULT_HISTOGRAM_BINS);
-
-		closeWindowsOnExit = closeWindowsOnExitCheckbox.getState();
-
-		// TODO - Should the select channel/frames be saved (i.e. the slice options array)? 
-		saveOptions();
 
 		int[] sum = new int[1];
 		imageStack1 = intersectMask(imageStack1, confinedStack, sum, false);
@@ -692,8 +704,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 		IJ.showProgress(1.0);
 
-		reportResults(imageStack1, imageStack2, roiStack1, roiStack2, confinedStack, lastChannelShiftedRawStack,
-				lastSegmentedShiftedRawStack, unshifted.m1, unshifted.m2, unshifted.r, results);
+		reportResults(imp1, imp2, imageStack1, imageStack2, roiStack1, roiStack2, confinedStack,
+				lastChannelShiftedRawStack, lastSegmentedShiftedRawStack, unshifted.m1, unshifted.m2, unshifted.r,
+				results);
 
 		IJ.showStatus(doneStatus + " Time taken = " + (System.currentTimeMillis() - startTime) / 1000.0);
 	}
@@ -863,10 +876,10 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			gd.addMessage("Stacks detected. Please select the slices.");
 
 			boolean added = false;
-			added |= addOptions(gd, imp1, "Image 1", 0);
-			added |= addOptions(gd, imp2, "Image 2", 2);
-			added |= addOptions(gd, roi1, "ROI 1", 4);
-			added |= addOptions(gd, roi2, "ROI 2", 6);
+			added |= addOptions(gd, imp1, "Image_1", 0);
+			added |= addOptions(gd, imp2, "Image_2", 2);
+			added |= addOptions(gd, roi1, "ROI_1", 4);
+			added |= addOptions(gd, roi2, "ROI_2", 6);
 			added |= addOptions(gd, roi, "Confined", 8);
 
 			if (added)
@@ -903,11 +916,11 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			if (channels.length > 1 || frames.length > 1)
 			{
 				added = true;
-				gd.addMessage(title);
+				//gd.addMessage(title);
 			}
 
-			setOption(gd, channels, "Channel", offset);
-			setOption(gd, frames, "Frame", offset + 1);
+			setOption(gd, channels, title + "_Channel", offset);
+			setOption(gd, frames, title + "_Frame", offset + 1);
 		}
 		return added;
 	}
@@ -1003,12 +1016,12 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		return result;
 	}
 
-	private ImageStack createROI(ImagePlus channelImp, ImagePlus roiImp, int offset, Choice imageList, Choice optionList)
+	private ImageStack createROI(ImagePlus channelImp, ImagePlus roiImp, int offset, int optionIndex)
 	{
 		ByteProcessor bp;
 
 		// Get the ROI option
-		String option = optionList.getSelectedItem();
+		String option = ROI_OPTIONS[optionIndex];
 
 		if (option.equals(OPTION_NONE) || roiImp == null || roiImp.getWidth() != channelImp.getWidth() ||
 				roiImp.getHeight() != channelImp.getHeight())
@@ -1089,18 +1102,17 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		return defaultMask(channelImp);
 	}
 
-	private ImageProcessor getRoiIp(ImageProcessor channelIp, Choice imageList)
+	private ImageProcessor getRoiIp(ImageProcessor channelIp, int index)
 	{
 		ImageProcessor roiIp = null;
 
-		String imageName = imageList.getSelectedItem();
-		if (imageName.equals(CHANNEL_IMAGE))
+		if (index == 0)
 		{
 			roiIp = channelIp;
 		}
 		else
 		{
-			ImagePlus roiImage = WindowManager.getImage(imageList.getSelectedItem());
+			ImagePlus roiImage = WindowManager.getImage(imageList.get(index - 1));
 			if (roiImage != null)
 			{
 				roiIp = roiImage.getProcessor();
@@ -1125,9 +1137,10 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		return result;
 	}
 
-	private void reportResults(ImageStack imageStack1, ImageStack imageStack2, ImageStack roiStack1,
-			ImageStack roiStack2, ImageStack confinedStack, ImageStack lastChannelShiftedRawStack,
-			ImageStack lastSegmentedShiftedRawStack, double M1, double M2, double R, List<CalculationResult> results)
+	private void reportResults(ImagePlus imp1, ImagePlus imp2, ImageStack imageStack1, ImageStack imageStack2,
+			ImageStack roiStack1, ImageStack roiStack2, ImageStack confinedStack,
+			ImageStack lastChannelShiftedRawStack, ImageStack lastSegmentedShiftedRawStack, double M1, double M2,
+			double R, List<CalculationResult> results)
 	{
 		IJ.showStatus(processingMandersStatus);
 
@@ -1326,14 +1339,15 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 		StringBuffer resultsEntry = new StringBuffer();
 		addField(resultsEntry, id);
-		addField(resultsEntry, getImageTitle(channel1List, 0));
-		addField(resultsEntry, getImageTitle(channel2List, 2));
+		addField(resultsEntry, getImageTitle(imp1, 0));
+		addField(resultsEntry, getImageTitle(imp2, 2));
 
-		addRoiField(resultsEntry, segmented1Option, segmented1List,
-				getRoiIp(imageStack1.getProcessor(1), segmented1List));
-		addRoiField(resultsEntry, segmented2Option, segmented2List,
-				getRoiIp(imageStack2.getProcessor(1), segmented2List));
-		addRoiField(resultsEntry, confinedOption, confinedList, getRoiIp(confinedStack.getProcessor(1), confinedList));
+		addRoiField(resultsEntry, segmented1OptionIndex, segmented1Index,
+				getRoiIp(imageStack1.getProcessor(1), segmented1Index));
+		addRoiField(resultsEntry, segmented2OptionIndex, segmented2Index,
+				getRoiIp(imageStack2.getProcessor(1), segmented2Index));
+		addRoiField(resultsEntry, confinedOptionIndex, confinedIndex,
+				getRoiIp(confinedStack.getProcessor(1), confinedIndex+1));
 		addField(resultsEntry, expandConfinedCompartment);
 		addField(resultsEntry, maximumRadius);
 		addField(resultsEntry, randomRadius);
@@ -1375,9 +1389,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		}
 	}
 
-	private Object getImageTitle(Choice imageList, int offset)
+	private Object getImageTitle(ImagePlus imp, int offset)
 	{
-		ImagePlus imp = WindowManager.getImage(imageList.getSelectedItem());
 		if (imp != null)
 		{
 			StringBuilder sb = new StringBuilder(imp.getTitle());
@@ -1497,7 +1510,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		}
 		else
 		{
-			closePlotWindow(plotWindow, locationKey);			
+			closePlotWindow(plotWindow, locationKey);
 			plotWindow = null;
 		}
 
@@ -1665,13 +1678,14 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		return buffer;
 	}
 
-	private void addRoiField(StringBuffer buffer, Choice optionList, Choice imageList, ImageProcessor roiIp)
+	private void addRoiField(StringBuffer buffer, int roiIndex, int imageIndex, ImageProcessor roiIp)
 	{
-		addField(buffer, optionList.getSelectedItem());
-		if (!optionList.getSelectedItem().equals(OPTION_NONE))
+		String roiOption = ROI_OPTIONS[roiIndex];
+		addField(buffer, roiOption);
+		if (!roiOption.equals(OPTION_NONE))
 		{
-			buffer.append(" : ").append(imageList.getSelectedItem());
-			if (optionList.getSelectedItem().equals(OPTION_MIN_VALUE))
+			buffer.append(" : ").append(imageList.get(imageIndex));
+			if (roiOption.equals(OPTION_MIN_VALUE))
 			{
 				if (roiIp != null)
 				{
@@ -1680,7 +1694,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 					buffer.append(")");
 				}
 			}
-			else if (optionList.getSelectedItem().equals(OPTION_USE_ROI))
+			else if (roiOption.equals(OPTION_USE_ROI))
 			{
 				if (roiIp != null)
 				{
@@ -1782,28 +1796,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	public void fillImagesList()
 	{
 		// Find the currently open images
-		ArrayList<String> newImageList = new ArrayList<String>();
-
-		for (int id : gdsc.utils.ImageJHelper.getIDList())
-		{
-			ImagePlus imp = WindowManager.getImage(id);
-
-			// Image must be 8-bit/16-bit
-			if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16))
-			{
-				// Check it is not one the result images
-				String imageTitle = imp.getTitle();
-				if ((imageTitle.equals(channel1RGBTitle)) || (imageTitle.equals(channel2RGBTitle)) ||
-						(imageTitle.equals(segmented1RGBTitle)) || (imageTitle.equals(segmented2RGBTitle)) ||
-						(imageTitle.equals(plotM1Title)) || (imageTitle.equals(plotM2Title)) ||
-						(imageTitle.equals(m1HistogramTitle)) || (imageTitle.equals(m2HistogramTitle)) ||
-						(imageTitle.equals(mergedChannelTitle)) || (imageTitle.equals(mergedSegmentedTitle)) ||
-						(imageTitle.equals(lastShiftedSegmentedTitle)) || (imageTitle.equals(lastShiftedChannelTitle)))
-					continue;
-
-				newImageList.add(imageTitle);
-			}
-		}
+		ArrayList<String> newImageList = createImageList();
 
 		// Check if the image list has changed
 		if (imageList.equals(newImageList))
@@ -1844,6 +1837,33 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			segmented2List.select(segmented2Index);
 		if ((confinedIndex < confinedList.getItemCount()) && (confinedIndex >= 0))
 			confinedList.select(confinedIndex);
+	}
+
+	public ArrayList<String> createImageList()
+	{
+		ArrayList<String> newImageList = new ArrayList<String>();
+
+		for (int id : gdsc.utils.ImageJHelper.getIDList())
+		{
+			ImagePlus imp = WindowManager.getImage(id);
+
+			// Image must be 8-bit/16-bit
+			if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16))
+			{
+				// Check it is not one the result images
+				String imageTitle = imp.getTitle();
+				if ((imageTitle.equals(channel1RGBTitle)) || (imageTitle.equals(channel2RGBTitle)) ||
+						(imageTitle.equals(segmented1RGBTitle)) || (imageTitle.equals(segmented2RGBTitle)) ||
+						(imageTitle.equals(plotM1Title)) || (imageTitle.equals(plotM2Title)) ||
+						(imageTitle.equals(m1HistogramTitle)) || (imageTitle.equals(m2HistogramTitle)) ||
+						(imageTitle.equals(mergedChannelTitle)) || (imageTitle.equals(mergedSegmentedTitle)) ||
+						(imageTitle.equals(lastShiftedSegmentedTitle)) || (imageTitle.equals(lastShiftedChannelTitle)))
+					continue;
+
+				newImageList.add(imageTitle);
+			}
+		}
+		return newImageList;
 	}
 
 	private void createFrame()
@@ -1913,14 +1933,14 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		okButton.addActionListener(this);
 		helpButton = new Button(helpButtonLabel);
 		helpButton.addActionListener(this);
-		 
+
 		JPanel buttonPanel = new JPanel();
 		FlowLayout l = new FlowLayout();
 		l.setVgap(0);
 		buttonPanel.setLayout(l);
 		buttonPanel.add(okButton, BorderLayout.CENTER);
 		buttonPanel.add(helpButton, BorderLayout.CENTER);
-		
+
 		mainPanel.add(buttonPanel);
 	}
 
@@ -2143,6 +2163,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		Prefs.set(OPT_SUB_RANDOM_SAMPLES, subRandomSamples);
 		Prefs.set(OPT_HISTOGRAM_BINS, histogramBins);
 		Prefs.set(OPT_CLOSE_WINDOWS_ON_EXIT, closeWindowsOnExit);
+		Prefs.set(OPT_SET_OPTIONS, setOptions);
 
 		Prefs.set(OPT_SHOW_CHANNEL1_RGB, showChannel1RGB);
 		Prefs.set(OPT_SHOW_CHANNEL2_RGB, showChannel2RGB);
@@ -2161,5 +2182,93 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		Prefs.set(OPT_RESULTS_DIRECTORY, resultsDirectory);
 		Prefs.set(OPT_P_VALUE, pValue);
 		Prefs.set(OPT_PERMUTATIONS, permutations);
+	}
+
+	/**
+	 * Run using an ImageJ generic dialog to allow recording in macros
+	 */
+	private void runAsPlugin()
+	{
+		imageList = createImageList();
+		if (imageList.size() < 2)
+		{
+			// Check for an image stack with more than one channel/frame
+			ImagePlus imp = (imageList.isEmpty()) ? null : WindowManager.getImage(imageList.get(0));
+			if (imp == null || (imp.getNChannels() + imp.getNFrames() < 3))
+			{
+				IJ.showMessage(FRAME_TITLE,
+						"Requires 2 images or a multi-channel/frame stack. Images must be 8-bit or 16-bit grayscale.");
+			}
+		}
+
+		String[] images = new String[imageList.size()];
+		String[] images2 = new String[imageList.size() + 1];
+		images2[0] = CHANNEL_IMAGE;
+		for (int i = 0; i < imageList.size(); i++)
+		{
+			images[i] = images2[i + 1] = imageList.get(i);
+		}
+
+		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+
+		gd.addChoice(choiceChannel1.replace(" ", "_"), images, getTitle(images, channel1Index));
+		gd.addChoice(choiceChannel2.replace(" ", "_"), images, getTitle(images, channel2Index));
+		// ROIs require two choice boxes
+		addRoiChoice(gd, choiceSegmentedChannel1, ROI_OPTIONS, images2, segmented1OptionIndex, segmented1Index);
+		addRoiChoice(gd, choiceSegmentedChannel2, ROI_OPTIONS, images2, segmented2OptionIndex, segmented2Index);
+		addRoiChoice(gd, choiceConfined, ROI_OPTIONS, images, confinedOptionIndex, confinedIndex);
+
+		gd.addCheckbox(choiceExpandConfined.trim().replace(" ", "_"), expandConfinedCompartment);
+		gd.addNumericField(choiceMaximumRadius, maximumRadius, 0);
+		gd.addNumericField(choiceRandomRadius, randomRadius, 0);
+		gd.addCheckbox(choiceSubRandomSamples.trim().replace(" ", "_"), subRandomSamples);
+		gd.addNumericField(choiceBinsNumber, histogramBins, 0);
+		gd.addCheckbox(choiceSetOptions.replace(" ", "_"), setOptions);
+
+		gd.showDialog();
+
+		if (gd.wasCanceled())
+			return;
+
+		channel1Index = gd.getNextChoiceIndex();
+		channel2Index = gd.getNextChoiceIndex();
+		segmented1OptionIndex = gd.getNextChoiceIndex();
+		segmented1Index = gd.getNextChoiceIndex();
+		segmented2OptionIndex = gd.getNextChoiceIndex();
+		segmented2Index = gd.getNextChoiceIndex();
+		confinedOptionIndex = gd.getNextChoiceIndex();
+		confinedIndex = gd.getNextChoiceIndex();
+		expandConfinedCompartment = gd.getNextBoolean();
+		maximumRadius = (int) gd.getNextNumber();
+		randomRadius = (int) gd.getNextNumber();
+		subRandomSamples = gd.getNextBoolean();
+		histogramBins = (int) gd.getNextNumber();
+
+		if ((setOptions = gd.getNextBoolean()))
+			setResultsOptions();
+
+		// Get the images
+		ImagePlus imp1 = WindowManager.getImage(images[channel1Index]);
+		ImagePlus imp2 = WindowManager.getImage(images[channel2Index]);
+		ImagePlus roi1 = WindowManager.getImage(images2[segmented1Index]);
+		ImagePlus roi2 = WindowManager.getImage(images2[segmented2Index]);
+		ImagePlus roi = WindowManager.getImage(images[confinedIndex]);
+
+		runCDA(imp1, imp2, roi1, roi2, roi);
+	}
+
+	private void addRoiChoice(GenericDialog gd, String title, String[] roiOptions, String[] images, int optionIndex,
+			int index)
+	{
+		String name = title.replace(" ", "_");
+		gd.addChoice(name, roiOptions, getTitle(roiOptions, optionIndex));
+		gd.addChoice(name + "_image", images, getTitle(images, index));
+	}
+
+	private String getTitle(String[] titles, int index)
+	{
+		if (index < titles.length)
+			return titles[index];
+		return "";
 	}
 }
