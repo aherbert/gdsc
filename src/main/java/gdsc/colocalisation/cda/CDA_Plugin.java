@@ -388,22 +388,22 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		GenericDialog gd = new GenericDialog("Set Results Options");
 
-		gd.addCheckbox("Show channel 1", showChannel1RGB);
-		gd.addCheckbox("Show channel 2", showChannel2RGB);
-		gd.addCheckbox("Show ROI 1", showSegmented1RGB);
-		gd.addCheckbox("Show ROI 2", showSegmented2RGB);
-		gd.addCheckbox("Show merged channel", showMergedChannelRGB);
-		gd.addCheckbox("Show merged ROI", showMergedSegmentedRGB);
-		gd.addCheckbox("Show merged channel max displacement", showMergedChannelDisplacementRGB);
-		gd.addCheckbox("Show merged ROI max displacement", showMergedSegmentedDisplacementRGB);
-		gd.addCheckbox("Show M1 plot", showM1PlotWindow);
-		gd.addCheckbox("Show M2 plot", showM2PlotWindow);
-		gd.addCheckbox("Show R plot", showRPlotWindow);
-		gd.addCheckbox("Show M1 statistics", showM1Statistics);
-		gd.addCheckbox("Show M2 statistics", showM2Statistics);
-		gd.addCheckbox("Show R statistics", showRStatistics);
-		gd.addCheckbox("Save results", saveResults);
-		gd.addStringField("Results directory", resultsDirectory);
+		gd.addCheckbox("Show_channel_1", showChannel1RGB);
+		gd.addCheckbox("Show_channel_2", showChannel2RGB);
+		gd.addCheckbox("Show_ROI_1", showSegmented1RGB);
+		gd.addCheckbox("Show_ROI_2", showSegmented2RGB);
+		gd.addCheckbox("Show_merged_channel", showMergedChannelRGB);
+		gd.addCheckbox("Show_merged_ROI", showMergedSegmentedRGB);
+		gd.addCheckbox("Show_merged_channel_max_displacement", showMergedChannelDisplacementRGB);
+		gd.addCheckbox("Show_merged_ROI_max_displacement", showMergedSegmentedDisplacementRGB);
+		gd.addCheckbox("Show_M1_plot", showM1PlotWindow);
+		gd.addCheckbox("Show_M2_plot", showM2PlotWindow);
+		gd.addCheckbox("Show_R_plot", showRPlotWindow);
+		gd.addCheckbox("Show_M1_statistics", showM1Statistics);
+		gd.addCheckbox("Show_M2_statistics", showM2Statistics);
+		gd.addCheckbox("Show_R_statistics", showRStatistics);
+		gd.addCheckbox("Save_results", saveResults);
+		gd.addStringField("Results_directory", resultsDirectory);
 		gd.addNumericField("p-Value", pValue, 2);
 		gd.addNumericField("Permutations", permutations, 0);
 
@@ -1106,13 +1106,13 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		ImageProcessor roiIp = null;
 
-		if (index == 0)
+		if (index < 0)
 		{
 			roiIp = channelIp;
 		}
 		else
 		{
-			ImagePlus roiImage = WindowManager.getImage(imageList.get(index - 1));
+			ImagePlus roiImage = WindowManager.getImage(imageList.get(index));
 			if (roiImage != null)
 			{
 				roiIp = roiImage.getProcessor();
@@ -1342,12 +1342,14 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		addField(resultsEntry, getImageTitle(imp1, 0));
 		addField(resultsEntry, getImageTitle(imp2, 2));
 
-		addRoiField(resultsEntry, segmented1OptionIndex, segmented1Index,
-				getRoiIp(imageStack1.getProcessor(1), segmented1Index));
-		addRoiField(resultsEntry, segmented2OptionIndex, segmented2Index,
-				getRoiIp(imageStack2.getProcessor(1), segmented2Index));
+		// Note that the segmented indices must be offset by one to account for the extra option
+		// in the list of segmented images 
+		addRoiField(resultsEntry, segmented1OptionIndex, segmented1Index-1,
+				getRoiIp(imageStack1.getProcessor(1), segmented1Index-1));
+		addRoiField(resultsEntry, segmented2OptionIndex, segmented2Index-1,
+				getRoiIp(imageStack2.getProcessor(1), segmented2Index-1));
 		addRoiField(resultsEntry, confinedOptionIndex, confinedIndex,
-				getRoiIp(confinedStack.getProcessor(1), confinedIndex+1));
+				getRoiIp(confinedStack.getProcessor(1), confinedIndex));
 		addField(resultsEntry, expandConfinedCompartment);
 		addField(resultsEntry, maximumRadius);
 		addField(resultsEntry, randomRadius);
