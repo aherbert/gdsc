@@ -1686,7 +1686,11 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		addField(buffer, roiOption);
 		if (!roiOption.equals(OPTION_NONE))
 		{
-			buffer.append(" : ").append(imageList.get(imageIndex));
+			buffer.append(" : ");
+			if (imageIndex < 0)
+				buffer.append(CHANNEL_IMAGE);
+			else
+				buffer.append(imageList.get(imageIndex));
 			if (roiOption.equals(OPTION_MIN_VALUE))
 			{
 				if (roiIp != null)
