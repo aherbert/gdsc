@@ -1379,6 +1379,8 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		plot.draw();
 		plot.setColor(Color.RED);
 		plot.addPoints(threshold, R2, Plot.CROSS);
+		plot.setColor(Color.BLACK);
+		plot.addLabel(0, 0, "Blue=C1+C2 above threshold; Red=Ch1/Ch2 below threshold");
 		rPlot = plot.show();
 	}
 }
