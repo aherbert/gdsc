@@ -571,6 +571,8 @@ public class SpotDistance implements PlugIn
 		Rectangle blurBounds = null;
 		if (regions == null)
 			regions = findRegions(s2);
+		if (regions.length == 0)
+			return; // Q. Should anything be reported?
 
 		if (regions.length == 1)
 		{
