@@ -97,6 +97,7 @@ public class SpotDistance implements PlugIn
 	private int[] regions = null;
 	private ImagePlus regionImp = null;
 	private Rectangle bounds = new Rectangle();
+	private Rectangle cachedBlurBounds = null;
 
 	public void run(String arg)
 	{
@@ -449,8 +450,6 @@ public class SpotDistance implements PlugIn
 			labelRegions(ip);
 
 			maskImp = new ImagePlus("Mask", ip);
-
-			maskImp.show();
 		}
 
 		if (imp.getNSlices() > 1 && maskImp.getNSlices() != 1 && maskImp.getNSlices() != imp.getNSlices())
@@ -567,8 +566,8 @@ public class SpotDistance implements PlugIn
 		//new ImagePlus("mask " + frame, s2).show();
 
 		// Check the mask we are using. 
-		// If only one region we can use a ROI bounds for the Gaussian blur to increase speed.
-		Rectangle blurBounds = null;
+		// We can use a ROI bounds for the Gaussian blur to increase speed.
+		Rectangle blurBounds = cachedBlurBounds;
 		if (regions == null)
 			regions = findRegions(s2);
 		if (regions.length == 0)
@@ -583,10 +582,13 @@ public class SpotDistance implements PlugIn
 			}
 			blurBounds = bounds;
 		}
-		else
+		else if (blurBounds == null)
 		{
-			// TODO - Create the bounds using the min and max of all the regions
+			// Create the bounds using the min and max of all the regions
+			blurBounds = findBounds(s2);
 		}
+
+		cachedBlurBounds = blurBounds;
 
 		if (showProjection)
 		{
@@ -850,6 +852,7 @@ public class SpotDistance implements PlugIn
 		{
 			regions = null;
 			regionImp = null;
+			cachedBlurBounds = null;
 		}
 	}
 
@@ -1063,6 +1066,40 @@ public class SpotDistance implements PlugIn
 		bounds.width = maxX - minX + 1;
 		bounds.height = maxY - minY + 1;
 		return new ImagePlus(null, outputStack);
+	}
+
+	private Rectangle findBounds(ImageStack inputStack)
+	{
+		int minX = Integer.MAX_VALUE;
+		int minY = Integer.MAX_VALUE;
+		int maxX = 0;
+		int maxY = 0;
+		for (int slice = 1; slice <= inputStack.getSize(); slice++)
+		{
+			ImageProcessor ip = inputStack.getProcessor(slice);
+			for (int i = 0; i < ip.getPixelCount(); i++)
+				if (ip.get(i) != 0)
+				{
+					// Calculate bounding rectangle
+					int x = i % inputStack.getWidth();
+					int y = i / inputStack.getWidth();
+					if (minX > x)
+						minX = x;
+					if (minY > y)
+						minY = y;
+					if (maxX < x)
+						maxX = x;
+					if (maxY < y)
+						maxY = y;
+				}
+		}
+
+		Rectangle bounds = new Rectangle();
+		bounds.x = minX;
+		bounds.y = minY;
+		bounds.width = maxX - minX + 1;
+		bounds.height = maxY - minY + 1;
+		return bounds;
 	}
 
 	/**
