@@ -67,6 +67,7 @@ public class SpotDistance implements PlugIn
 	private static double stdDevAboveBackground = 3;
 	private static int minPeakSize = 15;
 	private static double minPeakHeight = 5;
+	private static int maxPeaks = 50;
 
 	private static double circularityLimit = 0.7;
 	private static int showOverlay = 2;
@@ -155,6 +156,7 @@ public class SpotDistance implements PlugIn
 				gd.addNumericField("Background (SD > Av)", stdDevAboveBackground, 1);
 				gd.addNumericField("Min_peak_size", minPeakSize, 0);
 				gd.addNumericField("Min_peak_height", minPeakHeight, 2);
+				gd.addNumericField("Max_peaks", maxPeaks, 2);
 			}
 			gd.addNumericField("Ciruclarity_limit", circularityLimit, 2);
 			gd.addNumericField("Max_distance", maxDistance, 2, 6, "pixels");
@@ -185,6 +187,7 @@ public class SpotDistance implements PlugIn
 				stdDevAboveBackground = gd.getNextNumber();
 				minPeakSize = (int) gd.getNextNumber();
 				minPeakHeight = (int) gd.getNextNumber();
+				maxPeaks = (int) gd.getNextNumber();
 			}
 			circularityLimit = gd.getNextNumber();
 			maxDistance = gd.getNextNumber();
@@ -630,7 +633,6 @@ public class SpotDistance implements PlugIn
 		String autoThresholdMethod = "Otsu";
 		int searchMethod = FindFoci.SEARCH_ABOVE_BACKGROUND;
 		double searchParameter = 0;
-		int maxPeaks = 50;
 		int minSize = minPeakSize;
 		int peakMethod = FindFoci.PEAK_ABSOLUTE;
 		int outputType = FindFoci.OUTPUT_RESULTS_TABLE | FindFoci.OUTPUT_MASK_PEAKS |
