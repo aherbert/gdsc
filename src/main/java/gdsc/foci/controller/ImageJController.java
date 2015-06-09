@@ -126,6 +126,7 @@ public class ImageJController extends FindFociController
 		boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
 		boolean saveResults = model.isSaveResults();
 		String resultsDirectory = model.getResultsDirectory();
+		boolean objectAnalysis = model.isObjectAnalysis();
 		double gaussianBlur = model.getGaussianBlur();
 		int centreMethod = model.getCentreMethod();
 		double centreParameter = model.getCentreParameter();
@@ -153,6 +154,8 @@ public class ImageJController extends FindFociController
 			options |= FindFoci.OPTION_STATS_OUTSIDE;
 		if (removeEdgeMaxima)
 			options |= FindFoci.OPTION_REMOVE_EDGE_MAXIMA;
+		if (objectAnalysis)
+			options |= FindFoci.OPTION_OBJECT_ANALYSIS;
 
 		if (outputType == 0)
 		{
@@ -195,6 +198,8 @@ public class ImageJController extends FindFociController
 				Recorder.recordOption("Remove_edge_maxima");
 			if (saveResults)
 				Recorder.recordOption("Results_directory", resultsDirectory);
+			if (objectAnalysis)
+				Recorder.recordOption("Object_analysis");
 			Recorder.recordOption("Gaussian_blur", "" + gaussianBlur);
 			Recorder.recordOption("Centre_method", FindFoci.getCentreMethods()[centreMethod]);
 			Recorder.recordOption("Centre_parameter", "" + centreParameter);

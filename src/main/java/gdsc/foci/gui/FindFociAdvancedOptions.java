@@ -80,6 +80,7 @@ public class FindFociAdvancedOptions extends JDialog
 	private JFormattedTextField txtCentreParam;
 	private JCheckBox chckbxShowMaskMaxima;
 	private JCheckBox chckbxRemoveEdgeMaxima;
+	private JCheckBox chckbxObjectAnalysis;
 
 	/**
 	 * Launch the application.
@@ -119,15 +120,15 @@ public class FindFociAdvancedOptions extends JDialog
 
 	private void init()
 	{
-		setBounds(100, 100, 450, 361);
+		setBounds(100, 100, 450, 400);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
 		GridBagLayout gbl_contentPanel = new GridBagLayout();
 		gbl_contentPanel.columnWidths = new int[] { 0, 182, 50, 0 };
-		gbl_contentPanel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+		gbl_contentPanel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		gbl_contentPanel.columnWeights = new double[] { 0.0, 1.0, 0.0, Double.MIN_VALUE };
-		gbl_contentPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+		gbl_contentPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
 		contentPanel.setLayout(gbl_contentPanel);
 		{
 			{
@@ -199,6 +200,13 @@ public class FindFociAdvancedOptions extends JDialog
 				contentPanel.add(chckbxMarkPeakMaxima, gbc_chckbxMarkPeakMaxima);
 				{
 					chckbxShowMaskMaxima = new JCheckBox("Show mask maxima as dots");
+					chckbxShowMaskMaxima.addItemListener(new ItemListener()
+					{
+						public void itemStateChanged(ItemEvent e)
+						{
+							chckbxShowMaskMaxima.firePropertyChange("selected", 0, 1);
+						}
+					});
 					GridBagConstraints gbc_chckbxShowMaskMaxima = new GridBagConstraints();
 					gbc_chckbxShowMaskMaxima.anchor = GridBagConstraints.WEST;
 					gbc_chckbxShowMaskMaxima.gridwidth = 2;
@@ -324,6 +332,13 @@ public class FindFociAdvancedOptions extends JDialog
 		}
 		{
 			chckbxRemoveEdgeMaxima = new JCheckBox("Remove edge maxima");
+			chckbxRemoveEdgeMaxima.addItemListener(new ItemListener()
+			{
+				public void itemStateChanged(ItemEvent e)
+				{
+					chckbxRemoveEdgeMaxima.firePropertyChange("selected", 0, 1);
+				}
+			});
 			GridBagConstraints gbc_chckbxRemoveEdgeMaxima = new GridBagConstraints();
 			gbc_chckbxRemoveEdgeMaxima.anchor = GridBagConstraints.WEST;
 			gbc_chckbxRemoveEdgeMaxima.gridwidth = 2;
@@ -360,7 +375,7 @@ public class FindFociAdvancedOptions extends JDialog
 				}
 			});
 			GridBagConstraints gbc_txtResultsDirectory = new GridBagConstraints();
-			gbc_txtResultsDirectory.insets = new Insets(0, 0, 0, 5);
+			gbc_txtResultsDirectory.insets = new Insets(0, 0, 5, 5);
 			gbc_txtResultsDirectory.gridwidth = 2;
 			gbc_txtResultsDirectory.fill = GridBagConstraints.HORIZONTAL;
 			gbc_txtResultsDirectory.gridx = 0;
@@ -390,10 +405,27 @@ public class FindFociAdvancedOptions extends JDialog
 			btnDirectoryPicker.setMargin(new Insets(2, 2, 2, 2));
 			GridBagConstraints gbc_btnDirectoryPicker = new GridBagConstraints();
 			gbc_btnDirectoryPicker.fill = GridBagConstraints.HORIZONTAL;
-			gbc_btnDirectoryPicker.insets = new Insets(0, 0, 0, 0);
+			gbc_btnDirectoryPicker.insets = new Insets(0, 0, 5, 0);
 			gbc_btnDirectoryPicker.gridx = 2;
 			gbc_btnDirectoryPicker.gridy = 10;
 			contentPanel.add(btnDirectoryPicker, gbc_btnDirectoryPicker);
+		}
+		{
+			chckbxObjectAnalysis = new JCheckBox("Object analysis");
+			chckbxObjectAnalysis.setToolTipText("Compute objects within the mask and label maxima within each object");
+			chckbxObjectAnalysis.addItemListener(new ItemListener()
+			{
+				public void itemStateChanged(ItemEvent e)
+				{
+					chckbxObjectAnalysis.firePropertyChange("selected", 0, 1);
+				}
+			});
+			chckbxObjectAnalysis.setMargin(new Insets(2, 2, 2, 0));
+			GridBagConstraints gbc_chckbxObjectAnalysis = new GridBagConstraints();
+			gbc_chckbxObjectAnalysis.insets = new Insets(0, 0, 0, 5);
+			gbc_chckbxObjectAnalysis.gridx = 0;
+			gbc_chckbxObjectAnalysis.gridy = 11;
+			contentPanel.add(chckbxObjectAnalysis, gbc_chckbxObjectAnalysis);
 		}
 		{
 			JPanel buttonPane = new JPanel();
@@ -478,5 +510,9 @@ public class FindFociAdvancedOptions extends JDialog
 		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_9 = BeanProperty.create("removeEdgeMaxima");
 		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_12 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_9, chckbxRemoveEdgeMaxima, jCheckBoxBeanProperty);
 		autoBinding_12.bind();
+		//
+		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_10 = BeanProperty.create("objectAnalysis");
+		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_13 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_10, chckbxObjectAnalysis, jCheckBoxBeanProperty);
+		autoBinding_13.bind();
 	}
 }

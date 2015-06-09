@@ -101,6 +101,7 @@ public class FindFoci implements PlugIn, MouseListener
 		int centreMethod;
 		double centreParameter;
 		double fractionParameter;
+		boolean objectAnalysis;
 
 		int outputType;
 		int options;
@@ -132,6 +133,7 @@ public class FindFoci implements PlugIn, MouseListener
 			blur = findDouble("Gaussian_blur");
 			centreMethod = findIndex("Centre_method", centreMethods);
 			centreParameter = findDouble("Centre_parameter");
+			objectAnalysis = findBoolean("Object_analysis");
 
 			outputType = getOutputMaskFlags(showMask);
 
@@ -153,6 +155,8 @@ public class FindFoci implements PlugIn, MouseListener
 				options |= OPTION_STATS_OUTSIDE;
 			if (removeEdgeMaxima)
 				options |= OPTION_REMOVE_EDGE_MAXIMA;
+			if (objectAnalysis)
+				options |= OPTION_OBJECT_ANALYSIS;
 		}
 
 		private void readParameters(String filename) throws IOException
@@ -557,9 +561,19 @@ public class FindFoci implements PlugIn, MouseListener
 	 * internally to sort the results using values not stored in the result array.
 	 */
 	private final static int RESULT_CUSTOM_SORT_VALUE = 14;
+	/**
+	 * The index of the state (i.e. pixel value) from the mask image within the result int[] array of the results
+	 * ArrayList<int[]> object
+	 */
+	private final static int RESULT_STATE = 15;
+	/**
+	 * The index of the allocated object from the mask image within the result int[] array of the results
+	 * ArrayList<int[]> object
+	 */
+	private final static int RESULT_OBJECT = 16;
 
 	// The length of the result array
-	private final static int RESULT_LENGTH = 15;
+	private final static int RESULT_LENGTH = 17;
 
 	// The indices used within the saddle array
 	private final static int SADDLE_PEAK_ID = 0;
@@ -649,6 +663,11 @@ public class FindFoci implements PlugIn, MouseListener
 	 * Remove any maxima that touch the edge of the image
 	 */
 	public final static int OPTION_REMOVE_EDGE_MAXIMA = 8;
+	/**
+	 * Identify all connected non-zero mask pixels with the same value as objects and label the maxima
+	 * as belonging to each object
+	 */
+	public final static int OPTION_OBJECT_ANALYSIS = 16;
 
 	private static String[] centreMethods = { "Max value (search image)", "Max value (original image)",
 			"Centre of mass (search image)", "Centre of mass (original image)", "Gaussian (search image)",
@@ -736,6 +755,7 @@ public class FindFoci implements PlugIn, MouseListener
 	private static boolean myShowLogMessages = true;
 	private static boolean myRemoveEdgeMaxima = true;
 	private static String myResultsDirectory = "";
+	private static boolean myObjectAnalysis = true;
 	private static double myGaussianBlur = 0;
 	private static int myCentreMethod = FindFoci.CENTRE_MAX_VALUE_SEARCH;
 	private static double myCentreParameter = 2;
@@ -831,6 +851,7 @@ public class FindFoci implements PlugIn, MouseListener
 		gd.addCheckbox("Show_log_messages", myShowLogMessages);
 		gd.addCheckbox("Remove_edge_maxima", myRemoveEdgeMaxima);
 		gd.addStringField("Results_directory", myResultsDirectory);
+		gd.addCheckbox("Object_analysis", myObjectAnalysis);
 		gd.addMessage("Advanced options ...");
 		gd.addNumericField("Gaussian_blur", myGaussianBlur, 1);
 		gd.addChoice("Centre_method", centreMethods, centreMethods[myCentreMethod]);
@@ -897,6 +918,7 @@ public class FindFoci implements PlugIn, MouseListener
 		myShowLogMessages = gd.getNextBoolean();
 		myRemoveEdgeMaxima = gd.getNextBoolean();
 		myResultsDirectory = gd.getNextString();
+		myObjectAnalysis = gd.getNextBoolean();
 		myGaussianBlur = gd.getNextNumber();
 		myCentreMethod = gd.getNextChoiceIndex();
 		myCentreParameter = gd.getNextNumber();
@@ -933,6 +955,11 @@ public class FindFoci implements PlugIn, MouseListener
 		ImagePlus mask = WindowManager.getImage(myMaskImage);
 
 		setResultsDirectory(myResultsDirectory);
+
+		// Only perform object analysis if necessary
+		if (myObjectAnalysis && (myShowTable || this.resultsDirectory != null))
+			options |= OPTION_OBJECT_ANALYSIS;
+
 		exec(imp, mask, myBackgroundMethod, myBackgroundParameter, myThresholdMethod, mySearchMethod,
 				mySearchParameter, myMaxPeaks, myMinSize, myPeakMethod, myPeakParameter, outputType, mySortMethod,
 				options, myGaussianBlur, myCentreMethod, myCentreParameter, myFractionParameter);
@@ -1085,6 +1112,14 @@ public class FindFoci implements PlugIn, MouseListener
 		ArrayList<int[]> resultsArray = (ArrayList<int[]>) results[1];
 		double[] stats = (double[]) results[2];
 
+		// If we are outputting a results table or saving to file we can do the object analysis
+		if ((options & OPTION_OBJECT_ANALYSIS) != 0 &&
+				(((outputType & OUTPUT_RESULTS_TABLE) != 0) || resultsDirectory != null))
+		{
+			System.out.printf("1. Find all objects in the mask\n");
+			doObjectAnalysis(mask, resultsArray);
+		}
+
 		// Add peaks to a results window
 		if (resultsArray != null && (outputType & OUTPUT_RESULTS_TABLE) != 0)
 		{
@@ -1120,21 +1155,7 @@ public class FindFoci implements PlugIn, MouseListener
 		ImagePlus maxImp = null;
 		if (maximaImp != null && (outputType & OUTPUT_MASK) != 0)
 		{
-			ImageStack stack = maximaImp.getStack();
-
-			String outname = imp.getTitle() + " " + FRAME_TITLE;
-
-			maxImp = WindowManager.getImage(outname);
-			if (maxImp != null)
-			{
-				maxImp.setStack(stack);
-			}
-			else
-			{
-				maxImp = new ImagePlus(outname, stack);
-			}
-
-			maxImp.show();
+			maxImp = showImage(maximaImp.getStack(), imp.getTitle() + " " + FRAME_TITLE);
 
 			// Adjust the contrast to show all the maxima
 			if (resultsArray != null)
@@ -1178,6 +1199,22 @@ public class FindFoci implements PlugIn, MouseListener
 				maxImp.killRoi();
 			}
 		}
+	}
+
+	public ImagePlus showImage(ImageStack stack, String title)
+	{
+		ImagePlus maxImp;
+		maxImp = WindowManager.getImage(title);
+		if (maxImp != null)
+		{
+			maxImp.setStack(stack);
+		}
+		else
+		{
+			maxImp = new ImagePlus(title, stack);
+		}
+		maxImp.show();
+		return maxImp;
 	}
 
 	private String saveResults(String expId, ImagePlus imp, ImagePlus mask, int backgroundMethod,
@@ -1243,6 +1280,7 @@ public class FindFoci implements PlugIn, MouseListener
 			writeParam(out, "Show_log_messages", ((outputType & OUTPUT_LOG_MESSAGES) != 0) ? "true" : "false");
 			writeParam(out, "Remove_edge_maxima", ((outputType & OPTION_REMOVE_EDGE_MAXIMA) != 0) ? "true" : "false");
 			writeParam(out, "Results_directory", resultsDirectory);
+			writeParam(out, "Object_analysis", ((outputType & OPTION_OBJECT_ANALYSIS) != 0) ? "true" : "false");
 			writeParam(out, "Gaussian_blur", "" + blur);
 			writeParam(out, "Centre_method", centreMethods[centreMethod]);
 			writeParam(out, "Centre_parameter", "" + centreParameter);
@@ -1273,7 +1311,7 @@ public class FindFoci implements PlugIn, MouseListener
 	 * The method must be called with the output from
 	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double)}
 	 */
-	public void showResults(ImagePlus imp, int backgroundMethod, double backgroundParameter,
+	public void showResults(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
 			String autoThresholdMethod, double searchParameter, int maxPeaks, int minSize, int peakMethod,
 			double peakParameter, int outputType, int sortIndex, int options, Object[] results)
 	{
@@ -1282,6 +1320,13 @@ public class FindFoci implements PlugIn, MouseListener
 		@SuppressWarnings("unchecked")
 		ArrayList<int[]> resultsArray = (ArrayList<int[]>) results[1];
 		double[] stats = (double[]) results[2];
+
+		// If we are outputting a results table or saving to file we can do the object analysis
+		if ((options & OPTION_OBJECT_ANALYSIS) != 0 && ((outputType & OUTPUT_RESULTS_TABLE) != 0))
+		{
+			System.out.printf("2. Find all objects in the mask\n");
+			doObjectAnalysis(mask, resultsArray);
+		}
 
 		// Add peaks to a results window
 		if (resultsArray != null && (outputType & OUTPUT_RESULTS_TABLE) != 0)
@@ -1307,21 +1352,7 @@ public class FindFoci implements PlugIn, MouseListener
 		ImagePlus maxImp = null;
 		if (maximaImp != null && (outputType & OUTPUT_MASK) != 0)
 		{
-			ImageStack stack = maximaImp.getStack();
-
-			String outname = imp.getTitle() + " " + FRAME_TITLE;
-
-			maxImp = WindowManager.getImage(outname);
-			if (maxImp != null)
-			{
-				maxImp.setStack(stack);
-			}
-			else
-			{
-				maxImp = new ImagePlus(outname, stack);
-			}
-
-			maxImp.show();
+			maxImp = showImage(maximaImp.getStack(), imp.getTitle() + " " + FRAME_TITLE);
 
 			// Adjust the contrast to show all the maxima
 			if (resultsArray != null)
@@ -3025,7 +3056,9 @@ public class FindFoci implements PlugIn, MouseListener
 		sb.append("Av (>Bg)\t");
 		sb.append("% Signal\t");
 		sb.append("% Signal (>Bg)\t");
-		sb.append("Signal / Noise");
+		sb.append("Signal / Noise\t");
+		sb.append("Object\t");
+		sb.append("State");
 		sb.append(newLine);
 		return sb.toString();
 	}
@@ -3077,7 +3110,10 @@ public class FindFoci implements PlugIn, MouseListener
 		sb.append(IJ.d2s(1.0 * result[RESULT_INTENSITY_MINUS_BACKGROUND] / result[RESULT_COUNT], 2)).append("\t");
 		sb.append(IJ.d2s(100 * (result[RESULT_INTENSITY] / sum), 2)).append("\t");
 		sb.append(IJ.d2s(100 * (result[RESULT_INTENSITY_MINUS_BACKGROUND] / intensityAboveBackground), 2)).append("\t");
-		sb.append(IJ.d2s((result[RESULT_MAX_VALUE] / noise), 2)).append(newLine);
+		sb.append(IJ.d2s((result[RESULT_MAX_VALUE] / noise), 2)).append("\t");
+		sb.append(result[RESULT_OBJECT]).append("\t");
+		sb.append(result[RESULT_STATE]);
+		sb.append(newLine);
 		return sb.toString();
 	}
 
@@ -3262,6 +3298,61 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 
 		return 1;
+	}
+
+	/**
+	 * Extract the mask image
+	 * 
+	 * @param imp
+	 *            The mask image
+	 * @return The mask image array
+	 */
+	private int[] extractMask(ImagePlus mask)
+	{
+		if (mask == null)
+			return null;
+
+		// Check sizes in X & Y
+		if (mask.getWidth() != maxx || mask.getHeight() != maxy ||
+				(mask.getNSlices() != maxz && mask.getNSlices() != 1))
+		{
+			return null;
+		}
+
+		final int[] image;
+		if (mask.getNSlices() == 1)
+		{
+			// Extract a single plane
+			ImageProcessor ipMask = mask.getProcessor();
+
+			image = new int[maxx_maxy];
+			for (int i = maxx_maxy; i-- > 0;)
+			{
+				image[i] = ipMask.get(i);
+			}
+		}
+		else
+		{
+			// If the same stack size then process through the image
+			ImageStack stack = mask.getStack();
+			int c = mask.getChannel();
+			int f = mask.getFrame();
+			image = new int[maxx_maxy_maxz];
+			for (int slice = 1; slice <= mask.getNSlices(); slice++)
+			{
+				int stackIndex = mask.getStackIndex(c, slice, f);
+				ImageProcessor ipMask = stack.getProcessor(stackIndex);
+
+				int index = maxx_maxy * slice;
+				for (int i = maxx_maxy; i-- > 0;)
+				{
+					index--;
+					image[index] = ipMask.get(i);
+				}
+			}
+		}
+
+		return image;
 	}
 
 	/**
@@ -6114,6 +6205,14 @@ public class FindFoci implements PlugIn, MouseListener
 		ArrayList<int[]> resultsArray = (ArrayList<int[]>) results[1];
 		double[] stats = (double[]) results[2];
 
+		// If we are outputting a results table or saving to file we can do the object analysis
+		if ((options & OPTION_OBJECT_ANALYSIS) != 0 &&
+				(((outputType & OUTPUT_RESULTS_TABLE) != 0) || resultsDirectory != null))
+		{
+			System.out.printf("3. Find all objects in the mask\n");
+			doObjectAnalysis(mask, resultsArray);
+		}
+
 		// Record all the results to file
 		String expId = saveResults(imp.getShortTitle(), imp, mask, backgroundMethod, backgroundParameter,
 				autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
@@ -6209,5 +6308,187 @@ public class FindFoci implements PlugIn, MouseListener
 
 	public void mouseExited(MouseEvent paramMouseEvent)
 	{
+	}
+
+	/**
+	 * Identify all non-zero pixels in the mask image as potential objects. Mark connected pixels with the same value as
+	 * a
+	 * single object. For each maxima identify the object and original mask value for the maxima location.
+	 * 
+	 * @param mask
+	 * @param resultsArray
+	 */
+	private void doObjectAnalysis(ImagePlus mask, ArrayList<int[]> resultsArray)
+	{
+		if (resultsArray == null || resultsArray.isEmpty())
+			return;
+
+		final int[] maskImage = extractMask(mask);
+		if (maskImage == null)
+			return;
+
+		// Track all the objects
+		final short[] objects = new short[maskImage.length];
+		short id = 0;
+		int[] objectState = new int[10];
+		// Label for 2D/3D processing
+		final boolean is2D = (maskImage.length == maxx_maxy);
+
+		int[] pList = new int[100];
+
+		for (int i = 0; i < maskImage.length; i++)
+		{
+			if (maskImage[i] != 0 && objects[i] == 0)
+			{
+				id++;
+
+				// Store the original mask value of new object
+				if (objectState.length <= id)
+					objectState = Arrays.copyOf(objectState, objectState.length + 10);
+				objectState[id] = maskImage[i];
+
+				if (is2D)
+					pList = expandObjectXY(maskImage, objects, i, id, pList);
+				else
+					pList = expandObjectXYZ(maskImage, objects, i, id, pList);
+			}
+		}
+
+		// For each maximum, mark the object and original mask value (state)
+		for (int[] result : resultsArray)
+		{
+			int x = result[RESULT_X];
+			int y = result[RESULT_Y];
+			int z = (is2D) ? 0 : result[RESULT_Z];
+			int index = getIndex(x, y, z);
+			result[RESULT_OBJECT] = objects[index];
+			result[RESULT_STATE] = objectState[objects[index]];
+		}
+
+		// Debug: Show the object mask
+		final int n = (is2D) ? 1 : maxz;
+		ImageStack stack = new ImageStack(maxx, maxy, n);
+		for (int z = 0; z < n; z++)
+		{
+			final short[] pixels = new short[maxx_maxy];
+			System.arraycopy(objects, maxx_maxy * z, pixels, 0, maxx_maxy);
+			stack.setPixels(pixels, z + 1);
+		}
+		showImage(stack, mask.getTitle() + " Objects");
+	}
+
+	/**
+	 * Searches from the specified point to find all coordinates of the same value and assigns them to given maximum ID.
+	 */
+	private int[] expandObjectXYZ(final int[] image, final short[] maxima, final int index0, final short id, int[] pList)
+	{
+		maxima[index0] = id; // mark first point
+		int listI = 0; // index of current search element in the list
+		int listLen = 1; // number of elements in the list
+
+		// we create a list of connected points and start the list at the current point
+		pList[listI] = index0;
+
+		final int[] xyz = new int[3];
+		final int v0 = image[index0];
+
+		do
+		{
+			int index1 = pList[listI];
+			getXYZ(index1, xyz);
+			int x1 = xyz[0];
+			int y1 = xyz[1];
+			int z1 = xyz[2];
+
+			// It is more likely that the z stack will be out-of-bounds.
+			// Adopt the xy limit lookup and process z lookup separately
+
+			boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+			boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+
+			for (int d = 26; d-- > 0;)
+			{
+				if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
+				{
+					int index2 = index1 + offset[d];
+					if (maxima[index2] != 0)
+					{
+						// This has been done already, ignore this point
+						continue;
+					}
+
+					int v2 = image[index2];
+
+					if (v2 == v0)
+					{
+						// Add this to the search
+						pList[listLen++] = index2;
+						maxima[index2] = id;
+						if (pList.length == listLen)
+							pList = Arrays.copyOf(pList, (int) (listLen * 1.5));
+					}
+				}
+			}
+
+			listI++;
+
+		} while (listI < listLen);
+
+		return pList;
+	}
+
+	/**
+	 * Searches from the specified point to find all coordinates of the same value and assigns them to given maximum ID.
+	 */
+	private int[] expandObjectXY(final int[] image, final short[] maxima, final int index0, final short id, int[] pList)
+	{
+		maxima[index0] = id; // mark first point
+		int listI = 0; // index of current search element in the list
+		int listLen = 1; // number of elements in the list
+
+		// we create a list of connected points and start the list at the current point
+		pList[listI] = index0;
+
+		final int[] xyz = new int[2];
+		final int v0 = image[index0];
+
+		do
+		{
+			int index1 = pList[listI];
+			getXY(index1, xyz);
+			int x1 = xyz[0];
+			int y1 = xyz[1];
+
+			boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+
+			for (int d = 8; d-- > 0;)
+			{
+				if (isInnerXY || isWithinXY(x1, y1, d))
+				{
+					int index2 = index1 + offset[d];
+					if (maxima[index2] != 0)
+					{
+						// This has been done already, ignore this point
+						continue;
+					}
+
+					int v2 = image[index2];
+
+					if (v2 == v0)
+					{
+						// Add this to the search
+						pList[listLen++] = index2;
+						maxima[index2] = id;
+						if (pList.length == listLen)
+							pList = Arrays.copyOf(pList, (int) (listLen * 1.5));
+					}
+				}
+			}
+
+			listI++;
+
+		} while (listI < listLen);
+
+		return pList;
 	}
 }

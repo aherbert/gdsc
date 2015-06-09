@@ -50,6 +50,7 @@ public class FindFociModel extends AbstractModelObject
 	private int centreMethod = FindFoci.CENTRE_MAX_VALUE_SEARCH;
 	private double centreParameter = 2;
 	private double fractionParameter = 0.5;
+	private boolean objectAnalysis = false;
 
 	private List<String> imageList = new ArrayList<String>();
 	private String selectedImage = "";
@@ -689,6 +690,25 @@ public class FindFociModel extends AbstractModelObject
 	}
 
 	/**
+	 * @param objectAnalysis
+	 *            the objectAnalysis to set
+	 */
+	public void setObjectAnalysis(boolean objectAnalysis)
+	{
+		boolean oldValue = this.objectAnalysis;
+		this.objectAnalysis = objectAnalysis;
+		firePropertyChange("objectAnalysis", oldValue, this.objectAnalysis);
+	}
+
+	/**
+	 * @return the objectAnalysis
+	 */
+	public boolean isObjectAnalysis()
+	{
+		return objectAnalysis;
+	}
+	
+	/**
 	 * Sets the current state of the FindFoci model to unchanged
 	 */
 	public void setUnchanged()
@@ -789,6 +809,7 @@ public class FindFociModel extends AbstractModelObject
 		newModel.changed = this.changed;
 		newModel.backgroundParameterMemory = this.backgroundParameterMemory;
 		newModel.peakParameterMemory = this.peakParameterMemory;
+		newModel.objectAnalysis = objectAnalysis;
 
 		newModel.imageList = new ArrayList<String>(this.imageList.size());
 		for (String item : this.imageList)

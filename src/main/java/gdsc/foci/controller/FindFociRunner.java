@@ -174,7 +174,6 @@ public class FindFociRunner extends Thread
 		boolean minimumAboveSaddle = model.isMinimumAboveSaddle();
 		int peakMethod = model.getPeakMethod();
 		double peakParameter = model.getPeakParameter();
-		boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
 		int sortMethod = model.getSortMethod();
 		int maxPeaks = model.getMaxPeaks();
 		int showMask = model.getShowMask();
@@ -182,24 +181,20 @@ public class FindFociRunner extends Thread
 		boolean markMaxima = model.isMarkMaxima();
 		boolean markROIMaxima = model.isMarkROIMaxima();
 		boolean showMaskMaximaAsDots = model.isShowROIMaximaAsDots();
+
+		// Ignore:
+		// model.isShowLogMessages()
+		// model.isSaveResults();
+		// model.getResultsDirectory();
+
+		boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
+		boolean objectAnalysis = model.isObjectAnalysis();
 		double gaussianBlur = model.getGaussianBlur();
 		int centreMethod = model.getCentreMethod();
 		double centreParameter = model.getCentreParameter();
 		double fractionParameter = model.getFractionParameter();
 
-		int outputType = 0;
-		if (showMask == 1)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS;
-		if (showMask == 2)
-			outputType += FindFoci.OUTPUT_MASK_THRESHOLD;
-		if (showMask == 3)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_ABOVE_SADDLE;
-		if (showMask == 4)
-			outputType += FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_ABOVE_SADDLE;
-		if (showMask == 5)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_FRACTION_OF_INTENSITY;
-		if (showMask == 6)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_FRACTION_OF_HEIGHT;
+		int outputType = FindFoci.getOutputMaskFlags(showMask);
 
 		if (showTable)
 			outputType += FindFoci.OUTPUT_RESULTS_TABLE;
@@ -219,6 +214,8 @@ public class FindFociRunner extends Thread
 			options |= FindFoci.OPTION_STATS_OUTSIDE;
 		if (removeEdgeMaxima)
 			options |= FindFoci.OPTION_REMOVE_EDGE_MAXIMA;
+		if (objectAnalysis)
+			options |= FindFoci.OPTION_OBJECT_ANALYSIS;
 
 		if (outputType == 0)
 		{
@@ -227,9 +224,8 @@ public class FindFociRunner extends Thread
 
 		ImagePlus mask = WindowManager.getImage(maskImage);
 
-		
 		IJ.showStatus(FindFoci.FRAME_TITLE + " calculating ...");
-		
+
 		// Compare this model with the previously computed results and
 		// only update the parts that are necessary. 
 		FindFociState state = compareModels(model, previousModel);
@@ -307,12 +303,12 @@ public class FindFociRunner extends Thread
 		}
 		if (state.ordinal() <= FindFociState.SHOW_RESULTS.ordinal())
 		{
-			fp.showResults(imp, backgroundMethod, backgroundParameter, thresholdMethod, searchParameter, maxPeaks,
-					minSize, peakMethod, peakParameter, outputType, sortMethod, options, resultsArray);
+			fp.showResults(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod, searchParameter,
+					maxPeaks, minSize, peakMethod, peakParameter, outputType, sortMethod, options, resultsArray);
 		}
 
 		IJ.showStatus(FindFoci.FRAME_TITLE + " finished");
-		
+
 		previousModel = model;
 	}
 
@@ -388,18 +384,23 @@ public class FindFociRunner extends Thread
 		{
 			if (model.getShowMask() >= 5) // Only do this if using the fraction parameter
 				return FindFociState.CALCULATE_OUTPUT_MASK;
-			else
-				ignoreChange = true;
+			ignoreChange = true;
 		}
 
-		if (//notEqual(model.getResultsDirectory(), previousModel.getResultsDirectory()) ||
-		notEqual(model.isShowTable(), previousModel.isShowTable()) ||
+		if (notEqual(model.isShowTable(), previousModel.isShowTable()) ||
 				notEqual(model.isMarkMaxima(), previousModel.isMarkMaxima()) ||
-				notEqual(model.isMarkROIMaxima(), previousModel.isMarkROIMaxima())
-		//|| notEqual(model.isSaveResults(), previousModel.isSaveResults())
-		)
+				notEqual(model.isMarkROIMaxima(), previousModel.isMarkROIMaxima()))
 		{
 			return FindFociState.SHOW_RESULTS;
+		}
+
+		if (notEqual(model.isObjectAnalysis(), previousModel.isObjectAnalysis()))
+		{
+			// Only repeat if switched on. We can ignore it if the flag is switched off since the results
+			// will be the same.
+			if (model.isObjectAnalysis())
+				return FindFociState.SHOW_RESULTS;
+			ignoreChange = true;
 		}
 
 		// Options to ignore
