@@ -23,7 +23,7 @@ import gdsc.foci.FindFoci;
 /**
  * Provides a bean property model for the FindFoci algorithm
  */
-public class FindFociModel extends AbstractModelObject
+public class FindFociModel extends AbstractModelObject implements Cloneable
 {
 	private int backgroundMethod = FindFoci.BACKGROUND_AUTO_THRESHOLD;
 	private double backgroundParameter = 3;
@@ -51,6 +51,7 @@ public class FindFociModel extends AbstractModelObject
 	private double centreParameter = 2;
 	private double fractionParameter = 0.5;
 	private boolean objectAnalysis = false;
+	private boolean showObjectMask = false;
 
 	private List<String> imageList = new ArrayList<String>();
 	private String selectedImage = "";
@@ -707,7 +708,26 @@ public class FindFociModel extends AbstractModelObject
 	{
 		return objectAnalysis;
 	}
-	
+
+	/**
+	 * @param showObjectMask
+	 *            the showObjectMask to set
+	 */
+	public void setShowObjectMask(boolean showObjectMask)
+	{
+		boolean oldValue = this.showObjectMask;
+		this.showObjectMask = showObjectMask;
+		firePropertyChange("showObjectMask", oldValue, this.showObjectMask);
+	}
+
+	/**
+	 * @return the showObjectMask
+	 */
+	public boolean isShowObjectMask()
+	{
+		return showObjectMask;
+	}
+
 	/**
 	 * Sets the current state of the FindFoci model to unchanged
 	 */
@@ -753,75 +773,30 @@ public class FindFociModel extends AbstractModelObject
 	 */
 	public FindFociModel deepCopy()
 	{
-		//		FindFociModel newModel;
-		//		try
-		//		{
-		//			// Copy primitives with the clone() method
-		//			newModel = (FindFociModel) super.clone();
-		//
-		//			// Create duplicates of the objects
-		//			newModel.imageList = new ArrayList<String>(this.imageList.size());
-		//			for (String item : this.imageList)
-		//			{
-		//				newModel.imageList.add(item);
-		//			}
-		//			newModel.maskImageList = new ArrayList<String>(this.maskImageList.size());
-		//			for (String item : this.maskImageList)
-		//			{
-		//				newModel.maskImageList.add(item);
-		//			}
-		//			
-		//			return newModel;
-		//		}
-		//		catch (CloneNotSupportedException e)
-		//		{
-		//			return null;
-		//		}
-
-		FindFociModel newModel = new FindFociModel();
-		newModel.backgroundMethod = this.backgroundMethod;
-		newModel.backgroundParameter = this.backgroundParameter;
-		newModel.thresholdMethod = this.thresholdMethod;
-		newModel.statisticsMode = this.statisticsMode;
-		newModel.searchMethod = this.searchMethod;
-		newModel.searchParameter = this.searchParameter;
-		newModel.minSize = this.minSize;
-		newModel.minimumAboveSaddle = this.minimumAboveSaddle;
-		newModel.peakMethod = this.peakMethod;
-		newModel.peakParameter = this.peakParameter;
-		newModel.sortMethod = this.sortMethod;
-		newModel.maxPeaks = this.maxPeaks;
-		newModel.showMask = this.showMask;
-		newModel.showMaskMaximaAsDots = this.showMaskMaximaAsDots;
-		newModel.showTable = this.showTable;
-		newModel.markMaxima = this.markMaxima;
-		newModel.markROIMaxima = this.markROIMaxima;
-		newModel.showLogMessages = this.showLogMessages;
-		newModel.removeEdgeMaxima = this.removeEdgeMaxima;
-		newModel.saveResults = this.saveResults;
-		newModel.resultsDirectory = this.resultsDirectory;
-		newModel.gaussianBlur = this.gaussianBlur;
-		newModel.centreMethod = this.centreMethod;
-		newModel.centreParameter = this.centreParameter;
-		newModel.fractionParameter = this.fractionParameter;
-		newModel.selectedImage = this.selectedImage;
-		newModel.maskImage = this.maskImage;
-		newModel.changed = this.changed;
-		newModel.backgroundParameterMemory = this.backgroundParameterMemory;
-		newModel.peakParameterMemory = this.peakParameterMemory;
-		newModel.objectAnalysis = objectAnalysis;
-
-		newModel.imageList = new ArrayList<String>(this.imageList.size());
-		for (String item : this.imageList)
+		FindFociModel newModel;
+		try
 		{
-			newModel.imageList.add(item);
+			// Copy primitives with the clone() method
+			newModel = (FindFociModel) super.clone();
+
+			// Create duplicates of the objects
+			newModel.imageList = new ArrayList<String>(this.imageList.size());
+			for (String item : this.imageList)
+			{
+				newModel.imageList.add(item);
+			}
+			newModel.maskImageList = new ArrayList<String>(this.maskImageList.size());
+			for (String item : this.maskImageList)
+			{
+				newModel.maskImageList.add(item);
+			}
+
+			return newModel;
 		}
-		newModel.maskImageList = new ArrayList<String>(this.maskImageList.size());
-		for (String item : this.maskImageList)
+		catch (CloneNotSupportedException e)
 		{
-			newModel.maskImageList.add(item);
+			return null;
 		}
 
-		return newModel;
 	}
 }

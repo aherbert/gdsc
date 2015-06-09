@@ -181,14 +181,12 @@ public class FindFociRunner extends Thread
 		boolean markMaxima = model.isMarkMaxima();
 		boolean markROIMaxima = model.isMarkROIMaxima();
 		boolean showMaskMaximaAsDots = model.isShowROIMaximaAsDots();
-
-		// Ignore:
-		// model.isShowLogMessages()
-		// model.isSaveResults();
-		// model.getResultsDirectory();
-
+		// Ignore: model.isShowLogMessages()
 		boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
+		// Ignore: model.isSaveResults();
+		// Ignore: model.getResultsDirectory();
 		boolean objectAnalysis = model.isObjectAnalysis();
+		boolean showObjectMask = model.isShowObjectMask();
 		double gaussianBlur = model.getGaussianBlur();
 		int centreMethod = model.getCentreMethod();
 		double centreParameter = model.getCentreParameter();
@@ -215,7 +213,11 @@ public class FindFociRunner extends Thread
 		if (removeEdgeMaxima)
 			options |= FindFoci.OPTION_REMOVE_EDGE_MAXIMA;
 		if (objectAnalysis)
+		{
 			options |= FindFoci.OPTION_OBJECT_ANALYSIS;
+			if (showObjectMask)
+				options |= FindFoci.OPTION_SHOW_OBJECT_MASK;
+		}
 
 		if (outputType == 0)
 		{
@@ -402,6 +404,14 @@ public class FindFociRunner extends Thread
 				return FindFociState.SHOW_RESULTS;
 			ignoreChange = true;
 		}
+
+		if (notEqual(model.isShowObjectMask(), previousModel.isShowObjectMask()))
+		{
+			// Only repeat if the mask is to be shown
+			if (model.isObjectAnalysis() && model.isShowObjectMask())
+				return FindFociState.SHOW_RESULTS;
+			ignoreChange = true;
+		}		
 
 		// Options to ignore
 		if (notEqual(model.isShowLogMessages(), previousModel.isShowLogMessages()) ||
