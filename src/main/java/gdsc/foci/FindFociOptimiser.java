@@ -361,6 +361,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			long start = System.currentTimeMillis();
 
 			ArrayList<Result> results = runOptimiser(imp, mask, new StandardCounter(combinations));
+			IJ.showProgress(1);
 
 			if (results == null)
 			{
