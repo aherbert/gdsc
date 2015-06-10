@@ -1141,6 +1141,10 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 					options.setTitle("FindFoci Options");
 					options.setVisible(true);
 				}
+				else
+				{
+					options.toFront();
+				}
 			}
 		});
 
