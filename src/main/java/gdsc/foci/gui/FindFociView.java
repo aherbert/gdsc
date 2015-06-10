@@ -1213,7 +1213,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	public void setValidImages(boolean validImages)
 	{
 		this.validImages = validImages;
-		setRunEnabled(validImages && changed);
+		//setRunEnabled(validImages && changed);
+		// Allow the Run button to be enabled even when the model has not changed
+		setRunEnabled(validImages);
 	}
 
 	/**
@@ -1231,7 +1233,10 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	public void setChanged(boolean changed)
 	{
 		this.changed = changed;
-		setRunEnabled(validImages && changed);
+		// Note: The model 'changed' property is bound to this property using data bindings.
+		// So when the model is set to unchanged then the run button is disabled. Disable 
+		// this behaviour allowing the Run button to always be enabled when the images are valid.
+		//setRunEnabled(validImages && changed);
 	}
 
 	/**
