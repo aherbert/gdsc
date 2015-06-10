@@ -1074,12 +1074,6 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			return null;
 		}
 
-		if (imp.getNChannels() != 1 || imp.getNFrames() != 1)
-		{
-			IJ.showMessage("Error", "Only single channel, single frame images are supported");
-			return null;
-		}
-
 		Roi roi = imp.getRoi();
 		if (roi == null || roi.getType() != Roi.POINT)
 		{
@@ -2228,14 +2222,18 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 		// Look through the ROI points and exclude all outside the mask
 		ImageStack stack = mask.getStack();
+		int c = mask.getChannel();
+		int f = mask.getFrame();
 
 		int id = 0;
 		for (int i = 0; i < roiPoints.length; i++)
 		{
 			AssignedPoint point = roiPoints[i];
-			for (int slice = 1; slice <= stack.getSize(); slice++)
+
+			for (int slice = 1; slice <= mask.getNSlices(); slice++)
 			{
-				ImageProcessor ipMask = stack.getProcessor(slice);
+				int stackIndex = mask.getStackIndex(c, slice, f);
+				ImageProcessor ipMask = stack.getProcessor(stackIndex);
 
 				if (ipMask.get(point.getX(), point.getY()) > 0)
 				{
@@ -2266,7 +2264,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	private static boolean validMask(ImagePlus imp, ImagePlus mask)
 	{
 		return mask != null && mask.getWidth() == imp.getWidth() && mask.getHeight() == imp.getHeight() &&
-				(mask.getStackSize() == imp.getStackSize() || mask.getStackSize() == 1);
+				(mask.getNSlices() == imp.getNSlices() || mask.getStackSize() == 1);
 	}
 
 	private void sortResults(ArrayList<Result> results, int sortMethod, boolean highestFirst)
