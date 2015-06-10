@@ -23,6 +23,7 @@ import ij.Macro;
 import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.Overlay;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.io.Opener;
@@ -1111,6 +1112,10 @@ public class FindFoci implements PlugIn, MouseListener
 					roi = null;
 				}
 			}
+			
+			// The image may have a point ROI overlay added by the showResults(...) method called by the
+			// preview functionality of the FindFoci GUI
+			killOverlayPointRoi(imp);
 		}
 
 		Object[] results = findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
@@ -1392,7 +1397,10 @@ public class FindFoci implements PlugIn, MouseListener
 
 		// Remove ROI if not an output option
 		if ((outputType & OUTPUT_ROI_SELECTION) == 0)
+		{
 			killPointRoi(imp);
+			killOverlayPointRoi(imp);
+		}
 		if ((outputType & OUTPUT_MASK_ROI_SELECTION) == 0)
 			killPointRoi(maxImp);
 
@@ -1413,7 +1421,18 @@ public class FindFoci implements PlugIn, MouseListener
 				}
 
 				if ((outputType & OUTPUT_ROI_SELECTION) != 0)
-					imp.setRoi(new PointRoi(xpoints, ypoints, nMaxima));
+				{
+					// Use an overlay so that any area ROI is preserved
+					PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
+					if (imp.getRoi() != null)
+					{
+						imp.setOverlay(roi, Color.CYAN, 1, Color.YELLOW);
+					}
+					else
+					{
+						imp.setRoi(roi);
+					}
+				}
 
 				if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
 					maxImp.setRoi(new PointRoi(xpoints, ypoints, nMaxima));
@@ -1421,7 +1440,10 @@ public class FindFoci implements PlugIn, MouseListener
 			else
 			{
 				if ((outputType & OUTPUT_ROI_SELECTION) != 0)
+				{
 					killPointRoi(imp);
+					killOverlayPointRoi(imp);
+				}
 				if ((outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
 					killPointRoi(maxImp);
 			}
@@ -1437,6 +1459,37 @@ public class FindFoci implements PlugIn, MouseListener
 				imp.killRoi();
 			}
 		}
+	}
+
+	private void killOverlayPointRoi(ImagePlus imp)
+	{
+		if (imp.getOverlay() != null)
+		{
+			Overlay overlay = imp.getOverlay();
+			Roi toRemove = null;
+			Roi[] rois = overlay.toArray();
+			for (Roi roi : rois)
+			{
+				if (roi instanceof PointRoi)
+				{
+					if (roi.getStrokeColor() == Color.CYAN && roi.getFillColor() == Color.YELLOW)
+					{
+						toRemove = roi;
+						break;
+					}
+				}
+			}
+			if (toRemove != null)
+			{
+				if (rois.length == 1)
+					imp.setOverlay(null);
+				else
+				{
+					overlay.remove(toRemove);
+					imp.setOverlay(overlay);
+				}
+			}
+		}			
 	}
 
 	private int getMaskOption(int outputType)
