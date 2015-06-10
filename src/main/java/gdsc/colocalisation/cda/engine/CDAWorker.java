@@ -71,6 +71,8 @@ public class CDAWorker implements Runnable
 		final double m1 = (double) intersectResult.sum1 / denom1;
 		final double m2 = (double) intersectResult.sum2 / denom2;
 
+		//System.out.printf("d=%f, x=%d, y=%d, n=%d, r=%f\n", distance, x, y, c.getN(), intersectResult.r);
+		
 		results.add(new CalculationResult(distance, m1, m2, intersectResult.r));
 	}
 
@@ -94,8 +96,8 @@ public class CDAWorker implements Runnable
 				if ((m1[i] != 0) && (m2[i] != 0))
 				{
 					// ImageJ stores unsigned values
-					ii1[i] = i1[i] & 0xffff;
-					ii2[i] = i2[i] & 0xffff;
+					ii1[n] = i1[i] & 0xffff;
+					ii2[n] = i2[i] & 0xffff;
 					n++;
 				}
 			}
