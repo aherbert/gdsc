@@ -107,11 +107,11 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	{
 		int[] dimensions = imp.getDimensions();
 		int currentSlice = imp.getCurrentSlice();
-		
+
 		String[] methods = getMethods();
 		// channel3 is set within getMethods()
 		int nChannels = (channel3 > 0) ? 3 : 2;
-		
+
 		for (String method : methods)
 		{
 			if (logThresholds || logResults)
@@ -531,17 +531,11 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	{
 		ImageStack overlapStack = intersectMask(mask1, mask2);
 
-		byte on = (byte) 255;
+		final byte on = (byte) 255;
 
-		int sumX = 0;
-		double sumXY = 0;
-		double sumXX = 0;
-		double sumYY = 0;
-		int sumY = 0;
-		int n = 0;
 		int nTotal = 0;
-		int ch1;
-		int ch2;
+
+		Correlator c = new Correlator(overlapStack.getWidth() * overlapStack.getHeight());
 
 		for (int s = 1; s <= overlapStack.getSize(); s++)
 		{
@@ -562,19 +556,9 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 					if (mask[i] == on)
 					{
 						nTotal++;
-						ch1 = ip1.get(i);
-						ch2 = ip2.get(i);
 
 						if (b[i] == on)
-						{
-							sumX += ch1;
-							sumXY += (ch1 * ch2);
-							sumXX += (ch1 * ch1);
-							sumYY += (ch2 * ch2);
-							sumY += ch2;
-
-							n++;
-						}
+							c.add(ip1.get(i), ip2.get(i));
 					}
 				}
 			}
@@ -584,37 +568,18 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 				for (int i = ip1.getPixelCount(); i-- > 0;)
 				{
 					nTotal++;
-					ch1 = ip1.get(i);
-					ch2 = ip2.get(i);
 
 					if (b[i] == on)
-					{
-						sumX += ch1;
-						sumXY += (ch1 * ch2);
-						sumXX += (ch1 * ch1);
-						sumYY += (ch2 * ch2);
-						sumY += ch2;
-
-						n++;
-					}
+						c.add(ip1.get(i), ip2.get(i));
 				}
 			}
 		}
 
-		double m1 = sumX / totalIntensity1;
-		double m2 = sumY / totalIntensity2;
-		double r = Double.NaN;
+		final double m1 = c.getSumX() / totalIntensity1;
+		final double m2 = c.getSumY() / totalIntensity2;
+		final double r = c.getCorrelation();
 
-		if (n > 0)
-		{
-			double pearsons1 = sumXY - (1.0 * sumX * sumY / n);
-			double pearsons2 = sumXX - (1.0 * sumX * sumX / n);
-			double pearsons3 = sumYY - (1.0 * sumY * sumY / n);
-
-			r = pearsons1 / (Math.sqrt(pearsons2 * pearsons3));
-		}
-
-		return new CalculationResult(distance, m1, m2, r, n, (100.0 * n / nTotal));
+		return new CalculationResult(distance, m1, m2, r, c.getN(), (100.0 * c.getN() / nTotal));
 	}
 
 	/**

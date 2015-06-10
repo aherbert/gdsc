@@ -13,6 +13,7 @@ package gdsc.colocalisation.cda.engine;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
+import gdsc.colocalisation.Correlator;
 import gdsc.colocalisation.cda.engine.CalculationResult;
 import gdsc.colocalisation.cda.TwinStackShifter;
 import ij.IJ;
@@ -34,6 +35,7 @@ public class CDAWorker implements Runnable
 	TwinStackShifter twinImageShifter;
 	BlockingQueue<CDAJob> jobs;
 	int totalSteps;
+	Correlator c = new Correlator();
 
 	private volatile boolean finished = false;
 
@@ -56,7 +58,7 @@ public class CDAWorker implements Runnable
 	 */
 	public void run(int n, int x, int y)
 	{
-		double distance = Math.sqrt(x * x + y * y);
+		final double distance = Math.sqrt(x * x + y * y);
 
 		if (n % 2 == 0)
 			IJ.showProgress(n, totalSteps);
@@ -66,63 +68,43 @@ public class CDAWorker implements Runnable
 		IntersectResult intersectResult = calculateResults(twinImageShifter.getResultStack(),
 				twinImageShifter.getResultStack2(), imageStack2, roiStack2);
 
-		double m1 = intersectResult.sum1 / denom1;
-		double m2 = intersectResult.sum2 / denom2;
+		final double m1 = (double) intersectResult.sum1 / denom1;
+		final double m2 = (double) intersectResult.sum2 / denom2;
 
 		results.add(new CalculationResult(distance, m1, m2, intersectResult.r));
 	}
 
 	private IntersectResult calculateResults(ImageStack stack1, ImageStack roi1, ImageStack stack2, ImageStack roi2)
 	{
-		int sumX = 0;
-		long sumXY = 0;
-		long sumXX = 0;
-		long sumYY = 0;
-		int sumY = 0;
-		int n = 0;
-		short ch1;
-		short ch2;
+		c.clear();
 
 		for (int slice = stack1.getSize(); slice > 0; slice--)
 		{
-			short[] i1 = (short[]) stack1.getPixels(slice);
-			short[] i2 = (short[]) stack2.getPixels(slice);
+			final short[] i1 = (short[]) stack1.getPixels(slice);
+			final short[] i2 = (short[]) stack2.getPixels(slice);
 
-			byte[] m1 = (byte[]) roi1.getPixels(slice);
-			byte[] m2 = (byte[]) roi2.getPixels(slice);
+			final byte[] m1 = (byte[]) roi1.getPixels(slice);
+			final byte[] m2 = (byte[]) roi2.getPixels(slice);
 
+			int[] ii1 = new int[i1.length];
+			int[] ii2 = new int[i1.length];
+			int n = 0;
 			for (int i = i1.length; i-- > 0;)
 			{
 				if ((m1[i] != 0) && (m2[i] != 0))
 				{
-					ch1 = i1[i];
-					ch2 = i2[i];
-
-					sumX += ch1;
-					sumXY += (ch1 * ch2);
-					sumXX += (ch1 * ch1);
-					sumYY += (ch2 * ch2);
-					sumY += ch2;
-
+					// ImageJ stores unsigned values
+					ii1[i] = i1[i] & 0xffff;
+					ii2[i] = i2[i] & 0xffff;
 					n++;
 				}
 			}
+			c.add(ii1, ii2, n);
 		}
 
-		double r = Double.NaN;
-
-		if (n > 0)
-		{
-			double pearsons1 = sumXY - (1.0 * sumX * sumY / n);
-			double pearsons2 = sumXX - (1.0 * sumX * sumX / n);
-			double pearsons3 = sumYY - (1.0 * sumY * sumY / n);
-
-			r = pearsons1 / (Math.sqrt(pearsons2 * pearsons3));
-		}
-
-		return new IntersectResult(sumX, sumY, r); 
+		return new IntersectResult(c.getSumX(), c.getSumY(), c.getCorrelation());
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 

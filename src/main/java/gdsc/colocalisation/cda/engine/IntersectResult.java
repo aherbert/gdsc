@@ -5,11 +5,11 @@ package gdsc.colocalisation.cda.engine;
  */
 public class IntersectResult
 {
-	public int sum1;
-	public int sum2;
+	public long sum1;
+	public long sum2;
 	public double r;
 
-	public IntersectResult(int sum1, int sum2, double r)
+	public IntersectResult(long sum1, long sum2, double r)
 	{
 		this.sum1 = sum1;
 		this.sum2 = sum2;

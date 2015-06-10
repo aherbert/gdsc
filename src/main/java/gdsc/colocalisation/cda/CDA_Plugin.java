@@ -638,7 +638,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			return;
 		}
 
-		int[] sum = new int[1];
+		long[] sum = new long[1];
 		imageStack1 = intersectMask(imageStack1, confinedStack, sum, false);
 		imageStack2 = intersectMask(imageStack2, confinedStack, sum, false);
 		if (expandConfinedCompartment)
@@ -665,9 +665,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 		// Pre-calculate constants
 		intersectMask(imageStack1, roiStack1, sum, true);
-		double denom1 = sum[0];
+		double denom1 = (double) sum[0];
 		intersectMask(imageStack2, roiStack2, sum, true);
-		double denom2 = sum[0];
+		double denom2 = (double) sum[0];
 
 		IJ.showStatus(mandersCalculationStatus);
 
@@ -701,8 +701,6 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			lastChannelShiftedRawStack = twinImageShifter.getResultStack();
 			lastSegmentedShiftedRawStack = twinImageShifter.getResultStack2();
 		}
-
-		IJ.showProgress(1.0);
 
 		reportResults(imp1, imp2, imageStack1, imageStack2, roiStack1, roiStack2, confinedStack,
 				lastChannelShiftedRawStack, lastSegmentedShiftedRawStack, unshifted.m1, unshifted.m2, unshifted.r,
@@ -789,6 +787,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		// Initialise the progress count
 		int totalSteps = shiftIndices.length;
 		IJ.showProgress(0);
+		IJ.showStatus("Computing shifts ...");
 
 		List<CalculationResult> results = new ArrayList<CalculationResult>(totalSteps);
 
@@ -817,6 +816,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 		engine.end(false);
 		//IJ.log("# of results = " + results.size() + " / " + totalSteps);
+
+		IJ.showProgress(1.0); 
+		IJ.showStatus("Computing shifts ...");
 
 		return results;
 	}
@@ -1344,10 +1346,10 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 		// Note that the segmented indices must be offset by one to account for the extra option
 		// in the list of segmented images 
-		addRoiField(resultsEntry, segmented1OptionIndex, segmented1Index-1,
-				getRoiIp(imageStack1.getProcessor(1), segmented1Index-1));
-		addRoiField(resultsEntry, segmented2OptionIndex, segmented2Index-1,
-				getRoiIp(imageStack2.getProcessor(1), segmented2Index-1));
+		addRoiField(resultsEntry, segmented1OptionIndex, segmented1Index - 1,
+				getRoiIp(imageStack1.getProcessor(1), segmented1Index - 1));
+		addRoiField(resultsEntry, segmented2OptionIndex, segmented2Index - 1,
+				getRoiIp(imageStack2.getProcessor(1), segmented2Index - 1));
 		addRoiField(resultsEntry, confinedOptionIndex, confinedIndex,
 				getRoiIp(confinedStack.getProcessor(1), confinedIndex));
 		addField(resultsEntry, expandConfinedCompartment);
@@ -2066,7 +2068,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 * Create the intersect of the two masks. Results are written back to the image processor in the target stack unless
 	 * the duplicate option is true. The sum of the source image intensity within the intersect is accumulated.
 	 */
-	private ImageStack intersectMask(ImageStack targetStack, ImageStack sourceStack, int[] sum, boolean duplicate)
+	private ImageStack intersectMask(ImageStack targetStack, ImageStack sourceStack, long[] sum, boolean duplicate)
 	{
 		ImageStack newStack = new ImageStack(targetStack.getWidth(), targetStack.getHeight());
 		sum[0] = 0;
@@ -2086,9 +2088,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 * 
 	 * @return The sum of the source image intensity within the intersect
 	 */
-	private int intersectMask(ImageProcessor sourceImage, ByteProcessor maskImage, ImageProcessor outputImage)
+	private long intersectMask(ImageProcessor sourceImage, ByteProcessor maskImage, ImageProcessor outputImage)
 	{
-		int sum = 0;
+		long sum = 0;
 
 		// We need to do extra work if there is an output image so put this in a different loop
 		if (outputImage != null)

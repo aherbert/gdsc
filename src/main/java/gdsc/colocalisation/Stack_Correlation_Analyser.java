@@ -27,8 +27,8 @@ import gdsc.threshold.Auto_Threshold;
 
 /**
  * Processes a stack image with multiple channels. Each frame and z-slice are processed together. Extracts all the
- * channels and performs: 
- * (1) Thresholding to create a mask for each channel 
+ * channels and performs:
+ * (1) Thresholding to create a mask for each channel
  * (2) All-vs-all channel correlation within the union/intersect of the channel masks
  * 
  * Can optionally aggregate the channel z-stack before processing.
@@ -39,7 +39,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	private ImagePlus imp;
 
 	private final String FRAME_TITLE = "Stack Correlation Analyser";
-	
+
 	// ImageJ indexes for the dimensions array
 	// private final int X = 0;
 	// private final int Y = 1;
@@ -186,7 +186,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 				{
 					imp2.setOpenAsHyperStack(true);
 				}
-				imp2.show();			
+				imp2.show();
 			}
 		}
 		imp.setSlice(currentSlice);
@@ -371,17 +371,11 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 		ImageStack overlapStack = (useIntersect) ? intersectMask(s1.maskStack, s2.maskStack) : unionMask(s1.maskStack,
 				s2.maskStack);
 
-		byte on = (byte) 255;
+		final byte on = (byte) 255;
 
-		int sumX = 0;
-		double sumXY = 0;
-		double sumXX = 0;
-		double sumYY = 0;
-		int sumY = 0;
-		int n = 0;
 		int nTotal = 0;
-		int ch1;
-		int ch2;
+
+		Correlator c = new Correlator(s1.imageStack.getWidth() * s1.imageStack.getHeight());
 
 		for (int s = 1; s <= overlapStack.getSize(); s++)
 		{
@@ -389,38 +383,18 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 			ImageProcessor ip2 = s2.imageStack.getProcessor(s);
 			ByteProcessor overlap = (ByteProcessor) overlapStack.getProcessor(s);
 
-			byte[] b = (byte[]) overlap.getPixels();
+			final byte[] b = (byte[]) overlap.getPixels();
 			nTotal += b.length;
 			for (int i = b.length; i-- > 0;)
 			{
 				if (b[i] == on)
 				{
-					ch1 = ip1.get(i);
-					ch2 = ip2.get(i);
-
-					sumX += ch1;
-					sumXY += (ch1 * ch2);
-					sumXX += (ch1 * ch1);
-					sumYY += (ch2 * ch2);
-					sumY += ch2;
-
-					n++;
+					c.add(ip1.get(i), ip2.get(i));
 				}
 			}
 		}
 
-		double r = Double.NaN;
-
-		if (n > 0)
-		{
-			double pearsons1 = sumXY - (1.0 * sumX * sumY / n);
-			double pearsons2 = sumXX - (1.0 * sumX * sumX / n);
-			double pearsons3 = sumYY - (1.0 * sumY * sumY / n);
-
-			r = pearsons1 / (Math.sqrt(pearsons2 * pearsons3));
-		}
-
-		return new double[] { n, (100.0 * n / nTotal), r };
+		return new double[] { c.getN(), (100.0 * c.getN() / nTotal), c.getCorrelation() };
 	}
 
 	/**
@@ -433,9 +407,8 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	private boolean doCDA(SliceCollection s1, SliceCollection s2)
 	{
 		boolean significant = false;
-		
+
 		// Perform a quick CDA test for significance. Limit to N shifts for speed
-		
 
 		return significant;
 	}
