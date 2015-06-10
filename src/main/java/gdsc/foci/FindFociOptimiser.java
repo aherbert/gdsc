@@ -217,9 +217,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	private GenericDialog listenerGd;
 
 	// Stored to allow the display of any of the latest results from the result table
-	private ImagePlus lastImp, lastMask;
-	private ArrayList<Result> lastResults;
-	private String optimiserCommandOptions;
+	private static ImagePlus lastImp, lastMask;
+	private static ArrayList<Result> lastResults;
+	private static String optimiserCommandOptions;
 
 	// The number of combinations
 	private int combinations;
@@ -910,7 +910,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		Recorder.setCommand(null);
 	}
 
-	private double getDistanceThreshold(ImagePlus imp)
+	private static double getDistanceThreshold(ImagePlus imp)
 	{
 		if (myMatchSearchMethod == 1)
 			return myMatchSearchDistance;
@@ -923,7 +923,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		sb.append(String.format(format, args));
 	}
 
-	private AssignedPoint[] showResult(ImagePlus imp, ImagePlus mask, Options options)
+	private static AssignedPoint[] showResult(ImagePlus imp, ImagePlus mask, Options options)
 	{
 		if (imp == null)
 			return null;
@@ -975,7 +975,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		return predictedPoints;
 	}
 
-	private void closeImage(String title)
+	private static void closeImage(String title)
 	{
 		ImagePlus imp = WindowManager.getImage(title);
 		if (imp != null)
@@ -984,7 +984,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		}
 	}
 
-	private ImagePlus cloneImage(ImagePlus imp, String cloneTitle)
+	private static ImagePlus cloneImage(ImagePlus imp, String cloneTitle)
 	{
 		ImagePlus clone = WindowManager.getImage(cloneTitle);
 		if (clone == null)
@@ -1006,7 +1006,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		return clone;
 	}
 
-	private ImagePlus cloneImage(ImagePlus imp, ImagePlus mask, String cloneTitle)
+	private static ImagePlus cloneImage(ImagePlus imp, ImagePlus mask, String cloneTitle)
 	{
 		ImagePlus clone = WindowManager.getImage(cloneTitle);
 		Integer maskId = (mask != null) ? new Integer(mask.getID()) : 0;
@@ -1027,7 +1027,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		return clone;
 	}
 
-	private void maskImage(ImagePlus clone, ImagePlus mask)
+	private static void maskImage(ImagePlus clone, ImagePlus mask)
 	{
 		if (validMask(clone, mask))
 		{
@@ -2247,7 +2247,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		return Arrays.copyOf(roiPoints, id);
 	}
 
-	private Roi createRoi(List<Coordinate> points)
+	private static Roi createRoi(List<Coordinate> points)
 	{
 		int[] ox = new int[points.size()];
 		int[] oy = new int[points.size()];
