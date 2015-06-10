@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import gdsc.colocalisation.cda.TwinStackShifter;
-
 import gdsc.threshold.Auto_Threshold;
 import gdsc.utils.Random;
 
@@ -69,6 +68,8 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	private static int minimumRadius = 9;
 	private static int maximumRadius = 16;
 	private static double pCut = 0.05;
+	
+	private Correlator c;
 
 	/*
 	 * (non-Javadoc)
@@ -112,6 +113,8 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		// channel3 is set within getMethods()
 		int nChannels = (channel3 > 0) ? 3 : 2;
 
+		c = new Correlator(dimensions[0] * dimensions[1]);
+		
 		for (String method : methods)
 		{
 			if (logThresholds || logResults)
@@ -535,7 +538,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 
 		int nTotal = 0;
 
-		Correlator c = new Correlator(overlapStack.getWidth() * overlapStack.getHeight());
+		c.clear();
 
 		for (int s = 1; s <= overlapStack.getSize(); s++)
 		{

@@ -55,6 +55,8 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	private static boolean showMask = false;
 	private static boolean testSignificance = false;
 
+	private Correlator c;
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -92,6 +94,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	{
 		int[] dimensions = imp.getDimensions();
 		int currentSlice = imp.getCurrentSlice();
+		c = new Correlator(dimensions[0] * dimensions[1]);
 		for (String method : getMethods())
 		{
 			IJ.log("Stack correlation (" + method + ") : " + imp.getTitle());
@@ -375,7 +378,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 
 		int nTotal = 0;
 
-		Correlator c = new Correlator(s1.imageStack.getWidth() * s1.imageStack.getHeight());
+		c.clear();
 
 		for (int s = 1; s <= overlapStack.getSize(); s++)
 		{
