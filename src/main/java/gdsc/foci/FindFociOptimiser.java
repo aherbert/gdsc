@@ -2624,7 +2624,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			if (reuseResults && new File(fullResultFile).exists())
 			{
 				results = loadResults(fullResultFile);
-				if (results.size() == combinations)
+				if (results != null && results.size() == combinations)
 					IJ.log("Re-using results: " + fullResultFile);
 				else
 					results = null;
