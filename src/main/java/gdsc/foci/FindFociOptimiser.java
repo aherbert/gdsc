@@ -814,6 +814,16 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 		Options bestOptions = results.get(0).options;
 
+		double fractionParameter = 0;
+		int outputType = FindFoci.OUTPUT_RESULTS_TABLE | FindFoci.OUTPUT_ROI_SELECTION |
+				FindFoci.OUTPUT_MASK_ROI_SELECTION | FindFoci.OUTPUT_LOG_MESSAGES;
+
+		FindFoci.saveParameters(resultFile + ".params", null, null, bestOptions.backgroundMethod,
+				bestOptions.backgroundParameter, bestOptions.autoThresholdMethod, bestOptions.searchMethod,
+				bestOptions.searchParameter, bestOptions.maxPeaks, bestOptions.minSize, bestOptions.peakMethod,
+				bestOptions.peakParameter, outputType, bestOptions.sortIndex, bestOptions.options, bestOptions.blur,
+				bestOptions.centreMethod, bestOptions.centreParameter, fractionParameter, "");
+
 		OutputStreamWriter out = createResultsFile(bestOptions, imp, mask, resultFile);
 		if (out == null)
 			return;
@@ -893,7 +903,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		Recorder.recordOption("Peak_parameter", "" + bestOptions.peakParameter);
 		Recorder.recordOption("Sort_method", FindFoci.sortIndexMethods[bestOptions.sortIndex]);
 		Recorder.recordOption("Maximum_peaks", "" + bestOptions.maxPeaks);
-		Recorder.recordOption("Show_mask");
+		Recorder.recordOption("Show_mask", FindFoci.maskOptions[3]);
 		Recorder.recordOption("Show_table");
 		Recorder.recordOption("Mark_maxima");
 		Recorder.recordOption("Mark_peak_maxima");
@@ -2606,7 +2616,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		public void run()
 		{
 			final ImagePlus imp = FindFoci.openImage(inputDirectory, image);
-			String[] maskPath = FindFoci.getMaskImage(inputDirectory, maskDirectory, image); 
+			String[] maskPath = FindFoci.getMaskImage(inputDirectory, maskDirectory, image);
 			final ImagePlus mask = FindFoci.openImage(maskPath[0], maskPath[1]);
 			final String resultFile = outputDirectory + File.separator + imp.getShortTitle();
 			final String fullResultFile = resultFile + ".results.xls";

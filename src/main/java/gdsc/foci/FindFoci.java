@@ -1112,7 +1112,7 @@ public class FindFoci implements PlugIn, MouseListener
 					roi = null;
 				}
 			}
-			
+
 			// The image may have a point ROI overlay added by the showResults(...) method called by the
 			// preview functionality of the FindFoci GUI
 			killOverlayPointRoi(imp);
@@ -1275,11 +1275,41 @@ public class FindFoci implements PlugIn, MouseListener
 			roiEncoder.write(new PointRoi(xpoints, ypoints, resultsArray.size()));
 
 			// Save parameters to file
-			fos = new FileOutputStream(resultsDirectory + File.separatorChar + expId + ".params");
-			out = new OutputStreamWriter(fos, "UTF-8");
-			writeParam(out, "Image", imp.getTitle());
-			if (imp.getOriginalFileInfo() != null)
-				writeParam(out, "File", imp.getOriginalFileInfo().directory + imp.getOriginalFileInfo().fileName);
+			saveParameters(resultsDirectory + File.separatorChar + expId + ".params", imp, mask, backgroundMethod,
+					backgroundParameter, autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize,
+					peakMethod, peakParameter, outputType, sortIndex, options, blur, centreMethod, centreParameter,
+					fractionParameter, resultsDirectory);
+			return expId;
+		}
+		catch (Exception e)
+		{
+			logError(e.getMessage());
+		}
+		return "";
+	}
+
+	/**
+	 * Save the FindFoci parameters to file
+	 * 
+	 * @return True if the parmaeters were saved
+	 */
+	static boolean saveParameters(String filename, ImagePlus imp, ImagePlus mask, int backgroundMethod,
+			double backgroundParameter, String autoThresholdMethod, int searchMethod, double searchParameter,
+			int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex,
+			int options, double blur, int centreMethod, double centreParameter, double fractionParameter,
+			String resultsDirectory)
+	{
+		try
+		{
+			// Save parameters to file
+			FileOutputStream fos = new FileOutputStream(filename);
+			OutputStreamWriter out = new OutputStreamWriter(fos, "UTF-8");
+			if (imp != null)
+			{
+				writeParam(out, "Image", imp.getTitle());
+				if (imp.getOriginalFileInfo() != null)
+					writeParam(out, "File", imp.getOriginalFileInfo().directory + imp.getOriginalFileInfo().fileName);
+			}
 			if (mask != null)
 			{
 				writeParam(out, "Mask", mask.getTitle());
@@ -1315,13 +1345,13 @@ public class FindFoci implements PlugIn, MouseListener
 			writeParam(out, "Centre_method", centreMethods[centreMethod]);
 			writeParam(out, "Centre_parameter", "" + centreParameter);
 			out.close();
-			return expId;
+			return true;
 		}
 		catch (Exception e)
 		{
 			logError(e.getMessage());
 		}
-		return "";
+		return false;
 	}
 
 	public static String getStatisticsMode(int options)
@@ -1489,10 +1519,10 @@ public class FindFoci implements PlugIn, MouseListener
 					imp.setOverlay(overlay);
 				}
 			}
-		}			
+		}
 	}
 
-	private int getMaskOption(int outputType)
+	private static int getMaskOption(int outputType)
 	{
 		if (isSet(outputType, FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_FRACTION_OF_HEIGHT))
 			return 6;
@@ -1510,12 +1540,12 @@ public class FindFoci implements PlugIn, MouseListener
 		return 0;
 	}
 
-	private boolean isSet(int flag, int mask)
+	private static boolean isSet(int flag, int mask)
 	{
 		return (flag & mask) == mask;
 	}
 
-	private void writeParam(OutputStreamWriter out, String key, String value) throws IOException
+	private static void writeParam(OutputStreamWriter out, String key, String value) throws IOException
 	{
 		out.write(key);
 		out.write(" = ");
@@ -6032,7 +6062,7 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 	}
 
-	private void logError(String message)
+	private static void logError(String message)
 	{
 		IJ.log("ERROR - FindFoci: " + message);
 	}
