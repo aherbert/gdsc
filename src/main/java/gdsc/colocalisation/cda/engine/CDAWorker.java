@@ -76,8 +76,8 @@ public class CDAWorker implements Runnable
 		final double m1 = (double) intersectResult.sum1 / denom1;
 		final double m2 = (double) intersectResult.sum2 / denom2;
 
-		System.out.printf("d=%f, x=%d, y=%d, n=%d, r=%f, sx=%d, sy=%d\n", distance, x, y, c.getN(), intersectResult.r,
-				c.getSumX(), c.getSumY());
+		//System.out.printf("d=%f, x=%d, y=%d, n=%d, r=%f, sx=%d, sy=%d\n", distance, x, y, c.getN(), intersectResult.r,
+		//		c.getSumX(), c.getSumY());
 
 		results.add(new CalculationResult(distance, m1, m2, intersectResult.r));
 	}

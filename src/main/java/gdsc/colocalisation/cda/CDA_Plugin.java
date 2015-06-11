@@ -793,6 +793,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		int threads = Prefs.getThreads();
 		CDAEngine engine = new CDAEngine(imageStack1, roiStack1, confinedStack, imageStack2, roiStack2, denom1, denom2,
 				results, totalSteps, threads);
+		// Wait for initialisation
+		engine.isInitialised();
 
 		IJ.showProgress(0);
 		IJ.showStatus("Computing shifts ...");

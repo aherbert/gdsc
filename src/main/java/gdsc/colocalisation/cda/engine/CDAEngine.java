@@ -61,20 +61,55 @@ public class CDAEngine
 
 			t.start();
 		}
+	}
 
+	/**
+	 * This method checks if all the worker threads are ready to accept jobs, waiting a short period if necessary.
+	 * Note that jobs can still be queued if this method returns false.
+	 * 
+	 * @return True if ready to accept jobs, false if the workers are still initialising.
+	 */
+	public boolean isInitialised()
+	{
+		boolean ok = checkWorkers();
+		if (ok)
+			return true;
+		
+		ok = true;
 		for (CDAWorker worker : workers)
 		{
-			for (int i = 0; !worker.isInitialised() && i < 5; i++)
+			if (!checkWorkerWithDelay(worker))
+				ok = false;
+		}
+
+		if (ok)
+			return true;
+
+		// Re-check as they may have now initialised
+		return checkWorkers();
+	}
+	
+	private boolean checkWorkerWithDelay(CDAWorker worker)
+	{
+		for (int i = 0; !worker.isInitialised() && i < 5; i++)
+		{
+			try
 			{
-				try
-				{
-					Thread.sleep(20);
-				}
-				catch (InterruptedException e)
-				{
-				}
+				Thread.sleep(20);
+			}
+			catch (InterruptedException e)
+			{
 			}
 		}
+		return worker.isInitialised();
+	}
+	
+	private boolean checkWorkers()
+	{
+		for (CDAWorker worker : workers)
+			if (!worker.isInitialised())
+				return false;
+		return true;
 	}
 
 	private void createQueue(int threads)
