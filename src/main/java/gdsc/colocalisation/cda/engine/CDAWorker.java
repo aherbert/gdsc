@@ -27,8 +27,11 @@ import java.util.concurrent.BlockingQueue;
  */
 public class CDAWorker implements Runnable
 {
+	ImageStack imageStack1;
+	ImageStack roiStack1;
 	ImageStack imageStack2;
 	ImageStack roiStack2;
+	ImageStack confinedStack;
 	double denom1;
 	double denom2;
 	List<CalculationResult> results;
@@ -39,16 +42,18 @@ public class CDAWorker implements Runnable
 
 	private volatile boolean finished = false;
 
-	public CDAWorker(ImageStack imageStack2, ImageStack roiStack2, double denom1, double denom2,
-			List<CalculationResult> results, TwinStackShifter twinImageShifter, BlockingQueue<CDAJob> jobs,
+	public CDAWorker(ImageStack imageStack1, ImageStack roiStack1, ImageStack imageStack2, ImageStack roiStack2, ImageStack confinedStack, double denom1, double denom2,
+			List<CalculationResult> results, BlockingQueue<CDAJob> jobs,
 			int totalSteps)
 	{
+		this.imageStack1 = imageStack1;
+		this.roiStack1 = roiStack1;
 		this.imageStack2 = imageStack2;
 		this.roiStack2 = roiStack2;
+		this.confinedStack = confinedStack;
 		this.denom1 = denom1;
 		this.denom2 = denom2;
 		this.results = results;
-		this.twinImageShifter = twinImageShifter;
 		this.jobs = jobs;
 		this.totalSteps = totalSteps;
 	}
@@ -71,8 +76,9 @@ public class CDAWorker implements Runnable
 		final double m1 = (double) intersectResult.sum1 / denom1;
 		final double m2 = (double) intersectResult.sum2 / denom2;
 
-		//System.out.printf("d=%f, x=%d, y=%d, n=%d, r=%f\n", distance, x, y, c.getN(), intersectResult.r);
-		
+		System.out.printf("d=%f, x=%d, y=%d, n=%d, r=%f, sx=%d, sy=%d\n", distance, x, y, c.getN(), intersectResult.r,
+				c.getSumX(), c.getSumY());
+
 		results.add(new CalculationResult(distance, m1, m2, intersectResult.r));
 	}
 
@@ -114,6 +120,8 @@ public class CDAWorker implements Runnable
 	 */
 	public void run()
 	{
+		twinImageShifter = new TwinStackShifter(imageStack1, roiStack1, confinedStack);
+		
 		try
 		{
 			while (!finished)
@@ -150,5 +158,13 @@ public class CDAWorker implements Runnable
 	public boolean isFinished()
 	{
 		return finished;
+	}
+	
+	/**
+	 * @return True if the worker is ready to run jobs
+	 */
+	public boolean isInitialised()
+	{
+		return twinImageShifter != null;
 	}
 }

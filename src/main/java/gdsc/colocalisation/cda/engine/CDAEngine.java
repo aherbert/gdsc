@@ -13,7 +13,6 @@ package gdsc.colocalisation.cda.engine;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
-import gdsc.colocalisation.cda.TwinStackShifter;
 import ij.ImageStack;
 
 import java.util.Collections;
@@ -41,27 +40,40 @@ public class CDAEngine
 	 *            The number of threads to use (set to 1 if less than 1)
 	 */
 	public CDAEngine(ImageStack imageStack1, ImageStack roiStack1, ImageStack confinedStack, ImageStack imageStack2,
-			ImageStack roiStack2, double denom1, double denom2, List<CalculationResult> results,
-			int totalSteps, int threads)
+			ImageStack roiStack2, double denom1, double denom2, List<CalculationResult> results, int totalSteps,
+			int threads)
 	{
 		if (threads < 1)
 			threads = 1;
 
 		createQueue(threads);
-		results = Collections.synchronizedList(results);		
+		results = Collections.synchronizedList(results);
 
 		// Create the workers
 		for (int i = 0; i < threads; i++)
 		{
-			TwinStackShifter twinImageShifter = new TwinStackShifter(imageStack1, roiStack1, confinedStack);
-			CDAWorker worker = new CDAWorker(imageStack2, roiStack2, denom1, denom2, results, twinImageShifter, jobs,
-					totalSteps);
+			CDAWorker worker = new CDAWorker(imageStack1, roiStack1, imageStack2, roiStack2, confinedStack, denom1,
+					denom2, results, jobs, totalSteps);
 			Thread t = new Thread(worker);
 
 			workers.add(worker);
 			this.threads.add(t);
 
 			t.start();
+		}
+
+		for (CDAWorker worker : workers)
+		{
+			for (int i = 0; !worker.isInitialised() && i < 5; i++)
+			{
+				try
+				{
+					Thread.sleep(20);
+				}
+				catch (InterruptedException e)
+				{
+				}
+			}
 		}
 	}
 
