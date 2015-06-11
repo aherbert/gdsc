@@ -639,8 +639,6 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		}
 
 		long[] sum = new long[1];
-		imageStack1 = intersectMask(imageStack1, confinedStack, sum, false);
-		imageStack2 = intersectMask(imageStack2, confinedStack, sum, false);
 		if (expandConfinedCompartment)
 		{
 			// Expand the confined compartment to include all of the ROIs
@@ -653,6 +651,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			roiStack1 = intersectMask(roiStack1, confinedStack, sum, false);
 			roiStack2 = intersectMask(roiStack2, confinedStack, sum, false);
 		}
+		imageStack1 = intersectMask(imageStack1, confinedStack, sum, false);
+		imageStack2 = intersectMask(imageStack2, confinedStack, sum, false);
 
 		// This could be changed to check for a certain pixel count (e.g. (overlap / 255) < [count])
 		if (sum[0] == 0)
@@ -786,8 +786,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		// Initialise the progress count
 		int totalSteps = shiftIndices.length;
-		IJ.showProgress(0);
-		IJ.showStatus("Computing shifts ...");
+		IJ.showStatus("Creating CDA Engine ...");
 
 		List<CalculationResult> results = new ArrayList<CalculationResult>(totalSteps);
 
@@ -795,6 +794,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		CDAEngine engine = new CDAEngine(imageStack1, roiStack1, confinedStack, imageStack2, roiStack2, denom1, denom2,
 				results, totalSteps, threads);
 
+		IJ.showProgress(0);
+		IJ.showStatus("Computing shifts ...");
+		
 		for (int n = 0; n < shiftIndices.length; n++)
 		{
 			int index = shiftIndices[n];
@@ -817,7 +819,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		engine.end(false);
 		//IJ.log("# of results = " + results.size() + " / " + totalSteps);
 
-		IJ.showProgress(1.0); 
+		IJ.showProgress(1.0);
 		IJ.showStatus("Computing shifts ...");
 
 		return results;
@@ -1347,11 +1349,11 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		// Note that the segmented indices must be offset by one to account for the extra option
 		// in the list of segmented images 
 		addRoiField(resultsEntry, segmented1OptionIndex, segmented1Index - 1,
-				getRoiIp(imageStack1.getProcessor(1), segmented1Index - 1));
+				getRoiIp(imageStack1.getProcessor(1), segmented1Index - 1), 4);
 		addRoiField(resultsEntry, segmented2OptionIndex, segmented2Index - 1,
-				getRoiIp(imageStack2.getProcessor(1), segmented2Index - 1));
+				getRoiIp(imageStack2.getProcessor(1), segmented2Index - 1), 6);
 		addRoiField(resultsEntry, confinedOptionIndex, confinedIndex,
-				getRoiIp(confinedStack.getProcessor(1), confinedIndex));
+				getRoiIp(confinedStack.getProcessor(1), confinedIndex), 8);
 		addField(resultsEntry, expandConfinedCompartment);
 		addField(resultsEntry, maximumRadius);
 		addField(resultsEntry, randomRadius);
@@ -1682,7 +1684,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		return buffer;
 	}
 
-	private void addRoiField(StringBuffer buffer, int roiIndex, int imageIndex, ImageProcessor roiIp)
+	private void addRoiField(StringBuffer buffer, int roiIndex, int imageIndex, ImageProcessor roiIp, int offset)
 	{
 		String roiOption = ROI_OPTIONS[roiIndex];
 		addField(buffer, roiOption);
@@ -1692,7 +1694,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			if (imageIndex < 0)
 				buffer.append(CHANNEL_IMAGE);
 			else
-				buffer.append(imageList.get(imageIndex));
+				buffer.append(imageList.get(imageIndex)).append(" (c").append(sliceOptions[offset]).append(",t")
+						.append(sliceOptions[offset + 1]).append(")");
 			if (roiOption.equals(OPTION_MIN_VALUE))
 			{
 				if (roiIp != null)
