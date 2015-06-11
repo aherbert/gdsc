@@ -13,11 +13,10 @@ package gdsc.colocalisation;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
-import java.math.BigInteger;
 import java.util.Arrays;
 
 /**
- * Class to calculate the correlation between two datasets
+ * Class to calculate the correlation between two datasets, storing the data for the correlation calculation.
  */
 public class Correlator
 {
@@ -25,9 +24,6 @@ public class Correlator
 	private int n = 0;
 
 	private long sumX = 0;
-	private long sumXY = 0;
-	private long sumXX = 0;
-	private long sumYY = 0;
 	private long sumY = 0;
 
 	/**
@@ -95,9 +91,6 @@ public class Correlator
 	private void addData(final int v1, final int v2)
 	{
 		sumX += v1;
-		sumXY += (v1 * v2);
-		sumXX += (v1 * v1);
-		sumYY += (v2 * v2);
 		sumY += v2;
 		x[n] = v1;
 		y[n] = v2;
@@ -127,7 +120,8 @@ public class Correlator
 	 * 
 	 * @param v1
 	 * @param v2
-	 * @param length the length of the data set
+	 * @param length
+	 *            the length of the data set
 	 */
 	public void add(final int[] v1, final int[] v2, int length)
 	{
@@ -146,7 +140,14 @@ public class Correlator
 	 */
 	public double getCorrelation()
 	{
-		return correlation(x, y, n);
+		if (n == 0)
+			return Double.NaN;
+		
+		final double ux = sumX / (double) n;
+		final double uy = sumY / (double) n;
+		return doCorrelation(x, y, n, ux, uy);
+		
+		//return correlation(x, y, n);
 	}
 
 	/**
@@ -154,7 +155,21 @@ public class Correlator
 	 */
 	public double getFastCorrelation()
 	{
-		return calculateCorrelation(sumX, sumXY, sumXX, sumYY, sumY, n);
+		if (n == 0)
+			return Double.NaN;
+		
+		long sumXY = 0;
+		long sumXX = 0;
+		long sumYY = 0;
+		
+		for (int i = n; i-- > 0;)
+		{
+			sumXY += (x[i] * y[i]);
+			sumXX += (x[i] * x[i]);
+			sumYY += (y[i] * y[i]);
+		}
+
+		return FastCorrelator.calculateCorrelation(sumX, sumXY, sumXX, sumYY, sumY, n);
 	}
 
 	/**
@@ -187,30 +202,6 @@ public class Correlator
 	public long getSumY()
 	{
 		return sumY;
-	}
-
-	/**
-	 * @return The sum of the X data squared
-	 */
-	public long getSumXX()
-	{
-		return sumXX;
-	}
-
-	/**
-	 * @return The sum of the Y data squared
-	 */
-	public long getSumYY()
-	{
-		return sumYY;
-	}
-
-	/**
-	 * @return The sum of each X data point multiplied by the paired Y data point
-	 */
-	public long getSumXY()
-	{
-		return sumXY;
 	}
 
 	/**
@@ -249,9 +240,28 @@ public class Correlator
 	 *            The number of data points
 	 * @return The correlation
 	 */
-	private static double correlation(final int[] x, final int[] y, final int n)
+	public static double correlation(int[] x, int[] y, int n)
 	{
-		if (n == 0)
+		if (x == null || y == null)
+			return Double.NaN;
+		n = Math.min(Math.min(x.length, y.length), n);
+		return doCorrelation(x, y, n);
+	}
+
+	/**
+	 * Calculate the correlation
+	 * 
+	 * @param x
+	 *            The X data
+	 * @param y
+	 *            the Y data
+	 * @param n
+	 *            The number of data points
+	 * @return The correlation
+	 */
+	private static double doCorrelation(final int[] x, final int[] y, final int n)
+	{
+		if (n <= 0)
 			return Double.NaN;
 
 		long sx = 0;
@@ -266,7 +276,26 @@ public class Correlator
 
 		final double ux = sx / (double) n;
 		final double uy = sy / (double) n;
+		
+		return doCorrelation(x, y, n, ux, uy);	}
 
+	/**
+	 * Calculate the correlation
+	 * 
+	 * @param x
+	 *            The X data
+	 * @param y
+	 *            the Y data
+	 * @param n
+	 *            The number of data points
+	 * @param ux
+	 *            The mean of the X data
+	 * @param uy
+	 *            The mean of the Y data
+	 * @return The correlation
+	 */
+	private static double doCorrelation(final int[] x, final int[] y, final int n, final double ux, final double uy)
+	{
 		// TODO - Add a check to ensure that the sum will not lose precision as the total aggregates.
 		// This could be done by keeping a BigDecimal to store the overall sums. When the rolling total
 		// reaches the specified precision limit for a double then it should be added to the 
@@ -290,78 +319,11 @@ public class Correlator
 	}
 
 	/**
-	 * Calculate the correlation using a fast sum
-	 * 
-	 * @param x
-	 *            The X data
-	 * @param y
-	 *            the Y data
-	 * @return The correlation
-	 */
-	public static double fastCorrelation(int[] x, int[] y)
-	{
-		if (x == null || y == null)
-			return Double.NaN;
-		final int n = Math.min(x.length, y.length);
-		if (n == 0)
-			return Double.NaN;
-
-		long sumX = 0;
-		long sumXY = 0;
-		long sumXX = 0;
-		long sumYY = 0;
-		long sumY = 0;
-
-		for (int i = n; i-- > 0;)
-		{
-			sumX += x[i];
-			sumXY += (x[i] * y[i]);
-			sumXX += (x[i] * x[i]);
-			sumYY += (y[i] * y[i]);
-			sumY += y[i];
-		}
-
-		return calculateCorrelation(sumX, sumXY, sumXX, sumYY, sumY, n);
-	}
-
-	/**
-	 * Calculate the correlation using BigInteger to avoid precision error
-	 * 
-	 * @param sumX
-	 *            The sum of the X values
-	 * @param sumXY
-	 *            The sum of the X*Y values
-	 * @param sumXX
-	 *            The squared sum of the X values
-	 * @param sumYY
-	 *            The squared sum of the Y values
-	 * @param sumY
-	 *            The sum of the Y values
-	 * @param n
-	 *            The number of values
-	 * @return The correlation
-	 */
-	public static double calculateCorrelation(long sumX, long sumXY, long sumXX, long sumYY, long sumY, long n)
-	{
-		BigInteger nSumXY = BigInteger.valueOf(sumXY).multiply(BigInteger.valueOf(n));
-		BigInteger nSumXX = BigInteger.valueOf(sumXX).multiply(BigInteger.valueOf(n));
-		BigInteger nSumYY = BigInteger.valueOf(sumYY).multiply(BigInteger.valueOf(n));
-
-		nSumXY = nSumXY.subtract(BigInteger.valueOf(sumX).multiply(BigInteger.valueOf(sumY)));
-		nSumXX = nSumXX.subtract(BigInteger.valueOf(sumX).multiply(BigInteger.valueOf(sumX)));
-		nSumYY = nSumYY.subtract(BigInteger.valueOf(sumY).multiply(BigInteger.valueOf(sumY)));
-
-		BigInteger product = nSumXX.multiply(nSumYY);
-
-		return nSumXY.doubleValue() / Math.sqrt(product.doubleValue());
-	}
-
-	/**
 	 * Clear all stored values
 	 */
 	public void clear()
 	{
-		sumX = sumXY = sumXX = sumYY = sumY = 0;
+		sumX = sumY = 0;
 		n = 0;
 	}
 }
