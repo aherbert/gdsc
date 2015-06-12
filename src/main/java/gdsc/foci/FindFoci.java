@@ -1454,7 +1454,7 @@ public class FindFoci implements PlugIn, MouseListener
 				{
 					// Use an overlay so that any area ROI is preserved
 					PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
-					if (imp.getRoi() != null)
+					if (imp.getRoi() != null && !(imp.getRoi() instanceof PointRoi))
 					{
 						imp.setOverlay(roi, Color.CYAN, 1, Color.YELLOW);
 					}
