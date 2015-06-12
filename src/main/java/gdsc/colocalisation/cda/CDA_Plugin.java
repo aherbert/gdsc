@@ -33,6 +33,7 @@ import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.FloatStatistics;
 import ij.process.ImageProcessor;
+import ij.process.LUT;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
 import ij.util.Tools;
@@ -270,6 +271,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	// Store the channels and frames to use from image stacks
 	private static int[] sliceOptions = new int[10];
+	// Store the display range min for each ROI
+	private int[] displayMin = new int[3];
 
 	// Stores the list of images last used in the selection options
 	private ArrayList<String> imageList = new ArrayList<String>();
@@ -798,7 +801,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 		IJ.showProgress(0);
 		IJ.showStatus("Computing shifts ...");
-		
+
 		for (int n = 0; n < shiftIndices.length; n++)
 		{
 			int index = shiftIndices[n];
@@ -1005,20 +1008,20 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		{
 			// Convert to a short processor
 			ImageProcessor ip = inputStack.getProcessor(imp.getStackIndex(channel, slice, frame));
-			stack.addSlice(null, convertToShortProcessor(imp, ip));
+			stack.addSlice(null, convertToShortProcessor(imp, ip, channel));
 		}
 		return stack;
 	}
 
-	private ShortProcessor convertToShortProcessor(ImagePlus channel, ImageProcessor ip)
+	private ShortProcessor convertToShortProcessor(ImagePlus imp, ImageProcessor ip, int channel)
 	{
 		ShortProcessor result;
 		if (ip.getClass() == ShortProcessor.class)
 			result = (ShortProcessor) ip.duplicate();
 		else
 			result = (ShortProcessor) (ip.convertToShort(false));
-		result.setMinAndMax(channel.getDisplayRangeMin(), channel.getDisplayRangeMax());
-		result.setRoi(channel.getRoi());
+		result.setMinAndMax(getDisplayRangeMin(imp, channel), imp.getDisplayRangeMax());
+		result.setRoi(imp.getRoi());
 		return result;
 	}
 
@@ -1048,7 +1051,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			// - all pixels above the minimum display value
 			ImageStack result = new ImageStack(roiImp.getWidth(), roiImp.getHeight());
 
-			double min = (option.equals(OPTION_MIN_VALUE)) ? roiImp.getDisplayRangeMin() : 1;
+			final int min = (option.equals(OPTION_MIN_VALUE)) ? getDisplayRangeMin(roiImp, channel) : 1;
+			int minIndex = (offset - 4) / 2;
+			displayMin[minIndex] = min;
 
 			for (int slice = 1; slice <= slices; slice++)
 			{
@@ -1106,6 +1111,15 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		}
 
 		return defaultMask(channelImp);
+	}
+
+	private int getDisplayRangeMin(ImagePlus imp, int channel)
+	{
+		// Composite images can have a display range for each color channel
+		LUT[] luts = imp.getLuts();
+		if (luts != null && channel <= luts.length)
+			return (int) luts[channel - 1].min;
+		return (int) imp.getDisplayRangeMin();
 	}
 
 	private ImageProcessor getRoiIp(ImageProcessor channelIp, int index)
@@ -1702,8 +1716,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			{
 				if (roiIp != null)
 				{
+					int minIndex = (offset - 4) / 2;
 					buffer.append(" (>");
-					buffer.append(roiIp.getMin());
+					buffer.append(displayMin[minIndex]);
 					buffer.append(")");
 				}
 			}
