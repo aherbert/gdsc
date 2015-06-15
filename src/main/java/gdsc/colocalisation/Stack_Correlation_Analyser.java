@@ -53,7 +53,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	private static boolean aggregateZstack = true;
 	private static boolean logThresholds = false;
 	private static boolean showMask = false;
-	private static boolean testSignificance = false;
+	private static boolean subtractThreshold = false;
 
 	private Correlator c;
 
@@ -169,14 +169,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 
 						double[] results = correlate(s1, s2);
 
-						String significant = null;
-						if (testSignificance && results[2] > 0)
-						{
-							// Perform CDA
-							significant = (doCDA(s1, s2)) ? "significant" : "not significant";
-						}
-
-						reportResult(t, s1.getSliceName(), s2.getSliceName(), results, significant);
+						reportResult(t, s1.getSliceName(), s2.getSliceName(), results);
 					}
 				}
 			}
@@ -216,7 +209,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 		gd.addCheckbox("Aggregate Z-stack", aggregateZstack);
 		gd.addCheckbox("Log thresholds", logThresholds);
 		gd.addCheckbox("Show mask", showMask);
-		//gd.addCheckbox("Test significance (not yet implemented)", testSignificance);
+		gd.addCheckbox("Subtract threshold", subtractThreshold);
 		gd.addHelp(gdsc.help.URL.COLOCALISATION);
 
 		gd.showDialog();
@@ -228,7 +221,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 		aggregateZstack = gd.getNextBoolean();
 		logThresholds = gd.getNextBoolean();
 		showMask = gd.getNextBoolean();
-		//testSignificance = gd.getNextBoolean();
+		subtractThreshold = gd.getNextBoolean();
 
 		if (!methodOption.equals("Try all"))
 		{
@@ -380,6 +373,8 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 
 		c.clear();
 
+		long sum1 = 0, sum2 = 0;
+
 		for (int s = 1; s <= overlapStack.getSize(); s++)
 		{
 			ImageProcessor ip1 = s1.imageStack.getProcessor(s);
@@ -392,28 +387,35 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 			{
 				if (b[i] == on)
 				{
-					c.add(ip1.get(i), ip2.get(i));
+					final int v1 = ip1.get(i);
+					final int v2 = ip2.get(i);
+					sum1 += v1;
+					sum2 += v2;
+					c.add(v1, v2);
 				}
 			}
 		}
 
-		return new double[] { c.getN(), (100.0 * c.getN() / nTotal), c.getCorrelation() };
-	}
+		// We can calculate the Mander's coefficient if we are using the intersect
+		double m1 = 0, m2 = 0;
+		if (useIntersect)
+		{
+			long sum1A = s1.sum;
+			long sum2A = s2.sum;
+			
+			if (subtractThreshold)
+			{
+				sum1 -= c.getN() * s1.threshold;
+				sum1A -= s1.count * s1.threshold;
+				sum2 -= c.getN() * s2.threshold;
+				sum2A -= s2.count * s2.threshold;
+			}
+			
+			m1 = (double) sum1 / sum1A;
+			m2 = (double) sum2 / sum2A;
+		}
 
-	/**
-	 * Perform a quick run of the Confined Displacement Algorithm
-	 * 
-	 * @param s1
-	 * @param s2
-	 * @return
-	 */
-	private boolean doCDA(SliceCollection s1, SliceCollection s2)
-	{
-		boolean significant = false;
-
-		// Perform a quick CDA test for significance. Limit to N shifts for speed
-
-		return significant;
+		return new double[] { c.getN(), (100.0 * c.getN() / nTotal), c.getCorrelation(), m1, m2 };
 	}
 
 	/**
@@ -428,7 +430,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	 * @param results
 	 *            The correlation results
 	 */
-	private void reportResult(int t, String c1, String c2, double[] results, String significant)
+	private void reportResult(int t, String c1, String c2, double[] results)
 	{
 		int n = (int) results[0];
 		double area = results[1];
@@ -440,9 +442,11 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 		sb.append(n).append(",");
 		sb.append(IJ.d2s(area, 2)).append("%,");
 		sb.append(IJ.d2s(r, 4));
-		if (significant != null)
+		if (useIntersect)
 		{
-			sb.append(",").append(significant);
+			// Mander's coefficients 
+			sb.append(",").append(IJ.d2s(results[3], 4));
+			sb.append(",").append(IJ.d2s(results[4], 4));
 		}
 		IJ.log(sb.toString());
 	}
@@ -455,6 +459,8 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 		public int c;
 		public int z;
 		public ArrayList<Integer> slices;
+		public long sum;
+		public int count;
 
 		private String sliceName = null;
 
@@ -550,6 +556,8 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 			threshold = Auto_Threshold.getThreshold(method, data);
 
 			// Create a mask for each image in the stack
+			sum = 0;
+			count = 0;
 			maskStack = new ImageStack(imageStack.getWidth(), imageStack.getHeight());
 			for (int s = 1; s <= imageStack.getSize(); s++)
 			{
@@ -557,8 +565,11 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 				ImageProcessor ip = imageStack.getProcessor(s);
 				for (int i = bp.getPixelCount(); i-- > 0;)
 				{
-					if (ip.get(i) > threshold)
+					final int value = ip.get(i);
+					if (value > threshold)
 					{
+						sum += value;
+						count++;
 						bp.set(i, 255);
 					}
 				}
