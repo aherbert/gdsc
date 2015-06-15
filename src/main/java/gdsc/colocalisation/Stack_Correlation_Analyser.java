@@ -373,8 +373,6 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 
 		c.clear();
 
-		long sum1 = 0, sum2 = 0;
-
 		for (int s = 1; s <= overlapStack.getSize(); s++)
 		{
 			ImageProcessor ip1 = s1.imageStack.getProcessor(s);
@@ -387,11 +385,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 			{
 				if (b[i] == on)
 				{
-					final int v1 = ip1.get(i);
-					final int v2 = ip2.get(i);
-					sum1 += v1;
-					sum2 += v2;
-					c.add(v1, v2);
+					c.add(ip1.get(i), ip2.get(i));
 				}
 			}
 		}
@@ -400,6 +394,8 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 		double m1 = 0, m2 = 0;
 		if (useIntersect)
 		{
+			long sum1 = c.getSumX();
+			long sum2 = c.getSumY();
 			long sum1A = s1.sum;
 			long sum2A = s2.sum;
 			
