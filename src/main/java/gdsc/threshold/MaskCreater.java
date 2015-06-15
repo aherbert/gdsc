@@ -23,6 +23,7 @@ import ij.gui.Roi;
 import ij.plugin.PlugIn;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
+import ij.process.LUT;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -156,7 +157,6 @@ public class MaskCreater implements PlugIn
 		ByteProcessor bp;
 
 		ImageStack inputStack = imp.getImageStack();
-		int currentSlice = imp.getCurrentSlice();
 		ImageStack result = null;
 		int[] dimensions = imp.getDimensions();
 		int[] channels = createArray(dimensions[2], channel);
@@ -186,12 +186,7 @@ public class MaskCreater implements PlugIn
 						double min = 1;
 						if (option == OPTION_MIN_VALUE)
 						{
-							// Must update the hyperstack to get the image processor display range 
-							if (imp.isDisplayedHyperStack())
-								imp.setPosition(stackIndex);
-							else
-								imp.setSlice(stackIndex);
-							min = imp.getDisplayRangeMin();
+							min = getDisplayRangeMin(imp, channel);
 						}
 						else if (option == OPTION_THRESHOLD)
 						{
@@ -208,12 +203,6 @@ public class MaskCreater implements PlugIn
 						}
 						result.addSlice(null, bp);
 					}
-
-			// Reset the stack
-			if (imp.isDisplayedHyperStack())
-				imp.setPosition(currentSlice);
-			else
-				imp.setSlice(currentSlice);
 		}
 
 		if (option == OPTION_USE_ROI)
@@ -276,6 +265,15 @@ public class MaskCreater implements PlugIn
 		}
 
 		return maskImp;
+	}
+
+	private int getDisplayRangeMin(ImagePlus imp, int channel)
+	{
+		// Composite images can have a display range for each color channel
+		LUT[] luts = imp.getLuts();
+		if (luts != null && channel <= luts.length)
+			return (int) luts[channel - 1].min;
+		return (int) imp.getDisplayRangeMin();
 	}
 
 	private int[] getThresholds(ImagePlus imp, int[] channels, int[] slices, int[] frames)
