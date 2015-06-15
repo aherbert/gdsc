@@ -63,12 +63,13 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	private static boolean logThresholds = false;
 	private static boolean logResults = false;
 	private static boolean showMask = false;
+	private static boolean subtractThreshold = false;
 
 	private static int permutations = 100;
 	private static int minimumRadius = 9;
 	private static int maximumRadius = 16;
 	private static double pCut = 0.05;
-	
+
 	private Correlator c;
 
 	/*
@@ -114,7 +115,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		int nChannels = (channel3 > 0) ? 3 : 2;
 
 		c = new Correlator(dimensions[0] * dimensions[1]);
-		
+
 		for (String method : methods)
 		{
 			if (logThresholds || logResults)
@@ -243,6 +244,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		gd.addCheckbox("Log_thresholds", logThresholds);
 		gd.addCheckbox("Log_results", logResults);
 		gd.addCheckbox("Show_mask", showMask);
+		gd.addCheckbox("Subtract threshold", subtractThreshold);
 		gd.addNumericField("Permutations", permutations, 0);
 		gd.addNumericField("Minimum_shift", minimumRadius, 0);
 		gd.addNumericField("Maximum_shift", maximumRadius, 0);
@@ -260,6 +262,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		logThresholds = gd.getNextBoolean();
 		logResults = gd.getNextBoolean();
 		showMask = gd.getNextBoolean();
+		subtractThreshold = gd.getNextBoolean();
 		permutations = (int) gd.getNextNumber();
 		minimumRadius = (int) gd.getNextNumber();
 		maximumRadius = (int) gd.getNextNumber();
@@ -759,6 +762,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 			if (slices.isEmpty())
 				return;
 
+			final boolean mySubtractThreshold;
 			if (method != NONE)
 			{
 				// Create an aggregate histogram
@@ -774,7 +778,10 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 				}
 
 				threshold = Auto_Threshold.getThreshold(method, data);
+				mySubtractThreshold = subtractThreshold && (threshold > 0);
 			}
+			else
+				mySubtractThreshold = false;
 
 			// Create a mask for each image in the stack
 			maskStack = new ImageStack(imageStack.getWidth(), imageStack.getHeight());
@@ -784,9 +791,14 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 				ImageProcessor ip = imageStack.getProcessor(s);
 				for (int i = bp.getPixelCount(); i-- > 0;)
 				{
-					if (ip.get(i) > threshold)
+					final int value = ip.get(i);
+					if (value > threshold)
 					{
 						bp.set(i, 255);
+					}
+					if (mySubtractThreshold)
+					{
+						ip.set(i, value - threshold);
 					}
 				}
 				maskStack.addSlice(null, bp);
