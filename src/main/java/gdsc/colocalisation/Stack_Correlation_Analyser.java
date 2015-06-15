@@ -360,7 +360,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	 * 
 	 * @param s1
 	 * @param s2
-	 * @return an array containing: the number of overlapping pixels; the % total area for the overlap; and the R
+	 * @return an array containing: the number of overlapping pixels; the % total area for the overlap; R; M1; M2
 	 */
 	private double[] correlate(SliceCollection s1, SliceCollection s2)
 	{
