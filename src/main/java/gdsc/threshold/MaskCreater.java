@@ -27,6 +27,7 @@ import ij.process.LUT;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Create a mask from an image
@@ -163,7 +164,7 @@ public class MaskCreater implements PlugIn
 		int[] slices = createArray(dimensions[3], slice);
 		int[] frames = createArray(dimensions[4], frame);
 
-		int[] thresholds = null;
+		double[] thresholds = null;
 		if (option == OPTION_THRESHOLD)
 		{
 			thresholds = getThresholds(imp, channels, slices, frames);
@@ -183,24 +184,39 @@ public class MaskCreater implements PlugIn
 						int stackIndex = imp.getStackIndex(channel, slice, frame);
 						ImageProcessor roiIp = inputStack.getProcessor(stackIndex);
 
-						double min = 1;
-						if (option == OPTION_MIN_VALUE)
-						{
-							min = getDisplayRangeMin(imp, channel);
-						}
-						else if (option == OPTION_THRESHOLD)
-						{
-							min = thresholds[stackIndex - 1];
-						}
-
 						bp = new ByteProcessor(imp.getWidth(), imp.getHeight());
-						for (int i = roiIp.getPixelCount(); i-- > 0;)
+						if (option == OPTION_MASK)
 						{
-							if (roiIp.get(i) >= min)
+							for (int i = roiIp.getPixelCount(); i-- > 0;)
 							{
-								bp.set(i, 255);
+								if (roiIp.getf(i) != 0)
+								{
+									bp.set(i, 255);
+								}
 							}
 						}
+						else
+						{
+							final double min;
+							if (option == OPTION_MIN_VALUE)
+							{
+								min = getDisplayRangeMin(imp, channel);
+							}
+							else
+							// if (option == OPTION_THRESHOLD)
+							{
+								min = thresholds[stackIndex - 1];
+							}
+
+							for (int i = roiIp.getPixelCount(); i-- > 0;)
+							{
+								if (roiIp.getf(i) >= min)
+								{
+									bp.set(i, 255);
+								}
+							}
+						}
+
 						result.addSlice(null, bp);
 					}
 		}
@@ -240,9 +256,9 @@ public class MaskCreater implements PlugIn
 				}
 			}
 
-			for (int frame=frames.length; frame-- > 0; )
-				for (int slice=slices.length; slice-- > 0; )
-					for (int channel=channels.length; channel-- > 0; )
+			for (int frame = frames.length; frame-- > 0;)
+				for (int slice = slices.length; slice-- > 0;)
+					for (int channel = channels.length; channel-- > 0;)
 					{
 						result.addSlice(null, bp.duplicate());
 					}
@@ -276,31 +292,135 @@ public class MaskCreater implements PlugIn
 		return (int) imp.getDisplayRangeMin();
 	}
 
-	private int[] getThresholds(ImagePlus imp, int[] channels, int[] slices, int[] frames)
+	private double[] getThresholds(ImagePlus imp, int[] channels, int[] slices, int[] frames)
 	{
-		int[] thresholds = new int[imp.getStackSize()];
+		double[] thresholds = new double[imp.getStackSize()];
 		ImageStack inputStack = imp.getImageStack();
 
-		for (int frame : frames)
-			for (int channel : channels)
+		// 32-bit images have no histogram.
+		// We convert to 16-bit using the min-max from each channel
+		float[][] min = new float[channels.length][frames.length];
+		float[][] max = new float[channels.length][frames.length];
+		if (imp.getBitDepth() == 32)
+		{
+			// Convert the image to 16-bit
+
+			// Find the min and max per channel
+			for (int i = 0; i < channels.length; i++)
 			{
-				// Threshold the z-stack together
-				int stackIndex = imp.getStackIndex(channel, slices[0], frame);
-				int[] data = inputStack.getProcessor(stackIndex).getHistogram();
-				for (int i = 1; i < slices.length; i++)
+				Arrays.fill(min[i], Float.POSITIVE_INFINITY);
+				Arrays.fill(max[i], Float.NEGATIVE_INFINITY);
+			}
+
+			for (int i = 0; i < channels.length; i++)
+			{
+				for (int j = 0; j < frames.length; j++)
 				{
-					int[] tmp = inputStack.getProcessor(stackIndex).getHistogram();
-					for (int j = tmp.length; j-- > 0;)
-						data[j] += tmp[j];
+					// Find the min and max per channel across the z-stack
+					for (int k = 0; k < slices.length; k++)
+					{
+						int stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
+						float[] data = (float[]) inputStack.getProcessor(stackIndex).getPixels();
+						float cmin = data[0];
+						float cmax = data[0];
+						for (float f : data)
+						{
+							if (f < cmin)
+								cmin = f;
+							else if (f > cmax)
+								cmax = f;
+						}
+						if (cmin < min[i][j])
+							min[i][j] = cmin;
+						if (cmax > max[i][j])
+							max[i][j] = cmax;
+						//IJ.log(String.format("Channel %d, Frame %d, Slice %d : min = %f, max = %f", channels[i],
+						//		frames[j], slices[k], cmin, cmax));
+					}
 				}
-				int threshold = Auto_Threshold.getThreshold(thresholdMethod, data);
-				for (int slice : slices)
+			}
+
+			// Convert
+			//IJ.log("Converting 32-bit image to 16-bit for thresholding");
+			ImageStack newStack = new ImageStack(imp.getWidth(), imp.getHeight(), imp.getStackSize());
+			for (int i = 0; i < channels.length; i++)
+			{
+				for (int j = 0; j < frames.length; j++)
 				{
-					stackIndex = imp.getStackIndex(channel, slice, frame);
+					final float cmin = min[i][j];
+					final float cmax = max[i][j];
+					//IJ.log(String.format("Channel %d, Frame %d : min = %f, max = %f", channels[i], frames[j], cmin,
+					//		cmax));
+					for (int k = 0; k < slices.length; k++)
+					{
+						int stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
+						newStack.setPixels(convertToShort(inputStack.getProcessor(stackIndex), cmin, cmax), stackIndex);
+					}
+				}
+			}
+			inputStack = newStack;
+		}
+
+		for (int i = 0; i < channels.length; i++)
+		{
+			for (int j = 0; j < frames.length; j++)
+			{
+				final float cmin = min[i][j];
+				final float cmax = max[i][j];
+
+				// Threshold the z-stack together
+				int stackIndex = imp.getStackIndex(channels[i], slices[0], frames[j]);
+				final int[] data = inputStack.getProcessor(stackIndex).getHistogram();
+				for (int k = 1; k < slices.length; k++)
+				{
+					stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
+					int[] tmp = inputStack.getProcessor(stackIndex).getHistogram();
+					for (int ii = tmp.length; ii-- > 0;)
+						data[ii] += tmp[ii];
+				}
+				double threshold = Auto_Threshold.getThreshold(thresholdMethod, data);
+				if (imp.getBitDepth() == 32)
+				{
+					// Convert the 16-bit threshold back to the original 32-bit range
+					float scale = getScale(cmin, cmax);
+					threshold = (threshold / scale) + cmin;
+					//IJ.log(String.format("Channel %d, Frame %d : %f", channels[i], frames[j], threshold));
+				}
+
+				for (int k = 0; k < slices.length; k++)
+				{
+					stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
 					thresholds[stackIndex - 1] = threshold;
 				}
 			}
+		}
+
 		return thresholds;
+	}
+
+	private short[] convertToShort(ImageProcessor ip, float min, float max)
+	{
+		float[] pixels32 = (float[]) ip.getPixels();
+		short[] pixels16 = new short[pixels32.length];
+		float scale = getScale(min, max);
+		for (int i = 0; i < pixels16.length; i++)
+		{
+			double value = (pixels32[i] - min) * scale;
+			if (value < 0.0)
+				value = 0.0;
+			if (value > 65535.0)
+				value = 65535.0;
+			pixels16[i] = (short) (value + 0.5);
+		}
+		return pixels16;
+	}
+
+	private float getScale(float min, float max)
+	{
+		if ((max - min) == 0.0)
+			return 1.0f;
+		else
+			return 65535.0f / (max - min);
 	}
 
 	private int[] createArray(int total, int selected)
