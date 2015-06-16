@@ -1586,9 +1586,9 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		autoBinding_13.setConverter(new StringToBooleanConverter());
 		autoBinding_13.bind();
 		//
-		BeanProperty<FindFociHelperView, Boolean> findFociHelperViewBeanProperty = BeanProperty.create("showOverlay");
+		BeanProperty<FindFociHelperView, Boolean> FindFociHelperView2BeanProperty = BeanProperty.create("showOverlay");
 		BeanProperty<JToggleButton, Boolean> jToggleButtonBeanProperty = BeanProperty.create("selected");
-		AutoBinding<FindFociHelperView, Boolean, JToggleButton, Boolean> autoBinding_14 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, instance, findFociHelperViewBeanProperty, tglbtnOverlay, jToggleButtonBeanProperty);
+		AutoBinding<FindFociHelperView, Boolean, JToggleButton, Boolean> autoBinding_14 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, instance, FindFociHelperView2BeanProperty, tglbtnOverlay, jToggleButtonBeanProperty);
 		autoBinding_14.bind();
 		//
 		BeanProperty<JToggleButton, Boolean> jToggleButtonBeanProperty_1 = BeanProperty.create("enabled");
