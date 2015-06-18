@@ -175,6 +175,39 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 		return getThresholds(MLEVEL, maxSig, offset, h);
 	}
+	
+	/**
+	 * Calculate Otsu thresholds on the given image.
+	 * 
+	 * @param data
+	 *            The histogram data
+	 * @param MLEVEL
+	 *            The number of levels
+	 * @return The thresholds
+	 */
+	public int[] calculateThresholds(int[] data, int MLEVEL)
+	{
+		return calculateThresholds(data, MLEVEL, null);
+	}
+	
+	/**
+	 * Calculate Otsu thresholds on the given image.
+	 * 
+	 * @param data
+	 *            The histogram data
+	 * @param MLEVEL
+	 *            The number of levels
+	 * @param maxSig
+	 *            The maximum between class significance
+	 * @return The thresholds
+	 */
+	public int[] calculateThresholds(int[] data, int MLEVEL, float[] maxSig)
+	{
+		int[] offset = new int[1];
+		float[] h = buildHistogram(data, offset);
+
+		return getThresholds(MLEVEL, maxSig, offset, h);
+	}
 
 	private int[] getThresholds(int MLEVEL, float[] maxSig, int[] offset, float[] h)
 	{
@@ -207,7 +240,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 *            Output image minimum (if array length >= 1)
 	 * @return The normalised image histogram
 	 */
-	public float[] buildHistogram(ImagePlus imp, int[] offset)
+	private float[] buildHistogram(ImagePlus imp, int[] offset)
 	{
 		// Get stack histogram - Use ImagePlus to get the ImageProcessor so maintaining the ROI
 		int currentSlice = imp.getCurrentSlice();
@@ -222,6 +255,22 @@ public class Multi_OtsuThreshold implements PlugInFilter
 		}
 		imp.setSliceWithoutUpdate(currentSlice);
 
+		return buildHistogram(data, offset);
+	}
+	
+	/**
+	 * Create a histogram from image min to max. Normalise so integral is 1.
+	 * <p>
+	 * Return the image min in the offset variable
+	 * 
+	 * @param data
+	 *            The histogram data
+	 * @param offset
+	 *            Output image minimum (if array length >= 1)
+	 * @return The normalised image histogram
+	 */
+	private float[] buildHistogram(int[] data, int[] offset)
+	{
 		if (ignoreZero)
 			data[0] = 0;		
 		

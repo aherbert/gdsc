@@ -14,6 +14,7 @@ package gdsc.foci;
  *---------------------------------------------------------------------------*/
 
 import gdsc.threshold.Auto_Threshold;
+import gdsc.threshold.Multi_OtsuThreshold;
 import gdsc.utils.GaussianFit;
 import gdsc.utils.ImageJHelper;
 import ij.IJ;
@@ -741,8 +742,8 @@ public class FindFoci implements PlugIn, MouseListener
 	 * The list of recognised methods for auto-thresholding
 	 */
 	public final static String[] autoThresholdMethods = { "Default", "Huang", "Intermodes", "IsoData", "Li",
-			"MaxEntropy", "Mean", "MinError(I)", "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy",
-			"Shanbhag", "Triangle", "Yen" };
+			"MaxEntropy", "Mean", "MinError(I)", "Minimum", "Moments", "Otsu", "Otsu_3_Level", "Otsu_4_Level",
+			"Percentile", "RenyiEntropy", "Shanbhag", "Triangle", "Yen" };
 	public final static String[] statisticsModes = { "Both", "Inside", "Outside" };
 
 	private static String myMaskImage = "";
@@ -1711,7 +1712,7 @@ public class FindFoci implements PlugIn, MouseListener
 		// Calculate the auto-threshold if necessary
 		if (backgroundMethod == BACKGROUND_AUTO_THRESHOLD)
 		{
-			stats[STATS_BACKGROUND] = Auto_Threshold.getThreshold(autoThresholdMethod, statsHistogram);
+			stats[STATS_BACKGROUND] = getThreshold(autoThresholdMethod, statsHistogram);
 		}
 		statsHistogram = null;
 
@@ -1847,6 +1848,19 @@ public class FindFoci implements PlugIn, MouseListener
 		lastResultsArray = resultsArray;
 
 		return new Object[] { outImp, resultsArray, stats };
+	}
+
+	private int getThreshold(String autoThresholdMethod, int[] statsHistogram)
+	{
+		if (autoThresholdMethod.endsWith("evel"))
+		{
+			Multi_OtsuThreshold multi = new Multi_OtsuThreshold();
+			multi.ignoreZero = false;
+			int level = autoThresholdMethod.contains("_3_") ? 3 : 4;
+			int[] threshold = multi.calculateThresholds(statsHistogram, level);
+			return threshold[1];
+		}
+		return Auto_Threshold.getThreshold(autoThresholdMethod, statsHistogram);
 	}
 
 	private long timestamp;
@@ -1994,7 +2008,7 @@ public class FindFoci implements PlugIn, MouseListener
 		// Calculate the auto-threshold if necessary
 		if (backgroundMethod == BACKGROUND_AUTO_THRESHOLD)
 		{
-			stats[STATS_BACKGROUND] = Auto_Threshold.getThreshold(autoThresholdMethod, statsHistogram);
+			stats[STATS_BACKGROUND] = getThreshold(autoThresholdMethod, statsHistogram);
 		}
 
 		return new Object[] { image, types, maxima, histogram, stats, originalImage };
@@ -3007,7 +3021,7 @@ public class FindFoci implements PlugIn, MouseListener
 	private void thresholdMask(int[] image, short[] maxima, short peakValue, String autoThresholdMethod, double[] stats)
 	{
 		int[] histogram = buildHistogram(image, maxima, peakValue, round(stats[STATS_MAX]));
-		int threshold = Auto_Threshold.getThreshold(autoThresholdMethod, histogram);
+		int threshold = getThreshold(autoThresholdMethod, histogram);
 
 		for (int i = maxima.length; i-- > 0;)
 		{
