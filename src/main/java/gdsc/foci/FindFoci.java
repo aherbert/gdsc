@@ -2258,6 +2258,8 @@ public class FindFoci implements PlugIn, MouseListener
 		stats[STATS_SUM_ABOVE_BACKGROUND] = getIntensityAboveBackground(image, types, round(stats[STATS_BACKGROUND]));
 		Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, round(stats[STATS_MIN]),
 				round(stats[STATS_BACKGROUND]));
+		if (maxPoints == null)
+			return null;
 
 		ArrayList<int[]> resultsArray = new ArrayList<int[]>(maxPoints.length);
 

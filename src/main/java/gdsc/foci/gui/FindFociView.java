@@ -1357,6 +1357,10 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		{
 			setBackgroundLevel((Double) params[0]);
 		}
+		if (message == MessageType.ERROR)
+		{
+			chckbxPreview.setSelected(false);
+		}
 	}
 
 	@SuppressWarnings("rawtypes")

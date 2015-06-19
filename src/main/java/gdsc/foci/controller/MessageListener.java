@@ -20,7 +20,7 @@ public interface MessageListener
 {
 	public enum MessageType
 	{
-		BACKGROUND_LEVEL
+		BACKGROUND_LEVEL, ERROR
 	}
 
 	/**

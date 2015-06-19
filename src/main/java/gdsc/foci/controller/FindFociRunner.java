@@ -102,6 +102,9 @@ public class FindFociRunner extends Thread
 			else
 				IJ.log("A error occurred during processing");
 			t.printStackTrace();
+			
+			if (listener != null)
+				listener.notify(MessageType.ERROR, t);
 		}
 		finally
 		{
@@ -251,6 +254,12 @@ public class FindFociRunner extends Thread
 			{
 				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
 				return;
+			}
+			
+			if (listener != null)
+			{
+				double[] stats = (double[]) initArray[4];
+				listener.notify(MessageType.BACKGROUND_LEVEL, stats[FindFoci.STATS_BACKGROUND]);
 			}
 		}
 		if (state.ordinal() <= FindFociState.SEARCH.ordinal())
