@@ -40,12 +40,25 @@ public class MaskCreater implements PlugIn
 	public static int OPTION_USE_ROI = 2;
 	public static int OPTION_THRESHOLD = 3;
 
+	public static String[] methods;
+	static
+	{
+		// Add options for multi-level Otsu threshold
+		ArrayList<String> m = new ArrayList<String>();
+		m.addAll(Arrays.asList(Auto_Threshold.methods));
+		m.add("Otsu_3_level");
+		m.add("Otsu_4_level");
+		methods = m.toArray(new String[0]);
+	}
+
 	private static String selectedImage = "";
 	private static int selectedOption = OPTION_MASK;
 	private static String selectedThresholdMethod = "Otsu";
 	private static int selectedChannel = 0;
 	private static int selectedSlice = 0;
 	private static int selectedFrame = 0;
+	private static boolean selectedRemoveEdgeParticles = false;
+	private static int selectedMinParticleSize = 0;
 
 	private ImagePlus imp;
 	private int option;
@@ -53,6 +66,8 @@ public class MaskCreater implements PlugIn
 	private int channel = 0;
 	private int slice = 0;
 	private int frame = 0;
+	private boolean removeEdgeParticles = false;
+	private int minParticleSize = 0;
 
 	/*
 	 * (non-Javadoc)
@@ -95,10 +110,12 @@ public class MaskCreater implements PlugIn
 		gd.addMessage("Create a new mask image");
 		gd.addChoice("Image", imageList.toArray(new String[0]), selectedImage);
 		gd.addChoice("Option", options, options[selectedOption]);
-		gd.addChoice("Threshold_Method", Auto_Threshold.methods, selectedThresholdMethod);
+		gd.addChoice("Threshold_Method", methods, selectedThresholdMethod);
 		gd.addNumericField("Channel", selectedChannel, 0);
 		gd.addNumericField("Slice", selectedSlice, 0);
 		gd.addNumericField("Frame", selectedFrame, 0);
+		gd.addCheckbox("Remove_edge_particles", selectedRemoveEdgeParticles);
+		gd.addNumericField("Min_particle_size", selectedMinParticleSize, 0);
 		gd.addHelp(gdsc.help.URL.UTILITY);
 		gd.showDialog();
 
@@ -111,6 +128,8 @@ public class MaskCreater implements PlugIn
 		selectedChannel = (int) gd.getNextNumber();
 		selectedSlice = (int) gd.getNextNumber();
 		selectedFrame = (int) gd.getNextNumber();
+		selectedRemoveEdgeParticles = gd.getNextBoolean();
+		selectedMinParticleSize = (int) gd.getNextNumber();
 
 		setImp(WindowManager.getImage(selectedImage));
 		setOption(selectedOption);
@@ -118,6 +137,8 @@ public class MaskCreater implements PlugIn
 		setChannel(selectedChannel);
 		setSlice(selectedSlice);
 		setFrame(selectedFrame);
+		setRemoveEdgeParticles(selectedRemoveEdgeParticles);
+		setMinParticleSize(selectedMinParticleSize);
 
 		return true;
 	}
@@ -217,11 +238,12 @@ public class MaskCreater implements PlugIn
 							}
 						}
 
+						postProcess(bp);
+
 						result.addSlice(null, bp);
 					}
 		}
-
-		if (option == OPTION_USE_ROI)
+		else if (option == OPTION_USE_ROI)
 		{
 			// Use the ROI from the ROI image
 			Roi roi = imp.getRoi();
@@ -255,6 +277,8 @@ public class MaskCreater implements PlugIn
 					}
 				}
 			}
+
+			postProcess(bp);
 
 			for (int frame = frames.length; frame-- > 0;)
 				for (int slice = slices.length; slice-- > 0;)
@@ -378,7 +402,7 @@ public class MaskCreater implements PlugIn
 					for (int ii = tmp.length; ii-- > 0;)
 						data[ii] += tmp[ii];
 				}
-				double threshold = Auto_Threshold.getThreshold(thresholdMethod, data);
+				double threshold = getThreshold(thresholdMethod, data);
 				if (imp.getBitDepth() == 32)
 				{
 					// Convert the 16-bit threshold back to the original 32-bit range
@@ -396,6 +420,19 @@ public class MaskCreater implements PlugIn
 		}
 
 		return thresholds;
+	}
+
+	private int getThreshold(String autoThresholdMethod, int[] statsHistogram)
+	{
+		if (autoThresholdMethod.endsWith("evel"))
+		{
+			Multi_OtsuThreshold multi = new Multi_OtsuThreshold();
+			multi.ignoreZero = false;
+			int level = autoThresholdMethod.contains("_3_") ? 3 : 4;
+			int[] threshold = multi.calculateThresholds(statsHistogram, level);
+			return threshold[1];
+		}
+		return Auto_Threshold.getThreshold(autoThresholdMethod, statsHistogram);
 	}
 
 	private short[] convertToShort(ImageProcessor ip, float min, float max)
@@ -535,5 +572,332 @@ public class MaskCreater implements PlugIn
 	public int getSlice()
 	{
 		return slice;
+	}
+
+	/**
+	 * @return the removeEdgeParticles
+	 */
+	public boolean isRemoveEdgeParticles()
+	{
+		return removeEdgeParticles;
+	}
+
+	/**
+	 * @param removeEdgeParticles
+	 *            the removeEdgeParticles to set
+	 */
+	public void setRemoveEdgeParticles(boolean removeEdgeParticles)
+	{
+		this.removeEdgeParticles = removeEdgeParticles;
+	}
+
+	/**
+	 * @return the minParticleSize
+	 */
+	public int getMinParticleSize()
+	{
+		return minParticleSize;
+	}
+
+	/**
+	 * @param minParticleSize
+	 *            the minParticleSize to set
+	 */
+	public void setMinParticleSize(int minParticleSize)
+	{
+		this.minParticleSize = minParticleSize;
+	}
+
+	private void postProcess(ByteProcessor bp)
+	{
+		if (!removeEdgeParticles && minParticleSize == 0)
+			return;
+
+		// Assign all particles
+		int[] mask = findParticles(bp);
+
+		boolean changed = false;
+
+		if (removeEdgeParticles)
+		{
+			for (int x1 = 0, x2 = ylimit * maxx; x1 < bp.getWidth(); x1++, x2++)
+			{
+				if (mask[x1] != 0)
+				{
+					// Fill with zero all connected points
+					zero(mask, x1);
+					changed = true;
+				}
+				if (mask[x2] != 0)
+				{
+					// Fill with zero all connected points
+					zero(mask, x2);
+					changed = true;
+				}
+			}
+			for (int y1 = 0, y2 = xlimit; y1 < mask.length; y1 += maxx, y2 += maxx)
+			{
+				if (mask[y1] != 0)
+				{
+					// Fill with zero all connected points
+					zero(mask, y1);
+					changed = true;
+				}
+				if (mask[y2] != 0)
+				{
+					// Fill with zero all connected points
+					zero(mask, y2);
+					changed = true;
+				}
+			}
+		}
+
+		if (minParticleSize > 0)
+		{
+			// Count particle size and store an index to the particle location
+			int[] count = new int[particles + 1];
+			int[] index = new int[particles + 1];
+			for (int i = 0; i < mask.length; i++)
+				if (mask[i] != 0)
+				{
+					count[mask[i]]++;
+					index[mask[i]] = i;
+				}
+
+			// Remove small particles
+			for (int i = 1; i < count.length; i++)
+			{
+				if (count[i] > 0 && count[i] < minParticleSize)
+				{
+					zero(mask, index[i]);
+					changed = true;
+				}
+			}
+		}
+
+		// Copy the mask back
+		if (changed)
+		{
+			byte[] originalMask = (byte[]) bp.getPixels();
+			for (int i = 0; i < mask.length; i++)
+			{
+				if (mask[i] == 0)
+					originalMask[i] = 0;
+			}
+			// Reset
+			bp.setPixels(originalMask);
+		}
+	}
+
+	// Used for a particle search
+	private static final int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0, -1, -1, -1 };
+	private static final int[] DIR_Y_OFFSET = new int[] { -1, -1, 0, 1, 1, 1, 0, -1 };
+	private int maxx = 0, maxy;
+	private int xlimit, ylimit;
+	private int[] offset = null;
+	private int[] pList = null;
+	private int particles;
+
+	private void initialise(int maxx, int maxy)
+	{
+		// Check if already initialised for these dimensions
+		if (maxx == this.maxx && maxy == this.maxy)
+			return;
+
+		this.maxx = maxx;
+		this.maxy = maxy;
+		pList = new int[maxx * maxy];
+
+		xlimit = maxx - 1;
+		ylimit = maxy - 1;
+
+		// Create the offset table (for single array 2D neighbour comparisons)
+		offset = new int[DIR_X_OFFSET.length];
+		for (int d = offset.length; d-- > 0;)
+		{
+			offset[d] = maxx * DIR_Y_OFFSET[d] + DIR_X_OFFSET[d];
+		}
+	}
+
+	/**
+	 * Convert the mask to connected particles, each with a unique number.
+	 */
+	private int[] findParticles(ByteProcessor bp)
+	{
+		initialise(bp.getWidth(), bp.getHeight());
+
+		byte[] originalMask = (byte[]) bp.getPixels();
+		int[] mask = new int[originalMask.length];
+		boolean[] binaryMask = new boolean[originalMask.length];
+
+		// Store all the non-zero positions
+		for (int i = 0; i < mask.length; i++)
+			binaryMask[i] = (originalMask[i] != 0);
+
+		// Find particles 
+		particles = 0;
+		for (int i = 0; i < binaryMask.length; i++)
+		{
+			if (binaryMask[i])
+			{
+				expandParticle(binaryMask, mask, i, ++particles);
+			}
+		}
+
+		return mask;
+	}
+
+	/**
+	 * Searches from the specified point to find all connected points and assigns them to given particle.
+	 */
+	private void expandParticle(boolean[] binaryMask, int[] mask, int index0, final int particle)
+	{
+		binaryMask[index0] = false; // mark as processed
+		int listI = 0; // index of current search element in the list
+		int listLen = 1; // number of elements in the list
+
+		// we create a list of connected points and start the list at the particle start position
+		pList[listI] = index0;
+
+		do
+		{
+			final int index1 = pList[listI];
+			// Mark this position as part of the particle
+			mask[index1] = particle;
+
+			// Search the 8-connected neighbours 
+			final int x1 = index1 % maxx;
+			final int y1 = index1 / maxx;
+
+			final boolean isInnerXY = (x1 != 0 && x1 != xlimit) && (y1 != 0 && y1 != ylimit);
+
+			if (isInnerXY)
+			{
+				for (int d = 8; d-- > 0;)
+				{
+					int index2 = index1 + offset[d];
+					if (binaryMask[index2])
+					{
+						binaryMask[index2] = false; // mark as processed
+						// Add this to the search
+						pList[listLen++] = index2;
+					}
+				}
+			}
+			else
+			{
+				for (int d = 8; d-- > 0;)
+				{
+					if (isInside(x1, y1, d))
+					{
+						int index2 = index1 + offset[d];
+						if (binaryMask[index2])
+						{
+							binaryMask[index2] = false; // mark as processed
+							// Add this to the search
+							pList[listLen++] = index2;
+						}
+					}
+				}
+			}
+
+			listI++;
+
+		} while (listI < listLen);
+	}
+
+	/**
+	 * Returns whether the neighbour in a given direction is within the image. NOTE: it is assumed that the pixel x,y
+	 * itself is within the image! Uses class variables xlimit, ylimit: (dimensions of the image)-1
+	 * 
+	 * @param x
+	 *            x-coordinate of the pixel that has a neighbour in the given direction
+	 * @param y
+	 *            y-coordinate of the pixel that has a neighbour in the given direction
+	 * @param direction
+	 *            the direction from the pixel towards the neighbour
+	 * @return true if the neighbour is within the image (provided that x, y is within)
+	 */
+	private boolean isInside(int x, int y, int direction)
+	{
+		switch (direction)
+		{
+			case 0:
+				return (y > 0);
+			case 1:
+				return (y > 0 && x < xlimit);
+			case 2:
+				return (x < xlimit);
+			case 3:
+				return (y < ylimit && x < xlimit);
+			case 4:
+				return (y < ylimit);
+			case 5:
+				return (y < ylimit && x > 0);
+			case 6:
+				return (x > 0);
+			case 7:
+				return (y > 0 && x > 0);
+		}
+		return false;
+	}
+
+	/**
+	 * Searches from the specified point to find all connected points with the same value and set them to zero
+	 */
+	private void zero(int[] mask, int index0)
+	{
+		int value = mask[index0];
+		int listI = 0; // index of current search element in the list
+		int listLen = 1; // number of elements in the list
+
+		// we create a list of connected points and start the list at the particle start position
+		pList[listI] = index0;
+
+		do
+		{
+			final int index1 = pList[listI];
+			// Zero this position
+			mask[index1] = 0;
+
+			// Search the 8-connected neighbours 
+			final int x1 = index1 % maxx;
+			final int y1 = index1 / maxx;
+
+			final boolean isInnerXY = (x1 != 0 && x1 != xlimit) && (y1 != 0 && y1 != ylimit);
+
+			if (isInnerXY)
+			{
+				for (int d = 8; d-- > 0;)
+				{
+					int index2 = index1 + offset[d];
+					if (mask[index2] == value)
+					{
+						// Zero and add this to the search
+						mask[index2] = 0;
+						pList[listLen++] = index2;
+					}
+				}
+			}
+			else
+			{
+				for (int d = 8; d-- > 0;)
+				{
+					if (isInside(x1, y1, d))
+					{
+						int index2 = index1 + offset[d];
+						if (mask[index2] == value)
+						{
+							// Zero and add this to the search
+							mask[index2] = 0;
+							pList[listLen++] = index2;
+						}
+					}
+				}
+			}
+
+			listI++;
+
+		} while (listI < listLen);
 	}
 }
