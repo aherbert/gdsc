@@ -333,7 +333,7 @@ public class FindFoci implements PlugIn, MouseListener
 	 * List of background threshold methods for the dialog
 	 */
 	public final static String[] backgroundMethods = { "Absolute", "Mean", "Std.Dev above mean", "Auto threshold",
-			"None" };
+			"Min Mask/ROI", "None" };
 
 	/**
 	 * The background intensity is set using the input value.
@@ -352,9 +352,13 @@ public class FindFoci implements PlugIn, MouseListener
 	 */
 	public final static int BACKGROUND_AUTO_THRESHOLD = 3;
 	/**
+	 * The background intensity is set as the minimum image intensity within the ROI or mask.
+	 */
+	public final static int BACKGROUND_MIN_ROI = 4;
+	/**
 	 * The background intensity is set as 0. Equivalent to using {@link #BACKGROUND_ABSOLUTE} with a value of zero.
 	 */
-	public final static int BACKGROUND_NONE = 4;
+	public final static int BACKGROUND_NONE = 5;
 
 	/**
 	 * List of search methods for the dialog
@@ -3644,6 +3648,9 @@ public class FindFoci implements PlugIn, MouseListener
 
 			case BACKGROUND_STD_DEV_ABOVE_MEAN:
 				return round(stats[STATS_AV_BACKGROUND] + backgroundParameter * stats[STATS_SD_BACKGROUND]);
+				
+			case BACKGROUND_MIN_ROI:
+				return round(stats[STATS_MIN]);
 
 			case BACKGROUND_NONE:
 			default:
