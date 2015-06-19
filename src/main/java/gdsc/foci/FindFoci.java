@@ -5259,6 +5259,8 @@ public class FindFoci implements PlugIn, MouseListener
 
 					if (highestSaddle == null)
 					{
+						// TODO - This should not occur... ? What is the count above the saddle?
+						
 						// No neighbour so just remove
 						mergePeak(image, maxima, peakIdMap, peakId, result, (short) 0, null, null, null, null, true);
 					}
@@ -5267,7 +5269,7 @@ public class FindFoci implements PlugIn, MouseListener
 						// Find the neighbour peak (use the map because the neighbour may have been merged)
 						short neighbourPeakId = peakIdMap[highestSaddle[SADDLE_PEAK_ID]];
 						int[] neighbourResult = findResult(resultsArray, neighbourPeakId);
-
+						
 						// Note: Ensure the peak counts above the saddle are updated.
 						mergePeak(image, maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
 								saddlePoints.get(neighbourPeakId), highestSaddle, true);
@@ -5328,13 +5330,19 @@ public class FindFoci implements PlugIn, MouseListener
 			if (neighbourPeakId == result[RESULT_PEAK_ID])
 				neighbourPeakId = 0;
 
-			result[RESULT_SADDLE_NEIGHBOUR_ID] = neighbourPeakId;
-			if (result[RESULT_SADDLE_NEIGHBOUR_ID] == 0)
-			{
-				result[RESULT_COUNT_ABOVE_SADDLE] = result[RESULT_COUNT];
-				result[RESULT_HIGHEST_SADDLE_VALUE] = 0;
-			}
+			if (neighbourPeakId == 0)
+				clearSaddle(result);
+			else
+				result[RESULT_SADDLE_NEIGHBOUR_ID] = neighbourPeakId;
 		}
+	}
+	
+	private void clearSaddle(int[] result)
+	{
+		result[RESULT_COUNT_ABOVE_SADDLE] = result[RESULT_COUNT];
+		result[RESULT_INTENSITY_ABOVE_SADDLE] = result[RESULT_INTENSITY];
+		result[RESULT_SADDLE_NEIGHBOUR_ID] = 0;
+		result[RESULT_HIGHEST_SADDLE_VALUE] = 0;
 	}
 
 	/**
@@ -5498,8 +5506,7 @@ public class FindFoci implements PlugIn, MouseListener
 			}
 			else
 			{
-				neighbourResult[RESULT_SADDLE_NEIGHBOUR_ID] = 0;
-				neighbourResult[RESULT_HIGHEST_SADDLE_VALUE] = 0;
+				clearSaddle(neighbourResult);
 			}
 		}
 	}
