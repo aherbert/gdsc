@@ -15,7 +15,10 @@ package gdsc.utils;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.WindowManager;
+import ij.gui.Plot;
+import ij.gui.PlotWindow;
 import ij.io.DirectoryChooser;
 import ij.io.OpenDialog;
 import ij.plugin.HyperStackReducer;
@@ -23,6 +26,7 @@ import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 
+import java.awt.Frame;
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -44,6 +48,8 @@ public class ImageJHelper
 	public final static int GREY_8_16 = 8; // Greyscale image (8, 16 bit)
 	public final static int NO_IMAGE = 16; // Add no image option
 	public final static String NO_IMAGE_TITLE = "[None]";
+
+	private static boolean newWindow = false;
 
 	/**
 	 * Returns a list of the IDs of open images. Returns
@@ -340,5 +346,100 @@ public class ImageJHelper
 		{
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Show the image. Replace a currently open image with the specified title or else create a new image.
+	 * 
+	 * @param title
+	 * @param ip
+	 * @return the
+	 */
+	public static ImagePlus display(String title, ImageProcessor ip)
+	{
+		newWindow = false;
+		ImagePlus imp = WindowManager.getImage(title);
+		if (imp == null)
+		{
+			imp = new ImagePlus(title, ip);
+			imp.show();
+			newWindow = true;
+		}
+		else
+		{
+			imp.setProcessor(ip);
+		}
+		return imp;
+	}
+
+	/**
+	 * Show the image. Replace a currently open image with the specified title or else create a new image.
+	 * 
+	 * @param title
+	 * @param slices
+	 * @return the image
+	 */
+	public static ImagePlus display(String title, ImageStack slices)
+	{
+		newWindow = false;
+		ImagePlus imp = WindowManager.getImage(title);
+		if (imp == null)
+		{
+			imp = new ImagePlus(title, slices);
+			imp.show();
+			newWindow = true;
+		}
+		else
+		{
+			imp.setStack(slices);
+		}
+		return imp;
+	}
+
+	/**
+	 * Show the plot. Replace a currently open plot with the specified title or else create a new plot window.
+	 * 
+	 * @param title
+	 * @param plot
+	 * @return the plot window
+	 */
+	public static PlotWindow display(String title, Plot plot)
+	{
+		newWindow = false;
+		Frame plotWindow = null;
+		int[] wList = WindowManager.getIDList();
+		int len = wList != null ? wList.length : 0;
+		for (int i = 0; i < len; i++)
+		{
+			ImagePlus imp = WindowManager.getImage(wList[i]);
+			if (imp != null && imp.getWindow() instanceof PlotWindow)
+			{
+				if (imp.getTitle().equals(title))
+				{
+					plotWindow = imp.getWindow();
+					break;
+				}
+			}
+		}
+		PlotWindow p;
+		if (plotWindow == null)
+		{
+			p = plot.show();
+			newWindow = true;
+		}
+		else
+		{
+			p = (PlotWindow) plotWindow;
+			p.drawPlot(plot);
+		}
+		return p;
+	}
+
+	/**
+	 * @return True is the last call to display created a new window
+	 */
+	public static boolean isNewWindow()
+	{
+		return newWindow;
 	}
 }
