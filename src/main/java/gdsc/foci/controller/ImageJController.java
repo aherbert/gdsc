@@ -121,7 +121,7 @@ public class ImageJController extends FindFociController
 		boolean showTable = model.isShowTable();
 		boolean markMaxima = model.isMarkMaxima();
 		boolean markROIMaxima = model.isMarkROIMaxima();
-		boolean showMaskMaximaAsDots = model.isShowROIMaximaAsDots();
+		boolean showMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
 		boolean showLogMessages = model.isShowLogMessages();
 		boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
 		boolean saveResults = model.isSaveResults();

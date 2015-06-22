@@ -183,7 +183,7 @@ public class FindFociRunner extends Thread
 		boolean showTable = model.isShowTable();
 		boolean markMaxima = model.isMarkMaxima();
 		boolean markROIMaxima = model.isMarkROIMaxima();
-		boolean showMaskMaximaAsDots = model.isShowROIMaximaAsDots();
+		boolean showMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
 		// Ignore: model.isShowLogMessages()
 		boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
 		// Ignore: model.isSaveResults();

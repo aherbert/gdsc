@@ -410,9 +410,9 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	}
 
 	/**
-	 * @return the showROIMaximaAsDots
+	 * @return the showMaskMaximaAsDots
 	 */
-	public boolean isShowROIMaximaAsDots()
+	public boolean isShowMaskMaximaAsDots()
 	{
 		return showMaskMaximaAsDots;
 	}
@@ -425,7 +425,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	{
 		boolean oldValue = this.showMaskMaximaAsDots;
 		this.showMaskMaximaAsDots = showMaskMaximaAsDots;
-		firePropertyChange("showROIMaximaAsDots", oldValue, this.showMaskMaximaAsDots);
+		firePropertyChange("showMaskMaximaAsDots", oldValue, this.showMaskMaximaAsDots);
 	}
 
 	/**
