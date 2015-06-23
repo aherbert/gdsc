@@ -115,7 +115,10 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		gd.showDialog();
 
 		if (gd.wasCanceled() || !dialogItemChanged(gd, null))
+		{
+			imp.setOverlay(null);
 			return DONE;
+		}
 
 		return flags;
 	}
@@ -194,12 +197,6 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		// Do nothing
 	}
 
-	private String lastMaskTitle = null;
-	private double[][] objects = null;
-	private double[] stats = null;
-	private int defaultCutoff = -1;
-	private int maxObject;
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -207,65 +204,39 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	 */
 	public void run(ImageProcessor inputIp)
 	{
-		if (acquireLock())
+		analyseObjects();
+
+		label.setText(String.format("N = %d, Min = %.2f, Max = %.2f, Av = %.2f", objects.length, stats[0], stats[1],
+				stats[2]));
+
+		int cutoff = getCutoff();
+
+		// Segregate using the object means
+		int[] color = new int[maxObject + 1];
+		final int exclude = getRGB(255, 0, 0);
+		final int include = getRGB(0, 255, 0);
+		for (int i = 0; i < objects.length; i++)
 		{
-			String _maskTitle = "";
-			double _cutoff = -1;
-			boolean _autoCutoff = !autoCutoff;
-
-			// Repeat until no input settings change
-			while (!maskTitle.equals(_maskTitle) || _cutoff != cutoff || _autoCutoff != autoCutoff)
-			{
-				_maskTitle = maskTitle;
-				_cutoff = cutoff;
-				_autoCutoff = autoCutoff;
-
-				analyseObjects();
-
-				label.setText(String.format("N = %d, Min = %.2f, Max = %.2f, Av = %.2f", objects.length, stats[0],
-						stats[1], stats[2]));
-
-				int cutoff = getCutoff();
-
-				// Segregate using the object means
-				int[] color = new int[maxObject + 1];
-				final int exclude = getRGB(255, 0, 0);
-				final int include = getRGB(0, 255, 0);
-				for (int i = 0; i < objects.length; i++)
-				{
-					final int maskValue = (int) objects[i][0];
-					final double av = objects[i][2];
-					color[maskValue] = (av < cutoff) ? exclude : include;
-				}
-
-				ColorProcessor cp = new ColorProcessor(inputIp.getWidth(), inputIp.getHeight());
-				for (int i = 0; i < maskIp.getPixelCount(); i++)
-				{
-					final int maskValue = maskIp.get(i);
-					if (maskValue != 0)
-						cp.set(i, color[maskValue]);
-				}
-
-				// Overlay the segregated mask objects on the image
-				ImageRoi roi = new ImageRoi(0, 0, cp);
-				roi.setZeroTransparent(true);
-				roi.setOpacity(0.5);
-				Overlay overlay = new Overlay();
-				overlay.add(roi);
-				imp.setOverlay(overlay);
-			}
-
-			lock = false;
+			final int maskValue = (int) objects[i][0];
+			final double av = objects[i][2];
+			color[maskValue] = (av < cutoff) ? exclude : include;
 		}
-	}
 
-	private boolean lock = false;
+		ColorProcessor cp = new ColorProcessor(inputIp.getWidth(), inputIp.getHeight());
+		for (int i = 0; i < maskIp.getPixelCount(); i++)
+		{
+			final int maskValue = maskIp.get(i);
+			if (maskValue != 0)
+				cp.set(i, color[maskValue]);
+		}
 
-	private synchronized boolean acquireLock()
-	{
-		if (lock)
-			return false;
-		return lock = true;
+		// Overlay the segregated mask objects on the image
+		ImageRoi roi = new ImageRoi(0, 0, cp);
+		roi.setZeroTransparent(true);
+		roi.setOpacity(0.5);
+		Overlay overlay = new Overlay();
+		overlay.add(roi);
+		imp.setOverlay(overlay);
 	}
 
 	private int getRGB(int r, int g, int b)
@@ -273,6 +244,12 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		return ((r << 16) + (g << 8) + b);
 	}
 
+	private String lastMaskTitle = null;
+	private double[][] objects = null;
+	private double[] stats = null;
+	private int defaultCutoff = -1;
+	private int maxObject;
+	
 	private void analyseObjects()
 	{
 		// Check if we already have the objects
