@@ -27,6 +27,7 @@ import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import ij.process.ShortProcessor;
 
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
@@ -52,6 +53,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	private static String maskTitle = "";
 	private static boolean autoCutoff = true;
 	private static double cutoff = 0;
+	private static boolean splitMask = false;
 
 	private Checkbox autoCheckbox;
 	private Scrollbar cutoffSlider;
@@ -100,9 +102,10 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 			cutoff = stats.max;
 
 		gd.addChoice("Mask", names, maskTitle);
+		gd.addMessage("");
 		gd.addCheckbox("Auto_cutoff", autoCutoff);
 		gd.addSlider("Cut-off", stats.min, stats.max, cutoff);
-		gd.addMessage("");
+		gd.addCheckbox("Split_mask", splitMask);
 
 		autoCheckbox = (Checkbox) gd.getCheckboxes().get(0);
 		cutoffSlider = (Scrollbar) gd.getSliders().get(0);
@@ -171,6 +174,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		maskTitle = gd.getNextChoice();
 		autoCutoff = gd.getNextBoolean();
 		cutoff = gd.getNextNumber();
+		splitMask = gd.getNextBoolean();
 
 		// Check if this is a change to the settings during a preview and update the 
 		// auto threshold property
@@ -249,7 +253,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	private double[] stats = null;
 	private int defaultCutoff = -1;
 	private int maxObject;
-	
+
 	private void analyseObjects()
 	{
 		// Check if we already have the objects
@@ -279,8 +283,11 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		for (int i = 0; i < maskIp.getPixelCount(); i++)
 		{
 			final int value = maskIp.get(i);
-			count[value]++;
-			sum[value] += ch.get(i);
+			if (value != 0)
+			{
+				count[value]++;
+				sum[value] += ch.get(i);
+			}
 		}
 
 		ArrayList<double[]> tmpObjects = new ArrayList<double[]>();
@@ -307,8 +314,13 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		average /= objects.length;
 		stats = new double[] { min, max, average };
 
-		cutoffSlider.setMinimum((int) min);
-		cutoffSlider.setMaximum((int) Math.ceil(max));
+		final int minimum = (int) min;
+		final int maximum = (int) Math.ceil(max) + 1;
+		int value = cutoffSlider.getValue();
+		if (value < minimum)
+			value = minimum;
+
+		cutoffSlider.setValues(value, 1, minimum, maximum);
 
 		lastMaskTitle = maskTitle;
 	}
@@ -368,32 +380,77 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		// that may have been set in the preview dialog or in a macro
 		final int cutoff = getCutoff();
 
-		// Create a look-up table of objects to include or exclude
-		boolean[] exclude = new boolean[maxObject + 1];
-		for (int i = 0; i < objects.length; i++)
+		if (splitMask)
 		{
-			final int maskValue = (int) objects[i][0];
-			final double av = objects[i][2];
-			exclude[maskValue] = (av < cutoff);
-		}
-
-		// Create two masks for the segregated objects
-		ImageProcessor excludeIp = maskIp.createProcessor(maskIp.getWidth(), maskIp.getHeight());
-		ImageProcessor includeIp = maskIp.createProcessor(maskIp.getWidth(), maskIp.getHeight());
-
-		for (int i = 0; i < maskIp.getPixelCount(); i++)
-		{
-			final int maskValue = maskIp.get(i);
-			if (maskValue != 0)
+			// Create a look-up table of objects to include or exclude
+			boolean[] exclude = new boolean[maxObject + 1];
+			for (int i = 0; i < objects.length; i++)
 			{
-				if (exclude[maskValue])
-					excludeIp.set(i, maskValue);
-				else
-					includeIp.set(i, maskValue);
+				final int maskValue = (int) objects[i][0];
+				final double av = objects[i][2];
+				exclude[maskValue] = (av < cutoff);
 			}
-		}
 
-		ImageJHelper.display(maskTitle + " Include", includeIp);
-		ImageJHelper.display(maskTitle + " Exclude", excludeIp);
+			// Create two masks for the segregated objects
+			ImageProcessor excludeIp = maskIp.createProcessor(maskIp.getWidth(), maskIp.getHeight());
+			ImageProcessor includeIp = maskIp.createProcessor(maskIp.getWidth(), maskIp.getHeight());
+
+			for (int i = 0; i < maskIp.getPixelCount(); i++)
+			{
+				final int maskValue = maskIp.get(i);
+				if (maskValue != 0)
+				{
+					if (exclude[maskValue])
+						excludeIp.set(i, maskValue);
+					else
+						includeIp.set(i, maskValue);
+				}
+			}
+
+			ImageJHelper.display(maskTitle + " Include", includeIp);
+			ImageJHelper.display(maskTitle + " Exclude", excludeIp);
+		}
+		else
+		{
+			// Create a lookup table for the new mask objects.
+			// Q. Should we maintain the old mask value? This version uses new numbering.
+			int[] newMaskValue = new int[maxObject + 1];
+			int include = -1;
+			int exclude = 1;
+			for (int i = 0; i < objects.length; i++)
+			{
+				final int maskValue = (int) objects[i][0];
+				final double av = objects[i][2];
+				newMaskValue[maskValue] = (av < cutoff) ? exclude++ : include--;
+			}
+
+			// Add the bonus to the new mask value for the include objects
+			final int bonus = getBonus(include);
+			for (int i = 1; i < newMaskValue.length; i++)
+			{
+				if (newMaskValue[i] < 0)
+					newMaskValue[i] = bonus - newMaskValue[i];
+			}
+
+			ImageProcessor ip = new ShortProcessor(maskIp.getWidth(), maskIp.getHeight());
+			for (int i = 0; i < maskIp.getPixelCount(); i++)
+			{
+				final int maskValue = maskIp.get(i);
+				if (maskValue != 0)
+				{
+					ip.set(i, newMaskValue[maskValue]);
+				}
+			}
+
+			ImageJHelper.display(maskTitle + " Segregated", ip);
+		}
+	}
+
+	private int getBonus(int include)
+	{
+		int bonus = 1000;
+		while (bonus < include)
+			bonus += 1000;
+		return bonus;
 	}
 }
