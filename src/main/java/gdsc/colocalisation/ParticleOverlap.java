@@ -13,6 +13,12 @@ package gdsc.colocalisation;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+
 import gdsc.utils.ImageJHelper;
 import ij.IJ;
 import ij.ImagePlus;
@@ -30,15 +36,20 @@ import ij.text.TextWindow;
 public class ParticleOverlap implements PlugIn
 {
 	private static String FRAME_TITLE = "Particle Overlap";
+	private static String newLine = System.getProperty("line.separator");
+	private static String header = "Mask1\tImage1\tMask2\tID\tN\tNo\t%\tI\tIo\tMander's";
 
 	private static String maskTitle1 = "";
 	private static String imageTitle = "";
 	private static String maskTitle2 = "";
 	private static boolean showTotal = false;
+	private static boolean showTable = true;
+	private static String filename = "";
 
 	private static TextWindow tw = null;
 
 	private ImagePlus mask1Imp, imageImp, mask2Imp;
+	private OutputStreamWriter out = null;
 
 	public void run(String arg)
 	{
@@ -68,6 +79,8 @@ public class ParticleOverlap implements PlugIn
 		gd.addChoice("Particle_image", imageList, imageTitle);
 		gd.addChoice("Overlap_mask", maskList, maskTitle2);
 		gd.addCheckbox("Show_total", showTotal);
+		gd.addCheckbox("Show_table", showTable);
+		gd.addStringField("File", filename, 30);
 		gd.showDialog();
 
 		if (gd.wasCanceled())
@@ -77,6 +90,8 @@ public class ParticleOverlap implements PlugIn
 		imageTitle = gd.getNextChoice();
 		maskTitle2 = gd.getNextChoice();
 		showTotal = gd.getNextBoolean();
+		showTable = gd.getNextBoolean();
+		filename = gd.getNextString();
 
 		mask1Imp = WindowManager.getImage(maskTitle1);
 		imageImp = WindowManager.getImage(imageTitle);
@@ -97,8 +112,18 @@ public class ParticleOverlap implements PlugIn
 			IJ.error(FRAME_TITLE, "Overlap mask must match the dimensions of the particle mask");
 			return false;
 		}
+		if (!showTable && emptyFilename())
+		{
+			IJ.error(FRAME_TITLE, "No output specified");
+			return false;
+		}
 
 		return true;
+	}
+	
+	private boolean emptyFilename()
+	{
+		return (filename == null || filename.length() == 0);
 	}
 
 	private boolean checkDimensions(ImagePlus imp1, ImagePlus imp2)
@@ -157,6 +182,7 @@ public class ParticleOverlap implements PlugIn
 
 		// Summarise results
 		createResultsTable();
+		createResultsFile();
 
 		final String title = createTitle();
 		long sn1 = 0, sno1 = 0;
@@ -173,6 +199,8 @@ public class ParticleOverlap implements PlugIn
 		}
 		if (showTotal)
 			addResult(title, 0, sn1, sno1, ss1, sso1);
+		
+		closeResultsFile();
 	}
 
 	private ImageStack extractStack(ImagePlus imp)
@@ -192,10 +220,40 @@ public class ParticleOverlap implements PlugIn
 
 	private void createResultsTable()
 	{
+		if (!showTable)
+			return;
 		if (tw == null || !tw.isShowing())
 		{
-			tw = new TextWindow(FRAME_TITLE + " Results", "Mask1\tImage1\tMask2\tID\tN\tNo\t%\tI\tIo\tMander's", "",
-					800, 500);
+			tw = new TextWindow(FRAME_TITLE + " Results", header, "", 800, 500);
+		}
+	}
+
+	private void createResultsFile()
+	{
+		if (emptyFilename())
+			return;
+
+		try
+		{
+			if (filename.lastIndexOf('.') < 0)
+				filename += ".xls";
+			FileOutputStream fos = new FileOutputStream(filename);
+			out = new OutputStreamWriter(fos, "UTF-8");
+			try
+			{
+				out.write(header);
+				out.write(newLine);
+			}
+			catch (IOException e)
+			{
+				closeResultsFile();
+			}
+		}
+		catch (FileNotFoundException e)
+		{
+		}
+		catch (UnsupportedEncodingException e)
+		{
 		}
 	}
 
@@ -234,6 +292,43 @@ public class ParticleOverlap implements PlugIn
 		sb.append(s1).append("\t");
 		sb.append(so1).append("\t");
 		sb.append(ImageJHelper.rounded(so1 / s1, 5)).append("\t");
-		tw.append(sb.toString());
+
+		recordResult(sb.toString());
+	}
+
+	private void recordResult(String string)
+	{
+		if (showTable)
+			tw.append(string);
+		if (out != null)
+		{
+			try
+			{
+				out.write(string);
+				out.write(newLine);
+			}
+			catch (IOException e)
+			{
+				closeResultsFile();
+			}
+		}
+	}
+
+	private void closeResultsFile()
+	{
+		if (out != null)
+		{
+			try
+			{
+				out.close();
+			}
+			catch (IOException e)
+			{
+			}
+			finally
+			{
+				out = null;
+			}
+		}
 	}
 }
