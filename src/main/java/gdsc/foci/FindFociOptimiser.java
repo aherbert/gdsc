@@ -1117,7 +1117,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		// Get the optimisation search settings
 		GenericDialog gd = new GenericDialog(FRAME_TITLE);
 
-		ArrayList<String> newImageList = FindFoci.buildMaskList(imp);
+		ArrayList<String> newImageList = (multiMode) ? null : FindFoci.buildMaskList(imp);
 
 		// Column 1
 		gd.addMessage("Runs the FindFoci algorithm using different parameters.\n"
@@ -1351,11 +1351,13 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		myCentreParameterMaxArray = createCentreMaxLimits();
 		myCentreParameterIntervalArray = createCentreIntervals();
 
-		ImagePlus mask = WindowManager.getImage(myMaskImage);
-
-		if (!validMask(imp, mask))
+		if (!multiMode)
 		{
-			statisticsModes = new String[] { "Both" };
+			ImagePlus mask = WindowManager.getImage(myMaskImage);
+			if (!validMask(imp, mask))
+			{
+				statisticsModes = new String[] { "Both" };
+			}
 		}
 
 		if (myMatchSearchMethod == 1 && myMatchSearchDistance < 1)
