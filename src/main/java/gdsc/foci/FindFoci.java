@@ -1324,6 +1324,8 @@ public class FindFoci implements PlugIn, MouseListener
 			}
 			writeParam(out, "Background_method", backgroundMethods[backgroundMethod]);
 			writeParam(out, "Background_parameter", Double.toString(backgroundParameter));
+			if (autoThresholdMethod == null || autoThresholdMethod.length() == 0)
+				autoThresholdMethod = "[None]";
 			writeParam(out, "Auto_threshold", autoThresholdMethod);
 			writeParam(out, "Statistics_mode", getStatisticsMode(options));
 			writeParam(out, "Search_method", searchMethods[searchMethod]);
