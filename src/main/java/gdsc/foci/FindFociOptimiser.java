@@ -112,7 +112,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	/**
 	 * The list of recognised methods for sorting the results
 	 */
-	public final static String[] sortMethods = { "None", "Precision", "Recall", "F0.5", "F1", "F2", "F-beta", "Jaccard" };
+	public final static String[] sortMethods = { "None", "Precision", "Recall", "F0.5", "F1", "F2", "F-beta",
+			"Jaccard", "RMSD" };
 
 	/**
 	 * Do not sort the results
@@ -147,14 +148,10 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	 */
 	public final static int SORT_JACCARD = 7;
 	/**
-	 * Sort the results using the rank
+	 * Sort the results using the RMSD. Note that the RMSD is only computed using the TP so is therefore only of use
+	 * when the TP values are the same (i.e. for a tie breaker)
 	 */
-	@SuppressWarnings("unused")
-	private final static int SORT_RANK = 8;
-	/**
-	 * Sort the results using the score. This field is used by the multiple image optimser.
-	 */
-	private final static int SORT_SCORE = 9;
+	public final static int SORT_RMSD = 8;
 
 	public final static String[] matchSearchMethods = { "Relative", "Absolute" };
 	private static int myMatchSearchMethod = 0;
@@ -250,10 +247,6 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	 */
 	public void run(ImagePlus imp)
 	{
-		// TODO - Add 'true' support for 3D images. Currently it just uses XY distance and ignores Z. 
-		// (not sure how to do this since the ROI seems to be associated with one slice. 
-		// It may necessitate using all the ROIs in the ROI manager, one for each slice.)  
-
 		if (!showDialog(imp))
 			return;
 
@@ -347,9 +340,14 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				// Do not average the RMSD 
 				for (int i = 0; i < metrics.length - 1; i++)
 					metrics[i] *= factor;
+				// We must reset the score with the original RMSD
+				if (myResultsSortMethod == SORT_RMSD)
+					metrics[Result.SCORE] = metrics[Result.RMSD];
 			}
-			// Only when we score using rank do we want to have the lowest first
-			sortResults(results, SORT_SCORE, (scoringMode != SCORE_RANK));
+
+			// Now sort the results using the combined scores. Check is the scored metric is lowest first
+			final boolean lowestFirst = myResultsSortMethod == SORT_RMSD;
+			sortResultsByScore(results, lowestFirst);
 
 			// Output the combined results
 			saveResults(null, null, results, null, outputDirectory + File.separator + "all");
@@ -382,7 +380,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			IJ.log(String.format("Optimisation time = %.3f sec (%.3f ms / combination)", seconds, (double) runTime /
 					combinations));
 
-			getScore(results);
+			// For a single image we use the raw score (since no results are combined)
+			getScore(results, SCORE_RAW);
 			showResults(imp, mask, results);
 
 			// Re-run Find_Peaks and output the best result
@@ -518,6 +517,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			IJ.showMessage(sb.toString());
 	}
 
+	private void getScore(ArrayList<Result> results)
+	{
+		getScore(results, scoringMode);
+	}
+
 	/**
 	 * Gets the score for each item in the results set and sets it to the score field. The score is determined using the
 	 * configured resultsSortMethod and scoringMode. It is assumed that all the scoring metrics start at zero and higher
@@ -525,7 +529,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	 * 
 	 * @param results
 	 */
-	private void getScore(ArrayList<Result> results)
+	private void getScore(ArrayList<Result> results, int scoringMode)
 	{
 		// Extract the score from the results
 		final int scoreIndex;
@@ -537,6 +541,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				scoreIndex = myResultsSortMethod - 1;
 				break;
 
+			// If scoring using the rank then note that the rank was assigned 
+			// using the chosen metric in myResultsSortMethod within sortResults(...)
 			case SCORE_RANK:
 			default:
 				scoreIndex = Result.RANK;
@@ -770,7 +776,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			}
 		}
 		// All possible results sort methods are highest first
-		sortResults(results, myResultsSortMethod, true);
+		sortResults(results, myResultsSortMethod);
 		return results;
 	}
 
@@ -2451,34 +2457,62 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				(mask.getNSlices() == imp.getNSlices() || mask.getStackSize() == 1);
 	}
 
-	private void sortResults(ArrayList<Result> results, int sortMethod, boolean highestFirst)
+	private void sortResults(ArrayList<Result> results, int sortMethod)
 	{
-		int sortIndex = sortMethod - 1;
 		if (sortMethod != SORT_NONE)
 		{
-			ResultComparator c = new ResultComparator(sortIndex, highestFirst);
-			//c.tieMethod = 0;
-			Collections.sort(results, c);
-
-			// Cannot assign a rank if we have not sorted
-			int rank = 1;
-			int count = 0;
-			double score = results.get(0).metrics[sortIndex];
-			for (Result r : results)
-			{
-				if (score != r.metrics[sortIndex])
-				{
-					rank += count;
-					count = 0;
-					score = r.metrics[sortIndex];
-				}
-				r.metrics[Result.RANK] = rank;
-				count++;
-			}
+			final int sortIndex = getSortIndex(sortMethod);
+			ResultComparator c = new ResultComparator(sortIndex);
+			sortAndAssignRank(results, sortIndex, c);
 		}
 	}
 
-	private void sortResults(ArrayList<Result> results)
+	private int getSortIndex(int sortMethod)
+	{
+		// Most of the sort methods correspond to the first items of the metrics array
+		if (sortMethod <= SORT_JACCARD)
+			return sortMethod - 1;
+			
+		// Process special cases
+		switch (sortMethod)
+		{
+			case SORT_RMSD:
+				return Result.RMSD;
+		}
+		
+		// This is an error
+		return -1;
+	}
+
+	private void sortResultsByScore(ArrayList<Result> results, boolean lowestFirst)
+	{
+		final int sortIndex = Result.SCORE;
+		ResultComparator c = new ResultComparator(sortIndex, lowestFirst);
+		sortAndAssignRank(results, sortIndex, c);
+	}
+
+	public void sortAndAssignRank(ArrayList<Result> results, int sortIndex, ResultComparator c)
+	{
+		Collections.sort(results, c);
+
+		// Cannot assign a rank if we have not sorted
+		int rank = 1;
+		int count = 0;
+		double score = results.get(0).metrics[sortIndex];
+		for (Result r : results)
+		{
+			if (score != r.metrics[sortIndex])
+			{
+				rank += count;
+				count = 0;
+				score = r.metrics[sortIndex];
+			}
+			r.metrics[Result.RANK] = rank;
+			count++;
+		}
+	}
+
+	private void sortResultsById(ArrayList<Result> results)
 	{
 		Collections.sort(results);
 	}
@@ -2578,14 +2612,47 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	 */
 	private class ResultComparator implements Comparator<Result>
 	{
-		private int sortIndex = 0;
-		private int tieMethod = 1;
-		private final int highest;
+		private final int sortIndex;
+		private final int tieIndex;
+		private final int sortRank;
+		private final int tieRank;
 
-		public ResultComparator(int sortIndex, boolean highestFirst)
+		// Set this to zero to not perform a comparison of the result parameter options
+		private int tieMethod = 1;
+
+		public ResultComparator(int sortIndex, boolean lowestFirst)
 		{
 			this.sortIndex = sortIndex;
-			highest = (highestFirst) ? -1 : 1;
+			if (sortIndex == Result.RMSD)
+				tieIndex = Result.JACCARD;
+			else
+				tieIndex = Result.RMSD;
+			sortRank = (lowestFirst) ? 1 : -1;
+			tieRank = getRankOfHighest(tieIndex);
+		}
+
+		public ResultComparator(int sortIndex)
+		{
+			this.sortIndex = sortIndex;
+			if (sortIndex == Result.RMSD)
+				tieIndex = Result.JACCARD;
+			else
+				tieIndex = Result.RMSD;
+			sortRank = getRankOfHighest(sortIndex);
+			tieRank = getRankOfHighest(tieIndex);
+		}
+
+		private int getRankOfHighest(int index)
+		{
+			switch (index)
+			{
+				case Result.RANK:
+				case Result.RMSD:
+					// Highest last
+					return 1;
+			}
+			// Highest first
+			return -1;
 		}
 
 		/*
@@ -2597,15 +2664,15 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		{
 			// Require the highest is first
 			if (o1.metrics[sortIndex] > o2.metrics[sortIndex])
-				return highest;
+				return sortRank;
 			if (o1.metrics[sortIndex] < o2.metrics[sortIndex])
-				return -highest;
+				return -sortRank;
 
-			// Get the method with the lowest RMSD
-			if (o1.metrics[Result.RMSD] < o2.metrics[Result.RMSD])
-				return -1;
-			if (o1.metrics[Result.RMSD] > o2.metrics[Result.RMSD])
-				return 1;
+			// Compare using the tie index
+			if (o1.metrics[tieIndex] > o2.metrics[tieIndex])
+				return tieRank;
+			if (o1.metrics[tieIndex] < o2.metrics[tieIndex])
+				return -tieRank;
 
 			if (tieMethod == 1 && o1.options != null && o2.options != null)
 			{
@@ -2835,7 +2902,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				checkOptimisationSpace(results, imp);
 
 				// Reset to the order defined by the ID
-				sortResults(results);
+				sortResultsById(results);
 			}
 		}
 	}
@@ -2902,10 +2969,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				results.add(r);
 			}
 
-			getScore(results);
-
 			// If the results were loaded then we must sort them to get a rank
-			sortResults(results, myResultsSortMethod, true);
+			sortResults(results, myResultsSortMethod);
 		}
 		catch (ArrayIndexOutOfBoundsException e)
 		{
