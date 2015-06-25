@@ -296,6 +296,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			threadPool.shutdown();
 			IJ.showProgress(1);
 			IJ.showStatus("");
+			
+			if (ImageJHelper.isInterrupted())
+				return;
 
 			// Check all results are the same size
 			ArrayList<ArrayList<Result>> allResults = new ArrayList<ArrayList<Result>>(size);
@@ -363,6 +366,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			ArrayList<Result> results = runOptimiser(imp, mask, new StandardCounter(combinations));
 			IJ.showProgress(1);
 
+			if (ImageJHelper.isInterrupted())
+				return;
+			
 			if (results == null)
 			{
 				IJ.error(FRAME_TITLE, "No ROI points fall inside the mask image");
@@ -699,6 +705,10 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 														backgroundMethodArray[b], backgroundParameter,
 														searchMethodArray[s], searchParameter, minSize, myPeakMethod,
 														peakParameter, sortMethod, options, blur);
+												
+												// Null is returned when interrupted
+												if (runArray == null)
+													return null;
 
 												if (logBackground)
 												{
@@ -2617,6 +2627,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 		public void run()
 		{
+			if (IJ.escapePressed())
+				return;
+			
 			final ImagePlus imp = FindFoci.openImage(inputDirectory, image);
 			String[] maskPath = FindFoci.getMaskImage(inputDirectory, maskDirectory, image);
 			final ImagePlus mask = FindFoci.openImage(maskPath[0], maskPath[1]);
