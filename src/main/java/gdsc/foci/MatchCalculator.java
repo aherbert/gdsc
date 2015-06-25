@@ -166,10 +166,10 @@ public class MatchCalculator
 						Coordinate actualPoint = actualPoints[actualId];
 
 						// Calculate in steps for increased speed (allows early exit)
-						float dx = actualPoint.getPositionX() - x;
+						final float dx = abs(actualPoint.getPositionX() - x);
 						if (dx < dMin)
 						{
-							float dy = actualPoint.getPositionY() - y;
+							final float dy = abs(actualPoint.getPositionY() - y);
 							if (dy < dMin)
 							{
 								float d2 = dx * dx + dy * dy;
@@ -385,13 +385,13 @@ public class MatchCalculator
 						Coordinate actualPoint = actualPoints[actualId];
 
 						// Calculate in steps for increased speed (allows early exit)
-						float dx = actualPoint.getPositionX() - x;
+						final float dx = abs(actualPoint.getPositionX() - x);
 						if (dx < dMin)
 						{
-							float dy = actualPoint.getPositionY() - y;
+							final float dy = abs(actualPoint.getPositionY() - y);
 							if (dy < dMin)
 							{
-								float dz = actualPoint.getPositionZ() - z;
+								final float dz = abs(actualPoint.getPositionZ() - z);
 								if (dz < dMin)
 								{
 									float d2 = dx * dx + dy * dy + dz * dz;
@@ -455,5 +455,10 @@ public class MatchCalculator
 		if (tp > 0)
 			rmsd = Math.sqrt(rmsd / tp);
 		return new MatchResult(tp, fp, fn, rmsd);
+	}
+
+	private static float abs(final float f)
+	{
+		return (f < 0) ? -f : f;
 	}
 }
