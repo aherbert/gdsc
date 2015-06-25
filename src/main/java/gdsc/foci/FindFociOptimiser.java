@@ -15,6 +15,7 @@ package gdsc.foci;
 
 import gdsc.foci.gui.OptimiserView;
 import gdsc.utils.ImageJHelper;
+import gdsc.utils.UnicodeReader;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -296,7 +297,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			threadPool.shutdown();
 			IJ.showProgress(1);
 			IJ.showStatus("");
-			
+
 			if (ImageJHelper.isInterrupted())
 				return;
 
@@ -343,7 +344,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			for (int j = 0; j < results.size(); j++)
 			{
 				double[] metrics = results.get(j).metrics;
-				for (int i = 0; i < metrics.length; i++)
+				// Do not average the RMSD 
+				for (int i = 0; i < metrics.length - 1; i++)
 					metrics[i] *= factor;
 			}
 			// Only when we score using rank do we want to have the lowest first
@@ -368,7 +370,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 			if (ImageJHelper.isInterrupted())
 				return;
-			
+
 			if (results == null)
 			{
 				IJ.error(FRAME_TITLE, "No ROI points fall inside the mask image");
@@ -380,6 +382,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			IJ.log(String.format("Optimisation time = %.3f sec (%.3f ms / combination)", seconds, (double) runTime /
 					combinations));
 
+			getScore(results);
 			showResults(imp, mask, results);
 
 			// Re-run Find_Peaks and output the best result
@@ -643,10 +646,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		AssignedPoint[] roiPoints = extractRoiPoints(roi, imp, mask);
 
 		if (roiPoints.length == 0)
-		{
-			// TODO - Check if the same directory has a file named [image_title].csv and load points from that
 			return null;
-		}
+
+		final boolean is3D = is3D(roiPoints);
 
 		ArrayList<Result> results = new ArrayList<Result>(combinations);
 
@@ -705,7 +707,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 														backgroundMethodArray[b], backgroundParameter,
 														searchMethodArray[s], searchParameter, minSize, myPeakMethod,
 														peakParameter, sortMethod, options, blur);
-												
+
 												// Null is returned when interrupted
 												if (runArray == null)
 													return null;
@@ -754,7 +756,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 																	myPeakMethod, peakParameter, sortMethod, options,
 																	centreMethodArray[c], centreParameter);
 															Result result = analyseResults(id, roiPoints, resultsArray,
-																	dThreshold, runOptions, time, myBeta);
+																	dThreshold, runOptions, time, myBeta, is3D);
 															results.add(result);
 														}
 														id++;
@@ -799,6 +801,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			sb.append(IJ.d2s(result.metrics[Result.F2], RESULT_PRECISION)).append("\t");
 			sb.append(IJ.d2s(result.metrics[Result.Fb], RESULT_PRECISION)).append("\t");
 			sb.append(IJ.d2s(result.metrics[Result.SCORE], RESULT_PRECISION)).append("\t");
+			sb.append(IJ.d2s(result.metrics[Result.RMSD], RESULT_PRECISION)).append("\t");
 			sb.append(IJ.d2s(result.time / 1000000.0, RESULT_PRECISION)).append("\n");
 			resultsWindow.append(sb.toString());
 		}
@@ -861,6 +864,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				sb.append(IJ.d2s(result.metrics[Result.F2], RESULT_PRECISION)).append("\t");
 				sb.append(IJ.d2s(result.metrics[Result.Fb], RESULT_PRECISION)).append("\t");
 				sb.append(IJ.d2s(result.metrics[Result.SCORE], RESULT_PRECISION)).append("\t");
+				sb.append(IJ.d2s(result.metrics[Result.RMSD], RESULT_PRECISION)).append("\t");
 				sb.append(result.time).append("\n");
 				out.write(sb.toString());
 			}
@@ -2021,6 +2025,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		{
 			sb.append("Score\t");
 		}
+		sb.append("RMSD\t");
 		if (milliSeconds)
 			sb.append("mSec\n");
 		else
@@ -2029,23 +2034,30 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	}
 
 	private Result analyseResults(int id, AssignedPoint[] roiPoints, ArrayList<int[]> resultsArray, double dThreshold,
-			Options options, long time, double beta)
+			Options options, long time, double beta, boolean is3D)
 	{
 		// Extract results for analysis
 		AssignedPoint[] predictedPoints = extractedPredictedPoints(resultsArray);
 
-		MatchResult matchResult = MatchCalculator.analyseResults2D(roiPoints, predictedPoints, dThreshold);
+		MatchResult matchResult;
+		if (is3D)
+			matchResult = MatchCalculator.analyseResults3D(roiPoints, predictedPoints, dThreshold);
+		else
+			matchResult = MatchCalculator.analyseResults2D(roiPoints, predictedPoints, dThreshold);
 
 		return new Result(id, options, matchResult.getNumberPredicted(), matchResult.getTruePositives(),
-				matchResult.getFalsePositives(), matchResult.getFalseNegatives(), time, beta);
+				matchResult.getFalsePositives(), matchResult.getFalseNegatives(), time, beta, matchResult.getRMSD());
 	}
 
 	private AssignedPoint[] extractedPredictedPoints(ArrayList<int[]> resultsArray)
 	{
-		AssignedPoint[] predictedPoints = new AssignedPoint[resultsArray.size()];
+		final AssignedPoint[] predictedPoints = new AssignedPoint[resultsArray.size()];
 		for (int i = 0; i < resultsArray.size(); i++)
-			predictedPoints[i] = new AssignedPoint(resultsArray.get(i)[FindFoci.RESULT_X],
-					resultsArray.get(i)[FindFoci.RESULT_Y], i);
+		{
+			final int[] result = resultsArray.get(i);
+			predictedPoints[i] = new AssignedPoint(result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y],
+					result[FindFoci.RESULT_Z], i);
+		}
 		return predictedPoints;
 	}
 
@@ -2233,40 +2245,189 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		return (Double.isNaN(f) ? 0 : f);
 	}
 
+	/**
+	 * Extract the points for the given image. If a file exists in the same directory as the image with the suffix .csv,
+	 * .xyz, or .txt then the program will attempt to load 3D coordinates from file. Otherwise the points are taken from
+	 * the the ROI.
+	 * 
+	 * The points are then filtered to include only those within the mask region (if the mask dimensions match those of
+	 * the image).
+	 * 
+	 * @param roi
+	 * @param imp
+	 * @param mask
+	 * @return
+	 */
 	public static AssignedPoint[] extractRoiPoints(Roi roi, ImagePlus imp, ImagePlus mask)
 	{
-		AssignedPoint[] roiPoints = PointManager.extractRoiPoints(roi);
+		AssignedPoint[] roiPoints = null;
 
-		// Check if the mask is the correct dimensions to be used by the FindFoci algorithm
-		if (!validMask(imp, mask))
+		boolean is3D = imp.getNSlices() > 1;
+
+		roiPoints = loadPointsFromFile(imp);
+
+		if (roiPoints == null)
+		{
+			roiPoints = PointManager.extractRoiPoints(roi);
+		}
+		else if (!is3D)
+		{
+			// Discard any potential z-information since the image is not 3D
+			for (AssignedPoint point : roiPoints)
+				point.z = 0;
+		}
+
+		// If the mask is not valid or we have no point then return
+		if (!validMask(imp, mask) || roiPoints.length == 0)
 		{
 			return roiPoints;
 		}
 
+		// We must select the points that are inside the mask.
+
+		// Check that the mask should be used in 3D
+		is3D = is3D(roiPoints) && mask.getNSlices() > 1;
+
 		// Look through the ROI points and exclude all outside the mask
 		ImageStack stack = mask.getStack();
-		int c = mask.getChannel();
-		int f = mask.getFrame();
+		final int c = mask.getChannel();
+		final int f = mask.getFrame();
 
 		int id = 0;
-		for (int i = 0; i < roiPoints.length; i++)
+		for (AssignedPoint point : roiPoints)
 		{
-			AssignedPoint point = roiPoints[i];
-
-			for (int slice = 1; slice <= mask.getNSlices(); slice++)
+			if (is3D)
 			{
-				int stackIndex = mask.getStackIndex(c, slice, f);
-				ImageProcessor ipMask = stack.getProcessor(stackIndex);
-
-				if (ipMask.get(point.getX(), point.getY()) > 0)
+				// Check within the 3D mask
+				if (point.z <= mask.getNSlices())
 				{
-					roiPoints[id++] = point;
-					break;
+					int stackIndex = mask.getStackIndex(c, point.z, f);
+					ImageProcessor ipMask = stack.getProcessor(stackIndex);
+
+					if (ipMask.get(point.getX(), point.getY()) > 0)
+						roiPoints[id++] = point;
+				}
+			}
+			else
+			{
+				// Check all slices of the mask, i.e. a 2D projection
+				for (int slice = 1; slice <= mask.getNSlices(); slice++)
+				{
+					int stackIndex = mask.getStackIndex(c, slice, f);
+					ImageProcessor ipMask = stack.getProcessor(stackIndex);
+
+					if (ipMask.get(point.getX(), point.getY()) > 0)
+					{
+						roiPoints[id++] = point;
+						break;
+					}
 				}
 			}
 		}
 
 		return Arrays.copyOf(roiPoints, id);
+	}
+
+	private static boolean is3D(AssignedPoint[] roiPoints)
+	{
+		if (roiPoints.length == 0)
+			return false;
+
+		// All points must have a z-coordinate above zero
+		for (AssignedPoint point : roiPoints)
+			if (point.z < 1)
+				return false;
+
+		return true;
+	}
+
+	private static AssignedPoint[] loadPointsFromFile(ImagePlus imp)
+	{
+		FileInfo fileInfo = imp.getOriginalFileInfo();
+		if (fileInfo.directory != null)
+		{
+			String title = imp.getTitle();
+			int index = title.lastIndexOf('.');
+			if (index != -1)
+				title = title.substring(0, index);
+
+			for (String suffix : new String[] { ".csv", ".xyz", ".txt" })
+			{
+				AssignedPoint[] roiPoints = loadPointsFromFile(fileInfo.directory + title + suffix);
+				if (roiPoints != null)
+					return roiPoints;
+			}
+		}
+		return null;
+	}
+
+	private static Pattern pointsPattern = Pattern.compile("[, \t]+");
+
+	private static AssignedPoint[] loadPointsFromFile(String filename)
+	{
+		if (filename == null)
+			return null;
+		File file = new File(filename);
+		if (!file.exists())
+			return null;
+
+		BufferedReader input = null;
+		try
+		{
+			FileInputStream fis = new FileInputStream(filename);
+			input = new BufferedReader(new UnicodeReader(fis, null));
+
+			String line;
+			int id = 0;
+			int errors = 0;
+			ArrayList<AssignedPoint> points = new ArrayList<AssignedPoint>();
+			while ((line = input.readLine()) != null)
+			{
+				if (line.length() == 0)
+					continue;
+				if (line.charAt(0) == '#')
+					continue;
+				String[] fields = pointsPattern.split(line);
+				if (fields.length > 1)
+				{
+					try
+					{
+						int x = (int) Double.parseDouble(fields[0]);
+						int y = (int) Double.parseDouble(fields[1]);
+						int z = 0;
+						if (fields.length > 2)
+						{
+							z = (int) Double.parseDouble(fields[2]);
+						}
+						points.add(new AssignedPoint(x, y, z, ++id));
+					}
+					catch (NumberFormatException e)
+					{
+						// Abort if too many errors
+						if (++errors == 5)
+							return null;
+					}
+				}
+			}
+			return points.toArray(new AssignedPoint[points.size()]);
+		}
+		catch (IOException e)
+		{
+			// ignore
+		}
+		finally
+		{
+			try
+			{
+				if (input != null)
+					input.close();
+			}
+			catch (IOException e)
+			{
+				// Ignore
+			}
+		}
+		return null;
 	}
 
 	private static Roi createRoi(List<Coordinate> points)
@@ -2333,15 +2494,16 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		public static final int JACCARD = 6;
 		public static final int RANK = 7;
 		public static final int SCORE = 8;
+		public static final int RMSD = 9;
 
 		public int id;
 		public Options options;
 		public String parameters;
 		public int n, tp, fp, fn;
 		public long time;
-		public double[] metrics = new double[9];
+		public double[] metrics = new double[10];
 
-		public Result(int id, Options options, int n, int tp, int fp, int fn, long time, double beta)
+		public Result(int id, Options options, int n, int tp, int fp, int fn, long time, double beta, double rmsd)
 		{
 			this.id = id;
 			this.options = options;
@@ -2369,6 +2531,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			metrics[F1] = calculateFScore(metrics[PRECISION], metrics[RECALL], 1.0);
 			metrics[F2] = calculateFScore(metrics[PRECISION], metrics[RECALL], 2.0);
 			metrics[Fb] = calculateFScore(metrics[PRECISION], metrics[RECALL], beta);
+			metrics[RMSD] = rmsd;
 		}
 
 		/**
@@ -2378,12 +2541,19 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		 */
 		public void add(Result result)
 		{
+			// Create a new RMSD
+			// rmsd = Math.sqrt(sd / tp);
+			double sd1 = metrics[RMSD] * metrics[RMSD] * tp;
+			double sd2 = result.metrics[RMSD] * result.metrics[RMSD] * result.tp;
+			metrics[RMSD] = Math.sqrt((sd1 + sd2) / (tp + result.tp));
+
+			// Combine all other metrics
 			n += result.n;
 			tp += result.tp;
 			fp += result.fp;
 			fn += result.fn;
 			time += result.time;
-			for (int i = 0; i < metrics.length; i++)
+			for (int i = 0; i < metrics.length - 1; i++)
 				metrics[i] += result.metrics[i];
 		}
 
@@ -2430,6 +2600,12 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				return highest;
 			if (o1.metrics[sortIndex] < o2.metrics[sortIndex])
 				return -highest;
+
+			// Get the method with the lowest RMSD
+			if (o1.metrics[Result.RMSD] < o2.metrics[Result.RMSD])
+				return -1;
+			if (o1.metrics[Result.RMSD] > o2.metrics[Result.RMSD])
+				return 1;
 
 			if (tieMethod == 1 && o1.options != null && o2.options != null)
 			{
@@ -2629,7 +2805,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		{
 			if (IJ.escapePressed())
 				return;
-			
+
 			final ImagePlus imp = FindFoci.openImage(inputDirectory, image);
 			String[] maskPath = FindFoci.getMaskImage(inputDirectory, maskDirectory, image);
 			final ImagePlus mask = FindFoci.openImage(maskPath[0], maskPath[1]);
@@ -2687,15 +2863,21 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			input = new BufferedReader(new InputStreamReader(fis));
 
 			String line;
+			boolean isRMSD = false;
 			while ((line = input.readLine()) != null)
 			{
 				if (line.length() == 0)
 					continue;
 				if (line.charAt(0) == '#')
+				{
+					// Look for the RMSD field which was added later. This supports older results files
+					if (line.contains("RMSD"))
+						isRMSD = true;
 					continue;
+				}
 
 				// Code using split and parse
-				// # Rank	Blur	Background method	Max	Min	Search method	Peak method	Sort method	Centre method	N	TP	FP	FN	Jaccard	Precision	Recall	F0.5	F1	F2	F-beta	mSec
+				// # Rank	Blur	Background method	Max	Min	Search method	Peak method	Sort method	Centre method	N	TP	FP	FN	Jaccard	Precision	Recall	F0.5	F1	F2	F-beta	RMSD	mSec
 				int endIndex = getIndex(line, 8) + 1; // include the final tab
 				String parameters = line.substring(line.indexOf('\t') + 1, endIndex);
 				String metrics = line.substring(endIndex);
@@ -2708,14 +2890,19 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				int tp = Integer.parseInt(fields[1]);
 				int fp = Integer.parseInt(fields[2]);
 				int fn = Integer.parseInt(fields[3]);
+				double rmsd = 0;
+				if (isRMSD)
+					rmsd = Double.parseDouble(fields[fields.length - 2]);
 				long time = Long.parseLong(fields[fields.length - 1]);
 
-				Result r = new Result(id, null, n, tp, fp, fn, time, myBeta);
+				Result r = new Result(id, null, n, tp, fp, fn, time, myBeta, rmsd);
 				// Do not count on the Options being parsed from the parameters.
 				r.parameters = parameters;
 				r.options = optionsMap.get(id);
 				results.add(r);
 			}
+
+			getScore(results);
 
 			// If the results were loaded then we must sort them to get a rank
 			sortResults(results, myResultsSortMethod, true);
