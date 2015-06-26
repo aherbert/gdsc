@@ -113,8 +113,11 @@ public class RGBThresholdAnalyser implements PlugIn
 			analyse(name, cp, 1, ip1, ip3);
 			analyse(name, cp, 2, ip2, ip3);
 
+			
 			if (ImageJHelper.isInterrupted())
 				return;
+			
+			return;
 		}
 
 		IJ.showStatus(TITLE + " Finished");
@@ -147,6 +150,7 @@ public class RGBThresholdAnalyser implements PlugIn
 		}
 
 		// Check the threshold is valid
+		//ImageProcessor ep = ip.createProcessor(ip.getWidth(), ip.getHeight());
 		int error = 0;
 		long sum = 0;
 		for (int i = 0; i < mask.length; i++)
@@ -157,11 +161,15 @@ public class RGBThresholdAnalyser implements PlugIn
 				{
 					error++;
 					sum += ip.get(i) - manual;
+					//ep.set(i, ip.get(i));
 				}
 			}
 		}
 		if (error != 0)
+		{
 			System.out.printf("%s [%d] %d error pixels (sum = %d)\n", name, channel, error, sum);
+			//ImageJHelper.display("Error ch "+channel, ep);
+		}
 
 		double[] stats = getStatistics(h);
 
