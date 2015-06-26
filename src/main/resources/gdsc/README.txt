@@ -5,10 +5,9 @@ GDSC Plugins for ImageJ: a collection of ImageJ plugins including:
 - Various utility tools: 
 -- Thresholding and mask generation 
 -- Difference of Gaussians for contrast enhancement
--- Stack synchronisation for simultaneous image viewing
 -- Image/Stack alignment using correlation
  
-Copyright (C) 2014 Alex Herbert
+Copyright (C) 2015 Alex Herbert
 MRC Genome Damage and Stability Centre
 University of Sussex, UK
  

@@ -30,7 +30,7 @@ public class About_Plugin implements PlugIn
 {
 	private static String TITLE = "GDSC ImageJ Plugins";
 	private static String HELP_URL = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/plugins";
-	private static String YEAR = "2014";
+	private static String YEAR = "2015";
 
 	public void run(String arg)
 	{
