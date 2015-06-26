@@ -2812,8 +2812,20 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			}
 		}
 
+		public void increment(int delta)
+		{
+			if (addAndGet(delta) > last)
+			{
+				// Don't show progress all the time
+				last = get() + progressSize;
+				IJ.showProgress(get(), total);
+			}
+		}
+		
 		protected abstract int incrementAndGet();
 
+		protected abstract int addAndGet(int delta);
+		
 		protected abstract int get();
 	}
 
@@ -2830,6 +2842,12 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		protected int incrementAndGet()
 		{
 			return ++step;
+		}
+		
+		@Override
+		protected int addAndGet(int delta)
+		{
+			return step += delta;
 		}
 
 		@Override
@@ -2852,6 +2870,12 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		protected int incrementAndGet()
 		{
 			return step.incrementAndGet();
+		}
+		
+		@Override
+		protected int addAndGet(int delta)
+		{
+			return step.addAndGet(delta);
 		}
 
 		@Override
@@ -2883,6 +2907,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			if (imp == null)
 			{
 				IJ.log("Skipping file (it may not be an image): " + inputDirectory + image);
+				// We can skip forward in the progress
+				counter.increment(combinations);
 				return;
 			}
 			String[] maskPath = FindFoci.getMaskImage(inputDirectory, maskDirectory, image);
@@ -2894,7 +2920,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			{
 				results = loadResults(fullResultFile);
 				if (results != null && results.size() == combinations)
+				{
 					IJ.log("Re-using results: " + fullResultFile);
+					// We can skip forward in the progress
+					counter.increment(combinations);
+				}
 				else
 					results = null;
 			}
