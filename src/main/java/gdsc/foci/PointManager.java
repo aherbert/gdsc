@@ -161,11 +161,16 @@ public class PointManager
 			Polygon p = ((PolygonRoi) roi).getNonSplineCoordinates();
 			int n = p.npoints;
 			Rectangle bounds = roi.getBounds();
+			// The ROI has either a hyperstack position or a stack position, but not both.
+			// Both will be zero if the ROI has no 3D information.
+			int z = roi.getZPosition();
+			if (z == 0)
+				z = roi.getPosition();
 
 			roiPoints = new AssignedPoint[n];
 			for (int i = 0; i < n; i++)
 			{
-				roiPoints[i] = new AssignedPoint(bounds.x + p.xpoints[i], bounds.y + p.ypoints[i], i);
+				roiPoints[i] = new AssignedPoint(bounds.x + p.xpoints[i], bounds.y + p.ypoints[i], z, i);
 			}
 		}
 		else
