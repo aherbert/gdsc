@@ -388,7 +388,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			// Re-run Find_Peaks and output the best result
 			if (!results.isEmpty())
 			{
-				IJ.log("Top result = " + IJ.d2s(results.get(0).metrics[myResultsSortMethod - 1], 4));
+				IJ.log("Top result = " + IJ.d2s(results.get(0).metrics[getSortIndex(myResultsSortMethod)], 4));
 
 				Options bestOptions = results.get(0).options;
 
@@ -499,7 +499,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 			if (sb.length() > 0)
 			{
-				sb.insert(0, "Optimal result (" + IJ.d2s(results.get(0).metrics[myResultsSortMethod - 1], 4) +
+				sb.insert(0, "Optimal result (" + IJ.d2s(results.get(0).metrics[getSortIndex(myResultsSortMethod)], 4) +
 						") for " + imp.getShortTitle() + " obtained at the following limits:\n");
 				sb.append("You may want to increase the optimisation space.");
 
@@ -539,7 +539,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			case SCORE_RAW:
 			case SCORE_Z:
 			case SCORE_RELATIVE:
-				scoreIndex = myResultsSortMethod - 1;
+				scoreIndex = getSortIndex(myResultsSortMethod);
 				break;
 
 			// If scoring using the rank then note that the rank was assigned 
@@ -547,6 +547,12 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			case SCORE_RANK:
 			default:
 				scoreIndex = Result.RANK;
+		}
+
+		// Only Raw/Rank are valid for RMSD
+		if (scoreIndex == Result.RMSD && (scoringMode != SCORE_RAW || scoringMode != SCORE_RANK))
+		{
+			scoringMode = SCORE_RAW;
 		}
 
 		double[] score = new double[results.size()];
@@ -2542,7 +2548,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				remaining -= count;
 			}
 		}
-		
+
 		overlay.setStrokeColor(Color.cyan);
 
 		return overlay;
