@@ -13,16 +13,20 @@ package gdsc.foci;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
+import gdsc.utils.ImageJHelper;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.plugin.filter.PlugInFilter;
+import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Extracts the ROI points from an image to file.
@@ -35,6 +39,11 @@ public class PointExtractorPlugin implements PlugInFilter
 	private static String filename = "";
 	private static boolean xyz = true;
 
+	private PointRoi[] pointRois = null;
+
+	private static boolean useManager = true;
+	private static boolean reset = false;
+
 	private ImagePlus imp;
 
 	/*
@@ -44,7 +53,9 @@ public class PointExtractorPlugin implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		if (imp == null)
+		checkManagerForRois();
+
+		if (imp == null && !isManagerAvailable())
 		{
 			IJ.noImage();
 			return DONE;
@@ -53,6 +64,37 @@ public class PointExtractorPlugin implements PlugInFilter
 		this.imp = imp;
 
 		return DOES_ALL;
+	}
+
+	private void checkManagerForRois()
+	{
+		RoiManager manager = RoiManager.getInstance2();
+		if (manager == null)
+			return;
+
+		pointRois = new PointRoi[manager.getCount()];
+
+		// Store the point ROIs 
+		int count = 0;
+		for (Roi roi : manager.getRoisAsArray())
+		{
+			if (roi instanceof PointRoi)
+			{
+				pointRois[count++] = (PointRoi) roi;
+			}
+		}
+
+		pointRois = Arrays.copyOf(pointRois, count);
+	}
+
+	private boolean isManagerAvailable()
+	{
+		return nPointRois() != 0;
+	}
+
+	private int nPointRois()
+	{
+		return (pointRois == null) ? 0 : pointRois.length;
 	}
 
 	/*
@@ -66,11 +108,12 @@ public class PointExtractorPlugin implements PlugInFilter
 		{
 			return;
 		}
-		Roi roi = imp.getRoi();
 
-		ImagePlus maskImp = WindowManager.getImage(mask);
+		AssignedPoint points[] = getPoints();
 
-		AssignedPoint[] points = FindFociOptimiser.extractRoiPoints(roi, imp, maskImp);
+		// Allow empty files to be generated to support macros
+		if (points == null)
+			points = new AssignedPoint[0];
 
 		try
 		{
@@ -84,7 +127,7 @@ public class PointExtractorPlugin implements PlugInFilter
 				final int t = imp.getCurrentSlice();
 				final int z = 0;
 				TimeValuedPoint[] p = new TimeValuedPoint[points.length];
-				for (int i=0; i<points.length; i++)
+				for (int i = 0; i < points.length; i++)
 				{
 					final int x = points[i].getX();
 					final int y = points[i].getY();
@@ -100,21 +143,62 @@ public class PointExtractorPlugin implements PlugInFilter
 		}
 	}
 
+	private AssignedPoint[] getPoints()
+	{
+		AssignedPoint[] roiPoints;
+
+		if (isManagerAvailable() && useManager)
+		{
+			ArrayList<AssignedPoint> points = new ArrayList<AssignedPoint>();
+			for (PointRoi roi : pointRois)
+			{
+				points.addAll(Arrays.asList(PointManager.extractRoiPoints(roi)));
+			}
+			roiPoints = points.toArray(new AssignedPoint[points.size()]);
+
+			if (reset)
+			{
+				RoiManager manager = RoiManager.getInstance2();
+				if (manager != null)
+					manager.runCommand("reset");
+			}
+		}
+		else
+		{
+			roiPoints = PointManager.extractRoiPoints(imp.getRoi());
+		}
+
+		ImagePlus maskImp = WindowManager.getImage(mask);
+		return FindFociOptimiser.restrictToMask(maskImp, roiPoints);
+	}
+
 	private boolean showDialog()
 	{
-		ArrayList<String> newImageList = FindFoci.buildMaskList(imp);
+		// To improve the flexibility, do not restrict the mask to those suitable for the image. Allow any image for the mask.
+		//ArrayList<String> newImageList = FindFoci.buildMaskList(imp);
+		//String[] list = newImageList.toArray(new String[0]);
+		String[] list = ImageJHelper.getImageList(ImageJHelper.NO_IMAGE, null);
 
 		GenericDialog gd = new GenericDialog(TITLE);
 
-		gd.addMessage("Extracts the ROI points from an image to file");
-		gd.addChoice("mask", newImageList.toArray(new String[0]), mask);
+		gd.addMessage("Extracts the ROI points to file");
+		gd.addChoice("mask", list, mask);
 		gd.addStringField("filename", filename, 30);
 		gd.addCheckbox("xyz_only", xyz);
 
-		Roi roi = imp.getRoi();
-		if (roi == null || roi.getType() != Roi.POINT)
+		if (isManagerAvailable())
 		{
-			gd.addMessage("Warning: The image does not contain Point ROI.\nAn empty result file will be produced");
+			gd.addMessage(nPointRois() + " present in the ROI manager");
+			gd.addCheckbox("Use_manager_ROIs", useManager);
+			gd.addCheckbox("Reset_manager", reset);
+		}
+		else
+		{
+			Roi roi = imp.getRoi();
+			if (roi == null || roi.getType() != Roi.POINT)
+			{
+				gd.addMessage("Warning: The image does not contain Point ROI.\nAn empty result file will be produced");
+			}
 		}
 
 		gd.showDialog();
@@ -125,6 +209,12 @@ public class PointExtractorPlugin implements PlugInFilter
 		mask = gd.getNextChoice();
 		filename = gd.getNextString();
 		xyz = gd.getNextBoolean();
+
+		if (isManagerAvailable())
+		{
+			useManager = gd.getNextBoolean();
+			reset = gd.getNextBoolean();
+		}
 
 		return true;
 	}
