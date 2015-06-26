@@ -350,7 +350,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			sortResultsByScore(results, lowestFirst);
 
 			// Output the combined results
-			saveResults(null, null, results, null, outputDirectory + File.separator + "all");
+			saveResults(null, null, results, null, outputDirectory + "all");
 
 			// Show in a table
 			showResults(null, null, results);
@@ -1445,6 +1445,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			IJ.error(FRAME_TITLE, "Output directory is not a valid directory: " + outputDirectory);
 			return false;
 		}
+		
+		inputDirectory = ImageJHelper.addFileSeparator(inputDirectory);
+		maskDirectory = ImageJHelper.addFileSeparator(maskDirectory);
+		outputDirectory = ImageJHelper.addFileSeparator(outputDirectory);
+		
 		scoringMode = gd.getNextChoiceIndex();
 		reuseResults = gd.getNextBoolean();
 		Prefs.set(INPUT_DIRECTORY, inputDirectory);
@@ -1454,7 +1459,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		Prefs.set(REUSE_RESULTS, reuseResults);
 		return true;
 	}
-
+	
 	private String createSortOptions()
 	{
 		StringBuilder sb = new StringBuilder();
@@ -2874,9 +2879,15 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				return;
 
 			final ImagePlus imp = FindFoci.openImage(inputDirectory, image);
+			// The input filename may not be an image
+			if (imp == null)
+			{
+				IJ.log("Skipping file (it may not be an image): " + inputDirectory + image);
+				return;
+			}
 			String[] maskPath = FindFoci.getMaskImage(inputDirectory, maskDirectory, image);
 			final ImagePlus mask = FindFoci.openImage(maskPath[0], maskPath[1]);
-			final String resultFile = outputDirectory + File.separator + imp.getShortTitle();
+			final String resultFile = outputDirectory + imp.getShortTitle();
 			final String fullResultFile = resultFile + ".results.xls";
 			boolean newResults = false;
 			if (reuseResults && new File(fullResultFile).exists())
@@ -2889,6 +2900,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			}
 			if (results == null)
 			{
+				IJ.log("Creating results: " + fullResultFile);
 				newResults = true;
 				results = runOptimiser(imp, mask, counter);
 			}

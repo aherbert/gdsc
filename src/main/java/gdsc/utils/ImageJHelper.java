@@ -16,6 +16,7 @@ package gdsc.utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.Plot;
 import ij.gui.PlotWindow;
@@ -441,5 +442,17 @@ public class ImageJHelper
 	public static boolean isNewWindow()
 	{
 		return newWindow;
+	}
+	
+	/**
+	 * Add the platform specific file separator character to the directory (if missing)
+	 * @param directory
+	 * @return The directory
+	 */
+	public static String addFileSeparator(String directory)
+	{
+		if (directory.length()>0 && !(directory.endsWith("/")||directory.endsWith("\\")))
+			directory += Prefs.separator;
+		return directory;		
 	}
 }
