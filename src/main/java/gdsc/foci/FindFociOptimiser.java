@@ -23,6 +23,7 @@ import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
+import ij.gui.Overlay;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.gui.YesNoCancelDialog;
@@ -969,29 +970,46 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				options.searchMethod, options.searchParameter, options.maxPeaks, options.minSize, options.peakMethod,
 				options.peakParameter, outputType, options.sortIndex, options.options, options.blur,
 				options.centreMethod, options.centreParameter, 1);
-		AssignedPoint[] predictedPoints = PointManager.extractRoiPoints(clone.getRoi());
+
+		// Add 3D support here by getting the results from the results table not the clone image which only supports 2D
+		ArrayList<int[]> results = FindFoci.getResults();
+		//AssignedPoint[] predictedPoints = PointManager.extractRoiPoints(clone.getRoi());
+		AssignedPoint[] predictedPoints = new AssignedPoint[results.size()];
+		for (int i = 0; i < predictedPoints.length; i++)
+		{
+			int[] result = results.get(i);
+			predictedPoints[i] = new AssignedPoint(result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y],
+					result[FindFoci.RESULT_Z] + 1, i);
+		}
 		maskImage(clone, mask);
 
 		if (myShowScoreImages)
 		{
-			AssignedPoint[] actualPoints = PointManager.extractRoiPoints(imp.getRoi());
+			AssignedPoint[] actualPoints = extractRoiPoints(imp.getRoi(), imp, mask);
 
 			List<Coordinate> TP = new LinkedList<Coordinate>();
 			List<Coordinate> FP = new LinkedList<Coordinate>();
 			List<Coordinate> FN = new LinkedList<Coordinate>();
-			MatchCalculator.analyseResults2D(actualPoints, predictedPoints, getDistanceThreshold(imp), TP, FP, FN);
+			final boolean is3D = is3D(actualPoints);
+			if (is3D)
+				MatchCalculator.analyseResults3D(actualPoints, predictedPoints, getDistanceThreshold(imp), TP, FP, FN);
+			else
+				MatchCalculator.analyseResults2D(actualPoints, predictedPoints, getDistanceThreshold(imp), TP, FP, FN);
 
-			// Show image with TP, FP and FN
+			// Show image with TP, FP and FN. Use an overlay to support 3D images
 			ImagePlus tpImp = cloneImage(imp, mask, imp.getTitle() + " TP");
-			tpImp.setRoi(createRoi(TP));
+			//tpImp.setRoi(createRoi(TP));
+			tpImp.setOverlay(createOverlay(TP, imp));
 			tpImp.show();
 
 			ImagePlus fpImp = cloneImage(imp, mask, imp.getTitle() + " FP");
-			fpImp.setRoi(createRoi(FP));
+			//fpImp.setRoi(createRoi(FP));
+			fpImp.setOverlay(createOverlay(FP, imp));
 			fpImp.show();
 
 			ImagePlus fnImp = cloneImage(imp, mask, imp.getTitle() + " FN");
-			fnImp.setRoi(createRoi(FN));
+			//fnImp.setRoi(createRoi(FN));
+			fnImp.setOverlay(createOverlay(FN, imp));
 			fnImp.show();
 		}
 		else
@@ -1445,11 +1463,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			IJ.error(FRAME_TITLE, "Output directory is not a valid directory: " + outputDirectory);
 			return false;
 		}
-		
+
 		inputDirectory = ImageJHelper.addFileSeparator(inputDirectory);
 		maskDirectory = ImageJHelper.addFileSeparator(maskDirectory);
 		outputDirectory = ImageJHelper.addFileSeparator(outputDirectory);
-		
+
 		scoringMode = gd.getNextChoiceIndex();
 		reuseResults = gd.getNextBoolean();
 		Prefs.set(INPUT_DIRECTORY, inputDirectory);
@@ -1459,7 +1477,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		Prefs.set(REUSE_RESULTS, reuseResults);
 		return true;
 	}
-	
+
 	private String createSortOptions()
 	{
 		StringBuilder sb = new StringBuilder();
@@ -2281,7 +2299,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		{
 			roiPoints = PointManager.extractRoiPoints(roi);
 		}
-		else if (!is3D)
+
+		if (!is3D)
 		{
 			// Discard any potential z-information since the image is not 3D
 			for (AssignedPoint point : roiPoints)
@@ -2294,10 +2313,23 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			return roiPoints;
 		}
 
-		// We must select the points that are inside the mask.
+		return restrictToMask(mask, roiPoints);
+	}
+
+	/**
+	 * Restrict the given points to the mask
+	 * 
+	 * @param mask
+	 * @param roiPoints
+	 * @return
+	 */
+	public static AssignedPoint[] restrictToMask(ImagePlus mask, AssignedPoint[] roiPoints)
+	{
+		if (mask == null)
+			return roiPoints;
 
 		// Check that the mask should be used in 3D
-		is3D = is3D(roiPoints) && mask.getNSlices() > 1;
+		boolean is3D = is3D(roiPoints) && mask.getNSlices() > 1;
 
 		// Look through the ROI points and exclude all outside the mask
 		ImageStack stack = mask.getStack();
@@ -2441,6 +2473,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		return null;
 	}
 
+	@SuppressWarnings("unused")
 	private static Roi createRoi(List<Coordinate> points)
 	{
 		int[] ox = new int[points.size()];
@@ -2454,6 +2487,65 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			i++;
 		}
 		return new PointRoi(ox, oy, ox.length);
+	}
+
+	private static Overlay createOverlay(List<Coordinate> points, ImagePlus imp)
+	{
+		int c = imp.getChannel();
+		int f = imp.getFrame();
+		boolean isHyperStack = imp.isDisplayedHyperStack();
+
+		int[] ox = new int[points.size()];
+		int[] oy = new int[points.size()];
+		int[] oz = new int[points.size()];
+
+		int i = 0;
+		for (Coordinate point : points)
+		{
+			ox[i] = point.getX();
+			oy[i] = point.getY();
+			oz[i] = point.getZ();
+			i++;
+		}
+
+		Overlay overlay = new Overlay();
+		int remaining = ox.length;
+		for (int ii = 0; ii < ox.length; ii++)
+		{
+			// Find the next unprocessed slice
+			if (oz[ii] != -1)
+			{
+				final int slice = oz[ii];
+				// Extract all the points from this slice
+				int[] x = new int[remaining];
+				int[] y = new int[remaining];
+				int count = 0;
+				for (int j = ii; j < ox.length; j++)
+				{
+					if (oz[j] == slice)
+					{
+						x[count] = ox[j];
+						y[count] = oy[j];
+						count++;
+						oz[j] = -1; // Mark processed
+					}
+				}
+				x = Arrays.copyOf(x, count);
+				y = Arrays.copyOf(y, count);
+				PointRoi roi = new PointRoi(x, y, count);
+				if (isHyperStack)
+					roi.setPosition(c, slice, f);
+				else
+					roi.setPosition(slice);
+				roi.setHideLabels(true);
+				overlay.add(roi);
+				remaining -= count;
+			}
+		}
+		
+		overlay.setStrokeColor(Color.cyan);
+
+		return overlay;
 	}
 
 	private static boolean validMask(ImagePlus imp, ImagePlus mask)
@@ -2477,14 +2569,14 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		// Most of the sort methods correspond to the first items of the metrics array
 		if (sortMethod <= SORT_JACCARD)
 			return sortMethod - 1;
-			
+
 		// Process special cases
 		switch (sortMethod)
 		{
 			case SORT_RMSD:
 				return Result.RMSD;
 		}
-		
+
 		// This is an error
 		return -1;
 	}
@@ -2821,11 +2913,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				IJ.showProgress(get(), total);
 			}
 		}
-		
+
 		protected abstract int incrementAndGet();
 
 		protected abstract int addAndGet(int delta);
-		
+
 		protected abstract int get();
 	}
 
@@ -2843,7 +2935,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		{
 			return ++step;
 		}
-		
+
 		@Override
 		protected int addAndGet(int delta)
 		{
@@ -2871,7 +2963,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		{
 			return step.incrementAndGet();
 		}
-		
+
 		@Override
 		protected int addAndGet(int delta)
 		{
@@ -3171,7 +3263,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 					tf.setText(path);
 			}
 			// Double-click on the result table
-			else if (lastImp != null)
+			else if (lastImp != null && lastImp.isVisible())
 			{
 				// An extra line is added at the end of the results so remove this 
 				int rank = resultsWindow.getTextPanel().getLineCount() -
