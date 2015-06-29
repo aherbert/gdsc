@@ -443,16 +443,36 @@ public class ImageJHelper
 	{
 		return newWindow;
 	}
-	
+
 	/**
 	 * Add the platform specific file separator character to the directory (if missing)
+	 * 
 	 * @param directory
 	 * @return The directory
 	 */
 	public static String addFileSeparator(String directory)
 	{
-		if (directory.length()>0 && !(directory.endsWith("/")||directory.endsWith("\\")))
+		if (directory.length() > 0 && !(directory.endsWith("/") || directory.endsWith("\\")))
 			directory += Prefs.separator;
-		return directory;		
+		return directory;
+	}
+
+	/**
+	 * Return "s" if the size is not 1 otherwise returns an empty string. This can be used to add an s where necessary
+	 * to adjectives:
+	 * 
+	 * <pre>
+	 * System.out.printf(&quot;Created %s\n&quot;, Utils.pleural(n, &quot;thing&quot;));
+	 * </pre>
+	 * 
+	 * @param n
+	 *            The number of things
+	 * @param name
+	 *            The name of the thing
+	 * @return "s" or empty string
+	 */
+	public static String pleural(int n, String name)
+	{
+		return n + " " + name + ((Math.abs(n) == 1) ? "" : "s");
 	}
 }

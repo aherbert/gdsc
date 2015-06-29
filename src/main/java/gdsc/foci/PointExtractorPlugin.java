@@ -97,6 +97,16 @@ public class PointExtractorPlugin implements PlugInFilter
 		return (pointRois == null) ? 0 : pointRois.length;
 	}
 
+	private int nPoints()
+	{
+		if (pointRois == null)
+			return 0;
+		int count = 0;
+		for (PointRoi roi : pointRois)
+			count += roi.getNCoordinates();
+		return count;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -182,13 +192,14 @@ public class PointExtractorPlugin implements PlugInFilter
 		GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage("Extracts the ROI points to file");
-		gd.addChoice("mask", list, mask);
-		gd.addStringField("filename", filename, 30);
+		gd.addChoice("Mask", list, mask);
+		gd.addStringField("Filename", filename, 30);
 		gd.addCheckbox("xyz_only", xyz);
 
 		if (isManagerAvailable())
 		{
-			gd.addMessage(nPointRois() + " present in the ROI manager");
+			gd.addMessage(String.format("%s (%s) present in the ROI manager",
+					ImageJHelper.pleural(nPointRois(), "ROI"), ImageJHelper.pleural(nPoints(), "point")));
 			gd.addCheckbox("Use_manager_ROIs", useManager);
 			gd.addCheckbox("Reset_manager", reset);
 		}
