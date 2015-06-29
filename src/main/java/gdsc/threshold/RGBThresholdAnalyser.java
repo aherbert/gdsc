@@ -99,6 +99,11 @@ public class RGBThresholdAnalyser implements PlugIn
 				IJ.log("Matching image is not the same dimensions " + path);
 				continue;
 			}
+			if (!(imp2.getBitDepth() == 8 || imp2.getBitDepth() == 16))
+			{
+				IJ.log("File is not an 8/16 bit image " + file.getAbsolutePath());
+				continue;
+			}
 
 			IJ.showStatus(String.format("Processing %d / %d", count, fileList.length));
 
@@ -116,8 +121,6 @@ public class RGBThresholdAnalyser implements PlugIn
 			
 			if (ImageJHelper.isInterrupted())
 				return;
-			
-			return;
 		}
 
 		IJ.showStatus(TITLE + " Finished");
