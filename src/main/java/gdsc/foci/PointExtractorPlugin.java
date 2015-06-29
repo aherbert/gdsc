@@ -16,6 +16,7 @@ package gdsc.foci;
 import gdsc.utils.ImageJHelper;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.PointRoi;
@@ -63,7 +64,7 @@ public class PointExtractorPlugin implements PlugInFilter
 
 		this.imp = imp;
 
-		return DOES_ALL;
+		return DOES_ALL | NO_IMAGE_REQUIRED;
 	}
 
 	private void checkManagerForRois()
@@ -127,21 +128,25 @@ public class PointExtractorPlugin implements PlugInFilter
 
 		try
 		{
-			if (xyz)
+			if (xyz || imp == null)
 			{
 				PointManager.savePoints(points, filename);
 			}
 			else
 			{
 				// Extract the values
-				final int t = imp.getCurrentSlice();
-				final int z = 0;
 				TimeValuedPoint[] p = new TimeValuedPoint[points.length];
+				ImageStack stack = imp.getImageStack();
+				final int channel = imp.getChannel();
+				final int frame = imp.getFrame();
 				for (int i = 0; i < points.length; i++)
 				{
 					final int x = points[i].getX();
 					final int y = points[i].getY();
-					p[i] = new TimeValuedPoint(x, y, z, t, ip.getf(x, y));
+					final int z = points[i].getZ();
+					final int index = imp.getStackIndex(channel, z, frame);
+					ImageProcessor ip2 = stack.getProcessor(index);
+					p[i] = new TimeValuedPoint(x, y, z, frame, ip2.getf(x, y));
 				}
 
 				TimeValuePointManager.savePoints(p, filename);
@@ -194,7 +199,8 @@ public class PointExtractorPlugin implements PlugInFilter
 		gd.addMessage("Extracts the ROI points to file");
 		gd.addChoice("Mask", list, mask);
 		gd.addStringField("Filename", filename, 30);
-		gd.addCheckbox("xyz_only", xyz);
+		if (imp != null)
+			gd.addCheckbox("xyz_only", xyz);
 
 		if (isManagerAvailable())
 		{
@@ -219,7 +225,8 @@ public class PointExtractorPlugin implements PlugInFilter
 
 		mask = gd.getNextChoice();
 		filename = gd.getNextString();
-		xyz = gd.getNextBoolean();
+		if (imp != null)
+			xyz = gd.getNextBoolean();
 
 		if (isManagerAvailable())
 		{
