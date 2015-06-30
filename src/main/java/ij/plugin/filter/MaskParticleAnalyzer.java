@@ -176,22 +176,33 @@ public class MaskParticleAnalyzer extends ParticleAnalyzer
 		// We need to perform the same work as the super-class but instead of outlining using the 
 		// configured thresholds in the particle image we just use the position's current value.
 		// Do this by zeroing all pixels that are not the same value and then calling the super-class method.
-		ImageProcessor ip2 = ip.duplicate();
+		ImageProcessor originalIp = ip.duplicate();
 		value = (useGetPixelValue) ? ip.getPixelValue(x, y) : ip.getf(x, y);
 		for (int i = 0; i < image.length; i++)
 			if (image[i] != value)
-				ip2.set(i, 0);
-
-		ImageProcessor ip3 = ip2.duplicate();
-		super.analyzeParticle(x, y, imp, ip2);
+				ip.set(i, 0);
+		
+		ImageProcessor particleIp = ip.duplicate();
+		//System.out.printf("Particle = %f\n", value);
+		//ImageJHelper.display("Particle", particleIp);
+		super.analyzeParticle(x, y, imp, ip);
 
 		// At the end of processing the analyser fills the image processor to prevent 
 		// re-processing this object's pixels. 
 		// We must copy back the filled pixel values.
-		final int newValue = ip2.get(x, y);
+		final int newValue = ip.get(x, y);
+		//System.out.printf("Particle changed to = %d\n", newValue);
 		for (int i = 0; i < image.length; i++)
-			if (ip2.get(i) != ip3.get(i))
-				ip.set(i, newValue);
+		{
+			// Check if different from the input particle
+			if (ip.get(i) != particleIp.get(i))
+			{
+				// Change to the reset value
+				originalIp.set(i, newValue);
+			}
+			// Now copy back all the pixels from the original processor
+			ip.set(i, originalIp.get(i));
+		}
 	}
 
 	private int reflectionStatus = 0;
