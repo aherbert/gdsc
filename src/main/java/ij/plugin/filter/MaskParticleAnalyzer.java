@@ -3,14 +3,20 @@ package ij.plugin.filter;
 import gdsc.utils.ImageJHelper;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.Macro;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.Roi;
+import ij.macro.Interpreter;
+import ij.plugin.frame.RoiManager;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 
+import java.awt.Frame;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 
 /*----------------------------------------------------------------------------- 
@@ -41,6 +47,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzer
 
 	private boolean useGetPixelValue;
 	private float[] image;
+	private float value;
 	private double dmin, dmax;
 
 	public int setup(String arg, ImagePlus imp)
@@ -170,7 +177,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzer
 		// configured thresholds in the particle image we just use the position's current value.
 		// Do this by zeroing all pixels that are not the same value and then calling the super-class method.
 		ImageProcessor ip2 = ip.duplicate();
-		final float value = (useGetPixelValue) ? ip.getPixelValue(x, y) : ip.getf(x, y);
+		value = (useGetPixelValue) ? ip.getPixelValue(x, y) : ip.getf(x, y);
 		for (int i = 0; i < image.length; i++)
 			if (image[i] != value)
 				ip2.set(i, 0);
@@ -185,5 +192,91 @@ public class MaskParticleAnalyzer extends ParticleAnalyzer
 		for (int i = 0; i < image.length; i++)
 			if (ip2.get(i) != ip3.get(i))
 				ip.set(i, newValue);
+	}
+
+	private int reflectionStatus = 0;
+	private RoiManager roiManager;
+	private int lineWidth;
+	private boolean showResultsWindow;
+
+	/**
+	 * Saves statistics for one particle in a results table. This is
+	 * a method subclasses may want to override.
+	 */
+	@Override
+	protected void saveResults(ImageStatistics stats, Roi roi)
+	{
+		analyzer.saveResults(stats, roi);
+		if (recordStarts)
+		{
+			rt.addValue("XStart", stats.xstart);
+			rt.addValue("YStart", stats.ystart);
+		}
+
+		rt.addValue("Particle Value", value);
+
+		// In order to preserve the full functionality of the Particle Analyzer
+		// we need to get the values of some of the private fields. Do this with reflection.
+		if (reflectionStatus == 0)
+		{
+			try
+			{
+				Field f = ParticleAnalyzer.class.getDeclaredField("lineWidth");
+				f.setAccessible(true);
+				lineWidth = f.getInt(this);
+
+				f = ParticleAnalyzer.class.getDeclaredField("roiManager");
+				f.setAccessible(true);
+				roiManager = (RoiManager) f.get(this);
+
+				f = ParticleAnalyzer.class.getDeclaredField("showResultsWindow");
+				f.setAccessible(true);
+				showResultsWindow = f.getBoolean(this);
+				
+				// Flag that reflection has worked
+				reflectionStatus = 1;
+			}
+			catch (Throwable e)
+			{
+				// Flag that reflection has failed
+				reflectionStatus = -1;
+			}			
+		}
+
+		if (reflectionStatus == 1)
+		{
+			// Copy the superclass methods using the super-class variables obtained from relfection
+			if (addToManager)
+			{
+				if (roiManager == null)
+				{
+					if (Macro.getOptions() != null && Interpreter.isBatchMode())
+						roiManager = Interpreter.getBatchModeRoiManager();
+					if (roiManager == null)
+					{
+						Frame frame = WindowManager.getFrame("ROI Manager");
+						if (frame == null)
+							IJ.run("ROI Manager...");
+						frame = WindowManager.getFrame("ROI Manager");
+						if (frame == null || !(frame instanceof RoiManager))
+						{
+							addToManager = false;
+							return;
+						}
+						roiManager = (RoiManager) frame;
+					}
+					if (resetCounter)
+						roiManager.runCommand("reset");
+				}
+				if (imp.getStackSize() > 1)
+					roi.setPosition(imp.getCurrentSlice());
+				if (lineWidth != 1)
+					roi.setStrokeWidth(lineWidth);
+				roiManager.add(imp, roi, rt.getCounter());
+			}
+		}
+		
+		if (showResultsWindow && showResults)
+			rt.addResults();
 	}
 }
