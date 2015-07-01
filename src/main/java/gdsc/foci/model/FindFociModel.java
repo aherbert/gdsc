@@ -39,6 +39,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	private int maxPeaks = 50;
 	private int showMask = 3;
 	private boolean showTable = true;
+	private boolean clearTable = true;
 	private boolean markMaxima = true;
 	private boolean markROIMaxima = false;
 	private boolean showMaskMaximaAsDots = true;
@@ -369,6 +370,25 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	public boolean isShowTable()
 	{
 		return showTable;
+	}
+
+	/**
+	 * @param clearTable
+	 *            the clearTable to set
+	 */
+	public void setClearTable(boolean clearTable)
+	{
+		boolean oldValue = this.clearTable;
+		this.clearTable = clearTable;
+		firePropertyChange("clearTable", oldValue, this.clearTable);
+	}
+
+	/**
+	 * @return the clearTable
+	 */
+	public boolean isClearTable()
+	{
+		return clearTable;
 	}
 
 	/**

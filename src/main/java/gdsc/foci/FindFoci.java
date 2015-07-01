@@ -449,6 +449,10 @@ public class FindFoci implements PlugIn, MouseListener
 	 */
 	public final static int OUTPUT_MASK_FRACTION_OF_HEIGHT = 512;
 	/**
+	 * Output the peak statistics to a results window
+	 */
+	public final static int OUTPUT_CLEAR_RESULTS_TABLE = 1024;
+	/**
 	 * Create an output mask
 	 */
 	public final static int OUTPUT_MASK = OUTPUT_MASK_PEAKS | OUTPUT_MASK_THRESHOLD;
@@ -765,6 +769,7 @@ public class FindFoci implements PlugIn, MouseListener
 	private static int myMaxPeaks = 50;
 	private static int myShowMask = 3;
 	private static boolean myShowTable = true;
+	private static boolean myClearTable = false;
 	private static boolean myMarkMaxima = true;
 	private static boolean myMarkROIMaxima = false;
 	private static boolean myShowMaskMaximaAsDots = true;
@@ -862,6 +867,7 @@ public class FindFoci implements PlugIn, MouseListener
 		gd.addChoice("Show_mask", maskOptions, maskOptions[myShowMask]);
 		gd.addSlider("Fraction_parameter", 0.05, 1, myFractionParameter);
 		gd.addCheckbox("Show_table", myShowTable);
+		gd.addCheckbox("Clear_table", myClearTable);
 		gd.addCheckbox("Mark_maxima", myMarkMaxima);
 		gd.addCheckbox("Mark_peak_maxima", myMarkROIMaxima);
 		gd.addCheckbox("Show_peak_maxima_as_dots", myShowMaskMaximaAsDots);
@@ -930,6 +936,7 @@ public class FindFoci implements PlugIn, MouseListener
 		myShowMask = gd.getNextChoiceIndex();
 		myFractionParameter = gd.getNextNumber();
 		myShowTable = gd.getNextBoolean();
+		myClearTable = gd.getNextBoolean();
 		myMarkMaxima = gd.getNextBoolean();
 		myMarkROIMaxima = gd.getNextBoolean();
 		myShowMaskMaximaAsDots = gd.getNextBoolean();
@@ -946,6 +953,8 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if (myShowTable)
 			outputType += OUTPUT_RESULTS_TABLE;
+		if (myClearTable)
+			outputType += OUTPUT_CLEAR_RESULTS_TABLE;
 		if (myMarkMaxima)
 			outputType += OUTPUT_ROI_SELECTION;
 		if (myMarkROIMaxima)
@@ -1149,6 +1158,8 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 
 		// Add peaks to a results window
+		if ((outputType & OUTPUT_CLEAR_RESULTS_TABLE) != 0)
+			clearResultsWindow();
 		if (resultsArray != null && (outputType & OUTPUT_RESULTS_TABLE) != 0)
 		{
 			//if (isLogging(outputType))
@@ -1339,6 +1350,7 @@ public class FindFoci implements PlugIn, MouseListener
 			writeParam(out, "Show_mask", maskOptions[getMaskOption(outputType)]);
 			writeParam(out, "Fraction_parameter", "" + fractionParameter);
 			writeParam(out, "Show_table", ((outputType & OUTPUT_RESULTS_TABLE) != 0) ? "true" : "false");
+			writeParam(out, "Clear_table", ((outputType & OUTPUT_CLEAR_RESULTS_TABLE) != 0) ? "true" : "false");
 			writeParam(out, "Mark_maxima", ((outputType & OUTPUT_ROI_SELECTION) != 0) ? "true" : "false");
 			writeParam(out, "Mark_peak_maxima", ((outputType & OUTPUT_MASK_ROI_SELECTION) != 0) ? "true" : "false");
 			writeParam(out, "Show_peak_maxima_as_dots", ((outputType & OUTPUT_MASK_NO_PEAK_DOTS) == 0) ? "true"
@@ -1397,6 +1409,8 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 
 		// Add peaks to a results window
+		if ((outputType & OUTPUT_CLEAR_RESULTS_TABLE) != 0)
+			clearResultsWindow();
 		if (resultsArray != null && (outputType & OUTPUT_RESULTS_TABLE) != 0)
 		{
 			// There is some strange problem when using ImageJ's default results table when it asks the user
@@ -3140,6 +3154,14 @@ public class FindFoci implements PlugIn, MouseListener
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
 			resultsWindow = new TextWindow(FRAME_TITLE + " Results", createResultsHeader(), "", 900, 300);
+		}
+	}
+	
+	private void clearResultsWindow()
+	{
+		if (resultsWindow != null && resultsWindow.isShowing())
+		{
+			resultsWindow.getTextPanel().clear();
 		}
 	}
 

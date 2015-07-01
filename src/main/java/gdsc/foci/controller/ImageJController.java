@@ -119,6 +119,7 @@ public class ImageJController extends FindFociController
 		int maxPeaks = model.getMaxPeaks();
 		int showMask = model.getShowMask();
 		boolean showTable = model.isShowTable();
+		boolean clearTable = model.isClearTable();
 		boolean markMaxima = model.isMarkMaxima();
 		boolean markROIMaxima = model.isMarkROIMaxima();
 		boolean showMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
@@ -137,6 +138,8 @@ public class ImageJController extends FindFociController
 
 		if (showTable)
 			outputType += FindFoci.OUTPUT_RESULTS_TABLE;
+		if (clearTable)
+			outputType += FindFoci.OUTPUT_CLEAR_RESULTS_TABLE;
 		if (markMaxima)
 			outputType += FindFoci.OUTPUT_ROI_SELECTION;
 		if (markROIMaxima)
