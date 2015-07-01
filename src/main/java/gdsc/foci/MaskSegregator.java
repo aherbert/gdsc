@@ -49,6 +49,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	private int flags = DOES_16 + DOES_8G + FINAL_PROCESSING;
 	private ImagePlus imp;
 	private ImageProcessor maskIp;
+	private int[] objectMask;
 
 	private static String maskTitle = "";
 	private static boolean autoCutoff = true;
@@ -227,9 +228,9 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		}
 
 		ColorProcessor cp = new ColorProcessor(inputIp.getWidth(), inputIp.getHeight());
-		for (int i = 0; i < maskIp.getPixelCount(); i++)
+		for (int i = 0; i < objectMask.length; i++)
 		{
-			final int maskValue = maskIp.get(i);
+			final int maskValue = objectMask[i];
 			if (maskValue != 0)
 				cp.set(i, color[maskValue]);
 		}
@@ -268,21 +269,36 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 			return;
 
 		maskIp = maskImp.getProcessor();
+		final int[] maskImage = new int[maskIp.getPixelCount()];
+		for (int i = 0; i < maskImage.length; i++)
+			maskImage[i] = maskIp.get(i);
 
-		// Find the maximum value
+		// Perform a search for objects. 
+		// Expand any non-zero pixel value into all 8-connected pixels of the same value.
+		objectMask = new int[maskImage.length];
 		maxObject = 0;
-		for (int i = 0; i < maskIp.getPixelCount(); i++)
-			if (maxObject < maskIp.get(i))
-				maxObject = maskIp.get(i);
+
+		int[] pList = new int[100];
+		initialise(maskIp);
+
+		for (int i = 0; i < maskImage.length; i++)
+		{
+			// Look for non-zero values that are not already in an object
+			if (maskImage[i] != 0 && objectMask[i] == 0)
+			{
+				maxObject++;
+				pList = expandObjectXY(maskImage, objectMask, i, maxObject, pList);
+			}
+		}
 
 		// Analyse the objects
 		int[] count = new int[maxObject + 1];
 		long[] sum = new long[count.length];
 
 		ImageProcessor ch = imp.getProcessor();
-		for (int i = 0; i < maskIp.getPixelCount(); i++)
+		for (int i = 0; i < maskImage.length; i++)
 		{
-			final int value = maskIp.get(i);
+			final int value = objectMask[i];
 			if (value != 0)
 			{
 				count[value]++;
@@ -323,6 +339,122 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		cutoffSlider.setValues(value, 1, minimum, maximum);
 
 		lastMaskTitle = maskTitle;
+	}
+
+	/**
+	 * Searches from the specified point to find all coordinates of the same value and assigns them to given maximum ID.
+	 */
+	private int[] expandObjectXY(final int[] image, final int[] objectMask, final int index0, final int id, int[] pList)
+	{
+		objectMask[index0] = id; // mark first point
+		int listI = 0; // index of current search element in the list
+		int listLen = 1; // number of elements in the list
+
+		// we create a list of connected points and start the list at the current point
+		pList[listI] = index0;
+
+		final int v0 = image[index0];
+
+		do
+		{
+			final int index1 = pList[listI];
+			final int x1 = index1 % maxx;
+			final int y1 = index1 / maxx;
+
+			boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+
+			for (int d = 8; d-- > 0;)
+			{
+				if (isInnerXY || isWithinXY(x1, y1, d))
+				{
+					int index2 = index1 + offset[d];
+					if (objectMask[index2] != 0)
+					{
+						// This has been done already, ignore this point
+						continue;
+					}
+
+					int v2 = image[index2];
+
+					if (v2 == v0)
+					{
+						// Add this to the search
+						pList[listLen++] = index2;
+						objectMask[index2] = id;
+						if (pList.length == listLen)
+							pList = Arrays.copyOf(pList, (int) (listLen * 1.5));
+					}
+				}
+			}
+
+			listI++;
+
+		} while (listI < listLen);
+
+		return pList;
+	}
+
+	private int maxx, maxy;
+	private int xlimit, ylimit;
+	private int[] offset;
+	private final int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0, -1, -1, -1 };
+	private final int[] DIR_Y_OFFSET = new int[] { -1, -1, 0, 1, 1, 1, 0, -1 };
+
+	/**
+	 * Creates the direction offset tables.
+	 */
+	private void initialise(ImageProcessor ip)
+	{
+		maxx = ip.getWidth();
+		maxy = ip.getHeight();
+
+		xlimit = maxx - 1;
+		ylimit = maxy - 1;
+
+		// Create the offset table (for single array 3D neighbour comparisons)
+		offset = new int[DIR_X_OFFSET.length];
+		for (int d = offset.length; d-- > 0;)
+		{
+			offset[d] = maxx * DIR_Y_OFFSET[d] + DIR_X_OFFSET[d];
+		}
+	}
+
+	/**
+	 * returns whether the neighbour in a given direction is within the image. NOTE: it is assumed that the pixel x,y
+	 * itself is within the image! Uses class variables xlimit, ylimit: (dimensions of the image)-1
+	 * 
+	 * @param x
+	 *            x-coordinate of the pixel that has a neighbour in the given direction
+	 * @param y
+	 *            y-coordinate of the pixel that has a neighbour in the given direction
+	 * @param direction
+	 *            the direction from the pixel towards the neighbour
+	 * @return true if the neighbour is within the image (provided that x, y is within)
+	 */
+	private boolean isWithinXY(int x, int y, int direction)
+	{
+		switch (direction)
+		{
+			case 0:
+				return (y > 0);
+			case 1:
+				return (y > 0 && x < xlimit);
+			case 2:
+				return (x < xlimit);
+			case 3:
+				return (y < ylimit && x < xlimit);
+			case 4:
+				return (y < ylimit);
+			case 5:
+				return (y < ylimit && x > 0);
+			case 6:
+				return (x > 0);
+			case 7:
+				return (y > 0 && x > 0);
+			case 8:
+				return true;
+		}
+		return false;
 	}
 
 	private int getCutoff()
@@ -388,25 +520,25 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 			{
 				final int maskValue = (int) objects[i][0];
 				final double av = objects[i][2];
-				exclude[maskValue] = (av < cutoff);
+					exclude[maskValue] = (av < cutoff);
 			}
 
 			// Create two masks for the segregated objects
-			ImageProcessor excludeIp = maskIp.createProcessor(maskIp.getWidth(), maskIp.getHeight());
-			ImageProcessor includeIp = maskIp.createProcessor(maskIp.getWidth(), maskIp.getHeight());
+			ImageProcessor excludeIp = maskIp.createProcessor(maxx, maxy);
+			ImageProcessor includeIp = maskIp.createProcessor(maxx, maxy);
 
-			for (int i = 0; i < maskIp.getPixelCount(); i++)
+			for (int i = 0; i < objectMask.length; i++)
 			{
-				final int maskValue = maskIp.get(i);
+				final int maskValue = objectMask[i];
 				if (maskValue != 0)
 				{
 					if (exclude[maskValue])
-						excludeIp.set(i, maskValue);
+						excludeIp.set(i, maskIp.get(i));
 					else
-						includeIp.set(i, maskValue);
+						includeIp.set(i, maskIp.get(i));
 				}
 			}
-
+			
 			ImageJHelper.display(maskTitle + " Include", includeIp);
 			ImageJHelper.display(maskTitle + " Exclude", excludeIp);
 		}
@@ -432,15 +564,16 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 					newMaskValue[i] = bonus - newMaskValue[i];
 			}
 
-			ImageProcessor ip = new ShortProcessor(maskIp.getWidth(), maskIp.getHeight());
-			for (int i = 0; i < maskIp.getPixelCount(); i++)
+			ImageProcessor ip = new ShortProcessor(maxx, maxy);
+			for (int i = 0; i < objectMask.length; i++)
 			{
-				final int maskValue = maskIp.get(i);
+				final int maskValue = objectMask[i];
 				if (maskValue != 0)
 				{
 					ip.set(i, newMaskValue[maskValue]);
 				}
 			}
+			ip.setMinAndMax(0, exclude);
 
 			ImageJHelper.display(maskTitle + " Segregated", ip);
 		}
