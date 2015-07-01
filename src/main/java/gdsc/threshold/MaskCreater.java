@@ -52,7 +52,7 @@ public class MaskCreater implements PlugIn
 	}
 
 	private static String selectedImage = "";
-	private static int selectedOption = OPTION_MASK;
+	private static int selectedOption = OPTION_THRESHOLD;
 	private static String selectedThresholdMethod = "Otsu";
 	private static int selectedChannel = 0;
 	private static int selectedSlice = 0;
