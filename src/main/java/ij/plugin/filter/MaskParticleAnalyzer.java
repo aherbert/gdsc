@@ -72,11 +72,13 @@ public class MaskParticleAnalyzer extends ParticleAnalyzer
 			int[] idList = ImageJHelper.getIDList();
 			String[] list = new String[idList.length + 1];
 			list[0] = "[None]";
-			int count = 0;
+			int count = 1;
 			for (int id : idList)
 			{
 				ImagePlus imp2 = WindowManager.getImage(id);
 				if (imp2 == null || imp2.getWidth() != imp.getWidth() || imp2.getHeight() != imp.getHeight())
+					continue;
+				if (imp2.getID() == imp.getID())
 					continue;
 				list[count++] = imp2.getTitle();
 			}
