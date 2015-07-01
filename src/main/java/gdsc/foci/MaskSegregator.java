@@ -39,8 +39,8 @@ import java.util.Arrays;
 
 /**
  * Overlay a mask on the channel. For each unique pixel value in the mask (defining an object), analyse the pixels
- * values
- * from the image and segregate the objects into two classes.
+ * values from the image and segregate the objects into two classes. Objects must be contiguous pixels, allowing
+ * segregation of ordinary binary masks.
  */
 public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 {
@@ -520,7 +520,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 			{
 				final int maskValue = (int) objects[i][0];
 				final double av = objects[i][2];
-					exclude[maskValue] = (av < cutoff);
+				exclude[maskValue] = (av < cutoff);
 			}
 
 			// Create two masks for the segregated objects
@@ -538,7 +538,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 						includeIp.set(i, maskIp.get(i));
 				}
 			}
-			
+
 			ImageJHelper.display(maskTitle + " Include", includeIp);
 			ImageJHelper.display(maskTitle + " Exclude", excludeIp);
 		}
