@@ -194,6 +194,8 @@ public class ImageJController extends FindFociController
 			Recorder.recordOption("Fraction_parameter", "" + fractionParameter);
 			if (showTable)
 				Recorder.recordOption("Show_table");
+			if (clearTable)
+				Recorder.recordOption("Clear_table");
 			if (markMaxima)
 				Recorder.recordOption("Mark_maxima");
 			if (markROIMaxima)
