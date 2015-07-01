@@ -227,6 +227,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzer
 		}
 
 		rt.addValue("Particle Value", value);
+		rt.addValue("Pixels", stats.pixelCount);
 
 		// In order to preserve the full functionality of the Particle Analyzer
 		// we need to get the values of some of the private fields. Do this with reflection.
