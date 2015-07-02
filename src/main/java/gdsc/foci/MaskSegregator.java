@@ -59,7 +59,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	private Checkbox autoCheckbox;
 	private Scrollbar cutoffSlider;
 	private TextField cutoffText;
-	private Label label;
+	private Label label, label2;
 
 	/*
 	 * (non-Javadoc)
@@ -90,11 +90,16 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	 */
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
-
 		String[] names = getMasks(imp);
 		if (names.length == 0)
+		{
+			IJ.error(FRAME_TITLE, "No masks match the image dimensions");
 			return DONE;
+		}
+
+		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+
+		gd.addMessage("Overlay a mask on the current image and segregate objects into two classes.\n \nObjects are defined with contiguous pixels of the same value.\nThe mean image value for each object is used for segregation.");
 
 		ImageStatistics stats = ImageStatistics.getStatistics(imp.getProcessor(), ImageStatistics.MIN_MAX, null);
 		if (cutoff < stats.min)
@@ -104,6 +109,9 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 
 		gd.addChoice("Mask", names, maskTitle);
 		gd.addMessage("");
+		label = (Label) gd.getMessage();
+		gd.addMessage("");
+		label2 = (Label) gd.getMessage();
 		gd.addCheckbox("Auto_cutoff", autoCutoff);
 		gd.addSlider("Cut-off", stats.min, stats.max, cutoff);
 		gd.addCheckbox("Split_mask", splitMask);
@@ -111,9 +119,8 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		autoCheckbox = (Checkbox) gd.getCheckboxes().get(0);
 		cutoffSlider = (Scrollbar) gd.getSliders().get(0);
 		cutoffText = (TextField) gd.getNumericFields().get(0);
-		label = (Label) gd.getMessage();
 
-		gd.addHelp(gdsc.help.URL.UTILITY);
+		gd.addHelp(gdsc.help.URL.FIND_FOCI);
 		gd.addPreviewCheckbox(pfr);
 		gd.addDialogListener(this);
 		gd.showDialog();
@@ -170,6 +177,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 			// Turn off the preview
 			imp.setOverlay(null);
 			label.setText("");
+			label2.setText("");
 		}
 
 		maskTitle = gd.getNextChoice();
@@ -220,12 +228,23 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		int[] color = new int[maxObject + 1];
 		final int exclude = getRGB(255, 0, 0);
 		final int include = getRGB(0, 255, 0);
+		int nExclude = 0;
 		for (int i = 0; i < objects.length; i++)
 		{
 			final int maskValue = (int) objects[i][0];
 			final double av = objects[i][2];
-			color[maskValue] = (av < cutoff) ? exclude : include;
+			if (av < cutoff)
+			{
+				color[maskValue] = exclude;
+				nExclude++;
+			}
+			else
+			{
+				color[maskValue] = include;
+			}
 		}
+		final int nInclude = objects.length - nExclude;
+		label2.setText(String.format("Include = %d, Exclude = %d", nInclude, nExclude));
 
 		ColorProcessor cp = new ColorProcessor(inputIp.getWidth(), inputIp.getHeight());
 		for (int i = 0; i < objectMask.length; i++)

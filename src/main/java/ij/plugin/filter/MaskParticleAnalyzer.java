@@ -84,9 +84,11 @@ public class MaskParticleAnalyzer extends ParticleAnalyzer
 			}
 			list = Arrays.copyOf(list, count);
 			GenericDialog gd = new GenericDialog("Mask Particle Analyzer...");
+			gd.addMessage("Analyses objects in an image.\n \nObjects are defined with contiguous pixels of the same value.\nIgnore pixels outside any configured thresholds.");
 			gd.addChoice("Redirect_image", list, redirectTitle);
 			if (noThreshold)
-				gd.addMessage("Warning: The image is not thresholded / 8-bit binary mask.\nContinuing will use the min/max values in the image");
+				gd.addMessage("Warning: The image is not thresholded / 8-bit binary mask.\nContinuing will use the min/max values in the image which\nmay produce many objects.");
+			gd.addHelp(gdsc.help.URL.FIND_FOCI);
 			gd.showDialog();
 			if (gd.wasCanceled())
 				return DONE;
