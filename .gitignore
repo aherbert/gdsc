@@ -1,6 +1,7 @@
 /target
 .project
 .classpath
+.settings
 build.sh
 plugins
 .settings
