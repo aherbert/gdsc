@@ -105,6 +105,7 @@ public class FindFoci implements PlugIn, MouseListener
 		double fractionParameter;
 		boolean objectAnalysis;
 		boolean showObjectMask;
+		boolean saveToMemory;
 
 		int outputType;
 		int options;
@@ -138,6 +139,7 @@ public class FindFoci implements PlugIn, MouseListener
 			centreParameter = findDouble("Centre_parameter");
 			objectAnalysis = findBoolean("Object_analysis");
 			showObjectMask = findBoolean("Show_object_mask");
+			saveToMemory = findBoolean("Save_to_memory");
 
 			outputType = getOutputMaskFlags(showMask);
 
@@ -165,6 +167,8 @@ public class FindFoci implements PlugIn, MouseListener
 				if (showObjectMask)
 					options |= OPTION_SHOW_OBJECT_MASK;
 			}
+			if (saveToMemory)
+				options |= OPTION_SAVE_TO_MEMORY;
 		}
 
 		private void readParameters(String filename) throws IOException
@@ -688,6 +692,10 @@ public class FindFoci implements PlugIn, MouseListener
 	 * Show the object mask calculated during the object analysis
 	 */
 	public final static int OPTION_SHOW_OBJECT_MASK = 32;
+	/**
+	 * Save the results to memory (allows other plugins to obtain the results)
+	 */
+	public final static int OPTION_SAVE_TO_MEMORY = 64;
 
 	private static String[] centreMethods = { "Max value (search image)", "Max value (original image)",
 			"Centre of mass (search image)", "Centre of mass (original image)", "Gaussian (search image)",
@@ -778,6 +786,7 @@ public class FindFoci implements PlugIn, MouseListener
 	private static String myResultsDirectory = "";
 	private static boolean myObjectAnalysis = true;
 	private static boolean myShowObjectMask = false;
+	private static boolean mySaveToMemory = false;
 	private static double myGaussianBlur = 0;
 	private static int myCentreMethod = FindFoci.CENTRE_MAX_VALUE_SEARCH;
 	private static double myCentreParameter = 2;
@@ -817,6 +826,9 @@ public class FindFoci implements PlugIn, MouseListener
 	private final static byte BELOW_SADDLE = (byte) 128; // marks a point as falling below the highest saddle point
 
 	private final static byte IGNORE = EXCLUDED | LISTED; // marks point to be ignored in stage 1
+
+	// Allow the results to be stored in memory for other plugins to access
+	private static HashMap<String, ArrayList<int[]>> memory = new HashMap<String, ArrayList<int[]>>();
 
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
@@ -876,6 +888,7 @@ public class FindFoci implements PlugIn, MouseListener
 		gd.addStringField("Results_directory", myResultsDirectory);
 		gd.addCheckbox("Object_analysis", myObjectAnalysis);
 		gd.addCheckbox("Show_object_mask", myShowObjectMask);
+		gd.addCheckbox("Save_to_memory", mySaveToMemory);
 		gd.addMessage("Advanced options ...");
 		gd.addNumericField("Gaussian_blur", myGaussianBlur, 1);
 		gd.addChoice("Centre_method", centreMethods, centreMethods[myCentreMethod]);
@@ -945,6 +958,7 @@ public class FindFoci implements PlugIn, MouseListener
 		myResultsDirectory = gd.getNextString();
 		myObjectAnalysis = gd.getNextBoolean();
 		myShowObjectMask = gd.getNextBoolean();
+		mySaveToMemory = gd.getNextBoolean();
 		myGaussianBlur = gd.getNextNumber();
 		myCentreMethod = gd.getNextChoiceIndex();
 		myCentreParameter = gd.getNextNumber();
@@ -991,6 +1005,9 @@ public class FindFoci implements PlugIn, MouseListener
 			if (myShowObjectMask)
 				options |= OPTION_SHOW_OBJECT_MASK;
 		}
+
+		if (mySaveToMemory)
+			options |= OPTION_SAVE_TO_MEMORY;
 
 		exec(imp, mask, myBackgroundMethod, myBackgroundParameter, myThresholdMethod, mySearchMethod,
 				mySearchParameter, myMaxPeaks, myMinSize, myPeakMethod, myPeakParameter, outputType, mySortMethod,
@@ -1155,6 +1172,11 @@ public class FindFoci implements PlugIn, MouseListener
 			ImagePlus objectImp = doObjectAnalysis(mask, resultsArray, (options & OPTION_SHOW_OBJECT_MASK) != 0);
 			if (objectImp != null)
 				objectImp.show();
+		}
+
+		if ((options & OPTION_SAVE_TO_MEMORY) != 0)
+		{
+			saveToMemory(resultsArray, imp);
 		}
 
 		// Add peaks to a results window
@@ -1360,6 +1382,7 @@ public class FindFoci implements PlugIn, MouseListener
 			writeParam(out, "Results_directory", resultsDirectory);
 			writeParam(out, "Object_analysis", ((options & OPTION_OBJECT_ANALYSIS) != 0) ? "true" : "false");
 			writeParam(out, "Show_object_mask", ((options & OPTION_SHOW_OBJECT_MASK) != 0) ? "true" : "false");
+			writeParam(out, "Save_to_memory ", ((options & OPTION_SAVE_TO_MEMORY) != 0) ? "true" : "false");
 			writeParam(out, "Gaussian_blur", "" + blur);
 			writeParam(out, "Centre_method", centreMethods[centreMethod]);
 			writeParam(out, "Centre_parameter", "" + centreParameter);
@@ -1406,6 +1429,11 @@ public class FindFoci implements PlugIn, MouseListener
 			ImagePlus objectImp = doObjectAnalysis(mask, resultsArray, (options & OPTION_SHOW_OBJECT_MASK) != 0);
 			if (objectImp != null)
 				objectImp.show();
+		}
+
+		if ((options & OPTION_SAVE_TO_MEMORY) != 0)
+		{
+			saveToMemory(resultsArray, imp);
 		}
 
 		// Add peaks to a results window
@@ -3156,7 +3184,7 @@ public class FindFoci implements PlugIn, MouseListener
 			resultsWindow = new TextWindow(FRAME_TITLE + " Results", createResultsHeader(), "", 900, 300);
 		}
 	}
-	
+
 	private void clearResultsWindow()
 	{
 		if (resultsWindow != null && resultsWindow.isShowing())
@@ -3674,7 +3702,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 			case BACKGROUND_STD_DEV_ABOVE_MEAN:
 				return round(stats[STATS_AV_BACKGROUND] + backgroundParameter * stats[STATS_SD_BACKGROUND]);
-				
+
 			case BACKGROUND_MIN_ROI:
 				return round(stats[STATS_MIN]);
 
@@ -5293,7 +5321,7 @@ public class FindFoci implements PlugIn, MouseListener
 					if (highestSaddle == null)
 					{
 						// TODO - This should not occur... ? What is the count above the saddle?
-						
+
 						// No neighbour so just remove
 						mergePeak(image, maxima, peakIdMap, peakId, result, (short) 0, null, null, null, null, true);
 					}
@@ -5302,7 +5330,7 @@ public class FindFoci implements PlugIn, MouseListener
 						// Find the neighbour peak (use the map because the neighbour may have been merged)
 						short neighbourPeakId = peakIdMap[highestSaddle[SADDLE_PEAK_ID]];
 						int[] neighbourResult = findResult(resultsArray, neighbourPeakId);
-						
+
 						// Note: Ensure the peak counts above the saddle are updated.
 						mergePeak(image, maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
 								saddlePoints.get(neighbourPeakId), highestSaddle, true);
@@ -5369,7 +5397,7 @@ public class FindFoci implements PlugIn, MouseListener
 				result[RESULT_SADDLE_NEIGHBOUR_ID] = neighbourPeakId;
 		}
 	}
-	
+
 	private void clearSaddle(int[] result)
 	{
 		result[RESULT_COUNT_ABOVE_SADDLE] = result[RESULT_COUNT];
@@ -6377,6 +6405,11 @@ public class FindFoci implements PlugIn, MouseListener
 				IJ.saveAsTiff(objectImp, batchOutputDirectory + File.separator + expId + ".objects.tiff");
 		}
 
+		if ((options & OPTION_SAVE_TO_MEMORY) != 0)
+		{
+			saveToMemory(resultsArray, imp);
+		}
+
 		// Record all the results to file
 		saveResults(expId, imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod, searchMethod,
 				searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex, options, blur,
@@ -6660,5 +6693,48 @@ public class FindFoci implements PlugIn, MouseListener
 		} while (listI < listLen);
 
 		return pList;
+	}
+
+	/**
+	 * Save the results array to memory using the image name and current channel and frame
+	 * 
+	 * @param resultsArray
+	 * @param imp
+	 */
+	private void saveToMemory(ArrayList<int[]> resultsArray, ImagePlus imp)
+	{
+		if (resultsArray == null)
+			return;
+		int c = imp.getChannel();
+		int f = imp.getFrame();
+		String name = String.format("%s (c%d,t%d)", imp.getTitle(), c, f);
+		System.out.println("Save to memory as " + name);
+		memory.put(name, resultsArray);
+	}
+
+	/**
+	 * Get a list of the names of the results that are stored in memory
+	 * 
+	 * @return a list of results names
+	 */
+	public static String[] getResultsNames()
+	{
+		String[] list = new String[memory.size()];
+		int i = 0;
+		for (String name : memory.keySet())
+			list[i++] = name;
+		return list;
+	}
+
+	/**
+	 * Get set of results corresponding to the name
+	 * 
+	 * @param name
+	 *            The name of the results.
+	 * @return The results (or null if none exist)
+	 */
+	public static ArrayList<int[]> getResults(String name)
+	{
+		return memory.get(name);
 	}
 }

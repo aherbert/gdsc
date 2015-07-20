@@ -128,6 +128,7 @@ public class ImageJController extends FindFociController
 		boolean saveResults = model.isSaveResults();
 		String resultsDirectory = model.getResultsDirectory();
 		boolean objectAnalysis = model.isObjectAnalysis();
+		boolean saveToMemory = model.isSaveToMemory();
 		boolean showObjectMask = model.isShowObjectMask();
 		double gaussianBlur = model.getGaussianBlur();
 		int centreMethod = model.getCentreMethod();
@@ -164,6 +165,8 @@ public class ImageJController extends FindFociController
 			if (showObjectMask)
 				options |= FindFoci.OPTION_SHOW_OBJECT_MASK;
 		}
+		if (saveToMemory)
+			options |= FindFoci.OPTION_SAVE_TO_MEMORY;
 
 		if (outputType == 0)
 		{
@@ -214,6 +217,8 @@ public class ImageJController extends FindFociController
 				if (showObjectMask)
 					Recorder.recordOption("Show_object_mask");
 			}
+			if (saveToMemory)
+				Recorder.recordOption("Save_to_memory");
 			Recorder.recordOption("Gaussian_blur", "" + gaussianBlur);
 			Recorder.recordOption("Centre_method", FindFoci.getCentreMethods()[centreMethod]);
 			Recorder.recordOption("Centre_parameter", "" + centreParameter);

@@ -83,6 +83,7 @@ public class FindFociAdvancedOptions extends JDialog
 	private JCheckBox chckbxObjectAnalysis;
 	private JCheckBox chckbxShowObjectMask;
 	private JCheckBox chckbxClearTable;
+	private JCheckBox chckbxSaveToMemory;
 
 	/**
 	 * Launch the application.
@@ -122,15 +123,15 @@ public class FindFociAdvancedOptions extends JDialog
 
 	private void init()
 	{
-		setBounds(100, 100, 450, 479);
+		setBounds(100, 100, 450, 497);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
 		GridBagLayout gbl_contentPanel = new GridBagLayout();
 		gbl_contentPanel.columnWidths = new int[] { 0, 182, 50, 0 };
-		gbl_contentPanel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+		gbl_contentPanel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		gbl_contentPanel.columnWeights = new double[] { 0.0, 1.0, 0.0, Double.MIN_VALUE };
-		gbl_contentPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+		gbl_contentPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
 		contentPanel.setLayout(gbl_contentPanel);
 		{
 			{
@@ -461,10 +462,28 @@ public class FindFociAdvancedOptions extends JDialog
 			});
 			chckbxShowObjectMask.setMargin(new Insets(2, 2, 2, 0));
 			GridBagConstraints gbc_chckbxShowObjectMask = new GridBagConstraints();
-			gbc_chckbxShowObjectMask.insets = new Insets(0, 0, 0, 5);
+			gbc_chckbxShowObjectMask.insets = new Insets(0, 0, 5, 5);
 			gbc_chckbxShowObjectMask.gridx = 0;
 			gbc_chckbxShowObjectMask.gridy = 13;
 			contentPanel.add(chckbxShowObjectMask, gbc_chckbxShowObjectMask);
+		}
+		{
+			chckbxSaveToMemory = new JCheckBox("Save to memory");
+			chckbxSaveToMemory.setToolTipText("Save the result to memory (allows other plugins to access the results)");
+			chckbxSaveToMemory.addItemListener(new ItemListener()
+			{
+				public void itemStateChanged(ItemEvent e)
+				{
+					chckbxSaveToMemory.firePropertyChange("selected", 0, 1);
+				}
+			});
+			chckbxSaveToMemory.setMargin(new Insets(2, 2, 2, 0));
+			GridBagConstraints gbc_chckbxSaveToMemory = new GridBagConstraints();
+			gbc_chckbxSaveToMemory.anchor = GridBagConstraints.WEST;
+			gbc_chckbxSaveToMemory.insets = new Insets(0, 0, 0, 5);
+			gbc_chckbxSaveToMemory.gridx = 0;
+			gbc_chckbxSaveToMemory.gridy = 14;
+			contentPanel.add(chckbxSaveToMemory, gbc_chckbxSaveToMemory);
 		}
 		{
 			JPanel buttonPane = new JPanel();
@@ -561,5 +580,9 @@ public class FindFociAdvancedOptions extends JDialog
 		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_12 = BeanProperty.create("clearTable");
 		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_15 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_12, chckbxClearTable, jCheckBoxBeanProperty);
 		autoBinding_15.bind();
+		//
+		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_13 = BeanProperty.create("saveToMemory");
+		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_16 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_13, chckbxSaveToMemory, jCheckBoxBeanProperty);
+		autoBinding_16.bind();
 	}
 }

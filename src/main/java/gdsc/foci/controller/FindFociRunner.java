@@ -191,6 +191,7 @@ public class FindFociRunner extends Thread
 		// Ignore: model.getResultsDirectory();
 		boolean objectAnalysis = model.isObjectAnalysis();
 		boolean showObjectMask = model.isShowObjectMask();
+		boolean saveToMemory = model.isSaveToMemory();
 		double gaussianBlur = model.getGaussianBlur();
 		int centreMethod = model.getCentreMethod();
 		double centreParameter = model.getCentreParameter();
@@ -224,6 +225,8 @@ public class FindFociRunner extends Thread
 			if (showObjectMask)
 				options |= FindFoci.OPTION_SHOW_OBJECT_MASK;
 		}
+		if (saveToMemory)
+			options |= FindFoci.OPTION_SAVE_TO_MEMORY;
 
 		if (outputType == 0)
 		{
@@ -426,6 +429,15 @@ public class FindFociRunner extends Thread
 			ignoreChange = true;
 		}		
 
+		if (notEqual(model.isSaveToMemory(), previousModel.isSaveToMemory()))
+		{
+			// Only repeat if switched on. We can ignore it if the flag is switched off since the results
+			// will be the same.
+			if (model.isSaveToMemory())
+				return FindFociState.SHOW_RESULTS;
+			ignoreChange = true;
+		}
+		
 		// Options to ignore
 		if (notEqual(model.isShowLogMessages(), previousModel.isShowLogMessages()) ||
 				notEqual(model.getResultsDirectory(), previousModel.getResultsDirectory()) ||

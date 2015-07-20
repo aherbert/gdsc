@@ -53,6 +53,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	private double fractionParameter = 0.5;
 	private boolean objectAnalysis = false;
 	private boolean showObjectMask = false;
+	private boolean saveToMemory = false;
 
 	private List<String> imageList = new ArrayList<String>();
 	private String selectedImage = "";
@@ -746,6 +747,25 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	public boolean isShowObjectMask()
 	{
 		return showObjectMask;
+	}
+
+	/**
+	 * @param saveToMemory
+	 *            the saveToMemory to set
+	 */
+	public void setSaveToMemory(boolean saveToMemory)
+	{
+		boolean oldValue = this.saveToMemory;
+		this.saveToMemory = saveToMemory;
+		firePropertyChange("saveToMemory", oldValue, this.saveToMemory);
+	}
+
+	/**
+	 * @return the saveToMemory
+	 */
+	public boolean isSaveToMemory()
+	{
+		return saveToMemory;
 	}
 
 	/**
