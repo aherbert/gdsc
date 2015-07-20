@@ -3,3 +3,4 @@
 .classpath
 build.sh
 plugins
+.settings
