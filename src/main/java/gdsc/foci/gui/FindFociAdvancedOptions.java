@@ -84,6 +84,7 @@ public class FindFociAdvancedOptions extends JDialog
 	private JCheckBox chckbxShowObjectMask;
 	private JCheckBox chckbxClearTable;
 	private JCheckBox chckbxSaveToMemory;
+	private JCheckBox chckbxHideLabels;
 
 	/**
 	 * Launch the application.
@@ -123,15 +124,16 @@ public class FindFociAdvancedOptions extends JDialog
 
 	private void init()
 	{
-		setBounds(100, 100, 450, 497);
+		setBounds(100, 100, 450, 522);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
 		GridBagLayout gbl_contentPanel = new GridBagLayout();
 		gbl_contentPanel.columnWidths = new int[] { 0, 182, 50, 0 };
-		gbl_contentPanel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+		gbl_contentPanel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		gbl_contentPanel.columnWeights = new double[] { 0.0, 1.0, 0.0, Double.MIN_VALUE };
-		gbl_contentPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+		gbl_contentPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+				0.0, 0.0, 0.0, Double.MIN_VALUE };
 		contentPanel.setLayout(gbl_contentPanel);
 		{
 			{
@@ -221,6 +223,23 @@ public class FindFociAdvancedOptions extends JDialog
 				gbc_chckbxMarkPeakMaxima.gridy = 3;
 				contentPanel.add(chckbxMarkPeakMaxima, gbc_chckbxMarkPeakMaxima);
 				{
+					chckbxHideLabels = new JCheckBox("Hide labels");
+					chckbxHideLabels.setToolTipText("Hide the labels on the marked maxima");
+					chckbxHideLabels.addItemListener(new ItemListener()
+					{
+						public void itemStateChanged(ItemEvent e)
+						{
+							chckbxHideLabels.firePropertyChange("selected", 0, 1);
+						}
+					});
+					GridBagConstraints gbc_chckbxHideLabels = new GridBagConstraints();
+					gbc_chckbxHideLabels.anchor = GridBagConstraints.WEST;
+					gbc_chckbxHideLabels.insets = new Insets(0, 0, 5, 5);
+					gbc_chckbxHideLabels.gridx = 0;
+					gbc_chckbxHideLabels.gridy = 4;
+					contentPanel.add(chckbxHideLabels, gbc_chckbxHideLabels);
+				}
+				{
 					chckbxShowMaskMaxima = new JCheckBox("Show mask maxima as dots");
 					chckbxShowMaskMaxima.addItemListener(new ItemListener()
 					{
@@ -234,7 +253,7 @@ public class FindFociAdvancedOptions extends JDialog
 					gbc_chckbxShowMaskMaxima.gridwidth = 2;
 					gbc_chckbxShowMaskMaxima.insets = new Insets(0, 0, 5, 5);
 					gbc_chckbxShowMaskMaxima.gridx = 0;
-					gbc_chckbxShowMaskMaxima.gridy = 4;
+					gbc_chckbxShowMaskMaxima.gridy = 5;
 					contentPanel.add(chckbxShowMaskMaxima, gbc_chckbxShowMaskMaxima);
 				}
 				chckbxShowLogMessages.setMargin(new Insets(2, 2, 2, 0));
@@ -243,7 +262,7 @@ public class FindFociAdvancedOptions extends JDialog
 				gbc_chckbxShowLogMessages.insets = new Insets(0, 0, 5, 5);
 				gbc_chckbxShowLogMessages.anchor = GridBagConstraints.WEST;
 				gbc_chckbxShowLogMessages.gridx = 0;
-				gbc_chckbxShowLogMessages.gridy = 5;
+				gbc_chckbxShowLogMessages.gridy = 6;
 				contentPanel.add(chckbxShowLogMessages, gbc_chckbxShowLogMessages);
 			}
 		}
@@ -253,7 +272,7 @@ public class FindFociAdvancedOptions extends JDialog
 			gbc_lblCentreMethod.insets = new Insets(0, 0, 5, 5);
 			gbc_lblCentreMethod.anchor = GridBagConstraints.EAST;
 			gbc_lblCentreMethod.gridx = 0;
-			gbc_lblCentreMethod.gridy = 6;
+			gbc_lblCentreMethod.gridy = 7;
 			contentPanel.add(lblCentreMethod, gbc_lblCentreMethod);
 		}
 		chckbxSaveResults = new JCheckBox("Save results");
@@ -281,7 +300,7 @@ public class FindFociAdvancedOptions extends JDialog
 			gbc_comboBoxCentreMethod.insets = new Insets(0, 0, 5, 0);
 			gbc_comboBoxCentreMethod.fill = GridBagConstraints.HORIZONTAL;
 			gbc_comboBoxCentreMethod.gridx = 1;
-			gbc_comboBoxCentreMethod.gridy = 6;
+			gbc_comboBoxCentreMethod.gridy = 7;
 			contentPanel.add(comboBoxCentreMethod, gbc_comboBoxCentreMethod);
 		}
 		{
@@ -290,7 +309,7 @@ public class FindFociAdvancedOptions extends JDialog
 			gbc_lblCentreParam.anchor = GridBagConstraints.EAST;
 			gbc_lblCentreParam.insets = new Insets(0, 0, 5, 5);
 			gbc_lblCentreParam.gridx = 0;
-			gbc_lblCentreParam.gridy = 7;
+			gbc_lblCentreParam.gridy = 8;
 			contentPanel.add(lblCentreParam, gbc_lblCentreParam);
 		}
 		{
@@ -320,7 +339,7 @@ public class FindFociAdvancedOptions extends JDialog
 			gbc_sliderCentreParam.fill = GridBagConstraints.HORIZONTAL;
 			gbc_sliderCentreParam.insets = new Insets(0, 0, 5, 5);
 			gbc_sliderCentreParam.gridx = 1;
-			gbc_sliderCentreParam.gridy = 7;
+			gbc_sliderCentreParam.gridy = 8;
 			contentPanel.add(sliderCentreParam, gbc_sliderCentreParam);
 		}
 		{
@@ -349,7 +368,7 @@ public class FindFociAdvancedOptions extends JDialog
 			gbc_txtCentreParam.fill = GridBagConstraints.HORIZONTAL;
 			gbc_txtCentreParam.insets = new Insets(0, 0, 5, 0);
 			gbc_txtCentreParam.gridx = 2;
-			gbc_txtCentreParam.gridy = 7;
+			gbc_txtCentreParam.gridy = 8;
 			contentPanel.add(txtCentreParam, gbc_txtCentreParam);
 		}
 		{
@@ -366,7 +385,7 @@ public class FindFociAdvancedOptions extends JDialog
 			gbc_chckbxRemoveEdgeMaxima.gridwidth = 2;
 			gbc_chckbxRemoveEdgeMaxima.insets = new Insets(0, 0, 5, 5);
 			gbc_chckbxRemoveEdgeMaxima.gridx = 0;
-			gbc_chckbxRemoveEdgeMaxima.gridy = 8;
+			gbc_chckbxRemoveEdgeMaxima.gridy = 9;
 			contentPanel.add(chckbxRemoveEdgeMaxima, gbc_chckbxRemoveEdgeMaxima);
 		}
 		chckbxSaveResults.setMargin(new Insets(2, 2, 2, 0));
@@ -374,7 +393,7 @@ public class FindFociAdvancedOptions extends JDialog
 		gbc_chckbxSaveResults.insets = new Insets(0, 0, 5, 5);
 		gbc_chckbxSaveResults.anchor = GridBagConstraints.WEST;
 		gbc_chckbxSaveResults.gridx = 0;
-		gbc_chckbxSaveResults.gridy = 9;
+		gbc_chckbxSaveResults.gridy = 10;
 		contentPanel.add(chckbxSaveResults, gbc_chckbxSaveResults);
 		{
 			lblResultsDirectory = new JLabel("Results directory:");
@@ -382,7 +401,7 @@ public class FindFociAdvancedOptions extends JDialog
 			gbc_lblResultsDirectory.insets = new Insets(0, 0, 5, 5);
 			gbc_lblResultsDirectory.anchor = GridBagConstraints.WEST;
 			gbc_lblResultsDirectory.gridx = 0;
-			gbc_lblResultsDirectory.gridy = 10;
+			gbc_lblResultsDirectory.gridy = 11;
 			contentPanel.add(lblResultsDirectory, gbc_lblResultsDirectory);
 		}
 		{
@@ -401,7 +420,7 @@ public class FindFociAdvancedOptions extends JDialog
 			gbc_txtResultsDirectory.gridwidth = 2;
 			gbc_txtResultsDirectory.fill = GridBagConstraints.HORIZONTAL;
 			gbc_txtResultsDirectory.gridx = 0;
-			gbc_txtResultsDirectory.gridy = 11;
+			gbc_txtResultsDirectory.gridy = 12;
 			contentPanel.add(txtResultsDirectory, gbc_txtResultsDirectory);
 			txtResultsDirectory.setColumns(10);
 		}
@@ -429,7 +448,7 @@ public class FindFociAdvancedOptions extends JDialog
 			gbc_btnDirectoryPicker.fill = GridBagConstraints.HORIZONTAL;
 			gbc_btnDirectoryPicker.insets = new Insets(0, 0, 5, 0);
 			gbc_btnDirectoryPicker.gridx = 2;
-			gbc_btnDirectoryPicker.gridy = 11;
+			gbc_btnDirectoryPicker.gridy = 12;
 			contentPanel.add(btnDirectoryPicker, gbc_btnDirectoryPicker);
 		}
 		{
@@ -447,7 +466,7 @@ public class FindFociAdvancedOptions extends JDialog
 			gbc_chckbxObjectAnalysis.anchor = GridBagConstraints.WEST;
 			gbc_chckbxObjectAnalysis.insets = new Insets(0, 0, 5, 5);
 			gbc_chckbxObjectAnalysis.gridx = 0;
-			gbc_chckbxObjectAnalysis.gridy = 12;
+			gbc_chckbxObjectAnalysis.gridy = 13;
 			contentPanel.add(chckbxObjectAnalysis, gbc_chckbxObjectAnalysis);
 		}
 		{
@@ -464,7 +483,7 @@ public class FindFociAdvancedOptions extends JDialog
 			GridBagConstraints gbc_chckbxShowObjectMask = new GridBagConstraints();
 			gbc_chckbxShowObjectMask.insets = new Insets(0, 0, 5, 5);
 			gbc_chckbxShowObjectMask.gridx = 0;
-			gbc_chckbxShowObjectMask.gridy = 13;
+			gbc_chckbxShowObjectMask.gridy = 14;
 			contentPanel.add(chckbxShowObjectMask, gbc_chckbxShowObjectMask);
 		}
 		{
@@ -482,7 +501,7 @@ public class FindFociAdvancedOptions extends JDialog
 			gbc_chckbxSaveToMemory.anchor = GridBagConstraints.WEST;
 			gbc_chckbxSaveToMemory.insets = new Insets(0, 0, 0, 5);
 			gbc_chckbxSaveToMemory.gridx = 0;
-			gbc_chckbxSaveToMemory.gridy = 14;
+			gbc_chckbxSaveToMemory.gridy = 15;
 			contentPanel.add(chckbxSaveToMemory, gbc_chckbxSaveToMemory);
 		}
 		{
@@ -584,5 +603,9 @@ public class FindFociAdvancedOptions extends JDialog
 		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_13 = BeanProperty.create("saveToMemory");
 		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_16 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_13, chckbxSaveToMemory, jCheckBoxBeanProperty);
 		autoBinding_16.bind();
+		//
+		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_14 = BeanProperty.create("hideLabels");
+		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_17 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_14, chckbxHideLabels, jCheckBoxBeanProperty);
+		autoBinding_17.bind();
 	}
 }

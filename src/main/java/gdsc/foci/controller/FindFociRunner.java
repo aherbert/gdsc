@@ -184,6 +184,7 @@ public class FindFociRunner extends Thread
 		boolean clearTable = model.isClearTable();
 		boolean markMaxima = model.isMarkMaxima();
 		boolean markROIMaxima = model.isMarkROIMaxima();
+		boolean hideLabels = model.isHideLabels();
 		boolean showMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
 		// Ignore: model.isShowLogMessages()
 		boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
@@ -207,6 +208,8 @@ public class FindFociRunner extends Thread
 			outputType += FindFoci.OUTPUT_ROI_SELECTION;
 		if (markROIMaxima)
 			outputType += FindFoci.OUTPUT_MASK_ROI_SELECTION;
+		if (hideLabels)
+			outputType += FindFoci.OUTPUT_HIDE_LABELS;
 		if (!showMaskMaximaAsDots)
 			outputType += FindFoci.OUTPUT_MASK_NO_PEAK_DOTS;
 
@@ -407,6 +410,7 @@ public class FindFociRunner extends Thread
 		if (notEqual(model.isShowTable(), previousModel.isShowTable()) ||
 				notEqual(model.isClearTable(), previousModel.isClearTable()) ||
 				notEqual(model.isMarkMaxima(), previousModel.isMarkMaxima()) ||
+				notEqual(model.isHideLabels(), previousModel.isHideLabels()) ||
 				notEqual(model.isMarkROIMaxima(), previousModel.isMarkROIMaxima()))
 		{
 			return FindFociState.SHOW_RESULTS;

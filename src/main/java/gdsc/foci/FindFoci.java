@@ -131,6 +131,7 @@ public class FindFoci implements PlugIn, MouseListener
 			fractionParameter = findDouble("Fraction_parameter");
 			boolean markMaxima = findBoolean("Mark_maxima");
 			boolean markROIMaxima = findBoolean("Mark_peak_maxima");
+			boolean hideLabels = findBoolean("Hide_labels");
 			boolean showMaskMaximaAsDots = findBoolean("Show_peak_maxima_as_dots");
 			boolean showLogMessages = findBoolean("Show_log_messages");
 			boolean removeEdgeMaxima = findBoolean("Remove_edge_maxima");
@@ -147,6 +148,8 @@ public class FindFoci implements PlugIn, MouseListener
 				outputType += OUTPUT_ROI_SELECTION;
 			if (markROIMaxima)
 				outputType += OUTPUT_MASK_ROI_SELECTION;
+			if (hideLabels)
+				outputType += OUTPUT_HIDE_LABELS;
 			if (!showMaskMaximaAsDots)
 				outputType += OUTPUT_MASK_NO_PEAK_DOTS;
 			if (showLogMessages)
@@ -456,6 +459,10 @@ public class FindFoci implements PlugIn, MouseListener
 	 * Output the peak statistics to a results window
 	 */
 	public final static int OUTPUT_CLEAR_RESULTS_TABLE = 1024;
+	/**
+	 * When marking the peak locations on the input ImagePlus using point ROIs hide the number labels
+	 */
+	public final static int OUTPUT_HIDE_LABELS = 2048;
 	/**
 	 * Create an output mask
 	 */
@@ -780,6 +787,7 @@ public class FindFoci implements PlugIn, MouseListener
 	private static boolean myClearTable = false;
 	private static boolean myMarkMaxima = true;
 	private static boolean myMarkROIMaxima = false;
+	private static boolean myHideLabels = false;
 	private static boolean myShowMaskMaximaAsDots = true;
 	private static boolean myShowLogMessages = true;
 	private static boolean myRemoveEdgeMaxima = true;
@@ -882,6 +890,7 @@ public class FindFoci implements PlugIn, MouseListener
 		gd.addCheckbox("Clear_table", myClearTable);
 		gd.addCheckbox("Mark_maxima", myMarkMaxima);
 		gd.addCheckbox("Mark_peak_maxima", myMarkROIMaxima);
+		gd.addCheckbox("Hide_labels", myHideLabels);
 		gd.addCheckbox("Show_peak_maxima_as_dots", myShowMaskMaximaAsDots);
 		gd.addCheckbox("Show_log_messages", myShowLogMessages);
 		gd.addCheckbox("Remove_edge_maxima", myRemoveEdgeMaxima);
@@ -952,6 +961,7 @@ public class FindFoci implements PlugIn, MouseListener
 		myClearTable = gd.getNextBoolean();
 		myMarkMaxima = gd.getNextBoolean();
 		myMarkROIMaxima = gd.getNextBoolean();
+		myHideLabels = gd.getNextBoolean();
 		myShowMaskMaximaAsDots = gd.getNextBoolean();
 		myShowLogMessages = gd.getNextBoolean();
 		myRemoveEdgeMaxima = gd.getNextBoolean();
@@ -973,6 +983,8 @@ public class FindFoci implements PlugIn, MouseListener
 			outputType += OUTPUT_ROI_SELECTION;
 		if (myMarkROIMaxima)
 			outputType += OUTPUT_MASK_ROI_SELECTION;
+		if (myHideLabels)
+			outputType += OUTPUT_HIDE_LABELS;
 		if (!myShowMaskMaximaAsDots)
 			outputType += OUTPUT_MASK_NO_PEAK_DOTS;
 		if (myShowLogMessages)
@@ -1244,11 +1256,15 @@ public class FindFoci implements PlugIn, MouseListener
 					ypoints[i] = xy[RESULT_Y];
 				}
 
+				PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
+				if ((outputType & OUTPUT_HIDE_LABELS) != 0)
+					roi.setHideLabels(true);
+				
 				if ((outputType & OUTPUT_ROI_SELECTION) != 0)
-					imp.setRoi(new PointRoi(xpoints, ypoints, nMaxima));
+					imp.setRoi(roi);
 
 				if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
-					maxImp.setRoi(new PointRoi(xpoints, ypoints, nMaxima));
+					maxImp.setRoi(roi);
 			}
 		}
 
@@ -1375,6 +1391,7 @@ public class FindFoci implements PlugIn, MouseListener
 			writeParam(out, "Clear_table", ((outputType & OUTPUT_CLEAR_RESULTS_TABLE) != 0) ? "true" : "false");
 			writeParam(out, "Mark_maxima", ((outputType & OUTPUT_ROI_SELECTION) != 0) ? "true" : "false");
 			writeParam(out, "Mark_peak_maxima", ((outputType & OUTPUT_MASK_ROI_SELECTION) != 0) ? "true" : "false");
+			writeParam(out, "Hide_labels", ((outputType & OUTPUT_HIDE_LABELS) != 0) ? "true" : "false");
 			writeParam(out, "Show_peak_maxima_as_dots", ((outputType & OUTPUT_MASK_NO_PEAK_DOTS) == 0) ? "true"
 					: "false");
 			writeParam(out, "Show_log_messages", ((outputType & OUTPUT_LOG_MESSAGES) != 0) ? "true" : "false");
@@ -1503,6 +1520,8 @@ public class FindFoci implements PlugIn, MouseListener
 				{
 					// Use an overlay so that any area ROI is preserved
 					PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
+					if ((outputType & OUTPUT_HIDE_LABELS) != 0)
+						roi.setHideLabels(true);
 					if (imp.getRoi() != null && !(imp.getRoi() instanceof PointRoi))
 					{
 						imp.setOverlay(roi, Color.CYAN, 1, Color.YELLOW);
@@ -6444,14 +6463,18 @@ public class FindFoci implements PlugIn, MouseListener
 					ypoints[i] = xy[RESULT_Y];
 				}
 
+				PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
+				if ((outputType & OUTPUT_HIDE_LABELS) != 0)
+					roi.setHideLabels(true);
+				
 				if ((outputType & OUTPUT_ROI_SELECTION) != 0)
 				{
-					imp.setRoi(new PointRoi(xpoints, ypoints, nMaxima));
+					imp.setRoi(roi);
 					IJ.saveAsTiff(imp, batchOutputDirectory + File.separator + expId + ".tiff");
 				}
 
 				if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
-					maxImp.setRoi(new PointRoi(xpoints, ypoints, nMaxima));
+					maxImp.setRoi(roi);
 			}
 		}
 

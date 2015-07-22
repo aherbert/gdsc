@@ -48,16 +48,17 @@ public class SpotDensity implements PlugIn
 	private static String resultsName2 = "";
 	private static String maskImage = "";
 	private static double distance = 15;
-	private static double interval = 1;
+	private static double interval = 1.5;
 
 	private ImagePlus imp;
 
 	private class Foci
 	{
-		final int x, y;
+		final int id, x, y;
 
-		public Foci(int x, int y)
+		public Foci(int id, int x, int y)
 		{
+			this.id = id;
 			this.x = x;
 			this.y = y;
 		}
@@ -204,7 +205,7 @@ public class SpotDensity implements PlugIn
 		Foci[] foci = new Foci[results.size()];
 		int i = 0;
 		for (int[] result : results)
-			foci[i++] = new Foci(result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y]);
+			foci[i++] = new Foci(i, result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y]);
 		return foci;
 	}
 
@@ -227,22 +228,35 @@ public class SpotDensity implements PlugIn
 		double[] distances = new double[foci1.length];
 		int count = 0;
 
+		// Update the second set to foci inside the mask 
+		int N2 = 0;
+		for (int j = foci2.length; j-- > 0;)
+		{
+			final Foci m2 = foci2[j];
+			if (map.getPixelValue(m2.x, m2.y) != 0)
+			{
+				foci2[N2++] = m2;
+			}
+		}
+
 		int N = 0;
 		for (int i = foci1.length; i-- > 0;)
 		{
 			final Foci m = foci1[i];
 			// Ignore molecules that are near the edge of the boundary
-			if (map.getf(m.x, m.y) < distance)
+			if (map.getPixelValue(m.x, m.y) < distance)
 				continue;
 			N++;
 
 			double min = Double.POSITIVE_INFINITY;
-			for (int j = foci2.length; j-- > 0;)
+			for (int j = N2; j-- > 0;)
 			{
-				if (identical && i == j)
+				final Foci m2 = foci2[j];
+
+				if (identical && m.id == m2.id)
 					continue;
 
-				final double d2 = m.distance2(foci2[j]);
+				final double d2 = m.distance2(m2);
 				if (d2 < maxDistance2)
 				{
 					H[(int) (Math.sqrt(d2) / interval)]++;
@@ -292,22 +306,48 @@ public class SpotDensity implements PlugIn
 			r = Arrays.copyOf(r, nBins - 1);
 			pcf = Arrays.copyOf(pcf, nBins - 1);
 		}
-		
+
 		// Get the pixels in the entire mask
 		int area = 0;
 		float[] dMap = (float[]) map.getPixels();
 		for (int i = dMap.length; i-- > 0;)
 			if (dMap[i] != 0)
 				area++;
-		
-		double avDensity = (double) foci2.length / area;
 
-		Plot plot2 = new Plot(FRAME_TITLE + " Density", "Distance (px)", "Density (px^-2)", r, pcf);
+		double avDensity = (double) N2 / area;
+
+		// Get the maximum response
+		double max = 0;
+		for (int i = 0; i < pcf.length; i++)
+		{
+			if (max < pcf[i])
+				max = pcf[i];
+		}
+		max /= avDensity;
+		
+		
+		// Normalisation of the density chart could be made optional
+		boolean normalise = true;
+
+		String title = "Density";
+		String units = " (px^-2)";
+		if (normalise)
+		{
+			title = "Normalised Density";
+			units = "";
+			for (int i = 0; i < pcf.length; i++)
+				pcf[i] /= avDensity;
+		}
+
+		Plot plot2 = new Plot(FRAME_TITLE + " " + title, "Distance (px)", "Density" + units, r, pcf);
 		plot2.setColor(Color.red);
-		plot2.drawLine(r[0], avDensity, r[r.length-1], avDensity);
-		plot2.addLabel(0, 0, "Av.Density = "+IJ.d2s(avDensity, -3));
+		if (normalise)
+			plot2.drawLine(r[0], 1, r[r.length - 1], 1);
+		else
+			plot2.drawLine(r[0], avDensity, r[r.length - 1], avDensity);
+		plot2.addLabel(0, 0, "Av.Density = " + IJ.d2s(avDensity, -3) + " px^-2");
 		plot2.setColor(Color.blue);
-		PlotWindow pw2 = ImageJHelper.display(FRAME_TITLE + " Density", plot2);
+		PlotWindow pw2 = ImageJHelper.display(FRAME_TITLE + " " + title, plot2);
 
 		Point p = pw1.getLocation();
 		p.y += pw1.getHeight();
@@ -319,10 +359,12 @@ public class SpotDensity implements PlugIn
 		sb.append(foci1.length);
 		sb.append("\t").append(N);
 		sb.append("\t").append(foci2.length);
+		sb.append("\t").append(N2);
 		sb.append("\t").append(IJ.d2s(distance));
 		sb.append("\t").append(IJ.d2s(interval));
 		sb.append("\t").append(area);
 		sb.append("\t").append(IJ.d2s(avDensity, -3));
+		sb.append("\t").append(IJ.d2s(max, 3));
 		sb.append("\t").append(count);
 		double sum = 0;
 		for (int i = 0; i < count; i++)
@@ -336,7 +378,7 @@ public class SpotDensity implements PlugIn
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
-			resultsWindow = new TextWindow(FRAME_TITLE + " Positions", createResultsHeader(), "", 700, 300);
+			resultsWindow = new TextWindow(FRAME_TITLE + " Summary", createResultsHeader(), "", 700, 300);
 		}
 	}
 
@@ -346,10 +388,12 @@ public class SpotDensity implements PlugIn
 		sb.append("N1");
 		sb.append("\tN1_internal");
 		sb.append("\tN2");
+		sb.append("\tN2_selection");
 		sb.append("\tDistance");
 		sb.append("\tInterval");
 		sb.append("\tArea");
 		sb.append("\tAv. Density");
+		sb.append("\tMax Response");
 		sb.append("\tCount Distances");
 		sb.append("\tAv. Distance");
 		return sb.toString();

@@ -147,6 +147,7 @@ public class FindMaximaController extends ImageJController
 		boolean clearTable = model.isClearTable();
 		boolean markMaxima = model.isMarkMaxima();
 		boolean markROIMaxima = model.isMarkROIMaxima();
+		boolean hideLabels = model.isHideLabels();
 		boolean showLogMessages = model.isShowLogMessages();
 		double gaussianBlur = model.getGaussianBlur();
 		int centreMethod = model.getCentreMethod();
@@ -175,6 +176,8 @@ public class FindMaximaController extends ImageJController
 			outputType += FindFoci.OUTPUT_ROI_SELECTION;
 		if (markROIMaxima)
 			outputType += FindFoci.OUTPUT_MASK_ROI_SELECTION;
+		if (hideLabels)
+			outputType += FindFoci.OUTPUT_HIDE_LABELS;
 		if (showLogMessages)
 			outputType += FindFoci.OUTPUT_LOG_MESSAGES;
 

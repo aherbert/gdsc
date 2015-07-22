@@ -42,6 +42,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	private boolean clearTable = true;
 	private boolean markMaxima = true;
 	private boolean markROIMaxima = false;
+	private boolean hideLabels = false;
 	private boolean showMaskMaximaAsDots = true;
 	private boolean showLogMessages = true;
 	private boolean removeEdgeMaxima = false;
@@ -428,6 +429,25 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	public boolean isMarkROIMaxima()
 	{
 		return markROIMaxima;
+	}
+	
+	/**
+	 * @param hideLabels
+	 *            the hideLabels to set
+	 */
+	public void setHideLabels(boolean hideLabels)
+	{
+		boolean oldValue = this.hideLabels;
+		this.hideLabels = hideLabels;
+		firePropertyChange("hideLabels", oldValue, this.hideLabels);
+	}
+
+	/**
+	 * @return the hideLabels
+	 */
+	public boolean isHideLabels()
+	{
+		return hideLabels;
 	}
 
 	/**
