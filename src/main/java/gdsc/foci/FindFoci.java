@@ -6731,7 +6731,6 @@ public class FindFoci implements PlugIn, MouseListener
 		int c = imp.getChannel();
 		int f = imp.getFrame();
 		String name = String.format("%s (c%d,t%d)", imp.getTitle(), c, f);
-		System.out.println("Save to memory as " + name);
 		memory.put(name, resultsArray);
 	}
 
