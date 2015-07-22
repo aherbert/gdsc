@@ -369,6 +369,7 @@ public class ImageJHelper
 		else
 		{
 			imp.setProcessor(ip);
+			imp.getWindow().toFront();
 		}
 		return imp;
 	}
@@ -393,6 +394,7 @@ public class ImageJHelper
 		else
 		{
 			imp.setStack(slices);
+			imp.getWindow().toFront();
 		}
 		return imp;
 	}
@@ -432,6 +434,7 @@ public class ImageJHelper
 		{
 			p = (PlotWindow) plotWindow;
 			p.drawPlot(plot);
+			p.toFront();
 		}
 		return p;
 	}
