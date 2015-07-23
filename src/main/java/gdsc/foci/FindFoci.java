@@ -837,6 +837,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 	// Allow the results to be stored in memory for other plugins to access
 	private static HashMap<String, ArrayList<int[]>> memory = new HashMap<String, ArrayList<int[]>>();
+	private static ArrayList<String> memoryNames = new ArrayList<String>(); 
 
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
@@ -6731,7 +6732,10 @@ public class FindFoci implements PlugIn, MouseListener
 		int c = imp.getChannel();
 		int f = imp.getFrame();
 		String name = String.format("%s (c%d,t%d)", imp.getTitle(), c, f);
-		memory.put(name, resultsArray);
+		// Check if there was nothing stored at the key position and store the name.
+		// This allows memory results to be listed in order.
+		if (memory.put(name, resultsArray) == null)
+			memoryNames.add(name);
 	}
 
 	/**
@@ -6741,11 +6745,7 @@ public class FindFoci implements PlugIn, MouseListener
 	 */
 	public static String[] getResultsNames()
 	{
-		String[] list = new String[memory.size()];
-		int i = 0;
-		for (String name : memory.keySet())
-			list[i++] = name;
-		return list;
+		return memoryNames.toArray(new String[memoryNames.size()]);
 	}
 
 	/**
