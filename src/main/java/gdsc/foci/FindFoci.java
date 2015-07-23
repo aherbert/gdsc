@@ -894,7 +894,7 @@ public class FindFoci implements PlugIn, MouseListener
 		gd.addCheckbox("Show_peak_maxima_as_dots", myShowMaskMaximaAsDots);
 		gd.addCheckbox("Show_log_messages", myShowLogMessages);
 		gd.addCheckbox("Remove_edge_maxima", myRemoveEdgeMaxima);
-		gd.addStringField("Results_directory", myResultsDirectory);
+		gd.addStringField("Results_directory", myResultsDirectory, 30);
 		gd.addCheckbox("Object_analysis", myObjectAnalysis);
 		gd.addCheckbox("Show_object_mask", myShowObjectMask);
 		gd.addCheckbox("Save_to_memory", mySaveToMemory);
