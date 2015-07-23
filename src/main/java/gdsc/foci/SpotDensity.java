@@ -408,7 +408,9 @@ public class SpotDensity implements PlugIn
 					{
 						tp = (TextPanel) ((Canvas) e.getSource()).getParent();
 					}
-					ArrayList<PC> curves = new ArrayList<PC>();
+
+					int[] ids = new int[results.size()];
+					int count = 0;
 					for (int i = tp.getSelectionStart(); i <= tp.getSelectionEnd(); i++)
 					{
 						String line = tp.getLine(i);
@@ -416,7 +418,8 @@ public class SpotDensity implements PlugIn
 						{
 							String sid = line.substring(0, line.indexOf('\t'));
 							int id = Integer.parseInt(sid);
-							curves.add(results.get(id - 1));
+							if (id > 0 && id <= results.size())
+								ids[count++] = id;
 						}
 						catch (Exception ex)
 						{
@@ -424,29 +427,82 @@ public class SpotDensity implements PlugIn
 						}
 					}
 
-					if (curves.isEmpty())
+					if (count > 2)
+					{
+						// Ask the user which curves to combine since we may want to ignore some 
+						// between start and end
+						GenericDialog gd = new GenericDialog(FRAME_TITLE);
+						gd.addMessage("Select which curves to combine");
+
+						int count2 = 0;
+						int rowLimit = 20;
+						if (count <= rowLimit)
+						{
+							// Use checkboxes
+							for (int i = 0; i < count; i++)
+								gd.addCheckbox("ID_" + ids[i], true);
+							gd.showDialog();
+							if (gd.wasCanceled())
+								return;
+							for (int i = 0; i < count; i++)
+								if (gd.getNextBoolean())
+									ids[count2++] = ids[i];
+						}
+						else
+						{
+							// Use a text area
+							StringBuilder sb = new StringBuilder(Integer.toString(ids[0]));
+							for (int i = 1; i < count; i++)
+								sb.append("\n").append(ids[i]);								
+							gd.addTextAreas(sb.toString(), null, rowLimit, 10);
+							gd.showDialog();
+							if (gd.wasCanceled())
+								return;
+							for (String token : gd.getNextText().split("[ \t\n\r]+"))
+							{
+								try
+								{
+									int id = Integer.parseInt(token);
+									if (id > 0 && id <= results.size())
+										ids[count2++] = id;
+								}
+								catch (Exception ex)
+								{
+									// Ignore for now
+								}
+							}							
+						}
+						count = count2;
+					}
+
+					if (count == 0)
 						return;
 
 					// Check all curves are the same size and build an average
-					PC pc = curves.get(0);
+					PC pc = results.get(ids[0] - 1);
 					int length = pc.r.length;
 					int n = pc.n;
 					int area = pc.area;
-					double[] r = pc.r.clone();
+					double[] r = pc.r;
 					double[] pcf = pc.pcf.clone();
-					for (int i = 1; i < curves.size(); i++)
+					for (int i = 1; i < count; i++)
 					{
-						pc = curves.get(i);
+						pc = results.get(ids[i] - 1);
 						if (length != pc.r.length)
 							return;
 						n += pc.n;
 						area += pc.area;
 						for (int j = 0; j < length; j++)
+						{
+							// Distance scale must be the same!
+							if (r[j] != pc.r[j])
+								return;
 							pcf[j] += pc.pcf[j];
+						}
 					}
 					for (int j = 0; j < length; j++)
-						pcf[j] /= curves.size();
-					
+						pcf[j] /= count;
+
 					showPairCorrelation(new PC(n, area, r, pcf));
 				}
 
