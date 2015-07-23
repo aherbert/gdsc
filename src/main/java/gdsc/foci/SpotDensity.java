@@ -97,7 +97,7 @@ public class SpotDensity implements PlugIn
 
 		GenericDialog gd = new GenericDialog(FRAME_TITLE);
 
-		gd.addMessage("Analyses spots within a mask/ROI region\nand computes density and closest distances.\n(Hold shift for extra options)");
+		gd.addMessage("Analyses spots within a mask/ROI region\nand computes density and closest distances.");
 
 		gd.addChoice("Results_name_1", names, resultsName1);
 		gd.addChoice("Results_name_2", names, resultsName2);
