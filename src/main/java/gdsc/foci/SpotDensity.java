@@ -135,17 +135,8 @@ public class SpotDensity implements PlugIn
 		ArrayList<String> newImageList = new ArrayList<String>();
 		if (roi != null && roi.isArea())
 			newImageList.add("[ROI]");
-
-		for (int id : gdsc.utils.ImageJHelper.getIDList())
-		{
-			ImagePlus maskImp = WindowManager.getImage(id);
-			if (maskImp != null)
-			{
-				newImageList.add(maskImp.getTitle());
-			}
-		}
-
-		return newImageList.toArray(new String[0]);
+		newImageList.addAll(Arrays.asList(ImageJHelper.getImageList(ImageJHelper.GREY_8_16, null)));
+		return newImageList.toArray(new String[newImageList.size()]);
 	}
 
 	private FloatProcessor createDistanceMap(ImagePlus imp, String maskImage)
@@ -316,35 +307,27 @@ public class SpotDensity implements PlugIn
 
 		double avDensity = (double) N2 / area;
 
+		// Normalisation of the density chart to produce the pair correlation.
 		// Get the maximum response
 		double max = 0;
+		double maxr = 0;
 		for (int i = 0; i < pcf.length; i++)
 		{
+			pcf[i] /= avDensity;
 			if (max < pcf[i])
+			{
 				max = pcf[i];
+				maxr = r[i];
+			}
 		}
-		max /= avDensity;
-		
-		
+
 		// Normalisation of the density chart could be made optional
-		boolean normalise = true;
 
-		String title = "Density";
-		String units = " (px^-2)";
-		if (normalise)
-		{
-			title = "Normalised Density";
-			units = "";
-			for (int i = 0; i < pcf.length; i++)
-				pcf[i] /= avDensity;
-		}
+		String title = "Pair Correlation";
 
-		Plot plot2 = new Plot(FRAME_TITLE + " " + title, "Distance (px)", "Density" + units, r, pcf);
+		Plot plot2 = new Plot(FRAME_TITLE + " " + title, "r (px)", "g(r)", r, pcf);
 		plot2.setColor(Color.red);
-		if (normalise)
-			plot2.drawLine(r[0], 1, r[r.length - 1], 1);
-		else
-			plot2.drawLine(r[0], avDensity, r[r.length - 1], avDensity);
+		plot2.drawLine(r[0], 1, r[r.length - 1], 1);
 		plot2.addLabel(0, 0, "Av.Density = " + IJ.d2s(avDensity, -3) + " px^-2");
 		plot2.setColor(Color.blue);
 		PlotWindow pw2 = ImageJHelper.display(FRAME_TITLE + " " + title, plot2);
@@ -365,6 +348,7 @@ public class SpotDensity implements PlugIn
 		sb.append("\t").append(area);
 		sb.append("\t").append(IJ.d2s(avDensity, -3));
 		sb.append("\t").append(IJ.d2s(max, 3));
+		sb.append("\t").append(IJ.d2s(maxr, 3));
 		sb.append("\t").append(count);
 		double sum = 0;
 		for (int i = 0; i < count; i++)
@@ -393,7 +377,8 @@ public class SpotDensity implements PlugIn
 		sb.append("\tInterval");
 		sb.append("\tArea");
 		sb.append("\tAv. Density");
-		sb.append("\tMax Response");
+		sb.append("\tMax g(r)");
+		sb.append("\tr");
 		sb.append("\tCount Distances");
 		sb.append("\tAv. Distance");
 		return sb.toString();
