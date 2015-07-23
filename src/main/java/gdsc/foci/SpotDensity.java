@@ -26,10 +26,14 @@ import ij.plugin.filter.EDM;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.text.TextPanel;
 import ij.text.TextWindow;
 
+import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -49,6 +53,22 @@ public class SpotDensity implements PlugIn
 	private static String maskImage = "";
 	private static double distance = 15;
 	private static double interval = 1.5;
+
+	private class PC
+	{
+		final int n, area;
+		final double[] r, pcf;
+
+		public PC(int n, int area, double[] r, double[] pcf)
+		{
+			this.n = n;
+			this.area = area;
+			this.r = r;
+			this.pcf = pcf;
+		}
+	}
+
+	private static ArrayList<PC> results = new ArrayList<PC>();
 
 	private ImagePlus imp;
 
@@ -308,7 +328,7 @@ public class SpotDensity implements PlugIn
 		double avDensity = (double) N2 / area;
 
 		// Normalisation of the density chart to produce the pair correlation.
-		// Get the maximum response
+		// Get the maximum response for the summary.
 		double max = 0;
 		double maxr = 0;
 		for (int i = 0; i < pcf.length; i++)
@@ -321,16 +341,12 @@ public class SpotDensity implements PlugIn
 			}
 		}
 
-		// Normalisation of the density chart could be made optional
+		// Store the result
+		PC pc = new PC(N2, area, r, pcf);
+		results.add(pc);
 
-		String title = "Pair Correlation";
-
-		Plot plot2 = new Plot(FRAME_TITLE + " " + title, "r (px)", "g(r)", r, pcf);
-		plot2.setColor(Color.red);
-		plot2.drawLine(r[0], 1, r[r.length - 1], 1);
-		plot2.addLabel(0, 0, "Av.Density = " + IJ.d2s(avDensity, -3) + " px^-2");
-		plot2.setColor(Color.blue);
-		PlotWindow pw2 = ImageJHelper.display(FRAME_TITLE + " " + title, plot2);
+		// Display
+		PlotWindow pw2 = showPairCorrelation(pc);
 
 		Point p = pw1.getLocation();
 		p.y += pw1.getHeight();
@@ -339,7 +355,8 @@ public class SpotDensity implements PlugIn
 		// Table of results
 		createResultsWindow();
 		StringBuilder sb = new StringBuilder();
-		sb.append(foci1.length);
+		sb.append(results.size());
+		sb.append("\t").append(foci1.length);
 		sb.append("\t").append(N);
 		sb.append("\t").append(foci2.length);
 		sb.append("\t").append(N2);
@@ -358,18 +375,105 @@ public class SpotDensity implements PlugIn
 		resultsWindow.append(sb.toString());
 	}
 
+	private PlotWindow showPairCorrelation(PC pc)
+	{
+		double avDensity = (double) pc.n / pc.area;
+		String title = "Pair Correlation";
+		Plot plot2 = new Plot(FRAME_TITLE + " " + title, "r (px)", "g(r)", pc.r, pc.pcf);
+		plot2.setColor(Color.red);
+		plot2.drawLine(pc.r[0], 1, pc.r[pc.r.length - 1], 1);
+		plot2.addLabel(0, 0, "Av.Density = " + IJ.d2s(avDensity, -3) + " px^-2");
+		plot2.setColor(Color.blue);
+		return ImageJHelper.display(FRAME_TITLE + " " + title, plot2);
+	}
+
 	private void createResultsWindow()
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
 			resultsWindow = new TextWindow(FRAME_TITLE + " Summary", createResultsHeader(), "", 700, 300);
+
+			// Allow clicking multiple results in the window to show a combined curve
+			resultsWindow.getTextPanel().addMouseListener(new MouseListener()
+			{
+				public void mouseClicked(MouseEvent e)
+				{
+					TextPanel tp = null;
+					if (e.getSource() instanceof TextPanel)
+					{
+						tp = (TextPanel) e.getSource();
+					}
+					else if (e.getSource() instanceof Canvas &&
+							((Canvas) e.getSource()).getParent() instanceof TextPanel)
+					{
+						tp = (TextPanel) ((Canvas) e.getSource()).getParent();
+					}
+					ArrayList<PC> curves = new ArrayList<PC>();
+					for (int i = tp.getSelectionStart(); i <= tp.getSelectionEnd(); i++)
+					{
+						String line = tp.getLine(i);
+						try
+						{
+							String sid = line.substring(0, line.indexOf('\t'));
+							int id = Integer.parseInt(sid);
+							curves.add(results.get(id - 1));
+						}
+						catch (Exception ex)
+						{
+							// Ignore for now
+						}
+					}
+
+					if (curves.isEmpty())
+						return;
+
+					// Check all curves are the same size and build an average
+					PC pc = curves.get(0);
+					int length = pc.r.length;
+					int n = pc.n;
+					int area = pc.area;
+					double[] r = pc.r.clone();
+					double[] pcf = pc.pcf.clone();
+					for (int i = 1; i < curves.size(); i++)
+					{
+						pc = curves.get(i);
+						if (length != pc.r.length)
+							return;
+						n += pc.n;
+						area += pc.area;
+						for (int j = 0; j < length; j++)
+							pcf[j] += pc.pcf[j];
+					}
+					for (int j = 0; j < length; j++)
+						pcf[j] /= curves.size();
+					
+					showPairCorrelation(new PC(n, area, r, pcf));
+				}
+
+				public void mouseEntered(MouseEvent arg0)
+				{
+				}
+
+				public void mouseExited(MouseEvent arg0)
+				{
+				}
+
+				public void mousePressed(MouseEvent arg0)
+				{
+				}
+
+				public void mouseReleased(MouseEvent arg0)
+				{
+				}
+			});
 		}
 	}
 
 	private String createResultsHeader()
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append("N1");
+		sb.append("ID");
+		sb.append("\tN1");
 		sb.append("\tN1_internal");
 		sb.append("\tN2");
 		sb.append("\tN2_selection");
