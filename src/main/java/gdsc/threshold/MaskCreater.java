@@ -59,6 +59,7 @@ public class MaskCreater implements PlugIn
 	private static int selectedFrame = 0;
 	private static boolean selectedRemoveEdgeParticles = false;
 	private static int selectedMinParticleSize = 0;
+	private static boolean selectedStackHistogram = true;
 
 	private ImagePlus imp;
 	private int option;
@@ -68,6 +69,7 @@ public class MaskCreater implements PlugIn
 	private int frame = 0;
 	private boolean removeEdgeParticles = false;
 	private int minParticleSize = 0;
+	private boolean stackHistogram = true;
 
 	/*
 	 * (non-Javadoc)
@@ -116,6 +118,7 @@ public class MaskCreater implements PlugIn
 		gd.addNumericField("Frame", selectedFrame, 0);
 		gd.addCheckbox("Remove_edge_particles", selectedRemoveEdgeParticles);
 		gd.addNumericField("Min_particle_size", selectedMinParticleSize, 0);
+		gd.addCheckbox("Stack_histogram", selectedStackHistogram);
 		gd.addHelp(gdsc.help.URL.UTILITY);
 		gd.showDialog();
 
@@ -130,6 +133,7 @@ public class MaskCreater implements PlugIn
 		selectedFrame = (int) gd.getNextNumber();
 		selectedRemoveEdgeParticles = gd.getNextBoolean();
 		selectedMinParticleSize = (int) gd.getNextNumber();
+		selectedStackHistogram = gd.getNextBoolean();
 
 		setImp(WindowManager.getImage(selectedImage));
 		setOption(selectedOption);
@@ -139,6 +143,7 @@ public class MaskCreater implements PlugIn
 		setFrame(selectedFrame);
 		setRemoveEdgeParticles(selectedRemoveEdgeParticles);
 		setMinParticleSize(selectedMinParticleSize);
+		setStackHistogram(selectedStackHistogram);
 
 		return true;
 	}
@@ -392,29 +397,50 @@ public class MaskCreater implements PlugIn
 				final float cmin = min[i][j];
 				final float cmax = max[i][j];
 
-				// Threshold the z-stack together
-				int stackIndex = imp.getStackIndex(channels[i], slices[0], frames[j]);
-				final int[] data = inputStack.getProcessor(stackIndex).getHistogram();
-				for (int k = 1; k < slices.length; k++)
+				if (stackHistogram)
 				{
-					stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
-					int[] tmp = inputStack.getProcessor(stackIndex).getHistogram();
-					for (int ii = tmp.length; ii-- > 0;)
-						data[ii] += tmp[ii];
-				}
-				double threshold = getThreshold(thresholdMethod, data);
-				if (imp.getBitDepth() == 32)
-				{
-					// Convert the 16-bit threshold back to the original 32-bit range
-					float scale = getScale(cmin, cmax);
-					threshold = (threshold / scale) + cmin;
-					//IJ.log(String.format("Channel %d, Frame %d : %f", channels[i], frames[j], threshold));
-				}
+					// Threshold the z-stack together
+					int stackIndex = imp.getStackIndex(channels[i], slices[0], frames[j]);
+					final int[] data = inputStack.getProcessor(stackIndex).getHistogram();
+					for (int k = 1; k < slices.length; k++)
+					{
+						stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
+						int[] tmp = inputStack.getProcessor(stackIndex).getHistogram();
+						for (int ii = tmp.length; ii-- > 0;)
+							data[ii] += tmp[ii];
+					}
+					double threshold = getThreshold(thresholdMethod, data);
+					if (imp.getBitDepth() == 32)
+					{
+						// Convert the 16-bit threshold back to the original 32-bit range
+						float scale = getScale(cmin, cmax);
+						threshold = (threshold / scale) + cmin;
+						//IJ.log(String.format("Channel %d, Frame %d : %f", channels[i], frames[j], threshold));
+					}
 
-				for (int k = 0; k < slices.length; k++)
+					for (int k = 0; k < slices.length; k++)
+					{
+						stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
+						thresholds[stackIndex - 1] = threshold;
+					}
+				}
+				else
 				{
-					stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
-					thresholds[stackIndex - 1] = threshold;
+					// Threshold each slice
+					for (int k = 0; k < slices.length; k++)
+					{
+						int stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
+						final int[] data = inputStack.getProcessor(stackIndex).getHistogram();
+						double threshold = getThreshold(thresholdMethod, data);
+						if (imp.getBitDepth() == 32)
+						{
+							// Convert the 16-bit threshold back to the original 32-bit range
+							float scale = getScale(cmin, cmax);
+							threshold = (threshold / scale) + cmin;
+							//IJ.log(String.format("Channel %d, Frame %d : %f", channels[i], frames[j], threshold));
+						}
+						thresholds[stackIndex - 1] = threshold;
+					}
 				}
 			}
 		}
@@ -606,6 +632,23 @@ public class MaskCreater implements PlugIn
 	public void setMinParticleSize(int minParticleSize)
 	{
 		this.minParticleSize = minParticleSize;
+	}
+
+	/**
+	 * @return the stackHistogram
+	 */
+	public boolean isStackHistogram()
+	{
+		return stackHistogram;
+	}
+
+	/**
+	 * @param stackHistogram
+	 *            the stackHistogram to set
+	 */
+	public void setStackHistogram(boolean stackHistogram)
+	{
+		this.stackHistogram = stackHistogram;
 	}
 
 	private void postProcess(ByteProcessor bp)
