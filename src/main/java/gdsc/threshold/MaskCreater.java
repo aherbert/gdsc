@@ -196,6 +196,12 @@ public class MaskCreater implements PlugIn
 			thresholds = getThresholds(imp, channels, slices, frames);
 		}
 
+		// Find the global min and max XY values and create a bounding rectangle
+		final int w = imp.getWidth();
+		final int h = imp.getHeight();
+		int minx = w, maxx = 0;
+		int miny = h, maxy = 0;
+
 		if (option == OPTION_MIN_VALUE || option == OPTION_MASK || option == OPTION_THRESHOLD)
 		{
 			// Use the ROI image to create a mask either using:
@@ -210,7 +216,7 @@ public class MaskCreater implements PlugIn
 						int stackIndex = imp.getStackIndex(channel, slice, frame);
 						ImageProcessor roiIp = inputStack.getProcessor(stackIndex);
 
-						bp = new ByteProcessor(imp.getWidth(), imp.getHeight());
+						bp = new ByteProcessor(w, h);
 						if (option == OPTION_MASK)
 						{
 							for (int i = roiIp.getPixelCount(); i-- > 0;)
@@ -245,6 +251,22 @@ public class MaskCreater implements PlugIn
 
 						postProcess(bp);
 
+						byte ZERO = ((byte) 0) & 0xff;
+						byte[] pixels = (byte[]) bp.getPixels();
+						for (int y = 0, i = 0; y < h; y++)
+							for (int x = 0; x < w; x++, i++)
+								if (pixels[i] != ZERO)
+								{
+									if (minx > x)
+										minx = x;
+									else if (maxx < x)
+										maxx = x;
+									if (miny > y)
+										miny = y;
+									else if (maxy < y)
+										maxy = y;
+								}
+
 						result.addSlice(null, bp);
 					}
 		}
@@ -258,7 +280,7 @@ public class MaskCreater implements PlugIn
 				bounds = roi.getBounds();
 			else
 				// If no ROI then use the entire image
-				bounds = new Rectangle(imp.getWidth(), imp.getHeight());
+				bounds = new Rectangle(w, h);
 
 			// Use a mask for an irregular ROI
 			ImageProcessor ipMask = imp.getMask();
@@ -269,9 +291,9 @@ public class MaskCreater implements PlugIn
 			int rwidth = bounds.width;
 			int rheight = bounds.height;
 
-			result = new ImageStack(imp.getWidth(), imp.getHeight());
+			result = new ImageStack(w, h);
 
-			bp = new ByteProcessor(imp.getWidth(), imp.getHeight());
+			bp = new ByteProcessor(w, h);
 			for (int y = 0; y < rheight; y++)
 			{
 				for (int x = 0; x < rwidth; x++)
@@ -285,6 +307,22 @@ public class MaskCreater implements PlugIn
 
 			postProcess(bp);
 
+			byte ZERO = ((byte) 0) & 0xff;
+			byte[] pixels = (byte[]) bp.getPixels();
+			for (int y = 0, i = 0; y < h; y++)
+				for (int x = 0; x < w; x++, i++)
+					if (pixels[i] != ZERO)
+					{
+						if (minx > x)
+							minx = x;
+						else if (maxx < x)
+							maxx = x;
+						if (miny > y)
+							miny = y;
+						else if (maxy < y)
+							maxy = y;
+					}
+			
 			for (int frame = frames.length; frame-- > 0;)
 				for (int slice = slices.length; slice-- > 0;)
 					for (int channel = channels.length; channel-- > 0;)
@@ -306,6 +344,17 @@ public class MaskCreater implements PlugIn
 					maskImp.setDimensions(nChannels, nSlices, nFrames);
 					maskImp.setOpenAsHyperStack(true);
 				}
+			}
+
+			// Add a bounding rectangle
+			if (minx < w && miny < h)
+			{
+				// Due to the if/else maxx/maxy may not be initialised if we only have single pixels
+				if (maxx < minx)
+					maxx = minx;
+				if (maxy < miny)
+					maxy = miny;
+				maskImp.setRoi(new Rectangle(minx, miny, maxx - minx + 1, maxy - miny + 1));
 			}
 		}
 
