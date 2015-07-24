@@ -837,7 +837,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 	// Allow the results to be stored in memory for other plugins to access
 	private static HashMap<String, ArrayList<int[]>> memory = new HashMap<String, ArrayList<int[]>>();
-	private static ArrayList<String> memoryNames = new ArrayList<String>(); 
+	private static ArrayList<String> memoryNames = new ArrayList<String>();
 
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
@@ -1260,7 +1260,7 @@ public class FindFoci implements PlugIn, MouseListener
 				PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
 				if ((outputType & OUTPUT_HIDE_LABELS) != 0)
 					roi.setHideLabels(true);
-				
+
 				if ((outputType & OUTPUT_ROI_SELECTION) != 0)
 					imp.setRoi(roi);
 
@@ -3656,6 +3656,13 @@ public class FindFoci implements PlugIn, MouseListener
 		int max = hist.length - 1;
 		while ((hist[min] == 0) && (min < max))
 			min++;
+
+		// Check for an empty histogram
+		if (min == max && hist[max] == 0)
+		{
+			return new double[11];
+		}
+
 		while ((hist[max] == 0) && (max > min))
 			max--;
 
@@ -3712,7 +3719,7 @@ public class FindFoci implements PlugIn, MouseListener
 		{
 			case BACKGROUND_ABSOLUTE:
 				// Ensure all points above the threshold parameter are found
-				return round(backgroundParameter);
+				return round((backgroundParameter >= 0) ? backgroundParameter : 0);
 
 			case BACKGROUND_AUTO_THRESHOLD:
 				return round(stats[STATS_BACKGROUND]);
@@ -3721,7 +3728,8 @@ public class FindFoci implements PlugIn, MouseListener
 				return round(stats[STATS_AV_BACKGROUND]);
 
 			case BACKGROUND_STD_DEV_ABOVE_MEAN:
-				return round(stats[STATS_AV_BACKGROUND] + backgroundParameter * stats[STATS_SD_BACKGROUND]);
+				return round(stats[STATS_AV_BACKGROUND] +
+						((backgroundParameter >= 0) ? backgroundParameter * stats[STATS_SD_BACKGROUND] : 0));
 
 			case BACKGROUND_MIN_ROI:
 				return round(stats[STATS_MIN]);
@@ -3759,6 +3767,8 @@ public class FindFoci implements PlugIn, MouseListener
 				return round(stats[STATS_BACKGROUND]);
 
 			case SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND:
+				if (searchParameter < 0)
+					searchParameter = 0;
 				return round(stats[STATS_BACKGROUND] + searchParameter * (v0 - stats[STATS_BACKGROUND]));
 
 			case SEARCH_HALF_PEAK_VALUE:
@@ -3783,6 +3793,8 @@ public class FindFoci implements PlugIn, MouseListener
 	private int getPeakHeight(int peakMethod, double peakParameter, double[] stats, int v0)
 	{
 		int height = 1;
+		if (peakParameter < 0)
+			peakParameter = 0;
 		switch (peakMethod)
 		{
 			case PEAK_ABSOLUTE:
@@ -4879,6 +4891,8 @@ public class FindFoci implements PlugIn, MouseListener
 
 		int[] min = new int[3];
 		int[] max = new int[3];
+		if (range < 1)
+			range = 1;
 		for (int i = 3; i-- > 0;)
 		{
 			min[i] = centre[i] - range;
@@ -6467,7 +6481,7 @@ public class FindFoci implements PlugIn, MouseListener
 				PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
 				if ((outputType & OUTPUT_HIDE_LABELS) != 0)
 					roi.setHideLabels(true);
-				
+
 				if ((outputType & OUTPUT_ROI_SELECTION) != 0)
 				{
 					imp.setRoi(roi);
