@@ -38,6 +38,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	private int sortMethod = FindFoci.SORT_INTENSITY;
 	private int maxPeaks = 50;
 	private int showMask = 3;
+	private boolean overlayMask = false;
 	private boolean showTable = true;
 	private boolean clearTable = true;
 	private boolean markMaxima = true;
@@ -353,6 +354,25 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	public int getShowMask()
 	{
 		return showMask;
+	}
+
+	/**
+	 * @param overlayMask
+	 *            the overlayMask to set
+	 */
+	public void setOverlayMask(boolean overlayMask)
+	{
+		boolean oldValue = this.overlayMask;
+		this.overlayMask = overlayMask;
+		firePropertyChange("overlayMask", oldValue, this.overlayMask);
+	}
+
+	/**
+	 * @return the overlayMask
+	 */
+	public boolean isOverlayMask()
+	{
+		return overlayMask;
 	}
 
 	/**

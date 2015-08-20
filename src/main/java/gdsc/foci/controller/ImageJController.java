@@ -118,6 +118,7 @@ public class ImageJController extends FindFociController
 		int sortMethod = model.getSortMethod();
 		int maxPeaks = model.getMaxPeaks();
 		int showMask = model.getShowMask();
+		boolean overlayMask = model.isOverlayMask();
 		boolean showTable = model.isShowTable();
 		boolean clearTable = model.isClearTable();
 		boolean markMaxima = model.isMarkMaxima();
@@ -138,6 +139,8 @@ public class ImageJController extends FindFociController
 
 		int outputType = FindFoci.getOutputMaskFlags(showMask);
 
+		if (overlayMask)
+			outputType += FindFoci.OUTPUT_OVERLAY_MASK;
 		if (showTable)
 			outputType += FindFoci.OUTPUT_RESULTS_TABLE;
 		if (clearTable)
@@ -197,6 +200,8 @@ public class ImageJController extends FindFociController
 			Recorder.recordOption("Sort_method", FindFoci.sortIndexMethods[sortMethod]);
 			Recorder.recordOption("Maximum_peaks", "" + maxPeaks);
 			Recorder.recordOption("Show_mask", FindFoci.maskOptions[showMask]);
+			if (overlayMask)
+				Recorder.recordOption("Overlay_mask");
 			Recorder.recordOption("Fraction_parameter", "" + fractionParameter);
 			if (showTable)
 				Recorder.recordOption("Show_table");

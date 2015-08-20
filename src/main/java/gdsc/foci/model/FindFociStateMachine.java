@@ -63,6 +63,7 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
 		stateMap.put("centreMethod", FindFociState.CALCULATE_RESULTS);
 		stateMap.put("centreParameter", FindFociState.CALCULATE_RESULTS);
 		stateMap.put("showMask", FindFociState.CALCULATE_OUTPUT_MASK);
+		stateMap.put("overlayMask", FindFociState.CALCULATE_OUTPUT_MASK);
 		stateMap.put("showMaskMaximaAsDots", FindFociState.CALCULATE_OUTPUT_MASK);
 		stateMap.put("fractionParameter", FindFociState.CALCULATE_OUTPUT_MASK);
 		stateMap.put("showTable", FindFociState.SHOW_RESULTS);

@@ -143,6 +143,7 @@ public class FindMaximaController extends ImageJController
 		int sortMethod = model.getSortMethod();
 		int maxPeaks = model.getMaxPeaks();
 		int showMask = model.getShowMask();
+		boolean overlayMask = model.isOverlayMask();
 		boolean showTable = model.isShowTable();
 		boolean clearTable = model.isClearTable();
 		boolean markMaxima = model.isMarkMaxima();
@@ -154,20 +155,10 @@ public class FindMaximaController extends ImageJController
 		double centreParameter = model.getCentreParameter();
 		double fractionParameter = model.getFractionParameter();
 
-		int outputType = 0;
-		if (showMask == 1)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS;
-		if (showMask == 2)
-			outputType += FindFoci.OUTPUT_MASK_THRESHOLD;
-		if (showMask == 3)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_ABOVE_SADDLE;
-		if (showMask == 4)
-			outputType += FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_ABOVE_SADDLE;
-		if (showMask == 5)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_FRACTION_OF_INTENSITY;
-		if (showMask == 6)
-			outputType += FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_FRACTION_OF_HEIGHT;
+		int outputType = FindFoci.getOutputMaskFlags(showMask);
 
+		if (overlayMask)
+			outputType += FindFoci.OUTPUT_OVERLAY_MASK;
 		if (showTable)
 			outputType += FindFoci.OUTPUT_RESULTS_TABLE;
 		if (clearTable)

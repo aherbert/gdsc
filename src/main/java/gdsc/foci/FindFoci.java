@@ -24,6 +24,7 @@ import ij.Macro;
 import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.ImageRoi;
 import ij.gui.Overlay;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
@@ -34,6 +35,7 @@ import ij.plugin.PlugIn;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.frame.Recorder;
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
@@ -464,7 +466,15 @@ public class FindFoci implements PlugIn, MouseListener
 	 */
 	public final static int OUTPUT_HIDE_LABELS = 2048;
 	/**
+	 * Overlay the mask on the image
+	 */
+	public final static int OUTPUT_OVERLAY_MASK = 4096;
+	/**
 	 * Create an output mask
+	 */
+	public final static int CREATE_OUTPUT_MASK = OUTPUT_MASK_PEAKS | OUTPUT_MASK_THRESHOLD | OUTPUT_OVERLAY_MASK;
+	/**
+	 * Show an output mask
 	 */
 	public final static int OUTPUT_MASK = OUTPUT_MASK_PEAKS | OUTPUT_MASK_THRESHOLD;
 
@@ -783,6 +793,7 @@ public class FindFoci implements PlugIn, MouseListener
 	private static int mySortMethod = FindFoci.SORT_INTENSITY;
 	private static int myMaxPeaks = 50;
 	private static int myShowMask = 3;
+	private static boolean myOverlayMask = false;
 	private static boolean myShowTable = true;
 	private static boolean myClearTable = false;
 	private static boolean myMarkMaxima = true;
@@ -886,6 +897,7 @@ public class FindFoci implements PlugIn, MouseListener
 		gd.addChoice("Sort_method", sortIndexMethods, sortIndexMethods[mySortMethod]);
 		gd.addNumericField("Maximum_peaks", myMaxPeaks, 0);
 		gd.addChoice("Show_mask", maskOptions, maskOptions[myShowMask]);
+		gd.addCheckbox("Overlay_mask", myOverlayMask);
 		gd.addSlider("Fraction_parameter", 0.05, 1, myFractionParameter);
 		gd.addCheckbox("Show_table", myShowTable);
 		gd.addCheckbox("Clear_table", myClearTable);
@@ -957,6 +969,7 @@ public class FindFoci implements PlugIn, MouseListener
 		mySortMethod = gd.getNextChoiceIndex();
 		myMaxPeaks = (int) gd.getNextNumber();
 		myShowMask = gd.getNextChoiceIndex();
+		myOverlayMask = gd.getNextBoolean();
 		myFractionParameter = gd.getNextNumber();
 		myShowTable = gd.getNextBoolean();
 		myClearTable = gd.getNextBoolean();
@@ -976,6 +989,8 @@ public class FindFoci implements PlugIn, MouseListener
 
 		int outputType = getOutputMaskFlags(myShowMask);
 
+		if (myOverlayMask)
+			outputType += OUTPUT_OVERLAY_MASK;
 		if (myShowTable)
 			outputType += OUTPUT_RESULTS_TABLE;
 		if (myClearTable)
@@ -1227,18 +1242,25 @@ public class FindFoci implements PlugIn, MouseListener
 
 		// Update the mask image
 		ImagePlus maxImp = null;
-		if (maximaImp != null && (outputType & OUTPUT_MASK) != 0)
+		if (maximaImp != null)
 		{
-			maxImp = showImage(maximaImp.getStack(), imp.getTitle() + " " + FRAME_TITLE);
-
-			// Adjust the contrast to show all the maxima
-			if (resultsArray != null)
+			if ((outputType & OUTPUT_MASK) != 0)
 			{
-				int maxValue = ((outputType & OUTPUT_MASK_THRESHOLD) != 0) ? 4 : resultsArray.size() + 1;
-				maxImp.setDisplayRange(0, maxValue);
-			}
+				maxImp = showImage(maximaImp.getStack(), imp.getTitle() + " " + FRAME_TITLE);
 
-			maxImp.updateAndDraw();
+				// Adjust the contrast to show all the maxima
+				if (resultsArray != null)
+				{
+					int maxValue = ((outputType & OUTPUT_MASK_THRESHOLD) != 0) ? 4 : resultsArray.size() + 1;
+					maxImp.setDisplayRange(0, maxValue);
+				}
+
+				maxImp.updateAndDraw();
+			}
+			if ((outputType & OUTPUT_OVERLAY_MASK) != 0)
+			{
+				imp.setOverlay(createOverlay(imp, maximaImp));
+			}
 		}
 
 		// Add ROI crosses to original image
@@ -1279,6 +1301,45 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 	}
 
+	private Overlay createOverlay(ImagePlus imp, ImagePlus maximaImp)
+	{
+		Overlay o = new Overlay();
+		int channel = imp.getChannel();
+		int frame = imp.getFrame();
+		ImageStack stack = maximaImp.getImageStack();
+
+		// Q. What happens if the image is the same colour?
+		// Currently we just leave it to the user to switch the LUT for the image.
+		final int value = Color.YELLOW.getRGB();
+		
+		imp.getLuts();
+
+		for (int slice = 1; slice <= maximaImp.getStackSize(); slice++)
+		{
+			// Use a RGB image to allow coloured output
+			ImageProcessor ip = stack.getProcessor(slice);
+			ColorProcessor cp = new ColorProcessor(ip.getWidth(), ip.getHeight());
+			for (int i = 0; i < ip.getPixelCount(); i++)
+			{
+				if (ip.get(i) > 0)
+					cp.set(i, value);
+			}
+			ImageRoi roi = new ImageRoi(0, 0, cp);
+			roi.setZeroTransparent(true);
+			roi.setOpacity(0.5);
+			if (imp.isDisplayedHyperStack())
+			{
+				roi.setPosition(channel, slice, frame);
+			}
+			else
+			{
+				roi.setPosition(slice);
+			}
+			o.add(roi);
+		}
+		return o;
+	}
+
 	private ImagePlus showImage(ImageStack stack, String title)
 	{
 		return showImage(stack, title, true);
@@ -1286,8 +1347,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 	private ImagePlus showImage(ImageStack stack, String title, boolean show)
 	{
-		ImagePlus maxImp;
-		maxImp = WindowManager.getImage(title);
+		ImagePlus maxImp = WindowManager.getImage(title);
 		if (maxImp != null)
 		{
 			maxImp.setStack(stack);
@@ -1387,6 +1447,7 @@ public class FindFoci implements PlugIn, MouseListener
 			writeParam(out, "Sort_method", sortIndexMethods[sortIndex]);
 			writeParam(out, "Maximum_peaks", Integer.toString(maxPeaks));
 			writeParam(out, "Show_mask", maskOptions[getMaskOption(outputType)]);
+			writeParam(out, "Overlay_mask", ((outputType & OUTPUT_OVERLAY_MASK) != 0) ? "true" : "false");
 			writeParam(out, "Fraction_parameter", "" + fractionParameter);
 			writeParam(out, "Show_table", ((outputType & OUTPUT_RESULTS_TABLE) != 0) ? "true" : "false");
 			writeParam(out, "Clear_table", ((outputType & OUTPUT_CLEAR_RESULTS_TABLE) != 0) ? "true" : "false");
@@ -1478,18 +1539,26 @@ public class FindFoci implements PlugIn, MouseListener
 
 		// Update the mask image
 		ImagePlus maxImp = null;
-		if (maximaImp != null && (outputType & OUTPUT_MASK) != 0)
+		Overlay overlay = null;
+		if (maximaImp != null)
 		{
-			maxImp = showImage(maximaImp.getStack(), imp.getTitle() + " " + FRAME_TITLE);
-
-			// Adjust the contrast to show all the maxima
-			if (resultsArray != null)
+			if ((outputType & OUTPUT_MASK) != 0)
 			{
-				int maxValue = ((outputType & OUTPUT_MASK_THRESHOLD) != 0) ? 4 : resultsArray.size() + 1;
-				maxImp.setDisplayRange(0, maxValue);
-			}
+				maxImp = showImage(maximaImp.getStack(), imp.getTitle() + " " + FRAME_TITLE);
 
-			maxImp.updateAndDraw();
+				// Adjust the contrast to show all the maxima
+				if (resultsArray != null)
+				{
+					int maxValue = ((outputType & OUTPUT_MASK_THRESHOLD) != 0) ? 4 : resultsArray.size() + 1;
+					maxImp.setDisplayRange(0, maxValue);
+				}
+
+				maxImp.updateAndDraw();
+			}
+			if ((outputType & OUTPUT_OVERLAY_MASK) != 0)
+			{
+				overlay = createOverlay(imp, maximaImp);
+			}
 		}
 
 		// Remove ROI if not an output option
@@ -1525,7 +1594,14 @@ public class FindFoci implements PlugIn, MouseListener
 						roi.setHideLabels(true);
 					if (imp.getRoi() != null && !(imp.getRoi() instanceof PointRoi))
 					{
-						imp.setOverlay(roi, Color.CYAN, 1, Color.YELLOW);
+						roi.setStrokeColor(Color.CYAN);
+						roi.setStrokeWidth(1);
+						roi.setFillColor(Color.YELLOW);
+						// Add to the current overlay
+						if (overlay != null)
+							overlay.add(roi);
+						else
+							overlay = new Overlay(roi);
 					}
 					else
 					{
@@ -1547,6 +1623,10 @@ public class FindFoci implements PlugIn, MouseListener
 					killPointRoi(maxImp);
 			}
 		}
+
+		// Set the overlay (if null this will remove the old one)
+		//if (overlay != null)
+		imp.setOverlay(overlay);
 	}
 
 	private void killPointRoi(ImagePlus imp)
@@ -1898,7 +1978,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		// Build the output mask
 		ImagePlus outImp = null;
-		if ((outputType & OUTPUT_MASK) != 0)
+		if ((outputType & CREATE_OUTPUT_MASK) != 0)
 		{
 			IJ.showStatus("Generating mask image...");
 
@@ -2636,7 +2716,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		// Build the output mask
 		ImagePlus outImp = null;
-		if ((outputType & OUTPUT_MASK) != 0)
+		if ((outputType & CREATE_OUTPUT_MASK) != 0)
 		{
 			outImp = generateOutputMask(outputType, autoThresholdMethod, imageTitle, fractionParameter, image, types,
 					maxima, stats, resultsArray, nMaxima);

@@ -180,6 +180,7 @@ public class FindFociRunner extends Thread
 		int sortMethod = model.getSortMethod();
 		int maxPeaks = model.getMaxPeaks();
 		int showMask = model.getShowMask();
+		boolean overlayMask = model.isOverlayMask();
 		boolean showTable = model.isShowTable();
 		boolean clearTable = model.isClearTable();
 		boolean markMaxima = model.isMarkMaxima();
@@ -200,6 +201,8 @@ public class FindFociRunner extends Thread
 
 		int outputType = FindFoci.getOutputMaskFlags(showMask);
 
+		if (overlayMask)
+			outputType += FindFoci.OUTPUT_OVERLAY_MASK;
 		if (showTable)
 			outputType += FindFoci.OUTPUT_RESULTS_TABLE;
 		if (clearTable)
@@ -396,7 +399,8 @@ public class FindFociRunner extends Thread
 			//System.out.println("Ignoring change to maxpeaks: " + previousModel.getMaxPeaks() + " => " + model.getMaxPeaks());
 		}
 
-		if (notEqual(model.getShowMask(), previousModel.getShowMask()))
+		if (notEqual(model.getShowMask(), previousModel.getShowMask()) ||
+				notEqual(model.isOverlayMask(), previousModel.isOverlayMask()))
 		{
 			return FindFociState.CALCULATE_OUTPUT_MASK;
 		}
