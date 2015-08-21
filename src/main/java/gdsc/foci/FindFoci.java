@@ -3068,9 +3068,9 @@ public class FindFoci implements PlugIn, MouseListener
 				}
 				else if (nRadii == 1)
 					removeLineFrom(types, index);
-			} // if v<255 && v>0
+			} 
 		}
-	} // void cleanupExtraLines
+	}
 
 	/** delete a line starting at x, y up to the next (4-connected) vertex */
 	void removeLineFrom(byte[] types, int index)
@@ -3109,7 +3109,7 @@ public class FindFoci implements PlugIn, MouseListener
 				}
 			} // for directions d
 		} while (continues);
-	} // void removeLineFrom
+	}
 
 	/**
 	 * Analyze the neighbors of a pixel (x, y) in a byte image; pixels <255 ("non-white") are considered foreground.
@@ -3158,7 +3158,7 @@ public class FindFoci implements PlugIn, MouseListener
 		if (firstPixelSet && !prevPixelSet)
 			countTransitions++;
 		return countTransitions;
-	} // int nRadii
+	}
 
 	/**
 	 * For each peak in the maxima image, perform thresholding using the specified method.
