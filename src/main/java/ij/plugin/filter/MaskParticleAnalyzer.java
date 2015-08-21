@@ -40,8 +40,15 @@ import java.util.Arrays;
  * Adds an option to select the redirection image for particle analysis. This can be none.
  * <p>
  * If the input image is a mask then the functionality is the same as the original ParticleAnalyzer class.
+ * <p>
+ * Note: This class used to extend the default ImageJ ParticleAnalyzer. However the Java inheritance method invocation
+ * system would not call the MaskParticleAnalyzer.analyseParticle(...) method. This may be due to it being a default
+ * (package) scoped method. It works on the Linux JVM but not on Windows. It would call the protected/public methods
+ * that had been overridden, just not the default scope method. I have thus changed it to extend a copy of the ImageJ
+ * ParticleAnalyzer. This can be updated with new version from the ImageJ source code as appropriate and default scoped
+ * methods set to protected.
  */
-public class MaskParticleAnalyzer extends ParticleAnalyzer
+public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 {
 	private static String redirectTitle = "";
 
@@ -49,6 +56,62 @@ public class MaskParticleAnalyzer extends ParticleAnalyzer
 	private float[] image;
 	private float value;
 	private double dmin, dmax;
+
+	// Methods to allow the Analyzer class package level fields to be set.
+	// This is not possible on the Windows JVM but is OK on linux.
+	static Field firstParticle, lastParticle;
+	static
+	{
+		try
+		{
+			firstParticle = Analyzer.class.getDeclaredField("firstParticle");
+			firstParticle.setAccessible(true);
+
+			lastParticle = Analyzer.class.getDeclaredField("lastParticle");
+			lastParticle.setAccessible(true);
+		}
+		catch (Throwable e)
+		{
+			// Reflection has failed
+			firstParticle = lastParticle = null;
+		}
+	}
+
+	static void setAnalyzerFirstParticle(int value)
+	{
+		//Analyzer.firstParticle = value;
+		if (firstParticle != null)
+		{
+			try
+			{
+				firstParticle.set(Analyzer.class, value);
+				//IJ.log("Set firstParticle to "+value);
+			}
+			catch (Throwable e)
+			{
+				// Reflection has failed
+				firstParticle = null;
+			}
+		}
+	}
+
+	static void setAnalyzerLastParticle(int value)
+	{
+		//Analyzer.lastParticle = value;
+		if (lastParticle != null)
+		{
+			try
+			{
+				lastParticle.set(Analyzer.class, value);
+				//IJ.log("Set lastParticle to "+value);
+			}
+			catch (Throwable e)
+			{
+				// Reflection has failed
+				lastParticle = null;
+			}
+		}
+	}
 
 	public int setup(String arg, ImagePlus imp)
 	{
@@ -171,7 +234,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzer
 	}
 
 	@Override
-	void analyzeParticle(int x, int y, ImagePlus imp, ImageProcessor ip)
+	protected void analyzeParticle(int x, int y, ImagePlus imp, ImageProcessor ip)
 	{
 		// x,y - the position the particle was first found
 		// imp - the particle image
@@ -182,10 +245,11 @@ public class MaskParticleAnalyzer extends ParticleAnalyzer
 		// Do this by zeroing all pixels that are not the same value and then calling the super-class method.
 		ImageProcessor originalIp = ip.duplicate();
 		value = (useGetPixelValue) ? ip.getPixelValue(x, y) : ip.getf(x, y);
+		//IJ.log(String.format("Analysing x=%d,y=%d value=%f", x, y, value));
 		for (int i = 0; i < image.length; i++)
 			if (image[i] != value)
 				ip.set(i, 0);
-		
+
 		ImageProcessor particleIp = ip.duplicate();
 		//System.out.printf("Particle = %f\n", value);
 		//ImageJHelper.display("Particle", particleIp);
@@ -209,11 +273,6 @@ public class MaskParticleAnalyzer extends ParticleAnalyzer
 		}
 	}
 
-	private int reflectionStatus = 0;
-	private RoiManager roiManager;
-	private int lineWidth;
-	private boolean showResultsWindow;
-
 	/**
 	 * Saves statistics for one particle in a results table. This is
 	 * a method subclasses may want to override.
@@ -228,70 +287,41 @@ public class MaskParticleAnalyzer extends ParticleAnalyzer
 			rt.addValue("YStart", stats.ystart);
 		}
 
+		//IJ.log(String.format("Saving x=%d,y=%d count=%d, value=%f", roi.getBounds().x, roi.getBounds().y,
+		//		stats.pixelCount, value));
 		rt.addValue("Particle Value", value);
 		rt.addValue("Pixels", stats.pixelCount);
 
-		// In order to preserve the full functionality of the Particle Analyzer
-		// we need to get the values of some of the private fields. Do this with reflection.
-		if (reflectionStatus == 0)
+		// Copy the superclass methods using the super-class variables obtained from relfection
+		if (addToManager)
 		{
-			try
+			if (roiManager == null)
 			{
-				Field f = ParticleAnalyzer.class.getDeclaredField("lineWidth");
-				f.setAccessible(true);
-				lineWidth = f.getInt(this);
-
-				f = ParticleAnalyzer.class.getDeclaredField("roiManager");
-				f.setAccessible(true);
-				roiManager = (RoiManager) f.get(this);
-
-				f = ParticleAnalyzer.class.getDeclaredField("showResultsWindow");
-				f.setAccessible(true);
-				showResultsWindow = f.getBoolean(this);
-				
-				// Flag that reflection has worked
-				reflectionStatus = 1;
-			}
-			catch (Throwable e)
-			{
-				// Flag that reflection has failed
-				reflectionStatus = -1;
-			}			
-		}
-
-		if (reflectionStatus == 1)
-		{
-			// Copy the superclass methods using the super-class variables obtained from relfection
-			if (addToManager)
-			{
+				if (Macro.getOptions() != null && Interpreter.isBatchMode())
+					roiManager = Interpreter.getBatchModeRoiManager();
 				if (roiManager == null)
 				{
-					if (Macro.getOptions() != null && Interpreter.isBatchMode())
-						roiManager = Interpreter.getBatchModeRoiManager();
-					if (roiManager == null)
+					Frame frame = WindowManager.getFrame("ROI Manager");
+					if (frame == null)
+						IJ.run("ROI Manager...");
+					frame = WindowManager.getFrame("ROI Manager");
+					if (frame == null || !(frame instanceof RoiManager))
 					{
-						Frame frame = WindowManager.getFrame("ROI Manager");
-						if (frame == null)
-							IJ.run("ROI Manager...");
-						frame = WindowManager.getFrame("ROI Manager");
-						if (frame == null || !(frame instanceof RoiManager))
-						{
-							addToManager = false;
-							return;
-						}
-						roiManager = (RoiManager) frame;
+						addToManager = false;
+						return;
 					}
-					if (resetCounter)
-						roiManager.runCommand("reset");
+					roiManager = (RoiManager) frame;
 				}
-				if (imp.getStackSize() > 1)
-					roi.setPosition(imp.getCurrentSlice());
-				if (lineWidth != 1)
-					roi.setStrokeWidth(lineWidth);
-				roiManager.add(imp, roi, rt.getCounter());
+				if (resetCounter)
+					roiManager.runCommand("reset");
 			}
+			if (imp.getStackSize() > 1)
+				roi.setPosition(imp.getCurrentSlice());
+			if (lineWidth != 1)
+				roi.setStrokeWidth(lineWidth);
+			roiManager.add(imp, roi, rt.getCounter());
 		}
-		
+
 		if (showResultsWindow && showResults)
 			rt.addResults();
 	}
