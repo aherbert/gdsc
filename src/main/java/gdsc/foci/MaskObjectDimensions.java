@@ -399,7 +399,8 @@ public class MaskObjectDimensions implements PlugInFilter
 							// Check if we are inside the object
 							if (image[index] != object)
 								continue;
-							System.arraycopy(pos, 0, tmp, 0, 3);
+							for (int i = 0; i < 3; i++)
+								tmp[i] = pos[i]; 
 						}
 					}
 				}
