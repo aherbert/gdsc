@@ -107,7 +107,6 @@ public class MaskObjectDimensions implements PlugInFilter
 		final int maxx = dimensions[0];
 		final int maxy = dimensions[1];
 		final int maxz = dimensions[3];
-		final int[] maxd = new int[] { maxx, maxy, maxz };
 
 		int[] histogram = new int[(imp.getBitDepth() == 8) ? 256 : 65536];
 		int size = maxx * maxy;
@@ -232,14 +231,49 @@ public class MaskObjectDimensions implements PlugInFilter
 		// Output lines
 		Overlay overlay = (showOverlay) ? new Overlay() : null;
 
+		// Compute the bounding box for each object. This increases the speed of processing later
+		int[][] lower = new int[objectData.length][3];
+		int[][] upper = new int[objectData.length][3];
+		// Initialise to the centre of the object
+		for (int object = min; object <= max; object++)
+		{
+			final int objectIndex = object - min;
+			for (int i = 0; i < 3; i++)
+				lower[objectIndex][i] = upper[objectIndex][i] = (int) objectData[objectIndex][i];
+		}
+		for (int z = 0, i = 0; z < maxz; z++)
+			for (int y = 0; y < maxy; y++)
+				for (int x = 0; x < maxx; x++, i++)
+					if (image[i] != 0)
+					{
+						final int objectIndex = image[i] - min;
+						if (lower[objectIndex][0] > x)
+							lower[objectIndex][0] = x;
+						if (lower[objectIndex][1] > y)
+							lower[objectIndex][1] = y;
+						if (lower[objectIndex][2] > z)
+							lower[objectIndex][2] = z;
+						if (upper[objectIndex][0] < x)
+							upper[objectIndex][0] = x;
+						if (upper[objectIndex][1] < y)
+							upper[objectIndex][1] = y;
+						if (upper[objectIndex][2] < z)
+							upper[objectIndex][2] = z;
+					}
+
 		// For each object
 		for (int object = min; object <= max; object++)
 		{
-			int objectIndex = object - min;
+			final int objectIndex = object - min;
 
 			// Skip empty objects
 			if (objectData[objectIndex][3] == 0)
 				continue;
+
+			// Set bounds
+			final int[] mind = new int[] { lower[objectIndex][0], lower[objectIndex][1], lower[objectIndex][2] };
+			final int[] maxd = new int[] { upper[objectIndex][0] + 1, upper[objectIndex][1] + 1,
+					upper[objectIndex][2] + 1 };
 
 			// Calculate the inertia tensor
 			double[][] tensor = new double[3][3];
@@ -248,9 +282,9 @@ public class MaskObjectDimensions implements PlugInFilter
 			final double cx = objectData[objectIndex][0] - 0.5;
 			final double cy = objectData[objectIndex][1] - 0.5;
 			final double cz = objectData[objectIndex][2] - 0.5;
-			for (int z = 0, i = 0; z < maxz; z++)
-				for (int y = 0; y < maxy; y++)
-					for (int x = 0; x < maxx; x++, i++)
+			for (int z = mind[2]; z < maxd[2]; z++)
+				for (int y = mind[1]; y < maxd[1]; y++)
+					for (int x = mind[0], i = z * size + y * maxx + mind[0]; x < maxd[0]; x++, i++)
 						if (image[i] == object)
 						{
 							final double dx = x - cx;
@@ -323,38 +357,49 @@ public class MaskObjectDimensions implements PlugInFilter
 				final double epsilon = 1e-6;
 				final double[] direction = axes[axis];
 				double s = 0;
+				double longest = 0; // Used to normalise the longest dimension to 1
 				for (int i = 0; i < 3; i++)
 				{
-					if (Math.abs(direction[i]) < epsilon)
+					final double v = Math.abs(direction[i]);
+					if (v < epsilon)
 						direction[i] = 0;
+					if (longest < v)
+						longest = v;
 					s += direction[i];
 				}
-				double[] lower = com.clone();
-				double[] upper = com.clone();
+				double[] direction1 = com.clone();
+				double[] direction2 = com.clone();
 				if (s != 0)
 				{
 					// Assuming unit vector then moving in increments of 1 should never skip pixels 
-					// in any dimension
+					// in any dimension. Normalise to 1 in the longest dimension should still be OK.
+					for (int i = 0; i < 3; i++)
+					{
+						direction[i] /= longest;
+						if (direction[i] > 1)
+							direction[i] = 1;
+					}
+
+					double[] pos = new double[3];
 
 					// Move one way, then the other
 					for (int dir : new int[] { -1, 1 })
 					{
+						double[] tmp = (dir == 1) ? direction1 : direction2;
 						moveDirection: for (int n = dir;; n += dir)
 						{
-							double[] pos = new double[] { (com[0] + n * direction[0]), (com[1] + n * direction[1]),
-									(com[2] + n * direction[2]) };
-							// Check image bounds
 							for (int i = 0; i < 3; i++)
-								if (pos[i] < 0 || pos[i] >= maxd[i])
+							{
+								pos[i] = com[i] + n * direction[i];
+								// Check bounds
+								if (pos[i] < mind[i] || pos[i] >= maxd[i])
 									break moveDirection;
+							}
 							final int index = ((int) pos[2]) * size + ((int) pos[1]) * maxx + ((int) pos[0]);
 							// Check if we are inside the object
 							if (image[index] != object)
 								continue;
-							if (dir == 1)
-								lower = pos.clone();
-							else
-								upper = pos.clone();
+							System.arraycopy(pos, 0, tmp, 0, 3);
 						}
 					}
 				}
@@ -362,27 +407,27 @@ public class MaskObjectDimensions implements PlugInFilter
 				// Round to half pixels (since that is our accuracy during the pixel search)
 				for (int i = 0; i < 3; i++)
 				{
-					upper[i] = (int) upper[i] + 0.5;
-					lower[i] = (int) lower[i] + 0.5;
+					direction2[i] = (int) direction2[i] + 0.5;
+					direction1[i] = (int) direction1[i] + 0.5;
 				}
 
-				final double dx = upper[0] - lower[0];
-				final double dy = upper[1] - lower[1];
-				final double dz = upper[2] - lower[2];
+				final double dx = direction2[0] - direction1[0];
+				final double dy = direction2[1] - direction1[1];
+				final double dz = direction2[2] - direction1[2];
 				final double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
 				//System.out.printf("Object %2d Axis %d   : %8.3f %8.3f %8.3f - %8.3f %8.3f %8.3f == %12g\n", object,
 				//		axis + 1, lower[0], lower[1], lower[2], upper[0], upper[1], upper[2], d);
 
 				for (int i = 0; i < 3; i++)
-					sb.append('\t').append(ImageJHelper.rounded(lower[i]));
+					sb.append('\t').append(ImageJHelper.rounded(direction1[i]));
 				for (int i = 0; i < 3; i++)
-					sb.append('\t').append(ImageJHelper.rounded(upper[i]));
+					sb.append('\t').append(ImageJHelper.rounded(direction2[i]));
 				sb.append('\t').append(ImageJHelper.rounded(d));
 
 				// Draw lines on the image
 				if (showOverlay)
 				{
-					Line roi = new Line(lower[0], lower[1], upper[0], upper[1]);
+					Line roi = new Line(direction1[0], direction1[1], direction2[0], direction2[1]);
 					overlay.add(roi);
 				}
 			}
