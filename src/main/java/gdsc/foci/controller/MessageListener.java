@@ -20,7 +20,7 @@ public interface MessageListener
 {
 	public enum MessageType
 	{
-		BACKGROUND_LEVEL, ERROR
+		BACKGROUND_LEVEL, ERROR, READY, RUNNING, DONE, FAILED, FINISHED
 	}
 
 	/**

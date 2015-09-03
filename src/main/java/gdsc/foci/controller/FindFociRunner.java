@@ -31,8 +31,8 @@ public class FindFociRunner extends Thread
 {
 	private FindFociModel model = null;
 	private FindFociModel previousModel = null;
-	private Object lock = new Object();
-	private MessageListener listener;
+	private final Object lock = new Object();
+	private final MessageListener listener;
 
 	private boolean running = true;
 
@@ -52,6 +52,7 @@ public class FindFociRunner extends Thread
 	public FindFociRunner(MessageListener listener)
 	{
 		this.listener = listener;
+		notify(MessageType.READY);
 	}
 
 	/*
@@ -102,9 +103,8 @@ public class FindFociRunner extends Thread
 			else
 				IJ.log("A error occurred during processing");
 			t.printStackTrace();
-			
-			if (listener != null)
-				listener.notify(MessageType.ERROR, t);
+
+			notify(MessageType.ERROR, t);
 		}
 		finally
 		{
@@ -121,6 +121,12 @@ public class FindFociRunner extends Thread
 			resultsArray = null;
 			finish();
 		}
+	}
+
+	private void notify(MessageType messageType, Object... params)
+	{
+		if (listener != null)
+			listener.notify(messageType, params);
 	}
 
 	/**
@@ -157,11 +163,13 @@ public class FindFociRunner extends Thread
 		ImagePlus imp = WindowManager.getImage(title);
 		if (null == imp)
 		{
+			notify(MessageType.ERROR);
 			return;
 		}
 
 		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
 		{
+			notify(MessageType.ERROR);
 			return;
 		}
 
@@ -236,12 +244,14 @@ public class FindFociRunner extends Thread
 
 		if (outputType == 0)
 		{
+			notify(MessageType.ERROR);
 			return;
 		}
 
 		ImagePlus mask = WindowManager.getImage(maskImage);
 
 		IJ.showStatus(FindFoci.FRAME_TITLE + " calculating ...");
+		notify(MessageType.RUNNING);
 
 		// Compare this model with the previously computed results and
 		// only update the parts that are necessary. 
@@ -256,6 +266,7 @@ public class FindFociRunner extends Thread
 			if (imp2 == null)
 			{
 				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
+				notify(MessageType.FAILED);
 				return;
 			}
 		}
@@ -265,14 +276,11 @@ public class FindFociRunner extends Thread
 			if (initArray == null)
 			{
 				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
+				notify(MessageType.FAILED);
 				return;
 			}
-			
-			if (listener != null)
-			{
-				double[] stats = (double[]) initArray[4];
-				listener.notify(MessageType.BACKGROUND_LEVEL, stats[FindFoci.STATS_BACKGROUND]);
-			}
+
+			notify(MessageType.BACKGROUND_LEVEL, ((double[]) initArray[4])[FindFoci.STATS_BACKGROUND]);
 		}
 		if (state.ordinal() <= FindFociState.SEARCH.ordinal())
 		{
@@ -282,14 +290,11 @@ public class FindFociRunner extends Thread
 			if (searchArray == null)
 			{
 				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
+				notify(MessageType.FAILED);
 				return;
 			}
 
-			if (listener != null)
-			{
-				double[] stats = (double[]) searchInitArray[4];
-				listener.notify(MessageType.BACKGROUND_LEVEL, stats[FindFoci.STATS_BACKGROUND]);
-			}
+			notify(MessageType.BACKGROUND_LEVEL, ((double[]) searchInitArray[4])[FindFoci.STATS_BACKGROUND]);
 		}
 		if (state.ordinal() <= FindFociState.MERGE.ordinal())
 		{
@@ -299,6 +304,7 @@ public class FindFociRunner extends Thread
 			if (mergeArray == null)
 			{
 				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
+				notify(MessageType.FAILED);
 				return;
 			}
 		}
@@ -310,6 +316,7 @@ public class FindFociRunner extends Thread
 			if (prelimResultsArray == null)
 			{
 				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
+				notify(MessageType.FAILED);
 				return;
 			}
 		}
@@ -321,6 +328,7 @@ public class FindFociRunner extends Thread
 			if (resultsArray == null)
 			{
 				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
+				notify(MessageType.FAILED);
 				return;
 			}
 		}
@@ -331,6 +339,7 @@ public class FindFociRunner extends Thread
 		}
 
 		IJ.showStatus(FindFoci.FRAME_TITLE + " finished");
+		notify(MessageType.DONE);
 
 		previousModel = model;
 	}
@@ -435,7 +444,7 @@ public class FindFociRunner extends Thread
 			if (model.isObjectAnalysis() && model.isShowObjectMask())
 				return FindFociState.SHOW_RESULTS;
 			ignoreChange = true;
-		}		
+		}
 
 		if (notEqual(model.isSaveToMemory(), previousModel.isSaveToMemory()))
 		{
@@ -445,7 +454,7 @@ public class FindFociRunner extends Thread
 				return FindFociState.SHOW_RESULTS;
 			ignoreChange = true;
 		}
-		
+
 		// Options to ignore
 		if (notEqual(model.isShowLogMessages(), previousModel.isShowLogMessages()) ||
 				notEqual(model.getResultsDirectory(), previousModel.getResultsDirectory()) ||
@@ -485,8 +494,8 @@ public class FindFociRunner extends Thread
 
 	public void finish()
 	{
-		if (listener != null)
-			listener.notify(MessageType.BACKGROUND_LEVEL, 0.0);
+		notify(MessageType.BACKGROUND_LEVEL, 0.0);
+		notify(MessageType.FINISHED);
 		running = false;
 	}
 }

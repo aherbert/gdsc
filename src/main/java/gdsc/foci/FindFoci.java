@@ -13,6 +13,7 @@ package gdsc.foci;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
+import gdsc.foci.model.FindFociModel;
 import gdsc.threshold.Auto_Threshold;
 import gdsc.threshold.Multi_OtsuThreshold;
 import gdsc.utils.GaussianFit;
@@ -779,37 +780,74 @@ public class FindFoci implements PlugIn, MouseListener
 			"Percentile", "RenyiEntropy", "Shanbhag", "Triangle", "Yen" };
 	public final static String[] statisticsModes = { "Both", "Inside", "Outside" };
 
-	private static String myMaskImage = "";
-	private static int myBackgroundMethod = FindFoci.BACKGROUND_STD_DEV_ABOVE_MEAN;
-	private static double myBackgroundParameter = 3;
-	private static String myThresholdMethod = "Otsu";
-	private static String myStatisticsMode = "Both";
-	private static int mySearchMethod = FindFoci.SEARCH_ABOVE_BACKGROUND;
-	private static double mySearchParameter = 0.3;
-	private static int myMinSize = 5;
-	private static boolean myMinimumAboveSaddle = true;
-	private static int myPeakMethod = FindFoci.PEAK_RELATIVE_ABOVE_BACKGROUND;
-	private static double myPeakParameter = 0.5;
-	private static int mySortMethod = FindFoci.SORT_INTENSITY;
-	private static int myMaxPeaks = 50;
-	private static int myShowMask = 3;
-	private static boolean myOverlayMask = false;
-	private static boolean myShowTable = true;
-	private static boolean myClearTable = false;
-	private static boolean myMarkMaxima = true;
-	private static boolean myMarkROIMaxima = false;
-	private static boolean myHideLabels = false;
-	private static boolean myShowMaskMaximaAsDots = true;
-	private static boolean myShowLogMessages = true;
-	private static boolean myRemoveEdgeMaxima = true;
-	private static String myResultsDirectory = "";
-	private static boolean myObjectAnalysis = true;
-	private static boolean myShowObjectMask = false;
-	private static boolean mySaveToMemory = false;
-	private static double myGaussianBlur = 0;
-	private static int myCentreMethod = FindFoci.CENTRE_MAX_VALUE_SEARCH;
-	private static double myCentreParameter = 2;
-	private static double myFractionParameter = 0.5;
+	private static String myMaskImage;
+	private static int myBackgroundMethod;
+	private static double myBackgroundParameter;
+	private static String myThresholdMethod;
+	private static String myStatisticsMode;
+	private static int mySearchMethod;
+	private static double mySearchParameter;
+	private static int myMinSize;
+	private static boolean myMinimumAboveSaddle;
+	private static int myPeakMethod;
+	private static double myPeakParameter;
+	private static int mySortMethod;
+	private static int myMaxPeaks;
+	private static int myShowMask;
+	private static boolean myOverlayMask;
+	private static boolean myShowTable;
+	private static boolean myClearTable;
+	private static boolean myMarkMaxima;
+	private static boolean myMarkROIMaxima;
+	private static boolean myHideLabels;
+	private static boolean myShowMaskMaximaAsDots;
+	private static boolean myShowLogMessages;
+	private static boolean myRemoveEdgeMaxima;
+	private static String myResultsDirectory;
+	private static boolean myObjectAnalysis;
+	private static boolean myShowObjectMask;
+	private static boolean mySaveToMemory;
+	private static double myGaussianBlur;
+	private static int myCentreMethod;
+	private static double myCentreParameter;
+	private static double myFractionParameter;
+
+	static
+	{
+		// Use the default from the FindFociModel for consistency
+		FindFociModel model = new FindFociModel();
+		myMaskImage = model.getMaskImage();
+		myBackgroundMethod = model.getBackgroundMethod();
+		myBackgroundParameter = model.getBackgroundParameter();
+		myThresholdMethod = model.getThresholdMethod();
+		myStatisticsMode = model.getStatisticsMode();
+		mySearchMethod = model.getSearchMethod();
+		mySearchParameter = model.getSearchParameter();
+		myMinSize = model.getMinSize();
+		myMinimumAboveSaddle = model.isMinimumAboveSaddle();
+		myPeakMethod = model.getPeakMethod();
+		myPeakParameter = model.getPeakParameter();
+		mySortMethod = model.getSortMethod();
+		myMaxPeaks = model.getMaxPeaks();
+		myShowMask = model.getShowMask();
+		myOverlayMask = model.isOverlayMask();
+		myShowTable = model.isShowTable();
+		myClearTable = model.isClearTable();
+		myMarkMaxima = model.isMarkMaxima();
+		myMarkROIMaxima = model.isMarkROIMaxima();
+		myHideLabels = model.isHideLabels();
+		myShowMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
+		myShowLogMessages = model.isShowLogMessages();
+		myRemoveEdgeMaxima = model.isRemoveEdgeMaxima();
+		myResultsDirectory = model.getResultsDirectory();
+		myObjectAnalysis = model.isObjectAnalysis();
+		myShowObjectMask = model.isShowObjectMask();
+		mySaveToMemory = model.isSaveToMemory();
+		myGaussianBlur = model.getGaussianBlur();
+		myCentreMethod = model.getCentreMethod();
+		myCentreParameter = model.getCentreParameter();
+		myFractionParameter = model.getFractionParameter();
+	}
 
 	// the following are class variables for having shorter argument lists
 	private int maxx, maxy, maxz; // image dimensions
@@ -1311,7 +1349,7 @@ public class FindFoci implements PlugIn, MouseListener
 		// Q. What happens if the image is the same colour?
 		// Currently we just leave it to the user to switch the LUT for the image.
 		final int value = Color.YELLOW.getRGB();
-		
+
 		imp.getLuts();
 
 		for (int slice = 1; slice <= maximaImp.getStackSize(); slice++)
@@ -3068,7 +3106,7 @@ public class FindFoci implements PlugIn, MouseListener
 				}
 				else if (nRadii == 1)
 					removeLineFrom(types, index);
-			} 
+			}
 		}
 	}
 

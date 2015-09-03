@@ -38,13 +38,13 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	private int sortMethod = FindFoci.SORT_INTENSITY;
 	private int maxPeaks = 50;
 	private int showMask = 3;
-	private boolean overlayMask = false;
+	private boolean overlayMask = true;
 	private boolean showTable = true;
 	private boolean clearTable = true;
 	private boolean markMaxima = true;
 	private boolean markROIMaxima = false;
 	private boolean hideLabels = false;
-	private boolean showMaskMaximaAsDots = true;
+	private boolean showMaskMaximaAsDots = false;
 	private boolean showLogMessages = true;
 	private boolean removeEdgeMaxima = false;
 	private boolean saveResults = false;
