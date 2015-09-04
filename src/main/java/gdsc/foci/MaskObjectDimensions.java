@@ -20,6 +20,7 @@ import ij.ImageStack;
 import ij.gui.GenericDialog;
 import ij.gui.Line;
 import ij.gui.Overlay;
+import ij.measure.Calibration;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
@@ -376,6 +377,22 @@ public class MaskObjectDimensions implements PlugInFilter
 		if (c != null)
 			Arrays.sort(objects, c);
 
+		// Get the calibrated units
+		Calibration cal = imp.getCalibration();
+		String units = cal.getUnits();
+		final double calx, caly, calz;
+		if (cal.getXUnit().equals(cal.getYUnit()) && cal.getXUnit().equals(cal.getZUnit()))
+		{
+			calx = cal.pixelWidth;
+			caly = cal.pixelHeight;
+			calz = cal.pixelDepth;
+		}
+		else
+		{
+			calx = caly = calz = 1;
+			units = "px";
+		}
+
 		// For each object
 		for (MaskObject object : objects)
 		{
@@ -387,7 +404,7 @@ public class MaskObjectDimensions implements PlugInFilter
 			// Increase the upper bounds by 1 to allow < and >= range checks 
 			for (int i = 0; i < 3; i++)
 				maxd[i] += 1;
-			
+
 			// Calculate the inertia tensor
 			double[][] tensor = new double[3][3];
 
@@ -459,6 +476,7 @@ public class MaskObjectDimensions implements PlugInFilter
 
 			StringBuilder sb = new StringBuilder();
 			sb.append(imp.getTitle());
+			sb.append('\t').append(units);
 			Arrays.sort(object.values);
 			sb.append('\t').append(Arrays.toString(object.values));
 			sb.append('\t').append(object.n);
@@ -526,13 +544,6 @@ public class MaskObjectDimensions implements PlugInFilter
 					direction1[i] = (int) direction1[i] + 0.5;
 				}
 
-				final double dx = direction2[0] - direction1[0];
-				final double dy = direction2[1] - direction1[1];
-				final double dz = direction2[2] - direction1[2];
-				final double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-				//System.out.printf("Object %2d Axis %d   : %8.3f %8.3f %8.3f - %8.3f %8.3f %8.3f == %12g\n", object,
-				//		axis + 1, lower[0], lower[1], lower[2], upper[0], upper[1], upper[2], d);
-
 				if (showVectors)
 				{
 					for (int i = 0; i < 3; i++)
@@ -540,6 +551,21 @@ public class MaskObjectDimensions implements PlugInFilter
 					for (int i = 0; i < 3; i++)
 						sb.append('\t').append(ImageJHelper.rounded(direction2[i]));
 				}
+				
+				// Distance in pixels
+				double dx = direction2[0] - direction1[0];
+				double dy = direction2[1] - direction1[1];
+				double dz = direction2[2] - direction1[2];
+				double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+				//System.out.printf("Object %2d Axis %d   : %8.3f %8.3f %8.3f - %8.3f %8.3f %8.3f == %12g\n", object,
+				//		axis + 1, lower[0], lower[1], lower[2], upper[0], upper[1], upper[2], d);
+				sb.append('\t').append(ImageJHelper.rounded(d));
+				
+				// Calibrated length
+				dx *= calx;
+				dy *= caly;
+				dz *= calz;
+				d = Math.sqrt(dx * dx + dy * dy + dz * dz);
 				sb.append('\t').append(ImageJHelper.rounded(d));
 
 				// Draw lines on the image
@@ -577,6 +603,7 @@ public class MaskObjectDimensions implements PlugInFilter
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append("Image");
+		sb.append("\tUnits");
 		sb.append("\tObject");
 		sb.append("\tArea");
 		sb.append("\tcx\tcy\tcz");
@@ -592,6 +619,7 @@ public class MaskObjectDimensions implements PlugInFilter
 				sb.append("\tv").append(i).append(" uz");
 			}
 			sb.append("\tv").append(i).append(" d");
+			sb.append("\tv").append(i).append(" len");
 		}
 		return sb.toString();
 	}
