@@ -1235,7 +1235,8 @@ public class FindFoci implements PlugIn, MouseListener
 		if ((options & OPTION_OBJECT_ANALYSIS) != 0 &&
 				(((outputType & OUTPUT_RESULTS_TABLE) != 0) || resultsDirectory != null))
 		{
-			ImagePlus objectImp = doObjectAnalysis(mask, resultsArray, (options & OPTION_SHOW_OBJECT_MASK) != 0);
+			ImagePlus objectImp = doObjectAnalysis(mask, maximaImp, resultsArray,
+					(options & OPTION_SHOW_OBJECT_MASK) != 0);
 			if (objectImp != null)
 				objectImp.show();
 		}
@@ -1284,7 +1285,7 @@ public class FindFoci implements PlugIn, MouseListener
 		{
 			if ((outputType & OUTPUT_MASK) != 0)
 			{
-				maxImp = showImage(maximaImp.getStack(), imp.getTitle() + " " + FRAME_TITLE);
+				maxImp = showImage(maximaImp, imp.getTitle() + " " + FRAME_TITLE);
 
 				// Adjust the contrast to show all the maxima
 				if (resultsArray != null)
@@ -1378,14 +1379,15 @@ public class FindFoci implements PlugIn, MouseListener
 		return o;
 	}
 
-	private ImagePlus showImage(ImageStack stack, String title)
+	private ImagePlus showImage(ImagePlus imp, String title)
 	{
-		return showImage(stack, title, true);
+		return showImage(imp, title, true);
 	}
 
-	private ImagePlus showImage(ImageStack stack, String title, boolean show)
+	private ImagePlus showImage(ImagePlus imp, String title, boolean show)
 	{
 		ImagePlus maxImp = WindowManager.getImage(title);
+		ImageStack stack = imp.getImageStack();
 		if (maxImp != null)
 		{
 			maxImp.setStack(stack);
@@ -1394,6 +1396,7 @@ public class FindFoci implements PlugIn, MouseListener
 		{
 			maxImp = new ImagePlus(title, stack);
 		}
+		maxImp.setCalibration(imp.getCalibration());
 		if (show)
 			maxImp.show();
 		return maxImp;
@@ -1543,7 +1546,8 @@ public class FindFoci implements PlugIn, MouseListener
 		// If we are outputting a results table or saving to file we can do the object analysis
 		if ((options & OPTION_OBJECT_ANALYSIS) != 0 && ((outputType & OUTPUT_RESULTS_TABLE) != 0))
 		{
-			ImagePlus objectImp = doObjectAnalysis(mask, resultsArray, (options & OPTION_SHOW_OBJECT_MASK) != 0);
+			ImagePlus objectImp = doObjectAnalysis(mask, maximaImp, resultsArray,
+					(options & OPTION_SHOW_OBJECT_MASK) != 0);
 			if (objectImp != null)
 				objectImp.show();
 		}
@@ -1582,7 +1586,7 @@ public class FindFoci implements PlugIn, MouseListener
 		{
 			if ((outputType & OUTPUT_MASK) != 0)
 			{
-				maxImp = showImage(maximaImp.getStack(), imp.getTitle() + " " + FRAME_TITLE);
+				maxImp = showImage(maximaImp, imp.getTitle() + " " + FRAME_TITLE);
 
 				// Adjust the contrast to show all the maxima
 				if (resultsArray != null)
@@ -2020,8 +2024,8 @@ public class FindFoci implements PlugIn, MouseListener
 		{
 			IJ.showStatus("Generating mask image...");
 
-			outImp = generateOutputMask(outputType, autoThresholdMethod, imp.getTitle(), fractionParameter, image,
-					types, maxima, stats, resultsArray, nMaxima);
+			outImp = generateOutputMask(outputType, autoThresholdMethod, imp, fractionParameter, image, types, maxima,
+					stats, resultsArray, nMaxima);
 
 			if (isLogging)
 				timingSplit("Calulated output mask");
@@ -2140,7 +2144,8 @@ public class FindFoci implements PlugIn, MouseListener
 	 * 
 	 * @return Object array containing: (1) int[] - image array; (2) byte[] - types array; (3) short[] - maxima array;
 	 *         (4)
-	 *         int[] - image histogram; (5) double[] - image statistics; (6) int[] - the original image.
+	 *         int[] - image histogram; (5) double[] - image statistics; (6) int[] - the original image; (7) ImagePlus -
+	 *         the original image
 	 */
 	public Object[] findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask, int backgroundMethod,
 			String autoThresholdMethod, int options)
@@ -2197,7 +2202,7 @@ public class FindFoci implements PlugIn, MouseListener
 			stats[STATS_BACKGROUND] = getThreshold(autoThresholdMethod, statsHistogram);
 		}
 
-		return new Object[] { image, types, maxima, histogram, stats, originalImage };
+		return new Object[] { image, types, maxima, histogram, stats, originalImage, originalImp };
 	}
 
 	/**
@@ -2219,6 +2224,7 @@ public class FindFoci implements PlugIn, MouseListener
 		int[] histogram = (int[]) initArray[3];
 		double[] stats = (double[]) initArray[4];
 		int[] originalImage = (int[]) initArray[5];
+		ImagePlus imp = (ImagePlus) initArray[6];
 
 		byte[] types2 = null;
 		short[] maxima2 = null;
@@ -2227,7 +2233,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if (clonedInitArray == null)
 		{
-			clonedInitArray = new Object[6];
+			clonedInitArray = new Object[7];
 			types2 = new byte[types.length];
 			maxima2 = new short[maxima.length];
 			histogram2 = new int[histogram.length];
@@ -2257,6 +2263,7 @@ public class FindFoci implements PlugIn, MouseListener
 		clonedInitArray[3] = histogram2;
 		clonedInitArray[4] = stats2;
 		clonedInitArray[5] = originalImage;
+		clonedInitArray[6] = imp;
 
 		return clonedInitArray;
 	}
@@ -2279,6 +2286,7 @@ public class FindFoci implements PlugIn, MouseListener
 		int[] histogram = (int[]) initArray[3];
 		double[] stats = (double[]) initArray[4];
 		int[] originalImage = (int[]) initArray[5];
+		ImagePlus imp = (ImagePlus) initArray[6];
 
 		byte[] types2 = null;
 		short[] maxima2 = null;
@@ -2287,7 +2295,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if (clonedInitArray == null)
 		{
-			clonedInitArray = new Object[6];
+			clonedInitArray = new Object[7];
 			types2 = new byte[types.length];
 			maxima2 = new short[maxima.length];
 			histogram2 = new int[histogram.length];
@@ -2314,6 +2322,7 @@ public class FindFoci implements PlugIn, MouseListener
 		clonedInitArray[3] = histogram2;
 		clonedInitArray[4] = stats2;
 		clonedInitArray[5] = originalImage;
+		clonedInitArray[6] = imp;
 
 		return clonedInitArray;
 	}
@@ -2756,8 +2765,9 @@ public class FindFoci implements PlugIn, MouseListener
 		ImagePlus outImp = null;
 		if ((outputType & CREATE_OUTPUT_MASK) != 0)
 		{
-			outImp = generateOutputMask(outputType, autoThresholdMethod, imageTitle, fractionParameter, image, types,
-					maxima, stats, resultsArray, nMaxima);
+			ImagePlus imp = (ImagePlus) initArray[6];
+			outImp = generateOutputMask(outputType, autoThresholdMethod, imp, fractionParameter, image, types, maxima,
+					stats, resultsArray, nMaxima);
 		}
 
 		renumberPeaks(resultsArray, originalNumberOfPeaks);
@@ -2767,7 +2777,7 @@ public class FindFoci implements PlugIn, MouseListener
 		return new Object[] { outImp, resultsArray, stats };
 	}
 
-	private ImagePlus generateOutputMask(int outputType, String autoThresholdMethod, String imageTitle,
+	private ImagePlus generateOutputMask(int outputType, String autoThresholdMethod, ImagePlus imp,
 			double fractionParameter, int[] image, byte[] types, short[] maxima, double[] stats,
 			ArrayList<int[]> resultsArray, int nMaxima)
 	{
@@ -2778,6 +2788,7 @@ public class FindFoci implements PlugIn, MouseListener
 		// - Repeat
 		// - Finish all cells with no neighbours using random colour asignment
 
+		String imageTitle = imp.getTitle();
 		// Rebuild the mask: all maxima have value 1, the remaining peak area are numbered sequentially starting
 		// with value 2.
 		// First create byte values to use in the mask for each maxima
@@ -2906,7 +2917,9 @@ public class FindFoci implements PlugIn, MouseListener
 			stack.addSlice(null, ip);
 		}
 
-		return new ImagePlus(imageTitle + " " + FRAME_TITLE, stack);
+		ImagePlus result = new ImagePlus(imageTitle + " " + FRAME_TITLE, stack);
+		result.setCalibration(imp.getCalibration());
+		return result;
 	}
 
 	private void calculateFractionOfIntensityDisplayValues(double fractionParameter, int[] image, short[] maxima,
@@ -6552,7 +6565,8 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if ((options & OPTION_OBJECT_ANALYSIS) != 0)
 		{
-			ImagePlus objectImp = doObjectAnalysis(mask, resultsArray, (options & OPTION_SHOW_OBJECT_MASK) != 0);
+			ImagePlus objectImp = doObjectAnalysis(mask, maximaImp, resultsArray,
+					(options & OPTION_SHOW_OBJECT_MASK) != 0);
 			if (objectImp != null)
 				IJ.saveAsTiff(objectImp, batchOutputDirectory + File.separator + expId + ".objects.tiff");
 		}
@@ -6667,11 +6681,14 @@ public class FindFoci implements PlugIn, MouseListener
 	 * a single object. For each maxima identify the object and original mask value for the maxima location.
 	 * 
 	 * @param mask
+	 *            The mask containing objects
+	 * @param maximaImp
 	 * @param resultsArray
 	 * @param createObjectMask
 	 * @return The mask image if created
 	 */
-	private ImagePlus doObjectAnalysis(ImagePlus mask, ArrayList<int[]> resultsArray, boolean createObjectMask)
+	private ImagePlus doObjectAnalysis(ImagePlus mask, ImagePlus maximaImp, ArrayList<int[]> resultsArray,
+			boolean createObjectMask)
 	{
 		if (resultsArray == null || resultsArray.isEmpty())
 			return null;
@@ -6730,7 +6747,10 @@ public class FindFoci implements PlugIn, MouseListener
 				System.arraycopy(objects, maxx_maxy * z, pixels, 0, maxx_maxy);
 				stack.setPixels(pixels, z + 1);
 			}
-			maskImp = showImage(stack, mask.getTitle() + " Objects", false);
+			// Create a new ImagePlus so that the stack and calibration can be set
+			ImagePlus imp = new ImagePlus("", stack);
+			imp.setCalibration(maximaImp.getCalibration());
+			maskImp = showImage(imp, mask.getTitle() + " Objects", false);
 		}
 
 		return maskImp;
