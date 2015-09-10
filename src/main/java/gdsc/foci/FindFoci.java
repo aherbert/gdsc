@@ -857,6 +857,7 @@ public class FindFoci implements PlugIn, MouseListener
 	private int dStart;
 	private boolean[] flatEdge;
 	private String resultsDirectory = null;
+	private Rectangle bounds = null;
 
 	// The following arrays are built for a 3D search through the following z-order: (0,-1,1)
 	// Each 2D plane is built for a search round a pixel in an anti-clockwise direction. 
@@ -3496,6 +3497,9 @@ public class FindFoci implements PlugIn, MouseListener
 			if (roi.getType() == Roi.RECTANGLE && roiBounds.width == maxx && roiBounds.height == maxy)
 				return 0;
 
+			// Store the bounds of the ROI for the edge object analysis
+			bounds = roiBounds;
+
 			ImageProcessor ipMask = null;
 			RoundRectangle2D rr = null;
 
@@ -5815,17 +5819,34 @@ public class FindFoci implements PlugIn, MouseListener
 		for (short i = 0; i < peakIdMap.length; i++)
 			peakIdMap[i] = i;
 
+		// Support the ROI bounds used to create the analysis region
+		final int lowerx, upperx, lowery, uppery;
+		if (bounds != null)
+		{
+			lowerx = bounds.x;
+			lowery = bounds.y;
+			upperx = bounds.x + bounds.width;
+			uppery = bounds.y + bounds.height;
+		}
+		else
+		{
+			lowerx = 0;
+			upperx = maxx;
+			lowery = 0;
+			uppery = maxy;
+		}
+
 		// Set the look-up to zero if the peak contains edge pixels
 		for (int z = maxz; z-- > 0;)
 		{
 			// Look at top and bottom column
-			for (int y = maxy, i = getIndex(0, 0, z), ii = getIndex(maxx - 1, 0, z); y-- > 0; i += maxx, ii += maxx)
+			for (int y = uppery, i = getIndex(lowerx, lowery, z), ii = getIndex(upperx - 1, lowery, z); y-- > lowery; i += maxx, ii += maxx)
 			{
 				peakIdMap[maxima[i]] = 0;
 				peakIdMap[maxima[ii]] = 0;
 			}
 			// Look at top and bottom row
-			for (int x = maxx, i = getIndex(0, 0, z), ii = getIndex(0, maxy - 1, z); x-- > 0; i++, ii++)
+			for (int x = upperx, i = getIndex(lowerx, lowery, z), ii = getIndex(lowerx, uppery - 1, z); x-- > lowerx; i++, ii++)
 			{
 				peakIdMap[maxima[i]] = 0;
 				peakIdMap[maxima[ii]] = 0;
