@@ -8,7 +8,6 @@ import ij.process.*;
 import ij.measure.*;
 import ij.text.*;
 import ij.plugin.filter.Analyzer;
-import ij.plugin.frame.Recorder;
 import ij.plugin.frame.RoiManager;
 import ij.plugin.Colors;
 import ij.macro.Interpreter;
@@ -27,6 +26,7 @@ import ij.util.Tools;
 				continue the scan
 	</pre>
 */
+@SuppressWarnings("unused")
 public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
 
 	/** Display results in the ImageJ console. */
