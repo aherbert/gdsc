@@ -51,10 +51,12 @@ import java.util.Arrays;
 public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 {
 	private static String redirectTitle = "";
+	private ImagePlus restoreRedirectImp;
 
 	private boolean useGetPixelValue;
 	private float[] image;
 	private float value;
+	private boolean noThreshold = false;
 	private double dmin, dmax;
 
 	// Methods to allow the Analyzer class package level fields to be set.
@@ -115,20 +117,24 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 
 	public int setup(String arg, ImagePlus imp)
 	{
-		int flags = 0;
+		int flags = FINAL_PROCESSING;
 		if (imp != null)
 		{
 			if ("final".equals(arg))
 			{
-				imp.getProcessor().resetThreshold();
-				imp.setDisplayRange(dmin, dmax);
-				imp.updateAndDraw();
+				if (noThreshold)
+				{
+					imp.getProcessor().resetThreshold();
+					imp.setDisplayRange(dmin, dmax);
+					imp.updateAndDraw();
+				}
+				Analyzer.setRedirectImage(restoreRedirectImp);
 				return DONE;
 			}
 			dmin = imp.getDisplayRangeMin();
 			dmax = imp.getDisplayRangeMax();
 
-			boolean noThreshold = isNoThreshold(imp);
+			noThreshold = isNoThreshold(imp);
 
 			// The plugin will be run on a thresholded/mask image to define particles.
 			// Choose the redirect image to sample the pixels from.
@@ -157,6 +163,24 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 				return DONE;
 			int index = gd.getNextChoiceIndex();
 			redirectTitle = list[index];
+			if (Analyzer.isRedirectImage())
+			{
+				// Get the current redirect image using reflection since we just want to restore it
+				// and do not want errors from image size mismatch in Analyzer.getRedirectImage(imp); 
+				try
+				{
+					Field field = Analyzer.class.getDeclaredField("redirectTarget");
+					field.setAccessible(true);
+					int redirectTarget = (Integer) field.get(Analyzer.class);
+					restoreRedirectImp = WindowManager.getImage(redirectTarget);
+					//if (restoreRedirectImp != null)
+					//	System.out.println("Redirect image = " + restoreRedirectImp.getTitle());
+				}
+				catch (Throwable e)
+				{
+					// Reflection has failed
+				}
+			}
 			ImagePlus redirectImp = (index > 0) ? WindowManager.getImage(redirectTitle) : null;
 			Analyzer.setRedirectImage(redirectImp);
 
@@ -165,7 +189,6 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 
 			if (noThreshold)
 			{
-				flags = FINAL_PROCESSING;
 				cache(imp.getProcessor());
 				float min = Float.POSITIVE_INFINITY;
 				float max = Float.NEGATIVE_INFINITY;
