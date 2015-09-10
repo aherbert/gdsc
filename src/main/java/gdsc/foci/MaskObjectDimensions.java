@@ -618,8 +618,8 @@ public class MaskObjectDimensions implements PlugInFilter
 				sb.append("\tv").append(i).append(" uy");
 				sb.append("\tv").append(i).append(" uz");
 			}
-			sb.append("\tv").append(i).append(" d");
-			sb.append("\tv").append(i).append(" len");
+			sb.append("\tv").append(i).append(" len (px)");
+			sb.append("\tv").append(i).append(" len (units)");
 		}
 		return sb.toString();
 	}
