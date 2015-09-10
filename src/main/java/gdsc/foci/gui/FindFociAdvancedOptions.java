@@ -251,6 +251,7 @@ public class FindFociAdvancedOptions extends JDialog
 			}
 			{
 				chckbxShowMaskMaxima = new JCheckBox("Show mask maxima as dots");
+				chckbxShowMaskMaxima.setToolTipText("Mark maxima locations in the mask using a value above all other mask values");
 				chckbxShowMaskMaxima.addItemListener(new ItemListener()
 				{
 					public void itemStateChanged(ItemEvent e)
@@ -384,6 +385,7 @@ public class FindFociAdvancedOptions extends JDialog
 		}
 		{
 			chckbxRemoveEdgeMaxima = new JCheckBox("Remove edge maxima");
+			chckbxRemoveEdgeMaxima.setToolTipText("Remove maxima touching the edge of the analysis region");
 			chckbxRemoveEdgeMaxima.addItemListener(new ItemListener()
 			{
 				public void itemStateChanged(ItemEvent e)
