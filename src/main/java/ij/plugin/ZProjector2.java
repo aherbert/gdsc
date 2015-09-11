@@ -43,8 +43,7 @@ public class ZProjector2 extends ZProjectorCopy
 					int index = projImage.getStackIndex(c, 1, 1);
 					projImage.setSliceWithoutUpdate(index);
 					ip = projImage.getProcessor();
-					ImageStatistics stats = ImageStatistics.getStatistics(ip,
-							ImageStatistics.MIN_MAX, null);
+					ImageStatistics stats = ImageStatistics.getStatistics(ip, ImageStatistics.MIN_MAX, null);
 					ip.setMinAndMax(stats.min, stats.max);
 				}
 				projImage.setSliceWithoutUpdate(projImage.getStackIndex(1, 1, 1));
@@ -130,8 +129,18 @@ public class ZProjector2 extends ZProjectorCopy
 		IJ.showStatus("Calculating " + name + "...");
 		ImageStack stack = imp.getStack();
 		// Check not an RGB stack
-		if (invalidStack(stack))
+		int ptype;
+		if (stack.getProcessor(1) instanceof ByteProcessor)
+			ptype = BYTE_TYPE;
+		else if (stack.getProcessor(1) instanceof ShortProcessor)
+			ptype = SHORT_TYPE;
+		else if (stack.getProcessor(1) instanceof FloatProcessor)
+			ptype = FLOAT_TYPE;
+		else
+		{
+			IJ.error("Z Project", "Non-RGB stack required");
 			return null;
+		}
 		ImageProcessor[] slices = new ImageProcessor[sliceCount];
 		int index = 0;
 		for (int slice = startSlice; slice <= stopSlice; slice += increment)
@@ -155,28 +164,9 @@ public class ZProjector2 extends ZProjectorCopy
 				ip2.setf(k, p.value(values));
 			}
 		}
-		if (imp.getBitDepth() == 8)
-			ip2 = ip2.convertToByte(false);
+		ImagePlus projImage = makeOutputImage(imp, (FloatProcessor) ip2, ptype);
 		IJ.showProgress(1, 1);
-		return new ImagePlus(makeTitle(), ip2);
-	}
-
-	/**
-	 * Check the stack is OK to use with getf(), i.e. not a color processor
-	 * 
-	 * @param stack
-	 * @return True if not valid
-	 */
-	private boolean invalidStack(ImageStack stack)
-	{
-		ImageProcessor ip = stack.getProcessor(1);
-		if (ip == null ||
-				!(ip instanceof ByteProcessor || ip instanceof ShortProcessor || ip instanceof FloatProcessor))
-		{
-			IJ.error("Z Project", "Non-RGB stack required");
-			return true;
-		}
-		return false;
+		return projImage;
 	}
 
 	/*
@@ -216,7 +206,8 @@ public class ZProjector2 extends ZProjectorCopy
 	 * @param a
 	 *            Array
 	 * @param ignoreBelowZero
-	 *            Ignore all values less than or equal to zero
+	 *            Ignore all values less than or equal to zero. If no values are above zero the return is zero (not
+	 *            NaN).
 	 * @return The mode
 	 */
 	public static float mode(float[] a, boolean ignoreBelowZero)
@@ -234,7 +225,8 @@ public class ZProjector2 extends ZProjectorCopy
 	 * @param a
 	 *            Array
 	 * @param ignoreBelowZero
-	 *            Ignore all values less than or equal to zero
+	 *            Ignore all values less than or equal to zero. If no values are above zero the return is zero (not
+	 *            NaN).
 	 * @return The mode
 	 */
 	private static float getMode(float[] a, boolean ignoreBelowZero)
@@ -272,7 +264,7 @@ public class ZProjector2 extends ZProjectorCopy
 			while (i < length && a[i] <= 0)
 				i++;
 			if (length == i)
-				return Float.NaN;
+				return 0; //Float.NaN;
 		}
 
 		int currentCount = 1;

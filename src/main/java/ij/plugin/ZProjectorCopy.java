@@ -20,9 +20,9 @@ public class ZProjectorCopy implements PlugIn {
     private static final String METHOD_KEY = "zproject.method";
     protected int method = (int)Prefs.get(METHOD_KEY, AVG_METHOD);
 
-    private static final int BYTE_TYPE  = 0; 
-    private static final int SHORT_TYPE = 1; 
-    private static final int FLOAT_TYPE = 2;
+    protected static final int BYTE_TYPE  = 0; 
+    protected static final int SHORT_TYPE = 1; 
+    protected static final int FLOAT_TYPE = 2;
     
     public static final String lutMessage =
     	"Stacks with inverter LUTs may not project correctly.\n"
@@ -337,7 +337,7 @@ public class ZProjectorCopy implements PlugIn {
 	}
 
     /** Generate output image whose type is same as input image. */
-    private ImagePlus makeOutputImage(ImagePlus imp, FloatProcessor fp, int ptype) {
+    protected ImagePlus makeOutputImage(ImagePlus imp, FloatProcessor fp, int ptype) {
 		int width = imp.getWidth(); 
 		int height = imp.getHeight(); 
 		float[] pixels = (float[])fp.getPixels(); 
