@@ -403,7 +403,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			double n = nPixels[r];
 
 			// Get the data to be summarised
-			double[] data = new double[toProcess.length + 1];
+			double[] data = new double[toProcess.length + 2];
 
 			// AREA => sum this 
 			if (values[0] != null)
@@ -430,6 +430,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 				data[7] = values[7][r];
 
 			data[8] = n;
+			data[9] = 1;
 
 			// Find the record for the summary
 			if (map.containsKey(particle))
@@ -453,6 +454,8 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 				record[7] += data[7];
 				// nPixels
 				record[8] += data[8];
+				// nParticles
+				record[9] += data[9];
 			}
 			else
 			{
@@ -500,6 +503,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 
 			summary.addValue("Particle Value", particle.doubleValue());
 			summary.addValue("Pixels", data[8]);
+			summary.addValue("Particles", data[9]);
 		}
 
 		String windowTitle = "Particle Summary";
