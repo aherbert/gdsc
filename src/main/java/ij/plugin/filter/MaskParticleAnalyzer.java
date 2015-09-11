@@ -4,20 +4,26 @@ import gdsc.utils.ImageJHelper;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Macro;
+import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.Roi;
 import ij.macro.Interpreter;
+import ij.measure.ResultsTable;
 import ij.plugin.frame.RoiManager;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
+import ij.text.TextPanel;
+import ij.text.TextWindow;
 
 import java.awt.Frame;
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -51,6 +57,7 @@ import java.util.Arrays;
 public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 {
 	private static String redirectTitle = "";
+	private static boolean particleSummary = false;
 	private ImagePlus restoreRedirectImp;
 
 	private boolean useGetPixelValue;
@@ -129,6 +136,8 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 					imp.updateAndDraw();
 				}
 				Analyzer.setRedirectImage(restoreRedirectImp);
+				if (particleSummary)
+					createSummary();
 				return DONE;
 			}
 			dmin = imp.getDisplayRangeMin();
@@ -155,6 +164,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			GenericDialog gd = new GenericDialog("Mask Particle Analyzer...");
 			gd.addMessage("Analyses objects in an image.\n \nObjects are defined with contiguous pixels of the same value.\nIgnore pixels outside any configured thresholds.");
 			gd.addChoice("Redirect_image", list, redirectTitle);
+			gd.addCheckbox("Particle_summary", particleSummary);
 			if (noThreshold)
 				gd.addMessage("Warning: The image is not thresholded / 8-bit binary mask.\nContinuing will use the min/max values in the image which\nmay produce many objects.");
 			gd.addHelp(gdsc.help.URL.FIND_FOCI);
@@ -163,6 +173,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 				return DONE;
 			int index = gd.getNextChoiceIndex();
 			redirectTitle = list[index];
+			particleSummary = gd.getNextBoolean();
 			if (Analyzer.isRedirectImage())
 			{
 				// Get the current redirect image using reflection since we just want to restore it
@@ -347,5 +358,200 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 
 		if (showResultsWindow && showResults)
 			rt.addResults();
+	}
+
+	private void createSummary()
+	{
+		int nRows = rt.getCounter();
+		String label = (nRows > 0) ? rt.getLabel(0) : null;
+
+		// The second last column is the particle value
+		// The last column is the number of pixels
+		double[] particles = rt.getColumnAsDoubles(rt.getLastColumn() - 1);
+		double[] nPixels = rt.getColumnAsDoubles(rt.getLastColumn());
+
+		// Summarise only certain columns:
+		int[] toProcess = new int[] { ResultsTable.AREA, ResultsTable.MEAN, ResultsTable.MIN, ResultsTable.MAX,
+				ResultsTable.X_CENTER_OF_MASS, ResultsTable.Y_CENTER_OF_MASS, ResultsTable.INTEGRATED_DENSITY,
+				ResultsTable.RAW_INTEGRATED_DENSITY };
+		int next = 0;
+
+		double[][] values = new double[toProcess.length][];
+
+		for (int i = 0; i < rt.getLastColumn(); i++)
+		{
+			if (toProcess[next] != i)
+				continue;
+
+			if (rt.columnExists(i))
+			{
+				values[next] = rt.getColumnAsDoubles(i);
+			}
+
+			if (++next == toProcess.length)
+				break;
+		}
+
+		// Map all particles to a single result
+		HashMap<Double, double[]> map = new HashMap<Double, double[]>();
+		LinkedList<Double> order = new LinkedList<Double>();
+
+		// Now summarise
+		for (int r = 0; r < nRows; r++)
+		{
+			double particle = particles[r];
+			double n = nPixels[r];
+
+			// Get the data to be summarised
+			double[] data = new double[toProcess.length + 1];
+
+			// AREA => sum this 
+			if (values[0] != null)
+				data[0] = values[0][r];
+			// MEAN => multiply by nPixels and sum, divide at end by nPixels
+			if (values[1] != null)
+				data[1] = values[1][r] * n;
+			// MIN => Find min
+			if (values[2] != null)
+				data[2] = values[2][r];
+			// MAX => Find max
+			if (values[3] != null)
+				data[3] = values[3][r];
+			// X_CENTER_OF_MASS => multiply by nPixels and sum 
+			if (values[4] != null)
+				data[4] = values[4][r] * n;
+			// Y_CENTER_OF_MASS => multiply by nPixels and sum, divide at end by nPixels
+			if (values[5] != null)
+				data[5] = values[5][r] * n;
+			// INTEGRATED_DENSITY == area*mean => Just compute at end
+
+			// RAW_INTEGRATED_DENSITY == sum of pixels => sum
+			if (values[7] != null)
+				data[7] = values[7][r];
+
+			data[8] = n;
+
+			// Find the record for the summary
+			if (map.containsKey(particle))
+			{
+				double[] record = map.get(particle);
+				// AREA => sum this 
+				record[0] += data[0];
+				// MEAN => multiply by nPixels and sum, divide at end by nPixels
+				record[1] += data[1];
+				// MIN => Find min
+				record[2] = Math.min(data[2], record[2]);
+				// MAX => Find max
+				record[3] = Math.max(data[3], record[3]);
+				// X_CENTER_OF_MASS => multiply by nPixels and sum, divide at end by nPixels
+				record[4] += data[4];
+				// Y_CENTER_OF_MASS => multiply by nPixels and sum, divide at end by nPixels
+				record[5] += data[5];
+				// INTEGRATED_DENSITY == area*mean => Just compute at end
+
+				// RAW_INTEGRATED_DENSITY == sum of pixels => sum
+				record[7] += data[7];
+				// nPixels
+				record[8] += data[8];
+			}
+			else
+			{
+				map.put(particle, data);
+				order.add(particle);
+			}
+		}
+
+		// Produce summary
+		ResultsTable summary = new ResultsTable();
+		if (summary.getColumnHeading(ResultsTable.LAST_HEADING) == null)
+			summary.setDefaultHeadings();
+		for (Double particle : order)
+		{
+			summary.incrementCounter();
+			if (label != null)
+				summary.addLabel(label);
+
+			double[] data = map.get(particle);
+			double n = data[8];
+			// AREA => sum this 
+			if (values[0] != null)
+				summary.addValue(ResultsTable.AREA, data[0]);
+			// MEAN => multiply by nPixels and sum, divide at end by nPixels
+			if (values[1] != null)
+				summary.addValue(ResultsTable.MEAN, data[1] /= n);
+			// MIN => Find min
+			if (values[2] != null)
+				summary.addValue(ResultsTable.MIN, data[2]);
+			// MAX => Find max
+			if (values[3] != null)
+				summary.addValue(ResultsTable.MAX, data[3]);
+			// X_CENTER_OF_MASS => multiply by nPixels and sum, divide at end by nPixels 
+			if (values[4] != null)
+				summary.addValue(ResultsTable.X_CENTER_OF_MASS, data[4] / n);
+			// Y_CENTER_OF_MASS => multiply by nPixels and sum, divide at end by nPixels
+			if (values[5] != null)
+				summary.addValue(ResultsTable.Y_CENTER_OF_MASS, data[5] / n);
+			// INTEGRATED_DENSITY == area*mean => Just compute at end
+			if (values[6] != null) // Assumes that data[0] and data[1] were also present
+				summary.addValue(ResultsTable.INTEGRATED_DENSITY, data[0] * data[1]);
+			// RAW_INTEGRATED_DENSITY == sum of pixels => sum
+			if (values[7] != null)
+				summary.addValue(ResultsTable.RAW_INTEGRATED_DENSITY, data[7]);
+
+			summary.addValue("Particle Value", particle.doubleValue());
+			summary.addValue("Pixels", data[8]);
+		}
+
+		String windowTitle = "Particle Summary";
+
+		// This method does not work on my JRE as closing a results window throws an exception
+		// leaving the frame still in memory but not visible
+		//summary.show(windowTitle);
+
+		TextWindow win = null;
+		String tableHeadings = summary.getColumnHeadings();
+		boolean newWindow = false;
+
+		// This method does not check the frame is visible
+		//Frame frame = WindowManager.getFrame(windowTitle);
+		
+		// Find the results table if visible
+		for (Frame frame : WindowManager.getNonImageWindows())
+		{
+			if (frame != null && frame instanceof TextWindow && frame.isVisible())
+			{
+				if (windowTitle.equals(frame.getTitle()))
+				{
+					win = (TextWindow) frame;
+					break;
+				}
+			}
+		}
+		if (win == null)
+		{
+			// Create a new window matching the size of the "Results" table
+			int w = (int) Prefs.get(TextWindow.WIDTH_KEY, 800);
+			int h = (int) Prefs.get(TextWindow.HEIGHT_KEY, 250);
+			win = new TextWindow(windowTitle, tableHeadings, "", w, h);
+			newWindow = true;
+		}
+		TextPanel tp = win.getTextPanel();
+		if (!newWindow)
+			// Setting columns headings forces the table to be reset
+			tp.setColumnHeadings(tableHeadings);
+		tp.setResultsTable(summary);
+		int n = summary.getCounter();
+		if (n > 0)
+		{
+			if (tp.getLineCount() > 0)
+				tp.clear();
+			StringBuilder sb = new StringBuilder(n * tableHeadings.length());
+			for (int i = 0; i < n; i++)
+				sb.append(summary.getRowAsString(i)).append("\n");
+			// Adding all the data in one go does not auto-adjust column width
+			tp.append(sb.toString());
+		}
+		// Forces auto column width calculation
+		tp.scrollToTop();
 	}
 }
