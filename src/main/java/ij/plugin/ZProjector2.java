@@ -1,7 +1,5 @@
 package ij.plugin;
 
-import java.util.Arrays;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -12,6 +10,8 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
+
+import java.util.Arrays;
 
 /**
  * Extend the ZProjector to support mode intensity projection.
@@ -65,6 +65,7 @@ public class ZProjector2 extends ZProjectorCopy
 		gd.addChoice("Projection type", METHODS, METHODS[method]);
 		if (isHyperstack && imp.getNFrames() > 1 && imp.getNSlices() > 1)
 			gd.addCheckbox("All time frames", allTimeFrames);
+		gd.addHelp(gdsc.help.URL.UTILITY);
 		return gd;
 	}
 
