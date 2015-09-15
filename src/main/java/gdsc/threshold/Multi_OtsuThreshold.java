@@ -336,8 +336,17 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	public float[][] buildLookupTables(float[] h, float[][] P, float[][] S)
 	{
 		int NGRAY = h.length;
-		P = initialise(P, NGRAY);
-		S = initialise(S, NGRAY);
+		// Error if not enough memory
+		try
+		{
+    		P = initialise(P, NGRAY);
+    		S = initialise(S, NGRAY);
+		}
+		catch (OutOfMemoryError e)
+		{
+			IJ.log(TITLE + ": Out-of-memory - Try again with a smaller histogram (e.g. 8-bit image)");
+			throw e;
+		}
 
 		// diagonal 
 		for (int i = 0; i < NGRAY; ++i)
