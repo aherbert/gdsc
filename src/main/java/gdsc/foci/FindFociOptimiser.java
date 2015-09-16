@@ -844,7 +844,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		int outputType = FindFoci.OUTPUT_RESULTS_TABLE | FindFoci.OUTPUT_ROI_SELECTION |
 				FindFoci.OUTPUT_MASK_ROI_SELECTION | FindFoci.OUTPUT_LOG_MESSAGES;
 
-		FindFoci.saveParameters(resultFile + ".params", null, null, bestOptions.backgroundMethod,
+		// TODO - Add support for saving the channel, slice & frame 
+		FindFoci.saveParameters(resultFile + ".params", null, null, null, null, bestOptions.backgroundMethod,
 				bestOptions.backgroundParameter, bestOptions.autoThresholdMethod, bestOptions.searchMethod,
 				bestOptions.searchParameter, bestOptions.maxPeaks, bestOptions.minSize, bestOptions.peakMethod,
 				bestOptions.peakParameter, outputType, bestOptions.sortIndex, bestOptions.options, bestOptions.blur,

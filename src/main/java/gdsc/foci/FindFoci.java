@@ -113,6 +113,13 @@ public class FindFoci implements PlugIn, MouseListener
 		int outputType;
 		int options;
 
+		static final int C = 0;
+		static final int Z = 1;
+		static final int T = 2;
+		int[] image = new int[3];
+		int[] mask = new int[3];
+		boolean originalTitle;
+
 		public BatchParameters(String filename) throws Exception
 		{
 			readParameters(filename);
@@ -144,6 +151,14 @@ public class FindFoci implements PlugIn, MouseListener
 			objectAnalysis = findBoolean("Object_analysis");
 			showObjectMask = findBoolean("Show_object_mask");
 			saveToMemory = findBoolean("Save_to_memory");
+
+			image[C] = findInteger("Image_C", 1);
+			image[Z] = findInteger("Image_Z", 0);
+			image[T] = findInteger("Image_T", 1);
+			mask[C] = findInteger("Mask_C", 1);
+			mask[Z] = findInteger("Mask_Z", 0);
+			mask[T] = findInteger("Mask_T", 1);
+			originalTitle = findBoolean("Original_Title");
 
 			outputType = getOutputMaskFlags(showMask);
 
@@ -242,14 +257,48 @@ public class FindFoci implements PlugIn, MouseListener
 			return value;
 		}
 
+		private String findString(String key, String defaultValue)
+		{
+			String value;
+			key = key.toLowerCase();
+			if (parameterOptions != null)
+				value = Macro.getValue(parameterOptions, key, "");
+			else
+			{
+				value = map.get(key);
+			}
+			if (value == null || value.length() == 0)
+				return defaultValue;
+			return value;
+		}
+
 		private double findDouble(String key)
 		{
 			return Double.parseDouble(findString(key));
 		}
 
+		@SuppressWarnings("unused")
+		private double findDouble(String key, double defaultValue)
+		{
+			String value = findString(key, null);
+			if (value == null)
+				return defaultValue;
+			// Still error if the key value is not a double
+			return Double.parseDouble(value);
+		}
+
 		private int findInteger(String key)
 		{
 			return Integer.parseInt(findString(key));
+		}
+
+		private int findInteger(String key, int defaultValue)
+		{
+			String value = findString(key, null);
+			if (value == null)
+				return defaultValue;
+			// Still error if the key value is not an int
+			return Integer.parseInt(value);
 		}
 
 		private boolean findBoolean(String key)
@@ -1409,12 +1458,25 @@ public class FindFoci implements PlugIn, MouseListener
 			int options, double blur, int centreMethod, double centreParameter, double fractionParameter,
 			ArrayList<int[]> resultsArray, double[] stats, String resultsDirectory)
 	{
+		return saveResults(expId, imp, null, mask, null, backgroundMethod, backgroundParameter, autoThresholdMethod,
+				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
+				options, blur, centreMethod, centreParameter, fractionParameter, resultsArray, stats, resultsDirectory);
+	}
+
+	private String saveResults(String expId, ImagePlus imp, int[] imageDimension, ImagePlus mask, int[] maskDimension,
+			int backgroundMethod, double backgroundParameter, String autoThresholdMethod, int searchMethod,
+			double searchParameter, int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType,
+			int sortIndex, int options, double blur, int centreMethod, double centreParameter,
+			double fractionParameter, ArrayList<int[]> resultsArray, double[] stats, String resultsDirectory)
+	{
 		try
 		{
 			// Save results to file
 			FileOutputStream fos = new FileOutputStream(resultsDirectory + File.separatorChar + expId + ".xls");
 			OutputStreamWriter out = new OutputStreamWriter(fos, "UTF-8");
-			out.write(createResultsHeader(imp, stats));
+			if (imageDimension == null)
+				imageDimension = new int[] { imp.getC(), 0, imp.getT() };
+			out.write(createResultsHeader(imp, imageDimension, stats));
 			int[] xpoints = new int[resultsArray.size()];
 			int[] ypoints = new int[resultsArray.size()];
 			for (int i = 0; i < resultsArray.size(); i++)
@@ -1432,10 +1494,12 @@ public class FindFoci implements PlugIn, MouseListener
 			roiEncoder.write(new PointRoi(xpoints, ypoints, resultsArray.size()));
 
 			// Save parameters to file
-			saveParameters(resultsDirectory + File.separatorChar + expId + ".params", imp, mask, backgroundMethod,
-					backgroundParameter, autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize,
-					peakMethod, peakParameter, outputType, sortIndex, options, blur, centreMethod, centreParameter,
-					fractionParameter, resultsDirectory);
+			if (mask != null && maskDimension == null)
+				maskDimension = new int[] { mask.getC(), 0, mask.getT() };
+			saveParameters(resultsDirectory + File.separatorChar + expId + ".params", imp, imageDimension, mask,
+					maskDimension, backgroundMethod, backgroundParameter, autoThresholdMethod, searchMethod,
+					searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex, options,
+					blur, centreMethod, centreParameter, fractionParameter, resultsDirectory);
 			return expId;
 		}
 		catch (Exception e)
@@ -1448,13 +1512,13 @@ public class FindFoci implements PlugIn, MouseListener
 	/**
 	 * Save the FindFoci parameters to file
 	 * 
-	 * @return True if the parmaeters were saved
+	 * @return True if the parameters were saved
 	 */
-	static boolean saveParameters(String filename, ImagePlus imp, ImagePlus mask, int backgroundMethod,
-			double backgroundParameter, String autoThresholdMethod, int searchMethod, double searchParameter,
-			int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex,
-			int options, double blur, int centreMethod, double centreParameter, double fractionParameter,
-			String resultsDirectory)
+	static boolean saveParameters(String filename, ImagePlus imp, int[] imageDimension, ImagePlus mask, int[] maskDimension,
+			int backgroundMethod, double backgroundParameter, String autoThresholdMethod, int searchMethod,
+			double searchParameter, int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType,
+			int sortIndex, int options, double blur, int centreMethod, double centreParameter,
+			double fractionParameter, String resultsDirectory)
 	{
 		try
 		{
@@ -1466,6 +1530,9 @@ public class FindFoci implements PlugIn, MouseListener
 				writeParam(out, "Image", imp.getTitle());
 				if (imp.getOriginalFileInfo() != null)
 					writeParam(out, "File", imp.getOriginalFileInfo().directory + imp.getOriginalFileInfo().fileName);
+				writeParam(out, "Image_C", Integer.toString(imageDimension[BatchParameters.C]));
+				writeParam(out, "Image_Z", Integer.toString(imageDimension[BatchParameters.Z]));
+				writeParam(out, "Image_T", Integer.toString(imageDimension[BatchParameters.T]));
 			}
 			if (mask != null)
 			{
@@ -1473,6 +1540,9 @@ public class FindFoci implements PlugIn, MouseListener
 				if (mask.getOriginalFileInfo() != null)
 					writeParam(out, "Mask File", mask.getOriginalFileInfo().directory +
 							mask.getOriginalFileInfo().fileName);
+				writeParam(out, "Mask_C", Integer.toString(maskDimension[BatchParameters.C]));
+				writeParam(out, "Mask_Z", Integer.toString(maskDimension[BatchParameters.Z]));
+				writeParam(out, "Mask_T", Integer.toString(maskDimension[BatchParameters.T]));
 			}
 			writeParam(out, "Background_method", backgroundMethods[backgroundMethod]);
 			writeParam(out, "Background_parameter", Double.toString(backgroundParameter));
@@ -3347,10 +3417,10 @@ public class FindFoci implements PlugIn, MouseListener
 
 	private String createResultsHeader()
 	{
-		return createResultsHeader(null, null);
+		return createResultsHeader(null, null, null);
 	}
 
-	private String createResultsHeader(ImagePlus imp, double[] stats)
+	private String createResultsHeader(ImagePlus imp, int[] dimension, double[] stats)
 	{
 		StringBuilder sb = new StringBuilder();
 		if (imp != null)
@@ -3361,6 +3431,12 @@ public class FindFoci implements PlugIn, MouseListener
 				sb.append("# File\t").append(imp.getOriginalFileInfo().directory)
 						.append(imp.getOriginalFileInfo().fileName).append(newLine);
 			}
+			if (dimension == null)
+				dimension = new int[] { imp.getC(), 0, imp.getT() };
+			sb.append("# C\t").append(dimension[0]).append(newLine);
+			if (dimension[1] != 0)
+				sb.append("# Z\t").append(dimension[1]).append(newLine);
+			sb.append("# T\t").append(dimension[2]).append(newLine);
 		}
 		if (stats != null)
 		{
@@ -6480,12 +6556,14 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 		ImagePlus maskImp = openImage(mask[0], mask[1]);
 
+		// Check if there are CZT options for the image/mask
+		int[] imageDimension = parameters.image.clone();
+		int[] maskDimension = parameters.mask.clone();
+		imp = setupImage(imp, imageDimension);
+		maskImp = setupImage(maskImp, maskDimension);
+
 		// Run the algorithm
-		return execBatch(imp, maskImp, parameters.backgroundMethod, parameters.backgroundParameter,
-				parameters.autoThresholdMethod, parameters.searchMethod, parameters.searchParameter,
-				parameters.maxPeaks, parameters.minSize, parameters.peakMethod, parameters.peakParameter,
-				parameters.outputType, parameters.sortIndex, parameters.options, parameters.blur,
-				parameters.centreMethod, parameters.centreParameter, parameters.fractionParameter);
+		return execBatch(imp, maskImp, parameters, imageDimension, maskDimension);
 	}
 
 	/**
@@ -6524,7 +6602,33 @@ public class FindFoci implements PlugIn, MouseListener
 			return null;
 		Opener opener = new Opener();
 		opener.setSilentMode(true);
+		// TODO - Add suport for loading custom channel, slice and frame using a filename suffix, e.g. [cCzZtT]
+		// If the suffix exists, remove it, load the image then extract the specified slices.
 		return opener.openImage(directory, filename);
+	}
+
+	private ImagePlus setupImage(ImagePlus imp, int[] dimension)
+	{
+		// For channel and frame we can just update the position
+		if (dimension[BatchParameters.C] > 1 && dimension[BatchParameters.C] <= imp.getNChannels())
+			imp.setC(dimension[BatchParameters.C]);
+		dimension[BatchParameters.C] = imp.getC();
+		if (dimension[BatchParameters.T] > 1 && dimension[BatchParameters.T] <= imp.getNFrames())
+			imp.setT(dimension[BatchParameters.T]);
+		dimension[BatchParameters.T] = imp.getT();
+		// For z we extract the slice since the algorithm processes the stack from the current channel & frame
+		int z = 0;
+		if (imp.getNSlices() != 1 && dimension[BatchParameters.Z] > 0 &&
+				dimension[BatchParameters.Z] <= imp.getNSlices())
+		{
+			imp.setZ(dimension[BatchParameters.Z]);
+			ImageProcessor ip = imp.getProcessor();
+			String title = imp.getTitle();
+			imp = new ImagePlus(title, ip);
+			z = dimension[BatchParameters.Z];
+		}
+		dimension[BatchParameters.Z] = z;
+		return imp;
 	}
 
 	/**
@@ -6532,43 +6636,32 @@ public class FindFoci implements PlugIn, MouseListener
 	 * 
 	 * @param imp
 	 * @param mask
-	 * @param backgroundMethod
-	 * @param backgroundParameter
-	 * @param autoThresholdMethod
-	 * @param searchMethod
-	 * @param searchParameter
-	 * @param maxPeaks
-	 * @param minSize
-	 * @param peakMethod
-	 * @param peakParameter
-	 * @param outputType
-	 * @param sortIndex
-	 * @param options
-	 * @param blur
-	 * @param centreMethod
-	 * @param centreParameter
-	 * @param fractionParameter
+	 * @param p
+	 * @param imageDimension
+	 * @param maskDimension
+	 * @return
 	 */
-	private boolean execBatch(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
-			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
-			int peakMethod, double peakParameter, int outputType, int sortIndex, int options, double blur,
-			int centreMethod, double centreParameter, double fractionParameter)
+	private boolean execBatch(ImagePlus imp, ImagePlus mask, BatchParameters p, int[] imageDimension,
+			int[] maskDimension)
 	{
 		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
 		{
 			IJ.error(FRAME_TITLE, "Only 8-bit and 16-bit images are supported");
 			return false;
 		}
-		if ((centreMethod == CENTRE_GAUSSIAN_ORIGINAL || centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
+		if ((p.centreMethod == CENTRE_GAUSSIAN_ORIGINAL || p.centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
 				isGaussianFitEnabled < 1)
 		{
 			IJ.error(FRAME_TITLE, "Gaussian fit is not currently enabled");
 			return false;
 		}
 
-		Object[] results = findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
-				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
-				options, blur, centreMethod, centreParameter, fractionParameter);
+		final int options = p.options;
+		final int outputType = p.outputType;
+
+		Object[] results = findMaxima(imp, mask, p.backgroundMethod, p.backgroundParameter, p.autoThresholdMethod,
+				p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod, p.peakParameter, outputType,
+				p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter, p.fractionParameter);
 
 		if (results == null)
 		{
@@ -6582,7 +6675,17 @@ public class FindFoci implements PlugIn, MouseListener
 		ArrayList<int[]> resultsArray = (ArrayList<int[]>) results[1];
 		double[] stats = (double[]) results[2];
 
-		String expId = imp.getShortTitle();
+		String expId;
+		if (p.originalTitle)
+		{
+			expId = imp.getShortTitle();
+		}
+		else
+		{
+			expId = imp.getShortTitle() +
+					String.format("_c%dz%dt%d", imageDimension[BatchParameters.C], imageDimension[BatchParameters.Z],
+							imageDimension[BatchParameters.T]);
+		}
 
 		if ((options & OPTION_OBJECT_ANALYSIS) != 0)
 		{
@@ -6594,25 +6697,37 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if ((options & OPTION_SAVE_TO_MEMORY) != 0)
 		{
-			saveToMemory(resultsArray, imp);
+			saveToMemory(resultsArray, imp, imageDimension[BatchParameters.C], imageDimension[BatchParameters.Z],
+					imageDimension[BatchParameters.T]);
 		}
 
 		// Record all the results to file
-		saveResults(expId, imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod, searchMethod,
-				searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex, options, blur,
-				centreMethod, centreParameter, fractionParameter, resultsArray, stats, batchOutputDirectory);
+		saveResults(expId, imp, imageDimension, mask, maskDimension, p.backgroundMethod, p.backgroundParameter,
+				p.autoThresholdMethod, p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod,
+				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
+				p.fractionParameter, resultsArray, stats, batchOutputDirectory);
+
+		boolean saveImp = false;
 
 		// Update the mask image
 		ImagePlus maxImp = null;
-		if (maximaImp != null && (outputType & OUTPUT_MASK) != 0)
+		if (maximaImp != null)
 		{
-			ImageStack stack = maximaImp.getStack();
+			if ((outputType & OUTPUT_MASK) != 0)
+			{
+				ImageStack stack = maximaImp.getStack();
 
-			String outname = imp.getTitle() + " " + FRAME_TITLE;
-			maxImp = new ImagePlus(outname, stack);
-			// Adjust the contrast to show all the maxima
-			int maxValue = ((outputType & OUTPUT_MASK_THRESHOLD) != 0) ? 4 : resultsArray.size() + 1;
-			maxImp.setDisplayRange(0, maxValue);
+				String outname = imp.getTitle() + " " + FRAME_TITLE;
+				maxImp = new ImagePlus(outname, stack);
+				// Adjust the contrast to show all the maxima
+				int maxValue = ((outputType & OUTPUT_MASK_THRESHOLD) != 0) ? 4 : resultsArray.size() + 1;
+				maxImp.setDisplayRange(0, maxValue);
+			}
+			if ((outputType & OUTPUT_OVERLAY_MASK) != 0)
+			{
+				imp.setOverlay(createOverlay(imp, maximaImp));
+				saveImp = true;
+			}
 		}
 
 		// Add ROI crosses to original image
@@ -6638,7 +6753,7 @@ public class FindFoci implements PlugIn, MouseListener
 				if ((outputType & OUTPUT_ROI_SELECTION) != 0)
 				{
 					imp.setRoi(roi);
-					IJ.saveAsTiff(imp, batchOutputDirectory + File.separator + expId + ".tiff");
+					saveImp = true;
 				}
 
 				if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
@@ -6646,6 +6761,10 @@ public class FindFoci implements PlugIn, MouseListener
 			}
 		}
 
+		if (saveImp)
+		{
+			IJ.saveAsTiff(imp, batchOutputDirectory + File.separator + expId + ".tiff");
+		}
 		if (maxImp != null)
 		{
 			IJ.saveAsTiff(maxImp, batchOutputDirectory + File.separator + expId + ".mask.tiff");
@@ -6900,11 +7019,25 @@ public class FindFoci implements PlugIn, MouseListener
 	 */
 	private void saveToMemory(ArrayList<int[]> resultsArray, ImagePlus imp)
 	{
+		saveToMemory(resultsArray, imp, imp.getChannel(), 0, imp.getFrame());
+	}
+
+	/**
+	 * Save the results array to memory using the image name and current channel and frame
+	 * 
+	 * @param resultsArray
+	 * @param imp
+	 */
+	private void saveToMemory(ArrayList<int[]> resultsArray, ImagePlus imp, int c, int z, int t)
+	{
 		if (resultsArray == null)
 			return;
-		int c = imp.getChannel();
-		int f = imp.getFrame();
-		String name = String.format("%s (c%d,t%d)", imp.getTitle(), c, f);
+		String name;
+		// If we use a specific slice then add this to the name 
+		if (z != 0)
+			name = String.format("%s (c%d,z%d,t%d)", imp.getTitle(), c, z, t);
+		else
+			name = String.format("%s (c%d,t%d)", imp.getTitle(), c, t);
 		// Check if there was nothing stored at the key position and store the name.
 		// This allows memory results to be listed in order.
 		if (memory.put(name, resultsArray) == null)
