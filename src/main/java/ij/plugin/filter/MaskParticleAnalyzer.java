@@ -20,10 +20,14 @@ import ij.text.TextPanel;
 import ij.text.TextWindow;
 
 import java.awt.Frame;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -58,7 +62,11 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 {
 	private static String redirectTitle = "";
 	private static boolean particleSummary = false;
+	private static boolean saveHistogram = false;
+	private static String histogramFile = "";
 	private ImagePlus restoreRedirectImp;
+	private BufferedWriter out = null;
+	private HashMap<Double, int[]> summaryHistogram = null;
 
 	private boolean useGetPixelValue;
 	private float[] image;
@@ -136,6 +144,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 					imp.updateAndDraw();
 				}
 				Analyzer.setRedirectImage(restoreRedirectImp);
+				close(out);
 				if (particleSummary)
 					createSummary();
 				return DONE;
@@ -165,6 +174,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			gd.addMessage("Analyses objects in an image.\n \nObjects are defined with contiguous pixels of the same value.\nIgnore pixels outside any configured thresholds.");
 			gd.addChoice("Redirect_image", list, redirectTitle);
 			gd.addCheckbox("Particle_summary", particleSummary);
+			gd.addCheckbox("Save_histogram", saveHistogram);
 			if (noThreshold)
 				gd.addMessage("Warning: The image is not thresholded / 8-bit binary mask.\nContinuing will use the min/max values in the image which\nmay produce many objects.");
 			gd.addHelp(gdsc.help.URL.FIND_FOCI);
@@ -174,6 +184,22 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			int index = gd.getNextChoiceIndex();
 			redirectTitle = list[index];
 			particleSummary = gd.getNextBoolean();
+			if (particleSummary)
+				summaryHistogram = new HashMap<Double, int[]>();
+			saveHistogram = gd.getNextBoolean();
+			if (saveHistogram)
+			{
+				histogramFile = ImageJHelper.getFilename("Histogram_file", histogramFile);
+				if (histogramFile != null)
+				{
+					int i = histogramFile.lastIndexOf('.');
+					if (i == -1)
+						histogramFile += ".txt";
+					out = createOutput(histogramFile);
+					if (out == null)
+						return DONE;
+				}
+			}
 			if (Analyzer.isRedirectImage())
 			{
 				// Get the current redirect image using reflection since we just want to restore it
@@ -223,6 +249,65 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 		}
 
 		return super.setup(arg, imp) + flags;
+	}
+
+	private BufferedWriter createOutput(String filename)
+	{
+		try
+		{
+			FileOutputStream fos = new FileOutputStream(filename);
+			BufferedWriter out = new BufferedWriter(new OutputStreamWriter(fos, "UTF-8"));
+			out.write("Histogram\tParticle Value\tPixel Value\tCount");
+			out.newLine();
+			return out;
+		}
+		catch (Exception e)
+		{
+			IJ.error("Failed to create histogram file: " + filename);
+			return null;
+		}
+	}
+
+	private BufferedWriter writeHistogram(BufferedWriter out, int id, double particleValue, int[] histogram)
+	{
+		if (out == null || histogram == null)
+			return null;
+
+		final String prefix = String.format("%d\t%s\t", id, Double.toString(particleValue));
+		for (int i = 0; i < histogram.length; i++)
+		{
+			if (histogram[i] == 0)
+				continue;
+			try
+			{
+				out.write(prefix);
+				out.write(Integer.toString(i));
+				out.write('\t');
+				out.write(Integer.toString(histogram[i]));
+				out.newLine();
+			}
+			catch (Exception e)
+			{
+				close(out);
+				return null;
+			}
+		}
+
+		return out;
+	}
+
+	private void close(BufferedWriter out)
+	{
+		if (out != null)
+		{
+			try
+			{
+				out.close();
+			}
+			catch (Exception e)
+			{
+			}
+		}
 	}
 
 	public boolean isNoThreshold(ImagePlus imp)
@@ -325,6 +410,32 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 		//		stats.pixelCount, value));
 		rt.addValue("Particle Value", value);
 		rt.addValue("Pixels", stats.pixelCount);
+
+		// Optionally save histogram to file
+		int[] hist = (stats.histogram16 != null) ? stats.histogram16 : stats.histogram;
+		if (hist != null)
+		{
+			final double particleValue = value;
+			out = writeHistogram(out, rt.getCounter(), particleValue, hist);
+			if (particleSummary)
+			{
+				// Create and store a cumulative histogram if we are summarising the particles
+				if (summaryHistogram.containsKey(particleValue))
+				{
+					int[] hist2 = summaryHistogram.get(particleValue);
+					if (hist.length < hist2.length)
+					{
+						int[] tmp = hist;
+						hist = hist2;
+						hist2 = tmp;
+					}
+					for (int i = 0; i < hist2.length; i++)
+						hist[i] += hist2[i];
+				}
+
+				summaryHistogram.put(particleValue, hist);
+			}
+		}
 
 		// Copy the superclass methods using the super-class variables obtained from relfection
 		if (addToManager)
@@ -518,7 +629,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 
 		// This method does not check the frame is visible
 		//Frame frame = WindowManager.getFrame(windowTitle);
-		
+
 		// Find the results table if visible
 		for (Frame frame : WindowManager.getNonImageWindows())
 		{
@@ -557,5 +668,30 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 		}
 		// Forces auto column width calculation
 		tp.scrollToTop();
+		
+		// Optionally save summary histogram to file
+		if (saveHistogram)
+			saveSummaryHistogram(order);
+	}
+
+	private void saveSummaryHistogram(List<Double> order)
+	{
+		if (summaryHistogram.isEmpty())
+			return;
+		String summaryFilename = createSummaryFilename(histogramFile);
+		BufferedWriter out = createOutput(summaryFilename);
+		int id = 1;
+		for (Double value : order)
+		{
+			out = writeHistogram(out, id++, value, summaryHistogram.get(value));
+		}
+		close(out);
+	}
+
+	private String createSummaryFilename(String filename)
+	{
+		// The histogramFile had a default .txt, so look for the extension and insert 'summary'
+		int i = filename.lastIndexOf('.');
+		return filename.substring(0, i) + ".summary" + filename.substring(i);
 	}
 }
