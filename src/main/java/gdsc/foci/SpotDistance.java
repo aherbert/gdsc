@@ -49,6 +49,40 @@ import java.util.Comparator;
  */
 public class SpotDistance implements PlugIn
 {
+	/**
+	 * Used to store results and cache XYZ output formatting
+	 */
+	private class DistanceResult
+	{
+		int x, y, z;
+		double circularity;
+		String pixelXYZ;
+		String calXYZ;
+
+		public DistanceResult(int x, int y, int z, double circularity)
+		{
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.circularity = circularity;
+		}
+
+		String getPixelXYZ()
+		{
+			if (pixelXYZ == null)
+				pixelXYZ = String.format("%d\t%d\t%d", x, y, z);
+			return pixelXYZ;
+		}
+
+		String getCalXYZ()
+		{
+			if (calXYZ == null)
+				calXYZ = String.format("%s\t%s\t%s", ImageJHelper.rounded(x * cal.pixelWidth),
+						ImageJHelper.rounded(y * cal.pixelHeight), ImageJHelper.rounded(z * cal.pixelDepth));
+			return calXYZ;
+		}
+	}
+
 	public static String FRAME_TITLE = "Spot Distance";
 	private static TextWindow resultsWindow = null;
 	private static TextWindow summaryWindow = null;
@@ -76,6 +110,8 @@ public class SpotDistance implements PlugIn
 	private static boolean processFrames = false;
 	private static boolean showProjection = false;
 	private static boolean showDistances = false;
+	private static boolean pixelDistances = true;
+	private static boolean calibratedDistances = true;
 	private static int regionCounter = 1;
 	private static boolean debug = false;
 
@@ -172,6 +208,8 @@ public class SpotDistance implements PlugIn
 				gd.addCheckbox("Show_spot_image (debugging)", debug);
 			if (installOption)
 				gd.addCheckbox("Install_tool", false);
+			gd.addCheckbox("Pixel_distances", pixelDistances);
+			gd.addCheckbox("Calibrated_distances", calibratedDistances);
 			gd.addHelp(gdsc.help.URL.FIND_FOCI);
 
 			gd.showDialog();
@@ -204,11 +242,15 @@ public class SpotDistance implements PlugIn
 				debug = gd.getNextBoolean();
 			else
 				debug = false;
+			pixelDistances = gd.getNextBoolean();
+			calibratedDistances = gd.getNextBoolean();
 			if (installOption)
 			{
 				if (gd.getNextBoolean())
 					installTool();
 			}
+			if (!(pixelDistances || calibratedDistances))
+				calibratedDistances = true;
 		}
 
 		maskImp = checkMask(imp, maskImage);
@@ -480,18 +522,23 @@ public class SpotDistance implements PlugIn
 	 */
 	private void createResultsWindow()
 	{
-		if (resultsWindow == null || !resultsWindow.isShowing())
+		String resultsHeader = createResultsHeader();
+		if (resultsWindow == null || !resultsWindow.isShowing() || !sameHeader(resultsWindow, resultsHeader))
 		{
 			resultsWindow = new TextWindow(FRAME_TITLE + " Positions", createResultsHeader(), "", 700, 300);
 		}
-		if (summaryWindow == null || !summaryWindow.isShowing())
+		String summaryHeader = createSummaryHeader();
+		if (summaryWindow == null || !summaryWindow.isShowing() || !sameHeader(summaryWindow, summaryHeader))
 		{
 			summaryWindow = new TextWindow(FRAME_TITLE + " Summary", createSummaryHeader(), "", 700, 300);
 			Point p = resultsWindow.getLocation();
 			p.y += resultsWindow.getHeight();
 			summaryWindow.setLocation(p);
 		}
-		if (showDistances && (distancesWindow == null || !distancesWindow.isShowing()))
+		String distancesHeader = createDistancesHeader();
+		if (showDistances &&
+				(distancesWindow == null || !distancesWindow.isShowing() || !sameHeader(distancesWindow,
+						distancesHeader)))
 		{
 			distancesWindow = new TextWindow(FRAME_TITLE + " Distances", createDistancesHeader(), "", 700, 300);
 			Point p = summaryWindow.getLocation();
@@ -506,14 +553,26 @@ public class SpotDistance implements PlugIn
 		// Create the image result prefix
 		StringBuilder sb = new StringBuilder();
 		sb.append(imp.getTitle()).append("\t");
-		cal = imp.getCalibration();
-		sb.append(cal.getXUnit());
-		if (!(cal.getYUnit().equalsIgnoreCase(cal.getXUnit()) && cal.getZUnit().equalsIgnoreCase(cal.getXUnit())))
+		if (calibratedDistances)
 		{
-			sb.append(" ").append(cal.getYUnit()).append(" ").append(cal.getZUnit()).append(" ");
+			cal = imp.getCalibration();
+			sb.append(cal.getXUnit());
+			if (!(cal.getYUnit().equalsIgnoreCase(cal.getXUnit()) && cal.getZUnit().equalsIgnoreCase(cal.getXUnit())))
+			{
+				sb.append(" ").append(cal.getYUnit()).append(" ").append(cal.getZUnit());
+			}
+		}
+		else
+		{
+			sb.append("pixels");
 		}
 		sb.append("\t");
 		resultEntry = sb.toString();
+	}
+
+	private boolean sameHeader(TextWindow results, String header)
+	{
+		return results.getTextPanel().getColumnHeadings().equals(header);
 	}
 
 	private String createResultsHeader()
@@ -524,12 +583,18 @@ public class SpotDistance implements PlugIn
 		sb.append("Frame\t");
 		sb.append("Channel\t");
 		sb.append("Region\t");
-		sb.append("x (px)\t");
-		sb.append("y (px)\t");
-		sb.append("z (px)\t");
-		sb.append("X\t");
-		sb.append("Y\t");
-		sb.append("Z\t");
+		if (pixelDistances)
+		{
+			sb.append("x (px)\t");
+			sb.append("y (px)\t");
+			sb.append("z (px)\t");
+		}
+		if (calibratedDistances)
+		{
+			sb.append("X\t");
+			sb.append("Y\t");
+			sb.append("Z\t");
+		}
 		sb.append("Circularity");
 		return sb.toString();
 	}
@@ -542,10 +607,21 @@ public class SpotDistance implements PlugIn
 		sb.append("Frame\t");
 		sb.append("Channel\t");
 		sb.append("Region\t");
-		sb.append("Spots\t");
-		sb.append("Min\t");
-		sb.append("Max\t");
-		sb.append("Av");
+		sb.append("Spots");
+		if (pixelDistances)
+		{
+			sb.append("\t");
+			sb.append("Min (px)\t");
+			sb.append("Max (px)\t");
+			sb.append("Av (px)");
+		}
+		if (calibratedDistances)
+		{
+			sb.append("\t");
+			sb.append("Min\t");
+			sb.append("Max\t");
+			sb.append("Av");
+		}
 		return sb.toString();
 	}
 
@@ -556,10 +632,21 @@ public class SpotDistance implements PlugIn
 		sb.append("Units\t");
 		sb.append("Frame\t");
 		sb.append("Channel\t");
-		sb.append("Region\t");
-		sb.append("X1\tY1\tZ1\t");
-		sb.append("X2\tY2\tZ2\t");
-		sb.append("Distance");
+		sb.append("Region");
+		if (pixelDistances)
+		{
+			sb.append("\t");
+			sb.append("X1 (px)\tY1 (px)\tZ1 (px)\t");
+			sb.append("X2 (px)\tY2 (px)\tZ2 (px)\t");
+			sb.append("Distance (px)");
+		}
+		if (calibratedDistances)
+		{
+			sb.append("\t");
+			sb.append("X1\tY1\tZ1\t");
+			sb.append("X2\tY2\tZ2\t");
+			sb.append("Distance");
+		}
 		return sb.toString();
 	}
 
@@ -691,9 +778,9 @@ public class SpotDistance implements PlugIn
 			if (ImageJHelper.isInterrupted())
 				return;
 
-			ArrayList<float[]> resultsArray = analyseResults(croppedImp, results, frame, channel, overlay);
-			ArrayList<float[]> resultsArray2 = null;
-			for (float[] result : resultsArray)
+			ArrayList<DistanceResult> resultsArray = analyseResults(croppedImp, results, frame, channel, overlay);
+			ArrayList<DistanceResult> resultsArray2 = null;
+			for (DistanceResult result : resultsArray)
 			{
 				addResult(frame, channel, region, bounds, result);
 			}
@@ -708,7 +795,7 @@ public class SpotDistance implements PlugIn
 					return;
 
 				resultsArray2 = analyseResults(croppedImp2, results2, frame, c2, overlay2);
-				for (float[] result : resultsArray2)
+				for (DistanceResult result : resultsArray2)
 				{
 					addResult(frame, c2, region, bounds, result);
 				}
@@ -722,49 +809,75 @@ public class SpotDistance implements PlugIn
 				if (resultsArray.size() < 2)
 				{
 					// No comparisons possible
-					addSummaryResult(frame, ch, region, resultsArray.size(), 0, 0, 0);
+					addSummaryResult(frame, ch, region, resultsArray.size());
 					continue;
 				}
 
-				double minD = Double.POSITIVE_INFINITY;
-				double maxD = 0;
-				double sumD = 0;
+				double minD = Double.POSITIVE_INFINITY, minD2 = Double.POSITIVE_INFINITY;
+				double maxD = 0, maxD2 = 0;
+				double sumD = 0, sumD2 = 0;
 				int count = 0;
 				for (int i = 0; i < resultsArray.size(); i++)
 				{
-					float[] r1 = resultsArray.get(i);
+					DistanceResult r1 = resultsArray.get(i);
 					for (int j = i + 1; j < resultsArray.size(); j++)
 					{
-						float[] r2 = resultsArray.get(j);
-						double[] diff = new double[] { (r1[0] - r2[0]), (r1[1] - r2[1]), (r1[2] - r2[2]) };
+						DistanceResult r2 = resultsArray.get(j);
+						double[] diff = new double[] { (r1.x - r2.x), (r1.y - r2.y), (r1.z - r2.z) };
 
 						// Ignore distances above the maximum
+						double diff2 = -1;
 						if (maxDistance2 != 0)
 						{
-							if (diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2] > maxDistance2)
+							diff2 = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
+							if (diff2 > maxDistance2)
 								continue;
 						}
 
-						diff[0] *= cal.pixelWidth;
-						diff[1] *= cal.pixelHeight;
-						diff[2] *= cal.pixelDepth;
+						count++;
 
-						// TODO - This will not be valid if the units are not the same for all dimensions
-						double d = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
+						double d = 0, d2 = 0;
+						if (pixelDistances)
+						{
+							if (diff2 == -1)
+								diff2 = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
+							d = Math.sqrt(diff2);
+							if (d < minD)
+							{
+								minD = d;
+							}
+							if (d > maxD)
+							{
+								maxD = d;
+							}
+							sumD += d;
+						}
+
+						if (calibratedDistances)
+						{
+							diff[0] *= cal.pixelWidth;
+							diff[1] *= cal.pixelHeight;
+							diff[2] *= cal.pixelDepth;
+							// TODO - This will not be valid if the units are not the same for all dimensions
+							d2 = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
+							if (d2 < minD2)
+							{
+								minD2 = d2;
+							}
+							if (d2 > maxD2)
+							{
+								maxD2 = d2;
+							}
+							sumD2 += d2;
+						}
 
 						if (showDistances)
-							addDistanceResult(frame, ch, region, r1, r2, d);
-
-						if (d < minD)
-							minD = d;
-						if (d > maxD)
-							maxD = d;
-						sumD += d;
-						count++;
+							addDistanceResult(frame, ch, region, r1, r2, d, d2);
 					}
 				}
 
-				addSummaryResult(frame, ch, region, resultsArray.size(), minD, maxD, sumD / count);
+				addSummaryResult(frame, ch, region, resultsArray.size(), minD, maxD, sumD / count, minD2, maxD2, sumD2 /
+						count);
 			}
 			else
 			{
@@ -774,48 +887,73 @@ public class SpotDistance implements PlugIn
 				if (resultsArray.isEmpty() || resultsArray2.isEmpty())
 				{
 					// No comparisons possible
-					addSummaryResult(frame, ch, region, resultsArray.size() + resultsArray2.size(), 0, 0, 0);
+					addSummaryResult(frame, ch, region, resultsArray.size() + resultsArray2.size());
 					continue;
 				}
 
-				double minD = Double.POSITIVE_INFINITY;
-				double maxD = 0;
-				double sumD = 0;
+				double minD = Double.POSITIVE_INFINITY, minD2 = Double.POSITIVE_INFINITY;
+				double maxD = 0, maxD2 = 0;
+				double sumD = 0, sumD2 = 0;
 				int count = 0;
-				for (float[] r1 : resultsArray)
+				for (DistanceResult r1 : resultsArray)
 				{
-					for (float[] r2 : resultsArray2)
+					for (DistanceResult r2 : resultsArray2)
 					{
-						double[] diff = new double[] { (r1[0] - r2[0]), (r1[1] - r2[1]), (r1[2] - r2[2]) };
+						double[] diff = new double[] { (r1.x - r2.x), (r1.y - r2.y), (r1.z - r2.z) };
 
 						// Ignore distances above the maximum
+						double diff2 = -1;
 						if (maxDistance2 != 0)
 						{
-							if (diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2] > maxDistance2)
+							diff2 = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
+							if (diff2 > maxDistance2)
 								continue;
 						}
 
-						diff[0] *= cal.pixelWidth;
-						diff[1] *= cal.pixelHeight;
-						diff[2] *= cal.pixelDepth;
+						count++;
 
-						// TODO - This will not be valid if the units are not the same for all dimensions
-						double d = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
+						double d = 0, d2 = 0;
+						if (pixelDistances)
+						{
+							if (diff2 == -1)
+								diff2 = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
+							d = Math.sqrt(diff2);
+							if (d < minD)
+							{
+								minD = d;
+							}
+							if (d > maxD)
+							{
+								maxD = d;
+							}
+							sumD += d;
+						}
+
+						if (calibratedDistances)
+						{
+							diff[0] *= cal.pixelWidth;
+							diff[1] *= cal.pixelHeight;
+							diff[2] *= cal.pixelDepth;
+							// TODO - This will not be valid if the units are not the same for all dimensions
+							d2 = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
+							if (d2 < minD2)
+							{
+								minD2 = d2;
+							}
+							if (d2 > maxD2)
+							{
+								maxD2 = d2;
+							}
+							sumD2 += d2;
+						}
 
 						if (showDistances)
-							addDistanceResult(frame, ch, region, r1, r2, d);
-
-						if (d < minD)
-							minD = d;
-						if (d > maxD)
-							maxD = d;
-						sumD += d;
-						count++;
+							addDistanceResult(frame, ch, region, r1, r2, d, d2);
 					}
 				}
 
 				addSummaryResult(frame, ch, region, resultsArray.size() + resultsArray2.size(), minD, maxD, sumD /
-						count);
+						count, minD2, maxD2, sumD2 / count);
 			}
 		}
 
@@ -1124,11 +1262,11 @@ public class SpotDistance implements PlugIn
 	 * @param croppedImp
 	 * @param results
 	 */
-	private ArrayList<float[]> analyseResults(ImagePlus croppedImp, Object[] results, int frame, int channel,
+	private ArrayList<DistanceResult> analyseResults(ImagePlus croppedImp, Object[] results, int frame, int channel,
 			Overlay overlay)
 	{
 		if (results == null)
-			return new ArrayList<float[]>(0);
+			return new ArrayList<DistanceResult>(0);
 
 		ImagePlus peaksImp = (ImagePlus) results[0];
 		@SuppressWarnings("unchecked")
@@ -1138,7 +1276,7 @@ public class SpotDistance implements PlugIn
 		//		int height = croppedImp.getHeight();
 		//		FloatProcessor fp = new FloatProcessor(width, height);
 
-		ArrayList<float[]> newResultsArray = new ArrayList<float[]>(resultsArray.size());
+		ArrayList<DistanceResult> newResultsArray = new ArrayList<DistanceResult>(resultsArray.size());
 
 		// Process in Z order
 		Collections.sort(resultsArray, new Comparator<int[]>()
@@ -1158,8 +1296,8 @@ public class SpotDistance implements PlugIn
 
 		for (int[] result : resultsArray)
 		{
-			int x = result[FindFoci.RESULT_X];
-			int y = result[FindFoci.RESULT_Y];
+			int x = bounds.x + result[FindFoci.RESULT_X];
+			int y = bounds.y + result[FindFoci.RESULT_Y];
 			int z = result[FindFoci.RESULT_Z];
 
 			// Filter peaks on circularity (spots should be circles)
@@ -1190,8 +1328,8 @@ public class SpotDistance implements PlugIn
 
 			if (circularity < circularityLimit)
 			{
-				IJ.log(String.format("Excluded non-circular peak @ x%d,y%d,z%d : %g (4pi * %g / %g^2)", bounds.x + x,
-						bounds.y + y, z, circularity, area, perimeter));
+				IJ.log(String.format("Excluded non-circular peak @ x%d,y%d,z%d : %g (4pi * %g / %g^2)", x, y, z,
+						circularity, area, perimeter));
 				continue;
 			}
 
@@ -1201,7 +1339,7 @@ public class SpotDistance implements PlugIn
 				overlay.add(roi);
 			}
 
-			newResultsArray.add(new float[] { x, y, z, (float) circularity });
+			newResultsArray.add(new DistanceResult(x, y, z, circularity));
 		}
 
 		return newResultsArray;
@@ -1258,53 +1396,85 @@ public class SpotDistance implements PlugIn
 		return area;
 	}
 
-	private void addResult(int frame, int channel, int region, Rectangle bounds, float[] result)
+	private void addResult(int frame, int channel, int region, Rectangle bounds, DistanceResult result)
 	{
-		int x = bounds.x + (int) result[0];
-		int y = bounds.y + (int) result[1];
-		int z = (int) result[2];
 		StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
 		sb.append(frame).append("\t");
 		sb.append(channel).append("\t");
 		sb.append(region).append("\t");
-		sb.append(x).append("\t");
-		sb.append(y).append("\t");
-		sb.append(z).append("\t");
-		sb.append(String.format("%.2f\t%.2f\t%.2f\t%.4f", x * cal.pixelWidth, y * cal.pixelHeight, z * cal.pixelDepth,
-				result[3]));
+		if (pixelDistances)
+		{
+			sb.append(result.getPixelXYZ()).append("\t");
+		}
+		if (calibratedDistances)
+		{
+			sb.append(result.getCalXYZ()).append("\t");
+		}
+		sb.append(ImageJHelper.rounded(result.circularity));
 		resultsWindow.append(sb.toString());
 		allowUndo = true;
 	}
 
-	private void addSummaryResult(int frame, String channel, int region, int size, double minD, double maxD, double d)
+	private void addSummaryResult(int frame, String channel, int region, int size)
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
 		sb.append(frame).append("\t");
 		sb.append(channel).append("\t");
-		sb.append(region).append("\t").append(size).append("\t");
-		sb.append(String.format("%.2f\t%.2f\t%.2f", minD, maxD, d));
+		sb.append(region).append("\t").append(size);
+		if (pixelDistances)
+			sb.append("\t0\t0\t0");
+		if (calibratedDistances)
+			sb.append("\t0\t0\t0");
 		summaryWindow.append(sb.toString());
 		allowUndo = true;
 	}
 
-	private void addDistanceResult(int frame, String channel, int region, float[] r1, float[] r2, double d)
+	private void addSummaryResult(int frame, String channel, int region, int size, double minD, double maxD, double d,
+			double minD2, double maxD2, double d2)
 	{
-		int x1 = bounds.x + (int) r1[0];
-		int y1 = bounds.y + (int) r1[1];
-		int z1 = (int) r1[2];
-		int x2 = bounds.x + (int) r2[0];
-		int y2 = bounds.y + (int) r2[1];
-		int z2 = (int) r2[2];
 		StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
 		sb.append(frame).append("\t");
 		sb.append(channel).append("\t");
-		sb.append(region).append("\t");
-		sb.append(x1).append("\t").append(y1).append("\t").append(z1).append("\t");
-		sb.append(x2).append("\t").append(y2).append("\t").append(z2).append("\t");
-		sb.append(ImageJHelper.rounded(d));
+		sb.append(region).append("\t").append(size);
+		if (pixelDistances)
+		{
+			sb.append("\t").append(ImageJHelper.rounded(minD));
+			sb.append("\t").append(ImageJHelper.rounded(maxD));
+			sb.append("\t").append(ImageJHelper.rounded(d));
+		}
+		if (calibratedDistances)
+		{
+			sb.append("\t").append(ImageJHelper.rounded(minD2));
+			sb.append("\t").append(ImageJHelper.rounded(maxD2));
+			sb.append("\t").append(ImageJHelper.rounded(d2));
+		}
+		summaryWindow.append(sb.toString());
+		allowUndo = true;
+	}
+
+	private void addDistanceResult(int frame, String channel, int region, DistanceResult r1, DistanceResult r2,
+			double d, double d2)
+	{
+		StringBuilder sb = new StringBuilder();
+		sb.append(resultEntry);
+		sb.append(frame).append("\t");
+		sb.append(channel).append("\t");
+		sb.append(region);
+		if (pixelDistances)
+		{
+			sb.append("\t").append(r1.getPixelXYZ());
+			sb.append("\t").append(r2.getPixelXYZ());
+			sb.append("\t").append(ImageJHelper.rounded(d));
+		}
+		if (calibratedDistances)
+		{
+			sb.append("\t").append(r1.getCalXYZ());
+			sb.append("\t").append(r2.getCalXYZ());
+			sb.append("\t").append(ImageJHelper.rounded(d2));
+		}
 		distancesWindow.append(sb.toString());
 		allowUndo = true;
 	}
