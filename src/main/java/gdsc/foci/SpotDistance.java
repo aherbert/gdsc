@@ -724,7 +724,7 @@ public class SpotDistance implements PlugIn
 		int peakMethod = FindFoci.PEAK_ABSOLUTE;
 		int outputType = FindFoci.OUTPUT_RESULTS_TABLE | FindFoci.OUTPUT_MASK_PEAKS |
 				FindFoci.OUTPUT_MASK_ABOVE_SADDLE | FindFoci.OUTPUT_MASK_NO_PEAK_DOTS;
-		int sortIndex = FindFoci.SORT_MAX_VALUE;
+		int sortIndex = FindFoci.SORT_XYZ; // Ensure tracking is possible between frames 
 		int options = FindFoci.OPTION_MINIMUM_ABOVE_SADDLE; // | FindFoci.OPTION_STATS_INSIDE;
 		double blur = 0;
 		int centreMethod = FindFoci.CENTRE_OF_MASS_ORIGINAL;

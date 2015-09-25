@@ -671,7 +671,7 @@ public class FindFoci implements PlugIn, MouseListener
 	 */
 	public final static String[] sortIndexMethods = { "Size", "Total intensity", "Max value", "Average intensity",
 			"Total intensity minus background", "Average intensity minus background", "X", "Y", "Z", "Saddle height",
-			"Size above saddle", "Intensity above saddle", "Absolute height", "Relative height >Bg" };
+			"Size above saddle", "Intensity above saddle", "Absolute height", "Relative height >Bg", "Peak ID", "XYZ" };
 
 	/**
 	 * Sort the peaks using the pixel count
@@ -733,6 +733,10 @@ public class FindFoci implements PlugIn, MouseListener
 	 * Sort the peaks using the peak Id
 	 */
 	private final static int SORT_PEAK_ID = 14;
+	/**
+	 * Sort the peaks using the XYZ coordinates (in order)
+	 */
+	public final static int SORT_XYZ = 15;
 
 	/**
 	 * Apply the minimum size criteria to the peak size above the highest saddle point
@@ -6005,6 +6009,9 @@ public class FindFoci implements PlugIn, MouseListener
 				return RESULT_CUSTOM_SORT_VALUE;
 			case SORT_PEAK_ID:
 				return RESULT_PEAK_ID;
+			case SORT_XYZ:
+				customSortXYZ(resultsArray);
+				return RESULT_CUSTOM_SORT_VALUE;
 		}
 		return RESULT_INTENSITY;
 	}
@@ -6025,6 +6032,19 @@ public class FindFoci implements PlugIn, MouseListener
 			// Increase the relative height to avoid rounding when casting to int (Note: relative height is in range [0 - 1])  
 			//result[RESULT_CUSTOM_SORT_VALUE] = round(100000.0 * getRelativeHeight(result, background, absoluteHeight)); 
 			result[RESULT_CUSTOM_SORT_VALUE] = round(getRelativeHeight(result, background, absoluteHeight << 8));
+		}
+	}
+
+	private void customSortXYZ(ArrayList<int[]> resultsArray)
+	{
+		final int a = maxy * maxz;
+		final int b = maxz;
+		for (int[] result : resultsArray)
+		{
+			int x = result[RESULT_X];
+			int y = result[RESULT_Y];
+			int z = result[RESULT_Z];
+			result[RESULT_CUSTOM_SORT_VALUE] = x * a + y * b + z;
 		}
 	}
 
