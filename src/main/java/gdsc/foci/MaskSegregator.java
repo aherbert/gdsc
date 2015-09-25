@@ -53,6 +53,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 
 	private static String maskTitle = "";
 	private static boolean autoCutoff = true;
+	private static boolean eightConnected = false;
 	private static double cutoff = 0;
 	private static boolean splitMask = false;
 
@@ -113,6 +114,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		gd.addMessage("");
 		label2 = (Label) gd.getMessage();
 		gd.addCheckbox("Auto_cutoff", autoCutoff);
+		gd.addCheckbox("8-connected", eightConnected);
 		gd.addSlider("Cut-off", stats.min, stats.max, cutoff);
 		gd.addCheckbox("Split_mask", splitMask);
 
@@ -182,6 +184,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 
 		maskTitle = gd.getNextChoice();
 		autoCutoff = gd.getNextBoolean();
+		eightConnected = gd.getNextBoolean();
 		cutoff = gd.getNextNumber();
 		splitMask = gd.getNextBoolean();
 
@@ -269,6 +272,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	}
 
 	private String lastMaskTitle = null;
+	private boolean lastEightConnected = false;
 	private double[][] objects = null;
 	private double[] stats = null;
 	private int defaultCutoff = -1;
@@ -277,7 +281,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	private void analyseObjects()
 	{
 		// Check if we already have the objects
-		if (lastMaskTitle != null && lastMaskTitle.equals(maskTitle))
+		if (lastMaskTitle != null && lastMaskTitle.equals(maskTitle) && lastEightConnected == eightConnected)
 			return;
 
 		defaultCutoff = -1;
@@ -358,6 +362,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		cutoffSlider.setValues(value, 1, minimum, maximum);
 
 		lastMaskTitle = maskTitle;
+		lastEightConnected = eightConnected;
 	}
 
 	/**
@@ -368,6 +373,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		objectMask[index0] = id; // mark first point
 		int listI = 0; // index of current search element in the list
 		int listLen = 1; // number of elements in the list
+		final int neighbours = (eightConnected) ? 8 : 4;
 
 		// we create a list of connected points and start the list at the current point
 		pList[listI] = index0;
@@ -382,7 +388,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 
 			boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
 
-			for (int d = 8; d-- > 0;)
+			for (int d = neighbours; d-- > 0;)
 			{
 				if (isInnerXY || isWithinXY(x1, y1, d))
 				{
@@ -416,8 +422,8 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	private int maxx, maxy;
 	private int xlimit, ylimit;
 	private int[] offset;
-	private final int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0, -1, -1, -1 };
-	private final int[] DIR_Y_OFFSET = new int[] { -1, -1, 0, 1, 1, 1, 0, -1 };
+	private final int[] DIR_X_OFFSET = new int[] { 0, 1, 0, -1, 1, 1, -1, -1 };
+	private final int[] DIR_Y_OFFSET = new int[] { -1, 0, 1, 0, -1, 1, 1, -1 };
 
 	/**
 	 * Creates the direction offset tables.
@@ -454,26 +460,27 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	{
 		switch (direction)
 		{
+		// 4-connected directions
 			case 0:
 				return (y > 0);
 			case 1:
-				return (y > 0 && x < xlimit);
-			case 2:
 				return (x < xlimit);
-			case 3:
-				return (y < ylimit && x < xlimit);
-			case 4:
+			case 2:
 				return (y < ylimit);
-			case 5:
-				return (y < ylimit && x > 0);
-			case 6:
+			case 3:
 				return (x > 0);
+				// Then remaining 8-connected directions
+			case 4:
+				return (y > 0 && x < xlimit);
+			case 5:
+				return (y < ylimit && x < xlimit);
+			case 6:
+				return (y < ylimit && x > 0);
 			case 7:
 				return (y > 0 && x > 0);
-			case 8:
-				return true;
+			default:
+				return false;
 		}
-		return false;
 	}
 
 	private int getCutoff()
