@@ -35,6 +35,8 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Output the distances between spots within a mask region.
@@ -50,8 +52,9 @@ public class SpotDistance implements PlugIn
 	/**
 	 * Used to store results and cache XYZ output formatting
 	 */
-	private class DistanceResult
+	private class DistanceResult implements Comparable<DistanceResult>, Coordinate
 	{
+		int id;
 		int x, y, z;
 		double circularity;
 		String pixelXYZ;
@@ -78,6 +81,72 @@ public class SpotDistance implements PlugIn
 				calXYZ = String.format("%s\t%s\t%s", ImageJHelper.rounded(x * cal.pixelWidth),
 						ImageJHelper.rounded(y * cal.pixelHeight), ImageJHelper.rounded(z * cal.pixelDepth));
 			return calXYZ;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.lang.Comparable#compareTo(java.lang.Object)
+		 */
+		public int compareTo(DistanceResult paramT)
+		{
+			// Sort by ID ascending
+			return id - paramT.id;
+		}
+
+		public int getX()
+		{
+			return x;
+		}
+
+		public int getY()
+		{
+			return y;
+		}
+
+		public int getZ()
+		{
+			return z;
+		}
+
+		public float getPositionX()
+		{
+			return x;
+		}
+
+		public float getPositionY()
+		{
+			return y;
+		}
+
+		public float getPositionZ()
+		{
+			return z;
+		}
+
+		public double distance(float x, float y, float z)
+		{
+			return Math.sqrt(distance2(x, y, z));
+		}
+
+		public double distance(float x, float y)
+		{
+			return Math.sqrt(distance2(x, y));
+		}
+
+		public double distance2(float x, float y, float z)
+		{
+			final double dx = this.x - x;
+			final double dy = this.y - y;
+			final double dz = this.z - z;
+			return dx * dx + dy * dy + dz * dz;
+		}
+
+		public double distance2(float x, float y)
+		{
+			final double dx = this.x - x;
+			final double dy = this.y - y;
+			return dx * dx + dy * dy;
 		}
 	}
 
@@ -110,6 +179,7 @@ public class SpotDistance implements PlugIn
 	private static boolean showDistances = false;
 	private static boolean pixelDistances = true;
 	private static boolean calibratedDistances = true;
+	private static boolean trackObjects = false;
 	private static int regionCounter = 1;
 	private static boolean debug = false;
 
@@ -133,6 +203,9 @@ public class SpotDistance implements PlugIn
 	private ImagePlus regionImp = null;
 	private Rectangle bounds = new Rectangle();
 	private Rectangle cachedBlurBounds = null;
+
+	// Store the last frame results to allow primitive tracking
+	private ArrayList<DistanceResult> prevResultsArray = null, prevResultsArray2 = null;
 
 	public void run(String arg)
 	{
@@ -208,6 +281,7 @@ public class SpotDistance implements PlugIn
 				gd.addCheckbox("Install_tool", false);
 			gd.addCheckbox("Pixel_distances", pixelDistances);
 			gd.addCheckbox("Calibrated_distances", calibratedDistances);
+			gd.addCheckbox("Track_objects", trackObjects);
 			gd.addHelp(gdsc.help.URL.FIND_FOCI);
 
 			gd.showDialog();
@@ -242,6 +316,7 @@ public class SpotDistance implements PlugIn
 				debug = false;
 			pixelDistances = gd.getNextBoolean();
 			calibratedDistances = gd.getNextBoolean();
+			trackObjects = gd.getNextBoolean();
 			if (installOption)
 			{
 				if (gd.getNextBoolean())
@@ -776,13 +851,14 @@ public class SpotDistance implements PlugIn
 			if (ImageJHelper.isInterrupted())
 				return;
 
-			ArrayList<DistanceResult> resultsArray = analyseResults(ff, croppedImp, results, frame, channel, overlay);
-			ArrayList<DistanceResult> resultsArray2 = null;
+			ArrayList<DistanceResult> resultsArray = analyseResults(prevResultsArray, ff, croppedImp, results, frame,
+					channel, overlay);
 			for (DistanceResult result : resultsArray)
 			{
 				addResult(frame, channel, region, bounds, result);
 			}
 
+			ArrayList<DistanceResult> resultsArray2 = null;
 			if (s1b != null)
 			{
 				// Analyse the second channel
@@ -792,11 +868,17 @@ public class SpotDistance implements PlugIn
 				if (ImageJHelper.isInterrupted())
 					return;
 
-				resultsArray2 = analyseResults(ff, croppedImp2, results2, frame, c2, overlay2);
+				resultsArray2 = analyseResults(prevResultsArray2, ff, croppedImp2, results2, frame, c2, overlay2);
 				for (DistanceResult result : resultsArray2)
 				{
 					addResult(frame, c2, region, bounds, result);
 				}
+			}
+
+			if (trackObjects)
+			{
+				prevResultsArray = resultsArray;
+				prevResultsArray2 = resultsArray2;
 			}
 
 			if (s1b == null)
@@ -1259,6 +1341,8 @@ public class SpotDistance implements PlugIn
 
 	/**
 	 * Check the peak circularity. Add an overlay of the spots if requested.
+	 * 
+	 * @param prev
 	 * @param ff
 	 * @param croppedImp
 	 * @param results
@@ -1267,8 +1351,8 @@ public class SpotDistance implements PlugIn
 	 * @param overlay
 	 * @return
 	 */
-	private ArrayList<DistanceResult> analyseResults(FindFoci ff, ImagePlus croppedImp, Object[] results, int frame, int channel,
-			Overlay overlay)
+	private ArrayList<DistanceResult> analyseResults(ArrayList<DistanceResult> prev, FindFoci ff, ImagePlus croppedImp,
+			Object[] results, int frame, int channel, Overlay overlay)
 	{
 		if (results == null)
 			return new ArrayList<DistanceResult>(0);
@@ -1281,7 +1365,7 @@ public class SpotDistance implements PlugIn
 
 		// Process in XYZ order
 		ff.sortAscResults(resultsArray, FindFoci.SORT_XYZ, null);
-		
+
 		ImageStack maskStack = peaksImp.getImageStack();
 
 		for (int[] result : resultsArray)
@@ -1325,6 +1409,34 @@ public class SpotDistance implements PlugIn
 			}
 
 			newResultsArray.add(new DistanceResult(x, y, z, circularity));
+		}
+
+		if (prev != null && !prev.isEmpty() && !newResultsArray.isEmpty())
+		{
+			// If we have results from a previous frame then try and assign an ID to each 
+			// result using closest distance tracking.
+			double d = Math.sqrt(croppedImp.getWidth() * croppedImp.getWidth() + croppedImp.getHeight() *
+					croppedImp.getHeight() + croppedImp.getNSlices() * croppedImp.getNSlices());
+			List<PointPair> matches = new ArrayList<PointPair>();
+			MatchCalculator.analyseResults3D(prev.toArray(new DistanceResult[prev.size()]),
+					newResultsArray.toArray(new DistanceResult[newResultsArray.size()]), d, null, null, null, matches);
+
+			for (PointPair match : matches)
+			{
+				((DistanceResult) match.getPoint2()).id = ((DistanceResult) match.getPoint1()).id;
+			}
+
+			// Find max ID
+			int id = 0;
+			for (DistanceResult r : newResultsArray)
+				if (id < r.id)
+					id = r.id;
+			// Assign those that could not be tracked
+			for (DistanceResult r : newResultsArray)
+				if (r.id == 0)
+					r.id = ++id;
+			// Sort
+			Collections.sort(newResultsArray);
 		}
 
 		return newResultsArray;

@@ -96,6 +96,7 @@ public class MatchCalculator
 		int fp = n; // false positives (actual with no matched predicted point)
 		int fn = actualPointsLength; // false negatives (predicted point with no actual point)
 		double rmsd = 0;
+		final boolean checkLists = (TP != null) || (FP != null) || (FN != null) || (matches != null);
 
 		// loop over the two arrays assigning the closest unassigned pair
 		boolean[] resultAssignment = new boolean[n];
@@ -209,13 +210,16 @@ public class MatchCalculator
 					fp--;
 					rmsd += closest.getDistance(); // Already a squared distance
 
-					if (TP != null)
+					if (checkLists)
 					{
 						Coordinate predictedPoint = predictedPoints[closest.getPredictedId()];
 						Coordinate actualPoint = actualPoints[closest.getTargetId()];
-						TP.add(predictedPoint);
-						FP.remove(predictedPoint);
-						FN.remove(actualPoint);
+						if (TP != null)
+							TP.add(predictedPoint);
+						if (FP != null)
+							FP.remove(predictedPoint);
+						if (FN != null)
+							FN.remove(actualPoint);
 						if (matches != null)
 							matches.add(new PointPair(actualPoint, predictedPoint));
 					}
@@ -313,6 +317,7 @@ public class MatchCalculator
 		int fp = n; // false positives (actual with no matched predicted point)
 		int fn = actualPointsLength; // false negatives (predicted point with no actual point)
 		double rmsd = 0;
+		final boolean checkLists = (TP != null) || (FP != null) || (FN != null) || (matches != null);
 
 		// loop over the two arrays assigning the closest unassigned pair
 		boolean[] resultAssignment = new boolean[n];
@@ -432,13 +437,16 @@ public class MatchCalculator
 					fp--;
 					rmsd += closest.getDistance();
 
-					if (TP != null)
+					if (checkLists)
 					{
 						Coordinate predictedPoint = predictedPoints[closest.getPredictedId()];
 						Coordinate actualPoint = actualPoints[closest.getTargetId()];
-						TP.add(predictedPoint);
-						FP.remove(predictedPoint);
-						FN.remove(actualPoint);
+						if (TP != null)
+							TP.add(predictedPoint);
+						if (FP != null)
+							FP.remove(predictedPoint);
+						if (FN != null)
+							FN.remove(actualPoint);
 						if (matches != null)
 							matches.add(new PointPair(actualPoint, predictedPoint));
 					}
