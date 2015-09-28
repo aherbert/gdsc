@@ -605,7 +605,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		}
 	}
 
-	private int getBonus(int include)
+	static int getBonus(int include)
 	{
 		int bonus = 1000;
 		while (bonus < include)
