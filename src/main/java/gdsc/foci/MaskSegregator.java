@@ -24,6 +24,7 @@ import ij.gui.ImageRoi;
 import ij.gui.Overlay;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
+import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
@@ -56,6 +57,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	private static boolean eightConnected = false;
 	private static double cutoff = 0;
 	private static boolean splitMask = false;
+	private static boolean overlayOutline = true;
 
 	private Checkbox autoCheckbox;
 	private Scrollbar cutoffSlider;
@@ -117,6 +119,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		gd.addCheckbox("8-connected", eightConnected);
 		gd.addSlider("Cut-off", stats.min, stats.max, cutoff);
 		gd.addCheckbox("Split_mask", splitMask);
+		gd.addCheckbox("Overlay_outline", overlayOutline);
 
 		autoCheckbox = (Checkbox) gd.getCheckboxes().get(0);
 		cutoffSlider = (Scrollbar) gd.getSliders().get(0);
@@ -187,6 +190,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		eightConnected = gd.getNextBoolean();
 		cutoff = gd.getNextNumber();
 		splitMask = gd.getNextBoolean();
+		overlayOutline = gd.getNextBoolean();
 
 		// Check if this is a change to the settings during a preview and update the 
 		// auto threshold property
@@ -601,7 +605,10 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 			}
 			ip.setMinAndMax(0, exclude);
 
-			ImageJHelper.display(maskTitle + " Segregated", ip);
+			ImagePlus segImp = ImageJHelper.display(maskTitle + " Segregated", ip);
+
+			if (overlayOutline)
+				addOutline(segImp);
 		}
 	}
 
@@ -611,5 +618,19 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		while (bonus < include)
 			bonus += 1000;
 		return bonus;
+	}
+
+	static void addOutline(ImagePlus imp)
+	{
+		ByteProcessor bp = new ByteProcessor(imp.getWidth(), imp.getHeight());
+		ImageProcessor ip = imp.getProcessor();
+		for (int i = ip.getPixelCount(); i-- > 0;)
+			if (ip.get(i) == 0)
+				bp.set(i, 255);
+		bp.outline();
+		bp.invert();
+		ImageRoi roi = new ImageRoi(0, 0, bp);
+		roi.setZeroTransparent(true);
+		imp.setOverlay(new Overlay(roi));
 	}
 }

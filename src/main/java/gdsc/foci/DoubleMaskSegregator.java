@@ -18,10 +18,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
-import ij.gui.ImageRoi;
-import ij.gui.Overlay;
 import ij.plugin.PlugIn;
-import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
@@ -38,6 +35,7 @@ public class DoubleMaskSegregator implements PlugIn
 
 	private static String title1 = "";
 	private static String title2 = "";
+	private static boolean applyLUT = false;
 	private static boolean overlayOutline = true;
 
 	private ImagePlus imp1, imp2;
@@ -75,6 +73,7 @@ public class DoubleMaskSegregator implements PlugIn
 		gd.addMessage("Find the classes in each mask using continuous mask values\nand create an all-vs-all output combination mask");
 		gd.addChoice("Input_1", items, title1);
 		gd.addChoice("Input_2", items, title2);
+		gd.addCheckbox("Apply_LUT", applyLUT);
 		gd.addCheckbox("Overlay_outline", overlayOutline);
 
 		gd.addHelp(gdsc.help.URL.FIND_FOCI);
@@ -85,6 +84,7 @@ public class DoubleMaskSegregator implements PlugIn
 
 		title1 = gd.getNextChoice();
 		title2 = gd.getNextChoice();
+		applyLUT = gd.getNextBoolean();
 		overlayOutline = gd.getNextBoolean();
 
 		imp1 = WindowManager.getImage(title1);
@@ -198,22 +198,13 @@ public class DoubleMaskSegregator implements PlugIn
 		ShortProcessor sp = new ShortProcessor(imp1.getWidth(), imp1.getHeight());
 		for (int i = 0; i < out.length; i++)
 			sp.set(i, h[out[i]]);
-		sp.setLut(createLUT());
+		if (applyLUT)
+			sp.setLut(createLUT());
 		ImagePlus imp = ImageJHelper.display(TITLE, sp);
 
 		// Optionally outline each object
-		if (!overlayOutline)
-			return;
-		
-		ByteProcessor bp = new ByteProcessor(imp1.getWidth(), imp1.getHeight());
-		for (int i = 0; i < out.length; i++)
-			if (out[i] == 0)
-				bp.set(i, 255);
-		bp.outline();
-		bp.invert();
-		ImageRoi roi = new ImageRoi(0, 0, bp);
-		roi.setZeroTransparent(true);
-		imp.setOverlay(new Overlay(roi));
+		if (overlayOutline)
+			MaskSegregator.addOutline(imp);
 	}
 
 	private int[] getPixels(ImageProcessor ip)
