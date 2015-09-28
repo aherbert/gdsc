@@ -5957,7 +5957,7 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param resultsArray
 	 * @param sortIndex
 	 */
-	private void sortDescResults(ArrayList<int[]> resultsArray, int sortIndex, double[] stats)
+	void sortDescResults(ArrayList<int[]> resultsArray, int sortIndex, double[] stats)
 	{
 		Collections.sort(resultsArray, new ResultDescComparator(getResultIndex(sortIndex, resultsArray, stats)));
 	}
@@ -5968,7 +5968,7 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param resultsArray
 	 * @param sortIndex
 	 */
-	private void sortAscResults(ArrayList<int[]> resultsArray, int sortIndex, double[] stats)
+	void sortAscResults(ArrayList<int[]> resultsArray, int sortIndex, double[] stats)
 	{
 		Collections.sort(resultsArray, new ResultAscComparator(getResultIndex(sortIndex, resultsArray, stats)));
 	}

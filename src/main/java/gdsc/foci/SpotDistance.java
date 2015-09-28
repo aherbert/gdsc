@@ -35,8 +35,6 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 
 /**
  * Output the distances between spots within a mask region.
@@ -444,7 +442,7 @@ public class SpotDistance implements PlugIn
 		projectionImp.setSlice(1);
 		projectionImp.setOverlay(null);
 		projectionImp.setDimensions(nChannels, 1, frames.length);
-		projectionImp.setOpenAsHyperStack(true);
+		projectionImp.setOpenAsHyperStack(dualChannel);
 		projectionImp.show();
 	}
 
@@ -713,7 +711,7 @@ public class SpotDistance implements PlugIn
 		// - Try Float IP for the DoG image
 		// - Bigger feature size for DoG?
 
-		FindFoci fp = new FindFoci();
+		FindFoci ff = new FindFoci();
 		int backgroundMethod = (autoThreshold) ? FindFoci.BACKGROUND_AUTO_THRESHOLD
 				: FindFoci.BACKGROUND_STD_DEV_ABOVE_MEAN;
 		double backgroundParameter = stdDevAboveBackground;
@@ -724,7 +722,7 @@ public class SpotDistance implements PlugIn
 		int peakMethod = FindFoci.PEAK_ABSOLUTE;
 		int outputType = FindFoci.OUTPUT_RESULTS_TABLE | FindFoci.OUTPUT_MASK_PEAKS |
 				FindFoci.OUTPUT_MASK_ABOVE_SADDLE | FindFoci.OUTPUT_MASK_NO_PEAK_DOTS;
-		int sortIndex = FindFoci.SORT_XYZ; // Ensure tracking is possible between frames 
+		int sortIndex = FindFoci.SORT_MAX_VALUE;
 		int options = FindFoci.OPTION_MINIMUM_ABOVE_SADDLE; // | FindFoci.OPTION_STATS_INSIDE;
 		double blur = 0;
 		int centreMethod = FindFoci.CENTRE_OF_MASS_ORIGINAL;
@@ -770,7 +768,7 @@ public class SpotDistance implements PlugIn
 			if (debug)
 				showSpotImage(croppedImp, croppedImp2, region);
 
-			final Object[] results = fp.findMaxima(croppedImp, regionImp, backgroundMethod, backgroundParameter,
+			final Object[] results = ff.findMaxima(croppedImp, regionImp, backgroundMethod, backgroundParameter,
 					autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
 					outputType, sortIndex, options, blur, centreMethod, centreParameter, 1);
 			Object[] results2 = null;
@@ -778,7 +776,7 @@ public class SpotDistance implements PlugIn
 			if (ImageJHelper.isInterrupted())
 				return;
 
-			ArrayList<DistanceResult> resultsArray = analyseResults(croppedImp, results, frame, channel, overlay);
+			ArrayList<DistanceResult> resultsArray = analyseResults(ff, croppedImp, results, frame, channel, overlay);
 			ArrayList<DistanceResult> resultsArray2 = null;
 			for (DistanceResult result : resultsArray)
 			{
@@ -788,13 +786,13 @@ public class SpotDistance implements PlugIn
 			if (s1b != null)
 			{
 				// Analyse the second channel
-				results2 = fp.findMaxima(croppedImp2, regionImp, backgroundMethod, backgroundParameter,
+				results2 = ff.findMaxima(croppedImp2, regionImp, backgroundMethod, backgroundParameter,
 						autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod,
 						peakParameter2, outputType, sortIndex, options, blur, centreMethod, centreParameter, 1);
 				if (ImageJHelper.isInterrupted())
 					return;
 
-				resultsArray2 = analyseResults(croppedImp2, results2, frame, c2, overlay2);
+				resultsArray2 = analyseResults(ff, croppedImp2, results2, frame, c2, overlay2);
 				for (DistanceResult result : resultsArray2)
 				{
 					addResult(frame, c2, region, bounds, result);
@@ -1064,7 +1062,10 @@ public class SpotDistance implements PlugIn
 		Roi[] rois = overlay.toArray();
 		for (Roi roi : rois)
 		{
-			roi.setPosition(channel, 1, frame);
+			if (dualChannel)
+				roi.setPosition(channel, 1, frame);
+			else
+				roi.setPosition(frame);
 			mainOverlay.add(roi);
 		}
 	}
@@ -1258,11 +1259,15 @@ public class SpotDistance implements PlugIn
 
 	/**
 	 * Check the peak circularity. Add an overlay of the spots if requested.
-	 * 
+	 * @param ff
 	 * @param croppedImp
 	 * @param results
+	 * @param frame
+	 * @param channel
+	 * @param overlay
+	 * @return
 	 */
-	private ArrayList<DistanceResult> analyseResults(ImagePlus croppedImp, Object[] results, int frame, int channel,
+	private ArrayList<DistanceResult> analyseResults(FindFoci ff, ImagePlus croppedImp, Object[] results, int frame, int channel,
 			Overlay overlay)
 	{
 		if (results == null)
@@ -1272,26 +1277,11 @@ public class SpotDistance implements PlugIn
 		@SuppressWarnings("unchecked")
 		ArrayList<int[]> resultsArray = (ArrayList<int[]>) results[1];
 
-		//		int width = croppedImp.getWidth();
-		//		int height = croppedImp.getHeight();
-		//		FloatProcessor fp = new FloatProcessor(width, height);
-
 		ArrayList<DistanceResult> newResultsArray = new ArrayList<DistanceResult>(resultsArray.size());
 
-		// Process in Z order
-		Collections.sort(resultsArray, new Comparator<int[]>()
-		{
-			public int compare(int[] o1, int[] o2)
-			{
-				if (o1[FindFoci.RESULT_Z] < o2[FindFoci.RESULT_Z])
-					return -1;
-				if (o1[FindFoci.RESULT_Z] > o2[FindFoci.RESULT_Z])
-					return 1;
-				return 0;
-			}
-		});
-		//		int lastZ = -1;
-		//		ImageStack imgStack = croppedImp.getImageStack();
+		// Process in XYZ order
+		ff.sortAscResults(resultsArray, FindFoci.SORT_XYZ, null);
+		
 		ImageStack maskStack = peaksImp.getImageStack();
 
 		for (int[] result : resultsArray)
@@ -1304,11 +1294,6 @@ public class SpotDistance implements PlugIn
 			// C = 4*pi*A / P^2 
 			// where A = Area, P = Perimeter
 			// Q. Not sure if this will be valid for small spots.
-
-			// Extract the data if it is a new slice
-			//			if (z != lastZ)
-			//				imgStack.getProcessor(z + 1).toFloat(0, fp);
-			//			lastZ = z;
 
 			// Extract the peak.
 			// This could extract by a % volume. At current just use the mask region.
