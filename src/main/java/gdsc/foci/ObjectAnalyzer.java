@@ -47,7 +47,7 @@ public class ObjectAnalyzer
 	{
 		return objectMask;
 	}
-	
+
 	/**
 	 * @return The maximum object number
 	 */
@@ -197,5 +197,55 @@ public class ObjectAnalyzer
 			default:
 				return false;
 		}
+	}
+
+	/**
+	 * @return The image width
+	 */
+	public int getWidth()
+	{
+		return ip.getWidth();
+	}
+
+	/**
+	 * @return The image height
+	 */
+	public int getHeight()
+	{
+		return ip.getHeight();
+	}
+
+	/**
+	 * Get the centre-of-mass and pixel count of each object. Data is stored indexed by the object value so processing
+	 * of results should start from 1.
+	 * 
+	 * @return The centre-of-mass of each object (plus the pixel count) [object][cx,cy,n]
+	 */
+	public double[][] getObjectCentres()
+	{
+		int[] count = new int[maxObject + 1];
+		double[] sumx = new double[count.length];
+		double[] sumy = new double[count.length];
+		final int maxy = getHeight();
+		final int maxx = getWidth();
+		for (int y = 0, i = 0; y < maxy; y++)
+			for (int x = 0; x < maxx; x++, i++)
+			{
+				final int value = objectMask[i];
+				if (value != 0)
+				{
+					sumx[value] += x;
+					sumy[value] += y;
+					count[value]++;
+				}
+			}
+		double[][] data = new double[count.length][3];
+		for (int i = 1; i < count.length; i++)
+		{
+			data[i][0] = sumx[i] / count[i];
+			data[i][1] = sumy[i] / count[i];
+			data[i][2] = count[i];
+		}
+		return data;
 	}
 }
