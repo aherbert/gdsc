@@ -34,9 +34,8 @@ import java.util.Arrays;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 /**
- * Finds spots in an image. Locates the closest neighbour spot within a radius
- * and produces a line profile through the spots. If no neighbour is present
- * produces a line profile through the principle axis.
+ * Finds objects in an image using contiguous pixels of the same value. Locates the closest object to each Find Foci
+ * result held in memory and summarises the counts.
  */
 public class AssignFociToObjects implements PlugInFilter
 {
@@ -240,11 +239,13 @@ public class AssignFociToObjects implements PlugInFilter
 		int n = (int) Math.ceil(radius);
 		int newSize = 2 * n + 1;
 		if (size >= newSize)
-			return;
+		{
+			//return;
+		}
 		size = newSize;
 		search = new ArrayList<Search[]>();
 		AssignFociToObjects instance = new AssignFociToObjects();
-		Search[] s = new Search[size * size - 1];
+		Search[] s = new Search[size * size];
 
 		double[] tmp = new double[newSize];
 		for (int y = -n, i = 0; y <= n; y++, i++)
@@ -255,8 +256,6 @@ public class AssignFociToObjects implements PlugInFilter
 			final double y2 = tmp[i];
 			for (int x = -n, ii = 0; x <= n; x++, ii++)
 			{
-				if (x == 0 && y == 0)
-					continue;
 				s[index++] = instance.new Search(x, y, y2 + tmp[ii]);
 			}
 		}
@@ -264,9 +263,10 @@ public class AssignFociToObjects implements PlugInFilter
 		Arrays.sort(s);
 
 		// Store each increasing search distance as a set
+		// Ignore first record as it is d2==0
 		double last = -1;
 		int begin = 0, end = -1;
-		for (int i = 0; i < s.length; i++)
+		for (int i = 1; i < s.length; i++)
 		{
 			if (last != s[i].d2)
 			{
