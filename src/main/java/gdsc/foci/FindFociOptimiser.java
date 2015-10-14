@@ -653,13 +653,15 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	 */
 	private ArrayList<Result> runOptimiser(ImagePlus imp, ImagePlus mask, Counter counter)
 	{
-		Roi roi = checkImage(imp);
-		if (roi == null)
+		if (invalidImage(imp))
 			return null;
-		AssignedPoint[] roiPoints = extractRoiPoints(roi, imp, mask);
+		AssignedPoint[] roiPoints = extractRoiPoints(imp.getRoi(), imp, mask);
 
 		if (roiPoints.length == 0)
+		{
+			IJ.showMessage("Error", "Image must have a point ROI or corresponding ROI file");
 			return null;
+		}
 
 		final boolean is3D = is3D(roiPoints);
 
@@ -1116,27 +1118,27 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			return new int[] { FindFoci.OPTION_MINIMUM_ABOVE_SADDLE, 0 };
 	}
 
-	private Roi checkImage(ImagePlus imp)
+	private boolean invalidImage(ImagePlus imp)
 	{
 		if (null == imp)
 		{
 			IJ.noImage();
-			return null;
+			return true;
 		}
 
 		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
 		{
 			IJ.showMessage("Error", "Only 8-bit and 16-bit images are supported");
-			return null;
+			return true;
 		}
 
-		Roi roi = imp.getRoi();
-		if (roi == null || roi.getType() != Roi.POINT)
-		{
-			IJ.showMessage("Error", "Image must have a point ROI");
-			return null;
-		}
-		return roi;
+		// This error is now handled later
+		//Roi roi = imp.getRoi();
+		//if (roi != null && roi.getType() != Roi.POINT)
+		//{
+		//	IJ.showMessage("Error", "Image must have a point ROI");
+		//}
+		return false;
 	}
 
 	private boolean showDialog(ImagePlus imp)
@@ -2314,7 +2316,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				point.z = 0;
 		}
 
-		// If the mask is not valid or we have no point then return
+		// If the mask is not valid or we have no points then return
 		if (!validMask(imp, mask) || roiPoints.length == 0)
 		{
 			return roiPoints;
