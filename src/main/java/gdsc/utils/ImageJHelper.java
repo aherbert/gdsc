@@ -294,7 +294,8 @@ public class ImageJHelper
 			OpenDialog.setDefaultDirectory(directory);
 		DirectoryChooser chooser = new DirectoryChooser(title);
 		directory = chooser.getDirectory();
-		OpenDialog.setDefaultDirectory(defaultDir);
+		if (defaultDir != null && defaultDir.length() > 0)
+			OpenDialog.setDefaultDirectory(defaultDir);
 		return directory;
 	}
 
