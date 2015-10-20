@@ -238,7 +238,7 @@ public class AssignFociToObjects implements PlugInFilter
 		}
 		String title = FRAME_TITLE + " Histogram";
 		Plot plot = new Plot(title, "Count", "Frequency", x, y);
-		plot.setLimits(0, x[x.length-1], 0, yMax);
+		plot.setLimits(0, x[x.length - 1], 0, yMax);
 		plot.addLabel(0, 0,
 				String.format("N = %d, Mean = %s", (int) stats.getSum(), ImageJHelper.rounded(stats.getMean())));
 		plot.draw();
