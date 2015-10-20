@@ -19,6 +19,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.gui.Overlay;
+import ij.gui.Plot;
 import ij.gui.PointRoi;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
@@ -42,7 +43,11 @@ public class AssignFociToObjects implements PlugInFilter
 	public static final String FRAME_TITLE = "Assign Foci";
 
 	private static final int flags = DOES_16 + DOES_8G + NO_CHANGES + NO_UNDO;
+	private static String input = "";
 	private static double radius = 30;
+	private static int minSize = 0;
+	private static int maxSize = 0;
+	private static boolean removeSmallObjects = true;
 	private static boolean showObjects = false;
 	private static boolean showFoci = false;
 
@@ -105,6 +110,8 @@ public class AssignFociToObjects implements PlugInFilter
 		createResultsTables();
 
 		ObjectAnalyzer oa = new ObjectAnalyzer(ip);
+		if (removeSmallObjects)
+			oa.setMinObjectSize(minSize);
 		int[] objectMask = oa.getObjectMask();
 
 		final int maxx = ip.getWidth();
@@ -114,12 +121,12 @@ public class AssignFociToObjects implements PlugInFilter
 
 		// Assign each foci to the nearest object
 		int[] count = new int[oa.getMaxObject() + 1];
-		boolean[] found = new boolean[results.size()];
+		int[] found = new int[results.size()];
 		for (int i = 0; i < results.size(); i++)
 		{
 			final int[] result = results.get(i);
-			final int x = result[FindFoci.RESULT_X];
-			final int y = result[FindFoci.RESULT_Y];
+			final int x = result[0];
+			final int y = result[1];
 			// Check within the image
 			if (x < 0 || x >= maxx || y < 0 || y >= maxy)
 				continue;
@@ -128,7 +135,7 @@ public class AssignFociToObjects implements PlugInFilter
 			if (objectMask[index] != 0)
 			{
 				count[objectMask[index]]++;
-				found[i] = true;
+				found[i] = objectMask[index];
 				continue;
 			}
 
@@ -163,18 +170,31 @@ public class AssignFociToObjects implements PlugInFilter
 							maxCount = j;
 					// Assign
 					count[maxCount]++;
-					found[i] = true;
+					found[i] = maxCount;
 					break;
 				}
 			}
 		}
 
-		showMask(oa, found);
-
 		double[][] centres = oa.getObjectCentres();
+
+		// We must ignore those that are too small/big
+		int[] idMap = new int[count.length];
+		for (int i = 1; i < count.length; i++)
+		{
+			idMap[i] = i;
+			if (centres[i][2] < minSize || (maxSize != 0 && centres[i][2] > maxSize))
+			{
+				idMap[i] = -i;
+			}
+		}
+
+		// TODO - Remove objects from the output image ?
+		showMask(oa, found, idMap);
 
 		// Show the results
 		DescriptiveStatistics stats = new DescriptiveStatistics();
+		DescriptiveStatistics stats2 = new DescriptiveStatistics();
 		StringBuilder sb = new StringBuilder();
 		for (int i = 1; i < count.length; i++)
 		{
@@ -183,18 +203,58 @@ public class AssignFociToObjects implements PlugInFilter
 			sb.append('\t').append(ImageJHelper.rounded(centres[i][0]));
 			sb.append('\t').append(ImageJHelper.rounded(centres[i][1]));
 			sb.append('\t').append((int) (centres[i][2]));
+			if (idMap[i] > 0)
+			{
+				// Include this object
+				sb.append("\tTrue");
+				stats.addValue(count[i]);
+			}
+			else
+			{
+				// Exclude this object
+				sb.append("\tFalse");
+				stats2.addValue(count[i]);
+			}
 			sb.append('\t').append(count[i]);
 			sb.append('\n');
-			stats.addValue(count[i]);
 		}
 		resultsWindow.append(sb.toString());
+
+		// Histogram the count
+		final int max = (int) stats.getMax();
+		final double[] x = new double[max + 1];
+		final double[] y = new double[x.length];
+		for (int i = 1; i < count.length; i++)
+		{
+			if (idMap[i] > 0)
+				y[count[i]]++;
+		}
+		double yMax = 0;
+		for (int i = 0; i <= max; i++)
+		{
+			x[i] = i;
+			if (yMax < y[i])
+				yMax = y[i];
+		}
+		String title = FRAME_TITLE + " Histogram";
+		Plot plot = new Plot(title, "Count", "Frequency", x, y);
+		plot.setLimits(0, x[x.length-1], 0, yMax);
+		plot.addLabel(0, 0,
+				String.format("N = %d, Mean = %s", (int) stats.getSum(), ImageJHelper.rounded(stats.getMean())));
+		plot.draw();
+		plot.setColor(Color.RED);
+		plot.drawLine(stats.getMean(), 0, stats.getMean(), yMax);
+		ImageJHelper.display(title, plot);
+
 		// Show the summary
 		sb.setLength(0);
 		sb.append(imp.getTitle());
 		sb.append('\t').append(oa.getMaxObject());
+		sb.append('\t').append(stats.getN());
 		sb.append('\t').append(results.size());
 		sb.append('\t').append((int) stats.getSum());
-		sb.append('\t').append(results.size() - (int) stats.getSum());
+		sb.append('\t').append((int) stats2.getSum());
+		sb.append('\t').append(results.size() - (int) (stats.getSum() + stats2.getSum()));
 		sb.append('\t').append(stats.getMin());
 		sb.append('\t').append(stats.getMax());
 		sb.append('\t').append(ImageJHelper.rounded(stats.getMean()));
@@ -205,20 +265,40 @@ public class AssignFociToObjects implements PlugInFilter
 
 	public boolean showDialog()
 	{
-		results = FindFoci.getResults();
-		if (results == null)
+		ArrayList<int[]> findFociResults = getFindFociResults();
+		ArrayList<int[]> roiResults = getRoiResults();
+		if (findFociResults == null && roiResults == null)
 		{
-			IJ.error(FRAME_TITLE, "No " + FindFoci.FRAME_TITLE + " results in memory");
+			IJ.error(FRAME_TITLE, "No " + FindFoci.FRAME_TITLE + " results in memory or point ROI on the image");
 			return false;
 		}
 
 		GenericDialog gd = new GenericDialog(FRAME_TITLE);
 		gd.addHelp(URL.FIND_FOCI);
 
-		gd.addMessage("Assign Find Foci " + ImageJHelper.pleural(results.size(), "result") +
-				" to the nearest object\n(Objects will be found in the current image)");
+		String[] options = new String[2];
+		int count = 0;
 
+		String msg = "Assign foci to the nearest object\n(Objects will be found in the current image)\nAvailable foci:";
+		if (findFociResults != null)
+		{
+			msg += "\nFind Foci = " + ImageJHelper.pleural(findFociResults.size(), "result");
+			options[count++] = "Find Foci";
+		}
+		if (roiResults != null)
+		{
+			msg += "\nROI = " + ImageJHelper.pleural(roiResults.size(), "point");
+			options[count++] = "ROI";
+		}
+		options = Arrays.copyOf(options, count);
+
+		gd.addMessage(msg);
+
+		gd.addChoice("Foci", options, input);
 		gd.addSlider("Radius", 5, 50, radius);
+		gd.addNumericField("Min_size", minSize, 0);
+		gd.addNumericField("Max_size", maxSize, 0);
+		gd.addCheckbox("Remove_small_objects", removeSmallObjects);
 		gd.addCheckbox("Show_objects", showObjects);
 		gd.addCheckbox("Show_foci", showFoci);
 
@@ -226,11 +306,48 @@ public class AssignFociToObjects implements PlugInFilter
 		if (gd.wasCanceled())
 			return false;
 
+		input = gd.getNextChoice();
 		radius = Math.abs(gd.getNextNumber());
+		minSize = Math.abs((int) gd.getNextNumber());
+		maxSize = Math.abs((int) gd.getNextNumber());
+		removeSmallObjects = gd.getNextBoolean();
 		showObjects = gd.getNextBoolean();
 		showFoci = gd.getNextBoolean();
 
+		// Load objects
+		results = (input.equalsIgnoreCase("ROI")) ? roiResults : findFociResults;
+		if (results == null)
+		{
+			IJ.error(FRAME_TITLE, "No foci could be loaded");
+			return false;
+		}
+
 		return true;
+	}
+
+	private ArrayList<int[]> getFindFociResults()
+	{
+		if (FindFoci.getResults() == null)
+			return null;
+		ArrayList<int[]> results = new ArrayList<int[]>(FindFoci.getResults().size());
+		for (int[] result : FindFoci.getResults())
+		{
+			results.add(new int[] { result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y] });
+		}
+		return results;
+	}
+
+	private ArrayList<int[]> getRoiResults()
+	{
+		AssignedPoint[] points = PointManager.extractRoiPoints(imp.getRoi());
+		if (points.length == 0)
+			return null;
+		ArrayList<int[]> results = new ArrayList<int[]>(points.length);
+		for (AssignedPoint point : points)
+		{
+			results.add(new int[] { point.x, point.y });
+		}
+		return results;
 	}
 
 	private static void createDistanceGrid(double radius)
@@ -291,8 +408,9 @@ public class AssignFociToObjects implements PlugInFilter
 
 	private void createResultsTables()
 	{
-		resultsWindow = createWindow(resultsWindow, "Results", "Image\tObject\tcx\tcy\tSize\tCount");
-		summaryWindow = createWindow(summaryWindow, "Summary", "Image\tnObjects\tnFoci\tIn\tOut\tMin\tMax\tAv\tMed\tSD");
+		resultsWindow = createWindow(resultsWindow, "Results", "Image\tObject\tcx\tcy\tSize\tValid\tCount");
+		summaryWindow = createWindow(summaryWindow, "Summary",
+				"Image\tnObjects\tValid\tnFoci\tIn\tIgnored\tOut\tMin\tMax\tAv\tMed\tSD");
 		Point p1 = resultsWindow.getLocation();
 		Point p2 = summaryWindow.getLocation();
 		if (p1.x == p2.x && p1.y == p2.y)
@@ -309,7 +427,7 @@ public class AssignFociToObjects implements PlugInFilter
 		return window;
 	}
 
-	private void showMask(ObjectAnalyzer oa, boolean[] found)
+	private void showMask(ObjectAnalyzer oa, int[] found, int[] idMap)
 	{
 		if (!showObjects)
 			return;
@@ -329,36 +447,46 @@ public class AssignFociToObjects implements PlugInFilter
 		{
 			int[] xin = new int[found.length];
 			int[] yin = new int[found.length];
+			int[] xremove = new int[found.length];
+			int[] yremove = new int[found.length];
 			int[] xout = new int[found.length];
 			int[] yout = new int[found.length];
-			int in = 0, out = 0;
+			int in = 0, remove = 0, out = 0;
 			for (int i = 0; i < found.length; i++)
 			{
 				final int[] xy = results.get(i);
-				if (found[i])
+				final int id = idMap[found[i]];
+				if (id > 0)
 				{
-					xin[in] = xy[FindFoci.RESULT_X];
-					yin[in++] = xy[FindFoci.RESULT_Y];
+					xin[in] = xy[0];
+					yin[in++] = xy[1];
+				}
+				else if (id < 0)
+				{
+					xremove[remove] = xy[0];
+					yremove[remove++] = xy[1];
 				}
 				else
 				{
-					xout[out] = xy[FindFoci.RESULT_X];
-					yout[out++] = xy[FindFoci.RESULT_Y];
+					xout[out] = xy[0];
+					yout[out++] = xy[1];
 				}
 			}
 
 			Overlay o = new Overlay();
-			PointRoi roi = new PointRoi(xin, yin, in);
-			roi.setHideLabels(true);
-			roi.setFillColor(Color.GREEN);
-			roi.setStrokeColor(Color.GREEN);
-			o.add(roi);
-			roi = new PointRoi(xout, yout, out);
-			roi.setHideLabels(true);
-			roi.setFillColor(Color.RED);
-			roi.setStrokeColor(Color.RED);
-			o.add(roi);
+			addRoi(xin, yin, in, o, Color.GREEN);
+			addRoi(xremove, yremove, remove, o, Color.YELLOW);
+			addRoi(xout, yout, out, o, Color.RED);
 			imp.setOverlay(o);
 		}
+	}
+
+	private void addRoi(int[] x, int[] y, int n, Overlay o, Color color)
+	{
+		PointRoi roi = new PointRoi(x, y, n);
+		roi.setHideLabels(true);
+		roi.setFillColor(color);
+		roi.setStrokeColor(color);
+		o.add(roi);
 	}
 }

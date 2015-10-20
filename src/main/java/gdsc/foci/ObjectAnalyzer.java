@@ -26,6 +26,7 @@ public class ObjectAnalyzer
 	private boolean eightConnected;
 	private int[] objectMask;
 	private int maxObject;
+	private int minObjectSize = 0;
 
 	public ObjectAnalyzer(ImageProcessor ip)
 	{
@@ -36,8 +37,6 @@ public class ObjectAnalyzer
 	{
 		this.ip = ip;
 		this.eightConnected = eightConnected;
-
-		analyseObjects();
 	}
 
 	/**
@@ -45,6 +44,7 @@ public class ObjectAnalyzer
 	 */
 	public int[] getObjectMask()
 	{
+		analyseObjects();
 		return objectMask;
 	}
 
@@ -53,11 +53,15 @@ public class ObjectAnalyzer
 	 */
 	public int getMaxObject()
 	{
+		analyseObjects();
 		return maxObject;
 	}
 
 	private void analyseObjects()
 	{
+		if (objectMask != null)
+			return;
+
 		final int[] maskImage = new int[ip.getPixelCount()];
 		for (int i = 0; i < maskImage.length; i++)
 			maskImage[i] = ip.get(i);
@@ -67,8 +71,11 @@ public class ObjectAnalyzer
 		objectMask = new int[maskImage.length];
 		maxObject = 0;
 
-		int[] pList = new int[100];
+		int[][] ppList = new int[1][];
+		ppList[0] = new int[100];
 		initialise(ip);
+
+		int[] sizes = new int[100];
 
 		for (int i = 0; i < maskImage.length; i++)
 		{
@@ -76,7 +83,28 @@ public class ObjectAnalyzer
 			if (maskImage[i] != 0 && objectMask[i] == 0)
 			{
 				maxObject++;
-				pList = expandObjectXY(maskImage, objectMask, i, maxObject, pList);
+				int size = expandObjectXY(maskImage, objectMask, i, maxObject, ppList);
+				if (sizes.length == maxObject)
+					sizes = Arrays.copyOf(sizes, (int) (maxObject * 1.5));
+				sizes[maxObject] = size;
+			}
+		}
+
+		// Remove objects that are too small
+		if (minObjectSize > 0)
+		{
+			int[] map = new int[maxObject + 1];
+			maxObject = 0;
+			for (int i = 1; i < map.length; i++)
+			{
+				if (sizes[i] >= minObjectSize)
+					map[i] = ++maxObject;
+			}
+
+			for (int i = 0; i < objectMask.length; i++)
+			{
+				if (objectMask[i] != 0)
+					objectMask[i] = map[objectMask[i]];
 			}
 		}
 	}
@@ -84,7 +112,7 @@ public class ObjectAnalyzer
 	/**
 	 * Searches from the specified point to find all coordinates of the same value and assigns them to given maximum ID.
 	 */
-	private int[] expandObjectXY(final int[] image, final int[] objectMask, final int index0, final int id, int[] pList)
+	private int expandObjectXY(final int[] image, final int[] objectMask, final int index0, final int id, int[][] ppList)
 	{
 		objectMask[index0] = id; // mark first point
 		int listI = 0; // index of current search element in the list
@@ -92,6 +120,7 @@ public class ObjectAnalyzer
 		final int neighbours = (eightConnected) ? 8 : 4;
 
 		// we create a list of connected points and start the list at the current point
+		int[] pList = ppList[0];
 		pList[listI] = index0;
 
 		final int v0 = image[index0];
@@ -132,7 +161,9 @@ public class ObjectAnalyzer
 
 		} while (listI < listLen);
 
-		return pList;
+		ppList[0] = pList;
+
+		return listLen;
 	}
 
 	private int maxx, maxy;
@@ -247,5 +278,39 @@ public class ObjectAnalyzer
 			data[i][2] = count[i];
 		}
 		return data;
+	}
+
+	/**
+	 * @return The minimum object size. Objects below this are removed.
+	 */
+	public int getMinObjectSize()
+	{
+		return minObjectSize;
+	}
+
+	/**
+	 * @param minObjectSize
+	 *            The minimum object size. Objects below this are removed.
+	 */
+	public void setMinObjectSize(int minObjectSize)
+	{
+		this.minObjectSize = minObjectSize;
+	}
+
+	/**
+	 * @return True if objects should use 8-connected pixels. The default is 4-connected.
+	 */
+	public boolean isEightConnected()
+	{
+		return eightConnected;
+	}
+
+	/**
+	 * @param eightConnected
+	 *            True if objects should use 8-connected pixels. The default is 4-connected.
+	 */
+	public void setEightConnected(boolean eightConnected)
+	{
+		this.eightConnected = eightConnected;
 	}
 }
