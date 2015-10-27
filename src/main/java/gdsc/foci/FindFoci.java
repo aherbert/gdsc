@@ -6580,7 +6580,8 @@ public class FindFoci implements PlugIn, MouseListener
 		int[] imageDimension = parameters.image.clone();
 		int[] maskDimension = parameters.mask.clone();
 		imp = setupImage(imp, imageDimension);
-		maskImp = setupImage(maskImp, maskDimension);
+		if (maskImp != null)
+			maskImp = setupImage(maskImp, maskDimension);
 
 		// Run the algorithm
 		return execBatch(imp, maskImp, parameters, imageDimension, maskDimension);
