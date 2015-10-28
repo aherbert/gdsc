@@ -372,7 +372,8 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 	}
 
-	public static String FRAME_TITLE = "FindFoci";
+	public static final String FRAME_TITLE = "FindFoci";
+	
 	private static TextWindow resultsWindow = null;
 	private static ArrayList<int[]> lastResultsArray = null;
 	private static int isGaussianFitEnabled = 0;
@@ -941,6 +942,11 @@ public class FindFoci implements PlugIn, MouseListener
 	// Allow the results to be stored in memory for other plugins to access
 	private static HashMap<String, ArrayList<int[]>> memory = new HashMap<String, ArrayList<int[]>>();
 	private static ArrayList<String> memoryNames = new ArrayList<String>();
+	
+	// Used to record all the results into a single file during batch analysis
+	private OutputStreamWriter allOut = null;
+	private int batchId = 0;
+	private String batchPrefix = null;
 
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
@@ -1467,6 +1473,61 @@ public class FindFoci implements PlugIn, MouseListener
 				options, blur, centreMethod, centreParameter, fractionParameter, resultsArray, stats, resultsDirectory);
 	}
 
+	private void openBatchResultsFile()
+	{
+		try
+		{
+			batchId = 0;
+			FileOutputStream fos = new FileOutputStream(resultsDirectory + File.separatorChar + "all.xls");
+			allOut = new OutputStreamWriter(fos, "UTF-8");
+			allOut.write("Image ID\tImage\t" + createResultsHeader());
+		}
+		catch (Exception e)
+		{
+			logError(e.getMessage());
+			closeBatchResultsFile();
+		}
+	}
+	
+	private void closeBatchResultsFile()
+	{
+		if (allOut == null)
+			return;
+		try
+		{
+			allOut.close();
+		}
+		catch (Exception e)
+		{
+			logError(e.getMessage());
+		}
+		finally
+		{
+			allOut = null;
+		}
+	}
+	
+	private void initialiseBatchPrefix(String title)
+	{
+		batchPrefix = ++batchId + "\t" + title + "\t";
+	}
+
+	private void writeBatchResultsFile(String result)
+	{
+		if (allOut == null)
+			return;
+		try
+		{
+			allOut.write(batchPrefix);
+			allOut.write(result);
+		}
+		catch (Exception e)
+		{
+			logError(e.getMessage());
+			closeBatchResultsFile();
+		}
+	}
+
 	private String saveResults(String expId, ImagePlus imp, int[] imageDimension, ImagePlus mask, int[] maskDimension,
 			int backgroundMethod, double backgroundParameter, String autoThresholdMethod, int searchMethod,
 			double searchParameter, int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType,
@@ -1488,8 +1549,10 @@ public class FindFoci implements PlugIn, MouseListener
 				int[] result = resultsArray.get(i);
 				xpoints[i] = result[RESULT_X];
 				ypoints[i] = result[RESULT_Y];
-				out.write(buildResultEntry(i + 1, resultsArray.size() - i, result, stats[STATS_SUM],
-						stats[STATS_BACKGROUND], stats[STATS_SUM_ABOVE_BACKGROUND]));
+				String resultEntry = buildResultEntry(i + 1, resultsArray.size() - i, result, stats[STATS_SUM],
+						stats[STATS_BACKGROUND], stats[STATS_SUM_ABOVE_BACKGROUND]); 
+				out.write(resultEntry);
+				writeBatchResultsFile(resultEntry);
 			}
 			out.close();
 
@@ -1518,10 +1581,10 @@ public class FindFoci implements PlugIn, MouseListener
 	 * 
 	 * @return True if the parameters were saved
 	 */
-	static boolean saveParameters(String filename, ImagePlus imp, int[] imageDimension, ImagePlus mask, int[] maskDimension,
-			int backgroundMethod, double backgroundParameter, String autoThresholdMethod, int searchMethod,
-			double searchParameter, int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType,
-			int sortIndex, int options, double blur, int centreMethod, double centreParameter,
+	static boolean saveParameters(String filename, ImagePlus imp, int[] imageDimension, ImagePlus mask,
+			int[] maskDimension, int backgroundMethod, double backgroundParameter, String autoThresholdMethod,
+			int searchMethod, double searchParameter, int maxPeaks, int minSize, int peakMethod, double peakParameter,
+			int outputType, int sortIndex, int options, double blur, int centreMethod, double centreParameter,
 			double fractionParameter, String resultsDirectory)
 	{
 		try
@@ -6463,10 +6526,12 @@ public class FindFoci implements PlugIn, MouseListener
 			return;
 		}
 		setResultsDirectory(batchOutputDirectory);
+		openBatchResultsFile();
 		for (String image : imageList)
 		{
 			runBatch(image, parameters);
 		}
+		closeBatchResultsFile();
 	}
 
 	private boolean showBatchDialog()
@@ -6723,6 +6788,7 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 
 		// Record all the results to file
+		initialiseBatchPrefix(expId);
 		saveResults(expId, imp, imageDimension, mask, maskDimension, p.backgroundMethod, p.backgroundParameter,
 				p.autoThresholdMethod, p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod,
 				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
