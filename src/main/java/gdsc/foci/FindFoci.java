@@ -373,7 +373,7 @@ public class FindFoci implements PlugIn, MouseListener
 	}
 
 	public static final String FRAME_TITLE = "FindFoci";
-	
+
 	private static TextWindow resultsWindow = null;
 	private static ArrayList<int[]> lastResultsArray = null;
 	private static int isGaussianFitEnabled = 0;
@@ -942,11 +942,11 @@ public class FindFoci implements PlugIn, MouseListener
 	// Allow the results to be stored in memory for other plugins to access
 	private static HashMap<String, ArrayList<int[]>> memory = new HashMap<String, ArrayList<int[]>>();
 	private static ArrayList<String> memoryNames = new ArrayList<String>();
-	
+
 	// Used to record all the results into a single file during batch analysis
 	private OutputStreamWriter allOut = null;
 	private int batchId = 0;
-	private String batchPrefix = null;
+	private String batchPrefix = null, emptyEntry = null;
 
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
@@ -1488,7 +1488,7 @@ public class FindFoci implements PlugIn, MouseListener
 			closeBatchResultsFile();
 		}
 	}
-	
+
 	private void closeBatchResultsFile()
 	{
 		if (allOut == null)
@@ -1506,7 +1506,7 @@ public class FindFoci implements PlugIn, MouseListener
 			allOut = null;
 		}
 	}
-	
+
 	private void initialiseBatchPrefix(String title)
 	{
 		batchPrefix = ++batchId + "\t" + title + "\t";
@@ -1526,6 +1526,14 @@ public class FindFoci implements PlugIn, MouseListener
 			logError(e.getMessage());
 			closeBatchResultsFile();
 		}
+	}
+
+	private void writeEmptyBatchResultsFile()
+	{
+		// Check if we have a batch file before building the empty entry
+		if (allOut == null)
+			return;
+		writeBatchResultsFile(buildEmptyResultEntry());
 	}
 
 	private String saveResults(String expId, ImagePlus imp, int[] imageDimension, ImagePlus mask, int[] maskDimension,
@@ -1550,10 +1558,13 @@ public class FindFoci implements PlugIn, MouseListener
 				xpoints[i] = result[RESULT_X];
 				ypoints[i] = result[RESULT_Y];
 				String resultEntry = buildResultEntry(i + 1, resultsArray.size() - i, result, stats[STATS_SUM],
-						stats[STATS_BACKGROUND], stats[STATS_SUM_ABOVE_BACKGROUND]); 
+						stats[STATS_BACKGROUND], stats[STATS_SUM_ABOVE_BACKGROUND]);
 				out.write(resultEntry);
 				writeBatchResultsFile(resultEntry);
 			}
+			// Record an empty record for batch processing
+			if (resultsArray.isEmpty())
+				writeEmptyBatchResultsFile();
 			out.close();
 
 			// Save roi to file
@@ -3591,6 +3602,19 @@ public class FindFoci implements PlugIn, MouseListener
 		sb.append(result[RESULT_STATE]);
 		sb.append(newLine);
 		return sb.toString();
+	}
+
+	private String buildEmptyResultEntry()
+	{
+		if (emptyEntry == null)
+		{
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < 21; i++)
+				sb.append('\t');
+			sb.append(newLine);
+			emptyEntry = sb.toString();
+		}
+		return emptyEntry;
 	}
 
 	private String generateId(ImagePlus imp)
@@ -6530,6 +6554,8 @@ public class FindFoci implements PlugIn, MouseListener
 		for (String image : imageList)
 		{
 			runBatch(image, parameters);
+			if (ImageJHelper.isInterrupted())
+				break;
 		}
 		closeBatchResultsFile();
 	}
