@@ -394,6 +394,7 @@ public class ImageJHelper
 		}
 		else
 		{
+			slices.setColorModel(imp.getProcessor().getColorModel());
 			imp.setStack(slices);
 			imp.getWindow().toFront();
 		}
