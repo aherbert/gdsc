@@ -25,12 +25,17 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Prefs;
 import ij.WindowManager;
+import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
-import ij.plugin.PlugIn;
+import ij.plugin.filter.ExtendedPlugInFilter;
+import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ImageProcessor;
+import ij.process.LUT;
 import ij.text.TextWindow;
 
+import java.awt.AWTEvent;
 import java.awt.Point;
+import java.awt.image.ColorModel;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -40,9 +45,11 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
  * Finds objects in an image using contiguous pixels of the same value. Locates the closest object to each Find Foci
  * result held in memory and summarises the counts.
  */
-public class AssignFociToClusters implements PlugIn
+public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListener
 {
 	public static final String FRAME_TITLE = "Assign Foci To Clusters";
+
+	private static int flags = FINAL_PROCESSING + DOES_8G + DOES_16 + SNAPSHOT;
 
 	private static double radius = 100;
 	private static ClusteringAlgorithm[] algorithms = new ClusteringAlgorithm[] {
@@ -66,26 +73,36 @@ public class AssignFociToClusters implements PlugIn
 
 	private ImagePlus imp;
 	private ArrayList<int[]> results;
+	private ArrayList<Cluster> clusters;
+	private ColorModel cm;
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see ij.plugin.PlugIn#run(java.lang.String)
-	 */
-	public void run(String arg)
+	public int setup(String arg, ImagePlus imp)
 	{
+		if (arg.equals("final"))
+		{
+			if (clusters == null)
+				doClustering();
+			if (this.imp != null)
+			{
+				// Reset the preview 
+				ImageProcessor ip = this.imp.getProcessor();
+				ip.setColorModel(cm);
+				ip.reset();
+			}
+			displayResults();
+			return DONE;
+		}
+
 		results = FindFoci.getResults();
-		if (results == null)
+		if (results == null || results.isEmpty())
 		{
 			IJ.error(FRAME_TITLE, "Require " + FindFoci.FRAME_TITLE + " results in memory");
-			return;
+			return DONE;
 		}
-		this.imp = validateInputImage();
 
-		if (!showDialog())
-			return;
+		this.imp = validateInputImage(imp);
 
-		doClustering();
+		return flags;
 	}
 
 	/**
@@ -95,9 +112,8 @@ public class AssignFociToClusters implements PlugIn
 	 * @param imp
 	 * @return The image if valid
 	 */
-	private ImagePlus validateInputImage()
+	private ImagePlus validateInputImage(ImagePlus imp)
 	{
-		ImagePlus imp = WindowManager.getCurrentImage();
 		if (imp == null)
 			return null;
 		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
@@ -153,40 +169,179 @@ public class AssignFociToClusters implements PlugIn
 			}
 		}
 
+		// Store this so it can be reset
+		cm = imp.getProcessor().getColorModel();
+
 		return imp;
 	}
 
-	private boolean showDialog()
+	public void run(ImageProcessor ip)
+	{
+		double seconds = doClustering();
+
+		if (imp == null)
+		{
+			// Not a valid image for a preview overlay so log the clustering result			
+			IJ.log(ImageJHelper.pleural(clusters.size(), "cluster") + " in " + ImageJHelper.rounded(seconds) +
+					" seconds");
+			return;
+		}
+
+		// Create a new mask image colouring the objects from each cluster.
+		// Create a map to convert original foci pixels to clusters.
+		int[] map = new int[results.size() + 1];
+		for (int i = 0; i < clusters.size(); i++)
+		{
+			for (ClusterPoint p = clusters.get(i).head; p != null; p = p.next)
+			{
+				map[p.id] = i + 1;
+			}
+		}
+
+		// Update the preview processor with the clusters
+		for (int i = 0; i < ip.getPixelCount(); i++)
+		{
+			if (ip.get(i) != 0)
+				ip.set(i, map[ip.get(i)]);
+		}
+		ip.setColorModel(getColorModel());
+		ip.setMinAndMax(0, clusters.size());
+	}
+
+	/**
+	 * Build a custom LUT that helps show the classes
+	 * 
+	 * @return
+	 */
+	private LUT getColorModel()
+	{
+		byte[] reds = new byte[256];
+		byte[] greens = new byte[256];
+		byte[] blues = new byte[256];
+		int nColors = fire(reds, greens, blues);
+		if (nColors < 256)
+			interpolate(reds, greens, blues, nColors);
+		return new LUT(reds, greens, blues);
+	}
+
+	/**
+	 * Adapted from ij.plugin.LutLoader to remove the dark colours
+	 * 
+	 * @param reds
+	 * @param greens
+	 * @param blues
+	 * @return
+	 */
+	private int fire(byte[] reds, byte[] greens, byte[] blues)
+	{
+		int[] r = { //0, 0, 1, 25, 49, 
+		73, 98, 122, 146, 162, 173, 184, 195, 207, 217, 229, 240, 252, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+				255, 255, 255, 255, 255 };
+		int[] g = { //0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 14, 35, 57, 79, 101, 117, 133, 147, 161, 175, 190, 205, 219, 234, 248, 255, 255, 255,
+				255 };
+		int[] b = { //0, 61, 96, 130, 165, 
+		192, 220, 227, 210, 181, 151, 122, 93, 64, 35, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35, 98, 160, 223, 255 };
+		for (int i = 0; i < r.length; i++)
+		{
+			reds[i] = (byte) r[i];
+			greens[i] = (byte) g[i];
+			blues[i] = (byte) b[i];
+		}
+		return r.length;
+	}
+
+	/**
+	 * Copied from ij.plugin.LutLoader.
+	 * 
+	 * @param reds
+	 * @param greens
+	 * @param blues
+	 * @param nColors
+	 */
+	private void interpolate(byte[] reds, byte[] greens, byte[] blues, int nColors)
+	{
+		byte[] r = new byte[nColors];
+		byte[] g = new byte[nColors];
+		byte[] b = new byte[nColors];
+		System.arraycopy(reds, 0, r, 0, nColors);
+		System.arraycopy(greens, 0, g, 0, nColors);
+		System.arraycopy(blues, 0, b, 0, nColors);
+		double scale = nColors / 256.0;
+		int i1, i2;
+		double fraction;
+		// Ignore i=0 to ensure a black zero 
+		reds[0] = greens[0] = blues[0] = 0;
+		for (int i = 1; i < 256; i++)
+		{
+			i1 = (int) (i * scale);
+			i2 = i1 + 1;
+			if (i2 == nColors)
+				i2 = nColors - 1;
+			fraction = i * scale - i1;
+			//IJ.write(i+" "+i1+" "+i2+" "+fraction);
+			reds[i] = (byte) ((1.0 - fraction) * (r[i1] & 255) + fraction * (r[i2] & 255));
+			greens[i] = (byte) ((1.0 - fraction) * (g[i1] & 255) + fraction * (g[i2] & 255));
+			blues[i] = (byte) ((1.0 - fraction) * (b[i1] & 255) + fraction * (b[i2] & 255));
+		}
+	}
+
+	public void setNPasses(int nPasses)
+	{
+		// Nothing to do
+	}
+
+	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		GenericDialog gd = new GenericDialog(FRAME_TITLE);
 		gd.addHelp(URL.FIND_FOCI);
 		gd.addMessage(ImageJHelper.pleural(results.size(), "result"));
 
-		gd.addSlider("Radius", 5, 200, radius);
+		gd.addSlider("Radius", 5, 500, radius);
 		gd.addChoice("Algorithm", names, names[algorithm]);
-		if (imp != null)
+		if (this.imp != null)
 			gd.addCheckbox("Show_mask", showMask);
 
+		gd.addPreviewCheckbox(pfr);
+		gd.addDialogListener(this);
 		gd.showDialog();
-		if (gd.wasCanceled())
-			return false;
 
+		if (gd.wasCanceled() || !dialogItemChanged(gd, null))
+		{
+			return DONE;
+		}
+
+		return flags;
+	}
+
+	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
+	{
 		radius = Math.abs(gd.getNextNumber());
 		algorithm = gd.getNextChoiceIndex();
-		if (imp != null)
+		if (this.imp != null)
 			myShowMask = showMask = gd.getNextBoolean();
-
 		return true;
 	}
 
-	private void doClustering()
+	private double doClustering()
 	{
 		long start = System.currentTimeMillis();
 		IJ.showStatus("Clustering ...");
 		ClusteringEngine e = new ClusteringEngine(Prefs.getThreads(), algorithms[algorithm], new IJTrackProgress());
 		ArrayList<ClusterPoint> points = getPoints();
-		ArrayList<Cluster> clusters = e.findClusters(points, radius);
+		clusters = e.findClusters(points, radius);
 		Collections.sort(clusters);
+		double seconds = (System.currentTimeMillis() - start) / 1000.0;
+		IJ.showStatus(ImageJHelper.pleural(clusters.size(), "cluster") + " in " + ImageJHelper.rounded(seconds) +
+				" seconds");
+		return seconds;
+	}
+
+	private void displayResults()
+	{
+		if (clusters == null)
+			return;
+
 		IJ.showStatus("Displaying results ...");
 
 		createResultsTables();
@@ -205,17 +360,16 @@ public class AssignFociToClusters implements PlugIn
 			sb.append(ImageJHelper.rounded(cluster.n)).append('\t');
 			stats.addValue(cluster.n);
 			sb.append('\n');
-			
+
 			// Auto-width adjustment is only performed when number of rows is less than 10
 			// so do this before it won't work
-			if (i==9 && resultsWindow.getTextPanel().getLineCount() < 10)
+			if (i == 9 && resultsWindow.getTextPanel().getLineCount() < 10)
 			{
 				resultsWindow.append(sb.toString());
 				sb.setLength(0);
 			}
 		}
 		resultsWindow.append(sb.toString());
-		
 
 		sb.setLength(0);
 		sb.append(title).append('\t');
@@ -253,12 +407,16 @@ public class AssignFociToClusters implements PlugIn
 				}
 				newStack.setProcessor(ip2, s);
 			}
+			
+			// Set a color table if this is a new image
+			ImagePlus clusterImp = WindowManager.getImage(FRAME_TITLE);
+			if (clusterImp == null)
+				newStack.setColorModel(getColorModel());
+			
 			ImageJHelper.display(FRAME_TITLE, newStack);
-			if (ImageJHelper.isNewWindow())
-				IJ.run("Fire");
 		}
-		double seconds = (System.currentTimeMillis() - start) / 1000.0;
-		IJ.showStatus("Done in " + ImageJHelper.rounded(seconds) + " seconds");
+
+		IJ.showStatus("");
 	}
 
 	private ArrayList<ClusterPoint> getPoints()
