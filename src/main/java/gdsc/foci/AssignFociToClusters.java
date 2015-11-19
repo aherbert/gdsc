@@ -56,7 +56,7 @@ public class AssignFociToClusters implements PlugIn
 		for (int i = 0; i < names.length; i++)
 			names[i] = algorithms[i].toString();
 	}
-	private static int algorithm = 0;
+	private static int algorithm = 1;
 	private static boolean showMask = true;
 	private boolean myShowMask = false;
 
@@ -205,8 +205,17 @@ public class AssignFociToClusters implements PlugIn
 			sb.append(ImageJHelper.rounded(cluster.n)).append('\t');
 			stats.addValue(cluster.n);
 			sb.append('\n');
+			
+			// Auto-width adjustment is only performed when number of rows is less than 10
+			// so do this before it won't work
+			if (i==9 && resultsWindow.getTextPanel().getLineCount() < 10)
+			{
+				resultsWindow.append(sb.toString());
+				sb.setLength(0);
+			}
 		}
 		resultsWindow.append(sb.toString());
+		
 
 		sb.setLength(0);
 		sb.append(title).append('\t');
