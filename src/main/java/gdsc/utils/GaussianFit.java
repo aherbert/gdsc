@@ -60,8 +60,6 @@ public class GaussianFit implements PlugInFilter
 
 			// ... it exists on the classpath
 			
-			// TODO: get this to work calling the method with reflection ...
-
 			// Try a fit. 
 			double[] fit = null;
 			//gdsc.smlm.ij.plugins.GaussianFit gf = new gdsc.smlm.ij.plugins.GaussianFit();
