@@ -49,7 +49,8 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 {
 	public static final String FRAME_TITLE = "Assign Foci To Clusters";
 
-	private static int flags = FINAL_PROCESSING + DOES_8G + DOES_16 + SNAPSHOT;
+	private static int imageFlags = FINAL_PROCESSING + DOES_8G + DOES_16 + SNAPSHOT;
+	private static int noImageFlags = NO_IMAGE_REQUIRED;
 
 	private static double radius = 100;
 	private static ClusteringAlgorithm[] algorithms = new ClusteringAlgorithm[] {
@@ -78,6 +79,8 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 
 	public int setup(String arg, ImagePlus imp)
 	{
+		// TODO - When the preview is cancelled we need to reset the color model on the original image
+		
 		if (arg.equals("final"))
 		{
 			if (clusters == null)
@@ -102,7 +105,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 
 		this.imp = validateInputImage(imp);
 
-		return flags;
+		return (this.imp == null) ? noImageFlags : imageFlags;
 	}
 
 	/**
@@ -177,15 +180,16 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 
 	public void run(ImageProcessor ip)
 	{
-		double seconds = doClustering();
+		doClustering();
 
 		if (imp == null)
 		{
-			// Not a valid image for a preview overlay so log the clustering result			
-			IJ.log(ImageJHelper.pleural(clusters.size(), "cluster") + " in " + ImageJHelper.rounded(seconds) +
-					" seconds");
+			// This occurs when we set the NO_IMAGE_REQUIRED 
+			displayResults();			
 			return;
 		}
+		
+		// This occurs when we are supporting a preview
 
 		// Create a new mask image colouring the objects from each cluster.
 		// Create a map to convert original foci pixels to clusters.
@@ -215,6 +219,8 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	 */
 	private LUT getColorModel()
 	{
+		// TODO - create a colour LUT so that all colours from 1-255 are distinct
+		
 		byte[] reds = new byte[256];
 		byte[] greens = new byte[256];
 		byte[] blues = new byte[256];
@@ -300,10 +306,12 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		gd.addSlider("Radius", 5, 500, radius);
 		gd.addChoice("Algorithm", names, names[algorithm]);
 		if (this.imp != null)
+		{
+			// Allow preview
 			gd.addCheckbox("Show_mask", showMask);
-
-		gd.addPreviewCheckbox(pfr);
-		gd.addDialogListener(this);
+			gd.addPreviewCheckbox(pfr);
+			gd.addDialogListener(this);
+		}
 		gd.showDialog();
 
 		if (gd.wasCanceled() || !dialogItemChanged(gd, null))
@@ -311,7 +319,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			return DONE;
 		}
 
-		return flags;
+		return (this.imp == null) ? noImageFlags : imageFlags;
 	}
 
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
@@ -331,6 +339,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		ArrayList<ClusterPoint> points = getPoints();
 		clusters = e.findClusters(points, radius);
 		Collections.sort(clusters);
+		Collections.reverse(clusters);
 		double seconds = (System.currentTimeMillis() - start) / 1000.0;
 		IJ.showStatus(ImageJHelper.pleural(clusters.size(), "cluster") + " in " + ImageJHelper.rounded(seconds) +
 				" seconds");
@@ -407,12 +416,12 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 				}
 				newStack.setProcessor(ip2, s);
 			}
-			
+
 			// Set a color table if this is a new image
 			ImagePlus clusterImp = WindowManager.getImage(FRAME_TITLE);
 			if (clusterImp == null)
 				newStack.setColorModel(getColorModel());
-			
+
 			ImageJHelper.display(FRAME_TITLE, newStack);
 		}
 
