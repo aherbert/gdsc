@@ -621,7 +621,7 @@ public class FindFoci implements PlugIn, MouseListener
 	 */
 	public final static int RESULT_SADDLE_NEIGHBOUR_ID = 8;
 	/**
-	 * The index of the sum of the peak intensity within the result int[] array of the results ArrayList<int[]> object
+	 * The index of the average of the peak intensity within the result int[] array of the results ArrayList<int[]> object
 	 */
 	public final static int RESULT_AVERAGE_INTENSITY = 9;
 	/**
