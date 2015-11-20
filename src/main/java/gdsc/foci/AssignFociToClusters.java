@@ -94,7 +94,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
         FindFoci.RESULT_INTENSITY_ABOVE_SADDLE
 	};
 	//@formatter:on
-	private static int weight = 0;
+	private static int weight = 2;
 	private static boolean showMask = true;
 	private boolean myShowMask = false;
 
