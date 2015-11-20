@@ -79,19 +79,11 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 
 	public int setup(String arg, ImagePlus imp)
 	{
-		// TODO - When the preview is cancelled we need to reset the color model on the original image
-		
 		if (arg.equals("final"))
 		{
+			resetPreview();
 			if (clusters == null)
 				doClustering();
-			if (this.imp != null)
-			{
-				// Reset the preview 
-				ImageProcessor ip = this.imp.getProcessor();
-				ip.setColorModel(cm);
-				ip.reset();
-			}
 			displayResults();
 			return DONE;
 		}
@@ -106,6 +98,17 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		this.imp = validateInputImage(imp);
 
 		return (this.imp == null) ? noImageFlags : imageFlags;
+	}
+
+	public void resetPreview()
+	{
+		if (this.imp != null)
+		{
+			// Reset the preview 
+			ImageProcessor ip = this.imp.getProcessor();
+			ip.setColorModel(cm);
+			ip.reset();
+		}
 	}
 
 	/**
@@ -316,6 +319,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 
 		if (gd.wasCanceled() || !dialogItemChanged(gd, null))
 		{
+			resetPreview();
 			return DONE;
 		}
 
