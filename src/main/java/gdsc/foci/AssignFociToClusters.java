@@ -27,6 +27,9 @@ import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
+import ij.gui.Overlay;
+import ij.gui.PointRoi;
+import ij.gui.Roi;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ImageProcessor;
@@ -34,6 +37,7 @@ import ij.process.LUT;
 import ij.text.TextWindow;
 
 import java.awt.AWTEvent;
+import java.awt.Color;
 import java.awt.Label;
 import java.awt.Point;
 import java.awt.image.ColorModel;
@@ -96,6 +100,11 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	//@formatter:on
 	private static int weight = 2;
 	private static boolean showMask = true;
+	private static boolean eliminateEdgeClusters = false;
+	private static int border = 10;
+	private static boolean labelClusters = false;
+	private static boolean filterUsingPointROI = false;
+	private static double filterRadius = 50;
 	private boolean myShowMask = false;
 
 	private static TextWindow resultsWindow = null;
@@ -103,6 +112,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	private static int resultId = 1;
 
 	private ImagePlus imp;
+	private AssignedPoint[] roiPoints;
 	private ArrayList<int[]> results;
 	private ArrayList<Cluster> clusters;
 	private ColorModel cm;
@@ -136,6 +146,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			ImageProcessor ip = this.imp.getProcessor();
 			ip.setColorModel(cm);
 			ip.reset();
+			this.imp.setOverlay(null);
 		}
 	}
 
@@ -206,6 +217,11 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		// Store this so it can be reset
 		cm = imp.getProcessor().getColorModel();
 
+		// Check for a multi-point ROI
+		roiPoints = PointManager.extractRoiPoints(imp.getRoi());
+		if (roiPoints.length == 0)
+			roiPoints = null;
+
 		return imp;
 	}
 
@@ -223,7 +239,6 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		}
 
 		// This occurs when we are supporting a preview
-		label.setText(ImageJHelper.pleural(clusters.size(), "Cluster"));
 
 		// Create a new mask image colouring the objects from each cluster.
 		// Create a map to convert original foci pixels to clusters.
@@ -242,9 +257,47 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			if (ip.get(i) != 0)
 				ip.set(i, map[ip.get(i)]);
 		}
+
+		// Optionally remove edge clusters. Do not replace the results of clustering
+		// since this will be done again using the entire stack in the final processing.
+		ArrayList<Cluster> newClusters = clusters;
+		if (eliminateEdgeClusters)
+		{
+			// List of clusters to remove
+			boolean[] edge = new boolean[clusters.size() + 1];
+			findEdgeClusters(ip, edge);
+
+			// Renumber image and remove edge clusters
+			newClusters = new ArrayList<Cluster>(clusters.size());
+			for (int i = 0; i < clusters.size(); i++)
+			{
+				final int id = i + 1;
+				if (edge[id])
+				{
+					map[id] = 0;
+					continue;
+				}
+				newClusters.add(clusters.get(i));
+				// Use existing map array to store new mapping
+				map[id] = newClusters.size();
+			}
+
+			for (int i = 0; i < ip.getPixelCount(); i++)
+			{
+				if (ip.get(i) != 0)
+					ip.set(i, map[ip.get(i)]);
+			}
+		}
+
 		ip.setColorModel(getColorModel());
-		ip.setMinAndMax(0, clusters.size());
+		ip.setMinAndMax(0, newClusters.size());
+
+		labelClusters(imp);
+
+		label.setText(ImageJHelper.pleural(newClusters.size(), "Cluster"));
 	}
+
+	private LUT cachedLUT = null;
 
 	/**
 	 * Build a custom LUT that helps show the classes
@@ -253,6 +306,9 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	 */
 	private LUT getColorModel()
 	{
+		if (cachedLUT != null)
+			return cachedLUT;
+
 		// Create a colour LUT so that all colours from 1-255 are distinct.
 		// This was produced using http://phrogz.net/css/distinct-colors.html
 		byte[] reds = new byte[256];
@@ -516,7 +572,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		rgb(136, 0, 255, reds, greens, blues, i++);
 		rgb(217, 54, 76, reds, greens, blues, i++);
 
-		return new LUT(reds, greens, blues);
+		return cachedLUT = new LUT(reds, greens, blues);
 	}
 
 	private void rgb(int r, int g, int b, byte[] reds, byte[] greens, byte[] blues, int i)
@@ -543,6 +599,15 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		if (this.imp != null)
 		{
 			gd.addCheckbox("Show_mask", showMask);
+			gd.addCheckbox("Eliminate_edge_clusters", eliminateEdgeClusters);
+			gd.addSlider("Border", 1, 20, border);
+			gd.addCheckbox("Label_clusters", labelClusters);
+
+			if (roiPoints != null)
+			{
+				gd.addCheckbox("Filter_using_Point_ROI", filterUsingPointROI);
+				gd.addSlider("Filter_radius", 5, 500, filterRadius);
+			}
 		}
 
 		// Allow preview
@@ -571,8 +636,26 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		algorithm = gd.getNextChoiceIndex();
 		weight = gd.getNextChoiceIndex();
 		if (this.imp != null)
+		{
 			myShowMask = showMask = gd.getNextBoolean();
+			eliminateEdgeClusters = gd.getNextBoolean();
+			border = (int) Math.abs(gd.getNextNumber());
+			if (border < 1)
+				border = 1;
+			labelClusters = gd.getNextBoolean();
 
+			if (roiPoints != null)
+			{
+				filterUsingPointROI = gd.getNextBoolean();
+				filterRadius = Math.abs(gd.getNextNumber());
+			}
+		}
+
+		if (!gd.getPreviewCheckbox().getState())
+		{
+			resetPreview();
+		}
+		else
 		// We can support a preview without an image
 		if (label != null && imp == null)
 		{
@@ -590,14 +673,17 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 
 	private double lastRadius;
 	private int lastAlgorithm, lastWeight;
+	private boolean lastfilterUsingPointROI;
 
 	private void doClustering()
 	{
-		if (clusters == null || lastRadius != radius || lastAlgorithm != algorithm || lastWeight != weight)
+		if (clusters == null || lastRadius != radius || lastAlgorithm != algorithm || lastWeight != weight ||
+				(roiPoints != null && lastfilterUsingPointROI != filterUsingPointROI))
 		{
 			lastRadius = radius;
 			lastAlgorithm = algorithm;
 			lastWeight = weight;
+			lastfilterUsingPointROI = filterUsingPointROI;
 
 			long start = System.currentTimeMillis();
 			IJ.showStatus("Clustering ...");
@@ -615,6 +701,13 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 					return 0;
 				}
 			});
+
+			if (roiPoints != null && filterUsingPointROI)
+			{
+				// TODO ...
+				System.out.printf("Filter %d clusters using %d roi points\n", clusters.size(), roiPoints.length);
+			}
+
 			double seconds = (System.currentTimeMillis() - start) / 1000.0;
 			IJ.showStatus(ImageJHelper.pleural(clusters.size(), "cluster") + " in " + ImageJHelper.rounded(seconds) +
 					" seconds");
@@ -627,6 +720,82 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			return;
 
 		IJ.showStatus("Displaying results ...");
+
+		// Options only available if there is an input FindFoci mask image.
+		// Removal of edge clusters will reduce the final number of clusters.
+		if (myShowMask)
+		{
+			// Create a new mask image colouring the objects from each cluster.
+			// Create a map to convert original foci pixels to clusters.
+			int[] map = new int[results.size() + 1];
+			for (int i = 0; i < clusters.size(); i++)
+			{
+				for (ClusterPoint p = clusters.get(i).head; p != null; p = p.next)
+				{
+					map[p.id] = i + 1;
+				}
+			}
+
+			ImageStack stack = imp.getImageStack();
+			ImageStack newStack = new ImageStack(stack.getWidth(), stack.getHeight(), stack.getSize());
+			for (int s = 1; s <= stack.getSize(); s++)
+			{
+				ImageProcessor ip = stack.getProcessor(s);
+				ImageProcessor ip2 = ip.createProcessor(ip.getWidth(), ip.getHeight());
+				for (int i = 0; i < ip.getPixelCount(); i++)
+				{
+					if (ip.get(i) != 0)
+						ip2.set(i, map[ip.get(i)]);
+				}
+				newStack.setProcessor(ip2, s);
+			}
+
+			// Remove edge clusters. This requires the entire stack.
+			if (eliminateEdgeClusters)
+			{
+				// List of clusters to remove
+				boolean[] edge = new boolean[clusters.size() + 1];
+				for (int s = 1; s <= newStack.getSize(); s++)
+				{
+					findEdgeClusters(newStack.getProcessor(s), edge);
+				}
+
+				// Renumber image and remove edge clusters
+				ArrayList<Cluster> newClusters = new ArrayList<Cluster>(clusters.size());
+				for (int i = 0; i < clusters.size(); i++)
+				{
+					final int id = i + 1;
+					if (edge[id])
+					{
+						map[id] = 0;
+						continue;
+					}
+					newClusters.add(clusters.get(i));
+					// Use existing map array to store new mapping
+					map[id] = newClusters.size();
+				}
+				clusters = newClusters;
+
+				for (int s = 1; s <= stack.getSize(); s++)
+				{
+					ImageProcessor ip = newStack.getProcessor(s);
+					for (int i = 0; i < ip.getPixelCount(); i++)
+					{
+						if (ip.get(i) != 0)
+							ip.set(i, map[ip.get(i)]);
+					}
+				}
+			}
+
+			// Set a colour table if this is a new image. Otherwise the existing one is preserved.
+			ImagePlus clusterImp = WindowManager.getImage(FRAME_TITLE);
+			if (clusterImp == null)
+				newStack.setColorModel(getColorModel());
+
+			clusterImp = ImageJHelper.display(FRAME_TITLE, newStack);
+
+			labelClusters(clusterImp);
+		}
 
 		createResultsTables();
 
@@ -671,42 +840,65 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		sb.append(ImageJHelper.rounded(stats2.getMean())).append('\t');
 		summaryWindow.append(sb.toString());
 
-		if (myShowMask)
-		{
-			// Create a new mask image colouring the objects from each cluster.
-			// Create a map to convert original foci pixels to clusters.
-			int[] map = new int[results.size() + 1];
-			for (int i = 0; i < clusters.size(); i++)
-			{
-				for (ClusterPoint p = clusters.get(i).head; p != null; p = p.next)
-				{
-					map[p.id] = i + 1;
-				}
-			}
-
-			ImageStack stack = imp.getImageStack();
-			ImageStack newStack = new ImageStack(stack.getWidth(), stack.getHeight(), stack.getSize());
-			for (int s = 1; s <= stack.getSize(); s++)
-			{
-				ImageProcessor ip = stack.getProcessor(s);
-				ImageProcessor ip2 = ip.createProcessor(ip.getWidth(), ip.getHeight());
-				for (int i = 0; i < ip.getPixelCount(); i++)
-				{
-					if (ip.get(i) != 0)
-						ip2.set(i, map[ip.get(i)]);
-				}
-				newStack.setProcessor(ip2, s);
-			}
-
-			// Set a color table if this is a new image
-			ImagePlus clusterImp = WindowManager.getImage(FRAME_TITLE);
-			if (clusterImp == null)
-				newStack.setColorModel(getColorModel());
-
-			ImageJHelper.display(FRAME_TITLE, newStack);
-		}
-
 		IJ.showStatus("");
+	}
+
+	private void labelClusters(ImagePlus clusterImp)
+	{
+		Overlay o = null;
+		if (labelClusters)
+		{
+			o = new Overlay(getClusterRoi(clusters));
+			o.setStrokeColor(Color.cyan);
+		}
+		clusterImp.setOverlay(o);
+	}
+
+	private void findEdgeClusters(ImageProcessor ip, boolean[] edge)
+	{
+		for (int i = 0; i < border; i++)
+		{
+			final int top = ip.getHeight() - 1 - i;
+			if (top <= i)
+				break;
+			for (int x = 0; x < ip.getWidth(); x++)
+			{
+				if (ip.get(x, i) != 0)
+					edge[ip.get(x, i)] = true;
+				if (ip.get(x, top) != 0)
+					edge[ip.get(x, top)] = true;
+			}
+		}
+		for (int i = 0; i < border; i++)
+		{
+			final int top = ip.getWidth() - 1 - i;
+			if (top <= i)
+				break;
+			for (int y = border; y < ip.getHeight() - border; y++)
+			{
+				if (ip.get(i, y) != 0)
+					edge[ip.get(i, y)] = true;
+				if (ip.get(top, y) != 0)
+					edge[ip.get(top, y)] = true;
+			}
+		}
+	}
+
+	private Roi getClusterRoi(ArrayList<Cluster> clusters)
+	{
+		if (clusters == null || clusters.isEmpty())
+			return null;
+		int nMaxima = clusters.size();
+		float[] xpoints = new float[nMaxima];
+		float[] ypoints = new float[nMaxima];
+		int i = 0;
+		for (Cluster point : clusters)
+		{
+			xpoints[i] = (float) point.x;
+			ypoints[i] = (float) point.y;
+			i++;
+		}
+		return new PointRoi(xpoints, ypoints, nMaxima);
 	}
 
 	private ArrayList<ClusterPoint> getPoints()
