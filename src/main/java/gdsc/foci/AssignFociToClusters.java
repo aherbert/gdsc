@@ -44,6 +44,7 @@ import java.awt.image.ColorModel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
@@ -704,14 +705,36 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 
 			if (roiPoints != null && filterUsingPointROI)
 			{
-				// TODO ...
 				System.out.printf("Filter %d clusters using %d roi points\n", clusters.size(), roiPoints.length);
+
+				Coordinate[] actualPoints = roiPoints;
+				Coordinate[] predictedPoints = toCoordinates(clusters);
+				List<Coordinate> TP = null;
+				List<Coordinate> FP = null;
+				List<Coordinate> FN = null;
+				List<PointPair> matches = new ArrayList<PointPair>(clusters.size());
+				MatchCalculator.analyseResults2D(actualPoints, predictedPoints, filterRadius, TP, FP, FN, matches);
+				ArrayList<Cluster> newClusters = new ArrayList<Cluster>(matches.size());
+				for (PointPair pair : matches)
+					newClusters.add(clusters.get(((TimeValuedPoint) pair.getPoint2()).time));
+				clusters = newClusters;
 			}
 
 			double seconds = (System.currentTimeMillis() - start) / 1000.0;
 			IJ.showStatus(ImageJHelper.pleural(clusters.size(), "cluster") + " in " + ImageJHelper.rounded(seconds) +
 					" seconds");
 		}
+	}
+
+	private Coordinate[] toCoordinates(ArrayList<Cluster> clusters)
+	{
+		Coordinate[] coords = new Coordinate[clusters.size()];
+		for (int i = 0; i < clusters.size(); i++)
+		{
+			Cluster c = clusters.get(i);
+			coords[i] = new TimeValuedPoint((float) c.x, (float) c.y, 0, i, 0);
+		}
+		return coords;
 	}
 
 	private void displayResults()
@@ -856,30 +879,33 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 
 	private void findEdgeClusters(ImageProcessor ip, boolean[] edge)
 	{
+		final int w = ip.getWidth();
+		final int h = ip.getHeight();
+
 		for (int i = 0; i < border; i++)
 		{
-			final int top = ip.getHeight() - 1 - i;
-			if (top <= i)
-				break;
-			for (int x = 0; x < ip.getWidth(); x++)
+			final int top = h - 1 - i;
+			if (top < i)
+				return;
+			for (int x = 0, i1 = i * w, i2 = top * w; x < w; x++, i1++, i2++)
 			{
-				if (ip.get(x, i) != 0)
-					edge[ip.get(x, i)] = true;
-				if (ip.get(x, top) != 0)
-					edge[ip.get(x, top)] = true;
+				if (ip.get(i1) != 0)
+					edge[ip.get(i1)] = true;
+				if (ip.get(i2) != 0)
+					edge[ip.get(i2)] = true;
 			}
 		}
 		for (int i = 0; i < border; i++)
 		{
-			final int top = ip.getWidth() - 1 - i;
-			if (top <= i)
-				break;
-			for (int y = border; y < ip.getHeight() - border; y++)
+			final int top = w - 1 - i;
+			if (top < i)
+				return;
+			for (int y = border, i1 = border * w + i, i2 = border * w + top; y < w - border; y++, i1 += w, i2 += w)
 			{
-				if (ip.get(i, y) != 0)
-					edge[ip.get(i, y)] = true;
-				if (ip.get(top, y) != 0)
-					edge[ip.get(top, y)] = true;
+				if (ip.get(i1) != 0)
+					edge[ip.get(i1)] = true;
+				if (ip.get(i2) != 0)
+					edge[ip.get(i2)] = true;
 			}
 		}
 	}
