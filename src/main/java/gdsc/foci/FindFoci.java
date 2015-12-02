@@ -375,6 +375,12 @@ public class FindFoci implements PlugIn, MouseListener
 	public static final String FRAME_TITLE = "FindFoci";
 
 	private static TextWindow resultsWindow = null;
+	
+	// Used to buffer the results to the TextWindow
+	private StringBuilder resultsBuffer = new StringBuilder();
+	private int resultsCount = 0;
+	private int flushCount = 0;
+	
 	private static ArrayList<int[]> lastResultsArray = null;
 	private static int isGaussianFitEnabled = 0;
 	private static String newLine = System.getProperty("line.separator");
@@ -1342,6 +1348,7 @@ public class FindFoci implements PlugIn, MouseListener
 				addToResultTable(i + 1, resultsArray.size() - i, result, stats[STATS_SUM], stats[STATS_BACKGROUND],
 						stats[STATS_SUM_ABOVE_BACKGROUND]);
 			}
+			flushResults();
 			resultsWindow.append("");
 		}
 
@@ -1567,15 +1574,19 @@ public class FindFoci implements PlugIn, MouseListener
 			out.write(createResultsHeader(imp, imageDimension, stats));
 			int[] xpoints = new int[resultsArray.size()];
 			int[] ypoints = new int[resultsArray.size()];
+			final StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < resultsArray.size(); i++)
 			{
 				int[] result = resultsArray.get(i);
 				xpoints[i] = result[RESULT_X];
 				ypoints[i] = result[RESULT_Y];
-				String resultEntry = buildResultEntry(i + 1, resultsArray.size() - i, result, stats[STATS_SUM],
-						stats[STATS_BACKGROUND], stats[STATS_SUM_ABOVE_BACKGROUND]);
+
+				buildResultEntry(sb, i + 1, resultsArray.size() - i, result, stats[STATS_SUM], stats[STATS_BACKGROUND],
+						stats[STATS_SUM_ABOVE_BACKGROUND]);
+				final String resultEntry = sb.toString();
 				out.write(resultEntry);
 				writeBatchResultsFile(resultEntry);
+				sb.setLength(0);
 			}
 			// Record an empty record for batch processing
 			if (resultsArray.isEmpty())
@@ -1739,6 +1750,7 @@ public class FindFoci implements PlugIn, MouseListener
 				addToResultTable(i + 1, resultsArray.size() - i, result, stats[STATS_SUM], stats[STATS_BACKGROUND],
 						stats[STATS_SUM_ABOVE_BACKGROUND]);
 			}
+			flushResults();
 			if (!resultsArray.isEmpty())
 				resultsWindow.append("");
 		}
@@ -3501,7 +3513,15 @@ public class FindFoci implements PlugIn, MouseListener
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
 			resultsWindow = new TextWindow(FRAME_TITLE + " Results", createResultsHeader(), "", 900, 300);
+			resetResultsCount();
 		}
+	}
+
+	private void resetResultsCount()
+	{
+		resultsCount = 0;
+		// Set this at a level where the ij.text.TextWindow will auto-layout the columns
+		flushCount = 8;
 	}
 
 	private void clearResultsWindow()
@@ -3509,6 +3529,7 @@ public class FindFoci implements PlugIn, MouseListener
 		if (resultsWindow != null && resultsWindow.isShowing())
 		{
 			resultsWindow.getTextPanel().clear();
+			resetResultsCount();
 		}
 	}
 
@@ -3585,16 +3606,28 @@ public class FindFoci implements PlugIn, MouseListener
 	 */
 	private void addToResultTable(int i, int id, int[] result, double sum, double noise, double intensityAboveBackground)
 	{
-		resultsWindow.append(buildResultEntry(i, id, result, sum, noise, intensityAboveBackground));
+		// Buffer the output so that the table is displayed faster
+		buildResultEntry(resultsBuffer, i, id, result, sum, noise, intensityAboveBackground);
+		if (resultsCount > flushCount)
+		{
+			flushResults();
+		}
 	}
 
-	private String buildResultEntry(int i, int id, int[] result, double sum, double noise,
+	private void flushResults()
+	{
+		resultsWindow.append(resultsBuffer.toString());
+		resultsBuffer.setLength(0);
+		// One we have allowed auto-layout of the columns do the rest at the same time
+		flushCount = Integer.MAX_VALUE;
+	}
+
+	private void buildResultEntry(StringBuilder sb, int i, int id, int[] result, double sum, double noise,
 			double intensityAboveBackground)
 	{
 		final int absoluteHeight = getAbsoluteHeight(result, noise);
 		final double relativeHeight = getRelativeHeight(result, noise, absoluteHeight);
 
-		final StringBuilder sb = new StringBuilder();
 		sb.append(i).append("\t");
 		sb.append(id).append("\t");
 		// XY are pixel coordinates
@@ -3620,7 +3653,8 @@ public class FindFoci implements PlugIn, MouseListener
 		sb.append(result[RESULT_OBJECT]).append("\t");
 		sb.append(result[RESULT_STATE]);
 		sb.append(newLine);
-		return sb.toString();
+
+		resultsCount++;
 	}
 
 	private String buildEmptyResultEntry()
@@ -7203,19 +7237,19 @@ public class FindFoci implements PlugIn, MouseListener
 		gd.addNumericField("Capacity", searchCapacity, 0);
 		gd.addMessage("Note: The default is the legacy value for 16-bit signed integers.\n" +
 				"The maximum value supported is " + Integer.MAX_VALUE + ".\n \n" +
-						"This preference will be saved when you exit ImageJ.");
+				"This preference will be saved when you exit ImageJ.");
 
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return false;
-		
+
 		final double d = Math.abs(gd.getNextNumber());
 		if (d > Integer.MAX_VALUE)
 			return false;
-		
+
 		searchCapacity = Math.max(1, (int) d);
 		Prefs.set(SEARCH_CAPACITY, searchCapacity);
-		
+
 		return true;
 	}
 }
