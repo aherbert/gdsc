@@ -383,10 +383,18 @@ public class FindFoci implements PlugIn, MouseListener
 	private static String BATCH_MASK_DIRECTORY = "findfoci.batchMaskDirectory";
 	private static String BATCH_PARAMETER_FILE = "findfoci.batchParameterFile";
 	private static String BATCH_OUTPUT_DIRECTORY = "findfoci.batchOutputDirectory";
+	private static String SEARCH_CAPACITY = "findfoci.searchCapacity";
 	private static String batchInputDirectory = Prefs.get(BATCH_INPUT_DIRECTORY, "");
 	private static String batchMaskDirectory = Prefs.get(BATCH_MASK_DIRECTORY, "");
 	private static String batchParameterFile = Prefs.get(BATCH_PARAMETER_FILE, "");
 	private static String batchOutputDirectory = Prefs.get(BATCH_OUTPUT_DIRECTORY, "");
+	private static int searchCapacity = (int) Prefs.get(SEARCH_CAPACITY, Short.MAX_VALUE);
+	/**
+	 * The largest number that can be displayed in a 16-bit image.
+	 * <p>
+	 * Note searching for maxima uses 32-bit integers but ImageJ can only display 16-bit images.
+	 */
+	private static final int MAXIMA_CAPCITY = 65535;
 	private TextField textParamFile;
 
 	/**
@@ -621,7 +629,8 @@ public class FindFoci implements PlugIn, MouseListener
 	 */
 	public final static int RESULT_SADDLE_NEIGHBOUR_ID = 8;
 	/**
-	 * The index of the average of the peak intensity within the result int[] array of the results ArrayList<int[]> object
+	 * The index of the average of the peak intensity within the result int[] array of the results ArrayList<int[]>
+	 * object
 	 */
 	public final static int RESULT_AVERAGE_INTENSITY = 9;
 	/**
@@ -956,6 +965,12 @@ public class FindFoci implements PlugIn, MouseListener
 		if ("batch".equals(arg))
 		{
 			runBatchMode();
+			return;
+		}
+
+		if ("capacity".equals(arg))
+		{
+			showCapacityDialog();
 			return;
 		}
 
@@ -2004,7 +2019,7 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 
 		byte[] types = new byte[maxx_maxy_maxz]; // Will be a notepad for pixel types
-		short[] maxima = new short[maxx_maxy_maxz]; // Contains the maxima Id assigned for each point
+		int[] maxima = new int[maxx_maxy_maxz]; // Contains the maxima Id assigned for each point
 
 		IJ.showStatus("Initialising ROI...");
 
@@ -2121,7 +2136,7 @@ public class FindFoci implements PlugIn, MouseListener
 		if ((options & OPTION_REMOVE_EDGE_MAXIMA) != 0)
 			removeEdgeMaxima(resultsArray, image, maxima, stats, isLogging);
 
-		int totalPeaks = resultsArray.size();
+		final int totalPeaks = resultsArray.size();
 
 		if (blur > 0)
 		{
@@ -2175,6 +2190,9 @@ public class FindFoci implements PlugIn, MouseListener
 
 			outImp = generateOutputMask(outputType, autoThresholdMethod, imp, fractionParameter, image, types, maxima,
 					stats, resultsArray, nMaxima);
+
+			if (outImp == null)
+				IJ.error(FRAME_TITLE, "Too many maxima to display in a 16-bit image: " + nMaxima);
 
 			if (isLogging)
 				timingSplit("Calulated output mask");
@@ -2313,7 +2331,7 @@ public class FindFoci implements PlugIn, MouseListener
 		int[] originalImage = extractImage(originalImp);
 		int[] image = extractImage(imp);
 		byte[] types = new byte[maxx_maxy_maxz]; // Will be a notepad for pixel types
-		short[] maxima = new short[maxx_maxy_maxz]; // Contains the maxima Id assigned for each point
+		int[] maxima = new int[maxx_maxy_maxz]; // Contains the maxima Id assigned for each point
 
 		// Mark any point outside the ROI as processed
 		int exclusion = excludeOutsideROI(originalImp, types, false);
@@ -2369,14 +2387,14 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		int[] image = (int[]) initArray[0];
 		byte[] types = (byte[]) initArray[1];
-		short[] maxima = (short[]) initArray[2];
+		int[] maxima = (int[]) initArray[2];
 		int[] histogram = (int[]) initArray[3];
 		double[] stats = (double[]) initArray[4];
 		int[] originalImage = (int[]) initArray[5];
 		ImagePlus imp = (ImagePlus) initArray[6];
 
 		byte[] types2 = null;
-		short[] maxima2 = null;
+		int[] maxima2 = null;
 		int[] histogram2 = null;
 		double[] stats2 = null;
 
@@ -2384,14 +2402,14 @@ public class FindFoci implements PlugIn, MouseListener
 		{
 			clonedInitArray = new Object[7];
 			types2 = new byte[types.length];
-			maxima2 = new short[maxima.length];
+			maxima2 = new int[maxima.length];
 			histogram2 = new int[histogram.length];
 			stats2 = new double[stats.length];
 		}
 		else
 		{
 			types2 = (byte[]) clonedInitArray[1];
-			maxima2 = (short[]) clonedInitArray[2];
+			maxima2 = (int[]) clonedInitArray[2];
 			histogram2 = (int[]) clonedInitArray[3];
 			stats2 = (double[]) clonedInitArray[4];
 
@@ -2431,14 +2449,14 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		int[] image = (int[]) initArray[0];
 		byte[] types = (byte[]) initArray[1];
-		short[] maxima = (short[]) initArray[2];
+		int[] maxima = (int[]) initArray[2];
 		int[] histogram = (int[]) initArray[3];
 		double[] stats = (double[]) initArray[4];
 		int[] originalImage = (int[]) initArray[5];
 		ImagePlus imp = (ImagePlus) initArray[6];
 
 		byte[] types2 = null;
-		short[] maxima2 = null;
+		int[] maxima2 = null;
 		int[] histogram2 = null;
 		double[] stats2 = null;
 
@@ -2446,14 +2464,14 @@ public class FindFoci implements PlugIn, MouseListener
 		{
 			clonedInitArray = new Object[7];
 			types2 = new byte[types.length];
-			maxima2 = new short[maxima.length];
+			maxima2 = new int[maxima.length];
 			histogram2 = new int[histogram.length];
 			stats2 = new double[stats.length];
 		}
 		else
 		{
 			types2 = (byte[]) clonedInitArray[1];
-			maxima2 = (short[]) clonedInitArray[2];
+			maxima2 = (int[]) clonedInitArray[2];
 			histogram2 = (int[]) clonedInitArray[3];
 			stats2 = (double[]) clonedInitArray[4];
 		}
@@ -2506,7 +2524,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		int[] image = (int[]) initArray[0];
 		byte[] types = (byte[]) initArray[1]; // Will be a notepad for pixel types
-		short[] maxima = (short[]) initArray[2]; // Contains the maxima Id assigned for each point
+		int[] maxima = (int[]) initArray[2]; // Contains the maxima Id assigned for each point
 		int[] histogram = (int[]) initArray[3];
 		double[] stats = (double[]) initArray[4];
 		int[] originalImage = (int[]) initArray[5];
@@ -2590,7 +2608,7 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		int[] image = (int[]) initArray[0];
 		byte[] types = (byte[]) initArray[1]; // Will be a notepad for pixel types
-		short[] maxima = (short[]) initArray[2]; // Contains the maxima Id assigned for each point
+		int[] maxima = (int[]) initArray[2]; // Contains the maxima Id assigned for each point
 		int[] histogram = (int[]) initArray[3];
 		double[] stats = (double[]) initArray[4];
 
@@ -2661,7 +2679,7 @@ public class FindFoci implements PlugIn, MouseListener
 		boolean restrictAboveSaddle = (options & OPTION_MINIMUM_ABOVE_SADDLE) == OPTION_MINIMUM_ABOVE_SADDLE;
 
 		int[] image = (int[]) initArray[0];
-		short[] maxima = (short[]) initArray[2]; // Contains the maxima Id assigned for each point
+		int[] maxima = (int[]) initArray[2]; // Contains the maxima Id assigned for each point
 		double[] stats = (double[]) initArray[4];
 		int[] originalImage = (int[]) initArray[5];
 
@@ -2746,7 +2764,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		int[] searchImage = (int[]) initArray[0];
 		byte[] types = (byte[]) initArray[1];
-		short[] maxima = (short[]) initArray[2];
+		int[] maxima = (int[]) initArray[2];
 		double[] stats = (double[]) initArray[4];
 		int[] originalImage = (int[]) initArray[5];
 
@@ -2821,7 +2839,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		int[] searchImage = (int[]) initArray[0];
 		byte[] types = (byte[]) initArray[1];
-		short[] maxima = (short[]) initArray[2];
+		int[] maxima = (int[]) initArray[2];
 		double[] stats = (double[]) initArray[4];
 		int[] originalImage = (int[]) initArray[5];
 
@@ -2896,7 +2914,7 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		int[] image = (int[]) initArray[0];
 		byte[] types = (byte[]) initArray[1];
-		short[] maxima = (short[]) initArray[2];
+		int[] maxima = (int[]) initArray[2];
 		double[] stats = (double[]) initArray[4];
 
 		@SuppressWarnings("unchecked")
@@ -2927,7 +2945,7 @@ public class FindFoci implements PlugIn, MouseListener
 	}
 
 	private ImagePlus generateOutputMask(int outputType, String autoThresholdMethod, ImagePlus imp,
-			double fractionParameter, int[] image, byte[] types, short[] maxima, double[] stats,
+			double fractionParameter, int[] image, byte[] types, int[] maxima, double[] stats,
 			ArrayList<int[]> resultsArray, int nMaxima)
 	{
 		// TODO - Add an option for a coloured map of peaks using 4 colours. No touching peaks should be the same colour.
@@ -2941,8 +2959,8 @@ public class FindFoci implements PlugIn, MouseListener
 		// Rebuild the mask: all maxima have value 1, the remaining peak area are numbered sequentially starting
 		// with value 2.
 		// First create byte values to use in the mask for each maxima
-		short[] maximaValues = new short[nMaxima];
-		short[] maximaPeakIds = new short[nMaxima];
+		int[] maximaValues = new int[nMaxima];
+		int[] maximaPeakIds = new int[nMaxima];
 		int[] displayValues = new int[nMaxima];
 
 		if ((outputType & (OUTPUT_MASK_ABOVE_SADDLE | OUTPUT_MASK_FRACTION_OF_INTENSITY | OUTPUT_MASK_FRACTION_OF_HEIGHT)) != 0)
@@ -2965,9 +2983,9 @@ public class FindFoci implements PlugIn, MouseListener
 
 		for (int i = 0; i < nMaxima; i++)
 		{
-			maximaValues[i] = (short) (nMaxima - i);
+			maximaValues[i] = nMaxima - i;
 			int[] result = resultsArray.get(i);
-			maximaPeakIds[i] = (short) result[RESULT_PEAK_ID];
+			maximaPeakIds[i] = result[RESULT_PEAK_ID];
 			if ((outputType & OUTPUT_MASK_ABOVE_SADDLE) != 0)
 			{
 				displayValues[i] = result[RESULT_HIGHEST_SADDLE_VALUE];
@@ -3009,7 +3027,7 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 
 		ImageStack stack = new ImageStack(maxx, maxy);
-		short maximaValue = (short) (nMaxima + 1);
+		int maxValue = nMaxima;
 
 		if ((outputType & OUTPUT_MASK_THRESHOLD) != 0)
 		{
@@ -3023,7 +3041,7 @@ public class FindFoci implements PlugIn, MouseListener
 			addBorders(maxima, types);
 
 			// Adjust the values used to create the output mask
-			maximaValue = 4;
+			maxValue = 3;
 		}
 
 		// Blank any pixels below the saddle height
@@ -3039,23 +3057,26 @@ public class FindFoci implements PlugIn, MouseListener
 		// Set maxima to a high value
 		if ((outputType & OUTPUT_MASK_NO_PEAK_DOTS) == 0)
 		{
+			maxValue++;
 			for (int i = 0; i < nMaxima; i++)
 			{
-				int[] result = resultsArray.get(i);
-				maxima[getIndex(result[RESULT_X], result[RESULT_Y], result[RESULT_Z])] = maximaValue;
+				final int[] result = resultsArray.get(i);
+				maxima[getIndex(result[RESULT_X], result[RESULT_Y], result[RESULT_Z])] = maxValue;
 			}
 		}
 
-		if ((outputType & OUTPUT_MASK_THRESHOLD) != 0)
+		// Check the maxima can be displayed
+		if (maxValue > MAXIMA_CAPCITY)
 		{
-			nMaxima = 4;
+			// Q. Should a warning be generated?
+			return null;
 		}
 
 		// Output the mask
 		// The index is '(maxx_maxy) * z + maxx * y + x' so we can simply iterate over the array if we use z, y, x order
 		for (int z = 0, index = 0; z < maxz; z++)
 		{
-			ImageProcessor ip = (nMaxima > 253) ? new ShortProcessor(maxx, maxy) : new ByteProcessor(maxx, maxy);
+			ImageProcessor ip = (maxValue > 255) ? new ShortProcessor(maxx, maxy) : new ByteProcessor(maxx, maxy);
 			for (int y = 0; y < maxy; y++)
 			{
 				for (int x = 0; x < maxx; x++)
@@ -3071,18 +3092,16 @@ public class FindFoci implements PlugIn, MouseListener
 		return result;
 	}
 
-	private void calculateFractionOfIntensityDisplayValues(double fractionParameter, int[] image, short[] maxima,
-			double[] stats, short[] maximaPeakIds, int[] displayValues)
+	private void calculateFractionOfIntensityDisplayValues(double fractionParameter, int[] image, int[] maxima,
+			double[] stats, int[] maximaPeakIds, int[] displayValues)
 	{
 		// For each maxima
 		for (int i = 0; i < maximaPeakIds.length; i++)
 		{
-			short peakValue = maximaPeakIds[i];
-
 			// Histogram all the pixels above background
-			int[] hist = buildHistogram(image, maxima, peakValue, round(stats[STATS_MAX]));
+			final int[] hist = buildHistogram(image, maxima, maximaPeakIds[i], round(stats[STATS_MAX]));
 
-			int background = (int) Math.floor(stats[STATS_BACKGROUND]);
+			final int background = (int) Math.floor(stats[STATS_BACKGROUND]);
 
 			// Sum above background
 			long sum = 0;
@@ -3090,7 +3109,7 @@ public class FindFoci implements PlugIn, MouseListener
 				sum += hist[value] * (value - background);
 
 			// Determine the cut-off using fraction of cumulative intensity
-			long total = (long) (sum * fractionParameter);
+			final long total = (long) (sum * fractionParameter);
 
 			// Find the point in the histogram that exceeds the fraction
 			sum = 0;
@@ -3119,8 +3138,8 @@ public class FindFoci implements PlugIn, MouseListener
 	private void renumberPeaks(ArrayList<int[]> resultsArray, int originalNumberOfPeaks)
 	{
 		// Build a map between the original peak number and the new sorted order
-		short[] peakIdMap = new short[originalNumberOfPeaks + 1];
-		short i = 1;
+		final int[] peakIdMap = new int[originalNumberOfPeaks + 1];
+		int i = 1;
 		for (int[] result : resultsArray)
 		{
 			peakIdMap[result[RESULT_PEAK_ID]] = i++;
@@ -3140,7 +3159,7 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param maxima
 	 * @param types
 	 */
-	private void findBorders(short[] maxima, byte[] types)
+	private void findBorders(int[] maxima, byte[] types)
 	{
 		// TODO - This is not perfect. There is a problem with regions marked as saddles
 		// between 3 or more peaks. This can results in large blocks of saddle regions that
@@ -3155,7 +3174,7 @@ public class FindFoci implements PlugIn, MouseListener
 		// (Dots inserted to prevent auto-formatting removing spaces)
 		// It also only works on the XY plane. However it is fine for an approximation of the peak boundaries.
 
-		int[] xyz = new int[3];
+		final int[] xyz = new int[3];
 
 		for (int index = maxima.length; index-- > 0;)
 		{
@@ -3172,16 +3191,16 @@ public class FindFoci implements PlugIn, MouseListener
 				types[index] &= BELOW_SADDLE;
 
 				getXY(index, xyz);
-				int x = xyz[0];
-				int y = xyz[1];
-				boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+				final int x = xyz[0];
+				final int y = xyz[1];
+				final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
 
 				// Process the neighbours
 				for (int d = 8; d-- > 0;)
 				{
 					if (isInnerXY || isWithinXY(x, y, d))
 					{
-						int index2 = index + offset[d];
+						final int index2 = index + offset[d];
 
 						// Check if neighbour is a different peak
 						if (maxima[index] != maxima[index2] && maxima[index2] > 0 &&
@@ -3214,19 +3233,19 @@ public class FindFoci implements PlugIn, MouseListener
 	private int cleanupExtraCornerPixels(byte[] types, int z)
 	{
 		int removed = 0;
-		int[] xyz = new int[3];
+		final int[] xyz = new int[3];
 
 		for (int i = maxx_maxy, index = maxx_maxy * z; i-- > 0; index++)
 		{
 			if ((types[index] & SADDLE_POINT) != 0)
 			{
 				getXY(index, xyz);
-				int x = xyz[0];
-				int y = xyz[1];
+				final int x = xyz[0];
+				final int y = xyz[1];
 
-				boolean isInner = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+				final boolean isInner = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
 
-				boolean[] edgesSet = new boolean[8];
+				final boolean[] edgesSet = new boolean[8];
 				for (int d = 8; d-- > 0;)
 				{
 					// analyze 4 flat-edge neighbours
@@ -3260,7 +3279,7 @@ public class FindFoci implements PlugIn, MouseListener
 		{
 			if ((types[index] & SADDLE_POINT) != 0)
 			{
-				int nRadii = nRadii(types, index); // number of lines radiating
+				final int nRadii = nRadii(types, index); // number of lines radiating
 				if (nRadii == 0) // single point or foreground patch?
 				{
 					types[index] &= ~SADDLE_POINT;
@@ -3277,17 +3296,17 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		types[index] &= ~SADDLE_POINT;
 		types[index] |= SADDLE_WITHIN;
-		int[] xyz = new int[3];
+		final int[] xyz = new int[3];
 		boolean continues;
 		do
 		{
 			getXY(index, xyz);
-			int x = xyz[0];
-			int y = xyz[1];
+			final int x = xyz[0];
+			final int y = xyz[1];
 
 			continues = false;
-			boolean isInner = (y != 0 && y != maxy - 1) && (x != 0 && x != maxx - 1); // not necessary, but faster
-																					  // than isWithin
+			final boolean isInner = (y != 0 && y != maxy - 1) && (x != 0 && x != maxx - 1); // not necessary, but faster
+			// than isWithin
 			for (int d = 0; d < 8; d += 2)
 			{ // analyze 4-connected neighbors
 				if (isInner || isWithinXY(x, y, d))
@@ -3327,13 +3346,13 @@ public class FindFoci implements PlugIn, MouseListener
 		int countTransitions = 0;
 		boolean prevPixelSet = true;
 		boolean firstPixelSet = true; // initialize to make the compiler happy
-		int[] xyz = new int[3];
+		final int[] xyz = new int[3];
 		getXY(index, xyz);
-		int x = xyz[0];
-		int y = xyz[1];
+		final int x = xyz[0];
+		final int y = xyz[1];
 
-		boolean isInner = (y != 0 && y != maxy - 1) && (x != 0 && x != maxx - 1); // not necessary, but faster than
-																				  // isWithin
+		final boolean isInner = (y != 0 && y != maxy - 1) && (x != 0 && x != maxx - 1); // not necessary, but faster than
+		// isWithin
 		for (int d = 0; d < 8; d++)
 		{ // walk around the point and note every no-line->line transition
 			boolean pixelSet = prevPixelSet;
@@ -3368,17 +3387,17 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param s
 	 * @param autoThresholdMethod
 	 */
-	private void thresholdMask(int[] image, short[] maxima, short peakValue, String autoThresholdMethod, double[] stats)
+	private void thresholdMask(int[] image, int[] maxima, int peakValue, String autoThresholdMethod, double[] stats)
 	{
-		int[] histogram = buildHistogram(image, maxima, peakValue, round(stats[STATS_MAX]));
-		int threshold = getThreshold(autoThresholdMethod, histogram);
+		final int[] histogram = buildHistogram(image, maxima, peakValue, round(stats[STATS_MAX]));
+		final int threshold = getThreshold(autoThresholdMethod, histogram);
 
 		for (int i = maxima.length; i-- > 0;)
 		{
 			if (maxima[i] == peakValue)
 			{
 				// Use negative to allow use of image in place
-				maxima[i] = (short) ((image[i] > threshold) ? -3 : -2);
+				maxima[i] = ((image[i] > threshold) ? -3 : -2);
 			}
 		}
 	}
@@ -3392,9 +3411,9 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param maxValue
 	 * @return
 	 */
-	private int[] buildHistogram(int[] image, short[] maxima, short peakValue, int maxValue)
+	private int[] buildHistogram(int[] image, int[] maxima, int peakValue, int maxValue)
 	{
-		int[] histogram = new int[maxValue + 1];
+		final int[] histogram = new int[maxValue + 1];
 
 		for (int i = image.length; i-- > 0;)
 		{
@@ -3411,13 +3430,13 @@ public class FindFoci implements PlugIn, MouseListener
 	 * 
 	 * @param maxima
 	 */
-	private void invertMask(short[] maxima)
+	private void invertMask(int[] maxima)
 	{
 		for (int i = maxima.length; i-- > 0;)
 		{
 			if (maxima[i] < 0)
 			{
-				maxima[i] = (short) -maxima[i];
+				maxima[i] = -maxima[i];
 			}
 		}
 	}
@@ -3428,7 +3447,7 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param maxima
 	 * @param types
 	 */
-	private void addBorders(short[] maxima, byte[] types)
+	private void addBorders(int[] maxima, byte[] types)
 	{
 		for (int i = maxima.length; i-- > 0;)
 		{
@@ -3500,7 +3519,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 	private String createResultsHeader(ImagePlus imp, int[] dimension, double[] stats)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		if (imp != null)
 		{
 			sb.append("# Image\t").append(imp.getTitle()).append(newLine);
@@ -3572,10 +3591,10 @@ public class FindFoci implements PlugIn, MouseListener
 	private String buildResultEntry(int i, int id, int[] result, double sum, double noise,
 			double intensityAboveBackground)
 	{
-		int absoluteHeight = getAbsoluteHeight(result, noise);
-		double relativeHeight = getRelativeHeight(result, noise, absoluteHeight);
+		final int absoluteHeight = getAbsoluteHeight(result, noise);
+		final double relativeHeight = getRelativeHeight(result, noise, absoluteHeight);
 
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(i).append("\t");
 		sb.append(id).append("\t");
 		// XY are pixel coordinates
@@ -3608,7 +3627,7 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		if (emptyEntry == null)
 		{
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < 21; i++)
 				sb.append('\t');
 			sb.append(newLine);
@@ -3654,11 +3673,11 @@ public class FindFoci implements PlugIn, MouseListener
 	 */
 	private int excludeOutsideROI(ImagePlus imp, byte[] types, boolean isLogging)
 	{
-		Roi roi = imp.getRoi();
+		final Roi roi = imp.getRoi();
 
 		if (roi != null && roi.isArea())
 		{
-			Rectangle roiBounds = roi.getBounds();
+			final Rectangle roiBounds = roi.getBounds();
 
 			// Check if this ROI covers the entire image
 			if (roi.getType() == Roi.RECTANGLE && roiBounds.width == maxx && roiBounds.height == maxy)
@@ -3700,10 +3719,10 @@ public class FindFoci implements PlugIn, MouseListener
 			// Now unset the ROI region
 
 			// Create a mask from the ROI rectangle
-			int xOffset = roiBounds.x;
-			int yOffset = roiBounds.y;
-			int rwidth = roiBounds.width;
-			int rheight = roiBounds.height;
+			final int xOffset = roiBounds.x;
+			final int yOffset = roiBounds.y;
+			final int rwidth = roiBounds.width;
+			final int rheight = roiBounds.height;
 
 			for (int y = 0; y < rheight; y++)
 			{
@@ -3764,7 +3783,7 @@ public class FindFoci implements PlugIn, MouseListener
 		if (mask.getNSlices() == 1)
 		{
 			// If a single plane then duplicate through the image
-			ImageProcessor ipMask = mask.getProcessor();
+			final ImageProcessor ipMask = mask.getProcessor();
 
 			for (int i = maxx_maxy; i-- > 0;)
 			{
@@ -3780,9 +3799,9 @@ public class FindFoci implements PlugIn, MouseListener
 		else
 		{
 			// If the same stack size then process through the image
-			ImageStack stack = mask.getStack();
-			int c = mask.getChannel();
-			int f = mask.getFrame();
+			final ImageStack stack = mask.getStack();
+			final int c = mask.getChannel();
+			final int f = mask.getFrame();
 			for (int slice = 1; slice <= mask.getNSlices(); slice++)
 			{
 				int stackIndex = mask.getStackIndex(c, slice, f);
@@ -3837,13 +3856,13 @@ public class FindFoci implements PlugIn, MouseListener
 		else
 		{
 			// If the same stack size then process through the image
-			ImageStack stack = mask.getStack();
-			int c = mask.getChannel();
-			int f = mask.getFrame();
+			final ImageStack stack = mask.getStack();
+			final int c = mask.getChannel();
+			final int f = mask.getFrame();
 			image = new int[maxx_maxy_maxz];
 			for (int slice = 1; slice <= mask.getNSlices(); slice++)
 			{
-				int stackIndex = mask.getStackIndex(c, slice, f);
+				final int stackIndex = mask.getStackIndex(c, slice, f);
 				ImageProcessor ipMask = stack.getProcessor(stackIndex);
 
 				int index = maxx_maxy * slice;
@@ -3872,13 +3891,13 @@ public class FindFoci implements PlugIn, MouseListener
 	private int[] buildHistogram(ImagePlus imp, int[] image, byte[] types, int statsMode)
 	{
 		// Just in case the image is not 8 or 16-bit
-		int bitDepth = imp.getBitDepth();
+		final int bitDepth = imp.getBitDepth();
 		if (bitDepth != 8 && bitDepth != 16)
 			return imp.getProcessor().getHistogram();
 
-		int size = (int) Math.pow(2, bitDepth);
+		final int size = (int) Math.pow(2, bitDepth);
 
-		int[] data = new int[size];
+		final int[] data = new int[size];
 
 		if (statsMode == OPTION_STATS_INSIDE)
 		{
@@ -3914,13 +3933,13 @@ public class FindFoci implements PlugIn, MouseListener
 	private int[] buildHistogram(ImagePlus imp, int[] image)
 	{
 		// Just in case the image is not 8 or 16-bit
-		int bitDepth = imp.getBitDepth();
+		final int bitDepth = imp.getBitDepth();
 		if (bitDepth != 8 && bitDepth != 16)
 			return imp.getProcessor().getHistogram();
 
-		int size = (int) Math.pow(2, bitDepth);
+		final int size = (int) Math.pow(2, bitDepth);
 
-		int[] data = new int[size];
+		final int[] data = new int[size];
 
 		for (int i = image.length; i-- > 0;)
 		{
@@ -4137,14 +4156,13 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param threshold
 	 * @return
 	 */
-	private Coordinate[] getSortedMaxPoints(int[] image, short[] maxima, byte[] types, int globalMin, int threshold)
+	private Coordinate[] getSortedMaxPoints(int[] image, int[] maxima, byte[] types, int globalMin, int threshold)
 	{
 		ArrayList<Coordinate> maxPoints = new ArrayList<Coordinate>(500);
 		int[] pList = null; // working list for expanding local plateaus
 
-		short id = 0;
-		int[] xyz = new int[3];
-		int x, y, z;
+		int id = 0;
+		final int[] xyz = new int[3];
 
 		//int pCount = 0;
 
@@ -4152,7 +4170,7 @@ public class FindFoci implements PlugIn, MouseListener
 		{
 			if ((types[i] & (EXCLUDED | MAX_AREA | PLATEAU)) != 0)
 				continue;
-			int v = image[i];
+			final int v = image[i];
 			if (v < threshold)
 				continue;
 			if (v == globalMin)
@@ -4160,15 +4178,15 @@ public class FindFoci implements PlugIn, MouseListener
 
 			getXYZ(i, xyz);
 
-			x = xyz[0];
-			y = xyz[1];
-			z = xyz[2];
+			final int x = xyz[0];
+			final int y = xyz[1];
+			final int z = xyz[2];
 
 			/*
 			 * check whether we have a local maximum.
 			 */
-			boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
-			boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
+			final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+			final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
 			boolean isMax = true, equalNeighbour = false;
 
 			// It is more likely that the z stack will be out-of-bounds.
@@ -4178,7 +4196,7 @@ public class FindFoci implements PlugIn, MouseListener
 			{
 				if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d))
 				{
-					int vNeighbor = image[i + offset[d]];
+					final int vNeighbor = image[i + offset[d]];
 					if (vNeighbor > v)
 					{
 						isMax = false;
@@ -4195,10 +4213,10 @@ public class FindFoci implements PlugIn, MouseListener
 			if (isMax)
 			{
 				id++;
-				if (id >= Short.MAX_VALUE)
+				if (id >= searchCapacity)
 				{
-					IJ.log("The number of potential maxima exceeds the search capacity: " + Short.MAX_VALUE +
-							". Try using a denoising/smoothing filter.");
+					IJ.log("The number of potential maxima exceeds the search capacity: " + searchCapacity +
+							". Try using a denoising/smoothing filter or increase the capacity.");
 					return null;
 				}
 
@@ -4237,13 +4255,13 @@ public class FindFoci implements PlugIn, MouseListener
 		Collections.sort(maxPoints);
 
 		// Build a map between the original id and the new id following the sort
-		short[] idMap = new short[maxPoints.size() + 1];
+		final int[] idMap = new int[maxPoints.size() + 1];
 
 		// Label the points
 		for (int i = 0; i < maxPoints.size(); i++)
 		{
-			short newId = (short) (i + 1);
-			short oldId = maxPoints.get(i).id;
+			final int newId = (i + 1);
+			final int oldId = maxPoints.get(i).id;
 			idMap[oldId] = newId;
 			maxPoints.get(i).id = newId;
 		}
@@ -4272,8 +4290,8 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param pList
 	 * @return True if this is a true plateau, false if the plateau reaches a higher point
 	 */
-	private boolean expandMaximum(int[] image, short[] maxima, byte[] types, int globalMin, int threshold, int index0,
-			int v0, short id, ArrayList<Coordinate> maxPoints, int[] pList)
+	private boolean expandMaximum(int[] image, int[] maxima, byte[] types, int globalMin, int threshold, int index0,
+			int v0, int id, ArrayList<Coordinate> maxPoints, int[] pList)
 	{
 		types[index0] |= LISTED | PLATEAU; // mark first point as listed
 		int listI = 0; // index of current search element in the list
@@ -4284,34 +4302,34 @@ public class FindFoci implements PlugIn, MouseListener
 
 		// Calculate the center of plateau
 		boolean isPlateau = true;
-		int[] xyz = new int[3];
+		final int[] xyz = new int[3];
 
 		do
 		{
-			int index1 = pList[listI];
+			final int index1 = pList[listI];
 			getXYZ(index1, xyz);
-			int x1 = xyz[0];
-			int y1 = xyz[1];
-			int z1 = xyz[2];
+			final int x1 = xyz[0];
+			final int y1 = xyz[1];
+			final int z1 = xyz[2];
 
 			// It is more likely that the z stack will be out-of-bounds.
 			// Adopt the xy limit lookup and process z lookup separately
 
-			boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-			boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+			final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+			final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
 
 			for (int d = dStart; d-- > 0;)
 			{
 				if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
 				{
-					int index2 = index1 + offset[d];
+					final int index2 = index1 + offset[d];
 					if ((types[index2] & IGNORE) != 0)
 					{
 						// This has been done already, ignore this point
 						continue;
 					}
 
-					int v2 = image[index2];
+					final int v2 = image[index2];
 
 					if (v2 > v0)
 					{
@@ -4356,25 +4374,26 @@ public class FindFoci implements PlugIn, MouseListener
 		double dMax = Double.MAX_VALUE;
 		int iMax = 0;
 
-		// Calculate the maxima origin
+		// Calculate the maxima origin as the closest pixel to the centre-of-mass
 		for (int i = listLen; i-- > 0;)
 		{
-			int index = pList[i];
+			final int index = pList[i];
 			types[index] &= ~LISTED; // reset attributes no longer needed
 
 			if (isPlateau)
 			{
 				getXYZ(index, xyz);
 
-				int x = xyz[0];
-				int y = xyz[1];
-				int z = xyz[2];
+				final int x = xyz[0];
+				final int y = xyz[1];
+				final int z = xyz[2];
 
-				double d = (xEqual - x) * (xEqual - x) + (yEqual - y) * (yEqual - y) + (zEqual - z) * (zEqual - z);
+				final double d = (xEqual - x) * (xEqual - x) + (yEqual - y) * (yEqual - y) + (zEqual - z) *
+						(zEqual - z);
 
 				if (d < dMax)
 				{
-					d = dMax;
+					dMax = d;
 					iMax = i;
 				}
 
@@ -4386,7 +4405,7 @@ public class FindFoci implements PlugIn, MouseListener
 		// Assign the maximum
 		if (isPlateau)
 		{
-			int index = pList[iMax];
+			final int index = pList[iMax];
 			types[index] |= MAXIMUM;
 			maxPoints.add(new Coordinate(index, id, v0));
 		}
@@ -4400,24 +4419,20 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param maxima
 	 * @param maxPoints
 	 */
-	private void assignMaxima(short[] maxima, Coordinate[] maxPoints, ArrayList<int[]> resultsArray)
+	private void assignMaxima(int[] maxima, Coordinate[] maxPoints, ArrayList<int[]> resultsArray)
 	{
-		int[] xyz = new int[3];
+		final int[] xyz = new int[3];
 
 		for (Coordinate maximum : maxPoints)
 		{
 			getXYZ(maximum.index, xyz);
 
-			int x = xyz[0];
-			int y = xyz[1];
-			int z = xyz[2];
-
 			maxima[maximum.index] = maximum.id;
 
-			int[] result = new int[RESULT_LENGTH];
-			result[RESULT_X] = x;
-			result[RESULT_Y] = y;
-			result[RESULT_Z] = z;
+			final int[] result = new int[RESULT_LENGTH];
+			result[RESULT_X] = xyz[0];
+			result[RESULT_Y] = xyz[1];
+			result[RESULT_Z] = xyz[2];
 			result[RESULT_PEAK_ID] = maximum.id;
 			result[RESULT_MAX_VALUE] = maximum.value;
 			result[RESULT_INTENSITY] = maximum.value;
@@ -4431,10 +4446,10 @@ public class FindFoci implements PlugIn, MouseListener
 	 * Assigns points to their maxima using the steepest uphill gradient. Processes points in order of height,
 	 * progressively building peaks in a top-down fashion.
 	 */
-	private void assignPointsToMaxima(int[] image, int[] histogram, byte[] types, double[] stats, short[] maxima)
+	private void assignPointsToMaxima(int[] image, int[] histogram, byte[] types, double[] stats, int[] maxima)
 	{
-		int background = round(stats[STATS_BACKGROUND]);
-		int maxValue = round(stats[STATS_MAX]);
+		final int background = round(stats[STATS_BACKGROUND]);
+		final int maxValue = round(stats[STATS_MAX]);
 
 		// Create an array with the coordinates of all points between the threshold value and the max-1 value
 		int arraySize = 0;
@@ -4444,10 +4459,10 @@ public class FindFoci implements PlugIn, MouseListener
 		if (arraySize == 0)
 			return;
 
-		int[] coordinates = new int[arraySize]; // from pixel coordinates, low bits x, high bits y
+		final int[] coordinates = new int[arraySize]; // from pixel coordinates, low bits x, high bits y
 		int highestValue = 0;
 		int offset = 0;
-		int[] levelStart = new int[maxValue + 1];
+		final int[] levelStart = new int[maxValue + 1];
 		for (int v = background; v < maxValue; v++)
 		{
 			levelStart[v] = offset;
@@ -4455,13 +4470,13 @@ public class FindFoci implements PlugIn, MouseListener
 			if (histogram[v] > 0)
 				highestValue = v;
 		}
-		int[] levelOffset = new int[highestValue + 1];
+		final int[] levelOffset = new int[highestValue + 1];
 		for (int i = image.length; i-- > 0;)
 		{
 			if ((types[i] & EXCLUDED) != 0)
 				continue;
 
-			int v = image[i];
+			final int v = image[i];
 			if (v >= background && v < maxValue)
 			{
 				offset = levelStart[v] + levelOffset[v];
@@ -4487,7 +4502,7 @@ public class FindFoci implements PlugIn, MouseListener
 			while (remaining > 0)
 			{
 				processedLevel++;
-				int n = processLevel(image, types, maxima, levelStart[level], remaining, coordinates, background);
+				final int n = processLevel(image, types, maxima, levelStart[level], remaining, coordinates, background);
 				remaining -= n; // number of points processed
 
 				// If nothing was done then stop
@@ -4553,17 +4568,17 @@ public class FindFoci implements PlugIn, MouseListener
 	 *            The background intensity
 	 * @return number of pixels that have been changed
 	 */
-	private int processLevel(int[] image, byte[] types, short[] maxima, int levelStart, int levelNPoints,
+	private int processLevel(int[] image, byte[] types, int[] maxima, int levelStart, int levelNPoints,
 			int[] coordinates, int background)
 	{
 		//int[] pList = new int[0]; // working list for expanding local plateaus
 		int nChanged = 0;
 		int nUnchanged = 0;
-		int[] xyz = new int[3];
+		final int[] xyz = new int[3];
 
 		for (int i = 0, p = levelStart; i < levelNPoints; i++, p++)
 		{
-			int index = coordinates[p];
+			final int index = coordinates[p];
 
 			if ((types[index] & (EXCLUDED | MAX_AREA)) != 0)
 			{
@@ -4575,16 +4590,16 @@ public class FindFoci implements PlugIn, MouseListener
 			getXYZ(index, xyz);
 
 			// Extract the point coordinate
-			int x = xyz[0];
-			int y = xyz[1];
-			int z = xyz[2];
+			final int x = xyz[0];
+			final int y = xyz[1];
+			final int z = xyz[2];
 
-			int v = image[index];
+			final int v = image[index];
 
 			// It is more likely that the z stack will be out-of-bounds.
 			// Adopt the xy limit lookup and process z lookup separately
-			boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
-			boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
+			final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+			final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
 
 			// Check for the highest neighbour
 
@@ -4596,8 +4611,8 @@ public class FindFoci implements PlugIn, MouseListener
 			{
 				if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d))
 				{
-					int index2 = index + offset[d];
-					int vNeighbor = image[index2];
+					final int index2 = index + offset[d];
+					final int vNeighbor = image[index2];
 					if (vMax < vNeighbor) // Higher neighbour
 					{
 						vMax = vNeighbor;
@@ -4692,7 +4707,7 @@ public class FindFoci implements PlugIn, MouseListener
 	 * Searches from the specified point to find all coordinates of the same value and assigns them to given maximum.
 	 */
 	@SuppressWarnings("unused")
-	private void expandPlateau(int[] image, short[] maxima, byte[] types, int index0, int v0, short id, int[] pList)
+	private void expandPlateau(int[] image, int[] maxima, byte[] types, int index0, int v0, int id, int[] pList)
 	{
 		types[index0] |= LISTED; // mark first point as listed
 		int listI = 0; // index of current search element in the list
@@ -4701,34 +4716,34 @@ public class FindFoci implements PlugIn, MouseListener
 		// we create a list of connected points and start the list at the current maximum
 		pList[listI] = index0;
 
-		int[] xyz = new int[3];
+		final int[] xyz = new int[3];
 
 		do
 		{
-			int index1 = pList[listI];
+			final int index1 = pList[listI];
 			getXYZ(index1, xyz);
-			int x1 = xyz[0];
-			int y1 = xyz[1];
-			int z1 = xyz[2];
+			final int x1 = xyz[0];
+			final int y1 = xyz[1];
+			final int z1 = xyz[2];
 
 			// It is more likely that the z stack will be out-of-bounds.
 			// Adopt the xy limit lookup and process z lookup separately
 
-			boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-			boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+			final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+			final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
 
 			for (int d = dStart; d-- > 0;)
 			{
 				if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
 				{
-					int index2 = index1 + offset[d];
+					final int index2 = index1 + offset[d];
 					if ((types[index2] & IGNORE) != 0)
 					{
 						// This has been done already, ignore this point
 						continue;
 					}
 
-					int v2 = image[index2];
+					final int v2 = image[index2];
 
 					if (v2 == v0)
 					{
@@ -4747,7 +4762,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		for (int i = listLen; i-- > 0;)
 		{
-			int index = pList[i];
+			final int index = pList[i];
 			types[index] &= ~LISTED; // reset attributes no longer needed
 
 			// Assign to the given maximum
@@ -4770,15 +4785,15 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param maxima
 	 */
 	private void pruneMaxima(int[] image, byte[] types, int searchMethod, double searchParameter, double[] stats,
-			ArrayList<int[]> resultsArray, short[] maxima)
+			ArrayList<int[]> resultsArray, int[] maxima)
 	{
 		// Build an array containing the threshold for each peak.
 		// Note that maxima are numbered from 1
-		int nMaxima = resultsArray.size();
-		int[] peakThreshold = new int[nMaxima + 1];
+		final int nMaxima = resultsArray.size();
+		final int[] peakThreshold = new int[nMaxima + 1];
 		for (int i = 1; i < peakThreshold.length; i++)
 		{
-			int v0 = resultsArray.get(i - 1)[RESULT_MAX_VALUE];
+			final int v0 = resultsArray.get(i - 1)[RESULT_MAX_VALUE];
 			peakThreshold[i] = getTolerance(searchMethod, searchParameter, stats, v0);
 		}
 
@@ -4804,13 +4819,13 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param maxima
 	 * @param resultsArray
 	 */
-	private void calculateInitialResults(int[] image, short[] maxima, ArrayList<int[]> resultsArray)
+	private void calculateInitialResults(int[] image, int[] maxima, ArrayList<int[]> resultsArray)
 	{
-		int nMaxima = resultsArray.size();
+		final int nMaxima = resultsArray.size();
 
 		// Maxima are numbered from 1
-		int[] count = new int[nMaxima + 1];
-		int[] intensity = new int[nMaxima + 1];
+		final int[] count = new int[nMaxima + 1];
+		final int[] intensity = new int[nMaxima + 1];
 
 		for (int i = maxima.length; i-- > 0;)
 		{
@@ -4833,12 +4848,12 @@ public class FindFoci implements PlugIn, MouseListener
 	 * Loop over the image and sum the intensity of each peak area using the original image, storing this into the
 	 * results array.
 	 */
-	private void calculateNativeResults(int[] image, short[] maxima, ArrayList<int[]> resultsArray,
+	private void calculateNativeResults(int[] image, int[] maxima, ArrayList<int[]> resultsArray,
 			int originalNumberOfPeaks)
 	{
 		// Maxima are numbered from 1
-		int[] intensity = new int[originalNumberOfPeaks + 1];
-		int[] max = new int[originalNumberOfPeaks + 1];
+		final int[] intensity = new int[originalNumberOfPeaks + 1];
+		final int[] max = new int[originalNumberOfPeaks + 1];
 
 		for (int i = maxima.length; i-- > 0;)
 		{
@@ -4874,7 +4889,7 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param centreMethod
 	 * @param centreParameter
 	 */
-	private void locateMaxima(int[] image, int[] searchImage, short[] maxima, byte[] types,
+	private void locateMaxima(int[] image, int[] searchImage, int[] maxima, byte[] types,
 			ArrayList<int[]> resultsArray, int originalNumberOfPeaks, int centreMethod, double centreParameter)
 	{
 		if (centreMethod == CENTRE_MAX_VALUE_SEARCH)
@@ -4902,19 +4917,19 @@ public class FindFoci implements PlugIn, MouseListener
 				pList = new int[result[RESULT_COUNT]];
 
 			// Find the peak coords above the saddle
-			short maximaId = (short) result[RESULT_PEAK_ID];
-			int index = getIndex(result[RESULT_X], result[RESULT_Y], result[RESULT_Z]);
-			int listLen = findMaximaCoords(image, maxima, types, index, maximaId, result[RESULT_HIGHEST_SADDLE_VALUE],
-					pList);
+			final int maximaId = result[RESULT_PEAK_ID];
+			final int index = getIndex(result[RESULT_X], result[RESULT_Y], result[RESULT_Z]);
+			final int listLen = findMaximaCoords(image, maxima, types, index, maximaId,
+					result[RESULT_HIGHEST_SADDLE_VALUE], pList);
 			//IJ.log("maxima size > saddle = " + listLen);
 
 			// Find the boundaries of the coordinates
-			int[] min_xyz = new int[] { maxx, maxy, maxz };
-			int[] max_xyz = new int[] { 0, 0, 0 };
-			int[] xyz = new int[3];
+			final int[] min_xyz = new int[] { maxx, maxy, maxz };
+			final int[] max_xyz = new int[] { 0, 0, 0 };
+			final int[] xyz = new int[3];
 			for (int listI = listLen; listI-- > 0;)
 			{
-				int index1 = pList[listI];
+				final int index1 = pList[listI];
 				getXYZ(index1, xyz);
 				for (int i = 3; i-- > 0;)
 				{
@@ -4928,11 +4943,11 @@ public class FindFoci implements PlugIn, MouseListener
 			//		max_xyz[0] + "," + max_xyz[1] + "," + max_xyz[2]);
 
 			// Extract sub image
-			int[] dimensions = new int[3];
+			final int[] dimensions = new int[3];
 			for (int i = 3; i-- > 0;)
 				dimensions[i] = max_xyz[i] - min_xyz[i] + 1;
 
-			int[] subImage = extractSubImage(image, maxima, min_xyz, dimensions, maximaId,
+			final int[] subImage = extractSubImage(image, maxima, min_xyz, dimensions, maximaId,
 					result[RESULT_HIGHEST_SADDLE_VALUE]);
 
 			int[] centre = null;
@@ -4964,7 +4979,7 @@ public class FindFoci implements PlugIn, MouseListener
 			{
 				if (IJ.debugMode)
 				{
-					int[] shift = new int[3];
+					final int[] shift = new int[3];
 					double d = 0;
 					for (int i = 3; i-- > 0;)
 					{
@@ -4987,8 +5002,8 @@ public class FindFoci implements PlugIn, MouseListener
 	 * 
 	 * @return The number of points
 	 */
-	private int findMaximaCoords(int[] image, short[] maxima, byte[] types, int index0, short maximaId,
-			int saddleValue, int[] pList)
+	private int findMaximaCoords(int[] image, int[] maxima, byte[] types, int index0, int maximaId, int saddleValue,
+			int[] pList)
 	{
 		types[index0] |= LISTED; // mark first point as listed
 		int listI = 0; // index of current search element in the list
@@ -4997,31 +5012,31 @@ public class FindFoci implements PlugIn, MouseListener
 		// we create a list of connected points and start the list at the current maximum
 		pList[listI] = index0;
 
-		int[] xyz = new int[3];
+		final int[] xyz = new int[3];
 
 		do
 		{
-			int index1 = pList[listI];
+			final int index1 = pList[listI];
 			getXYZ(index1, xyz);
-			int x1 = xyz[0];
-			int y1 = xyz[1];
-			int z1 = xyz[2];
+			final int x1 = xyz[0];
+			final int y1 = xyz[1];
+			final int z1 = xyz[2];
 
-			boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-			boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+			final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+			final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
 
 			for (int d = dStart; d-- > 0;)
 			{
 				if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
 				{
-					int index2 = index1 + offset[d];
+					final int index2 = index1 + offset[d];
 					if ((types[index2] & IGNORE) != 0 || maxima[index2] != maximaId)
 					{
 						// This has been done already, ignore this point
 						continue;
 					}
 
-					int v2 = image[index2];
+					final int v2 = image[index2];
 
 					if (v2 >= saddleValue)
 					{
@@ -5038,7 +5053,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		for (int i = listLen; i-- > 0;)
 		{
-			int index = pList[i];
+			final int index = pList[i];
 			types[index] &= ~LISTED; // reset attributes no longer needed
 		}
 
@@ -5052,10 +5067,9 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param result
 	 * @param maxima
 	 */
-	private int[] extractSubImage(int[] image, short[] maxima, int[] min_xyz, int[] dimensions, short maximaId,
-			int minValue)
+	private int[] extractSubImage(int[] image, int[] maxima, int[] min_xyz, int[] dimensions, int maximaId, int minValue)
 	{
-		int[] subImage = new int[dimensions[0] * dimensions[1] * dimensions[2]];
+		final int[] subImage = new int[dimensions[0] * dimensions[1] * dimensions[2]];
 
 		int offset = 0;
 		for (int z = 0; z < dimensions[2]; z++)
@@ -5105,28 +5119,28 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 
 		// Used to map index back to XYZ
-		int blockSize = dimensions[0] * dimensions[1];
+		final int blockSize = dimensions[0] * dimensions[1];
 
 		if (count == 1)
 		{
 			// There is only one maximum pixel
-			int[] xyz = new int[3];
+			final int[] xyz = new int[3];
 			xyz[2] = index / (blockSize);
-			int mod = index % (blockSize);
+			final int mod = index % (blockSize);
 			xyz[1] = mod / dimensions[0];
 			xyz[0] = mod % dimensions[0];
 			return xyz;
 		}
 
 		// Find geometric mean
-		double[] centre = new double[3];
+		final double[] centre = new double[3];
 		for (int i = image.length; i-- > 0;)
 		{
 			if (maxValue == image[i])
 			{
-				int[] xyz = new int[3];
+				final int[] xyz = new int[3];
 				xyz[2] = i / (blockSize);
-				int mod = i % (blockSize);
+				final int mod = i % (blockSize);
 				xyz[1] = mod / dimensions[0];
 				xyz[0] = mod % dimensions[0];
 				for (int j = 3; j-- > 0;)
@@ -5166,7 +5180,7 @@ public class FindFoci implements PlugIn, MouseListener
 	 */
 	private int[] findCentreOfMass(int[] subImage, int[] dimensions, int range)
 	{
-		int[] centre = findCentreMaxValue(subImage, dimensions);
+		final int[] centre = findCentreMaxValue(subImage, dimensions);
 		double[] com = new double[] { centre[0], centre[1], centre[2] };
 
 		// Iterate until convergence
@@ -5174,7 +5188,7 @@ public class FindFoci implements PlugIn, MouseListener
 		int iter = 0;
 		do
 		{
-			double[] newCom = findCentreOfMass(subImage, dimensions, range, com);
+			final double[] newCom = findCentreOfMass(subImage, dimensions, range, com);
 			distance = Math.pow(newCom[0] - com[0], 2) + Math.pow(newCom[1] - com[1], 2) +
 					Math.pow(newCom[2] - com[2], 2);
 			com = newCom;
@@ -5189,10 +5203,10 @@ public class FindFoci implements PlugIn, MouseListener
 	 */
 	private double[] findCentreOfMass(int[] subImage, int[] dimensions, int range, double[] com)
 	{
-		int[] centre = convertCentre(com);
+		final int[] centre = convertCentre(com);
 
-		int[] min = new int[3];
-		int[] max = new int[3];
+		final int[] min = new int[3];
+		final int[] max = new int[3];
 		if (range < 1)
 			range = 1;
 		for (int i = 3; i-- > 0;)
@@ -5205,9 +5219,9 @@ public class FindFoci implements PlugIn, MouseListener
 				max[i] = dimensions[i] - 1;
 		}
 
-		int blockSize = dimensions[0] * dimensions[1];
+		final int blockSize = dimensions[0] * dimensions[1];
 
-		double[] newCom = new double[3];
+		final double[] newCom = new double[3];
 		long sum = 0;
 		for (int z = min[2]; z <= max[2]; z++)
 		{
@@ -5216,7 +5230,7 @@ public class FindFoci implements PlugIn, MouseListener
 				int index = blockSize * z + dimensions[0] * y + min[0];
 				for (int x = min[0]; x <= max[0]; x++, index++)
 				{
-					int value = subImage[index];
+					final int value = subImage[index];
 					if (value > 0)
 					{
 						sum += value;
@@ -5250,8 +5264,8 @@ public class FindFoci implements PlugIn, MouseListener
 		if (isGaussianFitEnabled < 1)
 			return null;
 
-		int blockSize = dimensions[0] * dimensions[1];
-		float[] projection = new float[blockSize];
+		final int blockSize = dimensions[0] * dimensions[1];
+		final float[] projection = new float[blockSize];
 
 		if (projectionMethod == 1)
 		{
@@ -5279,8 +5293,8 @@ public class FindFoci implements PlugIn, MouseListener
 				projection[i] /= dimensions[2];
 		}
 
-		GaussianFit gf = new GaussianFit();
-		double[] fitParams = gf.fit(projection, dimensions[0], dimensions[1]);
+		final GaussianFit gf = new GaussianFit();
+		final double[] fitParams = gf.fit(projection, dimensions[0], dimensions[1]);
 
 		int[] centre = null;
 		if (fitParams != null)
@@ -5293,8 +5307,8 @@ public class FindFoci implements PlugIn, MouseListener
 			long sum = 0;
 			for (int z = dimensions[2]; z-- > 0;)
 			{
-				int index = blockSize * z;
-				int value = subImage[index];
+				final int index = blockSize * z;
+				final int value = subImage[index];
 				if (value > 0)
 				{
 					com += z * value;
@@ -5351,31 +5365,31 @@ public class FindFoci implements PlugIn, MouseListener
 	 *            Contains an entry for each peak indexed from 1. The entry is a linked list of saddle points. Each
 	 *            saddle point is an array containing the neighbouring peak ID and the saddle value.
 	 */
-	private void findSaddlePoints(int[] image, byte[] types, ArrayList<int[]> resultsArray, short[] maxima,
+	private void findSaddlePoints(int[] image, byte[] types, ArrayList<int[]> resultsArray, int[] maxima,
 			ArrayList<LinkedList<int[]>> saddlePoints)
 	{
 		// Initialise the saddle points
-		int nMaxima = resultsArray.size();
+		final int nMaxima = resultsArray.size();
 		for (int i = 0; i < nMaxima + 1; i++)
 			saddlePoints.add(new LinkedList<int[]>());
 
-		int maxPeakSize = getMaxPeakSize(resultsArray);
-		int[][] pList = new int[maxPeakSize][2]; // here we enter points starting from a maximum (index,value)
-		int[] xyz = new int[3];
+		final int maxPeakSize = getMaxPeakSize(resultsArray);
+		final int[][] pList = new int[maxPeakSize][2]; // here we enter points starting from a maximum (index,value)
+		final int[] xyz = new int[3];
 
 		/* Process all the maxima */
 		for (int[] result : resultsArray)
 		{
-			int x0 = result[RESULT_X];
-			int y0 = result[RESULT_Y];
-			int z0 = result[RESULT_Z];
-			short id = (short) result[RESULT_PEAK_ID];
-			int index0 = getIndex(x0, y0, z0);
+			final int x0 = result[RESULT_X];
+			final int y0 = result[RESULT_Y];
+			final int z0 = result[RESULT_Z];
+			final int id = result[RESULT_PEAK_ID];
+			final int index0 = getIndex(x0, y0, z0);
 
-			int v0 = result[RESULT_MAX_VALUE];
+			final int v0 = result[RESULT_MAX_VALUE];
 
 			// List of saddle highest values with every other peak
-			int[] highestSaddleValue = new int[nMaxima + 1];
+			final int[] highestSaddleValue = new int[nMaxima + 1];
 
 			types[index0] |= LISTED; // mark first point as listed
 			int listI = 0; // index of current search element in the list
@@ -5387,19 +5401,19 @@ public class FindFoci implements PlugIn, MouseListener
 
 			do
 			{
-				int index1 = pList[listI][0];
-				int v1 = pList[listI][1];
+				final int index1 = pList[listI][0];
+				final int v1 = pList[listI][1];
 
 				getXYZ(index1, xyz);
-				int x1 = xyz[0];
-				int y1 = xyz[1];
-				int z1 = xyz[2];
+				final int x1 = xyz[0];
+				final int y1 = xyz[1];
+				final int z1 = xyz[2];
 
 				// It is more likely that the z stack will be out-of-bounds.
 				// Adopt the xy limit lookup and process z lookup separately
 
-				boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-				boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+				final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
 
 				// Check for the highest neighbour
 				for (int d = dStart; d-- > 0;)
@@ -5407,7 +5421,7 @@ public class FindFoci implements PlugIn, MouseListener
 					if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
 					{
 						// Get the coords
-						int index2 = index1 + offset[d];
+						final int index2 = index1 + offset[d];
 
 						if ((types[index2] & IGNORE) != 0)
 						{
@@ -5415,7 +5429,7 @@ public class FindFoci implements PlugIn, MouseListener
 							continue;
 						}
 
-						short id2 = maxima[index2];
+						final int id2 = maxima[index2];
 
 						if (id2 == id)
 						{
@@ -5428,10 +5442,10 @@ public class FindFoci implements PlugIn, MouseListener
 						else if (id2 != 0)
 						{
 							// This is another peak, see if it a saddle highpoint
-							int v2 = image[index2];
+							final int v2 = image[index2];
 
 							// Take the lower of the two points as the saddle
-							int minV;
+							final int minV;
 							if (v1 < v2)
 							{
 								types[index1] |= SADDLE;
@@ -5457,13 +5471,12 @@ public class FindFoci implements PlugIn, MouseListener
 
 			for (int i = listLen; i-- > 0;)
 			{
-				int index = pList[i][0];
-
+				final int index = pList[i][0];
 				types[index] &= ~LISTED; // reset attributes no longer needed
 			}
 
 			// Find the highest saddle
-			short highestNeighbourPeakId = 0;
+			int highestNeighbourPeakId = 0;
 			int highestNeighbourValue = 0;
 			LinkedList<int[]> saddles = saddlePoints.get(id);
 			for (int id2 = 1; id2 <= nMaxima; id2++)
@@ -5475,7 +5488,7 @@ public class FindFoci implements PlugIn, MouseListener
 					if (highestNeighbourValue < highestSaddleValue[id2])
 					{
 						highestNeighbourValue = highestSaddleValue[id2];
-						highestNeighbourPeakId = (short) id2;
+						highestNeighbourPeakId = id2;
 					}
 				}
 			}
@@ -5503,7 +5516,7 @@ public class FindFoci implements PlugIn, MouseListener
 	/**
 	 * Find the size and intensity of peaks above their saddle heights.
 	 */
-	private void analysePeaks(ArrayList<int[]> resultsArray, int[] image, short[] maxima, double[] stats)
+	private void analysePeaks(ArrayList<int[]> resultsArray, int[] image, int[] maxima, double[] stats)
 	{
 		// Create an array of the size/intensity of each peak above the highest saddle 
 		int[] peakIntensity = new int[resultsArray.size() + 1];
@@ -5538,14 +5551,14 @@ public class FindFoci implements PlugIn, MouseListener
 	/**
 	 * Merge sub-peaks into their highest neighbour peak using the highest saddle point
 	 */
-	private void mergeSubPeaks(ArrayList<int[]> resultsArray, int[] image, short[] maxima, int minSize, int peakMethod,
+	private void mergeSubPeaks(ArrayList<int[]> resultsArray, int[] image, int[] maxima, int minSize, int peakMethod,
 			double peakParameter, double[] stats, ArrayList<LinkedList<int[]>> saddlePoints, boolean isLogging,
 			boolean restrictAboveSaddle)
 	{
 		// Create an array containing the mapping between the original peak Id and the current Id that the peak has been
 		// mapped to.
-		short[] peakIdMap = new short[resultsArray.size() + 1];
-		for (short i = 0; i < peakIdMap.length; i++)
+		final int[] peakIdMap = new int[resultsArray.size() + 1];
+		for (int i = 0; i < peakIdMap.length; i++)
 			peakIdMap[i] = i;
 
 		// Process all the peaks for the minimum height. Process in order of saddle height
@@ -5553,18 +5566,18 @@ public class FindFoci implements PlugIn, MouseListener
 
 		for (int[] result : resultsArray)
 		{
-			short peakId = (short) result[RESULT_PEAK_ID];
-			LinkedList<int[]> saddles = saddlePoints.get(peakId);
+			final int peakId = result[RESULT_PEAK_ID];
+			final LinkedList<int[]> saddles = saddlePoints.get(peakId);
 
 			// Check if this peak has been reassigned or has no neighbours
 			if (peakId != peakIdMap[peakId])
 				continue;
 
-			int[] highestSaddle = findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
+			final int[] highestSaddle = findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
 
-			int peakBase = (highestSaddle == null) ? round(stats[STATS_BACKGROUND]) : highestSaddle[1];
+			final int peakBase = (highestSaddle == null) ? round(stats[STATS_BACKGROUND]) : highestSaddle[1];
 
-			int threshold = getPeakHeight(peakMethod, peakParameter, stats, result[RESULT_MAX_VALUE]);
+			final int threshold = getPeakHeight(peakMethod, peakParameter, stats, result[RESULT_MAX_VALUE]);
 
 			if (result[RESULT_MAX_VALUE] - peakBase < threshold)
 			{
@@ -5576,8 +5589,8 @@ public class FindFoci implements PlugIn, MouseListener
 				else
 				{
 					// Find the neighbour peak (use the map because the neighbour may have been merged)
-					short neighbourPeakId = peakIdMap[highestSaddle[SADDLE_PEAK_ID]];
-					int[] neighbourResult = findResult(resultsArray, neighbourPeakId);
+					final int neighbourPeakId = peakIdMap[highestSaddle[SADDLE_PEAK_ID]];
+					final int[] neighbourResult = findResult(resultsArray, neighbourPeakId);
 
 					mergePeak(image, maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
 							saddlePoints.get(neighbourPeakId), highestSaddle, false);
@@ -5595,7 +5608,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		for (int[] result : resultsArray)
 		{
-			short peakId = (short) result[RESULT_PEAK_ID];
+			final int peakId = result[RESULT_PEAK_ID];
 
 			// Check if this peak has been reassigned
 			if (peakId != peakIdMap[peakId])
@@ -5605,8 +5618,8 @@ public class FindFoci implements PlugIn, MouseListener
 			{
 				// This peak is not large enough, merge into the neighbour peak
 
-				LinkedList<int[]> saddles = saddlePoints.get(peakId);
-				int[] highestSaddle = findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
+				final LinkedList<int[]> saddles = saddlePoints.get(peakId);
+				final int[] highestSaddle = findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
 
 				if (highestSaddle == null)
 				{
@@ -5615,8 +5628,8 @@ public class FindFoci implements PlugIn, MouseListener
 				else
 				{
 					// Find the neighbour peak (use the map because the neighbour may have been merged)
-					short neighbourPeakId = peakIdMap[highestSaddle[SADDLE_PEAK_ID]];
-					int[] neighbourResult = findResult(resultsArray, neighbourPeakId);
+					final int neighbourPeakId = peakIdMap[highestSaddle[SADDLE_PEAK_ID]];
+					final int[] neighbourResult = findResult(resultsArray, neighbourPeakId);
 
 					mergePeak(image, maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
 							saddlePoints.get(neighbourPeakId), highestSaddle, false);
@@ -5641,7 +5654,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 			for (int[] result : resultsArray)
 			{
-				short peakId = (short) result[RESULT_PEAK_ID];
+				final int peakId = result[RESULT_PEAK_ID];
 
 				// Check if this peak has been reassigned
 				if (peakId != peakIdMap[peakId])
@@ -5651,21 +5664,21 @@ public class FindFoci implements PlugIn, MouseListener
 				{
 					// This peak is not large enough, merge into the neighbour peak
 
-					LinkedList<int[]> saddles = saddlePoints.get(peakId);
-					int[] highestSaddle = findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
+					final LinkedList<int[]> saddles = saddlePoints.get(peakId);
+					final int[] highestSaddle = findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
 
 					if (highestSaddle == null)
 					{
 						// TODO - This should not occur... ? What is the count above the saddle?
 
 						// No neighbour so just remove
-						mergePeak(image, maxima, peakIdMap, peakId, result, (short) 0, null, null, null, null, true);
+						mergePeak(image, maxima, peakIdMap, peakId, result, 0, null, null, null, null, true);
 					}
 					else
 					{
 						// Find the neighbour peak (use the map because the neighbour may have been merged)
-						short neighbourPeakId = peakIdMap[highestSaddle[SADDLE_PEAK_ID]];
-						int[] neighbourResult = findResult(resultsArray, neighbourPeakId);
+						final int neighbourPeakId = peakIdMap[highestSaddle[SADDLE_PEAK_ID]];
+						final int[] neighbourResult = findResult(resultsArray, neighbourPeakId);
 
 						// Note: Ensure the peak counts above the saddle are updated.
 						mergePeak(image, maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
@@ -5698,13 +5711,13 @@ public class FindFoci implements PlugIn, MouseListener
 		updateSaddleDetails(resultsArray, peakIdMap);
 	}
 
-	private void removePeak(int[] image, short[] maxima, short[] peakIdMap, int[] result, short peakId)
+	private void removePeak(int[] image, int[] maxima, int[] peakIdMap, int[] result, int peakId)
 	{
 		// No neighbour so just remove
-		mergePeak(image, maxima, peakIdMap, peakId, result, (short) 0, null, null, null, null, false);
+		mergePeak(image, maxima, peakIdMap, peakId, result, 0, null, null, null, null, false);
 	}
 
-	private int countPeaks(short[] peakIdMap)
+	private int countPeaks(int[] peakIdMap)
 	{
 		int count = 0;
 		for (int i = 1; i < peakIdMap.length; i++)
@@ -5717,11 +5730,11 @@ public class FindFoci implements PlugIn, MouseListener
 		return count;
 	}
 
-	private void updateSaddleDetails(ArrayList<int[]> resultsArray, short[] peakIdMap)
+	private void updateSaddleDetails(ArrayList<int[]> resultsArray, int[] peakIdMap)
 	{
 		for (int[] result : resultsArray)
 		{
-			short neighbourPeakId = peakIdMap[result[RESULT_SADDLE_NEIGHBOUR_ID]];
+			int neighbourPeakId = peakIdMap[result[RESULT_SADDLE_NEIGHBOUR_ID]];
 
 			// Ensure the peak is not marked as a saddle with itself
 			if (neighbourPeakId == result[RESULT_PEAK_ID])
@@ -5750,14 +5763,14 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param saddles
 	 * @return
 	 */
-	private int[] findHighestNeighbourSaddle(short[] peakIdMap, LinkedList<int[]> saddles, short peakId)
+	private int[] findHighestNeighbourSaddle(int[] peakIdMap, LinkedList<int[]> saddles, int peakId)
 	{
 		int[] maxSaddle = null;
 		int max = 0;
 		for (int[] saddle : saddles)
 		{
 			// Find foci that have not been reassigned to this peak (or nothing)
-			short neighbourPeakId = peakIdMap[saddle[SADDLE_PEAK_ID]];
+			final int neighbourPeakId = peakIdMap[saddle[SADDLE_PEAK_ID]];
 			if (neighbourPeakId != peakId && neighbourPeakId != 0)
 			{
 				if (max < saddle[SADDLE_VALUE])
@@ -5778,14 +5791,14 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param saddles
 	 * @return
 	 */
-	private int[] findHighestSaddle(short[] peakIdMap, LinkedList<int[]> saddles, int peakId)
+	private int[] findHighestSaddle(int[] peakIdMap, LinkedList<int[]> saddles, int peakId)
 	{
 		int[] maxSaddle = null;
 		int max = 0;
 		for (int[] saddle : saddles)
 		{
 			// Use the map to ensure the original saddle id corresponds to the current peaks
-			short neighbourPeakId = peakIdMap[saddle[SADDLE_PEAK_ID]];
+			final int neighbourPeakId = peakIdMap[saddle[SADDLE_PEAK_ID]];
 			if (neighbourPeakId == peakId)
 			{
 				if (max < saddle[SADDLE_VALUE])
@@ -5829,9 +5842,9 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param peakSaddles
 	 * @param highestSaddle
 	 */
-	private void mergePeak(int[] image, short[] maxima, short[] peakIdMap, short peakId, int[] result,
-			short neighbourPeakId, int[] neighbourResult, LinkedList<int[]> peakSaddles,
-			LinkedList<int[]> neighbourSaddles, int[] highestSaddle, boolean updatePeakAboveSaddle)
+	private void mergePeak(int[] image, int[] maxima, int[] peakIdMap, int peakId, int[] result, int neighbourPeakId,
+			int[] neighbourResult, LinkedList<int[]> peakSaddles, LinkedList<int[]> neighbourSaddles,
+			int[] highestSaddle, boolean updatePeakAboveSaddle)
 	{
 		if (neighbourResult != null)
 		{
@@ -5857,8 +5870,8 @@ public class FindFoci implements PlugIn, MouseListener
 			// Merge the saddles
 			for (int[] peakSaddle : peakSaddles)
 			{
-				int saddlePeakId = peakIdMap[peakSaddle[SADDLE_PEAK_ID]];
-				int[] neighbourSaddle = findHighestSaddle(peakIdMap, neighbourSaddles, saddlePeakId);
+				final int saddlePeakId = peakIdMap[peakSaddle[SADDLE_PEAK_ID]];
+				final int[] neighbourSaddle = findHighestSaddle(peakIdMap, neighbourSaddles, saddlePeakId);
 				if (neighbourSaddle == null)
 				{
 					// The neighbour peak does not touch this peak, add to the list
@@ -5895,7 +5908,7 @@ public class FindFoci implements PlugIn, MouseListener
 		// Update the count and intensity above the highest neighbour saddle
 		if (neighbourResult != null)
 		{
-			int[] newHighestSaddle = findHighestNeighbourSaddle(peakIdMap, neighbourSaddles, neighbourPeakId);
+			final int[] newHighestSaddle = findHighestNeighbourSaddle(peakIdMap, neighbourSaddles, neighbourPeakId);
 			if (newHighestSaddle != null)
 			{
 				reanalysePeak(image, maxima, peakIdMap, neighbourPeakId, newHighestSaddle, neighbourResult,
@@ -5915,14 +5928,14 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param peakIdMap
 	 * @param updatePeakAboveSaddle
 	 */
-	private void reanalysePeak(int[] image, short[] maxima, short[] peakIdMap, short peakId, int[] saddle,
-			int[] result, boolean updatePeakAboveSaddle)
+	private void reanalysePeak(int[] image, int[] maxima, int[] peakIdMap, int peakId, int[] saddle, int[] result,
+			boolean updatePeakAboveSaddle)
 	{
 		if (updatePeakAboveSaddle)
 		{
 			int peakSize = 0;
 			int peakIntensity = 0;
-			int saddleHeight = saddle[1];
+			final int saddleHeight = saddle[1];
 			for (int i = maxima.length; i-- > 0;)
 			{
 				if (maxima[i] > 0)
@@ -5953,11 +5966,11 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param maxima
 	 * @param peakIdMap
 	 */
-	private void reassignMaxima(short[] maxima, short[] peakIdMap)
+	private void reassignMaxima(int[] maxima, int[] peakIdMap)
 	{
 		for (int i = maxima.length; i-- > 0;)
 		{
-			if (maxima[i] > 0)
+			if (maxima[i] != 0)
 			{
 				maxima[i] = peakIdMap[maxima[i]];
 			}
@@ -5973,17 +5986,17 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param stats
 	 * @param isLogging
 	 */
-	private void removeEdgeMaxima(ArrayList<int[]> resultsArray, int[] image, short[] maxima, double[] stats,
+	private void removeEdgeMaxima(ArrayList<int[]> resultsArray, int[] image, int[] maxima, double[] stats,
 			boolean isLogging)
 	{
 		// Build a look-up table for all the peak IDs
-		short maxId = 0;
+		int maxId = 0;
 		for (int[] result : resultsArray)
-			if (maxId < (short) result[RESULT_PEAK_ID])
-				maxId = (short) result[RESULT_PEAK_ID];
+			if (maxId < result[RESULT_PEAK_ID])
+				maxId = result[RESULT_PEAK_ID];
 
-		short[] peakIdMap = new short[maxId + 1];
-		for (short i = 0; i < peakIdMap.length; i++)
+		final int[] peakIdMap = new int[maxId + 1];
+		for (int i = 0; i < peakIdMap.length; i++)
 			peakIdMap[i] = i;
 
 		// Support the ROI bounds used to create the analysis region
@@ -6023,7 +6036,7 @@ public class FindFoci implements PlugIn, MouseListener
 		// Mark maxima to be removed
 		for (int[] result : resultsArray)
 		{
-			short peakId = (short) result[RESULT_PEAK_ID];
+			final int peakId = result[RESULT_PEAK_ID];
 			if (peakIdMap[peakId] == 0)
 				result[RESULT_INTENSITY] = 0;
 		}
@@ -6400,17 +6413,17 @@ public class FindFoci implements PlugIn, MouseListener
 	private class Coordinate implements Comparable<Coordinate>
 	{
 		public int index;
-		public short id;
+		public int id;
 		public int value;
 
-		public Coordinate(int index, short id, int value)
+		public Coordinate(int index, int id, int value)
 		{
 			this.index = index;
 			this.id = id;
 			this.value = value;
 		}
 
-		public Coordinate(int x, int y, int z, short id, int value)
+		public Coordinate(int x, int y, int z, int id, int value)
 		{
 			this.index = getIndex(x, y, z);
 			this.id = id;
@@ -6951,6 +6964,7 @@ public class FindFoci implements PlugIn, MouseListener
 			return null;
 
 		// Track all the objects
+		// Note: This can only be called with a ImageJ image and so must use a 16-bit capacity. 
 		final short[] objects = new short[maskImage.length];
 		short id = 0;
 		int[] objectState = new int[10];
@@ -6980,10 +6994,10 @@ public class FindFoci implements PlugIn, MouseListener
 		// For each maximum, mark the object and original mask value (state)
 		for (int[] result : resultsArray)
 		{
-			int x = result[RESULT_X];
-			int y = result[RESULT_Y];
-			int z = (is2D) ? 0 : result[RESULT_Z];
-			int index = getIndex(x, y, z);
+			final int x = result[RESULT_X];
+			final int y = result[RESULT_Y];
+			final int z = (is2D) ? 0 : result[RESULT_Z];
+			final int index = getIndex(x, y, z);
 			result[RESULT_OBJECT] = objects[index];
 			result[RESULT_STATE] = objectState[objects[index]];
 		}
@@ -7026,30 +7040,30 @@ public class FindFoci implements PlugIn, MouseListener
 
 		do
 		{
-			int index1 = pList[listI];
+			final int index1 = pList[listI];
 			getXYZ(index1, xyz);
-			int x1 = xyz[0];
-			int y1 = xyz[1];
-			int z1 = xyz[2];
+			final int x1 = xyz[0];
+			final int y1 = xyz[1];
+			final int z1 = xyz[2];
 
 			// It is more likely that the z stack will be out-of-bounds.
 			// Adopt the xy limit lookup and process z lookup separately
 
-			boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-			boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+			final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+			final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
 
 			for (int d = 26; d-- > 0;)
 			{
 				if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
 				{
-					int index2 = index1 + offset[d];
+					final int index2 = index1 + offset[d];
 					if (maxima[index2] != 0)
 					{
 						// This has been done already, ignore this point
 						continue;
 					}
 
-					int v2 = image[index2];
+					final int v2 = image[index2];
 
 					if (v2 == v0)
 					{
@@ -7086,25 +7100,25 @@ public class FindFoci implements PlugIn, MouseListener
 
 		do
 		{
-			int index1 = pList[listI];
+			final int index1 = pList[listI];
 			getXY(index1, xyz);
-			int x1 = xyz[0];
-			int y1 = xyz[1];
+			final int x1 = xyz[0];
+			final int y1 = xyz[1];
 
-			boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+			final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
 
 			for (int d = 8; d-- > 0;)
 			{
 				if (isInnerXY || isWithinXY(x1, y1, d))
 				{
-					int index2 = index1 + offset[d];
+					final int index2 = index1 + offset[d];
 					if (maxima[index2] != 0)
 					{
 						// This has been done already, ignore this point
 						continue;
 					}
 
-					int v2 = image[index2];
+					final int v2 = image[index2];
 
 					if (v2 == v0)
 					{
@@ -7177,5 +7191,31 @@ public class FindFoci implements PlugIn, MouseListener
 	public static ArrayList<int[]> getResults(String name)
 	{
 		return memory.get(name);
+	}
+
+	private boolean showCapacityDialog()
+	{
+		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		gd.addMessage("Set the maximum number of potential maxima for the " + FRAME_TITLE + " algorithm.\n " +
+				"\nIncreasing this number can allow processing large images (which may be slow).\n \n" +
+				"The number of potential maxima can be reduced by smoothing the image (e.g\n" +
+				"using a Gaussian blur).");
+		gd.addNumericField("Capacity", searchCapacity, 0);
+		gd.addMessage("Note: The default is the legacy value for 16-bit signed integers.\n" +
+				"The maximum value supported is " + Integer.MAX_VALUE + ".\n \n" +
+						"This preference will be saved when you exit ImageJ.");
+
+		gd.showDialog();
+		if (gd.wasCanceled())
+			return false;
+		
+		final double d = Math.abs(gd.getNextNumber());
+		if (d > Integer.MAX_VALUE)
+			return false;
+		
+		searchCapacity = Math.max(1, (int) d);
+		Prefs.set(SEARCH_CAPACITY, searchCapacity);
+		
+		return true;
 	}
 }
