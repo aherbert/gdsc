@@ -375,12 +375,12 @@ public class FindFoci implements PlugIn, MouseListener
 	public static final String FRAME_TITLE = "FindFoci";
 
 	private static TextWindow resultsWindow = null;
-	
+
 	// Used to buffer the results to the TextWindow
 	private StringBuilder resultsBuffer = new StringBuilder();
 	private int resultsCount = 0;
 	private int flushCount = 0;
-	
+
 	private static ArrayList<int[]> lastResultsArray = null;
 	private static int isGaussianFitEnabled = 0;
 	private static String newLine = System.getProperty("line.separator");
@@ -6997,10 +6997,9 @@ public class FindFoci implements PlugIn, MouseListener
 		if (maskImage == null)
 			return null;
 
-		// Track all the objects
-		// Note: This can only be called with a ImageJ image and so must use a 16-bit capacity. 
-		final short[] objects = new short[maskImage.length];
-		short id = 0;
+		// Track all the objects. Allow more than the 16-bit capacity for counting objects.
+		final int[] objects = new int[maskImage.length];
+		int id = 0;
 		int[] objectState = new int[10];
 		// Label for 2D/3D processing
 		final boolean is2D = (maskImage.length == maxx_maxy);
@@ -7015,13 +7014,13 @@ public class FindFoci implements PlugIn, MouseListener
 
 				// Store the original mask value of new object
 				if (objectState.length <= id)
-					objectState = Arrays.copyOf(objectState, objectState.length + 10);
+					objectState = Arrays.copyOf(objectState, (int) (objectState.length * 1.5));
 				objectState[id] = maskImage[i];
 
 				if (is2D)
-					pList = expandObjectXY(maskImage, objects, i, id, pList);
+					pList = expandObjectXY(maskImage, objects, i, (short) id, pList);
 				else
-					pList = expandObjectXYZ(maskImage, objects, i, id, pList);
+					pList = expandObjectXYZ(maskImage, objects, i, (short) id, pList);
 			}
 		}
 
@@ -7032,20 +7031,30 @@ public class FindFoci implements PlugIn, MouseListener
 			final int y = result[RESULT_Y];
 			final int z = (is2D) ? 0 : result[RESULT_Z];
 			final int index = getIndex(x, y, z);
-			result[RESULT_OBJECT] = objects[index];
-			result[RESULT_STATE] = objectState[objects[index]];
+			// Convert the short to unsigned
+			final int objectValue = objects[index] & 0xffff;
+			result[RESULT_OBJECT] = objectValue;
+			result[RESULT_STATE] = objectState[objectValue];
 		}
 
 		// Show the object mask
 		ImagePlus maskImp = null;
 		if (createObjectMask)
 		{
+			// Check we do not exceed capcity
+			if (id > 65535)
+			{
+				IJ.log("The number of objects exceeds the 16-bit capacity used for diplay: 65535");
+				return null;
+			}
+
 			final int n = (is2D) ? 1 : maxz;
 			ImageStack stack = new ImageStack(maxx, maxy, n);
-			for (int z = 0; z < n; z++)
+			for (int z = 0, index = 0; z < n; z++)
 			{
 				final short[] pixels = new short[maxx_maxy];
-				System.arraycopy(objects, maxx_maxy * z, pixels, 0, maxx_maxy);
+				for (int i = 0; i < pixels.length; i++, index++)
+					pixels[i] = (short) objects[index];
 				stack.setPixels(pixels, z + 1);
 			}
 			// Create a new ImagePlus so that the stack and calibration can be set
@@ -7060,7 +7069,7 @@ public class FindFoci implements PlugIn, MouseListener
 	/**
 	 * Searches from the specified point to find all coordinates of the same value and assigns them to given maximum ID.
 	 */
-	private int[] expandObjectXYZ(final int[] image, final short[] maxima, final int index0, final short id, int[] pList)
+	private int[] expandObjectXYZ(final int[] image, final int[] maxima, final int index0, final int id, int[] pList)
 	{
 		maxima[index0] = id; // mark first point
 		int listI = 0; // index of current search element in the list
@@ -7120,7 +7129,7 @@ public class FindFoci implements PlugIn, MouseListener
 	/**
 	 * Searches from the specified point to find all coordinates of the same value and assigns them to given maximum ID.
 	 */
-	private int[] expandObjectXY(final int[] image, final short[] maxima, final int index0, final short id, int[] pList)
+	private int[] expandObjectXY(final int[] image, final int[] maxima, final int index0, final int id, int[] pList)
 	{
 		maxima[index0] = id; // mark first point
 		int listI = 0; // index of current search element in the list
