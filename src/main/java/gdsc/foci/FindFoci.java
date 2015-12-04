@@ -3038,7 +3038,6 @@ public class FindFoci implements PlugIn, MouseListener
 			types[index] = 0;
 		}
 
-		ImageStack stack = new ImageStack(maxx, maxy);
 		int maxValue = nMaxima;
 
 		if ((outputType & OUTPUT_MASK_THRESHOLD) != 0)
@@ -3080,23 +3079,32 @@ public class FindFoci implements PlugIn, MouseListener
 		// Check the maxima can be displayed
 		if (maxValue > MAXIMA_CAPCITY)
 		{
-			// Q. Should a warning be generated?
+			IJ.log("The number of maxima exceeds the 16-bit capacity used for diplay: " + MAXIMA_CAPCITY);
 			return null;
 		}
 
 		// Output the mask
 		// The index is '(maxx_maxy) * z + maxx * y + x' so we can simply iterate over the array if we use z, y, x order
-		for (int z = 0, index = 0; z < maxz; z++)
+		ImageStack stack = new ImageStack(maxx, maxy, maxz);
+		if (maxValue > 255)
 		{
-			ImageProcessor ip = (maxValue > 255) ? new ShortProcessor(maxx, maxy) : new ByteProcessor(maxx, maxy);
-			for (int y = 0; y < maxy; y++)
+			for (int z = 0, index = 0; z < maxz; z++)
 			{
-				for (int x = 0; x < maxx; x++)
-				{
-					ip.set(x, y, maxima[index++]);
-				}
+				final short[] pixels = new short[maxx_maxy];
+				for (int i = 0; i < maxx_maxy; i++, index++)
+					pixels[i] = (short) maxima[index];
+				stack.setPixels(pixels, z + 1);
 			}
-			stack.addSlice(null, ip);
+		}
+		else
+		{
+			for (int z = 0, index = 0; z < maxz; z++)
+			{
+				final byte[] pixels = new byte[maxx_maxy];
+				for (int i = 0; i < maxx_maxy; i++, index++)
+					pixels[i] = (byte) maxima[index];
+				stack.setPixels(pixels, z + 1);
+			}
 		}
 
 		ImagePlus result = new ImagePlus(imageTitle + " " + FRAME_TITLE, stack);
@@ -7042,9 +7050,9 @@ public class FindFoci implements PlugIn, MouseListener
 		if (createObjectMask)
 		{
 			// Check we do not exceed capcity
-			if (id > 65535)
+			if (id > MAXIMA_CAPCITY)
 			{
-				IJ.log("The number of objects exceeds the 16-bit capacity used for diplay: 65535");
+				IJ.log("The number of objects exceeds the 16-bit capacity used for diplay: " + MAXIMA_CAPCITY);
 				return null;
 			}
 
