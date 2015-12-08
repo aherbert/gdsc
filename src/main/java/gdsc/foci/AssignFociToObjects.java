@@ -400,10 +400,13 @@ public class AssignFociToObjects implements PlugInFilter
 			last = s[i].d2;
 		}
 
-		int length = end - begin + 1;
-		Search[] next = new Search[length];
-		System.arraycopy(s, begin, next, 0, length);
-		search.add(next);
+		if (end != -1)
+		{
+			int length = end - begin + 1;
+			Search[] next = new Search[length];
+			System.arraycopy(s, begin, next, 0, length);
+			search.add(next);
+		}
 	}
 
 	private void createResultsTables()
