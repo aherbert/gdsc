@@ -50,9 +50,12 @@ public class AssignFociToObjects implements PlugInFilter
 	private static boolean removeSmallObjects = true;
 	private static boolean showObjects = false;
 	private static boolean showFoci = false;
+	private static boolean showDistances = false;
+	private static boolean showHistogram = false;
 
 	private static TextWindow resultsWindow = null;
 	private static TextWindow summaryWindow = null;
+	private static TextWindow distancesWindow = null;
 
 	private ImagePlus imp;
 	private ArrayList<int[]> results;
@@ -122,6 +125,8 @@ public class AssignFociToObjects implements PlugInFilter
 		// Assign each foci to the nearest object
 		int[] count = new int[oa.getMaxObject() + 1];
 		int[] found = new int[results.size()];
+		double[] d2 = new double[found.length];
+		Arrays.fill(d2, -1);
 		for (int i = 0; i < results.size(); i++)
 		{
 			final int[] result = results.get(i);
@@ -136,6 +141,7 @@ public class AssignFociToObjects implements PlugInFilter
 			{
 				count[objectMask[index]]++;
 				found[i] = objectMask[index];
+				d2[i] = 0;
 				continue;
 			}
 
@@ -171,6 +177,7 @@ public class AssignFociToObjects implements PlugInFilter
 					// Assign
 					count[maxCount]++;
 					found[i] = maxCount;
+					d2[i] = next[0].d2;
 					break;
 				}
 			}
@@ -196,7 +203,7 @@ public class AssignFociToObjects implements PlugInFilter
 		DescriptiveStatistics stats = new DescriptiveStatistics();
 		DescriptiveStatistics stats2 = new DescriptiveStatistics();
 		StringBuilder sb = new StringBuilder();
-		for (int i = 1; i < count.length; i++)
+		for (int i = 1, j = 0; i < count.length; i++)
 		{
 			sb.append(imp.getTitle());
 			sb.append('\t').append(i);
@@ -217,34 +224,44 @@ public class AssignFociToObjects implements PlugInFilter
 			}
 			sb.append('\t').append(count[i]);
 			sb.append('\n');
+
+			// Flush before 10 lines to ensure auto-layout of columns
+			if (i >= 9 && j++ == 0)
+			{
+				resultsWindow.append(sb.toString());
+				sb.setLength(0);
+			}
 		}
 		resultsWindow.append(sb.toString());
 
 		// Histogram the count
-		final int max = (int) stats.getMax();
-		final double[] x = new double[max + 1];
-		final double[] y = new double[x.length];
-		for (int i = 1; i < count.length; i++)
+		if (showHistogram)
 		{
-			if (idMap[i] > 0)
-				y[count[i]]++;
+			final int max = (int) stats.getMax();
+			final double[] xValues = new double[max + 1];
+			final double[] yValues = new double[xValues.length];
+			for (int i = 1; i < count.length; i++)
+			{
+				if (idMap[i] > 0)
+					yValues[count[i]]++;
+			}
+			double yMax = 0;
+			for (int i = 0; i <= max; i++)
+			{
+				xValues[i] = i;
+				if (yMax < yValues[i])
+					yMax = yValues[i];
+			}
+			String title = FRAME_TITLE + " Histogram";
+			Plot plot = new Plot(title, "Count", "Frequency", xValues, yValues);
+			plot.setLimits(0, xValues[xValues.length - 1], 0, yMax);
+			plot.addLabel(0, 0,
+					String.format("N = %d, Mean = %s", (int) stats.getSum(), ImageJHelper.rounded(stats.getMean())));
+			plot.draw();
+			plot.setColor(Color.RED);
+			plot.drawLine(stats.getMean(), 0, stats.getMean(), yMax);
+			ImageJHelper.display(title, plot);
 		}
-		double yMax = 0;
-		for (int i = 0; i <= max; i++)
-		{
-			x[i] = i;
-			if (yMax < y[i])
-				yMax = y[i];
-		}
-		String title = FRAME_TITLE + " Histogram";
-		Plot plot = new Plot(title, "Count", "Frequency", x, y);
-		plot.setLimits(0, x[x.length - 1], 0, yMax);
-		plot.addLabel(0, 0,
-				String.format("N = %d, Mean = %s", (int) stats.getSum(), ImageJHelper.rounded(stats.getMean())));
-		plot.draw();
-		plot.setColor(Color.RED);
-		plot.drawLine(stats.getMean(), 0, stats.getMean(), yMax);
-		ImageJHelper.display(title, plot);
 
 		// Show the summary
 		sb.setLength(0);
@@ -261,6 +278,52 @@ public class AssignFociToObjects implements PlugInFilter
 		sb.append('\t').append(ImageJHelper.rounded(stats.getPercentile(50)));
 		sb.append('\t').append(ImageJHelper.rounded(stats.getStandardDeviation()));
 		summaryWindow.append(sb.toString());
+
+		if (!showDistances)
+			return;
+
+		sb.setLength(0);
+		for (int i = 0, j = 0; i < results.size(); i++)
+		{
+			final int[] result = results.get(i);
+			final int x = result[0];
+			final int y = result[1];
+			
+			// Check within the image
+			if (x < 0 || x >= maxx || y < 0 || y >= maxy)
+				continue;
+
+			sb.append(imp.getTitle());
+			sb.append('\t').append(i + 1);
+			sb.append('\t').append(x);
+			sb.append('\t').append(y);
+			if (found[i] > 0)
+			{
+				sb.append("\t").append(found[i]);
+				if (idMap[found[i]] > 0)
+				{
+					sb.append("\tTrue\t");
+				}
+				else
+				{
+					sb.append("\tFalse\t");
+				}
+				sb.append(ImageJHelper.rounded(Math.sqrt(d2[i])));
+				sb.append('\n');
+			}
+			else
+			{
+				sb.append("\t\t\t\n");
+			}
+
+			// Flush before 10 lines to ensure auto-layout of columns
+			if (i >= 9 && j++ == 0)
+			{
+				distancesWindow.append(sb.toString());
+				sb.setLength(0);
+			}
+		}
+		distancesWindow.append(sb.toString());
 	}
 
 	public boolean showDialog()
@@ -301,6 +364,8 @@ public class AssignFociToObjects implements PlugInFilter
 		gd.addCheckbox("Remove_small_objects", removeSmallObjects);
 		gd.addCheckbox("Show_objects", showObjects);
 		gd.addCheckbox("Show_foci", showFoci);
+		gd.addCheckbox("Show_distances", showDistances);
+		gd.addCheckbox("Show_histogram", showHistogram);
 
 		gd.showDialog();
 		if (gd.wasCanceled())
@@ -313,6 +378,8 @@ public class AssignFociToObjects implements PlugInFilter
 		removeSmallObjects = gd.getNextBoolean();
 		showObjects = gd.getNextBoolean();
 		showFoci = gd.getNextBoolean();
+		showDistances = gd.getNextBoolean();
+		showHistogram = gd.getNextBoolean();
 
 		// Load objects
 		results = (input.equalsIgnoreCase("ROI")) ? roiResults : findFociResults;
@@ -420,6 +487,17 @@ public class AssignFociToObjects implements PlugInFilter
 		{
 			p2.y += resultsWindow.getHeight();
 			summaryWindow.setLocation(p2);
+		}
+		if (showDistances)
+		{
+			distancesWindow = createWindow(distancesWindow, "Distances", "Image\tFoci\tx\ty\tObject\tValid\tDistance");
+			Point p3 = distancesWindow.getLocation();
+			if (p1.x == p3.x && p1.y == p3.y)
+			{
+				p3.x += 50;
+				p3.y += 50;
+				distancesWindow.setLocation(p3);
+			}
 		}
 	}
 
