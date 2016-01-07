@@ -43,6 +43,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	private boolean clearTable = true;
 	private boolean markMaxima = true;
 	private boolean markROIMaxima = false;
+	private boolean markUsingOverlay = false;
 	private boolean hideLabels = false;
 	private boolean showMaskMaximaAsDots = false;
 	private boolean showLogMessages = true;
@@ -449,6 +450,25 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	public boolean isMarkROIMaxima()
 	{
 		return markROIMaxima;
+	}
+
+	/**
+	 * @param markUsingOverlay
+	 *            the markUsingOverlay to set
+	 */
+	public void setMarkUsingOverlay(boolean markUsingOverlay)
+	{
+		boolean oldValue = this.markUsingOverlay;
+		this.markUsingOverlay = markUsingOverlay;
+		firePropertyChange("markUsingOverlay", oldValue, this.markUsingOverlay);
+	}
+
+	/**
+	 * @return the markUsingOverlay
+	 */
+	public boolean isMarkUsingOverlay()
+	{
+		return markUsingOverlay;
 	}
 	
 	/**

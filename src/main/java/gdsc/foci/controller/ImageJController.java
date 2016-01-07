@@ -123,6 +123,7 @@ public class ImageJController extends FindFociController
 		boolean clearTable = model.isClearTable();
 		boolean markMaxima = model.isMarkMaxima();
 		boolean markROIMaxima = model.isMarkROIMaxima();
+		boolean markUsingOverlay = model.isMarkUsingOverlay();
 		boolean hideLabels = model.isHideLabels();
 		boolean showMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
 		boolean showLogMessages = model.isShowLogMessages();
@@ -149,6 +150,8 @@ public class ImageJController extends FindFociController
 			outputType += FindFoci.OUTPUT_ROI_SELECTION;
 		if (markROIMaxima)
 			outputType += FindFoci.OUTPUT_MASK_ROI_SELECTION;
+		if (markUsingOverlay)
+			outputType += FindFoci.OUTPUT_ROI_USING_OVERLAY;
 		if (hideLabels)
 			outputType += FindFoci.OUTPUT_HIDE_LABELS;
 		if (!showMaskMaximaAsDots)
@@ -211,6 +214,8 @@ public class ImageJController extends FindFociController
 				Recorder.recordOption("Mark_maxima");
 			if (markROIMaxima)
 				Recorder.recordOption("Mark_peak_maxima");
+			if (markUsingOverlay)
+				Recorder.recordOption("Mark_using_overlay");
 			if (hideLabels)
 				Recorder.recordOption("Hide_labels");
 			if (showMaskMaximaAsDots)
