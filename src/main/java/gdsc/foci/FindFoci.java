@@ -28,6 +28,7 @@ import ij.gui.GenericDialog;
 import ij.gui.ImageRoi;
 import ij.gui.Overlay;
 import ij.gui.PointRoi;
+import ij.gui.PointRoi2;
 import ij.gui.Roi;
 import ij.io.Opener;
 import ij.io.RoiEncoder;
@@ -35,10 +36,8 @@ import ij.plugin.FolderOpener;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.frame.Recorder;
-import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
 import ij.text.TextWindow;
 
 import java.awt.Color;
@@ -141,6 +140,7 @@ public class FindFoci implements PlugIn, MouseListener
 			fractionParameter = findDouble("Fraction_parameter");
 			boolean markMaxima = findBoolean("Mark_maxima");
 			boolean markROIMaxima = findBoolean("Mark_peak_maxima");
+			boolean markUsingOverlay = findBoolean("Mark_using_overlay");
 			boolean hideLabels = findBoolean("Hide_labels");
 			boolean showMaskMaximaAsDots = findBoolean("Show_peak_maxima_as_dots");
 			boolean showLogMessages = findBoolean("Show_log_messages");
@@ -166,6 +166,8 @@ public class FindFoci implements PlugIn, MouseListener
 				outputType += OUTPUT_ROI_SELECTION;
 			if (markROIMaxima)
 				outputType += OUTPUT_MASK_ROI_SELECTION;
+			if (markUsingOverlay)
+				outputType += OUTPUT_ROI_USING_OVERLAY;
 			if (hideLabels)
 				outputType += OUTPUT_HIDE_LABELS;
 			if (!showMaskMaximaAsDots)
@@ -372,6 +374,28 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 	}
 
+	/**
+	 * Used for sorting the results by z-slice
+	 *
+	 */
+	private class XYZ implements Comparable<XYZ>
+	{
+		private int id, x, y, z;
+
+		public XYZ(int id, int x, int y, int z)
+		{
+			this.id = id;
+			this.x = x;
+			this.y = y;
+			this.z = z;
+		}
+
+		public int compareTo(XYZ that)
+		{
+			return this.z - that.z;
+		}
+	}
+
 	public static final String FRAME_TITLE = "FindFoci";
 
 	private static TextWindow resultsWindow = null;
@@ -534,6 +558,10 @@ public class FindFoci implements PlugIn, MouseListener
 	 * Overlay the mask on the image
 	 */
 	public final static int OUTPUT_OVERLAY_MASK = 4096;
+	/**
+	 * Overlay the ROI points on the image (preserving any current ROI)
+	 */
+	public final static int OUTPUT_ROI_USING_OVERLAY = 8192;
 	/**
 	 * Create an output mask
 	 */
@@ -868,6 +896,7 @@ public class FindFoci implements PlugIn, MouseListener
 	private static boolean myClearTable;
 	private static boolean myMarkMaxima;
 	private static boolean myMarkROIMaxima;
+	private static boolean myMarkUsingOverlay;
 	private static boolean myHideLabels;
 	private static boolean myShowMaskMaximaAsDots;
 	private static boolean myShowLogMessages;
@@ -1022,6 +1051,7 @@ public class FindFoci implements PlugIn, MouseListener
 		gd.addCheckbox("Clear_table", myClearTable);
 		gd.addCheckbox("Mark_maxima", myMarkMaxima);
 		gd.addCheckbox("Mark_peak_maxima", myMarkROIMaxima);
+		gd.addCheckbox("Mark_using_overlay", myMarkUsingOverlay);
 		gd.addCheckbox("Hide_labels", myHideLabels);
 		gd.addCheckbox("Show_peak_maxima_as_dots", myShowMaskMaximaAsDots);
 		gd.addCheckbox("Show_log_messages", myShowLogMessages);
@@ -1094,6 +1124,7 @@ public class FindFoci implements PlugIn, MouseListener
 		myClearTable = gd.getNextBoolean();
 		myMarkMaxima = gd.getNextBoolean();
 		myMarkROIMaxima = gd.getNextBoolean();
+		myMarkUsingOverlay = gd.getNextBoolean();
 		myHideLabels = gd.getNextBoolean();
 		myShowMaskMaximaAsDots = gd.getNextBoolean();
 		myShowLogMessages = gd.getNextBoolean();
@@ -1118,6 +1149,8 @@ public class FindFoci implements PlugIn, MouseListener
 			outputType += OUTPUT_ROI_SELECTION;
 		if (myMarkROIMaxima)
 			outputType += OUTPUT_MASK_ROI_SELECTION;
+		if (myMarkUsingOverlay)
+			outputType += OUTPUT_ROI_USING_OVERLAY;
 		if (myHideLabels)
 			outputType += OUTPUT_HIDE_LABELS;
 		if (!myShowMaskMaximaAsDots)
@@ -1277,15 +1310,19 @@ public class FindFoci implements PlugIn, MouseListener
 			{
 				if (roi.isArea())
 				{
-					// YesNoCancelDialog causes asynchronous thread exception within Eclipse.
-					GenericDialog d = new GenericDialog(FRAME_TITLE);
-					d.addMessage("Warning: Marking the maxima will destroy the ROI area");
-					d.showDialog();
-					if (!d.wasOKed())
-						return;
+					if ((outputType & OUTPUT_ROI_USING_OVERLAY) == 0)
+					{
+						// YesNoCancelDialog causes asynchronous thread exception within Eclipse.
+						GenericDialog d = new GenericDialog(FRAME_TITLE);
+						d.addMessage("Warning: Marking the maxima will destroy the ROI area.\nUse the Mark_using_overlay option to preserve the ROI.\n \nClick OK to continue (destroys the area ROI)");
+						d.showDialog();
+						if (!d.wasOKed())
+							return;
+					}
 				}
 				else
 				{
+					// Remove any non-area ROI to reset the bounding rectangle
 					imp.killRoi();
 					roi = null;
 				}
@@ -1363,6 +1400,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		// Update the mask image
 		ImagePlus maxImp = null;
+		Overlay overlay = null;
 		if (maximaImp != null)
 		{
 			if ((outputType & OUTPUT_MASK) != 0)
@@ -1380,46 +1418,196 @@ public class FindFoci implements PlugIn, MouseListener
 			}
 			if ((outputType & OUTPUT_OVERLAY_MASK) != 0)
 			{
-				imp.setOverlay(createOverlay(imp, maximaImp));
+				overlay = createOverlay(imp, maximaImp);
 			}
+		}
+
+		// Remove ROI if not an output option
+		if ((outputType & OUTPUT_ROI_SELECTION) == 0)
+		{
+			killPointRoi(imp);
+			killOverlayPointRoi(imp);
+		}
+		if ((outputType & OUTPUT_MASK_ROI_SELECTION) == 0)
+		{
+			killPointRoi(maxImp);
+			killOverlayPointRoi(maxImp);
 		}
 
 		// Add ROI crosses to original image
 		if (resultsArray != null && (outputType & (OUTPUT_ROI_SELECTION | OUTPUT_MASK_ROI_SELECTION)) != 0)
 		{
-			int nMaxima = resultsArray.size();
-
-			if (nMaxima > 0)
+			if (!resultsArray.isEmpty())
 			{
-				int[] xpoints = new int[nMaxima];
-				int[] ypoints = new int[nMaxima];
-				for (int i = 0; i < nMaxima; i++)
+				if ((outputType & OUTPUT_ROI_USING_OVERLAY) != 0)
 				{
-					int[] xy = resultsArray.get(i);
-					xpoints[i] = xy[RESULT_X];
-					ypoints[i] = xy[RESULT_Y];
+					// Create an roi for each z slice
+					PointRoi[] rois = createStackRoi(resultsArray, outputType);
+
+					if ((outputType & OUTPUT_ROI_SELECTION) != 0)
+					{
+						killPointRoi(imp);
+						overlay = addRoiToOverlay(imp, rois, overlay);
+					}
+
+					if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
+					{
+						killPointRoi(maxImp);
+						addRoiToOverlay(maxImp, rois);
+					}
 				}
+				else
+				{
+					PointRoi roi = createRoi(resultsArray, outputType);
 
-				PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
-				if ((outputType & OUTPUT_HIDE_LABELS) != 0)
-					roi.setHideLabels(true);
+					if ((outputType & OUTPUT_ROI_SELECTION) != 0)
+					{
+						killOverlayPointRoi(imp);
+						imp.setRoi(roi);
+					}
 
-				if ((outputType & OUTPUT_ROI_SELECTION) != 0)
-					imp.setRoi(roi);
-
-				if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
-					maxImp.setRoi(roi);
+					if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
+					{
+						killOverlayPointRoi(maxImp);
+						maxImp.setRoi(roi);
+					}
+				}
 			}
-		}
-
-		// Remove points from mask if necessary
-		if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) == 0)
-		{
-			if (maxImp.getRoi() != null && maxImp.getRoi().getType() == Roi.POINT)
+			else
 			{
-				maxImp.killRoi();
+				if ((outputType & OUTPUT_ROI_SELECTION) != 0)
+				{
+					killPointRoi(imp);
+					killOverlayPointRoi(imp);
+				}
+				if ((outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
+				{
+					killPointRoi(maxImp);
+					killOverlayPointRoi(maxImp);
+				}
 			}
 		}
+
+		//if (overlay != null)
+		imp.setOverlay(overlay);
+	}
+
+	/**
+	 * Add the point rois to the overlay configuring the hyperstack position if necessary.
+	 * 
+	 * @param imp
+	 * @param rois
+	 * @param overlay
+	 */
+	private void addRoiToOverlay(ImagePlus imp, Roi[] rois)
+	{
+		imp.setOverlay(addRoiToOverlay(imp, rois, imp.getOverlay()));
+	}
+
+	/**
+	 * Add the point rois to the overlay configuring the hyperstack position if necessary.
+	 * 
+	 * @param imp
+	 * @param rois
+	 * @param overlay
+	 */
+	private Overlay addRoiToOverlay(ImagePlus imp, Roi[] rois, Overlay overlay)
+	{
+		overlay = removeOverlayPointRoi(overlay);
+		final int channel = imp.getChannel();
+		final int frame = imp.getFrame();
+
+		if (rois.length > 0)
+		{
+			if (overlay == null)
+				overlay = new Overlay();
+			for (Roi roi : rois)
+			{
+				if (imp.isDisplayedHyperStack())
+				{
+					roi = (Roi) roi.clone();
+					roi.setPosition(channel, roi.getPosition(), frame);
+				}
+				overlay.addElement(roi);
+			}
+		}
+		return overlay;
+	}
+
+	private PointRoi[] createStackRoi(ArrayList<int[]> resultsArray, int outputType)
+	{
+		final int nMaxima = resultsArray.size();
+		final XYZ[] xyz = new XYZ[nMaxima];
+		for (int i = 0; i < nMaxima; i++)
+		{
+			final int[] xy = resultsArray.get(i);
+			xyz[i] = new XYZ(i + 1, xy[RESULT_X], xy[RESULT_Y], xy[RESULT_Z]);
+		}
+
+		Arrays.sort(xyz);
+
+		final boolean hideLabels = nMaxima < 2 || (outputType & OUTPUT_HIDE_LABELS) != 0;
+
+		PointRoi[] rois = new PointRoi[nMaxima];
+		int count = 0;
+		int[] ids = new int[nMaxima];
+		int[] xpoints = new int[nMaxima];
+		int[] ypoints = new int[nMaxima];
+		int npoints = 0;
+		int z = xyz[0].z;
+		for (int i = 0; i < nMaxima; i++)
+		{
+			if (xyz[i].z != z)
+			{
+				rois[count++] = createPointRoi(ids, xpoints, ypoints, z + 1, npoints, hideLabels);
+				npoints = 0;
+			}
+			ids[npoints] = xyz[i].id;
+			xpoints[npoints] = xyz[i].x;
+			ypoints[npoints] = xyz[i].y;
+			z = xyz[i].z;
+			npoints++;
+		}
+		rois[count++] = createPointRoi(ids, xpoints, ypoints, z + 1, npoints, hideLabels);
+		return Arrays.copyOf(rois, count);
+	}
+
+	private PointRoi createPointRoi(int[] ids, int[] xpoints, int[] ypoints, int slice, int npoints, boolean hideLabels)
+	{
+		// Use a custom PointRoi so we can draw the labels
+		PointRoi2 roi = new PointRoi2(xpoints, ypoints, npoints);
+		if (hideLabels)
+		{
+			roi.setHideLabels(hideLabels);
+		}
+		else
+		{
+			roi.setLabels(ids);
+		}
+		configureOverlayRoi(roi);
+
+		// This is only applicable to single z stack images. 
+		// We should call setPosition(int,int,int) for hyperstacks
+		roi.setPosition(slice);
+
+		return roi;
+	}
+
+	private PointRoi createRoi(ArrayList<int[]> resultsArray, int outputType)
+	{
+		final int nMaxima = resultsArray.size();
+		final int[] xpoints = new int[nMaxima];
+		final int[] ypoints = new int[nMaxima];
+		for (int i = 0; i < nMaxima; i++)
+		{
+			final int[] xy = resultsArray.get(i);
+			xpoints[i] = xy[RESULT_X];
+			ypoints[i] = xy[RESULT_Y];
+		}
+		PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
+		if ((outputType & OUTPUT_HIDE_LABELS) != 0)
+			roi.setHideLabels(true);
+		return roi;
 	}
 
 	private Overlay createOverlay(ImagePlus imp, ImagePlus maximaImp)
@@ -1669,6 +1857,7 @@ public class FindFoci implements PlugIn, MouseListener
 			writeParam(out, "Clear_table", ((outputType & OUTPUT_CLEAR_RESULTS_TABLE) != 0) ? "true" : "false");
 			writeParam(out, "Mark_maxima", ((outputType & OUTPUT_ROI_SELECTION) != 0) ? "true" : "false");
 			writeParam(out, "Mark_peak_maxima", ((outputType & OUTPUT_MASK_ROI_SELECTION) != 0) ? "true" : "false");
+			writeParam(out, "Mark_using_overlay", ((outputType & OUTPUT_ROI_USING_OVERLAY) != 0) ? "true" : "false");
 			writeParam(out, "Hide_labels", ((outputType & OUTPUT_HIDE_LABELS) != 0) ? "true" : "false");
 			writeParam(out, "Show_peak_maxima_as_dots", ((outputType & OUTPUT_MASK_NO_PEAK_DOTS) == 0) ? "true"
 					: "false");
@@ -1786,49 +1975,64 @@ public class FindFoci implements PlugIn, MouseListener
 			killOverlayPointRoi(imp);
 		}
 		if ((outputType & OUTPUT_MASK_ROI_SELECTION) == 0)
+		{
 			killPointRoi(maxImp);
+			killOverlayPointRoi(maxImp);
+		}
 
 		// Add ROI crosses to original image
 		if (resultsArray != null && (outputType & (OUTPUT_ROI_SELECTION | OUTPUT_MASK_ROI_SELECTION)) != 0)
 		{
-			int nMaxima = resultsArray.size();
-
-			if (nMaxima > 0)
+			if (!resultsArray.isEmpty())
 			{
-				int[] xpoints = new int[nMaxima];
-				int[] ypoints = new int[nMaxima];
-				for (int i = 0; i < nMaxima; i++)
+				if ((outputType & OUTPUT_ROI_USING_OVERLAY) != 0)
 				{
-					int[] xy = resultsArray.get(i);
-					xpoints[i] = xy[RESULT_X];
-					ypoints[i] = xy[RESULT_Y];
-				}
+					// Create an roi for each z slice
+					PointRoi[] rois = createStackRoi(resultsArray, outputType);
 
-				if ((outputType & OUTPUT_ROI_SELECTION) != 0)
-				{
-					// Use an overlay so that any area ROI is preserved
-					PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
-					if ((outputType & OUTPUT_HIDE_LABELS) != 0)
-						roi.setHideLabels(true);
-					if (imp.getRoi() != null && !(imp.getRoi() instanceof PointRoi))
+					if ((outputType & OUTPUT_ROI_SELECTION) != 0)
 					{
-						roi.setStrokeColor(Color.CYAN);
-						roi.setStrokeWidth(1);
-						roi.setFillColor(Color.YELLOW);
-						// Add to the current overlay
-						if (overlay != null)
-							overlay.add(roi);
+						killPointRoi(imp);
+						overlay = addRoiToOverlay(imp, rois, overlay);
+					}
+
+					if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
+					{
+						killPointRoi(maxImp);
+						addRoiToOverlay(maxImp, rois);
+					}
+				}
+				else
+				{
+					PointRoi roi = createRoi(resultsArray, outputType);
+
+					if ((outputType & OUTPUT_ROI_SELECTION) != 0)
+					{
+						killOverlayPointRoi(imp);
+
+						// Use an overlay so that any area ROI is preserved when previewing results
+						if (imp.getRoi() != null && !(imp.getRoi() instanceof PointRoi))
+						{
+							Roi roi2 = (Roi) roi.clone();
+							configureOverlayRoi(roi2);
+							// Add to the current overlay
+							if (overlay != null)
+								overlay.add(roi2);
+							else
+								overlay = new Overlay(roi2);
+						}
 						else
-							overlay = new Overlay(roi);
+						{
+							imp.setRoi(roi);
+						}
 					}
-					else
+
+					if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
 					{
-						imp.setRoi(roi);
+						killOverlayPointRoi(maxImp);
+						maxImp.setRoi(roi);
 					}
 				}
-
-				if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
-					maxImp.setRoi(new PointRoi(xpoints, ypoints, nMaxima));
 			}
 			else
 			{
@@ -1838,7 +2042,10 @@ public class FindFoci implements PlugIn, MouseListener
 					killOverlayPointRoi(imp);
 				}
 				if ((outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
+				{
 					killPointRoi(maxImp);
+					killOverlayPointRoi(maxImp);
+				}
 			}
 		}
 
@@ -1858,35 +2065,54 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 	}
 
+	private void configureOverlayRoi(Roi roi)
+	{
+		roi.setStrokeWidth(1);
+		roi.setStrokeColor(Color.CYAN);
+		roi.setFillColor(Color.YELLOW);
+	}
+
 	private void killOverlayPointRoi(ImagePlus imp)
 	{
-		if (imp.getOverlay() != null)
+		if (imp != null && imp.getOverlay() != null)
 		{
-			Overlay overlay = imp.getOverlay();
-			Roi toRemove = null;
+			imp.setOverlay(removeOverlayPointRoi(imp.getOverlay()));
+		}
+	}
+
+	/**
+	 * Removes any PointRoi from the overlay
+	 * 
+	 * @param overlay
+	 * @return The reduced overlay (or null)
+	 */
+	private Overlay removeOverlayPointRoi(Overlay overlay)
+	{
+		if (overlay != null)
+		{
 			Roi[] rois = overlay.toArray();
-			for (Roi roi : rois)
+			int count = 0;
+			for (int i = 0; i < rois.length; i++)
 			{
-				if (roi instanceof PointRoi)
+				if (rois[i] instanceof PointRoi)
 				{
-					if (roi.getStrokeColor() == Color.CYAN && roi.getFillColor() == Color.YELLOW)
+					if (rois[i].getStrokeColor() == Color.CYAN && rois[i].getFillColor() == Color.YELLOW)
 					{
-						toRemove = roi;
-						break;
+						continue;
 					}
 				}
+				rois[count++] = rois[i];
 			}
-			if (toRemove != null)
+			if (count == 0)
+				return null;
+			if (count != rois.length)
 			{
-				if (rois.length == 1)
-					imp.setOverlay(null);
-				else
-				{
-					overlay.remove(toRemove);
-					imp.setOverlay(overlay);
-				}
+				overlay.clear();
+				for (int i = 0; i < count; i++)
+					overlay.add(rois[i]);
 			}
 		}
+		return overlay;
 	}
 
 	private static int getMaskOption(int outputType)
@@ -6879,6 +7105,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		// Update the mask image
 		ImagePlus maxImp = null;
+		Overlay overlay = null;
 		if (maximaImp != null)
 		{
 			if ((outputType & OUTPUT_MASK) != 0)
@@ -6892,41 +7119,45 @@ public class FindFoci implements PlugIn, MouseListener
 				maxImp.setDisplayRange(0, maxValue);
 			}
 			if ((outputType & OUTPUT_OVERLAY_MASK) != 0)
-			{
-				imp.setOverlay(createOverlay(imp, maximaImp));
-				saveImp = true;
-			}
+				overlay = createOverlay(imp, maximaImp);
 		}
 
 		// Add ROI crosses to original image
 		if ((outputType & (OUTPUT_ROI_SELECTION | OUTPUT_MASK_ROI_SELECTION)) != 0)
 		{
-			int nMaxima = resultsArray.size();
-
-			if (nMaxima > 0)
+			if (!resultsArray.isEmpty())
 			{
-				int[] xpoints = new int[nMaxima];
-				int[] ypoints = new int[nMaxima];
-				for (int i = 0; i < nMaxima; i++)
+				if ((outputType & OUTPUT_ROI_USING_OVERLAY) != 0)
 				{
-					int[] xy = resultsArray.get(i);
-					xpoints[i] = xy[RESULT_X];
-					ypoints[i] = xy[RESULT_Y];
+					// Create an roi for each z slice
+					PointRoi[] rois = createStackRoi(resultsArray, outputType);
+
+					if ((outputType & OUTPUT_ROI_SELECTION) != 0)
+						overlay = addRoiToOverlay(imp, rois, overlay);
+
+					if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
+						addRoiToOverlay(maxImp, rois);
 				}
-
-				PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
-				if ((outputType & OUTPUT_HIDE_LABELS) != 0)
-					roi.setHideLabels(true);
-
-				if ((outputType & OUTPUT_ROI_SELECTION) != 0)
+				else
 				{
-					imp.setRoi(roi);
-					saveImp = true;
-				}
+					PointRoi roi = createRoi(resultsArray, outputType);
 
-				if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
-					maxImp.setRoi(roi);
+					if ((outputType & OUTPUT_ROI_SELECTION) != 0)
+					{
+						imp.setRoi(roi);
+						saveImp = true;
+					}
+
+					if (maxImp != null && (outputType & OUTPUT_MASK_ROI_SELECTION) != 0)
+						maxImp.setRoi(roi);
+				}
 			}
+		}
+
+		if (overlay != null)
+		{
+			imp.setOverlay(overlay);
+			saveImp = true;
 		}
 
 		if (saveImp)
