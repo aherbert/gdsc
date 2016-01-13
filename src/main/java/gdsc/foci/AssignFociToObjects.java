@@ -47,6 +47,7 @@ public class AssignFociToObjects implements PlugInFilter
 	private static double radius = 30;
 	private static int minSize = 0;
 	private static int maxSize = 0;
+	private static boolean eightConnected = false;
 	private static boolean removeSmallObjects = true;
 	private static boolean showObjects = false;
 	private static boolean showFoci = false;
@@ -115,6 +116,7 @@ public class AssignFociToObjects implements PlugInFilter
 		ObjectAnalyzer oa = new ObjectAnalyzer(ip);
 		if (removeSmallObjects)
 			oa.setMinObjectSize(minSize);
+		oa.setEightConnected(eightConnected);
 		int[] objectMask = oa.getObjectMask();
 
 		final int maxx = ip.getWidth();
@@ -361,6 +363,7 @@ public class AssignFociToObjects implements PlugInFilter
 		gd.addSlider("Radius", 5, 50, radius);
 		gd.addNumericField("Min_size", minSize, 0);
 		gd.addNumericField("Max_size", maxSize, 0);
+		gd.addCheckbox("Eight_connected", eightConnected);
 		gd.addCheckbox("Remove_small_objects", removeSmallObjects);
 		gd.addCheckbox("Show_objects", showObjects);
 		gd.addCheckbox("Show_foci", showFoci);
@@ -375,6 +378,7 @@ public class AssignFociToObjects implements PlugInFilter
 		radius = Math.abs(gd.getNextNumber());
 		minSize = Math.abs((int) gd.getNextNumber());
 		maxSize = Math.abs((int) gd.getNextNumber());
+		eightConnected = gd.getNextBoolean();
 		removeSmallObjects = gd.getNextBoolean();
 		showObjects = gd.getNextBoolean();
 		showFoci = gd.getNextBoolean();
