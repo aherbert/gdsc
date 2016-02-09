@@ -5,6 +5,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.GenericDialog;
 import ij.gui.Plot;
+import ij.gui.PlotWindow;
 import ij.gui.Roi;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
@@ -13,6 +14,7 @@ import ij.text.TextWindow;
 import ij.util.Tools;
 
 import java.awt.Color;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.Arrays;
 
@@ -31,9 +33,11 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 	final int flags = DOES_8G + DOES_16 + DOES_32 + NO_CHANGES + DOES_STACKS + PARALLELIZE_STACKS + FINAL_PROCESSING;
 	private static int window = 4;
 	private static int bitDepth = 16;
+	private static boolean debug = false;
 
 	private static TextWindow results;
 
+	private int commonIndex;
 	private ImagePlus imp;
 	private PlugInFilterRunner pfr;
 	private ImageStack stack;
@@ -92,7 +96,32 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 			IJ.error(TITLE, "Unable to determine common prefix within slice labels");
 			return DONE;
 		}
-		System.out.printf("Prefix = %s\n", master.substring(0, index));
+		commonIndex = index;
+
+		return flags;
+	}
+
+	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
+	{
+		this.imp = imp;
+		this.pfr = pfr;
+
+		// Get the user options
+		GenericDialog gd = new GenericDialog("Lottery");
+		gd.addMessage("Calculate the normalised intensity within an ROI.\nImages should have a linear response with respect to exposure.");
+		gd.addSlider("Window", 3, stack.getSize(), window);
+		gd.addSlider("Bit_depth", 4, imp.getBitDepth(), bitDepth);
+		gd.addCheckbox("Debug", debug);
+		gd.showDialog();
+		if (gd.wasCanceled())
+			return DONE;
+
+		window = Math.abs((int) gd.getNextNumber());
+		bitDepth = Math.abs((int) gd.getNextNumber());
+		debug = gd.getNextBoolean();
+
+		if (debug)
+			debug("Prefix = %s\n", stack.getSliceLabel(1).substring(0, commonIndex));
 
 		// Extract the exposure times from the labels
 		exposures = new float[stack.getSize()];
@@ -100,7 +129,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		{
 			String label = stack.getSliceLabel(i);
 			// Find the first digit
-			int startIndex = index;
+			int startIndex = commonIndex;
 			while (startIndex < label.length())
 			{
 				if (Character.isDigit(label.charAt(startIndex)))
@@ -151,28 +180,6 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 			}
 		}
 
-		System.out.printf("Exposures = %s\n", Arrays.toString(exposures));
-
-		return flags;
-	}
-
-	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
-	{
-		this.imp = imp;
-		this.pfr = pfr;
-
-		// Get the user options
-		GenericDialog gd = new GenericDialog("Lottery");
-		gd.addMessage("Calculate the normalised intensity within an ROI.\nImages should have a linear response with respect to exposure.");
-		gd.addSlider("Window", 3, stack.getSize(), window);
-		gd.addSlider("Bit_depth", 4, imp.getBitDepth(), bitDepth);
-		gd.showDialog();
-		if (gd.wasCanceled())
-			return DONE;
-
-		window = Math.abs((int) gd.getNextNumber());
-		bitDepth = Math.abs((int) gd.getNextNumber());
-
 		// Initialise for processing the ROI pixels
 		Roi roi = imp.getRoi();
 		bounds = roi.getBounds();
@@ -192,6 +199,9 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		{
 			n = bounds.width * bounds.height;
 		}
+
+		if (debug)
+			debug("Exposures = %s ...\n", Arrays.toString(Arrays.copyOf(exposures, Math.min(10, exposures.length))));
 
 		means = new float[exposures.length];
 		saturated = (float) (Math.pow(2, bitDepth) - 1);
@@ -251,7 +261,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		{
 			if (means[i] == -1)
 			{
-				IJ.log(String.format("Saturated pixels in slice %d : %s", i + 1, stack.getShortSliceLabel(i + 1)));
+				debug("Saturated pixels in slice %d : %s", i + 1, stack.getShortSliceLabel(i + 1));
 			}
 			else
 			{
@@ -278,6 +288,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		plot.setColor(Color.blue);
 		plot.addPoints(exposures, means, Plot.CIRCLE);
 		ImageJHelper.display(title, plot);
+		boolean newWindow = ImageJHelper.isNewWindow();
 
 		if (means.length < window)
 		{
@@ -319,7 +330,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 					final double residual = fitted.value(exposures[i]) - means[i];
 					ss += residual * residual;
 				}
-				System.out.printf("%d - %d = %f : y = %f + %f x t\n", start, end, ss, fit[0], fit[1]);
+				debug("%d - %d = %f : y = %f + %f x t\n", start, end, ss, fit[0], fit[1]);
 				// Store best fit
 				if (ss < bestSS)
 				{
@@ -343,13 +354,21 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		double x2 = exposures[bestStart + window - 1];
 		double y2 = fitted.value(x2);
 		plot.drawLine(x1, y1, x2, y2);
-		ImageJHelper.display(title, plot);
+		PlotWindow pw = ImageJHelper.display(title, plot);
 
 		// Report best fit to a table
 		if (results == null || !results.isVisible())
 		{
-			results = new TextWindow(TITLE, "Image\tx\ty\tw\th\tn\tStart\tEnd\tSS\tc\ta", "", 800, 300);
+			results = new TextWindow(TITLE + " Summary",
+					"Image\tx\ty\tw\th\tN\tStart\tEnd\tE1\tE2\tSS\tIntercept\tGradient", "", 800, 300);
 			results.setVisible(true);
+			if (newWindow)
+			{
+				Point p = results.getLocation();
+				p.x = pw.getX();
+				p.y = pw.getY() + pw.getHeight();
+				results.setLocation(p);
+			}
 		}
 		StringBuilder sb = new StringBuilder();
 		sb.append(imp.getTitle());
@@ -358,11 +377,19 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		sb.append('\t').append(bounds.width);
 		sb.append('\t').append(bounds.height);
 		sb.append('\t').append(n);
-		sb.append('\t').append(bestStart);
-		sb.append('\t').append(bestStart + window - 1);
+		sb.append('\t').append(bestStart + 1);
+		sb.append('\t').append(bestStart + window);
+		sb.append('\t').append(ImageJHelper.rounded(x1));
+		sb.append('\t').append(ImageJHelper.rounded(x2));
 		sb.append('\t').append(ImageJHelper.rounded(bestSS));
 		sb.append('\t').append(ImageJHelper.rounded(bestFit[0]));
 		sb.append('\t').append(ImageJHelper.rounded(bestFit[1]));
 		results.append(sb.toString());
+	}
+
+	private void debug(String format, Object... args)
+	{
+		if (debug)
+			IJ.log(String.format(format, args));
 	}
 }
