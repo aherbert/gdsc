@@ -8,7 +8,7 @@ import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well44497b;
 
 /**
- * Unlocks the image
+ * Computes the odds of winning the lottery using random sampling 
  */
 public class Lottery implements PlugIn
 {
