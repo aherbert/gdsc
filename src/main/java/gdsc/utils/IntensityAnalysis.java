@@ -30,7 +30,7 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 public class IntensityAnalysis implements ExtendedPlugInFilter
 {
 	final static String TITLE = "Intensity Analysis";
-	final int flags = DOES_8G + DOES_16 + DOES_32 + NO_CHANGES + DOES_STACKS + PARALLELIZE_STACKS + FINAL_PROCESSING;
+	final int flags = DOES_8G + DOES_16 + NO_CHANGES + DOES_STACKS + PARALLELIZE_STACKS + FINAL_PROCESSING;
 	private static int window = 4;
 	private static int bitDepth = 16;
 	private static boolean debug = false;
@@ -48,6 +48,11 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 	private boolean[] mask;
 	private int n;
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
+	 */
 	public int setup(String arg, ImagePlus imp)
 	{
 		if ("final".equals(arg))
@@ -101,10 +106,18 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		return flags;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
+	 * ij.plugin.filter.PlugInFilterRunner)
+	 */
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		this.imp = imp;
 		this.pfr = pfr;
+
+		bitDepth = Math.min(bitDepth, imp.getBitDepth());
 
 		// Get the user options
 		GenericDialog gd = new GenericDialog("Lottery");
@@ -209,12 +222,17 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		return flags;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
+	 */
 	public void run(ImageProcessor ip)
 	{
 		// Process each slice to find the mean of the pixels in the ROI
 		final int slice = pfr.getSliceNumber() - 1;
 
-		means[slice] = -1;
+		boolean sat = false;
 
 		double sum = 0;
 		if (mask != null)
@@ -227,7 +245,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 					if (mask[i])
 					{
 						if (ip.getf(index) >= saturated)
-							return;
+							sat = true;
 						sum += ip.getf(index);
 					}
 				}
@@ -241,41 +259,51 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 				for (int x = 0; x < bounds.width; x++, index++)
 				{
 					if (ip.getf(index) >= saturated)
-						return;
+						sat = true;
 					sum += ip.getf(index);
 				}
 			}
 		}
 
-		means[slice] = (float) (sum / n);
+		// Use negative for means with saturated pixels
+		means[slice] = ((sat) ? -1 : 1) * (float) (sum / n);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
+	 */
 	public void setNPasses(int nPasses)
 	{
 	}
 
+	/**
+	 * Show a plot of the mean for each slice against exposure. Perform linear fit on a sliding window and draw the best
+	 * fit line on the plot.
+	 */
 	private void showResults()
 	{
 		int valid = 0;
+		float[] means2 = new float[means.length];
+		float[] exposures2 = new float[means.length];
 		for (int i = 0; i < means.length; i++)
 		{
-			if (means[i] == -1)
+			if (means[i] < 0)
 			{
 				debug("Saturated pixels in slice %d : %s", i + 1, stack.getShortSliceLabel(i + 1));
+				means[i] = -means[i];
 			}
 			else
 			{
-				means[valid] = means[i];
-				exposures[valid] = exposures[i];
+				means2[valid] = means[i];
+				exposures2[valid] = exposures[i];
 				valid++;
 			}
 		}
 
-		if (valid == 0)
-			return;
-
-		means = Arrays.copyOf(means, valid);
-		exposures = Arrays.copyOf(exposures, valid);
+		means2 = Arrays.copyOf(means2, valid);
+		exposures2 = Arrays.copyOf(exposures2, valid);
 
 		String title = TITLE;
 		Plot plot = new Plot(title, "Exposure", "Mean");
@@ -287,82 +315,15 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		plot.setLimits(a[0] - ra, a[1] + ra, b[0] - rb, b[1] + rb);
 		plot.setColor(Color.blue);
 		plot.addPoints(exposures, means, Plot.CIRCLE);
-		ImageJHelper.display(title, plot);
-		boolean newWindow = ImageJHelper.isNewWindow();
-
-		if (means.length < window)
-		{
-			IJ.error(TITLE, "Not enough valid points for the fit window: " + means.length);
-			return;
-		}
-
-		// Do a linear fit using a sliding window. Find the region with the best linear fit.
-		double bestSS = Double.POSITIVE_INFINITY;
-		int bestStart = 0;
-		double[] bestFit = null;
-		for (int start = 0; start < means.length; start++)
-		{
-			int end = start + window;
-			if (end > means.length)
-				break;
-
-			// Linear fit
-			final CurveFitter<Parametric> fitter = new CurveFitter<Parametric>(new LevenbergMarquardtOptimizer());
-			SummaryStatistics gradient = new SummaryStatistics();
-
-			// Extract the data
-			for (int i = start; i < end; i++)
-			{
-				fitter.addObservedPoint(exposures[i], means[i]);
-				gradient.addValue(means[i] / exposures[i]);
-			}
-
-			if (gradient.getMean() > 0)
-			{
-				// Do linear regression to get diffusion rate
-				final double[] init = { 0, gradient.getMean() }; // a + b x
-				final double[] fit = fitter.fit(new PolynomialFunction.Parametric(), init);
-				final PolynomialFunction fitted = new PolynomialFunction(fit);
-				// Score the fit
-				double ss = 0;
-				for (int i = start; i < end; i++)
-				{
-					final double residual = fitted.value(exposures[i]) - means[i];
-					ss += residual * residual;
-				}
-				debug("%d - %d = %f : y = %f + %f x t\n", start, end, ss, fit[0], fit[1]);
-				// Store best fit
-				if (ss < bestSS)
-				{
-					bestSS = ss;
-					bestStart = start;
-					bestFit = fit;
-				}
-			}
-		}
-
-		if (bestFit == null)
-		{
-			IJ.error(TITLE, "No valid linear fits");
-			return;
-		}
-
-		plot.setColor(Color.red);
-		final PolynomialFunction fitted = new PolynomialFunction(bestFit);
-		double x1 = exposures[bestStart];
-		double y1 = fitted.value(x1);
-		double x2 = exposures[bestStart + window - 1];
-		double y2 = fitted.value(x2);
-		plot.drawLine(x1, y1, x2, y2);
 		PlotWindow pw = ImageJHelper.display(title, plot);
 
-		// Report best fit to a table
+		// Report results to a table
 		if (results == null || !results.isVisible())
 		{
 			results = new TextWindow(TITLE + " Summary",
 					"Image\tx\ty\tw\th\tN\tStart\tEnd\tE1\tE2\tSS\tIntercept\tGradient", "", 800, 300);
 			results.setVisible(true);
-			if (newWindow)
+			if (ImageJHelper.isNewWindow())
 			{
 				Point p = results.getLocation();
 				p.x = pw.getX();
@@ -370,6 +331,8 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 				results.setLocation(p);
 			}
 		}
+
+		// Initialise result output
 		StringBuilder sb = new StringBuilder();
 		sb.append(imp.getTitle());
 		sb.append('\t').append(bounds.x);
@@ -377,14 +340,93 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		sb.append('\t').append(bounds.width);
 		sb.append('\t').append(bounds.height);
 		sb.append('\t').append(n);
-		sb.append('\t').append(bestStart + 1);
-		sb.append('\t').append(bestStart + window);
-		sb.append('\t').append(ImageJHelper.rounded(x1));
-		sb.append('\t').append(ImageJHelper.rounded(x2));
-		sb.append('\t').append(ImageJHelper.rounded(bestSS));
-		sb.append('\t').append(ImageJHelper.rounded(bestFit[0]));
-		sb.append('\t').append(ImageJHelper.rounded(bestFit[1]));
+
+		if (means2.length < window)
+		{
+			IJ.error(TITLE, "Not enough unsaturated samples for the fit window: " + means2.length + " < " + window);
+			addNullFitResult(sb);
+		}
+		else
+		{
+
+			// Do a linear fit using a sliding window. Find the region with the best linear fit.
+			double bestSS = Double.POSITIVE_INFINITY;
+			int bestStart = 0;
+			double[] bestFit = null;
+			for (int start = 0; start < means2.length; start++)
+			{
+				int end = start + window;
+				if (end > means2.length)
+					break;
+
+				// Linear fit
+				final CurveFitter<Parametric> fitter = new CurveFitter<Parametric>(new LevenbergMarquardtOptimizer());
+				SummaryStatistics gradient = new SummaryStatistics();
+
+				// Extract the data
+				for (int i = start; i < end; i++)
+				{
+					fitter.addObservedPoint(exposures2[i], means2[i]);
+					gradient.addValue(means2[i] / exposures2[i]);
+				}
+
+				if (gradient.getMean() > 0)
+				{
+					// Do linear regression to get diffusion rate
+					final double[] init = { 0, gradient.getMean() }; // a + b x
+					final double[] fit = fitter.fit(new PolynomialFunction.Parametric(), init);
+					final PolynomialFunction fitted = new PolynomialFunction(fit);
+					// Score the fit
+					double ss = 0;
+					for (int i = start; i < end; i++)
+					{
+						final double residual = fitted.value(exposures2[i]) - means2[i];
+						ss += residual * residual;
+					}
+					debug("%d - %d = %f : y = %f + %f x t\n", start, end, ss, fit[0], fit[1]);
+					// Store best fit
+					if (ss < bestSS)
+					{
+						bestSS = ss;
+						bestStart = start;
+						bestFit = fit;
+					}
+				}
+			}
+
+			if (bestFit == null)
+			{
+				IJ.error(TITLE, "No valid linear fits");
+				addNullFitResult(sb);
+			}
+			else
+			{
+				plot.setColor(Color.red);
+				final PolynomialFunction fitted = new PolynomialFunction(bestFit);
+				double x1 = exposures2[bestStart];
+				double y1 = fitted.value(x1);
+				double x2 = exposures2[bestStart + window - 1];
+				double y2 = fitted.value(x2);
+				plot.drawLine(x1, y1, x2, y2);
+				pw = ImageJHelper.display(title, plot);
+
+				sb.append('\t').append(bestStart + 1);
+				sb.append('\t').append(bestStart + window);
+				sb.append('\t').append(ImageJHelper.rounded(x1));
+				sb.append('\t').append(ImageJHelper.rounded(x2));
+				sb.append('\t').append(ImageJHelper.rounded(bestSS));
+				sb.append('\t').append(ImageJHelper.rounded(bestFit[0]));
+				sb.append('\t').append(ImageJHelper.rounded(bestFit[1]));
+			}
+		}
+
 		results.append(sb.toString());
+	}
+
+	private void addNullFitResult(StringBuilder sb)
+	{
+		for (int i = 0; i < 7; i++)
+			sb.append('\t');
 	}
 
 	private void debug(String format, Object... args)
