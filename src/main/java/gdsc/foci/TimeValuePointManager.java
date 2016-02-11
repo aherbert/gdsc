@@ -28,7 +28,7 @@ public class TimeValuePointManager
 {
 	public enum FileType
 	{
-		CSV_IdTXYZV, CSV_IdTXY, TAB_IdTXYZV, TAB_IdTXY, QuickPALM, STORMJ, TAB_XYZ, CSV_XYZ, Unknown
+		FIND_FOCI, CSV_IdTXYZV, CSV_IdTXY, TAB_IdTXYZV, TAB_IdTXY, QuickPALM, STORMJ, TAB_XYZ, CSV_XYZ, Unknown
 	}
 
 	private static final String newline = System.getProperty("line.separator");
@@ -71,10 +71,10 @@ public class TimeValuePointManager
 			while ((line = input.readLine()) != null)
 			{
 				type = guessFiletype(line, lineCount++);
-				
+
 				if (!line.startsWith("#"))
 					nonHeaderLines++;
-				
+
 				// Stop after several non-header lines
 				if (type != FileType.Unknown || nonHeaderLines > 1)
 					break;
@@ -98,7 +98,11 @@ public class TimeValuePointManager
 	private FileType guessFiletype(String line, int lineCount)
 	{
 		int delimiterCount = countDelimeters(line, "\t");
-		
+
+		// FindFoci file
+		if (line.startsWith("Peak #\tMask Value") && delimiterCount >= 5)
+			return FileType.FIND_FOCI;
+
 		// Look for a unique text for the QuickPALM file on the first line
 		if (lineCount == 1 && line.contains("Up-Height") && delimiterCount >= 14)
 			return FileType.QuickPALM;
@@ -115,7 +119,7 @@ public class TimeValuePointManager
 			return FileType.TAB_IdTXY;
 		if (delimiterCount == 2)
 			return FileType.TAB_XYZ;
-		
+
 		// Comma separated fields: ID,T,X,Y,Z,Value
 		delimiterCount = countDelimeters(line, ",");
 		if (delimiterCount >= 5)
@@ -211,7 +215,7 @@ public class TimeValuePointManager
 			input = new BufferedReader(new FileReader(filename));
 
 			// TODO - Read in binary files from STORMJ
-			
+
 			skipHeader(input);
 
 			int errors = 0;
@@ -225,7 +229,7 @@ public class TimeValuePointManager
 						//int id = Integer.parseInt(tokens[fields[0]]); // Not currently needed
 						float t = 1;
 						if (fields[1] >= 0)
-							Float.parseFloat(tokens[fields[1]]); // QuickPALM uses a float for the time
+							t = Float.parseFloat(tokens[fields[1]]); // QuickPALM uses a float for the time
 						float x = Float.parseFloat(tokens[fields[2]]);
 						float y = Float.parseFloat(tokens[fields[3]]);
 						float z = 0;
@@ -235,12 +239,12 @@ public class TimeValuePointManager
 						{
 							// z is in nm and so must be converted to approximate pixels
 							float xNm = Float.parseFloat(tokens[4]);
-							z *= x / xNm; 
+							z *= x / xNm;
 						}
 						float value = 0;
 						if (fields[5] >= 0)
 							value = Float.parseFloat(tokens[fields[5]]);
-						points.add(new TimeValuedPoint(x, y, z, (int)t, value));
+						points.add(new TimeValuedPoint(x, y, z, (int) t, value));
 					}
 					catch (NumberFormatException e)
 					{
@@ -275,6 +279,12 @@ public class TimeValuePointManager
 
 		switch (type)
 		{
+			case FIND_FOCI:
+				delimiter = "\t";
+				// Store the object field in T
+				fields = new int[] { 0, 20, 2, 3, 4, 5 };
+				break;
+				
 			case QuickPALM:
 				delimiter = "\t";
 				fields = new int[] { 0, 14, 2, 3, 6, 1 };
@@ -291,7 +301,7 @@ public class TimeValuePointManager
 				// ID,T,X,Y,Z,Value
 				fields = new int[] { 0, 1, 2, 3, 4, 5 };
 				break;
-				
+
 			case TAB_IdTXY:
 				delimiter = "\t";
 				// ID,T,X,Y
@@ -303,13 +313,13 @@ public class TimeValuePointManager
 				// X,Y,Z
 				fields = new int[] { -1, -1, 0, 1, 2, -1 };
 				break;
-				
+
 			case CSV_IdTXYZV:
 				delimiter = ",";
 				// ID,T,X,Y,Z,Value
 				fields = new int[] { 0, 1, 2, 3, 4, 5 };
 				break;
-				
+
 			case CSV_IdTXY:
 				delimiter = ",";
 				// ID,T,X,Y
@@ -343,11 +353,19 @@ public class TimeValuePointManager
 	{
 		switch (type)
 		{
+			case FIND_FOCI:
+				do
+				{
+					readLine(input);
+				} while (line != null && (line.startsWith("#") || line.startsWith("Peak #")));
+
+				break;
+				
 			case QuickPALM:
 				readLine(input); // First line is the header so read this
-				
+
 				// Allow fall-through to read the next line
-				
+
 			// Read until no comment character
 			default:
 				do

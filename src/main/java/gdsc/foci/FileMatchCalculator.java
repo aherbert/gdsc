@@ -170,16 +170,13 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	private boolean showDialog()
 	{
-		String t1 = title1;
-		String t2 = title2;
-
 		ArrayList<String> newImageList = buildMaskList();
 
 		GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage("Compare the points in two files\nand compute the match statistics\n(Double click input fields to use a file chooser)");
-		gd.addStringField("Input_1", t1, 30);
-		gd.addStringField("Input_2", t2, 30);
+		gd.addStringField("Input_1", title1, 30);
+		gd.addStringField("Input_2", title2, 30);
 		if (!newImageList.isEmpty())
 			gd.addChoice("mask", newImageList.toArray(new String[0]), mask);
 		gd.addNumericField("Distance", dThreshold, 2);
@@ -232,12 +229,12 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		int tp = 0, fp = 0, fn = 0;
 		double rmsd = 0;
 
-		boolean is3D = is3D(actualPoints) && is3D(predictedPoints);
+		final boolean is3D = is3D(actualPoints) && is3D(predictedPoints);
 
 		List<PointPair> pairs = (showPairs) ? new LinkedList<PointPair>() : null;
 
 		// Process each timepoint
-		for (Integer t : getTimepoints(actualPoints))
+		for (Integer t : getTimepoints(actualPoints, predictedPoints))
 		{
 			Coordinate[] actual = getCoordinates(actualPoints, t);
 			Coordinate[] predicted = getCoordinates(predictedPoints, t);
@@ -276,13 +273,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		if (showPairs)
 		{
 			// Check if these are valued points
-			valued = false;
-			if (!pairs.isEmpty())
-			{
-				PointPair pair = pairs.get(0);
-				valued = ((TimeValuedPoint) pair.getPoint1()).getValue() > 0 &&
-						((TimeValuedPoint) pair.getPoint2()).getValue() > 0;
-			}
+			valued = isValued(actualPoints) && isValued(predictedPoints);
 		}
 
 		if (!java.awt.GraphicsEnvironment.isHeadless())
@@ -293,9 +284,10 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			}
 			if (showPairs)
 			{
+				String header = createPairsHeader(title1, title2);
 				if (pairsWindow == null || !pairsWindow.isShowing())
 				{
-					pairsWindow = new TextWindow(TITLE + " Pairs", createPairsHeader(pairs), "", 900, 300);
+					pairsWindow = new TextWindow(TITLE + " Pairs", header, "", 900, 300);
 					Point p = resultsWindow.getLocation();
 					p.y += resultsWindow.getHeight();
 					pairsWindow.setLocation(p);
@@ -342,7 +334,23 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		return false;
 	}
 
-	private Collection<Integer> getTimepoints(TimeValuedPoint[] points)
+	/**
+	 * Checks if there is a non-zero value within the points
+	 * 
+	 * @param points
+	 * @return
+	 */
+	private boolean isValued(TimeValuedPoint[] points)
+	{
+		if (points.length == 0)
+			return false;
+		for (TimeValuedPoint p : points)
+			if (p.getValue() != 0)
+				return true;
+		return false;
+	}
+
+	private Collection<Integer> getTimepoints(TimeValuedPoint[] points, TimeValuedPoint[] points2)
 	{
 		Set<Integer> set;
 		if (showPairs)
@@ -351,6 +359,8 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			// The order is not critical so use a HashSet
 			set = new HashSet<Integer>();
 		for (TimeValuedPoint p : points)
+			set.add(p.getTime());
+		for (TimeValuedPoint p : points2)
 			set.add(p.getTime());
 		return set;
 	}
@@ -362,7 +372,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		for (TimeValuedPoint p : points)
 			if (p.getTime() == t)
 				coords.add(new IdTimeValuedPoint(id++, p));
-		return coords.toArray(new Coordinate[0]);
+		return coords.toArray(new Coordinate[coords.size()]);
 	}
 
 	private String createResultsHeader()
@@ -385,7 +395,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		sb.append("F-beta");
 		return sb.toString();
 	}
-
+	
 	private void addResult(String i1, String i2, double dThrehsold, MatchResult result)
 	{
 		StringBuilder sb = new StringBuilder();
@@ -415,9 +425,18 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		}
 	}
 
-	private String createPairsHeader(List<PointPair> pairs)
+	private String pairsPrefix;
+	
+	private String createPairsHeader(String i1, String i2)
 	{
 		StringBuilder sb = new StringBuilder();
+		sb.append(i1).append("\t");
+		sb.append(i2).append("\t");
+		pairsPrefix = sb.toString();
+		
+		sb.setLength(0);
+		sb.append("Image 1\t");
+		sb.append("Image 2\t");
 		sb.append("T\t");
 		sb.append("ID1\t");
 		sb.append("X1\t");
@@ -442,7 +461,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	private String createPairResult(PointPair pair, boolean is3D)
 	{
-		StringBuilder sb = new StringBuilder();
+		StringBuilder sb = new StringBuilder(pairsPrefix);
 		IdTimeValuedPoint p1 = (IdTimeValuedPoint) pair.getPoint1();
 		IdTimeValuedPoint p2 = (IdTimeValuedPoint) pair.getPoint2();
 		int t = (p1 != null) ? p1.getTime() : p2.getTime();
@@ -494,7 +513,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 			final String newLine = System.getProperty("line.separator");
 
-			out.write(createPairsHeader(pairs));
+			out.write(createPairsHeader(title1, title2));
 			out.write(newLine);
 
 			for (PointPair pair : pairs)
