@@ -1386,7 +1386,8 @@ public class FindFoci implements PlugIn, MouseListener
 						stats[STATS_SUM_ABOVE_BACKGROUND]);
 			}
 			flushResults();
-			resultsWindow.append("");
+			//if (!resultsArray.isEmpty())
+			//	resultsWindow.append("");
 		}
 
 		// Record all the results to file
@@ -1691,7 +1692,7 @@ public class FindFoci implements PlugIn, MouseListener
 			batchId = 0;
 			FileOutputStream fos = new FileOutputStream(resultsDirectory + File.separatorChar + "all.xls");
 			allOut = new OutputStreamWriter(fos, "UTF-8");
-			allOut.write("Image ID\tImage\t" + createResultsHeader());
+			allOut.write("Image ID\tImage\t" + createResultsHeader(newLine));
 		}
 		catch (Exception e)
 		{
@@ -1765,7 +1766,7 @@ public class FindFoci implements PlugIn, MouseListener
 			OutputStreamWriter out = new OutputStreamWriter(fos, "UTF-8");
 			if (imageDimension == null)
 				imageDimension = new int[] { imp.getC(), 0, imp.getT() };
-			out.write(createResultsHeader(imp, imageDimension, stats));
+			out.write(createResultsHeader(imp, imageDimension, stats, newLine));
 			int[] xpoints = new int[resultsArray.size()];
 			int[] ypoints = new int[resultsArray.size()];
 			final StringBuilder sb = new StringBuilder();
@@ -1776,7 +1777,7 @@ public class FindFoci implements PlugIn, MouseListener
 				ypoints[i] = result[RESULT_Y];
 
 				buildResultEntry(sb, i + 1, resultsArray.size() - i, result, stats[STATS_SUM], stats[STATS_BACKGROUND],
-						stats[STATS_SUM_ABOVE_BACKGROUND]);
+						stats[STATS_SUM_ABOVE_BACKGROUND], newLine);
 				final String resultEntry = sb.toString();
 				out.write(resultEntry);
 				writeBatchResultsFile(resultEntry);
@@ -1953,8 +1954,8 @@ public class FindFoci implements PlugIn, MouseListener
 						stats[STATS_SUM_ABOVE_BACKGROUND]);
 			}
 			flushResults();
-			if (!resultsArray.isEmpty())
-				resultsWindow.append("");
+			//if (!resultsArray.isEmpty())
+			//	resultsWindow.append("");
 		}
 
 		// Update the mask image
@@ -3759,7 +3760,7 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
-			resultsWindow = new TextWindow(FRAME_TITLE + " Results", createResultsHeader(), "", 900, 300);
+			resultsWindow = new TextWindow(FRAME_TITLE + " Results", createResultsHeader(""), "", 900, 300);
 			resetResultsCount();
 		}
 	}
@@ -3780,12 +3781,12 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 	}
 
-	private String createResultsHeader()
+	private String createResultsHeader(String newLine)
 	{
-		return createResultsHeader(null, null, null);
+		return createResultsHeader(null, null, null, newLine);
 	}
 
-	private String createResultsHeader(ImagePlus imp, int[] dimension, double[] stats)
+	private String createResultsHeader(ImagePlus imp, int[] dimension, double[] stats, String newLine)
 	{
 		final StringBuilder sb = new StringBuilder();
 		if (imp != null)
@@ -3854,7 +3855,7 @@ public class FindFoci implements PlugIn, MouseListener
 	private void addToResultTable(int i, int id, int[] result, double sum, double noise, double intensityAboveBackground)
 	{
 		// Buffer the output so that the table is displayed faster
-		buildResultEntry(resultsBuffer, i, id, result, sum, noise, intensityAboveBackground);
+		buildResultEntry(resultsBuffer, i, id, result, sum, noise, intensityAboveBackground, "\n");
 		if (resultsCount > flushCount)
 		{
 			flushResults();
@@ -3870,7 +3871,7 @@ public class FindFoci implements PlugIn, MouseListener
 	}
 
 	private void buildResultEntry(StringBuilder sb, int i, int id, int[] result, double sum, double noise,
-			double intensityAboveBackground)
+			double intensityAboveBackground, String newLine)
 	{
 		final int absoluteHeight = getAbsoluteHeight(result, noise);
 		final double relativeHeight = getRelativeHeight(result, noise, absoluteHeight);
