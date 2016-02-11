@@ -1354,7 +1354,7 @@ public class FindFoci implements PlugIn, MouseListener
 				(((outputType & OUTPUT_RESULTS_TABLE) != 0) || resultsDirectory != null))
 		{
 			ImagePlus objectImp = doObjectAnalysis(mask, maximaImp, resultsArray,
-					(options & OPTION_SHOW_OBJECT_MASK) != 0);
+					(options & OPTION_SHOW_OBJECT_MASK) != 0, null);
 			if (objectImp != null)
 				objectImp.show();
 		}
@@ -1680,7 +1680,8 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		return saveResults(expId, imp, null, mask, null, backgroundMethod, backgroundParameter, autoThresholdMethod,
 				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
-				options, blur, centreMethod, centreParameter, fractionParameter, resultsArray, stats, resultsDirectory);
+				options, blur, centreMethod, centreParameter, fractionParameter, resultsArray, stats, resultsDirectory,
+				null);
 	}
 
 	private void openBatchResultsFile()
@@ -1738,11 +1739,15 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 	}
 
+	private void writeEmptyObjectsToBatchResultsFile(ObjectAnalysisResult objectAnalysisResult)
+	{
+		for (int id = 1; id <= objectAnalysisResult.numberOfObjects; id++)
+			if (objectAnalysisResult.fociCount[id] == 0)
+				writeBatchResultsFile(buildEmptyObjectResultEntry(id, objectAnalysisResult.objectState[id]));
+	}
+
 	private void writeEmptyBatchResultsFile()
 	{
-		// Check if we have a batch file before building the empty entry
-		if (allOut == null)
-			return;
 		writeBatchResultsFile(buildEmptyResultEntry());
 	}
 
@@ -1750,7 +1755,8 @@ public class FindFoci implements PlugIn, MouseListener
 			int backgroundMethod, double backgroundParameter, String autoThresholdMethod, int searchMethod,
 			double searchParameter, int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType,
 			int sortIndex, int options, double blur, int centreMethod, double centreParameter,
-			double fractionParameter, ArrayList<int[]> resultsArray, double[] stats, String resultsDirectory)
+			double fractionParameter, ArrayList<int[]> resultsArray, double[] stats, String resultsDirectory,
+			ObjectAnalysisResult objectAnalysisResult)
 	{
 		try
 		{
@@ -1776,9 +1782,16 @@ public class FindFoci implements PlugIn, MouseListener
 				writeBatchResultsFile(resultEntry);
 				sb.setLength(0);
 			}
-			// Record an empty record for batch processing
-			if (resultsArray.isEmpty())
-				writeEmptyBatchResultsFile();
+			// Check if we have a batch file
+			if (allOut != null)
+			{
+				if (objectAnalysisResult != null)
+					// Record an empty record for empty objects
+					writeEmptyObjectsToBatchResultsFile(objectAnalysisResult);
+				else if (resultsArray.isEmpty())
+					// Record an empty record for batch processing
+					writeEmptyBatchResultsFile();
+			}
 			out.close();
 
 			// Save roi to file
@@ -1911,7 +1924,7 @@ public class FindFoci implements PlugIn, MouseListener
 		if ((options & OPTION_OBJECT_ANALYSIS) != 0 && ((outputType & OUTPUT_RESULTS_TABLE) != 0))
 		{
 			ImagePlus objectImp = doObjectAnalysis(mask, maximaImp, resultsArray,
-					(options & OPTION_SHOW_OBJECT_MASK) != 0);
+					(options & OPTION_SHOW_OBJECT_MASK) != 0, null);
 			if (objectImp != null)
 				objectImp.show();
 		}
@@ -3889,6 +3902,20 @@ public class FindFoci implements PlugIn, MouseListener
 		sb.append(newLine);
 
 		resultsCount++;
+	}
+
+	private String buildEmptyObjectResultEntry(int objectId, int objectState)
+	{
+		if (emptyEntry == null)
+		{
+			final StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < 20; i++)
+				sb.append('\t');
+			sb.append(objectId).append('\t').append(objectState);
+			sb.append(newLine);
+			emptyEntry = sb.toString();
+		}
+		return emptyEntry;
 	}
 
 	private String buildEmptyResultEntry()
@@ -7080,10 +7107,12 @@ public class FindFoci implements PlugIn, MouseListener
 							imageDimension[BatchParameters.T]);
 		}
 
+		ObjectAnalysisResult objectAnalysisResult = null;
 		if ((options & OPTION_OBJECT_ANALYSIS) != 0)
 		{
+			objectAnalysisResult = new ObjectAnalysisResult();
 			ImagePlus objectImp = doObjectAnalysis(mask, maximaImp, resultsArray,
-					(options & OPTION_SHOW_OBJECT_MASK) != 0);
+					(options & OPTION_SHOW_OBJECT_MASK) != 0, objectAnalysisResult);
 			if (objectImp != null)
 				IJ.saveAsTiff(objectImp, batchOutputDirectory + File.separator + expId + ".objects.tiff");
 		}
@@ -7099,7 +7128,7 @@ public class FindFoci implements PlugIn, MouseListener
 		saveResults(expId, imp, imageDimension, mask, maskDimension, p.backgroundMethod, p.backgroundParameter,
 				p.autoThresholdMethod, p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod,
 				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
-				p.fractionParameter, resultsArray, stats, batchOutputDirectory);
+				p.fractionParameter, resultsArray, stats, batchOutputDirectory, objectAnalysisResult);
 
 		boolean saveImp = false;
 
@@ -7216,6 +7245,16 @@ public class FindFoci implements PlugIn, MouseListener
 	}
 
 	/**
+	 * Used to store the numer of objects and their original mask value (state)
+	 */
+	private class ObjectAnalysisResult
+	{
+		int numberOfObjects;
+		int[] objectState;
+		int[] fociCount;
+	}
+
+	/**
 	 * Identify all non-zero pixels in the mask image as potential objects. Mark connected pixels with the same value as
 	 * a single object. For each maxima identify the object and original mask value for the maxima location.
 	 * 
@@ -7226,11 +7265,23 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param createObjectMask
 	 * @return The mask image if created
 	 */
+	/**
+	 * @param mask
+	 * @param maximaImp
+	 * @param resultsArray
+	 * @param createObjectMask
+	 * @param oar
+	 * @return
+	 */
 	private ImagePlus doObjectAnalysis(ImagePlus mask, ImagePlus maximaImp, ArrayList<int[]> resultsArray,
-			boolean createObjectMask)
+			boolean createObjectMask, ObjectAnalysisResult objectAnalysisResult)
 	{
 		if (resultsArray == null || resultsArray.isEmpty())
-			return null;
+		{
+			// Allow the analysis to continue if we are creating the object mask or storing the analysis results
+			if (!createObjectMask && objectAnalysisResult == null)
+				return null;
+		}
 
 		final int[] maskImage = extractMask(mask);
 		if (maskImage == null)
@@ -7257,23 +7308,36 @@ public class FindFoci implements PlugIn, MouseListener
 				objectState[id] = maskImage[i];
 
 				if (is2D)
-					pList = expandObjectXY(maskImage, objects, i, (short) id, pList);
+					pList = expandObjectXY(maskImage, objects, i, id, pList);
 				else
-					pList = expandObjectXYZ(maskImage, objects, i, (short) id, pList);
+					pList = expandObjectXYZ(maskImage, objects, i, id, pList);
 			}
 		}
 
-		// For each maximum, mark the object and original mask value (state)
-		for (int[] result : resultsArray)
+		// For each maximum, mark the object and original mask value (state).
+		// Count the number of foci in each object.
+		int[] fociCount = new int[id + 1];
+		if (resultsArray != null)
 		{
-			final int x = result[RESULT_X];
-			final int y = result[RESULT_Y];
-			final int z = (is2D) ? 0 : result[RESULT_Z];
-			final int index = getIndex(x, y, z);
-			// Convert the short to unsigned
-			final int objectValue = objects[index] & 0xffff;
-			result[RESULT_OBJECT] = objectValue;
-			result[RESULT_STATE] = objectState[objectValue];
+			for (int[] result : resultsArray)
+			{
+				final int x = result[RESULT_X];
+				final int y = result[RESULT_Y];
+				final int z = (is2D) ? 0 : result[RESULT_Z];
+				final int index = getIndex(x, y, z);
+				final int objectId = objects[index];
+				result[RESULT_OBJECT] = objectId;
+				result[RESULT_STATE] = objectState[objectId];
+				fociCount[objectId]++;
+			}
+		}
+
+		// Store the number of objects and their orignal mask value
+		if (objectAnalysisResult != null)
+		{
+			objectAnalysisResult.numberOfObjects = id;
+			objectAnalysisResult.objectState = objectState;
+			objectAnalysisResult.fociCount = fociCount;
 		}
 
 		// Show the object mask
