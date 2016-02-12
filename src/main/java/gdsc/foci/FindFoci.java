@@ -3907,16 +3907,12 @@ public class FindFoci implements PlugIn, MouseListener
 
 	private String buildEmptyObjectResultEntry(int objectId, int objectState)
 	{
-		if (emptyEntry == null)
-		{
-			final StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < 20; i++)
-				sb.append('\t');
-			sb.append(objectId).append('\t').append(objectState);
-			sb.append(newLine);
-			emptyEntry = sb.toString();
-		}
-		return emptyEntry;
+		final StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < 20; i++)
+			sb.append('\t');
+		sb.append(objectId).append('\t').append(objectState);
+		sb.append(newLine);
+		return sb.toString();
 	}
 
 	private String buildEmptyResultEntry()
