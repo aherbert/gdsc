@@ -120,7 +120,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		bitDepth = Math.min(bitDepth, imp.getBitDepth());
 
 		// Get the user options
-		GenericDialog gd = new GenericDialog("Lottery");
+		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Calculate the normalised intensity within an ROI.\nImages should have a linear response with respect to exposure.");
 		gd.addSlider("Window", 3, stack.getSize(), window);
 		gd.addSlider("Bit_depth", 4, imp.getBitDepth(), bitDepth);
