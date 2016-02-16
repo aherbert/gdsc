@@ -16,6 +16,7 @@ import java.util.Arrays;
  */
 public class PointRoi2 extends PointRoi
 {
+	private static final long serialVersionUID = -1054219408481333977L;
 	private static Font font;
 	private static int fontSize = 9;
 	private double saveMag;
