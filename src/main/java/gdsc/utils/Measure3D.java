@@ -70,6 +70,8 @@ public class Measure3D extends PlugInFrame
 			IJ.showMessage("No images opened.");
 			return;
 		}
+		
+		installTool();
 
 		if (instance != null)
 		{
@@ -112,8 +114,7 @@ public class Measure3D extends PlugInFrame
 	private void installTool()
 	{
 		StringBuffer sb = new StringBuffer();
-		// TODO - Do a better icon
-		sb.append("macro 'Measure 3D Tool - C00fT06103C0f0T5910D' {\n");
+		sb.append("macro 'Measure 3D Tool - L0ef7F0d22Fe722C00fT06103T5610D' {\n");
 		sb.append("   call('").append(this.getClass().getName()).append(".run');\n");
 		sb.append("};\n");
 		new MacroInstaller().install(sb.toString());
