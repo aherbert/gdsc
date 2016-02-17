@@ -70,7 +70,9 @@ public class Measure3D extends PlugInFrame
 			IJ.showMessage("No images opened.");
 			return;
 		}
-		
+
+		// Install the macro that is called when the image is clicked.
+		// Do this each time since the toolbar could change.	
 		installTool();
 
 		if (instance != null)
@@ -106,19 +108,20 @@ public class Measure3D extends PlugInFrame
 		if (IJ.isMacOSX())
 			setResizable(false);
 		setVisible(true);
-
-		// Install the macro that is called when the image is clicked
-		installTool();
 	}
 
 	private void installTool()
 	{
-		StringBuffer sb = new StringBuffer();
-		sb.append("macro 'Measure 3D Tool - L0ef7F0d22Fe722C00fT06103T5610D' {\n");
-		sb.append("   call('").append(this.getClass().getName()).append(".run');\n");
-		sb.append("};\n");
-		new MacroInstaller().install(sb.toString());
-		Toolbar.getInstance().setTool(Toolbar.SPARE1);
+		String name = "Measure 3D Tool";
+		if (Toolbar.getInstance().getToolId(name) == -1)
+		{
+			StringBuffer sb = new StringBuffer();
+			sb.append("macro 'Measure 3D Tool - L0ef7F0d22Fe722C00fT06103T5610D' {\n");
+			sb.append("   call('").append(this.getClass().getName()).append(".run');\n");
+			sb.append("};\n");
+			new MacroInstaller().install(sb.toString());
+		}
+		Toolbar.getInstance().setTool(name);
 	}
 
 	public static void run()
@@ -213,7 +216,7 @@ public class Measure3D extends PlugInFrame
 			lastZ = z;
 			lastC = c;
 			lastT = t;
-			
+
 			// Overlay the first point on the image
 			if (overlayCheckbox.getState())
 			{
