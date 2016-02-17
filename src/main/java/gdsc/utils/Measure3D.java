@@ -178,9 +178,9 @@ public class Measure3D extends PlugInFrame
 				// Assume X and Y units are the same. Check the z-unit.
 				if (cal.getXUnit().equals(cal.getZUnit()))
 				{
-					dx = cal.getX(dx);
-					dy = cal.getY(dy);
-					dz = cal.getZ(dz);
+					dx *= cal.pixelWidth;
+					dy *= cal.pixelHeight;
+					dz *= cal.pixelDepth;
 					d2 = Math.sqrt(dx * dx + dy * dy + dz + dz);
 				}
 			}
