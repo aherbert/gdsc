@@ -23,7 +23,7 @@ package gdsc.analytics;
 import java.security.SecureRandom;
 
 /**
- * Represent the Google Analytics session data.
+ * Represent the Google Analytics session data for a visitor.
  * <p>
  * @see http://www.cardinalpath.com/ga-basics-the-structure-of-cookie-values/
  */
@@ -34,6 +34,7 @@ public class SessionData
 	private long previous;
 	private long current;
 	private int sessionNumber;
+	private int timeout = 30 * 60;
 
 	private SessionData(int visitorId, int sessionNumber)
 	{
@@ -45,9 +46,9 @@ public class SessionData
 	}
 
 	/**
-	 * Initializes a new session data, with new visitor id
+	 * Initializes a new session data, with new random visitor id
 	 */
-	public static SessionData newSession()
+	public static SessionData newSessionData()
 	{
 		final int visitorId = (new SecureRandom().nextInt() & 0x7FFFFFFF);
 		return new SessionData(visitorId, 1);
@@ -80,13 +81,16 @@ public class SessionData
 		final long now = System.currentTimeMillis() / 1000L;
 		if (initial == 0)
 		{
-			// If this is the first time event then initialise the time
+			// If this is the first check of the time then initialise the session
 			initial = previous = now;
 		}
 		else
 		{
 			// Else update the previous time
 			previous = current;
+			// Check the timeout and start a new session if necessary
+			if (now > current + timeout)
+				newSession();			
 		}
 		return current = now;
 	}
@@ -97,13 +101,30 @@ public class SessionData
 	}
 
 	/**
-	 * Increment the session number
+	 * Increment the session number to start a new session
 	 */
-	public void resetSession()
+	public void newSession()
 	{
-		// I do not think we need to update the timestamps here. 
+		// Do not update the timestamps here. 
 		// The next call to getCurrent() will do that anyway.
 		this.sessionNumber++;
 	}
+	
 
+	/**
+	 * Set the session timeout. After this amount of time the session number will increment. 
+	 * @param timeout The timeout in seconds
+	 */
+	public void setTimeout(int timeout)
+	{
+		this.timeout = timeout;
+	}
+	
+	/**
+	 * @return The timeout in seconds
+	 */
+	public int getTimeout()
+	{
+		return timeout;
+	}
 }

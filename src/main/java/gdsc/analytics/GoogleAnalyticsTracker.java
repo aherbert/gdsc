@@ -67,12 +67,15 @@ import java.util.regex.MatchResult;
  * is started again with {@link #startBackgroundThread()} (This is assuming you are in single-threaded mode to begin
  * with).
  * </p>
+ * <p>
+ * Note: This class has been forked from the JGoogleAnalyticsTracker project and modified by Alex Herbert to alter the
+ * data sent to Google Analytics and remove the slfj dependency. The architecture for dispatching messages is unchanged.
+ * </p>
  * 
- * @author Daniel Murphy, Stefan Brozinski
+ * @author Daniel Murphy, Stefan Brozinski, Alex Herbert
  */
-public class JGoogleAnalyticsTracker
+public class GoogleAnalyticsTracker
 {
-
 	public static enum DispatchMode
 	{
 		/**
@@ -109,25 +112,24 @@ public class JGoogleAnalyticsTracker
 		V_4_7_2
 	}
 
-	private GoogleAnalyticsVersion gaVersion;
-	private AnalyticsConfigData configData;
+	private GoogleAnalyticsVersion version;
+	private ClientData clientData;
 	private IGoogleAnalyticsURLBuilder builder;
 	private DispatchMode mode;
 	private boolean enabled;
 
-	public JGoogleAnalyticsTracker(AnalyticsConfigData argConfigData, GoogleAnalyticsVersion argVersion)
+	public GoogleAnalyticsTracker(ClientData clientData, GoogleAnalyticsVersion version)
 	{
-		this(argConfigData, argVersion, DispatchMode.SINGLE_THREAD);
+		this(clientData, version, DispatchMode.SINGLE_THREAD);
 	}
 
-	public JGoogleAnalyticsTracker(AnalyticsConfigData argConfigData, GoogleAnalyticsVersion argVersion,
-			DispatchMode argMode)
+	public GoogleAnalyticsTracker(ClientData clientData, GoogleAnalyticsVersion version, DispatchMode dispatchMode)
 	{
-		gaVersion = argVersion;
-		configData = argConfigData;
+		this.version = version;
+		this.clientData = clientData;
 		createBuilder();
 		enabled = true;
-		setDispatchMode(argMode);
+		setDispatchMode(dispatchMode);
 	}
 
 	/**
@@ -197,7 +199,7 @@ public class JGoogleAnalyticsTracker
 	 */
 	public void resetSession()
 	{
-		//builder.resetSession();
+		clientData.getSessionData().newSession();
 	}
 
 	/**
@@ -288,7 +290,6 @@ public class JGoogleAnalyticsTracker
 	 */
 	public static void completeBackgroundTasks(long timeoutMillis)
 	{
-
 		boolean fifoEmpty = false;
 		boolean asyncThreadsCompleted = false;
 
@@ -300,7 +301,7 @@ public class JGoogleAnalyticsTracker
 				fifoEmpty = (fifo.size() == 0);
 			}
 
-			synchronized (JGoogleAnalyticsTracker.class)
+			synchronized (GoogleAnalyticsTracker.class)
 			{
 				asyncThreadsCompleted = (asyncThreadsRunning == 0);
 			}
@@ -322,139 +323,13 @@ public class JGoogleAnalyticsTracker
 	}
 
 	/**
-	 * Tracks a page view.
-	 * 
-	 * @param argPageURL
-	 *            required, Google won't track without it. Ex: <code>"org/me/javaclass.java"</code>, or anything you
-	 *            want as
-	 *            the page url.
-	 * @param argPageTitle
-	 *            content title
-	 * @param argHostName
-	 *            the host name for the url
-	 */
-	public void trackPageView(String argPageURL, String argPageTitle, String argHostName)
-	{
-		trackPageViewFromReferrer(argPageURL, argPageTitle, argHostName, "http://www.dmurph.com", "/");
-	}
-
-	/**
-	 * Tracks a page view.
-	 * 
-	 * @param argPageURL
-	 *            required, Google won't track without it. Ex: <code>"org/me/javaclass.java"</code>, or anything you
-	 *            want as
-	 *            the page url.
-	 * @param argPageTitle
-	 *            content title
-	 * @param argHostName
-	 *            the host name for the url
-	 * @param argReferrerSite
-	 *            site of the referrer. ex, www.dmurph.com
-	 * @param argReferrerPage
-	 *            page of the referrer. ex, /mypage.php
-	 */
-	public void trackPageViewFromReferrer(String argPageURL, String argPageTitle, String argHostName,
-			String argReferrerSite, String argReferrerPage)
-	{
-		if (argPageURL == null)
-		{
-			throw new IllegalArgumentException("Page URL cannot be null, Google will not track the data.");
-		}
-		AnalyticsRequestData data = new AnalyticsRequestData();
-		data.setHostName(argHostName);
-		data.setPageTitle(argPageTitle);
-		data.setPageURL(argPageURL);
-		data.setReferrer(argReferrerSite, argReferrerPage);
-		makeCustomRequest(data);
-	}
-
-	/**
-	 * Tracks a page view.
-	 * 
-	 * @param argPageURL
-	 *            required, Google won't track without it. Ex: <code>"org/me/javaclass.java"</code>, or anything you
-	 *            want as
-	 *            the page url.
-	 * @param argPageTitle
-	 *            content title
-	 * @param argHostName
-	 *            the host name for the url
-	 * @param argSearchSource
-	 *            source of the search engine. ex: google
-	 * @param argSearchKeywords
-	 *            the keywords of the search. ex: java google analytics tracking
-	 *            utility
-	 */
-	public void trackPageViewFromSearch(String argPageURL, String argPageTitle, String argHostName,
-			String argSearchSource, String argSearchKeywords)
-	{
-		if (argPageURL == null)
-		{
-			throw new IllegalArgumentException("Page URL cannot be null, Google will not track the data.");
-		}
-		AnalyticsRequestData data = new AnalyticsRequestData();
-		data.setHostName(argHostName);
-		data.setPageTitle(argPageTitle);
-		data.setPageURL(argPageURL);
-		data.setSearchReferrer(argSearchSource, argSearchKeywords);
-		makeCustomRequest(data);
-	}
-
-	/**
-	 * Tracks an event. To provide more info about the page, use {@link #makeCustomRequest(AnalyticsRequestData)}.
-	 * 
-	 * @param argCategory
-	 * @param argAction
-	 */
-	public void trackEvent(String argCategory, String argAction)
-	{
-		trackEvent(argCategory, argAction, null, null);
-	}
-
-	/**
-	 * Tracks an event. To provide more info about the page, use {@link #makeCustomRequest(AnalyticsRequestData)}.
-	 * 
-	 * @param argCategory
-	 * @param argAction
-	 * @param argLabel
-	 */
-	public void trackEvent(String argCategory, String argAction, String argLabel)
-	{
-		trackEvent(argCategory, argAction, argLabel, null);
-	}
-
-	/**
-	 * Tracks an event. To provide more info about the page, use {@link #makeCustomRequest(AnalyticsRequestData)}.
-	 * 
-	 * @param argCategory
-	 *            required
-	 * @param argAction
-	 *            required
-	 * @param argLabel
-	 *            optional
-	 * @param argValue
-	 *            optional
-	 */
-	public void trackEvent(String argCategory, String argAction, String argLabel, Integer argValue)
-	{
-		AnalyticsRequestData data = new AnalyticsRequestData();
-		data.setEventCategory(argCategory);
-		data.setEventAction(argAction);
-		data.setEventLabel(argLabel);
-		data.setEventValue(argValue);
-
-		makeCustomRequest(data);
-	}
-
-	/**
 	 * Makes a custom tracking request based from the given data.
 	 * 
 	 * @param argData
 	 * @throws NullPointerException
 	 *             if argData is null or if the URL builder is null
 	 */
-	public synchronized void makeCustomRequest(AnalyticsRequestData argData)
+	public synchronized void makeCustomRequest(RequestData argData)
 	{
 		if (!enabled)
 		{
@@ -469,7 +344,7 @@ public class JGoogleAnalyticsTracker
 		{
 			throw new NullPointerException("Class was not initialized");
 		}
-		final String url = ""; //builder.buildURL(argData);
+		final String url = builder.buildURL(argData);
 
 		switch (mode)
 		{
@@ -478,7 +353,7 @@ public class JGoogleAnalyticsTracker
 				{
 					public void run()
 					{
-						synchronized (JGoogleAnalyticsTracker.class)
+						synchronized (GoogleAnalyticsTracker.class)
 						{
 							asyncThreadsRunning++;
 						}
@@ -488,7 +363,7 @@ public class JGoogleAnalyticsTracker
 						}
 						finally
 						{
-							synchronized (JGoogleAnalyticsTracker.class)
+							synchronized (GoogleAnalyticsTracker.class)
 							{
 								asyncThreadsRunning--;
 							}
@@ -498,9 +373,12 @@ public class JGoogleAnalyticsTracker
 				t.setDaemon(true);
 				t.start();
 				break;
+
 			case SYNCHRONOUS:
 				dispatchRequest(url);
 				break;
+
+			case SINGLE_THREAD:
 			default: // in case it's null, we default to the single-thread
 				synchronized (fifo)
 				{
@@ -509,7 +387,8 @@ public class JGoogleAnalyticsTracker
 				}
 				if (!backgroundThreadMayRun)
 				{
-					logger.error("A tracker request has been added to the queue but the background thread isn't running.");
+					logger.error(
+							"A tracker request has been added to the queue but the background thread isn't running.");
 				}
 				break;
 		}
@@ -543,13 +422,11 @@ public class JGoogleAnalyticsTracker
 
 	private void createBuilder()
 	{
-		switch (gaVersion)
+		switch (version)
 		{
 			case V_4_7_2:
-				builder = null; //new GoogleAnalyticsV4_7_2(configData);
-				break;
 			default:
-				builder = null; //new GoogleAnalyticsV4_7_2(configData);
+				builder = new GoogleAnalyticsURLBuilder(clientData);
 				break;
 		}
 	}
@@ -612,9 +489,9 @@ public class JGoogleAnalyticsTracker
 			};
 
 			// Don't prevent the application from terminating.
-			// Use completeBackgroundTasks() before exit if you want to ensure that all pending GA requests are sent. 
+			// Use completeBackgroundTasks() before exit if you want to ensure 
+			// that all pending GA requests are sent. 
 			backgroundThread.setDaemon(true);
-
 			backgroundThread.start();
 		}
 	}
@@ -646,5 +523,42 @@ public class JGoogleAnalyticsTracker
 			}
 			backgroundThread = null;
 		}
+	}
+
+	/**
+	 * Track a page
+	 * 
+	 * @param pageUrl
+	 *            The page URL (must not be null)
+	 * @param pageTitle
+	 *            The page title
+	 */
+	public void page(String pageUrl, String pageTitle)
+	{
+		RequestData data = new RequestData();
+		data.setPageURL(pageUrl);
+		data.setPageTitle(pageTitle);
+		data.setType(RequestData.Type.PAGE);
+		makeCustomRequest(data);
+	}
+
+	/**
+	 * Track a сustom variable. I do not know if this can be called with null page information.
+	 * 
+	 * @param pageUrl
+	 *            The page URL
+	 * @param pageTitle
+	 *            The page title
+	 * @param value
+	 *            the variable value
+	 */
+	public void customVariable(String pageUrl, String pageTitle, String value)
+	{
+		RequestData data = new RequestData();
+		data.setPageURL(pageUrl);
+		data.setPageTitle(pageTitle);
+		data.setType(RequestData.Type.CUSTOM_VARIABLE);
+		data.setValue(value);
+		makeCustomRequest(data);
 	}
 }

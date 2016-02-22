@@ -480,4 +480,7 @@ public class ImageJHelper
 	{
 		return n + " " + name + ((Math.abs(n) == 1) ? "" : "s");
 	}
+	
+	// TODO - Add code to use JGoogleAnalytics to monitor usage
+	
 }

@@ -1,69 +1,40 @@
-/**
- * Copyright (c) 2010 Daniel Murphy
- * 
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- * 
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-/**
- * Created at Jul 22, 2010, 11:37:36 PM
- */
 package gdsc.analytics;
 
 /**
- * Data that is client-specific, and should be common for all tracking requests.
- * For convenience most of this data is populated automatically by {@link #populateFromSystem()}.
- * 
- * @author Daniel Murphy
- * 
+ * Common client data. Allows caching of the client component of the Google Analytics URL.
  */
 public class ClientData
 {
-
 	private final String trackingCode;
 	private String encoding = "UTF-8";
 	private String screenResolution = null;
 	private String userLanguage = null;
 	private String hostName = null;
 	private SessionData sessionData;
+	private String url = null;
 
 	/**
 	 * constructs with the tracking code and a new session data.
 	 * 
-	 * @param argTrackingCode
+	 * @param trackingCode
 	 */
-	public ClientData(String argTrackingCode)
+	public ClientData(String trackingCode)
 	{
-		this(argTrackingCode, SessionData.newSession());
+		this(trackingCode, SessionData.newSessionData());
 	}
 
 	/**
 	 * constructs with the tracking code using the provided session data.
 	 * 
-	 * @param argTrackingCode
+	 * @param trackingCode
 	 */
-	public ClientData(String argTrackingCode, SessionData sessionData)
+	public ClientData(String trackingCode, SessionData sessionData)
 	{
-		if (argTrackingCode == null)
+		if (trackingCode == null)
 		{
 			throw new RuntimeException("Tracking code cannot be null");
 		}
-		trackingCode = argTrackingCode;
+		this.trackingCode = trackingCode;
 		this.sessionData = sessionData;
 	}
 
@@ -157,5 +128,21 @@ public class ClientData
 	public void setHostName(String hostName)
 	{
 		this.hostName = hostName;
+	}
+
+	/**
+	 * @return The client component of the URL
+	 */
+	public String getUrl()
+	{
+		return url;
+	}
+
+	/**
+	 * @param url The client component of the URL
+	 */
+	public void setUrl(String url)
+	{
+		this.url = url;
 	}
 }
