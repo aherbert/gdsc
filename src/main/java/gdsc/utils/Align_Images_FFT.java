@@ -1,8 +1,10 @@
 package gdsc.utils;
 
-import ij.Executer;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+
+import gdsc.ImageJTracker;
 import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
@@ -12,11 +14,6 @@ import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.util.Tools;
-
-import java.awt.Rectangle;
-import java.util.ArrayList;
-
-import gdsc.ImageJTracker;
 
 /**
  * Aligns an image stack to a reference image using XY translation to maximise the correlation. Takes in:
