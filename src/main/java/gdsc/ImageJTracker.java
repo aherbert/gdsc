@@ -12,6 +12,8 @@
  *---------------------------------------------------------------------------*/
 package gdsc;
 
+import java.lang.reflect.Method;
+
 import gdsc.analytics.ClientData;
 import gdsc.analytics.ClientDataManager;
 import gdsc.analytics.ConsoleLogger;
@@ -30,28 +32,69 @@ public class ImageJTracker
 
 	/**
 	 * Record the use of the ImageJ plugin
-	 * @param name The plugin name
-	 * @param argument The plugin argument
+	 * 
+	 * @param name
+	 *            The plugin name
+	 * @param argument
+	 *            The plugin argument
 	 */
 	public static void recordPlugin(String name, String argument)
+	{
+		String url = name;
+		if (argument != null && argument.length() > 0)
+			url += '/' + argument;
+
+		track(url, name);
+	}
+
+	/**
+	 * Record the use of a Java class
+	 * 
+	 * @param clazz
+	 *            The class
+	 */
+	public static void recordClass(@SuppressWarnings("rawtypes") Class clazz)
+	{
+		recordClass(clazz, null);
+	}
+
+	/**
+	 * Record the use of a Java class and method.
+	 * <p>
+	 * Only the method name is recorded for tracking simplicity. If multiple methods have the same name with different
+	 * parameters and access then this information will be lost.
+	 * 
+	 * @param clazz
+	 *            The class
+	 * @param method
+	 *            Optional method
+	 */
+	public static void recordClass(@SuppressWarnings("rawtypes") Class clazz, Method method)
+	{
+		final String title = clazz.getName();
+		String url = title.replace('.', '/');
+		if (method != null)
+			url += '/' + method.getName();
+		track(url, title);
+	}
+
+	private static void track(String pageUrl, String pageTitle)
 	{
 		// Log a page view then, for the first call, log a custom variable  
 		// Q. Is this the correct thing to do or can it be done all at once?
 		final boolean firstCall = initialise();
-		
-		String url = baseUrl + name;
-		if (argument!=null && argument.length()>0)
-			url += '/' + argument;
-		
-		tracker.page(url, name);
-		
+
+		String url = baseUrl + pageUrl;
+
+		tracker.page(url, pageTitle);
+
 		if (firstCall)
 		{
 			// Record the ImageJ information. This call should return a string like:
 			// ImageJ 1.48a; Java 1.7.0_11 [64-bit]; Windows 7 6.1; 29MB of 5376MB (<1%)
 			// (This should also be different if we are running within Fiji)
 			String info = new ImageJ().getInfo();
-			tracker.customVariable(url, name, info);
+			tracker.customVariable(url, pageTitle, info);
 		}
 	}
 
@@ -64,16 +107,16 @@ public class ImageJTracker
 			// explicitly identify it here.
 			baseUrl = '/' + Version.getMajorMinorRelease() + '/';
 			ClientData data = ClientDataManager.newClientData("UA-74107394-1");
-			
+
 			// Start a new session if plugins are not used for 10 minutes
 			data.getSessionData().setTimeout(60 * 10);
-			
+
 			// Create the tracker
 			tracker = new JGoogleAnalyticsTracker(data, GoogleAnalyticsVersion.V_4_7_2, DispatchMode.SINGLE_THREAD);
-			
+
 			// DEBUG: Enable logging
 			JGoogleAnalyticsTracker.setLogger(new ConsoleLogger());
-			
+
 			return true;
 		}
 		return false;
