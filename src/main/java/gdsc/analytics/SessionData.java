@@ -1,31 +1,40 @@
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2016 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- *
- * The code within the gdsc.analytics package is based upon:
- * 
- * JGoogleAnalyticsTracker by Daniel Murphy
- * @see https://code.google.com/archive/p/jgoogleanalyticstracker/
- * 
- * JGoogleAnalytics by Siddique Hameed 
- * @see https://github.com/siddii/jgoogleanalytics
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
 package gdsc.analytics;
+
+/*
+ * <ul>
+ * <li>Copyright (c) 2010 Daniel Murphy
+ * <li>Copyright (c) 2016 Alex Herbert
+ * </ul>
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * <p>
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ * <p>
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * @see https://code.google.com/archive/p/jgoogleanalyticstracker/
+ */
 
 import java.security.SecureRandom;
 
 /**
  * Represent the Google Analytics session data for a visitor.
- * <p>
+ * 
  * @see http://www.cardinalpath.com/ga-basics-the-structure-of-cookie-values/
+ * @author Alex Herbert
  */
 public class SessionData
 {
@@ -90,7 +99,7 @@ public class SessionData
 			previous = current;
 			// Check the timeout and start a new session if necessary
 			if (now > current + timeout)
-				newSession();			
+				newSession();
 		}
 		return current = now;
 	}
@@ -109,17 +118,18 @@ public class SessionData
 		// The next call to getCurrent() will do that anyway.
 		this.sessionNumber++;
 	}
-	
 
 	/**
-	 * Set the session timeout. After this amount of time the session number will increment. 
-	 * @param timeout The timeout in seconds
+	 * Set the session timeout. After this amount of time the session number will increment.
+	 * 
+	 * @param timeout
+	 *            The timeout in seconds
 	 */
 	public void setTimeout(int timeout)
 	{
 		this.timeout = timeout;
 	}
-	
+
 	/**
 	 * @return The timeout in seconds
 	 */

@@ -1,5 +1,10 @@
-/**
- * Copyright (c) 2010 Daniel Murphy
+package gdsc.analytics;
+
+/*
+ * <ul>
+ * <li>Copyright (c) 2010 Daniel Murphy
+ * <li>Copyright (c) 2016 Alex Herbert
+ * </ul>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -8,10 +13,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ * <p>
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ * <p>
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -19,11 +24,9 @@
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * @see https://code.google.com/archive/p/jgoogleanalyticstracker/
  */
-/**
- * Created at Jul 20, 2010, 4:39:49 AM
- */
-package gdsc.analytics;
 
 import java.util.Random;
 
@@ -77,29 +80,51 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 		if (client.getUrl() == null)
 			buildClientURL();
 		sb.append(client.getUrl());
-		
+
 		// Build the request data
 		sb.append("&utmt=").append(requestData.getType());
 
 		if (requestData.getValue() != null)
 		{
-			sb.append("&utme=").append(getURIString(requestData.getValue()));
+			sb.append("&utme=").append(URIEncoder.encodeURI(requestData.getValue()));
 		}
 
 		if (requestData.getPageTitle() != null)
 		{
-			sb.append("&utmdt=" + getURIString(requestData.getPageTitle())); // page title
+			sb.append("&utmdt=" + URIEncoder.encodeURI(requestData.getPageTitle())); // page title
 		}
 
 		if (requestData.getPageURL() != null)
 		{
-			sb.append("&utmp=" + getURIString(requestData.getPageURL())); // page url
+			sb.append("&utmp=" + URIEncoder.encodeURI(requestData.getPageURL())); // page url
 		}
-		
+
 		// A random number used to link Analytics GIF requests with AdSense.
 		sb.append("&utmhid=" + random.nextInt());
 
-		// cookie data
+		// Cookie data
+
+		// Session information:
+		//  initial = time the visit started
+		//  previous = time of the last session action
+		//  current = time now
+		//  visits = the number of sessions (due to inactive session timeout)
+		// See http://www.cardinalpath.com/ga-basics-the-structure-of-cookie-values/
+		final int hostnameHash = client.getHostName().hashCode();
+		final SessionData sessionData = client.getSessionData();
+		final int visitorId = sessionData.getVisitorId();
+		// We call getCurrent first to update the timestamps
+		final long current = sessionData.getCurrent();
+		final long initial = sessionData.getInitial();
+		final long previous = sessionData.getPrevious();
+		final int sessionNumber = sessionData.getSessionNumber();
+
+		sb.append("&utmcc=__utma%3D").append(hostnameHash).append(".").append(visitorId).append(".")
+				.append(initial).append(".").append(previous).append(".").append(current)
+				.append(".").append(sessionNumber);
+		
+		// Campaign data (currently not not supported)
+		//
 		//	utmcsr
 		//	Identifies a search engine, newsletter name, or other source specified in the
 		//	utm_source query parameter See the �Marketing Campaign Tracking�
@@ -117,44 +142,34 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 		//	utmcct
 		//	Campaign content or the content of a particular ad (used for A/B testing)
 		//	The value from utm_content query parameter.
-
-		// utmcsr%3D(direct)%7Cutmccn%D(direct)%7utmcmd%3D(none)
-
-		//	private String utmcsr = "(direct)";
-		//	private String utmccn = "(direct)";
-		//	private String utmctr = null;
-		//	private String utmcmd = "(none)";
-		//	private String utmcct = null;
-		// utmccn=(organic)|utmcsr=google|utmctr=snotwuh |utmcmd=organic
 		
-		String utmcsr = getURIString("(direct)");
-		String utmccn = getURIString("(direct)");
-		String utmctr = null;
-		String utmcmd = getURIString("(none)");
-		String utmcct = null;
-
-		int hostnameHash = hostnameHash(client.getHostName());
-		SessionData sessionData = client.getSessionData();
-		int visitorId = sessionData.getVisitorId();
-		long timestampCurrent = sessionData.getCurrent();
-		long timestampFirst = sessionData.getInitial();
-		long timestampPrevious = sessionData.getPrevious();
-		int visits = sessionData.getSessionNumber();
-
-		// Q. What are first, previous, current, visits?
-		// Should they be:
-		// first = time the session started
-		// previous = time of the last action/session?
-		// current = time now
-		// visits = the number of sessions
-		// In this case we should update the VisitorData object to reflect this.
-		// http://www.cardinalpath.com/ga-basics-the-structure-of-cookie-values/
-
-		sb.append("&utmcc=__utma%3D" + hostnameHash + "." + visitorId + "." + timestampFirst + "." + timestampPrevious +
-				"." + timestampCurrent + "." + visits + "%3B%2B__utmz%3D" + hostnameHash + "." + now +
-				".1.1.utmcsr%3D" + utmcsr + "%7Cutmccn%3D" + utmccn + "%7utmcmd%3D" + utmcmd +
-				(utmctr != null ? "%7Cutmctr%3D" + utmctr : "") + (utmcct != null ? "%7Cutmcct%3D" + utmcct : "") +
-				"%3B&gaq=1");
+		sb.append("%3B%2B__utmz%3D").append(hostnameHash).append(".").append(now);
+		
+		/*
+		final String utmcsr = URIEncoder.encodeURI("(direct)");
+		final String utmccn = URIEncoder.encodeURI("(direct)");
+		final String utmctr = null;
+		final String utmcmd = URIEncoder.encodeURI("(none)");
+		final String utmcct = null;
+		
+		sb.append(".1.1.utmcsr%3D").append(utmcsr).append("%7Cutmccn%3D").append(utmccn).append("%7utmcmd%3D" + utmcmd);
+		if (utmctr != null)
+			sb.append("%7Cutmctr%3D").append(utmctr);
+		if (utmcct != null)
+			sb.append("%7Cutmcct%3D").append(utmcct);
+		*/
+		
+		// => No campaign:
+		// utmcsr%3D(direct)%7Cutmccn%D(direct)%7utmcmd%3D(none)
+		
+		// Note: URL encoding (http://www.degraeve.com/reference/urlencoding.php)
+		// %3D    =
+		// %7C    |
+		
+		sb.append(".1.1.utmcsr%3D(direct)%7Cutmccn%D(direct)%7utmcmd%3D(none)");
+		
+		sb.append("%3B&gaq=1");
+		
 		return sb.toString();
 	}
 
@@ -165,7 +180,7 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 		sb.append("&utmac=" + client.getTrackingCode());
 		if (client.getEncoding() != null)
 		{
-			sb.append("&utmcs=" + getURIString(client.getEncoding())); // encoding
+			sb.append("&utmcs=" + URIEncoder.encodeURI(client.getEncoding())); // encoding
 		}
 		else
 		{
@@ -173,16 +188,16 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 		}
 		if (client.getScreenResolution() != null)
 		{
-			sb.append("&utmsr=" + getURIString(client.getScreenResolution())); // screen resolution
+			sb.append("&utmsr=" + URIEncoder.encodeURI(client.getScreenResolution())); // screen resolution
 		}
 		sb.append("&utmsc=32-bit"); // color depth
 		if (client.getUserLanguage() != null)
 		{
-			sb.append("&utmul=" + getURIString(client.getUserLanguage())); // language
+			sb.append("&utmul=" + URIEncoder.encodeURI(client.getUserLanguage())); // language
 		}
 		if (client.getHostName() != null)
 		{
-			sb.append("&utmhn=" + getURIString(client.getHostName())); // hostname
+			sb.append("&utmhn=" + URIEncoder.encodeURI(client.getHostName())); // hostname
 		}
 		sb.append("&utmje=1"); // java enabled			
 		client.setUrl(sb.toString());
@@ -233,18 +248,4 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 	 * utmcsr
 	 * %3D(direct)%7Cutmccn%3D(direct)%7Cutmcmd%3D(none)%3B&gaq=1
 	 */
-
-	private String getURIString(String argString)
-	{
-		if (argString == null)
-		{
-			return null;
-		}
-		return URIEncoder.encodeURI(argString);
-	}
-
-	private int hostnameHash(String hostname)
-	{
-		return hostname.hashCode();
-	}
 }

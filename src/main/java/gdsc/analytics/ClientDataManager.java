@@ -1,5 +1,33 @@
 package gdsc.analytics;
 
+/*
+ * <ul>
+ * <li>Copyright (c) 2010 Daniel Murphy
+ * <li>Copyright (c) 2016 Alex Herbert
+ * </ul>
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * <p>
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ * <p>
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * @see https://code.google.com/archive/p/jgoogleanalyticstracker/
+ */
+
 import java.awt.Dimension;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
@@ -22,7 +50,7 @@ public class ClientDataManager
 	 * @param data
 	 *            The data
 	 */
-	public static final void populateConfigData(ClientData data)
+	public static final void populate(ClientData data)
 	{
 		data.setEncoding(System.getProperty("file.encoding"));
 
@@ -44,12 +72,14 @@ public class ClientDataManager
 		}
 		data.setHostName(hostName);
 
-		Dimension d = getScreenSize();
+		final Dimension d = getScreenSize();
 		data.setScreenResolution(d.getWidth() + "x" + d.getHeight());
 	}
 
 	/**
 	 * Get the screen size
+	 * <p>
+	 * Taken from ImageJ.getScreenSize();
 	 * 
 	 * @return The dimension of the primary screen
 	 */
@@ -81,7 +111,7 @@ public class ClientDataManager
 	public static ClientData newClientData(String trackingCode)
 	{
 		ClientData data = new ClientData(trackingCode);
-		populateConfigData(data);
+		populate(data);
 		return data;
 	}
 

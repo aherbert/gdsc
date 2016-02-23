@@ -1,5 +1,10 @@
-/**
- * Copyright (c) 2010 Daniel Murphy, Stefan Brozinski
+package gdsc.analytics;
+
+/*
+ * <ul>
+ * <li>Copyright (c) 2010 Daniel Murphy, Stefan Brozinski
+ * <li>Copyright (c) 2016 Alex Herbert
+ * </ul>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -8,10 +13,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ * <p>
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ * <p>
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -19,11 +24,9 @@
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * @see https://code.google.com/archive/p/jgoogleanalyticstracker/
  */
-/**
- * Created at Jul 20, 2010, 4:04:22 AM
- */
-package gdsc.analytics;
 
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
@@ -394,24 +397,24 @@ public class GoogleAnalyticsTracker
 		}
 	}
 
-	private static void dispatchRequest(String argURL)
+	private static void dispatchRequest(String requestURL)
 	{
 		try
 		{
-			URL url = new URL(argURL);
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
+			final URL url = new URL(requestURL);
+			final HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
 			connection.setRequestMethod("GET");
 			connection.setInstanceFollowRedirects(true);
 			connection.connect();
-			int responseCode = connection.getResponseCode();
+			final int responseCode = connection.getResponseCode();
 			if (responseCode != HttpURLConnection.HTTP_OK)
 			{
-				logger.error("JGoogleAnalyticsTracker: Error requesting url '%s', received response code %s", argURL,
+				logger.error("JGoogleAnalyticsTracker: Error requesting url '%s', received response code %d", requestURL,
 						responseCode);
 			}
 			else
 			{
-				logger.debug("JGoogleAnalyticsTracker: Tracking success for url '%s'", argURL);
+				logger.debug("JGoogleAnalyticsTracker: Tracking success for url '%s'", requestURL);
 			}
 		}
 		catch (Exception e)
@@ -560,5 +563,29 @@ public class GoogleAnalyticsTracker
 		data.setType(RequestData.Type.CUSTOM_VARIABLE);
 		data.setValue(value);
 		makeCustomRequest(data);
+	}
+
+	/**
+	 * Get the logger
+	 * 
+	 * @return the logger
+	 */
+	public static Logger getLogger()
+	{
+		return logger;
+	}
+
+	/**
+	 * Set the logger
+	 * 
+	 * @param logger
+	 *            the logger to set
+	 */
+	public static void setLogger(Logger logger)
+	{
+		// If null set to the default (null) logger
+		if (logger == null)
+			logger = new Logger();
+		GoogleAnalyticsTracker.logger = logger;
 	}
 }

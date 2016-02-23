@@ -14,6 +14,7 @@ package gdsc;
 
 import gdsc.analytics.ClientData;
 import gdsc.analytics.ClientDataManager;
+import gdsc.analytics.ConsoleLogger;
 import gdsc.analytics.GoogleAnalyticsTracker;
 import gdsc.analytics.GoogleAnalyticsTracker.DispatchMode;
 import gdsc.analytics.GoogleAnalyticsTracker.GoogleAnalyticsVersion;
@@ -69,6 +70,10 @@ public class ImageJTracker
 			
 			// Create the tracker
 			tracker = new GoogleAnalyticsTracker(data, GoogleAnalyticsVersion.V_4_7_2, DispatchMode.SINGLE_THREAD);
+			
+			// DEBUG: Enable logging
+			GoogleAnalyticsTracker.setLogger(new ConsoleLogger());
+			
 			return true;
 		}
 		return false;

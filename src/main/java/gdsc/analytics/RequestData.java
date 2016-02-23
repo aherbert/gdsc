@@ -1,10 +1,45 @@
 package gdsc.analytics;
 
+/*
+ * <ul>
+ * <li>Copyright (c) 2010 Daniel Murphy
+ * <li>Copyright (c) 2016 Alex Herbert
+ * </ul>
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * <p>
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ * <p>
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * @see https://code.google.com/archive/p/jgoogleanalyticstracker/
+ */
+
 /**
  * Google Analytics request data
+ * 
+ * @author Alex Herbert
  */
 public class RequestData
 {
+	/**
+	 * The type of request
+	 * 
+	 * @author Alex Herbert
+	 */
 	public enum Type
 	{
 		EVENT("event"), TRANSACTION("transaction"), ITEM("item"), CUSTOM_VARIABLE("custom_variable"), PAGE("page");
@@ -27,37 +62,6 @@ public class RequestData
 	private String value = null;
 	private String pageTitle = null;
 	private String pageURL = null;
-
-	//	utmcsr
-	//	Identifies a search engine, newsletter name, or other source specified in the
-	//	utm_source query parameter See the �Marketing Campaign Tracking�
-	//	section for more information about query parameters.
-	//
-	//	utmccn
-	//	Stores the campaign name or value in the utm_campaign query parameter.
-	//
-	//	utmctr
-	//	Identifies the keywords used in an organic search or the value in the utm_term query parameter.
-	//
-	//	utmcmd
-	//	A campaign medium or value of utm_medium query parameter.
-	//
-	//	utmcct
-	//	Campaign content or the content of a particular ad (used for A/B testing)
-	//	The value from utm_content query parameter.
-	// referal:
-	//utmcsr=forums.jinx.com|utmcct=/topic.asp|utmcmd=referral
-	//utmcsr=rolwheels.com|utmccn=(referral)|utmcmd=referral|utmcct=/rol_dhuez_wheels.php
-	// search:
-	// utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=rol%20wheels
-
-	// utmcsr%3D(direct)%7Cutmccn%D(direct)%7utmcmd%3D(none)
-
-	//	private String utmcsr = "(direct)";
-	//	private String utmccn = "(direct)";
-	//	private String utmctr = null;
-	//	private String utmcmd = "(none)";
-	//	private String utmcct = null;
 
 	/**
 	 * @param type
