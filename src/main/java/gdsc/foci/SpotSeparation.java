@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -41,7 +43,7 @@ import java.util.List;
  */
 public class SpotSeparation implements PlugInFilter
 {
-	public static String FRAME_TITLE = "Spot Separation";
+	public static final String TITLE = "Spot Separation";
 
 	private final static String[] methods = { "MaxEntropy", "Yen" };
 
@@ -65,6 +67,8 @@ public class SpotSeparation implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (imp == null)
 			return DONE;
 		this.imp = imp;
@@ -121,7 +125,7 @@ public class SpotSeparation implements PlugInFilter
 				float xpos = points[i].x;
 				float ypos = points[i].y;
 				int peakId = points[i].id;
-				profileTitle = FRAME_TITLE + " Spot " + peakId + " Profile";
+				profileTitle = TITLE + " Spot " + peakId + " Profile";
 
 				float[] com = new float[2];
 				//double angle = calculateOrientation(spotIp, xpos, ypos, peakId, com);
@@ -195,7 +199,7 @@ public class SpotSeparation implements PlugInFilter
 				// the edge of the spots
 
 				int j = assigned[i];
-				profileTitle = FRAME_TITLE + " Spot " + points[i].id + " to " + points[j].id + " Profile";
+				profileTitle = TITLE + " Spot " + points[i].id + " to " + points[j].id + " Profile";
 
 				float distance = (float) Math.sqrt(d[i][j]);
 
@@ -290,7 +294,7 @@ public class SpotSeparation implements PlugInFilter
 
 	public boolean showDialog()
 	{
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addHelp(URL.UTILITY);
 
 		gd.addMessage("Analyse line profiles between spots within a separation distance");
@@ -428,7 +432,7 @@ public class SpotSeparation implements PlugInFilter
 		{
 			ImageProcessor spotIp = maximaImp.getProcessor();
 			spotIp.setMinAndMax(0, resultsArray.size());
-			String title = FRAME_TITLE + " Spots";
+			String title = TITLE + " Spots";
 			ImagePlus spotImp = WindowManager.getImage(title);
 			if (spotImp == null)
 			{
@@ -536,7 +540,7 @@ public class SpotSeparation implements PlugInFilter
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
-			resultsWindow = new TextWindow(FRAME_TITLE + " Positions", createResultsHeader(), "", 700, 300);
+			resultsWindow = new TextWindow(TITLE + " Positions", createResultsHeader(), "", 700, 300);
 		}
 
 		// Create the image result prefix
@@ -904,7 +908,7 @@ public class SpotSeparation implements PlugInFilter
 		{
 			if (plotProfiles.contains(f.getTitle()))
 				continue;
-			if (f.getTitle().startsWith(FRAME_TITLE) && f.getTitle().endsWith("Profile"))
+			if (f.getTitle().startsWith(TITLE) && f.getTitle().endsWith("Profile"))
 			{
 				if (f instanceof PlotWindow)
 				{

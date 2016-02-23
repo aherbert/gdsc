@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
+import gdsc.ImageJTracker;
 import gdsc.colocalisation.cda.TwinStackShifter;
 import gdsc.threshold.Auto_Threshold;
 import gdsc.utils.Random;
@@ -43,7 +44,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	private ImagePlus imp;
 
 	private static TextWindow tw;
-	private static String FRAME_TITLE = "Stack Colocalisation Analyser";
+	private static String TITLE = "Stack Colocalisation Analyser";
 	private static String NONE = "None";
 	private boolean firstResult;
 
@@ -79,6 +80,8 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (imp == null)
 		{
 			return DONE;
@@ -214,8 +217,8 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 
 	private String[] getMethods()
 	{
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
-		gd.addMessage(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
+		gd.addMessage(TITLE);
 		firstResult = true;
 
 		String[] indices = new String[imp.getNChannels()];
@@ -309,7 +312,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 
 	private String[] failed(String message)
 	{
-		IJ.error(FRAME_TITLE, message);
+		IJ.error(TITLE, message);
 		return new String[0];
 	}
 
@@ -656,7 +659,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		}
 		else if (tw == null || !tw.isShowing())
 		{
-			tw = new TextWindow(FRAME_TITLE + " Results",
+			tw = new TextWindow(TITLE + " Results",
 					"Image\tp\tMethod\tFrame\tCh1\tCh2\tCh3\tn\tArea\tM1\tSig\tM2\tSig\tR\tSig", "", 700, 300);
 		}
 	}

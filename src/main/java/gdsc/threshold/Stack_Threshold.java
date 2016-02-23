@@ -23,6 +23,8 @@ import ij.process.ImageProcessor;
 
 import java.util.ArrayList;
 
+import gdsc.ImageJTracker;
+
 /**
  * Processes an image stack and applies thresholding to create a mask for each channel+frame combination.
  */
@@ -31,7 +33,7 @@ public class Stack_Threshold implements PlugInFilter
 	// Store a reference to the current working image
 	private ImagePlus imp;
 
-	private static String FRAME_TITLE = "Stack Threshold";
+	private static String TITLE = "Stack Threshold";
 
 	// ImageJ indexes for the dimensions array
 	// private final int X = 0;
@@ -54,6 +56,8 @@ public class Stack_Threshold implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (imp == null)
 		{
 			return DONE;
@@ -145,8 +149,8 @@ public class Stack_Threshold implements PlugInFilter
 
 	private String[] getMethods()
 	{
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
-		gd.addMessage(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
+		gd.addMessage(TITLE);
 
 		// Commented out the methods that take a long time on 16-bit images.
 		String[] methods = { "Try all", "Default",
@@ -202,7 +206,7 @@ public class Stack_Threshold implements PlugInFilter
 
 	private String[] failed(String message)
 	{
-		IJ.error(FRAME_TITLE, message);
+		IJ.error(TITLE, message);
 		return new String[0];
 	}
 

@@ -22,6 +22,8 @@ import ij.process.ImageProcessor;
 
 import java.util.ArrayList;
 
+import gdsc.ImageJTracker;
+
 /**
  * Create an average of all the open stacks with the same dimensions and bit-depth as the active stack.
  */
@@ -36,6 +38,7 @@ public class Stack_Average implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin("Stack Average", arg);
 		if (imp == null)
 		{
 			IJ.noImage();

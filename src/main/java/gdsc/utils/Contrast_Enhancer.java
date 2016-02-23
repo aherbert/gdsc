@@ -1,5 +1,7 @@
 package gdsc.utils;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -31,6 +33,8 @@ public class Contrast_Enhancer implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin("Contrast Enhancer", arg);
+		
 		if (imp == null)
 		{
 			return DONE;

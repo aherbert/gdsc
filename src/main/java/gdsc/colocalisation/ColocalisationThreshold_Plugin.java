@@ -56,6 +56,8 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
+import gdsc.ImageJTracker;
+
 /**
  * Compares two images for correlated pixel intensities. If the two images are correlated a search is performed for the
  * threshold below which the two images are not correlated.
@@ -69,7 +71,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	// Used to show the results
 	private static TextWindow tw;
-	private static String FRAME_TITLE = "CT Plugin";
+	private static String TITLE = "CT Plugin";
 
 	// Image titles
 	private static String channel1Title = "CT Channel 1";
@@ -201,14 +203,16 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	public ColocalisationThreshold_Plugin()
 	{
-		super(FRAME_TITLE);
+		super(TITLE);
 	}
 
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (WindowManager.getImageCount() == 0)
 		{
-			IJ.showMessage(FRAME_TITLE, "No images opened.");
+			IJ.showMessage(TITLE, "No images opened.");
 			return;
 		}
 
@@ -415,7 +419,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 		if ((width1 != width2) || (height1 != height2))
 		{
-			IJ.showMessage(FRAME_TITLE, "Both images (stacks) must be at the same height and width");
+			IJ.showMessage(TITLE, "Both images (stacks) must be at the same height and width");
 			return;
 		}
 
@@ -437,7 +441,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 		if (imp1.getNSlices() != imp2.getNSlices())
 		{
-			IJ.showMessage(FRAME_TITLE, "Both images (stacks) must be at the same depth");
+			IJ.showMessage(TITLE, "Both images (stacks) must be at the same depth");
 			return;
 		}
 
@@ -604,14 +608,14 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 			ct.setSearchTolerance(searchTolerance);
 			if (!ct.correlate())
 			{
-				IJ.showMessage(FRAME_TITLE, "No correlation found above tolerance. Ending");
+				IJ.showMessage(TITLE, "No correlation found above tolerance. Ending");
 				IJ.showStatus("Done");
 				return;
 			}
 		}
 		catch (Exception ex)
 		{
-			IJ.error(FRAME_TITLE, "Error: " + ex.getMessage());
+			IJ.error(TITLE, "Error: " + ex.getMessage());
 			IJ.showStatus("Done");
 			return;
 		}
@@ -869,7 +873,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		double percGtTCh2 = (double) sumCh2_coloc / (double) sumCh2gtT;
 
 		// Create results window
-		String resultsTitle = FRAME_TITLE + " Results";
+		String resultsTitle = TITLE + " Results";
 		openResultsWindow(resultsTitle);
 		String imageTitle = createImageTitle(imp1, imp2);
 
@@ -1163,7 +1167,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	{
 		if (channel1List.getItemCount() == 0)
 		{
-			IJ.showMessage(FRAME_TITLE, "No available images. Images must be 8-bit or 16-bit grayscale.");
+			IJ.showMessage(TITLE, "No available images. Images must be 8-bit or 16-bit grayscale.");
 			return false;
 		}
 

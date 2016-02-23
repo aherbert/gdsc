@@ -66,7 +66,7 @@ public class ImageJController extends FindFociController
 			{
 				// Check it is not one the result images
 				String imageTitle = imp.getTitle();
-				if (!imageTitle.endsWith(FindFoci.FRAME_TITLE))
+				if (!imageTitle.endsWith(FindFoci.TITLE))
 				{
 					imageList.add(imageTitle);
 				}

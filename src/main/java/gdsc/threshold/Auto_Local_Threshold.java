@@ -1,4 +1,5 @@
 package gdsc.threshold;
+import gdsc.ImageJTracker;
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
@@ -13,8 +14,12 @@ import ij.plugin.*;
 // 1.2  25/May/2010
                 
 public class Auto_Local_Threshold implements PlugIn {
+		private static final String TITLE = "Auto Local Threshold"; 
+	
         /** Ask for parameters and then execute.*/
         public void run(String arg) {
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		// 1 - Obtain the currently active image:
 		ImagePlus imp = IJ.getImage();
 
@@ -29,7 +34,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		}
 
 		 // 2 - Ask for parameters:
-		GenericDialog gd = new GenericDialog("Auto Local Threshold");
+		GenericDialog gd = new GenericDialog(TITLE);
 		String [] methods={"Try all", "Bernsen",  "Mean", "Median", "MidGrey", "Niblack", "Sauvola"};
 		gd.addMessage("Auto Local Threshold v1.2");
 		gd.addChoice("Method", methods, methods[0]);

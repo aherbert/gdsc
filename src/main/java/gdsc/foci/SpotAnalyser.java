@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -48,7 +50,7 @@ import org.apache.commons.math3.stat.inference.TestUtils;
  */
 public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 {
-	public static String FRAME_TITLE = "Spot Analyser";
+	public static final String TITLE = "Spot Analyser";
 	private static String[] maskOptions = new String[] { "Threshold", "Use ROI" };
 
 	private static final int INSIDE = 0;
@@ -82,6 +84,8 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (imp == null)
 		{
 			IJ.noImage();
@@ -115,7 +119,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	 */
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 
 		spotChannel = imp.getChannel();
 		thresholdChannel = spotChannel;
@@ -224,7 +228,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 
 		if (!checkData(ip))
 		{
-			IJ.error(FRAME_TITLE, "Channel has no data range");
+			IJ.error(TITLE, "Channel has no data range");
 			resetImage();
 			return;
 		}
@@ -457,7 +461,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 		{
 			if (results == null || !results.isShowing())
 			{
-				results = new TextWindow(FRAME_TITLE + " Results",
+				results = new TextWindow(TITLE + " Results",
 						"Image\tChannel\tParticle\tInside Sum\tAv\tSD\tR\tOutside Sum\tAv\tSD\tR\tIncrease\tp-value",
 						"", 800, 600);
 				results.setVisible(true);

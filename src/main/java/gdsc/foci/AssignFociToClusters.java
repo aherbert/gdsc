@@ -134,7 +134,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		results = FindFoci.getResults();
 		if (results == null || results.isEmpty())
 		{
-			IJ.error(FRAME_TITLE, "Require " + FindFoci.FRAME_TITLE + " results in memory");
+			IJ.error(FRAME_TITLE, "Require " + FindFoci.TITLE + " results in memory");
 			return DONE;
 		}
 

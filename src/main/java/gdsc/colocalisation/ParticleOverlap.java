@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 
+import gdsc.ImageJTracker;
 import gdsc.utils.ImageJHelper;
 import ij.IJ;
 import ij.ImagePlus;
@@ -35,7 +36,7 @@ import ij.text.TextWindow;
  */
 public class ParticleOverlap implements PlugIn
 {
-	private static String FRAME_TITLE = "Particle Overlap";
+	private static String TITLE = "Particle Overlap";
 	private static String newLine = System.getProperty("line.separator");
 	private static String header = "Mask1\tImage1\tMask2\tID\tN\tNo\t%\tI\tIo\tMander's";
 
@@ -53,9 +54,11 @@ public class ParticleOverlap implements PlugIn
 
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (WindowManager.getImageCount() == 0)
 		{
-			IJ.showMessage(FRAME_TITLE, "No images opened.");
+			IJ.showMessage(TITLE, "No images opened.");
 			return;
 		}
 
@@ -67,7 +70,7 @@ public class ParticleOverlap implements PlugIn
 
 	private boolean showDialog()
 	{
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage("For each particle in a mask (defined by unique pixel value)\n"
 				+ "count the overlap and Mander's coefficient with a second mask image");
@@ -99,22 +102,22 @@ public class ParticleOverlap implements PlugIn
 
 		if (mask1Imp == null)
 		{
-			IJ.error(FRAME_TITLE, "No particle mask specified");
+			IJ.error(TITLE, "No particle mask specified");
 			return false;
 		}
 		if (!checkDimensions(mask1Imp, imageImp))
 		{
-			IJ.error(FRAME_TITLE, "Particle image must match the dimensions of the particle mask");
+			IJ.error(TITLE, "Particle image must match the dimensions of the particle mask");
 			return false;
 		}
 		if (!checkDimensions(mask1Imp, mask2Imp))
 		{
-			IJ.error(FRAME_TITLE, "Overlap mask must match the dimensions of the particle mask");
+			IJ.error(TITLE, "Overlap mask must match the dimensions of the particle mask");
 			return false;
 		}
 		if (!showTable && emptyFilename())
 		{
-			IJ.error(FRAME_TITLE, "No output specified");
+			IJ.error(TITLE, "No output specified");
 			return false;
 		}
 
@@ -224,7 +227,7 @@ public class ParticleOverlap implements PlugIn
 			return;
 		if (tw == null || !tw.isShowing())
 		{
-			tw = new TextWindow(FRAME_TITLE + " Results", header, "", 800, 500);
+			tw = new TextWindow(TITLE + " Results", header, "", 800, 500);
 		}
 	}
 

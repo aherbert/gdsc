@@ -9,6 +9,8 @@ import java.awt.Point;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -65,6 +67,8 @@ public class Measure3D extends PlugInFrame
 	 */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.showMessage("No images opened.");

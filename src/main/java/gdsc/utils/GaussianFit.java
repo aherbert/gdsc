@@ -23,6 +23,8 @@ import ij.process.ImageProcessor;
 import java.awt.Rectangle;
 import java.lang.reflect.Method;
 
+import gdsc.ImageJTracker;
+
 /**
  * Fits a circular 2D Gaussian.
  */
@@ -40,18 +42,6 @@ public class GaussianFit implements PlugInFilter
 		errorMessage = "";
 		exception = null;
 
-		int size = 99;
-		float mu = size / 2;
-		float s0 = 3;
-		float N = 10;
-
-		// Create a 2D Gaussian curve
-		float[] data = new float[size * size];
-		for (int y = 0; y < size; y++)
-			for (int x = 0; x < size; x++)
-				data[y * size + x] = (float) (N * (Math.exp(-0.5 * ((mu - x) * (mu - x) + 0.5 * (mu - y) * (mu - y)) /
-						(s0 * s0))));
-
 		try
 		{
 			// Get a class in this package to find the package class loader
@@ -60,13 +50,25 @@ public class GaussianFit implements PlugInFilter
 
 			// ... it exists on the classpath
 			
+			final int size = 99;
+			final float mu = size / 2;
+			final float s0 = 3;
+			final float N = 10;
+
+			// Create a 2D Gaussian curve
+			final float[] data = new float[size * size];
+			for (int y = 0; y < size; y++)
+				for (int x = 0; x < size; x++)
+					data[y * size + x] = (float) (N * (Math.exp(-0.5 * ((mu - x) * (mu - x) + 0.5 * (mu - y) * (mu - y)) /
+							(s0 * s0))));
+			
 			// Try a fit. 
 			double[] fit = null;
 			//gdsc.smlm.ij.plugins.GaussianFit gf = new gdsc.smlm.ij.plugins.GaussianFit();
 			//fit = gf.fit(data, size, size);
 
 			// Use reflection to allow building without the SMLM plugins on the classpath
-			Method m = c.getDeclaredMethod("fit", new Class[] { float[].class, int.class, int.class });
+			final Method m = c.getDeclaredMethod("fit", new Class[] { float[].class, int.class, int.class });
 			fit = (double[]) m.invoke(c.newInstance(), data, size, size);
 			if (fit != null)
 			{
@@ -167,6 +169,7 @@ public class GaussianFit implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin("Gaussian Fit", arg);
 		Roi roi = imp.getRoi();
 		if (roi == null || !roi.isArea())
 		{

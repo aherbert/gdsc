@@ -72,7 +72,7 @@ public class OptimiserController extends FindFociController implements Runnable
 					
 				// Check it is not one the result images
 				String imageTitle = imp.getTitle();
-				if (!imageTitle.endsWith(FindFoci.FRAME_TITLE) &&
+				if (!imageTitle.endsWith(FindFoci.TITLE) &&
 						!imageTitle.endsWith("clone") &&
 						!imageTitle.endsWith(" TP") &&
 						!imageTitle.endsWith(" FP") &&

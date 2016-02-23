@@ -60,6 +60,8 @@ import org.apache.commons.math3.optim.nonlinear.vector.Weight;
 import org.apache.commons.math3.optim.nonlinear.vector.jacobian.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.util.Precision;
 
+import gdsc.ImageJTracker;
+
 /**
  * Outlines a circular cell using the optimal path through a membrane scoring map.
  * <p>
@@ -113,6 +115,8 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (imp == null)
 		{
 			return DONE;

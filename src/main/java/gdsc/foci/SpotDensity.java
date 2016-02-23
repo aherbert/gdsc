@@ -97,7 +97,7 @@ public class SpotDensity implements PlugIn
 		String[] names = FindFoci.getResultsNames();
 		if (names == null || names.length == 0)
 		{
-			IJ.error(FRAME_TITLE, "Spots must be stored in memory using the " + FindFoci.FRAME_TITLE + " plugin");
+			IJ.error(FRAME_TITLE, "Spots must be stored in memory using the " + FindFoci.TITLE + " plugin");
 			return;
 		}
 

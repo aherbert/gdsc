@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -196,7 +198,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 		}
 	}
 
-	public static String FRAME_TITLE = "Spot Pairs";
+	public static final String TITLE = "Spot Pairs";
 	private static TextWindow resultsWindow = null;
 
 	private static double radius = 10;
@@ -219,6 +221,8 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (imp == null)
 			return DONE;
 		Roi roi = imp.getRoi();
@@ -234,7 +238,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 		points = PointManager.extractRoiPoints(roi);
 		if (points.length < 2)
 		{
-			IJ.error(FRAME_TITLE, "Please mark at least two ROI points on the image");
+			IJ.error(TITLE, "Please mark at least two ROI points on the image");
 			return DONE;
 		}
 
@@ -289,7 +293,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
-			resultsWindow = new TextWindow(FRAME_TITLE, createResultsHeader(), "", 600, 500);
+			resultsWindow = new TextWindow(TITLE, createResultsHeader(), "", 600, 500);
 		}
 	}
 
@@ -561,7 +565,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	 */
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addHelp(URL.UTILITY);
 
 		gd.addMessage("Find the closest pairs of marked ROI points");

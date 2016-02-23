@@ -1,4 +1,5 @@
 package gdsc.utils;
+import gdsc.ImageJTracker;
 import ij.ImagePlus;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
@@ -15,6 +16,7 @@ public class Unlock_Image implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin("Unlock Image", arg);
 		if (imp != null)
 		{
 			imp.unlock();

@@ -1,5 +1,7 @@
 package gdsc.threshold;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -77,6 +79,8 @@ public class ThreadAnalyser implements PlugIn
 	 */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (!showDialog())
 		{
 			return;

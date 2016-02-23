@@ -34,6 +34,7 @@ public class About_Plugin implements PlugIn
 
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
 		if (arg.equals("about"))
 		{
 			showAbout();

@@ -158,9 +158,9 @@ public class FindFociPlugin implements PlugIn
 			if (instance.isVisible())
 			{
 				// Ask if the user would like a second instance
-				GenericDialog gd = new GenericDialog(FindFoci.FRAME_TITLE);
+				GenericDialog gd = new GenericDialog(FindFoci.TITLE);
 				gd.enableYesNoCancel();
-				gd.addMessage(FindFoci.FRAME_TITLE + " is already open.\n \nDo you want to create another instance?");
+				gd.addMessage(FindFoci.TITLE + " is already open.\n \nDo you want to create another instance?");
 				gd.showDialog();
 				if (gd.wasCanceled())
 					return;

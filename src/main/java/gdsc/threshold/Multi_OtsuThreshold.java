@@ -2,6 +2,7 @@ package gdsc.threshold;
 
 import java.awt.Color;
 
+import gdsc.ImageJTracker;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -23,8 +24,8 @@ import ij.process.ImageProcessor;
  */
 public class Multi_OtsuThreshold implements PlugInFilter
 {
-	String TITLE = "Multi Otsu Threshold";
-	ImagePlus imp;
+	private static final String TITLE = "Multi Otsu Threshold";
+	private ImagePlus imp;
 
 	// Static to maintain state between plugin calls 
 	private static int MLEVEL = 2;
@@ -49,6 +50,8 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (imp == null)
 		{
 			IJ.noImage();

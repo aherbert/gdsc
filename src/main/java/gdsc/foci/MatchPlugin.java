@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -138,6 +140,8 @@ public class MatchPlugin implements PlugIn
 	@SuppressWarnings("unchecked")
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		fileMode = arg.equals("file");
 
 		if (!showDialog())

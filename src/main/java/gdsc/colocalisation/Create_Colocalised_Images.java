@@ -15,6 +15,7 @@ package gdsc.colocalisation;
 
 import java.util.Random;
 
+import gdsc.ImageJTracker;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
@@ -29,6 +30,7 @@ import ij.process.ShortProcessor;
  */
 public class Create_Colocalised_Images implements PlugIn
 {
+	private static final String TITLE = "Colocalisaed Images";
 	ByteProcessor roi;
 	int background = 0;
 	int foreground = 255;
@@ -49,6 +51,8 @@ public class Create_Colocalised_Images implements PlugIn
 
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (!getBitDepth())
 			return;
 
@@ -70,7 +74,7 @@ public class Create_Colocalised_Images implements PlugIn
 
 	private boolean getBitDepth()
 	{
-		GenericDialog param = new GenericDialog("Colocalisaed Images", IJ.getInstance());
+		GenericDialog param = new GenericDialog(TITLE, IJ.getInstance());
 		String bitDepthChoice[] = { "8bit", "12bit", "16bit" };// bit depth of images
 		param.addChoice("Create ...", bitDepthChoice, bitDepthChoice[bitDepth]);
 		param.addCheckbox("Create masks", createMasks);

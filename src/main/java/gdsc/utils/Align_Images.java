@@ -33,6 +33,7 @@ import java.util.ArrayList;
  */
 public class Align_Images implements PlugIn
 {
+	private static final String TITLE = "Align Images";
 	private static int myMinXShift = -10, myMaxXShift = 10;
 	private static int myMinYShift = -10, myMaxYShift = 10;
 	private String[] subPixelMethods = new String[] { "None", "Cubic", "Gaussian" };
@@ -104,7 +105,7 @@ public class Align_Images implements PlugIn
 
 	private boolean showDialog(String[] imageList)
 	{
-		GenericDialog gd = new GenericDialog("Align Images");
+		GenericDialog gd = new GenericDialog(TITLE);
 
 		if (!contains(imageList, reference))
 		{

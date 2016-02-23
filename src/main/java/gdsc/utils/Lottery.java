@@ -7,11 +7,14 @@ import ij.plugin.PlugIn;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well44497b;
 
+import gdsc.ImageJTracker;
+
 /**
  * Computes the odds of winning the lottery using random sampling 
  */
 public class Lottery implements PlugIn
 {
+	final static String TITLE = "Lottery";
 	static int numbers = 59;
 	static int pick = 6;
 	static int match = 3;
@@ -24,7 +27,9 @@ public class Lottery implements PlugIn
 	 */
 	public void run(String arg)
 	{
-		GenericDialog gd = new GenericDialog("Lottery");
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
+		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Calculate the lottory odds");
 		gd.addSlider("Numbers", 1, numbers, numbers);
 		gd.addSlider("Pick", 1, pick, pick);

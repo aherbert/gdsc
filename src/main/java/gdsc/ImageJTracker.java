@@ -15,9 +15,9 @@ package gdsc;
 import gdsc.analytics.ClientData;
 import gdsc.analytics.ClientDataManager;
 import gdsc.analytics.ConsoleLogger;
-import gdsc.analytics.GoogleAnalyticsTracker;
-import gdsc.analytics.GoogleAnalyticsTracker.DispatchMode;
-import gdsc.analytics.GoogleAnalyticsTracker.GoogleAnalyticsVersion;
+import gdsc.analytics.JGoogleAnalyticsTracker;
+import gdsc.analytics.JGoogleAnalyticsTracker.DispatchMode;
+import gdsc.analytics.JGoogleAnalyticsTracker.GoogleAnalyticsVersion;
 import ij.ImageJ;
 
 /**
@@ -25,7 +25,7 @@ import ij.ImageJ;
  */
 public class ImageJTracker
 {
-	private static GoogleAnalyticsTracker tracker = null;
+	private static JGoogleAnalyticsTracker tracker = null;
 	private static String baseUrl = null;
 
 	/**
@@ -62,17 +62,17 @@ public class ImageJTracker
 			// Set up a base url using the package version.
 			// Note that the GA tracking code is specific to this codebase and so we do not
 			// explicitly identify it here.
-			baseUrl = '/' + Version.getVersion() + '/';
+			baseUrl = '/' + Version.getMajorMinorRelease() + '/';
 			ClientData data = ClientDataManager.newClientData("UA-74107394-1");
 			
 			// Start a new session if plugins are not used for 10 minutes
 			data.getSessionData().setTimeout(60 * 10);
 			
 			// Create the tracker
-			tracker = new GoogleAnalyticsTracker(data, GoogleAnalyticsVersion.V_4_7_2, DispatchMode.SINGLE_THREAD);
+			tracker = new JGoogleAnalyticsTracker(data, GoogleAnalyticsVersion.V_4_7_2, DispatchMode.SINGLE_THREAD);
 			
 			// DEBUG: Enable logging
-			GoogleAnalyticsTracker.setLogger(new ConsoleLogger());
+			JGoogleAnalyticsTracker.setLogger(new ConsoleLogger());
 			
 			return true;
 		}

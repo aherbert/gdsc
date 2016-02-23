@@ -1,6 +1,8 @@
 package gdsc.utils;
 
+import ij.Executer;
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
@@ -13,6 +15,8 @@ import ij.util.Tools;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
+
+import gdsc.ImageJTracker;
 
 /**
  * Aligns an image stack to a reference image using XY translation to maximise the correlation. Takes in:
@@ -38,6 +42,7 @@ import java.util.ArrayList;
 // http://scribblethink.org/Work/nvisionInterface/nip.pdf
 public class Align_Images_FFT implements PlugIn
 {
+	private static final String TITLE = "Align Images FFT";
 	public static final String[] windowFunctions = new String[] { "None", "Hanning", "Cosine", "Tukey" };
 	private static int myWindowFunction = 3;
 	private static boolean restrictTranslation = false;
@@ -63,6 +68,8 @@ public class Align_Images_FFT implements PlugIn
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		String[] imageList = getImagesList();
 
 		if (imageList.length < 1)
@@ -114,7 +121,7 @@ public class Align_Images_FFT implements PlugIn
 
 	private boolean showDialog(String[] imageList)
 	{
-		GenericDialog gd = new GenericDialog("Align Images");
+		GenericDialog gd = new GenericDialog(TITLE);
 
 		if (!contains(imageList, reference))
 			reference = imageList[0];

@@ -43,6 +43,8 @@ import javax.swing.JPanel;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
+import gdsc.ImageJTracker;
+
 /**
  * Alows an RGB image to be filtered using HSB limits.
  */
@@ -88,6 +90,8 @@ public class HSB_Picker extends PlugInFrame
 	 */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.showMessage("No images opened.");

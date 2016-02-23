@@ -34,6 +34,8 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
+import gdsc.ImageJTracker;
+
 /**
  * Analyses the image using the FindFoci algorithm to identify and assign pixels to maxima.
  * Realigns the marked PointROI with the appropriate peak. Any points that cannot be aligned
@@ -71,6 +73,8 @@ public class PointAlignerPlugin implements PlugIn
 	 */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		imp = WindowManager.getCurrentImage();
 
 		if (null == imp)

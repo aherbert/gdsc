@@ -1,5 +1,7 @@
 package gdsc.utils;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -23,6 +25,7 @@ import ij.process.FloatProcessor;
  */
 public class GaussianPlugin implements PlugIn
 {
+	private static final String TITLE = "Gaussian";
 	private static int width = 256;
 	private static int height = 256;
 	private static float amplitude = 255;
@@ -40,7 +43,8 @@ public class GaussianPlugin implements PlugIn
 	 */
 	public void run(String arg)
 	{
-		GenericDialog gd = new GenericDialog("Gaussian");
+		ImageJTracker.recordPlugin(TITLE, arg);
+		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addNumericField("Width", width, 0);
 		gd.addNumericField("Height", height, 0);
 		gd.addNumericField("Amplitude", amplitude, 0);

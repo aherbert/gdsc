@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -396,7 +398,7 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 	}
 
-	public static final String FRAME_TITLE = "FindFoci";
+	public static final String TITLE = "FindFoci";
 
 	private static TextWindow resultsWindow = null;
 
@@ -995,6 +997,8 @@ public class FindFoci implements PlugIn, MouseListener
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		ImagePlus imp = WindowManager.getCurrentImage();
 
 		if ("batch".equals(arg))
@@ -1011,20 +1015,20 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if (null == imp)
 		{
-			IJ.error(FRAME_TITLE, "There must be at least one image open");
+			IJ.error(TITLE, "There must be at least one image open");
 			return;
 		}
 
 		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
 		{
-			IJ.error(FRAME_TITLE, "Only 8-bit and 16-bit images are supported");
+			IJ.error(TITLE, "Only 8-bit and 16-bit images are supported");
 			return;
 		}
 
 		// Build a list of the open images
 		ArrayList<String> newImageList = buildMaskList(imp);
 
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addChoice("Mask", newImageList.toArray(new String[0]), myMaskImage);
 		gd.addMessage("Background options ...");
@@ -1170,7 +1174,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if (outputType == 0)
 		{
-			IJ.error(FRAME_TITLE, "No results options chosen");
+			IJ.error(TITLE, "No results options chosen");
 			return;
 		}
 
@@ -1243,7 +1247,7 @@ public class FindFoci implements PlugIn, MouseListener
 				// - Not be the same image
 				// - Not be derived from the same image, i.e. a FindFoci result (check using image name)
 				// - Match dimensions of the input image
-				if (maskImp != null && maskImp.getID() != imp.getID() && !maskImp.getTitle().endsWith(FRAME_TITLE) &&
+				if (maskImp != null && maskImp.getID() != imp.getID() && !maskImp.getTitle().endsWith(TITLE) &&
 						//!maskImp.getTitle().startsWith(imp.getTitle()) && 
 						maskImp.getWidth() == imp.getWidth() && maskImp.getHeight() == imp.getHeight() &&
 						(maskImp.getNSlices() == imp.getNSlices() || maskImp.getNSlices() == 1))
@@ -1291,13 +1295,13 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
 		{
-			IJ.error(FRAME_TITLE, "Only 8-bit and 16-bit images are supported");
+			IJ.error(TITLE, "Only 8-bit and 16-bit images are supported");
 			return;
 		}
 		if ((centreMethod == CENTRE_GAUSSIAN_ORIGINAL || centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
 				isGaussianFitEnabled < 1)
 		{
-			IJ.error(FRAME_TITLE, "Gaussian fit is not currently enabled");
+			IJ.error(TITLE, "Gaussian fit is not currently enabled");
 			return;
 		}
 
@@ -1313,7 +1317,7 @@ public class FindFoci implements PlugIn, MouseListener
 					if ((outputType & OUTPUT_ROI_USING_OVERLAY) == 0)
 					{
 						// YesNoCancelDialog causes asynchronous thread exception within Eclipse.
-						GenericDialog d = new GenericDialog(FRAME_TITLE);
+						GenericDialog d = new GenericDialog(TITLE);
 						d.addMessage("Warning: Marking the maxima will destroy the ROI area.\nUse the Mark_using_overlay option to preserve the ROI.\n \nClick OK to continue (destroys the area ROI)");
 						d.showDialog();
 						if (!d.wasOKed())
@@ -1406,7 +1410,7 @@ public class FindFoci implements PlugIn, MouseListener
 		{
 			if ((outputType & OUTPUT_MASK) != 0)
 			{
-				maxImp = showImage(maximaImp, imp.getTitle() + " " + FRAME_TITLE);
+				maxImp = showImage(maximaImp, imp.getTitle() + " " + TITLE);
 
 				// Adjust the contrast to show all the maxima
 				if (resultsArray != null)
@@ -1965,7 +1969,7 @@ public class FindFoci implements PlugIn, MouseListener
 		{
 			if ((outputType & OUTPUT_MASK) != 0)
 			{
-				maxImp = showImage(maximaImp, imp.getTitle() + " " + FRAME_TITLE);
+				maxImp = showImage(maximaImp, imp.getTitle() + " " + TITLE);
 
 				// Adjust the contrast to show all the maxima
 				if (resultsArray != null)
@@ -2230,20 +2234,20 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
 		{
-			IJ.error(FRAME_TITLE, "Only 8-bit and 16-bit images are supported");
+			IJ.error(TITLE, "Only 8-bit and 16-bit images are supported");
 			return null;
 		}
 		if ((centreMethod == CENTRE_GAUSSIAN_ORIGINAL || centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
 				isGaussianFitEnabled < 1)
 		{
-			IJ.error(FRAME_TITLE, "Gaussian fit is not currently enabled");
+			IJ.error(TITLE, "Gaussian fit is not currently enabled");
 			return null;
 		}
 
 		boolean isLogging = isLogging(outputType);
 
 		if (isLogging)
-			IJ.log("---" + newLine + FRAME_TITLE + " : " + imp.getTitle());
+			IJ.log("---" + newLine + TITLE + " : " + imp.getTitle());
 
 		// Call first to set up the processing for isWithin;
 		initialise(imp);
@@ -2444,7 +2448,7 @@ public class FindFoci implements PlugIn, MouseListener
 					stats, resultsArray, nMaxima);
 
 			if (outImp == null)
-				IJ.error(FRAME_TITLE, "Too many maxima to display in a 16-bit image: " + nMaxima);
+				IJ.error(TITLE, "Too many maxima to display in a 16-bit image: " + nMaxima);
 
 			if (isLogging)
 				timingSplit("Calulated output mask");
@@ -2573,7 +2577,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if (originalImp.getBitDepth() != 8 && originalImp.getBitDepth() != 16)
 		{
-			IJ.error(FRAME_TITLE, "Only 8-bit and 16-bit images are supported");
+			IJ.error(TITLE, "Only 8-bit and 16-bit images are supported");
 			return null;
 		}
 
@@ -3010,7 +3014,7 @@ public class FindFoci implements PlugIn, MouseListener
 		if ((centreMethod == CENTRE_GAUSSIAN_ORIGINAL || centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
 				isGaussianFitEnabled < 1)
 		{
-			IJ.log(FRAME_TITLE + " Error: Gaussian fit is not currently enabled");
+			IJ.log(TITLE + " Error: Gaussian fit is not currently enabled");
 			return null;
 		}
 
@@ -3085,7 +3089,7 @@ public class FindFoci implements PlugIn, MouseListener
 		if ((centreMethod == CENTRE_GAUSSIAN_ORIGINAL || centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
 				isGaussianFitEnabled < 1)
 		{
-			IJ.log(FRAME_TITLE + " Error: Gaussian fit is not currently enabled");
+			IJ.log(TITLE + " Error: Gaussian fit is not currently enabled");
 			return null;
 		}
 
@@ -3347,7 +3351,7 @@ public class FindFoci implements PlugIn, MouseListener
 			}
 		}
 
-		ImagePlus result = new ImagePlus(imageTitle + " " + FRAME_TITLE, stack);
+		ImagePlus result = new ImagePlus(imageTitle + " " + TITLE, stack);
 		result.setCalibration(imp.getCalibration());
 		return result;
 	}
@@ -3760,7 +3764,7 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
-			resultsWindow = new TextWindow(FRAME_TITLE + " Results", createResultsHeader(""), "", 900, 300);
+			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(""), "", 900, 300);
 			resetResultsCount();
 		}
 	}
@@ -6841,7 +6845,7 @@ public class FindFoci implements PlugIn, MouseListener
 		String[] imageList = getBatchImages(batchInputDirectory);
 		if (imageList == null || imageList.length == 0)
 		{
-			IJ.error(FRAME_TITLE, "No input images in folder: " + batchInputDirectory);
+			IJ.error(TITLE, "No input images in folder: " + batchInputDirectory);
 			return;
 		}
 		BatchParameters parameters;
@@ -6851,7 +6855,7 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 		catch (Exception e)
 		{
-			IJ.error(FRAME_TITLE, "Unable to read parameters file: " + e.getMessage());
+			IJ.error(TITLE, "Unable to read parameters file: " + e.getMessage());
 			return;
 		}
 		setResultsDirectory(batchOutputDirectory);
@@ -6867,9 +6871,9 @@ public class FindFoci implements PlugIn, MouseListener
 
 	private boolean showBatchDialog()
 	{
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Run " +
-				FRAME_TITLE +
+				TITLE +
 				" on a set of images.\n \nAll images in a directory will be processed.\n \nOptional mask images in the input directory should be named:\n[image_name].mask.[ext]\nor placed in the mask directory with the same name as the parent image.");
 		gd.addStringField("Input_directory", batchInputDirectory);
 		gd.addStringField("Mask_directory", batchMaskDirectory);
@@ -6891,26 +6895,26 @@ public class FindFoci implements PlugIn, MouseListener
 		batchInputDirectory = gd.getNextString();
 		if (!new File(batchInputDirectory).isDirectory())
 		{
-			IJ.error(FRAME_TITLE, "Input directory is not a valid directory: " + batchInputDirectory);
+			IJ.error(TITLE, "Input directory is not a valid directory: " + batchInputDirectory);
 			return false;
 		}
 		batchMaskDirectory = gd.getNextString();
 		if ((batchMaskDirectory != null && batchMaskDirectory.length() > 0) &&
 				!new File(batchMaskDirectory).isDirectory())
 		{
-			IJ.error(FRAME_TITLE, "Mask directory is not a valid directory: " + batchMaskDirectory);
+			IJ.error(TITLE, "Mask directory is not a valid directory: " + batchMaskDirectory);
 			return false;
 		}
 		batchParameterFile = gd.getNextString();
 		if (!new File(batchParameterFile).isFile())
 		{
-			IJ.error(FRAME_TITLE, "Parameter file is not a valid file: " + batchParameterFile);
+			IJ.error(TITLE, "Parameter file is not a valid file: " + batchParameterFile);
 			return false;
 		}
 		batchOutputDirectory = gd.getNextString();
 		if (!new File(batchOutputDirectory).isDirectory())
 		{
-			IJ.error(FRAME_TITLE, "Output directory is not a valid directory: " + batchOutputDirectory);
+			IJ.error(TITLE, "Output directory is not a valid directory: " + batchOutputDirectory);
 			return false;
 		}
 		Prefs.set(BATCH_INPUT_DIRECTORY, batchInputDirectory);
@@ -6967,7 +6971,7 @@ public class FindFoci implements PlugIn, MouseListener
 		ImagePlus imp = openImage(batchInputDirectory, image);
 		if (imp == null)
 		{
-			IJ.error(FRAME_TITLE, "File is not a valid image: " + image);
+			IJ.error(TITLE, "File is not a valid image: " + image);
 			return false;
 		}
 		ImagePlus maskImp = openImage(mask[0], mask[1]);
@@ -7063,13 +7067,13 @@ public class FindFoci implements PlugIn, MouseListener
 	{
 		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
 		{
-			IJ.error(FRAME_TITLE, "Only 8-bit and 16-bit images are supported");
+			IJ.error(TITLE, "Only 8-bit and 16-bit images are supported");
 			return false;
 		}
 		if ((p.centreMethod == CENTRE_GAUSSIAN_ORIGINAL || p.centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
 				isGaussianFitEnabled < 1)
 		{
-			IJ.error(FRAME_TITLE, "Gaussian fit is not currently enabled");
+			IJ.error(TITLE, "Gaussian fit is not currently enabled");
 			return false;
 		}
 
@@ -7138,7 +7142,7 @@ public class FindFoci implements PlugIn, MouseListener
 			{
 				ImageStack stack = maximaImp.getStack();
 
-				String outname = imp.getTitle() + " " + FRAME_TITLE;
+				String outname = imp.getTitle() + " " + TITLE;
 				maxImp = new ImagePlus(outname, stack);
 				// Adjust the contrast to show all the maxima
 				int maxValue = ((outputType & OUTPUT_MASK_THRESHOLD) != 0) ? 4 : resultsArray.size() + 1;
@@ -7538,8 +7542,8 @@ public class FindFoci implements PlugIn, MouseListener
 
 	private boolean showCapacityDialog()
 	{
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
-		gd.addMessage("Set the maximum number of potential maxima for the " + FRAME_TITLE + " algorithm.\n " +
+		GenericDialog gd = new GenericDialog(TITLE);
+		gd.addMessage("Set the maximum number of potential maxima for the " + TITLE + " algorithm.\n " +
 				"\nIncreasing this number can allow processing large images (which may be slow).\n \n" +
 				"The number of potential maxima can be reduced by smoothing the image (e.g\n" +
 				"using a Gaussian blur).");

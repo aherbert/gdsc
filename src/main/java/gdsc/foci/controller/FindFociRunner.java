@@ -253,7 +253,7 @@ public class FindFociRunner extends Thread
 
 		ImagePlus mask = WindowManager.getImage(maskImage);
 
-		IJ.showStatus(FindFoci.FRAME_TITLE + " calculating ...");
+		IJ.showStatus(FindFoci.TITLE + " calculating ...");
 		notify(MessageType.RUNNING);
 
 		// Compare this model with the previously computed results and
@@ -268,7 +268,7 @@ public class FindFociRunner extends Thread
 			imp2 = FindFoci.applyBlur(imp, gaussianBlur);
 			if (imp2 == null)
 			{
-				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
+				IJ.showStatus(FindFoci.TITLE + " failed");
 				notify(MessageType.FAILED);
 				return;
 			}
@@ -278,7 +278,7 @@ public class FindFociRunner extends Thread
 			initArray = fp.findMaximaInit(imp, imp2, mask, backgroundMethod, thresholdMethod, options);
 			if (initArray == null)
 			{
-				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
+				IJ.showStatus(FindFoci.TITLE + " failed");
 				notify(MessageType.FAILED);
 				return;
 			}
@@ -292,7 +292,7 @@ public class FindFociRunner extends Thread
 					searchParameter);
 			if (searchArray == null)
 			{
-				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
+				IJ.showStatus(FindFoci.TITLE + " failed");
 				notify(MessageType.FAILED);
 				return;
 			}
@@ -306,7 +306,7 @@ public class FindFociRunner extends Thread
 					gaussianBlur);
 			if (mergeArray == null)
 			{
-				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
+				IJ.showStatus(FindFoci.TITLE + " failed");
 				notify(MessageType.FAILED);
 				return;
 			}
@@ -318,7 +318,7 @@ public class FindFociRunner extends Thread
 					centreMethod, centreParameter);
 			if (prelimResultsArray == null)
 			{
-				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
+				IJ.showStatus(FindFoci.TITLE + " failed");
 				notify(MessageType.FAILED);
 				return;
 			}
@@ -330,7 +330,7 @@ public class FindFociRunner extends Thread
 					thresholdMethod, imp.getTitle(), fractionParameter);
 			if (resultsArray == null)
 			{
-				IJ.showStatus(FindFoci.FRAME_TITLE + " failed");
+				IJ.showStatus(FindFoci.TITLE + " failed");
 				notify(MessageType.FAILED);
 				return;
 			}
@@ -341,7 +341,7 @@ public class FindFociRunner extends Thread
 					maxPeaks, minSize, peakMethod, peakParameter, outputType, sortMethod, options, resultsArray);
 		}
 
-		IJ.showStatus(FindFoci.FRAME_TITLE + " finished");
+		IJ.showStatus(FindFoci.TITLE + " finished");
 		notify(MessageType.DONE);
 
 		previousModel = model;

@@ -1,5 +1,7 @@
 package gdsc.threshold;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -34,6 +36,7 @@ import java.util.Arrays;
  */
 public class MaskCreater implements PlugIn
 {
+	private static final String TITLE = "Mask Creator";
 	public static String[] options = new String[] { "Use as mask", "Min Display Value", "Use ROI", "Threshold" };
 	public static int OPTION_MASK = 0;
 	public static int OPTION_MIN_VALUE = 1;
@@ -78,6 +81,8 @@ public class MaskCreater implements PlugIn
 	 */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (!showDialog())
 		{
 			return;
@@ -108,7 +113,7 @@ public class MaskCreater implements PlugIn
 			return false;
 		}
 
-		GenericDialog gd = new GenericDialog("Mask Creator");
+		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Create a new mask image");
 		gd.addChoice("Image", imageList.toArray(new String[0]), selectedImage);
 		gd.addChoice("Option", options, options[selectedOption]);

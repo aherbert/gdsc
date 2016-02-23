@@ -50,13 +50,15 @@ import javax.swing.JToggleButton;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import gdsc.ImageJTracker;
+
 /**
  * Provides the ability to synchronise the display frame of multiple stack windows
  */
 public class Stack_Synchroniser extends PlugInFrame implements ItemListener, ImageListener, ListSelectionListener
 {
 	private static final long serialVersionUID = 1L;
-	private static String FRAME_TITLE = "Stack Synchroniser";
+	private static String TITLE = "Stack Synchroniser";
 	private static Frame instance;
 
 	private ImagePlus parentImage = null;
@@ -81,7 +83,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 	 */
 	public Stack_Synchroniser()
 	{
-		super(FRAME_TITLE);
+		super(TITLE);
 	}
 
 	/*
@@ -91,6 +93,8 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 	 */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.showMessage("No images opened.");

@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -84,7 +86,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 {
 	private static OptimiserView instance;
 
-	private static String FRAME_TITLE = "FindFoci Optimiser";
+	private static String TITLE = "FindFoci Optimiser";
 	private static TextWindow resultsWindow = null;
 	private static int STEP_LIMIT = 10000;
 	private static final int RESULT_PRECISION = 4;
@@ -230,6 +232,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	 */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (arg.equals("frame"))
 		{
 			showOptimiserWindow();
@@ -251,7 +255,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		if (!showDialog(imp))
 			return;
 
-		IJ.log("---\n" + FRAME_TITLE);
+		IJ.log("---\n" + TITLE);
 		IJ.log(combinations + " combinations");
 
 		if (multiMode)
@@ -260,7 +264,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			String[] imageList = FindFoci.getBatchImages(inputDirectory);
 			if (imageList == null || imageList.length == 0)
 			{
-				IJ.error(FRAME_TITLE, "No input images in folder: " + inputDirectory);
+				IJ.error(TITLE, "No input images in folder: " + inputDirectory);
 				return;
 			}
 
@@ -303,14 +307,14 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 					continue;
 				if (!allResults.isEmpty() && w.results.size() != allResults.get(0).size())
 				{
-					IJ.error(FRAME_TITLE, "Some optimisation runs produced a different number of results");
+					IJ.error(TITLE, "Some optimisation runs produced a different number of results");
 					return;
 				}
 				allResults.add(w.results);
 			}
 			if (allResults.isEmpty())
 			{
-				IJ.error(FRAME_TITLE, "No optimisation runs produced results");
+				IJ.error(TITLE, "No optimisation runs produced results");
 				return;
 			}
 
@@ -372,7 +376,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 			if (results == null)
 			{
-				IJ.error(FRAME_TITLE, "No ROI points fall inside the mask image");
+				IJ.error(TITLE, "No ROI points fall inside the mask image");
 				return;
 			}
 
@@ -1162,7 +1166,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		}
 
 		// Get the optimisation search settings
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 
 		ArrayList<String> newImageList = (multiMode) ? null : FindFoci.buildMaskList(imp);
 
@@ -1420,7 +1424,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			return false;
 		}
 
-		YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), FRAME_TITLE, combinations +
+		YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE, combinations +
 				" combinations. Do you wish to proceed?");
 		if (!d.yesPressed())
 			return false;
@@ -1430,9 +1434,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 	private boolean showMultiDialog()
 	{
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Run " +
-				FRAME_TITLE +
+				TITLE +
 				" on a set of images.\n \nAll images in a directory will be processed.\n \nOptional mask images in the input directory should be named:\n[image_name].mask.[ext]\nor placed in the mask directory with the same name as the parent image.");
 		gd.addStringField("Input_directory", inputDirectory);
 		gd.addStringField("Mask_directory", maskDirectory);
@@ -1457,19 +1461,19 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		inputDirectory = gd.getNextString();
 		if (!new File(inputDirectory).isDirectory())
 		{
-			IJ.error(FRAME_TITLE, "Input directory is not a valid directory: " + inputDirectory);
+			IJ.error(TITLE, "Input directory is not a valid directory: " + inputDirectory);
 			return false;
 		}
 		maskDirectory = gd.getNextString();
 		if ((maskDirectory != null && maskDirectory.length() > 0) && !new File(maskDirectory).isDirectory())
 		{
-			IJ.error(FRAME_TITLE, "Mask directory is not a valid directory: " + maskDirectory);
+			IJ.error(TITLE, "Mask directory is not a valid directory: " + maskDirectory);
 			return false;
 		}
 		outputDirectory = gd.getNextString();
 		if (!new File(outputDirectory).isDirectory())
 		{
-			IJ.error(FRAME_TITLE, "Output directory is not a valid directory: " + outputDirectory);
+			IJ.error(TITLE, "Output directory is not a valid directory: " + outputDirectory);
 			return false;
 		}
 
@@ -1961,7 +1965,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
 			heading = createResultsHeader(true, true);
-			resultsWindow = new TextWindow(FRAME_TITLE + " Results", heading, "", 1000, 300);
+			resultsWindow = new TextWindow(TITLE + " Results", heading, "", 1000, 300);
 			if (resultsWindow.getTextPanel() != null)
 			{
 				resultsWindow.getTextPanel().addMouseListener(this);

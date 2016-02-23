@@ -1,5 +1,7 @@
 package gdsc.utils;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -34,6 +36,8 @@ public class Projection implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin("Projection", arg);
+		
 		if (imp == null || imp.getNSlices() == 1)
 		{
 			return DONE;

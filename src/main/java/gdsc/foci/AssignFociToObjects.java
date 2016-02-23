@@ -334,7 +334,7 @@ public class AssignFociToObjects implements PlugInFilter
 		ArrayList<int[]> roiResults = getRoiResults();
 		if (findFociResults == null && roiResults == null)
 		{
-			IJ.error(FRAME_TITLE, "No " + FindFoci.FRAME_TITLE + " results in memory or point ROI on the image");
+			IJ.error(FRAME_TITLE, "No " + FindFoci.TITLE + " results in memory or point ROI on the image");
 			return false;
 		}
 

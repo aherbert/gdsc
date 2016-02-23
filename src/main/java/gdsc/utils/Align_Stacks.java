@@ -1,5 +1,6 @@
 package gdsc.utils;
 
+import gdsc.ImageJTracker;
 import gdsc.threshold.Auto_Threshold;
 import ij.IJ;
 import ij.ImagePlus;
@@ -31,7 +32,8 @@ import java.util.ArrayList;
  */
 public class Align_Stacks implements PlugIn
 {
-	private static String SELF_ALIGN = "selfAlign";
+	private static final String TITLE = "Align Stacks";
+	private static final String SELF_ALIGN = "selfAlign";
 
 	private static String reference = "";
 	private static boolean selfAlign = false;
@@ -49,6 +51,8 @@ public class Align_Stacks implements PlugIn
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		String[] imageList = getImagesList();
 
 		if (imageList.length < 1)
@@ -114,7 +118,7 @@ public class Align_Stacks implements PlugIn
 
 	private boolean showDialog(String[] imageList, boolean selfAlignMode)
 	{
-		GenericDialog gd = new GenericDialog("Align Stacks");
+		GenericDialog gd = new GenericDialog(TITLE);
 
 		if (selfAlignMode)
 		{

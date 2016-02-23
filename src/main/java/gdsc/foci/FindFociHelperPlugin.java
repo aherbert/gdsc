@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -41,6 +43,7 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 	 */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin("FindFoci Helper", arg);
 		showFindFociPickerWindow();
 	}
 

@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -45,7 +47,7 @@ import java.util.Arrays;
  */
 public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 {
-	public static String FRAME_TITLE = "Mask Segregator";
+	public static final String TITLE = "Mask Segregator";
 
 	private int flags = DOES_16 + DOES_8G + FINAL_PROCESSING;
 	private ImagePlus imp;
@@ -71,6 +73,8 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (imp == null)
 		{
 			IJ.noImage();
@@ -96,11 +100,11 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		String[] names = getMasks(imp);
 		if (names.length == 0)
 		{
-			IJ.error(FRAME_TITLE, "No masks match the image dimensions");
+			IJ.error(TITLE, "No masks match the image dimensions");
 			return DONE;
 		}
 
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage("Overlay a mask on the current image and segregate objects into two classes.\n \nObjects are defined with contiguous pixels of the same value.\nThe mean image value for each object is used for segregation.");
 

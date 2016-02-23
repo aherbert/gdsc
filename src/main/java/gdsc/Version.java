@@ -16,17 +16,19 @@ package gdsc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Show the version information contained in the gdsc/gdsc.properties file
  */
 public class Version
 {
-	public static final String UNKNOWN = "unknown"; 
+	public static final String UNKNOWN = "unknown";
 	private static String version = null;
 	private static String buildDate = null;
-	
-	static 
+
+	static
 	{
 		// Locate the SVN revision
 		Class<Version> resourceClass = Version.class;
@@ -38,19 +40,19 @@ public class Version
 			Properties props = new Properties();
 			props.load(propertiesStream);
 			version = props.getProperty("version");
-			buildDate = props.getProperty("build.date"); 
+			buildDate = props.getProperty("build.date");
 		}
 		catch (IOException e)
 		{
 			// Ignore
 		}
-		
+
 		if (version == null || version.length() == 0)
 			version = UNKNOWN;
 		if (buildDate == null || buildDate.length() == 0)
 			buildDate = UNKNOWN;
 	}
-	
+
 	public static void main(String[] args)
 	{
 		StringBuilder msg = new StringBuilder();
@@ -59,14 +61,70 @@ public class Version
 		msg.append("Build Date : ").append(buildDate).append(newLine);
 		System.out.print(msg.toString());
 	}
-	
+
 	public static String getVersion()
 	{
 		return version;
 	}
-	
+
 	public static String getBuildDate()
 	{
 		return buildDate;
+	}
+
+	/**
+	 * Get the major version
+	 * 
+	 * @return The major version (or 0 if unknown)
+	 */
+	public static int getMajorVersion()
+	{
+		Pattern p = Pattern.compile("^\\d+");
+		Matcher m = p.matcher(version);
+		if (m.matches())
+			return Integer.parseInt(m.group());
+		return 0;
+	}
+
+	/**
+	 * Get the minor version
+	 * 
+	 * @return The minor version (or 0 if unknown)
+	 */
+	public static int getMinorVersion()
+	{
+		Pattern p = Pattern.compile("^\\d+\\.(\\d+)");
+		Matcher m = p.matcher(version);
+		if (m.matches())
+			return Integer.parseInt(m.group(1));
+		return 0;
+	}
+
+	/**
+	 * Get the release version
+	 * 
+	 * @return The release version (or 0 if unknown)
+	 */
+	public static int getReleaseVersion()
+	{
+		Pattern p = Pattern.compile("^\\d+\\.\\d+\\.(\\d+)");
+		Matcher m = p.matcher(version);
+		if (m.matches())
+			return Integer.parseInt(m.group(1));
+		return 0;
+	}
+	
+	/**
+	 * Get a string with the major, minor and release versions
+	 * 
+	 * @return Major.Minor.Release
+	 */
+	public static String getMajorMinorRelease()
+	{
+		Pattern p = Pattern.compile("^\\d+\\.\\d+\\.\\d+");
+		Matcher m = p.matcher(version);
+		if (m.matches())
+			return m.group();
+		return "";
 	}
 }

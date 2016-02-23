@@ -23,6 +23,7 @@ import ij.process.ImageProcessor;
 
 import java.util.ArrayList;
 
+import gdsc.ImageJTracker;
 import gdsc.threshold.Auto_Threshold;
 
 /**
@@ -38,7 +39,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	// Store a reference to the current working image
 	private ImagePlus imp;
 
-	private final String FRAME_TITLE = "Stack Correlation Analyser";
+	private final String TITLE = "Stack Correlation Analyser";
 
 	// ImageJ indexes for the dimensions array
 	// private final int X = 0;
@@ -64,6 +65,8 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (imp == null)
 		{
 			return DONE;
@@ -190,8 +193,8 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 
 	private String[] getMethods()
 	{
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
-		gd.addMessage(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
+		gd.addMessage(TITLE);
 		// Commented out the methods that take a long time on 16-bit images.
 		String[] methods = { "Try all", "Default",
 				// "Huang",
@@ -239,7 +242,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 
 		if (methods == null || methods.length == 0)
 		{
-			IJ.error(FRAME_TITLE, "No valid thresholding method(s) specified");
+			IJ.error(TITLE, "No valid thresholding method(s) specified");
 		}
 
 		return methods;

@@ -2,6 +2,7 @@ package gdsc.utils;
 
 import java.awt.AWTEvent;
 
+import gdsc.ImageJTracker;
 import ij.ImagePlus;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
@@ -24,6 +25,7 @@ public class DifferenceOfGaussiansRunner implements ExtendedPlugInFilter, Dialog
 
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin("Difference Of Gaussians", arg);
 		return filter.setup(arg, imp);
 	}
 

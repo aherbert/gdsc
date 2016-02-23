@@ -27,11 +27,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
+import gdsc.ImageJTracker;
+
 /**
  * Scales all planes in an image to the given maximim
  */
 public class Image_Scaler implements PlugInFilter
 {
+	private static final String TITLE = "Image Scaler";
 	private ImagePlus imp;
 	private static double maxValue = 255;
 	private static String listFile = "";
@@ -43,6 +46,8 @@ public class Image_Scaler implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (!showDialog())
 		{
 			return DONE;
@@ -53,7 +58,7 @@ public class Image_Scaler implements PlugInFilter
 
 	private boolean showDialog()
 	{
-		GenericDialog gd = new GenericDialog("Image Scaler");
+		GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage("Rescales the maxima of the image(s) to the given value.\nProcesses the image stack or a set of input images.");
 		gd.addNumericField("Max", maxValue, 2);

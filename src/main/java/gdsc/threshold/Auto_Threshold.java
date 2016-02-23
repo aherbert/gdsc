@@ -1,5 +1,6 @@
 package gdsc.threshold;
 
+import gdsc.ImageJTracker;
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
@@ -27,6 +28,8 @@ import ij.plugin.*;
 
 public class Auto_Threshold implements PlugIn
 {
+	private static final String TITLE = "Auto Threshold";
+	
 	public final static String[] methods = { "Default", "Huang", "Intermodes", "IsoData", "Li", "MaxEntropy", "Mean",
 			"MeanPlusStdDev", "MinError(I)", "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag",
 			"Triangle", "Yen" };
@@ -49,6 +52,8 @@ public class Auto_Threshold implements PlugIn
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		// 1 - Obtain the currently active image:
 		ImagePlus imp = IJ.getImage();
 
@@ -76,7 +81,7 @@ public class Auto_Threshold implements PlugIn
 		}
 
 		// 2 - Ask for parameters:
-		GenericDialog gd = new GenericDialog("Auto Threshold");
+		GenericDialog gd = new GenericDialog(TITLE);
 		//		String [] methods={"Bernsen", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy", "MinError", "Minimum", "Moments", "Niblack", "Otsu", "Percentile", "RenyiEntropy", "Sauvola", "Shanbhag" , "Triangle", "Yen"};
 		gd.addMessage("Auto Threshold v1.14");
 		String[] methods = { "Try all", "Default", "Huang", "Intermodes", "IsoData", "Li", "MaxEntropy", "Mean",

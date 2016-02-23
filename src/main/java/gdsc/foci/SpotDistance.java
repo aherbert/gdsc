@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -150,7 +152,7 @@ public class SpotDistance implements PlugIn
 		}
 	}
 
-	public static String FRAME_TITLE = "Spot Distance";
+	public static final String TITLE = "Spot Distance";
 	private static TextWindow resultsWindow = null;
 	private static TextWindow summaryWindow = null;
 	private static TextWindow distancesWindow = null;
@@ -209,6 +211,8 @@ public class SpotDistance implements PlugIn
 
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		boolean extraOptions = IJ.shiftKeyDown();
 
 		if (arg != null && arg.equals("undo"))
@@ -250,7 +254,7 @@ public class SpotDistance implements PlugIn
 
 		if (arg == null || !arg.equals("redo")) // Allow repeat with same parameters
 		{
-			GenericDialog gd = new GenericDialog(FRAME_TITLE);
+			GenericDialog gd = new GenericDialog(TITLE);
 
 			gd.addMessage("Detects spots within a mask/ROI region\nand computes all-vs-all distances.\n(Hold shift for extra options)");
 
@@ -333,7 +337,7 @@ public class SpotDistance implements PlugIn
 
 		if (doDualChannel)
 		{
-			GenericDialog gd = new GenericDialog(FRAME_TITLE);
+			GenericDialog gd = new GenericDialog(TITLE);
 			gd.addMessage("Select the channels for dual channel analysis");
 
 			String[] list = new String[imp.getNChannels()];
@@ -598,12 +602,12 @@ public class SpotDistance implements PlugIn
 		String resultsHeader = createResultsHeader();
 		if (resultsWindow == null || !resultsWindow.isShowing() || !sameHeader(resultsWindow, resultsHeader))
 		{
-			resultsWindow = new TextWindow(FRAME_TITLE + " Positions", createResultsHeader(), "", 700, 300);
+			resultsWindow = new TextWindow(TITLE + " Positions", createResultsHeader(), "", 700, 300);
 		}
 		String summaryHeader = createSummaryHeader();
 		if (summaryWindow == null || !summaryWindow.isShowing() || !sameHeader(summaryWindow, summaryHeader))
 		{
-			summaryWindow = new TextWindow(FRAME_TITLE + " Summary", createSummaryHeader(), "", 700, 300);
+			summaryWindow = new TextWindow(TITLE + " Summary", createSummaryHeader(), "", 700, 300);
 			Point p = resultsWindow.getLocation();
 			p.y += resultsWindow.getHeight();
 			summaryWindow.setLocation(p);
@@ -613,7 +617,7 @@ public class SpotDistance implements PlugIn
 				(distancesWindow == null || !distancesWindow.isShowing() || !sameHeader(distancesWindow,
 						distancesHeader)))
 		{
-			distancesWindow = new TextWindow(FRAME_TITLE + " Distances", createDistancesHeader(), "", 700, 300);
+			distancesWindow = new TextWindow(TITLE + " Distances", createDistancesHeader(), "", 700, 300);
 			Point p = summaryWindow.getLocation();
 			p.y += summaryWindow.getHeight();
 			distancesWindow.setLocation(p);
@@ -1201,10 +1205,10 @@ public class SpotDistance implements PlugIn
 
 	private void showSpotImage(ImagePlus croppedImp, ImagePlus croppedImp2, int region)
 	{
-		debugSpotImp = createImage(croppedImp, debugSpotImp, FRAME_TITLE + " Pixels", 0);
+		debugSpotImp = createImage(croppedImp, debugSpotImp, TITLE + " Pixels", 0);
 		if (croppedImp2 != null)
-			debugSpotImp2 = createImage(croppedImp2, debugSpotImp2, FRAME_TITLE + " Pixels B", 0);
-		debugMaskImp = createImage(regionImp, debugMaskImp, FRAME_TITLE + " Region", 1);
+			debugSpotImp2 = createImage(croppedImp2, debugSpotImp2, TITLE + " Pixels B", 0);
+		debugMaskImp = createImage(regionImp, debugMaskImp, TITLE + " Region", 1);
 	}
 
 	private ImagePlus createImage(ImagePlus sourceImp, ImagePlus debugImp, String title, int region)

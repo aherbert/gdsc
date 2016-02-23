@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -39,7 +41,7 @@ import org.apache.commons.math3.linear.RealVector;
  */
 public class MaskObjectDimensions implements PlugInFilter
 {
-	public static String FRAME_TITLE = "Mask Object Dimensions";
+	public static final String TITLE = "Mask Object Dimensions";
 
 	private int flags = DOES_16 + DOES_8G;
 	private ImagePlus imp;
@@ -133,6 +135,8 @@ public class MaskObjectDimensions implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (imp == null)
 		{
 			IJ.noImage();
@@ -152,7 +156,7 @@ public class MaskObjectDimensions implements PlugInFilter
 	 */
 	private boolean showDialog()
 	{
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage("For each object defined with a unique pixel value,\ncompute the dimensions along the axes of the inertia tensor");
 
@@ -587,7 +591,7 @@ public class MaskObjectDimensions implements PlugInFilter
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
-			resultsWindow = new TextWindow(FRAME_TITLE + " Results", createResultsHeader(), "", 900, 300);
+			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300);
 		}
 	}
 
