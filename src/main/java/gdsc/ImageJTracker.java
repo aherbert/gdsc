@@ -20,6 +20,7 @@ import gdsc.analytics.ConsoleLogger;
 import gdsc.analytics.JGoogleAnalyticsTracker;
 import gdsc.analytics.JGoogleAnalyticsTracker.DispatchMode;
 import gdsc.analytics.JGoogleAnalyticsTracker.GoogleAnalyticsVersion;
+import ij.IJ;
 import ij.ImageJ;
 
 /**
@@ -90,10 +91,17 @@ public class ImageJTracker
 
 		if (firstCall)
 		{
-			// Record the ImageJ information. This call should return a string like:
-			// ImageJ 1.48a; Java 1.7.0_11 [64-bit]; Windows 7 6.1; 29MB of 5376MB (<1%)
-			// (This should also be different if we are running within Fiji)
-			String info = new ImageJ().getInfo();
+			// Record the ImageJ information.
+			ImageJ ij = IJ.getInstance();
+			if (ij == null)
+			{
+				// Run embedded without shoing
+				ij = new ImageJ(ImageJ.NO_SHOW);
+			}
+			// This call should return a string like:
+			//   ImageJ 1.48a; Java 1.7.0_11 [64-bit]; Windows 7 6.1; 29MB of 5376MB (<1%)
+			// (This should also be different if we are running within Fiji)			
+			String info = ij.getInfo();
 			tracker.customVariable(url, pageTitle, info);
 		}
 	}
