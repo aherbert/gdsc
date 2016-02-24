@@ -139,7 +139,7 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 
 		//_utma (unique visitor cookie)
 		sb.append("&utmcc=__utma%3D").append(hostnameHash).append(".").append(visitorId).append(".").append(initial)
-				.append(".").append(previous).append(".").append(current).append(".").append(sessionNumber);
+				.append(".").append(previous).append(".").append(current).append(".").append(sessionNumber).append("%3B");
 
 		//_utmb (session cookie)
 		sb.append("%2B__utmb%3D").append(hostnameHash).append("%3B");
@@ -164,12 +164,12 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 
 		final int campaignNumber = 1;
 		sb.append("%2B__utmz%3D").append(hostnameHash).append(".").append(now).append(".").append(sessionNumber)
-				.append(".").append(campaignNumber);
+				.append(".").append(campaignNumber).append(".");
 
 		// => No campaign:
 		// utmcsr%3D(direct)%7Cutmccn%D(direct)%7utmcmd%3D(none)
 
-		sb.append(".utmcsr%3D(direct)%7Cutmccn%D(direct)%7utmcmd%3D(none)%3B");
+		sb.append("utmcsr%3D(direct)%7Cutmccn%D(direct)%7utmcmd%3D(none)%3B");
 
 		sb.append("&gaq=1");
 
@@ -207,9 +207,9 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 		final String referrerURL = "http://www.google.com/";
 		sb.append("&utmr=" + URIEncoder.encodeURI(referrerURL)); //referrer URL
 
-		sb.append("&utmsc=32-bit"); // color depth
+		sb.append("&utmsc=32-bit"); // colour depth
 		sb.append("&utmje=1"); // java enabled		
-		sb.append("&utmfl=9.0%20%20r28"); //flash
+		sb.append("&utmfl=-"); //flash
 		sb.append("&utmcr=1"); //carriage return
 
 		client.setUrl(sb.toString());
