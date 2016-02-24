@@ -64,7 +64,13 @@ public class ClientDataManager
 		String hostName = "localhost";
 		try
 		{
-			hostName = InetAddress.getLocalHost().getHostName();
+			final InetAddress iAddress = InetAddress.getLocalHost();
+			// This performs a lookup of the name service as well
+			// e.g. host.domain.com
+			hostName = iAddress.getCanonicalHostName();
+			// This only retrieves the bare hostname
+			// e.g. host
+			// hostName = iAddress.getHostName();
 		}
 		catch (UnknownHostException e)
 		{
