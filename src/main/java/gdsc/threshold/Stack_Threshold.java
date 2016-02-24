@@ -60,6 +60,7 @@ public class Stack_Threshold implements PlugInFilter
 		
 		if (imp == null)
 		{
+			IJ.noImage();
 			return DONE;
 		}
 
