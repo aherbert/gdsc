@@ -38,20 +38,52 @@ import java.security.SecureRandom;
  */
 public class SessionData
 {
+	/**
+	 * The unique vistor ID
+	 */
 	private int visitorId;
+	/**
+	 * Timestamp of the first visit
+	 */
 	private long initial;
+	/**
+	 * Timestamp of the previous visit
+	 */
 	private long previous;
+	/**
+	 * Timestamp of the current visit
+	 */
 	private long current;
+	/**
+	 * Session number
+	 */
 	private int sessionNumber;
-	private int timeout = 30 * 60;
+	/**
+	 * Google sessions timeout after 30 minutes of inactivity
+	 */
+	private final int TIMEOUT = 30 * 60;
 
+	/**
+	 * Create a new session
+	 * 
+	 * @param visitorId
+	 * @param sessionNumber
+	 */
 	private SessionData(int visitorId, int sessionNumber)
 	{
 		this.visitorId = visitorId;
-		this.initial = 0;
-		this.previous = 0;
-		this.current = 0;
+		initial = previous = current = timestamp();
 		this.sessionNumber = sessionNumber;
+	}
+
+	/**
+	 * Get the number of seconds since the epoch (midnight, January 1, 1970 UTC)
+	 * 
+	 * @return The timestamp in seconds
+	 */
+	public static long timestamp()
+	{
+		return System.currentTimeMillis() / 1000L;
 	}
 
 	/**
@@ -68,42 +100,37 @@ public class SessionData
 		return visitorId;
 	}
 
+	/**
+	 * @return Timestamp of the first visit
+	 */
 	public long getInitial()
 	{
 		return initial;
 	}
 
+	/**
+	 * @return Timestamp of the previous visit
+	 */
 	public long getPrevious()
 	{
 		return previous;
 	}
 
 	/**
-	 * Get the current time.
-	 * <p>
-	 * This should be called before {@link #getInitial()} and {@link #getPrevious()} as they are updated.
-	 * 
-	 * @return The current time
+	 * @return Timestamp of the current visit
 	 */
 	public long getCurrent()
 	{
-		final long now = System.currentTimeMillis() / 1000L;
-		if (initial == 0)
-		{
-			// If this is the first check of the time then initialise the session
-			initial = previous = now;
-		}
-		else
-		{
-			// Else update the previous time
-			previous = current;
-			// Check the timeout and start a new session if necessary
-			if (now > current + timeout)
-				newSession();
-		}
-		return current = now;
+		final long now = timestamp();
+		// Check the timeout and start a new session if necessary
+		if (now > current + TIMEOUT)
+			newSession(now);
+		return current;
 	}
 
+	/**
+	 * @return The session number
+	 */
 	public int getSessionNumber()
 	{
 		return sessionNumber;
@@ -114,27 +141,20 @@ public class SessionData
 	 */
 	public void newSession()
 	{
-		// Do not update the timestamps here. 
-		// The next call to getCurrent() will do that anyway.
-		this.sessionNumber++;
+		newSession(timestamp());
 	}
 
 	/**
-	 * Set the session timeout. After this amount of time the session number will increment.
+	 * Increment the session number to start a new session
 	 * 
-	 * @param timeout
-	 *            The timeout in seconds
+	 * @param now
+	 *            The current timpstamp for the new session
 	 */
-	public void setTimeout(int timeout)
+	private void newSession(long now)
 	{
-		this.timeout = timeout;
-	}
-
-	/**
-	 * @return The timeout in seconds
-	 */
-	public int getTimeout()
-	{
-		return timeout;
+		// Previous stores the start time of the last session 
+		previous = current;
+		current = now;
+		this.sessionNumber++;
 	}
 }

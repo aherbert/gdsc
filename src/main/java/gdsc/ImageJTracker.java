@@ -81,7 +81,7 @@ public class ImageJTracker
 
 	private static void track(String pageUrl, String pageTitle)
 	{
-		// Log a page view then, for the first call, log a custom variable  
+		// Log a page view then, for the first call, log a custom variable with the ImageJ details.  
 		// Q. Is this the correct thing to do or can it be done all at once?
 		final boolean firstCall = initialise();
 
@@ -95,7 +95,7 @@ public class ImageJTracker
 			ImageJ ij = IJ.getInstance();
 			if (ij == null)
 			{
-				// Run embedded without shoing
+				// Run embedded without showing
 				ij = new ImageJ(ImageJ.NO_SHOW);
 			}
 			// This call should return a string like:
@@ -115,9 +115,6 @@ public class ImageJTracker
 			// explicitly identify it here.
 			baseUrl = '/' + Version.getMajorMinorRelease() + '/';
 			ClientData data = ClientDataManager.newClientData("UA-74107394-1");
-
-			// Start a new session if plugins are not used for 10 minutes
-			data.getSessionData().setTimeout(60 * 10);
 
 			// Create the tracker
 			tracker = new JGoogleAnalyticsTracker(data, GoogleAnalyticsVersion.V_4_7_2, DispatchMode.SINGLE_THREAD);

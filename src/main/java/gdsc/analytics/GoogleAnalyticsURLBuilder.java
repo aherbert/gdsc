@@ -34,7 +34,8 @@ import java.util.Random;
  * Details about the parameters used by Google Analytics can be found here:
  * http://code.google.com/apis/analytics/docs/tracking/gaTrackingTroubleshooting.html#gifParameters
  * 
- * This class has been forked from the JGoogleAnalyticsTracker project and modified by Alex Herbert.
+ * This class has been forked from the JGoogleAnalyticsTracker project and modified by Alex Herbert 
+ * to support session timeout and caching of the client data.
  * 
  * @author Daniel Murphy, Alex Herbert
  * @see http://code.google.com/apis/analytics/docs/tracking/gaTrackingTroubleshooting.html#gifParameters
@@ -104,72 +105,74 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 
 		// Cookie data
 
+		// Note: URL encoding (http://www.degraeve.com/reference/urlencoding.php)
+		// %2B    +
+		// %3B    ;
+		// %3D    =
+		// %7C    |
+
+		// References:
+		// https://www.koozai.com/blog/analytics/google-analytics-and-cookies/
+		// https://www.optimizesmart.com/google-analytics-cookies-ultimate-guide/
+		// http://www.cardinalpath.com/ga-basics-the-structure-of-cookie-values/
+
+		//_utma (unique visitor cookie)
+		//_utmb (session cookie)
+		//_utmc (session cookie)
+		//_utmt (The _utmt cookie is used to throttle the request rate and it expires after 10 minutes)
+		//_utmv (visitor segmentation cookie)
+		//_utmx (Google Analytics Content Experiment cookie)
+		//_utmz (Campaign cookie)
+
 		// Session information:
-		//  initial = time the visit started
-		//  previous = time of the last session action
-		//  current = time now
+		//  initial = time of initial visit
+		//  previous = time of beginning the previous session
+		//  current = time for current visit
 		//  visits = the number of sessions (due to inactive session timeout)
-		// See http://www.cardinalpath.com/ga-basics-the-structure-of-cookie-values/
 		final int hostnameHash = client.getHostName().hashCode();
 		final SessionData sessionData = client.getSessionData();
 		final int visitorId = sessionData.getVisitorId();
-		// We call getCurrent first to update the timestamps
-		final long current = sessionData.getCurrent();
 		final long initial = sessionData.getInitial();
 		final long previous = sessionData.getPrevious();
+		final long current = sessionData.getCurrent();
 		final int sessionNumber = sessionData.getSessionNumber();
 
-		sb.append("&utmcc=__utma%3D").append(hostnameHash).append(".").append(visitorId).append(".")
-				.append(initial).append(".").append(previous).append(".").append(current)
-				.append(".").append(sessionNumber);
-		
-		// Campaign data (currently not not supported)
-		//
-		//	utmcsr
-		//	Identifies a search engine, newsletter name, or other source specified in the
-		//	utm_source query parameter See the �Marketing Campaign Tracking�
-		//	section for more information about query parameters.
-		//
-		//	utmccn
-		//	Stores the campaign name or value in the utm_campaign query parameter.
-		//
-		//	utmctr
-		//	Identifies the keywords used in an organic search or the value in the utm_term query parameter.
-		//
-		//	utmcmd
-		//	A campaign medium or value of utm_medium query parameter.
-		//
-		//	utmcct
-		//	Campaign content or the content of a particular ad (used for A/B testing)
-		//	The value from utm_content query parameter.
-		
-		sb.append("%3B%2B__utmz%3D").append(hostnameHash).append(".").append(now);
-		
-		/*
-		final String utmcsr = URIEncoder.encodeURI("(direct)");
-		final String utmccn = URIEncoder.encodeURI("(direct)");
-		final String utmctr = null;
-		final String utmcmd = URIEncoder.encodeURI("(none)");
-		final String utmcct = null;
-		
-		sb.append(".1.1.utmcsr%3D").append(utmcsr).append("%7Cutmccn%3D").append(utmccn).append("%7utmcmd%3D" + utmcmd);
-		if (utmctr != null)
-			sb.append("%7Cutmctr%3D").append(utmctr);
-		if (utmcct != null)
-			sb.append("%7Cutmcct%3D").append(utmcct);
-		*/
-		
+		//_utma (unique visitor cookie)
+		sb.append("&utmcc=__utma%3D").append(hostnameHash).append(".").append(visitorId).append(".").append(initial)
+				.append(".").append(previous).append(".").append(current).append(".").append(sessionNumber);
+
+		//_utmb (session cookie)
+		sb.append("%2B__utmb%3D").append(hostnameHash).append("%3B");
+		//_utmc (session cookie)
+		// __utmc not used any more but include it anyway
+		sb.append("%2B__utmc%3D").append(hostnameHash).append("%3B");
+
+		//_utmv (visitor segmentation cookie)
+		sb.append("%2B__utmv%3D").append(hostnameHash).append("%3B");
+
+		//_utmx (Google Analytics Content Experiment cookie)
+		// The _utmx cookie is Google Analytics Content Experiment cookie, 
+		// which is used for A/B testing of different versions of a web page.
+
+		//_utmz (Campaign cookie)
+		// (currently we do not support campaign data)
+		//utmcsr = >It represents campaign source and stores the value of utm_source variable.
+		//utmccn = >It represents campaign name and stores the value of utm_campaign variable.
+		//utmcmd = >It represents campaign medium and stores the value of utm_medium variable.
+		//utmctr = >It represents campaign term (keyword) and stores the value of utm_term variable.
+		//utmcct = >It represents campaign content and stores the value of utm_content variable.
+
+		final int campaignNumber = 1;
+		sb.append("%2B__utmz%3D").append(hostnameHash).append(".").append(now).append(".").append(sessionNumber)
+				.append(".").append(campaignNumber);
+
 		// => No campaign:
 		// utmcsr%3D(direct)%7Cutmccn%D(direct)%7utmcmd%3D(none)
-		
-		// Note: URL encoding (http://www.degraeve.com/reference/urlencoding.php)
-		// %3D    =
-		// %7C    |
-		
-		sb.append(".1.1.utmcsr%3D(direct)%7Cutmccn%D(direct)%7utmcmd%3D(none)");
-		
-		sb.append("%3B&gaq=1");
-		
+
+		sb.append(".utmcsr%3D(direct)%7Cutmccn%D(direct)%7utmcmd%3D(none)%3B");
+
+		sb.append("&gaq=1");
+
 		return sb.toString();
 	}
 
@@ -190,7 +193,6 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 		{
 			sb.append("&utmsr=" + URIEncoder.encodeURI(client.getScreenResolution())); // screen resolution
 		}
-		sb.append("&utmsc=32-bit"); // color depth
 		if (client.getUserLanguage() != null)
 		{
 			sb.append("&utmul=" + URIEncoder.encodeURI(client.getUserLanguage())); // language
@@ -199,7 +201,17 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 		{
 			sb.append("&utmhn=" + URIEncoder.encodeURI(client.getHostName())); // hostname
 		}
-		sb.append("&utmje=1"); // java enabled			
+
+		// Q. Is this required?
+		// Analytics did not register when it was not present.
+		final String referrerURL = "http://www.google.com/";
+		sb.append("&utmr=" + URIEncoder.encodeURI(referrerURL)); //referrer URL
+
+		sb.append("&utmsc=32-bit"); // color depth
+		sb.append("&utmje=1"); // java enabled		
+		sb.append("&utmfl=9.0%20%20r28"); //flash
+		sb.append("&utmcr=1"); //carriage return
+
 		client.setUrl(sb.toString());
 	}
 

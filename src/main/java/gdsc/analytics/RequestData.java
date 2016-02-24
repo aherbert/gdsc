@@ -39,10 +39,11 @@ public class RequestData
 	 * The type of request
 	 * 
 	 * @author Alex Herbert
+	 * @see http://code.google.com/apis/analytics/docs/tracking/gaTrackingTroubleshooting.html#gifParameters
 	 */
 	public enum Type
 	{
-		EVENT("event"), TRANSACTION("transaction"), ITEM("item"), CUSTOM_VARIABLE("custom_variable"), PAGE("page");
+		EVENT("event"), TRANSACTION("transaction"), ITEM("item"), CUSTOM_VARIABLE("custom variable"), PAGE("page");
 
 		private String name;
 
