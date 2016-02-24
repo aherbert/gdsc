@@ -83,7 +83,7 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 		sb.append(client.getUrl());
 
 		// Build the request data
-		sb.append("&utmt=").append(requestData.getType());
+		sb.append("&utmt=").append(URIEncoder.encodeURI(requestData.getType()));
 
 		if (requestData.getValue() != null)
 		{
