@@ -41,37 +41,37 @@ public class SessionData
 	/**
 	 * The unique vistor ID
 	 */
-	private int visitorId;
+	protected int visitorId;
 	/**
 	 * Timestamp of the first visit
 	 */
-	private long initial;
+	protected long initial;
 	/**
 	 * Timestamp of the previous visit
 	 */
-	private long previous;
+	protected long previous;
 	/**
 	 * Timestamp of the current visit
 	 */
-	private long current;
+	protected long current;
 	/**
 	 * Timestamp of the latest call to refresh the session.
 	 * 
 	 * @see #refresh()
 	 */
-	private long latest;
+	protected long latest;
 	/**
 	 * Session number
 	 */
-	private int sessionNumber;
+	protected int sessionNumber;
 	/**
 	 * The number of times the session has been refreshed
 	 */
-	private int count;
+	protected int count;
 	/**
 	 * Google sessions timeout after 30 minutes of inactivity
 	 */
-	private final int TIMEOUT = 30 * 60;
+	protected final int TIMEOUT = 30 * 60;
 
 	/**
 	 * Create a new session
@@ -79,7 +79,7 @@ public class SessionData
 	 * @param visitorId
 	 * @param sessionNumber
 	 */
-	private SessionData(int visitorId, int sessionNumber)
+	protected SessionData(int visitorId, int sessionNumber)
 	{
 		this.visitorId = visitorId;
 		initial = previous = current = latest = timestamp();
@@ -98,7 +98,7 @@ public class SessionData
 	}
 
 	/**
-	 * Initializes a new session data, with new random visitor id
+	 * Initialises a new session data, with new random visitor id
 	 */
 	public static SessionData newSessionData()
 	{
@@ -200,7 +200,7 @@ public class SessionData
 	 * @param now
 	 *            The current timpstamp for the new session
 	 */
-	private void newSession(long now)
+	protected void newSession(long now)
 	{
 		// Previous stores the start time of the last session 
 		previous = current;

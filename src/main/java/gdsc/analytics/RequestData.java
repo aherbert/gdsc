@@ -37,8 +37,22 @@ import java.util.Arrays;
  */
 public class RequestData
 {
+	/**
+	 * Scope the custom variable to the visitor level
+	 */
+	public static final int LEVEL_VISITOR = 1;
+	/**
+	 * Scope the custom variable to the session level
+	 */
+	public static final int LEVEL_SESSION = 2;
+	/**
+	 * Scope the custom variable to the page level
+	 */
+	public static final int LEVEL_PAGE = 3;
+	
 	private String[] labels = null;
 	private String[] values = null;
+	private int[] levels = null;
 	private int size = 0;
 	private String customVariablesURL = null;
 	private String pageTitle = null;
@@ -47,10 +61,11 @@ public class RequestData
 	/**
 	 * Add a custom variable
 	 * 
-	 * @param label
-	 * @param value
+	 * @param label The variable label
+	 * @param value The variable value
+	 * @param level The scope (1=visitor; 2=session; 3=page)
 	 */
-	public void addCustomVariable(String label, String value)
+	public void addCustomVariable(String label, String value, int level)
 	{
 		if (label == null || value == null)
 			return;
@@ -58,15 +73,18 @@ public class RequestData
 		{
 			labels = new String[1];
 			values = new String[1];
+			levels = new int[1];
 		}
 		else if (labels.length == size)
 		{
 			final int newSize = (int) (size * 1.5) + 1;
 			labels = Arrays.copyOf(labels, newSize);
 			values = Arrays.copyOf(values, newSize);
+			levels = Arrays.copyOf(levels, newSize);
 		}
 		labels[size] = label;
 		values[size] = value;
+		levels[size] = level;
 		size++;
 
 		setCustomVariablesURL(null);
@@ -98,6 +116,16 @@ public class RequestData
 	public String[] getValues()
 	{
 		return values;
+	}
+
+	/**
+	 * Note that the size of the returned array may be larger than {@link #getVariableCount()}
+	 * 
+	 * @return the levels (used for custom variables)
+	 */
+	public int[] getLevels()
+	{
+		return levels;
 	}
 
 	/**

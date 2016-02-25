@@ -102,7 +102,7 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 		//   						//  (possible values might be Free, Bronze, Gold, and Platinum)
 		//   	  1                 // Sets the scope to visitor-level.  Optional parameter.
 		//     ]); 
-		//  _gaq.push(['_setCustomVar', 2, 'Another', 'Value', 1]);
+		//  _gaq.push(['_setCustomVar', 2, 'Another', 'Value', 2]); // Scoped to session level
 		//
 		//  (function() {
 		//    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
@@ -189,7 +189,7 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 
 		//_utma (unique visitor cookie)
 		// Note: The hostnameHash is 1 in the v5.6.7 _utma cookie. Perhaps this is no longer used.
-		
+
 		sb.append("&utmcc=__utma%3D").append(hostnameHash).append(".").append(visitorId).append(".").append(initial)
 				.append(".").append(previous).append(".").append(current).append(".").append(sessionNumber)
 				.append("%3B");
@@ -219,7 +219,7 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 
 		// Not sure what this is? Sometimes it is present, sometimes not
 		//sb.append("&utmredir=1");
-		
+
 		// This is a new parameter that contains some internal state that helps improve ga.js.
 		sb.append("&utmu=qxAAAAAAAAAAAAAAAAAAAAAE~");
 
@@ -229,10 +229,10 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 	private void buildClientURL()
 	{
 		StringBuilder sb = new StringBuilder();
-		
+
 		// Google Analytics tracking code
 		sb.append("&utmac=" + client.getTrackingCode());
-		
+
 		if (client.getEncoding() != null)
 		{
 			sb.append("&utmcs=" + URIEncoder.encodeURI(client.getEncoding())); // encoding
@@ -265,7 +265,7 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 	private void buildCustomVariablesURL(RequestData requestData)
 	{
 		// See https://developers.google.com/analytics/devguides/collection/gajs/gaTrackingCustomVariables
-		
+
 		// Custom variables have a label and value:
 		//_gaq.push(['_setCustomVar',
 		//     	  1,                // This custom var is set to slot #1.  Required parameter.
@@ -274,15 +274,16 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 		//     						//  (possible values might be Free, Bronze, Gold, and Platinum)
 		//     	  1                 // Sets the scope to visitor-level.  Optional parameter.
 		//       ]);
-		//_gaq.push(['_setCustomVar', 2, 'ImageJ2', '1.49a; plus', 1]);
+		//_gaq.push(['_setCustomVar', 2, 'ImageJ2', '1.49a; plus', 2]);
 		//
-		// &utme=8(ImageJ*ImageJ2)9(1.48a%3B%20extra*1.49%3B%20plus)11(1*1)
+		// &utme=8(ImageJ*ImageJ2)9(1.48a%3B%20extra*1.49%3B%20plus)11(1*2)
 
 		StringBuilder sb = new StringBuilder();
-		
+
 		final int count = requestData.getVariableCount();
 		final String[] values = requestData.getValues();
 		final String[] labels = requestData.getLabels();
+		final int[] levels = requestData.getLevels();
 
 		sb.append("&utme=8(");
 		for (int i = 0; i < count; i++)
@@ -303,10 +304,10 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 		{
 			if (i != 0)
 				sb.append('*');
-			sb.append('1'); // Scope to the visitor-level
+			sb.append(levels[i]); // Scope
 		}
 		sb.append(")");
-		
+
 		requestData.setCustomVariablesURL(sb.toString());
 	}
 }

@@ -9,13 +9,19 @@
  * <p>
  * The JGoogleAnalyticsTracker code has been modified to allow better
  * use of the session tracking within Google Analytics using session
- * timeout. The slf4j dependency was removed. 
+ * timeout. The slf4j dependency was removed. The URL data for Google Analytics 
+ * was updated to the latest version (as of Feb 2016). As a result all of
+ * the classes related to building the GA URL were re-written and so have been 
+ * name changed from their equivalent classes in the parent project. The URIEncoder 
+ * and JGoogleAnalyticsTracker classes are basically unchanged and so have
+ * the same name.
  * <p>
  * Since the code will only be used within a Java application
  * the referral, search referral and campaign functionality has been
  * removed to simplify the analytics and allow caching most of the
  * constructed analytics URL. The code is redistributed under the
- * original MIT licence.
+ * original MIT licence and maintains the copyright of Daniel Murphey
+ * through the code with the addition of Alex Herbert.
  * <p>
  * MIT Licence:
  * <p>

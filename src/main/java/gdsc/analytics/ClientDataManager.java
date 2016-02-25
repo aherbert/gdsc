@@ -68,9 +68,14 @@ public class ClientDataManager
 			// This performs a lookup of the name service as well
 			// e.g. host.domain.com
 			hostName = iAddress.getCanonicalHostName();
+			
 			// This only retrieves the bare hostname
 			// e.g. host
 			// hostName = iAddress.getHostName();
+			
+			// This retrieves the IP address as a string
+			// e.g. 192.168.0.1 
+			//hostName = iAddress.getHostAddress();
 		}
 		catch (UnknownHostException e)
 		{
@@ -121,4 +126,19 @@ public class ClientDataManager
 		return data;
 	}
 
+	/**
+	 * Create a ClientData object and populate it with information from the system
+	 * 
+	 * @param trackingCode
+	 *            The Google Analytiucs tracking code
+	 * @param sessionData
+	 *            The session data
+	 * @return the client data
+	 */
+	public static ClientData newClientData(String trackingCode, SessionData sessionData)
+	{
+		ClientData data = new ClientData(trackingCode, sessionData);
+		populate(data);
+		return data;
+	}
 }

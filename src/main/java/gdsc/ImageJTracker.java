@@ -19,6 +19,7 @@ import gdsc.analytics.ClientDataManager;
 import gdsc.analytics.ConsoleLogger;
 import gdsc.analytics.JGoogleAnalyticsTracker;
 import gdsc.analytics.RequestData;
+import gdsc.analytics.SessionData;
 import gdsc.analytics.JGoogleAnalyticsTracker.DispatchMode;
 import gdsc.analytics.JGoogleAnalyticsTracker.GoogleAnalyticsVersion;
 import ij.IJ;
@@ -84,7 +85,7 @@ public class ImageJTracker
 	private static synchronized void track(String pageUrl, String pageTitle)
 	{
 		// This method is synchronized due to the use of the same RequestData object
-		
+
 		initialise();
 
 		String url = baseUrl + pageUrl;
@@ -101,9 +102,11 @@ public class ImageJTracker
 			// Note that the GA tracking code is specific to this codebase and so we do not
 			// explicitly identify it (i.e. the Java package/program name) here.
 			baseUrl = '/' + Version.getMajorMinorRelease() + '/';
-			ClientData data = ClientDataManager.newClientData("UA-74107394-1");
-
+			
 			// Create the tracker
+			final SessionData sessionData = ImageJSessionData.newImageJSessionData();
+			final ClientData data = ClientDataManager.newClientData("UA-74107394-1", sessionData);
+
 			tracker = new JGoogleAnalyticsTracker(data, GoogleAnalyticsVersion.V_5_6_7, DispatchMode.SINGLE_THREAD);
 
 			// DEBUG: Enable logging
@@ -119,9 +122,10 @@ public class ImageJTracker
 			// This call should return a string like:
 			//   ImageJ 1.48a; Java 1.7.0_11 [64-bit]; Windows 7 6.1; 29MB of 5376MB (<1%)
 			// (This should also be different if we are running within Fiji)
-			// TODO - See how this is used in Google Analytics and maybe change to add the values individually
+			// TODO - See how this is used in Google Analytics reporting and maybe change to 
+			// add the values individually
 			requestData = new RequestData();
-			requestData.addCustomVariable("ImageJ", ij.getInfo());
+			requestData.addCustomVariable("ImageJ", ij.getInfo(), RequestData.LEVEL_SESSION);
 
 			return true;
 		}
