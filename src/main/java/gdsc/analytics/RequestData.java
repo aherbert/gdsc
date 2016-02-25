@@ -1,5 +1,7 @@
 package gdsc.analytics;
 
+import java.util.Arrays;
+
 /*
  * <ul>
  * <li>Copyright (c) 2010 Daniel Murphy
@@ -35,67 +37,67 @@ package gdsc.analytics;
  */
 public class RequestData
 {
-	/**
-	 * The type of request
-	 * 
-	 * @author Alex Herbert
-	 * @see http://code.google.com/apis/analytics/docs/tracking/gaTrackingTroubleshooting.html#gifParameters
-	 */
-	public enum Type
-	{
-		EVENT("event"), TRANSACTION("transaction"), ITEM("item"), CUSTOM_VARIABLE("custom variable"), PAGE("page");
-
-		private String name;
-
-		private Type(String name)
-		{
-			this.name = name;
-		}
-
-		@Override
-		public String toString()
-		{
-			return name;
-		}
-	}
-
-	private Type type = Type.PAGE;
-	private String value = null;
+	private String[] labels = null;
+	private String[] values = null;
+	private int size = 0;
+	private String customVariablesURL = null;
 	private String pageTitle = null;
 	private String pageURL = null;
 
 	/**
-	 * @param type
-	 *            The type of request (defaults to page)
-	 */
-	public void setType(Type type)
-	{
-		this.type = type;
-	}
-
-	/**
-	 * @return The type of request
-	 */
-	public String getType()
-	{
-		return type.toString();
-	}
-
-	/**
+	 * Add a custom variable
+	 * 
+	 * @param label
 	 * @param value
-	 *            the value (used for events or custom variables)
 	 */
-	public void setValue(String value)
+	public void addCustomVariable(String label, String value)
 	{
-		this.value = value;
+		if (label == null || value == null)
+			return;
+		if (labels == null)
+		{
+			labels = new String[1];
+			values = new String[1];
+		}
+		else if (labels.length == size)
+		{
+			final int newSize = (int) (size * 1.5) + 1;
+			labels = Arrays.copyOf(labels, newSize);
+			values = Arrays.copyOf(values, newSize);
+		}
+		labels[size] = label;
+		values[size] = value;
+		size++;
+
+		setCustomVariablesURL(null);
 	}
 
 	/**
-	 * @return the value (used for events or custom variables)
+	 * @return the number of custom variables
 	 */
-	public String getValue()
+	public int getVariableCount()
 	{
-		return value;
+		return size;
+	}
+
+	/**
+	 * Note that the size of the returned array may be larger than {@link #getVariableCount()}
+	 * 
+	 * @return the labels (used for custom variables)
+	 */
+	public String[] getLabels()
+	{
+		return labels;
+	}
+
+	/**
+	 * Note that the size of the returned array may be larger than {@link #getVariableCount()}
+	 * 
+	 * @return the values (used for custom variables)
+	 */
+	public String[] getValues()
+	{
+		return values;
 	}
 
 	/**
@@ -135,5 +137,26 @@ public class RequestData
 	public String getPageURL()
 	{
 		return pageURL;
+	}
+
+	/**
+	 * Get the cached custom variables URL
+	 * 
+	 * @return the customVariablesURL
+	 */
+	public String getCustomVariablesURL()
+	{
+		return customVariablesURL;
+	}
+
+	/**
+	 * Cache the custom variables URL. Allows re-use of this object for a different page request.
+	 * 
+	 * @param customVariablesURL
+	 *            the customVariablesURL to set
+	 */
+	public void setCustomVariablesURL(String customVariablesURL)
+	{
+		this.customVariablesURL = customVariablesURL;
 	}
 }

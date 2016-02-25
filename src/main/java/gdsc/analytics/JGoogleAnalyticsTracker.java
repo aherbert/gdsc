@@ -112,7 +112,7 @@ public class JGoogleAnalyticsTracker
 
 	public static enum GoogleAnalyticsVersion
 	{
-		V_4_7_2
+		V_5_6_7
 	}
 
 	private GoogleAnalyticsVersion version;
@@ -139,21 +139,21 @@ public class JGoogleAnalyticsTracker
 	 * Sets the dispatch mode
 	 * 
 	 * @see DispatchMode
-	 * @param argMode
+	 * @param mode
 	 *            the mode to to put the tracker in. If this is null, the tracker
 	 *            defaults to {@link DispatchMode#SINGLE_THREAD}
 	 */
-	public void setDispatchMode(DispatchMode argMode)
+	public void setDispatchMode(DispatchMode mode)
 	{
-		if (argMode == null)
+		if (mode == null)
 		{
-			argMode = DispatchMode.SINGLE_THREAD;
+			mode = DispatchMode.SINGLE_THREAD;
 		}
-		if (argMode == DispatchMode.SINGLE_THREAD)
+		if (mode == DispatchMode.SINGLE_THREAD)
 		{
 			startBackgroundThread();
 		}
-		mode = argMode;
+		this.mode = mode;
 	}
 
 	/**
@@ -208,11 +208,11 @@ public class JGoogleAnalyticsTracker
 	/**
 	 * Sets if the api dispatches tracking requests.
 	 * 
-	 * @param argEnabled
+	 * @param enabled
 	 */
-	public void setEnabled(boolean argEnabled)
+	public void setEnabled(boolean enabled)
 	{
-		enabled = argEnabled;
+		this.enabled = enabled;
 	}
 
 	/**
@@ -230,12 +230,12 @@ public class JGoogleAnalyticsTracker
 	 * <p>
 	 * Call this static method early (before creating any tracking requests).
 	 * 
-	 * @param argProxy
+	 * @param proxy
 	 *            The proxy to use
 	 */
-	public static void setProxy(Proxy argProxy)
+	public static void setProxy(Proxy proxy)
 	{
-		proxy = (argProxy != null) ? argProxy : Proxy.NO_PROXY;
+		JGoogleAnalyticsTracker.proxy = (proxy != null) ? proxy : Proxy.NO_PROXY;
 	}
 
 	/**
@@ -328,18 +328,18 @@ public class JGoogleAnalyticsTracker
 	/**
 	 * Makes a custom tracking request based from the given data.
 	 * 
-	 * @param argData
+	 * @param requestData
 	 * @throws NullPointerException
-	 *             if argData is null or if the URL builder is null
+	 *             if requestData is null or if the URL builder is null
 	 */
-	public synchronized void makeCustomRequest(RequestData argData)
+	public synchronized void makeCustomRequest(RequestData requestData)
 	{
 		if (!enabled)
 		{
 			logger.debug("Ignoring tracking request, enabled is false");
 			return;
 		}
-		if (argData == null)
+		if (requestData == null)
 		{
 			throw new NullPointerException("Data cannot be null");
 		}
@@ -347,7 +347,7 @@ public class JGoogleAnalyticsTracker
 		{
 			throw new NullPointerException("Class was not initialized");
 		}
-		final String url = builder.buildURL(argData);
+		final String url = builder.buildURL(requestData);
 
 		switch (mode)
 		{
@@ -409,8 +409,8 @@ public class JGoogleAnalyticsTracker
 			final int responseCode = connection.getResponseCode();
 			if (responseCode != HttpURLConnection.HTTP_OK)
 			{
-				logger.error("JGoogleAnalyticsTracker: Error requesting url '%s', received response code %d", requestURL,
-						responseCode);
+				logger.error("JGoogleAnalyticsTracker: Error requesting url '%s', received response code %d",
+						requestURL, responseCode);
 			}
 			else
 			{
@@ -427,7 +427,7 @@ public class JGoogleAnalyticsTracker
 	{
 		switch (version)
 		{
-			case V_4_7_2:
+			case V_5_6_7:
 			default:
 				builder = new GoogleAnalyticsURLBuilder(clientData);
 				break;
@@ -541,27 +541,6 @@ public class JGoogleAnalyticsTracker
 		RequestData data = new RequestData();
 		data.setPageURL(pageUrl);
 		data.setPageTitle(pageTitle);
-		data.setType(RequestData.Type.PAGE);
-		makeCustomRequest(data);
-	}
-
-	/**
-	 * Track a сustom variable. I do not know if this can be called with null page information.
-	 * 
-	 * @param pageUrl
-	 *            The page URL
-	 * @param pageTitle
-	 *            The page title
-	 * @param value
-	 *            the variable value
-	 */
-	public void customVariable(String pageUrl, String pageTitle, String value)
-	{
-		RequestData data = new RequestData();
-		data.setPageURL(pageUrl);
-		data.setPageTitle(pageTitle);
-		data.setType(RequestData.Type.CUSTOM_VARIABLE);
-		data.setValue(value);
 		makeCustomRequest(data);
 	}
 

@@ -55,9 +55,19 @@ public class SessionData
 	 */
 	private long current;
 	/**
+	 * Timestamp of the latest call to refresh the session.
+	 * 
+	 * @see #refresh()
+	 */
+	private long latest;
+	/**
 	 * Session number
 	 */
 	private int sessionNumber;
+	/**
+	 * The number of times the session has been refreshed
+	 */
+	private int count;
 	/**
 	 * Google sessions timeout after 30 minutes of inactivity
 	 */
@@ -72,8 +82,9 @@ public class SessionData
 	private SessionData(int visitorId, int sessionNumber)
 	{
 		this.visitorId = visitorId;
-		initial = previous = current = timestamp();
+		initial = previous = current = latest = timestamp();
 		this.sessionNumber = sessionNumber;
+		count = 0;
 	}
 
 	/**
@@ -101,6 +112,8 @@ public class SessionData
 	}
 
 	/**
+	 * Get the start time of the first ever session
+	 * 
 	 * @return Timestamp of the first visit
 	 */
 	public long getInitial()
@@ -109,6 +122,8 @@ public class SessionData
 	}
 
 	/**
+	 * Get the start time of the previous session
+	 * 
 	 * @return Timestamp of the previous visit
 	 */
 	public long getPrevious()
@@ -117,23 +132,58 @@ public class SessionData
 	}
 
 	/**
+	 * Get the start time of the current session
+	 * 
 	 * @return Timestamp of the current visit
 	 */
 	public long getCurrent()
 	{
-		final long now = timestamp();
-		// Check the timeout and start a new session if necessary
-		if (now > current + TIMEOUT)
-			newSession(now);
 		return current;
 	}
 
 	/**
+	 * Get the session number
+	 * 
 	 * @return The session number
 	 */
 	public int getSessionNumber()
 	{
 		return sessionNumber;
+	}
+
+	/**
+	 * Get the hit count for the session. This is equivalent to the number of times {@link #refresh()} is called.
+	 * 
+	 * @return The count of times the session has been refreshed
+	 */
+	public int getCount()
+	{
+		// Check if not yet initialised.
+		// This allows a new session object to have a correct hit count even if the 
+		// refresh() function has not been called, i.e.
+		// 0 or 1 calls to refresh() will produce a count of 1
+		// N calls to refresh() will produce a count of N
+		// This allows refresh() to be called when a session has just been created.
+		if (count == 0)
+			count = 1;
+		return count;
+	}
+
+	/**
+	 * Refresh the session and increment the hit count. If the session has expired then the session number will be
+	 * incremented and the current and previous timestamps will be updated. The hit counter will be reset.
+	 */
+	public void refresh()
+	{
+		count++;
+
+		// Get the current session expire time
+		final long expires = latest + TIMEOUT;
+		// Get the current time
+		latest = timestamp();
+		// Check if the session has expired
+		if (latest > expires)
+			newSession(latest);
 	}
 
 	/**
@@ -145,7 +195,7 @@ public class SessionData
 	}
 
 	/**
-	 * Increment the session number to start a new session
+	 * Increment the session number to start a new session. This resets the hit counter.
 	 * 
 	 * @param now
 	 *            The current timpstamp for the new session
@@ -154,7 +204,9 @@ public class SessionData
 	{
 		// Previous stores the start time of the last session 
 		previous = current;
-		current = now;
+		current = latest = now;
 		this.sessionNumber++;
+		// Reset the hit counter
+		this.count = 0;
 	}
 }

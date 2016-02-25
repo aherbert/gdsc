@@ -59,7 +59,7 @@ public class ClientDataManager
 		{
 			region = System.getProperty("user.country");
 		}
-		data.setUserLanguage(System.getProperty("user.language") + "-" + region);
+		data.setUserLanguage((System.getProperty("user.language") + "-" + region).toLowerCase());
 
 		String hostName = "localhost";
 		try

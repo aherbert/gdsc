@@ -18,6 +18,7 @@ import gdsc.analytics.ClientData;
 import gdsc.analytics.ClientDataManager;
 import gdsc.analytics.ConsoleLogger;
 import gdsc.analytics.JGoogleAnalyticsTracker;
+import gdsc.analytics.RequestData;
 import gdsc.analytics.JGoogleAnalyticsTracker.DispatchMode;
 import gdsc.analytics.JGoogleAnalyticsTracker.GoogleAnalyticsVersion;
 import ij.IJ;
@@ -30,6 +31,7 @@ public class ImageJTracker
 {
 	private static JGoogleAnalyticsTracker tracker = null;
 	private static String baseUrl = null;
+	private static RequestData requestData = null;
 
 	/**
 	 * Record the use of the ImageJ plugin
@@ -79,18 +81,34 @@ public class ImageJTracker
 		track(url, title);
 	}
 
-	private static void track(String pageUrl, String pageTitle)
+	private static synchronized void track(String pageUrl, String pageTitle)
 	{
-		// Log a page view then, for the first call, log a custom variable with the ImageJ details.  
-		// Q. Is this the correct thing to do or can it be done all at once?
-		final boolean firstCall = initialise();
+		// This method is synchronized due to the use of the same RequestData object
+		
+		initialise();
 
 		String url = baseUrl + pageUrl;
+		requestData.setPageURL(url);
+		requestData.setPageTitle(pageTitle);
+		tracker.makeCustomRequest(requestData);
+	}
 
-		tracker.page(url, pageTitle);
-
-		if (firstCall)
+	private static boolean initialise()
+	{
+		if (tracker == null)
 		{
+			// Set up a base url using the package version.
+			// Note that the GA tracking code is specific to this codebase and so we do not
+			// explicitly identify it (i.e. the Java package/program name) here.
+			baseUrl = '/' + Version.getMajorMinorRelease() + '/';
+			ClientData data = ClientDataManager.newClientData("UA-74107394-1");
+
+			// Create the tracker
+			tracker = new JGoogleAnalyticsTracker(data, GoogleAnalyticsVersion.V_5_6_7, DispatchMode.SINGLE_THREAD);
+
+			// DEBUG: Enable logging
+			JGoogleAnalyticsTracker.setLogger(new ConsoleLogger());
+
 			// Record the ImageJ information.
 			ImageJ ij = IJ.getInstance();
 			if (ij == null)
@@ -100,27 +118,10 @@ public class ImageJTracker
 			}
 			// This call should return a string like:
 			//   ImageJ 1.48a; Java 1.7.0_11 [64-bit]; Windows 7 6.1; 29MB of 5376MB (<1%)
-			// (This should also be different if we are running within Fiji)			
-			String info = ij.getInfo();
-			tracker.customVariable(url, pageTitle, info);
-		}
-	}
-
-	private static boolean initialise()
-	{
-		if (tracker == null)
-		{
-			// Set up a base url using the package version.
-			// Note that the GA tracking code is specific to this codebase and so we do not
-			// explicitly identify it here.
-			baseUrl = '/' + Version.getMajorMinorRelease() + '/';
-			ClientData data = ClientDataManager.newClientData("UA-74107394-1");
-
-			// Create the tracker
-			tracker = new JGoogleAnalyticsTracker(data, GoogleAnalyticsVersion.V_4_7_2, DispatchMode.SINGLE_THREAD);
-
-			// DEBUG: Enable logging
-			JGoogleAnalyticsTracker.setLogger(new ConsoleLogger());
+			// (This should also be different if we are running within Fiji)
+			// TODO - See how this is used in Google Analytics and maybe change to add the values individually
+			requestData = new RequestData();
+			requestData.addCustomVariable("ImageJ", ij.getInfo());
 
 			return true;
 		}
