@@ -70,7 +70,7 @@ public class ImageJSessionData extends SessionData
 
 		// This will be stored if ImageJ shuts down cleanly
 		Prefs.set(SESSION_PROPERTY, sb.toString());
-		// This is an expensive call so leave it ImageJ to do this upon exit
+		// This is an expensive call so leave it for ImageJ to do this upon exit
 		//Prefs.savePreferences();
 	}
 
