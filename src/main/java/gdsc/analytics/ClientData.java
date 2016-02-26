@@ -1,5 +1,10 @@
 package gdsc.analytics;
 
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 /*
  * <ul>
  * <li>Copyright (c) 2010 Daniel Murphy
@@ -40,6 +45,7 @@ public class ClientData
 	private String hostName = null;
 	private SessionData sessionData;
 	private String url = null;
+	private List<Map.Entry<String, String>> headers = null;
 
 	/**
 	 * constructs with the tracking code and a new session data.
@@ -115,6 +121,14 @@ public class ClientData
 	}
 
 	/**
+	 * @return The HTTP header key-value pairs
+	 */
+	public List<Map.Entry<String, String>> getHeaders()
+	{
+		return headers;
+	}
+
+	/**
 	 * Sets the character encoding of the client. like UTF-8
 	 * 
 	 * @param argEncoding
@@ -175,5 +189,18 @@ public class ClientData
 	public void setUrl(String url)
 	{
 		this.url = url;
+	}
+
+	/**
+	 * Add a HTTP header key-value pair
+	 * 
+	 * @param key
+	 * @param value
+	 */
+	public void addHeader(String key, String value)
+	{
+		if (headers == null)
+			headers = new ArrayList<Map.Entry<String, String>>();
+		headers.add(new AbstractMap.SimpleImmutableEntry<String, String>(key, value));
 	}
 }

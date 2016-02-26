@@ -119,15 +119,26 @@ public class ImageJTracker
 				// Run embedded without showing
 				ij = new ImageJ(ImageJ.NO_SHOW);
 			}
+			// Note: Session variables have a 128 character key-value pair limit.
+			// For better use in Google Analytics reporting add values indvidually.
+			requestData = new RequestData();
+
+			// ImageJ version
 			// This call should return a string like:
 			//   ImageJ 1.48a; Java 1.7.0_11 [64-bit]; Windows 7 6.1; 29MB of 5376MB (<1%)
 			// (This should also be different if we are running within Fiji)
-			// Note: Session variables have a 128 character key-value pair limit.
-			// TODO - See how this is used in Google Analytics reporting and maybe change to 
-			// add the values individually
-			requestData = new RequestData();
-			requestData.addCustomVariable("ImageJ", ij.getInfo(), RequestData.LEVEL_SESSION);
-
+			String info = ij.getInfo();
+			if (info.indexOf(';') != -1)
+				info = info.substring(0, info.indexOf(';'));
+			requestData.addCustomVariable("ImageJ", info, RequestData.LEVEL_SESSION);
+			
+			// Java version
+			requestData.addCustomVariable("java.version", System.getProperty("java.version"), RequestData.LEVEL_SESSION);
+			// OS
+			requestData.addCustomVariable("os.name", System.getProperty("os.name"), RequestData.LEVEL_SESSION);
+			requestData.addCustomVariable("os.version", System.getProperty("os.version"), RequestData.LEVEL_SESSION);
+			requestData.addCustomVariable("os.arch", System.getProperty("os.arch"), RequestData.LEVEL_SESSION);
+			
 			return true;
 		}
 		return false;

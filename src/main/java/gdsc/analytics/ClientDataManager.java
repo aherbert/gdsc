@@ -85,6 +85,22 @@ public class ClientDataManager
 
 		final Dimension d = getScreenSize();
 		data.setScreenResolution(d.width + "x" + d.height);
+		
+		// Add HTTP headers which will be fed into the URLConnection.setRequestProperty(String, String) method.
+		// Some of this can be tracked by Google Analytics.
+		// The browser and operating system are taken from the User-Agent property.
+		
+		//data.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"); // To simulate Chrome
+		
+		// The Java URLConnection User-Agent property will default to Java/1.6.0.19 where the 
+		// last part is the JRE version.
+		// Build e.g. Java/1.6.0.19 (Windows 7 6.1)
+		
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("Java/").append(System.getProperty("java.version"));
+		sb.append(" (").append(System.getProperty("os.name")).append(" ").append(System.getProperty("os.version")).append(")");
+		data.addHeader("User-Agent", sb.toString());
 	}
 
 	/**

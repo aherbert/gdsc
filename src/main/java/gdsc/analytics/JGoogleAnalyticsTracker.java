@@ -35,6 +35,9 @@ import java.net.Proxy.Type;
 import java.net.SocketAddress;
 import java.net.URL;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Scanner;
 import java.util.regex.MatchResult;
@@ -96,11 +99,28 @@ public class JGoogleAnalyticsTracker
 		SINGLE_THREAD
 	}
 
+	/**
+	 * Store the data for the HTTP Get method
+	 * 
+	 * @author a.herbert@sussex.ac.uk
+	 */
+	private class HTTPData
+	{
+		final String url;
+		final List<Entry<String, String>> headers;
+
+		HTTPData(String url, List<Entry<String, String>> headers)
+		{
+			this.url = url;
+			this.headers = headers;
+		}
+	}
+
 	private static Logger logger = new Logger();
 	private static final ThreadGroup asyncThreadGroup = new ThreadGroup("Async Google Analytics Threads");
 	private static long asyncThreadsRunning = 0;
 	private static Proxy proxy = Proxy.NO_PROXY;
-	private static Queue<String> fifo = new LinkedList<String>();
+	private static Queue<HTTPData> fifo = new LinkedList<HTTPData>();
 	private static Thread backgroundThread = null; // the thread used in 'queued' mode.
 	private static boolean backgroundThreadMayRun = false;
 
@@ -362,7 +382,7 @@ public class JGoogleAnalyticsTracker
 						}
 						try
 						{
-							dispatchRequest(url);
+							dispatchRequest(url, clientData.getHeaders());
 						}
 						finally
 						{
@@ -378,14 +398,14 @@ public class JGoogleAnalyticsTracker
 				break;
 
 			case SYNCHRONOUS:
-				dispatchRequest(url);
+				dispatchRequest(url, clientData.getHeaders());
 				break;
 
 			case SINGLE_THREAD:
 			default: // in case it's null, we default to the single-thread
 				synchronized (fifo)
 				{
-					fifo.add(url);
+					fifo.add(new HTTPData(url, clientData.getHeaders()));
 					fifo.notify();
 				}
 				if (!backgroundThreadMayRun)
@@ -397,7 +417,7 @@ public class JGoogleAnalyticsTracker
 		}
 	}
 
-	private static void dispatchRequest(String requestURL)
+	private static void dispatchRequest(String requestURL, List<Entry<String, String>> headers)
 	{
 		try
 		{
@@ -405,6 +425,13 @@ public class JGoogleAnalyticsTracker
 			final HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
 			connection.setRequestMethod("GET");
 			connection.setInstanceFollowRedirects(true);
+			if (headers != null)
+			{
+				for (Map.Entry<String, String> entry : headers)
+				{
+					connection.setRequestProperty(entry.getKey(), entry.getValue());
+				}
+			}
 			connection.connect();
 			final int responseCode = connection.getResponseCode();
 			if (responseCode != HttpURLConnection.HTTP_OK)
@@ -451,7 +478,7 @@ public class JGoogleAnalyticsTracker
 					{
 						try
 						{
-							String url = null;
+							HTTPData httpData = null;
 
 							synchronized (fifo)
 							{
@@ -463,15 +490,15 @@ public class JGoogleAnalyticsTracker
 								if (!fifo.isEmpty())
 								{
 									// Get a reference to the oldest element in the FIFO, but leave it in the FIFO until it is processed.
-									url = fifo.peek();
+									httpData = fifo.peek();
 								}
 							}
 
-							if (url != null)
+							if (httpData != null)
 							{
 								try
 								{
-									dispatchRequest(url);
+									dispatchRequest(httpData.url, httpData.headers);
 								}
 								finally
 								{
