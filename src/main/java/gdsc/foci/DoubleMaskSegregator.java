@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -47,6 +49,8 @@ public class DoubleMaskSegregator implements PlugIn
 	 */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (!showDialog())
 		{
 			return;
