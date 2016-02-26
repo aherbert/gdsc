@@ -44,12 +44,10 @@ import java.util.regex.MatchResult;
 
 /**
  * Common tracking calls are implemented as methods, but if you want to control
- * what data to send, then use {@link #makeCustomRequest(AnalyticsRequestData)}.
+ * what data to send, then use {@link #makeCustomRequest(RequestData)}.
  * If you are making custom calls, the only requirements are:
  * <ul>
- * <li>If you are tracking an event, {@link AnalyticsRequestData#setEventCategory(String)} and
- * {@link AnalyticsRequestData#setEventAction(String)} must both be populated.</li>
- * <li>If you are not tracking an event, {@link AnalyticsRequestData#setPageURL(String)} must be populated</li>
+ * <li>{@link RequestData#setPageURL(String)} must be populated</li>
  * </ul>
  * See the <a
  * href=http://code.google.com/intl/en-US/apis/analytics/docs/tracking/gaTrackingTroubleshooting.html#gifParameters>

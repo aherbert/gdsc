@@ -24,8 +24,6 @@ package gdsc.analytics;
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * @see https://code.google.com/archive/p/jgoogleanalyticstracker/
  */
 
 import java.awt.Dimension;
@@ -92,11 +90,9 @@ public class ClientDataManager
 		
 		//data.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"); // To simulate Chrome
 		
-		// The Java URLConnection User-Agent property will default to Java/1.6.0.19 where the 
+		// The Java URLConnection User-Agent property will default to 'Java/1.6.0.19' where the 
 		// last part is the JRE version.
-		// Build e.g. Java/1.6.0.19 (Windows 7 6.1)
-		
-		
+		// Add the operating system to this, e.g. Java/1.6.0.19 (Windows 7 6.1)
 		StringBuilder sb = new StringBuilder();
 		sb.append("Java/").append(System.getProperty("java.version"));
 		sb.append(" (").append(System.getProperty("os.name")).append(" ").append(System.getProperty("os.version")).append(")");

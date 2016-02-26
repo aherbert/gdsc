@@ -36,13 +36,13 @@ public interface SessionStore
 	 * Load the session state.
 	 * <p>
 	 * Should return an array consisting of [visitorId,initial,previous,current,latest,sessionNumber,count]
+	 * 
 	 * @return The session state
 	 */
 	long[] load();
-	
+
 	/**
 	 * Save the session state.
-	 * @return The session state
 	 */
 	void save(long[] state);
 }

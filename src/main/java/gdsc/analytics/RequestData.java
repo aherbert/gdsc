@@ -4,7 +4,6 @@ import java.util.Arrays;
 
 /*
  * <ul>
- * <li>Copyright (c) 2010 Daniel Murphy
  * <li>Copyright (c) 2016 Alex Herbert
  * </ul>
  * 
@@ -26,8 +25,6 @@ import java.util.Arrays;
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * @see https://code.google.com/archive/p/jgoogleanalyticstracker/
  */
 
 /**
@@ -163,12 +160,12 @@ public class RequestData
 	/**
 	 * Sets the page title, which will be the Content Title in Google Analytics
 	 * 
-	 * @param argContentTitle
-	 *            the contentTitle to set
+	 * @param pageTitle
+	 *            the page title to set
 	 */
-	public void setPageTitle(String argContentTitle)
+	public void setPageTitle(String pageTitle)
 	{
-		pageTitle = argContentTitle;
+		this.pageTitle = pageTitle;
 	}
 
 	/**
@@ -183,12 +180,12 @@ public class RequestData
 	 * The page url, which is required. Traditionally this is of the form "/content/page.html", but you can
 	 * put anything here (like "/com/dmurph/test.java").
 	 * 
-	 * @param argPageURL
-	 *            the pageURL to set
+	 * @param pageURL
+	 *            the page URL to set
 	 */
-	public void setPageURL(String argPageURL)
+	public void setPageURL(String pageURL)
 	{
-		pageURL = argPageURL;
+		this.pageURL = pageURL;
 	}
 
 	/**
