@@ -49,7 +49,7 @@ public class RequestData
 	 * Scope the custom variable to the page level
 	 */
 	public static final int LEVEL_PAGE = 3;
-	
+
 	private String[] labels = null;
 	private String[] values = null;
 	private int[] levels = null;
@@ -60,15 +60,29 @@ public class RequestData
 
 	/**
 	 * Add a custom variable
+	 * <p>
+	 * Note: Session variables have a 128 character key-value pair limit. You can set up to 5 variables at a given
+	 * level.
 	 * 
-	 * @param label The variable label
-	 * @param value The variable value
-	 * @param level The scope (1=visitor; 2=session; 3=page)
+	 * @param label
+	 *            The variable label
+	 * @param value
+	 *            The variable value
+	 * @param level
+	 *            The scope (1=visitor; 2=session; 3=page)
+	 * @return True if the variable was stored
 	 */
-	public void addCustomVariable(String label, String value, int level)
+	public boolean addCustomVariable(String label, String value, int level)
 	{
 		if (label == null || value == null)
-			return;
+			return false;
+		// https://developers.google.com/analytics/devguides/collection/gajs/gaTrackingCustomVariables
+		// Note: Session variables have a 128 character key-value pair limit.
+		if (level == LEVEL_SESSION && (label.length() + value.length()) > 128)
+			return false;
+		// You can set up to 5 variables at a given level.
+		if (count(level) > 5)
+			return false;
 		if (labels == null)
 		{
 			labels = new String[1];
@@ -88,6 +102,24 @@ public class RequestData
 		size++;
 
 		setCustomVariablesURL(null);
+
+		return true;
+	}
+
+	/**
+	 * Count the number of variables at the given level
+	 * 
+	 * @param level
+	 *            The level
+	 * @return The count
+	 */
+	private int count(int level)
+	{
+		int count = 0;
+		for (int i = 0; i < size; i++)
+			if (levels[i] == level)
+				count++;
+		return count;
 	}
 
 	/**

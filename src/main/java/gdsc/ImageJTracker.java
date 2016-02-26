@@ -102,9 +102,9 @@ public class ImageJTracker
 			// Note that the GA tracking code is specific to this codebase and so we do not
 			// explicitly identify it (i.e. the Java package/program name) here.
 			baseUrl = '/' + Version.getMajorMinorRelease() + '/';
-			
+
 			// Create the tracker
-			final SessionData sessionData = ImageJSessionData.newImageJSessionData();
+			final SessionData sessionData = SessionData.newSessionData(new ImageJSessionStore());
 			final ClientData data = ClientDataManager.newClientData("UA-74107394-1", sessionData);
 
 			tracker = new JGoogleAnalyticsTracker(data, GoogleAnalyticsVersion.V_5_6_7, DispatchMode.SINGLE_THREAD);
@@ -122,6 +122,7 @@ public class ImageJTracker
 			// This call should return a string like:
 			//   ImageJ 1.48a; Java 1.7.0_11 [64-bit]; Windows 7 6.1; 29MB of 5376MB (<1%)
 			// (This should also be different if we are running within Fiji)
+			// Note: Session variables have a 128 character key-value pair limit.
 			// TODO - See how this is used in Google Analytics reporting and maybe change to 
 			// add the values individually
 			requestData = new RequestData();

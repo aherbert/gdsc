@@ -77,6 +77,7 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 		final long initial = sessionData.getInitial();
 		final long previous = sessionData.getPrevious();
 		final long current = sessionData.getCurrent();
+		final long now = sessionData.getLatest();
 		final int sessionNumber = sessionData.getSessionNumber();
 		final int hitCount = sessionData.getCount();
 
@@ -120,8 +121,6 @@ public class GoogleAnalyticsURLBuilder implements IGoogleAnalyticsURLBuilder
 
 		StringBuilder sb = new StringBuilder();
 		sb.append(URL_PREFIX);
-
-		final long now = SessionData.timestamp();
 
 		sb.append("?utmwv=").append(getVersion()); // version
 		sb.append("&utms=").append(hitCount); // hit number for the session? 

@@ -73,18 +73,21 @@ public class SessionData
 	 */
 	protected final int TIMEOUT = 30 * 60;
 
+	private SessionStore sessionStore = null;
+
 	/**
 	 * Create a new session
 	 * 
 	 * @param visitorId
-	 * @param sessionNumber
+	 *            The visitor Id
 	 */
-	protected SessionData(int visitorId, int sessionNumber)
+	private SessionData(int visitorId)
 	{
 		this.visitorId = visitorId;
 		initial = previous = current = latest = timestamp();
-		this.sessionNumber = sessionNumber;
-		count = 0;
+		this.count = 0;
+		this.sessionNumber = 1;
+		this.sessionStore = null;
 	}
 
 	/**
@@ -98,14 +101,98 @@ public class SessionData
 	}
 
 	/**
+	 * Create a new session
+	 * 
+	 * @param sessionStore
+	 *            The session store used to load/save the state
+	 */
+	private SessionData(SessionStore sessionStore) throws IllegalArgumentException
+	{
+		long[] data = sessionStore.load();
+		if (data == null || data.length < 7)
+			throw new IllegalArgumentException("Invalid session data");
+		this.visitorId = getInt(data[0], Integer.MIN_VALUE);
+		this.initial = data[1];
+		this.previous = data[2];
+		this.current = data[3];
+		this.latest = data[4];
+		this.count = getInt(data[5], 0);
+		this.sessionNumber = getInt(data[6], 0);
+		this.sessionStore = sessionStore;
+
+		// Check the timestamps make sense
+		if (latest < current)
+			throw new IllegalArgumentException("Latest timestamp before current");
+		if (current < previous)
+			throw new IllegalArgumentException("Current timestamp before previous");
+		if (previous < initial)
+			throw new IllegalArgumentException("Previous timestamp before initial");
+	}
+
+	/**
+	 * Check the long can be cast to an integer without truncation
+	 * 
+	 * @param l
+	 *            A long
+	 * @param min
+	 *            The minimum
+	 * @return The integer value
+	 * @throws IllegalArgumentException
+	 */
+	private static int getInt(long l, int min) throws IllegalArgumentException
+	{
+		if (l <= Integer.MAX_VALUE && l >= min)
+			return (int) l;
+		throw new IllegalArgumentException("Session data is not a valid integer");
+	}
+
+	/**
 	 * Initialises a new session data, with new random visitor id
 	 */
 	public static SessionData newSessionData()
 	{
 		final int visitorId = (new SecureRandom().nextInt() & 0x7FFFFFFF);
-		return new SessionData(visitorId, 1);
+		return new SessionData(visitorId);
 	}
 
+	/**
+	 * Initialises a new session data using the session store to load the session, else create a new session with random
+	 * visitor id
+	 */
+	public static SessionData newSessionData(SessionStore sessionStore)
+	{
+		if (sessionStore != null)
+		{
+			try
+			{
+				return new SessionData(sessionStore);
+			}
+			catch (IllegalArgumentException e)
+			{
+				// Ignore this and create a default new session
+			}
+		}
+		SessionData sessionData = newSessionData();
+		// Add the session store and save the new session 
+		sessionData.sessionStore = sessionStore;
+		sessionData.save();
+		return sessionData;
+	}
+
+	/**
+	 * Save the session state. This should be called whenever the state changes.
+	 */
+	private void save()
+	{
+		if (sessionStore != null)
+			sessionStore.save(new long[] { visitorId, initial, previous, current, latest, count, sessionNumber });
+	}
+
+	/**
+	 * Get the visitor Id
+	 * 
+	 * @return The visitor Id
+	 */
 	public int getVisitorId()
 	{
 		return visitorId;
@@ -139,6 +226,17 @@ public class SessionData
 	public long getCurrent()
 	{
 		return current;
+	}
+
+	/**
+	 * Get the latest timestamp of the current session (time of last call to {@link #refresh()} or the time the session
+	 * was created)
+	 * 
+	 * @return Latest timestamp
+	 */
+	public long getLatest()
+	{
+		return latest;
 	}
 
 	/**
@@ -179,11 +277,20 @@ public class SessionData
 
 		// Get the current session expire time
 		final long expires = latest + TIMEOUT;
-		// Get the current time
-		latest = timestamp();
+		// Get the current time.
+		// Only do this if the count is above 1, i.e. do not update the 
+		// timestamp if the session has just been created
+		if (count > 1)
+			latest = timestamp();
 		// Check if the session has expired
 		if (latest > expires)
+		{
 			newSession(latest);
+		}
+		else
+		{
+			save();
+		}
 	}
 
 	/**
@@ -208,5 +315,6 @@ public class SessionData
 		this.sessionNumber++;
 		// Reset the hit counter
 		this.count = 0;
+		save();
 	}
 }
