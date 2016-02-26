@@ -116,8 +116,8 @@ public class SessionData
 		this.previous = data[2];
 		this.current = data[3];
 		this.latest = data[4];
-		this.count = getInt(data[5], 0);
-		this.sessionNumber = getInt(data[6], 0);
+		this.sessionNumber = getInt(data[5], 0);
+		this.count = getInt(data[6], 0);
 		this.sessionStore = sessionStore;
 
 		// Check the timestamps make sense
@@ -185,7 +185,7 @@ public class SessionData
 	private void save()
 	{
 		if (sessionStore != null)
-			sessionStore.save(new long[] { visitorId, initial, previous, current, latest, count, sessionNumber });
+			sessionStore.save(new long[] { visitorId, initial, previous, current, latest, sessionNumber, count });
 	}
 
 	/**
