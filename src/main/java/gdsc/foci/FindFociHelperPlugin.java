@@ -43,7 +43,7 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 	 */
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin("FindFoci Helper", arg);
+		ImageJTracker.recordPlugin(FindFoci.TITLE + " Helper", arg);
 		showFindFociPickerWindow();
 	}
 

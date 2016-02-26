@@ -14,6 +14,8 @@ import ij.process.ImageStatistics;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 
+import gdsc.ImageJTracker;
+
 /**
  * Aligns an image stack to a reference image using XY translation to maximise the normalised correlation. Takes in:
  * 
@@ -51,6 +53,8 @@ public class Align_Images implements PlugIn
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		String[] imageList = getImagesList();
 
 		if (imageList.length < 1)

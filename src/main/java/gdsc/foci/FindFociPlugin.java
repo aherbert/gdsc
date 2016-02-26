@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -147,6 +149,8 @@ public class FindFociPlugin implements PlugIn
 	 */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(FindFoci.TITLE + " GUI", arg);
+		
 		if (WindowManager.getImageCount() < 1)
 		{
 			IJ.showMessage("No images opened.");
