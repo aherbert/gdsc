@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -54,7 +56,7 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
  */
 public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListener
 {
-	public static final String FRAME_TITLE = "Assign Foci To Clusters";
+	public static final String TITLE = "Assign Foci To Clusters";
 
 	private static int imageFlags = DOES_8G + DOES_16 + SNAPSHOT;
 	private static int noImageFlags = NO_IMAGE_REQUIRED + FINAL_PROCESSING;
@@ -131,10 +133,12 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			displayResults();
 			return DONE;
 		}
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		results = FindFoci.getResults();
 		if (results == null || results.isEmpty())
 		{
-			IJ.error(FRAME_TITLE, "Require " + FindFoci.TITLE + " results in memory");
+			IJ.error(TITLE, "Require " + FindFoci.TITLE + " results in memory");
 			return DONE;
 		}
 
@@ -572,7 +576,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addHelp(URL.FIND_FOCI);
 		gd.addMessage(ImageJHelper.pleural(results.size(), "result"));
 
@@ -837,11 +841,11 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			}
 
 			// Set a colour table if this is a new image. Otherwise the existing one is preserved.
-			ImagePlus clusterImp = WindowManager.getImage(FRAME_TITLE);
+			ImagePlus clusterImp = WindowManager.getImage(TITLE);
 			if (clusterImp == null)
 				newStack.setColorModel(getColorModel());
 
-			clusterImp = ImageJHelper.display(FRAME_TITLE, newStack);
+			clusterImp = ImageJHelper.display(TITLE, newStack);
 
 			labelClusters(clusterImp);
 		}
@@ -1024,7 +1028,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	private TextWindow createWindow(TextWindow window, String title, String header, int h)
 	{
 		if (window == null || !window.isVisible())
-			window = new TextWindow(FRAME_TITLE + " " + title, header, "", 800, h);
+			window = new TextWindow(TITLE + " " + title, header, "", 800, h);
 		return window;
 	}
 }

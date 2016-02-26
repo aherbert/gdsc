@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -40,7 +42,7 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
  */
 public class AssignFociToObjects implements PlugInFilter
 {
-	public static final String FRAME_TITLE = "Assign Foci";
+	public static final String TITLE = "Assign Foci";
 
 	private static final int flags = DOES_16 + DOES_8G + NO_CHANGES + NO_UNDO;
 	private static String input = "";
@@ -93,6 +95,8 @@ public class AssignFociToObjects implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (imp == null)
 			return DONE;
 		this.imp = imp;
@@ -254,7 +258,7 @@ public class AssignFociToObjects implements PlugInFilter
 				if (yMax < yValues[i])
 					yMax = yValues[i];
 			}
-			String title = FRAME_TITLE + " Histogram";
+			String title = TITLE + " Histogram";
 			Plot plot = new Plot(title, "Count", "Frequency", xValues, yValues);
 			plot.setLimits(0, xValues[xValues.length - 1], 0, yMax);
 			plot.addLabel(0, 0,
@@ -334,11 +338,11 @@ public class AssignFociToObjects implements PlugInFilter
 		ArrayList<int[]> roiResults = getRoiResults();
 		if (findFociResults == null && roiResults == null)
 		{
-			IJ.error(FRAME_TITLE, "No " + FindFoci.TITLE + " results in memory or point ROI on the image");
+			IJ.error(TITLE, "No " + FindFoci.TITLE + " results in memory or point ROI on the image");
 			return false;
 		}
 
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addHelp(URL.FIND_FOCI);
 
 		String[] options = new String[2];
@@ -389,7 +393,7 @@ public class AssignFociToObjects implements PlugInFilter
 		results = (input.equalsIgnoreCase("ROI")) ? roiResults : findFociResults;
 		if (results == null)
 		{
-			IJ.error(FRAME_TITLE, "No foci could be loaded");
+			IJ.error(TITLE, "No foci could be loaded");
 			return false;
 		}
 
@@ -508,7 +512,7 @@ public class AssignFociToObjects implements PlugInFilter
 	private TextWindow createWindow(TextWindow window, String title, String header)
 	{
 		if (window == null || !window.isVisible())
-			window = new TextWindow(FRAME_TITLE + " " + title, header, "", 800, 400);
+			window = new TextWindow(TITLE + " " + title, header, "", 800, 400);
 		return window;
 	}
 
@@ -527,7 +531,7 @@ public class AssignFociToObjects implements PlugInFilter
 			ip.set(i, objectMask[i]);
 
 		ip.setMinAndMax(0, oa.getMaxObject());
-		ImagePlus imp = ImageJHelper.display(FRAME_TITLE + " Objects", ip);
+		ImagePlus imp = ImageJHelper.display(TITLE + " Objects", ip);
 		if (showFoci && found.length > 0)
 		{
 			int[] xin = new int[found.length];

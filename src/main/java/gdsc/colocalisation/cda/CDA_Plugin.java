@@ -1,5 +1,7 @@
 package gdsc.colocalisation.cda;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -84,7 +86,7 @@ import javax.swing.JPanel;
 public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListener, KeyListener, Runnable
 {
 	private static final long serialVersionUID = 1L;
-	private static String FRAME_TITLE = "CDA Plugin";
+	private static String TITLE = "CDA Plugin";
 	private static String OPTION_NONE = "(None)";
 	private static String OPTION_MASK = "Use as mask";
 	private static String OPTION_MIN_VALUE = "Min Display Value";
@@ -279,7 +281,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	public CDA_Plugin()
 	{
-		super(FRAME_TITLE);
+		super(TITLE);
 	}
 
 	/*
@@ -289,6 +291,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 */
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.showMessage("No images opened.");
@@ -637,7 +641,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		// Check inputs
 		if (roiStack1 == null || roiStack2 == null || confinedStack == null)
 		{
-			IJ.showMessage(FRAME_TITLE, "ROIs must be at the same width and height of the input images");
+			IJ.showMessage(TITLE, "ROIs must be at the same width and height of the input images");
 			return;
 		}
 
@@ -852,7 +856,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		if (stack != null && (w != stack.getWidth() || h != stack.getHeight() || s != stack.getSize()))
 		{
-			IJ.showMessage(FRAME_TITLE, "Images must be the same width and height and depth");
+			IJ.showMessage(TITLE, "Images must be the same width and height and depth");
 			return false;
 		}
 		return true;
@@ -1354,7 +1358,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		if (tw == null || !tw.isShowing())
 		{
 			heading = createHeading(heading);
-			tw = new TextWindow(FRAME_TITLE + " Results", heading.toString(), "", 1000, 300);
+			tw = new TextWindow(TITLE + " Results", heading.toString(), "", 1000, 300);
 		}
 
 		StringBuffer resultsEntry = new StringBuffer();
@@ -1789,7 +1793,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		if (WindowManager.getImageCount() == 0)
 		{
-			// IJ.showMessage(FRAME_TITLE, "No images opened.");
+			// IJ.showMessage(TITLE, "No images opened.");
 			return false;
 		}
 
@@ -1799,7 +1803,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			ImagePlus imp = WindowManager.getImage(channel1List.getSelectedItem());
 			if (imp == null || (imp.getNChannels() + imp.getNFrames() < 3))
 			{
-				IJ.showMessage(FRAME_TITLE,
+				IJ.showMessage(TITLE,
 						"Requires 2 images or a multi-channel/frame stack. Images must be 8-bit or 16-bit grayscale.");
 				return false;
 			}
@@ -1810,7 +1814,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 		if (randomRadius >= maximumRadius)
 		{
-			IJ.showMessage(FRAME_TITLE, "Require '" + choiceRandomRadius + "' < '" + choiceMaximumRadius + "'");
+			IJ.showMessage(TITLE, "Require '" + choiceRandomRadius + "' < '" + choiceMaximumRadius + "'");
 			return false;
 		}
 
@@ -2224,7 +2228,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			ImagePlus imp = (imageList.isEmpty()) ? null : WindowManager.getImage(imageList.get(0));
 			if (imp == null || (imp.getNChannels() + imp.getNFrames() < 3))
 			{
-				IJ.showMessage(FRAME_TITLE,
+				IJ.showMessage(TITLE,
 						"Requires 2 images or a multi-channel/frame stack. Images must be 8-bit or 16-bit grayscale.");
 			}
 		}
@@ -2237,7 +2241,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			images[i] = images2[i + 1] = imageList.get(i);
 		}
 
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addChoice(choiceChannel1.replace(" ", "_"), images, getTitle(images, channel1Index));
 		gd.addChoice(choiceChannel2.replace(" ", "_"), images, getTitle(images, channel2Index));

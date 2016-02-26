@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.ImageJTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -45,7 +47,7 @@ import java.util.Arrays;
  */
 public class SpotDensity implements PlugIn
 {
-	public static String FRAME_TITLE = "Spot Density";
+	public static String TITLE = "Spot Density";
 	private static TextWindow resultsWindow = null;
 
 	private static String resultsName1 = "";
@@ -93,11 +95,13 @@ public class SpotDensity implements PlugIn
 
 	public void run(String arg)
 	{
+		ImageJTracker.recordPlugin(TITLE, arg);
+		
 		// List the foci results
 		String[] names = FindFoci.getResultsNames();
 		if (names == null || names.length == 0)
 		{
-			IJ.error(FRAME_TITLE, "Spots must be stored in memory using the " + FindFoci.TITLE + " plugin");
+			IJ.error(TITLE, "Spots must be stored in memory using the " + FindFoci.TITLE + " plugin");
 			return;
 		}
 
@@ -111,11 +115,11 @@ public class SpotDensity implements PlugIn
 
 		if (maskImageList.length == 0)
 		{
-			IJ.error(FRAME_TITLE, "No mask images and no area ROI on current image");
+			IJ.error(TITLE, "No mask images and no area ROI on current image");
 			return;
 		}
 
-		GenericDialog gd = new GenericDialog(FRAME_TITLE);
+		GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage("Analyses spots within a mask/ROI region\nand computes density and closest distances.");
 
@@ -308,8 +312,8 @@ public class SpotDensity implements PlugIn
 
 		// Truncate the unused r for the plot
 		r = Arrays.copyOf(r, nBins);
-		Plot plot1 = new Plot(FRAME_TITLE + " Min Distance", "Distance (px)", "Frequency", r, dMin);
-		PlotWindow pw1 = ImageJHelper.display(FRAME_TITLE + " Min Distance", plot1);
+		Plot plot1 = new Plot(TITLE + " Min Distance", "Distance (px)", "Frequency", r, dMin);
+		PlotWindow pw1 = ImageJHelper.display(TITLE + " Min Distance", plot1);
 
 		// The final bin may be empty if the correlation interval was a factor of the correlation distance
 		if (pcf[pcf.length - 1] == 0)
@@ -379,19 +383,19 @@ public class SpotDensity implements PlugIn
 	{
 		double avDensity = (double) pc.n / pc.area;
 		String title = "Pair Correlation";
-		Plot plot2 = new Plot(FRAME_TITLE + " " + title, "r (px)", "g(r)", pc.r, pc.pcf);
+		Plot plot2 = new Plot(TITLE + " " + title, "r (px)", "g(r)", pc.r, pc.pcf);
 		plot2.setColor(Color.red);
 		plot2.drawLine(pc.r[0], 1, pc.r[pc.r.length - 1], 1);
 		plot2.addLabel(0, 0, "Av.Density = " + IJ.d2s(avDensity, -3) + " px^-2");
 		plot2.setColor(Color.blue);
-		return ImageJHelper.display(FRAME_TITLE + " " + title, plot2);
+		return ImageJHelper.display(TITLE + " " + title, plot2);
 	}
 
 	private void createResultsWindow()
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
-			resultsWindow = new TextWindow(FRAME_TITLE + " Summary", createResultsHeader(), "", 700, 300);
+			resultsWindow = new TextWindow(TITLE + " Summary", createResultsHeader(), "", 700, 300);
 
 			// Allow clicking multiple results in the window to show a combined curve
 			resultsWindow.getTextPanel().addMouseListener(new MouseListener()
@@ -431,7 +435,7 @@ public class SpotDensity implements PlugIn
 					{
 						// Ask the user which curves to combine since we may want to ignore some 
 						// between start and end
-						GenericDialog gd = new GenericDialog(FRAME_TITLE);
+						GenericDialog gd = new GenericDialog(TITLE);
 						gd.addMessage("Select which curves to combine");
 
 						int count2 = 0;
