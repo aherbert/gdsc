@@ -412,7 +412,7 @@ public class JGoogleAnalyticsTracker
 			connection.setRequestMethod("POST");
 			connection.setDoOutput(true);
 			connection.setUseCaches(false);
-			final byte[] out = parameters.getBytes(StandardCharsets.UTF_8);
+			final byte[] out = parameters.getBytes("UTF-8");
 			final int length = out.length;
 			connection.setFixedLengthStreamingMode(length);
 			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
