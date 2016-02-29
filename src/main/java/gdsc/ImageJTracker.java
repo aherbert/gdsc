@@ -14,25 +14,24 @@ package gdsc;
 
 import java.lang.reflect.Method;
 
-import gdsc.analytics.ClientData;
 import gdsc.analytics.ClientDataManager;
+import gdsc.analytics.ClientParameters;
 import gdsc.analytics.ConsoleLogger;
 import gdsc.analytics.JGoogleAnalyticsTracker;
-import gdsc.analytics.RequestData;
-import gdsc.analytics.SessionData;
 import gdsc.analytics.JGoogleAnalyticsTracker.DispatchMode;
 import gdsc.analytics.JGoogleAnalyticsTracker.GoogleAnalyticsVersion;
 import ij.IJ;
 import ij.ImageJ;
+import ij.Prefs;
 
 /**
  * Provide methods to track code usage within ImageJ
  */
 public class ImageJTracker
 {
+	private static final String GDSC_CLIENT_ID_PROPERTY = "gdsc.ga.clientId";
+
 	private static JGoogleAnalyticsTracker tracker = null;
-	private static String baseUrl = null;
-	private static RequestData requestData = null;
 
 	/**
 	 * Record the use of the ImageJ plugin
@@ -44,9 +43,9 @@ public class ImageJTracker
 	 */
 	public static void recordPlugin(String name, String argument)
 	{
-		String url = name;
+		String url = '/' + name;
 		if (argument != null && argument.length() > 0)
-			url += '/' + argument;
+			url += "?arg=" + argument;
 
 		track(url, name);
 	}
@@ -76,9 +75,9 @@ public class ImageJTracker
 	public static void recordClass(@SuppressWarnings("rawtypes") Class clazz, Method method)
 	{
 		final String title = clazz.getName();
-		String url = title.replace('.', '/');
+		String url = '/' + title.replace('.', '/');
 		if (method != null)
-			url += '/' + method.getName();
+			url += "?method=" + method.getName();
 		track(url, title);
 	}
 
@@ -88,29 +87,26 @@ public class ImageJTracker
 
 		initialise();
 
-		String url = baseUrl + pageUrl;
-		requestData.setPageURL(url);
-		requestData.setPageTitle(pageTitle);
-		tracker.makeCustomRequest(requestData);
+		tracker.pageview(pageUrl, pageTitle);
 	}
 
 	private static boolean initialise()
 	{
 		if (tracker == null)
 		{
-			// Set up a base url using the package version.
-			// Note that the GA tracking code is specific to this codebase and so we do not
-			// explicitly identify it (i.e. the Java package/program name) here.
-			baseUrl = '/' + Version.getMajorMinorRelease() + '/';
+			// Create the tracker ...
 
-			// Create the tracker
-			final SessionData sessionData = SessionData.newSessionData(new ImageJSessionStore());
-			final ClientData data = ClientDataManager.newClientData("UA-74107394-1", sessionData);
+			// Get the client parameters
+			final String clientId = Prefs.get(GDSC_CLIENT_ID_PROPERTY, null);
+			final ClientParameters clientParameters = new ClientParameters("UA-74107394-1", clientId,
+					"GDSC ImageJ Plugins");
+			
+			ClientDataManager.populate(clientParameters);
 
-			tracker = new JGoogleAnalyticsTracker(data, GoogleAnalyticsVersion.V_5_6_7, DispatchMode.SINGLE_THREAD);
+			// Record for next time
+			Prefs.set(GDSC_CLIENT_ID_PROPERTY, clientParameters.getClientId());
 
-			// DEBUG: Enable logging
-			JGoogleAnalyticsTracker.setLogger(new ConsoleLogger());
+			clientParameters.setApplicationVersion(Version.getMajorMinorRelease());
 
 			// Record the ImageJ information.
 			ImageJ ij = IJ.getInstance();
@@ -119,9 +115,6 @@ public class ImageJTracker
 				// Run embedded without showing
 				ij = new ImageJ(ImageJ.NO_SHOW);
 			}
-			// Note: Session variables have a 128 character key-value pair limit.
-			// For better use in Google Analytics reporting add values indvidually.
-			requestData = new RequestData();
 
 			// ImageJ version
 			// This call should return a string like:
@@ -130,15 +123,24 @@ public class ImageJTracker
 			String info = ij.getInfo();
 			if (info.indexOf(';') != -1)
 				info = info.substring(0, info.indexOf(';'));
-			requestData.addCustomVariable("ImageJ", info, RequestData.LEVEL_SESSION);
-			
+
+			clientParameters.addCustomDimension(info);
+
 			// Java version
-			requestData.addCustomVariable("java.version", System.getProperty("java.version"), RequestData.LEVEL_SESSION);
-			// OS
-			requestData.addCustomVariable("os.name", System.getProperty("os.name"), RequestData.LEVEL_SESSION);
-			requestData.addCustomVariable("os.version", System.getProperty("os.version"), RequestData.LEVEL_SESSION);
-			requestData.addCustomVariable("os.arch", System.getProperty("os.arch"), RequestData.LEVEL_SESSION);
+			clientParameters.addCustomDimension(System.getProperty("java.version"));
 			
+			// OS
+			clientParameters.addCustomDimension(System.getProperty("os.name"));
+			clientParameters.addCustomDimension(System.getProperty("os.version"));
+			clientParameters.addCustomDimension(System.getProperty("os.arch"));
+
+			// Create the tracker
+			tracker = new JGoogleAnalyticsTracker(clientParameters, GoogleAnalyticsVersion.V_1,
+					DispatchMode.SINGLE_THREAD);
+
+			// DEBUG: Enable logging
+			JGoogleAnalyticsTracker.setLogger(new ConsoleLogger());
+
 			return true;
 		}
 		return false;

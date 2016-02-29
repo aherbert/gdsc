@@ -4,17 +4,17 @@
  * <li>Copyright (c) 2016 Alex Herbert
  * </ul>
  * 
- * The core of this packgage is based upon JGoogleAnalyticsTracker by Daniel Murphy.
+ * This package is based on ideas from JGoogleAnalyticsTracker by Daniel Murphy.
  * A similar package is JGoogleAnalytics by Siddique Hameed.
  * <p>
- * The JGoogleAnalyticsTracker code has been modified to allow better
- * use of the session tracking within Google Analytics using session
- * timeout. The slf4j dependency was removed. The URL data for Google Analytics 
- * was updated to the latest version (as of Feb 2016). As a result all of
- * the classes related to building the GA URL were re-written and so have been 
- * name changed from their equivalent classes in the parent project. The URIEncoder 
- * and JGoogleAnalyticsTracker classes have been modified but remain
- * recognisable and so have the same name.
+ * The JGoogleAnalyticsTracker code dummied the GET request sent to Google 
+ * Analytics by a browser. This code uses the new Analytics Measurement 
+ * Protocol which is designed to allow any web connected device to measure 
+ * user interaction via a HTTP POST request.
+ * <p>
+ * As a result all of the classes related to building the analytics URL were 
+ * re-written. The URIEncoder and JGoogleAnalyticsTracker classes have been 
+ * modified but remain recognisable and so have the same name.
  * <p>
  * Since the code will only be used within a Java application
  * the referral, search referral and campaign functionality has been
@@ -44,6 +44,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * <p>
+ * @see https://developers.google.com/analytics/devguides/collection/protocol/v1/
  * @see https://code.google.com/archive/p/jgoogleanalyticstracker/
  * @see https://github.com/siddii/jgoogleanalytics
  */

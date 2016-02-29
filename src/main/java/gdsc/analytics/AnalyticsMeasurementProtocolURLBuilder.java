@@ -1,0 +1,162 @@
+package gdsc.analytics;
+
+import java.util.List;
+
+/*
+ * <ul>
+ * <li>Copyright (c) 2016 Alex Herbert
+ * </ul>
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * <p>
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ * <p>
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * @see https://code.google.com/archive/p/jgoogleanalyticstracker/
+ */
+
+import java.util.Random;
+
+/**
+ * Build the parameters used by Google Analytics Measurement Protocol.
+ * <p>
+ * This class only supports the pageview hit type.
+ * 
+ * @author Alex Herbert
+ * @see https://developers.google.com/analytics/devguides/collection/protocol/v1/
+ */
+public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasurementProtocolURLBuilder
+{
+	public static final String URL_PREFIX = "http://www.google-analytics.com/collect";
+
+	private final Random random = new Random();
+
+	public AnalyticsMeasurementProtocolURLBuilder()
+	{
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.analytics.IAnalyticsMeasurementProtocolURLBuilder#getVersion()
+	 */
+	public String getVersion()
+	{
+		return "1";
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.analytics.IAnalyticsMeasurementProtocolURLBuilder#buildURL(gdsc.analytics.ClientParameters,
+	 * gdsc.analytics.RequestParameters)
+	 */
+	public String buildURL(ClientParameters clientParameters, RequestParameters requestParameters)
+	{
+		// Details of how to build a URL are given here:
+		// https://developers.google.com/analytics/devguides/collection/protocol/v1/devguide#commonhits
+
+		StringBuilder sb = new StringBuilder();
+
+		sb.append("v=").append(getVersion()); // version
+
+		// Check if this is a new session
+		if (clientParameters.isNewSession())
+			sb.append("&sc=start");
+
+		// Build the client data
+		if (clientParameters.getUrl() == null)
+			buildClientURL(clientParameters);
+		sb.append(clientParameters.getUrl());
+
+		// Hit type
+		add(sb, "t", requestParameters.getHitType());
+
+		// Build the request data
+
+		// Check for more custom dimensions
+		if (requestParameters.getNumberOfCustomDimensions() > 0)
+		{
+			buildCustomDimensionsURL(sb, requestParameters.getCustomDimensions(),
+					clientParameters.getNumberOfCustomDimensions() + 1);
+		}
+
+		addCheck(sb, "dp", requestParameters.getDocumentPath());
+		addCheck(sb, "dt", requestParameters.getDocumentTitle());
+
+		// Cache buster.  
+		// Used to send a random number in GET requests to ensure browsers and proxies don't cache hits. 
+		// It should be sent as the final parameter of the request
+		sb.append("&z=" + random.nextInt());
+
+		return sb.toString();
+	}
+
+	/**
+	 * Add the key value pair
+	 * @param sb
+	 * @param key
+	 * @param value
+	 */
+	private void add(StringBuilder sb, String key, String value)
+	{
+		sb.append('&').append(key).append('=').append(URIEncoder.encodeURI(value));
+	}
+
+	/**
+	 * Add the key value pair if the value is not null
+	 * @param sb
+	 * @param key
+	 * @param value
+	 */
+	private void addCheck(StringBuilder sb, String key, String value)
+	{
+		if (value == null)
+			return;
+		add(sb, key, value);
+	}
+
+	private void buildClientURL(ClientParameters client)
+	{
+		StringBuilder sb = new StringBuilder();
+
+		add(sb, "tid", client.getTrackingId());
+		add(sb, "cid", client.getClientId());
+		add(sb, "an", client.getApplicationName());
+		addCheck(sb, "aid", client.getApplicationId());
+		addCheck(sb, "av", client.getApplicationVersion());
+		
+		addCheck(sb, "sr", client.getScreenResolution());
+		addCheck(sb, "ul", client.getUserLanguage());
+		addCheck(sb, "dh", client.getHostName());
+		addCheck(sb, "ua", client.getUserAgent());
+
+		sb.append("&je=1"); // java enabled
+
+		buildCustomDimensionsURL(sb, client.getCustomDimensions(), 1);
+
+		client.setUrl(sb.toString());
+	}
+
+	private void buildCustomDimensionsURL(StringBuilder sb, List<String> customDimensions, int start)
+	{
+		if (customDimensions == null)
+			return;
+		for (String value : customDimensions)
+			add(sb, "cd" + (start++), value);
+	}
+}

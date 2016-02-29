@@ -26,23 +26,72 @@ package gdsc.analytics;
  */
 
 /**
- * Provide function to save and load the session state.
- * 
- * @author Alex Herbert
+ * Represent a session
  */
-public interface SessionStore
+public class Session
 {
 	/**
-	 * Load the session state.
-	 * <p>
-	 * Should return an array consisting of [visitorId,initial,previous,current,latest,sessionNumber,count]
-	 * 
-	 * @return The session state
+	 * Google sessions timeout after 30 minutes of inactivity
 	 */
-	long[] load();
+	private long timeout = 30 * 60;
+	/**
+	 * Timestamp of the session.
+	 */
+	private long now;
 
 	/**
-	 * Save the session state.
+	 * Create a new session
 	 */
-	void save(long[] state);
+	public Session()
+	{
+		now = 0;
+	}
+
+	/**
+	 * Get the number of seconds since the epoch (midnight, January 1, 1970 UTC)
+	 * 
+	 * @return The timestamp in seconds
+	 */
+	public static long timestamp()
+	{
+		return System.currentTimeMillis() / 1000L;
+	}
+
+	/**
+	 * Check if the session is new (i.e. has not been initialised, has timed out, or been reset).
+	 * Calling this refreshes the current session to prevent timeout.
+	 */
+	public boolean isNew()
+	{
+		// Get the current session expire time
+		final long expires = now + timeout;
+		// Get the current time.
+		now = timestamp();
+		// Check if the session has expired
+		return (now > expires);
+	}
+
+	/**
+	 * Reset and start a new session
+	 */
+	public void reset()
+	{
+		now = 0;
+	}
+
+	/**
+	 * @return the timeout
+	 */
+	public long getTimeout()
+	{
+		return timeout;
+	}
+
+	/**
+	 * @param timeout the timeout to set
+	 */
+	public void setTimeout(long timeout)
+	{
+		this.timeout = timeout;
+	}
 }

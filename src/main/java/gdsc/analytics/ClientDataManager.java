@@ -38,20 +38,18 @@ import java.net.UnknownHostException;
 import ij.IJ;
 
 /**
- * Populates the ClientData with information from the system
+ * Populates the client with information from the system
  */
 public class ClientDataManager
 {
 	/**
-	 * Populates the ClientData with information from the system
+	 * Populates the client parameters with information from the system
 	 * 
 	 * @param data
 	 *            The data
 	 */
-	public static final void populate(ClientData data)
+	public static final void populate(ClientParameters data)
 	{
-		data.setEncoding(System.getProperty("file.encoding"));
-
 		String region = System.getProperty("user.region");
 		if (region == null)
 		{
@@ -84,8 +82,6 @@ public class ClientDataManager
 		final Dimension d = getScreenSize();
 		data.setScreenResolution(d.width + "x" + d.height);
 		
-		// Add HTTP headers which will be fed into the URLConnection.setRequestProperty(String, String) method.
-		// Some of this can be tracked by Google Analytics.
 		// The browser and operating system are taken from the User-Agent property.
 		
 		//data.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"); // To simulate Chrome
@@ -96,13 +92,14 @@ public class ClientDataManager
 		StringBuilder sb = new StringBuilder();
 		sb.append("Java/").append(System.getProperty("java.version"));
 		sb.append(" (").append(System.getProperty("os.name")).append(" ").append(System.getProperty("os.version")).append(")");
-		data.addHeader("User-Agent", sb.toString());
+		data.setUserAgent(sb.toString());
 		
 		// Note: Adding the OS does not currently work within Google Analytics.
 		//
 		// https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters#ua
 		// "The User Agent of the browser. Note that Google has libraries to identify real user agents. 
 		// Hand crafting your own agent could break at any time."
+		
 		// A better option is to pass in custom variables so this data can be used in reports.
 	}
 
@@ -129,35 +126,5 @@ public class ClientDataManager
 			return new Dimension(bounds.width, bounds.height);
 		else
 			return Toolkit.getDefaultToolkit().getScreenSize();
-	}
-
-	/**
-	 * Create a ClientData object and populate it with information from the system
-	 * 
-	 * @param trackingCode
-	 *            The Google Analytiucs tracking code
-	 * @return the client data
-	 */
-	public static ClientData newClientData(String trackingCode)
-	{
-		ClientData data = new ClientData(trackingCode);
-		populate(data);
-		return data;
-	}
-
-	/**
-	 * Create a ClientData object and populate it with information from the system
-	 * 
-	 * @param trackingCode
-	 *            The Google Analytiucs tracking code
-	 * @param sessionData
-	 *            The session data
-	 * @return the client data
-	 */
-	public static ClientData newClientData(String trackingCode, SessionData sessionData)
-	{
-		ClientData data = new ClientData(trackingCode, sessionData);
-		populate(data);
-		return data;
 	}
 }

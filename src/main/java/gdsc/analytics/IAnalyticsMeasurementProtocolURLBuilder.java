@@ -28,7 +28,7 @@ package gdsc.analytics;
 /**
  * URL builder for the tracking requests.
  */
-public interface IGoogleAnalyticsURLBuilder
+public interface IAnalyticsMeasurementProtocolURLBuilder
 {
 	/**
 	 * Gets the version for this builder
@@ -38,10 +38,11 @@ public interface IGoogleAnalyticsURLBuilder
 	public String getVersion();
 
 	/**
-	 * Build the URL request from the data
+	 * Build the parameters URL request from the data
 	 * 
-	 * @param requestData The request data
-	 * @return The URL
+	 * @param clientParameters The client parameter data
+	 * @param requestParameters The request parameter data
+	 * @return The parameters URL
 	 */
-	public String buildURL(RequestData requestData);
+	public String buildURL(ClientParameters clientParameters, RequestParameters requestParameters);
 }

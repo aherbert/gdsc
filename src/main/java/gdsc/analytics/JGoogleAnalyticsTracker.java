@@ -1,5 +1,7 @@
 package gdsc.analytics;
 
+import java.io.OutputStream;
+
 /*
  * <ul>
  * <li>Copyright (c) 2010 Daniel Murphy, Stefan Brozinski
@@ -34,20 +36,19 @@ import java.net.Proxy;
 import java.net.Proxy.Type;
 import java.net.SocketAddress;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Scanner;
 import java.util.regex.MatchResult;
 
 /**
  * Common tracking calls are implemented as methods, but if you want to control
- * what data to send, then use {@link #makeCustomRequest(RequestData)}.
+ * what data to send, then use {@link #makeCustomRequest(RequestParameters)}.
  * If you are making custom calls, the only requirements are:
  * <ul>
- * <li>{@link RequestData#setPageURL(String)} must be populated</li>
+ * <li>{@link RequestParameters#setPageURL(String)} must be populated</li>
  * </ul>
  * See the <a
  * href=http://code.google.com/intl/en-US/apis/analytics/docs/tracking/gaTrackingTroubleshooting.html#gifParameters>
@@ -73,7 +74,8 @@ import java.util.regex.MatchResult;
  * </p>
  * <p>
  * Note: This class has been forked from the JGoogleAnalyticsTracker project and modified by Alex Herbert to alter the
- * data sent to Google Analytics and remove the slfj dependency. The architecture for dispatching messages is unchanged.
+ * data sent to Google Analytics to use the POST method for the Measurement Protocol and remove the slfj dependency. The
+ * architecture for dispatching messages is unchanged.
  * </p>
  * 
  * @author Daniel Murphy, Stefan Brozinski, Alex Herbert
@@ -97,28 +99,11 @@ public class JGoogleAnalyticsTracker
 		SINGLE_THREAD
 	}
 
-	/**
-	 * Store the data for the HTTP Get method
-	 * 
-	 * @author a.herbert@sussex.ac.uk
-	 */
-	private class HTTPData
-	{
-		final String url;
-		final List<Entry<String, String>> headers;
-
-		HTTPData(String url, List<Entry<String, String>> headers)
-		{
-			this.url = url;
-			this.headers = headers;
-		}
-	}
-
 	private static Logger logger = new Logger();
 	private static final ThreadGroup asyncThreadGroup = new ThreadGroup("Async Google Analytics Threads");
 	private static long asyncThreadsRunning = 0;
 	private static Proxy proxy = Proxy.NO_PROXY;
-	private static Queue<HTTPData> fifo = new LinkedList<HTTPData>();
+	private static Queue<String> fifo = new LinkedList<String>();
 	private static Thread backgroundThread = null; // the thread used in 'queued' mode.
 	private static boolean backgroundThreadMayRun = false;
 
@@ -130,24 +115,25 @@ public class JGoogleAnalyticsTracker
 
 	public static enum GoogleAnalyticsVersion
 	{
-		V_5_6_7
+		V_1
 	}
 
 	private GoogleAnalyticsVersion version;
-	private ClientData clientData;
-	private IGoogleAnalyticsURLBuilder builder;
+	private ClientParameters clientParameters;
+	private IAnalyticsMeasurementProtocolURLBuilder builder;
 	private DispatchMode mode;
 	private boolean enabled;
 
-	public JGoogleAnalyticsTracker(ClientData clientData, GoogleAnalyticsVersion version)
+	public JGoogleAnalyticsTracker(ClientParameters clientParameters, GoogleAnalyticsVersion version)
 	{
-		this(clientData, version, DispatchMode.SINGLE_THREAD);
+		this(clientParameters, version, DispatchMode.SINGLE_THREAD);
 	}
 
-	public JGoogleAnalyticsTracker(ClientData clientData, GoogleAnalyticsVersion version, DispatchMode dispatchMode)
+	public JGoogleAnalyticsTracker(ClientParameters clientParameters, GoogleAnalyticsVersion version,
+			DispatchMode dispatchMode)
 	{
 		this.version = version;
-		this.clientData = clientData;
+		this.clientParameters = clientParameters;
 		createBuilder();
 		enabled = true;
 		setDispatchMode(dispatchMode);
@@ -213,14 +199,6 @@ public class JGoogleAnalyticsTracker
 	public boolean isMultiThreaded()
 	{
 		return mode == DispatchMode.MULTI_THREAD;
-	}
-
-	/**
-	 * Resets the session cookie.
-	 */
-	public void resetSession()
-	{
-		clientData.getSessionData().newSession();
 	}
 
 	/**
@@ -346,18 +324,18 @@ public class JGoogleAnalyticsTracker
 	/**
 	 * Makes a custom tracking request based from the given data.
 	 * 
-	 * @param requestData
+	 * @param requestParameters
 	 * @throws NullPointerException
 	 *             if requestData is null or if the URL builder is null
 	 */
-	public synchronized void makeCustomRequest(RequestData requestData)
+	public synchronized void makeCustomRequest(RequestParameters requestParameters)
 	{
 		if (!enabled)
 		{
 			logger.debug("Ignoring tracking request, enabled is false");
 			return;
 		}
-		if (requestData == null)
+		if (requestParameters == null)
 		{
 			throw new NullPointerException("Data cannot be null");
 		}
@@ -365,7 +343,7 @@ public class JGoogleAnalyticsTracker
 		{
 			throw new NullPointerException("Class was not initialized");
 		}
-		final String url = builder.buildURL(requestData);
+		final String url = builder.buildURL(clientParameters, requestParameters);
 
 		switch (mode)
 		{
@@ -380,7 +358,7 @@ public class JGoogleAnalyticsTracker
 						}
 						try
 						{
-							dispatchRequest(url, clientData.getHeaders());
+							dispatchRequest(url);
 						}
 						finally
 						{
@@ -396,14 +374,14 @@ public class JGoogleAnalyticsTracker
 				break;
 
 			case SYNCHRONOUS:
-				dispatchRequest(url, clientData.getHeaders());
+				dispatchRequest(url);
 				break;
 
 			case SINGLE_THREAD:
 			default: // in case it's null, we default to the single-thread
 				synchronized (fifo)
 				{
-					fifo.add(new HTTPData(url, clientData.getHeaders()));
+					fifo.add(url);
 					fifo.notify();
 				}
 				if (!backgroundThreadMayRun)
@@ -415,36 +393,60 @@ public class JGoogleAnalyticsTracker
 		}
 	}
 
-	private static void dispatchRequest(String requestURL, List<Entry<String, String>> headers)
+	private static void dispatchRequest(String parameters)
 	{
+		HttpURLConnection connection = null;
 		try
 		{
-			final URL url = new URL(requestURL);
-			final HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
-			connection.setRequestMethod("GET");
-			connection.setInstanceFollowRedirects(true);
-			if (headers != null)
-			{
-				for (Map.Entry<String, String> entry : headers)
-				{
-					connection.setRequestProperty(entry.getKey(), entry.getValue());
-				}
-			}
+			final URL url = new URL("http://www.google-analytics.com/collect");
+			connection = (HttpURLConnection) url.openConnection(proxy);
+			connection.setRequestMethod("POST");
+			connection.setDoOutput(true);
+			connection.setUseCaches(false);
+
+			URLEncoder.encode("blah", "UTF-8");
+
+			final byte[] out = parameters.getBytes(StandardCharsets.UTF_8);
+			final int length = out.length;
+			connection.setFixedLengthStreamingMode(length);
+			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
 			connection.connect();
+			OutputStream os = connection.getOutputStream();
+			os.write(out);
 			final int responseCode = connection.getResponseCode();
 			if (responseCode != HttpURLConnection.HTTP_OK)
 			{
 				logger.error("JGoogleAnalyticsTracker: Error requesting url '%s', received response code %d",
-						requestURL, responseCode);
+						parameters, responseCode);
 			}
 			else
 			{
-				logger.debug("JGoogleAnalyticsTracker: Tracking success for url '%s'", requestURL);
+				logger.debug("JGoogleAnalyticsTracker: Tracking success for url '%s'", parameters);
 			}
+
+			//
+			//			InputStream is = connection.getInputStream();
+			//			BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+			//			String line;
+			//			StringBuffer response = new StringBuffer();
+			//			while ((line = rd.readLine()) != null)
+			//			{
+			//				response.append(line);
+			//				response.append('\r');
+			//			}
+			//			rd.close();
+			//			logger.debug("Reponse %s", response.toString());
 		}
 		catch (Exception e)
 		{
 			logger.error("Error making tracking request: %s", e.getMessage());
+		}
+		finally
+		{
+			if (connection != null)
+			{
+				connection.disconnect();
+			}
 		}
 	}
 
@@ -452,9 +454,9 @@ public class JGoogleAnalyticsTracker
 	{
 		switch (version)
 		{
-			case V_5_6_7:
+			case V_1:
 			default:
-				builder = new GoogleAnalyticsURLBuilder(clientData);
+				builder = new AnalyticsMeasurementProtocolURLBuilder();
 				break;
 		}
 	}
@@ -476,7 +478,7 @@ public class JGoogleAnalyticsTracker
 					{
 						try
 						{
-							HTTPData httpData = null;
+							String url = null;
 
 							synchronized (fifo)
 							{
@@ -488,15 +490,15 @@ public class JGoogleAnalyticsTracker
 								if (!fifo.isEmpty())
 								{
 									// Get a reference to the oldest element in the FIFO, but leave it in the FIFO until it is processed.
-									httpData = fifo.peek();
+									url = fifo.peek();
 								}
 							}
 
-							if (httpData != null)
+							if (url != null)
 							{
 								try
 								{
-									dispatchRequest(httpData.url, httpData.headers);
+									dispatchRequest(url);
 								}
 								finally
 								{
@@ -554,18 +556,18 @@ public class JGoogleAnalyticsTracker
 	}
 
 	/**
-	 * Track a page
+	 * Track a page view
 	 * 
-	 * @param pageUrl
-	 *            The page URL (must not be null)
-	 * @param pageTitle
-	 *            The page title
+	 * @param documentPath
+	 *            The document path (must not be null)
+	 * @param documentTitle
+	 *            The document title
 	 */
-	public void page(String pageUrl, String pageTitle)
+	public void pageview(String documentPath, String documentTitle)
 	{
-		RequestData data = new RequestData();
-		data.setPageURL(pageUrl);
-		data.setPageTitle(pageTitle);
+		RequestParameters data = new RequestParameters(HitType.PAGEVIEW);
+		data.setDocumentPath(documentPath);
+		data.setDocumentTitle(documentTitle);
 		makeCustomRequest(data);
 	}
 
