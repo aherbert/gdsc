@@ -14,7 +14,7 @@ package gdsc;
 
 import java.lang.reflect.Method;
 
-import gdsc.analytics.ClientDataManager;
+import gdsc.analytics.ClientParametersManager;
 import gdsc.analytics.ClientParameters;
 import gdsc.analytics.ConsoleLogger;
 import gdsc.analytics.JGoogleAnalyticsTracker;
@@ -101,7 +101,7 @@ public class ImageJTracker
 			final ClientParameters clientParameters = new ClientParameters("UA-74107394-1", clientId,
 					"GDSC ImageJ Plugins");
 			
-			ClientDataManager.populate(clientParameters);
+			ClientParametersManager.populate(clientParameters);
 
 			// Record for next time
 			Prefs.set(GDSC_CLIENT_ID_PROPERTY, clientParameters.getClientId());
