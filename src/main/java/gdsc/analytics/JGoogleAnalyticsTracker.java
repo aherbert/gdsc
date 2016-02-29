@@ -1,7 +1,14 @@
 package gdsc.analytics;
 
 import java.io.OutputStream;
-
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
+import java.net.SocketAddress;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Scanner;
+import java.util.regex.MatchResult;
 /*
  * <ul>
  * <li>Copyright (c) 2010 Daniel Murphy, Stefan Brozinski
@@ -29,18 +36,8 @@ import java.io.OutputStream;
  *
  * @see https://code.google.com/archive/p/jgoogleanalyticstracker/
  */
-
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Proxy.Type;
-import java.net.SocketAddress;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Scanner;
-import java.util.regex.MatchResult;
 
 /**
  * Common tracking calls are implemented as methods, but if you want to control
