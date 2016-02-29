@@ -19,7 +19,7 @@ import gdsc.analytics.ClientParameters;
 import gdsc.analytics.ConsoleLogger;
 import gdsc.analytics.JGoogleAnalyticsTracker;
 import gdsc.analytics.JGoogleAnalyticsTracker.DispatchMode;
-import gdsc.analytics.JGoogleAnalyticsTracker.GoogleAnalyticsVersion;
+import gdsc.analytics.JGoogleAnalyticsTracker.MeasurementProtocolVersion;
 import ij.IJ;
 import ij.ImageJ;
 import ij.Prefs;
@@ -135,7 +135,7 @@ public class ImageJTracker
 			clientParameters.addCustomDimension(System.getProperty("os.arch"));
 
 			// Create the tracker
-			tracker = new JGoogleAnalyticsTracker(clientParameters, GoogleAnalyticsVersion.V_1,
+			tracker = new JGoogleAnalyticsTracker(clientParameters, MeasurementProtocolVersion.V_1,
 					DispatchMode.SINGLE_THREAD);
 
 			// DEBUG: Enable logging

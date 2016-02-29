@@ -36,7 +36,6 @@ import java.net.Proxy;
 import java.net.Proxy.Type;
 import java.net.SocketAddress;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -113,28 +112,36 @@ public class JGoogleAnalyticsTracker
 		asyncThreadGroup.setDaemon(true);
 	}
 
-	public static enum GoogleAnalyticsVersion
+	/**
+	 * The Protocol version. This will only change when there are changes made that are not backwards compatible.
+	 * 
+	 * @author a.herbert@sussex.ac.uk
+	 */
+	public static enum MeasurementProtocolVersion
 	{
+		/**
+		 * Version 1
+		 */
 		V_1
 	}
 
-	private GoogleAnalyticsVersion version;
-	private ClientParameters clientParameters;
-	private IAnalyticsMeasurementProtocolURLBuilder builder;
+	private final MeasurementProtocolVersion version;
+	private final ClientParameters clientParameters;
+	private final IAnalyticsMeasurementProtocolURLBuilder builder;
 	private DispatchMode mode;
 	private boolean enabled;
 
-	public JGoogleAnalyticsTracker(ClientParameters clientParameters, GoogleAnalyticsVersion version)
+	public JGoogleAnalyticsTracker(ClientParameters clientParameters, MeasurementProtocolVersion version)
 	{
 		this(clientParameters, version, DispatchMode.SINGLE_THREAD);
 	}
 
-	public JGoogleAnalyticsTracker(ClientParameters clientParameters, GoogleAnalyticsVersion version,
+	public JGoogleAnalyticsTracker(ClientParameters clientParameters, MeasurementProtocolVersion version,
 			DispatchMode dispatchMode)
 	{
 		this.version = version;
 		this.clientParameters = clientParameters;
-		createBuilder();
+		builder = createBuilder();
 		enabled = true;
 		setDispatchMode(dispatchMode);
 	}
@@ -339,10 +346,6 @@ public class JGoogleAnalyticsTracker
 		{
 			throw new NullPointerException("Data cannot be null");
 		}
-		if (builder == null)
-		{
-			throw new NullPointerException("Class was not initialized");
-		}
 		final String url = builder.buildURL(clientParameters, requestParameters);
 
 		switch (mode)
@@ -393,6 +396,12 @@ public class JGoogleAnalyticsTracker
 		}
 	}
 
+	/**
+	 * Send the parameters to Google Analytics using the Measurement Protocol. This uses the HTTP POST method.
+	 * 
+	 * @param parameters
+	 *            The POST parameters (assumed to use UTF-8 encoding)
+	 */
 	private static void dispatchRequest(String parameters)
 	{
 		HttpURLConnection connection = null;
@@ -403,9 +412,6 @@ public class JGoogleAnalyticsTracker
 			connection.setRequestMethod("POST");
 			connection.setDoOutput(true);
 			connection.setUseCaches(false);
-
-			URLEncoder.encode("blah", "UTF-8");
-
 			final byte[] out = parameters.getBytes(StandardCharsets.UTF_8);
 			final int length = out.length;
 			connection.setFixedLengthStreamingMode(length);
@@ -424,7 +430,7 @@ public class JGoogleAnalyticsTracker
 				logger.debug("JGoogleAnalyticsTracker: Tracking success for url '%s'", parameters);
 			}
 
-			//
+			// I do not think we need to get the reply
 			//			InputStream is = connection.getInputStream();
 			//			BufferedReader rd = new BufferedReader(new InputStreamReader(is));
 			//			String line;
@@ -450,14 +456,13 @@ public class JGoogleAnalyticsTracker
 		}
 	}
 
-	private void createBuilder()
+	private IAnalyticsMeasurementProtocolURLBuilder createBuilder()
 	{
 		switch (version)
 		{
 			case V_1:
 			default:
-				builder = new AnalyticsMeasurementProtocolURLBuilder();
-				break;
+				return new AnalyticsMeasurementProtocolURLBuilder();
 		}
 	}
 
