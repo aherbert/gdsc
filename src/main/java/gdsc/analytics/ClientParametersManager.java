@@ -40,7 +40,7 @@ import ij.IJ;
 /**
  * Populates the client with information from the system
  */
-public class ClientDataManager
+public class ClientParametersManager
 {
 	/**
 	 * Populates the client parameters with information from the system
