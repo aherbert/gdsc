@@ -38,21 +38,29 @@ public class RequestParameters
 {
 	private final HitType hitType;
 	private List<String> customDimensions = null;
-	
+
 	private String documentPath = null;
 	private String documentTitle = null;
-	
+
 	public RequestParameters(HitType hitType)
 	{
 		this.hitType = hitType;
 	}
-	
+
 	/**
 	 * @return The hit type
 	 */
 	public String getHitType()
 	{
 		return hitType.toString();
+	}
+
+	/**
+	 * @return The hit type
+	 */
+	public HitType getHitTypeEnum()
+	{
+		return hitType;
 	}
 
 	/**
@@ -94,7 +102,8 @@ public class RequestParameters
 	}
 
 	/**
-	 * @param documentPath the document path to set
+	 * @param documentPath
+	 *            the document path to set
 	 */
 	public void setDocumentPath(String documentPath)
 	{
@@ -110,7 +119,8 @@ public class RequestParameters
 	}
 
 	/**
-	 * @param documentTitle the document title to set
+	 * @param documentTitle
+	 *            the document title to set
 	 */
 	public void setDocumentTitle(String documentTitle)
 	{

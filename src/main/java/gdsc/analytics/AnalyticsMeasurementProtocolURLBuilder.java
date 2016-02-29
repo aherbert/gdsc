@@ -83,10 +83,14 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 			buildClientURL(clientParameters);
 		sb.append(clientParameters.getUrl());
 
+		// Build the request data
+		
+		// Q - Do we even want to use the other hit types, e.g. event?
+		if (requestParameters.getHitTypeEnum() != HitType.PAGEVIEW)
+			throw new IllegalArgumentException("Only the pageview hit type is supported");
+		
 		// Hit type
 		add(sb, "t", requestParameters.getHitType());
-
-		// Build the request data
 
 		// Check for more custom dimensions
 		if (requestParameters.getNumberOfCustomDimensions() > 0)
