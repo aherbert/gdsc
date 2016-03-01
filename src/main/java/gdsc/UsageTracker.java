@@ -461,6 +461,9 @@ public class UsageTracker implements PlugIn
 			return;
 		final boolean disabled = gd.getNextBoolean();
 		final boolean anonymize = gd.getNextBoolean();
+		// XXX - Tracking is disabled to allow a release of the code while this feature is not mature
+		if (true)
+			return;
 		// Anonymize first to respect the user choice if they still have tracking on
 		setAnonymized(anonymize);
 		setDisabled(disabled);
