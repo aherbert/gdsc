@@ -403,10 +403,11 @@ public class UsageTracker implements PlugIn
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
 		// @formatter:off
-		gd.addMessage(About_Plugin.TITLE + " Privacy Policy\n \n" +
+		gd.addMessage(About_Plugin.TITLE + "\n \n" +
 				"The use of these plugins is free and unconstrained.\n" +
 				"The code uses Google Analytics to help us understand\n" +
 				"how users are using the plugins.\n \n" +
+				"Privacy Policy\n \n" +
 				"No personal information or data within ImageJ is recorded.\n \n" +
 				"We record the plugin name and the software running ImageJ.\n" +
 				"This happens in the background when nothing else is active so will\n" +
