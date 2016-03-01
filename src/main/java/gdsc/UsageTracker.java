@@ -179,6 +179,7 @@ public class UsageTracker implements PlugIn
 
 				createTracker();
 
+				// XXX - Disable in production code 
 				// DEBUG: Enable logging
 				JGoogleAnalyticsTracker.setLogger(new ConsoleLogger());
 			}
@@ -322,7 +323,8 @@ public class UsageTracker implements PlugIn
 	 */
 	public static boolean isDisabled()
 	{
-		return (state == DISABLED);
+		// XXX - Tracking is disabled to allow a release of the code while this feature is not mature
+		return true; // (state == DISABLED);
 	}
 
 	/**
