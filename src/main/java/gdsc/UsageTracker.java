@@ -410,6 +410,10 @@ public class UsageTracker implements PlugIn
 	 */
 	private static void verifyStatus()
 	{
+		// XXX - Tracking is disabled to allow a release of the code while this feature is not mature
+		if (true)
+			return;
+		
 		String lastVersion = Prefs.get(PROPERTY_GA_OPT_VERSION, "");
 		String thisVersion = getVersion();
 		if (state == UNKNOWN || anonymized == UNKNOWN || !lastVersion.equals(thisVersion))
