@@ -39,8 +39,8 @@ public class UsageTracker implements PlugIn
 {
 	private static final String TITLE = "Usage Tracker";
 	private static final String PROPERTY_GA_CLIENT_ID = "gdsc.ga.clientId";
-	private static final String PROPERTY_GA_OPT = "gdsc.ga.opt";
-	private static final String PROPERTY_GA_OPT_VERSION = "gdsc.ga.opt.version";
+	private static final String PROPERTY_GA_STATE = "gdsc.ga.state";
+	private static final String PROPERTY_GA_LAST_VERSION = "gdsc.ga.lastVersion";
 	private static final String PROPERTY_GA_ANONYMIZE = "gdsc.ga.anonymize";
 	private static final int DISABLED = -1;
 	private static final int UNKNOWN = 0;
@@ -52,7 +52,7 @@ public class UsageTracker implements PlugIn
 	/**
 	 * Flag indicating that the user has opted out of analytics
 	 */
-	private static int state = (int) Prefs.get(PROPERTY_GA_OPT, UNKNOWN);
+	private static int state = (int) Prefs.get(PROPERTY_GA_STATE, UNKNOWN);
 	/**
 	 * Flag indicating that the IP address of the sender will be anonymized
 	 */
@@ -338,11 +338,11 @@ public class UsageTracker implements PlugIn
 		final int oldState = UsageTracker.state; 
 		UsageTracker.state = (disabled) ? DISABLED : ENABLED;
 
-		Prefs.set(PROPERTY_GA_OPT_VERSION, getVersion());
+		Prefs.set(PROPERTY_GA_LAST_VERSION, getVersion());
 		
 		if (oldState != state)
 		{
-			Prefs.set(PROPERTY_GA_OPT, state);
+			Prefs.set(PROPERTY_GA_STATE, state);
 
 			// Record this opt in/out status change
 			
@@ -385,7 +385,7 @@ public class UsageTracker implements PlugIn
 		final int oldAnonymized = anonymized;
 		UsageTracker.anonymized = (anonymize) ? ENABLED : DISABLED;
 
-		Prefs.set(PROPERTY_GA_OPT_VERSION, getVersion());
+		Prefs.set(PROPERTY_GA_LAST_VERSION, getVersion());
 		
 		if (oldAnonymized != anonymized)
 		{
@@ -414,7 +414,7 @@ public class UsageTracker implements PlugIn
 		if (true)
 			return;
 		
-		String lastVersion = Prefs.get(PROPERTY_GA_OPT_VERSION, "");
+		String lastVersion = Prefs.get(PROPERTY_GA_LAST_VERSION, "");
 		String thisVersion = getVersion();
 		if (state == UNKNOWN || anonymized == UNKNOWN || !lastVersion.equals(thisVersion))
 			showDialog(true);
