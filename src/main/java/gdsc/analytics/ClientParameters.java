@@ -185,6 +185,7 @@ public class ClientParameters
 	 */
 	public void setScreenResolution(String argScreenResolution)
 	{
+		this.url = null;
 		screenResolution = argScreenResolution;
 	}
 
@@ -196,6 +197,7 @@ public class ClientParameters
 	 */
 	public void setUserLanguage(String argUserLanguage)
 	{
+		this.url = null;
 		userLanguage = argUserLanguage;
 	}
 
@@ -207,6 +209,7 @@ public class ClientParameters
 	 */
 	public void setHostName(String hostName)
 	{
+		this.url = null;
 		this.hostName = hostName;
 	}
 
@@ -227,6 +230,7 @@ public class ClientParameters
 	 */
 	public void setUserAgent(String userAgent)
 	{
+		this.url = null;
 		this.userAgent = userAgent;
 	}
 
@@ -236,6 +240,7 @@ public class ClientParameters
 	 */
 	public void setApplicationId(String applicationId)
 	{
+		this.url = null;
 		this.applicationId = applicationId;
 	}
 
@@ -245,19 +250,18 @@ public class ClientParameters
 	 */
 	public void setApplicationVersion(String applicationVersion)
 	{
+		this.url = null;
 		this.applicationVersion = applicationVersion;
 	}
 
 	/**
-	 * Set the state of IP anonymization. If true this will reset the hostName to localhost. This clears the cached URL.
+	 * Set the state of IP anonymization
 	 * 
 	 * @param anonymize
 	 *            True if the IP address of the sender will be anonymized
 	 */
 	public void setAnonymized(boolean anonymized)
 	{
-		if (anonymized)
-			this.hostName = "localhost";
 		this.url = null;
 		this.anonymized = anonymized;
 	}
@@ -271,6 +275,7 @@ public class ClientParameters
 	{
 		if (value == null || value.length() == 0)
 			return;
+		this.url = null;
 		if (customDimensions == null)
 			customDimensions = new ArrayList<String>(1);
 		customDimensions.add(value);

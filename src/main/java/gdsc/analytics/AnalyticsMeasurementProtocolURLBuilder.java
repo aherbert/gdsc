@@ -186,11 +186,17 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 
 		addCheck(sb, "sr", client.getScreenResolution());
 		addCheck(sb, "ul", client.getUserLanguage());
-		addCheck(sb, "dh", client.getHostName());
 		addCheck(sb, "ua", client.getUserAgent());
 		
 		if (client.isAnonymized())
+		{
 			sb.append("&aip=1"); // Anonymize IP
+			sb.append("&dh=localhost");
+		}
+		else
+		{
+			addCheck(sb, "dh", client.getHostName());
+		}
 
 		sb.append("&je=1"); // java enabled
 
