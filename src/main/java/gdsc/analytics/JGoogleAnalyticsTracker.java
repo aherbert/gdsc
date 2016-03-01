@@ -574,6 +574,28 @@ public class JGoogleAnalyticsTracker
 	}
 
 	/**
+	 * Track an event
+	 * 
+	 * @param category
+	 *            The category (must not be null)
+	 * @param action
+	 *            The action (must not be null)
+	 * @param label
+	 *            The label
+	 * @param value
+	 *            The value
+	 */
+	public void event(String category, String action, String label, Integer value)
+	{
+		RequestParameters data = new RequestParameters(HitType.EVENT);
+		data.setCategory(category);
+		data.setAction(action);
+		data.setLabel(label);
+		data.setValue(value);
+		makeCustomRequest(data);
+	}
+
+	/**
 	 * Get the logger
 	 * 
 	 * @return the logger

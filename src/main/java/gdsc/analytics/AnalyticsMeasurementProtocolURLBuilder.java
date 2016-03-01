@@ -71,12 +71,6 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 		// https://developers.google.com/analytics/devguides/collection/protocol/v1/devguide#commonhits
 		// https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters
 
-		// -=-=-=-=-
-		// Q - Do we even want to use the other hit types, e.g. event?
-		if (requestParameters.getHitTypeEnum() != HitType.PAGEVIEW)
-			throw new IllegalArgumentException("Only the pageview hit type is supported");
-		// -=-=-=-=-
-		
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("v=1"); // version
@@ -91,7 +85,7 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 		sb.append(clientParameters.getUrl());
 
 		// Build the request data
-		
+
 		// Hit type
 		add(sb, "t", requestParameters.getHitType());
 
@@ -102,8 +96,23 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 					clientParameters.getNumberOfCustomDimensions() + 1);
 		}
 
-		addCheck(sb, "dp", requestParameters.getDocumentPath());
-		addCheck(sb, "dt", requestParameters.getDocumentTitle());
+		switch (requestParameters.getHitTypeEnum())
+		{
+			case PAGEVIEW:
+				add(sb, "dp", requestParameters.getDocumentPath());
+				add(sb, "dt", requestParameters.getDocumentTitle());
+				break;
+				
+			case EVENT:
+				add(sb, "ec", requestParameters.getCategory());
+				add(sb, "ea", requestParameters.getAction());
+				addCheck(sb, "el", requestParameters.getLabel());
+				addCheck(sb, "ev", requestParameters.getValue());
+				break;
+				
+			default:
+				throw new IllegalArgumentException("Unsupported hit type: " + requestParameters.getHitType());
+		}
 
 		// Cache buster.  
 		// Used to send a random number in GET requests to ensure browsers and proxies don't cache hits. 
@@ -115,6 +124,7 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 
 	/**
 	 * Add the key value pair
+	 * 
 	 * @param sb
 	 * @param key
 	 * @param value
@@ -125,7 +135,20 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 	}
 
 	/**
+	 * Add the key value pair
+	 * 
+	 * @param sb
+	 * @param key
+	 * @param value
+	 */
+	private void add(StringBuilder sb, String key, int value)
+	{
+		sb.append('&').append(key).append('=').append(value);
+	}
+
+	/**
 	 * Add the key value pair if the value is not null
+	 * 
 	 * @param sb
 	 * @param key
 	 * @param value
@@ -137,6 +160,20 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 		add(sb, key, value);
 	}
 
+	/**
+	 * Add the key value pair if the value is not null
+	 * 
+	 * @param sb
+	 * @param key
+	 * @param value
+	 */
+	private void addCheck(StringBuilder sb, String key, Integer value)
+	{
+		if (value == null)
+			return;
+		add(sb, key, value.intValue());
+	}
+
 	private void buildClientURL(ClientParameters client)
 	{
 		StringBuilder sb = new StringBuilder();
@@ -146,7 +183,7 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 		add(sb, "an", client.getApplicationName());
 		addCheck(sb, "aid", client.getApplicationId());
 		addCheck(sb, "av", client.getApplicationVersion());
-		
+
 		addCheck(sb, "sr", client.getScreenResolution());
 		addCheck(sb, "ul", client.getUserLanguage());
 		addCheck(sb, "dh", client.getHostName());
