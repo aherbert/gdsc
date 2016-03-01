@@ -14,7 +14,7 @@ public class ZProjector2Runner implements PlugIn
 	
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin("Z-Projector 2", arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		filter.run(arg);
 	}
 }

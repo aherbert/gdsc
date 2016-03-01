@@ -997,7 +997,7 @@ public class FindFoci implements PlugIn, MouseListener
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(TITLE, arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		ImagePlus imp = WindowManager.getCurrentImage();
 

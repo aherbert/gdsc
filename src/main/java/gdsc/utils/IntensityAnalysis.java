@@ -63,7 +63,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 			return DONE;
 		}
 		
-		ImageJTracker.recordPlugin(TITLE, arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 
 		if (imp == null || imp.getStackSize() == 1)
 		{

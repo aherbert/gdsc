@@ -43,7 +43,7 @@ public class GaussianPlugin implements PlugIn
 	 */
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(TITLE, arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addNumericField("Width", width, 0);
 		gd.addNumericField("Height", height, 0);

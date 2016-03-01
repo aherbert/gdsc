@@ -27,7 +27,7 @@ public class Lottery implements PlugIn
 	 */
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(TITLE, arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Calculate the lottory odds");

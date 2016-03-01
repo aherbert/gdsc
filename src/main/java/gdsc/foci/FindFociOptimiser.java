@@ -232,7 +232,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	 */
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(TITLE, arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		if (arg.equals("frame"))
 		{

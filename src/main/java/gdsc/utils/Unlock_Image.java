@@ -16,7 +16,7 @@ public class Unlock_Image implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		ImageJTracker.recordPlugin("Unlock Image", arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		if (imp != null)
 		{
 			imp.unlock();

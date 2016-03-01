@@ -51,7 +51,7 @@ public class Create_Colocalised_Images implements PlugIn
 
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(TITLE, arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		if (!getBitDepth())
 			return;

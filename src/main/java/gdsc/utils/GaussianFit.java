@@ -169,7 +169,7 @@ public class GaussianFit implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		ImageJTracker.recordPlugin("Gaussian Fit", arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		Roi roi = imp.getRoi();
 		if (roi == null || !roi.isArea())
 		{

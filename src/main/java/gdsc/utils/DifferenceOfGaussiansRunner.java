@@ -25,7 +25,7 @@ public class DifferenceOfGaussiansRunner implements ExtendedPlugInFilter, Dialog
 
 	public int setup(String arg, ImagePlus imp)
 	{
-		ImageJTracker.recordPlugin("Difference Of Gaussians", arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		return filter.setup(arg, imp);
 	}
 

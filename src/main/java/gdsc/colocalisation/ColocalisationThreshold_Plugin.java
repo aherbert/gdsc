@@ -208,7 +208,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(TITLE, arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		if (WindowManager.getImageCount() == 0)
 		{

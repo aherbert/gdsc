@@ -33,7 +33,7 @@ public class Contrast_Enhancer implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		ImageJTracker.recordPlugin("Contrast Enhancer", arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		if (imp == null)
 		{

@@ -149,7 +149,7 @@ public class FindFociPlugin implements PlugIn
 	 */
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(FindFoci.TITLE + " GUI", arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		if (WindowManager.getImageCount() < 1)
 		{

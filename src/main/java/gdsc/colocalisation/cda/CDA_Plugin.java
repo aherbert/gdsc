@@ -291,7 +291,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 */
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(TITLE, arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		if (WindowManager.getImageCount() == 0)
 		{

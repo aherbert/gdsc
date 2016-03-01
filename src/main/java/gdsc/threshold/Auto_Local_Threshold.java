@@ -18,7 +18,7 @@ public class Auto_Local_Threshold implements PlugIn {
 	
         /** Ask for parameters and then execute.*/
         public void run(String arg) {
-		ImageJTracker.recordPlugin(TITLE, arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		// 1 - Obtain the currently active image:
 		ImagePlus imp = IJ.getImage();

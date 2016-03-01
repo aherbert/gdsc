@@ -211,7 +211,7 @@ public class SpotDistance implements PlugIn
 
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(TITLE, arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		boolean extraOptions = IJ.shiftKeyDown();
 

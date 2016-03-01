@@ -133,7 +133,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			displayResults();
 			return DONE;
 		}
-		ImageJTracker.recordPlugin(TITLE, arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		results = FindFoci.getResults();
 		if (results == null || results.isEmpty())

@@ -16,7 +16,7 @@ public class MaskParticleAnalyzerRunner implements PlugInFilter
 	
 	public int setup(String arg, ImagePlus imp)
 	{
-		ImageJTracker.recordPlugin("Mask Particle Analyzer", arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		return filter.setup(arg, imp);
 	}
 

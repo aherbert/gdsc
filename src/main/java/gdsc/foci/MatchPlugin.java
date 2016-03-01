@@ -140,7 +140,7 @@ public class MatchPlugin implements PlugIn
 	@SuppressWarnings("unchecked")
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(TITLE, arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		fileMode = arg.equals("file");
 

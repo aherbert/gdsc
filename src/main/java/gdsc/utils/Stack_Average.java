@@ -38,7 +38,7 @@ public class Stack_Average implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		ImageJTracker.recordPlugin("Stack Average", arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		if (imp == null)
 		{
 			IJ.noImage();

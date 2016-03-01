@@ -34,7 +34,10 @@ public class About_Plugin implements PlugIn
 
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(TITLE, arg);
+		if (arg == null || arg.length() == 0)
+			arg = "about";
+
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		if (arg.equals("about"))
 		{
 			showAbout();
@@ -55,8 +58,8 @@ public class About_Plugin implements PlugIn
 
 	public void showUnintallDialog()
 	{
-		IJ.showMessage(TITLE, "To uninstall this plugin, move gdsc_.jar out\n"
-				+ "of the plugins folder and restart ImageJ.");
+		IJ.showMessage(TITLE,
+				"To uninstall this plugin, move gdsc_.jar out\n" + "of the plugins folder and restart ImageJ.");
 	}
 
 	public static void showAbout()

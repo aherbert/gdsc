@@ -36,7 +36,7 @@ public class Projection implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		ImageJTracker.recordPlugin("Projection", arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		if (imp == null || imp.getNSlices() == 1)
 		{

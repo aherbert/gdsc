@@ -73,7 +73,7 @@ public class PointAlignerPlugin implements PlugIn
 	 */
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(TITLE, arg);
+		ImageJTracker.recordPlugin(this.getClass(), arg);
 		
 		imp = WindowManager.getCurrentImage();
 
