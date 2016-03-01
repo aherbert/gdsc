@@ -155,8 +155,11 @@ public class UsageTracker implements PlugIn
 	 */
 	private static void initialise()
 	{
-		initialiseTracker();
 		verifyStatus();
+		
+		// We only need to create the tracker if we are monitoring
+		if (!isDisabled())
+			initialiseTracker();
 	}
 
 	/**
@@ -330,24 +333,35 @@ public class UsageTracker implements PlugIn
 	 */
 	public static void setDisabled(boolean disabled)
 	{
-		final int newState = (disabled) ? DISABLED : ENABLED;
+		final int oldState = UsageTracker.state; 
+		UsageTracker.state = (disabled) ? DISABLED : ENABLED;
 
-		if (newState != state)
+		Prefs.set(PROPERTY_GA_OPT_VERSION, getVersion());
+		
+		if (oldState != state)
 		{
-			Prefs.set(PROPERTY_GA_OPT, newState);
-			UsageTracker.state = newState;
+			Prefs.set(PROPERTY_GA_OPT, state);
 
-			initialiseTracker();
+			// Record this opt in/out status change
+			
+			// If the state was previously unknown and they opt out then do nothing.
+			// This is a user who never wants to be tracked.
+			if (oldState == UNKNOWN && disabled)
+				return;
 
-			// Record this opt in/out status change as an event (even if the user has opted out 
-			// we will collect this fact then leave them alone).
-			// Reset the session if tracking has been enabled.
+			// Otherwise record the in/out status change, either:
+			// - The user was previously opt in but now opts out; or
+			// - The user was previously opt out but now opts in
+
 			final boolean enabled = !disabled;
+			
+			initialiseTracker();
+			// Reset the session if tracking has been enabled.
 			if (enabled)
 				tracker.resetSession();
-			tracker.event("Tracking", Boolean.toString(enabled), getVersion(), null);
+			// Track the opt status change with an event
+			tracker.event("Tracking", Boolean.toString(enabled), getVersion(), null);			
 		}
-		Prefs.set(PROPERTY_GA_OPT_VERSION, getVersion());
 	}
 
 	/**
@@ -366,25 +380,32 @@ public class UsageTracker implements PlugIn
 	 */
 	public static void setAnonymized(boolean anonymize)
 	{
-		final int newAnonymized = (anonymize) ? ENABLED : DISABLED;
+		final int oldAnonymized = anonymized;
+		UsageTracker.anonymized = (anonymize) ? ENABLED : DISABLED;
 
-		if (newAnonymized != anonymized)
+		Prefs.set(PROPERTY_GA_OPT_VERSION, getVersion());
+		
+		if (oldAnonymized != anonymized)
 		{
-			Prefs.set(PROPERTY_GA_ANONYMIZE, newAnonymized);
-			UsageTracker.anonymized = newAnonymized;
+			Prefs.set(PROPERTY_GA_ANONYMIZE, anonymized);
 
 			// Make sure the tracker is informed
-			initialiseTracker();
-			tracker.setAnonymised(isAnonymized());
+			if (tracker != null)
+				tracker.setAnonymised(isAnonymized());
 		}
-		Prefs.set(PROPERTY_GA_OPT_VERSION, getVersion());
 	}
 
+	/**
+	 * @return The version of the code
+	 */
 	private static String getVersion()
 	{
 		return Version.getMajorMinor();
 	}
 
+	/**
+	 * Check the opt-in/out status. If it is not known then present a dialog to ask the user to set preferences.
+	 */
 	private static void verifyStatus()
 	{
 		String lastVersion = Prefs.get(PROPERTY_GA_OPT_VERSION, "");
@@ -393,6 +414,9 @@ public class UsageTracker implements PlugIn
 			showDialog(true);
 	}
 
+	/* (non-Javadoc)
+	 * @see ij.plugin.PlugIn#run(java.lang.String)
+	 */
 	public void run(String arg)
 	{
 		recordPlugin(this.getClass(), arg);
