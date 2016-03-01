@@ -95,7 +95,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (!showDialog())
 		{
 			return;
@@ -178,7 +178,8 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 		GenericDialog gd = new GenericDialog(TITLE);
 
-		gd.addMessage("Compare the points in two files\nand compute the match statistics\n(Double click input fields to use a file chooser)");
+		gd.addMessage(
+				"Compare the points in two files\nand compute the match statistics\n(Double click input fields to use a file chooser)");
 		gd.addStringField("Input_1", title1, 30);
 		gd.addStringField("Input_2", title2, 30);
 		if (!newImageList.isEmpty())
@@ -255,8 +256,9 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 				matches = new LinkedList<PointPair>();
 			}
 
-			MatchResult result = (is3D) ? MatchCalculator.analyseResults3D(actual, predicted, dThreshold, TP, FP, FN,
-					matches) : MatchCalculator.analyseResults2D(actual, predicted, dThreshold, TP, FP, FN, matches);
+			MatchResult result = (is3D)
+					? MatchCalculator.analyseResults3D(actual, predicted, dThreshold, TP, FP, FN, matches)
+					: MatchCalculator.analyseResults2D(actual, predicted, dThreshold, TP, FP, FN, matches);
 
 			// Aggregate
 			tp += result.getTruePositives();
@@ -399,7 +401,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		sb.append("F-beta");
 		return sb.toString();
 	}
-	
+
 	private void addResult(String i1, String i2, double dThrehsold, MatchResult result)
 	{
 		StringBuilder sb = new StringBuilder();
@@ -430,14 +432,14 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	}
 
 	private String pairsPrefix;
-	
+
 	private String createPairsHeader(String i1, String i2)
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append(i1).append("\t");
 		sb.append(i2).append("\t");
 		pairsPrefix = sb.toString();
-		
+
 		sb.setLength(0);
 		sb.append("Image 1\t");
 		sb.append("Image 2\t");
@@ -454,7 +456,8 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		sb.append("Z2\t");
 		if (valued)
 			sb.append("Value\t");
-		sb.append("Distance");
+		sb.append("Distance\t");
+		sb.append("Outcome");
 		return sb.toString();
 	}
 
@@ -474,9 +477,15 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		addPoint(sb, p2);
 		double d = (is3D) ? pair.getXYZDistance() : pair.getXYDistance();
 		if (d >= 0)
-			sb.append(d);
+			sb.append(d).append("\t");
 		else
-			sb.append("-");
+			sb.append("\t");
+		// Added for colocalisation analysis:
+		// C = Colocalised (i.e. a match)
+		// F = First dataset has foci
+		// S = Second dataset has foci
+		final char outcome = (p1 != null) ? (p2 != null) ? 'C' : 'F' : 'S';
+		sb.append(outcome);
 		return sb.toString();
 	}
 
@@ -485,9 +494,9 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		if (p == null)
 		{
 			if (valued)
-				sb.append("-\t-\t-\t-\t-\t");
+				sb.append("\t\t\t\t\t");
 			else
-				sb.append("-\t-\t-\t-\t");
+				sb.append("\t\t\t\t");
 		}
 		else
 		{
