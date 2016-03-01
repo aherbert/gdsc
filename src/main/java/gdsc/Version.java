@@ -115,6 +115,20 @@ public class Version
 	}
 	
 	/**
+	 * Get a string with the major and minor versions
+	 * 
+	 * @return Major.Minor
+	 */
+	public static String getMajorMinor()
+	{
+		Pattern p = Pattern.compile("^\\d+\\.\\d+");
+		Matcher m = p.matcher(version);
+		if (m.find())
+			return m.group();
+		return "";
+	}
+	
+	/**
 	 * Get a string with the major, minor and release versions
 	 * 
 	 * @return Major.Minor.Release

@@ -618,4 +618,23 @@ public class JGoogleAnalyticsTracker
 			logger = new Logger();
 		JGoogleAnalyticsTracker.logger = logger;
 	}
+
+	/**
+	 * Reset the session (i.e. start a new session)
+	 */
+	public void resetSession()
+	{
+		clientParameters.resetSession();
+	}
+
+	/**
+	 * Set the state of IP anonymization
+	 * 
+	 * @param anonymize
+	 *            True if the IP address of the sender will be anonymized
+	 */
+	public void setAnonymised(boolean anonymized)
+	{
+		clientParameters.setAnonymized(anonymized);
+	}
 }

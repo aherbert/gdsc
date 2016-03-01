@@ -47,10 +47,12 @@ public class ClientParameters
 	private String userAgent = null;
 	private String applicationId = null;
 	private String applicationVersion = null;
+	private boolean anonymized = false;
 
 	private List<String> customDimensions = null;
 
 	private String url = null;
+
 
 	/**
 	 * Constructs with the tracking Id. If the client Id is null or empty then a new UUID will be created.
@@ -158,6 +160,15 @@ public class ClientParameters
 		return applicationVersion;
 	}
 
+
+	/**
+	 * @return True if the IP address of the sender will be anonymized
+	 */
+	public boolean isAnonymized()
+	{
+		return anonymized;
+	}
+	
 	/**
 	 * @return The client component of the URL
 	 */
@@ -238,6 +249,20 @@ public class ClientParameters
 	}
 
 	/**
+	 * Set the state of IP anonymization. If true this will reset the hostName to localhost. This clears the cached URL.
+	 * 
+	 * @param anonymize
+	 *            True if the IP address of the sender will be anonymized
+	 */
+	public void setAnonymized(boolean anonymized)
+	{
+		if (anonymized)
+			this.hostName = "localhost";
+		this.url = null;
+		this.anonymized = anonymized;
+	}
+
+	/**
 	 * Add a custom dimension
 	 * 
 	 * @param value
@@ -265,5 +290,13 @@ public class ClientParameters
 	public int getNumberOfCustomDimensions()
 	{
 		return (customDimensions == null) ? 0 : customDimensions.size();
+	}
+
+	/**
+	 * Reset the session (i.e. start a new session)
+	 */
+	public void resetSession()
+	{
+		this.session.reset();
 	}
 }

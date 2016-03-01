@@ -28,9 +28,9 @@ import java.util.ArrayList;
  */
 public class About_Plugin implements PlugIn
 {
-	private static String TITLE = "GDSC ImageJ Plugins";
+	public static String TITLE = "GDSC ImageJ Plugins";
 	private static String HELP_URL = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/plugins";
-	private static String YEAR = "2015";
+	private static String YEAR = "2016";
 
 	public void run(String arg)
 	{
