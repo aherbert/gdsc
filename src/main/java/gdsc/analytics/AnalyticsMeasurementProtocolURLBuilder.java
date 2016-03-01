@@ -34,7 +34,7 @@ import java.util.Random;
 /**
  * Build the parameters used by Google Analytics Measurement Protocol.
  * <p>
- * This class only supports the pageview hit type.
+ * This class only supports the pageview and event hit type.
  * 
  * @author Alex Herbert
  * @see https://developers.google.com/analytics/devguides/collection/protocol/v1/
