@@ -69,10 +69,17 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 	{
 		// Details of how to build a URL are given here:
 		// https://developers.google.com/analytics/devguides/collection/protocol/v1/devguide#commonhits
+		// https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters
 
+		// -=-=-=-=-
+		// Q - Do we even want to use the other hit types, e.g. event?
+		if (requestParameters.getHitTypeEnum() != HitType.PAGEVIEW)
+			throw new IllegalArgumentException("Only the pageview hit type is supported");
+		// -=-=-=-=-
+		
 		StringBuilder sb = new StringBuilder();
 
-		sb.append("v=").append(getVersion()); // version
+		sb.append("v=1"); // version
 
 		// Check if this is a new session
 		if (clientParameters.isNewSession())
@@ -84,10 +91,6 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 		sb.append(clientParameters.getUrl());
 
 		// Build the request data
-		
-		// Q - Do we even want to use the other hit types, e.g. event?
-		if (requestParameters.getHitTypeEnum() != HitType.PAGEVIEW)
-			throw new IllegalArgumentException("Only the pageview hit type is supported");
 		
 		// Hit type
 		add(sb, "t", requestParameters.getHitType());
@@ -105,7 +108,7 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 		// Cache buster.  
 		// Used to send a random number in GET requests to ensure browsers and proxies don't cache hits. 
 		// It should be sent as the final parameter of the request
-		sb.append("&z=" + random.nextInt());
+		sb.append("&z=").append(random.nextInt());
 
 		return sb.toString();
 	}
