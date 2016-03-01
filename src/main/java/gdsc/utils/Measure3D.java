@@ -9,7 +9,7 @@ import java.awt.Point;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
-import gdsc.ImageJTracker;
+import gdsc.UsageTracker;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -67,7 +67,7 @@ public class Measure3D extends PlugInFrame
 	 */
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		if (WindowManager.getImageCount() == 0)
 		{

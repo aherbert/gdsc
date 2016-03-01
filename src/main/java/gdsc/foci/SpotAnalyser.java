@@ -1,6 +1,6 @@
 package gdsc.foci;
 
-import gdsc.ImageJTracker;
+import gdsc.UsageTracker;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -84,7 +84,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		ImageJTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		if (imp == null)
 		{

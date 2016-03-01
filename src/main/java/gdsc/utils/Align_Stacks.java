@@ -1,6 +1,6 @@
 package gdsc.utils;
 
-import gdsc.ImageJTracker;
+import gdsc.UsageTracker;
 import gdsc.threshold.Auto_Threshold;
 import ij.IJ;
 import ij.ImagePlus;
@@ -51,7 +51,7 @@ public class Align_Stacks implements PlugIn
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		String[] imageList = getImagesList();
 

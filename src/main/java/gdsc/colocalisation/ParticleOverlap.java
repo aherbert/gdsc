@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 
-import gdsc.ImageJTracker;
+import gdsc.UsageTracker;
 import gdsc.utils.ImageJHelper;
 import ij.IJ;
 import ij.ImagePlus;
@@ -54,7 +54,7 @@ public class ParticleOverlap implements PlugIn
 
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		if (WindowManager.getImageCount() == 0)
 		{

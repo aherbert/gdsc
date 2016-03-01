@@ -50,7 +50,7 @@ import javax.swing.JToggleButton;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import gdsc.ImageJTracker;
+import gdsc.UsageTracker;
 
 /**
  * Provides the ability to synchronise the display frame of multiple stack windows
@@ -93,7 +93,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 	 */
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		if (WindowManager.getImageCount() == 0)
 		{

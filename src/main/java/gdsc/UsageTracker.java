@@ -35,7 +35,7 @@ import ij.plugin.PlugIn;
 /**
  * Provide methods to track code usage within ImageJ
  */
-public class ImageJTracker implements PlugIn
+public class UsageTracker implements PlugIn
 {
 	private static final String TITLE = "Usage Tracker";
 	private static final String PROPERTY_GA_CLIENT_ID = "gdsc.ga.clientId";
@@ -335,7 +335,7 @@ public class ImageJTracker implements PlugIn
 		if (newState != state)
 		{
 			Prefs.set(PROPERTY_GA_OPT, newState);
-			ImageJTracker.state = newState;
+			UsageTracker.state = newState;
 
 			initialiseTracker();
 
@@ -371,7 +371,7 @@ public class ImageJTracker implements PlugIn
 		if (newAnonymized != anonymized)
 		{
 			Prefs.set(PROPERTY_GA_ANONYMIZE, newAnonymized);
-			ImageJTracker.anonymized = newAnonymized;
+			UsageTracker.anonymized = newAnonymized;
 
 			// Make sure the tracker is informed
 			initialiseTracker();
@@ -420,9 +420,8 @@ public class ImageJTracker implements PlugIn
 		if (autoMessage)
 		{
 		gd.addMessage(
-				"Note: This dialog is automatically shown after each new\n" +
-				"major.minor release to re-confirm your choice or if your\n" +
-				"preferences are not known.");
+				"Note: This dialog is automatically shown if your preferences\n" +
+				"are not known, or after a release that changes the tracking data.");
 		}
 		// @formatter:on
 		gd.hideCancelButton();

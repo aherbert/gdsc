@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
-import gdsc.ImageJTracker;
+import gdsc.UsageTracker;
 import gdsc.colocalisation.cda.TwinStackShifter;
 import gdsc.threshold.Auto_Threshold;
 import gdsc.utils.Random;
@@ -80,7 +80,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		ImageJTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		if (imp == null)
 		{

@@ -1,6 +1,6 @@
 package gdsc.threshold;
 
-import gdsc.ImageJTracker;
+import gdsc.UsageTracker;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -81,7 +81,7 @@ public class MaskCreater implements PlugIn
 	 */
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		if (!showDialog())
 		{

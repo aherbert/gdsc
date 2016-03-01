@@ -1,6 +1,6 @@
 package gdsc.foci;
 
-import gdsc.ImageJTracker;
+import gdsc.UsageTracker;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -95,7 +95,7 @@ public class SpotDensity implements PlugIn
 
 	public void run(String arg)
 	{
-		ImageJTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		// List the foci results
 		String[] names = FindFoci.getResultsNames();
