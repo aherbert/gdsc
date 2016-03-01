@@ -133,7 +133,7 @@ public class About_Plugin implements PlugIn
 		installed = true;
 
 		// Locate all the GDSC plugins using the plugins.config:
-		InputStream readmeStream = getPluginsConfig();
+		InputStream pluginsStream = getPluginsConfig();
 
 		ij.Menus.installPlugin("", ij.Menus.PLUGINS_MENU, "-", "", IJ.getInstance());
 
@@ -143,7 +143,7 @@ public class About_Plugin implements PlugIn
 		BufferedReader input = null;
 		try
 		{
-			input = new BufferedReader(new InputStreamReader(readmeStream));
+			input = new BufferedReader(new InputStreamReader(pluginsStream));
 			String line;
 			while ((line = input.readLine()) != null)
 			{
@@ -212,7 +212,7 @@ public class About_Plugin implements PlugIn
 		return true;
 	}
 
-	private static InputStream getPluginsConfig()
+	public static InputStream getPluginsConfig()
 	{
 		// Get the embedded config in the jar file
 		Class<About_Plugin> resourceClass = About_Plugin.class;
