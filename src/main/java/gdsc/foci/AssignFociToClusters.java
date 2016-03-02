@@ -1,6 +1,6 @@
 package gdsc.foci;
 
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -133,7 +133,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			displayResults();
 			return DONE;
 		}
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		results = FindFoci.getResults();
 		if (results == null || results.isEmpty())

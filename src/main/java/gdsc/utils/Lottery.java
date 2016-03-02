@@ -7,7 +7,7 @@ import ij.plugin.PlugIn;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well44497b;
 
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 
 /**
  * Computes the odds of winning the lottery using random sampling 
@@ -27,7 +27,7 @@ public class Lottery implements PlugIn
 	 */
 	public void run(String arg)
 	{
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Calculate the lottory odds");

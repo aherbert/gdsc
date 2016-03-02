@@ -27,7 +27,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 
 /**
  * Scales all planes in an image to the given maximim
@@ -46,7 +46,7 @@ public class Image_Scaler implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		if (!showDialog())
 		{

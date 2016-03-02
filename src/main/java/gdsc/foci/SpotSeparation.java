@@ -1,6 +1,6 @@
 package gdsc.foci;
 
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -67,7 +67,7 @@ public class SpotSeparation implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		if (imp == null)
 			return DONE;

@@ -1,6 +1,6 @@
 package gdsc.utils;
 
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 import ij.ImagePlus;
 import ij.plugin.filter.MaskParticleAnalyzer;
 import ij.plugin.filter.PlugInFilter;
@@ -16,7 +16,7 @@ public class MaskParticleAnalyzerRunner implements PlugInFilter
 	
 	public int setup(String arg, ImagePlus imp)
 	{
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		return filter.setup(arg, imp);
 	}
 

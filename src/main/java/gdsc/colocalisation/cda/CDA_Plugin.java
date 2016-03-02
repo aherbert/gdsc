@@ -1,6 +1,6 @@
 package gdsc.colocalisation.cda;
 
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -291,7 +291,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 */
 	public void run(String arg)
 	{
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		if (WindowManager.getImageCount() == 0)
 		{

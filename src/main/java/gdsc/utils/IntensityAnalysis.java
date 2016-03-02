@@ -24,7 +24,7 @@ import org.apache.commons.math3.fitting.CurveFitter;
 import org.apache.commons.math3.optim.nonlinear.vector.jacobian.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 
 /**
  * Analyses the ROI across a stack of exposures. Exposures must be set within the slice labels.
@@ -63,7 +63,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 			return DONE;
 		}
 		
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 
 		if (imp == null || imp.getStackSize() == 1)
 		{

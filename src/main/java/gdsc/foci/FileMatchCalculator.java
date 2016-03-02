@@ -1,6 +1,6 @@
 package gdsc.foci;
 
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -94,7 +94,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	 */
 	public void run(String arg)
 	{
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 
 		if (!showDialog())
 		{

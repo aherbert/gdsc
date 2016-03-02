@@ -1,6 +1,6 @@
 package gdsc.foci;
 
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -232,7 +232,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	 */
 	public void run(String arg)
 	{
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		if (arg.equals("frame"))
 		{

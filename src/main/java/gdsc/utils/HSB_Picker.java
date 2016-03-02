@@ -43,7 +43,7 @@ import javax.swing.JPanel;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 
 /**
  * Alows an RGB image to be filtered using HSB limits.
@@ -90,7 +90,7 @@ public class HSB_Picker extends PlugInFrame
 	 */
 	public void run(String arg)
 	{
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		if (WindowManager.getImageCount() == 0)
 		{

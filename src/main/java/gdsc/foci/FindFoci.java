@@ -1,6 +1,6 @@
 package gdsc.foci;
 
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -997,7 +997,7 @@ public class FindFoci implements PlugIn, MouseListener
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
 	{
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		ImagePlus imp = WindowManager.getCurrentImage();
 

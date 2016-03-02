@@ -20,7 +20,7 @@ import ij.plugin.PlugIn;
 /**
  * Provide methods to track code usage within ImageJ
  */
-public class PluginTracker implements PlugIn
+public class UsageTracker implements PlugIn
 {
 	private static final String TITLE = "Usage Tracker";
 	private static HashMap<String, String[]> map = new HashMap<String, String[]>();
@@ -85,7 +85,7 @@ public class PluginTracker implements PlugIn
 		if (trackerInitialised)
 			return;
 
-		synchronized (PluginTracker.class)
+		synchronized (UsageTracker.class)
 		{
 			// Check again since this may be a second thread that was waiting  
 			if (trackerInitialised)

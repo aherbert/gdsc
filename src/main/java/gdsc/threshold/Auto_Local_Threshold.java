@@ -1,5 +1,5 @@
 package gdsc.threshold;
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
@@ -18,7 +18,7 @@ public class Auto_Local_Threshold implements PlugIn {
 	
         /** Ask for parameters and then execute.*/
         public void run(String arg) {
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		// 1 - Obtain the currently active image:
 		ImagePlus imp = IJ.getImage();

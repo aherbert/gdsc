@@ -37,7 +37,7 @@ public class About_Plugin implements PlugIn
 		if (arg == null || arg.length() == 0)
 			arg = "about";
 
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		if (arg.equals("about"))
 		{
 			showAbout();

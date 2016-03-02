@@ -3,7 +3,7 @@ package gdsc.utils;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -65,7 +65,7 @@ public class Align_Images_FFT implements PlugIn
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
 	{
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		String[] imageList = getImagesList();
 

@@ -29,7 +29,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-import gdsc.PluginTracker;
+import gdsc.UsageTracker;
 
 /**
  * Skeletonise a mask image. Then produce a set of lines connecting node points on the skeleton.
@@ -64,7 +64,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		PluginTracker.recordPlugin(this.getClass(), arg);
+		UsageTracker.recordPlugin(this.getClass(), arg);
 		
 		if (imp == null)
 		{
