@@ -10,7 +10,7 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
-package gdsc;
+package gdsc.common.ij;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,12 +18,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 
-import gdsc.analytics.ClientParameters;
-import gdsc.analytics.ClientParametersManager;
-import gdsc.analytics.ConsoleLogger;
-import gdsc.analytics.JGoogleAnalyticsTracker;
-import gdsc.analytics.JGoogleAnalyticsTracker.DispatchMode;
-import gdsc.analytics.JGoogleAnalyticsTracker.MeasurementProtocolVersion;
+import gdsc.common.analytics.ClientParameters;
+import gdsc.common.analytics.ClientParametersManager;
+import gdsc.common.analytics.ConsoleLogger;
+import gdsc.common.analytics.JGoogleAnalyticsTracker;
+import gdsc.common.analytics.JGoogleAnalyticsTracker.DispatchMode;
+import gdsc.common.analytics.JGoogleAnalyticsTracker.MeasurementProtocolVersion;
 import gdsc.help.URL;
 import ij.IJ;
 import ij.ImageJ;
@@ -97,7 +97,7 @@ public class ImageJAnalyticsTracker
 				Prefs.set(PROPERTY_GA_CLIENT_ID, clientParameters.getClientId());
 
 				// Record the version of analytics we are using
-				clientParameters.setApplicationVersion(gdsc.analytics.Version.VERSION_X_X_X);
+				clientParameters.setApplicationVersion(gdsc.common.analytics.Version.VERSION_X_X_X);
 
 				// Use custom dimensions to record client data. These should be registered 
 				// in the analytics account for the given tracking ID
@@ -372,7 +372,7 @@ public class ImageJAnalyticsTracker
 	 */
 	private static String getVersion()
 	{
-		return gdsc.analytics.Version.VERSION_X_X;
+		return gdsc.common.analytics.Version.VERSION_X_X;
 	}
 
 	/**

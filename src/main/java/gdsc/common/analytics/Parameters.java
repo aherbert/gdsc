@@ -1,4 +1,4 @@
-package gdsc.analytics;
+package gdsc.common.analytics;
 
 import java.util.ArrayList;
 import java.util.List;

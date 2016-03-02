@@ -1,4 +1,4 @@
-package gdsc.analytics;
+package gdsc.common.analytics;
 
 import java.io.OutputStream;
 import java.net.InetSocketAddress;

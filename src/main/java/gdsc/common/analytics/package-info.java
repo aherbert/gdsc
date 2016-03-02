@@ -48,4 +48,4 @@
  * @see https://code.google.com/archive/p/jgoogleanalyticstracker/
  * @see https://github.com/siddii/jgoogleanalytics
  */
-package gdsc.analytics;
+package gdsc.common.analytics;

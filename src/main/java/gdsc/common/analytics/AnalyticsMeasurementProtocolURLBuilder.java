@@ -1,4 +1,4 @@
-package gdsc.analytics;
+package gdsc.common.analytics;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ import java.util.List;
 
 import java.util.Random;
 
-import gdsc.analytics.Parameters.CustomDimension;
+import gdsc.common.analytics.Parameters.CustomDimension;
 
 /**
  * Build the parameters used by Google Analytics Measurement Protocol.

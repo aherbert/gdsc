@@ -1,4 +1,4 @@
-package gdsc.analytics;
+package gdsc.common.analytics;
 
 /*
  * <ul>
