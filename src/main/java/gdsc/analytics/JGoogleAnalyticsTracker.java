@@ -69,9 +69,13 @@ import java.net.URL;
  * with).
  * </p>
  * <p>
- * Note: This class has been forked from the JGoogleAnalyticsTracker project and modified by Alex Herbert to alter the
- * data sent to Google Analytics to use the POST method for the Measurement Protocol and remove the slfj dependency. The
- * architecture for dispatching messages is unchanged.
+ * Note: This class has been forked from the JGoogleAnalyticsTracker project and modified by Alex Herbert to:
+ * <ul>
+ * <li>Alter the data sent to Google Analytics to use the POST method for the Measurement Protocol
+ * <li>Remove the slfj dependency
+ * <li>Make the logger specific to the instance (since each instance may have a different GA tracking ID)
+ * </ul>
+ * The architecture for dispatching messages is unchanged.
  * </p>
  * 
  * @author Daniel Murphy, Stefan Brozinski, Alex Herbert
@@ -91,18 +95,21 @@ public class JGoogleAnalyticsTracker
 		MULTI_THREAD,
 		/**
 		 * Each tracking request is added to a queue, and a single dispatch thread makes the requests.
+		 * <p>
+		 * The dispatch thread is shared by all instances of the class. To avoid your tracking calls being swamped 
+		 * by another tracker you could use the {@link #MULTI_THREAD} option and let the JVM figure out which 
+		 * request dispatch thread to run.
 		 */
 		SINGLE_THREAD
 	}
 
-	private static Logger logger = new Logger();
 	private static final ThreadGroup asyncThreadGroup = new ThreadGroup("Async Google Analytics Threads");
 	private static long asyncThreadsRunning = 0;
 	private static Proxy proxy = Proxy.NO_PROXY;
 	private static Queue<String> fifo = new LinkedList<String>();
 	private static Thread backgroundThread = null; // the thread used in 'queued' mode.
 	private static boolean backgroundThreadMayRun = false;
-
+	
 	static
 	{
 		asyncThreadGroup.setMaxPriority(Thread.MIN_PRIORITY);
@@ -122,6 +129,7 @@ public class JGoogleAnalyticsTracker
 		V_1
 	}
 
+	private Logger logger = new Logger();
 	private final MeasurementProtocolVersion version;
 	private final ClientParameters clientParameters;
 	private final IAnalyticsMeasurementProtocolURLBuilder builder;
@@ -159,7 +167,7 @@ public class JGoogleAnalyticsTracker
 		}
 		if (mode == DispatchMode.SINGLE_THREAD)
 		{
-			startBackgroundThread();
+			startBackgroundThread(logger);
 		}
 		this.mode = mode;
 	}
@@ -358,7 +366,7 @@ public class JGoogleAnalyticsTracker
 						}
 						try
 						{
-							dispatchRequest(url);
+							dispatchRequest(url, logger);
 						}
 						finally
 						{
@@ -374,7 +382,7 @@ public class JGoogleAnalyticsTracker
 				break;
 
 			case SYNCHRONOUS:
-				dispatchRequest(url);
+				dispatchRequest(url, logger);
 				break;
 
 			case SINGLE_THREAD:
@@ -398,8 +406,10 @@ public class JGoogleAnalyticsTracker
 	 * 
 	 * @param parameters
 	 *            The POST parameters (assumed to use UTF-8 encoding)
+	 * @param logger
+	 *            The logger used for status messages
 	 */
-	private static void dispatchRequest(String parameters)
+	private static void dispatchRequest(String parameters, Logger logger)
 	{
 		HttpURLConnection connection = null;
 		try
@@ -466,7 +476,7 @@ public class JGoogleAnalyticsTracker
 	/**
 	 * If the background thread for 'queued' mode is not running, start it now.
 	 */
-	private synchronized static void startBackgroundThread()
+	private synchronized static void startBackgroundThread(final Logger logger)
 	{
 		if (backgroundThread == null)
 		{
@@ -500,7 +510,7 @@ public class JGoogleAnalyticsTracker
 							{
 								try
 								{
-									dispatchRequest(url);
+									dispatchRequest(url, logger);
 								}
 								finally
 								{
@@ -600,7 +610,7 @@ public class JGoogleAnalyticsTracker
 	 * 
 	 * @return the logger
 	 */
-	public static Logger getLogger()
+	public Logger getLogger()
 	{
 		return logger;
 	}
@@ -611,12 +621,12 @@ public class JGoogleAnalyticsTracker
 	 * @param logger
 	 *            the logger to set
 	 */
-	public static void setLogger(Logger logger)
+	public void setLogger(Logger logger)
 	{
 		// If null set to the default (null) logger
 		if (logger == null)
 			logger = new Logger();
-		JGoogleAnalyticsTracker.logger = logger;
+		this.logger = logger;
 	}
 
 	/**
