@@ -1,7 +1,5 @@
 package gdsc.analytics;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /*
@@ -34,7 +32,7 @@ import java.util.regex.Pattern;
  * 
  * @see https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters
  */
-public class ClientParameters
+public class ClientParameters extends Parameters
 {
 	private final String trackingId;
 	private final String clientId;
@@ -49,10 +47,7 @@ public class ClientParameters
 	private String applicationVersion = null;
 	private boolean anonymized = false;
 
-	private List<String> customDimensions = null;
-
 	private String url = null;
-
 
 	/**
 	 * Constructs with the tracking Id. If the client Id is null or empty then a new UUID will be created.
@@ -160,7 +155,6 @@ public class ClientParameters
 		return applicationVersion;
 	}
 
-
 	/**
 	 * @return True if the IP address of the sender will be anonymized
 	 */
@@ -168,7 +162,7 @@ public class ClientParameters
 	{
 		return anonymized;
 	}
-	
+
 	/**
 	 * @return The client component of the URL
 	 */
@@ -264,37 +258,6 @@ public class ClientParameters
 	{
 		this.url = null;
 		this.anonymized = anonymized;
-	}
-
-	/**
-	 * Add a custom dimension
-	 * 
-	 * @param value
-	 */
-	public void addCustomDimension(String value)
-	{
-		if (value == null || value.length() == 0)
-			return;
-		this.url = null;
-		if (customDimensions == null)
-			customDimensions = new ArrayList<String>(1);
-		customDimensions.add(value);
-	}
-
-	/**
-	 * @return The custom dimensions
-	 */
-	public List<String> getCustomDimensions()
-	{
-		return customDimensions;
-	}
-
-	/**
-	 * @return The number of customer dimensions
-	 */
-	public int getNumberOfCustomDimensions()
-	{
-		return (customDimensions == null) ? 0 : customDimensions.size();
 	}
 
 	/**

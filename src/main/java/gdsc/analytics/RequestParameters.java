@@ -1,8 +1,5 @@
 package gdsc.analytics;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /*
  * <ul>
  * <li>Copyright (c) 2016 Alex Herbert
@@ -34,10 +31,9 @@ import java.util.List;
  * @see https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters
  * @author Alex Herbert
  */
-public class RequestParameters
+public class RequestParameters extends Parameters
 {
 	private final HitType hitType;
-	private List<String> customDimensions = null;
 
 	private String documentPath = null;
 	private String documentTitle = null;
@@ -65,36 +61,6 @@ public class RequestParameters
 	public HitType getHitTypeEnum()
 	{
 		return hitType;
-	}
-
-	/**
-	 * Add a custom dimension
-	 * 
-	 * @param value
-	 */
-	public void addCustomDimension(String value)
-	{
-		if (value == null || value.length() == 0)
-			return;
-		if (customDimensions == null)
-			customDimensions = new ArrayList<String>(1);
-		customDimensions.add(value);
-	}
-
-	/**
-	 * @return The custom dimensions
-	 */
-	public List<String> getCustomDimensions()
-	{
-		return customDimensions;
-	}
-
-	/**
-	 * @return The number of customer dimensions
-	 */
-	public int getNumberOfCustomDimensions()
-	{
-		return (customDimensions == null) ? 0 : customDimensions.size();
 	}
 
 	/**

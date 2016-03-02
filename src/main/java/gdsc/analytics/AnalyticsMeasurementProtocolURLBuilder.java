@@ -31,6 +31,8 @@ import java.util.List;
 
 import java.util.Random;
 
+import gdsc.analytics.Parameters.CustomDimension;
+
 /**
  * Build the parameters used by Google Analytics Measurement Protocol.
  * <p>
@@ -90,11 +92,7 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 		add(sb, "t", requestParameters.getHitType());
 
 		// Check for more custom dimensions
-		if (requestParameters.getNumberOfCustomDimensions() > 0)
-		{
-			buildCustomDimensionsURL(sb, requestParameters.getCustomDimensions(),
-					clientParameters.getNumberOfCustomDimensions() + 1);
-		}
+		buildCustomDimensionsURL(sb, requestParameters.getCustomDimensions());
 
 		switch (requestParameters.getHitTypeEnum())
 		{
@@ -102,14 +100,14 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 				add(sb, "dp", requestParameters.getDocumentPath());
 				add(sb, "dt", requestParameters.getDocumentTitle());
 				break;
-				
+
 			case EVENT:
 				add(sb, "ec", requestParameters.getCategory());
 				add(sb, "ea", requestParameters.getAction());
 				addCheck(sb, "el", requestParameters.getLabel());
 				addCheck(sb, "ev", requestParameters.getValue());
 				break;
-				
+
 			default:
 				throw new IllegalArgumentException("Unsupported hit type: " + requestParameters.getHitType());
 		}
@@ -187,7 +185,7 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 		addCheck(sb, "sr", client.getScreenResolution());
 		addCheck(sb, "ul", client.getUserLanguage());
 		addCheck(sb, "ua", client.getUserAgent());
-		
+
 		if (client.isAnonymized())
 		{
 			sb.append("&aip=1"); // Anonymize IP
@@ -200,16 +198,16 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 
 		sb.append("&je=1"); // java enabled
 
-		buildCustomDimensionsURL(sb, client.getCustomDimensions(), 1);
+		buildCustomDimensionsURL(sb, client.getCustomDimensions());
 
 		client.setUrl(sb.toString());
 	}
 
-	private void buildCustomDimensionsURL(StringBuilder sb, List<String> customDimensions, int start)
+	private void buildCustomDimensionsURL(StringBuilder sb, List<CustomDimension> customDimensions)
 	{
 		if (customDimensions == null)
 			return;
-		for (String value : customDimensions)
-			add(sb, "cd" + (start++), value);
+		for (CustomDimension d : customDimensions)
+			add(sb, "cd" + d.number, d.value);
 	}
 }

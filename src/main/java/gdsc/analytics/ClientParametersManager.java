@@ -100,7 +100,7 @@ public class ClientParametersManager
 		// "The User Agent of the browser. Note that Google has libraries to identify real user agents. 
 		// Hand crafting your own agent could break at any time."
 		
-		// A better option is to pass in custom variables so this data can be used in reports.
+		// A better option is to pass in custom dimension so this data can be used in reports.
 	}
 
 	/**
