@@ -24,7 +24,6 @@ import gdsc.common.analytics.ConsoleLogger;
 import gdsc.common.analytics.JGoogleAnalyticsTracker;
 import gdsc.common.analytics.JGoogleAnalyticsTracker.DispatchMode;
 import gdsc.common.analytics.JGoogleAnalyticsTracker.MeasurementProtocolVersion;
-import gdsc.help.URL;
 import ij.IJ;
 import ij.ImageJ;
 import ij.Prefs;
@@ -409,7 +408,7 @@ public class ImageJAnalyticsTracker
 				"address to a region, usually a country. For more details click\n" +
 				"the Help button.\n \n" + 
 				"Click here to opt-out from Google Analytics");
-		gd.addHelp(URL.TRACKING);
+		gd.addHelp("http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/tracking");
 		gd.addCheckbox("Disabled", isDisabled());
 		gd.addCheckbox("Anonymise IP", isAnonymized());
 		if (autoMessage)

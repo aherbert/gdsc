@@ -21,5 +21,4 @@ public class URL
 	public static String COLOCALISATION = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/colocalisation";
 	public static String UTILITY = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/utility";
 	public static String FIND_FOCI = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/findfoci";
-	public static String TRACKING = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/tracking";
 }
