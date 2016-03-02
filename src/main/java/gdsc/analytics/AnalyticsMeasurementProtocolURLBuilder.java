@@ -208,6 +208,6 @@ public class AnalyticsMeasurementProtocolURLBuilder implements IAnalyticsMeasure
 		if (customDimensions == null)
 			return;
 		for (CustomDimension d : customDimensions)
-			add(sb, "cd" + d.number, d.value);
+			add(sb, "cd" + d.index, d.value);
 	}
 }
