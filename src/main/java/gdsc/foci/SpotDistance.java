@@ -1,6 +1,6 @@
 package gdsc.foci;
 
-import gdsc.UsageTracker;
+import gdsc.PluginTracker;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -211,7 +211,7 @@ public class SpotDistance implements PlugIn
 
 	public void run(String arg)
 	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+		PluginTracker.recordPlugin(this.getClass(), arg);
 		
 		boolean extraOptions = IJ.shiftKeyDown();
 

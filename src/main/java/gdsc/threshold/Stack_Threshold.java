@@ -23,7 +23,7 @@ import ij.process.ImageProcessor;
 
 import java.util.ArrayList;
 
-import gdsc.UsageTracker;
+import gdsc.PluginTracker;
 
 /**
  * Processes an image stack and applies thresholding to create a mask for each channel+frame combination.
@@ -56,7 +56,7 @@ public class Stack_Threshold implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+		PluginTracker.recordPlugin(this.getClass(), arg);
 		
 		if (imp == null)
 		{

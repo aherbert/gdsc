@@ -16,7 +16,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 
 import gdsc.analytics.ClientParameters;
@@ -30,14 +29,15 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.Prefs;
 import ij.gui.GenericDialog;
-import ij.plugin.PlugIn;
 
 /**
- * Provide methods to track code usage within ImageJ
+ * Provide a global reference to JGoogleAnalyticsTracker
+ * <p>
+ * This class exists in both the codebase for the GDSC ImageJ Plugins and GDSC SMLM ImageJ Plugins simply to allow
+ * tracking of both applications together with the same client Id and session in one instance of ImageJ.
  */
-public class UsageTracker implements PlugIn
+public class ImageJAnalyticsTracker
 {
-	private static final String TITLE = "Usage Tracker";
 	private static final String PROPERTY_GA_CLIENT_ID = "gdsc.ga.clientId";
 	private static final String PROPERTY_GA_STATE = "gdsc.ga.state";
 	private static final String PROPERTY_GA_LAST_VERSION = "gdsc.ga.lastVersion";
@@ -46,8 +46,8 @@ public class UsageTracker implements PlugIn
 	private static final int UNKNOWN = 0;
 	private static final int ENABLED = 1;
 
+	private static ClientParameters clientParameters = null;
 	private static JGoogleAnalyticsTracker tracker = null;
-	private static HashMap<String, String[]> map = new HashMap<String, String[]>();
 
 	/**
 	 * Flag indicating that the user has opted out of analytics
@@ -59,107 +59,101 @@ public class UsageTracker implements PlugIn
 	private static int anonymized = (int) Prefs.get(PROPERTY_GA_ANONYMIZE, UNKNOWN);
 
 	/**
-	 * Record the use of the ImageJ plugin using the raw class and argument passed by ImageJ. The plugins config
-	 * file will be used to identify the correct ImageJ plugin path and title.
+	 * Track a page view
 	 * 
-	 * @param clazz
-	 *            The class
-	 * @param argument
-	 *            The plugin argument
+	 * @param documentPath
+	 *            The document path (must not be null)
+	 * @param documentTitle
+	 *            The document title
 	 */
-	public static void recordPlugin(@SuppressWarnings("rawtypes") Class clazz, String argument)
+	public static void pageview(String pageUrl, String pageTitle)
 	{
-		initialise();
+		initialiseTracker();
 		if (isDisabled())
 			return;
-
-		final String[] pair = map.get(getKey(clazz.getName(), argument));
-		if (pair == null)
-		{
-			recordPlugin(clazz.getName().replace('.', '/'), argument);
-		}
-		else
-		{
-			tracker.pageview(pair[0], pair[1]);
-		}
-	}
-
-	private static String getKey(String name, String argument)
-	{
-		return (argument != null && argument.length() > 0) ? name + '.' + argument : name;
-	}
-
-	/**
-	 * Record the use of the ImageJ plugin
-	 * 
-	 * @param name
-	 *            The plugin name
-	 * @param argument
-	 *            The plugin argument
-	 */
-	private static void recordPlugin(String name, String argument)
-	{
-		initialise();
-		if (isDisabled())
-			return;
-
-		String url = '/' + name;
-		if (argument != null && argument.length() > 0)
-			url += "?arg=" + argument;
-
-		trackPageView(url, name);
-	}
-
-	/**
-	 * Record the use of a Java class
-	 * 
-	 * @param clazz
-	 *            The class
-	 */
-	public static void recordClass(@SuppressWarnings("rawtypes") Class clazz)
-	{
-		recordClass(clazz, null);
-	}
-
-	/**
-	 * Record the use of a Java class and method.
-	 * <p>
-	 * Only the method name is recorded for tracking simplicity. If multiple methods have the same name with different
-	 * parameters and access then this information will be lost.
-	 * 
-	 * @param clazz
-	 *            The class
-	 * @param method
-	 *            Optional method
-	 */
-	public static void recordClass(@SuppressWarnings("rawtypes") Class clazz, Method method)
-	{
-		initialise();
-		if (isDisabled())
-			return;
-
-		final String title = clazz.getName();
-		String url = '/' + title.replace('.', '/');
-		if (method != null)
-			url += "?method=" + method.getName();
-		trackPageView(url, title);
-	}
-
-	private static void trackPageView(String pageUrl, String pageTitle)
-	{
 		tracker.pageview(pageUrl, pageTitle);
 	}
 
 	/**
-	 * Create the tracker and then verify the opt in/out status of the user if it unknown or a new major.minor version.
+	 * Create the client parameters for the tracker and populate with information about ImageJ and the system
 	 */
-	private static void initialise()
+	public static void initialise()
 	{
-		verifyStatus();
-		
-		// We only need to create the tracker if we are monitoring
-		if (!isDisabled())
-			initialiseTracker();
+		if (clientParameters == null)
+		{
+			synchronized (ImageJAnalyticsTracker.class)
+			{
+				// In case another thread was waiting to do this
+				if (clientParameters != null)
+					return;
+
+				// Get the client parameters
+				final String clientId = Prefs.get(PROPERTY_GA_CLIENT_ID, null);
+				clientParameters = new ClientParameters("UA-74107394-1", clientId, "GDSC ImageJ Plugins");
+
+				ClientParametersManager.populate(clientParameters);
+
+				// Record for next time
+				Prefs.set(PROPERTY_GA_CLIENT_ID, clientParameters.getClientId());
+
+				// Record the version of analytics we are using
+				clientParameters.setApplicationVersion(gdsc.analytics.Version.VERSION_X_X_X);
+
+				// Use custom dimensions to record client data. These should be registered 
+				// in the analytics account for the given tracking ID
+
+				// Record the ImageJ information.
+				clientParameters.addCustomDimension(1, getImageJInfo());
+
+				// Java version
+				clientParameters.addCustomDimension(2, System.getProperty("java.version"));
+
+				// OS
+				clientParameters.addCustomDimension(3, System.getProperty("os.name"));
+				clientParameters.addCustomDimension(4, System.getProperty("os.version"));
+				clientParameters.addCustomDimension(5, System.getProperty("os.arch"));
+			}
+		}
+	}
+
+	/**
+	 * @return The ImageJ information (Application name and version)
+	 */
+	private static String getImageJInfo()
+	{
+		ImageJ ij = IJ.getInstance();
+		if (ij == null)
+		{
+			// Run embedded without showing
+			ij = new ImageJ(ImageJ.NO_SHOW);
+		}
+
+		// ImageJ version
+		// This call should return a string like:
+		//   ImageJ 1.48a; Java 1.7.0_11 [64-bit]; Windows 7 6.1; 29MB of 5376MB (<1%)
+		// (This should also be different if we are running within Fiji)
+		String info = ij.getInfo();
+		if (info.indexOf(';') != -1)
+			info = info.substring(0, info.indexOf(';'));
+		return info;
+	}
+
+	/**
+	 * Add a custom dimension
+	 * <p>
+	 * Note that custom dimensions have to be created for your site before they can be used in analytics reports.
+	 * 
+	 * @see https://support.google.com/analytics/answer/2709829
+	 * 
+	 * @param index
+	 *            The dimension index (1-20 or 1-200 for premium accounts)
+	 * @param value
+	 *            The dimension value (must not be null)
+	 */
+	public static void addCustomDimension(int index, String value)
+	{
+		initialise();
+		clientParameters.addCustomDimension(index, value);
 	}
 
 	/**
@@ -169,26 +163,37 @@ public class UsageTracker implements PlugIn
 	{
 		if (tracker == null)
 		{
-			synchronized (map)
+			synchronized (ImageJAnalyticsTracker.class)
 			{
 				// Check again since this may be a second thread that was waiting  
 				if (tracker != null)
 					return;
 
-				buildPluginMap();
+				initialise();
 
-				createTracker();
+				tracker = new JGoogleAnalyticsTracker(clientParameters, MeasurementProtocolVersion.V_1,
+						DispatchMode.SINGLE_THREAD);
+
+				tracker.setAnonymised(isAnonymized());
 
 				// XXX - Disable in production code 
 				// DEBUG: Enable logging
-				JGoogleAnalyticsTracker.setLogger(new ConsoleLogger());
+				tracker.setLogger(new ConsoleLogger());
 			}
 		}
 	}
 
-	private static void buildPluginMap()
+	/**
+	 * Provide a method to read an ImageJ properties file and create the map between the ImageJ plugin class and
+	 * argument and the ImageJ menu path and plugin title.
+	 * 
+	 * @param map
+	 *            The map object to populate
+	 * @param pluginsStream
+	 *            The ImageJ properties file
+	 */
+	public static void buildPluginMap(HashMap<String, String[]> map, InputStream pluginsStream)
 	{
-		InputStream pluginsStream = About_Plugin.getPluginsConfig();
 		BufferedReader input = null;
 		try
 		{
@@ -272,50 +277,16 @@ public class UsageTracker implements PlugIn
 		return getKey(name, argument);
 	}
 
-	private static void createTracker()
+	/**
+	 * Get the key used for the given name and argument in the plugin map
+	 * 
+	 * @param name
+	 * @param argument
+	 * @return The key
+	 */
+	public static String getKey(String name, String argument)
 	{
-		// Get the client parameters
-		final String clientId = Prefs.get(PROPERTY_GA_CLIENT_ID, null);
-		final ClientParameters clientParameters = new ClientParameters("UA-74107394-1", clientId, About_Plugin.TITLE);
-
-		ClientParametersManager.populate(clientParameters);
-
-		// Record for next time
-		Prefs.set(PROPERTY_GA_CLIENT_ID, clientParameters.getClientId());
-
-		clientParameters.setApplicationVersion(Version.getMajorMinorRelease());
-
-		// Record the ImageJ information.
-		ImageJ ij = IJ.getInstance();
-		if (ij == null)
-		{
-			// Run embedded without showing
-			ij = new ImageJ(ImageJ.NO_SHOW);
-		}
-
-		// ImageJ version
-		// This call should return a string like:
-		//   ImageJ 1.48a; Java 1.7.0_11 [64-bit]; Windows 7 6.1; 29MB of 5376MB (<1%)
-		// (This should also be different if we are running within Fiji)
-		String info = ij.getInfo();
-		if (info.indexOf(';') != -1)
-			info = info.substring(0, info.indexOf(';'));
-
-		clientParameters.addCustomDimension(info);
-
-		// Java version
-		clientParameters.addCustomDimension(System.getProperty("java.version"));
-
-		// OS
-		clientParameters.addCustomDimension(System.getProperty("os.name"));
-		clientParameters.addCustomDimension(System.getProperty("os.version"));
-		clientParameters.addCustomDimension(System.getProperty("os.arch"));
-
-		// Create the tracker
-		tracker = new JGoogleAnalyticsTracker(clientParameters, MeasurementProtocolVersion.V_1,
-				DispatchMode.SINGLE_THREAD);
-
-		tracker.setAnonymised(isAnonymized());
+		return (argument != null && argument.length() > 0) ? name + '.' + argument : name;
 	}
 
 	/**
@@ -323,8 +294,7 @@ public class UsageTracker implements PlugIn
 	 */
 	public static boolean isDisabled()
 	{
-		// XXX - Tracking is disabled to allow a release of the code while this feature is not mature
-		return true; // (state == DISABLED);
+		return (state == DISABLED);
 	}
 
 	/**
@@ -335,17 +305,17 @@ public class UsageTracker implements PlugIn
 	 */
 	public static void setDisabled(boolean disabled)
 	{
-		final int oldState = UsageTracker.state; 
-		UsageTracker.state = (disabled) ? DISABLED : ENABLED;
+		final int oldState = ImageJAnalyticsTracker.state;
+		ImageJAnalyticsTracker.state = (disabled) ? DISABLED : ENABLED;
 
 		Prefs.set(PROPERTY_GA_LAST_VERSION, getVersion());
-		
+
 		if (oldState != state)
 		{
 			Prefs.set(PROPERTY_GA_STATE, state);
 
 			// Record this opt in/out status change
-			
+
 			// If the state was previously unknown and they opt out then do nothing.
 			// This is a user who never wants to be tracked.
 			if (oldState == UNKNOWN && disabled)
@@ -356,13 +326,13 @@ public class UsageTracker implements PlugIn
 			// - The user was previously opt out but now opts in
 
 			final boolean enabled = !disabled;
-			
+
 			initialiseTracker();
 			// Reset the session if tracking has been enabled.
 			if (enabled)
 				tracker.resetSession();
 			// Track the opt status change with an event
-			tracker.event("Tracking", Boolean.toString(enabled), getVersion(), null);			
+			tracker.event("Tracking", Boolean.toString(enabled), getVersion(), null);
 		}
 	}
 
@@ -383,10 +353,10 @@ public class UsageTracker implements PlugIn
 	public static void setAnonymized(boolean anonymize)
 	{
 		final int oldAnonymized = anonymized;
-		UsageTracker.anonymized = (anonymize) ? ENABLED : DISABLED;
+		ImageJAnalyticsTracker.anonymized = (anonymize) ? ENABLED : DISABLED;
 
 		Prefs.set(PROPERTY_GA_LAST_VERSION, getVersion());
-		
+
 		if (oldAnonymized != anonymized)
 		{
 			Prefs.set(PROPERTY_GA_ANONYMIZE, anonymized);
@@ -402,38 +372,32 @@ public class UsageTracker implements PlugIn
 	 */
 	private static String getVersion()
 	{
-		return Version.getMajorMinor();
+		return gdsc.analytics.Version.VERSION_X_X;
 	}
 
 	/**
-	 * Check the opt-in/out status. If it is not known then present a dialog to ask the user to set preferences.
+	 * Check the opt-in/out status. If it is not known for this version of the analytics code then return true.
 	 */
-	private static void verifyStatus()
+	public static boolean unknownStatus()
 	{
-		// XXX - Tracking is disabled to allow a release of the code while this feature is not mature
-		if (true)
-			return;
-		
 		String lastVersion = Prefs.get(PROPERTY_GA_LAST_VERSION, "");
 		String thisVersion = getVersion();
-		if (state == UNKNOWN || anonymized == UNKNOWN || !lastVersion.equals(thisVersion))
-			showDialog(true);
+		return (state == UNKNOWN || anonymized == UNKNOWN || !lastVersion.equals(thisVersion));
 	}
 
-	/* (non-Javadoc)
-	 * @see ij.plugin.PlugIn#run(java.lang.String)
+	/**
+	 * Show a dialog allowing users to opt in/out of Google Analytics
+	 * 
+	 * @param title
+	 *            The dialog title
+	 * @param autoMessage
+	 *            Set to true to display the message about automatically showing when the status is unknown
 	 */
-	public void run(String arg)
+	public static void showDialog(String title, boolean autoMessage)
 	{
-		recordPlugin(this.getClass(), arg);
-		showDialog(false);
-	}
-
-	private static void showDialog(boolean autoMessage)
-	{
-		GenericDialog gd = new GenericDialog(TITLE);
+		GenericDialog gd = new GenericDialog(title);
 		// @formatter:off
-		gd.addMessage(About_Plugin.TITLE + "\n \n" +
+		gd.addMessage("GDSC ImageJ Plugins\n \n" +
 				"The use of these plugins is free and unconstrained.\n" +
 				"The code uses Google Analytics to help us understand\n" +
 				"how users are using the plugins.\n \n" +
@@ -461,9 +425,7 @@ public class UsageTracker implements PlugIn
 			return;
 		final boolean disabled = gd.getNextBoolean();
 		final boolean anonymize = gd.getNextBoolean();
-		// XXX - Tracking is disabled to allow a release of the code while this feature is not mature
-		if (true)
-			return;
+		
 		// Anonymize first to respect the user choice if they still have tracking on
 		setAnonymized(anonymize);
 		setDisabled(disabled);

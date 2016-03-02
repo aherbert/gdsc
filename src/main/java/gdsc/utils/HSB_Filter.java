@@ -24,7 +24,7 @@ import ij.process.ImageProcessor;
 import java.awt.AWTEvent;
 import java.awt.Color;
 
-import gdsc.UsageTracker;
+import gdsc.PluginTracker;
 
 /**
  * Alows an RGB image to be filtered using HSB limits.
@@ -52,7 +52,7 @@ public class HSB_Filter implements ExtendedPlugInFilter, DialogListener
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+		PluginTracker.recordPlugin(this.getClass(), arg);
 		
 		if (imp == null)
 		{

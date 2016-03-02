@@ -260,6 +260,30 @@ public class ClientParameters extends Parameters
 		this.anonymized = anonymized;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.analytics.Parameters#addCustomDimension(int, java.lang.String)
+	 */
+	@Override
+	public void addCustomDimension(int index, String value)
+	{
+		this.url = null;
+		super.addCustomDimension(index, value);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.analytics.Parameters#addCustomMetric(int, int)
+	 */
+	@Override
+	public void addCustomMetric(int index, int value)
+	{
+		this.url = null;
+		super.addCustomMetric(index, value);
+	}
+
 	/**
 	 * Reset the session (i.e. start a new session)
 	 */

@@ -23,7 +23,7 @@ import ij.process.ImageProcessor;
 
 import java.util.ArrayList;
 
-import gdsc.UsageTracker;
+import gdsc.PluginTracker;
 import gdsc.threshold.Auto_Threshold;
 
 /**
@@ -65,7 +65,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+		PluginTracker.recordPlugin(this.getClass(), arg);
 		
 		if (imp == null)
 		{

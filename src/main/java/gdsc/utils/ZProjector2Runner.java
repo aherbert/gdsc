@@ -1,6 +1,6 @@
 package gdsc.utils;
 
-import gdsc.UsageTracker;
+import gdsc.PluginTracker;
 import ij.plugin.PlugIn;
 import ij.plugin.ZProjector2;
 
@@ -14,7 +14,7 @@ public class ZProjector2Runner implements PlugIn
 	
 	public void run(String arg)
 	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+		PluginTracker.recordPlugin(this.getClass(), arg);
 		filter.run(arg);
 	}
 }

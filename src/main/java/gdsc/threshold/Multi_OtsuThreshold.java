@@ -2,7 +2,7 @@ package gdsc.threshold;
 
 import java.awt.Color;
 
-import gdsc.UsageTracker;
+import gdsc.PluginTracker;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -50,7 +50,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+		PluginTracker.recordPlugin(this.getClass(), arg);
 		
 		if (imp == null)
 		{

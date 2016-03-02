@@ -1,6 +1,6 @@
 package gdsc.foci;
 
-import gdsc.UsageTracker;
+import gdsc.PluginTracker;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -56,7 +56,7 @@ public class PointExtractorPlugin implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+		PluginTracker.recordPlugin(this.getClass(), arg);
 		
 		checkManagerForRois();
 

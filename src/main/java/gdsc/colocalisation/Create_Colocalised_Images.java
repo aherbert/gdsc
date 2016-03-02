@@ -15,7 +15,7 @@ package gdsc.colocalisation;
 
 import java.util.Random;
 
-import gdsc.UsageTracker;
+import gdsc.PluginTracker;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
@@ -51,7 +51,7 @@ public class Create_Colocalised_Images implements PlugIn
 
 	public void run(String arg)
 	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+		PluginTracker.recordPlugin(this.getClass(), arg);
 		
 		if (!getBitDepth())
 			return;

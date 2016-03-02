@@ -23,7 +23,7 @@ import ij.process.ImageProcessor;
 import java.awt.Rectangle;
 import java.lang.reflect.Method;
 
-import gdsc.UsageTracker;
+import gdsc.PluginTracker;
 
 /**
  * Fits a circular 2D Gaussian.
@@ -169,7 +169,7 @@ public class GaussianFit implements PlugInFilter
 	 */
 	public int setup(String arg, ImagePlus imp)
 	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+		PluginTracker.recordPlugin(this.getClass(), arg);
 		Roi roi = imp.getRoi();
 		if (roi == null || !roi.isArea())
 		{

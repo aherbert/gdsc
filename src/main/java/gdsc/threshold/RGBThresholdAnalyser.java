@@ -1,6 +1,6 @@
 package gdsc.threshold;
 
-import gdsc.UsageTracker;
+import gdsc.PluginTracker;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -47,7 +47,7 @@ public class RGBThresholdAnalyser implements PlugIn
 	 */
 	public void run(String arg)
 	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+		PluginTracker.recordPlugin(this.getClass(), arg);
 		
 		dir1 = ImageJHelper.getDirectory("RGB_Directory", dir1);
 		if (dir1 == null)

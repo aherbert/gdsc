@@ -14,7 +14,7 @@ import ij.process.ImageStatistics;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 
-import gdsc.UsageTracker;
+import gdsc.PluginTracker;
 
 /**
  * Aligns an image stack to a reference image using XY translation to maximise the normalised correlation. Takes in:
@@ -53,7 +53,7 @@ public class Align_Images implements PlugIn
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
 	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+		PluginTracker.recordPlugin(this.getClass(), arg);
 		
 		String[] imageList = getImagesList();
 

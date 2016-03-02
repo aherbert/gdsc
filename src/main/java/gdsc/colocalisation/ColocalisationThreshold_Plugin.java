@@ -56,7 +56,7 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
-import gdsc.UsageTracker;
+import gdsc.PluginTracker;
 
 /**
  * Compares two images for correlated pixel intensities. If the two images are correlated a search is performed for the
@@ -208,7 +208,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	public void run(String arg)
 	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+		PluginTracker.recordPlugin(this.getClass(), arg);
 		
 		if (WindowManager.getImageCount() == 0)
 		{

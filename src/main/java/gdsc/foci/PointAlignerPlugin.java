@@ -34,7 +34,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-import gdsc.UsageTracker;
+import gdsc.PluginTracker;
 
 /**
  * Analyses the image using the FindFoci algorithm to identify and assign pixels to maxima.
@@ -73,7 +73,7 @@ public class PointAlignerPlugin implements PlugIn
 	 */
 	public void run(String arg)
 	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+		PluginTracker.recordPlugin(this.getClass(), arg);
 		
 		imp = WindowManager.getCurrentImage();
 

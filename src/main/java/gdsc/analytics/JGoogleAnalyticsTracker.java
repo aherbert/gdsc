@@ -96,8 +96,8 @@ public class JGoogleAnalyticsTracker
 		/**
 		 * Each tracking request is added to a queue, and a single dispatch thread makes the requests.
 		 * <p>
-		 * The dispatch thread is shared by all instances of the class. To avoid your tracking calls being swamped 
-		 * by another tracker you could use the {@link #MULTI_THREAD} option and let the JVM figure out which 
+		 * The dispatch thread is shared by all instances of the class. To avoid your tracking calls being swamped
+		 * by another tracker you could use the {@link #MULTI_THREAD} option and let the JVM figure out which
 		 * request dispatch thread to run.
 		 */
 		SINGLE_THREAD
@@ -109,7 +109,7 @@ public class JGoogleAnalyticsTracker
 	private static Queue<String> fifo = new LinkedList<String>();
 	private static Thread backgroundThread = null; // the thread used in 'queued' mode.
 	private static boolean backgroundThreadMayRun = false;
-	
+
 	static
 	{
 		asyncThreadGroup.setMaxPriority(Thread.MIN_PRIORITY);
@@ -136,11 +136,29 @@ public class JGoogleAnalyticsTracker
 	private DispatchMode mode;
 	private boolean enabled;
 
+	/**
+	 * Create an instance
+	 * 
+	 * @param clientParameters
+	 *            The client parameters
+	 * @param version
+	 *            The GA version
+	 */
 	public JGoogleAnalyticsTracker(ClientParameters clientParameters, MeasurementProtocolVersion version)
 	{
 		this(clientParameters, version, DispatchMode.SINGLE_THREAD);
 	}
 
+	/**
+	 * Create an instance
+	 * 
+	 * @param clientParameters
+	 *            The client parameters
+	 * @param version
+	 *            The GA version
+	 * @param dispatchMode
+	 *            The dispatch mode
+	 */
 	public JGoogleAnalyticsTracker(ClientParameters clientParameters, MeasurementProtocolVersion version,
 			DispatchMode dispatchMode)
 	{
