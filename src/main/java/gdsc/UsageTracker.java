@@ -14,7 +14,7 @@ package gdsc;
 
 import java.util.HashMap;
 
-import gdsc.common.ij.ImageJAnalyticsTracker;
+import gdsc.core.ij.ImageJAnalyticsTracker;
 import ij.plugin.PlugIn;
 
 /**

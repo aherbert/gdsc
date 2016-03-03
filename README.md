@@ -28,7 +28,10 @@ See the [Colocalisation User Manual](Colocalisation.odt) for full details.
 Utility Plugins
 ---------------
 
-The GDSC plugins provide various utility tools for image analysis. The tools include: thresholding and mask generation; difference of Gaussians for contrast enhancement; stack synchronisation for simultaneous image viewing; and image alignment.
+The GDSC plugins provide various utility tools for image analysis. The tools 
+include: thresholding and mask generation; difference of Gaussians for 
+contrast enhancement; stack synchronisation for simultaneous image viewing; 
+and image alignment.
 
 
 Install
@@ -37,38 +40,58 @@ Install
 The GDSC plugins are distributed using an ImageJ2/Fiji update site. 
 
 To install the plugins using Fiji (an ImageJ distribution) just follow the
-instructions [How_to_follow_a_3rd_party_update_site](http://fiji.sc/How_to_follow_a_3rd_party_update_site) and add the GDSC 
-update site. All the plugins will appear under the 'Plugins > GDSC' menu.
+instructions [How_to_follow_a_3rd_party_update_site](http://fiji.sc/How_to_follow_a_3rd_party_update_site) 
+and add the GDSC update site. All the plugins will appear under the 
+'Plugins > GDSC' menu.
 
 
 Installation from source
 ------------------------
 
-1. Clone the repository with a unique name (e.g. "gdsc")
+The source code is accessed using git and built using Maven. 
 
-        git clone https://github.com/aherbert/GDSC.git gdsc
+The code depends on the GDSC-Core artifact so you will have to install this to
+your local Maven repository before building:
 
-2. Build the code and package using Maven
+1. Clone GDSC Core the repository
 
-        cd gdsc
-        mvn -P dist package
+        git clone https://github.com/aherbert/GDSC-Core.git
 
-This will produce a gdsc-[VERSION].jar file in the target directory. All 
+2. Build the code and install using Maven
+
+        cd GDSC-Core
+        mvn install
+        cd ..
+
+This will produce a gdsc-core-[VERSION].jar file in the local Maven repository. 
+You can now build the other GDSC packages that depend on this code.
+
+3. Clone the repository
+
+        git clone https://github.com/aherbert/GDSC.git
+
+4. Build the code and package using Maven
+
+        cd GDSC
+        mvn -P dist package -DskipTests=true
+
+This will produce a gdsc_-[VERSION].jar file in the target directory. All 
 dependencies are copied into the target/dist/lib directory.
 
-3. Copy the gdsc_smlm jar into the plugins directory of ImageJ. 
+5. Copy the gdsc_* jar into the plugins directory of ImageJ. 
 
-4. Copy the dependencies into the plugins directory (or onto the Java
+6. Copy the dependencies into the plugins directory (or onto the Java
 classpath). Note that the Maven package routine puts all dependencies into
 the target/dist/lib directory even if they are not required by the SMLM code
 (it does not check what functions are actually used by the code). The libraries
 you will need are:
   
+        gdsc-core
         beansbinding
         commons-math3
         imagescience
 
-5. The plugins will now appear under the 'Plugins > GDSC' menu in ImageJ.
+7. The plugins will now appear under the 'Plugins > GDSC' menu in ImageJ.
 
 
 Running from source
