@@ -71,8 +71,10 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 	private Choice imageChoice;
 	private JToggleButton synchroniseButton;
 	private JButton helpButton;
-	private DefaultListModel<String> listModel;
-	private JList<String> childList;
+	@SuppressWarnings("rawtypes")
+	private DefaultListModel listModel;
+	@SuppressWarnings("rawtypes")
+	private JList childList;
 
 	// Used to check whether to update the image list
 	private ArrayList<String> imageList = new ArrayList<String>();
@@ -192,6 +194,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 		fillChildList();
 	}
 
+	@SuppressWarnings("unchecked")
 	private void fillChildList()
 	{
 		synchronized (childList)
@@ -225,6 +228,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 		super.close();
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void createFrame()
 	{
 		Panel mainPanel = new Panel();
@@ -258,7 +262,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 		mainPanel.add(createLabelPanel("Images to sync:"));
 
 		listModel = new DefaultListModel<String>();
-		childList = new JList<String>(listModel);
+		childList = new JList(listModel);
 		childList.setVisibleRowCount(15);
 		JScrollPane scrollPane = new JScrollPane(childList);
 		mainPanel.add(scrollPane);
