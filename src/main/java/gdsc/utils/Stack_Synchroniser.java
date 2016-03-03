@@ -261,7 +261,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 		
 		mainPanel.add(createLabelPanel("Images to sync:"));
 
-		listModel = new DefaultListModel<String>();
+		listModel = new DefaultListModel();
 		childList = new JList(listModel);
 		childList.setVisibleRowCount(15);
 		JScrollPane scrollPane = new JScrollPane(childList);
