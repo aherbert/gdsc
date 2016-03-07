@@ -212,7 +212,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		
 		if (WindowManager.getImageCount() == 0)
 		{
-			IJ.showMessage(TITLE, "No images opened.");
+			IJ.error(TITLE, "No images opened.");
 			return;
 		}
 
