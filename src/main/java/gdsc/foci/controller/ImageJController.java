@@ -1,5 +1,7 @@
 package gdsc.foci.controller;
 
+import gdsc.UsageTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -245,10 +247,11 @@ public class ImageJController extends FindFociController
 		ImagePlus mask = WindowManager.getImage(maskImage);
 
 		// Run the plugin
-		FindFoci fp = new FindFoci();
+		UsageTracker.recordPlugin(FindFoci.class, "");
+		FindFoci ff = new FindFoci();
 		if (saveResults)
-			fp.setResultsDirectory(resultsDirectory);
-		fp.exec(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod, searchMethod, searchParameter,
+			ff.setResultsDirectory(resultsDirectory);
+		ff.exec(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod, searchMethod, searchParameter,
 				maxPeaks, minSize, peakMethod, peakParameter, outputType, sortMethod, options, gaussianBlur,
 				centreMethod, centreParameter, fractionParameter);
 	}
