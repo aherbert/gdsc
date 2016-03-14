@@ -998,7 +998,7 @@ public class FindFoci implements PlugIn, MouseListener
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		ImagePlus imp = WindowManager.getCurrentImage();
 
 		if ("batch".equals(arg))
@@ -1193,9 +1193,9 @@ public class FindFoci implements PlugIn, MouseListener
 		if (mySaveToMemory)
 			options |= OPTION_SAVE_TO_MEMORY;
 
-		exec(imp, mask, myBackgroundMethod, myBackgroundParameter, myThresholdMethod, mySearchMethod,
-				mySearchParameter, myMaxPeaks, myMinSize, myPeakMethod, myPeakParameter, outputType, mySortMethod,
-				options, myGaussianBlur, myCentreMethod, myCentreParameter, myFractionParameter);
+		exec(imp, mask, myBackgroundMethod, myBackgroundParameter, myThresholdMethod, mySearchMethod, mySearchParameter,
+				myMaxPeaks, myMinSize, myPeakMethod, myPeakParameter, outputType, mySortMethod, options, myGaussianBlur,
+				myCentreMethod, myCentreParameter, myFractionParameter);
 	}
 
 	/**
@@ -1279,7 +1279,8 @@ public class FindFoci implements PlugIn, MouseListener
 	 *            See {@link #OUTPUT_LOG_MESSAGES}; {@link #OUTPUT_MASK_PEAKS}; {@link #OUTPUT_MASK_THRESHOLD};
 	 *            {@link #OUTPUT_ROI_SELECTION}; {@link #OUTPUT_RESULTS_TABLE}. In the case of OUTPUT_MASK the ImagePlus
 	 *            returned by
-	 *            {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int) } will
+	 *            {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int) }
+	 *            will
 	 *            be displayed.
 	 * @param sortIndex
 	 * @param options
@@ -1318,7 +1319,8 @@ public class FindFoci implements PlugIn, MouseListener
 					{
 						// YesNoCancelDialog causes asynchronous thread exception within Eclipse.
 						GenericDialog d = new GenericDialog(TITLE);
-						d.addMessage("Warning: Marking the maxima will destroy the ROI area.\nUse the Mark_using_overlay option to preserve the ROI.\n \nClick OK to continue (destroys the area ROI)");
+						d.addMessage(
+								"Warning: Marking the maxima will destroy the ROI area.\nUse the Mark_using_overlay option to preserve the ROI.\n \nClick OK to continue (destroys the area ROI)");
 						d.showDialog();
 						if (!d.wasOKed())
 							return;
@@ -1618,16 +1620,17 @@ public class FindFoci implements PlugIn, MouseListener
 	private Overlay createOverlay(ImagePlus imp, ImagePlus maximaImp)
 	{
 		Overlay o = new Overlay();
-		int channel = imp.getChannel();
-		int frame = imp.getFrame();
+		final int channel = imp.getChannel();
+		final int frame = imp.getFrame();
 		ImageStack stack = maximaImp.getImageStack();
+		final int currentSlice = imp.getCurrentSlice();
 
 		// Q. What happens if the image is the same colour?
 		// Currently we just leave it to the user to switch the LUT for the image.
 		final int value = Color.YELLOW.getRGB();
+		//imp.getLuts();
 
-		imp.getLuts();
-
+		final boolean multiSliceStack = maximaImp.getStackSize() > 1;
 		for (int slice = 1; slice <= maximaImp.getStackSize(); slice++)
 		{
 			// Use a RGB image to allow coloured output
@@ -1647,7 +1650,9 @@ public class FindFoci implements PlugIn, MouseListener
 			}
 			else
 			{
-				roi.setPosition(slice);
+				// If the mask has more than one slice then we can use the stack slice.
+				// Otherwise we processed a single slice of the image and should use the current index.
+				roi.setPosition((multiSliceStack) ? slice : currentSlice);
 			}
 			o.add(roi);
 		}
@@ -1679,8 +1684,8 @@ public class FindFoci implements PlugIn, MouseListener
 
 	private String saveResults(String expId, ImagePlus imp, ImagePlus mask, int backgroundMethod,
 			double backgroundParameter, String autoThresholdMethod, int searchMethod, double searchParameter,
-			int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex,
-			int options, double blur, int centreMethod, double centreParameter, double fractionParameter,
+			int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex, int options,
+			double blur, int centreMethod, double centreParameter, double fractionParameter,
 			ArrayList<int[]> resultsArray, double[] stats, String resultsDirectory)
 	{
 		return saveResults(expId, imp, null, mask, null, backgroundMethod, backgroundParameter, autoThresholdMethod,
@@ -1759,8 +1764,8 @@ public class FindFoci implements PlugIn, MouseListener
 	private String saveResults(String expId, ImagePlus imp, int[] imageDimension, ImagePlus mask, int[] maskDimension,
 			int backgroundMethod, double backgroundParameter, String autoThresholdMethod, int searchMethod,
 			double searchParameter, int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType,
-			int sortIndex, int options, double blur, int centreMethod, double centreParameter,
-			double fractionParameter, ArrayList<int[]> resultsArray, double[] stats, String resultsDirectory,
+			int sortIndex, int options, double blur, int centreMethod, double centreParameter, double fractionParameter,
+			ArrayList<int[]> resultsArray, double[] stats, String resultsDirectory,
 			ObjectAnalysisResult objectAnalysisResult)
 	{
 		try
@@ -1808,8 +1813,8 @@ public class FindFoci implements PlugIn, MouseListener
 				maskDimension = new int[] { mask.getC(), 0, mask.getT() };
 			saveParameters(resultsDirectory + File.separatorChar + expId + ".params", imp, imageDimension, mask,
 					maskDimension, backgroundMethod, backgroundParameter, autoThresholdMethod, searchMethod,
-					searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex, options,
-					blur, centreMethod, centreParameter, fractionParameter, resultsDirectory);
+					searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex, options, blur,
+					centreMethod, centreParameter, fractionParameter, resultsDirectory);
 			return expId;
 		}
 		catch (Exception e)
@@ -1848,8 +1853,8 @@ public class FindFoci implements PlugIn, MouseListener
 			{
 				writeParam(out, "Mask", mask.getTitle());
 				if (mask.getOriginalFileInfo() != null)
-					writeParam(out, "Mask File", mask.getOriginalFileInfo().directory +
-							mask.getOriginalFileInfo().fileName);
+					writeParam(out, "Mask File",
+							mask.getOriginalFileInfo().directory + mask.getOriginalFileInfo().fileName);
 				writeParam(out, "Mask_C", Integer.toString(maskDimension[BatchParameters.C]));
 				writeParam(out, "Mask_Z", Integer.toString(maskDimension[BatchParameters.Z]));
 				writeParam(out, "Mask_T", Integer.toString(maskDimension[BatchParameters.T]));
@@ -1877,8 +1882,8 @@ public class FindFoci implements PlugIn, MouseListener
 			writeParam(out, "Mark_peak_maxima", ((outputType & OUTPUT_MASK_ROI_SELECTION) != 0) ? "true" : "false");
 			writeParam(out, "Mark_using_overlay", ((outputType & OUTPUT_ROI_USING_OVERLAY) != 0) ? "true" : "false");
 			writeParam(out, "Hide_labels", ((outputType & OUTPUT_HIDE_LABELS) != 0) ? "true" : "false");
-			writeParam(out, "Show_peak_maxima_as_dots", ((outputType & OUTPUT_MASK_NO_PEAK_DOTS) == 0) ? "true"
-					: "false");
+			writeParam(out, "Show_peak_maxima_as_dots",
+					((outputType & OUTPUT_MASK_NO_PEAK_DOTS) == 0) ? "true" : "false");
 			writeParam(out, "Show_log_messages", ((outputType & OUTPUT_LOG_MESSAGES) != 0) ? "true" : "false");
 			writeParam(out, "Remove_edge_maxima", ((options & OPTION_REMOVE_EDGE_MAXIMA) != 0) ? "true" : "false");
 			writeParam(out, "Results_directory", resultsDirectory);
@@ -1900,7 +1905,9 @@ public class FindFoci implements PlugIn, MouseListener
 
 	public static String getStatisticsMode(int options)
 	{
-		if ((options & (FindFoci.OPTION_STATS_INSIDE | FindFoci.OPTION_STATS_OUTSIDE)) == (FindFoci.OPTION_STATS_INSIDE | FindFoci.OPTION_STATS_OUTSIDE))
+		if ((options &
+				(FindFoci.OPTION_STATS_INSIDE | FindFoci.OPTION_STATS_OUTSIDE)) == (FindFoci.OPTION_STATS_INSIDE |
+						FindFoci.OPTION_STATS_OUTSIDE))
 			return "Both";
 		if ((options & FindFoci.OPTION_STATS_INSIDE) != 0)
 			return "Inside";
@@ -3219,7 +3226,8 @@ public class FindFoci implements PlugIn, MouseListener
 		int[] maximaPeakIds = new int[nMaxima];
 		int[] displayValues = new int[nMaxima];
 
-		if ((outputType & (OUTPUT_MASK_ABOVE_SADDLE | OUTPUT_MASK_FRACTION_OF_INTENSITY | OUTPUT_MASK_FRACTION_OF_HEIGHT)) != 0)
+		if ((outputType &
+				(OUTPUT_MASK_ABOVE_SADDLE | OUTPUT_MASK_FRACTION_OF_INTENSITY | OUTPUT_MASK_FRACTION_OF_HEIGHT)) != 0)
 		{
 			if ((outputType & OUTPUT_MASK_FRACTION_OF_HEIGHT) != 0)
 				fractionParameter = Math.max(Math.min(1 - fractionParameter, 1), 0);
@@ -3248,8 +3256,9 @@ public class FindFoci implements PlugIn, MouseListener
 			}
 			else if ((outputType & OUTPUT_MASK_FRACTION_OF_HEIGHT) != 0)
 			{
-				displayValues[i] = (int) Math.round(fractionParameter *
-						(result[RESULT_MAX_VALUE] - stats[STATS_BACKGROUND]) + stats[STATS_BACKGROUND]);
+				displayValues[i] = (int) Math
+						.round(fractionParameter * (result[RESULT_MAX_VALUE] - stats[STATS_BACKGROUND]) +
+								stats[STATS_BACKGROUND]);
 			}
 		}
 
@@ -3300,7 +3309,8 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 
 		// Blank any pixels below the saddle height
-		if ((outputType & (OUTPUT_MASK_ABOVE_SADDLE | OUTPUT_MASK_FRACTION_OF_INTENSITY | OUTPUT_MASK_FRACTION_OF_HEIGHT)) != 0)
+		if ((outputType &
+				(OUTPUT_MASK_ABOVE_SADDLE | OUTPUT_MASK_FRACTION_OF_INTENSITY | OUTPUT_MASK_FRACTION_OF_HEIGHT)) != 0)
 		{
 			for (int i = maxima.length; i-- > 0;)
 			{
@@ -3856,7 +3866,8 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param intensityAboveBackground
 	 *            The image intensity above the background
 	 */
-	private void addToResultTable(int i, int id, int[] result, double sum, double noise, double intensityAboveBackground)
+	private void addToResultTable(int i, int id, int[] result, double sum, double noise,
+			double intensityAboveBackground)
 	{
 		// Buffer the output so that the table is displayed faster
 		buildResultEntry(resultsBuffer, i, id, result, sum, noise, intensityAboveBackground, "\n");
@@ -4033,7 +4044,8 @@ public class FindFoci implements PlugIn, MouseListener
 					if (mask)
 					{
 						// Set each z-slice as excluded
-						for (int index = getIndex(x + xOffset, y + yOffset, 0); index < maxx_maxy_maxz; index += maxx_maxy)
+						for (int index = getIndex(x + xOffset, y + yOffset,
+								0); index < maxx_maxy_maxz; index += maxx_maxy)
 						{
 							types[index] &= ~EXCLUDED;
 						}
@@ -4684,8 +4696,8 @@ public class FindFoci implements PlugIn, MouseListener
 				final int y = xyz[1];
 				final int z = xyz[2];
 
-				final double d = (xEqual - x) * (xEqual - x) + (yEqual - y) * (yEqual - y) + (zEqual - z) *
-						(zEqual - z);
+				final double d = (xEqual - x) * (xEqual - x) + (yEqual - y) * (yEqual - y) +
+						(zEqual - z) * (zEqual - z);
 
 				if (d < dMax)
 				{
@@ -5185,8 +5197,8 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param centreMethod
 	 * @param centreParameter
 	 */
-	private void locateMaxima(int[] image, int[] searchImage, int[] maxima, byte[] types,
-			ArrayList<int[]> resultsArray, int originalNumberOfPeaks, int centreMethod, double centreParameter)
+	private void locateMaxima(int[] image, int[] searchImage, int[] maxima, byte[] types, ArrayList<int[]> resultsArray,
+			int originalNumberOfPeaks, int centreMethod, double centreParameter)
 	{
 		if (centreMethod == CENTRE_MAX_VALUE_SEARCH)
 		{
@@ -5217,7 +5229,7 @@ public class FindFoci implements PlugIn, MouseListener
 			final int index = getIndex(result[RESULT_X], result[RESULT_Y], result[RESULT_Z]);
 			final int listLen = findMaximaCoords(image, maxima, types, index, maximaId,
 					result[RESULT_HIGHEST_SADDLE_VALUE], pList);
-			//IJ.log("maxima size > saddle = " + listLen);
+					//IJ.log("maxima size > saddle = " + listLen);
 
 			// Find the boundaries of the coordinates
 			final int[] min_xyz = new int[] { maxx, maxy, maxz };
@@ -5363,7 +5375,8 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param result
 	 * @param maxima
 	 */
-	private int[] extractSubImage(int[] image, int[] maxima, int[] min_xyz, int[] dimensions, int maximaId, int minValue)
+	private int[] extractSubImage(int[] image, int[] maxima, int[] min_xyz, int[] dimensions, int maximaId,
+			int minValue)
 	{
 		final int[] subImage = new int[dimensions[0] * dimensions[1] * dimensions[2]];
 
@@ -6316,13 +6329,15 @@ public class FindFoci implements PlugIn, MouseListener
 		for (int z = maxz; z-- > 0;)
 		{
 			// Look at top and bottom column
-			for (int y = uppery, i = getIndex(lowerx, lowery, z), ii = getIndex(upperx - 1, lowery, z); y-- > lowery; i += maxx, ii += maxx)
+			for (int y = uppery, i = getIndex(lowerx, lowery, z), ii = getIndex(upperx - 1, lowery,
+					z); y-- > lowery; i += maxx, ii += maxx)
 			{
 				peakIdMap[maxima[i]] = 0;
 				peakIdMap[maxima[ii]] = 0;
 			}
 			// Look at top and bottom row
-			for (int x = upperx, i = getIndex(lowerx, lowery, z), ii = getIndex(lowerx, uppery - 1, z); x-- > lowerx; i++, ii++)
+			for (int x = upperx, i = getIndex(lowerx, lowery, z), ii = getIndex(lowerx, uppery - 1,
+					z); x-- > lowerx; i++, ii++)
 			{
 				peakIdMap[maxima[i]] = 0;
 				peakIdMap[maxima[ii]] = 0;
@@ -6872,8 +6887,7 @@ public class FindFoci implements PlugIn, MouseListener
 	private boolean showBatchDialog()
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
-		gd.addMessage("Run " +
-				TITLE +
+		gd.addMessage("Run " + TITLE +
 				" on a set of images.\n \nAll images in a directory will be processed.\n \nOptional mask images in the input directory should be named:\n[image_name].mask.[ext]\nor placed in the mask directory with the same name as the parent image.");
 		gd.addStringField("Input_directory", batchInputDirectory);
 		gd.addStringField("Mask_directory", batchMaskDirectory);
@@ -7103,9 +7117,8 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 		else
 		{
-			expId = imp.getShortTitle() +
-					String.format("_c%dz%dt%d", imageDimension[BatchParameters.C], imageDimension[BatchParameters.Z],
-							imageDimension[BatchParameters.T]);
+			expId = imp.getShortTitle() + String.format("_c%dz%dt%d", imageDimension[BatchParameters.C],
+					imageDimension[BatchParameters.Z], imageDimension[BatchParameters.T]);
 		}
 
 		ObjectAnalysisResult objectAnalysisResult = null;
