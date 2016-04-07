@@ -427,9 +427,8 @@ public class AssignFociToObjects implements PlugInFilter
 
 	private static void createDistanceGrid(double radius)
 	{
-		// Auto-generated method stub
-		int n = (int) Math.ceil(radius);
-		int newSize = 2 * n + 1;
+		final int n = (int) Math.ceil(radius);
+		final int newSize = 2 * n + 1;
 		if (size >= newSize)
 		{
 			//return;
