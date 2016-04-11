@@ -230,16 +230,18 @@ public class TimeValuePointManager
 						float t = 1;
 						if (fields[1] >= 0)
 							t = Float.parseFloat(tokens[fields[1]]); // QuickPALM uses a float for the time
-						float x = Float.parseFloat(tokens[fields[2]]);
-						float y = Float.parseFloat(tokens[fields[3]]);
+						final float x = Float.parseFloat(tokens[fields[2]]);
+						final float y = Float.parseFloat(tokens[fields[3]]);
 						float z = 0;
 						if (fields[4] >= 0)
-							z = Float.parseFloat(tokens[fields[4]]);
-						if (type == FileType.QuickPALM)
 						{
-							// z is in nm and so must be converted to approximate pixels
-							float xNm = Float.parseFloat(tokens[4]);
-							z *= x / xNm;
+							z = Float.parseFloat(tokens[fields[4]]);
+							if (type == FileType.QuickPALM)
+							{
+								// z is in nm and so must be converted to approximate pixels
+								float xNm = Float.parseFloat(tokens[4]);
+								z *= x / xNm;
+							}
 						}
 						float value = 0;
 						if (fields[5] >= 0)
@@ -284,7 +286,7 @@ public class TimeValuePointManager
 				// Store the object field in T
 				fields = new int[] { 0, 20, 2, 3, 4, 5 };
 				break;
-				
+
 			case QuickPALM:
 				delimiter = "\t";
 				fields = new int[] { 0, 14, 2, 3, 6, 1 };
@@ -360,13 +362,13 @@ public class TimeValuePointManager
 				} while (line != null && (line.startsWith("#") || line.startsWith("Peak #")));
 
 				break;
-				
+
 			case QuickPALM:
 				readLine(input); // First line is the header so read this
 
 				// Allow fall-through to read the next line
 
-			// Read until no comment character
+				// Read until no comment character
 			default:
 				do
 				{
