@@ -18,6 +18,7 @@ import gdsc.UsageTracker;
 import gdsc.utils.ImageJHelper;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.Overlay;
@@ -76,6 +77,11 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	private static boolean showPairs = false;
 	private static boolean savePairs = false;
 	private static String filename = "";
+	private static String image1 = "";
+	private static String image2 = "";
+	private static boolean showComposite = false;
+
+	private String myMask, myImage1, myImage2;
 
 	private static boolean writeHeader = true;
 	private static TextWindow resultsWindow = null;
@@ -117,11 +123,15 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		}
 		d = dThreshold;
 
-		ImagePlus maskImp = WindowManager.getImage(mask);
-		if (maskImp != null)
+		// Optionally filter points using a mask
+		if (myMask != null)
 		{
-			actualPoints = filter(actualPoints, maskImp.getProcessor());
-			predictedPoints = filter(predictedPoints, maskImp.getProcessor());
+			ImagePlus maskImp = WindowManager.getImage(myMask);
+			if (maskImp != null)
+			{
+				actualPoints = filter(actualPoints, maskImp.getProcessor());
+				predictedPoints = filter(predictedPoints, maskImp.getProcessor());
+			}
 		}
 
 		compareCoordinates(actualPoints, predictedPoints, d);
@@ -175,6 +185,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	private boolean showDialog()
 	{
 		ArrayList<String> newImageList = buildMaskList();
+		final boolean haveImages = !newImageList.isEmpty();
 
 		GenericDialog gd = new GenericDialog(TITLE);
 
@@ -182,12 +193,24 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 				"Compare the points in two files\nand compute the match statistics\n(Double click input fields to use a file chooser)");
 		gd.addStringField("Input_1", title1, 30);
 		gd.addStringField("Input_2", title2, 30);
-		if (!newImageList.isEmpty())
-			gd.addChoice("mask", newImageList.toArray(new String[0]), mask);
+		if (haveImages)
+		{
+			@SuppressWarnings("unchecked")
+			ArrayList<String> maskImageList = (ArrayList<String>) newImageList.clone();
+			maskImageList.add("[None]");
+			gd.addChoice("mask", maskImageList.toArray(new String[0]), mask);
+		}
 		gd.addNumericField("Distance", dThreshold, 2);
 		gd.addNumericField("Beta", beta, 2);
 		gd.addCheckbox("Show_pairs", showPairs);
 		gd.addCheckbox("Save_pairs", savePairs);
+		if (!newImageList.isEmpty())
+		{
+			gd.addCheckbox("Show_composite", showComposite);
+			String[] items = newImageList.toArray(new String[newImageList.size()]);
+			gd.addChoice("Image_1", items, image1);
+			gd.addChoice("Image_2", items, image2);
+		}
 
 		// Dialog to allow double click to select files using a file chooser
 		if (!java.awt.GraphicsEnvironment.isHeadless())
@@ -205,11 +228,20 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 		title1 = gd.getNextString();
 		title2 = gd.getNextString();
-		mask = (newImageList.isEmpty()) ? "" : gd.getNextChoice();
+		if (haveImages)
+		{
+			myMask = mask = gd.getNextChoice();
+		}
 		dThreshold = gd.getNextNumber();
 		beta = gd.getNextNumber();
 		showPairs = gd.getNextBoolean();
 		savePairs = gd.getNextBoolean();
+		if (haveImages)
+		{
+			showComposite = gd.getNextBoolean();
+			myImage1 = image1 = gd.getNextChoice();
+			myImage2 = image2 = gd.getNextChoice();
+		}
 
 		return true;
 	}
@@ -217,26 +249,29 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	public static ArrayList<String> buildMaskList()
 	{
 		ArrayList<String> newImageList = new ArrayList<String>();
-		newImageList.add("[None]");
 
 		for (int id : gdsc.utils.ImageJHelper.getIDList())
 		{
-			ImagePlus maskImp = WindowManager.getImage(id);
-			newImageList.add(maskImp.getTitle());
+			ImagePlus imp = WindowManager.getImage(id);
+			// Ignore RGB images
+			if (imp.getBitDepth() == 24)
+				continue;
+			newImageList.add(imp.getTitle());
 		}
 
 		return newImageList;
 	}
 
-	private MatchResult compareCoordinates(TimeValuedPoint[] actualPoints, TimeValuedPoint[] predictedPoints,
+	private void compareCoordinates(TimeValuedPoint[] actualPoints, TimeValuedPoint[] predictedPoints,
 			double dThreshold)
 	{
 		int tp = 0, fp = 0, fn = 0;
 		double rmsd = 0;
 
 		final boolean is3D = is3D(actualPoints) && is3D(predictedPoints);
+		final boolean computePairs = showPairs || (showComposite && myImage1 != null && myImage2 != null);
 
-		List<PointPair> pairs = (showPairs) ? new LinkedList<PointPair>() : null;
+		final List<PointPair> pairs = (computePairs) ? new LinkedList<PointPair>() : null;
 
 		// Process each timepoint
 		for (Integer t : getTimepoints(actualPoints, predictedPoints))
@@ -248,7 +283,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			List<Coordinate> FP = null;
 			List<Coordinate> FN = null;
 			List<PointPair> matches = null;
-			if (showPairs)
+			if (computePairs)
 			{
 				TP = new LinkedList<Coordinate>();
 				FP = new LinkedList<Coordinate>();
@@ -266,7 +301,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			fn += result.getFalseNegatives();
 			rmsd += (result.getRMSD() * result.getRMSD()) * result.getTruePositives();
 
-			if (showPairs)
+			if (computePairs)
 			{
 				pairs.addAll(matches);
 				for (Coordinate c : FN)
@@ -320,7 +355,12 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			savePairs(pairs, is3D);
 		}
 
-		return result;
+		if (java.awt.GraphicsEnvironment.isHeadless())
+			return;
+
+		// If input images and a mask have been selected then we can produce an output
+		// that draws the points on a composite image.
+		produceComposite(pairs);
 	}
 
 	/**
@@ -616,6 +656,195 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	public void mouseExited(MouseEvent e)
 	{
+
+	}
+
+	private void produceComposite(List<PointPair> pairs)
+	{
+		if (!showComposite)
+			return;
+		if (myImage1 == null || myImage2 == null)
+			return;
+		ImagePlus imp1 = WindowManager.getImage(myImage1);
+		ImagePlus imp2 = WindowManager.getImage(myImage2);
+		ImagePlus impM = WindowManager.getImage(myMask);
+		if (myImage1 == null || myImage2 == null)
+		{
+			IJ.error(TITLE, "No images specified for composite");
+			return;
+		}
+		// Images must be the same XYZ dimensions
+		final int w = imp1.getWidth();
+		final int h = imp1.getHeight();
+		final int z = imp1.getNSlices();
+		if (w != imp2.getWidth() || h != imp2.getHeight() || z != imp2.getNSlices())
+		{
+			IJ.error(TITLE, "Composite images must have the same XYZ dimensions");
+			return;
+		}
+		if (impM != null && (w != impM.getWidth() || h != impM.getHeight()))
+		{
+			IJ.error(TITLE, "Composite image mask must have the same XY dimensions");
+			return;
+		}
+
+		if (z == 1)
+			produceComposite2D(imp1, imp2, impM, pairs);
+		else
+			produceComposite3D(imp1, imp2, impM, pairs);
+	}
+
+	private void produceComposite2D(ImagePlus imp1, ImagePlus imp2, ImagePlus impM, List<PointPair> pairs)
+	{
+		final boolean addMask = impM != null;
+
+		final int w = imp1.getWidth();
+		final int h = imp1.getHeight();
+		final ImageStack stack = new ImageStack(w, h);
+		final ImageStack s1 = imp1.getImageStack();
+		final ImageStack s2 = imp2.getImageStack();
+		final ImageStack sm = (addMask) ? impM.getImageStack() : null;
+
+		// Get the bit-depth for the output stack
+		int depth = imp1.getBitDepth();
+		depth = Math.max(depth, imp2.getBitDepth());
+		if (addMask)
+			depth = Math.max(depth, impM.getBitDepth());
+
+		final int nChannels = (addMask) ? 3 : 2;
+		final int nSlices = 1;
+		int nFrames = 0;
+
+		// Produce a composite for each time point.
+		// The list will have pairs in order of timepoints.
+		ArrayList<Integer> upper = new ArrayList<Integer>();
+
+		int time = -1;
+		final IdTimeValuedPoint[] p1 = new IdTimeValuedPoint[pairs.size()];
+		final IdTimeValuedPoint[] p2 = new IdTimeValuedPoint[pairs.size()];
+		for (int i = 0; i < pairs.size(); i++)
+		{
+			p1[i] = (IdTimeValuedPoint) pairs.get(i).getPoint1();
+			p2[i] = (IdTimeValuedPoint) pairs.get(i).getPoint2();
+			final int newTime = (p1[i] != null) ? p1[i].time : p2[i].time;
+			if (time != newTime)
+			{
+				if (time != -1)
+					upper.add(i);
+				time = newTime;
+			}
+		}
+		upper.add(pairs.size());
+
+		// Create an overlay to show the pairs
+		Overlay overlay = new Overlay();
+		final Color colorf = MatchPlugin.UNMATCH1;
+		final Color colors = MatchPlugin.UNMATCH2;
+		final Color colorc = MatchPlugin.MATCH;
+
+		int l = 0;
+		for (int u : upper)
+		{
+			nFrames++;
+			time = (p1[l] != null) ? p1[l].time : p2[l].time;
+			//System.out.printf("%d - %d : Time %d\n", l, u, time);
+
+			// Extract the images for the specified time
+			stack.addSlice("Image1, t=" + time,
+					convert(s1.getProcessor(imp1.getStackIndex(imp1.getC(), 1, time)), depth));
+			stack.addSlice("Image2, t=" + time,
+					convert(s2.getProcessor(imp2.getStackIndex(imp2.getC(), 1, time)), depth));
+			if (addMask)
+				stack.addSlice("Mask, t=" + time,
+						convert(sm.getProcessor(impM.getStackIndex(impM.getC(), 1, time)), depth));
+
+			// Count number of First, Second, Colocalised
+			int f = 0, s = 0, c = 0;
+			float[] fx = new float[u - l + 1];
+			float[] fy = new float[fx.length];
+			float[] sx = new float[fx.length];
+			float[] sy = new float[fx.length];
+			float[] cx = new float[fx.length];
+			float[] cy = new float[fx.length];
+			for (int j = l; j < u; j++)
+			{
+				if (p1[j] == null)
+				{
+					sx[s] = p2[j].x;
+					sy[s] = p2[j].y;
+					s++;
+				}
+				else if (p2[j] == null)
+				{
+					fx[f] = p1[j].x;
+					fy[f] = p1[j].y;
+					f++;
+				}
+				else
+				{
+					cx[c] = (p1[j].x + p2[j].x) * 0.5f;
+					cy[c] = (p1[j].y + p2[j].y) * 0.5f;
+					c++;
+				}
+			}
+
+			add(overlay, fx, fy, f, colorf, nFrames);
+			add(overlay, sx, sy, s, colors, nFrames);
+			add(overlay, cx, cy, c, colorc, nFrames);
+
+			l = u;
+		}
+
+		String title = "Match Composite";
+		ImagePlus imp = new ImagePlus(title, stack);
+		imp.setDimensions(nChannels, nSlices, nFrames);
+		imp.setOverlay(overlay);
+		imp.setOpenAsHyperStack(true);
+
+
+		imp2 = WindowManager.getImage(title);
+		if (imp2 != null)
+		{
+			if (imp2.isDisplayedHyperStack())
+			{
+				imp2.setImage(imp);
+				imp2.getWindow().toFront();
+				return;
+			}
+			// Figure out how to convert back to a hyperstack if it is not already.
+			// Currently we just close the image and show a new one.
+			imp2.close();
+		}
+		
+		imp.show();
+	}
+
+	private ImageProcessor convert(ImageProcessor processor, int depth)
+	{
+		if (depth == 8)
+			return processor.convertToByte(true);
+		if (depth == 16)
+			return processor.convertToShort(true);
+		return processor.convertToFloat();
+	}
+
+	private void add(Overlay overlay, float[] x, float[] y, int n, Color color, int frame)
+	{
+		if (n != 0)
+		{
+			PointRoi roi = new PointRoi(x, y, n);
+			// Tie position to the frame but not the channel or slice
+			roi.setPosition(0, 0, frame);
+			roi.setStrokeColor(color);
+			roi.setFillColor(color);
+			roi.setHideLabels(true);
+			overlay.add(roi);
+		}
+	}
+
+	private void produceComposite3D(ImagePlus imp1, ImagePlus imp2, ImagePlus impM, List<PointPair> pairs)
+	{
+		// TODO Auto-generated method stub
 
 	}
 }
