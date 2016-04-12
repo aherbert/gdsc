@@ -808,6 +808,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			if (imp2.isDisplayedHyperStack())
 			{
 				imp2.setImage(imp);
+				imp2.setOverlay(overlay);
 				imp2.getWindow().toFront();
 				return;
 			}
