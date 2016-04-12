@@ -39,6 +39,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -80,6 +81,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	private static String image1 = "";
 	private static String image2 = "";
 	private static boolean showComposite = false;
+	private static boolean useSlicePosition = false;
 
 	private String myMask, myImage1, myImage2;
 
@@ -195,9 +197,9 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		gd.addStringField("Input_2", title2, 30);
 		if (haveImages)
 		{
-			@SuppressWarnings("unchecked")
-			ArrayList<String> maskImageList = (ArrayList<String>) newImageList.clone();
+			ArrayList<String> maskImageList = new ArrayList<String>(newImageList.size() + 1);
 			maskImageList.add("[None]");
+			maskImageList.addAll(newImageList);
 			gd.addChoice("mask", maskImageList.toArray(new String[0]), mask);
 		}
 		gd.addNumericField("Distance", dThreshold, 2);
@@ -206,10 +208,11 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		gd.addCheckbox("Save_pairs", savePairs);
 		if (!newImageList.isEmpty())
 		{
-			gd.addCheckbox("Show_composite", showComposite);
+			gd.addCheckbox("Show_composite_image", showComposite);
 			String[] items = newImageList.toArray(new String[newImageList.size()]);
 			gd.addChoice("Image_1", items, image1);
 			gd.addChoice("Image_2", items, image2);
+			gd.addCheckbox("Use_slice_position", useSlicePosition);
 		}
 
 		// Dialog to allow double click to select files using a file chooser
@@ -241,6 +244,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			showComposite = gd.getNextBoolean();
 			myImage1 = image1 = gd.getNextChoice();
 			myImage2 = image2 = gd.getNextChoice();
+			useSlicePosition = gd.getNextBoolean();
 		}
 
 		return true;
@@ -676,8 +680,8 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		// Images must be the same XYZ dimensions
 		final int w = imp1.getWidth();
 		final int h = imp1.getHeight();
-		final int z = imp1.getNSlices();
-		if (w != imp2.getWidth() || h != imp2.getHeight() || z != imp2.getNSlices())
+		final int nSlices = imp1.getNSlices();
+		if (w != imp2.getWidth() || h != imp2.getHeight() || nSlices != imp2.getNSlices())
 		{
 			IJ.error(TITLE, "Composite images must have the same XYZ dimensions");
 			return;
@@ -688,18 +692,8 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			return;
 		}
 
-		if (z == 1)
-			produceComposite2D(imp1, imp2, impM, pairs);
-		else
-			produceComposite3D(imp1, imp2, impM, pairs);
-	}
-
-	private void produceComposite2D(ImagePlus imp1, ImagePlus imp2, ImagePlus impM, List<PointPair> pairs)
-	{
 		final boolean addMask = impM != null;
 
-		final int w = imp1.getWidth();
-		final int h = imp1.getHeight();
 		final ImageStack stack = new ImageStack(w, h);
 		final ImageStack s1 = imp1.getImageStack();
 		final ImageStack s2 = imp2.getImageStack();
@@ -712,11 +706,11 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			depth = Math.max(depth, impM.getBitDepth());
 
 		final int nChannels = (addMask) ? 3 : 2;
-		final int nSlices = 1;
 		int nFrames = 0;
 
 		// Produce a composite for each time point.
-		// The list will have pairs in order of timepoints.
+		// The input list will have pairs in order of time.
+		// So move through the list noting each new time.
 		ArrayList<Integer> upper = new ArrayList<Integer>();
 
 		int time = -1;
@@ -750,47 +744,56 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			//System.out.printf("%d - %d : Time %d\n", l, u, time);
 
 			// Extract the images for the specified time
-			stack.addSlice("Image1, t=" + time,
-					convert(s1.getProcessor(imp1.getStackIndex(imp1.getC(), 1, time)), depth));
-			stack.addSlice("Image2, t=" + time,
-					convert(s2.getProcessor(imp2.getStackIndex(imp2.getC(), 1, time)), depth));
-			if (addMask)
-				stack.addSlice("Mask, t=" + time,
-						convert(sm.getProcessor(impM.getStackIndex(impM.getC(), 1, time)), depth));
+			for (int slice = 1; slice <= nSlices; slice++)
+			{
+				stack.addSlice("Image1, t=" + time,
+						convert(s1.getProcessor(imp1.getStackIndex(imp1.getC(), slice, time)), depth));
+				stack.addSlice("Image2, t=" + time,
+						convert(s2.getProcessor(imp2.getStackIndex(imp2.getC(), slice, time)), depth));
+				if (addMask)
+					stack.addSlice("Mask, t=" + time,
+							convert(sm.getProcessor(impM.getStackIndex(impM.getC(), slice, time)), depth));
+			}
 
-			// Count number of First, Second, Colocalised
+			// Count number of First, Second, Colocalised.
 			int f = 0, s = 0, c = 0;
-			float[] fx = new float[u - l + 1];
+			float[] fx = new float[u - l];
 			float[] fy = new float[fx.length];
 			float[] sx = new float[fx.length];
 			float[] sy = new float[fx.length];
 			float[] cx = new float[fx.length];
 			float[] cy = new float[fx.length];
+			int[] fz = new int[fx.length];
+			int[] sz = new int[fx.length];
+			int[] cz = new int[fx.length];
 			for (int j = l; j < u; j++)
 			{
 				if (p1[j] == null)
 				{
 					sx[s] = p2[j].x;
 					sy[s] = p2[j].y;
+					sz[s] = p2[j].getZ();
 					s++;
 				}
 				else if (p2[j] == null)
 				{
 					fx[f] = p1[j].x;
 					fy[f] = p1[j].y;
+					fz[f] = p1[j].getZ();
 					f++;
 				}
 				else
 				{
 					cx[c] = (p1[j].x + p2[j].x) * 0.5f;
 					cy[c] = (p1[j].y + p2[j].y) * 0.5f;
+					cz[c] = (p1[j].getZ() + p2[j].getZ()) / 2;
 					c++;
 				}
 			}
 
-			add(overlay, fx, fy, f, colorf, nFrames);
-			add(overlay, sx, sy, s, colors, nFrames);
-			add(overlay, cx, cy, c, colorc, nFrames);
+			add(overlay, fx, fy, fz, f, colorf, nFrames);
+			add(overlay, sx, sy, sz, s, colors, nFrames);
+			add(overlay, cx, cy, cz, c, colorc, nFrames);
 
 			l = u;
 		}
@@ -800,7 +803,6 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		imp.setDimensions(nChannels, nSlices, nFrames);
 		imp.setOverlay(overlay);
 		imp.setOpenAsHyperStack(true);
-
 
 		imp2 = WindowManager.getImage(title);
 		if (imp2 != null)
@@ -816,7 +818,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			// Currently we just close the image and show a new one.
 			imp2.close();
 		}
-		
+
 		imp.show();
 	}
 
@@ -829,23 +831,80 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		return processor.convertToFloat();
 	}
 
-	private void add(Overlay overlay, float[] x, float[] y, int n, Color color, int frame)
+	private void add(Overlay overlay, float[] x, float[] y, int[] z, int n, Color color, int frame)
 	{
 		if (n != 0)
 		{
-			PointRoi roi = new PointRoi(x, y, n);
-			// Tie position to the frame but not the channel or slice
-			roi.setPosition(0, 0, frame);
-			roi.setStrokeColor(color);
-			roi.setFillColor(color);
-			roi.setHideLabels(true);
-			overlay.add(roi);
+			// Option to position the ROI points on the z-slice.
+			// This requires an ROI for each slice that contains a point.
+			if (useSlicePosition)
+			{
+				// Sort points by slice position
+				float[][] data = new float[n][3];
+				for (int i = n; i-- > 0;)
+				{
+					data[i][0] = z[i];
+					data[i][1] = x[i];
+					data[i][2] = y[i];
+				}
+
+				Comparator<float[]> comp = new Comparator<float[]>()
+				{
+					public int compare(float[] o1, float[] o2)
+					{
+						// smallest first
+						if (o1[0] < o2[0])
+							return -1;
+						if (o1[0] > o2[0])
+							return 1;
+						return 0;
+					}
+				};
+
+				Arrays.sort(data, comp);
+
+				// Find blocks in the same slice
+				int l = 0;
+				ArrayList<Integer> upper = new ArrayList<Integer>(n);
+				for (int i = 0; i < n; i++)
+				{
+					if (data[l][0] != data[i][0])
+					{
+						upper.add(i);
+						l = i;
+					}
+				}
+				upper.add(n);
+
+				// Process each block
+				l = 0;
+				for (int u : upper)
+				{
+					int nPoints = u - l;
+					for (int i = l, j = 0; i < u; i++, j++)
+					{
+						x[j] = data[i][1];
+						y[j] = data[i][2];
+					}
+					add(overlay, new PointRoi(x, y, nPoints), (int) data[l][0], frame, color);
+					l = u;
+				}
+			}
+			else
+			{
+				add(overlay, new PointRoi(x, y, n), 0, frame, color);
+			}
 		}
 	}
 
-	private void produceComposite3D(ImagePlus imp1, ImagePlus imp2, ImagePlus impM, List<PointPair> pairs)
+	private void add(Overlay overlay, PointRoi roi, int slice, int frame, Color color)
 	{
-		// TODO Auto-generated method stub
-
+		// Tie position to the frame but not the channel or slice
+		//System.out.printf("Add %d to z=%d,t=%d\n", roi.getNCoordinates(), slice, frame);
+		roi.setPosition(0, slice, frame);
+		roi.setStrokeColor(color);
+		roi.setFillColor(color);
+		roi.setHideLabels(true);
+		overlay.add(roi);
 	}
 }
