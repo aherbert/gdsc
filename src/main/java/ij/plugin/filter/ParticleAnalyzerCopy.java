@@ -4,7 +4,7 @@ import java.awt.*;
 import java.awt.image.IndexColorModel;
 import java.util.Properties;
 
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 import ij.*;
 import ij.gui.*;
 import ij.process.*;

@@ -15,7 +15,11 @@ import gdsc.UsageTracker;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
+import gdsc.core.match.Coordinate;
+import gdsc.core.match.MatchCalculator;
+import gdsc.core.match.MatchResult;
+import gdsc.core.match.PointPair;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -63,7 +67,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 		public IdTimeValuedPoint(int id, TimeValuedPoint p)
 		{
-			super(p.x, p.y, p.z, p.time, p.value);
+			super(p.getX(), p.getY(), p.getZ(), p.time, p.value);
 			this.id = id;
 		}
 	}
@@ -144,7 +148,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		int ok = 0;
 		for (int i = 0; i < points.length; i++)
 		{
-			if (processor.get(points[i].getX(), points[i].getY()) > 0)
+			if (processor.get(points[i].getXint(), points[i].getYint()) > 0)
 			{
 				points[ok++] = points[i];
 			}
@@ -254,7 +258,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	{
 		ArrayList<String> newImageList = new ArrayList<String>();
 
-		for (int id : gdsc.utils.ImageJHelper.getIDList())
+		for (int id : gdsc.core.ij.Utils.getIDList())
 		{
 			ImagePlus imp = WindowManager.getImage(id);
 			// Ignore RGB images
@@ -377,7 +381,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	{
 		if (points.length == 0)
 			return false;
-		float z = points[0].getPositionZ();
+		final float z = points[0].getZ();
 		for (TimeValuedPoint p : points)
 			if (p.getZ() != z)
 				return true;
@@ -545,9 +549,9 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		else
 		{
 			sb.append(p.id).append("\t");
-			sb.append(p.getPositionX()).append("\t");
-			sb.append(p.getPositionY()).append("\t");
-			sb.append(p.getPositionZ()).append("\t");
+			sb.append(p.getXint()).append("\t");
+			sb.append(p.getYint()).append("\t");
+			sb.append(p.getZint()).append("\t");
 			if (valued)
 				sb.append(p.getValue()).append("\t");
 		}
@@ -555,7 +559,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	private void savePairs(List<PointPair> pairs, boolean is3D)
 	{
-		String[] path = ImageJHelper.decodePath(filename);
+		String[] path = Utils.decodePath(filename);
 		OpenDialog chooser = new OpenDialog("matches_file", path[0], path[1]);
 		if (chooser.getFileName() == null)
 			return;
@@ -770,23 +774,23 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			{
 				if (p1[j] == null)
 				{
-					sx[s] = p2[j].x;
-					sy[s] = p2[j].y;
-					sz[s] = p2[j].getZ();
+					sx[s] = p2[j].getX();
+					sy[s] = p2[j].getY();
+					sz[s] = p2[j].getZint();
 					s++;
 				}
 				else if (p2[j] == null)
 				{
-					fx[f] = p1[j].x;
-					fy[f] = p1[j].y;
-					fz[f] = p1[j].getZ();
+					fx[f] = p1[j].getX();
+					fy[f] = p1[j].getY();
+					fz[f] = p1[j].getZint();
 					f++;
 				}
 				else
 				{
-					cx[c] = (p1[j].x + p2[j].x) * 0.5f;
-					cy[c] = (p1[j].y + p2[j].y) * 0.5f;
-					cz[c] = (p1[j].getZ() + p2[j].getZ()) / 2;
+					cx[c] = (p1[j].getX() + p2[j].getX()) * 0.5f;
+					cy[c] = (p1[j].getY() + p2[j].getY()) * 0.5f;
+					cz[c] = (p1[j].getZint() + p2[j].getZint()) / 2;
 					c++;
 				}
 			}

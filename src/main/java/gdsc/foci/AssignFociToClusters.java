@@ -1,27 +1,17 @@
 package gdsc.foci;
 
 import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2015 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
-import gdsc.clustering.Cluster;
-import gdsc.clustering.ClusterPoint;
-import gdsc.clustering.ClusteringAlgorithm;
-import gdsc.clustering.ClusteringEngine;
-import gdsc.clustering.IJTrackProgress;
 import gdsc.help.URL;
-import gdsc.utils.ImageJHelper;
+import gdsc.core.clustering.Cluster;
+import gdsc.core.clustering.ClusterPoint;
+import gdsc.core.clustering.ClusteringAlgorithm;
+import gdsc.core.clustering.ClusteringEngine;
+import gdsc.core.ij.IJTrackProgress;
+import gdsc.core.ij.Utils;
+import gdsc.core.match.Coordinate;
+import gdsc.core.match.MatchCalculator;
+import gdsc.core.match.MatchResult;
+import gdsc.core.match.PointPair;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -281,7 +271,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			labelClusters(imp);
 		}
 
-		label.setText(ImageJHelper.pleural(filteredClusters.size(), "Cluster"));
+		label.setText(Utils.pleural(filteredClusters.size(), "Cluster"));
 	}
 
 	private LUT cachedLUT = null;
@@ -578,7 +568,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addHelp(URL.FIND_FOCI);
-		gd.addMessage(ImageJHelper.pleural(results.size(), "result"));
+		gd.addMessage(Utils.pleural(results.size(), "result"));
 
 		gd.addSlider("Radius", 5, 500, radius);
 		gd.addChoice("Algorithm", names, names[algorithm]);
@@ -657,7 +647,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	private synchronized void noImagePreview()
 	{
 		doClustering();
-		label.setText(ImageJHelper.pleural(filteredClusters.size(), "Cluster"));
+		label.setText(Utils.pleural(filteredClusters.size(), "Cluster"));
 	}
 
 	private double lastRadius;
@@ -789,8 +779,8 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		}
 
 		double seconds = (System.currentTimeMillis() - start) / 1000.0;
-		IJ.showStatus(ImageJHelper.pleural(filteredClusters.size(), "cluster") + " in " +
-				ImageJHelper.rounded(seconds) + " seconds");
+		IJ.showStatus(Utils.pleural(filteredClusters.size(), "cluster") + " in " +
+				Utils.rounded(seconds) + " seconds");
 	}
 
 	private Coordinate[] toCoordinates(ArrayList<Cluster> clusters)
@@ -845,7 +835,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			if (clusterImp == null)
 				newStack.setColorModel(getColorModel());
 
-			clusterImp = ImageJHelper.display(TITLE, newStack);
+			clusterImp = Utils.display(TITLE, newStack);
 
 			labelClusters(clusterImp);
 		}
@@ -862,10 +852,10 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			final Cluster cluster = filteredClusters.get(i);
 			sb.append(title).append('\t');
 			sb.append(i + 1).append('\t');
-			sb.append(ImageJHelper.rounded(cluster.x)).append('\t');
-			sb.append(ImageJHelper.rounded(cluster.y)).append('\t');
-			sb.append(ImageJHelper.rounded(cluster.n)).append('\t');
-			sb.append(ImageJHelper.rounded(cluster.sumw)).append('\t');
+			sb.append(Utils.rounded(cluster.x)).append('\t');
+			sb.append(Utils.rounded(cluster.y)).append('\t');
+			sb.append(Utils.rounded(cluster.n)).append('\t');
+			sb.append(Utils.rounded(cluster.sumw)).append('\t');
 			stats.addValue(cluster.n);
 			stats2.addValue(cluster.sumw);
 			sb.append('\n');
@@ -882,31 +872,31 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 
 		sb.setLength(0);
 		sb.append(title).append('\t');
-		sb.append(ImageJHelper.rounded(radius)).append('\t');
+		sb.append(Utils.rounded(radius)).append('\t');
 		sb.append(results.size()).append('\t');
 		sb.append(filteredClusters.size()).append('\t');
 		sb.append((int) stats.getMin()).append('\t');
 		sb.append((int) stats.getMax()).append('\t');
-		sb.append(ImageJHelper.rounded(stats.getMean())).append('\t');
-		sb.append(ImageJHelper.rounded(stats2.getMin())).append('\t');
-		sb.append(ImageJHelper.rounded(stats2.getMax())).append('\t');
-		sb.append(ImageJHelper.rounded(stats2.getMean())).append('\t');
+		sb.append(Utils.rounded(stats.getMean())).append('\t');
+		sb.append(Utils.rounded(stats2.getMin())).append('\t');
+		sb.append(Utils.rounded(stats2.getMax())).append('\t');
+		sb.append(Utils.rounded(stats2.getMean())).append('\t');
 		summaryWindow.append(sb.toString());
 
 		if (matchResult != null)
 		{
 			sb.setLength(0);
 			sb.append(title).append('\t');
-			sb.append(ImageJHelper.rounded(filterRadius)).append('\t');
+			sb.append(Utils.rounded(filterRadius)).append('\t');
 			sb.append(matchResult.getNumberActual()).append('\t');
 			sb.append(matchResult.getNumberPredicted()).append('\t');
 			sb.append(matchResult.getTruePositives()).append('\t');
 			sb.append(matchResult.getFalseNegatives()).append('\t');
 			sb.append(matchResult.getFalsePositives()).append('\t');
-			sb.append(ImageJHelper.rounded(matchResult.getJaccard())).append('\t');
-			sb.append(ImageJHelper.rounded(matchResult.getRecall())).append('\t');
-			sb.append(ImageJHelper.rounded(matchResult.getPrecision())).append('\t');
-			sb.append(ImageJHelper.rounded(matchResult.getFScore(1))).append('\t');
+			sb.append(Utils.rounded(matchResult.getJaccard())).append('\t');
+			sb.append(Utils.rounded(matchResult.getRecall())).append('\t');
+			sb.append(Utils.rounded(matchResult.getPrecision())).append('\t');
+			sb.append(Utils.rounded(matchResult.getFScore(1))).append('\t');
 			matchWindow.append(sb.toString());
 		}
 

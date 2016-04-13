@@ -15,7 +15,7 @@ import gdsc.UsageTracker;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -84,7 +84,7 @@ public class ApplyMask implements PlugInFilter
 		ArrayList<String> imageList = new ArrayList<String>();
 		imageList.add(sourceImage);
 
-		for (int id : ImageJHelper.getIDList())
+		for (int id : Utils.getIDList())
 		{
 			ImagePlus imp = WindowManager.getImage(id);
 			if (imp != null)

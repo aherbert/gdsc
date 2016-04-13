@@ -86,7 +86,7 @@ import javax.swing.JCheckBox;
 
 import gdsc.foci.converter.StringToBooleanConverter;
 import gdsc.foci.converter.SearchModeConverter;
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 
 import javax.swing.JToggleButton;
 
@@ -247,7 +247,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		gbc_comboImageList.gridx = 1;
 		gbc_comboImageList.gridy = 0;
 		contentPane.add(comboImageList, gbc_comboImageList);
-		
+
 		lblMaskImage = new JLabel("Mask Image");
 		GridBagConstraints gbc_lblMaskImage = new GridBagConstraints();
 		gbc_lblMaskImage.anchor = GridBagConstraints.EAST;
@@ -255,7 +255,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		gbc_lblMaskImage.gridx = 0;
 		gbc_lblMaskImage.gridy = 1;
 		contentPane.add(lblMaskImage, gbc_lblMaskImage);
-		
+
 		comboMaskImageList = new JComboBox<String>();
 		comboMaskImageList.setToolTipText("Select the input mask image");
 		comboMaskImageList.addItemListener(new ItemListener()
@@ -548,7 +548,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	private void createFindMaximaModel()
 	{
 		model = new FindFociModel();
-		
+
 		model.setMaskImage(null);
 		// Find points above the mean. This is a good start for finding maxima.
 		model.setBackgroundMethod(FindFoci.BACKGROUND_STD_DEV_ABOVE_MEAN);
@@ -896,15 +896,16 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 		for (int i = 0; i < points.length; i++)
 		{
-			int x = points[i].getX();
-			int y = points[i].getY();
+			int x = (int) points[i].getX();
+			int y = (int) points[i].getY();
 			GridPoint gridPoint = manager.findUnassignedPoint(x, y);
 			if (gridPoint != null)
 			{
 				addMappedPoint(x, y, gridPoint, i + 1);
 
 				// Update points
-				points[i] = new AssignedPoint(gridPoint.getX(), gridPoint.getY(), points[i].getZ(), points[i].getId());
+				points[i] = new AssignedPoint(gridPoint.getXint(), gridPoint.getYint(), points[i].getZint(),
+						points[i].getId());
 			}
 			else
 			{
@@ -942,8 +943,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 					continue;
 
 				// Find peak to assign
-				int x = point.getX();
-				int y = point.getY();
+				int x = point.getXint();
+				int y = point.getYint();
 				GridPoint gridPoint = manager.findUnassignedPoint(x, y);
 				if (gridPoint == null)
 				{
@@ -959,8 +960,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 					// Build a list of distances to unassigned peaks. Store distance and x,y coords.
 					// Multiply the distance to allow double precision to be approximately compared with integers.
-					potentialMappedPoints.add(new int[] { x, y, point.getZ(), point.getId(), gridPoint.getX(),
-							gridPoint.getY(), (int) (gridPoint.distance2(x, y) * 100) });
+					potentialMappedPoints.add(new int[] { x, y, point.getZint(), point.getId(), gridPoint.getXint(),
+							gridPoint.getYint(), (int) (gridPoint.distance2(x, y) * 100) });
 				}
 			}
 
@@ -988,7 +989,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 				}
 			}
 
-			logMessage("Processed %d / %d. +%d mapped, +%d unmapped", roiPoints.size(), points.length, mapped, unmapped);
+			logMessage("Processed %d / %d. +%d mapped, +%d unmapped", roiPoints.size(), points.length, mapped,
+					unmapped);
 		}
 		points = roiPoints.toArray(new AssignedPoint[0]);
 		return points;
@@ -1018,12 +1020,13 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 			AssignedPoint[] points = PointManager.extractRoiPoints(activeImp.getRoi());
 			if (points.length > 0)
 			{
-				logMessage("Re-assigning %d point%s to %s", points.length, (points.length != 1) ? "s" : "", activeImage);
+				logMessage("Re-assigning %d point%s to %s", points.length, (points.length != 1) ? "s" : "",
+						activeImage);
 
 				for (int i = 0; i < points.length; i++)
 				{
-					int x = points[i].getX();
-					int y = points[i].getY();
+					final int x = points[i].getXint();
+					final int y = points[i].getYint();
 					GridPoint gridPoint = manager.findExactUnassignedPoint(x, y);
 					if (gridPoint != null)
 					{
@@ -1074,8 +1077,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		List<GridPoint> points = new ArrayList<GridPoint>(resultsArray.size());
 		for (int[] result : resultsArray)
 		{
-			points.add(new GridPoint(result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y],
-					result[FindFoci.RESULT_Z], result[FindFoci.RESULT_MAX_VALUE]));
+			points.add(new GridPoint(result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y], result[FindFoci.RESULT_Z],
+					result[FindFoci.RESULT_MAX_VALUE]));
 		}
 		return points;
 	}
@@ -1204,8 +1207,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 					}
 				}
 				// Add the new position
-				p.xpoints[roiIndex] = gridPoint.getX();
-				p.ypoints[roiIndex] = gridPoint.getY();
+				p.xpoints[roiIndex] = gridPoint.getXint();
+				p.ypoints[roiIndex] = gridPoint.getYint();
 
 				activeImp.setRoi(new PointRoi(p.xpoints, p.ypoints, p.npoints));
 			}
@@ -1389,7 +1392,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	private void saveResults()
 	{
 		Calibration cal = activeImp.getCalibration();
-		
+
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
 			resultsWindow = new TextWindow("FindFoci Helper Results", createResultsHeader(), "", 300, 500);
@@ -1399,12 +1402,12 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		AssignedPoint[] points = getRoiPoints();
 		for (AssignedPoint p : points)
 		{
-			int x = p.getX();
-			int y = p.getY();
-			int z = p.getZ();
+			int x = p.getXint();
+			int y = p.getYint();
+			int z = p.getZint();
 			int height = impStack.getProcessor(z + 1).get(x, y);
 			boolean assigned = (p.getAssignedId() != -1);
-			addResult(p.getId() + 1, x*cal.pixelWidth, y*cal.pixelHeight, height, assigned);
+			addResult(p.getId() + 1, x * cal.pixelWidth, y * cal.pixelHeight, height, assigned);
 		}
 		resultsWindow.append("");
 	}
@@ -1419,8 +1422,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		AssignedPoint[] points = PointManager.extractRoiPoints(activeImp.getRoi());
 		for (AssignedPoint p : points)
 		{
-			int x = p.getX();
-			int y = p.getY();
+			final int x = p.getXint();
+			final int y = p.getYint();
 			GridPoint gridPoint = manager.findExactAssignedPoint(x, y);
 			if (gridPoint == null)
 			{
@@ -1446,8 +1449,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append(index).append("\t");
-		sb.append(ImageJHelper.rounded(x)).append("\t");
-		sb.append(ImageJHelper.rounded(y)).append("\t");
+		sb.append(Utils.rounded(x)).append("\t");
+		sb.append(Utils.rounded(y)).append("\t");
 		sb.append(height).append("\t");
 		sb.append(assigned).append("\t");
 		resultsWindow.append(sb.toString());
@@ -1518,90 +1521,124 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 		savedRoi = null;
 	}
+
 	@SuppressWarnings("rawtypes")
-	protected void initDataBindings() {
+	protected void initDataBindings()
+	{
 		BeanProperty<FindFociModel, List<String>> findFociModelBeanProperty = BeanProperty.create("imageList");
-		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding = SwingBindings.createJComboBoxBinding(UpdateStrategy.READ, model, findFociModelBeanProperty, comboImageList);
+		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding = SwingBindings
+				.createJComboBoxBinding(UpdateStrategy.READ, model, findFociModelBeanProperty, comboImageList);
 		jComboBinding.bind();
 		//
 		BeanProperty<FindFociModel, String> findFociModelBeanProperty_1 = BeanProperty.create("selectedImage");
 		BeanProperty<JComboBox, Object> jComboBoxBeanProperty = BeanProperty.create("selectedItem");
-		AutoBinding<FindFociModel, String, JComboBox, Object> autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_1, comboImageList, jComboBoxBeanProperty);
+		AutoBinding<FindFociModel, String, JComboBox, Object> autoBinding = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_1, comboImageList, jComboBoxBeanProperty);
 		autoBinding.bind();
 		//
-		BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty = BeanProperty.create("potentialMaxima");
+		BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty = BeanProperty
+				.create("potentialMaxima");
 		BeanProperty<JLabel, String> jLabelBeanProperty = BeanProperty.create("text");
-		AutoBinding<FindFociHelperView, Integer, JLabel, String> autoBinding_2 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociPickerViewBeanProperty, labelPotentialMaxima, jLabelBeanProperty);
+		AutoBinding<FindFociHelperView, Integer, JLabel, String> autoBinding_2 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty, labelPotentialMaxima,
+				jLabelBeanProperty);
 		autoBinding_2.bind();
 		//
 		BeanProperty<FindFociHelperView, Boolean> findFociPickerViewBeanProperty_1 = BeanProperty.create("runEnabled");
-		AutoBinding<FindFociModel, List<String>, FindFociHelperView, Boolean> autoBinding_3 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociModelBeanProperty, instance, findFociPickerViewBeanProperty_1);
+		AutoBinding<FindFociModel, List<String>, FindFociHelperView, Boolean> autoBinding_3 = Bindings
+				.createAutoBinding(UpdateStrategy.READ, model, findFociModelBeanProperty, instance,
+						findFociPickerViewBeanProperty_1);
 		autoBinding_3.setConverter(new ValidImagesConverter());
 		autoBinding_3.bind();
 		//
 		BeanProperty<JButton, Boolean> jButtonBeanProperty = BeanProperty.create("enabled");
-		AutoBinding<FindFociHelperView, Boolean, JButton, Boolean> autoBinding_4 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_1, btnRun, jButtonBeanProperty);
+		AutoBinding<FindFociHelperView, Boolean, JButton, Boolean> autoBinding_4 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_1, btnRun, jButtonBeanProperty);
 		autoBinding_4.bind();
 		//
 		BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty_2 = BeanProperty.create("resolution");
 		BeanProperty<JFormattedTextField, String> jFormattedTextFieldBeanProperty = BeanProperty.create("text");
-		AutoBinding<FindFociHelperView, Integer, JFormattedTextField, String> autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, instance, findFociPickerViewBeanProperty_2, txtResolution, jFormattedTextFieldBeanProperty);
+		AutoBinding<FindFociHelperView, Integer, JFormattedTextField, String> autoBinding_1 = Bindings
+				.createAutoBinding(UpdateStrategy.READ_WRITE, instance, findFociPickerViewBeanProperty_2, txtResolution,
+						jFormattedTextFieldBeanProperty);
 		autoBinding_1.bind();
 		//
 		BeanProperty<FindFociHelperView, Boolean> findFociPickerViewBeanProperty_3 = BeanProperty.create("logging");
 		BeanProperty<JCheckBox, Boolean> jCheckBoxBeanProperty = BeanProperty.create("selected");
-		AutoBinding<FindFociHelperView, Boolean, JCheckBox, Boolean> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, instance, findFociPickerViewBeanProperty_3, chckbxLogmessages, jCheckBoxBeanProperty);
+		AutoBinding<FindFociHelperView, Boolean, JCheckBox, Boolean> autoBinding_5 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, instance, findFociPickerViewBeanProperty_3, chckbxLogmessages,
+				jCheckBoxBeanProperty);
 		autoBinding_5.bind();
 		//
 		BeanProperty<FindFociHelperView, String> findFociPickerViewBeanProperty_4 = BeanProperty.create("activeImage");
-		AutoBinding<FindFociHelperView, String, JLabel, String> autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_4, txtActiveImage, jLabelBeanProperty);
+		AutoBinding<FindFociHelperView, String, JLabel, String> autoBinding_6 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_4, txtActiveImage, jLabelBeanProperty);
 		autoBinding_6.bind();
 		//
-		BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty_5 = BeanProperty.create("mappedPoints");
-		AutoBinding<FindFociHelperView, Integer, JLabel, String> autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_5, txtMappedPoints, jLabelBeanProperty);
+		BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty_5 = BeanProperty
+				.create("mappedPoints");
+		AutoBinding<FindFociHelperView, Integer, JLabel, String> autoBinding_7 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_5, txtMappedPoints, jLabelBeanProperty);
 		autoBinding_7.bind();
 		//
-		BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty_6 = BeanProperty.create("unmappedPoints");
-		AutoBinding<FindFociHelperView, Integer, JLabel, String> autoBinding_8 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_6, txtUnmappedPoints, jLabelBeanProperty);
+		BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty_6 = BeanProperty
+				.create("unmappedPoints");
+		AutoBinding<FindFociHelperView, Integer, JLabel, String> autoBinding_8 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_6, txtUnmappedPoints, jLabelBeanProperty);
 		autoBinding_8.bind();
 		//
 		BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty_7 = BeanProperty.create("totalPoints");
-		AutoBinding<FindFociHelperView, Integer, JLabel, String> autoBinding_9 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_7, txtTotal, jLabelBeanProperty);
+		AutoBinding<FindFociHelperView, Integer, JLabel, String> autoBinding_9 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_7, txtTotal, jLabelBeanProperty);
 		autoBinding_9.bind();
 		//
-		AutoBinding<FindFociHelperView, String, JButton, Boolean> autoBinding_10 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_4, btnStop, jButtonBeanProperty);
+		AutoBinding<FindFociHelperView, String, JButton, Boolean> autoBinding_10 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_4, btnStop, jButtonBeanProperty);
 		autoBinding_10.setConverter(new StringToBooleanConverter());
 		autoBinding_10.bind();
 		//
 		BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty_8 = BeanProperty.create("searchMode");
-		AutoBinding<FindFociHelperView, Integer, JComboBox, Object> autoBinding_12 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, instance, findFociPickerViewBeanProperty_8, comboSearchMode, jComboBoxBeanProperty);
+		AutoBinding<FindFociHelperView, Integer, JComboBox, Object> autoBinding_12 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, instance, findFociPickerViewBeanProperty_8, comboSearchMode,
+				jComboBoxBeanProperty);
 		autoBinding_12.setConverter(new SearchModeConverter());
 		autoBinding_12.bind();
 		//
-		BeanProperty<FindFociHelperView, Boolean> findFociPickerViewBeanProperty_9 = BeanProperty.create("assignDragged");
-		AutoBinding<FindFociHelperView, Boolean, JCheckBox, Boolean> autoBinding_11 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, instance, findFociPickerViewBeanProperty_9, chckbxAssigndragged, jCheckBoxBeanProperty);
+		BeanProperty<FindFociHelperView, Boolean> findFociPickerViewBeanProperty_9 = BeanProperty
+				.create("assignDragged");
+		AutoBinding<FindFociHelperView, Boolean, JCheckBox, Boolean> autoBinding_11 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, instance, findFociPickerViewBeanProperty_9, chckbxAssigndragged,
+				jCheckBoxBeanProperty);
 		autoBinding_11.bind();
 		//
-		AutoBinding<FindFociHelperView, String, JButton, Boolean> autoBinding_13 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_4, btnSaveResults, jButtonBeanProperty);
+		AutoBinding<FindFociHelperView, String, JButton, Boolean> autoBinding_13 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_4, btnSaveResults, jButtonBeanProperty);
 		autoBinding_13.setConverter(new StringToBooleanConverter());
 		autoBinding_13.bind();
 		//
 		BeanProperty<FindFociHelperView, Boolean> FindFociHelperView2BeanProperty = BeanProperty.create("showOverlay");
 		BeanProperty<JToggleButton, Boolean> jToggleButtonBeanProperty = BeanProperty.create("selected");
-		AutoBinding<FindFociHelperView, Boolean, JToggleButton, Boolean> autoBinding_14 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, instance, FindFociHelperView2BeanProperty, tglbtnOverlay, jToggleButtonBeanProperty);
+		AutoBinding<FindFociHelperView, Boolean, JToggleButton, Boolean> autoBinding_14 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, instance, FindFociHelperView2BeanProperty, tglbtnOverlay,
+				jToggleButtonBeanProperty);
 		autoBinding_14.bind();
 		//
 		BeanProperty<JToggleButton, Boolean> jToggleButtonBeanProperty_1 = BeanProperty.create("enabled");
-		AutoBinding<FindFociHelperView, String, JToggleButton, Boolean> autoBinding_15 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_4, tglbtnOverlay, jToggleButtonBeanProperty_1);
+		AutoBinding<FindFociHelperView, String, JToggleButton, Boolean> autoBinding_15 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_4, tglbtnOverlay,
+				jToggleButtonBeanProperty_1);
 		autoBinding_15.setConverter(new StringToBooleanConverter());
 		autoBinding_15.bind();
 		//
 		BeanProperty<FindFociModel, List<String>> findFociModelBeanProperty_2 = BeanProperty.create("maskImageList");
-		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding_1 = SwingBindings.createJComboBoxBinding(UpdateStrategy.READ, model, findFociModelBeanProperty_2, comboMaskImageList);
+		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding_1 = SwingBindings
+				.createJComboBoxBinding(UpdateStrategy.READ, model, findFociModelBeanProperty_2, comboMaskImageList);
 		jComboBinding_1.bind();
 		//
 		BeanProperty<FindFociModel, String> findFociModelBeanProperty_3 = BeanProperty.create("maskImage");
-		AutoBinding<FindFociModel, String, JComboBox, Object> autoBinding_16 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_3, comboMaskImageList, jComboBoxBeanProperty);
+		AutoBinding<FindFociModel, String, JComboBox, Object> autoBinding_16 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_3, comboMaskImageList,
+				jComboBoxBeanProperty);
 		autoBinding_16.bind();
 	}
 }

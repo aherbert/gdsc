@@ -11,7 +11,7 @@ import org.junit.internal.ArrayComparisonFailure;
 
 public class NonMaximumSuppressionTest
 {
-	private gdsc.utils.Random rand;
+	private gdsc.core.utils.Random rand;
 
 	private boolean debug = false;
 
@@ -44,7 +44,7 @@ public class NonMaximumSuppressionTest
 	private void floatCompareBlockFindToMaxFind(NonMaximumSuppression nms, int width, int height, int boxSize)
 			throws ArrayComparisonFailure
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 		float[] data = floatCreateData(width, height);
 
 		int[] blockIndices = nms.blockFindNxN(data, width, height, boxSize);
@@ -91,7 +91,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void floatBlockFindNxNAndblockFind3x3ReturnSameResult()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -121,7 +121,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void floatBlockFindIsFasterThanMaxFind()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -194,7 +194,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void floatBlockFindNxNInternalIsFasterThanblockFindNxNForBigBorders()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -268,7 +268,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void floatBlockFind3x3MethodIsFasterThanBlockFindNxN()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -320,7 +320,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void floatBlockFind3x3WithBufferIsFasterThanBlockFind3x3()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -381,7 +381,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void floatBlockFind3x3MethodIsFasterThanMaxFind3x3()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -450,7 +450,7 @@ public class NonMaximumSuppressionTest
 	private void floatCompareBlockMethodsForSize1(NonMaximumSuppression nms, int width, int height)
 			throws ArrayComparisonFailure
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		float[] data = floatCreateData(width, height);
 
@@ -472,7 +472,7 @@ public class NonMaximumSuppressionTest
 	//@Test
 	public void floatFindBlockMaximaOptimisedIsFasterThanFindBlockMaxima()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -564,7 +564,7 @@ public class NonMaximumSuppressionTest
 	private void intCompareBlockFindToMaxFind(NonMaximumSuppression nms, int width, int height, int boxSize)
 			throws ArrayComparisonFailure
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 		int[] data = intCreateData(width, height);
 
 		int[] blockIndices = nms.blockFindNxN(data, width, height, boxSize);
@@ -611,7 +611,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void intBlockFindNxNAndblockFind3x3ReturnSameResult()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -641,7 +641,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void intBlockFindIsFasterThanMaxFind()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -714,7 +714,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void intBlockFindNxNInternalIsFasterThanblockFindNxNForBigBorders()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -788,7 +788,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void intBlockFind3x3MethodIsFasterThanBlockFindNxN()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -840,7 +840,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void intBlockFind3x3WithBufferIsFasterThanBlockFind3x3()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -901,7 +901,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void intBlockFind3x3MethodIsFasterThanMaxFind3x3()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -970,7 +970,7 @@ public class NonMaximumSuppressionTest
 	private void intCompareBlockMethodsForSize1(NonMaximumSuppression nms, int width, int height)
 			throws ArrayComparisonFailure
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		int[] data = intCreateData(width, height);
 
@@ -992,7 +992,7 @@ public class NonMaximumSuppressionTest
 	//@Test
 	public void intFindBlockMaximaOptimisedIsFasterThanFindBlockMaxima()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -1099,7 +1099,7 @@ public class NonMaximumSuppressionTest
 	private void compareFloatBlockFindInternalToIntBlockFindInternal(NonMaximumSuppression nms, int width, int height,
 			int boxSize) throws ArrayComparisonFailure
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 		int[] data = intCreateData(width, height);
 		float[] data2 = floatClone(data);
 
@@ -1119,7 +1119,7 @@ public class NonMaximumSuppressionTest
 	private void compareFloatBlockFindToIntBlockFind(NonMaximumSuppression nms, int width, int height, int boxSize)
 			throws ArrayComparisonFailure
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 		int[] data = intCreateData(width, height);
 		float[] data2 = floatClone(data);
 
@@ -1147,7 +1147,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void intBlockFindNxNInternalIsFasterThanFloatBlockFindNxNInternal()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -1217,7 +1217,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void intBlockFindNxNIsFasterThanFloatBlockFindNxN()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -1301,7 +1301,7 @@ public class NonMaximumSuppressionTest
 	private void compareFloatFindBlockMaximaNxNInternalToIntFindBlockMaximaNxNInternal(NonMaximumSuppression nms,
 			int width, int height, int boxSize) throws ArrayComparisonFailure
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 		int[] data = intCreateData(width, height);
 		float[] data2 = floatClone(data);
 
@@ -1336,7 +1336,7 @@ public class NonMaximumSuppressionTest
 	private void compareFloatFindBlockMaximaNxNToIntFindBlockMaximaNxN(NonMaximumSuppression nms, int width,
 			int height, int boxSize) throws ArrayComparisonFailure
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 		int[] data = intCreateData(width, height);
 		float[] data2 = floatClone(data);
 
@@ -1356,7 +1356,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void intFindBlockMaximaNxNInternalIsFasterThanFloatFindBlockMaximaNxNInternal()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);
@@ -1426,7 +1426,7 @@ public class NonMaximumSuppressionTest
 	@Test
 	public void intFindBlockMaximaNxNIsFasterThanFloatFindBlockMaximaNxN()
 	{
-		rand = new gdsc.utils.Random(-30051977);
+		rand = new gdsc.core.utils.Random(-30051977);
 
 		NonMaximumSuppression nms = new NonMaximumSuppression();
 		nms.setBackground(0f);

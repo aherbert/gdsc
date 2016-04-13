@@ -1,18 +1,5 @@
 package gdsc.utils;
 
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.gui.GenericDialog;
-import ij.gui.Plot;
-import ij.gui.PlotWindow;
-import ij.gui.Roi;
-import ij.plugin.filter.ExtendedPlugInFilter;
-import ij.plugin.filter.PlugInFilterRunner;
-import ij.process.ImageProcessor;
-import ij.text.TextWindow;
-import ij.util.Tools;
-
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -25,6 +12,19 @@ import org.apache.commons.math3.optim.nonlinear.vector.jacobian.LevenbergMarquar
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
 import gdsc.UsageTracker;
+import gdsc.core.ij.Utils;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.gui.GenericDialog;
+import ij.gui.Plot;
+import ij.gui.PlotWindow;
+import ij.gui.Roi;
+import ij.plugin.filter.ExtendedPlugInFilter;
+import ij.plugin.filter.PlugInFilterRunner;
+import ij.process.ImageProcessor;
+import ij.text.TextWindow;
+import ij.util.Tools;
 
 /**
  * Analyses the ROI across a stack of exposures. Exposures must be set within the slice labels.
@@ -319,7 +319,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		plot.setLimits(a[0] - ra, a[1] + ra, b[0] - rb, b[1] + rb);
 		plot.setColor(Color.blue);
 		plot.addPoints(exposures, means, Plot.CIRCLE);
-		PlotWindow pw = ImageJHelper.display(title, plot);
+		PlotWindow pw = Utils.display(title, plot);
 
 		// Report results to a table
 		if (results == null || !results.isVisible())
@@ -327,7 +327,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 			results = new TextWindow(TITLE + " Summary",
 					"Image\tx\ty\tw\th\tN\tStart\tEnd\tE1\tE2\tSS\tIntercept\tGradient", "", 800, 300);
 			results.setVisible(true);
-			if (ImageJHelper.isNewWindow())
+			if (Utils.isNewWindow())
 			{
 				Point p = results.getLocation();
 				p.x = pw.getX();
@@ -412,15 +412,15 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 				double x2 = exposures2[bestStart + window - 1];
 				double y2 = fitted.value(x2);
 				plot.drawLine(x1, y1, x2, y2);
-				pw = ImageJHelper.display(title, plot);
+				pw = Utils.display(title, plot);
 
 				sb.append('\t').append(bestStart + 1);
 				sb.append('\t').append(bestStart + window);
-				sb.append('\t').append(ImageJHelper.rounded(x1));
-				sb.append('\t').append(ImageJHelper.rounded(x2));
-				sb.append('\t').append(ImageJHelper.rounded(bestSS));
-				sb.append('\t').append(ImageJHelper.rounded(bestFit[0]));
-				sb.append('\t').append(ImageJHelper.rounded(bestFit[1]));
+				sb.append('\t').append(Utils.rounded(x1));
+				sb.append('\t').append(Utils.rounded(x2));
+				sb.append('\t').append(Utils.rounded(bestSS));
+				sb.append('\t').append(Utils.rounded(bestFit[0]));
+				sb.append('\t').append(Utils.rounded(bestFit[1]));
 			}
 		}
 

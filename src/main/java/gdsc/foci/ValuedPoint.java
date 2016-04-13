@@ -28,7 +28,7 @@ public class ValuedPoint extends BasePoint
 
 	public ValuedPoint(AssignedPoint point, int value)
 	{
-		super(point.getX(), point.getY(), point.getZ());
+		super(point.getXint(), point.getYint(), point.getZint());
 		this.value = value;
 	}
 

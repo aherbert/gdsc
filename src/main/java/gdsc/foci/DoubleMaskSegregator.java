@@ -15,7 +15,7 @@ import gdsc.UsageTracker;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -61,7 +61,7 @@ public class DoubleMaskSegregator implements PlugIn
 
 	private boolean showDialog()
 	{
-		String[] items = ImageJHelper.getImageList(ImageJHelper.GREY_8_16, null);
+		String[] items = Utils.getImageList(Utils.GREY_8_16, null);
 
 		if (items.length < 2)
 		{
@@ -204,7 +204,7 @@ public class DoubleMaskSegregator implements PlugIn
 			sp.set(i, h[out[i]]);
 		if (applyLUT)
 			sp.setLut(createLUT());
-		ImagePlus imp = ImageJHelper.display(TITLE, sp);
+		ImagePlus imp = Utils.display(TITLE, sp);
 
 		// Optionally outline each object
 		if (overlayOutline)

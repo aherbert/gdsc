@@ -15,7 +15,7 @@ import gdsc.UsageTracker;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -145,9 +145,9 @@ public class PointExtractorPlugin implements PlugInFilter
 				final int frame = imp.getFrame();
 				for (int i = 0; i < points.length; i++)
 				{
-					final int x = points[i].getX();
-					final int y = points[i].getY();
-					final int z = points[i].getZ();
+					final int x = (int) points[i].getX();
+					final int y = (int) points[i].getY();
+					final int z = (int) points[i].getZ();
 					final int index = imp.getStackIndex(channel, z, frame);
 					ImageProcessor ip2 = stack.getProcessor(index);
 					p[i] = new TimeValuedPoint(x, y, z, frame, ip2.getf(x, y));
@@ -196,7 +196,7 @@ public class PointExtractorPlugin implements PlugInFilter
 		// To improve the flexibility, do not restrict the mask to those suitable for the image. Allow any image for the mask.
 		//ArrayList<String> newImageList = FindFoci.buildMaskList(imp);
 		//String[] list = newImageList.toArray(new String[0]);
-		String[] list = ImageJHelper.getImageList(ImageJHelper.NO_IMAGE, null);
+		String[] list = Utils.getImageList(Utils.NO_IMAGE, null);
 
 		GenericDialog gd = new GenericDialog(TITLE);
 
@@ -209,7 +209,7 @@ public class PointExtractorPlugin implements PlugInFilter
 		if (isManagerAvailable())
 		{
 			gd.addMessage(String.format("%s (%s) present in the ROI manager",
-					ImageJHelper.pleural(nPointRois(), "ROI"), ImageJHelper.pleural(nPoints(), "point")));
+					Utils.pleural(nPointRois(), "ROI"), Utils.pleural(nPoints(), "point")));
 			gd.addCheckbox("Use_manager_ROIs", useManager);
 			gd.addCheckbox("Reset_manager", reset);
 		}

@@ -155,7 +155,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 
 		if (WindowManager.getImageCount() > 0)
 		{
-			for (int id : gdsc.utils.ImageJHelper.getIDList())
+			for (int id : gdsc.core.ij.Utils.getIDList())
 			{
 				ImagePlus imp = WindowManager.getImage(id);
 

@@ -16,7 +16,7 @@ import gdsc.UsageTracker;
  *---------------------------------------------------------------------------*/
 
 import gdsc.help.URL;
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.DialogListener;
@@ -324,7 +324,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 			ClusterPoint p2 = p1.next;
 			final double d = p1.distance(p2);
 			resultsWindow.append(String.format("\t%d\t%.0f\t%.0f\t%d\t%.0f\t%.0f\t%s\t%s\n", p1.id, p1.x, p1.y, p2.id,
-					p2.x, p2.y, ImageJHelper.rounded(d), ImageJHelper.rounded(d * cal.pixelWidth)));
+					p2.x, p2.y, Utils.rounded(d), Utils.rounded(d * cal.pixelWidth)));
 		}
 	}
 

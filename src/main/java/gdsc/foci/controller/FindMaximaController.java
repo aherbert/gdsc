@@ -50,7 +50,7 @@ public class FindMaximaController extends ImageJController
 	{
 		int noOfImages = WindowManager.getImageCount();
 		List<String> imageList = new ArrayList<String>(noOfImages);
-		for (int id : gdsc.utils.ImageJHelper.getIDList())
+		for (int id : gdsc.core.ij.Utils.getIDList())
 		{
 			ImagePlus imp = WindowManager.getImage(id);
 

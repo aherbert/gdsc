@@ -20,7 +20,7 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 
 import gdsc.UsageTracker;
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -75,8 +75,8 @@ public class ParticleOverlap implements PlugIn
 		gd.addMessage("For each particle in a mask (defined by unique pixel value)\n"
 				+ "count the overlap and Mander's coefficient with a second mask image");
 
-		String[] imageList = ImageJHelper.getImageList(ImageJHelper.GREY_SCALE, null);
-		String[] maskList = ImageJHelper.getImageList(ImageJHelper.GREY_8_16, null);
+		String[] imageList = Utils.getImageList(Utils.GREY_SCALE, null);
+		String[] maskList = Utils.getImageList(Utils.GREY_8_16, null);
 
 		gd.addChoice("Particle_mask", maskList, maskTitle1);
 		gd.addChoice("Particle_image", imageList, imageTitle);
@@ -291,10 +291,10 @@ public class ParticleOverlap implements PlugIn
 		sb.append(id).append("\t");
 		sb.append(n1).append("\t");
 		sb.append(no1).append("\t");
-		sb.append(ImageJHelper.rounded((100.0 * no1) / n1)).append("\t");
+		sb.append(Utils.rounded((100.0 * no1) / n1)).append("\t");
 		sb.append(s1).append("\t");
 		sb.append(so1).append("\t");
-		sb.append(ImageJHelper.rounded(so1 / s1, 5)).append("\t");
+		sb.append(Utils.rounded(so1 / s1, 5)).append("\t");
 
 		recordResult(sb.toString());
 	}

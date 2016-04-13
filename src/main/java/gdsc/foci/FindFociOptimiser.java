@@ -16,8 +16,11 @@ import gdsc.UsageTracker;
  *---------------------------------------------------------------------------*/
 
 import gdsc.foci.gui.OptimiserView;
-import gdsc.utils.ImageJHelper;
-import gdsc.utils.UnicodeReader;
+import gdsc.core.ij.Utils;
+import gdsc.core.match.Coordinate;
+import gdsc.core.match.MatchCalculator;
+import gdsc.core.match.MatchResult;
+import gdsc.core.utils.UnicodeReader;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -291,12 +294,12 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			}
 
 			// Collect all the results
-			ImageJHelper.waitForCompletion(futures);
+			Utils.waitForCompletion(futures);
 			threadPool.shutdown();
 			IJ.showProgress(1);
 			IJ.showStatus("");
 
-			if (ImageJHelper.isInterrupted())
+			if (Utils.isInterrupted())
 				return;
 
 			// Check all results are the same size
@@ -371,7 +374,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			ArrayList<Result> results = runOptimiser(imp, mask, new StandardCounter(combinations));
 			IJ.showProgress(1);
 
-			if (ImageJHelper.isInterrupted())
+			if (Utils.isInterrupted())
 				return;
 
 			if (results == null)
@@ -1477,9 +1480,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			return false;
 		}
 
-		inputDirectory = ImageJHelper.addFileSeparator(inputDirectory);
-		maskDirectory = ImageJHelper.addFileSeparator(maskDirectory);
-		outputDirectory = ImageJHelper.addFileSeparator(outputDirectory);
+		inputDirectory = Utils.addFileSeparator(inputDirectory);
+		maskDirectory = Utils.addFileSeparator(maskDirectory);
+		outputDirectory = Utils.addFileSeparator(outputDirectory);
 
 		scoringMode = gd.getNextChoiceIndex();
 		reuseResults = gd.getNextBoolean();
@@ -2032,7 +2035,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		FileInfo info = imp.getOriginalFileInfo();
 		if (info != null)
 		{
-			return ImageJHelper.combinePath(info.directory, info.fileName);
+			return Utils.combinePath(info.directory, info.fileName);
 		}
 		else
 		{
@@ -2360,7 +2363,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 					int stackIndex = mask.getStackIndex(c, point.z, f);
 					ImageProcessor ipMask = stack.getProcessor(stackIndex);
 
-					if (ipMask.get(point.getX(), point.getY()) > 0)
+					if (ipMask.get(point.getXint(), point.getYint()) > 0)
 						roiPoints[id++] = point;
 				}
 			}
@@ -2372,7 +2375,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 					int stackIndex = mask.getStackIndex(c, slice, f);
 					ImageProcessor ipMask = stack.getProcessor(stackIndex);
 
-					if (ipMask.get(point.getX(), point.getY()) > 0)
+					if (ipMask.get(point.getXint(), point.getYint()) > 0)
 					{
 						roiPoints[id++] = point;
 						break;
@@ -2495,8 +2498,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		int i = 0;
 		for (Coordinate point : points)
 		{
-			ox[i] = point.getX();
-			oy[i] = point.getY();
+			ox[i] = point.getXint();
+			oy[i] = point.getYint();
 			i++;
 		}
 		return new PointRoi(ox, oy, ox.length);
@@ -2515,9 +2518,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		int i = 0;
 		for (Coordinate point : points)
 		{
-			ox[i] = point.getX();
-			oy[i] = point.getY();
-			oz[i] = point.getZ();
+			ox[i] = point.getXint();
+			oy[i] = point.getYint();
+			oz[i] = point.getZint();
 			i++;
 		}
 
@@ -3270,7 +3273,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 				String path = tf.getText();
 				final boolean recording = Recorder.record;
 				Recorder.record = false;
-				path = ImageJHelper.getDirectory("Choose_a_directory", path);
+				path = Utils.getDirectory("Choose_a_directory", path);
 				Recorder.record = recording;
 				if (path != null)
 					tf.setText(path);

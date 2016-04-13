@@ -1,6 +1,10 @@
 package gdsc.utils;
 
+import java.awt.Rectangle;
+import java.util.ArrayList;
+
 import gdsc.UsageTracker;
+import gdsc.core.ij.Utils;
 import gdsc.threshold.Auto_Threshold;
 import ij.IJ;
 import ij.ImagePlus;
@@ -13,9 +17,6 @@ import ij.plugin.ZProjector;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-
-import java.awt.Rectangle;
-import java.util.ArrayList;
 
 /**
  * Aligns open image stacks to a reference stack using XY translation to maximise the correlation. Takes in:
@@ -99,7 +100,7 @@ public class Align_Stacks implements PlugIn
 		// Find the currently open images
 		ArrayList<String> newImageList = new ArrayList<String>();
 
-		for (int id : gdsc.utils.ImageJHelper.getIDList())
+		for (int id : gdsc.core.ij.Utils.getIDList())
 		{
 			ImagePlus imp = WindowManager.getImage(id);
 
@@ -269,7 +270,7 @@ public class Align_Stacks implements PlugIn
 					}
 				}
 
-				if (ImageJHelper.isInterrupted())
+				if (Utils.isInterrupted())
 					return;
 			}
 		}
@@ -303,7 +304,7 @@ public class Align_Stacks implements PlugIn
 					}
 				}
 
-				if (ImageJHelper.isInterrupted())
+				if (Utils.isInterrupted())
 					return;
 			}
 		}
@@ -384,7 +385,7 @@ public class Align_Stacks implements PlugIn
 
 	private FloatProcessor extractTile(ImagePlus imp, int frame, int channel, int projectionMethod)
 	{
-		return ImageJHelper.extractTile(imp, frame, channel, projectionMethod).toFloat(1, null);
+		return Utils.extractTile(imp, frame, channel, projectionMethod).toFloat(1, null);
 	}
 
 	/**

@@ -16,7 +16,7 @@ import gdsc.UsageTracker;
  *---------------------------------------------------------------------------*/
 
 import gdsc.threshold.Auto_Threshold;
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -153,7 +153,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	{
 		String[] names = new String[WindowManager.getImageCount()];
 		int count = 0;
-		for (int id : gdsc.utils.ImageJHelper.getIDList())
+		for (int id : gdsc.core.ij.Utils.getIDList())
 		{
 			ImagePlus imp = WindowManager.getImage(id);
 			if (imp == null)
@@ -445,8 +445,8 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 				}
 			}
 
-			ImageJHelper.display(maskTitle + " Include", includeIp);
-			ImageJHelper.display(maskTitle + " Exclude", excludeIp);
+			Utils.display(maskTitle + " Include", includeIp);
+			Utils.display(maskTitle + " Exclude", excludeIp);
 		}
 		else
 		{
@@ -481,7 +481,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 			}
 			ip.setMinAndMax(0, exclude);
 
-			ImagePlus segImp = ImageJHelper.display(maskTitle + " Segregated", ip);
+			ImagePlus segImp = Utils.display(maskTitle + " Segregated", ip);
 
 			if (overlayOutline)
 				addOutline(segImp);

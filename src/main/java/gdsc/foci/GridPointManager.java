@@ -55,13 +55,13 @@ public class GridPointManager
 		for (GridPoint p : allPoints)
 		{
 			if (p.getX() < minX)
-				minX = p.getX();
+				minX = p.getXint();
 			if (p.getX() > maxX)
-				maxX = p.getX();
+				maxX = p.getXint();
 			if (p.getY() < minY)
-				minY = p.getY();
+				minY = p.getYint();
 			if (p.getY() > maxY)
-				maxY = p.getY();
+				maxY = p.getYint();
 		}
 
 		if (minX < 0 || minY < 0)
@@ -96,8 +96,8 @@ public class GridPointManager
 
 	private void addToGrid(GridPoint p)
 	{
-		int xBlock = getXBlock(p.getX());
-		int yBlock = getYBlock(p.getY());
+		int xBlock = getXBlock(p.getXint());
+		int yBlock = getYBlock(p.getYint());
 		@SuppressWarnings("unchecked")
 		LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[xBlock][yBlock];
 		if (points == null)

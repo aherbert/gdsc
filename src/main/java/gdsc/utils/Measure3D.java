@@ -10,6 +10,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
 import gdsc.UsageTracker;
+import gdsc.core.ij.Utils;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -287,10 +288,10 @@ public class Measure3D extends PlugInFrame
 		sb.append('\t').append(x);
 		sb.append('\t').append(y);
 		sb.append('\t').append(z);
-		sb.append('\t').append(ImageJHelper.rounded(d));
+		sb.append('\t').append(Utils.rounded(d));
 		if (d != -1)
 		{
-			sb.append('\t').append(ImageJHelper.rounded(d2));
+			sb.append('\t').append(Utils.rounded(d2));
 			sb.append('\t').append(units);
 		}
 		else

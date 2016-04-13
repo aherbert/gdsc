@@ -15,7 +15,7 @@ import gdsc.UsageTracker;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -235,8 +235,8 @@ public class ThreadAnalyser implements PlugIn
 
 		// Add a second mask image to threshold (if necessary) for objects to find on the threads
 
-		String[] imageList = ImageJHelper.getImageList(ImageJHelper.GREY_8_16, ignoreSuffix);
-		String[] objectList = ImageJHelper.getImageList(ImageJHelper.GREY_8_16 | ImageJHelper.NO_IMAGE, ignoreSuffix);
+		String[] imageList = Utils.getImageList(Utils.GREY_8_16, ignoreSuffix);
+		String[] objectList = Utils.getImageList(Utils.GREY_8_16 | Utils.NO_IMAGE, ignoreSuffix);
 
 		if (imageList.length == 0)
 		{

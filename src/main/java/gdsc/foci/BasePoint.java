@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.core.match.Coordinate;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -40,61 +42,6 @@ public class BasePoint implements Coordinate
 		this.y = y;
 	}
 
-	/**
-	 * Calculate the squared distance to the given coordinates
-	 */
-	public double distance2(int x, int y, int z)
-	{
-		return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y) + (this.z - z) * (this.z - z);
-	}
-
-	/**
-	 * Calculate the squared distance to the given coordinates
-	 */
-	public double distance2(int x, int y)
-	{
-		return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y);
-	}
-
-	/**
-	 * Calculate the distance to the given coordinates
-	 */
-	public double distance(int x, int y, int z)
-	{
-		return Math.sqrt(distance2(x, y, z));
-	}
-
-	/**
-	 * Calculate the distance to the given coordinates
-	 */
-	public double distance(int x, int y)
-	{
-		return Math.sqrt(distance2(x, y));
-	}
-
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#getX()
-	 */
-	public int getX()
-	{
-		return x;
-	}
-
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#getY()
-	 */
-	public int getY()
-	{
-		return y;
-	}
-
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#getZ()
-	 */
-	public int getZ()
-	{
-		return z;
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -126,59 +73,143 @@ public class BasePoint implements Coordinate
 		return (41 * (41 * (41 + x) + y) + z);
 	}
 
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#getPositionX()
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#getX()
 	 */
-	public float getPositionX()
+	public float getX()
 	{
 		return x;
 	}
 
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#getPositionY()
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#getY()
 	 */
-	public float getPositionY()
+	public float getY()
 	{
 		return y;
 	}
 
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#getPositionZ()
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#getZ()
 	 */
-	public float getPositionZ()
+	public float getZ()
 	{
 		return z;
 	}
 
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#distance(float, float, float)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#getXint()
+	 */
+	public int getXint()
+	{
+		return x;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#getYint()
+	 */
+	public int getYint()
+	{
+		return y;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#getZint()
+	 */
+	public int getZint()
+	{
+		return z;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#distance(float, float, float)
 	 */
 	public double distance(float x, float y, float z)
 	{
 		return Math.sqrt(distance2(x, y, z));
 	}
 
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#distance(float, float)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#distance(float, float)
 	 */
 	public double distance(float x, float y)
 	{
 		return Math.sqrt(distance2(x, y));
 	}
 
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#distance2(float, float, float)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#distance2(float, float, float)
 	 */
 	public double distance2(float x, float y, float z)
 	{
 		return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y) + (this.z - z) * (this.z - z);
 	}
 
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#distance2(float, float)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#distance2(float, float)
 	 */
 	public double distance2(float x, float y)
 	{
 		return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#distanceXY(gdsc.core.match.Coordinate)
+	 */
+	public double distanceXY(Coordinate other)
+	{
+		return distance(other.getX(), other.getY());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#distanceXY2(gdsc.core.match.Coordinate)
+	 */
+	public double distanceXY2(Coordinate other)
+	{
+		return distance2(other.getX(), other.getY());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#distanceXYZ(gdsc.core.match.Coordinate)
+	 */
+	public double distanceXYZ(Coordinate other)
+	{
+		return distance(other.getX(), other.getY(), other.getZ());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.core.match.Coordinate#distanceXYZ2(gdsc.core.match.Coordinate)
+	 */
+	public double distanceXYZ2(Coordinate other)
+	{
+		return distance2(other.getX(), other.getY(), other.getZ());
 	}
 }

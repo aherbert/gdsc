@@ -51,7 +51,7 @@ public class Contrast_Enhancer implements PlugInFilter
 	{
 		ContrastEnhancer ce = new ContrastEnhancer();
 		double saturated = 0.35;
-		for (int id : gdsc.utils.ImageJHelper.getIDList())
+		for (int id : gdsc.core.ij.Utils.getIDList())
 		{
 			ImagePlus imp = WindowManager.getImage(id);
 			imp.resetDisplayRange();

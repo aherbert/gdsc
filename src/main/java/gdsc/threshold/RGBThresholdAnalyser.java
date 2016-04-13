@@ -15,7 +15,7 @@ import gdsc.UsageTracker;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.PlugIn;
@@ -49,10 +49,10 @@ public class RGBThresholdAnalyser implements PlugIn
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
 		
-		dir1 = ImageJHelper.getDirectory("RGB_Directory", dir1);
+		dir1 = Utils.getDirectory("RGB_Directory", dir1);
 		if (dir1 == null)
 			return;
-		dir2 = ImageJHelper.getDirectory("Image_Directory", dir2);
+		dir2 = Utils.getDirectory("Image_Directory", dir2);
 		if (dir2 == null)
 			return;
 
@@ -123,7 +123,7 @@ public class RGBThresholdAnalyser implements PlugIn
 			analyse(name, cp, 2, ip2, ip3);
 
 			
-			if (ImageJHelper.isInterrupted())
+			if (Utils.isInterrupted())
 				return;
 		}
 
@@ -134,8 +134,8 @@ public class RGBThresholdAnalyser implements PlugIn
 	{
 		byte[] mask = cp.getChannel(channel);
 
-		//ImageJHelper.display("RGB Channel " + channel, new ByteProcessor(ip.getWidth(), ip.getHeight(), mask));
-		//ImageJHelper.display("Channel " + channel, ip);
+		//Utils.display("RGB Channel " + channel, new ByteProcessor(ip.getWidth(), ip.getHeight(), mask));
+		//Utils.display("Channel " + channel, ip);
 
 		// Get the histogram for the channel
 		int[] h = new int[(ip instanceof ByteProcessor) ? 256 : 65336];
@@ -175,7 +175,7 @@ public class RGBThresholdAnalyser implements PlugIn
 		if (error != 0)
 		{
 			System.out.printf("%s [%d] %d error pixels (sum = %d)\n", name, channel, error, sum);
-			//ImageJHelper.display("Error ch "+channel, ep);
+			//Utils.display("Error ch "+channel, ep);
 		}
 
 		double[] stats = getStatistics(h);

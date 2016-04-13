@@ -15,7 +15,7 @@ import gdsc.UsageTracker;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -159,7 +159,7 @@ public class SpotDensity implements PlugIn
 		ArrayList<String> newImageList = new ArrayList<String>();
 		if (roi != null && roi.isArea())
 			newImageList.add("[ROI]");
-		newImageList.addAll(Arrays.asList(ImageJHelper.getImageList(ImageJHelper.GREY_8_16, null)));
+		newImageList.addAll(Arrays.asList(Utils.getImageList(Utils.GREY_8_16, null)));
 		return newImageList.toArray(new String[newImageList.size()]);
 	}
 
@@ -191,20 +191,20 @@ public class SpotDensity implements PlugIn
 					bp.set(i, 255);
 		}
 
-		//		ImageJHelper.display("Mask", bp);
+		//		Utils.display("Mask", bp);
 
 		// Create a distance map from the mask
 		EDM edm = new EDM();
 		FloatProcessor map = edm.makeFloatEDM(bp, 0, true);
 
-		//		ImageJHelper.display("Map", map);
+		//		Utils.display("Map", map);
 		//		
 		//		float[] fmap = (float[])map.getPixels();
 		//		byte[] mask = new byte[fmap.length];
 		//		for (int i = 0; i < mask.length; i++)
 		//			if (fmap[i] >= distance)
 		//				mask[i] = -1;
-		//		ImageJHelper.display("Mask2", new ByteProcessor(bp.getWidth(), bp.getHeight(), mask));
+		//		Utils.display("Mask2", new ByteProcessor(bp.getWidth(), bp.getHeight(), mask));
 
 		return map;
 	}
@@ -313,7 +313,7 @@ public class SpotDensity implements PlugIn
 		// Truncate the unused r for the plot
 		r = Arrays.copyOf(r, nBins);
 		Plot plot1 = new Plot(TITLE + " Min Distance", "Distance (px)", "Frequency", r, dMin);
-		PlotWindow pw1 = ImageJHelper.display(TITLE + " Min Distance", plot1);
+		PlotWindow pw1 = Utils.display(TITLE + " Min Distance", plot1);
 
 		// The final bin may be empty if the correlation interval was a factor of the correlation distance
 		if (pcf[pcf.length - 1] == 0)
@@ -388,7 +388,7 @@ public class SpotDensity implements PlugIn
 		plot2.drawLine(pc.r[0], 1, pc.r[pc.r.length - 1], 1);
 		plot2.addLabel(0, 0, "Av.Density = " + IJ.d2s(avDensity, -3) + " px^-2");
 		plot2.setColor(Color.blue);
-		return ImageJHelper.display(TITLE + " " + title, plot2);
+		return Utils.display(TITLE + " " + title, plot2);
 	}
 
 	private void createResultsWindow()

@@ -19,7 +19,7 @@ import gdsc.foci.model.FindFociModel;
 import gdsc.threshold.Auto_Threshold;
 import gdsc.threshold.Multi_OtsuThreshold;
 import gdsc.utils.GaussianFit;
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -1240,7 +1240,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if (imp != null)
 		{
-			for (int id : gdsc.utils.ImageJHelper.getIDList())
+			for (int id : gdsc.core.ij.Utils.getIDList())
 			{
 				ImagePlus maskImp = WindowManager.getImage(id);
 				// Mask image must:
@@ -2323,7 +2323,7 @@ public class FindFoci implements PlugIn, MouseListener
 		if (isLogging)
 			recordStatistics(stats, exclusion, options);
 
-		if (ImageJHelper.isInterrupted())
+		if (Utils.isInterrupted())
 			return null;
 
 		// Calculate the auto-threshold if necessary
@@ -2340,7 +2340,7 @@ public class FindFoci implements PlugIn, MouseListener
 		Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, round(stats[STATS_MIN]),
 				round(stats[STATS_BACKGROUND]));
 
-		if (ImageJHelper.isInterrupted() || maxPoints == null)
+		if (Utils.isInterrupted() || maxPoints == null)
 			return null;
 
 		if (isLogging)
@@ -2356,7 +2356,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		assignPointsToMaxima(image, histogram, types, stats, maxima);
 
-		if (ImageJHelper.isInterrupted())
+		if (Utils.isInterrupted())
 			return null;
 
 		if (isLogging)
@@ -2374,7 +2374,7 @@ public class FindFoci implements PlugIn, MouseListener
 		ArrayList<LinkedList<int[]>> saddlePoints = new ArrayList<LinkedList<int[]>>(resultsArray.size() + 1);
 		findSaddlePoints(image, types, resultsArray, maxima, saddlePoints);
 
-		if (ImageJHelper.isInterrupted())
+		if (Utils.isInterrupted())
 			return null;
 
 		// Find the peak sizes above their saddle points.
@@ -2393,7 +2393,7 @@ public class FindFoci implements PlugIn, MouseListener
 		if (isLogging)
 			timingSplit("Merged peaks");
 
-		if (ImageJHelper.isInterrupted())
+		if (Utils.isInterrupted())
 			return null;
 
 		if ((options & OPTION_REMOVE_EDGE_MAXIMA) != 0)
@@ -4557,7 +4557,7 @@ public class FindFoci implements PlugIn, MouseListener
 		//if (pCount > 0)
 		//	System.out.printf("Plateau count = %d\n", pCount);
 
-		if (ImageJHelper.isInterrupted())
+		if (Utils.isInterrupted())
 			return null;
 
 		Collections.sort(maxPoints);
@@ -4818,7 +4818,7 @@ public class FindFoci implements PlugIn, MouseListener
 					break;
 			}
 
-			if ((processedLevel % 64 == 0) && ImageJHelper.isInterrupted())
+			if ((processedLevel % 64 == 0) && Utils.isInterrupted())
 				return;
 
 			if (remaining > 0 && level > background)
@@ -5909,7 +5909,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if (isLogging)
 			IJ.log("Height filter : Number of peaks = " + countPeaks(peakIdMap));
-		if (ImageJHelper.isInterrupted())
+		if (Utils.isInterrupted())
 			return;
 
 		// Process all the peaks for the minimum size. Process in order of smallest first
@@ -5948,7 +5948,7 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if (isLogging)
 			IJ.log("Size filter : Number of peaks = " + countPeaks(peakIdMap));
-		if (ImageJHelper.isInterrupted())
+		if (Utils.isInterrupted())
 			return;
 
 		// This can be intensive due to the requirement to recount the peak size above the saddle, so it is optional
@@ -5994,7 +5994,7 @@ public class FindFoci implements PlugIn, MouseListener
 								saddlePoints.get(neighbourPeakId), highestSaddle, true);
 
 						// Check for interruption after each merge
-						if (ImageJHelper.isInterrupted())
+						if (Utils.isInterrupted())
 							return;
 					}
 				}
@@ -6878,7 +6878,7 @@ public class FindFoci implements PlugIn, MouseListener
 		for (String image : imageList)
 		{
 			runBatch(image, parameters);
-			if (ImageJHelper.isInterrupted())
+			if (Utils.isInterrupted())
 				break;
 		}
 		closeBatchResultsFile();
@@ -7230,11 +7230,11 @@ public class FindFoci implements PlugIn, MouseListener
 			Recorder.record = false;
 			if (tf == textParamFile)
 			{
-				path = ImageJHelper.getFilename("Choose_a_parameter_file", path);
+				path = Utils.getFilename("Choose_a_parameter_file", path);
 			}
 			else
 			{
-				path = ImageJHelper.getDirectory("Choose_a_directory", path);
+				path = Utils.getDirectory("Choose_a_directory", path);
 			}
 			Recorder.record = recording;
 			if (path != null)

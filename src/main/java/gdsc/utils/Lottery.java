@@ -1,13 +1,13 @@
 package gdsc.utils;
 
-import ij.IJ;
-import ij.gui.GenericDialog;
-import ij.plugin.PlugIn;
-
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well44497b;
 
 import gdsc.UsageTracker;
+import gdsc.core.ij.Utils;
+import ij.IJ;
+import ij.gui.GenericDialog;
+import ij.plugin.PlugIn;
 
 /**
  * Computes the odds of winning the lottery using random sampling 
@@ -99,7 +99,7 @@ public class Lottery implements PlugIn
 				double f = (double) ok / count;
 				IJ.log(String.format("%d / %d = %f (1 in %f)", ok, count, f, 1.0 / f));
 				c = 0;
-				if (ImageJHelper.isInterrupted())
+				if (Utils.isInterrupted())
 					return;
 			}
 

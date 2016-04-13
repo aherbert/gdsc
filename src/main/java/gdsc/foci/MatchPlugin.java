@@ -15,7 +15,11 @@ import gdsc.UsageTracker;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
+import gdsc.core.match.Coordinate;
+import gdsc.core.match.MatchResult;
+import gdsc.core.match.MatchCalculator;
+import gdsc.core.match.PointPair;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -81,9 +85,8 @@ public class MatchPlugin implements PlugIn
 	private static String[] findFociResult = new String[] { "Intensity", "Intensity above saddle",
 			"Intensity above background", "Count", "Count above saddle", "Max value", "Highest saddle value", };
 	private static int[] findFociResultIndex = new int[] { FindFoci.RESULT_INTENSITY,
-			FindFoci.RESULT_INTENSITY_ABOVE_SADDLE, FindFoci.RESULT_INTENSITY_MINUS_BACKGROUND,
-			FindFoci.RESULT_COUNT, FindFoci.RESULT_COUNT_ABOVE_SADDLE, FindFoci.RESULT_MAX_VALUE,
-			FindFoci.RESULT_HIGHEST_SADDLE_VALUE, };
+			FindFoci.RESULT_INTENSITY_ABOVE_SADDLE, FindFoci.RESULT_INTENSITY_MINUS_BACKGROUND, FindFoci.RESULT_COUNT,
+			FindFoci.RESULT_COUNT_ABOVE_SADDLE, FindFoci.RESULT_MAX_VALUE, FindFoci.RESULT_HIGHEST_SADDLE_VALUE, };
 	private static int findFociResultChoiceIndex = 0;
 
 	private static boolean writeHeader = true;
@@ -141,7 +144,7 @@ public class MatchPlugin implements PlugIn
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		fileMode = arg.equals("file");
 
 		if (!showDialog())
@@ -325,15 +328,15 @@ public class MatchPlugin implements PlugIn
 	private TimeValuedPoint[] extractHeights(ImagePlus imp, Coordinate[] actualPoints, int channel, int frame)
 	{
 		// Use maximum intensity projection
-		ImageProcessor ip = ImageJHelper.extractTile(imp, frame, channel, ZProjector.MAX_METHOD);
+		ImageProcessor ip = Utils.extractTile(imp, frame, channel, ZProjector.MAX_METHOD);
 		//new ImagePlus("height", ip).show(); 
 
 		// Store ID as the time
 		TimeValuedPoint[] newPoints = new TimeValuedPoint[actualPoints.length];
 		for (int i = 0; i < newPoints.length; i++)
 		{
-			int x = actualPoints[i].getX();
-			int y = actualPoints[i].getY();
+			int x = (int) actualPoints[i].getX();
+			int y = (int) actualPoints[i].getY();
 			int value = ip.get(x, y);
 			newPoints[i] = new TimeValuedPoint(x, y, 0, i + 1, value);
 		}
@@ -382,7 +385,7 @@ public class MatchPlugin implements PlugIn
 		if (!fileMode)
 		{
 			List<String> imageList = new LinkedList<String>();
-			for (int id : gdsc.utils.ImageJHelper.getIDList())
+			for (int id : gdsc.core.ij.Utils.getIDList())
 			{
 				ImagePlus imp = WindowManager.getImage(id);
 				if (imp != null)
@@ -501,7 +504,7 @@ public class MatchPlugin implements PlugIn
 			if (doQuartiles)
 			{
 				header = createResultsHeader(qResults);
-				ImageJHelper.refreshHeadings(resultsWindow, header, true);
+				Utils.refreshHeadings(resultsWindow, header, true);
 			}
 
 			if (resultsWindow == null || !resultsWindow.isShowing())
@@ -771,7 +774,7 @@ public class MatchPlugin implements PlugIn
 
 		// Find old plot
 		ImagePlus oldPlot = null;
-		for (int id : ImageJHelper.getIDList())
+		for (int id : Utils.getIDList())
 		{
 			ImagePlus imp = WindowManager.getImage(id);
 			if (imp != null && imp.getTitle().equals(title))
@@ -943,7 +946,7 @@ public class MatchPlugin implements PlugIn
 		if (matches.isEmpty() && falsePositives.isEmpty() && falseNegatives.isEmpty())
 			return;
 
-		String[] path = ImageJHelper.decodePath(filename);
+		String[] path = Utils.decodePath(filename);
 		OpenDialog chooser = new OpenDialog("matches_file", path[0], path[1]);
 		if (chooser.getFileName() == null)
 			return;
@@ -960,16 +963,16 @@ public class MatchPlugin implements PlugIn
 			final String newLine = System.getProperty("line.separator");
 			sb.append("# Image 1   = ").append(t1).append(newLine);
 			sb.append("# Image 2   = ").append(t2).append(newLine);
-			sb.append("# Distance  = ").append(ImageJHelper.rounded(d, 2)).append(newLine);
+			sb.append("# Distance  = ").append(Utils.rounded(d, 2)).append(newLine);
 			sb.append("# N 1       = ").append(result.getNumberActual()).append(newLine);
 			sb.append("# N 2       = ").append(result.getNumberPredicted()).append(newLine);
 			sb.append("# Match     = ").append(result.getTruePositives()).append(newLine);
 			sb.append("# Unmatch 1 = ").append(result.getFalseNegatives()).append(newLine);
 			sb.append("# Unmatch 2 = ").append(result.getFalsePositives()).append(newLine);
-			sb.append("# Jaccard   = ").append(ImageJHelper.rounded(result.getJaccard(), 4)).append(newLine);
-			sb.append("# Recall 1  = ").append(ImageJHelper.rounded(result.getRecall(), 4)).append(newLine);
-			sb.append("# Recall 2  = ").append(ImageJHelper.rounded(result.getPrecision(), 4)).append(newLine);
-			sb.append("# F-score   = ").append(ImageJHelper.rounded(result.getFScore(1.0), 4)).append(newLine);
+			sb.append("# Jaccard   = ").append(Utils.rounded(result.getJaccard(), 4)).append(newLine);
+			sb.append("# Recall 1  = ").append(Utils.rounded(result.getRecall(), 4)).append(newLine);
+			sb.append("# Recall 2  = ").append(Utils.rounded(result.getPrecision(), 4)).append(newLine);
+			sb.append("# F-score   = ").append(Utils.rounded(result.getFScore(1.0), 4)).append(newLine);
 			sb.append("# X1\tY1\tV1\tX2\tY2\tV2").append(newLine);
 
 			out.write(sb.toString());
@@ -1062,7 +1065,7 @@ public class MatchPlugin implements PlugIn
 			}
 			else
 			{
-				ImageJHelper.refreshHeadings(matchedWindow, header, true);
+				Utils.refreshHeadings(matchedWindow, header, true);
 			}
 		}
 		else
@@ -1089,8 +1092,8 @@ public class MatchPlugin implements PlugIn
 			int value = -1;
 			if (findFociImageIndex > 0)
 			{
-				TimeValuedPoint point = (TimeValuedPoint) ((findFociImageIndex == 1) ? pair.getPoint1() : pair
-						.getPoint2());
+				TimeValuedPoint point = (TimeValuedPoint) ((findFociImageIndex == 1) ? pair.getPoint1()
+						: pair.getPoint2());
 				value = (int) point.value;
 			}
 			addMatchedPair(pair.getPoint1(), pair.getPoint2(), pair.getXYZDistance(), value);

@@ -13,6 +13,15 @@ package gdsc.colocalisation;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+
+import gdsc.UsageTracker;
+import gdsc.colocalisation.cda.TwinStackShifter;
+import gdsc.core.utils.Random;
+import gdsc.threshold.Auto_Threshold;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -21,16 +30,6 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-
-import gdsc.UsageTracker;
-import gdsc.colocalisation.cda.TwinStackShifter;
-import gdsc.threshold.Auto_Threshold;
-import gdsc.utils.Random;
 
 /**
  * Processes a stack image with multiple channels. Requires three channels. Each frame is processed separately. Extracts

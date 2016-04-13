@@ -16,7 +16,7 @@ import gdsc.UsageTracker;
  *---------------------------------------------------------------------------*/
 
 import gdsc.help.URL;
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
@@ -213,8 +213,8 @@ public class AssignFociToObjects implements PlugInFilter
 		{
 			sb.append(imp.getTitle());
 			sb.append('\t').append(i);
-			sb.append('\t').append(ImageJHelper.rounded(centres[i][0]));
-			sb.append('\t').append(ImageJHelper.rounded(centres[i][1]));
+			sb.append('\t').append(Utils.rounded(centres[i][0]));
+			sb.append('\t').append(Utils.rounded(centres[i][1]));
 			sb.append('\t').append((int) (centres[i][2]));
 			if (idMap[i] > 0)
 			{
@@ -262,11 +262,11 @@ public class AssignFociToObjects implements PlugInFilter
 			Plot plot = new Plot(title, "Count", "Frequency", xValues, yValues);
 			plot.setLimits(0, xValues[xValues.length - 1], 0, yMax);
 			plot.addLabel(0, 0,
-					String.format("N = %d, Mean = %s", (int) stats.getSum(), ImageJHelper.rounded(stats.getMean())));
+					String.format("N = %d, Mean = %s", (int) stats.getSum(), Utils.rounded(stats.getMean())));
 			plot.draw();
 			plot.setColor(Color.RED);
 			plot.drawLine(stats.getMean(), 0, stats.getMean(), yMax);
-			ImageJHelper.display(title, plot);
+			Utils.display(title, plot);
 		}
 
 		// Show the summary
@@ -280,9 +280,9 @@ public class AssignFociToObjects implements PlugInFilter
 		sb.append('\t').append(results.size() - (int) (stats.getSum() + stats2.getSum()));
 		sb.append('\t').append(stats.getMin());
 		sb.append('\t').append(stats.getMax());
-		sb.append('\t').append(ImageJHelper.rounded(stats.getMean()));
-		sb.append('\t').append(ImageJHelper.rounded(stats.getPercentile(50)));
-		sb.append('\t').append(ImageJHelper.rounded(stats.getStandardDeviation()));
+		sb.append('\t').append(Utils.rounded(stats.getMean()));
+		sb.append('\t').append(Utils.rounded(stats.getPercentile(50)));
+		sb.append('\t').append(Utils.rounded(stats.getStandardDeviation()));
 		summaryWindow.append(sb.toString());
 
 		if (!showDistances)
@@ -314,7 +314,7 @@ public class AssignFociToObjects implements PlugInFilter
 				{
 					sb.append("\tFalse\t");
 				}
-				sb.append(ImageJHelper.rounded(Math.sqrt(d2[i])));
+				sb.append(Utils.rounded(Math.sqrt(d2[i])));
 				sb.append('\n');
 			}
 			else
@@ -351,12 +351,12 @@ public class AssignFociToObjects implements PlugInFilter
 		String msg = "Assign foci to the nearest object\n(Objects will be found in the current image)\nAvailable foci:";
 		if (findFociResults != null)
 		{
-			msg += "\nFind Foci = " + ImageJHelper.pleural(findFociResults.size(), "result");
+			msg += "\nFind Foci = " + Utils.pleural(findFociResults.size(), "result");
 			options[count++] = "Find Foci";
 		}
 		if (roiResults != null)
 		{
-			msg += "\nROI = " + ImageJHelper.pleural(roiResults.size(), "point");
+			msg += "\nROI = " + Utils.pleural(roiResults.size(), "point");
 			options[count++] = "ROI";
 		}
 		options = Arrays.copyOf(options, count);
@@ -530,7 +530,7 @@ public class AssignFociToObjects implements PlugInFilter
 			ip.set(i, objectMask[i]);
 
 		ip.setMinAndMax(0, oa.getMaxObject());
-		ImagePlus imp = ImageJHelper.display(TITLE + " Objects", ip);
+		ImagePlus imp = Utils.display(TITLE + " Objects", ip);
 		if (showFoci && found.length > 0)
 		{
 			int[] xin = new int[found.length];

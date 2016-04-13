@@ -1,5 +1,7 @@
 package gdsc.foci;
 
+import gdsc.core.match.BasePoint;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -16,54 +18,24 @@ package gdsc.foci;
 /**
  * Stores a 2D/3D point (real coordinates) with time and value.
  */
-public class TimeValuedPoint implements Coordinate
+public class TimeValuedPoint extends BasePoint
 {
-	protected float x = 0;
-	protected float y = 0;
-	protected float z = 0;
-	protected int time = 0;
-	protected float value = 0;
+	protected int time;
+	protected float value;
 
 	public TimeValuedPoint(float x, float y, float z, int time, float value)
 	{
-		this.x = x;
-		this.y = y;
-		this.z = z;
+		super(x, y, z);
 		this.time = time;
 		this.value = value;
 	}
 
 	public TimeValuedPoint(float x, float y, float z, float value)
 	{
-		this.x = x;
-		this.y = y;
-		this.z = z;
+		super(x, y, z);
 		this.value = value;
 	}
 
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#getX()
-	 */
-	public int getX()
-	{
-		return (int)x;
-	}
-
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#getY()
-	 */
-	public int getY()
-	{
-		return (int)y;
-	}
-
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#getZ()
-	 */
-	public int getZ()
-	{
-		return (int)z;
-	}
 	
 	/**
 	 * @return the time
@@ -79,61 +51,5 @@ public class TimeValuedPoint implements Coordinate
 	public float getValue()
 	{
 		return value;
-	}
-	
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#getPositionX()
-	 */
-	public float getPositionX()
-	{
-		return x;
-	}
-
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#getPositionY()
-	 */
-	public float getPositionY()
-	{
-		return y;
-	}
-
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#getPositionZ()
-	 */
-	public float getPositionZ()
-	{
-		return z;
-	}
-
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#distance(float, float, float)
-	 */
-	public double distance(float x, float y, float z)
-	{
-		return Math.sqrt(distance2(x, y, z));
-	}
-
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#distance(float, float)
-	 */
-	public double distance(float x, float y)
-	{
-		return Math.sqrt(distance2(x, y));
-	}
-	
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#distance2(float, float, float)
-	 */
-	public double distance2(float x, float y, float z)
-	{
-		return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y) + (this.z - z) * (this.z - z);
-	}
-
-	/* (non-Javadoc)
-	 * @see gdsc.foci.Coordinate#distance2(float, float)
-	 */
-	public double distance2(float x, float y)
-	{
-		return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y);
 	}
 }

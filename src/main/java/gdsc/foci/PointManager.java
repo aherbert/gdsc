@@ -29,6 +29,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import gdsc.core.match.Coordinate;
+
 /**
  * Manages I/O of the Point class
  */
@@ -191,8 +193,8 @@ public class PointManager
 	public static Roi createROI(List<? extends Coordinate> array)
 	{
 		int nMaxima = array.size();
-		int[] xpoints = new int[nMaxima];
-		int[] ypoints = new int[nMaxima];
+		float[] xpoints = new float[nMaxima];
+		float[] ypoints = new float[nMaxima];
 		int i = 0;
 		for (Coordinate point : array)
 		{
@@ -213,8 +215,8 @@ public class PointManager
 	public static Roi createROI(AssignedPoint[] array)
 	{
 		int nMaxima = array.length;
-		int[] xpoints = new int[nMaxima];
-		int[] ypoints = new int[nMaxima];
+		float[] xpoints = new float[nMaxima];
+		float[] ypoints = new float[nMaxima];
 		for (int i = 0; i < nMaxima; i++)
 		{
 			xpoints[i] = array[i].getX();

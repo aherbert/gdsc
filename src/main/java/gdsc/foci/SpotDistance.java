@@ -1,7 +1,5 @@
 package gdsc.foci;
 
-import gdsc.UsageTracker;
-
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -15,7 +13,17 @@ import gdsc.UsageTracker;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
-import gdsc.utils.ImageJHelper;
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import gdsc.UsageTracker;
+import gdsc.core.ij.Utils;
+import gdsc.core.match.MatchCalculator;
+import gdsc.core.match.PointPair;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -33,13 +41,6 @@ import ij.process.ShortProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
 
-import java.awt.Color;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Output the distances between spots within a mask region.
  * <P>
@@ -54,19 +55,16 @@ public class SpotDistance implements PlugIn
 	/**
 	 * Used to store results and cache XYZ output formatting
 	 */
-	private class DistanceResult implements Comparable<DistanceResult>, Coordinate
+	private class DistanceResult extends BasePoint implements Comparable<DistanceResult>
 	{
 		int id;
-		int x, y, z;
 		double circularity;
 		String pixelXYZ;
 		String calXYZ;
 
 		public DistanceResult(int x, int y, int z, double circularity)
 		{
-			this.x = x;
-			this.y = y;
-			this.z = z;
+			super(x, y, z);
 			this.circularity = circularity;
 		}
 
@@ -80,8 +78,8 @@ public class SpotDistance implements PlugIn
 		String getCalXYZ()
 		{
 			if (calXYZ == null)
-				calXYZ = String.format("%s\t%s\t%s", ImageJHelper.rounded(x * cal.pixelWidth),
-						ImageJHelper.rounded(y * cal.pixelHeight), ImageJHelper.rounded(z * cal.pixelDepth));
+				calXYZ = String.format("%s\t%s\t%s", Utils.rounded(x * cal.pixelWidth),
+						Utils.rounded(y * cal.pixelHeight), Utils.rounded(z * cal.pixelDepth));
 			return calXYZ;
 		}
 
@@ -94,61 +92,6 @@ public class SpotDistance implements PlugIn
 		{
 			// Sort by ID ascending
 			return id - paramT.id;
-		}
-
-		public int getX()
-		{
-			return x;
-		}
-
-		public int getY()
-		{
-			return y;
-		}
-
-		public int getZ()
-		{
-			return z;
-		}
-
-		public float getPositionX()
-		{
-			return x;
-		}
-
-		public float getPositionY()
-		{
-			return y;
-		}
-
-		public float getPositionZ()
-		{
-			return z;
-		}
-
-		public double distance(float x, float y, float z)
-		{
-			return Math.sqrt(distance2(x, y, z));
-		}
-
-		public double distance(float x, float y)
-		{
-			return Math.sqrt(distance2(x, y));
-		}
-
-		public double distance2(float x, float y, float z)
-		{
-			final double dx = this.x - x;
-			final double dy = this.y - y;
-			final double dz = this.z - z;
-			return dx * dx + dy * dy + dz * dz;
-		}
-
-		public double distance2(float x, float y)
-		{
-			final double dx = this.x - x;
-			final double dy = this.y - y;
-			return dx * dx + dy * dy;
 		}
 	}
 
@@ -212,7 +155,7 @@ public class SpotDistance implements PlugIn
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		boolean extraOptions = IJ.shiftKeyDown();
 
 		if (arg != null && arg.equals("undo"))
@@ -256,7 +199,8 @@ public class SpotDistance implements PlugIn
 		{
 			GenericDialog gd = new GenericDialog(TITLE);
 
-			gd.addMessage("Detects spots within a mask/ROI region\nand computes all-vs-all distances.\n(Hold shift for extra options)");
+			gd.addMessage(
+					"Detects spots within a mask/ROI region\nand computes all-vs-all distances.\n(Hold shift for extra options)");
 
 			gd.addChoice("Mask", maskImageList, maskImage);
 			gd.addNumericField("Smoothing", smoothingSize, 2, 6, "pixels");
@@ -416,13 +360,13 @@ public class SpotDistance implements PlugIn
 				}
 			}
 
-			if (ImageJHelper.isInterrupted())
+			if (Utils.isInterrupted())
 				return;
 
 			exec(frame, channel, s1, s1b, s2);
 			IJ.showProgress(i + 1, frames.length);
 
-			if (ImageJHelper.isInterrupted())
+			if (Utils.isInterrupted())
 				return;
 
 			// Recreate the mask if using multiple frames
@@ -530,7 +474,7 @@ public class SpotDistance implements PlugIn
 		ArrayList<String> newImageList = new ArrayList<String>();
 		newImageList.add("[None]");
 
-		for (int id : gdsc.utils.ImageJHelper.getIDList())
+		for (int id : gdsc.core.ij.Utils.getIDList())
 		{
 			ImagePlus maskImp = WindowManager.getImage(id);
 			// Mask image must:
@@ -613,9 +557,8 @@ public class SpotDistance implements PlugIn
 			summaryWindow.setLocation(p);
 		}
 		String distancesHeader = createDistancesHeader();
-		if (showDistances &&
-				(distancesWindow == null || !distancesWindow.isShowing() || !sameHeader(distancesWindow,
-						distancesHeader)))
+		if (showDistances && (distancesWindow == null || !distancesWindow.isShowing() ||
+				!sameHeader(distancesWindow, distancesHeader)))
 		{
 			distancesWindow = new TextWindow(TITLE + " Distances", createDistancesHeader(), "", 700, 300);
 			Point p = summaryWindow.getLocation();
@@ -852,7 +795,7 @@ public class SpotDistance implements PlugIn
 					outputType, sortIndex, options, blur, centreMethod, centreParameter, 1);
 			Object[] results2 = null;
 
-			if (ImageJHelper.isInterrupted())
+			if (Utils.isInterrupted())
 				return;
 
 			ArrayList<DistanceResult> resultsArray = analyseResults(prevResultsArray, ff, croppedImp, results, frame,
@@ -869,7 +812,7 @@ public class SpotDistance implements PlugIn
 				results2 = ff.findMaxima(croppedImp2, regionImp, backgroundMethod, backgroundParameter,
 						autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod,
 						peakParameter2, outputType, sortIndex, options, blur, centreMethod, centreParameter, 1);
-				if (ImageJHelper.isInterrupted())
+				if (Utils.isInterrupted())
 					return;
 
 				resultsArray2 = analyseResults(prevResultsArray2, ff, croppedImp2, results2, frame, c2, overlay2);
@@ -960,8 +903,8 @@ public class SpotDistance implements PlugIn
 					}
 				}
 
-				addSummaryResult(frame, ch, region, resultsArray.size(), minD, maxD, sumD / count, minD2, maxD2, sumD2 /
-						count);
+				addSummaryResult(frame, ch, region, resultsArray.size(), minD, maxD, sumD / count, minD2, maxD2,
+						sumD2 / count);
 			}
 			else
 			{
@@ -1036,8 +979,8 @@ public class SpotDistance implements PlugIn
 					}
 				}
 
-				addSummaryResult(frame, ch, region, resultsArray.size() + resultsArray2.size(), minD, maxD, sumD /
-						count, minD2, maxD2, sumD2 / count);
+				addSummaryResult(frame, ch, region, resultsArray.size() + resultsArray2.size(), minD, maxD,
+						sumD / count, minD2, maxD2, sumD2 / count);
 			}
 		}
 
@@ -1419,8 +1362,9 @@ public class SpotDistance implements PlugIn
 		{
 			// If we have results from a previous frame then try and assign an ID to each 
 			// result using closest distance tracking.
-			double d = Math.sqrt(croppedImp.getWidth() * croppedImp.getWidth() + croppedImp.getHeight() *
-					croppedImp.getHeight() + croppedImp.getNSlices() * croppedImp.getNSlices());
+			double d = Math.sqrt(
+					croppedImp.getWidth() * croppedImp.getWidth() + croppedImp.getHeight() * croppedImp.getHeight() +
+							croppedImp.getNSlices() * croppedImp.getNSlices());
 			List<PointPair> matches = new ArrayList<PointPair>();
 			MatchCalculator.analyseResults3D(prev.toArray(new DistanceResult[prev.size()]),
 					newResultsArray.toArray(new DistanceResult[newResultsArray.size()]), d, null, null, null, matches);
@@ -1512,7 +1456,7 @@ public class SpotDistance implements PlugIn
 		{
 			sb.append(result.getCalXYZ()).append("\t");
 		}
-		sb.append(ImageJHelper.rounded(result.circularity));
+		sb.append(Utils.rounded(result.circularity));
 		resultsWindow.append(sb.toString());
 		allowUndo = true;
 	}
@@ -1542,15 +1486,15 @@ public class SpotDistance implements PlugIn
 		sb.append(region).append("\t").append(size);
 		if (pixelDistances)
 		{
-			sb.append("\t").append(ImageJHelper.rounded(minD));
-			sb.append("\t").append(ImageJHelper.rounded(maxD));
-			sb.append("\t").append(ImageJHelper.rounded(d));
+			sb.append("\t").append(Utils.rounded(minD));
+			sb.append("\t").append(Utils.rounded(maxD));
+			sb.append("\t").append(Utils.rounded(d));
 		}
 		if (calibratedDistances)
 		{
-			sb.append("\t").append(ImageJHelper.rounded(minD2));
-			sb.append("\t").append(ImageJHelper.rounded(maxD2));
-			sb.append("\t").append(ImageJHelper.rounded(d2));
+			sb.append("\t").append(Utils.rounded(minD2));
+			sb.append("\t").append(Utils.rounded(maxD2));
+			sb.append("\t").append(Utils.rounded(d2));
 		}
 		summaryWindow.append(sb.toString());
 		allowUndo = true;
@@ -1568,13 +1512,13 @@ public class SpotDistance implements PlugIn
 		{
 			sb.append("\t").append(r1.getPixelXYZ());
 			sb.append("\t").append(r2.getPixelXYZ());
-			sb.append("\t").append(ImageJHelper.rounded(d));
+			sb.append("\t").append(Utils.rounded(d));
 		}
 		if (calibratedDistances)
 		{
 			sb.append("\t").append(r1.getCalXYZ());
 			sb.append("\t").append(r2.getCalXYZ());
-			sb.append("\t").append(ImageJHelper.rounded(d2));
+			sb.append("\t").append(Utils.rounded(d2));
 		}
 		distancesWindow.append(sb.toString());
 		allowUndo = true;

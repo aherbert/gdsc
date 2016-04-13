@@ -1,7 +1,5 @@
 package gdsc.colocalisation.cda;
 
-import gdsc.UsageTracker;
-
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -13,32 +11,6 @@ import gdsc.UsageTracker;
  * Maria Osorio-Reich:
  * http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:confined_displacement_algorithm_determines_true_and_random_colocalization_:start
  *---------------------------------------------------------------------------*/
-
-import gdsc.colocalisation.cda.engine.CDAEngine;
-import gdsc.colocalisation.cda.engine.CalculationResult;
-import gdsc.utils.ImageJHelper;
-import gdsc.utils.Random;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.Prefs;
-import ij.WindowManager;
-import ij.gui.GUI;
-import ij.gui.GenericDialog;
-import ij.gui.Plot;
-import ij.gui.PlotWindow;
-import ij.gui.Roi;
-import ij.macro.MacroRunner;
-import ij.plugin.frame.PlugInFrame;
-import ij.process.ByteProcessor;
-import ij.process.ColorProcessor;
-import ij.process.FloatProcessor;
-import ij.process.FloatStatistics;
-import ij.process.ImageProcessor;
-import ij.process.LUT;
-import ij.process.ShortProcessor;
-import ij.text.TextWindow;
-import ij.util.Tools;
 
 import java.awt.BorderLayout;
 import java.awt.Button;
@@ -72,6 +44,33 @@ import java.util.Date;
 import java.util.List;
 
 import javax.swing.JPanel;
+
+import gdsc.UsageTracker;
+import gdsc.colocalisation.cda.engine.CDAEngine;
+import gdsc.colocalisation.cda.engine.CalculationResult;
+import gdsc.core.ij.Utils;
+import gdsc.core.utils.Random;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GUI;
+import ij.gui.GenericDialog;
+import ij.gui.Plot;
+import ij.gui.PlotWindow;
+import ij.gui.Roi;
+import ij.macro.MacroRunner;
+import ij.plugin.frame.PlugInFrame;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
+import ij.process.FloatStatistics;
+import ij.process.ImageProcessor;
+import ij.process.LUT;
+import ij.process.ShortProcessor;
+import ij.text.TextWindow;
+import ij.util.Tools;
 
 /**
  * Test for significant colocalisation within images using the Confined Displacement Algorithm (CDA).
@@ -684,7 +683,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		List<CalculationResult> results = calculateResults(imageStack1, roiStack1, confinedStack, imageStack2,
 				roiStack2, denom1, denom2, shiftIndices);
 
-		if (ImageJHelper.isInterrupted())
+		if (Utils.isInterrupted())
 			return;
 
 		// Get unshifted result
@@ -818,7 +817,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 			engine.run(n, x, y);
 
-			if (ImageJHelper.isInterrupted())
+			if (Utils.isInterrupted())
 			{
 				engine.end(true);
 				break;
@@ -1392,7 +1391,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			try
 			{
 				// Save results to file
-				String directory = ImageJHelper.combinePath(resultsDirectory, id);
+				String directory = Utils.combinePath(resultsDirectory, id);
 				if (!new File(directory).mkdirs())
 					return;
 				IJ.save(mergedSegmentedRGB, directory + File.separatorChar + "MergedROI.tif");
@@ -1875,7 +1874,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		ArrayList<String> newImageList = new ArrayList<String>();
 
-		for (int id : gdsc.utils.ImageJHelper.getIDList())
+		for (int id : gdsc.core.ij.Utils.getIDList())
 		{
 			ImagePlus imp = WindowManager.getImage(id);
 

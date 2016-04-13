@@ -90,7 +90,7 @@ public class Stack_Average implements PlugInFilter
 		int bitDepth = imp.getBitDepth();
 
 		// Build a list of the images
-		int[] wList = gdsc.utils.ImageJHelper.getIDList();
+		int[] wList = gdsc.core.ij.Utils.getIDList();
 
 		ArrayList<ImagePlus> images = new ArrayList<ImagePlus>(wList.length);
 

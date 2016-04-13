@@ -4,6 +4,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 
 import gdsc.UsageTracker;
+import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -99,7 +100,7 @@ public class Align_Images_FFT implements PlugIn
 		// Find the currently open images
 		ArrayList<String> newImageList = new ArrayList<String>();
 
-		for (int id : gdsc.utils.ImageJHelper.getIDList())
+		for (int id : gdsc.core.ij.Utils.getIDList())
 		{
 			ImagePlus imp = WindowManager.getImage(id);
 
@@ -297,7 +298,7 @@ public class Align_Images_FFT implements PlugIn
 				correlationStack.addSlice(null, fpCorrelation.duplicate());
 			if (showNormalisedImage)
 				normalisedStack.addSlice(null, fpNormalised.duplicate());
-			if (ImageJHelper.isInterrupted())
+			if (Utils.isInterrupted())
 				return null;
 		}
 
@@ -405,7 +406,7 @@ public class Align_Images_FFT implements PlugIn
 					null,
 					alignImages(refFHT, s, ss, targetIp, slice, windowFunction, bounds, null, null, subPixelMethod,
 							interpolationMethod, clipOutput));
-			if (ImageJHelper.isInterrupted())
+			if (Utils.isInterrupted())
 				return null;
 		}
 

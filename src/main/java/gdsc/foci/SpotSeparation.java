@@ -1,7 +1,5 @@
 package gdsc.foci;
 
-import gdsc.UsageTracker;
-
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -15,9 +13,17 @@ import gdsc.UsageTracker;
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
+import java.awt.Frame;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
+import gdsc.UsageTracker;
+import gdsc.core.utils.Sort;
 import gdsc.help.URL;
 import gdsc.threshold.ThreadAnalyser;
-import gdsc.utils.Sort;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
@@ -28,13 +34,6 @@ import ij.measure.Calibration;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-
-import java.awt.Frame;
-import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Finds spots in an image. Locates the closest neighbour spot within a radius

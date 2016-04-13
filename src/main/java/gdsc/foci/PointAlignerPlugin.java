@@ -35,6 +35,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import gdsc.UsageTracker;
+import gdsc.core.match.MatchResult;
 
 /**
  * Analyses the image using the FindFoci algorithm to identify and assign pixels to maxima.
@@ -216,7 +217,7 @@ public class PointAlignerPlugin implements PlugIn
 		int background = Integer.MAX_VALUE;
 		for (AssignedPoint point : points)
 		{
-			int i = ip.get(point.getX(), point.getY());
+			int i = ip.get(point.getXint(), point.getYint());
 			if (background > i)
 				background = i;
 		}
@@ -262,9 +263,9 @@ public class PointAlignerPlugin implements PlugIn
 		{
 			int pointId = point.getId();
 			point.setAssignedId(-1);
-			int x = point.getX();
-			int y = point.getY();
-			int z = point.getZ(); // TODO - Deal with 3D images
+			int x = point.getXint();
+			int y = point.getYint();
+			int z = point.getZint(); // TODO - Deal with 3D images
 
 			pointHeight[pointId] = impStack.getProcessor(z + 1).get(x, y);
 			if (minHeight > pointHeight[pointId])
@@ -341,9 +342,9 @@ public class PointAlignerPlugin implements PlugIn
 		{
 			int pointId = point.getId();
 			AssignedPoint newPoint = point;
-			int x = point.getX();
-			int y = point.getY();
-			int z = point.getZ();
+			int x = point.getXint();
+			int y = point.getYint();
+			int z = point.getZint();
 
 			int maximaId = point.getAssignedId();
 
@@ -449,9 +450,9 @@ public class PointAlignerPlugin implements PlugIn
 		// Do this in descending height order
 		for (AssignedPoint point : points)
 		{
-			int x = point.getX();
-			int y = point.getY();
-			int z = point.getZ();
+			int x = point.getXint();
+			int y = point.getYint();
+			int z = point.getZint();
 			pointHeight[point.getId()] = impStack.getProcessor(z + 1).get(x, y);
 		}
 		Arrays.sort(points, new PointHeightComparator(pointHeight));

@@ -1,6 +1,6 @@
 package ij.plugin.filter;
 
-import gdsc.utils.ImageJHelper;
+import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Macro;
@@ -156,7 +156,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 
 			// The plugin will be run on a thresholded/mask image to define particles.
 			// Choose the redirect image to sample the pixels from.
-			int[] idList = ImageJHelper.getIDList();
+			int[] idList = Utils.getIDList();
 			String[] list = new String[idList.length + 1];
 			list[0] = "[None]";
 			int count = 1;
@@ -189,7 +189,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			saveHistogram = gd.getNextBoolean();
 			if (saveHistogram)
 			{
-				histogramFile = ImageJHelper.getFilename("Histogram_file", histogramFile);
+				histogramFile = Utils.getFilename("Histogram_file", histogramFile);
 				if (histogramFile != null)
 				{
 					int i = histogramFile.lastIndexOf('.');
@@ -371,7 +371,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 
 		ImageProcessor particleIp = ip.duplicate();
 		//System.out.printf("Particle = %f\n", value);
-		//ImageJHelper.display("Particle", particleIp);
+		//Utils.display("Particle", particleIp);
 		super.analyzeParticle(x, y, imp, ip);
 
 		// At the end of processing the analyser fills the image processor to prevent 
