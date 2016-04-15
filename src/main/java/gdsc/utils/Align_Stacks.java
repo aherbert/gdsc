@@ -4,6 +4,9 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 
 import gdsc.UsageTracker;
+import gdsc.core.ij.AlignImagesFFT;
+import gdsc.core.ij.AlignImagesFFT.SubPixelMethod;
+import gdsc.core.ij.AlignImagesFFT.WindowMethod;
 import gdsc.core.ij.Utils;
 import gdsc.threshold.Auto_Threshold;
 import ij.IJ;
@@ -53,7 +56,7 @@ public class Align_Stacks implements PlugIn
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		String[] imageList = getImagesList();
 
 		if (imageList.length < 1)
@@ -80,17 +83,17 @@ public class Align_Stacks implements PlugIn
 			bounds = createBounds(minXShift, maxXShift, minYShift, maxYShift);
 		}
 
+		WindowMethod wm = WindowMethod.values()[myWindowFunction];
+		SubPixelMethod spm = SubPixelMethod.values()[subPixelMethod];
 		if (selfAlign)
 		{
-			exec(refImp, refImp, projectionMethod, myWindowFunction, bounds, subPixelMethod, interpolationMethod,
-					clipOutput);
+			exec(refImp, refImp, projectionMethod, wm, bounds, spm, interpolationMethod, clipOutput);
 		}
 		else
 		{
 			for (ImagePlus targetImp : getTargetImages(refImp))
 			{
-				exec(refImp, targetImp, projectionMethod, myWindowFunction, bounds, subPixelMethod,
-						interpolationMethod, clipOutput);
+				exec(refImp, targetImp, projectionMethod, wm, bounds, spm, interpolationMethod, clipOutput);
 			}
 		}
 	}
@@ -105,8 +108,8 @@ public class Align_Stacks implements PlugIn
 			ImagePlus imp = WindowManager.getImage(id);
 
 			// Image must be 8-bit/16-bit
-			if (imp != null &&
-					(imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16 || imp.getType() == ImagePlus.GRAY32))
+			if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16 ||
+					imp.getType() == ImagePlus.GRAY32))
 			{
 				// Check it is not one the result images
 				String imageTitle = imp.getTitle();
@@ -135,12 +138,12 @@ public class Align_Stacks implements PlugIn
 			clipOutput = false;
 		}
 
-		String msg = (selfAlignMode) ? "Align all frames to the current frame." : "Align all open stacks with the same XYC dimensions as the reference.";
+		String msg = (selfAlignMode) ? "Align all frames to the current frame."
+				: "Align all open stacks with the same XYC dimensions as the reference.";
 		msg += "\nZ stacks per time frame are projected and multiple channels\nare tiled to a single image used to define the offset for\nthe frame.\n";
 		if (!selfAlignMode)
 			msg += "Optionally align a single stack to the currect frame";
 		gd.addMessage(msg);
-			
 
 		gd.addChoice("Reference_image", imageList, reference);
 		if (!selfAlignMode)
@@ -219,8 +222,8 @@ public class Align_Stacks implements PlugIn
 		return true;
 	}
 
-	public void exec(ImagePlus refImp, ImagePlus targetImp, int projectionMethod, int windowFunction, Rectangle bounds,
-			int subPixelMethod, int interpolationMethod, boolean clipOutput)
+	private void exec(ImagePlus refImp, ImagePlus targetImp, int projectionMethod, WindowMethod windowFunction,
+			Rectangle bounds, SubPixelMethod subPixelMethod, int interpolationMethod, boolean clipOutput)
 	{
 		// Check same size
 		if (!isValid(refImp, targetImp))
@@ -238,7 +241,7 @@ public class Align_Stacks implements PlugIn
 		{
 			ImageProcessor ip1 = createComposite(refImp, t1, projectionMethod, windowFunction);
 			ImagePlus imp1 = new ImagePlus("ip1", ip1);
-			Align_Images_FFT align = new Align_Images_FFT();
+			AlignImagesFFT align = new AlignImagesFFT();
 			align.setDoTranslation(false);
 			align.init(imp1, windowFunction, true);
 
@@ -255,7 +258,7 @@ public class Align_Stacks implements PlugIn
 
 				// Align the image
 				ImagePlus imp2 = new ImagePlus("ip2", ip2);
-				align.align(imp2, 0, bounds, subPixelMethod, interpolationMethod, clipOutput);
+				align.align(imp2, WindowMethod.NONE, bounds, subPixelMethod, interpolationMethod, clipOutput);
 
 				// Transform original stack
 				ImageStack stack = targetImp.getImageStack();
@@ -288,8 +291,9 @@ public class Align_Stacks implements PlugIn
 				// Align the image
 				ImagePlus imp1 = new ImagePlus("ip1", ip1);
 				ImagePlus imp2 = new ImagePlus("ip2", ip2);
-				Align_Images_FFT align = new Align_Images_FFT();
-				align.exec(imp1, imp2, 0, bounds, subPixelMethod, interpolationMethod, true, false, false, clipOutput);
+				AlignImagesFFT align = new AlignImagesFFT();
+				align.align(imp1, imp2, WindowMethod.NONE, bounds, subPixelMethod, interpolationMethod, true, false,
+						false, clipOutput);
 
 				// Transform original stack
 				ImageStack stack = targetImp.getImageStack();
@@ -332,14 +336,14 @@ public class Align_Stacks implements PlugIn
 		return isMatchingDimensions(refImp.getDimensions(), targetImp.getDimensions());
 	}
 
-	private ImageProcessor createComposite(ImagePlus imp, int frame, int projectionMethod, int windowFunction)
+	private ImageProcessor createComposite(ImagePlus imp, int frame, int projectionMethod, WindowMethod windowFunction)
 	{
 		// Extract the channels using the specified projection method
 		FloatProcessor[] tiles = new FloatProcessor[imp.getNChannels()];
 		for (int channel = 1; channel <= imp.getNChannels(); channel++)
 		{
 			tiles[channel - 1] = extractTile(imp, frame, channel, projectionMethod);
-			tiles[channel - 1] = Align_Images_FFT.applyWindowSeparable(tiles[channel - 1], windowFunction);
+			tiles[channel - 1] = AlignImagesFFT.applyWindowSeparable(tiles[channel - 1], windowFunction);
 
 			// Normalise so each image contributes equally to the alignment
 			normalise(tiles[channel - 1]);
