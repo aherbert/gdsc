@@ -63,7 +63,8 @@ have to install these to your local Maven repository before building:
         mvn install
         cd ..
 
-This will produce a gdsc-analytics-[VERSION].jar file in the local Maven repository. 
+	This will produce a gdsc-analytics-[VERSION].jar file in the local Maven 
+	repository. 
  
 3. Clone the GDSC Core repository
 
@@ -75,7 +76,8 @@ This will produce a gdsc-analytics-[VERSION].jar file in the local Maven reposit
         mvn install
         cd ..
 
-This will produce a gdsc-core-[VERSION].jar file in the local Maven repository. 
+	This will produce a gdsc-core-[VERSION].jar file in the local Maven 
+	repository. 
 
 5. Clone the GDSC repository
 
@@ -86,8 +88,8 @@ This will produce a gdsc-core-[VERSION].jar file in the local Maven repository.
         cd GDSC
         mvn -P dist package -DskipTests=true
 
-This will produce a gdsc_-[VERSION].jar file in the target directory. All 
-dependencies are copied into the target/dist/lib directory.
+	This will produce a gdsc_-[VERSION].jar file in the target directory. All 
+	dependencies are copied into the target/dist/lib directory.
 
 7. Copy the gdsc_* jar into the plugins directory of ImageJ. 
 
@@ -121,9 +123,9 @@ Running from source
 
         ant
 
-This will package all the compiled GDSC classes into a jar file within the
-plugins folder, copy ImageJ and the GDSC dependencies from the Maven repsitory,
-and then launch ImageJ.
+	This will package all the compiled GDSC classes into a jar file within the
+	plugins folder, copy ImageJ and the GDSC dependencies from the Maven 
+	repsitory, and then launch ImageJ.
 
 4. When finished you can remove all the created files using
 
