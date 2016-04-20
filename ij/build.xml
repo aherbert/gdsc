@@ -28,6 +28,8 @@ the desired versions.
                     <include name="**/commons-math3-3*.jar"/>  
                     <include name="**/beansbinding-1.2.1*.jar"/>  
                     <include name="**/imagescience-2.4.1*.jar"/>  
+                    <include name="**/gdsc-analytics-1.0.0*.jar"/>  
+                    <include name="**/gdsc-core-1.1.0*.jar"/>  
                 </patternset>
             </fileset>  
         </copy> 
