@@ -20,7 +20,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Show the version information contained in the gdsc/gdsc.properties file
+ * Show the version information contained in the gdsc/Version.txt file.
+ * <p>
+ * Uses Semantic Versioning.
+ * 
+ * @see http://semver.org/
  */
 public class Version
 {
@@ -62,11 +66,21 @@ public class Version
 		System.out.print(msg.toString());
 	}
 
+	/**
+	 * Get the GDSC version
+	 * 
+	 * @return The gdsc package version
+	 */
 	public static String getVersion()
 	{
 		return version;
 	}
 
+	/**
+	 * Get the GDSC package build date
+	 * 
+	 * @return The gdsc package build date
+	 */
 	public static String getBuildDate()
 	{
 		return buildDate;
@@ -113,27 +127,27 @@ public class Version
 			return Integer.parseInt(m.group(1));
 		return 0;
 	}
-	
+
 	/**
-	 * Get a string with the major and minor versions
+	 * Get the patch version
 	 * 
-	 * @return Major.Minor
+	 * @return The patch version (or 0 if unknown)
 	 */
-	public static String getMajorMinor()
+	public static int getPatchVersion()
 	{
-		Pattern p = Pattern.compile("^\\d+\\.\\d+");
+		Pattern p = Pattern.compile("^\\d+\\.\\d+\\.(\\d+)");
 		Matcher m = p.matcher(version);
 		if (m.find())
-			return m.group();
-		return "";
+			return Integer.parseInt(m.group(1));
+		return 0;
 	}
 	
 	/**
-	 * Get a string with the major, minor and release versions
+	 * Get a string with the major, minor and patch versions
 	 * 
-	 * @return Major.Minor.Release
+	 * @return Major.Minor.Patch
 	 */
-	public static String getMajorMinorRelease()
+	public static String getMajorMinorPatch()
 	{
 		Pattern p = Pattern.compile("^\\d+\\.\\d+\\.\\d+");
 		Matcher m = p.matcher(version);
