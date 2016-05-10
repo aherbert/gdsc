@@ -85,6 +85,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	private static String image1 = "";
 	private static String image2 = "";
 	private static boolean showComposite = false;
+	private static boolean ignoreFrames = false;
 	private static boolean useSlicePosition = false;
 
 	private String myMask, myImage1, myImage2;
@@ -213,6 +214,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		if (!newImageList.isEmpty())
 		{
 			gd.addCheckbox("Show_composite_image", showComposite);
+			gd.addCheckbox("Ignore_file_frames", ignoreFrames);
 			String[] items = newImageList.toArray(new String[newImageList.size()]);
 			gd.addChoice("Image_1", items, image1);
 			gd.addChoice("Image_2", items, image2);
@@ -246,6 +248,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		if (haveImages)
 		{
 			showComposite = gd.getNextBoolean();
+			ignoreFrames = gd.getNextBoolean();
 			myImage1 = image1 = gd.getNextChoice();
 			myImage2 = image2 = gd.getNextChoice();
 			useSlicePosition = gd.getNextBoolean();
@@ -734,6 +737,18 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		}
 		upper.add(pairs.size());
 
+		// Check if the input image has only one time frame but the points have multiple time points
+		boolean singleFrame = false;
+		if (upper.size() > 1 && imp1.getNFrames() == 1 && imp2.getNFrames() == 1)
+		{
+			if (ignoreFrames)
+			{
+				singleFrame = true;
+				upper.clear();
+				upper.add(pairs.size());
+			}
+		}
+
 		// Create an overlay to show the pairs
 		Overlay overlay = new Overlay();
 		final Color colorf = MatchPlugin.UNMATCH1;
@@ -746,6 +761,8 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			nFrames++;
 			time = (p1[l] != null) ? p1[l].time : p2[l].time;
 			//System.out.printf("%d - %d : Time %d\n", l, u, time);
+			if (singleFrame)
+				time = 1;
 
 			// Extract the images for the specified time
 			for (int slice = 1; slice <= nSlices; slice++)
