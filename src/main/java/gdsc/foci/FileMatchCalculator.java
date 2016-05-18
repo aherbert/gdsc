@@ -572,13 +572,13 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		boolean fileSelected = false;
 		if (savePairs)
 		{
-			filename = getFilename(filename);
+			filename = getFilename("Pairs_filename", filename);
 			fileSelected = filename != null;
 		}
 		boolean fileSingleSelected = false;
 		if (savePairsSingleFile)
 		{
-			filenameSingle = getFilename(filenameSingle);
+			filenameSingle = getFilename("Pairs_filename_single", filenameSingle);
 			fileSingleSelected = filenameSingle != null;
 		}
 		if (!(fileSelected || fileSingleSelected))
@@ -658,10 +658,10 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		}
 	}
 
-	private String getFilename(String filename)
+	private String getFilename(String title, String filename)
 	{
 		final String[] path = Utils.decodePath(filename);
-		final OpenDialog chooser = new OpenDialog("matches_file", path[0], path[1]);
+		final OpenDialog chooser = new OpenDialog(title, path[0], path[1]);
 		if (chooser.getFileName() == null)
 			return null;
 		return Utils.replaceExtension(chooser.getDirectory() + chooser.getFileName(), ".xls");
