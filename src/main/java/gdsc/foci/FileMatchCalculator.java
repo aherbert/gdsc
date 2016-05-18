@@ -37,6 +37,7 @@ import java.awt.Point;
 import java.awt.TextField;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -81,7 +82,9 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	private static double beta = 4;
 	private static boolean showPairs = false;
 	private static boolean savePairs = false;
+	private static boolean savePairsSingleFile = false;
 	private static String filename = "";
+	private static String filenameSingle = "";
 	private static String image1 = "";
 	private static String image2 = "";
 	private static boolean showComposite = false;
@@ -211,6 +214,8 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		gd.addNumericField("Beta", beta, 2);
 		gd.addCheckbox("Show_pairs", showPairs);
 		gd.addCheckbox("Save_pairs", savePairs);
+		gd.addMessage("Use this option to save the pairs to a single file,\nappending if it exists");
+		gd.addCheckbox("Save_pairs_single_file", savePairsSingleFile);
 		if (!newImageList.isEmpty())
 		{
 			gd.addCheckbox("Show_composite_image", showComposite);
@@ -245,6 +250,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		beta = gd.getNextNumber();
 		showPairs = gd.getNextBoolean();
 		savePairs = gd.getNextBoolean();
+		savePairsSingleFile = gd.getNextBoolean();
 		if (haveImages)
 		{
 			showComposite = gd.getNextBoolean();
@@ -280,7 +286,8 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		double rmsd = 0;
 
 		final boolean is3D = is3D(actualPoints) && is3D(predictedPoints);
-		final boolean computePairs = showPairs || (showComposite && myImage1 != null && myImage2 != null);
+		final boolean computePairs = showPairs || savePairs || savePairsSingleFile ||
+				(showComposite && myImage1 != null && myImage2 != null);
 
 		final List<PointPair> pairs = (computePairs) ? new LinkedList<PointPair>() : null;
 
@@ -322,7 +329,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			}
 		}
 
-		if (showPairs)
+		if (showPairs || savePairs || savePairsSingleFile)
 		{
 			// Check if these are valued points
 			valued = isValued(actualPoints) && isValued(predictedPoints);
@@ -361,7 +368,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		MatchResult result = new MatchResult(tp, fp, fn, rmsd);
 		addResult(title1, title2, dThreshold, result);
 
-		if (showPairs && savePairs)
+		if (savePairs || savePairsSingleFile)
 		{
 			savePairs(pairs, is3D);
 		}
@@ -562,28 +569,62 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	private void savePairs(List<PointPair> pairs, boolean is3D)
 	{
-		String[] path = Utils.decodePath(filename);
-		OpenDialog chooser = new OpenDialog("matches_file", path[0], path[1]);
-		if (chooser.getFileName() == null)
+		boolean fileSelected = false;
+		if (savePairs)
+		{
+			filename = getFilename(filename);
+			fileSelected = filename != null;
+		}
+		boolean fileSingleSelected = false;
+		if (savePairsSingleFile)
+		{
+			filenameSingle = getFilename(filenameSingle);
+			fileSingleSelected = filenameSingle != null;
+		}
+		if (!(fileSelected || fileSingleSelected))
 			return;
 
-		filename = chooser.getDirectory() + chooser.getFileName();
-
 		OutputStreamWriter out = null;
+		OutputStreamWriter outSingle = null;
 		try
 		{
-			FileOutputStream fos = new FileOutputStream(filename);
-			out = new OutputStreamWriter(fos, "UTF-8");
-
 			final String newLine = System.getProperty("line.separator");
 
-			out.write(createPairsHeader(title1, title2));
-			out.write(newLine);
+			// Always create the header as it sets up the pairs prefix for each pair result
+			final String header = createPairsHeader(title1, title2);
+			if (fileSelected)
+			{
+				FileOutputStream fos = new FileOutputStream(filename);
+				out = new OutputStreamWriter(fos, "UTF-8");
+				out.write(header);
+				out.write(newLine);
+			}
+			if (fileSingleSelected)
+			{
+				File file = new File(filenameSingle);
+				boolean append = (file.length() != 0);
+				FileOutputStream fos = new FileOutputStream(file, append);
+				outSingle = new OutputStreamWriter(fos, "UTF-8");
+				if (!append)
+				{
+					outSingle.write(header);
+					outSingle.write(newLine);
+				}
+			}
 
 			for (PointPair pair : pairs)
 			{
-				out.write(createPairResult(pair, is3D));
-				out.write(newLine);
+				final String result = createPairResult(pair, is3D);
+				if (out != null)
+				{
+					out.write(result);
+					out.write(newLine);
+				}
+				if (outSingle != null)
+				{
+					outSingle.write(result);
+					outSingle.write(newLine);
+				}
 			}
 		}
 		catch (Exception e)
@@ -603,7 +644,27 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 					// Ignore
 				}
 			}
+			if (outSingle != null)
+			{
+				try
+				{
+					outSingle.close();
+				}
+				catch (IOException e)
+				{
+					// Ignore
+				}
+			}
 		}
+	}
+
+	private String getFilename(String filename)
+	{
+		final String[] path = Utils.decodePath(filename);
+		final OpenDialog chooser = new OpenDialog("matches_file", path[0], path[1]);
+		if (chooser.getFileName() == null)
+			return null;
+		return Utils.replaceExtension(chooser.getDirectory() + chooser.getFileName(), ".xls");
 	}
 
 	public void mouseClicked(MouseEvent e)
