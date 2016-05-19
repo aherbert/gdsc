@@ -964,12 +964,11 @@ public class FindFoci implements PlugIn, MouseListener
 	// Note the x==y==z==0 element is not present. Thus there are blocks of 8,9,9 for each plane.
 	// This preserves the isWithin() functionality of ij.plugin.filter.MaximumFinder.
 
-	private final int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0, -1, -1, -1, 0, 1, 1, 1, 0, -1, -1, -1, 0, 0, 1, 1, 1,
-			0, -1, -1, -1, 0 };
-	private final int[] DIR_Y_OFFSET = new int[] { -1, -1, 0, 1, 1, 1, 0, -1, -1, -1, 0, 1, 1, 1, 0, -1, 0, -1, -1, 0,
-			1, 1, 1, 0, -1, 0 };
-	private final int[] DIR_Z_OFFSET = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1,
-			1, 1, 1, 1, 1, 1 };
+	//@formatter:off
+	private final int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
+	private final int[] DIR_Y_OFFSET = new int[] {-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1, 0,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
+	private final int[] DIR_Z_OFFSET = new int[] { 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+	//@formatter:on
 
 	/* the following constants are used to set bits corresponding to pixel types */
 	private final static byte EXCLUDED = (byte) 1; // marks points outside the ROI
