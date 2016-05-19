@@ -1120,7 +1120,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		// Composite images can have a display range for each color channel
 		LUT[] luts = imp.getLuts();
-		if (luts != null && channel <= luts.length)
+		if (luts != null && channel <= luts.length && channel > 0)
 			return (int) luts[channel - 1].min;
 		return (int) imp.getDisplayRangeMin();
 	}
