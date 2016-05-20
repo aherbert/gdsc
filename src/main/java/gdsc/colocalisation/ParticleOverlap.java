@@ -32,13 +32,13 @@ import ij.text.TextWindow;
 
 /**
  * For all particles in a mask (defined by their unique pixel value), count the overlap with a second mask image. An
- * intensity image is used to calculate the Mander's coefficient of each particle.
+ * intensity image is used to calculate the Manders coefficient of each particle.
  */
 public class ParticleOverlap implements PlugIn
 {
 	private static String TITLE = "Particle Overlap";
 	private static String newLine = System.getProperty("line.separator");
-	private static String header = "Mask1\tImage1\tMask2\tID\tN\tNo\t%\tI\tIo\tMander's";
+	private static String header = "Mask1\tImage1\tMask2\tID\tN\tNo\t%\tI\tIo\tManders";
 
 	private static String maskTitle1 = "";
 	private static String imageTitle = "";
@@ -73,7 +73,7 @@ public class ParticleOverlap implements PlugIn
 		GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage("For each particle in a mask (defined by unique pixel value)\n"
-				+ "count the overlap and Mander's coefficient with a second mask image");
+				+ "count the overlap and Manders coefficient with a second mask image");
 
 		String[] imageList = Utils.getImageList(Utils.GREY_SCALE, null);
 		String[] maskList = Utils.getImageList(Utils.GREY_8_16, null);

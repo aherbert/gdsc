@@ -211,7 +211,8 @@ public class ParticleCorrelation implements PlugIn
 			{
 				final double x = sumx[i] / count[i];
 				final double y = sumy[i] / count[i];
-				final double z = sumz[i] / count[i];
+				// Centre on the slice
+				final double z = 1 + sumz[i] / count[i];
 				addResult(title, i + 1, getValue(mask, objectMask, i + 1), x, y, z, count[i], sum1[i], sum2[i]);
 			}
 		}
