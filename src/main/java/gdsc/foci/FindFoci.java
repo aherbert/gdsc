@@ -416,11 +416,13 @@ public class FindFoci implements PlugIn, MouseListener
 	private static String BATCH_PARAMETER_FILE = "findfoci.batchParameterFile";
 	private static String BATCH_OUTPUT_DIRECTORY = "findfoci.batchOutputDirectory";
 	private static String SEARCH_CAPACITY = "findfoci.searchCapacity";
+	private static String EMPTY_FIELD = "findfoci.emptyField";
 	private static String batchInputDirectory = Prefs.get(BATCH_INPUT_DIRECTORY, "");
 	private static String batchMaskDirectory = Prefs.get(BATCH_MASK_DIRECTORY, "");
 	private static String batchParameterFile = Prefs.get(BATCH_PARAMETER_FILE, "");
 	private static String batchOutputDirectory = Prefs.get(BATCH_OUTPUT_DIRECTORY, "");
 	private static int searchCapacity = (int) Prefs.get(SEARCH_CAPACITY, Short.MAX_VALUE);
+	private static String emptyField = Prefs.get(EMPTY_FIELD, "");
 	/**
 	 * The largest number that can be displayed in a 16-bit image.
 	 * <p>
@@ -1006,9 +1008,9 @@ public class FindFoci implements PlugIn, MouseListener
 			return;
 		}
 
-		if ("capacity".equals(arg))
+		if ("settings".equals(arg))
 		{
-			showCapacityDialog();
+			showSettingsDialog();
 			return;
 		}
 
@@ -3922,8 +3924,9 @@ public class FindFoci implements PlugIn, MouseListener
 	private String buildEmptyObjectResultEntry(int objectId, int objectState)
 	{
 		final StringBuilder sb = new StringBuilder();
+		// Note: The entry prefix has a tab at the end, so write field then tab
 		for (int i = 0; i < 20; i++)
-			sb.append('\t');
+			sb.append(emptyField).append('\t');
 		sb.append(objectId).append('\t').append(objectState);
 		sb.append(newLine);
 		return sb.toString();
@@ -3934,9 +3937,10 @@ public class FindFoci implements PlugIn, MouseListener
 		if (emptyEntry == null)
 		{
 			final StringBuilder sb = new StringBuilder();
+			// Note: The entry prefix has a tab at the end, so write field then tab
 			for (int i = 0; i < 21; i++)
-				sb.append('\t');
-			sb.append(newLine);
+				sb.append(emptyField).append('\t');
+			sb.append(emptyField).append(newLine);
 			emptyEntry = sb.toString();
 		}
 		return emptyEntry;
@@ -5228,7 +5232,7 @@ public class FindFoci implements PlugIn, MouseListener
 			final int index = getIndex(result[RESULT_X], result[RESULT_Y], result[RESULT_Z]);
 			final int listLen = findMaximaCoords(image, maxima, types, index, maximaId,
 					result[RESULT_HIGHEST_SADDLE_VALUE], pList);
-					//IJ.log("maxima size > saddle = " + listLen);
+			//IJ.log("maxima size > saddle = " + listLen);
 
 			// Find the boundaries of the coordinates
 			final int[] min_xyz = new int[] { maxx, maxy, maxz };
@@ -7552,17 +7556,25 @@ public class FindFoci implements PlugIn, MouseListener
 		return memory.get(name);
 	}
 
-	private boolean showCapacityDialog()
+	private boolean showSettingsDialog()
 	{
-		GenericDialog gd = new GenericDialog(TITLE);
-		gd.addMessage("Set the maximum number of potential maxima for the " + TITLE + " algorithm.\n " +
-				"\nIncreasing this number can allow processing large images (which may be slow).\n \n" +
+		GenericDialog gd = new GenericDialog(TITLE + " Settings");
+		//@formatter:off
+		gd.addMessage("Set the maximum number of potential maxima for the " + TITLE + " algorithm.\n" +
+				"Increasing this number can allow processing large images (which may be slow).\n" +
 				"The number of potential maxima can be reduced by smoothing the image (e.g\n" +
-				"using a Gaussian blur).");
+				"using a Gaussian blur).\n" + 
+				"Note: The default is the legacy value for 16-bit signed integers.\n" +
+				"The maximum value supported is " + Integer.MAX_VALUE);
 		gd.addNumericField("Capacity", searchCapacity, 0);
-		gd.addMessage("Note: The default is the legacy value for 16-bit signed integers.\n" +
-				"The maximum value supported is " + Integer.MAX_VALUE + ".\n \n" +
-				"This preference will be saved when you exit ImageJ.");
+		gd.addMessage("Set the record to use when recording no results during batch processing.\n" +
+				"(A record is always written to the results file for each batch image,\n" +
+				"even when no foci are found; this value will be used for all the fields\n" +
+				"in the empty record.)");
+		gd.addStringField("Empty_Field", emptyField);
+
+		gd.addMessage("Settings are saved when you exit ImageJ.");
+		//@formatter:on
 
 		gd.showDialog();
 		if (gd.wasCanceled())
@@ -7571,9 +7583,17 @@ public class FindFoci implements PlugIn, MouseListener
 		final double d = Math.abs(gd.getNextNumber());
 		if (d > Integer.MAX_VALUE)
 			return false;
-
 		searchCapacity = Math.max(1, (int) d);
+
+		emptyField = gd.getNextString();
+		if (emptyField == null)
+			emptyField = "";
+
+		// Reset this so it will be initialised again
+		emptyEntry = null;
+
 		Prefs.set(SEARCH_CAPACITY, searchCapacity);
+		Prefs.set(EMPTY_FIELD, emptyField);
 
 		return true;
 	}
