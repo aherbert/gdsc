@@ -36,7 +36,7 @@ public class ParticleCorrelation implements PlugIn
 	private static String imageTitle2 = "";
 	private static int cImage1 = 1;
 	private static int cImage2 = 2;
-	private static boolean eightConnected = true;
+	private static boolean eightConnected = false;
 	private static int minSize = 0;
 	private static boolean showDataTable = true;
 	private static boolean showPlot = false;
