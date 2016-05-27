@@ -30,7 +30,6 @@ import ij.Prefs;
 import ij.gui.GenericDialog;
 import ij.gui.Overlay;
 import ij.gui.PointRoi;
-import ij.gui.Roi;
 import ij.gui.YesNoCancelDialog;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
