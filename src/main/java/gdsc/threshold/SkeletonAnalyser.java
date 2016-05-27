@@ -413,11 +413,11 @@ public class SkeletonAnalyser implements PlugInFilter
 
 					// Keep all edges that go to another junction
 					int keep = 0;
-					while (currentLines[keep].internal && keep < n)
+					while (keep < n && currentLines[keep].internal)
 						keep++;
 
 					// Keep remaining edges in length order (descending) until there are only 2 edges.
-					while (keep < 2 && keep < n)
+					while (keep < n && keep < 2)
 						keep++;
 
 					// Mark others for deletion
