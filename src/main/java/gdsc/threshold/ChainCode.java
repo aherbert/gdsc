@@ -23,21 +23,21 @@ import java.util.LinkedList;
  */
 public class ChainCode implements Comparable<ChainCode>
 {
-	private final float ROOT2 = (float) Math.sqrt(2);
+	private final static float ROOT2 = (float) Math.sqrt(2);
 
 	/**
 	 * Describes the x-direction for the chain code
 	 */
-	public final int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0, -1, -1, -1 };
+	public final static int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0, -1, -1, -1 };
 	/**
 	 * Describes the y-direction for the chain code
 	 */
-	public final int[] DIR_Y_OFFSET = new int[] { -1, -1, 0, 1, 1, 1, 0, -1 };
+	public final static int[] DIR_Y_OFFSET = new int[] { -1, -1, 0, 1, 1, 1, 0, -1 };
 
 	/**
 	 * Describes the length for the chain code
 	 */
-	public final float[] DIR_LENGTH = new float[] { 1, ROOT2, 1, ROOT2, 1, ROOT2, 1, ROOT2 };
+	public final static float[] DIR_LENGTH = new float[] { 1, ROOT2, 1, ROOT2, 1, ROOT2, 1, ROOT2 };
 
 	private int x = 0;
 	private int y = 0;
@@ -165,5 +165,56 @@ public class ChainCode implements Comparable<ChainCode>
 				return 1;
 		}
 		return 0;
+	}
+
+	/**
+	 * Gets the end position.
+	 *
+	 * @return the end [endX, endY]
+	 */
+	public int[] getEnd()
+	{
+		int x = this.x;
+		int y = this.y;
+
+		for (int code : run)
+		{
+			x += DIR_X_OFFSET[code];
+			y += DIR_Y_OFFSET[code];
+		}
+
+		return new int[] { x, y };
+	}
+
+	/**
+	 * Create a new chain code in the opposite direction
+	 *
+	 * @return the chain code
+	 */
+	public ChainCode reverse()
+	{
+		int x = this.x;
+		int y = this.y;
+
+		int i = 0;
+		int[] run2 = new int[run.size()];
+		for (int code : run)
+		{
+			x += DIR_X_OFFSET[code];
+			y += DIR_Y_OFFSET[code];
+			run2[i++] = code;
+		}
+
+		ChainCode reverse = new ChainCode(x, y);
+		while (i-->0)
+		{
+			reverse.add((run2[i] + 4) % 8);
+		}
+
+		int[] end2 = reverse.getEnd();
+		if (end2[0] != this.x || end2[1] != this.y)
+			System.out.printf("Reverse error: (%d,%d) != (%d,%d)\n", x, y, end2[0], end2[1]);
+
+		return reverse;
 	}
 }

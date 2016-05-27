@@ -414,8 +414,8 @@ public class ThreadAnalyser implements PlugIn
 			int[] run = code.getRun();
 			for (int i=0; i<run.length/2; i++)
 			{
-				x += code.DIR_X_OFFSET[run[i]];
-				y += code.DIR_Y_OFFSET[run[i]];
+				x += ChainCode.DIR_X_OFFSET[run[i]];
+				y += ChainCode.DIR_Y_OFFSET[run[i]];
 			}
 			xPoints[nPoints] = x;
 			yPoints[nPoints] = y;
@@ -711,9 +711,9 @@ public class ThreadAnalyser implements PlugIn
 		d[i] = 0;
 		for (int direction : code.getRun())
 		{
-			x[i + 1] = x[i] + code.DIR_X_OFFSET[direction];
-			y[i + 1] = y[i] + code.DIR_Y_OFFSET[direction];
-			d[i + 1] = d[i] + code.DIR_LENGTH[direction];
+			x[i + 1] = x[i] + ChainCode.DIR_X_OFFSET[direction];
+			y[i + 1] = y[i] + ChainCode.DIR_Y_OFFSET[direction];
+			d[i + 1] = d[i] + ChainCode.DIR_LENGTH[direction];
 			i++;
 		}
 	}

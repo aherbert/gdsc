@@ -1,5 +1,16 @@
 package gdsc.threshold;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+
+import gdsc.UsageTracker;
+import gdsc.core.ij.Utils;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -16,20 +27,16 @@ package gdsc.threshold;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Prefs;
-import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.Overlay;
+import ij.gui.PointRoi;
+import ij.gui.Roi;
 import ij.gui.YesNoCancelDialog;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-
-import gdsc.UsageTracker;
 
 /**
  * Skeletonise a mask image. Then produce a set of lines connecting node points on the skeleton.
@@ -44,12 +51,26 @@ public class SkeletonAnalyser implements PlugInFilter
 	private static TextWindow resultsWindow = null;
 	private static boolean writeHeader = true;
 
+	private static boolean s_pruneJunctions = false;
+	private static int s_minLength = 0;
+	private static boolean s_showNodeMap = true;
+	private static boolean s_showOverlay = false;
+	private static boolean s_showTable = true;
+
+	// Public to allow control of the algorithm in the run(ImageProcessor) method
+	boolean pruneJunctions = false;
+	int minLength = 0;
+	boolean showNodeMap = true;
+	boolean showOverlay = false;
+	boolean showTable = true;
+
 	private int foreground;
 	private ImagePlus imp;
 
 	public final static byte TERMINUS = (byte) 1;
 	public final static byte EDGE = (byte) 2;
 	public final static byte JUNCTION = (byte) 4;
+	public final static byte LINE = TERMINUS | EDGE;
 	public final static byte NODE = TERMINUS | JUNCTION;
 	public final static byte SKELETON = EDGE | NODE;
 	public final static byte PROCESSED = (byte) 8;
@@ -65,7 +86,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			IJ.noImage();
@@ -78,8 +99,35 @@ public class SkeletonAnalyser implements PlugInFilter
 			IJ.error("Binary image required");
 			return DONE;
 		}
+
+		if (!showDialog())
+			return DONE;
+
 		initialise(imp.getWidth(), imp.getHeight());
 		return IJ.setupDialog(imp, DOES_8G | SNAPSHOT);
+	}
+
+	private boolean showDialog()
+	{
+		GenericDialog gd = new GenericDialog(TITLE);
+
+		gd.addCheckbox("Prune_junctions", s_pruneJunctions);
+		gd.addNumericField("Min_length", s_minLength, 0);
+		gd.addCheckbox("Show_node_map", s_showNodeMap);
+		gd.addCheckbox("Show_overlay", s_showOverlay);
+		gd.addCheckbox("Show_table", s_showTable);
+
+		gd.showDialog();
+		if (gd.wasCanceled())
+			return false;
+
+		pruneJunctions = s_pruneJunctions = gd.getNextBoolean();
+		minLength = s_minLength = (int) gd.getNextNumber();
+		showNodeMap = s_showNodeMap = gd.getNextBoolean();
+		showOverlay = s_showOverlay = gd.getNextBoolean();
+		showTable = s_showTable = gd.getNextBoolean();
+
+		return true;
 	}
 
 	/*
@@ -91,23 +139,42 @@ public class SkeletonAnalyser implements PlugInFilter
 	{
 		ByteProcessor bp = (ByteProcessor) ip.convertToByte(false);
 
+		final int width = bp.getWidth();
+		final int height = bp.getHeight();
+
 		skeletonise(bp, true);
 		//skeltonise(bp, false);
 
 		byte[] map = findNodes(bp);
-
-		showMap(map, bp.getWidth(), bp.getHeight(), imp.getTitle() + " SkeletonNodeMap");
+		if (pruneJunctions)
+		{
+			boolean pruned = prune(map, width, height);
+			while (pruned)
+			{
+				pruned = prune(map, width, height);
+			}
+		}
 
 		List<float[]> lines = extractLines(map);
 
-		showResults(lines);
+		if (showNodeMap)
+		{
+			ColorProcessor cp = createMapImage(map, width, height);
+			ImagePlus mapImp = Utils.display(this.imp.getTitle() + " SkeletonNodeMap", cp);
+			if (showOverlay)
+				showOverlay(mapImp, lines);
+		}
+
+		if (showTable)
+			showResults(lines);
 	}
 
 	/**
 	 * Skeltonise the image processor. Must be a binary image.
 	 * 
 	 * @param ip
-	 * @param trim Eliminate redundant 4-connected pixels if possible.
+	 * @param trim
+	 *            Eliminate redundant 4-connected pixels if possible.
 	 * @return False if not a binary image
 	 */
 	public boolean skeletonise(ByteProcessor ip, boolean trim)
@@ -181,28 +248,274 @@ public class SkeletonAnalyser implements PlugInFilter
 	}
 
 	/**
-	 * Show an image of the skeleton node map: TERMINUS = blue; EDGE = red; JUNCTION = green; PROCESSED = cyan
-	 * @param map
-	 *            The skeleton node map
-	 * @param width
-	 * @param height
-	 * @param title
+	 * Search the skeleton and create a node map of the skeleton points.
+	 * Points can be either: TERMINUS, EDGE or JUNCTION.
+	 * Points not on the skeleton are set to zero.
+	 *
+	 * @param skeleton
+	 *            the skeleton
+	 * @return The skeleton node map (or null if not a binary processor)
 	 */
-	public void showMap(byte[] map, int width, int height, String title)
+	private byte[] findNodes(byte[] skeleton)
 	{
-		ColorProcessor cp = createMapImage(map, width, height);
+		final byte foreground = (byte) this.foreground;
+		byte[] map = new byte[skeleton.length];
 
-		ImagePlus imp = WindowManager.getImage(title);
-		if (imp == null)
+		for (int index = map.length; index-- > 0;)
 		{
-			imp = new ImagePlus(title, cp);
+			if (skeleton[index] == foreground)
+			{
+				// Process the neighbours
+				int count = nRadii(skeleton, index);
+
+				switch (count)
+				{
+					case 0:
+					case 1:
+						map[index] = TERMINUS;
+						break;
+					case 2:
+						map[index] = EDGE;
+						break;
+					default:
+						map[index] = JUNCTION;
+						break;
+				}
+			}
 		}
-		else
+
+		return map;
+	}
+
+	private class Line implements Comparable<Line>
+	{
+		int start;
+		@SuppressWarnings("unused")
+		int end;
+		float length;
+		boolean internal;
+		ChainCode code;
+
+		Line(int start, int end, float length, boolean internal, ChainCode code)
 		{
-			imp.setProcessor(cp);
-			imp.updateAndDraw();
+			this.start = start;
+			this.end = end;
+			this.length = length;
+			this.internal = internal;
+			this.code = code;
 		}
-		imp.show();
+
+		public int compareTo(Line that)
+		{
+			return this.start - that.start;
+		}
+	}
+
+	private class LineComparator implements Comparator<Line>
+	{
+		public int compare(Line o1, Line o2)
+		{
+			if (o1.internal ^ o2.internal)
+				// If one is internal and the other is not
+				return (o1.internal) ? -1 : 1;
+			// Rank by length
+			if (o1.length > o2.length)
+				return -1;
+			if (o1.length < o2.length)
+				return 1;
+			return 0;
+		}
+	}
+
+	/**
+	 * Prune the shortest line from junctions that end in a terminus, until all junctions are eliminated.
+	 *
+	 * @param map
+	 *            the map
+	 * @param width
+	 *            the width
+	 * @param height
+	 *            the height
+	 * @return true, if successful
+	 */
+	private boolean prune(byte[] map, int width, int height)
+	{
+		//Each entry is: startX, startY, endX, endY, length
+		List<ChainCode> chainCodes = new LinkedList<ChainCode>();
+		List<float[]> lines = extractLines(map, chainCodes);
+
+		// Convert line to start and end index
+		int[] startIndex = new int[lines.size()];
+		int[] endIndex = new int[startIndex.length];
+		float[] lengths = new float[startIndex.length];
+		int i = 0;
+		for (float[] line : lines)
+		{
+			startIndex[i] = getIndex((int) line[0], (int) line[1]);
+			endIndex[i] = getIndex((int) line[2], (int) line[3]);
+			lengths[i] = line[4];
+			i++;
+		}
+
+		Iterator<ChainCode> it = chainCodes.iterator();
+
+		ArrayList<Line> junctionLines = new ArrayList<Line>(lines.size());
+		final LineComparator lineComparator = new LineComparator();
+
+		// Find all lines that start at a terminus and end at a junction
+		// Find all the lines that start and end at a junction
+		for (i = 0; i < startIndex.length; i++)
+		{
+			ChainCode code = it.next();
+
+			// Ends at a junction
+			if ((map[endIndex[i]] & JUNCTION) != 0)
+			{
+				// Check if it starts at a junction (i.e. is internal)
+				final boolean internal = (map[startIndex[i]] & JUNCTION) != 0;
+
+				// Store the line under the index of the junction, reverse the chain code
+				junctionLines.add(new Line(endIndex[i], startIndex[i], lengths[i], internal, code.reverse()));
+
+				if (internal)
+				{
+					// Starts at a junction so store under this junction as well
+					junctionLines.add(new Line(startIndex[i], endIndex[i], lengths[i], true, code));
+				}
+			}
+		}
+
+		// Sort by the junction start
+		Collections.sort(junctionLines);
+
+		// Each junction should have 3/4 lines if clean up or corner pixels was OK, worst case is 8.
+		int n = 0;
+		Line[] currentLines = new Line[8];
+		int current = 0;
+
+		ArrayList<Line> toDelete = new ArrayList<SkeletonAnalyser.Line>(100);
+
+		// Process the set of lines for each junction
+		for (Line line : junctionLines)
+		{
+			if (current != line.start)
+			{
+				if (n != 0)
+				{
+					if (n < 3)
+					{
+						System.err.printf("Junction %d,%d has less than 3 lines", currentLines[0].start % maxx,
+								currentLines[0].start / maxx);
+					}
+
+					// Sort 
+					Arrays.sort(currentLines, 0, n, lineComparator);
+
+					// Keep all edges that go to another junction
+					int keep = 0;
+					while (currentLines[keep].internal && keep < n)
+						keep++;
+
+					// Keep remaining edges in length order (descending) until there are only 2 edges.
+					while (keep < 2 && keep < n)
+						keep++;
+
+					// Mark others for deletion
+					while (keep < n)
+						toDelete.add(currentLines[keep++]);
+				}
+				n = 0;
+				current = line.start;
+			}
+			currentLines[n++] = line;
+		}
+
+		if (n != 0)
+		{
+			if (n < 3)
+			{
+				System.err.printf("Junction %d,%d has less than 3 lines", currentLines[0].start % maxx,
+						currentLines[0].start / maxx);
+			}
+
+			// Sort 
+			Arrays.sort(currentLines, 0, n, lineComparator);
+
+			// Keep all edges that go to another junction
+			int keep = 0;
+			while (currentLines[keep].internal && keep < n)
+				keep++;
+
+			// Keep remaining edges in length order (descending) until there are only 2 edges.
+			while (keep < 2 && keep < n)
+				keep++;
+
+			// Mark others for deletion, these should be the shortest
+			while (keep < n)
+				toDelete.add(currentLines[keep++]);
+		}
+
+		if (toDelete.isEmpty())
+		{
+			for (i = 0; i < map.length; i++)
+				map[i] |= PROCESSED;
+			return false;
+		}
+
+		// If any marked for deletion, remove the shortest line
+		Collections.sort(toDelete, new Comparator<Line>()
+		{
+			public int compare(Line o1, Line o2)
+			{
+				// Rank by length
+				if (o1.length < o2.length)
+					return -1;
+				if (o1.length > o2.length)
+					return 1;
+				return 0;
+			}
+		});
+
+//		ColorProcessor cp = createMapImage(map, width, height);
+//		Utils.display(this.imp.getTitle() + " SkeletonNodeMap", cp);
+
+		// Remove the line for deletion
+		ChainCode code = toDelete.get(0).code;
+		int x = code.getX();
+		int y = code.getY();
+		//		System.out.printf("Pruning %d,%d: %f\n", x, y, code.getDistance());
+		int[] run = code.getRun();
+		int index = getIndex(x, y);
+		//		System.out.printf("Pruning %d,%d, T=%b, E=%b, J=%b\n", x, y, (map[index] & TERMINUS) != 0,
+		//				(map[index] & EDGE) != 0, (map[index] & JUNCTION) != 0);
+
+		if ((map[index] & LINE) != 0)
+		{
+			//			System.out.printf("Pruning %d,%d\n", x, y);
+			map[index] = 0;
+		}
+		for (int d : run)
+		{
+			x += ChainCode.DIR_X_OFFSET[d];
+			y += ChainCode.DIR_Y_OFFSET[d];
+			index = getIndex(x, y);
+			//			System.out.printf("Pruning %d,%d, T=%b, E=%b, J=%b\n", x, y, (map[index] & TERMINUS) != 0,
+			//					(map[index] & EDGE) != 0, (map[index] & JUNCTION) != 0);
+			if ((map[index] & LINE) != 0)
+			{
+				//				System.out.printf("Pruning %d,%d\n", x, y);
+				map[index] = 0;
+			}
+		}
+
+		// Create a new map
+		final byte foreground = (byte) this.foreground;
+		final byte background = (byte) (this.foreground + 1);
+		for (i = 0; i < map.length; i++)
+			map[i] = (map[i] != 0) ? foreground : background;
+		byte[] map2 = findNodes(map);
+		System.arraycopy(map2, 0, map, 0, map.length);
+		return true;
 	}
 
 	/**
@@ -227,24 +540,21 @@ public class SkeletonAnalyser implements PlugInFilter
 				int x = xy[0];
 				int y = xy[1];
 
-				if ((map[index] & PROCESSED) == PROCESSED)
+				if ((map[index] & TERMINUS) != 0)
+				{
+					cp.putPixel(x, y, new int[] { 0, 0, 255 });
+				}
+				else if ((map[index] & EDGE) != 0)
+				{
+					cp.putPixel(x, y, new int[] { 255, 0, 0 });
+				}
+				else if ((map[index] & JUNCTION) != 0)
+				{
+					cp.putPixel(x, y, new int[] { 0, 255, 0 });
+				}
+				else if ((map[index] & PROCESSED) != 0)
 				{
 					cp.putPixel(x, y, new int[] { 0, 255, 255 });
-				}
-				else
-				{
-					switch (map[index])
-					{
-						case TERMINUS:
-							cp.putPixel(x, y, new int[] { 0, 0, 255 });
-							break;
-						case EDGE:
-							cp.putPixel(x, y, new int[] { 255, 0, 0 });
-							break;
-						default:
-							cp.putPixel(x, y, new int[] { 0, 255, 0 });
-							break;
-					}
 				}
 			}
 		}
@@ -256,7 +566,8 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * Analyse the neighbours of a pixel (x, y) in a byte image; pixels > 0 ("non-white") are considered foreground.
 	 * Out-of-boundary pixels are considered background.
 	 * 
-	 * @param types the byte image
+	 * @param types
+	 *            the byte image
 	 * @param index
 	 *            coordinate of the point
 	 * @return Number of lines emanating from this point. Zero if the point is embedded in either foreground
@@ -328,8 +639,13 @@ public class SkeletonAnalyser implements PlugInFilter
 	public List<float[]> extractLines(byte[] map, List<ChainCode> chainCodes)
 	{
 		LinkedList<float[]> lines = new LinkedList<float[]>();
+		LinkedList<ChainCode> myChainCodes = (chainCodes != null) ? new LinkedList<ChainCode>() : null;
 		int[] xy = new int[2];
 		ChainCode code = null;
+
+		// Reset
+		for (int index = 0; index < map.length; index++)
+			map[index] &= ~PROCESSED;
 
 		// Process TERMINALs
 		for (int index = 0; index < map.length; index++)
@@ -341,10 +657,10 @@ public class SkeletonAnalyser implements PlugInFilter
 				int y = xy[1];
 				//System.out.printf("Process %d,%d\n", x, y);
 
-				if (chainCodes != null)
+				if (myChainCodes != null)
 				{
 					code = new ChainCode(x, y);
-					chainCodes.add(code);
+					myChainCodes.add(code);
 				}
 				lines.add(extend(map, index, code));
 
@@ -365,7 +681,7 @@ public class SkeletonAnalyser implements PlugInFilter
 				int y = xy[1];
 				//System.out.printf("Process %d,%d\n", x, y);
 
-				if (chainCodes != null)
+				if (myChainCodes != null)
 				{
 					code = new ChainCode(x, y);
 				}
@@ -378,9 +694,9 @@ public class SkeletonAnalyser implements PlugInFilter
 					// Only add the junction as a start point if a new line was created
 					lines.add(line);
 
-					if (chainCodes != null)
+					if (myChainCodes != null)
 					{
-						chainCodes.add(code);
+						myChainCodes.add(code);
 						code = new ChainCode(x, y);
 					}
 					line = extend(map, index, code, processedDirections);
@@ -403,10 +719,10 @@ public class SkeletonAnalyser implements PlugInFilter
 				int y = xy[1];
 				//System.out.printf("Process %d,%d\n", x, y);
 
-				if (chainCodes != null)
+				if (myChainCodes != null)
 				{
 					code = new ChainCode(x, y);
-					chainCodes.add(code);
+					myChainCodes.add(code);
 				}
 				lines.add(extend(map, index, code));
 			}
@@ -414,9 +730,30 @@ public class SkeletonAnalyser implements PlugInFilter
 
 		//showMap(map, maxx, maxy, "LineMapEdges");
 
-		Collections.sort(lines, new ResultComparator());
+		// Sort by length
+		ArrayList<Result> results = new ArrayList<Result>(lines.size());
+		for (float[] line : lines)
+			results.add(new Result(line, null));
+		if (myChainCodes != null)
+		{
+			int i = 0;
+			for (ChainCode c : myChainCodes)
+				results.get(i++).code = c;
+		}
 
-		return lines;
+		Collections.sort(results);
+
+		ArrayList<float[]> sortedLines = new ArrayList<float[]>(lines.size());
+		for (Result result : results)
+			sortedLines.add(result.line);
+		if (myChainCodes != null)
+		{
+			chainCodes.clear();
+			for (Result result : results)
+				chainCodes.add(result.code);
+		}
+
+		return sortedLines;
 	}
 
 	/**
@@ -456,7 +793,7 @@ public class SkeletonAnalyser implements PlugInFilter
 		while (nextDirection >= 0)
 		{
 			currentIndex += offset[nextDirection];
-			length += DIR_LENGTH[nextDirection];
+			length += ChainCode.DIR_LENGTH[nextDirection];
 
 			if (code != null)
 			{
@@ -464,7 +801,7 @@ public class SkeletonAnalyser implements PlugInFilter
 			}
 
 			// Mark terminals / edges as processed
-			if ((map[currentIndex] & (TERMINUS | EDGE)) != 0)
+			if ((map[currentIndex] & LINE) != 0)
 			{
 				map[currentIndex] |= PROCESSED;
 			}
@@ -605,11 +942,36 @@ public class SkeletonAnalyser implements PlugInFilter
 
 		createResultsWindow();
 
-		int id = 1;
+		int id = 0;
 		for (float[] line : lines)
 		{
-			addResult(id++, line);
+			if (line[4] < minLength)
+				break;
+			addResult(++id, line);
 		}
+	}
+
+	private void showOverlay(ImagePlus mapImp, List<float[]> lines)
+	{
+		int[] x = new int[lines.size()];
+		int[] y = new int[x.length];
+
+		int id = 0;
+		for (float[] line : lines)
+		{
+			if (line[4] < minLength)
+				break;
+			x[id] = (int) line[0];
+			y[id++] = (int) line[1];
+		}
+
+		Overlay overlay = null;
+		if (id != 0)
+		{
+			Roi roi = new PointRoi(x, y, id);
+			overlay = new Overlay(roi);
+		}
+		mapImp.setOverlay(overlay);
 	}
 
 	private void createResultsWindow()
@@ -742,7 +1104,7 @@ public class SkeletonAnalyser implements PlugInFilter
 
 	/**
 	 * For each skeleton pixel, check the 2 adjacent non-diagonal neighbour pixels in clockwise fashion. If they are
-	 * both skeleton pixels then this pixel can be removed (since they form a diagonal line) if not connected at the 
+	 * both skeleton pixels then this pixel can be removed (since they form a diagonal line) if not connected at the
 	 * opposite corner.
 	 */
 	private int cleanupExtraCornerPixels(ImageProcessor ip)
@@ -782,7 +1144,7 @@ public class SkeletonAnalyser implements PlugInFilter
 
 				for (int d = 0; d < 8; d += 2)
 				{
-					if ((edgesSet[d] && edgesSet[(d + 2) % 8]) && 
+					if ((edgesSet[d] && edgesSet[(d + 2) % 8]) &&
 							!(edgesSet[(d + 5) % 8] || (edgesSet[(d + 4) % 8] && edgesSet[(d + 6) % 8])))
 					{
 						removed++;
@@ -800,18 +1162,6 @@ public class SkeletonAnalyser implements PlugInFilter
 	private int[] offset;
 
 	/**
-	 * Describes the x-direction for the chain code
-	 */
-	public final int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0, -1, -1, -1 };
-	/**
-	 * Describes the y-direction for the chain code
-	 */
-	public final int[] DIR_Y_OFFSET = new int[] { -1, -1, 0, 1, 1, 1, 0, -1 };
-
-	private final float ROOT2 = (float) Math.sqrt(2);
-	private final float[] DIR_LENGTH = new float[] { 1, ROOT2, 1, ROOT2, 1, ROOT2, 1, ROOT2 };
-
-	/**
 	 * Initialises the global width and height variables. Creates the direction offset tables.
 	 */
 	public void initialise(int width, int height)
@@ -823,10 +1173,10 @@ public class SkeletonAnalyser implements PlugInFilter
 		ylimit = maxy - 1;
 
 		// Create the offset table (for single array 3D neighbour comparisons)
-		offset = new int[DIR_X_OFFSET.length];
+		offset = new int[ChainCode.DIR_X_OFFSET.length];
 		for (int d = offset.length; d-- > 0;)
 		{
-			offset[d] = getIndex(DIR_X_OFFSET[d], DIR_Y_OFFSET[d]);
+			offset[d] = getIndex(ChainCode.DIR_X_OFFSET[d], ChainCode.DIR_Y_OFFSET[d]);
 		}
 	}
 
@@ -894,31 +1244,28 @@ public class SkeletonAnalyser implements PlugInFilter
 		return false;
 	}
 
-	/**
-	 * Provides the ability to sort the results arrays in ascending order
-	 */
-	private class ResultComparator implements Comparator<float[]>
+	private class Result implements Comparable<Result>
 	{
-		public ResultComparator()
+		float[] line;
+		ChainCode code;
+
+		Result(float[] line, ChainCode code)
 		{
+			this.line = line;
+			this.code = code;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-		 */
-		public int compare(float[] o1, float[] o2)
+		public int compareTo(Result that)
 		{
 			int[] result = new int[1];
 
 			// Distance first
-			if (compare(o1[4], o2[4], result) != 0)
+			if (compare(this.line[4], that.line[4], result) != 0)
 				return -result[0];
 
 			// Then coordinates 
 			for (int i = 0; i < 4; i++)
-				if (compare(o1[i], o2[i], result) != 0)
+				if (compare(this.line[i], that.line[i], result) != 0)
 					return result[0];
 
 			return 0;
