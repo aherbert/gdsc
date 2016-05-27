@@ -968,7 +968,8 @@ public class SkeletonAnalyser implements PlugInFilter
 		Overlay overlay = null;
 		if (id != 0)
 		{
-			Roi roi = new PointRoi(x, y, id);
+			PointRoi roi = new PointRoi(x, y, id);
+			roi.setHideLabels(false);
 			overlay = new Overlay(roi);
 		}
 		mapImp.setOverlay(overlay);
