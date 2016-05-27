@@ -206,14 +206,8 @@ public class ChainCode implements Comparable<ChainCode>
 		}
 
 		ChainCode reverse = new ChainCode(x, y);
-		while (i-->0)
-		{
+		while (i-- > 0)
 			reverse.add((run2[i] + 4) % 8);
-		}
-
-		int[] end2 = reverse.getEnd();
-		if (end2[0] != this.x || end2[1] != this.y)
-			System.out.printf("Reverse error: (%d,%d) != (%d,%d)\n", x, y, end2[0], end2[1]);
 
 		return reverse;
 	}
