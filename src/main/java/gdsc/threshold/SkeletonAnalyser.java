@@ -442,14 +442,14 @@ public class SkeletonAnalyser implements PlugInFilter
 
 			// Keep all edges that go to another junction
 			int keep = 0;
-			while (currentLines[keep].internal && keep < n)
+			while (keep < n && currentLines[keep].internal)
 				keep++;
 
 			// Keep remaining edges in length order (descending) until there are only 2 edges.
-			while (keep < 2 && keep < n)
+			while (keep < n && keep < 2)
 				keep++;
 
-			// Mark others for deletion, these should be the shortest
+			// Mark others for deletion
 			while (keep < n)
 				toDelete.add(currentLines[keep++]);
 		}
@@ -475,8 +475,8 @@ public class SkeletonAnalyser implements PlugInFilter
 			}
 		});
 
-//		ColorProcessor cp = createMapImage(map, width, height);
-//		Utils.display(this.imp.getTitle() + " SkeletonNodeMap", cp);
+		//		ColorProcessor cp = createMapImage(map, width, height);
+		//		Utils.display(this.imp.getTitle() + " SkeletonNodeMap", cp);
 
 		// Remove the line for deletion
 		ChainCode code = toDelete.get(0).code;
@@ -974,8 +974,16 @@ public class SkeletonAnalyser implements PlugInFilter
 		mapImp.setOverlay(overlay);
 	}
 
+	private String unit = "px";
+	private double unitConversion = 1;
+
 	private void createResultsWindow()
 	{
+		if (this.imp.getCalibration() != null)
+		{
+			unit = imp.getCalibration().getUnit();
+			unitConversion = imp.getCalibration().pixelWidth;
+		}
 		if (java.awt.GraphicsEnvironment.isHeadless())
 		{
 			if (writeHeader)
@@ -1001,7 +1009,9 @@ public class SkeletonAnalyser implements PlugInFilter
 		sb.append("StartY\t");
 		sb.append("EndX\t");
 		sb.append("EndY\t");
+		sb.append("Length (px)\t");
 		sb.append("Length\t");
+		sb.append("Unit");
 		return sb.toString();
 	}
 
@@ -1014,6 +1024,8 @@ public class SkeletonAnalyser implements PlugInFilter
 			sb.append((int) line[i]).append("\t");
 		}
 		sb.append(IJ.d2s(line[4], 2)).append("\t");
+		sb.append(IJ.d2s(line[4] * unitConversion, 2)).append("\t");
+		sb.append(unit);
 
 		if (java.awt.GraphicsEnvironment.isHeadless())
 		{
