@@ -400,29 +400,7 @@ public class SkeletonAnalyser implements PlugInFilter
 			if (current != line.start)
 			{
 				if (n != 0)
-				{
-					if (n < 3)
-					{
-						System.err.printf("Junction %d,%d has less than 3 lines", currentLines[0].start % maxx,
-								currentLines[0].start / maxx);
-					}
-
-					// Sort 
-					Arrays.sort(currentLines, 0, n, lineComparator);
-
-					// Keep all edges that go to another junction
-					int keep = 0;
-					while (keep < n && currentLines[keep].internal)
-						keep++;
-
-					// Keep remaining edges in length order (descending) until there are only 2 edges.
-					while (keep < n && keep < 2)
-						keep++;
-
-					// Mark others for deletion
-					while (keep < n)
-						toDelete.add(currentLines[keep++]);
-				}
+					markForDeletion(lineComparator, n, currentLines, toDelete);
 				n = 0;
 				current = line.start;
 			}
@@ -430,29 +408,7 @@ public class SkeletonAnalyser implements PlugInFilter
 		}
 
 		if (n != 0)
-		{
-			if (n < 3)
-			{
-				System.err.printf("Junction %d,%d has less than 3 lines", currentLines[0].start % maxx,
-						currentLines[0].start / maxx);
-			}
-
-			// Sort 
-			Arrays.sort(currentLines, 0, n, lineComparator);
-
-			// Keep all edges that go to another junction
-			int keep = 0;
-			while (keep < n && currentLines[keep].internal)
-				keep++;
-
-			// Keep remaining edges in length order (descending) until there are only 2 edges.
-			while (keep < n && keep < 2)
-				keep++;
-
-			// Mark others for deletion
-			while (keep < n)
-				toDelete.add(currentLines[keep++]);
-		}
+			markForDeletion(lineComparator, n, currentLines, toDelete);
 
 		if (toDelete.isEmpty())
 		{
@@ -515,6 +471,32 @@ public class SkeletonAnalyser implements PlugInFilter
 		byte[] map2 = findNodes(map);
 		System.arraycopy(map2, 0, map, 0, map.length);
 		return true;
+	}
+
+	private void markForDeletion(final LineComparator lineComparator, int n, Line[] currentLines,
+			ArrayList<Line> toDelete)
+	{
+		if (n < 3)
+		{
+			System.err.printf("Junction %d,%d has less than 3 lines", currentLines[0].start % maxx,
+					currentLines[0].start / maxx);
+		}
+
+		// Sort 
+		Arrays.sort(currentLines, 0, n, lineComparator);
+
+		// Keep all edges that go to another junction
+		int keep = 0;
+		while (keep < n && currentLines[keep].internal)
+			keep++;
+
+		// Keep remaining edges in length order (descending) until there are only 2 edges.
+		while (keep < n && keep < 2)
+			keep++;
+
+		// Mark others for deletion
+		while (keep < n)
+			toDelete.add(currentLines[keep++]);
 	}
 
 	/**
