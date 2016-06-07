@@ -16,7 +16,7 @@ package gdsc.foci;
 /**
  * Stores a 2D/3D point with an assigned Id
  */
-public class AssignedPoint extends BasePoint
+public class AssignedPoint extends BasePoint implements Comparable<AssignedPoint>
 {
 	protected int id = 0;
 	protected int assignedId = 0;
@@ -35,12 +35,14 @@ public class AssignedPoint extends BasePoint
 
 	/**
 	 * Sets the point Id
+	 * 
 	 * @param id
 	 */
 	public void setId(int id)
 	{
 		this.id = id;
 	}
+
 	/**
 	 * @return the id
 	 */
@@ -50,7 +52,8 @@ public class AssignedPoint extends BasePoint
 	}
 
 	/**
-	 * @param assignedId the assignedId to set
+	 * @param assignedId
+	 *            the assignedId to set
 	 */
 	public void setAssignedId(int assignedId)
 	{
@@ -63,5 +66,21 @@ public class AssignedPoint extends BasePoint
 	public int getAssignedId()
 	{
 		return assignedId;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	public int compareTo(AssignedPoint that)
+	{
+		int d = this.x - that.x;
+		if (d != 0)
+			return d;
+		d = this.y - that.y;
+		if (d != 0)
+			return d;
+		return this.z - that.z;
 	}
 }
