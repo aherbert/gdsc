@@ -506,7 +506,7 @@ public class FindFoci implements PlugIn, MouseListener
 	/**
 	 * List of peak height methods for the dialog
 	 */
-	public final static String[] maskOptions = { "[None]", "Peaks", "Threshold", "Peaks above saddle",
+	public final static String[] maskOptions = { "(None)", "Peaks", "Threshold", "Peaks above saddle",
 			"Threshold above saddle", "Fraction of intensity", "Fraction height above background" };
 
 	/**
@@ -1237,7 +1237,7 @@ public class FindFoci implements PlugIn, MouseListener
 	public static ArrayList<String> buildMaskList(ImagePlus imp)
 	{
 		ArrayList<String> newImageList = new ArrayList<String>();
-		newImageList.add("[None]");
+		newImageList.add("(None)");
 
 		if (imp != null)
 		{
@@ -1863,7 +1863,7 @@ public class FindFoci implements PlugIn, MouseListener
 			writeParam(out, "Background_method", backgroundMethods[backgroundMethod]);
 			writeParam(out, "Background_parameter", Double.toString(backgroundParameter));
 			if (autoThresholdMethod == null || autoThresholdMethod.length() == 0)
-				autoThresholdMethod = "[None]";
+				autoThresholdMethod = "(None)";
 			writeParam(out, "Auto_threshold", autoThresholdMethod);
 			writeParam(out, "Statistics_mode", getStatisticsMode(options));
 			writeParam(out, "Search_method", searchMethods[searchMethod]);
