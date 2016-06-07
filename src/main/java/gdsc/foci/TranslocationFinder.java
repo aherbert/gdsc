@@ -345,7 +345,7 @@ public class TranslocationFinder implements PlugIn
 
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
-			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 700, 300);
+			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 1000, 300);
 		}
 	}
 
