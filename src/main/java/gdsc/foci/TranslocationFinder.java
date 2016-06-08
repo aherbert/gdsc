@@ -63,6 +63,7 @@ public class TranslocationFinder implements PlugIn
 	private static String resultsName3 = "";
 	private static String image = "";
 	private static double distance = 50;
+	private static double minDistance = 8;
 	private static double factor = 2;
 	private static boolean showMatches = false;
 
@@ -97,6 +98,7 @@ public class TranslocationFinder implements PlugIn
 		gd.addChoice("Results_name_3", names, resultsName3);
 		gd.addChoice("Overlay_on_image", imageList, image);
 		gd.addNumericField("Distance", distance, 2, 6, "pixels");
+		gd.addNumericField("Min_distance", minDistance, 2, 6, "pixels");
 		gd.addNumericField("Factor", factor, 2);
 		gd.addCheckbox("Show_matches", showMatches);
 		gd.addHelp(gdsc.help.URL.FIND_FOCI);
@@ -110,6 +112,7 @@ public class TranslocationFinder implements PlugIn
 		resultsName3 = gd.getNextChoice();
 		image = gd.getNextChoice();
 		distance = gd.getNextNumber();
+		minDistance = gd.getNextNumber();
 		factor = gd.getNextNumber();
 		showMatches = gd.getNextBoolean();
 
@@ -243,9 +246,9 @@ public class TranslocationFinder implements PlugIn
 			sb.append("\t").append(Utils.rounded(d23));
 
 			// Compute classification
-			if (muchSmaller(d12, d13, d23))
+			if (isSeparated(d12, d13, d23))
 				triplet[3] = NO_TRANSLOCATION;
-			else if (muchSmaller(d13, d12, d23))
+			else if (isSeparated(d13, d12, d23, minDistance))
 				triplet[3] = TRANSLOCATION;
 			sb.append('\t').append(CLASSIFICATION[triplet[3]]);
 			sb.append('\t').append(count).append(CLASSIFICATION[triplet[3]].charAt(0));
@@ -253,56 +256,6 @@ public class TranslocationFinder implements PlugIn
 		}
 
 		overlayTriplets();
-	}
-
-	/**
-	 * Overlay triplets on image
-	 */
-	private void overlayTriplets()
-	{
-		int count;
-		if (imp != null)
-		{
-			Overlay o = new Overlay();
-			count = 0;
-			for (int[] triplet : triplets)
-			{
-				count++;
-				float[] x = new float[3];
-				float[] y = new float[3];
-				AssignedPoint p1 = foci1[triplet[0]];
-				AssignedPoint p2 = foci2[triplet[1]];
-				AssignedPoint p3 = foci3[triplet[2]];
-				x[0] = p1.x;
-				x[1] = p2.x;
-				x[2] = p3.x;
-				y[0] = p1.y;
-				y[1] = p2.y;
-				y[2] = p3.y;
-				PolygonRoi roi = new PolygonRoi(x, y, 3, Roi.POLYGON);
-				Color color;
-				switch (triplet[3])
-				{
-					case TRANSLOCATION:
-						color = Color.CYAN;
-						break;
-					case NO_TRANSLOCATION:
-						color = Color.MAGENTA;
-						break;
-					case UNKNOWN:
-					default:
-						color = Color.YELLOW;
-				}
-				roi.setStrokeColor(color);
-				o.add(roi);
-
-				TextRoi text = new TextRoi(Maths.max(x) + 1, Maths.min(y),
-						Integer.toString(count) + CLASSIFICATION[triplet[3]].charAt(0));
-				text.setStrokeColor(color);
-				o.add(text);
-			}
-			imp.setOverlay(o);
-		}
 	}
 
 	private boolean is3D(AssignedPoint[] foci)
@@ -484,7 +437,7 @@ public class TranslocationFinder implements PlugIn
 
 	/**
 	 * Check if distance 12 is much smaller than distance 13 and 23. It must be a given factor smaller than the other
-	 * two distances.
+	 * two distances. i.e. foci 3 is separated from foci 1 and 2.
 	 *
 	 * @param d12
 	 *            the d12
@@ -494,8 +447,78 @@ public class TranslocationFinder implements PlugIn
 	 *            the d23
 	 * @return true, if successful
 	 */
-	private boolean muchSmaller(double d12, double d13, double d23)
+	private boolean isSeparated(double d12, double d13, double d23)
 	{
 		return d13 / d12 > factor && d23 / d12 > factor;
+	}
+
+	/**
+	 * Check if distance 12 is much smaller than distance 13 and 23. It must be a given factor smaller than the other
+	 * two distances. The other two distances must also be above the min distance threshold, i.e. foci 3 is separated
+	 * from foci 1 and 2.
+	 *
+	 * @param d12
+	 *            the d12
+	 * @param d13
+	 *            the d13
+	 * @param d23
+	 *            the d23
+	 * @param minDistance
+	 *            the min distance
+	 * @return true, if successful
+	 */
+	private boolean isSeparated(double d12, double d13, double d23, double minDistance)
+	{
+		return d13 > minDistance && d23 > minDistance && d13 / d12 > factor && d23 / d12 > factor;
+	}
+
+	/**
+	 * Overlay triplets on image
+	 */
+	private void overlayTriplets()
+	{
+		int count;
+		if (imp != null)
+		{
+			Overlay o = new Overlay();
+			count = 0;
+			for (int[] triplet : triplets)
+			{
+				count++;
+				float[] x = new float[3];
+				float[] y = new float[3];
+				AssignedPoint p1 = foci1[triplet[0]];
+				AssignedPoint p2 = foci2[triplet[1]];
+				AssignedPoint p3 = foci3[triplet[2]];
+				x[0] = p1.x;
+				x[1] = p2.x;
+				x[2] = p3.x;
+				y[0] = p1.y;
+				y[1] = p2.y;
+				y[2] = p3.y;
+				PolygonRoi roi = new PolygonRoi(x, y, 3, Roi.POLYGON);
+				Color color;
+				switch (triplet[3])
+				{
+					case TRANSLOCATION:
+						color = Color.CYAN;
+						break;
+					case NO_TRANSLOCATION:
+						color = Color.MAGENTA;
+						break;
+					case UNKNOWN:
+					default:
+						color = Color.YELLOW;
+				}
+				roi.setStrokeColor(color);
+				o.add(roi);
+
+				TextRoi text = new TextRoi(Maths.max(x) + 1, Maths.min(y),
+						Integer.toString(count) + CLASSIFICATION[triplet[3]].charAt(0));
+				text.setStrokeColor(color);
+				o.add(text);
+			}
+			imp.setOverlay(o);
+		}
 	}
 }
