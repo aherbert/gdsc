@@ -1,24 +1,27 @@
 package gdsc.foci;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
-
-import gdsc.UsageTracker;
+import java.awt.Canvas;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
- * Copyright (C) 2011 Alex Herbert
+ * Copyright (C) 2016 Alex Herbert
  * Genome Damage and Stability Centre
  * University of Sussex, UK
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *---------------------------------------------------------------------------*/
 
+import java.awt.Color;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.List;
+
+import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
 import gdsc.core.match.MatchCalculator;
 import gdsc.core.match.PointPair;
@@ -35,6 +38,7 @@ import ij.gui.Roi;
 import ij.gui.TextRoi;
 import ij.plugin.PlugIn;
 import ij.process.ByteProcessor;
+import ij.text.TextPanel;
 import ij.text.TextWindow;
 
 /**
@@ -61,6 +65,13 @@ public class TranslocationFinder implements PlugIn
 	private static double distance = 50;
 	private static double factor = 2;
 	private static boolean showMatches = false;
+
+	// The foci
+	private AssignedPoint[] foci1, foci2, foci3;
+	// Image to draw overlay
+	private ImagePlus imp;
+	// Current set of triplets
+	private ArrayList<int[]> triplets;
 
 	public void run(String arg)
 	{
@@ -103,14 +114,14 @@ public class TranslocationFinder implements PlugIn
 		showMatches = gd.getNextBoolean();
 
 		// Get the foci
-		AssignedPoint[] foci1 = getFoci(resultsName1);
-		AssignedPoint[] foci2 = getFoci(resultsName2);
-		AssignedPoint[] foci3 = getFoci(resultsName3);
+		foci1 = getFoci(resultsName1);
+		foci2 = getFoci(resultsName2);
+		foci3 = getFoci(resultsName3);
 
 		if (foci1 == null || foci2 == null || foci3 == null)
 			return;
 
-		analyse(foci1, foci2, foci3);
+		analyse();
 	}
 
 	private AssignedPoint[] getFoci(String resultsName)
@@ -135,15 +146,8 @@ public class TranslocationFinder implements PlugIn
 	/**
 	 * For all foci in set 1, compare to set 2 and output a histogram of the average density around each foci (pair
 	 * correlation) and the minimum distance to another foci.
-	 *
-	 * @param foci1
-	 *            the foci1
-	 * @param foci2
-	 *            the foci2
-	 * @param foci3
-	 *            the foci3
 	 */
-	private void analyse(AssignedPoint[] foci1, AssignedPoint[] foci2, AssignedPoint[] foci3)
+	private void analyse()
 	{
 		// Compute pairwise matches
 		final boolean is3D = is3D(foci1) || is3D(foci2) || is3D(foci3);
@@ -164,7 +168,7 @@ public class TranslocationFinder implements PlugIn
 		}
 
 		// Use for debugging
-		ImagePlus imp = WindowManager.getImage(image);
+		imp = WindowManager.getImage(image);
 
 		if (imp != null && showMatches)
 		{
@@ -181,7 +185,7 @@ public class TranslocationFinder implements PlugIn
 		}
 
 		// Find triplets with mutual closest neighbours
-		ArrayList<int[]> triplets = new ArrayList<int[]>();
+		triplets = new ArrayList<int[]>();
 		for (PointPair pair12 : matches12)
 		{
 			final int id1 = ((AssignedPoint) pair12.getPoint1()).id;
@@ -248,7 +252,15 @@ public class TranslocationFinder implements PlugIn
 			resultsWindow.append(sb.toString());
 		}
 
-		// Overlay triplets on image
+		overlayTriplets();
+	}
+
+	/**
+	 * Overlay triplets on image
+	 */
+	private void overlayTriplets()
+	{
+		int count;
 		if (imp != null)
 		{
 			Overlay o = new Overlay();
@@ -281,8 +293,6 @@ public class TranslocationFinder implements PlugIn
 					default:
 						color = Color.YELLOW;
 				}
-				roi.setName("test");
-				//roi.setStrokeWidth(2);
 				roi.setStrokeColor(color);
 				o.add(roi);
 
@@ -346,6 +356,107 @@ public class TranslocationFinder implements PlugIn
 		if (resultsWindow == null || !resultsWindow.isShowing())
 		{
 			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 1000, 300);
+
+			// Allow the results to be manually changed
+			resultsWindow.getTextPanel().addMouseListener(new MouseListener()
+			{
+				public void mouseClicked(MouseEvent e)
+				{
+					if (e.getClickCount() < 2)
+						return;
+
+					TextPanel tp = null;
+					if (e.getSource() instanceof TextPanel)
+					{
+						tp = (TextPanel) e.getSource();
+					}
+					else if (e.getSource() instanceof Canvas &&
+							((Canvas) e.getSource()).getParent() instanceof TextPanel)
+					{
+						tp = (TextPanel) ((Canvas) e.getSource()).getParent();
+					}
+
+					final String line = tp.getLine(tp.getSelectionStart());
+					final String[] fields = line.split("\t");
+					final GenericDialog gd = new GenericDialog(TITLE + " Results Update");
+
+					// Get the current classification: label = count + classification char
+					final String label = fields[fields.length - 1];
+					int index = 0;
+					final char c = label.charAt(label.length() - 1);
+					while (index < CLASSIFICATION.length && CLASSIFICATION[index].charAt(0) != c)
+						index++;
+					if (index == CLASSIFICATION.length)
+						index = 0;
+
+					// Prompt the user to change it
+					gd.addMessage("Update the classification for " + label);
+					gd.addChoice("Class", CLASSIFICATION, CLASSIFICATION[index]);
+					gd.showDialog();
+					if (gd.wasCanceled())
+						return;
+					final int newIndex = gd.getNextChoiceIndex();
+					if (newIndex == index)
+						return;
+					index = newIndex;
+
+					// Update the table fields
+					final String sCount = label.substring(0, label.length() - 1);
+					fields[fields.length - 2] = CLASSIFICATION[index];
+					fields[fields.length - 1] = sCount + CLASSIFICATION[index].charAt(0);
+					StringBuilder sb = new StringBuilder(fields[0]);
+					for (int i = 1; i < fields.length; i++)
+						sb.append('\t').append(fields[i]);
+					tp.setLine(tp.getSelectionStart(), sb.toString());
+
+					// Update the overlay
+					if (imp == null || triplets == null)
+						return;
+
+					// Get the triplet count from the label
+					int count = 0;
+					try
+					{
+						count = Integer.parseInt(sCount);
+					}
+					catch (NumberFormatException ex)
+					{
+						return;
+					}
+					if (triplets.size() < count)
+						return;
+
+					// Find if the selection is from the current set of triplets
+					final int[] triplet = triplets.get(count - 1);
+					final AssignedPoint p1 = foci1[triplet[0]];
+					final AssignedPoint p2 = foci2[triplet[1]];
+					final AssignedPoint p3 = foci3[triplet[2]];
+					if (p1.x != Integer.parseInt(fields[1]) || p1.y != Integer.parseInt(fields[2]) ||
+							p1.z != Integer.parseInt(fields[3]) || p2.x != Integer.parseInt(fields[4]) ||
+							p2.y != Integer.parseInt(fields[5]) || p2.z != Integer.parseInt(fields[6]) ||
+							p3.x != Integer.parseInt(fields[7]) || p3.y != Integer.parseInt(fields[8]) ||
+							p3.z != Integer.parseInt(fields[9]))
+						return;
+					triplet[3] = index;
+					overlayTriplets();
+				}
+
+				public void mouseEntered(MouseEvent arg0)
+				{
+				}
+
+				public void mouseExited(MouseEvent arg0)
+				{
+				}
+
+				public void mousePressed(MouseEvent arg0)
+				{
+				}
+
+				public void mouseReleased(MouseEvent arg0)
+				{
+				}
+			});
 		}
 	}
 
