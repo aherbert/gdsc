@@ -19,6 +19,7 @@ import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import gdsc.UsageTracker;
@@ -31,12 +32,16 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.ImageCanvas;
 import ij.gui.Line;
 import ij.gui.Overlay;
+import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.TextRoi;
+import ij.gui.Toolbar;
 import ij.plugin.PlugIn;
+import ij.plugin.tool.PlugInTool;
 import ij.process.ByteProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
@@ -67,16 +72,29 @@ public class TranslocationFinder implements PlugIn
 	private static double factor = 2;
 	private static boolean showMatches = false;
 
+	// Static fields hold information to draw the overlay and update the results table 
+	
 	// The foci
-	private AssignedPoint[] foci1, foci2, foci3;
+	private static AssignedPoint[] foci1, foci2, foci3;
 	// Image to draw overlay
-	private ImagePlus imp;
+	private static ImagePlus imp;
 	// Current set of triplets
-	private ArrayList<int[]> triplets;
+	private static ArrayList<int[]> triplets = new ArrayList<int[]>();
+	
+	// Image to draw overlay for the manual triplets
+	private static ImagePlus manualImp;
+	// Current set of manual triplets
+	private static ArrayList<AssignedPoint[]> manualTriplets = new ArrayList<AssignedPoint[]>();
 
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
+
+		if ("tool".equals(arg))
+		{
+			addPluginTool();
+			return;
+		}
 
 		// List the foci results
 		String[] names = FindFoci.getResultsNames();
@@ -188,7 +206,7 @@ public class TranslocationFinder implements PlugIn
 		}
 
 		// Find triplets with mutual closest neighbours
-		triplets = new ArrayList<int[]>();
+		triplets.clear();
 		for (PointPair pair12 : matches12)
 		{
 			final int id1 = ((AssignedPoint) pair12.getPoint1()).id;
@@ -230,29 +248,7 @@ public class TranslocationFinder implements PlugIn
 		for (int[] triplet : triplets)
 		{
 			count++;
-			StringBuilder sb = new StringBuilder();
-			sb.append(name);
-			AssignedPoint p1 = foci1[triplet[0]];
-			AssignedPoint p2 = foci2[triplet[1]];
-			AssignedPoint p3 = foci3[triplet[2]];
-			addTriplet(sb, p1);
-			addTriplet(sb, p2);
-			addTriplet(sb, p3);
-			final double d12 = p1.distanceXYZ(p2);
-			final double d13 = p1.distanceXYZ(p3);
-			final double d23 = p2.distanceXYZ(p3);
-			sb.append("\t").append(Utils.rounded(d12));
-			sb.append("\t").append(Utils.rounded(d13));
-			sb.append("\t").append(Utils.rounded(d23));
-
-			// Compute classification
-			if (isSeparated(d12, d13, d23))
-				triplet[3] = NO_TRANSLOCATION;
-			else if (isSeparated(d13, d12, d23, minDistance))
-				triplet[3] = TRANSLOCATION;
-			sb.append('\t').append(CLASSIFICATION[triplet[3]]);
-			sb.append('\t').append(count).append(CLASSIFICATION[triplet[3]].charAt(0));
-			resultsWindow.append(sb.toString());
+			addResult(count, triplet);
 		}
 
 		overlayTriplets();
@@ -362,8 +358,10 @@ public class TranslocationFinder implements PlugIn
 						sb.append('\t').append(fields[i]);
 					tp.setLine(tp.getSelectionStart(), sb.toString());
 
-					// Update the overlay
-					if (imp == null || triplets == null)
+					// Update the overlay if we can
+					if (imp == null && manualImp == null)
+						return;
+					if (triplets.isEmpty() && manualTriplets.isEmpty())
 						return;
 
 					// Get the triplet count from the label
@@ -376,21 +374,49 @@ public class TranslocationFinder implements PlugIn
 					{
 						return;
 					}
-					if (triplets.size() < count)
+					if (count == 0)
 						return;
 
-					// Find if the selection is from the current set of triplets
-					final int[] triplet = triplets.get(count - 1);
-					final AssignedPoint p1 = foci1[triplet[0]];
-					final AssignedPoint p2 = foci2[triplet[1]];
-					final AssignedPoint p3 = foci3[triplet[2]];
-					if (p1.x != Integer.parseInt(fields[1]) || p1.y != Integer.parseInt(fields[2]) ||
-							p1.z != Integer.parseInt(fields[3]) || p2.x != Integer.parseInt(fields[4]) ||
-							p2.y != Integer.parseInt(fields[5]) || p2.z != Integer.parseInt(fields[6]) ||
-							p3.x != Integer.parseInt(fields[7]) || p3.y != Integer.parseInt(fields[8]) ||
-							p3.z != Integer.parseInt(fields[9]))
-						return;
-					triplet[3] = index;
+					if (count > 0)
+					{
+						// Triplet added by the plugin
+						if (triplets.size() < count)
+							return;
+
+						// Find if the selection is from the current set of triplets
+						final int[] triplet = triplets.get(count - 1);
+						final AssignedPoint p1 = foci1[triplet[0]];
+						final AssignedPoint p2 = foci2[triplet[1]];
+						final AssignedPoint p3 = foci3[triplet[2]];
+						if (p1.x != Integer.parseInt(fields[1]) || p1.y != Integer.parseInt(fields[2]) ||
+								p1.z != Integer.parseInt(fields[3]) || p2.x != Integer.parseInt(fields[4]) ||
+								p2.y != Integer.parseInt(fields[5]) || p2.z != Integer.parseInt(fields[6]) ||
+								p3.x != Integer.parseInt(fields[7]) || p3.y != Integer.parseInt(fields[8]) ||
+								p3.z != Integer.parseInt(fields[9]))
+							return;
+						triplet[3] = index;
+					}
+					else
+					{
+						// Manual triplet
+						count = -count;
+						if (manualTriplets.size() < count)
+							return;
+
+						// Find if the selection is from the current set of manual triplets
+						final AssignedPoint[] triplet = manualTriplets.get(count - 1);
+						final AssignedPoint p1 = triplet[0];
+						final AssignedPoint p2 = triplet[1];
+						final AssignedPoint p3 = triplet[2];
+						if (p1.x != Integer.parseInt(fields[1]) || p1.y != Integer.parseInt(fields[2]) ||
+								p1.z != Integer.parseInt(fields[3]) || p2.x != Integer.parseInt(fields[4]) ||
+								p2.y != Integer.parseInt(fields[5]) || p2.z != Integer.parseInt(fields[6]) ||
+								p3.x != Integer.parseInt(fields[7]) || p3.y != Integer.parseInt(fields[8]) ||
+								p3.z != Integer.parseInt(fields[9]))
+							return;
+						triplet[0].id = index;
+					}
+
 					overlayTriplets();
 				}
 
@@ -426,6 +452,66 @@ public class TranslocationFinder implements PlugIn
 		sb.append("\tClass");
 		sb.append("\tLabel");
 		return sb.toString();
+	}
+
+	private void addResult(int count, int[] triplet)
+	{
+		AssignedPoint p1 = foci1[triplet[0]];
+		AssignedPoint p2 = foci2[triplet[1]];
+		AssignedPoint p3 = foci3[triplet[2]];
+		triplet[3] = addResult(count, name, p1, p2, p3);
+	}
+
+	private int addResult(int count, String name, AssignedPoint p1, AssignedPoint p2, AssignedPoint p3)
+	{
+		return addResult(count, name, p1, p2, p3, -1);
+	}
+
+	/**
+	 * Adds the result.
+	 *
+	 * @param count
+	 *            the count
+	 * @param name
+	 *            the name
+	 * @param p1
+	 *            the p1
+	 * @param p2
+	 *            the p2
+	 * @param p3
+	 *            the p3
+	 * @param classification
+	 *            the classification (set to -1 to auto compute)
+	 * @return the classification
+	 */
+	private int addResult(int count, String name, AssignedPoint p1, AssignedPoint p2, AssignedPoint p3,
+			int classification)
+	{
+		StringBuilder sb = new StringBuilder();
+		sb.append(name);
+		addTriplet(sb, p1);
+		addTriplet(sb, p2);
+		addTriplet(sb, p3);
+		final double d12 = p1.distanceXYZ(p2);
+		final double d13 = p1.distanceXYZ(p3);
+		final double d23 = p2.distanceXYZ(p3);
+		sb.append("\t").append(Utils.rounded(d12));
+		sb.append("\t").append(Utils.rounded(d13));
+		sb.append("\t").append(Utils.rounded(d23));
+
+		// Compute classification
+		if (classification >= CLASSIFICATION.length || classification < 0)
+		{
+			classification = 0;
+			if (isSeparated(d12, d13, d23))
+				classification = NO_TRANSLOCATION;
+			else if (isSeparated(d13, d12, d23, minDistance))
+				classification = TRANSLOCATION;
+		}
+		sb.append('\t').append(CLASSIFICATION[classification]);
+		sb.append('\t').append(count).append(CLASSIFICATION[classification].charAt(0));
+		resultsWindow.append(sb.toString());
+		return classification;
 	}
 
 	private void addTriplet(StringBuilder sb, AssignedPoint p)
@@ -477,48 +563,186 @@ public class TranslocationFinder implements PlugIn
 	 */
 	private void overlayTriplets()
 	{
-		int count;
+		Overlay o = null;
 		if (imp != null)
 		{
-			Overlay o = new Overlay();
-			count = 0;
+			o = new Overlay();
+			int count = 0;
 			for (int[] triplet : triplets)
 			{
 				count++;
-				float[] x = new float[3];
-				float[] y = new float[3];
 				AssignedPoint p1 = foci1[triplet[0]];
 				AssignedPoint p2 = foci2[triplet[1]];
 				AssignedPoint p3 = foci3[triplet[2]];
-				x[0] = p1.x;
-				x[1] = p2.x;
-				x[2] = p3.x;
-				y[0] = p1.y;
-				y[1] = p2.y;
-				y[2] = p3.y;
-				PolygonRoi roi = new PolygonRoi(x, y, 3, Roi.POLYGON);
-				Color color;
-				switch (triplet[3])
-				{
-					case TRANSLOCATION:
-						color = Color.CYAN;
-						break;
-					case NO_TRANSLOCATION:
-						color = Color.MAGENTA;
-						break;
-					case UNKNOWN:
-					default:
-						color = Color.YELLOW;
-				}
-				roi.setStrokeColor(color);
-				o.add(roi);
-
-				TextRoi text = new TextRoi(Maths.max(x) + 1, Maths.min(y),
-						Integer.toString(count) + CLASSIFICATION[triplet[3]].charAt(0));
-				text.setStrokeColor(color);
-				o.add(text);
+				addTriplet(count, o, p1, p2, p3, triplet[3]);
 			}
 			imp.setOverlay(o);
 		}
+		if (manualImp != null)
+		{
+			// New overlay if the two images are different
+			if (o == null || (imp != null && imp.getID() != manualImp.getID()))
+				o = new Overlay();
+			int count = 0;
+			for (AssignedPoint[] triplet : manualTriplets)
+			{
+				count--;
+				AssignedPoint p1 = triplet[0];
+				AssignedPoint p2 = triplet[1];
+				AssignedPoint p3 = triplet[2];
+				// We store the classification in the id of the first point
+				addTriplet(count, o, p1, p2, p3, triplet[0].id);
+			}
+			manualImp.setOverlay(o);
+		}
+	}
+
+	private void addTriplet(int count, Overlay o, AssignedPoint p1, AssignedPoint p2, AssignedPoint p3,
+			int classification)
+	{
+		float[] x = new float[3];
+		float[] y = new float[3];
+		x[0] = p1.x;
+		x[1] = p2.x;
+		x[2] = p3.x;
+		y[0] = p1.y;
+		y[1] = p2.y;
+		y[2] = p3.y;
+		PolygonRoi roi = new PolygonRoi(x, y, 3, Roi.POLYGON);
+		Color color;
+		switch (classification)
+		{
+			case TRANSLOCATION:
+				color = Color.CYAN;
+				break;
+			case NO_TRANSLOCATION:
+				color = Color.MAGENTA;
+				break;
+			case UNKNOWN:
+			default:
+				color = Color.YELLOW;
+		}
+		roi.setStrokeColor(color);
+		o.add(roi);
+
+		TextRoi text = new TextRoi(Maths.max(x) + 1, Maths.min(y),
+				Integer.toString(count) + CLASSIFICATION[classification].charAt(0));
+		text.setStrokeColor(color);
+		o.add(text);
+	}
+
+	/**
+	 * Provide a tool on the ImageJ toolbar that responds to a user clicking on the same image to identify
+	 * foci for potential translocations.
+	 */
+	public class TranslocationFinderPluginTool extends PlugInTool
+	{
+		final String[] labels = { "C1", "C2", "C3" };
+		final String[] items = Arrays.copyOf(CLASSIFICATION, CLASSIFICATION.length + 1);
+		int imageId = 0;
+		int[] ox = new int[3], oy = new int[3], oz = new int[3];
+		int points = 0;
+
+		TranslocationFinderPluginTool()
+		{
+			items[items.length - 1] = "Auto";
+		}
+
+		@Override
+		public String getToolName()
+		{
+			return "Manual Translocation Finder Tool";
+		}
+
+		@Override
+		public String getToolIcon()
+		{
+			return "Cf00o4233C0f0o6933C00foa644C000Ta508M";
+		}
+
+		@Override
+		public void mouseClicked(ImagePlus imp, MouseEvent e)
+		{
+			// Ensure rapid mouse click does not break things
+			synchronized (this)
+			{
+				if (imageId != imp.getID())
+				{
+					points = 0;
+				}
+				imageId = imp.getID();
+
+				ImageCanvas ic = imp.getCanvas();
+				ox[points] = ic.offScreenX(e.getX());
+				oy[points] = ic.offScreenY(e.getY());
+				oz[points] = imp.getSlice();
+				//System.out.printf("click %d,%d\n", ox[points], oy[points]);
+				points++;
+
+				// Draw points as an ROI.
+				if (points < 3)
+				{
+					PointRoi roi = new PointRoi(ox, oy, points);
+					roi.setHideLabels(false);
+					imp.setRoi(roi);
+				}
+				else
+				{
+					imp.setRoi((Roi) null);
+					points = 0;
+
+					int classification = CLASSIFICATION.length; // Auto
+
+					// Q. Ask user if they want to add the point?
+					GenericDialog gd = new GenericDialog(TITLE + " Tool");
+					gd.addMessage("Record manual translocation");
+					gd.addChoice("Class", items, items[classification]);
+					gd.addNumericField("Min_distance", minDistance, 2, 6, "pixels");
+					gd.addNumericField("Factor", factor, 2);
+					gd.showDialog();
+					if (gd.wasCanceled())
+						return;
+					classification = gd.getNextChoiceIndex();
+					minDistance = gd.getNextNumber();
+					factor = gd.getNextNumber();
+
+					// If a new image for a triplet then reset the manual triplets for the overlay
+					if (manualImp != null && manualImp.getID() != imp.getID())
+						manualTriplets.clear();
+					manualImp = imp;
+					
+					createResultsWindow();
+					AssignedPoint p1 = new AssignedPoint(ox[0], oy[0], oz[0], 1);
+					AssignedPoint p2 = new AssignedPoint(ox[1], oy[1], oz[1], 2);
+					AssignedPoint p3 = new AssignedPoint(ox[2], oy[2], oz[2], 3);
+					manualTriplets.add(new AssignedPoint[] { p1, p2, p3 });
+					int count = -manualTriplets.size();
+					classification = addResult(count, imp.getTitle() + " (Manual)", p1, p2, p3, classification);
+					p1.id = classification;
+					overlayTriplets();
+				}
+			}
+
+			e.consume();
+		}
+	}
+
+	private static TranslocationFinder instance = null;
+	private static TranslocationFinderPluginTool toolInstance = null;
+
+	/**
+	 * Initialise the manual translocation finder tool. This is to allow support for calling within macro toolsets.
+	 */
+	public static void addPluginTool()
+	{
+		if (instance == null)
+		{
+			instance = new TranslocationFinder();
+			toolInstance = instance.new TranslocationFinderPluginTool();
+		}
+
+		// Add the tool
+		Toolbar.addPlugInTool(toolInstance);
+		IJ.showStatus("Added " + TITLE + " Tool");
 	}
 }
