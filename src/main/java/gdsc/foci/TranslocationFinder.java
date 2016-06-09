@@ -73,14 +73,14 @@ public class TranslocationFinder implements PlugIn
 	private static boolean showMatches = false;
 
 	// Static fields hold information to draw the overlay and update the results table 
-	
+
 	// The foci
 	private static AssignedPoint[] foci1, foci2, foci3;
 	// Image to draw overlay
 	private static ImagePlus imp;
 	// Current set of triplets
 	private static ArrayList<int[]> triplets = new ArrayList<int[]>();
-	
+
 	// Image to draw overlay for the manual triplets
 	private static ImagePlus manualImp;
 	// Current set of manual triplets
@@ -642,6 +642,7 @@ public class TranslocationFinder implements PlugIn
 		int imageId = 0;
 		int[] ox = new int[3], oy = new int[3], oz = new int[3];
 		int points = 0;
+		boolean prompt = true;
 
 		TranslocationFinderPluginTool()
 		{
@@ -658,6 +659,21 @@ public class TranslocationFinder implements PlugIn
 		public String getToolIcon()
 		{
 			return "Cf00o4233C0f0o6933C00foa644C000Ta508M";
+		}
+
+		@Override
+		public void showOptionsDialog()
+		{
+			GenericDialog gd = new GenericDialog(TITLE + " Tool Options");
+			gd.addNumericField("Min_distance", minDistance, 2, 6, "pixels");
+			gd.addNumericField("Factor", factor, 2);
+			gd.addCheckbox("Show_record_dialog", prompt);
+			gd.showDialog();
+			if (gd.wasCanceled())
+				return;
+			minDistance = gd.getNextNumber();
+			factor = gd.getNextNumber();
+			prompt = gd.getNextBoolean();
 		}
 
 		@Override
@@ -694,23 +710,26 @@ public class TranslocationFinder implements PlugIn
 					int classification = CLASSIFICATION.length; // Auto
 
 					// Q. Ask user if they want to add the point?
-					GenericDialog gd = new GenericDialog(TITLE + " Tool");
-					gd.addMessage("Record manual translocation");
-					gd.addChoice("Class", items, items[classification]);
-					gd.addNumericField("Min_distance", minDistance, 2, 6, "pixels");
-					gd.addNumericField("Factor", factor, 2);
-					gd.showDialog();
-					if (gd.wasCanceled())
-						return;
-					classification = gd.getNextChoiceIndex();
-					minDistance = gd.getNextNumber();
-					factor = gd.getNextNumber();
+					if (prompt)
+					{
+						GenericDialog gd = new GenericDialog(TITLE + " Tool");
+						gd.addMessage("Record manual translocation");
+						gd.addChoice("Class", items, items[classification]);
+						gd.addNumericField("Min_distance", minDistance, 2, 6, "pixels");
+						gd.addNumericField("Factor", factor, 2);
+						gd.showDialog();
+						if (gd.wasCanceled())
+							return;
+						classification = gd.getNextChoiceIndex();
+						minDistance = gd.getNextNumber();
+						factor = gd.getNextNumber();
+					}
 
 					// If a new image for a triplet then reset the manual triplets for the overlay
 					if (manualImp != null && manualImp.getID() != imp.getID())
 						manualTriplets.clear();
 					manualImp = imp;
-					
+
 					createResultsWindow();
 					AssignedPoint p1 = new AssignedPoint(ox[0], oy[0], oz[0], 1);
 					AssignedPoint p2 = new AssignedPoint(ox[1], oy[1], oz[1], 2);
