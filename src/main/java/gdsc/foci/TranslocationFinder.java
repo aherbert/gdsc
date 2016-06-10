@@ -157,8 +157,8 @@ public class TranslocationFinder implements PlugIn
 		int i = 0;
 		for (int[] result : results)
 		{
-			foci[i] = new AssignedPoint(result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y], result[FindFoci.RESULT_Z],
-					i);
+			foci[i] = new AssignedPoint(result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y],
+					result[FindFoci.RESULT_Z] + 1, i);
 			i++;
 		}
 		return foci;
