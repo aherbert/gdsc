@@ -345,12 +345,12 @@ public class TranslocationFinder implements PlugIn
 					if (gd.wasCanceled())
 						return;
 					final int newIndex = gd.getNextChoiceIndex();
-					if (newIndex == index)
-						return;
+					final boolean noChange = (newIndex == index);
 					index = newIndex;
 
-					// Update the table fields
+					// Update the table fields so we capture the manual edit
 					final String sCount = label.substring(0, label.length() - 1);
+					fields[fields.length - 3] = "Manual";
 					fields[fields.length - 2] = CLASSIFICATION[index];
 					fields[fields.length - 1] = sCount + CLASSIFICATION[index].charAt(0);
 					StringBuilder sb = new StringBuilder(fields[0]);
@@ -359,6 +359,8 @@ public class TranslocationFinder implements PlugIn
 					tp.setLine(tp.getSelectionStart(), sb.toString());
 
 					// Update the overlay if we can
+					if (noChange)
+						return;
 					if (imp == null && manualImp == null)
 						return;
 					if (triplets.isEmpty() && manualTriplets.isEmpty())
@@ -449,6 +451,7 @@ public class TranslocationFinder implements PlugIn
 		sb.append("\tD12");
 		sb.append("\tD13");
 		sb.append("\tD23");
+		sb.append("\tMode");
 		sb.append("\tClass");
 		sb.append("\tLabel");
 		return sb.toString();
@@ -507,6 +510,11 @@ public class TranslocationFinder implements PlugIn
 				classification = NO_TRANSLOCATION;
 			else if (isSeparated(d13, d12, d23, minDistance))
 				classification = TRANSLOCATION;
+			sb.append("\tAuto");
+		}
+		else
+		{
+			sb.append("\tManual");
 		}
 		sb.append('\t').append(CLASSIFICATION[classification]);
 		sb.append('\t').append(count).append(CLASSIFICATION[classification].charAt(0));
