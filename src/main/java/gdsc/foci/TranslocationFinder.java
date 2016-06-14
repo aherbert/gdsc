@@ -148,9 +148,14 @@ public class TranslocationFinder implements PlugIn
 	private AssignedPoint[] getFoci(String resultsName)
 	{
 		ArrayList<int[]> results = FindFoci.getResults(resultsName);
-		if (results == null || results.size() == 0)
+		if (results == null)
 		{
 			IJ.showMessage("Error", "No foci with the name " + resultsName);
+			return null;
+		}
+		if (results.size() == 0)
+		{
+			IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
 			return null;
 		}
 		AssignedPoint[] foci = new AssignedPoint[results.size()];
