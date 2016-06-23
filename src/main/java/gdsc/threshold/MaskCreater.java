@@ -16,6 +16,8 @@ import gdsc.UsageTracker;
  *---------------------------------------------------------------------------*/
 
 import gdsc.core.ij.Utils;
+import gdsc.foci.ObjectAnalyzer;
+import gdsc.foci.ObjectAnalyzer3D;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -26,6 +28,7 @@ import ij.plugin.PlugIn;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
+import ij.process.ShortProcessor;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -63,6 +66,8 @@ public class MaskCreater implements PlugIn
 	private static boolean selectedRemoveEdgeParticles = false;
 	private static int selectedMinParticleSize = 0;
 	private static boolean selectedStackHistogram = true;
+	private static boolean selectedAssignObjects = false;
+	private static boolean selectedEightConnected = false;
 
 	private ImagePlus imp;
 	private int option;
@@ -73,6 +78,8 @@ public class MaskCreater implements PlugIn
 	private boolean removeEdgeParticles = false;
 	private int minParticleSize = 0;
 	private boolean stackHistogram = true;
+	private boolean assignObjects = false;
+	private boolean eightConnected = false;
 
 	/*
 	 * (non-Javadoc)
@@ -82,7 +89,7 @@ public class MaskCreater implements PlugIn
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (!showDialog())
 		{
 			return;
@@ -124,6 +131,8 @@ public class MaskCreater implements PlugIn
 		gd.addCheckbox("Remove_edge_particles", selectedRemoveEdgeParticles);
 		gd.addNumericField("Min_particle_size", selectedMinParticleSize, 0);
 		gd.addCheckbox("Stack_histogram", selectedStackHistogram);
+		gd.addCheckbox("Assign_objects", selectedAssignObjects);
+		gd.addCheckbox("Eight_connected", selectedEightConnected);
 		gd.addHelp(gdsc.help.URL.UTILITY);
 		gd.showDialog();
 
@@ -139,6 +148,8 @@ public class MaskCreater implements PlugIn
 		selectedRemoveEdgeParticles = gd.getNextBoolean();
 		selectedMinParticleSize = (int) gd.getNextNumber();
 		selectedStackHistogram = gd.getNextBoolean();
+		selectedAssignObjects = gd.getNextBoolean();
+		selectedEightConnected = gd.getNextBoolean();
 
 		setImp(WindowManager.getImage(selectedImage));
 		setOption(selectedOption);
@@ -149,6 +160,8 @@ public class MaskCreater implements PlugIn
 		setRemoveEdgeParticles(selectedRemoveEdgeParticles);
 		setMinParticleSize(selectedMinParticleSize);
 		setStackHistogram(selectedStackHistogram);
+		setAssignObjects(selectedAssignObjects);
+		setEightConnected(selectedEightConnected);
 
 		return true;
 	}
@@ -186,7 +199,7 @@ public class MaskCreater implements PlugIn
 		if (imp == null)
 			return maskImp;
 
-		ByteProcessor bp;
+		ImageProcessor ip;
 
 		ImageStack inputStack = imp.getImageStack();
 		ImageStack result = null;
@@ -194,6 +207,10 @@ public class MaskCreater implements PlugIn
 		int[] channels = createArray(dimensions[2], channel);
 		int[] slices = createArray(dimensions[3], slice);
 		int[] frames = createArray(dimensions[4], frame);
+
+		int nChannels = channels.length;
+		int nSlices = slices.length;
+		int nFrames = frames.length;
 
 		double[] thresholds = null;
 		if (option == OPTION_THRESHOLD)
@@ -206,29 +223,37 @@ public class MaskCreater implements PlugIn
 		final int h = imp.getHeight();
 		int minx = w, maxx = 0;
 		int miny = h, maxy = 0;
+		int max = 0;
 
 		if (option == OPTION_MIN_VALUE || option == OPTION_MASK || option == OPTION_THRESHOLD)
 		{
 			// Use the ROI image to create a mask either using:
 			// - non-zero pixels (i.e. a mask)
 			// - all pixels above the minimum display value
-			result = new ImageStack(imp.getWidth(), imp.getHeight());
+			result = new ImageStack(imp.getWidth(), imp.getHeight(), nChannels * nSlices * nFrames);
 
-			for (int frame : frames)
-				for (int slice : slices)
-					for (int channel : channels)
+			for (int f = 0; f < frames.length; f++)
+			{
+				int frame = frames[f];
+				for (int c = 0; c < channels.length; c++)
+				{
+					int channel = channels[c];
+
+					ImageStack channelStack = new ImageStack(imp.getWidth(), imp.getHeight());
+
+					for (int slice : slices)
 					{
 						int stackIndex = imp.getStackIndex(channel, slice, frame);
 						ImageProcessor roiIp = inputStack.getProcessor(stackIndex);
 
-						bp = new ByteProcessor(w, h);
+						ip = new ByteProcessor(w, h);
 						if (option == OPTION_MASK)
 						{
 							for (int i = roiIp.getPixelCount(); i-- > 0;)
 							{
 								if (roiIp.getf(i) != 0)
 								{
-									bp.set(i, 255);
+									ip.set(i, 255);
 								}
 							}
 						}
@@ -249,19 +274,29 @@ public class MaskCreater implements PlugIn
 							{
 								if (roiIp.getf(i) >= min)
 								{
-									bp.set(i, 255);
+									ip.set(i, 255);
 								}
 							}
 						}
 
-						postProcess(bp);
+						channelStack.addSlice(null, ip);
+					}
 
-						byte ZERO = ((byte) 0) & 0xff;
-						byte[] pixels = (byte[]) bp.getPixels();
+					// Post process the entire z-stack to find objects in 3D
+					channelStack = postProcess(channelStack);
+
+					for (int slice = 1; slice <= channelStack.getSize(); slice++)
+					{
+						ip = channelStack.getProcessor(slice);
+						// Find bounds and max value
 						for (int y = 0, i = 0; y < h; y++)
 							for (int x = 0; x < w; x++, i++)
-								if (pixels[i] != ZERO)
+							{
+								final int value = ip.get(i);
+								if (value != 0)
 								{
+									if (max < value)
+										max = value;
 									if (minx > x)
 										minx = x;
 									else if (maxx < x)
@@ -271,9 +306,23 @@ public class MaskCreater implements PlugIn
 									else if (maxy < y)
 										maxy = y;
 								}
+							}
 
-						result.addSlice(null, bp);
+						// Adapted from getStackIndex() to use zero-indexed frame (f) and channel (c)
+						int index = (f) * nChannels * nSlices + (slice - 1) * nChannels + c + 1;
+						result.setPixels(ip.getPixels(), index);
 					}
+
+				} // End channel
+			} // End frame
+
+			if (max <= 255)
+			{
+				ImageStack result2 = new ImageStack(imp.getWidth(), imp.getHeight(), result.getSize());
+				for (int slice = 1; slice <= result.getSize(); slice++)
+					result2.setProcessor(result.getProcessor(slice).convertToByte(false), slice);
+				result = result2;
+			}
 		}
 		else if (option == OPTION_USE_ROI)
 		{
@@ -298,26 +347,29 @@ public class MaskCreater implements PlugIn
 
 			result = new ImageStack(w, h);
 
-			bp = new ByteProcessor(w, h);
+			ip = new ByteProcessor(w, h);
 			for (int y = 0; y < rheight; y++)
 			{
 				for (int x = 0; x < rwidth; x++)
 				{
 					if (ipMask == null || ipMask.get(x, y) != 0)
 					{
-						bp.set(x + xOffset, y + yOffset, 255);
+						ip.set(x + xOffset, y + yOffset, 255);
 					}
 				}
 			}
 
-			postProcess(bp);
+			ip = postProcess(ip);
 
-			byte ZERO = ((byte) 0) & 0xff;
-			byte[] pixels = (byte[]) bp.getPixels();
+			// Find bounds
 			for (int y = 0, i = 0; y < h; y++)
 				for (int x = 0; x < w; x++, i++)
-					if (pixels[i] != ZERO)
+				{
+					final int value = ip.get(i);
+					if (value != 0)
 					{
+						if (max < value)
+							max = value;
 						if (minx > x)
 							minx = x;
 						else if (maxx < x)
@@ -327,42 +379,44 @@ public class MaskCreater implements PlugIn
 						else if (maxy < y)
 							maxy = y;
 					}
-			
+				}
+
+			if (max <= 255)
+				ip = ip.convertToByte(false);
+
 			for (int frame = frames.length; frame-- > 0;)
 				for (int slice = slices.length; slice-- > 0;)
 					for (int channel = channels.length; channel-- > 0;)
 					{
-						result.addSlice(null, bp.duplicate());
+						result.addSlice(null, ip.duplicate());
 					}
 		}
 
-		if (result != null)
-		{
-			maskImp = new ImagePlus(imp.getShortTitle() + " Mask", result);
-			if (imp.isDisplayedHyperStack())
-			{
-				int nChannels = channels.length;
-				int nSlices = slices.length;
-				int nFrames = frames.length;
-				if (nChannels * nSlices * nFrames > 1)
-				{
-					maskImp.setDimensions(nChannels, nSlices, nFrames);
-					maskImp.setOpenAsHyperStack(true);
-				}
-			}
+		if (result == null)
+			return null;
 
-			// Add a bounding rectangle
-			if (minx < w && miny < h)
+		maskImp = new ImagePlus(imp.getShortTitle() + " Mask", result);
+		if (imp.isDisplayedHyperStack())
+		{
+			if (nChannels * nSlices * nFrames > 1)
 			{
-				// Due to the if/else maxx/maxy may not be initialised if we only have single pixels
-				if (maxx < minx)
-					maxx = minx;
-				if (maxy < miny)
-					maxy = miny;
-				maskImp.setRoi(new Rectangle(minx, miny, maxx - minx + 1, maxy - miny + 1));
+				maskImp.setDimensions(nChannels, nSlices, nFrames);
+				maskImp.setOpenAsHyperStack(true);
 			}
 		}
 
+		// Add a bounding rectangle
+		if (minx < w && miny < h)
+		{
+			// Due to the if/else maxx/maxy may not be initialised if we only have single pixels
+			if (maxx < minx)
+				maxx = minx;
+			if (maxy < miny)
+				maxy = miny;
+			maskImp.setRoi(new Rectangle(minx, miny, maxx - minx + 1, maxy - miny + 1));
+		}
+
+		maskImp.setDisplayRange(0, max);
 		return maskImp;
 	}
 
@@ -697,6 +751,48 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Checks if is assign objects.
+	 *
+	 * @return true, if is assign objects
+	 */
+	public boolean isAssignObjects()
+	{
+		return assignObjects;
+	}
+
+	/**
+	 * Sets if assign objects.
+	 *
+	 * @param assignObjects
+	 *            is assign objects
+	 */
+	public void setAssignObjects(boolean assignObjects)
+	{
+		this.assignObjects = assignObjects;
+	}
+
+	/**
+	 * Checks if object assignment is eight connected.
+	 *
+	 * @return true, if is eight connected
+	 */
+	public boolean isEightConnected()
+	{
+		return eightConnected;
+	}
+
+	/**
+	 * Sets if object assignment is eight connected.
+	 *
+	 * @param eightConnected
+	 *            is eight connected
+	 */
+	public void setEightConnected(boolean eightConnected)
+	{
+		this.eightConnected = eightConnected;
+	}
+
+	/**
 	 * @param stackHistogram
 	 *            the stackHistogram to set
 	 */
@@ -705,296 +801,189 @@ public class MaskCreater implements PlugIn
 		this.stackHistogram = stackHistogram;
 	}
 
-	private void postProcess(ByteProcessor bp)
+	private ImageProcessor postProcess(ImageProcessor ip)
 	{
-		if (!removeEdgeParticles && minParticleSize == 0)
-			return;
+		if (!removeEdgeParticles && minParticleSize == 0 && !assignObjects)
+			return ip;
 
 		// Assign all particles
-		int[] mask = findParticles(bp);
+		ObjectAnalyzer oa = new ObjectAnalyzer(ip, eightConnected);
+		oa.setMinObjectSize(minParticleSize);
+		int[] mask = oa.getObjectMask();
 
-		boolean changed = false;
+		final int maxx = ip.getWidth();
+		final int maxy = ip.getHeight();
 
 		if (removeEdgeParticles)
 		{
-			for (int x1 = 0, x2 = ylimit * maxx; x1 < bp.getWidth(); x1++, x2++)
+			final int xlimit = maxx - 1;
+			final int ylimit = ip.getHeight() - 1;
+
+			final int[] toZero = Utils.newArray(oa.getMaxObject() + 1, 0, 1);
+
+			for (int x1 = 0, x2 = ylimit * maxx; x1 < maxx; x1++, x2++)
 			{
 				if (mask[x1] != 0)
 				{
-					// Fill with zero all connected points
-					zero(mask, x1);
-					changed = true;
+					toZero[mask[x1]] = 0;
 				}
 				if (mask[x2] != 0)
 				{
-					// Fill with zero all connected points
-					zero(mask, x2);
-					changed = true;
+					toZero[mask[x2]] = 0;
 				}
 			}
 			for (int y1 = 0, y2 = xlimit; y1 < mask.length; y1 += maxx, y2 += maxx)
 			{
 				if (mask[y1] != 0)
 				{
-					// Fill with zero all connected points
-					zero(mask, y1);
-					changed = true;
+					toZero[mask[y1]] = 0;
 				}
 				if (mask[y2] != 0)
 				{
-					// Fill with zero all connected points
-					zero(mask, y2);
-					changed = true;
+					toZero[mask[y2]] = 0;
+				}
+			}
+
+			int newObjects = 0;
+			for (int o = 1; o < toZero.length; o++)
+			{
+				if (toZero[o] == 0)
+					continue;
+				toZero[o] = ++newObjects;
+				if (newObjects > 65535)
+				{
+					// No more objects can be stored in a 16-bit image
+					while (o < toZero.length)
+					{
+						toZero[o++] = 0;
+					}
+					break;
+				}
+			}
+			if (newObjects != oa.getMaxObject())
+			{
+				// At least one object to be zerod
+				for (int i = 0; i < mask.length; i++)
+				{
+					mask[i] = toZero[mask[i]];
 				}
 			}
 		}
 
-		if (minParticleSize > 0)
+		if (!assignObjects)
 		{
-			// Count particle size and store an index to the particle location
-			int[] count = new int[particles + 1];
-			int[] index = new int[particles + 1];
+			// Create a binary mask
 			for (int i = 0; i < mask.length; i++)
 				if (mask[i] != 0)
-				{
-					count[mask[i]]++;
-					index[mask[i]] = i;
-				}
+					mask[i] = 255;
+		}
 
-			// Remove small particles
-			for (int i = 1; i < count.length; i++)
+		final short[] newMask = new short[maxx * maxy];
+		for (int i = 0; i < newMask.length; i++)
+			newMask[i] = (short) mask[i++];
+
+		return new ShortProcessor(maxx, maxy, newMask, null);
+	}
+
+	private ImageStack postProcess(ImageStack stack)
+	{
+		if (!removeEdgeParticles && minParticleSize == 0 && !assignObjects)
+			return stack;
+
+		final int maxx = stack.getWidth();
+		final int maxy = stack.getHeight();
+		final int maxz = stack.getSize();
+		final int maxx_maxy = maxx * maxy;
+
+		final int[] image = new int[maxx_maxy * maxz];
+		for (int slice = 1, index = 0; slice <= maxz; slice++)
+		{
+			ImageProcessor ip = stack.getProcessor(slice);
+			for (int i = 0; i < maxx_maxy; i++)
+				image[index++] = ip.get(i);
+		}
+
+		// Assign all particles
+		ObjectAnalyzer3D oa = new ObjectAnalyzer3D(image, maxx, maxy, maxz, eightConnected);
+		oa.setMinObjectSize(minParticleSize);
+		int[] mask = oa.getObjectMask();
+
+		if (removeEdgeParticles)
+		{
+			final int xlimit = maxx - 1;
+			final int ylimit = stack.getHeight() - 1;
+
+			final int[] toZero = Utils.newArray(oa.getMaxObject() + 1, 0, 1);
+
+			for (int z = 0, offset = 0; z < maxz; z++, offset += maxx_maxy)
 			{
-				if (count[i] > 0 && count[i] < minParticleSize)
+				for (int x1 = 0, x2 = ylimit * maxx; x1 < maxx; x1++, x2++)
 				{
-					zero(mask, index[i]);
-					changed = true;
+					if (mask[offset + x1] != 0)
+					{
+						toZero[mask[offset + x1]] = 0;
+					}
+					if (mask[offset + x2] != 0)
+					{
+						toZero[mask[offset + x2]] = 0;
+					}
+				}
+				for (int y1 = 0, y2 = xlimit; y1 < maxx_maxy; y1 += maxx, y2 += maxx)
+				{
+					if (mask[offset + y1] != 0)
+					{
+						toZero[mask[offset + y1]] = 0;
+					}
+					if (mask[offset + y2] != 0)
+					{
+						toZero[mask[offset + y2]] = 0;
+					}
+				}
+			}
+
+			int newObjects = 0;
+			for (int o = 1; o < toZero.length; o++)
+			{
+				if (toZero[o] == 0)
+					continue;
+				toZero[o] = ++newObjects;
+				if (newObjects > 65535)
+				{
+					// No more objects can be stored in a 16-bit image
+					while (o < toZero.length)
+					{
+						toZero[o++] = 0;
+					}
+					break;
+				}
+			}
+			if (newObjects != oa.getMaxObject())
+			{
+				// At least one object to be zerod
+				for (int i = 0; i < mask.length; i++)
+				{
+					mask[i] = toZero[mask[i]];
 				}
 			}
 		}
 
-		// Copy the mask back
-		if (changed)
+		if (!assignObjects)
 		{
-			byte[] originalMask = (byte[]) bp.getPixels();
+			// Create a binary mask
 			for (int i = 0; i < mask.length; i++)
-			{
-				if (mask[i] == 0)
-					originalMask[i] = 0;
-			}
-			// Reset
-			bp.setPixels(originalMask);
-		}
-	}
-
-	// Used for a particle search
-	private static final int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0, -1, -1, -1 };
-	private static final int[] DIR_Y_OFFSET = new int[] { -1, -1, 0, 1, 1, 1, 0, -1 };
-	private int maxx = 0, maxy;
-	private int xlimit, ylimit;
-	private int[] offset = null;
-	private int[] pList = null;
-	private int particles;
-
-	private void initialise(int maxx, int maxy)
-	{
-		// Check if already initialised for these dimensions
-		if (maxx == this.maxx && maxy == this.maxy)
-			return;
-
-		this.maxx = maxx;
-		this.maxy = maxy;
-		pList = new int[maxx * maxy];
-
-		xlimit = maxx - 1;
-		ylimit = maxy - 1;
-
-		// Create the offset table (for single array 2D neighbour comparisons)
-		offset = new int[DIR_X_OFFSET.length];
-		for (int d = offset.length; d-- > 0;)
-		{
-			offset[d] = maxx * DIR_Y_OFFSET[d] + DIR_X_OFFSET[d];
-		}
-	}
-
-	/**
-	 * Convert the mask to connected particles, each with a unique number.
-	 */
-	private int[] findParticles(ByteProcessor bp)
-	{
-		initialise(bp.getWidth(), bp.getHeight());
-
-		byte[] originalMask = (byte[]) bp.getPixels();
-		int[] mask = new int[originalMask.length];
-		boolean[] binaryMask = new boolean[originalMask.length];
-
-		// Store all the non-zero positions
-		for (int i = 0; i < mask.length; i++)
-			binaryMask[i] = (originalMask[i] != 0);
-
-		// Find particles 
-		particles = 0;
-		for (int i = 0; i < binaryMask.length; i++)
-		{
-			if (binaryMask[i])
-			{
-				expandParticle(binaryMask, mask, i, ++particles);
-			}
+				if (mask[i] != 0)
+					mask[i] = 255;
 		}
 
-		return mask;
-	}
-
-	/**
-	 * Searches from the specified point to find all connected points and assigns them to given particle.
-	 */
-	private void expandParticle(boolean[] binaryMask, int[] mask, int index0, final int particle)
-	{
-		binaryMask[index0] = false; // mark as processed
-		int listI = 0; // index of current search element in the list
-		int listLen = 1; // number of elements in the list
-
-		// we create a list of connected points and start the list at the particle start position
-		pList[listI] = index0;
-
-		do
+		ImageStack newStack = new ImageStack(maxx, maxy, maxz);
+		for (int slice = 1, index = 0; slice <= maxz; slice++)
 		{
-			final int index1 = pList[listI];
-			// Mark this position as part of the particle
-			mask[index1] = particle;
-
-			// Search the 8-connected neighbours 
-			final int x1 = index1 % maxx;
-			final int y1 = index1 / maxx;
-
-			final boolean isInnerXY = (x1 != 0 && x1 != xlimit) && (y1 != 0 && y1 != ylimit);
-
-			if (isInnerXY)
-			{
-				for (int d = 8; d-- > 0;)
-				{
-					int index2 = index1 + offset[d];
-					if (binaryMask[index2])
-					{
-						binaryMask[index2] = false; // mark as processed
-						// Add this to the search
-						pList[listLen++] = index2;
-					}
-				}
-			}
-			else
-			{
-				for (int d = 8; d-- > 0;)
-				{
-					if (isInside(x1, y1, d))
-					{
-						int index2 = index1 + offset[d];
-						if (binaryMask[index2])
-						{
-							binaryMask[index2] = false; // mark as processed
-							// Add this to the search
-							pList[listLen++] = index2;
-						}
-					}
-				}
-			}
-
-			listI++;
-
-		} while (listI < listLen);
-	}
-
-	/**
-	 * Returns whether the neighbour in a given direction is within the image. NOTE: it is assumed that the pixel x,y
-	 * itself is within the image! Uses class variables xlimit, ylimit: (dimensions of the image)-1
-	 * 
-	 * @param x
-	 *            x-coordinate of the pixel that has a neighbour in the given direction
-	 * @param y
-	 *            y-coordinate of the pixel that has a neighbour in the given direction
-	 * @param direction
-	 *            the direction from the pixel towards the neighbour
-	 * @return true if the neighbour is within the image (provided that x, y is within)
-	 */
-	private boolean isInside(int x, int y, int direction)
-	{
-		switch (direction)
-		{
-			case 0:
-				return (y > 0);
-			case 1:
-				return (y > 0 && x < xlimit);
-			case 2:
-				return (x < xlimit);
-			case 3:
-				return (y < ylimit && x < xlimit);
-			case 4:
-				return (y < ylimit);
-			case 5:
-				return (y < ylimit && x > 0);
-			case 6:
-				return (x > 0);
-			case 7:
-				return (y > 0 && x > 0);
+			final short[] newMask = new short[maxx_maxy];
+			for (int i = 0; i < maxx_maxy; i++)
+				newMask[i] = (short) mask[index++];
+			newStack.setPixels(newMask, slice);
 		}
-		return false;
-	}
-
-	/**
-	 * Searches from the specified point to find all connected points with the same value and set them to zero
-	 */
-	private void zero(int[] mask, int index0)
-	{
-		int value = mask[index0];
-		int listI = 0; // index of current search element in the list
-		int listLen = 1; // number of elements in the list
-
-		// we create a list of connected points and start the list at the particle start position
-		pList[listI] = index0;
-
-		do
-		{
-			final int index1 = pList[listI];
-			// Zero this position
-			mask[index1] = 0;
-
-			// Search the 8-connected neighbours 
-			final int x1 = index1 % maxx;
-			final int y1 = index1 / maxx;
-
-			final boolean isInnerXY = (x1 != 0 && x1 != xlimit) && (y1 != 0 && y1 != ylimit);
-
-			if (isInnerXY)
-			{
-				for (int d = 8; d-- > 0;)
-				{
-					int index2 = index1 + offset[d];
-					if (mask[index2] == value)
-					{
-						// Zero and add this to the search
-						mask[index2] = 0;
-						pList[listLen++] = index2;
-					}
-				}
-			}
-			else
-			{
-				for (int d = 8; d-- > 0;)
-				{
-					if (isInside(x1, y1, d))
-					{
-						int index2 = index1 + offset[d];
-						if (mask[index2] == value)
-						{
-							// Zero and add this to the search
-							mask[index2] = 0;
-							pList[listLen++] = index2;
-						}
-					}
-				}
-			}
-
-			listI++;
-
-		} while (listI < listLen);
+		
+		return newStack;
 	}
 }
