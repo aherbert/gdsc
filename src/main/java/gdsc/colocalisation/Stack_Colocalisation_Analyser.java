@@ -20,6 +20,7 @@ import java.util.Comparator;
 
 import gdsc.UsageTracker;
 import gdsc.colocalisation.cda.TwinStackShifter;
+import gdsc.core.utils.Correlator;
 import gdsc.core.utils.Random;
 import gdsc.threshold.Auto_Threshold;
 import ij.IJ;

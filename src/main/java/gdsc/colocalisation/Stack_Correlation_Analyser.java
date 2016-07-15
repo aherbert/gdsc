@@ -24,6 +24,7 @@ import ij.process.ImageProcessor;
 import java.util.ArrayList;
 
 import gdsc.UsageTracker;
+import gdsc.core.utils.Correlator;
 import gdsc.threshold.Auto_Threshold;
 
 /**
