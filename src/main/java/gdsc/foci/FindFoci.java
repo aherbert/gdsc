@@ -4445,16 +4445,14 @@ public class FindFoci implements PlugIn, MouseListener
 	}
 
 	/**
-	 * Find all local maxima (irrespective whether they finally qualify as maxima or not)
-	 * 
+	 * Find all local maxima (irrespective whether they finally qualify as maxima or not).
+	 *
 	 * @param image
 	 *            The image to be analyzed
-	 * @param roi
-	 *            The image ROI bounds
+	 * @param maxima
+	 *            the maxima
 	 * @param types
 	 *            A byte image, same size as ip, where the maximum points are marked as MAXIMUM
-	 * @param direction
-	 *            The direction array. Will be marked with the greatest uphill direction of each point.
 	 * @param globalMin
 	 *            The image global minimum
 	 * @param threshold
