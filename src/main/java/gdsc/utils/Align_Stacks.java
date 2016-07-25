@@ -8,7 +8,8 @@ import gdsc.core.ij.AlignImagesFFT;
 import gdsc.core.ij.AlignImagesFFT.SubPixelMethod;
 import gdsc.core.ij.AlignImagesFFT.WindowMethod;
 import gdsc.core.ij.Utils;
-import gdsc.threshold.Auto_Threshold;
+import gdsc.core.threshold.AutoThreshold;
+import gdsc.core.threshold.AutoThreshold.Method;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -405,7 +406,7 @@ public class Align_Stacks implements PlugIn
 
 		ShortProcessor sp = (ShortProcessor) ip.convertToShort(true);
 		int[] data = sp.getHistogram();
-		int threshold = Auto_Threshold.Otsu(data);
+		int threshold = AutoThreshold.getThreshold(Method.OTSU, data);
 		float minf = (float) threshold;
 		float maxf = (float) sp.getMax();
 

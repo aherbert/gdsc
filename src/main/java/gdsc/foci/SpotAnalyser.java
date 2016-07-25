@@ -1,21 +1,15 @@
 package gdsc.foci;
 
+import java.awt.AWTEvent;
+import java.awt.Label;
+
+import org.apache.commons.math3.exception.NumberIsTooSmallException;
+import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.inference.TestUtils;
+
 import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
-import gdsc.threshold.Auto_Threshold;
+import gdsc.core.threshold.AutoThreshold;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -32,14 +26,6 @@ import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-
-import java.awt.AWTEvent;
-import java.awt.Label;
-
-import org.apache.commons.math3.exception.NumberIsTooSmallException;
-import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.apache.commons.math3.stat.inference.TestUtils;
 
 /**
  * Analyses the intensity of each channel within the brightest spot of the
@@ -70,7 +56,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 
 	private static int maskOption = 0;
 	private static double blur = 3;
-	private static String thresholdMethod = "Otsu";
+	private static String thresholdMethod = AutoThreshold.Method.OTSU.name;
 	private static double minSize = 50;
 	private static boolean showParticles = false;
 	private static int maxPeaks = 1;
@@ -142,7 +128,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 
 		gd.addChoice("Threshold_Channel", channels, channels[thresholdChannel - 1]);
 		gd.addSlider("Blur", 0.01, 5, blur);
-		gd.addChoice("Threshold_method", Auto_Threshold.methods, thresholdMethod);
+		gd.addChoice("Threshold_method", AutoThreshold.getMethods(), thresholdMethod);
 		gd.addChoice("Spot_Channel", channels, channels[spotChannel - 1]);
 		gd.addSlider("Min_size", 50, 10000, minSize);
 		gd.addCheckbox("Show_particles", showParticles);
@@ -248,7 +234,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 			}
 
 			// Threshold
-			int t = Auto_Threshold.getThreshold(thresholdMethod, ip.getHistogram());
+			int t = AutoThreshold.getThreshold(thresholdMethod, ip.getHistogram());
 			ip.setThreshold(t, 65536, ImageProcessor.NO_LUT_UPDATE);
 		}
 

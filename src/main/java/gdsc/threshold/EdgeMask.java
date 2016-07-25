@@ -48,6 +48,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import gdsc.UsageTracker;
+import gdsc.core.threshold.AutoThreshold;
+import gdsc.core.threshold.AutoThreshold.Method;
 
 /**
  * Create an edge mask from an image.
@@ -279,7 +281,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 		// Only RGB/8/16 bit greyscale image have a histogram
 
 		// Get a suggested background threshold
-		limits[2] = Auto_Threshold.Otsu(data);
+		limits[2] = AutoThreshold.getThreshold(Method.OTSU, data);
 
 		// Get the upper limit using a fraction of the data
 		int limit = (int) (percent * ip.getPixelCount() / 100.0);

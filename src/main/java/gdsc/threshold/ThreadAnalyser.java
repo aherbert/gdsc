@@ -1,5 +1,13 @@
 package gdsc.threshold;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+
 import gdsc.UsageTracker;
 
 /*----------------------------------------------------------------------------- 
@@ -16,6 +24,7 @@ import gdsc.UsageTracker;
  *---------------------------------------------------------------------------*/
 
 import gdsc.core.ij.Utils;
+import gdsc.core.threshold.AutoThreshold;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -33,14 +42,6 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
 
 /**
  * Analyses an image using a given mask.
@@ -62,7 +63,7 @@ public class ThreadAnalyser implements PlugIn
 	private static int maskChannel = 0;
 	private static String objectImage = "";
 	private static int objectChannel = 0;
-	private static String method = "Otsu";
+	private static String method = AutoThreshold.Method.OTSU.name;
 	private static String resultDirectory = "";
 	private static int minLength = 0;
 	private static boolean showSkeleton = false;
@@ -201,7 +202,7 @@ public class ThreadAnalyser implements PlugIn
 		if (!isMask)
 		{
 			int[] data = ip.getHistogram();
-			int level = Auto_Threshold.getThreshold(method, data);
+			int level = AutoThreshold.getThreshold(method, data);
 			ip.threshold(level);
 			if (!Prefs.blackBackground)
 				ip.invert();
@@ -247,7 +248,7 @@ public class ThreadAnalyser implements PlugIn
 		gd.addChoice("Image", imageList, image);
 		gd.addChoice("Mask", imageList, maskImage);
 		gd.addChoice("Objects", objectList, objectImage);
-		gd.addChoice("Threshold_method", Auto_Threshold.methods, method);
+		gd.addChoice("Threshold_method", AutoThreshold.getMethods(true), method);
 		gd.addStringField("Result_directory", resultDirectory, 30);
 		gd.addNumericField("Min_length", minLength, 0);
 		gd.addCheckbox("Show_skeleton", showSkeleton);

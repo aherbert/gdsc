@@ -16,6 +16,7 @@ import gdsc.UsageTracker;
  *---------------------------------------------------------------------------*/
 
 import gdsc.core.ij.Utils;
+import gdsc.core.threshold.AutoThreshold;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.PlugIn;
@@ -180,9 +181,10 @@ public class RGBThresholdAnalyser implements PlugIn
 
 		double[] stats = getStatistics(h);
 
-		int[] thresholds = new int[Auto_Threshold.methods.length];
+		final String[] methods = AutoThreshold.getMethods(true);
+		int[] thresholds = new int[methods.length];
 		for (int i = 0; i < thresholds.length; i++)
-			thresholds[i] = Auto_Threshold.getThreshold(Auto_Threshold.methods[i], h);
+			thresholds[i] = AutoThreshold.getThreshold(methods[i], h);
 
 		addResult(name, channel, stats, manual, thresholds, h);
 	}
@@ -262,7 +264,8 @@ public class RGBThresholdAnalyser implements PlugIn
 		sb.append("Min\tMax\tAv\tSD");
 
 		addMethod(sb, "Manual");
-		for (String method : Auto_Threshold.methods)
+		final String[] methods = AutoThreshold.getMethods(true);
+		for (String method : methods)
 			addMethod(sb, method);
 		return sb.toString();
 	}

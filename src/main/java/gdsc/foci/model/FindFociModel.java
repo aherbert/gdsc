@@ -18,6 +18,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import gdsc.core.threshold.AutoThreshold;
 import gdsc.foci.FindFoci;
 
 /**
@@ -27,7 +28,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 {
 	private int backgroundMethod = FindFoci.BACKGROUND_AUTO_THRESHOLD;
 	private double backgroundParameter = 3;
-	private String thresholdMethod = "Otsu";
+	private String thresholdMethod = AutoThreshold.Method.OTSU.name;
 	private String statisticsMode = "Both";
 	private int searchMethod = FindFoci.SEARCH_ABOVE_BACKGROUND;
 	private double searchParameter = 0.3;

@@ -16,6 +16,7 @@ import gdsc.UsageTracker;
  *---------------------------------------------------------------------------*/
 
 import gdsc.core.ij.Utils;
+import gdsc.core.threshold.AutoThreshold;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -37,7 +38,7 @@ public class ApplyMask implements PlugInFilter
 	
 	private static String selectedImage = "";
 	private static int selectedOption = MaskCreater.OPTION_MASK;
-	private static String selectedThresholdMethod = "Otsu";
+	private static String selectedThresholdMethod = AutoThreshold.Method.OTSU.name;
 	private static int selectedChannel = 0;
 	private static int selectedSlice = 0;
 	private static int selectedFrame = 0;
@@ -97,7 +98,7 @@ public class ApplyMask implements PlugInFilter
 		gd.addMessage("Create a mask from a source image and apply it.\nPixels outside the mask will be set to zero.");
 		gd.addChoice("Mask_Image", imageList.toArray(new String[0]), selectedImage);
 		gd.addChoice("Option", MaskCreater.options, MaskCreater.options[selectedOption]);
-		gd.addChoice("Threshold_Method", Auto_Threshold.methods, selectedThresholdMethod);
+		gd.addChoice("Threshold_Method", AutoThreshold.getMethods(), selectedThresholdMethod);
 		gd.addNumericField("Channel", selectedChannel, 0);
 		gd.addNumericField("Slice", selectedSlice, 0);
 		gd.addNumericField("Frame", selectedFrame, 0);

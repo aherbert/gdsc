@@ -1,5 +1,10 @@
 package gdsc.threshold;
 
+import java.util.ArrayList;
+
+import gdsc.UsageTracker;
+import gdsc.core.threshold.AutoThreshold;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -21,10 +26,6 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
-import java.util.ArrayList;
-
-import gdsc.UsageTracker;
-
 /**
  * Processes an image stack and applies thresholding to create a mask for each channel+frame combination.
  */
@@ -42,7 +43,7 @@ public class Stack_Threshold implements PlugInFilter
 	private final int Z = 3;
 	private final int T = 4;
 
-	private static String methodOption = "Otsu";
+	private static String methodOption = AutoThreshold.Method.OTSU.name;
 
 	// Options flags
 	private static boolean logThresholds = false;
@@ -154,15 +155,17 @@ public class Stack_Threshold implements PlugInFilter
 		gd.addMessage(TITLE);
 
 		// Commented out the methods that take a long time on 16-bit images.
-		String[] methods = { "Try all", "Default",
+		String[] methods = { "Try all", AutoThreshold.Method.DEFAULT.name,
 				// "Huang",
 				// "Intermodes",
 				// "IsoData",
-				"Li", "MaxEntropy", "Mean", "MinError(I)",
+				AutoThreshold.Method.LI.name, AutoThreshold.Method.MAX_ENTROPY.name, AutoThreshold.Method.MEAN.name,
+				AutoThreshold.Method.MIN_ERROR_I.name,
 				// "Minimum",
-				"Moments", "Otsu", "Percentile", "RenyiEntropy",
+				AutoThreshold.Method.MOMENTS.name, AutoThreshold.Method.OTSU.name, AutoThreshold.Method.PERCENTILE.name,
+				AutoThreshold.Method.RENYI_ENTROPY.name,
 				// "Shanbhag",
-				"Triangle", "Yen" };
+				AutoThreshold.Method.TRIANGLE.name, AutoThreshold.Method.YEN.name };
 
 		gd.addChoice("Method", methods, methodOption);
 		gd.addCheckbox("Log_thresholds", logThresholds);
@@ -335,7 +338,7 @@ public class Stack_Threshold implements PlugInFilter
 				}
 			}
 
-			threshold = Auto_Threshold.getThreshold(method, data);
+			threshold = AutoThreshold.getThreshold(method, data);
 
 			// Create a mask for each image in the stack
 			maskStack = new ImageStack(imageStack.getWidth(), imageStack.getHeight());

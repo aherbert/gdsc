@@ -20,9 +20,9 @@ import java.util.Comparator;
 
 import gdsc.UsageTracker;
 import gdsc.colocalisation.cda.TwinStackShifter;
+import gdsc.core.threshold.AutoThreshold;
 import gdsc.core.utils.Correlator;
 import gdsc.core.utils.Random;
-import gdsc.threshold.Auto_Threshold;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -55,7 +55,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	private final int Z = 3;
 	private final int T = 4;
 
-	private static String methodOption = "Otsu";
+	private static String methodOption = AutoThreshold.Method.OTSU.name;
 	private static int channel1 = 1;
 	private static int channel2 = 2;
 	private static int channel3 = 0;
@@ -81,7 +81,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			return DONE;
@@ -233,15 +233,17 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		gd.addChoice("Channel_3", indices, indices[channel3]);
 
 		// Commented out the methods that take a long time on 16-bit images.
-		String[] methods = { "Try all", "Default",
+		String[] methods = { "Try all", AutoThreshold.Method.DEFAULT.name,
 				// "Huang",
 				// "Intermodes",
 				// "IsoData",
-				"Li", "MaxEntropy", "Mean", "MinError(I)",
+				AutoThreshold.Method.LI.name, AutoThreshold.Method.MAX_ENTROPY.name, AutoThreshold.Method.MEAN.name,
+				AutoThreshold.Method.MIN_ERROR_I.name,
 				// "Minimum",
-				"Moments", "Otsu", "Percentile", "RenyiEntropy",
+				AutoThreshold.Method.MOMENTS.name, AutoThreshold.Method.OTSU.name, AutoThreshold.Method.PERCENTILE.name,
+				AutoThreshold.Method.RENYI_ENTROPY.name,
 				// "Shanbhag",
-				"Triangle", "Yen", NONE };
+				AutoThreshold.Method.TRIANGLE.name, AutoThreshold.Method.YEN.name, AutoThreshold.Method.NONE.name };
 
 		gd.addChoice("Method", methods, methodOption);
 		gd.addCheckbox("Log_thresholds", logThresholds);
@@ -352,9 +354,8 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		ImageStack newStack = new ImageStack(maskStack.getWidth(), maskStack.getHeight());
 		for (int s = 1; s <= maskStack.getSize(); s++)
 		{
-			newStack.addSlice(
-					null,
-					intersectMask((ByteProcessor) maskStack.getProcessor(s), (ByteProcessor) maskStack2.getProcessor(s)));
+			newStack.addSlice(null, intersectMask((ByteProcessor) maskStack.getProcessor(s),
+					(ByteProcessor) maskStack2.getProcessor(s)));
 		}
 		return newStack;
 	}
@@ -780,7 +781,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 					}
 				}
 
-				threshold = Auto_Threshold.getThreshold(method, data);
+				threshold = AutoThreshold.getThreshold(method, data);
 				mySubtractThreshold = subtractThreshold && (threshold > 0);
 			}
 			else

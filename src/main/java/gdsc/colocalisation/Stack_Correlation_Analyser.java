@@ -1,5 +1,11 @@
 package gdsc.colocalisation;
 
+import java.util.ArrayList;
+
+import gdsc.UsageTracker;
+import gdsc.core.threshold.AutoThreshold;
+import gdsc.core.utils.Correlator;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -20,12 +26,6 @@ import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
-
-import java.util.ArrayList;
-
-import gdsc.UsageTracker;
-import gdsc.core.utils.Correlator;
-import gdsc.threshold.Auto_Threshold;
 
 /**
  * Processes a stack image with multiple channels. Each frame and z-slice are processed together. Extracts all the
@@ -50,7 +50,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	private final int T = 4;
 
 	// Options
-	private static String methodOption = "Otsu";
+	private static String methodOption = AutoThreshold.Method.OTSU.name;
 	private static boolean useIntersect = true;
 	private static boolean aggregateZstack = true;
 	private static boolean logThresholds = false;
@@ -67,7 +67,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			return DONE;
@@ -197,15 +197,17 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage(TITLE);
 		// Commented out the methods that take a long time on 16-bit images.
-		String[] methods = { "Try all", "Default",
+		String[] methods = { "Try all", AutoThreshold.Method.DEFAULT.name,
 				// "Huang",
 				// "Intermodes",
 				// "IsoData",
-				"Li", "MaxEntropy", "Mean", "MinError(I)",
+				AutoThreshold.Method.LI.name, AutoThreshold.Method.MAX_ENTROPY.name, AutoThreshold.Method.MEAN.name,
+				AutoThreshold.Method.MIN_ERROR_I.name,
 				// "Minimum",
-				"Moments", "None", "Otsu", "Percentile", "RenyiEntropy",
+				AutoThreshold.Method.MOMENTS.name, AutoThreshold.Method.OTSU.name, AutoThreshold.Method.PERCENTILE.name,
+				AutoThreshold.Method.RENYI_ENTROPY.name,
 				// "Shanbhag",
-				"Triangle", "Yen" };
+				AutoThreshold.Method.TRIANGLE.name, AutoThreshold.Method.YEN.name, AutoThreshold.Method.NONE.name };
 
 		gd.addChoice("Method", methods, methodOption);
 		gd.addMessage("Correlation uses union/intersect of the masks");
@@ -303,9 +305,8 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 		ImageStack newStack = new ImageStack(maskStack.getWidth(), maskStack.getHeight());
 		for (int s = 1; s <= maskStack.getSize(); s++)
 		{
-			newStack.addSlice(
-					null,
-					intersectMask((ByteProcessor) maskStack.getProcessor(s), (ByteProcessor) maskStack2.getProcessor(s)));
+			newStack.addSlice(null, intersectMask((ByteProcessor) maskStack.getProcessor(s),
+					(ByteProcessor) maskStack2.getProcessor(s)));
 		}
 		return newStack;
 	}
@@ -368,8 +369,8 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	 */
 	private double[] correlate(SliceCollection s1, SliceCollection s2)
 	{
-		ImageStack overlapStack = (useIntersect) ? intersectMask(s1.maskStack, s2.maskStack) : unionMask(s1.maskStack,
-				s2.maskStack);
+		ImageStack overlapStack = (useIntersect) ? intersectMask(s1.maskStack, s2.maskStack)
+				: unionMask(s1.maskStack, s2.maskStack);
 
 		final byte on = (byte) 255;
 
@@ -402,7 +403,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 			long sum2 = c.getSumY();
 			long sum1A = s1.sum;
 			long sum2A = s2.sum;
-			
+
 			if (subtractThreshold)
 			{
 				sum1 -= c.getN() * s1.threshold;
@@ -410,7 +411,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 				sum2 -= c.getN() * s2.threshold;
 				sum2A -= s2.count * s2.threshold;
 			}
-			
+
 			m1 = (double) sum1 / sum1A;
 			m2 = (double) sum2 / sum2A;
 		}
@@ -553,7 +554,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 				}
 			}
 
-			threshold = Auto_Threshold.getThreshold(method, data);
+			threshold = AutoThreshold.getThreshold(method, data);
 
 			// Create a mask for each image in the stack
 			sum = 0;

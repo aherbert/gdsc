@@ -20,6 +20,7 @@ import gdsc.core.ij.Utils;
 import gdsc.core.match.Coordinate;
 import gdsc.core.match.MatchCalculator;
 import gdsc.core.match.MatchResult;
+import gdsc.core.threshold.AutoThreshold;
 import gdsc.core.utils.UnicodeReader;
 import ij.IJ;
 import ij.ImagePlus;
@@ -84,8 +85,8 @@ import javax.swing.JFrame;
 /**
  * Runs the FindFoci plugin with various settings and compares the results to the reference image point ROI.
  */
-public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener, DialogListener, TextListener,
-		ItemListener
+public class FindFociOptimiser
+		implements PlugIn, MouseListener, WindowListener, DialogListener, TextListener, ItemListener
 {
 	private static OptimiserView instance;
 
@@ -99,7 +100,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	private static boolean myBackgroundAuto = true;
 	private static boolean myBackgroundAbsolute = false;
 	private static String myBackgroundParameter = "2.5, 3.5, 0.5";
-	private static String myThresholdMethod = "Otsu";
+	private static String myThresholdMethod = AutoThreshold.Method.OTSU.name;
 	private static String myStatisticsMode = "Both";
 	private static boolean mySearchAboveBackground = true;
 	private static boolean mySearchFractionOfPeak = true;
@@ -118,8 +119,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	/**
 	 * The list of recognised methods for sorting the results
 	 */
-	public final static String[] sortMethods = { "None", "Precision", "Recall", "F0.5", "F1", "F2", "F-beta",
-			"Jaccard", "RMSD" };
+	public final static String[] sortMethods = { "None", "Precision", "Recall", "F0.5", "F1", "F2", "F-beta", "Jaccard",
+			"RMSD" };
 
 	/**
 	 * Do not sort the results
@@ -236,7 +237,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (arg.equals("frame"))
 		{
 			showOptimiserWindow();
@@ -385,8 +386,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 			long runTime = System.currentTimeMillis() - start;
 			double seconds = runTime / 1000.0;
-			IJ.log(String.format("Optimisation time = %.3f sec (%.3f ms / combination)", seconds, (double) runTime /
-					combinations));
+			IJ.log(String.format("Optimisation time = %.3f sec (%.3f ms / combination)", seconds,
+					(double) runTime / combinations));
 
 			// For a single image we use the raw score (since no results are combined)
 			getScore(results, SCORE_RAW);
@@ -688,8 +689,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			int thresholdMethodIndex = 0;
 			for (int b = 0; b < backgroundMethodArray.length; b++)
 			{
-				String thresholdMethod = (backgroundMethodArray[b] == FindFoci.BACKGROUND_AUTO_THRESHOLD) ? thresholdMethods[thresholdMethodIndex++]
-						: "";
+				String thresholdMethod = (backgroundMethodArray[b] == FindFoci.BACKGROUND_AUTO_THRESHOLD)
+						? thresholdMethods[thresholdMethodIndex++] : "";
 
 				String[] myStatsModes = backgroundMethodHasStatisticsMode(backgroundMethodArray[b]) ? statisticsModes
 						: new String[] { "Both" };
@@ -706,16 +707,16 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 					{
 						boolean logBackground = (blurCount == 0) && !multiMode; // Log on first blur iteration
 						// Use zero when there is no parameter
-						final double thisBackgroundParameter = (backgroundMethodHasParameter(backgroundMethodArray[b])) ? backgroundParameter
-								: 0;
+						final double thisBackgroundParameter = (backgroundMethodHasParameter(backgroundMethodArray[b]))
+								? backgroundParameter : 0;
 
 						for (int minSize = myMinSizeMin; minSize <= myMinSizeMax; minSize += myMinSizeInterval)
 							for (int s = 0; s < searchMethodArray.length; s++)
 								for (double searchParameter = mySearchParameterMinArray[s]; searchParameter <= mySearchParameterMax; searchParameter += mySearchParameterInterval)
 								{
 									// Use zero when there is no parameter
-									double thisSearchParameter = (searchMethodHasParameter(searchMethodArray[s])) ? searchParameter
-											: 0;
+									double thisSearchParameter = (searchMethodHasParameter(searchMethodArray[s]))
+											? searchParameter : 0;
 									for (double peakParameter = myPeakParameterMin; peakParameter <= myPeakParameterMax; peakParameter += myPeakParameterInterval)
 										for (int options : optionsArray)
 										{
@@ -738,15 +739,13 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 												{
 													final double backgroundLevel = ((double[]) clonedInitArray[4])[FindFoci.STATS_BACKGROUND];
 													logBackground = false;
-													IJ.log(String
-															.format("Background level - %s %s: %s = %g",
-																	FindFoci.backgroundMethods[backgroundMethodArray[b]],
-																	backgroundMethodHasStatisticsMode(backgroundMethodArray[b]) ? "(" +
-																			statsMode + ") "
-																			: "",
-																	((backgroundMethodHasParameter(backgroundMethodArray[b])) ? IJ
-																			.d2s(backgroundParameter, 2)
-																			: thresholdMethod), backgroundLevel));
+													IJ.log(String.format("Background level - %s %s: %s = %g",
+															FindFoci.backgroundMethods[backgroundMethodArray[b]],
+															backgroundMethodHasStatisticsMode(backgroundMethodArray[b])
+																	? "(" + statsMode + ") " : "",
+															((backgroundMethodHasParameter(backgroundMethodArray[b]))
+																	? IJ.d2s(backgroundParameter, 2) : thresholdMethod),
+															backgroundLevel));
 												}
 
 												long findMaximaRunTime = findMaximaInitTime + System.nanoTime() -
@@ -1174,10 +1173,10 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 		ArrayList<String> newImageList = (multiMode) ? null : FindFoci.buildMaskList(imp);
 
 		// Column 1
-		gd.addMessage("Runs the FindFoci algorithm using different parameters.\n"
-				+ "Results are compared to reference ROI points.\n\n"
-				+ "Input range fields accept 3 values: min,max,interval\n"
-				+ "Gaussian blur accepts comma-delimited values for the blur.");
+		gd.addMessage("Runs the FindFoci algorithm using different parameters.\n" +
+				"Results are compared to reference ROI points.\n\n" +
+				"Input range fields accept 3 values: min,max,interval\n" +
+				"Gaussian blur accepts comma-delimited values for the blur.");
 
 		createSettings();
 		gd.addChoice("Settings", SETTINGS, SETTINGS[0]);
@@ -1225,9 +1224,9 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			gd.addStringField("Result_file", myResultFile, 35);
 
 			// Add a message about double clicking the result table to show the result
-			gd.addMessage("Note: Double-click an entry in the optimiser results table\n"
-					+ "to view the FindFoci output. This only works for the most recent\n"
-					+ "set of results in the table.");
+			gd.addMessage("Note: Double-click an entry in the optimiser results table\n" +
+					"to view the FindFoci output. This only works for the most recent\n" +
+					"set of results in the table.");
 		}
 
 		gd.addHelp(gdsc.help.URL.FIND_FOCI);
@@ -1427,8 +1426,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			return false;
 		}
 
-		YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE, combinations +
-				" combinations. Do you wish to proceed?");
+		YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE,
+				combinations + " combinations. Do you wish to proceed?");
 		if (!d.yesPressed())
 			return false;
 
@@ -1438,14 +1437,14 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	private boolean showMultiDialog()
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
-		gd.addMessage("Run " +
-				TITLE +
+		gd.addMessage("Run " + TITLE +
 				" on a set of images.\n \nAll images in a directory will be processed.\n \nOptional mask images in the input directory should be named:\n[image_name].mask.[ext]\nor placed in the mask directory with the same name as the parent image.");
 		gd.addStringField("Input_directory", inputDirectory);
 		gd.addStringField("Mask_directory", maskDirectory);
 		gd.addStringField("Output_directory", outputDirectory);
 		gd.addMessage("[Note: Double-click a text field to open a selection dialog]");
-		gd.addMessage("The score metric for each parameter combination is computed per image.\nThe scores are converted then averaged across all images.");
+		gd.addMessage(
+				"The score metric for each parameter combination is computed per image.\nThe scores are converted then averaged across all images.");
 		gd.addChoice("Score_conversion", SCORING_MODES, SCORING_MODES[scoringMode]);
 		gd.addCheckbox("Re-use_results", reuseResults);
 		@SuppressWarnings("unchecked")
@@ -1692,7 +1691,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 	private static boolean backgroundMethodHasParameter(int backgroundMethod)
 	{
-		return !(backgroundMethod == FindFoci.BACKGROUND_NONE || backgroundMethod == FindFoci.BACKGROUND_MEAN || backgroundMethod == FindFoci.BACKGROUND_AUTO_THRESHOLD);
+		return !(backgroundMethod == FindFoci.BACKGROUND_NONE || backgroundMethod == FindFoci.BACKGROUND_MEAN ||
+				backgroundMethod == FindFoci.BACKGROUND_AUTO_THRESHOLD);
 	}
 
 	private int[] createSearchArray()
@@ -3433,10 +3433,11 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 
 	// Store the preset values for the Text fields, Choices, Numeric field.
 	// Preceed with a '-' character if the field is for single mode only.
+	//@formatter:off
 	private String[][] textPreset = new String[][] { { "Testing", // preset name 
 			// Text fields
 			"3", // Background_parameter
-			"Otsu", // Auto_threshold
+			AutoThreshold.Method.OTSU.name, // Auto_threshold
 			"Both", // Statistics_mode
 			"0, 0.6, 0.2", // Search_parameter
 			"3, 9, 2", // Minimum_size
@@ -3460,7 +3461,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	}, { "Default", // preset name 
 			// Text fields
 			"2.5, 3.5, 0.5", // Background_parameter
-			"Otsu", // Auto_threshold
+			AutoThreshold.Method.OTSU.name, // Auto_threshold
 			"Both", // Statistics_mode
 			"0, 0.6, 0.2", // Search_parameter
 			"1, 9, 2", // Minimum_size
@@ -3484,7 +3485,8 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 	}, { "Benchmark", // preset name 
 			// Text fields
 			"0, 4.7, 0.667", // Background_parameter
-			"Otsu, RenyiEntropy, Triangle", // Auto_threshold
+			AutoThreshold.Method.OTSU.name + ", "+AutoThreshold.Method.RENYI_ENTROPY.name+
+			", "+AutoThreshold.Method.TRIANGLE.name, // Auto_threshold
 			"Both", // Statistics_mode
 			"0, 0.8, 0.1", // Search_parameter
 			"1, 9, 2", // Minimum_size
@@ -3530,6 +3532,7 @@ public class FindFociOptimiser implements PlugIn, MouseListener, WindowListener,
 			FLAG_TRUE, // Search_fraction_of_peak
 			FLAG_FALSE + FLAG_SINGLE // Show_score_images
 	} };
+	//@formatter:on
 
 	private void createSettings()
 	{

@@ -1,22 +1,17 @@
 package gdsc.foci;
 
+import java.awt.AWTEvent;
+import java.awt.Checkbox;
+import java.awt.Label;
+import java.awt.Scrollbar;
+import java.awt.TextField;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
-import gdsc.threshold.Auto_Threshold;
 import gdsc.core.ij.Utils;
+import gdsc.core.threshold.AutoThreshold;
+import gdsc.core.threshold.AutoThreshold.Method;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -31,14 +26,6 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
-
-import java.awt.AWTEvent;
-import java.awt.Checkbox;
-import java.awt.Label;
-import java.awt.Scrollbar;
-import java.awt.TextField;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Overlay a mask on the channel. For each unique pixel value in the mask (defining an object), analyse the pixels
@@ -378,7 +365,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 				h[av] += count;
 			}
 
-			defaultCutoff = Auto_Threshold.getThreshold("Otsu", h);
+			defaultCutoff = AutoThreshold.getThreshold(Method.OTSU, h);
 		}
 
 		// Reset the position on the slider for the dialog

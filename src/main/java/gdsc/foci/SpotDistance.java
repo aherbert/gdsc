@@ -24,6 +24,7 @@ import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
 import gdsc.core.match.MatchCalculator;
 import gdsc.core.match.PointPair;
+import gdsc.core.threshold.AutoThreshold;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -737,7 +738,7 @@ public class SpotDistance implements PlugIn
 		int backgroundMethod = (autoThreshold) ? FindFoci.BACKGROUND_AUTO_THRESHOLD
 				: FindFoci.BACKGROUND_STD_DEV_ABOVE_MEAN;
 		double backgroundParameter = stdDevAboveBackground;
-		String autoThresholdMethod = "Otsu";
+		String autoThresholdMethod = AutoThreshold.Method.OTSU.name;
 		int searchMethod = FindFoci.SEARCH_ABOVE_BACKGROUND;
 		double searchParameter = 0;
 		int minSize = minPeakSize;

@@ -1,5 +1,9 @@
 package gdsc.threshold;
 
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import gdsc.UsageTracker;
 
 /*----------------------------------------------------------------------------- 
@@ -16,6 +20,7 @@ import gdsc.UsageTracker;
  *---------------------------------------------------------------------------*/
 
 import gdsc.core.ij.Utils;
+import gdsc.core.threshold.AutoThreshold;
 import gdsc.foci.ObjectAnalyzer;
 import gdsc.foci.ObjectAnalyzer3D;
 import ij.IJ;
@@ -29,10 +34,6 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
-
-import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Create a mask from an image
@@ -51,7 +52,7 @@ public class MaskCreater implements PlugIn
 	{
 		// Add options for multi-level Otsu threshold
 		ArrayList<String> m = new ArrayList<String>();
-		m.addAll(Arrays.asList(Auto_Threshold.methods));
+		m.addAll(Arrays.asList(AutoThreshold.getMethods(true)));
 		m.add("Otsu_3_level");
 		m.add("Otsu_4_level");
 		methods = m.toArray(new String[0]);
@@ -59,7 +60,7 @@ public class MaskCreater implements PlugIn
 
 	private static String selectedImage = "";
 	private static int selectedOption = OPTION_THRESHOLD;
-	private static String selectedThresholdMethod = "Otsu";
+	private static String selectedThresholdMethod = AutoThreshold.Method.OTSU.name;
 	private static int selectedChannel = 0;
 	private static int selectedSlice = 0;
 	private static int selectedFrame = 0;
@@ -566,7 +567,7 @@ public class MaskCreater implements PlugIn
 			int[] threshold = multi.calculateThresholds(statsHistogram, level);
 			return threshold[1];
 		}
-		return Auto_Threshold.getThreshold(autoThresholdMethod, statsHistogram);
+		return AutoThreshold.getThreshold(autoThresholdMethod, statsHistogram);
 	}
 
 	private short[] convertToShort(ImageProcessor ip, float min, float max)

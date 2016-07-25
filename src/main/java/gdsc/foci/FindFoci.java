@@ -1,47 +1,5 @@
 package gdsc.foci;
 
-import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
-import gdsc.foci.model.FindFociModel;
-import gdsc.threshold.Auto_Threshold;
-import gdsc.threshold.Multi_OtsuThreshold;
-import gdsc.utils.GaussianFit;
-import gdsc.core.ij.Utils;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.Macro;
-import ij.Prefs;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
-import ij.gui.ImageRoi;
-import ij.gui.Overlay;
-import ij.gui.PointRoi;
-import ij.gui.PointRoi2;
-import ij.gui.Roi;
-import ij.io.Opener;
-import ij.io.RoiEncoder;
-import ij.plugin.FolderOpener;
-import ij.plugin.PlugIn;
-import ij.plugin.filter.GaussianBlur;
-import ij.plugin.frame.Recorder;
-import ij.process.ColorProcessor;
-import ij.process.ImageProcessor;
-import ij.text.TextWindow;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
@@ -68,6 +26,48 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Vector;
+
+import gdsc.UsageTracker;
+import gdsc.core.ij.Utils;
+import gdsc.core.threshold.AutoThreshold;
+
+/*----------------------------------------------------------------------------- 
+ * GDSC Plugins for ImageJ
+ * 
+ * Copyright (C) 2011 Alex Herbert
+ * Genome Damage and Stability Centre
+ * University of Sussex, UK
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *---------------------------------------------------------------------------*/
+
+import gdsc.foci.model.FindFociModel;
+import gdsc.threshold.Multi_OtsuThreshold;
+import gdsc.utils.GaussianFit;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Macro;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.ImageRoi;
+import ij.gui.Overlay;
+import ij.gui.PointRoi;
+import ij.gui.PointRoi2;
+import ij.gui.Roi;
+import ij.io.Opener;
+import ij.io.RoiEncoder;
+import ij.plugin.FolderOpener;
+import ij.plugin.PlugIn;
+import ij.plugin.filter.GaussianBlur;
+import ij.plugin.frame.Recorder;
+import ij.process.ColorProcessor;
+import ij.process.ImageProcessor;
+import ij.text.TextWindow;
 
 /**
  * Find the peak intensity regions of an image.
@@ -876,9 +876,18 @@ public class FindFoci implements PlugIn, MouseListener
 	/**
 	 * The list of recognised methods for auto-thresholding
 	 */
-	public final static String[] autoThresholdMethods = { "Default", "Huang", "Intermodes", "IsoData", "Li",
-			"MaxEntropy", "Mean", "MinError(I)", "Minimum", "Moments", "Otsu", "Otsu_3_Level", "Otsu_4_Level",
-			"Percentile", "RenyiEntropy", "Shanbhag", "Triangle", "Yen" };
+	public final static String[] autoThresholdMethods;
+	static
+	{
+		ArrayList<String> m = new ArrayList<String>();
+		for (String name : AutoThreshold.getMethods(true))
+			m.add(name);
+		// Add multi-level Otsu thresholding
+		m.add(AutoThreshold.Method.OTSU.name + "_3_Level");
+		m.add(AutoThreshold.Method.OTSU.name + "_4_Level");
+		Collections.sort(m);
+		autoThresholdMethods = m.toArray(new String[m.size()]);
+	}
 	public final static String[] statisticsModes = { "Both", "Inside", "Outside" };
 
 	private static String myMaskImage;
@@ -2481,7 +2490,7 @@ public class FindFoci implements PlugIn, MouseListener
 			int[] threshold = multi.calculateThresholds(statsHistogram, level);
 			return threshold[1];
 		}
-		return Auto_Threshold.getThreshold(autoThresholdMethod, statsHistogram);
+		return AutoThreshold.getThreshold(autoThresholdMethod, statsHistogram);
 	}
 
 	private long timestamp;
