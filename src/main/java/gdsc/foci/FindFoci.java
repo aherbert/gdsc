@@ -2828,6 +2828,7 @@ public class FindFoci implements PlugIn, MouseListener
 		}
 		setResultsDirectory(batchOutputDirectory);
 		openBatchResultsFile();
+		// TODO - make this multi-threaded
 		for (String image : imageList)
 		{
 			runBatch(image, parameters);
