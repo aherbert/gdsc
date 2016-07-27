@@ -2358,7 +2358,6 @@ public class FindFoci implements PlugIn, MouseListener
 			int options, double blur)
 	{
 		lastResultsArray = null;
-		System.out.printf("findMaximaRun %dx%dx%d\n", ffp.maxx, ffp.maxy, ffp.maxz);
 		Object[] results = ffp.findMaximaRun(initArray, backgroundMethod, backgroundParameter, searchMethod,
 				searchParameter, minSize, peakMethod, peakParameter, sortIndex, options, blur);
 		return results;
@@ -2391,7 +2390,6 @@ public class FindFoci implements PlugIn, MouseListener
 			int searchMethod, double searchParameter)
 	{
 		lastResultsArray = null;
-		System.out.printf("findMaximaSearch %dx%dx%d\n", ffp.maxx, ffp.maxy, ffp.maxz);
 		Object[] results = ffp.findMaximaSearch(initArray, backgroundMethod, backgroundParameter, searchMethod,
 				searchParameter);
 		return results;
@@ -2428,7 +2426,6 @@ public class FindFoci implements PlugIn, MouseListener
 			double peakParameter, int options, double blur)
 	{
 		lastResultsArray = null;
-		System.out.printf("findMaximaMerge %dx%dx%d\n", ffp.maxx, ffp.maxy, ffp.maxz);
 		Object[] results = ffp.findMaximaMerge(initArray, searchArray, minSize, peakMethod, peakParameter, options,
 				blur);
 		return results;
@@ -2467,7 +2464,6 @@ public class FindFoci implements PlugIn, MouseListener
 			int centreMethod, double centreParameter)
 	{
 		lastResultsArray = null;
-		System.out.printf("findMaximaResults %dx%dx%d\n", ffp.maxx, ffp.maxy, ffp.maxz);
 		FindFociResult result = ffp.findMaximaResults(initArray, runArray, maxPeaks, sortIndex, centreMethod,
 				centreParameter);
 		if (result != null)
@@ -2507,7 +2503,6 @@ public class FindFoci implements PlugIn, MouseListener
 			int centreMethod, double centreParameter)
 	{
 		lastResultsArray = null;
-		System.out.printf("findMaximaPrelimResults %dx%dx%d\n", ffp.maxx, ffp.maxy, ffp.maxz);
 		FindFociResult result = ffp.findMaximaPrelimResults(initArray, mergeArray, maxPeaks, sortIndex, centreMethod,
 				centreParameter);
 		if (result != null)
@@ -2556,7 +2551,6 @@ public class FindFoci implements PlugIn, MouseListener
 			int outputType, String autoThresholdMethod, String imageTitle, double fractionParameter)
 	{
 		lastResultsArray = null;
-		System.out.printf("findMaximaMaskResults %dx%dx%d\n", ffp.maxx, ffp.maxy, ffp.maxz);
 		FindFociResult result = ffp.findMaximaMaskResults(initArray, mergeArray, prelimResults, outputType,
 				autoThresholdMethod, imageTitle, fractionParameter);
 		if (result != null)
