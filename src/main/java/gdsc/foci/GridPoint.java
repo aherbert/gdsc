@@ -20,12 +20,12 @@ public class GridPoint extends ValuedPoint
 {
 	private boolean assigned = false;
 
-	public GridPoint(int x, int y, int z, int value)
+	public GridPoint(int x, int y, int z, float value)
 	{
 		super(x, y, z, value);
 	}
 
-	public GridPoint(AssignedPoint point, int value)
+	public GridPoint(AssignedPoint point, float value)
 	{
 		super(point, value);
 	}

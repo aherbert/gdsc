@@ -438,7 +438,7 @@ public class MatchPlugin implements PlugIn
 			gd.addCheckbox("Match_table", matchTable);
 		}
 		gd.addCheckbox("Save_matches", saveMatches);
-		ArrayList<int[]> resultsArray = FindFoci.getResults();
+		ArrayList<double[]> resultsArray = FindFoci.getResults();
 		if (resultsArray != null)
 		{
 			String[] imageItems = new String[] { "[None]", "Image1", "Image2" };
@@ -542,12 +542,12 @@ public class MatchPlugin implements PlugIn
 		TimeValuedPoint[] predictedValuedPoints = (TimeValuedPoint[]) predictedPoints;
 
 		// Combine points and sort
-		ArrayList<Integer> heights = extractHeights(actualValuedPoints, predictedValuedPoints);
+		ArrayList<Double> heights = extractHeights(actualValuedPoints, predictedValuedPoints);
 
 		if (heights.isEmpty())
 			return null;
 
-		int[] Q = getQuartiles(heights);
+		float[] Q = getQuartiles(heights);
 
 		// Process each quartile
 		MatchResult[] qResults = new MatchResult[4];
@@ -564,16 +564,16 @@ public class MatchPlugin implements PlugIn
 	/**
 	 * Extract all the heights from the two sets of valued points
 	 */
-	private ArrayList<Integer> extractHeights(TimeValuedPoint[] actualPoints, TimeValuedPoint[] predictedPoints)
+	private ArrayList<Double> extractHeights(TimeValuedPoint[] actualPoints, TimeValuedPoint[] predictedPoints)
 	{
 		HashSet<TimeValuedPoint> nonDuplicates = new HashSet<TimeValuedPoint>();
 		nonDuplicates.addAll(Arrays.asList(actualPoints));
 		nonDuplicates.addAll(Arrays.asList(predictedPoints));
 
-		ArrayList<Integer> heights = new ArrayList<Integer>(nonDuplicates.size());
+		ArrayList<Double> heights = new ArrayList<Double>(nonDuplicates.size());
 		for (TimeValuedPoint p : nonDuplicates)
 		{
-			heights.add((int) p.getValue());
+			heights.add((double) p.getValue());
 		}
 		Collections.sort(heights);
 		return heights;
@@ -582,12 +582,12 @@ public class MatchPlugin implements PlugIn
 	/**
 	 * Extract the points that are within the specified limits
 	 */
-	private TimeValuedPoint[] extractPoints(TimeValuedPoint[] points, int lowerLimit, int upperLimit)
+	private TimeValuedPoint[] extractPoints(TimeValuedPoint[] points, float lower, float upper)
 	{
 		LinkedList<TimeValuedPoint> list = new LinkedList<TimeValuedPoint>();
 		for (TimeValuedPoint p : points)
 		{
-			if (p.getValue() >= lowerLimit && p.getValue() < upperLimit)
+			if (p.getValue() >= lower && p.getValue() < upper)
 				list.add(p);
 		}
 		return list.toArray(new TimeValuedPoint[list.size()]);
@@ -596,12 +596,12 @@ public class MatchPlugin implements PlugIn
 	/**
 	 * Count the points that are within the specified limits
 	 */
-	private int countPoints(TimeValuedPoint[] points, int lowerLimit, int upperLimit)
+	private int countPoints(TimeValuedPoint[] points, float lower, float upper)
 	{
 		int n = 0;
 		for (TimeValuedPoint p : points)
 		{
-			if (p.getValue() >= lowerLimit && p.getValue() < upperLimit)
+			if (p.getValue() >= lower && p.getValue() < upper)
 				n++;
 		}
 		return n;
@@ -814,17 +814,17 @@ public class MatchPlugin implements PlugIn
 			return;
 
 		// Extract the heights of the matched points. Use the average height of each match.
-		ArrayList<Integer> heights = new ArrayList<Integer>(matches.size());
+		ArrayList<Double> heights = new ArrayList<Double>(matches.size());
 		for (PointPair pair : matches)
 		{
 			TimeValuedPoint p1 = (TimeValuedPoint) pair.getPoint1();
 			TimeValuedPoint p2 = (TimeValuedPoint) pair.getPoint2();
-			heights.add(Math.round(((p1.getValue() + p2.getValue()) / 2)));
+			heights.add((p1.getValue() + p2.getValue()) / 2.0);
 		}
 		Collections.sort(heights);
 
 		// Get the quartile ranges
-		int[] Q = getQuartiles(heights);
+		float[] Q = getQuartiles(heights);
 
 		// Extract the valued points
 		TimeValuedPoint[] actualPoints = extractValuedPoints(falseNegatives);
@@ -834,15 +834,15 @@ public class MatchPlugin implements PlugIn
 		int[] actualCount = new int[6];
 		int[] predictedCount = new int[6];
 
-		actualCount[0] = countPoints(actualPoints, 0, Q[0]);
-		predictedCount[0] = countPoints(predictedPoints, 0, Q[0]);
+		actualCount[0] = countPoints(actualPoints, Float.NEGATIVE_INFINITY, Q[0]);
+		predictedCount[0] = countPoints(predictedPoints, Float.NEGATIVE_INFINITY, Q[0]);
 		for (int q = 0; q < 4; q++)
 		{
 			actualCount[q + 1] = countPoints(actualPoints, Q[q], Q[q + 1]);
 			predictedCount[q + 1] = countPoints(predictedPoints, Q[q], Q[q + 1]);
 		}
-		actualCount[5] = countPoints(actualPoints, Q[4], Integer.MAX_VALUE);
-		predictedCount[5] = countPoints(predictedPoints, Q[4], Integer.MAX_VALUE);
+		actualCount[5] = countPoints(actualPoints, Q[4], Float.POSITIVE_INFINITY);
+		predictedCount[5] = countPoints(predictedPoints, Q[4], Float.POSITIVE_INFINITY);
 
 		// Show a result table
 		String header = "Image 1\tN\t% <Q1\t% Q1\t% Q2\t% Q3\t% Q4\t% >Q4\tImage2\tN\t% <Q1\t% Q1\t% Q2\t% Q3\t% Q4\t% >Q4";
@@ -864,14 +864,15 @@ public class MatchPlugin implements PlugIn
 		addUnmatchedResult(title1, title2, actualCount, predictedCount);
 	}
 
-	private int[] getQuartiles(ArrayList<Integer> heights)
+	private float[] getQuartiles(ArrayList<Double> heights)
 	{
 		if (heights.isEmpty())
-			return new int[] { 0, 0, 0, 0, 0 };
+			return new float[] { 0, 0, 0, 0, 0 };
 
-		return new int[] { heights.get(0), (int) PointAlignerPlugin.getQuartileBoundary(heights, 0.25),
-				(int) PointAlignerPlugin.getQuartileBoundary(heights, 0.5),
-				(int) PointAlignerPlugin.getQuartileBoundary(heights, 0.75), heights.get(heights.size() - 1) + 1 };
+		return new float[] { heights.get(0).floatValue(), PointAlignerPlugin.getQuartileBoundary(heights, 0.25),
+				PointAlignerPlugin.getQuartileBoundary(heights, 0.5),
+				PointAlignerPlugin.getQuartileBoundary(heights, 0.75),
+				heights.get(heights.size() - 1).floatValue() + 1 };
 	}
 
 	private TimeValuedPoint[] extractValuedPoints(List<Coordinate> list)
@@ -1169,7 +1170,7 @@ public class MatchPlugin implements PlugIn
 	{
 		if (findFociImageIndex == 0)
 			return;
-		ArrayList<int[]> resultsArray = FindFoci.getResults();
+		ArrayList<double[]> resultsArray = FindFoci.getResults();
 
 		// Check the arrays are the correct size
 		if (resultsArray.size() != ((findFociImageIndex == 1) ? actualPoints.length : predictedPoints.length))
@@ -1182,12 +1183,12 @@ public class MatchPlugin implements PlugIn
 		for (PointPair pair : matches)
 		{
 			TimeValuedPoint point = (TimeValuedPoint) ((findFociImageIndex == 1) ? pair.getPoint1() : pair.getPoint2());
-			point.value = resultsArray.get(point.time - 1)[resultIndex];
+			point.value = (float) resultsArray.get(point.time - 1)[resultIndex];
 		}
 		TimeValuedPoint[] points = extractValuedPoints((findFociImageIndex == 1) ? fN : fP);
 		for (TimeValuedPoint point : points)
 		{
-			point.value = resultsArray.get(point.time - 1)[resultIndex];
+			point.value = (float) resultsArray.get(point.time - 1)[resultIndex];
 		}
 	}
 }

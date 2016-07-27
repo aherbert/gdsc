@@ -14,6 +14,7 @@ package gdsc.foci.controller;
  *---------------------------------------------------------------------------*/
 
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociResult;
 import gdsc.foci.model.FindFociModel;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -29,7 +30,7 @@ import java.util.List;
  */
 public class FindMaximaController extends ImageJController
 {
-	private ArrayList<int[]> resultsArray = new ArrayList<int[]>();
+	private ArrayList<double[]> resultsArray = new ArrayList<double[]>();
 	private ImageStack activeImageStack = null;
 	private int activeChannel = 1;
 	private int activeFrame = 1;
@@ -83,7 +84,7 @@ public class FindMaximaController extends ImageJController
 	@Override
 	public void run()
 	{
-		resultsArray = new ArrayList<int[]>();
+		resultsArray = new ArrayList<double[]>();
 
 		// Get the selected image
 		String title = model.getSelectedImage();
@@ -192,16 +193,14 @@ public class FindMaximaController extends ImageJController
 
 		ImagePlus mask = WindowManager.getImage(maskImage);
 
-		FindFoci fp = new FindFoci();
-		Object[] results = fp.findMaxima(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod,
+		FindFoci ff = new FindFoci();
+		FindFociResult results = ff.findMaxima(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod,
 				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortMethod,
 				options, gaussianBlur, centreMethod, centreParameter, fractionParameter);
 
 		if (results != null)
 		{
-			@SuppressWarnings("unchecked")
-			ArrayList<int[]> newResultsArray = (ArrayList<int[]>) results[1];
-
+			ArrayList<double[]> newResultsArray = results.results;
 			if (newResultsArray != null)
 				resultsArray = newResultsArray;
 		}
@@ -265,7 +264,7 @@ public class FindMaximaController extends ImageJController
 	/**
 	 * @return the resultsArray
 	 */
-	public ArrayList<int[]> getResultsArray()
+	public ArrayList<double[]> getResultsArray()
 	{
 		return resultsArray;
 	}

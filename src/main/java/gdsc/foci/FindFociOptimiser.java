@@ -678,7 +678,7 @@ public class FindFociOptimiser
 		// Set the threshold for assigning points matches as a fraction of the image size
 		double dThreshold = getDistanceThreshold(imp);
 
-		FindFoci fp = new FindFoci();
+		FindFoci ff = new FindFoci();
 		int id = 0;
 		for (int blurCount = 0; blurCount < blurArray.length; blurCount++)
 		{
@@ -698,7 +698,7 @@ public class FindFociOptimiser
 				{
 					long methodStart = System.nanoTime();
 					int statisticsMode = convertStatisticsMode(statsMode);
-					Object[] initArray = fp.findMaximaInit(imp, imp2, mask, backgroundMethodArray[b], thresholdMethod,
+					Object[] initArray = ff.findMaximaInit(imp, imp2, mask, backgroundMethodArray[b], thresholdMethod,
 							statisticsMode);
 					Object[] clonedInitArray = null;
 					long findMaximaInitTime = System.nanoTime() - methodStart;
@@ -726,7 +726,7 @@ public class FindFociOptimiser
 												clonedInitArray = FindFoci.cloneInitArray(initArray, clonedInitArray);
 												// System.currentTimeMillis() or System.nanoTime()
 												methodStart = System.nanoTime();
-												Object[] runArray = fp.findMaximaRun(clonedInitArray,
+												Object[] runArray = ff.findMaximaRun(clonedInitArray,
 														backgroundMethodArray[b], backgroundParameter,
 														searchMethodArray[s], searchParameter, minSize, myPeakMethod,
 														peakParameter, sortMethod, options, blur);
@@ -756,9 +756,9 @@ public class FindFociOptimiser
 													for (double centreParameter = myCentreParameterMinArray[c]; centreParameter <= myCentreParameterMaxArray[c]; centreParameter += myCentreParameterIntervalArray[c])
 													{
 														methodStart = System.nanoTime();
-														Object[] peakResults = fp.findMaximaResults(clonedInitArray,
-																runArray, myMaxPeaks, sortMethod, centreMethodArray[c],
-																centreParameter);
+														FindFociResult peakResults = ff.findMaximaResults(
+																clonedInitArray, runArray, myMaxPeaks, sortMethod,
+																centreMethodArray[c], centreParameter);
 
 														long time = findMaximaRunTime + System.nanoTime() - methodStart;
 
@@ -767,16 +767,13 @@ public class FindFociOptimiser
 														if (peakResults != null)
 														{
 															// Get the results
-															@SuppressWarnings("unchecked")
-															ArrayList<int[]> resultsArray = (ArrayList<int[]>) peakResults[1];
-
 															Options runOptions = new Options(blur,
 																	backgroundMethodArray[b], thisBackgroundParameter,
 																	thresholdMethod, searchMethodArray[s],
 																	thisSearchParameter, myMaxPeaks, minSize,
 																	myPeakMethod, peakParameter, sortMethod, options,
 																	centreMethodArray[c], centreParameter);
-															Result result = analyseResults(id, roiPoints, resultsArray,
+															Result result = analyseResults(id, roiPoints, peakResults.results,
 																	dThreshold, runOptions, time, myBeta, is3D);
 															results.add(result);
 														}
@@ -980,21 +977,21 @@ public class FindFociOptimiser
 		ImagePlus clone = cloneImage(imp, imp.getTitle() + " clone");
 		clone.show();
 
-		FindFoci fp = new FindFoci();
-		fp.exec(clone, mask, options.backgroundMethod, options.backgroundParameter, options.autoThresholdMethod,
+		FindFoci ff = new FindFoci();
+		ff.exec(clone, mask, options.backgroundMethod, options.backgroundParameter, options.autoThresholdMethod,
 				options.searchMethod, options.searchParameter, options.maxPeaks, options.minSize, options.peakMethod,
 				options.peakParameter, outputType, options.sortIndex, options.options, options.blur,
 				options.centreMethod, options.centreParameter, 1);
 
 		// Add 3D support here by getting the results from the results table not the clone image which only supports 2D
-		ArrayList<int[]> results = FindFoci.getResults();
+		ArrayList<double[]> results = FindFoci.getResults();
 		//AssignedPoint[] predictedPoints = PointManager.extractRoiPoints(clone.getRoi());
 		AssignedPoint[] predictedPoints = new AssignedPoint[results.size()];
 		for (int i = 0; i < predictedPoints.length; i++)
 		{
-			int[] result = results.get(i);
-			predictedPoints[i] = new AssignedPoint(result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y],
-					result[FindFoci.RESULT_Z] + 1, i);
+			double[] result = results.get(i);
+			predictedPoints[i] = new AssignedPoint((int) result[FindFoci.RESULT_X], (int) result[FindFoci.RESULT_Y],
+					(int) result[FindFoci.RESULT_Z] + 1, i);
 		}
 		maskImage(clone, mask);
 
@@ -2078,8 +2075,8 @@ public class FindFociOptimiser
 		return sb.toString();
 	}
 
-	private Result analyseResults(int id, AssignedPoint[] roiPoints, ArrayList<int[]> resultsArray, double dThreshold,
-			Options options, long time, double beta, boolean is3D)
+	private Result analyseResults(int id, AssignedPoint[] roiPoints, ArrayList<double[]> resultsArray,
+			double dThreshold, Options options, long time, double beta, boolean is3D)
 	{
 		// Extract results for analysis
 		AssignedPoint[] predictedPoints = extractedPredictedPoints(resultsArray);
@@ -2094,14 +2091,14 @@ public class FindFociOptimiser
 				matchResult.getFalsePositives(), matchResult.getFalseNegatives(), time, beta, matchResult.getRMSD());
 	}
 
-	private AssignedPoint[] extractedPredictedPoints(ArrayList<int[]> resultsArray)
+	private AssignedPoint[] extractedPredictedPoints(ArrayList<double[]> resultsArray)
 	{
 		final AssignedPoint[] predictedPoints = new AssignedPoint[resultsArray.size()];
 		for (int i = 0; i < resultsArray.size(); i++)
 		{
-			final int[] result = resultsArray.get(i);
-			predictedPoints[i] = new AssignedPoint(result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y],
-					result[FindFoci.RESULT_Z], i);
+			final double[] result = resultsArray.get(i);
+			predictedPoints[i] = new AssignedPoint((int) result[FindFoci.RESULT_X], (int) result[FindFoci.RESULT_Y],
+					(int) result[FindFoci.RESULT_Z], i);
 		}
 		return predictedPoints;
 	}

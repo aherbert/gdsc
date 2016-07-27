@@ -75,7 +75,7 @@ public class PointAlignerPlugin implements PlugIn
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		imp = WindowManager.getCurrentImage();
 
 		if (null == imp)
@@ -110,7 +110,7 @@ public class PointAlignerPlugin implements PlugIn
 
 		AssignedPoint[] points = FindFociOptimiser.extractRoiPoints(roi, imp, null);
 
-		FindFoci fp = new FindFoci();
+		FindFoci ff = new FindFoci();
 
 		//ImagePlus mask = WindowManager.getImage(maskImage);
 		ImagePlus mask = null;
@@ -130,7 +130,7 @@ public class PointAlignerPlugin implements PlugIn
 		int centreMethod = FindFoci.CENTRE_MAX_VALUE_ORIGINAL;
 		double centreParameter = 0;
 
-		Object[] results = fp.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
+		FindFociResult results = ff.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
 				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
 				options, blur, centreMethod, centreParameter, 1);
 
@@ -229,15 +229,14 @@ public class PointAlignerPlugin implements PlugIn
 		return (background < 0) ? 0 : background;
 	}
 
-	private void alignPoints(AssignedPoint[] points, Object[] results)
+	private void alignPoints(AssignedPoint[] points, FindFociResult results)
 	{
 		if (showOverlay || logAlignments)
 			IJ.log(String.format("%s : %s", TITLE, imp.getTitle()));
 
 		// Get the results
-		ImagePlus maximaImp = (ImagePlus) results[0];
-		@SuppressWarnings("unchecked")
-		ArrayList<int[]> resultsArray = (ArrayList<int[]>) results[1];
+		ImagePlus maximaImp = results.mask;
+		ArrayList<double[]> resultsArray = results.results;
 
 		// We would like the order of the results to correspond to the maxima image pixel values. 
 		Collections.reverse(resultsArray);
@@ -258,7 +257,7 @@ public class PointAlignerPlugin implements PlugIn
 		sortPoints(points, impStack);
 
 		// TODO - Why is there no maximum move distance?
-		
+
 		for (AssignedPoint point : points)
 		{
 			int pointId = point.getId();
@@ -282,10 +281,10 @@ public class PointAlignerPlugin implements PlugIn
 				{
 					// Already assigned - The previous point is higher so it wins.
 					// See if any unassigned maxima are closer. This could be an ROI marking error.
-					int[] result = resultsArray.get(maximaId);
-					double d = distance2(x, y, z, result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y],
-							result[FindFoci.RESULT_Z]);
-					int maxHeight = 0;
+					double[] result = resultsArray.get(maximaId);
+					double d = distance2(x, y, z, (int) result[FindFoci.RESULT_X], (int) result[FindFoci.RESULT_Y],
+							(int) result[FindFoci.RESULT_Z]);
+					float maxHeight = Float.NEGATIVE_INFINITY;
 
 					for (int id = 0; id < assigned.length; id++)
 					{
@@ -294,8 +293,8 @@ public class PointAlignerPlugin implements PlugIn
 						{
 							result = resultsArray.get(id);
 
-							double newD = distance2(x, y, z, result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y],
-									result[FindFoci.RESULT_Z]);
+							double newD = distance2(x, y, z, (int) result[FindFoci.RESULT_X],
+									(int) result[FindFoci.RESULT_Y], (int) result[FindFoci.RESULT_Z]);
 							if (newD < d)
 							{
 								// Pick the closest
@@ -303,10 +302,11 @@ public class PointAlignerPlugin implements PlugIn
 								//d = newD;
 
 								// Pick the highest
-								if (maxHeight < result[FindFoci.RESULT_MAX_VALUE])
+								final float v = (float) result[FindFoci.RESULT_MAX_VALUE];
+								if (maxHeight < v)
 								{
 									maximaId = id;
-									maxHeight = result[FindFoci.RESULT_MAX_VALUE];
+									maxHeight = v;
 								}
 							}
 						}
@@ -324,7 +324,7 @@ public class PointAlignerPlugin implements PlugIn
 		}
 
 		// Analyse assigned points for possible errors
-		int thresholdHeight = getThresholdHeight(points, assigned, resultsArray);
+		float thresholdHeight = getThresholdHeight(points, assigned, resultsArray);
 
 		// Output results
 		LinkedList<AssignedPoint> ok = new LinkedList<AssignedPoint>();
@@ -333,7 +333,7 @@ public class PointAlignerPlugin implements PlugIn
 		LinkedList<AssignedPoint> noAlign = new LinkedList<AssignedPoint>();
 
 		double averageMovedDistance = 0;
-		int minAssignedHeight = Integer.MAX_VALUE;
+		float minAssignedHeight = Float.POSITIVE_INFINITY;
 
 		// List of ROI after moving to the assigned peak
 		ArrayList<AssignedPoint> newRoiPoints = new ArrayList<AssignedPoint>(points.length);
@@ -350,10 +350,10 @@ public class PointAlignerPlugin implements PlugIn
 
 			if (maximaId >= 0)
 			{
-				int[] result = resultsArray.get(maximaId);
-				int newX = result[FindFoci.RESULT_X];
-				int newY = result[FindFoci.RESULT_Y];
-				int newZ = result[FindFoci.RESULT_Z];
+				double[] result = resultsArray.get(maximaId);
+				int newX = (int) result[FindFoci.RESULT_X];
+				int newY = (int) result[FindFoci.RESULT_Y];
+				int newZ = (int) result[FindFoci.RESULT_Z];
 
 				double d = 0;
 				if (newX != x || newY != y || newZ != z)
@@ -372,9 +372,10 @@ public class PointAlignerPlugin implements PlugIn
 				}
 				else
 				{
-					if (minAssignedHeight > result[FindFoci.RESULT_MAX_VALUE])
+					final float v = (float) result[FindFoci.RESULT_MAX_VALUE];
+					if (minAssignedHeight > v)
 					{
-						minAssignedHeight = result[FindFoci.RESULT_MAX_VALUE];
+						minAssignedHeight = v;
 					}
 
 					if (assigned[maximaId] == pointId)
@@ -405,7 +406,8 @@ public class PointAlignerPlugin implements PlugIn
 			}
 			else
 			{
-				log("Point [%d] %d @ %s cannot be aligned", pointId + 1, pointHeight[pointId], getCoords(is3d, x, y, z));
+				log("Point [%d] %d @ %s cannot be aligned", pointId + 1, pointHeight[pointId],
+						getCoords(is3d, x, y, z));
 				noAlign.add(point);
 				extractPoint(impStack, "noalign", pointId + 1, x, y, z, x, y, z);
 				newPoint = null; // remove unaligned points from the updated ROI
@@ -462,20 +464,21 @@ public class PointAlignerPlugin implements PlugIn
 		}
 	}
 
-	private LinkedList<AssignedPoint> findMissedPoints(ArrayList<int[]> resultsArray, int[] assigned,
-			int minAssignedHeight)
+	private LinkedList<AssignedPoint> findMissedPoints(ArrayList<double[]> resultsArray, int[] assigned,
+			float minAssignedHeight)
 	{
 		// List maxima above the minimum height that have not been picked
 		ImageStack maskStack = getMaskStack();
 		LinkedList<AssignedPoint> missed = new LinkedList<AssignedPoint>();
 		for (int maximaId = 0; maximaId < resultsArray.size(); maximaId++)
 		{
-			int[] result = resultsArray.get(maximaId);
-			if (assigned[maximaId] < 0 && result[FindFoci.RESULT_MAX_VALUE] > minAssignedHeight)
+			double[] result = resultsArray.get(maximaId);
+			final float v = (float) result[FindFoci.RESULT_MAX_VALUE];
+			if (assigned[maximaId] < 0 && v > minAssignedHeight)
 			{
-				int x = result[FindFoci.RESULT_X];
-				int y = result[FindFoci.RESULT_Y];
-				int z = result[FindFoci.RESULT_Z];
+				int x = (int) result[FindFoci.RESULT_X];
+				int y = (int) result[FindFoci.RESULT_Y];
+				int z = (int) result[FindFoci.RESULT_Z];
 
 				// Check if the point is within the mask
 				if (maskStack != null)
@@ -490,19 +493,19 @@ public class PointAlignerPlugin implements PlugIn
 		return missed;
 	}
 
-	private LinkedList<Integer> findMissedHeights(ArrayList<int[]> resultsArray, int[] assigned, int minAssignedHeight)
+	private LinkedList<Double> findMissedHeights(ArrayList<double[]> resultsArray, int[] assigned, double t)
 	{
 		// List maxima above the minimum height that have not been picked
 		ImageStack maskStack = getMaskStack();
-		LinkedList<Integer> missed = new LinkedList<Integer>();
+		LinkedList<Double> missed = new LinkedList<Double>();
 		for (int maximaId = 0; maximaId < resultsArray.size(); maximaId++)
 		{
-			int[] result = resultsArray.get(maximaId);
-			if (assigned[maximaId] < 0 && result[FindFoci.RESULT_MAX_VALUE] > minAssignedHeight)
+			double[] result = resultsArray.get(maximaId);
+			if (assigned[maximaId] < 0 && result[FindFoci.RESULT_MAX_VALUE] > t)
 			{
-				int x = result[FindFoci.RESULT_X];
-				int y = result[FindFoci.RESULT_Y];
-				int z = result[FindFoci.RESULT_Z];
+				int x = (int) result[FindFoci.RESULT_X];
+				int y = (int) result[FindFoci.RESULT_Y];
+				int z = (int) result[FindFoci.RESULT_Z];
 
 				// Check if the point is within the mask
 				if (maskStack != null)
@@ -523,14 +526,14 @@ public class PointAlignerPlugin implements PlugIn
 	 * 
 	 * @return The height below which any point is considered an error
 	 */
-	private int getThresholdHeight(AssignedPoint[] points, int[] assigned, ArrayList<int[]> resultsArray)
+	private float getThresholdHeight(AssignedPoint[] points, int[] assigned, ArrayList<double[]> resultsArray)
 	{
-		ArrayList<Integer> heights = new ArrayList<Integer>(points.length);
+		ArrayList<Double> heights = new ArrayList<Double>(points.length);
 		for (int maximaId = 0; maximaId < assigned.length; maximaId++)
 		{
 			if (assigned[maximaId] >= 0)
 			{
-				int[] result = resultsArray.get(maximaId);
+				double[] result = resultsArray.get(maximaId);
 				heights.add(result[FindFoci.RESULT_MAX_VALUE]);
 			}
 		}
@@ -550,7 +553,7 @@ public class PointAlignerPlugin implements PlugIn
 		if (heights.isEmpty())
 			return 0;
 
-		int t = heights.get(0);
+		double t = heights.get(0);
 
 		switch (limitMethod)
 		{
@@ -559,7 +562,7 @@ public class PointAlignerPlugin implements PlugIn
 				float q1 = getQuartileBoundary(heights, 0.25);
 				float q2 = getQuartileBoundary(heights, 0.5);
 
-				t = round(q1 - factor * (q2 - q1));
+				t = q1 - factor * (q2 - q1);
 				log("Limiting peaks %s: %s - %s * %s = %d", limitMethods[limitMethod], IJ.d2s(q1), IJ.d2s(factor),
 						IJ.d2s(q2 - q1), t);
 
@@ -568,16 +571,16 @@ public class PointAlignerPlugin implements PlugIn
 			case 2:
 				// n * Std.Dev. below the mean
 				double[] stats = getStatistics(heights);
-				t = round(stats[0] - factor * stats[1]);
+				t = stats[0] - factor * stats[1];
 
-				log("Limiting peaks %s: %s - %s * %s = %d", limitMethods[limitMethod], IJ.d2s(stats[0]),
-						IJ.d2s(factor), IJ.d2s(stats[1]), t);
+				log("Limiting peaks %s: %s - %s * %s = %d", limitMethods[limitMethod], IJ.d2s(stats[0]), IJ.d2s(factor),
+						IJ.d2s(stats[1]), t);
 
 				break;
 
 			case 3:
 				// nth Percentile
-				t = round(getQuartileBoundary(heights, 0.01 * factor));
+				t = getQuartileBoundary(heights, 0.01 * factor);
 				log("Limiting peaks %s: %sth = %d", limitMethods[limitMethod], IJ.d2s(factor), t);
 
 				break;
@@ -585,7 +588,7 @@ public class PointAlignerPlugin implements PlugIn
 			case 4:
 				// Number of missed points is a factor below picked points,
 				// i.e. the number of potential maxima is a fraction of the number of assigned maxima.
-				List<Integer> missedHeights = findMissedHeights(resultsArray, assigned, t);
+				List<Double> missedHeights = findMissedHeights(resultsArray, assigned, t);
 				double fraction = factor / 100;
 				for (int pointId = 0; pointId < heights.size(); pointId++)
 				{
@@ -612,20 +615,33 @@ public class PointAlignerPlugin implements PlugIn
 			default:
 		}
 
-		return t;
+		// Round for integer data
+		if (integerData(heights))
+			t = round(t);
+
+		return (float) t;
+	}
+
+	private boolean integerData(ArrayList<Double> heights)
+	{
+		for (double d : heights)
+			if ((int) d != d)
+				return false;
+
+		return true;
 	}
 
 	/**
 	 * Count points that are above the given height
 	 * 
-	 * @param heights
+	 * @param missedHeights
 	 * @param height
 	 * @return The count
 	 */
-	private int countPoints(List<Integer> heights, int height)
+	private int countPoints(List<Double> missedHeights, double height)
 	{
-		int count = heights.size();
-		for (int h : heights)
+		int count = missedHeights.size();
+		for (double h : missedHeights)
 		{
 			if (h < height)
 			{
@@ -651,12 +667,12 @@ public class PointAlignerPlugin implements PlugIn
 	 * @param fraction
 	 * @return The boundary
 	 */
-	public static float getQuartileBoundary(ArrayList<Integer> heights, double fraction)
+	public static float getQuartileBoundary(ArrayList<Double> heights, double fraction)
 	{
 		if (heights.isEmpty())
 			return 0;
 		if (heights.size() == 1)
-			return heights.get(0);
+			return heights.get(0).floatValue();
 
 		int upper = (int) Math.ceil(heights.size() * fraction);
 		int lower = (int) Math.floor(heights.size() * fraction);
@@ -664,15 +680,15 @@ public class PointAlignerPlugin implements PlugIn
 		upper = Math.min(Math.max(upper, 0), heights.size() - 1);
 		lower = Math.min(Math.max(lower, 0), heights.size() - 1);
 
-		return (heights.get(upper) + heights.get(lower)) / 2.0f;
+		return (float) ((heights.get(upper) + heights.get(lower)) / 2.0);
 	}
 
-	private double[] getStatistics(ArrayList<Integer> heights)
+	private double[] getStatistics(ArrayList<Double> heights)
 	{
 		double sum = 0.0;
 		double sum2 = 0.0;
 		int n = heights.size();
-		for (int h : heights)
+		for (double h : heights)
 		{
 			sum += h;
 			sum2 += (h * h);

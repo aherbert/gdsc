@@ -147,7 +147,7 @@ public class TranslocationFinder implements PlugIn
 
 	private AssignedPoint[] getFoci(String resultsName)
 	{
-		ArrayList<int[]> results = FindFoci.getResults(resultsName);
+		ArrayList<double[]> results = FindFoci.getResults(resultsName);
 		if (results == null)
 		{
 			IJ.showMessage("Error", "No foci with the name " + resultsName);
@@ -160,10 +160,10 @@ public class TranslocationFinder implements PlugIn
 		}
 		AssignedPoint[] foci = new AssignedPoint[results.size()];
 		int i = 0;
-		for (int[] result : results)
+		for (double[] result : results)
 		{
-			foci[i] = new AssignedPoint(result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y],
-					result[FindFoci.RESULT_Z] + 1, i);
+			foci[i] = new AssignedPoint((int) result[FindFoci.RESULT_X], (int) result[FindFoci.RESULT_Y],
+					(int) result[FindFoci.RESULT_Z] + 1, i);
 			i++;
 		}
 		return foci;

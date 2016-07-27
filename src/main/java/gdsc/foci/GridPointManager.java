@@ -194,7 +194,7 @@ public class GridPointManager
 		}
 
 		// Check all surrounding blocks for highest unassigned point
-		int maxValue = Integer.MIN_VALUE;
+		float maxValue = Float.NEGATIVE_INFINITY;
 		for (int x = Math.max(0, xBlock - 1); x <= Math.min(grid.length - 1, xBlock + 1); x++)
 		{
 			for (int y = Math.max(0, yBlock - 1); y <= Math.min(grid[0].length - 1, yBlock + 1); y++)

@@ -109,7 +109,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	private ImagePlus imp;
 	private boolean[] edge = null;
 	private AssignedPoint[] roiPoints;
-	private ArrayList<int[]> results;
+	private ArrayList<double[]> results;
 	private ArrayList<Cluster> clusters, minSizeClusters, edgeClusters, filteredClusters;
 	private MatchResult matchResult;
 	private ColorModel cm;
@@ -124,7 +124,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			return DONE;
 		}
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		results = FindFoci.getResults();
 		if (results == null || results.isEmpty())
 		{
@@ -192,10 +192,10 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		// Image values correspond to the reverse order of the results.
 		for (int i = 0, id = results.size(); i < results.size(); i++, id--)
 		{
-			final int[] result = results.get(i);
-			final int x = result[FindFoci.RESULT_X];
-			final int y = result[FindFoci.RESULT_Y];
-			final int z = result[FindFoci.RESULT_Z];
+			final double[] result = results.get(i);
+			final int x = (int) result[FindFoci.RESULT_X];
+			final int y = (int) result[FindFoci.RESULT_Y];
+			final int z = (int) result[FindFoci.RESULT_Z];
 			try
 			{
 				final int value = stack.getProcessor(z + 1).get(x, y);
@@ -745,8 +745,8 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			lastBorder = border;
 		}
 
-		if (filteredClusters == null ||
-				(roiPoints != null && (lastfilterUsingPointROI != filterUsingPointROI || lastFilterRadius != filterRadius)))
+		if (filteredClusters == null || (roiPoints != null &&
+				(lastfilterUsingPointROI != filterUsingPointROI || lastFilterRadius != filterRadius)))
 		{
 			if (roiPoints != null && filterUsingPointROI)
 			{
@@ -779,8 +779,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		}
 
 		double seconds = (System.currentTimeMillis() - start) / 1000.0;
-		IJ.showStatus(Utils.pleural(filteredClusters.size(), "cluster") + " in " +
-				Utils.rounded(seconds) + " seconds");
+		IJ.showStatus(Utils.pleural(filteredClusters.size(), "cluster") + " in " + Utils.rounded(seconds) + " seconds");
 	}
 
 	private Coordinate[] toCoordinates(ArrayList<Cluster> clusters)
@@ -979,7 +978,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		final int weight_index = weight_result_index[weight];
 		for (int i = 0, id = results.size(); i < results.size(); i++, id--)
 		{
-			int[] result = results.get(i);
+			double[] result = results.get(i);
 			final double w = (weight_index != -1) ? result[weight_index] : 1;
 			points.add(ClusterPoint.newClusterPoint(id, result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y], w));
 		}

@@ -307,7 +307,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 		for (int particle = 1; particle <= noOfParticles; particle++)
 		{
 			// Run FindFoci to find the single highest spot
-			FindFoci fp = new FindFoci();
+			FindFoci ff = new FindFoci();
 			ImagePlus mask = createMask(particlesIp, particle);
 			int backgroundMethod = FindFoci.BACKGROUND_MEAN;
 			double backgroundParameter = 0;
@@ -325,13 +325,13 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 			double centreParameter = 0;
 			double fractionParameter = fraction;
 
-			Object[] results = fp.findMaxima(tmpImp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
+			FindFociResult result = ff.findMaxima(tmpImp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
 					searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
 					options, blur, centreMethod, centreParameter, fractionParameter);
-			if (results == null)
+			if (result == null)
 				continue;
 
-			ImagePlus maximaImp = (ImagePlus) results[0];
+			ImagePlus maximaImp = result.mask;
 			ImageProcessor spotIp = maximaImp.getProcessor();
 
 			// Renumber to the correct particle value

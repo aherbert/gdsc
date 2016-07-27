@@ -96,7 +96,7 @@ public class SpotDensity implements PlugIn
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		// List the foci results
 		String[] names = FindFoci.getResultsNames();
 		if (names == null || names.length == 0)
@@ -211,7 +211,7 @@ public class SpotDensity implements PlugIn
 
 	private Foci[] getFoci(String resultsName)
 	{
-		ArrayList<int[]> results = FindFoci.getResults(resultsName);
+		ArrayList<double[]> results = FindFoci.getResults(resultsName);
 		if (results == null || results.size() == 0)
 		{
 			IJ.showMessage("Error", "No foci with the name " + resultsName);
@@ -219,8 +219,8 @@ public class SpotDensity implements PlugIn
 		}
 		Foci[] foci = new Foci[results.size()];
 		int i = 0;
-		for (int[] result : results)
-			foci[i++] = new Foci(i, result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y]);
+		for (double[] result : results)
+			foci[i++] = new Foci(i, (int) result[FindFoci.RESULT_X], (int) result[FindFoci.RESULT_Y]);
 		return foci;
 	}
 
@@ -457,7 +457,7 @@ public class SpotDensity implements PlugIn
 							// Use a text area
 							StringBuilder sb = new StringBuilder(Integer.toString(ids[0]));
 							for (int i = 1; i < count; i++)
-								sb.append("\n").append(ids[i]);								
+								sb.append("\n").append(ids[i]);
 							gd.addTextAreas(sb.toString(), null, rowLimit, 10);
 							gd.showDialog();
 							if (gd.wasCanceled())
@@ -474,7 +474,7 @@ public class SpotDensity implements PlugIn
 								{
 									// Ignore for now
 								}
-							}							
+							}
 						}
 						count = count2;
 					}

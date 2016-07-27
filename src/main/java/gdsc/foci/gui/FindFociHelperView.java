@@ -1072,13 +1072,13 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		return activeImp != null;
 	}
 
-	private List<GridPoint> extractGridPoints(ArrayList<int[]> resultsArray)
+	private List<GridPoint> extractGridPoints(ArrayList<double[]> resultsArray)
 	{
 		List<GridPoint> points = new ArrayList<GridPoint>(resultsArray.size());
-		for (int[] result : resultsArray)
+		for (double[] result : resultsArray)
 		{
-			points.add(new GridPoint(result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y], result[FindFoci.RESULT_Z],
-					result[FindFoci.RESULT_MAX_VALUE]));
+			points.add(new GridPoint((int) result[FindFoci.RESULT_X], (int) result[FindFoci.RESULT_Y],
+					(int) result[FindFoci.RESULT_Z], (float) result[FindFoci.RESULT_MAX_VALUE]));
 		}
 		return points;
 	}

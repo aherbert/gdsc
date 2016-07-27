@@ -67,7 +67,7 @@ public class SpotSeparation implements PlugInFilter
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 			return DONE;
 		this.imp = imp;
@@ -86,18 +86,17 @@ public class SpotSeparation implements PlugInFilter
 
 		// TODO - Add some options to be able to preview the spots using a ExtendedPluginFilter
 
-		Object[] results = runFindFoci(ip);
-		
+		FindFociResult results = runFindFoci(ip);
+
 		// Respect the image ROI
 		results = cropToRoi(results, ip);
-		
+
 		if (results == null)
 			return;
 
-		ImagePlus maximaImp = (ImagePlus) results[0];
+		ImagePlus maximaImp = results.mask;
 		ImageProcessor spotIp = maximaImp.getProcessor();
-		@SuppressWarnings("unchecked")
-		ArrayList<int[]> resultsArray = (ArrayList<int[]>) results[1];
+		ArrayList<double[]> resultsArray = results.results;
 
 		showSpotImage(maximaImp, resultsArray);
 
@@ -136,8 +135,8 @@ public class SpotSeparation implements PlugInFilter
 				float dx = (float) (Math.cos(angle) * step);
 				float dy = (float) (Math.sin(angle) * step);
 
-				System.out.printf("%s : Angle = %f, dx=%f, dy=%f. d(x,y)=%.2f,%.2f\n", profileTitle, angle * 180.0 /
-						Math.PI, dx, dy, points[i].x - com[0], points[i].y - com[1]);
+				System.out.printf("%s : Angle = %f, dx=%f, dy=%f. d(x,y)=%.2f,%.2f\n", profileTitle,
+						angle * 180.0 / Math.PI, dx, dy, points[i].x - com[0], points[i].y - com[1]);
 
 				// Draw line profile through the centre calculated from the moments. This will fail if
 				// the object has a hollow centre (e.g. a horseshoe) so check if it is in the mask.
@@ -315,16 +314,15 @@ public class SpotSeparation implements PlugInFilter
 		return true;
 	}
 
-	private Object[] cropToRoi(Object[] results, ImageProcessor ip)
+	private FindFociResult cropToRoi(FindFociResult results, ImageProcessor ip)
 	{
 		Roi roi = imp.getRoi();
 		if (roi == null || results == null)
 			return results;
 
-		ImagePlus maximaImp = (ImagePlus) results[0];
+		ImagePlus maximaImp = results.mask;
 		ImageProcessor spotIp = maximaImp.getProcessor();
-		@SuppressWarnings("unchecked")
-		ArrayList<int[]> resultsArray = (ArrayList<int[]>) results[1];
+		ArrayList<double[]> resultsArray = results.results;
 
 		// Find all maxima that are within the ROI bounds
 		final byte[] mask = (roi.getMask() == null) ? null : (byte[]) roi.getMask().getPixels();
@@ -336,9 +334,9 @@ public class SpotSeparation implements PlugInFilter
 
 		for (int i = 0; i < resultsArray.size(); i++)
 		{
-			final int[] result = resultsArray.get(i);
-			final int x = result[FindFoci.RESULT_X];
-			final int y = result[FindFoci.RESULT_Y];
+			final double[] result = resultsArray.get(i);
+			final int x = (int) result[FindFoci.RESULT_X];
+			final int y = (int) result[FindFoci.RESULT_Y];
 
 			if (x >= bounds.x && x < maxx && y >= bounds.y && y < maxy)
 			{
@@ -356,11 +354,11 @@ public class SpotSeparation implements PlugInFilter
 			return null;
 
 		// Renumber the remaining valid spots
-		ArrayList<int[]> newResultsArray = new ArrayList<int[]>(newCount);
+		ArrayList<double[]> newResultsArray = new ArrayList<double[]>(newCount);
 		int[] maskIdMap = new int[resultsArray.size() + 1];
 		for (int i = 0; i < resultsArray.size(); i++)
 		{
-			final int[] result = resultsArray.get(i);
+			final double[] result = resultsArray.get(i);
 			if (newId[i] > 0)
 			{
 				result[FindFoci.RESULT_PEAK_ID] = newId[i];
@@ -383,10 +381,10 @@ public class SpotSeparation implements PlugInFilter
 		}
 		maximaImp.setProcessor(spotIp);
 
-		return new Object[] { maximaImp, newResultsArray };
+		return new FindFociResult(maximaImp, newResultsArray, null);
 	}
 
-	private Object[] runFindFoci(ImageProcessor ip)
+	private FindFociResult runFindFoci(ImageProcessor ip)
 	{
 		// Run FindFoci to get the spots
 		// Get each spot as a different number with the centre using the search
@@ -403,7 +401,7 @@ public class SpotSeparation implements PlugInFilter
 
 		// TODO - Find the best method for this
 
-		FindFoci fp = new FindFoci();
+		FindFoci ff = new FindFoci();
 		String autoThresholdMethod = method;
 		int searchMethod = FindFoci.SEARCH_ABOVE_BACKGROUND;
 		double searchParameter = 0;
@@ -419,13 +417,13 @@ public class SpotSeparation implements PlugInFilter
 		double centreParameter = 0;
 		double fractionParameter = 0;
 
-		Object[] results = fp.findMaxima(new ImagePlus("tmp", ip), null, backgroundMethod, backgroundParameter,
+		FindFociResult results = ff.findMaxima(new ImagePlus("tmp", ip), null, backgroundMethod, backgroundParameter,
 				autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
 				outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter);
 		return results;
 	}
 
-	private void showSpotImage(ImagePlus maximaImp, ArrayList<int[]> resultsArray)
+	private void showSpotImage(ImagePlus maximaImp, ArrayList<double[]> resultsArray)
 	{
 		if (showSpotImage)
 		{
@@ -452,15 +450,15 @@ public class SpotSeparation implements PlugInFilter
 	 * @param resultsArray
 	 * @return
 	 */
-	private AssignedPoint[] extractSpotCoordinates(ArrayList<int[]> resultsArray)
+	private AssignedPoint[] extractSpotCoordinates(ArrayList<double[]> resultsArray)
 	{
 		AssignedPoint[] points = new AssignedPoint[resultsArray.size()];
 		int i = 0;
 		int maxId = resultsArray.size() + 1;
-		for (int[] result : resultsArray)
+		for (double[] result : resultsArray)
 		{
-			points[i] = new AssignedPoint(result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y], maxId -
-					result[FindFoci.RESULT_PEAK_ID]);
+			points[i] = new AssignedPoint((int) result[FindFoci.RESULT_X], (int) result[FindFoci.RESULT_Y],
+					maxId - (int) result[FindFoci.RESULT_PEAK_ID]);
 			i++;
 		}
 		return points;
@@ -708,8 +706,8 @@ public class SpotSeparation implements PlugInFilter
 
 		double width1 = middle;
 		double width2 = xValues[xValues.length - 1] - width1;
-		sb.append(String.format("%.2f\t%.2f\t%.2f", width1 * cal.pixelWidth, width2 * cal.pixelWidth, distance *
-				cal.pixelWidth));
+		sb.append(String.format("%.2f\t%.2f\t%.2f", width1 * cal.pixelWidth, width2 * cal.pixelWidth,
+				distance * cal.pixelWidth));
 		resultsWindow.append(sb.toString());
 	}
 

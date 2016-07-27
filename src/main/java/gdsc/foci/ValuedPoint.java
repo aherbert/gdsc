@@ -18,15 +18,15 @@ package gdsc.foci;
  */
 public class ValuedPoint extends BasePoint
 {
-	private int value = 0;
+	private float value = 0;
 
-	public ValuedPoint(int x, int y, int z, int value)
+	public ValuedPoint(int x, int y, int z, float value)
 	{
 		super(x, y, z);
 		this.value = value;
 	}
 
-	public ValuedPoint(AssignedPoint point, int value)
+	public ValuedPoint(AssignedPoint point, float value)
 	{
 		super(point.getXint(), point.getYint(), point.getZint());
 		this.value = value;
@@ -35,7 +35,7 @@ public class ValuedPoint extends BasePoint
 	/**
 	 * @return the value
 	 */
-	public int getValue()
+	public float getValue()
 	{
 		return value;
 	}

@@ -16,6 +16,7 @@ package gdsc.foci.controller;
 import java.util.ArrayList;
 
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociResult;
 import gdsc.foci.controller.MessageListener.MessageType;
 import gdsc.foci.model.FindFociModel;
 import gdsc.foci.model.FindFociState;
@@ -37,7 +38,7 @@ public class FindFociRunner extends Thread
 	private boolean running = true;
 
 	// Used for the staged FindFoci results
-	FindFoci fp = new FindFoci();
+	FindFoci ff = new FindFoci();
 	ImagePlus imp2;
 	Object[] initArray;
 	Object[] searchInitArray;
@@ -46,8 +47,8 @@ public class FindFociRunner extends Thread
 	Object[] resultsInitArray;
 	Object[] maskInitArray;
 	Object[] mergeArray;
-	Object[] prelimResultsArray;
-	Object[] resultsArray;
+	FindFociResult prelimResults;
+	FindFociResult results;
 
 	public FindFociRunner(MessageListener listener)
 	{
@@ -108,7 +109,7 @@ public class FindFociRunner extends Thread
 		}
 		finally
 		{
-			fp = null;
+			ff = null;
 			imp2 = null;
 			initArray = null;
 			searchInitArray = null;
@@ -117,8 +118,8 @@ public class FindFociRunner extends Thread
 			resultsInitArray = null;
 			maskInitArray = null;
 			mergeArray = null;
-			prelimResultsArray = null;
-			resultsArray = null;
+			prelimResults = null;
+			results = null;
 			finish();
 		}
 	}
@@ -275,7 +276,7 @@ public class FindFociRunner extends Thread
 		}
 		if (state.ordinal() <= FindFociState.FIND_MAXIMA.ordinal())
 		{
-			initArray = fp.findMaximaInit(imp, imp2, mask, backgroundMethod, thresholdMethod, options);
+			initArray = ff.findMaximaInit(imp, imp2, mask, backgroundMethod, thresholdMethod, options);
 			if (initArray == null)
 			{
 				IJ.showStatus(FindFoci.TITLE + " failed");
@@ -288,7 +289,7 @@ public class FindFociRunner extends Thread
 		if (state.ordinal() <= FindFociState.SEARCH.ordinal())
 		{
 			searchInitArray = FindFoci.cloneInitArray(initArray, searchInitArray);
-			searchArray = fp.findMaximaSearch(searchInitArray, backgroundMethod, backgroundParameter, searchMethod,
+			searchArray = ff.findMaximaSearch(searchInitArray, backgroundMethod, backgroundParameter, searchMethod,
 					searchParameter);
 			if (searchArray == null)
 			{
@@ -302,7 +303,7 @@ public class FindFociRunner extends Thread
 		if (state.ordinal() <= FindFociState.MERGE.ordinal())
 		{
 			mergeInitArray = FindFoci.cloneResultsArray(searchInitArray, mergeInitArray);
-			mergeArray = fp.findMaximaMerge(mergeInitArray, searchArray, minSize, peakMethod, peakParameter, options,
+			mergeArray = ff.findMaximaMerge(mergeInitArray, searchArray, minSize, peakMethod, peakParameter, options,
 					gaussianBlur);
 			if (mergeArray == null)
 			{
@@ -314,9 +315,9 @@ public class FindFociRunner extends Thread
 		if (state.ordinal() <= FindFociState.CALCULATE_RESULTS.ordinal())
 		{
 			resultsInitArray = FindFoci.cloneResultsArray(mergeInitArray, resultsInitArray);
-			prelimResultsArray = fp.findMaximaPrelimResults(resultsInitArray, mergeArray, maxPeaks, sortMethod,
+			prelimResults = ff.findMaximaPrelimResults(resultsInitArray, mergeArray, maxPeaks, sortMethod,
 					centreMethod, centreParameter);
-			if (prelimResultsArray == null)
+			if (prelimResults == null)
 			{
 				IJ.showStatus(FindFoci.TITLE + " failed");
 				notify(MessageType.FAILED);
@@ -326,9 +327,9 @@ public class FindFociRunner extends Thread
 		if (state.ordinal() <= FindFociState.CALCULATE_OUTPUT_MASK.ordinal())
 		{
 			maskInitArray = FindFoci.cloneResultsArray(resultsInitArray, maskInitArray);
-			resultsArray = fp.findMaximaMaskResults(maskInitArray, mergeArray, prelimResultsArray, outputType,
+			results = ff.findMaximaMaskResults(maskInitArray, mergeArray, prelimResults, outputType,
 					thresholdMethod, imp.getTitle(), fractionParameter);
-			if (resultsArray == null)
+			if (results == null)
 			{
 				IJ.showStatus(FindFoci.TITLE + " failed");
 				notify(MessageType.FAILED);
@@ -337,8 +338,8 @@ public class FindFociRunner extends Thread
 		}
 		if (state.ordinal() <= FindFociState.SHOW_RESULTS.ordinal())
 		{
-			fp.showResults(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod, searchParameter,
-					maxPeaks, minSize, peakMethod, peakParameter, outputType, sortMethod, options, resultsArray);
+			ff.showResults(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod, searchParameter,
+					maxPeaks, minSize, peakMethod, peakParameter, outputType, sortMethod, options, results);
 		}
 
 		IJ.showStatus(FindFoci.TITLE + " finished");
@@ -398,8 +399,7 @@ public class FindFociRunner extends Thread
 		// Special case where the change is only relevant if previous model was at the limit
 		if (notEqual(model.getMaxPeaks(), previousModel.getMaxPeaks()))
 		{
-			@SuppressWarnings("unchecked")
-			ArrayList<int[]> resultsArrayList = (ArrayList<int[]>) resultsArray[1];
+			ArrayList<double[]> resultsArrayList =  results.results;
 			int change = model.getMaxPeaks() - previousModel.getMaxPeaks();
 			if ((change > 0 && resultsArrayList.size() >= previousModel.getMaxPeaks()) ||
 					(change < 0 && resultsArrayList.size() > model.getMaxPeaks()))

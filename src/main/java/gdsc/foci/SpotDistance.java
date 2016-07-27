@@ -791,15 +791,15 @@ public class SpotDistance implements PlugIn
 			if (debug)
 				showSpotImage(croppedImp, croppedImp2, region);
 
-			final Object[] results = ff.findMaxima(croppedImp, regionImp, backgroundMethod, backgroundParameter,
+			final FindFociResult ffResult = ff.findMaxima(croppedImp, regionImp, backgroundMethod, backgroundParameter,
 					autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
 					outputType, sortIndex, options, blur, centreMethod, centreParameter, 1);
-			Object[] results2 = null;
+			FindFociResult results2 = null;
 
 			if (Utils.isInterrupted())
 				return;
 
-			ArrayList<DistanceResult> resultsArray = analyseResults(prevResultsArray, ff, croppedImp, results, frame,
+			ArrayList<DistanceResult> resultsArray = analyseResults(prevResultsArray, ff, croppedImp, ffResult, frame,
 					channel, overlay);
 			for (DistanceResult result : resultsArray)
 			{
@@ -1293,34 +1293,34 @@ public class SpotDistance implements PlugIn
 	 * @param prev
 	 * @param ff
 	 * @param croppedImp
-	 * @param results
+	 * @param ffResult
 	 * @param frame
 	 * @param channel
 	 * @param overlay
 	 * @return
 	 */
 	private ArrayList<DistanceResult> analyseResults(ArrayList<DistanceResult> prev, FindFoci ff, ImagePlus croppedImp,
-			Object[] results, int frame, int channel, Overlay overlay)
+			FindFociResult ffResult, int frame, int channel, Overlay overlay)
 	{
-		if (results == null)
+		if (ffResult == null)
 			return new ArrayList<DistanceResult>(0);
 
-		ImagePlus peaksImp = (ImagePlus) results[0];
-		@SuppressWarnings("unchecked")
-		ArrayList<int[]> resultsArray = (ArrayList<int[]>) results[1];
+		ImagePlus peaksImp = ffResult.mask;
+		ArrayList<double[]> resultsArray = ffResult.results;
 
 		ArrayList<DistanceResult> newResultsArray = new ArrayList<DistanceResult>(resultsArray.size());
 
 		// Process in XYZ order
-		ff.sortAscResults(resultsArray, FindFoci.SORT_XYZ, null);
+		FindFociProcessor ffp = new FindFociIntProcessor(null);
+		ffp.sortAscResults(resultsArray, FindFoci.SORT_XYZ, null);
 
 		ImageStack maskStack = peaksImp.getImageStack();
 
-		for (int[] result : resultsArray)
+		for (double[] result : resultsArray)
 		{
-			int x = bounds.x + result[FindFoci.RESULT_X];
-			int y = bounds.y + result[FindFoci.RESULT_Y];
-			int z = result[FindFoci.RESULT_Z];
+			int x = bounds.x + (int) result[FindFoci.RESULT_X];
+			int y = bounds.y + (int) result[FindFoci.RESULT_Y];
+			int z = (int) result[FindFoci.RESULT_Z];
 
 			// Filter peaks on circularity (spots should be circles)
 			// C = 4*pi*A / P^2 
@@ -1335,7 +1335,7 @@ public class SpotDistance implements PlugIn
 			//new ImagePlus("peak", fp.duplicate()).show();
 			//new ImagePlus("mask", maskIp).show();
 
-			int peakId = result[FindFoci.RESULT_PEAK_ID];
+			int peakId = (int) result[FindFoci.RESULT_PEAK_ID];
 			int maskId = resultsArray.size() - peakId + 1;
 			Roi roi = extractSelection(maskIp, maskId, channel, z + 1, frame);
 			double perimeter = roi.getLength();
