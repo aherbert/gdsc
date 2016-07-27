@@ -304,17 +304,17 @@ public abstract class FindFociProcessor
 
 		// Combine maxima below the minimum peak criteria to adjacent peaks (or eliminate if no neighbours)
 		int originalNumberOfPeaks = resultsArray.size();
-		mergeSubPeaks(resultsArray, image, maxima, minSize, peakMethod, peakParameter, stats, saddlePoints, isLogging,
-				restrictAboveSaddle);
+		resultsArray = mergeSubPeaks(resultsArray, image, maxima, minSize, peakMethod, peakParameter, stats,
+				saddlePoints, isLogging, restrictAboveSaddle);
 
 		if (isLogging)
 			timingSplit("Merged peaks");
 
-		if (Utils.isInterrupted())
+		if (resultsArray == null || Utils.isInterrupted())
 			return null;
 
 		if ((options & FindFoci.OPTION_REMOVE_EDGE_MAXIMA) != 0)
-			removeEdgeMaxima(resultsArray, maxima, stats, isLogging);
+			resultsArray = removeEdgeMaxima(resultsArray, maxima, stats, isLogging);
 
 		final int totalPeaks = resultsArray.size();
 
@@ -440,7 +440,8 @@ public abstract class FindFociProcessor
 	 * 
 	 * @return Object array containing: (1) Object - image pixels; (2) byte[] - types array; (3) short[] - maxima array;
 	 *         (4)
-	 *         Histogram - image histogram; (5) double[] - image statistics; (6) Object - the original image pixels; (7) ImagePlus -
+	 *         Histogram - image histogram; (5) double[] - image statistics; (6) Object - the original image pixels; (7)
+	 *         ImagePlus -
 	 *         the original image
 	 */
 	Object[] findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask, int backgroundMethod,
@@ -626,7 +627,7 @@ public abstract class FindFociProcessor
 	 * @param initArray
 	 *            The output from
 	 *            {@link #findMaximaInit(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int)}
-	 * @return Object array containing: (1)  a result ArrayList<double[]> with details of the
+	 * @return Object array containing: (1) a result ArrayList<double[]> with details of the
 	 *         maxima. The details can be extracted for each result using the constants defined with the prefix
 	 *         FindFoci.RESULT_;
 	 *         (2) Integer with the original number of peaks before merging.
@@ -681,11 +682,13 @@ public abstract class FindFociProcessor
 
 		// Combine maxima below the minimum peak criteria to adjacent peaks (or eliminate if no neighbours)
 		int originalNumberOfPeaks = resultsArray.size();
-		mergeSubPeaks(resultsArray, image, maxima, minSize, peakMethod, peakParameter, stats, saddlePoints, false,
-				restrictAboveSaddle);
+		resultsArray = mergeSubPeaks(resultsArray, image, maxima, minSize, peakMethod, peakParameter, stats,
+				saddlePoints, false, restrictAboveSaddle);
+		if (resultsArray == null)
+			return null;
 
 		if ((options & FindFoci.OPTION_REMOVE_EDGE_MAXIMA) != 0)
-			removeEdgeMaxima(resultsArray, maxima, stats, false);
+			resultsArray = removeEdgeMaxima(resultsArray, maxima, stats, false);
 
 		if (blur > 0)
 		{
@@ -825,11 +828,13 @@ public abstract class FindFociProcessor
 
 		// Combine maxima below the minimum peak criteria to adjacent peaks (or eliminate if no neighbours)
 		int originalNumberOfPeaks = resultsArray.size();
-		mergeSubPeaks(resultsArray, image, maxima, minSize, peakMethod, peakParameter, stats, saddlePoints, false,
-				restrictAboveSaddle);
+		resultsArray = mergeSubPeaks(resultsArray, image, maxima, minSize, peakMethod, peakParameter, stats,
+				saddlePoints, false, restrictAboveSaddle);
+		if (resultsArray == null)
+			return null;
 
 		if ((options & FindFoci.OPTION_REMOVE_EDGE_MAXIMA) != 0)
-			removeEdgeMaxima(resultsArray, maxima, stats, false);
+			resultsArray = removeEdgeMaxima(resultsArray, maxima, stats, false);
 
 		if (blur > 0)
 		{
@@ -3439,9 +3444,9 @@ public abstract class FindFociProcessor
 	/**
 	 * Merge sub-peaks into their highest neighbour peak using the highest saddle point
 	 */
-	private void mergeSubPeaks(ArrayList<double[]> resultsArray, Object pixels, int[] maxima, int minSize,
-			int peakMethod, double peakParameter, double[] stats, ArrayList<LinkedList<double[]>> saddlePoints,
-			boolean isLogging, boolean restrictAboveSaddle)
+	private ArrayList<double[]> mergeSubPeaks(ArrayList<double[]> resultsArray, Object pixels, int[] maxima,
+			int minSize, int peakMethod, double peakParameter, double[] stats,
+			ArrayList<LinkedList<double[]>> saddlePoints, boolean isLogging, boolean restrictAboveSaddle)
 	{
 		setPixels(pixels);
 
@@ -3491,7 +3496,7 @@ public abstract class FindFociProcessor
 		if (isLogging)
 			IJ.log("Height filter : Number of peaks = " + countPeaks(peakIdMap));
 		if (Utils.isInterrupted())
-			return;
+			return null;
 
 		// Process all the peaks for the minimum size. Process in order of smallest first
 		sortAscResults(resultsArray, FindFoci.SORT_COUNT, stats);
@@ -3530,7 +3535,7 @@ public abstract class FindFociProcessor
 		if (isLogging)
 			IJ.log("Size filter : Number of peaks = " + countPeaks(peakIdMap));
 		if (Utils.isInterrupted())
-			return;
+			return null;
 
 		// This can be intensive due to the requirement to recount the peak size above the saddle, so it is optional
 		if (restrictAboveSaddle)
@@ -3576,7 +3581,7 @@ public abstract class FindFociProcessor
 
 						// Check for interruption after each merge
 						if (Utils.isInterrupted())
-							return;
+							return null;
 					}
 				}
 			}
@@ -3596,6 +3601,8 @@ public abstract class FindFociProcessor
 		reassignMaxima(maxima, peakIdMap);
 
 		updateSaddleDetails(resultsArray, peakIdMap);
+
+		return resultsArray;
 	}
 
 	private ArrayList<double[]> removeFlaggedResults(ArrayList<double[]> resultsArray)
@@ -3611,7 +3618,7 @@ public abstract class FindFociProcessor
 				resultsArray.get(toIndex)[FindFoci.RESULT_INTENSITY] != Double.NEGATIVE_INFINITY)
 			toIndex++;
 		if (toIndex < resultsArray.size())
-			resultsArray = new ArrayList<double[]>((ArrayList<double[]>) resultsArray.subList(0, toIndex));
+			resultsArray = new ArrayList<double[]>(resultsArray.subList(0, toIndex));
 		return resultsArray;
 	}
 
@@ -3623,7 +3630,7 @@ public abstract class FindFociProcessor
 		//}
 
 		if (maxPeaks < resultsArray.size())
-			resultsArray = new ArrayList<double[]>((ArrayList<double[]>) resultsArray.subList(0, maxPeaks));
+			resultsArray = new ArrayList<double[]>(resultsArray.subList(0, maxPeaks));
 		return resultsArray;
 	}
 
@@ -3904,8 +3911,10 @@ public abstract class FindFociProcessor
 	 *            the stats
 	 * @param isLogging
 	 *            the is logging
+	 * @return the results array
 	 */
-	private void removeEdgeMaxima(ArrayList<double[]> resultsArray, int[] maxima, double[] stats, boolean isLogging)
+	private ArrayList<double[]> removeEdgeMaxima(ArrayList<double[]> resultsArray, int[] maxima, double[] stats,
+			boolean isLogging)
 	{
 		// Build a look-up table for all the peak IDs
 		double maxId = 0;
@@ -3966,6 +3975,8 @@ public abstract class FindFociProcessor
 		reassignMaxima(maxima, peakIdMap);
 
 		updateSaddleDetails(resultsArray, peakIdMap);
+
+		return resultsArray;
 	}
 
 	/**

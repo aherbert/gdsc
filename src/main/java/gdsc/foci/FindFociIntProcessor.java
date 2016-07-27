@@ -44,7 +44,7 @@ public class FindFociIntProcessor extends FindFociProcessor
 	public FindFociIntProcessor(ImagePlus imp)
 	{
 		super(imp);
-		if (imp.getBitDepth() != 8 || imp.getBitDepth() != 16)
+		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
 			throw new RuntimeException("Bit-depth not supported: " + imp.getBitDepth());
 	}
 

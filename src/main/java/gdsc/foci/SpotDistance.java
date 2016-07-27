@@ -178,9 +178,9 @@ public class SpotDistance implements PlugIn
 			return;
 		}
 
-		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
+		if (!FindFoci.isSupported(imp.getBitDepth()))
 		{
-			IJ.showMessage("Error", "Only 8-bit and 16-bit images are supported");
+			IJ.showMessage("Error", "Only " + FindFoci.getSupported() + " images are supported");
 			return;
 		}
 

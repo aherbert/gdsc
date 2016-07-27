@@ -25,12 +25,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Allows ImageJ to run the {@link gdsc.foci.FindFoci } algorithm  
+ * Allows ImageJ to run the {@link gdsc.foci.FindFoci } algorithm
  */
 public class OptimiserController extends FindFociController implements Runnable
 {
 	private FindFociOptimiser optimiser = new FindFociOptimiser();
-	
+
 	public OptimiserController(FindFociModel model)
 	{
 		super(model);
@@ -61,23 +61,18 @@ public class OptimiserController extends FindFociController implements Runnable
 		{
 			ImagePlus imp = WindowManager.getImage(id);
 
-			// Image must be 8-bit/16-bit && only contains XYZ dimensions
-			if (imp != null 
-					&& (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16)
-					&& (imp.getNChannels() == 1 && imp.getNFrames() == 1))
+			// Image must be 8-bit/16-bit/32-bit && only contains XYZ dimensions
+			if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16 ||
+					imp.getType() == ImagePlus.GRAY32) && (imp.getNChannels() == 1 && imp.getNFrames() == 1))
 			{
 				Roi roi = imp.getRoi();
 				if (roi == null || roi.getType() != Roi.POINT)
 					continue;
-					
+
 				// Check it is not one the result images
 				String imageTitle = imp.getTitle();
-				if (!imageTitle.endsWith(FindFoci.TITLE) &&
-						!imageTitle.endsWith("clone") &&
-						!imageTitle.endsWith(" TP") &&
-						!imageTitle.endsWith(" FP") &&
-						!imageTitle.endsWith(" FN")
-						)
+				if (!imageTitle.endsWith(FindFoci.TITLE) && !imageTitle.endsWith("clone") &&
+						!imageTitle.endsWith(" TP") && !imageTitle.endsWith(" FP") && !imageTitle.endsWith(" FN"))
 				{
 					imageList.add(imageTitle);
 				}
@@ -113,13 +108,15 @@ public class OptimiserController extends FindFociController implements Runnable
 	{
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see gdsc.foci.controller.FindFociController#endPreview()
 	 */
 	public void endPreview()
 	{
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 

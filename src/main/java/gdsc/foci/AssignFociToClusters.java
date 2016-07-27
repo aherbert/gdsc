@@ -160,7 +160,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	{
 		if (imp == null)
 			return null;
-		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
+		if (!FindFoci.isSupported(imp.getBitDepth()))
 			return null;
 
 		// Find all the mask objects using a stack histogram.

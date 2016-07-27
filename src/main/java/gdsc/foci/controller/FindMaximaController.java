@@ -55,8 +55,9 @@ public class FindMaximaController extends ImageJController
 		{
 			ImagePlus imp = WindowManager.getImage(id);
 
-			// Image must be 8-bit/16-bit
-			if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16))
+			// Image must be 8-bit/16-bit/32-bit
+			if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16 ||
+					imp.getType() == ImagePlus.GRAY32))
 			{
 				// Check it is not one the result images
 				String imageTitle = imp.getTitle();
@@ -94,7 +95,7 @@ public class FindMaximaController extends ImageJController
 			return;
 		}
 
-		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
+		if (!FindFoci.isSupported(imp.getBitDepth()))
 		{
 			return;
 		}

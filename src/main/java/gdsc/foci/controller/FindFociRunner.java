@@ -168,7 +168,7 @@ public class FindFociRunner extends Thread
 			return;
 		}
 
-		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
+		if (!FindFoci.isSupported(imp.getBitDepth()))
 		{
 			notify(MessageType.ERROR);
 			return;
@@ -315,8 +315,8 @@ public class FindFociRunner extends Thread
 		if (state.ordinal() <= FindFociState.CALCULATE_RESULTS.ordinal())
 		{
 			resultsInitArray = FindFoci.cloneResultsArray(mergeInitArray, resultsInitArray);
-			prelimResults = ff.findMaximaPrelimResults(resultsInitArray, mergeArray, maxPeaks, sortMethod,
-					centreMethod, centreParameter);
+			prelimResults = ff.findMaximaPrelimResults(resultsInitArray, mergeArray, maxPeaks, sortMethod, centreMethod,
+					centreParameter);
 			if (prelimResults == null)
 			{
 				IJ.showStatus(FindFoci.TITLE + " failed");
@@ -327,8 +327,8 @@ public class FindFociRunner extends Thread
 		if (state.ordinal() <= FindFociState.CALCULATE_OUTPUT_MASK.ordinal())
 		{
 			maskInitArray = FindFoci.cloneResultsArray(resultsInitArray, maskInitArray);
-			results = ff.findMaximaMaskResults(maskInitArray, mergeArray, prelimResults, outputType,
-					thresholdMethod, imp.getTitle(), fractionParameter);
+			results = ff.findMaximaMaskResults(maskInitArray, mergeArray, prelimResults, outputType, thresholdMethod,
+					imp.getTitle(), fractionParameter);
 			if (results == null)
 			{
 				IJ.showStatus(FindFoci.TITLE + " failed");
@@ -338,8 +338,8 @@ public class FindFociRunner extends Thread
 		}
 		if (state.ordinal() <= FindFociState.SHOW_RESULTS.ordinal())
 		{
-			ff.showResults(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod, searchParameter,
-					maxPeaks, minSize, peakMethod, peakParameter, outputType, sortMethod, options, results);
+			ff.showResults(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod, searchParameter, maxPeaks,
+					minSize, peakMethod, peakParameter, outputType, sortMethod, options, results);
 		}
 
 		IJ.showStatus(FindFoci.TITLE + " finished");
@@ -399,7 +399,7 @@ public class FindFociRunner extends Thread
 		// Special case where the change is only relevant if previous model was at the limit
 		if (notEqual(model.getMaxPeaks(), previousModel.getMaxPeaks()))
 		{
-			ArrayList<double[]> resultsArrayList =  results.results;
+			ArrayList<double[]> resultsArrayList = results.results;
 			int change = model.getMaxPeaks() - previousModel.getMaxPeaks();
 			if ((change > 0 && resultsArrayList.size() >= previousModel.getMaxPeaks()) ||
 					(change < 0 && resultsArrayList.size() > model.getMaxPeaks()))

@@ -49,7 +49,7 @@ public class FindFociFloatProcessor extends FindFociProcessor
 	public FindFociFloatProcessor(ImagePlus imp)
 	{
 		super(imp);
-		if (imp.getBitDepth() != 8 || imp.getBitDepth() != 16 || imp.getBitDepth() != 32)
+		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16 && imp.getBitDepth() != 32)
 			throw new RuntimeException("Bit-depth not supported: " + imp.getBitDepth());
 	}
 
@@ -322,9 +322,10 @@ public class FindFociFloatProcessor extends FindFociProcessor
 		int bin = this.bin[i];
 
 		// Check 
-		if (bin != findBin(histogram, i))
+		int bin2 = findBin(histogram, i);
+		if (bin != bin2)
 		{
-			throw new RuntimeException("Failed to compute float value histogram bin");
+			throw new RuntimeException("Failed to compute float value histogram bin: " + bin + " != " + bin2);
 		}
 
 		return bin;
@@ -356,6 +357,11 @@ public class FindFociFloatProcessor extends FindFociProcessor
 		/* sanity check the result */
 		if (value < values[lower] || value >= values[lower + 1])
 		{
+			// The search attempts to find the index for lower which is equal or above the value.
+			// Process the exceptional case where we are at the top end of the range
+			if (value == values[lower + 1])
+				return lower + 1;
+
 			return -1;
 		}
 
@@ -372,7 +378,8 @@ public class FindFociFloatProcessor extends FindFociProcessor
 			case FindFoci.SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND:
 				if (searchParameter < 0)
 					searchParameter = 0;
-				return (float) (stats[FindFoci.STATS_BACKGROUND] + searchParameter * (v0 - stats[FindFoci.STATS_BACKGROUND]));
+				return (float) (stats[FindFoci.STATS_BACKGROUND] +
+						searchParameter * (v0 - stats[FindFoci.STATS_BACKGROUND]));
 
 			case FindFoci.SEARCH_HALF_PEAK_VALUE:
 				return (float) (stats[FindFoci.STATS_BACKGROUND] + 0.5 * (v0 - stats[FindFoci.STATS_BACKGROUND]));
@@ -399,7 +406,7 @@ public class FindFociFloatProcessor extends FindFociProcessor
 		{
 			// This is an edge case that will only happen if peakParameter is zero or below.
 			// Just make it small enough that there must be a peak above the saddle point.
-			height = ((v0 - stats[FindFoci.STATS_BACKGROUND]) * 1e-6); 
+			height = ((v0 - stats[FindFoci.STATS_BACKGROUND]) * 1e-6);
 		}
 		return height;
 	}

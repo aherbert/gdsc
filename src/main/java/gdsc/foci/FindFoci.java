@@ -978,9 +978,9 @@ public class FindFoci implements PlugIn, MouseListener
 			return;
 		}
 
-		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16 && imp.getBitDepth() != 32)
+		if (!isSupported(imp.getBitDepth()))
 		{
-			IJ.error(TITLE, "Only 8-bit, 16-bit and 32-bit images are supported");
+			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
 			return;
 		}
 
@@ -1253,9 +1253,9 @@ public class FindFoci implements PlugIn, MouseListener
 			int peakMethod, double peakParameter, int outputType, int sortIndex, int options, double blur,
 			int centreMethod, double centreParameter, double fractionParameter)
 	{
-		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16 && imp.getBitDepth() != 32)
+		if (!isSupported(imp.getBitDepth()))
 		{
-			IJ.error(TITLE, "Only 8-bit and 16-bit images are supported");
+			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
 			return;
 		}
 		if ((centreMethod == CENTRE_GAUSSIAN_ORIGINAL || centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
@@ -2200,9 +2200,9 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if (imp == null)
 			return null;
-		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16 && imp.getBitDepth() != 32)
+		if (!isSupported(imp.getBitDepth()))
 		{
-			IJ.error(TITLE, "Only 8-bit, 16-bit and 32-bit images are supported");
+			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
 			return null;
 		}
 
@@ -2278,7 +2278,8 @@ public class FindFoci implements PlugIn, MouseListener
 	 * 
 	 * @return Object array containing: (1) Object - image pixels; (2) byte[] - types array; (3) short[] - maxima array;
 	 *         (4)
-	 *         Histogram - image histogram; (5) double[] - image statistics; (6) Object - the original image pixels; (7) ImagePlus -
+	 *         Histogram - image histogram; (5) double[] - image statistics; (6) Object - the original image pixels; (7)
+	 *         ImagePlus -
 	 *         the original image
 	 */
 	public Object[] findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask, int backgroundMethod,
@@ -2288,9 +2289,9 @@ public class FindFoci implements PlugIn, MouseListener
 
 		if (imp == null)
 			return null;
-		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16 && imp.getBitDepth() != 32)
+		if (!isSupported(imp.getBitDepth()))
 		{
-			IJ.error(TITLE, "Only 8-bit, 16-bit and 32-bit images are supported");
+			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
 			return null;
 		}
 
@@ -2347,7 +2348,7 @@ public class FindFoci implements PlugIn, MouseListener
 	 * @param initArray
 	 *            The output from
 	 *            {@link #findMaximaInit(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int)}
-	 * @return Object array containing: (1)  a result ArrayList<double[]> with details of the
+	 * @return Object array containing: (1) a result ArrayList<double[]> with details of the
 	 *         maxima. The details can be extracted for each result using the constants defined with the prefix
 	 *         FindFoci.RESULT_;
 	 *         (2) Integer with the original number of peaks before merging.
@@ -3033,9 +3034,9 @@ public class FindFoci implements PlugIn, MouseListener
 	private boolean execBatch(ImagePlus imp, ImagePlus mask, BatchParameters p, int[] imageDimension,
 			int[] maskDimension)
 	{
-		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
+		if (!isSupported(imp.getBitDepth()))
 		{
-			IJ.error(TITLE, "Only 8-bit and 16-bit images are supported");
+			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
 			return false;
 		}
 		if ((p.centreMethod == CENTRE_GAUSSIAN_ORIGINAL || p.centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
@@ -3048,9 +3049,10 @@ public class FindFoci implements PlugIn, MouseListener
 		final int options = p.options;
 		final int outputType = p.outputType;
 
-		FindFociResult ffResult = findMaxima(imp, mask, p.backgroundMethod, p.backgroundParameter, p.autoThresholdMethod,
-				p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod, p.peakParameter, outputType,
-				p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter, p.fractionParameter);
+		FindFociResult ffResult = findMaxima(imp, mask, p.backgroundMethod, p.backgroundParameter,
+				p.autoThresholdMethod, p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod,
+				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
+				p.fractionParameter);
 
 		if (ffResult == null)
 		{
@@ -3306,5 +3308,27 @@ public class FindFoci implements PlugIn, MouseListener
 		Prefs.set(EMPTY_FIELD, emptyField);
 
 		return true;
+	}
+
+	/**
+	 * Checks if is supported.
+	 *
+	 * @param bitDepth
+	 *            the bit depth
+	 * @return true, if is supported
+	 */
+	public static boolean isSupported(int bitDepth)
+	{
+		return bitDepth == 8 || bitDepth == 16 || bitDepth == 32;
+	}
+
+	/**
+	 * Get the supported images as a text output
+	 *
+	 * @return A text output of the supported images
+	 */
+	public static String getSupported()
+	{
+		return "8-bit, 16-bit and 32-bit";
 	}
 }
