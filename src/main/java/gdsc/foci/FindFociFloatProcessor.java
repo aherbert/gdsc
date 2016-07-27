@@ -321,17 +321,17 @@ public class FindFociFloatProcessor extends FindFociProcessor
 		// We store the bin for each input index when building the histogram
 		int bin = this.bin[i];
 
-		// Check 
-		int bin2 = findBin(histogram, i);
-		if (bin != bin2)
-		{
-			throw new RuntimeException("Failed to compute float value histogram bin: " + bin + " != " + bin2);
-		}
+		//// Check 
+		//int bin2 = findBin(histogram, i);
+		//if (bin != bin2)
+		//{
+		//	throw new RuntimeException("Failed to compute float value histogram bin: " + bin + " != " + bin2);
+		//}
 
 		return bin;
 	}
 
-	private int findBin(Histogram histogram, int i)
+	protected int findBin(Histogram histogram, int i)
 	{
 		/* perform binary search - relies on having sorted data */
 		final float[] values = ((FloatHistogram) histogram).value;

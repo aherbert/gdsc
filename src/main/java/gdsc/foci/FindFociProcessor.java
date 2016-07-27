@@ -404,6 +404,7 @@ public abstract class FindFociProcessor
 			t = AutoThreshold.getThreshold(autoThresholdMethod, statsHistogram);
 		}
 		// Convert back to an image value
+		//System.out.printf("bin = %d, value = %f\n", t, histogram.getValue(t));
 		return histogram.getValue(t);
 	}
 
