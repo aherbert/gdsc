@@ -22,7 +22,7 @@ class FloatHistogram extends Histogram
 		super(h, minBin, maxBin);
 		this.value = value;
 	}
-	
+
 	public FloatHistogram(float[] value, int[] h)
 	{
 		super(h);
@@ -30,12 +30,21 @@ class FloatHistogram extends Histogram
 	}
 
 	@Override
-	public FloatHistogram compact(int size)
+	public Histogram compact(int size)
 	{
 		if (minBin == maxBin)
 			return this;
 		float min = getValue(minBin);
 		float max = getValue(maxBin);
+
+		if ((int) min == min && (int) max == max && min >= 0 && max < size)
+		{
+			// Check if we can convert to integer histogram
+			if (integerData())
+				return integerHistogram(size);
+		}
+
+		// Compress non-integer data
 		int size_1 = size - 1;
 		float binSize = (max - min) / size_1;
 		int[] newH = new int[size];
@@ -51,8 +60,24 @@ class FloatHistogram extends Histogram
 		// Create the new values
 		float[] newValue = new float[size];
 		for (int i = 0; i < size; i++)
-			newValue[i] = min * i * binSize;
+			newValue[i] = min + i * binSize;
 		return new FloatHistogram(newValue, newH);
+	}
+
+	private boolean integerData()
+	{
+		for (float f : value)
+			if ((int) f != f)
+				return false;
+		return true;
+	}
+
+	private Histogram integerHistogram(int size)
+	{
+		int[] h = new int[size];
+		for (int i = 0; i < value.length; i++)
+			h[(int) value[i]] += this.h[i];
+		return new Histogram(h);
 	}
 
 	public float getValue(int i)
