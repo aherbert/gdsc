@@ -34,10 +34,10 @@ class FloatHistogram extends Histogram
 	{
 		if (minBin == maxBin)
 			return this;
-		float min = getValue(minBin);
-		float max = getValue(maxBin);
+		final float min = getValue(minBin);
+		final float max = getValue(maxBin);
 
-		if ((int) min == min && (int) max == max && min >= 0 && max < size)
+		if ((int) min == min && (int) max == max && (max - min) < size)
 		{
 			// Check if we can convert to integer histogram
 			if (integerData())
@@ -45,9 +45,9 @@ class FloatHistogram extends Histogram
 		}
 
 		// Compress non-integer data
-		int size_1 = size - 1;
-		float binSize = (max - min) / size_1;
-		int[] newH = new int[size];
+		final int size_1 = size - 1;
+		final float binSize = (max - min) / size_1;
+		final int[] newH = new int[size];
 		for (int i = 0; i < h.length; i++)
 		{
 			int bin = (int) ((getValue(i) - min) / binSize + 0.5);
@@ -58,7 +58,7 @@ class FloatHistogram extends Histogram
 			newH[bin] += h[i];
 		}
 		// Create the new values
-		float[] newValue = new float[size];
+		final float[] newValue = new float[size];
 		for (int i = 0; i < size; i++)
 			newValue[i] = min + i * binSize;
 		return new FloatHistogram(newValue, newH);
@@ -74,9 +74,22 @@ class FloatHistogram extends Histogram
 
 	private Histogram integerHistogram(int size)
 	{
+		final float min = getValue(minBin);
+		int offset = 0;
+		if (min < 0)
+		{
+			// build with offset
+			offset = (int) min;
+		}
+
+		// No need to check size since this has been done already
 		int[] h = new int[size];
 		for (int i = 0; i < value.length; i++)
-			h[(int) value[i]] += this.h[i];
+			h[(int) value[i] - offset] += this.h[i];
+
+		if (offset != 0)
+			return new IntHistogram(h, offset);
+
 		return new Histogram(h);
 	}
 
