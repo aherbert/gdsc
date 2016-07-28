@@ -37,19 +37,15 @@ import ij.process.ImageProcessor;
  * <p>
  * Supports 8- or 16-bit images
  */
-public class FindFociIntProcessor extends FindFociProcessor
+public class FindFociIntProcessor extends FindFociBaseProcessor
 {
 	private int[] image;
 
-	public FindFociIntProcessor(ImagePlus imp)
-	{
-		super(imp);
-		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
-			throw new RuntimeException("Bit-depth not supported: " + imp.getBitDepth());
-	}
-
 	protected Object extractImage(ImagePlus imp)
 	{
+		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
+			throw new RuntimeException("Bit-depth not supported: " + imp.getBitDepth());
+		
 		ImageStack stack = imp.getStack();
 		int[] image = new int[maxx_maxy_maxz];
 		int c = imp.getChannel();

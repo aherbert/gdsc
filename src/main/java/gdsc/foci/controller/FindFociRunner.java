@@ -288,7 +288,7 @@ public class FindFociRunner extends Thread
 		}
 		if (state.ordinal() <= FindFociState.SEARCH.ordinal())
 		{
-			searchInitArray = FindFoci.cloneInitArray(initArray, searchInitArray);
+			searchInitArray = ff.cloneInitArray(initArray, searchInitArray);
 			searchArray = ff.findMaximaSearch(searchInitArray, backgroundMethod, backgroundParameter, searchMethod,
 					searchParameter);
 			if (searchArray == null)
@@ -302,7 +302,7 @@ public class FindFociRunner extends Thread
 		}
 		if (state.ordinal() <= FindFociState.MERGE.ordinal())
 		{
-			mergeInitArray = FindFoci.cloneResultsArray(searchInitArray, mergeInitArray);
+			mergeInitArray = ff.cloneResultsArray(searchInitArray, mergeInitArray);
 			mergeArray = ff.findMaximaMerge(mergeInitArray, searchArray, minSize, peakMethod, peakParameter, options,
 					gaussianBlur);
 			if (mergeArray == null)
@@ -314,7 +314,7 @@ public class FindFociRunner extends Thread
 		}
 		if (state.ordinal() <= FindFociState.CALCULATE_RESULTS.ordinal())
 		{
-			resultsInitArray = FindFoci.cloneResultsArray(mergeInitArray, resultsInitArray);
+			resultsInitArray = ff.cloneResultsArray(mergeInitArray, resultsInitArray);
 			prelimResults = ff.findMaximaPrelimResults(resultsInitArray, mergeArray, maxPeaks, sortMethod, centreMethod,
 					centreParameter);
 			if (prelimResults == null)
@@ -326,7 +326,7 @@ public class FindFociRunner extends Thread
 		}
 		if (state.ordinal() <= FindFociState.CALCULATE_OUTPUT_MASK.ordinal())
 		{
-			maskInitArray = FindFoci.cloneResultsArray(resultsInitArray, maskInitArray);
+			maskInitArray = ff.cloneResultsArray(resultsInitArray, maskInitArray);
 			results = ff.findMaximaMaskResults(maskInitArray, mergeArray, prelimResults, outputType, thresholdMethod,
 					imp.getTitle(), fractionParameter);
 			if (results == null)

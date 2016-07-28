@@ -1311,7 +1311,7 @@ public class SpotDistance implements PlugIn
 		ArrayList<DistanceResult> newResultsArray = new ArrayList<DistanceResult>(resultsArray.size());
 
 		// Process in XYZ order
-		FindFociProcessor ffp = new FindFociIntProcessor(null);
+		FindFociBaseProcessor ffp = new FindFociIntProcessor();
 		ffp.sortAscResults(resultsArray, FindFoci.SORT_XYZ, null);
 
 		ImageStack maskStack = peaksImp.getImageStack();

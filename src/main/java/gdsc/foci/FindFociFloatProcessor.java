@@ -40,18 +40,11 @@ import ij.process.ImageProcessor;
  * <p>
  * Supports 8-, 16- or 32-bit images. Processing is performed using a float image values.
  */
-public class FindFociFloatProcessor extends FindFociProcessor
+public class FindFociFloatProcessor extends FindFociBaseProcessor
 {
 	private float[] image;
 	// Cache the bin for each index
 	private int[] bin;
-
-	public FindFociFloatProcessor(ImagePlus imp)
-	{
-		super(imp);
-		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16 && imp.getBitDepth() != 32)
-			throw new RuntimeException("Bit-depth not supported: " + imp.getBitDepth());
-	}
 
 	/**
 	 * Extract the image into a linear array stacked in zyx order
