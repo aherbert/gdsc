@@ -195,10 +195,6 @@ public interface FindFociProcessor
 	 * @see {@link #OPTION_STATS_INSIDE } and {@link #OPTION_STATS_OUTSIDE }
 	 */
 	public final static int STATS_SD_BACKGROUND = 10;
-	/**
-	 * The index of the total image intensity above the background in the results statistics array
-	 */
-	public final static int STATS_SUM_ABOVE_MIN_BACKGROUND = 11;
 
 	/**
 	 * The index of the peak X coordinate within the result int[] array of the results ArrayList<double[]> object
@@ -267,34 +263,24 @@ public interface FindFociProcessor
 	 */
 	public final static int RESULT_INTENSITY_ABOVE_SADDLE = 13;
 	/**
-	 * The index of the sum of the peak intensity above the minimum value of the analysed image within the result int[] array of the results
-	 * ArrayList<double[]> object
-	 */
-	public final static int RESULT_INTENSITY_MINUS_MIN = 14;
-	/**
-	 * The index of the average of the peak intensity above the minimum value of the analysed image within the result int[] array of the results
-	 * ArrayList<double[]> object
-	 */
-	public final static int RESULT_AVERAGE_INTENSITY_MINUS_MIN = 15;
-	/**
 	 * The index of the custom sort value within the result int[] array of the results ArrayList<int[]> object. This is
 	 * used
 	 * internally to sort the results using values not stored in the result array.
 	 */
-	final static int RESULT_CUSTOM_SORT_VALUE = 16;
+	final static int RESULT_CUSTOM_SORT_VALUE = 14;
 	/**
 	 * The index of the state (i.e. pixel value) from the mask image within the result int[] array of the results
 	 * ArrayList<double[]> object
 	 */
-	final static int RESULT_STATE = 17;
+	final static int RESULT_STATE = 15;
 	/**
 	 * The index of the allocated object from the mask image within the result int[] array of the results
 	 * ArrayList<double[]> object
 	 */
-	final static int RESULT_OBJECT = 18;
+	final static int RESULT_OBJECT = 16;
 
 	// The length of the result array
-	final static int RESULT_LENGTH = 19;
+	final static int RESULT_LENGTH = 17;
 
 	/**
 	 * Sort the peaks using the pixel count
@@ -360,14 +346,6 @@ public interface FindFociProcessor
 	 * Sort the peaks using the XYZ coordinates (in order)
 	 */
 	public final static int SORT_XYZ = 15;
-	/**
-	 * Sort the peaks using the sum of pixel intensity (minus the minimum in the analysed region)
-	 */
-	public final static int SORT_INTENSITY_MINUS_MIN = 16;
-	/**
-	 * Sort the peaks using the average pixel value (minus the minimum in the analysed region)
-	 */
-	public final static int SORT_AVERAGE_INTENSITY_MINUS_MIN = 17;
 
 	/**
 	 * Apply the minimum size criteria to the peak size above the highest saddle point

@@ -269,8 +269,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		}
 
 		stats[STATS_SUM_ABOVE_BACKGROUND] = getIntensityAboveBackground(originalImage, types, stats[STATS_BACKGROUND]);
-		stats[STATS_SUM_ABOVE_MIN_BACKGROUND] = getIntensityAboveBackground(originalImage, types,
-				stats[STATS_MIN_BACKGROUND]);
 
 		// Calculate the peaks centre and maximum value.
 		locateMaxima(originalImage, image, maxima, types, resultsArray, originalNumberOfPeaks, centreMethod,
@@ -552,8 +550,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		stats[STATS_BACKGROUND] = getSearchThreshold(backgroundMethod, backgroundParameter, stats);
 		stats[STATS_SUM_ABOVE_BACKGROUND] = getIntensityAboveBackground(originalImage, types,
 				round(stats[STATS_BACKGROUND]));
-		stats[STATS_SUM_ABOVE_MIN_BACKGROUND] = getIntensityAboveBackground(originalImage, types,
-				stats[STATS_MIN_BACKGROUND]);
 		Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, round(stats[STATS_MIN]),
 				round(stats[STATS_BACKGROUND]));
 
@@ -621,8 +617,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		setPixels(image);
 		stats[STATS_BACKGROUND] = getSearchThreshold(backgroundMethod, backgroundParameter, stats);
 		stats[STATS_SUM_ABOVE_BACKGROUND] = getIntensityAboveBackground(originalImage, types, stats[STATS_BACKGROUND]);
-		stats[STATS_SUM_ABOVE_MIN_BACKGROUND] = getIntensityAboveBackground(originalImage, types,
-				stats[STATS_MIN_BACKGROUND]);
 		Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, (float) stats[STATS_MIN],
 				(float) stats[STATS_BACKGROUND]);
 		if (maxPoints == null)
@@ -1429,6 +1423,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			case SORT_INTENSITY_MINUS_BACKGROUND:
 			case SORT_AVERAGE_INTENSITY:
 			case SORT_AVERAGE_INTENSITY_MINUS_BACKGROUND:
+			case SORT_INTENSITY_ABOVE_SADDLE:
 				return true;
 				
 			case SORT_COUNT:
@@ -1438,13 +1433,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			case SORT_Z:
 			case SORT_SADDLE_HEIGHT:
 			case SORT_COUNT_ABOVE_SADDLE:
-			case SORT_INTENSITY_ABOVE_SADDLE:
 			case SORT_ABSOLUTE_HEIGHT:
 			case SORT_RELATIVE_HEIGHT_ABOVE_BACKGROUND:
 			case SORT_PEAK_ID:
 			case SORT_XYZ:
-			case SORT_INTENSITY_MINUS_MIN:
-			case SORT_AVERAGE_INTENSITY_MINUS_MIN:
 			default:
 				return false;
 		}
@@ -3064,12 +3056,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		for (double[] result : resultsArray)
 		{
 			result[RESULT_INTENSITY_MINUS_BACKGROUND] = result[RESULT_INTENSITY] - background * result[RESULT_COUNT];
-			result[RESULT_INTENSITY_MINUS_MIN] = result[RESULT_INTENSITY] -
-					min * result[RESULT_COUNT];
 			result[RESULT_AVERAGE_INTENSITY] = result[RESULT_INTENSITY] / result[RESULT_COUNT];
 			result[RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND] = result[RESULT_INTENSITY_MINUS_BACKGROUND] /
-					result[RESULT_COUNT];
-			result[RESULT_AVERAGE_INTENSITY_MINUS_MIN] = result[RESULT_INTENSITY_MINUS_MIN] /
 					result[RESULT_COUNT];
 		}
 	}
@@ -3876,10 +3864,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			case SORT_XYZ:
 				customSortXYZ(resultsArray);
 				return RESULT_CUSTOM_SORT_VALUE;
-			case SORT_INTENSITY_MINUS_MIN:
-				return RESULT_INTENSITY_MINUS_MIN;
-			case SORT_AVERAGE_INTENSITY_MINUS_MIN:
-				return RESULT_AVERAGE_INTENSITY_MINUS_MIN;
 			default:
 				System.err.println(FindFoci.TITLE + " ERROR: Unknown sort index method " + sortIndex);
 		}

@@ -469,9 +469,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			"Absolute height", 
 			"Relative height >Bg", 
 			"Peak ID", 
-			"XYZ",
-			"Total intensity minus min", 
-			"Average intensity minus min" };
+			"XYZ" };
 
 	private static String[] centreMethods = { 
 			"Max value (search image)", 
@@ -2105,11 +2103,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		sb.append("Av\t");
 		sb.append("Total (>Bg)\t");
 		sb.append("Av (>Bg)\t");
-		sb.append("Total (>Min)\t");
-		sb.append("Av (>Min)\t");
 		sb.append("% Signal\t");
 		sb.append("% Signal (>Bg)\t");
-		sb.append("% Signal (>Min)\t");
 		sb.append("Signal / Noise\t");
 		sb.append("Object\t");
 		sb.append("State");
@@ -2148,7 +2143,6 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		final double sum = stats[STATS_SUM];
 		final double noise = stats[STATS_BACKGROUND];
 		final double intensityAboveBackground=stats[STATS_SUM_ABOVE_BACKGROUND];
-		final double intensityAboveMinBackground=stats[STATS_SUM_ABOVE_MIN_BACKGROUND];		
 		
 		final double absoluteHeight = ffp.getAbsoluteHeight(result, noise);
 		final double relativeHeight = ffp.getRelativeHeight(result, noise, absoluteHeight);
@@ -2177,11 +2171,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		addValue(sb, result[RESULT_INTENSITY] / result[RESULT_COUNT]);
 		addValue(sb, result[RESULT_INTENSITY_MINUS_BACKGROUND], floatImage);
 		addValue(sb, result[RESULT_INTENSITY_MINUS_BACKGROUND] / result[RESULT_COUNT]);
-		addValue(sb, result[RESULT_INTENSITY_MINUS_MIN], floatImage);
-		addValue(sb, result[RESULT_INTENSITY_MINUS_MIN] / result[RESULT_COUNT]);
 		addValue(sb, 100 * (result[RESULT_INTENSITY] / sum));
 		addValue(sb, 100 * (result[RESULT_INTENSITY_MINUS_BACKGROUND] / intensityAboveBackground));
-		addValue(sb, 100 * (result[RESULT_INTENSITY_MINUS_MIN] / intensityAboveMinBackground));
 		addValue(sb, (result[RESULT_MAX_VALUE] / noise));
 		sb.append((int) result[RESULT_OBJECT]).append("\t");
 		sb.append((int) result[RESULT_STATE]);
