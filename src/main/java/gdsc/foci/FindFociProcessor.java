@@ -740,7 +740,6 @@ public abstract class FindFociProcessor
 				(float) stats[FindFoci.STATS_BACKGROUND]);
 		if (maxPoints == null)
 			return null;
-
 		ArrayList<double[]> resultsArray = new ArrayList<double[]>(maxPoints.length);
 
 		assignMaxima(maxima, maxPoints, resultsArray);
@@ -2265,6 +2264,7 @@ public abstract class FindFociProcessor
 			result[FindFoci.RESULT_MAX_VALUE] = maximum.value;
 			result[FindFoci.RESULT_INTENSITY] = maximum.value;
 			result[FindFoci.RESULT_COUNT] = 1;
+			result[FindFoci.RESULT_HIGHEST_SADDLE_VALUE] = Double.NEGATIVE_INFINITY;
 
 			resultsArray.add(result);
 		}
@@ -2378,8 +2378,7 @@ public abstract class FindFociProcessor
 		//for (byte b : types)
 		//	if ((b & PLATEAU) == PLATEAU)
 		//		nP++;
-
-		//IJ.log(String.format("Processed %d levels [%d steps], %d plateau points", levels, processedLevel, nP));
+		//System.out.printf("Processed %d levels [%d steps], %d plateau points\n", levels, processedLevel, nP);
 	}
 
 	/**
@@ -3282,6 +3281,7 @@ public abstract class FindFociProcessor
 
 			// List of saddle highest values with every other peak
 			final float[] highestSaddleValue = new float[nMaxima + 1];
+			Arrays.fill(highestSaddleValue, Float.NEGATIVE_INFINITY);
 
 			types[index0] |= LISTED; // mark first point as listed
 			int listI = 0; // index of current search element in the list
@@ -3369,11 +3369,11 @@ public abstract class FindFociProcessor
 
 			// Find the highest saddle
 			int highestNeighbourPeakId = 0;
-			float highestNeighbourValue = 0;
+			float highestNeighbourValue = Float.NEGATIVE_INFINITY;
 			LinkedList<double[]> saddles = saddlePoints.get(id);
 			for (int id2 = 1; id2 <= nMaxima; id2++)
 			{
-				if (highestSaddleValue[id2] > 0)
+				if (highestSaddleValue[id2] != Float.NEGATIVE_INFINITY)
 				{
 					saddles.add(new double[] { id2, highestSaddleValue[id2] });
 					// IJ.log("Peak saddle " + id + " -> " + id2 + " @ " + highestSaddleValue[id2]);
@@ -3421,6 +3421,7 @@ public abstract class FindFociProcessor
 		for (double[] result : resultsArray)
 		{
 			saddleHeight[(int) result[FindFoci.RESULT_PEAK_ID]] = (float) result[FindFoci.RESULT_HIGHEST_SADDLE_VALUE];
+			//System.out.printf("ID=%d saddle=%f (%f)\n", (int) result[FindFoci.RESULT_PEAK_ID], result[FindFoci.RESULT_HIGHEST_SADDLE_VALUE], result[FindFoci.RESULT_COUNT_ABOVE_SADDLE]);
 		}
 
 		for (int i = maxima.length; i-- > 0;)
@@ -3676,7 +3677,7 @@ public abstract class FindFociProcessor
 		result[FindFoci.RESULT_COUNT_ABOVE_SADDLE] = result[FindFoci.RESULT_COUNT];
 		result[FindFoci.RESULT_INTENSITY_ABOVE_SADDLE] = result[FindFoci.RESULT_INTENSITY];
 		result[FindFoci.RESULT_SADDLE_NEIGHBOUR_ID] = 0;
-		result[FindFoci.RESULT_HIGHEST_SADDLE_VALUE] = 0;
+		result[FindFoci.RESULT_HIGHEST_SADDLE_VALUE] = Double.NEGATIVE_INFINITY;
 	}
 
 	/**
@@ -3690,7 +3691,7 @@ public abstract class FindFociProcessor
 	private double[] findHighestNeighbourSaddle(int[] peakIdMap, LinkedList<double[]> saddles, int peakId)
 	{
 		double[] maxSaddle = null;
-		double max = 0;
+		double max = Double.NEGATIVE_INFINITY;
 		for (double[] saddle : saddles)
 		{
 			// Find foci that have not been reassigned to this peak (or nothing)
@@ -3718,7 +3719,7 @@ public abstract class FindFociProcessor
 	private double[] findHighestSaddle(int[] peakIdMap, LinkedList<double[]> saddles, int peakId)
 	{
 		double[] maxSaddle = null;
-		double max = 0;
+		double max = Double.NEGATIVE_INFINITY;
 		for (double[] saddle : saddles)
 		{
 			// Use the map to ensure the original saddle id corresponds to the current peaks
