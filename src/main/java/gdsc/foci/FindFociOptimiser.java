@@ -696,12 +696,15 @@ public class FindFociOptimiser
 						: new String[] { "Both" };
 				for (String statsMode : myStatsModes)
 				{
-					long methodStart = System.nanoTime();
 					int statisticsMode = convertStatisticsMode(statsMode);
+					long methodStart = System.nanoTime();
 					Object[] initArray = ff.findMaximaInit(imp, imp2, mask, backgroundMethodArray[b], thresholdMethod,
 							statisticsMode);
-					Object[] clonedInitArray = null;
 					long findMaximaInitTime = System.nanoTime() - methodStart;
+					if (initArray == null)
+						return null;
+					//Object[] clonedInitArray = null;
+					Object[] searchInitArray = null;
 
 					for (double backgroundParameter = myBackgroundParameterMinArray[b]; backgroundParameter <= myBackgroundParameterMax; backgroundParameter += myBackgroundParameterInterval)
 					{
@@ -710,46 +713,50 @@ public class FindFociOptimiser
 						final double thisBackgroundParameter = (backgroundMethodHasParameter(backgroundMethodArray[b]))
 								? backgroundParameter : 0;
 
-						for (int minSize = myMinSizeMin; minSize <= myMinSizeMax; minSize += myMinSizeInterval)
-							for (int s = 0; s < searchMethodArray.length; s++)
-								for (double searchParameter = mySearchParameterMinArray[s]; searchParameter <= mySearchParameterMax; searchParameter += mySearchParameterInterval)
+						for (int s = 0; s < searchMethodArray.length; s++)
+							for (double searchParameter = mySearchParameterMinArray[s]; searchParameter <= mySearchParameterMax; searchParameter += mySearchParameterInterval)
+							{
+								// Use zero when there is no parameter
+								double thisSearchParameter = (searchMethodHasParameter(searchMethodArray[s]))
+										? searchParameter : 0;
+
+								searchInitArray = ff.cloneInitArray(initArray, searchInitArray);
+								methodStart = System.nanoTime();
+								Object[] searchArray = ff.findMaximaSearch(searchInitArray, backgroundMethodArray[b],
+										thisBackgroundParameter, searchMethodArray[s], thisSearchParameter);
+								long findMaximaSearchTime = findMaximaInitTime + System.nanoTime() - methodStart;
+								if (searchArray == null)
+									return null;
+								Object[] mergeInitArray = null;
+
+								if (logBackground)
 								{
-									// Use zero when there is no parameter
-									double thisSearchParameter = (searchMethodHasParameter(searchMethodArray[s]))
-											? searchParameter : 0;
+									final double backgroundLevel = ((double[]) searchArray[4])[FindFoci.STATS_BACKGROUND];
+									logBackground = false;
+									IJ.log(String.format("Background level - %s %s: %s = %g",
+											FindFoci.backgroundMethods[backgroundMethodArray[b]],
+											backgroundMethodHasStatisticsMode(backgroundMethodArray[b])
+													? "(" + statsMode + ") " : "",
+											((backgroundMethodHasParameter(backgroundMethodArray[b]))
+													? IJ.d2s(backgroundParameter, 2) : thresholdMethod),
+											backgroundLevel));
+								}
+
+								for (int minSize = myMinSizeMin; minSize <= myMinSizeMax; minSize += myMinSizeInterval)
 									for (double peakParameter = myPeakParameterMin; peakParameter <= myPeakParameterMax; peakParameter += myPeakParameterInterval)
 										for (int options : optionsArray)
 										{
 											options += statisticsMode;
 											for (int sortMethod : sortMethodArray)
 											{
-												clonedInitArray = FindFoci.cloneInitArray(initArray, clonedInitArray);
-												// System.currentTimeMillis() or System.nanoTime()
+												mergeInitArray = ff.cloneResultsArray(searchInitArray, mergeInitArray);
 												methodStart = System.nanoTime();
-												Object[] runArray = ff.findMaximaRun(clonedInitArray,
-														backgroundMethodArray[b], backgroundParameter,
-														searchMethodArray[s], searchParameter, minSize, myPeakMethod,
-														peakParameter, sortMethod, options, blur);
-
-												// Null is returned when interrupted
-												if (runArray == null)
-													return null;
-
-												if (logBackground)
-												{
-													final double backgroundLevel = ((double[]) clonedInitArray[4])[FindFoci.STATS_BACKGROUND];
-													logBackground = false;
-													IJ.log(String.format("Background level - %s %s: %s = %g",
-															FindFoci.backgroundMethods[backgroundMethodArray[b]],
-															backgroundMethodHasStatisticsMode(backgroundMethodArray[b])
-																	? "(" + statsMode + ") " : "",
-															((backgroundMethodHasParameter(backgroundMethodArray[b]))
-																	? IJ.d2s(backgroundParameter, 2) : thresholdMethod),
-															backgroundLevel));
-												}
-
-												long findMaximaRunTime = findMaximaInitTime + System.nanoTime() -
+												Object[] mergeArray = ff.findMaximaMerge(mergeInitArray, searchArray,
+														minSize, myPeakMethod, peakParameter, options, blur);
+												long findMaximaMergeTime = findMaximaSearchTime + System.nanoTime() -
 														methodStart;
+												if (mergeArray == null)
+													return null;
 
 												for (int c = 0; c < centreMethodArray.length; c++)
 												{
@@ -757,10 +764,9 @@ public class FindFociOptimiser
 													{
 														methodStart = System.nanoTime();
 														FindFociResult peakResults = ff.findMaximaResults(
-																clonedInitArray, runArray, myMaxPeaks, sortMethod,
+																mergeInitArray, mergeArray, myMaxPeaks, sortMethod,
 																centreMethodArray[c], centreParameter);
-
-														long time = findMaximaRunTime + System.nanoTime() - methodStart;
+														long time = findMaximaMergeTime + System.nanoTime() - methodStart;
 
 														counter.increment();
 
@@ -773,8 +779,9 @@ public class FindFociOptimiser
 																	thisSearchParameter, myMaxPeaks, minSize,
 																	myPeakMethod, peakParameter, sortMethod, options,
 																	centreMethodArray[c], centreParameter);
-															Result result = analyseResults(id, roiPoints, peakResults.results,
-																	dThreshold, runOptions, time, myBeta, is3D);
+															Result result = analyseResults(id, roiPoints,
+																	peakResults.results, dThreshold, runOptions, time,
+																	myBeta, is3D);
 															results.add(result);
 														}
 														id++;
@@ -782,7 +789,7 @@ public class FindFociOptimiser
 												}
 											}
 										}
-								}
+							}
 					}
 				}
 			}
