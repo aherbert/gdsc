@@ -1,8 +1,8 @@
 package gdsc.foci;
 
 import java.util.Arrays;
+import java.util.Comparator;
 
-import gdsc.core.utils.Sort;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
@@ -123,26 +123,32 @@ public class FindFociFloatProcessor extends FindFociProcessor
 	 */
 	private FloatHistogram buildHistogram(float[] data, int[] indices)
 	{
-		Sort.sort(indices, data, true);
-
-		// Reverse
-		int left = 0;
-		int right = data.length - 1;
-
-		while (left < right)
+		// Convert data for sorting
+		float[][] sortData = new float[indices.length][2];
+		for (int i = indices.length; i-- > 0;)
 		{
-			// swap the values at the left and right indices
-			final float temp = data[left];
-			data[left] = data[right];
-			data[right] = temp;
+			sortData[i][0] = data[i];
+			sortData[i][1] = indices[i];
+		}
 
-			final int temp2 = indices[left];
-			indices[left] = indices[right];
-			indices[right] = temp2;
+		Arrays.sort(sortData, new Comparator<float[]>()
+		{
+			public int compare(float[] o1, float[] o2)
+			{
+				// Smallest first
+				if (o1[0] > o2[0])
+					return 1;
+				if (o1[0] < o2[0])
+					return -1;
+				return 0;
+			}
+		});
 
-			// move the left and right index pointers in toward the center
-			left++;
-			right--;
+		// Copy back
+		for (int i = indices.length; i-- > 0;)
+		{
+			indices[i] = (int) sortData[i][1];
+			data[i] = sortData[i][0];
 		}
 
 		float lastValue = data[0];
@@ -183,6 +189,7 @@ public class FindFociFloatProcessor extends FindFociProcessor
 		h = Arrays.copyOf(h, size);
 		value = Arrays.copyOf(value, size);
 
+		// TODO - remove this
 		// Check
 		int total = 0;
 		for (int i : h)
