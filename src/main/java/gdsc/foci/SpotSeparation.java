@@ -96,7 +96,7 @@ public class SpotSeparation implements PlugInFilter
 
 		ImagePlus maximaImp = results.mask;
 		ImageProcessor spotIp = maximaImp.getProcessor();
-		ArrayList<double[]> resultsArray = results.results;
+		ArrayList<FindFociResult> resultsArray = results.results;
 
 		showSpotImage(maximaImp, resultsArray);
 
@@ -322,7 +322,7 @@ public class SpotSeparation implements PlugInFilter
 
 		ImagePlus maximaImp = results.mask;
 		ImageProcessor spotIp = maximaImp.getProcessor();
-		ArrayList<double[]> resultsArray = results.results;
+		ArrayList<FindFociResult> resultsArray = results.results;
 
 		// Find all maxima that are within the ROI bounds
 		final byte[] mask = (roi.getMask() == null) ? null : (byte[]) roi.getMask().getPixels();
@@ -334,9 +334,9 @@ public class SpotSeparation implements PlugInFilter
 
 		for (int i = 0; i < resultsArray.size(); i++)
 		{
-			final double[] result = resultsArray.get(i);
-			final int x = (int) result[FindFoci.RESULT_X];
-			final int y = (int) result[FindFoci.RESULT_Y];
+			final FindFociResult result = resultsArray.get(i);
+			final int x = result.RESULT_X;
+			final int y = result.RESULT_Y;
 
 			if (x >= bounds.x && x < maxx && y >= bounds.y && y < maxy)
 			{
@@ -354,14 +354,14 @@ public class SpotSeparation implements PlugInFilter
 			return null;
 
 		// Renumber the remaining valid spots
-		ArrayList<double[]> newResultsArray = new ArrayList<double[]>(newCount);
+		ArrayList<FindFociResult> newResultsArray = new ArrayList<FindFociResult>(newCount);
 		int[] maskIdMap = new int[resultsArray.size() + 1];
 		for (int i = 0; i < resultsArray.size(); i++)
 		{
-			final double[] result = resultsArray.get(i);
+			final FindFociResult result = resultsArray.get(i);
 			if (newId[i] > 0)
 			{
-				result[FindFoci.RESULT_PEAK_ID] = newId[i];
+				result.RESULT_PEAK_ID = newId[i];
 				newResultsArray.add(result);
 				// Reverse peak IDs so the highest value is the first in the
 				// results list
@@ -423,7 +423,7 @@ public class SpotSeparation implements PlugInFilter
 		return results;
 	}
 
-	private void showSpotImage(ImagePlus maximaImp, ArrayList<double[]> resultsArray)
+	private void showSpotImage(ImagePlus maximaImp, ArrayList<FindFociResult> resultsArray)
 	{
 		if (showSpotImage)
 		{
@@ -450,15 +450,15 @@ public class SpotSeparation implements PlugInFilter
 	 * @param resultsArray
 	 * @return
 	 */
-	private AssignedPoint[] extractSpotCoordinates(ArrayList<double[]> resultsArray)
+	private AssignedPoint[] extractSpotCoordinates(ArrayList<FindFociResult> resultsArray)
 	{
 		AssignedPoint[] points = new AssignedPoint[resultsArray.size()];
 		int i = 0;
 		int maxId = resultsArray.size() + 1;
-		for (double[] result : resultsArray)
+		for (FindFociResult result : resultsArray)
 		{
-			points[i] = new AssignedPoint((int) result[FindFoci.RESULT_X], (int) result[FindFoci.RESULT_Y],
-					maxId - (int) result[FindFoci.RESULT_PEAK_ID]);
+			points[i] = new AssignedPoint(result.RESULT_X, result.RESULT_Y,
+					maxId - result.RESULT_PEAK_ID);
 			i++;
 		}
 		return points;

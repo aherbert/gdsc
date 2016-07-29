@@ -79,17 +79,6 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		"Count above saddle",
 		"Intensity above saddle"
 	};	
-	private static int[] weight_result_index = new int[] {
-		-1,
-        FindFoci.RESULT_COUNT,
-        FindFoci.RESULT_INTENSITY,
-        FindFoci.RESULT_MAX_VALUE,
-        FindFoci.RESULT_AVERAGE_INTENSITY,
-        FindFoci.RESULT_INTENSITY_MINUS_BACKGROUND,
-        FindFoci.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND,
-        FindFoci.RESULT_COUNT_ABOVE_SADDLE,
-        FindFoci.RESULT_INTENSITY_ABOVE_SADDLE
-	};
 	//@formatter:on
 	private static int weight = 2;
 	private static int minSize = 0;
@@ -109,7 +98,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	private ImagePlus imp;
 	private boolean[] edge = null;
 	private AssignedPoint[] roiPoints;
-	private ArrayList<double[]> results;
+	private ArrayList<FindFociResult> results;
 	private ArrayList<Cluster> clusters, minSizeClusters, edgeClusters, filteredClusters;
 	private MatchResult matchResult;
 	private ColorModel cm;
@@ -192,10 +181,10 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		// Image values correspond to the reverse order of the results.
 		for (int i = 0, id = results.size(); i < results.size(); i++, id--)
 		{
-			final double[] result = results.get(i);
-			final int x = (int) result[FindFoci.RESULT_X];
-			final int y = (int) result[FindFoci.RESULT_Y];
-			final int z = (int) result[FindFoci.RESULT_Z];
+			final FindFociResult result = results.get(i);
+			final int x = result.RESULT_X;
+			final int y = result.RESULT_Y;
+			final int z = result.RESULT_Z;
 			try
 			{
 				final int value = stack.getProcessor(z + 1).get(x, y);
@@ -975,14 +964,31 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			return null;
 		ArrayList<ClusterPoint> points = new ArrayList<ClusterPoint>(FindFoci.getResults().size());
 		// Image values correspond to the reverse order of the results.
-		final int weight_index = weight_result_index[weight];
 		for (int i = 0, id = results.size(); i < results.size(); i++, id--)
 		{
-			double[] result = results.get(i);
-			final double w = (weight_index != -1) ? result[weight_index] : 1;
-			points.add(ClusterPoint.newClusterPoint(id, result[FindFoci.RESULT_X], result[FindFoci.RESULT_Y], w));
+			FindFociResult result = results.get(i);
+			points.add(ClusterPoint.newClusterPoint(id, result.RESULT_X, result.RESULT_Y, getWeight(result)));
 		}
 		return points;
+	}
+
+	private double getWeight(FindFociResult result)
+	{
+		switch (weight)
+		{
+			//@formatter:off
+			case 0: return 1.0;
+			case 1: return result.RESULT_COUNT;
+			case 2: return result.RESULT_INTENSITY;
+			case 3: return result.RESULT_MAX_VALUE;
+			case 4: return result.RESULT_AVERAGE_INTENSITY;
+			case 5: return result.RESULT_INTENSITY_MINUS_BACKGROUND;
+			case 6: return result.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND;
+			case 7: return result.RESULT_COUNT_ABOVE_SADDLE;
+			case 8: return result.RESULT_INTENSITY_ABOVE_SADDLE;
+			default: return 1.0;
+			//@formatter:on
+		}
 	}
 
 	private void createResultsTables()

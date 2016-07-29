@@ -144,102 +144,6 @@ public interface FindFociProcessor
 	public final static int OUTPUT_MASK = OUTPUT_MASK_PEAKS | OUTPUT_MASK_THRESHOLD;
 
 	/**
-	 * The index of the peak X coordinate within the result int[] array of the results ArrayList<double[]> object
-	 */
-	public final static int RESULT_X = 0;
-	/**
-	 * The index of the peak Y coordinate within the result int[] array of the results ArrayList<double[]> object
-	 */
-	public final static int RESULT_Y = 1;
-	/**
-	 * The index of the peak Z coordinate within the result int[] array of the results ArrayList<double[]> object
-	 */
-	public final static int RESULT_Z = 2;
-	/**
-	 * The index of the internal ID used during the FindFoci routine within the result int[] array of the results
-	 * ArrayList<double[]> object. This can be ignored.
-	 */
-	public final static int RESULT_PEAK_ID = 3;
-	/**
-	 * The index of the number of pixels in the peak within the result int[] array of the results ArrayList<double[]>
-	 * object
-	 */
-	public final static int RESULT_COUNT = 4;
-	/**
-	 * The index of the sum of the peak intensity within the result int[] array of the results ArrayList
-	 * <double[]> object
-	 */
-	public final static int RESULT_INTENSITY = 5;
-	/**
-	 * The index of the peak maximum value within the result int[] array of the results ArrayList<double[]> object
-	 */
-	public final static int RESULT_MAX_VALUE = 6;
-	/**
-	 * The index of the peak highest saddle point within the result int[] array of the results ArrayList
-	 * <double[]> object
-	 */
-	public final static int RESULT_HIGHEST_SADDLE_VALUE = 7;
-	/**
-	 * The index of the peak highest saddle point within the result int[] array of the results ArrayList
-	 * <double[]> object
-	 */
-	public final static int RESULT_SADDLE_NEIGHBOUR_ID = 8;
-	/**
-	 * The index of the average of the peak intensity within the result int[] array of the results ArrayList<double[]>
-	 * object
-	 */
-	public final static int RESULT_AVERAGE_INTENSITY = 9;
-	/**
-	 * The index of the sum of the peak intensity above the background within the result int[] array of the results
-	 * ArrayList<double[]> object
-	 */
-	public final static int RESULT_INTENSITY_MINUS_BACKGROUND = 10;
-	/**
-	 * The index of the average of the peak intensity above the background within the result int[] array of the results
-	 * ArrayList<double[]> object
-	 */
-	public final static int RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND = 11;
-	/**
-	 * The index of the number of pixels in the peak above the highest saddle within the result int[] array of the
-	 * results ArrayList<double[]> object
-	 */
-	public final static int RESULT_COUNT_ABOVE_SADDLE = 12;
-	/**
-	 * The index of the sum of the peak intensity above the highest saddle within the result int[] array of the results
-	 * ArrayList<double[]> object
-	 */
-	public final static int RESULT_INTENSITY_ABOVE_SADDLE = 13;
-	/**
-	 * The index of the sum of the peak intensity above the minimum value of the analysed image within the result int[] array of the results
-	 * ArrayList<double[]> object
-	 */
-	public final static int RESULT_INTENSITY_MINUS_MIN = 14;
-	/**
-	 * The index of the average of the peak intensity above the minimum value of the analysed image within the result int[] array of the results
-	 * ArrayList<double[]> object
-	 */
-	public final static int RESULT_AVERAGE_INTENSITY_MINUS_MIN = 15;
-	/**
-	 * The index of the custom sort value within the result int[] array of the results ArrayList<int[]> object. This is
-	 * used
-	 * internally to sort the results using values not stored in the result array.
-	 */
-	final static int RESULT_CUSTOM_SORT_VALUE = 16;
-	/**
-	 * The index of the state (i.e. pixel value) from the mask image within the result int[] array of the results
-	 * ArrayList<double[]> object
-	 */
-	final static int RESULT_STATE = 17;
-	/**
-	 * The index of the allocated object from the mask image within the result int[] array of the results
-	 * ArrayList<double[]> object
-	 */
-	final static int RESULT_OBJECT = 18;
-
-	// The length of the result array
-	final static int RESULT_LENGTH = 19;
-
-	/**
 	 * Sort the peaks using the pixel count
 	 */
 	public final static int SORT_COUNT = 0;
@@ -372,7 +276,7 @@ public interface FindFociProcessor
 	 * Re-map peak centre using a Gaussian fit on the original image.
 	 */
 	public final static int CENTRE_GAUSSIAN_ORIGINAL = 5;
-	
+
 	/**
 	 * Here the processing is done: Find the maxima of an image.
 	 * 
@@ -446,46 +350,57 @@ public interface FindFociProcessor
 	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double)}
 	 * routine.
 	 * It does not support logging, interruption or mask generation. The method initialises the system up to the point
-	 * of background generation. The result object can be cloned and passed multiple times to the
-	 * {@link #findMaximaRun(Object[], int, double, int, double, int, int, int, double, int, int, double, int, double)}
-	 * method.
-	 * 
+	 * of background generation. The result object can be cloned and passed multiple times to later methods for further
+	 * processing.
 	 * <p>
 	 * This method is intended for benchmarking.
 	 * 
-	 * @return Object array containing: (1) Object - image pixels; (2) byte[] - types array; (3) short[] - maxima array;
-	 *         (4)
-	 *         Histogram - image histogram; (5) double[] - image statistics; (6) Object - the original image pixels; (7)
-	 *         ImagePlus -
-	 *         the original image
+	 * @return the initialisation results
 	 */
-	Object[] findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask, int backgroundMethod,
+	FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask, int backgroundMethod,
 			String autoThresholdMethod, int options);
 
 	/**
-	 * Clones the init array for use in
-	 * {@link #findMaximaRun(Object[], int, double, int, double, int, int, int, double, int, int) }.
-	 * Only the elements that are destructively modified by findMaximaRun are duplicated. The rest are shallow copied.
+	 * Clones the init array for use in {@link #findMaximaSearch(FindFociInitResults, int, double, int, double)}.
+	 * Only the elements that are destructively modified by findMaximaSearch are duplicated. The rest are shallow
+	 * copied.
 	 * 
-	 * @param initArray
-	 *            The original init array
-	 * @param clonedInitArray
-	 *            A previously cloned init array (avoid reallocating memory). Can be null.
-	 * @return The cloned array
+	 * @param initResults
+	 *            The original init results object
+	 * @param clonedInitResults
+	 *            A previously cloned init results object (avoid reallocating memory). Can be null.
+	 * @return The cloned init results
 	 */
-	Object[] cloneInitArray(Object[] initArray, Object[] clonedInitArray);
+	FindFociInitResults cloneForSearch(FindFociInitResults initResults, FindFociInitResults clonedInitResults);
 
 	/**
 	 * Clones the init array for use in findMaxima staged methods.
-	 * Only the elements that are destructively modified by findMaximaRun are duplicated. The rest are shallow copied.
+	 * Only the elements that are destructively modified by the findMaxima staged methods are duplicated. The rest are
+	 * shallow copied.
 	 * 
-	 * @param initArray
-	 *            The original init array
-	 * @param clonedInitArray
-	 *            A previously cloned init array (avoid reallocating memory). Can be null.
-	 * @return The cloned array
+	 * @param initResults
+	 *            The original init results object
+	 * @param clonedInitResults
+	 *            A previously cloned init results object (avoid reallocating memory). Can be null.
+	 * @return The cloned init results
 	 */
-	Object[] cloneResultsArray(Object[] initArray, Object[] clonedInitArray);
+	FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults);
+
+	/**
+	 * This method is a stripped-down version of the
+	 * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double)}
+	 * routine.
+	 * It does not support logging, interruption or mask generation. Only the result array is generated.
+	 * <p>
+	 * This method is intended for benchmarking.
+	 * 
+	 * @param initResults
+	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}
+	 * @return The merge results
+	 */
+	FindFociMergeResults findMaximaRun(FindFociInitResults initResults, int backgroundMethod,
+			double backgroundParameter, int searchMethod, double searchParameter, int minSize, int peakMethod,
+			double peakParameter, int sortIndex, int options, double blur);
 
 	/**
 	 * This method is a stripped-down version of the
@@ -494,49 +409,15 @@ public interface FindFociProcessor
 	 * It does not support logging, interruption or mask generation. Only the result array is generated.
 	 * 
 	 * <p>
-	 * The method must be called with the output from
-	 * {@link #findMaximaInit(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int)}
-	 * 
-	 * <p>
 	 * This method is intended for benchmarking.
 	 * 
-	 * @param initArray
-	 *            The output from
-	 *            {@link #findMaximaInit(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int)}
-	 * @return Object array containing: (1) a result ArrayList<double[]> with details of the
-	 *         maxima. The details can be extracted for each result using the constants defined with the prefix
-	 *         FindFoci.RESULT_;
-	 *         (2) Integer with the original number of peaks before merging.
-	 */
-	Object[] findMaximaRun(Object[] initArray, int backgroundMethod, double backgroundParameter, int searchMethod,
-			double searchParameter, int minSize, int peakMethod, double peakParameter, int sortIndex, int options,
-			double blur);
-
-	/**
-	 * This method is a stripped-down version of the
-	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
-	 * routine.
-	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 * 
-	 * <p>
-	 * The method must be called with the output from
-	 * {@link #findMaximaInit(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int)}
-	 * 
-	 * <p>
-	 * This method is intended for benchmarking.
-	 * 
-	 * @param initArray
-	 *            The output from
-	 *            {@link #findMaximaInit(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int)}
+	 * @param initResults
+	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
 	 *            Contents are destructively modified so should be cloned before input.
-	 * @return Object array containing: (1) a result ArrayList<double[]> with
-	 *         details of the
-	 *         maxima. The details can be extracted for each result using the constants defined with the prefix
-	 *         FindFoci.RESULT_;
-	 *         (2) ArrayList<LinkedList<double[]>> the saddle points
+	 * @return The search results
 	 */
-	Object[] findMaximaSearch(Object[] initArray, int backgroundMethod, double backgroundParameter, int searchMethod,
-			double searchParameter);
+	FindFociSearchResults findMaximaSearch(FindFociInitResults initResults, int backgroundMethod,
+			double backgroundParameter, int searchMethod, double searchParameter);
 
 	/**
 	 * This method is a stripped-down version of the
@@ -545,91 +426,62 @@ public interface FindFociProcessor
 	 * It does not support logging, interruption or mask generation. Only the result array is generated.
 	 * 
 	 * <p>
-	 * The method must be called with the output from
-	 * {@link #findMaximaInit(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int)}
-	 * 
-	 * <p>
 	 * This method is intended for benchmarking.
 	 * 
-	 * @param initArray
-	 *            The output from
-	 *            {@link #findMaximaInit(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int)}
-	 *            .
+	 * @param initResults
+	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
 	 *            Contents are destructively modified so should be cloned before input.
-	 * @param searchArray
+	 * @param searchResults
 	 *            The output from {@link #findMaximaSearch(Object[], int, double, int, double)}.
 	 *            Contents are unchanged.
-	 * @return Object array containing: (1) a result ArrayList<double[]> with
-	 *         details of the
-	 *         maxima. The details can be extracted for each result using the constants defined with the prefix
-	 *         FindFoci.RESULT_;
-	 *         (2) Integer - the original number of peaks before merging.
+	 * @return The merge results
 	 */
-	Object[] findMaximaMerge(Object[] initArray, Object[] searchArray, int minSize, int peakMethod,
-			double peakParameter, int options, double blur);
+	FindFociMergeResults findMaximaMerge(FindFociInitResults initResults, FindFociSearchResults searchResults,
+			int minSize, int peakMethod, double peakParameter, int options, double blur);
 
 	/**
 	 * This method is a stripped-down version of the
 	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
 	 * routine.
 	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 * 
-	 * <p>
-	 * The method must be called with the output from
-	 * {@link #findMaximaInit(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int)}
 	 * 
 	 * <p>
 	 * This method is intended for benchmarking.
 	 * 
-	 * @param initArray
-	 *            The output from
-	 *            {@link #findMaximaInit(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int)}
-	 *            .
+	 * @param initResults
+	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
 	 *            Contents are destructively modified so should be cloned before input.
-	 * @param runArray
+	 * @param mergeResults
 	 *            The output from
-	 *            {@link #findMaximaRun(Object[], int, double, int, double, int, int, double, int, int, double)}.
+	 *            {@link #findMaximaMerge(FindFociInitResults, FindFociSearchResults, int, int, double, int, double)}.
 	 *            Contents are unchanged.
-	 * @return Result containing: (1) null (this option is not supported); (2) a result ArrayList<double[]> with
-	 *         details of the
-	 *         maxima. The details can be extracted for each result using the constants defined with the prefix
-	 *         FindFoci.RESULT_;
-	 *         (3) the image statistics double[] array. The details can be extracted using the constants defined with
-	 *         the FindFoci.STATS_ prefix.
+	 * @return The FindFoci results (does not support the output mask)
 	 */
-	FindFociResults findMaximaResults(Object[] initArray, Object[] runArray, int maxPeaks, int sortIndex,
-			int centreMethod, double centreParameter);
+	FindFociResults findMaximaResults(FindFociInitResults initResults, FindFociMergeResults mergeResults, int maxPeaks,
+			int sortIndex, int centreMethod, double centreParameter);
 
 	/**
 	 * This method is a stripped-down version of the
 	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
 	 * routine.
 	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 * 
-	 * <p>
-	 * The method must be called with the output from
-	 * {@link #findMaximaInit(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int)}
 	 * 
 	 * <p>
 	 * This method is intended for staged processing.
 	 * 
-	 * @param initArray
-	 *            The output from
-	 *            {@link #findMaximaInit(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int)}
-	 *            .
+	 * @param initResults
+	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
 	 *            Contents are destructively modified so should be cloned before input.
-	 * @param mergeArray
-	 *            The output from {@link #findMaximaMerge(Object[], Object[], int, int, double, int, double)}.
+	 * @param mergeResults
+	 *            The output from
+	 *            {@link #findMaximaMerge(FindFociInitResults, FindFociSearchResults, int, int, double, int, double)}.
 	 *            Contents are unchanged.
-	 * @return Result containing: (1) null (this option is not supported); (2) a result ArrayList<double[]> with
-	 *         details of the
-	 *         maxima. The details can be extracted for each result using the constants defined with the prefix
-	 *         FindFoci.RESULT_;
-	 *         (3) the image statistics double[] array. The details can be extracted using the constants defined with
-	 *         the FindFoci.STATS_ prefix.
+	 * @return The preliminary results (these are not finalised and must be passed to
+	 *         {@link #findMaximaMaskResults(FindFociInitResults, FindFociMergeResults, FindFociResults, int, String, String, double)}
+	 *         )
 	 */
-	FindFociResults findMaximaPrelimResults(Object[] initArray, Object[] mergeArray, int maxPeaks, int sortIndex,
-			int centreMethod, double centreParameter);
+	FindFociResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
+			int maxPeaks, int sortIndex, int centreMethod, double centreParameter);
 
 	/**
 	 * This method is a stripped-down version of the
@@ -638,36 +490,26 @@ public interface FindFociProcessor
 	 * It does not support logging or interruption.
 	 * 
 	 * <p>
-	 * The method must be called with the output from
-	 * {@link #findMaximaPrelimResults(Object[], Object[], int, int, int, double)}
-	 * 
-	 * <p>
 	 * This method is intended for staged processing.
 	 * 
-	 * @param initArray
-	 *            The output from
-	 *            {@link #findMaximaInit(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int)}
-	 *            .
+	 * @param initResults
+	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
 	 *            Contents are destructively modified so should be cloned before input.
-	 * @param mergeArray
-	 *            The output from {@link #findMaximaMerge(Object[], Object[], int, int, double, int, double)}.
+	 * @param mergeResults
+	 *            The output from
+	 *            {@link #findMaximaMerge(FindFociInitResults, FindFociSearchResults, int, int, double, int, double)}.
 	 *            Contents are unchanged.
 	 * @param prelimResults
-	 *            The output from {@link #findMaximaPrelimResults(Object[], Object[], int, int, int, double)}.
+	 *            The output from
+	 *            {@link #findMaximaPrelimResults(FindFociInitResults, FindFociMergeResults, int, int, int, double)}
 	 *            Contents are unchanged.
 	 * @param imageTitle
 	 * @param autoThresholdMethod
 	 * @param fractionParameter
 	 *            The height of the peak to show in the mask
-	 * @return Result containing: (1) a new ImagePlus (with a stack) where the maxima are set to nMaxima+1 and
-	 *         peak areas numbered starting from nMaxima (Background 0). Pixels outside of the roi of the input ip are
-	 *         not set. Alternatively the peak areas can be thresholded using the auto-threshold method and coloured
-	 *         1(saddle), 2(background), 3(threshold), 4(peak); (2) a result ArrayList<double[]> with details of the
-	 *         maxima. The details can be extracted for each result using the constants defined with the prefix
-	 *         FindFoci.RESULT_;
-	 *         (3) the image statistics double[] array. The details can be extracted using the constants defined with
-	 *         the FindFoci.STATS_ prefix. Returns null if cancelled by escape.
+	 * @return The FindFoci results
 	 */
-	FindFociResults findMaximaMaskResults(Object[] initArray, Object[] mergeArray, FindFociResults prelimResults,
-			int outputType, String autoThresholdMethod, String imageTitle, double fractionParameter);
+	FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
+			FindFociResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
+			double fractionParameter);
 }

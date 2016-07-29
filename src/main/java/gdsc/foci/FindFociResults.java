@@ -27,7 +27,7 @@ public class FindFociResults implements Cloneable
 	public final ImagePlus mask;
 
 	/** The results. */
-	public final ArrayList<double[]> results;
+	public final ArrayList<FindFociResult> results;
 
 	/** The stats. */
 	public final FindFociStatistics stats;
@@ -42,7 +42,7 @@ public class FindFociResults implements Cloneable
 	 * @param stats
 	 *            the stats
 	 */
-	public FindFociResults(ImagePlus mask, ArrayList<double[]> results, FindFociStatistics stats)
+	public FindFociResults(ImagePlus mask, ArrayList<FindFociResult> results, FindFociStatistics stats)
 	{
 		this.mask = mask;
 		this.results = results;

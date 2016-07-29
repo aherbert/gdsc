@@ -14,6 +14,7 @@ package gdsc.foci.gui;
  *---------------------------------------------------------------------------*/
 
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociResult;
 import gdsc.foci.GridException;
 import gdsc.foci.GridPoint;
 import gdsc.foci.GridPointManager;
@@ -1072,13 +1073,13 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		return activeImp != null;
 	}
 
-	private List<GridPoint> extractGridPoints(ArrayList<double[]> resultsArray)
+	private List<GridPoint> extractGridPoints(ArrayList<FindFociResult> resultsArray)
 	{
 		List<GridPoint> points = new ArrayList<GridPoint>(resultsArray.size());
-		for (double[] result : resultsArray)
+		for (FindFociResult result : resultsArray)
 		{
-			points.add(new GridPoint((int) result[FindFoci.RESULT_X], (int) result[FindFoci.RESULT_Y],
-					(int) result[FindFoci.RESULT_Z], (float) result[FindFoci.RESULT_MAX_VALUE]));
+			points.add(new GridPoint(result.RESULT_X, result.RESULT_Y,
+					result.RESULT_Z, result.RESULT_MAX_VALUE));
 		}
 		return points;
 	}

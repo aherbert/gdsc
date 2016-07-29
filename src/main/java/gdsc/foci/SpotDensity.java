@@ -211,7 +211,7 @@ public class SpotDensity implements PlugIn
 
 	private Foci[] getFoci(String resultsName)
 	{
-		ArrayList<double[]> results = FindFoci.getResults(resultsName);
+		ArrayList<FindFociResult> results = FindFoci.getResults(resultsName);
 		if (results == null || results.size() == 0)
 		{
 			IJ.showMessage("Error", "No foci with the name " + resultsName);
@@ -219,8 +219,8 @@ public class SpotDensity implements PlugIn
 		}
 		Foci[] foci = new Foci[results.size()];
 		int i = 0;
-		for (double[] result : results)
-			foci[i++] = new Foci(i, (int) result[FindFoci.RESULT_X], (int) result[FindFoci.RESULT_Y]);
+		for (FindFociResult result : results)
+			foci[i++] = new Foci(i, result.RESULT_X, result.RESULT_Y);
 		return foci;
 	}
 

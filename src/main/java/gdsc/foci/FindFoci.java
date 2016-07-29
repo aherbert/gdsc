@@ -392,7 +392,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	private int resultsCount = 0;
 	private int flushCount = 0;
 
-	private static ArrayList<double[]> lastResultsArray = null;
+	private static ArrayList<FindFociResult> lastResultsArray = null;
 	static int isGaussianFitEnabled = 0;
 	static String newLine = System.getProperty("line.separator");
 
@@ -627,7 +627,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	private String resultsDirectory = null;
 
 	// Allow the results to be stored in memory for other plugins to access
-	private static HashMap<String, ArrayList<double[]>> memory = new HashMap<String, ArrayList<double[]>>();
+	private static HashMap<String, ArrayList<FindFociResult>> memory = new HashMap<String, ArrayList<FindFociResult>>();
 	private static ArrayList<String> memoryNames = new ArrayList<String>();
 
 	// Used to record all the results into a single file during batch analysis
@@ -993,7 +993,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 		// Get the results
 		ImagePlus maximaImp = ffResult.mask;
-		ArrayList<double[]> resultsArray = (ArrayList<double[]>) ffResult.results;
+		ArrayList<FindFociResult> resultsArray = (ArrayList<FindFociResult>) ffResult.results;
 		FindFociStatistics stats = ffResult.stats;
 
 		// If we are outputting a results table or saving to file we can do the object analysis
@@ -1028,7 +1028,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			createResultsWindow();
 			for (int i = 0; i < resultsArray.size(); i++)
 			{
-				double[] result = resultsArray.get(i);
+				FindFociResult result = resultsArray.get(i);
 				addToResultTable(i + 1, resultsArray.size() - i, result, stats);
 			}
 			flushResults();
@@ -1181,14 +1181,14 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return overlay;
 	}
 
-	private PointRoi[] createStackRoi(ArrayList<double[]> resultsArray, int outputType)
+	private PointRoi[] createStackRoi(ArrayList<FindFociResult> resultsArray, int outputType)
 	{
 		final int nMaxima = resultsArray.size();
 		final XYZ[] xyz = new XYZ[nMaxima];
 		for (int i = 0; i < nMaxima; i++)
 		{
-			final double[] xy = resultsArray.get(i);
-			xyz[i] = new XYZ(i + 1, (int) xy[RESULT_X], (int) xy[RESULT_Y], (int) xy[RESULT_Z]);
+			final FindFociResult xy = resultsArray.get(i);
+			xyz[i] = new XYZ(i + 1, xy.RESULT_X, xy.RESULT_Y, xy.RESULT_Z);
 		}
 
 		Arrays.sort(xyz);
@@ -1240,16 +1240,16 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return roi;
 	}
 
-	private PointRoi createRoi(ArrayList<double[]> resultsArray, int outputType)
+	private PointRoi createRoi(ArrayList<FindFociResult> resultsArray, int outputType)
 	{
 		final int nMaxima = resultsArray.size();
 		final int[] xpoints = new int[nMaxima];
 		final int[] ypoints = new int[nMaxima];
 		for (int i = 0; i < nMaxima; i++)
 		{
-			final double[] xy = resultsArray.get(i);
-			xpoints[i] = (int) xy[RESULT_X];
-			ypoints[i] = (int) xy[RESULT_Y];
+			final FindFociResult xy = resultsArray.get(i);
+			xpoints[i] = xy.RESULT_X;
+			ypoints[i] = xy.RESULT_Y;
 		}
 		PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
 		if ((outputType & OUTPUT_HIDE_LABELS) != 0)
@@ -1326,7 +1326,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			double backgroundParameter, String autoThresholdMethod, int searchMethod, double searchParameter,
 			int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex, int options,
 			double blur, int centreMethod, double centreParameter, double fractionParameter,
-			ArrayList<double[]> resultsArray, FindFociStatistics stats, String resultsDirectory)
+			ArrayList<FindFociResult> resultsArray, FindFociStatistics stats, String resultsDirectory)
 	{
 		return saveResults(expId, imp, null, mask, null, backgroundMethod, backgroundParameter, autoThresholdMethod,
 				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
@@ -1405,7 +1405,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			int backgroundMethod, double backgroundParameter, String autoThresholdMethod, int searchMethod,
 			double searchParameter, int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType,
 			int sortIndex, int options, double blur, int centreMethod, double centreParameter, double fractionParameter,
-			ArrayList<double[]> resultsArray, FindFociStatistics stats, String resultsDirectory,
+			ArrayList<FindFociResult> resultsArray, FindFociStatistics stats, String resultsDirectory,
 			ObjectAnalysisResult objectAnalysisResult)
 	{
 		try
@@ -1421,9 +1421,9 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			final StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < resultsArray.size(); i++)
 			{
-				double[] result = resultsArray.get(i);
-				xpoints[i] = (int) result[RESULT_X];
-				ypoints[i] = (int) result[RESULT_Y];
+				FindFociResult result = resultsArray.get(i);
+				xpoints[i] = result.RESULT_X;
+				ypoints[i] = result.RESULT_Y;
 
 				buildResultEntry(sb, i + 1, resultsArray.size() - i, result, stats, newLine);
 				final String resultEntry = sb.toString();
@@ -1567,7 +1567,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	{
 		// Get the results
 		ImagePlus maximaImp = results.mask;
-		ArrayList<double[]> resultsArray = results.results;
+		ArrayList<FindFociResult> resultsArray = results.results;
 		FindFociStatistics stats = results.stats;
 
 		// If we are outputting a results table or saving to file we can do the object analysis
@@ -1600,7 +1600,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			createResultsWindow();
 			for (int i = 0; i < resultsArray.size(); i++)
 			{
-				double[] result = resultsArray.get(i);
+				FindFociResult result = resultsArray.get(i);
 				addToResultTable(i + 1, resultsArray.size() - i, result, stats);
 			}
 			flushResults();
@@ -1895,8 +1895,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaInit(ij.ImagePlus, ij.ImagePlus, ij.ImagePlus, int, java.lang.String,
 	 * int)
 	 */
-	public Object[] findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask, int backgroundMethod,
-			String autoThresholdMethod, int options)
+	public FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask,
+			int backgroundMethod, String autoThresholdMethod, int options)
 	{
 		lastResultsArray = null;
 
@@ -1917,79 +1917,74 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see gdsc.foci.FindFociProcessor#cloneInitArray(java.lang.Object[], java.lang.Object[])
+	 * @see gdsc.foci.FindFociProcessor#cloneForSearch(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociInitResults)
 	 */
-	public Object[] cloneInitArray(Object[] initArray, Object[] clonedInitArray)
+	public FindFociInitResults cloneForSearch(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
 	{
-		return ffp.cloneInitArray(initArray, clonedInitArray);
+		return ffp.cloneForSearch(initResults, clonedInitResults);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see gdsc.foci.FindFociProcessor#cloneResultsArray(java.lang.Object[], java.lang.Object[])
+	 * @see gdsc.foci.FindFociProcessor#clone(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociInitResults)
 	 */
-	public Object[] cloneResultsArray(Object[] initArray, Object[] clonedInitArray)
+	public FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
 	{
-		return ffp.cloneResultsArray(initArray, clonedInitArray);
+		return ffp.clone(initResults, clonedInitResults);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaRun(java.lang.Object[], int, double, int, double, int, int, double,
-	 * int, int, double)
+	 * @see gdsc.foci.FindFociProcessor#findMaximaRun(gdsc.foci.FindFociInitResults, int, double, int, double, int, int,
+	 * double, int, int, double)
 	 */
-	public Object[] findMaximaRun(Object[] initArray, int backgroundMethod, double backgroundParameter,
-			int searchMethod, double searchParameter, int minSize, int peakMethod, double peakParameter, int sortIndex,
-			int options, double blur)
+	public FindFociMergeResults findMaximaRun(FindFociInitResults initResults, int backgroundMethod,
+			double backgroundParameter, int searchMethod, double searchParameter, int minSize, int peakMethod,
+			double peakParameter, int sortIndex, int options, double blur)
 	{
 		lastResultsArray = null;
-		Object[] results = ffp.findMaximaRun(initArray, backgroundMethod, backgroundParameter, searchMethod,
-				searchParameter, minSize, peakMethod, peakParameter, sortIndex, options, blur);
-		return results;
+		return ffp.findMaximaRun(initResults, backgroundMethod, backgroundParameter, searchMethod, searchParameter,
+				minSize, peakMethod, peakParameter, sortIndex, options, blur);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaSearch(java.lang.Object[], int, double, int, double)
+	 * @see gdsc.foci.FindFociProcessor#findMaximaSearch(gdsc.foci.FindFociInitResults, int, double, int, double)
 	 */
-	public Object[] findMaximaSearch(Object[] initArray, int backgroundMethod, double backgroundParameter,
-			int searchMethod, double searchParameter)
+	public FindFociSearchResults findMaximaSearch(FindFociInitResults initResults, int backgroundMethod,
+			double backgroundParameter, int searchMethod, double searchParameter)
 	{
 		lastResultsArray = null;
-		Object[] results = ffp.findMaximaSearch(initArray, backgroundMethod, backgroundParameter, searchMethod,
-				searchParameter);
-		return results;
+		return ffp.findMaximaSearch(initResults, backgroundMethod, backgroundParameter, searchMethod, searchParameter);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaMerge(java.lang.Object[], java.lang.Object[], int, int, double, int,
-	 * double)
+	 * @see gdsc.foci.FindFociProcessor#findMaximaMerge(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociSearchResults,
+	 * int, int, double, int, double)
 	 */
-	public Object[] findMaximaMerge(Object[] initArray, Object[] searchArray, int minSize, int peakMethod,
-			double peakParameter, int options, double blur)
+	public FindFociMergeResults findMaximaMerge(FindFociInitResults initResults, FindFociSearchResults searchResults,
+			int minSize, int peakMethod, double peakParameter, int options, double blur)
 	{
 		lastResultsArray = null;
-		Object[] results = ffp.findMaximaMerge(initArray, searchArray, minSize, peakMethod, peakParameter, options,
-				blur);
-		return results;
-
+		return ffp.findMaximaMerge(initResults, searchResults, minSize, peakMethod, peakParameter, options, blur);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaResults(java.lang.Object[], java.lang.Object[], int, int, int, double)
+	 * @see gdsc.foci.FindFociProcessor#findMaximaResults(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociMergeResults,
+	 * int, int, int, double)
 	 */
-	public FindFociResults findMaximaResults(Object[] initArray, Object[] runArray, int maxPeaks, int sortIndex,
-			int centreMethod, double centreParameter)
+	public FindFociResults findMaximaResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
+			int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
 	{
 		lastResultsArray = null;
-		FindFociResults result = ffp.findMaximaResults(initArray, runArray, maxPeaks, sortIndex, centreMethod,
+		FindFociResults result = ffp.findMaximaResults(initResults, mergeResults, maxPeaks, sortIndex, centreMethod,
 				centreParameter);
 		if (result != null)
 			lastResultsArray = result.results;
@@ -2000,15 +1995,15 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaPrelimResults(java.lang.Object[], java.lang.Object[], int, int, int,
-	 * double)
+	 * @see gdsc.foci.FindFociProcessor#findMaximaPrelimResults(gdsc.foci.FindFociInitResults,
+	 * gdsc.foci.FindFociMergeResults, int, int, int, double)
 	 */
-	public FindFociResults findMaximaPrelimResults(Object[] initArray, Object[] mergeArray, int maxPeaks, int sortIndex,
-			int centreMethod, double centreParameter)
+	public FindFociResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
+			int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
 	{
 		lastResultsArray = null;
-		FindFociResults result = ffp.findMaximaPrelimResults(initArray, mergeArray, maxPeaks, sortIndex, centreMethod,
-				centreParameter);
+		FindFociResults result = ffp.findMaximaPrelimResults(initResults, mergeResults, maxPeaks, sortIndex,
+				centreMethod, centreParameter);
 		if (result != null)
 			lastResultsArray = result.results;
 		return result;
@@ -2018,14 +2013,15 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaMaskResults(java.lang.Object[], java.lang.Object[],
-	 * gdsc.foci.FindFociResult, int, java.lang.String, java.lang.String, double)
+	 * @see gdsc.foci.FindFociProcessor#findMaximaMaskResults(gdsc.foci.FindFociInitResults,
+	 * gdsc.foci.FindFociMergeResults, gdsc.foci.FindFociResults, int, java.lang.String, java.lang.String, double)
 	 */
-	public FindFociResults findMaximaMaskResults(Object[] initArray, Object[] mergeArray, FindFociResults prelimResults,
-			int outputType, String autoThresholdMethod, String imageTitle, double fractionParameter)
+	public FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
+			FindFociResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
+			double fractionParameter)
 	{
 		lastResultsArray = null;
-		FindFociResults result = ffp.findMaximaMaskResults(initArray, mergeArray, prelimResults, outputType,
+		FindFociResults result = ffp.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType,
 				autoThresholdMethod, imageTitle, fractionParameter);
 		if (result != null)
 			lastResultsArray = result.results;
@@ -2132,7 +2128,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @param stats
 	 *            the stats
 	 */
-	private void addToResultTable(int i, int id, double[] result, FindFociStatistics stats)
+	private void addToResultTable(int i, int id, FindFociResult result, FindFociStatistics stats)
 	{
 		// Buffer the output so that the table is displayed faster
 		buildResultEntry(resultsBuffer, i, id, result, stats, "\n");
@@ -2150,7 +2146,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		flushCount = Integer.MAX_VALUE;
 	}
 
-	private void buildResultEntry(StringBuilder sb, int i, int id, double[] result, FindFociStatistics stats, String newLine)
+	private void buildResultEntry(StringBuilder sb, int i, int id, FindFociResult result, FindFociStatistics stats,
+			String newLine)
 	{
 		final double sum = stats.regionTotal;
 		final double noise = stats.background;
@@ -2164,32 +2161,32 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		sb.append(i).append("\t");
 		sb.append(id).append("\t");
 		// XY are pixel coordinates
-		sb.append((int) result[RESULT_X]).append("\t");
-		sb.append((int) result[RESULT_Y]).append("\t");
+		sb.append(result.RESULT_X).append("\t");
+		sb.append(result.RESULT_Y).append("\t");
 		// Z should correspond to slice 
-		sb.append((int) result[RESULT_Z] + 1).append("\t");
-		sb.append((int) result[RESULT_COUNT]).append("\t");
+		sb.append(result.RESULT_Z + 1).append("\t");
+		sb.append(result.RESULT_COUNT).append("\t");
 
-		addValue(sb, result[RESULT_MAX_VALUE], floatImage);
-		addValue(sb, result[RESULT_INTENSITY], floatImage);
-		addValue(sb, result[RESULT_HIGHEST_SADDLE_VALUE], floatImage);
+		addValue(sb, result.RESULT_MAX_VALUE, floatImage);
+		addValue(sb, result.RESULT_INTENSITY, floatImage);
+		addValue(sb, result.RESULT_HIGHEST_SADDLE_VALUE, floatImage);
 
-		sb.append((int) result[RESULT_SADDLE_NEIGHBOUR_ID]).append("\t");
+		sb.append(result.RESULT_SADDLE_NEIGHBOUR_ID).append("\t");
 		addValue(sb, absoluteHeight, floatImage);
 		addValue(sb, relativeHeight);
-		sb.append((int) result[RESULT_COUNT_ABOVE_SADDLE]).append("\t");
-		addValue(sb, result[RESULT_INTENSITY_ABOVE_SADDLE], floatImage);
-		addValue(sb, result[RESULT_INTENSITY] / result[RESULT_COUNT]);
-		addValue(sb, result[RESULT_INTENSITY_MINUS_BACKGROUND], floatImage);
-		addValue(sb, result[RESULT_INTENSITY_MINUS_BACKGROUND] / result[RESULT_COUNT]);
-		addValue(sb, result[RESULT_INTENSITY_MINUS_MIN], floatImage);
-		addValue(sb, result[RESULT_INTENSITY_MINUS_MIN] / result[RESULT_COUNT]);
-		addValue(sb, 100 * (result[RESULT_INTENSITY] / sum));
-		addValue(sb, 100 * (result[RESULT_INTENSITY_MINUS_BACKGROUND] / stats.totalAboveBackground));
-		addValue(sb, 100 * (result[RESULT_INTENSITY_MINUS_MIN] / stats.totalAboveImageMinimum));
-		addValue(sb, (result[RESULT_MAX_VALUE] / noise));
-		sb.append((int) result[RESULT_OBJECT]).append("\t");
-		sb.append((int) result[RESULT_STATE]);
+		sb.append(result.RESULT_COUNT_ABOVE_SADDLE).append("\t");
+		addValue(sb, result.RESULT_INTENSITY_ABOVE_SADDLE, floatImage);
+		addValue(sb, result.RESULT_INTENSITY / result.RESULT_COUNT);
+		addValue(sb, result.RESULT_INTENSITY_MINUS_BACKGROUND, floatImage);
+		addValue(sb, result.RESULT_INTENSITY_MINUS_BACKGROUND / result.RESULT_COUNT);
+		addValue(sb, result.RESULT_INTENSITY_MINUS_MIN, floatImage);
+		addValue(sb, result.RESULT_INTENSITY_MINUS_MIN / result.RESULT_COUNT);
+		addValue(sb, 100 * (result.RESULT_INTENSITY / sum));
+		addValue(sb, 100 * (result.RESULT_INTENSITY_MINUS_BACKGROUND / stats.totalAboveBackground));
+		addValue(sb, 100 * (result.RESULT_INTENSITY_MINUS_MIN / stats.totalAboveImageMinimum));
+		addValue(sb, (result.RESULT_MAX_VALUE / noise));
+		sb.append(result.RESULT_OBJECT).append("\t");
+		sb.append(result.RESULT_STATE);
 		sb.append(newLine);
 
 		resultsCount++;
@@ -2294,7 +2291,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	/**
 	 * @return The results from the last call of FindFoci
 	 */
-	public static ArrayList<double[]> getResults()
+	public static ArrayList<FindFociResult> getResults()
 	{
 		return lastResultsArray;
 	}
@@ -2557,7 +2554,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 		// Get the results
 		ImagePlus maximaImp = ffResult.mask;
-		ArrayList<double[]> resultsArray = ffResult.results;
+		ArrayList<FindFociResult> resultsArray = ffResult.results;
 		FindFociStatistics stats = ffResult.stats;
 
 		String expId;
@@ -2714,7 +2711,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @param resultsArray
 	 * @param imp
 	 */
-	private void saveToMemory(ArrayList<double[]> resultsArray, ImagePlus imp)
+	private void saveToMemory(ArrayList<FindFociResult> resultsArray, ImagePlus imp)
 	{
 		saveToMemory(resultsArray, imp, imp.getChannel(), 0, imp.getFrame());
 	}
@@ -2725,7 +2722,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @param resultsArray
 	 * @param imp
 	 */
-	private void saveToMemory(ArrayList<double[]> resultsArray, ImagePlus imp, int c, int z, int t)
+	private void saveToMemory(ArrayList<FindFociResult> resultsArray, ImagePlus imp, int c, int z, int t)
 	{
 		if (resultsArray == null)
 			return;
@@ -2758,7 +2755,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 *            The name of the results.
 	 * @return The results (or null if none exist)
 	 */
-	public static ArrayList<double[]> getResults(String name)
+	public static ArrayList<FindFociResult> getResults(String name)
 	{
 		return memory.get(name);
 	}

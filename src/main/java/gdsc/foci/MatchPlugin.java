@@ -82,11 +82,16 @@ public class MatchPlugin implements PlugIn
 	private static boolean saveMatches = false;
 	private static String filename = "";
 	private static int findFociImageIndex = 0;
-	private static String[] findFociResult = new String[] { "Intensity", "Intensity above saddle",
-			"Intensity above background", "Count", "Count above saddle", "Max value", "Highest saddle value", };
-	private static int[] findFociResultIndex = new int[] { FindFoci.RESULT_INTENSITY,
-			FindFoci.RESULT_INTENSITY_ABOVE_SADDLE, FindFoci.RESULT_INTENSITY_MINUS_BACKGROUND, FindFoci.RESULT_COUNT,
-			FindFoci.RESULT_COUNT_ABOVE_SADDLE, FindFoci.RESULT_MAX_VALUE, FindFoci.RESULT_HIGHEST_SADDLE_VALUE, };
+	//@formatter:off
+	private static String[] findFociResult = new String[] { 
+			"Intensity", 
+			"Intensity above saddle",
+			"Intensity above background", 
+			"Count", 
+			"Count above saddle", 
+			"Max value", 
+			"Highest saddle value", };
+	//@formatter:off
 	private static int findFociResultChoiceIndex = 0;
 
 	private static boolean writeHeader = true;
@@ -438,7 +443,7 @@ public class MatchPlugin implements PlugIn
 			gd.addCheckbox("Match_table", matchTable);
 		}
 		gd.addCheckbox("Save_matches", saveMatches);
-		ArrayList<double[]> resultsArray = FindFoci.getResults();
+		ArrayList<FindFociResult> resultsArray = FindFoci.getResults();
 		if (resultsArray != null)
 		{
 			String[] imageItems = new String[] { "[None]", "Image1", "Image2" };
@@ -542,7 +547,7 @@ public class MatchPlugin implements PlugIn
 		TimeValuedPoint[] predictedValuedPoints = (TimeValuedPoint[]) predictedPoints;
 
 		// Combine points and sort
-		ArrayList<Double> heights = extractHeights(actualValuedPoints, predictedValuedPoints);
+		ArrayList<Float> heights = extractHeights(actualValuedPoints, predictedValuedPoints);
 
 		if (heights.isEmpty())
 			return null;
@@ -564,16 +569,16 @@ public class MatchPlugin implements PlugIn
 	/**
 	 * Extract all the heights from the two sets of valued points
 	 */
-	private ArrayList<Double> extractHeights(TimeValuedPoint[] actualPoints, TimeValuedPoint[] predictedPoints)
+	private ArrayList<Float> extractHeights(TimeValuedPoint[] actualPoints, TimeValuedPoint[] predictedPoints)
 	{
 		HashSet<TimeValuedPoint> nonDuplicates = new HashSet<TimeValuedPoint>();
 		nonDuplicates.addAll(Arrays.asList(actualPoints));
 		nonDuplicates.addAll(Arrays.asList(predictedPoints));
 
-		ArrayList<Double> heights = new ArrayList<Double>(nonDuplicates.size());
+		ArrayList<Float> heights = new ArrayList<Float>(nonDuplicates.size());
 		for (TimeValuedPoint p : nonDuplicates)
 		{
-			heights.add((double) p.getValue());
+			heights.add(p.getValue());
 		}
 		Collections.sort(heights);
 		return heights;
@@ -814,12 +819,12 @@ public class MatchPlugin implements PlugIn
 			return;
 
 		// Extract the heights of the matched points. Use the average height of each match.
-		ArrayList<Double> heights = new ArrayList<Double>(matches.size());
+		ArrayList<Float> heights = new ArrayList<Float>(matches.size());
 		for (PointPair pair : matches)
 		{
 			TimeValuedPoint p1 = (TimeValuedPoint) pair.getPoint1();
 			TimeValuedPoint p2 = (TimeValuedPoint) pair.getPoint2();
-			heights.add((p1.getValue() + p2.getValue()) / 2.0);
+			heights.add((float)((p1.getValue() + p2.getValue()) / 2.0));
 		}
 		Collections.sort(heights);
 
@@ -864,7 +869,7 @@ public class MatchPlugin implements PlugIn
 		addUnmatchedResult(title1, title2, actualCount, predictedCount);
 	}
 
-	private float[] getQuartiles(ArrayList<Double> heights)
+	private float[] getQuartiles(ArrayList<Float> heights)
 	{
 		if (heights.isEmpty())
 			return new float[] { 0, 0, 0, 0, 0 };
@@ -1170,7 +1175,7 @@ public class MatchPlugin implements PlugIn
 	{
 		if (findFociImageIndex == 0)
 			return;
-		ArrayList<double[]> resultsArray = FindFoci.getResults();
+		ArrayList<FindFociResult> resultsArray = FindFoci.getResults();
 
 		// Check the arrays are the correct size
 		if (resultsArray.size() != ((findFociImageIndex == 1) ? actualPoints.length : predictedPoints.length))
@@ -1179,16 +1184,32 @@ public class MatchPlugin implements PlugIn
 			return;
 		}
 
-		int resultIndex = findFociResultIndex[findFociResultChoiceIndex];
 		for (PointPair pair : matches)
 		{
 			TimeValuedPoint point = (TimeValuedPoint) ((findFociImageIndex == 1) ? pair.getPoint1() : pair.getPoint2());
-			point.value = (float) resultsArray.get(point.time - 1)[resultIndex];
+			point.value = getValue(resultsArray.get(point.time - 1));
 		}
 		TimeValuedPoint[] points = extractValuedPoints((findFociImageIndex == 1) ? fN : fP);
 		for (TimeValuedPoint point : points)
 		{
-			point.value = (float) resultsArray.get(point.time - 1)[resultIndex];
+			point.value = getValue(resultsArray.get(point.time - 1));
+		}
+	}
+	
+	private float getValue(FindFociResult result)
+	{
+		switch (findFociResultChoiceIndex)
+		{
+			//@formatter:off
+			case 0: return (float)result.RESULT_INTENSITY;
+			case 1: return (float)result.RESULT_INTENSITY_ABOVE_SADDLE;
+			case 2: return (float)result.RESULT_INTENSITY_MINUS_BACKGROUND;
+			case 3: return (float)result.RESULT_COUNT;
+			case 4: return (float)result.RESULT_COUNT_ABOVE_SADDLE;
+			case 5: return (float)result.RESULT_MAX_VALUE;
+			case 6: return (float)result.RESULT_HIGHEST_SADDLE_VALUE;
+			default: return (float) result.RESULT_INTENSITY;
+			//@formatter:on
 		}
 	}
 }
