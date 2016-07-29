@@ -175,6 +175,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		if (Utils.isInterrupted())
 			return null;
 
+		if (isLogging)
+			timingSplit("Initialised");
+		
 		// Calculate the auto-threshold if necessary
 		if (backgroundMethod == BACKGROUND_AUTO_THRESHOLD)
 		{
@@ -1514,7 +1517,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Set all pixels outside the ROI to PROCESSED
+	 * Set all pixels outside the ROI to EXCLUDED
 	 * 
 	 * @param imp
 	 *            The input image
@@ -1564,7 +1567,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 					IJ.log("ROI = Round ROI");
 			}
 
-			// Set everything as processed
+			// Set everything as excluded
 			for (int i = types.length; i-- > 0;)
 				types[i] = EXCLUDED;
 
@@ -1604,7 +1607,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Set all pixels outside the Mask to PROCESSED
+	 * Set all pixels outside the Mask to EXCLUDED
 	 * 
 	 * @param imp
 	 *            The mask image
@@ -2575,9 +2578,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		for (int i = maxima.length; i-- > 0;)
 		{
-			if (maxima[i] > 0)
+			final int id = maxima[i]; 
+			if (id != 0)
 			{
-				if (getf(i) < peakThreshold[maxima[i]])
+				if (getf(i) < peakThreshold[id])
 				{
 					// Unset this pixel as part of the peak
 					maxima[i] = 0;
@@ -2631,10 +2635,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		for (int i = maxima.length; i-- > 0;)
 		{
-			if (maxima[i] > 0)
+			final int id = maxima[i]; 
+			if (id != 0)
 			{
-				count[maxima[i]]++;
-				intensity[maxima[i]] += getf(i);
+				count[id]++;
+				intensity[id] += getf(i);
 			}
 		}
 
