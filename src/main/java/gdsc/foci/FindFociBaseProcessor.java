@@ -1711,7 +1711,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		stats.totalAboveImageMinimum = getIntensityAboveFloor(originalImage, types, stats.imageMinimum);
 	}
 
-	private double getIntensityAboveFloor(Object pixels, byte[] types, final float floor)
+	protected double getIntensityAboveFloor(Object pixels, byte[] types, final float floor)
 	{
 		setPixels(pixels);
 
@@ -2023,7 +2023,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            the list
 	 * @return True if this is a true plateau, false if the plateau reaches a higher point
 	 */
-	private boolean expandMaximum(int[] maxima, byte[] types, float globalMin, float threshold, int index0, float v0,
+	protected boolean expandMaximum(int[] maxima, byte[] types, float globalMin, float threshold, int index0, float v0,
 			int id, ArrayList<Coordinate> maxPoints, int[] pList)
 	{
 		types[index0] |= LISTED | PLATEAU; // mark first point as listed
@@ -2345,7 +2345,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            The background intensity
 	 * @return number of pixels that have been changed
 	 */
-	private int processLevel(byte[] types, int[] maxima, int levelStart, int levelNPoints, int[] coordinates,
+	protected int processLevel(byte[] types, int[] maxima, int levelStart, int levelNPoints, int[] coordinates,
 			int background)
 	{
 		//int[] pList = new int[0]; // working list for expanding local plateaus
@@ -2483,8 +2483,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/**
 	 * Searches from the specified point to find all coordinates of the same value and assigns them to given maximum.
 	 */
-	@SuppressWarnings("unused")
-	private void expandPlateau(int[] maxima, byte[] types, int index0, float v0, int id, int[] pList)
+	protected void expandPlateau(int[] maxima, byte[] types, int index0, float v0, int id, int[] pList)
 	{
 		types[index0] |= LISTED; // mark first point as listed
 		int listI = 0; // index of current search element in the list
@@ -2561,7 +2560,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @param resultsArray
 	 * @param maxima
 	 */
-	private void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
+	protected void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
 			FindFociStatistics stats, ArrayList<FindFociResult> resultsArray, int[] maxima)
 	{
 		setPixels(pixels);
@@ -2666,19 +2665,20 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		for (int i = maxima.length; i-- > 0;)
 		{
-			if (maxima[i] > 0)
+			final int id = maxima[i]; 
+			if (id != 0)
 			{
 				final float v = getf(i);
-				intensity[maxima[i]] += v;
-				if (max[maxima[i]] < v)
-					max[maxima[i]] = v;
+				intensity[id] += v;
+				if (max[id] < v)
+					max[id] = v;
 			}
 		}
 
 		for (FindFociResult result : resultsArray)
 		{
 			final int id = result.RESULT_PEAK_ID;
-			if (intensity[id] > 0)
+			if (intensity[id] != 0)
 			{
 				result.RESULT_INTENSITY = intensity[id];
 				result.RESULT_MAX_VALUE = max[id];
@@ -3193,7 +3193,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            Contains an entry for each peak indexed from 1. The entry is a linked list of saddle points. Each
 	 *            saddle point is an array containing the neighbouring peak ID and the saddle value.
 	 */
-	private void findSaddlePoints(Object pixels, byte[] types, ArrayList<FindFociResult> resultsArray, int[] maxima,
+	protected void findSaddlePoints(Object pixels, byte[] types, ArrayList<FindFociResult> resultsArray, int[] maxima,
 			ArrayList<LinkedList<FindFociSaddle>> saddlePoints)
 	{
 		setPixels(pixels);
@@ -3346,7 +3346,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/**
 	 * Find the size and intensity of peaks above their saddle heights.
 	 */
-	private void analysePeaks(ArrayList<FindFociResult> resultsArray, Object pixels, int[] maxima,
+	protected void analysePeaks(ArrayList<FindFociResult> resultsArray, Object pixels, int[] maxima,
 			FindFociStatistics stats)
 	{
 		setPixels(pixels);
@@ -3793,7 +3793,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @param peakIdMap
 	 * @param updatePeakAboveSaddle
 	 */
-	private void reanalysePeak(int[] maxima, int[] peakIdMap, int peakId, FindFociSaddle saddle, FindFociResult result,
+	protected void reanalysePeak(int[] maxima, int[] peakIdMap, int peakId, FindFociSaddle saddle, FindFociResult result,
 			boolean updatePeakAboveSaddle)
 	{
 		if (updatePeakAboveSaddle)
