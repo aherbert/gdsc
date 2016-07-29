@@ -17,7 +17,7 @@ import java.util.LinkedList;
  *---------------------------------------------------------------------------*/
 
 /**
- * Contains the results of the FindFoci algorithm after the initialisation stage.
+ * Contains the results of the FindFoci algorithm after the search stage.
  */
 public class FindFociSearchResults
 {

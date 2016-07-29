@@ -16,7 +16,7 @@ import java.util.ArrayList;
  *---------------------------------------------------------------------------*/
 
 /**
- * Contains the results of the FindFoci algorithm after the initialisation stage.
+ * Contains the results of the FindFoci algorithm after the merge stage.
  */
 public class FindFociMergeResults
 {

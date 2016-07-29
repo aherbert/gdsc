@@ -29,7 +29,7 @@ public class FindFociResults implements Cloneable
 	/** The results. */
 	public final ArrayList<FindFociResult> results;
 
-	/** The stats. */
+	/** The statistics. */
 	public final FindFociStatistics stats;
 
 	/**
