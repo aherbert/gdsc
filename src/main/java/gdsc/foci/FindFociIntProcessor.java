@@ -183,7 +183,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		return image[i];
 	}
 
-	protected int getBackgroundBin(Histogram histogram, double background)
+	protected int getBackgroundBin(Histogram histogram, float background)
 	{
 		return round(background);
 	}
@@ -193,7 +193,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		return image[i];
 	}
 
-	protected float getTolerance(int searchMethod, double searchParameter, FindFociStatistics stats, double v0)
+	protected float getTolerance(int searchMethod, double searchParameter, FindFociStatistics stats, float v0)
 	{
 		switch (searchMethod)
 		{
@@ -212,7 +212,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		return 0;
 	}
 
-	protected double getPeakHeight(int peakMethod, double peakParameter, FindFociStatistics stats, double v0)
+	protected double getPeakHeight(int peakMethod, double peakParameter, FindFociStatistics stats, float v0)
 	{
 		int height = 1;
 		if (peakParameter < 0)

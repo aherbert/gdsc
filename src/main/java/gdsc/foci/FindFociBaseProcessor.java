@@ -322,8 +322,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			// Convert to a smaller histogram 
 			histogram = histogram.compact(65536);
 		}
-		int[] statsHistogram = histogram.h;
-		int t;
+		final int[] statsHistogram = histogram.h;
+		final int t;
 		if (autoThresholdMethod.endsWith("evel"))
 		{
 			Multi_OtsuThreshold multi = new Multi_OtsuThreshold();
@@ -350,7 +350,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 	private void timingSplit(String string)
 	{
-		long newTimestamp = System.nanoTime();
+		final long newTimestamp = System.nanoTime();
 		IJ.log(string + " = " + ((newTimestamp - timestamp) / 1000000.0) + " msec");
 		timestamp = newTimestamp;
 	}
@@ -1846,7 +1846,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            The current maxima value
 	 * @return The minimum height
 	 */
-	protected abstract double getPeakHeight(int peakMethod, double peakParameter, FindFociStatistics stats, double v0);
+	protected abstract double getPeakHeight(int peakMethod, double peakParameter, FindFociStatistics stats, float v0);
 
 	/**
 	 * Find all local maxima (irrespective whether they finally qualify as maxima or not).
@@ -2312,7 +2312,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            the background
 	 * @return the background bin
 	 */
-	protected abstract int getBackgroundBin(Histogram histogram, double background);
+	protected abstract int getBackgroundBin(Histogram histogram, float background);
 
 	/**
 	 * Gets the bin for the given image position.
@@ -2569,8 +2569,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		final float[] peakThreshold = new float[nMaxima + 1];
 		for (int i = 1; i < peakThreshold.length; i++)
 		{
-			final double v0 = resultsArray.get(i - 1).RESULT_MAX_VALUE;
-			peakThreshold[i] = getTolerance(searchMethod, searchParameter, stats, v0);
+			peakThreshold[i] = getTolerance(searchMethod, searchParameter, stats,
+					resultsArray.get(i - 1).RESULT_MAX_VALUE);
 		}
 
 		for (int i = maxima.length; i-- > 0;)
@@ -2600,8 +2600,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            The current maxima value
 	 * @return The threshold
 	 */
-	protected abstract float getTolerance(int searchMethod, double searchParameter, FindFociStatistics stats,
-			double v0);
+	protected abstract float getTolerance(int searchMethod, double searchParameter, FindFociStatistics stats, float v0);
 
 	protected int round(double d)
 	{
