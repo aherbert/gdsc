@@ -850,7 +850,7 @@ public class FindFociOptimiser
 	private void saveResults(ImagePlus imp, ImagePlus mask, ArrayList<Result> results, AssignedPoint[] predictedPoints,
 			String resultFile)
 	{
-		if (resultFile == null)
+		if (Utils.isNullOrEmpty(resultFile))
 			return;
 
 		Options bestOptions = results.get(0).options;
