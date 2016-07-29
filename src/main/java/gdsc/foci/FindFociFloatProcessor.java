@@ -51,14 +51,14 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 	 */
 	protected Object extractImage(ImagePlus imp)
 	{
-		ImageStack stack = imp.getStack();
-		float[] image = new float[maxx_maxy_maxz];
-		int c = imp.getChannel();
-		int f = imp.getFrame();
+		final ImageStack stack = imp.getStack();
+		final float[] image = new float[maxx_maxy_maxz];
+		final int c = imp.getChannel();
+		final int f = imp.getFrame();
 		for (int slice = 1, i = 0; slice <= maxz; slice++)
 		{
-			int stackIndex = imp.getStackIndex(c, slice, f);
-			ImageProcessor ip = stack.getProcessor(stackIndex);
+			final int stackIndex = imp.getStackIndex(c, slice, f);
+			final ImageProcessor ip = stack.getProcessor(stackIndex);
 			for (int index = 0; index < ip.getPixelCount(); index++)
 			{
 				image[i++] = ip.getf(index);
@@ -67,6 +67,35 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		return image;
 	}
 
+	protected byte[] createTypesArray(Object pixels)
+	{
+		final float[] image = (float[]) pixels;
+		final byte[] types = new byte[maxx_maxy_maxz];
+		// Blank bad pixels
+		// TODO - See how the algorithm will cope with a Gaussian blur on NaN or infinite pixels.
+		// Maybe we must replace invalid pixels with something else, e.g. mean of the remaining valid pixels
+		// or mean of the surrounding pixels (if they are valid)
+		for (int i = 0; i < types.length; i++)
+			if (Float.isNaN(image[i]) || Float.isInfinite(image[i]))
+				types[i] = EXCLUDED;
+		return types;
+	}
+
+	protected float getImageMin(Object pixels, byte[] types)
+	{
+		final float[] image = (float[]) pixels;
+		float min = Float.POSITIVE_INFINITY;
+		for (int i = image.length; i-- > 0;)
+		{
+			if ((types[i] & EXCLUDED) == 0)
+			{
+				if (min > image[i])
+					min = image[i];
+			}
+		}
+		return min;
+	}
+	
 	@Override
 	protected Histogram buildHistogram(int bitDepth, Object pixels, byte[] types, int statsMode)
 	{

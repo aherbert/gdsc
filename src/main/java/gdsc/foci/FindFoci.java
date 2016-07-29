@@ -469,7 +469,9 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			"Absolute height", 
 			"Relative height >Bg", 
 			"Peak ID", 
-			"XYZ" };
+			"XYZ",
+			"Total intensity minus min", 
+			"Average intensity minus min" };
 
 	private static String[] centreMethods = { 
 			"Max value (search image)", 
@@ -478,7 +480,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			"Centre of mass (original image)", 
 			"Gaussian (search image)",
 			"Gaussian (original image)" };
-	//@formatter:off
+	//@formatter:on
 
 	static
 	{
@@ -1808,8 +1810,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		out.write(newLine);
 	}
 
-	/* (non-Javadoc)
-	 * @see gdsc.foci.FindFociProcessor#findMaxima(ij.ImagePlus, ij.ImagePlus, int, double, java.lang.String, int, double, int, int, int, double, int, int, int, double, int, double, double)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#findMaxima(ij.ImagePlus, ij.ImagePlus, int, double, java.lang.String, int,
+	 * double, int, int, int, double, int, int, int, double, int, double, double)
 	 */
 	public FindFociResult findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
 			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
@@ -2103,8 +2108,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		sb.append("Av\t");
 		sb.append("Total (>Bg)\t");
 		sb.append("Av (>Bg)\t");
+		sb.append("Total (>Min)\t");
+		sb.append("Av (>Min)\t");
 		sb.append("% Signal\t");
 		sb.append("% Signal (>Bg)\t");
+		sb.append("% Signal (>Min)\t");
 		sb.append("Signal / Noise\t");
 		sb.append("Object\t");
 		sb.append("State");
@@ -2115,10 +2123,14 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	/**
 	 * Add a result to the result table.
 	 *
-	 * @param i            Peak number
-	 * @param id the id
-	 * @param result            The peak result
-	 * @param stats the stats
+	 * @param i
+	 *            Peak number
+	 * @param id
+	 *            the id
+	 * @param result
+	 *            The peak result
+	 * @param stats
+	 *            the stats
 	 */
 	private void addToResultTable(int i, int id, double[] result, double[] stats)
 	{
@@ -2142,11 +2154,12 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	{
 		final double sum = stats[STATS_SUM];
 		final double noise = stats[STATS_BACKGROUND];
-		final double intensityAboveBackground=stats[STATS_SUM_ABOVE_BACKGROUND];
-		
+		final double intensityAboveBackground = stats[STATS_SUM_ABOVE_BACKGROUND];
+		final double intensityAboveImageMin = stats[STATS_SUM_ABOVE_IMAGE_MIN];
+
 		final double absoluteHeight = ffp.getAbsoluteHeight(result, noise);
 		final double relativeHeight = ffp.getRelativeHeight(result, noise, absoluteHeight);
-		
+
 		// TODO format this for int/float processing
 		final boolean floatImage = (ffp instanceof FindFociFloatProcessor);
 
@@ -2171,8 +2184,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		addValue(sb, result[RESULT_INTENSITY] / result[RESULT_COUNT]);
 		addValue(sb, result[RESULT_INTENSITY_MINUS_BACKGROUND], floatImage);
 		addValue(sb, result[RESULT_INTENSITY_MINUS_BACKGROUND] / result[RESULT_COUNT]);
+		addValue(sb, result[RESULT_INTENSITY_MINUS_MIN], floatImage);
+		addValue(sb, result[RESULT_INTENSITY_MINUS_MIN] / result[RESULT_COUNT]);
 		addValue(sb, 100 * (result[RESULT_INTENSITY] / sum));
 		addValue(sb, 100 * (result[RESULT_INTENSITY_MINUS_BACKGROUND] / intensityAboveBackground));
+		addValue(sb, 100 * (result[RESULT_INTENSITY_MINUS_MIN] / intensityAboveImageMin));
 		addValue(sb, (result[RESULT_MAX_VALUE] / noise));
 		sb.append((int) result[RESULT_OBJECT]).append("\t");
 		sb.append((int) result[RESULT_STATE]);
@@ -2195,11 +2211,27 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 	private void addValue(StringBuilder sb, double value)
 	{
-		// Have a min of 4 significant figures
-		if (value > 100)
-			sb.append(IJ.d2s(value, 2)).append("\t");
+		sb.append(getFormat(value)).append("\t");
+	}
+
+	static String getFormat(double value, boolean floatImage)
+	{
+		if (floatImage)
+		{
+			return getFormat(value);
+		}
 		else
-			sb.append(Utils.rounded(value, 4)).append("\t");
+		{
+			return Integer.toString((int) value);
+		}
+	}
+
+	static String getFormat(double value)
+	{
+		if (value > 100)
+			return IJ.d2s(value, 2);
+		else
+			return Utils.rounded(value, 4);
 	}
 
 	private String buildEmptyObjectResultEntry(int objectId, int objectState)

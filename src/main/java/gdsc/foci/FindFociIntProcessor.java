@@ -45,15 +45,15 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 	{
 		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
 			throw new RuntimeException("Bit-depth not supported: " + imp.getBitDepth());
-		
-		ImageStack stack = imp.getStack();
-		int[] image = new int[maxx_maxy_maxz];
-		int c = imp.getChannel();
-		int f = imp.getFrame();
+
+		final ImageStack stack = imp.getStack();
+		final int[] image = new int[maxx_maxy_maxz];
+		final int c = imp.getChannel();
+		final int f = imp.getFrame();
 		for (int slice = 1, i = 0; slice <= maxz; slice++)
 		{
-			int stackIndex = imp.getStackIndex(c, slice, f);
-			ImageProcessor ip = stack.getProcessor(stackIndex);
+			final int stackIndex = imp.getStackIndex(c, slice, f);
+			final ImageProcessor ip = stack.getProcessor(stackIndex);
 			for (int index = 0; index < ip.getPixelCount(); index++)
 			{
 				image[i++] = ip.get(index);
@@ -62,9 +62,29 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		return image;
 	}
 
+	protected byte[] createTypesArray(Object pixels)
+	{
+		return new byte[maxx_maxy_maxz];
+	}
+
+	protected float getImageMin(Object pixels, byte[] types)
+	{
+		final int[] image = (int[]) pixels;
+		int min = Integer.MAX_VALUE;
+		for (int i = image.length; i-- > 0;)
+		{
+			if ((types[i] & EXCLUDED) == 0)
+			{
+				if (min > image[i])
+					min = image[i];
+			}
+		}
+		return min;
+	}
+
 	protected Histogram buildHistogram(int bitDepth, Object pixels, byte[] types, int statsMode)
 	{
-		int[] image = (int[]) pixels;
+		final int[] image = (int[]) pixels;
 
 		final int size = (int) Math.pow(2, bitDepth);
 
@@ -96,7 +116,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 
 	protected Histogram buildHistogram(int bitDepth, Object pixels)
 	{
-		int[] image = ((int[]) pixels);
+		final int[] image = ((int[]) pixels);
 
 		final int size = (int) Math.pow(2, bitDepth);
 
@@ -112,7 +132,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 
 	protected Histogram buildHistogram(Object pixels, int[] maxima, int peakValue, float maxValue)
 	{
-		int[] image = (int[]) pixels;
+		final int[] image = (int[]) pixels;
 		final int[] histogram = new int[(int) maxValue + 1];
 
 		for (int i = image.length; i-- > 0;)
@@ -167,12 +187,12 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 	{
 		return round(background);
 	}
-	
+
 	protected int getBin(Histogram histogram, int i)
 	{
 		return image[i];
 	}
-	
+
 	protected float getTolerance(int searchMethod, double searchParameter, double[] stats, double v0)
 	{
 		switch (searchMethod)
@@ -183,14 +203,15 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 			case FindFoci.SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND:
 				if (searchParameter < 0)
 					searchParameter = 0;
-				return round(stats[FindFoci.STATS_BACKGROUND] + searchParameter * (v0 - stats[FindFoci.STATS_BACKGROUND]));
+				return round(
+						stats[FindFoci.STATS_BACKGROUND] + searchParameter * (v0 - stats[FindFoci.STATS_BACKGROUND]));
 
 			case FindFoci.SEARCH_HALF_PEAK_VALUE:
 				return round(stats[FindFoci.STATS_BACKGROUND] + 0.5 * (v0 - stats[FindFoci.STATS_BACKGROUND]));
 		}
 		return 0;
 	}
-	
+
 	protected double getPeakHeight(int peakMethod, double peakParameter, double[] stats, double v0)
 	{
 		int height = 1;
