@@ -144,67 +144,6 @@ public interface FindFociProcessor
 	public final static int OUTPUT_MASK = OUTPUT_MASK_PEAKS | OUTPUT_MASK_THRESHOLD;
 
 	/**
-	 * The index of the minimum in the results statistics array
-	 */
-	public final static int STATS_MIN = 0;
-	/**
-	 * The index of the maximum in the results statistics array
-	 */
-	public final static int STATS_MAX = 1;
-	/**
-	 * The index of the mean in the results statistics array
-	 */
-	public final static int STATS_AV = 2;
-	/**
-	 * The index of the standard deviation in the results statistics array
-	 */
-	public final static int STATS_SD = 3;
-	/**
-	 * The index of the total image intensity in the results statistics array
-	 */
-	public final static int STATS_SUM = 4;
-	/**
-	 * The index of the image background level in the results statistics array (see {@link #BACKGROUND_AUTO_THRESHOLD})
-	 */
-	public final static int STATS_BACKGROUND = 5;
-	/**
-	 * The index of the total image intensity above the background in the results statistics array
-	 */
-	public final static int STATS_SUM_ABOVE_BACKGROUND = 6;
-	/**
-	 * The index of the minimum of the background region in the results statistics array
-	 * 
-	 * @see {@link #OPTION_STATS_INSIDE } and {@link #OPTION_STATS_OUTSIDE }
-	 */
-	public final static int STATS_MIN_BACKGROUND = 7;
-	/**
-	 * The index of the maximum of the background region in the results statistics array
-	 * 
-	 * @see {@link #OPTION_STATS_INSIDE } and {@link #OPTION_STATS_OUTSIDE }
-	 */
-	public final static int STATS_MAX_BACKGROUND = 8;
-	/**
-	 * The index of the mean of the background region in the results statistics array
-	 * 
-	 * @see {@link #OPTION_STATS_INSIDE } and {@link #OPTION_STATS_OUTSIDE }
-	 */
-	public final static int STATS_AV_BACKGROUND = 9;
-	/**
-	 * The index of the standard deviation of the background region in the results statistics array.
-	 * 
-	 * @see {@link #OPTION_STATS_INSIDE } and {@link #OPTION_STATS_OUTSIDE }
-	 */
-	public final static int STATS_SD_BACKGROUND = 10;
-	/**
-	 * The index of the minimum image value in the results statistics array
-	 */
-	public final static int STATS_IMAGE_MIN = 11;
-	/**
-	 * The index of the total image intensity above the minimum image value in the results statistics array
-	 */
-	public final static int STATS_SUM_ABOVE_IMAGE_MIN = 12;
-
-	/**
 	 * The index of the peak X coordinate within the result int[] array of the results ArrayList<double[]> object
 	 */
 	public final static int RESULT_X = 0;
@@ -497,7 +436,7 @@ public interface FindFociProcessor
 	 *         (3) the image statistics double[] array. The details can be extracted using the constants defined with
 	 *         the FindFoci.STATS_ prefix. Returns null if cancelled by escape.
 	 */
-	FindFociResult findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
+	FindFociResults findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
 			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
 			int peakMethod, double peakParameter, int outputType, int sortIndex, int options, double blur,
 			int centreMethod, double centreParameter, double fractionParameter);
@@ -658,7 +597,7 @@ public interface FindFociProcessor
 	 *         (3) the image statistics double[] array. The details can be extracted using the constants defined with
 	 *         the FindFoci.STATS_ prefix.
 	 */
-	FindFociResult findMaximaResults(Object[] initArray, Object[] runArray, int maxPeaks, int sortIndex,
+	FindFociResults findMaximaResults(Object[] initArray, Object[] runArray, int maxPeaks, int sortIndex,
 			int centreMethod, double centreParameter);
 
 	/**
@@ -689,7 +628,7 @@ public interface FindFociProcessor
 	 *         (3) the image statistics double[] array. The details can be extracted using the constants defined with
 	 *         the FindFoci.STATS_ prefix.
 	 */
-	FindFociResult findMaximaPrelimResults(Object[] initArray, Object[] mergeArray, int maxPeaks, int sortIndex,
+	FindFociResults findMaximaPrelimResults(Object[] initArray, Object[] mergeArray, int maxPeaks, int sortIndex,
 			int centreMethod, double centreParameter);
 
 	/**
@@ -729,6 +668,6 @@ public interface FindFociProcessor
 	 *         (3) the image statistics double[] array. The details can be extracted using the constants defined with
 	 *         the FindFoci.STATS_ prefix. Returns null if cancelled by escape.
 	 */
-	FindFociResult findMaximaMaskResults(Object[] initArray, Object[] mergeArray, FindFociResult prelimResults,
+	FindFociResults findMaximaMaskResults(Object[] initArray, Object[] mergeArray, FindFociResults prelimResults,
 			int outputType, String autoThresholdMethod, String imageTitle, double fractionParameter);
 }

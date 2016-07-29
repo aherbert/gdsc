@@ -101,7 +101,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaxima(ij.ImagePlus, ij.ImagePlus, int, double, java.lang.String, int,
 	 * double, int, int, int, double, int, int, int, double, int, double, double)
 	 */
-	public FindFociResult findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
+	public FindFociResults findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
 			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
 			int peakMethod, double peakParameter, int outputType, int sortIndex, int options, double blur,
 			int centreMethod, double centreParameter, double fractionParameter)
@@ -124,7 +124,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		final Object originalImage = extractImage(imp);
 		final byte[] types = createTypesArray(originalImage); // Will be a notepad for pixel types
 		final int[] maxima = new int[maxx_maxy_maxz]; // Contains the maxima Id assigned for each point
-		final float imageMin = getImageMin(originalImage, types);
+		FindFociStatistics stats = new FindFociStatistics();
+		stats.imageMinimum = getImageMin(originalImage, types);
 
 		final Object image;
 		if (blur > 0)
@@ -149,8 +150,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		IJ.showStatus("Building histogram...");
 
 		final Histogram histogram = buildHistogram(imp.getBitDepth(), image, types, OPTION_STATS_INSIDE);
-		final double[] stats = getStatistics(histogram);
-		stats[STATS_IMAGE_MIN] = imageMin;
+		getStatistics(histogram, stats);
 
 		Histogram statsHistogram = histogram;
 
@@ -170,9 +170,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			{
 				statsHistogram = buildHistogram(imp.getBitDepth(), image, types, OPTION_STATS_OUTSIDE);
 			}
-			double[] newStats = getStatistics(statsHistogram);
-			for (int i = 0; i < 4; i++)
-				stats[i + STATS_MIN_BACKGROUND] = newStats[i + STATS_MIN];
+			getBackgroundStatistics(statsHistogram, stats);
 		}
 
 		if (isLogging)
@@ -184,16 +182,16 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// Calculate the auto-threshold if necessary
 		if (backgroundMethod == BACKGROUND_AUTO_THRESHOLD)
 		{
-			stats[STATS_BACKGROUND] = getThreshold(autoThresholdMethod, statsHistogram);
+			stats.background = getThreshold(autoThresholdMethod, statsHistogram);
 		}
 		statsHistogram = null;
 
 		IJ.showStatus("Getting sorted maxima...");
-		stats[STATS_BACKGROUND] = getSearchThreshold(backgroundMethod, backgroundParameter, stats);
+		stats.background = getSearchThreshold(backgroundMethod, backgroundParameter, stats);
 		if (isLogging)
-			IJ.log("Background level = " + getFormat(stats[STATS_BACKGROUND]));
-		Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, (float) stats[STATS_MIN],
-				(float) stats[STATS_BACKGROUND]);
+			IJ.log("Background level = " + getFormat(stats.background));
+		Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, (float) stats.regionMinimum,
+				(float) stats.background);
 
 		if (Utils.isInterrupted() || maxPoints == null)
 			return null;
@@ -274,7 +272,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				centreParameter);
 
 		// Calculate the average intensity and values minus background
-		calculateFinalResults(resultsArray, stats[STATS_BACKGROUND], stats[STATS_MIN_BACKGROUND]);
+		calculateFinalResults(resultsArray, stats.background, stats.backgroundRegionMinimum);
 
 		// Reorder the results
 		sortDescResults(resultsArray, sortIndex, stats);
@@ -294,7 +292,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// Compute this only when we know we have some results (to avoid wasted CPU)
 		if (nMaxima != 0)
 			getIntensityAboveBackgrounds(originalImage, types, stats);
-		
+
 		if (isLogging)
 			timingSplit("Calulated results");
 
@@ -318,7 +316,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		IJ.showTime(imp, start, "Done ", maxz);
 
-		return new FindFociResult(outImp, resultsArray, stats);
+		return new FindFociResults(outImp, resultsArray, stats);
 	}
 
 	private float getThreshold(String autoThresholdMethod, Histogram histogram)
@@ -405,8 +403,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		Object originalImage = extractImage(originalImp);
 		final byte[] types = createTypesArray(originalImage); // Will be a notepad for pixel types
 		int[] maxima = new int[maxx_maxy_maxz]; // Contains the maxima Id assigned for each point
-		final float imageMin = getImageMin(originalImage, types);
-		
+		final FindFociStatistics stats = new FindFociStatistics();
+		stats.imageMinimum = getImageMin(originalImage, types);
+
 		Object image = extractImage(imp);
 
 		// Mark any point outside the ROI as processed
@@ -414,8 +413,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		exclusion += excludeOutsideMask(mask, types, false);
 
 		final Histogram histogram = buildHistogram(imp.getBitDepth(), image, types, OPTION_STATS_INSIDE);
-		final double[] stats = getStatistics(histogram);
-		stats[STATS_IMAGE_MIN] = imageMin;
+		getStatistics(histogram, stats);
 
 		Histogram statsHistogram = histogram;
 
@@ -435,21 +433,19 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			{
 				statsHistogram = buildHistogram(imp.getBitDepth(), image, types, OPTION_STATS_OUTSIDE);
 			}
-			double[] newStats = getStatistics(statsHistogram);
-			for (int i = 0; i < 4; i++)
-				stats[i + STATS_MIN_BACKGROUND] = newStats[i + STATS_MIN];
+			getBackgroundStatistics(statsHistogram, stats);
 		}
 
 		// Calculate the auto-threshold if necessary
 		if (backgroundMethod == BACKGROUND_AUTO_THRESHOLD)
 		{
-			stats[STATS_BACKGROUND] = getThreshold(autoThresholdMethod, statsHistogram);
+			stats.background = getThreshold(autoThresholdMethod, statsHistogram);
 		}
 
 		// Do this here since we now have the background and image min. 
 		// This saves having to do it repeated later during multiple calls with the same init state. 
 		getIntensityAboveBackgrounds(originalImage, types, stats);
-		
+
 		return new Object[] { image, types, maxima, histogram, stats, originalImage, originalImp };
 	}
 
@@ -465,28 +461,27 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		byte[] types = (byte[]) initArray[1];
 		int[] maxima = (int[]) initArray[2];
 		Histogram histogram = (Histogram) initArray[3];
-		double[] stats = (double[]) initArray[4];
+		FindFociStatistics stats = (FindFociStatistics)initArray[4];
 		Object originalImage = initArray[5];
 		ImagePlus imp = (ImagePlus) initArray[6];
 
 		byte[] types2 = null;
 		int[] maxima2 = null;
-		Histogram histogram2 = histogram.clone();
-		double[] stats2 = null;
+		// TODO - check if these are destructively modifed
+		Histogram histogram2 = histogram; // histogram.clone();
+		FindFociStatistics stats2 = stats; // stats.clone();
 
 		if (clonedInitArray == null)
 		{
 			clonedInitArray = new Object[7];
 			types2 = new byte[types.length];
 			maxima2 = new int[maxima.length];
-			stats2 = new double[stats.length];
 		}
 		else
 		{
 			// Re-use arrays
 			types2 = (byte[]) clonedInitArray[1];
 			maxima2 = (int[]) clonedInitArray[2];
-			stats2 = (double[]) clonedInitArray[4];
 
 			// Maxima should be all zeros
 			final short zero = 0;
@@ -495,7 +490,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		// Copy the arrays that are destructively modified 
 		System.arraycopy(types, 0, types2, 0, types.length);
-		System.arraycopy(stats, 0, stats2, 0, stats.length);
 
 		// Image is unchanged so this is not copied
 		clonedInitArray[0] = image;
@@ -521,33 +515,31 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		byte[] types = (byte[]) initArray[1];
 		int[] maxima = (int[]) initArray[2];
 		Histogram histogram = (Histogram) initArray[3];
-		double[] stats = (double[]) initArray[4];
+		FindFociStatistics stats = (FindFociStatistics)initArray[4];
 		Object originalImage = initArray[5];
 		ImagePlus imp = (ImagePlus) initArray[6];
 
 		byte[] types2 = null;
 		int[] maxima2 = null;
-		Histogram histogram2 = histogram.clone();
-		double[] stats2 = null;
+		// TODO - check if these are destructively modifed
+		Histogram histogram2 = histogram; // histogram.clone();
+		FindFociStatistics stats2 = stats; // stats.clone();
 
 		if (clonedInitArray == null)
 		{
 			clonedInitArray = new Object[7];
 			types2 = new byte[types.length];
 			maxima2 = new int[maxima.length];
-			stats2 = new double[stats.length];
 		}
 		else
 		{
 			types2 = (byte[]) clonedInitArray[1];
 			maxima2 = (int[]) clonedInitArray[2];
-			stats2 = (double[]) clonedInitArray[4];
 		}
 
 		// Copy the arrays that are destructively modified 
 		System.arraycopy(types, 0, types2, 0, types.length);
 		System.arraycopy(maxima, 0, maxima2, 0, maxima.length);
-		System.arraycopy(stats, 0, stats2, 0, stats.length);
 
 		// Image is unchanged so this is not copied
 		clonedInitArray[0] = image;
@@ -577,13 +569,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		byte[] types = (byte[]) initArray[1]; // Will be a notepad for pixel types
 		int[] maxima = (int[]) initArray[2]; // Contains the maxima Id assigned for each point
 		Histogram histogram = (Histogram) initArray[3];
-		double[] stats = (double[]) initArray[4];
+		FindFociStatistics stats = (FindFociStatistics)initArray[4];
 		Object originalImage = initArray[5];
 
 		setPixels(image);
-		stats[STATS_BACKGROUND] = getSearchThreshold(backgroundMethod, backgroundParameter, stats);
-		Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, (float) stats[STATS_MIN],
-				(float) stats[STATS_BACKGROUND]);
+		stats.background = getSearchThreshold(backgroundMethod, backgroundParameter, stats);
+		Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, (float) stats.regionMinimum,
+				(float) stats.background);
 
 		if (maxPoints == null)
 			return null;
@@ -643,12 +635,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		byte[] types = (byte[]) initArray[1]; // Will be a notepad for pixel types
 		int[] maxima = (int[]) initArray[2]; // Contains the maxima Id assigned for each point
 		Histogram histogram = (Histogram) initArray[3];
-		double[] stats = (double[]) initArray[4];
+		FindFociStatistics stats = (FindFociStatistics)initArray[4];
 
 		setPixels(image);
-		stats[STATS_BACKGROUND] = getSearchThreshold(backgroundMethod, backgroundParameter, stats);
-		Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, (float) stats[STATS_MIN],
-				(float) stats[STATS_BACKGROUND]);
+		stats.background = getSearchThreshold(backgroundMethod, backgroundParameter, stats);
+		Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, (float) stats.regionMinimum,
+				(float) stats.background);
 		if (maxPoints == null)
 			return null;
 		ArrayList<double[]> resultsArray = new ArrayList<double[]>(maxPoints.length);
@@ -689,7 +681,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		Object image = initArray[0];
 		int[] maxima = (int[]) initArray[2]; // Contains the maxima Id assigned for each point
-		double[] stats = (double[]) initArray[4];
+		FindFociStatistics stats = (FindFociStatistics)initArray[4];
 		Object originalImage = initArray[5];
 
 		@SuppressWarnings("unchecked")
@@ -740,13 +732,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaxima(ij.ImagePlus, int, double, java.lang.String, int, double, int, int,
 	 * int, double, int, int, int, double, int, double, double)
 	 */
-	public FindFociResult findMaximaResults(Object[] initArray, Object[] runArray, int maxPeaks, int sortIndex,
+	public FindFociResults findMaximaResults(Object[] initArray, Object[] runArray, int maxPeaks, int sortIndex,
 			int centreMethod, double centreParameter)
 	{
 		Object searchImage = initArray[0];
 		byte[] types = (byte[]) initArray[1];
 		int[] maxima = (int[]) initArray[2];
-		double[] stats = (double[]) initArray[4];
+		FindFociStatistics stats = (FindFociStatistics)initArray[4];
 		Object originalImage = initArray[5];
 
 		@SuppressWarnings("unchecked")
@@ -763,7 +755,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				centreParameter);
 
 		// Calculate the average intensity and values minus background
-		calculateFinalResults(resultsArray, stats[STATS_BACKGROUND], stats[STATS_MIN_BACKGROUND]);
+		calculateFinalResults(resultsArray, stats.background, stats.backgroundRegionMinimum);
 
 		// Reorder the results
 		sortDescResults(resultsArray, sortIndex, stats);
@@ -773,7 +765,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		renumberPeaks(resultsArray, originalNumberOfPeaks);
 
-		return new FindFociResult(null, resultsArray, stats);
+		return new FindFociResults(null, resultsArray, stats);
 	}
 
 	/*
@@ -782,13 +774,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaxima(ij.ImagePlus, int, double, java.lang.String, int, double, int, int,
 	 * int, double, int, int, int, double, int, double, double)
 	 */
-	public FindFociResult findMaximaPrelimResults(Object[] initArray, Object[] mergeArray, int maxPeaks, int sortIndex,
+	public FindFociResults findMaximaPrelimResults(Object[] initArray, Object[] mergeArray, int maxPeaks, int sortIndex,
 			int centreMethod, double centreParameter)
 	{
 		Object searchImage = initArray[0];
 		byte[] types = (byte[]) initArray[1];
 		int[] maxima = (int[]) initArray[2];
-		double[] stats = (double[]) initArray[4];
+		FindFociStatistics stats = (FindFociStatistics)initArray[4];
 		Object originalImage = initArray[5];
 
 		@SuppressWarnings("unchecked")
@@ -805,7 +797,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				centreParameter);
 
 		// Calculate the average intensity and values minus background
-		calculateFinalResults(resultsArray, stats[STATS_BACKGROUND], stats[STATS_MIN]);
+		calculateFinalResults(resultsArray, stats.background, stats.regionMinimum);
 
 		// Reorder the results
 		sortDescResults(resultsArray, sortIndex, stats);
@@ -813,7 +805,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// Only return the best results
 		resultsArray = trim(resultsArray, maxPeaks);
 
-		return new FindFociResult(null, resultsArray, stats);
+		return new FindFociResults(null, resultsArray, stats);
 	}
 
 	/*
@@ -822,13 +814,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaxima(ij.ImagePlus, int, double, java.lang.String, int, double, int, int,
 	 * int, double, int, int, int, double, int, double, double)
 	 */
-	public FindFociResult findMaximaMaskResults(Object[] initArray, Object[] mergeArray, FindFociResult prelimResults,
+	public FindFociResults findMaximaMaskResults(Object[] initArray, Object[] mergeArray, FindFociResults prelimResults,
 			int outputType, String autoThresholdMethod, String imageTitle, double fractionParameter)
 	{
 		Object image = initArray[0];
 		byte[] types = (byte[]) initArray[1];
 		int[] maxima = (int[]) initArray[2];
-		double[] stats = (double[]) initArray[4];
+		FindFociStatistics stats = (FindFociStatistics)initArray[4];
 
 		ArrayList<double[]> originalResultsArray = prelimResults.results;
 		int originalNumberOfPeaks = (Integer) mergeArray[1];
@@ -851,11 +843,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		renumberPeaks(resultsArray, originalNumberOfPeaks);
 
-		return new FindFociResult(outImp, resultsArray, stats);
+		return new FindFociResults(outImp, resultsArray, stats);
 	}
 
 	private ImagePlus generateOutputMask(int outputType, String autoThresholdMethod, ImagePlus imp,
-			double fractionParameter, Object pixels, byte[] types, int[] maxima, double[] stats,
+			double fractionParameter, Object pixels, byte[] types, int[] maxima, FindFociStatistics stats,
 			ArrayList<double[]> resultsArray, int nMaxima)
 	{
 		// TODO - Add an option for a coloured map of peaks using 4 colours. No touching peaks should be the same colour.
@@ -889,7 +881,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		else
 		{
 			// Ensure no pixels are below the saddle height
-			Arrays.fill(displayValues, (float) stats[STATS_MIN] - 1);
+			Arrays.fill(displayValues, (float) stats.regionMinimum - 1);
 		}
 
 		setPixels(pixels);
@@ -906,8 +898,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			}
 			else if ((outputType & OUTPUT_MASK_FRACTION_OF_HEIGHT) != 0)
 			{
-				displayValues[i] = (float) (fractionParameter * (result[RESULT_MAX_VALUE] - stats[STATS_BACKGROUND]) +
-						stats[STATS_BACKGROUND]);
+				displayValues[i] = (float) (fractionParameter * (result[RESULT_MAX_VALUE] - stats.background) +
+						stats.background);
 				if (!floatImage)
 					displayValues[i] = round(displayValues[i]);
 			}
@@ -1018,17 +1010,17 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	private void calculateFractionOfIntensityDisplayValues(double fractionParameter, Object pixels, int[] maxima,
-			double[] stats, int[] maximaPeakIds, float[] displayValues)
+			FindFociStatistics stats, int[] maximaPeakIds, float[] displayValues)
 	{
 		// For each maxima
 		for (int i = 0; i < maximaPeakIds.length; i++)
 		{
 			// Histogram all the pixels above background
-			final Histogram hist = buildHistogram(pixels, maxima, maximaPeakIds[i], (float) stats[STATS_MAX]);
+			final Histogram hist = buildHistogram(pixels, maxima, maximaPeakIds[i], (float) stats.regionMaximum);
 
 			if (hist instanceof FloatHistogram)
 			{
-				final float background = (float) stats[STATS_BACKGROUND];
+				final float background = (float) stats.background;
 
 				// Sum above background
 				double sum = 0;
@@ -1053,7 +1045,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			}
 			else
 			{
-				final int background = (int) Math.floor(stats[STATS_BACKGROUND]);
+				final int background = (int) Math.floor(stats.background);
 
 				// Sum above background
 				long sum = 0;
@@ -1334,9 +1326,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @param s
 	 * @param autoThresholdMethod
 	 */
-	private void thresholdMask(Object pixels, int[] maxima, int peakValue, String autoThresholdMethod, double[] stats)
+	private void thresholdMask(Object pixels, int[] maxima, int peakValue, String autoThresholdMethod,
+			FindFociStatistics stats)
 	{
-		final Histogram histogram = buildHistogram(pixels, maxima, peakValue, (float) stats[STATS_MAX]);
+		final Histogram histogram = buildHistogram(pixels, maxima, peakValue, (float) stats.regionMaximum);
 		final float t = getThreshold(autoThresholdMethod, histogram);
 
 		if (pixels instanceof float[])
@@ -1422,20 +1415,20 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @param sortIndex
 	 *            the sort index
 	 */
-	private void recordStatistics(double[] stats, int exclusion, int options, int sortIndex)
+	private void recordStatistics(FindFociStatistics stats, int exclusion, int options, int sortIndex)
 	{
 		final boolean floatImage = (this instanceof FindFociFloatProcessor);
-		
+
 		StringBuilder sb = new StringBuilder();
-		sb.append("Image min = ").append(FindFoci.getFormat(stats[STATS_IMAGE_MIN], floatImage));
+		sb.append("Image min = ").append(FindFoci.getFormat(stats.imageMinimum, floatImage));
 		if (exclusion > 0)
 			sb.append("\nImage stats (inside mask/ROI) : Min = ");
 		else
 			sb.append("\nImage stats : Min = ");
-		sb.append(FindFoci.getFormat(stats[STATS_MIN], floatImage));
-		sb.append(", Max = ").append(FindFoci.getFormat(stats[STATS_MAX], floatImage));
-		sb.append(", Mean = ").append(FindFoci.getFormat(stats[STATS_AV]));
-		sb.append(", StdDev = ").append(FindFoci.getFormat(stats[STATS_SD]));
+		sb.append(FindFoci.getFormat(stats.regionMinimum, floatImage));
+		sb.append(", Max = ").append(FindFoci.getFormat(stats.regionMaximum, floatImage));
+		sb.append(", Mean = ").append(FindFoci.getFormat(stats.regionAverage));
+		sb.append(", StdDev = ").append(FindFoci.getFormat(stats.regionStdDev));
 		IJ.log(sb.toString());
 
 		sb.setLength(0);
@@ -1443,16 +1436,16 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			sb.append("Background stats (mode=").append(FindFoci.getStatisticsMode(options)).append(") : Min = ");
 		else
 			sb.append("Background stats : Min = ");
-		sb.append(FindFoci.getFormat(stats[STATS_MIN_BACKGROUND], floatImage));
-		sb.append(", Max = ").append(FindFoci.getFormat(stats[STATS_MAX_BACKGROUND], floatImage));
-		sb.append(", Mean = ").append(FindFoci.getFormat(stats[STATS_AV_BACKGROUND]));
-		sb.append(", StdDev = ").append(FindFoci.getFormat(stats[STATS_SD_BACKGROUND]));
-		if (stats[STATS_MIN_BACKGROUND] < 0 && isSortIndexSenstiveToNegativeValues(sortIndex))
+		sb.append(FindFoci.getFormat(stats.backgroundRegionMinimum, floatImage));
+		sb.append(", Max = ").append(FindFoci.getFormat(stats.backgroundRegionMaximum, floatImage));
+		sb.append(", Mean = ").append(FindFoci.getFormat(stats.backgroundRegionAverage));
+		sb.append(", StdDev = ").append(FindFoci.getFormat(stats.backgroundRegionStdDev));
+		if (stats.backgroundRegionMinimum < 0 && isSortIndexSenstiveToNegativeValues(sortIndex))
 			sb.append(
 					"\nWARNING: Min background is below zero and the chosen sort index is sensitive to negative values");
 		IJ.log(sb.toString());
 	}
-	
+
 	private String getFormat(double value)
 	{
 		final boolean floatImage = (this instanceof FindFociFloatProcessor);
@@ -1704,33 +1697,76 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 */
 	protected abstract Histogram buildHistogram(int bitDepth, Object pixels);
 
-	private void getIntensityAboveBackgrounds(final Object originalImage, final byte[] types, final double[] stats)
+	private void getIntensityAboveBackgrounds(final Object originalImage, final byte[] types,
+			final FindFociStatistics stats)
 	{
-		stats[STATS_SUM_ABOVE_BACKGROUND] = getIntensityAboveBackground(originalImage, types, stats[STATS_BACKGROUND]);
-		stats[STATS_SUM_ABOVE_IMAGE_MIN] = getIntensityAboveBackground(originalImage, types, stats[STATS_IMAGE_MIN]);
+		stats.totalAboveBackground = getIntensityAboveFloor(originalImage, types, stats.background);
+		stats.totalAboveImageMinimum = getIntensityAboveFloor(originalImage, types, stats.imageMinimum);
 	}
-	
-	private double getIntensityAboveBackground(Object pixels, byte[] types, double background)
+
+	private double getIntensityAboveFloor(Object pixels, byte[] types, final float floor)
 	{
 		setPixels(pixels);
 
-		final float b = (float) background;
 		double sum = 0;
 		for (int i = types.length; i-- > 0;)
 		{
-			if ((types[i] & EXCLUDED) == 0 && getf(i) > b)
+			if ((types[i] & EXCLUDED) == 0 && getf(i) > floor)
 			{
-				sum += (getf(i) - b);
+				sum += (getf(i) - floor);
 			}
 		}
 		return sum;
 	}
 
 	/**
-	 * Return the image statistics
-	 * 
+	 * Compute the image statistics.
+	 *
 	 * @param histogram
 	 *            The image histogram
+	 * @param stats
+	 *            the stats
+	 */
+	private void getStatistics(Histogram histogram, FindFociStatistics stats)
+	{
+		double[] newStats = getStatistics(histogram);
+		if (newStats != null)
+		{
+			stats.regionMinimum = stats.backgroundRegionMinimum = (float) newStats[0];
+			stats.regionMaximum = stats.backgroundRegionMaximum = (float) newStats[1];
+			stats.regionAverage = stats.backgroundRegionAverage = newStats[2];
+			stats.regionStdDev = stats.backgroundRegionStdDev = newStats[3];
+			stats.regionTotal = newStats[4];
+		}
+	}
+
+	/**
+	 * Compute the image statistics for the background
+	 *
+	 * @param histogram
+	 *            The image histogram
+	 * @param stats
+	 *            the stats
+	 */
+	private void getBackgroundStatistics(Histogram histogram, FindFociStatistics stats)
+	{
+		double[] newStats = getStatistics(histogram);
+		if (newStats != null)
+		{
+			stats.backgroundRegionMinimum = (float) newStats[0];
+			stats.backgroundRegionMaximum = (float) newStats[1];
+			stats.backgroundRegionAverage = newStats[2];
+			stats.backgroundRegionStdDev = newStats[3];
+		}
+	}
+	
+	/**
+	 * Return the image statistics.
+	 *
+	 * @param histogram
+	 *            The image histogram
+	 * @param stats
+	 *            the stats
 	 * @return Array containing: min, max, av, stdDev, sum
 	 */
 	private double[] getStatistics(Histogram histogram)
@@ -1774,7 +1810,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		double min = histogram.getValue(histogram.minBin);
 		double max = histogram.getValue(histogram.maxBin);
-		return new double[] { min, max, av, stdDev, sum, 0, 0, min, max, av, stdDev, 0, 0 };
+		return new double[] { min, max, av, stdDev, sum };
 	}
 
 	/**
@@ -1788,7 +1824,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            The image statistics
 	 * @return The threshold
 	 */
-	protected abstract float getSearchThreshold(int backgroundMethod, double backgroundParameter, double[] stats);
+	protected abstract float getSearchThreshold(int backgroundMethod, double backgroundParameter,
+			FindFociStatistics stats);
 
 	/**
 	 * Get the minimum height for this peak above the highest saddle point
@@ -1803,7 +1840,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            The current maxima value
 	 * @return The minimum height
 	 */
-	protected abstract double getPeakHeight(int peakMethod, double peakParameter, double[] stats, double v0);
+	protected abstract double getPeakHeight(int peakMethod, double peakParameter, FindFociStatistics stats, double v0);
 
 	/**
 	 * Find all local maxima (irrespective whether they finally qualify as maxima or not).
@@ -2102,9 +2139,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 	private float NO_SADDLE_VALUE;
 
-	private void setNoSaddleValue(double[] stats)
+	private void setNoSaddleValue(FindFociStatistics stats)
 	{
-		if (stats[STATS_BACKGROUND] >= 0)
+		if (stats.background >= 0)
 			NO_SADDLE_VALUE = 0;
 		else
 			NO_SADDLE_VALUE = Float.NEGATIVE_INFINITY;
@@ -2122,7 +2159,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @param stats
 	 *            the stats
 	 */
-	private void assignMaxima(int[] maxima, Coordinate[] maxPoints, ArrayList<double[]> resultsArray, double[] stats)
+	private void assignMaxima(int[] maxima, Coordinate[] maxPoints, ArrayList<double[]> resultsArray,
+			FindFociStatistics stats)
 	{
 		final int[] xyz = new int[3];
 		setNoSaddleValue(stats);
@@ -2151,13 +2189,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * Assigns points to their maxima using the steepest uphill gradient. Processes points in order of height,
 	 * progressively building peaks in a top-down fashion.
 	 */
-	private void assignPointsToMaxima(Object pixels, Histogram hist, byte[] types, double[] stats, int[] maxima)
+	private void assignPointsToMaxima(Object pixels, Histogram hist, byte[] types, FindFociStatistics stats,
+			int[] maxima)
 	{
 		setPixels(pixels);
 		// This is modified so clone it
 		final int[] histogram = hist.h.clone();
 
-		final int minBin = getBackgroundBin(hist, stats[STATS_BACKGROUND]);
+		final int minBin = getBackgroundBin(hist, stats.background);
 		final int maxBin = hist.maxBin;
 
 		// Create an array with the coordinates of all points between the threshold value and the max-1 value
@@ -2513,8 +2552,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @param resultsArray
 	 * @param maxima
 	 */
-	private void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter, double[] stats,
-			ArrayList<double[]> resultsArray, int[] maxima)
+	private void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
+			FindFociStatistics stats, ArrayList<double[]> resultsArray, int[] maxima)
 	{
 		setPixels(pixels);
 
@@ -2555,7 +2594,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            The current maxima value
 	 * @return The threshold
 	 */
-	protected abstract float getTolerance(int searchMethod, double searchParameter, double[] stats, double v0);
+	protected abstract float getTolerance(int searchMethod, double searchParameter, FindFociStatistics stats,
+			double v0);
 
 	protected int round(double d)
 	{
@@ -2635,7 +2675,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			}
 		}
 	}
-	
+
 	/**
 	 * Calculate the peaks centre and maximum value. This could be done in many ways:
 	 * - Max value
@@ -3290,7 +3330,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/**
 	 * Find the size and intensity of peaks above their saddle heights.
 	 */
-	private void analysePeaks(ArrayList<double[]> resultsArray, Object pixels, int[] maxima, double[] stats)
+	private void analysePeaks(ArrayList<double[]> resultsArray, Object pixels, int[] maxima, FindFociStatistics stats)
 	{
 		setPixels(pixels);
 
@@ -3329,7 +3369,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * Merge sub-peaks into their highest neighbour peak using the highest saddle point
 	 */
 	private ArrayList<double[]> mergeSubPeaks(ArrayList<double[]> resultsArray, Object pixels, int[] maxima,
-			int minSize, int peakMethod, double peakParameter, double[] stats,
+			int minSize, int peakMethod, double peakParameter, FindFociStatistics stats,
 			ArrayList<LinkedList<double[]>> saddlePoints, boolean isLogging, boolean restrictAboveSaddle)
 	{
 		setPixels(pixels);
@@ -3355,7 +3395,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 			final double[] highestSaddle = findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
 
-			final double peakBase = (highestSaddle == null) ? stats[STATS_BACKGROUND] : highestSaddle[1];
+			final double peakBase = (highestSaddle == null) ? stats.background : highestSaddle[1];
 
 			final double threshold = getPeakHeight(peakMethod, peakParameter, stats, result[RESULT_MAX_VALUE]);
 
@@ -3797,8 +3837,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            the is logging
 	 * @return the results array
 	 */
-	private ArrayList<double[]> removeEdgeMaxima(ArrayList<double[]> resultsArray, int[] maxima, double[] stats,
-			boolean isLogging)
+	private ArrayList<double[]> removeEdgeMaxima(ArrayList<double[]> resultsArray, int[] maxima,
+			FindFociStatistics stats, boolean isLogging)
 	{
 		// Build a look-up table for all the peak IDs
 		double maxId = 0;
@@ -3869,7 +3909,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @param resultsArray
 	 * @param sortIndex
 	 */
-	void sortDescResults(ArrayList<double[]> resultsArray, int sortIndex, double[] stats)
+	void sortDescResults(ArrayList<double[]> resultsArray, int sortIndex, FindFociStatistics stats)
 	{
 		Collections.sort(resultsArray, new ResultDescComparator(getResultIndex(sortIndex, resultsArray, stats)));
 	}
@@ -3880,12 +3920,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @param resultsArray
 	 * @param sortIndex
 	 */
-	void sortAscResults(ArrayList<double[]> resultsArray, int sortIndex, double[] stats)
+	void sortAscResults(ArrayList<double[]> resultsArray, int sortIndex, FindFociStatistics stats)
 	{
 		Collections.sort(resultsArray, new ResultAscComparator(getResultIndex(sortIndex, resultsArray, stats)));
 	}
 
-	private int getResultIndex(int sortIndex, ArrayList<double[]> resultsArray, double[] stats)
+	private int getResultIndex(int sortIndex, ArrayList<double[]> resultsArray, FindFociStatistics stats)
 	{
 		switch (sortIndex)
 		{
@@ -3914,10 +3954,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			case SORT_INTENSITY_ABOVE_SADDLE:
 				return RESULT_INTENSITY_ABOVE_SADDLE;
 			case SORT_ABSOLUTE_HEIGHT:
-				customSortAbsoluteHeight(resultsArray, stats[STATS_BACKGROUND]);
+				customSortAbsoluteHeight(resultsArray, stats.background);
 				return RESULT_CUSTOM_SORT_VALUE;
 			case SORT_RELATIVE_HEIGHT_ABOVE_BACKGROUND:
-				customSortRelativeHeightAboveBackground(resultsArray, stats[STATS_BACKGROUND]);
+				customSortRelativeHeightAboveBackground(resultsArray, stats.background);
 				return RESULT_CUSTOM_SORT_VALUE;
 			case SORT_PEAK_ID:
 				return RESULT_PEAK_ID;

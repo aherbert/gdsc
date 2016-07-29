@@ -791,10 +791,10 @@ public class SpotDistance implements PlugIn
 			if (debug)
 				showSpotImage(croppedImp, croppedImp2, region);
 
-			final FindFociResult ffResult = ff.findMaxima(croppedImp, regionImp, backgroundMethod, backgroundParameter,
+			final FindFociResults ffResult = ff.findMaxima(croppedImp, regionImp, backgroundMethod, backgroundParameter,
 					autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
 					outputType, sortIndex, options, blur, centreMethod, centreParameter, 1);
-			FindFociResult results2 = null;
+			FindFociResults results2 = null;
 
 			if (Utils.isInterrupted())
 				return;
@@ -1300,7 +1300,7 @@ public class SpotDistance implements PlugIn
 	 * @return
 	 */
 	private ArrayList<DistanceResult> analyseResults(ArrayList<DistanceResult> prev, FindFoci ff, ImagePlus croppedImp,
-			FindFociResult ffResult, int frame, int channel, Overlay overlay)
+			FindFociResults ffResult, int frame, int channel, Overlay overlay)
 	{
 		if (ffResult == null)
 			return new ArrayList<DistanceResult>(0);

@@ -16,7 +16,8 @@ package gdsc.foci.controller;
 import java.util.ArrayList;
 
 import gdsc.foci.FindFoci;
-import gdsc.foci.FindFociResult;
+import gdsc.foci.FindFociResults;
+import gdsc.foci.FindFociStatistics;
 import gdsc.foci.controller.MessageListener.MessageType;
 import gdsc.foci.model.FindFociModel;
 import gdsc.foci.model.FindFociState;
@@ -47,8 +48,8 @@ public class FindFociRunner extends Thread
 	Object[] resultsInitArray;
 	Object[] maskInitArray;
 	Object[] mergeArray;
-	FindFociResult prelimResults;
-	FindFociResult results;
+	FindFociResults prelimResults;
+	FindFociResults results;
 
 	public FindFociRunner(MessageListener listener)
 	{
@@ -284,7 +285,7 @@ public class FindFociRunner extends Thread
 				return;
 			}
 
-			notify(MessageType.BACKGROUND_LEVEL, ((double[]) initArray[4])[FindFoci.STATS_BACKGROUND]);
+			notify(MessageType.BACKGROUND_LEVEL, ((FindFociStatistics) initArray[4]).background);
 		}
 		if (state.ordinal() <= FindFociState.SEARCH.ordinal())
 		{
@@ -298,7 +299,7 @@ public class FindFociRunner extends Thread
 				return;
 			}
 
-			notify(MessageType.BACKGROUND_LEVEL, ((double[]) searchInitArray[4])[FindFoci.STATS_BACKGROUND]);
+			notify(MessageType.BACKGROUND_LEVEL, ((FindFociStatistics) initArray[4]).background);
 		}
 		if (state.ordinal() <= FindFociState.MERGE.ordinal())
 		{

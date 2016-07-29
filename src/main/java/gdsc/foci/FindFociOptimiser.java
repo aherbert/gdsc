@@ -731,7 +731,7 @@ public class FindFociOptimiser
 
 								if (logBackground)
 								{
-									final double backgroundLevel = ((double[]) searchArray[4])[FindFoci.STATS_BACKGROUND];
+									final float backgroundLevel = ((FindFociStatistics) searchArray[4]).background;
 									logBackground = false;
 									IJ.log(String.format("Background level - %s %s: %s = %g",
 											FindFoci.backgroundMethods[backgroundMethodArray[b]],
@@ -763,7 +763,7 @@ public class FindFociOptimiser
 													for (double centreParameter = myCentreParameterMinArray[c]; centreParameter <= myCentreParameterMaxArray[c]; centreParameter += myCentreParameterIntervalArray[c])
 													{
 														methodStart = System.nanoTime();
-														FindFociResult peakResults = ff.findMaximaResults(
+														FindFociResults peakResults = ff.findMaximaResults(
 																mergeInitArray, mergeArray, myMaxPeaks, sortMethod,
 																centreMethodArray[c], centreParameter);
 														long time = findMaximaMergeTime + System.nanoTime() - methodStart;

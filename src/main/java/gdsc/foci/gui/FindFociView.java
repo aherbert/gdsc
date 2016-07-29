@@ -1357,7 +1357,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		switch (message)
 		{
 			case BACKGROUND_LEVEL:
-				setBackgroundLevel((Double) params[0]);
+				setBackgroundLevel((Float) params[0]);
 				break;
 				
 			case ERROR:

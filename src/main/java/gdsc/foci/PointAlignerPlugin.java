@@ -130,7 +130,7 @@ public class PointAlignerPlugin implements PlugIn
 		int centreMethod = FindFoci.CENTRE_MAX_VALUE_ORIGINAL;
 		double centreParameter = 0;
 
-		FindFociResult results = ff.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
+		FindFociResults results = ff.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
 				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
 				options, blur, centreMethod, centreParameter, 1);
 
@@ -229,7 +229,7 @@ public class PointAlignerPlugin implements PlugIn
 		return (background < 0) ? 0 : background;
 	}
 
-	private void alignPoints(AssignedPoint[] points, FindFociResult results)
+	private void alignPoints(AssignedPoint[] points, FindFociResults results)
 	{
 		if (showOverlay || logAlignments)
 			IJ.log(String.format("%s : %s", TITLE, imp.getTitle()));

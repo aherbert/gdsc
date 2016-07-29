@@ -981,7 +981,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			killOverlayPointRoi(imp);
 		}
 
-		FindFociResult ffResult = findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
+		FindFociResults ffResult = findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
 				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
 				options, blur, centreMethod, centreParameter, fractionParameter);
 
@@ -994,7 +994,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		// Get the results
 		ImagePlus maximaImp = ffResult.mask;
 		ArrayList<double[]> resultsArray = (ArrayList<double[]>) ffResult.results;
-		double[] stats = ffResult.stats;
+		FindFociStatistics stats = ffResult.stats;
 
 		// If we are outputting a results table or saving to file we can do the object analysis
 		if ((options & OPTION_OBJECT_ANALYSIS) != 0 &&
@@ -1017,7 +1017,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		if (resultsArray != null && (outputType & OUTPUT_RESULTS_TABLE) != 0)
 		{
 			//if (isLogging(outputType))
-			//	IJ.log("Background (noise) level = " + IJ.d2s(stats[STATS_BACKGROUND], 2));
+			//	IJ.log("Background (noise) level = " + IJ.d2s(stats.STATS_BACKGROUND, 2));
 
 			// There is some strange problem when using ImageJ's default results table when it asks the user
 			// to save a previous list and then aborts the plugin if the user says Yes, No or Cancel leaving
@@ -1326,7 +1326,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			double backgroundParameter, String autoThresholdMethod, int searchMethod, double searchParameter,
 			int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex, int options,
 			double blur, int centreMethod, double centreParameter, double fractionParameter,
-			ArrayList<double[]> resultsArray, double[] stats, String resultsDirectory)
+			ArrayList<double[]> resultsArray, FindFociStatistics stats, String resultsDirectory)
 	{
 		return saveResults(expId, imp, null, mask, null, backgroundMethod, backgroundParameter, autoThresholdMethod,
 				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
@@ -1405,7 +1405,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			int backgroundMethod, double backgroundParameter, String autoThresholdMethod, int searchMethod,
 			double searchParameter, int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType,
 			int sortIndex, int options, double blur, int centreMethod, double centreParameter, double fractionParameter,
-			ArrayList<double[]> resultsArray, double[] stats, String resultsDirectory,
+			ArrayList<double[]> resultsArray, FindFociStatistics stats, String resultsDirectory,
 			ObjectAnalysisResult objectAnalysisResult)
 	{
 		try
@@ -1563,12 +1563,12 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 */
 	public void showResults(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
 			String autoThresholdMethod, double searchParameter, int maxPeaks, int minSize, int peakMethod,
-			double peakParameter, int outputType, int sortIndex, int options, FindFociResult results)
+			double peakParameter, int outputType, int sortIndex, int options, FindFociResults results)
 	{
 		// Get the results
 		ImagePlus maximaImp = results.mask;
 		ArrayList<double[]> resultsArray = results.results;
-		double[] stats = results.stats;
+		FindFociStatistics stats = results.stats;
 
 		// If we are outputting a results table or saving to file we can do the object analysis
 		if ((options & OPTION_OBJECT_ANALYSIS) != 0 && ((outputType & OUTPUT_RESULTS_TABLE) != 0))
@@ -1816,7 +1816,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaxima(ij.ImagePlus, ij.ImagePlus, int, double, java.lang.String, int,
 	 * double, int, int, int, double, int, int, int, double, int, double, double)
 	 */
-	public FindFociResult findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
+	public FindFociResults findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
 			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
 			int peakMethod, double peakParameter, int outputType, int sortIndex, int options, double blur,
 			int centreMethod, double centreParameter, double fractionParameter)
@@ -1834,7 +1834,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		// Support int[] or float[] images using a dedicated processor
 		ffp = createFFProcessor(imp);
 
-		FindFociResult result = ffp.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
+		FindFociResults result = ffp.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
 				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
 				options, blur, centreMethod, centreParameter, fractionParameter);
 		if (result != null)
@@ -1985,11 +1985,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * 
 	 * @see gdsc.foci.FindFociProcessor#findMaximaResults(java.lang.Object[], java.lang.Object[], int, int, int, double)
 	 */
-	public FindFociResult findMaximaResults(Object[] initArray, Object[] runArray, int maxPeaks, int sortIndex,
+	public FindFociResults findMaximaResults(Object[] initArray, Object[] runArray, int maxPeaks, int sortIndex,
 			int centreMethod, double centreParameter)
 	{
 		lastResultsArray = null;
-		FindFociResult result = ffp.findMaximaResults(initArray, runArray, maxPeaks, sortIndex, centreMethod,
+		FindFociResults result = ffp.findMaximaResults(initArray, runArray, maxPeaks, sortIndex, centreMethod,
 				centreParameter);
 		if (result != null)
 			lastResultsArray = result.results;
@@ -2003,11 +2003,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaPrelimResults(java.lang.Object[], java.lang.Object[], int, int, int,
 	 * double)
 	 */
-	public FindFociResult findMaximaPrelimResults(Object[] initArray, Object[] mergeArray, int maxPeaks, int sortIndex,
+	public FindFociResults findMaximaPrelimResults(Object[] initArray, Object[] mergeArray, int maxPeaks, int sortIndex,
 			int centreMethod, double centreParameter)
 	{
 		lastResultsArray = null;
-		FindFociResult result = ffp.findMaximaPrelimResults(initArray, mergeArray, maxPeaks, sortIndex, centreMethod,
+		FindFociResults result = ffp.findMaximaPrelimResults(initArray, mergeArray, maxPeaks, sortIndex, centreMethod,
 				centreParameter);
 		if (result != null)
 			lastResultsArray = result.results;
@@ -2021,11 +2021,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaMaskResults(java.lang.Object[], java.lang.Object[],
 	 * gdsc.foci.FindFociResult, int, java.lang.String, java.lang.String, double)
 	 */
-	public FindFociResult findMaximaMaskResults(Object[] initArray, Object[] mergeArray, FindFociResult prelimResults,
+	public FindFociResults findMaximaMaskResults(Object[] initArray, Object[] mergeArray, FindFociResults prelimResults,
 			int outputType, String autoThresholdMethod, String imageTitle, double fractionParameter)
 	{
 		lastResultsArray = null;
-		FindFociResult result = ffp.findMaximaMaskResults(initArray, mergeArray, prelimResults, outputType,
+		FindFociResults result = ffp.findMaximaMaskResults(initArray, mergeArray, prelimResults, outputType,
 				autoThresholdMethod, imageTitle, fractionParameter);
 		if (result != null)
 			lastResultsArray = result.results;
@@ -2065,7 +2065,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return createResultsHeader(null, null, null, newLine);
 	}
 
-	private String createResultsHeader(ImagePlus imp, int[] dimension, double[] stats, String newLine)
+	private String createResultsHeader(ImagePlus imp, int[] dimension, FindFociStatistics stats, String newLine)
 	{
 		final StringBuilder sb = new StringBuilder();
 		if (imp != null)
@@ -2085,11 +2085,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 		if (stats != null)
 		{
-			sb.append("# Background\t").append(stats[STATS_BACKGROUND]).append(newLine);
-			sb.append("# Min\t").append(stats[STATS_MIN]).append(newLine);
-			sb.append("# Max\t").append(stats[STATS_MAX]).append(newLine);
-			sb.append("# Average\t").append(stats[STATS_AV]).append(newLine);
-			sb.append("# Std.Dev\t").append(stats[STATS_SD]).append(newLine);
+			sb.append("# Background\t").append(stats.background).append(newLine);
+			sb.append("# Min\t").append(stats.regionMinimum).append(newLine);
+			sb.append("# Max\t").append(stats.regionMaximum).append(newLine);
+			sb.append("# Average\t").append(stats.regionAverage).append(newLine);
+			sb.append("# Std.Dev\t").append(stats.regionStdDev).append(newLine);
 		}
 		sb.append("Peak #\t");
 		sb.append("Mask Value\t");
@@ -2132,7 +2132,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @param stats
 	 *            the stats
 	 */
-	private void addToResultTable(int i, int id, double[] result, double[] stats)
+	private void addToResultTable(int i, int id, double[] result, FindFociStatistics stats)
 	{
 		// Buffer the output so that the table is displayed faster
 		buildResultEntry(resultsBuffer, i, id, result, stats, "\n");
@@ -2150,12 +2150,10 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		flushCount = Integer.MAX_VALUE;
 	}
 
-	private void buildResultEntry(StringBuilder sb, int i, int id, double[] result, double[] stats, String newLine)
+	private void buildResultEntry(StringBuilder sb, int i, int id, double[] result, FindFociStatistics stats, String newLine)
 	{
-		final double sum = stats[STATS_SUM];
-		final double noise = stats[STATS_BACKGROUND];
-		final double intensityAboveBackground = stats[STATS_SUM_ABOVE_BACKGROUND];
-		final double intensityAboveImageMin = stats[STATS_SUM_ABOVE_IMAGE_MIN];
+		final double sum = stats.regionTotal;
+		final double noise = stats.background;
 
 		final double absoluteHeight = ffp.getAbsoluteHeight(result, noise);
 		final double relativeHeight = ffp.getRelativeHeight(result, noise, absoluteHeight);
@@ -2187,8 +2185,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		addValue(sb, result[RESULT_INTENSITY_MINUS_MIN], floatImage);
 		addValue(sb, result[RESULT_INTENSITY_MINUS_MIN] / result[RESULT_COUNT]);
 		addValue(sb, 100 * (result[RESULT_INTENSITY] / sum));
-		addValue(sb, 100 * (result[RESULT_INTENSITY_MINUS_BACKGROUND] / intensityAboveBackground));
-		addValue(sb, 100 * (result[RESULT_INTENSITY_MINUS_MIN] / intensityAboveImageMin));
+		addValue(sb, 100 * (result[RESULT_INTENSITY_MINUS_BACKGROUND] / stats.totalAboveBackground));
+		addValue(sb, 100 * (result[RESULT_INTENSITY_MINUS_MIN] / stats.totalAboveImageMinimum));
 		addValue(sb, (result[RESULT_MAX_VALUE] / noise));
 		sb.append((int) result[RESULT_OBJECT]).append("\t");
 		sb.append((int) result[RESULT_STATE]);
@@ -2546,7 +2544,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		final int options = p.options;
 		final int outputType = p.outputType;
 
-		FindFociResult ffResult = findMaxima(imp, mask, p.backgroundMethod, p.backgroundParameter,
+		FindFociResults ffResult = findMaxima(imp, mask, p.backgroundMethod, p.backgroundParameter,
 				p.autoThresholdMethod, p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod,
 				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
 				p.fractionParameter);
@@ -2560,7 +2558,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		// Get the results
 		ImagePlus maximaImp = ffResult.mask;
 		ArrayList<double[]> resultsArray = ffResult.results;
-		double[] stats = ffResult.stats;
+		FindFociStatistics stats = ffResult.stats;
 
 		String expId;
 		if (p.originalTitle)

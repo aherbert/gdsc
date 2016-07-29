@@ -104,7 +104,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		bin = new int[image.length];
 		int[] indices = new int[image.length];
 		int c = 0;
-		if (statsMode == FindFoci.OPTION_STATS_INSIDE)
+		if (statsMode == OPTION_STATS_INSIDE)
 		{
 			for (int i = 0; i < image.length; i++)
 			{
@@ -295,33 +295,33 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 	}
 
 	@Override
-	protected float getSearchThreshold(int backgroundMethod, double backgroundParameter, double[] stats)
+	protected float getSearchThreshold(int backgroundMethod, double backgroundParameter, FindFociStatistics stats)
 	{
 		switch (backgroundMethod)
 		{
-			case FindFoci.BACKGROUND_ABSOLUTE:
+			case BACKGROUND_ABSOLUTE:
 				// Ensure all points above the threshold parameter are found
 				//return (float) ((backgroundParameter > 0) ? backgroundParameter : 0);
 				// Allow negatives
 				return (float) backgroundParameter;
 
-			case FindFoci.BACKGROUND_AUTO_THRESHOLD:
-				return (float) (stats[FindFoci.STATS_BACKGROUND]);
+			case BACKGROUND_AUTO_THRESHOLD:
+				return (float) (stats.background);
 
-			case FindFoci.BACKGROUND_MEAN:
-				return (float) (stats[FindFoci.STATS_AV_BACKGROUND]);
+			case BACKGROUND_MEAN:
+				return (float) (stats.backgroundRegionAverage);
 
-			case FindFoci.BACKGROUND_STD_DEV_ABOVE_MEAN:
-				return (float) (stats[FindFoci.STATS_AV_BACKGROUND] +
-						((backgroundParameter > 0) ? backgroundParameter * stats[FindFoci.STATS_SD_BACKGROUND] : 0));
+			case BACKGROUND_STD_DEV_ABOVE_MEAN:
+				return (float) (stats.backgroundRegionAverage +
+						((backgroundParameter > 0) ? backgroundParameter * stats.backgroundRegionStdDev : 0));
 
-			case FindFoci.BACKGROUND_MIN_ROI:
-				return (float) (stats[FindFoci.STATS_MIN]);
+			case BACKGROUND_MIN_ROI:
+				return (float) (stats.regionMinimum);
 
-			case FindFoci.BACKGROUND_NONE:
+			case BACKGROUND_NONE:
 			default:
 				// Ensure all the maxima are found. Use Min and not zero to support float images with negative values
-				return (float) stats[FindFoci.STATS_MIN];
+				return (float) stats.regionMinimum;
 		}
 	}
 
@@ -397,45 +397,45 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		return lower;
 	}
 
-	protected float getTolerance(int searchMethod, double searchParameter, double[] stats, double v0)
+	protected float getTolerance(int searchMethod, double searchParameter, FindFociStatistics stats, double v0)
 	{
 		switch (searchMethod)
 		{
-			case FindFoci.SEARCH_ABOVE_BACKGROUND:
-				return (float) (stats[FindFoci.STATS_BACKGROUND]);
+			case SEARCH_ABOVE_BACKGROUND:
+				return (float) (stats.background);
 
-			case FindFoci.SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND:
+			case SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND:
 				if (searchParameter < 0)
 					searchParameter = 0;
-				return (float) (stats[FindFoci.STATS_BACKGROUND] +
-						searchParameter * (v0 - stats[FindFoci.STATS_BACKGROUND]));
+				return (float) (stats.background +
+						searchParameter * (v0 - stats.background));
 
-			case FindFoci.SEARCH_HALF_PEAK_VALUE:
-				return (float) (stats[FindFoci.STATS_BACKGROUND] + 0.5 * (v0 - stats[FindFoci.STATS_BACKGROUND]));
+			case SEARCH_HALF_PEAK_VALUE:
+				return (float) (stats.background + 0.5 * (v0 - stats.background));
 		}
-		return (float) (stats[FindFoci.STATS_MIN]);
+		return (float) (stats.regionMinimum);
 	}
 
-	protected double getPeakHeight(int peakMethod, double peakParameter, double[] stats, double v0)
+	protected double getPeakHeight(int peakMethod, double peakParameter, FindFociStatistics stats, double v0)
 	{
 		double height = 0;
 		switch (peakMethod)
 		{
-			case FindFoci.PEAK_ABSOLUTE:
+			case PEAK_ABSOLUTE:
 				height = (peakParameter);
 				break;
-			case FindFoci.PEAK_RELATIVE:
+			case PEAK_RELATIVE:
 				height = (v0 * peakParameter);
 				break;
-			case FindFoci.PEAK_RELATIVE_ABOVE_BACKGROUND:
-				height = ((v0 - stats[FindFoci.STATS_BACKGROUND]) * peakParameter);
+			case PEAK_RELATIVE_ABOVE_BACKGROUND:
+				height = ((v0 - stats.background) * peakParameter);
 				break;
 		}
 		if (height <= 0)
 		{
 			// This is an edge case that will only happen if peakParameter is zero or below.
 			// Just make it small enough that there must be a peak above the saddle point.
-			height = ((v0 - stats[FindFoci.STATS_BACKGROUND]) * 1e-6);
+			height = ((v0 - stats.background) * 1e-6);
 		}
 		return height;
 	}

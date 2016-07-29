@@ -325,7 +325,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 			double centreParameter = 0;
 			double fractionParameter = fraction;
 
-			FindFociResult result = ff.findMaxima(tmpImp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
+			FindFociResults result = ff.findMaxima(tmpImp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
 					searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
 					options, blur, centreMethod, centreParameter, fractionParameter);
 			if (result == null)

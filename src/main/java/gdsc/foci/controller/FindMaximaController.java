@@ -14,7 +14,7 @@ package gdsc.foci.controller;
  *---------------------------------------------------------------------------*/
 
 import gdsc.foci.FindFoci;
-import gdsc.foci.FindFociResult;
+import gdsc.foci.FindFociResults;
 import gdsc.foci.model.FindFociModel;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -195,7 +195,7 @@ public class FindMaximaController extends ImageJController
 		ImagePlus mask = WindowManager.getImage(maskImage);
 
 		FindFoci ff = new FindFoci();
-		FindFociResult results = ff.findMaxima(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod,
+		FindFociResults results = ff.findMaxima(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod,
 				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortMethod,
 				options, gaussianBlur, centreMethod, centreParameter, fractionParameter);
 

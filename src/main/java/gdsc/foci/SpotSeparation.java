@@ -86,7 +86,7 @@ public class SpotSeparation implements PlugInFilter
 
 		// TODO - Add some options to be able to preview the spots using a ExtendedPluginFilter
 
-		FindFociResult results = runFindFoci(ip);
+		FindFociResults results = runFindFoci(ip);
 
 		// Respect the image ROI
 		results = cropToRoi(results, ip);
@@ -314,7 +314,7 @@ public class SpotSeparation implements PlugInFilter
 		return true;
 	}
 
-	private FindFociResult cropToRoi(FindFociResult results, ImageProcessor ip)
+	private FindFociResults cropToRoi(FindFociResults results, ImageProcessor ip)
 	{
 		Roi roi = imp.getRoi();
 		if (roi == null || results == null)
@@ -381,10 +381,10 @@ public class SpotSeparation implements PlugInFilter
 		}
 		maximaImp.setProcessor(spotIp);
 
-		return new FindFociResult(maximaImp, newResultsArray, null);
+		return new FindFociResults(maximaImp, newResultsArray, null);
 	}
 
-	private FindFociResult runFindFoci(ImageProcessor ip)
+	private FindFociResults runFindFoci(ImageProcessor ip)
 	{
 		// Run FindFoci to get the spots
 		// Get each spot as a different number with the centre using the search
@@ -417,7 +417,7 @@ public class SpotSeparation implements PlugInFilter
 		double centreParameter = 0;
 		double fractionParameter = 0;
 
-		FindFociResult results = ff.findMaxima(new ImagePlus("tmp", ip), null, backgroundMethod, backgroundParameter,
+		FindFociResults results = ff.findMaxima(new ImagePlus("tmp", ip), null, backgroundMethod, backgroundParameter,
 				autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
 				outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter);
 		return results;
