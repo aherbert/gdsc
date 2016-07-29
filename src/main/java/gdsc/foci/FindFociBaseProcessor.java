@@ -1715,9 +1715,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		double sum = 0;
 		for (int i = types.length; i-- > 0;)
 		{
-			if ((types[i] & EXCLUDED) == 0 && getf(i) > floor)
+			if ((types[i] & EXCLUDED) == 0)
 			{
-				sum += (getf(i) - floor);
+				final float v = getf(i);
+				if (v > floor)
+					sum += (v - floor);
 			}
 		}
 		return sum;
@@ -2887,8 +2889,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				int index = getIndex(min_xyz[0], y + min_xyz[1], z + min_xyz[2]);
 				for (int x = 0; x < dimensions[0]; x++, index++, offset++)
 				{
-					if (maxima[index] == maximaId && getf(index) > minValue)
-						subImage[offset] = getf(index) - minValue;
+					if (maxima[index] == maximaId)
+					{
+						final float v = getf(index);
+						if (v > minValue)
+							subImage[offset] = v - minValue;
+					}
 				}
 			}
 		}
@@ -3357,9 +3363,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		{
 			if (maxima[i] > 0)
 			{
-				if (getf(i) > saddleHeight[maxima[i]])
+				final float v = getf(i);
+				if (v > saddleHeight[maxima[i]])
 				{
-					peakIntensity[maxima[i]] += getf(i);
+					peakIntensity[maxima[i]] += v;
 					peakSize[maxima[i]]++;
 				}
 			}
@@ -3797,9 +3804,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 					maxima[i] = peakIdMap[maxima[i]];
 					if (maxima[i] == peakId)
 					{
-						if (getf(i) > saddleHeight)
+						final float v = getf(i);
+						if (v > saddleHeight)
 						{
-							peakIntensity += getf(i);
+							peakIntensity += v;
 							peakSize++;
 						}
 					}
