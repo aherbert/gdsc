@@ -502,7 +502,7 @@ public class FindFociRunner extends Thread
 
 	public void finish()
 	{
-		notify(MessageType.BACKGROUND_LEVEL, 0.0);
+		notify(MessageType.BACKGROUND_LEVEL, 0.0f);
 		notify(MessageType.FINISHED);
 		running = false;
 	}
