@@ -203,8 +203,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 			case SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND:
 				if (searchParameter < 0)
 					searchParameter = 0;
-				return round(
-						stats.background + searchParameter * (v0 - stats.background));
+				return round(stats.background + searchParameter * (v0 - stats.background));
 
 			case SEARCH_HALF_PEAK_VALUE:
 				return round(stats.background + 0.5 * (v0 - stats.background));
