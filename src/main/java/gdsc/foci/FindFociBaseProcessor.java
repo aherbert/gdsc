@@ -1336,7 +1336,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	private void thresholdMask(Object pixels, int[] maxima, int peakValue, String autoThresholdMethod,
 			FindFociStatistics stats)
 	{
-		System.out.println("threshold mask");
 		final Histogram histogram = buildHistogram(pixels, maxima, peakValue, stats.regionMaximum);
 		final float t = getThreshold(autoThresholdMethod, histogram);
 
