@@ -232,4 +232,10 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 			height = 1; // It should be a peak
 		return height;
 	}
+
+	@Override
+	public boolean isFloatProcessor()
+	{
+		return false;
+	}
 }

@@ -438,4 +438,10 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		}
 		return height;
 	}
+
+	@Override
+	public boolean isFloatProcessor()
+	{
+		return true;
+	}
 }

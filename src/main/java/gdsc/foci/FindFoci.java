@@ -635,6 +635,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	private int batchId = 0;
 	private String batchPrefix = null, emptyEntry = null;
 	private FindFociBaseProcessor ffp;
+	private boolean optimisedProcessor = false;
 
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
@@ -1841,9 +1842,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			lastResultsArray = result.results;
 		return result;
 	}
-
+	
 	private FindFociBaseProcessor createFFProcessor(ImagePlus imp)
 	{
+		if (isOptimisedProcessor())
+			return (imp.getBitDepth() == 32) ? new FindFociOptimisedFloatProcessor() : new FindFociOptimisedIntProcessor();
 		return (imp.getBitDepth() == 32) ? new FindFociFloatProcessor() : new FindFociIntProcessor();
 	}
 
@@ -2155,8 +2158,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		final double absoluteHeight = ffp.getAbsoluteHeight(result, noise);
 		final double relativeHeight = ffp.getRelativeHeight(result, noise, absoluteHeight);
 
-		// TODO format this for int/float processing
-		final boolean floatImage = (ffp instanceof FindFociFloatProcessor);
+		final boolean floatImage = ffp.isFloatProcessor();
 
 		sb.append(i).append("\t");
 		sb.append(id).append("\t");
@@ -2822,5 +2824,21 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	public static String getSupported()
 	{
 		return "8-bit, 16-bit and 32-bit";
+	}
+
+	/**
+	 * @return True if using an optimised FindFociProcessor (default is generic)
+	 */
+	public boolean isOptimisedProcessor()
+	{
+		return optimisedProcessor;
+	}
+
+	/**
+	 * @param optimisedProcessor True if using an optimised FindFociProcessor (default is generic)
+	 */
+	public void setOptimisedProcessor(boolean optimisedProcessor)
+	{
+		this.optimisedProcessor = optimisedProcessor;
 	}
 }

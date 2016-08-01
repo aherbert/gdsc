@@ -1424,7 +1424,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 */
 	private void recordStatistics(FindFociStatistics stats, int exclusion, int options, int sortIndex)
 	{
-		final boolean floatImage = (this instanceof FindFociFloatProcessor);
+		final boolean floatImage = isFloatProcessor();
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("Image min = ").append(FindFoci.getFormat(stats.imageMinimum, floatImage));
@@ -1455,8 +1455,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 	private String getFormat(double value)
 	{
-		final boolean floatImage = (this instanceof FindFociFloatProcessor);
-		return FindFoci.getFormat(value, floatImage);
+		return FindFoci.getFormat(value, isFloatProcessor());
 	}
 
 	private boolean isSortIndexSenstiveToNegativeValues(int sortIndex)
@@ -4665,4 +4664,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		return pList;
 	}
+
+	/**
+	 * Checks if is float processor.
+	 *
+	 * @return true, if is float processor
+	 */
+	public abstract boolean isFloatProcessor();
 }
