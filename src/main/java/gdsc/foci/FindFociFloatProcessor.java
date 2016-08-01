@@ -261,12 +261,12 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		h = Arrays.copyOf(h, size);
 		value = Arrays.copyOf(value, size);
 
-		// Check
-		int total = 0;
-		for (int i : h)
-			total += i;
-		if (total != data.length)
-			throw new RuntimeException("Failed to compute float histogram");
+		//// Check
+		//int total = 0;
+		//for (int i : h)
+		//	total += i;
+		//if (total != data.length)
+		//	throw new RuntimeException("Failed to compute float histogram");
 
 		return new FloatHistogram(value, h);
 	}
