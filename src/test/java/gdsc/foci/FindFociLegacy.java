@@ -4107,10 +4107,44 @@ public class FindFociLegacy
 		}
 	}
 
+	private class ResultComparator implements Comparator<int[]>
+	{
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+		 */
+		public int compare(int[] o1, int[] o2)
+		{
+			if (o1[RESULT_MAX_VALUE] > o2[RESULT_MAX_VALUE])
+				return -1;
+			if (o1[RESULT_MAX_VALUE] < o2[RESULT_MAX_VALUE])
+				return 1;
+			if (o1[RESULT_COUNT] > o2[RESULT_COUNT])
+				return -1;
+			if (o1[RESULT_COUNT] < o2[RESULT_COUNT])
+				return 1;
+			if (o1[RESULT_X] > o2[RESULT_X])
+				return -1;
+			if (o1[RESULT_X] < o2[RESULT_X])
+				return 1;
+			if (o1[RESULT_Y] > o2[RESULT_Y])
+				return -1;
+			if (o1[RESULT_Y] < o2[RESULT_Y])
+				return 1;
+			if (o1[RESULT_Z] > o2[RESULT_Z])
+				return -1;
+			if (o1[RESULT_Z] < o2[RESULT_Z])
+				return 1;
+			// This should not happen as two maxima will be in the same position
+			throw new RuntimeException("Unable to sort the results");
+		}
+	}
+
 	/**
 	 * Provides the ability to sort the results arrays in descending order
 	 */
-	private class ResultDescComparator implements Comparator<int[]>
+	private class ResultDescComparator extends ResultComparator
 	{
 		private int sortIndex = 0;
 
@@ -4131,14 +4165,14 @@ public class FindFociLegacy
 				return -1;
 			if (o1[sortIndex] < o2[sortIndex])
 				return 1;
-			return 0;
+			return super.compare(o1, o2);
 		}
 	}
 
 	/**
 	 * Provides the ability to sort the results arrays in ascending order
 	 */
-	private class ResultAscComparator implements Comparator<int[]>
+	private class ResultAscComparator extends ResultComparator
 	{
 		private int sortIndex = 0;
 
@@ -4159,7 +4193,7 @@ public class FindFociLegacy
 				return 1;
 			if (o1[sortIndex] < o2[sortIndex])
 				return -1;
-			return 0;
+			return super.compare(o1, o2);
 		}
 	}
 }

@@ -1336,6 +1336,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	private void thresholdMask(Object pixels, int[] maxima, int peakValue, String autoThresholdMethod,
 			FindFociStatistics stats)
 	{
+		System.out.println("threshold mask");
 		final Histogram histogram = buildHistogram(pixels, maxima, peakValue, stats.regionMaximum);
 		final float t = getThreshold(autoThresholdMethod, histogram);
 
@@ -1458,7 +1459,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		return FindFoci.getFormat(value, isFloatProcessor());
 	}
 
-	private boolean isSortIndexSenstiveToNegativeValues(int sortIndex)
+	public static boolean isSortIndexSenstiveToNegativeValues(int sortIndex)
 	{
 		switch (sortIndex)
 		{
@@ -4337,7 +4338,44 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/**
 	 * Provides the ability to sort the results arrays in descending order
 	 */
-	private class ResultDescComparator implements Comparator<FindFociResult>
+	private class ResultComparator implements Comparator<FindFociResult>
+	{
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+		 */
+		public int compare(FindFociResult o1, FindFociResult o2)
+		{
+			if (o1.RESULT_MAX_VALUE > o2.RESULT_MAX_VALUE)
+				return -1;
+			if (o1.RESULT_MAX_VALUE < o2.RESULT_MAX_VALUE)
+				return 1;
+			if (o1.RESULT_COUNT > o2.RESULT_COUNT)
+				return -1;
+			if (o1.RESULT_COUNT < o2.RESULT_COUNT)
+				return 1;
+			if (o1.RESULT_X > o2.RESULT_X)
+				return -1;
+			if (o1.RESULT_X < o2.RESULT_X)
+				return 1;
+			if (o1.RESULT_Y > o2.RESULT_Y)
+				return -1;
+			if (o1.RESULT_Y < o2.RESULT_Y)
+				return 1;
+			if (o1.RESULT_Z > o2.RESULT_Z)
+				return -1;
+			if (o1.RESULT_Z < o2.RESULT_Z)
+				return 1;
+			// This should not happen as two maxima will be in the same position
+			throw new RuntimeException("Unable to sort the results");
+		}
+	}
+	
+	/**
+	 * Provides the ability to sort the results arrays in descending order
+	 */
+	private class ResultDescComparator extends ResultComparator
 	{
 		/*
 		 * (non-Javadoc)
@@ -4351,14 +4389,16 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				return -1;
 			if (o1.RESULT_CUSTOM_SORT_VALUE < o2.RESULT_CUSTOM_SORT_VALUE)
 				return 1;
-			return 0;
+			
+			// Avoid bad draws
+			return super.compare(o1, o2);
 		}
 	}
 
 	/**
 	 * Provides the ability to sort the results arrays in ascending order
 	 */
-	private class ResultAscComparator implements Comparator<FindFociResult>
+	private class ResultAscComparator extends ResultComparator
 	{
 		/*
 		 * (non-Javadoc)
@@ -4372,7 +4412,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				return 1;
 			if (o1.RESULT_CUSTOM_SORT_VALUE < o2.RESULT_CUSTOM_SORT_VALUE)
 				return -1;
-			return 0;
+			
+			// Avoid bad draws
+			return super.compare(o1, o2);
 		}
 	}
 
