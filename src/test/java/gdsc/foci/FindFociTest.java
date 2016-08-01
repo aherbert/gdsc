@@ -131,6 +131,72 @@ public class FindFociTest
 		}
 	}
 
+	@Test
+	public void isFasterUsingOptimisedIntProcessor()
+	{
+		// Get settings to try for the speed test
+		int[] indices = new int[] { 1 };
+
+		// Warm up
+		createData();
+		runInt(data[0], indices[0], false);
+		runInt(data[0], indices[0], true);
+
+		long time1 = System.nanoTime();
+		for (ImagePlus imp : data)
+		{
+			for (int i : indices)
+			{
+				runInt(imp, i, false);
+			}
+		}
+		time1 = System.nanoTime() - time1;
+		long time2 = System.nanoTime();
+		for (ImagePlus imp : data)
+		{
+			for (int i : indices)
+			{
+				runInt(imp, i, true);
+			}
+		}
+		time2 = System.nanoTime() - time2;
+		System.out.printf("Int %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
+		Assert.assertTrue(time2 < time1);
+	}
+
+	@Test
+	public void isFasterUsingOptimisedFloatProcessor()
+	{
+		// Get settings to try for the speed test
+		int[] indices = new int[] { 1 };
+
+		// Warm up
+		createData();
+		runInt(data[0], indices[0], false);
+		runInt(data[0], indices[0], true);
+
+		long time1 = System.nanoTime();
+		for (ImagePlus imp : data)
+		{
+			for (int i : indices)
+			{
+				runFloat(imp, i, false, false);
+			}
+		}
+		time1 = System.nanoTime() - time1;
+		long time2 = System.nanoTime();
+		for (ImagePlus imp : data)
+		{
+			for (int i : indices)
+			{
+				runFloat(imp, i, true, false);
+			}
+		}
+		time2 = System.nanoTime() - time2;
+		System.out.printf("Float %d, Opt Float %d, %fx faster\n", time1, time2, (double) time1 / time2);
+		Assert.assertTrue(time2 < time1);
+	}
+
 	private void isEqual(FindFociResults r1, FindFociResults r2, int set)
 	{
 		isEqual(r1, r2, set, false);
