@@ -3180,7 +3180,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			result.averageIntensity = result.totalIntensity / result.count;
 			result.averageIntensityAboveBackground = result.totalIntensityAboveBackground /
 					result.count;
-			result.averageIntesnityAboveImageMinimum = result.totalIntensityAboveImageMinimum / result.count;
+			result.averageIntensityAboveImageMinimum = result.totalIntensityAboveImageMinimum / result.count;
 		}
 	}
 
@@ -4026,7 +4026,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			case SORT_INTENSITY_MINUS_MIN:
 				return result.totalIntensityAboveImageMinimum;
 			case SORT_AVERAGE_INTENSITY_MINUS_MIN:
-				return result.averageIntesnityAboveImageMinimum;
+				return result.averageIntensityAboveImageMinimum;
 			default:
 				throw new RuntimeException("Unknown sort index method " + sortIndex);
 		}

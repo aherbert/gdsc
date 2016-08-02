@@ -81,7 +81,7 @@ public class FindFociResult implements Cloneable
 	/**
 	 * The average of the peak intensity above the minimum value of the analysed image
 	 */
-	public double averageIntesnityAboveImageMinimum;
+	public double averageIntensityAboveImageMinimum;
 	/**
 	 * The custom sort value. This is used internally to sort the results using values not stored in the result array.
 	 */
