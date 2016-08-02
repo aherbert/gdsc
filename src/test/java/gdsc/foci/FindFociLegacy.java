@@ -4125,17 +4125,17 @@ public class FindFociLegacy
 			if (o1[RESULT_COUNT] < o2[RESULT_COUNT])
 				return 1;
 			if (o1[RESULT_X] > o2[RESULT_X])
-				return -1;
+				return 1;
 			if (o1[RESULT_X] < o2[RESULT_X])
-				return 1;
+				return -1;
 			if (o1[RESULT_Y] > o2[RESULT_Y])
-				return -1;
+				return 1;
 			if (o1[RESULT_Y] < o2[RESULT_Y])
-				return 1;
-			if (o1[RESULT_Z] > o2[RESULT_Z])
 				return -1;
-			if (o1[RESULT_Z] < o2[RESULT_Z])
+			if (o1[RESULT_Z] > o2[RESULT_Z])
 				return 1;
+			if (o1[RESULT_Z] < o2[RESULT_Z])
+				return -1;
 			// This should not happen as two maxima will be in the same position
 			throw new RuntimeException("Unable to sort the results");
 		}
