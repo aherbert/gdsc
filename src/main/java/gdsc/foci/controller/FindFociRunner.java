@@ -50,7 +50,7 @@ public class FindFociRunner extends Thread
 	FindFociInitResults mergeInitResults;
 	FindFociInitResults resultsInitResults;
 	FindFociInitResults maskInitResults;
-	FindFociMergeResults mergeArray;
+	FindFociMergeResults mergeResults;
 	FindFociResults prelimResults;
 	FindFociResults results;
 
@@ -121,7 +121,7 @@ public class FindFociRunner extends Thread
 			mergeInitResults = null;
 			resultsInitResults = null;
 			maskInitResults = null;
-			mergeArray = null;
+			mergeResults = null;
 			prelimResults = null;
 			results = null;
 			finish();
@@ -307,9 +307,9 @@ public class FindFociRunner extends Thread
 		if (state.ordinal() <= FindFociState.MERGE.ordinal())
 		{
 			mergeInitResults = ff.clone(searchInitResults, mergeInitResults);
-			mergeArray = ff.findMaximaMerge(mergeInitResults, searchArray, minSize, peakMethod, peakParameter, options,
+			mergeResults = ff.findMaximaMerge(mergeInitResults, searchArray, minSize, peakMethod, peakParameter, options,
 					gaussianBlur);
-			if (mergeArray == null)
+			if (mergeResults == null)
 			{
 				IJ.showStatus(FindFoci.TITLE + " failed");
 				notify(MessageType.FAILED);
@@ -319,7 +319,7 @@ public class FindFociRunner extends Thread
 		if (state.ordinal() <= FindFociState.CALCULATE_RESULTS.ordinal())
 		{
 			resultsInitResults = ff.clone(mergeInitResults, resultsInitResults);
-			prelimResults = ff.findMaximaPrelimResults(resultsInitResults, mergeArray, maxPeaks, sortMethod, centreMethod,
+			prelimResults = ff.findMaximaPrelimResults(resultsInitResults, mergeResults, maxPeaks, sortMethod, centreMethod,
 					centreParameter);
 			if (prelimResults == null)
 			{
@@ -331,7 +331,7 @@ public class FindFociRunner extends Thread
 		if (state.ordinal() <= FindFociState.CALCULATE_OUTPUT_MASK.ordinal())
 		{
 			maskInitResults = ff.clone(resultsInitResults, maskInitResults);
-			results = ff.findMaximaMaskResults(maskInitResults, mergeArray, prelimResults, outputType, thresholdMethod,
+			results = ff.findMaximaMaskResults(maskInitResults, mergeResults, prelimResults, outputType, thresholdMethod,
 					imp.getTitle(), fractionParameter);
 			if (results == null)
 			{
