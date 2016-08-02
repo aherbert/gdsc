@@ -744,7 +744,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// If no blur was applied, then the centre using the original image will be the same as using the search
 		if (centreMethod == CENTRE_MAX_VALUE_ORIGINAL)
 			centreMethod = CENTRE_MAX_VALUE_SEARCH;
-		
+
 		// Calculate the peaks centre and maximum value.
 		locateMaxima(originalImage, searchImage, maxima, types, resultsArray, originalNumberOfPeaks, centreMethod,
 				centreParameter);
@@ -789,7 +789,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// If no blur was applied, then the centre using the original image will be the same as using the search
 		if (centreMethod == CENTRE_MAX_VALUE_ORIGINAL)
 			centreMethod = CENTRE_MAX_VALUE_SEARCH;
-		
+
 		// Calculate the peaks centre and maximum value.
 		locateMaxima(originalImage, searchImage, maxima, types, resultsArray, originalNumberOfPeaks, centreMethod,
 				centreParameter);
@@ -1441,7 +1441,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		sb.append(", StdDev = ").append(FindFoci.getFormat(stats.backgroundRegionStdDev));
 		if (stats.imageMinimum < 0 && isSortIndexSenstiveToNegativeValues(sortIndex))
 			sb.append(
-					"\nWARNING: Image minimum is below zero and the chosen sort index is sensitive to negative values");
+					"\nWARNING: Image minimum is below zero and the chosen sort index is sensitive to negative values: " +
+							FindFoci.sortIndexMethods[sortIndex]);
 		IJ.log(sb.toString());
 	}
 
@@ -2577,8 +2578,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		final float[] peakThreshold = new float[nMaxima + 1];
 		for (int i = 1; i < peakThreshold.length; i++)
 		{
-			peakThreshold[i] = getTolerance(searchMethod, searchParameter, stats,
-					resultsArray.get(i - 1).maxValue);
+			peakThreshold[i] = getTolerance(searchMethod, searchParameter, stats, resultsArray.get(i - 1).maxValue);
 		}
 
 		for (int i = maxima.length; i-- > 0;)
@@ -2738,8 +2738,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			// Find the peak coords above the saddle
 			final int maximaId = result.id;
 			final int index = getIndex(result.x, result.y, result.z);
-			final int listLen = findMaximaCoords(maxima, types, index, maximaId, result.highestSaddleValue,
-					pList);
+			final int listLen = findMaximaCoords(maxima, types, index, maximaId, result.highestSaddleValue, pList);
 			//IJ.log("maxima size > saddle = " + listLen);
 
 			// Find the boundaries of the coordinates
@@ -2766,8 +2765,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			for (int i = 3; i-- > 0;)
 				dimensions[i] = max_xyz[i] - min_xyz[i] + 1;
 
-			final float[] subImage = extractSubImage(maxima, min_xyz, dimensions, maximaId,
-					result.highestSaddleValue);
+			final float[] subImage = extractSubImage(maxima, min_xyz, dimensions, maximaId, result.highestSaddleValue);
 
 			int[] centre = null;
 			switch (centreMethod)
@@ -3178,8 +3176,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			result.totalIntensityAboveBackground = result.totalIntensity - background * result.count;
 			result.totalIntensityAboveImageMinimum = result.totalIntensity - min * result.count;
 			result.averageIntensity = result.totalIntensity / result.count;
-			result.averageIntensityAboveBackground = result.totalIntensityAboveBackground /
-					result.count;
+			result.averageIntensityAboveBackground = result.totalIntensityAboveBackground / result.count;
 			result.averageIntensityAboveImageMinimum = result.totalIntensityAboveImageMinimum / result.count;
 		}
 	}

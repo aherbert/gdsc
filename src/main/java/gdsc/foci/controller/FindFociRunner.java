@@ -16,6 +16,7 @@ package gdsc.foci.controller;
 import java.util.ArrayList;
 
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociBaseProcessor;
 import gdsc.foci.FindFociInitResults;
 import gdsc.foci.FindFociMergeResults;
 import gdsc.foci.FindFociResult;
@@ -318,6 +319,11 @@ public class FindFociRunner extends Thread
 		}
 		if (state.ordinal() <= FindFociState.CALCULATE_RESULTS.ordinal())
 		{
+			if (initResults.stats.imageMinimum < 0 && FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortMethod))
+				notify(MessageType.SORT_INDEX_SENSITIVE_TO_NEGATIVE_VALUES, initResults.stats.imageMinimum);
+			else
+				notify(MessageType.SORT_INDEX_OK, initResults.stats.imageMinimum);
+			
 			resultsInitResults = ff.clone(mergeInitResults, resultsInitResults);
 			prelimResults = ff.findMaximaPrelimResults(resultsInitResults, mergeResults, maxPeaks, sortMethod, centreMethod,
 					centreParameter);
@@ -503,6 +509,7 @@ public class FindFociRunner extends Thread
 	public void finish()
 	{
 		notify(MessageType.BACKGROUND_LEVEL, 0.0f);
+		notify(MessageType.SORT_INDEX_OK, 0.0f);
 		notify(MessageType.FINISHED);
 		running = false;
 	}

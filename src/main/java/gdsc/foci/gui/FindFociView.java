@@ -1,43 +1,5 @@
 package gdsc.foci.gui;
 
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
-import gdsc.foci.FindFoci;
-import gdsc.foci.controller.FindFociController;
-import gdsc.foci.controller.MessageListener;
-import gdsc.foci.controller.NullController;
-import gdsc.foci.converter.BackgroundMethodConverter;
-import gdsc.foci.converter.BackgroundParamAbsoluteDisabledConverter;
-import gdsc.foci.converter.BackgroundParamAbsoluteEnabledConverter;
-import gdsc.foci.converter.BackgroundParamEnabledConverter;
-import gdsc.foci.converter.BackgroundThresholdMethodEnabledConverter;
-import gdsc.foci.converter.DoubleConverter;
-import gdsc.foci.converter.PeakMethodConverter;
-import gdsc.foci.converter.PeakParamAbsoluteDisabledConverter;
-import gdsc.foci.converter.PeakParamAbsoluteEnabledConverter;
-import gdsc.foci.converter.SearchMethodConverter;
-import gdsc.foci.converter.SearchParamEnabledConverter;
-import gdsc.foci.converter.ShowMaskConverter;
-import gdsc.foci.converter.SliderConverter;
-import gdsc.foci.converter.SliderDoubleConverter;
-import gdsc.foci.converter.SortMethodConverter;
-import gdsc.foci.converter.StatisticsModeParamEnabledConverter;
-import gdsc.foci.converter.ValidImagesConverter;
-import gdsc.foci.model.FindFociModel;
-import gdsc.format.LimitedNumberFormat;
-import ij.macro.MacroRunner;
-
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.EventQueue;
@@ -82,6 +44,46 @@ import org.jdesktop.beansbinding.ELProperty;
 import org.jdesktop.swingbinding.JComboBoxBinding;
 import org.jdesktop.swingbinding.SwingBindings;
 
+/*----------------------------------------------------------------------------- 
+ * GDSC Plugins for ImageJ
+ * 
+ * Copyright (C) 2011 Alex Herbert
+ * Genome Damage and Stability Centre
+ * University of Sussex, UK
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *---------------------------------------------------------------------------*/
+
+import gdsc.foci.FindFoci;
+import gdsc.foci.controller.FindFociController;
+import gdsc.foci.controller.MessageListener;
+import gdsc.foci.controller.NullController;
+import gdsc.foci.converter.BackgroundMethodConverter;
+import gdsc.foci.converter.BackgroundParamAbsoluteDisabledConverter;
+import gdsc.foci.converter.BackgroundParamAbsoluteEnabledConverter;
+import gdsc.foci.converter.BackgroundParamEnabledConverter;
+import gdsc.foci.converter.BackgroundThresholdMethodEnabledConverter;
+import gdsc.foci.converter.DoubleConverter;
+import gdsc.foci.converter.PeakMethodConverter;
+import gdsc.foci.converter.PeakParamAbsoluteDisabledConverter;
+import gdsc.foci.converter.PeakParamAbsoluteEnabledConverter;
+import gdsc.foci.converter.SearchMethodConverter;
+import gdsc.foci.converter.SearchParamEnabledConverter;
+import gdsc.foci.converter.ShowMaskConverter;
+import gdsc.foci.converter.SliderConverter;
+import gdsc.foci.converter.SliderDoubleConverter;
+import gdsc.foci.converter.SortMethodColorConverter;
+import gdsc.foci.converter.SortMethodConverter;
+import gdsc.foci.converter.StatisticsModeParamEnabledConverter;
+import gdsc.foci.converter.ValidImagesConverter;
+import gdsc.foci.model.FindFociModel;
+import gdsc.format.LimitedNumberFormat;
+import ij.IJ;
+import ij.macro.MacroRunner;
+
 /**
  * Provides a permanent form front-end for the FindFoci algorithm
  */
@@ -99,6 +101,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	private boolean changed = false;
 	private boolean runEnabled = false;
 	private double backgroundLevel = 0;
+	private boolean sortIndexError = false;
+	private int oldSortIndex = -1;
 	private FindFociView instance = this;
 
 	// Used to set the limits for the absolute threshold slider
@@ -843,8 +847,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 			{
 				if (e.getClickCount() > 1)
 				{
-					SliderLimitHelper.updateRangeLimits(sliderPeakParam, "Peak parameter",
-							SliderConverter.SCALE_FACTOR, 0, 1);
+					SliderLimitHelper.updateRangeLimits(sliderPeakParam, "Peak parameter", SliderConverter.SCALE_FACTOR,
+							0, 1);
 				}
 			}
 		});
@@ -982,8 +986,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 			{
 				if (e.getClickCount() > 1)
 				{
-					SliderLimitHelper
-							.updateRangeLimits(sliderMaxPeaks, "Maximum peaks", 1, 1, Double.POSITIVE_INFINITY);
+					SliderLimitHelper.updateRangeLimits(sliderMaxPeaks, "Maximum peaks", 1, 1,
+							Double.POSITIVE_INFINITY);
 				}
 			}
 		});
@@ -1288,6 +1292,37 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	}
 
 	/**
+	 * @return True if the sort index will be a problem
+	 */
+	public boolean isSortIndexError()
+	{
+		return sortIndexError;
+	}
+
+	/**
+	 * @param sortIndexError
+	 *            True if the sort index will be a problem
+	 */
+	public void setSortIndexError(boolean sortIndexError)
+	{
+		boolean oldValue = this.sortIndexError;
+		this.sortIndexError = sortIndexError;
+		this.firePropertyChange("sortIndexError", oldValue, sortIndexError);
+
+		if (sortIndexError)
+		{
+			if (oldSortIndex != model.getSortMethod())
+				IJ.log("WARNING: Image minimum is below zero and the chosen sort index is sensitive to negative values: " +
+						FindFoci.sortIndexMethods[model.getSortMethod()]);
+			oldSortIndex = model.getSortMethod();
+		}
+		else
+		{
+			oldSortIndex = -1;
+		}
+	}
+
+	/**
 	 * @return the runEnabled
 	 */
 	public boolean isRunEnabled()
@@ -1359,36 +1394,44 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 			case BACKGROUND_LEVEL:
 				setBackgroundLevel((Float) params[0]);
 				break;
-				
+
+			case SORT_INDEX_OK:
+				setSortIndexError(false);
+				break;
+
+			case SORT_INDEX_SENSITIVE_TO_NEGATIVE_VALUES:
+				setSortIndexError(true);
+				break;
+
 			case ERROR:
 				// This is done when the runner had an error that prevents any further calculations
 				chckbxPreview.setSelected(false);
 				// Fall-through to reset the foreground
-				
+
 			case FINISHED:
 				// This is done when the runner has been shutdown for further calculations
 				// Fall-through to reset the foreground
-				
+
 			case READY:
 				// This is done when the runner is OK to calculate
 				chckbxPreview.setForeground(Color.BLACK);
 				break;
-				
+
 			case RUNNING:
 				// This is done when the runner is calculating
 				chckbxPreview.setForeground(Color.YELLOW);
 				break;
-				
+
 			case DONE:
 				// This is done when the runner finished calculating
 				chckbxPreview.setForeground(Color.GREEN);
 				break;
-				
+
 			case FAILED:
 				// This is done when the runner had an error during the calculation
 				chckbxPreview.setForeground(Color.RED);
 				break;
-				
+
 			default:
 				// Do nothing 
 		}
@@ -1478,9 +1521,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		//
 		BeanProperty<FindFociModel, Double> findFociBeanProperty_10 = BeanProperty.create("backgroundParameter");
 		BeanProperty<JSlider, Integer> jSliderBeanProperty_6 = BeanProperty.create("value");
-		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_22 = Bindings
-				.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_10, sliderBackgroundParam,
-						jSliderBeanProperty_6);
+		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_22 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_10, sliderBackgroundParam,
+				jSliderBeanProperty_6);
 		autoBinding_22.setConverter(new SliderConverter());
 		autoBinding_22.bind();
 		//
@@ -1504,8 +1547,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		autoBinding_25.bind();
 		//
 		BeanProperty<FindFociModel, List<String>> findFociBeanProperty_11 = BeanProperty.create("imageList");
-		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding = SwingBindings.createJComboBoxBinding(
-				UpdateStrategy.READ, model, findFociBeanProperty_11, comboImageList);
+		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding = SwingBindings
+				.createJComboBoxBinding(UpdateStrategy.READ, model, findFociBeanProperty_11, comboImageList);
 		jComboBinding.bind();
 		//
 		BeanProperty<JComboBox, Boolean> jComboBoxBeanProperty_1 = BeanProperty.create("enabled");
@@ -1527,9 +1570,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		//
 		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_1 = BeanProperty.create("minimumAboveSaddle");
 		BeanProperty<JCheckBox, Boolean> jCheckBoxBeanProperty = BeanProperty.create("selected");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_31 = Bindings
-				.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_1, chckbxNewCheckBox,
-						jCheckBoxBeanProperty);
+		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_31 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_1, chckbxNewCheckBox,
+				jCheckBoxBeanProperty);
 		autoBinding_31.bind();
 		//
 		BeanProperty<JFormattedTextField, String> jFormattedTextFieldBeanProperty = BeanProperty.create("text");
@@ -1591,9 +1634,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		autoBinding_29.setConverter(new PeakParamAbsoluteDisabledConverter());
 		autoBinding_29.bind();
 		//
-		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_30 = Bindings
-				.createAutoBinding(UpdateStrategy.READ, model, findFociModelBeanProperty_2, sliderPeakParamAbsolute,
-						jSliderBeanProperty_8);
+		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_30 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociModelBeanProperty_2, sliderPeakParamAbsolute,
+				jSliderBeanProperty_8);
 		autoBinding_30.setConverter(new PeakParamAbsoluteEnabledConverter());
 		autoBinding_30.bind();
 		//
@@ -1652,8 +1695,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		autoBinding_20.bind();
 		//
 		BeanProperty<FindFociModel, List<String>> findFociModelBeanProperty_4 = BeanProperty.create("maskImageList");
-		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding_1 = SwingBindings.createJComboBoxBinding(
-				UpdateStrategy.READ, model, findFociModelBeanProperty_4, comboMaskImageList);
+		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding_1 = SwingBindings
+				.createJComboBoxBinding(UpdateStrategy.READ, model, findFociModelBeanProperty_4, comboMaskImageList);
 		jComboBinding_1.bind();
 		//
 		BeanProperty<FindFociModel, String> findFociModelBeanProperty_5 = BeanProperty.create("statisticsMode");
@@ -1681,9 +1724,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		autoBinding_43.bind();
 		//
 		BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
-		AutoBinding<FindFociModel, Double, JTextField, String> autoBinding_44 = Bindings
-				.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_6, txtFractionParam,
-						jTextFieldBeanProperty);
+		AutoBinding<FindFociModel, Double, JTextField, String> autoBinding_44 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_6, txtFractionParam,
+				jTextFieldBeanProperty);
 		autoBinding_44.setConverter(new DoubleConverter());
 		autoBinding_44.bind();
 		//
@@ -1693,5 +1736,12 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 				UpdateStrategy.READ, instance, findFociViewBeanProperty_5, lblBackgroundLevelValue, jLabelBeanProperty);
 		autoBinding_45.setConverter(new DoubleConverter());
 		autoBinding_45.bind();
+		//
+		BeanProperty<FindFociView, Boolean> findFociViewBeanProperty_6 = BeanProperty.create("sortIndexError");
+		BeanProperty<JComboBox, Color> jComboBoxBeanProperty_3 = BeanProperty.create("foreground");
+		AutoBinding<FindFociView, Boolean, JComboBox, Color> autoBinding_46 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociViewBeanProperty_6, comboSortMethod, jComboBoxBeanProperty_3);
+		autoBinding_46.setConverter(new SortMethodColorConverter());
+		autoBinding_46.bind();
 	}
 }

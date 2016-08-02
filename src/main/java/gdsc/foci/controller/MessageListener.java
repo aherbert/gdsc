@@ -20,12 +20,14 @@ public interface MessageListener
 {
 	public enum MessageType
 	{
-		BACKGROUND_LEVEL, ERROR, READY, RUNNING, DONE, FAILED, FINISHED
+		BACKGROUND_LEVEL, SORT_INDEX_OK, SORT_INDEX_SENSITIVE_TO_NEGATIVE_VALUES, ERROR, READY, RUNNING, DONE, FAILED, FINISHED
 	}
 
 	/**
-	 * @param message The type of the message
-	 * @param params The parameters of the message
+	 * @param message
+	 *            The type of the message
+	 * @param params
+	 *            The parameters of the message
 	 */
 	public void notify(MessageType message, Object... params);
 }
