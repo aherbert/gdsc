@@ -634,7 +634,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	private int batchId = 0;
 	private String batchPrefix = null, emptyEntry = null;
 	private FindFociBaseProcessor ffp;
-	private boolean optimisedProcessor = false;
+	private boolean optimisedProcessor = true;
 
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
