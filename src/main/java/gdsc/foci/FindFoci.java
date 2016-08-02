@@ -1873,7 +1873,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 */
 	public ImagePlus blur(ImagePlus imp, double blur)
 	{
-		return ffp.blur(imp, blur);
+		// Use static method as the FindFociProcessor may be null
+		return FindFociBaseProcessor.applyBlur(imp, blur);
 	}
 
 	/*
