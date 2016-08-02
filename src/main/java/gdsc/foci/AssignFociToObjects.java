@@ -407,7 +407,7 @@ public class AssignFociToObjects implements PlugInFilter
 		ArrayList<int[]> results = new ArrayList<int[]>(FindFoci.getResults().size());
 		for (FindFociResult result : FindFoci.getResults())
 		{
-			results.add(new int[] { result.RESULT_X, result.RESULT_Y });
+			results.add(new int[] { result.x, result.y });
 		}
 		return results;
 	}

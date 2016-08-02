@@ -335,8 +335,8 @@ public class SpotSeparation implements PlugInFilter
 		for (int i = 0; i < resultsArray.size(); i++)
 		{
 			final FindFociResult result = resultsArray.get(i);
-			final int x = result.RESULT_X;
-			final int y = result.RESULT_Y;
+			final int x = result.x;
+			final int y = result.y;
 
 			if (x >= bounds.x && x < maxx && y >= bounds.y && y < maxy)
 			{
@@ -361,7 +361,7 @@ public class SpotSeparation implements PlugInFilter
 			final FindFociResult result = resultsArray.get(i);
 			if (newId[i] > 0)
 			{
-				result.RESULT_PEAK_ID = newId[i];
+				result.id = newId[i];
 				newResultsArray.add(result);
 				// Reverse peak IDs so the highest value is the first in the
 				// results list
@@ -457,8 +457,8 @@ public class SpotSeparation implements PlugInFilter
 		int maxId = resultsArray.size() + 1;
 		for (FindFociResult result : resultsArray)
 		{
-			points[i] = new AssignedPoint(result.RESULT_X, result.RESULT_Y,
-					maxId - result.RESULT_PEAK_ID);
+			points[i] = new AssignedPoint(result.x, result.y,
+					maxId - result.id);
 			i++;
 		}
 		return points;

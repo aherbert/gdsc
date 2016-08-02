@@ -282,8 +282,8 @@ public class PointAlignerPlugin implements PlugIn
 					// Already assigned - The previous point is higher so it wins.
 					// See if any unassigned maxima are closer. This could be an ROI marking error.
 					FindFociResult result = resultsArray.get(maximaId);
-					double d = distance2(x, y, z, result.RESULT_X, result.RESULT_Y,
-							result.RESULT_Z);
+					double d = distance2(x, y, z, result.x, result.y,
+							result.z);
 					float maxHeight = Float.NEGATIVE_INFINITY;
 
 					for (int id = 0; id < assigned.length; id++)
@@ -293,8 +293,8 @@ public class PointAlignerPlugin implements PlugIn
 						{
 							result = resultsArray.get(id);
 
-							double newD = distance2(x, y, z, result.RESULT_X,
-									result.RESULT_Y, result.RESULT_Z);
+							double newD = distance2(x, y, z, result.x,
+									result.y, result.z);
 							if (newD < d)
 							{
 								// Pick the closest
@@ -302,7 +302,7 @@ public class PointAlignerPlugin implements PlugIn
 								//d = newD;
 
 								// Pick the highest
-								final float v = result.RESULT_MAX_VALUE;
+								final float v = result.maxValue;
 								if (maxHeight < v)
 								{
 									maximaId = id;
@@ -351,9 +351,9 @@ public class PointAlignerPlugin implements PlugIn
 			if (maximaId >= 0)
 			{
 				FindFociResult result = resultsArray.get(maximaId);
-				int newX = result.RESULT_X;
-				int newY = result.RESULT_Y;
-				int newZ = result.RESULT_Z;
+				int newX = result.x;
+				int newY = result.y;
+				int newZ = result.z;
 
 				double d = 0;
 				if (newX != x || newY != y || newZ != z)
@@ -361,10 +361,10 @@ public class PointAlignerPlugin implements PlugIn
 					d = point.distance(newX, newY, newZ);
 				}
 
-				if (result.RESULT_MAX_VALUE < thresholdHeight)
+				if (result.maxValue < thresholdHeight)
 				{
 					log("Point [%d] %d @ %s ~> %d @ %s (%s) below height threshold (< %d)", pointId + 1,
-							pointHeight[pointId], getCoords(is3d, x, y, z), result.RESULT_MAX_VALUE,
+							pointHeight[pointId], getCoords(is3d, x, y, z), result.maxValue,
 							getCoords(is3d, newX, newY, newZ), IJ.d2s(d, 2), thresholdHeight);
 					noAlign.add(point);
 					extractPoint(impStack, "below_threshold", pointId + 1, x, y, z, newX, newY, newZ);
@@ -372,7 +372,7 @@ public class PointAlignerPlugin implements PlugIn
 				}
 				else
 				{
-					final float v = (float) result.RESULT_MAX_VALUE;
+					final float v = (float) result.maxValue;
 					if (minAssignedHeight > v)
 					{
 						minAssignedHeight = v;
@@ -383,7 +383,7 @@ public class PointAlignerPlugin implements PlugIn
 						// This is the highest point assigned to the maxima.
 						// Check if it is being moved.
 						log("Point [%d] %d @ %s => %d @ %s (%s)", pointId + 1, pointHeight[pointId],
-								getCoords(is3d, x, y, z), result.RESULT_MAX_VALUE,
+								getCoords(is3d, x, y, z), result.maxValue,
 								getCoords(is3d, newX, newY, newZ), IJ.d2s(d, 2));
 						newPoint = new AssignedPoint(newX, newY, newZ, point.getId());
 						if (showMoved && d > 0)
@@ -473,12 +473,12 @@ public class PointAlignerPlugin implements PlugIn
 		for (int maximaId = 0; maximaId < resultsArray.size(); maximaId++)
 		{
 			FindFociResult result = resultsArray.get(maximaId);
-			final float v = (float) result.RESULT_MAX_VALUE;
+			final float v = (float) result.maxValue;
 			if (assigned[maximaId] < 0 && v > minAssignedHeight)
 			{
-				int x = result.RESULT_X;
-				int y = result.RESULT_Y;
-				int z = result.RESULT_Z;
+				int x = result.x;
+				int y = result.y;
+				int z = result.z;
 
 				// Check if the point is within the mask
 				if (maskStack != null)
@@ -501,11 +501,11 @@ public class PointAlignerPlugin implements PlugIn
 		for (int maximaId = 0; maximaId < resultsArray.size(); maximaId++)
 		{
 			FindFociResult result = resultsArray.get(maximaId);
-			if (assigned[maximaId] < 0 && result.RESULT_MAX_VALUE > t)
+			if (assigned[maximaId] < 0 && result.maxValue > t)
 			{
-				int x = result.RESULT_X;
-				int y = result.RESULT_Y;
-				int z = result.RESULT_Z;
+				int x = result.x;
+				int y = result.y;
+				int z = result.z;
 
 				// Check if the point is within the mask
 				if (maskStack != null)
@@ -514,7 +514,7 @@ public class PointAlignerPlugin implements PlugIn
 						continue;
 				}
 
-				missed.add(result.RESULT_MAX_VALUE);
+				missed.add(result.maxValue);
 			}
 		}
 		Collections.sort(missed);
@@ -534,7 +534,7 @@ public class PointAlignerPlugin implements PlugIn
 			if (assigned[maximaId] >= 0)
 			{
 				FindFociResult result = resultsArray.get(maximaId);
-				heights.add(result.RESULT_MAX_VALUE);
+				heights.add(result.maxValue);
 			}
 		}
 

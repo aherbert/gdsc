@@ -220,7 +220,7 @@ public class SpotDensity implements PlugIn
 		Foci[] foci = new Foci[results.size()];
 		int i = 0;
 		for (FindFociResult result : results)
-			foci[i++] = new Foci(i, result.RESULT_X, result.RESULT_Y);
+			foci[i++] = new Foci(i, result.x, result.y);
 		return foci;
 	}
 

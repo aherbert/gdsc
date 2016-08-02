@@ -1000,7 +1000,7 @@ public class FindFociOptimiser
 		for (int i = 0; i < predictedPoints.length; i++)
 		{
 			FindFociResult result = results.get(i);
-			predictedPoints[i] = new AssignedPoint(result.RESULT_X, result.RESULT_Y, result.RESULT_Z + 1, i);
+			predictedPoints[i] = new AssignedPoint(result.x, result.y, result.z + 1, i);
 		}
 		maskImage(clone, mask);
 
@@ -2106,7 +2106,7 @@ public class FindFociOptimiser
 		for (int i = 0; i < resultsArray.size(); i++)
 		{
 			final FindFociResult result = resultsArray.get(i);
-			predictedPoints[i] = new AssignedPoint(result.RESULT_X, result.RESULT_Y, result.RESULT_Z, i);
+			predictedPoints[i] = new AssignedPoint(result.x, result.y, result.z, i);
 		}
 		return predictedPoints;
 	}

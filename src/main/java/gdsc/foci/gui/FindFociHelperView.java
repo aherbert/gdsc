@@ -1078,8 +1078,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		List<GridPoint> points = new ArrayList<GridPoint>(resultsArray.size());
 		for (FindFociResult result : resultsArray)
 		{
-			points.add(new GridPoint(result.RESULT_X, result.RESULT_Y,
-					result.RESULT_Z, result.RESULT_MAX_VALUE));
+			points.add(new GridPoint(result.x, result.y,
+					result.z, result.maxValue));
 		}
 		return points;
 	}

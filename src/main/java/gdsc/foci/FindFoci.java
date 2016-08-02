@@ -1188,7 +1188,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		for (int i = 0; i < nMaxima; i++)
 		{
 			final FindFociResult xy = resultsArray.get(i);
-			xyz[i] = new XYZ(i + 1, xy.RESULT_X, xy.RESULT_Y, xy.RESULT_Z);
+			xyz[i] = new XYZ(i + 1, xy.x, xy.y, xy.z);
 		}
 
 		Arrays.sort(xyz);
@@ -1248,8 +1248,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		for (int i = 0; i < nMaxima; i++)
 		{
 			final FindFociResult xy = resultsArray.get(i);
-			xpoints[i] = xy.RESULT_X;
-			ypoints[i] = xy.RESULT_Y;
+			xpoints[i] = xy.x;
+			ypoints[i] = xy.y;
 		}
 		PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
 		if ((outputType & OUTPUT_HIDE_LABELS) != 0)
@@ -1422,8 +1422,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			for (int i = 0; i < resultsArray.size(); i++)
 			{
 				FindFociResult result = resultsArray.get(i);
-				xpoints[i] = result.RESULT_X;
-				ypoints[i] = result.RESULT_Y;
+				xpoints[i] = result.x;
+				ypoints[i] = result.y;
 
 				buildResultEntry(sb, i + 1, resultsArray.size() - i, result, stats, newLine);
 				final String resultEntry = sb.toString();
@@ -2133,32 +2133,32 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		sb.append(i).append("\t");
 		sb.append(id).append("\t");
 		// XY are pixel coordinates
-		sb.append(result.RESULT_X).append("\t");
-		sb.append(result.RESULT_Y).append("\t");
+		sb.append(result.x).append("\t");
+		sb.append(result.y).append("\t");
 		// Z should correspond to slice 
-		sb.append(result.RESULT_Z + 1).append("\t");
-		sb.append(result.RESULT_COUNT).append("\t");
+		sb.append(result.z + 1).append("\t");
+		sb.append(result.count).append("\t");
 
-		addValue(sb, result.RESULT_MAX_VALUE, floatImage);
-		addValue(sb, result.RESULT_INTENSITY, floatImage);
-		addValue(sb, result.RESULT_HIGHEST_SADDLE_VALUE, floatImage);
+		addValue(sb, result.maxValue, floatImage);
+		addValue(sb, result.totalIntensity, floatImage);
+		addValue(sb, result.highestSaddleValue, floatImage);
 
-		sb.append(result.RESULT_SADDLE_NEIGHBOUR_ID).append("\t");
+		sb.append(result.saddleNeighbourId).append("\t");
 		addValue(sb, absoluteHeight, floatImage);
 		addValue(sb, relativeHeight);
-		sb.append(result.RESULT_COUNT_ABOVE_SADDLE).append("\t");
-		addValue(sb, result.RESULT_INTENSITY_ABOVE_SADDLE, floatImage);
-		addValue(sb, result.RESULT_INTENSITY / result.RESULT_COUNT);
-		addValue(sb, result.RESULT_INTENSITY_MINUS_BACKGROUND, floatImage);
-		addValue(sb, result.RESULT_INTENSITY_MINUS_BACKGROUND / result.RESULT_COUNT);
-		addValue(sb, result.RESULT_INTENSITY_MINUS_MIN, floatImage);
-		addValue(sb, result.RESULT_INTENSITY_MINUS_MIN / result.RESULT_COUNT);
-		addValue(sb, 100 * (result.RESULT_INTENSITY / sum));
-		addValue(sb, 100 * (result.RESULT_INTENSITY_MINUS_BACKGROUND / stats.totalAboveBackground));
-		addValue(sb, 100 * (result.RESULT_INTENSITY_MINUS_MIN / stats.totalAboveImageMinimum));
-		addValue(sb, (result.RESULT_MAX_VALUE / noise));
-		sb.append(result.RESULT_OBJECT).append("\t");
-		sb.append(result.RESULT_STATE);
+		sb.append(result.countAboveSaddle).append("\t");
+		addValue(sb, result.intensityAboveSaddle, floatImage);
+		addValue(sb, result.totalIntensity / result.count);
+		addValue(sb, result.totalIntensityAboveBackground, floatImage);
+		addValue(sb, result.totalIntensityAboveBackground / result.count);
+		addValue(sb, result.totalIntensityAboveImageMinimum, floatImage);
+		addValue(sb, result.totalIntensityAboveImageMinimum / result.count);
+		addValue(sb, 100 * (result.totalIntensity / sum));
+		addValue(sb, 100 * (result.totalIntensityAboveBackground / stats.totalAboveBackground));
+		addValue(sb, 100 * (result.totalIntensityAboveImageMinimum / stats.totalAboveImageMinimum));
+		addValue(sb, (result.maxValue / noise));
+		sb.append(result.object).append("\t");
+		sb.append(result.state);
 		sb.append(newLine);
 
 		resultsCount++;

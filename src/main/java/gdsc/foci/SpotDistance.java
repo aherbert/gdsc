@@ -1318,9 +1318,9 @@ public class SpotDistance implements PlugIn
 
 		for (FindFociResult result : resultsArray)
 		{
-			int x = bounds.x + result.RESULT_X;
-			int y = bounds.y + result.RESULT_Y;
-			int z = result.RESULT_Z;
+			int x = bounds.x + result.x;
+			int y = bounds.y + result.y;
+			int z = result.z;
 
 			// Filter peaks on circularity (spots should be circles)
 			// C = 4*pi*A / P^2 
@@ -1335,7 +1335,7 @@ public class SpotDistance implements PlugIn
 			//new ImagePlus("peak", fp.duplicate()).show();
 			//new ImagePlus("mask", maskIp).show();
 
-			int peakId = result.RESULT_PEAK_ID;
+			int peakId = result.id;
 			int maskId = resultsArray.size() - peakId + 1;
 			Roi roi = extractSelection(maskIp, maskId, channel, z + 1, frame);
 			double perimeter = roi.getLength();

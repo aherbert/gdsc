@@ -1201,14 +1201,14 @@ public class MatchPlugin implements PlugIn
 		switch (findFociResultChoiceIndex)
 		{
 			//@formatter:off
-			case 0: return (float)result.RESULT_INTENSITY;
-			case 1: return (float)result.RESULT_INTENSITY_ABOVE_SADDLE;
-			case 2: return (float)result.RESULT_INTENSITY_MINUS_BACKGROUND;
-			case 3: return (float)result.RESULT_COUNT;
-			case 4: return (float)result.RESULT_COUNT_ABOVE_SADDLE;
-			case 5: return (float)result.RESULT_MAX_VALUE;
-			case 6: return (float)result.RESULT_HIGHEST_SADDLE_VALUE;
-			default: return (float) result.RESULT_INTENSITY;
+			case 0: return (float)result.totalIntensity;
+			case 1: return (float)result.intensityAboveSaddle;
+			case 2: return (float)result.totalIntensityAboveBackground;
+			case 3: return (float)result.count;
+			case 4: return (float)result.countAboveSaddle;
+			case 5: return (float)result.maxValue;
+			case 6: return (float)result.highestSaddleValue;
+			default: return (float) result.totalIntensity;
 			//@formatter:on
 		}
 	}

@@ -182,9 +182,9 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		for (int i = 0, id = results.size(); i < results.size(); i++, id--)
 		{
 			final FindFociResult result = results.get(i);
-			final int x = result.RESULT_X;
-			final int y = result.RESULT_Y;
-			final int z = result.RESULT_Z;
+			final int x = result.x;
+			final int y = result.y;
+			final int z = result.z;
 			try
 			{
 				final int value = stack.getProcessor(z + 1).get(x, y);
@@ -967,7 +967,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		for (int i = 0, id = results.size(); i < results.size(); i++, id--)
 		{
 			FindFociResult result = results.get(i);
-			points.add(ClusterPoint.newClusterPoint(id, result.RESULT_X, result.RESULT_Y, getWeight(result)));
+			points.add(ClusterPoint.newClusterPoint(id, result.x, result.y, getWeight(result)));
 		}
 		return points;
 	}
@@ -978,14 +978,14 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		{
 			//@formatter:off
 			case 0: return 1.0;
-			case 1: return result.RESULT_COUNT;
-			case 2: return result.RESULT_INTENSITY;
-			case 3: return result.RESULT_MAX_VALUE;
-			case 4: return result.RESULT_AVERAGE_INTENSITY;
-			case 5: return result.RESULT_INTENSITY_MINUS_BACKGROUND;
-			case 6: return result.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND;
-			case 7: return result.RESULT_COUNT_ABOVE_SADDLE;
-			case 8: return result.RESULT_INTENSITY_ABOVE_SADDLE;
+			case 1: return result.count;
+			case 2: return result.totalIntensity;
+			case 3: return result.maxValue;
+			case 4: return result.averageIntensity;
+			case 5: return result.totalIntensityAboveBackground;
+			case 6: return result.averageIntensityAboveBackground;
+			case 7: return result.countAboveSaddle;
+			case 8: return result.intensityAboveSaddle;
 			default: return 1.0;
 			//@formatter:on
 		}

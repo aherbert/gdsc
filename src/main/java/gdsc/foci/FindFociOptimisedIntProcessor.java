@@ -571,7 +571,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		for (int i = 1; i < peakThreshold.length; i++)
 		{
 			peakThreshold[i] = (int) getTolerance(searchMethod, searchParameter, stats,
-					resultsArray.get(i - 1).RESULT_MAX_VALUE);
+					resultsArray.get(i - 1).maxValue);
 		}
 
 		for (int i = maxima.length; i-- > 0;)
@@ -615,9 +615,9 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 
 		for (FindFociResult result : resultsArray)
 		{
-			result.RESULT_COUNT = count[result.RESULT_PEAK_ID];
-			result.RESULT_INTENSITY = (double) intensity[result.RESULT_PEAK_ID];
-			result.RESULT_AVERAGE_INTENSITY = result.RESULT_INTENSITY / result.RESULT_COUNT;
+			result.count = count[result.id];
+			result.totalIntensity = (double) intensity[result.id];
+			result.averageIntensity = result.totalIntensity / result.count;
 		}
 	}
 
@@ -649,11 +649,11 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 
 		for (FindFociResult result : resultsArray)
 		{
-			final int id = result.RESULT_PEAK_ID;
+			final int id = result.id;
 			if (intensity[id] != 0)
 			{
-				result.RESULT_INTENSITY = (double) intensity[id];
-				result.RESULT_MAX_VALUE = max[id];
+				result.totalIntensity = (double) intensity[id];
+				result.maxValue = max[id];
 			}
 		}
 	}
@@ -682,10 +682,10 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		/* Process all the maxima */
 		for (FindFociResult result : resultsArray)
 		{
-			final int x0 = result.RESULT_X;
-			final int y0 = result.RESULT_Y;
-			final int z0 = result.RESULT_Z;
-			final int id = result.RESULT_PEAK_ID;
+			final int x0 = result.x;
+			final int y0 = result.y;
+			final int z0 = result.z;
+			final int id = result.id;
 			final int index0 = getIndex(x0, y0, z0);
 
 			// List of saddle highest values with every other peak
@@ -797,8 +797,8 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 			// Set the saddle point
 			if (highestNeighbourPeakId != 0)
 			{
-				result.RESULT_SADDLE_NEIGHBOUR_ID = highestNeighbourPeakId;
-				result.RESULT_HIGHEST_SADDLE_VALUE = highestNeighbourValue;
+				result.saddleNeighbourId = highestNeighbourPeakId;
+				result.highestSaddleValue = highestNeighbourValue;
 			}
 		} // for all maxima
 	}
@@ -822,7 +822,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		final int[] saddleHeight = new int[resultsArray.size() + 1];
 		for (FindFociResult result : resultsArray)
 		{
-			saddleHeight[result.RESULT_PEAK_ID] = (int) result.RESULT_HIGHEST_SADDLE_VALUE;
+			saddleHeight[result.id] = (int) result.highestSaddleValue;
 		}
 
 		for (int i = maxima.length; i-- > 0;)
@@ -840,8 +840,8 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 
 		for (FindFociResult result : resultsArray)
 		{
-			result.RESULT_COUNT_ABOVE_SADDLE = peakSize[result.RESULT_PEAK_ID];
-			result.RESULT_INTENSITY_ABOVE_SADDLE = (double) peakIntensity[result.RESULT_PEAK_ID];
+			result.countAboveSaddle = peakSize[result.id];
+			result.intensityAboveSaddle = (double) peakIntensity[result.id];
 		}
 	}
 
@@ -877,12 +877,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 				}
 			}
 
-			result.RESULT_COUNT_ABOVE_SADDLE = peakSize;
-			result.RESULT_INTENSITY_ABOVE_SADDLE = (double) peakIntensity;
+			result.countAboveSaddle = peakSize;
+			result.intensityAboveSaddle = (double) peakIntensity;
 		}
 
-		result.RESULT_SADDLE_NEIGHBOUR_ID = peakIdMap[saddle.id];
-		result.RESULT_HIGHEST_SADDLE_VALUE = saddle.value;
+		result.saddleNeighbourId = peakIdMap[saddle.id];
+		result.highestSaddleValue = saddle.value;
 	}
 
 	/*

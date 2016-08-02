@@ -21,79 +21,79 @@ public class FindFociResult implements Cloneable
 	/**
 	 * The X coordinate
 	 */
-	public int RESULT_X;
+	public int x;
 	/**
 	 * The Y coordinate
 	 */
-	public int RESULT_Y;
+	public int y;
 	/**
-	 * The Z coordinate
+	 * The Z coordinate (this is zero-indexed, not one-indexed as per ImageJ stack slices)
 	 */
-	public int RESULT_Z;
+	public int z;
 	/**
 	 * The internal ID used during the FindFoci routine. This can be ignored.
 	 */
-	public int RESULT_PEAK_ID;
+	public int id;
 	/**
 	 * The number of pixels in the peak
 	 */
-	public int RESULT_COUNT;
+	public int count;
 	/**
 	 * The sum of the peak intensity
 	 */
-	public double RESULT_INTENSITY;
+	public double totalIntensity;
 	/**
 	 * The peak maximum value
 	 */
-	public float RESULT_MAX_VALUE;
+	public float maxValue;
 	/**
 	 * The peak highest saddle point
 	 */
-	public float RESULT_HIGHEST_SADDLE_VALUE;
+	public float highestSaddleValue;
 	/**
 	 * The peak ID of the touching peak with the highest saddle point
 	 */
-	public int RESULT_SADDLE_NEIGHBOUR_ID;
+	public int saddleNeighbourId;
 	/**
 	 * The average of the peak intensity
 	 */
-	public double RESULT_AVERAGE_INTENSITY;
+	public double averageIntensity;
 	/**
 	 * The sum of the peak intensity above the background
 	 */
-	public double RESULT_INTENSITY_MINUS_BACKGROUND;
+	public double totalIntensityAboveBackground;
 	/**
 	 * The average of the peak intensity above the background
 	 */
-	public double RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND;
+	public double averageIntensityAboveBackground;
 	/**
 	 * The number of pixels in the peak above the highest saddle
 	 */
-	public int RESULT_COUNT_ABOVE_SADDLE;
+	public int countAboveSaddle;
 	/**
 	 * The sum of the peak intensity above the highest saddle
 	 */
-	public double RESULT_INTENSITY_ABOVE_SADDLE;
+	public double intensityAboveSaddle;
 	/**
 	 * The sum of the peak intensity above the minimum value of the analysed image
 	 */
-	public double RESULT_INTENSITY_MINUS_MIN;
+	public double totalIntensityAboveImageMinimum;
 	/**
 	 * The average of the peak intensity above the minimum value of the analysed image
 	 */
-	public double RESULT_AVERAGE_INTENSITY_MINUS_MIN;
+	public double averageIntesnityAboveImageMinimum;
 	/**
 	 * The custom sort value. This is used internally to sort the results using values not stored in the result array.
 	 */
-	double RESULT_CUSTOM_SORT_VALUE;
+	double sortValue;
 	/**
 	 * The state (i.e. pixel value) from the mask image
 	 */
-	public int RESULT_STATE;
+	public int state;
 	/**
 	 * The allocated object from the mask image
 	 */
-	public int RESULT_OBJECT;
+	public int object;
 
 	/**
 	 * Instantiates a new find foci result.
@@ -128,6 +128,6 @@ public class FindFociResult implements Cloneable
 	 */
 	public int[] getCoordinates()
 	{
-		return new int[] { RESULT_X, RESULT_Y, RESULT_Z };
+		return new int[] { x, y, z };
 	}
 }

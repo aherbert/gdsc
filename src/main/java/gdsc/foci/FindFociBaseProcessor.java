@@ -890,14 +890,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		{
 			maximaValues[i] = nMaxima - i;
 			FindFociResult result = resultsArray.get(i);
-			maximaPeakIds[i] = result.RESULT_PEAK_ID;
+			maximaPeakIds[i] = result.id;
 			if ((outputType & OUTPUT_MASK_ABOVE_SADDLE) != 0)
 			{
-				displayValues[i] = result.RESULT_HIGHEST_SADDLE_VALUE;
+				displayValues[i] = result.highestSaddleValue;
 			}
 			else if ((outputType & OUTPUT_MASK_FRACTION_OF_HEIGHT) != 0)
 			{
-				displayValues[i] = (float) (fractionParameter * (result.RESULT_MAX_VALUE - stats.background) +
+				displayValues[i] = (float) (fractionParameter * (result.maxValue - stats.background) +
 						stats.background);
 				if (!floatImage)
 					displayValues[i] = round(displayValues[i]);
@@ -968,7 +968,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			for (int i = 0; i < nMaxima; i++)
 			{
 				final FindFociResult result = resultsArray.get(i);
-				maxima[getIndex(result.RESULT_X, result.RESULT_Y, result.RESULT_Z)] = maxValue;
+				maxima[getIndex(result.x, result.y, result.z)] = maxValue;
 			}
 		}
 
@@ -1080,14 +1080,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		int i = 1;
 		for (FindFociResult result : resultsArray)
 		{
-			peakIdMap[result.RESULT_PEAK_ID] = i++;
+			peakIdMap[result.id] = i++;
 		}
 
 		// Update the Ids
 		for (FindFociResult result : resultsArray)
 		{
-			result.RESULT_PEAK_ID = peakIdMap[result.RESULT_PEAK_ID];
-			result.RESULT_SADDLE_NEIGHBOUR_ID = peakIdMap[result.RESULT_SADDLE_NEIGHBOUR_ID];
+			result.id = peakIdMap[result.id];
+			result.saddleNeighbourId = peakIdMap[result.saddleNeighbourId];
 		}
 	}
 
@@ -1491,20 +1491,20 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	double getAbsoluteHeight(FindFociResult result, double floor)
 	{
 		double absoluteHeight = 0;
-		if (result.RESULT_HIGHEST_SADDLE_VALUE > floor)
+		if (result.highestSaddleValue > floor)
 		{
-			absoluteHeight = result.RESULT_MAX_VALUE - result.RESULT_HIGHEST_SADDLE_VALUE;
+			absoluteHeight = result.maxValue - result.highestSaddleValue;
 		}
 		else
 		{
-			absoluteHeight = result.RESULT_MAX_VALUE - floor;
+			absoluteHeight = result.maxValue - floor;
 		}
 		return absoluteHeight;
 	}
 
 	double getRelativeHeight(FindFociResult result, double floor, double absoluteHeight)
 	{
-		return absoluteHeight / (result.RESULT_MAX_VALUE - floor);
+		return absoluteHeight / (result.maxValue - floor);
 	}
 
 	/**
@@ -2176,14 +2176,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			maxima[maximum.index] = maximum.id;
 
 			final FindFociResult result = new FindFociResult();
-			result.RESULT_X = xyz[0];
-			result.RESULT_Y = xyz[1];
-			result.RESULT_Z = xyz[2];
-			result.RESULT_PEAK_ID = maximum.id;
-			result.RESULT_MAX_VALUE = maximum.value;
-			result.RESULT_INTENSITY = maximum.value;
-			result.RESULT_COUNT = 1;
-			result.RESULT_HIGHEST_SADDLE_VALUE = NO_SADDLE_VALUE;
+			result.x = xyz[0];
+			result.y = xyz[1];
+			result.z = xyz[2];
+			result.id = maximum.id;
+			result.maxValue = maximum.value;
+			result.totalIntensity = maximum.value;
+			result.count = 1;
+			result.highestSaddleValue = NO_SADDLE_VALUE;
 
 			resultsArray.add(result);
 		}
@@ -2578,7 +2578,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		for (int i = 1; i < peakThreshold.length; i++)
 		{
 			peakThreshold[i] = getTolerance(searchMethod, searchParameter, stats,
-					resultsArray.get(i - 1).RESULT_MAX_VALUE);
+					resultsArray.get(i - 1).maxValue);
 		}
 
 		for (int i = maxima.length; i-- > 0;)
@@ -2650,9 +2650,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		for (FindFociResult result : resultsArray)
 		{
-			result.RESULT_COUNT = count[result.RESULT_PEAK_ID];
-			result.RESULT_INTENSITY = intensity[result.RESULT_PEAK_ID];
-			result.RESULT_AVERAGE_INTENSITY = result.RESULT_INTENSITY / result.RESULT_COUNT;
+			result.count = count[result.id];
+			result.totalIntensity = intensity[result.id];
+			result.averageIntensity = result.totalIntensity / result.count;
 		}
 	}
 
@@ -2683,11 +2683,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		for (FindFociResult result : resultsArray)
 		{
-			final int id = result.RESULT_PEAK_ID;
+			final int id = result.id;
 			if (intensity[id] != 0)
 			{
-				result.RESULT_INTENSITY = intensity[id];
-				result.RESULT_MAX_VALUE = max[id];
+				result.totalIntensity = intensity[id];
+				result.maxValue = max[id];
 			}
 		}
 	}
@@ -2732,13 +2732,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		for (FindFociResult result : resultsArray)
 		{
 			// Ensure list is large enough
-			if (pList.length < result.RESULT_COUNT)
-				pList = new int[result.RESULT_COUNT];
+			if (pList.length < result.count)
+				pList = new int[result.count];
 
 			// Find the peak coords above the saddle
-			final int maximaId = result.RESULT_PEAK_ID;
-			final int index = getIndex(result.RESULT_X, result.RESULT_Y, result.RESULT_Z);
-			final int listLen = findMaximaCoords(maxima, types, index, maximaId, result.RESULT_HIGHEST_SADDLE_VALUE,
+			final int maximaId = result.id;
+			final int index = getIndex(result.x, result.y, result.z);
+			final int listLen = findMaximaCoords(maxima, types, index, maximaId, result.highestSaddleValue,
 					pList);
 			//IJ.log("maxima size > saddle = " + listLen);
 
@@ -2767,7 +2767,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				dimensions[i] = max_xyz[i] - min_xyz[i] + 1;
 
 			final float[] subImage = extractSubImage(maxima, min_xyz, dimensions, maximaId,
-					result.RESULT_HIGHEST_SADDLE_VALUE);
+					result.highestSaddleValue);
 
 			int[] centre = null;
 			switch (centreMethod)
@@ -2811,9 +2811,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				}
 
 				// RESULT_[XYZ] are 0, 1, 2
-				result.RESULT_X = centre[0] + min_xyz[0];
-				result.RESULT_Y = centre[1] + min_xyz[1];
-				result.RESULT_Z = centre[2] + min_xyz[2];
+				result.x = centre[0] + min_xyz[0];
+				result.y = centre[1] + min_xyz[1];
+				result.z = centre[2] + min_xyz[2];
 			}
 		}
 	}
@@ -3175,12 +3175,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	{
 		for (FindFociResult result : resultsArray)
 		{
-			result.RESULT_INTENSITY_MINUS_BACKGROUND = result.RESULT_INTENSITY - background * result.RESULT_COUNT;
-			result.RESULT_INTENSITY_MINUS_MIN = result.RESULT_INTENSITY - min * result.RESULT_COUNT;
-			result.RESULT_AVERAGE_INTENSITY = result.RESULT_INTENSITY / result.RESULT_COUNT;
-			result.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND = result.RESULT_INTENSITY_MINUS_BACKGROUND /
-					result.RESULT_COUNT;
-			result.RESULT_AVERAGE_INTENSITY_MINUS_MIN = result.RESULT_INTENSITY_MINUS_MIN / result.RESULT_COUNT;
+			result.totalIntensityAboveBackground = result.totalIntensity - background * result.count;
+			result.totalIntensityAboveImageMinimum = result.totalIntensity - min * result.count;
+			result.averageIntensity = result.totalIntensity / result.count;
+			result.averageIntensityAboveBackground = result.totalIntensityAboveBackground /
+					result.count;
+			result.averageIntesnityAboveImageMinimum = result.totalIntensityAboveImageMinimum / result.count;
 		}
 	}
 
@@ -3217,10 +3217,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		/* Process all the maxima */
 		for (FindFociResult result : resultsArray)
 		{
-			final int x0 = result.RESULT_X;
-			final int y0 = result.RESULT_Y;
-			final int z0 = result.RESULT_Z;
-			final int id = result.RESULT_PEAK_ID;
+			final int x0 = result.x;
+			final int y0 = result.y;
+			final int z0 = result.z;
+			final int id = result.id;
 			final int index0 = getIndex(x0, y0, z0);
 
 			// List of saddle highest values with every other peak
@@ -3332,8 +3332,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			// Set the saddle point
 			if (highestNeighbourPeakId != 0)
 			{
-				result.RESULT_SADDLE_NEIGHBOUR_ID = highestNeighbourPeakId;
-				result.RESULT_HIGHEST_SADDLE_VALUE = highestNeighbourValue;
+				result.saddleNeighbourId = highestNeighbourPeakId;
+				result.highestSaddleValue = highestNeighbourValue;
 			}
 		} // for all maxima
 	}
@@ -3343,8 +3343,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		int maxPeakSize = 0;
 		for (FindFociResult result : resultsArray)
 		{
-			if (maxPeakSize < result.RESULT_COUNT)
-				maxPeakSize = result.RESULT_COUNT;
+			if (maxPeakSize < result.count)
+				maxPeakSize = result.count;
 		}
 		return maxPeakSize;
 	}
@@ -3365,7 +3365,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		final float[] saddleHeight = new float[resultsArray.size() + 1];
 		for (FindFociResult result : resultsArray)
 		{
-			saddleHeight[result.RESULT_PEAK_ID] = result.RESULT_HIGHEST_SADDLE_VALUE;
+			saddleHeight[result.id] = result.highestSaddleValue;
 			//System.out.printf("ID=%d saddle=%f (%f)\n", result.RESULT_PEAK_ID, result.RESULT_HIGHEST_SADDLE_VALUE, result.RESULT_COUNT_ABOVE_SADDLE);
 		}
 
@@ -3384,8 +3384,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		for (FindFociResult result : resultsArray)
 		{
-			result.RESULT_COUNT_ABOVE_SADDLE = peakSize[result.RESULT_PEAK_ID];
-			result.RESULT_INTENSITY_ABOVE_SADDLE = peakIntensity[result.RESULT_PEAK_ID];
+			result.countAboveSaddle = peakSize[result.id];
+			result.intensityAboveSaddle = peakIntensity[result.id];
 		}
 	}
 
@@ -3410,7 +3410,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		for (FindFociResult result : resultsArray)
 		{
-			final int peakId = result.RESULT_PEAK_ID;
+			final int peakId = result.id;
 			final LinkedList<FindFociSaddle> saddles = saddlePoints.get(peakId);
 
 			// Check if this peak has been reassigned or has no neighbours
@@ -3421,9 +3421,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 			final float peakBase = (highestSaddle == null) ? stats.background : highestSaddle.value;
 
-			final double threshold = getPeakHeight(peakMethod, peakParameter, stats, result.RESULT_MAX_VALUE);
+			final double threshold = getPeakHeight(peakMethod, peakParameter, stats, result.maxValue);
 
-			if (result.RESULT_MAX_VALUE - peakBase < threshold)
+			if (result.maxValue - peakBase < threshold)
 			{
 				// This peak is not high enough, merge into the neighbour peak
 				if (highestSaddle == null)
@@ -3452,13 +3452,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		for (FindFociResult result : resultsArray)
 		{
-			final int peakId = result.RESULT_PEAK_ID;
+			final int peakId = result.id;
 
 			// Check if this peak has been reassigned
 			if (peakId != peakIdMap[peakId])
 				continue;
 
-			if (result.RESULT_COUNT < minSize)
+			if (result.count < minSize)
 			{
 				// This peak is not large enough, merge into the neighbour peak
 
@@ -3498,13 +3498,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 			for (FindFociResult result : resultsArray)
 			{
-				final int peakId = result.RESULT_PEAK_ID;
+				final int peakId = result.id;
 
 				// Check if this peak has been reassigned
 				if (peakId != peakIdMap[peakId])
 					continue;
 
-				if (result.RESULT_COUNT_ABOVE_SADDLE < minSize)
+				if (result.countAboveSaddle < minSize)
 				{
 					// This peak is not large enough, merge into the neighbour peak
 
@@ -3563,7 +3563,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		//	resultsArray.remove(resultsArray.size() - 1);
 
 		int toIndex = 0;
-		while (toIndex < resultsArray.size() && resultsArray.get(toIndex).RESULT_INTENSITY != Double.NEGATIVE_INFINITY)
+		while (toIndex < resultsArray.size() && resultsArray.get(toIndex).totalIntensity != Double.NEGATIVE_INFINITY)
 			toIndex++;
 		if (toIndex < resultsArray.size())
 			resultsArray = new ArrayList<FindFociResult>(resultsArray.subList(0, toIndex));
@@ -3605,25 +3605,25 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	{
 		for (FindFociResult result : resultsArray)
 		{
-			int neighbourPeakId = peakIdMap[result.RESULT_SADDLE_NEIGHBOUR_ID];
+			int neighbourPeakId = peakIdMap[result.saddleNeighbourId];
 
 			// Ensure the peak is not marked as a saddle with itself
-			if (neighbourPeakId == result.RESULT_PEAK_ID)
+			if (neighbourPeakId == result.id)
 				neighbourPeakId = 0;
 
 			if (neighbourPeakId == 0)
 				clearSaddle(result);
 			else
-				result.RESULT_SADDLE_NEIGHBOUR_ID = neighbourPeakId;
+				result.saddleNeighbourId = neighbourPeakId;
 		}
 	}
 
 	private void clearSaddle(FindFociResult result)
 	{
-		result.RESULT_COUNT_ABOVE_SADDLE = result.RESULT_COUNT;
-		result.RESULT_INTENSITY_ABOVE_SADDLE = result.RESULT_INTENSITY;
-		result.RESULT_SADDLE_NEIGHBOUR_ID = 0;
-		result.RESULT_HIGHEST_SADDLE_VALUE = NO_SADDLE_VALUE;
+		result.countAboveSaddle = result.count;
+		result.intensityAboveSaddle = result.totalIntensity;
+		result.saddleNeighbourId = 0;
+		result.highestSaddleValue = NO_SADDLE_VALUE;
 	}
 
 	/**
@@ -3693,7 +3693,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	{
 		for (FindFociResult result : resultsArray)
 		{
-			if (result.RESULT_PEAK_ID == id)
+			if (result.id == id)
 				return result;
 		}
 		return null;
@@ -3723,18 +3723,18 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			//					neighbourResult.RESULT_COUNT + ")");
 
 			// Assign this peak's statistics to the neighbour
-			neighbourResult.RESULT_INTENSITY += result.RESULT_INTENSITY;
-			neighbourResult.RESULT_COUNT += result.RESULT_COUNT;
+			neighbourResult.totalIntensity += result.totalIntensity;
+			neighbourResult.count += result.count;
 
-			neighbourResult.RESULT_AVERAGE_INTENSITY = neighbourResult.RESULT_INTENSITY / neighbourResult.RESULT_COUNT;
+			neighbourResult.averageIntensity = neighbourResult.totalIntensity / neighbourResult.count;
 
 			// Check if the neighbour is higher and reassign the maximum point
-			if (neighbourResult.RESULT_MAX_VALUE < result.RESULT_MAX_VALUE)
+			if (neighbourResult.maxValue < result.maxValue)
 			{
-				neighbourResult.RESULT_MAX_VALUE = result.RESULT_MAX_VALUE;
-				neighbourResult.RESULT_X = result.RESULT_X;
-				neighbourResult.RESULT_Y = result.RESULT_Y;
-				neighbourResult.RESULT_Z = result.RESULT_Z;
+				neighbourResult.maxValue = result.maxValue;
+				neighbourResult.x = result.x;
+				neighbourResult.y = result.y;
+				neighbourResult.z = result.z;
 			}
 
 			// Merge the saddles
@@ -3773,7 +3773,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		}
 
 		// Flag this result as merged using the intensity flag. This will be used later to eliminate peaks
-		result.RESULT_INTENSITY = Double.NEGATIVE_INFINITY;
+		result.totalIntensity = Double.NEGATIVE_INFINITY;
 
 		// Update the count and intensity above the highest neighbour saddle
 		if (neighbourResult != null)
@@ -3824,12 +3824,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				}
 			}
 
-			result.RESULT_COUNT_ABOVE_SADDLE = peakSize;
-			result.RESULT_INTENSITY_ABOVE_SADDLE = peakIntensity;
+			result.countAboveSaddle = peakSize;
+			result.intensityAboveSaddle = peakIntensity;
 		}
 
-		result.RESULT_SADDLE_NEIGHBOUR_ID = peakIdMap[saddle.id];
-		result.RESULT_HIGHEST_SADDLE_VALUE = saddle.value;
+		result.saddleNeighbourId = peakIdMap[saddle.id];
+		result.highestSaddleValue = saddle.value;
 	}
 
 	/**
@@ -3868,8 +3868,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// Build a look-up table for all the peak IDs
 		int maxId = 0;
 		for (FindFociResult result : resultsArray)
-			if (maxId < result.RESULT_PEAK_ID)
-				maxId = result.RESULT_PEAK_ID;
+			if (maxId < result.id)
+				maxId = result.id;
 
 		final int[] peakIdMap = new int[maxId + 1];
 		for (int i = 0; i < peakIdMap.length; i++)
@@ -3914,9 +3914,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// Mark maxima to be removed
 		for (FindFociResult result : resultsArray)
 		{
-			final int peakId = result.RESULT_PEAK_ID;
+			final int peakId = result.id;
 			if (peakIdMap[peakId] == 0)
-				result.RESULT_INTENSITY = Double.NEGATIVE_INFINITY;
+				result.totalIntensity = Double.NEGATIVE_INFINITY;
 		}
 
 		resultsArray = removeFlaggedResults(resultsArray);
@@ -3979,7 +3979,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			case SORT_AVERAGE_INTENSITY_MINUS_MIN:
 				for (FindFociResult result : resultsArray)
 				{
-					result.RESULT_CUSTOM_SORT_VALUE = getSortValue(result, sortIndex, stats);
+					result.sortValue = getSortValue(result, sortIndex, stats);
 				}
 				return;
 
@@ -3993,40 +3993,40 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		switch (sortIndex)
 		{
 			case SORT_INTENSITY:
-				return result.RESULT_INTENSITY;
+				return result.totalIntensity;
 			case SORT_INTENSITY_MINUS_BACKGROUND:
-				return result.RESULT_INTENSITY_MINUS_BACKGROUND;
+				return result.totalIntensityAboveBackground;
 			case SORT_COUNT:
-				return result.RESULT_COUNT;
+				return result.count;
 			case SORT_MAX_VALUE:
-				return result.RESULT_MAX_VALUE;
+				return result.maxValue;
 			case SORT_AVERAGE_INTENSITY:
-				return result.RESULT_AVERAGE_INTENSITY;
+				return result.averageIntensity;
 			case SORT_AVERAGE_INTENSITY_MINUS_BACKGROUND:
-				return result.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND;
+				return result.averageIntensityAboveBackground;
 			case SORT_X:
-				return result.RESULT_X;
+				return result.x;
 			case SORT_Y:
-				return result.RESULT_Y;
+				return result.y;
 			case SORT_Z:
-				return result.RESULT_Z;
+				return result.z;
 			case SORT_SADDLE_HEIGHT:
-				return result.RESULT_HIGHEST_SADDLE_VALUE;
+				return result.highestSaddleValue;
 			case SORT_COUNT_ABOVE_SADDLE:
-				return result.RESULT_COUNT_ABOVE_SADDLE;
+				return result.countAboveSaddle;
 			case SORT_INTENSITY_ABOVE_SADDLE:
-				return result.RESULT_INTENSITY_ABOVE_SADDLE;
+				return result.intensityAboveSaddle;
 			case SORT_ABSOLUTE_HEIGHT:
 				return getAbsoluteHeight(result, stats.background);
 			case SORT_RELATIVE_HEIGHT_ABOVE_BACKGROUND:
 				final double absoluteHeight = getAbsoluteHeight(result, stats.background);
 				return getRelativeHeight(result, stats.background, absoluteHeight);
 			case SORT_PEAK_ID:
-				return result.RESULT_PEAK_ID;
+				return result.id;
 			case SORT_INTENSITY_MINUS_MIN:
-				return result.RESULT_INTENSITY_MINUS_MIN;
+				return result.totalIntensityAboveImageMinimum;
 			case SORT_AVERAGE_INTENSITY_MINUS_MIN:
-				return result.RESULT_AVERAGE_INTENSITY_MINUS_MIN;
+				return result.averageIntesnityAboveImageMinimum;
 			default:
 				throw new RuntimeException("Unknown sort index method " + sortIndex);
 		}
@@ -4038,10 +4038,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		final int b = maxz;
 		for (FindFociResult result : resultsArray)
 		{
-			final int x = result.RESULT_X;
-			final int y = result.RESULT_Y;
-			final int z = result.RESULT_Z;
-			result.RESULT_CUSTOM_SORT_VALUE = x * a + y * b + z;
+			final int x = result.x;
+			final int y = result.y;
+			final int z = result.z;
+			result.sortValue = x * a + y * b + z;
 		}
 	}
 
@@ -4353,25 +4353,25 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		 */
 		public int compare(FindFociResult o1, FindFociResult o2)
 		{
-			if (o1.RESULT_MAX_VALUE > o2.RESULT_MAX_VALUE)
+			if (o1.maxValue > o2.maxValue)
 				return -1;
-			if (o1.RESULT_MAX_VALUE < o2.RESULT_MAX_VALUE)
+			if (o1.maxValue < o2.maxValue)
 				return 1;
-			if (o1.RESULT_COUNT > o2.RESULT_COUNT)
+			if (o1.count > o2.count)
 				return -1;
-			if (o1.RESULT_COUNT < o2.RESULT_COUNT)
+			if (o1.count < o2.count)
 				return 1;
-			if (o1.RESULT_X > o2.RESULT_X)
+			if (o1.x > o2.x)
 				return 1;
-			if (o1.RESULT_X < o2.RESULT_X)
+			if (o1.x < o2.x)
 				return -1;
-			if (o1.RESULT_Y > o2.RESULT_Y)
+			if (o1.y > o2.y)
 				return 1;
-			if (o1.RESULT_Y < o2.RESULT_Y)
+			if (o1.y < o2.y)
 				return -1;
-			if (o1.RESULT_Z > o2.RESULT_Z)
+			if (o1.z > o2.z)
 				return 1;
-			if (o1.RESULT_Z < o2.RESULT_Z)
+			if (o1.z < o2.z)
 				return -1;
 			// This should not happen as two maxima will be in the same position
 			throw new RuntimeException("Unable to sort the results");
@@ -4391,9 +4391,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		public int compare(FindFociResult o1, FindFociResult o2)
 		{
 			// Require the highest is first
-			if (o1.RESULT_CUSTOM_SORT_VALUE > o2.RESULT_CUSTOM_SORT_VALUE)
+			if (o1.sortValue > o2.sortValue)
 				return -1;
-			if (o1.RESULT_CUSTOM_SORT_VALUE < o2.RESULT_CUSTOM_SORT_VALUE)
+			if (o1.sortValue < o2.sortValue)
 				return 1;
 
 			// Avoid bad draws
@@ -4414,9 +4414,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		public int compare(FindFociResult o1, FindFociResult o2)
 		{
 			// Require the lowest is first
-			if (o1.RESULT_CUSTOM_SORT_VALUE > o2.RESULT_CUSTOM_SORT_VALUE)
+			if (o1.sortValue > o2.sortValue)
 				return 1;
-			if (o1.RESULT_CUSTOM_SORT_VALUE < o2.RESULT_CUSTOM_SORT_VALUE)
+			if (o1.sortValue < o2.sortValue)
 				return -1;
 
 			// Avoid bad draws
@@ -4493,13 +4493,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		{
 			for (FindFociResult result : resultsArray)
 			{
-				final int x = result.RESULT_X;
-				final int y = result.RESULT_Y;
-				final int z = (is2D) ? 0 : result.RESULT_Z;
+				final int x = result.x;
+				final int y = result.y;
+				final int z = (is2D) ? 0 : result.z;
 				final int index = getIndex(x, y, z);
 				final int objectId = objects[index];
-				result.RESULT_OBJECT = objectId;
-				result.RESULT_STATE = objectState[objectId];
+				result.object = objectId;
+				result.state = objectState[objectId];
 				fociCount[objectId]++;
 			}
 		}

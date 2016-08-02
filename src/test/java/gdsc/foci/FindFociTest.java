@@ -410,22 +410,22 @@ public class FindFociTest
     			//System.out.printf("[%d] %d,%d %f (%d) vs %d,%d %f (%d)\n", i, 
     			//		o1.RESULT_X, o1.RESULT_Y, o1.RESULT_MAX_VALUE, o1.RESULT_COUNT,
     			//		o2.RESULT_X, o2.RESULT_Y, o2.RESULT_MAX_VALUE, o2.RESULT_COUNT);
-    			Assert.assertEquals("X", o1.RESULT_X, o2.RESULT_X);
-    			Assert.assertEquals("Y", o1.RESULT_Y, o2.RESULT_Y);
-    			Assert.assertEquals("Z", o1.RESULT_Z, o2.RESULT_Z);
-    			Assert.assertEquals("ID", o1.RESULT_PEAK_ID, o2.RESULT_PEAK_ID);
-    			Assert.assertEquals("Count", o1.RESULT_COUNT, o2.RESULT_COUNT);
-    			Assert.assertEquals("Saddle ID", o1.RESULT_SADDLE_NEIGHBOUR_ID, o2.RESULT_SADDLE_NEIGHBOUR_ID);
-    			Assert.assertEquals("Count >Saddle", o1.RESULT_COUNT_ABOVE_SADDLE, o2.RESULT_COUNT_ABOVE_SADDLE);
+    			Assert.assertEquals("X", o1.x, o2.x);
+    			Assert.assertEquals("Y", o1.y, o2.y);
+    			Assert.assertEquals("Z", o1.z, o2.z);
+    			Assert.assertEquals("ID", o1.id, o2.id);
+    			Assert.assertEquals("Count", o1.count, o2.count);
+    			Assert.assertEquals("Saddle ID", o1.saddleNeighbourId, o2.saddleNeighbourId);
+    			Assert.assertEquals("Count >Saddle", o1.countAboveSaddle, o2.countAboveSaddle);
     			if (negativeValues)
     				continue;
-    			Assert.assertEquals("Intensity", (int)o1.RESULT_INTENSITY, (int)o2.RESULT_INTENSITY);
-    			Assert.assertEquals("Max", (int)o1.RESULT_MAX_VALUE, (int)o2.RESULT_MAX_VALUE);
-    			Assert.assertEquals("Saddle value", (int)o1.RESULT_HIGHEST_SADDLE_VALUE, (int)o2.RESULT_HIGHEST_SADDLE_VALUE);
-    			Assert.assertEquals("Av Intensity", (int)o1.RESULT_AVERAGE_INTENSITY, (int)o2.RESULT_AVERAGE_INTENSITY);
-    			Assert.assertEquals("Intensity >background", (int)o1.RESULT_INTENSITY_MINUS_BACKGROUND, (int)o2.RESULT_INTENSITY_MINUS_BACKGROUND);
-    			Assert.assertEquals("Av Intensity >background", (int)o1.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND, (int)o2.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND);
-    			Assert.assertEquals("Intensity > Saddle", (int)o1.RESULT_INTENSITY_ABOVE_SADDLE, (int)o2.RESULT_INTENSITY_ABOVE_SADDLE);
+    			Assert.assertEquals("Intensity", (int)o1.totalIntensity, (int)o2.totalIntensity);
+    			Assert.assertEquals("Max", (int)o1.maxValue, (int)o2.maxValue);
+    			Assert.assertEquals("Saddle value", (int)o1.highestSaddleValue, (int)o2.highestSaddleValue);
+    			Assert.assertEquals("Av Intensity", (int)o1.averageIntensity, (int)o2.averageIntensity);
+    			Assert.assertEquals("Intensity >background", (int)o1.totalIntensityAboveBackground, (int)o2.totalIntensityAboveBackground);
+    			Assert.assertEquals("Av Intensity >background", (int)o1.averageIntensityAboveBackground, (int)o2.averageIntensityAboveBackground);
+    			Assert.assertEquals("Intensity > Saddle", (int)o1.intensityAboveSaddle, (int)o2.intensityAboveSaddle);
     			//@formatter:on
 			}
 		}
@@ -451,21 +451,21 @@ public class FindFociTest
 			for (int[] r : resultsArray)
 			{
 				FindFociResult r2 = new FindFociResult();
-				r2.RESULT_AVERAGE_INTENSITY = r[FindFociLegacy.RESULT_AVERAGE_INTENSITY];
-				r2.RESULT_X = r[FindFociLegacy.RESULT_X];
-				r2.RESULT_Y = r[FindFociLegacy.RESULT_Y];
-				r2.RESULT_Z = r[FindFociLegacy.RESULT_Z];
-				r2.RESULT_PEAK_ID = r[FindFociLegacy.RESULT_PEAK_ID];
-				r2.RESULT_COUNT = r[FindFociLegacy.RESULT_COUNT];
-				r2.RESULT_INTENSITY = r[FindFociLegacy.RESULT_INTENSITY];
-				r2.RESULT_MAX_VALUE = r[FindFociLegacy.RESULT_MAX_VALUE];
-				r2.RESULT_HIGHEST_SADDLE_VALUE = r[FindFociLegacy.RESULT_HIGHEST_SADDLE_VALUE];
-				r2.RESULT_SADDLE_NEIGHBOUR_ID = r[FindFociLegacy.RESULT_SADDLE_NEIGHBOUR_ID];
-				r2.RESULT_AVERAGE_INTENSITY = r[FindFociLegacy.RESULT_AVERAGE_INTENSITY];
-				r2.RESULT_INTENSITY_MINUS_BACKGROUND = r[FindFociLegacy.RESULT_INTENSITY_MINUS_BACKGROUND];
-				r2.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND = r[FindFociLegacy.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND];
-				r2.RESULT_COUNT_ABOVE_SADDLE = r[FindFociLegacy.RESULT_COUNT_ABOVE_SADDLE];
-				r2.RESULT_INTENSITY_ABOVE_SADDLE = r[FindFociLegacy.RESULT_INTENSITY_ABOVE_SADDLE];
+				r2.averageIntensity = r[FindFociLegacy.RESULT_AVERAGE_INTENSITY];
+				r2.x = r[FindFociLegacy.RESULT_X];
+				r2.y = r[FindFociLegacy.RESULT_Y];
+				r2.z = r[FindFociLegacy.RESULT_Z];
+				r2.id = r[FindFociLegacy.RESULT_PEAK_ID];
+				r2.count = r[FindFociLegacy.RESULT_COUNT];
+				r2.totalIntensity = r[FindFociLegacy.RESULT_INTENSITY];
+				r2.maxValue = r[FindFociLegacy.RESULT_MAX_VALUE];
+				r2.highestSaddleValue = r[FindFociLegacy.RESULT_HIGHEST_SADDLE_VALUE];
+				r2.saddleNeighbourId = r[FindFociLegacy.RESULT_SADDLE_NEIGHBOUR_ID];
+				r2.averageIntensity = r[FindFociLegacy.RESULT_AVERAGE_INTENSITY];
+				r2.totalIntensityAboveBackground = r[FindFociLegacy.RESULT_INTENSITY_MINUS_BACKGROUND];
+				r2.averageIntensityAboveBackground = r[FindFociLegacy.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND];
+				r2.countAboveSaddle = r[FindFociLegacy.RESULT_COUNT_ABOVE_SADDLE];
+				r2.intensityAboveSaddle = r[FindFociLegacy.RESULT_INTENSITY_ABOVE_SADDLE];
 				results.add(r2);
 			}
 		}

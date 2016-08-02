@@ -48,7 +48,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 		for (int i = 1; i < peakThreshold.length; i++)
 		{
 			peakThreshold[i] = getTolerance(searchMethod, searchParameter, stats,
-					resultsArray.get(i - 1).RESULT_MAX_VALUE);
+					resultsArray.get(i - 1).maxValue);
 		}
 
 		for (int i = maxima.length; i-- > 0;)
@@ -92,9 +92,9 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 
 		for (FindFociResult result : resultsArray)
 		{
-			result.RESULT_COUNT = count[result.RESULT_PEAK_ID];
-			result.RESULT_INTENSITY = intensity[result.RESULT_PEAK_ID];
-			result.RESULT_AVERAGE_INTENSITY = result.RESULT_INTENSITY / result.RESULT_COUNT;
+			result.count = count[result.id];
+			result.totalIntensity = intensity[result.id];
+			result.averageIntensity = result.totalIntensity / result.count;
 		}
 	}
 
@@ -126,11 +126,11 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 
 		for (FindFociResult result : resultsArray)
 		{
-			final int id = result.RESULT_PEAK_ID;
+			final int id = result.id;
 			if (intensity[id] != 0)
 			{
-				result.RESULT_INTENSITY = intensity[id];
-				result.RESULT_MAX_VALUE = max[id];
+				result.totalIntensity = intensity[id];
+				result.maxValue = max[id];
 			}
 		}
 	}
@@ -154,7 +154,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 		final float[] saddleHeight = new float[resultsArray.size() + 1];
 		for (FindFociResult result : resultsArray)
 		{
-			saddleHeight[result.RESULT_PEAK_ID] = result.RESULT_HIGHEST_SADDLE_VALUE;
+			saddleHeight[result.id] = result.highestSaddleValue;
 		}
 
 		for (int i = maxima.length; i-- > 0;)
@@ -172,8 +172,8 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 
 		for (FindFociResult result : resultsArray)
 		{
-			result.RESULT_COUNT_ABOVE_SADDLE = peakSize[result.RESULT_PEAK_ID];
-			result.RESULT_INTENSITY_ABOVE_SADDLE = peakIntensity[result.RESULT_PEAK_ID];
+			result.countAboveSaddle = peakSize[result.id];
+			result.intensityAboveSaddle = peakIntensity[result.id];
 		}
 	}
 
@@ -208,12 +208,12 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 				}
 			}
 
-			result.RESULT_COUNT_ABOVE_SADDLE = peakSize;
-			result.RESULT_INTENSITY_ABOVE_SADDLE = peakIntensity;
+			result.countAboveSaddle = peakSize;
+			result.intensityAboveSaddle = peakIntensity;
 		}
 
-		result.RESULT_SADDLE_NEIGHBOUR_ID = peakIdMap[saddle.id];
-		result.RESULT_HIGHEST_SADDLE_VALUE = saddle.value;
+		result.saddleNeighbourId = peakIdMap[saddle.id];
+		result.highestSaddleValue = saddle.value;
 	}
 
 	/*
