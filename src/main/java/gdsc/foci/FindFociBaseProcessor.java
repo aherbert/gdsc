@@ -1439,9 +1439,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		sb.append(", Max = ").append(FindFoci.getFormat(stats.backgroundRegionMaximum, floatImage));
 		sb.append(", Mean = ").append(FindFoci.getFormat(stats.backgroundRegionAverage));
 		sb.append(", StdDev = ").append(FindFoci.getFormat(stats.backgroundRegionStdDev));
-		if (stats.backgroundRegionMinimum < 0 && isSortIndexSenstiveToNegativeValues(sortIndex))
+		if (stats.imageMinimum < 0 && isSortIndexSenstiveToNegativeValues(sortIndex))
 			sb.append(
-					"\nWARNING: Min background is below zero and the chosen sort index is sensitive to negative values");
+					"\nWARNING: Image minimum is below zero and the chosen sort index is sensitive to negative values");
 		IJ.log(sb.toString());
 	}
 
