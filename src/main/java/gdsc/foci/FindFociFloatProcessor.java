@@ -42,9 +42,9 @@ import ij.process.ImageProcessor;
  */
 public class FindFociFloatProcessor extends FindFociBaseProcessor
 {
-	private float[] image;
+	protected float[] image;
 	// Cache the bin for each index
-	private int[] bin;
+	protected int[] bin;
 
 	/**
 	 * Extract the image into a linear array stacked in zyx order

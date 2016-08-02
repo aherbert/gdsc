@@ -39,7 +39,7 @@ import ij.process.ImageProcessor;
  */
 public class FindFociIntProcessor extends FindFociBaseProcessor
 {
-	private int[] image;
+	protected int[] image;
 
 	protected Object extractImage(ImagePlus imp)
 	{
