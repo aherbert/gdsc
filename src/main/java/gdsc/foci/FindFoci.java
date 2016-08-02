@@ -58,7 +58,6 @@ import ij.io.Opener;
 import ij.io.RoiEncoder;
 import ij.plugin.FolderOpener;
 import ij.plugin.PlugIn;
-import ij.plugin.filter.GaussianBlur;
 import ij.plugin.frame.Recorder;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
@@ -1842,11 +1841,12 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			lastResultsArray = result.results;
 		return result;
 	}
-	
+
 	private FindFociBaseProcessor createFFProcessor(ImagePlus imp)
 	{
 		if (isOptimisedProcessor())
-			return (imp.getBitDepth() == 32) ? new FindFociOptimisedFloatProcessor() : new FindFociOptimisedIntProcessor();
+			return (imp.getBitDepth() == 32) ? new FindFociOptimisedFloatProcessor()
+					: new FindFociOptimisedIntProcessor();
 		return (imp.getBitDepth() == 32) ? new FindFociFloatProcessor() : new FindFociIntProcessor();
 	}
 
@@ -1863,33 +1863,17 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 */
 	public static ImagePlus applyBlur(ImagePlus imp, double blur)
 	{
-		if (blur > 0)
-		{
-			// Note: imp.duplicate() crops the image if there is an ROI selection
-			// so duplicate each ImageProcessor instead.
-			GaussianBlur gb = new GaussianBlur();
-			ImageStack stack = imp.getImageStack();
-			ImageStack newStack = new ImageStack(stack.getWidth(), stack.getHeight(), stack.getSize());
-			int channel = imp.getChannel();
-			int frame = imp.getFrame();
-			int[] dim = imp.getDimensions();
-			// Copy the entire stack
-			for (int slice = 1; slice <= stack.getSize(); slice++)
-				newStack.setPixels(stack.getProcessor(slice).getPixels(), slice);
-			// Now blur the current channel and frame
-			for (int slice = 1; slice <= dim[3]; slice++)
-			{
-				int stackIndex = imp.getStackIndex(channel, slice, frame);
-				ImageProcessor ip = stack.getProcessor(stackIndex).duplicate();
-				gb.blurGaussian(ip, blur, blur, 0.0002);
-				newStack.setPixels(ip.getPixels(), stackIndex);
-			}
-			imp = new ImagePlus(null, newStack);
-			imp.setDimensions(dim[2], dim[3], dim[4]);
-			imp.setC(channel);
-			imp.setT(frame);
-		}
-		return imp;
+		return FindFociBaseProcessor.applyBlur(imp, blur);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#blur(ij.ImagePlus, double)
+	 */
+	public ImagePlus blur(ImagePlus imp, double blur)
+	{
+		return ffp.blur(imp, blur);
 	}
 
 	/*
@@ -1935,21 +1919,6 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	public FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
 	{
 		return ffp.clone(initResults, clonedInitResults);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaRun(gdsc.foci.FindFociInitResults, int, double, int, double, int, int,
-	 * double, int, int, double)
-	 */
-	public FindFociMergeResults findMaximaRun(FindFociInitResults initResults, int backgroundMethod,
-			double backgroundParameter, int searchMethod, double searchParameter, int minSize, int peakMethod,
-			double peakParameter, int sortIndex, int options, double blur)
-	{
-		lastResultsArray = null;
-		return ffp.findMaximaRun(initResults, backgroundMethod, backgroundParameter, searchMethod, searchParameter,
-				minSize, peakMethod, peakParameter, sortIndex, options, blur);
 	}
 
 	/*
@@ -2835,7 +2804,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	}
 
 	/**
-	 * @param optimisedProcessor True if using an optimised FindFociProcessor (default is generic)
+	 * @param optimisedProcessor
+	 *            True if using an optimised FindFociProcessor (default is generic)
 	 */
 	public void setOptimisedProcessor(boolean optimisedProcessor)
 	{

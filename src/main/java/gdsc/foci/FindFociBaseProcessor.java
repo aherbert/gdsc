@@ -29,6 +29,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
+import ij.plugin.filter.GaussianBlur;
 import ij.process.ImageProcessor;
 
 /**
@@ -388,6 +389,58 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 */
 	protected abstract float getImageMin(Object pixels, byte[] types);
 
+	/**
+	 * Apply a Gaussian blur to the image and returns a new image.
+	 * Returns the original image if blur <= 0.
+	 * <p>
+	 * Only blurs the current channel and frame for use in the FindFoci algorithm.
+	 * 
+	 * @param imp
+	 * @param blur
+	 *            The blur standard deviation
+	 * @return the blurred image
+	 */
+	public static ImagePlus applyBlur(ImagePlus imp, double blur)
+	{
+		if (blur > 0)
+		{
+			// Note: imp.duplicate() crops the image if there is an ROI selection
+			// so duplicate each ImageProcessor instead.
+			GaussianBlur gb = new GaussianBlur();
+			ImageStack stack = imp.getImageStack();
+			ImageStack newStack = new ImageStack(stack.getWidth(), stack.getHeight(), stack.getSize());
+			int channel = imp.getChannel();
+			int frame = imp.getFrame();
+			int[] dim = imp.getDimensions();
+			// Copy the entire stack
+			for (int slice = 1; slice <= stack.getSize(); slice++)
+				newStack.setPixels(stack.getProcessor(slice).getPixels(), slice);
+			// Now blur the current channel and frame
+			for (int slice = 1; slice <= dim[3]; slice++)
+			{
+				int stackIndex = imp.getStackIndex(channel, slice, frame);
+				ImageProcessor ip = stack.getProcessor(stackIndex).duplicate();
+				gb.blurGaussian(ip, blur, blur, 0.0002);
+				newStack.setPixels(ip.getPixels(), stackIndex);
+			}
+			imp = new ImagePlus(null, newStack);
+			imp.setDimensions(dim[2], dim[3], dim[4]);
+			imp.setC(channel);
+			imp.setT(frame);
+		}
+		return imp;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#blur(ij.ImagePlus, double)
+	 */
+	public ImagePlus blur(ImagePlus imp, double blur)
+	{
+		return applyBlur(imp, blur);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -567,76 +620,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaRun(gdsc.foci.FindFociInitResults, int, double, int, double, int, int,
-	 * double, int, int, double)
-	 */
-	public FindFociMergeResults findMaximaRun(FindFociInitResults initResults, int backgroundMethod,
-			double backgroundParameter, int searchMethod, double searchParameter, int minSize, int peakMethod,
-			double peakParameter, int sortIndex, int options, double blur)
-	{
-		boolean restrictAboveSaddle = (options & OPTION_MINIMUM_ABOVE_SADDLE) == OPTION_MINIMUM_ABOVE_SADDLE;
-
-		Object image = initResults.image;
-		byte[] types = initResults.types; // Will be a notepad for pixel types
-		int[] maxima = initResults.maxima; // Contains the maxima Id assigned for each point
-		Histogram histogram = initResults.histogram;
-		FindFociStatistics stats = initResults.stats;
-		Object originalImage = initResults.originalImage;
-
-		setPixels(image);
-		stats.background = getSearchThreshold(backgroundMethod, backgroundParameter, stats);
-		Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, stats.regionMinimum, stats.background);
-
-		if (maxPoints == null)
-			return null;
-
-		ArrayList<FindFociResult> resultsArray = new ArrayList<FindFociResult>(maxPoints.length);
-
-		assignMaxima(maxima, maxPoints, resultsArray, stats);
-
-		// Free memory
-		maxPoints = null;
-
-		assignPointsToMaxima(image, histogram, types, stats, maxima);
-
-		// Remove points below the peak growth criteria
-		pruneMaxima(image, types, searchMethod, searchParameter, stats, resultsArray, maxima);
-
-		// Calculate the initial results (peak size and intensity)
-		calculateInitialResults(image, maxima, resultsArray);
-
-		// Calculate the highest saddle point for each peak
-		ArrayList<LinkedList<FindFociSaddle>> saddlePoints = new ArrayList<LinkedList<FindFociSaddle>>(
-				resultsArray.size() + 1);
-		findSaddlePoints(image, types, resultsArray, maxima, saddlePoints);
-
-		// Find the peak sizes above their saddle points.
-		analysePeaks(resultsArray, image, maxima, stats);
-
-		// TODO - Add another staging method here.
-
-		// Combine maxima below the minimum peak criteria to adjacent peaks (or eliminate if no neighbours)
-		int originalNumberOfPeaks = resultsArray.size();
-		resultsArray = mergeSubPeaks(resultsArray, image, maxima, minSize, peakMethod, peakParameter, stats,
-				saddlePoints, false, restrictAboveSaddle);
-		if (resultsArray == null)
-			return null;
-
-		if ((options & OPTION_REMOVE_EDGE_MAXIMA) != 0)
-			resultsArray = removeEdgeMaxima(resultsArray, maxima, stats, false);
-
-		if (blur > 0)
-		{
-			// Recalculate the totals using the original image 
-			calculateNativeResults(originalImage, maxima, resultsArray, originalNumberOfPeaks);
-		}
-
-		return new FindFociMergeResults(resultsArray, originalNumberOfPeaks);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see gdsc.foci.FindFociProcessor#findMaximaSearch(gdsc.foci.FindFociInitResults, int, double, int, double)
 	 */
 	public FindFociSearchResults findMaximaSearch(FindFociInitResults initResults, int backgroundMethod,
@@ -758,6 +741,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		for (FindFociResult result : originalResultsArray)
 			resultsArray.add(result.clone());
 
+		// If no blur was applied, then the centre using the original image will be the same as using the search
+		if (centreMethod == CENTRE_MAX_VALUE_ORIGINAL)
+			centreMethod = CENTRE_MAX_VALUE_SEARCH;
+		
 		// Calculate the peaks centre and maximum value.
 		locateMaxima(originalImage, searchImage, maxima, types, resultsArray, originalNumberOfPeaks, centreMethod,
 				centreParameter);
@@ -799,6 +786,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		for (FindFociResult result : originalResultsArray)
 			resultsArray.add(result.clone());
 
+		// If no blur was applied, then the centre using the original image will be the same as using the search
+		if (centreMethod == CENTRE_MAX_VALUE_ORIGINAL)
+			centreMethod = CENTRE_MAX_VALUE_SEARCH;
+		
 		// Calculate the peaks centre and maximum value.
 		locateMaxima(originalImage, searchImage, maxima, types, resultsArray, originalNumberOfPeaks, centreMethod,
 				centreParameter);
@@ -1979,7 +1970,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		reassignMaxima(maxima, idMap);
 
-		return maxPoints.toArray(new Coordinate[maxPoints.size()]);
+		Coordinate[] results = maxPoints.toArray(new Coordinate[maxPoints.size()]);
+		// XXX - Debug
+		//for (Coordinate r : results)
+		//	System.out.printf("[%d] %d = %f\n", r.id, r.index, r.value);
+		return results;
 	}
 
 	/**

@@ -2034,7 +2034,11 @@ public class FindFociLegacy
 
 		reassignMaxima(maxima, idMap);
 
-		return maxPoints.toArray(new Coordinate[0]);
+		Coordinate[] results = maxPoints.toArray(new Coordinate[maxPoints.size()]);
+		// XXX - Debug
+		//for (Coordinate r : results)
+		//	System.out.printf("[%d] %d = %d\n", r.id, r.index, r.value);
+		return results;
 	} // getSortedMaxPoints
 
 	/**

@@ -315,8 +315,8 @@ public interface FindFociProcessor
 	 * @param peakParameter
 	 *            parameter for calculating the minimum peak height
 	 * @param outputType
-	 *            Use {@link #FindFoci.OUTPUT_MASK_PEAKS} to get an ImagePlus in the result Object array. Use
-	 *            {@link #FindFoci.OUTPUT_LOG_MESSAGES} to get runtime information.
+	 *            Use {@link #OUTPUT_MASK_PEAKS} to get an ImagePlus in the result Object array. Use
+	 *            {@link #OUTPUT_LOG_MESSAGES} to get runtime information.
 	 * @param sortIndex
 	 *            The index of the result statistic to use for the peak sorting
 	 * @param options
@@ -346,6 +346,19 @@ public interface FindFociProcessor
 			int centreMethod, double centreParameter, double fractionParameter);
 
 	/**
+	 * Apply a Gaussian blur to the image and returns a new image.
+	 * Returns the original image if blur <= 0.
+	 * <p>
+	 * Only blurs the current channel and frame for use in the FindFoci algorithm.
+	 * 
+	 * @param imp
+	 * @param blur
+	 *            The blur standard deviation
+	 * @return the blurred image
+	 */
+	ImagePlus blur(ImagePlus imp, double blur);
+
+	/**
 	 * This method is a stripped-down version of the
 	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double)}
 	 * routine.
@@ -354,7 +367,20 @@ public interface FindFociProcessor
 	 * processing.
 	 * <p>
 	 * This method is intended for benchmarking.
-	 * 
+	 *
+	 * @param originalImp
+	 *            the original image
+	 * @param imp
+	 *            the image after the blur has been applied ( see {@link #blur(ImagePlus, double)} ).
+	 *            This allows the blur to be pre-computed.
+	 * @param mask
+	 *            A mask image used to define the region to search for peaks
+	 * @param backgroundMethod
+	 *            Method for calculating the background level (use the constants with prefix FindFoci.BACKGROUND_)
+	 * @param autoThresholdMethod
+	 *            The thresholding method (use a string from {@link #autoThresholdMethods } )
+	 * @param options
+	 *            An options flag (use the constants with prefix FindFoci.OPTION_)
 	 * @return the initialisation results
 	 */
 	FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask, int backgroundMethod,
@@ -377,30 +403,14 @@ public interface FindFociProcessor
 	 * Clones the init array for use in findMaxima staged methods.
 	 * Only the elements that are destructively modified by the findMaxima staged methods are duplicated. The rest are
 	 * shallow copied.
-	 * 
+	 *
 	 * @param initResults
 	 *            The original init results object
 	 * @param clonedInitResults
 	 *            A previously cloned init results object (avoid reallocating memory). Can be null.
-	 * @return The cloned init results
+	 * @return the find foci init results
 	 */
 	FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults);
-
-	/**
-	 * This method is a stripped-down version of the
-	 * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double)}
-	 * routine.
-	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 * <p>
-	 * This method is intended for benchmarking.
-	 * 
-	 * @param initResults
-	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}
-	 * @return The merge results
-	 */
-	FindFociMergeResults findMaximaRun(FindFociInitResults initResults, int backgroundMethod,
-			double backgroundParameter, int searchMethod, double searchParameter, int minSize, int peakMethod,
-			double peakParameter, int sortIndex, int options, double blur);
 
 	/**
 	 * This method is a stripped-down version of the
@@ -410,11 +420,19 @@ public interface FindFociProcessor
 	 * 
 	 * <p>
 	 * This method is intended for benchmarking.
-	 * 
+	 *
 	 * @param initResults
 	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
 	 *            Contents are destructively modified so should be cloned before input.
-	 * @return The search results
+	 * @param backgroundMethod
+	 *            Method for calculating the background level (use the constants with prefix FindFoci.BACKGROUND_)
+	 * @param backgroundParameter
+	 *            parameter for calculating the background level
+	 * @param searchMethod
+	 *            Method for calculating the region growing stopping criteria (use the constants with prefix SEARCH_)
+	 * @param searchParameter
+	 *            parameter for calculating the stopping criteria
+	 * @return the find foci search results
 	 */
 	FindFociSearchResults findMaximaSearch(FindFociInitResults initResults, int backgroundMethod,
 			double backgroundParameter, int searchMethod, double searchParameter);
@@ -427,14 +445,26 @@ public interface FindFociProcessor
 	 * 
 	 * <p>
 	 * This method is intended for benchmarking.
-	 * 
+	 *
 	 * @param initResults
 	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
 	 *            Contents are destructively modified so should be cloned before input.
 	 * @param searchResults
 	 *            The output from {@link #findMaximaSearch(Object[], int, double, int, double)}.
 	 *            Contents are unchanged.
-	 * @return The merge results
+	 * @param minSize
+	 *            The minimum size for a peak
+	 * @param peakMethod
+	 *            Method for calculating the minimum peak height above the highest saddle (use the constants with prefix
+	 *            PEAK_)
+	 * @param peakParameter
+	 *            parameter for calculating the minimum peak height
+	 * @param options
+	 *            An options flag (use the constants with prefix FindFoci.OPTION_)
+	 * @param blur
+	 *            Apply a Gaussian blur of the specified radius before processing (helps smooth noisy images for better
+	 *            peak identification)
+	 * @return the find foci merge results
 	 */
 	FindFociMergeResults findMaximaMerge(FindFociInitResults initResults, FindFociSearchResults searchResults,
 			int minSize, int peakMethod, double peakParameter, int options, double blur);
@@ -447,7 +477,7 @@ public interface FindFociProcessor
 	 * 
 	 * <p>
 	 * This method is intended for benchmarking.
-	 * 
+	 *
 	 * @param initResults
 	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
 	 *            Contents are destructively modified so should be cloned before input.
@@ -455,7 +485,16 @@ public interface FindFociProcessor
 	 *            The output from
 	 *            {@link #findMaximaMerge(FindFociInitResults, FindFociSearchResults, int, int, double, int, double)}.
 	 *            Contents are unchanged.
-	 * @return The FindFoci results (does not support the output mask)
+	 * @param maxPeaks
+	 *            The maximum number of peaks to report
+	 * @param sortIndex
+	 *            The index of the result statistic to use for the peak sorting
+	 * @param centreMethod
+	 *            Define the method used to calculate the peak centre (use the constants with prefix
+	 *            FindFociProcessor.CENTRE_)
+	 * @param centreParameter
+	 *            Parameter for calculating the peak centre
+	 * @return the find foci results
 	 */
 	FindFociResults findMaximaResults(FindFociInitResults initResults, FindFociMergeResults mergeResults, int maxPeaks,
 			int sortIndex, int centreMethod, double centreParameter);
@@ -468,7 +507,7 @@ public interface FindFociProcessor
 	 * 
 	 * <p>
 	 * This method is intended for staged processing.
-	 * 
+	 *
 	 * @param initResults
 	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
 	 *            Contents are destructively modified so should be cloned before input.
@@ -476,12 +515,19 @@ public interface FindFociProcessor
 	 *            The output from
 	 *            {@link #findMaximaMerge(FindFociInitResults, FindFociSearchResults, int, int, double, int, double)}.
 	 *            Contents are unchanged.
-	 * @return The preliminary results (these are not finalised and must be passed to
-	 *         {@link #findMaximaMaskResults(FindFociInitResults, FindFociMergeResults, FindFociResults, int, String, String, double)}
-	 *         )
+	 * @param maxPeaks
+	 *            The maximum number of peaks to report
+	 * @param sortIndex
+	 *            The index of the result statistic to use for the peak sorting
+	 * @param centreMethod
+	 *            Define the method used to calculate the peak centre (use the constants with prefix
+	 *            FindFociProcessor.CENTRE_)
+	 * @param centreParameter
+	 *            Parameter for calculating the peak centre
+	 * @return the find foci results
 	 */
 	FindFociResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
-			int maxPeaks, int sortIndex, int centreMethod, double centreParameter);
+			int maxPeaks, int sortIndex,int centreMethod,  double centreParameter);
 
 	/**
 	 * This method is a stripped-down version of the
@@ -491,7 +537,7 @@ public interface FindFociProcessor
 	 * 
 	 * <p>
 	 * This method is intended for staged processing.
-	 * 
+	 *
 	 * @param initResults
 	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
 	 *            Contents are destructively modified so should be cloned before input.
@@ -503,11 +549,16 @@ public interface FindFociProcessor
 	 *            The output from
 	 *            {@link #findMaximaPrelimResults(FindFociInitResults, FindFociMergeResults, int, int, int, double)}
 	 *            Contents are unchanged.
-	 * @param imageTitle
+	 * @param outputType
+	 *            Use {@link #OUTPUT_MASK_PEAKS} to get an ImagePlus in the result Object array. Use
+	 *            {@link #OUTPUT_LOG_MESSAGES} to get runtime information.
 	 * @param autoThresholdMethod
+	 *            The thresholding method (use a string from {@link #autoThresholdMethods } )
+	 * @param imageTitle
+	 *            the image title
 	 * @param fractionParameter
-	 *            The height of the peak to show in the mask
-	 * @return The FindFoci results
+	 *            Used to specify the fraction of the peak to show in the mask
+	 * @return the find foci results
 	 */
 	FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
 			FindFociResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,

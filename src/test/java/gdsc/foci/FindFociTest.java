@@ -21,6 +21,7 @@ public class FindFociTest
 	static RandomGenerator rand = new Well19937c(30051977);
 	static ImagePlus[] data;
 	static int numberOfTestImages = 2;
+	static final int LOOPS = 5;
 
 	// Allow testing different settings.
 	// Note that the float processor must use absolute values as the relative ones are converted to floats
@@ -132,6 +133,94 @@ public class FindFociTest
 	}
 
 	@Test
+	public void isSameResultUsingIntProcessorWithStagedMethods()
+	{
+		for (ImagePlus imp : createData())
+		{
+			for (int i = 0; i < backgroundMethod.length; i++)
+			{
+				FindFociResults r1 = runLegacy(imp, i);
+				FindFociResults r2 = runIntStaged(imp, i, false);
+				isEqual(r1, r2, i);
+			}
+		}
+	}
+
+	@Test
+	public void isSameResultUsingOptimisedIntProcessorWithStagedMethods()
+	{
+		for (ImagePlus imp : createData())
+		{
+			for (int i = 0; i < backgroundMethod.length; i++)
+			{
+				FindFociResults r1 = runLegacy(imp, i);
+				FindFociResults r2 = runIntStaged(imp, i, true);
+				isEqual(r1, r2, i);
+			}
+		}
+	}
+
+	@Test
+	public void isSameResultUsingFloatProcessorWithStagedMethods()
+	{
+		for (ImagePlus imp : createData())
+		{
+			for (int i = 0; i < backgroundMethod.length; i++)
+			{
+				FindFociResults r1 = runLegacy(imp, i);
+				FindFociResults r2 = runFloatStaged(imp, i, false, false);
+				isEqual(r1, r2, i);
+			}
+		}
+	}
+
+	@Test
+	public void isSameResultUsingOptimisedFloatProcessorWithStagedMethods()
+	{
+		for (ImagePlus imp : createData())
+		{
+			for (int i = 0; i < backgroundMethod.length; i++)
+			{
+				FindFociResults r1 = runLegacy(imp, i);
+				FindFociResults r2 = runFloatStaged(imp, i, true, false);
+				isEqual(r1, r2, i);
+			}
+		}
+	}
+
+	@Test
+	public void isSameResultUsingFloatProcessorWithStagedMethodsWithNegativeValues()
+	{
+		for (ImagePlus imp : createData())
+		{
+			for (int i = 0; i < backgroundMethod.length; i++)
+			{
+				if (FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortIndex[i]))
+					continue;
+				FindFociResults r1 = runLegacy(imp, i);
+				FindFociResults r2 = runFloatStaged(imp, i, false, true);
+				isEqual(r1, r2, i, true);
+			}
+		}
+	}
+
+	@Test
+	public void isSameResultUsingOptimisedFloatProcessorWithStagedMethodsWithNegativeValues()
+	{
+		for (ImagePlus imp : createData())
+		{
+			for (int i = 0; i < backgroundMethod.length; i++)
+			{
+				if (FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortIndex[i]))
+					continue;
+				FindFociResults r1 = runLegacy(imp, i);
+				FindFociResults r2 = runFloatStaged(imp, i, true, true);
+				isEqual(r1, r2, i, true);
+			}
+		}
+	}
+
+	@Test
 	public void isFasterUsingOptimisedIntProcessor()
 	{
 		// Get settings to try for the speed test
@@ -145,19 +234,21 @@ public class FindFociTest
 		long time1 = System.nanoTime();
 		for (ImagePlus imp : data)
 		{
-			for (int i : indices)
-			{
-				runInt(imp, i, false);
-			}
+			for (int n = LOOPS; n-- > 0;)
+				for (int i : indices)
+				{
+					runInt(imp, i, false);
+				}
 		}
 		time1 = System.nanoTime() - time1;
 		long time2 = System.nanoTime();
 		for (ImagePlus imp : data)
 		{
-			for (int i : indices)
-			{
-				runInt(imp, i, true);
-			}
+			for (int n = LOOPS; n-- > 0;)
+				for (int i : indices)
+				{
+					runInt(imp, i, true);
+				}
 		}
 		time2 = System.nanoTime() - time2;
 		System.out.printf("Int %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
@@ -178,19 +269,21 @@ public class FindFociTest
 		long time1 = System.nanoTime();
 		for (ImagePlus imp : data)
 		{
-			for (int i : indices)
-			{
-				runFloat(imp, i, false, false);
-			}
+			for (int n = LOOPS; n-- > 0;)
+				for (int i : indices)
+				{
+					runFloat(imp, i, false, false);
+				}
 		}
 		time1 = System.nanoTime() - time1;
 		long time2 = System.nanoTime();
 		for (ImagePlus imp : data)
 		{
-			for (int i : indices)
-			{
-				runFloat(imp, i, true, false);
-			}
+			for (int n = LOOPS; n-- > 0;)
+				for (int i : indices)
+				{
+					runFloat(imp, i, true, false);
+				}
 		}
 		time2 = System.nanoTime() - time2;
 		System.out.printf("Float %d, Opt Float %d, %fx faster\n", time1, time2, (double) time1 / time2);
@@ -209,36 +302,47 @@ public class FindFociTest
 		Assert.assertEquals(set + " Mask", imp1 != null, imp2 != null);
 		if (imp1 != null)
 		{
-			//			Assert.assertArrayEquals(set + " Mask values", (float[]) (imp1.getProcessor().convertToFloat().getPixels()),
-			//					(float[]) (imp2.getProcessor().convertToFloat().getPixels()), 0);
+			//Assert.assertArrayEquals(set + " Mask values", (float[]) (imp1.getProcessor().convertToFloat().getPixels()),
+			//		(float[]) (imp2.getProcessor().convertToFloat().getPixels()), 0);
 		}
 		ArrayList<FindFociResult> results1 = r1.results;
 		ArrayList<FindFociResult> results2 = r2.results;
 		//System.out.printf("N1=%d, N2=%d\n", results1.size(), results2.size());
 		Assert.assertEquals(set + " Results Size", results1.size(), results2.size());
-		for (int i = 0; i < results1.size(); i++)
+		int counter = 0;
+		try
 		{
-			//@formatter:off
-			FindFociResult o1 = results1.get(i);
-			FindFociResult o2 = results2.get(i);
-			//System.out.printf("[%d] %d,%d %f (%d)\n", i, o2.RESULT_X, o2.RESULT_Y, o2.RESULT_MAX_VALUE, o2.RESULT_COUNT);
-			Assert.assertEquals(set + " X: " +i, o1.RESULT_X, o2.RESULT_X);
-			Assert.assertEquals(set + " Y: " +i, o1.RESULT_Y, o2.RESULT_Y);
-			Assert.assertEquals(set + " Z: " +i, o1.RESULT_Z, o2.RESULT_Z);
-			Assert.assertEquals(set + " ID: " +i, o1.RESULT_PEAK_ID, o2.RESULT_PEAK_ID);
-			Assert.assertEquals(set + " Count: " +i, o1.RESULT_COUNT, o2.RESULT_COUNT);
-			Assert.assertEquals(set + " Saddle ID: " +i, o1.RESULT_SADDLE_NEIGHBOUR_ID, o2.RESULT_SADDLE_NEIGHBOUR_ID);
-			Assert.assertEquals(set + " Count >Saddle: " +i, o1.RESULT_COUNT_ABOVE_SADDLE, o2.RESULT_COUNT_ABOVE_SADDLE);
-			if (negativeValues)
-				continue;
-			Assert.assertEquals(set + " Intensity: " +i, (int)o1.RESULT_INTENSITY, (int)o2.RESULT_INTENSITY);
-			Assert.assertEquals(set + " Max: " +i, (int)o1.RESULT_MAX_VALUE, (int)o2.RESULT_MAX_VALUE);
-			Assert.assertEquals(set + " Saddle value: " +i, (int)o1.RESULT_HIGHEST_SADDLE_VALUE, (int)o2.RESULT_HIGHEST_SADDLE_VALUE);
-			Assert.assertEquals(set + " Av Intensity: " +i, (int)o1.RESULT_AVERAGE_INTENSITY, (int)o2.RESULT_AVERAGE_INTENSITY);
-			Assert.assertEquals(set + " Intensity >background: " +i, (int)o1.RESULT_INTENSITY_MINUS_BACKGROUND, (int)o2.RESULT_INTENSITY_MINUS_BACKGROUND);
-			Assert.assertEquals(set + " Av Intensity >background: " +i, (int)o1.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND, (int)o2.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND);
-			Assert.assertEquals(set + " Intensity > Saddle: " +i, (int)o1.RESULT_INTENSITY_ABOVE_SADDLE, (int)o2.RESULT_INTENSITY_ABOVE_SADDLE);
-			//@formatter:on
+			for (int i = 0; i < results1.size(); i++)
+			{
+				counter = i;
+				//@formatter:off
+    			FindFociResult o1 = results1.get(i);
+    			FindFociResult o2 = results2.get(i);
+    			//System.out.printf("[%d] %d,%d %f (%d) vs %d,%d %f (%d)\n", i, 
+    			//		o1.RESULT_X, o1.RESULT_Y, o1.RESULT_MAX_VALUE, o1.RESULT_COUNT,
+    			//		o2.RESULT_X, o2.RESULT_Y, o2.RESULT_MAX_VALUE, o2.RESULT_COUNT);
+    			Assert.assertEquals("X", o1.RESULT_X, o2.RESULT_X);
+    			Assert.assertEquals("Y", o1.RESULT_Y, o2.RESULT_Y);
+    			Assert.assertEquals("Z", o1.RESULT_Z, o2.RESULT_Z);
+    			Assert.assertEquals("ID", o1.RESULT_PEAK_ID, o2.RESULT_PEAK_ID);
+    			Assert.assertEquals("Count", o1.RESULT_COUNT, o2.RESULT_COUNT);
+    			Assert.assertEquals("Saddle ID", o1.RESULT_SADDLE_NEIGHBOUR_ID, o2.RESULT_SADDLE_NEIGHBOUR_ID);
+    			Assert.assertEquals("Count >Saddle", o1.RESULT_COUNT_ABOVE_SADDLE, o2.RESULT_COUNT_ABOVE_SADDLE);
+    			if (negativeValues)
+    				continue;
+    			Assert.assertEquals("Intensity", (int)o1.RESULT_INTENSITY, (int)o2.RESULT_INTENSITY);
+    			Assert.assertEquals("Max", (int)o1.RESULT_MAX_VALUE, (int)o2.RESULT_MAX_VALUE);
+    			Assert.assertEquals("Saddle value", (int)o1.RESULT_HIGHEST_SADDLE_VALUE, (int)o2.RESULT_HIGHEST_SADDLE_VALUE);
+    			Assert.assertEquals("Av Intensity", (int)o1.RESULT_AVERAGE_INTENSITY, (int)o2.RESULT_AVERAGE_INTENSITY);
+    			Assert.assertEquals("Intensity >background", (int)o1.RESULT_INTENSITY_MINUS_BACKGROUND, (int)o2.RESULT_INTENSITY_MINUS_BACKGROUND);
+    			Assert.assertEquals("Av Intensity >background", (int)o1.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND, (int)o2.RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND);
+    			Assert.assertEquals("Intensity > Saddle", (int)o1.RESULT_INTENSITY_ABOVE_SADDLE, (int)o2.RESULT_INTENSITY_ABOVE_SADDLE);
+    			//@formatter:on
+			}
+		}
+		catch (AssertionError e)
+		{
+			throw new AssertionError(String.format("Set %d [%d]: " + e.getMessage(), set, counter), e);
 		}
 	}
 
@@ -296,12 +400,67 @@ public class FindFociTest
 		{
 			fp.subtract(bias + 100);
 		}
+		imp = new ImagePlus(null, fp);
 		FindFoci ff = new FindFoci();
 		ff.setOptimisedProcessor(optimised);
-		return ff.findMaxima(new ImagePlus(null, fp), null, backgroundMethod[i], backgroundParameter[i],
-				autoThresholdMethod[i], searchMethod[i], searchParameter[i], maxPeaks[i], minSize[i], peakMethod[i],
-				peakParameter[i], outputType[i], sortIndex[i], options[i], blur[i], centreMethod[i], centreParameter[i],
+		return ff.findMaxima(imp, null, backgroundMethod[i], backgroundParameter[i], autoThresholdMethod[i],
+				searchMethod[i], searchParameter[i], maxPeaks[i], minSize[i], peakMethod[i], peakParameter[i],
+				outputType[i], sortIndex[i], options[i], blur[i], centreMethod[i], centreParameter[i],
 				fractionParameter[i]);
+	}
+
+	private FindFociResults runIntStaged(ImagePlus imp, int i, boolean optimised)
+	{
+		ImagePlus imp2 = FindFoci.applyBlur(imp, blur[i]);
+		FindFoci ff = new FindFoci();
+		ff.setOptimisedProcessor(optimised);
+		//		FindFociInitResults initResults = ff.findMaximaInit(imp, imp2, null, backgroundMethod[i],
+		//				autoThresholdMethod[i], options[i]);
+		//		FindFociInitResults searchInitResults = ff.cloneForSearch(initResults, null);
+		//		FindFociSearchResults searchResults = ff.findMaximaSearch(searchInitResults, backgroundMethod[i],
+		//				backgroundParameter[i], searchMethod[i], searchParameter[i]);
+		//		FindFociInitResults mergeInitResults = ff.clone(searchInitResults, null);
+		//		FindFociMergeResults mergeResults = ff.findMaximaMerge(mergeInitResults, searchResults, minSize[i],
+		//				peakMethod[i], peakParameter[i], options[i], blur[i]);
+		//		FindFociInitResults resultsInitResults = ff.clone(mergeInitResults, null);
+		//		FindFociResults prelimResults = ff.findMaximaPrelimResults(resultsInitResults, mergeResults, maxPeaks[i],
+		//				sortIndex[i], centreMethod[i], centreParameter[i]);
+		//		FindFociInitResults maskInitResults = ff.clone(resultsInitResults, null);
+		//		return ff.findMaximaMaskResults(maskInitResults, mergeResults, prelimResults, outputType[i],
+		//				autoThresholdMethod[i], "FindFociTest", fractionParameter[i]);
+		FindFociInitResults initResults = ff.findMaximaInit(imp, imp2, null, backgroundMethod[i],
+				autoThresholdMethod[i], options[i]);
+		FindFociSearchResults searchResults = ff.findMaximaSearch(initResults, backgroundMethod[i],
+				backgroundParameter[i], searchMethod[i], searchParameter[i]);
+		FindFociMergeResults mergeResults = ff.findMaximaMerge(initResults, searchResults, minSize[i], peakMethod[i],
+				peakParameter[i], options[i], blur[i]);
+		FindFociResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i], sortIndex[i],
+				centreMethod[i], centreParameter[i]);
+		return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i], autoThresholdMethod[i],
+				"FindFociTest", fractionParameter[i]);
+	}
+
+	private FindFociResults runFloatStaged(ImagePlus imp, int i, boolean optimised, boolean negative)
+	{
+		FloatProcessor fp = (FloatProcessor) imp.getProcessor().convertToFloat();
+		if (negative)
+		{
+			fp.subtract(bias + 100);
+		}
+		imp = new ImagePlus(null, fp);
+		ImagePlus imp2 = FindFoci.applyBlur(imp, blur[i]);
+		FindFoci ff = new FindFoci();
+		ff.setOptimisedProcessor(optimised);
+		FindFociInitResults initResults = ff.findMaximaInit(imp, imp2, null, backgroundMethod[i],
+				autoThresholdMethod[i], options[i]);
+		FindFociSearchResults searchResults = ff.findMaximaSearch(initResults, backgroundMethod[i],
+				backgroundParameter[i], searchMethod[i], searchParameter[i]);
+		FindFociMergeResults mergeResults = ff.findMaximaMerge(initResults, searchResults, minSize[i], peakMethod[i],
+				peakParameter[i], options[i], blur[i]);
+		FindFociResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i], sortIndex[i],
+				centreMethod[i], centreParameter[i]);
+		return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i], autoThresholdMethod[i],
+				"FindFociTest", fractionParameter[i]);
 	}
 
 	private static ImagePlus[] createData()
@@ -320,11 +479,11 @@ public class FindFociTest
 	private static ImagePlus createImageData()
 	{
 		// Create an image with peaks
-		int size = 512;
+		int size = 256;
 		int n = 80;
-		float[] data1 = createSpots(size, n, 10000, 2.5, 3.0);
-		float[] data2 = createSpots(size, n, 10000, 4.5, 3.5);
-		float[] data3 = createSpots(size, n, 10000, 6.5, 5);
+		float[] data1 = createSpots(size, n, 5000, 10000, 2.5, 3.0);
+		float[] data2 = createSpots(size, n, 10000, 20000, 4.5, 3.5);
+		float[] data3 = createSpots(size, n, 20000, 40000, 6.5, 5);
 		// Combine images and add a bias and read noise
 		RandomDataGenerator rg = new RandomDataGenerator(rand);
 		short[] data = new short[data1.length];
@@ -340,14 +499,14 @@ public class FindFociTest
 		return new ImagePlus(title, ip);
 	}
 
-	private static float[] createSpots(int size, int n, float value, double sigmaX, double sigmaY)
+	private static float[] createSpots(int size, int n, int min, int max, double sigmaX, double sigmaY)
 	{
 		float[] data = new float[size * size];
 		// Randomly put on spots
 		RandomDataGenerator rg = new RandomDataGenerator(rand);
 		while (n-- > 0)
 		{
-			data[rand.nextInt(data.length)] = rg.nextPoisson(value);
+			data[rand.nextInt(data.length)] = rg.nextInt(min, max);
 		}
 
 		// Blur

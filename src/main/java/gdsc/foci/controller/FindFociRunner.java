@@ -270,7 +270,7 @@ public class FindFociRunner extends Thread
 
 		if (state.ordinal() <= FindFociState.INITIAL.ordinal())
 		{
-			imp2 = FindFoci.applyBlur(imp, gaussianBlur);
+			imp2 = ff.blur(imp, gaussianBlur);
 			if (imp2 == null)
 			{
 				IJ.showStatus(FindFoci.TITLE + " failed");

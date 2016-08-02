@@ -683,7 +683,7 @@ public class FindFociOptimiser
 		for (int blurCount = 0; blurCount < blurArray.length; blurCount++)
 		{
 			double blur = blurArray[blurCount];
-			ImagePlus imp2 = FindFoci.applyBlur(imp, blur);
+			ImagePlus imp2 = ff.blur(imp, blur);
 
 			// Iterate over the options
 			int thresholdMethodIndex = 0;
