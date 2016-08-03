@@ -39,12 +39,13 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
 import gdsc.core.logging.MemoryLogger;
 import gdsc.core.threshold.AutoThreshold;
+import gdsc.core.utils.Maths;
+import gdsc.core.utils.UnicodeReader;
 import gdsc.foci.FindFociBaseProcessor.ObjectAnalysisResult;
 import gdsc.foci.model.FindFociModel;
 import gdsc.utils.GaussianFit;
@@ -645,7 +646,6 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 	// Used to record all the results into a single file during batch analysis
 	private OutputStreamWriter allOut = null;
-	private AtomicInteger batchId = new AtomicInteger();
 	private String emptyEntry = null;
 	private FindFociBaseProcessor ffpStaged;
 	private boolean optimisedProcessor = true;
@@ -1350,19 +1350,21 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 				stats, resultsDirectory, null, null);
 	}
 
-	private void openBatchResultsFile()
+	private String openBatchResultsFile()
 	{
+		String filename = resultsDirectory + File.separatorChar + "all.xls";
 		try
 		{
-			batchId = new AtomicInteger();
-			FileOutputStream fos = new FileOutputStream(resultsDirectory + File.separatorChar + "all.xls");
+			FileOutputStream fos = new FileOutputStream(filename);
 			allOut = new OutputStreamWriter(fos, "UTF-8");
 			allOut.write("Image ID\tImage\t" + createResultsHeader(newLine));
+			return filename;
 		}
 		catch (Exception e)
 		{
 			logError(e.getMessage());
 			closeBatchResultsFile();
+			return null;
 		}
 	}
 
@@ -1384,9 +1386,97 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 	}
 
-	private String initialiseBatchPrefix(String title)
+	private class BatchResult implements Comparable<BatchResult>
 	{
-		return batchId.incrementAndGet() + "\t" + title + "\t";
+		final String entry;
+		final int id;
+		final int batchId;
+
+		BatchResult(String entry, int id)
+		{
+			this.entry = entry;
+			this.id = id;
+			// The first characters before the tab are the batch Id
+			int index = entry.indexOf('\t');
+			batchId = Integer.parseInt(entry.substring(0, index));
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.lang.Comparable#compareTo(java.lang.Object)
+		 */
+		public int compareTo(BatchResult that)
+		{
+			int result = this.batchId - that.batchId;
+			return (result == 0) ? this.id - that.id : result;
+		}
+	}
+
+	private void sortBatchResultsFile(String filename)
+	{
+		BufferedReader input = null;
+		ArrayList<BatchResult> results = null;
+		String header = null;
+		try
+		{
+			FileInputStream fis = new FileInputStream(filename);
+			input = new BufferedReader(new UnicodeReader(fis, null));
+			header = input.readLine();
+			String line;
+			int id = 0;
+			results = new ArrayList<FindFoci.BatchResult>();
+			while ((line = input.readLine()) != null)
+			{
+				results.add(new BatchResult(line, ++id));
+			}
+		}
+		catch (Exception e)
+		{
+			logError(e.getMessage());
+			return;
+		}
+		finally
+		{
+			try
+			{
+				if (input != null)
+					input.close();
+			}
+			catch (Exception e)
+			{
+				logError(e.getMessage());
+			}
+		}
+
+		Collections.sort(results);
+		
+		try
+		{
+			FileOutputStream fos = new FileOutputStream(filename);
+			allOut = new OutputStreamWriter(fos, "UTF-8");
+			// Add new lines because Buffered reader strips them
+			allOut.write(header);
+			allOut.write(newLine);
+			for (BatchResult r : results)
+			{
+				allOut.write(r.entry);
+				allOut.write(newLine);
+			}
+		}
+		catch (Exception e)
+		{
+			logError(e.getMessage());
+		}
+		finally
+		{
+			closeBatchResultsFile();
+		}
+	}
+
+	private String initialiseBatchPrefix(int batchId, String title)
+	{
+		return batchId + "\t" + title + "\t";
 	}
 
 	private synchronized void writeBatchResultsFile(String batchPrefix, List<String> results)
@@ -2322,17 +2412,35 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 	}
 
+	private class Job
+	{
+		final String filename;
+		final int batchId;
+
+		Job(String filename, int batchId)
+		{
+			this.filename = filename;
+			this.batchId = batchId;
+		}
+
+		Job()
+		{
+			this.filename = null;
+			this.batchId = 0;
+		}
+	}
+
 	/**
 	 * Used to allow multi-threading of the fitting method
 	 */
 	private class Worker implements Runnable
 	{
 		volatile boolean finished = false;
-		final BlockingQueue<String> jobs;
+		final BlockingQueue<Job> jobs;
 		final FindFoci ff;
 		final BatchParameters parameters;
 
-		public Worker(BlockingQueue<String> jobs, FindFoci ff, BatchParameters parameters)
+		public Worker(BlockingQueue<Job> jobs, FindFoci ff, BatchParameters parameters)
 		{
 			this.jobs = jobs;
 			this.ff = ff;
@@ -2350,10 +2458,12 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			{
 				while (!finished)
 				{
-					final String job = jobs.take();
-					if (Utils.isNullOrEmpty(job) || finished)
+					final Job job = jobs.take();
+					if (job == null || finished)
 						break;
-					run(job);
+					if (job.batchId == 0)
+						break;
+					run(job.filename, job.batchId);
 				}
 			}
 			catch (InterruptedException e)
@@ -2367,14 +2477,14 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			}
 		}
 
-		private void run(String filename)
+		private void run(String filename, int batchId)
 		{
 			if (Utils.isInterrupted())
 			{
 				finished = true;
 				return;
 			}
-			runBatch(ff, filename, parameters);
+			runBatch(ff, batchId, filename, parameters);
 		}
 	}
 
@@ -2402,7 +2512,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			return;
 		}
 		setResultsDirectory(batchOutputDirectory);
-		openBatchResultsFile();
+		String batchFilename = openBatchResultsFile();
 		IJ.redirectErrorMessages();
 
 		if ((parameters.outputType & OUTPUT_LOG_MESSAGES) != 0)
@@ -2410,6 +2520,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			IJ.log("---");
 			IJ.log(TITLE + " Batch");
 		}
+		
+		// Multi-threaded use can result in ImageJ objects not existing.
+		// Initialise all IJ static methods we will use.
+		// TODO - Check if this is complete 
+		IJ.d2s(0);		
 
 		long runTime = System.nanoTime();
 		totalProgress = imageList.length;
@@ -2417,10 +2532,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		progress = 0;
 
 		// Allow multi-threaded execution
-		final int nThreads = Prefs.getThreads();
+		final int nThreads = Maths.min(Prefs.getThreads(), totalProgress);
+		boolean sortResults = false;
 		if (batchMultiThread && nThreads > 1)
 		{
-			BlockingQueue<String> jobs = new ArrayBlockingQueue<String>(nThreads * 2);
+			BlockingQueue<Job> jobs = new ArrayBlockingQueue<Job>(nThreads * 2);
 			List<Worker> workers = new LinkedList<Worker>();
 			List<Thread> threads = new LinkedList<Thread>();
 			for (int i = 0; i < nThreads; i++)
@@ -2432,16 +2548,18 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 				t.start();
 			}
 
+			int batchId = 0;
 			for (String image : imageList)
 			{
-				put(jobs, image);
+				putJob(jobs, image, ++batchId);
 				if (Utils.isInterrupted())
 					break;
 			}
+			sortResults = batchId > 1;
 			// Finish all the worker threads by passing in a null job
 			for (int i = 0; i < threads.size(); i++)
 			{
-				put(jobs, "");
+				putEmptyJob(jobs);
 			}
 
 			// Wait for all to finish
@@ -2460,15 +2578,19 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 		else
 		{
+			int batchId = 0;
 			for (String image : imageList)
 			{
-				runBatch(this, image, parameters);
+				runBatch(this, ++batchId, image, parameters);
 				if (Utils.isInterrupted())
 					break;
 			}
 		}
 
 		closeBatchResultsFile();
+
+		if (sortResults)
+			sortBatchResultsFile(batchFilename);
 
 		runTime = System.nanoTime() - runTime;
 		IJ.showProgress(1);
@@ -2581,11 +2703,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return Arrays.copyOf(list, c);
 	}
 
-	private void put(BlockingQueue<String> jobs, String filename)
+	private void putJob(BlockingQueue<Job> jobs, String filename, int batchId)
 	{
 		try
 		{
-			jobs.put(filename);
+			jobs.put(new Job(filename, batchId));
 		}
 		catch (InterruptedException e)
 		{
@@ -2593,7 +2715,19 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 	}
 
-	private static boolean runBatch(FindFoci ff, String image, BatchParameters parameters)
+	private void putEmptyJob(BlockingQueue<Job> jobs)
+	{
+		try
+		{
+			jobs.put(new Job());
+		}
+		catch (InterruptedException e)
+		{
+			throw new RuntimeException("Unexpected interruption", e);
+		}
+	}
+
+	private static boolean runBatch(FindFoci ff, int batchId, String image, BatchParameters parameters)
 	{
 		ff.showProgress();
 		IJ.showStatus(image);
@@ -2616,7 +2750,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			maskImp = setupImage(maskImp, maskDimension);
 
 		// Run the algorithm
-		return execBatch(ff, imp, maskImp, parameters, imageDimension, maskDimension);
+		return execBatch(ff, batchId, imp, maskImp, parameters, imageDimension, maskDimension);
 	}
 
 	/**
@@ -2689,6 +2823,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 *
 	 * @param ff
 	 *            the FindFoci instance
+	 * @param batchId
+	 *            the batch id
 	 * @param imp
 	 *            the imp
 	 * @param mask
@@ -2701,7 +2837,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 *            the mask dimension
 	 * @return true, if successful
 	 */
-	private static boolean execBatch(FindFoci ff, ImagePlus imp, ImagePlus mask, BatchParameters p,
+	private static boolean execBatch(FindFoci ff, int batchId, ImagePlus imp, ImagePlus mask, BatchParameters p,
 			int[] imageDimension, int[] maskDimension)
 	{
 		if (!isSupported(imp.getBitDepth()))
@@ -2765,7 +2901,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 
 		// Record all the results to file
-		final String batchPrefix = ff.initialiseBatchPrefix(expId);
+		final String batchPrefix = ff.initialiseBatchPrefix(batchId, expId);
 		ff.saveResults(ffp, expId, imp, imageDimension, mask, maskDimension, p.backgroundMethod, p.backgroundParameter,
 				p.autoThresholdMethod, p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod,
 				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
