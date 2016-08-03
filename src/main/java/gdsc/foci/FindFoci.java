@@ -1450,7 +1450,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 
 		Collections.sort(results);
-		
+
 		try
 		{
 			FileOutputStream fos = new FileOutputStream(filename);
@@ -2484,7 +2484,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 				finished = true;
 				return;
 			}
-			runBatch(ff, batchId, filename, parameters);
+			runBatch(ff, batchId, filename, parameters, new MemoryLogger());
 		}
 	}
 
@@ -2520,11 +2520,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			IJ.log("---");
 			IJ.log(TITLE + " Batch");
 		}
-		
+
 		// Multi-threaded use can result in ImageJ objects not existing.
 		// Initialise all IJ static methods we will use.
 		// TODO - Check if this is complete 
-		IJ.d2s(0);		
+		IJ.d2s(0);
 
 		long runTime = System.nanoTime();
 		totalProgress = imageList.length;
@@ -2581,7 +2581,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			int batchId = 0;
 			for (String image : imageList)
 			{
-				runBatch(this, ++batchId, image, parameters);
+				runBatch(this, ++batchId, image, parameters, null);
 				if (Utils.isInterrupted())
 					break;
 			}
@@ -2727,7 +2727,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 	}
 
-	private static boolean runBatch(FindFoci ff, int batchId, String image, BatchParameters parameters)
+	private static boolean runBatch(FindFoci ff, int batchId, String image, BatchParameters parameters, MemoryLogger logger)
 	{
 		ff.showProgress();
 		IJ.showStatus(image);
@@ -2750,7 +2750,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			maskImp = setupImage(maskImp, maskDimension);
 
 		// Run the algorithm
-		return execBatch(ff, batchId, imp, maskImp, parameters, imageDimension, maskDimension);
+		return execBatch(ff, batchId, imp, maskImp, parameters, imageDimension, maskDimension, logger);
 	}
 
 	/**
@@ -2835,10 +2835,12 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 *            the image dimension
 	 * @param maskDimension
 	 *            the mask dimension
+	 * @param logger
+	 *            the logger
 	 * @return true, if successful
 	 */
 	private static boolean execBatch(FindFoci ff, int batchId, ImagePlus imp, ImagePlus mask, BatchParameters p,
-			int[] imageDimension, int[] maskDimension)
+			int[] imageDimension, int[] maskDimension, MemoryLogger logger)
 	{
 		if (!isSupported(imp.getBitDepth()))
 		{
@@ -2857,13 +2859,13 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 		FindFociBaseProcessor ffp = ff.createFFProcessor(imp);
 		ffp.setShowStatus(false);
-		MemoryLogger logger = new MemoryLogger();
 		ffp.setLogger(logger);
 		FindFociResults ffResult = ff.findMaxima(ffp, imp, mask, p.backgroundMethod, p.backgroundParameter,
 				p.autoThresholdMethod, p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod,
 				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
 				p.fractionParameter);
-		recordLogMessages(logger);
+		if (logger != null)
+			recordLogMessages(logger);
 
 		if (ffResult == null)
 			return false;
