@@ -34,8 +34,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import gdsc.UsageTracker;
@@ -408,12 +411,14 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	private static String BATCH_MASK_DIRECTORY = "findfoci.batchMaskDirectory";
 	private static String BATCH_PARAMETER_FILE = "findfoci.batchParameterFile";
 	private static String BATCH_OUTPUT_DIRECTORY = "findfoci.batchOutputDirectory";
+	private static String BATCH_MULTI_THREAD = "findfoci.batchMultiThread";
 	private static String SEARCH_CAPACITY = "findfoci.searchCapacity";
 	private static String EMPTY_FIELD = "findfoci.emptyField";
 	private static String batchInputDirectory = Prefs.get(BATCH_INPUT_DIRECTORY, "");
 	private static String batchMaskDirectory = Prefs.get(BATCH_MASK_DIRECTORY, "");
 	private static String batchParameterFile = Prefs.get(BATCH_PARAMETER_FILE, "");
 	private static String batchOutputDirectory = Prefs.get(BATCH_OUTPUT_DIRECTORY, "");
+	private static boolean batchMultiThread = Prefs.get(BATCH_MULTI_THREAD, false);
 	static int searchCapacity = (int) Prefs.get(SEARCH_CAPACITY, Short.MAX_VALUE);
 	private static String emptyField = Prefs.get(EMPTY_FIELD, "");
 	private TextField textParamFile;
@@ -2318,6 +2323,62 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	}
 
 	/**
+	 * Used to allow multi-threading of the fitting method
+	 */
+	private class Worker implements Runnable
+	{
+		volatile boolean finished = false;
+		final BlockingQueue<String> jobs;
+		final FindFoci ff;
+		final BatchParameters parameters;
+
+		public Worker(BlockingQueue<String> jobs, FindFoci ff, BatchParameters parameters)
+		{
+			this.jobs = jobs;
+			this.ff = ff;
+			this.parameters = parameters;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.lang.Runnable#run()
+		 */
+		public void run()
+		{
+			try
+			{
+				while (!finished)
+				{
+					final String job = jobs.take();
+					if (Utils.isNullOrEmpty(job) || finished)
+						break;
+					run(job);
+				}
+			}
+			catch (InterruptedException e)
+			{
+				System.out.println(e.toString());
+				throw new RuntimeException(e);
+			}
+			finally
+			{
+				finished = true;
+			}
+		}
+
+		private void run(String filename)
+		{
+			if (Utils.isInterrupted())
+			{
+				finished = true;
+				return;
+			}
+			runBatch(ff, filename, parameters);
+		}
+	}
+
+	/**
 	 * Runs a batch of FindFoci analysis. Asks for an input directory, parameter file and results directory.
 	 */
 	private void runBatchMode()
@@ -2344,26 +2405,80 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		openBatchResultsFile();
 		IJ.redirectErrorMessages();
 
-		// TODO - make this multi-threaded
+		if ((parameters.outputType & OUTPUT_LOG_MESSAGES) != 0)
+		{
+			IJ.log("---");
+			IJ.log(TITLE + " Batch");
+		}
 
 		long runTime = System.nanoTime();
 		totalProgress = imageList.length;
 		stepProgress = Utils.getProgressInterval(totalProgress);
 		progress = 0;
 
-		for (String image : imageList)
+		// Allow multi-threaded execution
+		final int nThreads = Prefs.getThreads();
+		if (batchMultiThread && nThreads > 1)
 		{
-			runBatch(this, image, parameters);
-			if (Utils.isInterrupted())
-				break;
+			BlockingQueue<String> jobs = new ArrayBlockingQueue<String>(nThreads * 2);
+			List<Worker> workers = new LinkedList<Worker>();
+			List<Thread> threads = new LinkedList<Thread>();
+			for (int i = 0; i < nThreads; i++)
+			{
+				Worker worker = new Worker(jobs, this, parameters);
+				Thread t = new Thread(worker);
+				workers.add(worker);
+				threads.add(t);
+				t.start();
+			}
+
+			for (String image : imageList)
+			{
+				put(jobs, image);
+				if (Utils.isInterrupted())
+					break;
+			}
+			// Finish all the worker threads by passing in a null job
+			for (int i = 0; i < threads.size(); i++)
+			{
+				put(jobs, "");
+			}
+
+			// Wait for all to finish
+			for (int i = 0; i < threads.size(); i++)
+			{
+				try
+				{
+					threads.get(i).join();
+				}
+				catch (InterruptedException e)
+				{
+					e.printStackTrace();
+				}
+			}
+			threads.clear();
+		}
+		else
+		{
+			for (String image : imageList)
+			{
+				runBatch(this, image, parameters);
+				if (Utils.isInterrupted())
+					break;
+			}
 		}
 
 		closeBatchResultsFile();
 
+		runTime = System.nanoTime() - runTime;
 		IJ.showProgress(1);
 		IJ.showStatus("");
-		runTime = System.nanoTime() - runTime;
-		IJ.log(TITLE + " Batch time = " + Utils.timeToString(runTime / 1000000.0));
+
+		if ((parameters.outputType & OUTPUT_LOG_MESSAGES) != 0)
+		{
+			IJ.log("---");
+			IJ.log(TITLE + " Batch time = " + Utils.timeToString(runTime / 1000000.0));
+		}
 
 		if (Utils.isInterrupted())
 		{
@@ -2381,6 +2496,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		gd.addStringField("Mask_directory", batchMaskDirectory);
 		gd.addStringField("Parameter_file", batchParameterFile);
 		gd.addStringField("Output_directory", batchOutputDirectory);
+		gd.addCheckbox("Multi-thread", batchMultiThread);
 		gd.addMessage("[Note: Double-click a text field to open a selection dialog]");
 		@SuppressWarnings("unchecked")
 		Vector<TextField> texts = (Vector<TextField>) gd.getStringFields();
@@ -2419,10 +2535,12 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			IJ.error(TITLE, "Output directory is not a valid directory: " + batchOutputDirectory);
 			return false;
 		}
+		batchMultiThread = gd.getNextBoolean();
 		Prefs.set(BATCH_INPUT_DIRECTORY, batchInputDirectory);
 		Prefs.set(BATCH_MASK_DIRECTORY, batchMaskDirectory);
 		Prefs.set(BATCH_PARAMETER_FILE, batchParameterFile);
 		Prefs.set(BATCH_OUTPUT_DIRECTORY, batchOutputDirectory);
+		Prefs.set(BATCH_MULTI_THREAD, batchMultiThread);
 		return true;
 	}
 
@@ -2461,6 +2579,18 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			list[c++] = name;
 		}
 		return Arrays.copyOf(list, c);
+	}
+
+	private void put(BlockingQueue<String> jobs, String filename)
+	{
+		try
+		{
+			jobs.put(filename);
+		}
+		catch (InterruptedException e)
+		{
+			throw new RuntimeException("Unexpected interruption", e);
+		}
 	}
 
 	private static boolean runBatch(FindFoci ff, String image, BatchParameters parameters)
@@ -2598,7 +2728,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
 				p.fractionParameter);
 		recordLogMessages(logger);
-		
+
 		if (ffResult == null)
 			return false;
 
@@ -2715,7 +2845,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	/**
 	 * Record the messages from the logger
 	 *
-	 * @param logger the logger
+	 * @param logger
+	 *            the logger
 	 */
 	private synchronized static void recordLogMessages(MemoryLogger logger)
 	{
