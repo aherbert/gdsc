@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 
 import gdsc.core.ij.Utils;
+import gdsc.core.logging.Logger;
 import gdsc.core.threshold.AutoThreshold;
 import gdsc.threshold.Multi_OtsuThreshold;
 import gdsc.utils.GaussianFit;
@@ -67,6 +68,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	protected boolean[] flatEdge;
 	private Rectangle bounds = null;
 
+	private boolean showStatus = true;
+	private Logger logger = null;
+
 	// The following arrays are built for a 3D search through the following z-order: (0,-1,1)
 	// Each 2D plane is built for a search round a pixel in an anti-clockwise direction. 
 	// Note the x==y==z==0 element is not present. Thus there are blocks of 8,9,9 for each plane.
@@ -106,7 +110,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		boolean isLogging = isLogging(outputType);
 
 		if (isLogging)
-			IJ.log("---" + FindFoci.newLine + FindFoci.TITLE + " : " + imp.getTitle());
+			log("---" + FindFoci.newLine + FindFoci.TITLE + " : " + imp.getTitle());
 
 		// Call first to set up the processing for isWithin;
 		initialise(imp);
@@ -115,7 +119,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		timingStart();
 		final boolean restrictAboveSaddle = (options & OPTION_MINIMUM_ABOVE_SADDLE) == OPTION_MINIMUM_ABOVE_SADDLE;
 
-		IJ.showStatus("Initialising memory...");
+		showStatus("Initialising memory...");
 
 		// Support int[] or float[] image
 		final Object originalImage = extractImage(imp);
@@ -136,7 +140,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			image = originalImage;
 		}
 
-		IJ.showStatus("Initialising ROI...");
+		showStatus("Initialising ROI...");
 
 		// Mark any point outside the ROI as processed
 		int exclusion = excludeOutsideROI(imp, types, isLogging);
@@ -144,7 +148,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		// The histogram is used to process the levels in the assignPointsToMaxima() routine. 
 		// So only use those that have not been excluded.
-		IJ.showStatus("Building histogram...");
+		showStatus("Building histogram...");
 
 		final Histogram histogram = buildHistogram(imp.getBitDepth(), image, types, OPTION_STATS_INSIDE);
 		getStatistics(histogram, stats);
@@ -186,18 +190,18 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		}
 		statsHistogram = null;
 
-		IJ.showStatus("Getting sorted maxima...");
+		showStatus("Getting sorted maxima...");
 		stats.background = getSearchThreshold(backgroundMethod, backgroundParameter, stats);
 		if (isLogging)
-			IJ.log("Background level = " + getFormat(stats.background));
+			log("Background level = " + getFormat(stats.background));
 		Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, stats.regionMinimum, stats.background);
 
 		if (Utils.isInterrupted() || maxPoints == null)
 			return null;
 
 		if (isLogging)
-			IJ.log("Number of potential maxima = " + maxPoints.length);
-		IJ.showStatus("Analyzing maxima...");
+			log("Number of potential maxima = " + maxPoints.length);
+		showStatus("Analyzing maxima...");
 
 		ArrayList<FindFociResult> resultsArray = new ArrayList<FindFociResult>(maxPoints.length);
 
@@ -220,7 +224,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// Calculate the initial results (peak size and intensity)
 		calculateInitialResults(image, maxima, resultsArray);
 
-		IJ.showStatus("Finding saddle points...");
+		showStatus("Finding saddle points...");
 
 		// Calculate the highest saddle point for each peak
 		ArrayList<LinkedList<FindFociSaddle>> saddlePoints = new ArrayList<LinkedList<FindFociSaddle>>(
@@ -236,7 +240,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		if (isLogging)
 			timingSplit("Mapped saddle points");
 
-		IJ.showStatus("Merging peaks...");
+		showStatus("Merging peaks...");
 
 		// Combine maxima below the minimum peak criteria to adjacent peaks (or eliminate if no neighbours)
 		int originalNumberOfPeaks = resultsArray.size();
@@ -286,7 +290,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			String message = "Final number of peaks = " + nMaxima;
 			if (nMaxima < totalPeaks)
 				message += " / " + totalPeaks;
-			IJ.log(message);
+			log(message);
 		}
 
 		// Compute this only when we know we have some results (to avoid wasted CPU)
@@ -300,7 +304,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		ImagePlus outImp = null;
 		if ((outputType & CREATE_OUTPUT_MASK) != 0)
 		{
-			IJ.showStatus("Generating mask image...");
+			showStatus("Generating mask image...");
 
 			outImp = generateOutputMask(outputType, autoThresholdMethod, imp, fractionParameter, image, types, maxima,
 					stats, resultsArray, nMaxima);
@@ -356,7 +360,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	private void timingSplit(String string)
 	{
 		final long newTimestamp = System.nanoTime();
-		IJ.log(string + " = " + ((newTimestamp - timestamp) / 1000000.0) + " msec");
+		log(string + " = " + ((newTimestamp - timestamp) / 1000000.0) + " msec");
 		timestamp = newTimestamp;
 	}
 
@@ -975,7 +979,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// Check the maxima can be displayed
 		if (maxValue > MAXIMA_CAPCITY)
 		{
-			IJ.log("The number of maxima exceeds the 16-bit capacity used for diplay: " + MAXIMA_CAPCITY);
+			log("The number of maxima exceeds the 16-bit capacity used for diplay: " + MAXIMA_CAPCITY);
 			return null;
 		}
 
@@ -1428,7 +1432,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		sb.append(", Max = ").append(FindFoci.getFormat(stats.regionMaximum, floatImage));
 		sb.append(", Mean = ").append(FindFoci.getFormat(stats.regionAverage));
 		sb.append(", StdDev = ").append(FindFoci.getFormat(stats.regionStdDev));
-		IJ.log(sb.toString());
+		log(sb.toString());
 
 		sb.setLength(0);
 		if (exclusion > 0)
@@ -1443,7 +1447,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			sb.append(
 					"\nWARNING: Image minimum is below zero and the chosen sort index is sensitive to negative values: " +
 							FindFoci.sortIndexMethods[sortIndex]);
-		IJ.log(sb.toString());
+		log(sb.toString());
 	}
 
 	private String getFormat(double value)
@@ -1541,14 +1545,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			{
 				ipMask = roi.getMask();
 				if (isLogging)
-					IJ.log("ROI = Mask");
+					log("ROI = Mask");
 			}
 			// Use a mask for an irregular ROI
 			else if (roi.getType() == Roi.FREEROI)
 			{
 				ipMask = imp.getMask();
 				if (isLogging)
-					IJ.log("ROI = Freehand ROI");
+					log("ROI = Freehand ROI");
 			}
 			// Use a round rectangle if necessary
 			else if (roi.getRoundRectArcSize() != 0)
@@ -1556,7 +1560,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				rr = new RoundRectangle2D.Float(roiBounds.x, roiBounds.y, roiBounds.width, roiBounds.height,
 						roi.getRoundRectArcSize(), roi.getRoundRectArcSize());
 				if (isLogging)
-					IJ.log("ROI = Round ROI");
+					log("ROI = Round ROI");
 			}
 
 			// Set everything as excluded
@@ -1618,14 +1622,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		{
 			if (isLogging)
 			{
-				IJ.log("Mask dimensions do not match the image");
+				log("Mask dimensions do not match the image");
 			}
 			return 0;
 		}
 
 		if (isLogging)
 		{
-			IJ.log("Mask image = " + mask.getTitle());
+			log("Mask image = " + mask.getTitle());
 		}
 
 		if (mask.getNSlices() == 1)
@@ -1918,7 +1922,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				id++;
 				if (id >= FindFoci.searchCapacity)
 				{
-					IJ.log("The number of potential maxima exceeds the search capacity: " + FindFoci.searchCapacity +
+					log("The number of potential maxima exceeds the search capacity: " + FindFoci.searchCapacity +
 							". Try using a denoising/smoothing filter or increase the capacity.");
 					return null;
 				}
@@ -2078,7 +2082,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		} while (listI < listLen && isPlateau);
 
-		// IJ.log("Potential plateau "+ x0 + ","+y0+","+z0+" : "+listLen);
+		// log("Potential plateau "+ x0 + ","+y0+","+z0+" : "+listLen);
 
 		// Find the centre
 		double xEqual = 0;
@@ -2283,7 +2287,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				// any pixels that we have not reached?
 				// It could happen if there is a large area of flat pixels => no local maxima.
 				// Add to the next level.
-				//IJ.log("Unprocessed " + remaining + " @level = " + level);
+				//log("Unprocessed " + remaining + " @level = " + level);
 
 				int nextLevel = level; // find the next level to process
 				do
@@ -2462,7 +2466,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			//          // A higher point has been found. Check if this position is a plateau
 			//if ((types[index] & PLATEAU) == PLATEAU)
 			//{
-			//	IJ.log(String.format("Plateau merge to higher level: %d @ [%d,%d] : %d", image[index], x, y,
+			//	log(String.format("Plateau merge to higher level: %d @ [%d,%d] : %d", image[index], x, y,
 			//			image[index2]));
 			//
 			//	// Initialise the list to allow all points on this level to be processed. 
@@ -2541,7 +2545,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		} while (listI < listLen);
 
-		//IJ.log("Plateau size = "+listLen);
+		//log("Plateau size = "+listLen);
 
 		for (int i = listLen; i-- > 0;)
 		{
@@ -2739,7 +2743,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			final int maximaId = result.id;
 			final int index = getIndex(result.x, result.y, result.z);
 			final int listLen = findMaximaCoords(maxima, types, index, maximaId, result.highestSaddleValue, pList);
-			//IJ.log("maxima size > saddle = " + listLen);
+			//log("maxima size > saddle = " + listLen);
 
 			// Find the boundaries of the coordinates
 			final int[] min_xyz = new int[] { maxx, maxy, maxz };
@@ -2757,7 +2761,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 						max_xyz[i] = xyz[i];
 				}
 			}
-			//IJ.log("Boundaries " + maximaId + " : " + min_xyz[0] + "," + min_xyz[1] + "," + min_xyz[2] + " => " +
+			//log("Boundaries " + maximaId + " : " + min_xyz[0] + "," + min_xyz[1] + "," + min_xyz[2] + " => " +
 			//		max_xyz[0] + "," + max_xyz[1] + "," + max_xyz[2]);
 
 			// Extract sub image
@@ -2777,7 +2781,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 					//					{
 					//						if (IJ.debugMode)
 					//						{
-					//							IJ.log("No Gaussian fit");
+					//							log("No Gaussian fit");
 					//						}
 					//					}
 					break;
@@ -2804,7 +2808,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 						shift[i] = coords[i] - (centre[i] + min_xyz[i]);
 						d += shift[i] * shift[i];
 					}
-					IJ.log("Moved centre: " + shift[0] + " , " + shift[1] + " , " + shift[2] + " = " +
+					log("Moved centre: " + shift[0] + " , " + shift[1] + " , " + shift[2] + " = " +
 							IJ.d2s(Math.sqrt(d), 2));
 				}
 
@@ -3317,7 +3321,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				if (highestSaddleValue[id2] != NO_SADDLE_VALUE)
 				{
 					saddles.add(new FindFociSaddle(id2, highestSaddleValue[id2]));
-					// IJ.log("Peak saddle " + id + " -> " + id2 + " @ " + highestSaddleValue[id2]);
+					// log("Peak saddle " + id + " -> " + id2 + " @ " + highestSaddleValue[id2]);
 					if (highestNeighbourValue < highestSaddleValue[id2])
 					{
 						highestNeighbourValue = highestSaddleValue[id2];
@@ -3440,7 +3444,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		}
 
 		if (isLogging)
-			IJ.log("Height filter : Number of peaks = " + countPeaks(peakIdMap));
+			log("Height filter : Number of peaks = " + countPeaks(peakIdMap));
 		if (Utils.isInterrupted())
 			return null;
 
@@ -3479,7 +3483,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		}
 
 		if (isLogging)
-			IJ.log("Size filter : Number of peaks = " + countPeaks(peakIdMap));
+			log("Size filter : Number of peaks = " + countPeaks(peakIdMap));
 		if (Utils.isInterrupted())
 			return null;
 
@@ -3533,7 +3537,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			}
 
 			if (isLogging)
-				IJ.log("Size above saddle filter : Number of peaks = " + countPeaks(peakIdMap));
+				log("Size above saddle filter : Number of peaks = " + countPeaks(peakIdMap));
 
 			// TODO - Add an intensity above saddle filter.
 			// All code is in place so this should be a copy of the code above.
@@ -3716,7 +3720,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	{
 		if (neighbourResult != null)
 		{
-			//			IJ.log("Merging " + peakId + " (" + result.RESULT_COUNT + ") -> " + neighbourPeakId + " (" +
+			//			log("Merging " + peakId + " (" + result.RESULT_COUNT + ") -> " + neighbourPeakId + " (" +
 			//					neighbourResult.RESULT_COUNT + ")");
 
 			// Assign this peak's statistics to the neighbour
@@ -3759,7 +3763,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		}
 		// else
 		// {
-		// IJ.log("Merging " + peakId + " (" + result.RESULT_COUNT + ") -> " + neighbourPeakId);
+		// log("Merging " + peakId + " (" + result.RESULT_COUNT + ") -> " + neighbourPeakId);
 		// }
 
 		// Map anything previously mapped to this peak to the new neighbour
@@ -4516,7 +4520,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			// Check we do not exceed capcity
 			if (id > MAXIMA_CAPCITY)
 			{
-				IJ.log("The number of objects exceeds the 16-bit capacity used for diplay: " + MAXIMA_CAPCITY);
+				log("The number of objects exceeds the 16-bit capacity used for diplay: " + MAXIMA_CAPCITY);
 				return null;
 			}
 
@@ -4716,4 +4720,54 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @return true, if is float processor
 	 */
 	public abstract boolean isFloatProcessor();
+
+	/**
+	 * @return Set to true if showing progress in the ImageJ status bar
+	 */
+	public boolean isShowStatus()
+	{
+		return showStatus;
+	}
+
+	/**
+	 * @param showStatus
+	 *            Set to true to show progress in the ImageJ status bar
+	 */
+	public void setShowStatus(boolean showStatus)
+	{
+		this.showStatus = showStatus;
+	}
+
+	private void showStatus(String status)
+	{
+		if (showStatus)
+			IJ.showStatus(status);
+	}
+
+	/**
+	 * @return the logger
+	 */
+	public Logger getLogger()
+	{
+		return logger;
+	}
+
+	/**
+	 * Set the logger. If this is null then logging will go to the ImageJ log window
+	 * 
+	 * @param logger
+	 *            the logger to set
+	 */
+	public void setLogger(Logger logger)
+	{
+		this.logger = logger;
+	}
+
+	private void log(String message)
+	{
+		if (logger != null)
+			logger.info(message);
+		else
+			IJ.log(message);
+	}
 }

@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
+import gdsc.core.logging.MemoryLogger;
 import gdsc.core.threshold.AutoThreshold;
 import gdsc.foci.FindFociBaseProcessor.ObjectAnalysisResult;
 import gdsc.foci.model.FindFociModel;
@@ -2300,6 +2301,22 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return lastResultsArray;
 	}
 
+	// Used for multi-threaded batch mode processing
+	/** The total progress. */
+	int progress, stepProgress, totalProgress;
+
+	/**
+	 * Show progress.
+	 */
+	private synchronized void showProgress()
+	{
+		if (++progress % stepProgress == 0)
+		{
+			if (Utils.showStatus("Frame: " + progress + " / " + totalProgress))
+				IJ.showProgress(progress, totalProgress);
+		}
+	}
+
 	/**
 	 * Runs a batch of FindFoci analysis. Asks for an input directory, parameter file and results directory.
 	 */
@@ -2326,14 +2343,33 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		setResultsDirectory(batchOutputDirectory);
 		openBatchResultsFile();
 		IJ.redirectErrorMessages();
+
 		// TODO - make this multi-threaded
+
+		long runTime = System.nanoTime();
+		totalProgress = imageList.length;
+		stepProgress = Utils.getProgressInterval(totalProgress);
+		progress = 0;
+
 		for (String image : imageList)
 		{
 			runBatch(this, image, parameters);
 			if (Utils.isInterrupted())
 				break;
 		}
+
 		closeBatchResultsFile();
+
+		IJ.showProgress(1);
+		IJ.showStatus("");
+		runTime = System.nanoTime() - runTime;
+		IJ.log(TITLE + " Batch time = " + Utils.timeToString(runTime / 1000000.0));
+
+		if (Utils.isInterrupted())
+		{
+			IJ.showStatus("Cancelled");
+			IJ.log(TITLE + " Batch Cancelled");
+		}
 	}
 
 	private boolean showBatchDialog()
@@ -2429,6 +2465,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 	private static boolean runBatch(FindFoci ff, String image, BatchParameters parameters)
 	{
+		ff.showProgress();
+		IJ.showStatus(image);
 		final String[] mask = getMaskImage(batchInputDirectory, batchMaskDirectory, image);
 
 		// Open the image (and mask)
@@ -2552,16 +2590,17 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		final int outputType = p.outputType;
 
 		FindFociBaseProcessor ffp = ff.createFFProcessor(imp);
+		ffp.setShowStatus(false);
+		MemoryLogger logger = new MemoryLogger();
+		ffp.setLogger(logger);
 		FindFociResults ffResult = ff.findMaxima(ffp, imp, mask, p.backgroundMethod, p.backgroundParameter,
 				p.autoThresholdMethod, p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod,
 				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
 				p.fractionParameter);
-
+		recordLogMessages(logger);
+		
 		if (ffResult == null)
-		{
-			IJ.showStatus("Cancelled.");
 			return false;
-		}
 
 		// Get the results
 		ImagePlus maximaImp = ffResult.mask;
@@ -2671,6 +2710,17 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 
 		return true;
+	}
+
+	/**
+	 * Record the messages from the logger
+	 *
+	 * @param logger the logger
+	 */
+	private synchronized static void recordLogMessages(MemoryLogger logger)
+	{
+		for (String message : logger.getMessages())
+			IJ.log(message);
 	}
 
 	/*
