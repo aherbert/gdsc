@@ -34,7 +34,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
@@ -353,6 +355,12 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		private int findIndex(String key, String[] options)
 		{
 			String value = findString(key);
+			// Options in square brackets [] were changed to brackets ()
+			if (value.length() > 0)
+			{
+				if (value.charAt(0) == '[' && value.charAt(value.length() - 1) == ']')
+					value = '(' + value.substring(1, value.length() - 1) + ')';
+			}
 			for (int i = 0; i < options.length; i++)
 				if (options[i].equalsIgnoreCase(value))
 					return i;
@@ -631,9 +639,9 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 	// Used to record all the results into a single file during batch analysis
 	private OutputStreamWriter allOut = null;
-	private int batchId = 0;
-	private String batchPrefix = null, emptyEntry = null;
-	private FindFociBaseProcessor ffp;
+	private AtomicInteger batchId = new AtomicInteger();
+	private String emptyEntry = null;
+	private FindFociBaseProcessor ffpStaged;
 	private boolean optimisedProcessor = true;
 
 	/** Ask for parameters and then execute. */
@@ -981,9 +989,10 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			killOverlayPointRoi(imp);
 		}
 
-		FindFociResults ffResult = findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
-				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
-				options, blur, centreMethod, centreParameter, fractionParameter);
+		FindFociBaseProcessor ffp = createFFProcessor(imp);
+		FindFociResults ffResult = findMaxima(ffp, imp, mask, backgroundMethod, backgroundParameter,
+				autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
+				outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter);
 
 		if (ffResult == null)
 		{
@@ -1029,7 +1038,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			for (int i = 0; i < resultsArray.size(); i++)
 			{
 				FindFociResult result = resultsArray.get(i);
-				addToResultTable(i + 1, resultsArray.size() - i, result, stats);
+				addToResultTable(ffp, i + 1, resultsArray.size() - i, result, stats);
 			}
 			flushResults();
 			//if (!resultsArray.isEmpty())
@@ -1039,7 +1048,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		// Record all the results to file
 		if (resultsArray != null && resultsDirectory != null)
 		{
-			saveResults(generateId(imp), imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
+			saveResults(ffp, generateId(imp), imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
 					searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
 					options, blur, centreMethod, centreParameter, fractionParameter, resultsArray, stats,
 					resultsDirectory);
@@ -1146,7 +1155,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @param rois
 	 * @param overlay
 	 */
-	private void addRoiToOverlay(ImagePlus imp, Roi[] rois)
+	private static void addRoiToOverlay(ImagePlus imp, Roi[] rois)
 	{
 		imp.setOverlay(addRoiToOverlay(imp, rois, imp.getOverlay()));
 	}
@@ -1158,7 +1167,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @param rois
 	 * @param overlay
 	 */
-	private Overlay addRoiToOverlay(ImagePlus imp, Roi[] rois, Overlay overlay)
+	private static Overlay addRoiToOverlay(ImagePlus imp, Roi[] rois, Overlay overlay)
 	{
 		overlay = removeOverlayPointRoi(overlay);
 		final int channel = imp.getChannel();
@@ -1219,7 +1228,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return Arrays.copyOf(rois, count);
 	}
 
-	private PointRoi createPointRoi(int[] ids, int[] xpoints, int[] ypoints, int slice, int npoints, boolean hideLabels)
+	private static PointRoi createPointRoi(int[] ids, int[] xpoints, int[] ypoints, int slice, int npoints,
+			boolean hideLabels)
 	{
 		// Use a custom PointRoi so we can draw the labels
 		PointRoi2 roi = new PointRoi2(xpoints, ypoints, npoints);
@@ -1240,7 +1250,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return roi;
 	}
 
-	private PointRoi createRoi(ArrayList<FindFociResult> resultsArray, int outputType)
+	private static PointRoi createRoi(ArrayList<FindFociResult> resultsArray, int outputType)
 	{
 		final int nMaxima = resultsArray.size();
 		final int[] xpoints = new int[nMaxima];
@@ -1257,7 +1267,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return roi;
 	}
 
-	private Overlay createOverlay(ImagePlus imp, ImagePlus maximaImp)
+	private static Overlay createOverlay(ImagePlus imp, ImagePlus maximaImp)
 	{
 		Overlay o = new Overlay();
 		final int channel = imp.getChannel();
@@ -1322,23 +1332,23 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return maxImp;
 	}
 
-	private String saveResults(String expId, ImagePlus imp, ImagePlus mask, int backgroundMethod,
-			double backgroundParameter, String autoThresholdMethod, int searchMethod, double searchParameter,
-			int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex, int options,
-			double blur, int centreMethod, double centreParameter, double fractionParameter,
+	private String saveResults(FindFociBaseProcessor ffp, String expId, ImagePlus imp, ImagePlus mask,
+			int backgroundMethod, double backgroundParameter, String autoThresholdMethod, int searchMethod,
+			double searchParameter, int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType,
+			int sortIndex, int options, double blur, int centreMethod, double centreParameter, double fractionParameter,
 			ArrayList<FindFociResult> resultsArray, FindFociStatistics stats, String resultsDirectory)
 	{
-		return saveResults(expId, imp, null, mask, null, backgroundMethod, backgroundParameter, autoThresholdMethod,
-				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
-				options, blur, centreMethod, centreParameter, fractionParameter, resultsArray, stats, resultsDirectory,
-				null);
+		return saveResults(ffp, expId, imp, null, mask, null, backgroundMethod, backgroundParameter,
+				autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
+				outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter, resultsArray,
+				stats, resultsDirectory, null, null);
 	}
 
 	private void openBatchResultsFile()
 	{
 		try
 		{
-			batchId = 0;
+			batchId = new AtomicInteger();
 			FileOutputStream fos = new FileOutputStream(resultsDirectory + File.separatorChar + "all.xls");
 			allOut = new OutputStreamWriter(fos, "UTF-8");
 			allOut.write("Image ID\tImage\t" + createResultsHeader(newLine));
@@ -1368,19 +1378,22 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 	}
 
-	private void initialiseBatchPrefix(String title)
+	private String initialiseBatchPrefix(String title)
 	{
-		batchPrefix = ++batchId + "\t" + title + "\t";
+		return batchId.incrementAndGet() + "\t" + title + "\t";
 	}
 
-	private void writeBatchResultsFile(String result)
+	private synchronized void writeBatchResultsFile(String batchPrefix, List<String> results)
 	{
 		if (allOut == null)
 			return;
 		try
 		{
-			allOut.write(batchPrefix);
-			allOut.write(result);
+			for (String result : results)
+			{
+				allOut.write(batchPrefix);
+				allOut.write(result);
+			}
 		}
 		catch (Exception e)
 		{
@@ -1389,24 +1402,26 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 	}
 
-	private void writeEmptyObjectsToBatchResultsFile(ObjectAnalysisResult objectAnalysisResult)
+	private void writeEmptyObjectsToBatchResultsFile(ArrayList<String> batchResults,
+			ObjectAnalysisResult objectAnalysisResult)
 	{
 		for (int id = 1; id <= objectAnalysisResult.numberOfObjects; id++)
 			if (objectAnalysisResult.fociCount[id] == 0)
-				writeBatchResultsFile(buildEmptyObjectResultEntry(id, objectAnalysisResult.objectState[id]));
+				batchResults.add(buildEmptyObjectResultEntry(id, objectAnalysisResult.objectState[id]));
 	}
 
-	private void writeEmptyBatchResultsFile()
+	private void writeEmptyBatchResultsFile(ArrayList<String> batchResults)
 	{
-		writeBatchResultsFile(buildEmptyResultEntry());
+		batchResults.add(buildEmptyResultEntry());
 	}
 
-	private String saveResults(String expId, ImagePlus imp, int[] imageDimension, ImagePlus mask, int[] maskDimension,
-			int backgroundMethod, double backgroundParameter, String autoThresholdMethod, int searchMethod,
-			double searchParameter, int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType,
-			int sortIndex, int options, double blur, int centreMethod, double centreParameter, double fractionParameter,
-			ArrayList<FindFociResult> resultsArray, FindFociStatistics stats, String resultsDirectory,
-			ObjectAnalysisResult objectAnalysisResult)
+	private String saveResults(FindFociBaseProcessor ffp, String expId, ImagePlus imp, int[] imageDimension,
+			ImagePlus mask, int[] maskDimension, int backgroundMethod, double backgroundParameter,
+			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
+			int peakMethod, double peakParameter, int outputType, int sortIndex, int options, double blur,
+			int centreMethod, double centreParameter, double fractionParameter, ArrayList<FindFociResult> resultsArray,
+			FindFociStatistics stats, String resultsDirectory, ObjectAnalysisResult objectAnalysisResult,
+			String batchPrefix)
 	{
 		try
 		{
@@ -1419,27 +1434,31 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			int[] xpoints = new int[resultsArray.size()];
 			int[] ypoints = new int[resultsArray.size()];
 			final StringBuilder sb = new StringBuilder();
+			final ArrayList<String> batchResults = (allOut == null) ? null : new ArrayList<String>(resultsArray.size());
 			for (int i = 0; i < resultsArray.size(); i++)
 			{
 				FindFociResult result = resultsArray.get(i);
 				xpoints[i] = result.x;
 				ypoints[i] = result.y;
 
-				buildResultEntry(sb, i + 1, resultsArray.size() - i, result, stats, newLine);
+				buildResultEntry(ffp, sb, i + 1, resultsArray.size() - i, result, stats, newLine);
 				final String resultEntry = sb.toString();
 				out.write(resultEntry);
-				writeBatchResultsFile(resultEntry);
+				if (batchResults != null)
+					batchResults.add(resultEntry);
 				sb.setLength(0);
 			}
 			// Check if we have a batch file
-			if (allOut != null)
+			if (batchResults != null)
 			{
 				if (objectAnalysisResult != null)
 					// Record an empty record for empty objects
-					writeEmptyObjectsToBatchResultsFile(objectAnalysisResult);
+					writeEmptyObjectsToBatchResultsFile(batchResults, objectAnalysisResult);
 				else if (resultsArray.isEmpty())
 					// Record an empty record for batch processing
-					writeEmptyBatchResultsFile();
+					writeEmptyBatchResultsFile(batchResults);
+
+				writeBatchResultsFile(batchPrefix, batchResults);
 			}
 			out.close();
 
@@ -1555,8 +1574,301 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return "Both";
 	}
 
+	private void killPointRoi(ImagePlus imp)
+	{
+		if (imp != null)
+		{
+			if (imp.getRoi() != null && imp.getRoi().getType() == Roi.POINT)
+			{
+				imp.killRoi();
+			}
+		}
+	}
+
+	private static void configureOverlayRoi(Roi roi)
+	{
+		roi.setStrokeWidth(1);
+		roi.setStrokeColor(Color.CYAN);
+		roi.setFillColor(Color.YELLOW);
+	}
+
+	private void killOverlayPointRoi(ImagePlus imp)
+	{
+		if (imp != null && imp.getOverlay() != null)
+		{
+			imp.setOverlay(removeOverlayPointRoi(imp.getOverlay()));
+		}
+	}
+
 	/**
-	 * Show the result of the FindFoci algorithm.
+	 * Removes any PointRoi from the overlay
+	 * 
+	 * @param overlay
+	 * @return The reduced overlay (or null)
+	 */
+	private static Overlay removeOverlayPointRoi(Overlay overlay)
+	{
+		if (overlay != null)
+		{
+			Roi[] rois = overlay.toArray();
+			int count = 0;
+			for (int i = 0; i < rois.length; i++)
+			{
+				if (rois[i] instanceof PointRoi)
+				{
+					if (rois[i].getStrokeColor() == Color.CYAN && rois[i].getFillColor() == Color.YELLOW)
+					{
+						continue;
+					}
+				}
+				rois[count++] = rois[i];
+			}
+			if (count == 0)
+				return null;
+			if (count != rois.length)
+			{
+				overlay.clear();
+				for (int i = 0; i < count; i++)
+					overlay.add(rois[i]);
+			}
+		}
+		return overlay;
+	}
+
+	private static int getMaskOption(int outputType)
+	{
+		if (isSet(outputType, FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_FRACTION_OF_HEIGHT))
+			return 6;
+		if (isSet(outputType, FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_FRACTION_OF_INTENSITY))
+			return 5;
+		if (isSet(outputType, FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_ABOVE_SADDLE))
+			return 4;
+		if (isSet(outputType, FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_ABOVE_SADDLE))
+			return 3;
+		if (isSet(outputType, FindFoci.OUTPUT_MASK_THRESHOLD))
+			return 2;
+		if (isSet(outputType, FindFoci.OUTPUT_MASK_PEAKS))
+			return 1;
+
+		return 0;
+	}
+
+	private static boolean isSet(int flag, int mask)
+	{
+		return (flag & mask) == mask;
+	}
+
+	private static void writeParam(OutputStreamWriter out, String key, String value) throws IOException
+	{
+		out.write(key);
+		out.write(" = ");
+		out.write(value);
+		out.write(newLine);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#findMaxima(ij.ImagePlus, ij.ImagePlus, int, double, java.lang.String, int,
+	 * double, int, int, int, double, int, int, int, double, int, double, double)
+	 */
+	public FindFociResults findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
+			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
+			int peakMethod, double peakParameter, int outputType, int sortIndex, int options, double blur,
+			int centreMethod, double centreParameter, double fractionParameter)
+	{
+		lastResultsArray = null;
+
+		if (imp == null)
+			return null;
+		if (!isSupported(imp.getBitDepth()))
+		{
+			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
+			return null;
+		}
+
+		// Support int[] or float[] images using a dedicated processor
+		FindFociResults result = findMaxima(createFFProcessor(imp), imp, mask, backgroundMethod, backgroundParameter,
+				autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
+				outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter);
+		if (result != null)
+			lastResultsArray = result.results;
+		return result;
+	}
+
+	private FindFociResults findMaxima(FindFociBaseProcessor ffp, ImagePlus imp, ImagePlus mask, int backgroundMethod,
+			double backgroundParameter, String autoThresholdMethod, int searchMethod, double searchParameter,
+			int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex, int options,
+			double blur, int centreMethod, double centreParameter, double fractionParameter)
+	{
+		return ffp.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod, searchMethod,
+				searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex, options, blur,
+				centreMethod, centreParameter, fractionParameter);
+	}
+
+	private FindFociBaseProcessor createFFProcessor(ImagePlus imp)
+	{
+		if (isOptimisedProcessor())
+			return (imp.getBitDepth() == 32) ? new FindFociOptimisedFloatProcessor()
+					: new FindFociOptimisedIntProcessor();
+		return (imp.getBitDepth() == 32) ? new FindFociFloatProcessor() : new FindFociIntProcessor();
+	}
+
+	/**
+	 * Apply a Gaussian blur to the image and returns a new image.
+	 * Returns the original image if blur <= 0.
+	 * <p>
+	 * Only blurs the current channel and frame for use in the FindFoci algorithm.
+	 * 
+	 * @param imp
+	 * @param blur
+	 *            The blur standard deviation
+	 * @return the blurred image
+	 */
+	public static ImagePlus applyBlur(ImagePlus imp, double blur)
+	{
+		return FindFociBaseProcessor.applyBlur(imp, blur);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#blur(ij.ImagePlus, double)
+	 */
+	public ImagePlus blur(ImagePlus imp, double blur)
+	{
+		// Use static method as the FindFociProcessor may be null
+		return FindFociBaseProcessor.applyBlur(imp, blur);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#findMaximaInit(ij.ImagePlus, ij.ImagePlus, ij.ImagePlus, int, java.lang.String,
+	 * int)
+	 */
+	public FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask,
+			int backgroundMethod, String autoThresholdMethod, int options)
+	{
+		lastResultsArray = null;
+
+		if (imp == null)
+			return null;
+		if (!isSupported(imp.getBitDepth()))
+		{
+			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
+			return null;
+		}
+
+		// Support int[] or float[] images using a dedicated processor
+		ffpStaged = createFFProcessor(originalImp);
+
+		return ffpStaged.findMaximaInit(originalImp, imp, mask, backgroundMethod, autoThresholdMethod, options);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#cloneForSearch(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociInitResults)
+	 */
+	public FindFociInitResults cloneForSearch(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
+	{
+		return ffpStaged.cloneForSearch(initResults, clonedInitResults);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#clone(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociInitResults)
+	 */
+	public FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
+	{
+		return ffpStaged.clone(initResults, clonedInitResults);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#findMaximaSearch(gdsc.foci.FindFociInitResults, int, double, int, double)
+	 */
+	public FindFociSearchResults findMaximaSearch(FindFociInitResults initResults, int backgroundMethod,
+			double backgroundParameter, int searchMethod, double searchParameter)
+	{
+		lastResultsArray = null;
+		return ffpStaged.findMaximaSearch(initResults, backgroundMethod, backgroundParameter, searchMethod,
+				searchParameter);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#findMaximaMerge(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociSearchResults,
+	 * int, int, double, int, double)
+	 */
+	public FindFociMergeResults findMaximaMerge(FindFociInitResults initResults, FindFociSearchResults searchResults,
+			int minSize, int peakMethod, double peakParameter, int options, double blur)
+	{
+		lastResultsArray = null;
+		return ffpStaged.findMaximaMerge(initResults, searchResults, minSize, peakMethod, peakParameter, options, blur);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#findMaximaResults(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociMergeResults,
+	 * int, int, int, double)
+	 */
+	public FindFociResults findMaximaResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
+			int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
+	{
+		lastResultsArray = null;
+		FindFociResults result = ffpStaged.findMaximaResults(initResults, mergeResults, maxPeaks, sortIndex,
+				centreMethod, centreParameter);
+		if (result != null)
+			lastResultsArray = result.results;
+		return result;
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#findMaximaPrelimResults(gdsc.foci.FindFociInitResults,
+	 * gdsc.foci.FindFociMergeResults, int, int, int, double)
+	 */
+	public FindFociResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
+			int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
+	{
+		lastResultsArray = null;
+		FindFociResults result = ffpStaged.findMaximaPrelimResults(initResults, mergeResults, maxPeaks, sortIndex,
+				centreMethod, centreParameter);
+		if (result != null)
+			lastResultsArray = result.results;
+		return result;
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#findMaximaMaskResults(gdsc.foci.FindFociInitResults,
+	 * gdsc.foci.FindFociMergeResults, gdsc.foci.FindFociResults, int, java.lang.String, java.lang.String, double)
+	 */
+	public FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
+			FindFociResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
+			double fractionParameter)
+	{
+		lastResultsArray = null;
+		FindFociResults result = ffpStaged.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType,
+				autoThresholdMethod, imageTitle, fractionParameter);
+		if (result != null)
+			lastResultsArray = result.results;
+		return result;
+	}
+
+	/**
+	 * Show the result of the FindFoci algorithm. It is assumed the results were generated using the FindFoci staged
+	 * methods.
 	 * <p>
 	 * The method must be called with the output from
 	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double)}
@@ -1573,9 +1885,9 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		// If we are outputting a results table or saving to file we can do the object analysis
 		if ((options & OPTION_OBJECT_ANALYSIS) != 0 && ((outputType & OUTPUT_RESULTS_TABLE) != 0))
 		{
-			// Assume ffp is not null as the user has already run through the FindFoci algorithm to get the results.
+			// Assume ffpStaged is not null as the user has already run through the FindFoci algorithm to get the results.
 
-			ImagePlus objectImp = ffp.doObjectAnalysis(mask, maximaImp, resultsArray,
+			ImagePlus objectImp = ffpStaged.doObjectAnalysis(mask, maximaImp, resultsArray,
 					(options & OPTION_SHOW_OBJECT_MASK) != 0, null);
 			if (objectImp != null)
 				objectImp.show();
@@ -1601,7 +1913,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			for (int i = 0; i < resultsArray.size(); i++)
 			{
 				FindFociResult result = resultsArray.get(i);
-				addToResultTable(i + 1, resultsArray.size() - i, result, stats);
+				addToResultTable(ffpStaged, i + 1, resultsArray.size() - i, result, stats);
 			}
 			flushResults();
 			//if (!resultsArray.isEmpty())
@@ -1718,289 +2030,6 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		imp.setOverlay(overlay);
 	}
 
-	private void killPointRoi(ImagePlus imp)
-	{
-		if (imp != null)
-		{
-			if (imp.getRoi() != null && imp.getRoi().getType() == Roi.POINT)
-			{
-				imp.killRoi();
-			}
-		}
-	}
-
-	private void configureOverlayRoi(Roi roi)
-	{
-		roi.setStrokeWidth(1);
-		roi.setStrokeColor(Color.CYAN);
-		roi.setFillColor(Color.YELLOW);
-	}
-
-	private void killOverlayPointRoi(ImagePlus imp)
-	{
-		if (imp != null && imp.getOverlay() != null)
-		{
-			imp.setOverlay(removeOverlayPointRoi(imp.getOverlay()));
-		}
-	}
-
-	/**
-	 * Removes any PointRoi from the overlay
-	 * 
-	 * @param overlay
-	 * @return The reduced overlay (or null)
-	 */
-	private Overlay removeOverlayPointRoi(Overlay overlay)
-	{
-		if (overlay != null)
-		{
-			Roi[] rois = overlay.toArray();
-			int count = 0;
-			for (int i = 0; i < rois.length; i++)
-			{
-				if (rois[i] instanceof PointRoi)
-				{
-					if (rois[i].getStrokeColor() == Color.CYAN && rois[i].getFillColor() == Color.YELLOW)
-					{
-						continue;
-					}
-				}
-				rois[count++] = rois[i];
-			}
-			if (count == 0)
-				return null;
-			if (count != rois.length)
-			{
-				overlay.clear();
-				for (int i = 0; i < count; i++)
-					overlay.add(rois[i]);
-			}
-		}
-		return overlay;
-	}
-
-	private static int getMaskOption(int outputType)
-	{
-		if (isSet(outputType, FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_FRACTION_OF_HEIGHT))
-			return 6;
-		if (isSet(outputType, FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_FRACTION_OF_INTENSITY))
-			return 5;
-		if (isSet(outputType, FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_ABOVE_SADDLE))
-			return 4;
-		if (isSet(outputType, FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_ABOVE_SADDLE))
-			return 3;
-		if (isSet(outputType, FindFoci.OUTPUT_MASK_THRESHOLD))
-			return 2;
-		if (isSet(outputType, FindFoci.OUTPUT_MASK_PEAKS))
-			return 1;
-
-		return 0;
-	}
-
-	private static boolean isSet(int flag, int mask)
-	{
-		return (flag & mask) == mask;
-	}
-
-	private static void writeParam(OutputStreamWriter out, String key, String value) throws IOException
-	{
-		out.write(key);
-		out.write(" = ");
-		out.write(value);
-		out.write(newLine);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaxima(ij.ImagePlus, ij.ImagePlus, int, double, java.lang.String, int,
-	 * double, int, int, int, double, int, int, int, double, int, double, double)
-	 */
-	public FindFociResults findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
-			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
-			int peakMethod, double peakParameter, int outputType, int sortIndex, int options, double blur,
-			int centreMethod, double centreParameter, double fractionParameter)
-	{
-		lastResultsArray = null;
-
-		if (imp == null)
-			return null;
-		if (!isSupported(imp.getBitDepth()))
-		{
-			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
-			return null;
-		}
-
-		// Support int[] or float[] images using a dedicated processor
-		ffp = createFFProcessor(imp);
-
-		FindFociResults result = ffp.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
-				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
-				options, blur, centreMethod, centreParameter, fractionParameter);
-		if (result != null)
-			lastResultsArray = result.results;
-		return result;
-	}
-
-	private FindFociBaseProcessor createFFProcessor(ImagePlus imp)
-	{
-		if (isOptimisedProcessor())
-			return (imp.getBitDepth() == 32) ? new FindFociOptimisedFloatProcessor()
-					: new FindFociOptimisedIntProcessor();
-		return (imp.getBitDepth() == 32) ? new FindFociFloatProcessor() : new FindFociIntProcessor();
-	}
-
-	/**
-	 * Apply a Gaussian blur to the image and returns a new image.
-	 * Returns the original image if blur <= 0.
-	 * <p>
-	 * Only blurs the current channel and frame for use in the FindFoci algorithm.
-	 * 
-	 * @param imp
-	 * @param blur
-	 *            The blur standard deviation
-	 * @return the blurred image
-	 */
-	public static ImagePlus applyBlur(ImagePlus imp, double blur)
-	{
-		return FindFociBaseProcessor.applyBlur(imp, blur);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociProcessor#blur(ij.ImagePlus, double)
-	 */
-	public ImagePlus blur(ImagePlus imp, double blur)
-	{
-		// Use static method as the FindFociProcessor may be null
-		return FindFociBaseProcessor.applyBlur(imp, blur);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaInit(ij.ImagePlus, ij.ImagePlus, ij.ImagePlus, int, java.lang.String,
-	 * int)
-	 */
-	public FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask,
-			int backgroundMethod, String autoThresholdMethod, int options)
-	{
-		lastResultsArray = null;
-
-		if (imp == null)
-			return null;
-		if (!isSupported(imp.getBitDepth()))
-		{
-			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
-			return null;
-		}
-
-		// Support int[] or float[] images using a dedicated processor
-		ffp = createFFProcessor(originalImp);
-
-		return ffp.findMaximaInit(originalImp, imp, mask, backgroundMethod, autoThresholdMethod, options);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociProcessor#cloneForSearch(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociInitResults)
-	 */
-	public FindFociInitResults cloneForSearch(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
-	{
-		return ffp.cloneForSearch(initResults, clonedInitResults);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociProcessor#clone(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociInitResults)
-	 */
-	public FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
-	{
-		return ffp.clone(initResults, clonedInitResults);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaSearch(gdsc.foci.FindFociInitResults, int, double, int, double)
-	 */
-	public FindFociSearchResults findMaximaSearch(FindFociInitResults initResults, int backgroundMethod,
-			double backgroundParameter, int searchMethod, double searchParameter)
-	{
-		lastResultsArray = null;
-		return ffp.findMaximaSearch(initResults, backgroundMethod, backgroundParameter, searchMethod, searchParameter);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaMerge(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociSearchResults,
-	 * int, int, double, int, double)
-	 */
-	public FindFociMergeResults findMaximaMerge(FindFociInitResults initResults, FindFociSearchResults searchResults,
-			int minSize, int peakMethod, double peakParameter, int options, double blur)
-	{
-		lastResultsArray = null;
-		return ffp.findMaximaMerge(initResults, searchResults, minSize, peakMethod, peakParameter, options, blur);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaResults(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociMergeResults,
-	 * int, int, int, double)
-	 */
-	public FindFociResults findMaximaResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
-			int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
-	{
-		lastResultsArray = null;
-		FindFociResults result = ffp.findMaximaResults(initResults, mergeResults, maxPeaks, sortIndex, centreMethod,
-				centreParameter);
-		if (result != null)
-			lastResultsArray = result.results;
-		return result;
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaPrelimResults(gdsc.foci.FindFociInitResults,
-	 * gdsc.foci.FindFociMergeResults, int, int, int, double)
-	 */
-	public FindFociResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
-			int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
-	{
-		lastResultsArray = null;
-		FindFociResults result = ffp.findMaximaPrelimResults(initResults, mergeResults, maxPeaks, sortIndex,
-				centreMethod, centreParameter);
-		if (result != null)
-			lastResultsArray = result.results;
-		return result;
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaMaskResults(gdsc.foci.FindFociInitResults,
-	 * gdsc.foci.FindFociMergeResults, gdsc.foci.FindFociResults, int, java.lang.String, java.lang.String, double)
-	 */
-	public FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
-			FindFociResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
-			double fractionParameter)
-	{
-		lastResultsArray = null;
-		FindFociResults result = ffp.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType,
-				autoThresholdMethod, imageTitle, fractionParameter);
-		if (result != null)
-			lastResultsArray = result.results;
-		return result;
-	}
-
 	/**
 	 * Create the result window (if it is not available)
 	 */
@@ -2092,6 +2121,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	/**
 	 * Add a result to the result table.
 	 *
+	 * @param ffp
+	 *            the processor used to create the results
 	 * @param i
 	 *            Peak number
 	 * @param id
@@ -2101,10 +2132,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @param stats
 	 *            the stats
 	 */
-	private void addToResultTable(int i, int id, FindFociResult result, FindFociStatistics stats)
+	private void addToResultTable(FindFociBaseProcessor ffp, int i, int id, FindFociResult result,
+			FindFociStatistics stats)
 	{
 		// Buffer the output so that the table is displayed faster
-		buildResultEntry(resultsBuffer, i, id, result, stats, "\n");
+		buildResultEntry(ffp, resultsBuffer, i, id, result, stats, "\n");
 		if (resultsCount > flushCount)
 		{
 			flushResults();
@@ -2119,8 +2151,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		flushCount = Integer.MAX_VALUE;
 	}
 
-	private void buildResultEntry(StringBuilder sb, int i, int id, FindFociResult result, FindFociStatistics stats,
-			String newLine)
+	private void buildResultEntry(FindFociBaseProcessor ffp, StringBuilder sb, int i, int id, FindFociResult result,
+			FindFociStatistics stats, String newLine)
 	{
 		final double sum = stats.regionTotal;
 		final double noise = stats.background;
@@ -2212,7 +2244,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return sb.toString();
 	}
 
-	private String buildEmptyResultEntry()
+	private synchronized String buildEmptyResultEntry()
 	{
 		if (emptyEntry == null)
 		{
@@ -2293,10 +2325,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 		setResultsDirectory(batchOutputDirectory);
 		openBatchResultsFile();
+		IJ.redirectErrorMessages();
 		// TODO - make this multi-threaded
 		for (String image : imageList)
 		{
-			runBatch(image, parameters);
+			runBatch(this, image, parameters);
 			if (Utils.isInterrupted())
 				break;
 		}
@@ -2394,11 +2427,9 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return Arrays.copyOf(list, c);
 	}
 
-	private boolean runBatch(String image, BatchParameters parameters)
+	private static boolean runBatch(FindFoci ff, String image, BatchParameters parameters)
 	{
-		IJ.redirectErrorMessages();
-
-		String[] mask = getMaskImage(batchInputDirectory, batchMaskDirectory, image);
+		final String[] mask = getMaskImage(batchInputDirectory, batchMaskDirectory, image);
 
 		// Open the image (and mask)
 		ImagePlus imp = openImage(batchInputDirectory, image);
@@ -2417,7 +2448,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			maskImp = setupImage(maskImp, maskDimension);
 
 		// Run the algorithm
-		return execBatch(imp, maskImp, parameters, imageDimension, maskDimension);
+		return execBatch(ff, imp, maskImp, parameters, imageDimension, maskDimension);
 	}
 
 	/**
@@ -2456,12 +2487,12 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			return null;
 		Opener opener = new Opener();
 		opener.setSilentMode(true);
-		// TODO - Add suport for loading custom channel, slice and frame using a filename suffix, e.g. [cCzZtT]
+		// TODO - Add support for loading custom channel, slice and frame using a filename suffix, e.g. [cCzZtT]
 		// If the suffix exists, remove it, load the image then extract the specified slices.
 		return opener.openImage(directory, filename);
 	}
 
-	private ImagePlus setupImage(ImagePlus imp, int[] dimension)
+	private static ImagePlus setupImage(ImagePlus imp, int[] dimension)
 	{
 		// For channel and frame we can just update the position
 		if (dimension[BatchParameters.C] > 1 && dimension[BatchParameters.C] <= imp.getNChannels())
@@ -2486,17 +2517,24 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	}
 
 	/**
-	 * Truncated version of the exec() method that saves all results to the batch output directory
-	 * 
+	 * Truncated version of the exec() method that saves all results to the batch output directory.
+	 *
+	 * @param ff
+	 *            the FindFoci instance
 	 * @param imp
+	 *            the imp
 	 * @param mask
+	 *            the mask
 	 * @param p
+	 *            the p
 	 * @param imageDimension
+	 *            the image dimension
 	 * @param maskDimension
-	 * @return
+	 *            the mask dimension
+	 * @return true, if successful
 	 */
-	private boolean execBatch(ImagePlus imp, ImagePlus mask, BatchParameters p, int[] imageDimension,
-			int[] maskDimension)
+	private static boolean execBatch(FindFoci ff, ImagePlus imp, ImagePlus mask, BatchParameters p,
+			int[] imageDimension, int[] maskDimension)
 	{
 		if (!isSupported(imp.getBitDepth()))
 		{
@@ -2513,7 +2551,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		final int options = p.options;
 		final int outputType = p.outputType;
 
-		FindFociResults ffResult = findMaxima(imp, mask, p.backgroundMethod, p.backgroundParameter,
+		FindFociBaseProcessor ffp = ff.createFFProcessor(imp);
+		FindFociResults ffResult = ff.findMaxima(ffp, imp, mask, p.backgroundMethod, p.backgroundParameter,
 				p.autoThresholdMethod, p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod,
 				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
 				p.fractionParameter);
@@ -2529,7 +2568,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		ArrayList<FindFociResult> resultsArray = ffResult.results;
 		FindFociStatistics stats = ffResult.stats;
 
-		String expId;
+		final String expId;
 		if (p.originalTitle)
 		{
 			expId = imp.getShortTitle();
@@ -2552,16 +2591,16 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 		if ((options & OPTION_SAVE_TO_MEMORY) != 0)
 		{
-			saveToMemory(resultsArray, imp, imageDimension[BatchParameters.C], imageDimension[BatchParameters.Z],
+			ff.saveToMemory(resultsArray, imp, imageDimension[BatchParameters.C], imageDimension[BatchParameters.Z],
 					imageDimension[BatchParameters.T]);
 		}
 
 		// Record all the results to file
-		initialiseBatchPrefix(expId);
-		saveResults(expId, imp, imageDimension, mask, maskDimension, p.backgroundMethod, p.backgroundParameter,
+		final String batchPrefix = ff.initialiseBatchPrefix(expId);
+		ff.saveResults(ffp, expId, imp, imageDimension, mask, maskDimension, p.backgroundMethod, p.backgroundParameter,
 				p.autoThresholdMethod, p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod,
 				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
-				p.fractionParameter, resultsArray, stats, batchOutputDirectory, objectAnalysisResult);
+				p.fractionParameter, resultsArray, stats, batchOutputDirectory, objectAnalysisResult, batchPrefix);
 
 		boolean saveImp = false;
 
@@ -2592,7 +2631,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 				if ((outputType & OUTPUT_ROI_USING_OVERLAY) != 0)
 				{
 					// Create an roi for each z slice
-					PointRoi[] rois = createStackRoi(resultsArray, outputType);
+					PointRoi[] rois = ff.createStackRoi(resultsArray, outputType);
 
 					if ((outputType & OUTPUT_ROI_SELECTION) != 0)
 						overlay = addRoiToOverlay(imp, rois, overlay);
