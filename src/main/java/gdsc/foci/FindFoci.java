@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
@@ -649,6 +650,9 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	private String emptyEntry = null;
 	private FindFociBaseProcessor ffpStaged;
 	private boolean optimisedProcessor = true;
+	private AtomicInteger batchImages;
+	private AtomicInteger batchOK;
+	private AtomicInteger batchError;
 
 	/** Ask for parameters and then execute. */
 	public void run(String arg)
@@ -2484,7 +2488,9 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 				finished = true;
 				return;
 			}
-			runBatch(ff, batchId, filename, parameters, new MemoryLogger());
+			MemoryLogger logger = new MemoryLogger();
+			runBatch(ff, batchId, filename, parameters, logger);
+			recordLogMessages(logger);
 		}
 	}
 
@@ -2511,9 +2517,15 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			IJ.error(TITLE, "Unable to read parameters file: " + e.getMessage());
 			return;
 		}
+		if ((parameters.centreMethod == CENTRE_GAUSSIAN_ORIGINAL ||
+				parameters.centreMethod == CENTRE_GAUSSIAN_SEARCH) && isGaussianFitEnabled < 1)
+		{
+			IJ.error(TITLE, "Gaussian fit is not currently enabled");
+			return;
+		}
+
 		setResultsDirectory(batchOutputDirectory);
 		String batchFilename = openBatchResultsFile();
-		IJ.redirectErrorMessages();
 
 		if ((parameters.outputType & OUTPUT_LOG_MESSAGES) != 0)
 		{
@@ -2530,6 +2542,9 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		totalProgress = imageList.length;
 		stepProgress = Utils.getProgressInterval(totalProgress);
 		progress = 0;
+		batchImages = new AtomicInteger();
+		batchOK = new AtomicInteger();
+		batchError = new AtomicInteger();
 
 		// Allow multi-threaded execution
 		final int nThreads = Maths.min(Prefs.getThreads(), totalProgress);
@@ -2597,10 +2612,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		IJ.showStatus("");
 
 		if ((parameters.outputType & OUTPUT_LOG_MESSAGES) != 0)
-		{
 			IJ.log("---");
-			IJ.log(TITLE + " Batch time = " + Utils.timeToString(runTime / 1000000.0));
-		}
+
+		IJ.log(String.format("%s Batch time = %s. %s. Processed %d / %s. %s.", TITLE,
+				Utils.timeToString(runTime / 1000000.0), Utils.pleural(totalProgress, "file"), batchOK.get(),
+				Utils.pleural(batchImages.get(), "image"), Utils.pleural(batchError.get(), "file error")));
 
 		if (Utils.isInterrupted())
 		{
@@ -2727,7 +2743,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 	}
 
-	private static boolean runBatch(FindFoci ff, int batchId, String image, BatchParameters parameters, MemoryLogger logger)
+	private static boolean runBatch(FindFoci ff, int batchId, String image, BatchParameters parameters,
+			MemoryLogger logger)
 	{
 		ff.showProgress();
 		IJ.showStatus(image);
@@ -2737,7 +2754,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		ImagePlus imp = openImage(batchInputDirectory, image);
 		if (imp == null)
 		{
-			IJ.error(TITLE, "File is not a valid image: " + image);
+			error(ff, logger, parameters, "File is not a valid image: " + image);
 			return false;
 		}
 		ImagePlus maskImp = openImage(mask[0], mask[1]);
@@ -2751,6 +2768,33 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 		// Run the algorithm
 		return execBatch(ff, batchId, imp, maskImp, parameters, imageDimension, maskDimension, logger);
+	}
+
+	/**
+	 * Simple error log to the ImageJ window instead of using IJ.error() and IJ.redirectErrorMessages since the redirect
+	 * flag is reset each time.
+	 * 
+	 * @param ff
+	 * @param parameters
+	 * 
+	 * @param msg
+	 */
+	public static void error(FindFoci ff, MemoryLogger logger, BatchParameters parameters, String msg)
+	{
+		ff.batchError.incrementAndGet();
+		if (logger != null)
+		{
+			if ((parameters.outputType & OUTPUT_LOG_MESSAGES) != 0)
+				logger.error("---");
+			logger.error(TITLE + " Batch ERROR: " + msg);
+		}
+		else
+		{
+			if ((parameters.outputType & OUTPUT_LOG_MESSAGES) != 0)
+				IJ.log("---");
+			IJ.log(TITLE + " Batch ERROR: " + msg);
+		}
+		Macro.abort();
 	}
 
 	/**
@@ -2844,13 +2888,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	{
 		if (!isSupported(imp.getBitDepth()))
 		{
-			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
-			return false;
-		}
-		if ((p.centreMethod == CENTRE_GAUSSIAN_ORIGINAL || p.centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
-				isGaussianFitEnabled < 1)
-		{
-			IJ.error(TITLE, "Gaussian fit is not currently enabled");
+			error(ff, logger, p, "Only " + FindFoci.getSupported() + " images are supported");
 			return false;
 		}
 
@@ -2860,15 +2898,16 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		FindFociBaseProcessor ffp = ff.createFFProcessor(imp);
 		ffp.setShowStatus(false);
 		ffp.setLogger(logger);
+		ff.batchImages.incrementAndGet();
 		FindFociResults ffResult = ff.findMaxima(ffp, imp, mask, p.backgroundMethod, p.backgroundParameter,
 				p.autoThresholdMethod, p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod,
 				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
 				p.fractionParameter);
-		if (logger != null)
-			recordLogMessages(logger);
 
 		if (ffResult == null)
 			return false;
+
+		ff.batchOK.incrementAndGet();
 
 		// Get the results
 		ImagePlus maximaImp = ffResult.mask;
