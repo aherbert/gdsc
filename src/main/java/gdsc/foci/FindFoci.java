@@ -420,7 +420,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	private static String batchMaskDirectory = Prefs.get(BATCH_MASK_DIRECTORY, "");
 	private static String batchParameterFile = Prefs.get(BATCH_PARAMETER_FILE, "");
 	private static String batchOutputDirectory = Prefs.get(BATCH_OUTPUT_DIRECTORY, "");
-	private static boolean batchMultiThread = Prefs.get(BATCH_MULTI_THREAD, false);
+	private static boolean batchMultiThread = Prefs.get(BATCH_MULTI_THREAD, true);
 	static int searchCapacity = (int) Prefs.get(SEARCH_CAPACITY, Short.MAX_VALUE);
 	private static String emptyField = Prefs.get(EMPTY_FIELD, "");
 	private TextField textParamFile;
@@ -1434,6 +1434,18 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			{
 				results.add(new BatchResult(line, ++id));
 			}
+		}
+		catch (OutOfMemoryError e)
+		{
+			// In case the file is too big to read in for a sort
+			results.clear();
+			results = null;
+			// Try and free the memory
+			final Runtime runtime = Runtime.getRuntime();
+			runtime.runFinalization();
+			runtime.gc();
+			logError(e.getMessage());
+			return;
 		}
 		catch (Exception e)
 		{
