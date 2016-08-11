@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 
 import gdsc.core.ij.Utils;
+import gdsc.core.threshold.Histogram;
 import ij.IJ;
 
 /*----------------------------------------------------------------------------- 

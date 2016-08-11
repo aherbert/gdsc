@@ -1,5 +1,6 @@
 package gdsc.foci;
 
+import gdsc.core.threshold.Histogram;
 import ij.ImagePlus;
 
 /*----------------------------------------------------------------------------- 

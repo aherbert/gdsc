@@ -3,6 +3,8 @@ package gdsc.foci;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import gdsc.core.threshold.FloatHistogram;
+import gdsc.core.threshold.Histogram;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;

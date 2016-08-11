@@ -24,6 +24,8 @@ import java.util.LinkedList;
 import gdsc.core.ij.Utils;
 import gdsc.core.logging.Logger;
 import gdsc.core.threshold.AutoThreshold;
+import gdsc.core.threshold.FloatHistogram;
+import gdsc.core.threshold.Histogram;
 import gdsc.threshold.Multi_OtsuThreshold;
 import gdsc.utils.GaussianFit;
 import ij.IJ;
