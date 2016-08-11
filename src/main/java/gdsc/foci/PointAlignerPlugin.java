@@ -35,6 +35,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import gdsc.UsageTracker;
+import gdsc.core.ij.Utils;
 import gdsc.core.match.MatchResult;
 
 /**
@@ -204,7 +205,7 @@ public class PointAlignerPlugin implements PlugIn
 		return true;
 	}
 
-	private int getBackgroundLevel(AssignedPoint[] points)
+	private float getBackgroundLevel(AssignedPoint[] points)
 	{
 		// Get a maximum intensity project of the image
 		ZProjector projector = new ZProjector(imp);
@@ -214,19 +215,19 @@ public class PointAlignerPlugin implements PlugIn
 		ImageProcessor ip = projector.getProjection().getProcessor();
 
 		// Set background using the lowest currently picked point
-		int background = Integer.MAX_VALUE;
+		float background = Float.POSITIVE_INFINITY;
 		for (AssignedPoint point : points)
 		{
-			int i = ip.get(point.getXint(), point.getYint());
-			if (background > i)
-				background = i;
+			final float v = ip.getf(point.getXint(), point.getYint());
+			if (background > v)
+				background = v;
 		}
 
 		// Subtract the image Std.Dev. to get a buffer for error.
 		ImageStatistics stats = ip.getStatistics();
-		background -= (int) stats.stdDev;
+		background -= stats.stdDev;
 
-		return (background < 0) ? 0 : background;
+		return background;
 	}
 
 	private void alignPoints(AssignedPoint[] points, FindFociResults results)
@@ -251,8 +252,8 @@ public class PointAlignerPlugin implements PlugIn
 		Arrays.fill(assigned, -1);
 		for (AssignedPoint point : points)
 			point.setAssignedId(-1);
-		int[] pointHeight = new int[points.length];
-		int minHeight = Integer.MAX_VALUE;
+		float[] pointHeight = new float[points.length];
+		float minHeight = Float.POSITIVE_INFINITY;
 
 		sortPoints(points, impStack);
 
@@ -266,7 +267,7 @@ public class PointAlignerPlugin implements PlugIn
 			int y = point.getYint();
 			int z = point.getZint(); // TODO - Deal with 3D images
 
-			pointHeight[pointId] = impStack.getProcessor(z + 1).get(x, y);
+			pointHeight[pointId] = impStack.getProcessor(z + 1).getf(x, y);
 			if (minHeight > pointHeight[pointId])
 			{
 				minHeight = pointHeight[pointId];
@@ -282,8 +283,7 @@ public class PointAlignerPlugin implements PlugIn
 					// Already assigned - The previous point is higher so it wins.
 					// See if any unassigned maxima are closer. This could be an ROI marking error.
 					FindFociResult result = resultsArray.get(maximaId);
-					double d = distance2(x, y, z, result.x, result.y,
-							result.z);
+					double d = distance2(x, y, z, result.x, result.y, result.z);
 					float maxHeight = Float.NEGATIVE_INFINITY;
 
 					for (int id = 0; id < assigned.length; id++)
@@ -293,8 +293,7 @@ public class PointAlignerPlugin implements PlugIn
 						{
 							result = resultsArray.get(id);
 
-							double newD = distance2(x, y, z, result.x,
-									result.y, result.z);
+							double newD = distance2(x, y, z, result.x, result.y, result.z);
 							if (newD < d)
 							{
 								// Pick the closest
@@ -324,7 +323,7 @@ public class PointAlignerPlugin implements PlugIn
 		}
 
 		// Analyse assigned points for possible errors
-		float thresholdHeight = getThresholdHeight(points, assigned, resultsArray);
+		final float thresholdHeight = getThresholdHeight(points, assigned, resultsArray);
 
 		// Output results
 		LinkedList<AssignedPoint> ok = new LinkedList<AssignedPoint>();
@@ -363,9 +362,11 @@ public class PointAlignerPlugin implements PlugIn
 
 				if (result.maxValue < thresholdHeight)
 				{
-					log("Point [%d] %d @ %s ~> %d @ %s (%s) below height threshold (< %d)", pointId + 1,
-							pointHeight[pointId], getCoords(is3d, x, y, z), result.maxValue,
-							getCoords(is3d, newX, newY, newZ), IJ.d2s(d, 2), thresholdHeight);
+					if (logAlignments)
+						log("Point [%d] %s @ %s ~> %s @ %s (%s) below height threshold (< %s)", pointId + 1,
+								Utils.rounded(pointHeight[pointId]), getCoords(is3d, x, y, z),
+								Utils.rounded(result.maxValue), getCoords(is3d, newX, newY, newZ), IJ.d2s(d, 2),
+								Utils.rounded(thresholdHeight));
 					noAlign.add(point);
 					extractPoint(impStack, "below_threshold", pointId + 1, x, y, z, newX, newY, newZ);
 					newPoint = null; // remove unaligned points from the updated ROI
@@ -382,9 +383,10 @@ public class PointAlignerPlugin implements PlugIn
 					{
 						// This is the highest point assigned to the maxima.
 						// Check if it is being moved.
-						log("Point [%d] %d @ %s => %d @ %s (%s)", pointId + 1, pointHeight[pointId],
-								getCoords(is3d, x, y, z), result.maxValue,
-								getCoords(is3d, newX, newY, newZ), IJ.d2s(d, 2));
+						if (logAlignments)
+							log("Point [%d] %s @ %s => %s @ %s (%s)", pointId + 1, Utils.rounded(pointHeight[pointId]),
+									getCoords(is3d, x, y, z), Utils.rounded(result.maxValue),
+									getCoords(is3d, newX, newY, newZ), IJ.d2s(d, 2));
 						newPoint = new AssignedPoint(newX, newY, newZ, point.getId());
 						if (showMoved && d > 0)
 							moved.add((updateOverlay) ? newPoint : point);
@@ -395,8 +397,10 @@ public class PointAlignerPlugin implements PlugIn
 					else
 					{
 						// This point is lower than another assigned to the maxima
-						log("Point [%d] %d @ %s conflicts for assigned point [%d]", pointId + 1, pointHeight[pointId],
-								getCoords(is3d, x, y, z), assigned[maximaId] + 1);
+						if (logAlignments)
+							log("Point [%d] %s @ %s conflicts for assigned point [%d]", pointId + 1,
+									Utils.rounded(pointHeight[pointId]), getCoords(is3d, x, y, z),
+									assigned[maximaId] + 1);
 						conflict.add(point);
 
 						// Output an image showing the pixels
@@ -406,8 +410,9 @@ public class PointAlignerPlugin implements PlugIn
 			}
 			else
 			{
-				log("Point [%d] %d @ %s cannot be aligned", pointId + 1, pointHeight[pointId],
-						getCoords(is3d, x, y, z));
+				if (logAlignments)
+					log("Point [%d] %s @ %s cannot be aligned", pointId + 1, Utils.rounded(pointHeight[pointId]),
+							getCoords(is3d, x, y, z));
 				noAlign.add(point);
 				extractPoint(impStack, "noalign", pointId + 1, x, y, z, x, y, z);
 				newPoint = null; // remove unaligned points from the updated ROI
@@ -417,9 +422,12 @@ public class PointAlignerPlugin implements PlugIn
 				newRoiPoints.add(newPoint);
 		}
 
-		log("Minimum picked value = " + minHeight);
-		log("Threshold = %d", thresholdHeight);
-		log("Minimum assigned peak height = " + minAssignedHeight);
+		if (logAlignments)
+		{
+			log("Minimum picked value = " + Utils.rounded(minHeight));
+			log("Threshold = " + Utils.rounded(thresholdHeight));
+			log("Minimum assigned peak height = " + Utils.rounded(minAssignedHeight));
+		}
 
 		if (averageMovedDistance > 0)
 			averageMovedDistance /= (moved.isEmpty()) ? ok.size() : moved.size();
@@ -431,7 +439,8 @@ public class PointAlignerPlugin implements PlugIn
 		showOverlay(ok, moved, conflict, noAlign, missed);
 
 		createResultsWindow();
-		addResult(ok, moved, averageMovedDistance, conflict, noAlign, missed);
+		addResult(minHeight, thresholdHeight, minAssignedHeight, ok, moved, averageMovedDistance, conflict, noAlign,
+				missed);
 	}
 
 	private double distance2(int x, int y, int z, int x2, int y2, int z2)
@@ -563,8 +572,9 @@ public class PointAlignerPlugin implements PlugIn
 				float q2 = getQuartileBoundary(heights, 0.5);
 
 				t = q1 - factor * (q2 - q1);
-				log("Limiting peaks %s: %s - %s * %s = %d", limitMethods[limitMethod], IJ.d2s(q1), IJ.d2s(factor),
-						IJ.d2s(q2 - q1), t);
+				if (logAlignments)
+					log("Limiting peaks %s: %s - %s * %s = %s", limitMethods[limitMethod], Utils.rounded(q1),
+							Utils.rounded(factor), Utils.rounded(q2 - q1), Utils.rounded(t));
 
 				break;
 
@@ -573,15 +583,18 @@ public class PointAlignerPlugin implements PlugIn
 				double[] stats = getStatistics(heights);
 				t = stats[0] - factor * stats[1];
 
-				log("Limiting peaks %s: %s - %s * %s = %d", limitMethods[limitMethod], IJ.d2s(stats[0]), IJ.d2s(factor),
-						IJ.d2s(stats[1]), t);
+				if (logAlignments)
+					log("Limiting peaks %s: %s - %s * %s = %s", limitMethods[limitMethod], Utils.rounded(stats[0]),
+							Utils.rounded(factor), Utils.rounded(stats[1]), Utils.rounded(t));
 
 				break;
 
 			case 3:
 				// nth Percentile
 				t = getQuartileBoundary(heights, 0.01 * factor);
-				log("Limiting peaks %s: %sth = %d", limitMethods[limitMethod], IJ.d2s(factor), t);
+				if (logAlignments)
+					log("Limiting peaks %s: %sth = %s", limitMethods[limitMethod], Utils.rounded(factor),
+							Utils.rounded(t));
 
 				break;
 
@@ -609,7 +622,9 @@ public class PointAlignerPlugin implements PlugIn
 					log("Warning: Maximum height threshold reached when attempting to limit the number of missed peaks");
 				}
 
-				log("Limiting peaks %s: %s %% = %d", limitMethods[limitMethod], IJ.d2s(factor), t);
+				if (logAlignments)
+					log("Limiting peaks %s: %s %% = %s", limitMethods[limitMethod], Utils.rounded(factor),
+							Utils.rounded(t));
 				break;
 
 			default:
@@ -850,6 +865,11 @@ public class PointAlignerPlugin implements PlugIn
 		StringBuilder sb = new StringBuilder();
 		sb.append("Title\t");
 		sb.append("Image\t");
+		sb.append("Method\t");
+		sb.append("Factor\t");
+		sb.append("Min Height\t");
+		sb.append("Threshold\t");
+		sb.append("Min Assigned Height\t");
 		sb.append("OK\t");
 		sb.append("Moved\t");
 		sb.append("Av.Move\t");
@@ -862,16 +882,23 @@ public class PointAlignerPlugin implements PlugIn
 		sb.append("FN\t");
 		sb.append("Precision\t");
 		sb.append("Recall\t");
+		sb.append("Jaccard\t");
 		sb.append("F1-score");
 		return sb.toString();
 	}
 
-	private void addResult(LinkedList<AssignedPoint> ok, LinkedList<AssignedPoint> moved, double averageMovedDistance,
+	private void addResult(float minHeight, float thresholdHeight, float minAssignedHeight,
+			LinkedList<AssignedPoint> ok, LinkedList<AssignedPoint> moved, double averageMovedDistance,
 			LinkedList<AssignedPoint> conflict, LinkedList<AssignedPoint> noAlign, LinkedList<AssignedPoint> missed)
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append(resultTitle).append("\t");
 		sb.append(imp.getTitle()).append("\t");
+		sb.append(limitMethods[limitMethod]).append("\t");
+		sb.append(factor).append("\t");
+		sb.append(Utils.rounded(minHeight)).append("\t");
+		sb.append(Utils.rounded(thresholdHeight)).append("\t");
+		sb.append(Utils.rounded(minAssignedHeight)).append("\t");
 		sb.append(ok.size()).append("\t");
 		sb.append(moved.size()).append("\t");
 		sb.append(IJ.d2s(averageMovedDistance, 2)).append("\t");
@@ -890,6 +917,7 @@ public class PointAlignerPlugin implements PlugIn
 		sb.append(fn).append("\t");
 		sb.append(IJ.d2s(match.getPrecision(), 4)).append("\t");
 		sb.append(IJ.d2s(match.getRecall(), 4)).append("\t");
+		sb.append(IJ.d2s(match.getJaccard(), 4)).append("\t");
 		sb.append(IJ.d2s(match.getFScore(1), 4));
 
 		if (java.awt.GraphicsEnvironment.isHeadless())
