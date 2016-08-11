@@ -97,7 +97,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		}
 		return min;
 	}
-	
+
 	@Override
 	protected Histogram buildHistogram(int bitDepth, Object pixels, byte[] types, int statsMode)
 	{
@@ -223,59 +223,9 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		return new FloatHistogram(value, h);
 	}
 
-	/**
-	 * Build a histogram using all pixels.
-	 *
-	 * @param data
-	 *            The image data (must be sorted)
-	 * @param doSort
-	 *            True if the data should be sorted
-	 * @param indices
-	 * @return The image histogram
-	 */
-	private FloatHistogram buildHistogram(float[] data, boolean doSort)
-	{
-		if (doSort)
-			Arrays.sort(data);
-
-		float lastValue = data[0];
-		int count = 0;
-
-		int size = 0;
-		float[] value = new float[data.length];
-		int[] h = new int[data.length];
-
-		for (int i = 0; i < data.length; i++)
-		{
-			if (lastValue != data[i])
-			{
-				value[size] = lastValue;
-				h[size++] = count;
-				count = 0;
-			}
-			lastValue = data[i];
-			count++;
-		}
-		// Final count
-		value[size] = lastValue;
-		h[size++] = count;
-
-		h = Arrays.copyOf(h, size);
-		value = Arrays.copyOf(value, size);
-
-		//// Check
-		//int total = 0;
-		//for (int i : h)
-		//	total += i;
-		//if (total != data.length)
-		//	throw new RuntimeException("Failed to compute float histogram");
-
-		return new FloatHistogram(value, h);
-	}
-
 	protected Histogram buildHistogram(int bitDepth, Object pixels)
 	{
-		return buildHistogram(((float[]) pixels).clone(), true);
+		return FloatHistogram.buildHistogram(((float[]) pixels).clone(), true);
 	}
 
 	protected Histogram buildHistogram(Object pixels, int[] maxima, int peakValue, float maxValue)
@@ -292,7 +242,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 					data = Arrays.copyOf(data, (int) (size * 1.5));
 			}
 		}
-		return buildHistogram(Arrays.copyOf(data, size), true);
+		return FloatHistogram.buildHistogram(Arrays.copyOf(data, size), true);
 	}
 
 	@Override
@@ -408,8 +358,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 			case SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND:
 				if (searchParameter < 0)
 					searchParameter = 0;
-				return (float) (stats.background +
-						searchParameter * (v0 - stats.background));
+				return (float) (stats.background + searchParameter * (v0 - stats.background));
 
 			case SEARCH_HALF_PEAK_VALUE:
 				return (float) (stats.background + 0.5 * (v0 - stats.background));
