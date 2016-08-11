@@ -1055,8 +1055,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 			}
 			else
 			{
-				logMessage("%d: Mapped (%d,%d) => (%d,%d) (%spx)", index, x, y, gridPoint.getX(), gridPoint.getY(),
-						IJ.d2s(gridPoint.distance(x, y), 1));
+				logMessage("%d: Mapped (%d,%d) => (%d,%d) (%spx)", index, x, y, (int) gridPoint.getX(),
+						(int) gridPoint.getY(), IJ.d2s(gridPoint.distance(x, y), 1));
 			}
 		}
 		setMappedPoints(this.mappedPoints + 1);
@@ -1078,8 +1078,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		List<GridPoint> points = new ArrayList<GridPoint>(resultsArray.size());
 		for (FindFociResult result : resultsArray)
 		{
-			points.add(new GridPoint(result.x, result.y,
-					result.z, result.maxValue));
+			points.add(new GridPoint(result.x, result.y, result.z, result.maxValue));
 		}
 		return points;
 	}
