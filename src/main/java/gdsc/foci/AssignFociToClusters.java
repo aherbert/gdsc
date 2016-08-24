@@ -954,7 +954,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			i++;
 		}
 		PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
-		roi.setHideLabels(false);
+		roi.setShowLabels(true);
 		return roi;
 	}
 

@@ -711,7 +711,7 @@ public class TranslocationFinder implements PlugIn
 				if (points < 3)
 				{
 					PointRoi roi = new PointRoi(ox, oy, points);
-					roi.setHideLabels(false);
+					roi.setShowLabels(true);
 					imp.setRoi(roi);
 				}
 				else
