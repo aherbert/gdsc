@@ -1,5 +1,28 @@
 package gdsc.utils;
 
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.image.IndexColorModel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+
+import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
+import org.apache.commons.math3.analysis.MultivariateVectorFunction;
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresBuilder;
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer.Optimum;
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresProblem;
+import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
+import org.apache.commons.math3.linear.DiagonalMatrix;
+import org.apache.commons.math3.optim.ConvergenceChecker;
+import org.apache.commons.math3.optim.PointVectorValuePair;
+import org.apache.commons.math3.optim.SimplePointChecker;
+import org.apache.commons.math3.util.Precision;
+
+import gdsc.UsageTracker;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -35,32 +58,6 @@ import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-
-import java.awt.AWTEvent;
-import java.awt.Color;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.image.IndexColorModel;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-
-import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
-import org.apache.commons.math3.analysis.MultivariateVectorFunction;
-import org.apache.commons.math3.optim.ConvergenceChecker;
-import org.apache.commons.math3.optim.InitialGuess;
-import org.apache.commons.math3.optim.MaxEval;
-import org.apache.commons.math3.optim.MaxIter;
-import org.apache.commons.math3.optim.PointVectorValuePair;
-import org.apache.commons.math3.optim.SimplePointChecker;
-import org.apache.commons.math3.optim.nonlinear.vector.ModelFunction;
-import org.apache.commons.math3.optim.nonlinear.vector.ModelFunctionJacobian;
-import org.apache.commons.math3.optim.nonlinear.vector.Target;
-import org.apache.commons.math3.optim.nonlinear.vector.Weight;
-import org.apache.commons.math3.optim.nonlinear.vector.jacobian.LevenbergMarquardtOptimizer;
-import org.apache.commons.math3.util.Precision;
-
-import gdsc.UsageTracker;
 
 /**
  * Outlines a circular cell using the optimal path through a membrane scoring map.
@@ -116,7 +113,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			return DONE;
@@ -1275,25 +1272,33 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		double orthoTolerance = 1e-10;
 		double threshold = Precision.SAFE_MIN;
 
-		LevenbergMarquardtOptimizer optimiser = new LevenbergMarquardtOptimizer(initialStepBoundFactor, checker,
+		LevenbergMarquardtOptimizer optimiser = new LevenbergMarquardtOptimizer(initialStepBoundFactor,
 				costRelativeTolerance, parRelativeTolerance, orthoTolerance, threshold);
 
 		try
 		{
-			PointVectorValuePair solution = optimiser.optimize(new MaxIter(maxEval), new MaxEval(Integer.MAX_VALUE),
-					new ModelFunctionJacobian(new MultivariateMatrixFunction()
-					{
+			//@formatter:off
+			LeastSquaresProblem problem = new LeastSquaresBuilder()
+					.maxEvaluations(Integer.MAX_VALUE)
+					.maxIterations(maxEval)
+					.start(startPoint)
+					.target(func.calculateTarget())
+					.weight(new DiagonalMatrix(func.calculateWeights()))
+					.model(func, new MultivariateMatrixFunction() {
 						public double[][] value(double[] point) throws IllegalArgumentException
 						{
 							return func.jacobian(point);
-						}
-					}), new ModelFunction(func), new Target(func.calculateTarget()),
-					new Weight(func.calculateWeights()), new InitialGuess(startPoint));
+						}} )
+					.checkerPair(checker)
+					.build();
+			//@formatter:on
+
+			Optimum solution = optimiser.optimize(problem);
 
 			if (debug)
-				IJ.log(String.format("Eval = %d (Iter = %d), RMS = %f", optimiser.getEvaluations(),
-						optimiser.getIterations(), optimiser.getRMS()));
-			return solution.getPointRef();
+				IJ.log(String.format("Eval = %d (Iter = %d), RMS = %f", solution.getEvaluations(),
+						solution.getIterations(), solution.getRMS()));
+			return solution.getPoint().toArray();
 		}
 		catch (Exception e)
 		{
@@ -1387,8 +1392,8 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		{
 			EllipticalCell cell = new EllipticalCell();
 			FloatPolygon ellipse = cell.drawEllipse(params);
-			ip = createFilledCell(width, height, new PolygonRoi(ellipse.xpoints, ellipse.ypoints, ellipse.npoints,
-					PolygonRoi.POLYGON));
+			ip = createFilledCell(width, height,
+					new PolygonRoi(ellipse.xpoints, ellipse.ypoints, ellipse.npoints, PolygonRoi.POLYGON));
 			ip.setMinAndMax(0, CELL);
 			displayImage(ip, "Start estimate");
 		}
@@ -1512,8 +1517,8 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		public double[] value(double[] point) throws IllegalArgumentException
 		{
 			if (debug)
-				System.out.printf("%f,%f %f,%f,%f %f\n", point[0], point[1], point[2], point[3], point[4], point[5] *
-						180.0 / Math.PI);
+				System.out.printf("%f,%f %f,%f,%f %f\n", point[0], point[1], point[2], point[3], point[4],
+						point[5] * 180.0 / Math.PI);
 			return getValue(point);
 		}
 
