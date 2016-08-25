@@ -572,7 +572,7 @@ public class AssignFociToObjects implements PlugInFilter
 	private void addRoi(int[] x, int[] y, int n, Overlay o, Color color)
 	{
 		PointRoi roi = new PointRoi(x, y, n);
-		roi.setHideLabels(true);
+		roi.setShowLabels(false);
 		roi.setFillColor(color);
 		roi.setStrokeColor(color);
 		o.add(roi);

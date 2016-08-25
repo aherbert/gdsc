@@ -2558,7 +2558,7 @@ public class FindFociOptimiser
 					roi.setPosition(c, slice, f);
 				else
 					roi.setPosition(slice);
-				roi.setHideLabels(true);
+				roi.setShowLabels(false);
 				overlay.add(roi);
 				remaining -= count;
 			}

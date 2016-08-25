@@ -179,7 +179,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		PointRoi roi = (PointRoi) PointManager.createROI(list);
 		roi.setStrokeColor(strokeColor);
 		roi.setFillColor(fillColor);
-		roi.setHideLabels(true);
+		roi.setShowLabels(false);
 
 		if (o == null)
 		{
@@ -986,7 +986,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		roi.setPosition(0, slice, frame);
 		roi.setStrokeColor(color);
 		roi.setFillColor(color);
-		roi.setHideLabels(true);
+		roi.setShowLabels(false);
 		overlay.add(roi);
 	}
 }

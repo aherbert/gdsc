@@ -1273,7 +1273,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 		PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
 		if ((outputType & OUTPUT_HIDE_LABELS) != 0)
-			roi.setHideLabels(true);
+			roi.setShowLabels(false);
 		return roi;
 	}
 

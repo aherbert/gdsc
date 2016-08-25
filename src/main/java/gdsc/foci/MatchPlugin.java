@@ -368,7 +368,7 @@ public class MatchPlugin implements PlugIn
 		PointRoi roi = (PointRoi) PointManager.createROI(list);
 		roi.setStrokeColor(strokeColor);
 		roi.setFillColor(fillColor);
-		roi.setHideLabels(true);
+		roi.setShowLabels(false);
 
 		if (o == null)
 		{
@@ -768,7 +768,7 @@ public class MatchPlugin implements PlugIn
 		maximum += range * 0.05;
 		minimum -= range * 0.05;
 		plot.setLimits(minimum, maximum, minimum, maximum);
-		plot.setSize(300 + Plot.LEFT_MARGIN + Plot.RIGHT_MARGIN, 300 + Plot.TOP_MARGIN + Plot.BOTTOM_MARGIN);
+		plot.setFrameSize(300, 300);
 
 		plot.setColor(MATCH);
 		plot.addPoints(xMatch, yMatch, Plot.X);
