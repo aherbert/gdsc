@@ -28,6 +28,7 @@ import ij.process.FloatProcessor;
 import ij.process.FloodFiller;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import imagescience.ImageScience;
 import imagescience.feature.Edges;
 import imagescience.feature.Laplacian;
 import imagescience.image.Aspects;
@@ -35,7 +36,7 @@ import imagescience.image.FloatImage;
 import imagescience.image.Image;
 import imagescience.segment.Thresholder;
 import imagescience.segment.ZeroCrosser;
-import imagescience.utility.ImageScience;
+import imagescience.utility.VersionChecker;
 
 import java.awt.AWTEvent;
 import java.awt.Rectangle;
@@ -65,7 +66,7 @@ import gdsc.core.threshold.AutoThreshold.Method;
 public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 {
 	private static final String TITLE = "Edge Mask Creator";
-	private static final String MINISVERSION = "2.4.0";
+	private static final String MINISVERSION = "3.0.0";
 
 	private static final String[] METHODS = new String[] { "Above background", "Laplacian edges", "Gradient edges",
 			"Maximum gradient edges" };
@@ -100,7 +101,8 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 		}
 		try
 		{
-			if (ImageScience.version().compareTo(MINISVERSION) < 0)
+			// Entire block in try-catch as the library may not be present 
+			if (VersionChecker.compare(ImageScience.version(), MINISVERSION) < 0)
 				throw new IllegalStateException();
 		}
 		catch (Throwable e)
