@@ -6,10 +6,9 @@ import java.awt.Rectangle;
 import java.util.Arrays;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction.Parametric;
-import org.apache.commons.math3.fitting.CurveFitter;
-import org.apache.commons.math3.optim.nonlinear.vector.jacobian.LevenbergMarquardtOptimizer;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.commons.math3.fitting.PolynomialCurveFitter;
+import org.apache.commons.math3.fitting.WeightedObservedPoints;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
@@ -62,7 +61,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 			showResults();
 			return DONE;
 		}
-		
+
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
 		if (imp == null || imp.getStackSize() == 1)
@@ -125,7 +124,8 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 
 		// Get the user options
 		GenericDialog gd = new GenericDialog(TITLE);
-		gd.addMessage("Calculate the normalised intensity within an ROI.\nImages should have a linear response with respect to exposure.");
+		gd.addMessage(
+				"Calculate the normalised intensity within an ROI.\nImages should have a linear response with respect to exposure.");
 		gd.addSlider("Window", 3, stack.getSize(), window);
 		gd.addSlider("Bit_depth", 4, imp.getBitDepth(), bitDepth);
 		gd.addCheckbox("Debug", debug);
@@ -364,21 +364,22 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 					break;
 
 				// Linear fit
-				final CurveFitter<Parametric> fitter = new CurveFitter<Parametric>(new LevenbergMarquardtOptimizer());
-				SummaryStatistics gradient = new SummaryStatistics();
+				final WeightedObservedPoints obs = new WeightedObservedPoints();
+				final SimpleRegression r = new SimpleRegression();
 
 				// Extract the data
 				for (int i = start; i < end; i++)
 				{
-					fitter.addObservedPoint(exposures2[i], means2[i]);
-					gradient.addValue(means2[i] / exposures2[i]);
+					obs.add(exposures2[i], means2[i]);
+					r.addData(exposures2[i], means2[i]);
 				}
 
-				if (gradient.getMean() > 0)
+				if (r.getN() > 0)
 				{
 					// Do linear regression to get diffusion rate
-					final double[] init = { 0, gradient.getMean() }; // a + b x
-					final double[] fit = fitter.fit(new PolynomialFunction.Parametric(), init);
+					final double[] init = { r.getIntercept(), r.getSlope() }; // a + b x
+					final PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2).withStartPoint(init);
+					final double[] fit = fitter.fit(obs.toList());
 					final PolynomialFunction fitted = new PolynomialFunction(fit);
 					// Score the fit
 					double ss = 0;
