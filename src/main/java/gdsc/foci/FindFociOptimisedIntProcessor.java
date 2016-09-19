@@ -680,6 +680,8 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		final int[] pListV = new int[maxPeakSize];
 		final int[] xyz = new int[3];
 
+		final int[] highestSaddleValue = new int[nMaxima + 1];
+		
 		/* Process all the maxima */
 		for (FindFociResult result : resultsArray)
 		{
@@ -690,8 +692,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 			final int index0 = getIndex(x0, y0, z0);
 
 			// List of saddle highest values with every other peak
-			final int[] highestSaddleValue = new int[nMaxima + 1];
-			//Arrays.fill(highestSaddleValue, NO_SADDLE_VALUE); // No saddle value will be zero
+			Arrays.fill(highestSaddleValue, 0);
 
 			types[index0] |= LISTED; // mark first point as listed
 			int listI = 0; // index of current search element in the list

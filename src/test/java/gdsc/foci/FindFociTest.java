@@ -18,6 +18,7 @@ import ij.process.ShortProcessor;
 public class FindFociTest
 {
 	static int bias = 500;
+	static int offset = bias + 100;
 	static RandomGenerator rand = new Well19937c(30051977);
 	static ImagePlus[] data;
 	static int numberOfTestImages = 2;
@@ -399,6 +400,7 @@ public class FindFociTest
 		//System.out.printf("N1=%d, N2=%d\n", results1.size(), results2.size());
 		Assert.assertEquals(set + " Results Size", results1.size(), results2.size());
 		int counter = 0;
+		final int offset = (negativeValues) ? FindFociTest.offset : 0;
 		try
 		{
 			for (int i = 0; i < results1.size(); i++)
@@ -407,9 +409,9 @@ public class FindFociTest
 				//@formatter:off
     			FindFociResult o1 = results1.get(i);
     			FindFociResult o2 = results2.get(i);
-    			//System.out.printf("[%d] %d,%d %f (%d) vs %d,%d %f (%d)\n", i, 
-    			//		o1.RESULT_X, o1.RESULT_Y, o1.RESULT_MAX_VALUE, o1.RESULT_COUNT,
-    			//		o2.RESULT_X, o2.RESULT_Y, o2.RESULT_MAX_VALUE, o2.RESULT_COUNT);
+    			//System.out.printf("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d\n", i, 
+    			//		o1.x, o1.y, o1.maxValue, o1.count, o1.saddleNeighbourId, 
+    			//		o2.x, o2.y, o2.maxValue, o2.count, o2.saddleNeighbourId);
     			Assert.assertEquals("X", o1.x, o2.x);
     			Assert.assertEquals("Y", o1.y, o2.y);
     			Assert.assertEquals("Z", o1.z, o2.z);
@@ -417,14 +419,15 @@ public class FindFociTest
     			Assert.assertEquals("Count", o1.count, o2.count);
     			Assert.assertEquals("Saddle ID", o1.saddleNeighbourId, o2.saddleNeighbourId);
     			Assert.assertEquals("Count >Saddle", o1.countAboveSaddle, o2.countAboveSaddle);
+    			Assert.assertEquals("Max", (int)o1.maxValue, (int)o2.maxValue + offset);
+    			if (o2.highestSaddleValue != Float.NEGATIVE_INFINITY && o2.highestSaddleValue != 0)
+    				Assert.assertEquals("Saddle value", (int)o1.highestSaddleValue, (int)o2.highestSaddleValue + offset);
+    			Assert.assertEquals("Av Intensity", (int)o1.averageIntensity, (int)o2.averageIntensity + offset);
+    			Assert.assertEquals("Av Intensity >background", (int)o1.averageIntensityAboveBackground, (int)o2.averageIntensityAboveBackground);
     			if (negativeValues)
     				continue;
     			Assert.assertEquals("Intensity", (int)o1.totalIntensity, (int)o2.totalIntensity);
-    			Assert.assertEquals("Max", (int)o1.maxValue, (int)o2.maxValue);
-    			Assert.assertEquals("Saddle value", (int)o1.highestSaddleValue, (int)o2.highestSaddleValue);
-    			Assert.assertEquals("Av Intensity", (int)o1.averageIntensity, (int)o2.averageIntensity);
     			Assert.assertEquals("Intensity >background", (int)o1.totalIntensityAboveBackground, (int)o2.totalIntensityAboveBackground);
-    			Assert.assertEquals("Av Intensity >background", (int)o1.averageIntensityAboveBackground, (int)o2.averageIntensityAboveBackground);
     			Assert.assertEquals("Intensity > Saddle", (int)o1.intensityAboveSaddle, (int)o2.intensityAboveSaddle);
     			//@formatter:on
 			}
@@ -487,7 +490,7 @@ public class FindFociTest
 		FloatProcessor fp = (FloatProcessor) imp.getProcessor().convertToFloat();
 		if (negative)
 		{
-			fp.subtract(bias + 100);
+			fp.subtract(offset);
 		}
 		imp = new ImagePlus(null, fp);
 		FindFoci ff = new FindFoci();

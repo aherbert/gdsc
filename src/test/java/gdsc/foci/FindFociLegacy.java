@@ -3531,6 +3531,37 @@ public class FindFociLegacy
 		return null;
 	}
 
+	private class SaddleComparator implements Comparator<int[]>
+	{
+		public int compare(int[]  o1, int[] o2)
+		{
+			int result = o1[SADDLE_PEAK_ID] - o2[SADDLE_PEAK_ID];
+			if (result != 0)
+				return result;
+			if (o1[SADDLE_VALUE] > o2[SADDLE_VALUE])
+				return -1;
+			if (o1[SADDLE_VALUE] < o2[SADDLE_VALUE])
+				return 1;
+			return 0;
+		}
+	}
+
+	private SaddleComparator saddleComparator = new SaddleComparator();
+
+	private class DefaultSaddleComparator implements Comparator<int[]>
+	{
+		public int compare(int[] o1, int[] o2)
+		{
+			if (o1[SADDLE_VALUE] > o2[SADDLE_VALUE])
+				return -1;
+			if (o1[SADDLE_VALUE] < o2[SADDLE_VALUE])
+				return 1;
+			return o1[SADDLE_PEAK_ID] - o2[SADDLE_PEAK_ID];
+		}
+	}
+
+	private DefaultSaddleComparator defaultSaddleComparator = new DefaultSaddleComparator();
+	
 	/**
 	 * Assigns the peak to the neighbour. Flags the peak as merged by setting the intensity to zero.
 	 * If the highest saddle is lowered then recomputes the size/intensity above the saddle.
@@ -3570,15 +3601,71 @@ public class FindFociLegacy
 				neighbourResult[RESULT_Z] = result[RESULT_Z];
 			}
 
-			// Merge the saddles
-			for (int[] peakSaddle : peakSaddles)
+			// 19.09.2016: Added to match the new implementation in the FindFociBaseProcessor
+
+			// Consolidate the saddles of the neighbour. This should speed up processing.
+			// 1. Remove all saddle with the peak that is being merged.
+			int size = 0;
+			int[][] newNeighbourSaddles = new int[neighbourSaddles.size()][];
+			for (int[] saddle : neighbourSaddles)
 			{
+				if (peakIdMap[saddle[SADDLE_PEAK_ID]] == peakId || peakIdMap[saddle[SADDLE_PEAK_ID]] == 0)
+					// Ignore saddle with peak that is being merged or has been removed
+					continue;
+				// Consolidate the id
+				saddle[SADDLE_PEAK_ID] = peakIdMap[saddle[SADDLE_PEAK_ID]];
+				newNeighbourSaddles[size++] = saddle;
+			}
+			newNeighbourSaddles = Arrays.copyOf(newNeighbourSaddles, size);
+			Arrays.sort(newNeighbourSaddles, saddleComparator);
+
+			// 2. Remove all but the highest saddle with other peaks.
+			int lastId = 0;
+			size = 0;
+			for (int i = 0; i < newNeighbourSaddles.length; i++)
+			{
+				if (lastId != newNeighbourSaddles[i][SADDLE_PEAK_ID])
+					newNeighbourSaddles[size++] = newNeighbourSaddles[i];
+				lastId = newNeighbourSaddles[i][SADDLE_PEAK_ID];
+			}
+			newNeighbourSaddles = Arrays.copyOf(newNeighbourSaddles, size);
+			Arrays.sort(newNeighbourSaddles, defaultSaddleComparator);
+
+			neighbourSaddles.clear();
+			neighbourSaddles.addAll(Arrays.asList(newNeighbourSaddles));
+
+			// Consolidate the peak saddles too...
+			int size2 = 0;
+			int[][] newSaddles = new int[peakSaddles.size()][];
+			for (int[] saddle : peakSaddles)
+			{
+				if (peakIdMap[saddle[SADDLE_PEAK_ID]] == neighbourPeakId || peakIdMap[saddle[SADDLE_PEAK_ID]] == 0)
+					// Ignore saddle with peak that is being merged or has been removed
+					continue;
+				// Consolidate the id
+				saddle[SADDLE_PEAK_ID] = peakIdMap[saddle[SADDLE_PEAK_ID]];
+				newSaddles[size2++] = saddle;
+			}
+			newSaddles = Arrays.copyOf(newSaddles, size2);
+			Arrays.sort(newSaddles, saddleComparator);
+
+			// Merge the saddles
+			lastId = 0;
+			boolean doSort = false;
+			for (int i = 0; i < newSaddles.length; i++)
+			{
+				if (lastId == newSaddles[i][SADDLE_PEAK_ID])
+					continue;
+				lastId = newSaddles[i][SADDLE_PEAK_ID];
+
+				final int[] peakSaddle = newSaddles[i];
 				final int saddlePeakId = peakIdMap[peakSaddle[SADDLE_PEAK_ID]];
 				final int[] neighbourSaddle = findHighestSaddle(peakIdMap, neighbourSaddles, saddlePeakId);
 				if (neighbourSaddle == null)
 				{
 					// The neighbour peak does not touch this peak, add to the list
 					neighbourSaddles.add(peakSaddle);
+					doSort = true;
 				}
 				else
 				{
@@ -3586,9 +3673,13 @@ public class FindFociLegacy
 					if (neighbourSaddle[SADDLE_VALUE] < peakSaddle[SADDLE_VALUE])
 					{
 						neighbourSaddle[SADDLE_VALUE] = peakSaddle[SADDLE_VALUE];
+						doSort = true;
 					}
 				}
 			}
+
+			if (doSort)
+				Collections.sort(neighbourSaddles, defaultSaddleComparator);
 
 			// Free memory
 			peakSaddles.clear();
