@@ -351,17 +351,18 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		return histogram.getValue(t);
 	}
 
-	private long timestamp;
+	private long timestamp, timestamp2;
 
 	private void timingStart()
 	{
-		timestamp = System.nanoTime();
+		timestamp = timestamp2 = System.nanoTime();
 	}
 
 	private void timingSplit(String string)
 	{
 		final long newTimestamp = System.nanoTime();
-		log(string + " = " + ((newTimestamp - timestamp) / 1000000.0) + " msec");
+		log(String.format("%s = %.2f ms : %.2f ms", string, 
+		((newTimestamp - timestamp) / 1000000.0), ((newTimestamp - timestamp2) / 1000000.0)));
 		timestamp = newTimestamp;
 	}
 
