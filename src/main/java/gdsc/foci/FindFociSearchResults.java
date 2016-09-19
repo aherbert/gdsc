@@ -1,7 +1,6 @@
 package gdsc.foci;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -22,7 +21,7 @@ import java.util.LinkedList;
 public class FindFociSearchResults
 {
 	public ArrayList<FindFociResult> resultsArray;
-	public ArrayList<LinkedList<FindFociSaddle>> saddlePoints;
+	public ArrayList<ArrayList<FindFociSaddle>> saddlePoints;
 
 	/**
 	 * Instantiates a new find foci merge results.
@@ -33,7 +32,7 @@ public class FindFociSearchResults
 	 *            the saddle points
 	 */
 	public FindFociSearchResults(ArrayList<FindFociResult> resultsArray,
-			ArrayList<LinkedList<FindFociSaddle>> saddlePoints)
+			ArrayList<ArrayList<FindFociSaddle>> saddlePoints)
 	{
 		this.resultsArray = resultsArray;
 		this.saddlePoints = saddlePoints;

@@ -2,7 +2,6 @@ package gdsc.foci;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 
 import gdsc.core.ij.Utils;
 import gdsc.core.threshold.Histogram;
@@ -666,14 +665,14 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 * java.util.ArrayList)
 	 */
 	protected void findSaddlePoints(Object pixels, byte[] types, ArrayList<FindFociResult> resultsArray, int[] maxima,
-			ArrayList<LinkedList<FindFociSaddle>> saddlePoints)
+			ArrayList<ArrayList<FindFociSaddle>> saddlePoints)
 	{
 		setPixels(pixels);
 
 		// Initialise the saddle points
 		final int nMaxima = resultsArray.size();
 		for (int i = 0; i < nMaxima + 1; i++)
-			saddlePoints.add(new LinkedList<FindFociSaddle>());
+			saddlePoints.add(new ArrayList<FindFociSaddle>());
 
 		final int maxPeakSize = getMaxPeakSize(resultsArray);
 		final int[] pListI = new int[maxPeakSize]; // here we enter points starting from a maximum (index,value)
@@ -780,17 +779,29 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 			// Find the highest saddle
 			int highestNeighbourPeakId = 0;
 			int highestNeighbourValue = 0;
-			LinkedList<FindFociSaddle> saddles = saddlePoints.get(id);
+			int count = 0;
 			for (int id2 = 1; id2 <= nMaxima; id2++)
 			{
 				if (highestSaddleValue[id2] != 0)
 				{
-					saddles.add(new FindFociSaddle(id2, highestSaddleValue[id2]));
+					count++;
 					// IJ.log("Peak saddle " + id + " -> " + id2 + " @ " + highestSaddleValue[id2]);
 					if (highestNeighbourValue < highestSaddleValue[id2])
 					{
 						highestNeighbourValue = highestSaddleValue[id2];
 						highestNeighbourPeakId = id2;
+					}
+				}
+			}
+			if (count != 0)
+			{
+				ArrayList<FindFociSaddle> saddles = saddlePoints.get(id);
+				saddles.ensureCapacity(saddles.size() + count);
+				for (int id2 = 1; id2 <= nMaxima; id2++)
+				{
+					if (highestSaddleValue[id2] != 0)
+					{
+						saddles.add(new FindFociSaddle(id2, highestSaddleValue[id2]));
 					}
 				}
 			}
