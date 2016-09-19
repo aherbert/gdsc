@@ -245,7 +245,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		showStatus("Merging peaks...");
 
 		// Combine maxima below the minimum peak criteria to adjacent peaks (or eliminate if no neighbours)
-		int originalNumberOfPeaks = resultsArray.size();
+		final int originalNumberOfPeaks = resultsArray.size();
 		resultsArray = mergeSubPeaks(resultsArray, image, maxima, minSize, peakMethod, peakParameter, stats,
 				saddlePoints, isLogging, restrictAboveSaddle);
 
@@ -3354,8 +3354,51 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 	/**
 	 * Find the size and intensity of peaks above their saddle heights.
+	 * 
+	 * @param originalNumberOfPeaks
 	 */
-	protected void analysePeaks(ArrayList<FindFociResult> resultsArray, Object pixels, int[] maxima,
+	private void analysePeaks(ArrayList<FindFociResult> resultsArray, Object pixels, int[] maxima,
+			FindFociStatistics stats)
+	{
+		setPixels(pixels);
+
+		// Create an array of the size/intensity of each peak above the highest saddle 
+		final double[] peakIntensity = new double[resultsArray.size() + 1];
+		final int[] peakSize = new int[peakIntensity.length];
+
+		// Store all the saddle heights
+		final float[] saddleHeight = new float[peakIntensity.length];
+		for (FindFociResult result : resultsArray)
+		{
+			saddleHeight[result.id] = result.highestSaddleValue;
+			//System.out.printf("ID=%d saddle=%f (%f)\n", result.RESULT_PEAK_ID, result.RESULT_HIGHEST_SADDLE_VALUE, result.RESULT_COUNT_ABOVE_SADDLE);
+		}
+
+		for (int i = maxima.length; i-- > 0;)
+		{
+			final int id = maxima[i];
+			if (id != 0)
+			{
+				final float v = getf(i);
+				if (v > saddleHeight[id])
+				{
+					peakIntensity[id] += v;
+					peakSize[id]++;
+				}
+			}
+		}
+
+		for (FindFociResult result : resultsArray)
+		{
+			result.countAboveSaddle = peakSize[result.id];
+			result.intensityAboveSaddle = peakIntensity[result.id];
+		}
+	}
+
+	/**
+	 * Find the size and intensity of peaks above their saddle heights.
+	 */
+	private void analysePeaksWithBounds(ArrayList<FindFociResult> resultsArray, Object pixels, int[] maxima,
 			FindFociStatistics stats)
 	{
 		setPixels(pixels);
@@ -3372,23 +3415,53 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			//System.out.printf("ID=%d saddle=%f (%f)\n", result.RESULT_PEAK_ID, result.RESULT_HIGHEST_SADDLE_VALUE, result.RESULT_COUNT_ABOVE_SADDLE);
 		}
 
-		for (int i = maxima.length; i-- > 0;)
-		{
-			if (maxima[i] > 0)
-			{
-				final float v = getf(i);
-				if (v > saddleHeight[maxima[i]])
+		// Store the xyz limits for each peak.
+		// This speeds up re-computation of the height above the min saddle.
+		final int[] minx = new int[peakIntensity.length];
+		final int[] miny = new int[peakIntensity.length];
+		final int[] minz = new int[peakIntensity.length];
+		Arrays.fill(minx, this.maxx);
+		Arrays.fill(miny, this.maxy);
+		Arrays.fill(minz, this.maxz);
+		final int[] maxx = new int[peakIntensity.length];
+		final int[] maxy = new int[peakIntensity.length];
+		final int[] maxz = new int[peakIntensity.length];
+
+		for (int z = 0, i = 0; z < this.maxz; z++)
+			for (int y = 0; y < this.maxy; y++)
+				for (int x = 0; x < this.maxx; x++, i++)
 				{
-					peakIntensity[maxima[i]] += v;
-					peakSize[maxima[i]]++;
+					final int id = maxima[i];
+					if (id != 0)
+					{
+						final float v = getf(i);
+						if (v > saddleHeight[id])
+						{
+							peakIntensity[id] += v;
+							peakSize[id]++;
+						}
+
+						// Get bounds
+						minx[id] = Math.min(minx[id], x);
+						miny[id] = Math.min(miny[id], y);
+						minz[id] = Math.min(minz[id], z);
+						maxx[id] = Math.max(maxx[id], x);
+						maxy[id] = Math.max(maxy[id], y);
+						maxz[id] = Math.max(maxz[id], z);
+					}
 				}
-			}
-		}
 
 		for (FindFociResult result : resultsArray)
 		{
 			result.countAboveSaddle = peakSize[result.id];
 			result.intensityAboveSaddle = peakIntensity[result.id];
+			result.minx = minx[result.id];
+			result.miny = miny[result.id];
+			result.minz = minz[result.id];
+			// Allow iterating i=min; i<max; i++
+			result.maxx = maxx[result.id] + 1;
+			result.maxy = maxy[result.id] + 1;
+			result.maxz = maxz[result.id] + 1;
 		}
 	}
 
@@ -3494,7 +3567,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		{
 			updateSaddleDetails(resultsArray, peakIdMap);
 			reassignMaxima(maxima, peakIdMap);
-			analysePeaks(resultsArray, pixels, maxima, stats);
+			analysePeaksWithBounds(resultsArray, pixels, maxima, stats);
+			//analysePeaks(resultsArray, pixels, maxima, stats, resultsArray.size());
 
 			// Process all the peaks for the minimum size above the saddle points. Process in order of smallest first
 			sortAscResults(resultsArray, SORT_COUNT_ABOVE_SADDLE, stats);
@@ -3519,7 +3593,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 						// TODO - This should not occur... ? What is the count above the saddle?
 
 						// No neighbour so just remove
-						mergePeak(maxima, peakIdMap, peakId, result, 0, null, null, null, null, true);
+						mergePeak(maxima, peakIdMap, peakId, result, 0, null, null, null, null, false);
 					}
 					else
 					{
@@ -3705,16 +3779,27 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/**
 	 * Assigns the peak to the neighbour. Flags the peak as merged by setting the intensity to zero.
 	 * If the highest saddle is lowered then recomputes the size/intensity above the saddle.
-	 * 
+	 *
 	 * @param maxima
+	 *            the maxima
 	 * @param peakIdMap
+	 *            the peak id map
 	 * @param peakId
+	 *            the peak id
 	 * @param result
+	 *            the result
 	 * @param neighbourPeakId
+	 *            the neighbour peak id
 	 * @param neighbourResult
-	 * @param linkedList
+	 *            the neighbour result (can be null)
 	 * @param peakSaddles
+	 *            the peak saddles
+	 * @param neighbourSaddles
+	 *            the neighbour saddles
 	 * @param highestSaddle
+	 *            the highest saddle
+	 * @param updatePeakAboveSaddle
+	 *            Set to true to update peak above saddle
 	 */
 	private void mergePeak(int[] maxima, int[] peakIdMap, int peakId, FindFociResult result, int neighbourPeakId,
 			FindFociResult neighbourResult, LinkedList<FindFociSaddle> peakSaddles,
@@ -3730,6 +3815,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			neighbourResult.count += result.count;
 
 			neighbourResult.averageIntensity = neighbourResult.totalIntensity / neighbourResult.count;
+
+			// Update the bounds
+			if (updatePeakAboveSaddle)
+				neighbourResult.updateBounds(result);
 
 			// Check if the neighbour is higher and reassign the maximum point
 			if (neighbourResult.maxValue < result.maxValue)
@@ -3797,35 +3886,62 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 	/**
 	 * Reassign the maxima using the peak Id map and recounts all pixels above the saddle height.
-	 * 
+	 *
 	 * @param maxima
+	 *            the maxima
 	 * @param peakIdMap
+	 *            the peak id map
+	 * @param peakId
+	 *            the peak id
+	 * @param saddle
+	 *            the saddle
+	 * @param result
+	 *            the result
 	 * @param updatePeakAboveSaddle
+	 *            Set to true to update the peak above saddle
 	 */
-	protected void reanalysePeak(int[] maxima, int[] peakIdMap, int peakId, FindFociSaddle saddle,
-			FindFociResult result, boolean updatePeakAboveSaddle)
+	protected void reanalysePeak(final int[] maxima, final int[] peakIdMap, final int peakId,
+			final FindFociSaddle saddle, final FindFociResult result, final boolean updatePeakAboveSaddle)
 	{
 		if (updatePeakAboveSaddle)
 		{
 			int peakSize = 0;
 			double peakIntensity = 0;
 			final float saddleHeight = saddle.value;
-			for (int i = maxima.length; i-- > 0;)
-			{
-				if (maxima[i] > 0)
-				{
-					maxima[i] = peakIdMap[maxima[i]];
-					if (maxima[i] == peakId)
+
+			// Search using the bounds
+			for (int z = result.minz; z < result.maxz; z++)
+				for (int y = result.miny; y < result.maxy; y++)
+					for (int x = result.minx, i = getIndex(result.minx, y, z); x < result.maxx; x++, i++)
 					{
-						final float v = getf(i);
-						if (v > saddleHeight)
+						final int id = maxima[i];
+						if (id != 0 && peakIdMap[id] == peakId)
 						{
-							peakIntensity += v;
-							peakSize++;
+							//maxima[i] = peakId; // Remap
+							final float v = getf(i);
+							if (v > saddleHeight)
+							{
+								peakIntensity += v;
+								peakSize++;
+							}
 						}
 					}
-				}
-			}
+
+			//// Global search
+			//for (int i = maxima.length; i-- > 0;)
+			//{
+			//	final int id = maxima[i];
+			//	if (id != 0 && peakIdMap[id] == peakId)
+			//	{
+			//		//maxima[i] = peakId; // Remap
+			//		final float v = getf(i);
+			//		if (v > saddleHeight)
+			//		{
+			//			peakIntensity += v;
+			//			peakSize++;
+			//		}
+			//	}
+			//}
 
 			result.countAboveSaddle = peakSize;
 			result.intensityAboveSaddle = peakIntensity;

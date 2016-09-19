@@ -94,6 +94,30 @@ public class FindFociResult implements Cloneable
 	 * The allocated object from the mask image
 	 */
 	public int object;
+	/**
+	 * The minimum x range covered by the peak. This is used when merging peaks above the minimum saddle value. 
+	 */
+	int minx;
+	/**
+	 * The minimum y range covered by the peak. This is used when merging peaks above the minimum saddle value. 
+	 */
+	int miny;
+	/**
+	 * The minimum z range covered by the peak. This is used when merging peaks above the minimum saddle value. 
+	 */
+	int minz;
+	/**
+	 * The maximum x range covered by the peak. This is used when merging peaks above the minimum saddle value. 
+	 */
+	int maxx;
+	/**
+	 * The maximum y range covered by the peak. This is used when merging peaks above the minimum saddle value. 
+	 */
+	int maxy;
+	/**
+	 * The maximum z range covered by the peak. This is used when merging peaks above the minimum saddle value. 
+	 */
+	int maxz;
 
 	/**
 	 * Instantiates a new find foci result.
@@ -129,5 +153,15 @@ public class FindFociResult implements Cloneable
 	public int[] getCoordinates()
 	{
 		return new int[] { x, y, z };
+	}
+
+	void updateBounds(FindFociResult result)
+	{
+		minx = Math.min(minx, result.minx);
+		miny = Math.min(miny, result.miny);
+		minz = Math.min(minz, result.minz);
+		maxx = Math.max(maxx, result.maxx);
+		maxy = Math.max(maxy, result.maxy);
+		maxz = Math.max(maxz, result.maxz);
 	}
 }
