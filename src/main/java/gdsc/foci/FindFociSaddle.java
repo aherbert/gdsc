@@ -16,7 +16,7 @@ package gdsc.foci;
 /**
  * Contains the foci result of the FindFoci algorithm.
  */
-public class FindFociSaddle implements Cloneable
+public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle>
 {
 	/** The saddle peak id. */
 	public int id;
@@ -50,5 +50,19 @@ public class FindFociSaddle implements Cloneable
 		{
 			return null;
 		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	public int compareTo(FindFociSaddle that)
+	{
+		if (this.value > that.value)
+			return -1;
+		if (this.value < that.value)
+			return 1;
+		return this.id - that.id;
 	}
 }
