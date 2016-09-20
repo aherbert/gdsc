@@ -64,8 +64,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	protected int maxx, maxy, maxz; // image dimensions
 	protected int xlimit, ylimit, zlimit;
 	protected int maxx_maxy, maxx_maxy_maxz;
-	protected int[] offset;
-	protected int dStart;
+	protected int[] offset, offset2;
+	protected int dStart, dStart2;
 	protected boolean[] flatEdge;
 	private Rectangle bounds = null;
 
@@ -81,6 +81,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	protected final int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
 	protected final int[] DIR_Y_OFFSET = new int[] {-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1, 0,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
 	protected final int[] DIR_Z_OFFSET = new int[] { 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+	// Half-neighbours
+	protected final int[] DIR_X_OFFSET2 = new int[] { 0, 1, 1, 1, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
+	protected final int[] DIR_Y_OFFSET2 = new int[] {-1,-1, 0, 1,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
+	protected final int[] DIR_Z_OFFSET2 = new int[] { 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
 	//@formatter:on
 
 	/* the following constants are used to set bits corresponding to pixel types */
@@ -92,6 +96,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	protected final static byte SADDLE_POINT = (byte) 32; // marks a saddle between maxima
 	protected final static byte SADDLE_WITHIN = (byte) 64; // marks a point within a maxima next to a saddle
 	protected final static byte PLATEAU = (byte) 128; // marks a point as a plateau region
+	protected final static byte NOT_MAXIMUM = (byte) 32; // marks a point as not a maximum
+	protected final static byte SADDLE_SEARCH = (byte) 32; // marks a point to use in the saddle search
 
 	protected final static byte BELOW_SADDLE = (byte) 128; // marks a point as falling below the highest saddle point
 
@@ -361,8 +367,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	private void timingSplit(String string)
 	{
 		final long newTimestamp = System.nanoTime();
-		log(String.format("%s = %.2f ms : %.2f ms", string, 
-		((newTimestamp - timestamp) / 1000000.0), ((newTimestamp - timestamp2) / 1000000.0)));
+		log(String.format("%s = %.2f ms : %.2f ms", string, ((newTimestamp - timestamp) / 1000000.0),
+				((newTimestamp - timestamp2) / 1000000.0)));
 		timestamp = newTimestamp;
 	}
 
@@ -877,7 +883,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				fractionParameter = Math.max(Math.min(1 - fractionParameter, 1), 0);
 
 			// Reset unneeded flags in the types array since new flags are required to mark pixels below the cut-off height.
-			byte resetFlag = (byte) (SADDLE_POINT | MAX_AREA);
+			final byte resetFlag = (byte) (SADDLE_POINT | MAX_AREA);
 			for (int i = types.length; i-- > 0;)
 			{
 				types[i] &= resetFlag;
@@ -1877,7 +1883,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		setPixels(pixels);
 		for (int i = maxx_maxy_maxz; i-- > 0;)
 		{
-			if ((types[i] & (EXCLUDED | MAX_AREA | PLATEAU)) != 0)
+			if ((types[i] & (EXCLUDED | MAX_AREA | PLATEAU | NOT_MAXIMUM)) != 0)
 				continue;
 			final float v = getf(i);
 			if (v < threshold)
@@ -1915,6 +1921,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 					{
 						// Neighbour is equal, this is a potential plateau maximum
 						equalNeighbour = true;
+					}
+					else
+					{
+						// This is lower so cannot be a maxima 
+						types[i + offset[d]] |= NOT_MAXIMUM;
 					}
 				}
 			}
@@ -1960,6 +1971,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		if (Utils.isInterrupted())
 			return null;
+
+		for (int i = maxx_maxy_maxz; i-- > 0;)
+			types[i] &= ~NOT_MAXIMUM; // reset attributes no longer needed
 
 		Collections.sort(maxPoints);
 
@@ -2076,6 +2090,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 						// Add this to the search
 						pList[listLen++] = index2;
 						types[index2] |= LISTED | PLATEAU;
+					}
+					else
+					{
+						types[index2] |= NOT_MAXIMUM;
 					}
 				}
 			}
@@ -3202,7 +3220,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            Contains an entry for each peak indexed from 1. The entry is a linked list of saddle points. Each
 	 *            saddle point is an array containing the neighbouring peak ID and the saddle value.
 	 */
-	protected void findSaddlePoints(Object pixels, byte[] types, ArrayList<FindFociResult> resultsArray, int[] maxima,
+	private void findSaddlePoints(Object pixels, byte[] types, ArrayList<FindFociResult> resultsArray, int[] maxima,
 			ArrayList<ArrayList<FindFociSaddle>> saddlePoints)
 	{
 		setPixels(pixels);
@@ -3217,118 +3235,81 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		final float[] pListV = new float[maxPeakSize];
 		final int[] xyz = new int[3];
 
-		final float[] highestSaddleValue = new float[nMaxima + 1];
-
 		// Can we speed this up?
 		// Attempts to use a bounding region do not change the speed. The limit must be the 
 		// search of N-connected neighbours.
 
-		final boolean useBoundingRegion = false;
+		final boolean useBoundingRegion = true;
 		if (useBoundingRegion)
 		{
-			// Find the bounding dimensions for each peak and search within that?
-			findBounds(resultsArray, maxima);
+			// Do an initial sweep of half-neighbours to mark pixels for a saddle search
+			for (int i = maxx_maxy_maxz; i-- > 0;)
+			{
+				final int id = maxima[i];
+				if (id == 0)
+					continue;
+
+				getXYZ(i, xyz);
+
+				final int x = xyz[0];
+				final int y = xyz[1];
+				final int z = xyz[2];
+
+				/*
+				 * Check whether we have a touching maxima
+				 */
+				final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+				final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
+
+				// It is more likely that the z stack will be out-of-bounds.
+				// Adopt the xy limit lookup and process z lookup separately
+
+				for (int d = dStart2; d-- > 0;)
+				{
+					if (isInnerXYZ || (isInnerXY && isWithinZ2(z, d)) || isWithinXYZ2(x, y, z, d))
+					{
+						final int id2 = maxima[i + offset2[d]];
+						if (id2 != 0 && id2 != id)
+						{
+							// This is saddle search point between two touching maxima
+							types[i] |= SADDLE_SEARCH;
+							types[i + offset2[d]] |= SADDLE_SEARCH;
+						}
+					}
+				}
+			}
+
+			// Find the bounding dimensions for each peak which are saddle search points 
+			// and search within that
+			findBounds(resultsArray, maxima, types);
+
+			setupFindHighestSaddleValues(nMaxima);
 
 			for (FindFociResult result : resultsArray)
 			{
-				Arrays.fill(highestSaddleValue, NO_SADDLE_VALUE);
-				final int id = result.id;
-
-				for (int z = result.minz; z < result.maxz; z++)
+				// Skip if no saddles
+				if (result.maxx < 0)
 				{
-					final boolean isInnerZ = (zlimit == 0) ? true : (z != 0 && z != zlimit);
-					for (int y = result.miny; y < result.maxy; y++)
-					{
-						final boolean isInnerY = (y != 0 && y != ylimit);
-						for (int x = result.minx, index1 = getIndex(result.minx, y, z); x < result.maxx; x++, index1++)
-						{
-							if (maxima[index1] == id)
-							{
-								final float v1 = getf(index1);
-
-								final boolean isInnerXY = isInnerY && (x != 0 && x != xlimit);
-								final boolean isInnerXYZ = isInnerXY && isInnerZ;
-
-								for (int d = dStart; d-- > 0;)
-								{
-									if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d))
-									{
-										// Get the coords
-										final int index2 = index1 + offset[d];
-										final int id2 = maxima[index2];
-
-										if (id2 == id || id2 == 0)
-											// Same maxima, or no maxima, do nothing
-											continue;
-
-										// This is another peak, see if it a saddle highpoint
-										final float v2 = getf(index2);
-
-										// Take the lower of the two points as the saddle
-										final float minV;
-										if (v1 < v2)
-										{
-											types[index1] |= SADDLE;
-											minV = v1;
-										}
-										else
-										{
-											types[index2] |= SADDLE;
-											minV = v2;
-										}
-
-										if (highestSaddleValue[id2] < minV)
-										{
-											highestSaddleValue[id2] = minV;
-										}
-									}
-								}
-							}
-						}
-					}
+					ArrayList<FindFociSaddle> saddles = new ArrayList<FindFociSaddle>(0);
+					saddlePoints.add(saddles);
+					//result.saddleNeighbourId = 0;
+					//result.highestSaddleValue = NO_SADDLE_VALUE;
+					continue;
 				}
 
-				// Find the highest saddle
-				int highestNeighbourPeakId = 0;
-				float highestNeighbourValue = NO_SADDLE_VALUE;
-				int count = 0;
-				for (int id2 = 1; id2 <= nMaxima; id2++)
-				{
-					if (highestSaddleValue[id2] != NO_SADDLE_VALUE)
-					{
-						count++;
-						// log("Peak saddle " + id + " -> " + id2 + " @ " + highestSaddleValue[id2]);
-						if (highestNeighbourValue < highestSaddleValue[id2])
-						{
-							highestNeighbourValue = highestSaddleValue[id2];
-							highestNeighbourPeakId = id2;
-						}
-					}
-				}
-				ArrayList<FindFociSaddle> saddles = new ArrayList<FindFociSaddle>(count);
-				saddlePoints.add(saddles);
-				if (count != 0)
-				{
-					for (int id2 = 1; id2 <= nMaxima; id2++)
-					{
-						if (highestSaddleValue[id2] != NO_SADDLE_VALUE)
-						{
-							saddles.add(new FindFociSaddle(id2, highestSaddleValue[id2]));
-						}
-					}
-					Collections.sort(saddles);
-				}
-
-				// Set the saddle point
-				if (highestNeighbourPeakId != 0)
-				{
-					result.saddleNeighbourId = highestNeighbourPeakId;
-					result.highestSaddleValue = highestNeighbourValue;
-				}
+				findHighestSaddleValues(result, maxima, types, saddlePoints);
 			}
+
+			finaliseFindHighestSaddleValues();
+
+			// Reset attributes no longer needed
+			for (int i = maxx_maxy_maxz; i-- > 0;)
+				types[i] &= ~SADDLE_SEARCH;
 		}
 		else
 		{
+			final float[] highestSaddleValues = new float[nMaxima + 1];
+
 			/* Process all the maxima */
 			for (FindFociResult result : resultsArray)
 			{
@@ -3339,7 +3320,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				final int index0 = getIndex(x0, y0, z0);
 
 				// List of saddle highest values with every other peak
-				Arrays.fill(highestSaddleValue, NO_SADDLE_VALUE);
+				Arrays.fill(highestSaddleValues, NO_SADDLE_VALUE);
 
 				types[index0] |= LISTED; // mark first point as listed
 				int listI = 0; // index of current search element in the list
@@ -3407,9 +3388,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 									minV = v2;
 								}
 
-								if (highestSaddleValue[id2] < minV)
+								if (highestSaddleValues[id2] < minV)
 								{
-									highestSaddleValue[id2] = minV;
+									highestSaddleValues[id2] = minV;
 								}
 							}
 						}
@@ -3431,13 +3412,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				int count = 0;
 				for (int id2 = 1; id2 <= nMaxima; id2++)
 				{
-					if (highestSaddleValue[id2] != NO_SADDLE_VALUE)
+					if (highestSaddleValues[id2] != NO_SADDLE_VALUE)
 					{
 						count++;
 						// log("Peak saddle " + id + " -> " + id2 + " @ " + highestSaddleValue[id2]);
-						if (highestNeighbourValue < highestSaddleValue[id2])
+						if (highestNeighbourValue < highestSaddleValues[id2])
 						{
-							highestNeighbourValue = highestSaddleValue[id2];
+							highestNeighbourValue = highestSaddleValues[id2];
 							highestNeighbourPeakId = id2;
 						}
 					}
@@ -3448,9 +3429,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				{
 					for (int id2 = 1; id2 <= nMaxima; id2++)
 					{
-						if (highestSaddleValue[id2] != NO_SADDLE_VALUE)
+						if (highestSaddleValues[id2] != NO_SADDLE_VALUE)
 						{
-							saddles.add(new FindFociSaddle(id2, highestSaddleValue[id2]));
+							saddles.add(new FindFociSaddle(id2, highestSaddleValues[id2]));
 						}
 					}
 					Collections.sort(saddles);
@@ -3464,6 +3445,202 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				}
 			} // for all maxima
 		}
+	}
+
+	private float[] highestSaddleValues = null;
+
+	/**
+	 * Set up processing for {@link #findHighestSaddleValues(FindFociResult, int[], byte[], ArrayList)}
+	 *
+	 * @param nMaxima
+	 *            the number of maxima
+	 */
+	protected void setupFindHighestSaddleValues(int nMaxima)
+	{
+		nMaxima++;
+		if (highestSaddleValues == null || highestSaddleValues.length < nMaxima)
+			highestSaddleValues = new float[nMaxima];
+	}
+
+	/**
+	 * Find highest saddle values for each maxima touching the given result and add them to the saddle points.
+	 *
+	 * @param result
+	 *            the result
+	 * @param maxima
+	 *            the maxima
+	 * @param types
+	 *            the types
+	 * @param saddlePoints
+	 *            the saddle points
+	 */
+	protected void findHighestSaddleValues(FindFociResult result, int[] maxima, byte[] types,
+			ArrayList<ArrayList<FindFociSaddle>> saddlePoints)
+	{
+		Arrays.fill(highestSaddleValues, NO_SADDLE_VALUE);
+		final int id = result.id;
+
+		final boolean alwaysInnerY = (result.miny != 0 && result.maxy != maxy);
+		final boolean alwaysInnerX = (result.minx != 0 && result.maxx != maxx);
+
+		if (result.maxz - result.minz == 1)
+		{
+			final int index0 = getIndex(0, 0, result.minz);
+			final int dStart = 8;
+			for (int y = result.miny; y < result.maxy; y++)
+			{
+				final boolean isInnerY = alwaysInnerY || (y != 0 && y != ylimit);
+				for (int x = result.minx, index1 = index0 + getIndex(result.minx, y); x < result.maxx; x++, index1++)
+				{
+					if ((types[index1] & SADDLE_SEARCH) == 0)
+						continue;
+					if (maxima[index1] == id)
+					{
+						final float v1 = getf(index1);
+
+						final boolean isInnerXY = isInnerY && (alwaysInnerX || (x != 0 && x != xlimit));
+
+						for (int d = dStart; d-- > 0;)
+						{
+							if (isInnerXY || isWithinXY(x, y, d))
+							{
+								// Get the coords
+								final int index2 = index1 + offset[d];
+								final int id2 = maxima[index2];
+
+								if (id2 == id || id2 == 0)
+									// Same maxima, or no maxima, do nothing
+									continue;
+
+								// This is another peak, see if it a saddle highpoint
+								final float v2 = getf(index2);
+
+								// Take the lower of the two points as the saddle
+								final float minV;
+								if (v1 < v2)
+								{
+									types[index1] |= SADDLE;
+									minV = v1;
+								}
+								else
+								{
+									types[index2] |= SADDLE;
+									minV = v2;
+								}
+
+								if (highestSaddleValues[id2] < minV)
+								{
+									highestSaddleValues[id2] = minV;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for (int z = result.minz; z < result.maxz; z++)
+			{
+				final boolean isInnerZ = (zlimit == 0) ? true : (z != 0 && z != zlimit);
+				for (int y = result.miny; y < result.maxy; y++)
+				{
+					final boolean isInnerY = alwaysInnerY || (y != 0 && y != ylimit);
+					for (int x = result.minx, index1 = getIndex(result.minx, y, z); x < result.maxx; x++, index1++)
+					{
+						if ((types[index1] & SADDLE_SEARCH) == 0)
+							continue;
+						if (maxima[index1] == id)
+						{
+							final float v1 = getf(index1);
+
+							final boolean isInnerXY = isInnerY && (alwaysInnerX || (x != 0 && x != xlimit));
+							final boolean isInnerXYZ = isInnerXY && isInnerZ;
+
+							for (int d = dStart; d-- > 0;)
+							{
+								if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d))
+								{
+									// Get the coords
+									final int index2 = index1 + offset[d];
+									final int id2 = maxima[index2];
+
+									if (id2 == id || id2 == 0)
+										// Same maxima, or no maxima, do nothing
+										continue;
+
+									// This is another peak, see if it a saddle highpoint
+									final float v2 = getf(index2);
+
+									// Take the lower of the two points as the saddle
+									final float minV;
+									if (v1 < v2)
+									{
+										types[index1] |= SADDLE;
+										minV = v1;
+									}
+									else
+									{
+										types[index2] |= SADDLE;
+										minV = v2;
+									}
+
+									if (highestSaddleValues[id2] < minV)
+									{
+										highestSaddleValues[id2] = minV;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Find the highest saddle
+		int highestNeighbourPeakId = 0;
+		float highestNeighbourValue = NO_SADDLE_VALUE;
+		int count = 0;
+		for (int id2 = 1; id2 < highestSaddleValues.length; id2++)
+		{
+			if (highestSaddleValues[id2] != NO_SADDLE_VALUE)
+			{
+				count++;
+				// log("Peak saddle " + id + " -> " + id2 + " @ " + highestSaddleValue[id2]);
+				if (highestNeighbourValue < highestSaddleValues[id2])
+				{
+					highestNeighbourValue = highestSaddleValues[id2];
+					highestNeighbourPeakId = id2;
+				}
+			}
+		}
+		final ArrayList<FindFociSaddle> saddles = new ArrayList<FindFociSaddle>(count);
+		saddlePoints.add(saddles);
+		if (count != 0)
+		{
+			for (int id2 = 1; id2 < highestSaddleValues.length; id2++)
+			{
+				if (highestSaddleValues[id2] != NO_SADDLE_VALUE)
+				{
+					saddles.add(new FindFociSaddle(id2, highestSaddleValues[id2]));
+				}
+			}
+			Collections.sort(saddles);
+		}
+
+		// Set the saddle point
+		if (highestNeighbourPeakId != 0)
+		{
+			result.saddleNeighbourId = highestNeighbourPeakId;
+			result.highestSaddleValue = highestNeighbourValue;
+		}
+	}
+
+	/**
+	 * Called after all calls to {@link #findHighestSaddleValues(FindFociResult, int[], byte[], ArrayList)}
+	 */
+	protected void finaliseFindHighestSaddleValues()
+	{
 	}
 
 	protected int getMaxPeakSize(ArrayList<FindFociResult> resultsArray)
@@ -3523,7 +3700,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/**
 	 * Find the bounds of peaks.
 	 */
-	protected void findBounds(ArrayList<FindFociResult> resultsArray, int[] maxima)
+	private void findBounds(ArrayList<FindFociResult> resultsArray, int[] maxima, byte[] types)
 	{
 		// Store the xyz limits for each peak.
 		// This speeds up re-computation of the height above the min saddle.
@@ -3537,21 +3714,25 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		final int[] maxx = new int[size];
 		final int[] maxy = new int[size];
 		final int[] maxz = new int[size];
+		Arrays.fill(maxx, -2);
 
 		for (int z = 0, i = 0; z < this.maxz; z++)
 			for (int y = 0; y < this.maxy; y++)
 				for (int x = 0; x < this.maxx; x++, i++)
 				{
-					final int id = maxima[i];
-					if (id != 0)
+					if ((types[i] & SADDLE_SEARCH) != 0)
 					{
-						// Get bounds
-						minx[id] = Math.min(minx[id], x);
-						miny[id] = Math.min(miny[id], y);
-						minz[id] = Math.min(minz[id], z);
-						maxx[id] = Math.max(maxx[id], x);
-						maxy[id] = Math.max(maxy[id], y);
-						maxz[id] = Math.max(maxz[id], z);
+						final int id = maxima[i];
+						if (id != 0)
+						{
+							// Get bounds
+							minx[id] = Math.min(minx[id], x);
+							miny[id] = Math.min(miny[id], y);
+							minz[id] = Math.min(minz[id], z);
+							maxx[id] = Math.max(maxx[id], x);
+							maxy[id] = Math.max(maxy[id], y);
+							maxz[id] = Math.max(maxz[id], z);
+						}
 					}
 				}
 
@@ -4525,6 +4706,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		ylimit = maxy - 1;
 		zlimit = maxz - 1;
 		dStart = (maxz == 1) ? 8 : 26;
+		dStart2 = dStart / 2;
 
 		// Create the offset table (for single array 3D neighbour comparisons)
 		offset = new int[DIR_X_OFFSET.length];
@@ -4533,6 +4715,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		{
 			offset[d] = getIndex(DIR_X_OFFSET[d], DIR_Y_OFFSET[d], DIR_Z_OFFSET[d]);
 			flatEdge[d] = (Math.abs(DIR_X_OFFSET[d]) + Math.abs(DIR_Y_OFFSET[d]) + Math.abs(DIR_Z_OFFSET[d]) == 1);
+		}
+
+		// Create the offset table for half-neighbours (for single array 3D neighbour comparisons)
+		offset2 = new int[DIR_X_OFFSET2.length];
+		for (int d = offset2.length; d-- > 0;)
+		{
+			offset2[d] = getIndex(DIR_X_OFFSET2[d], DIR_Y_OFFSET2[d], DIR_Z_OFFSET2[d]);
 		}
 	}
 
@@ -4547,6 +4736,18 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	protected int getIndex(int x, int y, int z)
 	{
 		return (maxx_maxy) * z + maxx * y + x;
+	}
+
+	/**
+	 * Return the single index associated with the x,y coordinates
+	 * 
+	 * @param x
+	 * @param y
+	 * @return The index
+	 */
+	protected int getIndex(int x, int y)
+	{
+		return maxx * y + x;
 	}
 
 	/**
@@ -4657,7 +4858,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * returns whether the neighbour in a given direction is within the image. NOTE: it is assumed that the pixel x,y,z
+	 * Returns whether the neighbour in a given direction is within the image. NOTE: it is assumed that the pixel x,y,z
 	 * itself is within the image! Uses class variables xlimit, ylimit, zlimit: (dimensions of the image)-1
 	 * 
 	 * @param x
@@ -4731,6 +4932,56 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
+	 * Returns whether the neighbour in a given direction is within the image when using the half-neighbour look-up
+	 * table.
+	 * NOTE: it is assumed that the pixel x,y,z itself is within the image! Uses class variables xlimit, ylimit, zlimit:
+	 * (dimensions of the image)-1
+	 * 
+	 * @param x
+	 *            x-coordinate of the pixel that has a neighbour in the given direction
+	 * @param y
+	 *            y-coordinate of the pixel that has a neighbour in the given direction
+	 * @param z
+	 *            z-coordinate of the pixel that has a neighbour in the given direction
+	 * @param direction
+	 *            the direction from the pixel towards the neighbour
+	 * @return true if the neighbour is within the image (provided that x, y, z is within)
+	 */
+	protected boolean isWithinXYZ2(int x, int y, int z, int direction)
+	{
+		switch (direction)
+		{
+			case 0:
+				return (y > 0);
+			case 1:
+				return (y > 0 && x < xlimit);
+			case 2:
+				return (x < xlimit);
+			case 3:
+				return (y < ylimit && x < xlimit);
+			case 4:
+				return (z > 0 && y > 0);
+			case 5:
+				return (z > 0 && y > 0 && x < xlimit);
+			case 6:
+				return (z > 0 && x < xlimit);
+			case 7:
+				return (z > 0 && y < ylimit && x < xlimit);
+			case 8:
+				return (z > 0 && y < ylimit);
+			case 9:
+				return (z > 0 && y < ylimit && x > 0);
+			case 10:
+				return (z > 0 && x > 0);
+			case 11:
+				return (z > 0 && y > 0 && x > 0);
+			case 12:
+				return (z > 0);
+		}
+		return false;
+	}
+
+	/**
 	 * returns whether the neighbour in a given direction is within the image. NOTE: it is assumed that the pixel z
 	 * itself is within the image! Uses class variables zlimit: (dimensions of the image)-1
 	 * 
@@ -4750,6 +5001,27 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			return (z > 0);
 		// z = 1
 		return z < zlimit;
+	}
+
+	/**
+	 * returns whether the neighbour in a given direction is within the image when using the half-neighbour look-up
+	 * table.
+	 * NOTE: it is assumed that the pixel z itself is within the image! Uses class variables zlimit: (dimensions of the
+	 * image)-1
+	 * 
+	 * @param z
+	 *            z-coordinate of the pixel that has a neighbour in the given direction
+	 * @param direction
+	 *            the direction from the pixel towards the neighbour
+	 * @return true if the neighbour is within the image (provided that z is within)
+	 */
+	protected boolean isWithinZ2(int z, int direction)
+	{
+		// z = 0
+		if (direction < 4)
+			return true;
+		// z = -1
+		return (z > 0);
 	}
 
 	/**
