@@ -3268,12 +3268,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				{
 					if (isInnerXYZ || (isInnerXY && isWithinZ2(z, d)) || isWithinXYZ2(x, y, z, d))
 					{
-						final int id2 = maxima[i + offset2[d]];
+						final int index = i + offset2[d];
+						final int id2 = maxima[index];
 						if (id2 != 0 && id2 != id)
 						{
 							// This is saddle search point between two touching maxima
 							types[i] |= SADDLE_SEARCH;
-							types[i + offset2[d]] |= SADDLE_SEARCH;
+							types[index] |= SADDLE_SEARCH;
 						}
 					}
 				}
