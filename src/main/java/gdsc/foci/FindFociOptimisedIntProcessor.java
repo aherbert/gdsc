@@ -703,7 +703,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 *            the highest saddle values
 	 */
 	protected void findHighestSaddleValues(FindFociResult result, int[] maxima, byte[] types,
-			ArrayList<ArrayList<FindFociSaddle>> saddlePoints)
+			ArrayList<FindFociSaddleList> saddlePoints)
 	{
 		Arrays.fill(highestSaddleValues, 0);
 		final int id = result.id;
@@ -842,19 +842,21 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 				}
 			}
 		}
-		final ArrayList<FindFociSaddle> saddles = new ArrayList<FindFociSaddle>(count);
-		saddlePoints.add(saddles);
 		if (count != 0)
 		{
-			for (int id2 = 1; id2 < highestSaddleValues.length; id2++)
+			final FindFociSaddle[] saddles = new FindFociSaddle[count];
+			for (int id2 = 1, c = 0; id2 < highestSaddleValues.length; id2++)
 			{
 				if (highestSaddleValues[id2] != 0)
 				{
-					saddles.add(new FindFociSaddle(id2, highestSaddleValues[id2]));
+					saddles[c++] = new FindFociSaddle(id2, highestSaddleValues[id2]);
 				}
 			}
-			Collections.sort(saddles);
+			Arrays.sort(saddles);
+			saddlePoints.add(new FindFociSaddleList(saddles));
 		}
+		else
+			saddlePoints.add(new FindFociSaddleList());
 
 		// Set the saddle point
 		if (highestNeighbourPeakId != 0)

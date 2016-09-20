@@ -14,7 +14,7 @@ package gdsc.foci;
  *---------------------------------------------------------------------------*/
 
 /**
- * Contains the foci result of the FindFoci algorithm.
+ * Contains the foci saddle result of the FindFoci algorithm.
  */
 public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle>
 {

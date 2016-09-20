@@ -21,7 +21,7 @@ import java.util.ArrayList;
 public class FindFociSearchResults
 {
 	public ArrayList<FindFociResult> resultsArray;
-	public ArrayList<ArrayList<FindFociSaddle>> saddlePoints;
+	public ArrayList<FindFociSaddleList> saddlePoints;
 
 	/**
 	 * Instantiates a new find foci merge results.
@@ -32,7 +32,7 @@ public class FindFociSearchResults
 	 *            the saddle points
 	 */
 	public FindFociSearchResults(ArrayList<FindFociResult> resultsArray,
-			ArrayList<ArrayList<FindFociSaddle>> saddlePoints)
+			ArrayList<FindFociSaddleList> saddlePoints)
 	{
 		this.resultsArray = resultsArray;
 		this.saddlePoints = saddlePoints;
