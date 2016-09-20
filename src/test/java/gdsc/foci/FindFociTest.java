@@ -232,26 +232,32 @@ public class FindFociTest
 		runInt(data[0], indices[0], false);
 		runInt(data[0], indices[0], true);
 
-		long time1 = System.nanoTime();
+		long time1 = Long.MAX_VALUE;
 		for (ImagePlus imp : data)
 		{
 			for (int n = LOOPS; n-- > 0;)
+			{
+				start();
 				for (int i : indices)
 				{
 					runInt(imp, i, false);
 				}
+				time1 = stop(time1);
+			}
 		}
-		time1 = System.nanoTime() - time1;
-		long time2 = System.nanoTime();
+		long time2 = Long.MAX_VALUE;
 		for (ImagePlus imp : data)
 		{
 			for (int n = LOOPS; n-- > 0;)
+			{
+				start();
 				for (int i : indices)
 				{
 					runInt(imp, i, true);
 				}
+				time2 = stop(time2);
+			}
 		}
-		time2 = System.nanoTime() - time2;
 		System.out.printf("Int %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
 		Assert.assertTrue(time2 < time1);
 	}
@@ -264,36 +270,42 @@ public class FindFociTest
 
 		// Warm up
 		createData();
-		runInt(data[0], indices[0], false);
-		runInt(data[0], indices[0], true);
+		runFloat(data[0], indices[0], false, false);
+		runFloat(data[0], indices[0], true, false);
 
-		long time1 = System.nanoTime();
+		long time1 = Long.MAX_VALUE;
 		for (ImagePlus imp : data)
 		{
 			for (int n = LOOPS; n-- > 0;)
+			{
+				start();
 				for (int i : indices)
 				{
 					runFloat(imp, i, false, false);
 				}
+				time1 = stop(time1);
+			}
 		}
-		time1 = System.nanoTime() - time1;
-		long time2 = System.nanoTime();
+		long time2 = Long.MAX_VALUE;
 		for (ImagePlus imp : data)
 		{
 			for (int n = LOOPS; n-- > 0;)
+			{
+				start();
 				for (int i : indices)
 				{
 					runFloat(imp, i, true, false);
 				}
+				time2 = stop(time2);
+			}
 		}
-		time2 = System.nanoTime() - time2;
 		System.out.printf("Float %d, Opt Float %d, %fx faster\n", time1, time2, (double) time1 / time2);
-		
+
 		// Comment out this assertion as it sometimes fails when running all the tests. 
 		// When running all the tests the some code gets run more and so
 		// the JVM has had time to optimise it. When running the test alone the optimised processor is comparable.
 		// I am not worried the optimisation has worse performance.
-		
+
 		//Assert.assertTrue(time2 < time1 * 1.4); // Allow discretion so test will pass
 	}
 
@@ -308,26 +320,32 @@ public class FindFociTest
 		runLegacy(data[0], indices[0]);
 		runInt(data[0], indices[0], true);
 
-		long time1 = System.nanoTime();
+		long time1 = Long.MAX_VALUE;
 		for (ImagePlus imp : data)
 		{
 			for (int n = LOOPS; n-- > 0;)
+			{
+				start();
 				for (int i : indices)
 				{
 					runLegacy(imp, i);
 				}
+				time1 = stop(time1);
+			}
 		}
-		time1 = System.nanoTime() - time1;
-		long time2 = System.nanoTime();
+		long time2 = Long.MAX_VALUE;
 		for (ImagePlus imp : data)
 		{
 			for (int n = LOOPS; n-- > 0;)
+			{
+				start();
 				for (int i : indices)
 				{
 					runInt(imp, i, true);
 				}
+				time2 = stop(time2);
+			}
 		}
-		time2 = System.nanoTime() - time2;
 		System.out.printf("Legacy %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
 
 		// Comment out this assertion as it sometimes fails when running all the tests. 
@@ -356,26 +374,32 @@ public class FindFociTest
 			data2[i] = new ImagePlus(null, fp);
 		}
 
-		long time1 = System.nanoTime();
+		long time1 = Long.MAX_VALUE;
 		for (ImagePlus imp : data2)
 		{
 			for (int n = LOOPS; n-- > 0;)
+			{
+				start();
 				for (int i : indices)
 				{
 					runFloat(imp, i, true, false);
 				}
+				time1 = stop(time1);
+			}
 		}
-		time1 = System.nanoTime() - time1;
-		long time2 = System.nanoTime();
+		long time2 = Long.MAX_VALUE;
 		for (ImagePlus imp : data)
 		{
 			for (int n = LOOPS; n-- > 0;)
+			{
+				start();
 				for (int i : indices)
 				{
 					runInt(imp, i, true);
 				}
+				time2 = stop(time2);
+			}
 		}
-		time2 = System.nanoTime() - time2;
 		System.out.printf("Opt Float %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
 		Assert.assertTrue(time2 < time1);
 	}
@@ -594,4 +618,18 @@ public class FindFociTest
 
 		return (float[]) fp.getPixels();
 	}
+
+	private long time;
+
+	private void start()
+	{
+		time = System.nanoTime();
+
+	}
+
+	private long stop(long t)
+	{
+		return Math.min(t, System.nanoTime() - time);
+	}
+
 }
