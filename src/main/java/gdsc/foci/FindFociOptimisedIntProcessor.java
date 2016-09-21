@@ -711,14 +711,13 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		final boolean alwaysInnerY = (result.miny != 0 && result.maxy != maxy);
 		final boolean alwaysInnerX = (result.minx != 0 && result.maxx != maxx);
 
-		if (result.maxz - result.minz == 1)
+		if (maxz == 1)
 		{
-			final int index0 = getIndex(0, 0, result.minz);
-			final int dStart = 8;
+			// 2D processing
 			for (int y = result.miny; y < result.maxy; y++)
 			{
 				final boolean isInnerY = alwaysInnerY || (y != 0 && y != ylimit);
-				for (int x = result.minx, index1 = index0 + getIndex(result.minx, y); x < result.maxx; x++, index1++)
+				for (int x = result.minx, index1 = getIndex(result.minx, y); x < result.maxx; x++, index1++)
 				{
 					if ((types[index1] & SADDLE_SEARCH) == 0)
 						continue;
@@ -728,7 +727,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 
 						final boolean isInnerXY = isInnerY && (alwaysInnerX || (x != 0 && x != xlimit));
 
-						for (int d = dStart; d-- > 0;)
+						for (int d = 8; d-- > 0;)
 						{
 							if (isInnerXY || isWithinXY(x, y, d))
 							{
@@ -785,7 +784,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 							final boolean isInnerXY = isInnerY && (alwaysInnerX || (x != 0 && x != xlimit));
 							final boolean isInnerXYZ = isInnerXY && isInnerZ;
 
-							for (int d = dStart; d-- > 0;)
+							for (int d = 26; d-- > 0;)
 							{
 								if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d))
 								{
