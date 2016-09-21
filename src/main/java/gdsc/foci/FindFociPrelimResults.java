@@ -1,0 +1,69 @@
+package gdsc.foci;
+
+import ij.ImagePlus;
+
+/*----------------------------------------------------------------------------- 
+ * GDSC Plugins for ImageJ
+ * 
+ * Copyright (C) 2016 Alex Herbert
+ * Genome Damage and Stability Centre
+ * University of Sussex, UK
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *---------------------------------------------------------------------------*/
+
+/**
+ * Contains the results of the FindFoci algorithm.
+ */
+public class FindFociPrelimResults implements Cloneable
+{
+
+	/** The mask. */
+	public final ImagePlus mask;
+
+	/** The results. */
+	public final FindFociResult[] results;
+
+	/** The statistics. */
+	public final FindFociStatistics stats;
+
+	/**
+	 * Instantiates a new find foci result.
+	 *
+	 * @param mask
+	 *            the mask
+	 * @param results
+	 *            the results
+	 * @param stats
+	 *            the stats
+	 */
+	public FindFociPrelimResults(ImagePlus mask, FindFociResult[] results, FindFociStatistics stats)
+	{
+		this.mask = mask;
+		this.results = results;
+		this.stats = stats;
+	}
+
+	/**
+	 * Returns a shallow copy of this set of results.
+	 *
+	 * @return the find foci results
+	 * @see java.lang.Object#clone()
+	 */
+	@Override
+	public FindFociPrelimResults clone()
+	{
+		try
+		{
+			FindFociPrelimResults copy = (FindFociPrelimResults) super.clone();
+			return copy;
+		}
+		catch (CloneNotSupportedException e)
+		{
+			return null;
+		}
+	}
+}
