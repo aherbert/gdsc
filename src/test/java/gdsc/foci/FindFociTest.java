@@ -231,34 +231,34 @@ public class FindFociTest
 
 		// Warm up
 		createData();
-		runInt(data[0], indices[0], false);
-		runInt(data[0], indices[0], true);
+		//runInt(data[0], indices[0], false);
+		//runInt(data[0], indices[0], true);
 
 		long time1 = Long.MAX_VALUE;
-		for (ImagePlus imp : data)
+		for (int n = LOOPS; n-- > 0;)
 		{
-			for (int n = LOOPS; n-- > 0;)
+			start();
+			for (ImagePlus imp : data)
 			{
-				start();
 				for (int i : indices)
 				{
 					runInt(imp, i, false);
 				}
-				time1 = stop(time1);
 			}
+			time1 = stop(time1);
 		}
 		long time2 = Long.MAX_VALUE;
-		for (ImagePlus imp : data)
+		for (int n = LOOPS; n-- > 0;)
 		{
-			for (int n = LOOPS; n-- > 0;)
+			start();
+			for (ImagePlus imp : data)
 			{
-				start();
 				for (int i : indices)
 				{
 					runInt(imp, i, true);
 				}
-				time2 = stop(time2);
 			}
+			time2 = stop(time2);
 		}
 		System.out.printf("Int %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
 		Assert.assertTrue(time2 < time1);
@@ -272,34 +272,34 @@ public class FindFociTest
 
 		// Warm up
 		createData();
-		runFloat(data[0], indices[0], false, false);
-		runFloat(data[0], indices[0], true, false);
+		//runFloat(data[0], indices[0], false, false);
+		//runFloat(data[0], indices[0], true, false);
 
 		long time1 = Long.MAX_VALUE;
-		for (ImagePlus imp : data)
+		for (int n = LOOPS; n-- > 0;)
 		{
-			for (int n = LOOPS; n-- > 0;)
+			start();
+			for (ImagePlus imp : data)
 			{
-				start();
 				for (int i : indices)
 				{
 					runFloat(imp, i, false, false);
 				}
-				time1 = stop(time1);
 			}
+			time1 = stop(time1);
 		}
 		long time2 = Long.MAX_VALUE;
-		for (ImagePlus imp : data)
+		for (int n = LOOPS; n-- > 0;)
 		{
-			for (int n = LOOPS; n-- > 0;)
+			start();
+			for (ImagePlus imp : data)
 			{
-				start();
 				for (int i : indices)
 				{
 					runFloat(imp, i, true, false);
 				}
-				time2 = stop(time2);
 			}
+			time2 = stop(time2);
 		}
 		System.out.printf("Float %d, Opt Float %d, %fx faster\n", time1, time2, (double) time1 / time2);
 
@@ -319,34 +319,34 @@ public class FindFociTest
 
 		// Warm up
 		createData();
-		runLegacy(data[0], indices[0]);
-		runInt(data[0], indices[0], true);
+		//runLegacy(data[0], indices[0]);
+		//runInt(data[0], indices[0], true);
 
 		long time1 = Long.MAX_VALUE;
-		for (ImagePlus imp : data)
+		for (int n = LOOPS; n-- > 0;)
 		{
-			for (int n = LOOPS; n-- > 0;)
+			start();
+			for (ImagePlus imp : data)
 			{
-				start();
 				for (int i : indices)
 				{
 					runLegacy(imp, i);
 				}
-				time1 = stop(time1);
 			}
+			time1 = stop(time1);
 		}
 		long time2 = Long.MAX_VALUE;
-		for (ImagePlus imp : data)
+		for (int n = LOOPS; n-- > 0;)
 		{
-			for (int n = LOOPS; n-- > 0;)
+			start();
+			for (ImagePlus imp : data)
 			{
-				start();
 				for (int i : indices)
 				{
 					runInt(imp, i, true);
 				}
-				time2 = stop(time2);
 			}
+			time2 = stop(time2);
 		}
 		System.out.printf("Legacy %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
 
@@ -366,8 +366,8 @@ public class FindFociTest
 
 		// Warm up
 		createData();
-		runFloat(data[0], indices[0], true, false);
-		runInt(data[0], indices[0], true);
+		//runFloat(data[0], indices[0], true, false);
+		//runInt(data[0], indices[0], true);
 
 		ImagePlus[] data2 = new ImagePlus[data.length];
 		for (int i = 0; i < data.length; i++)
@@ -376,30 +376,30 @@ public class FindFociTest
 		}
 
 		long time1 = Long.MAX_VALUE;
-		for (ImagePlus imp : data2)
+		for (int n = LOOPS; n-- > 0;)
 		{
-			for (int n = LOOPS; n-- > 0;)
+			start();
+			for (ImagePlus imp : data2)
 			{
-				start();
 				for (int i : indices)
 				{
 					runFloat(imp, i, true, false);
 				}
-				time1 = stop(time1);
 			}
+			time1 = stop(time1);
 		}
 		long time2 = Long.MAX_VALUE;
-		for (ImagePlus imp : data)
+		for (int n = LOOPS; n-- > 0;)
 		{
-			for (int n = LOOPS; n-- > 0;)
+			start();
+			for (ImagePlus imp : data)
 			{
-				start();
 				for (int i : indices)
 				{
 					runInt(imp, i, true);
 				}
-				time2 = stop(time2);
 			}
+			time2 = stop(time2);
 		}
 		System.out.printf("Opt Float %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
 		Assert.assertTrue(time2 < time1);
