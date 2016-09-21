@@ -536,7 +536,7 @@ public class FindFociTest
 				backgroundParameter[i], searchMethod[i], searchParameter[i]);
 		FindFociMergeResults mergeResults = ff.findMaximaMerge(initResults, searchResults, minSize[i], peakMethod[i],
 				peakParameter[i], options[i], blur[i]);
-		FindFociResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i], sortIndex[i],
+		FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i], sortIndex[i],
 				centreMethod[i], centreParameter[i]);
 		return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i], autoThresholdMethod[i],
 				"FindFociTest", fractionParameter[i]);
@@ -559,7 +559,7 @@ public class FindFociTest
 				backgroundParameter[i], searchMethod[i], searchParameter[i]);
 		FindFociMergeResults mergeResults = ff.findMaximaMerge(initResults, searchResults, minSize[i], peakMethod[i],
 				peakParameter[i], options[i], blur[i]);
-		FindFociResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i], sortIndex[i],
+		FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i], sortIndex[i],
 				centreMethod[i], centreParameter[i]);
 		return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i], autoThresholdMethod[i],
 				"FindFociTest", fractionParameter[i]);

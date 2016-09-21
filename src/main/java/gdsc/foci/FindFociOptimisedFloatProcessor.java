@@ -1,6 +1,5 @@
 package gdsc.foci;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /*----------------------------------------------------------------------------- 
@@ -38,18 +37,17 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * gdsc.foci.FindFociStatistics, java.util.ArrayList, int[])
 	 */
 	protected void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
-			FindFociStatistics stats, ArrayList<FindFociResult> resultsArray, int[] maxima)
+			FindFociStatistics stats, FindFociResult[] resultsArray, int[] maxima)
 	{
 		setPixels(pixels);
 
 		// Build an array containing the threshold for each peak.
 		// Note that maxima are numbered from 1
-		final int nMaxima = resultsArray.size();
+		final int nMaxima = resultsArray.length;
 		final float[] peakThreshold = new float[nMaxima + 1];
 		for (int i = 1; i < peakThreshold.length; i++)
 		{
-			peakThreshold[i] = getTolerance(searchMethod, searchParameter, stats,
-					resultsArray.get(i - 1).maxValue);
+			peakThreshold[i] = getTolerance(searchMethod, searchParameter, stats, resultsArray[i - 1].maxValue);
 		}
 
 		for (int i = maxima.length; i-- > 0;)
@@ -72,10 +70,10 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * 
 	 * @see gdsc.foci.FindFociBaseProcessor#calculateInitialResults(java.lang.Object, int[], java.util.ArrayList)
 	 */
-	protected void calculateInitialResults(Object pixels, int[] maxima, ArrayList<FindFociResult> resultsArray)
+	protected void calculateInitialResults(Object pixels, int[] maxima, FindFociResult[] resultsArray)
 	{
 		setPixels(pixels);
-		final int nMaxima = resultsArray.size();
+		final int nMaxima = resultsArray.length;
 
 		// Maxima are numbered from 1
 		final int[] count = new int[nMaxima + 1];
@@ -91,8 +89,9 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 			}
 		}
 
-		for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			result.count = count[result.id];
 			result.totalIntensity = intensity[result.id];
 			result.averageIntensity = result.totalIntensity / result.count;
@@ -104,7 +103,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * 
 	 * @see gdsc.foci.FindFociBaseProcessor#calculateNativeResults(java.lang.Object, int[], java.util.ArrayList, int)
 	 */
-	protected void calculateNativeResults(Object pixels, int[] maxima, ArrayList<FindFociResult> resultsArray,
+	protected void calculateNativeResults(Object pixels, int[] maxima, FindFociResult[] resultsArray,
 			int originalNumberOfPeaks)
 	{
 		setPixels(pixels);
@@ -125,8 +124,9 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 			}
 		}
 
-		for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			final int id = result.id;
 			if (intensity[id] != 0)
 			{
@@ -142,19 +142,19 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * @see gdsc.foci.FindFociBaseProcessor#analysePeaks(java.util.ArrayList, java.lang.Object, int[],
 	 * gdsc.foci.FindFociStatistics)
 	 */
-	protected void analysePeaks(ArrayList<FindFociResult> resultsArray, Object pixels, int[] maxima,
-			FindFociStatistics stats)
+	protected void analysePeaks(FindFociResult[] resultsArray, Object pixels, int[] maxima, FindFociStatistics stats)
 	{
 		setPixels(pixels);
 
 		// Create an array of the size/intensity of each peak above the highest saddle 
-		final double[] peakIntensity = new double[resultsArray.size() + 1];
-		final int[] peakSize = new int[resultsArray.size() + 1];
+		final double[] peakIntensity = new double[resultsArray.length + 1];
+		final int[] peakSize = new int[resultsArray.length + 1];
 
 		// Store all the saddle heights
-		final float[] saddleHeight = new float[resultsArray.size() + 1];
-		for (FindFociResult result : resultsArray)
+		final float[] saddleHeight = new float[resultsArray.length + 1];
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			saddleHeight[result.id] = result.highestSaddleValue;
 		}
 
@@ -171,30 +171,31 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 			}
 		}
 
-		for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			result.countAboveSaddle = peakSize[result.id];
 			result.intensityAboveSaddle = peakIntensity[result.id];
 		}
 	}
 
-
 	/**
 	 * Find the size and intensity of peaks above their saddle heights.
 	 */
-	protected void analysePeaksWithBounds(ArrayList<FindFociResult> resultsArray, Object pixels, int[] maxima,
+	protected void analysePeaksWithBounds(FindFociResult[] resultsArray, Object pixels, int[] maxima,
 			FindFociStatistics stats)
 	{
 		setPixels(pixels);
 
 		// Create an array of the size/intensity of each peak above the highest saddle 
-		final double[] peakIntensity = new double[resultsArray.size() + 1];
-		final int[] peakSize = new int[resultsArray.size() + 1];
+		final double[] peakIntensity = new double[resultsArray.length + 1];
+		final int[] peakSize = new int[resultsArray.length + 1];
 
 		// Store all the saddle heights
-		final float[] saddleHeight = new float[resultsArray.size() + 1];
-		for (FindFociResult result : resultsArray)
+		final float[] saddleHeight = new float[resultsArray.length + 1];
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			saddleHeight[result.id] = result.highestSaddleValue;
 			//System.out.printf("ID=%d saddle=%f (%f)\n", result.RESULT_PEAK_ID, result.RESULT_HIGHEST_SADDLE_VALUE, result.RESULT_COUNT_ABOVE_SADDLE);
 		}
@@ -235,8 +236,9 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 					}
 				}
 
-		for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			result.countAboveSaddle = peakSize[result.id];
 			result.intensityAboveSaddle = peakIntensity[result.id];
 			result.minx = minx[result.id];

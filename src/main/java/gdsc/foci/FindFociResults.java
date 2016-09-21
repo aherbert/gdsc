@@ -1,6 +1,7 @@
 package gdsc.foci;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import ij.ImagePlus;
 
@@ -50,7 +51,25 @@ public class FindFociResults implements Cloneable
 	}
 
 	/**
-	 *  Returns a shallow copy of this set of results. 
+	 * Instantiates a new find foci results.
+	 *
+	 * @param mask
+	 *            the mask
+	 * @param results
+	 *            the results
+	 * @param stats
+	 *            the stats
+	 */
+	public FindFociResults(ImagePlus mask, FindFociResult[] results, FindFociStatistics stats)
+	{
+		this.mask = mask;
+		this.results = (results == null) ? new ArrayList<FindFociResult>(0)
+				: new ArrayList<FindFociResult>(Arrays.asList(results));
+		this.stats = stats;
+	}
+
+	/**
+	 * Returns a shallow copy of this set of results.
 	 *
 	 * @return the find foci results
 	 * @see java.lang.Object#clone()

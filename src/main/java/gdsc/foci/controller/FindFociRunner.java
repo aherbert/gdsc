@@ -19,6 +19,7 @@ import gdsc.foci.FindFoci;
 import gdsc.foci.FindFociBaseProcessor;
 import gdsc.foci.FindFociInitResults;
 import gdsc.foci.FindFociMergeResults;
+import gdsc.foci.FindFociPrelimResults;
 import gdsc.foci.FindFociResult;
 import gdsc.foci.FindFociResults;
 import gdsc.foci.FindFociSearchResults;
@@ -52,7 +53,7 @@ public class FindFociRunner extends Thread
 	FindFociInitResults resultsInitResults;
 	FindFociInitResults maskInitResults;
 	FindFociMergeResults mergeResults;
-	FindFociResults prelimResults;
+	FindFociPrelimResults prelimResults;
 	FindFociResults results;
 
 	public FindFociRunner(MessageListener listener)

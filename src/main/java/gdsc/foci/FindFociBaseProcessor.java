@@ -210,9 +210,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			log("Number of potential maxima = " + maxPoints.length);
 		showStatus("Analyzing maxima...");
 
-		ArrayList<FindFociResult> resultsArray = new ArrayList<FindFociResult>(maxPoints.length);
-
-		assignMaxima(maxima, maxPoints, resultsArray, stats);
+		FindFociResult[] resultsArray = assignMaxima(maxima, maxPoints, stats);
 
 		// Free memory
 		maxPoints = null;
@@ -231,11 +229,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// Calculate the initial results (peak size and intensity)
 		calculateInitialResults(image, maxima, resultsArray);
 
+		if (isLogging)
+			timingSplit("Calculated initial results");
+
 		showStatus("Finding saddle points...");
 
 		// Calculate the highest saddle point for each peak
-		ArrayList<FindFociSaddleList> saddlePoints = new ArrayList<FindFociSaddleList>(resultsArray.size() + 1);
-		findSaddlePoints(image, types, resultsArray, maxima, saddlePoints);
+		FindFociSaddleList[] saddlePoints = findSaddlePoints(image, types, resultsArray, maxima);
 
 		if (Utils.isInterrupted())
 			return null;
@@ -249,7 +249,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		showStatus("Merging peaks...");
 
 		// Combine maxima below the minimum peak criteria to adjacent peaks (or eliminate if no neighbours)
-		final int originalNumberOfPeaks = resultsArray.size();
+		final int originalNumberOfPeaks = resultsArray.length;
 		resultsArray = mergeSubPeaks(resultsArray, image, maxima, minSize, peakMethod, peakParameter, stats,
 				saddlePoints, isLogging, restrictAboveSaddle);
 
@@ -262,7 +262,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		if ((options & OPTION_REMOVE_EDGE_MAXIMA) != 0)
 			resultsArray = removeEdgeMaxima(resultsArray, maxima, stats, isLogging);
 
-		final int totalPeaks = resultsArray.size();
+		final int totalPeaks = resultsArray.length;
 
 		if (blur > 0)
 		{
@@ -290,7 +290,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// Only return the best results
 		resultsArray = trim(resultsArray, maxPeaks);
 
-		final int nMaxima = resultsArray.size();
+		final int nMaxima = resultsArray.length;
 		if (isLogging)
 		{
 			String message = "Final number of peaks = " + nMaxima;
@@ -531,7 +531,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		byte[] types2 = null;
 		int[] maxima2 = null;
 
-		// TODO - check if these are destructively modifed
+		// These are not destructively modified
 		Histogram histogram2 = histogram; // histogram.clone();
 		FindFociStatistics stats2 = stats; // stats.clone();
 
@@ -590,7 +590,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		byte[] types2 = null;
 		int[] maxima2 = null;
 
-		// TODO - check if these are destructively modifed
+		// These are not destructively modified
 		Histogram histogram2 = histogram; // histogram.clone();
 		FindFociStatistics stats2 = stats; // stats.clone();
 
@@ -647,9 +647,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, stats.regionMinimum, stats.background);
 		if (maxPoints == null)
 			return null;
-		ArrayList<FindFociResult> resultsArray = new ArrayList<FindFociResult>(maxPoints.length);
-
-		assignMaxima(maxima, maxPoints, resultsArray, stats);
+		final FindFociResult[] resultsArray = assignMaxima(maxima, maxPoints, stats);
 
 		// Free memory
 		maxPoints = null;
@@ -663,8 +661,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		calculateInitialResults(image, maxima, resultsArray);
 
 		// Calculate the highest saddle point for each peak
-		ArrayList<FindFociSaddleList> saddlePoints = new ArrayList<FindFociSaddleList>(resultsArray.size() + 1);
-		findSaddlePoints(image, types, resultsArray, maxima, saddlePoints);
+		final FindFociSaddleList[] saddlePoints = findSaddlePoints(image, types, resultsArray, maxima);
 
 		// Find the peak sizes above their saddle points.
 		analysePeaks(resultsArray, image, maxima, stats);
@@ -688,21 +685,22 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		FindFociStatistics stats = initResults.stats;
 		Object originalImage = initResults.originalImage;
 
-		ArrayList<FindFociResult> originalResultsArray = searchResults.resultsArray;
-		ArrayList<FindFociSaddleList> originalSaddlePoints = searchResults.saddlePoints;
+		final FindFociResult[] originalResultsArray = searchResults.resultsArray;
+		final FindFociSaddleList[] originalSaddlePoints = searchResults.saddlePoints;
 
 		// Clone the results
-		ArrayList<FindFociResult> resultsArray = new ArrayList<FindFociResult>(originalResultsArray.size());
-		for (int i = 0; i < originalResultsArray.size(); i++)
-			resultsArray.add(originalResultsArray.get(i).clone());
+		FindFociResult[] resultsArray = new FindFociResult[originalResultsArray.length];
+		for (int i = 0; i < originalResultsArray.length; i++)
+			resultsArray[i] = originalResultsArray[i].clone();
 
 		// Clone the saddle points
-		ArrayList<FindFociSaddleList> saddlePoints = new ArrayList<FindFociSaddleList>(originalSaddlePoints.size() + 1);
-		for (int i = 0; i < originalSaddlePoints.size(); i++)
-			saddlePoints.add(originalSaddlePoints.get(i).clone());
+		final FindFociSaddleList[] saddlePoints = new FindFociSaddleList[originalSaddlePoints.length];
+		// Ignore first position
+		for (int i = 1; i < originalSaddlePoints.length; i++)
+			saddlePoints[i] = originalSaddlePoints[i].clone();
 
 		// Combine maxima below the minimum peak criteria to adjacent peaks (or eliminate if no neighbours)
-		int originalNumberOfPeaks = resultsArray.size();
+		int originalNumberOfPeaks = resultsArray.length;
 		resultsArray = mergeSubPeaks(resultsArray, image, maxima, minSize, peakMethod, peakParameter, stats,
 				saddlePoints, false, restrictAboveSaddle);
 		if (resultsArray == null)
@@ -735,13 +733,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		FindFociStatistics stats = initResults.stats;
 		Object originalImage = initResults.originalImage;
 
-		ArrayList<FindFociResult> originalResultsArray = mergeResults.resultsArray;
+		final FindFociResult[] originalResultsArray = mergeResults.resultsArray;
 		int originalNumberOfPeaks = mergeResults.originalNumberOfPeaks;
 
 		// Clone the results
-		ArrayList<FindFociResult> resultsArray = new ArrayList<FindFociResult>(originalResultsArray.size());
-		for (int i = 0; i < originalResultsArray.size(); i++)
-			resultsArray.add(originalResultsArray.get(i).clone());
+		FindFociResult[] resultsArray = new FindFociResult[originalResultsArray.length];
+		for (int i = 0; i < originalResultsArray.length; i++)
+			resultsArray[i] = originalResultsArray[i].clone();
 
 		// If no blur was applied, then the centre using the original image will be the same as using the search
 		if (centreMethod == CENTRE_MAX_VALUE_ORIGINAL)
@@ -771,7 +769,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaPrelimResults(gdsc.foci.FindFociInitResults,
 	 * gdsc.foci.FindFociMergeResults, int, int, int, double)
 	 */
-	public FindFociResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
+	public FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
 			int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
 	{
 		Object searchImage = initResults.image;
@@ -780,13 +778,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		FindFociStatistics stats = initResults.stats;
 		Object originalImage = initResults.originalImage;
 
-		ArrayList<FindFociResult> originalResultsArray = mergeResults.resultsArray;
+		final FindFociResult[] originalResultsArray = mergeResults.resultsArray;
 		int originalNumberOfPeaks = mergeResults.originalNumberOfPeaks;
 
 		// Clone the results
-		ArrayList<FindFociResult> resultsArray = new ArrayList<FindFociResult>(originalResultsArray.size());
-		for (int i = 0; i < originalResultsArray.size(); i++)
-			resultsArray.add(originalResultsArray.get(i).clone());
+		FindFociResult[] resultsArray = new FindFociResult[originalResultsArray.length];
+		for (int i = 0; i < originalResultsArray.length; i++)
+			resultsArray[i] = originalResultsArray[i].clone();
 
 		// If no blur was applied, then the centre using the original image will be the same as using the search
 		if (centreMethod == CENTRE_MAX_VALUE_ORIGINAL)
@@ -805,7 +803,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// Only return the best results
 		resultsArray = trim(resultsArray, maxPeaks);
 
-		return new FindFociResults(null, resultsArray, stats);
+		return new FindFociPrelimResults(null, resultsArray, stats);
 	}
 
 	/*
@@ -815,7 +813,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * gdsc.foci.FindFociMergeResults, gdsc.foci.FindFociResults, int, java.lang.String, java.lang.String, double)
 	 */
 	public FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
-			FindFociResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
+			FindFociPrelimResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
 			double fractionParameter)
 	{
 		Object image = initResults.image;
@@ -823,15 +821,15 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		int[] maxima = initResults.maxima;
 		FindFociStatistics stats = initResults.stats;
 
-		ArrayList<FindFociResult> originalResultsArray = prelimResults.results;
+		final FindFociResult[] originalResultsArray = prelimResults.results;
 		int originalNumberOfPeaks = mergeResults.originalNumberOfPeaks;
 
 		// Clone the results
-		ArrayList<FindFociResult> resultsArray = new ArrayList<FindFociResult>(originalResultsArray.size());
-		for (int i = 0; i < originalResultsArray.size(); i++)
-			resultsArray.add(originalResultsArray.get(i).clone());
+		FindFociResult[] resultsArray = new FindFociResult[originalResultsArray.length];
+		for (int i = 0; i < originalResultsArray.length; i++)
+			resultsArray[i] = originalResultsArray[i].clone();
 
-		int nMaxima = resultsArray.size();
+		int nMaxima = resultsArray.length;
 
 		// Build the output mask
 		ImagePlus outImp = null;
@@ -849,7 +847,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 	private ImagePlus generateOutputMask(int outputType, String autoThresholdMethod, ImagePlus imp,
 			double fractionParameter, Object pixels, byte[] types, int[] maxima, FindFociStatistics stats,
-			ArrayList<FindFociResult> resultsArray, int nMaxima)
+			FindFociResult[] resultsArray, int nMaxima)
 	{
 		// TODO - Add an option for a coloured map of peaks using 4 colours. No touching peaks should be the same colour.
 		// - Assign all neighbours for each cell
@@ -891,7 +889,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		for (int i = 0; i < nMaxima; i++)
 		{
 			maximaValues[i] = nMaxima - i;
-			FindFociResult result = resultsArray.get(i);
+			FindFociResult result = resultsArray[i];
 			maximaPeakIds[i] = result.id;
 			if ((outputType & OUTPUT_MASK_ABOVE_SADDLE) != 0)
 			{
@@ -969,7 +967,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			maxValue++;
 			for (int i = 0; i < nMaxima; i++)
 			{
-				final FindFociResult result = resultsArray.get(i);
+				final FindFociResult result = resultsArray[i];
 				maxima[getIndex(result.x, result.y, result.z)] = maxValue;
 			}
 		}
@@ -1075,19 +1073,20 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/**
 	 * Update the peak Ids to use the sorted order
 	 */
-	private void renumberPeaks(ArrayList<FindFociResult> resultsArray, int originalNumberOfPeaks)
+	private void renumberPeaks(FindFociResult[] resultsArray, int originalNumberOfPeaks)
 	{
 		// Build a map between the original peak number and the new sorted order
 		final int[] peakIdMap = new int[originalNumberOfPeaks + 1];
 		int index = 1;
-		for (int i = 0; i < resultsArray.size(); i++)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
-			peakIdMap[resultsArray.get(i).id] = index++;
+			peakIdMap[resultsArray[i].id] = index++;
 		}
 
 		// Update the Ids
-		for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			result.id = peakIdMap[result.id];
 			result.saddleNeighbourId = peakIdMap[result.saddleNeighbourId];
 		}
@@ -1863,7 +1862,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	protected Coordinate[] getSortedMaxPoints(Object pixels, int[] maxima, byte[] types, float globalMin,
 			float threshold)
 	{
-		ArrayList<Coordinate> maxPoints = new ArrayList<Coordinate>(500);
+		final ArrayList<Coordinate> maxPoints = new ArrayList<Coordinate>(500);
 		int[] pList = null; // working list for expanding local plateaus
 
 		int id = 0;
@@ -2062,14 +2061,15 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		for (int i = 0; i < maxPoints.size(); i++)
 		{
 			final int newId = (i + 1);
-			final int oldId = maxPoints.get(i).id;
+			final Coordinate c = maxPoints.get(i);
+			final int oldId = c.id;
 			idMap[oldId] = newId;
-			maxPoints.get(i).id = newId;
+			c.id = newId;
 		}
 
 		reassignMaxima(maxima, idMap);
 
-		Coordinate[] results = maxPoints.toArray(new Coordinate[maxPoints.size()]);
+		final Coordinate[] results = maxPoints.toArray(new Coordinate[maxPoints.size()]);
 		// XXX - Debug
 		//for (Coordinate r : results)
 		//	System.out.printf("[%d] %d = %f\n", r.id, r.index, r.value);
@@ -2313,19 +2313,20 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            the maxima
 	 * @param maxPoints
 	 *            the max points
-	 * @param resultsArray
-	 *            the results array
 	 * @param stats
 	 *            the stats
+	 * @return the find foci result[]
 	 */
-	private void assignMaxima(int[] maxima, Coordinate[] maxPoints, ArrayList<FindFociResult> resultsArray,
-			FindFociStatistics stats)
+	private FindFociResult[] assignMaxima(int[] maxima, Coordinate[] maxPoints, FindFociStatistics stats)
 	{
 		final int[] xyz = new int[3];
 		setNoSaddleValue(stats);
 
-		for (Coordinate maximum : maxPoints)
+		final FindFociResult[] resultsArray = new FindFociResult[maxPoints.length];
+
+		for (int i = 0; i < maxPoints.length; i++)
 		{
+			final Coordinate maximum = maxPoints[i];
 			getXYZ(maximum.index, xyz);
 
 			maxima[maximum.index] = maximum.id;
@@ -2340,8 +2341,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			result.count = 1;
 			result.highestSaddleValue = NO_SADDLE_VALUE;
 
-			resultsArray.add(result);
+			resultsArray[i] = result;
 		}
+
+		return resultsArray;
 	}
 
 	/**
@@ -2852,17 +2855,17 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @param maxima
 	 */
 	protected void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
-			FindFociStatistics stats, ArrayList<FindFociResult> resultsArray, int[] maxima)
+			FindFociStatistics stats, FindFociResult[] resultsArray, int[] maxima)
 	{
 		setPixels(pixels);
 
 		// Build an array containing the threshold for each peak.
 		// Note that maxima are numbered from 1
-		final int nMaxima = resultsArray.size();
+		final int nMaxima = resultsArray.length;
 		final float[] peakThreshold = new float[nMaxima + 1];
 		for (int i = 1; i < peakThreshold.length; i++)
 		{
-			peakThreshold[i] = getTolerance(searchMethod, searchParameter, stats, resultsArray.get(i - 1).maxValue);
+			peakThreshold[i] = getTolerance(searchMethod, searchParameter, stats, resultsArray[i - 1].maxValue);
 		}
 
 		for (int i = maxima.length; i-- > 0;)
@@ -2913,10 +2916,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @param maxima
 	 * @param resultsArray
 	 */
-	protected void calculateInitialResults(Object pixels, int[] maxima, ArrayList<FindFociResult> resultsArray)
+	protected void calculateInitialResults(Object pixels, int[] maxima, FindFociResult[] resultsArray)
 	{
 		setPixels(pixels);
-		final int nMaxima = resultsArray.size();
+		final int nMaxima = resultsArray.length;
 
 		// Maxima are numbered from 1
 		final int[] count = new int[nMaxima + 1];
@@ -2932,8 +2935,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			}
 		}
 
-		for (FindFociResult result : resultsArray)
+		//for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			result.count = count[result.id];
 			result.totalIntensity = intensity[result.id];
 			result.averageIntensity = result.totalIntensity / result.count;
@@ -2944,7 +2949,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * Loop over the image and sum the intensity of each peak area using the original image, storing this into the
 	 * results array.
 	 */
-	protected void calculateNativeResults(Object pixels, int[] maxima, ArrayList<FindFociResult> resultsArray,
+	protected void calculateNativeResults(Object pixels, int[] maxima, FindFociResult[] resultsArray,
 			int originalNumberOfPeaks)
 	{
 		setPixels(pixels);
@@ -2965,8 +2970,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			}
 		}
 
-		for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			final int id = result.id;
 			if (intensity[id] != 0)
 			{
@@ -2991,7 +2997,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @param centreParameter
 	 */
 	private void locateMaxima(Object pixels, Object searchPixels, int[] maxima, byte[] types,
-			ArrayList<FindFociResult> resultsArray, int originalNumberOfPeaks, int centreMethod, double centreParameter)
+			FindFociResult[] resultsArray, int originalNumberOfPeaks, int centreMethod, double centreParameter)
 	{
 		if (centreMethod == CENTRE_MAX_VALUE_SEARCH)
 		{
@@ -3013,8 +3019,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		int[] pList = new int[0];
 
 		// For each peak, compute the centre
-		for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			// Ensure list is large enough
 			if (pList.length < result.count)
 				pList = new int[result.count];
@@ -3033,12 +3040,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			{
 				final int index1 = pList[listI];
 				getXYZ(index1, xyz);
-				for (int i = 3; i-- > 0;)
+				for (int ii = 3; ii-- > 0;)
 				{
-					if (min_xyz[i] > xyz[i])
-						min_xyz[i] = xyz[i];
-					if (max_xyz[i] < xyz[i])
-						max_xyz[i] = xyz[i];
+					if (min_xyz[ii] > xyz[ii])
+						min_xyz[ii] = xyz[ii];
+					if (max_xyz[ii] < xyz[ii])
+						max_xyz[ii] = xyz[ii];
 				}
 			}
 			//log("Boundaries " + maximaId + " : " + min_xyz[0] + "," + min_xyz[1] + "," + min_xyz[2] + " => " +
@@ -3046,8 +3053,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 			// Extract sub image
 			final int[] dimensions = new int[3];
-			for (int i = 3; i-- > 0;)
-				dimensions[i] = max_xyz[i] - min_xyz[i] + 1;
+			for (int ii = 3; ii-- > 0;)
+				dimensions[ii] = max_xyz[ii] - min_xyz[ii] + 1;
 
 			final float[] subImage = extractSubImage(maxima, min_xyz, dimensions, maximaId, result.highestSaddleValue);
 
@@ -3083,10 +3090,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 					final int[] shift = new int[3];
 					double d = 0;
 					final int[] coords = result.getCoordinates();
-					for (int i = 3; i-- > 0;)
+					for (int ii = 3; ii-- > 0;)
 					{
-						shift[i] = coords[i] - (centre[i] + min_xyz[i]);
-						d += shift[i] * shift[i];
+						shift[ii] = coords[ii] - (centre[ii] + min_xyz[ii]);
+						d += shift[ii] * shift[ii];
 					}
 					log("Moved centre: " + shift[0] + " , " + shift[1] + " , " + shift[2] + " = " +
 							IJ.d2s(Math.sqrt(d), 2));
@@ -3493,10 +3500,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @param background
 	 * @param min
 	 */
-	private void calculateFinalResults(ArrayList<FindFociResult> resultsArray, double background, double min)
+	private void calculateFinalResults(FindFociResult[] resultsArray, double background, double min)
 	{
-		for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			result.totalIntensityAboveBackground = result.totalIntensity - background * result.count;
 			result.totalIntensityAboveImageMinimum = result.totalIntensity - min * result.count;
 			result.averageIntensity = result.totalIntensity / result.count;
@@ -3516,19 +3524,19 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            the results array
 	 * @param maxima
 	 *            the maxima
-	 * @param saddlePoints
-	 *            Contains an entry for each peak indexed from 1. The entry is a linked list of saddle points. Each
-	 *            saddle point is an array containing the neighbouring peak ID and the saddle value.
+	 * @return The saddle points.
+	 *         Contains an entry for each peak indexed from 1. The entry is a linked list of saddle points. Each
+	 *         saddle point is an array containing the neighbouring peak ID and the saddle value.
 	 */
-	private void findSaddlePoints(Object pixels, byte[] types, ArrayList<FindFociResult> resultsArray, int[] maxima,
-			ArrayList<FindFociSaddleList> saddlePoints)
+	private FindFociSaddleList[] findSaddlePoints(Object pixels, byte[] types, FindFociResult[] resultsArray,
+			int[] maxima)
 	{
 		setPixels(pixels);
 
+		final FindFociSaddleList[] saddlePoints = new FindFociSaddleList[resultsArray.length + 1];
+
 		// Initialise the saddle points
-		final int nMaxima = resultsArray.size();
-		// Empty first list for the non-existent id=0
-		saddlePoints.add(new FindFociSaddleList());
+		final int nMaxima = resultsArray.length;
 
 		final int maxPeakSize = getMaxPeakSize(resultsArray);
 		final int[] pListI = new int[maxPeakSize]; // here we enter points starting from a maximum (index,value)
@@ -3623,12 +3631,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 			setupFindHighestSaddleValues(nMaxima);
 
-			for (FindFociResult result : resultsArray)
+			for (int i = 0; i < resultsArray.length; i++)
 			{
+				final FindFociResult result = resultsArray[i];
 				// Skip if no saddles
 				if (result.maxx < 0)
 				{
-					saddlePoints.add(new FindFociSaddleList());
+					saddlePoints[i + 1] = new FindFociSaddleList();
 					continue;
 				}
 
@@ -3645,11 +3654,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		{
 			final float[] highestSaddleValues = new float[nMaxima + 1];
 
-			final int dStart = (is2D()) ? 8 : 26; 
-			
+			final int dStart = (is2D()) ? 8 : 26;
+
 			/* Process all the maxima */
-			for (FindFociResult result : resultsArray)
+			for (int i = 0; i < resultsArray.length; i++)
 			{
+				final FindFociResult result = resultsArray[i];
 				final int x0 = result.x;
 				final int y0 = result.y;
 				final int z0 = result.z;
@@ -3737,9 +3747,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 				} while (listI < listLen);
 
-				for (int i = listLen; i-- > 0;)
+				for (int ii = listLen; ii-- > 0;)
 				{
-					final int index = pListI[i];
+					final int index = pListI[ii];
 					types[index] &= ~LISTED; // reset attributes no longer needed
 				}
 
@@ -3771,10 +3781,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 						}
 					}
 					Arrays.sort(saddles);
-					saddlePoints.add(new FindFociSaddleList(saddles));
+					saddlePoints[i + 1] = new FindFociSaddleList(saddles);
 				}
 				else
-					saddlePoints.add(new FindFociSaddleList());
+					saddlePoints[i + 1] = new FindFociSaddleList();
 
 				// Set the saddle point
 				if (highestNeighbourPeakId != 0)
@@ -3784,6 +3794,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				}
 			} // for all maxima
 		}
+
+		return saddlePoints;
 	}
 
 	private float[] highestSaddleValues = null;
@@ -3814,7 +3826,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            the saddle points
 	 */
 	protected void findHighestSaddleValues(FindFociResult result, int[] maxima, byte[] types,
-			ArrayList<FindFociSaddleList> saddlePoints)
+			FindFociSaddleList[] saddlePoints)
 	{
 		Arrays.fill(highestSaddleValues, NO_SADDLE_VALUE);
 		final int id = result.id;
@@ -3962,10 +3974,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				}
 			}
 			Arrays.sort(saddles);
-			saddlePoints.add(new FindFociSaddleList(saddles));
+			saddlePoints[id] = new FindFociSaddleList(saddles);
 		}
 		else
-			saddlePoints.add(new FindFociSaddleList());
+			saddlePoints[id] = new FindFociSaddleList();
 
 		// Set the saddle point
 		if (highestNeighbourPeakId != 0)
@@ -3982,11 +3994,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	{
 	}
 
-	protected int getMaxPeakSize(ArrayList<FindFociResult> resultsArray)
+	protected int getMaxPeakSize(FindFociResult[] resultsArray)
 	{
 		int maxPeakSize = 0;
-		for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			if (maxPeakSize < result.count)
 				maxPeakSize = result.count;
 		}
@@ -3998,19 +4011,19 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * 
 	 * @param originalNumberOfPeaks
 	 */
-	protected void analysePeaks(ArrayList<FindFociResult> resultsArray, Object pixels, int[] maxima,
-			FindFociStatistics stats)
+	protected void analysePeaks(FindFociResult[] resultsArray, Object pixels, int[] maxima, FindFociStatistics stats)
 	{
 		setPixels(pixels);
 
 		// Create an array of the size/intensity of each peak above the highest saddle 
-		final double[] peakIntensity = new double[resultsArray.size() + 1];
+		final double[] peakIntensity = new double[resultsArray.length + 1];
 		final int[] peakSize = new int[peakIntensity.length];
 
 		// Store all the saddle heights
 		final float[] saddleHeight = new float[peakIntensity.length];
-		for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			saddleHeight[result.id] = result.highestSaddleValue;
 			//System.out.printf("ID=%d saddle=%f (%f)\n", result.RESULT_PEAK_ID, result.RESULT_HIGHEST_SADDLE_VALUE, result.RESULT_COUNT_ABOVE_SADDLE);
 		}
@@ -4029,8 +4042,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			}
 		}
 
-		for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			result.countAboveSaddle = peakSize[result.id];
 			result.intensityAboveSaddle = peakIntensity[result.id];
 		}
@@ -4039,12 +4053,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/**
 	 * Find the bounds of peaks.
 	 */
-	private void findBounds(ArrayList<FindFociResult> resultsArray, int[] maxima, byte[] types)
+	private void findBounds(FindFociResult[] resultsArray, int[] maxima, byte[] types)
 	{
 		// Store the xyz limits for each peak.
 		// This speeds up re-computation of the height above the min saddle.
 
-		final int size = resultsArray.size() + 1;
+		final int size = resultsArray.length + 1;
 		final int[] minx = new int[size];
 		final int[] miny = new int[size];
 		Arrays.fill(minx, this.maxx);
@@ -4072,8 +4086,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 					}
 				}
 
-			for (FindFociResult result : resultsArray)
+			for (int i = 0; i < resultsArray.length; i++)
 			{
+				final FindFociResult result = resultsArray[i];
 				result.minx = minx[result.id];
 				result.miny = miny[result.id];
 				result.minz = 0;
@@ -4109,8 +4124,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 						}
 					}
 
-			for (FindFociResult result : resultsArray)
+			for (int i = 0; i < resultsArray.length; i++)
 			{
+				final FindFociResult result = resultsArray[i];
 				result.minx = minx[result.id];
 				result.miny = miny[result.id];
 				result.minz = minz[result.id];
@@ -4125,19 +4141,20 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/**
 	 * Find the size and intensity of peaks above their saddle heights.
 	 */
-	protected void analysePeaksWithBounds(ArrayList<FindFociResult> resultsArray, Object pixels, int[] maxima,
+	protected void analysePeaksWithBounds(FindFociResult[] resultsArray, Object pixels, int[] maxima,
 			FindFociStatistics stats)
 	{
 		setPixels(pixels);
 
 		// Create an array of the size/intensity of each peak above the highest saddle 
-		final double[] peakIntensity = new double[resultsArray.size() + 1];
-		final int[] peakSize = new int[resultsArray.size() + 1];
+		final double[] peakIntensity = new double[resultsArray.length + 1];
+		final int[] peakSize = new int[resultsArray.length + 1];
 
 		// Store all the saddle heights
-		final float[] saddleHeight = new float[resultsArray.size() + 1];
-		for (FindFociResult result : resultsArray)
+		final float[] saddleHeight = new float[resultsArray.length + 1];
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			saddleHeight[result.id] = result.highestSaddleValue;
 			//System.out.printf("ID=%d saddle=%f (%f)\n", result.RESULT_PEAK_ID, result.RESULT_HIGHEST_SADDLE_VALUE, result.RESULT_COUNT_ABOVE_SADDLE);
 		}
@@ -4178,8 +4195,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 					}
 				}
 
-		for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
+			final FindFociResult result = resultsArray[i];
 			result.countAboveSaddle = peakSize[result.id];
 			result.intensityAboveSaddle = peakIntensity[result.id];
 			result.minx = minx[result.id];
@@ -4195,22 +4213,22 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/**
 	 * Merge sub-peaks into their highest neighbour peak using the highest saddle point
 	 */
-	private ArrayList<FindFociResult> mergeSubPeaks(ArrayList<FindFociResult> resultsArray, Object pixels, int[] maxima,
-			int minSize, int peakMethod, double peakParameter, FindFociStatistics stats,
-			ArrayList<FindFociSaddleList> saddlePoints, boolean isLogging, boolean restrictAboveSaddle)
+	private FindFociResult[] mergeSubPeaks(FindFociResult[] resultsArray, Object pixels, int[] maxima, int minSize,
+			int peakMethod, double peakParameter, FindFociStatistics stats, FindFociSaddleList[] saddlePoints,
+			boolean isLogging, boolean restrictAboveSaddle)
 	{
 		setPixels(pixels);
 		setNoSaddleValue(stats);
 
 		// Create an array containing the mapping between the original peak Id and the current Id that the peak has been
 		// mapped to.
-		final int[] peakIdMap = new int[resultsArray.size() + 1];
+		final int[] peakIdMap = new int[resultsArray.length + 1];
 		final FindFociResult[] resultList = new FindFociResult[peakIdMap.length];
 		resultList[0] = new FindFociResult(); // Empty first record
 		for (int i = 1; i < peakIdMap.length; i++)
 		{
 			peakIdMap[i] = i;
-			resultList[i] = resultsArray.get(i - 1);
+			resultList[i] = resultsArray[i - 1];
 		}
 		// Sort by Id for fast look-up
 		Arrays.sort(resultList, new Comparator<FindFociResult>()
@@ -4224,16 +4242,16 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// Process all the peaks for the minimum height. Process in order of saddle height
 		sortDescResults(resultsArray, SORT_SADDLE_HEIGHT, stats);
 
-		for (int i = 0; i < resultsArray.size(); i++)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
-			final FindFociResult result = resultsArray.get(i);
+			final FindFociResult result = resultsArray[i];
 			final int peakId = result.id;
 
 			// Check if this peak has been reassigned or has no neighbours
 			if (peakId != peakIdMap[peakId])
 				continue;
 
-			final FindFociSaddleList saddles = saddlePoints.get(peakId);
+			final FindFociSaddleList saddles = saddlePoints[peakId];
 			consolidateSaddles(result, saddles, peakIdMap);
 
 			final FindFociSaddle highestSaddle = (saddles.size == 0) ? null : saddles.list[0]; //findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
@@ -4256,7 +4274,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 					final FindFociResult neighbourResult = resultList[neighbourPeakId]; //findResult(resultsArray, neighbourPeakId);
 
 					mergePeak(maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
-							saddlePoints.get(neighbourPeakId), highestSaddle, false);
+							saddlePoints[neighbourPeakId], highestSaddle, false);
 				}
 			}
 		}
@@ -4269,9 +4287,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// Process all the peaks for the minimum size. Process in order of smallest first
 		sortAscResults(resultsArray, SORT_COUNT, stats);
 
-		for (int i = 0; i < resultsArray.size(); i++)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
-			final FindFociResult result = resultsArray.get(i);
+			final FindFociResult result = resultsArray[i];
 			final int peakId = result.id;
 
 			// Check if this peak has been reassigned or has no neighbours
@@ -4281,7 +4299,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			if (result.count < minSize)
 			{
 				// This peak is not large enough, merge into the neighbour peak
-				final FindFociSaddleList saddles = saddlePoints.get(peakId);
+				final FindFociSaddleList saddles = saddlePoints[peakId];
 				consolidateSaddles(result, saddles, peakIdMap);
 				if (saddles.size == 0)
 				{
@@ -4296,7 +4314,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 					final FindFociResult neighbourResult = resultList[neighbourPeakId]; //findResult(resultsArray, neighbourPeakId);
 
 					mergePeak(maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
-							saddlePoints.get(neighbourPeakId), highestSaddle, false);
+							saddlePoints[neighbourPeakId], highestSaddle, false);
 				}
 			}
 		}
@@ -4312,14 +4330,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			updateSaddleDetails(resultsArray, peakIdMap);
 			reassignMaxima(maxima, peakIdMap);
 			analysePeaksWithBounds(resultsArray, pixels, maxima, stats);
-			//analysePeaks(resultsArray, pixels, maxima, stats, resultsArray.size());
+			//analysePeaks(resultsArray, pixels, maxima, stats, resultsArray.length);
 
 			// Process all the peaks for the minimum size above the saddle points. Process in order of smallest first
 			sortAscResults(resultsArray, SORT_COUNT_ABOVE_SADDLE, stats);
 
-			for (int i = 0; i < resultsArray.size(); i++)
+			for (int i = 0; i < resultsArray.length; i++)
 			{
-				final FindFociResult result = resultsArray.get(i);
+				final FindFociResult result = resultsArray[i];
 				final int peakId = result.id;
 
 				// Check if this peak has been reassigned
@@ -4330,7 +4348,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				{
 					// This peak is not large enough, merge into the neighbour peak
 
-					final FindFociSaddleList saddles = saddlePoints.get(peakId);
+					final FindFociSaddleList saddles = saddlePoints[peakId];
 					consolidateSaddles(result, saddles, peakIdMap);
 					if (saddles.size == 0)
 					{
@@ -4349,7 +4367,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 						// Note: Ensure the peak counts above the saddle are updated.
 						mergePeak(maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
-								saddlePoints.get(neighbourPeakId), highestSaddle, true);
+								saddlePoints[neighbourPeakId], highestSaddle, true);
 
 						// Check for interruption after each merge
 						if (Utils.isInterrupted())
@@ -4380,31 +4398,21 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		return resultsArray;
 	}
 
-	private ArrayList<FindFociResult> removeFlaggedResults(ArrayList<FindFociResult> resultsArray)
+	private FindFociResult[] removeFlaggedResults(FindFociResult[] resultsArray)
 	{
 		// Remove merged peaks from the results
 		sortDescResults(resultsArray, SORT_INTENSITY, null);
 
-		//while (resultsArray.size() > 0 && resultsArray.get(resultsArray.size() - 1).RESULT_INTENSITY == Double.NEGATIVE_INFINITY)
-		//	resultsArray.remove(resultsArray.size() - 1);
-
-		int toIndex = 0;
-		while (toIndex < resultsArray.size() && resultsArray.get(toIndex).totalIntensity != Double.NEGATIVE_INFINITY)
-			toIndex++;
-		if (toIndex < resultsArray.size())
-			resultsArray = new ArrayList<FindFociResult>(resultsArray.subList(0, toIndex));
-		return resultsArray;
+		int size = 0;
+		while (size < resultsArray.length && resultsArray[size].totalIntensity != Double.NEGATIVE_INFINITY)
+			size++;
+		return trim(resultsArray, size);
 	}
 
-	private ArrayList<FindFociResult> trim(ArrayList<FindFociResult> resultsArray, int maxPeaks)
+	private FindFociResult[] trim(FindFociResult[] resultsArray, int size)
 	{
-		//while (resultsArray.size() > maxPeaks)
-		//{
-		//	resultsArray.remove(resultsArray.size() - 1);
-		//}
-
-		if (maxPeaks < resultsArray.size())
-			resultsArray = new ArrayList<FindFociResult>(resultsArray.subList(0, maxPeaks));
+		if (size < resultsArray.length)
+			resultsArray = Arrays.copyOf(resultsArray, size);
 		return resultsArray;
 	}
 
@@ -4428,12 +4436,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		return count;
 	}
 
-	private void updateSaddleDetails(ArrayList<FindFociResult> resultsArray, int[] peakIdMap)
+	private void updateSaddleDetails(FindFociResult[] resultsArray, int[] peakIdMap)
 	{
-		for (int i = 0; i < resultsArray.size(); i++)
-		//for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
-			final FindFociResult result = resultsArray.get(i);
+			final FindFociResult result = resultsArray[i];
 			int neighbourPeakId = peakIdMap[result.saddleNeighbourId];
 
 			// Ensure the peak is not marked as a saddle with itself
@@ -4850,15 +4857,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            the is logging
 	 * @return the results array
 	 */
-	private ArrayList<FindFociResult> removeEdgeMaxima(ArrayList<FindFociResult> resultsArray, int[] maxima,
-			FindFociStatistics stats, boolean isLogging)
+	private FindFociResult[] removeEdgeMaxima(FindFociResult[] resultsArray, int[] maxima, FindFociStatistics stats,
+			boolean isLogging)
 	{
 		// Build a look-up table for all the peak IDs
 		int maxId = 0;
-		for (int i = 0; i < resultsArray.size(); i++)
-		//for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
-			final FindFociResult result = resultsArray.get(i);
+			final FindFociResult result = resultsArray[i];
 			if (maxId < result.id)
 				maxId = result.id;
 		}
@@ -4904,10 +4910,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		}
 
 		// Mark maxima to be removed
-		for (int i = 0; i < resultsArray.size(); i++)
-		//for (FindFociResult result : resultsArray)
+		for (int i = 0; i < resultsArray.length; i++)
 		{
-			final FindFociResult result = resultsArray.get(i);
+			final FindFociResult result = resultsArray[i];
 			final int peakId = result.id;
 			if (peakIdMap[peakId] == 0)
 				result.totalIntensity = Double.NEGATIVE_INFINITY;
@@ -4922,16 +4927,31 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		return resultsArray;
 	}
 
+	private final ResultDescComparator descComparator = new ResultDescComparator();
+	private final ResultAscComparator ascComparator = new ResultAscComparator();
+
 	/**
 	 * Sort the results using the specified index in descending order
 	 * 
 	 * @param resultsArray
 	 * @param sortIndex
 	 */
-	void sortDescResults(ArrayList<FindFociResult> resultsArray, int sortIndex, FindFociStatistics stats)
+	void sortDescResults(FindFociResult[] resultsArray, int sortIndex, FindFociStatistics stats)
 	{
 		customSort(resultsArray, sortIndex, stats);
-		Collections.sort(resultsArray, new ResultDescComparator());
+		Arrays.sort(resultsArray, descComparator);
+	}
+
+	/**
+	 * Sort the results using the specified index in ascending order
+	 * 
+	 * @param resultsArray
+	 * @param sortIndex
+	 */
+	void sortAscResults(FindFociResult[] resultsArray, int sortIndex, FindFociStatistics stats)
+	{
+		customSort(resultsArray, sortIndex, stats);
+		Arrays.sort(resultsArray, ascComparator);
 	}
 
 	/**
@@ -4943,7 +4963,44 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	void sortAscResults(ArrayList<FindFociResult> resultsArray, int sortIndex, FindFociStatistics stats)
 	{
 		customSort(resultsArray, sortIndex, stats);
-		Collections.sort(resultsArray, new ResultAscComparator());
+		Collections.sort(resultsArray, ascComparator);
+	}
+
+	private void customSort(FindFociResult[] resultsArray, int sortIndex, FindFociStatistics stats)
+	{
+		switch (sortIndex)
+		{
+			case SORT_XYZ:
+				customSortXYZ(resultsArray);
+				return;
+
+			case SORT_INTENSITY:
+			case SORT_INTENSITY_MINUS_BACKGROUND:
+			case SORT_COUNT:
+			case SORT_MAX_VALUE:
+			case SORT_AVERAGE_INTENSITY:
+			case SORT_AVERAGE_INTENSITY_MINUS_BACKGROUND:
+			case SORT_X:
+			case SORT_Y:
+			case SORT_Z:
+			case SORT_SADDLE_HEIGHT:
+			case SORT_COUNT_ABOVE_SADDLE:
+			case SORT_INTENSITY_ABOVE_SADDLE:
+			case SORT_ABSOLUTE_HEIGHT:
+			case SORT_RELATIVE_HEIGHT_ABOVE_BACKGROUND:
+			case SORT_PEAK_ID:
+			case SORT_INTENSITY_MINUS_MIN:
+			case SORT_AVERAGE_INTENSITY_MINUS_MIN:
+				for (int i = 0; i < resultsArray.length; i++)
+				{
+					final FindFociResult result = resultsArray[i];
+					result.sortValue = getSortValue(result, sortIndex, stats);
+				}
+				return;
+
+			default:
+				throw new RuntimeException("Unknown sort index method " + sortIndex);
+		}
 	}
 
 	private void customSort(ArrayList<FindFociResult> resultsArray, int sortIndex, FindFociStatistics stats)
@@ -4972,7 +5029,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			case SORT_INTENSITY_MINUS_MIN:
 			case SORT_AVERAGE_INTENSITY_MINUS_MIN:
 				for (int i = 0; i < resultsArray.size(); i++)
-				//for (FindFociResult result : resultsArray)
 				{
 					final FindFociResult result = resultsArray.get(i);
 					result.sortValue = getSortValue(result, sortIndex, stats);
@@ -5028,12 +5084,25 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		}
 	}
 
+	private void customSortXYZ(FindFociResult[] resultsArray)
+	{
+		final int a = maxy * maxz;
+		final int b = maxz;
+		for (int i = 0; i < resultsArray.length; i++)
+		{
+			final FindFociResult result = resultsArray[i];
+			final int x = result.x;
+			final int y = result.y;
+			final int z = result.z;
+			result.sortValue = x * a + y * b + z;
+		}
+	}
+
 	private void customSortXYZ(ArrayList<FindFociResult> resultsArray)
 	{
 		final int a = maxy * maxz;
 		final int b = maxz;
 		for (int i = 0; i < resultsArray.size(); i++)
-		//for (FindFociResult result : resultsArray)
 		{
 			final FindFociResult result = resultsArray.get(i);
 			final int x = result.x;
@@ -5619,7 +5688,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		if (resultsArray != null)
 		{
 			for (int i = 0; i < resultsArray.size(); i++)
-			//for (FindFociResult result : resultsArray)
 			{
 				final FindFociResult result = resultsArray.get(i);
 				final int x = result.x;

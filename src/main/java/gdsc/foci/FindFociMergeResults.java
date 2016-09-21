@@ -20,7 +20,7 @@ import java.util.ArrayList;
  */
 public class FindFociMergeResults
 {
-	public ArrayList<FindFociResult> resultsArray;
+	public FindFociResult[] resultsArray;
 	public int originalNumberOfPeaks;
 
 	/**
@@ -31,7 +31,7 @@ public class FindFociMergeResults
 	 * @param originalNumberOfPeaks
 	 *            the original number of peaks
 	 */
-	public FindFociMergeResults(ArrayList<FindFociResult> resultsArray, int originalNumberOfPeaks)
+	public FindFociMergeResults(FindFociResult[] resultsArray, int originalNumberOfPeaks)
 	{
 		this.resultsArray = resultsArray;
 		this.originalNumberOfPeaks = originalNumberOfPeaks;

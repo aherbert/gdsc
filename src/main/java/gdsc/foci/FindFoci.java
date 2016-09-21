@@ -1012,7 +1012,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 		// Get the results
 		ImagePlus maximaImp = ffResult.mask;
-		ArrayList<FindFociResult> resultsArray = (ArrayList<FindFociResult>) ffResult.results;
+		ArrayList<FindFociResult> resultsArray = ffResult.results;
 		FindFociStatistics stats = ffResult.stats;
 
 		// If we are outputting a results table or saving to file we can do the object analysis
@@ -1813,9 +1813,9 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex, int options,
 			double blur, int centreMethod, double centreParameter, double fractionParameter)
 	{
-		FindFociResults result = ffp.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod, searchMethod,
-				searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex, options, blur,
-				centreMethod, centreParameter, fractionParameter);
+		FindFociResults result = ffp.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
+				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
+				options, blur, centreMethod, centreParameter, fractionParameter);
 		return result;
 	}
 
@@ -1949,14 +1949,15 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaPrelimResults(gdsc.foci.FindFociInitResults,
 	 * gdsc.foci.FindFociMergeResults, int, int, int, double)
 	 */
-	public FindFociResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
-			int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
+	public FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults,
+			FindFociMergeResults mergeResults, int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
 	{
 		lastResultsArray = null;
-		FindFociResults result = ffpStaged.findMaximaPrelimResults(initResults, mergeResults, maxPeaks, sortIndex,
+		FindFociPrelimResults result = ffpStaged.findMaximaPrelimResults(initResults, mergeResults, maxPeaks, sortIndex,
 				centreMethod, centreParameter);
 		if (result != null)
-			lastResultsArray = result.results;
+			lastResultsArray = (result.results == null) ? null
+					: new ArrayList<FindFociResult>(Arrays.asList(result.results));
 		return result;
 
 	}
@@ -1968,7 +1969,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * gdsc.foci.FindFociMergeResults, gdsc.foci.FindFociResults, int, java.lang.String, java.lang.String, double)
 	 */
 	public FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
-			FindFociResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
+			FindFociPrelimResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
 			double fractionParameter)
 	{
 		lastResultsArray = null;

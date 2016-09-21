@@ -526,7 +526,7 @@ public interface FindFociProcessor
 	 *            Parameter for calculating the peak centre
 	 * @return the find foci results
 	 */
-	FindFociResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
+	FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
 			int maxPeaks, int sortIndex,int centreMethod,  double centreParameter);
 
 	/**
@@ -561,6 +561,6 @@ public interface FindFociProcessor
 	 * @return the find foci results
 	 */
 	FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
-			FindFociResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
+			FindFociPrelimResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
 			double fractionParameter);
 }
