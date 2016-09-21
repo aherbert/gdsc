@@ -124,6 +124,10 @@ public class FindFociSaddleList implements Cloneable
 			return;
 		// Increase size
 		list = Arrays.copyOf(list, size + n);
+		
+		// On the assumption that any list which needs extra capacity will be from a large peak
+		// This does not appear to affect speed so it is left commented out.
+		//list = Arrays.copyOf(list, Math.max(size + n, (int) (list.length * 3)));
 	}
 
 	/**

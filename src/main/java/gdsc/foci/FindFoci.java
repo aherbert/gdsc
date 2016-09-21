@@ -1813,9 +1813,10 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex, int options,
 			double blur, int centreMethod, double centreParameter, double fractionParameter)
 	{
-		return ffp.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod, searchMethod,
+		FindFociResults result = ffp.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod, searchMethod,
 				searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex, options, blur,
 				centreMethod, centreParameter, fractionParameter);
+		return result;
 	}
 
 	private FindFociBaseProcessor createFFProcessor(ImagePlus imp)
