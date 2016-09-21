@@ -65,7 +65,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	protected int xlimit, ylimit, zlimit;
 	protected int maxx_maxy, maxx_maxy_maxz;
 	protected int[] offset, offset2;
-	protected int dStart, dStart2;
+	//protected int dStart;
 	protected boolean[] flatEdge;
 	private Rectangle bounds = null;
 
@@ -1871,87 +1871,175 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		//int pCount = 0;
 		setPixels(pixels);
-		for (int i = maxx_maxy_maxz; i-- > 0;)
+		if (is2D())
 		{
-			if ((types[i] & (EXCLUDED | MAX_AREA | PLATEAU | NOT_MAXIMUM)) != 0)
-				continue;
-			final float v = getf(i);
-			if (v < threshold)
-				continue;
-			if (v == globalMin)
-				continue;
-
-			getXYZ(i, xyz);
-
-			final int x = xyz[0];
-			final int y = xyz[1];
-			final int z = xyz[2];
-
-			/*
-			 * check whether we have a local maximum.
-			 */
-			final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
-			final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
-			boolean isMax = true, equalNeighbour = false;
-
-			// It is more likely that the z stack will be out-of-bounds.
-			// Adopt the xy limit lookup and process z lookup separately
-
-			for (int d = dStart; d-- > 0;)
+			for (int i = maxx_maxy_maxz; i-- > 0;)
 			{
-				if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d))
+				if ((types[i] & (EXCLUDED | MAX_AREA | PLATEAU | NOT_MAXIMUM)) != 0)
+					continue;
+				final float v = getf(i);
+				if (v < threshold)
+					continue;
+				if (v == globalMin)
+					continue;
+
+				getXY(i, xyz);
+
+				final int x = xyz[0];
+				final int y = xyz[1];
+
+				/*
+				 * check whether we have a local maximum.
+				 */
+				final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+				boolean isMax = true, equalNeighbour = false;
+
+				// It is more likely that the z stack will be out-of-bounds.
+				// Adopt the xy limit lookup and process z lookup separately
+
+				for (int d = 8; d-- > 0;)
 				{
-					final float vNeighbor = getf(i + offset[d]);
-					if (vNeighbor > v)
+					if (isInnerXY || isWithinXY(x, y, d))
 					{
-						isMax = false;
-						break;
+						final float vNeighbor = getf(i + offset[d]);
+						if (vNeighbor > v)
+						{
+							isMax = false;
+							break;
+						}
+						else if (vNeighbor == v)
+						{
+							// Neighbour is equal, this is a potential plateau maximum
+							equalNeighbour = true;
+						}
+						else
+						{
+							// This is lower so cannot be a maxima 
+							types[i + offset[d]] |= NOT_MAXIMUM;
+						}
 					}
-					else if (vNeighbor == v)
+				}
+
+				if (isMax)
+				{
+					id++;
+					if (id >= FindFoci.searchCapacity)
 					{
-						// Neighbour is equal, this is a potential plateau maximum
-						equalNeighbour = true;
+						log("The number of potential maxima exceeds the search capacity: " + FindFoci.searchCapacity +
+								". Try using a denoising/smoothing filter or increase the capacity.");
+						return null;
+					}
+
+					if (equalNeighbour)
+					{
+						// Initialise the working list
+						if (pList == null)
+						{
+							// Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
+							pList = new int[i + 1];
+						}
+						//pCount++;
+
+						// Search the local area marking all equal neighbour points as maximum
+						if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxPoints, pList))
+						{
+							// Not a true maximum, ignore this
+							id--;
+						}
 					}
 					else
 					{
-						// This is lower so cannot be a maxima 
-						types[i + offset[d]] |= NOT_MAXIMUM;
+						types[i] |= MAXIMUM | MAX_AREA;
+						maxima[i] = id;
+						maxPoints.add(new Coordinate(x, y, 0, id, v));
 					}
 				}
 			}
-
-			if (isMax)
+		}
+		else
+		{
+			for (int i = maxx_maxy_maxz; i-- > 0;)
 			{
-				id++;
-				if (id >= FindFoci.searchCapacity)
+				if ((types[i] & (EXCLUDED | MAX_AREA | PLATEAU | NOT_MAXIMUM)) != 0)
+					continue;
+				final float v = getf(i);
+				if (v < threshold)
+					continue;
+				if (v == globalMin)
+					continue;
+
+				getXYZ(i, xyz);
+
+				final int x = xyz[0];
+				final int y = xyz[1];
+				final int z = xyz[2];
+
+				/*
+				 * check whether we have a local maximum.
+				 */
+				final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+				final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
+				boolean isMax = true, equalNeighbour = false;
+
+				// It is more likely that the z stack will be out-of-bounds.
+				// Adopt the xy limit lookup and process z lookup separately
+
+				for (int d = 26; d-- > 0;)
 				{
-					log("The number of potential maxima exceeds the search capacity: " + FindFoci.searchCapacity +
-							". Try using a denoising/smoothing filter or increase the capacity.");
-					return null;
+					if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d))
+					{
+						final float vNeighbor = getf(i + offset[d]);
+						if (vNeighbor > v)
+						{
+							isMax = false;
+							break;
+						}
+						else if (vNeighbor == v)
+						{
+							// Neighbour is equal, this is a potential plateau maximum
+							equalNeighbour = true;
+						}
+						else
+						{
+							// This is lower so cannot be a maxima 
+							types[i + offset[d]] |= NOT_MAXIMUM;
+						}
+					}
 				}
 
-				if (equalNeighbour)
+				if (isMax)
 				{
-					// Initialise the working list
-					if (pList == null)
+					id++;
+					if (id >= FindFoci.searchCapacity)
 					{
-						// Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
-						pList = new int[i + 1];
+						log("The number of potential maxima exceeds the search capacity: " + FindFoci.searchCapacity +
+								". Try using a denoising/smoothing filter or increase the capacity.");
+						return null;
 					}
-					//pCount++;
 
-					// Search the local area marking all equal neighbour points as maximum
-					if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxPoints, pList))
+					if (equalNeighbour)
 					{
-						// Not a true maximum, ignore this
-						id--;
+						// Initialise the working list
+						if (pList == null)
+						{
+							// Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
+							pList = new int[i + 1];
+						}
+						//pCount++;
+
+						// Search the local area marking all equal neighbour points as maximum
+						if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxPoints, pList))
+						{
+							// Not a true maximum, ignore this
+							id--;
+						}
 					}
-				}
-				else
-				{
-					types[i] |= MAXIMUM | MAX_AREA;
-					maxima[i] = id;
-					maxPoints.add(new Coordinate(x, y, z, id, v));
+					else
+					{
+						types[i] |= MAXIMUM | MAX_AREA;
+						maxima[i] = id;
+						maxPoints.add(new Coordinate(x, y, z, id, v));
+					}
 				}
 			}
 		}
@@ -2043,54 +2131,106 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		boolean isPlateau = true;
 		final int[] xyz = new int[3];
 
-		do
+		if (is2D())
 		{
-			final int index1 = pList[listI];
-			getXYZ(index1, xyz);
-			final int x1 = xyz[0];
-			final int y1 = xyz[1];
-			final int z1 = xyz[2];
-
-			// It is more likely that the z stack will be out-of-bounds.
-			// Adopt the xy limit lookup and process z lookup separately
-
-			final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-			final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
-
-			for (int d = dStart; d-- > 0;)
+			do
 			{
-				if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
+				final int index1 = pList[listI];
+				getXY(index1, xyz);
+				final int x1 = xyz[0];
+				final int y1 = xyz[1];
+
+				// It is more likely that the z stack will be out-of-bounds.
+				// Adopt the xy limit lookup and process z lookup separately
+
+				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+
+				for (int d = 8; d-- > 0;)
 				{
-					final int index2 = index1 + offset[d];
-					if ((types[index2] & IGNORE) != 0)
+					if (isInnerXY || isWithinXY(x1, y1, d))
 					{
-						// This has been done already, ignore this point
-						continue;
-					}
+						final int index2 = index1 + offset[d];
+						if ((types[index2] & IGNORE) != 0)
+						{
+							// This has been done already, ignore this point
+							continue;
+						}
 
-					final float v2 = getf(index2);
+						final float v2 = getf(index2);
 
-					if (v2 > v0)
-					{
-						isPlateau = false;
-						//break; // Cannot break as we want to label the entire plateau.
-					}
-					else if (v2 == v0)
-					{
-						// Add this to the search
-						pList[listLen++] = index2;
-						types[index2] |= LISTED | PLATEAU;
-					}
-					else
-					{
-						types[index2] |= NOT_MAXIMUM;
+						if (v2 > v0)
+						{
+							isPlateau = false;
+							//break; // Cannot break as we want to label the entire plateau.
+						}
+						else if (v2 == v0)
+						{
+							// Add this to the search
+							pList[listLen++] = index2;
+							types[index2] |= LISTED | PLATEAU;
+						}
+						else
+						{
+							types[index2] |= NOT_MAXIMUM;
+						}
 					}
 				}
-			}
 
-			listI++;
+				listI++;
 
-		} while (listI < listLen && isPlateau);
+			} while (listI < listLen && isPlateau);
+		}
+		else
+		{
+			do
+			{
+				final int index1 = pList[listI];
+				getXYZ(index1, xyz);
+				final int x1 = xyz[0];
+				final int y1 = xyz[1];
+				final int z1 = xyz[2];
+
+				// It is more likely that the z stack will be out-of-bounds.
+				// Adopt the xy limit lookup and process z lookup separately
+
+				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+				final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+
+				for (int d = 26; d-- > 0;)
+				{
+					if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
+					{
+						final int index2 = index1 + offset[d];
+						if ((types[index2] & IGNORE) != 0)
+						{
+							// This has been done already, ignore this point
+							continue;
+						}
+
+						final float v2 = getf(index2);
+
+						if (v2 > v0)
+						{
+							isPlateau = false;
+							//break; // Cannot break as we want to label the entire plateau.
+						}
+						else if (v2 == v0)
+						{
+							// Add this to the search
+							pList[listLen++] = index2;
+							types[index2] |= LISTED | PLATEAU;
+						}
+						else
+						{
+							types[index2] |= NOT_MAXIMUM;
+						}
+					}
+				}
+
+				listI++;
+
+			} while (listI < listLen && isPlateau);
+		}
 
 		// log("Potential plateau "+ x0 + ","+y0+","+z0+" : "+listLen);
 
@@ -2374,126 +2514,213 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		int nUnchanged = 0;
 		final int[] xyz = new int[3];
 
-		for (int i = 0, p = levelStart; i < levelNPoints; i++, p++)
+		if (is2D())
 		{
-			final int index = coordinates[p];
-
-			if ((types[index] & (EXCLUDED | MAX_AREA)) != 0)
+			for (int i = 0, p = levelStart; i < levelNPoints; i++, p++)
 			{
-				// This point can be ignored
-				nChanged++;
-				continue;
-			}
+				final int index = coordinates[p];
 
-			getXYZ(index, xyz);
-
-			// Extract the point coordinate
-			final int x = xyz[0];
-			final int y = xyz[1];
-			final int z = xyz[2];
-
-			final float v = getf(index);
-
-			// It is more likely that the z stack will be out-of-bounds.
-			// Adopt the xy limit lookup and process z lookup separately
-			final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
-			final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
-
-			// Check for the highest neighbour
-
-			// TODO - Try out using a Sobel operator to assign the gradient direction. Follow the steepest gradient.
-
-			int dMax = -1;
-			float vMax = v;
-			for (int d = dStart; d-- > 0;)
-			{
-				if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d))
+				if ((types[index] & (EXCLUDED | MAX_AREA)) != 0)
 				{
-					final int index2 = index + offset[d];
-					final float vNeighbor = getf(index2);
-					if (vMax < vNeighbor) // Higher neighbour
+					// This point can be ignored
+					nChanged++;
+					continue;
+				}
+
+				getXY(index, xyz);
+
+				// Extract the point coordinate
+				final int x = xyz[0];
+				final int y = xyz[1];
+
+				final float v = getf(index);
+
+				// It is more likely that the z stack will be out-of-bounds.
+				// Adopt the xy limit lookup and process z lookup separately
+				final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+
+				// Check for the highest neighbour
+
+				// TODO - Try out using a Sobel operator to assign the gradient direction. Follow the steepest gradient.
+
+				int dMax = -1;
+				float vMax = v;
+				for (int d = 8; d-- > 0;)
+				{
+					if (isInnerXY || isWithinXY(x, y, d))
 					{
-						vMax = vNeighbor;
-						dMax = d;
-					}
-					else if (vMax == vNeighbor) // Equal neighbour
-					{
-						// Check if the neighbour is higher than this point (i.e. an equal higher neighbour has been found)
-						if (v != vNeighbor)
+						final int index2 = index + offset[d];
+						final float vNeighbor = getf(index2);
+						if (vMax < vNeighbor) // Higher neighbour
 						{
-							// Favour flat edges over diagonals in the case of equal neighbours
-							if (flatEdge[d])
-							{
-								dMax = d;
-							}
+							vMax = vNeighbor;
+							dMax = d;
 						}
-						// The neighbour is the same height, check if it is a maxima
-						else if ((types[index2] & MAX_AREA) != 0)
+						else if (vMax == vNeighbor) // Equal neighbour
 						{
-							if (dMax < 0) // Unassigned
+							// Check if the neighbour is higher than this point (i.e. an equal higher neighbour has been found)
+							if (v != vNeighbor)
 							{
-								dMax = d;
+								// Favour flat edges over diagonals in the case of equal neighbours
+								if (flatEdge[d])
+								{
+									dMax = d;
+								}
 							}
-							// Favour flat edges over diagonals in the case of equal neighbours
-							else if (flatEdge[d])
+							// The neighbour is the same height, check if it is a maxima
+							else if ((types[index2] & MAX_AREA) != 0)
 							{
-								dMax = d;
+								if (dMax < 0) // Unassigned
+								{
+									dMax = d;
+								}
+								// Favour flat edges over diagonals in the case of equal neighbours
+								else if (flatEdge[d])
+								{
+									dMax = d;
+								}
 							}
 						}
 					}
 				}
-			}
 
-			if (dMax < 0)
-			{
-				// This could happen if all neighbours are the same height and none are maxima.
-				// Since plateau maxima should be handled in the initial maximum finding stage, any equal neighbours
-				// should be processed eventually.
-				coordinates[levelStart + (nUnchanged++)] = index;
-				continue;
-			}
+				if (dMax < 0)
+				{
+					// This could happen if all neighbours are the same height and none are maxima.
+					// Since plateau maxima should be handled in the initial maximum finding stage, any equal neighbours
+					// should be processed eventually.
+					coordinates[levelStart + (nUnchanged++)] = index;
+					continue;
+				}
 
-			int index2 = index + offset[dMax];
-
-			// TODO. 
-			// The code below can be uncommented to flood fill a plateau with the first maxima that touches it.
-			// However this can lead to striping artifacts where diagonals are at the same level but 
-			// adjacent cells are not, e.g:
-			// 1122
-			// 1212
-			// 2122
-			// 1222
-			// Consequently the code has been commented out and the default behaviour fills plateaus from the
-			// edges inwards with a bias in the direction of the sweep across the pixels.
-			// A better method may be to assign pixels to the nearest maxima using a distance measure 
-			// (Euclidian, City-Block, etc). This would involve:
-			// - Mark all plateau edges that touch a maxima 
-			// - for each maxima edge:
-			// -- Measure distance for each plateau point to the nearest touching edge
-			// - Compare distance maps for each maxima and assign points to nearest maxima
-
-			// Flood fill
-			//          // A higher point has been found. Check if this position is a plateau
-			//if ((types[index] & PLATEAU) == PLATEAU)
-			//{
-			//	log(String.format("Plateau merge to higher level: %d @ [%d,%d] : %d", image[index], x, y,
-			//			image[index2]));
-			//
-			//	// Initialise the list to allow all points on this level to be processed. 
-			//	if (pList.length < levelNPoints)
-			//	{
-			//		pList = new int[levelNPoints];
-			//	}
-			//
-			//	expandPlateau(maxima, types, index, v, maxima[index2], pList);
-			//}
-			//else
-			{
 				types[index] |= MAX_AREA;
-				maxima[index] = maxima[index2];
+				maxima[index] = maxima[index + offset[dMax]];
 				nChanged++;
-			}
-		} // for pixel i
+			} // for pixel i
+		}
+		else
+		{
+			for (int i = 0, p = levelStart; i < levelNPoints; i++, p++)
+			{
+				final int index = coordinates[p];
+
+				if ((types[index] & (EXCLUDED | MAX_AREA)) != 0)
+				{
+					// This point can be ignored
+					nChanged++;
+					continue;
+				}
+
+				getXYZ(index, xyz);
+
+				// Extract the point coordinate
+				final int x = xyz[0];
+				final int y = xyz[1];
+				final int z = xyz[2];
+
+				final float v = getf(index);
+
+				// It is more likely that the z stack will be out-of-bounds.
+				// Adopt the xy limit lookup and process z lookup separately
+				final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+				final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
+
+				// Check for the highest neighbour
+
+				// TODO - Try out using a Sobel operator to assign the gradient direction. Follow the steepest gradient.
+
+				int dMax = -1;
+				float vMax = v;
+				for (int d = 26; d-- > 0;)
+				{
+					if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d))
+					{
+						final int index2 = index + offset[d];
+						final float vNeighbor = getf(index2);
+						if (vMax < vNeighbor) // Higher neighbour
+						{
+							vMax = vNeighbor;
+							dMax = d;
+						}
+						else if (vMax == vNeighbor) // Equal neighbour
+						{
+							// Check if the neighbour is higher than this point (i.e. an equal higher neighbour has been found)
+							if (v != vNeighbor)
+							{
+								// Favour flat edges over diagonals in the case of equal neighbours
+								if (flatEdge[d])
+								{
+									dMax = d;
+								}
+							}
+							// The neighbour is the same height, check if it is a maxima
+							else if ((types[index2] & MAX_AREA) != 0)
+							{
+								if (dMax < 0) // Unassigned
+								{
+									dMax = d;
+								}
+								// Favour flat edges over diagonals in the case of equal neighbours
+								else if (flatEdge[d])
+								{
+									dMax = d;
+								}
+							}
+						}
+					}
+				}
+
+				if (dMax < 0)
+				{
+					// This could happen if all neighbours are the same height and none are maxima.
+					// Since plateau maxima should be handled in the initial maximum finding stage, any equal neighbours
+					// should be processed eventually.
+					coordinates[levelStart + (nUnchanged++)] = index;
+					continue;
+				}
+
+				int index2 = index + offset[dMax];
+
+				// TODO. 
+				// The code below can be uncommented to flood fill a plateau with the first maxima that touches it.
+				// However this can lead to striping artifacts where diagonals are at the same level but 
+				// adjacent cells are not, e.g:
+				// 1122
+				// 1212
+				// 2122
+				// 1222
+				// Consequently the code has been commented out and the default behaviour fills plateaus from the
+				// edges inwards with a bias in the direction of the sweep across the pixels.
+				// A better method may be to assign pixels to the nearest maxima using a distance measure 
+				// (Euclidian, City-Block, etc). This would involve:
+				// - Mark all plateau edges that touch a maxima 
+				// - for each maxima edge:
+				// -- Measure distance for each plateau point to the nearest touching edge
+				// - Compare distance maps for each maxima and assign points to nearest maxima
+
+				// Flood fill
+				//          // A higher point has been found. Check if this position is a plateau
+				//if ((types[index] & PLATEAU) == PLATEAU)
+				//{
+				//	log(String.format("Plateau merge to higher level: %d @ [%d,%d] : %d", image[index], x, y,
+				//			image[index2]));
+				//
+				//	// Initialise the list to allow all points on this level to be processed. 
+				//	if (pList.length < levelNPoints)
+				//	{
+				//		pList = new int[levelNPoints];
+				//	}
+				//
+				//	expandPlateau(maxima, types, index, v, maxima[index2], pList);
+				//}
+				//else
+				{
+					types[index] |= MAX_AREA;
+					maxima[index] = maxima[index2];
+					nChanged++;
+				}
+			} // for pixel i
+		}
 
 		//if (nUnchanged > 0)
 		//	System.out.printf("nUnchanged = %d\n", nUnchanged);
@@ -2515,45 +2742,88 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		final int[] xyz = new int[3];
 
-		do
+		if (is2D())
 		{
-			final int index1 = pList[listI];
-			getXYZ(index1, xyz);
-			final int x1 = xyz[0];
-			final int y1 = xyz[1];
-			final int z1 = xyz[2];
-
-			// It is more likely that the z stack will be out-of-bounds.
-			// Adopt the xy limit lookup and process z lookup separately
-
-			final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-			final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
-
-			for (int d = dStart; d-- > 0;)
+			do
 			{
-				if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
+				final int index1 = pList[listI];
+				getXY(index1, xyz);
+				final int x1 = xyz[0];
+				final int y1 = xyz[1];
+
+				// It is more likely that the z stack will be out-of-bounds.
+				// Adopt the xy limit lookup and process z lookup separately
+
+				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+
+				for (int d = 8; d-- > 0;)
 				{
-					final int index2 = index1 + offset[d];
-					if ((types[index2] & IGNORE) != 0)
+					if (isInnerXY || isWithinXY(x1, y1, d))
 					{
-						// This has been done already, ignore this point
-						continue;
-					}
+						final int index2 = index1 + offset[d];
+						if ((types[index2] & IGNORE) != 0)
+						{
+							// This has been done already, ignore this point
+							continue;
+						}
 
-					final float v2 = getf(index2);
+						final float v2 = getf(index2);
 
-					if (v2 == v0)
-					{
-						// Add this to the search
-						pList[listLen++] = index2;
-						types[index2] |= LISTED;
+						if (v2 == v0)
+						{
+							// Add this to the search
+							pList[listLen++] = index2;
+							types[index2] |= LISTED;
+						}
 					}
 				}
-			}
 
-			listI++;
+				listI++;
 
-		} while (listI < listLen);
+			} while (listI < listLen);
+		}
+		else
+		{
+			do
+			{
+				final int index1 = pList[listI];
+				getXYZ(index1, xyz);
+				final int x1 = xyz[0];
+				final int y1 = xyz[1];
+				final int z1 = xyz[2];
+
+				// It is more likely that the z stack will be out-of-bounds.
+				// Adopt the xy limit lookup and process z lookup separately
+
+				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+				final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+
+				for (int d = 26; d-- > 0;)
+				{
+					if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
+					{
+						final int index2 = index1 + offset[d];
+						if ((types[index2] & IGNORE) != 0)
+						{
+							// This has been done already, ignore this point
+							continue;
+						}
+
+						final float v2 = getf(index2);
+
+						if (v2 == v0)
+						{
+							// Add this to the search
+							pList[listLen++] = index2;
+							types[index2] |= LISTED;
+						}
+					}
+				}
+
+				listI++;
+
+			} while (listI < listLen);
+		}
 
 		//log("Plateau size = "+listLen);
 
@@ -2846,42 +3116,82 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		final int[] xyz = new int[3];
 
-		do
+		if (maxx == 1)
 		{
-			final int index1 = pList[listI];
-			getXYZ(index1, xyz);
-			final int x1 = xyz[0];
-			final int y1 = xyz[1];
-			final int z1 = xyz[2];
-
-			final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-			final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
-
-			for (int d = dStart; d-- > 0;)
+			do
 			{
-				if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
+				final int index1 = pList[listI];
+				getXY(index1, xyz);
+				final int x1 = xyz[0];
+				final int y1 = xyz[1];
+
+				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+
+				for (int d = 8; d-- > 0;)
 				{
-					final int index2 = index1 + offset[d];
-					if ((types[index2] & IGNORE) != 0 || maxima[index2] != maximaId)
+					if (isInnerXY || isWithinXY(x1, y1, d))
 					{
-						// This has been done already, ignore this point
-						continue;
-					}
+						final int index2 = index1 + offset[d];
+						if ((types[index2] & IGNORE) != 0 || maxima[index2] != maximaId)
+						{
+							// This has been done already, ignore this point
+							continue;
+						}
 
-					final float v2 = getf(index2);
+						final float v2 = getf(index2);
 
-					if (v2 >= saddleValue)
-					{
-						// Add this to the search
-						pList[listLen++] = index2;
-						types[index2] |= LISTED;
+						if (v2 >= saddleValue)
+						{
+							// Add this to the search
+							pList[listLen++] = index2;
+							types[index2] |= LISTED;
+						}
 					}
 				}
-			}
 
-			listI++;
+				listI++;
 
-		} while (listI < listLen);
+			} while (listI < listLen);
+		}
+		else
+		{
+			do
+			{
+				final int index1 = pList[listI];
+				getXYZ(index1, xyz);
+				final int x1 = xyz[0];
+				final int y1 = xyz[1];
+				final int z1 = xyz[2];
+
+				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+				final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+
+				for (int d = 26; d-- > 0;)
+				{
+					if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
+					{
+						final int index2 = index1 + offset[d];
+						if ((types[index2] & IGNORE) != 0 || maxima[index2] != maximaId)
+						{
+							// This has been done already, ignore this point
+							continue;
+						}
+
+						final float v2 = getf(index2);
+
+						if (v2 >= saddleValue)
+						{
+							// Add this to the search
+							pList[listLen++] = index2;
+							types[index2] |= LISTED;
+						}
+					}
+				}
+
+				listI++;
+
+			} while (listI < listLen);
+		}
 
 		for (int i = listLen; i-- > 0;)
 		{
@@ -3233,7 +3543,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		if (useBoundingRegion)
 		{
 			// Do an initial sweep of half-neighbours to mark pixels for a saddle search
-			if (maxz == 1)
+			if (is2D())
 			{
 				for (int i = maxx_maxy_maxz; i-- > 0;)
 				{
@@ -3335,6 +3645,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		{
 			final float[] highestSaddleValues = new float[nMaxima + 1];
 
+			final int dStart = (is2D()) ? 8 : 26; 
+			
 			/* Process all the maxima */
 			for (FindFociResult result : resultsArray)
 			{
@@ -3510,9 +3822,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		final boolean alwaysInnerY = (result.miny != 0 && result.maxy != maxy);
 		final boolean alwaysInnerX = (result.minx != 0 && result.maxx != maxx);
 
-		if (maxz == 1)
+		if (is2D())
 		{
-			// 2D processing
 			for (int y = result.miny; y < result.maxy; y++)
 			{
 				final boolean isInnerY = alwaysInnerY || (y != 0 && y != ylimit);
@@ -3742,7 +4053,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		final int[] maxy = new int[size];
 		Arrays.fill(maxx, -2);
 
-		if (maxz == 1)
+		if (is2D())
 		{
 			for (int y = 0, i = 0; y < this.maxy; y++)
 				for (int x = 0; x < this.maxx; x++, i++)
@@ -4031,7 +4342,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 					else
 					{
 						final FindFociSaddle highestSaddle = saddles.list[0]; //findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
-						
+
 						// Find the neighbour peak (use the map because the neighbour may have been merged)
 						final int neighbourPeakId = highestSaddle.id;
 						final FindFociResult neighbourResult = resultList[neighbourPeakId]; //findResult(resultsArray, neighbourPeakId);
@@ -4097,7 +4408,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		return resultsArray;
 	}
 
-	private void removePeak(int[] maxima, int[] peakIdMap, FindFociResult result, FindFociSaddleList saddles, int peakId)
+	private void removePeak(int[] maxima, int[] peakIdMap, FindFociResult result, FindFociSaddleList saddles,
+			int peakId)
 	{
 		// No neighbour so just remove
 		mergePeak(maxima, peakIdMap, peakId, result, 0, null, saddles, null, null, false);
@@ -4141,30 +4453,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		result.intensityAboveSaddle = result.totalIntensity;
 		result.saddleNeighbourId = 0;
 		result.highestSaddleValue = NO_SADDLE_VALUE;
-	}
-
-	/**
-	 * Find the highest saddle that has not been assigned to the specified peak
-	 * 
-	 * @param peakIdMap
-	 * @param peakId
-	 * @param saddles
-	 * @return
-	 */
-	private FindFociSaddle findHighestNeighbourSaddle(int[] peakIdMap, FindFociSaddleList saddles, int peakId)
-	{
-		for (int i = 0; i < saddles.size; i++)
-		{
-			// Find foci that have not been reassigned to this peak (or nothing)
-			final FindFociSaddle saddle = saddles.list[i];
-			final int neighbourPeakId = peakIdMap[saddle.id];
-			if (neighbourPeakId != peakId && neighbourPeakId != 0)
-			{
-				// Works if the saddles are sorted
-				return saddle;
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -4398,7 +4686,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			if (neighbourSaddles.size != 0)
 			{
 				final FindFociSaddle newHighestSaddle = neighbourSaddles.list[0]; //findHighestNeighbourSaddle(peakIdMap, neighbourSaddles,	neighbourPeakId);
-				
+
 				// We only need to update if the highest saddle value has been changed
 				if (updatePeakAboveSaddle)
 				{
@@ -4771,8 +5059,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		xlimit = maxx - 1;
 		ylimit = maxy - 1;
 		zlimit = maxz - 1;
-		dStart = (maxz == 1) ? 8 : 26;
-		dStart2 = dStart / 2;
 
 		// Create the offset table (for single array 3D neighbour comparisons)
 		offset = new int[DIR_X_OFFSET.length];
@@ -4789,6 +5075,16 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		{
 			offset2[d] = getIndex(DIR_X_OFFSET2[d], DIR_Y_OFFSET2[d], DIR_Z_OFFSET2[d]);
 		}
+	}
+
+	/**
+	 * Checks if is a 2D image
+	 *
+	 * @return true, if is 2D image
+	 */
+	protected boolean is2D()
+	{
+		return maxz == 1;
 	}
 
 	/**
