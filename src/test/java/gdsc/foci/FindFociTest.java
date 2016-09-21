@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import gdsc.core.threshold.AutoThreshold;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.plugin.filter.GaussianBlur;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -22,6 +23,7 @@ public class FindFociTest
 	static RandomGenerator rand = new Well19937c(30051977);
 	static ImagePlus[] data;
 	static int numberOfTestImages = 2;
+	static int numberOfTestImages3D = 2;
 	static final int LOOPS = 20;
 
 	// Allow testing different settings.
@@ -370,8 +372,7 @@ public class FindFociTest
 		ImagePlus[] data2 = new ImagePlus[data.length];
 		for (int i = 0; i < data.length; i++)
 		{
-			FloatProcessor fp = (FloatProcessor) data[i].getProcessor().convertToFloat();
-			data2[i] = new ImagePlus(null, fp);
+			data2[i] = toFloat(data[i], false);
 		}
 
 		long time1 = Long.MAX_VALUE;
@@ -511,18 +512,29 @@ public class FindFociTest
 
 	private FindFociResults runFloat(ImagePlus imp, int i, boolean optimised, boolean negative)
 	{
-		FloatProcessor fp = (FloatProcessor) imp.getProcessor().convertToFloat();
-		if (negative)
-		{
-			fp.subtract(offset);
-		}
-		imp = new ImagePlus(null, fp);
+		imp = toFloat(imp, negative);
 		FindFoci ff = new FindFoci();
 		ff.setOptimisedProcessor(optimised);
 		return ff.findMaxima(imp, null, backgroundMethod[i], backgroundParameter[i], autoThresholdMethod[i],
 				searchMethod[i], searchParameter[i], maxPeaks[i], minSize[i], peakMethod[i], peakParameter[i],
 				outputType[i], sortIndex[i], options[i], blur[i], centreMethod[i], centreParameter[i],
 				fractionParameter[i]);
+	}
+
+	private ImagePlus toFloat(ImagePlus imp, boolean negative)
+	{
+		ImageStack stack = imp.getImageStack();
+		ImageStack newStack = new ImageStack(stack.getWidth(), stack.getHeight());
+		for (int n = 1; n <= stack.getSize(); n++)
+		{
+			FloatProcessor fp = (FloatProcessor) stack.getProcessor(n).convertToFloat();
+			if (negative)
+			{
+				fp.subtract(offset);
+			}
+			newStack.addSlice(fp);
+		}
+		return new ImagePlus(null, newStack);
 	}
 
 	private FindFociResults runIntStaged(ImagePlus imp, int i, boolean optimised)
@@ -536,20 +548,15 @@ public class FindFociTest
 				backgroundParameter[i], searchMethod[i], searchParameter[i]);
 		FindFociMergeResults mergeResults = ff.findMaximaMerge(initResults, searchResults, minSize[i], peakMethod[i],
 				peakParameter[i], options[i], blur[i]);
-		FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i], sortIndex[i],
-				centreMethod[i], centreParameter[i]);
+		FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i],
+				sortIndex[i], centreMethod[i], centreParameter[i]);
 		return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i], autoThresholdMethod[i],
 				"FindFociTest", fractionParameter[i]);
 	}
 
 	private FindFociResults runFloatStaged(ImagePlus imp, int i, boolean optimised, boolean negative)
 	{
-		FloatProcessor fp = (FloatProcessor) imp.getProcessor().convertToFloat();
-		if (negative)
-		{
-			fp.subtract(bias + 100);
-		}
-		imp = new ImagePlus(null, fp);
+		imp = toFloat(imp, negative);
 		FindFoci ff = new FindFoci();
 		ImagePlus imp2 = ff.blur(imp, blur[i]);
 		ff.setOptimisedProcessor(optimised);
@@ -559,8 +566,8 @@ public class FindFociTest
 				backgroundParameter[i], searchMethod[i], searchParameter[i]);
 		FindFociMergeResults mergeResults = ff.findMaximaMerge(initResults, searchResults, minSize[i], peakMethod[i],
 				peakParameter[i], options[i], blur[i]);
-		FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i], sortIndex[i],
-				centreMethod[i], centreParameter[i]);
+		FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i],
+				sortIndex[i], centreMethod[i], centreParameter[i]);
 		return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i], autoThresholdMethod[i],
 				"FindFociTest", fractionParameter[i]);
 	}
@@ -570,9 +577,12 @@ public class FindFociTest
 		if (data == null)
 		{
 			System.out.println("Creating data ...");
-			data = new ImagePlus[numberOfTestImages];
-			for (int i = 0; i < data.length; i++)
-				data[i] = createImageData();
+			data = new ImagePlus[numberOfTestImages + numberOfTestImages3D];
+			int index = 0;
+			for (int i = 0; i < numberOfTestImages; i++)
+				data[index++] = createImageData();
+			for (int i = 0; i < numberOfTestImages3D; i++)
+				data[index++] = createImageData3D();
 			System.out.println("Created data");
 		}
 		return data;
@@ -586,6 +596,16 @@ public class FindFociTest
 		float[] data1 = createSpots(size, n, 5000, 10000, 2.5, 3.0);
 		float[] data2 = createSpots(size, n, 10000, 20000, 4.5, 3.5);
 		float[] data3 = createSpots(size, n, 20000, 40000, 6.5, 5);
+		short[] data = combine(data1, data2, data3);
+		// Show
+		String title = "FindFociTest";
+		ImageProcessor ip = new ShortProcessor(size, size, data, null);
+		//gdsc.core.ij.Utils.display(title, ip);
+		return new ImagePlus(title, ip);
+	}
+
+	private static short[] combine(float[] data1, float[] data2, float[] data3)
+	{
 		// Combine images and add a bias and read noise
 		RandomDataGenerator rg = new RandomDataGenerator(rand);
 		short[] data = new short[data1.length];
@@ -594,11 +614,7 @@ public class FindFociTest
 			final double mu = data1[i] + data2[i] + data3[i];
 			data[i] = (short) (((mu != 0) ? rg.nextPoisson(mu) : 0) + rg.nextGaussian(bias, 5));
 		}
-		// Show
-		String title = "FindFociTest";
-		ImageProcessor ip = new ShortProcessor(size, size, data, null);
-		//gdsc.core.ij.Utils.display(title, ip);
-		return new ImagePlus(title, ip);
+		return data;
 	}
 
 	private static float[] createSpots(int size, int n, int min, int max, double sigmaX, double sigmaY)
@@ -617,6 +633,63 @@ public class FindFociTest
 		gb.blurFloat(fp, sigmaX, sigmaY, 0.0002);
 
 		return (float[]) fp.getPixels();
+	}
+
+	private static ImagePlus createImageData3D()
+	{
+		// Create an image with peaks
+		int size = 64;
+		int z = 5;
+		int n = 20;
+		float[][] data1 = createSpots3D(size, z, n, 5000, 10000, 2.5, 3.0);
+		float[][] data2 = createSpots3D(size, z, n, 10000, 20000, 4.5, 3.5);
+		float[][] data3 = createSpots3D(size, z, n, 20000, 40000, 6.5, 5);
+		ImageStack stack = new ImageStack(size, size);
+		for (int i = 0; i < data1.length; i++)
+		{
+			short[] data = combine(data1[i], data2[i], data3[i]);
+			stack.addSlice(new ShortProcessor(size, size, data, null));
+		}
+		// Show
+		String title = "FindFociTest3D";
+		//gdsc.core.ij.Utils.display(title, stack);
+		return new ImagePlus(title, stack);
+	}
+
+	private static float[][] createSpots3D(int size, int z, int n, int min, int max, double sigmaX, double sigmaY)
+	{
+		float[] data = new float[size * size];
+		// Randomly put on spots
+		RandomDataGenerator rg = new RandomDataGenerator(rand);
+		while (n-- > 0)
+		{
+			data[rand.nextInt(data.length)] = rg.nextInt(min, max);
+		}
+
+		int middle = z / 2;
+		float[][] result = new float[z][];
+		for (int i = 0; i < z; i++)
+		{
+			FloatProcessor fp = new FloatProcessor(size, size, data.clone());
+			GaussianBlur gb = new GaussianBlur();
+			// Increase blur when out-of-focus
+			double scale = createWidthScale(Math.abs(middle - i), middle);
+			gb.blurFloat(fp, sigmaX * scale, sigmaY * scale, 0.0002);
+			result[i] = (float[]) fp.getPixels();
+		}
+		return result;
+	}
+
+	/**
+	 * Generate a scale so that at the configured zDepth the scale is 1.5.
+	 * 
+	 * @param z
+	 * @return The scale
+	 */
+	private static double createWidthScale(double z, double depth)
+	{
+		z /= depth;
+		return 1.0 + z * z * 0.5;
 	}
 
 	private long time;
