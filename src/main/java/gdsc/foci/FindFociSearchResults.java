@@ -1,7 +1,5 @@
 package gdsc.foci;
 
-import java.util.ArrayList;
-
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
