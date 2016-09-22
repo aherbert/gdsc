@@ -4617,12 +4617,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			{
 				final FindFociSaddle saddle = newNeighbourSaddles[i];
 				// Consolidate the id
-				//				saddle.id = peakIdMap[saddle.id];
-				//				if (saddle.id == peakId || saddle.id == 0)
-				//					// Ignore saddle with peak that is being merged or has been removed
-				//					continue;
-				//				newNeighbourSaddles[size++] = saddle;
-
 				final int newId = peakIdMap[saddle.id];
 				if (newId == 0 || newId == peakId)
 					// Ignore saddle with peak that is being merged or has been removed

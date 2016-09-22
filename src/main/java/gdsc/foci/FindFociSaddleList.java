@@ -226,8 +226,10 @@ public class FindFociSaddleList implements Cloneable
 		for (int i = 0; i < size; i++)
 		{
 			if (lastId != list[i].id)
+			{
 				list[newSize++] = list[i];
-			lastId = list[i].id;
+				lastId = list[i].id;
+			}
 		}
 		clear(newSize);
 		if (maintain)
