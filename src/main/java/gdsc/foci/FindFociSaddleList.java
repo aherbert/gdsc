@@ -21,6 +21,33 @@ import java.util.Comparator;
  */
 public class FindFociSaddleList implements Cloneable
 {
+	private static class IdSaddleComparator implements Comparator<FindFociSaddle>
+	{
+		public int compare(FindFociSaddle o1, FindFociSaddle o2)
+		{
+			final int result = o1.id - o2.id;
+			if (result != 0)
+				return result;
+			return o1.order - o2.order;
+		}
+	}
+
+	private static class OrderSaddleComparator implements Comparator<FindFociSaddle>
+	{
+		public int compare(FindFociSaddle o1, FindFociSaddle o2)
+		{
+			return o1.order - o2.order;
+		}
+	}
+
+	private static IdSaddleComparator idSaddleComparator;
+	private static OrderSaddleComparator orderSaddleComparator;
+	static
+	{
+		idSaddleComparator = new IdSaddleComparator();
+		orderSaddleComparator = new OrderSaddleComparator();
+	}
+
 	int size;
 	FindFociSaddle[] list;
 
@@ -81,8 +108,6 @@ public class FindFociSaddleList implements Cloneable
 	public void clear()
 	{
 		clear(0);
-		for (int i = 0; i < size; i++)
-			list[i] = null;
 	}
 
 	/**
@@ -93,8 +118,11 @@ public class FindFociSaddleList implements Cloneable
 	 */
 	public void clear(int position)
 	{
+		if (position == size)
+			return;
+		final int oldSize = size;
 		size = position;
-		while (position < list.length)
+		while (position < oldSize)
 			list[position++] = null;
 	}
 
@@ -104,9 +132,7 @@ public class FindFociSaddleList implements Cloneable
 	 */
 	public void erase()
 	{
-		for (int i = 0; i < size; i++)
-			list[i] = null;
-		size = 0;
+		clear();
 		list = null;
 	}
 
@@ -124,7 +150,7 @@ public class FindFociSaddleList implements Cloneable
 			return;
 		// Increase size
 		list = Arrays.copyOf(list, size + n);
-		
+
 		// On the assumption that any list which needs extra capacity will be from a large peak
 		// This does not appear to affect speed so it is left commented out.
 		//list = Arrays.copyOf(list, Math.max(size + n, (int) (list.length * 3)));
@@ -165,7 +191,7 @@ public class FindFociSaddleList implements Cloneable
 	 */
 	public void sort()
 	{
-		if (size == 0)
+		if (size < 0)
 			return;
 		Arrays.sort(list, 0, size);
 	}
@@ -177,8 +203,48 @@ public class FindFociSaddleList implements Cloneable
 	 */
 	public void sort(Comparator<FindFociSaddle> saddleComparator)
 	{
-		if (size == 0)
+		if (size < 0)
 			return;
 		Arrays.sort(list, 0, size, saddleComparator);
+	}
+
+	/**
+	 * Remove duplicate Ids from the list and maintain the current order, or else do a default sort
+	 * 
+	 * @param maintain
+	 *            Maintain the current order, otherwise do default sort
+	 */
+	public void removeDuplicates(boolean maintain)
+	{
+		if (size < 2)
+			return;
+		for (int i = 0; i < size; i++)
+			list[i].order = i;
+		sort(idSaddleComparator);
+		int lastId = 0;
+		int newSize = 0;
+		for (int i = 0; i < size; i++)
+		{
+			if (lastId != list[i].id)
+				list[newSize++] = list[i];
+			lastId = list[i].id;
+		}
+		clear(newSize);
+		if (maintain)
+			sort(orderSaddleComparator);
+		else
+			sort();
+	}
+
+	/**
+	 * Sort the list by Id but otherwise maintain the current order
+	 */
+	public void sortById()
+	{
+		if (size < 2)
+			return;
+		for (int i = 0; i < size; i++)
+			list[i].order = i;
+		sort(idSaddleComparator);
 	}
 }

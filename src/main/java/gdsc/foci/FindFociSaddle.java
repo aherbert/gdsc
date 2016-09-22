@@ -23,7 +23,10 @@ public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle>
 
 	/** The saddle value. */
 	public float value;
-
+	
+	/** Used for sorting */
+	int order; 
+	
 	/**
 	 * Instantiates a new find foci saddle.
 	 */
@@ -63,6 +66,8 @@ public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle>
 			return -1;
 		if (this.value < that.value)
 			return 1;
+		// For compatibility with the legacy code the saddles must be sorted by Id if they are the same value
+		//return 0; 
 		return this.id - that.id;
 	}
 }

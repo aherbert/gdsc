@@ -769,8 +769,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaPrelimResults(gdsc.foci.FindFociInitResults,
 	 * gdsc.foci.FindFociMergeResults, int, int, int, double)
 	 */
-	public FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
-			int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
+	public FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults,
+			FindFociMergeResults mergeResults, int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
 	{
 		Object searchImage = initResults.image;
 		byte[] types = initResults.types;
@@ -4252,7 +4252,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				continue;
 
 			final FindFociSaddleList saddles = saddlePoints[peakId];
-			consolidateSaddles(result, saddles, peakIdMap);
+			final boolean change = consolidateSaddles(result, saddles, peakIdMap);
 
 			final FindFociSaddle highestSaddle = (saddles.size == 0) ? null : saddles.list[0]; //findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
 
@@ -4277,12 +4277,20 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 							saddlePoints[neighbourPeakId], highestSaddle, false);
 				}
 			}
+			else if (change)
+			{
+				// TODO - see if removing duplicates (so keeping the list small) increases speed.
+				// It may just help with memory performance.
+				saddles.removeDuplicates(true);
+			}
 		}
 
 		if (isLogging)
 			timingSplit("Height filter : Number of peaks = " + countPeaks(peakIdMap));
 		if (Utils.isInterrupted())
 			return null;
+
+		report();
 
 		// Process all the peaks for the minimum size. Process in order of smallest first
 		sortAscResults(resultsArray, SORT_COUNT, stats);
@@ -4323,6 +4331,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			timingSplit("Size filter : Number of peaks = " + countPeaks(peakIdMap));
 		if (Utils.isInterrupted())
 			return null;
+
+		report();
 
 		// This can be intensive due to the requirement to recount the peak size above the saddle, so it is optional
 		if (restrictAboveSaddle)
@@ -4381,6 +4391,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 			if (isLogging)
 				timingSplit("Size above saddle filter : Number of peaks = " + countPeaks(peakIdMap));
+
+			report();
 
 			// TODO - Add an intensity above saddle filter.
 			// All code is in place so this should be a copy of the code above.
@@ -4487,22 +4499,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 	//private int analysis, analysisSub, analysisFull;
 
-	private class SaddleComparator implements Comparator<FindFociSaddle>
-	{
-		public int compare(FindFociSaddle o1, FindFociSaddle o2)
-		{
-			int result = o1.id - o2.id;
-			if (result != 0)
-				return result;
-			if (o1.value > o2.value)
-				return -1;
-			if (o1.value < o2.value)
-				return 1;
-			return 0;
-		}
-	}
+	//private int sameId, totalId;
 
-	private SaddleComparator saddleComparator = new SaddleComparator();
+	private void report()
+	{
+		//System.out.printf("Same Id %d / %d (%.2f)\n", sameId, totalId, (double) sameId / totalId);
+		//sameId = totalId = 0;
+	}
 
 	/**
 	 * Consolidate the saddles to update their ids. Remove invalid saddles.
@@ -4513,23 +4516,43 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *            the saddles
 	 * @param peakIdMap
 	 *            the peak id map
+	 * @return true if the ids have changed
 	 */
-	private void consolidateSaddles(FindFociResult result, FindFociSaddleList saddles, int[] peakIdMap)
+	private boolean consolidateSaddles(FindFociResult result, FindFociSaddleList saddles, int[] peakIdMap)
 	{
 		final int peakId = result.id;
 		int size = 0;
 		final FindFociSaddle[] list = saddles.list;
+		boolean change = false;
 		for (int i = 0; i < saddles.size; i++)
 		{
 			final FindFociSaddle saddle = list[i];
 			// Consolidate the id
-			saddle.id = peakIdMap[saddle.id];
-			if (saddle.id == 0 || saddle.id == peakId)
+			final int newId = peakIdMap[saddle.id];
+			if (newId == 0 || newId == peakId)
 				// Ignore saddle that is now invalid
 				continue;
+			if (saddle.id != newId)
+			{
+				saddle.id = newId;
+				change = true;
+			}
 			list[size++] = saddle;
 		}
 		saddles.clear(size);
+
+		if (change)
+		{
+			// For compatibility with the legacy code we do not sort.
+			// This maintains the list in height order but the with the peaks potentially
+			// out of ID order now that IDs have changed.
+			// However the result.saddleNeighbourId property will match the head of the list.
+			//saddles.removeDuplicates(true);
+
+			//if (size != 0 && peakIdMap[result.saddleNeighbourId] != list[0].id)
+			//	System.out.printf("result saddleNeighbourId does not match the saddle list\n");
+		}
+		return change;
 	}
 
 	/**
@@ -4591,30 +4614,48 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			// 1. Remove all saddles with the peak that is being merged.
 			int size = 0;
 			final FindFociSaddle[] newNeighbourSaddles = neighbourSaddles.list;
+			boolean change = false;
 			for (int i = 0; i < neighbourSaddles.size; i++)
 			{
 				final FindFociSaddle saddle = newNeighbourSaddles[i];
 				// Consolidate the id
-				saddle.id = peakIdMap[saddle.id];
-				if (saddle.id == peakId || saddle.id == 0)
+				//				saddle.id = peakIdMap[saddle.id];
+				//				if (saddle.id == peakId || saddle.id == 0)
+				//					// Ignore saddle with peak that is being merged or has been removed
+				//					continue;
+				//				newNeighbourSaddles[size++] = saddle;
+
+				final int newId = peakIdMap[saddle.id];
+				if (newId == 0 || newId == peakId)
 					// Ignore saddle with peak that is being merged or has been removed
 					continue;
+				if (saddle.id != newId)
+				{
+					saddle.id = newId;
+					change = true;
+				}
 				newNeighbourSaddles[size++] = saddle;
 			}
+			//			if (!change)
+			//				sameId++;
+			//			totalId++;
 			neighbourSaddles.clear(size);
-			neighbourSaddles.sort(saddleComparator);
 
-			// 2. Remove all but the highest saddle with other peaks.
-			int lastId = 0;
-			size = 0;
-			for (int i = 0; i < neighbourSaddles.size; i++)
+			if (change)
 			{
-				if (lastId != newNeighbourSaddles[i].id)
-					newNeighbourSaddles[size++] = newNeighbourSaddles[i];
-				lastId = newNeighbourSaddles[i].id;
+				// For compatibility with the legacy code we have to keep the saddles in order of height then 
+				// current Id, so do not maintain the order
+				neighbourSaddles.removeDuplicates(false);
 			}
-			neighbourSaddles.clear(size);
-			neighbourSaddles.sort();
+			else
+			{
+				// For compatibility with the legacy code we have to keep the saddles in order of height then 
+				// current Id. Omitting a sort here would be faster.
+				// Ideally we would remove this sort() as the list is already sorted by value.
+				// TODO - change the legacy code to match this, or figure out why it is needed.
+				// This means that the legacy code has to change findHighestSaddle to search for the ... ?
+				neighbourSaddles.sort();
+			}
 
 			// The peak saddles will already have been consolidated for Id
 			// but we can remove the saddle with the neighbour. 
@@ -4626,14 +4667,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				if (saddle.id == neighbourPeakId)
 					// Ignore saddle with peak that is being merged or has been removed
 					continue;
-				// Consolidate the id
 				newPeakSaddles[size++] = saddle;
 			}
 			peakSaddles.clear(size);
-			peakSaddles.sort(saddleComparator);
+			peakSaddles.sortById();
 
 			// Merge the saddles
-			lastId = 0;
+			int lastId = 0;
 			boolean doSort = false;
 			boolean capacityCheck = true;
 			for (int i = 0; i < size; i++)
