@@ -4279,9 +4279,19 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			}
 			else if (change)
 			{
+				// For compatibility with the legacy code we do not sort by height then Id
+				// but we maintain the current order.
+				// This maintains the list in height order but with the peaks potentially
+				// out of ID order now that IDs have changed.
+				// However the result.saddleNeighbourId property will match the head of the list.
+
 				// TODO - see if removing duplicates (so keeping the list small) increases speed.
 				// It may just help with memory performance.
 				saddles.removeDuplicates(true);
+				
+				// This is a check...
+				//if (size != 0 && peakIdMap[result.saddleNeighbourId] != list[0].id)
+				//	System.out.printf("result saddleNeighbourId does not match the saddle list\n");
 			}
 		}
 
@@ -4540,18 +4550,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			list[size++] = saddle;
 		}
 		saddles.clear(size);
-
-		if (change)
-		{
-			// For compatibility with the legacy code we do not sort.
-			// This maintains the list in height order but the with the peaks potentially
-			// out of ID order now that IDs have changed.
-			// However the result.saddleNeighbourId property will match the head of the list.
-			//saddles.removeDuplicates(true);
-
-			//if (size != 0 && peakIdMap[result.saddleNeighbourId] != list[0].id)
-			//	System.out.printf("result saddleNeighbourId does not match the saddle list\n");
-		}
 		return change;
 	}
 
