@@ -1,7 +1,5 @@
 package gdsc.foci;
 
-import java.util.Arrays;
-
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -133,121 +131,6 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 				result.totalIntensity = intensity[id];
 				result.maxValue = max[id];
 			}
-		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociBaseProcessor#analysePeaks(java.util.ArrayList, java.lang.Object, int[],
-	 * gdsc.foci.FindFociStatistics)
-	 */
-	protected void analysePeaks(FindFociResult[] resultsArray, Object pixels, int[] maxima, FindFociStatistics stats)
-	{
-		setPixels(pixels);
-
-		// Create an array of the size/intensity of each peak above the highest saddle 
-		final double[] peakIntensity = new double[resultsArray.length + 1];
-		final int[] peakSize = new int[resultsArray.length + 1];
-
-		// Store all the saddle heights
-		final float[] saddleHeight = new float[resultsArray.length + 1];
-		for (int i = 0; i < resultsArray.length; i++)
-		{
-			final FindFociResult result = resultsArray[i];
-			saddleHeight[result.id] = result.highestSaddleValue;
-		}
-
-		for (int i = maxima.length; i-- > 0;)
-		{
-			if (maxima[i] > 0)
-			{
-				final float v = image[i];
-				if (v > saddleHeight[maxima[i]])
-				{
-					peakIntensity[maxima[i]] += v;
-					peakSize[maxima[i]]++;
-				}
-			}
-		}
-
-		for (int i = 0; i < resultsArray.length; i++)
-		{
-			final FindFociResult result = resultsArray[i];
-			result.countAboveSaddle = peakSize[result.id];
-			result.intensityAboveSaddle = peakIntensity[result.id];
-		}
-	}
-
-	/**
-	 * Find the size and intensity of peaks above their saddle heights.
-	 */
-	protected void analysePeaksWithBounds(FindFociResult[] resultsArray, Object pixels, int[] maxima,
-			FindFociStatistics stats)
-	{
-		setPixels(pixels);
-
-		// Create an array of the size/intensity of each peak above the highest saddle 
-		final double[] peakIntensity = new double[resultsArray.length + 1];
-		final int[] peakSize = new int[resultsArray.length + 1];
-
-		// Store all the saddle heights
-		final float[] saddleHeight = new float[resultsArray.length + 1];
-		for (int i = 0; i < resultsArray.length; i++)
-		{
-			final FindFociResult result = resultsArray[i];
-			saddleHeight[result.id] = result.highestSaddleValue;
-			//System.out.printf("ID=%d saddle=%f (%f)\n", result.RESULT_PEAK_ID, result.RESULT_HIGHEST_SADDLE_VALUE, result.RESULT_COUNT_ABOVE_SADDLE);
-		}
-
-		// Store the xyz limits for each peak.
-		// This speeds up re-computation of the height above the min saddle.
-		final int[] minx = new int[peakIntensity.length];
-		final int[] miny = new int[peakIntensity.length];
-		final int[] minz = new int[peakIntensity.length];
-		Arrays.fill(minx, this.maxx);
-		Arrays.fill(miny, this.maxy);
-		Arrays.fill(minz, this.maxz);
-		final int[] maxx = new int[peakIntensity.length];
-		final int[] maxy = new int[peakIntensity.length];
-		final int[] maxz = new int[peakIntensity.length];
-
-		for (int z = 0, i = 0; z < this.maxz; z++)
-			for (int y = 0; y < this.maxy; y++)
-				for (int x = 0; x < this.maxx; x++, i++)
-				{
-					final int id = maxima[i];
-					if (id != 0)
-					{
-						final float v = image[i];
-						if (v > saddleHeight[id])
-						{
-							peakIntensity[id] += v;
-							peakSize[id]++;
-						}
-
-						// Get bounds
-						minx[id] = Math.min(minx[id], x);
-						miny[id] = Math.min(miny[id], y);
-						minz[id] = Math.min(minz[id], z);
-						maxx[id] = Math.max(maxx[id], x);
-						maxy[id] = Math.max(maxy[id], y);
-						maxz[id] = Math.max(maxz[id], z);
-					}
-				}
-
-		for (int i = 0; i < resultsArray.length; i++)
-		{
-			final FindFociResult result = resultsArray[i];
-			result.countAboveSaddle = peakSize[result.id];
-			result.intensityAboveSaddle = peakIntensity[result.id];
-			result.minx = minx[result.id];
-			result.miny = miny[result.id];
-			result.minz = minz[result.id];
-			// Allow iterating i=min; i<max; i++
-			result.maxx = maxx[result.id] + 1;
-			result.maxy = maxy[result.id] + 1;
-			result.maxz = maxz[result.id] + 1;
 		}
 	}
 

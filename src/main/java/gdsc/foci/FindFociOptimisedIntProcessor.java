@@ -1055,16 +1055,16 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociBaseProcessor#analysePeaks(java.util.ArrayList, java.lang.Object, int[],
-	 * gdsc.foci.FindFociStatistics)
+	/**
+	 * Find the size and intensity of peaks above their saddle heights.
+	 *
+	 * @param resultsArray
+	 *            the results array
+	 * @param maxima
+	 *            the maxima
 	 */
-	protected void analysePeaks(FindFociResult[] resultsArray, Object pixels, int[] maxima, FindFociStatistics stats)
+	protected void analyseNonContiguousPeaks(FindFociResult[] resultsArray, int[] maxima)
 	{
-		setPixels(pixels);
-
 		// Create an array of the size/intensity of each peak above the highest saddle 
 		final long[] peakIntensity = new long[resultsArray.length + 1];
 		final int[] peakSize = new int[resultsArray.length + 1];
@@ -1097,6 +1097,260 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 			result.countAboveSaddle = peakSize[result.id];
 			result.intensityAboveSaddle = (double) peakIntensity[result.id];
 		}
+	}
+
+	/**
+	 * Searches from the specified maximum to find all contiguous points above the saddle
+	 *
+	 * @param maxima
+	 *            the maxima
+	 * @param types
+	 *            the types
+	 * @param result
+	 *            the result
+	 * @param pList
+	 *            the list
+	 * @return True if this is a true plateau, false if the plateau reaches a higher point
+	 */
+	protected int[] analyseContiguousPeak(int[] maxima, byte[] types, FindFociResult result, int[] pList)
+	{
+		final int index0 = getIndex(result.x, result.y, result.z);
+		final int peakId = result.id;
+		final int v0 = (int) result.highestSaddleValue;
+
+		if (pList.length < result.count)
+			pList = new int[result.count];
+
+		types[index0] |= LISTED; // mark first point as listed
+		int listI = 0; // index of current search element in the list
+		int listLen = 1; // number of elements in the list
+
+		// we create a list of connected points and start the list at the current maximum
+		pList[listI] = index0;
+
+		final int[] xyz = new int[3];
+
+		long sum = 0;
+
+		if (is2D())
+		{
+			do
+			{
+				final int index1 = pList[listI];
+				getXY(index1, xyz);
+				final int x1 = xyz[0];
+				final int y1 = xyz[1];
+
+				// It is more likely that the z stack will be out-of-bounds.
+				// Adopt the xy limit lookup and process z lookup separately
+
+				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+
+				for (int d = 8; d-- > 0;)
+				{
+					if (isInnerXY || isWithinXY(x1, y1, d))
+					{
+						final int index2 = index1 + offset[d];
+						if ((types[index2] & LISTED) != 0 || maxima[index2] != peakId)
+						{
+							// Different peak or already done
+							continue;
+						}
+
+						final int v1 = image[index2];
+						if (v1 > v0)
+						{
+							pList[listLen++] = index2;
+							types[index2] |= LISTED;
+							sum += v1;
+						}
+					}
+				}
+
+				listI++;
+
+			} while (listI < listLen);
+		}
+		else
+		{
+			do
+			{
+				final int index1 = pList[listI];
+				getXYZ(index1, xyz);
+				final int x1 = xyz[0];
+				final int y1 = xyz[1];
+				final int z1 = xyz[2];
+
+				// It is more likely that the z stack will be out-of-bounds.
+				// Adopt the xy limit lookup and process z lookup separately
+
+				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+				final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+
+				for (int d = 26; d-- > 0;)
+				{
+					if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
+					{
+						final int index2 = index1 + offset[d];
+						if ((types[index2] & LISTED) != 0 || maxima[index2] != peakId)
+						{
+							// Different peak or already done
+							continue;
+						}
+
+						final int v1 = image[index2];
+						if (v1 > v0)
+						{
+							pList[listLen++] = index2;
+							types[index2] |= LISTED;
+							sum += v1;
+						}
+					}
+				}
+
+				listI++;
+
+			} while (listI < listLen);
+		}
+
+		result.countAboveSaddle = listI;
+		result.intensityAboveSaddle = (double) sum;
+
+		return pList;
+	}
+
+	/**
+	 * Searches from the specified maximum to find all contiguous points above the saddle.
+	 *
+	 * @param maxima
+	 *            the maxima
+	 * @param types
+	 *            the types
+	 * @param result
+	 *            the result
+	 * @param pList
+	 *            the list
+	 * @param peakIdMap
+	 *            the peak id map
+	 * @param peakId
+	 *            the peak id
+	 * @return True if this is a true plateau, false if the plateau reaches a higher point
+	 */
+	protected int[] analyseContiguousPeak(int[] maxima, byte[] types, FindFociResult result, int[] pList,
+			final int[] peakIdMap, final int peakId)
+	{
+		final int index0 = getIndex(result.x, result.y, result.z);
+		final int v0 = (int) result.highestSaddleValue;
+
+		if (pList.length < result.count)
+			pList = new int[result.count];
+
+		types[index0] |= LISTED; // mark first point as listed
+		int listI = 0; // index of current search element in the list
+		int listLen = 1; // number of elements in the list
+
+		// we create a list of connected points and start the list at the current maximum
+		pList[listI] = index0;
+
+		final int[] xyz = new int[3];
+
+		long sum = 0;
+
+		if (is2D())
+		{
+			do
+			{
+				final int index1 = pList[listI];
+				getXY(index1, xyz);
+				final int x1 = xyz[0];
+				final int y1 = xyz[1];
+
+				// It is more likely that the z stack will be out-of-bounds.
+				// Adopt the xy limit lookup and process z lookup separately
+
+				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+
+				for (int d = 8; d-- > 0;)
+				{
+					if (isInnerXY || isWithinXY(x1, y1, d))
+					{
+						final int index2 = index1 + offset[d];
+						if ((types[index2] & LISTED) != 0)
+						{
+							// Already done
+							continue;
+						}
+						if (peakIdMap[maxima[index2]] != peakId)
+						{
+							// Different peak
+							continue;
+						}
+
+						final int v1 = image[index2];
+						if (v1 > v0)
+						{
+							pList[listLen++] = index2;
+							types[index2] |= LISTED;
+							sum += v1;
+						}
+					}
+				}
+
+				listI++;
+
+			} while (listI < listLen);
+		}
+		else
+		{
+			do
+			{
+				final int index1 = pList[listI];
+				getXYZ(index1, xyz);
+				final int x1 = xyz[0];
+				final int y1 = xyz[1];
+				final int z1 = xyz[2];
+
+				// It is more likely that the z stack will be out-of-bounds.
+				// Adopt the xy limit lookup and process z lookup separately
+
+				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+				final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+
+				for (int d = 26; d-- > 0;)
+				{
+					if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
+					{
+						final int index2 = index1 + offset[d];
+						if ((types[index2] & LISTED) != 0)
+						{
+							// Already done
+							continue;
+						}
+						if (peakIdMap[maxima[index2]] != peakId)
+						{
+							// Different peak
+							continue;
+						}
+
+						final int v1 = image[index2];
+						if (v1 > v0)
+						{
+							pList[listLen++] = index2;
+							types[index2] |= LISTED;
+							sum += v1;
+						}
+					}
+				}
+
+				listI++;
+
+			} while (listI < listLen);
+		}
+
+		result.countAboveSaddle = listI;
+		result.intensityAboveSaddle = (double) sum;
+
+		return pList;
 	}
 
 	/**

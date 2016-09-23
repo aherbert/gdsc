@@ -245,6 +245,11 @@ public interface FindFociProcessor
 	 * Save the results to memory (allows other plugins to obtain the results)
 	 */
 	public final static int OPTION_SAVE_TO_MEMORY = 64;
+	/**
+	 * The peak above the highest saddle point must be contiguous. The legacy algorithm used non-contiguous pixels above
+	 * the saddle.
+	 */
+	public final static int OPTION_CONTIGUOUS_ABOVE_SADDLE = 128;
 
 	/**
 	 * Define the peak centre using the highest pixel value of the search image (default). In the case of multiple
@@ -527,7 +532,7 @@ public interface FindFociProcessor
 	 * @return the find foci results
 	 */
 	FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
-			int maxPeaks, int sortIndex,int centreMethod,  double centreParameter);
+			int maxPeaks, int sortIndex, int centreMethod, double centreParameter);
 
 	/**
 	 * This method is a stripped-down version of the

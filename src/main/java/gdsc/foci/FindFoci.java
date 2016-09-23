@@ -1821,10 +1821,17 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 	private FindFociBaseProcessor createFFProcessor(ImagePlus imp)
 	{
+		final FindFociBaseProcessor ffp;
 		if (isOptimisedProcessor())
-			return (imp.getBitDepth() == 32) ? new FindFociOptimisedFloatProcessor()
+		{
+			ffp = (imp.getBitDepth() == 32) ? new FindFociOptimisedFloatProcessor()
 					: new FindFociOptimisedIntProcessor();
-		return (imp.getBitDepth() == 32) ? new FindFociFloatProcessor() : new FindFociIntProcessor();
+		}
+		else
+		{
+			ffp = (imp.getBitDepth() == 32) ? new FindFociFloatProcessor() : new FindFociIntProcessor();
+		}
+		return ffp;
 	}
 
 	/**

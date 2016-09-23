@@ -55,7 +55,7 @@ public class FindFociTest
 			for (int i = 0; i < backgroundMethod.length; i++)
 			{
 				FindFociResults r1 = runLegacy(imp, i);
-				FindFociResults r2 = runInt(imp, i, false);
+				FindFociResults r2 = runInt(imp, i, false, true);
 				isEqual(r1, r2, i);
 			}
 		}
@@ -66,12 +66,13 @@ public class FindFociTest
 	{
 		for (ImagePlus imp : createData())
 		{
-			for (int i = 0; i < backgroundMethod.length; i++)
-			{
-				FindFociResults r1 = runLegacy(imp, i);
-				FindFociResults r2 = runInt(imp, i, true);
-				isEqual(r1, r2, i);
-			}
+			for (boolean nonContiguous : new boolean[] { true, false })
+				for (int i = 0; i < backgroundMethod.length; i++)
+				{
+					FindFociResults r1 = runInt(imp, i, false, nonContiguous);
+					FindFociResults r2 = runInt(imp, i, true, nonContiguous);
+					isEqual(r1, r2, i);
+				}
 		}
 	}
 
@@ -80,12 +81,13 @@ public class FindFociTest
 	{
 		for (ImagePlus imp : createData())
 		{
-			for (int i = 0; i < backgroundMethod.length; i++)
-			{
-				FindFociResults r1 = runLegacy(imp, i);
-				FindFociResults r2 = runFloat(imp, i, false, false);
-				isEqual(r1, r2, i);
-			}
+			for (boolean nonContiguous : new boolean[] { true, false })
+				for (int i = 0; i < backgroundMethod.length; i++)
+				{
+					FindFociResults r1 = runInt(imp, i, false, nonContiguous);
+					FindFociResults r2 = runFloat(imp, i, false, false, nonContiguous);
+					isEqual(r1, r2, i);
+				}
 		}
 	}
 
@@ -94,12 +96,13 @@ public class FindFociTest
 	{
 		for (ImagePlus imp : createData())
 		{
-			for (int i = 0; i < backgroundMethod.length; i++)
-			{
-				FindFociResults r1 = runLegacy(imp, i);
-				FindFociResults r2 = runFloat(imp, i, true, false);
-				isEqual(r1, r2, i);
-			}
+			for (boolean nonContiguous : new boolean[] { true, false })
+				for (int i = 0; i < backgroundMethod.length; i++)
+				{
+					FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
+					FindFociResults r2 = runFloat(imp, i, true, false, nonContiguous);
+					isEqual(r1, r2, i);
+				}
 		}
 	}
 
@@ -108,14 +111,15 @@ public class FindFociTest
 	{
 		for (ImagePlus imp : createData())
 		{
-			for (int i = 0; i < backgroundMethod.length; i++)
-			{
-				if (FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortIndex[i]))
-					continue;
-				FindFociResults r1 = runLegacy(imp, i);
-				FindFociResults r2 = runFloat(imp, i, false, true);
-				isEqual(r1, r2, i, true);
-			}
+			for (boolean nonContiguous : new boolean[] { true, false })
+				for (int i = 0; i < backgroundMethod.length; i++)
+				{
+					if (FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortIndex[i]))
+						continue;
+					FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
+					FindFociResults r2 = runFloat(imp, i, false, true, nonContiguous);
+					isEqual(r1, r2, i, true);
+				}
 		}
 	}
 
@@ -124,14 +128,15 @@ public class FindFociTest
 	{
 		for (ImagePlus imp : createData())
 		{
-			for (int i = 0; i < backgroundMethod.length; i++)
-			{
-				if (FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortIndex[i]))
-					continue;
-				FindFociResults r1 = runLegacy(imp, i);
-				FindFociResults r2 = runFloat(imp, i, true, true);
-				isEqual(r1, r2, i, true);
-			}
+			for (boolean nonContiguous : new boolean[] { true, false })
+				for (int i = 0; i < backgroundMethod.length; i++)
+				{
+					if (FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortIndex[i]))
+						continue;
+					FindFociResults r1 = runFloat(imp, i, true, false, nonContiguous);
+					FindFociResults r2 = runFloat(imp, i, true, true, nonContiguous);
+					isEqual(r1, r2, i, true);
+				}
 		}
 	}
 
@@ -140,12 +145,13 @@ public class FindFociTest
 	{
 		for (ImagePlus imp : createData())
 		{
-			for (int i = 0; i < backgroundMethod.length; i++)
-			{
-				FindFociResults r1 = runLegacy(imp, i);
-				FindFociResults r2 = runIntStaged(imp, i, false);
-				isEqual(r1, r2, i);
-			}
+			for (boolean nonContiguous : new boolean[] { true, false })
+				for (int i = 0; i < backgroundMethod.length; i++)
+				{
+					FindFociResults r1 = runInt(imp, i, false, nonContiguous);
+					FindFociResults r2 = runIntStaged(imp, i, false, nonContiguous);
+					isEqual(r1, r2, i);
+				}
 		}
 	}
 
@@ -154,12 +160,13 @@ public class FindFociTest
 	{
 		for (ImagePlus imp : createData())
 		{
-			for (int i = 0; i < backgroundMethod.length; i++)
-			{
-				FindFociResults r1 = runLegacy(imp, i);
-				FindFociResults r2 = runIntStaged(imp, i, true);
-				isEqual(r1, r2, i);
-			}
+			for (boolean nonContiguous : new boolean[] { true, false })
+				for (int i = 0; i < backgroundMethod.length; i++)
+				{
+					FindFociResults r1 = runInt(imp, i, true, nonContiguous);
+					FindFociResults r2 = runIntStaged(imp, i, true, nonContiguous);
+					isEqual(r1, r2, i);
+				}
 		}
 	}
 
@@ -168,12 +175,13 @@ public class FindFociTest
 	{
 		for (ImagePlus imp : createData())
 		{
-			for (int i = 0; i < backgroundMethod.length; i++)
-			{
-				FindFociResults r1 = runLegacy(imp, i);
-				FindFociResults r2 = runFloatStaged(imp, i, false, false);
-				isEqual(r1, r2, i);
-			}
+			for (boolean nonContiguous : new boolean[] { true, false })
+				for (int i = 0; i < backgroundMethod.length; i++)
+				{
+					FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
+					FindFociResults r2 = runFloatStaged(imp, i, false, false, nonContiguous);
+					isEqual(r1, r2, i);
+				}
 		}
 	}
 
@@ -182,12 +190,13 @@ public class FindFociTest
 	{
 		for (ImagePlus imp : createData())
 		{
-			for (int i = 0; i < backgroundMethod.length; i++)
-			{
-				FindFociResults r1 = runLegacy(imp, i);
-				FindFociResults r2 = runFloatStaged(imp, i, true, false);
-				isEqual(r1, r2, i);
-			}
+			for (boolean nonContiguous : new boolean[] { true, false })
+				for (int i = 0; i < backgroundMethod.length; i++)
+				{
+					FindFociResults r1 = runFloat(imp, i, true, false, nonContiguous);
+					FindFociResults r2 = runFloatStaged(imp, i, true, false, nonContiguous);
+					isEqual(r1, r2, i);
+				}
 		}
 	}
 
@@ -196,14 +205,15 @@ public class FindFociTest
 	{
 		for (ImagePlus imp : createData())
 		{
-			for (int i = 0; i < backgroundMethod.length; i++)
-			{
-				if (FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortIndex[i]))
-					continue;
-				FindFociResults r1 = runLegacy(imp, i);
-				FindFociResults r2 = runFloatStaged(imp, i, false, true);
-				isEqual(r1, r2, i, true);
-			}
+			for (boolean nonContiguous : new boolean[] { true, false })
+				for (int i = 0; i < backgroundMethod.length; i++)
+				{
+					if (FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortIndex[i]))
+						continue;
+					FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
+					FindFociResults r2 = runFloatStaged(imp, i, false, true, nonContiguous);
+					isEqual(r1, r2, i, true);
+				}
 		}
 	}
 
@@ -212,14 +222,15 @@ public class FindFociTest
 	{
 		for (ImagePlus imp : createData())
 		{
-			for (int i = 0; i < backgroundMethod.length; i++)
-			{
-				if (FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortIndex[i]))
-					continue;
-				FindFociResults r1 = runLegacy(imp, i);
-				FindFociResults r2 = runFloatStaged(imp, i, true, true);
-				isEqual(r1, r2, i, true);
-			}
+			for (boolean nonContiguous : new boolean[] { true, false })
+				for (int i = 0; i < backgroundMethod.length; i++)
+				{
+					if (FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortIndex[i]))
+						continue;
+					FindFociResults r1 = runFloat(imp, i, true, false, nonContiguous);
+					FindFociResults r2 = runFloatStaged(imp, i, true, true, nonContiguous);
+					isEqual(r1, r2, i, true);
+				}
 		}
 	}
 
@@ -242,7 +253,8 @@ public class FindFociTest
 			{
 				for (int i : indices)
 				{
-					runInt(imp, i, false);
+					for (boolean nonContiguous : new boolean[] { true, false })
+						runInt(imp, i, false, nonContiguous);
 				}
 			}
 			time1 = stop(time1);
@@ -255,7 +267,8 @@ public class FindFociTest
 			{
 				for (int i : indices)
 				{
-					runInt(imp, i, true);
+					for (boolean nonContiguous : new boolean[] { true, false })
+						runInt(imp, i, true, nonContiguous);
 				}
 			}
 			time2 = stop(time2);
@@ -283,7 +296,8 @@ public class FindFociTest
 			{
 				for (int i : indices)
 				{
-					runFloat(imp, i, false, false);
+					for (boolean nonContiguous : new boolean[] { true, false })
+						runFloat(imp, i, false, false, nonContiguous);
 				}
 			}
 			time1 = stop(time1);
@@ -296,7 +310,8 @@ public class FindFociTest
 			{
 				for (int i : indices)
 				{
-					runFloat(imp, i, true, false);
+					for (boolean nonContiguous : new boolean[] { true, false })
+						runFloat(imp, i, true, false, nonContiguous);
 				}
 			}
 			time2 = stop(time2);
@@ -343,7 +358,7 @@ public class FindFociTest
 			{
 				for (int i : indices)
 				{
-					runInt(imp, i, true);
+					runInt(imp, i, true, true);
 				}
 			}
 			time2 = stop(time2);
@@ -383,7 +398,8 @@ public class FindFociTest
 			{
 				for (int i : indices)
 				{
-					runFloat(imp, i, true, false);
+					for (boolean nonContiguous : new boolean[] { true, false })
+						runFloat(imp, i, true, false, nonContiguous);
 				}
 			}
 			time1 = stop(time1);
@@ -396,7 +412,8 @@ public class FindFociTest
 			{
 				for (int i : indices)
 				{
-					runInt(imp, i, true);
+					for (boolean nonContiguous : new boolean[] { true, false })
+						runInt(imp, i, true, nonContiguous);
 				}
 			}
 			time2 = stop(time2);
@@ -500,24 +517,26 @@ public class FindFociTest
 		return new FindFociResults((ImagePlus) result[0], results, null);
 	}
 
-	private FindFociResults runInt(ImagePlus imp, int i, boolean optimised)
+	private FindFociResults runInt(ImagePlus imp, int i, boolean optimised, boolean nonContiguous)
 	{
 		FindFoci ff = new FindFoci();
 		ff.setOptimisedProcessor(optimised);
+		final int flags = (nonContiguous) ? options[i] : options[i] | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		return ff.findMaxima(imp, null, backgroundMethod[i], backgroundParameter[i], autoThresholdMethod[i],
 				searchMethod[i], searchParameter[i], maxPeaks[i], minSize[i], peakMethod[i], peakParameter[i],
-				outputType[i], sortIndex[i], options[i], blur[i], centreMethod[i], centreParameter[i],
+				outputType[i], sortIndex[i], flags, blur[i], centreMethod[i], centreParameter[i],
 				fractionParameter[i]);
 	}
 
-	private FindFociResults runFloat(ImagePlus imp, int i, boolean optimised, boolean negative)
+	private FindFociResults runFloat(ImagePlus imp, int i, boolean optimised, boolean negative, boolean nonContiguous)
 	{
 		imp = toFloat(imp, negative);
 		FindFoci ff = new FindFoci();
 		ff.setOptimisedProcessor(optimised);
+		final int flags = (nonContiguous) ? options[i] : options[i] | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		return ff.findMaxima(imp, null, backgroundMethod[i], backgroundParameter[i], autoThresholdMethod[i],
 				searchMethod[i], searchParameter[i], maxPeaks[i], minSize[i], peakMethod[i], peakParameter[i],
-				outputType[i], sortIndex[i], options[i], blur[i], centreMethod[i], centreParameter[i],
+				outputType[i], sortIndex[i], flags, blur[i], centreMethod[i], centreParameter[i],
 				fractionParameter[i]);
 	}
 
@@ -537,35 +556,38 @@ public class FindFociTest
 		return new ImagePlus(null, newStack);
 	}
 
-	private FindFociResults runIntStaged(ImagePlus imp, int i, boolean optimised)
+	private FindFociResults runIntStaged(ImagePlus imp, int i, boolean optimised, boolean nonContiguous)
 	{
 		FindFoci ff = new FindFoci();
 		ff.setOptimisedProcessor(optimised);
+		final int flags = (nonContiguous) ? options[i] : options[i] | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		ImagePlus imp2 = ff.blur(imp, blur[i]);
 		FindFociInitResults initResults = ff.findMaximaInit(imp, imp2, null, backgroundMethod[i],
-				autoThresholdMethod[i], options[i]);
+				autoThresholdMethod[i], flags);
 		FindFociSearchResults searchResults = ff.findMaximaSearch(initResults, backgroundMethod[i],
 				backgroundParameter[i], searchMethod[i], searchParameter[i]);
 		FindFociMergeResults mergeResults = ff.findMaximaMerge(initResults, searchResults, minSize[i], peakMethod[i],
-				peakParameter[i], options[i], blur[i]);
+				peakParameter[i], flags, blur[i]);
 		FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i],
 				sortIndex[i], centreMethod[i], centreParameter[i]);
 		return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i], autoThresholdMethod[i],
 				"FindFociTest", fractionParameter[i]);
 	}
 
-	private FindFociResults runFloatStaged(ImagePlus imp, int i, boolean optimised, boolean negative)
+	private FindFociResults runFloatStaged(ImagePlus imp, int i, boolean optimised, boolean negative,
+			boolean nonContiguous)
 	{
 		imp = toFloat(imp, negative);
 		FindFoci ff = new FindFoci();
 		ImagePlus imp2 = ff.blur(imp, blur[i]);
 		ff.setOptimisedProcessor(optimised);
+		final int flags = (nonContiguous) ? options[i] : options[i] | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		FindFociInitResults initResults = ff.findMaximaInit(imp, imp2, null, backgroundMethod[i],
-				autoThresholdMethod[i], options[i]);
+				autoThresholdMethod[i], flags);
 		FindFociSearchResults searchResults = ff.findMaximaSearch(initResults, backgroundMethod[i],
 				backgroundParameter[i], searchMethod[i], searchParameter[i]);
 		FindFociMergeResults mergeResults = ff.findMaximaMerge(initResults, searchResults, minSize[i], peakMethod[i],
-				peakParameter[i], options[i], blur[i]);
+				peakParameter[i], flags, blur[i]);
 		FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i],
 				sortIndex[i], centreMethod[i], centreParameter[i]);
 		return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i], autoThresholdMethod[i],
