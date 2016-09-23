@@ -116,7 +116,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	{
 		boolean isLogging = isLogging(outputType);
 
-		//nonContiguous = false;
+		//options |= OPTION_CONTIGUOUS_ABOVE_SADDLE;
 
 		if (isLogging)
 			log("---" + FindFoci.newLine + FindFoci.TITLE + " : " + imp.getTitle());
