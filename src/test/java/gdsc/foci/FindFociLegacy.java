@@ -3264,39 +3264,42 @@ public class FindFociLegacy
 		for (int i = 0; i < peakIdMap.length; i++)
 			peakIdMap[i] = i;
 
-		// Process all the peaks for the minimum height. Process in order of saddle height
-		sortDescResults(resultsArray, SORT_SADDLE_HEIGHT, stats);
-
-		for (int[] result : resultsArray)
+		if (peakParameter > 0)
 		{
-			final int peakId = result[RESULT_PEAK_ID];
-			final LinkedList<int[]> saddles = saddlePoints.get(peakId);
+			// Process all the peaks for the minimum height. Process in order of saddle height
+			sortDescResults(resultsArray, SORT_SADDLE_HEIGHT, stats);
 
-			// Check if this peak has been reassigned or has no neighbours
-			if (peakId != peakIdMap[peakId])
-				continue;
-
-			final int[] highestSaddle = findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
-
-			final int peakBase = (highestSaddle == null) ? round(stats[STATS_BACKGROUND]) : highestSaddle[1];
-
-			final int threshold = getPeakHeight(peakMethod, peakParameter, stats, result[RESULT_MAX_VALUE]);
-
-			if (result[RESULT_MAX_VALUE] - peakBase < threshold)
+			for (int[] result : resultsArray)
 			{
-				// This peak is not high enough, merge into the neighbour peak
-				if (highestSaddle == null)
-				{
-					removePeak(image, maxima, peakIdMap, result, peakId);
-				}
-				else
-				{
-					// Find the neighbour peak (use the map because the neighbour may have been merged)
-					final int neighbourPeakId = peakIdMap[highestSaddle[SADDLE_PEAK_ID]];
-					final int[] neighbourResult = findResult(resultsArray, neighbourPeakId);
+				final int peakId = result[RESULT_PEAK_ID];
+				final LinkedList<int[]> saddles = saddlePoints.get(peakId);
 
-					mergePeak(image, maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
-							saddlePoints.get(neighbourPeakId), highestSaddle, false);
+				// Check if this peak has been reassigned or has no neighbours
+				if (peakId != peakIdMap[peakId])
+					continue;
+
+				final int[] highestSaddle = findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
+
+				final int peakBase = (highestSaddle == null) ? round(stats[STATS_BACKGROUND]) : highestSaddle[1];
+
+				final int threshold = getPeakHeight(peakMethod, peakParameter, stats, result[RESULT_MAX_VALUE]);
+
+				if (result[RESULT_MAX_VALUE] - peakBase < threshold)
+				{
+					// This peak is not high enough, merge into the neighbour peak
+					if (highestSaddle == null)
+					{
+						removePeak(image, maxima, peakIdMap, result, peakId);
+					}
+					else
+					{
+						// Find the neighbour peak (use the map because the neighbour may have been merged)
+						final int neighbourPeakId = peakIdMap[highestSaddle[SADDLE_PEAK_ID]];
+						final int[] neighbourResult = findResult(resultsArray, neighbourPeakId);
+
+						mergePeak(image, maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
+								saddlePoints.get(neighbourPeakId), highestSaddle, false);
+					}
 				}
 			}
 		}
@@ -3306,36 +3309,39 @@ public class FindFociLegacy
 		if (Utils.isInterrupted())
 			return;
 
-		// Process all the peaks for the minimum size. Process in order of smallest first
-		sortAscResults(resultsArray, SORT_COUNT, stats);
-
-		for (int[] result : resultsArray)
+		if (minSize > 1)
 		{
-			final int peakId = result[RESULT_PEAK_ID];
+			// Process all the peaks for the minimum size. Process in order of smallest first
+			sortAscResults(resultsArray, SORT_COUNT, stats);
 
-			// Check if this peak has been reassigned
-			if (peakId != peakIdMap[peakId])
-				continue;
-
-			if (result[RESULT_COUNT] < minSize)
+			for (int[] result : resultsArray)
 			{
-				// This peak is not large enough, merge into the neighbour peak
+				final int peakId = result[RESULT_PEAK_ID];
 
-				final LinkedList<int[]> saddles = saddlePoints.get(peakId);
-				final int[] highestSaddle = findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
+				// Check if this peak has been reassigned
+				if (peakId != peakIdMap[peakId])
+					continue;
 
-				if (highestSaddle == null)
+				if (result[RESULT_COUNT] < minSize)
 				{
-					removePeak(image, maxima, peakIdMap, result, peakId);
-				}
-				else
-				{
-					// Find the neighbour peak (use the map because the neighbour may have been merged)
-					final int neighbourPeakId = peakIdMap[highestSaddle[SADDLE_PEAK_ID]];
-					final int[] neighbourResult = findResult(resultsArray, neighbourPeakId);
+					// This peak is not large enough, merge into the neighbour peak
 
-					mergePeak(image, maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
-							saddlePoints.get(neighbourPeakId), highestSaddle, false);
+					final LinkedList<int[]> saddles = saddlePoints.get(peakId);
+					final int[] highestSaddle = findHighestNeighbourSaddle(peakIdMap, saddles, peakId);
+
+					if (highestSaddle == null)
+					{
+						removePeak(image, maxima, peakIdMap, result, peakId);
+					}
+					else
+					{
+						// Find the neighbour peak (use the map because the neighbour may have been merged)
+						final int neighbourPeakId = peakIdMap[highestSaddle[SADDLE_PEAK_ID]];
+						final int[] neighbourResult = findResult(resultsArray, neighbourPeakId);
+
+						mergePeak(image, maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
+								saddlePoints.get(neighbourPeakId), highestSaddle, false);
+					}
 				}
 			}
 		}
@@ -3346,7 +3352,7 @@ public class FindFociLegacy
 			return;
 
 		// This can be intensive due to the requirement to recount the peak size above the saddle, so it is optional
-		if (restrictAboveSaddle)
+		if (minSize > 1 && restrictAboveSaddle)
 		{
 			updateSaddleDetails(resultsArray, peakIdMap);
 			reassignMaxima(maxima, peakIdMap);
@@ -3533,7 +3539,7 @@ public class FindFociLegacy
 
 	private class SaddleComparator implements Comparator<int[]>
 	{
-		public int compare(int[]  o1, int[] o2)
+		public int compare(int[] o1, int[] o2)
 		{
 			int result = o1[SADDLE_PEAK_ID] - o2[SADDLE_PEAK_ID];
 			if (result != 0)
@@ -3561,7 +3567,7 @@ public class FindFociLegacy
 	}
 
 	private DefaultSaddleComparator defaultSaddleComparator = new DefaultSaddleComparator();
-	
+
 	/**
 	 * Assigns the peak to the neighbour. Flags the peak as merged by setting the intensity to zero.
 	 * If the highest saddle is lowered then recomputes the size/intensity above the saddle.

@@ -650,6 +650,39 @@ public class FindFociOptimiser
 		return top;
 	}
 
+	private class StopWatch
+	{
+		long base;
+		long time;
+
+		StopWatch()
+		{
+			this(0);
+		}
+		
+		StopWatch create()
+		{
+			return new StopWatch(time());
+		}
+		
+		private StopWatch(long base)
+		{
+			time = System.nanoTime();
+			this.base = base;
+		}
+
+		long stop()
+		{
+			time = System.nanoTime() - time;
+			return time();
+		}
+		
+		long time()
+		{
+			return time + base;
+		}
+	}
+
 	/**
 	 * Enumerate the parameters for FindFoci on the provided image
 	 * 
@@ -697,10 +730,10 @@ public class FindFociOptimiser
 				for (String statsMode : myStatsModes)
 				{
 					int statisticsMode = convertStatisticsMode(statsMode);
-					long methodStart = System.nanoTime();
+					StopWatch sw1 = new StopWatch();
 					FindFociInitResults initResults = ff.findMaximaInit(imp, imp2, mask, backgroundMethodArray[b],
 							thresholdMethod, statisticsMode);
-					long findMaximaInitTime = System.nanoTime() - methodStart;
+					sw1.stop();
 					if (initResults == null)
 						return null;
 					//Object[] clonedInitArray = null;
@@ -720,12 +753,12 @@ public class FindFociOptimiser
 								double thisSearchParameter = (searchMethodHasParameter(searchMethodArray[s]))
 										? searchParameter : 0;
 
-								searchInitArray = ff.cloneForSearch(initResults, searchInitArray);
-								methodStart = System.nanoTime();
+								searchInitArray = ff.clone(initResults, searchInitArray);
+								StopWatch sw2 = sw1.create();
 								FindFociSearchResults searchArray = ff.findMaximaSearch(searchInitArray,
 										backgroundMethodArray[b], thisBackgroundParameter, searchMethodArray[s],
 										thisSearchParameter);
-								long findMaximaSearchTime = findMaximaInitTime + System.nanoTime() - methodStart;
+								sw2.stop();
 								if (searchArray == null)
 									return null;
 								FindFociInitResults mergeInitArray = null;
@@ -743,33 +776,44 @@ public class FindFociOptimiser
 											backgroundLevel));
 								}
 
-								for (int minSize = myMinSizeMin; minSize <= myMinSizeMax; minSize += myMinSizeInterval)
-									for (double peakParameter = myPeakParameterMin; peakParameter <= myPeakParameterMax; peakParameter += myPeakParameterInterval)
+								for (double peakParameter = myPeakParameterMin; peakParameter <= myPeakParameterMax; peakParameter += myPeakParameterInterval)
+								{
+									StopWatch sw3 = sw2.create();
+									FindFociMergeTempResults mergePeakResults = ff.findMaximaMergePeak(searchInitArray,
+											searchArray, myPeakMethod, peakParameter);
+									sw3.stop();
+
+									for (int minSize = myMinSizeMin; minSize <= myMinSizeMax; minSize += myMinSizeInterval)
+									{
+										StopWatch sw4 = sw3.create();
+										FindFociMergeTempResults mergeSizeResults = ff
+												.findMaximaMergeSize(searchInitArray, mergePeakResults, minSize);
+										sw4.stop();
+
 										for (int options : optionsArray)
 										{
+											// TODO - add option for FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE
+											
+											mergeInitArray = ff.clone(searchInitArray, mergeInitArray);
+											StopWatch sw5 = sw4.create();
+											FindFociMergeResults mergeArray = ff.findMaximaMergeFinal(mergeInitArray,
+													mergeSizeResults, minSize, options, blur);
+											sw5.stop();
+											if (mergeArray == null)
+												return null;
+
 											options += statisticsMode;
 											for (int sortMethod : sortMethodArray)
 											{
-												mergeInitArray = ff.clone(searchInitArray, mergeInitArray);
-												methodStart = System.nanoTime();
-												FindFociMergeResults mergeArray = ff.findMaximaMerge(mergeInitArray,
-														searchArray, minSize, myPeakMethod, peakParameter, options,
-														blur);
-												long findMaximaMergeTime = findMaximaSearchTime + System.nanoTime() -
-														methodStart;
-												if (mergeArray == null)
-													return null;
-
 												for (int c = 0; c < centreMethodArray.length; c++)
 												{
 													for (double centreParameter = myCentreParameterMinArray[c]; centreParameter <= myCentreParameterMaxArray[c]; centreParameter += myCentreParameterIntervalArray[c])
 													{
-														methodStart = System.nanoTime();
+														StopWatch sw6 = sw5.create();
 														FindFociResults peakResults = ff.findMaximaResults(
 																mergeInitArray, mergeArray, myMaxPeaks, sortMethod,
 																centreMethodArray[c], centreParameter);
-														long time = findMaximaMergeTime + System.nanoTime() -
-																methodStart;
+														final long time = sw6.stop();
 
 														counter.increment();
 
@@ -792,6 +836,8 @@ public class FindFociOptimiser
 												}
 											}
 										}
+									}
+								}
 							}
 					}
 				}

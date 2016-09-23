@@ -19,6 +19,7 @@ import gdsc.foci.FindFoci;
 import gdsc.foci.FindFociBaseProcessor;
 import gdsc.foci.FindFociInitResults;
 import gdsc.foci.FindFociMergeResults;
+import gdsc.foci.FindFociMergeTempResults;
 import gdsc.foci.FindFociPrelimResults;
 import gdsc.foci.FindFociResult;
 import gdsc.foci.FindFociResults;
@@ -52,6 +53,8 @@ public class FindFociRunner extends Thread
 	FindFociInitResults mergeInitResults;
 	FindFociInitResults resultsInitResults;
 	FindFociInitResults maskInitResults;
+	FindFociMergeTempResults mergePeakResults;
+	FindFociMergeTempResults mergeSizeResults;
 	FindFociMergeResults mergeResults;
 	FindFociPrelimResults prelimResults;
 	FindFociResults results;
@@ -294,7 +297,7 @@ public class FindFociRunner extends Thread
 		}
 		if (state.ordinal() <= FindFociState.SEARCH.ordinal())
 		{
-			searchInitResults = ff.cloneForSearch(initResults, searchInitResults);
+			searchInitResults = ff.clone(initResults, searchInitResults);
 			searchArray = ff.findMaximaSearch(searchInitResults, backgroundMethod, backgroundParameter, searchMethod,
 					searchParameter);
 			if (searchArray == null)
@@ -306,11 +309,34 @@ public class FindFociRunner extends Thread
 
 			notify(MessageType.BACKGROUND_LEVEL, searchInitResults.stats.background);
 		}
-		if (state.ordinal() <= FindFociState.MERGE.ordinal())
+		
+		
+		if (state.ordinal() <= FindFociState.MERGE_HEIGHT.ordinal())
+		{
+			// No clone as the maxima and types are not changed
+			mergePeakResults = ff.findMaximaMergePeak(searchInitResults, searchArray, peakMethod, peakParameter);
+			if (mergePeakResults == null)
+			{
+				IJ.showStatus(FindFoci.TITLE + " failed");
+				notify(MessageType.FAILED);
+				return;
+			}
+		}
+		if (state.ordinal() <= FindFociState.MERGE_SIZE.ordinal())
+		{
+			// No clone as the maxima and types are not changed
+			mergeSizeResults = ff.findMaximaMergeSize(searchInitResults, mergePeakResults, minSize);
+			if (mergeSizeResults == null)
+			{
+				IJ.showStatus(FindFoci.TITLE + " failed");
+				notify(MessageType.FAILED);
+				return;
+			}
+		}
+		if (state.ordinal() <= FindFociState.MERGE_SADDLE.ordinal())
 		{
 			mergeInitResults = ff.clone(searchInitResults, mergeInitResults);
-			mergeResults = ff.findMaximaMerge(mergeInitResults, searchArray, minSize, peakMethod, peakParameter, options,
-					gaussianBlur);
+			mergeResults = ff.findMaximaMergeFinal(mergeInitResults, mergeSizeResults, minSize, options, gaussianBlur);
 			if (mergeResults == null)
 			{
 				IJ.showStatus(FindFoci.TITLE + " failed");
@@ -392,12 +418,21 @@ public class FindFociRunner extends Thread
 			return FindFociState.SEARCH;
 		}
 
-		if (notEqual(model.getMinSize(), previousModel.getMinSize()) ||
-				notEqual(model.isMinimumAboveSaddle(), previousModel.isMinimumAboveSaddle()) ||
-				notEqual(model.getPeakMethod(), previousModel.getPeakMethod()) ||
+		if (notEqual(model.getPeakMethod(), previousModel.getPeakMethod()) ||
 				notEqual(model.getPeakParameter(), previousModel.getPeakParameter()))
 		{
-			return FindFociState.MERGE;
+			return FindFociState.MERGE_HEIGHT;
+		}
+
+		if (notEqual(model.getMinSize(), previousModel.getMinSize()))
+		{
+			return FindFociState.MERGE_SIZE;
+		}
+
+		if (notEqual(model.isMinimumAboveSaddle(), previousModel.isMinimumAboveSaddle()) ||
+				notEqual(model.isRemoveEdgeMaxima(), previousModel.isRemoveEdgeMaxima()))
+		{
+			return FindFociState.MERGE_SADDLE;
 		}
 
 		if (notEqual(model.getSortMethod(), previousModel.getSortMethod()) ||

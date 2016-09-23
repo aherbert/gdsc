@@ -519,66 +519,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see gdsc.foci.FindFociProcessor#cloneForSearch(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociInitResults)
-	 */
-	public FindFociInitResults cloneForSearch(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
-	{
-		Object image = initResults.image;
-		byte[] types = initResults.types;
-		int[] maxima = initResults.maxima;
-		Histogram histogram = initResults.histogram;
-		FindFociStatistics stats = initResults.stats;
-		Object originalImage = initResults.originalImage;
-		ImagePlus originalImp = initResults.originalImp;
-
-		byte[] types2 = null;
-		int[] maxima2 = null;
-
-		// These are not destructively modified
-		Histogram histogram2 = histogram; // histogram.clone();
-		FindFociStatistics stats2 = stats; // stats.clone();
-
-		if (clonedInitResults == null)
-		{
-			types2 = new byte[types.length];
-			maxima2 = new int[maxima.length];
-		}
-		else
-		{
-			// Re-use arrays
-			types2 = clonedInitResults.types;
-			maxima2 = clonedInitResults.maxima;
-
-			// Maxima should be all zeros
-			final short zero = 0;
-			Arrays.fill(maxima2, zero);
-		}
-
-		// Copy the arrays that are destructively modified 
-		System.arraycopy(types, 0, types2, 0, types.length);
-
-		// Note: Image is unchanged so this is not copied
-
-		if (clonedInitResults == null)
-		{
-			return new FindFociInitResults(image, types2, maxima2, histogram2, stats2, originalImage, originalImp);
-		}
-
-		clonedInitResults.image = image;
-		clonedInitResults.types = types2;
-		clonedInitResults.maxima = maxima2;
-		clonedInitResults.histogram = histogram2;
-		clonedInitResults.stats = stats2;
-		clonedInitResults.originalImage = originalImage;
-		clonedInitResults.originalImp = originalImp;
-
-		return clonedInitResults;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gdsc.foci.FindFociProcessor#clone(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociInitResults)
+	 * @see gdsc.foci.FindFociProcessor#clone(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociInitResults, boolean,
+	 * boolean)
 	 */
 	public FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
 	{
@@ -609,7 +551,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			maxima2 = clonedInitResults.maxima;
 		}
 
-		// Copy the arrays that are destructively modified 
+		// Copy the arrays that are destructively modified
 		System.arraycopy(types, 0, types2, 0, types.length);
 		System.arraycopy(maxima, 0, maxima2, 0, maxima.length);
 
@@ -675,41 +617,110 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaMerge(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociSearchResults,
-	 * int, int, double, int, double)
+	 * @see gdsc.foci.FindFociProcessor#findMaximaMergePeak(gdsc.foci.FindFociInitResults,
+	 * gdsc.foci.FindFociSearchResults, int, double)
 	 */
-	public FindFociMergeResults findMaximaMerge(FindFociInitResults initResults, FindFociSearchResults searchResults,
-			int minSize, int peakMethod, double peakParameter, int options, double blur)
+	public FindFociMergeTempResults findMaximaMergePeak(FindFociInitResults initResults,
+			FindFociSearchResults searchResults, int peakMethod, double peakParameter)
 	{
-		boolean restrictAboveSaddle = (options & OPTION_MINIMUM_ABOVE_SADDLE) == OPTION_MINIMUM_ABOVE_SADDLE;
-		final boolean nonContiguous = (options & OPTION_CONTIGUOUS_ABOVE_SADDLE) != OPTION_CONTIGUOUS_ABOVE_SADDLE;
+		final FindFociResult[] resultsArray = clone(searchResults.resultsArray);
+		final FindFociSaddleList[] saddlePoints = clone(searchResults.saddlePoints);
 
-		Object image = initResults.image;
-		int[] maxima = initResults.maxima; // Contains the maxima Id assigned for each point
-		byte[] types = initResults.types;
-		FindFociStatistics stats = initResults.stats;
-		Object originalImage = initResults.originalImage;
+		// Combine maxima below the minimum peak criteria to adjacent peaks (or eliminate if no neighbours)
+		return mergeUsingHeight(resultsArray, initResults.image, initResults.maxima, initResults.types, peakMethod,
+				peakParameter, initResults.stats, saddlePoints);
+	}
 
-		final FindFociResult[] originalResultsArray = searchResults.resultsArray;
-		final FindFociSaddleList[] originalSaddlePoints = searchResults.saddlePoints;
-
-		// Clone the results
-		FindFociResult[] resultsArray = new FindFociResult[originalResultsArray.length];
-		for (int i = 0; i < originalResultsArray.length; i++)
-			resultsArray[i] = originalResultsArray[i].clone();
-
-		// Clone the saddle points
+	private FindFociSaddleList[] clone(final FindFociSaddleList[] originalSaddlePoints)
+	{
 		final FindFociSaddleList[] saddlePoints = new FindFociSaddleList[originalSaddlePoints.length];
 		// Ignore first position
 		for (int i = 1; i < originalSaddlePoints.length; i++)
 			saddlePoints[i] = originalSaddlePoints[i].clone();
+		return saddlePoints;
+	}
 
-		// Combine maxima below the minimum peak criteria to adjacent peaks (or eliminate if no neighbours)
+	private FindFociResult[] clone(final FindFociResult[] originalResultsArray)
+	{
+		FindFociResult[] resultsArray = new FindFociResult[originalResultsArray.length];
+		for (int i = 0; i < originalResultsArray.length; i++)
+			resultsArray[i] = originalResultsArray[i].clone();
+		return resultsArray;
+		//return originalResultsArray;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#findMaximaMergeSize(gdsc.foci.FindFociInitResults,
+	 * gdsc.foci.FindFociMergeTempResults, int)
+	 */
+	public FindFociMergeTempResults findMaximaMergeSize(FindFociInitResults initResults,
+			FindFociMergeTempResults mergeResults, int minSize)
+	{
+		// Clone input destructively modified
+		final FindFociResult[] resultsArray = clone(mergeResults.resultsArray);
+		final FindFociSaddleList[] saddlePoints = clone(mergeResults.saddlePoints);
+		final int[] peakIdMap = mergeResults.peakIdMap.clone();
+		final FindFociResult[] resultList = updateResultList(resultsArray);
+
+		mergeResults = new FindFociMergeTempResults(resultsArray, saddlePoints, peakIdMap, resultList);
+		if (minSize > 1)
+			mergeUsingSize(mergeResults, initResults.maxima, minSize);
+		return mergeResults;
+	}
+
+	/**
+	 * The results list is a sorted reference to the all the results in the results array. When that is cloned the
+	 * resultsList has to be updated with new refeneces.
+	 * 
+	 * @param resultsArray
+	 * @return The new result list
+	 */
+	private FindFociResult[] updateResultList(FindFociResult[] resultsArray)
+	{
+		FindFociResult[] list = new FindFociResult[resultsArray.length + 1];
+		for (int i = 0; i < resultsArray.length; i++)
+			list[resultsArray[i].id] = resultsArray[i];
+		return list;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#findMaximaMergeFinal(gdsc.foci.FindFociInitResults,
+	 * gdsc.foci.FindFociMergeTempResults, int, int, double)
+	 */
+	public FindFociMergeResults findMaximaMergeFinal(FindFociInitResults initResults,
+			FindFociMergeTempResults mergeResults, int minSize, int options, double blur)
+	{
+		int[] maxima = initResults.maxima; // Contains the maxima Id assigned for each point
+		FindFociStatistics stats = initResults.stats;
+		Object originalImage = initResults.originalImage;
+
+		final boolean restrictAboveSaddle = (options & OPTION_MINIMUM_ABOVE_SADDLE) == OPTION_MINIMUM_ABOVE_SADDLE;
+
+		FindFociResult[] resultsArray = clone(mergeResults.resultsArray);
+		int[] peakIdMap = mergeResults.peakIdMap;
+
+		if (minSize > 1 && restrictAboveSaddle)
+		{
+			final boolean nonContiguous = (options & OPTION_CONTIGUOUS_ABOVE_SADDLE) != OPTION_CONTIGUOUS_ABOVE_SADDLE;
+
+			// Clone input destructively modified
+			final FindFociSaddleList[] saddlePoints = clone(mergeResults.saddlePoints);
+			peakIdMap = peakIdMap.clone();
+			final FindFociResult[] resultList = updateResultList(resultsArray);
+
+			mergeResults = new FindFociMergeTempResults(resultsArray, saddlePoints, peakIdMap, resultList);
+			mergeAboveSaddle(mergeResults, initResults.image, maxima, initResults.types, minSize, nonContiguous);
+		}
+
+		resultsArray = clone(mergeResults.resultsArray);
+
 		int originalNumberOfPeaks = resultsArray.length;
-		resultsArray = mergeSubPeaks(resultsArray, image, maxima, types, minSize, peakMethod, peakParameter, stats,
-				saddlePoints, false, restrictAboveSaddle, nonContiguous);
-		if (resultsArray == null)
-			return null;
+
+		resultsArray = mergeFinal(resultsArray, peakIdMap, maxima);
 
 		if ((options & OPTION_REMOVE_EDGE_MAXIMA) != 0)
 			resultsArray = removeEdgeMaxima(resultsArray, maxima, stats, false);
@@ -741,10 +752,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		final FindFociResult[] originalResultsArray = mergeResults.resultsArray;
 		int originalNumberOfPeaks = mergeResults.originalNumberOfPeaks;
 
-		// Clone the results
-		FindFociResult[] resultsArray = new FindFociResult[originalResultsArray.length];
-		for (int i = 0; i < originalResultsArray.length; i++)
-			resultsArray[i] = originalResultsArray[i].clone();
+		FindFociResult[] resultsArray = clone(originalResultsArray);
 
 		// If no blur was applied, then the centre using the original image will be the same as using the search
 		if (centreMethod == CENTRE_MAX_VALUE_ORIGINAL)
@@ -786,10 +794,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		final FindFociResult[] originalResultsArray = mergeResults.resultsArray;
 		int originalNumberOfPeaks = mergeResults.originalNumberOfPeaks;
 
-		// Clone the results
-		FindFociResult[] resultsArray = new FindFociResult[originalResultsArray.length];
-		for (int i = 0; i < originalResultsArray.length; i++)
-			resultsArray[i] = originalResultsArray[i].clone();
+		FindFociResult[] resultsArray = clone(originalResultsArray);
 
 		// If no blur was applied, then the centre using the original image will be the same as using the search
 		if (centreMethod == CENTRE_MAX_VALUE_ORIGINAL)
@@ -829,10 +834,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		final FindFociResult[] originalResultsArray = prelimResults.results;
 		int originalNumberOfPeaks = mergeResults.originalNumberOfPeaks;
 
-		// Clone the results
-		FindFociResult[] resultsArray = new FindFociResult[originalResultsArray.length];
-		for (int i = 0; i < originalResultsArray.length; i++)
-			resultsArray[i] = originalResultsArray[i].clone();
+		FindFociResult[] resultsArray = clone(originalResultsArray);
 
 		int nMaxima = resultsArray.length;
 
@@ -4362,6 +4364,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			} while (listI < listLen);
 		}
 
+		for (int i = listLen; i-- > 0;)
+		{
+			types[pList[i]] &= ~LISTED; // reset attributes no longer needed
+		}
+
 		result.countAboveSaddle = listI;
 		result.intensityAboveSaddle = sum;
 
@@ -4537,74 +4544,124 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		setPixels(pixels);
 		setNoSaddleValue(stats);
 
+		final FindFociMergeTempResults mergeResults = mergeUsingHeight(resultsArray, pixels, maxima, types, peakMethod,
+				peakParameter, stats, saddlePoints);
+
+		if (isLogging)
+			timingSplit("Height filter : Number of peaks = " + countPeaks(mergeResults.peakIdMap));
+		if (Utils.isInterrupted())
+			return null;
+
+		if (minSize > 1)
+		{
+			mergeUsingSize(mergeResults, maxima, minSize);
+		}
+
+		if (isLogging)
+			timingSplit("Size filter : Number of peaks = " + countPeaks(mergeResults.peakIdMap));
+		if (Utils.isInterrupted())
+			return null;
+
+		// This can be intensive due to the requirement to recount the peak size above the saddle, so it is optional
+		if (minSize > 1 && restrictAboveSaddle)
+		{
+			mergeAboveSaddle(mergeResults, pixels, maxima, types, minSize, nonContiguous);
+
+			if (isLogging)
+				timingSplit("Size above saddle filter : Number of peaks = " + countPeaks(mergeResults.peakIdMap));
+			if (Utils.isInterrupted())
+				return null;
+
+			// TODO - Add an intensity above saddle filter.
+			// All code is in place so this should be a copy of the code above.
+			// However what should the intensity above the saddle be relative to? 
+			// - It could be an absolute value. This is image specific.
+			// - It could be relative to the total peak intensity.
+		}
+
+		return mergeFinal(resultsArray, mergeResults.peakIdMap, maxima);
+	}
+
+	/**
+	 * Merge sub-peaks into their highest neighbour peak using the highest saddle point based on a min height criteria
+	 */
+	private FindFociMergeTempResults mergeUsingHeight(FindFociResult[] resultsArray, Object pixels, int[] maxima,
+			byte[] types, int peakMethod, double peakParameter, FindFociStatistics stats,
+			FindFociSaddleList[] saddlePoints)
+	{
+		setPixels(pixels);
+		setNoSaddleValue(stats);
+
 		// Create an array containing the mapping between the original peak Id and the current Id that the peak has been
 		// mapped to.
 		final int[] peakIdMap = new int[resultsArray.length + 1];
+
+		// Used for fast look-up of peaks when the order has been changed
 		final FindFociResult[] resultList = new FindFociResult[peakIdMap.length];
-		resultList[0] = new FindFociResult(); // Empty first record
 		for (int i = 1; i < peakIdMap.length; i++)
 		{
 			peakIdMap[i] = i;
 			resultList[i] = resultsArray[i - 1];
 		}
-		// Sort by Id for fast look-up
-		Arrays.sort(resultList, new Comparator<FindFociResult>()
+
+		if (peakParameter > 0)
 		{
-			public int compare(FindFociResult o1, FindFociResult o2)
+			// Process all the peaks for the minimum height. Process in order of saddle height
+			sortDescResults(resultsArray, SORT_SADDLE_HEIGHT, stats);
+
+			for (int i = 0; i < resultsArray.length; i++)
 			{
-				return o1.id - o2.id;
-			}
-		});
+				final FindFociResult result = resultsArray[i];
+				final int peakId = result.id;
 
-		// Process all the peaks for the minimum height. Process in order of saddle height
-		sortDescResults(resultsArray, SORT_SADDLE_HEIGHT, stats);
+				// Check if this peak has been reassigned or has no neighbours
+				if (peakId != peakIdMap[peakId])
+					continue;
 
-		for (int i = 0; i < resultsArray.length; i++)
-		{
-			final FindFociResult result = resultsArray[i];
-			final int peakId = result.id;
+				final FindFociSaddleList saddles = saddlePoints[peakId];
+				consolidateSaddles(result, saddles, peakIdMap);
 
-			// Check if this peak has been reassigned or has no neighbours
-			if (peakId != peakIdMap[peakId])
-				continue;
+				final FindFociSaddle highestSaddle = (saddles.size == 0) ? null : saddles.list[0]; // findHighestSaddle(saddles);
 
-			final FindFociSaddleList saddles = saddlePoints[peakId];
-			consolidateSaddles(result, saddles, peakIdMap);
+				final float peakBase = (highestSaddle == null) ? stats.background : highestSaddle.value;
 
-			final FindFociSaddle highestSaddle = (saddles.size == 0) ? null : saddles.list[0]; // findHighestSaddle(saddles);
+				final double threshold = getPeakHeight(peakMethod, peakParameter, stats, result.maxValue);
 
-			final float peakBase = (highestSaddle == null) ? stats.background : highestSaddle.value;
-
-			final double threshold = getPeakHeight(peakMethod, peakParameter, stats, result.maxValue);
-
-			if (result.maxValue - peakBase < threshold)
-			{
-				// This peak is not high enough, merge into the neighbour peak
-				if (highestSaddle == null)
+				if (result.maxValue - peakBase < threshold)
 				{
-					removePeak(maxima, peakIdMap, result, saddles, peakId);
-				}
-				else
-				{
-					// Find the neighbour peak (use the map because the neighbour may have been merged)
-					final int neighbourPeakId = highestSaddle.id;
-					final FindFociResult neighbourResult = resultList[neighbourPeakId]; //findResult(resultsArray, neighbourPeakId);
+					// This peak is not high enough, merge into the neighbour peak
+					if (highestSaddle == null)
+					{
+						removePeak(maxima, peakIdMap, result, saddles, peakId);
+					}
+					else
+					{
+						// Find the neighbour peak (use the map because the neighbour may have been merged)
+						final int neighbourPeakId = highestSaddle.id;
+						final FindFociResult neighbourResult = resultList[neighbourPeakId]; //findResult(resultsArray, neighbourPeakId);
 
-					mergePeak(maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
-							saddlePoints[neighbourPeakId], highestSaddle);
+						mergePeak(maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
+								saddlePoints[neighbourPeakId], highestSaddle);
+					}
 				}
 			}
 		}
 
-		if (isLogging)
-			timingSplit("Height filter : Number of peaks = " + countPeaks(peakIdMap));
-		if (Utils.isInterrupted())
-			return null;
+		return new FindFociMergeTempResults(resultsArray, saddlePoints, peakIdMap, resultList);
+	}
 
-		report();
+	/**
+	 * Merge sub-peaks into their highest neighbour peak using the highest saddle point based on a min size criteria
+	 */
+	private void mergeUsingSize(FindFociMergeTempResults mergeResult, int[] maxima, int minSize)
+	{
+		final FindFociResult[] resultsArray = mergeResult.resultsArray;
+		final FindFociSaddleList[] saddlePoints = mergeResult.saddlePoints;
+		final int[] peakIdMap = mergeResult.peakIdMap;
+		final FindFociResult[] resultList = mergeResult.resultList;
 
 		// Process all the peaks for the minimum size. Process in order of smallest first
-		sortAscResults(resultsArray, SORT_COUNT, stats);
+		sortAscResults(resultsArray, SORT_COUNT, null);
 
 		for (int i = 0; i < resultsArray.length; i++)
 		{
@@ -4637,92 +4694,81 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 				}
 			}
 		}
+	}
 
-		if (isLogging)
-			timingSplit("Size filter : Number of peaks = " + countPeaks(peakIdMap));
-		if (Utils.isInterrupted())
-			return null;
+	/**
+	 * Merge sub-peaks into their highest neighbour peak using the highest saddle point
+	 */
+	private void mergeAboveSaddle(FindFociMergeTempResults mergeResult, Object pixels, int[] maxima, byte[] types,
+			int minSize, boolean nonContiguous)
+	{
+		final FindFociResult[] resultsArray = mergeResult.resultsArray;
+		final FindFociSaddleList[] saddlePoints = mergeResult.saddlePoints;
+		final int[] peakIdMap = mergeResult.peakIdMap;
+		final FindFociResult[] resultList = mergeResult.resultList;
 
-		report();
+		updateSaddleDetails(resultsArray, peakIdMap);
+		reassignMaxima(maxima, peakIdMap);
+		int[] pList = null;
 
-		// This can be intensive due to the requirement to recount the peak size above the saddle, so it is optional
-		if (restrictAboveSaddle)
+		if (nonContiguous)
 		{
-			updateSaddleDetails(resultsArray, peakIdMap);
-			reassignMaxima(maxima, peakIdMap);
-			int[] pList = null;
-
-			if (nonContiguous)
-			{
-				// Note: In the legacy code we find the number of pixels above the highest saddle value, irrespective of 
-				// whether the pixels are contiguous. This is wrong and the height above the saddle should refer to 
-				// the mass of the contiguous pixels above the saddle.
-				analysePeaksWithBounds(resultsArray, pixels, maxima);
-			}
-			else
-			{
-				pList = analyseContiguousPeaks(resultsArray, pixels, maxima, types);
-			}
-
-			// Process all the peaks for the minimum size above the saddle points. Process in order of smallest first
-			sortAscResults(resultsArray, SORT_COUNT_ABOVE_SADDLE, stats);
-
-			for (int i = 0; i < resultsArray.length; i++)
-			{
-				final FindFociResult result = resultsArray[i];
-				final int peakId = result.id;
-
-				// Check if this peak has been reassigned
-				if (peakId != peakIdMap[peakId])
-					continue;
-
-				if (result.countAboveSaddle < minSize)
-				{
-					// This peak is not large enough, merge into the neighbour peak
-
-					final FindFociSaddleList saddles = saddlePoints[peakId];
-					consolidateSaddles(result, saddles, peakIdMap);
-					if (saddles.size == 0)
-					{
-						// TODO - This should not occur... ? What is the count above the saddle?
-
-						// No neighbour so just remove
-						removePeak(maxima, peakIdMap, result, saddles, peakId);
-					}
-					else
-					{
-						final FindFociSaddle highestSaddle = saddles.list[0]; // findHighestSaddle(saddles);
-
-						// Find the neighbour peak (use the map because the neighbour may have been merged)
-						final int neighbourPeakId = highestSaddle.id;
-						final FindFociResult neighbourResult = resultList[neighbourPeakId]; //findResult(resultsArray, neighbourPeakId);
-
-						// Note: Ensure the peak counts above the saddle are updated.
-						mergePeak(maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
-								saddlePoints[neighbourPeakId], highestSaddle, true, nonContiguous, types, pList);
-
-						// Check for interruption after each merge
-						if (Utils.isInterrupted())
-							return null;
-					}
-				}
-			}
-
-			//System.out.printf("Analysis above saddle: sub=%.2f, full=%.2f\n", (double) analysisSub / analysis,
-			//		(double) analysisFull / analysis);
-
-			if (isLogging)
-				timingSplit("Size above saddle filter : Number of peaks = " + countPeaks(peakIdMap));
-
-			report();
-
-			// TODO - Add an intensity above saddle filter.
-			// All code is in place so this should be a copy of the code above.
-			// However what should the intensity above the saddle be relative to? 
-			// - It could be an absolute value. This is image specific.
-			// - It could be relative to the total peak intensity.
+			// Note: In the legacy code we find the number of pixels above the highest saddle value, irrespective of 
+			// whether the pixels are contiguous. This is wrong and the height above the saddle should refer to 
+			// the mass of the contiguous pixels above the saddle.
+			analysePeaksWithBounds(resultsArray, pixels, maxima);
+		}
+		else
+		{
+			pList = analyseContiguousPeaks(resultsArray, pixels, maxima, types);
 		}
 
+		// Process all the peaks for the minimum size above the saddle points. Process in order of smallest first
+		sortAscResults(resultsArray, SORT_COUNT_ABOVE_SADDLE, null);
+
+		for (int i = 0; i < resultsArray.length; i++)
+		{
+			final FindFociResult result = resultsArray[i];
+			final int peakId = result.id;
+
+			// Check if this peak has been reassigned
+			if (peakId != peakIdMap[peakId])
+				continue;
+
+			if (result.countAboveSaddle < minSize)
+			{
+				// This peak is not large enough, merge into the neighbour peak
+
+				final FindFociSaddleList saddles = saddlePoints[peakId];
+				consolidateSaddles(result, saddles, peakIdMap);
+				if (saddles.size == 0)
+				{
+					// TODO - This should not occur... ? What is the count above the saddle?
+
+					// No neighbour so just remove
+					removePeak(maxima, peakIdMap, result, saddles, peakId);
+				}
+				else
+				{
+					final FindFociSaddle highestSaddle = saddles.list[0]; // findHighestSaddle(saddles);
+
+					// Find the neighbour peak (use the map because the neighbour may have been merged)
+					final int neighbourPeakId = highestSaddle.id;
+					final FindFociResult neighbourResult = resultList[neighbourPeakId]; //findResult(resultsArray, neighbourPeakId);
+
+					// Note: Ensure the peak counts above the saddle are updated.
+					mergePeak(maxima, peakIdMap, peakId, result, neighbourPeakId, neighbourResult, saddles,
+							saddlePoints[neighbourPeakId], highestSaddle, true, nonContiguous, types, pList);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Finalised the merge of sub-peaks into their highest neighbour peak using the highest saddle point
+	 */
+	private FindFociResult[] mergeFinal(FindFociResult[] resultsArray, int[] peakIdMap, int[] maxima)
+	{
 		resultsArray = removeFlaggedResults(resultsArray);
 
 		reassignMaxima(maxima, peakIdMap);
@@ -4844,14 +4890,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	//private int analysis, analysisSub, analysisFull;
-
-	//private int sameId, totalId;
-
-	private void report()
-	{
-		//System.out.printf("Same Id %d / %d (%.2f)\n", sameId, totalId, (double) sameId / totalId);
-		//sameId = totalId = 0;
-	}
 
 	/**
 	 * Consolidate the saddles to update their ids. Remove invalid saddles.
@@ -5055,7 +5093,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		// Flag this result as merged using the intensity flag. This will be used later to eliminate peaks
 		result.totalIntensity = Double.NEGATIVE_INFINITY;
 		// Free memory
-		peakSaddles.list = null;
+		peakSaddles.free();
 
 		// Update the count and intensity above the highest neighbour saddle
 		if (neighbourResult != null)

@@ -1346,6 +1346,11 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 
 			} while (listI < listLen);
 		}
+		
+		for (int i = listLen; i-- > 0;)
+		{
+			types[pList[i]] &= ~LISTED; // reset attributes no longer needed
+		}
 
 		result.countAboveSaddle = listI;
 		result.intensityAboveSaddle = (double) sum;

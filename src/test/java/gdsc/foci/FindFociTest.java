@@ -50,13 +50,14 @@ public class FindFociTest
 	@Test
 	public void isSameResultUsingIntProcessor()
 	{
+		boolean nonContiguous = true;
 		for (ImagePlus imp : createData())
 		{
 			for (int i = 0; i < backgroundMethod.length; i++)
 			{
 				FindFociResults r1 = runLegacy(imp, i);
-				FindFociResults r2 = runInt(imp, i, false, true);
-				isEqual(r1, r2, i);
+				FindFociResults r2 = runInt(imp, i, false, nonContiguous);
+				isEqual(r1, r2, i, nonContiguous);
 			}
 		}
 	}
@@ -71,7 +72,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runInt(imp, i, false, nonContiguous);
 					FindFociResults r2 = runInt(imp, i, true, nonContiguous);
-					isEqual(r1, r2, i);
+					isEqual(r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -86,7 +87,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runInt(imp, i, false, nonContiguous);
 					FindFociResults r2 = runFloat(imp, i, false, false, nonContiguous);
-					isEqual(r1, r2, i);
+					isEqual(r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -101,7 +102,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
 					FindFociResults r2 = runFloat(imp, i, true, false, nonContiguous);
-					isEqual(r1, r2, i);
+					isEqual(r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -118,7 +119,7 @@ public class FindFociTest
 						continue;
 					FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
 					FindFociResults r2 = runFloat(imp, i, false, true, nonContiguous);
-					isEqual(r1, r2, i, true);
+					isEqual(r1, r2, i, true, nonContiguous);
 				}
 		}
 	}
@@ -135,7 +136,7 @@ public class FindFociTest
 						continue;
 					FindFociResults r1 = runFloat(imp, i, true, false, nonContiguous);
 					FindFociResults r2 = runFloat(imp, i, true, true, nonContiguous);
-					isEqual(r1, r2, i, true);
+					isEqual(r1, r2, i, true, nonContiguous);
 				}
 		}
 	}
@@ -150,7 +151,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runInt(imp, i, false, nonContiguous);
 					FindFociResults r2 = runIntStaged(imp, i, false, nonContiguous);
-					isEqual(r1, r2, i);
+					isEqual(r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -165,7 +166,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runInt(imp, i, true, nonContiguous);
 					FindFociResults r2 = runIntStaged(imp, i, true, nonContiguous);
-					isEqual(r1, r2, i);
+					isEqual(r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -180,7 +181,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
 					FindFociResults r2 = runFloatStaged(imp, i, false, false, nonContiguous);
-					isEqual(r1, r2, i);
+					isEqual(r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -195,7 +196,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runFloat(imp, i, true, false, nonContiguous);
 					FindFociResults r2 = runFloatStaged(imp, i, true, false, nonContiguous);
-					isEqual(r1, r2, i);
+					isEqual(r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -212,7 +213,7 @@ public class FindFociTest
 						continue;
 					FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
 					FindFociResults r2 = runFloatStaged(imp, i, false, true, nonContiguous);
-					isEqual(r1, r2, i, true);
+					isEqual(r1, r2, i, true, nonContiguous);
 				}
 		}
 	}
@@ -229,7 +230,7 @@ public class FindFociTest
 						continue;
 					FindFociResults r1 = runFloat(imp, i, true, false, nonContiguous);
 					FindFociResults r2 = runFloatStaged(imp, i, true, true, nonContiguous);
-					isEqual(r1, r2, i, true);
+					isEqual(r1, r2, i, true, nonContiguous);
 				}
 		}
 	}
@@ -422,16 +423,18 @@ public class FindFociTest
 		Assert.assertTrue(time2 < time1);
 	}
 
-	private void isEqual(FindFociResults r1, FindFociResults r2, int set)
+	private void isEqual(FindFociResults r1, FindFociResults r2, int set, boolean nonContiguous)
 	{
-		isEqual(r1, r2, set, false);
+		isEqual(r1, r2, set, false, nonContiguous);
 	}
 
-	private void isEqual(FindFociResults r1, FindFociResults r2, int set, boolean negativeValues)
+	private void isEqual(FindFociResults r1, FindFociResults r2, int set, boolean negativeValues, boolean nonContiguous)
 	{
+		String setName = String.format("Set %d (%b)", set, nonContiguous);  
+		
 		ImagePlus imp1 = r1.mask;
 		ImagePlus imp2 = r2.mask;
-		Assert.assertEquals(set + " Mask", imp1 != null, imp2 != null);
+		Assert.assertEquals(setName + " Mask", imp1 != null, imp2 != null);
 		if (imp1 != null)
 		{
 			//Assert.assertArrayEquals(set + " Mask values", (float[]) (imp1.getProcessor().convertToFloat().getPixels()),
@@ -440,7 +443,7 @@ public class FindFociTest
 		ArrayList<FindFociResult> results1 = r1.results;
 		ArrayList<FindFociResult> results2 = r2.results;
 		//System.out.printf("N1=%d, N2=%d\n", results1.size(), results2.size());
-		Assert.assertEquals(set + " Results Size", results1.size(), results2.size());
+		Assert.assertEquals(setName + " Results Size", results1.size(), results2.size());
 		int counter = 0;
 		final int offset = (negativeValues) ? FindFociTest.offset : 0;
 		try
@@ -476,7 +479,7 @@ public class FindFociTest
 		}
 		catch (AssertionError e)
 		{
-			throw new AssertionError(String.format("Set %d [%d]: " + e.getMessage(), set, counter), e);
+			throw new AssertionError(String.format("%s [%d]: " + e.getMessage(), setName, counter), e);
 		}
 	}
 
@@ -524,8 +527,7 @@ public class FindFociTest
 		final int flags = (nonContiguous) ? options[i] : options[i] | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		return ff.findMaxima(imp, null, backgroundMethod[i], backgroundParameter[i], autoThresholdMethod[i],
 				searchMethod[i], searchParameter[i], maxPeaks[i], minSize[i], peakMethod[i], peakParameter[i],
-				outputType[i], sortIndex[i], flags, blur[i], centreMethod[i], centreParameter[i],
-				fractionParameter[i]);
+				outputType[i], sortIndex[i], flags, blur[i], centreMethod[i], centreParameter[i], fractionParameter[i]);
 	}
 
 	private FindFociResults runFloat(ImagePlus imp, int i, boolean optimised, boolean negative, boolean nonContiguous)
@@ -536,8 +538,7 @@ public class FindFociTest
 		final int flags = (nonContiguous) ? options[i] : options[i] | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		return ff.findMaxima(imp, null, backgroundMethod[i], backgroundParameter[i], autoThresholdMethod[i],
 				searchMethod[i], searchParameter[i], maxPeaks[i], minSize[i], peakMethod[i], peakParameter[i],
-				outputType[i], sortIndex[i], flags, blur[i], centreMethod[i], centreParameter[i],
-				fractionParameter[i]);
+				outputType[i], sortIndex[i], flags, blur[i], centreMethod[i], centreParameter[i], fractionParameter[i]);
 	}
 
 	private ImagePlus toFloat(ImagePlus imp, boolean negative)
@@ -566,8 +567,11 @@ public class FindFociTest
 				autoThresholdMethod[i], flags);
 		FindFociSearchResults searchResults = ff.findMaximaSearch(initResults, backgroundMethod[i],
 				backgroundParameter[i], searchMethod[i], searchParameter[i]);
-		FindFociMergeResults mergeResults = ff.findMaximaMerge(initResults, searchResults, minSize[i], peakMethod[i],
-				peakParameter[i], flags, blur[i]);
+		FindFociMergeTempResults mergePeakResults = ff.findMaximaMergePeak(initResults, searchResults, peakMethod[i],
+				peakParameter[i]);
+		mergePeakResults = ff.findMaximaMergeSize(initResults, mergePeakResults, minSize[i]);
+		FindFociMergeResults mergeResults = ff.findMaximaMergeFinal(initResults, mergePeakResults, minSize[i],
+				flags, blur[i]);
 		FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i],
 				sortIndex[i], centreMethod[i], centreParameter[i]);
 		return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i], autoThresholdMethod[i],
@@ -586,8 +590,11 @@ public class FindFociTest
 				autoThresholdMethod[i], flags);
 		FindFociSearchResults searchResults = ff.findMaximaSearch(initResults, backgroundMethod[i],
 				backgroundParameter[i], searchMethod[i], searchParameter[i]);
-		FindFociMergeResults mergeResults = ff.findMaximaMerge(initResults, searchResults, minSize[i], peakMethod[i],
-				peakParameter[i], flags, blur[i]);
+		FindFociMergeTempResults mergePeakResults = ff.findMaximaMergePeak(initResults, searchResults, peakMethod[i],
+				peakParameter[i]);
+		mergePeakResults = ff.findMaximaMergeSize(initResults, mergePeakResults, minSize[i]);
+		FindFociMergeResults mergeResults = ff.findMaximaMergeFinal(initResults, mergePeakResults, minSize[i],
+				flags, blur[i]);
 		FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i],
 				sortIndex[i], centreMethod[i], centreParameter[i]);
 		return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i], autoThresholdMethod[i],

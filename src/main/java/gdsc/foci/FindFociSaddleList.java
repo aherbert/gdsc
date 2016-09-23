@@ -66,7 +66,8 @@ public class FindFociSaddleList implements Cloneable
 	public FindFociSaddleList(FindFociSaddle[] list)
 	{
 		this.list = list;
-		this.size = list.length;
+		if (list != null)
+			this.size = list.length;
 	}
 
 	/**
@@ -110,6 +111,16 @@ public class FindFociSaddleList implements Cloneable
 		clear(0);
 	}
 
+
+	/**
+	 * Free memory (Set size to zero and the list to null)
+	 */
+	void free()
+	{
+		size = 0;
+		list = null;
+	}
+	
 	/**
 	 * Clear the list from the given position but do not reduce the capacity
 	 * 
@@ -177,7 +188,14 @@ public class FindFociSaddleList implements Cloneable
 	{
 		// Make same length so that add operations behave exactly the same
 		if (size == 0)
-			return new FindFociSaddleList();
+		{
+			if (list == null)
+				// This is a list that has had the free() method called
+				return new FindFociSaddleList(null);
+			else
+				// This list is just empty
+				return new FindFociSaddleList();
+		}
 		final FindFociSaddle[] list = new FindFociSaddle[this.list.length];
 		for (int i = 0; i < size; i++)
 			list[i] = this.list[i].clone();

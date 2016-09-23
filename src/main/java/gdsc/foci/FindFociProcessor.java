@@ -392,19 +392,6 @@ public interface FindFociProcessor
 			String autoThresholdMethod, int options);
 
 	/**
-	 * Clones the init array for use in {@link #findMaximaSearch(FindFociInitResults, int, double, int, double)}.
-	 * Only the elements that are destructively modified by findMaximaSearch are duplicated. The rest are shallow
-	 * copied.
-	 * 
-	 * @param initResults
-	 *            The original init results object
-	 * @param clonedInitResults
-	 *            A previously cloned init results object (avoid reallocating memory). Can be null.
-	 * @return The cloned init results
-	 */
-	FindFociInitResults cloneForSearch(FindFociInitResults initResults, FindFociInitResults clonedInitResults);
-
-	/**
 	 * Clones the init array for use in findMaxima staged methods.
 	 * Only the elements that are destructively modified by the findMaxima staged methods are duplicated. The rest are
 	 * shallow copied.
@@ -453,17 +440,55 @@ public interface FindFociProcessor
 	 *
 	 * @param initResults
 	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
-	 *            Contents are destructively modified so should be cloned before input.
 	 * @param searchResults
 	 *            The output from {@link #findMaximaSearch(Object[], int, double, int, double)}.
 	 *            Contents are unchanged.
-	 * @param minSize
-	 *            The minimum size for a peak
 	 * @param peakMethod
 	 *            Method for calculating the minimum peak height above the highest saddle (use the constants with prefix
 	 *            PEAK_)
 	 * @param peakParameter
 	 *            parameter for calculating the minimum peak height
+	 * @return the find foci merge results
+	 */
+	FindFociMergeTempResults findMaximaMergePeak(FindFociInitResults initResults, FindFociSearchResults searchResults,
+			int peakMethod, double peakParameter);
+
+	/**
+	 * This method is a stripped-down version of the
+	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
+	 * routine.
+	 * It does not support logging, interruption or mask generation. Only the result array is generated.
+	 * 
+	 * <p>
+	 * This method is intended for benchmarking.
+	 *
+	 * @param initResults
+	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
+	 * @param mergeResults
+	 *            The output from {@link #findMaximaMergePeak(FindFociInitResults, FindFociSearchResults, int, double)}.
+	 * @param minSize
+	 *            The minimum size for a peak
+	 * @return the find foci merge results
+	 */
+	FindFociMergeTempResults findMaximaMergeSize(FindFociInitResults initResults, FindFociMergeTempResults mergeResults,
+			int minSize);
+
+	/**
+	 * This method is a stripped-down version of the
+	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
+	 * routine.
+	 * It does not support logging, interruption or mask generation. Only the result array is generated.
+	 * 
+	 * <p>
+	 * This method is intended for benchmarking.
+	 *
+	 * @param initResults
+	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
+	 *            Contents are destructively modified so should be cloned before input.
+	 * @param mergeResults
+	 *            The output from {@link #findMaximaMergeSize(FindFociInitResults, FindFociMergeTempResults, int)}.
+	 * @param minSize
+	 *            The minimum size for a peak
 	 * @param options
 	 *            An options flag (use the constants with prefix FindFoci.OPTION_)
 	 * @param blur
@@ -471,8 +496,8 @@ public interface FindFociProcessor
 	 *            peak identification)
 	 * @return the find foci merge results
 	 */
-	FindFociMergeResults findMaximaMerge(FindFociInitResults initResults, FindFociSearchResults searchResults,
-			int minSize, int peakMethod, double peakParameter, int options, double blur);
+	FindFociMergeResults findMaximaMergeFinal(FindFociInitResults initResults, FindFociMergeTempResults mergeResults,
+			int minSize, int options, double blur);
 
 	/**
 	 * This method is a stripped-down version of the

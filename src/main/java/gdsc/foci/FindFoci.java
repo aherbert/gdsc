@@ -1889,16 +1889,6 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see gdsc.foci.FindFociProcessor#cloneForSearch(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociInitResults)
-	 */
-	public FindFociInitResults cloneForSearch(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
-	{
-		return ffpStaged.cloneForSearch(initResults, clonedInitResults);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see gdsc.foci.FindFociProcessor#clone(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociInitResults)
 	 */
 	public FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
@@ -1922,14 +1912,40 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see gdsc.foci.FindFociProcessor#findMaximaMerge(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociSearchResults,
-	 * int, int, double, int, double)
+	 * @see gdsc.foci.FindFociProcessor#findMaximaMergePeak(gdsc.foci.FindFociInitResults,
+	 * gdsc.foci.FindFociSearchResults, int, double)
 	 */
-	public FindFociMergeResults findMaximaMerge(FindFociInitResults initResults, FindFociSearchResults searchResults,
-			int minSize, int peakMethod, double peakParameter, int options, double blur)
+	public FindFociMergeTempResults findMaximaMergePeak(FindFociInitResults initResults,
+			FindFociSearchResults searchResults, int peakMethod, double peakParameter)
 	{
 		lastResultsArray = null;
-		return ffpStaged.findMaximaMerge(initResults, searchResults, minSize, peakMethod, peakParameter, options, blur);
+		return ffpStaged.findMaximaMergePeak(initResults, searchResults, peakMethod, peakParameter);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#findMaximaMergeSize(gdsc.foci.FindFociInitResults,
+	 * gdsc.foci.FindFociMergeTempResults, int)
+	 */
+	public FindFociMergeTempResults findMaximaMergeSize(FindFociInitResults initResults,
+			FindFociMergeTempResults mergeResults, int minSize)
+	{
+		lastResultsArray = null;
+		return ffpStaged.findMaximaMergeSize(initResults, mergeResults, minSize);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see gdsc.foci.FindFociProcessor#findMaximaMergeFinal(gdsc.foci.FindFociInitResults,
+	 * gdsc.foci.FindFociMergeTempResults, int, int, double)
+	 */
+	public FindFociMergeResults findMaximaMergeFinal(FindFociInitResults initResults,
+			FindFociMergeTempResults mergeResults, int minSize, int options, double blur)
+	{
+		lastResultsArray = null;
+		return ffpStaged.findMaximaMergeFinal(initResults, mergeResults, minSize, options, blur);
 	}
 
 	/*

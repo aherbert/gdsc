@@ -53,11 +53,11 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
 		stateMap.put("backgroundParameter", FindFociState.SEARCH);
 		stateMap.put("searchMethod", FindFociState.SEARCH);
 		stateMap.put("searchParameter", FindFociState.SEARCH);
-		stateMap.put("minSize", FindFociState.MERGE);
-		stateMap.put("minimumAboveSaddle", FindFociState.MERGE);
-		stateMap.put("peakMethod", FindFociState.MERGE);
-		stateMap.put("peakParameter", FindFociState.MERGE);
-		stateMap.put("removeEdgeMaxima", FindFociState.MERGE);
+		stateMap.put("peakMethod", FindFociState.MERGE_HEIGHT);
+		stateMap.put("peakParameter", FindFociState.MERGE_HEIGHT);
+		stateMap.put("minSize", FindFociState.MERGE_SIZE);
+		stateMap.put("minimumAboveSaddle", FindFociState.MERGE_SADDLE);
+		stateMap.put("removeEdgeMaxima", FindFociState.MERGE_SADDLE);
 		stateMap.put("sortMethod", FindFociState.CALCULATE_RESULTS);
 		stateMap.put("maxPeaks", FindFociState.CALCULATE_RESULTS);
 		stateMap.put("centreMethod", FindFociState.CALCULATE_RESULTS);
