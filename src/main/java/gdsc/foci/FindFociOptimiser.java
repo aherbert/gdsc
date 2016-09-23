@@ -307,14 +307,15 @@ public class FindFociOptimiser
 			ArrayList<ArrayList<Result>> allResults = new ArrayList<ArrayList<Result>>(size);
 			for (OptimisationWorker w : workers)
 			{
-				if (w.results == null)
+				if (w.result == null)
 					continue;
-				if (!allResults.isEmpty() && w.results.size() != allResults.get(0).size())
+				ArrayList<Result> results = w.result.results;
+				if (!allResults.isEmpty() && results.size() != allResults.get(0).size())
 				{
 					IJ.error(TITLE, "Some optimisation runs produced a different number of results");
 					return;
 				}
-				allResults.add(w.results);
+				allResults.add(results);
 			}
 			if (allResults.isEmpty())
 			{
@@ -370,26 +371,20 @@ public class FindFociOptimiser
 		{
 			ImagePlus mask = WindowManager.getImage(myMaskImage);
 
-			long start = System.currentTimeMillis();
-
-			ArrayList<Result> results = runOptimiser(imp, mask, new StandardCounter(combinations));
+			OptimiserResult result = runOptimiser(imp, mask, new StandardCounter(combinations));
 			IJ.showProgress(1);
 
 			if (Utils.isInterrupted())
 				return;
 
-			if (results == null)
+			if (result == null)
 			{
 				IJ.error(TITLE, "No ROI points fall inside the mask image");
 				return;
 			}
 
-			long runTime = System.currentTimeMillis() - start;
-			double seconds = runTime / 1000.0;
-			IJ.log(String.format("Optimisation time = %.3f sec (%.3f ms / combination)", seconds,
-					(double) runTime / combinations));
-
 			// For a single image we use the raw score (since no results are combined)
+			ArrayList<Result> results = result.results;
 			getScore(results, SCORE_RAW);
 			showResults(imp, mask, results);
 
@@ -404,9 +399,8 @@ public class FindFociOptimiser
 
 				saveResults(imp, mask, results, predictedPoints, myResultFile);
 
-				checkOptimisationSpace(results, imp);
+				checkOptimisationSpace(result, imp);
 			}
-			IJ.showTime(imp, start, "Done ");
 		}
 	}
 
@@ -459,17 +453,24 @@ public class FindFociOptimiser
 	/**
 	 * Check if the optimal results was obtained at the edge of the optimisation search space
 	 * 
-	 * @param results
+	 * @param result
 	 * @param imp
 	 */
-	private void checkOptimisationSpace(ArrayList<Result> results, ImagePlus imp)
+	private void checkOptimisationSpace(OptimiserResult result, ImagePlus imp)
 	{
-		Options bestOptions = results.get(0).options;
+		Options bestOptions = result.results.get(0).options;
 		if (bestOptions == null)
 			return;
 
+		if (result.time != 0)
+		{
+			final double seconds = result.time / 1e9;
+			IJ.log(String.format("%s Optimisation time = %.3f sec (%.3f ms / combination). Speed up = %.3fx",
+					imp.getTitle(), seconds, result.time / 1e6 / combinations, result.total / (double) result.time));
+		}
+
 		// Check if a sub-optimal best result was obtained at the limit of the optimisation range
-		if (results.get(0).metrics[Result.F1] < 1.0)
+		if (result.results.get(0).metrics[Result.F1] < 1.0)
 		{
 			StringBuilder sb = new StringBuilder();
 			if (backgroundMethodHasParameter(bestOptions.backgroundMethod))
@@ -502,13 +503,15 @@ public class FindFociOptimiser
 			else if (bestOptions.blur == blurArray[blurArray.length - 1])
 				append(sb, "- Gaussian blur @ upper limit (%g)\n", bestOptions.blur);
 
-			if (bestOptions.maxPeaks == results.get(0).n)
+			if (bestOptions.maxPeaks == result.results.get(0).n)
 				append(sb, "- Total peaks == Maximum Peaks (%d)\n", bestOptions.maxPeaks);
 
 			if (sb.length() > 0)
 			{
-				sb.insert(0, "Optimal result (" + IJ.d2s(results.get(0).metrics[getSortIndex(myResultsSortMethod)], 4) +
-						") for " + imp.getShortTitle() + " obtained at the following limits:\n");
+				sb.insert(0,
+						"Optimal result (" +
+								IJ.d2s(result.results.get(0).metrics[getSortIndex(myResultsSortMethod)], 4) + ") for " +
+								imp.getShortTitle() + " obtained at the following limits:\n");
 				sb.append("You may want to increase the optimisation space.");
 
 				showIncreaseSpaceMessage(sb);
@@ -659,12 +662,12 @@ public class FindFociOptimiser
 		{
 			this(0);
 		}
-		
+
 		StopWatch create()
 		{
 			return new StopWatch(time());
 		}
-		
+
 		private StopWatch(long base)
 		{
 			time = System.nanoTime();
@@ -676,10 +679,28 @@ public class FindFociOptimiser
 			time = System.nanoTime() - time;
 			return time();
 		}
-		
+
 		long time()
 		{
 			return time + base;
+		}
+	}
+
+	private class OptimiserResult
+	{
+		ArrayList<Result> results;
+		long time;
+		long total;
+
+		OptimiserResult(ArrayList<Result> results, long time)
+		{
+			this.results = results;
+			this.time = time;
+			total = 0;
+			if (results == null)
+				return;
+			for (int i=0; i<results.size(); i++)
+				total += results.get(i).time;
 		}
 	}
 
@@ -692,7 +713,7 @@ public class FindFociOptimiser
 	 *            The mask
 	 * @return The results (or null if there are no ROI points inside the mask)
 	 */
-	private ArrayList<Result> runOptimiser(ImagePlus imp, ImagePlus mask, Counter counter)
+	private OptimiserResult runOptimiser(ImagePlus imp, ImagePlus mask, Counter counter)
 	{
 		if (invalidImage(imp))
 			return null;
@@ -711,12 +732,16 @@ public class FindFociOptimiser
 		// Set the threshold for assigning points matches as a fraction of the image size
 		double dThreshold = getDistanceThreshold(imp);
 
+		StopWatch sw = new StopWatch();
+
 		FindFoci ff = new FindFoci();
 		int id = 0;
 		for (int blurCount = 0; blurCount < blurArray.length; blurCount++)
 		{
 			double blur = blurArray[blurCount];
+			StopWatch sw0 = new StopWatch();
 			ImagePlus imp2 = ff.blur(imp, blur);
+			sw0.stop();
 
 			// Iterate over the options
 			int thresholdMethodIndex = 0;
@@ -730,7 +755,7 @@ public class FindFociOptimiser
 				for (String statsMode : myStatsModes)
 				{
 					int statisticsMode = convertStatisticsMode(statsMode);
-					StopWatch sw1 = new StopWatch();
+					StopWatch sw1 = sw0.create();
 					FindFociInitResults initResults = ff.findMaximaInit(imp, imp2, mask, backgroundMethodArray[b],
 							thresholdMethod, statisticsMode);
 					sw1.stop();
@@ -793,7 +818,7 @@ public class FindFociOptimiser
 										for (int options : optionsArray)
 										{
 											// TODO - add option for FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE
-											
+
 											mergeInitArray = ff.clone(searchInitArray, mergeInitArray);
 											StopWatch sw5 = sw4.create();
 											FindFociMergeResults mergeArray = ff.findMaximaMergeFinal(mergeInitArray,
@@ -843,9 +868,13 @@ public class FindFociOptimiser
 				}
 			}
 		}
+
+		sw.stop();
+
 		// All possible results sort methods are highest first
 		sortResults(results, myResultsSortMethod);
-		return results;
+
+		return new OptimiserResult(results, sw.time());
 	}
 
 	private void showResults(ImagePlus imp, ImagePlus mask, ArrayList<Result> results)
@@ -3048,7 +3077,7 @@ public class FindFociOptimiser
 	{
 		String image;
 		Counter counter;
-		ArrayList<Result> results = null;
+		OptimiserResult result = null;
 
 		public OptimisationWorker(String image, Counter counter)
 		{
@@ -3077,33 +3106,32 @@ public class FindFociOptimiser
 			boolean newResults = false;
 			if (reuseResults && new File(fullResultFile).exists())
 			{
-				results = loadResults(fullResultFile);
+				ArrayList<Result> results = loadResults(fullResultFile);
 				if (results != null && results.size() == combinations)
 				{
 					IJ.log("Re-using results: " + fullResultFile);
 					// We can skip forward in the progress
-					counter.increment(combinations);
+					counter.increment(combinations);					
+					result = new OptimiserResult(results, 0);
 				}
-				else
-					results = null;
 			}
-			if (results == null)
+			if (result == null)
 			{
 				IJ.log("Creating results: " + fullResultFile);
 				newResults = true;
-				results = runOptimiser(imp, mask, counter);
+				result = runOptimiser(imp, mask, counter);
 			}
-			if (results != null)
+			if (result != null)
 			{
 				if (newResults)
 				{
-					saveResults(imp, mask, results, null, resultFile);
+					saveResults(imp, mask, result.results, null, resultFile);
 				}
 
-				checkOptimisationSpace(results, imp);
+				checkOptimisationSpace(result, imp);
 
 				// Reset to the order defined by the ID
-				sortResultsById(results);
+				sortResultsById(result.results);
 			}
 		}
 	}
