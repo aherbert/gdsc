@@ -116,6 +116,7 @@ public class ImageJController extends FindFociController
 		double searchParameter = model.getSearchParameter();
 		int minSize = model.getMinSize();
 		boolean minimumAboveSaddle = model.isMinimumAboveSaddle();
+		boolean connectedAboveSaddle = model.isConnectedAboveSaddle();
 		int peakMethod = model.getPeakMethod();
 		double peakParameter = model.getPeakParameter();
 		int sortMethod = model.getSortMethod();
@@ -165,6 +166,8 @@ public class ImageJController extends FindFociController
 		int options = 0;
 		if (minimumAboveSaddle)
 			options |= FindFoci.OPTION_MINIMUM_ABOVE_SADDLE;
+		if (connectedAboveSaddle)
+			options |= FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		if (statisticsMode.equalsIgnoreCase("inside"))
 			options |= FindFoci.OPTION_STATS_INSIDE;
 		else if (statisticsMode.equalsIgnoreCase("outside"))
@@ -201,6 +204,8 @@ public class ImageJController extends FindFociController
 			Recorder.recordOption("Minimum_size", "" + minSize);
 			if (minimumAboveSaddle)
 				Recorder.recordOption("Minimum_above_saddle");
+			if (connectedAboveSaddle)
+				Recorder.recordOption("Connected_above_saddle");
 			Recorder.recordOption("Minimum_peak_height", FindFoci.peakMethods[peakMethod]);
 			Recorder.recordOption("Peak_parameter", "" + peakParameter);
 			Recorder.recordOption("Sort_method", FindFoci.sortIndexMethods[sortMethod]);

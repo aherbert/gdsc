@@ -34,6 +34,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	private double searchParameter = 0.3;
 	private int minSize = 5;
 	private boolean minimumAboveSaddle = true;
+	private boolean connectedAboveSaddle = false;
 	private int peakMethod = FindFoci.PEAK_RELATIVE_ABOVE_BACKGROUND;
 	private double peakParameter = 0.5;
 	private int sortMethod = FindFoci.SORT_INTENSITY;
@@ -256,6 +257,25 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	}
 
 	/**
+	 * @param connectedAboveSaddle
+	 *            the connectedAboveSaddle to set
+	 */
+	public void setConnectedAboveSaddle(boolean connectedAboveSaddle)
+	{
+		boolean oldValue = this.connectedAboveSaddle;
+		this.connectedAboveSaddle = connectedAboveSaddle;
+		firePropertyChange("connectedAboveSaddle", oldValue, this.connectedAboveSaddle);
+	}
+
+	/**
+	 * @return the connectedAboveSaddle
+	 */
+	public boolean isConnectedAboveSaddle()
+	{
+		return connectedAboveSaddle;
+	}
+
+	/**
 	 * @param peakMethod
 	 *            the peakMethod to set
 	 */
@@ -471,7 +491,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 	{
 		return markUsingOverlay;
 	}
-	
+
 	/**
 	 * @param hideLabels
 	 *            the hideLabels to set
@@ -898,6 +918,5 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 		{
 			return null;
 		}
-
 	}
 }

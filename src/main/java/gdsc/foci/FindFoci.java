@@ -136,6 +136,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			searchParameter = findDouble("Search_parameter");
 			minSize = findInteger("Minimum_size");
 			boolean minimumAboveSaddle = findBoolean("Minimum_above_saddle");
+			boolean connectedAboveSaddle = findBoolean("Connected_above_saddle");
 			peakMethod = findIndex("Minimum_peak_height", peakMethods);
 			peakParameter = findDouble("Peak_parameter");
 			sortIndex = findIndex("Sort_method", sortIndexMethods);
@@ -182,6 +183,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			options = 0;
 			if (minimumAboveSaddle)
 				options |= OPTION_MINIMUM_ABOVE_SADDLE;
+			if (connectedAboveSaddle)
+				options |= OPTION_CONTIGUOUS_ABOVE_SADDLE;
 			if (statisticsMode.equalsIgnoreCase("inside"))
 				options |= OPTION_STATS_INSIDE;
 			else if (statisticsMode.equalsIgnoreCase("outside"))
@@ -577,6 +580,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	private static double mySearchParameter;
 	private static int myMinSize;
 	private static boolean myMinimumAboveSaddle;
+	private static boolean myConnectedAboveSaddle;
 	private static int myPeakMethod;
 	private static double myPeakParameter;
 	private static int mySortMethod;
@@ -614,6 +618,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		mySearchParameter = model.getSearchParameter();
 		myMinSize = model.getMinSize();
 		myMinimumAboveSaddle = model.isMinimumAboveSaddle();
+		myConnectedAboveSaddle = model.isConnectedAboveSaddle();
 		myPeakMethod = model.getPeakMethod();
 		myPeakParameter = model.getPeakParameter();
 		mySortMethod = model.getSortMethod();
@@ -700,10 +705,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		gd.addChoice("Search_method", searchMethods, searchMethods[mySearchMethod]);
 		gd.addNumericField("Search_parameter", mySearchParameter, 2);
 		gd.addMessage("Merge options ...");
-		gd.addNumericField("Minimum_size", myMinSize, 0);
-		gd.addCheckbox("Minimum_above_saddle", myMinimumAboveSaddle);
 		gd.addChoice("Minimum_peak_height", peakMethods, peakMethods[myPeakMethod]);
 		gd.addNumericField("Peak_parameter", myPeakParameter, 2);
+		gd.addNumericField("Minimum_size", myMinSize, 0);
+		gd.addCheckbox("Minimum_above_saddle", myMinimumAboveSaddle);
+		gd.addCheckbox("Connected_above_saddle", myConnectedAboveSaddle);
 		gd.addMessage("Results options ...");
 		Component resultsLabel = gd.getMessage(); // Note the component that will start column 2
 		gd.addChoice("Sort_method", sortIndexMethods, sortIndexMethods[mySortMethod]);
@@ -775,10 +781,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		myStatisticsMode = gd.getNextChoice();
 		mySearchMethod = gd.getNextChoiceIndex();
 		mySearchParameter = gd.getNextNumber();
-		myMinSize = (int) gd.getNextNumber();
-		myMinimumAboveSaddle = gd.getNextBoolean();
 		myPeakMethod = gd.getNextChoiceIndex();
 		myPeakParameter = gd.getNextNumber();
+		myMinSize = (int) gd.getNextNumber();
+		myMinimumAboveSaddle = gd.getNextBoolean();
+		myConnectedAboveSaddle = gd.getNextBoolean();
 		mySortMethod = gd.getNextChoiceIndex();
 		myMaxPeaks = (int) gd.getNextNumber();
 		myShowMask = gd.getNextChoiceIndex();
@@ -825,6 +832,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		int options = 0;
 		if (myMinimumAboveSaddle)
 			options |= OPTION_MINIMUM_ABOVE_SADDLE;
+		if (myConnectedAboveSaddle)
+			options |= OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		if (myStatisticsMode.equalsIgnoreCase("inside"))
 			options |= OPTION_STATS_INSIDE;
 		else if (myStatisticsMode.equalsIgnoreCase("outside"))
@@ -1639,6 +1648,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			writeParam(out, "Search_parameter", Double.toString(searchParameter));
 			writeParam(out, "Minimum_size", Integer.toString(minSize));
 			writeParam(out, "Minimum_above_saddle", ((options & OPTION_MINIMUM_ABOVE_SADDLE) != 0) ? "true" : "false");
+			writeParam(out, "Connected_above_saddle", ((options & OPTION_CONTIGUOUS_ABOVE_SADDLE) != 0) ? "true" : "false");
 			writeParam(out, "Minimum_peak_height", peakMethods[peakMethod]);
 			writeParam(out, "Peak_parameter", Double.toString(peakParameter));
 			writeParam(out, "Sort_method", sortIndexMethods[sortIndex]);

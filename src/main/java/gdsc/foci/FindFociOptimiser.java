@@ -106,7 +106,7 @@ public class FindFociOptimiser
 	private static boolean mySearchFractionOfPeak = true;
 	private static String mySearchParameter = "0, 0.6, 0.2";
 	private static String myMinSizeParameter = "1, 9, 2";
-	private static String[] saddleOptions = { "Yes", "No", "Both" };
+	private static String[] saddleOptions = { "Yes", "Yes - Connected", "No", "All" };
 	private static int myMinimumAboveSaddle = 0;
 	private static int myPeakMethod = FindFoci.PEAK_RELATIVE_ABOVE_BACKGROUND;
 	private static String myPeakParameter = "0, 0.6, 0.2";
@@ -699,7 +699,7 @@ public class FindFociOptimiser
 			total = 0;
 			if (results == null)
 				return;
-			for (int i=0; i<results.size(); i++)
+			for (int i = 0; i < results.size(); i++)
 				total += results.get(i).time;
 		}
 	}
@@ -817,8 +817,6 @@ public class FindFociOptimiser
 
 										for (int options : optionsArray)
 										{
-											// TODO - add option for FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE
-
 											mergeInitArray = ff.clone(searchInitArray, mergeInitArray);
 											StopWatch sw5 = sw4.create();
 											FindFociMergeResults mergeArray = ff.findMaximaMergeFinal(mergeInitArray,
@@ -1017,6 +1015,8 @@ public class FindFociOptimiser
 		Recorder.recordOption("Minimum_size", "" + bestOptions.minSize);
 		if ((bestOptions.options & FindFoci.OPTION_MINIMUM_ABOVE_SADDLE) != 0)
 			Recorder.recordOption("Minimum_above_saddle");
+		if ((bestOptions.options & FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE) != 0)
+			Recorder.recordOption("Connected_above_saddle");
 		Recorder.recordOption("Minimum_peak_height", FindFoci.peakMethods[bestOptions.peakMethod]);
 		Recorder.recordOption("Peak_parameter", "" + bestOptions.peakParameter);
 		Recorder.recordOption("Sort_method", FindFoci.sortIndexMethods[bestOptions.sortIndex]);
@@ -1200,9 +1200,12 @@ public class FindFociOptimiser
 		if (myMinimumAboveSaddle == 0)
 			return new int[] { FindFoci.OPTION_MINIMUM_ABOVE_SADDLE };
 		else if (myMinimumAboveSaddle == 1)
+			return new int[] { FindFoci.OPTION_MINIMUM_ABOVE_SADDLE | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE };
+		else if (myMinimumAboveSaddle == 2)
 			return new int[] { 0 };
 		else
-			return new int[] { FindFoci.OPTION_MINIMUM_ABOVE_SADDLE, 0 };
+			return new int[] { FindFoci.OPTION_MINIMUM_ABOVE_SADDLE,
+					FindFoci.OPTION_MINIMUM_ABOVE_SADDLE | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE, 0 };
 	}
 
 	private boolean invalidImage(ImagePlus imp)
@@ -1276,10 +1279,10 @@ public class FindFociOptimiser
 		gd.addCheckbox("Search_above_background", mySearchAboveBackground);
 		gd.addCheckbox("Search_fraction_of_peak", mySearchFractionOfPeak);
 		gd.addStringField("Search_parameter", mySearchParameter, 12);
-		gd.addStringField("Minimum_size", myMinSizeParameter, 12);
-		gd.addChoice("Minimum_above_saddle", saddleOptions, saddleOptions[myMinimumAboveSaddle]);
 		gd.addChoice("Minimum_peak_height", FindFoci.peakMethods, FindFoci.peakMethods[myPeakMethod]);
 		gd.addStringField("Peak_parameter", myPeakParameter, 12);
+		gd.addStringField("Minimum_size", myMinSizeParameter, 12);
+		gd.addChoice("Minimum_above_saddle", saddleOptions, saddleOptions[myMinimumAboveSaddle]);
 
 		// Column 2
 		gd.addMessage(createSortOptions());
@@ -1378,10 +1381,10 @@ public class FindFociOptimiser
 		mySearchAboveBackground = gd.getNextBoolean();
 		mySearchFractionOfPeak = gd.getNextBoolean();
 		mySearchParameter = gd.getNextString();
-		myMinSizeParameter = gd.getNextString();
-		myMinimumAboveSaddle = gd.getNextChoiceIndex();
 		myPeakMethod = gd.getNextChoiceIndex();
 		myPeakParameter = gd.getNextString();
+		myMinSizeParameter = gd.getNextString();
+		myMinimumAboveSaddle = gd.getNextChoiceIndex();
 		mySortMethod = gd.getNextString();
 		myMaxPeaks = (int) gd.getNextNumber();
 		myGaussianBlur = gd.getNextString();
@@ -2224,7 +2227,11 @@ public class FindFociOptimiser
 		sb.append(maxPeaks).append("\t");
 		sb.append(minSize);
 		if ((options & FindFoci.OPTION_MINIMUM_ABOVE_SADDLE) != 0)
+		{
 			sb.append(" >saddle");
+			if ((options & FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE) != 0)
+				sb.append(" conn");
+		}
 		sb.append("\t");
 		sb.append(FindFoci.searchMethods[searchMethod]);
 		if (searchMethodHasParameter(searchMethod))
@@ -2283,11 +2290,14 @@ public class FindFociOptimiser
 				thresholdMethod = "";
 			}
 			int maxPeaks = Integer.parseInt(fields[2]);
+			// XXX
 			index = fields[3].indexOf(" ");
 			if (index > 0)
 			{
-				fields[3] = fields[3].substring(0, index);
 				options |= FindFoci.OPTION_MINIMUM_ABOVE_SADDLE;
+				if (fields[3].contains("conn"))
+					options |= FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+				fields[3] = fields[3].substring(0, index);
 			}
 			int minSize = Integer.parseInt(fields[3]);
 			int searchMethod = -1;
@@ -3111,7 +3121,7 @@ public class FindFociOptimiser
 				{
 					IJ.log("Re-using results: " + fullResultFile);
 					// We can skip forward in the progress
-					counter.increment(combinations);					
+					counter.increment(combinations);
 					result = new OptimiserResult(results, 0);
 				}
 			}

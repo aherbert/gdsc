@@ -89,6 +89,15 @@ public class FindFociRunner extends Thread
 
 				if (modelToRun != null)
 				{
+					// TODO - This system currently has to wait for the last calculation to finish before
+					// looking for the next model to run. This means for long running calculations the 
+					// user may have to wait a long time for the last one to finish, then wait again for 
+					// the next. 
+					// Ideally we would run the calculation on a different thread. We can then do the model
+					// comparison here. If the next model to run resets to an earlier state than the 
+					// current model then we should cancel the current calculation and start again, part way
+					// through...
+					// Basically this needs better interrupt handling for long running jobs.
 					runFindFoci(modelToRun);
 				}
 				else
@@ -193,6 +202,7 @@ public class FindFociRunner extends Thread
 		double searchParameter = model.getSearchParameter();
 		int minSize = model.getMinSize();
 		boolean minimumAboveSaddle = model.isMinimumAboveSaddle();
+		boolean connectedAboveSaddle = model.isConnectedAboveSaddle();
 		int peakMethod = model.getPeakMethod();
 		double peakParameter = model.getPeakParameter();
 		int sortMethod = model.getSortMethod();
@@ -240,6 +250,8 @@ public class FindFociRunner extends Thread
 		int options = 0;
 		if (minimumAboveSaddle)
 			options |= FindFoci.OPTION_MINIMUM_ABOVE_SADDLE;
+		if (connectedAboveSaddle)
+			options |= FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		if (statisticsMode.equalsIgnoreCase("inside"))
 			options |= FindFoci.OPTION_STATS_INSIDE;
 		else if (statisticsMode.equalsIgnoreCase("outside"))
@@ -309,8 +321,6 @@ public class FindFociRunner extends Thread
 
 			notify(MessageType.BACKGROUND_LEVEL, searchInitResults.stats.background);
 		}
-		
-		
 		if (state.ordinal() <= FindFociState.MERGE_HEIGHT.ordinal())
 		{
 			// No clone as the maxima and types are not changed
@@ -346,14 +356,15 @@ public class FindFociRunner extends Thread
 		}
 		if (state.ordinal() <= FindFociState.CALCULATE_RESULTS.ordinal())
 		{
-			if (initResults.stats.imageMinimum < 0 && FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortMethod))
+			if (initResults.stats.imageMinimum < 0 &&
+					FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortMethod))
 				notify(MessageType.SORT_INDEX_SENSITIVE_TO_NEGATIVE_VALUES, initResults.stats.imageMinimum);
 			else
 				notify(MessageType.SORT_INDEX_OK, initResults.stats.imageMinimum);
-			
+
 			resultsInitResults = ff.clone(mergeInitResults, resultsInitResults);
-			prelimResults = ff.findMaximaPrelimResults(resultsInitResults, mergeResults, maxPeaks, sortMethod, centreMethod,
-					centreParameter);
+			prelimResults = ff.findMaximaPrelimResults(resultsInitResults, mergeResults, maxPeaks, sortMethod,
+					centreMethod, centreParameter);
 			if (prelimResults == null)
 			{
 				IJ.showStatus(FindFoci.TITLE + " failed");
@@ -364,8 +375,8 @@ public class FindFociRunner extends Thread
 		if (state.ordinal() <= FindFociState.CALCULATE_OUTPUT_MASK.ordinal())
 		{
 			maskInitResults = ff.clone(resultsInitResults, maskInitResults);
-			results = ff.findMaximaMaskResults(maskInitResults, mergeResults, prelimResults, outputType, thresholdMethod,
-					imp.getTitle(), fractionParameter);
+			results = ff.findMaximaMaskResults(maskInitResults, mergeResults, prelimResults, outputType,
+					thresholdMethod, imp.getTitle(), fractionParameter);
 			if (results == null)
 			{
 				IJ.showStatus(FindFoci.TITLE + " failed");
@@ -433,6 +444,12 @@ public class FindFociRunner extends Thread
 				notEqual(model.isRemoveEdgeMaxima(), previousModel.isRemoveEdgeMaxima()))
 		{
 			return FindFociState.MERGE_SADDLE;
+		}
+		if (notEqual(model.isConnectedAboveSaddle(), previousModel.isConnectedAboveSaddle()))
+		{
+			if (model.isMinimumAboveSaddle()) // Only do this if computing above saddle
+				return FindFociState.MERGE_SADDLE;
+			ignoreChange = true;
 		}
 
 		if (notEqual(model.getSortMethod(), previousModel.getSortMethod()) ||

@@ -141,6 +141,7 @@ public class FindMaximaController extends ImageJController
 		double searchParameter = model.getSearchParameter();
 		int minSize = model.getMinSize();
 		boolean minimumAboveSaddle = model.isMinimumAboveSaddle();
+		boolean connectedAboveSaddle = model.isConnectedAboveSaddle();
 		int peakMethod = model.getPeakMethod();
 		double peakParameter = model.getPeakParameter();
 		int sortMethod = model.getSortMethod();
@@ -181,6 +182,8 @@ public class FindMaximaController extends ImageJController
 		int options = 0;
 		if (minimumAboveSaddle)
 			options |= FindFoci.OPTION_MINIMUM_ABOVE_SADDLE;
+		if (connectedAboveSaddle)
+			options |= FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		if (statisticsMode.equalsIgnoreCase("inside"))
 			options |= FindFoci.OPTION_STATS_INSIDE;
 		else if (statisticsMode.equalsIgnoreCase("outside"))
