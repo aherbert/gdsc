@@ -1455,6 +1455,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 				// Do nothing 
 		}
 	}
+	@SuppressWarnings("rawtypes")
 	protected void initDataBindings() {
 		BeanProperty<FindFociModel, Double> findFociBeanProperty_1 = BeanProperty.create("searchParameter");
 		BeanProperty<JSlider, Integer> jSliderBeanProperty_1 = BeanProperty.create("value");
