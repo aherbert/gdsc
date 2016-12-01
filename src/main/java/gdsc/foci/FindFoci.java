@@ -2511,11 +2511,12 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 				while (!finished)
 				{
 					final Job job = jobs.take();
-					if (job == null || finished)
+					if (job == null || job.batchId == 0)
+						// Signal to end
 						break;
-					if (job.batchId == 0)
-						break;
-					run(job.filename, job.batchId);
+					// Only run jobs when not finished. This allows the queue to be emptied.
+					if (!finished)
+						run(job.filename, job.batchId);
 				}
 			}
 			catch (InterruptedException e)
@@ -2614,9 +2615,9 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			int batchId = 0;
 			for (String image : imageList)
 			{
-				putJob(jobs, image, ++batchId);
 				if (Utils.isInterrupted())
 					break;
+				putJob(jobs, image, ++batchId);
 			}
 			sortResults = batchId > 1;
 			// Finish all the worker threads by passing in a null job
