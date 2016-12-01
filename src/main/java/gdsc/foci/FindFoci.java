@@ -2508,7 +2508,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		{
 			try
 			{
-				while (!finished)
+				while (true)
 				{
 					final Job job = jobs.take();
 					if (job == null || job.batchId == 0)
