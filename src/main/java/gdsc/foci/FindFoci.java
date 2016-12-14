@@ -1578,7 +1578,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 				else if (resultsArray.isEmpty())
 					// Record an empty record for batch processing
 					writeEmptyBatchResultsFile(batchResults);
-
+				
 				writeBatchResultsFile(batchPrefix, batchResults);
 			}
 			out.close();
@@ -1648,7 +1648,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			writeParam(out, "Search_parameter", Double.toString(searchParameter));
 			writeParam(out, "Minimum_size", Integer.toString(minSize));
 			writeParam(out, "Minimum_above_saddle", ((options & OPTION_MINIMUM_ABOVE_SADDLE) != 0) ? "true" : "false");
-			writeParam(out, "Connected_above_saddle", ((options & OPTION_CONTIGUOUS_ABOVE_SADDLE) != 0) ? "true" : "false");
+			writeParam(out, "Connected_above_saddle",
+					((options & OPTION_CONTIGUOUS_ABOVE_SADDLE) != 0) ? "true" : "false");
 			writeParam(out, "Minimum_peak_height", peakMethods[peakMethod]);
 			writeParam(out, "Peak_parameter", Double.toString(peakParameter));
 			writeParam(out, "Sort_method", sortIndexMethods[sortIndex]);
@@ -2205,12 +2206,34 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 	}
 
-	private String createResultsHeader(String newLine)
+	private static String createResultsHeader(String newLine)
 	{
 		return createResultsHeader(null, null, null, newLine);
 	}
 
-	private String createResultsHeader(ImagePlus imp, int[] dimension, FindFociStatistics stats, String newLine)
+	/**
+	 * Hold the header tab count in the standard header
+	 */
+	private static int nTabs;
+
+	/**
+	 * Gets the header tab count in the standard header.
+	 *
+	 * @return the header tab count
+	 */
+	private static synchronized int getHeaderTabCount()
+	{
+		if (nTabs == 0)
+		{
+			String header = createResultsHeader(null, null, null, newLine);
+			for (int i = 0; i < header.length(); i++)
+				if (header.charAt(i) == '\t')
+					nTabs++;
+		}
+		return nTabs;
+	}
+
+	private static String createResultsHeader(ImagePlus imp, int[] dimension, FindFociStatistics stats, String newLine)
 	{
 		final StringBuilder sb = new StringBuilder();
 		if (imp != null)
@@ -2383,21 +2406,29 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	private String buildEmptyObjectResultEntry(int objectId, int objectState)
 	{
 		final StringBuilder sb = new StringBuilder();
-		// Note: The entry prefix has a tab at the end, so write field then tab
-		for (int i = 0; i < 20; i++)
+		// We subtract 1 since we want to add the objectId and another tab
+		int nTabs = getHeaderTabCount() - 1;
+		for (int i = 0; i < nTabs; i++)
 			sb.append(emptyField).append('\t');
-		sb.append(objectId).append('\t').append(objectState);
-		sb.append(newLine);
+		sb.append(objectId).append('\t');
+		sb.append(objectState).append(newLine);
 		return sb.toString();
 	}
 
+	/**
+	 * Builds the empty result entry. This can be used to build
+	 *
+	 * @param extraTabs
+	 *            the extra tabs
+	 * @return the string
+	 */
 	private synchronized String buildEmptyResultEntry()
 	{
 		if (emptyEntry == null)
 		{
 			final StringBuilder sb = new StringBuilder();
-			// Note: The entry prefix has a tab at the end, so write field then tab
-			for (int i = 0; i < 21; i++)
+			int nTabs = getHeaderTabCount();
+			for (int i = 0; i < nTabs; i++)
 				sb.append(emptyField).append('\t');
 			sb.append(emptyField).append(newLine);
 			emptyEntry = sb.toString();
