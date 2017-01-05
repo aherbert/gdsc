@@ -50,6 +50,7 @@ import gdsc.colocalisation.cda.engine.CDAEngine;
 import gdsc.colocalisation.cda.engine.CalculationResult;
 import gdsc.core.ij.Utils;
 import gdsc.core.utils.Random;
+import gdsc.core.utils.StoredData;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -1669,8 +1670,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			sum[d] += values[i];
 			count[d]++;
 		}
-		ArrayList<Double> avDistances = new ArrayList<Double>(n);
-		ArrayList<Double> avValues = new ArrayList<Double>(n);
+		StoredData avDistances = new StoredData(n);
+		StoredData avValues = new StoredData(n);
 		for (int i = (subRandomSamples) ? 0 : 1; i < n; i++)
 		{
 			if (count[i] > 0)
@@ -1681,17 +1682,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		}
 
 		plot.setColor(color);
-		plot.addPoints(toArray(avDistances), toArray(avValues), Plot.LINE);
-	}
-
-	private double[] toArray(ArrayList<Double> values)
-	{
-		double[] array = new double[values.size()];
-		for (int i = 0; i < array.length; i++)
-		{
-			array[i] = values.get(i);
-		}
-		return array;
+		plot.addPoints(avDistances.getValues(), avValues.getValues(), Plot.LINE);
 	}
 
 	private StringBuffer addField(StringBuffer buffer, Object field)

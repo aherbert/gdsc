@@ -21,6 +21,7 @@ import gdsc.core.match.Coordinate;
 import gdsc.core.match.MatchCalculator;
 import gdsc.core.match.MatchResult;
 import gdsc.core.threshold.AutoThreshold;
+import gdsc.core.utils.StoredData;
 import gdsc.core.utils.UnicodeReader;
 import ij.IJ;
 import ij.ImagePlus;
@@ -1732,7 +1733,7 @@ public class FindFociOptimiser
 	private double[] splitValues(String text)
 	{
 		String[] tokens = text.split(";|,|:");
-		ArrayList<Double> list = new ArrayList<Double>(tokens.length);
+		StoredData list = new StoredData(tokens.length);
 		for (String token : tokens)
 		{
 			try
@@ -1744,13 +1745,7 @@ public class FindFociOptimiser
 			}
 		}
 
-		if (list.size() == 0)
-			return new double[] { 0 };
-
-		double[] array = new double[list.size()];
-		for (int i = 0; i < array.length; i++)
-			array[i] = list.get(i);
-		return array;
+		return list.getValues();
 	}
 
 	private double[] createBackgroundLimits()
