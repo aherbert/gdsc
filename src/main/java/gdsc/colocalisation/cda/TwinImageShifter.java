@@ -180,31 +180,27 @@ public class TwinImageShifter
 			// Find all the locations in this strip that need to be shifted
 			int[] sites = horizontalROI[y];
 
-			if (sites.length == 0 )
+			if (sites.length == 0)
 			{
 				continue;
 			}
 
 			// Extract the values 
-			int i = 0;
 			int index = y * resultIP.getWidth();
-			for (int x : sites)
+			for (int i = 0; i < sites.length; i++)
 			{
-				t1[i] = resultIP.get(index + x);
-				t2[i] = result2IP.get(index + x);
-				i++;
+				t1[i] = resultIP.get(index + sites[i]);
+				t2[i] = result2IP.get(index + sites[i]);
 			}
 
 			// Perform a shift
 			rotateArrays(t1, t2, t3, t4, xShift, sites.length);
 
 			// Write back the values
-			i = 0;
-			for (int x : sites)
+			for (int i = 0; i < sites.length; i++)
 			{
-				resultIP.set(index + x, t3[i]);
-				result2IP.set(index + x, t4[i]);
-				i++;
+				resultIP.set(index + sites[i], t3[i]);
+				result2IP.set(index + sites[i], t4[i]);
 			}
 		}
 	}
@@ -216,32 +212,28 @@ public class TwinImageShifter
 			// Find all the locations in this strip that need to be shifted
 			int[] sites = verticalROI[x];
 
-			if (sites.length == 0 )
+			if (sites.length == 0)
 			{
 				continue;
 			}
 
 			// Extract the values 
-			int i = 0;
-			for (int y : sites)
+			for (int i = 0; i < sites.length; i++)
 			{
-				int index = y * resultIP.getWidth() + x;
+				int index = sites[i] * resultIP.getWidth() + x;
 				t1[i] = resultIP.get(index);
 				t2[i] = result2IP.get(index);
-				i++;
 			}
 
 			// Perform a shift
 			rotateArrays(t1, t2, t3, t4, yShift, sites.length);
 
 			// Write back the values
-			i = 0;
-			for (int y : sites)
+			for (int i = 0; i < sites.length; i++)
 			{
-				int index = y * resultIP.getWidth() + x;
+				int index = sites[i] * resultIP.getWidth() + x;
 				resultIP.set(index, t3[i]);
 				result2IP.set(index, t4[i]);
-				i++;
 			}
 		}
 	}
