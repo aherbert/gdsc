@@ -1,5 +1,7 @@
 package gdsc.colocalisation.cda;
 
+import java.util.Arrays;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -15,8 +17,6 @@ package gdsc.colocalisation.cda;
 
 import ij.process.ImageProcessor;
 
-import java.util.ArrayList;
-
 public class TwinImageShifter
 {
 	private ImageProcessor imageIP;
@@ -28,8 +28,8 @@ public class TwinImageShifter
 	private int yShift = 0;
 	private int w;
 	private int h;
-	private ArrayList<ArrayList<Integer>> horizontalROI;
-	private ArrayList<ArrayList<Integer>> verticalROI;
+	private int[][] horizontalROI;
+	private int[][] verticalROI;
 
 	// Used as working space
 	private int[] t1 = null, t2 = null, t3 = null, t4 = null;
@@ -68,75 +68,89 @@ public class TwinImageShifter
 
 	private void buildHorizontalROIArrays()
 	{
-		this.horizontalROI = new ArrayList<ArrayList<Integer>>(h);
+		this.horizontalROI = new int[h][];
 
-		for (int y = 0; y < h; ++y)
+		int[] sites = new int[w];
+
+		if (roiIP != null)
 		{
-			ArrayList<Integer> sites = new ArrayList<Integer>();
-
-			if (roiIP != null)
+			for (int y = 0; y < h; ++y)
 			{
+				int size = 0;
 				for (int x = 0, index = y * roiIP.getWidth(); x < w; x++, index++)
 				{
 					if (roiIP.get(index) != 0)
 					{
-						sites.add(x);
+						sites[size++] = x;
 					}
 				}
+
+				// This is the array for height position 'y'
+				horizontalROI[y] = Arrays.copyOf(sites, size);
 			}
-			else
+		}
+		else
+		{
+			for (int x = 0; x < w; x++)
 			{
-				for (int x = 0; x < w; x++)
-				{
-					sites.add(x);
-				}
+				sites[x] = x;
 			}
 
-			// This is the array for height position 'y'
-			horizontalROI.add(sites);
+			for (int y = 0; y < h; ++y)
+			{
+				// This is the array for height position 'y'
+				horizontalROI[y] = sites;
+			}
 		}
 	}
 
 	private void buildVerticalROIArrays()
 	{
-		this.verticalROI = new ArrayList<ArrayList<Integer>>(w);
+		this.verticalROI = new int[w][];
 
-		for (int x = 0; x < w; ++x)
+		int[] sites = new int[h];
+
+		if (roiIP != null)
 		{
-			ArrayList<Integer> sites = new ArrayList<Integer>();
-
-			if (roiIP != null)
+			for (int x = 0; x < w; ++x)
 			{
+				int size = 0;
 				for (int y = 0; y < h; ++y)
 				{
 					if (roiIP.get(x, y) != 0)
 					{
-						sites.add(y);
+						sites[size++] = y;
 					}
 				}
+
+				// This is the array for width position 'x'
+				verticalROI[x] = Arrays.copyOf(sites, size);
 			}
-			else
+		}
+		else
+		{
+			for (int y = 0; y < h; ++y)
 			{
-				for (int y = 0; y < h; ++y)
-				{
-					sites.add(y);
-				}
+				sites[y] = y;
 			}
 
-			// This is the array for width position 'x'
-			verticalROI.add(sites);
+			for (int x = 0; x < w; ++x)
+			{
+				// This is the array for width position 'x'
+				verticalROI[x] = sites;
+			}
 		}
 	}
 
 	private void createTempArrays()
 	{
 		int max = 0;
-		for (ArrayList<Integer> list : horizontalROI)
-			if (max < list.size())
-				max = list.size();
-		for (ArrayList<Integer> list : verticalROI)
-			if (max < list.size())
-				max = list.size();
+		for (int[] list : horizontalROI)
+			if (max < list.length)
+				max = list.length;
+		for (int[] list : verticalROI)
+			if (max < list.length)
+				max = list.length;
 		t1 = new int[max];
 		t2 = new int[max];
 		t3 = new int[max];
@@ -164,9 +178,9 @@ public class TwinImageShifter
 		for (int y = 0; y < h; ++y)
 		{
 			// Find all the locations in this strip that need to be shifted
-			ArrayList<Integer> sites = horizontalROI.get(y);
+			int[] sites = horizontalROI[y];
 
-			if (sites.isEmpty())
+			if (sites.length == 0 )
 			{
 				continue;
 			}
@@ -182,7 +196,7 @@ public class TwinImageShifter
 			}
 
 			// Perform a shift
-			rotateArrays(t1, t2, t3, t4, xShift, sites.size());
+			rotateArrays(t1, t2, t3, t4, xShift, sites.length);
 
 			// Write back the values
 			i = 0;
@@ -200,9 +214,9 @@ public class TwinImageShifter
 		for (int x = 0; x < w; ++x)
 		{
 			// Find all the locations in this strip that need to be shifted
-			ArrayList<Integer> sites = verticalROI.get(x);
+			int[] sites = verticalROI[x];
 
-			if (sites.isEmpty())
+			if (sites.length == 0 )
 			{
 				continue;
 			}
@@ -218,7 +232,7 @@ public class TwinImageShifter
 			}
 
 			// Perform a shift
-			rotateArrays(t1, t2, t3, t4, yShift, sites.size());
+			rotateArrays(t1, t2, t3, t4, yShift, sites.length);
 
 			// Write back the values
 			i = 0;
