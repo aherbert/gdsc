@@ -1173,7 +1173,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		double[] m2Values = new double[results.size()];
 		double[] rValues = new double[results.size()];
 
-		ArrayList<Integer> indexDistance = new ArrayList<Integer>();
+		int[] indexDistance = new int[m1Values.length];
+		int size = 0;
 
 		for (int i = 0; i < m1Values.length; ++i)
 		{
@@ -1187,20 +1188,20 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			// All results over the random distance threshold will be used for the significance calculation
 			if (distances[i] > randomRadius)
 			{
-				indexDistance.add(i);
+				indexDistance[size++] = i;
 			}
 		}
 
 		// Extract the results above the random threshold
-		float[] m1ValuesForRandom = new float[indexDistance.size()];
-		float[] m2ValuesForRandom = new float[indexDistance.size()];
-		float[] rValuesForRandom = new float[indexDistance.size()];
+		float[] m1ValuesForRandom = new float[size];
+		float[] m2ValuesForRandom = new float[size];
+		float[] rValuesForRandom = new float[size];
 
 		for (int i = 0; i < m1ValuesForRandom.length; ++i)
 		{
-			m1ValuesForRandom[i] = (float) m1Values[indexDistance.get(i)];
-			m2ValuesForRandom[i] = (float) m2Values[indexDistance.get(i)];
-			rValuesForRandom[i] = (float) rValues[indexDistance.get(i)];
+			m1ValuesForRandom[i] = (float) m1Values[indexDistance[i]];
+			m2ValuesForRandom[i] = (float) m2Values[indexDistance[i]];
+			rValuesForRandom[i] = (float) rValues[indexDistance[i]];
 		}
 
 		// Sort the 'random' result arrays
