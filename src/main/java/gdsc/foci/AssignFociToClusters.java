@@ -25,7 +25,7 @@ import ij.gui.Roi;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ImageProcessor;
-import ij.process.LUT;
+import ij.process.LUTHelper;
 import ij.text.TextWindow;
 
 import java.awt.AWTEvent;
@@ -254,7 +254,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 					ip.set(i, map[ip.get(i)]);
 			}
 
-			ip.setColorModel(Utils.getColorModel());
+			ip.setColorModel(LUTHelper.getColorModel());
 			ip.setMinAndMax(0, filteredClusters.size());
 
 			labelClusters(imp);
@@ -536,7 +536,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			// Set a colour table if this is a new image. Otherwise the existing one is preserved.
 			ImagePlus clusterImp = WindowManager.getImage(TITLE);
 			if (clusterImp == null)
-				newStack.setColorModel(Utils.getColorModel());
+				newStack.setColorModel(LUTHelper.getColorModel());
 
 			clusterImp = Utils.display(TITLE, newStack);
 
