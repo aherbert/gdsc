@@ -3130,7 +3130,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 		final int[] xyz = new int[3];
 
-		if (maxx == 1)
+		if (is2D())
 		{
 			do
 			{
@@ -6092,7 +6092,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		int id = 0;
 		int[] objectState = new int[10];
 		// Label for 2D/3D processing
-		final boolean is2D = (maskImage.length == maxx_maxy);
+		final boolean is2D = is2D();
 
 		int[] pList = new int[100];
 
