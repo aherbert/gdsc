@@ -20,6 +20,7 @@ import gdsc.core.match.Coordinate;
 import gdsc.core.match.MatchCalculator;
 import gdsc.core.match.MatchResult;
 import gdsc.core.match.PointPair;
+import gnu.trove.set.hash.TIntHashSet;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -43,13 +44,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * Compares the coordinates in two files and computes the match statistics.
@@ -414,19 +411,18 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		return false;
 	}
 
-	private Collection<Integer> getTimepoints(TimeValuedPoint[] points, TimeValuedPoint[] points2)
+	private int[] getTimepoints(TimeValuedPoint[] points, TimeValuedPoint[] points2)
 	{
-		Set<Integer> set;
-		if (showPairs)
-			set = new TreeSet<Integer>();
-		else
-			// The order is not critical so use a HashSet
-			set = new HashSet<Integer>();
+		TIntHashSet set = new TIntHashSet();
 		for (TimeValuedPoint p : points)
 			set.add(p.getTime());
 		for (TimeValuedPoint p : points2)
 			set.add(p.getTime());
-		return set;
+		int[] data = set.toArray();
+		if (showPairs)
+			// Sort so the table order is nice
+			Arrays.sort(data);
+		return data;
 	}
 
 	private Coordinate[] getCoordinates(TimeValuedPoint[] points, int t)
