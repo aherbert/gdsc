@@ -423,7 +423,7 @@ public class SpotDistance implements PlugIn
 		if (processFrames)
 		{
 			frames = new int[imp.getNFrames()];
-			for (int i = 0; i < imp.getNFrames(); i++)
+			for (int i = 0; i < frames.length; i++)
 				frames[i] = i + 1;
 		}
 		else
