@@ -743,6 +743,7 @@ public class FindFociOptimiser
 			StopWatch sw0 = new StopWatch();
 			ImagePlus imp2 = ff.blur(imp, blur);
 			sw0.stop();
+			//System.out.printf("0");
 
 			// Iterate over the options
 			int thresholdMethodIndex = 0;
@@ -760,6 +761,7 @@ public class FindFociOptimiser
 					FindFociInitResults initResults = ff.findMaximaInit(imp, imp2, mask, backgroundMethodArray[b],
 							thresholdMethod, statisticsMode);
 					sw1.stop();
+					//System.out.printf("1");
 					if (initResults == null)
 						return null;
 					//Object[] clonedInitArray = null;
@@ -785,6 +787,7 @@ public class FindFociOptimiser
 										backgroundMethodArray[b], thisBackgroundParameter, searchMethodArray[s],
 										thisSearchParameter);
 								sw2.stop();
+								//System.out.printf("2");
 								if (searchArray == null)
 									return null;
 								FindFociInitResults mergeInitArray = null;
@@ -808,13 +811,16 @@ public class FindFociOptimiser
 									FindFociMergeTempResults mergePeakResults = ff.findMaximaMergePeak(searchInitArray,
 											searchArray, myPeakMethod, peakParameter);
 									sw3.stop();
+									//System.out.printf("3");
 
 									for (int minSize = myMinSizeMin; minSize <= myMinSizeMax; minSize += myMinSizeInterval)
 									{
 										StopWatch sw4 = sw3.create();
+										//System.out.printf(".");
 										FindFociMergeTempResults mergeSizeResults = ff
 												.findMaximaMergeSize(searchInitArray, mergePeakResults, minSize);
 										sw4.stop();
+										//System.out.printf("4");
 
 										for (int options : optionsArray)
 										{
@@ -823,6 +829,7 @@ public class FindFociOptimiser
 											FindFociMergeResults mergeArray = ff.findMaximaMergeFinal(mergeInitArray,
 													mergeSizeResults, minSize, options, blur);
 											sw5.stop();
+											//System.out.printf("5");
 											if (mergeArray == null)
 												return null;
 
@@ -838,6 +845,7 @@ public class FindFociOptimiser
 																mergeInitArray, mergeArray, myMaxPeaks, sortMethod,
 																centreMethodArray[c], centreParameter);
 														final long time = sw6.stop();
+														//System.out.printf("6");
 
 														counter.increment();
 
@@ -854,8 +862,16 @@ public class FindFociOptimiser
 																	peakResults.results, dThreshold, runOptions, time,
 																	myBeta, is3D);
 															results.add(result);
+															//System.out.printf("%s %d\n", result.getParameters(), time);
 														}
+														else
+														{
+															//System.out.printf("\n");
+														}
+														
 														id++;
+														if (IJ.escapePressed())
+															return null;
 													}
 												}
 											}
@@ -2488,7 +2504,7 @@ public class FindFociOptimiser
 	private static AssignedPoint[] loadPointsFromFile(ImagePlus imp)
 	{
 		FileInfo fileInfo = imp.getOriginalFileInfo();
-		if (fileInfo.directory != null)
+		if (fileInfo != null && fileInfo.directory != null)
 		{
 			String title = imp.getTitle();
 			int index = title.lastIndexOf('.');
@@ -2987,31 +3003,33 @@ public class FindFociOptimiser
 	{
 		final int total;
 		final int progressSize;
-		int last = 0;
+		int next = 0;
 
 		public Counter(int total)
 		{
 			this.total = total;
 			this.progressSize = Math.max(1, total / 400);
+			next = progressSize;
+			IJ.showProgress(0);
 		}
 
 		public void increment()
 		{
-			if (incrementAndGet() > last)
+			// Don't show progress all the time
+			if (incrementAndGet() >= next)
 			{
-				// Don't show progress all the time
-				last = get() + progressSize;
 				IJ.showProgress(get(), total);
+				next = get() + progressSize;
 			}
 		}
 
 		public void increment(int delta)
 		{
-			if (addAndGet(delta) > last)
+			// Don't show progress all the time
+			if (addAndGet(delta) >= next)
 			{
-				// Don't show progress all the time
-				last = get() + progressSize;
 				IJ.showProgress(get(), total);
+				next = get() + progressSize;
 			}
 		}
 
