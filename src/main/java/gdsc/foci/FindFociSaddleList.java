@@ -3,6 +3,8 @@ package gdsc.foci;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import gnu.trove.set.hash.TIntHashSet;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -25,10 +27,19 @@ public class FindFociSaddleList implements Cloneable
 	{
 		public int compare(FindFociSaddle o1, FindFociSaddle o2)
 		{
-			final int result = o1.id - o2.id;
-			if (result != 0)
-				return result;
-			return o1.order - o2.order;
+			if (o1.id < o2.id)
+				return -1;
+			if (o1.id > o2.id)
+				return 1;
+			if (o1.order < o2.order)
+				return -1;
+			if (o1.order > o2.order)
+				return 1;
+			return 0;
+			//			final int result = o1.id - o2.id;
+			//			if (result != 0)
+			//				return result;
+			//			return o1.order - o2.order;
 		}
 	}
 
@@ -36,7 +47,12 @@ public class FindFociSaddleList implements Cloneable
 	{
 		public int compare(FindFociSaddle o1, FindFociSaddle o2)
 		{
-			return o1.order - o2.order;
+			if (o1.order < o2.order)
+				return -1;
+			if (o1.order > o2.order)
+				return 1;
+			return 0;
+			//return o1.order - o2.order;
 		}
 	}
 
@@ -111,7 +127,6 @@ public class FindFociSaddleList implements Cloneable
 		clear(0);
 	}
 
-
 	/**
 	 * Free memory (Set size to zero and the list to null)
 	 */
@@ -120,7 +135,7 @@ public class FindFociSaddleList implements Cloneable
 		size = 0;
 		list = null;
 	}
-	
+
 	/**
 	 * Clear the list from the given position but do not reduce the capacity
 	 * 
@@ -209,7 +224,7 @@ public class FindFociSaddleList implements Cloneable
 	 */
 	public void sort()
 	{
-		if (size < 0)
+		if (size < 2)
 			return;
 		Arrays.sort(list, 0, size);
 	}
@@ -221,7 +236,7 @@ public class FindFociSaddleList implements Cloneable
 	 */
 	public void sort(Comparator<FindFociSaddle> saddleComparator)
 	{
-		if (size < 0)
+		if (size < 2)
 			return;
 		Arrays.sort(list, 0, size, saddleComparator);
 	}
@@ -254,6 +269,27 @@ public class FindFociSaddleList implements Cloneable
 			sort(orderSaddleComparator);
 		else
 			sort();
+	}
+
+	/**
+	 * Remove duplicate Ids from the list and do a default sort
+	 * 
+	 * @param maintain
+	 *            Maintain the current order, otherwise do default sort
+	 */
+	public void removeDuplicates()
+	{
+		if (size < 2)
+			return;
+		TIntHashSet set = new TIntHashSet(size);
+		int newSize = 0;
+		for (int i = 0; i < size; i++)
+		{
+			if (set.add(list[i].id))
+				list[newSize++] = list[i];
+		}
+		clear(newSize);
+		sort();
 	}
 
 	/**
