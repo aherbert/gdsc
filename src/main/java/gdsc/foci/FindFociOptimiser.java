@@ -239,14 +239,32 @@ public class FindFociOptimiser
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
-		if (arg.equals("frame"))
+		try
 		{
-			showOptimiserWindow();
+			if (arg.equals("frame"))
+			{
+				showOptimiserWindow();
+			}
+			else
+			{
+				ImagePlus imp = (arg.equals("multi")) ? null : WindowManager.getCurrentImage();
+				run(imp);
+			}
 		}
-		else
+		catch (NoClassDefFoundError e) {
+			// Because we have no underscore '_' in the class name ImageJ will not print
+			// the error so handle it here
+			IJ.handleException(e);
+		}
+		// Extra debugging ...
+		catch (Error t)
 		{
-			ImagePlus imp = (arg.equals("multi")) ? null : WindowManager.getCurrentImage();
-			run(imp);
+			IJ.handleException(t);			
+			throw t;
+		}
+		catch (Throwable t)
+		{
+			IJ.handleException(t);
 		}
 	}
 
@@ -868,7 +886,7 @@ public class FindFociOptimiser
 														{
 															//System.out.printf("\n");
 														}
-														
+
 														id++;
 														if (IJ.escapePressed())
 															return null;
