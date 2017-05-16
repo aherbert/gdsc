@@ -16,6 +16,8 @@ import gdsc.UsageTracker;
  *---------------------------------------------------------------------------*/
 
 import gdsc.foci.gui.OptimiserView;
+import gnu.trove.set.hash.TDoubleHashSet;
+import gnu.trove.set.hash.TIntHashSet;
 import gdsc.core.ij.Utils;
 import gdsc.core.match.Coordinate;
 import gdsc.core.match.MatchCalculator;
@@ -251,7 +253,8 @@ public class FindFociOptimiser
 				run(imp);
 			}
 		}
-		catch (NoClassDefFoundError e) {
+		catch (NoClassDefFoundError e)
+		{
 			// Because we have no underscore '_' in the class name ImageJ will not print
 			// the error so handle it here
 			IJ.handleException(e);
@@ -259,7 +262,7 @@ public class FindFociOptimiser
 		// Extra debugging ...
 		catch (Error t)
 		{
-			IJ.handleException(t);			
+			IJ.handleException(t);
 		}
 		catch (Throwable t)
 		{
@@ -1285,8 +1288,6 @@ public class FindFociOptimiser
 			}
 		}
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
-		
 		// Get the optimisation search settings
 		GenericDialog gd = new GenericDialog(TITLE);
 
@@ -1396,9 +1397,7 @@ public class FindFociOptimiser
 				gd.setBackground(new Color(238, 238, 238));
 		}
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		gd.showDialog();
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		if (gd.wasCanceled())
 		{
 			Recorder.record = recorderOn; // Reset the recorder
@@ -1406,7 +1405,6 @@ public class FindFociOptimiser
 		}
 
 		// Ignore the settings field
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		gd.getNextChoiceIndex();
 
 		if (!multiMode)
@@ -1441,13 +1439,10 @@ public class FindFociOptimiser
 			myShowScoreImages = gd.getNextBoolean();
 			myResultFile = gd.getNextString();
 		}
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		Recorder.record = recorderOn; // Reset the recorder
 
 		// This only works if we do not attach as a dialogListener to the GenericDialog
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		optimiserCommandOptions = Recorder.getCommandOptions();
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 
 		// Validate the chosen parameters
 		if (myBackgroundStdDevAboveMean && myBackgroundAbsolute)
@@ -1465,12 +1460,10 @@ public class FindFociOptimiser
 			IJ.error("Require at least one background search method");
 			return false;
 		}
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 
 		// Check which options to optimise
 		optionsArray = createOptionsArray();
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		parseThresholdMethods();
 		if (myBackgroundAuto && thresholdMethods.length == 0)
 		{
@@ -1478,10 +1471,8 @@ public class FindFociOptimiser
 			return false;
 		}
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		parseStatisticsModes();
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		backgroundMethodArray = createBackgroundArray();
 		parseBackgroundLimits();
 		if (myBackgroundParameterMax < myBackgroundParameterMin)
@@ -1491,7 +1482,6 @@ public class FindFociOptimiser
 		}
 		myBackgroundParameterMinArray = createBackgroundLimits();
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		searchMethodArray = createSearchArray();
 		parseSearchLimits();
 		if (mySearchParameterMax < mySearchParameterMin)
@@ -1501,7 +1491,6 @@ public class FindFociOptimiser
 		}
 		mySearchParameterMinArray = createSearchLimits();
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		parseMinSizeLimits();
 		if (myMinSizeMax < myMinSizeMin)
 		{
@@ -1509,7 +1498,6 @@ public class FindFociOptimiser
 			return false;
 		}
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		parsePeakParameterLimits();
 		if (myPeakParameterMax < myPeakParameterMin)
 		{
@@ -1524,10 +1512,8 @@ public class FindFociOptimiser
 			return false;
 		}
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		blurArray = createBlurArray();
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		centreMethodArray = createCentreArray();
 		parseCentreLimits();
 		if (myCentreParameterMax < myCentreParameterMin)
@@ -1539,7 +1525,6 @@ public class FindFociOptimiser
 		myCentreParameterMaxArray = createCentreMaxLimits();
 		myCentreParameterIntervalArray = createCentreIntervals();
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		if (!multiMode)
 		{
 			ImagePlus mask = WindowManager.getImage(myMaskImage);
@@ -1549,13 +1534,11 @@ public class FindFociOptimiser
 			}
 		}
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		if (myMatchSearchMethod == 1 && myMatchSearchDistance < 1)
 		{
 			IJ.log("WARNING: Absolute peak match distance is less than 1 pixel: " + myMatchSearchDistance);
 		}
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		// Count the number of options
 		combinations = countSteps();
 		if (combinations >= STEP_LIMIT)
@@ -1564,13 +1547,10 @@ public class FindFociOptimiser
 			return false;
 		}
 
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE,
 				combinations + " combinations. Do you wish to proceed?");
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		if (!d.yesPressed())
 			return false;
-		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 
 		return true;
 	}
@@ -1766,24 +1746,55 @@ public class FindFociOptimiser
 	private void parseBackgroundLimits()
 	{
 		double[] values = splitValues(myBackgroundParameter);
-
+		values = checkValuesTriplet("Background parameter", values, 0, 1);
 		myBackgroundParameterMin = values[0];
-		if (values.length == 3)
+		myBackgroundParameterMax = values[1];
+		myBackgroundParameterInterval = values[2];
+	}
+
+	private double[] checkValuesTriplet(String name, double[] values, double defaultMin, double defaultInterval)
+	{
+		if (values.length == 0)
 		{
-			myBackgroundParameterMax = values[1];
-			myBackgroundParameterInterval = values[2];
+			Utils.log("%s Warning : %s : No min:max:increment, setting to default minimum %s", TITLE, name,
+					Utils.rounded(defaultMin));
+			return new double[] { defaultMin, defaultMin, defaultInterval };
 		}
-		else
+		double min, max, interval;
+
+		min = values[0];
+		if (min < defaultMin)
 		{
-			myBackgroundParameterMax = values[0];
-			myBackgroundParameterInterval = 1;
+			Utils.log("%s Warning : %s : Minimum below default (%f < %s), setting to default", TITLE, name, min,
+					Utils.rounded(defaultMin));
+			min = defaultMin;
 		}
 
-		if (myBackgroundParameterInterval < 0)
-			myBackgroundParameterInterval = -myBackgroundParameterInterval;
+		max = min;
+		interval = defaultInterval;
+		if (values.length > 1)
+		{
+			max = values[1];
+			if (max < min)
+			{
+				Utils.log("%s Warning : %s : Maximum below minimum (%f < %f), setting to minimum", TITLE, name, max,
+						min);
+				max = min;
+			}
 
-		while (myBackgroundParameterMin < 0)
-			myBackgroundParameterMin += myBackgroundParameterInterval;
+			if (values.length > 2)
+			{
+				interval = values[2];
+				if (interval <= 0)
+				{
+					Utils.log("%s Warning : %s : Interval is not strictly positive (%f), setting to default (%s)",
+							TITLE, name, interval, Utils.rounded(defaultInterval));
+					interval = defaultInterval;
+				}
+			}
+		}
+
+		return new double[] { min, max, interval };
 	}
 
 	private double[] splitValues(String text)
@@ -1860,24 +1871,10 @@ public class FindFociOptimiser
 	private void parseSearchLimits()
 	{
 		double[] values = splitValues(mySearchParameter);
-
+		values = checkValuesTriplet("Search parameter", values, 0, 1);
 		mySearchParameterMin = values[0];
-		if (values.length == 3)
-		{
-			mySearchParameterMax = values[1];
-			mySearchParameterInterval = values[2];
-		}
-		else
-		{
-			mySearchParameterMax = values[0];
-			mySearchParameterInterval = 1;
-		}
-
-		if (mySearchParameterInterval < 0)
-			mySearchParameterInterval = -mySearchParameterInterval;
-
-		while (mySearchParameterMin < 0)
-			mySearchParameterMin += mySearchParameterInterval;
+		mySearchParameterMax = values[1];
+		mySearchParameterInterval = values[2];
 	}
 
 	private double[] createSearchLimits()
@@ -1903,62 +1900,56 @@ public class FindFociOptimiser
 	private void parseMinSizeLimits()
 	{
 		double[] values = splitValues(myMinSizeParameter);
-
+		values = checkValuesTriplet("Min size parameter", values, 1, 1);
 		myMinSizeMin = (int) values[0];
-		if (values.length == 3)
-		{
-			myMinSizeMax = (int) values[1];
-			myMinSizeInterval = (int) values[2];
-		}
-		else
-		{
-			myMinSizeMax = (int) values[0];
-			myMinSizeInterval = 1;
-		}
-
-		if (myMinSizeInterval < 1)
-			myMinSizeInterval = -myMinSizeInterval;
-
-		// The minimum size should not be zero (this would not be a peak)
-		while (myMinSizeMin <= 0)
-			myMinSizeMin += myMinSizeInterval;
+		myMinSizeMax = (int) values[1];
+		myMinSizeInterval = (int) values[2];
 	}
 
 	private void parsePeakParameterLimits()
 	{
 		double[] values = splitValues(myPeakParameter);
-
+		values = checkValuesTriplet("Peak parameter", values, 0, 1);
 		myPeakParameterMin = values[0];
-		if (values.length == 3)
-		{
-			myPeakParameterMax = values[1];
-			myPeakParameterInterval = values[2];
-		}
-		else
-		{
-			myPeakParameterMax = values[0];
-			myPeakParameterInterval = 1;
-		}
-
-		if (myPeakParameterInterval < 0)
-			myPeakParameterInterval = -myPeakParameterInterval;
-
-		while (myPeakParameterMin < 0)
-			myPeakParameterMin += myPeakParameterInterval;
+		myPeakParameterMax = values[1];
+		myPeakParameterInterval = values[2];
 	}
 
 	private int[] createSortArray()
 	{
 		double[] values = splitValues(mySortMethod);
-		int[] array = new int[values.length];
-		for (int i = 0; i < array.length; i++)
-			array[i] = (int) values[i];
+		TIntHashSet set = new TIntHashSet(values.length);
+		for (double v : values)
+		{
+			int method = (int) v;
+			if (method >= 0 && method <= FindFoci.SORT_AVERAGE_INTENSITY_MINUS_MIN)
+				set.add(method);
+		}
+		if (set.isEmpty())
+		{
+			Utils.log("%s Warning : Sort method : No values, setting to default %d", TITLE, FindFoci.SORT_INTENSITY);
+			return new int[] { FindFoci.SORT_INTENSITY }; // Default
+		}
+		int[] array = set.toArray();
+		Arrays.sort(array);
 		return array;
 	}
 
 	private double[] createBlurArray()
 	{
-		double[] array = splitValues(myGaussianBlur);
+		double[] values = splitValues(myGaussianBlur);
+		TDoubleHashSet set = new TDoubleHashSet(values.length);
+		for (double v : values)
+		{
+			if (v >= 0)
+				set.add(v);
+		}
+		if (set.isEmpty())
+		{
+			Utils.log("%s Warning : Gaussian blur : No values, setting to default 0", TITLE);
+			return new double[] { 0 }; // Default
+		}
+		double[] array = set.toArray();
 		Arrays.sort(array);
 		return array;
 	}
@@ -1966,35 +1957,31 @@ public class FindFociOptimiser
 	private int[] createCentreArray()
 	{
 		double[] values = splitValues(myCentreMethod);
-		if (values.length == 0)
-			return new int[] { FindFoci.CENTRE_MAX_VALUE_SEARCH }; // Default 
-		int[] array = new int[values.length];
-		for (int i = 0; i < array.length; i++)
-			array[i] = (int) values[i];
+		TIntHashSet set = new TIntHashSet(values.length);
+		for (double v : values)
+		{
+			int method = (int) v;
+			if (method >= 0 && method <= FindFoci.CENTRE_GAUSSIAN_ORIGINAL)
+				set.add(method);
+		}
+		if (set.isEmpty())
+		{
+			Utils.log("%s Warning : Centre method : No values, setting to default %d", TITLE,
+					FindFoci.CENTRE_MAX_VALUE_SEARCH);
+			return new int[] { FindFoci.CENTRE_MAX_VALUE_SEARCH }; // Default
+		}
+		int[] array = set.toArray();
+		Arrays.sort(array);
 		return array;
 	}
 
 	private void parseCentreLimits()
 	{
 		double[] values = splitValues(myCentreParameter);
-
+		values = checkValuesTriplet("Centre parameter", values, 0, 1);
 		myCentreParameterMin = (int) values[0];
-		if (values.length == 3)
-		{
-			myCentreParameterMax = (int) values[1];
-			myCentreParameterInterval = (int) values[2];
-		}
-		else
-		{
-			myCentreParameterMax = (int) values[0];
-			myCentreParameterInterval = 1;
-		}
-
-		if (myCentreParameterInterval < 1)
-			myCentreParameterInterval = -myCentreParameterInterval;
-
-		while (myCentreParameterMin < 0)
-			myCentreParameterMin += myCentreParameterInterval;
+		myCentreParameterMax = (int) values[1];
+		myCentreParameterInterval = (int) values[2];
 	}
 
 	private int[] createCentreMinLimits()
@@ -3582,8 +3569,8 @@ public class FindFociOptimiser
 			AutoThreshold.Method.OTSU.name, // Auto_threshold
 			"Both", // Statistics_mode
 			"0, 0.6, 0.2", // Search_parameter
-			"3, 9, 2", // Minimum_size
 			"0, 0.6, 0.2", // Peak_parameter
+			"3, 9, 2", // Minimum_size
 			"1", // Sort_method
 			"1", // Gaussian_blur
 			"0", // Centre_method
@@ -3606,8 +3593,8 @@ public class FindFociOptimiser
 			AutoThreshold.Method.OTSU.name, // Auto_threshold
 			"Both", // Statistics_mode
 			"0, 0.6, 0.2", // Search_parameter
-			"1, 9, 2", // Minimum_size
 			"0, 0.6, 0.2", // Peak_parameter
+			"1, 9, 2", // Minimum_size
 			"1", // Sort_method
 			"0, 0.5, 1", // Gaussian_blur
 			"0", // Centre_method
@@ -3631,8 +3618,8 @@ public class FindFociOptimiser
 			", "+AutoThreshold.Method.TRIANGLE.name, // Auto_threshold
 			"Both", // Statistics_mode
 			"0, 0.8, 0.1", // Search_parameter
-			"1, 9, 2", // Minimum_size
 			"0, 0.8, 0.1", // Peak_parameter
+			"1, 9, 2", // Minimum_size
 			"1", // Sort_method
 			"0, 0.5, 1, 2", // Gaussian_blur
 			"0", // Centre_method
