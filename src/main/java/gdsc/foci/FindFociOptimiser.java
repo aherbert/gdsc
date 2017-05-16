@@ -1285,6 +1285,8 @@ public class FindFociOptimiser
 			}
 		}
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
+		
 		// Get the optimisation search settings
 		GenericDialog gd = new GenericDialog(TITLE);
 
@@ -1394,7 +1396,9 @@ public class FindFociOptimiser
 				gd.setBackground(new Color(238, 238, 238));
 		}
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		gd.showDialog();
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		if (gd.wasCanceled())
 		{
 			Recorder.record = recorderOn; // Reset the recorder
@@ -1402,6 +1406,7 @@ public class FindFociOptimiser
 		}
 
 		// Ignore the settings field
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		gd.getNextChoiceIndex();
 
 		if (!multiMode)
@@ -1436,10 +1441,13 @@ public class FindFociOptimiser
 			myShowScoreImages = gd.getNextBoolean();
 			myResultFile = gd.getNextString();
 		}
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		Recorder.record = recorderOn; // Reset the recorder
 
 		// This only works if we do not attach as a dialogListener to the GenericDialog
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		optimiserCommandOptions = Recorder.getCommandOptions();
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 
 		// Validate the chosen parameters
 		if (myBackgroundStdDevAboveMean && myBackgroundAbsolute)
@@ -1457,10 +1465,12 @@ public class FindFociOptimiser
 			IJ.error("Require at least one background search method");
 			return false;
 		}
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 
 		// Check which options to optimise
 		optionsArray = createOptionsArray();
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		parseThresholdMethods();
 		if (myBackgroundAuto && thresholdMethods.length == 0)
 		{
@@ -1468,8 +1478,10 @@ public class FindFociOptimiser
 			return false;
 		}
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		parseStatisticsModes();
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		backgroundMethodArray = createBackgroundArray();
 		parseBackgroundLimits();
 		if (myBackgroundParameterMax < myBackgroundParameterMin)
@@ -1479,6 +1491,7 @@ public class FindFociOptimiser
 		}
 		myBackgroundParameterMinArray = createBackgroundLimits();
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		searchMethodArray = createSearchArray();
 		parseSearchLimits();
 		if (mySearchParameterMax < mySearchParameterMin)
@@ -1488,6 +1501,7 @@ public class FindFociOptimiser
 		}
 		mySearchParameterMinArray = createSearchLimits();
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		parseMinSizeLimits();
 		if (myMinSizeMax < myMinSizeMin)
 		{
@@ -1495,6 +1509,7 @@ public class FindFociOptimiser
 			return false;
 		}
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		parsePeakParameterLimits();
 		if (myPeakParameterMax < myPeakParameterMin)
 		{
@@ -1509,8 +1524,10 @@ public class FindFociOptimiser
 			return false;
 		}
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		blurArray = createBlurArray();
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		centreMethodArray = createCentreArray();
 		parseCentreLimits();
 		if (myCentreParameterMax < myCentreParameterMin)
@@ -1522,6 +1539,7 @@ public class FindFociOptimiser
 		myCentreParameterMaxArray = createCentreMaxLimits();
 		myCentreParameterIntervalArray = createCentreIntervals();
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		if (!multiMode)
 		{
 			ImagePlus mask = WindowManager.getImage(myMaskImage);
@@ -1531,11 +1549,13 @@ public class FindFociOptimiser
 			}
 		}
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		if (myMatchSearchMethod == 1 && myMatchSearchDistance < 1)
 		{
 			IJ.log("WARNING: Absolute peak match distance is less than 1 pixel: " + myMatchSearchDistance);
 		}
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		// Count the number of options
 		combinations = countSteps();
 		if (combinations >= STEP_LIMIT)
@@ -1544,10 +1564,13 @@ public class FindFociOptimiser
 			return false;
 		}
 
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE,
 				combinations + " combinations. Do you wish to proceed?");
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 		if (!d.yesPressed())
 			return false;
+		Utils.log("Line %d", new RuntimeException().getStackTrace()[0].getLineNumber());
 
 		return true;
 	}
