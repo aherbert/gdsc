@@ -260,7 +260,6 @@ public class FindFociOptimiser
 		catch (Error t)
 		{
 			IJ.handleException(t);			
-			throw t;
 		}
 		catch (Throwable t)
 		{
