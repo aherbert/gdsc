@@ -259,15 +259,6 @@ public class FindFociOptimiser
 			// the error so handle it here
 			IJ.handleException(e);
 		}
-		// Extra debugging ...
-		catch (Error t)
-		{
-			IJ.handleException(t);
-		}
-		catch (Throwable t)
-		{
-			IJ.handleException(t);
-		}
 	}
 
 	/**
