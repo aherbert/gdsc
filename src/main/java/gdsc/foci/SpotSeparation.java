@@ -457,8 +457,7 @@ public class SpotSeparation implements PlugInFilter
 		int maxId = resultsArray.size() + 1;
 		for (FindFociResult result : resultsArray)
 		{
-			points[i] = new AssignedPoint(result.x, result.y,
-					maxId - result.id);
+			points[i] = new AssignedPoint(result.x, result.y, maxId - result.id);
 			i++;
 		}
 		return points;
@@ -872,6 +871,7 @@ public class SpotSeparation implements PlugInFilter
 		return angle;
 	}
 
+	@SuppressWarnings("unchecked")
 	private final float[][] convertToFloat(List<float[]>... lists)
 	{
 		int size = 0;
