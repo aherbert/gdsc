@@ -37,7 +37,8 @@ import ij.process.ImageProcessor;
 import ij.process.LUT;
 
 /**
- * Create a mask from two thresholded source images.
+ * Create a colocated mask from two source images using the threshold or minimum display value from each image to define
+ * their image mask. The two image masks are combined using an AND or OR operator.
  */
 public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 {
