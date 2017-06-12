@@ -1,4 +1,4 @@
-package gdsc.threshold;
+package gdsc.colocalisation;
 
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
@@ -78,7 +78,7 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 		synchronized void clean()
 		{
 			dirty = false;
-			notify();
+			//notify(); Nothing listens for a clean state
 		}
 
 		/**
@@ -328,6 +328,7 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 
 		int[] index = new int[3];
 
+		StringBuilder sb = null;
 		for (int i = 0, j = 2; i < 3; i++, j++)
 		{
 			if (dimensions1[j] == dimensions2[j])
@@ -345,8 +346,17 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 				// Use the max dimension.
 				// The other image is only singular so getStackIndex will clip it appropriately.
 				index[i] = Math.max(dimensions1[j], dimensions2[j]);
+				// Log dimension mismatch
+				if (sb == null)
+					sb = new StringBuilder(TITLE).append(" Warning - Dimension mismatch:");
+				else
+					sb.append(",");
+				sb.append(" ").append(dimName[i]).append(" ").append(dimensions1[j]).append("!=")
+						.append(dimensions2[j]);
 			}
 		}
+		if (sb != null)
+			IJ.log(sb.toString());
 
 		// Get the thresholds
 		TDoubleArrayList list = new TDoubleArrayList(index[0] * 2);
