@@ -177,11 +177,33 @@ public class ApplyMask implements PlugInFilter
 			return;
 		}
 		
+		// Check other dimensions && log dimension mismatch
+		int[] dimensions1 = imp.getDimensions();
+		int[] dimensions2 = maskImp.getDimensions();
+
+		String[] dimName = { "C", "Z", "T" };
+
+		StringBuilder sb = null;
+		for (int i = 0, j = 2; i < 3; i++, j++)
+		{
+			if (dimensions1[j] != dimensions2[j])
+			{
+				// Log dimension mismatch
+				if (sb == null)
+					sb = new StringBuilder(TITLE).append(" Warning - Dimension mismatch:");
+				else
+					sb.append(",");
+				sb.append(" ").append(dimName[i]).append(" ").append(dimensions1[j]).append("!=")
+						.append(dimensions2[j]);
+			}
+		}
+		if (sb != null)
+			IJ.log(sb.toString());		
+		
 		// Apply the mask to the correct stack dimensions
-		int[] dimensions = imp.getDimensions();
-		int[] channels = createArray(dimensions[2]);
-		int[] slices = createArray(dimensions[3]);
-		int[] frames = createArray(dimensions[4]);
+		int[] channels = createArray(dimensions1[2]);
+		int[] slices = createArray(dimensions1[3]);
+		int[] frames = createArray(dimensions1[4]);
 		
 		ImageStack imageStack = imp.getStack();
 		ImageStack maskStack = maskImp.getStack();
