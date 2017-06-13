@@ -871,7 +871,6 @@ public class SpotSeparation implements PlugInFilter
 		return angle;
 	}
 
-	@SuppressWarnings("unchecked")
 	private final float[][] convertToFloat(List<float[]>... lists)
 	{
 		int size = 0;

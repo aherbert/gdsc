@@ -1,5 +1,17 @@
 package gdsc.foci;
 
+import java.awt.Color;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+
 import gdsc.UsageTracker;
 import gdsc.core.data.utils.Rounder;
 import gdsc.core.data.utils.RounderFactory;
@@ -19,9 +31,13 @@ import gdsc.core.data.utils.RounderFactory;
 
 import gdsc.core.ij.Utils;
 import gdsc.core.match.Coordinate;
-import gdsc.core.match.MatchResult;
 import gdsc.core.match.MatchCalculator;
+import gdsc.core.match.MatchResult;
 import gdsc.core.match.PointPair;
+import gdsc.core.utils.TurboList;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.procedure.TIntObjectProcedure;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -36,18 +52,6 @@ import ij.plugin.PlugIn;
 import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-
-import java.awt.Color;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Compares the ROI points on two images and computes the match statistics.
@@ -300,9 +304,9 @@ public class MatchPlugin implements PlugIn
 			imp2.saveRoi();
 			imp2.killRoi();
 			// Use colour blind friendly colours
-			addOverlay(imp2, TP, MATCH);
-			addOverlay(imp2, FN, UNMATCH1);
-			addOverlay(imp2, FP, UNMATCH2);
+			addOverlay(imp2, TP, MATCH, scaleX, scaleY, scaleZ);
+			addOverlay(imp2, FN, UNMATCH1, scaleX, scaleY, scaleZ);
+			addOverlay(imp2, FP, UNMATCH2, scaleX, scaleY, scaleZ);
 			imp2.updateAndDraw();
 		}
 
@@ -480,20 +484,46 @@ public class MatchPlugin implements PlugIn
 			int x = (int) Math.round(actualPoints[i].getX() / scaleX);
 			int y = (int) Math.round(actualPoints[i].getY() / scaleY);
 			int value = ip.get(x, y);
-			newPoints[i] = new TimeValuedPoint(x, y, 0, i + 1, value);
+			newPoints[i] = new TimeValuedPoint(actualPoints[i].getX(), actualPoints[i].getY(), actualPoints[i].getZ(),
+					i + 1, value);
 		}
 
 		return newPoints;
 	}
 
 	/**
-	 * Adds an ROI point overlay to the image using the specified colour
-	 * 
+	 * Adds an ROI point overlay to the image using the specified colour.
+	 *
 	 * @param imp
+	 *            the imp
 	 * @param list
+	 *            the list
 	 * @param color
+	 *            the color
 	 */
 	public static void addOverlay(ImagePlus imp, List<? extends Coordinate> list, Color color)
+	{
+		addOverlay(imp, list, color, 1, 1, 1);
+	}
+
+	/**
+	 * Adds an ROI point overlay to the image using the specified colour.
+	 *
+	 * @param imp
+	 *            the imp
+	 * @param list
+	 *            the list
+	 * @param color
+	 *            the color
+	 * @param scaleX
+	 *            the scale X
+	 * @param scaleY
+	 *            the scale Y
+	 * @param scaleZ
+	 *            the scale Z
+	 */
+	public static void addOverlay(ImagePlus imp, List<? extends Coordinate> list, Color color, double scaleX,
+			double scaleY, double scaleZ)
 	{
 		if (list.isEmpty())
 			return;
@@ -502,20 +532,88 @@ public class MatchPlugin implements PlugIn
 		Color fillColor = color;
 
 		Overlay o = imp.getOverlay();
-		PointRoi roi = (PointRoi) PointManager.createROI(list);
-		roi.setStrokeColor(strokeColor);
-		roi.setFillColor(fillColor);
-		roi.setShowLabels(false);
-
 		if (o == null)
+			o = new Overlay();
+
+		for (PointRoi roi : createROI(imp, list, scaleX, scaleY, scaleZ))
 		{
-			imp.setOverlay(roi, strokeColor, 2, fillColor);
-		}
-		else
-		{
+			roi.setStrokeColor(strokeColor);
+			roi.setFillColor(fillColor);
+			roi.setShowLabels(false);
 			o.add(roi);
-			imp.setOverlay(o);
 		}
+		imp.setOverlay(o);
+	}
+
+	/**
+	 * Creates an ImageJ PointRoi from the list of points, one per slice.
+	 *
+	 * @param array
+	 *            List of points
+	 * @param scaleX
+	 *            the scale X
+	 * @param scaleY
+	 *            the scale Y
+	 * @param scaleZ
+	 *            the scale Z
+	 * @return The PointRoi
+	 */
+	public static PointRoi[] createROI(final ImagePlus imp, List<? extends Coordinate> array, double scaleX,
+			double scaleY, double scaleZ)
+	{
+		// We have to create an overlay per z-slice using the calibration scale
+		TIntObjectHashMap<TIntArrayList> xpoints = new TIntObjectHashMap<TIntArrayList>();
+		TIntArrayList nextlist = new TIntArrayList();
+
+		for (Coordinate point : array)
+		{
+			int x = (int) Math.round(point.getX() / scaleX);
+			int y = (int) Math.round(point.getY() / scaleY);
+			int z = (int) Math.round(point.getZ() / scaleZ);
+
+			TIntArrayList list = xpoints.putIfAbsent(z, nextlist);
+			if (list == null)
+			{
+				list = nextlist;
+				nextlist = new TIntArrayList();
+			}
+
+			list.add(x);
+			list.add(y);
+		}
+
+		final int channel = 0;
+		final int frame = 0;
+		final boolean isHyperStack = imp.isDisplayedHyperStack();
+
+		final TurboList<PointRoi> rois = new TurboList<PointRoi>(xpoints.size());
+		xpoints.forEachEntry(new TIntObjectProcedure<TIntArrayList>()
+		{
+			public boolean execute(int z, TIntArrayList b)
+			{
+				int[] data = b.toArray();
+				float[] x = new float[data.length / 2];
+				float[] y = new float[x.length];
+				for (int i = 0, j = 0; j < x.length; j++)
+				{
+					x[j] = data[i++];
+					y[j] = data[i++];
+				}
+				PointRoi roi = new PointRoi(x, y);
+				if (isHyperStack)
+				{
+					roi.setPosition(channel, z, frame);
+				}
+				else
+				{
+					roi.setPosition(imp.getStackIndex(channel, z, frame));
+				}
+				rois.add(roi);
+				return true;
+			}
+		});
+
+		return rois.toArray(new PointRoi[rois.size()]);
 	}
 
 	private boolean showDialog()
@@ -648,7 +746,7 @@ public class MatchPlugin implements PlugIn
 		{
 			dThreshold = d;
 		}
-		if (imageMode)
+		if (imageMode || memoryMode)
 		{
 			overlay = gd.getNextBoolean();
 			quartiles = gd.getNextBoolean();
