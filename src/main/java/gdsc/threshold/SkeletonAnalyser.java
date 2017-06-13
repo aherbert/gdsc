@@ -1000,13 +1000,13 @@ public class SkeletonAnalyser implements PlugInFilter
 	private void addResult(int id, float[] line)
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append(id).append("\t");
+		sb.append(id).append('\t');
 		for (int i = 0; i < 4; i++)
 		{
-			sb.append((int) line[i]).append("\t");
+			sb.append((int) line[i]).append('\t');
 		}
-		sb.append(IJ.d2s(line[4], 2)).append("\t");
-		sb.append(IJ.d2s(line[4] * unitConversion, 2)).append("\t");
+		sb.append(IJ.d2s(line[4], 2)).append('\t');
+		sb.append(IJ.d2s(line[4] * unitConversion, 2)).append('\t');
 		sb.append(unit);
 
 		if (java.awt.GraphicsEnvironment.isHeadless())

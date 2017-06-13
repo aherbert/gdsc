@@ -211,10 +211,16 @@ public class SpotDensity implements PlugIn
 
 	private Foci[] getFoci(String resultsName)
 	{
-		ArrayList<FindFociResult> results = FindFoci.getResults(resultsName);
-		if (results == null || results.size() == 0)
+		FindFociMemoryResults memoryResults = FindFoci.getResults(resultsName);
+		if (memoryResults == null)
 		{
 			IJ.showMessage("Error", "No foci with the name " + resultsName);
+			return null;
+		}
+		ArrayList<FindFociResult> results = memoryResults.results; 
+		if (results.size() == 0)
+		{
+			IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
 			return null;
 		}
 		Foci[] foci = new Foci[results.size()];
@@ -360,21 +366,21 @@ public class SpotDensity implements PlugIn
 		createResultsWindow();
 		StringBuilder sb = new StringBuilder();
 		sb.append(results.size());
-		sb.append("\t").append(foci1.length);
-		sb.append("\t").append(N);
-		sb.append("\t").append(foci2.length);
-		sb.append("\t").append(N2);
-		sb.append("\t").append(IJ.d2s(distance));
-		sb.append("\t").append(IJ.d2s(interval));
-		sb.append("\t").append(area);
-		sb.append("\t").append(IJ.d2s(avDensity, -3));
-		sb.append("\t").append(IJ.d2s(max, 3));
-		sb.append("\t").append(IJ.d2s(maxr, 3));
-		sb.append("\t").append(count);
+		sb.append('\t').append(foci1.length);
+		sb.append('\t').append(N);
+		sb.append('\t').append(foci2.length);
+		sb.append('\t').append(N2);
+		sb.append('\t').append(IJ.d2s(distance));
+		sb.append('\t').append(IJ.d2s(interval));
+		sb.append('\t').append(area);
+		sb.append('\t').append(IJ.d2s(avDensity, -3));
+		sb.append('\t').append(IJ.d2s(max, 3));
+		sb.append('\t').append(IJ.d2s(maxr, 3));
+		sb.append('\t').append(count);
 		double sum = 0;
 		for (int i = 0; i < count; i++)
 			sum += distances[i];
-		sb.append("\t").append(IJ.d2s(sum / count, 2));
+		sb.append('\t').append(IJ.d2s(sum / count, 2));
 
 		resultsWindow.append(sb.toString());
 	}

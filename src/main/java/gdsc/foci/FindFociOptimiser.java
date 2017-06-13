@@ -916,21 +916,21 @@ public class FindFociOptimiser
 		{
 			Result result = results.get(i);
 			StringBuilder sb = new StringBuilder();
-			sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append("\t");
+			sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append('\t');
 			sb.append(result.getParameters());
-			sb.append(result.n).append("\t");
-			sb.append(result.tp).append("\t");
-			sb.append(result.fp).append("\t");
-			sb.append(result.fn).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.JACCARD], RESULT_PRECISION)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.PRECISION], RESULT_PRECISION)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.RECALL], RESULT_PRECISION)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.F05], RESULT_PRECISION)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.F1], RESULT_PRECISION)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.F2], RESULT_PRECISION)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.Fb], RESULT_PRECISION)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.SCORE], RESULT_PRECISION)).append("\t");
-			sb.append(IJ.d2s(result.metrics[Result.RMSD], RESULT_PRECISION)).append("\t");
+			sb.append(result.n).append('\t');
+			sb.append(result.tp).append('\t');
+			sb.append(result.fp).append('\t');
+			sb.append(result.fn).append('\t');
+			sb.append(IJ.d2s(result.metrics[Result.JACCARD], RESULT_PRECISION)).append('\t');
+			sb.append(IJ.d2s(result.metrics[Result.PRECISION], RESULT_PRECISION)).append('\t');
+			sb.append(IJ.d2s(result.metrics[Result.RECALL], RESULT_PRECISION)).append('\t');
+			sb.append(IJ.d2s(result.metrics[Result.F05], RESULT_PRECISION)).append('\t');
+			sb.append(IJ.d2s(result.metrics[Result.F1], RESULT_PRECISION)).append('\t');
+			sb.append(IJ.d2s(result.metrics[Result.F2], RESULT_PRECISION)).append('\t');
+			sb.append(IJ.d2s(result.metrics[Result.Fb], RESULT_PRECISION)).append('\t');
+			sb.append(IJ.d2s(result.metrics[Result.SCORE], RESULT_PRECISION)).append('\t');
+			sb.append(IJ.d2s(result.metrics[Result.RMSD], RESULT_PRECISION)).append('\t');
 			sb.append(IJ.d2s(result.time / 1000000.0, RESULT_PRECISION)).append("\n");
 			resultsWindow.append(sb.toString());
 		}
@@ -980,21 +980,21 @@ public class FindFociOptimiser
 			{
 				Result result = results.get(i);
 				StringBuilder sb = new StringBuilder();
-				sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append("\t");
+				sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append('\t');
 				sb.append(result.getParameters());
-				sb.append(result.n).append("\t");
-				sb.append(result.tp).append("\t");
-				sb.append(result.fp).append("\t");
-				sb.append(result.fn).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.JACCARD], RESULT_PRECISION)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.PRECISION], RESULT_PRECISION)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.RECALL], RESULT_PRECISION)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.F05], RESULT_PRECISION)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.F1], RESULT_PRECISION)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.F2], RESULT_PRECISION)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.Fb], RESULT_PRECISION)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.SCORE], RESULT_PRECISION)).append("\t");
-				sb.append(IJ.d2s(result.metrics[Result.RMSD], RESULT_PRECISION)).append("\t");
+				sb.append(result.n).append('\t');
+				sb.append(result.tp).append('\t');
+				sb.append(result.fp).append('\t');
+				sb.append(result.fn).append('\t');
+				sb.append(IJ.d2s(result.metrics[Result.JACCARD], RESULT_PRECISION)).append('\t');
+				sb.append(IJ.d2s(result.metrics[Result.PRECISION], RESULT_PRECISION)).append('\t');
+				sb.append(IJ.d2s(result.metrics[Result.RECALL], RESULT_PRECISION)).append('\t');
+				sb.append(IJ.d2s(result.metrics[Result.F05], RESULT_PRECISION)).append('\t');
+				sb.append(IJ.d2s(result.metrics[Result.F1], RESULT_PRECISION)).append('\t');
+				sb.append(IJ.d2s(result.metrics[Result.F2], RESULT_PRECISION)).append('\t');
+				sb.append(IJ.d2s(result.metrics[Result.Fb], RESULT_PRECISION)).append('\t');
+				sb.append(IJ.d2s(result.metrics[Result.SCORE], RESULT_PRECISION)).append('\t');
+				sb.append(IJ.d2s(result.metrics[Result.RMSD], RESULT_PRECISION)).append('\t');
 				sb.append(result.time).append("\n");
 				out.write(sb.toString());
 			}
@@ -2244,7 +2244,7 @@ public class FindFociOptimiser
 		// Output results
 		String spacer = " : ";
 		StringBuilder sb = new StringBuilder();
-		sb.append(blur).append("\t");
+		sb.append(blur).append('\t');
 		sb.append(FindFoci.backgroundMethods[backgroundMethod]);
 		if (backgroundMethodHasStatisticsMode(backgroundMethod))
 		{
@@ -2252,8 +2252,8 @@ public class FindFociOptimiser
 		}
 		sb.append(spacer);
 		sb.append(backgroundMethodHasParameter(backgroundMethod) ? IJ.d2s(backgroundParameter, 2) : thresholdMethod)
-				.append("\t");
-		sb.append(maxPeaks).append("\t");
+				.append('\t');
+		sb.append(maxPeaks).append('\t');
 		sb.append(minSize);
 		if ((options & FindFoci.OPTION_MINIMUM_ABOVE_SADDLE) != 0)
 		{
@@ -2261,18 +2261,18 @@ public class FindFociOptimiser
 			if ((options & FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE) != 0)
 				sb.append(" conn");
 		}
-		sb.append("\t");
+		sb.append('\t');
 		sb.append(FindFoci.searchMethods[searchMethod]);
 		if (searchMethodHasParameter(searchMethod))
 			sb.append(spacer).append(IJ.d2s(searchParameter, 2));
-		sb.append("\t");
+		sb.append('\t');
 		sb.append(FindFoci.peakMethods[peakMethod]).append(spacer);
-		sb.append(IJ.d2s(peakParameter, 2)).append("\t");
-		sb.append(FindFoci.sortIndexMethods[sortMethod]).append("\t");
+		sb.append(IJ.d2s(peakParameter, 2)).append('\t');
+		sb.append(FindFoci.sortIndexMethods[sortMethod]).append('\t');
 		sb.append(FindFoci.getCentreMethods()[centreMethod]);
 		if (centreMethodHasParameter(centreMethod))
 			sb.append(spacer).append(IJ.d2s(centreParameter, 2));
-		sb.append("\t");
+		sb.append('\t');
 		return sb.toString();
 	}
 

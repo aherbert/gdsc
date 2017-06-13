@@ -573,7 +573,7 @@ public class SpotDistance implements PlugIn
 
 		// Create the image result prefix
 		StringBuilder sb = new StringBuilder();
-		sb.append(imp.getTitle()).append("\t");
+		sb.append(imp.getTitle()).append('\t');
 		if (calibratedDistances)
 		{
 			cal = imp.getCalibration();
@@ -587,7 +587,7 @@ public class SpotDistance implements PlugIn
 		{
 			sb.append("pixels");
 		}
-		sb.append("\t");
+		sb.append('\t');
 		resultEntry = sb.toString();
 	}
 
@@ -631,14 +631,14 @@ public class SpotDistance implements PlugIn
 		sb.append("Spots");
 		if (pixelDistances)
 		{
-			sb.append("\t");
+			sb.append('\t');
 			sb.append("Min (px)\t");
 			sb.append("Max (px)\t");
 			sb.append("Av (px)");
 		}
 		if (calibratedDistances)
 		{
-			sb.append("\t");
+			sb.append('\t');
 			sb.append("Min\t");
 			sb.append("Max\t");
 			sb.append("Av");
@@ -656,14 +656,14 @@ public class SpotDistance implements PlugIn
 		sb.append("Region");
 		if (pixelDistances)
 		{
-			sb.append("\t");
+			sb.append('\t');
 			sb.append("X1 (px)\tY1 (px)\tZ1 (px)\t");
 			sb.append("X2 (px)\tY2 (px)\tZ2 (px)\t");
 			sb.append("Distance (px)");
 		}
 		if (calibratedDistances)
 		{
-			sb.append("\t");
+			sb.append('\t');
 			sb.append("X1\tY1\tZ1\t");
 			sb.append("X2\tY2\tZ2\t");
 			sb.append("Distance");
@@ -1446,16 +1446,16 @@ public class SpotDistance implements PlugIn
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
-		sb.append(frame).append("\t");
-		sb.append(channel).append("\t");
-		sb.append(region).append("\t");
+		sb.append(frame).append('\t');
+		sb.append(channel).append('\t');
+		sb.append(region).append('\t');
 		if (pixelDistances)
 		{
-			sb.append(result.getPixelXYZ()).append("\t");
+			sb.append(result.getPixelXYZ()).append('\t');
 		}
 		if (calibratedDistances)
 		{
-			sb.append(result.getCalXYZ()).append("\t");
+			sb.append(result.getCalXYZ()).append('\t');
 		}
 		sb.append(Utils.rounded(result.circularity));
 		resultsWindow.append(sb.toString());
@@ -1466,9 +1466,9 @@ public class SpotDistance implements PlugIn
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
-		sb.append(frame).append("\t");
-		sb.append(channel).append("\t");
-		sb.append(region).append("\t").append(size);
+		sb.append(frame).append('\t');
+		sb.append(channel).append('\t');
+		sb.append(region).append('\t').append(size);
 		if (pixelDistances)
 			sb.append("\t0\t0\t0");
 		if (calibratedDistances)
@@ -1482,20 +1482,20 @@ public class SpotDistance implements PlugIn
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
-		sb.append(frame).append("\t");
-		sb.append(channel).append("\t");
-		sb.append(region).append("\t").append(size);
+		sb.append(frame).append('\t');
+		sb.append(channel).append('\t');
+		sb.append(region).append('\t').append(size);
 		if (pixelDistances)
 		{
-			sb.append("\t").append(Utils.rounded(minD));
-			sb.append("\t").append(Utils.rounded(maxD));
-			sb.append("\t").append(Utils.rounded(d));
+			sb.append('\t').append(Utils.rounded(minD));
+			sb.append('\t').append(Utils.rounded(maxD));
+			sb.append('\t').append(Utils.rounded(d));
 		}
 		if (calibratedDistances)
 		{
-			sb.append("\t").append(Utils.rounded(minD2));
-			sb.append("\t").append(Utils.rounded(maxD2));
-			sb.append("\t").append(Utils.rounded(d2));
+			sb.append('\t').append(Utils.rounded(minD2));
+			sb.append('\t').append(Utils.rounded(maxD2));
+			sb.append('\t').append(Utils.rounded(d2));
 		}
 		summaryWindow.append(sb.toString());
 		allowUndo = true;
@@ -1506,20 +1506,20 @@ public class SpotDistance implements PlugIn
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
-		sb.append(frame).append("\t");
-		sb.append(channel).append("\t");
+		sb.append(frame).append('\t');
+		sb.append(channel).append('\t');
 		sb.append(region);
 		if (pixelDistances)
 		{
-			sb.append("\t").append(r1.getPixelXYZ());
-			sb.append("\t").append(r2.getPixelXYZ());
-			sb.append("\t").append(Utils.rounded(d));
+			sb.append('\t').append(r1.getPixelXYZ());
+			sb.append('\t').append(r2.getPixelXYZ());
+			sb.append('\t').append(Utils.rounded(d));
 		}
 		if (calibratedDistances)
 		{
-			sb.append("\t").append(r1.getCalXYZ());
-			sb.append("\t").append(r2.getCalXYZ());
-			sb.append("\t").append(Utils.rounded(d2));
+			sb.append('\t').append(r1.getCalXYZ());
+			sb.append('\t').append(r2.getCalXYZ());
+			sb.append('\t').append(Utils.rounded(d2));
 		}
 		distancesWindow.append(sb.toString());
 		allowUndo = true;

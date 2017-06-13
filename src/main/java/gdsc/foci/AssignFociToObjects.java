@@ -305,7 +305,7 @@ public class AssignFociToObjects implements PlugInFilter
 			sb.append('\t').append(y);
 			if (found[i] > 0)
 			{
-				sb.append("\t").append(found[i]);
+				sb.append('\t').append(found[i]);
 				if (idMap[found[i]] > 0)
 				{
 					sb.append("\tTrue\t");

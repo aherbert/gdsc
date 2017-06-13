@@ -263,9 +263,9 @@ public class ParticleOverlap implements PlugIn
 	private String createTitle()
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append(getName(mask1Imp)).append("\t");
-		sb.append(getName(imageImp)).append("\t");
-		sb.append(getName(mask2Imp)).append("\t");
+		sb.append(getName(mask1Imp)).append('\t');
+		sb.append(getName(imageImp)).append('\t');
+		sb.append(getName(mask2Imp)).append('\t');
 		return sb.toString();
 	}
 
@@ -288,13 +288,13 @@ public class ParticleOverlap implements PlugIn
 	private void addResult(String title, int id, long n1, long no1, double s1, double so1)
 	{
 		StringBuilder sb = new StringBuilder(title);
-		sb.append(id).append("\t");
-		sb.append(n1).append("\t");
-		sb.append(no1).append("\t");
-		sb.append(Utils.rounded((100.0 * no1) / n1)).append("\t");
-		sb.append(s1).append("\t");
-		sb.append(so1).append("\t");
-		sb.append(Utils.rounded(so1 / s1, 5)).append("\t");
+		sb.append(id).append('\t');
+		sb.append(n1).append('\t');
+		sb.append(no1).append('\t');
+		sb.append(Utils.rounded((100.0 * no1) / n1)).append('\t');
+		sb.append(s1).append('\t');
+		sb.append(so1).append('\t');
+		sb.append(Utils.rounded(so1 / s1, 5)).append('\t');
 
 		recordResult(sb.toString());
 	}

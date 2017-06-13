@@ -1689,7 +1689,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		if (buffer.length() > 0)
 		{
-			buffer.append("\t");
+			buffer.append('\t');
 		}
 		buffer.append(field);
 		return buffer;

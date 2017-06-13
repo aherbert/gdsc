@@ -459,20 +459,20 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	private void addResult(String i1, String i2, double dThrehsold, MatchResult result)
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append(i1).append("\t");
-		sb.append(i2).append("\t");
-		sb.append(IJ.d2s(dThrehsold, 2)).append("\t");
-		sb.append(result.getNumberPredicted()).append("\t");
-		sb.append(result.getTruePositives()).append("\t");
-		sb.append(result.getFalsePositives()).append("\t");
-		sb.append(result.getFalseNegatives()).append("\t");
-		sb.append(IJ.d2s(result.getJaccard(), 4)).append("\t");
-		sb.append(IJ.d2s(result.getRMSD(), 4)).append("\t");
-		sb.append(IJ.d2s(result.getPrecision(), 4)).append("\t");
-		sb.append(IJ.d2s(result.getRecall(), 4)).append("\t");
-		sb.append(IJ.d2s(result.getFScore(0.5), 4)).append("\t");
-		sb.append(IJ.d2s(result.getFScore(1.0), 4)).append("\t");
-		sb.append(IJ.d2s(result.getFScore(2.0), 4)).append("\t");
+		sb.append(i1).append('\t');
+		sb.append(i2).append('\t');
+		sb.append(IJ.d2s(dThrehsold, 2)).append('\t');
+		sb.append(result.getNumberPredicted()).append('\t');
+		sb.append(result.getTruePositives()).append('\t');
+		sb.append(result.getFalsePositives()).append('\t');
+		sb.append(result.getFalseNegatives()).append('\t');
+		sb.append(IJ.d2s(result.getJaccard(), 4)).append('\t');
+		sb.append(IJ.d2s(result.getRMSD(), 4)).append('\t');
+		sb.append(IJ.d2s(result.getPrecision(), 4)).append('\t');
+		sb.append(IJ.d2s(result.getRecall(), 4)).append('\t');
+		sb.append(IJ.d2s(result.getFScore(0.5), 4)).append('\t');
+		sb.append(IJ.d2s(result.getFScore(1.0), 4)).append('\t');
+		sb.append(IJ.d2s(result.getFScore(2.0), 4)).append('\t');
 		sb.append(IJ.d2s(result.getFScore(beta), 4));
 
 		if (java.awt.GraphicsEnvironment.isHeadless())
@@ -490,8 +490,8 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	private String createPairsHeader(String i1, String i2)
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append(i1).append("\t");
-		sb.append(i2).append("\t");
+		sb.append(i1).append('\t');
+		sb.append(i2).append('\t');
 		pairsPrefix = sb.toString();
 
 		sb.setLength(0);
@@ -526,14 +526,14 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		IdTimeValuedPoint p1 = (IdTimeValuedPoint) pair.getPoint1();
 		IdTimeValuedPoint p2 = (IdTimeValuedPoint) pair.getPoint2();
 		int t = (p1 != null) ? p1.getTime() : p2.getTime();
-		sb.append(t).append("\t");
+		sb.append(t).append('\t');
 		addPoint(sb, p1);
 		addPoint(sb, p2);
 		double d = (is3D) ? pair.getXYZDistance() : pair.getXYDistance();
 		if (d >= 0)
-			sb.append(d).append("\t");
+			sb.append(d).append('\t');
 		else
-			sb.append("\t");
+			sb.append('\t');
 		// Added for colocalisation analysis:
 		// C = Colocalised (i.e. a match)
 		// F = First dataset has foci
@@ -554,12 +554,12 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		}
 		else
 		{
-			sb.append(p.id).append("\t");
-			sb.append(p.getXint()).append("\t");
-			sb.append(p.getYint()).append("\t");
-			sb.append(p.getZint()).append("\t");
+			sb.append(p.id).append('\t');
+			sb.append(p.getXint()).append('\t');
+			sb.append(p.getYint()).append('\t');
+			sb.append(p.getZint()).append('\t');
 			if (valued)
-				sb.append(p.getValue()).append("\t");
+				sb.append(p.getValue()).append('\t');
 		}
 	}
 

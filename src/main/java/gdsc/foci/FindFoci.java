@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
@@ -647,8 +648,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	private String resultsDirectory = null;
 
 	// Allow the results to be stored in memory for other plugins to access
-	private static HashMap<String, ArrayList<FindFociResult>> memory = new HashMap<String, ArrayList<FindFociResult>>();
-	private static ArrayList<String> memoryNames = new ArrayList<String>();
+	private static LinkedHashMap<String, FindFociMemoryResults> memory = new LinkedHashMap<String, FindFociMemoryResults>();
 
 	// Used to record all the results into a single file during batch analysis
 	private OutputStreamWriter allOut = null;
@@ -1578,7 +1578,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 				else if (resultsArray.isEmpty())
 					// Record an empty record for batch processing
 					writeEmptyBatchResultsFile(batchResults);
-				
+
 				writeBatchResultsFile(batchPrefix, batchResults);
 			}
 			out.close();
@@ -2332,23 +2332,23 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 		final boolean floatImage = ffp.isFloatProcessor();
 
-		sb.append(i).append("\t");
-		sb.append(id).append("\t");
+		sb.append(i).append('\t');
+		sb.append(id).append('\t');
 		// XY are pixel coordinates
-		sb.append(result.x).append("\t");
-		sb.append(result.y).append("\t");
+		sb.append(result.x).append('\t');
+		sb.append(result.y).append('\t');
 		// Z should correspond to slice 
-		sb.append(result.z + 1).append("\t");
-		sb.append(result.count).append("\t");
+		sb.append(result.z + 1).append('\t');
+		sb.append(result.count).append('\t');
 
 		addValue(sb, result.maxValue, floatImage);
 		addValue(sb, result.totalIntensity, floatImage);
 		addValue(sb, result.highestSaddleValue, floatImage);
 
-		sb.append(result.saddleNeighbourId).append("\t");
+		sb.append(result.saddleNeighbourId).append('\t');
 		addValue(sb, absoluteHeight, floatImage);
 		addValue(sb, relativeHeight);
-		sb.append(result.countAboveSaddle).append("\t");
+		sb.append(result.countAboveSaddle).append('\t');
 		addValue(sb, result.intensityAboveSaddle, floatImage);
 		addValue(sb, result.totalIntensity / result.count);
 		addValue(sb, result.totalIntensityAboveBackground, floatImage);
@@ -2359,7 +2359,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		addValue(sb, 100 * (result.totalIntensityAboveBackground / stats.totalAboveBackground));
 		addValue(sb, 100 * (result.totalIntensityAboveImageMinimum / stats.totalAboveImageMinimum));
 		addValue(sb, (result.maxValue / noise));
-		sb.append(result.object).append("\t");
+		sb.append(result.object).append('\t');
 		sb.append(result.state);
 		sb.append(newLine);
 
@@ -2374,13 +2374,13 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 		else
 		{
-			sb.append((int) value).append("\t");
+			sb.append((int) value).append('\t');
 		}
 	}
 
 	private void addValue(StringBuilder sb, double value)
 	{
-		sb.append(getFormat(value)).append("\t");
+		sb.append(getFormat(value)).append('\t');
 	}
 
 	static String getFormat(double value, boolean floatImage)
@@ -3183,8 +3183,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			name = String.format("%s (c%d,t%d)", imp.getTitle(), c, t);
 		// Check if there was nothing stored at the key position and store the name.
 		// This allows memory results to be listed in order.
-		if (memory.put(name, resultsArray) == null)
-			memoryNames.add(name);
+		memory.put(name, new FindFociMemoryResults(imp, resultsArray));
 	}
 
 	/**
@@ -3194,7 +3193,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 */
 	public static String[] getResultsNames()
 	{
-		return memoryNames.toArray(new String[memoryNames.size()]);
+		String[] names = new String[memory.size()];
+		int i = 0;
+		for (String name : memory.keySet())
+			names[i++] = name;
+		return names;
 	}
 
 	/**
@@ -3204,7 +3207,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 *            The name of the results.
 	 * @return The results (or null if none exist)
 	 */
-	public static ArrayList<FindFociResult> getResults(String name)
+	public static FindFociMemoryResults getResults(String name)
 	{
 		return memory.get(name);
 	}

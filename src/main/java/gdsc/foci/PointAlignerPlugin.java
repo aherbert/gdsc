@@ -892,32 +892,32 @@ public class PointAlignerPlugin implements PlugIn
 			LinkedList<AssignedPoint> conflict, LinkedList<AssignedPoint> noAlign, LinkedList<AssignedPoint> missed)
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append(resultTitle).append("\t");
-		sb.append(imp.getTitle()).append("\t");
-		sb.append(limitMethods[limitMethod]).append("\t");
-		sb.append(factor).append("\t");
-		sb.append(Utils.rounded(minHeight)).append("\t");
-		sb.append(Utils.rounded(thresholdHeight)).append("\t");
-		sb.append(Utils.rounded(minAssignedHeight)).append("\t");
-		sb.append(ok.size()).append("\t");
-		sb.append(moved.size()).append("\t");
-		sb.append(IJ.d2s(averageMovedDistance, 2)).append("\t");
-		sb.append(conflict.size()).append("\t");
-		sb.append(noAlign.size()).append("\t");
-		sb.append(missed.size()).append("\t");
+		sb.append(resultTitle).append('\t');
+		sb.append(imp.getTitle()).append('\t');
+		sb.append(limitMethods[limitMethod]).append('\t');
+		sb.append(factor).append('\t');
+		sb.append(Utils.rounded(minHeight)).append('\t');
+		sb.append(Utils.rounded(thresholdHeight)).append('\t');
+		sb.append(Utils.rounded(minAssignedHeight)).append('\t');
+		sb.append(ok.size()).append('\t');
+		sb.append(moved.size()).append('\t');
+		sb.append(IJ.d2s(averageMovedDistance, 2)).append('\t');
+		sb.append(conflict.size()).append('\t');
+		sb.append(noAlign.size()).append('\t');
+		sb.append(missed.size()).append('\t');
 
 		int tp = ok.size() + moved.size();
 		int fp = conflict.size() + noAlign.size();
 		int fn = missed.size();
 		MatchResult match = new MatchResult(tp, fp, fn, 0);
 
-		sb.append(match.getNumberPredicted()).append("\t");
-		sb.append(tp).append("\t");
-		sb.append(fp).append("\t");
-		sb.append(fn).append("\t");
-		sb.append(IJ.d2s(match.getPrecision(), 4)).append("\t");
-		sb.append(IJ.d2s(match.getRecall(), 4)).append("\t");
-		sb.append(IJ.d2s(match.getJaccard(), 4)).append("\t");
+		sb.append(match.getNumberPredicted()).append('\t');
+		sb.append(tp).append('\t');
+		sb.append(fp).append('\t');
+		sb.append(fn).append('\t');
+		sb.append(IJ.d2s(match.getPrecision(), 4)).append('\t');
+		sb.append(IJ.d2s(match.getRecall(), 4)).append('\t');
+		sb.append(IJ.d2s(match.getJaccard(), 4)).append('\t');
 		sb.append(IJ.d2s(match.getFScore(1), 4));
 
 		if (java.awt.GraphicsEnvironment.isHeadless())

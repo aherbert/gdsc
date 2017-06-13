@@ -904,27 +904,27 @@ public class ThreadAnalyser implements PlugIn
 			double[] edmStats)
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append(id).append("\t");
+		sb.append(id).append('\t');
 		for (int i = 0; i < 4; i++)
 		{
-			sb.append((int) line[i]).append("\t");
+			sb.append((int) line[i]).append('\t');
 		}
-		sb.append(IJ.d2s(line[4], 2)).append("\t");
+		sb.append(IJ.d2s(line[4], 2)).append('\t');
 		for (int i = 0; i < 2; i++)
 		{
-			sb.append(maxima[i]).append("\t");
+			sb.append(maxima[i]).append('\t');
 		}
 		for (int i = 0; i < 2; i++)
 		{
-			sb.append(objectMaxima[i]).append("\t");
+			sb.append(objectMaxima[i]).append('\t');
 		}
 		for (int i = 0; i < 4; i++)
 		{
-			sb.append(IJ.d2s(imageStats[i], 2)).append("\t");
+			sb.append(IJ.d2s(imageStats[i], 2)).append('\t');
 		}
 		for (int i = 0; i < 4; i++)
 		{
-			sb.append(IJ.d2s(edmStats[i], 2)).append("\t");
+			sb.append(IJ.d2s(edmStats[i], 2)).append('\t');
 		}
 
 		if (java.awt.GraphicsEnvironment.isHeadless())

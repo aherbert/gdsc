@@ -547,14 +547,14 @@ public class SpotSeparation implements PlugInFilter
 			sb.append(" [Z").append(imp.getSlice()).append("C").append(imp.getChannel()).append("T")
 					.append(imp.getFrame()).append("]");
 		}
-		sb.append("\t");
+		sb.append('\t');
 		cal = imp.getCalibration();
 		sb.append(cal.getXUnit());
 		if (!(cal.getYUnit().equalsIgnoreCase(cal.getXUnit()) && cal.getZUnit().equalsIgnoreCase(cal.getXUnit())))
 		{
 			sb.append(" ").append(cal.getYUnit()).append(" ").append(cal.getZUnit()).append(" ");
 		}
-		sb.append("\t");
+		sb.append('\t');
 		resultEntry = sb.toString();
 	}
 

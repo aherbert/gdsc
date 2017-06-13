@@ -467,7 +467,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append(imp.getTitle()).append("\t\t");
-		sb.append(particle).append("\t");
+		sb.append(particle).append('\t');
 		sb.append(countInside).append("\t\t\t\t");
 		sb.append(countOutside).append("\t\t\t\t");
 		if (java.awt.GraphicsEnvironment.isHeadless())
@@ -483,9 +483,9 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	private void addResult(int channel, int particle, DescriptiveStatistics[][][] stats)
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append(imp.getTitle()).append("\t");
-		sb.append(channel).append("\t");
-		sb.append(particle).append("\t");
+		sb.append(imp.getTitle()).append('\t');
+		sb.append(channel).append('\t');
+		sb.append(particle).append('\t');
 
 		double sx = stats[channel][INSIDE][particle].getSum();
 		double sd = stats[channel][INSIDE][particle].getStandardDeviation();
@@ -517,11 +517,11 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 					stats[spotChannel][OUTSIDE][particle].getValues());
 		}
 
-		sb.append(IJ.d2s(sx, 0)).append("\t").append(IJ.d2s(av, 2)).append("\t").append(IJ.d2s(sd, 2)).append("\t")
-				.append(IJ.d2s(r, 3)).append("\t");
-		sb.append(IJ.d2s(sx2, 0)).append("\t").append(IJ.d2s(av2, 2)).append("\t").append(IJ.d2s(sd2, 2)).append("\t")
-				.append(IJ.d2s(r2, 3)).append("\t");
-		sb.append(IJ.d2s(av / av2, 2)).append("\t");
+		sb.append(IJ.d2s(sx, 0)).append('\t').append(IJ.d2s(av, 2)).append('\t').append(IJ.d2s(sd, 2)).append('\t')
+				.append(IJ.d2s(r, 3)).append('\t');
+		sb.append(IJ.d2s(sx2, 0)).append('\t').append(IJ.d2s(av2, 2)).append('\t').append(IJ.d2s(sd2, 2)).append('\t')
+				.append(IJ.d2s(r2, 3)).append('\t');
+		sb.append(IJ.d2s(av / av2, 2)).append('\t');
 		sb.append(String.format("%.3g", p));
 
 		if (java.awt.GraphicsEnvironment.isHeadless())

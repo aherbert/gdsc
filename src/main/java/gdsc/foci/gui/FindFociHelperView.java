@@ -1448,11 +1448,11 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	private void addResult(int index, double x, double y, int height, boolean assigned)
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append(index).append("\t");
-		sb.append(Utils.rounded(x)).append("\t");
-		sb.append(Utils.rounded(y)).append("\t");
-		sb.append(height).append("\t");
-		sb.append(assigned).append("\t");
+		sb.append(index).append('\t');
+		sb.append(Utils.rounded(x)).append('\t');
+		sb.append(Utils.rounded(y)).append('\t');
+		sb.append(height).append('\t');
+		sb.append(assigned).append('\t');
 		resultsWindow.append(sb.toString());
 	}
 

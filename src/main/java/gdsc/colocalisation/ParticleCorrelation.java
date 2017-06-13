@@ -315,9 +315,9 @@ public class ParticleCorrelation implements PlugIn
 	private String createTitle()
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append(getName(maskImp, maskImp.getChannel())).append("\t");
-		sb.append(getName(imageImp1, c1)).append("\t");
-		sb.append(getName(imageImp2, c2)).append("\t");
+		sb.append(getName(maskImp, maskImp.getChannel())).append('\t');
+		sb.append(getName(imageImp1, c1)).append('\t');
+		sb.append(getName(imageImp2, c2)).append('\t');
 		return sb.toString();
 	}
 
@@ -356,10 +356,10 @@ public class ParticleCorrelation implements PlugIn
 		PearsonsCorrelation p2 = new PearsonsCorrelation(rm);
 
 		StringBuilder sb = new StringBuilder(title);
-		sb.append(sum1.length).append("\t");
-		sb.append(Utils.rounded(p1.getCorrelationMatrix().getEntry(0, 1))).append("\t");
-		sb.append(Utils.rounded(p1.getCorrelationPValues().getEntry(0, 1))).append("\t");
-		sb.append(Utils.rounded(p2.getCorrelationMatrix().getEntry(0, 1))).append("\t");
+		sb.append(sum1.length).append('\t');
+		sb.append(Utils.rounded(p1.getCorrelationMatrix().getEntry(0, 1))).append('\t');
+		sb.append(Utils.rounded(p1.getCorrelationPValues().getEntry(0, 1))).append('\t');
+		sb.append(Utils.rounded(p2.getCorrelationMatrix().getEntry(0, 1))).append('\t');
 		sb.append(Utils.rounded(p2.getCorrelationPValues().getEntry(0, 1)));
 		twSummary.append(sb.toString());
 	}
@@ -367,13 +367,13 @@ public class ParticleCorrelation implements PlugIn
 	private void addResult(String title, int id, int value, double x, double y, double z, int n, double s1, double s2)
 	{
 		StringBuilder sb = new StringBuilder(title);
-		sb.append(id).append("\t");
-		sb.append(value).append("\t");
-		sb.append(Utils.rounded(x)).append("\t");
-		sb.append(Utils.rounded(y)).append("\t");
-		sb.append(Utils.rounded(z)).append("\t");
-		sb.append(n).append("\t");
-		sb.append(s1).append("\t");
+		sb.append(id).append('\t');
+		sb.append(value).append('\t');
+		sb.append(Utils.rounded(x)).append('\t');
+		sb.append(Utils.rounded(y)).append('\t');
+		sb.append(Utils.rounded(z)).append('\t');
+		sb.append(n).append('\t');
+		sb.append(s1).append('\t');
 		sb.append(s2);
 		twDataTable.append(sb.toString());
 	}

@@ -147,12 +147,13 @@ public class TranslocationFinder implements PlugIn
 
 	private AssignedPoint[] getFoci(String resultsName)
 	{
-		ArrayList<FindFociResult> results = FindFoci.getResults(resultsName);
-		if (results == null)
+		FindFociMemoryResults memoryResults = FindFoci.getResults(resultsName);
+		if (memoryResults == null)
 		{
 			IJ.showMessage("Error", "No foci with the name " + resultsName);
 			return null;
 		}
+		ArrayList<FindFociResult> results = memoryResults.results; 
 		if (results.size() == 0)
 		{
 			IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
@@ -502,9 +503,9 @@ public class TranslocationFinder implements PlugIn
 		final double d12 = p1.distanceXYZ(p2);
 		final double d13 = p1.distanceXYZ(p3);
 		final double d23 = p2.distanceXYZ(p3);
-		sb.append("\t").append(Utils.rounded(d12));
-		sb.append("\t").append(Utils.rounded(d13));
-		sb.append("\t").append(Utils.rounded(d23));
+		sb.append('\t').append(Utils.rounded(d12));
+		sb.append('\t').append(Utils.rounded(d13));
+		sb.append('\t').append(Utils.rounded(d23));
 
 		// Compute classification
 		if (classification >= CLASSIFICATION.length || classification < 0)
@@ -528,9 +529,9 @@ public class TranslocationFinder implements PlugIn
 
 	private void addTriplet(StringBuilder sb, AssignedPoint p)
 	{
-		sb.append("\t").append(p.x);
-		sb.append("\t").append(p.y);
-		sb.append("\t").append(p.z);
+		sb.append('\t').append(p.x);
+		sb.append('\t').append(p.y);
+		sb.append('\t').append(p.z);
 	}
 
 	/**

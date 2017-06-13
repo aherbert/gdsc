@@ -976,7 +976,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 			double percTotCh2, double percGtTCh1, double percGtTCh2, double totalPixels)
 	{
 		StringBuffer str = new StringBuffer();
-		str.append(fileName).append("\t");
+		str.append(fileName).append('\t');
 		switch (roiIndex)
 		{
 			case 0:
@@ -1116,7 +1116,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		{
 			str.append(format.format(value));
 		}
-		str.append("\t");
+		str.append('\t');
 	}
 
 	private void appendFormat(StringBuffer str, double value, DecimalFormat format, String units)
@@ -1129,7 +1129,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		{
 			str.append(format.format(value)).append(units);
 		}
-		str.append("\t");
+		str.append('\t');
 	}
 
 	private void saveOptions()

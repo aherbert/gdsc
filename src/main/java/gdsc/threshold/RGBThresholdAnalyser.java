@@ -272,7 +272,7 @@ public class RGBThresholdAnalyser implements PlugIn
 
 	private void addMethod(StringBuilder sb, String method)
 	{
-		sb.append("\t").append(method).append("\tCount\tSum");
+		sb.append('\t').append(method).append("\tCount\tSum");
 	}
 
 	private void addResult(String name, int channel, double[] stats, int manual, int[] thresholds, int[] h)
@@ -305,9 +305,9 @@ public class RGBThresholdAnalyser implements PlugIn
 		}
 
 		StringBuilder sb = new StringBuilder();
-		sb.append(name).append("\t").append(channel);
+		sb.append(name).append('\t').append(channel);
 		for (int i = 0; i < stats.length; i++)
-			sb.append("\t").append(IJ.d2s(stats[i]));
+			sb.append('\t').append(IJ.d2s(stats[i]));
 		addResult(sb, manual, area, intensity);
 		for (int t : thresholds)
 			addResult(sb, t, area, intensity);
@@ -316,9 +316,9 @@ public class RGBThresholdAnalyser implements PlugIn
 
 	private void addResult(StringBuilder sb, int t, double[] area, double[] intensity)
 	{
-		sb.append("\t").append(t);
-		sb.append("\t").append(IJ.d2s(area[t], 5));
-		sb.append("\t").append(IJ.d2s(intensity[t], 5));
+		sb.append('\t').append(t);
+		sb.append('\t').append(IJ.d2s(area[t], 5));
+		sb.append('\t').append(IJ.d2s(intensity[t], 5));
 	}
 
 }
