@@ -1,6 +1,8 @@
 package gdsc.foci;
 
 import gdsc.UsageTracker;
+import gdsc.core.data.utils.Rounder;
+import gdsc.core.data.utils.RounderFactory;
 
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
@@ -29,6 +31,7 @@ import ij.gui.Plot;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.io.OpenDialog;
+import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
@@ -74,6 +77,14 @@ public class MatchPlugin implements PlugIn
 	private static String title2 = "";
 	private static int dType = 0;
 	private static double dThreshold = 0.05;
+
+	// For memory mode
+	private static String name1 = "";
+	private static String name2 = "";
+	private static String[] unitTypes = new String[] { "Pixel", "Calibrated" };
+	private static int unitType = 0;
+	private static double memoryThreshold = 5;
+
 	private static boolean overlay = true;
 	private static boolean quartiles = false;
 	private static boolean scatter = true;
@@ -91,7 +102,7 @@ public class MatchPlugin implements PlugIn
 			"Count above saddle", 
 			"Max value", 
 			"Highest saddle value", };
-	//@formatter:off
+	//@formatter:on
 	private static int findFociResultChoiceIndex = 0;
 
 	private static boolean writeHeader = true;
@@ -101,7 +112,9 @@ public class MatchPlugin implements PlugIn
 	private static TextWindow resultsWindow = null;
 	private static TextWindow unmatchedWindow = null;
 	private static TextWindow matchedWindow = null;
+	private boolean memoryMode = false;
 	private boolean fileMode = false;
+	private boolean imageMode = false;
 	private static int channel1 = 1;
 	private static int frame1 = 1;
 	private static int channel2 = 1;
@@ -110,6 +123,11 @@ public class MatchPlugin implements PlugIn
 	private String t2 = "";
 	private Coordinate[] actualPoints = null;
 	private Coordinate[] predictedPoints = null;
+
+	// For memory mode
+	private String unit;
+
+	private double scaleX = 1, scaleY = 1, scaleZ = 1;
 
 	/*
 	 * (non-Javadoc)
@@ -150,7 +168,9 @@ public class MatchPlugin implements PlugIn
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
-		fileMode = arg.equals("file");
+		memoryMode = "memory".equals(arg);
+		fileMode = !memoryMode && "file".equals(arg);
+		imageMode = !memoryMode && !fileMode;
 
 		if (!showDialog())
 		{
@@ -169,12 +189,49 @@ public class MatchPlugin implements PlugIn
 		t1 = title1;
 		t2 = title2;
 
-		if (fileMode)
+		if (memoryMode)
+		{
+			t1 = name1;
+			t2 = name2;
+
+			FindFociMemoryResults m1, m2;
+
+			try
+			{
+				m1 = getFindFociMemoryResults(t1);
+				actualPoints = getFindFociPoints(m1, t1);
+				m2 = getFindFociMemoryResults(t2);
+				predictedPoints = getFindFociPoints(m2, t2);
+			}
+			catch (IllegalStateException e)
+			{
+				IJ.error("Failed to load the points: " + e.getMessage());
+				return;
+			}
+			d = memoryThreshold;
+
+			// Support image analysis if the images are open
+			imp1 = WindowManager.getImage(m1.imageId);
+			imp2 = WindowManager.getImage(m2.imageId);
+
+			boolean canExtractHeights = canExtractHeights(imp1, imp2);
+			doQuartiles = quartiles && canExtractHeights;
+			doScatter = scatter && canExtractHeights;
+			doUnmatched = unmatchedDistribution && canExtractHeights;
+
+			if (doQuartiles || doScatter || doUnmatched || matchTable)
+			{
+				// Extract the heights for each point
+				actualPoints = extractHeights(imp1, actualPoints, channel1, frame1);
+				predictedPoints = extractHeights(imp2, predictedPoints, channel2, frame2);
+			}
+		}
+		else if (fileMode)
 		{
 			try
 			{
-				actualPoints = PointManager.loadPoints(title1);
-				predictedPoints = PointManager.loadPoints(title2);
+				actualPoints = PointManager.loadPoints(t1);
+				predictedPoints = PointManager.loadPoints(t2);
 			}
 			catch (IOException e)
 			{
@@ -185,30 +242,37 @@ public class MatchPlugin implements PlugIn
 		}
 		else
 		{
-			imp1 = WindowManager.getImage(title1);
-			imp2 = WindowManager.getImage(title2);
-
-			if (imp1 != null && imp2 != null)
+			imp1 = WindowManager.getImage(t1);
+			if (imp1 == null)
 			{
-				if (dType == 1)
-				{
-					d = dThreshold;
-				}
-				else
-				{
-					int length1 = Math.min(imp1.getWidth(), imp1.getHeight());
-					int length2 = Math.min(imp2.getWidth(), imp2.getHeight());
-					d = Math.ceil(dThreshold * Math.max(length1, length2));
-				}
-
-				actualPoints = PointManager.extractRoiPoints(imp1.getRoi());
-				predictedPoints = PointManager.extractRoiPoints(imp2.getRoi());
-
-				boolean canExtractHeights = canExtractHeights(imp1, imp2);
-				doQuartiles = quartiles && canExtractHeights;
-				doScatter = scatter && canExtractHeights;
-				doUnmatched = unmatchedDistribution && canExtractHeights;
+				IJ.error("Failed to load image1: " + t1);
+				return;
 			}
+			imp2 = WindowManager.getImage(t2);
+			if (imp2 == null)
+			{
+				IJ.error("Failed to load image2: " + t2);
+				return;
+			}
+
+			if (dType == 1)
+			{
+				d = dThreshold;
+			}
+			else
+			{
+				int length1 = Math.min(imp1.getWidth(), imp1.getHeight());
+				int length2 = Math.min(imp2.getWidth(), imp2.getHeight());
+				d = Math.ceil(dThreshold * Math.max(length1, length2));
+			}
+
+			actualPoints = PointManager.extractRoiPoints(imp1.getRoi());
+			predictedPoints = PointManager.extractRoiPoints(imp2.getRoi());
+
+			boolean canExtractHeights = canExtractHeights(imp1, imp2);
+			doQuartiles = quartiles && canExtractHeights;
+			doScatter = scatter && canExtractHeights;
+			doUnmatched = unmatchedDistribution && canExtractHeights;
 
 			if (doQuartiles || doScatter || doUnmatched || matchTable)
 			{
@@ -218,6 +282,9 @@ public class MatchPlugin implements PlugIn
 			}
 		}
 
+		if (unit == null)
+			unit = "px";
+
 		Object[] points = compareROI(actualPoints, predictedPoints, d, doQuartiles);
 
 		List<Coordinate> TP = (List<Coordinate>) points[0];
@@ -226,7 +293,7 @@ public class MatchPlugin implements PlugIn
 		List<PointPair> matches = (List<PointPair>) points[3];
 		MatchResult result = (MatchResult) points[4];
 
-		if (overlay && !fileMode)
+		if (overlay && (imageMode || memoryMode))
 		{
 			// Imp2 is the predicted, show the overlay on this
 			imp2.setOverlay(null);
@@ -253,7 +320,7 @@ public class MatchPlugin implements PlugIn
 
 		if (saveMatches)
 		{
-			saveMatches(imp1, imp2, d, matches, FP, FN, result);
+			saveMatches(d, matches, FP, FN, result);
 		}
 
 		if (matchTable)
@@ -261,6 +328,76 @@ public class MatchPlugin implements PlugIn
 			addIntensityFromFindFoci(matches, FP, FN);
 			showMatches(matches, FP, FN);
 		}
+	}
+
+	private FindFociMemoryResults getFindFociMemoryResults(String resultsName) throws IllegalStateException
+	{
+		FindFociMemoryResults memoryResults = FindFoci.getResults(resultsName);
+		if (memoryResults == null)
+		{
+			throw new IllegalStateException("No foci with the name " + resultsName);
+		}
+		ArrayList<FindFociResult> results = memoryResults.results;
+		if (results.size() == 0)
+		{
+			throw new IllegalStateException("Zero foci in the results with the name " + resultsName);
+		}
+		return memoryResults;
+	}
+
+	private Coordinate[] getFindFociPoints(FindFociMemoryResults memoryResults, String resultsName)
+			throws IllegalStateException
+	{
+		ArrayList<FindFociResult> results = memoryResults.results;
+
+		// If using calibration then we must convert the coordinates
+		if (unitType == 1)
+		{
+			// Get the calibration
+			Calibration calibration = memoryResults.calibration;
+			if (calibration == null)
+				throw new IllegalStateException("No calibration for the results with the name " + resultsName);
+
+			String unit = calibration.getUnit();
+			if (this.unit != null && !this.unit.equals(unit))
+				throw new IllegalStateException("Calibration units for the results are different");
+			this.unit = unit;
+
+			// The units must be the same
+			if (!unit.equals(calibration.getYUnit()) || !unit.equals(calibration.getZUnit()))
+				throw new IllegalStateException(
+						"Calibration units are different in different dimensions for the results with the name " +
+								resultsName);
+
+			scaleX = calibration.pixelWidth;
+			scaleY = calibration.pixelHeight;
+			scaleZ = calibration.pixelDepth;
+
+			gdsc.core.match.BasePoint[] points = new gdsc.core.match.BasePoint[results.size()];
+			int i = 0;
+			for (FindFociResult result : results)
+			{
+				points[i++] = new gdsc.core.match.BasePoint(convert(result.x, scaleX), convert(result.y, scaleY),
+						convert(result.z, scaleZ));
+			}
+			return points;
+		}
+		else
+		{
+			// Native pixel units
+			AssignedPoint[] points = new AssignedPoint[results.size()];
+			int i = 0;
+			for (FindFociResult result : results)
+			{
+				points[i++] = new AssignedPoint(result.x, result.y, result.z);
+			}
+			return points;
+		}
+	}
+
+	private static float convert(int x, double cx)
+	{
+		return (float) (x * cx);
 	}
 
 	/**
@@ -340,8 +477,8 @@ public class MatchPlugin implements PlugIn
 		TimeValuedPoint[] newPoints = new TimeValuedPoint[actualPoints.length];
 		for (int i = 0; i < newPoints.length; i++)
 		{
-			int x = (int) actualPoints[i].getX();
-			int y = (int) actualPoints[i].getY();
+			int x = (int) Math.round(actualPoints[i].getX() / scaleX);
+			int y = (int) Math.round(actualPoints[i].getY() / scaleY);
 			int value = ip.get(x, y);
 			newPoints[i] = new TimeValuedPoint(x, y, 0, i + 1, value);
 		}
@@ -386,8 +523,24 @@ public class MatchPlugin implements PlugIn
 		String[] items = null;
 		String t1 = title1;
 		String t2 = title2;
+		double d = dThreshold;
 
-		if (!fileMode)
+		if (memoryMode)
+		{
+			items = FindFoci.getResultsNames();
+			if (items.length < 2)
+			{
+				IJ.showMessage(TITLE, "Require 2 results in memory");
+				return false;
+			}
+
+			List<String> imageList = Arrays.asList(items);
+			int index = 0;
+			t1 = (imageList.contains(name1) ? name1 : imageList.get(index++));
+			t2 = (imageList.contains(name2) ? name2 : imageList.get(index));
+			d = memoryThreshold;
+		}
+		if (imageMode)
 		{
 			List<String> imageList = new LinkedList<String>();
 			for (int id : gdsc.core.ij.Utils.getIDList())
@@ -418,7 +571,15 @@ public class MatchPlugin implements PlugIn
 
 		GenericDialog gd = new GenericDialog(TITLE);
 
-		if (fileMode)
+		if (memoryMode)
+		{
+			gd.addMessage("Compare the points between 2 FindFoci results\nand compute the match statistics");
+			gd.addChoice("Input_1", items, t1);
+			gd.addChoice("Input_2", items, t2);
+			gd.addMessage("Distance between matching points in:");
+			gd.addChoice("Unit", unitTypes, unitTypes[unitType]);
+		}
+		else if (fileMode)
 		{
 			gd.addMessage("Compare the points in two files\nand compute the match statistics");
 			gd.addStringField("Input_1", t1, 30);
@@ -433,8 +594,8 @@ public class MatchPlugin implements PlugIn
 			gd.addMessage("Distance between matching points in pixels, or fraction of\n" + "image edge length");
 			gd.addChoice("Distance_type", dTypes, dTypes[dType]);
 		}
-		gd.addNumericField("Distance", dThreshold, 2);
-		if (!fileMode)
+		gd.addNumericField("Distance", d, 2);
+		if (imageMode || memoryMode)
 		{
 			gd.addCheckbox("Overlay", overlay);
 			gd.addCheckbox("Quartiles", quartiles);
@@ -443,12 +604,16 @@ public class MatchPlugin implements PlugIn
 			gd.addCheckbox("Match_table", matchTable);
 		}
 		gd.addCheckbox("Save_matches", saveMatches);
-		ArrayList<FindFociResult> resultsArray = FindFoci.getResults();
-		if (resultsArray != null)
+		ArrayList<FindFociResult> resultsArray = null;
+		if (!memoryMode)
 		{
-			String[] imageItems = new String[] { "[None]", "Image1", "Image2" };
-			gd.addChoice("FindFoci_image", imageItems, imageItems[findFociImageIndex]);
-			gd.addChoice("FindFoci_result", findFociResult, findFociResult[findFociResultChoiceIndex]);
+			resultsArray = FindFoci.getResults();
+			if (resultsArray != null)
+			{
+				String[] imageItems = new String[] { "[None]", "Image1", "Image2" };
+				gd.addChoice("FindFoci_image", imageItems, imageItems[findFociImageIndex]);
+				gd.addChoice("FindFoci_result", findFociResult, findFociResult[findFociResultChoiceIndex]);
+			}
 		}
 
 		gd.addHelp(gdsc.help.URL.FIND_FOCI);
@@ -457,7 +622,13 @@ public class MatchPlugin implements PlugIn
 		if (gd.wasCanceled())
 			return false;
 
-		if (fileMode)
+		if (memoryMode)
+		{
+			name1 = gd.getNextChoice();
+			name2 = gd.getNextChoice();
+			unitType = gd.getNextChoiceIndex();
+		}
+		else if (fileMode)
 		{
 			title1 = gd.getNextString();
 			title2 = gd.getNextString();
@@ -468,8 +639,16 @@ public class MatchPlugin implements PlugIn
 			title2 = gd.getNextChoice();
 			dType = gd.getNextChoiceIndex();
 		}
-		dThreshold = gd.getNextNumber();
-		if (!fileMode)
+		d = gd.getNextNumber();
+		if (memoryMode)
+		{
+			memoryThreshold = d;
+		}
+		else
+		{
+			dThreshold = d;
+		}
+		if (imageMode)
 		{
 			overlay = gd.getNextBoolean();
 			quartiles = gd.getNextBoolean();
@@ -495,8 +674,9 @@ public class MatchPlugin implements PlugIn
 		List<Coordinate> FP = new LinkedList<Coordinate>();
 		List<Coordinate> FN = new LinkedList<Coordinate>();
 		List<PointPair> matches = new LinkedList<PointPair>();
-		MatchResult result = MatchCalculator.analyseResults2D(actualPoints, predictedPoints, dThreshold, TP, FP, FN,
-				matches);
+		MatchResult result = (memoryMode)
+				? MatchCalculator.analyseResults3D(actualPoints, predictedPoints, dThreshold, TP, FP, FN, matches)
+				: MatchCalculator.analyseResults2D(actualPoints, predictedPoints, dThreshold, TP, FP, FN, matches);
 		MatchResult[] qResults = null;
 
 		if (doQuartiles)
@@ -617,7 +797,8 @@ public class MatchPlugin implements PlugIn
 		StringBuilder sb = new StringBuilder();
 		sb.append("Image 1\t");
 		sb.append("Image 2\t");
-		sb.append("Distance (px)\t");
+		sb.append("Distance\t");
+		sb.append("Unit\t");
 		sb.append("N 1\t");
 		sb.append("N 2\t");
 		sb.append("Match\t");
@@ -652,17 +833,18 @@ public class MatchPlugin implements PlugIn
 	private void addResult(String i1, String i2, double dThrehsold, MatchResult result, MatchResult[] qResults)
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append(i1).append("\t");
-		sb.append(i2).append("\t");
-		sb.append(IJ.d2s(dThrehsold, 2)).append("\t");
-		sb.append(result.getNumberActual()).append("\t");
-		sb.append(result.getNumberPredicted()).append("\t");
-		sb.append(result.getTruePositives()).append("\t");
-		sb.append(result.getFalseNegatives()).append("\t");
-		sb.append(result.getFalsePositives()).append("\t");
-		sb.append(IJ.d2s(result.getJaccard(), 4)).append("\t");
-		sb.append(IJ.d2s(result.getRecall(), 4)).append("\t");
-		sb.append(IJ.d2s(result.getPrecision(), 4)).append("\t");
+		sb.append(i1).append('\t');
+		sb.append(i2).append('\t');
+		sb.append(IJ.d2s(dThrehsold, 2)).append('\t');
+		sb.append(unit).append('\t');
+		sb.append(result.getNumberActual()).append('\t');
+		sb.append(result.getNumberPredicted()).append('\t');
+		sb.append(result.getTruePositives()).append('\t');
+		sb.append(result.getFalseNegatives()).append('\t');
+		sb.append(result.getFalsePositives()).append('\t');
+		sb.append(IJ.d2s(result.getJaccard(), 4)).append('\t');
+		sb.append(IJ.d2s(result.getRecall(), 4)).append('\t');
+		sb.append(IJ.d2s(result.getPrecision(), 4)).append('\t');
 		sb.append(IJ.d2s(result.getFScore(1.0), 4));
 
 		if (qResults != null)
@@ -684,14 +866,14 @@ public class MatchPlugin implements PlugIn
 	private void addQuartileResult(StringBuilder sb, MatchResult result)
 	{
 		sb.append("\t \t");
-		sb.append(result.getNumberActual()).append("\t");
-		sb.append(result.getNumberPredicted()).append("\t");
-		sb.append(result.getTruePositives()).append("\t");
-		sb.append(result.getFalseNegatives()).append("\t");
-		sb.append(result.getFalsePositives()).append("\t");
-		sb.append(IJ.d2s(result.getJaccard(), 4)).append("\t");
-		sb.append(IJ.d2s(result.getRecall(), 4)).append("\t");
-		sb.append(IJ.d2s(result.getPrecision(), 4)).append("\t");
+		sb.append(result.getNumberActual()).append('\t');
+		sb.append(result.getNumberPredicted()).append('\t');
+		sb.append(result.getTruePositives()).append('\t');
+		sb.append(result.getFalseNegatives()).append('\t');
+		sb.append(result.getFalsePositives()).append('\t');
+		sb.append(IJ.d2s(result.getJaccard(), 4)).append('\t');
+		sb.append(IJ.d2s(result.getRecall(), 4)).append('\t');
+		sb.append(IJ.d2s(result.getPrecision(), 4)).append('\t');
 		sb.append(IJ.d2s(result.getFScore(1.0), 4));
 	}
 
@@ -824,7 +1006,7 @@ public class MatchPlugin implements PlugIn
 		{
 			TimeValuedPoint p1 = (TimeValuedPoint) pair.getPoint1();
 			TimeValuedPoint p2 = (TimeValuedPoint) pair.getPoint2();
-			heights.add((float)((p1.getValue() + p2.getValue()) / 2.0));
+			heights.add((float) ((p1.getValue() + p2.getValue()) / 2.0));
 		}
 		Collections.sort(heights);
 
@@ -893,7 +1075,7 @@ public class MatchPlugin implements PlugIn
 	{
 		StringBuilder sb = new StringBuilder();
 		addQuartiles(sb, title1, actualCount);
-		sb.append("\t");
+		sb.append('\t');
 		addQuartiles(sb, title2, predictedCount);
 
 		if (java.awt.GraphicsEnvironment.isHeadless())
@@ -913,14 +1095,14 @@ public class MatchPlugin implements PlugIn
 		for (int c : counts)
 			total += c;
 
-		sb.append(imageTitle).append("\t").append(total);
+		sb.append(imageTitle).append('\t').append(total);
 
 		if (total > 0)
 		{
 			double factor = total / 100.0;
 			for (int c : counts)
 			{
-				sb.append("\t");
+				sb.append('\t');
 				sb.append(IJ.d2s(c / factor, 1));
 			}
 		}
@@ -936,18 +1118,14 @@ public class MatchPlugin implements PlugIn
 	/**
 	 * Saves the matches and the false positives/negatives to file
 	 * 
-	 * @param imp1
-	 *            - Actual
-	 * @param imp2
-	 *            - Predicted
 	 * @param d
 	 * @param matches
 	 * @param falsePositives
 	 * @param falseNegatives
 	 * @param result
 	 */
-	private void saveMatches(ImagePlus imp1, ImagePlus imp2, double d, List<PointPair> matches,
-			List<Coordinate> falsePositives, List<Coordinate> falseNegatives, MatchResult result)
+	private void saveMatches(double d, List<PointPair> matches, List<Coordinate> falsePositives,
+			List<Coordinate> falseNegatives, MatchResult result)
 	{
 		if (matches.isEmpty() && falsePositives.isEmpty() && falseNegatives.isEmpty())
 			return;
@@ -970,6 +1148,7 @@ public class MatchPlugin implements PlugIn
 			sb.append("# Image 1   = ").append(t1).append(newLine);
 			sb.append("# Image 2   = ").append(t2).append(newLine);
 			sb.append("# Distance  = ").append(Utils.rounded(d, 2)).append(newLine);
+			sb.append("# Unit      = ").append(unit).append(newLine);
 			sb.append("# N 1       = ").append(result.getNumberActual()).append(newLine);
 			sb.append("# N 2       = ").append(result.getNumberPredicted()).append(newLine);
 			sb.append("# Match     = ").append(result.getTruePositives()).append(newLine);
@@ -980,6 +1159,8 @@ public class MatchPlugin implements PlugIn
 			sb.append("# Recall 2  = ").append(Utils.rounded(result.getPrecision(), 4)).append(newLine);
 			sb.append("# F-score   = ").append(Utils.rounded(result.getFScore(1.0), 4)).append(newLine);
 			sb.append("# X1\tY1\tV1\tX2\tY2\tV2").append(newLine);
+
+			Rounder r = RounderFactory.create(4);
 
 			out.write(sb.toString());
 
@@ -995,8 +1176,8 @@ public class MatchPlugin implements PlugIn
 					v1 = p1.getValue(); // Actual
 					v2 = p2.getValue(); // Predicted
 				}
-				out.write(String.format("%d\t%d\t%.0f\t%d\t%d\t%.0f%s", c1.getX(), c1.getY(), v1, c2.getX(), c2.getY(),
-						v2, newLine));
+				out.write(String.format("%s\t%s\t%s\t%s\t%s\t%s%s", r.round(c1.getX()), r.round(c1.getY()), r.round(v1),
+						r.round(c2.getX()), r.round(c2.getY()), r.round(v2), newLine));
 			}
 			// Actual
 			for (Coordinate c : falseNegatives)
@@ -1007,7 +1188,8 @@ public class MatchPlugin implements PlugIn
 					TimeValuedPoint p = (TimeValuedPoint) c;
 					v1 = p.getValue();
 				}
-				out.write(String.format("%d\t%d\t%.0f\t0\t0\t0%s", c.getX(), c.getY(), v1, newLine));
+				out.write(String.format("%s\t%s\t%.0f\t0\t0\t0%s", r.round(c.getX()), r.round(c.getY()), r.round(v1),
+						newLine));
 			}
 			// Predicted
 			for (Coordinate c : falsePositives)
@@ -1018,7 +1200,8 @@ public class MatchPlugin implements PlugIn
 					TimeValuedPoint p = (TimeValuedPoint) c;
 					v1 = p.getValue();
 				}
-				out.write(String.format("0\t0\t0\t%d\t%d\t%.0f%s", c.getX(), c.getY(), v1, newLine));
+				out.write(String.format("0\t0\t0\t%s\t%s\t%.0f%s", r.round(c.getX()), r.round(c.getY()), r.round(v1),
+						newLine));
 			}
 		}
 		catch (Exception e)
@@ -1146,7 +1329,7 @@ public class MatchPlugin implements PlugIn
 		else
 			sb.append("-");
 		if ((value > -1))
-			sb.append("\t").append(value);
+			sb.append('\t').append(value);
 		if (!java.awt.GraphicsEnvironment.isHeadless())
 		{
 			matchedWindow.append(sb.toString());
@@ -1162,8 +1345,8 @@ public class MatchPlugin implements PlugIn
 		if (point != null)
 		{
 			TimeValuedPoint p = (TimeValuedPoint) point;
-			sb.append(title).append("\t").append(p.getTime()).append("\t").append(p.getX()).append("\t")
-					.append(p.getY()).append("\t");
+			sb.append(title).append('\t').append(p.getTime()).append('\t').append(p.getX()).append('\t')
+					.append(p.getY()).append('\t');
 		}
 		else
 		{
@@ -1195,19 +1378,19 @@ public class MatchPlugin implements PlugIn
 			point.value = getValue(resultsArray.get(point.time - 1));
 		}
 	}
-	
+
 	private float getValue(FindFociResult result)
 	{
 		switch (findFociResultChoiceIndex)
 		{
 			//@formatter:off
-			case 0: return (float)result.totalIntensity;
-			case 1: return (float)result.intensityAboveSaddle;
-			case 2: return (float)result.totalIntensityAboveBackground;
-			case 3: return (float)result.count;
-			case 4: return (float)result.countAboveSaddle;
-			case 5: return (float)result.maxValue;
-			case 6: return (float)result.highestSaddleValue;
+			case 0: return  (float) result.totalIntensity;
+			case 1: return  (float) result.intensityAboveSaddle;
+			case 2: return  (float) result.totalIntensityAboveBackground;
+			case 3: return  (float) result.count;
+			case 4: return  (float) result.countAboveSaddle;
+			case 5: return  (float) result.maxValue;
+			case 6: return  (float) result.highestSaddleValue;
 			default: return (float) result.totalIntensity;
 			//@formatter:on
 		}
