@@ -393,7 +393,7 @@ public class MatchPlugin implements PlugIn
 			int i = 0;
 			for (FindFociResult result : results)
 			{
-				points[i++] = new AssignedPoint(result.x, result.y, result.z);
+				points[i++] = new AssignedPoint(result.x, result.y, result.z, 0);
 			}
 			return points;
 		}
