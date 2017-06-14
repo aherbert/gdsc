@@ -89,7 +89,8 @@ public class MatchPlugin implements PlugIn
 	private static int unitType = 0;
 	private static double memoryThreshold = 5;
 
-	private static boolean overlay = true;
+	private static String[] overlayTypes = new String[] { "None", "Colour", "Colour safe" };
+	private static int overlay = 1;
 	private static boolean quartiles = false;
 	private static boolean scatter = true;
 	private static boolean unmatchedDistribution = true;
@@ -297,16 +298,29 @@ public class MatchPlugin implements PlugIn
 		List<PointPair> matches = (List<PointPair>) points[3];
 		MatchResult result = (MatchResult) points[4];
 
-		if (overlay && (imageMode || memoryMode))
+		if (overlay > 0 && (imageMode || memoryMode))
 		{
 			// Imp2 is the predicted, show the overlay on this
 			imp2.setOverlay(null);
 			imp2.saveRoi();
 			imp2.killRoi();
-			// Use colour blind friendly colours
-			addOverlay(imp2, TP, MATCH, scaleX, scaleY, scaleZ);
-			addOverlay(imp2, FN, UNMATCH1, scaleX, scaleY, scaleZ);
-			addOverlay(imp2, FP, UNMATCH2, scaleX, scaleY, scaleZ);
+			Color m, u1, u2;
+			if (overlay == 2)
+			{
+				// Use colour blind friendly colours
+				m = MATCH;
+				u1 = UNMATCH1;
+				u2 = UNMATCH2;
+			}
+			else
+			{
+				m = Color.YELLOW;
+				u1 = Color.RED;
+				u2 = Color.GREEN;
+			}
+			addOverlay(imp2, TP, m, scaleX, scaleY, scaleZ);
+			addOverlay(imp2, FN, u1, scaleX, scaleY, scaleZ);
+			addOverlay(imp2, FP, u2, scaleX, scaleY, scaleZ);
 			imp2.updateAndDraw();
 		}
 
@@ -695,7 +709,7 @@ public class MatchPlugin implements PlugIn
 		gd.addNumericField("Distance", d, 2);
 		if (imageMode || memoryMode)
 		{
-			gd.addCheckbox("Overlay", overlay);
+			gd.addChoice("Overlay", overlayTypes, overlayTypes[overlay]);
 			gd.addCheckbox("Quartiles", quartiles);
 			gd.addCheckbox("Scatter_plot", scatter);
 			gd.addCheckbox("Unmatched_distribution", unmatchedDistribution);
@@ -748,7 +762,7 @@ public class MatchPlugin implements PlugIn
 		}
 		if (imageMode || memoryMode)
 		{
-			overlay = gd.getNextBoolean();
+			overlay = gd.getNextChoiceIndex();
 			quartiles = gd.getNextBoolean();
 			scatter = gd.getNextBoolean();
 			unmatchedDistribution = gd.getNextBoolean();
@@ -1339,7 +1353,7 @@ public class MatchPlugin implements PlugIn
 			return;
 
 		// Show a result table
-		String header = "Image 1\tId\tX\tY\tImage 2\tId\tX\tY\tDistance";
+		String header = "Image 1\tId\tX\tY\tSlice\tImage 2\tId\tX\tY\tSlice\tDistance";
 		if (findFociImageIndex > 0)
 		{
 			header += "\tImage " + findFociImageIndex + ": " + findFociResult[findFociResultChoiceIndex];
@@ -1423,7 +1437,7 @@ public class MatchPlugin implements PlugIn
 		addPoint(sb, t1, point1);
 		addPoint(sb, t2, point2);
 		if ((xyzDistance > -1))
-			sb.append(xyzDistance);
+			sb.append(Utils.rounded(xyzDistance));
 		else
 			sb.append("-");
 		if ((value > -1))
@@ -1443,12 +1457,20 @@ public class MatchPlugin implements PlugIn
 		if (point != null)
 		{
 			TimeValuedPoint p = (TimeValuedPoint) point;
-			sb.append(title).append('\t').append(p.getTime()).append('\t').append(p.getX()).append('\t')
-					.append(p.getY()).append('\t');
+			Rounder r = RounderFactory.create(4);
+			//@formatter:off
+			sb.append(title)
+    			.append('\t').append(p.getTime())
+    			.append('\t').append(r.round(p.getX()))
+    			.append('\t').append(r.round(p.getY()))
+				//.append('\t').append(r.round(p.getZ()))
+				.append('\t').append((int) Math.round(p.getZ() / scaleZ))
+				.append('\t');
+			//@formatter:on
 		}
 		else
 		{
-			sb.append("-\t-\t-\t-\t");
+			sb.append("-\t-\t-\t-\t-\t");
 		}
 	}
 
