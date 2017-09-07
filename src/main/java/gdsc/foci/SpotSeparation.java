@@ -179,7 +179,6 @@ public class SpotSeparation implements PlugInFilter
 						break;
 				}
 
-				@SuppressWarnings("unchecked")
 				float[][] profileValues = convertToFloat(before, after);
 				xValues = profileValues[0];
 				yValues = profileValues[1];
@@ -253,7 +252,6 @@ public class SpotSeparation implements PlugInFilter
 						break;
 				}
 
-				@SuppressWarnings("unchecked")
 				float[][] profileValues = convertToFloat(before, values, after);
 				xValues = profileValues[0];
 				yValues = profileValues[1];
@@ -871,6 +869,7 @@ public class SpotSeparation implements PlugInFilter
 		return angle;
 	}
 
+	@SafeVarargs
 	private final float[][] convertToFloat(List<float[]>... lists)
 	{
 		int size = 0;
