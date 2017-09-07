@@ -12,6 +12,7 @@ import gdsc.core.match.Coordinate;
 import gdsc.core.match.MatchCalculator;
 import gdsc.core.match.MatchResult;
 import gdsc.core.match.PointPair;
+import gdsc.core.utils.TextUtils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -260,7 +261,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			labelClusters(imp);
 		}
 
-		label.setText(Utils.pleural(filteredClusters.size(), "Cluster"));
+		label.setText(TextUtils.pleural(filteredClusters.size(), "Cluster"));
 	}
 
 	public void setNPasses(int nPasses)
@@ -272,7 +273,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addHelp(URL.FIND_FOCI);
-		gd.addMessage(Utils.pleural(results.size(), "result"));
+		gd.addMessage(TextUtils.pleural(results.size(), "result"));
 
 		gd.addSlider("Radius", 5, 500, radius);
 		gd.addChoice("Algorithm", names, names[algorithm]);
@@ -351,7 +352,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	private synchronized void noImagePreview()
 	{
 		doClustering();
-		label.setText(Utils.pleural(filteredClusters.size(), "Cluster"));
+		label.setText(TextUtils.pleural(filteredClusters.size(), "Cluster"));
 	}
 
 	private double lastRadius;
@@ -483,7 +484,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		}
 
 		double seconds = (System.currentTimeMillis() - start) / 1000.0;
-		IJ.showStatus(Utils.pleural(filteredClusters.size(), "cluster") + " in " + Utils.rounded(seconds) + " seconds");
+		IJ.showStatus(TextUtils.pleural(filteredClusters.size(), "cluster") + " in " + Utils.rounded(seconds) + " seconds");
 	}
 
 	private Coordinate[] toCoordinates(ArrayList<Cluster> clusters)

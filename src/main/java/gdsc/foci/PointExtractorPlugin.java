@@ -16,6 +16,7 @@ import gdsc.UsageTracker;
  *---------------------------------------------------------------------------*/
 
 import gdsc.core.ij.Utils;
+import gdsc.core.utils.TextUtils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -209,7 +210,7 @@ public class PointExtractorPlugin implements PlugInFilter
 		if (isManagerAvailable())
 		{
 			gd.addMessage(String.format("%s (%s) present in the ROI manager",
-					Utils.pleural(nPointRois(), "ROI"), Utils.pleural(nPoints(), "point")));
+					TextUtils.pleural(nPointRois(), "ROI"), TextUtils.pleural(nPoints(), "point")));
 			gd.addCheckbox("Use_manager_ROIs", useManager);
 			gd.addCheckbox("Reset_manager", reset);
 		}

@@ -47,6 +47,7 @@ import gdsc.core.ij.Utils;
 import gdsc.core.logging.MemoryLogger;
 import gdsc.core.threshold.AutoThreshold;
 import gdsc.core.utils.Maths;
+import gdsc.core.utils.TextUtils;
 import gdsc.core.utils.UnicodeReader;
 import gdsc.foci.FindFociBaseProcessor.ObjectAnalysisResult;
 import gdsc.foci.model.FindFociModel;
@@ -2695,8 +2696,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			IJ.log("---");
 
 		IJ.log(String.format("%s Batch time = %s. %s. Processed %d / %s. %s.", TITLE,
-				Utils.timeToString(runTime / 1000000.0), Utils.pleural(totalProgress, "file"), batchOK.get(),
-				Utils.pleural(batchImages.get(), "image"), Utils.pleural(batchError.get(), "file error")));
+				Utils.timeToString(runTime / 1000000.0), TextUtils.pleural(totalProgress, "file"), batchOK.get(),
+				TextUtils.pleural(batchImages.get(), "image"), TextUtils.pleural(batchError.get(), "file error")));
 
 		if (Utils.isInterrupted())
 		{

@@ -21,6 +21,7 @@ import gdsc.UsageTracker;
 
 import gdsc.core.ij.Utils;
 import gdsc.core.threshold.AutoThreshold;
+import gdsc.core.utils.SimpleArrayUtils;
 import gdsc.foci.ObjectAnalyzer;
 import gdsc.foci.ObjectAnalyzer3D;
 import ij.IJ;
@@ -820,7 +821,7 @@ public class MaskCreater implements PlugIn
 			final int xlimit = maxx - 1;
 			final int ylimit = ip.getHeight() - 1;
 
-			final int[] toZero = Utils.newArray(oa.getMaxObject() + 1, 0, 1);
+			final int[] toZero = SimpleArrayUtils.newArray(oa.getMaxObject() + 1, 0, 1);
 
 			for (int x1 = 0, x2 = ylimit * maxx; x1 < maxx; x1++, x2++)
 			{
@@ -914,7 +915,7 @@ public class MaskCreater implements PlugIn
 			final int xlimit = maxx - 1;
 			final int ylimit = stack.getHeight() - 1;
 
-			final int[] toZero = Utils.newArray(oa.getMaxObject() + 1, 0, 1);
+			final int[] toZero = SimpleArrayUtils.newArray(oa.getMaxObject() + 1, 0, 1);
 
 			for (int z = 0, offset = 0; z < maxz; z++, offset += maxx_maxy)
 			{

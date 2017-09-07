@@ -17,6 +17,7 @@ import gdsc.UsageTracker;
 
 import gdsc.help.URL;
 import gdsc.core.ij.Utils;
+import gdsc.core.utils.TextUtils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
@@ -351,12 +352,12 @@ public class AssignFociToObjects implements PlugInFilter
 		String msg = "Assign foci to the nearest object\n(Objects will be found in the current image)\nAvailable foci:";
 		if (findFociResults != null)
 		{
-			msg += "\nFind Foci = " + Utils.pleural(findFociResults.size(), "result");
+			msg += "\nFind Foci = " + TextUtils.pleural(findFociResults.size(), "result");
 			options[count++] = "Find Foci";
 		}
 		if (roiResults != null)
 		{
-			msg += "\nROI = " + Utils.pleural(roiResults.size(), "point");
+			msg += "\nROI = " + TextUtils.pleural(roiResults.size(), "point");
 			options[count++] = "ROI";
 		}
 		options = Arrays.copyOf(options, count);

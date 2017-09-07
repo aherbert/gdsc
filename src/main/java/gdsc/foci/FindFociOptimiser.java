@@ -24,6 +24,7 @@ import gdsc.core.match.MatchCalculator;
 import gdsc.core.match.MatchResult;
 import gdsc.core.threshold.AutoThreshold;
 import gdsc.core.utils.StoredData;
+import gdsc.core.utils.TextUtils;
 import gdsc.core.utils.UnicodeReader;
 import ij.IJ;
 import ij.ImagePlus;
@@ -951,7 +952,7 @@ public class FindFociOptimiser
 	private void saveResults(ImagePlus imp, ImagePlus mask, ArrayList<Result> results, AssignedPoint[] predictedPoints,
 			String resultFile)
 	{
-		if (Utils.isNullOrEmpty(resultFile))
+		if (TextUtils.isNullOrEmpty(resultFile))
 			return;
 
 		Options bestOptions = results.get(0).options;
