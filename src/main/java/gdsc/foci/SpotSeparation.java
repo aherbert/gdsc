@@ -179,6 +179,7 @@ public class SpotSeparation implements PlugInFilter
 						break;
 				}
 
+				@SuppressWarnings("unchecked")
 				float[][] profileValues = convertToFloat(before, after);
 				xValues = profileValues[0];
 				yValues = profileValues[1];
@@ -252,6 +253,7 @@ public class SpotSeparation implements PlugInFilter
 						break;
 				}
 
+				@SuppressWarnings("unchecked")
 				float[][] profileValues = convertToFloat(before, values, after);
 				xValues = profileValues[0];
 				yValues = profileValues[1];
