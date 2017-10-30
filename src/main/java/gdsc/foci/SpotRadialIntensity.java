@@ -52,6 +52,8 @@ public class SpotRadialIntensity implements PlugIn
 	private static double interval = 1;
 	private static boolean showFoci = false;
 	private static boolean showObjects = false;
+	private static boolean showTable = true;
+	private static boolean showPlot = true;
 
 	private ImagePlus imp;
 	private String prefix;
@@ -112,6 +114,8 @@ public class SpotRadialIntensity implements PlugIn
 		gd.addNumericField("Interval", interval, 2, 6, "pixels");
 		gd.addCheckbox("Show_foci", showFoci);
 		gd.addCheckbox("Show_objects", showObjects);
+		gd.addCheckbox("Show_table", showTable);
+		gd.addCheckbox("Show_plot", showPlot);
 		gd.addHelp(gdsc.help.URL.FIND_FOCI);
 
 		gd.showDialog();
@@ -124,6 +128,21 @@ public class SpotRadialIntensity implements PlugIn
 		double interval = gd.getNextNumber();
 		showFoci = gd.getNextBoolean();
 		showObjects = gd.getNextBoolean();
+		showTable = gd.getNextBoolean();
+		showPlot = gd.getNextBoolean();
+
+		// Validate options
+		if (!Maths.isFinite(distance) || !Maths.isFinite(interval) || distance <= 0 || interval <= 0 ||
+				(int) (distance / interval) <= 1)
+		{
+			IJ.error(TITLE, "No valid distances using the given interval");
+			return;
+		}
+		if (!(showTable || showPlot))
+		{
+			IJ.error(TITLE, "No output option");
+			return;
+		}
 
 		if (distance != SpotRadialIntensity.distance || interval != SpotRadialIntensity.interval)
 			resultsWindow = null; // Create a new window
@@ -267,7 +286,8 @@ public class SpotRadialIntensity implements PlugIn
 	 */
 	private void analyse(Foci[] foci, ObjectAnalyzer objects)
 	{
-		createResultsWindow();
+		if (showTable)
+			createResultsWindow();
 		StringBuilder sb = new StringBuilder();
 
 		int[] mask = objects.getObjectMask();
@@ -290,7 +310,7 @@ public class SpotRadialIntensity implements PlugIn
 		int[] dx2 = new int[2 * distance + 1];
 
 		// Plot of each radial intensity
-		Plot plot = new Plot(TITLE, "Distance", "Average");
+		Plot plot = (showPlot) ? new Plot(TITLE, "Distance", "Average") : null;
 		double[] xAxis = SimpleArrayUtils.newArray(maxBin, 0, interval);
 		double[] yAxis = new double[xAxis.length];
 		LUT lut = LUTHelper.createLUT(LUTHelper.LutColour.FIRE_GLOW);
@@ -350,46 +370,57 @@ public class SpotRadialIntensity implements PlugIn
 				}
 			}
 
-			// Table of results
-			sb.setLength(0);
-			sb.append(prefix);
-			sb.append('\t').append(f.id);
-			sb.append('\t').append(f.object);
-			float b = background[f.object];
-			sb.append('\t').append(Utils.rounded(b));
-			sb.append('\t').append(f.x);
-			sb.append('\t').append(f.y);
-			for (int i = 0; i < maxBin; i++)
+			if (showTable)
 			{
-				double v = sum[i] / count[i] - b * count[i];
-				yAxis[i] = v;
-				sb.append('\t').append(Utils.rounded(v));
-			}
-			int xLimit = 0;
-			for (int i = 0; i < maxBin; i++)
-			{
-				if (count[i] != 0)
-					xLimit = i + 1;
-				sb.append('\t').append(count[i]);
-			}
+				// Table of results
+				sb.setLength(0);
+				sb.append(prefix);
+				sb.append('\t').append(f.id);
+				sb.append('\t').append(f.object);
+				float b = background[f.object];
+				sb.append('\t').append(Utils.rounded(b));
+				sb.append('\t').append(f.x);
+				sb.append('\t').append(f.y);
+				for (int i = 0; i < maxBin; i++)
+				{
+					double v = sum[i] / count[i] - b * count[i];
+					yAxis[i] = v;
+					sb.append('\t').append(Utils.rounded(v));
+				}
+				for (int i = 0; i < maxBin; i++)
+				{
+					sb.append('\t').append(count[i]);
+				}
 
-			resultsWindow.append(sb.toString());
+				resultsWindow.append(sb.toString());
+			}
 
 			// Add to plot
-			plot.setColor(LUTHelper.getColour(lut, ii + 1, 0, foci.length));
-			if (xLimit < xAxis.length)
+			if (showPlot)
 			{
-				plot.addPoints(Arrays.copyOf(xAxis, xLimit), Arrays.copyOf(yAxis, xLimit), Plot.LINE);
-			}
-			else
-			{
-				plot.addPoints(xAxis, yAxis, Plot.LINE);
+				int xLimit = 0;
+				for (int i = 0; i < maxBin; i++)
+					if (count[i] != 0)
+						xLimit = i + 1;
+
+				plot.setColor(LUTHelper.getColour(lut, ii + 1, 0, foci.length));
+				if (xLimit < xAxis.length)
+				{
+					plot.addPoints(Arrays.copyOf(xAxis, xLimit), Arrays.copyOf(yAxis, xLimit), Plot.LINE);
+				}
+				else
+				{
+					plot.addPoints(xAxis, yAxis, Plot.LINE);
+				}
 			}
 		}
 
-		plot.setColor(Color.BLACK);
-		Utils.display(TITLE, plot);
-		plot.setLimitsToFit(true); // Seems to only work after drawing
+		if (showPlot)
+		{
+			plot.setColor(Color.BLACK);
+			Utils.display(TITLE, plot);
+			plot.setLimitsToFit(true); // Seems to only work after drawing
+		}
 	}
 
 	/**
