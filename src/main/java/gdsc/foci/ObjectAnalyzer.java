@@ -1,5 +1,8 @@
 package gdsc.foci;
 
+import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -14,6 +17,7 @@ package gdsc.foci;
  *---------------------------------------------------------------------------*/
 
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 
 import java.util.Arrays;
 
@@ -112,7 +116,8 @@ public class ObjectAnalyzer
 	/**
 	 * Searches from the specified point to find all coordinates of the same value and assigns them to given maximum ID.
 	 */
-	private int expandObjectXY(final int[] image, final int[] objectMask, final int index0, final int id, int[][] ppList)
+	private int expandObjectXY(final int[] image, final int[] objectMask, final int index0, final int id,
+			int[][] ppList)
 	{
 		objectMask[index0] = id; // mark first point
 		int listI = 0; // index of current search element in the list
@@ -207,7 +212,7 @@ public class ObjectAnalyzer
 	{
 		switch (direction)
 		{
-		// 4-connected directions
+			// 4-connected directions
 			case 0:
 				return (y > 0);
 			case 1:
@@ -216,7 +221,7 @@ public class ObjectAnalyzer
 				return (y < ylimit);
 			case 3:
 				return (x > 0);
-				// Then remaining 8-connected directions
+			// Then remaining 8-connected directions
 			case 4:
 				return (y > 0 && x < xlimit);
 			case 5:
@@ -312,5 +317,29 @@ public class ObjectAnalyzer
 	public void setEightConnected(boolean eightConnected)
 	{
 		this.eightConnected = eightConnected;
+	}
+
+	/**
+	 * Get an image processor containing the object mask.
+	 *
+	 * @return the image processor
+	 */
+	public ImageProcessor toProcessor()
+	{
+		int max = getMaxObject();
+		ImageProcessor ip = (max > 255) ? (max > 65535) ? new FloatProcessor(getWidth(), getHeight())
+				: new ShortProcessor(getWidth(), getHeight()) : new ByteProcessor(getWidth(), getHeight());
+		if (max > 65535)
+		{
+			for (int i = objectMask.length; i-- > 0;)
+				ip.setf(i, objectMask[i]);
+		}
+		else
+		{
+			for (int i = objectMask.length; i-- > 0;)
+				ip.set(i, objectMask[i]);
+		}
+		ip.setMinAndMax(0, max);
+		return ip;
 	}
 }
