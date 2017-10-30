@@ -1,55 +1,9 @@
 package gdsc.foci;
 
-import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
-import gdsc.foci.gui.OptimiserView;
-import gnu.trove.set.hash.TDoubleHashSet;
-import gnu.trove.set.hash.TIntHashSet;
-import gdsc.core.ij.Utils;
-import gdsc.core.match.Coordinate;
-import gdsc.core.match.MatchCalculator;
-import gdsc.core.match.MatchResult;
-import gdsc.core.threshold.AutoThreshold;
-import gdsc.core.utils.StoredData;
-import gdsc.core.utils.TextUtils;
-import gdsc.core.utils.UnicodeReader;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.Prefs;
-import ij.WindowManager;
-import ij.gui.DialogListener;
-import ij.gui.GenericDialog;
-import ij.gui.Overlay;
-import ij.gui.PointRoi;
-import ij.gui.Roi;
-import ij.gui.YesNoCancelDialog;
-import ij.io.FileInfo;
-import ij.plugin.PlugIn;
-import ij.plugin.frame.Recorder;
-import ij.process.ImageProcessor;
-import ij.text.TextWindow;
-
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
 import java.awt.Choice;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -85,6 +39,50 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import javax.swing.JFrame;
+
+import gdsc.UsageTracker;
+import gdsc.core.ij.Utils;
+import gdsc.core.match.Coordinate;
+import gdsc.core.match.MatchCalculator;
+import gdsc.core.match.MatchResult;
+import gdsc.core.threshold.AutoThreshold;
+import gdsc.core.utils.StoredData;
+import gdsc.core.utils.TextUtils;
+import gdsc.core.utils.UnicodeReader;
+
+/*----------------------------------------------------------------------------- 
+ * GDSC Plugins for ImageJ
+ * 
+ * Copyright (C) 2011 Alex Herbert
+ * Genome Damage and Stability Centre
+ * University of Sussex, UK
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *---------------------------------------------------------------------------*/
+
+import gdsc.foci.gui.OptimiserView;
+import gnu.trove.set.hash.TDoubleHashSet;
+import gnu.trove.set.hash.TIntHashSet;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.DialogListener;
+import ij.gui.ExtendedGenericDialog;
+import ij.gui.GenericDialog;
+import ij.gui.Overlay;
+import ij.gui.PointRoi;
+import ij.gui.Roi;
+import ij.gui.YesNoCancelDialog;
+import ij.io.FileInfo;
+import ij.plugin.PlugIn;
+import ij.plugin.frame.Recorder;
+import ij.process.ImageProcessor;
+import ij.text.TextWindow;
 
 /**
  * Runs the FindFoci plugin with various settings and compares the results to the reference image point ROI.
@@ -1281,11 +1279,10 @@ public class FindFociOptimiser
 		}
 
 		// Get the optimisation search settings
-		GenericDialog gd = new GenericDialog(TITLE);
+		ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
 		ArrayList<String> newImageList = (multiMode) ? null : FindFoci.buildMaskList(imp);
 
-		// Column 1
 		gd.addMessage("Runs the FindFoci algorithm using different parameters.\n" +
 				"Results are compared to reference ROI points.\n\n" +
 				"Input range fields accept 3 values: min,max,interval\n" +
@@ -1313,9 +1310,7 @@ public class FindFociOptimiser
 		gd.addStringField("Minimum_size", myMinSizeParameter, 12);
 		gd.addChoice("Minimum_above_saddle", saddleOptions, saddleOptions[myMinimumAboveSaddle]);
 
-		// Column 2
 		gd.addMessage(createSortOptions());
-		Component sortOptionsLabel = gd.getMessage(); // Note the component that will start column 2
 
 		gd.addStringField("Sort_method", mySortMethod);
 		gd.addNumericField("Maximum_peaks", myMaxPeaks, 0);
@@ -1334,7 +1329,7 @@ public class FindFociOptimiser
 		if (!multiMode)
 		{
 			gd.addCheckbox("Show_score_images", myShowScoreImages);
-			gd.addStringField("Result_file", myResultFile, 35);
+			gd.addFilenameField("Result_file", myResultFile, 35);
 
 			// Add a message about double clicking the result table to show the result
 			gd.addMessage("Note: Double-click an entry in the optimiser results table\n" +
@@ -1353,40 +1348,6 @@ public class FindFociOptimiser
 
 			// Listen for changes
 			addListeners(gd);
-		}
-
-		// Re-arrange the standard layout which has a GridBagLayout with 2 columns (label,field)
-		// to 4 columns: (label,field) x 2
-
-		if (gd.getLayout() != null)
-		{
-			GridBagLayout grid = (GridBagLayout) gd.getLayout();
-
-			int xOffset = 0, yOffset = 0;
-			int lastY = -1, rowCount = 0;
-			for (Component comp : gd.getComponents())
-			{
-				// Check if this should be the second major column
-				if (comp == sortOptionsLabel)
-				{
-					xOffset += 2;
-					yOffset -= rowCount;
-				}
-				// Reposition the field
-				GridBagConstraints c = grid.getConstraints(comp);
-				if (lastY != c.gridy)
-					rowCount++;
-				lastY = c.gridy;
-				c.gridx = c.gridx + xOffset;
-				c.gridy = c.gridy + yOffset;
-				c.insets.left = c.insets.left + 10 * xOffset;
-				c.insets.top = 0;
-				c.insets.bottom = 0;
-				grid.setConstraints(comp, c);
-			}
-
-			if (IJ.isLinux())
-				gd.setBackground(new Color(238, 238, 238));
 		}
 
 		gd.showDialog();

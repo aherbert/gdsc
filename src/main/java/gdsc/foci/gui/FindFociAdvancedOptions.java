@@ -1,5 +1,41 @@
 package gdsc.foci.gui;
 
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import org.jdesktop.beansbinding.AutoBinding;
+import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
+import org.jdesktop.beansbinding.BeanProperty;
+import org.jdesktop.beansbinding.Bindings;
+
+import gdsc.core.ij.Utils;
+
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
@@ -20,41 +56,6 @@ import gdsc.foci.converter.DoubleConverter;
 import gdsc.foci.converter.SliderDoubleConverter;
 import gdsc.foci.model.FindFociModel;
 import gdsc.format.LimitedNumberFormat;
-
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JFormattedTextField;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
-import org.jdesktop.beansbinding.AutoBinding;
-import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
-import org.jdesktop.beansbinding.BeanProperty;
-import org.jdesktop.beansbinding.Bindings;
 
 /**
  * Provides additional options for the FindFociView
@@ -475,15 +476,9 @@ public class FindFociAdvancedOptions extends JDialog
 				@Override
 				public void mouseClicked(MouseEvent e)
 				{
-					JFileChooser chooser = new JFileChooser();
-					chooser.setCurrentDirectory(new java.io.File("."));
-					chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-					// disable the "All files" option.
-					chooser.setAcceptAllFileFilterUsed(false);
-					if (chooser.showOpenDialog(contentPanel) == JFileChooser.APPROVE_OPTION)
-					{
-						model.setResultsDirectory(chooser.getSelectedFile().getAbsolutePath());
-					}
+					String dir = Utils.getDirectory(getTitle(), model.getResultsDirectory());
+					if (dir != null)
+						model.setResultsDirectory(dir);
 				}
 			});
 			btnDirectoryPicker.setMargin(new Insets(2, 2, 2, 2));
@@ -568,7 +563,10 @@ public class FindFociAdvancedOptions extends JDialog
 			}
 		}
 		initDataBindings();
+		
+		this.pack();
 	}
+	
 	protected void initDataBindings() {
 		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty = BeanProperty.create("showTable");
 		BeanProperty<JCheckBox, Boolean> jCheckBoxBeanProperty = BeanProperty.create("selected");

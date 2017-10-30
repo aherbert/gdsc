@@ -14,9 +14,6 @@ package gdsc.foci;
  *---------------------------------------------------------------------------*/
 
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.TextField;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -58,6 +55,7 @@ import ij.ImageStack;
 import ij.Macro;
 import ij.Prefs;
 import ij.WindowManager;
+import ij.gui.ExtendedGenericDialog;
 import ij.gui.GenericDialog;
 import ij.gui.ImageRoi;
 import ij.gui.Overlay;
@@ -694,7 +692,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		// Build a list of the open images
 		ArrayList<String> newImageList = buildMaskList(imp);
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
 		gd.addChoice("Mask", newImageList.toArray(new String[0]), myMaskImage);
 		gd.addMessage("Background options ...");
@@ -712,7 +710,6 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		gd.addCheckbox("Minimum_above_saddle", myMinimumAboveSaddle);
 		gd.addCheckbox("Connected_above_saddle", myConnectedAboveSaddle);
 		gd.addMessage("Results options ...");
-		Component resultsLabel = gd.getMessage(); // Note the component that will start column 2
 		gd.addChoice("Sort_method", sortIndexMethods, sortIndexMethods[mySortMethod]);
 		gd.addNumericField("Maximum_peaks", myMaxPeaks, 0);
 		gd.addChoice("Show_mask", maskOptions, maskOptions[myShowMask]);
@@ -727,7 +724,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		gd.addCheckbox("Show_peak_maxima_as_dots", myShowMaskMaximaAsDots);
 		gd.addCheckbox("Show_log_messages", myShowLogMessages);
 		gd.addCheckbox("Remove_edge_maxima", myRemoveEdgeMaxima);
-		gd.addStringField("Results_directory", myResultsDirectory, 30);
+		gd.addDirectoryField("Results_directory", myResultsDirectory, 30);
 		gd.addCheckbox("Object_analysis", myObjectAnalysis);
 		gd.addCheckbox("Show_object_mask", myShowObjectMask);
 		gd.addCheckbox("Save_to_memory", mySaveToMemory);
@@ -736,40 +733,6 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		gd.addChoice("Centre_method", centreMethods, centreMethods[myCentreMethod]);
 		gd.addNumericField("Centre_parameter", myCentreParameter, 0);
 		gd.addHelp(gdsc.help.URL.FIND_FOCI);
-
-		// Re-arrange the standard layout which has a GridBagLayout with 2 columns (label,field)
-		// to 4 columns: (label,field) x 2
-
-		if (gd.getLayout() != null)
-		{
-			GridBagLayout grid = (GridBagLayout) gd.getLayout();
-
-			int xOffset = 0, yOffset = 0;
-			int lastY = -1, rowCount = 0;
-			for (Component comp : gd.getComponents())
-			{
-				// Check if this should be the second major column
-				if (comp == resultsLabel)
-				{
-					xOffset += 2;
-					yOffset -= rowCount;
-				}
-				// Reposition the field
-				GridBagConstraints c = grid.getConstraints(comp);
-				if (lastY != c.gridy)
-					rowCount++;
-				lastY = c.gridy;
-				c.gridx = c.gridx + xOffset;
-				c.gridy = c.gridy + yOffset;
-				c.insets.left = c.insets.left + 10 * xOffset;
-				c.insets.top = 0;
-				c.insets.bottom = 0;
-				grid.setConstraints(comp, c);
-			}
-
-			if (IJ.isLinux())
-				gd.setBackground(new Color(238, 238, 238));
-		}
 
 		gd.showDialog();
 		if (gd.wasCanceled())

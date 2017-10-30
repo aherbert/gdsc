@@ -544,6 +544,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		gbc_btnHelp.gridy = 11;
 		contentPane.add(btnHelp, gbc_btnHelp);
 		initDataBindings();
+		
+		this.pack();
 	}
 
 	private void createFindMaximaModel()

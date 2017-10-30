@@ -2,6 +2,7 @@ package gdsc.foci.gui;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -213,7 +214,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	}
 
 	private void init()
-	{
+	{		
 		addWindowListener(new WindowAdapter()
 		{
 			@Override
@@ -243,7 +244,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		setContentPane(contentPane);
 		GridBagLayout gbl_contentPane = new GridBagLayout();
 		gbl_contentPane.columnWidths = new int[] { 0, 182, 50, 0 };
-		gbl_contentPane.rowHeights = new int[] { 27, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		gbl_contentPane.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0 };
 		gbl_contentPane.columnWeights = new double[] { 0.0, 1.0, 1.0, Double.MIN_VALUE };
 		gbl_contentPane.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -1218,6 +1219,16 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 			}
 		});
 		initDataBindings();
+
+		// Fixes resizing on MacOS
+		Dimension separatorDim = new Dimension(0, 1);
+		separator.setPreferredSize(separatorDim);
+		separator_1.setPreferredSize(separatorDim);
+		separator_2.setPreferredSize(separatorDim);
+		separator_3.setPreferredSize(separatorDim);
+		separator_4.setPreferredSize(separatorDim);
+		
+		this.pack();
 	}
 
 	private void startPreview()
