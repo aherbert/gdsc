@@ -1587,7 +1587,12 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			{
 				writeParam(out, "Image", imp.getTitle());
 				if (imp.getOriginalFileInfo() != null)
-					writeParam(out, "File", imp.getOriginalFileInfo().directory + imp.getOriginalFileInfo().fileName);
+				{
+					String path = (imp.getOriginalFileInfo().directory != null)
+							? imp.getOriginalFileInfo().directory + imp.getOriginalFileInfo().fileName
+							: imp.getOriginalFileInfo().fileName;
+					writeParam(out, "File", path);
+				}
 				writeParam(out, "Image_C", Integer.toString(imageDimension[BatchParameters.C]));
 				writeParam(out, "Image_Z", Integer.toString(imageDimension[BatchParameters.Z]));
 				writeParam(out, "Image_T", Integer.toString(imageDimension[BatchParameters.T]));
@@ -1596,8 +1601,12 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			{
 				writeParam(out, "Mask", mask.getTitle());
 				if (mask.getOriginalFileInfo() != null)
-					writeParam(out, "Mask File",
-							mask.getOriginalFileInfo().directory + mask.getOriginalFileInfo().fileName);
+				{
+					String path = (mask.getOriginalFileInfo().directory != null)
+							? mask.getOriginalFileInfo().directory + mask.getOriginalFileInfo().fileName
+							: mask.getOriginalFileInfo().fileName;
+					writeParam(out, "Mask File", path);
+				}
 				writeParam(out, "Mask_C", Integer.toString(maskDimension[BatchParameters.C]));
 				writeParam(out, "Mask_Z", Integer.toString(maskDimension[BatchParameters.Z]));
 				writeParam(out, "Mask_T", Integer.toString(maskDimension[BatchParameters.T]));
