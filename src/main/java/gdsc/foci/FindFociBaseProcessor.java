@@ -6144,8 +6144,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		final int[] objects = new int[maskImage.length];
 		int id = 0;
 		int[] objectState = new int[10];
-		// Label for 2D/3D processing
-		final boolean is2D = is2D();
+		// Label for 2D/3D processing. This is for the mask not the input image!
+		final boolean is2D = mask.getNSlices() == 1;
 
 		int[] pList = new int[100];
 
@@ -6186,7 +6186,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			}
 		}
 
-		// Store the number of objects and their orignal mask value
+		// Store the number of objects and their original mask value
 		if (objectAnalysisResult != null)
 		{
 			objectAnalysisResult.numberOfObjects = id;
