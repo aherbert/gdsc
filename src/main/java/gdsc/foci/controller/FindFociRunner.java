@@ -118,9 +118,9 @@ public class FindFociRunner extends Thread
 		{
 			// Log this to ImageJ. Do not bubble up exceptions
 			if (t.getMessage() != null)
-				IJ.log("A error occurred during processing: " + t.getMessage());
+				IJ.log("An error occurred during processing: " + t.getMessage());
 			else
-				IJ.log("A error occurred during processing");
+				IJ.log("An error occurred during processing");
 			t.printStackTrace();
 
 			notify(MessageType.ERROR, t);
