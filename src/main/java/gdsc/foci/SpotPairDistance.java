@@ -20,10 +20,10 @@ import java.awt.event.MouseEvent;
 import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
 import gdsc.core.utils.Maths;
-import gdsc.core.utils.TextUtils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.ImageCanvas;
@@ -35,6 +35,7 @@ import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import ij.plugin.tool.PlugInTool;
 import ij.process.ImageProcessor;
+import ij.text.TextPanel;
 import ij.text.TextWindow;
 
 /**
@@ -44,6 +45,16 @@ public class SpotPairDistance implements PlugIn
 {
 	public static final String TITLE = "Spot Pair Distance";
 
+	private static final String PREFS_CHANNEL_1 = "gdsc.foci.spotpairdistance.channel_1";
+	private static final String PREFS_CHANNEL_2 = "gdsc.foci.spotpairdistance.channel_2";
+	private static final String PREFS_SEARCH_RANGE = "gdsc.foci.spotpairdistance.search_range";
+	private static final String PREFS_COM_RANGE = "gdsc.foci.spotpairdistance.com_range";
+	private static final String PREFS_SHOW_DISTANCES = "gdsc.foci.spotpairdistance.show_distances";
+	private static final String PREFS_SHOW_SEARCH_REGION = "gdsc.foci.spotpairdistance.show_search_region";
+	private static final String PREFS_SHOW_COM_REGION = "gdsc.foci.spotpairdistance.show_com_region";
+	private static final String PREFS_SHOW_LINE = "gdsc.foci.spotpairdistance.show_line";
+	private static final String PREFS_ADD_TO_OVERLAY = "gdsc.foci.spotpairdistance.add_to_overlay";
+
 	/**
 	 * All the work for this plugin is done with the plugin tool.
 	 * It handles mouse click events from an image.
@@ -52,14 +63,15 @@ public class SpotPairDistance implements PlugIn
 	{
 		private static TextWindow distancesWindow = null;
 
-		private int channel1 = 1;
-		private int channel2 = 2;
-		private int searchRange = 5;
-		private int comRange = 2;
-		private boolean showDistances = true;
-		private boolean showSearchRegion = true;
-		private boolean showComRegion = true;
-		private boolean showLine = true;
+		private int channel1 = Prefs.getInt(PREFS_CHANNEL_1, 1);
+		private int channel2 = Prefs.getInt(PREFS_CHANNEL_2, 2);
+		private int searchRange = Prefs.getInt(PREFS_SEARCH_RANGE, 5);
+		private int comRange = Prefs.getInt(PREFS_COM_RANGE, 2);
+		private boolean showDistances = Prefs.getBoolean(PREFS_SHOW_DISTANCES, true);
+		private boolean showSearchRegion = Prefs.getBoolean(PREFS_SHOW_SEARCH_REGION, true);
+		private boolean showComRegion = Prefs.getBoolean(PREFS_SHOW_COM_REGION, true);
+		private boolean showLine = Prefs.getBoolean(PREFS_SHOW_LINE, true);
+		private boolean addToOverlay = Prefs.getBoolean(PREFS_ADD_TO_OVERLAY, true);
 
 		boolean active = true;
 
@@ -80,6 +92,13 @@ public class SpotPairDistance implements PlugIn
 		public void showOptionsDialog()
 		{
 			GenericDialog gd = new GenericDialog(TITLE + " Tool Options");
+			gd.addMessage(
+				//@formatter:off
+				"Click on a multi-channel image and the distance between the\n" +
+				"center-of-mass of spots in two channels will be measured.");
+				//@formatter:on
+			if (!hasMultiChannelImage())
+				gd.addMessage("Warning: Currently no multi-channel images are open.");
 			gd.addNumericField("Channel_1", channel1, 0);
 			gd.addNumericField("Channel_2", channel2, 0);
 			gd.addSlider("Search_range", 1, 10, searchRange);
@@ -88,6 +107,7 @@ public class SpotPairDistance implements PlugIn
 			gd.addCheckbox("Show_search_region", showSearchRegion);
 			gd.addCheckbox("Show_com_region", showComRegion);
 			gd.addCheckbox("Show_line", showLine);
+			gd.addCheckbox("Add_to_overlay", addToOverlay);
 			gd.showDialog();
 			if (gd.wasCanceled())
 				return;
@@ -102,9 +122,30 @@ public class SpotPairDistance implements PlugIn
 				showSearchRegion = gd.getNextBoolean();
 				showComRegion = gd.getNextBoolean();
 				showLine = gd.getNextBoolean();
+				addToOverlay = gd.getNextBoolean();
 				active = (channel1 != channel2 && searchRange > 0 &&
 						(showDistances || showSearchRegion || showComRegion || showLine));
+				Prefs.set(PREFS_CHANNEL_1, channel1);
+				Prefs.set(PREFS_CHANNEL_2, channel2);
+				Prefs.set(PREFS_SEARCH_RANGE, searchRange);
+				Prefs.set(PREFS_COM_RANGE, comRange);
+				Prefs.set(PREFS_SHOW_DISTANCES, showDistances);
+				Prefs.set(PREFS_SHOW_SEARCH_REGION, showSearchRegion);
+				Prefs.set(PREFS_SHOW_COM_REGION, showComRegion);
+				Prefs.set(PREFS_SHOW_LINE, showLine);
+				Prefs.set(PREFS_ADD_TO_OVERLAY, addToOverlay);
 			}
+		}
+
+		private boolean hasMultiChannelImage()
+		{
+			for (int id : Utils.getIDList())
+			{
+				ImagePlus imp = WindowManager.getImage(id);
+				if (imp != null && imp.getNChannels() > 1)
+					return true;
+			}
+			return false;
 		}
 
 		@Override
@@ -121,7 +162,11 @@ public class SpotPairDistance implements PlugIn
 			synchronized (this)
 			{
 				if (c < channel1 || c < channel2)
+				{
+					IJ.log(TITLE + " - ERROR: Image has fewer channels than those selected for analysis");
 					return;
+				}
+
 				ImageCanvas ic = imp.getCanvas();
 				int x = ic.offScreenX(e.getX());
 				int y = ic.offScreenY(e.getY());
@@ -131,6 +176,99 @@ public class SpotPairDistance implements PlugIn
 						2 * searchRange + 1).intersection(new Rectangle(imp.getWidth(), imp.getHeight()));
 				if (bounds.width == 0 || bounds.height == 0)
 					return;
+
+				if (e.isAltDown() || e.isShiftDown() || e.isControlDown())
+				{
+					// Option to remove the result
+					//System.out.println("Remove at ... " + bounds);
+
+					// Remove all the overlay components
+					Overlay o = imp.getOverlay();
+					if (o != null)
+					{
+						Roi[] rois = o.toArray();
+						o = new Overlay();
+						for (int i = 0; i < rois.length; i++)
+						{
+							Roi roi = rois[i];
+							if (roi.isArea())
+							{
+								Rectangle r = rois[i].getBounds();
+								//System.out.println(r);
+								if (r.intersects(bounds))
+									continue;
+							}
+							else if (roi instanceof Line)
+							{
+								// Assume a line
+								Line line = (Line) roi;
+								if (bounds.contains(line.x1d, line.y1d) || bounds.contains(line.x2d, line.y2d))
+									continue;
+							}
+							o.add(rois[i]);
+						}
+						imp.setOverlay(o);
+					}
+
+					// Remove any distances from this image
+					if (distancesWindow != null && distancesWindow.isShowing())
+					{
+						TextPanel tp = distancesWindow.getTextPanel();
+						String title = imp.getTitle();
+						for (int i = 0; i < tp.getLineCount(); i++)
+						{
+							String line = tp.getLine(i);
+							// Check the image name
+							int startIndex = line.indexOf('\t');
+							if (startIndex == -1)
+								continue;
+							if (!title.equals(line.substring(0, startIndex)))
+								continue;
+
+							// Find the start of the region column
+							for (int j = 4; j-- > 0;)
+							{
+								startIndex = line.indexOf('\t', startIndex + 1);
+								if (startIndex == -1)
+									break;
+							}
+							if (startIndex == -1)
+								continue;
+							int endIndex = line.indexOf('\t', startIndex + 1);
+							if (endIndex == -1)
+								continue;
+							String text = line.substring(startIndex + 1, endIndex);
+							//System.out.println("Region " + text);
+
+							// Region is formatted as 'x,y wxh'
+							int commaIndex = text.indexOf(',');
+							int spaceIndex = text.indexOf(' ');
+							int xIndex = text.indexOf('x');
+							if (commaIndex == -1 || spaceIndex < commaIndex || xIndex < spaceIndex)
+								continue;
+							try
+							{
+								int xx = Integer.parseInt(text.substring(0, commaIndex));
+								int yy = Integer.parseInt(text.substring(commaIndex + 1, spaceIndex));
+								int w = Integer.parseInt(text.substring(spaceIndex + 1, xIndex));
+								int h = Integer.parseInt(text.substring(xIndex + 1));
+								Rectangle r = new Rectangle(xx, yy, w, h);
+								//System.out.println(r);
+								if (r.intersects(bounds))
+								{
+									//tp.setLine(i, "");
+									tp.setSelection(i, i);
+									tp.clearSelection();
+								}
+							}
+							catch (NumberFormatException ex)
+							{
+							}
+						}
+					}
+
+					return;
+				}
 
 				int slice = imp.getZ();
 				int frame = imp.getFrame();
@@ -167,7 +305,12 @@ public class SpotPairDistance implements PlugIn
 					addDistanceResult(imp, slice, frame, bounds, com1, com2);
 				if (showSearchRegion || showComRegion || showLine)
 				{
-					Overlay o = new Overlay();
+					Overlay o = null;
+					if (addToOverlay)
+						o = imp.getOverlay();
+					if (o == null)
+						o = new Overlay();
+
 					if (showSearchRegion)
 						o.add(createRoi(bounds, Color.magenta));
 					if (showComRegion)
@@ -339,27 +482,6 @@ public class SpotPairDistance implements PlugIn
 
 		addPluginTool();
 
-		GenericDialog gd = new GenericDialog(TITLE);
-		gd.addMessage(TextUtils.wrap(
-				//@formatter:off
-				"Click on a multi-channel image and the distance between the center-of-mass " +
-				"of spots in two channels will be measured. The " + TITLE + " tool must be selected. " +
-				"Options for the tool can be configured by double-clicking the tool icon.", 80));
-		//@formatter:on
-		if (!hasMultiChannelImage())
-			gd.addMessage("Warning: Currently no multi-channel images are open.");
-		gd.hideCancelButton();
-		gd.showDialog();
-	}
-
-	private boolean hasMultiChannelImage()
-	{
-		for (int id : Utils.getIDList())
-		{
-			ImagePlus imp = WindowManager.getImage(id);
-			if (imp != null && imp.getNChannels() > 1)
-				return true;
-		}
-		return false;
+		toolInstance.showOptionsDialog();
 	}
 }
