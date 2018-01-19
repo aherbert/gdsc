@@ -72,8 +72,8 @@ public class SpotPairDistance implements PlugIn
 		@Override
 		public String getToolIcon()
 		{
-			// A green line between a red and blue spot
-			return "C0f0L53b7Cf00o4233C00foa644";
+			// A magenta line between a red and blue spot
+			return "Cf0fL32daCf00o1055C00foc855";
 		}
 
 		@Override
@@ -344,7 +344,7 @@ public class SpotPairDistance implements PlugIn
 				//@formatter:off
 				"Click on a multi-channel image and the distance between the center-of-mass " +
 				"of spots in two channels will be measured. The " + TITLE + " tool must be selected. " +
-				"Options for the tool can be configured using the tool icon.", 80));
+				"Options for the tool can be configured by double-clicking the tool icon.", 80));
 		//@formatter:on
 		if (!hasMultiChannelImage())
 			gd.addMessage("Warning: Currently no multi-channel images are open.");
