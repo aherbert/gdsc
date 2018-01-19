@@ -63,15 +63,15 @@ public class SpotPairDistance implements PlugIn
 	{
 		private static TextWindow distancesWindow = null;
 
-		private int channel1 = Prefs.getInt(PREFS_CHANNEL_1, 1);
-		private int channel2 = Prefs.getInt(PREFS_CHANNEL_2, 2);
-		private int searchRange = Prefs.getInt(PREFS_SEARCH_RANGE, 5);
-		private int comRange = Prefs.getInt(PREFS_COM_RANGE, 2);
-		private boolean showDistances = Prefs.getBoolean(PREFS_SHOW_DISTANCES, true);
-		private boolean showSearchRegion = Prefs.getBoolean(PREFS_SHOW_SEARCH_REGION, true);
-		private boolean showComRegion = Prefs.getBoolean(PREFS_SHOW_COM_REGION, true);
-		private boolean showLine = Prefs.getBoolean(PREFS_SHOW_LINE, true);
-		private boolean addToOverlay = Prefs.getBoolean(PREFS_ADD_TO_OVERLAY, true);
+		private int channel1 = (int) Prefs.get(PREFS_CHANNEL_1, 1);
+		private int channel2 = (int) Prefs.get(PREFS_CHANNEL_2, 2);
+		private int searchRange = (int) Prefs.get(PREFS_SEARCH_RANGE, 5);
+		private int comRange = (int) Prefs.get(PREFS_COM_RANGE, 2);
+		private boolean showDistances = Prefs.get(PREFS_SHOW_DISTANCES, true);
+		private boolean showSearchRegion = Prefs.get(PREFS_SHOW_SEARCH_REGION, true);
+		private boolean showComRegion = Prefs.get(PREFS_SHOW_COM_REGION, true);
+		private boolean showLine = Prefs.get(PREFS_SHOW_LINE, true);
+		private boolean addToOverlay = Prefs.get(PREFS_ADD_TO_OVERLAY, true);
 
 		boolean active = true;
 
@@ -180,7 +180,6 @@ public class SpotPairDistance implements PlugIn
 				if (e.isAltDown() || e.isShiftDown() || e.isControlDown())
 				{
 					// Option to remove the result
-					//System.out.println("Remove at ... " + bounds);
 
 					// Remove all the overlay components
 					Overlay o = imp.getOverlay();
@@ -194,13 +193,11 @@ public class SpotPairDistance implements PlugIn
 							if (roi.isArea())
 							{
 								Rectangle r = rois[i].getBounds();
-								//System.out.println(r);
 								if (r.intersects(bounds))
 									continue;
 							}
 							else if (roi instanceof Line)
 							{
-								// Assume a line
 								Line line = (Line) roi;
 								if (bounds.contains(line.x1d, line.y1d) || bounds.contains(line.x2d, line.y2d))
 									continue;
@@ -238,7 +235,6 @@ public class SpotPairDistance implements PlugIn
 							if (endIndex == -1)
 								continue;
 							String text = line.substring(startIndex + 1, endIndex);
-							//System.out.println("Region " + text);
 
 							// Region is formatted as 'x,y wxh'
 							int commaIndex = text.indexOf(',');
@@ -253,7 +249,6 @@ public class SpotPairDistance implements PlugIn
 								int w = Integer.parseInt(text.substring(spaceIndex + 1, xIndex));
 								int h = Integer.parseInt(text.substring(xIndex + 1));
 								Rectangle r = new Rectangle(xx, yy, w, h);
-								//System.out.println(r);
 								if (r.intersects(bounds))
 								{
 									//tp.setLine(i, "");
@@ -325,7 +320,7 @@ public class SpotPairDistance implements PlugIn
 			}
 		}
 
-		private double[] com(ImageProcessor ip, int m, Rectangle r1)
+		private double[] com(ImageProcessor ip, int m, Rectangle r)
 		{
 			int x = m % ip.getWidth();
 			int y = m / ip.getWidth();
@@ -346,10 +341,10 @@ public class SpotPairDistance implements PlugIn
 			int my = y - ry;
 			ry = 2 * ry + 1;
 
-			r1.x = mx;
-			r1.width = rx;
-			r1.y = my;
-			r1.height = ry;
+			r.x = mx;
+			r.width = rx;
+			r.y = my;
+			r.height = ry;
 
 			double cx = 0;
 			double cy = 0;
