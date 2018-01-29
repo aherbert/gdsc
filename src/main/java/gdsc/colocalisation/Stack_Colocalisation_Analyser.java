@@ -621,7 +621,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 
 		char spacer = (logResults) ? ',' : '\t';
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append(imp.getTitle()).append(spacer);
 		sb.append(IJ.d2s(pCut, 4)).append(spacer);
 		sb.append(method).append(spacer);
@@ -724,7 +724,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 				}
 				else
 				{
-					StringBuffer sb = new StringBuffer();
+					StringBuilder sb = new StringBuilder();
 					sb.append("c").append(c);
 					if (z != 0)
 					{

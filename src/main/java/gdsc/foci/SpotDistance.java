@@ -1527,7 +1527,7 @@ public class SpotDistance implements PlugIn
 
 	private void installTool()
 	{
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append("macro 'Spot Distance Action Tool - C00fo4233o6922oa644Cf00O00ff' {\n");
 		sb.append("   call('").append(this.getClass().getName()).append(".run');\n");
 		sb.append("};\n");

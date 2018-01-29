@@ -1353,7 +1353,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 		String id = generateId();
 
-		StringBuffer heading = null;
+		StringBuilder heading = null;
 
 		// Output the results to a text window
 		if (tw == null || !tw.isShowing())
@@ -1362,7 +1362,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			tw = new TextWindow(TITLE + " Results", heading.toString(), "", 1000, 300);
 		}
 
-		StringBuffer resultsEntry = new StringBuffer();
+		StringBuilder resultsEntry = new StringBuilder();
 		addField(resultsEntry, id);
 		addField(resultsEntry, getImageTitle(imp1, 0));
 		addField(resultsEntry, getImageTitle(imp2, 2));
@@ -1482,11 +1482,11 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		}
 	}
 
-	private StringBuffer createHeading(StringBuffer heading)
+	private StringBuilder createHeading(StringBuilder heading)
 	{
 		if (heading == null)
 		{
-			heading = new StringBuffer();
+			heading = new StringBuilder();
 
 			addField(heading, "Exp. Id");
 			addField(heading, choiceChannel1);
@@ -1685,7 +1685,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		plot.addPoints(avDistances.getValues(), avValues.getValues(), Plot.LINE);
 	}
 
-	private StringBuffer addField(StringBuffer buffer, Object field)
+	private StringBuilder addField(StringBuilder buffer, Object field)
 	{
 		if (buffer.length() > 0)
 		{
@@ -1695,7 +1695,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		return buffer;
 	}
 
-	private void addRoiField(StringBuffer buffer, int roiIndex, int imageIndex, ImageProcessor roiIp, int offset)
+	private void addRoiField(StringBuilder buffer, int roiIndex, int imageIndex, ImageProcessor roiIp, int offset)
 	{
 		String roiOption = ROI_OPTIONS[roiIndex];
 		addField(buffer, roiOption);
@@ -1734,7 +1734,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		}
 	}
 
-	private void addResults(StringBuffer sb, DisplayStatistics displayStatistics)
+	private void addResults(StringBuilder sb, DisplayStatistics displayStatistics)
 	{
 		double value = displayStatistics.getValue();
 		double av = displayStatistics.getAverage();

@@ -975,7 +975,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 			double m1threshold, double m2threshold, double percVolCh1, double percVolCh2, double percTotCh1,
 			double percTotCh2, double percGtTCh1, double percGtTCh2, double totalPixels)
 	{
-		StringBuffer str = new StringBuffer();
+		StringBuilder str = new StringBuilder();
 		str.append(fileName).append('\t');
 		switch (roiIndex)
 		{
@@ -1059,7 +1059,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	{
 		if (tw == null || !tw.isShowing())
 		{
-			StringBuffer heading = new StringBuffer("Images\tROI\tZeroZero\t");
+			StringBuilder heading = new StringBuilder("Images\tROI\tZeroZero\t");
 
 			if (showRTotal)
 				heading.append("Rtotal\t");
@@ -1106,7 +1106,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		}
 	}
 
-	private void appendFormat(StringBuffer str, double value, DecimalFormat format)
+	private void appendFormat(StringBuilder str, double value, DecimalFormat format)
 	{
 		if (Double.isNaN(value))
 		{
@@ -1119,7 +1119,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		str.append('\t');
 	}
 
-	private void appendFormat(StringBuffer str, double value, DecimalFormat format, String units)
+	private void appendFormat(StringBuilder str, double value, DecimalFormat format, String units)
 	{
 		if (Double.isNaN(value))
 		{

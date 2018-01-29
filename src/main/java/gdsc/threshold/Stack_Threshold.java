@@ -291,7 +291,7 @@ public class Stack_Threshold implements PlugInFilter
 		{
 			if (sliceName == null)
 			{
-				StringBuffer sb = new StringBuffer();
+				StringBuilder sb = new StringBuilder();
 				sb.append("c").append(c);
 				if (z != 0)
 				{

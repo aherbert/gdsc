@@ -138,7 +138,7 @@ public class HSB_Picker extends PlugInFrame
 
 	private void installTool()
 	{
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append("macro 'HSB Picker Tool - C00fT0610HC0f0T5910SCf00Tac10L' {\n");
 		sb.append("   call('").append(this.getClass().getName()).append(".run');\n");
 		sb.append("};\n");

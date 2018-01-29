@@ -120,7 +120,7 @@ public class Measure3D extends PlugInFrame
 		String name = "Measure 3D Tool";
 		if (Toolbar.getInstance().getToolId(name) == -1)
 		{
-			StringBuffer sb = new StringBuffer();
+			StringBuilder sb = new StringBuilder();
 			sb.append("macro 'Measure 3D Tool - L0ef7F0d22Fe722C00fT06103T5610D' {\n");
 			sb.append("   call('").append(this.getClass().getName()).append(".run');\n");
 			sb.append("};\n");

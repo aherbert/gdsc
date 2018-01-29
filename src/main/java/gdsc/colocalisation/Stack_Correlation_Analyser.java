@@ -436,7 +436,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 		int n = (int) results[0];
 		double area = results[1];
 		double r = results[2];
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append("t").append(t).append(",");
 		sb.append(c1).append(",");
 		sb.append(c2).append(",");
@@ -507,7 +507,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 		{
 			if (sliceName == null)
 			{
-				StringBuffer sb = new StringBuffer();
+				StringBuilder sb = new StringBuilder();
 				sb.append("c").append(c);
 				if (z != 0)
 				{
