@@ -1,6 +1,5 @@
 package gdsc.foci;
 
-// TODO: Auto-generated Javadoc
 /*----------------------------------------------------------------------------- 
  * GDSC Plugins for ImageJ
  * 
