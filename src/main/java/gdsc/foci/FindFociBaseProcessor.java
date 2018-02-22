@@ -6100,8 +6100,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			if (o1.sortValue < o2.sortValue)
 				return -1;
 
-			// Avoid bad draws
-			return super.compare(o1, o2);
+			// Avoid bad draws. This is an ascending sort so reverse the order.
+			return super.compare(o2, o1);
 		}
 	}
 

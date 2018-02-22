@@ -4294,7 +4294,8 @@ public class FindFociLegacy
 				return 1;
 			if (o1[sortIndex] < o2[sortIndex])
 				return -1;
-			return super.compare(o1, o2);
+			// Reverse order for ascending sort
+			return super.compare(o2, o1);
 		}
 	}
 }
