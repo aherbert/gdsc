@@ -51,6 +51,7 @@ public class SpotPairDistance implements PlugIn
 	private static final String PREFS_CHANNEL_2 = "gdsc.foci.spotpairdistance.channel_2";
 	private static final String PREFS_SEARCH_RANGE = "gdsc.foci.spotpairdistance.search_range";
 	private static final String PREFS_COM_RANGE = "gdsc.foci.spotpairdistance.com_range";
+	private static final String PREFS_REVERSE_ORIENTATION_LINE = "gdsc.foci.spotpairdistance.reverse_orientation_line";
 	private static final String PREFS_SHOW_DISTANCES = "gdsc.foci.spotpairdistance.show_distances";
 	private static final String PREFS_SHOW_SEARCH_REGION = "gdsc.foci.spotpairdistance.show_search_region";
 	private static final String PREFS_SHOW_COM_REGION = "gdsc.foci.spotpairdistance.show_com_region";
@@ -70,6 +71,7 @@ public class SpotPairDistance implements PlugIn
 		private int channel2 = (int) Prefs.get(PREFS_CHANNEL_2, 2);
 		private int searchRange = (int) Prefs.get(PREFS_SEARCH_RANGE, 5);
 		private int comRange = (int) Prefs.get(PREFS_COM_RANGE, 2);
+		private boolean reverseOrientationLine = Prefs.get(PREFS_REVERSE_ORIENTATION_LINE, false);
 		private boolean showDistances = Prefs.get(PREFS_SHOW_DISTANCES, true);
 		private boolean showSearchRegion = Prefs.get(PREFS_SHOW_SEARCH_REGION, true);
 		private boolean showComRegion = Prefs.get(PREFS_SHOW_COM_REGION, true);
@@ -124,6 +126,7 @@ public class SpotPairDistance implements PlugIn
 			gd.addNumericField("Channel_2", channel2, 0);
 			gd.addSlider("Search_range", 1, 10, searchRange);
 			gd.addSlider("Centre_of_mass_range", 1, 10, comRange);
+			gd.addCheckbox("Reverse_orientation_line", reverseOrientationLine);
 			gd.addCheckbox("Show_distances", showDistances);
 			gd.addCheckbox("Show_search_region", showSearchRegion);
 			gd.addCheckbox("Show_com_region", showComRegion);
@@ -140,6 +143,7 @@ public class SpotPairDistance implements PlugIn
 				searchRange = (int) gd.getNextNumber();
 				comRange = (int) gd.getNextNumber();
 				comRange = Maths.clip(0, searchRange, comRange);
+				reverseOrientationLine = gd.getNextBoolean();
 				showDistances = gd.getNextBoolean();
 				showSearchRegion = gd.getNextBoolean();
 				showComRegion = gd.getNextBoolean();
@@ -152,6 +156,7 @@ public class SpotPairDistance implements PlugIn
 				Prefs.set(PREFS_CHANNEL_2, channel2);
 				Prefs.set(PREFS_SEARCH_RANGE, searchRange);
 				Prefs.set(PREFS_COM_RANGE, comRange);
+				Prefs.set(PREFS_REVERSE_ORIENTATION_LINE, reverseOrientationLine);
 				Prefs.set(PREFS_SHOW_DISTANCES, showDistances);
 				Prefs.set(PREFS_SHOW_SEARCH_REGION, showSearchRegion);
 				Prefs.set(PREFS_SHOW_COM_REGION, showComRegion);
@@ -371,8 +376,9 @@ public class SpotPairDistance implements PlugIn
 				double x = ic.offScreenXD(e.getX());
 				double y = ic.offScreenYD(e.getY());
 
-				// - Draw a line ROI from the start location
-				imp.setRoi(createLine(com1[0], com1[1], x, y, Color.yellow));
+				// - Draw a line ROI from the start location (it may be reversed)
+				double[] line = createOrientationLine(com1[0], com1[1], x, y);
+				imp.setRoi(createLine(line[0], line[1], line[2], line[3], Color.yellow));
 				dragging++;
 			}
 
@@ -404,15 +410,16 @@ public class SpotPairDistance implements PlugIn
 				boolean hasDragged = dragging > 1;
 				dragging = 0;
 
-				double x = 0, y = 0;
+				double[] line = null;
 				if (hasDragged)
 				{
 					// Remove drag line
 					imp.killRoi();
 
 					ImageCanvas ic = imp.getCanvas();
-					x = ic.offScreenXD(e.getX());
-					y = ic.offScreenYD(e.getY());
+					double x = ic.offScreenXD(e.getX());
+					double y = ic.offScreenYD(e.getY());
+					line = createOrientationLine(com1[0], com1[1], x, y);
 
 					if (showOrientationLine)
 					{
@@ -421,7 +428,7 @@ public class SpotPairDistance implements PlugIn
 							o = imp.getOverlay();
 						if (o == null)
 							o = new Overlay();
-						o.add(createLine(com1[0], com1[1], x, y, Color.yellow));
+						o.add(createLine(line[0], line[1], line[2], line[3], Color.yellow));
 						imp.setOverlay(o);
 					}
 				}
@@ -438,7 +445,7 @@ public class SpotPairDistance implements PlugIn
 						// - Compute relative orientation
 						// Both vectors are are centred on com1. The drag end point
 						// specifies the vector direction origin not the end.
-						double[] v1 = createVector(com1[0], com1[1], x, y);
+						double[] v1 = createVector(line[2], line[3], line[0], line[1]);
 						double[] v2 = createVector(com2[0], com2[1], com1[0], com1[1]);
 
 						// Requires the vectors to have a length.
@@ -473,6 +480,30 @@ public class SpotPairDistance implements PlugIn
 			double x = x1 - x2;
 			double y = y1 - y2;
 			return new double[] { x, y };
+		}
+
+		/**
+		 * Creates the orientation line.
+		 *
+		 * @param x1
+		 *            the CoM x
+		 * @param y1
+		 *            the CoM y
+		 * @param x2
+		 *            the mouse position x
+		 * @param y2
+		 *            the mouse position y
+		 * @return [startX,startY,endX,endY]
+		 */
+		private double[] createOrientationLine(double x1, double y1, double x2, double y2)
+		{
+			if (reverseOrientationLine)
+			{
+				x2 = 2 * x1 - x2; //  x1 -(x2-x1);
+				y2 = 2 * y1 - y2; //  y1 -(y2-y1);
+				return new double[] { x1, y1, x2, y2 };
+			}
+			return new double[] { x1, y1, x2, y2 };
 		}
 
 		private double normalise(double[] vector)
