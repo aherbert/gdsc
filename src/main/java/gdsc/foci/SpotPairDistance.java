@@ -20,6 +20,8 @@ import java.awt.event.MouseEvent;
 import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
 import gdsc.core.utils.Maths;
+import gdsc.core.utils.SimpleLock;
+import gdsc.core.utils.TextUtils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -53,6 +55,7 @@ public class SpotPairDistance implements PlugIn
 	private static final String PREFS_SHOW_SEARCH_REGION = "gdsc.foci.spotpairdistance.show_search_region";
 	private static final String PREFS_SHOW_COM_REGION = "gdsc.foci.spotpairdistance.show_com_region";
 	private static final String PREFS_SHOW_LINE = "gdsc.foci.spotpairdistance.show_line";
+	private static final String PREFS_SHOW_ORIENTATION_LINE = "gdsc.foci.spotpairdistance.show_orientation_line";
 	private static final String PREFS_ADD_TO_OVERLAY = "gdsc.foci.spotpairdistance.add_to_overlay";
 
 	/**
@@ -71,9 +74,24 @@ public class SpotPairDistance implements PlugIn
 		private boolean showSearchRegion = Prefs.get(PREFS_SHOW_SEARCH_REGION, true);
 		private boolean showComRegion = Prefs.get(PREFS_SHOW_COM_REGION, true);
 		private boolean showLine = Prefs.get(PREFS_SHOW_LINE, true);
+		private boolean showOrientationLine = Prefs.get(PREFS_SHOW_ORIENTATION_LINE, true);
 		private boolean addToOverlay = Prefs.get(PREFS_ADD_TO_OVERLAY, true);
 
 		boolean active = true;
+
+		// Flag set in mouse pressed and released in mouse released
+		int dragging = 0;
+
+		@SuppressWarnings("unused")
+		SimpleLock lock = new SimpleLock();
+
+		// Created in the MousePressed event
+		int origX, origY;
+		int slice, frame;
+		Rectangle bounds;
+		Rectangle r1 = new Rectangle();
+		Rectangle r2 = new Rectangle();
+		double[] com1, com2;
 
 		@Override
 		public String getToolName()
@@ -94,8 +112,11 @@ public class SpotPairDistance implements PlugIn
 			GenericDialog gd = new GenericDialog(TITLE + " Tool Options");
 			gd.addMessage(
 				//@formatter:off
-				"Click on a multi-channel image and the distance between the\n" +
-				"center-of-mass of spots in two channels will be measured.");
+				TextUtils.wrap(
+				"Click on a multi-channel image and the distance between the " +
+				"center-of-mass of spots in two channels will be measured. " +
+				"Drag from the clicked point to create an orientation for " +
+				"relative XY distance.", 80));
 				//@formatter:on
 			if (!hasMultiChannelImage())
 				gd.addMessage("Warning: Currently no multi-channel images are open.");
@@ -107,6 +128,7 @@ public class SpotPairDistance implements PlugIn
 			gd.addCheckbox("Show_search_region", showSearchRegion);
 			gd.addCheckbox("Show_com_region", showComRegion);
 			gd.addCheckbox("Show_line", showLine);
+			gd.addCheckbox("Show_orientation_line", showOrientationLine);
 			gd.addCheckbox("Add_to_overlay", addToOverlay);
 			gd.showDialog();
 			if (gd.wasCanceled())
@@ -122,6 +144,7 @@ public class SpotPairDistance implements PlugIn
 				showSearchRegion = gd.getNextBoolean();
 				showComRegion = gd.getNextBoolean();
 				showLine = gd.getNextBoolean();
+				showOrientationLine = gd.getNextBoolean();
 				addToOverlay = gd.getNextBoolean();
 				active = (channel1 != channel2 && searchRange > 0 &&
 						(showDistances || showSearchRegion || showComRegion || showLine));
@@ -133,6 +156,7 @@ public class SpotPairDistance implements PlugIn
 				Prefs.set(PREFS_SHOW_SEARCH_REGION, showSearchRegion);
 				Prefs.set(PREFS_SHOW_COM_REGION, showComRegion);
 				Prefs.set(PREFS_SHOW_LINE, showLine);
+				Prefs.set(PREFS_SHOW_ORIENTATION_LINE, showOrientationLine);
 				Prefs.set(PREFS_ADD_TO_OVERLAY, addToOverlay);
 			}
 		}
@@ -148,9 +172,32 @@ public class SpotPairDistance implements PlugIn
 			return false;
 		}
 
+		// --------------
+		// Actions
+		// --------------
+
+		// Mouse press:
+		// - Find the CoM in both channels
+		// - Store press location
+
+		// Mouse drag 
+		// - Draw a line ROI from the start location
+
+		// Mouse released 
+		// - Compute relative orientation
+		// - Output Euclidian distance and relative XY distance
+
+		// Mouse clicked with modifier key 
+		// - Find Overlay components within the region and remove from Overlay and table
+
+		// --------------
+
 		@Override
-		public void mouseClicked(ImagePlus imp, MouseEvent e)
+		public void mousePressed(ImagePlus imp, MouseEvent e)
 		{
+			if (isRemoveEvent(e))
+				return;
+
 			int c = imp.getNChannels();
 			if (!active || c == 1)
 				return;
@@ -172,104 +219,15 @@ public class SpotPairDistance implements PlugIn
 				int y = ic.offScreenY(e.getY());
 
 				// Get the region bounds to search for maxima
-				Rectangle bounds = new Rectangle(x - searchRange, y - searchRange, 2 * searchRange + 1,
-						2 * searchRange + 1).intersection(new Rectangle(imp.getWidth(), imp.getHeight()));
+				bounds = new Rectangle(x - searchRange, y - searchRange, 2 * searchRange + 1, 2 * searchRange + 1)
+						.intersection(new Rectangle(imp.getWidth(), imp.getHeight()));
 				if (bounds.width == 0 || bounds.height == 0)
-					return;
-
-				if (e.isAltDown() || e.isShiftDown() || e.isControlDown())
 				{
-					// Option to remove the result
-
-					// Remove all the overlay components
-					Overlay o = imp.getOverlay();
-					if (o != null)
-					{
-						Roi[] rois = o.toArray();
-						o = new Overlay();
-						for (int i = 0; i < rois.length; i++)
-						{
-							Roi roi = rois[i];
-							if (roi.isArea())
-							{
-								Rectangle r = rois[i].getBounds();
-								if (r.intersects(bounds))
-									continue;
-							}
-							else if (roi instanceof Line)
-							{
-								Line line = (Line) roi;
-								if (bounds.contains(line.x1d, line.y1d) || bounds.contains(line.x2d, line.y2d))
-									continue;
-							}
-							o.add(rois[i]);
-						}
-						imp.setOverlay(o);
-					}
-
-					// Remove any distances from this image
-					if (distancesWindow != null && distancesWindow.isShowing())
-					{
-						TextPanel tp = distancesWindow.getTextPanel();
-						String title = imp.getTitle();
-						for (int i = 0; i < tp.getLineCount(); i++)
-						{
-							String line = tp.getLine(i);
-							// Check the image name
-							int startIndex = line.indexOf('\t');
-							if (startIndex == -1)
-								continue;
-							if (!title.equals(line.substring(0, startIndex)))
-								continue;
-
-							// Find the start of the region column
-							for (int j = 4; j-- > 0;)
-							{
-								startIndex = line.indexOf('\t', startIndex + 1);
-								if (startIndex == -1)
-									break;
-							}
-							if (startIndex == -1)
-								continue;
-							int endIndex = line.indexOf('\t', startIndex + 1);
-							if (endIndex == -1)
-								continue;
-							String text = line.substring(startIndex + 1, endIndex);
-
-							// Region is formatted as 'x,y wxh'
-							int commaIndex = text.indexOf(',');
-							int spaceIndex = text.indexOf(' ');
-							int xIndex = text.indexOf('x');
-							if (commaIndex == -1 || spaceIndex < commaIndex || xIndex < spaceIndex)
-								continue;
-							try
-							{
-								int xx = Integer.parseInt(text.substring(0, commaIndex));
-								int yy = Integer.parseInt(text.substring(commaIndex + 1, spaceIndex));
-								int w = Integer.parseInt(text.substring(spaceIndex + 1, xIndex));
-								int h = Integer.parseInt(text.substring(xIndex + 1));
-								Rectangle r = new Rectangle(xx, yy, w, h);
-								if (r.intersects(bounds))
-								{
-									//tp.setLine(i, "");
-									tp.setSelection(i, i);
-									tp.clearSelection();
-									// Since i will be incremented for the next line,
-									// decrement to check the current line again.
-									i--;  
-								}
-							}
-							catch (NumberFormatException ex)
-							{
-							}
-						}
-					}
-
 					return;
 				}
 
-				int slice = imp.getZ();
-				int frame = imp.getFrame();
+				slice = imp.getZ();
+				frame = imp.getFrame();
 
 				int i1 = imp.getStackIndex(channel1, slice, frame);
 				int i2 = imp.getStackIndex(channel2, slice, frame);
@@ -294,13 +252,15 @@ public class SpotPairDistance implements PlugIn
 				}
 
 				// Find centre-of-mass around each maxima
-				Rectangle r1 = new Rectangle();
-				Rectangle r2 = new Rectangle();
-				double[] com1 = com(ip1, m1, r1);
-				double[] com2 = com(ip2, m2, r2);
+				com1 = com(ip1, m1, r1);
+				com2 = com(ip2, m2, r2);
 
-				if (showDistances)
-					addDistanceResult(imp, slice, frame, bounds, com1, com2);
+				// Store the actual pixel position so it is clear when the mouse has 
+				// been dragged to a new position.
+				origX = e.getX();
+				origY = e.getY();
+
+				// Add the overlay visuals
 				if (showSearchRegion || showComRegion || showLine)
 				{
 					Overlay o = null;
@@ -320,7 +280,15 @@ public class SpotPairDistance implements PlugIn
 						o.add(createLine(com1[0], com1[1], com2[0], com2[1], Color.magenta));
 					imp.setOverlay(o);
 				}
+
+				// Initiate dragging
+				dragging = 1;
 			}
+		}
+
+		private boolean isRemoveEvent(MouseEvent e)
+		{
+			return e.isAltDown() || e.isShiftDown() || e.isControlDown();
 		}
 
 		private double[] com(ImageProcessor ip, int m, Rectangle r)
@@ -384,6 +352,172 @@ public class SpotPairDistance implements PlugIn
 			return roi;
 		}
 
+		@Override
+		public void mouseDragged(ImagePlus imp, MouseEvent e)
+		{
+			if (dragging == 0)
+				return;
+			e.consume();
+
+			// Simple ignore of rapid events. This is not needed as the ImageCanvas must 
+			// correctly call this when the last event has been processed.
+			//if (lock.acquire())
+			//{
+
+			// Only a drag if the mouse has moved position
+			if (origX != e.getX() || origY != e.getY())
+			{
+				ImageCanvas ic = imp.getCanvas();
+				double x = ic.offScreenXD(e.getX());
+				double y = ic.offScreenYD(e.getY());
+
+				// - Draw a line ROI from the start location
+				imp.setRoi(createLine(com1[0], com1[1], x, y, Color.yellow));
+				dragging++;
+			}
+
+			//	lock.release();
+			//}
+			//else
+			//{
+			//	System.out.println("Ignored drag");
+			//}
+		}
+
+		@Override
+		public void mouseReleased(ImagePlus imp, MouseEvent e)
+		{
+			if (dragging == 0)
+				return;
+
+			e.consume();
+
+			// Note: ImageJ bug
+			// ImageCanvas.activateOverlayRoi() may set the image ROI (if currently null)
+			// using the first ROI that contains a mouseReleased event if >250 milliseconds
+			// have elapsed from the mousePressed event. Nothing can currently be done to 
+			// stop this since it ignores the consumed flag.
+
+			synchronized (this)
+			{
+				// Halt dragging but check if a drag did occur
+				boolean hasDragged = dragging > 1;
+				dragging = 0;
+
+				double x = 0, y = 0;
+				if (hasDragged)
+				{
+					// Remove drag line
+					imp.killRoi();
+
+					ImageCanvas ic = imp.getCanvas();
+					x = ic.offScreenXD(e.getX());
+					y = ic.offScreenYD(e.getY());
+
+					if (showOrientationLine)
+					{
+						Overlay o = null;
+						if (addToOverlay)
+							o = imp.getOverlay();
+						if (o == null)
+							o = new Overlay();
+						o.add(createLine(com1[0], com1[1], x, y, Color.yellow));
+						imp.setOverlay(o);
+					}
+				}
+
+				// - Output Euclidian distance and relative XY distance
+				if (showDistances)
+				{
+					// For relative orientation
+					double angle = 0;
+					double relX = 0;
+					double relY = 0;
+					if (hasDragged)
+					{
+						// - Compute relative orientation
+						// Both vectors are are centred on com1. The drag end point
+						// specifies the vector direction origin not the end.
+						double[] v1 = createVector(com1[0], com1[1], x, y);
+						double[] v2 = createVector(com2[0], com2[1], com1[0], com1[1]);
+
+						// Requires the vectors to have a length.
+						double l1 = normalise(v1);
+						double l2 = normalise(v2);
+						if (l1 != 0 && l2 != 0)
+						{
+							double dot = v1[0] * v2[0] + v1[1] * v2[1];
+							angle = Math.acos(dot) * 180.0 / Math.PI;
+							// Scalar projection of v2 in direction of v1.
+							// This is the relative X component
+							relX = dot * l2;
+							// The relative Y component is determined using Pythagoras' rule 
+							relY = Math.sqrt(l2 * l2 - relX * relX);
+							// Compute sign to get an orientation
+							if (angle != 0)
+							{
+								double sign = Math.signum(v1[0] * v2[1] - v1[1] * v2[0]);
+								angle *= sign;
+								relY *= sign;
+							}
+						}
+					}
+
+					addDistanceResult(imp, slice, frame, bounds, com1, com2, angle, relX, relY);
+				}
+			}
+		}
+
+		private double[] createVector(double x1, double y1, double x2, double y2)
+		{
+			double x = x1 - x2;
+			double y = y1 - y2;
+			return new double[] { x, y };
+		}
+
+		private double normalise(double[] vector)
+		{
+			double x = vector[0];
+			double y = vector[1];
+			// Normalise
+			double length = Math.sqrt(x * x + y * y);
+			if (length != 0)
+			{
+				vector[0] /= length;
+				vector[1] /= length;
+			}
+			return length;
+		}
+
+		@SuppressWarnings("unused")
+		private double[] crossProduct(double[] vector1, double[] vector2)
+		{
+			// The cross product is only relevant in 3D!
+			double u1 = vector1[0];
+			double u2 = vector1[1];
+			double u3 = 0;
+			double v1 = vector2[0];
+			double v2 = vector2[1];
+			double v3 = 0;
+			double s1 = u2 * v3 - u3 * v2;
+			double s2 = u3 * v1 - u1 * v3;
+			double s3 = u1 * v2 - u2 * v1;
+			return new double[] { s1, s2, s3 };
+
+			// Simplifies to:
+			//return new double[] { 0, 0, u1 * v2 - u2 * v1 };
+		}
+
+		@SuppressWarnings("unused")
+		private double dotSign(double[] vector1, double[] vector2)
+		{
+			double u1 = vector1[0];
+			double u2 = vector1[1];
+			double v1 = vector2[0];
+			double v2 = vector2[1];
+			return u1 * v2 - u2 * v1;
+		}
+
 		/**
 		 * Create the result window (if it is not available)
 		 */
@@ -407,15 +541,18 @@ public class SpotPairDistance implements PlugIn
 			sb.append("X1 (px)\tY1 (px)\t");
 			sb.append("X2 (px)\tY2 (px)\t");
 			sb.append("Distance (px)\t");
+			sb.append("Relative Angle\t");
+			sb.append("Rel X (px)\tRel Y (px)\t");
 			sb.append("X1\tY1\t");
 			sb.append("X2\tY2\t");
 			sb.append("Distance\t");
+			sb.append("Rel X\tRel Y\t");
 			sb.append("Units");
 			return sb.toString();
 		}
 
 		private void addDistanceResult(ImagePlus imp, int slice, int frame, Rectangle bounds, double[] com1,
-				double[] com2)
+				double[] com2, double angle, double relX, double relY)
 		{
 			createResultsWindow();
 
@@ -438,10 +575,14 @@ public class SpotPairDistance implements PlugIn
 			double dy = com1[1] - com2[1];
 			double d = Math.sqrt(dx * dx + dy * dy);
 			sb.append('\t').append(Utils.rounded(d));
+			sb.append('\t').append(Utils.rounded(angle));
+			sb.append('\t').append(Utils.rounded(relX));
+			sb.append('\t').append(Utils.rounded(relY));
+
 			Calibration cal = imp.getCalibration();
 			String unit = cal.getUnit();
 			// Only if matching units and pixel scaling
-			if (cal.getYUnit() == unit && (cal.pixelWidth != 1.0 || cal.pixelWidth != 1.0))
+			if (cal.getYUnit() == unit && (cal.pixelWidth != 1.0 || cal.pixelHeight != 1.0))
 			{
 				sb.append('\t').append(Utils.rounded(com1[0] * cal.pixelWidth));
 				sb.append('\t').append(Utils.rounded(com1[1] * cal.pixelHeight));
@@ -451,9 +592,144 @@ public class SpotPairDistance implements PlugIn
 				dy *= cal.pixelHeight;
 				d = Math.sqrt(dx * dx + dy * dy);
 				sb.append('\t').append(Utils.rounded(d));
+				// Units must be the same for calibrated relative distance
+				if (cal.pixelWidth == cal.pixelHeight)
+				{
+					sb.append('\t').append(Utils.rounded(relX * cal.pixelWidth));
+					sb.append('\t').append(Utils.rounded(relY * cal.pixelWidth));
+				}
+				else
+				{
+					sb.append("'\t-\t-");
+				}
 				sb.append('\t').append(unit);
 			}
 			distancesWindow.append(sb.toString());
+		}
+
+		@Override
+		public void mouseClicked(ImagePlus imp, MouseEvent e)
+		{
+			int c = imp.getNChannels();
+			if (!active || c == 1)
+				return;
+
+			if (!isRemoveEvent(e))
+				return;
+
+			// Mark this event as handled
+			e.consume();
+
+			// Ensure rapid mouse click / new options does not break things
+			synchronized (this)
+			{
+				// Option to remove the result
+				ImageCanvas ic = imp.getCanvas();
+				int x = ic.offScreenX(e.getX());
+				int y = ic.offScreenY(e.getY());
+
+				// Get the region bounds to search for maxima
+				Rectangle bounds = new Rectangle(x - searchRange, y - searchRange, 2 * searchRange + 1,
+						2 * searchRange + 1).intersection(new Rectangle(imp.getWidth(), imp.getHeight()));
+				if (bounds.width == 0 || bounds.height == 0)
+				{
+					return;
+				}
+
+				// Remove all the overlay components
+				Overlay o = imp.getOverlay();
+				if (o != null)
+				{
+					Roi[] rois = o.toArray();
+					o = new Overlay();
+					for (int i = 0; i < rois.length; i++)
+					{
+						Roi roi = rois[i];
+						if (roi.isArea())
+						{
+							Rectangle r = roi.getBounds();
+							if (r.intersects(bounds))
+								continue;
+						}
+						else if (roi instanceof Line)
+						{
+							Line line = (Line) roi;
+							if (bounds.contains(line.x1d, line.y1d) || bounds.contains(line.x2d, line.y2d))
+								continue;
+						}
+						o.add(roi);
+					}
+					if (o.size() == 0)
+						imp.setOverlay(null);
+					else
+						imp.setOverlay(o);
+
+					// Note:
+					// ImageCanvas.activateOverlayRoi() may set the image ROI using the first ROI 
+					// that contains a mousePressed/mouseReleased event. Check if it should be removed.
+					Roi impRoi = imp.getRoi();
+					if (impRoi != null && bounds.intersects(impRoi.getBounds()))
+						imp.setRoi((Roi) null);
+				}
+
+				// Remove any distances from this image
+				if (distancesWindow != null && distancesWindow.isShowing())
+				{
+					TextPanel tp = distancesWindow.getTextPanel();
+					String title = imp.getTitle();
+					for (int i = 0; i < tp.getLineCount(); i++)
+					{
+						String line = tp.getLine(i);
+						// Check the image name
+						int startIndex = line.indexOf('\t');
+						if (startIndex == -1)
+							continue;
+						if (!title.equals(line.substring(0, startIndex)))
+							continue;
+
+						// Find the start of the region column
+						for (int j = 4; j-- > 0;)
+						{
+							startIndex = line.indexOf('\t', startIndex + 1);
+							if (startIndex == -1)
+								break;
+						}
+						if (startIndex == -1)
+							continue;
+						int endIndex = line.indexOf('\t', startIndex + 1);
+						if (endIndex == -1)
+							continue;
+						String text = line.substring(startIndex + 1, endIndex);
+
+						// Region is formatted as 'x,y wxh'
+						int commaIndex = text.indexOf(',');
+						int spaceIndex = text.indexOf(' ');
+						int xIndex = text.indexOf('x');
+						if (commaIndex == -1 || spaceIndex < commaIndex || xIndex < spaceIndex)
+							continue;
+						try
+						{
+							int xx = Integer.parseInt(text.substring(0, commaIndex));
+							int yy = Integer.parseInt(text.substring(commaIndex + 1, spaceIndex));
+							int w = Integer.parseInt(text.substring(spaceIndex + 1, xIndex));
+							int h = Integer.parseInt(text.substring(xIndex + 1));
+							Rectangle r = new Rectangle(xx, yy, w, h);
+							if (r.intersects(bounds))
+							{
+								//tp.setLine(i, "");
+								tp.setSelection(i, i);
+								tp.clearSelection();
+								// Since i will be incremented for the next line,
+								// decrement to check the current line again.
+								i--;
+							}
+						}
+						catch (NumberFormatException ex)
+						{
+						}
+					}
+				}
+			}
 		}
 	}
 
