@@ -254,6 +254,9 @@ public class SpotPairDistance implements PlugIn
 									//tp.setLine(i, "");
 									tp.setSelection(i, i);
 									tp.clearSelection();
+									// Since i will be incremented for the next line,
+									// decrement to check the current line again.
+									i--;  
 								}
 							}
 							catch (NumberFormatException ex)
@@ -457,7 +460,7 @@ public class SpotPairDistance implements PlugIn
 	private static SpotPairDistancePluginTool toolInstance = null;
 
 	/**
-	 * Initialise the manual translocation finder tool. This is to allow support for calling within macro toolsets.
+	 * Initialise the spot pair distance tool. This is to allow support for calling within macro toolsets.
 	 */
 	public static void addPluginTool()
 	{
