@@ -458,7 +458,7 @@ public class SpotPairDistance implements PlugIn
 							{
 								double sign = Math.signum(v1[0] * v2[1] - v1[1] * v2[0]);
 								angle *= sign;
-								relY *= sign;
+								relY *= -sign; // Positive rotation makes y below the x-axis direction
 							}
 						}
 					}
