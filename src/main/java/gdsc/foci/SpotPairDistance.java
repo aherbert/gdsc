@@ -20,7 +20,6 @@ import java.awt.event.MouseEvent;
 import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
 import gdsc.core.utils.Maths;
-import gdsc.core.utils.SimpleLock;
 import gdsc.core.utils.TextUtils;
 import ij.IJ;
 import ij.ImagePlus;
@@ -83,9 +82,6 @@ public class SpotPairDistance implements PlugIn
 
 		// Flag set in mouse pressed and released in mouse released
 		int dragging = 0;
-
-		@SuppressWarnings("unused")
-		SimpleLock lock = new SimpleLock();
 
 		// Created in the MousePressed event
 		int origX, origY;
@@ -364,11 +360,6 @@ public class SpotPairDistance implements PlugIn
 				return;
 			e.consume();
 
-			// Simple ignore of rapid events. This is not needed as the ImageCanvas must 
-			// correctly call this when the last event has been processed.
-			//if (lock.acquire())
-			//{
-
 			// Only a drag if the mouse has moved position
 			if (origX != e.getX() || origY != e.getY())
 			{
@@ -381,13 +372,6 @@ public class SpotPairDistance implements PlugIn
 				imp.setRoi(createLine(line[0], line[1], line[2], line[3], Color.yellow));
 				dragging++;
 			}
-
-			//	lock.release();
-			//}
-			//else
-			//{
-			//	System.out.println("Ignored drag");
-			//}
 		}
 
 		@Override
