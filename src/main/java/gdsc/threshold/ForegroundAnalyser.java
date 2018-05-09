@@ -21,6 +21,7 @@ import gdsc.core.data.procedures.FValueProcedure;
 import gdsc.core.data.procedures.IValueProcedure;
 import gdsc.core.data.utils.Rounder;
 import gdsc.core.data.utils.RounderFactory;
+import gdsc.core.ij.Utils;
 import gdsc.core.ij.roi.RoiHelper;
 import gdsc.core.threshold.AutoThreshold;
 import gdsc.core.threshold.FloatHistogram;
@@ -44,6 +45,7 @@ public class ForegroundAnalyser implements PlugInFilter
 	private static TextWindow resultsWindow = null;
 
 	private static String method = AutoThreshold.Method.OTSU.name;
+	private static boolean showMask = false;
 	private static boolean doStack = true;
 	private static String[] BINS = { "256", "512", "1024", "2048", "4096", "8192", "16384" };
 	private static int histogramBins = 4;
@@ -103,6 +105,7 @@ public class ForegroundAnalyser implements PlugInFilter
 
 		gd.addMessage("Threshold pixels inside an ROI and analyse foreground pixels");
 		gd.addChoice("Threshold_method", AutoThreshold.getMethods(true), method);
+		gd.addCheckbox("Show_mask", showMask);
 		if (isMultiZ)
 			gd.addCheckbox("Do_stack", doStack);
 		if (is32bit)
@@ -115,6 +118,7 @@ public class ForegroundAnalyser implements PlugInFilter
 			return false;
 
 		method = gd.getNextChoice();
+		showMask = gd.getNextBoolean();
 		if (isMultiZ)
 			doStack = gd.getNextBoolean();
 		if (is32bit)
@@ -134,7 +138,7 @@ public class ForegroundAnalyser implements PlugInFilter
 		{
 			ImageStack inputStack = imp.getImageStack();
 			slice = 0;
-			for (int n = imp.getNSlices(); n >= 1; n--)
+			for (int n = 1, nSlices = imp.getNSlices(); n <= nSlices; n++)
 			{
 				stack.addSlice(null, inputStack.getPixels(imp.getStackIndex(channel, n, frame)));
 			}
@@ -213,6 +217,10 @@ public class ForegroundAnalyser implements PlugInFilter
 		// Show results
 		createResultsWindow();
 		addResult(channel, slice, frame, roi, n, t, stats);
+
+		// Show foreground mask...
+		if (showMask)
+			showMask(roi, stack, t);
 	}
 
 	private void createResultsWindow()
@@ -273,5 +281,71 @@ public class ForegroundAnalyser implements PlugInFilter
 		sb.append(r.toString(stats.getMean())).append('\t');
 		sb.append(r.toString(stats.getStandardDeviation())).append('\t');
 		resultsWindow.append(sb.toString());
+	}
+
+	private void showMask(Roi roi, ImageStack stack, float t)
+	{
+		final int maxx = stack.getWidth();
+		final int maxy = stack.getHeight();
+		ImageStack maskStack = new ImageStack(maxx, maxy);
+		final int n = maxx * maxy;
+		if (roi == null)
+		{
+			for (int slice = 1; slice <= stack.getSize(); slice++)
+			{
+				byte[] pixels = new byte[n];
+				ImageProcessor ip = stack.getProcessor(slice);
+				for (int i = 0; i < n; i++)
+					if (ip.getf(i) >= t)
+						pixels[i] = -1;
+				maskStack.addSlice(null, pixels);
+			}
+		}
+		else
+		{
+			final Rectangle roiBounds = roi.getBounds();
+			final int xOffset = roiBounds.x;
+			final int yOffset = roiBounds.y;
+			final int rwidth = roiBounds.width;
+			final int rheight = roiBounds.height;
+
+			ImageProcessor mask = roi.getMask();
+			if (mask == null)
+			{
+				for (int slice = 1; slice <= stack.getSize(); slice++)
+				{
+					byte[] pixels = new byte[n];
+					ImageProcessor ip = stack.getProcessor(slice);
+					for (int y = 0; y < rheight; y++)
+					{
+						for (int x = 0, i = (y + yOffset) * maxx + xOffset; x < rwidth; x++, i++)
+						{
+							if (ip.getf(i) >= t)
+								pixels[i] = -1;
+						}
+					}
+					maskStack.addSlice(null, pixels);
+				}
+			}
+			else
+			{
+				for (int slice = 1; slice <= stack.getSize(); slice++)
+				{
+					byte[] pixels = new byte[n];
+					ImageProcessor ip = stack.getProcessor(slice);
+					for (int y = 0, j = 0; y < rheight; y++)
+					{
+						for (int x = 0, i = (y + yOffset) * maxx + xOffset; x < rwidth; x++, i++, j++)
+						{
+							if (ip.getf(i) >= t && mask.get(j) != 0)
+								pixels[i] = -1;
+						}
+					}
+					maskStack.addSlice(null, pixels);
+				}
+			}
+		}
+
+		Utils.display(TITLE, maskStack);
 	}
 }
