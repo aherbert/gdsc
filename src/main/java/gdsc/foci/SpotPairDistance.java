@@ -22,6 +22,7 @@ import gdsc.core.ij.Utils;
 import gdsc.core.utils.Maths;
 import gdsc.core.utils.TextUtils;
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Prefs;
@@ -770,6 +771,12 @@ public class SpotPairDistance implements PlugIn
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
 		addPluginTool();
+
+		// Fiji restores the toolbar from the last session. 
+		// Do not show the options if this is happening.
+		ImageJ ij = IJ.getInstance();
+		if (ij == null || !ij.isVisible())
+			return;
 
 		toolInstance.showOptionsDialog();
 	}
