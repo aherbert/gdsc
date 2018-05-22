@@ -74,6 +74,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	private static double pCut = 0.05;
 
 	private Correlator c;
+	private int[] ii1, ii2;
 
 	/*
 	 * (non-Javadoc)
@@ -119,7 +120,10 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		// channel3 is set within getMethods()
 		int nChannels = (channel3 != 1) ? 3 : 2;
 
-		c = new Correlator(dimensions[0] * dimensions[1]);
+		int size = dimensions[0] * dimensions[1];
+		c = new Correlator(size);
+		ii1 = new int[size];
+		ii2 = new int[size];
 
 		for (String method : methods)
 		{
@@ -420,9 +424,21 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	{
 		double m1Significant = 0, m2Significant = 0, rSignificant = 0;
 
+		// Debug - show all the input
+		//Utils.display("Stack Analyser Stack1", s1.imageStack);
+		//Utils.display("Stack Analyser Stack2", s2.imageStack);
+		//Utils.display("Stack Analyser ROI1", s1.maskStack);
+		//Utils.display("Stack Analyser ROI2", s2.maskStack);
+		//Utils.display("Stack Analyser Confined", s3.maskStack);
+
 		// Calculate the total intensity within the channels, only counting regions in the channel mask and the ROI
 		double totalIntensity1 = getTotalIntensity(s1.imageStack, s1.maskStack, s3.maskStack);
 		double totalIntensity2 = getTotalIntensity(s2.imageStack, s2.maskStack, s3.maskStack);
+
+		//System.out.printf("Stack Analyser total = %s (%s)  %s (%s) : %s)\n", 
+		//		totalIntensity1, getTotalIntensity(s1.maskStack, s1.maskStack, null),
+		//		totalIntensity2, getTotalIntensity(s2.maskStack, s2.maskStack, null),
+		//		getTotalIntensity(s3.maskStack, s3.maskStack, null));
 
 		// Get the standard result
 		CalculationResult result = correlate(s1.imageStack, s1.maskStack, s2.imageStack, s2.maskStack, s3.maskStack, 0,
@@ -529,7 +545,6 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 
 	private double getTotalIntensity(ImageStack imageStack, ImageStack maskStack, ImageStack maskStack2)
 	{
-		byte on = (byte) 255;
 		double total = 0;
 		for (int s = 1; s <= imageStack.getSize(); s++)
 		{
@@ -544,7 +559,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 
 				for (int i = mask.length; i-- > 0;)
 				{
-					if (mask[i] == on && mask2[i] == on)
+					if (mask[i] != 0 && mask2[i] != 0)
 					{
 						total += ip1.get(i);
 					}
@@ -554,7 +569,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 			{
 				for (int i = mask.length; i-- > 0;)
 				{
-					if (mask[i] == on)
+					if (mask[i] != 0)
 					{
 						total += ip1.get(i);
 					}
@@ -573,8 +588,6 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	{
 		ImageStack overlapStack = combineBits(mask1, mask2, Blitter.AND);
 
-		final byte on = (byte) 255;
-
 		int nTotal = 0;
 
 		c.clear();
@@ -587,6 +600,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 			ByteProcessor overlap = (ByteProcessor) overlapStack.getProcessor(s);
 			byte[] b = (byte[]) overlap.getPixels();
 
+			int n = 0;
 			if (roi != null)
 			{
 				// Calculate correlation within a specified region
@@ -595,12 +609,15 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 
 				for (int i = mask.length; i-- > 0;)
 				{
-					if (mask[i] == on)
+					if (mask[i] != 0)
 					{
 						nTotal++;
-
-						if (b[i] == on)
-							c.add(ip1.get(i), ip2.get(i));
+						if (b[i] != 0)
+						{
+							ii1[n] = ip1.get(i);
+							ii2[n] = ip2.get(i);
+							n++;
+						}
 					}
 				}
 			}
@@ -609,11 +626,16 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 				// Calculate correlation for entire image
 				for (int i = ip1.getPixelCount(); i-- > 0;)
 				{
-					if (b[i] == on)
-						c.add(ip1.get(i), ip2.get(i));
+					if (b[i] != 0)
+					{
+						ii1[n] = ip1.get(i);
+						ii2[n] = ip2.get(i);
+						n++;
+					}
 				}
 				nTotal += ip1.getPixelCount();
 			}
+			c.add(ii1, ii2, n);
 		}
 
 		final double m1 = c.getSumX() / totalIntensity1;
