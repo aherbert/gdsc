@@ -69,6 +69,8 @@ import ij.process.FloatProcessor;
 import ij.process.FloatStatistics;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
+import ij.process.LUTHelper;
+import ij.process.LUTHelper.LutColour;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
 import ij.util.Tools;
@@ -292,7 +294,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.showMessage("No images opened.");
@@ -645,7 +647,12 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			return;
 		}
 
-		long[] sum = new long[1];
+		if (isZero(roiStack1) || isZero(roiStack2) || isZero(confinedStack))
+		{
+			IJ.showMessage(TITLE, "Empty ROI(s)");
+			return;
+		}
+
 		if (expandConfinedCompartment)
 		{
 			// Expand the confined compartment to include all of the ROIs
@@ -655,26 +662,34 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		else
 		{
 			// Restrict the ROIs to the confined compartment
-			roiStack1 = intersectMask(roiStack1, confinedStack, sum, false);
-			roiStack2 = intersectMask(roiStack2, confinedStack, sum, false);
-		}
-		imageStack1 = intersectMask(imageStack1, confinedStack, sum, false);
-		imageStack2 = intersectMask(imageStack2, confinedStack, sum, false);
+			intersectMask(roiStack1, confinedStack);
+			intersectMask(roiStack2, confinedStack);
 
-		// This could be changed to check for a certain pixel count (e.g. (overlap / 255) < [count])
-		if (sum[0] == 0)
-		{
-			IJ.error("The two ROIs do not overlap ... quitting");
-			return;
+			// This could be changed to check for a certain pixel count (e.g. (overlap / 255) < [count])
+			if (isZero(roiStack1) || isZero(roiStack2))
+			{
+				IJ.showMessage(TITLE, "Empty ROI(s)");
+				return;
+			}
 		}
+		intersectMask(imageStack1, confinedStack);
+		intersectMask(imageStack2, confinedStack);
+
+		// Debug - show all the input
+		//Utils.display("CDA Stack1", imageStack1);
+		//Utils.display("CDA Stack2", imageStack2);
+		//Utils.display("CDA ROI1", roiStack1);
+		//Utils.display("CDA ROI2", roiStack2);
+		//Utils.display("CDA Confined", confinedStack);
 
 		IJ.showStatus(calculatingFirstMandersStatus);
 
 		// Pre-calculate constants
-		intersectMask(imageStack1, roiStack1, sum, true);
-		double denom1 = (double) sum[0];
-		intersectMask(imageStack2, roiStack2, sum, true);
-		double denom2 = (double) sum[0];
+		double denom1 = intersectSum(imageStack1, roiStack1);
+		double denom2 = intersectSum(imageStack2, roiStack2);
+
+		//System.out.printf("CDA total = %s (%d)  %s (%d) : %d)\n", denom1, intersectSum(roiStack1, roiStack1), denom2,
+		//		intersectSum(roiStack2, roiStack2), intersectSum(confinedStack, confinedStack));
 
 		IJ.showStatus(mandersCalculationStatus);
 
@@ -1083,34 +1098,44 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 			if (roi != null)
 			{
-				// Use a mask for an irregular ROI
-				ImageProcessor ipMask = roiImp.getMask();
-
-				// Create a mask from the ROI rectangle
-				Rectangle bounds = roi.getBounds();
-				int xOffset = bounds.x;
-				int yOffset = bounds.y;
-				int rwidth = bounds.width;
-				int rheight = bounds.height;
-
 				ImageStack result = new ImageStack(roiImp.getWidth(), roiImp.getHeight());
 
+				bp = new ByteProcessor(roiImp.getWidth(), roiImp.getHeight());
+				bp.setValue(255);
+				bp.fill(roi);
+				byte[] pixels = (byte[]) bp.getPixels();
 				for (int slice = 1; slice <= slices; slice++)
 				{
-					bp = new ByteProcessor(roiImp.getWidth(), roiImp.getHeight());
-					for (int y = 0; y < rheight; y++)
-					{
-						for (int x = 0; x < rwidth; x++)
-						{
-							if (ipMask == null || ipMask.get(x, y) != 0)
-							{
-								bp.set(x + xOffset, y + yOffset, 255);
-							}
-						}
-					}
-					result.addSlice(null, bp);
+					result.addSlice(null, pixels.clone());
 				}
 				return result;
+
+				//// Use a mask for an irregular ROI
+				//ImageProcessor ipMask = roiImp.getMask();
+				//
+				//// Create a mask from the ROI rectangle
+				//Rectangle bounds = roi.getBounds();
+				//int xOffset = bounds.x;
+				//int yOffset = bounds.y;
+				//int rwidth = bounds.width;
+				//int rheight = bounds.height;
+				//
+				//for (int slice = 1; slice <= slices; slice++)
+				//{
+				//	bp = new ByteProcessor(roiImp.getWidth(), roiImp.getHeight());
+				//	for (int y = 0; y < rheight; y++)
+				//	{
+				//		for (int x = 0; x < rwidth; x++)
+				//		{
+				//			if (ipMask == null || ipMask.get(x, y) != 0)
+				//			{
+				//				bp.set(x + xOffset, y + yOffset, 255);
+				//			}
+				//		}
+				//	}
+				//	result.addSlice(null, bp);
+				//}
+				//return result;
 			}
 		}
 
@@ -1152,19 +1177,19 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private ImageStack defaultMask(ImagePlus imp)
 	{
 		ImageStack result = new ImageStack(imp.getWidth(), imp.getHeight());
+		ByteProcessor bp = new ByteProcessor(imp.getWidth(), imp.getHeight());
+		bp.add(255);
+		byte[] pixels = (byte[]) bp.getPixels();
 		for (int s = imp.getNSlices(); s-- > 0;)
 		{
-			ByteProcessor bp = new ByteProcessor(imp.getWidth(), imp.getHeight());
-			bp.add(255);
-			result.addSlice(null, bp);
+			result.addSlice(null, pixels.clone());
 		}
 		return result;
 	}
 
 	private void reportResults(ImagePlus imp1, ImagePlus imp2, ImageStack imageStack1, ImageStack imageStack2,
-			ImageStack roiStack1, ImageStack roiStack2, ImageStack confinedStack,
-			ImageStack lastChannelShiftedRawStack, ImageStack lastSegmentedShiftedRawStack, double M1, double M2,
-			double R, List<CalculationResult> results)
+			ImageStack roiStack1, ImageStack roiStack2, ImageStack confinedStack, ImageStack lastChannelShiftedRawStack,
+			ImageStack lastSegmentedShiftedRawStack, double M1, double M2, double R, List<CalculationResult> results)
 	{
 		IJ.showStatus(processingMandersStatus);
 
@@ -1250,17 +1275,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		// Output the channel 1 as red
 		// Output the channel 2 as green
 
-		ImageStack channel1RGBIP = null, channel2RGBIP = null, segmented1RGBIP = null, segmented2RGBIP = null;
-		ImageStack mergedChannelIP = null, mergedSegmentedRGBIP = null, mergedChannelDisplacementIP = null, mergedSegmentedDisplacementIP = null;
+		ImageStack mergedChannelIP = null, mergedSegmentedRGBIP = null, mergedChannelDisplacementIP = null,
+				mergedSegmentedDisplacementIP = null;
 
-		if (showChannel1RGB || showMergedChannelRGB)
-			channel1RGBIP = createColorOutput(imageStack1, confinedStack, 0);
-		if (showChannel2RGB || showMergedChannelRGB)
-			channel2RGBIP = createColorOutput(imageStack2, confinedStack, 1);
-		if (showSegmented1RGB || showMergedSegmentedRGB)
-			segmented1RGBIP = createColorOutput(roiStack1, confinedStack, 0);
-		if (showSegmented2RGB || showMergedSegmentedRGB)
-			segmented2RGBIP = createColorOutput(roiStack2, confinedStack, 1);
 		int w = imageStack1.getWidth();
 		int h = imageStack1.getHeight();
 		int slices = imageStack1.getSize();
@@ -1269,9 +1286,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		if (showMergedSegmentedRGB)
 			mergedSegmentedRGBIP = new ImageStack(w, h, slices);
 		if (showMergedChannelDisplacementRGB)
-			mergedChannelDisplacementIP = createColorOutput(lastChannelShiftedRawStack, confinedStack, 0);
+			mergedChannelDisplacementIP = new ImageStack(w, h, slices);
 		if (showMergedSegmentedDisplacementRGB)
-			mergedSegmentedDisplacementIP = createColorOutput(lastSegmentedShiftedRawStack, confinedStack, 0);
+			mergedSegmentedDisplacementIP = new ImageStack(w, h, slices);
 
 		for (int n = 1; n <= imageStack1.getSize(); n++)
 		{
@@ -1279,8 +1296,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			if (showMergedChannelRGB)
 			{
 				ColorProcessor cp = new ColorProcessor(w, h);
-				cp.setPixels(0, channel1RGBIP.getProcessor(n).toFloat(0, null));
-				cp.setPixels(1, channel2RGBIP.getProcessor(n).toFloat(1, null));
+				cp.setChannel(1, (ByteProcessor) imageStack1.getProcessor(n).convertToByte(true));
+				cp.setChannel(2, (ByteProcessor) imageStack2.getProcessor(n).convertToByte(true));
 				mergedChannelIP.setPixels(cp.getPixels(), n);
 			}
 
@@ -1288,8 +1305,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			if (showMergedSegmentedRGB)
 			{
 				ColorProcessor cp = new ColorProcessor(w, h);
-				cp.setPixels(0, segmented1RGBIP.getProcessor(n).toFloat(0, null));
-				cp.setPixels(1, segmented2RGBIP.getProcessor(n).toFloat(1, null));
+				cp.setChannel(1, (ByteProcessor) roiStack1.getProcessor(n));
+				cp.setChannel(2, (ByteProcessor) roiStack2.getProcessor(n));
 				mergedSegmentedRGBIP.setPixels(cp.getPixels(), n);
 			}
 
@@ -1297,42 +1314,33 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			if (showMergedChannelDisplacementRGB)
 			{
 				ColorProcessor cp = new ColorProcessor(w, h);
-				cp.setPixels(mergedChannelDisplacementIP.getPixels(n));
-				cp.setPixels(1, channel2RGBIP.getProcessor(n).toFloat(1, null));
+				cp.setChannel(1, (ByteProcessor) lastChannelShiftedRawStack.getProcessor(n).convertToByte(true));
+				cp.setChannel(2, (ByteProcessor) imageStack2.getProcessor(n).convertToByte(true));
+				mergedChannelDisplacementIP.setPixels(cp.getPixels(), n);
 			}
 
 			if (showMergedSegmentedDisplacementRGB)
 			{
 				ColorProcessor cp = new ColorProcessor(w, h);
-				cp.setPixels(mergedSegmentedDisplacementIP.getPixels(n));
-				cp.setPixels(1, segmented2RGBIP.getProcessor(n).toFloat(1, null));
+				cp.setChannel(1, (ByteProcessor) lastSegmentedShiftedRawStack.getProcessor(n));
+				cp.setChannel(2, (ByteProcessor) roiStack2.getProcessor(n).convertToByte(true));
+				mergedSegmentedDisplacementIP.setPixels(cp.getPixels(), n);
 			}
 		}
 
-		// Set the area outside the ROI to white.
-		//		invert(channel1RGBIP, confinedStack);
-		//		invert(channel2RGBIP, confinedStack);
-		//		invert(segmented1RGBIP, confinedStack);
-		//		invert(segmented2RGBIP, confinedStack);
-		//		invert(mergedChannelIP, confinedStack);
-		//		invert(mergedSegmentedRGBIP, confinedStack);
-		//		invert(mergedChannelDisplacementIP, confinedStack);
-		//		invert(mergedSegmentedDisplacementIP, confinedStack);
-
-		createDisplayImages(channel1RGBIP, channel2RGBIP, segmented1RGBIP, segmented2RGBIP, mergedChannelIP,
-				mergedSegmentedRGBIP, mergedChannelDisplacementIP, mergedSegmentedDisplacementIP);
-
 		// Update the images
-		updateImage(channel1RGB, channel1RGBTitle, channel1RGBIP, showChannel1RGB);
-		updateImage(channel2RGB, channel2RGBTitle, channel2RGBIP, showChannel2RGB);
-		updateImage(segmented1RGB, segmented1RGBTitle, segmented1RGBIP, showSegmented1RGB);
-		updateImage(segmented2RGB, segmented2RGBTitle, segmented2RGBIP, showSegmented2RGB);
-		updateImage(mergedChannelRGB, mergedChannelTitle, mergedChannelIP, showMergedChannelRGB);
-		updateImage(mergedSegmentedRGB, mergedSegmentedTitle, mergedSegmentedRGBIP, showMergedSegmentedRGB);
-		updateImage(mergedChannelDisplacementRGB, lastShiftedChannelTitle, mergedChannelDisplacementIP,
-				showMergedChannelDisplacementRGB);
-		updateImage(mergedSegmentedDisplacementRGB, lastShiftedSegmentedTitle, mergedSegmentedDisplacementIP,
-				showMergedSegmentedDisplacementRGB);
+		channel1RGB = updateImage(channel1RGB, channel1RGBTitle, imageStack1, showChannel1RGB, LutColour.RED);
+		channel2RGB = updateImage(channel2RGB, channel2RGBTitle, imageStack2, showChannel2RGB, LutColour.GREEN);
+		segmented1RGB = updateImage(segmented1RGB, segmented1RGBTitle, roiStack1, showSegmented1RGB, LutColour.RED);
+		segmented2RGB = updateImage(segmented2RGB, segmented2RGBTitle, roiStack2, showSegmented2RGB, LutColour.GREEN);
+		mergedChannelRGB = updateImage(mergedChannelRGB, mergedChannelTitle, mergedChannelIP, showMergedChannelRGB,
+				null);
+		mergedSegmentedRGB = updateImage(mergedSegmentedRGB, mergedSegmentedTitle, mergedSegmentedRGBIP,
+				showMergedSegmentedRGB, null);
+		mergedChannelDisplacementRGB = updateImage(mergedChannelDisplacementRGB, lastShiftedChannelTitle,
+				mergedChannelDisplacementIP, showMergedChannelDisplacementRGB, null);
+		mergedSegmentedDisplacementRGB = updateImage(mergedSegmentedDisplacementRGB, lastShiftedSegmentedTitle,
+				mergedSegmentedDisplacementIP, showMergedSegmentedDisplacementRGB, null);
 
 		// Create plots of the results
 		m1PlotWindow = refreshPlotWindow(m1PlotWindow, showM1PlotWindow, plotM1, OPT_LOCATION_PLOT_M1);
@@ -1437,49 +1445,29 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		return "cda" + df.format(new Date());
 	}
 
-	private void createDisplayImages(ImageStack channel1RGBIP, ImageStack channel2RGBIP, ImageStack segmented1RGBIP,
-			ImageStack segmented2RGBIP, ImageStack mergedChannelIP, ImageStack mergedSegmentedRGBIP,
-			ImageStack mergedChannelDisplacementIP, ImageStack mergedSegmentedDisplacementIP)
+	private ImagePlus updateImage(ImagePlus imp, String title, ImageStack stack, boolean show, LutColour lutColor)
 	{
-		// Only create the images if they have not yet been made.
-		if (channel1RGB == null)
-			channel1RGB = newImagePlus(channel1RGBTitle, channel1RGBIP);
-		if (channel2RGB == null)
-			channel2RGB = newImagePlus(channel2RGBTitle, channel2RGBIP);
-		if (segmented1RGB == null)
-			segmented1RGB = newImagePlus(segmented1RGBTitle, segmented1RGBIP);
-		if (segmented2RGB == null)
-			segmented2RGB = newImagePlus(segmented2RGBTitle, segmented2RGBIP);
-		if (mergedChannelRGB == null)
-			mergedChannelRGB = newImagePlus(mergedChannelTitle, mergedChannelIP);
-		if (mergedSegmentedRGB == null)
-			mergedSegmentedRGB = newImagePlus(mergedSegmentedTitle, mergedSegmentedRGBIP);
-		if (mergedChannelDisplacementRGB == null)
-			mergedChannelDisplacementRGB = newImagePlus(lastShiftedChannelTitle, mergedChannelDisplacementIP);
-		if (mergedSegmentedDisplacementRGB == null)
-			mergedSegmentedDisplacementRGB = newImagePlus(lastShiftedSegmentedTitle, mergedSegmentedDisplacementIP);
-	}
-
-	private ImagePlus newImagePlus(String title, ImageStack stack)
-	{
-		if (stack != null)
-			return new ImagePlus(title, stack);
-		return null;
-	}
-
-	private void updateImage(ImagePlus imp, String title, ImageStack stack, boolean show)
-	{
-		if (stack != null)
-			imp.setStack(title, stack);
-		//imp.getMask(); // Re-initialise the image? 
-
-		if (imp != null)
+		if (!show)
 		{
-			if (show)
-				imp.show();
-			else
+			if (imp != null)
 				imp.hide();
+			return null;
 		}
+		else if (stack != null)
+		{
+			if (imp == null || !imp.isVisible())
+			{
+				imp = new ImagePlus(title, stack);
+				imp.show();
+			}
+			else
+			{
+				imp.setStack(title, stack);
+			}
+			if (lutColor != null)
+				imp.setLut(LUTHelper.createLUT(lutColor, true));
+		}
+		return imp;
 	}
 
 	private StringBuilder createHeading(StringBuilder heading)
@@ -1593,46 +1581,13 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		}
 	}
 
-	@SuppressWarnings("unused")
-	private void invert(ImageStack imageStack, ImageStack confinedStack)
-	{
-		for (int n = 1; n <= imageStack.getSize(); n++)
-		{
-			ImageProcessor ip = imageStack.getProcessor(n);
-			ImageProcessor confinedIp = confinedStack.getProcessor(n);
-
-			for (int i = confinedIp.getPixelCount(); i-- > 0;)
-			{
-				if (confinedIp.get(i) == 0)
-				{
-					ip.set(i, 0xFFFFFFFF);
-				}
-			}
-		}
-	}
-
-	private ImageStack createColorOutput(ImageStack image, ImageStack mask, int channel)
-	{
-		ImageStack result = new ImageStack(image.getWidth(), image.getHeight());
-		for (int n = 1; n <= image.getSize(); n++)
-		{
-			ByteProcessor byteIP = (ByteProcessor) (image.getProcessor(n).duplicate().convertToByte(true));
-			intersectMask(byteIP, (ByteProcessor) mask.getProcessor(n), byteIP);
-
-			ColorProcessor cp = new ColorProcessor(byteIP.getWidth(), byteIP.getHeight());
-			cp.setPixels(channel, byteIP.toFloat(0, null));
-
-			result.addSlice(null, cp);
-		}
-		return result;
-	}
-
 	private Plot createPlot(double[] distances, double[] values, Color color, Color avColor, String title,
-			String xLabel, String yLabel, double[] spacedX, double[] ceroValuesX, double[] ceroValuesY, double[] spacedY)
+			String xLabel, String yLabel, double[] spacedX, double[] ceroValuesX, double[] ceroValuesY,
+			double[] spacedY)
 	{
 		float[] dummy = null;
-		Plot plot = new Plot(title, xLabel.concat(pixelsUnitString), yLabel, dummy, dummy, Plot.X_NUMBERS +
-				Plot.Y_NUMBERS + Plot.X_TICKS + Plot.Y_TICKS);
+		Plot plot = new Plot(title, xLabel.concat(pixelsUnitString), yLabel, dummy, dummy,
+				Plot.X_NUMBERS + Plot.Y_NUMBERS + Plot.X_TICKS + Plot.Y_TICKS);
 
 		double min = 0;
 		for (double d : values)
@@ -1911,13 +1866,13 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 		segmented1List = new Choice();
 		segmented1Option = new Choice();
-		mainPanel.add(createRoiChoicePanel(segmented1List, segmented1Option, choiceSegmentedChannel1,
-				segmented1OptionIndex));
+		mainPanel.add(
+				createRoiChoicePanel(segmented1List, segmented1Option, choiceSegmentedChannel1, segmented1OptionIndex));
 
 		segmented2List = new Choice();
 		segmented2Option = new Choice();
-		mainPanel.add(createRoiChoicePanel(segmented2List, segmented2Option, choiceSegmentedChannel2,
-				segmented2OptionIndex));
+		mainPanel.add(
+				createRoiChoicePanel(segmented2List, segmented2Option, choiceSegmentedChannel2, segmented2OptionIndex));
 
 		confinedList = new Choice();
 		confinedOption = new Choice();
@@ -2079,64 +2034,105 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		return panel;
 	}
 
-	/**
-	 * Create the intersect of the two masks. Results are written back to the image processor in the target stack unless
-	 * the duplicate option is true. The sum of the source image intensity within the intersect is accumulated.
-	 */
-	private ImageStack intersectMask(ImageStack targetStack, ImageStack sourceStack, long[] sum, boolean duplicate)
+	//	/**
+	//	 * Create the intersect of the two masks. Results are written back to the image processor in the target stack unless
+	//	 * the duplicate option is true. The sum of the source image intensity within the intersect is accumulated.
+	//	 */
+	//	private ImageStack intersectMask(ImageStack targetStack, ImageStack sourceStack, long[] sum, boolean duplicate)
+	//	{
+	//		ImageStack newStack = new ImageStack(targetStack.getWidth(), targetStack.getHeight());
+	//		sum[0] = 0;
+	//		for (int s = 1; s <= targetStack.getSize(); s++)
+	//		{
+	//			ImageProcessor ip = targetStack.getProcessor(s);
+	//			if (duplicate)
+	//				ip = ip.duplicate();
+	//			sum[0] += intersectMask(ip, (ByteProcessor) sourceStack.getProcessor(s));
+	//			newStack.addSlice(null, ip);
+	//		}
+	//		return newStack;
+	//	}
+	//
+	//	/**
+	//	 * Create the intersect of the two masks. Results are written back to the output image processor if specified.
+	//	 * 
+	//	 * @return The sum of the source image intensity within the intersect
+	//	 */
+	//	private long intersectMask(ImageProcessor sourceImage, ByteProcessor maskImage, ImageProcessor outputImage)
+	//	{
+	//
+	//		long sum = 0;
+	//
+	//		// We need to do extra work if there is an output image so put this in a different loop
+	//		if (outputImage != null)
+	//		{
+	//			int sourceIntensity;
+	//			for (int i = maskImage.getPixelCount(); i-- > 0;)
+	//			{
+	//				if (maskImage.get(i) != 0)
+	//				{
+	//					sourceIntensity = sourceImage.get(i);
+	//					outputImage.set(i, sourceIntensity);
+	//					sum += sourceIntensity;
+	//				}
+	//				else
+	//				{
+	//					outputImage.set(i, 0);
+	//				}
+	//			}
+	//		}
+	//		else
+	//		{
+	//			for (int i = maskImage.getPixelCount(); i-- > 0;)
+	//			{
+	//				if (maskImage.get(i) != 0)
+	//				{
+	//					sum += sourceImage.get(i);
+	//				}
+	//			}
+	//		}
+	//
+	//		return sum;
+	//	}
+	//
+	//	/**
+	//	 * Create the intersect of the two masks. Results are written back to the output image processor if specified.
+	//	 * 
+	//	 * @return The sum of the source image intensity within the intersect
+	//	 */
+	//	private long intersectMask(ImageProcessor sourceImage, ByteProcessor maskImage)
+	//	{
+	//		long sum = 0;
+	//
+	//		for (int i = maskImage.getPixelCount(); i-- > 0;)
+	//		{
+	//			if (maskImage.get(i) != 0)
+	//			{
+	//				sum += sourceImage.get(i);
+	//			}
+	//			else
+	//			{
+	//				sourceImage.set(i, 0);
+	//			}
+	//		}
+	//
+	//		return sum;
+	//	}
+
+	private boolean isZero(ImageStack maskStack)
 	{
-		ImageStack newStack = new ImageStack(targetStack.getWidth(), targetStack.getHeight());
-		sum[0] = 0;
-		for (int s = 1; s <= targetStack.getSize(); s++)
-		{
-			ImageProcessor ip = targetStack.getProcessor(s);
-			if (duplicate)
-				ip = ip.duplicate();
-			sum[0] += intersectMask(ip, (ByteProcessor) sourceStack.getProcessor(s), ip);
-			newStack.addSlice(null, ip);
-		}
-		return newStack;
+		for (int s = 1; s <= maskStack.getSize(); s++)
+			if (!isZero(maskStack.getProcessor(s)))
+				return false;
+		return true;
 	}
 
-	/**
-	 * Create the intersect of the two masks. Results are written back to the output image processor if specified.
-	 * 
-	 * @return The sum of the source image intensity within the intersect
-	 */
-	private long intersectMask(ImageProcessor sourceImage, ByteProcessor maskImage, ImageProcessor outputImage)
+	private boolean isZero(ImageProcessor ip)
 	{
-		long sum = 0;
-
-		// We need to do extra work if there is an output image so put this in a different loop
-		if (outputImage != null)
-		{
-			int sourceIntensity;
-			for (int i = maskImage.getPixelCount(); i-- > 0;)
-			{
-				if (maskImage.get(i) != 0)
-				{
-					sourceIntensity = sourceImage.get(i);
-					outputImage.set(i, sourceIntensity);
-					sum += sourceIntensity;
-				}
-				else
-				{
-					outputImage.set(i, 0);
-				}
-			}
-		}
-		else
-		{
-			for (int i = maskImage.getPixelCount(); i-- > 0;)
-			{
-				if (maskImage.get(i) != 0)
-				{
-					sum += sourceImage.get(i);
-				}
-			}
-		}
-
-		return sum;
+		for (int i = ip.getPixelCount(); i-- > 0;)
+			if (ip.get(i) != 0)
+				return false;
+		return true;
 	}
 
 	/**
@@ -2148,9 +2144,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private void unionMask(ImageStack mask1, ImageStack mask2)
 	{
 		for (int s = 1; s <= mask1.getSize(); s++)
-		{
 			unionMask((ByteProcessor) mask1.getProcessor(s), (ByteProcessor) mask2.getProcessor(s));
-		}
 	}
 
 	/**
@@ -2162,12 +2156,62 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private void unionMask(ByteProcessor mask1, ByteProcessor mask2)
 	{
 		for (int i = mask1.getPixelCount(); i-- > 0;)
-		{
 			if (mask2.get(i) != 0)
-			{
 				mask1.set(i, 255);
-			}
+	}
+
+	/**
+	 * Modify the stack to zero all zero pixels from the mask
+	 * 
+	 * @param stack
+	 * @param mask
+	 */
+	private void intersectMask(ImageStack stack, ImageStack mask)
+	{
+		for (int s = 1; s <= stack.getSize(); s++)
+			intersectMask(stack.getProcessor(s), (ByteProcessor) mask.getProcessor(s));
+	}
+
+	/**
+	 * Modify the processor to zero all zero pixels from the mask.
+	 *
+	 * @param ip
+	 *            the ip
+	 * @param mask
+	 *            the mask
+	 */
+	private void intersectMask(ImageProcessor ip, ByteProcessor mask)
+	{
+		for (int i = ip.getPixelCount(); i-- > 0;)
+			if (mask.get(i) == 0)
+				ip.set(i, 0);
+	}
+
+	/**
+	 * Sum the stack within the mask.
+	 */
+	private long intersectSum(ImageStack stack, ImageStack mask)
+	{
+		long sum = 0;
+		for (int s = 1; s <= stack.getSize(); s++)
+		{
+			sum += intersectSum(stack.getProcessor(s), (ByteProcessor) mask.getProcessor(s));
 		}
+		return sum;
+	}
+
+	/**
+	 * Sum the processor within the mask.
+	 */
+	private long intersectSum(ImageProcessor ip, ByteProcessor mask)
+	{
+		long sum = 0;
+		for (int i = mask.getPixelCount(); i-- > 0;)
+		{
+			if (mask.get(i) != 0)
+				sum += ip.get(i);
+		}
+		return sum;
 	}
 
 	private void saveOptions()
