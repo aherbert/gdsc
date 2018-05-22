@@ -26,8 +26,9 @@ import gdsc.core.utils.Random;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.gui.GenericDialog;
+import ij.gui.ExtendedGenericDialog;
 import ij.plugin.filter.PlugInFilter;
+import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
@@ -45,6 +46,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 
 	private static TextWindow tw;
 	private static String TITLE = "Stack Colocalisation Analyser";
+	private static String COMBINE = "Combine 1+2";
 	private static String NONE = "None";
 	private boolean firstResult;
 
@@ -115,7 +117,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 
 		String[] methods = getMethods();
 		// channel3 is set within getMethods()
-		int nChannels = (channel3 > 0) ? 3 : 2;
+		int nChannels = (channel3 != 1) ? 3 : 2;
 
 		c = new Correlator(dimensions[0] * dimensions[1]);
 
@@ -168,14 +170,19 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 
 				// Note that channel 3 is offset by 1 because it contains the [none] option
 				SliceCollection s3;
-				if (channel3 > 0)
+				if (channel3 > 1)
 				{
-					s3 = sliceCollections.get(channel3 - 1);
+					s3 = sliceCollections.get(channel3 - 2);
 					extractImageAndCreateOutputMask(method, maskImage, 3, t, s3);
 				}
 				else
 				{
-					s3 = new SliceCollection(channel3);
+					s3 = new SliceCollection(0);
+					if (channel3 == 0)
+					{
+						// Combine the two masks
+						combineMasksAndCreateOutputMask(method, maskImage, 3, t, s1, s2, s3);
+					}
 				}
 
 				double[] results = correlate(s1, s2, s3);
@@ -215,9 +222,25 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		}
 	}
 
+	private void combineMasksAndCreateOutputMask(String method, ImagePlus maskImage, int c, int t, SliceCollection s1,
+			SliceCollection s2, SliceCollection sliceCollection)
+	{
+		sliceCollection.createMask(s1.maskStack, s2.maskStack);
+		if (showMask)
+		{
+			ImageStack maskStack = maskImage.getImageStack();
+			for (int s = 1; s <= sliceCollection.maskStack.getSize(); s++)
+			{
+				int newSliceNumber = maskImage.getStackIndex(c, s, t);
+				maskStack.setSliceLabel(method + ":" + COMBINE, newSliceNumber);
+				maskStack.setPixels(sliceCollection.maskStack.getPixels(s), newSliceNumber);
+			}
+		}
+	}
+
 	private String[] getMethods()
 	{
-		GenericDialog gd = new GenericDialog(TITLE);
+		ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 		gd.addMessage(TITLE);
 		firstResult = true;
 
@@ -227,10 +250,10 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 			indices[i - 1] = "" + i;
 		}
 
-		gd.addChoice("Channel_1", indices, indices[channel1 - 1]);
-		gd.addChoice("Channel_2", indices, indices[channel2 - 1]);
+		gd.addChoice("Channel_1", indices, channel1 - 1);
+		gd.addChoice("Channel_2", indices, channel2 - 1);
 		indices = addNoneOption(indices);
-		gd.addChoice("Channel_3", indices, indices[channel3]);
+		gd.addChoice("Channel_3", indices, channel3);
 
 		// Commented out the methods that take a long time on 16-bit images.
 		String[] methods = { "Try all", AutoThreshold.Method.DEFAULT.name,
@@ -303,11 +326,12 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 
 	private String[] addNoneOption(String[] indices)
 	{
-		String[] newIndices = new String[indices.length + 1];
-		newIndices[0] = NONE;
+		String[] newIndices = new String[indices.length + 2];
+		newIndices[0] = COMBINE;
+		newIndices[1] = NONE;
 		for (int i = 0; i < indices.length; i++)
 		{
-			newIndices[i + 1] = indices[i];
+			newIndices[i + 2] = indices[i];
 		}
 		return newIndices;
 	}
@@ -343,44 +367,41 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	}
 
 	/**
-	 * Create the intersect of the two masks
-	 * 
-	 * @param maskStack
-	 * @param maskStack2
-	 * @return the new mask
+	 * Create the combination of the two stacks.
+	 *
+	 * @param stack1
+	 *            the stack 1
+	 * @param stack2
+	 *            the stack 2
+	 * @param operation
+	 *            the operation
+	 * @return the new stack
 	 */
-	private ImageStack intersectMask(ImageStack maskStack, ImageStack maskStack2)
+	private ImageStack combineBits(ImageStack stack1, ImageStack stack2, int operation)
 	{
-		ImageStack newStack = new ImageStack(maskStack.getWidth(), maskStack.getHeight());
-		for (int s = 1; s <= maskStack.getSize(); s++)
+		ImageStack newStack = new ImageStack(stack1.getWidth(), stack1.getHeight());
+		for (int s = 1; s <= stack1.getSize(); s++)
 		{
-			newStack.addSlice(null, intersectMask((ByteProcessor) maskStack.getProcessor(s),
-					(ByteProcessor) maskStack2.getProcessor(s)));
+			newStack.addSlice(null, combineBits(stack1.getProcessor(s), stack2.getProcessor(s), operation));
 		}
 		return newStack;
 	}
 
 	/**
-	 * Create the intersect of the two masks
-	 * 
-	 * @param mask1
-	 * @param mask2
-	 * @return the new mask
+	 * Create the combination of the two processors.
+	 *
+	 * @param ip1
+	 *            the ip 1
+	 * @param ip2
+	 *            the ip 2
+	 * @param operation
+	 *            the blitter operation
+	 * @return the new processor
 	 */
-	private ByteProcessor intersectMask(ByteProcessor mask1, ByteProcessor mask2)
+	private ImageProcessor combineBits(ImageProcessor ip1, ImageProcessor ip2, int operation)
 	{
-		ByteProcessor bp = new ByteProcessor(mask1.getWidth(), mask1.getHeight());
-		byte on = (byte) 255;
-		byte[] m1 = (byte[]) mask1.getPixels();
-		byte[] m2 = (byte[]) mask2.getPixels();
-		byte[] b = (byte[]) bp.getPixels();
-		for (int i = m1.length; i-- > 0;)
-		{
-			if (m1[i] == on && m2[i] == on)
-			{
-				b[i] = on;
-			}
-		}
+		ImageProcessor bp = (ImageProcessor) ip1.duplicate();
+		bp.copyBits(ip2, 0, 0, operation);
 		return bp;
 	}
 
@@ -481,18 +502,29 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 			}
 
 			// Output if significant at given confidence level. Avoid bounds errors.
-			int index = (int) Math.min(results.size() - 1, Math.ceil(results.size() * (1 - pCut)));
+			int upperIndex = (int) Math.min(results.size() - 1, Math.ceil(results.size() * (1 - pCut)));
+			int lowerIndex = (int) Math.floor(results.size() * pCut);
 
 			Collections.sort(results, new M1Comparator());
-			m1Significant = result.m1 - results.get(index).m1;
+			m1Significant = sig(results.get(lowerIndex).m1, result.m1, results.get(upperIndex).m1);
 			Collections.sort(results, new M2Comparator());
-			m2Significant = result.m2 - results.get(index).m2;
+			m2Significant = sig(results.get(lowerIndex).m2, result.m2, results.get(upperIndex).m2);
 			Collections.sort(results, new RComparator());
-			rSignificant = result.r - results.get(index).r;
+			rSignificant = sig(results.get(lowerIndex).r, result.r, results.get(upperIndex).r);
 		}
 
 		return new double[] { result.m1, result.m2, result.r, result.n, result.area, m1Significant, m2Significant,
 				rSignificant };
+	}
+
+	private static double sig(double lower, double value, double upper)
+	{
+		System.out.printf("%g < %g < %g\n", lower, value, upper);
+		if (value < lower)
+			return -1;
+		if (value > upper)
+			return 1;
+		return 0;
 	}
 
 	private double getTotalIntensity(ImageStack imageStack, ImageStack maskStack, ImageStack maskStack2)
@@ -539,7 +571,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	private CalculationResult correlate(ImageStack image1, ImageStack mask1, ImageStack image2, ImageStack mask2,
 			ImageStack roi, double distance, double totalIntensity1, double totalIntensity2)
 	{
-		ImageStack overlapStack = intersectMask(mask1, mask2);
+		ImageStack overlapStack = combineBits(mask1, mask2, Blitter.AND);
 
 		final byte on = (byte) 255;
 
@@ -577,11 +609,10 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 				// Calculate correlation for entire image
 				for (int i = ip1.getPixelCount(); i-- > 0;)
 				{
-					nTotal++;
-
 					if (b[i] == on)
 						c.add(ip1.get(i), ip2.get(i));
 				}
+				nTotal += ip1.getPixelCount();
 			}
 		}
 
@@ -615,9 +646,9 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		double r = results[2];
 		int n = (int) results[3];
 		double area = results[4];
-		boolean m1Significant = results[5] > 0;
-		boolean m2Significant = results[6] > 0;
-		boolean rSignificant = results[7] > 0;
+		String m1Significant = getResult(results[5]);
+		String m2Significant = getResult(results[6]);
+		String rSignificant = getResult(results[7]);
 
 		char spacer = (logResults) ? ',' : '\t';
 
@@ -646,6 +677,15 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		{
 			tw.append(sb.toString());
 		}
+	}
+
+	private static String getResult(double d)
+	{
+		if (d < 0)
+			return "Non-colocated";
+		if (d > 0)
+			return "Colocated";
+		return "-";
 	}
 
 	private void createResultsWindow()
@@ -757,7 +797,6 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		/**
 		 * Creates a mask using the specified thresholding method
 		 * 
-		 * @param ip
 		 * @param method
 		 * @return the mask
 		 */
@@ -807,6 +846,21 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 				}
 				maskStack.addSlice(null, bp);
 			}
+		}
+
+		/**
+		 * Creates a mask by combining the two masks.
+		 *
+		 * @param stack1
+		 *            the stack 1
+		 * @param stack2
+		 *            the stack 2
+		 * @return the mask
+		 */
+		private void createMask(ImageStack stack1, ImageStack stack2)
+		{
+			sliceName = COMBINE;
+			maskStack = combineBits(stack1, stack2, Blitter.OR);
 		}
 	}
 
