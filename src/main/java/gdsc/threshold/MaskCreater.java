@@ -541,7 +541,7 @@ public class MaskCreater implements PlugIn
 					}
 					else
 					{
-						IJ.log(String.format("Channel %d, Frame %d : %f", channels[i], frames[j], threshold));
+						//IJ.log(String.format("Channel %d, Frame %d : %f", channels[i], frames[j], threshold));
 					}
 
 					for (int k = 0; k < slices.length; k++)
