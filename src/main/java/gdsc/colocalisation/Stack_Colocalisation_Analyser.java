@@ -519,7 +519,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 
 	private static double sig(double lower, double value, double upper)
 	{
-		System.out.printf("%g < %g < %g\n", lower, value, upper);
+		//System.out.printf("%g < %g < %g\n", lower, value, upper);
 		if (value < lower)
 			return -1;
 		if (value > upper)
