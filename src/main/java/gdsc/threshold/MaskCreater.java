@@ -265,18 +265,30 @@ public class MaskCreater implements PlugIn
 							if (option == OPTION_MIN_VALUE)
 							{
 								min = getDisplayRangeMin(imp, channel);
+								for (int i = roiIp.getPixelCount(); i-- > 0;)
+								{
+									// Only display pixels equal to or above the 
+									// min display threshold								
+									if (roiIp.getf(i) >= min)
+									{
+										ip.set(i, 255);
+									}
+								}
 							}
 							else
 							// if (option == OPTION_THRESHOLD)
 							{
 								min = thresholds[stackIndex - 1];
-							}
-
-							for (int i = roiIp.getPixelCount(); i-- > 0;)
-							{
-								if (roiIp.getf(i) >= min)
+								for (int i = roiIp.getPixelCount(); i-- > 0;)
 								{
-									ip.set(i, 255);
+									// When thresholding it is typical to only 
+									// display pixels above the threshold. The IJ
+									// plugins compute the threshold for integer histograms
+									// then call ImageProcessor.setThreshold(t+1, [upper limit]).
+									if (roiIp.getf(i) > min)
+									{
+										ip.set(i, 255);
+									}
 								}
 							}
 						}
@@ -526,6 +538,10 @@ public class MaskCreater implements PlugIn
 						float scale = getScale(cmin, cmax);
 						threshold = (threshold / scale) + cmin;
 						//IJ.log(String.format("Channel %d, Frame %d : %f", channels[i], frames[j], threshold));
+					}
+					else
+					{
+						IJ.log(String.format("Channel %d, Frame %d : %f", channels[i], frames[j], threshold));
 					}
 
 					for (int k = 0; k < slices.length; k++)
