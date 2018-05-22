@@ -26,12 +26,13 @@ public class CDAWorker implements Runnable
 	BlockingQueue<CDAJob> jobs;
 	int totalSteps;
 	Correlator c = new Correlator();
+	final int[] ii1, ii2;
 
 	private volatile boolean finished = false;
 
-	public CDAWorker(ImageStack imageStack1, ImageStack roiStack1, ImageStack imageStack2, ImageStack roiStack2, ImageStack confinedStack, double denom1, double denom2,
-			List<CalculationResult> results, BlockingQueue<CDAJob> jobs,
-			int totalSteps)
+	public CDAWorker(ImageStack imageStack1, ImageStack roiStack1, ImageStack imageStack2, ImageStack roiStack2,
+			ImageStack confinedStack, double denom1, double denom2, List<CalculationResult> results,
+			BlockingQueue<CDAJob> jobs, int totalSteps)
 	{
 		this.imageStack1 = imageStack1;
 		this.roiStack1 = roiStack1;
@@ -43,6 +44,8 @@ public class CDAWorker implements Runnable
 		this.results = results;
 		this.jobs = jobs;
 		this.totalSteps = totalSteps;
+		ii1 = new int[imageStack1.getWidth() * imageStack1.getHeight()];
+		ii2 = new int[ii1.length];
 	}
 
 	/**
@@ -81,8 +84,6 @@ public class CDAWorker implements Runnable
 			final byte[] m1 = (byte[]) roi1.getPixels(slice);
 			final byte[] m2 = (byte[]) roi2.getPixels(slice);
 
-			int[] ii1 = new int[i1.length];
-			int[] ii2 = new int[i1.length];
 			int n = 0;
 			for (int i = i1.length; i-- > 0;)
 			{
@@ -108,7 +109,7 @@ public class CDAWorker implements Runnable
 	public void run()
 	{
 		twinImageShifter = new TwinStackShifter(imageStack1, roiStack1, confinedStack);
-		
+
 		try
 		{
 			while (!finished)
@@ -146,7 +147,7 @@ public class CDAWorker implements Runnable
 	{
 		return finished;
 	}
-	
+
 	/**
 	 * @return True if the worker is ready to run jobs
 	 */
