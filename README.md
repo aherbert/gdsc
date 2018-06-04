@@ -86,10 +86,10 @@ have to install these to your local Maven repository before building:
 6. Build the code and package using Maven
 
         cd GDSC
-        mvn -P dist package -DskipTests=true
+        mvn package -DskipTests=true
 
 	This will produce a gdsc_-[VERSION].jar file in the target directory. All 
-	dependencies are copied into the target/dist/lib directory.
+	dependencies are copied into the target/dependencies directory.
 
 7. Copy the gdsc_* jar into the plugins directory of ImageJ. 
 
