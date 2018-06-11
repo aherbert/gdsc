@@ -26,16 +26,16 @@ package gdsc.foci.converter;
 import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociProcessor;
 
-public class StatisticsModeParamEnabledConverter extends Converter<Integer,Boolean>
+public class StatisticsModeParamEnabledConverter extends Converter<Integer, Boolean>
 {
 	@Override
 	public Boolean convertForward(Integer paramS)
 	{
 		int backgroundMethod = paramS.intValue();
-		return Boolean.valueOf(
-				backgroundMethod != FindFoci.BACKGROUND_ABSOLUTE && 
-				backgroundMethod != FindFoci.BACKGROUND_NONE);
+		return Boolean.valueOf(backgroundMethod != FindFociProcessor.BACKGROUND_ABSOLUTE &&
+				backgroundMethod != FindFociProcessor.BACKGROUND_NONE);
 	}
 
 	@Override

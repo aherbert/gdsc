@@ -85,8 +85,8 @@ public class CDAWorker implements Runnable
 		IntersectResult intersectResult = calculateResults(twinImageShifter.getResultStack(),
 				twinImageShifter.getResultStack2(), imageStack2, roiStack2);
 
-		final double m1 = (double) intersectResult.sum1 / denom1;
-		final double m2 = (double) intersectResult.sum2 / denom2;
+		final double m1 = intersectResult.sum1 / denom1;
+		final double m2 = intersectResult.sum2 / denom2;
 
 		//System.out.printf("d=%f, x=%d, y=%d, n=%d, r=%f, sx=%d, sy=%d\n", distance, x, y, c.getN(), intersectResult.r,
 		//		c.getSumX(), c.getSumY());
@@ -128,6 +128,7 @@ public class CDAWorker implements Runnable
 	 * 
 	 * @see java.lang.Runnable#run()
 	 */
+	@Override
 	public void run()
 	{
 		twinImageShifter = new TwinStackShifter(imageStack1, roiStack1, confinedStack);

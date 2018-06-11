@@ -114,6 +114,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -672,6 +673,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		return Utils.replaceExtension(chooser.getDirectory() + chooser.getFileName(), ".xls");
 	}
 
+	@Override
 	public void mouseClicked(MouseEvent e)
 	{
 		if (e.getClickCount() > 1) // Double-click
@@ -716,21 +718,25 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		return result;
 	}
 
+	@Override
 	public void mousePressed(MouseEvent e)
 	{
 
 	}
 
+	@Override
 	public void mouseReleased(MouseEvent e)
 	{
 
 	}
 
+	@Override
 	public void mouseEntered(MouseEvent e)
 	{
 
 	}
 
+	@Override
 	public void mouseExited(MouseEvent e)
 	{
 
@@ -937,6 +943,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 				Comparator<float[]> comp = new Comparator<float[]>()
 				{
+					@Override
 					public int compare(float[] o1, float[] o2)
 					{
 						// smallest first

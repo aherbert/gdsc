@@ -77,6 +77,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		if ("final".equals(arg))
@@ -138,6 +139,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
 	 * ij.plugin.filter.PlugInFilterRunner)
 	 */
+	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		this.imp = imp;
@@ -254,6 +256,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		// Process each slice to find the mean of the pixels in the ROI
@@ -301,6 +304,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 	 * 
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
+	@Override
 	public void setNPasses(int nPasses)
 	{
 	}

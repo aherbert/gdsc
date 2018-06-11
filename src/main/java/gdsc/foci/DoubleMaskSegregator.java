@@ -56,10 +56,11 @@ public class DoubleMaskSegregator implements PlugIn
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (!showDialog())
 		{
 			return;
@@ -83,7 +84,8 @@ public class DoubleMaskSegregator implements PlugIn
 		if (title1.equalsIgnoreCase(title2))
 			title2 = (title1.equalsIgnoreCase(items[0]) || title1 == "") ? items[1] : items[0];
 
-		gd.addMessage("Find the classes in each mask using continuous mask values\nand create an all-vs-all output combination mask");
+		gd.addMessage(
+				"Find the classes in each mask using continuous mask values\nand create an all-vs-all output combination mask");
 		gd.addChoice("Input_1", items, title1);
 		gd.addChoice("Input_2", items, title2);
 		gd.addCheckbox("Apply_LUT", applyLUT);
@@ -315,8 +317,8 @@ public class DoubleMaskSegregator implements PlugIn
 	{
 		int[] r = { 0, 0, 0, 0, 0, 0, 19, 29, 50, 48, 79, 112, 134, 158, 186, 201, 217, 229, 242, 250, 250, 250, 250,
 				251, 250, 250, 250, 250, 251, 251, 243, 230 };
-		int[] g = { 156, 165, 176, 184, 190, 196, 193, 184, 171, 162, 146, 125, 107, 93, 81, 87, 92, 97, 95, 93, 93,
-				90, 85, 69, 64, 54, 47, 35, 19, 0, 4, 0 };
+		int[] g = { 156, 165, 176, 184, 190, 196, 193, 184, 171, 162, 146, 125, 107, 93, 81, 87, 92, 97, 95, 93, 93, 90,
+				85, 69, 64, 54, 47, 35, 19, 0, 4, 0 };
 		int[] b = { 140, 147, 158, 166, 170, 176, 209, 220, 234, 225, 236, 246, 250, 251, 250, 250, 245, 230, 230, 222,
 				202, 180, 163, 142, 123, 114, 106, 94, 84, 64, 26, 27 };
 		for (int i = 0; i < r.length; i++)

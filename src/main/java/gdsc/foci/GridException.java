@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 /**
  * Stores a 2D/3D point with a value and an assigned flag.
  */

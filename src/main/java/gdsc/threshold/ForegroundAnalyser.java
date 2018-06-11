@@ -80,6 +80,7 @@ public class ForegroundAnalyser implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -93,6 +94,7 @@ public class ForegroundAnalyser implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		if (!showDialog())
@@ -169,6 +171,7 @@ public class ForegroundAnalyser implements PlugInFilter
 			final TFloatArrayList data = new TFloatArrayList(ip.getPixelCount());
 			FValueProcedure p = new FValueProcedure()
 			{
+				@Override
 				public void execute(float value)
 				{
 					data.add(value);
@@ -198,6 +201,7 @@ public class ForegroundAnalyser implements PlugInFilter
 			final int[] data = new int[(imp.getBitDepth() == 8) ? 256 : 65336];
 			IValueProcedure p = new IValueProcedure()
 			{
+				@Override
 				public void execute(int value)
 				{
 					data[value]++;

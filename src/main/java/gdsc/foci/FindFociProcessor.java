@@ -25,7 +25,6 @@ package gdsc.foci;
 
 import ij.ImagePlus;
 
-
 /**
  * Interface describing the methods for the FindFoci algorithm to find the peak intensity regions of an image.
  * <p>

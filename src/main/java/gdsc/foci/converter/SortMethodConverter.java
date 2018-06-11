@@ -27,18 +27,18 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFoci;
 
-public class SortMethodConverter extends Converter<Integer,Object>
+public class SortMethodConverter extends Converter<Integer, Object>
 {
 	@Override
 	public String convertForward(Integer paramT)
 	{
 		return FindFoci.sortIndexMethods[paramT.intValue()];
 	}
-	
+
 	@Override
 	public Integer convertReverse(Object paramS)
 	{
-		for (int i=0; i<FindFoci.sortIndexMethods.length; i++)
+		for (int i = 0; i < FindFoci.sortIndexMethods.length; i++)
 		{
 			if (FindFoci.sortIndexMethods[i].equals(paramS))
 			{

@@ -73,6 +73,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -103,6 +104,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor inputProcessor)
 	{
 		int[] dimensions = imp.getDimensions();

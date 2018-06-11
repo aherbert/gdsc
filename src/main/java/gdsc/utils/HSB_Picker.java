@@ -23,7 +23,6 @@
  */
 package gdsc.utils;
 
-
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Color;
@@ -98,10 +97,11 @@ public class HSB_Picker extends PlugInFrame
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.showMessage("No images opened.");
@@ -112,7 +112,7 @@ public class HSB_Picker extends PlugInFrame
 		{
 			if (!(instance.getTitle().equals(getTitle())))
 			{
-				HSB_Picker oldInstance = (HSB_Picker) instance;
+				HSB_Picker oldInstance = instance;
 				Prefs.saveLocation(OPT_LOCATION, oldInstance.getLocation());
 				oldInstance.close();
 			}
@@ -184,7 +184,7 @@ public class HSB_Picker extends PlugInFrame
 		ImageProcessor ip = imp.getProcessor();
 		addValue(ip, p);
 	}
-	
+
 	/**
 	 * @return The current image (must be 24-bit and have an image canvas)
 	 */
@@ -204,7 +204,7 @@ public class HSB_Picker extends PlugInFrame
 		// This can be fixed by setting:
 		//   WindowManager.setCurrentWindow(win);
 		// in the ImageCanvas.mousePressed(...) method.
-		
+
 		ImagePlus imp = WindowManager.getCurrentImage();
 		if (imp == null || imp.getBitDepth() != 24 || imp.getCanvas() == null)
 			return null;
@@ -285,6 +285,7 @@ public class HSB_Picker extends PlugInFrame
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#close()
 	 */
+	@Override
 	public void close()
 	{
 		Prefs.saveLocation(OPT_LOCATION, getLocation());
@@ -312,6 +313,7 @@ public class HSB_Picker extends PlugInFrame
 		clearButton = new Button("Reset");
 		clearButton.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				clear();
@@ -320,14 +322,14 @@ public class HSB_Picker extends PlugInFrame
 		add(clearButton, 0, 3);
 		row++;
 
-		createSliderPanel(
-				scaleSlider = new Scrollbar(Scrollbar.HORIZONTAL, (int) (2 * SCALE), 1, 1, (int) (4 * SCALE)),
+		createSliderPanel(scaleSlider = new Scrollbar(Scrollbar.HORIZONTAL, (int) (2 * SCALE), 1, 1, (int) (4 * SCALE)),
 				"Filter scale", scaleLabel = new Label("0"), SCALE);
 
 		// Add the buttons
 		filterButton = new Button("HSB Filter");
 		filterButton.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				runFilter();
@@ -336,6 +338,7 @@ public class HSB_Picker extends PlugInFrame
 		okButton = new Button("Close");
 		okButton.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				close();
@@ -344,6 +347,7 @@ public class HSB_Picker extends PlugInFrame
 		helpButton = new Button("Help");
 		helpButton.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				String macro = "run('URL...', 'url=" + gdsc.help.URL.UTILITY + "');";
@@ -388,6 +392,7 @@ public class HSB_Picker extends PlugInFrame
 		sliderField.addAdjustmentListener(new AdjustmentListener()
 		{
 
+			@Override
 			public void adjustmentValueChanged(AdjustmentEvent e)
 			{
 				setSliderLabel(sliderField, sliderLabel, scale);

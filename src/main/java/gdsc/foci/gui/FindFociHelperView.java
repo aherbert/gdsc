@@ -23,7 +23,6 @@
  */
 package gdsc.foci.gui;
 
-
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
@@ -74,6 +73,7 @@ import org.jdesktop.swingbinding.SwingBindings;
 import gdsc.core.ij.Utils;
 import gdsc.foci.AssignedPoint;
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociProcessor;
 import gdsc.foci.FindFociResult;
 import gdsc.foci.GridException;
 import gdsc.foci.GridPoint;
@@ -173,6 +173,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	{
 		EventQueue.invokeLater(new Runnable()
 		{
+			@Override
 			public void run()
 			{
 				try
@@ -236,6 +237,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		comboImageList.setToolTipText("Select the input image");
 		comboImageList.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboImageList.firePropertyChange("selectedItem", 0, 1);
@@ -269,6 +271,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		comboMaskImageList.setToolTipText("Select the input mask image");
 		comboMaskImageList.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboMaskImageList.firePropertyChange("selectedItem", 0, 1);
@@ -302,6 +305,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		txtResolution = new JFormattedTextField(new LimitedNumberFormat(0));
 		txtResolution.addPropertyChangeListener(new PropertyChangeListener()
 		{
+			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName() == "value")
@@ -331,6 +335,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		btnSaveResults = new JButton("Save Results");
 		btnSaveResults.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				if (isActive())
@@ -371,6 +376,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		comboSearchMode = new JComboBox<String>();
 		comboSearchMode.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				// Force the BeansBinding framework to pick up the state change
@@ -389,6 +395,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		btnRun = new JButton("Start");
 		btnRun.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				initialisePicker();
@@ -404,6 +411,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		btnStop = new JButton("Stop");
 		btnStop.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				killPicker();
@@ -524,6 +532,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		tglbtnOverlay = new JToggleButton("Show Overlay");
 		tglbtnOverlay.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				// Force the BeansBinding framework to pick up the state change
@@ -552,7 +561,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		gbc_btnHelp.gridy = 11;
 		contentPane.add(btnHelp, gbc_btnHelp);
 		initDataBindings();
-		
+
 		this.pack();
 	}
 
@@ -562,22 +571,22 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 		model.setMaskImage(null);
 		// Find points above the mean. This is a good start for finding maxima.
-		model.setBackgroundMethod(FindFoci.BACKGROUND_STD_DEV_ABOVE_MEAN);
+		model.setBackgroundMethod(FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN);
 		model.setBackgroundParameter(0);
 		model.setThresholdMethod("");
-		model.setSearchMethod(FindFoci.SEARCH_ABOVE_BACKGROUND);
+		model.setSearchMethod(FindFociProcessor.SEARCH_ABOVE_BACKGROUND);
 		model.setSearchParameter(0);
 		model.setMaxPeaks(33000);
 		model.setMinSize(1);
 		model.setMinimumAboveSaddle(false);
-		model.setPeakMethod(FindFoci.PEAK_RELATIVE);
+		model.setPeakMethod(FindFociProcessor.PEAK_RELATIVE);
 		model.setPeakParameter(0);
 		model.setShowMask(0);
 		model.setShowTable(true); // We need to get the results table
 		model.setMarkMaxima(false);
 		model.setMarkROIMaxima(false);
 		model.setShowLogMessages(false);
-		model.setSortMethod(FindFoci.SORT_MAX_VALUE);
+		model.setSortMethod(FindFociProcessor.SORT_MAX_VALUE);
 		model.setGaussianBlur(0);
 		model.setCentreMethod(FindFoci.CENTRE_MAX_VALUE_ORIGINAL);
 		model.setCentreParameter(0);
@@ -1123,35 +1132,43 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		dragging = false;
 	}
 
+	@Override
 	public void windowOpened(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowClosing(WindowEvent e)
 	{
 		killPicker();
 	}
 
+	@Override
 	public void windowClosed(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowIconified(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowDeiconified(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowActivated(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowDeactivated(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void mouseClicked(MouseEvent e)
 	{
 		setShowOverlay(false);
@@ -1250,6 +1267,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		}
 	}
 
+	@Override
 	public void mousePressed(MouseEvent e)
 	{
 	}
@@ -1257,6 +1275,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	/*
 	 * If the user has dragged an ROI point then it should be reassigned when it is dropped.
 	 */
+	@Override
 	public void mouseReleased(MouseEvent e)
 	{
 		if (dragging)
@@ -1306,10 +1325,12 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		return -1;
 	}
 
+	@Override
 	public void mouseEntered(MouseEvent e)
 	{
 	}
 
+	@Override
 	public void mouseExited(MouseEvent e)
 	{
 	}
@@ -1318,6 +1339,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	 * If the user is dragging a multi-point ROI position then this method will detect the
 	 * point and set it to unassigned. This is done once at the start of the drag.
 	 */
+	@Override
 	public void mouseDragged(MouseEvent e)
 	{
 		setShowOverlay(false);
@@ -1366,6 +1388,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		}
 	}
 
+	@Override
 	public void mouseMoved(MouseEvent e)
 	{
 	}
@@ -1383,6 +1406,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	 */
 	private class DistanceComparator implements Comparator<int[]>
 	{
+		@Override
 		public int compare(int[] o1, int[] o2)
 		{
 			int diff = o1[6] - o2[6];

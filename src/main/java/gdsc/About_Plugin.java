@@ -23,7 +23,6 @@
  */
 package gdsc;
 
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +42,7 @@ public class About_Plugin implements PlugIn
 	private static String HELP_URL = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/plugins";
 	private static String YEAR = "2016";
 
+	@Override
 	public void run(String arg)
 	{
 		if (arg == null || arg.length() == 0)

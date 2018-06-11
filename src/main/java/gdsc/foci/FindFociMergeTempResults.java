@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 /**
  * Contains the results of the FindFoci algorithm during the merge stage.
  */

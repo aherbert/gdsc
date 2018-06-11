@@ -27,7 +27,7 @@ import java.util.List;
 
 import org.jdesktop.beansbinding.Converter;
 
-public class ValidImagesConverter extends Converter<List<String>,Boolean>
+public class ValidImagesConverter extends Converter<List<String>, Boolean>
 {
 	@Override
 	public Boolean convertForward(List<String> paramS)

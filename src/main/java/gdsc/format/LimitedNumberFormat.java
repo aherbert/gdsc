@@ -34,13 +34,13 @@ import java.text.ParsePosition;
 public class LimitedNumberFormat extends DecimalFormat
 {
 	/**
-	 * Auto-generated 
+	 * Auto-generated
 	 */
 	private static final long serialVersionUID = -2564688480913124241L;
-	
+
 	private double min = Double.MIN_VALUE;
 	private double max = Double.MAX_VALUE;
-	
+
 	public LimitedNumberFormat(double min, double max)
 	{
 		super();
@@ -71,16 +71,16 @@ public class LimitedNumberFormat extends DecimalFormat
 	@Override
 	public Number parse(String source, ParsePosition parsePosition)
 	{
-//		int currentIndex = parsePosition.getIndex();
+		//		int currentIndex = parsePosition.getIndex();
 		Number n = super.parse(source, parsePosition);
 		if (n != null)
 		{
-//			if (n.doubleValue() < min || n.doubleValue() > max)
-//			{
-//				parsePosition.setErrorIndex(currentIndex);
-//				parsePosition.setIndex(currentIndex);
-//				n = null;
-//			}
+			//			if (n.doubleValue() < min || n.doubleValue() > max)
+			//			{
+			//				parsePosition.setErrorIndex(currentIndex);
+			//				parsePosition.setIndex(currentIndex);
+			//				n = null;
+			//			}
 			if (n.doubleValue() < min)
 			{
 				n = Double.valueOf(min);

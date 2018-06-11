@@ -23,11 +23,11 @@
  */
 package gdsc.foci.controller;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociProcessor;
 import gdsc.foci.FindFociResult;
 import gdsc.foci.FindFociResults;
 import gdsc.foci.model.FindFociModel;
@@ -174,31 +174,31 @@ public class FindMaximaController extends ImageJController
 		int outputType = FindFoci.getOutputMaskFlags(showMask);
 
 		if (overlayMask)
-			outputType += FindFoci.OUTPUT_OVERLAY_MASK;
+			outputType += FindFociProcessor.OUTPUT_OVERLAY_MASK;
 		if (showTable)
-			outputType += FindFoci.OUTPUT_RESULTS_TABLE;
+			outputType += FindFociProcessor.OUTPUT_RESULTS_TABLE;
 		if (clearTable)
-			outputType += FindFoci.OUTPUT_CLEAR_RESULTS_TABLE;
+			outputType += FindFociProcessor.OUTPUT_CLEAR_RESULTS_TABLE;
 		if (markMaxima)
-			outputType += FindFoci.OUTPUT_ROI_SELECTION;
+			outputType += FindFociProcessor.OUTPUT_ROI_SELECTION;
 		if (markROIMaxima)
-			outputType += FindFoci.OUTPUT_MASK_ROI_SELECTION;
+			outputType += FindFociProcessor.OUTPUT_MASK_ROI_SELECTION;
 		if (markUsingOverlay)
-			outputType += FindFoci.OUTPUT_ROI_USING_OVERLAY;
+			outputType += FindFociProcessor.OUTPUT_ROI_USING_OVERLAY;
 		if (hideLabels)
-			outputType += FindFoci.OUTPUT_HIDE_LABELS;
+			outputType += FindFociProcessor.OUTPUT_HIDE_LABELS;
 		if (showLogMessages)
-			outputType += FindFoci.OUTPUT_LOG_MESSAGES;
+			outputType += FindFociProcessor.OUTPUT_LOG_MESSAGES;
 
 		int options = 0;
 		if (minimumAboveSaddle)
-			options |= FindFoci.OPTION_MINIMUM_ABOVE_SADDLE;
+			options |= FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE;
 		if (connectedAboveSaddle)
-			options |= FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+			options |= FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		if (statisticsMode.equalsIgnoreCase("inside"))
-			options |= FindFoci.OPTION_STATS_INSIDE;
+			options |= FindFociProcessor.OPTION_STATS_INSIDE;
 		else if (statisticsMode.equalsIgnoreCase("outside"))
-			options |= FindFoci.OPTION_STATS_OUTSIDE;
+			options |= FindFociProcessor.OPTION_STATS_OUTSIDE;
 
 		if (outputType == 0)
 		{
@@ -272,6 +272,7 @@ public class FindMaximaController extends ImageJController
 	 * 
 	 * @see gdsc.foci.controller.FindFociController#endPreview()
 	 */
+	@Override
 	public void endPreview()
 	{
 		// Do nothing

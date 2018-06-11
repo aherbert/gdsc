@@ -97,6 +97,7 @@ public class MaskCreater implements PlugIn
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -1010,7 +1011,7 @@ public class MaskCreater implements PlugIn
 				newMask[i] = (short) mask[index++];
 			newStack.setPixels(newMask, slice);
 		}
-		
+
 		return newStack;
 	}
 }

@@ -23,7 +23,6 @@
  */
 package gdsc.colocalisation.cda.engine;
 
-
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -85,7 +84,7 @@ public class CDAEngine
 		boolean ok = checkWorkers();
 		if (ok)
 			return true;
-		
+
 		ok = true;
 		for (CDAWorker worker : workers)
 		{
@@ -99,7 +98,7 @@ public class CDAEngine
 		// Re-check as they may have now initialised
 		return checkWorkers();
 	}
-	
+
 	private boolean checkWorkerWithDelay(CDAWorker worker)
 	{
 		for (int i = 0; !worker.isInitialised() && i < 5; i++)
@@ -114,7 +113,7 @@ public class CDAEngine
 		}
 		return worker.isInitialised();
 	}
-	
+
 	private boolean checkWorkers()
 	{
 		for (CDAWorker worker : workers)

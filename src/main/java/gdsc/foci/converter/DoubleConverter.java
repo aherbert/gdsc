@@ -27,10 +27,10 @@ import java.text.DecimalFormat;
 
 import org.jdesktop.beansbinding.Converter;
 
-public class DoubleConverter extends Converter<Double,String>
+public class DoubleConverter extends Converter<Double, String>
 {
 	private static DecimalFormat dc = new DecimalFormat("#.##");
-	
+
 	@Override
 	public String convertForward(Double paramS)
 	{

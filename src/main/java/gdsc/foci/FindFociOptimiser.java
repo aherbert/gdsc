@@ -62,6 +62,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import javax.swing.JFrame;
+import javax.swing.WindowConstants;
 
 import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
@@ -245,6 +246,7 @@ public class FindFociOptimiser
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -435,6 +437,7 @@ public class FindFociOptimiser
 		// List the results in the output directory
 		String[] results = new File(outputDirectory).list(new FilenameFilter()
 		{
+			@Override
 			public boolean accept(File dir, String name)
 			{
 				return name.endsWith(".results.xls");
@@ -768,7 +771,7 @@ public class FindFociOptimiser
 			int thresholdMethodIndex = 0;
 			for (int b = 0; b < backgroundMethodArray.length; b++)
 			{
-				String thresholdMethod = (backgroundMethodArray[b] == FindFoci.BACKGROUND_AUTO_THRESHOLD)
+				String thresholdMethod = (backgroundMethodArray[b] == FindFociProcessor.BACKGROUND_AUTO_THRESHOLD)
 						? thresholdMethods[thresholdMethodIndex++] : "";
 
 				String[] myStatsModes = backgroundMethodHasStatisticsMode(backgroundMethodArray[b]) ? statisticsModes
@@ -965,8 +968,8 @@ public class FindFociOptimiser
 		Options bestOptions = results.get(0).options;
 
 		double fractionParameter = 0;
-		int outputType = FindFoci.OUTPUT_RESULTS_TABLE | FindFoci.OUTPUT_ROI_SELECTION |
-				FindFoci.OUTPUT_MASK_ROI_SELECTION | FindFoci.OUTPUT_LOG_MESSAGES;
+		int outputType = FindFociProcessor.OUTPUT_RESULTS_TABLE | FindFociProcessor.OUTPUT_ROI_SELECTION |
+				FindFociProcessor.OUTPUT_MASK_ROI_SELECTION | FindFociProcessor.OUTPUT_LOG_MESSAGES;
 
 		// TODO - Add support for saving the channel, slice & frame 
 		FindFoci.saveParameters(resultFile + ".params", null, null, null, null, bestOptions.backgroundMethod,
@@ -1049,9 +1052,9 @@ public class FindFociOptimiser
 		Recorder.recordOption("Search_method", FindFoci.searchMethods[bestOptions.searchMethod]);
 		Recorder.recordOption("Search_parameter", "" + bestOptions.searchParameter);
 		Recorder.recordOption("Minimum_size", "" + bestOptions.minSize);
-		if ((bestOptions.options & FindFoci.OPTION_MINIMUM_ABOVE_SADDLE) != 0)
+		if ((bestOptions.options & FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE) != 0)
 			Recorder.recordOption("Minimum_above_saddle");
-		if ((bestOptions.options & FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE) != 0)
+		if ((bestOptions.options & FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE) != 0)
 			Recorder.recordOption("Connected_above_saddle");
 		Recorder.recordOption("Minimum_peak_height", FindFoci.peakMethods[bestOptions.peakMethod]);
 		Recorder.recordOption("Peak_parameter", "" + bestOptions.peakParameter);
@@ -1092,8 +1095,9 @@ public class FindFociOptimiser
 		if (imp == null)
 			return null;
 
-		int outputType = FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_ABOVE_SADDLE |
-				FindFoci.OUTPUT_MASK_ROI_SELECTION | FindFoci.OUTPUT_ROI_SELECTION | FindFoci.OUTPUT_LOG_MESSAGES;
+		int outputType = FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_ABOVE_SADDLE |
+				FindFociProcessor.OUTPUT_MASK_ROI_SELECTION | FindFociProcessor.OUTPUT_ROI_SELECTION |
+				FindFociProcessor.OUTPUT_LOG_MESSAGES;
 		// Clone the input image to allow display of the peaks on the original
 		ImagePlus clone = cloneImage(imp, imp.getTitle() + " clone");
 		clone.show();
@@ -1234,14 +1238,16 @@ public class FindFociOptimiser
 	private int[] createOptionsArray()
 	{
 		if (myMinimumAboveSaddle == 0)
-			return new int[] { FindFoci.OPTION_MINIMUM_ABOVE_SADDLE };
+			return new int[] { FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE };
 		else if (myMinimumAboveSaddle == 1)
-			return new int[] { FindFoci.OPTION_MINIMUM_ABOVE_SADDLE | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE };
+			return new int[] {
+					FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE };
 		else if (myMinimumAboveSaddle == 2)
 			return new int[] { 0 };
 		else
-			return new int[] { FindFoci.OPTION_MINIMUM_ABOVE_SADDLE,
-					FindFoci.OPTION_MINIMUM_ABOVE_SADDLE | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE, 0 };
+			return new int[] { FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE,
+					FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE,
+					0 };
 	}
 
 	private boolean invalidImage(ImagePlus imp)
@@ -1531,7 +1537,7 @@ public class FindFociOptimiser
 		gd.addChoice("Score_conversion", SCORING_MODES, SCORING_MODES[scoringMode]);
 		gd.addCheckbox("Re-use_results", reuseResults);
 		@SuppressWarnings("unchecked")
-		Vector<TextField> texts = (Vector<TextField>) gd.getStringFields();
+		Vector<TextField> texts = gd.getStringFields();
 		for (TextField tf : texts)
 		{
 			tf.addMouseListener(this);
@@ -1580,16 +1586,16 @@ public class FindFociOptimiser
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append("Sort options (comma-delimited). Use if total peaks > max peaks:\n");
-		addSortOption(sb, FindFoci.SORT_COUNT).append("; ");
-		addSortOption(sb, FindFoci.SORT_INTENSITY).append("; ");
-		addSortOption(sb, FindFoci.SORT_MAX_VALUE).append("; ");
-		addSortOption(sb, FindFoci.SORT_AVERAGE_INTENSITY).append(";\n");
-		addSortOption(sb, FindFoci.SORT_INTENSITY_MINUS_BACKGROUND).append("; ");
-		addSortOption(sb, FindFoci.SORT_AVERAGE_INTENSITY_MINUS_BACKGROUND).append(";\n");
-		addSortOption(sb, FindFoci.SORT_SADDLE_HEIGHT).append("; ");
-		addSortOption(sb, FindFoci.SORT_COUNT_ABOVE_SADDLE).append("; ");
-		addSortOption(sb, FindFoci.SORT_INTENSITY_ABOVE_SADDLE).append(";\n");
-		addSortOption(sb, FindFoci.SORT_ABSOLUTE_HEIGHT);
+		addSortOption(sb, FindFociProcessor.SORT_COUNT).append("; ");
+		addSortOption(sb, FindFociProcessor.SORT_INTENSITY).append("; ");
+		addSortOption(sb, FindFociProcessor.SORT_MAX_VALUE).append("; ");
+		addSortOption(sb, FindFociProcessor.SORT_AVERAGE_INTENSITY).append(";\n");
+		addSortOption(sb, FindFociProcessor.SORT_INTENSITY_MINUS_BACKGROUND).append("; ");
+		addSortOption(sb, FindFociProcessor.SORT_AVERAGE_INTENSITY_MINUS_BACKGROUND).append(";\n");
+		addSortOption(sb, FindFociProcessor.SORT_SADDLE_HEIGHT).append("; ");
+		addSortOption(sb, FindFociProcessor.SORT_COUNT_ABOVE_SADDLE).append("; ");
+		addSortOption(sb, FindFociProcessor.SORT_INTENSITY_ABOVE_SADDLE).append(";\n");
+		addSortOption(sb, FindFociProcessor.SORT_ABSOLUTE_HEIGHT);
 		return sb.toString();
 	}
 
@@ -1661,9 +1667,9 @@ public class FindFociOptimiser
 	private int convertStatisticsMode(String mode)
 	{
 		if (mode.equalsIgnoreCase("inside"))
-			return FindFoci.OPTION_STATS_INSIDE;
+			return FindFociProcessor.OPTION_STATS_INSIDE;
 		if (mode.equalsIgnoreCase("outside"))
-			return FindFoci.OPTION_STATS_OUTSIDE;
+			return FindFociProcessor.OPTION_STATS_OUTSIDE;
 		return 0;
 	}
 
@@ -1673,7 +1679,7 @@ public class FindFociOptimiser
 		int i = 0;
 		if (myBackgroundAbsolute)
 		{
-			array[i] = FindFoci.BACKGROUND_ABSOLUTE;
+			array[i] = FindFociProcessor.BACKGROUND_ABSOLUTE;
 			i++;
 		}
 		if (myBackgroundAuto)
@@ -1681,13 +1687,13 @@ public class FindFociOptimiser
 			for (@SuppressWarnings("unused")
 			String method : thresholdMethods)
 			{
-				array[i] = FindFoci.BACKGROUND_AUTO_THRESHOLD;
+				array[i] = FindFociProcessor.BACKGROUND_AUTO_THRESHOLD;
 				i++;
 			}
 		}
 		if (myBackgroundStdDevAboveMean)
 		{
-			array[i] = FindFoci.BACKGROUND_STD_DEV_ABOVE_MEAN;
+			array[i] = FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN;
 			i++;
 		}
 		return array;
@@ -1794,13 +1800,15 @@ public class FindFociOptimiser
 
 	private static boolean backgroundMethodHasStatisticsMode(int backgroundMethod)
 	{
-		return !(backgroundMethod == FindFoci.BACKGROUND_NONE || backgroundMethod == FindFoci.BACKGROUND_ABSOLUTE);
+		return !(backgroundMethod == FindFociProcessor.BACKGROUND_NONE ||
+				backgroundMethod == FindFociProcessor.BACKGROUND_ABSOLUTE);
 	}
 
 	private static boolean backgroundMethodHasParameter(int backgroundMethod)
 	{
-		return !(backgroundMethod == FindFoci.BACKGROUND_NONE || backgroundMethod == FindFoci.BACKGROUND_MEAN ||
-				backgroundMethod == FindFoci.BACKGROUND_AUTO_THRESHOLD);
+		return !(backgroundMethod == FindFociProcessor.BACKGROUND_NONE ||
+				backgroundMethod == FindFociProcessor.BACKGROUND_MEAN ||
+				backgroundMethod == FindFociProcessor.BACKGROUND_AUTO_THRESHOLD);
 	}
 
 	private int[] createSearchArray()
@@ -1809,12 +1817,12 @@ public class FindFociOptimiser
 		int i = 0;
 		if (mySearchAboveBackground)
 		{
-			array[i] = FindFoci.SEARCH_ABOVE_BACKGROUND;
+			array[i] = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
 			i++;
 		}
 		if (mySearchFractionOfPeak)
 		{
-			array[i] = FindFoci.SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND;
+			array[i] = FindFociProcessor.SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND;
 			i++;
 		}
 		return array;
@@ -1856,7 +1864,7 @@ public class FindFociOptimiser
 
 	private static boolean searchMethodHasParameter(int searchMethod)
 	{
-		return !(searchMethod == FindFoci.SEARCH_ABOVE_BACKGROUND);
+		return !(searchMethod == FindFociProcessor.SEARCH_ABOVE_BACKGROUND);
 	}
 
 	private void parseMinSizeLimits()
@@ -1884,13 +1892,14 @@ public class FindFociOptimiser
 		for (double v : values)
 		{
 			int method = (int) v;
-			if (method >= 0 && method <= FindFoci.SORT_AVERAGE_INTENSITY_MINUS_MIN)
+			if (method >= 0 && method <= FindFociProcessor.SORT_AVERAGE_INTENSITY_MINUS_MIN)
 				set.add(method);
 		}
 		if (set.isEmpty())
 		{
-			Utils.log("%s Warning : Sort method : No values, setting to default %d", TITLE, FindFoci.SORT_INTENSITY);
-			return new int[] { FindFoci.SORT_INTENSITY }; // Default
+			Utils.log("%s Warning : Sort method : No values, setting to default %d", TITLE,
+					FindFociProcessor.SORT_INTENSITY);
+			return new int[] { FindFociProcessor.SORT_INTENSITY }; // Default
 		}
 		int[] array = set.toArray();
 		Arrays.sort(array);
@@ -2226,10 +2235,10 @@ public class FindFociOptimiser
 				.append('\t');
 		sb.append(maxPeaks).append('\t');
 		sb.append(minSize);
-		if ((options & FindFoci.OPTION_MINIMUM_ABOVE_SADDLE) != 0)
+		if ((options & FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE) != 0)
 		{
 			sb.append(" >saddle");
-			if ((options & FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE) != 0)
+			if ((options & FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE) != 0)
 				sb.append(" conn");
 		}
 		sb.append('\t');
@@ -2275,11 +2284,11 @@ public class FindFociOptimiser
 				int last = fields[1].indexOf(')', first);
 				String mode = fields[1].substring(first, last);
 				if (mode.equals("Inside"))
-					options |= FindFoci.OPTION_STATS_INSIDE;
+					options |= FindFociProcessor.OPTION_STATS_INSIDE;
 				else if (mode.equals("Outside"))
-					options |= FindFoci.OPTION_STATS_OUTSIDE;
+					options |= FindFociProcessor.OPTION_STATS_OUTSIDE;
 				else
-					options |= FindFoci.OPTION_STATS_INSIDE | FindFoci.OPTION_STATS_OUTSIDE;
+					options |= FindFociProcessor.OPTION_STATS_INSIDE | FindFociProcessor.OPTION_STATS_OUTSIDE;
 			}
 			int index = fields[1].indexOf(" : ") + 3;
 			String thresholdMethod = fields[1].substring(index);
@@ -2294,9 +2303,9 @@ public class FindFociOptimiser
 			index = fields[3].indexOf(" ");
 			if (index > 0)
 			{
-				options |= FindFoci.OPTION_MINIMUM_ABOVE_SADDLE;
+				options |= FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE;
 				if (fields[3].contains("conn"))
-					options |= FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+					options |= FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 				fields[3] = fields[3].substring(0, index);
 			}
 			int minSize = Integer.parseInt(fields[3]);
@@ -2804,6 +2813,7 @@ public class FindFociOptimiser
 		 * 
 		 * @see java.lang.Comparable#compareTo(java.lang.Object)
 		 */
+		@Override
 		public int compareTo(Result paramT)
 		{
 			return id - paramT.id;
@@ -2863,6 +2873,7 @@ public class FindFociOptimiser
 		 * 
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 		 */
+		@Override
 		public int compare(Result o1, Result o2)
 		{
 			// Require the highest is first
@@ -3097,6 +3108,7 @@ public class FindFociOptimiser
 			this.counter = counter;
 		}
 
+		@Override
 		public void run()
 		{
 			if (IJ.escapePressed())
@@ -3352,6 +3364,7 @@ public class FindFociOptimiser
 	 * 
 	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
 	 */
+	@Override
 	public void mouseClicked(MouseEvent e)
 	{
 		// Show the result that was double clicked in the result table
@@ -3385,18 +3398,22 @@ public class FindFociOptimiser
 		}
 	}
 
+	@Override
 	public void mousePressed(MouseEvent e)
 	{
 	}
 
+	@Override
 	public void mouseReleased(MouseEvent e)
 	{
 	}
 
+	@Override
 	public void mouseEntered(MouseEvent e)
 	{
 	}
 
+	@Override
 	public void mouseExited(MouseEvent e)
 	{
 	}
@@ -3421,7 +3438,7 @@ public class FindFociOptimiser
 			// it exists on the classpath
 			instance = new OptimiserView();
 			instance.addWindowListener(this);
-			instance.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+			instance.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 
 			IJ.register(OptimiserView.class);
 
@@ -3470,31 +3487,38 @@ public class FindFociOptimiser
 		instance.toFront();
 	}
 
+	@Override
 	public void windowOpened(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowClosing(WindowEvent e)
 	{
 		WindowManager.removeWindow(instance);
 	}
 
+	@Override
 	public void windowClosed(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowIconified(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowDeiconified(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowActivated(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowDeactivated(WindowEvent e)
 	{
 	}
@@ -3674,7 +3698,7 @@ public class FindFociOptimiser
 	private void addListeners(GenericDialog gd)
 	{
 		listenerGd = gd;
-		Vector<TextField> fields = (Vector<TextField>) gd.getStringFields();
+		Vector<TextField> fields = gd.getStringFields();
 		// Optionally Ignore final text field (it is the result file field)
 		int stringFields = fields.size() - ((multiMode) ? 0 : 1);
 		for (int i = 0; i < stringFields; i++)
@@ -3693,13 +3717,13 @@ public class FindFociOptimiser
 		DialogSettings s = settings.get(0);
 		s.text.clear();
 		s.option.clear();
-		Vector<TextField> fields = (Vector<TextField>) gd.getStringFields();
+		Vector<TextField> fields = gd.getStringFields();
 		// Optionally Ignore final text field (it is the result file field)
 		int stringFields = fields.size() - ((multiMode) ? 0 : 1);
 		for (int i = 0; i < stringFields; i++)
 			s.text.add(fields.get(i).getText());
 		// The first choice is the settings name which we ignore
-		Vector<Choice> cfields = (Vector<Choice>) gd.getChoices();
+		Vector<Choice> cfields = gd.getChoices();
 		for (int i = 1; i < cfields.size(); i++)
 			s.text.add(cfields.get(i).getSelectedItem());
 		for (TextField field : (Vector<TextField>) gd.getNumericFields())
@@ -3714,13 +3738,13 @@ public class FindFociOptimiser
 		//System.out.println("Applying " + s.name + " " + updating);
 		lastTime = System.currentTimeMillis();
 		int index = 0, index2 = 0;
-		Vector<TextField> fields = (Vector<TextField>) gd.getStringFields();
+		Vector<TextField> fields = gd.getStringFields();
 		// Optionally Ignore final text field (it is the result file field)
 		int stringFields = fields.size() - ((multiMode) ? 0 : 1);
 		for (int i = 0; i < stringFields; i++)
 			fields.get(i).setText(s.text.get(index++));
 		// The first choice is the settings name
-		Vector<Choice> cfields = (Vector<Choice>) gd.getChoices();
+		Vector<Choice> cfields = gd.getChoices();
 		cfields.get(0).select(s.name);
 		for (int i = 1; i < cfields.size(); i++)
 			cfields.get(i).select(s.text.get(index++));
@@ -3736,11 +3760,13 @@ public class FindFociOptimiser
 		dialogItemChanged(listenerGd, e);
 	}
 
+	@Override
 	public void textValueChanged(TextEvent e)
 	{
 		dialogItemChanged(listenerGd, e);
 	}
 
+	@Override
 	public void itemStateChanged(ItemEvent e)
 	{
 		dialogItemChanged(listenerGd, e);
@@ -3751,6 +3777,7 @@ public class FindFociOptimiser
 	 * 
 	 * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog, java.awt.AWTEvent)
 	 */
+	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		if (e == null || e.getSource() == null || !aquireLock())

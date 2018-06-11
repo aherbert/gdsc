@@ -23,7 +23,6 @@
  */
 package gdsc.foci.controller;
 
-
 /**
  * Provides a mechanism for passing messages about the processing state
  */

@@ -25,7 +25,6 @@ package gdsc.foci;
 
 import gdsc.core.match.BasePoint;
 
-
 /**
  * Stores a 2D/3D point (real coordinates) with time and value.
  */
@@ -47,7 +46,6 @@ public class TimeValuedPoint extends BasePoint
 		this.value = value;
 	}
 
-	
 	/**
 	 * @return the time
 	 */

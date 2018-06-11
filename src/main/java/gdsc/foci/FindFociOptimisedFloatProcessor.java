@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 /**
  * Find the peak intensity regions of an image.
  * <P>
@@ -45,6 +44,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * @see gdsc.foci.FindFociBaseProcessor#pruneMaxima(java.lang.Object, byte[], int, double,
 	 * gdsc.foci.FindFociStatistics, java.util.ArrayList, int[])
 	 */
+	@Override
 	protected void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
 			FindFociStatistics stats, FindFociResult[] resultsArray, int[] maxima)
 	{
@@ -79,6 +79,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * 
 	 * @see gdsc.foci.FindFociBaseProcessor#calculateInitialResults(java.lang.Object, int[], java.util.ArrayList)
 	 */
+	@Override
 	protected void calculateInitialResults(Object pixels, int[] maxima, FindFociResult[] resultsArray)
 	{
 		setPixels(pixels);
@@ -112,6 +113,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * 
 	 * @see gdsc.foci.FindFociBaseProcessor#calculateNativeResults(java.lang.Object, int[], java.util.ArrayList, int)
 	 */
+	@Override
 	protected void calculateNativeResults(Object pixels, int[] maxima, FindFociResult[] resultsArray,
 			int originalNumberOfPeaks)
 	{
@@ -159,6 +161,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * @param saddleHeight
 	 *            the saddle height
 	 */
+	@Override
 	protected void computeIntensityAboveSaddle(final int[] maxima, final int[] peakIdMap, final int peakId,
 			final FindFociResult result, final float saddleHeight)
 	{
@@ -191,6 +194,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * 
 	 * @see gdsc.foci.FindFociBaseProcessor#getIntensityAboveFloor(java.lang.Object, byte[], float)
 	 */
+	@Override
 	protected double getIntensityAboveFloor(Object pixels, byte[] types, final float floor)
 	{
 		setPixels(pixels);

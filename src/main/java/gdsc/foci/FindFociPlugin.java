@@ -31,6 +31,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import javax.swing.JFrame;
+import javax.swing.WindowConstants;
 
 import gdsc.UsageTracker;
 import gdsc.foci.controller.FindFociController;
@@ -69,45 +70,55 @@ public class FindFociPlugin implements PlugIn
 			instance.addWindowListener(this);
 		}
 
+		@Override
 		public void windowOpened(WindowEvent e)
 		{
 		}
 
+		@Override
 		public void windowClosing(WindowEvent e)
 		{
 			WindowManager.removeWindow(instance);
 		}
 
+		@Override
 		public void windowClosed(WindowEvent e)
 		{
 		}
 
+		@Override
 		public void windowIconified(WindowEvent e)
 		{
 		}
 
+		@Override
 		public void windowDeiconified(WindowEvent e)
 		{
 		}
 
+		@Override
 		public void windowActivated(WindowEvent e)
 		{
 		}
 
+		@Override
 		public void windowDeactivated(WindowEvent e)
 		{
 		}
 
+		@Override
 		public void imageOpened(ImagePlus imp)
 		{
 			// Ignore
 		}
 
+		@Override
 		public void imageClosed(ImagePlus imp)
 		{
 			// Ignore
 		}
 
+		@Override
 		public void imageUpdated(ImagePlus imp)
 		{
 			if (imp == null)
@@ -141,6 +152,7 @@ public class FindFociPlugin implements PlugIn
 			}
 		}
 
+		@Override
 		public void propertyChange(PropertyChangeEvent evt)
 		{
 			// Store the slice for the image when it changes.
@@ -156,10 +168,11 @@ public class FindFociPlugin implements PlugIn
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (WindowManager.getImageCount() < 1)
 		{
 			IJ.showMessage("No images opened.");
@@ -208,7 +221,7 @@ public class FindFociPlugin implements PlugIn
 			// it exists on the classpath
 			instance = new FindFociView(model, controller);
 			listener.addWindowListener(instance);
-			instance.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+			instance.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 
 			IJ.register(FindFociView.class);
 
@@ -263,7 +276,7 @@ public class FindFociPlugin implements PlugIn
 
 		FindFociView instance = new FindFociView(model, controller);
 		listener.addWindowListener(instance);
-		instance.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		instance.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		showInstance(instance);
 	}

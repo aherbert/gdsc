@@ -75,10 +75,11 @@ public class Measure3D extends PlugInFrame
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.showMessage("No images opened.");
@@ -93,7 +94,7 @@ public class Measure3D extends PlugInFrame
 		{
 			if (!(instance.getTitle().equals(getTitle())))
 			{
-				Measure3D oldInstance = (Measure3D) instance;
+				Measure3D oldInstance = instance;
 				Prefs.saveLocation(OPT_LOCATION, oldInstance.getLocation());
 				oldInstance.close();
 			}
@@ -253,31 +254,38 @@ public class Measure3D extends PlugInFrame
 			results.addWindowListener(new WindowListener()
 			{
 
+				@Override
 				public void windowActivated(WindowEvent e)
 				{
 				}
 
+				@Override
 				public void windowClosed(WindowEvent e)
 				{
 				}
 
+				@Override
 				public void windowClosing(WindowEvent e)
 				{
 					Prefs.saveLocation(OPT_LOCATION_RESULTS, results.getLocation());
 				}
 
+				@Override
 				public void windowDeactivated(WindowEvent e)
 				{
 				}
 
+				@Override
 				public void windowDeiconified(WindowEvent e)
 				{
 				}
 
+				@Override
 				public void windowIconified(WindowEvent e)
 				{
 				}
 
+				@Override
 				public void windowOpened(WindowEvent e)
 				{
 				}
@@ -341,6 +349,7 @@ public class Measure3D extends PlugInFrame
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#close()
 	 */
+	@Override
 	public void close()
 	{
 		Prefs.saveLocation(OPT_LOCATION, getLocation());

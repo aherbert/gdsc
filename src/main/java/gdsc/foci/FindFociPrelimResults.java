@@ -25,7 +25,6 @@ package gdsc.foci;
 
 import ij.ImagePlus;
 
-
 /**
  * Contains the results of the FindFoci algorithm.
  */

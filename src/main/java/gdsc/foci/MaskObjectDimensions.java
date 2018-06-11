@@ -142,10 +142,11 @@ public class MaskObjectDimensions implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			IJ.noImage();
@@ -167,13 +168,15 @@ public class MaskObjectDimensions implements PlugInFilter
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
 
-		gd.addMessage("For each object defined with a unique pixel value,\ncompute the dimensions along the axes of the inertia tensor");
+		gd.addMessage(
+				"For each object defined with a unique pixel value,\ncompute the dimensions along the axes of the inertia tensor");
 
 		gd.addSlider("Merge_distance", 0, 15, mergeDistance);
 		gd.addCheckbox("Show_overlay", showOverlay);
 		gd.addCheckbox("Clear_table", clearTable);
 		gd.addCheckbox("Show_vectors", showVectors);
-		gd.addChoice("Sort_method", sortMethods, sortMethods[Math.max(0, Math.min(sortMethod, sortMethods.length - 1))]);
+		gd.addChoice("Sort_method", sortMethods,
+				sortMethods[Math.max(0, Math.min(sortMethod, sortMethods.length - 1))]);
 
 		gd.addHelp(gdsc.help.URL.FIND_FOCI);
 		gd.showDialog();
@@ -195,6 +198,7 @@ public class MaskObjectDimensions implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor inputProcessor)
 	{
 		// Extract the current z-stack
@@ -350,6 +354,7 @@ public class MaskObjectDimensions implements PlugInFilter
 		{
 			c = new Comparator<MaskObjectDimensions.MaskObject>()
 			{
+				@Override
 				public int compare(MaskObject o1, MaskObject o2)
 				{
 					if (o1.cx < o2.cx)
@@ -372,6 +377,7 @@ public class MaskObjectDimensions implements PlugInFilter
 		{
 			c = new Comparator<MaskObjectDimensions.MaskObject>()
 			{
+				@Override
 				public int compare(MaskObject o1, MaskObject o2)
 				{
 					if (o1.n < o2.n)
@@ -564,7 +570,7 @@ public class MaskObjectDimensions implements PlugInFilter
 					for (int i = 0; i < 3; i++)
 						sb.append('\t').append(Utils.rounded(direction2[i]));
 				}
-				
+
 				// Distance in pixels
 				double dx = direction2[0] - direction1[0];
 				double dy = direction2[1] - direction1[1];
@@ -573,7 +579,7 @@ public class MaskObjectDimensions implements PlugInFilter
 				//System.out.printf("Object %2d Axis %d   : %8.3f %8.3f %8.3f - %8.3f %8.3f %8.3f == %12g\n", object,
 				//		axis + 1, lower[0], lower[1], lower[2], upper[0], upper[1], upper[2], d);
 				sb.append('\t').append(Utils.rounded(d));
-				
+
 				// Calibrated length
 				dx *= calx;
 				dy *= caly;

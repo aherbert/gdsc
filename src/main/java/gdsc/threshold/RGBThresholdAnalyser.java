@@ -55,10 +55,11 @@ public class RGBThresholdAnalyser implements PlugIn
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		dir1 = Utils.getDirectory("RGB_Directory", dir1);
 		if (dir1 == null)
 			return;
@@ -68,6 +69,7 @@ public class RGBThresholdAnalyser implements PlugIn
 
 		File[] fileList = (new File(dir1)).listFiles(new FilenameFilter()
 		{
+			@Override
 			public boolean accept(File dir, String name)
 			{
 				name = name.toLowerCase();
@@ -132,7 +134,6 @@ public class RGBThresholdAnalyser implements PlugIn
 			analyse(name, cp, 1, ip1, ip3);
 			analyse(name, cp, 2, ip2, ip3);
 
-			
 			if (Utils.isInterrupted())
 				return;
 		}

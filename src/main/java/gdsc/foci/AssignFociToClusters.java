@@ -128,6 +128,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	private ColorModel cm;
 	private Label label = null;
 
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		if (arg.equals("final"))
@@ -237,6 +238,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		return imp;
 	}
 
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		// This will not be called if we selected NO_IMAGE_REQUIRED
@@ -287,11 +289,13 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		label.setText(TextUtils.pleural(filteredClusters.size(), "Cluster"));
 	}
 
+	@Override
 	public void setNPasses(int nPasses)
 	{
 		// Nothing to do
 	}
 
+	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
@@ -336,6 +340,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		return (this.imp == null) ? noImageFlags : imageFlags;
 	}
 
+	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		radius = Math.abs(gd.getNextNumber());
@@ -405,6 +410,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			clusters = e.findClusters(points, radius);
 			Collections.sort(clusters, new Comparator<Cluster>()
 			{
+				@Override
 				public int compare(Cluster o1, Cluster o2)
 				{
 					if (o1.sumw > o2.sumw)
@@ -507,7 +513,8 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		}
 
 		double seconds = (System.currentTimeMillis() - start) / 1000.0;
-		IJ.showStatus(TextUtils.pleural(filteredClusters.size(), "cluster") + " in " + Utils.rounded(seconds) + " seconds");
+		IJ.showStatus(
+				TextUtils.pleural(filteredClusters.size(), "cluster") + " in " + Utils.rounded(seconds) + " seconds");
 	}
 
 	private Coordinate[] toCoordinates(ArrayList<Cluster> clusters)

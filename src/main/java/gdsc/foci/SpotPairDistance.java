@@ -776,6 +776,7 @@ public class SpotPairDistance implements PlugIn
 		IJ.showStatus("Added " + TITLE + " Tool");
 	}
 
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);

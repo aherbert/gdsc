@@ -23,7 +23,6 @@
  */
 package gdsc.colocalisation;
 
-
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -63,10 +62,11 @@ public class ParticleOverlap implements PlugIn
 	private ImagePlus mask1Imp, imageImp, mask2Imp;
 	private OutputStreamWriter out = null;
 
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.showMessage(TITLE, "No images opened.");
@@ -83,8 +83,8 @@ public class ParticleOverlap implements PlugIn
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
 
-		gd.addMessage("For each particle in a mask (defined by unique pixel value)\n"
-				+ "count the overlap and Manders coefficient with a second mask image");
+		gd.addMessage("For each particle in a mask (defined by unique pixel value)\n" +
+				"count the overlap and Manders coefficient with a second mask image");
 
 		String[] imageList = Utils.getImageList(Utils.GREY_SCALE, null);
 		String[] maskList = Utils.getImageList(Utils.GREY_8_16, null);
@@ -134,7 +134,7 @@ public class ParticleOverlap implements PlugIn
 
 		return true;
 	}
-	
+
 	private boolean emptyFilename()
 	{
 		return (filename == null || filename.length() == 0);
@@ -213,7 +213,7 @@ public class ParticleOverlap implements PlugIn
 		}
 		if (showTotal)
 			addResult(title, 0, sn1, sno1, ss1, sso1);
-		
+
 		closeResultsFile();
 	}
 

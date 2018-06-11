@@ -164,7 +164,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 		}
 
 		/**
-		 * Sorts the points in ID order. This only works for the first two points in the list. 
+		 * Sorts the points in ID order. This only works for the first two points in the list.
 		 */
 		public void sort()
 		{
@@ -177,7 +177,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 				head = p2;
 				p1.next = p2.next;
 				p2.next = p1;
-			}			
+			}
 		}
 	}
 
@@ -228,10 +228,11 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 			return DONE;
 		Roi roi = imp.getRoi();
@@ -260,9 +261,10 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 		{
 			for (Cluster c : candidates)
 				c.sort();
-			
+
 			Collections.sort(candidates, new Comparator<Cluster>()
 			{
+				@Override
 				public int compare(Cluster o1, Cluster o2)
 				{
 					// Put the pairs first
@@ -270,7 +272,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 						return -1;
 					if (o1.n < o2.n)
 						return 1;
-					
+
 					// Sort by the first point ID
 					if (o1.head.id < o2.head.id)
 						return -1;
@@ -342,6 +344,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		candidates = findPairs();
@@ -572,6 +575,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
 	 * ij.plugin.filter.PlugInFilterRunner)
 	 */
+	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
@@ -604,6 +608,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	 * @param e
 	 * @return
 	 */
+	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		radius = gd.getNextNumber();
@@ -617,6 +622,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	/**
 	 * @param nPasses
 	 */
+	@Override
 	public void setNPasses(int nPasses)
 	{
 		// Do nothing		

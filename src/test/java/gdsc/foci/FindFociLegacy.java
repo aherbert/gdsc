@@ -538,13 +538,13 @@ public class FindFociLegacy
 
 	public static String getStatisticsMode(int options)
 	{
-		if ((options &
-				(FindFoci.OPTION_STATS_INSIDE | FindFoci.OPTION_STATS_OUTSIDE)) == (FindFoci.OPTION_STATS_INSIDE |
-						FindFoci.OPTION_STATS_OUTSIDE))
+		if ((options & (FindFociProcessor.OPTION_STATS_INSIDE |
+				FindFociProcessor.OPTION_STATS_OUTSIDE)) == (FindFociProcessor.OPTION_STATS_INSIDE |
+						FindFociProcessor.OPTION_STATS_OUTSIDE))
 			return "Both";
-		if ((options & FindFoci.OPTION_STATS_INSIDE) != 0)
+		if ((options & FindFociProcessor.OPTION_STATS_INSIDE) != 0)
 			return "Inside";
-		if ((options & FindFoci.OPTION_STATS_OUTSIDE) != 0)
+		if ((options & FindFociProcessor.OPTION_STATS_OUTSIDE) != 0)
 			return "Outside";
 		return "Both";
 	}
@@ -1750,7 +1750,7 @@ public class FindFociLegacy
 			}
 		}
 
-		return (double) sum;
+		return sum;
 	}
 
 	/**
@@ -3562,6 +3562,7 @@ public class FindFociLegacy
 
 	private class SaddleComparator implements Comparator<int[]>
 	{
+		@Override
 		public int compare(int[] o1, int[] o2)
 		{
 			int result = o1[SADDLE_PEAK_ID] - o2[SADDLE_PEAK_ID];
@@ -3579,6 +3580,7 @@ public class FindFociLegacy
 
 	private class DefaultSaddleComparator implements Comparator<int[]>
 	{
+		@Override
 		public int compare(int[] o1, int[] o2)
 		{
 			if (o1[SADDLE_VALUE] > o2[SADDLE_VALUE])
@@ -4219,6 +4221,7 @@ public class FindFociLegacy
 		 * 
 		 * @see java.lang.Comparable#compareTo(java.lang.Object)
 		 */
+		@Override
 		public int compareTo(Coordinate o)
 		{
 			// Require the sort to rank the highest peak as first.
@@ -4238,6 +4241,7 @@ public class FindFociLegacy
 		 * 
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 		 */
+		@Override
 		public int compare(int[] o1, int[] o2)
 		{
 			if (o1[RESULT_MAX_VALUE] > o2[RESULT_MAX_VALUE])
@@ -4282,6 +4286,7 @@ public class FindFociLegacy
 		 * 
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 		 */
+		@Override
 		public int compare(int[] o1, int[] o2)
 		{
 			// Require the highest is first
@@ -4310,6 +4315,7 @@ public class FindFociLegacy
 		 * 
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 		 */
+		@Override
 		public int compare(int[] o1, int[] o2)
 		{
 			// Require the lowest is first

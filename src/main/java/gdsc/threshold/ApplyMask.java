@@ -43,8 +43,8 @@ import ij.process.ImageProcessor;
  */
 public class ApplyMask implements PlugInFilter
 {
-	private static final String TITLE = "Apply Mask"; 
-	
+	private static final String TITLE = "Apply Mask";
+
 	private static String selectedImage = "";
 	private static int selectedOption = MaskCreater.OPTION_MASK;
 	private static String selectedThresholdMethod = AutoThreshold.Method.OTSU.name;
@@ -60,13 +60,16 @@ public class ApplyMask implements PlugInFilter
 	private int slice = 0;
 	private int frame = 0;
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			IJ.noImage();
@@ -77,17 +80,20 @@ public class ApplyMask implements PlugInFilter
 		{
 			applyMask();
 		}
-		return DONE; 
+		return DONE;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		// All process already done
 	}
-	
+
 	private boolean showDialog()
 	{
 		String sourceImage = "(Use target)";
@@ -158,7 +164,8 @@ public class ApplyMask implements PlugInFilter
 	}
 
 	/**
-	 * Create a mask from a source image and apply it to a target image. All pixels outside the mask will be set to zero.
+	 * Create a mask from a source image and apply it to a target image. All pixels outside the mask will be set to
+	 * zero.
 	 */
 	public void applyMask()
 	{
@@ -172,7 +179,7 @@ public class ApplyMask implements PlugInFilter
 		mc.setChannel(selectedChannel);
 		mc.setSlice(selectedSlice);
 		mc.setFrame(selectedFrame);
-		maskImp = mc.createMask(); 
+		maskImp = mc.createMask();
 
 		// Check the mask has the correct dimensions
 		if (maskImp == null)
@@ -185,7 +192,7 @@ public class ApplyMask implements PlugInFilter
 			IJ.error(TITLE, "Calculated mask does not match the target image dimensions");
 			return;
 		}
-		
+
 		// Check other dimensions && log dimension mismatch
 		int[] dimensions1 = imp.getDimensions();
 		int[] dimensions2 = maskImp.getDimensions();
@@ -207,25 +214,25 @@ public class ApplyMask implements PlugInFilter
 			}
 		}
 		if (sb != null)
-			IJ.log(sb.toString());		
-		
+			IJ.log(sb.toString());
+
 		// Apply the mask to the correct stack dimensions
 		int[] channels = createArray(dimensions1[2]);
 		int[] slices = createArray(dimensions1[3]);
 		int[] frames = createArray(dimensions1[4]);
-		
+
 		ImageStack imageStack = imp.getStack();
 		ImageStack maskStack = maskImp.getStack();
-		
+
 		for (int frame : frames)
 			for (int slice : slices)
 				for (int channel : channels)
 				{
 					ImageProcessor ip = imageStack.getProcessor(imp.getStackIndex(channel, slice, frame));
-					
+
 					// getStackIndex will clip to the mask dimensions  
 					ImageProcessor maskIp = maskStack.getProcessor(maskImp.getStackIndex(channel, slice, frame));
-					
+
 					for (int i = maskIp.getPixelCount(); i-- > 0;)
 					{
 						if (maskIp.get(i) == 0)
@@ -234,7 +241,7 @@ public class ApplyMask implements PlugInFilter
 						}
 					}
 				}
-		
+
 		imp.updateAndDraw();
 	}
 
@@ -245,7 +252,7 @@ public class ApplyMask implements PlugInFilter
 			array[i] = i + 1;
 		return array;
 	}
-	
+
 	/**
 	 * @param imp
 	 *            the target image for the masking

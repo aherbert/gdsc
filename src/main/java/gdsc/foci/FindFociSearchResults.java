@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 /**
  * Contains the results of the FindFoci algorithm after the search stage.
  */
@@ -40,8 +39,7 @@ public class FindFociSearchResults
 	 * @param saddlePoints
 	 *            the saddle points
 	 */
-	public FindFociSearchResults(FindFociResult[] resultsArray,
-			FindFociSaddleList[] saddlePoints)
+	public FindFociSearchResults(FindFociResult[] resultsArray, FindFociSaddleList[] saddlePoints)
 	{
 		this.resultsArray = resultsArray;
 		this.saddlePoints = saddlePoints;

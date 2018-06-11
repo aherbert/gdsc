@@ -26,7 +26,6 @@ package gdsc.foci;
 import gdsc.core.threshold.Histogram;
 import ij.ImagePlus;
 
-
 /**
  * Contains the results of the FindFoci algorithm after the initialisation stage.
  */
@@ -43,13 +42,20 @@ public class FindFociInitResults
 	/**
 	 * Instantiates a new find foci init results.
 	 *
-	 * @param image the image
-	 * @param types the types
-	 * @param maxima the maxima
-	 * @param histgram the histgram
-	 * @param stats the stats
-	 * @param originalImage the original image
-	 * @param originalImp the original imp
+	 * @param image
+	 *            the image
+	 * @param types
+	 *            the types
+	 * @param maxima
+	 *            the maxima
+	 * @param histgram
+	 *            the histgram
+	 * @param stats
+	 *            the stats
+	 * @param originalImage
+	 *            the original image
+	 * @param originalImp
+	 *            the original imp
 	 */
 	public FindFociInitResults(Object image, byte[] types, int[] maxima, Histogram histgram, FindFociStatistics stats,
 			Object originalImage, ImagePlus originalImp)

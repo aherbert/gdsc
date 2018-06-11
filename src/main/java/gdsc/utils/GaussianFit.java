@@ -23,7 +23,6 @@
  */
 package gdsc.utils;
 
-
 import java.awt.Rectangle;
 import java.lang.reflect.Method;
 
@@ -59,7 +58,7 @@ public class GaussianFit implements PlugInFilter
 			Class c = Class.forName("gdsc.smlm.ij.plugins.GaussianFit", true, pluginClass.getClass().getClassLoader());
 
 			// ... it exists on the classpath
-			
+
 			final int size = 99;
 			final float mu = size / 2;
 			final float s0 = 3;
@@ -69,9 +68,9 @@ public class GaussianFit implements PlugInFilter
 			final float[] data = new float[size * size];
 			for (int y = 0; y < size; y++)
 				for (int x = 0; x < size; x++)
-					data[y * size + x] = (float) (N * (Math.exp(-0.5 * ((mu - x) * (mu - x) + 0.5 * (mu - y) * (mu - y)) /
-							(s0 * s0))));
-			
+					data[y * size + x] = (float) (N *
+							(Math.exp(-0.5 * ((mu - x) * (mu - x) + 0.5 * (mu - y) * (mu - y)) / (s0 * s0))));
+
 			// Try a fit. 
 			double[] fit = null;
 			//gdsc.smlm.ij.plugins.GaussianFit gf = new gdsc.smlm.ij.plugins.GaussianFit();
@@ -110,7 +109,7 @@ public class GaussianFit implements PlugInFilter
 			exception = ex;
 			errorMessage = ex.getMessage();
 		}
-		
+
 		if (!fittingEnabled)
 		{
 			System.out.println(errorMessage);
@@ -177,6 +176,7 @@ public class GaussianFit implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -194,6 +194,7 @@ public class GaussianFit implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		FloatProcessor fp = ip.toFloat(0, null);

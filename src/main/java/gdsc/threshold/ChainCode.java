@@ -25,7 +25,6 @@ package gdsc.threshold;
 
 import java.util.LinkedList;
 
-
 /**
  * Stores a chain code. Stores the origin and a set of offsets in a run. The offset can be used to find the x,y
  * coordinates for each point using the DIR_X_OFFSET and DIR_Y_OFFSET directions for successive points from the origin.
@@ -143,6 +142,7 @@ public class ChainCode implements Comparable<ChainCode>
 	 * 
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString()
 	{
 		if (toString == null)
@@ -158,6 +158,7 @@ public class ChainCode implements Comparable<ChainCode>
 		return toString;
 	}
 
+	@Override
 	public int compareTo(ChainCode o)
 	{
 		if (o != null)

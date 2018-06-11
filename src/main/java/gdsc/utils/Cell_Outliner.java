@@ -119,6 +119,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -127,7 +128,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		{
 			return DONE;
 		}
-		if (imp.getRoi() == null || imp.getRoi().getType() != ij.gui.PolygonRoi.POINT)
+		if (imp.getRoi() == null || imp.getRoi().getType() != Roi.POINT)
 		{
 			IJ.error("Please select a centre point using the ROI tool");
 			return DONE;
@@ -147,6 +148,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
 	 * ij.plugin.filter.PlugInFilterRunner)
 	 */
+	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
@@ -212,6 +214,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog, java.awt.AWTEvent)
 	 */
+	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		int oldCellRadius = cellRadius;
@@ -256,6 +259,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
+	@Override
 	public void setNPasses(int nPasses)
 	{
 		// Do nothing		
@@ -266,6 +270,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor inputProcessor)
 	{
 		// This can be called by the preview or as the final run
@@ -485,7 +490,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			{
 				EllipticalCell e = new EllipticalCell();
 				FloatPolygon ellipse = e.drawEllipse(params);
-				cell = new PolygonRoi(ellipse.xpoints, ellipse.ypoints, ellipse.npoints, PolygonRoi.POLYGON);
+				cell = new PolygonRoi(ellipse.xpoints, ellipse.ypoints, ellipse.npoints, Roi.POLYGON);
 			}
 
 			PolygonRoi finalCell = cell;
@@ -566,7 +571,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 		ByteProcessor mask = new ByteProcessor(pointBounds.width, pointBounds.height);
 		mask.setValue(255);
-		mask.draw(new PolygonRoi(ellipse.xpoints, ellipse.ypoints, ellipse.npoints, PolygonRoi.POLYGON));
+		mask.draw(new PolygonRoi(ellipse.xpoints, ellipse.ypoints, ellipse.npoints, Roi.POLYGON));
 
 		EDM edm = new EDM();
 		FloatProcessor map = edm.makeFloatEDM(mask, (byte) 255, false);
@@ -1220,7 +1225,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			yPoints = newYPoints;
 		}
 
-		return new PolygonRoi(xPoints, yPoints, nPoints, PolygonRoi.POLYGON);
+		return new PolygonRoi(xPoints, yPoints, nPoints, Roi.POLYGON);
 	}
 
 	/**
@@ -1294,6 +1299,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 					.target(func.calculateTarget())
 					.weight(new DiagonalMatrix(func.calculateWeights()))
 					.model(func, new MultivariateMatrixFunction() {
+						@Override
 						public double[][] value(double[] point) throws IllegalArgumentException
 						{
 							return func.jacobian(point);
@@ -1402,7 +1408,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			EllipticalCell cell = new EllipticalCell();
 			FloatPolygon ellipse = cell.drawEllipse(params);
 			ip = createFilledCell(width, height,
-					new PolygonRoi(ellipse.xpoints, ellipse.ypoints, ellipse.npoints, PolygonRoi.POLYGON));
+					new PolygonRoi(ellipse.xpoints, ellipse.ypoints, ellipse.npoints, Roi.POLYGON));
 			ip.setMinAndMax(0, CELL);
 			displayImage(ip, "Start estimate");
 		}
@@ -1523,6 +1529,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		 * 
 		 * @see org.apache.commons.math3.analysis.MultivariateVectorFunction#value(double[])
 		 */
+		@Override
 		public double[] value(double[] point) throws IllegalArgumentException
 		{
 			if (debug)
@@ -1661,6 +1668,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		{
 			return new MultivariateMatrixFunction()
 			{
+				@Override
 				public double[][] value(double[] point)
 				{
 					return jacobian(point);
@@ -1755,7 +1763,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			nPoints++;
 		}
 
-		return new PolygonRoi(xPoints, yPoints, nPoints, PolygonRoi.POLYGON);
+		return new PolygonRoi(xPoints, yPoints, nPoints, Roi.POLYGON);
 	}
 
 	private void addPoint(ArrayList<Point> coords, int index)

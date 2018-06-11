@@ -95,6 +95,7 @@ public class TranslocationFinder implements PlugIn
 	// Current set of manual triplets
 	private static ArrayList<AssignedPoint[]> manualTriplets = new ArrayList<AssignedPoint[]>();
 
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -162,7 +163,7 @@ public class TranslocationFinder implements PlugIn
 			IJ.showMessage("Error", "No foci with the name " + resultsName);
 			return null;
 		}
-		ArrayList<FindFociResult> results = memoryResults.results; 
+		ArrayList<FindFociResult> results = memoryResults.results;
 		if (results.size() == 0)
 		{
 			IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
@@ -323,6 +324,7 @@ public class TranslocationFinder implements PlugIn
 			// Allow the results to be manually changed
 			resultsWindow.getTextPanel().addMouseListener(new MouseListener()
 			{
+				@Override
 				public void mouseClicked(MouseEvent e)
 				{
 					if (e.getClickCount() < 2)
@@ -436,18 +438,22 @@ public class TranslocationFinder implements PlugIn
 					overlayTriplets();
 				}
 
+				@Override
 				public void mouseEntered(MouseEvent arg0)
 				{
 				}
 
+				@Override
 				public void mouseExited(MouseEvent arg0)
 				{
 				}
 
+				@Override
 				public void mousePressed(MouseEvent arg0)
 				{
 				}
 
+				@Override
 				public void mouseReleased(MouseEvent arg0)
 				{
 				}

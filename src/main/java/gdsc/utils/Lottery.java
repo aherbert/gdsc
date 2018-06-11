@@ -33,7 +33,7 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 /**
- * Computes the odds of winning the lottery using random sampling 
+ * Computes the odds of winning the lottery using random sampling
  */
 public class Lottery implements PlugIn
 {
@@ -48,10 +48,11 @@ public class Lottery implements PlugIn
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Calculate the lottory odds");
 		gd.addSlider("Numbers", 1, numbers, numbers);

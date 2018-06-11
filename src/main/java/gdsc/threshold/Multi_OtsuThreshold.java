@@ -71,10 +71,11 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			IJ.noImage();
@@ -89,6 +90,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
@@ -127,7 +129,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 			IJ.error(TITLE, "No output options");
 			return;
 		}
-		
+
 		// Run on whole stack
 		if (s_doStack)
 			run(imp, MLEVEL);
@@ -155,7 +157,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	{
 		int[] offset = new int[1];
 		float[] h = buildHistogram(imp, offset);
-		
+
 		float[] maxSig = new float[1];
 		int[] threshold = getThresholds(MLEVEL, maxSig, offset, h);
 
@@ -201,7 +203,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 		return getThresholds(MLEVEL, maxSig, offset, h);
 	}
-	
+
 	/**
 	 * Calculate Otsu thresholds on the given image.
 	 * 
@@ -215,7 +217,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	{
 		return calculateThresholds(data, MLEVEL, null);
 	}
-	
+
 	/**
 	 * Calculate Otsu thresholds on the given image.
 	 * 
@@ -283,7 +285,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 		return buildHistogram(data, offset);
 	}
-	
+
 	/**
 	 * Create a histogram from image min to max. Normalise so integral is 1.
 	 * <p>
@@ -298,22 +300,22 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	private float[] buildHistogram(int[] data, int[] offset)
 	{
 		if (ignoreZero)
-			data[0] = 0;		
-		
+			data[0] = 0;
+
 		// Bracket the histogram to the range that holds data to make it quicker
-		int minbin = 0, maxbin = data.length-1;
+		int minbin = 0, maxbin = data.length - 1;
 		while (data[minbin] == 0 && minbin < data.length)
 			minbin++;
 		while (data[maxbin] == 0 && maxbin > 0)
 			maxbin--;
 		if (maxbin < minbin) // No data at all
 			minbin = maxbin;
-		
+
 		// ROI masking changes the histogram so total up the number of used pixels
 		long total = 0;
 		for (int d : data)
 			total += d;
-		
+
 		int[] data2 = new int[(maxbin - minbin) + 1];
 		for (int i = minbin; i <= maxbin; i++)
 		{
@@ -365,8 +367,8 @@ public class Multi_OtsuThreshold implements PlugInFilter
 		// Error if not enough memory
 		try
 		{
-    		P = initialise(P, NGRAY);
-    		S = initialise(S, NGRAY);
+			P = initialise(P, NGRAY);
+			S = initialise(S, NGRAY);
 		}
 		catch (OutOfMemoryError e)
 		{
@@ -378,13 +380,13 @@ public class Multi_OtsuThreshold implements PlugInFilter
 		for (int i = 0; i < NGRAY; ++i)
 		{
 			P[i][i] = h[i];
-			S[i][i] = ((float) i) * h[i];
+			S[i][i] = (i) * h[i];
 		}
 		// calculate first row (row 0 is all zero)
 		for (int i = 1; i < NGRAY - 1; ++i)
 		{
 			P[1][i + 1] = P[1][i] + h[i + 1];
-			S[1][i + 1] = S[1][i] + ((float) (i + 1)) * h[i + 1];
+			S[1][i + 1] = S[1][i] + (i + 1) * h[i + 1];
 		}
 		// using row 1 to calculate others
 		for (int i = 2; i < NGRAY; i++)
@@ -593,14 +595,14 @@ public class Multi_OtsuThreshold implements PlugInFilter
 		sb.append(" maxSig = ").append(maxSig[0]);
 		IJ.log(sb.toString());
 	}
-	
+
 	private void showHistogram(float[] h, int[] thresholds, int minbin, String title)
 	{
 		int NGRAY = h.length;
-		
+
 		// X-axis values
 		float[] bin = new float[NGRAY];
-		
+
 		// Calculate the maximum
 		float hmax = 0.f;
 		int mode = 0;
@@ -635,16 +637,16 @@ public class Multi_OtsuThreshold implements PlugInFilter
 		Plot histogram = new Plot(title, "Intensity", "p(Intensity)", bin, h);
 		histogram.setLimits(minbin, minbin + NGRAY, 0.f, hmax);
 		histogram.draw();
-		
+
 		// Add lines for each threshold
 		histogram.setLineWidth(1);
 		histogram.setColor(Color.red);
-		for (int i=1; i<thresholds.length; i++)
+		for (int i = 1; i < thresholds.length; i++)
 		{
 			double x = thresholds[i];
 			histogram.drawLine(x, 0, x, hmax);
-		}		
-		
+		}
+
 		histogram.show();
 	}
 
@@ -678,12 +680,12 @@ public class Multi_OtsuThreshold implements PlugInFilter
 					NewImage.FILL_BLACK);
 			rstack[i] = region[i].getImageStack();
 		}
-		
-		int[] newT = new int[mlevel +1];
+
+		int[] newT = new int[mlevel + 1];
 		System.arraycopy(t, 0, newT, 0, mlevel);
 		newT[mlevel] = Integer.MAX_VALUE;
 		t = newT;
-		
+
 		for (int slice = 1; slice <= slices; slice++)
 		{
 			ImageProcessor ip = stack.getProcessor(slice);
@@ -694,8 +696,8 @@ public class Multi_OtsuThreshold implements PlugInFilter
 			for (int i = 0; i < ip.getPixelCount(); ++i)
 			{
 				int val = ip.get(i);
-				int k=0;
-				while (val > t[k+1])
+				int k = 0;
+				while (val > t[k + 1])
 					k++;
 				rip[k].set(i, val);
 			}
@@ -733,7 +735,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 					NewImage.FILL_BLACK);
 			rstack[i] = region[i].getImageStack();
 		}
-		int[] newT = new int[mlevel +1];
+		int[] newT = new int[mlevel + 1];
 		System.arraycopy(t, 0, newT, 0, mlevel);
 		newT[mlevel] = Integer.MAX_VALUE;
 		t = newT;
@@ -747,8 +749,8 @@ public class Multi_OtsuThreshold implements PlugInFilter
 			for (int i = 0; i < ip.getPixelCount(); ++i)
 			{
 				int val = ip.get(i);
-				int k=0;
-				while (val > t[k+1])
+				int k = 0;
+				while (val > t[k + 1])
 					k++;
 				rip[k].set(i, 255);
 			}

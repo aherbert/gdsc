@@ -23,7 +23,6 @@
  */
 package gdsc.foci.model;
 
-
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
@@ -90,6 +89,7 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
 	 * 
 	 * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
 	 */
+	@Override
 	public void propertyChange(PropertyChangeEvent evt)
 	{
 		String propertyName = evt.getPropertyName();

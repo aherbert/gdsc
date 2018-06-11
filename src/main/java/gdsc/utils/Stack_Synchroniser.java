@@ -23,7 +23,6 @@
  */
 package gdsc.utils;
 
-
 import java.awt.BorderLayout;
 import java.awt.Choice;
 import java.awt.Component;
@@ -103,10 +102,11 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.showMessage("No images opened.");
@@ -147,6 +147,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#windowActivated(java.awt.event.WindowEvent)
 	 */
+	@Override
 	public void windowActivated(WindowEvent e)
 	{
 		super.windowActivated(e);
@@ -196,11 +197,11 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 			}
 
 			updateChildren = true;
-			
-    		// Ensure the drop-downs are resized
-    		pack();
+
+			// Ensure the drop-downs are resized
+			pack();
 		}
-		
+
 		fillChildList();
 	}
 
@@ -209,19 +210,19 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 	{
 		synchronized (childList)
 		{
-    		// Re-populate the image lists
-    		childList.clearSelection();
-    		listModel.clear();
-    
-    		for (String imageTitle : imageList)
-    		{
-    			if (!imageTitle.equals(imageChoice.getSelectedItem()))
-    			{
-    				listModel.addElement(imageTitle);
-    			}
-    		}
-    
-    		invalidate();
+			// Re-populate the image lists
+			childList.clearSelection();
+			listModel.clear();
+
+			for (String imageTitle : imageList)
+			{
+				if (!imageTitle.equals(imageChoice.getSelectedItem()))
+				{
+					listModel.addElement(imageTitle);
+				}
+			}
+
+			invalidate();
 		}
 	}
 
@@ -230,6 +231,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#windowClosing(java.awt.event.WindowEvent)
 	 */
+	@Override
 	public void windowClosing(WindowEvent e)
 	{
 		Prefs.saveLocation(OPT_LOCATION, getLocation());
@@ -250,25 +252,27 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 
 		synchroniseButton = new JToggleButton("Synchronise");
 		synchroniseButton.addItemListener(this);
-		
+
 		helpButton = new JButton("Help");
-		helpButton.addMouseListener(new MouseAdapter() {
+		helpButton.addMouseListener(new MouseAdapter()
+		{
 			@Override
-			public void mouseClicked(MouseEvent e) {
-				String macro = "run('URL...', 'url="+gdsc.help.URL.UTILITY+"');";
+			public void mouseClicked(MouseEvent e)
+			{
+				String macro = "run('URL...', 'url=" + gdsc.help.URL.UTILITY + "');";
 				new MacroRunner(macro);
 			}
 		});
-		
+
 		JPanel buttonPanel = new JPanel();
 		FlowLayout l = new FlowLayout();
 		l.setVgap(0);
 		buttonPanel.setLayout(l);
 		buttonPanel.add(synchroniseButton, BorderLayout.CENTER);
 		buttonPanel.add(helpButton, BorderLayout.CENTER);
-		
+
 		mainPanel.add(buttonPanel);
-		
+
 		mainPanel.add(createLabelPanel("Images to sync:"));
 
 		listModel = new DefaultListModel();
@@ -311,7 +315,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 			}
 			catch (Exception ex)
 			{
-				list.select((String) selected);
+				list.select(selected);
 			}
 		}
 		panel.add(listLabel, BorderLayout.WEST);
@@ -333,6 +337,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 	 * 
 	 * @see ij.ImageListener#imageOpened(ij.ImagePlus)
 	 */
+	@Override
 	public void imageOpened(ImagePlus imp)
 	{
 		fillImagesList();
@@ -343,6 +348,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 	 * 
 	 * @see ij.ImageListener#imageClosed(ij.ImagePlus)
 	 */
+	@Override
 	public void imageClosed(ImagePlus imp)
 	{
 		if (imp == parentImage)
@@ -361,6 +367,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 	 * 
 	 * @see ij.ImageListener#imageUpdated(ij.ImagePlus)
 	 */
+	@Override
 	public void imageUpdated(ImagePlus imp)
 	{
 		if (imp == parentImage && currentSlice != parentImage.getCurrentSlice() && !childImages.isEmpty())
@@ -370,8 +377,8 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 			int frame = parentImage.getFrame();
 			int slice = parentImage.getSlice();
 
-//			System.out.printf("Image Id %d : Slice %d (c=%d,z=%d,t=%d)\n", imp.getID(), currentSlice, channel, slice,
-//					frame);
+			//			System.out.printf("Image Id %d : Slice %d (c=%d,z=%d,t=%d)\n", imp.getID(), currentSlice, channel, slice,
+			//					frame);
 			for (ImagePlus childImp : childImages)
 			{
 				int stackIndex = childImp.getStackIndex(channel, slice, frame);
@@ -385,6 +392,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 	 * 
 	 * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
 	 */
+	@Override
 	public void itemStateChanged(ItemEvent e)
 	{
 		Object actioner = e.getSource();
@@ -397,9 +405,8 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 			}
 		}
 
-		parentImage = (synchroniseButton.isSelected()) 
-			? WindowManager.getImage(extractId(this.imageChoice.getSelectedItem()))
-			: null;
+		parentImage = (synchroniseButton.isSelected())
+				? WindowManager.getImage(extractId(this.imageChoice.getSelectedItem())) : null;
 
 		updateSynchronisation();
 	}
@@ -409,6 +416,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 	 * 
 	 * @see javax.swing.event.ListSelectionListener#valueChanged(javax.swing.event.ListSelectionEvent)
 	 */
+	@Override
 	public void valueChanged(ListSelectionEvent e)
 	{
 		updateSynchronisation();

@@ -23,7 +23,6 @@
  */
 package gdsc.foci.gui;
 
-
 import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -85,6 +84,7 @@ public class OptimiserView extends JFrame
 	{
 		EventQueue.invokeLater(new Runnable()
 		{
+			@Override
 			public void run()
 			{
 				try
@@ -147,6 +147,7 @@ public class OptimiserView extends JFrame
 		comboImageList.setToolTipText("Select the input image");
 		comboImageList.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboImageList.firePropertyChange("selectedItem", 0, 1);
@@ -166,7 +167,7 @@ public class OptimiserView extends JFrame
 		gbc_comboBox.gridx = 1;
 		gbc_comboBox.gridy = 0;
 		contentPane.add(comboImageList, gbc_comboBox);
-		
+
 		panel = new JPanel();
 		GridBagConstraints gbc_panel = new GridBagConstraints();
 		gbc_panel.gridwidth = 2;
@@ -174,28 +175,31 @@ public class OptimiserView extends JFrame
 		gbc_panel.gridx = 0;
 		gbc_panel.gridy = 1;
 		contentPane.add(panel, gbc_panel);
-				
-				btnHelp = new JButton("Help");
-				btnHelp.addMouseListener(new MouseAdapter() {
-					@Override
-					public void mouseClicked(MouseEvent e) {
-						String macro = "run('URL...', 'url="+gdsc.help.URL.FIND_FOCI+"');";
-						new MacroRunner(macro);
-					}
-				});
-				panel.add(btnHelp);
-		
-				btnRun = new JButton("Run");
-				panel.add(btnRun);
-				btnRun.addActionListener(new ActionListener()
-				{
-					public void actionPerformed(ActionEvent e)
-					{
-						// Run in a new thread to allow updates to the IJ progress bar
-						Thread thread = new Thread(controller);
-						thread.start();
-					}
-				});
+
+		btnHelp = new JButton("Help");
+		btnHelp.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				String macro = "run('URL...', 'url=" + gdsc.help.URL.FIND_FOCI + "');";
+				new MacroRunner(macro);
+			}
+		});
+		panel.add(btnHelp);
+
+		btnRun = new JButton("Run");
+		panel.add(btnRun);
+		btnRun.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				// Run in a new thread to allow updates to the IJ progress bar
+				Thread thread = new Thread(controller);
+				thread.start();
+			}
+		});
 		initDataBindings();
 	}
 
@@ -222,8 +226,8 @@ public class OptimiserView extends JFrame
 	protected void initDataBindings()
 	{
 		BeanProperty<FindFociModel, List<String>> findFociModelBeanProperty = BeanProperty.create("imageList");
-		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding = SwingBindings.createJComboBoxBinding(
-				UpdateStrategy.READ, model, findFociModelBeanProperty, comboImageList);
+		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding = SwingBindings
+				.createJComboBoxBinding(UpdateStrategy.READ, model, findFociModelBeanProperty, comboImageList);
 		jComboBinding.bind();
 		//
 		BeanProperty<FindFociModel, String> findFociModelBeanProperty_1 = BeanProperty.create("selectedImage");
@@ -233,8 +237,8 @@ public class OptimiserView extends JFrame
 		autoBinding.bind();
 		//
 		BeanProperty<JButton, Boolean> jButtonBeanProperty = BeanProperty.create("enabled");
-		AutoBinding<FindFociModel, List<String>, JButton, Boolean> autoBinding_1 = Bindings.createAutoBinding(
-				UpdateStrategy.READ, model, findFociModelBeanProperty, btnRun, jButtonBeanProperty);
+		AutoBinding<FindFociModel, List<String>, JButton, Boolean> autoBinding_1 = Bindings
+				.createAutoBinding(UpdateStrategy.READ, model, findFociModelBeanProperty, btnRun, jButtonBeanProperty);
 		autoBinding_1.setConverter(new ValidImagesConverter());
 		autoBinding_1.bind();
 	}

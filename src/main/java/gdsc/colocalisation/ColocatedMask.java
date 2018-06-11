@@ -121,6 +121,7 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 			this.flag = flag;
 		}
 
+		@Override
 		public void run()
 		{
 			while (true)
@@ -160,6 +161,7 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -465,16 +467,19 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 		return imp.getDisplayRangeMin();
 	}
 
+	@Override
 	public void imageOpened(ImagePlus imp)
 	{
 		// Ignore
 	}
 
+	@Override
 	public void imageClosed(ImagePlus imp)
 	{
 		// Ignore
 	}
 
+	@Override
 	public void imageUpdated(ImagePlus imp)
 	{
 		if (imp.getID() == id1 || imp.getID() == id2)
@@ -487,6 +492,7 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 		}
 	}
 
+	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		// It will be null when the NonBlockingDialog is first shown

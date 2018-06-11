@@ -27,18 +27,18 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFoci;
 
-public class BackgroundMethodConverter extends Converter<Integer,Object>
+public class BackgroundMethodConverter extends Converter<Integer, Object>
 {
 	@Override
 	public String convertForward(Integer paramT)
 	{
 		return FindFoci.backgroundMethods[paramT.intValue()];
 	}
-	
+
 	@Override
 	public Integer convertReverse(Object paramS)
 	{
-		for (int i=0; i<FindFoci.backgroundMethods.length; i++)
+		for (int i = 0; i < FindFoci.backgroundMethods.length; i++)
 		{
 			if (FindFoci.backgroundMethods[i].equals(paramS))
 			{

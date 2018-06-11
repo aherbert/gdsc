@@ -23,7 +23,6 @@
  */
 package gdsc.foci.controller;
 
-
 import java.util.ArrayList;
 
 import gdsc.foci.FindFoci;
@@ -32,6 +31,7 @@ import gdsc.foci.FindFociInitResults;
 import gdsc.foci.FindFociMergeResults;
 import gdsc.foci.FindFociMergeTempResults;
 import gdsc.foci.FindFociPrelimResults;
+import gdsc.foci.FindFociProcessor;
 import gdsc.foci.FindFociResult;
 import gdsc.foci.FindFociResults;
 import gdsc.foci.FindFociSearchResults;
@@ -81,6 +81,7 @@ public class FindFociRunner extends Thread
 	 * 
 	 * @see java.lang.Thread#run()
 	 */
+	@Override
 	public void run()
 	{
 		try
@@ -242,41 +243,41 @@ public class FindFociRunner extends Thread
 		int outputType = FindFoci.getOutputMaskFlags(showMask);
 
 		if (overlayMask)
-			outputType += FindFoci.OUTPUT_OVERLAY_MASK;
+			outputType += FindFociProcessor.OUTPUT_OVERLAY_MASK;
 		if (showTable)
-			outputType += FindFoci.OUTPUT_RESULTS_TABLE;
+			outputType += FindFociProcessor.OUTPUT_RESULTS_TABLE;
 		if (clearTable)
-			outputType += FindFoci.OUTPUT_CLEAR_RESULTS_TABLE;
+			outputType += FindFociProcessor.OUTPUT_CLEAR_RESULTS_TABLE;
 		if (markMaxima)
-			outputType += FindFoci.OUTPUT_ROI_SELECTION;
+			outputType += FindFociProcessor.OUTPUT_ROI_SELECTION;
 		if (markROIMaxima)
-			outputType += FindFoci.OUTPUT_MASK_ROI_SELECTION;
+			outputType += FindFociProcessor.OUTPUT_MASK_ROI_SELECTION;
 		if (markUsingOverlay)
-			outputType += FindFoci.OUTPUT_ROI_USING_OVERLAY;
+			outputType += FindFociProcessor.OUTPUT_ROI_USING_OVERLAY;
 		if (hideLabels)
-			outputType += FindFoci.OUTPUT_HIDE_LABELS;
+			outputType += FindFociProcessor.OUTPUT_HIDE_LABELS;
 		if (!showMaskMaximaAsDots)
-			outputType += FindFoci.OUTPUT_MASK_NO_PEAK_DOTS;
+			outputType += FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
 
 		int options = 0;
 		if (minimumAboveSaddle)
-			options |= FindFoci.OPTION_MINIMUM_ABOVE_SADDLE;
+			options |= FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE;
 		if (connectedAboveSaddle)
-			options |= FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+			options |= FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		if (statisticsMode.equalsIgnoreCase("inside"))
-			options |= FindFoci.OPTION_STATS_INSIDE;
+			options |= FindFociProcessor.OPTION_STATS_INSIDE;
 		else if (statisticsMode.equalsIgnoreCase("outside"))
-			options |= FindFoci.OPTION_STATS_OUTSIDE;
+			options |= FindFociProcessor.OPTION_STATS_OUTSIDE;
 		if (removeEdgeMaxima)
-			options |= FindFoci.OPTION_REMOVE_EDGE_MAXIMA;
+			options |= FindFociProcessor.OPTION_REMOVE_EDGE_MAXIMA;
 		if (objectAnalysis)
 		{
-			options |= FindFoci.OPTION_OBJECT_ANALYSIS;
+			options |= FindFociProcessor.OPTION_OBJECT_ANALYSIS;
 			if (showObjectMask)
-				options |= FindFoci.OPTION_SHOW_OBJECT_MASK;
+				options |= FindFociProcessor.OPTION_SHOW_OBJECT_MASK;
 		}
 		if (saveToMemory)
-			options |= FindFoci.OPTION_SAVE_TO_MEMORY;
+			options |= FindFociProcessor.OPTION_SAVE_TO_MEMORY;
 
 		if (outputType == 0)
 		{

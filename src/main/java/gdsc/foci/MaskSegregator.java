@@ -42,6 +42,7 @@ import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.gui.ImageRoi;
 import ij.gui.Overlay;
+import ij.measure.Measurements;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ByteProcessor;
@@ -81,10 +82,11 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			IJ.noImage();
@@ -105,6 +107,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus,
 	 * java.lang.String, ij.plugin.filter.PlugInFilterRunner)
 	 */
+	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		String[] names = getMasks(imp);
@@ -116,9 +119,10 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 
 		GenericDialog gd = new GenericDialog(TITLE);
 
-		gd.addMessage("Overlay a mask on the current image and segregate objects into two classes.\n \nObjects are defined with contiguous pixels of the same value.\nThe mean image value for each object is used for segregation.");
+		gd.addMessage(
+				"Overlay a mask on the current image and segregate objects into two classes.\n \nObjects are defined with contiguous pixels of the same value.\nThe mean image value for each object is used for segregation.");
 
-		ImageStatistics stats = ImageStatistics.getStatistics(imp.getProcessor(), ImageStatistics.MIN_MAX, null);
+		ImageStatistics stats = ImageStatistics.getStatistics(imp.getProcessor(), Measurements.MIN_MAX, null);
 		if (cutoff < stats.min)
 			cutoff = stats.min;
 		if (cutoff > stats.max)
@@ -186,6 +190,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	 * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog,
 	 * java.awt.AWTEvent)
 	 */
+	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		// Preview checkbox will be null if running headless
@@ -226,6 +231,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
+	@Override
 	public void setNPasses(int nPasses)
 	{
 		// Do nothing
@@ -236,6 +242,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor inputIp)
 	{
 		analyseObjects();

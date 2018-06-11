@@ -52,7 +52,6 @@ import ij.process.ShortProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
 
-
 /**
  * Extend the ImageJ Particle Analyser to allow the particles to be obtained from an input mask with objects
  * assigned using contiguous pixels with a unique value. If blank pixels exist between two objects with the same pixel
@@ -141,6 +140,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 		}
 	}
 
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		int flags = FINAL_PROCESSING;
@@ -182,12 +182,14 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			}
 			list = Arrays.copyOf(list, count);
 			GenericDialog gd = new GenericDialog("Mask Particle Analyzer...");
-			gd.addMessage("Analyses objects in an image.\n \nObjects are defined with contiguous pixels of the same value.\nIgnore pixels outside any configured thresholds.");
+			gd.addMessage(
+					"Analyses objects in an image.\n \nObjects are defined with contiguous pixels of the same value.\nIgnore pixels outside any configured thresholds.");
 			gd.addChoice("Redirect_image", list, redirectTitle);
 			gd.addCheckbox("Particle_summary", particleSummary);
 			gd.addCheckbox("Save_histogram", saveHistogram);
 			if (noThreshold)
-				gd.addMessage("Warning: The image is not thresholded / 8-bit binary mask.\nContinuing will use the min/max values in the image which\nmay produce many objects.");
+				gd.addMessage(
+						"Warning: The image is not thresholded / 8-bit binary mask.\nContinuing will use the min/max values in the image which\nmay produce many objects.");
 			gd.addHelp(gdsc.help.URL.FIND_FOCI);
 			gd.showDialog();
 			if (gd.wasCanceled())
@@ -679,7 +681,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 		}
 		// Forces auto column width calculation
 		tp.scrollToTop();
-		
+
 		// Optionally save summary histogram to file
 		if (saveHistogram)
 			saveSummaryHistogram(order);

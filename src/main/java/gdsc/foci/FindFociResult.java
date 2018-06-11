@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 /**
  * Contains the foci result of the FindFoci algorithm.
  */
@@ -106,27 +105,27 @@ public class FindFociResult implements Cloneable
 	 */
 	public int object;
 	/**
-	 * The minimum x range covered by the peak. This is used when merging peaks above the minimum saddle value. 
+	 * The minimum x range covered by the peak. This is used when merging peaks above the minimum saddle value.
 	 */
 	int minx;
 	/**
-	 * The minimum y range covered by the peak. This is used when merging peaks above the minimum saddle value. 
+	 * The minimum y range covered by the peak. This is used when merging peaks above the minimum saddle value.
 	 */
 	int miny;
 	/**
-	 * The minimum z range covered by the peak. This is used when merging peaks above the minimum saddle value. 
+	 * The minimum z range covered by the peak. This is used when merging peaks above the minimum saddle value.
 	 */
 	int minz;
 	/**
-	 * The maximum x range covered by the peak. This is used when merging peaks above the minimum saddle value. 
+	 * The maximum x range covered by the peak. This is used when merging peaks above the minimum saddle value.
 	 */
 	int maxx;
 	/**
-	 * The maximum y range covered by the peak. This is used when merging peaks above the minimum saddle value. 
+	 * The maximum y range covered by the peak. This is used when merging peaks above the minimum saddle value.
 	 */
 	int maxy;
 	/**
-	 * The maximum z range covered by the peak. This is used when merging peaks above the minimum saddle value. 
+	 * The maximum z range covered by the peak. This is used when merging peaks above the minimum saddle value.
 	 */
 	int maxz;
 

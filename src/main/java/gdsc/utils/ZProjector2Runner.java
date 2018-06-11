@@ -34,7 +34,8 @@ import ij.plugin.ZProjector2;
 public class ZProjector2Runner implements PlugIn
 {
 	private ZProjector2 filter = new ZProjector2();
-	
+
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);

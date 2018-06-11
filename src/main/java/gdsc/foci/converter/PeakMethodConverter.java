@@ -27,18 +27,18 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFoci;
 
-public class PeakMethodConverter extends Converter<Integer,Object>
+public class PeakMethodConverter extends Converter<Integer, Object>
 {
 	@Override
 	public String convertForward(Integer paramT)
 	{
 		return FindFoci.peakMethods[paramT.intValue()];
 	}
-	
+
 	@Override
 	public Integer convertReverse(Object paramS)
 	{
-		for (int i=0; i<FindFoci.peakMethods.length; i++)
+		for (int i = 0; i < FindFoci.peakMethods.length; i++)
 		{
 			if (FindFoci.peakMethods[i].equals(paramS))
 			{

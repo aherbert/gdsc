@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
@@ -83,6 +82,7 @@ public class PointAlignerPlugin implements PlugIn
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -125,17 +125,17 @@ public class PointAlignerPlugin implements PlugIn
 
 		//ImagePlus mask = WindowManager.getImage(maskImage);
 		ImagePlus mask = null;
-		int backgroundMethod = FindFoci.BACKGROUND_ABSOLUTE;
+		int backgroundMethod = FindFociProcessor.BACKGROUND_ABSOLUTE;
 		double backgroundParameter = getBackgroundLevel(points);
 		String autoThresholdMethod = "";
-		int searchMethod = FindFoci.SEARCH_ABOVE_BACKGROUND;
+		int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
 		double searchParameter = 0;
 		int maxPeaks = 33000;
 		int minSize = 1;
-		int peakMethod = FindFoci.PEAK_RELATIVE;
+		int peakMethod = FindFociProcessor.PEAK_RELATIVE;
 		double peakParameter = 0;
-		int outputType = FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_NO_PEAK_DOTS;
-		int sortIndex = FindFoci.SORT_MAX_VALUE;
+		int outputType = FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
+		int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
 		int options = 0;
 		double blur = 0;
 		int centreMethod = FindFoci.CENTRE_MAX_VALUE_ORIGINAL;
@@ -383,7 +383,7 @@ public class PointAlignerPlugin implements PlugIn
 				}
 				else
 				{
-					final float v = (float) result.maxValue;
+					final float v = result.maxValue;
 					if (minAssignedHeight > v)
 					{
 						minAssignedHeight = v;
@@ -492,7 +492,7 @@ public class PointAlignerPlugin implements PlugIn
 		for (int maximaId = 0; maximaId < resultsArray.size(); maximaId++)
 		{
 			FindFociResult result = resultsArray.get(maximaId);
-			final float v = (float) result.maxValue;
+			final float v = result.maxValue;
 			if (assigned[maximaId] < 0 && v > minAssignedHeight)
 			{
 				int x = result.x;
@@ -949,6 +949,7 @@ public class PointAlignerPlugin implements PlugIn
 			this.pointHeight = pointHeight;
 		}
 
+		@Override
 		public int compare(AssignedPoint o1, AssignedPoint o2)
 		{
 			int diff = pointHeight[o1.getId()] - pointHeight[o2.getId()];

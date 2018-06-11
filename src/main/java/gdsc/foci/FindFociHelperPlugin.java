@@ -29,6 +29,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import javax.swing.JFrame;
+import javax.swing.WindowConstants;
 
 import gdsc.UsageTracker;
 import gdsc.foci.gui.FindFociHelperView;
@@ -50,6 +51,7 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -76,7 +78,7 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 			// it exists on the classpath
 			instance = new FindFociHelperView();
 			instance.addWindowListener(this);
-			instance.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+			instance.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 
 			IJ.register(OptimiserView.class);
 
@@ -125,31 +127,38 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 		instance.toFront();
 	}
 
+	@Override
 	public void windowOpened(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowClosing(WindowEvent e)
 	{
 		WindowManager.removeWindow(instance);
 	}
 
+	@Override
 	public void windowClosed(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowIconified(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowDeiconified(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowActivated(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowDeactivated(WindowEvent e)
 	{
 	}

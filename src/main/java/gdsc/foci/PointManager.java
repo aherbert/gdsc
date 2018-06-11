@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.io.BufferedReader;

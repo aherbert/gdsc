@@ -64,7 +64,8 @@ public class ThreadAnalyser implements PlugIn
 	private static TextWindow resultsWindow = null;
 	private static boolean writeHeader = true;
 
-	private static String[] ignoreSuffix = new String[] { "EDM", "SkeletonNodeMap", "SkeletonMap", "Threads", "Objects" };
+	private static String[] ignoreSuffix = new String[] { "EDM", "SkeletonNodeMap", "SkeletonMap", "Threads",
+			"Objects" };
 
 	private static String image = "";
 	private static int imageChannel = 0;
@@ -87,10 +88,11 @@ public class ThreadAnalyser implements PlugIn
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (!showDialog())
 		{
 			return;
@@ -385,8 +387,8 @@ public class ThreadAnalyser implements PlugIn
 		if (showSkeletonMap || minLength > 0)
 		{
 			int size = chainCodes.size();
-			ImageProcessor ip = (size > 255) ? new ShortProcessor(bp.getWidth(), bp.getHeight()) : new ByteProcessor(
-					bp.getWidth(), bp.getHeight());
+			ImageProcessor ip = (size > 255) ? new ShortProcessor(bp.getWidth(), bp.getHeight())
+					: new ByteProcessor(bp.getWidth(), bp.getHeight());
 			return ip;
 		}
 		return null;
@@ -422,7 +424,7 @@ public class ThreadAnalyser implements PlugIn
 			int x = code.getX();
 			int y = code.getY();
 			int[] run = code.getRun();
-			for (int i=0; i<run.length/2; i++)
+			for (int i = 0; i < run.length / 2; i++)
 			{
 				x += ChainCode.DIR_X_OFFSET[run[i]];
 				y += ChainCode.DIR_Y_OFFSET[run[i]];
@@ -433,7 +435,7 @@ public class ThreadAnalyser implements PlugIn
 		}
 		return new PointRoi(xPoints, yPoints, nPoints);
 	}
-	
+
 	private void showImage(ImageProcessor ip, String title, Roi roi)
 	{
 		ImagePlus imp = WindowManager.getImage(title);
@@ -518,8 +520,8 @@ public class ThreadAnalyser implements PlugIn
 	{
 		if (chainCodes.size() > 1000)
 		{
-			YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE, "Do you want to show all " +
-					chainCodes.size() + " results?");
+			YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE,
+					"Do you want to show all " + chainCodes.size() + " results?");
 			d.setVisible(true);
 			if (!d.yesPressed())
 				return;

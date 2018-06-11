@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 import java.util.LinkedList;
 import java.util.List;
 
@@ -47,7 +46,7 @@ public class GridPointManager
 	 * Define the search modes for the {@link #findUnassignedPoint(int, int)} method
 	 */
 	public static final String[] SEARCH_MODES = new String[] { "Highest", "Closest" };
-	
+
 	public static final int HIGHEST = 0;
 	public static final int CLOSEST = 1;
 
@@ -162,7 +161,7 @@ public class GridPointManager
 	{
 		return findHighest(xCoord, yCoord, true);
 	}
-	
+
 	/**
 	 * Find the highest unassigned point within the sampling resolution from the given coordinates.
 	 * If a point is found it will have its assigned flag set to true.
@@ -180,9 +179,10 @@ public class GridPointManager
 
 		return point;
 	}
-	
+
 	/**
-	 * Find the highest point within the sampling resolution from the given coordinates with the specified assigned status.
+	 * Find the highest point within the sampling resolution from the given coordinates with the specified assigned
+	 * status.
 	 * 
 	 * @param xCoord
 	 * @param yCoord
@@ -199,9 +199,9 @@ public class GridPointManager
 		if (!assigned)
 		{
 			// Use closest assigned peak to set the resolution for the unassigned search
-    		GridPoint closestPoint = findClosestAssignedPoint(xCoord, yCoord);
-    		if (closestPoint != null)
-    			resolution2 = closestPoint.distance2(xCoord, yCoord);
+			GridPoint closestPoint = findClosestAssignedPoint(xCoord, yCoord);
+			if (closestPoint != null)
+				resolution2 = closestPoint.distance2(xCoord, yCoord);
 		}
 
 		// Check all surrounding blocks for highest unassigned point
@@ -299,7 +299,7 @@ public class GridPointManager
 
 		return null;
 	}
-	
+
 	/**
 	 * Find the closest assigned point within the sampling resolution from the given coordinates
 	 * 
@@ -360,7 +360,7 @@ public class GridPointManager
 					{
 						if (p.isAssigned() == assigned)
 						{
-							final double d2 = p.distance2(xCoord, yCoord); 
+							final double d2 = p.distance2(xCoord, yCoord);
 							if (d2 < resolution2)
 							{
 								resolution2 = d2;

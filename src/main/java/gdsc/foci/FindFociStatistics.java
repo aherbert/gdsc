@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 /**
  * Contains the statistics results of the FindFoci algorithm.
  */

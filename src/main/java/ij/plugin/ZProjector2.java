@@ -30,6 +30,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.measure.Measurements;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -66,7 +67,7 @@ public class ZProjector2 extends ZProjectorCopy
 					int index = projImage.getStackIndex(c, 1, 1);
 					projImage.setSliceWithoutUpdate(index);
 					ip = projImage.getProcessor();
-					ImageStatistics stats = ImageStatistics.getStatistics(ip, ImageStatistics.MIN_MAX, null);
+					ImageStatistics stats = ImageStatistics.getStatistics(ip, Measurements.MIN_MAX, null);
 					ip.setMinAndMax(stats.min, stats.max);
 				}
 				projImage.setSliceWithoutUpdate(projImage.getStackIndex(1, 1, 1));
@@ -204,6 +205,7 @@ public class ZProjector2 extends ZProjectorCopy
 		// Override to change the method for accessing pixel values to getf() 
 		return doProjection("median", new Projector()
 		{
+			@Override
 			public float value(float[] values)
 			{
 				return median(values);
@@ -215,6 +217,7 @@ public class ZProjector2 extends ZProjectorCopy
 	{
 		return doProjection("mode", new Projector()
 		{
+			@Override
 			public float value(float[] values)
 			{
 				return getMode(values, ignoreZero);

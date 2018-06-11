@@ -27,18 +27,18 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFoci;
 
-public class CentreMethodConverter extends Converter<Integer,Object>
+public class CentreMethodConverter extends Converter<Integer, Object>
 {
 	@Override
 	public String convertForward(Integer paramT)
 	{
 		return FindFoci.getCentreMethods()[paramT.intValue()];
 	}
-	
+
 	@Override
 	public Integer convertReverse(Object paramS)
 	{
-		for (int i=0; i<FindFoci.getCentreMethods().length; i++)
+		for (int i = 0; i < FindFoci.getCentreMethods().length; i++)
 		{
 			if (FindFoci.getCentreMethods()[i].equals(paramS))
 			{

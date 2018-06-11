@@ -88,6 +88,7 @@ public class AssignFociToObjects implements PlugInFilter
 			this.d2 = d2;
 		}
 
+		@Override
 		public int compareTo(Search that)
 		{
 			if (this.d2 < that.d2)
@@ -103,10 +104,11 @@ public class AssignFociToObjects implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 			return DONE;
 		this.imp = imp;
@@ -118,6 +120,7 @@ public class AssignFociToObjects implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		if (!showDialog())
@@ -304,7 +307,7 @@ public class AssignFociToObjects implements PlugInFilter
 			final int[] result = results.get(i);
 			final int x = result[0];
 			final int y = result[1];
-			
+
 			// Check within the image
 			if (x < 0 || x >= maxx || y < 0 || y >= maxy)
 				continue;

@@ -64,10 +64,11 @@ public class PointExtractorPlugin implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		checkManagerForRois();
 
 		if (imp == null && !isManagerAvailable())
@@ -127,6 +128,7 @@ public class PointExtractorPlugin implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		if (!showDialog())
@@ -218,8 +220,8 @@ public class PointExtractorPlugin implements PlugInFilter
 
 		if (isManagerAvailable())
 		{
-			gd.addMessage(String.format("%s (%s) present in the ROI manager",
-					TextUtils.pleural(nPointRois(), "ROI"), TextUtils.pleural(nPoints(), "point")));
+			gd.addMessage(String.format("%s (%s) present in the ROI manager", TextUtils.pleural(nPointRois(), "ROI"),
+					TextUtils.pleural(nPoints(), "point")));
 			gd.addCheckbox("Use_manager_ROIs", useManager);
 			gd.addCheckbox("Reset_manager", reset);
 		}

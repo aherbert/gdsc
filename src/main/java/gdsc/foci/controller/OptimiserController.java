@@ -23,7 +23,6 @@
  */
 package gdsc.foci.controller;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -124,6 +123,7 @@ public class OptimiserController extends FindFociController implements Runnable
 	 * 
 	 * @see gdsc.foci.controller.FindFociController#endPreview()
 	 */
+	@Override
 	public void endPreview()
 	{
 	}

@@ -29,7 +29,6 @@ import java.util.Arrays;
 import ij.ImagePlus;
 import ij.measure.Calibration;
 
-
 /**
  * Contains the results of the FindFoci algorithm saved to memory.
  */
@@ -37,7 +36,7 @@ public class FindFociMemoryResults implements Cloneable
 {
 	/** The image Id. */
 	public final int imageId;
-	
+
 	/** The image calibration. */
 	public final Calibration calibration;
 

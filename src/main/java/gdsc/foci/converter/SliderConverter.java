@@ -25,14 +25,14 @@ package gdsc.foci.converter;
 
 import org.jdesktop.beansbinding.Converter;
 
-public class SliderConverter extends Converter<Double,Integer>
+public class SliderConverter extends Converter<Double, Integer>
 {
 	public static double SCALE_FACTOR = 1000;
-	
+
 	@Override
 	public Integer convertForward(Double paramS)
 	{
-		return Integer.valueOf((int)(paramS * SCALE_FACTOR));
+		return Integer.valueOf((int) (paramS * SCALE_FACTOR));
 	}
 
 	@Override

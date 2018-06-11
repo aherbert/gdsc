@@ -23,7 +23,6 @@
  */
 package gdsc.colocalisation;
 
-
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Checkbox;
@@ -216,10 +215,11 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		super(TITLE);
 	}
 
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.error(TITLE, "No images opened.");
@@ -272,6 +272,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		fillImagesList();
 	}
 
+	@Override
 	public synchronized void actionPerformed(ActionEvent e)
 	{
 		Object actioner = e.getSource();
@@ -286,13 +287,14 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		}
 		if ((Button) actioner == helpButton)
 		{
-			String macro = "run('URL...', 'url="+gdsc.help.URL.COLOCALISATION+"');";
+			String macro = "run('URL...', 'url=" + gdsc.help.URL.COLOCALISATION + "');";
 			new MacroRunner(macro);
 		}
 
 		super.notify();
 	}
 
+	@Override
 	public void itemStateChanged(ItemEvent e)
 	{
 		if (setResultsOptionsCheckbox.getState())
@@ -342,12 +344,14 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		}
 	}
 
+	@Override
 	public void windowClosing(WindowEvent e)
 	{
 		Prefs.saveLocation(OPT_LOCATION, getLocation());
 		close();
 	}
 
+	@Override
 	public void close()
 	{
 		if (closeWindowsOnExit)
@@ -377,6 +381,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		}
 	}
 
+	@Override
 	public void windowActivated(WindowEvent e)
 	{
 		fillImagesList();
@@ -390,6 +395,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	 * 
 	 * @see java.lang.Runnable#run()
 	 */
+	@Override
 	public void run()
 	{
 		findThreshold();
@@ -772,9 +778,9 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 						int scaledCh1 = (int) (ch1 * ch1Scaling);
 						int scaledCh2 = (int) (ch2 * ch2Scaling);
 
-						color[0] = (int) scaledCh1;
-						color[1] = (int) scaledCh2;
-						color[2] = (int) 0;
+						color[0] = scaledCh1;
+						color[1] = scaledCh2;
+						color[2] = 0;
 
 						ipColoc.putPixel(x, y, color);
 
@@ -824,7 +830,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 								{
 									colocInt = (int) Math.sqrt(scaledCh1 * scaledCh2);
 								}
-								color[2] = (int) colocInt;
+								color[2] = colocInt;
 
 								ipColoc.putPixel(x, y, color);
 							}
@@ -949,10 +955,10 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		double plotY = 0;
 		plot16.resetMinAndMax();
 		int plotmax2 = (int) (plot16.getMax());
-		int plotmax = (int) (plotmax2 / 2);
+		int plotmax = plotmax2 / 2;
 
-		scaledC1ThresholdValue = (int) ((double) ch1threshmax * ch1Scaling);
-		scaledC2ThresholdValue = 255 - (int) ((double) ch2threshmax * ch2Scaling);
+		scaledC1ThresholdValue = (int) (ch1threshmax * ch1Scaling);
+		scaledC2ThresholdValue = 255 - (int) (ch2threshmax * ch2Scaling);
 
 		double m = ct.getM();
 		double b = ct.getB();
@@ -960,10 +966,10 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		// Draw regression line
 		for (int c = (ch1Max < 256) ? 256 : ch1Max; c-- > 0;)
 		{
-			plotY = ((double) c * m) + b;
+			plotY = (c * m) + b;
 
-			int scaledXValue = (int) ((double) c * ch1Scaling);
-			int scaledYValue = 255 - (int) ((double) plotY * ch2Scaling);
+			int scaledXValue = (int) (c * ch1Scaling);
+			int scaledYValue = 255 - (int) (plotY * ch2Scaling);
 
 			plot16.putPixel(scaledXValue, scaledYValue, plotmax);
 
@@ -1276,15 +1282,15 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		mainPanel.add(createCheckboxPanel(showColocalisedCheckbox, choiceShowColocalised, showColocalised));
 
 		useConstantIntensityCheckbox = new Checkbox();
-		mainPanel.add(createCheckboxPanel(useConstantIntensityCheckbox, choiceUseConstantIntensity,
-				useConstantIntensity));
+		mainPanel.add(
+				createCheckboxPanel(useConstantIntensityCheckbox, choiceUseConstantIntensity, useConstantIntensity));
 
 		showScatterPlotCheckbox = new Checkbox();
 		mainPanel.add(createCheckboxPanel(showScatterPlotCheckbox, choiceShowScatterPlot, showScatterPlot));
 
 		includeZeroZeroPixelsCheckbox = new Checkbox();
-		mainPanel.add(createCheckboxPanel(includeZeroZeroPixelsCheckbox, choiceIncludeZeroZeroPixels,
-				includeZeroZeroPixels));
+		mainPanel.add(
+				createCheckboxPanel(includeZeroZeroPixelsCheckbox, choiceIncludeZeroZeroPixels, includeZeroZeroPixels));
 
 		closeWindowsOnExitCheckbox = new Checkbox();
 		mainPanel.add(createCheckboxPanel(closeWindowsOnExitCheckbox, choiceCloseWindowsOnExit, closeWindowsOnExit));
@@ -1297,14 +1303,14 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		okButton.addActionListener(this);
 		helpButton = new Button(helpButtonLabel);
 		helpButton.addActionListener(this);
-		
+
 		JPanel buttonPanel = new JPanel();
 		FlowLayout l = new FlowLayout();
 		l.setVgap(0);
 		buttonPanel.setLayout(l);
 		buttonPanel.add(okButton, BorderLayout.CENTER);
 		buttonPanel.add(helpButton, BorderLayout.CENTER);
-		
+
 		mainPanel.add(buttonPanel);
 	}
 
@@ -1349,17 +1355,17 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	{
 		if (results == null)
 			return;
-		
+
 		double[] threshold = new double[results.size()];
 		double[] R = new double[results.size()];
 		double[] R2 = new double[results.size()];
 
 		double yMin = 1, yMax = -1;
-		
+
 		// Plot the zero threshold result at the minimum threshold value
 		int minThreshold = Integer.MAX_VALUE;
 		int zeroThresholdIndex = 0;
-		
+
 		for (int i = 0, j = results.size() - 1; i < results.size(); i++, j--)
 		{
 			ColocalisationThreshold.ThresholdResult result = results.get(i);
@@ -1384,7 +1390,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 			}
 		}
 		threshold[zeroThresholdIndex] = (minThreshold > 0) ? minThreshold - 1 : 0;
-		
+
 		if (rPlot != null && rPlot.isVisible())
 			rPlot.close();
 		Plot plot = new Plot(correlationValuesTitle, "Threshold", "R", threshold, R);

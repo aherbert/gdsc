@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -100,6 +99,7 @@ public class SpotDistance implements PlugIn
 		 * 
 		 * @see java.lang.Comparable#compareTo(java.lang.Object)
 		 */
+		@Override
 		public int compareTo(DistanceResult paramT)
 		{
 			// Sort by ID ascending
@@ -164,6 +164,7 @@ public class SpotDistance implements PlugIn
 	// Store the last frame results to allow primitive tracking
 	private ArrayList<DistanceResult> prevResultsArray = null, prevResultsArray2 = null;
 
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -746,18 +747,18 @@ public class SpotDistance implements PlugIn
 		// - Bigger feature size for DoG?
 
 		FindFoci ff = new FindFoci();
-		int backgroundMethod = (autoThreshold) ? FindFoci.BACKGROUND_AUTO_THRESHOLD
-				: FindFoci.BACKGROUND_STD_DEV_ABOVE_MEAN;
+		int backgroundMethod = (autoThreshold) ? FindFociProcessor.BACKGROUND_AUTO_THRESHOLD
+				: FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN;
 		double backgroundParameter = stdDevAboveBackground;
 		String autoThresholdMethod = AutoThreshold.Method.OTSU.name;
-		int searchMethod = FindFoci.SEARCH_ABOVE_BACKGROUND;
+		int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
 		double searchParameter = 0;
 		int minSize = minPeakSize;
-		int peakMethod = FindFoci.PEAK_ABSOLUTE;
-		int outputType = FindFoci.OUTPUT_RESULTS_TABLE | FindFoci.OUTPUT_MASK_PEAKS |
-				FindFoci.OUTPUT_MASK_ABOVE_SADDLE | FindFoci.OUTPUT_MASK_NO_PEAK_DOTS;
-		int sortIndex = FindFoci.SORT_MAX_VALUE;
-		int options = FindFoci.OPTION_MINIMUM_ABOVE_SADDLE; // | FindFoci.OPTION_STATS_INSIDE;
+		int peakMethod = FindFociProcessor.PEAK_ABSOLUTE;
+		int outputType = FindFociProcessor.OUTPUT_RESULTS_TABLE | FindFociProcessor.OUTPUT_MASK_PEAKS |
+				FindFociProcessor.OUTPUT_MASK_ABOVE_SADDLE | FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
+		int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
+		int options = FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE; // | FindFoci.OPTION_STATS_INSIDE;
 		double blur = 0;
 		int centreMethod = FindFoci.CENTRE_OF_MASS_ORIGINAL;
 		double centreParameter = 2;
@@ -1323,7 +1324,7 @@ public class SpotDistance implements PlugIn
 
 		// Process in XYZ order
 		FindFociBaseProcessor ffp = new FindFociIntProcessor();
-		ffp.sortAscResults(resultsArray, FindFoci.SORT_XYZ, null);
+		ffp.sortAscResults(resultsArray, FindFociProcessor.SORT_XYZ, null);
 
 		ImageStack maskStack = peaksImp.getImageStack();
 

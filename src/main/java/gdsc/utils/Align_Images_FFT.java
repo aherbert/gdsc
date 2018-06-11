@@ -94,6 +94,7 @@ public class Align_Images_FFT implements PlugIn
 	}
 
 	/** Ask for parameters and then execute. */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -215,7 +216,6 @@ public class Align_Images_FFT implements PlugIn
 				return true;
 		return false;
 	}
-	
 
 	public static Rectangle createBounds(int minXShift, int maxXShift, int minYShift, int maxYShift)
 	{

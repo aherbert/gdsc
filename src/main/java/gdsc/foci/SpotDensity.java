@@ -102,6 +102,7 @@ public class SpotDensity implements PlugIn
 		}
 	}
 
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -226,7 +227,7 @@ public class SpotDensity implements PlugIn
 			IJ.showMessage("Error", "No foci with the name " + resultsName);
 			return null;
 		}
-		ArrayList<FindFociResult> results = memoryResults.results; 
+		ArrayList<FindFociResult> results = memoryResults.results;
 		if (results.size() == 0)
 		{
 			IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
@@ -415,6 +416,7 @@ public class SpotDensity implements PlugIn
 			// Allow clicking multiple results in the window to show a combined curve
 			resultsWindow.getTextPanel().addMouseListener(new MouseListener()
 			{
+				@Override
 				public void mouseClicked(MouseEvent e)
 				{
 					TextPanel tp = null;
@@ -525,18 +527,22 @@ public class SpotDensity implements PlugIn
 					showPairCorrelation(new PC(n, area, r, pcf));
 				}
 
+				@Override
 				public void mouseEntered(MouseEvent arg0)
 				{
 				}
 
+				@Override
 				public void mouseExited(MouseEvent arg0)
 				{
 				}
 
+				@Override
 				public void mousePressed(MouseEvent arg0)
 				{
 				}
 
+				@Override
 				public void mouseReleased(MouseEvent arg0)
 				{
 				}

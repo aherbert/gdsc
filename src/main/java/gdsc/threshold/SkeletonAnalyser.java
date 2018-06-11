@@ -91,6 +91,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -143,6 +144,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		ByteProcessor bp = (ByteProcessor) ip.convertToByte(false);
@@ -187,7 +189,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 */
 	public boolean skeletonise(ByteProcessor ip, boolean trim)
 	{
-		if (!((ByteProcessor) ip).isBinary())
+		if (!ip.isBinary())
 			return false;
 
 		if (maxx == 0)
@@ -216,7 +218,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 */
 	public byte[] findNodes(ByteProcessor ip)
 	{
-		if (!((ByteProcessor) ip).isBinary())
+		if (!ip.isBinary())
 			return null;
 
 		byte foreground = (byte) (Prefs.blackBackground ? 255 : 0);
@@ -313,6 +315,7 @@ public class SkeletonAnalyser implements PlugInFilter
 			this.code = code;
 		}
 
+		@Override
 		public int compareTo(Line that)
 		{
 			return this.start - that.start;
@@ -321,6 +324,7 @@ public class SkeletonAnalyser implements PlugInFilter
 
 	private class LineComparator implements Comparator<Line>
 	{
+		@Override
 		public int compare(Line o1, Line o2)
 		{
 			if (o1.internal ^ o2.internal)
@@ -429,6 +433,7 @@ public class SkeletonAnalyser implements PlugInFilter
 		// If any marked for deletion, remove the shortest line
 		Collections.sort(toDelete, new Comparator<Line>()
 		{
+			@Override
 			public int compare(Line o1, Line o2)
 			{
 				// Rank by length
@@ -1258,6 +1263,7 @@ public class SkeletonAnalyser implements PlugInFilter
 			this.code = code;
 		}
 
+		@Override
 		public int compareTo(Result that)
 		{
 			int[] result = new int[1];

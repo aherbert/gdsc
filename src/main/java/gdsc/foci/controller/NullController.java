@@ -23,7 +23,6 @@
  */
 package gdsc.foci.controller;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -31,19 +30,21 @@ import java.util.Random;
 import gdsc.foci.model.FindFociModel;
 
 /**
- * Dummy controller that provides stub functionality to {@link gdsc.foci.gui.FindFociView } 
+ * Dummy controller that provides stub functionality to {@link gdsc.foci.gui.FindFociView }
  */
 public class NullController extends FindFociController
 {
 	private int lowerLimit = 15;
 	private int upperLimit = 220;
-	
+
 	public NullController(FindFociModel model)
 	{
 		super(model);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see gdsc.foci.controller.FindFociController#getImageCount()
 	 */
 	@Override
@@ -51,19 +52,22 @@ public class NullController extends FindFociController
 	{
 		return 3;
 	}
-	
+
 	private int updateCounter = 0;
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see gdsc.foci.controller.FindFociController#updateImageList()
 	 */
+	@Override
 	public void updateImageList()
 	{
 		//System.out.println("updateImageList");
-		
+
 		// Note: Increment the updateCounter to ensure the list is refreshed
 		//updateCounter++;
-		
+
 		List<String> imageList = new ArrayList<String>();
 		imageList.add(updateCounter + " : One");
 		imageList.add(updateCounter + " : Two");
@@ -76,32 +80,43 @@ public class NullController extends FindFociController
 		lowerLimit = rand.nextInt(base);
 		upperLimit = rand.nextInt(255 - base) + base;
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see gdsc.foci.controller.FindFociController#run()
 	 */
+	@Override
 	public void run()
 	{
 		model.setUnchanged();
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see gdsc.foci.controller.FindFociController#preview()
 	 */
+	@Override
 	public void preview()
 	{
 		System.out.println("FindFoci Preview");
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see gdsc.foci.controller.FindFociController#endPreview()
 	 */
+	@Override
 	public void endPreview()
 	{
 		System.out.println("FindFoci EndPreview");
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see gdsc.foci.controller.FindFociController#getImageLimits(int[])
 	 */
 	@Override

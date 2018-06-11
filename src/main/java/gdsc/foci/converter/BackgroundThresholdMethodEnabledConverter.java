@@ -26,15 +26,15 @@ package gdsc.foci.converter;
 import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociProcessor;
 
-public class BackgroundThresholdMethodEnabledConverter extends Converter<Integer,Boolean>
+public class BackgroundThresholdMethodEnabledConverter extends Converter<Integer, Boolean>
 {
 	@Override
 	public Boolean convertForward(Integer paramS)
 	{
 		int backgroundMethod = paramS.intValue();
-		return Boolean.valueOf(
-				backgroundMethod == FindFoci.BACKGROUND_AUTO_THRESHOLD);
+		return Boolean.valueOf(backgroundMethod == FindFociProcessor.BACKGROUND_AUTO_THRESHOLD);
 	}
 
 	@Override

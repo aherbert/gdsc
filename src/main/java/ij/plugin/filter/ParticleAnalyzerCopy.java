@@ -160,8 +160,8 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	protected Analyzer analyzer;
 	protected int slice;
 	protected boolean processStack;
-	protected boolean showResults, excludeEdgeParticles, showSizeDistribution, resetCounter, showProgress,
-			recordStarts, displaySummary, floodFill, addToManager, inSituShow;
+	protected boolean showResults, excludeEdgeParticles, showSizeDistribution, resetCounter, showProgress, recordStarts,
+			displaySummary, floodFill, addToManager, inSituShow;
 
 	protected boolean showResultsWindow = true;
 	private String summaryHdr = "Slice\tCount\tTotal Area\tAverage Size\t%Area";
@@ -281,6 +281,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 		slice = 1;
 	}
 
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		this.arg = arg;
@@ -312,6 +313,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 		return flags;
 	}
 
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		if (canceled)
@@ -952,8 +954,8 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 			ImageStatistics stats = imp.getStatistics();
 			if (imageType != BYTE || (stats.histogram[0] + stats.histogram[255] != stats.pixelCount))
 			{
-				IJ.error("Particle Analyzer", "A thresholded image or 8-bit binary image is\n"
-						+ "required. Threshold levels can be set using\n" + "the Image->Adjust->Threshold tool.");
+				IJ.error("Particle Analyzer", "A thresholded image or 8-bit binary image is\n" +
+						"required. Threshold levels can be set using\n" + "the Image->Adjust->Threshold tool.");
 				canceled = true;
 				return false;
 			}
@@ -1255,7 +1257,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	void drawRoiFilledParticle(ImageProcessor ip, Roi roi, ImageProcessor mask, int count)
 	{
 		int grayLevel = (count < 65535) ? count : 65535;
-		ip.setValue((double) grayLevel);
+		ip.setValue(grayLevel);
 		ip.setRoi(roi.getBounds());
 		ip.fill(mask);
 	}

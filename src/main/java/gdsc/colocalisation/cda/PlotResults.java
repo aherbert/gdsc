@@ -23,7 +23,6 @@
  */
 package gdsc.colocalisation.cda;
 
-
 import java.awt.Color;
 
 import ij.gui.Plot;
@@ -124,8 +123,8 @@ public class PlotResults
 				maxHistogram = d;
 		maxHistogram *= 1.05;
 
-		plot = new Plot(plotTitle, plotXTitle, plotYTitle, xValues, yValues, Plot.X_NUMBERS + Plot.Y_NUMBERS +
-				Plot.X_TICKS + Plot.Y_TICKS);
+		plot = new Plot(plotTitle, plotXTitle, plotYTitle, xValues, yValues,
+				Plot.X_NUMBERS + Plot.Y_NUMBERS + Plot.X_TICKS + Plot.Y_TICKS);
 
 		// Ensure the horizontal scale goes from 0 to 1 but add at least 0.05 to the limits.
 		double xMin = Math.min(xValues[0] - 0.05, Math.min(sampleValue - 0.05, 0));

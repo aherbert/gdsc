@@ -31,7 +31,6 @@ import gdsc.core.ij.Utils;
 import gdsc.core.threshold.Histogram;
 import ij.IJ;
 
-
 /**
  * Find the peak intensity regions of an image.
  * <P>
@@ -44,6 +43,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 * 
 	 * @see gdsc.foci.FindFociBaseProcessor#getSortedMaxPoints(java.lang.Object, int[], byte[], float, float)
 	 */
+	@Override
 	protected Coordinate[] getSortedMaxPoints(Object pixels, int[] maxima, byte[] types, float fGlobalMin,
 			float fThreshold)
 	{
@@ -472,6 +472,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 * @see gdsc.foci.FindFociBaseProcessor#assignPointsToMaxima(java.lang.Object, gdsc.foci.Histogram, byte[],
 	 * gdsc.foci.FindFociStatistics, int[])
 	 */
+	@Override
 	protected void assignPointsToMaxima(Object pixels, Histogram hist, byte[] types, FindFociStatistics stats,
 			int[] maxima)
 	{
@@ -585,6 +586,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 * 
 	 * @see gdsc.foci.FindFociBaseProcessor#processLevel(byte[], int[], int, int, int[], int)
 	 */
+	@Override
 	protected int processLevel(byte[] types, int[] maxima, int levelStart, int levelNPoints, int[] coordinates,
 			int background)
 	{
@@ -773,6 +775,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 * @see gdsc.foci.FindFociBaseProcessor#pruneMaxima(java.lang.Object, byte[], int, double,
 	 * gdsc.foci.FindFociStatistics, java.util.ArrayList, int[])
 	 */
+	@Override
 	protected void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
 			FindFociStatistics stats, FindFociResult[] resultsArray, int[] maxima)
 	{
@@ -807,6 +810,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 * 
 	 * @see gdsc.foci.FindFociBaseProcessor#calculateInitialResults(java.lang.Object, int[], java.util.ArrayList)
 	 */
+	@Override
 	protected void calculateInitialResults(Object pixels, int[] maxima, FindFociResult[] resultsArray)
 	{
 		setPixels(pixels);
@@ -830,7 +834,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		{
 			final FindFociResult result = resultsArray[i];
 			result.count = count[result.id];
-			result.totalIntensity = (double) intensity[result.id];
+			result.totalIntensity = intensity[result.id];
 			result.averageIntensity = result.totalIntensity / result.count;
 		}
 	}
@@ -840,6 +844,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 * 
 	 * @see gdsc.foci.FindFociBaseProcessor#calculateNativeResults(java.lang.Object, int[], java.util.ArrayList, int)
 	 */
+	@Override
 	protected void calculateNativeResults(Object pixels, int[] maxima, FindFociResult[] resultsArray,
 			int originalNumberOfPeaks)
 	{
@@ -867,7 +872,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 			final int id = result.id;
 			if (intensity[id] != 0)
 			{
-				result.totalIntensity = (double) intensity[id];
+				result.totalIntensity = intensity[id];
 				result.maxValue = max[id];
 			}
 		}
@@ -881,6 +886,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 * @param nMaxima
 	 *            the number of maxima
 	 */
+	@Override
 	protected void setupFindHighestSaddleValues(int nMaxima)
 	{
 		nMaxima++;
@@ -888,6 +894,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 			highestSaddleValues = new int[nMaxima];
 	}
 
+	@Override
 	protected void finaliseFindHighestSaddleValues()
 	{
 	}
@@ -904,6 +911,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 * @param highestSaddleValues
 	 *            the highest saddle values
 	 */
+	@Override
 	protected void findHighestSaddleValues(FindFociResult result, int[] maxima, byte[] types,
 			FindFociSaddleList[] saddlePoints)
 	{
@@ -1074,6 +1082,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 * @param maxima
 	 *            the maxima
 	 */
+	@Override
 	protected void analyseNonContiguousPeaks(FindFociResult[] resultsArray, int[] maxima)
 	{
 		// Create an array of the size/intensity of each peak above the highest saddle 
@@ -1106,7 +1115,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		{
 			final FindFociResult result = resultsArray[i];
 			result.countAboveSaddle = peakSize[result.id];
-			result.intensityAboveSaddle = (double) peakIntensity[result.id];
+			result.intensityAboveSaddle = peakIntensity[result.id];
 		}
 	}
 
@@ -1123,6 +1132,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 *            the list
 	 * @return True if this is a true plateau, false if the plateau reaches a higher point
 	 */
+	@Override
 	protected int[] analyseContiguousPeak(int[] maxima, byte[] types, FindFociResult result, int[] pList)
 	{
 		final int index0 = getIndex(result.x, result.y, result.z);
@@ -1225,7 +1235,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		}
 
 		result.countAboveSaddle = listI;
-		result.intensityAboveSaddle = (double) sum;
+		result.intensityAboveSaddle = sum;
 
 		return pList;
 	}
@@ -1247,6 +1257,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 *            the peak id
 	 * @return True if this is a true plateau, false if the plateau reaches a higher point
 	 */
+	@Override
 	protected int[] analyseContiguousPeak(int[] maxima, byte[] types, FindFociResult result, int[] pList,
 			final int[] peakIdMap, final int peakId)
 	{
@@ -1357,14 +1368,14 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 
 			} while (listI < listLen);
 		}
-		
+
 		for (int i = listLen; i-- > 0;)
 		{
 			types[pList[i]] &= ~LISTED; // reset attributes no longer needed
 		}
 
 		result.countAboveSaddle = listI;
-		result.intensityAboveSaddle = (double) sum;
+		result.intensityAboveSaddle = sum;
 
 		return pList;
 	}
@@ -1455,6 +1466,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 * @param saddleHeight
 	 *            the saddle height
 	 */
+	@Override
 	protected void computeIntensityAboveSaddle(final int[] maxima, final int[] peakIdMap, final int peakId,
 			final FindFociResult result, final float saddleHeight)
 	{
@@ -1487,6 +1499,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 * 
 	 * @see gdsc.foci.FindFociBaseProcessor#getIntensityAboveFloor(java.lang.Object, byte[], float)
 	 */
+	@Override
 	protected double getIntensityAboveFloor(Object pixels, byte[] types, final float fFloor)
 	{
 		setPixels(pixels);
@@ -1503,6 +1516,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 					sum += (v - floor);
 			}
 		}
-		return (double) sum;
+		return sum;
 	}
 }

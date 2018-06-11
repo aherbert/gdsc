@@ -23,7 +23,6 @@
  */
 package gdsc.help;
 
-
 /**
  * Help URLs
  */

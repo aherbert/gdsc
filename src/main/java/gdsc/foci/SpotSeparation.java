@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 import java.awt.Frame;
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -75,6 +74,7 @@ public class SpotSeparation implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -90,6 +90,7 @@ public class SpotSeparation implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		if (!showDialog())
@@ -400,11 +401,11 @@ public class SpotSeparation implements PlugInFilter
 		// centre
 
 		// Allow image thresholding
-		int backgroundMethod = FindFoci.BACKGROUND_AUTO_THRESHOLD;
+		int backgroundMethod = FindFociProcessor.BACKGROUND_AUTO_THRESHOLD;
 		double backgroundParameter = 0;
 		if (ip.getMinThreshold() != ImageProcessor.NO_THRESHOLD)
 		{
-			backgroundMethod = FindFoci.BACKGROUND_ABSOLUTE;
+			backgroundMethod = FindFociProcessor.BACKGROUND_ABSOLUTE;
 			backgroundParameter = ip.getMinThreshold();
 		}
 
@@ -412,15 +413,15 @@ public class SpotSeparation implements PlugInFilter
 
 		FindFoci ff = new FindFoci();
 		String autoThresholdMethod = method;
-		int searchMethod = FindFoci.SEARCH_ABOVE_BACKGROUND;
+		int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
 		double searchParameter = 0;
 		int maxPeaks = 100;
 		int minSize = 3;
-		int peakMethod = FindFoci.PEAK_ABSOLUTE;
+		int peakMethod = FindFociProcessor.PEAK_ABSOLUTE;
 		double peakParameter = 5;
-		int outputType = FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_NO_PEAK_DOTS;
-		int sortIndex = FindFoci.SORT_MAX_VALUE;
-		int options = FindFoci.OPTION_STATS_INSIDE;
+		int outputType = FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
+		int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
+		int options = FindFociProcessor.OPTION_STATS_INSIDE;
 		double blur = 1.5;
 		int centreMethod = FindFoci.CENTRE_MAX_VALUE_SEARCH;
 		double centreParameter = 0;

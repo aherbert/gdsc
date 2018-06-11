@@ -69,6 +69,7 @@ import org.jdesktop.swingbinding.JComboBoxBinding;
 import org.jdesktop.swingbinding.SwingBindings;
 
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociProcessor;
 import gdsc.foci.controller.FindFociController;
 import gdsc.foci.controller.MessageListener;
 import gdsc.foci.controller.NullController;
@@ -182,6 +183,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	{
 		EventQueue.invokeLater(new Runnable()
 		{
+			@Override
 			public void run()
 			{
 				try
@@ -224,7 +226,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	}
 
 	private void init()
-	{		
+	{
 		addWindowListener(new WindowAdapter()
 		{
 			@Override
@@ -273,6 +275,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		comboImageList.setToolTipText("Select the input image");
 		comboImageList.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboImageList.firePropertyChange("selectedItem", 0, 1);
@@ -333,6 +336,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		sliderGaussianBlur.setToolTipText("Apply a pre-processing blur. Helps noisy images");
 		sliderGaussianBlur.addChangeListener(new ChangeListener()
 		{
+			@Override
 			public void stateChanged(ChangeEvent e)
 			{
 				sliderGaussianBlur.firePropertyChange("value", 0, 1);
@@ -352,6 +356,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		txtGaussianBlur = new JFormattedTextField(new LimitedNumberFormat(0));
 		txtGaussianBlur.addPropertyChangeListener(new PropertyChangeListener()
 		{
+			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName() == "value")
@@ -391,6 +396,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		comboMaskImageList.setToolTipText("Select a mask defining the analysis area");
 		comboMaskImageList.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboMaskImageList.firePropertyChange("selectedItem", 0, 1);
@@ -431,6 +437,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		comboBackgroundMethod.setToolTipText("Specify the background threshold method");
 		comboBackgroundMethod.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboBackgroundMethod.firePropertyChange("selectedItem", 0, 1);
@@ -470,9 +477,10 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		sliderBackgroundParam.setToolTipText("Controls the selected background method");
 		sliderBackgroundParam.addChangeListener(new ChangeListener()
 		{
+			@Override
 			public void stateChanged(ChangeEvent e)
 			{
-				if (model.getBackgroundMethod() != FindFoci.BACKGROUND_ABSOLUTE)
+				if (model.getBackgroundMethod() != FindFociProcessor.BACKGROUND_ABSOLUTE)
 				{
 					sliderBackgroundParam.firePropertyChange("value", 0, 1);
 				}
@@ -506,9 +514,10 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		});
 		sliderBackgroundParamAbsolute.addChangeListener(new ChangeListener()
 		{
+			@Override
 			public void stateChanged(ChangeEvent e)
 			{
-				if (model.getBackgroundMethod() == FindFoci.BACKGROUND_ABSOLUTE)
+				if (model.getBackgroundMethod() == FindFociProcessor.BACKGROUND_ABSOLUTE)
 				{
 					sliderBackgroundParamAbsolute.firePropertyChange("value", 0, 1);
 				}
@@ -528,6 +537,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		txtBackgroundParam = new JFormattedTextField(new LimitedNumberFormat(0));
 		txtBackgroundParam.addPropertyChangeListener(new PropertyChangeListener()
 		{
+			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName() == "value")
@@ -565,6 +575,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		comboThresholdMethod.setToolTipText("Method used for auto-thresholding");
 		comboThresholdMethod.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboThresholdMethod.firePropertyChange("selectedItem", 0, 1);
@@ -592,6 +603,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		comboStatisticsMode.setToolTipText("Calculate background using area inside/outside the ROI/Masked region");
 		comboStatisticsMode.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboStatisticsMode.firePropertyChange("selectedItem", 0, 1);
@@ -641,6 +653,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		comboSearchMethod.setToolTipText("Specify the method used to expand maxima into peaks");
 		comboSearchMethod.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboSearchMethod.firePropertyChange("selectedItem", 0, 1);
@@ -680,6 +693,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		});
 		sliderSearchParam.addChangeListener(new ChangeListener()
 		{
+			@Override
 			public void stateChanged(ChangeEvent e)
 			{
 				sliderSearchParam.firePropertyChange("value", 0, 1);
@@ -699,6 +713,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		txtSearchParam = new JFormattedTextField(new LimitedNumberFormat(0, 1));
 		txtSearchParam.addPropertyChangeListener(new PropertyChangeListener()
 		{
+			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName() == "value")
@@ -756,6 +771,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		sliderMinimumSize.setToolTipText("The minimum size required to define a peak");
 		sliderMinimumSize.addChangeListener(new ChangeListener()
 		{
+			@Override
 			public void stateChanged(ChangeEvent e)
 			{
 				sliderMinimumSize.firePropertyChange("value", 0, 1);
@@ -773,6 +789,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		txtMinimumSize = new JFormattedTextField(new LimitedNumberFormat(0));
 		txtMinimumSize.addPropertyChangeListener(new PropertyChangeListener()
 		{
+			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName() == "value")
@@ -799,9 +816,11 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		contentPane.add(txtMinimumSize, gbc_txtMinimumSize);
 
 		chckbxMinSizeAboveSaddle = new JCheckBox("Minimum size above saddle");
-		chckbxMinSizeAboveSaddle.setToolTipText("Restrict minimum size to the peak volume above the highest saddle point");
+		chckbxMinSizeAboveSaddle
+				.setToolTipText("Restrict minimum size to the peak volume above the highest saddle point");
 		chckbxMinSizeAboveSaddle.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				chckbxMinSizeAboveSaddle.firePropertyChange("selected", 0, 1);
@@ -817,9 +836,11 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		contentPane.add(chckbxMinSizeAboveSaddle, gbc_chckbxMinSizeAboveSaddle);
 
 		chckbxConnectedAboveSaddle = new JCheckBox("Connected above saddle");
-		chckbxConnectedAboveSaddle.setToolTipText("The peak volume above the highest saddle point must be connected pixels");
+		chckbxConnectedAboveSaddle
+				.setToolTipText("The peak volume above the highest saddle point must be connected pixels");
 		chckbxConnectedAboveSaddle.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				chckbxConnectedAboveSaddle.firePropertyChange("selected", 0, 1);
@@ -832,7 +853,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		gbc_chckbxConnectedAboveSaddle.gridx = 1;
 		gbc_chckbxConnectedAboveSaddle.gridy = 17;
 		contentPane.add(chckbxConnectedAboveSaddle, gbc_chckbxConnectedAboveSaddle);
-		
+
 		lblPeakMethod = new JLabel("Peak method");
 		GridBagConstraints gbc_lblPeakMethod = new GridBagConstraints();
 		gbc_lblPeakMethod.anchor = GridBagConstraints.EAST;
@@ -845,6 +866,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		comboPeakMethod.setToolTipText("Specify the required height for a peak");
 		comboPeakMethod.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboPeakMethod.firePropertyChange("selectedItem", 0, 1);
@@ -884,9 +906,10 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		sliderPeakParam.setToolTipText("Controls the selected peak method");
 		sliderPeakParam.addChangeListener(new ChangeListener()
 		{
+			@Override
 			public void stateChanged(ChangeEvent e)
 			{
-				if (model.getPeakMethod() != FindFoci.PEAK_ABSOLUTE)
+				if (model.getPeakMethod() != FindFociProcessor.PEAK_ABSOLUTE)
 				{
 					sliderPeakParam.firePropertyChange("value", 0, 1);
 				}
@@ -918,9 +941,10 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		});
 		sliderPeakParamAbsolute.addChangeListener(new ChangeListener()
 		{
+			@Override
 			public void stateChanged(ChangeEvent e)
 			{
-				if (model.getPeakMethod() == FindFoci.PEAK_ABSOLUTE)
+				if (model.getPeakMethod() == FindFociProcessor.PEAK_ABSOLUTE)
 				{
 					sliderPeakParamAbsolute.firePropertyChange("value", 0, 1);
 				}
@@ -940,6 +964,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		txtPeakParam = new JFormattedTextField(new LimitedNumberFormat(0));
 		txtPeakParam.addPropertyChangeListener(new PropertyChangeListener()
 		{
+			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName() == "value")
@@ -984,6 +1009,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		comboSortMethod.setToolTipText("Metric used to sort the peaks");
 		comboSortMethod.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboSortMethod.firePropertyChange("selectedItem", 0, 1);
@@ -1023,6 +1049,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		sliderMaxPeaks.setToolTipText("Specify the maximum number of peaks");
 		sliderMaxPeaks.addChangeListener(new ChangeListener()
 		{
+			@Override
 			public void stateChanged(ChangeEvent e)
 			{
 				sliderMaxPeaks.firePropertyChange("value", 0, 1);
@@ -1041,6 +1068,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		txtMaxPeaks = new JFormattedTextField(new LimitedNumberFormat(1));
 		txtMaxPeaks.addPropertyChangeListener(new PropertyChangeListener()
 		{
+			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName() == "value")
@@ -1078,6 +1106,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		comboShowMask.setToolTipText("Configure the output mask");
 		comboShowMask.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboShowMask.firePropertyChange("selectedItem", 0, 1);
@@ -1104,6 +1133,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		sliderFractionParam = new JSlider();
 		sliderFractionParam.addChangeListener(new ChangeListener()
 		{
+			@Override
 			public void stateChanged(ChangeEvent e)
 			{
 				sliderFractionParam.firePropertyChange("value", 0, 1);
@@ -1121,6 +1151,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		txtFractionParam = new JTextField();
 		txtFractionParam.addPropertyChangeListener(new PropertyChangeListener()
 		{
+			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName() == "value")
@@ -1204,6 +1235,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		chckbxPreview.setToolTipText("Update results dynamically (requires more memory)");
 		chckbxPreview.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				if (chckbxPreview.isSelected())
@@ -1221,6 +1253,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		panel.add(chckbxPreview);
 		btnRun.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				// Run in a new thread to allow updates to the IJ progress bar
@@ -1237,7 +1270,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		separator_2.setPreferredSize(separatorDim);
 		separator_3.setPreferredSize(separatorDim);
 		separator_4.setPreferredSize(separatorDim);
-		
+
 		this.pack();
 	}
 
@@ -1391,6 +1424,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	 * 
 	 * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
 	 */
+	@Override
 	public void propertyChange(PropertyChangeEvent evt)
 	{
 		if (evt.getPropertyName().equals("selectedImage") || evt.getPropertyName().equals("valid"))
@@ -1427,6 +1461,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	 * 
 	 * @see gdsc.foci.gui.MessageListener#notify(java.lang.String, java.lang.Object[])
 	 */
+	@Override
 	public void notify(MessageType message, Object... params)
 	{
 		switch (message)
@@ -1476,247 +1511,318 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 				// Do nothing 
 		}
 	}
+
 	@SuppressWarnings("rawtypes")
-	protected void initDataBindings() {
+	protected void initDataBindings()
+	{
 		BeanProperty<FindFociModel, Double> findFociBeanProperty_1 = BeanProperty.create("searchParameter");
 		BeanProperty<JSlider, Integer> jSliderBeanProperty_1 = BeanProperty.create("value");
-		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_2 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_1, sliderSearchParam, jSliderBeanProperty_1);
+		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_2 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_1, sliderSearchParam, jSliderBeanProperty_1);
 		autoBinding_2.setConverter(new SliderConverter());
 		autoBinding_2.bind();
 		//
 		BeanProperty<FindFociModel, Double> findFociBeanProperty_2 = BeanProperty.create("peakParameter");
 		BeanProperty<JSlider, Integer> jSliderBeanProperty_2 = BeanProperty.create("value");
-		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_2, sliderPeakParam, jSliderBeanProperty_2);
+		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_5 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_2, sliderPeakParam, jSliderBeanProperty_2);
 		autoBinding_5.setConverter(new SliderConverter());
 		autoBinding_5.bind();
 		//
 		BeanProperty<FindFociModel, Integer> findFociBeanProperty_3 = BeanProperty.create("maxPeaks");
 		BeanProperty<JSlider, Integer> jSliderBeanProperty_3 = BeanProperty.create("value");
-		AutoBinding<FindFociModel, Integer, JSlider, Integer> autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_3, sliderMaxPeaks, jSliderBeanProperty_3);
+		AutoBinding<FindFociModel, Integer, JSlider, Integer> autoBinding_6 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_3, sliderMaxPeaks, jSliderBeanProperty_3);
 		autoBinding_6.bind();
 		//
 		BeanProperty<FindFociModel, Integer> findFociBeanProperty_4 = BeanProperty.create("backgroundMethod");
 		BeanProperty<JComboBox, Object> jComboBoxBeanProperty = BeanProperty.create("selectedItem");
-		AutoBinding<FindFociModel, Integer, JComboBox, Object> autoBinding_8 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_4, comboBackgroundMethod, jComboBoxBeanProperty);
+		AutoBinding<FindFociModel, Integer, JComboBox, Object> autoBinding_8 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_4, comboBackgroundMethod, jComboBoxBeanProperty);
 		autoBinding_8.setConverter(new BackgroundMethodConverter());
 		autoBinding_8.bind();
 		//
 		BeanProperty<JLabel, Boolean> jLabelBeanProperty_1 = BeanProperty.create("enabled");
-		AutoBinding<FindFociModel, Integer, JLabel, Boolean> autoBinding_10 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociBeanProperty_4, lblBackgroundParam, jLabelBeanProperty_1);
+		AutoBinding<FindFociModel, Integer, JLabel, Boolean> autoBinding_10 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociBeanProperty_4, lblBackgroundParam, jLabelBeanProperty_1);
 		autoBinding_10.setConverter(new BackgroundParamEnabledConverter());
 		autoBinding_10.bind();
 		//
 		BeanProperty<FindFociModel, Integer> findFociBeanProperty_5 = BeanProperty.create("searchMethod");
 		BeanProperty<JSlider, Boolean> jSliderBeanProperty_4 = BeanProperty.create("enabled");
-		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_11 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociBeanProperty_5, sliderSearchParam, jSliderBeanProperty_4);
+		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_11 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociBeanProperty_5, sliderSearchParam, jSliderBeanProperty_4);
 		autoBinding_11.setConverter(new SearchParamEnabledConverter());
 		autoBinding_11.bind();
 		//
-		AutoBinding<FindFociModel, Integer, JComboBox, Object> autoBinding_12 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_5, comboSearchMethod, jComboBoxBeanProperty);
+		AutoBinding<FindFociModel, Integer, JComboBox, Object> autoBinding_12 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_5, comboSearchMethod, jComboBoxBeanProperty);
 		autoBinding_12.setConverter(new SearchMethodConverter());
 		autoBinding_12.bind();
 		//
-		AutoBinding<FindFociModel, Integer, JLabel, Boolean> autoBinding_14 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociBeanProperty_5, lblSearchParam, jLabelBeanProperty_1);
+		AutoBinding<FindFociModel, Integer, JLabel, Boolean> autoBinding_14 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociBeanProperty_5, lblSearchParam, jLabelBeanProperty_1);
 		autoBinding_14.setConverter(new SearchParamEnabledConverter());
 		autoBinding_14.bind();
 		//
 		BeanProperty<FindFociModel, String> findFociBeanProperty_6 = BeanProperty.create("thresholdMethod");
-		AutoBinding<FindFociModel, String, JComboBox, Object> autoBinding_15 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_6, comboThresholdMethod, jComboBoxBeanProperty);
+		AutoBinding<FindFociModel, String, JComboBox, Object> autoBinding_15 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_6, comboThresholdMethod, jComboBoxBeanProperty);
 		autoBinding_15.bind();
 		//
 		BeanProperty<FindFociModel, Integer> findFociBeanProperty_7 = BeanProperty.create("sortMethod");
-		AutoBinding<FindFociModel, Integer, JComboBox, Object> autoBinding_16 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_7, comboSortMethod, jComboBoxBeanProperty);
+		AutoBinding<FindFociModel, Integer, JComboBox, Object> autoBinding_16 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_7, comboSortMethod, jComboBoxBeanProperty);
 		autoBinding_16.setConverter(new SortMethodConverter());
 		autoBinding_16.bind();
 		//
 		BeanProperty<FindFociModel, Integer> findFociBeanProperty_8 = BeanProperty.create("showMask");
-		AutoBinding<FindFociModel, Integer, JComboBox, Object> autoBinding_17 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_8, comboShowMask, jComboBoxBeanProperty);
+		AutoBinding<FindFociModel, Integer, JComboBox, Object> autoBinding_17 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_8, comboShowMask, jComboBoxBeanProperty);
 		autoBinding_17.setConverter(new ShowMaskConverter());
 		autoBinding_17.bind();
 		//
 		BeanProperty<FindFociModel, Double> findFociBeanProperty_9 = BeanProperty.create("gaussianBlur");
 		BeanProperty<JSlider, Integer> jSliderBeanProperty_5 = BeanProperty.create("value");
-		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_9 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_9, sliderGaussianBlur, jSliderBeanProperty_5);
+		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_9 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_9, sliderGaussianBlur, jSliderBeanProperty_5);
 		autoBinding_9.setConverter(new SliderConverter());
 		autoBinding_9.bind();
 		//
-		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_19 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociBeanProperty_4, sliderBackgroundParam, jSliderBeanProperty_4);
+		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_19 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociBeanProperty_4, sliderBackgroundParam, jSliderBeanProperty_4);
 		autoBinding_19.setConverter(new BackgroundParamEnabledConverter());
 		autoBinding_19.bind();
 		//
 		BeanProperty<FindFociModel, Double> findFociBeanProperty_10 = BeanProperty.create("backgroundParameter");
 		BeanProperty<JSlider, Integer> jSliderBeanProperty_6 = BeanProperty.create("value");
-		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_22 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_10, sliderBackgroundParam, jSliderBeanProperty_6);
+		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_22 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_10, sliderBackgroundParam,
+				jSliderBeanProperty_6);
 		autoBinding_22.setConverter(new SliderConverter());
 		autoBinding_22.bind();
 		//
 		BeanProperty<JSlider, Integer> jSliderBeanProperty_7 = BeanProperty.create("value");
-		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_23 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_10, sliderBackgroundParamAbsolute, jSliderBeanProperty_7);
+		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_23 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_10, sliderBackgroundParamAbsolute,
+				jSliderBeanProperty_7);
 		autoBinding_23.setConverter(new SliderDoubleConverter());
 		autoBinding_23.bind();
 		//
 		BeanProperty<JSlider, Boolean> jSliderBeanProperty_8 = BeanProperty.create("visible");
-		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_24 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociBeanProperty_4, sliderBackgroundParamAbsolute, jSliderBeanProperty_8);
+		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_24 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociBeanProperty_4, sliderBackgroundParamAbsolute,
+				jSliderBeanProperty_8);
 		autoBinding_24.setConverter(new BackgroundParamAbsoluteEnabledConverter());
 		autoBinding_24.bind();
 		//
-		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_25 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociBeanProperty_4, sliderBackgroundParam, jSliderBeanProperty_8);
+		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_25 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociBeanProperty_4, sliderBackgroundParam, jSliderBeanProperty_8);
 		autoBinding_25.setConverter(new BackgroundParamAbsoluteDisabledConverter());
 		autoBinding_25.bind();
 		//
 		BeanProperty<FindFociModel, List<String>> findFociBeanProperty_11 = BeanProperty.create("imageList");
-		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding = SwingBindings.createJComboBoxBinding(UpdateStrategy.READ, model, findFociBeanProperty_11, comboImageList);
+		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding = SwingBindings
+				.createJComboBoxBinding(UpdateStrategy.READ, model, findFociBeanProperty_11, comboImageList);
 		jComboBinding.bind();
 		//
 		BeanProperty<JComboBox, Boolean> jComboBoxBeanProperty_1 = BeanProperty.create("enabled");
-		AutoBinding<FindFociModel, Integer, JComboBox, Boolean> autoBinding_26 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociBeanProperty_4, comboThresholdMethod, jComboBoxBeanProperty_1);
+		AutoBinding<FindFociModel, Integer, JComboBox, Boolean> autoBinding_26 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociBeanProperty_4, comboThresholdMethod, jComboBoxBeanProperty_1);
 		autoBinding_26.setConverter(new BackgroundThresholdMethodEnabledConverter());
 		autoBinding_26.bind();
 		//
-		AutoBinding<FindFociModel, Integer, JLabel, Boolean> autoBinding_27 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociBeanProperty_4, lblThresholdMethod, jLabelBeanProperty_1);
+		AutoBinding<FindFociModel, Integer, JLabel, Boolean> autoBinding_27 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociBeanProperty_4, lblThresholdMethod, jLabelBeanProperty_1);
 		autoBinding_27.setConverter(new BackgroundThresholdMethodEnabledConverter());
 		autoBinding_27.bind();
 		//
 		BeanProperty<FindFociModel, String> findFociBeanProperty_12 = BeanProperty.create("selectedImage");
 		BeanProperty<JComboBox, String> jComboBoxBeanProperty_2 = BeanProperty.create("selectedItem");
-		AutoBinding<FindFociModel, String, JComboBox, String> autoBinding_28 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_12, comboImageList, jComboBoxBeanProperty_2);
+		AutoBinding<FindFociModel, String, JComboBox, String> autoBinding_28 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_12, comboImageList, jComboBoxBeanProperty_2);
 		autoBinding_28.bind();
 		//
 		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_1 = BeanProperty.create("minimumAboveSaddle");
 		BeanProperty<JCheckBox, Boolean> jCheckBoxBeanProperty = BeanProperty.create("selected");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_31 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_1, chckbxMinSizeAboveSaddle, jCheckBoxBeanProperty);
+		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_31 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_1, chckbxMinSizeAboveSaddle,
+				jCheckBoxBeanProperty);
 		autoBinding_31.bind();
 		//
 		BeanProperty<JFormattedTextField, String> jFormattedTextFieldBeanProperty = BeanProperty.create("text");
-		AutoBinding<FindFociModel, Double, JFormattedTextField, String> autoBinding_32 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_9, txtGaussianBlur, jFormattedTextFieldBeanProperty);
+		AutoBinding<FindFociModel, Double, JFormattedTextField, String> autoBinding_32 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_9, txtGaussianBlur,
+				jFormattedTextFieldBeanProperty);
 		autoBinding_32.setConverter(new DoubleConverter());
 		autoBinding_32.bind();
 		//
 		BeanProperty<FindFociModel, Integer> findFociBeanProperty = BeanProperty.create("minSize");
 		BeanProperty<JFormattedTextField, String> jFormattedTextFieldBeanProperty_1 = BeanProperty.create("text");
-		AutoBinding<FindFociModel, Integer, JFormattedTextField, String> autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty, txtMinimumSize, jFormattedTextFieldBeanProperty_1);
+		AutoBinding<FindFociModel, Integer, JFormattedTextField, String> autoBinding = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty, txtMinimumSize,
+				jFormattedTextFieldBeanProperty_1);
 		autoBinding.bind();
 		//
 		BeanProperty<JFormattedTextField, String> jFormattedTextFieldBeanProperty_2 = BeanProperty.create("text");
-		AutoBinding<FindFociModel, Double, JFormattedTextField, String> autoBinding_3 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_2, txtPeakParam, jFormattedTextFieldBeanProperty_2);
+		AutoBinding<FindFociModel, Double, JFormattedTextField, String> autoBinding_3 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_2, txtPeakParam,
+				jFormattedTextFieldBeanProperty_2);
 		autoBinding_3.setConverter(new DoubleConverter());
 		autoBinding_3.bind();
 		//
 		BeanProperty<JFormattedTextField, String> jFormattedTextFieldBeanProperty_3 = BeanProperty.create("text");
-		AutoBinding<FindFociModel, Integer, JFormattedTextField, String> autoBinding_4 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_3, txtMaxPeaks, jFormattedTextFieldBeanProperty_3);
+		AutoBinding<FindFociModel, Integer, JFormattedTextField, String> autoBinding_4 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_3, txtMaxPeaks,
+				jFormattedTextFieldBeanProperty_3);
 		autoBinding_4.bind();
 		//
 		BeanProperty<JFormattedTextField, String> jFormattedTextFieldBeanProperty_4 = BeanProperty.create("text");
-		AutoBinding<FindFociModel, Double, JFormattedTextField, String> autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_1, txtSearchParam, jFormattedTextFieldBeanProperty_4);
+		AutoBinding<FindFociModel, Double, JFormattedTextField, String> autoBinding_7 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_1, txtSearchParam,
+				jFormattedTextFieldBeanProperty_4);
 		autoBinding_7.setConverter(new DoubleConverter());
 		autoBinding_7.bind();
 		//
 		BeanProperty<JFormattedTextField, String> jFormattedTextFieldBeanProperty_5 = BeanProperty.create("text");
-		AutoBinding<FindFociModel, Double, JFormattedTextField, String> autoBinding_13 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_10, txtBackgroundParam, jFormattedTextFieldBeanProperty_5);
+		AutoBinding<FindFociModel, Double, JFormattedTextField, String> autoBinding_13 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_10, txtBackgroundParam,
+				jFormattedTextFieldBeanProperty_5);
 		autoBinding_13.setConverter(new DoubleConverter());
 		autoBinding_13.bind();
 		//
 		BeanProperty<FindFociView, Boolean> findFociViewBeanProperty = BeanProperty.create("validImages");
-		AutoBinding<FindFociModel, List<String>, FindFociView, Boolean> autoBinding_18 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociBeanProperty_11, instance, findFociViewBeanProperty);
+		AutoBinding<FindFociModel, List<String>, FindFociView, Boolean> autoBinding_18 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociBeanProperty_11, instance, findFociViewBeanProperty);
 		autoBinding_18.setConverter(new ValidImagesConverter());
 		autoBinding_18.bind();
 		//
 		BeanProperty<FindFociView, Boolean> findFociViewBeanProperty_2 = BeanProperty.create("runEnabled");
 		BeanProperty<JButton, Boolean> jButtonBeanProperty = BeanProperty.create("enabled");
-		AutoBinding<FindFociView, Boolean, JButton, Boolean> autoBinding_21 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociViewBeanProperty_2, btnRun, jButtonBeanProperty);
+		AutoBinding<FindFociView, Boolean, JButton, Boolean> autoBinding_21 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociViewBeanProperty_2, btnRun, jButtonBeanProperty);
 		autoBinding_21.bind();
 		//
 		BeanProperty<FindFociModel, Integer> findFociModelBeanProperty_2 = BeanProperty.create("peakMethod");
-		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_29 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociModelBeanProperty_2, sliderPeakParam, jSliderBeanProperty_8);
+		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_29 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociModelBeanProperty_2, sliderPeakParam, jSliderBeanProperty_8);
 		autoBinding_29.setConverter(new PeakParamAbsoluteDisabledConverter());
 		autoBinding_29.bind();
 		//
-		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_30 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociModelBeanProperty_2, sliderPeakParamAbsolute, jSliderBeanProperty_8);
+		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_30 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociModelBeanProperty_2, sliderPeakParamAbsolute,
+				jSliderBeanProperty_8);
 		autoBinding_30.setConverter(new PeakParamAbsoluteEnabledConverter());
 		autoBinding_30.bind();
 		//
 		BeanProperty<JSlider, Integer> jSliderBeanProperty_9 = BeanProperty.create("value");
-		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_33 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty_2, sliderPeakParamAbsolute, jSliderBeanProperty_9);
+		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_33 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty_2, sliderPeakParamAbsolute,
+				jSliderBeanProperty_9);
 		autoBinding_33.setConverter(new SliderDoubleConverter());
 		autoBinding_33.bind();
 		//
-		AutoBinding<FindFociModel, Integer, JComboBox, Object> autoBinding_34 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_2, comboPeakMethod, jComboBoxBeanProperty);
+		AutoBinding<FindFociModel, Integer, JComboBox, Object> autoBinding_34 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_2, comboPeakMethod, jComboBoxBeanProperty);
 		autoBinding_34.setConverter(new PeakMethodConverter());
 		autoBinding_34.bind();
 		//
 		BeanProperty<JFormattedTextField, Boolean> jFormattedTextFieldBeanProperty_6 = BeanProperty.create("enabled");
-		AutoBinding<FindFociModel, Integer, JFormattedTextField, Boolean> autoBinding_35 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociBeanProperty_4, txtBackgroundParam, jFormattedTextFieldBeanProperty_6);
+		AutoBinding<FindFociModel, Integer, JFormattedTextField, Boolean> autoBinding_35 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociBeanProperty_4, txtBackgroundParam,
+				jFormattedTextFieldBeanProperty_6);
 		autoBinding_35.setConverter(new BackgroundParamEnabledConverter());
 		autoBinding_35.bind();
 		//
-		AutoBinding<FindFociModel, Integer, JFormattedTextField, Boolean> autoBinding_36 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociBeanProperty_5, txtSearchParam, jFormattedTextFieldBeanProperty_6);
+		AutoBinding<FindFociModel, Integer, JFormattedTextField, Boolean> autoBinding_36 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociBeanProperty_5, txtSearchParam, jFormattedTextFieldBeanProperty_6);
 		autoBinding_36.setConverter(new SearchParamEnabledConverter());
 		autoBinding_36.bind();
 		//
 		ELProperty<JSlider, Object> jSliderEvalutionProperty = ELProperty.create("${value}");
-		AutoBinding<FindFociModel, Integer, JSlider, Object> autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociBeanProperty, sliderMinimumSize, jSliderEvalutionProperty);
+		AutoBinding<FindFociModel, Integer, JSlider, Object> autoBinding_1 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociBeanProperty, sliderMinimumSize, jSliderEvalutionProperty);
 		autoBinding_1.bind();
 		//
 		BeanProperty<FindFociView, Integer> findFociViewBeanProperty_3 = BeanProperty.create("imageMinimum");
 		BeanProperty<JSlider, Integer> jSliderBeanProperty = BeanProperty.create("minimum");
-		AutoBinding<FindFociView, Integer, JSlider, Integer> autoBinding_37 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociViewBeanProperty_3, sliderBackgroundParamAbsolute, jSliderBeanProperty);
+		AutoBinding<FindFociView, Integer, JSlider, Integer> autoBinding_37 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociViewBeanProperty_3, sliderBackgroundParamAbsolute,
+				jSliderBeanProperty);
 		autoBinding_37.bind();
 		//
 		BeanProperty<FindFociView, Integer> findFociViewBeanProperty_4 = BeanProperty.create("imageMaximum");
 		BeanProperty<JSlider, Integer> jSliderBeanProperty_10 = BeanProperty.create("maximum");
-		AutoBinding<FindFociView, Integer, JSlider, Integer> autoBinding_38 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociViewBeanProperty_4, sliderBackgroundParamAbsolute, jSliderBeanProperty_10);
+		AutoBinding<FindFociView, Integer, JSlider, Integer> autoBinding_38 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociViewBeanProperty_4, sliderBackgroundParamAbsolute,
+				jSliderBeanProperty_10);
 		autoBinding_38.bind();
 		//
 		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_3 = BeanProperty.create("changed");
 		BeanProperty<FindFociView, Boolean> findFociViewBeanProperty_1 = BeanProperty.create("changed");
-		AutoBinding<FindFociModel, Boolean, FindFociView, Boolean> autoBinding_39 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociModelBeanProperty_3, instance, findFociViewBeanProperty_1);
+		AutoBinding<FindFociModel, Boolean, FindFociView, Boolean> autoBinding_39 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociModelBeanProperty_3, instance, findFociViewBeanProperty_1);
 		autoBinding_39.bind();
 		//
 		BeanProperty<FindFociModel, String> findFociModelBeanProperty = BeanProperty.create("maskImage");
-		AutoBinding<FindFociModel, String, JComboBox, Object> autoBinding_20 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty, comboMaskImageList, jComboBoxBeanProperty);
+		AutoBinding<FindFociModel, String, JComboBox, Object> autoBinding_20 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty, comboMaskImageList, jComboBoxBeanProperty);
 		autoBinding_20.bind();
 		//
 		BeanProperty<FindFociModel, List<String>> findFociModelBeanProperty_4 = BeanProperty.create("maskImageList");
-		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding_1 = SwingBindings.createJComboBoxBinding(UpdateStrategy.READ, model, findFociModelBeanProperty_4, comboMaskImageList);
+		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding_1 = SwingBindings
+				.createJComboBoxBinding(UpdateStrategy.READ, model, findFociModelBeanProperty_4, comboMaskImageList);
 		jComboBinding_1.bind();
 		//
 		BeanProperty<FindFociModel, String> findFociModelBeanProperty_5 = BeanProperty.create("statisticsMode");
-		AutoBinding<FindFociModel, String, JComboBox, Object> autoBinding_40 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_5, comboStatisticsMode, jComboBoxBeanProperty);
+		AutoBinding<FindFociModel, String, JComboBox, Object> autoBinding_40 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_5, comboStatisticsMode,
+				jComboBoxBeanProperty);
 		autoBinding_40.bind();
 		//
-		AutoBinding<FindFociModel, Integer, JComboBox, Boolean> autoBinding_41 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociBeanProperty_4, comboStatisticsMode, jComboBoxBeanProperty_1);
+		AutoBinding<FindFociModel, Integer, JComboBox, Boolean> autoBinding_41 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociBeanProperty_4, comboStatisticsMode, jComboBoxBeanProperty_1);
 		autoBinding_41.setConverter(new StatisticsModeParamEnabledConverter());
 		autoBinding_41.bind();
 		//
-		AutoBinding<FindFociModel, Integer, JLabel, Boolean> autoBinding_42 = Bindings.createAutoBinding(UpdateStrategy.READ, model, findFociBeanProperty_4, lblStatisticsMode, jLabelBeanProperty_1);
+		AutoBinding<FindFociModel, Integer, JLabel, Boolean> autoBinding_42 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, model, findFociBeanProperty_4, lblStatisticsMode, jLabelBeanProperty_1);
 		autoBinding_42.setConverter(new StatisticsModeParamEnabledConverter());
 		autoBinding_42.bind();
 		//
 		BeanProperty<FindFociModel, Double> findFociModelBeanProperty_6 = BeanProperty.create("fractionParameter");
 		BeanProperty<JSlider, Integer> jSliderBeanProperty_11 = BeanProperty.create("value");
-		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_43 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_6, sliderFractionParam, jSliderBeanProperty_11);
+		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_43 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_6, sliderFractionParam,
+				jSliderBeanProperty_11);
 		autoBinding_43.setConverter(new SliderConverter());
 		autoBinding_43.bind();
 		//
 		BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
-		AutoBinding<FindFociModel, Double, JTextField, String> autoBinding_44 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_6, txtFractionParam, jTextFieldBeanProperty);
+		AutoBinding<FindFociModel, Double, JTextField, String> autoBinding_44 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_6, txtFractionParam,
+				jTextFieldBeanProperty);
 		autoBinding_44.setConverter(new DoubleConverter());
 		autoBinding_44.bind();
 		//
 		BeanProperty<FindFociView, Double> findFociViewBeanProperty_5 = BeanProperty.create("backgroundLevel");
 		BeanProperty<JLabel, String> jLabelBeanProperty = BeanProperty.create("text");
-		AutoBinding<FindFociView, Double, JLabel, String> autoBinding_45 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociViewBeanProperty_5, lblBackgroundLevelValue, jLabelBeanProperty);
+		AutoBinding<FindFociView, Double, JLabel, String> autoBinding_45 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociViewBeanProperty_5, lblBackgroundLevelValue, jLabelBeanProperty);
 		autoBinding_45.setConverter(new DoubleConverter());
 		autoBinding_45.bind();
 		//
 		BeanProperty<FindFociView, Boolean> findFociViewBeanProperty_6 = BeanProperty.create("sortIndexError");
 		BeanProperty<JComboBox, Color> jComboBoxBeanProperty_3 = BeanProperty.create("foreground");
-		AutoBinding<FindFociView, Boolean, JComboBox, Color> autoBinding_46 = Bindings.createAutoBinding(UpdateStrategy.READ, instance, findFociViewBeanProperty_6, comboSortMethod, jComboBoxBeanProperty_3);
+		AutoBinding<FindFociView, Boolean, JComboBox, Color> autoBinding_46 = Bindings.createAutoBinding(
+				UpdateStrategy.READ, instance, findFociViewBeanProperty_6, comboSortMethod, jComboBoxBeanProperty_3);
 		autoBinding_46.setConverter(new SortMethodColorConverter());
 		autoBinding_46.bind();
 		//
 		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_7 = BeanProperty.create("connectedAboveSaddle");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_47 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_7, chckbxConnectedAboveSaddle, jCheckBoxBeanProperty);
+		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_47 = Bindings.createAutoBinding(
+				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_7, chckbxConnectedAboveSaddle,
+				jCheckBoxBeanProperty);
 		autoBinding_47.bind();
 	}
 }

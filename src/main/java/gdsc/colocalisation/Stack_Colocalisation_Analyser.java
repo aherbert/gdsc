@@ -23,7 +23,6 @@
  */
 package gdsc.colocalisation;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -92,6 +91,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -122,6 +122,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor inputProcessor)
 	{
 		int[] dimensions = imp.getDimensions();
@@ -415,7 +416,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	 */
 	private ImageProcessor combineBits(ImageProcessor ip1, ImageProcessor ip2, int operation)
 	{
-		ImageProcessor bp = (ImageProcessor) ip1.duplicate();
+		ImageProcessor bp = ip1.duplicate();
 		bp.copyBits(ip2, 0, 0, operation);
 		return bp;
 	}
@@ -925,6 +926,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	 */
 	private class M1Comparator implements Comparator<CalculationResult>
 	{
+		@Override
 		public int compare(CalculationResult o1, CalculationResult o2)
 		{
 			if (o1.m1 < o2.m1)
@@ -940,6 +942,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	 */
 	private class M2Comparator implements Comparator<CalculationResult>
 	{
+		@Override
 		public int compare(CalculationResult o1, CalculationResult o2)
 		{
 			if (o1.m2 < o2.m2)
@@ -955,6 +958,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	 */
 	private class RComparator implements Comparator<CalculationResult>
 	{
+		@Override
 		public int compare(CalculationResult o1, CalculationResult o2)
 		{
 			if (o1.r < o2.r)

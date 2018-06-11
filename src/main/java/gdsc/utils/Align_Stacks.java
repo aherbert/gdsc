@@ -77,6 +77,7 @@ public class Align_Stacks implements PlugIn
 	private static boolean clipOutput = false;
 
 	/** Ask for parameters and then execute. */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -430,14 +431,14 @@ public class Align_Stacks implements PlugIn
 		ShortProcessor sp = (ShortProcessor) ip.convertToShort(true);
 		int[] data = sp.getHistogram();
 		int threshold = AutoThreshold.getThreshold(Method.OTSU, data);
-		float minf = (float) threshold;
+		float minf = threshold;
 		float maxf = (float) sp.getMax();
 
 		float scaleFactor = 255.0f / (maxf - minf);
 
 		for (int i = pixels.length; i-- > 0;)
 		{
-			pixels[i] = (Math.max((float) sp.get(i), minf) - minf) * scaleFactor;
+			pixels[i] = (Math.max(sp.get(i), minf) - minf) * scaleFactor;
 		}
 	}
 

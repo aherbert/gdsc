@@ -23,7 +23,6 @@
  */
 package gdsc.utils;
 
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -54,10 +53,11 @@ public class Image_Scaler implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (!showDialog())
 		{
 			return DONE;
@@ -70,7 +70,8 @@ public class Image_Scaler implements PlugInFilter
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
 
-		gd.addMessage("Rescales the maxima of the image(s) to the given value.\nProcesses the image stack or a set of input images.");
+		gd.addMessage(
+				"Rescales the maxima of the image(s) to the given value.\nProcesses the image stack or a set of input images.");
 		gd.addNumericField("Max", maxValue, 2);
 		gd.addMessage("List file containing full image path, one image per line.");
 		gd.addStringField("List file", listFile);
@@ -91,6 +92,7 @@ public class Image_Scaler implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor inputProcessor)
 	{
 		boolean listExists = (listFile != null && !listFile.equals(""));
@@ -110,7 +112,8 @@ public class Image_Scaler implements PlugInFilter
 	/**
 	 * Scales all the images by the same factor so that one image has the specified maximum.
 	 * 
-	 * @param listFile File listing all the images to scale
+	 * @param listFile
+	 *            File listing all the images to scale
 	 * @param maxValue
 	 */
 	public void run(String listFile, double maxValue)
@@ -122,8 +125,8 @@ public class Image_Scaler implements PlugInFilter
 		if (!new File(listFile).exists())
 			return;
 
-		double[] limits = new double[] { Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY }; 
-		
+		double[] limits = new double[] { Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
+
 		// Read all images sequentially and find the limits
 		try
 		{
@@ -133,7 +136,7 @@ public class Image_Scaler implements PlugInFilter
 			{
 				if (!new File(line).exists())
 					continue;
-				
+
 				ImagePlus imp = new ImagePlus(line);
 				if (imp != null)
 				{
@@ -149,12 +152,12 @@ public class Image_Scaler implements PlugInFilter
 			IJ.error("Failed to read images in input list file: " + listFile);
 			return;
 		}
-		
+
 		if (limits[1] <= limits[0])
 			return;
 
 		double scaleFactor = maxValue / limits[1];
-		
+
 		// Rewrite images
 		try
 		{
@@ -164,7 +167,7 @@ public class Image_Scaler implements PlugInFilter
 			{
 				if (!new File(line).exists())
 					continue;
-				
+
 				ImagePlus imp = new ImagePlus(line);
 				if (imp != null)
 				{
@@ -181,7 +184,7 @@ public class Image_Scaler implements PlugInFilter
 			IJ.error("Failed to re-write images in input list file: " + listFile);
 		}
 	}
-	
+
 	/**
 	 * Scales all the images by the same factor so that one image has the specified maximum.
 	 * 
@@ -190,7 +193,7 @@ public class Image_Scaler implements PlugInFilter
 	 */
 	public void run(ImagePlus[] images, double maxValue)
 	{
-		double[] limits = new double[] { Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY }; 
+		double[] limits = new double[] { Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
 
 		for (ImagePlus imp : images)
 		{
@@ -219,7 +222,7 @@ public class Image_Scaler implements PlugInFilter
 				limits[0] = stats.min;
 			if (limits[1] < stats.max)
 				limits[1] = stats.max;
-		}		
+		}
 	}
 
 	private void multiply(ImagePlus imp, double scaleFactor)

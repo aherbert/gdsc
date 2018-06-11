@@ -27,18 +27,18 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.GridPointManager;
 
-public class SearchModeConverter extends Converter<Integer,Object>
+public class SearchModeConverter extends Converter<Integer, Object>
 {
 	@Override
 	public String convertForward(Integer paramT)
 	{
 		return GridPointManager.SEARCH_MODES[paramT.intValue()];
 	}
-	
+
 	@Override
 	public Integer convertReverse(Object paramS)
 	{
-		for (int i=0; i<GridPointManager.SEARCH_MODES.length; i++)
+		for (int i = 0; i < GridPointManager.SEARCH_MODES.length; i++)
 		{
 			if (GridPointManager.SEARCH_MODES[i].equals(paramS))
 			{

@@ -28,7 +28,6 @@ import java.util.Comparator;
 
 import gnu.trove.set.hash.TIntHashSet;
 
-
 /**
  * Contains the foci saddle results of the FindFoci algorithm.
  */
@@ -36,6 +35,7 @@ public class FindFociSaddleList implements Cloneable
 {
 	private static class IdSaddleComparator implements Comparator<FindFociSaddle>
 	{
+		@Override
 		public int compare(FindFociSaddle o1, FindFociSaddle o2)
 		{
 			if (o1.id < o2.id)
@@ -56,6 +56,7 @@ public class FindFociSaddleList implements Cloneable
 
 	private static class OrderSaddleComparator implements Comparator<FindFociSaddle>
 	{
+		@Override
 		public int compare(FindFociSaddle o1, FindFociSaddle o2)
 		{
 			if (o1.order < o2.order)

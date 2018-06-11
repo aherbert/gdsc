@@ -88,6 +88,7 @@ public class PointRoi2 extends PointRoi
 	}
 
 	/** Draws the points on the image. */
+	@Override
 	public void draw(Graphics g)
 	{
 		updatePolygon();
@@ -120,6 +121,7 @@ public class PointRoi2 extends PointRoi
 		}
 	}
 
+	@Override
 	void drawPoint(Graphics g, int x, int y, int n)
 	{
 		g.setColor(fillColor != null ? fillColor : Color.white);
@@ -138,6 +140,7 @@ public class PointRoi2 extends PointRoi
 	 * 
 	 * @see ij.gui.PointRoi#setHideLabels(boolean)
 	 */
+	@Override
 	public void setHideLabels(boolean hideLabels)
 	{
 		this.hideLabels = hideLabels;

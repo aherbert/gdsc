@@ -23,7 +23,6 @@
  */
 package gdsc.utils;
 
-
 import java.awt.AWTEvent;
 import java.awt.Color;
 
@@ -60,10 +59,11 @@ public class HSB_Filter implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			return DONE;
@@ -77,6 +77,7 @@ public class HSB_Filter implements ExtendedPlugInFilter, DialogListener
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
 	 * ij.plugin.filter.PlugInFilterRunner)
 	 */
+	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
@@ -129,6 +130,7 @@ public class HSB_Filter implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog, java.awt.AWTEvent)
 	 */
+	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		hue = (float) gd.getNextNumber();
@@ -145,6 +147,7 @@ public class HSB_Filter implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
+	@Override
 	public void setNPasses(int nPasses)
 	{
 		// Do nothing		
@@ -155,14 +158,15 @@ public class HSB_Filter implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor inputProcessor)
 	{
-		final float minH = (float) (hue - hueWidth);
-		final float maxH = (float) (hue + hueWidth);
-		final float minS = (float) (saturation - saturationWidth);
-		final float maxS = (float) (saturation + saturationWidth);
-		final float minB = (float) (brightness - brightnessWidth);
-		final float maxB = (float) (brightness + brightnessWidth);
+		final float minH = hue - hueWidth;
+		final float maxH = hue + hueWidth;
+		final float minS = saturation - saturationWidth;
+		final float maxS = saturation + saturationWidth;
+		final float minB = brightness - brightnessWidth;
+		final float maxB = brightness + brightnessWidth;
 		for (int i = 0; i < s.length; i++)
 		{
 			float hh = h[i];

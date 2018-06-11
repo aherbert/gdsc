@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 /**
  * Stores a 2D/3D point with a value and an assigned flag.
  */
@@ -42,7 +41,8 @@ public class GridPoint extends ValuedPoint
 	}
 
 	/**
-	 * @param assigned the assigned to set
+	 * @param assigned
+	 *            the assigned to set
 	 */
 	public void setAssigned(boolean assigned)
 	{

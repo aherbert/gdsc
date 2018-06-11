@@ -23,7 +23,6 @@
  */
 package gdsc.foci.gui;
 
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -46,6 +45,7 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 
 /**
@@ -71,7 +71,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 		try
 		{
 			SliderLimitHelper dialog = new SliderLimitHelper();
-			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			dialog.setVisible(true);
 		}
 		catch (Exception e)
@@ -91,9 +91,11 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	 */
 	public SliderLimitHelper()
 	{
-		addWindowListener(new WindowAdapter() {
+		addWindowListener(new WindowAdapter()
+		{
 			@Override
-			public void windowActivated(WindowEvent e) {
+			public void windowActivated(WindowEvent e)
+			{
 				validMin();
 				validMax();
 			}
@@ -104,7 +106,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	private void init()
 	{
 		setModalityType(ModalityType.DOCUMENT_MODAL);
-		setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		setBounds(100, 100, 197, 145);
 		getContentPane().setLayout(new BorderLayout());
@@ -139,6 +141,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 			txtMinimum = new JFormattedTextField();
 			txtMinimum.addPropertyChangeListener(new PropertyChangeListener()
 			{
+				@Override
 				public void propertyChange(PropertyChangeEvent evt)
 				{
 					if (evt.getPropertyName().equals("textFormatter"))
@@ -150,7 +153,8 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 			txtMinimum.addKeyListener(new KeyAdapter()
 			{
 				@Override
-				public void keyReleased(KeyEvent e) {
+				public void keyReleased(KeyEvent e)
+				{
 					validMin();
 				}
 			});
@@ -175,6 +179,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 			txtMaximum = new JFormattedTextField();
 			txtMaximum.addPropertyChangeListener(new PropertyChangeListener()
 			{
+				@Override
 				public void propertyChange(PropertyChangeEvent evt)
 				{
 					if (evt.getPropertyName().equals("textFormatter"))
@@ -219,13 +224,14 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	}
 
 	/**
-	 * @param name The parameter name
+	 * @param name
+	 *            The parameter name
 	 */
 	public void setParameterName(String name)
 	{
-		this.lblParametername.setText(name); 
+		this.lblParametername.setText(name);
 	}
-	
+
 	/**
 	 * @param minimum
 	 *            the minimum to set
@@ -265,6 +271,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	 * 
 	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
 	 */
+	@Override
 	public void actionPerformed(ActionEvent e)
 	{
 		if (e.getActionCommand() == "OK")
@@ -317,7 +324,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	{
 		if (isEmpty(txtField))
 			return true;
-		
+
 		try
 		{
 			double value = Double.parseDouble(txtField.getText());

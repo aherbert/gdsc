@@ -187,7 +187,7 @@ public class TwinImageShifter
 	{
 		if (xShift == 0)
 			return;
-		
+
 		for (int y = 0; y < h; ++y)
 		{
 			// Find all the locations in this strip that need to be shifted
@@ -222,7 +222,7 @@ public class TwinImageShifter
 	{
 		if (yShift == 0)
 			return;
-		
+
 		for (int x = 0; x < w; ++x)
 		{
 			// Find all the locations in this strip that need to be shifted

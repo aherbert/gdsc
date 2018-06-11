@@ -307,6 +307,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -367,6 +368,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		fillImagesList();
 	}
 
+	@Override
 	public synchronized void actionPerformed(ActionEvent e)
 	{
 		Object actioner = e.getSource();
@@ -388,6 +390,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		super.notify();
 	}
 
+	@Override
 	public void itemStateChanged(ItemEvent e)
 	{
 		Object actioner = e.getSource();
@@ -471,16 +474,19 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		return true;
 	}
 
+	@Override
 	public void keyTyped(KeyEvent e)
 	{
 		// Do nothing
 	}
 
+	@Override
 	public void keyPressed(KeyEvent e)
 	{
 		// Do nothing
 	}
 
+	@Override
 	public void keyReleased(KeyEvent e)
 	{
 		Object actioner = e.getSource();
@@ -492,6 +498,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		updateNumberOfSamples();
 	}
 
+	@Override
 	public void windowClosing(WindowEvent e)
 	{
 		closeWindowsOnExit = closeWindowsOnExitCheckbox.getState();
@@ -502,6 +509,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		close();
 	}
 
+	@Override
 	public void close()
 	{
 		if (closeWindowsOnExit)
@@ -563,6 +571,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		}
 	}
 
+	@Override
 	public void windowActivated(WindowEvent e)
 	{
 		super.windowActivated(e);
@@ -586,6 +595,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 * 
 	 * @see java.lang.Runnable#run()
 	 */
+	@Override
 	public void run()
 	{
 		doCDA();
@@ -1647,7 +1657,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		{
 			if (count[i] > 0)
 			{
-				avDistances.add((double) i);
+				avDistances.add(i);
 				avValues.add(sum[i] / count[i]);
 			}
 		}

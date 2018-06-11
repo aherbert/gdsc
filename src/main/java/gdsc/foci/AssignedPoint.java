@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 /**
  * Stores a 2D/3D point with an assigned Id
  */
@@ -84,6 +83,7 @@ public class AssignedPoint extends BasePoint implements Comparable<AssignedPoint
 	 * 
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
+	@Override
 	public int compareTo(AssignedPoint that)
 	{
 		int d = this.x - that.x;

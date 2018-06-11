@@ -177,6 +177,7 @@ public class MatchPlugin implements PlugIn
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public void run(String arg)
 	{
@@ -612,6 +613,7 @@ public class MatchPlugin implements PlugIn
 		final TurboList<PointRoi> rois = new TurboList<PointRoi>(xpoints.size());
 		xpoints.forEachEntry(new TIntObjectProcedure<TIntArrayList>()
 		{
+			@Override
 			public boolean execute(int z, TIntArrayList b)
 			{
 				int[] data = b.toArray();
@@ -1389,6 +1391,7 @@ public class MatchPlugin implements PlugIn
 
 		Collections.sort(matches, new Comparator<PointPair>()
 		{
+			@Override
 			public int compare(PointPair o1, PointPair o2)
 			{
 				TimeValuedPoint p1 = (TimeValuedPoint) o1.getPoint1();
@@ -1414,6 +1417,7 @@ public class MatchPlugin implements PlugIn
 
 		Arrays.sort(actualPoints, new Comparator<TimeValuedPoint>()
 		{
+			@Override
 			public int compare(TimeValuedPoint p1, TimeValuedPoint p2)
 			{
 				return (p1.getTime() < p2.getTime()) ? -1 : 1;
@@ -1421,6 +1425,7 @@ public class MatchPlugin implements PlugIn
 		});
 		Arrays.sort(predictedPoints, new Comparator<TimeValuedPoint>()
 		{
+			@Override
 			public int compare(TimeValuedPoint p1, TimeValuedPoint p2)
 			{
 				return (p1.getTime() < p2.getTime()) ? -1 : 1;
@@ -1516,10 +1521,10 @@ public class MatchPlugin implements PlugIn
 			case 0: return  (float) result.totalIntensity;
 			case 1: return  (float) result.intensityAboveSaddle;
 			case 2: return  (float) result.totalIntensityAboveBackground;
-			case 3: return  (float) result.count;
-			case 4: return  (float) result.countAboveSaddle;
-			case 5: return  (float) result.maxValue;
-			case 6: return  (float) result.highestSaddleValue;
+			case 3: return  result.count;
+			case 4: return  result.countAboveSaddle;
+			case 5: return  result.maxValue;
+			case 6: return  result.highestSaddleValue;
 			default: return (float) result.totalIntensity;
 			//@formatter:on
 		}

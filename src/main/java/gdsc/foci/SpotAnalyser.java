@@ -91,10 +91,11 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			IJ.noImage();
@@ -126,6 +127,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus,
 	 * java.lang.String, ij.plugin.filter.PlugInFilterRunner)
 	 */
+	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
@@ -178,6 +180,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	 * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog,
 	 * java.awt.AWTEvent)
 	 */
+	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		if (containsRoiMask)
@@ -216,6 +219,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
+	@Override
 	public void setNPasses(int nPasses)
 	{
 		// Do nothing
@@ -226,6 +230,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor inputIp)
 	{
 		// Just run the particle analyser
@@ -332,25 +337,25 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 			// Run FindFoci to find the single highest spot
 			FindFoci ff = new FindFoci();
 			ImagePlus mask = createMask(particlesIp, particle);
-			int backgroundMethod = FindFoci.BACKGROUND_MEAN;
+			int backgroundMethod = FindFociProcessor.BACKGROUND_MEAN;
 			double backgroundParameter = 0;
 			String autoThresholdMethod = "";
-			int searchMethod = FindFoci.SEARCH_ABOVE_BACKGROUND;
+			int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
 			double searchParameter = 0;
 			int minSize = 5;
-			int peakMethod = FindFoci.PEAK_RELATIVE_ABOVE_BACKGROUND;
+			int peakMethod = FindFociProcessor.PEAK_RELATIVE_ABOVE_BACKGROUND;
 			double peakParameter = 0.5;
-			int outputType = FindFoci.OUTPUT_MASK | FindFoci.OUTPUT_MASK_FRACTION_OF_HEIGHT |
-					FindFoci.OUTPUT_MASK_NO_PEAK_DOTS;
-			int sortIndex = FindFoci.SORT_MAX_VALUE;
-			int options = FindFoci.OPTION_STATS_INSIDE;
+			int outputType = FindFociProcessor.OUTPUT_MASK | FindFociProcessor.OUTPUT_MASK_FRACTION_OF_HEIGHT |
+					FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
+			int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
+			int options = FindFociProcessor.OPTION_STATS_INSIDE;
 			int centreMethod = FindFoci.CENTRE_MAX_VALUE_ORIGINAL;
 			double centreParameter = 0;
 			double fractionParameter = fraction;
 
-			FindFociResults result = ff.findMaxima(tmpImp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
-					searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
-					options, blur, centreMethod, centreParameter, fractionParameter);
+			FindFociResults result = ff.findMaxima(tmpImp, mask, backgroundMethod, backgroundParameter,
+					autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
+					outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter);
 			if (result == null)
 				continue;
 

@@ -71,6 +71,7 @@ public class ParticleCorrelation implements PlugIn
 	private ImagePlus maskImp, imageImp1, imageImp2;
 	private int c1, c2;
 
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);

@@ -23,7 +23,6 @@
  */
 package gdsc.foci.model;
 
-
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -31,6 +30,7 @@ import java.util.List;
 
 import gdsc.core.threshold.AutoThreshold;
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociProcessor;
 
 /**
  * Provides a bean property model for the FindFoci algorithm
@@ -96,6 +96,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 		// Notify if any properties change
 		this.addPropertyChangeListener(new PropertyChangeListener()
 		{
+			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (!changed && !("changed".equals(evt.getPropertyName())))
@@ -117,8 +118,8 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 		firePropertyChange("backgroundmethod", oldValue, this.backgroundMethod);
 
 		// Check if this is a switch to/from absolute background
-		if (oldValue != backgroundMethod &&
-				(oldValue == FindFoci.BACKGROUND_ABSOLUTE || backgroundMethod == FindFoci.BACKGROUND_ABSOLUTE))
+		if (oldValue != backgroundMethod && (oldValue == FindFociProcessor.BACKGROUND_ABSOLUTE ||
+				backgroundMethod == FindFociProcessor.BACKGROUND_ABSOLUTE))
 		{
 			double current = backgroundParameter;
 			setBackgroundParameter(backgroundParameterMemory);
@@ -297,7 +298,8 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 		firePropertyChange("peakMethod", oldValue, this.peakMethod);
 
 		// Check if this is a switch to/from absolute background
-		if (oldValue != peakMethod && (oldValue == FindFoci.PEAK_ABSOLUTE || peakMethod == FindFoci.PEAK_ABSOLUTE))
+		if (oldValue != peakMethod &&
+				(oldValue == FindFociProcessor.PEAK_ABSOLUTE || peakMethod == FindFociProcessor.PEAK_ABSOLUTE))
 		{
 			double current = peakParameter;
 			setPeakParameter(peakParameterMemory);

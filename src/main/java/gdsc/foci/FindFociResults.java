@@ -28,7 +28,6 @@ import java.util.Arrays;
 
 import ij.ImagePlus;
 
-
 /**
  * Contains the results of the FindFoci algorithm.
  */

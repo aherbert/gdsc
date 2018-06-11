@@ -23,7 +23,6 @@
  */
 package gdsc;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -152,7 +151,7 @@ public class Version
 			return Integer.parseInt(m.group(1));
 		return 0;
 	}
-	
+
 	/**
 	 * Get a string with the major, minor and patch versions
 	 * 

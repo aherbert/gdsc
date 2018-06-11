@@ -26,15 +26,15 @@ package gdsc.foci.converter;
 import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociProcessor;
 
-public class SearchParamEnabledConverter extends Converter<Integer,Boolean>
+public class SearchParamEnabledConverter extends Converter<Integer, Boolean>
 {
 	@Override
 	public Boolean convertForward(Integer paramS)
 	{
 		int searchMethod = paramS.intValue();
-		return Boolean.valueOf(
-				searchMethod == FindFoci.SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND);
+		return Boolean.valueOf(searchMethod == FindFociProcessor.SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND);
 	}
 
 	@Override

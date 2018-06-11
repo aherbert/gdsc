@@ -60,8 +60,7 @@ public class FindFociStateMachineTest
 				for (int i = 0; i < propertyNames.length; i++)
 				{
 					steps++;
-					sm.propertyChange(new PropertyChangeEvent(this, randomNames[x++],
-							oldValue, newValue));
+					sm.propertyChange(new PropertyChangeEvent(this, randomNames[x++], oldValue, newValue));
 				}
 				sm.setState(FindFociState.COMPLETE);
 			}

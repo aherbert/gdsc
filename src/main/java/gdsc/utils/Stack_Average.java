@@ -23,7 +23,6 @@
  */
 package gdsc.utils;
 
-
 import java.util.ArrayList;
 
 import gdsc.UsageTracker;
@@ -46,6 +45,7 @@ public class Stack_Average implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -63,6 +63,7 @@ public class Stack_Average implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		ArrayList<ImagePlus> images = getImages();
@@ -109,7 +110,8 @@ public class Stack_Average implements PlugInFilter
 			ImagePlus imp2 = WindowManager.getImage(wList[i]);
 			if (imp2 != null)
 			{
-				if (!imp2.getTitle().startsWith("Stack Average") && sameDimensions(dimensions, imp2.getDimensions()) && bitDepth == imp2.getBitDepth())
+				if (!imp2.getTitle().startsWith("Stack Average") && sameDimensions(dimensions, imp2.getDimensions()) &&
+						bitDepth == imp2.getBitDepth())
 				{
 					images.add(imp2);
 				}
@@ -119,10 +121,9 @@ public class Stack_Average implements PlugInFilter
 		return images;
 	}
 
-
 	private boolean sameDimensions(int[] dimensions, int[] dimensions2)
 	{
-		for (int i = dimensions.length; i-- > 0; )
+		for (int i = dimensions.length; i-- > 0;)
 		{
 			if (dimensions[i] != dimensions2[i])
 			{
@@ -131,7 +132,7 @@ public class Stack_Average implements PlugInFilter
 		}
 		return true;
 	}
-	
+
 	private ImageStack createResult()
 	{
 		int width = imp.getWidth();

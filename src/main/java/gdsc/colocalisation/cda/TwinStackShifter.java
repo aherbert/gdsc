@@ -23,7 +23,6 @@
  */
 package gdsc.colocalisation.cda;
 
-
 import ij.ImagePlus;
 import ij.ImageStack;
 
@@ -40,7 +39,7 @@ public class TwinStackShifter
 
 	public TwinStackShifter(ImagePlus imageImp, ImagePlus image2Imp, ImagePlus roiImp)
 	{
-		initialise(imageImp.getImageStack(), image2Imp.getImageStack(), 
+		initialise(imageImp.getImageStack(), image2Imp.getImageStack(),
 				(roiImp != null) ? roiImp.getImageStack() : null);
 	}
 
@@ -71,8 +70,8 @@ public class TwinStackShifter
 
 		for (int n = 1; n <= s; n++)
 		{
-			imageShifters[n - 1] = new TwinImageShifter(s1.getProcessor(n), s2.getProcessor(n), 
-				(s3 != null) ? s3.getProcessor(n) : null);
+			imageShifters[n - 1] = new TwinImageShifter(s1.getProcessor(n), s2.getProcessor(n),
+					(s3 != null) ? s3.getProcessor(n) : null);
 		}
 	}
 

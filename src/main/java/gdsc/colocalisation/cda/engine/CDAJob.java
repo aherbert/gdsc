@@ -23,14 +23,13 @@
  */
 package gdsc.colocalisation.cda.engine;
 
-
 /**
- * Specifies a translation shift for the CDA algorithm 
+ * Specifies a translation shift for the CDA algorithm
  */
 public class CDAJob
 {
 	public int n, x, y;
-	
+
 	public CDAJob(int n, int x, int y)
 	{
 		this.n = n;

@@ -224,11 +224,11 @@ public class ObjectAnalyzer3D
 					final int index2 = index1 + offset[d];
 					try
 					{
-					if (objectMask[index2] != 0)
-					{
-						// This has been done already, ignore this point
-						continue;
-					}
+						if (objectMask[index2] != 0)
+						{
+							// This has been done already, ignore this point
+							continue;
+						}
 					}
 					catch (ArrayIndexOutOfBoundsException e)
 					{

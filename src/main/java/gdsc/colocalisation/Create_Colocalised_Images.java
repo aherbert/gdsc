@@ -23,7 +23,6 @@
  */
 package gdsc.colocalisation;
 
-
 import java.util.Random;
 
 import gdsc.UsageTracker;
@@ -37,7 +36,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 /**
- * Create some dummy images to test for colocalisation 
+ * Create some dummy images to test for colocalisation
  */
 public class Create_Colocalised_Images implements PlugIn
 {
@@ -60,10 +59,11 @@ public class Create_Colocalised_Images implements PlugIn
 	int minSize = 5;
 	int maxExpansionSize = 15;
 
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (!getBitDepth())
 			return;
 

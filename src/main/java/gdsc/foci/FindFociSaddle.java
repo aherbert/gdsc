@@ -23,7 +23,6 @@
  */
 package gdsc.foci;
 
-
 /**
  * Contains the foci saddle result of the FindFoci algorithm.
  */
@@ -34,10 +33,10 @@ public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle>
 
 	/** The saddle value. */
 	public float value;
-	
+
 	/** Used for sorting */
-	int order; 
-	
+	int order;
+
 	/**
 	 * Instantiates a new find foci saddle.
 	 */
@@ -71,6 +70,7 @@ public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle>
 	 * 
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
+	@Override
 	public int compareTo(FindFociSaddle that)
 	{
 		if (this.value > that.value)
