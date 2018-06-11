@@ -183,10 +183,10 @@ public class Auto_Local_Threshold implements PlugIn
 		{ // selected a method
 			if (stackSize > 1 && doIstack)
 			{ //whole stack
-				//				if (doIstackHistogram) {// one global histogram
-				//					Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram );
-				//				}
-				//				else{ // slice by slice
+				  //				if (doIstackHistogram) {// one global histogram
+			  //					Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram );
+			  //				}
+			  //				else{ // slice by slice
 				for (int k = 1; k <= stackSize; k++)
 				{
 					imp.setSlice(k);

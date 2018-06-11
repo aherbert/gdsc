@@ -25,7 +25,6 @@ package gdsc.foci.converter;
 
 import org.jdesktop.beansbinding.Converter;
 
-import gdsc.foci.FindFoci;
 import gdsc.foci.FindFociProcessor;
 
 public class BackgroundParamEnabledConverter extends Converter<Integer, Boolean>

@@ -61,7 +61,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
-import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
 import gdsc.UsageTracker;

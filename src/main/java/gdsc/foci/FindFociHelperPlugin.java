@@ -28,7 +28,6 @@ import java.awt.event.WindowListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
 import gdsc.UsageTracker;
