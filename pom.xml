@@ -16,6 +16,14 @@
 
 	<name>GDSC</name>
 	<url>http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/gdsc_plugins</url>
+	<organization>
+		<name>Genome Damage and Stability Centre</name>
+		<url>http://www.sussex.ac.uk/gdsc/</url>
+	</organization>
+	<description>Genome Damage and Stability Centre ImageJ Plugins
+
+Software for microscopy image analysis
+</description>
 
 	<licenses>
 		<license>
@@ -25,12 +33,7 @@
 		</license>
 	</licenses>
 
-	<inceptionYear>2013</inceptionYear>
-	<contributors>
-		<contributor>
-			<name>Alex Herbert</name>
-		</contributor>
-	</contributors>
+	<inceptionYear>2011</inceptionYear>
 	<mailingLists>
 		<mailingList>
 			<name>ImageJ Forum</name>
@@ -58,10 +61,15 @@
 			</roles>
 		</developer>
 	</developers>
+	<contributors>
+		<contributor>
+			<name>Alex Herbert</name>
+		</contributor>
+	</contributors>
 
 	<properties>
 		<license.licenseName>gpl_v3</license.licenseName>
-		<license.copyrightOwners>N/A</license.copyrightOwners>
+		<license.copyrightOwners>Alex Herbert</license.copyrightOwners>
 	</properties>
 
 	<build>
@@ -174,23 +182,4 @@
 		</repository>
 	</repositories>
 
-	<organization>
-		<name>Genome Damage and Stability Centre</name>
-		<url>http://www.sussex.ac.uk/gdsc/</url>
-	</organization>
-	<description>Genome Damage and Stability Centre ImageJ Plugins
-
-The GDSC ImageJ plugins are a collection of analysis programs for microscopy images including colocalisation analysis and peak finding.
-
-Find Foci
-
-The Find Foci plugins allow the identification of peak intensity regions within 2D and 3D images. The tools provide: the automated and semi-automated labelling of peaks; comparison of marked points between images; and alignment of manually marked points to peak maxima.
-
-Colocalisation Analysis
-
-The GDSC Colocalisation plugins provide various tools to perform colocalisation analysis. The tools provide: thresholding for N-dimensional images for signal identification; correlation and overlap coefficient analysis; and colocalisation significance testing.
-
-Utility Plugins
-
-The GDSC plugins provide various utility tools for image analysis. The tools include: thresholding and mask generation; difference of Gaussians for contrast enhancement; stack synchronisation for simultaneous image viewing; and image alignment.</description>
 </project>

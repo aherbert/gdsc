@@ -1,42 +1,28 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci.gui;
 
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
-import gdsc.foci.FindFoci;
-import gdsc.foci.FindFociResult;
-import gdsc.foci.GridException;
-import gdsc.foci.GridPoint;
-import gdsc.foci.GridPointManager;
-import gdsc.foci.AssignedPoint;
-import gdsc.foci.MatchPlugin;
-import gdsc.foci.PointAlignerPlugin;
-import gdsc.foci.PointManager;
-import gdsc.foci.controller.FindMaximaController;
-import gdsc.foci.converter.ValidImagesConverter;
-import gdsc.foci.model.FindFociModel;
-import gdsc.format.LimitedNumberFormat;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.WindowManager;
-import ij.gui.ImageCanvas;
-import ij.gui.PointRoi;
-import ij.gui.PolygonRoi;
-import ij.gui.Roi;
-import ij.macro.MacroRunner;
-import ij.measure.Calibration;
-import ij.text.TextWindow;
 
 import java.awt.Color;
 import java.awt.EventQueue;
@@ -68,11 +54,13 @@ import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
@@ -83,13 +71,33 @@ import org.jdesktop.beansbinding.Bindings;
 import org.jdesktop.swingbinding.JComboBoxBinding;
 import org.jdesktop.swingbinding.SwingBindings;
 
-import javax.swing.JCheckBox;
-
-import gdsc.foci.converter.StringToBooleanConverter;
-import gdsc.foci.converter.SearchModeConverter;
 import gdsc.core.ij.Utils;
-
-import javax.swing.JToggleButton;
+import gdsc.foci.AssignedPoint;
+import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociResult;
+import gdsc.foci.GridException;
+import gdsc.foci.GridPoint;
+import gdsc.foci.GridPointManager;
+import gdsc.foci.MatchPlugin;
+import gdsc.foci.PointAlignerPlugin;
+import gdsc.foci.PointManager;
+import gdsc.foci.controller.FindMaximaController;
+import gdsc.foci.converter.SearchModeConverter;
+import gdsc.foci.converter.StringToBooleanConverter;
+import gdsc.foci.converter.ValidImagesConverter;
+import gdsc.foci.model.FindFociModel;
+import gdsc.format.LimitedNumberFormat;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.ImageCanvas;
+import ij.gui.PointRoi;
+import ij.gui.PolygonRoi;
+import ij.gui.Roi;
+import ij.macro.MacroRunner;
+import ij.measure.Calibration;
+import ij.text.TextWindow;
 
 /**
  * Provides a permanent form front-end that allows the user to pick ROI points and have them mapped to the closest

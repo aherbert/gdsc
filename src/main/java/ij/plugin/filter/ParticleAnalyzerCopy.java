@@ -1,19 +1,70 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package ij.plugin.filter;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.image.IndexColorModel;
 import java.util.Properties;
 
-import gdsc.core.ij.Utils;
-import ij.*;
-import ij.gui.*;
-import ij.process.*;
-import ij.measure.*;
-import ij.text.*;
-import ij.plugin.filter.Analyzer;
-import ij.plugin.frame.RoiManager;
-import ij.plugin.Colors;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.LookUpTable;
+import ij.Macro;
+import ij.Prefs;
+import ij.Undo;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.ImageWindow;
+import ij.gui.Overlay;
+import ij.gui.PolygonRoi;
+import ij.gui.Roi;
+import ij.gui.Wand;
 import ij.macro.Interpreter;
+import ij.measure.Calibration;
+import ij.measure.Measurements;
+import ij.measure.ResultsTable;
+import ij.plugin.Colors;
+import ij.plugin.frame.RoiManager;
+import ij.process.ByteProcessor;
+import ij.process.ByteStatistics;
+import ij.process.ColorProcessor;
+import ij.process.ColorStatistics;
+import ij.process.FloatProcessor;
+import ij.process.FloatStatistics;
+import ij.process.FloodFiller;
+import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
+import ij.process.PolygonFiller;
+import ij.process.ShortProcessor;
+import ij.process.ShortStatistics;
+import ij.text.TextPanel;
+import ij.text.TextWindow;
 import ij.util.Tools;
 
 /**
