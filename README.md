@@ -50,52 +50,34 @@ Installation from source
 
 The source code is accessed using git and built using Maven. 
 
-The code depends on the GDSC-Analytics and GDSC-Core artifacts so you will 
-have to install these to your local Maven repository before building:
+The code depends on the GDSC-Analytics and GDSC-Core artifacts so 
+you will have to install these to your local Maven repository before building:
 
-1. Clone the GDSC Analytics repository
+1. Clone the required repositories
 
         git clone https://github.com/aherbert/GDSC-Analytics.git
+        git clone https://github.com/aherbert/GDSC-Core.git
+        git clone https://github.com/aherbert/GDSC-SMLM.git
 
 2. Build the code and install using Maven
 
         cd GDSC-Analytics
         mvn install
         cd ..
-
-	This will produce a gdsc-analytics-[VERSION].jar file in the local Maven 
-	repository. 
- 
-3. Clone the GDSC Core repository
-
-        git clone https://github.com/aherbert/GDSC-Core.git
-
-4. Build the code and install using Maven
-
         cd GDSC-Core
         mvn install
         cd ..
-
-	This will produce a gdsc-core-[VERSION].jar file in the local Maven 
-	repository. 
-
-5. Clone the GDSC repository
-
-        git clone https://github.com/aherbert/GDSC.git
-
-6. Build the code and package using Maven
-
-        cd GDSC
-        mvn -P dist package -DskipTests=true
+        cd GDSC-SMLM
+        mvn package
 
 	This will produce a gdsc_-[VERSION].jar file in the target directory. All 
-	dependencies are copied into the target/dist/lib directory.
+	dependencies are copied into the target/dependencies directory.
 
-7. Copy the gdsc_* jar into the plugins directory of ImageJ. 
+3. Copy the gdsc_* jar into the plugins directory of ImageJ. 
 
-8. Copy the dependencies into the plugins directory (or onto the Java
+4. Copy the dependencies into the plugins directory (or onto the Java
 classpath). Note that the Maven package routine puts all dependencies into
-the target/dist/lib directory even if they are not required by the SMLM code
+the target/dependencies directory even if they are not required by the SMLM code
 (it does not check what functions are actually used by the code). The libraries
 you will need are:
   
@@ -105,7 +87,7 @@ you will need are:
         commons-math3
         imagescience
 
-9. The plugins will now appear under the 'Plugins > GDSC' menu in ImageJ.
+5. The plugins will now appear under the 'Plugins > GDSC' menu in ImageJ.
 
 
 Running from source
