@@ -57,7 +57,7 @@ you will have to install these to your local Maven repository before building:
 
         git clone https://github.com/aherbert/GDSC-Analytics.git
         git clone https://github.com/aherbert/GDSC-Core.git
-        git clone https://github.com/aherbert/GDSC-SMLM.git
+        git clone https://github.com/aherbert/GDSC.git
 
 2. Build the code and install using Maven
 
@@ -67,7 +67,7 @@ you will have to install these to your local Maven repository before building:
         cd GDSC-Core
         mvn install
         cd ..
-        cd GDSC-SMLM
+        cd GDSC
         mvn package
 
 	This will produce a gdsc_-[VERSION].jar file in the target directory. All 
