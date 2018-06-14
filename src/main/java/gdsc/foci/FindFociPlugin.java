@@ -1,20 +1,38 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
+import javax.swing.WindowConstants;
+
 import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
 import gdsc.foci.controller.FindFociController;
 import gdsc.foci.controller.ImageJController;
 import gdsc.foci.gui.FindFociView;
@@ -25,15 +43,6 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
-
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
-import javax.swing.JFrame;
 
 /**
  * Provides a permanent form front-end for the FindFoci plugin filter
@@ -60,45 +69,55 @@ public class FindFociPlugin implements PlugIn
 			instance.addWindowListener(this);
 		}
 
+		@Override
 		public void windowOpened(WindowEvent e)
 		{
 		}
 
+		@Override
 		public void windowClosing(WindowEvent e)
 		{
 			WindowManager.removeWindow(instance);
 		}
 
+		@Override
 		public void windowClosed(WindowEvent e)
 		{
 		}
 
+		@Override
 		public void windowIconified(WindowEvent e)
 		{
 		}
 
+		@Override
 		public void windowDeiconified(WindowEvent e)
 		{
 		}
 
+		@Override
 		public void windowActivated(WindowEvent e)
 		{
 		}
 
+		@Override
 		public void windowDeactivated(WindowEvent e)
 		{
 		}
 
+		@Override
 		public void imageOpened(ImagePlus imp)
 		{
 			// Ignore
 		}
 
+		@Override
 		public void imageClosed(ImagePlus imp)
 		{
 			// Ignore
 		}
 
+		@Override
 		public void imageUpdated(ImagePlus imp)
 		{
 			if (imp == null)
@@ -132,6 +151,7 @@ public class FindFociPlugin implements PlugIn
 			}
 		}
 
+		@Override
 		public void propertyChange(PropertyChangeEvent evt)
 		{
 			// Store the slice for the image when it changes.
@@ -147,10 +167,11 @@ public class FindFociPlugin implements PlugIn
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (WindowManager.getImageCount() < 1)
 		{
 			IJ.showMessage("No images opened.");
@@ -199,7 +220,7 @@ public class FindFociPlugin implements PlugIn
 			// it exists on the classpath
 			instance = new FindFociView(model, controller);
 			listener.addWindowListener(instance);
-			instance.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+			instance.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 
 			IJ.register(FindFociView.class);
 
@@ -254,7 +275,7 @@ public class FindFociPlugin implements PlugIn
 
 		FindFociView instance = new FindFociView(model, controller);
 		listener.addWindowListener(instance);
-		instance.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		instance.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		showInstance(instance);
 	}

@@ -1,7 +1,41 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Label;
+import java.awt.Point;
+import java.awt.image.ColorModel;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+
 import gdsc.UsageTracker;
-import gdsc.help.URL;
 import gdsc.core.clustering.Cluster;
 import gdsc.core.clustering.ClusterPoint;
 import gdsc.core.clustering.ClusteringAlgorithm;
@@ -13,6 +47,7 @@ import gdsc.core.match.MatchCalculator;
 import gdsc.core.match.MatchResult;
 import gdsc.core.match.PointPair;
 import gdsc.core.utils.TextUtils;
+import gdsc.help.URL;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -28,18 +63,6 @@ import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ImageProcessor;
 import ij.process.LUTHelper;
 import ij.text.TextWindow;
-
-import java.awt.AWTEvent;
-import java.awt.Color;
-import java.awt.Label;
-import java.awt.Point;
-import java.awt.image.ColorModel;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 /**
  * Performs clustering on the latest Find Foci result held in memory. Optionally can draw the clusters on the Find Foci
@@ -105,6 +128,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	private ColorModel cm;
 	private Label label = null;
 
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		if (arg.equals("final"))
@@ -214,6 +238,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		return imp;
 	}
 
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		// This will not be called if we selected NO_IMAGE_REQUIRED
@@ -264,11 +289,13 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		label.setText(TextUtils.pleural(filteredClusters.size(), "Cluster"));
 	}
 
+	@Override
 	public void setNPasses(int nPasses)
 	{
 		// Nothing to do
 	}
 
+	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
@@ -313,6 +340,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		return (this.imp == null) ? noImageFlags : imageFlags;
 	}
 
+	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		radius = Math.abs(gd.getNextNumber());
@@ -382,6 +410,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 			clusters = e.findClusters(points, radius);
 			Collections.sort(clusters, new Comparator<Cluster>()
 			{
+				@Override
 				public int compare(Cluster o1, Cluster o2)
 				{
 					if (o1.sumw > o2.sumw)
@@ -484,7 +513,8 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		}
 
 		double seconds = (System.currentTimeMillis() - start) / 1000.0;
-		IJ.showStatus(TextUtils.pleural(filteredClusters.size(), "cluster") + " in " + Utils.rounded(seconds) + " seconds");
+		IJ.showStatus(
+				TextUtils.pleural(filteredClusters.size(), "cluster") + " in " + Utils.rounded(seconds) + " seconds");
 	}
 
 	private Coordinate[] toCoordinates(ArrayList<Cluster> clusters)

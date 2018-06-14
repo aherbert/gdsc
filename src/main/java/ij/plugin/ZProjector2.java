@@ -1,3 +1,26 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package ij.plugin;
 
 import java.util.Arrays;
@@ -7,6 +30,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.measure.Measurements;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -43,7 +67,7 @@ public class ZProjector2 extends ZProjectorCopy
 					int index = projImage.getStackIndex(c, 1, 1);
 					projImage.setSliceWithoutUpdate(index);
 					ip = projImage.getProcessor();
-					ImageStatistics stats = ImageStatistics.getStatistics(ip, ImageStatistics.MIN_MAX, null);
+					ImageStatistics stats = ImageStatistics.getStatistics(ip, Measurements.MIN_MAX, null);
 					ip.setMinAndMax(stats.min, stats.max);
 				}
 				projImage.setSliceWithoutUpdate(projImage.getStackIndex(1, 1, 1));
@@ -181,6 +205,7 @@ public class ZProjector2 extends ZProjectorCopy
 		// Override to change the method for accessing pixel values to getf() 
 		return doProjection("median", new Projector()
 		{
+			@Override
 			public float value(float[] values)
 			{
 				return median(values);
@@ -192,6 +217,7 @@ public class ZProjector2 extends ZProjectorCopy
 	{
 		return doProjection("mode", new Projector()
 		{
+			@Override
 			public float value(float[] values)
 			{
 				return getMode(values, ignoreZero);

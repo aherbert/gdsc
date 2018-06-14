@@ -1,17 +1,27 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci.model;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -20,6 +30,7 @@ import java.util.List;
 
 import gdsc.core.threshold.AutoThreshold;
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociProcessor;
 
 /**
  * Provides a bean property model for the FindFoci algorithm
@@ -85,6 +96,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 		// Notify if any properties change
 		this.addPropertyChangeListener(new PropertyChangeListener()
 		{
+			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (!changed && !("changed".equals(evt.getPropertyName())))
@@ -106,8 +118,8 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 		firePropertyChange("backgroundmethod", oldValue, this.backgroundMethod);
 
 		// Check if this is a switch to/from absolute background
-		if (oldValue != backgroundMethod &&
-				(oldValue == FindFoci.BACKGROUND_ABSOLUTE || backgroundMethod == FindFoci.BACKGROUND_ABSOLUTE))
+		if (oldValue != backgroundMethod && (oldValue == FindFociProcessor.BACKGROUND_ABSOLUTE ||
+				backgroundMethod == FindFociProcessor.BACKGROUND_ABSOLUTE))
 		{
 			double current = backgroundParameter;
 			setBackgroundParameter(backgroundParameterMemory);
@@ -286,7 +298,8 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 		firePropertyChange("peakMethod", oldValue, this.peakMethod);
 
 		// Check if this is a switch to/from absolute background
-		if (oldValue != peakMethod && (oldValue == FindFoci.PEAK_ABSOLUTE || peakMethod == FindFoci.PEAK_ABSOLUTE))
+		if (oldValue != peakMethod &&
+				(oldValue == FindFociProcessor.PEAK_ABSOLUTE || peakMethod == FindFociProcessor.PEAK_ABSOLUTE))
 		{
 			double current = peakParameter;
 			setPeakParameter(peakParameterMemory);

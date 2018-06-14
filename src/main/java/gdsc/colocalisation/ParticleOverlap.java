@@ -1,17 +1,27 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.colocalisation;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -52,10 +62,11 @@ public class ParticleOverlap implements PlugIn
 	private ImagePlus mask1Imp, imageImp, mask2Imp;
 	private OutputStreamWriter out = null;
 
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.showMessage(TITLE, "No images opened.");
@@ -72,8 +83,8 @@ public class ParticleOverlap implements PlugIn
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
 
-		gd.addMessage("For each particle in a mask (defined by unique pixel value)\n"
-				+ "count the overlap and Manders coefficient with a second mask image");
+		gd.addMessage("For each particle in a mask (defined by unique pixel value)\n" +
+				"count the overlap and Manders coefficient with a second mask image");
 
 		String[] imageList = Utils.getImageList(Utils.GREY_SCALE, null);
 		String[] maskList = Utils.getImageList(Utils.GREY_8_16, null);
@@ -123,7 +134,7 @@ public class ParticleOverlap implements PlugIn
 
 		return true;
 	}
-	
+
 	private boolean emptyFilename()
 	{
 		return (filename == null || filename.length() == 0);
@@ -202,7 +213,7 @@ public class ParticleOverlap implements PlugIn
 		}
 		if (showTotal)
 			addResult(title, 0, sn1, sno1, ss1, sso1);
-		
+
 		closeResultsFile();
 	}
 

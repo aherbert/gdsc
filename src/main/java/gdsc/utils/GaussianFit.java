@@ -1,29 +1,38 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.utils;
 
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
+import java.awt.Rectangle;
+import java.lang.reflect.Method;
 
+import gdsc.UsageTracker;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-
-import java.awt.Rectangle;
-import java.lang.reflect.Method;
-
-import gdsc.UsageTracker;
 
 /**
  * Fits a circular 2D Gaussian.
@@ -49,7 +58,7 @@ public class GaussianFit implements PlugInFilter
 			Class c = Class.forName("gdsc.smlm.ij.plugins.GaussianFit", true, pluginClass.getClass().getClassLoader());
 
 			// ... it exists on the classpath
-			
+
 			final int size = 99;
 			final float mu = size / 2;
 			final float s0 = 3;
@@ -59,9 +68,9 @@ public class GaussianFit implements PlugInFilter
 			final float[] data = new float[size * size];
 			for (int y = 0; y < size; y++)
 				for (int x = 0; x < size; x++)
-					data[y * size + x] = (float) (N * (Math.exp(-0.5 * ((mu - x) * (mu - x) + 0.5 * (mu - y) * (mu - y)) /
-							(s0 * s0))));
-			
+					data[y * size + x] = (float) (N *
+							(Math.exp(-0.5 * ((mu - x) * (mu - x) + 0.5 * (mu - y) * (mu - y)) / (s0 * s0))));
+
 			// Try a fit. 
 			double[] fit = null;
 			//gdsc.smlm.ij.plugins.GaussianFit gf = new gdsc.smlm.ij.plugins.GaussianFit();
@@ -100,7 +109,7 @@ public class GaussianFit implements PlugInFilter
 			exception = ex;
 			errorMessage = ex.getMessage();
 		}
-		
+
 		if (!fittingEnabled)
 		{
 			System.out.println(errorMessage);
@@ -167,6 +176,7 @@ public class GaussianFit implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -184,6 +194,7 @@ public class GaussianFit implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		FloatProcessor fp = ip.toFloat(0, null);

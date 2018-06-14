@@ -1,20 +1,37 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
 import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
@@ -30,14 +47,6 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
-
-import java.awt.Canvas;
-import java.awt.Color;
-import java.awt.Point;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Output the density around spots within a mask region. Spots are defined using FindFoci results loaded from memory.
@@ -93,6 +102,7 @@ public class SpotDensity implements PlugIn
 		}
 	}
 
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -217,7 +227,7 @@ public class SpotDensity implements PlugIn
 			IJ.showMessage("Error", "No foci with the name " + resultsName);
 			return null;
 		}
-		ArrayList<FindFociResult> results = memoryResults.results; 
+		ArrayList<FindFociResult> results = memoryResults.results;
 		if (results.size() == 0)
 		{
 			IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
@@ -406,6 +416,7 @@ public class SpotDensity implements PlugIn
 			// Allow clicking multiple results in the window to show a combined curve
 			resultsWindow.getTextPanel().addMouseListener(new MouseListener()
 			{
+				@Override
 				public void mouseClicked(MouseEvent e)
 				{
 					TextPanel tp = null;
@@ -516,18 +527,22 @@ public class SpotDensity implements PlugIn
 					showPairCorrelation(new PC(n, area, r, pcf));
 				}
 
+				@Override
 				public void mouseEntered(MouseEvent arg0)
 				{
 				}
 
+				@Override
 				public void mouseExited(MouseEvent arg0)
 				{
 				}
 
+				@Override
 				public void mousePressed(MouseEvent arg0)
 				{
 				}
 
+				@Override
 				public void mouseReleased(MouseEvent arg0)
 				{
 				}

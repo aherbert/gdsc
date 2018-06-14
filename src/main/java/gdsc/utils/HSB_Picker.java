@@ -1,28 +1,27 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.utils;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
-import ij.IJ;
-import ij.ImagePlus;
-import ij.Prefs;
-import ij.WindowManager;
-import ij.gui.GUI;
-import ij.gui.Toolbar;
-import ij.macro.MacroRunner;
-import ij.plugin.MacroInstaller;
-import ij.plugin.frame.PlugInFrame;
-import ij.process.ImageProcessor;
 
 import java.awt.BorderLayout;
 import java.awt.Button;
@@ -44,6 +43,16 @@ import javax.swing.JPanel;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
 import gdsc.UsageTracker;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GUI;
+import ij.gui.Toolbar;
+import ij.macro.MacroRunner;
+import ij.plugin.MacroInstaller;
+import ij.plugin.frame.PlugInFrame;
+import ij.process.ImageProcessor;
 
 /**
  * Alows an RGB image to be filtered using HSB limits.
@@ -88,10 +97,11 @@ public class HSB_Picker extends PlugInFrame
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.showMessage("No images opened.");
@@ -102,7 +112,7 @@ public class HSB_Picker extends PlugInFrame
 		{
 			if (!(instance.getTitle().equals(getTitle())))
 			{
-				HSB_Picker oldInstance = (HSB_Picker) instance;
+				HSB_Picker oldInstance = instance;
 				Prefs.saveLocation(OPT_LOCATION, oldInstance.getLocation());
 				oldInstance.close();
 			}
@@ -174,7 +184,7 @@ public class HSB_Picker extends PlugInFrame
 		ImageProcessor ip = imp.getProcessor();
 		addValue(ip, p);
 	}
-	
+
 	/**
 	 * @return The current image (must be 24-bit and have an image canvas)
 	 */
@@ -194,7 +204,7 @@ public class HSB_Picker extends PlugInFrame
 		// This can be fixed by setting:
 		//   WindowManager.setCurrentWindow(win);
 		// in the ImageCanvas.mousePressed(...) method.
-		
+
 		ImagePlus imp = WindowManager.getCurrentImage();
 		if (imp == null || imp.getBitDepth() != 24 || imp.getCanvas() == null)
 			return null;
@@ -275,6 +285,7 @@ public class HSB_Picker extends PlugInFrame
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#close()
 	 */
+	@Override
 	public void close()
 	{
 		Prefs.saveLocation(OPT_LOCATION, getLocation());
@@ -302,6 +313,7 @@ public class HSB_Picker extends PlugInFrame
 		clearButton = new Button("Reset");
 		clearButton.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				clear();
@@ -310,14 +322,14 @@ public class HSB_Picker extends PlugInFrame
 		add(clearButton, 0, 3);
 		row++;
 
-		createSliderPanel(
-				scaleSlider = new Scrollbar(Scrollbar.HORIZONTAL, (int) (2 * SCALE), 1, 1, (int) (4 * SCALE)),
+		createSliderPanel(scaleSlider = new Scrollbar(Scrollbar.HORIZONTAL, (int) (2 * SCALE), 1, 1, (int) (4 * SCALE)),
 				"Filter scale", scaleLabel = new Label("0"), SCALE);
 
 		// Add the buttons
 		filterButton = new Button("HSB Filter");
 		filterButton.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				runFilter();
@@ -326,6 +338,7 @@ public class HSB_Picker extends PlugInFrame
 		okButton = new Button("Close");
 		okButton.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				close();
@@ -334,6 +347,7 @@ public class HSB_Picker extends PlugInFrame
 		helpButton = new Button("Help");
 		helpButton.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				String macro = "run('URL...', 'url=" + gdsc.help.URL.UTILITY + "');";
@@ -378,6 +392,7 @@ public class HSB_Picker extends PlugInFrame
 		sliderField.addAdjustmentListener(new AdjustmentListener()
 		{
 
+			@Override
 			public void adjustmentValueChanged(AdjustmentEvent e)
 			{
 				setSliderLabel(sliderField, sliderLabel, scale);

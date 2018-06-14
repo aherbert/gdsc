@@ -1,20 +1,29 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
 import java.awt.Canvas;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2016 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
 import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -86,6 +95,7 @@ public class TranslocationFinder implements PlugIn
 	// Current set of manual triplets
 	private static ArrayList<AssignedPoint[]> manualTriplets = new ArrayList<AssignedPoint[]>();
 
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -153,7 +163,7 @@ public class TranslocationFinder implements PlugIn
 			IJ.showMessage("Error", "No foci with the name " + resultsName);
 			return null;
 		}
-		ArrayList<FindFociResult> results = memoryResults.results; 
+		ArrayList<FindFociResult> results = memoryResults.results;
 		if (results.size() == 0)
 		{
 			IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
@@ -314,6 +324,7 @@ public class TranslocationFinder implements PlugIn
 			// Allow the results to be manually changed
 			resultsWindow.getTextPanel().addMouseListener(new MouseListener()
 			{
+				@Override
 				public void mouseClicked(MouseEvent e)
 				{
 					if (e.getClickCount() < 2)
@@ -427,18 +438,22 @@ public class TranslocationFinder implements PlugIn
 					overlayTriplets();
 				}
 
+				@Override
 				public void mouseEntered(MouseEvent arg0)
 				{
 				}
 
+				@Override
 				public void mouseExited(MouseEvent arg0)
 				{
 				}
 
+				@Override
 				public void mousePressed(MouseEvent arg0)
 				{
 				}
 
+				@Override
 				public void mouseReleased(MouseEvent arg0)
 				{
 				}

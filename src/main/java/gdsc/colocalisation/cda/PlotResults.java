@@ -1,24 +1,40 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.colocalisation.cda;
 
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- *
- * This class is based on the original CDA_Plugin developed by 
- * Maria Osorio-Reich:
- * http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:confined_displacement_algorithm_determines_true_and_random_colocalization_:start
- *---------------------------------------------------------------------------*/
+import java.awt.Color;
 
 import ij.gui.Plot;
-
-import java.awt.Color;
 
 /**
  * Provides functionality to plot a histogram of sampleData and then determine if a value is
  * significant using a specified p-value, i.e. it lies outside the upper/lower tails of the histogram sampleData.
+ * <p>
+ * This class is based on the original CDA_Plugin developed by Maria Osorio-Reich:
+ * <a href=
+ * "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:confined_displacement_algorithm_determines_true_and_random_colocalization_:start">Confined
+ * Displacement Algorithm Determines True and Random Colocalization</a>
  */
 public class PlotResults
 {
@@ -107,8 +123,8 @@ public class PlotResults
 				maxHistogram = d;
 		maxHistogram *= 1.05;
 
-		plot = new Plot(plotTitle, plotXTitle, plotYTitle, xValues, yValues, Plot.X_NUMBERS + Plot.Y_NUMBERS +
-				Plot.X_TICKS + Plot.Y_TICKS);
+		plot = new Plot(plotTitle, plotXTitle, plotYTitle, xValues, yValues,
+				Plot.X_NUMBERS + Plot.Y_NUMBERS + Plot.X_TICKS + Plot.Y_TICKS);
 
 		// Ensure the horizontal scale goes from 0 to 1 but add at least 0.05 to the limits.
 		double xMin = Math.min(xValues[0] - 0.05, Math.min(sampleValue - 0.05, 0));

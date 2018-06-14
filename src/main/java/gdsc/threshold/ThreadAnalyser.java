@@ -1,3 +1,26 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.threshold;
 
 import java.io.File;
@@ -9,20 +32,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 
 import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
 import gdsc.core.ij.Utils;
 import gdsc.core.threshold.AutoThreshold;
 import ij.IJ;
@@ -55,7 +64,8 @@ public class ThreadAnalyser implements PlugIn
 	private static TextWindow resultsWindow = null;
 	private static boolean writeHeader = true;
 
-	private static String[] ignoreSuffix = new String[] { "EDM", "SkeletonNodeMap", "SkeletonMap", "Threads", "Objects" };
+	private static String[] ignoreSuffix = new String[] { "EDM", "SkeletonNodeMap", "SkeletonMap", "Threads",
+			"Objects" };
 
 	private static String image = "";
 	private static int imageChannel = 0;
@@ -78,10 +88,11 @@ public class ThreadAnalyser implements PlugIn
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (!showDialog())
 		{
 			return;
@@ -376,8 +387,8 @@ public class ThreadAnalyser implements PlugIn
 		if (showSkeletonMap || minLength > 0)
 		{
 			int size = chainCodes.size();
-			ImageProcessor ip = (size > 255) ? new ShortProcessor(bp.getWidth(), bp.getHeight()) : new ByteProcessor(
-					bp.getWidth(), bp.getHeight());
+			ImageProcessor ip = (size > 255) ? new ShortProcessor(bp.getWidth(), bp.getHeight())
+					: new ByteProcessor(bp.getWidth(), bp.getHeight());
 			return ip;
 		}
 		return null;
@@ -413,7 +424,7 @@ public class ThreadAnalyser implements PlugIn
 			int x = code.getX();
 			int y = code.getY();
 			int[] run = code.getRun();
-			for (int i=0; i<run.length/2; i++)
+			for (int i = 0; i < run.length / 2; i++)
 			{
 				x += ChainCode.DIR_X_OFFSET[run[i]];
 				y += ChainCode.DIR_Y_OFFSET[run[i]];
@@ -424,7 +435,7 @@ public class ThreadAnalyser implements PlugIn
 		}
 		return new PointRoi(xPoints, yPoints, nPoints);
 	}
-	
+
 	private void showImage(ImageProcessor ip, String title, Roi roi)
 	{
 		ImagePlus imp = WindowManager.getImage(title);
@@ -509,8 +520,8 @@ public class ThreadAnalyser implements PlugIn
 	{
 		if (chainCodes.size() > 1000)
 		{
-			YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE, "Do you want to show all " +
-					chainCodes.size() + " results?");
+			YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE,
+					"Do you want to show all " + chainCodes.size() + " results?");
 			d.setVisible(true);
 			if (!d.yesPressed())
 				return;

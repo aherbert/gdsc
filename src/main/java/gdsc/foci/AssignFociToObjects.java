@@ -1,23 +1,39 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
+import java.awt.Color;
+import java.awt.Point;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+
 import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
-import gdsc.help.URL;
 import gdsc.core.ij.Utils;
 import gdsc.core.utils.TextUtils;
+import gdsc.help.URL;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
@@ -29,13 +45,6 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
-
-import java.awt.Color;
-import java.awt.Point;
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 /**
  * Finds objects in an image using contiguous pixels of the same value. Locates the closest object to each Find Foci
@@ -79,6 +88,7 @@ public class AssignFociToObjects implements PlugInFilter
 			this.d2 = d2;
 		}
 
+		@Override
 		public int compareTo(Search that)
 		{
 			if (this.d2 < that.d2)
@@ -94,10 +104,11 @@ public class AssignFociToObjects implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 			return DONE;
 		this.imp = imp;
@@ -109,6 +120,7 @@ public class AssignFociToObjects implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		if (!showDialog())
@@ -295,7 +307,7 @@ public class AssignFociToObjects implements PlugInFilter
 			final int[] result = results.get(i);
 			final int x = result[0];
 			final int y = result[1];
-			
+
 			// Check within the image
 			if (x < 0 || x >= maxx || y < 0 || y >= maxy)
 				continue;

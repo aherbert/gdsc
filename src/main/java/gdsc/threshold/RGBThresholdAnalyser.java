@@ -1,20 +1,32 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.threshold;
 
+import java.io.File;
+import java.io.FilenameFilter;
+
 import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
 import gdsc.core.ij.Utils;
 import gdsc.core.threshold.AutoThreshold;
 import ij.IJ;
@@ -24,9 +36,6 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-
-import java.io.File;
-import java.io.FilenameFilter;
 
 /**
  * For all the RGB images in one directory, look for a matching image in a second directory that has 3 channels.
@@ -46,10 +55,11 @@ public class RGBThresholdAnalyser implements PlugIn
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		dir1 = Utils.getDirectory("RGB_Directory", dir1);
 		if (dir1 == null)
 			return;
@@ -59,6 +69,7 @@ public class RGBThresholdAnalyser implements PlugIn
 
 		File[] fileList = (new File(dir1)).listFiles(new FilenameFilter()
 		{
+			@Override
 			public boolean accept(File dir, String name)
 			{
 				name = name.toLowerCase();
@@ -123,7 +134,6 @@ public class RGBThresholdAnalyser implements PlugIn
 			analyse(name, cp, 1, ip1, ip3);
 			analyse(name, cp, 2, ip2, ip3);
 
-			
 			if (Utils.isInterrupted())
 				return;
 		}

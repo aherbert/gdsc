@@ -1,22 +1,32 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
 import gdsc.core.threshold.Histogram;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2016 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
 
 /**
  * Find the peak intensity regions of an image.
@@ -42,6 +52,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 {
 	protected int[] image;
 
+	@Override
 	protected Object extractImage(ImagePlus imp)
 	{
 		if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16)
@@ -63,11 +74,13 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		return image;
 	}
 
+	@Override
 	protected byte[] createTypesArray(Object pixels)
 	{
 		return new byte[maxx_maxy_maxz];
 	}
 
+	@Override
 	protected float getImageMin(Object pixels, byte[] types)
 	{
 		final int[] image = (int[]) pixels;
@@ -83,6 +96,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		return min;
 	}
 
+	@Override
 	protected Histogram buildHistogram(int bitDepth, Object pixels, byte[] types, int statsMode)
 	{
 		final int[] image = (int[]) pixels;
@@ -115,6 +129,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		return new Histogram(data);
 	}
 
+	@Override
 	protected Histogram buildHistogram(int bitDepth, Object pixels)
 	{
 		final int[] image = ((int[]) pixels);
@@ -131,6 +146,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		return new Histogram(data);
 	}
 
+	@Override
 	protected Histogram buildHistogram(Object pixels, int[] maxima, int peakValue, float maxValue)
 	{
 		final int[] image = (int[]) pixels;
@@ -146,6 +162,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		return new Histogram(histogram);
 	}
 
+	@Override
 	protected float getSearchThreshold(int backgroundMethod, double backgroundParameter, FindFociStatistics stats)
 	{
 		switch (backgroundMethod)
@@ -174,26 +191,31 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		}
 	}
 
+	@Override
 	protected void setPixels(Object pixels)
 	{
 		this.image = (int[]) pixels;
 	}
 
+	@Override
 	protected float getf(int i)
 	{
 		return image[i];
 	}
 
+	@Override
 	protected int getBackgroundBin(Histogram histogram, float background)
 	{
 		return round(background);
 	}
 
+	@Override
 	protected int getBin(Histogram histogram, int i)
 	{
 		return image[i];
 	}
 
+	@Override
 	protected float getTolerance(int searchMethod, double searchParameter, FindFociStatistics stats, float v0)
 	{
 		switch (searchMethod)
@@ -212,6 +234,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		return 0;
 	}
 
+	@Override
 	protected double getPeakHeight(int peakMethod, double peakParameter, FindFociStatistics stats, float v0)
 	{
 		int height = 1;

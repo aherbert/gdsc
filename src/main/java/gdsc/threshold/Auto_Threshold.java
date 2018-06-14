@@ -1,3 +1,26 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.threshold;
 
 import gdsc.UsageTracker;
@@ -38,7 +61,7 @@ import ij.process.StackConverter;
 public class Auto_Threshold implements PlugIn
 {
 	private static final String TITLE = "Auto Threshold";
-	
+
 	// Original method variable changed to static to allow repeatability of dialog
 	private static String myMethod = AutoThreshold.Method.OTSU.name;
 	private static boolean noBlack = false;
@@ -55,10 +78,11 @@ public class Auto_Threshold implements PlugIn
 	private static double stdDevMultiplier = 3;
 
 	/** Ask for parameters and then execute. */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		// 1 - Obtain the currently active image:
 		ImagePlus imp = IJ.getImage();
 
@@ -109,7 +133,8 @@ public class Auto_Threshold implements PlugIn
 			gd.addCheckbox("Stack", doIstack);
 			gd.addCheckbox("Use_stack_histogram", doIstackHistogram);
 		}
-		gd.addMessage("The thresholded result of 8 & 16 bit images is shown\nin white [255] in 8 bits.\nFor 16 bit images, results of \'Try all\' and single slices\nof a stack are shown in white [65535] in 16 bits.\nUnsuccessfully thresholded images are left unchanged.");
+		gd.addMessage(
+				"The thresholded result of 8 & 16 bit images is shown\nin white [255] in 8 bits.\nFor 16 bit images, results of \'Try all\' and single slices\nof a stack are shown in white [65535] in 16 bits.\nUnsuccessfully thresholded images are left unchanged.");
 		gd.addHelp(gdsc.help.URL.UTILITY);
 
 		gd.showDialog();
@@ -287,7 +312,8 @@ public class Auto_Threshold implements PlugIn
 			{ //whole stack
 				if (doIstackHistogram)
 				{// one global histogram
-					Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram);
+					Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog,
+							doIstackHistogram);
 					if (((Integer) result[0]) != -1 && imp.getBitDepth() == 16)
 						new StackConverter(imp).convertToGray8();
 				}
@@ -438,7 +464,7 @@ public class Auto_Threshold implements PlugIn
 									ip.putPixel(x, y, b);
 							}
 						}
-					}//threshold all of them
+					} //threshold all of them
 					imp.setSliceWithoutUpdate(currentSlice);
 				}
 				else

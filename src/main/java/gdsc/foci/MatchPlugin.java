@@ -1,3 +1,26 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
 import java.awt.Color;
@@ -15,20 +38,6 @@ import java.util.List;
 import gdsc.UsageTracker;
 import gdsc.core.data.utils.Rounder;
 import gdsc.core.data.utils.RounderFactory;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
 import gdsc.core.ij.Utils;
 import gdsc.core.match.Coordinate;
 import gdsc.core.match.MatchCalculator;
@@ -168,6 +177,7 @@ public class MatchPlugin implements PlugIn
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public void run(String arg)
 	{
@@ -603,6 +613,7 @@ public class MatchPlugin implements PlugIn
 		final TurboList<PointRoi> rois = new TurboList<PointRoi>(xpoints.size());
 		xpoints.forEachEntry(new TIntObjectProcedure<TIntArrayList>()
 		{
+			@Override
 			public boolean execute(int z, TIntArrayList b)
 			{
 				int[] data = b.toArray();
@@ -1380,6 +1391,7 @@ public class MatchPlugin implements PlugIn
 
 		Collections.sort(matches, new Comparator<PointPair>()
 		{
+			@Override
 			public int compare(PointPair o1, PointPair o2)
 			{
 				TimeValuedPoint p1 = (TimeValuedPoint) o1.getPoint1();
@@ -1405,6 +1417,7 @@ public class MatchPlugin implements PlugIn
 
 		Arrays.sort(actualPoints, new Comparator<TimeValuedPoint>()
 		{
+			@Override
 			public int compare(TimeValuedPoint p1, TimeValuedPoint p2)
 			{
 				return (p1.getTime() < p2.getTime()) ? -1 : 1;
@@ -1412,6 +1425,7 @@ public class MatchPlugin implements PlugIn
 		});
 		Arrays.sort(predictedPoints, new Comparator<TimeValuedPoint>()
 		{
+			@Override
 			public int compare(TimeValuedPoint p1, TimeValuedPoint p2)
 			{
 				return (p1.getTime() < p2.getTime()) ? -1 : 1;
@@ -1507,10 +1521,10 @@ public class MatchPlugin implements PlugIn
 			case 0: return  (float) result.totalIntensity;
 			case 1: return  (float) result.intensityAboveSaddle;
 			case 2: return  (float) result.totalIntensityAboveBackground;
-			case 3: return  (float) result.count;
-			case 4: return  (float) result.countAboveSaddle;
-			case 5: return  (float) result.maxValue;
-			case 6: return  (float) result.highestSaddleValue;
+			case 3: return  result.count;
+			case 4: return  result.countAboveSaddle;
+			case 5: return  result.maxValue;
+			case 6: return  result.highestSaddleValue;
 			default: return (float) result.totalIntensity;
 			//@formatter:on
 		}

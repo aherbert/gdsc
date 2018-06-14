@@ -1,19 +1,33 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci.controller;
 
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
+import java.util.ArrayList;
+import java.util.List;
 
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociProcessor;
 import gdsc.foci.FindFociResult;
 import gdsc.foci.FindFociResults;
 import gdsc.foci.model.FindFociModel;
@@ -22,9 +36,6 @@ import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.process.ImageProcessor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Allows ImageJ to run the {@link gdsc.foci.FindFoci } algorithm and return the results.
@@ -163,31 +174,31 @@ public class FindMaximaController extends ImageJController
 		int outputType = FindFoci.getOutputMaskFlags(showMask);
 
 		if (overlayMask)
-			outputType += FindFoci.OUTPUT_OVERLAY_MASK;
+			outputType += FindFociProcessor.OUTPUT_OVERLAY_MASK;
 		if (showTable)
-			outputType += FindFoci.OUTPUT_RESULTS_TABLE;
+			outputType += FindFociProcessor.OUTPUT_RESULTS_TABLE;
 		if (clearTable)
-			outputType += FindFoci.OUTPUT_CLEAR_RESULTS_TABLE;
+			outputType += FindFociProcessor.OUTPUT_CLEAR_RESULTS_TABLE;
 		if (markMaxima)
-			outputType += FindFoci.OUTPUT_ROI_SELECTION;
+			outputType += FindFociProcessor.OUTPUT_ROI_SELECTION;
 		if (markROIMaxima)
-			outputType += FindFoci.OUTPUT_MASK_ROI_SELECTION;
+			outputType += FindFociProcessor.OUTPUT_MASK_ROI_SELECTION;
 		if (markUsingOverlay)
-			outputType += FindFoci.OUTPUT_ROI_USING_OVERLAY;
+			outputType += FindFociProcessor.OUTPUT_ROI_USING_OVERLAY;
 		if (hideLabels)
-			outputType += FindFoci.OUTPUT_HIDE_LABELS;
+			outputType += FindFociProcessor.OUTPUT_HIDE_LABELS;
 		if (showLogMessages)
-			outputType += FindFoci.OUTPUT_LOG_MESSAGES;
+			outputType += FindFociProcessor.OUTPUT_LOG_MESSAGES;
 
 		int options = 0;
 		if (minimumAboveSaddle)
-			options |= FindFoci.OPTION_MINIMUM_ABOVE_SADDLE;
+			options |= FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE;
 		if (connectedAboveSaddle)
-			options |= FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+			options |= FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		if (statisticsMode.equalsIgnoreCase("inside"))
-			options |= FindFoci.OPTION_STATS_INSIDE;
+			options |= FindFociProcessor.OPTION_STATS_INSIDE;
 		else if (statisticsMode.equalsIgnoreCase("outside"))
-			options |= FindFoci.OPTION_STATS_OUTSIDE;
+			options |= FindFociProcessor.OPTION_STATS_OUTSIDE;
 
 		if (outputType == 0)
 		{
@@ -261,6 +272,7 @@ public class FindMaximaController extends ImageJController
 	 * 
 	 * @see gdsc.foci.controller.FindFociController#endPreview()
 	 */
+	@Override
 	public void endPreview()
 	{
 		// Do nothing

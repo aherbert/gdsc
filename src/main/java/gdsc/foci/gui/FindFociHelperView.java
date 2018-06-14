@@ -1,42 +1,27 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci.gui;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
-import gdsc.foci.FindFoci;
-import gdsc.foci.FindFociResult;
-import gdsc.foci.GridException;
-import gdsc.foci.GridPoint;
-import gdsc.foci.GridPointManager;
-import gdsc.foci.AssignedPoint;
-import gdsc.foci.MatchPlugin;
-import gdsc.foci.PointAlignerPlugin;
-import gdsc.foci.PointManager;
-import gdsc.foci.controller.FindMaximaController;
-import gdsc.foci.converter.ValidImagesConverter;
-import gdsc.foci.model.FindFociModel;
-import gdsc.format.LimitedNumberFormat;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.WindowManager;
-import ij.gui.ImageCanvas;
-import ij.gui.PointRoi;
-import ij.gui.PolygonRoi;
-import ij.gui.Roi;
-import ij.macro.MacroRunner;
-import ij.measure.Calibration;
-import ij.text.TextWindow;
 
 import java.awt.Color;
 import java.awt.EventQueue;
@@ -68,11 +53,13 @@ import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
@@ -83,13 +70,34 @@ import org.jdesktop.beansbinding.Bindings;
 import org.jdesktop.swingbinding.JComboBoxBinding;
 import org.jdesktop.swingbinding.SwingBindings;
 
-import javax.swing.JCheckBox;
-
-import gdsc.foci.converter.StringToBooleanConverter;
-import gdsc.foci.converter.SearchModeConverter;
 import gdsc.core.ij.Utils;
-
-import javax.swing.JToggleButton;
+import gdsc.foci.AssignedPoint;
+import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociProcessor;
+import gdsc.foci.FindFociResult;
+import gdsc.foci.GridException;
+import gdsc.foci.GridPoint;
+import gdsc.foci.GridPointManager;
+import gdsc.foci.MatchPlugin;
+import gdsc.foci.PointAlignerPlugin;
+import gdsc.foci.PointManager;
+import gdsc.foci.controller.FindMaximaController;
+import gdsc.foci.converter.SearchModeConverter;
+import gdsc.foci.converter.StringToBooleanConverter;
+import gdsc.foci.converter.ValidImagesConverter;
+import gdsc.foci.model.FindFociModel;
+import gdsc.format.LimitedNumberFormat;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.ImageCanvas;
+import ij.gui.PointRoi;
+import ij.gui.PolygonRoi;
+import ij.gui.Roi;
+import ij.macro.MacroRunner;
+import ij.measure.Calibration;
+import ij.text.TextWindow;
 
 /**
  * Provides a permanent form front-end that allows the user to pick ROI points and have them mapped to the closest
@@ -165,6 +173,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	{
 		EventQueue.invokeLater(new Runnable()
 		{
+			@Override
 			public void run()
 			{
 				try
@@ -228,6 +237,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		comboImageList.setToolTipText("Select the input image");
 		comboImageList.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboImageList.firePropertyChange("selectedItem", 0, 1);
@@ -261,6 +271,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		comboMaskImageList.setToolTipText("Select the input mask image");
 		comboMaskImageList.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				comboMaskImageList.firePropertyChange("selectedItem", 0, 1);
@@ -294,6 +305,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		txtResolution = new JFormattedTextField(new LimitedNumberFormat(0));
 		txtResolution.addPropertyChangeListener(new PropertyChangeListener()
 		{
+			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName() == "value")
@@ -323,6 +335,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		btnSaveResults = new JButton("Save Results");
 		btnSaveResults.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				if (isActive())
@@ -363,6 +376,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		comboSearchMode = new JComboBox<String>();
 		comboSearchMode.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				// Force the BeansBinding framework to pick up the state change
@@ -381,6 +395,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		btnRun = new JButton("Start");
 		btnRun.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				initialisePicker();
@@ -396,6 +411,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		btnStop = new JButton("Stop");
 		btnStop.addActionListener(new ActionListener()
 		{
+			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				killPicker();
@@ -516,6 +532,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		tglbtnOverlay = new JToggleButton("Show Overlay");
 		tglbtnOverlay.addItemListener(new ItemListener()
 		{
+			@Override
 			public void itemStateChanged(ItemEvent e)
 			{
 				// Force the BeansBinding framework to pick up the state change
@@ -544,7 +561,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		gbc_btnHelp.gridy = 11;
 		contentPane.add(btnHelp, gbc_btnHelp);
 		initDataBindings();
-		
+
 		this.pack();
 	}
 
@@ -554,22 +571,22 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 		model.setMaskImage(null);
 		// Find points above the mean. This is a good start for finding maxima.
-		model.setBackgroundMethod(FindFoci.BACKGROUND_STD_DEV_ABOVE_MEAN);
+		model.setBackgroundMethod(FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN);
 		model.setBackgroundParameter(0);
 		model.setThresholdMethod("");
-		model.setSearchMethod(FindFoci.SEARCH_ABOVE_BACKGROUND);
+		model.setSearchMethod(FindFociProcessor.SEARCH_ABOVE_BACKGROUND);
 		model.setSearchParameter(0);
 		model.setMaxPeaks(33000);
 		model.setMinSize(1);
 		model.setMinimumAboveSaddle(false);
-		model.setPeakMethod(FindFoci.PEAK_RELATIVE);
+		model.setPeakMethod(FindFociProcessor.PEAK_RELATIVE);
 		model.setPeakParameter(0);
 		model.setShowMask(0);
 		model.setShowTable(true); // We need to get the results table
 		model.setMarkMaxima(false);
 		model.setMarkROIMaxima(false);
 		model.setShowLogMessages(false);
-		model.setSortMethod(FindFoci.SORT_MAX_VALUE);
+		model.setSortMethod(FindFociProcessor.SORT_MAX_VALUE);
 		model.setGaussianBlur(0);
 		model.setCentreMethod(FindFoci.CENTRE_MAX_VALUE_ORIGINAL);
 		model.setCentreParameter(0);
@@ -1115,35 +1132,43 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		dragging = false;
 	}
 
+	@Override
 	public void windowOpened(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowClosing(WindowEvent e)
 	{
 		killPicker();
 	}
 
+	@Override
 	public void windowClosed(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowIconified(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowDeiconified(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowActivated(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowDeactivated(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void mouseClicked(MouseEvent e)
 	{
 		setShowOverlay(false);
@@ -1242,6 +1267,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		}
 	}
 
+	@Override
 	public void mousePressed(MouseEvent e)
 	{
 	}
@@ -1249,6 +1275,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	/*
 	 * If the user has dragged an ROI point then it should be reassigned when it is dropped.
 	 */
+	@Override
 	public void mouseReleased(MouseEvent e)
 	{
 		if (dragging)
@@ -1298,10 +1325,12 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		return -1;
 	}
 
+	@Override
 	public void mouseEntered(MouseEvent e)
 	{
 	}
 
+	@Override
 	public void mouseExited(MouseEvent e)
 	{
 	}
@@ -1310,6 +1339,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	 * If the user is dragging a multi-point ROI position then this method will detect the
 	 * point and set it to unassigned. This is done once at the start of the drag.
 	 */
+	@Override
 	public void mouseDragged(MouseEvent e)
 	{
 		setShowOverlay(false);
@@ -1358,6 +1388,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		}
 	}
 
+	@Override
 	public void mouseMoved(MouseEvent e)
 	{
 	}
@@ -1375,6 +1406,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	 */
 	private class DistanceComparator implements Comparator<int[]>
 	{
+		@Override
 		public int compare(int[] o1, int[] o2)
 		{
 			int diff = o1[6] - o2[6];

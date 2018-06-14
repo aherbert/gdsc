@@ -1,3 +1,26 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
 import java.awt.Rectangle;
@@ -515,13 +538,13 @@ public class FindFociLegacy
 
 	public static String getStatisticsMode(int options)
 	{
-		if ((options &
-				(FindFoci.OPTION_STATS_INSIDE | FindFoci.OPTION_STATS_OUTSIDE)) == (FindFoci.OPTION_STATS_INSIDE |
-						FindFoci.OPTION_STATS_OUTSIDE))
+		if ((options & (FindFociProcessor.OPTION_STATS_INSIDE |
+				FindFociProcessor.OPTION_STATS_OUTSIDE)) == (FindFociProcessor.OPTION_STATS_INSIDE |
+						FindFociProcessor.OPTION_STATS_OUTSIDE))
 			return "Both";
-		if ((options & FindFoci.OPTION_STATS_INSIDE) != 0)
+		if ((options & FindFociProcessor.OPTION_STATS_INSIDE) != 0)
 			return "Inside";
-		if ((options & FindFoci.OPTION_STATS_OUTSIDE) != 0)
+		if ((options & FindFociProcessor.OPTION_STATS_OUTSIDE) != 0)
 			return "Outside";
 		return "Both";
 	}
@@ -1727,7 +1750,7 @@ public class FindFociLegacy
 			}
 		}
 
-		return (double) sum;
+		return sum;
 	}
 
 	/**
@@ -3539,6 +3562,7 @@ public class FindFociLegacy
 
 	private class SaddleComparator implements Comparator<int[]>
 	{
+		@Override
 		public int compare(int[] o1, int[] o2)
 		{
 			int result = o1[SADDLE_PEAK_ID] - o2[SADDLE_PEAK_ID];
@@ -3556,6 +3580,7 @@ public class FindFociLegacy
 
 	private class DefaultSaddleComparator implements Comparator<int[]>
 	{
+		@Override
 		public int compare(int[] o1, int[] o2)
 		{
 			if (o1[SADDLE_VALUE] > o2[SADDLE_VALUE])
@@ -4196,6 +4221,7 @@ public class FindFociLegacy
 		 * 
 		 * @see java.lang.Comparable#compareTo(java.lang.Object)
 		 */
+		@Override
 		public int compareTo(Coordinate o)
 		{
 			// Require the sort to rank the highest peak as first.
@@ -4215,6 +4241,7 @@ public class FindFociLegacy
 		 * 
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 		 */
+		@Override
 		public int compare(int[] o1, int[] o2)
 		{
 			if (o1[RESULT_MAX_VALUE] > o2[RESULT_MAX_VALUE])
@@ -4259,6 +4286,7 @@ public class FindFociLegacy
 		 * 
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 		 */
+		@Override
 		public int compare(int[] o1, int[] o2)
 		{
 			// Require the highest is first
@@ -4287,6 +4315,7 @@ public class FindFociLegacy
 		 * 
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 		 */
+		@Override
 		public int compare(int[] o1, int[] o2)
 		{
 			// Require the lowest is first

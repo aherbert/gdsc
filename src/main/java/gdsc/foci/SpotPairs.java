@@ -1,22 +1,37 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
 import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
-import gdsc.help.URL;
 import gdsc.core.ij.Utils;
+import gdsc.help.URL;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.DialogListener;
@@ -29,12 +44,6 @@ import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-
-import java.awt.AWTEvent;
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 
 /**
  * Analyses marked ROI points in an image. Find the closest pairs within a set distance of each other.
@@ -155,7 +164,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 		}
 
 		/**
-		 * Sorts the points in ID order. This only works for the first two points in the list. 
+		 * Sorts the points in ID order. This only works for the first two points in the list.
 		 */
 		public void sort()
 		{
@@ -168,7 +177,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 				head = p2;
 				p1.next = p2.next;
 				p2.next = p1;
-			}			
+			}
 		}
 	}
 
@@ -219,10 +228,11 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 			return DONE;
 		Roi roi = imp.getRoi();
@@ -251,9 +261,10 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 		{
 			for (Cluster c : candidates)
 				c.sort();
-			
+
 			Collections.sort(candidates, new Comparator<Cluster>()
 			{
+				@Override
 				public int compare(Cluster o1, Cluster o2)
 				{
 					// Put the pairs first
@@ -261,7 +272,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 						return -1;
 					if (o1.n < o2.n)
 						return 1;
-					
+
 					// Sort by the first point ID
 					if (o1.head.id < o2.head.id)
 						return -1;
@@ -333,6 +344,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		candidates = findPairs();
@@ -563,6 +575,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
 	 * ij.plugin.filter.PlugInFilterRunner)
 	 */
+	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
@@ -595,6 +608,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	 * @param e
 	 * @return
 	 */
+	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		radius = gd.getNextNumber();
@@ -608,6 +622,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	/**
 	 * @param nPasses
 	 */
+	@Override
 	public void setNPasses(int nPasses)
 	{
 		// Do nothing		

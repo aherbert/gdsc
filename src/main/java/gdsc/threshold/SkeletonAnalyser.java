@@ -1,3 +1,26 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.threshold;
 
 import java.util.ArrayList;
@@ -10,20 +33,6 @@ import java.util.List;
 
 import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Prefs;
@@ -82,6 +91,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -134,6 +144,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		ByteProcessor bp = (ByteProcessor) ip.convertToByte(false);
@@ -178,7 +189,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 */
 	public boolean skeletonise(ByteProcessor ip, boolean trim)
 	{
-		if (!((ByteProcessor) ip).isBinary())
+		if (!ip.isBinary())
 			return false;
 
 		if (maxx == 0)
@@ -207,7 +218,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 */
 	public byte[] findNodes(ByteProcessor ip)
 	{
-		if (!((ByteProcessor) ip).isBinary())
+		if (!ip.isBinary())
 			return null;
 
 		byte foreground = (byte) (Prefs.blackBackground ? 255 : 0);
@@ -304,6 +315,7 @@ public class SkeletonAnalyser implements PlugInFilter
 			this.code = code;
 		}
 
+		@Override
 		public int compareTo(Line that)
 		{
 			return this.start - that.start;
@@ -312,6 +324,7 @@ public class SkeletonAnalyser implements PlugInFilter
 
 	private class LineComparator implements Comparator<Line>
 	{
+		@Override
 		public int compare(Line o1, Line o2)
 		{
 			if (o1.internal ^ o2.internal)
@@ -420,6 +433,7 @@ public class SkeletonAnalyser implements PlugInFilter
 		// If any marked for deletion, remove the shortest line
 		Collections.sort(toDelete, new Comparator<Line>()
 		{
+			@Override
 			public int compare(Line o1, Line o2)
 			{
 				// Rank by length
@@ -1249,6 +1263,7 @@ public class SkeletonAnalyser implements PlugInFilter
 			this.code = code;
 		}
 
+		@Override
 		public int compareTo(Result that)
 		{
 			int[] result = new int[1];

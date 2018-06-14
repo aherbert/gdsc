@@ -1,30 +1,40 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci.controller;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
 import gdsc.foci.FindFoci;
+import gdsc.foci.FindFociProcessor;
 import gdsc.foci.model.FindFociModel;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.plugin.frame.Recorder;
 import ij.process.ImageStatistics;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Allows ImageJ to run the {@link gdsc.foci.FindFoci } algorithm
@@ -145,43 +155,43 @@ public class ImageJController extends FindFociController
 		int outputType = FindFoci.getOutputMaskFlags(showMask);
 
 		if (overlayMask)
-			outputType += FindFoci.OUTPUT_OVERLAY_MASK;
+			outputType += FindFociProcessor.OUTPUT_OVERLAY_MASK;
 		if (showTable)
-			outputType += FindFoci.OUTPUT_RESULTS_TABLE;
+			outputType += FindFociProcessor.OUTPUT_RESULTS_TABLE;
 		if (clearTable)
-			outputType += FindFoci.OUTPUT_CLEAR_RESULTS_TABLE;
+			outputType += FindFociProcessor.OUTPUT_CLEAR_RESULTS_TABLE;
 		if (markMaxima)
-			outputType += FindFoci.OUTPUT_ROI_SELECTION;
+			outputType += FindFociProcessor.OUTPUT_ROI_SELECTION;
 		if (markROIMaxima)
-			outputType += FindFoci.OUTPUT_MASK_ROI_SELECTION;
+			outputType += FindFociProcessor.OUTPUT_MASK_ROI_SELECTION;
 		if (markUsingOverlay)
-			outputType += FindFoci.OUTPUT_ROI_USING_OVERLAY;
+			outputType += FindFociProcessor.OUTPUT_ROI_USING_OVERLAY;
 		if (hideLabels)
-			outputType += FindFoci.OUTPUT_HIDE_LABELS;
+			outputType += FindFociProcessor.OUTPUT_HIDE_LABELS;
 		if (!showMaskMaximaAsDots)
-			outputType += FindFoci.OUTPUT_MASK_NO_PEAK_DOTS;
+			outputType += FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
 		if (showLogMessages)
-			outputType += FindFoci.OUTPUT_LOG_MESSAGES;
+			outputType += FindFociProcessor.OUTPUT_LOG_MESSAGES;
 
 		int options = 0;
 		if (minimumAboveSaddle)
-			options |= FindFoci.OPTION_MINIMUM_ABOVE_SADDLE;
+			options |= FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE;
 		if (connectedAboveSaddle)
-			options |= FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+			options |= FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		if (statisticsMode.equalsIgnoreCase("inside"))
-			options |= FindFoci.OPTION_STATS_INSIDE;
+			options |= FindFociProcessor.OPTION_STATS_INSIDE;
 		else if (statisticsMode.equalsIgnoreCase("outside"))
-			options |= FindFoci.OPTION_STATS_OUTSIDE;
+			options |= FindFociProcessor.OPTION_STATS_OUTSIDE;
 		if (removeEdgeMaxima)
-			options |= FindFoci.OPTION_REMOVE_EDGE_MAXIMA;
+			options |= FindFociProcessor.OPTION_REMOVE_EDGE_MAXIMA;
 		if (objectAnalysis)
 		{
-			options |= FindFoci.OPTION_OBJECT_ANALYSIS;
+			options |= FindFociProcessor.OPTION_OBJECT_ANALYSIS;
 			if (showObjectMask)
-				options |= FindFoci.OPTION_SHOW_OBJECT_MASK;
+				options |= FindFociProcessor.OPTION_SHOW_OBJECT_MASK;
 		}
 		if (saveToMemory)
-			options |= FindFoci.OPTION_SAVE_TO_MEMORY;
+			options |= FindFociProcessor.OPTION_SAVE_TO_MEMORY;
 
 		if (outputType == 0)
 		{
@@ -302,6 +312,7 @@ public class ImageJController extends FindFociController
 	 * 
 	 * @see gdsc.foci.controller.FindFociController#endPreview()
 	 */
+	@Override
 	public void endPreview()
 	{
 		if (runner != null)

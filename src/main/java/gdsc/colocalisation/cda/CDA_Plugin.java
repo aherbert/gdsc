@@ -1,16 +1,27 @@
-package gdsc.colocalisation.cda;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
  * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- *
- * This class is based on the original CDA_Plugin developed by 
- * Maria Osorio-Reich:
- * http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:confined_displacement_algorithm_determines_true_and_random_colocalization_:start
- *---------------------------------------------------------------------------*/
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
+package gdsc.colocalisation.cda;
 
 import java.awt.BorderLayout;
 import java.awt.Button;
@@ -84,6 +95,11 @@ import ij.util.Tools;
  * 
  * Supports stacks. Only a specific channel and time frame can be used and all input images must have the same number
  * of z-sections for the chosen channel/time frame.
+ * <p>
+ * This class is based on the original CDA_Plugin developed by Maria Osorio-Reich:
+ * <a href=
+ * "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:confined_displacement_algorithm_determines_true_and_random_colocalization_:start">Confined
+ * Displacement Algorithm Determines True and Random Colocalization</a>
  */
 public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListener, KeyListener, Runnable
 {
@@ -291,6 +307,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -351,6 +368,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		fillImagesList();
 	}
 
+	@Override
 	public synchronized void actionPerformed(ActionEvent e)
 	{
 		Object actioner = e.getSource();
@@ -372,6 +390,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		super.notify();
 	}
 
+	@Override
 	public void itemStateChanged(ItemEvent e)
 	{
 		Object actioner = e.getSource();
@@ -455,16 +474,19 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		return true;
 	}
 
+	@Override
 	public void keyTyped(KeyEvent e)
 	{
 		// Do nothing
 	}
 
+	@Override
 	public void keyPressed(KeyEvent e)
 	{
 		// Do nothing
 	}
 
+	@Override
 	public void keyReleased(KeyEvent e)
 	{
 		Object actioner = e.getSource();
@@ -476,6 +498,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		updateNumberOfSamples();
 	}
 
+	@Override
 	public void windowClosing(WindowEvent e)
 	{
 		closeWindowsOnExit = closeWindowsOnExitCheckbox.getState();
@@ -486,6 +509,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		close();
 	}
 
+	@Override
 	public void close()
 	{
 		if (closeWindowsOnExit)
@@ -547,6 +571,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		}
 	}
 
+	@Override
 	public void windowActivated(WindowEvent e)
 	{
 		super.windowActivated(e);
@@ -570,6 +595,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 * 
 	 * @see java.lang.Runnable#run()
 	 */
+	@Override
 	public void run()
 	{
 		doCDA();
@@ -1631,7 +1657,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		{
 			if (count[i] > 0)
 			{
-				avDistances.add((double) i);
+				avDistances.add(i);
 				avValues.add(sum[i] / count[i]);
 			}
 		}

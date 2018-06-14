@@ -1,3 +1,26 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
 import java.awt.AWTEvent;
@@ -68,10 +91,11 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			IJ.noImage();
@@ -103,6 +127,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus,
 	 * java.lang.String, ij.plugin.filter.PlugInFilterRunner)
 	 */
+	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
@@ -155,6 +180,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	 * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog,
 	 * java.awt.AWTEvent)
 	 */
+	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		if (containsRoiMask)
@@ -193,6 +219,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
+	@Override
 	public void setNPasses(int nPasses)
 	{
 		// Do nothing
@@ -203,6 +230,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor inputIp)
 	{
 		// Just run the particle analyser
@@ -309,25 +337,25 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 			// Run FindFoci to find the single highest spot
 			FindFoci ff = new FindFoci();
 			ImagePlus mask = createMask(particlesIp, particle);
-			int backgroundMethod = FindFoci.BACKGROUND_MEAN;
+			int backgroundMethod = FindFociProcessor.BACKGROUND_MEAN;
 			double backgroundParameter = 0;
 			String autoThresholdMethod = "";
-			int searchMethod = FindFoci.SEARCH_ABOVE_BACKGROUND;
+			int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
 			double searchParameter = 0;
 			int minSize = 5;
-			int peakMethod = FindFoci.PEAK_RELATIVE_ABOVE_BACKGROUND;
+			int peakMethod = FindFociProcessor.PEAK_RELATIVE_ABOVE_BACKGROUND;
 			double peakParameter = 0.5;
-			int outputType = FindFoci.OUTPUT_MASK | FindFoci.OUTPUT_MASK_FRACTION_OF_HEIGHT |
-					FindFoci.OUTPUT_MASK_NO_PEAK_DOTS;
-			int sortIndex = FindFoci.SORT_MAX_VALUE;
-			int options = FindFoci.OPTION_STATS_INSIDE;
+			int outputType = FindFociProcessor.OUTPUT_MASK | FindFociProcessor.OUTPUT_MASK_FRACTION_OF_HEIGHT |
+					FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
+			int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
+			int options = FindFociProcessor.OPTION_STATS_INSIDE;
 			int centreMethod = FindFoci.CENTRE_MAX_VALUE_ORIGINAL;
 			double centreParameter = 0;
 			double fractionParameter = fraction;
 
-			FindFociResults result = ff.findMaxima(tmpImp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
-					searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
-					options, blur, centreMethod, centreParameter, fractionParameter);
+			FindFociResults result = ff.findMaxima(tmpImp, mask, backgroundMethod, backgroundParameter,
+					autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
+					outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter);
 			if (result == null)
 				continue;
 

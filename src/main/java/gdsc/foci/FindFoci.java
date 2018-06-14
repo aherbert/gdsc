@@ -1,17 +1,27 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2016 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
 
 import java.awt.Color;
 import java.awt.TextField;
@@ -393,6 +403,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			this.z = z;
 		}
 
+		@Override
 		public int compareTo(XYZ that)
 		{
 			return this.z - that.z;
@@ -659,6 +670,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	private AtomicInteger batchError;
 
 	/** Ask for parameters and then execute. */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -844,17 +856,17 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		switch (showMask)
 		{
 			case 1:
-				return FindFoci.OUTPUT_MASK_PEAKS;
+				return FindFociProcessor.OUTPUT_MASK_PEAKS;
 			case 2:
-				return FindFoci.OUTPUT_MASK_THRESHOLD;
+				return FindFociProcessor.OUTPUT_MASK_THRESHOLD;
 			case 3:
-				return FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_ABOVE_SADDLE;
+				return FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_ABOVE_SADDLE;
 			case 4:
-				return FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_ABOVE_SADDLE;
+				return FindFociProcessor.OUTPUT_MASK_THRESHOLD | FindFociProcessor.OUTPUT_MASK_ABOVE_SADDLE;
 			case 5:
-				return FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_FRACTION_OF_INTENSITY;
+				return FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_FRACTION_OF_INTENSITY;
 			case 6:
-				return FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_FRACTION_OF_HEIGHT;
+				return FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_FRACTION_OF_HEIGHT;
 			default:
 				return 0;
 		}
@@ -1383,6 +1395,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		 * 
 		 * @see java.lang.Comparable#compareTo(java.lang.Object)
 		 */
+		@Override
 		public int compareTo(BatchResult that)
 		{
 			int result = this.batchId - that.batchId;
@@ -1659,13 +1672,13 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 	public static String getStatisticsMode(int options)
 	{
-		if ((options &
-				(FindFoci.OPTION_STATS_INSIDE | FindFoci.OPTION_STATS_OUTSIDE)) == (FindFoci.OPTION_STATS_INSIDE |
-						FindFoci.OPTION_STATS_OUTSIDE))
+		if ((options & (FindFociProcessor.OPTION_STATS_INSIDE |
+				FindFociProcessor.OPTION_STATS_OUTSIDE)) == (FindFociProcessor.OPTION_STATS_INSIDE |
+						FindFociProcessor.OPTION_STATS_OUTSIDE))
 			return "Both";
-		if ((options & FindFoci.OPTION_STATS_INSIDE) != 0)
+		if ((options & FindFociProcessor.OPTION_STATS_INSIDE) != 0)
 			return "Inside";
-		if ((options & FindFoci.OPTION_STATS_OUTSIDE) != 0)
+		if ((options & FindFociProcessor.OPTION_STATS_OUTSIDE) != 0)
 			return "Outside";
 		return "Both";
 	}
@@ -1733,17 +1746,19 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 	private static int getMaskOption(int outputType)
 	{
-		if (isSet(outputType, FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_FRACTION_OF_HEIGHT))
+		if (isSet(outputType,
+				FindFociProcessor.OUTPUT_MASK_THRESHOLD | FindFociProcessor.OUTPUT_MASK_FRACTION_OF_HEIGHT))
 			return 6;
-		if (isSet(outputType, FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_FRACTION_OF_INTENSITY))
+		if (isSet(outputType,
+				FindFociProcessor.OUTPUT_MASK_THRESHOLD | FindFociProcessor.OUTPUT_MASK_FRACTION_OF_INTENSITY))
 			return 5;
-		if (isSet(outputType, FindFoci.OUTPUT_MASK_THRESHOLD | FindFoci.OUTPUT_MASK_ABOVE_SADDLE))
+		if (isSet(outputType, FindFociProcessor.OUTPUT_MASK_THRESHOLD | FindFociProcessor.OUTPUT_MASK_ABOVE_SADDLE))
 			return 4;
-		if (isSet(outputType, FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_ABOVE_SADDLE))
+		if (isSet(outputType, FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_ABOVE_SADDLE))
 			return 3;
-		if (isSet(outputType, FindFoci.OUTPUT_MASK_THRESHOLD))
+		if (isSet(outputType, FindFociProcessor.OUTPUT_MASK_THRESHOLD))
 			return 2;
-		if (isSet(outputType, FindFoci.OUTPUT_MASK_PEAKS))
+		if (isSet(outputType, FindFociProcessor.OUTPUT_MASK_PEAKS))
 			return 1;
 
 		return 0;
@@ -1768,6 +1783,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaxima(ij.ImagePlus, ij.ImagePlus, int, double, java.lang.String, int,
 	 * double, int, int, int, double, int, int, int, double, int, double, double)
 	 */
+	@Override
 	public FindFociResults findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
 			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
 			int peakMethod, double peakParameter, int outputType, int sortIndex, int options, double blur,
@@ -1839,6 +1855,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * 
 	 * @see gdsc.foci.FindFociProcessor#blur(ij.ImagePlus, double)
 	 */
+	@Override
 	public ImagePlus blur(ImagePlus imp, double blur)
 	{
 		// Use static method as the FindFociProcessor may be null
@@ -1851,6 +1868,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaInit(ij.ImagePlus, ij.ImagePlus, ij.ImagePlus, int, java.lang.String,
 	 * int)
 	 */
+	@Override
 	public FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask,
 			int backgroundMethod, String autoThresholdMethod, int options)
 	{
@@ -1875,6 +1893,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * 
 	 * @see gdsc.foci.FindFociProcessor#clone(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociInitResults)
 	 */
+	@Override
 	public FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
 	{
 		return ffpStaged.clone(initResults, clonedInitResults);
@@ -1885,6 +1904,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * 
 	 * @see gdsc.foci.FindFociProcessor#findMaximaSearch(gdsc.foci.FindFociInitResults, int, double, int, double)
 	 */
+	@Override
 	public FindFociSearchResults findMaximaSearch(FindFociInitResults initResults, int backgroundMethod,
 			double backgroundParameter, int searchMethod, double searchParameter)
 	{
@@ -1899,6 +1919,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaMergePeak(gdsc.foci.FindFociInitResults,
 	 * gdsc.foci.FindFociSearchResults, int, double)
 	 */
+	@Override
 	public FindFociMergeTempResults findMaximaMergePeak(FindFociInitResults initResults,
 			FindFociSearchResults searchResults, int peakMethod, double peakParameter)
 	{
@@ -1912,6 +1933,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaMergeSize(gdsc.foci.FindFociInitResults,
 	 * gdsc.foci.FindFociMergeTempResults, int)
 	 */
+	@Override
 	public FindFociMergeTempResults findMaximaMergeSize(FindFociInitResults initResults,
 			FindFociMergeTempResults mergeResults, int minSize)
 	{
@@ -1925,6 +1947,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaMergeFinal(gdsc.foci.FindFociInitResults,
 	 * gdsc.foci.FindFociMergeTempResults, int, int, double)
 	 */
+	@Override
 	public FindFociMergeResults findMaximaMergeFinal(FindFociInitResults initResults,
 			FindFociMergeTempResults mergeResults, int minSize, int options, double blur)
 	{
@@ -1938,6 +1961,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaResults(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociMergeResults,
 	 * int, int, int, double)
 	 */
+	@Override
 	public FindFociResults findMaximaResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
 			int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
 	{
@@ -1956,6 +1980,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaPrelimResults(gdsc.foci.FindFociInitResults,
 	 * gdsc.foci.FindFociMergeResults, int, int, int, double)
 	 */
+	@Override
 	public FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults,
 			FindFociMergeResults mergeResults, int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
 	{
@@ -1975,6 +2000,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaMaskResults(gdsc.foci.FindFociInitResults,
 	 * gdsc.foci.FindFociMergeResults, gdsc.foci.FindFociResults, int, java.lang.String, java.lang.String, double)
 	 */
+	@Override
 	public FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
 			FindFociPrelimResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
 			double fractionParameter)
@@ -2508,6 +2534,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		 * 
 		 * @see java.lang.Runnable#run()
 		 */
+		@Override
 		public void run()
 		{
 			try
@@ -2690,7 +2717,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		gd.addCheckbox("Multi-thread", batchMultiThread);
 		gd.addMessage("[Note: Double-click a text field to open a selection dialog]");
 		@SuppressWarnings("unchecked")
-		Vector<TextField> texts = (Vector<TextField>) gd.getStringFields();
+		Vector<TextField> texts = gd.getStringFields();
 		for (TextField tf : texts)
 		{
 			tf.addMouseListener(this);
@@ -3089,6 +3116,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * 
 	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
 	 */
+	@Override
 	public void mouseClicked(MouseEvent e)
 	{
 		if (e.getClickCount() > 1 && e.getSource() instanceof TextField) // Double-click
@@ -3111,18 +3139,22 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 	}
 
+	@Override
 	public void mousePressed(MouseEvent paramMouseEvent)
 	{
 	}
 
+	@Override
 	public void mouseReleased(MouseEvent paramMouseEvent)
 	{
 	}
 
+	@Override
 	public void mouseEntered(MouseEvent paramMouseEvent)
 	{
 	}
 
+	@Override
 	public void mouseExited(MouseEvent paramMouseEvent)
 	{
 	}

@@ -1,17 +1,27 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2016 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
 
 /**
  * Find the peak intensity regions of an image.
@@ -34,6 +44,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * @see gdsc.foci.FindFociBaseProcessor#pruneMaxima(java.lang.Object, byte[], int, double,
 	 * gdsc.foci.FindFociStatistics, java.util.ArrayList, int[])
 	 */
+	@Override
 	protected void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
 			FindFociStatistics stats, FindFociResult[] resultsArray, int[] maxima)
 	{
@@ -68,6 +79,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * 
 	 * @see gdsc.foci.FindFociBaseProcessor#calculateInitialResults(java.lang.Object, int[], java.util.ArrayList)
 	 */
+	@Override
 	protected void calculateInitialResults(Object pixels, int[] maxima, FindFociResult[] resultsArray)
 	{
 		setPixels(pixels);
@@ -101,6 +113,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * 
 	 * @see gdsc.foci.FindFociBaseProcessor#calculateNativeResults(java.lang.Object, int[], java.util.ArrayList, int)
 	 */
+	@Override
 	protected void calculateNativeResults(Object pixels, int[] maxima, FindFociResult[] resultsArray,
 			int originalNumberOfPeaks)
 	{
@@ -148,6 +161,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * @param saddleHeight
 	 *            the saddle height
 	 */
+	@Override
 	protected void computeIntensityAboveSaddle(final int[] maxima, final int[] peakIdMap, final int peakId,
 			final FindFociResult result, final float saddleHeight)
 	{
@@ -180,6 +194,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 	 * 
 	 * @see gdsc.foci.FindFociBaseProcessor#getIntensityAboveFloor(java.lang.Object, byte[], float)
 	 */
+	@Override
 	protected double getIntensityAboveFloor(Object pixels, byte[] types, final float floor)
 	{
 		setPixels(pixels);

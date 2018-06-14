@@ -1,20 +1,29 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.utils;
 
 import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
@@ -41,6 +50,7 @@ public class GaussianPlugin implements PlugIn
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -82,20 +92,23 @@ public class GaussianPlugin implements PlugIn
 	{
 		float[] img = new float[width * height];
 
-		for (int i=0; i<1; i++)
+		for (int i = 0; i < 1; i++)
 		{
 			float sigma_x = sx[i];
 			float sigma_y = sy[i];
 			float theta = angle[i];
-			
-			float a = (float) (Math.cos(theta)*Math.cos(theta)/(2*sigma_x*sigma_x) + Math.sin(theta)*Math.sin(theta)/(2*sigma_y*sigma_y));
-			float b = (float) (Math.sin(2*theta)/(4*sigma_x*sigma_x) - Math.sin(2*theta)/(4*sigma_y*sigma_y));
-			float c = (float) (Math.sin(theta)*Math.sin(theta)/(2*sigma_x*sigma_x) + Math.cos(theta)*Math.cos(theta)/(2*sigma_y*sigma_y));
-			
+
+			float a = (float) (Math.cos(theta) * Math.cos(theta) / (2 * sigma_x * sigma_x) +
+					Math.sin(theta) * Math.sin(theta) / (2 * sigma_y * sigma_y));
+			float b = (float) (Math.sin(2 * theta) / (4 * sigma_x * sigma_x) -
+					Math.sin(2 * theta) / (4 * sigma_y * sigma_y));
+			float c = (float) (Math.sin(theta) * Math.sin(theta) / (2 * sigma_x * sigma_x) +
+					Math.cos(theta) * Math.cos(theta) / (2 * sigma_y * sigma_y));
+
 			int index = 0;
-			for (int yi=0; yi<height; yi++)
+			for (int yi = 0; yi < height; yi++)
 			{
-				for (int xi=0; xi<width; xi++) 
+				for (int xi = 0; xi < width; xi++)
 				{
 					img[index++] += gaussian(xi, yi, amplitude[i], xpos[i], ypos[i], a, b, c);
 				}
@@ -107,12 +120,14 @@ public class GaussianPlugin implements PlugIn
 
 	/**
 	 * Generic form of the 2D Gaussian
+	 * 
 	 * @param x
 	 * @param y
 	 * @return
 	 */
 	private float gaussian(float x, float y, float A, float x0, float y0, float a, float b, float c)
 	{
-		return (float) (A*Math.exp( -(a*(x-x0)*(x-x0) + 2*b*(x-x0)*(y-y0) + c*(y-y0)*(y-y0)))); 
+		return (float) (A *
+				Math.exp(-(a * (x - x0) * (x - x0) + 2 * b * (x - x0) * (y - y0) + c * (y - y0) * (y - y0))));
 	}
 }

@@ -1,20 +1,31 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.threshold;
 
+import java.util.ArrayList;
+
 import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
 import gdsc.core.ij.Utils;
 import gdsc.core.threshold.AutoThreshold;
 import ij.IJ;
@@ -25,8 +36,6 @@ import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 
-import java.util.ArrayList;
-
 /**
  * Create a mask from a source image and apply it to a target image. All pixels outside the mask will be set to zero.
  * The mask can be created using: an existing mask; thresholding or the minimum display value. The source image for the
@@ -34,8 +43,8 @@ import java.util.ArrayList;
  */
 public class ApplyMask implements PlugInFilter
 {
-	private static final String TITLE = "Apply Mask"; 
-	
+	private static final String TITLE = "Apply Mask";
+
 	private static String selectedImage = "";
 	private static int selectedOption = MaskCreater.OPTION_MASK;
 	private static String selectedThresholdMethod = AutoThreshold.Method.OTSU.name;
@@ -51,13 +60,16 @@ public class ApplyMask implements PlugInFilter
 	private int slice = 0;
 	private int frame = 0;
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			IJ.noImage();
@@ -68,17 +80,20 @@ public class ApplyMask implements PlugInFilter
 		{
 			applyMask();
 		}
-		return DONE; 
+		return DONE;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		// All process already done
 	}
-	
+
 	private boolean showDialog()
 	{
 		String sourceImage = "(Use target)";
@@ -149,7 +164,8 @@ public class ApplyMask implements PlugInFilter
 	}
 
 	/**
-	 * Create a mask from a source image and apply it to a target image. All pixels outside the mask will be set to zero.
+	 * Create a mask from a source image and apply it to a target image. All pixels outside the mask will be set to
+	 * zero.
 	 */
 	public void applyMask()
 	{
@@ -163,7 +179,7 @@ public class ApplyMask implements PlugInFilter
 		mc.setChannel(selectedChannel);
 		mc.setSlice(selectedSlice);
 		mc.setFrame(selectedFrame);
-		maskImp = mc.createMask(); 
+		maskImp = mc.createMask();
 
 		// Check the mask has the correct dimensions
 		if (maskImp == null)
@@ -176,7 +192,7 @@ public class ApplyMask implements PlugInFilter
 			IJ.error(TITLE, "Calculated mask does not match the target image dimensions");
 			return;
 		}
-		
+
 		// Check other dimensions && log dimension mismatch
 		int[] dimensions1 = imp.getDimensions();
 		int[] dimensions2 = maskImp.getDimensions();
@@ -198,25 +214,25 @@ public class ApplyMask implements PlugInFilter
 			}
 		}
 		if (sb != null)
-			IJ.log(sb.toString());		
-		
+			IJ.log(sb.toString());
+
 		// Apply the mask to the correct stack dimensions
 		int[] channels = createArray(dimensions1[2]);
 		int[] slices = createArray(dimensions1[3]);
 		int[] frames = createArray(dimensions1[4]);
-		
+
 		ImageStack imageStack = imp.getStack();
 		ImageStack maskStack = maskImp.getStack();
-		
+
 		for (int frame : frames)
 			for (int slice : slices)
 				for (int channel : channels)
 				{
 					ImageProcessor ip = imageStack.getProcessor(imp.getStackIndex(channel, slice, frame));
-					
+
 					// getStackIndex will clip to the mask dimensions  
 					ImageProcessor maskIp = maskStack.getProcessor(maskImp.getStackIndex(channel, slice, frame));
-					
+
 					for (int i = maskIp.getPixelCount(); i-- > 0;)
 					{
 						if (maskIp.get(i) == 0)
@@ -225,7 +241,7 @@ public class ApplyMask implements PlugInFilter
 						}
 					}
 				}
-		
+
 		imp.updateAndDraw();
 	}
 
@@ -236,7 +252,7 @@ public class ApplyMask implements PlugInFilter
 			array[i] = i + 1;
 		return array;
 	}
-	
+
 	/**
 	 * @param imp
 	 *            the target image for the masking

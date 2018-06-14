@@ -1,3 +1,26 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
 import java.util.ArrayList;
@@ -430,8 +453,8 @@ public class FindFociTest
 
 	private void isEqual(FindFociResults r1, FindFociResults r2, int set, boolean negativeValues, boolean nonContiguous)
 	{
-		String setName = String.format("Set %d (%b)", set, nonContiguous);  
-		
+		String setName = String.format("Set %d (%b)", set, nonContiguous);
+
 		ImagePlus imp1 = r1.mask;
 		ImagePlus imp2 = r2.mask;
 		Assert.assertEquals(setName + " Mask", imp1 != null, imp2 != null);
@@ -524,7 +547,7 @@ public class FindFociTest
 	{
 		FindFoci ff = new FindFoci();
 		ff.setOptimisedProcessor(optimised);
-		final int flags = (nonContiguous) ? options[i] : options[i] | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+		final int flags = (nonContiguous) ? options[i] : options[i] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		return ff.findMaxima(imp, null, backgroundMethod[i], backgroundParameter[i], autoThresholdMethod[i],
 				searchMethod[i], searchParameter[i], maxPeaks[i], minSize[i], peakMethod[i], peakParameter[i],
 				outputType[i], sortIndex[i], flags, blur[i], centreMethod[i], centreParameter[i], fractionParameter[i]);
@@ -535,7 +558,7 @@ public class FindFociTest
 		imp = toFloat(imp, negative);
 		FindFoci ff = new FindFoci();
 		ff.setOptimisedProcessor(optimised);
-		final int flags = (nonContiguous) ? options[i] : options[i] | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+		final int flags = (nonContiguous) ? options[i] : options[i] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		return ff.findMaxima(imp, null, backgroundMethod[i], backgroundParameter[i], autoThresholdMethod[i],
 				searchMethod[i], searchParameter[i], maxPeaks[i], minSize[i], peakMethod[i], peakParameter[i],
 				outputType[i], sortIndex[i], flags, blur[i], centreMethod[i], centreParameter[i], fractionParameter[i]);
@@ -561,7 +584,7 @@ public class FindFociTest
 	{
 		FindFoci ff = new FindFoci();
 		ff.setOptimisedProcessor(optimised);
-		final int flags = (nonContiguous) ? options[i] : options[i] | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+		final int flags = (nonContiguous) ? options[i] : options[i] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		ImagePlus imp2 = ff.blur(imp, blur[i]);
 		FindFociInitResults initResults = ff.findMaximaInit(imp, imp2, null, backgroundMethod[i],
 				autoThresholdMethod[i], flags);
@@ -570,8 +593,8 @@ public class FindFociTest
 		FindFociMergeTempResults mergePeakResults = ff.findMaximaMergePeak(initResults, searchResults, peakMethod[i],
 				peakParameter[i]);
 		mergePeakResults = ff.findMaximaMergeSize(initResults, mergePeakResults, minSize[i]);
-		FindFociMergeResults mergeResults = ff.findMaximaMergeFinal(initResults, mergePeakResults, minSize[i],
-				flags, blur[i]);
+		FindFociMergeResults mergeResults = ff.findMaximaMergeFinal(initResults, mergePeakResults, minSize[i], flags,
+				blur[i]);
 		FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i],
 				sortIndex[i], centreMethod[i], centreParameter[i]);
 		return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i], autoThresholdMethod[i],
@@ -585,7 +608,7 @@ public class FindFociTest
 		FindFoci ff = new FindFoci();
 		ImagePlus imp2 = ff.blur(imp, blur[i]);
 		ff.setOptimisedProcessor(optimised);
-		final int flags = (nonContiguous) ? options[i] : options[i] | FindFoci.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+		final int flags = (nonContiguous) ? options[i] : options[i] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
 		FindFociInitResults initResults = ff.findMaximaInit(imp, imp2, null, backgroundMethod[i],
 				autoThresholdMethod[i], flags);
 		FindFociSearchResults searchResults = ff.findMaximaSearch(initResults, backgroundMethod[i],
@@ -593,8 +616,8 @@ public class FindFociTest
 		FindFociMergeTempResults mergePeakResults = ff.findMaximaMergePeak(initResults, searchResults, peakMethod[i],
 				peakParameter[i]);
 		mergePeakResults = ff.findMaximaMergeSize(initResults, mergePeakResults, minSize[i]);
-		FindFociMergeResults mergeResults = ff.findMaximaMergeFinal(initResults, mergePeakResults, minSize[i],
-				flags, blur[i]);
+		FindFociMergeResults mergeResults = ff.findMaximaMergeFinal(initResults, mergePeakResults, minSize[i], flags,
+				blur[i]);
 		FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[i],
 				sortIndex[i], centreMethod[i], centreParameter[i]);
 		return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i], autoThresholdMethod[i],

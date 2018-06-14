@@ -1,17 +1,27 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci.gui;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -35,6 +45,7 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 
 /**
@@ -60,7 +71,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 		try
 		{
 			SliderLimitHelper dialog = new SliderLimitHelper();
-			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			dialog.setVisible(true);
 		}
 		catch (Exception e)
@@ -80,9 +91,11 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	 */
 	public SliderLimitHelper()
 	{
-		addWindowListener(new WindowAdapter() {
+		addWindowListener(new WindowAdapter()
+		{
 			@Override
-			public void windowActivated(WindowEvent e) {
+			public void windowActivated(WindowEvent e)
+			{
 				validMin();
 				validMax();
 			}
@@ -93,7 +106,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	private void init()
 	{
 		setModalityType(ModalityType.DOCUMENT_MODAL);
-		setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		setBounds(100, 100, 197, 145);
 		getContentPane().setLayout(new BorderLayout());
@@ -128,6 +141,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 			txtMinimum = new JFormattedTextField();
 			txtMinimum.addPropertyChangeListener(new PropertyChangeListener()
 			{
+				@Override
 				public void propertyChange(PropertyChangeEvent evt)
 				{
 					if (evt.getPropertyName().equals("textFormatter"))
@@ -139,7 +153,8 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 			txtMinimum.addKeyListener(new KeyAdapter()
 			{
 				@Override
-				public void keyReleased(KeyEvent e) {
+				public void keyReleased(KeyEvent e)
+				{
 					validMin();
 				}
 			});
@@ -164,6 +179,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 			txtMaximum = new JFormattedTextField();
 			txtMaximum.addPropertyChangeListener(new PropertyChangeListener()
 			{
+				@Override
 				public void propertyChange(PropertyChangeEvent evt)
 				{
 					if (evt.getPropertyName().equals("textFormatter"))
@@ -208,13 +224,14 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	}
 
 	/**
-	 * @param name The parameter name
+	 * @param name
+	 *            The parameter name
 	 */
 	public void setParameterName(String name)
 	{
-		this.lblParametername.setText(name); 
+		this.lblParametername.setText(name);
 	}
-	
+
 	/**
 	 * @param minimum
 	 *            the minimum to set
@@ -254,6 +271,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	 * 
 	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
 	 */
+	@Override
 	public void actionPerformed(ActionEvent e)
 	{
 		if (e.getActionCommand() == "OK")
@@ -306,7 +324,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	{
 		if (isEmpty(txtField))
 			return true;
-		
+
 		try
 		{
 			double value = Double.parseDouble(txtField.getText());

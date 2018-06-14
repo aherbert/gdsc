@@ -1,26 +1,39 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
 import gdsc.core.match.Coordinate;
 
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
 /**
- * <p>Stores a 2D/3D point.
+ * <p>
+ * Stores a 2D/3D point.
  * 
- * <p>Overrides equals and hashCode methods using x,y,z, coordinates for equivalence. Derived classes can optionally override this.
+ * <p>
+ * Overrides equals and hashCode methods using x,y,z, coordinates for equivalence. Derived classes can optionally
+ * override this.
  * 
- * @see {@link java.lang.Object#equals(java.lang.Object) } 
+ * @see {@link java.lang.Object#equals(java.lang.Object) }
  * @see {@link java.lang.Object#hashCode() }
  */
 public class BasePoint implements Coordinate
@@ -41,7 +54,6 @@ public class BasePoint implements Coordinate
 		this.x = x;
 		this.y = y;
 	}
-
 
 	/*
 	 * (non-Javadoc)
@@ -78,6 +90,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#getX()
 	 */
+	@Override
 	public float getX()
 	{
 		return x;
@@ -88,6 +101,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#getY()
 	 */
+	@Override
 	public float getY()
 	{
 		return y;
@@ -98,6 +112,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#getZ()
 	 */
+	@Override
 	public float getZ()
 	{
 		return z;
@@ -108,6 +123,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#getXint()
 	 */
+	@Override
 	public int getXint()
 	{
 		return x;
@@ -118,6 +134,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#getYint()
 	 */
+	@Override
 	public int getYint()
 	{
 		return y;
@@ -128,6 +145,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#getZint()
 	 */
+	@Override
 	public int getZint()
 	{
 		return z;
@@ -138,6 +156,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#distance(float, float, float)
 	 */
+	@Override
 	public double distance(float x, float y, float z)
 	{
 		return Math.sqrt(distance2(x, y, z));
@@ -148,6 +167,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#distance(float, float)
 	 */
+	@Override
 	public double distance(float x, float y)
 	{
 		return Math.sqrt(distance2(x, y));
@@ -158,6 +178,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#distance2(float, float, float)
 	 */
+	@Override
 	public double distance2(float x, float y, float z)
 	{
 		return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y) + (this.z - z) * (this.z - z);
@@ -168,6 +189,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#distance2(float, float)
 	 */
+	@Override
 	public double distance2(float x, float y)
 	{
 		return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y);
@@ -178,6 +200,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#distanceXY(gdsc.core.match.Coordinate)
 	 */
+	@Override
 	public double distanceXY(Coordinate other)
 	{
 		return distance(other.getX(), other.getY());
@@ -188,6 +211,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#distanceXY2(gdsc.core.match.Coordinate)
 	 */
+	@Override
 	public double distanceXY2(Coordinate other)
 	{
 		return distance2(other.getX(), other.getY());
@@ -198,6 +222,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#distanceXYZ(gdsc.core.match.Coordinate)
 	 */
+	@Override
 	public double distanceXYZ(Coordinate other)
 	{
 		return distance(other.getX(), other.getY(), other.getZ());
@@ -208,6 +233,7 @@ public class BasePoint implements Coordinate
 	 * 
 	 * @see gdsc.core.match.Coordinate#distanceXYZ2(gdsc.core.match.Coordinate)
 	 */
+	@Override
 	public double distanceXYZ2(Coordinate other)
 	{
 		return distance2(other.getX(), other.getY(), other.getZ());

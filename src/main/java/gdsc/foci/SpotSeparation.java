@@ -1,17 +1,27 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
 
 import java.awt.Frame;
 import java.awt.Rectangle;
@@ -64,6 +74,7 @@ public class SpotSeparation implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -79,6 +90,7 @@ public class SpotSeparation implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		if (!showDialog())
@@ -389,11 +401,11 @@ public class SpotSeparation implements PlugInFilter
 		// centre
 
 		// Allow image thresholding
-		int backgroundMethod = FindFoci.BACKGROUND_AUTO_THRESHOLD;
+		int backgroundMethod = FindFociProcessor.BACKGROUND_AUTO_THRESHOLD;
 		double backgroundParameter = 0;
 		if (ip.getMinThreshold() != ImageProcessor.NO_THRESHOLD)
 		{
-			backgroundMethod = FindFoci.BACKGROUND_ABSOLUTE;
+			backgroundMethod = FindFociProcessor.BACKGROUND_ABSOLUTE;
 			backgroundParameter = ip.getMinThreshold();
 		}
 
@@ -401,15 +413,15 @@ public class SpotSeparation implements PlugInFilter
 
 		FindFoci ff = new FindFoci();
 		String autoThresholdMethod = method;
-		int searchMethod = FindFoci.SEARCH_ABOVE_BACKGROUND;
+		int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
 		double searchParameter = 0;
 		int maxPeaks = 100;
 		int minSize = 3;
-		int peakMethod = FindFoci.PEAK_ABSOLUTE;
+		int peakMethod = FindFociProcessor.PEAK_ABSOLUTE;
 		double peakParameter = 5;
-		int outputType = FindFoci.OUTPUT_MASK_PEAKS | FindFoci.OUTPUT_MASK_NO_PEAK_DOTS;
-		int sortIndex = FindFoci.SORT_MAX_VALUE;
-		int options = FindFoci.OPTION_STATS_INSIDE;
+		int outputType = FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
+		int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
+		int options = FindFociProcessor.OPTION_STATS_INSIDE;
 		double blur = 1.5;
 		int centreMethod = FindFoci.CENTRE_MAX_VALUE_SEARCH;
 		double centreParameter = 0;

@@ -1,28 +1,37 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.utils;
 
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
+import java.util.ArrayList;
 
+import gdsc.UsageTracker;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
-
-import java.util.ArrayList;
-
-import gdsc.UsageTracker;
 
 /**
  * Create an average of all the open stacks with the same dimensions and bit-depth as the active stack.
@@ -36,6 +45,7 @@ public class Stack_Average implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -53,6 +63,7 @@ public class Stack_Average implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		ArrayList<ImagePlus> images = getImages();
@@ -99,7 +110,8 @@ public class Stack_Average implements PlugInFilter
 			ImagePlus imp2 = WindowManager.getImage(wList[i]);
 			if (imp2 != null)
 			{
-				if (!imp2.getTitle().startsWith("Stack Average") && sameDimensions(dimensions, imp2.getDimensions()) && bitDepth == imp2.getBitDepth())
+				if (!imp2.getTitle().startsWith("Stack Average") && sameDimensions(dimensions, imp2.getDimensions()) &&
+						bitDepth == imp2.getBitDepth())
 				{
 					images.add(imp2);
 				}
@@ -109,10 +121,9 @@ public class Stack_Average implements PlugInFilter
 		return images;
 	}
 
-
 	private boolean sameDimensions(int[] dimensions, int[] dimensions2)
 	{
-		for (int i = dimensions.length; i-- > 0; )
+		for (int i = dimensions.length; i-- > 0;)
 		{
 			if (dimensions[i] != dimensions2[i])
 			{
@@ -121,7 +132,7 @@ public class Stack_Average implements PlugInFilter
 		}
 		return true;
 	}
-	
+
 	private ImageStack createResult()
 	{
 		int width = imp.getWidth();

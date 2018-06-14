@@ -1,17 +1,27 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2016 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
 
 import java.awt.Rectangle;
 import java.awt.geom.RoundRectangle2D;
@@ -110,6 +120,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaxima(ij.ImagePlus, ij.ImagePlus, int, double, java.lang.String, int,
 	 * double, int, int, int, double, int, int, int, double, int, double, double)
 	 */
+	@Override
 	public FindFociResults findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
 			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
 			int peakMethod, double peakParameter, int outputType, int sortIndex, int options, double blur,
@@ -451,6 +462,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * 
 	 * @see gdsc.foci.FindFociProcessor#blur(ij.ImagePlus, double)
 	 */
+	@Override
 	public ImagePlus blur(ImagePlus imp, double blur)
 	{
 		return applyBlur(imp, blur);
@@ -462,6 +474,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaInit(ij.ImagePlus, ij.ImagePlus, ij.ImagePlus, int, java.lang.String,
 	 * int)
 	 */
+	@Override
 	public FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask,
 			int backgroundMethod, String autoThresholdMethod, int options)
 	{
@@ -523,6 +536,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#clone(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociInitResults, boolean,
 	 * boolean)
 	 */
+	@Override
 	public FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
 	{
 		Object image = initResults.image;
@@ -579,6 +593,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * 
 	 * @see gdsc.foci.FindFociProcessor#findMaximaSearch(gdsc.foci.FindFociInitResults, int, double, int, double)
 	 */
+	@Override
 	public FindFociSearchResults findMaximaSearch(FindFociInitResults initResults, int backgroundMethod,
 			double backgroundParameter, int searchMethod, double searchParameter)
 	{
@@ -621,6 +636,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaMergePeak(gdsc.foci.FindFociInitResults,
 	 * gdsc.foci.FindFociSearchResults, int, double)
 	 */
+	@Override
 	public FindFociMergeTempResults findMaximaMergePeak(FindFociInitResults initResults,
 			FindFociSearchResults searchResults, int peakMethod, double peakParameter)
 	{
@@ -656,6 +672,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaMergeSize(gdsc.foci.FindFociInitResults,
 	 * gdsc.foci.FindFociMergeTempResults, int)
 	 */
+	@Override
 	public FindFociMergeTempResults findMaximaMergeSize(FindFociInitResults initResults,
 			FindFociMergeTempResults mergeResults, int minSize)
 	{
@@ -692,6 +709,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaMergeFinal(gdsc.foci.FindFociInitResults,
 	 * gdsc.foci.FindFociMergeTempResults, int, int, double)
 	 */
+	@Override
 	public FindFociMergeResults findMaximaMergeFinal(FindFociInitResults initResults,
 			FindFociMergeTempResults mergeResults, int minSize, int options, double blur)
 	{
@@ -741,6 +759,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaResults(gdsc.foci.FindFociInitResults, gdsc.foci.FindFociMergeResults,
 	 * int, int, int, double)
 	 */
+	@Override
 	public FindFociResults findMaximaResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
 			int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
 	{
@@ -783,6 +802,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaPrelimResults(gdsc.foci.FindFociInitResults,
 	 * gdsc.foci.FindFociMergeResults, int, int, int, double)
 	 */
+	@Override
 	public FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults,
 			FindFociMergeResults mergeResults, int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
 	{
@@ -823,6 +843,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @see gdsc.foci.FindFociProcessor#findMaximaMaskResults(gdsc.foci.FindFociInitResults,
 	 * gdsc.foci.FindFociMergeResults, gdsc.foci.FindFociResults, int, java.lang.String, java.lang.String, double)
 	 */
+	@Override
 	public FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
 			FindFociPrelimResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
 			double fractionParameter)
@@ -6010,6 +6031,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		 * 
 		 * @see java.lang.Comparable#compareTo(java.lang.Object)
 		 */
+		@Override
 		public int compareTo(Coordinate o)
 		{
 			// Require the sort to rank the highest peak as first.
@@ -6032,6 +6054,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		 * 
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 		 */
+		@Override
 		public int compare(FindFociResult o1, FindFociResult o2)
 		{
 			if (o1.maxValue > o2.maxValue)
@@ -6069,6 +6092,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		 * 
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 		 */
+		@Override
 		public int compare(FindFociResult o1, FindFociResult o2)
 		{
 			// Require the highest is first
@@ -6092,6 +6116,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		 * 
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 		 */
+		@Override
 		public int compare(FindFociResult o1, FindFociResult o2)
 		{
 			// Require the lowest is first

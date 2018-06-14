@@ -1,28 +1,38 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.colocalisation;
 
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
+import java.awt.Rectangle;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
-
-import java.awt.Rectangle;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * Class that allow the threshold for colocalisation analysis to be calculated for two images. A regression is performed
@@ -209,7 +219,7 @@ public class ColocalisationThreshold
 		// reaches the a specified precision limit for a double then it should be added to the 
 		// BigDecimal and reset. The precision limit could be set using the value of the mean, 
 		// e.g. 1e10 times bigger than the mean. 
-		
+
 		// Calculate variances
 		double ch1mch1MeanSqSum = 0;
 		double ch2mch2MeanSqSum = 0;
@@ -452,7 +462,7 @@ public class ColocalisationThreshold
 
 			// Set new thresholds
 			threshold1 = currentThreshold;
-			threshold2 = (int) Math.round(((double) threshold1 * m) + b);
+			threshold2 = (int) Math.round((threshold1 * m) + b);
 
 			// A = both channels above the threshold
 			// B = either channel below the threshold
@@ -514,7 +524,7 @@ public class ColocalisationThreshold
 			double ch1mch1MeanSqSumB = 0;
 			double ch2mch2MeanSqSumB = 0;
 			double ch1mch2MeanSqSumB = 0;
-			
+
 			for (int i = i1.length; i-- > 0;)
 			{
 				ch1 = i1[i];
@@ -610,7 +620,7 @@ public class ColocalisationThreshold
 
 			// Set new thresholds
 			threshold1 = currentThreshold;
-			threshold2 = (int) Math.round(((double) threshold1 * m) + b);
+			threshold2 = (int) Math.round((threshold1 * m) + b);
 
 			// A = both channels above the threshold
 			// B = either channel below the threshold
@@ -672,7 +682,7 @@ public class ColocalisationThreshold
 			double ch1mch1MeanSqSumB = 0;
 			double ch2mch2MeanSqSumB = 0;
 			double ch1mch2MeanSqSumB = 0;
-			
+
 			for (int i = i1.length; i-- > 0;)
 			{
 				ch1 = i1[i];
@@ -729,8 +739,8 @@ public class ColocalisationThreshold
 			// Look for results where the correlation above the threshold is positive
 			// and the correlation below the threshold (RltT) is closer to the target R-threshold.
 			if (result.r > rThreshold &&
-			//result.r2 < rThreshold &&
-			//Math.abs(result.r2 - rThreshold) < Math.abs(convergenceTolerance) &&
+					//result.r2 < rThreshold &&
+					//Math.abs(result.r2 - rThreshold) < Math.abs(convergenceTolerance) &&
 					Math.abs(result.r2 - rThreshold) < Math.abs(rBelowThreshold - rThreshold))
 			{
 				rAboveThreshold = result.r;
@@ -874,7 +884,7 @@ public class ColocalisationThreshold
 	{
 		return (correlated) ? rAboveThreshold : Double.NaN;
 	}
-	
+
 	/**
 	 * Set the limit for the correlation below the threshold. The search will stop when the correlation for the pixels
 	 * below threshold is with the convergence tolerance distance of this R, i.e. is R = R-threshold +/- tolerance.
@@ -961,6 +971,7 @@ public class ColocalisationThreshold
 			this.r2 = r2;
 		}
 
+		@Override
 		public int compareTo(ThresholdResult otherResult) throws ClassCastException
 		{
 			return otherResult.threshold1 - this.threshold1;

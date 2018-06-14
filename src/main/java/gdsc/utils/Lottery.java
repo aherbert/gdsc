@@ -1,3 +1,26 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.utils;
 
 import org.apache.commons.math3.random.RandomGenerator;
@@ -10,7 +33,7 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 /**
- * Computes the odds of winning the lottery using random sampling 
+ * Computes the odds of winning the lottery using random sampling
  */
 public class Lottery implements PlugIn
 {
@@ -25,10 +48,11 @@ public class Lottery implements PlugIn
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Calculate the lottory odds");
 		gd.addSlider("Numbers", 1, numbers, numbers);

@@ -1,20 +1,31 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
+import java.util.ArrayList;
+
 import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2015 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
 import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
@@ -24,8 +35,6 @@ import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
-
-import java.util.ArrayList;
 
 /**
  * Compares two masks created using the Mask Segregator with pixels of AB and A'B' and creates a new mask with pixels of
@@ -47,10 +56,11 @@ public class DoubleMaskSegregator implements PlugIn
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (!showDialog())
 		{
 			return;
@@ -74,7 +84,8 @@ public class DoubleMaskSegregator implements PlugIn
 		if (title1.equalsIgnoreCase(title2))
 			title2 = (title1.equalsIgnoreCase(items[0]) || title1 == "") ? items[1] : items[0];
 
-		gd.addMessage("Find the classes in each mask using continuous mask values\nand create an all-vs-all output combination mask");
+		gd.addMessage(
+				"Find the classes in each mask using continuous mask values\nand create an all-vs-all output combination mask");
 		gd.addChoice("Input_1", items, title1);
 		gd.addChoice("Input_2", items, title2);
 		gd.addCheckbox("Apply_LUT", applyLUT);
@@ -306,8 +317,8 @@ public class DoubleMaskSegregator implements PlugIn
 	{
 		int[] r = { 0, 0, 0, 0, 0, 0, 19, 29, 50, 48, 79, 112, 134, 158, 186, 201, 217, 229, 242, 250, 250, 250, 250,
 				251, 250, 250, 250, 250, 251, 251, 243, 230 };
-		int[] g = { 156, 165, 176, 184, 190, 196, 193, 184, 171, 162, 146, 125, 107, 93, 81, 87, 92, 97, 95, 93, 93,
-				90, 85, 69, 64, 54, 47, 35, 19, 0, 4, 0 };
+		int[] g = { 156, 165, 176, 184, 190, 196, 193, 184, 171, 162, 146, 125, 107, 93, 81, 87, 92, 97, 95, 93, 93, 90,
+				85, 69, 64, 54, 47, 35, 19, 0, 4, 0 };
 		int[] b = { 140, 147, 158, 166, 170, 176, 209, 220, 234, 225, 236, 246, 250, 251, 250, 250, 245, 230, 230, 222,
 				202, 180, 163, 142, 123, 114, 106, 94, 84, 64, 26, 27 };
 		for (int i = 0; i < r.length; i++)

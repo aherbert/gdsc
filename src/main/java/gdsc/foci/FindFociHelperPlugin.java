@@ -1,32 +1,41 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
-
-import gdsc.UsageTracker;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
-import gdsc.foci.gui.FindFociHelperView;
-import gdsc.foci.gui.OptimiserView;
-import ij.IJ;
-import ij.WindowManager;
-import ij.plugin.PlugIn;
 
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import javax.swing.JFrame;
+import javax.swing.WindowConstants;
+
+import gdsc.UsageTracker;
+import gdsc.foci.gui.FindFociHelperView;
+import gdsc.foci.gui.OptimiserView;
+import ij.IJ;
+import ij.WindowManager;
+import ij.plugin.PlugIn;
 
 /**
  * Create a window that allows the user to pick ROI points and have them mapped to the closest maxima found
@@ -41,6 +50,7 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 	 * 
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -67,7 +77,7 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 			// it exists on the classpath
 			instance = new FindFociHelperView();
 			instance.addWindowListener(this);
-			instance.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+			instance.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 
 			IJ.register(OptimiserView.class);
 
@@ -116,31 +126,38 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 		instance.toFront();
 	}
 
+	@Override
 	public void windowOpened(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowClosing(WindowEvent e)
 	{
 		WindowManager.removeWindow(instance);
 	}
 
+	@Override
 	public void windowClosed(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowIconified(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowDeiconified(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowActivated(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowDeactivated(WindowEvent e)
 	{
 	}

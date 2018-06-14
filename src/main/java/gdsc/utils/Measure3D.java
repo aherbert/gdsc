@@ -1,3 +1,26 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.utils;
 
 import java.awt.Checkbox;
@@ -11,20 +34,6 @@ import java.awt.event.WindowListener;
 
 import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Prefs;
@@ -66,10 +75,11 @@ public class Measure3D extends PlugInFrame
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (WindowManager.getImageCount() == 0)
 		{
 			IJ.showMessage("No images opened.");
@@ -84,7 +94,7 @@ public class Measure3D extends PlugInFrame
 		{
 			if (!(instance.getTitle().equals(getTitle())))
 			{
-				Measure3D oldInstance = (Measure3D) instance;
+				Measure3D oldInstance = instance;
 				Prefs.saveLocation(OPT_LOCATION, oldInstance.getLocation());
 				oldInstance.close();
 			}
@@ -244,31 +254,38 @@ public class Measure3D extends PlugInFrame
 			results.addWindowListener(new WindowListener()
 			{
 
+				@Override
 				public void windowActivated(WindowEvent e)
 				{
 				}
 
+				@Override
 				public void windowClosed(WindowEvent e)
 				{
 				}
 
+				@Override
 				public void windowClosing(WindowEvent e)
 				{
 					Prefs.saveLocation(OPT_LOCATION_RESULTS, results.getLocation());
 				}
 
+				@Override
 				public void windowDeactivated(WindowEvent e)
 				{
 				}
 
+				@Override
 				public void windowDeiconified(WindowEvent e)
 				{
 				}
 
+				@Override
 				public void windowIconified(WindowEvent e)
 				{
 				}
 
+				@Override
 				public void windowOpened(WindowEvent e)
 				{
 				}
@@ -332,6 +349,7 @@ public class Measure3D extends PlugInFrame
 	 * 
 	 * @see ij.plugin.frame.PlugInFrame#close()
 	 */
+	@Override
 	public void close()
 	{
 		Prefs.saveLocation(OPT_LOCATION, getLocation());

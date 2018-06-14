@@ -1,17 +1,27 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.colocalisation.cda;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
 
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -29,7 +39,7 @@ public class TwinStackShifter
 
 	public TwinStackShifter(ImagePlus imageImp, ImagePlus image2Imp, ImagePlus roiImp)
 	{
-		initialise(imageImp.getImageStack(), image2Imp.getImageStack(), 
+		initialise(imageImp.getImageStack(), image2Imp.getImageStack(),
 				(roiImp != null) ? roiImp.getImageStack() : null);
 	}
 
@@ -60,8 +70,8 @@ public class TwinStackShifter
 
 		for (int n = 1; n <= s; n++)
 		{
-			imageShifters[n - 1] = new TwinImageShifter(s1.getProcessor(n), s2.getProcessor(n), 
-				(s3 != null) ? s3.getProcessor(n) : null);
+			imageShifters[n - 1] = new TwinImageShifter(s1.getProcessor(n), s2.getProcessor(n),
+					(s3 != null) ? s3.getProcessor(n) : null);
 		}
 	}
 

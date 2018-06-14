@@ -1,3 +1,26 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.utils;
 
 import java.awt.Rectangle;
@@ -9,12 +32,12 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.measure.Measurements;
 import ij.plugin.PlugIn;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-
 
 /**
  * Aligns an image stack to a reference image using XY translation to maximise the normalised correlation. Takes in:
@@ -51,10 +74,11 @@ public class Align_Images implements PlugIn
 	private static boolean clipOutput = false;
 
 	/** Ask for parameters and then execute. */
+	@Override
 	public void run(String arg)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		String[] imageList = getImagesList();
 
 		if (imageList.length < 1)
@@ -95,8 +119,8 @@ public class Align_Images implements PlugIn
 			ImagePlus imp = WindowManager.getImage(id);
 
 			// Image must be 8-bit/16-bit
-			if (imp != null &&
-					(imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16 || imp.getType() == ImagePlus.GRAY32))
+			if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16 ||
+					imp.getType() == ImagePlus.GRAY32))
 			{
 				// Check it is not one the result images
 				String imageTitle = imp.getTitle();
@@ -129,8 +153,9 @@ public class Align_Images implements PlugIn
 			target = maskList[0];
 		}
 
-		gd.addMessage("Align target image stack to a reference using\ncorrelation within a translation range. Ignore pixels\nin the reference using a mask.");
-		
+		gd.addMessage(
+				"Align target image stack to a reference using\ncorrelation within a translation range. Ignore pixels\nin the reference using a mask.");
+
 		gd.addChoice("Reference_image", imageList, reference);
 		gd.addChoice("Reference_mask", maskList, referenceMask);
 		gd.addChoice("Target_image", maskList, target);
@@ -172,14 +197,14 @@ public class Align_Images implements PlugIn
 		return false;
 	}
 
-	public ImagePlus exec(ImagePlus refImp, ImageProcessor maskIp, ImagePlus targetImp, int minXShift,
-			int maxXShift, int minYShift, int maxYShift, int subPixelMethod, int interpolationMethod,
-			boolean showCorrelationImage, boolean clipOutput)
+	public ImagePlus exec(ImagePlus refImp, ImageProcessor maskIp, ImagePlus targetImp, int minXShift, int maxXShift,
+			int minYShift, int maxYShift, int subPixelMethod, int interpolationMethod, boolean showCorrelationImage,
+			boolean clipOutput)
 	{
 		ImageProcessor refIp = refImp.getProcessor();
 		if (targetImp == null)
 			targetImp = refImp;
-		
+
 		// Check same size
 		if (!isValid(refIp, maskIp, targetImp))
 			return null;
@@ -205,10 +230,8 @@ public class Align_Images implements PlugIn
 		{
 			ImageProcessor targetIp = stack.getProcessor(slice);
 			//targetIp = normalise(targetIp);
-			outStack.addSlice(
-					null,
-					alignImages(refIp, maskIp, targetIp, slice, minXShift, maxXShift, minYShift, maxYShift, fp,
-							subPixelMethod, interpolationMethod, clipOutput));
+			outStack.addSlice(null, alignImages(refIp, maskIp, targetIp, slice, minXShift, maxXShift, minYShift,
+					maxYShift, fp, subPixelMethod, interpolationMethod, clipOutput));
 			if (showCorrelationImage)
 			{
 				correlationStack.addSlice(null, fp.duplicate());
@@ -388,17 +411,17 @@ public class Align_Images implements PlugIn
 			boolean clipOutput)
 	{
 		// Check if interpolation is needed
-		if (xOffset == (int)xOffset && yOffset == (int)yOffset)
+		if (xOffset == (int) xOffset && yOffset == (int) yOffset)
 		{
 			interpolationMethod = ImageProcessor.NONE;
 		}
-		
+
 		// Bicubic interpolation can generate values outside the input range. 
 		// Optionally clip these. This is not applicable for ColorProcessors.
 		ImageStatistics stats = null;
 		if (interpolationMethod == ImageProcessor.BICUBIC && clipOutput && !(ip instanceof ColorProcessor))
-			stats = ImageStatistics.getStatistics(ip, ImageStatistics.MIN_MAX, null);
-		
+			stats = ImageStatistics.getStatistics(ip, Measurements.MIN_MAX, null);
+
 		ip.setInterpolationMethod(interpolationMethod);
 		ip.translate(xOffset, yOffset);
 
@@ -431,7 +454,7 @@ public class Align_Images implements PlugIn
 		// This value will be progressively halved. 
 		// Start with a value that allows the number of iterations to fully cover the region +/- 1 pixel
 		// TODO - Test if 0.67 is better as this can cover +/- 1 pixel in 2 iterations
-		double range = 0.5;    
+		double range = 0.5;
 		for (int c = 10; c-- > 0;)
 		{
 			centre = performCubicFit(fp, centre[0], centre[1], range);
@@ -603,14 +626,12 @@ public class Align_Images implements PlugIn
 		}
 		else
 		{
-			coord[0] = x +
-					(Math.log(subCorrMat[y][x - 1]) - Math.log(subCorrMat[y][x + 1])) /
-					(2 * Math.log(subCorrMat[y][x - 1]) - 4 * Math.log(subCorrMat[y][x]) + 2 * Math
-							.log(subCorrMat[y][x + 1]));
-			coord[1] = y +
-					(Math.log(subCorrMat[y - 1][x]) - Math.log(subCorrMat[y + 1][x])) /
-					(2 * Math.log(subCorrMat[y - 1][x]) - 4 * Math.log(subCorrMat[y][x]) + 2 * Math
-							.log(subCorrMat[y + 1][x]));
+			coord[0] = x + (Math.log(subCorrMat[y][x - 1]) - Math.log(subCorrMat[y][x + 1])) /
+					(2 * Math.log(subCorrMat[y][x - 1]) - 4 * Math.log(subCorrMat[y][x]) +
+							2 * Math.log(subCorrMat[y][x + 1]));
+			coord[1] = y + (Math.log(subCorrMat[y - 1][x]) - Math.log(subCorrMat[y + 1][x])) /
+					(2 * Math.log(subCorrMat[y - 1][x]) - 4 * Math.log(subCorrMat[y][x]) +
+							2 * Math.log(subCorrMat[y + 1][x]));
 		}
 		return (coord);
 	}
@@ -642,8 +663,7 @@ public class Align_Images implements PlugIn
 		Rectangle bRef = new Rectangle(0, 0, refIp.getWidth(), refIp.getHeight());
 
 		// This is the smallest of the two images.
-		Rectangle region = new Rectangle(0, 0, 
-				Math.min(refIp.getWidth(), targetIp.getWidth()), 
+		Rectangle region = new Rectangle(0, 0, Math.min(refIp.getWidth(), targetIp.getWidth()),
 				Math.min(refIp.getHeight(), targetIp.getHeight()));
 
 		// Shift the region

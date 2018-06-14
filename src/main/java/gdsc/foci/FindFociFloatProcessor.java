@@ -1,3 +1,26 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci;
 
 import java.util.Arrays;
@@ -8,19 +31,6 @@ import gdsc.core.threshold.Histogram;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2016 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
 
 /**
  * Find the peak intensity regions of an image.
@@ -51,6 +61,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 	/**
 	 * Extract the image into a linear array stacked in zyx order
 	 */
+	@Override
 	protected Object extractImage(ImagePlus imp)
 	{
 		final ImageStack stack = imp.getStack();
@@ -69,6 +80,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		return image;
 	}
 
+	@Override
 	protected byte[] createTypesArray(Object pixels)
 	{
 		final float[] image = (float[]) pixels;
@@ -83,6 +95,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		return types;
 	}
 
+	@Override
 	protected float getImageMin(Object pixels, byte[] types)
 	{
 		final float[] image = (float[]) pixels;
@@ -157,6 +170,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 
 		Arrays.sort(sortData, new Comparator<float[]>()
 		{
+			@Override
 			public int compare(float[] o1, float[] o2)
 			{
 				// Smallest first
@@ -223,11 +237,13 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		return new FloatHistogram(value, h);
 	}
 
+	@Override
 	protected Histogram buildHistogram(int bitDepth, Object pixels)
 	{
 		return FloatHistogram.buildHistogram(((float[]) pixels).clone(), true);
 	}
 
+	@Override
 	protected Histogram buildHistogram(Object pixels, int[] maxima, int peakValue, float maxValue)
 	{
 		float[] image = (float[]) pixels;
@@ -257,7 +273,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 				return (float) backgroundParameter;
 
 			case BACKGROUND_AUTO_THRESHOLD:
-				return (float) (stats.background);
+				return (stats.background);
 
 			case BACKGROUND_MEAN:
 				return (float) (stats.backgroundRegionAverage);
@@ -267,25 +283,28 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 						((backgroundParameter > 0) ? backgroundParameter * stats.backgroundRegionStdDev : 0));
 
 			case BACKGROUND_MIN_ROI:
-				return (float) (stats.regionMinimum);
+				return (stats.regionMinimum);
 
 			case BACKGROUND_NONE:
 			default:
 				// Ensure all the maxima are found. Use Min and not zero to support float images with negative values
-				return (float) stats.regionMinimum;
+				return stats.regionMinimum;
 		}
 	}
 
+	@Override
 	protected void setPixels(Object pixels)
 	{
 		this.image = (float[]) pixels;
 	}
 
+	@Override
 	protected float getf(int i)
 	{
 		return image[i];
 	}
 
+	@Override
 	protected int getBackgroundBin(Histogram histogram, float background)
 	{
 		for (int i = histogram.minBin; i < histogram.maxBin; i++)
@@ -296,6 +315,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		return histogram.maxBin;
 	}
 
+	@Override
 	protected int getBin(Histogram histogram, int i)
 	{
 		// We store the bin for each input index when building the histogram
@@ -348,12 +368,13 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		return lower;
 	}
 
+	@Override
 	protected float getTolerance(int searchMethod, double searchParameter, FindFociStatistics stats, float v0)
 	{
 		switch (searchMethod)
 		{
 			case SEARCH_ABOVE_BACKGROUND:
-				return (float) (stats.background);
+				return (stats.background);
 
 			case SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND:
 				if (searchParameter < 0)
@@ -363,9 +384,10 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 			case SEARCH_HALF_PEAK_VALUE:
 				return (float) (stats.background + 0.5 * (v0 - stats.background));
 		}
-		return (float) (stats.regionMinimum);
+		return (stats.regionMinimum);
 	}
 
+	@Override
 	protected double getPeakHeight(int peakMethod, double peakParameter, FindFociStatistics stats, float v0)
 	{
 		double height = 0;

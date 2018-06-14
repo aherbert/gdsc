@@ -1,38 +1,50 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.foci.controller;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
-
-import gdsc.foci.model.FindFociModel;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import gdsc.foci.model.FindFociModel;
+
 /**
- * Dummy controller that provides stub functionality to {@link gdsc.foci.gui.FindFociView } 
+ * Dummy controller that provides stub functionality to {@link gdsc.foci.gui.FindFociView }
  */
 public class NullController extends FindFociController
 {
 	private int lowerLimit = 15;
 	private int upperLimit = 220;
-	
+
 	public NullController(FindFociModel model)
 	{
 		super(model);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see gdsc.foci.controller.FindFociController#getImageCount()
 	 */
 	@Override
@@ -40,19 +52,22 @@ public class NullController extends FindFociController
 	{
 		return 3;
 	}
-	
+
 	private int updateCounter = 0;
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see gdsc.foci.controller.FindFociController#updateImageList()
 	 */
+	@Override
 	public void updateImageList()
 	{
 		//System.out.println("updateImageList");
-		
+
 		// Note: Increment the updateCounter to ensure the list is refreshed
 		//updateCounter++;
-		
+
 		List<String> imageList = new ArrayList<String>();
 		imageList.add(updateCounter + " : One");
 		imageList.add(updateCounter + " : Two");
@@ -65,32 +80,43 @@ public class NullController extends FindFociController
 		lowerLimit = rand.nextInt(base);
 		upperLimit = rand.nextInt(255 - base) + base;
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see gdsc.foci.controller.FindFociController#run()
 	 */
+	@Override
 	public void run()
 	{
 		model.setUnchanged();
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see gdsc.foci.controller.FindFociController#preview()
 	 */
+	@Override
 	public void preview()
 	{
 		System.out.println("FindFoci Preview");
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see gdsc.foci.controller.FindFociController#endPreview()
 	 */
+	@Override
 	public void endPreview()
 	{
 		System.out.println("FindFoci EndPreview");
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see gdsc.foci.controller.FindFociController#getImageLimits(int[])
 	 */
 	@Override

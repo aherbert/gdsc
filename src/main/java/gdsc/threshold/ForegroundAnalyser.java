@@ -1,20 +1,30 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.threshold;
 
 import java.awt.Rectangle;
 import java.util.Arrays;
-
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
 
 import gdsc.UsageTracker;
 import gdsc.core.data.procedures.FValueProcedure;
@@ -70,6 +80,7 @@ public class ForegroundAnalyser implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
@@ -83,6 +94,7 @@ public class ForegroundAnalyser implements PlugInFilter
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		if (!showDialog())
@@ -159,6 +171,7 @@ public class ForegroundAnalyser implements PlugInFilter
 			final TFloatArrayList data = new TFloatArrayList(ip.getPixelCount());
 			FValueProcedure p = new FValueProcedure()
 			{
+				@Override
 				public void execute(float value)
 				{
 					data.add(value);
@@ -188,6 +201,7 @@ public class ForegroundAnalyser implements PlugInFilter
 			final int[] data = new int[(imp.getBitDepth() == 8) ? 256 : 65336];
 			IValueProcedure p = new IValueProcedure()
 			{
+				@Override
 				public void execute(int value)
 				{
 					data[value]++;

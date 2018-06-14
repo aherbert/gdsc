@@ -1,18 +1,32 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.utils;
 
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
+import java.awt.AWTEvent;
+import java.awt.Color;
 
+import gdsc.UsageTracker;
 import ij.ImagePlus;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
@@ -20,11 +34,6 @@ import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
-
-import java.awt.AWTEvent;
-import java.awt.Color;
-
-import gdsc.UsageTracker;
 
 /**
  * Alows an RGB image to be filtered using HSB limits.
@@ -50,10 +59,11 @@ public class HSB_Filter implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			return DONE;
@@ -67,6 +77,7 @@ public class HSB_Filter implements ExtendedPlugInFilter, DialogListener
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
 	 * ij.plugin.filter.PlugInFilterRunner)
 	 */
+	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
@@ -119,6 +130,7 @@ public class HSB_Filter implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog, java.awt.AWTEvent)
 	 */
+	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		hue = (float) gd.getNextNumber();
@@ -135,6 +147,7 @@ public class HSB_Filter implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
+	@Override
 	public void setNPasses(int nPasses)
 	{
 		// Do nothing		
@@ -145,14 +158,15 @@ public class HSB_Filter implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor inputProcessor)
 	{
-		final float minH = (float) (hue - hueWidth);
-		final float maxH = (float) (hue + hueWidth);
-		final float minS = (float) (saturation - saturationWidth);
-		final float maxS = (float) (saturation + saturationWidth);
-		final float minB = (float) (brightness - brightnessWidth);
-		final float maxB = (float) (brightness + brightnessWidth);
+		final float minH = hue - hueWidth;
+		final float maxH = hue + hueWidth;
+		final float minS = saturation - saturationWidth;
+		final float maxS = saturation + saturationWidth;
+		final float minB = brightness - brightnessWidth;
+		final float maxB = brightness + brightnessWidth;
 		for (int i = 0; i < s.length; i++)
 		{
 			float hh = h[i];

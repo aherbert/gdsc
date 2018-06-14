@@ -1,18 +1,41 @@
+/*-
+ * #%L
+ * Genome Damage and Stability Centre ImageJ Plugins
+ * 
+ * Software for microscopy image analysis
+ * %%
+ * Copyright (C) 2011 - 2018 Alex Herbert
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 package gdsc.threshold;
 
-/*----------------------------------------------------------------------------- 
- * GDSC Plugins for ImageJ
- * 
- * Copyright (C) 2011 Alex Herbert
- * Genome Damage and Stability Centre
- * University of Sussex, UK
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *---------------------------------------------------------------------------*/
+import java.awt.AWTEvent;
+import java.awt.Rectangle;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
+import gdsc.UsageTracker;
+import gdsc.core.threshold.AutoThreshold;
+import gdsc.core.threshold.AutoThreshold.Method;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -21,6 +44,7 @@ import ij.Prefs;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.gui.Roi;
+import ij.measure.Measurements;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.PlugInFilterRunner;
@@ -37,20 +61,6 @@ import imagescience.image.Image;
 import imagescience.segment.Thresholder;
 import imagescience.segment.ZeroCrosser;
 import imagescience.utility.VersionChecker;
-
-import java.awt.AWTEvent;
-import java.awt.Rectangle;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import gdsc.UsageTracker;
-import gdsc.core.threshold.AutoThreshold;
-import gdsc.core.threshold.AutoThreshold.Method;
 
 /**
  * Create an edge mask from an image.
@@ -90,10 +100,11 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		
+
 		if (imp == null)
 		{
 			IJ.noImage();
@@ -121,7 +132,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 				// Copy the mask (before it is reset) if we are not processing the entire stack
 				if (!doesStacks)
 					maskIp = maskIp.duplicate();
-				
+
 				// Reset the main image
 				ImageProcessor ip = imp.getProcessor();
 				ip.reset();
@@ -132,7 +143,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 			if (doesStacks)
 			{
 				// Process all slices of the stack
-				
+
 				// Disable the progress bar for the blur. 
 				// This does not effect IJ.showProgress(int, int), only IJ.showProgress(double)
 				// Allows the progress to be correctly reported.
@@ -213,6 +224,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip)
 	{
 		createMask(ip);
@@ -224,6 +236,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
 	 * ij.plugin.filter.PlugInFilterRunner)
 	 */
+	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
 		ImageProcessor ip = imp.getProcessor();
@@ -271,7 +284,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 
 	private double[] getLimits(ImageProcessor ip)
 	{
-		ImageStatistics stats = ImageStatistics.getStatistics(ip, ImageStatistics.MIN_MAX, null);
+		ImageStatistics stats = ImageStatistics.getStatistics(ip, Measurements.MIN_MAX, null);
 		double[] limits = new double[] { stats.min, stats.max, 0 };
 
 		// Use histogram to cover x% of the data
@@ -303,6 +316,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	}
 
 	/** Listener to modifications of the input fields of the dialog */
+	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		method = gd.getNextChoiceIndex();
@@ -331,6 +345,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	 * 
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
+	@Override
 	public void setNPasses(int nPasses)
 	{
 
@@ -809,6 +824,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 		 * 
 		 * @see java.lang.Runnable#run()
 		 */
+		@Override
 		public void run()
 		{
 			if (mask == null)
