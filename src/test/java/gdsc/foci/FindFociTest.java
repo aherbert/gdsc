@@ -639,7 +639,7 @@ public class FindFociTest
 				"FindFociTest", fractionParameter[i]);
 	}
 
-	private static ImagePlus[] createData()
+	private static synchronized ImagePlus[] createData()
 	{
 		if (data == null)
 		{
