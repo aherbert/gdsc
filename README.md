@@ -50,18 +50,22 @@ Installation from source
 
 The source code is accessed using git and built using Maven. 
 
-The code depends on the GDSC-Analytics and GDSC-Core artifacts so 
+The code depends on the GDSC-Analytics, GDSC-Test and GDSC-Core artifacts so 
 you will have to install these to your local Maven repository before building:
 
 1. Clone the required repositories
 
         git clone https://github.com/aherbert/GDSC-Analytics.git
+        git clone https://github.com/aherbert/GDSC-Test.git
         git clone https://github.com/aherbert/GDSC-Core.git
         git clone https://github.com/aherbert/GDSC.git
 
 2. Build the code and install using Maven
 
         cd GDSC-Analytics
+        mvn install
+        cd ..
+        cd GDSC-Test
         mvn install
         cd ..
         cd GDSC-Core

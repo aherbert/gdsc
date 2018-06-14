@@ -139,6 +139,12 @@ Software for microscopy image analysis
 			<version>1.2.0</version>
 		</dependency>
 		<dependency>
+			<groupId>gdsc</groupId>
+			<artifactId>gdsc-test</artifactId>
+			<version>1.0.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 		</dependency>
