@@ -27,11 +27,13 @@ import java.util.ArrayList;
 
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.random.RandomGenerator;
-import org.apache.commons.math3.random.Well19937c;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
 import gdsc.core.threshold.AutoThreshold;
+import gdsc.test.TestSettings;
+import gdsc.test.TestSettings.LogLevel;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.filter.GaussianBlur;
@@ -43,7 +45,6 @@ public class FindFociTest
 {
 	static int bias = 500;
 	static int offset = bias + 100;
-	static RandomGenerator rand = new Well19937c(30051977);
 	static ImagePlus[] data;
 	static int numberOfTestImages = 2;
 	static int numberOfTestImages3D = 2;
@@ -261,6 +262,8 @@ public class FindFociTest
 	@Test
 	public void isFasterUsingOptimisedIntProcessor()
 	{
+		TestSettings.assumeLowComplexity();
+
 		// Get settings to try for the speed test
 		int[] indices = new int[] { 1 };
 
@@ -297,13 +300,17 @@ public class FindFociTest
 			}
 			time2 = stop(time2);
 		}
-		System.out.printf("Int %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
+		TestSettings.info("Int %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
 		Assert.assertTrue(time2 < time1);
 	}
 
 	@Test
 	public void isFasterUsingOptimisedFloatProcessor()
 	{
+		TestSettings.assumeMediumComplexity();
+		// Since no assertions are made check the logging will be seen
+		Assume.assumeTrue(TestSettings.allow(LogLevel.WARN));
+
 		// Get settings to try for the speed test
 		int[] indices = new int[] { 1 };
 
@@ -340,7 +347,6 @@ public class FindFociTest
 			}
 			time2 = stop(time2);
 		}
-		System.out.printf("Float %d, Opt Float %d, %fx faster\n", time1, time2, (double) time1 / time2);
 
 		// Comment out this assertion as it sometimes fails when running all the tests. 
 		// When running all the tests the some code gets run more and so
@@ -348,11 +354,17 @@ public class FindFociTest
 		// I am not worried the optimisation has worse performance.
 
 		//Assert.assertTrue(time2 < time1 * 1.4); // Allow discretion so test will pass
+		TestSettings.logSpeedTestResult(time2 < time1, "Float %d, Opt Float %d, %fx faster\n", time1, time2,
+				(double) time1 / time2);
 	}
 
 	@Test
 	public void isNotSlowerthanLegacyUsingOptimisedIntProcessor()
 	{
+		TestSettings.assumeMediumComplexity();
+		// Since no assertions are made check the logging will be seen
+		Assume.assumeTrue(TestSettings.allow(LogLevel.WARN));
+
 		// Get settings to try for the speed test
 		int[] indices = new int[] { 1 };
 
@@ -387,7 +399,6 @@ public class FindFociTest
 			}
 			time2 = stop(time2);
 		}
-		System.out.printf("Legacy %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
 
 		// Comment out this assertion as it sometimes fails when running all the tests. 
 		// When running all the tests the legacy code gets run more and so
@@ -395,11 +406,15 @@ public class FindFociTest
 		// I am not worried the new code has worse performance.
 
 		//Assert.assertTrue(time2 < time1 * 1.4); // Allow some discretion over the legacy method
+		TestSettings.logSpeedTestResult(time2 < time1, "Legacy %d, Opt Int %d, %fx faster\n", time1, time2,
+				(double) time1 / time2);
 	}
 
 	@Test
 	public void isFasterUsingOptimisedIntProcessorOverOptimisedFloatProcessor()
 	{
+		TestSettings.assumeLowComplexity();
+
 		// Get settings to try for the speed test
 		int[] indices = new int[] { 1 };
 
@@ -442,7 +457,7 @@ public class FindFociTest
 			}
 			time2 = stop(time2);
 		}
-		System.out.printf("Opt Float %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
+		TestSettings.info("Opt Float %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
 		Assert.assertTrue(time2 < time1);
 	}
 
@@ -465,7 +480,7 @@ public class FindFociTest
 		}
 		ArrayList<FindFociResult> results1 = r1.results;
 		ArrayList<FindFociResult> results2 = r2.results;
-		//System.out.printf("N1=%d, N2=%d\n", results1.size(), results2.size());
+		//TestSettings.info("N1=%d, N2=%d\n", results1.size(), results2.size());
 		Assert.assertEquals(setName + " Results Size", results1.size(), results2.size());
 		int counter = 0;
 		final int offset = (negativeValues) ? FindFociTest.offset : 0;
@@ -477,7 +492,7 @@ public class FindFociTest
 				//@formatter:off
     			FindFociResult o1 = results1.get(i);
     			FindFociResult o2 = results2.get(i);
-    			//System.out.printf("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d\n", i, 
+    			//TestSettings.info("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d\n", i, 
     			//		o1.x, o1.y, o1.maxValue, o1.count, o1.saddleNeighbourId, 
     			//		o2.x, o2.y, o2.maxValue, o2.count, o2.saddleNeighbourId);
     			Assert.assertEquals("X", o1.x, o2.x);
@@ -624,31 +639,32 @@ public class FindFociTest
 				"FindFociTest", fractionParameter[i]);
 	}
 
-	private static ImagePlus[] createData()
+	private static synchronized ImagePlus[] createData()
 	{
 		if (data == null)
 		{
-			System.out.println("Creating data ...");
+			RandomGenerator rg = TestSettings.getRandomGenerator();
+			TestSettings.infoln("Creating data ...");
 			data = new ImagePlus[numberOfTestImages + numberOfTestImages3D];
 			int index = 0;
 			for (int i = 0; i < numberOfTestImages; i++)
-				data[index++] = createImageData();
+				data[index++] = createImageData(rg);
 			for (int i = 0; i < numberOfTestImages3D; i++)
-				data[index++] = createImageData3D();
-			System.out.println("Created data");
+				data[index++] = createImageData3D(rg);
+			TestSettings.infoln("Created data");
 		}
 		return data;
 	}
 
-	private static ImagePlus createImageData()
+	private static ImagePlus createImageData(RandomGenerator rg)
 	{
 		// Create an image with peaks
 		int size = 256;
 		int n = 80;
-		float[] data1 = createSpots(size, n, 5000, 10000, 2.5, 3.0);
-		float[] data2 = createSpots(size, n, 10000, 20000, 4.5, 3.5);
-		float[] data3 = createSpots(size, n, 20000, 40000, 6.5, 5);
-		short[] data = combine(data1, data2, data3);
+		float[] data1 = createSpots(rg, size, n, 5000, 10000, 2.5, 3.0);
+		float[] data2 = createSpots(rg, size, n, 10000, 20000, 4.5, 3.5);
+		float[] data3 = createSpots(rg, size, n, 20000, 40000, 6.5, 5);
+		short[] data = combine(rg, data1, data2, data3);
 		// Show
 		String title = "FindFociTest";
 		ImageProcessor ip = new ShortProcessor(size, size, data, null);
@@ -656,27 +672,28 @@ public class FindFociTest
 		return new ImagePlus(title, ip);
 	}
 
-	private static short[] combine(float[] data1, float[] data2, float[] data3)
+	private static short[] combine(RandomGenerator rg, float[] data1, float[] data2, float[] data3)
 	{
 		// Combine images and add a bias and read noise
-		RandomDataGenerator rg = new RandomDataGenerator(rand);
+		RandomDataGenerator rdg = new RandomDataGenerator(rg);
 		short[] data = new short[data1.length];
 		for (int i = 0; i < data.length; i++)
 		{
 			final double mu = data1[i] + data2[i] + data3[i];
-			data[i] = (short) (((mu != 0) ? rg.nextPoisson(mu) : 0) + rg.nextGaussian(bias, 5));
+			data[i] = (short) (((mu != 0) ? rdg.nextPoisson(mu) : 0) + rdg.nextGaussian(bias, 5));
 		}
 		return data;
 	}
 
-	private static float[] createSpots(int size, int n, int min, int max, double sigmaX, double sigmaY)
+	private static float[] createSpots(RandomGenerator rg, int size, int n, int min, int max, double sigmaX,
+			double sigmaY)
 	{
 		float[] data = new float[size * size];
 		// Randomly put on spots
-		RandomDataGenerator rg = new RandomDataGenerator(rand);
+		RandomDataGenerator rdg = new RandomDataGenerator(rg);
 		while (n-- > 0)
 		{
-			data[rand.nextInt(data.length)] = rg.nextInt(min, max);
+			data[rg.nextInt(data.length)] = rdg.nextInt(min, max);
 		}
 
 		// Blur
@@ -687,19 +704,19 @@ public class FindFociTest
 		return (float[]) fp.getPixels();
 	}
 
-	private static ImagePlus createImageData3D()
+	private static ImagePlus createImageData3D(RandomGenerator rg)
 	{
 		// Create an image with peaks
 		int size = 64;
 		int z = 5;
 		int n = 20;
-		float[][] data1 = createSpots3D(size, z, n, 5000, 10000, 2.5, 3.0);
-		float[][] data2 = createSpots3D(size, z, n, 10000, 20000, 4.5, 3.5);
-		float[][] data3 = createSpots3D(size, z, n, 20000, 40000, 6.5, 5);
+		float[][] data1 = createSpots3D(rg, size, z, n, 5000, 10000, 2.5, 3.0);
+		float[][] data2 = createSpots3D(rg, size, z, n, 10000, 20000, 4.5, 3.5);
+		float[][] data3 = createSpots3D(rg, size, z, n, 20000, 40000, 6.5, 5);
 		ImageStack stack = new ImageStack(size, size);
 		for (int i = 0; i < data1.length; i++)
 		{
-			short[] data = combine(data1[i], data2[i], data3[i]);
+			short[] data = combine(rg, data1[i], data2[i], data3[i]);
 			stack.addSlice(new ShortProcessor(size, size, data, null));
 		}
 		// Show
@@ -708,14 +725,15 @@ public class FindFociTest
 		return new ImagePlus(title, stack);
 	}
 
-	private static float[][] createSpots3D(int size, int z, int n, int min, int max, double sigmaX, double sigmaY)
+	private static float[][] createSpots3D(RandomGenerator rg, int size, int z, int n, int min, int max, double sigmaX,
+			double sigmaY)
 	{
 		float[] data = new float[size * size];
 		// Randomly put on spots
-		RandomDataGenerator rg = new RandomDataGenerator(rand);
+		RandomDataGenerator rdg = new RandomDataGenerator(rg);
 		while (n-- > 0)
 		{
-			data[rand.nextInt(data.length)] = rg.nextInt(min, max);
+			data[rg.nextInt(data.length)] = rdg.nextInt(min, max);
 		}
 
 		int middle = z / 2;

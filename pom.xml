@@ -14,7 +14,7 @@
 	<version>1.3.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>GDSC</name>
+	<name>GDSC plugins for ImageJ</name>
 	<url>http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/gdsc_plugins</url>
 	<organization>
 		<name>Genome Damage and Stability Centre</name>
@@ -137,6 +137,12 @@ Software for microscopy image analysis
 			<groupId>gdsc</groupId>
 			<artifactId>gdsc-core</artifactId>
 			<version>1.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>gdsc</groupId>
+			<artifactId>gdsc-test</artifactId>
+			<version>1.0.0</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
