@@ -29,10 +29,10 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import gdsc.UsageTracker;
+import gdsc.colocalisation.cda.CDA_Plugin;
 import gdsc.colocalisation.cda.TwinStackShifter;
 import gdsc.core.threshold.AutoThreshold;
 import gdsc.core.utils.Correlator;
-import gdsc.core.utils.Random;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -461,67 +461,22 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 			// Circularly permute the s2 stack and compute the M1,M2,R stats.
 			// Perform permutations within given distance limits, random n trials from all combinations.
 
-			// Count the number of permutations
-			int maximumRadius2 = maximumRadius * maximumRadius;
-			int minimumRadius2 = minimumRadius * minimumRadius;
-			int totalPermutations = 0;
-			for (int i = -maximumRadius; i <= maximumRadius; ++i)
-			{
-				for (int j = -maximumRadius; j <= maximumRadius; ++j)
-				{
-					int distance2 = i * i + j * j;
-					if (distance2 > maximumRadius2 || distance2 < minimumRadius2)
-						continue;
-					totalPermutations++;
-				}
-			}
-
-			// There should always be total permutations since minimumRadius <= maximumRadius
-
-			// Randomise the permutations
-			int[] indices = new int[totalPermutations];
-			totalPermutations = 0;
-			for (int i = -maximumRadius; i <= maximumRadius; ++i)
-			{
-				for (int j = -maximumRadius; j <= maximumRadius; ++j)
-				{
-					int distance2 = i * i + j * j;
-					if (distance2 > maximumRadius2 || distance2 < minimumRadius2)
-						continue;
-					// Pack the magnitude of the shift into the first 4 bytes and then pack the signs
-					int index = (Math.abs(i) & 0xff) << 8 | Math.abs(j) & 0xff;
-					if (i < 0)
-						index |= 0x00010000;
-					if (j < 0)
-						index |= 0x00020000;
-
-					indices[totalPermutations++] = index;
-				}
-			}
-
-			// Fisher-Yates shuffle
-			Random rand = new Random(30051977);
-			rand.shuffle(indices);
+			int[] indices = CDA_Plugin.getRandomShiftIndices(minimumRadius, maximumRadius, permutations);
 
 			TwinStackShifter stackShifter = new TwinStackShifter(s2.imageStack, s2.maskStack, s3.maskStack);
 
 			// Process only the specified number of permutations
-			int n = (permutations < totalPermutations) ? permutations : totalPermutations;
-			ArrayList<CalculationResult> results = new ArrayList<CalculationResult>(n);
+			ArrayList<CalculationResult> results = new ArrayList<CalculationResult>(indices.length);
 
-			while (n-- > 0)
+			for (int n = indices.length; n-- > 0;)
 			{
 				int index = indices[n];
-				int j = index & 0xff;
-				int i = (index & 0xff00) >> 8;
-				if ((index & 0x00010000) == 0x00010000)
-					i = -i;
-				if ((index & 0x00020000) == 0x00020000)
-					j = -j;
+				int x = CDA_Plugin.getXShift(index);
+				int y = CDA_Plugin.getYShift(index);
 
-				double distance = Math.sqrt(i * i + j * j);
+				double distance = Math.sqrt(x * x + y * y);
 
-				stackShifter.setShift(i, j);
+				stackShifter.setShift(x, y);
 				stackShifter.run();
 
 				results.add(correlate(s1.imageStack, s1.maskStack, stackShifter.getResultImage().getStack(),

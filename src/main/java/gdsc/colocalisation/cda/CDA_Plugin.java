@@ -56,12 +56,15 @@ import java.util.List;
 
 import javax.swing.JPanel;
 
+import org.apache.commons.math3.random.Well19937c;
+
 import gdsc.UsageTracker;
 import gdsc.colocalisation.cda.engine.CDAEngine;
 import gdsc.colocalisation.cda.engine.CalculationResult;
 import gdsc.core.ij.Utils;
 import gdsc.core.utils.Random;
 import gdsc.core.utils.StoredData;
+import gnu.trove.list.array.TIntArrayList;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -759,61 +762,108 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	private int[] buildShiftIndices(boolean subRandomSamples, int randomRadius, int maximumRadius)
 	{
-		int[] shiftIndices1 = randomIndices(randomRadius, maximumRadius);
-		int[] shiftIndices2 = randomIndices(0, (subRandomSamples) ? randomRadius : 0);
+		int[] shiftIndices1 = getRandomShiftIndices(randomRadius, maximumRadius, permutations);
+		int[] shiftIndices2 = (subRandomSamples) ? getRandomShiftIndices(0, randomRadius, permutations) : new int[0];
 		int[] shiftIndices = merge(shiftIndices1, shiftIndices2);
 		return shiftIndices;
 	}
 
-	private int[] randomIndices(int minimumRadius, int maximumRadius)
+	/**
+	 * Generate random shift indices between the minimum and maximum radius.
+	 * <p>
+	 * The indices are packed as unsigned bytes in the first 2 bytes of the integer. The signs are packed in the next 2
+	 * bits:
+	 * 
+	 * <pre>
+	 * int index = (Math.abs(i) & 0xff) << 8 | Math.abs(j) & 0xff;
+	 * if (i < 0)
+	 * 	index |= 0x00010000;
+	 * if (j < 0)
+	 * 	index |= 0x00020000;
+	 * </pre>
+	 * 
+	 * <p>
+	 * This supports shifts up to +/-256 pixels.
+	 *
+	 * @param minimumRadius
+	 *            the minimum radius (range 0-256)
+	 * @param maximumRadius
+	 *            the maximum radius (range 0-256)
+	 * @param permutations
+	 *            the permutations
+	 * @return the random shift indices
+	 */
+	public static int[] getRandomShiftIndices(int minimumRadius, int maximumRadius, int permutations)
 	{
+		if (minimumRadius < 0 || minimumRadius > 256)
+			throw new IllegalArgumentException("Shifts of 0-256 are supported");
+		if (maximumRadius < 0 || maximumRadius > 256)
+			throw new IllegalArgumentException("Shifts of 0-256 are supported");
+
 		// Count the number of permutations
-		double maximumRadius2 = maximumRadius * maximumRadius;
-		double minimumRadius2 = minimumRadius * minimumRadius;
-		int totalPermutations = 0;
+		final int maximumRadius2 = maximumRadius * maximumRadius;
+		final int minimumRadius2 = minimumRadius * minimumRadius;
+		TIntArrayList list = new TIntArrayList(512);
 		for (int i = -maximumRadius; i <= maximumRadius; ++i)
 		{
 			for (int j = -maximumRadius; j <= maximumRadius; ++j)
 			{
-				double distance2 = i * i + j * j;
+				// Int is big enough to hold 256^2 * 2
+				int distance2 = i * i + j * j;
 				if (distance2 > maximumRadius2 || distance2 <= minimumRadius2)
 					continue;
-				totalPermutations++;
-			}
-		}
-
-		if (totalPermutations == 0)
-			return new int[0];
-
-		// Randomise the permutations
-		int[] indices = new int[totalPermutations];
-		totalPermutations = 0;
-		for (int i = -maximumRadius; i <= maximumRadius; ++i)
-		{
-			for (int j = -maximumRadius; j <= maximumRadius; ++j)
-			{
-				double distance2 = i * i + j * j;
-				if (distance2 > maximumRadius2 || distance2 <= minimumRadius2)
-					continue;
-				// Pack the magnitude of the shift into the first 4 bytes and then pack the signs
+				// Pack the magnitude of the shift into the first 2 bytes and then pack the signs.
 				int index = (Math.abs(i) & 0xff) << 8 | Math.abs(j) & 0xff;
 				if (i < 0)
 					index |= 0x00010000;
 				if (j < 0)
 					index |= 0x00020000;
-
-				indices[totalPermutations++] = index;
+				list.add(index);
 			}
 		}
 
-		if (permutations < totalPermutations && permutations > 0)
+		// Randomise the permutations
+		if (permutations < list.size() && permutations > 0)
 		{
-			// Fisher-Yates shuffle to randomly select
-			Random rand = new Random();
-			rand.shuffle(indices);
-			return Arrays.copyOf(indices, permutations);
+			int[] sample = Random.sample(permutations, list.size(), new Well19937c(30051977));
+			int[] indices = new int[permutations];
+			for (int i = 0; i < permutations; i++)
+				indices[i] = list.getQuick(sample[i]);
+			return indices;
 		}
-		return indices;
+
+		// No sub-selection
+		return list.toArray();
+	}
+
+	/**
+	 * Gets the x shift from the packed index.
+	 *
+	 * @param index
+	 *            the index
+	 * @return the x shift
+	 */
+	public static int getXShift(int index)
+	{
+		int i = (index & 0xff00) >> 8;
+		if ((index & 0x00010000) == 0x00010000)
+			i = -i;
+		return i;
+	}
+
+	/**
+	 * Gets the y shift from the packed index.
+	 *
+	 * @param index
+	 *            the index
+	 * @return the y shift
+	 */
+	public static int getYShift(int index)
+	{
+		int j = index & 0xff;
+		if ((index & 0x00020000) == 0x00020000)
+			j = -j;
+		return j;
 	}
 
 	private int[] merge(int[] shiftIndices1, int[] shiftIndices2)
@@ -850,12 +900,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		for (int n = 0; n < shiftIndices.length; n++)
 		{
 			int index = shiftIndices[n];
-			int y = index & 0xff;
-			int x = (index & 0xff00) >> 8;
-			if ((index & 0x00010000) == 0x00010000)
-				x = -x;
-			if ((index & 0x00020000) == 0x00020000)
-				y = -y;
+			int x = CDA_Plugin.getXShift(index);
+			int y = CDA_Plugin.getYShift(index);
 
 			engine.run(n, x, y);
 
