@@ -308,8 +308,6 @@ public class FindFociTest
 	public void isFasterUsingOptimisedFloatProcessor()
 	{
 		TestSettings.assumeMediumComplexity();
-		// Since no assertions are made check the logging will be seen
-		Assume.assumeTrue(TestSettings.allow(LogLevel.WARN));
 
 		// Get settings to try for the speed test
 		int[] indices = new int[] { 1 };
@@ -362,8 +360,6 @@ public class FindFociTest
 	public void isNotSlowerthanLegacyUsingOptimisedIntProcessor()
 	{
 		TestSettings.assumeMediumComplexity();
-		// Since no assertions are made check the logging will be seen
-		Assume.assumeTrue(TestSettings.allow(LogLevel.WARN));
 
 		// Get settings to try for the speed test
 		int[] indices = new int[] { 1 };
