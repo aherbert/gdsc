@@ -28,12 +28,11 @@ import java.util.ArrayList;
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 
 import gdsc.core.threshold.AutoThreshold;
 import gdsc.test.TestSettings;
-import gdsc.test.TestSettings.LogLevel;
+import gdsc.test.TestSettings.TestComplexity;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.filter.GaussianBlur;
@@ -307,7 +306,7 @@ public class FindFociTest
 	@Test
 	public void isFasterUsingOptimisedFloatProcessor()
 	{
-		TestSettings.assumeMediumComplexity();
+		TestSettings.assumeSpeedTest(TestComplexity.MEDIUM);
 
 		// Get settings to try for the speed test
 		int[] indices = new int[] { 1 };
@@ -359,7 +358,7 @@ public class FindFociTest
 	@Test
 	public void isNotSlowerthanLegacyUsingOptimisedIntProcessor()
 	{
-		TestSettings.assumeMediumComplexity();
+		TestSettings.assumeSpeedTest(TestComplexity.MEDIUM);
 
 		// Get settings to try for the speed test
 		int[] indices = new int[] { 1 };
