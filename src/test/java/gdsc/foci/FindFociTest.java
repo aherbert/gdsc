@@ -31,6 +31,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import gdsc.core.threshold.AutoThreshold;
+import gdsc.test.TestAssert;
 import gdsc.test.TestSettings;
 import gdsc.test.TestSettings.TestComplexity;
 import ij.ImagePlus;
@@ -43,7 +44,9 @@ import ij.process.ShortProcessor;
 public class FindFociTest
 {
 	static int bias = 500;
-	static int offset = bias + 100;
+	// Offset to create negative values.
+	// Power of 2 should not effect the mantissa precision
+	static int offset = 1024;
 	static ImagePlus[] data;
 	static int numberOfTestImages = 2;
 	static int numberOfTestImages3D = 2;
@@ -80,7 +83,7 @@ public class FindFociTest
 			{
 				FindFociResults r1 = runLegacy(imp, i);
 				FindFociResults r2 = runInt(imp, i, false, nonContiguous);
-				isEqual(r1, r2, i, nonContiguous);
+				isEqual(true, r1, r2, i, nonContiguous);
 			}
 		}
 	}
@@ -95,7 +98,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runInt(imp, i, false, nonContiguous);
 					FindFociResults r2 = runInt(imp, i, true, nonContiguous);
-					isEqual(r1, r2, i, nonContiguous);
+					isEqual(false, r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -110,7 +113,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runInt(imp, i, false, nonContiguous);
 					FindFociResults r2 = runFloat(imp, i, false, false, nonContiguous);
-					isEqual(r1, r2, i, nonContiguous);
+					isEqual(false, r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -125,7 +128,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
 					FindFociResults r2 = runFloat(imp, i, true, false, nonContiguous);
-					isEqual(r1, r2, i, nonContiguous);
+					isEqual(false, r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -142,7 +145,7 @@ public class FindFociTest
 						continue;
 					FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
 					FindFociResults r2 = runFloat(imp, i, false, true, nonContiguous);
-					isEqual(r1, r2, i, true, nonContiguous);
+					isEqual(false, r1, r2, i, true, nonContiguous);
 				}
 		}
 	}
@@ -159,7 +162,7 @@ public class FindFociTest
 						continue;
 					FindFociResults r1 = runFloat(imp, i, true, false, nonContiguous);
 					FindFociResults r2 = runFloat(imp, i, true, true, nonContiguous);
-					isEqual(r1, r2, i, true, nonContiguous);
+					isEqual(false, r1, r2, i, true, nonContiguous);
 				}
 		}
 	}
@@ -174,7 +177,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runInt(imp, i, false, nonContiguous);
 					FindFociResults r2 = runIntStaged(imp, i, false, nonContiguous);
-					isEqual(r1, r2, i, nonContiguous);
+					isEqual(false, r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -189,7 +192,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runInt(imp, i, true, nonContiguous);
 					FindFociResults r2 = runIntStaged(imp, i, true, nonContiguous);
-					isEqual(r1, r2, i, nonContiguous);
+					isEqual(false, r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -204,7 +207,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
 					FindFociResults r2 = runFloatStaged(imp, i, false, false, nonContiguous);
-					isEqual(r1, r2, i, nonContiguous);
+					isEqual(false, r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -219,7 +222,7 @@ public class FindFociTest
 				{
 					FindFociResults r1 = runFloat(imp, i, true, false, nonContiguous);
 					FindFociResults r2 = runFloatStaged(imp, i, true, false, nonContiguous);
-					isEqual(r1, r2, i, nonContiguous);
+					isEqual(false, r1, r2, i, nonContiguous);
 				}
 		}
 	}
@@ -236,7 +239,7 @@ public class FindFociTest
 						continue;
 					FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
 					FindFociResults r2 = runFloatStaged(imp, i, false, true, nonContiguous);
-					isEqual(r1, r2, i, true, nonContiguous);
+					isEqual(false, r1, r2, i, true, nonContiguous);
 				}
 		}
 	}
@@ -253,7 +256,7 @@ public class FindFociTest
 						continue;
 					FindFociResults r1 = runFloat(imp, i, true, false, nonContiguous);
 					FindFociResults r2 = runFloatStaged(imp, i, true, true, nonContiguous);
-					isEqual(r1, r2, i, true, nonContiguous);
+					isEqual(false, r1, r2, i, true, nonContiguous);
 				}
 		}
 	}
@@ -456,12 +459,13 @@ public class FindFociTest
 		Assert.assertTrue(time2 < time1);
 	}
 
-	private void isEqual(FindFociResults r1, FindFociResults r2, int set, boolean nonContiguous)
+	private void isEqual(boolean legacy, FindFociResults r1, FindFociResults r2, int set, boolean nonContiguous)
 	{
-		isEqual(r1, r2, set, false, nonContiguous);
+		isEqual(legacy, r1, r2, set, false, nonContiguous);
 	}
 
-	private void isEqual(FindFociResults r1, FindFociResults r2, int set, boolean negativeValues, boolean nonContiguous)
+	private void isEqual(boolean legacy, FindFociResults r1, FindFociResults r2, int set, boolean negativeValues,
+			boolean nonContiguous)
 	{
 		String setName = String.format("Set %d (%b)", set, nonContiguous);
 
@@ -497,16 +501,27 @@ public class FindFociTest
     			Assert.assertEquals("Count", o1.count, o2.count);
     			Assert.assertEquals("Saddle ID", o1.saddleNeighbourId, o2.saddleNeighbourId);
     			Assert.assertEquals("Count >Saddle", o1.countAboveSaddle, o2.countAboveSaddle);
-    			Assert.assertEquals("Max", (int)o1.maxValue, (int)o2.maxValue + offset);
+    			// Single/Summed values can be cast to long as they should be 16-bit integers 
+    			Assert.assertEquals("Max", (long)o1.maxValue, (long)o2.maxValue + offset);
     			if (o2.highestSaddleValue != Float.NEGATIVE_INFINITY && o2.highestSaddleValue != 0)
-    				Assert.assertEquals("Saddle value", (int)o1.highestSaddleValue, (int)o2.highestSaddleValue + offset);
-    			Assert.assertEquals("Av Intensity", (int)o1.averageIntensity, (int)o2.averageIntensity + offset);
-    			Assert.assertEquals("Av Intensity >background", (int)o1.averageIntensityAboveBackground, (int)o2.averageIntensityAboveBackground);
+    				Assert.assertEquals("Saddle value", (long)o1.highestSaddleValue, (long)o2.highestSaddleValue + offset);
+    			if (legacy)
+    			{
+        			// Cast to integer as this is the result format of the legacy FindFoci code
+        			Assert.assertEquals("Av Intensity", (long)o1.averageIntensity, (long)o2.averageIntensity + offset);
+        			Assert.assertEquals("Av Intensity >background", (long)o1.averageIntensityAboveBackground, (long)o2.averageIntensityAboveBackground);
+    			}
+    			else
+    			{
+        			// Averages cannot be cast and are compared as floating-point values
+        			TestAssert.assertEqualsRelative("Av Intensity", o1.averageIntensity, o2.averageIntensity + offset, 1e-9);
+        			TestAssert.assertEqualsRelative("Av Intensity >background", o1.averageIntensityAboveBackground, o2.averageIntensityAboveBackground, 1e-9);
+    			}
     			if (negativeValues)
     				continue;
-    			Assert.assertEquals("Intensity", (int)o1.totalIntensity, (int)o2.totalIntensity);
-    			Assert.assertEquals("Intensity >background", (int)o1.totalIntensityAboveBackground, (int)o2.totalIntensityAboveBackground);
-    			Assert.assertEquals("Intensity > Saddle", (int)o1.intensityAboveSaddle, (int)o2.intensityAboveSaddle);
+    			Assert.assertEquals("Intensity", (long)o1.totalIntensity, (long)o2.totalIntensity);
+    			Assert.assertEquals("Intensity >background", (long)o1.totalIntensityAboveBackground, (long)o2.totalIntensityAboveBackground);
+    			Assert.assertEquals("Intensity > Saddle", (long)o1.intensityAboveSaddle, (long)o2.intensityAboveSaddle);
     			//@formatter:on
 			}
 		}
@@ -675,7 +690,12 @@ public class FindFociTest
 		for (int i = 0; i < data.length; i++)
 		{
 			final double mu = data1[i] + data2[i] + data3[i];
-			data[i] = (short) (((mu != 0) ? rdg.nextPoisson(mu) : 0) + rdg.nextGaussian(bias, 5));
+			double v = (((mu != 0) ? rdg.nextPoisson(mu) : 0) + rdg.nextGaussian(bias, 5));
+			if (v < 0)
+				v = 0;
+			else if (v > 65535)
+				v = 65535;
+			data[i] = (short) v;
 		}
 		return data;
 	}
