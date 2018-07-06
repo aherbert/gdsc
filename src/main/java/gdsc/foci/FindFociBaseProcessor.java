@@ -209,6 +209,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		if (backgroundMethod == BACKGROUND_AUTO_THRESHOLD)
 		{
 			stats.background = getThreshold(autoThresholdMethod, statsHistogram);
+			//System.out.printf("background = %s\n", stats.background);
 		}
 		statsHistogram = null;
 
@@ -349,8 +350,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		if (histogram instanceof FloatHistogram)
 		{
 			// Convert to a smaller histogram 
-			//histogram = histogram.compact(65536);
-			histogram = histogram.compact(4096);
+			// Use the limit for 16-bit integer data. This ensure compatibility 
+			// between the Integer and Float processor, i.e. if a 16-bit image
+			// is converted to a float image it will achieve the same results.
+			histogram = histogram.compact(65536);
+			//histogram = histogram.compact(4096);
 		}
 		final int[] statsHistogram = histogram.h;
 		final int t;

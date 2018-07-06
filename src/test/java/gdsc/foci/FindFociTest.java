@@ -527,7 +527,7 @@ public class FindFociTest
 		}
 		catch (AssertionError e)
 		{
-			throw new AssertionError(String.format("%s [%d]: " + e.getMessage(), setName, counter), e);
+			TestAssert.wrapAssertionError(e, "%s [%d]", setName, counter);
 		}
 	}
 
