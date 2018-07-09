@@ -28,7 +28,7 @@ import java.util.Random;
 
 import org.junit.Test;
 
-@SuppressWarnings({"javadoc"})
+@SuppressWarnings({ "javadoc" })
 public class FindFociStateMachineTest
 {
 	/**

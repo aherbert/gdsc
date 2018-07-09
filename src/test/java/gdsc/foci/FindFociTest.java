@@ -41,7 +41,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
-@SuppressWarnings({"javadoc"})
+@SuppressWarnings({ "javadoc" })
 public class FindFociTest
 {
 	static int bias = 500;
