@@ -355,7 +355,7 @@ public interface FindFociProcessor
 	 *         (3) the image statistics double[] array. The details can be extracted using the constants defined with
 	 *         the FindFoci.STATS_ prefix. Returns null if cancelled by escape.
 	 */
-	FindFociResults findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
+	public FindFociResults findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
 			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
 			int peakMethod, double peakParameter, int outputType, int sortIndex, int options, double blur,
 			int centreMethod, double centreParameter, double fractionParameter);
@@ -365,13 +365,14 @@ public interface FindFociProcessor
 	 * Returns the original image if blur <= 0.
 	 * <p>
 	 * Only blurs the current channel and frame for use in the FindFoci algorithm.
-	 * 
+	 *
 	 * @param imp
+	 *            the image
 	 * @param blur
 	 *            The blur standard deviation
 	 * @return the blurred image
 	 */
-	ImagePlus blur(ImagePlus imp, double blur);
+	public ImagePlus blur(ImagePlus imp, double blur);
 
 	/**
 	 * This method is a stripped-down version of the
@@ -398,7 +399,7 @@ public interface FindFociProcessor
 	 *            An options flag (use the constants with prefix FindFoci.OPTION_)
 	 * @return the initialisation results
 	 */
-	FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask, int backgroundMethod,
+	public FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask, int backgroundMethod,
 			String autoThresholdMethod, int options);
 
 	/**
@@ -412,7 +413,7 @@ public interface FindFociProcessor
 	 *            A previously cloned init results object (avoid reallocating memory). Can be null.
 	 * @return the find foci init results
 	 */
-	FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults);
+	public FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults);
 
 	/**
 	 * This method is a stripped-down version of the
@@ -436,7 +437,7 @@ public interface FindFociProcessor
 	 *            parameter for calculating the stopping criteria
 	 * @return the find foci search results
 	 */
-	FindFociSearchResults findMaximaSearch(FindFociInitResults initResults, int backgroundMethod,
+	public FindFociSearchResults findMaximaSearch(FindFociInitResults initResults, int backgroundMethod,
 			double backgroundParameter, int searchMethod, double searchParameter);
 
 	/**
@@ -460,7 +461,7 @@ public interface FindFociProcessor
 	 *            parameter for calculating the minimum peak height
 	 * @return the find foci merge results
 	 */
-	FindFociMergeTempResults findMaximaMergePeak(FindFociInitResults initResults, FindFociSearchResults searchResults,
+	public FindFociMergeTempResults findMaximaMergePeak(FindFociInitResults initResults, FindFociSearchResults searchResults,
 			int peakMethod, double peakParameter);
 
 	/**
@@ -480,7 +481,7 @@ public interface FindFociProcessor
 	 *            The minimum size for a peak
 	 * @return the find foci merge results
 	 */
-	FindFociMergeTempResults findMaximaMergeSize(FindFociInitResults initResults, FindFociMergeTempResults mergeResults,
+	public FindFociMergeTempResults findMaximaMergeSize(FindFociInitResults initResults, FindFociMergeTempResults mergeResults,
 			int minSize);
 
 	/**
@@ -506,7 +507,7 @@ public interface FindFociProcessor
 	 *            peak identification)
 	 * @return the find foci merge results
 	 */
-	FindFociMergeResults findMaximaMergeFinal(FindFociInitResults initResults, FindFociMergeTempResults mergeResults,
+	public FindFociMergeResults findMaximaMergeFinal(FindFociInitResults initResults, FindFociMergeTempResults mergeResults,
 			int minSize, int options, double blur);
 
 	/**
@@ -536,7 +537,7 @@ public interface FindFociProcessor
 	 *            Parameter for calculating the peak centre
 	 * @return the find foci results
 	 */
-	FindFociResults findMaximaResults(FindFociInitResults initResults, FindFociMergeResults mergeResults, int maxPeaks,
+	public FindFociResults findMaximaResults(FindFociInitResults initResults, FindFociMergeResults mergeResults, int maxPeaks,
 			int sortIndex, int centreMethod, double centreParameter);
 
 	/**
@@ -566,7 +567,7 @@ public interface FindFociProcessor
 	 *            Parameter for calculating the peak centre
 	 * @return the find foci results
 	 */
-	FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
+	public FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
 			int maxPeaks, int sortIndex, int centreMethod, double centreParameter);
 
 	/**
@@ -600,7 +601,7 @@ public interface FindFociProcessor
 	 *            Used to specify the fraction of the peak to show in the mask
 	 * @return the find foci results
 	 */
-	FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
+	public FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
 			FindFociPrelimResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
 			double fractionParameter);
 }
