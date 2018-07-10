@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -43,7 +43,7 @@ public class TimeValuePointManager
 
 	private static final String newline = System.getProperty("line.separator");
 
-	private String filename;
+	private final String filename;
 	private FileType type = null;
 
 	// Used to parse the input file
@@ -60,7 +60,7 @@ public class TimeValuePointManager
 
 	/**
 	 * Attempts to detect the file type by reading the initial lines
-	 * 
+	 *
 	 * @return The type of file containing the points
 	 * @throws IOException
 	 */
@@ -97,7 +97,7 @@ public class TimeValuePointManager
 				if (input != null)
 					input.close();
 			}
-			catch (IOException e)
+			catch (final IOException e)
 			{
 			}
 		}
@@ -150,7 +150,7 @@ public class TimeValuePointManager
 
 	/**
 	 * Save the points to file
-	 * 
+	 *
 	 * @param points
 	 * @throws IOException
 	 */
@@ -162,24 +162,22 @@ public class TimeValuePointManager
 		OutputStreamWriter out = null;
 		try
 		{
-			File file = new File(filename);
+			final File file = new File(filename);
 			if (!file.exists())
-			{
 				if (file.getParent() != null)
 					new File(file.getParent()).mkdirs();
-			}
 
 			// Save results to file
-			FileOutputStream fos = new FileOutputStream(filename);
+			final FileOutputStream fos = new FileOutputStream(filename);
 			out = new OutputStreamWriter(fos);
 
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 
 			out.write("ID,T,X,Y,Z,Value" + newline);
 
 			// Output all results in ascending rank order
 			int id = 0;
-			for (TimeValuedPoint point : points)
+			for (final TimeValuedPoint point : points)
 			{
 				sb.append(++id).append(',');
 				sb.append(point.getTime()).append(',');
@@ -198,7 +196,7 @@ public class TimeValuePointManager
 				if (out != null)
 					out.close();
 			}
-			catch (IOException e)
+			catch (final IOException e)
 			{
 			}
 		}
@@ -206,7 +204,7 @@ public class TimeValuePointManager
 
 	/**
 	 * Loads the points from the file
-	 * 
+	 *
 	 * @return
 	 * @throws IOException
 	 */
@@ -217,7 +215,7 @@ public class TimeValuePointManager
 		if (type == FileType.Unknown || !setupParser())
 			return new TimeValuedPoint[0];
 
-		LinkedList<TimeValuedPoint> points = new LinkedList<TimeValuedPoint>();
+		final LinkedList<TimeValuedPoint> points = new LinkedList<>();
 		BufferedReader input = null;
 		try
 		{
@@ -231,9 +229,8 @@ public class TimeValuePointManager
 			int errors = 0;
 			while (line != null)
 			{
-				String[] tokens = line.split(delimiter);
+				final String[] tokens = line.split(delimiter);
 				if (tokens.length > maxField)
-				{
 					try
 					{
 						//int id = Integer.parseInt(tokens[fields[0]]); // Not currently needed
@@ -249,7 +246,7 @@ public class TimeValuePointManager
 							if (type == FileType.QuickPALM)
 							{
 								// z is in nm and so must be converted to approximate pixels
-								float xNm = Float.parseFloat(tokens[4]);
+								final float xNm = Float.parseFloat(tokens[4]);
 								z *= x / xNm;
 							}
 						}
@@ -258,13 +255,12 @@ public class TimeValuePointManager
 							value = Float.parseFloat(tokens[fields[5]]);
 						points.add(new TimeValuedPoint(x, y, z, (int) t, value));
 					}
-					catch (NumberFormatException e)
+					catch (final NumberFormatException e)
 					{
 						System.err.println("Invalid numbers on line: " + lineCount);
 						if (++errors > 10)
 							break;
 					}
-				}
 				readLine(input);
 			}
 
@@ -277,7 +273,7 @@ public class TimeValuePointManager
 				if (input != null)
 					input.close();
 			}
-			catch (IOException e)
+			catch (final IOException e)
 			{
 			}
 		}
@@ -348,7 +344,7 @@ public class TimeValuePointManager
 				return false;
 		}
 
-		for (int i : fields)
+		for (final int i : fields)
 			if (maxField < i)
 				maxField = i;
 
@@ -357,7 +353,7 @@ public class TimeValuePointManager
 
 	/**
 	 * Reads lines from the input until the first record is reached. Leaves the line variable at the first record.
-	 * 
+	 *
 	 * @param input
 	 * @throws IOException
 	 */
@@ -367,9 +363,8 @@ public class TimeValuePointManager
 		{
 			case FIND_FOCI:
 				do
-				{
 					readLine(input);
-				} while (line != null && (line.startsWith("#") || line.startsWith("Peak #")));
+				while (line != null && (line.startsWith("#") || line.startsWith("Peak #")));
 
 				break;
 
@@ -381,9 +376,8 @@ public class TimeValuePointManager
 				// Read until no comment character
 			default:
 				do
-				{
 					readLine(input);
-				} while (line != null && line.startsWith("#"));
+				while (line != null && line.startsWith("#"));
 
 				break;
 		}
@@ -398,27 +392,27 @@ public class TimeValuePointManager
 
 	/**
 	 * Save the points to the given file
-	 * 
+	 *
 	 * @param points
 	 * @param filename
 	 * @throws IOException
 	 */
 	public static void savePoints(TimeValuedPoint[] points, String filename) throws IOException
 	{
-		TimeValuePointManager manager = new TimeValuePointManager(filename);
+		final TimeValuePointManager manager = new TimeValuePointManager(filename);
 		manager.savePoints(points);
 	}
 
 	/**
 	 * Loads the points from the file
-	 * 
+	 *
 	 * @param filename
 	 * @return The points
 	 * @throws IOException
 	 */
 	public static TimeValuedPoint[] loadPoints(String filename) throws IOException
 	{
-		TimeValuePointManager manager = new TimeValuePointManager(filename);
+		final TimeValuePointManager manager = new TimeValuePointManager(filename);
 		return manager.loadPoints();
 	}
 }

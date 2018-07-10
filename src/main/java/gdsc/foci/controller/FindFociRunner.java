@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -78,7 +78,7 @@ public class FindFociRunner extends Thread
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Thread#run()
 	 */
 	@Override
@@ -100,33 +100,27 @@ public class FindFociRunner extends Thread
 				}
 
 				if (modelToRun != null)
-				{
 					// TODO - This system currently has to wait for the last calculation to finish before
-					// looking for the next model to run. This means for long running calculations the 
-					// user may have to wait a long time for the last one to finish, then wait again for 
-					// the next. 
+					// looking for the next model to run. This means for long running calculations the
+					// user may have to wait a long time for the last one to finish, then wait again for
+					// the next.
 					// Ideally we would run the calculation on a different thread. We can then do the model
-					// comparison here. If the next model to run resets to an earlier state than the 
+					// comparison here. If the next model to run resets to an earlier state than the
 					// current model then we should cancel the current calculation and start again, part way
 					// through...
 					// Basically this needs better interrupt handling for long running jobs.
 					runFindFoci(modelToRun);
-				}
 				else
-				{
 					// Wait for a new model to be queued
 					pause();
-				}
 			}
 		}
-		catch (InterruptedException e)
+		catch (final InterruptedException e)
 		{
 			if (running)
-			{
 				IJ.log("FindPeakRunner interupted: " + e.getLocalizedMessage());
-			}
 		}
-		catch (Throwable t)
+		catch (final Throwable t)
 		{
 			// Log this to ImageJ. Do not bubble up exceptions
 			if (t.getMessage() != null)
@@ -162,7 +156,7 @@ public class FindFociRunner extends Thread
 
 	/**
 	 * Invoke the Thread.wait() method
-	 * 
+	 *
 	 * @throws InterruptedException
 	 */
 	private synchronized void pause() throws InterruptedException
@@ -172,7 +166,7 @@ public class FindFociRunner extends Thread
 
 	/**
 	 * Add a FindFociModel for processing
-	 * 
+	 *
 	 * @param newModel
 	 */
 	public synchronized void queue(FindFociModel newModel)
@@ -190,8 +184,8 @@ public class FindFociRunner extends Thread
 	private void runFindFoci(FindFociModel model)
 	{
 		// Get the selected image
-		String title = model.getSelectedImage();
-		ImagePlus imp = WindowManager.getImage(title);
+		final String title = model.getSelectedImage();
+		final ImagePlus imp = WindowManager.getImage(title);
 		if (null == imp)
 		{
 			notify(MessageType.ERROR);
@@ -205,40 +199,40 @@ public class FindFociRunner extends Thread
 		}
 
 		// Set-up the FindFoci variables
-		String maskImage = model.getMaskImage();
-		int backgroundMethod = model.getBackgroundMethod();
-		double backgroundParameter = model.getBackgroundParameter();
-		String thresholdMethod = model.getThresholdMethod();
-		String statisticsMode = model.getStatisticsMode();
-		int searchMethod = model.getSearchMethod();
-		double searchParameter = model.getSearchParameter();
-		int minSize = model.getMinSize();
-		boolean minimumAboveSaddle = model.isMinimumAboveSaddle();
-		boolean connectedAboveSaddle = model.isConnectedAboveSaddle();
-		int peakMethod = model.getPeakMethod();
-		double peakParameter = model.getPeakParameter();
-		int sortMethod = model.getSortMethod();
-		int maxPeaks = model.getMaxPeaks();
-		int showMask = model.getShowMask();
-		boolean overlayMask = model.isOverlayMask();
-		boolean showTable = model.isShowTable();
-		boolean clearTable = model.isClearTable();
-		boolean markMaxima = model.isMarkMaxima();
-		boolean markROIMaxima = model.isMarkROIMaxima();
-		boolean markUsingOverlay = model.isMarkUsingOverlay();
-		boolean hideLabels = model.isHideLabels();
-		boolean showMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
+		final String maskImage = model.getMaskImage();
+		final int backgroundMethod = model.getBackgroundMethod();
+		final double backgroundParameter = model.getBackgroundParameter();
+		final String thresholdMethod = model.getThresholdMethod();
+		final String statisticsMode = model.getStatisticsMode();
+		final int searchMethod = model.getSearchMethod();
+		final double searchParameter = model.getSearchParameter();
+		final int minSize = model.getMinSize();
+		final boolean minimumAboveSaddle = model.isMinimumAboveSaddle();
+		final boolean connectedAboveSaddle = model.isConnectedAboveSaddle();
+		final int peakMethod = model.getPeakMethod();
+		final double peakParameter = model.getPeakParameter();
+		final int sortMethod = model.getSortMethod();
+		final int maxPeaks = model.getMaxPeaks();
+		final int showMask = model.getShowMask();
+		final boolean overlayMask = model.isOverlayMask();
+		final boolean showTable = model.isShowTable();
+		final boolean clearTable = model.isClearTable();
+		final boolean markMaxima = model.isMarkMaxima();
+		final boolean markROIMaxima = model.isMarkROIMaxima();
+		final boolean markUsingOverlay = model.isMarkUsingOverlay();
+		final boolean hideLabels = model.isHideLabels();
+		final boolean showMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
 		// Ignore: model.isShowLogMessages()
-		boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
+		final boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
 		// Ignore: model.isSaveResults();
 		// Ignore: model.getResultsDirectory();
-		boolean objectAnalysis = model.isObjectAnalysis();
-		boolean showObjectMask = model.isShowObjectMask();
-		boolean saveToMemory = model.isSaveToMemory();
-		double gaussianBlur = model.getGaussianBlur();
-		int centreMethod = model.getCentreMethod();
-		double centreParameter = model.getCentreParameter();
-		double fractionParameter = model.getFractionParameter();
+		final boolean objectAnalysis = model.isObjectAnalysis();
+		final boolean showObjectMask = model.isShowObjectMask();
+		final boolean saveToMemory = model.isSaveToMemory();
+		final double gaussianBlur = model.getGaussianBlur();
+		final int centreMethod = model.getCentreMethod();
+		final double centreParameter = model.getCentreParameter();
+		final double fractionParameter = model.getFractionParameter();
 
 		int outputType = FindFoci.getOutputMaskFlags(showMask);
 
@@ -285,14 +279,14 @@ public class FindFociRunner extends Thread
 			return;
 		}
 
-		ImagePlus mask = WindowManager.getImage(maskImage);
+		final ImagePlus mask = WindowManager.getImage(maskImage);
 
 		IJ.showStatus(FindFoci.TITLE + " calculating ...");
 		notify(MessageType.RUNNING);
 
 		// Compare this model with the previously computed results and
-		// only update the parts that are necessary. 
-		FindFociState state = compareModels(model, previousModel);
+		// only update the parts that are necessary.
+		final FindFociState state = compareModels(model, previousModel);
 		previousModel = null;
 
 		//System.out.println("Updating from " + state);
@@ -397,10 +391,8 @@ public class FindFociRunner extends Thread
 			}
 		}
 		if (state.ordinal() <= FindFociState.SHOW_RESULTS.ordinal())
-		{
 			ff.showResults(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod, searchParameter, maxPeaks,
 					minSize, peakMethod, peakParameter, outputType, sortMethod, options, results);
-		}
 
 		IJ.showStatus(FindFoci.TITLE + " finished");
 		notify(MessageType.DONE);
@@ -410,7 +402,7 @@ public class FindFociRunner extends Thread
 
 	/**
 	 * Compare two models and identify the state of the calculation
-	 * 
+	 *
 	 * @param model
 	 * @param previousModel
 	 * @return The state
@@ -421,9 +413,7 @@ public class FindFociRunner extends Thread
 
 		if (previousModel == null || notEqual(model.getSelectedImage(), previousModel.getSelectedImage()) ||
 				notEqual(model.getGaussianBlur(), previousModel.getGaussianBlur()))
-		{
 			return FindFociState.INITIAL;
-		}
 
 		if (notEqual(model.getBackgroundMethod(), previousModel.getBackgroundMethod()) ||
 				notEqual(model.getMaskImage(), previousModel.getMaskImage()) ||
@@ -431,32 +421,22 @@ public class FindFociRunner extends Thread
 				notEqual(model.getThresholdMethod(), previousModel.getThresholdMethod())
 		//|| notEqual(model.isShowLogMessages(), previousModel.isShowLogMessages())
 		)
-		{
 			return FindFociState.FIND_MAXIMA;
-		}
 
 		if (notEqual(model.getSearchMethod(), previousModel.getSearchMethod()) ||
 				notEqual(model.getSearchParameter(), previousModel.getSearchParameter()))
-		{
 			return FindFociState.SEARCH;
-		}
 
 		if (notEqual(model.getPeakMethod(), previousModel.getPeakMethod()) ||
 				notEqual(model.getPeakParameter(), previousModel.getPeakParameter()))
-		{
 			return FindFociState.MERGE_HEIGHT;
-		}
 
 		if (notEqual(model.getMinSize(), previousModel.getMinSize()))
-		{
 			return FindFociState.MERGE_SIZE;
-		}
 
 		if (notEqual(model.isMinimumAboveSaddle(), previousModel.isMinimumAboveSaddle()) ||
 				notEqual(model.isRemoveEdgeMaxima(), previousModel.isRemoveEdgeMaxima()))
-		{
 			return FindFociState.MERGE_SADDLE;
-		}
 		if (notEqual(model.isConnectedAboveSaddle(), previousModel.isConnectedAboveSaddle()))
 		{
 			if (model.isMinimumAboveSaddle()) // Only do this if computing above saddle
@@ -467,30 +447,24 @@ public class FindFociRunner extends Thread
 		if (notEqual(model.getSortMethod(), previousModel.getSortMethod()) ||
 				notEqual(model.getCentreMethod(), previousModel.getCentreMethod()) ||
 				notEqual(model.getCentreParameter(), previousModel.getCentreParameter()))
-		{
 			return FindFociState.CALCULATE_RESULTS;
-		}
 
 		// Special case where the change is only relevant if previous model was at the limit
 		if (notEqual(model.getMaxPeaks(), previousModel.getMaxPeaks()))
 		{
-			ArrayList<FindFociResult> resultsArrayList = results.results;
-			int change = model.getMaxPeaks() - previousModel.getMaxPeaks();
+			final ArrayList<FindFociResult> resultsArrayList = results.results;
+			final int change = model.getMaxPeaks() - previousModel.getMaxPeaks();
 			if ((change > 0 && resultsArrayList.size() >= previousModel.getMaxPeaks()) ||
 					(change < 0 && resultsArrayList.size() > model.getMaxPeaks()))
-			{
 				//System.out.println("Updating change to maxpeaks: " + previousModel.getMaxPeaks() + " => " + model.getMaxPeaks());
 				return FindFociState.CALCULATE_RESULTS;
-			}
 			ignoreChange = true;
 			//System.out.println("Ignoring change to maxpeaks: " + previousModel.getMaxPeaks() + " => " + model.getMaxPeaks());
 		}
 
 		if (notEqual(model.getShowMask(), previousModel.getShowMask()) ||
 				notEqual(model.isOverlayMask(), previousModel.isOverlayMask()))
-		{
 			return FindFociState.CALCULATE_OUTPUT_MASK;
-		}
 		if (notEqual(model.getFractionParameter(), previousModel.getFractionParameter()))
 		{
 			if (model.getShowMask() >= 5) // Only do this if using the fraction parameter
@@ -504,9 +478,7 @@ public class FindFociRunner extends Thread
 				notEqual(model.isMarkUsingOverlay(), previousModel.isMarkUsingOverlay()) ||
 				notEqual(model.isHideLabels(), previousModel.isHideLabels()) ||
 				notEqual(model.isMarkROIMaxima(), previousModel.isMarkROIMaxima()))
-		{
 			return FindFociState.SHOW_RESULTS;
-		}
 
 		if (notEqual(model.isObjectAnalysis(), previousModel.isObjectAnalysis()))
 		{
@@ -538,14 +510,10 @@ public class FindFociRunner extends Thread
 		if (notEqual(model.isShowLogMessages(), previousModel.isShowLogMessages()) ||
 				notEqual(model.getResultsDirectory(), previousModel.getResultsDirectory()) ||
 				notEqual(model.isSaveResults(), previousModel.isSaveResults()))
-		{
 			ignoreChange = true;
-		}
 
 		if (ignoreChange)
-		{
 			return FindFociState.COMPLETE;
-		}
 
 		// Default to do the entire calculation
 		return FindFociState.INITIAL;

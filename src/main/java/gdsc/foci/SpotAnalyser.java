@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -65,7 +65,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	private static final int INSIDE = 0;
 	private static final int OUTSIDE = 1;
 
-	private int flags = DOES_16 + DOES_8G + SNAPSHOT + FINAL_PROCESSING;
+	private final int flags = DOES_16 + DOES_8G + SNAPSHOT + FINAL_PROCESSING;
 	private ImagePlus imp;
 	private ImageProcessor maskIp;
 	private Label label;
@@ -88,7 +88,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
@@ -102,7 +102,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 			return DONE;
 		}
 		this.imp = imp;
-		ImageProcessor ip = imp.getProcessor();
+		final ImageProcessor ip = imp.getProcessor();
 		if (arg.equals("final"))
 		{
 			analyseImage();
@@ -115,7 +115,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 
 	private void resetImage()
 	{
-		ImageProcessor ip = imp.getProcessor();
+		final ImageProcessor ip = imp.getProcessor();
 		ip.reset();
 		ip.setMinAndMax(min, max);
 		imp.updateAndDraw();
@@ -123,18 +123,18 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus,
 	 * java.lang.String, ij.plugin.filter.PlugInFilterRunner)
 	 */
 	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 
 		spotChannel = imp.getChannel();
 		thresholdChannel = spotChannel;
-		Roi roi = imp.getRoi();
+		final Roi roi = imp.getRoi();
 		if (roi != null && roi.isArea())
 		{
 			containsRoiMask = true;
@@ -147,7 +147,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 			maskIp.setThreshold(0, 254, ImageProcessor.NO_LUT_UPDATE);
 		}
 
-		String[] channels = new String[imp.getNChannels()];
+		final String[] channels = new String[imp.getNChannels()];
 		for (int i = 0; i < channels.length; i++)
 			channels[i] = Integer.toString(i + 1);
 
@@ -176,7 +176,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog,
 	 * java.awt.AWTEvent)
 	 */
@@ -216,7 +216,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
 	@Override
@@ -227,7 +227,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
@@ -237,7 +237,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 		noOfParticles = 0;
 
 		// Avoid destructively modifying the image. Work on the selected channel for thresholding
-		int index = imp.getStackIndex(thresholdChannel, imp.getSlice(), imp.getFrame());
+		final int index = imp.getStackIndex(thresholdChannel, imp.getSlice(), imp.getFrame());
 		ImageProcessor ip = imp.getImageStack().getProcessor(index).duplicate();
 
 		if (!checkData(ip))
@@ -257,27 +257,27 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 			// Blur the image
 			if (blur > 0)
 			{
-				GaussianBlur gb = new GaussianBlur();
+				final GaussianBlur gb = new GaussianBlur();
 				gb.blurGaussian(ip, blur, blur, 0.002);
 			}
 
 			// Threshold
-			int t = AutoThreshold.getThreshold(thresholdMethod, ip.getHistogram());
+			final int t = AutoThreshold.getThreshold(thresholdMethod, ip.getHistogram());
 			ip.setThreshold(t, 65536, ImageProcessor.NO_LUT_UPDATE);
 		}
 
 		// Analyse particles
-		ImagePlus particlesImp = new ImagePlus(imp.getTitle() + " Particles", ip);
-		int analyserOptions = ParticleAnalyzer.SHOW_ROI_MASKS + ParticleAnalyzer.IN_SITU_SHOW +
+		final ImagePlus particlesImp = new ImagePlus(imp.getTitle() + " Particles", ip);
+		final int analyserOptions = ParticleAnalyzer.SHOW_ROI_MASKS + ParticleAnalyzer.IN_SITU_SHOW +
 				ParticleAnalyzer.EXCLUDE_EDGE_PARTICLES;
-		int measurements = 0;
-		ResultsTable rt = new ResultsTable();
+		final int measurements = 0;
+		final ResultsTable rt = new ResultsTable();
 
-		double maxSize = Double.POSITIVE_INFINITY;
-		ParticleAnalyzer pa = new ParticleAnalyzer(analyserOptions, measurements, rt, minSize, maxSize);
+		final double maxSize = Double.POSITIVE_INFINITY;
+		final ParticleAnalyzer pa = new ParticleAnalyzer(analyserOptions, measurements, rt, minSize, maxSize);
 		pa.analyze(particlesImp, ip);
 
-		ImageProcessor particlesIp = particlesImp.getProcessor();
+		final ImageProcessor particlesIp = particlesImp.getProcessor();
 		noOfParticles = rt.getCounter();
 		if (label != null)
 			label.setText(String.format("%d particle%s", noOfParticles, (noOfParticles == 1) ? "" : "s"));
@@ -292,10 +292,8 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	{
 		final int firstValue = ip.get(0);
 		for (int i = 1; i < ip.getPixelCount(); i++)
-		{
 			if (ip.get(i) != firstValue)
 				return true;
-		}
 		return false;
 	}
 
@@ -310,57 +308,57 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 
 		// The particles have already been identified in the run() method.
 		// Copy the pixels.
-		ImageProcessor particlesIp = imp.getProcessor().duplicate();
+		final ImageProcessor particlesIp = imp.getProcessor().duplicate();
 
 		resetImage(); // Restore the original image
 
 		// Get the channel for spot analysis
 		ImagePlus tmpImp;
 		{
-			int index = imp.getStackIndex(spotChannel, imp.getSlice(), imp.getFrame());
-			ImageProcessor ip = imp.getImageStack().getProcessor(index);
+			final int index = imp.getStackIndex(spotChannel, imp.getSlice(), imp.getFrame());
+			final ImageProcessor ip = imp.getImageStack().getProcessor(index);
 			tmpImp = new ImagePlus("Dummy", ip);
 		}
 
 		if (showParticles)
 		{
-			ImageProcessor tmpIp = particlesIp.duplicate();
+			final ImageProcessor tmpIp = particlesIp.duplicate();
 			tmpIp.setMinAndMax(0, noOfParticles);
 			showImage(this.imp.getTitle() + " Particles", tmpIp);
 		}
 
-		ImageProcessor spotsIp = particlesIp.createProcessor(particlesIp.getWidth(), particlesIp.getHeight());
+		final ImageProcessor spotsIp = particlesIp.createProcessor(particlesIp.getWidth(), particlesIp.getHeight());
 
 		// For each particle:
 		for (int particle = 1; particle <= noOfParticles; particle++)
 		{
 			// Run FindFoci to find the single highest spot
-			FindFoci ff = new FindFoci();
-			ImagePlus mask = createMask(particlesIp, particle);
-			int backgroundMethod = FindFociProcessor.BACKGROUND_MEAN;
-			double backgroundParameter = 0;
-			String autoThresholdMethod = "";
-			int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
-			double searchParameter = 0;
-			int minSize = 5;
-			int peakMethod = FindFociProcessor.PEAK_RELATIVE_ABOVE_BACKGROUND;
-			double peakParameter = 0.5;
-			int outputType = FindFociProcessor.OUTPUT_MASK | FindFociProcessor.OUTPUT_MASK_FRACTION_OF_HEIGHT |
+			final FindFoci ff = new FindFoci();
+			final ImagePlus mask = createMask(particlesIp, particle);
+			final int backgroundMethod = FindFociProcessor.BACKGROUND_MEAN;
+			final double backgroundParameter = 0;
+			final String autoThresholdMethod = "";
+			final int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
+			final double searchParameter = 0;
+			final int minSize = 5;
+			final int peakMethod = FindFociProcessor.PEAK_RELATIVE_ABOVE_BACKGROUND;
+			final double peakParameter = 0.5;
+			final int outputType = FindFociProcessor.OUTPUT_MASK | FindFociProcessor.OUTPUT_MASK_FRACTION_OF_HEIGHT |
 					FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
-			int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
-			int options = FindFociProcessor.OPTION_STATS_INSIDE;
-			int centreMethod = FindFoci.CENTRE_MAX_VALUE_ORIGINAL;
-			double centreParameter = 0;
-			double fractionParameter = fraction;
+			final int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
+			final int options = FindFociProcessor.OPTION_STATS_INSIDE;
+			final int centreMethod = FindFoci.CENTRE_MAX_VALUE_ORIGINAL;
+			final double centreParameter = 0;
+			final double fractionParameter = fraction;
 
-			FindFociResults result = ff.findMaxima(tmpImp, mask, backgroundMethod, backgroundParameter,
+			final FindFociResults result = ff.findMaxima(tmpImp, mask, backgroundMethod, backgroundParameter,
 					autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
 					outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter);
 			if (result == null)
 				continue;
 
-			ImagePlus maximaImp = result.mask;
-			ImageProcessor spotIp = maximaImp.getProcessor();
+			final ImagePlus maximaImp = result.mask;
+			final ImageProcessor spotIp = maximaImp.getProcessor();
 
 			// Renumber to the correct particle value
 			for (int j = 0; j < spotIp.getPixelCount(); j++)
@@ -380,12 +378,10 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 		// spotsIp => The largest spot within each particle
 
 		// Create a mask of the particles
-		byte[] mask = new byte[particlesIp.getPixelCount()];
+		final byte[] mask = new byte[particlesIp.getPixelCount()];
 		for (int i = 0; i < particlesIp.getPixelCount(); i++)
-		{
 			if (particlesIp.get(i) != 0)
 				mask[i] = 1;
-		}
 
 		// Subtract the spots from the particles
 		particlesIp.copyBits(spotsIp, 0, 0, Blitter.SUBTRACT);
@@ -393,13 +389,13 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 		createResultsWindow();
 
 		// Create a statistical summary for [channel][inside/outside][particle]
-		DescriptiveStatistics[][][] stats = new DescriptiveStatistics[imp.getNChannels() + 1][2][noOfParticles + 1];
+		final DescriptiveStatistics[][][] stats = new DescriptiveStatistics[imp.getNChannels() + 1][2][noOfParticles + 1];
 
-		ImageStack stack = imp.getImageStack();
+		final ImageStack stack = imp.getImageStack();
 		for (int channel = 1; channel <= imp.getNChannels(); channel++)
 		{
-			int index = imp.getStackIndex(channel, imp.getSlice(), imp.getFrame());
-			ImageProcessor channelIp = stack.getProcessor(index);
+			final int index = imp.getStackIndex(channel, imp.getSlice(), imp.getFrame());
+			final ImageProcessor channelIp = stack.getProcessor(index);
 
 			for (int particle = 0; particle <= noOfParticles; particle++)
 			{
@@ -408,31 +404,23 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 			}
 
 			for (int i = 0; i < mask.length; i++)
-			{
 				if (mask[i] != 0)
 				{
-					int v = channelIp.get(i);
+					final int v = channelIp.get(i);
 					stats[channel][INSIDE][spotsIp.get(i)].addValue(v);
 					stats[channel][OUTSIDE][particlesIp.get(i)].addValue(v);
 				}
-			}
 		}
 
 		// Add the counts inside and outside
 		for (int particle = 1; particle <= noOfParticles; particle++)
-		{
 			// Just choose the first channel (all are the same)
 			addResult(particle, stats[1][INSIDE][particle].getN(), stats[1][OUTSIDE][particle].getN());
-		}
 
 		// Add the statistics inside and outside for each channel
 		for (int channel = 1; channel <= imp.getNChannels(); channel++)
-		{
 			for (int particle = 1; particle <= noOfParticles; particle++)
-			{
 				addResult(channel, particle, stats);
-			}
-		}
 	}
 
 	private ImagePlus showImage(String title, ImageProcessor ip)
@@ -453,7 +441,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Zero all pixels that are not the given value
-	 * 
+	 *
 	 * @param ip
 	 * @param value
 	 * @return
@@ -462,10 +450,8 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	{
 		ip = ip.duplicate();
 		for (int i = 0; i < ip.getPixelCount(); i++)
-		{
 			if (ip.get(i) != value)
 				ip.set(i, 0);
-		}
 		return new ImagePlus("Mask", ip);
 	}
 
@@ -481,55 +467,48 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 				results.setVisible(true);
 			}
 		}
-		else
+		else if (writeHeader)
 		{
-			if (writeHeader)
-			{
-				writeHeader = false;
-				IJ.log("Image\tChannel\tParticle\tInside Sum\tAv\tSD\tR\tOutside Sum\tAv\tSD\tR\tIncrease\tp-value");
-			}
+			writeHeader = false;
+			IJ.log("Image\tChannel\tParticle\tInside Sum\tAv\tSD\tR\tOutside Sum\tAv\tSD\tR\tIncrease\tp-value");
 		}
 	}
 
 	private void addResult(int particle, long countInside, long countOutside)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(imp.getTitle()).append("\t\t");
 		sb.append(particle).append('\t');
 		sb.append(countInside).append("\t\t\t\t");
 		sb.append(countOutside).append("\t\t\t\t");
 		if (java.awt.GraphicsEnvironment.isHeadless())
-		{
 			IJ.log(sb.toString());
-		}
 		else
-		{
 			results.append(sb.toString());
-		}
 	}
 
 	private void addResult(int channel, int particle, DescriptiveStatistics[][][] stats)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(imp.getTitle()).append('\t');
 		sb.append(channel).append('\t');
 		sb.append(particle).append('\t');
 
-		double sx = stats[channel][INSIDE][particle].getSum();
-		double sd = stats[channel][INSIDE][particle].getStandardDeviation();
-		long n = stats[channel][INSIDE][particle].getN();
-		double av = sx / n;
-		double sx2 = stats[channel][OUTSIDE][particle].getSum();
-		double sd2 = stats[channel][OUTSIDE][particle].getStandardDeviation();
-		long n2 = stats[channel][OUTSIDE][particle].getN();
-		double av2 = sx2 / n2;
+		final double sx = stats[channel][INSIDE][particle].getSum();
+		final double sd = stats[channel][INSIDE][particle].getStandardDeviation();
+		final long n = stats[channel][INSIDE][particle].getN();
+		final double av = sx / n;
+		final double sx2 = stats[channel][OUTSIDE][particle].getSum();
+		final double sd2 = stats[channel][OUTSIDE][particle].getStandardDeviation();
+		final long n2 = stats[channel][OUTSIDE][particle].getN();
+		final double av2 = sx2 / n2;
 
 		double p = 0;
 		try
 		{
 			p = TestUtils.tTest(stats[channel][INSIDE][particle], stats[channel][OUTSIDE][particle]);
 		}
-		catch (NumberIsTooSmallException e)
+		catch (final NumberIsTooSmallException e)
 		{
 			// Ignore
 		}
@@ -553,12 +532,8 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 		sb.append(String.format("%.3g", p));
 
 		if (java.awt.GraphicsEnvironment.isHeadless())
-		{
 			IJ.log(sb.toString());
-		}
 		else
-		{
 			results.append(sb.toString());
-		}
 	}
 }

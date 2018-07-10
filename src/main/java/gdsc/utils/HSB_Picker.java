@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -70,13 +70,13 @@ public class HSB_Picker extends PlugInFrame
 	@SuppressWarnings("unused")
 	private Label sampleLabel;
 	private Label nLabel;
-	private Label[] statsLabel;
+	private final Label[] statsLabel;
 	private Scrollbar scaleSlider;
 	@SuppressWarnings("unused")
 	private Label scaleLabel;
 	private Button clearButton, filterButton, okButton, helpButton;
 
-	private SummaryStatistics[] stats;
+	private final SummaryStatistics[] stats;
 
 	/**
 	 * Constructor
@@ -87,14 +87,12 @@ public class HSB_Picker extends PlugInFrame
 		stats = new SummaryStatistics[3];
 		statsLabel = new Label[3];
 		for (int i = 0; i < stats.length; i++)
-		{
 			stats[i] = new SummaryStatistics();
-		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
 	 */
 	@Override
@@ -109,10 +107,9 @@ public class HSB_Picker extends PlugInFrame
 		}
 
 		if (instance != null)
-		{
 			if (!(instance.getTitle().equals(getTitle())))
 			{
-				HSB_Picker oldInstance = instance;
+				final HSB_Picker oldInstance = instance;
 				Prefs.saveLocation(OPT_LOCATION, oldInstance.getLocation());
 				oldInstance.close();
 			}
@@ -121,7 +118,6 @@ public class HSB_Picker extends PlugInFrame
 				instance.toFront();
 				return;
 			}
-		}
 
 		instance = this;
 		IJ.register(HSB_Picker.class);
@@ -131,13 +127,11 @@ public class HSB_Picker extends PlugInFrame
 
 		addKeyListener(IJ.getInstance());
 		pack();
-		Point loc = Prefs.getLocation(OPT_LOCATION);
+		final Point loc = Prefs.getLocation(OPT_LOCATION);
 		if (loc != null)
 			setLocation(loc);
 		else
-		{
 			GUI.center(this);
-		}
 		if (IJ.isMacOSX())
 			setResizable(false);
 		setVisible(true);
@@ -148,7 +142,7 @@ public class HSB_Picker extends PlugInFrame
 
 	private void installTool()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("macro 'HSB Picker Tool - C00fT0610HC0f0T5910SCf00Tac10L' {\n");
 		sb.append("   call('").append(this.getClass().getName()).append(".run');\n");
 		sb.append("};\n");
@@ -159,29 +153,27 @@ public class HSB_Picker extends PlugInFrame
 	public static void run()
 	{
 		if (instance != null)
-		{
 			instance.imageClicked();
-		}
 		else
 		{
-			ImagePlus imp = getCurrentImage();
+			final ImagePlus imp = getCurrentImage();
 			if (imp == null)
 				return;
 			// Create a new instance
-			HSB_Picker p = new HSB_Picker();
+			final HSB_Picker p = new HSB_Picker();
 			p.run("");
 		}
 	}
 
 	private void imageClicked()
 	{
-		ImagePlus imp = getCurrentImage();
+		final ImagePlus imp = getCurrentImage();
 		if (imp == null)
 			return;
-		Point p = imp.getCanvas().getCursorLoc();
+		final Point p = imp.getCanvas().getCursorLoc();
 		if (p == null)
 			return;
-		ImageProcessor ip = imp.getProcessor();
+		final ImageProcessor ip = imp.getProcessor();
 		addValue(ip, p);
 	}
 
@@ -205,7 +197,7 @@ public class HSB_Picker extends PlugInFrame
 		//   WindowManager.setCurrentWindow(win);
 		// in the ImageCanvas.mousePressed(...) method.
 
-		ImagePlus imp = WindowManager.getCurrentImage();
+		final ImagePlus imp = WindowManager.getCurrentImage();
 		if (imp == null || imp.getBitDepth() != 24 || imp.getCanvas() == null)
 			return null;
 		return imp;
@@ -213,13 +205,12 @@ public class HSB_Picker extends PlugInFrame
 
 	private void addValue(ImageProcessor ip, Point p)
 	{
-		int[] iArray = new int[3];
-		float[] hsbvals = new float[3];
+		final int[] iArray = new int[3];
+		final float[] hsbvals = new float[3];
 
-		int width = sampleSlider.getValue();
-		int limit = width * width;
+		final int width = sampleSlider.getValue();
+		final int limit = width * width;
 		for (int y = -width; y <= width; y++)
-		{
 			for (int x = -width; x <= width; x++)
 			{
 				if (x * x + y * y > limit)
@@ -230,14 +221,13 @@ public class HSB_Picker extends PlugInFrame
 				for (int i = 0; i < 3; i++)
 					stats[i].addValue(hsbvals[i]);
 			}
-		}
 
 		updateDisplayedStatistics();
 	}
 
 	private void clear()
 	{
-		for (SummaryStatistics s : stats)
+		for (final SummaryStatistics s : stats)
 			s.clear();
 		updateDisplayedStatistics();
 	}
@@ -250,10 +240,10 @@ public class HSB_Picker extends PlugInFrame
 			return;
 		}
 		// Use the SD to set a 95% interval for the width
-		double scale = scaleSlider.getValue() / SCALE;
-		float hWidth = (float) (stats[0].getStandardDeviation() * scale);
-		float sWidth = (float) (stats[1].getStandardDeviation() * scale);
-		float bWidth = (float) (stats[2].getStandardDeviation() * scale);
+		final double scale = scaleSlider.getValue() / SCALE;
+		final float hWidth = (float) (stats[0].getStandardDeviation() * scale);
+		final float sWidth = (float) (stats[1].getStandardDeviation() * scale);
+		final float bWidth = (float) (stats[2].getStandardDeviation() * scale);
 		HSB_Filter.hue = clip(stats[0].getMean());
 		HSB_Filter.hueWidth = clip(hWidth);
 		HSB_Filter.saturation = clip(stats[1].getMean());
@@ -282,7 +272,7 @@ public class HSB_Picker extends PlugInFrame
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.frame.PlugInFrame#close()
 	 */
 	@Override
@@ -350,13 +340,13 @@ public class HSB_Picker extends PlugInFrame
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				String macro = "run('URL...', 'url=" + gdsc.help.URL.UTILITY + "');";
+				final String macro = "run('URL...', 'url=" + gdsc.help.URL.UTILITY + "');";
 				new MacroRunner(macro);
 			}
 		});
 
-		JPanel buttonPanel = new JPanel();
-		FlowLayout l = new FlowLayout();
+		final JPanel buttonPanel = new JPanel();
+		final FlowLayout l = new FlowLayout();
 		l.setVgap(0);
 		buttonPanel.setLayout(l);
 		buttonPanel.add(filterButton, BorderLayout.CENTER);
@@ -383,7 +373,7 @@ public class HSB_Picker extends PlugInFrame
 	private void createSliderPanel(final Scrollbar sliderField, String label, final Label sliderLabel,
 			final double scale)
 	{
-		Label listLabel = new Label(label, 0);
+		final Label listLabel = new Label(label, 0);
 		add(listLabel, 0, 1);
 		sliderField.setSize(100, 10);
 		c.ipadx = 75;
@@ -405,13 +395,13 @@ public class HSB_Picker extends PlugInFrame
 
 	private void setSliderLabel(final Scrollbar sliderField, final Label sliderLabel, double scale)
 	{
-		double value = sliderField.getValue() / scale;
+		final double value = sliderField.getValue() / scale;
 		sliderLabel.setText(String.format("%.2f", value));
 	}
 
 	private void createLabelPanel(Label labelField, String label, String value)
 	{
-		Label listLabel = new Label(label, 0);
+		final Label listLabel = new Label(label, 0);
 		add(listLabel, 0, 1);
 		if (labelField != null)
 		{

@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -23,6 +23,8 @@
  */
 package gdsc.foci;
 
+import gdsc.threshold.Auto_Local_Threshold;
+import gdsc.threshold.Auto_Threshold;
 import ij.ImagePlus;
 
 /**
@@ -294,13 +296,13 @@ public interface FindFociProcessor
 
 	/**
 	 * Here the processing is done: Find the maxima of an image.
-	 * 
+	 *
 	 * <P>
 	 * Local maxima are processed in order, highest first. Regions are grown from local maxima until a saddle point is
 	 * found or the stopping criteria are met (based on pixel intensity). If a peak does not meet the peak criteria (min
 	 * size) it is absorbed into the highest peak that touches it (if a neighbour peak exists). Only a single iteration
 	 * is performed and consequently peak absorption could produce sub-optimal results due to greedy peak growth.
-	 * 
+	 *
 	 * <P>
 	 * Peak expansion stopping criteria are defined using the method parameter. See {@link #SEARCH_ABOVE_BACKGROUND};
 	 * {@link #SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND}; {@link #SEARCH_HALF_PEAK_VALUE};
@@ -315,7 +317,7 @@ public interface FindFociProcessor
 	 * @param backgroundParameter
 	 *            parameter for calculating the background level
 	 * @param autoThresholdMethod
-	 *            The thresholding method (use a string from {@link #autoThresholdMethods } )
+	 *            The thresholding method (use a string from {@link gdsc.core.threshold.AutoThreshold#getMethods() } )
 	 * @param searchMethod
 	 *            Method for calculating the region growing stopping criteria (use the constants with prefix SEARCH_)
 	 * @param searchParameter
@@ -394,7 +396,7 @@ public interface FindFociProcessor
 	 * @param backgroundMethod
 	 *            Method for calculating the background level (use the constants with prefix FindFoci.BACKGROUND_)
 	 * @param autoThresholdMethod
-	 *            The thresholding method (use a string from {@link #autoThresholdMethods } )
+	 *            The thresholding method (use a string from {@link gdsc.core.threshold.AutoThreshold#getMethods() } )
 	 * @param options
 	 *            An options flag (use the constants with prefix FindFoci.OPTION_)
 	 * @return the initialisation results
@@ -420,7 +422,7 @@ public interface FindFociProcessor
 	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
 	 * routine.
 	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 * 
+	 *
 	 * <p>
 	 * This method is intended for benchmarking.
 	 *
@@ -445,7 +447,7 @@ public interface FindFociProcessor
 	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
 	 * routine.
 	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 * 
+	 *
 	 * <p>
 	 * This method is intended for benchmarking.
 	 *
@@ -469,7 +471,7 @@ public interface FindFociProcessor
 	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
 	 * routine.
 	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 * 
+	 *
 	 * <p>
 	 * This method is intended for benchmarking.
 	 *
@@ -489,7 +491,7 @@ public interface FindFociProcessor
 	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
 	 * routine.
 	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 * 
+	 *
 	 * <p>
 	 * This method is intended for benchmarking.
 	 *
@@ -515,7 +517,7 @@ public interface FindFociProcessor
 	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
 	 * routine.
 	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 * 
+	 *
 	 * <p>
 	 * This method is intended for benchmarking.
 	 *
@@ -545,7 +547,7 @@ public interface FindFociProcessor
 	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
 	 * routine.
 	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 * 
+	 *
 	 * <p>
 	 * This method is intended for staged processing.
 	 *
@@ -575,7 +577,7 @@ public interface FindFociProcessor
 	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
 	 * routine.
 	 * It does not support logging or interruption.
-	 * 
+	 *
 	 * <p>
 	 * This method is intended for staged processing.
 	 *
@@ -594,7 +596,7 @@ public interface FindFociProcessor
 	 *            Use {@link #OUTPUT_MASK_PEAKS} to get an ImagePlus in the result Object array. Use
 	 *            {@link #OUTPUT_LOG_MESSAGES} to get runtime information.
 	 * @param autoThresholdMethod
-	 *            The thresholding method (use a string from {@link #autoThresholdMethods } )
+	 *            The thresholding method (use a string from {@link gdsc.core.threshold.AutoThreshold#getMethods() } )
 	 * @param imageTitle
 	 *            the image title
 	 * @param fractionParameter

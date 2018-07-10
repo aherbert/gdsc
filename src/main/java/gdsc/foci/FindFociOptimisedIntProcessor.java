@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -40,14 +40,14 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 {
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.FindFociBaseProcessor#getSortedMaxPoints(java.lang.Object, int[], byte[], float, float)
 	 */
 	@Override
 	protected Coordinate[] getSortedMaxPoints(Object pixels, int[] maxima, byte[] types, float fGlobalMin,
 			float fThreshold)
 	{
-		ArrayList<Coordinate> maxPoints = new ArrayList<Coordinate>(500);
+		final ArrayList<Coordinate> maxPoints = new ArrayList<>(500);
 		int[] pList = null; // working list for expanding local plateaus
 
 		// Int processing
@@ -61,7 +61,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		setPixels(pixels);
 
 		if (is2D())
-		{
 			for (int i = maxx_maxy_maxz; i-- > 0;)
 			{
 				if ((types[i] & (EXCLUDED | MAX_AREA | PLATEAU | NOT_MAXIMUM)) != 0)
@@ -87,7 +86,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 				// Adopt the xy limit lookup and process z lookup separately
 
 				for (int d = 8; d-- > 0;)
-				{
 					if (isInnerXY || isWithinXY(x, y, d))
 					{
 						final int vNeighbor = image[i + offset[d]];
@@ -97,17 +95,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 							break;
 						}
 						else if (vNeighbor == v)
-						{
 							// Neighbour is equal, this is a potential plateau maximum
 							equalNeighbour = true;
-						}
 						else
-						{
-							// This is lower so cannot be a maxima 
+							// This is lower so cannot be a maxima
 							types[i + offset[d]] |= NOT_MAXIMUM;
-						}
 					}
-				}
 
 				if (isMax)
 				{
@@ -124,18 +117,13 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 					{
 						// Initialise the working list
 						if (pList == null)
-						{
-							// Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
+						 // Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
 							pList = new int[i + 1];
-						}
-						//pCount++;
 
 						// Search the local area marking all equal neighbour points as maximum
 						if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxPoints, pList))
-						{
 							// Not a true maximum, ignore this
 							id--;
-						}
 					}
 					else
 					{
@@ -145,9 +133,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 					}
 				}
 			}
-		}
 		else
-		{
 			for (int i = maxx_maxy_maxz; i-- > 0;)
 			{
 				if ((types[i] & (EXCLUDED | MAX_AREA | PLATEAU | NOT_MAXIMUM)) != 0)
@@ -175,7 +161,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 				// Adopt the xy limit lookup and process z lookup separately
 
 				for (int d = 26; d-- > 0;)
-				{
 					if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d))
 					{
 						final int vNeighbor = image[i + offset[d]];
@@ -185,17 +170,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 							break;
 						}
 						else if (vNeighbor == v)
-						{
 							// Neighbour is equal, this is a potential plateau maximum
 							equalNeighbour = true;
-						}
 						else
-						{
-							// This is lower so cannot be a maxima 
+							// This is lower so cannot be a maxima
 							types[i + offset[d]] |= NOT_MAXIMUM;
-						}
 					}
-				}
 
 				if (isMax)
 				{
@@ -212,18 +192,13 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 					{
 						// Initialise the working list
 						if (pList == null)
-						{
-							// Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
+						 // Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
 							pList = new int[i + 1];
-						}
-						//pCount++;
 
 						// Search the local area marking all equal neighbour points as maximum
 						if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxPoints, pList))
-						{
 							// Not a true maximum, ignore this
 							id--;
-						}
 					}
 					else
 					{
@@ -233,7 +208,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 					}
 				}
 			}
-		}
 
 		//if (pCount > 0)
 		//	System.out.printf("Plateau count = %d\n", pCount);
@@ -302,7 +276,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		final int[] xyz = new int[3];
 
 		if (is2D())
-		{
 			do
 			{
 				final int index1 = pList[listI];
@@ -316,23 +289,18 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
 
 				for (int d = 8; d-- > 0;)
-				{
 					if (isInnerXY || isWithinXY(x1, y1, d))
 					{
 						final int index2 = index1 + offset[d];
 						if ((types[index2] & IGNORE) != 0)
-						{
 							// This has been done already, ignore this point
 							continue;
-						}
 
 						final int v2 = image[index2];
 
 						if (v2 > v0)
-						{
 							isPlateau = false;
 							//break; // Cannot break as we want to label the entire plateau.
-						}
 						else if (v2 == v0)
 						{
 							// Add this to the search
@@ -340,18 +308,13 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 							types[index2] |= LISTED | PLATEAU;
 						}
 						else
-						{
 							types[index2] |= NOT_MAXIMUM;
-						}
 					}
-				}
 
 				listI++;
 
 			} while (listI < listLen && isPlateau);
-		}
 		else
-		{
 			do
 			{
 				final int index1 = pList[listI];
@@ -367,23 +330,18 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 				final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
 
 				for (int d = 26; d-- > 0;)
-				{
 					if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
 					{
 						final int index2 = index1 + offset[d];
 						if ((types[index2] & IGNORE) != 0)
-						{
 							// This has been done already, ignore this point
 							continue;
-						}
 
 						final int v2 = image[index2];
 
 						if (v2 > v0)
-						{
 							isPlateau = false;
 							//break; // Cannot break as we want to label the entire plateau.
-						}
 						else if (v2 == v0)
 						{
 							// Add this to the search
@@ -391,16 +349,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 							types[index2] |= LISTED | PLATEAU;
 						}
 						else
-						{
 							types[index2] |= NOT_MAXIMUM;
-						}
 					}
-				}
 
 				listI++;
 
 			} while (listI < listLen && isPlateau);
-		}
 
 		// IJ.log("Potential plateau "+ x0 + ","+y0+","+z0+" : "+listLen);
 
@@ -410,7 +364,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		double zEqual = 0;
 		int nEqual = 0;
 		if (isPlateau)
-		{
 			for (int i = listLen; i-- > 0;)
 			{
 				getXYZ(pList[i], xyz);
@@ -419,7 +372,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 				zEqual += xyz[2];
 				nEqual++;
 			}
-		}
 		xEqual /= nEqual;
 		yEqual /= nEqual;
 		zEqual /= nEqual;
@@ -468,7 +420,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.FindFociBaseProcessor#assignPointsToMaxima(java.lang.Object, gdsc.foci.Histogram, byte[],
 	 * gdsc.foci.FindFociStatistics, int[])
 	 */
@@ -526,10 +478,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 			int remaining = histogram[level];
 
 			if (remaining == 0)
-			{
-				continue;
-			}
-			//levels++;
+			 continue;
 
 			// Use the idle counter to ensure that we exit the loop if no pixels have been processed for two cycles
 			while (remaining > 0)
@@ -565,7 +514,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 					int newNextLevelEnd = levelStart[nextLevel] + histogram[nextLevel];
 					for (int i = 0, p = levelStart[level]; i < remaining; i++, p++)
 					{
-						int index = coordinates[p];
+						final int index = coordinates[p];
 						coordinates[newNextLevelEnd++] = index;
 					}
 					// tasklist for the next level to process becomes longer by this:
@@ -583,7 +532,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.FindFociBaseProcessor#processLevel(byte[], int[], int, int, int[], int)
 	 */
 	@Override
@@ -596,7 +545,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		final int[] xyz = new int[3];
 
 		if (is2D())
-		{
 			for (int i = 0, p = levelStart; i < levelNPoints; i++, p++)
 			{
 				final int index = coordinates[p];
@@ -625,7 +573,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 				int dMax = -1;
 				int vMax = v;
 				for (int d = 8; d-- > 0;)
-				{
 					if (isInnerXY || isWithinXY(x, y, d))
 					{
 						final int index2 = index + offset[d];
@@ -635,33 +582,21 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 							vMax = vNeighbor;
 							dMax = d;
 						}
-						else if (vMax == vNeighbor) // Equal neighbour
-						{
+						else if (vMax == vNeighbor)
 							// Check if the neighbour is higher than this point (i.e. an equal higher neighbour has been found)
 							if (v != vNeighbor)
 							{
 								// Favour flat edges over diagonals in the case of equal neighbours
 								if (flatEdge[d])
-								{
 									dMax = d;
-								}
 							}
 							// The neighbour is the same height, check if it is a maxima
 							else if ((types[index2] & MAX_AREA) != 0)
-							{
-								if (dMax < 0) // Unassigned
-								{
+								if (dMax < 0)
 									dMax = d;
-								}
-								// Favour flat edges over diagonals in the case of equal neighbours
 								else if (flatEdge[d])
-								{
 									dMax = d;
-								}
-							}
-						}
 					}
-				}
 
 				if (dMax < 0)
 				{
@@ -672,15 +607,13 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 					continue;
 				}
 
-				int index2 = index + offset[dMax];
+				final int index2 = index + offset[dMax];
 
 				types[index] |= MAX_AREA;
 				maxima[index] = maxima[index2];
 				nChanged++;
 			} // for pixel i
-		}
 		else
-		{
 			for (int i = 0, p = levelStart; i < levelNPoints; i++, p++)
 			{
 				final int index = coordinates[p];
@@ -711,7 +644,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 				int dMax = -1;
 				int vMax = v;
 				for (int d = 26; d-- > 0;)
-				{
 					if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d))
 					{
 						final int index2 = index + offset[d];
@@ -721,33 +653,21 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 							vMax = vNeighbor;
 							dMax = d;
 						}
-						else if (vMax == vNeighbor) // Equal neighbour
-						{
+						else if (vMax == vNeighbor)
 							// Check if the neighbour is higher than this point (i.e. an equal higher neighbour has been found)
 							if (v != vNeighbor)
 							{
 								// Favour flat edges over diagonals in the case of equal neighbours
 								if (flatEdge[d])
-								{
 									dMax = d;
-								}
 							}
 							// The neighbour is the same height, check if it is a maxima
 							else if ((types[index2] & MAX_AREA) != 0)
-							{
-								if (dMax < 0) // Unassigned
-								{
+								if (dMax < 0)
 									dMax = d;
-								}
-								// Favour flat edges over diagonals in the case of equal neighbours
 								else if (flatEdge[d])
-								{
 									dMax = d;
-								}
-							}
-						}
 					}
-				}
 
 				if (dMax < 0)
 				{
@@ -758,20 +678,19 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 					continue;
 				}
 
-				int index2 = index + offset[dMax];
+				final int index2 = index + offset[dMax];
 
 				types[index] |= MAX_AREA;
 				maxima[index] = maxima[index2];
 				nChanged++;
 			} // for pixel i
-		}
 
 		return nChanged;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.FindFociBaseProcessor#pruneMaxima(java.lang.Object, byte[], int, double,
 	 * gdsc.foci.FindFociStatistics, java.util.ArrayList, int[])
 	 */
@@ -786,28 +705,24 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		final int nMaxima = resultsArray.length;
 		final int[] peakThreshold = new int[nMaxima + 1];
 		for (int i = 1; i < peakThreshold.length; i++)
-		{
 			peakThreshold[i] = (int) getTolerance(searchMethod, searchParameter, stats, resultsArray[i - 1].maxValue);
-		}
 
 		for (int i = maxima.length; i-- > 0;)
 		{
 			final int id = maxima[i];
 			if (id != 0)
-			{
 				if (image[i] < peakThreshold[id])
 				{
 					// Unset this pixel as part of the peak
 					maxima[i] = 0;
 					types[i] &= ~MAX_AREA;
 				}
-			}
 		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.FindFociBaseProcessor#calculateInitialResults(java.lang.Object, int[], java.util.ArrayList)
 	 */
 	@Override
@@ -841,7 +756,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.FindFociBaseProcessor#calculateNativeResults(java.lang.Object, int[], java.util.ArrayList, int)
 	 */
 	@Override
@@ -922,7 +837,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		final boolean alwaysInnerX = (result.minx != 0 && result.maxx != maxx);
 
 		if (is2D())
-		{
 			for (int y = result.miny; y < result.maxy; y++)
 			{
 				final boolean isInnerY = alwaysInnerY || (y != 0 && y != ylimit);
@@ -937,7 +851,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 						final boolean isInnerXY = isInnerY && (alwaysInnerX || (x != 0 && x != xlimit));
 
 						for (int d = 8; d-- > 0;)
-						{
 							if (isInnerXY || isWithinXY(x, y, d))
 							{
 								// Get the coords
@@ -965,17 +878,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 								}
 
 								if (highestSaddleValues[id2] < minV)
-								{
 									highestSaddleValues[id2] = minV;
-								}
 							}
-						}
 					}
 				}
 			}
-		}
 		else
-		{
 			for (int z = result.minz; z < result.maxz; z++)
 			{
 				final boolean isInnerZ = (zlimit == 0) ? true : (z != 0 && z != zlimit);
@@ -994,7 +902,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 							final boolean isInnerXYZ = isInnerXY && isInnerZ;
 
 							for (int d = 26; d-- > 0;)
-							{
 								if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d))
 								{
 									// Get the coords
@@ -1022,23 +929,18 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 									}
 
 									if (highestSaddleValues[id2] < minV)
-									{
 										highestSaddleValues[id2] = minV;
-									}
 								}
-							}
 						}
 					}
 				}
 			}
-		}
 
 		// Find the highest saddle
 		int highestNeighbourPeakId = 0;
 		float highestNeighbourValue = 0;
 		int count = 0;
 		for (int id2 = 1; id2 < highestSaddleValues.length; id2++)
-		{
 			if (highestSaddleValues[id2] != 0)
 			{
 				count++;
@@ -1049,17 +951,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 					highestNeighbourPeakId = id2;
 				}
 			}
-		}
 		if (count != 0)
 		{
 			final FindFociSaddle[] saddles = new FindFociSaddle[count];
 			for (int id2 = 1, c = 0; id2 < highestSaddleValues.length; id2++)
-			{
 				if (highestSaddleValues[id2] != 0)
-				{
 					saddles[c++] = new FindFociSaddle(id2, highestSaddleValues[id2]);
-				}
-			}
 			Arrays.sort(saddles);
 			saddlePoints[id] = new FindFociSaddleList(saddles);
 		}
@@ -1085,7 +982,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	@Override
 	protected void analyseNonContiguousPeaks(FindFociResult[] resultsArray, int[] maxima)
 	{
-		// Create an array of the size/intensity of each peak above the highest saddle 
+		// Create an array of the size/intensity of each peak above the highest saddle
 		final long[] peakIntensity = new long[resultsArray.length + 1];
 		final int[] peakSize = new int[resultsArray.length + 1];
 
@@ -1154,7 +1051,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		long sum = 0;
 
 		if (is2D())
-		{
 			do
 			{
 				final int index1 = pList[listI];
@@ -1168,15 +1064,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
 
 				for (int d = 8; d-- > 0;)
-				{
 					if (isInnerXY || isWithinXY(x1, y1, d))
 					{
 						final int index2 = index1 + offset[d];
 						if ((types[index2] & LISTED) != 0 || maxima[index2] != peakId)
-						{
 							// Different peak or already done
 							continue;
-						}
 
 						final int v1 = image[index2];
 						if (v1 > v0)
@@ -1186,14 +1079,11 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 							sum += v1;
 						}
 					}
-				}
 
 				listI++;
 
 			} while (listI < listLen);
-		}
 		else
-		{
 			do
 			{
 				final int index1 = pList[listI];
@@ -1209,15 +1099,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 				final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
 
 				for (int d = 26; d-- > 0;)
-				{
 					if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
 					{
 						final int index2 = index1 + offset[d];
 						if ((types[index2] & LISTED) != 0 || maxima[index2] != peakId)
-						{
 							// Different peak or already done
 							continue;
-						}
 
 						final int v1 = image[index2];
 						if (v1 > v0)
@@ -1227,12 +1114,10 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 							sum += v1;
 						}
 					}
-				}
 
 				listI++;
 
 			} while (listI < listLen);
-		}
 
 		result.countAboveSaddle = listI;
 		result.intensityAboveSaddle = sum;
@@ -1279,7 +1164,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		long sum = 0;
 
 		if (is2D())
-		{
 			do
 			{
 				final int index1 = pList[listI];
@@ -1293,20 +1177,15 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 				final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
 
 				for (int d = 8; d-- > 0;)
-				{
 					if (isInnerXY || isWithinXY(x1, y1, d))
 					{
 						final int index2 = index1 + offset[d];
 						if ((types[index2] & LISTED) != 0)
-						{
 							// Already done
 							continue;
-						}
 						if (peakIdMap[maxima[index2]] != peakId)
-						{
 							// Different peak
 							continue;
-						}
 
 						final int v1 = image[index2];
 						if (v1 > v0)
@@ -1316,14 +1195,11 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 							sum += v1;
 						}
 					}
-				}
 
 				listI++;
 
 			} while (listI < listLen);
-		}
 		else
-		{
 			do
 			{
 				final int index1 = pList[listI];
@@ -1339,20 +1215,15 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 				final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
 
 				for (int d = 26; d-- > 0;)
-				{
 					if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
 					{
 						final int index2 = index1 + offset[d];
 						if ((types[index2] & LISTED) != 0)
-						{
 							// Already done
 							continue;
-						}
 						if (peakIdMap[maxima[index2]] != peakId)
-						{
 							// Different peak
 							continue;
-						}
 
 						final int v1 = image[index2];
 						if (v1 > v0)
@@ -1362,17 +1233,13 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 							sum += v1;
 						}
 					}
-				}
 
 				listI++;
 
 			} while (listI < listLen);
-		}
 
 		for (int i = listLen; i-- > 0;)
-		{
 			types[pList[i]] &= ~LISTED; // reset attributes no longer needed
-		}
 
 		result.countAboveSaddle = listI;
 		result.intensityAboveSaddle = sum;
@@ -1388,7 +1255,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	{
 		setPixels(pixels);
 
-		// Create an array of the size/intensity of each peak above the highest saddle 
+		// Create an array of the size/intensity of each peak above the highest saddle
 		final long[] peakIntensity = new long[resultsArray.length + 1];
 		final int[] peakSize = new int[resultsArray.length + 1];
 
@@ -1496,7 +1363,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.FindFociBaseProcessor#getIntensityAboveFloor(java.lang.Object, byte[], float)
 	 */
 	@Override
@@ -1508,14 +1375,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 
 		long sum = 0;
 		for (int i = types.length; i-- > 0;)
-		{
 			if ((types[i] & EXCLUDED) == 0)
 			{
 				final int v = image[i];
 				if (v > floor)
 					sum += (v - floor);
 			}
-		}
 		return sum;
 	}
 }

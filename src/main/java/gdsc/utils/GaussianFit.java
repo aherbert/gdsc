@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -54,8 +54,8 @@ public class GaussianFit implements PlugInFilter
 		try
 		{
 			// Get a class in this package to find the package class loader
-			GaussianPlugin pluginClass = new GaussianPlugin();
-			Class c = Class.forName("gdsc.smlm.ij.plugins.GaussianFit", true, pluginClass.getClass().getClassLoader());
+			final GaussianPlugin pluginClass = new GaussianPlugin();
+			final Class c = Class.forName("gdsc.smlm.ij.plugins.GaussianFit", true, pluginClass.getClass().getClassLoader());
 
 			// ... it exists on the classpath
 
@@ -71,7 +71,7 @@ public class GaussianFit implements PlugInFilter
 					data[y * size + x] = (float) (N *
 							(Math.exp(-0.5 * ((mu - x) * (mu - x) + 0.5 * (mu - y) * (mu - y)) / (s0 * s0))));
 
-			// Try a fit. 
+			// Try a fit.
 			double[] fit = null;
 			//gdsc.smlm.ij.plugins.GaussianFit gf = new gdsc.smlm.ij.plugins.GaussianFit();
 			//fit = gf.fit(data, size, size);
@@ -80,21 +80,19 @@ public class GaussianFit implements PlugInFilter
 			final Method m = c.getDeclaredMethod("fit", new Class[] { float[].class, int.class, int.class });
 			fit = (double[]) m.invoke(c.newInstance(), data, size, size);
 			if (fit != null)
-			{
 				fittingEnabled = true;
-			}
 		}
-		catch (ExceptionInInitializerError e)
+		catch (final ExceptionInInitializerError e)
 		{
 			exception = e;
 			errorMessage = "Failed to initialize class: " + e.getMessage();
 		}
-		catch (LinkageError e)
+		catch (final LinkageError e)
 		{
 			exception = e;
 			errorMessage = "Failed to link class: " + e.getMessage();
 		}
-		catch (ClassNotFoundException ex)
+		catch (final ClassNotFoundException ex)
 		{
 			exception = ex;
 			errorMessage = "Failed to find class: " + ex.getMessage();
@@ -104,16 +102,14 @@ public class GaussianFit implements PlugInFilter
 			//ex.printStackTrace(pw);
 			//IJ.log(sw.toString());
 		}
-		catch (Exception ex)
+		catch (final Exception ex)
 		{
 			exception = ex;
 			errorMessage = ex.getMessage();
 		}
 
 		if (!fittingEnabled)
-		{
 			System.out.println(errorMessage);
-		}
 	}
 
 	private void init(float[] data, int width, int height)
@@ -137,11 +133,11 @@ public class GaussianFit implements PlugInFilter
 		try
 		{
 			// Use reflection to allow building without the SMLM plugins on the classpath
-			Class c = Class.forName("gdsc.smlm.ij.plugins.GaussianFit", true, this.getClass().getClassLoader());
-			Method m = c.getDeclaredMethod("fit", new Class[] { float[].class, int.class, int.class });
+			final Class c = Class.forName("gdsc.smlm.ij.plugins.GaussianFit", true, this.getClass().getClassLoader());
+			final Method m = c.getDeclaredMethod("fit", new Class[] { float[].class, int.class, int.class });
 			return (double[]) m.invoke(c.newInstance(), data, width, height);
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			return null;
 		}
@@ -173,14 +169,14 @@ public class GaussianFit implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		Roi roi = imp.getRoi();
+		final Roi roi = imp.getRoi();
 		if (roi == null || !roi.isArea())
 		{
 			IJ.error("Require a region ROI");
@@ -191,17 +187,17 @@ public class GaussianFit implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
 	public void run(ImageProcessor ip)
 	{
 		FloatProcessor fp = ip.toFloat(0, null);
-		Rectangle bounds = fp.getRoi();
+		final Rectangle bounds = fp.getRoi();
 		fp = (FloatProcessor) fp.crop();
 
-		double[] params = fit((float[]) fp.getPixels(), fp.getWidth(), fp.getHeight());
+		final double[] params = fit((float[]) fp.getPixels(), fp.getWidth(), fp.getHeight());
 		if (params != null)
 			IJ.log(String.format("f(x,y) = %g + %g exp -( ( (x-%g)^2 / (2 * %g^2) + (y-%g)^2 ) / (2 * %g^2) )",
 					params[0], params[1], bounds.x + params[2], params[4], bounds.y + params[3], params[5]));

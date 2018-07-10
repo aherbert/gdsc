@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -82,7 +82,7 @@ public class SpotRadialIntensity implements PlugIn
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
 	@Override
@@ -91,7 +91,7 @@ public class SpotRadialIntensity implements PlugIn
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
 		// List the foci results
-		String[] names = FindFoci.getResultsNames();
+		final String[] names = FindFoci.getResultsNames();
 		if (names == null || names.length == 0)
 		{
 			IJ.error(TITLE, "Spots must be stored in memory using the " + FindFoci.TITLE + " plugin");
@@ -106,14 +106,14 @@ public class SpotRadialIntensity implements PlugIn
 		}
 
 		// Build a list of the open images for use as a mask
-		String[] maskImageList = getImageList();
+		final String[] maskImageList = getImageList();
 		if (maskImageList.length == 0)
 		{
 			IJ.error(TITLE, "No mask images");
 			return;
 		}
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage(
 				"Analyses spots within a mask region\nand computes radial intensity within the mask object region.");
@@ -134,8 +134,8 @@ public class SpotRadialIntensity implements PlugIn
 
 		resultsName = gd.getNextChoice();
 		maskImage = gd.getNextChoice();
-		int distance = (int) gd.getNextNumber();
-		double interval = gd.getNextNumber();
+		final int distance = (int) gd.getNextNumber();
+		final double interval = gd.getNextNumber();
 		showFoci = gd.getNextBoolean();
 		showObjects = gd.getNextBoolean();
 		showTable = gd.getNextBoolean();
@@ -160,16 +160,16 @@ public class SpotRadialIntensity implements PlugIn
 		SpotRadialIntensity.interval = interval;
 
 		// Get the objects
-		ObjectAnalyzer objects = createObjectAnalyzer(maskImage);
+		final ObjectAnalyzer objects = createObjectAnalyzer(maskImage);
 		if (objects == null)
 			return;
 
 		// Get the foci
-		Foci[] foci = getFoci(resultsName, objects);
+		final Foci[] foci = getFoci(resultsName, objects);
 		if (foci == null)
 			return;
 
-		PointRoi roi = (showFoci || showObjects) ? createPointRoi(foci) : null;
+		final PointRoi roi = (showFoci || showObjects) ? createPointRoi(foci) : null;
 
 		if (showFoci)
 			imp.setRoi(roi);
@@ -181,17 +181,17 @@ public class SpotRadialIntensity implements PlugIn
 
 	/**
 	 * Build a list of all the valid mask image names.
-	 * 
+	 *
 	 * @return The list of images
 	 */
 	public String[] getImageList()
 	{
-		ArrayList<String> newImageList = new ArrayList<String>();
-		int w = imp.getWidth();
-		int h = imp.getHeight();
-		for (int id : Utils.getIDList())
+		final ArrayList<String> newImageList = new ArrayList<>();
+		final int w = imp.getWidth();
+		final int h = imp.getHeight();
+		for (final int id : Utils.getIDList())
 		{
-			ImagePlus imp = WindowManager.getImage(id);
+			final ImagePlus imp = WindowManager.getImage(id);
 			if (imp == null)
 				continue;
 			// Same xy dimensions
@@ -214,7 +214,7 @@ public class SpotRadialIntensity implements PlugIn
 	 */
 	private ObjectAnalyzer createObjectAnalyzer(String maskImage)
 	{
-		ImagePlus maskImp = WindowManager.getImage(maskImage);
+		final ImagePlus maskImp = WindowManager.getImage(maskImage);
 		if (maskImp == null)
 		{
 			IJ.error(TITLE, "No mask");
@@ -234,25 +234,25 @@ public class SpotRadialIntensity implements PlugIn
 	 */
 	private Foci[] getFoci(String resultsName, ObjectAnalyzer objects)
 	{
-		FindFociMemoryResults memoryResults = FindFoci.getResults(resultsName);
+		final FindFociMemoryResults memoryResults = FindFoci.getResults(resultsName);
 		if (memoryResults == null)
 		{
 			IJ.error(TITLE, "No foci with the name " + resultsName);
 			return null;
 		}
-		ArrayList<FindFociResult> results = memoryResults.results;
+		final ArrayList<FindFociResult> results = memoryResults.results;
 		if (results.size() == 0)
 		{
 			IJ.error(TITLE, "Zero foci in the results with the name " + resultsName);
 			return null;
 		}
-		int[] mask = objects.getObjectMask();
-		int maxx = imp.getWidth();
-		TurboList<Foci> foci = new TurboList<Foci>(results.size());
+		final int[] mask = objects.getObjectMask();
+		final int maxx = imp.getWidth();
+		final TurboList<Foci> foci = new TurboList<>(results.size());
 		for (int i = 0, id = 1; i < results.size(); i++)
 		{
-			FindFociResult result = results.get(i);
-			int object = mask[result.y * maxx + result.x];
+			final FindFociResult result = results.get(i);
+			final int object = mask[result.y * maxx + result.x];
 			if (object != 0)
 				foci.add(new Foci(id++, object, result.x, result.y));
 		}
@@ -273,15 +273,15 @@ public class SpotRadialIntensity implements PlugIn
 	 */
 	private PointRoi createPointRoi(Foci[] foci)
 	{
-		float[] x = new float[foci.length];
-		float[] y = new float[foci.length];
+		final float[] x = new float[foci.length];
+		final float[] y = new float[foci.length];
 		for (int ii = 0; ii < foci.length; ii++)
 		{
-			Foci f = foci[ii];
+			final Foci f = foci[ii];
 			x[ii] = f.x;
 			y[ii] = f.y;
 		}
-		PointRoi roi = new PointRoi(x, y);
+		final PointRoi roi = new PointRoi(x, y);
 		roi.setShowLabels(true);
 		return roi;
 	}
@@ -298,45 +298,43 @@ public class SpotRadialIntensity implements PlugIn
 	{
 		if (showTable)
 			createResultsWindow();
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 
-		int[] mask = objects.getObjectMask();
-		float[] background = getBackground(objects);
+		final int[] mask = objects.getObjectMask();
+		final float[] background = getBackground(objects);
 
 		// For radial intensity
-		float[] pixels = (float[]) imp.getProcessor().toFloat(0, null).getPixels();
-		int limit = distance * distance;
-		int maxBin = (int) (distance / interval);
-		int[] count = new int[maxBin];
-		double[] sum = new double[maxBin];
+		final float[] pixels = (float[]) imp.getProcessor().toFloat(0, null).getPixels();
+		final int limit = distance * distance;
+		final int maxBin = (int) (distance / interval);
+		final int[] count = new int[maxBin];
+		final double[] sum = new double[maxBin];
 		// The lower limit of the squared distance for each bin
-		double[] distances = new double[maxBin];
+		final double[] distances = new double[maxBin];
 		for (int i = 0; i < distances.length; i++)
-		{
 			distances[i] = Maths.pow2(i * interval);
-		}
 
 		// Table of dx^2
-		int[] dx2 = new int[2 * distance + 1];
+		final int[] dx2 = new int[2 * distance + 1];
 
 		// Plot of each radial intensity
-		Plot plot = (showPlot) ? new Plot(TITLE, "Distance", "Average") : null;
-		double[] xAxis = SimpleArrayUtils.newArray(maxBin, 0, interval);
-		double[] yAxis = new double[xAxis.length];
-		LUT lut = LUTHelper.createLUT(LUTHelper.LutColour.FIRE_GLOW);
+		final Plot plot = (showPlot) ? new Plot(TITLE, "Distance", "Average") : null;
+		final double[] xAxis = SimpleArrayUtils.newArray(maxBin, 0, interval);
+		final double[] yAxis = new double[xAxis.length];
+		final LUT lut = LUTHelper.createLUT(LUTHelper.LutColour.FIRE_GLOW);
 
-		int w = imp.getWidth();
-		int upperx = imp.getWidth() - 1;
-		int uppery = imp.getHeight() - 1;
+		final int w = imp.getWidth();
+		final int upperx = imp.getWidth() - 1;
+		final int uppery = imp.getHeight() - 1;
 		for (int ii = 0; ii < foci.length; ii++)
 		{
-			Foci f = foci[ii];
+			final Foci f = foci[ii];
 
 			// Find limits && clip
-			int minx = Math.max(0, f.x - distance);
-			int maxx = Math.min(upperx, f.x + distance);
-			int miny = Math.max(0, f.y - distance);
-			int maxy = Math.min(uppery, f.y + distance);
+			final int minx = Math.max(0, f.x - distance);
+			final int maxx = Math.min(upperx, f.x + distance);
+			final int miny = Math.max(0, f.y - distance);
+			final int maxy = Math.min(uppery, f.y + distance);
 
 			// Table of dx^2
 			for (int x = minx, j = 0; x <= maxx; x++, j++)
@@ -352,14 +350,13 @@ public class SpotRadialIntensity implements PlugIn
 			// For all pixels
 			for (int y = miny; y <= maxy; y++)
 			{
-				int dy2 = Maths.pow2(f.y - y);
+				final int dy2 = Maths.pow2(f.y - y);
 				for (int x = minx, i = y * w + minx, j = 0; x <= maxx; x++, i++, j++)
-				{
 					// If correct object
 					if (mask[i] == f.object)
 					{
 						// Get distance squared
-						int d2 = dy2 + dx2[j];
+						final int d2 = dy2 + dx2[j];
 						if (d2 < limit)
 						{
 							// Put in radial stats
@@ -377,7 +374,6 @@ public class SpotRadialIntensity implements PlugIn
 							sum[bin] += pixels[i];
 						}
 					}
-				}
 			}
 
 			if (showTable)
@@ -387,20 +383,18 @@ public class SpotRadialIntensity implements PlugIn
 				sb.append(prefix);
 				sb.append('\t').append(f.id);
 				sb.append('\t').append(f.object);
-				float b = background[f.object];
+				final float b = background[f.object];
 				sb.append('\t').append(Utils.rounded(b));
 				sb.append('\t').append(f.x);
 				sb.append('\t').append(f.y);
 				for (int i = 0; i < maxBin; i++)
 				{
-					double v = sum[i] / count[i] - b * count[i];
+					final double v = sum[i] / count[i] - b * count[i];
 					yAxis[i] = v;
 					sb.append('\t').append(Utils.rounded(v));
 				}
 				for (int i = 0; i < maxBin; i++)
-				{
 					sb.append('\t').append(count[i]);
-				}
 
 				resultsWindow.append(sb.toString());
 			}
@@ -415,13 +409,9 @@ public class SpotRadialIntensity implements PlugIn
 
 				plot.setColor(LUTHelper.getColour(lut, ii + 1, 0, foci.length));
 				if (xLimit < xAxis.length)
-				{
 					plot.addPoints(Arrays.copyOf(xAxis, xLimit), Arrays.copyOf(yAxis, xLimit), Plot.LINE);
-				}
 				else
-				{
 					plot.addPoints(xAxis, yAxis, Plot.LINE);
-				}
 			}
 		}
 
@@ -442,18 +432,18 @@ public class SpotRadialIntensity implements PlugIn
 	 */
 	private float[] getBackground(ObjectAnalyzer objects)
 	{
-		ImageProcessor ip = imp.getProcessor().duplicate();
+		final ImageProcessor ip = imp.getProcessor().duplicate();
 		ip.convolve3x3(SimpleArrayUtils.newIntArray(9, 1));
-		int[] mask = objects.getObjectMask();
-		int maxObject = objects.getMaxObject();
-		float[] background = new float[maxObject + 1];
+		final int[] mask = objects.getObjectMask();
+		final int maxObject = objects.getMaxObject();
+		final float[] background = new float[maxObject + 1];
 		Arrays.fill(background, Float.POSITIVE_INFINITY);
 		for (int i = mask.length; i-- > 0;)
 		{
-			int id = mask[i];
+			final int id = mask[i];
 			if (id != 0)
 			{
-				float v = ip.getf(i);
+				final float v = ip.getf(i);
 				if (background[id] > v)
 					background[id] = v;
 			}
@@ -464,33 +454,31 @@ public class SpotRadialIntensity implements PlugIn
 	private void createResultsWindow()
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
-		{
 			resultsWindow = new TextWindow(TITLE + " Summary", createResultsHeader(), "", 700, 300);
-		}
 		prefix = String.format("%s (C=%d,Z=%d,T=%d)", imp.getTitle(), imp.getChannel(), imp.getSlice(), imp.getFrame());
 	}
 
 	private String createResultsHeader()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Image");
 		sb.append("\tID");
 		sb.append("\tObject");
 		sb.append("\tBackground");
 		sb.append("\tx");
 		sb.append("\ty");
-		int maxBin = (int) (distance / interval);
+		final int maxBin = (int) (distance / interval);
 		for (int i = 0; i < maxBin; i++)
 		{
-			double low = interval * i;
-			double high = interval * (i + 1);
+			final double low = interval * i;
+			final double high = interval * (i + 1);
 			sb.append("\tAv ").append(Utils.rounded(low));
 			sb.append("-").append(Utils.rounded(high));
 		}
 		for (int i = 0; i < maxBin; i++)
 		{
-			double low = interval * i;
-			double high = interval * (i + 1);
+			final double low = interval * i;
+			final double high = interval * (i + 1);
 			sb.append("\tN ").append(Utils.rounded(low));
 			sb.append("-").append(Utils.rounded(high));
 		}

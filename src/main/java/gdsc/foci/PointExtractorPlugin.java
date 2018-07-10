@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -61,7 +61,7 @@ public class PointExtractorPlugin implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
@@ -84,21 +84,17 @@ public class PointExtractorPlugin implements PlugInFilter
 
 	private void checkManagerForRois()
 	{
-		RoiManager manager = RoiManager.getInstance2();
+		final RoiManager manager = RoiManager.getInstance2();
 		if (manager == null)
 			return;
 
 		pointRois = new PointRoi[manager.getCount()];
 
-		// Store the point ROIs 
+		// Store the point ROIs
 		int count = 0;
-		for (Roi roi : manager.getRoisAsArray())
-		{
+		for (final Roi roi : manager.getRoisAsArray())
 			if (roi instanceof PointRoi)
-			{
 				pointRois[count++] = (PointRoi) roi;
-			}
-		}
 
 		pointRois = Arrays.copyOf(pointRois, count);
 	}
@@ -118,23 +114,21 @@ public class PointExtractorPlugin implements PlugInFilter
 		if (pointRois == null)
 			return 0;
 		int count = 0;
-		for (PointRoi roi : pointRois)
+		for (final PointRoi roi : pointRois)
 			count += roi.getNCoordinates();
 		return count;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
 	public void run(ImageProcessor ip)
 	{
 		if (!showDialog())
-		{
 			return;
-		}
 
 		AssignedPoint points[] = getPoints();
 
@@ -145,14 +139,12 @@ public class PointExtractorPlugin implements PlugInFilter
 		try
 		{
 			if (xyz || imp == null)
-			{
 				PointManager.savePoints(points, filename);
-			}
 			else
 			{
 				// Extract the values
-				TimeValuedPoint[] p = new TimeValuedPoint[points.length];
-				ImageStack stack = imp.getImageStack();
+				final TimeValuedPoint[] p = new TimeValuedPoint[points.length];
+				final ImageStack stack = imp.getImageStack();
 				final int channel = imp.getChannel();
 				final int frame = imp.getFrame();
 				for (int i = 0; i < points.length; i++)
@@ -161,14 +153,14 @@ public class PointExtractorPlugin implements PlugInFilter
 					final int y = (int) points[i].getY();
 					final int z = (int) points[i].getZ();
 					final int index = imp.getStackIndex(channel, z, frame);
-					ImageProcessor ip2 = stack.getProcessor(index);
+					final ImageProcessor ip2 = stack.getProcessor(index);
 					p[i] = new TimeValuedPoint(x, y, z, frame, ip2.getf(x, y));
 				}
 
 				TimeValuePointManager.savePoints(p, filename);
 			}
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			IJ.error("Failed to save the ROI points:\n" + e.getMessage());
 		}
@@ -180,26 +172,22 @@ public class PointExtractorPlugin implements PlugInFilter
 
 		if (isManagerAvailable() && useManager)
 		{
-			ArrayList<AssignedPoint> points = new ArrayList<AssignedPoint>();
-			for (PointRoi roi : pointRois)
-			{
+			final ArrayList<AssignedPoint> points = new ArrayList<>();
+			for (final PointRoi roi : pointRois)
 				points.addAll(Arrays.asList(PointManager.extractRoiPoints(roi)));
-			}
 			roiPoints = points.toArray(new AssignedPoint[points.size()]);
 
 			if (reset)
 			{
-				RoiManager manager = RoiManager.getInstance2();
+				final RoiManager manager = RoiManager.getInstance2();
 				if (manager != null)
 					manager.runCommand("reset");
 			}
 		}
 		else
-		{
 			roiPoints = PointManager.extractRoiPoints(imp.getRoi());
-		}
 
-		ImagePlus maskImp = WindowManager.getImage(mask);
+		final ImagePlus maskImp = WindowManager.getImage(mask);
 		return FindFociOptimiser.restrictToMask(maskImp, roiPoints);
 	}
 
@@ -208,9 +196,9 @@ public class PointExtractorPlugin implements PlugInFilter
 		// To improve the flexibility, do not restrict the mask to those suitable for the image. Allow any image for the mask.
 		//ArrayList<String> newImageList = FindFoci.buildMaskList(imp);
 		//String[] list = newImageList.toArray(new String[0]);
-		String[] list = Utils.getImageList(Utils.NO_IMAGE, null);
+		final String[] list = Utils.getImageList(Utils.NO_IMAGE, null);
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage("Extracts the ROI points to file");
 		gd.addChoice("Mask", list, mask);
@@ -227,11 +215,9 @@ public class PointExtractorPlugin implements PlugInFilter
 		}
 		else
 		{
-			Roi roi = imp.getRoi();
+			final Roi roi = imp.getRoi();
 			if (roi == null || roi.getType() != Roi.POINT)
-			{
 				gd.addMessage("Warning: The image does not contain Point ROI.\nAn empty result file will be produced");
-			}
 		}
 
 		gd.showDialog();

@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -73,7 +73,7 @@ import gdsc.format.LimitedNumberFormat;
 public class FindFociAdvancedOptions extends JDialog
 {
 	private static final long serialVersionUID = -217510642094281899L;
-	private FindFociModel model;
+	private final FindFociModel model;
 
 	private final JPanel contentPanel = new JPanel();
 	private JCheckBox chckbxShowTable;
@@ -106,11 +106,11 @@ public class FindFociAdvancedOptions extends JDialog
 	{
 		try
 		{
-			FindFociAdvancedOptions dialog = new FindFociAdvancedOptions();
+			final FindFociAdvancedOptions dialog = new FindFociAdvancedOptions();
 			dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			dialog.setVisible(true);
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			e.printStackTrace();
 		}
@@ -141,7 +141,7 @@ public class FindFociAdvancedOptions extends JDialog
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
-		GridBagLayout gbl_contentPanel = new GridBagLayout();
+		final GridBagLayout gbl_contentPanel = new GridBagLayout();
 		gbl_contentPanel.columnWidths = new int[] { 0, 182, 50, 0 };
 		gbl_contentPanel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		gbl_contentPanel.columnWeights = new double[] { 0.0, 1.0, 0.0, Double.MIN_VALUE };
@@ -161,7 +161,7 @@ public class FindFociAdvancedOptions extends JDialog
 						chckbxOverlayMask.firePropertyChange("selected", 0, 1);
 					}
 				});
-				GridBagConstraints gbc_chckbxOverlayMask = new GridBagConstraints();
+				final GridBagConstraints gbc_chckbxOverlayMask = new GridBagConstraints();
 				gbc_chckbxOverlayMask.gridwidth = 2;
 				gbc_chckbxOverlayMask.anchor = GridBagConstraints.WEST;
 				gbc_chckbxOverlayMask.insets = new Insets(0, 0, 5, 5);
@@ -181,7 +181,7 @@ public class FindFociAdvancedOptions extends JDialog
 					}
 				});
 				chckbxShowTable.setMargin(new Insets(2, 2, 2, 0));
-				GridBagConstraints gbc_chckbxShowTable = new GridBagConstraints();
+				final GridBagConstraints gbc_chckbxShowTable = new GridBagConstraints();
 				gbc_chckbxShowTable.gridwidth = 2;
 				gbc_chckbxShowTable.anchor = GridBagConstraints.WEST;
 				gbc_chckbxShowTable.insets = new Insets(0, 0, 5, 5);
@@ -201,7 +201,7 @@ public class FindFociAdvancedOptions extends JDialog
 					}
 				});
 				chckbxClearTable.setMargin(new Insets(2, 2, 2, 0));
-				GridBagConstraints gbc_chckbxClearTable = new GridBagConstraints();
+				final GridBagConstraints gbc_chckbxClearTable = new GridBagConstraints();
 				gbc_chckbxClearTable.gridwidth = 2;
 				gbc_chckbxClearTable.anchor = GridBagConstraints.WEST;
 				gbc_chckbxClearTable.insets = new Insets(0, 0, 5, 5);
@@ -221,7 +221,7 @@ public class FindFociAdvancedOptions extends JDialog
 					}
 				});
 				chckbxMarkMaxima.setMargin(new Insets(2, 2, 2, 0));
-				GridBagConstraints gbc_chckbxMarkMaxima = new GridBagConstraints();
+				final GridBagConstraints gbc_chckbxMarkMaxima = new GridBagConstraints();
 				gbc_chckbxMarkMaxima.gridwidth = 2;
 				gbc_chckbxMarkMaxima.anchor = GridBagConstraints.WEST;
 				gbc_chckbxMarkMaxima.insets = new Insets(0, 0, 5, 5);
@@ -241,7 +241,7 @@ public class FindFociAdvancedOptions extends JDialog
 					}
 				});
 				chckbxMarkPeakMaxima.setMargin(new Insets(2, 2, 2, 0));
-				GridBagConstraints gbc_chckbxMarkPeakMaxima = new GridBagConstraints();
+				final GridBagConstraints gbc_chckbxMarkPeakMaxima = new GridBagConstraints();
 				gbc_chckbxMarkPeakMaxima.gridwidth = 2;
 				gbc_chckbxMarkPeakMaxima.anchor = GridBagConstraints.WEST;
 				gbc_chckbxMarkPeakMaxima.insets = new Insets(0, 0, 5, 5);
@@ -260,7 +260,7 @@ public class FindFociAdvancedOptions extends JDialog
 						chckbxMarkUsingOverlay.firePropertyChange("selected", 0, 1);
 					}
 				});
-				GridBagConstraints gbc_chckbxMarkUsingOverlay = new GridBagConstraints();
+				final GridBagConstraints gbc_chckbxMarkUsingOverlay = new GridBagConstraints();
 				gbc_chckbxMarkUsingOverlay.anchor = GridBagConstraints.WEST;
 				gbc_chckbxMarkUsingOverlay.gridwidth = 2;
 				gbc_chckbxMarkUsingOverlay.insets = new Insets(0, 0, 5, 5);
@@ -279,7 +279,7 @@ public class FindFociAdvancedOptions extends JDialog
 						chckbxHideLabels.firePropertyChange("selected", 0, 1);
 					}
 				});
-				GridBagConstraints gbc_chckbxHideLabels = new GridBagConstraints();
+				final GridBagConstraints gbc_chckbxHideLabels = new GridBagConstraints();
 				gbc_chckbxHideLabels.anchor = GridBagConstraints.WEST;
 				gbc_chckbxHideLabels.insets = new Insets(0, 0, 5, 5);
 				gbc_chckbxHideLabels.gridx = 0;
@@ -298,7 +298,7 @@ public class FindFociAdvancedOptions extends JDialog
 						chckbxShowMaskMaxima.firePropertyChange("selected", 0, 1);
 					}
 				});
-				GridBagConstraints gbc_chckbxShowMaskMaxima = new GridBagConstraints();
+				final GridBagConstraints gbc_chckbxShowMaskMaxima = new GridBagConstraints();
 				gbc_chckbxShowMaskMaxima.anchor = GridBagConstraints.WEST;
 				gbc_chckbxShowMaskMaxima.gridwidth = 2;
 				gbc_chckbxShowMaskMaxima.insets = new Insets(0, 0, 5, 5);
@@ -318,7 +318,7 @@ public class FindFociAdvancedOptions extends JDialog
 					}
 				});
 				chckbxShowLogMessages.setMargin(new Insets(2, 2, 2, 0));
-				GridBagConstraints gbc_chckbxShowLogMessages = new GridBagConstraints();
+				final GridBagConstraints gbc_chckbxShowLogMessages = new GridBagConstraints();
 				gbc_chckbxShowLogMessages.gridwidth = 2;
 				gbc_chckbxShowLogMessages.insets = new Insets(0, 0, 5, 5);
 				gbc_chckbxShowLogMessages.anchor = GridBagConstraints.WEST;
@@ -329,7 +329,7 @@ public class FindFociAdvancedOptions extends JDialog
 		}
 		{
 			lblCentreMethod = new JLabel("Centre method");
-			GridBagConstraints gbc_lblCentreMethod = new GridBagConstraints();
+			final GridBagConstraints gbc_lblCentreMethod = new GridBagConstraints();
 			gbc_lblCentreMethod.insets = new Insets(0, 0, 5, 5);
 			gbc_lblCentreMethod.anchor = GridBagConstraints.EAST;
 			gbc_lblCentreMethod.gridx = 0;
@@ -337,7 +337,7 @@ public class FindFociAdvancedOptions extends JDialog
 			contentPanel.add(lblCentreMethod, gbc_lblCentreMethod);
 		}
 		{
-			comboBoxCentreMethod = new JComboBox<String>();
+			comboBoxCentreMethod = new JComboBox<>();
 			comboBoxCentreMethod.setToolTipText("The method used to mark the origin of each peak");
 			comboBoxCentreMethod.addItemListener(new ItemListener()
 			{
@@ -347,8 +347,8 @@ public class FindFociAdvancedOptions extends JDialog
 					comboBoxCentreMethod.firePropertyChange("selectedItem", 0, 1);
 				}
 			});
-			comboBoxCentreMethod.setModel(new DefaultComboBoxModel<String>(FindFoci.getCentreMethods()));
-			GridBagConstraints gbc_comboBoxCentreMethod = new GridBagConstraints();
+			comboBoxCentreMethod.setModel(new DefaultComboBoxModel<>(FindFoci.getCentreMethods()));
+			final GridBagConstraints gbc_comboBoxCentreMethod = new GridBagConstraints();
 			gbc_comboBoxCentreMethod.gridwidth = 2;
 			gbc_comboBoxCentreMethod.insets = new Insets(0, 0, 5, 0);
 			gbc_comboBoxCentreMethod.fill = GridBagConstraints.HORIZONTAL;
@@ -358,7 +358,7 @@ public class FindFociAdvancedOptions extends JDialog
 		}
 		{
 			lblCentreParam = new JLabel("Centre param");
-			GridBagConstraints gbc_lblCentreParam = new GridBagConstraints();
+			final GridBagConstraints gbc_lblCentreParam = new GridBagConstraints();
 			gbc_lblCentreParam.anchor = GridBagConstraints.EAST;
 			gbc_lblCentreParam.insets = new Insets(0, 0, 5, 5);
 			gbc_lblCentreParam.gridx = 0;
@@ -373,10 +373,8 @@ public class FindFociAdvancedOptions extends JDialog
 				public void mouseClicked(MouseEvent e)
 				{
 					if (e.getClickCount() > 1)
-					{
 						SliderLimitHelper.updateRangeLimits(sliderCentreParam, "Centre parameter", 1, 0,
 								Double.POSITIVE_INFINITY);
-					}
 				}
 			});
 			sliderCentreParam.setToolTipText("Controls the selected centre method");
@@ -389,7 +387,7 @@ public class FindFociAdvancedOptions extends JDialog
 				}
 			});
 			sliderCentreParam.setMaximum(10);
-			GridBagConstraints gbc_sliderCentreParam = new GridBagConstraints();
+			final GridBagConstraints gbc_sliderCentreParam = new GridBagConstraints();
 			gbc_sliderCentreParam.fill = GridBagConstraints.HORIZONTAL;
 			gbc_sliderCentreParam.insets = new Insets(0, 0, 5, 5);
 			gbc_sliderCentreParam.gridx = 1;
@@ -404,9 +402,7 @@ public class FindFociAdvancedOptions extends JDialog
 				public void propertyChange(PropertyChangeEvent evt)
 				{
 					if (evt.getPropertyName() == "value")
-					{
 						txtCentreParam.firePropertyChange("text", 0, 1);
-					}
 				}
 			});
 			txtCentreParam.addKeyListener(new KeyAdapter()
@@ -419,7 +415,7 @@ public class FindFociAdvancedOptions extends JDialog
 			});
 			txtCentreParam.setHorizontalAlignment(SwingConstants.TRAILING);
 			txtCentreParam.setText("0");
-			GridBagConstraints gbc_txtCentreParam = new GridBagConstraints();
+			final GridBagConstraints gbc_txtCentreParam = new GridBagConstraints();
 			gbc_txtCentreParam.fill = GridBagConstraints.HORIZONTAL;
 			gbc_txtCentreParam.insets = new Insets(0, 0, 5, 0);
 			gbc_txtCentreParam.gridx = 2;
@@ -437,7 +433,7 @@ public class FindFociAdvancedOptions extends JDialog
 					chckbxRemoveEdgeMaxima.firePropertyChange("selected", 0, 1);
 				}
 			});
-			GridBagConstraints gbc_chckbxRemoveEdgeMaxima = new GridBagConstraints();
+			final GridBagConstraints gbc_chckbxRemoveEdgeMaxima = new GridBagConstraints();
 			gbc_chckbxRemoveEdgeMaxima.anchor = GridBagConstraints.WEST;
 			gbc_chckbxRemoveEdgeMaxima.gridwidth = 2;
 			gbc_chckbxRemoveEdgeMaxima.insets = new Insets(0, 0, 5, 5);
@@ -457,7 +453,7 @@ public class FindFociAdvancedOptions extends JDialog
 				}
 			});
 			chckbxSaveResults.setMargin(new Insets(2, 2, 2, 0));
-			GridBagConstraints gbc_chckbxSaveResults = new GridBagConstraints();
+			final GridBagConstraints gbc_chckbxSaveResults = new GridBagConstraints();
 			gbc_chckbxSaveResults.insets = new Insets(0, 0, 5, 5);
 			gbc_chckbxSaveResults.anchor = GridBagConstraints.WEST;
 			gbc_chckbxSaveResults.gridx = 0;
@@ -466,7 +462,7 @@ public class FindFociAdvancedOptions extends JDialog
 		}
 		{
 			lblResultsDirectory = new JLabel("Results directory:");
-			GridBagConstraints gbc_lblResultsDirectory = new GridBagConstraints();
+			final GridBagConstraints gbc_lblResultsDirectory = new GridBagConstraints();
 			gbc_lblResultsDirectory.insets = new Insets(0, 0, 5, 5);
 			gbc_lblResultsDirectory.anchor = GridBagConstraints.WEST;
 			gbc_lblResultsDirectory.gridx = 0;
@@ -484,7 +480,7 @@ public class FindFociAdvancedOptions extends JDialog
 					txtResultsDirectory.firePropertyChange("text", 0, 1);
 				}
 			});
-			GridBagConstraints gbc_txtResultsDirectory = new GridBagConstraints();
+			final GridBagConstraints gbc_txtResultsDirectory = new GridBagConstraints();
 			gbc_txtResultsDirectory.insets = new Insets(0, 0, 5, 5);
 			gbc_txtResultsDirectory.gridwidth = 2;
 			gbc_txtResultsDirectory.fill = GridBagConstraints.HORIZONTAL;
@@ -501,13 +497,13 @@ public class FindFociAdvancedOptions extends JDialog
 				@Override
 				public void mouseClicked(MouseEvent e)
 				{
-					String dir = Utils.getDirectory(getTitle(), model.getResultsDirectory());
+					final String dir = Utils.getDirectory(getTitle(), model.getResultsDirectory());
 					if (dir != null)
 						model.setResultsDirectory(dir);
 				}
 			});
 			btnDirectoryPicker.setMargin(new Insets(2, 2, 2, 2));
-			GridBagConstraints gbc_btnDirectoryPicker = new GridBagConstraints();
+			final GridBagConstraints gbc_btnDirectoryPicker = new GridBagConstraints();
 			gbc_btnDirectoryPicker.fill = GridBagConstraints.HORIZONTAL;
 			gbc_btnDirectoryPicker.insets = new Insets(0, 0, 5, 0);
 			gbc_btnDirectoryPicker.gridx = 2;
@@ -526,7 +522,7 @@ public class FindFociAdvancedOptions extends JDialog
 				}
 			});
 			chckbxObjectAnalysis.setMargin(new Insets(2, 2, 2, 0));
-			GridBagConstraints gbc_chckbxObjectAnalysis = new GridBagConstraints();
+			final GridBagConstraints gbc_chckbxObjectAnalysis = new GridBagConstraints();
 			gbc_chckbxObjectAnalysis.anchor = GridBagConstraints.WEST;
 			gbc_chckbxObjectAnalysis.insets = new Insets(0, 0, 5, 5);
 			gbc_chckbxObjectAnalysis.gridx = 0;
@@ -545,7 +541,7 @@ public class FindFociAdvancedOptions extends JDialog
 				}
 			});
 			chckbxShowObjectMask.setMargin(new Insets(2, 2, 2, 0));
-			GridBagConstraints gbc_chckbxShowObjectMask = new GridBagConstraints();
+			final GridBagConstraints gbc_chckbxShowObjectMask = new GridBagConstraints();
 			gbc_chckbxShowObjectMask.insets = new Insets(0, 0, 5, 5);
 			gbc_chckbxShowObjectMask.gridx = 0;
 			gbc_chckbxShowObjectMask.gridy = 16;
@@ -563,7 +559,7 @@ public class FindFociAdvancedOptions extends JDialog
 				}
 			});
 			chckbxSaveToMemory.setMargin(new Insets(2, 2, 2, 0));
-			GridBagConstraints gbc_chckbxSaveToMemory = new GridBagConstraints();
+			final GridBagConstraints gbc_chckbxSaveToMemory = new GridBagConstraints();
 			gbc_chckbxSaveToMemory.anchor = GridBagConstraints.WEST;
 			gbc_chckbxSaveToMemory.insets = new Insets(0, 0, 0, 5);
 			gbc_chckbxSaveToMemory.gridx = 0;
@@ -571,11 +567,11 @@ public class FindFociAdvancedOptions extends JDialog
 			contentPanel.add(chckbxSaveToMemory, gbc_chckbxSaveToMemory);
 		}
 		{
-			JPanel buttonPane = new JPanel();
+			final JPanel buttonPane = new JPanel();
 			buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
 			getContentPane().add(buttonPane, BorderLayout.SOUTH);
 			{
-				JButton okButton = new JButton("OK");
+				final JButton okButton = new JButton("OK");
 				okButton.setToolTipText("Close this window");
 				okButton.addMouseListener(new MouseAdapter()
 				{
@@ -597,127 +593,127 @@ public class FindFociAdvancedOptions extends JDialog
 
 	protected void initDataBindings()
 	{
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty = BeanProperty.create("showTable");
-		BeanProperty<JCheckBox, Boolean> jCheckBoxBeanProperty = BeanProperty.create("selected");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty = BeanProperty.create("showTable");
+		final BeanProperty<JCheckBox, Boolean> jCheckBoxBeanProperty = BeanProperty.create("selected");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty, chckbxShowTable, jCheckBoxBeanProperty);
 		autoBinding.bind();
 		//
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_1 = BeanProperty.create("markMaxima");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_1 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_1 = BeanProperty.create("markMaxima");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_1 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_1, chckbxMarkMaxima, jCheckBoxBeanProperty);
 		autoBinding_1.bind();
 		//
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_2 = BeanProperty.create("markROIMaxima");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_2 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_2 = BeanProperty.create("markROIMaxima");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_2 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_2, chckbxMarkPeakMaxima,
 				jCheckBoxBeanProperty);
 		autoBinding_2.bind();
 		//
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_3 = BeanProperty.create("showLogMessages");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_3 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_3 = BeanProperty.create("showLogMessages");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_3 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_3, chckbxShowLogMessages,
 				jCheckBoxBeanProperty);
 		autoBinding_3.bind();
 		//
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_4 = BeanProperty.create("saveResults");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_4 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_4 = BeanProperty.create("saveResults");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_4 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_4, chckbxSaveResults,
 				jCheckBoxBeanProperty);
 		autoBinding_4.bind();
 		//
-		BeanProperty<FindFociModel, String> findFociModelBeanProperty_5 = BeanProperty.create("resultsDirectory");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
-		AutoBinding<FindFociModel, String, JTextField, String> autoBinding_5 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, String> findFociModelBeanProperty_5 = BeanProperty.create("resultsDirectory");
+		final BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
+		final AutoBinding<FindFociModel, String, JTextField, String> autoBinding_5 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_5, txtResultsDirectory,
 				jTextFieldBeanProperty);
 		autoBinding_5.bind();
 		//
-		BeanProperty<FindFociModel, Integer> findFociModelBeanProperty_6 = BeanProperty.create("centreMethod");
-		BeanProperty<JComboBox<String>, Object> jComboBoxBeanProperty = BeanProperty.create("selectedItem");
-		AutoBinding<FindFociModel, Integer, JComboBox<String>, Object> autoBinding_6 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Integer> findFociModelBeanProperty_6 = BeanProperty.create("centreMethod");
+		final BeanProperty<JComboBox<String>, Object> jComboBoxBeanProperty = BeanProperty.create("selectedItem");
+		final AutoBinding<FindFociModel, Integer, JComboBox<String>, Object> autoBinding_6 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_6, comboBoxCentreMethod,
 				jComboBoxBeanProperty);
 		autoBinding_6.setConverter(new CentreMethodConverter());
 		autoBinding_6.bind();
 		//
-		BeanProperty<FindFociModel, Double> findFociModelBeanProperty_7 = BeanProperty.create("centreParameter");
-		BeanProperty<JSlider, Integer> jSliderBeanProperty = BeanProperty.create("value");
-		AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_7 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Double> findFociModelBeanProperty_7 = BeanProperty.create("centreParameter");
+		final BeanProperty<JSlider, Integer> jSliderBeanProperty = BeanProperty.create("value");
+		final AutoBinding<FindFociModel, Double, JSlider, Integer> autoBinding_7 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_7, sliderCentreParam, jSliderBeanProperty);
 		autoBinding_7.setConverter(new SliderDoubleConverter());
 		autoBinding_7.bind();
 		//
-		BeanProperty<JFormattedTextField, Boolean> jFormattedTextFieldBeanProperty_1 = BeanProperty.create("enabled");
-		AutoBinding<FindFociModel, Integer, JFormattedTextField, Boolean> autoBinding_9 = Bindings.createAutoBinding(
+		final BeanProperty<JFormattedTextField, Boolean> jFormattedTextFieldBeanProperty_1 = BeanProperty.create("enabled");
+		final AutoBinding<FindFociModel, Integer, JFormattedTextField, Boolean> autoBinding_9 = Bindings.createAutoBinding(
 				UpdateStrategy.READ, model, findFociModelBeanProperty_6, txtCentreParam,
 				jFormattedTextFieldBeanProperty_1);
 		autoBinding_9.setConverter(new CentreParamEnabledConverter());
 		autoBinding_9.bind();
 		//
-		BeanProperty<JSlider, Boolean> jSliderBeanProperty_1 = BeanProperty.create("enabled");
-		AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_10 = Bindings.createAutoBinding(
+		final BeanProperty<JSlider, Boolean> jSliderBeanProperty_1 = BeanProperty.create("enabled");
+		final AutoBinding<FindFociModel, Integer, JSlider, Boolean> autoBinding_10 = Bindings.createAutoBinding(
 				UpdateStrategy.READ, model, findFociModelBeanProperty_6, sliderCentreParam, jSliderBeanProperty_1);
 		autoBinding_10.setConverter(new CentreParamEnabledConverter());
 		autoBinding_10.bind();
 		//
-		BeanProperty<JFormattedTextField, String> jFormattedTextFieldBeanProperty_2 = BeanProperty.create("text");
-		AutoBinding<FindFociModel, Double, JFormattedTextField, String> autoBinding_11 = Bindings.createAutoBinding(
+		final BeanProperty<JFormattedTextField, String> jFormattedTextFieldBeanProperty_2 = BeanProperty.create("text");
+		final AutoBinding<FindFociModel, Double, JFormattedTextField, String> autoBinding_11 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_7, txtCentreParam,
 				jFormattedTextFieldBeanProperty_2);
 		autoBinding_11.setConverter(new DoubleConverter());
 		autoBinding_11.bind();
 		//
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_8 = BeanProperty.create("showMaskMaximaAsDots");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_8 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_8 = BeanProperty.create("showMaskMaximaAsDots");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_8 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_8, chckbxShowMaskMaxima,
 				jCheckBoxBeanProperty);
 		autoBinding_8.bind();
 		//
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_9 = BeanProperty.create("removeEdgeMaxima");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_12 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_9 = BeanProperty.create("removeEdgeMaxima");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_12 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_9, chckbxRemoveEdgeMaxima,
 				jCheckBoxBeanProperty);
 		autoBinding_12.bind();
 		//
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_10 = BeanProperty.create("objectAnalysis");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_13 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_10 = BeanProperty.create("objectAnalysis");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_13 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_10, chckbxObjectAnalysis,
 				jCheckBoxBeanProperty);
 		autoBinding_13.bind();
 		//
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_11 = BeanProperty.create("showObjectMask");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_14 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_11 = BeanProperty.create("showObjectMask");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_14 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_11, chckbxShowObjectMask,
 				jCheckBoxBeanProperty);
 		autoBinding_14.bind();
 		//
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_12 = BeanProperty.create("clearTable");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_15 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_12 = BeanProperty.create("clearTable");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_15 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_12, chckbxClearTable,
 				jCheckBoxBeanProperty);
 		autoBinding_15.bind();
 		//
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_13 = BeanProperty.create("saveToMemory");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_16 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_13 = BeanProperty.create("saveToMemory");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_16 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_13, chckbxSaveToMemory,
 				jCheckBoxBeanProperty);
 		autoBinding_16.bind();
 		//
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_14 = BeanProperty.create("hideLabels");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_17 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_14 = BeanProperty.create("hideLabels");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_17 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_14, chckbxHideLabels,
 				jCheckBoxBeanProperty);
 		autoBinding_17.bind();
 		//
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_15 = BeanProperty.create("overlayMask");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_18 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_15 = BeanProperty.create("overlayMask");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_18 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_15, chckbxOverlayMask,
 				jCheckBoxBeanProperty);
 		autoBinding_18.bind();
 		//
-		BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_16 = BeanProperty.create("markUsingOverlay");
-		AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_19 = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_16 = BeanProperty.create("markUsingOverlay");
+		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_19 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_16, chckbxMarkUsingOverlay,
 				jCheckBoxBeanProperty);
 		autoBinding_19.bind();

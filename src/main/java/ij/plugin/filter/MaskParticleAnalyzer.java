@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -97,7 +97,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			lastParticle = Analyzer.class.getDeclaredField("lastParticle");
 			lastParticle.setAccessible(true);
 		}
-		catch (Throwable e)
+		catch (final Throwable e)
 		{
 			// Reflection has failed
 			firstParticle = lastParticle = null;
@@ -108,42 +108,38 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 	{
 		//Analyzer.firstParticle = value;
 		if (firstParticle != null)
-		{
 			try
 			{
 				firstParticle.set(Analyzer.class, value);
 				//IJ.log("Set firstParticle to "+value);
 			}
-			catch (Throwable e)
+			catch (final Throwable e)
 			{
 				// Reflection has failed
 				firstParticle = null;
 			}
-		}
 	}
 
 	static void setAnalyzerLastParticle(int value)
 	{
 		//Analyzer.lastParticle = value;
 		if (lastParticle != null)
-		{
 			try
 			{
 				lastParticle.set(Analyzer.class, value);
 				//IJ.log("Set lastParticle to "+value);
 			}
-			catch (Throwable e)
+			catch (final Throwable e)
 			{
 				// Reflection has failed
 				lastParticle = null;
 			}
-		}
 	}
 
 	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
-		int flags = FINAL_PROCESSING;
+		final int flags = FINAL_PROCESSING;
 		if (imp != null)
 		{
 			if ("final".equals(arg))
@@ -167,13 +163,13 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 
 			// The plugin will be run on a thresholded/mask image to define particles.
 			// Choose the redirect image to sample the pixels from.
-			int[] idList = Utils.getIDList();
+			final int[] idList = Utils.getIDList();
 			String[] list = new String[idList.length + 1];
 			list[0] = "[None]";
 			int count = 1;
-			for (int id : idList)
+			for (final int id : idList)
 			{
-				ImagePlus imp2 = WindowManager.getImage(id);
+				final ImagePlus imp2 = WindowManager.getImage(id);
 				if (imp2 == null || imp2.getWidth() != imp.getWidth() || imp2.getHeight() != imp.getHeight())
 					continue;
 				if (imp2.getID() == imp.getID())
@@ -181,7 +177,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 				list[count++] = imp2.getTitle();
 			}
 			list = Arrays.copyOf(list, count);
-			GenericDialog gd = new GenericDialog("Mask Particle Analyzer...");
+			final GenericDialog gd = new GenericDialog("Mask Particle Analyzer...");
 			gd.addMessage(
 					"Analyses objects in an image.\n \nObjects are defined with contiguous pixels of the same value.\nIgnore pixels outside any configured thresholds.");
 			gd.addChoice("Redirect_image", list, redirectTitle);
@@ -194,18 +190,18 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			gd.showDialog();
 			if (gd.wasCanceled())
 				return DONE;
-			int index = gd.getNextChoiceIndex();
+			final int index = gd.getNextChoiceIndex();
 			redirectTitle = list[index];
 			particleSummary = gd.getNextBoolean();
 			if (particleSummary)
-				summaryHistogram = new HashMap<Double, int[]>();
+				summaryHistogram = new HashMap<>();
 			saveHistogram = gd.getNextBoolean();
 			if (saveHistogram)
 			{
 				histogramFile = Utils.getFilename("Histogram_file", histogramFile);
 				if (histogramFile != null)
 				{
-					int i = histogramFile.lastIndexOf('.');
+					final int i = histogramFile.lastIndexOf('.');
 					if (i == -1)
 						histogramFile += ".txt";
 					out = createOutput(histogramFile);
@@ -214,24 +210,22 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 				}
 			}
 			if (Analyzer.isRedirectImage())
-			{
 				// Get the current redirect image using reflection since we just want to restore it
-				// and do not want errors from image size mismatch in Analyzer.getRedirectImage(imp); 
+				// and do not want errors from image size mismatch in Analyzer.getRedirectImage(imp);
 				try
 				{
-					Field field = Analyzer.class.getDeclaredField("redirectTarget");
+					final Field field = Analyzer.class.getDeclaredField("redirectTarget");
 					field.setAccessible(true);
-					int redirectTarget = (Integer) field.get(Analyzer.class);
+					final int redirectTarget = (Integer) field.get(Analyzer.class);
 					restoreRedirectImp = WindowManager.getImage(redirectTarget);
 					//if (restoreRedirectImp != null)
 					//	System.out.println("Redirect image = " + restoreRedirectImp.getTitle());
 				}
-				catch (Throwable e)
+				catch (final Throwable e)
 				{
 					// Reflection has failed
 				}
-			}
-			ImagePlus redirectImp = (index > 0) ? WindowManager.getImage(redirectTitle) : null;
+			final ImagePlus redirectImp = (index > 0) ? WindowManager.getImage(redirectTitle) : null;
 			Analyzer.setRedirectImage(redirectImp);
 
 			useGetPixelValue = imp.getProcessor() instanceof ColorProcessor;
@@ -243,15 +237,11 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 				float min = Float.POSITIVE_INFINITY;
 				float max = Float.NEGATIVE_INFINITY;
 				for (int i = 1; i < image.length; i++)
-				{
 					if (image[i] != 0)
-					{
 						if (min > image[i])
 							min = image[i];
 						else if (max < image[i])
 							max = image[i];
-					}
-				}
 				if (min == Float.POSITIVE_INFINITY)
 				{
 					IJ.error("The image has no values");
@@ -268,13 +258,13 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 	{
 		try
 		{
-			FileOutputStream fos = new FileOutputStream(filename);
-			BufferedWriter out = new BufferedWriter(new OutputStreamWriter(fos, "UTF-8"));
+			final FileOutputStream fos = new FileOutputStream(filename);
+			final BufferedWriter out = new BufferedWriter(new OutputStreamWriter(fos, "UTF-8"));
 			out.write("Histogram\tParticle Value\tPixel Value\tCount");
 			out.newLine();
 			return out;
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			IJ.error("Failed to create histogram file: " + filename);
 			return null;
@@ -299,7 +289,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 				out.write(Integer.toString(histogram[i]));
 				out.newLine();
 			}
-			catch (Exception e)
+			catch (final Exception e)
 			{
 				close(out);
 				return null;
@@ -312,22 +302,20 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 	private void close(BufferedWriter out)
 	{
 		if (out != null)
-		{
 			try
 			{
 				out.close();
 			}
-			catch (Exception e)
+			catch (final Exception e)
 			{
 			}
-		}
 	}
 
 	public boolean isNoThreshold(ImagePlus imp)
 	{
 		boolean noThreshold = false;
-		ImageProcessor ip = imp.getProcessor();
-		double t1 = ip.getMinThreshold();
+		final ImageProcessor ip = imp.getProcessor();
+		final double t1 = ip.getMinThreshold();
 		int imageType;
 		if (ip instanceof ShortProcessor)
 			imageType = SHORT;
@@ -337,11 +325,9 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			imageType = BYTE;
 		if (t1 == ImageProcessor.NO_THRESHOLD)
 		{
-			ImageStatistics stats = imp.getStatistics();
+			final ImageStatistics stats = imp.getStatistics();
 			if (imageType != BYTE || (stats.histogram[0] + stats.histogram[255] != stats.pixelCount))
-			{
 				noThreshold = true;
-			}
 		}
 		return noThreshold;
 	}
@@ -353,9 +339,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 		final int h = ip.getHeight();
 		for (int y = 0, i = 0; y < h; y++)
 			for (int x = 0; x < w; x++, i++)
-			{
 				image[i] = (useGetPixelValue) ? ip.getPixelValue(x, y) : ip.getf(i);
-			}
 	}
 
 	@Override
@@ -370,25 +354,25 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 	{
 		// x,y - the position the particle was first found
 		// imp - the particle image
-		// ip - the current processor from the particle image 
+		// ip - the current processor from the particle image
 
-		// We need to perform the same work as the super-class but instead of outlining using the 
+		// We need to perform the same work as the super-class but instead of outlining using the
 		// configured thresholds in the particle image we just use the position's current value.
 		// Do this by zeroing all pixels that are not the same value and then calling the super-class method.
-		ImageProcessor originalIp = ip.duplicate();
+		final ImageProcessor originalIp = ip.duplicate();
 		value = (useGetPixelValue) ? ip.getPixelValue(x, y) : ip.getf(x, y);
 		//IJ.log(String.format("Analysing x=%d,y=%d value=%f", x, y, value));
 		for (int i = 0; i < image.length; i++)
 			if (image[i] != value)
 				ip.set(i, 0);
 
-		ImageProcessor particleIp = ip.duplicate();
+		final ImageProcessor particleIp = ip.duplicate();
 		//System.out.printf("Particle = %f\n", value);
 		//Utils.display("Particle", particleIp);
 		super.analyzeParticle(x, y, imp, ip);
 
-		// At the end of processing the analyser fills the image processor to prevent 
-		// re-processing this object's pixels. 
+		// At the end of processing the analyser fills the image processor to prevent
+		// re-processing this object's pixels.
 		// We must copy back the filled pixel values.
 		final int newValue = ip.get(x, y);
 		//System.out.printf("Particle changed to = %d\n", newValue);
@@ -396,10 +380,8 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 		{
 			// Check if different from the input particle
 			if (ip.get(i) != particleIp.get(i))
-			{
 				// Change to the reset value
 				originalIp.set(i, newValue);
-			}
 			// Now copy back all the pixels from the original processor
 			ip.set(i, originalIp.get(i));
 		}
@@ -438,7 +420,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 					int[] hist2 = summaryHistogram.get(particleValue);
 					if (hist.length < hist2.length)
 					{
-						int[] tmp = hist;
+						final int[] tmp = hist;
 						hist = hist2;
 						hist2 = tmp;
 					}
@@ -486,21 +468,21 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 
 	private void createSummary()
 	{
-		int nRows = rt.getCounter();
-		String label = (nRows > 0) ? rt.getLabel(0) : null;
+		final int nRows = rt.getCounter();
+		final String label = (nRows > 0) ? rt.getLabel(0) : null;
 
 		// The second last column is the particle value
 		// The last column is the number of pixels
-		double[] particles = rt.getColumnAsDoubles(rt.getLastColumn() - 1);
-		double[] nPixels = rt.getColumnAsDoubles(rt.getLastColumn());
+		final double[] particles = rt.getColumnAsDoubles(rt.getLastColumn() - 1);
+		final double[] nPixels = rt.getColumnAsDoubles(rt.getLastColumn());
 
 		// Summarise only certain columns:
-		int[] toProcess = new int[] { ResultsTable.AREA, ResultsTable.MEAN, ResultsTable.MIN, ResultsTable.MAX,
+		final int[] toProcess = new int[] { ResultsTable.AREA, ResultsTable.MEAN, ResultsTable.MIN, ResultsTable.MAX,
 				ResultsTable.X_CENTER_OF_MASS, ResultsTable.Y_CENTER_OF_MASS, ResultsTable.INTEGRATED_DENSITY,
 				ResultsTable.RAW_INTEGRATED_DENSITY };
 		int next = 0;
 
-		double[][] values = new double[toProcess.length][];
+		final double[][] values = new double[toProcess.length][];
 
 		for (int i = 0; i < rt.getLastColumn(); i++)
 		{
@@ -508,28 +490,26 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 				continue;
 
 			if (rt.columnExists(i))
-			{
 				values[next] = rt.getColumnAsDoubles(i);
-			}
 
 			if (++next == toProcess.length)
 				break;
 		}
 
 		// Map all particles to a single result
-		HashMap<Double, double[]> map = new HashMap<Double, double[]>();
-		LinkedList<Double> order = new LinkedList<Double>();
+		final HashMap<Double, double[]> map = new HashMap<>();
+		final LinkedList<Double> order = new LinkedList<>();
 
 		// Now summarise
 		for (int r = 0; r < nRows; r++)
 		{
-			double particle = particles[r];
-			double n = nPixels[r];
+			final double particle = particles[r];
+			final double n = nPixels[r];
 
 			// Get the data to be summarised
-			double[] data = new double[toProcess.length + 2];
+			final double[] data = new double[toProcess.length + 2];
 
-			// AREA => sum this 
+			// AREA => sum this
 			if (values[0] != null)
 				data[0] = values[0][r];
 			// MEAN => multiply by nPixels and sum, divide at end by nPixels
@@ -541,7 +521,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			// MAX => Find max
 			if (values[3] != null)
 				data[3] = values[3][r];
-			// X_CENTER_OF_MASS => multiply by nPixels and sum 
+			// X_CENTER_OF_MASS => multiply by nPixels and sum
 			if (values[4] != null)
 				data[4] = values[4][r] * n;
 			// Y_CENTER_OF_MASS => multiply by nPixels and sum, divide at end by nPixels
@@ -559,8 +539,8 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			// Find the record for the summary
 			if (map.containsKey(particle))
 			{
-				double[] record = map.get(particle);
-				// AREA => sum this 
+				final double[] record = map.get(particle);
+				// AREA => sum this
 				record[0] += data[0];
 				// MEAN => multiply by nPixels and sum, divide at end by nPixels
 				record[1] += data[1];
@@ -589,18 +569,18 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 		}
 
 		// Produce summary
-		ResultsTable summary = new ResultsTable();
+		final ResultsTable summary = new ResultsTable();
 		if (summary.getColumnHeading(ResultsTable.LAST_HEADING) == null)
 			summary.setDefaultHeadings();
-		for (Double particle : order)
+		for (final Double particle : order)
 		{
 			summary.incrementCounter();
 			if (label != null)
 				summary.addLabel(label);
 
-			double[] data = map.get(particle);
-			double n = data[8];
-			// AREA => sum this 
+			final double[] data = map.get(particle);
+			final double n = data[8];
+			// AREA => sum this
 			if (values[0] != null)
 				summary.addValue(ResultsTable.AREA, data[0]);
 			// MEAN => multiply by nPixels and sum, divide at end by nPixels
@@ -612,7 +592,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			// MAX => Find max
 			if (values[3] != null)
 				summary.addValue(ResultsTable.MAX, data[3]);
-			// X_CENTER_OF_MASS => multiply by nPixels and sum, divide at end by nPixels 
+			// X_CENTER_OF_MASS => multiply by nPixels and sum, divide at end by nPixels
 			if (values[4] != null)
 				summary.addValue(ResultsTable.X_CENTER_OF_MASS, data[4] / n);
 			// Y_CENTER_OF_MASS => multiply by nPixels and sum, divide at end by nPixels
@@ -630,50 +610,46 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			summary.addValue("Particles", data[9]);
 		}
 
-		String windowTitle = "Particle Summary";
+		final String windowTitle = "Particle Summary";
 
 		// This method does not work on my JRE as closing a results window throws an exception
 		// leaving the frame still in memory but not visible
 		//summary.show(windowTitle);
 
 		TextWindow win = null;
-		String tableHeadings = summary.getColumnHeadings();
+		final String tableHeadings = summary.getColumnHeadings();
 		boolean newWindow = false;
 
 		// This method does not check the frame is visible
 		//Frame frame = WindowManager.getFrame(windowTitle);
 
 		// Find the results table if visible
-		for (Frame frame : WindowManager.getNonImageWindows())
-		{
+		for (final Frame frame : WindowManager.getNonImageWindows())
 			if (frame != null && frame instanceof TextWindow && frame.isVisible())
-			{
 				if (windowTitle.equals(frame.getTitle()))
 				{
 					win = (TextWindow) frame;
 					break;
 				}
-			}
-		}
 		if (win == null)
 		{
 			// Create a new window matching the size of the "Results" table
-			int w = (int) Prefs.get(TextWindow.WIDTH_KEY, 800);
-			int h = (int) Prefs.get(TextWindow.HEIGHT_KEY, 250);
+			final int w = (int) Prefs.get(TextWindow.WIDTH_KEY, 800);
+			final int h = (int) Prefs.get(TextWindow.HEIGHT_KEY, 250);
 			win = new TextWindow(windowTitle, tableHeadings, "", w, h);
 			newWindow = true;
 		}
-		TextPanel tp = win.getTextPanel();
+		final TextPanel tp = win.getTextPanel();
 		if (!newWindow)
 			// Setting columns headings forces the table to be reset
 			tp.setColumnHeadings(tableHeadings);
 		tp.setResultsTable(summary);
-		int n = summary.getCounter();
+		final int n = summary.getCounter();
 		if (n > 0)
 		{
 			if (tp.getLineCount() > 0)
 				tp.clear();
-			StringBuilder sb = new StringBuilder(n * tableHeadings.length());
+			final StringBuilder sb = new StringBuilder(n * tableHeadings.length());
 			for (int i = 0; i < n; i++)
 				sb.append(summary.getRowAsString(i)).append("\n");
 			// Adding all the data in one go does not auto-adjust column width
@@ -691,20 +667,18 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 	{
 		if (summaryHistogram.isEmpty())
 			return;
-		String summaryFilename = createSummaryFilename(histogramFile);
+		final String summaryFilename = createSummaryFilename(histogramFile);
 		BufferedWriter out = createOutput(summaryFilename);
 		int id = 1;
-		for (Double value : order)
-		{
+		for (final Double value : order)
 			out = writeHistogram(out, id++, value, summaryHistogram.get(value));
-		}
 		close(out);
 	}
 
 	private String createSummaryFilename(String filename)
 	{
 		// The histogramFile had a default .txt, so look for the extension and insert 'summary'
-		int i = filename.lastIndexOf('.');
+		final int i = filename.lastIndexOf('.');
 		return filename.substring(0, i) + ".summary" + filename.substring(i);
 	}
 }

@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -45,7 +45,7 @@ public class Lottery implements PlugIn
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
 	@Override
@@ -53,7 +53,7 @@ public class Lottery implements PlugIn
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Calculate the lottory odds");
 		gd.addSlider("Numbers", 1, numbers, numbers);
 		gd.addSlider("Pick", 1, pick, pick);
@@ -84,7 +84,7 @@ public class Lottery implements PlugIn
 			return;
 		}
 
-		RandomGenerator rand = new Well44497b(System.currentTimeMillis());
+		final RandomGenerator rand = new Well44497b(System.currentTimeMillis());
 		String msg = "Calculating ...";
 		if (simulations == 0)
 			msg += " Escape to exit";
@@ -120,7 +120,7 @@ public class Lottery implements PlugIn
 
 			if (++c == 100000)
 			{
-				double f = (double) ok / count;
+				final double f = (double) ok / count;
 				IJ.log(String.format("%d / %d = %f (1 in %f)", ok, count, f, 1.0 / f));
 				c = 0;
 				if (Utils.isInterrupted())

@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -79,12 +79,12 @@ public class ObjectAnalyzer3D
 		if (objectMask != null)
 			return;
 
-		// Perform a search for objects. 
+		// Perform a search for objects.
 		// Expand any non-zero pixel value into all 8-connected pixels of the same value.
 		objectMask = new int[maskImage.length];
 		maxObject = 0;
 
-		int[][] ppList = new int[1][];
+		final int[][] ppList = new int[1][];
 		ppList[0] = new int[100];
 		initialise();
 		final boolean is2D = maxz == 1;
@@ -92,7 +92,6 @@ public class ObjectAnalyzer3D
 		int[] sizes = new int[100];
 
 		for (int i = 0; i < maskImage.length; i++)
-		{
 			// Look for non-zero values that are not already in an object
 			if (maskImage[i] != 0 && objectMask[i] == 0)
 			{
@@ -106,24 +105,19 @@ public class ObjectAnalyzer3D
 					sizes = Arrays.copyOf(sizes, (int) (maxObject * 1.5));
 				sizes[maxObject] = size;
 			}
-		}
 
 		// Remove objects that are too small
 		if (minObjectSize > 0)
 		{
-			int[] map = new int[maxObject + 1];
+			final int[] map = new int[maxObject + 1];
 			maxObject = 0;
 			for (int i = 1; i < map.length; i++)
-			{
 				if (sizes[i] >= minObjectSize)
 					map[i] = ++maxObject;
-			}
 
 			for (int i = 0; i < objectMask.length; i++)
-			{
 				if (objectMask[i] != 0)
 					objectMask[i] = map[objectMask[i]];
-			}
 		}
 	}
 
@@ -153,15 +147,12 @@ public class ObjectAnalyzer3D
 			final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
 
 			for (int d = neighbours; d-- > 0;)
-			{
 				if (isInnerXY || isWithinXY(x1, y1, d))
 				{
 					final int index2 = index1 + offset[d];
 					if (objectMask[index2] != 0)
-					{
 						// This has been done already, ignore this point
 						continue;
-					}
 
 					final int v2 = image[index2];
 
@@ -174,7 +165,6 @@ public class ObjectAnalyzer3D
 							pList = Arrays.copyOf(pList, (int) (listLen * 1.5));
 					}
 				}
-			}
 
 			listI++;
 
@@ -218,19 +208,16 @@ public class ObjectAnalyzer3D
 			final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
 
 			for (int d = neighbours; d-- > 0;)
-			{
 				if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d))
 				{
 					final int index2 = index1 + offset[d];
 					try
 					{
 						if (objectMask[index2] != 0)
-						{
 							// This has been done already, ignore this point
 							continue;
-						}
 					}
-					catch (ArrayIndexOutOfBoundsException e)
+					catch (final ArrayIndexOutOfBoundsException e)
 					{
 						continue;
 					}
@@ -246,7 +233,6 @@ public class ObjectAnalyzer3D
 							pList = Arrays.copyOf(pList, (int) (listLen * 1.5));
 					}
 				}
-			}
 
 			listI++;
 
@@ -266,7 +252,7 @@ public class ObjectAnalyzer3D
 	private final int[] DIR_X_OFFSET3 = new int[] { 0, 1, 0,-1, 0, 0,   1, 1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1 };
 	private final int[] DIR_Y_OFFSET3 = new int[] {-1, 0, 1, 0, 0, 0,  -1, 1, 1,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1 };
 	private final int[] DIR_Z_OFFSET3 = new int[] { 0, 0, 0, 0,-1, 1,   0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1 };
-	
+
 	//@formatter:on
 
 	/**
@@ -279,25 +265,21 @@ public class ObjectAnalyzer3D
 			// Create the 2D offset table
 			offset = new int[DIR_X_OFFSET2.length];
 			for (int d = offset.length; d-- > 0;)
-			{
 				offset[d] = maxx * DIR_Y_OFFSET2[d] + DIR_X_OFFSET2[d];
-			}
 		}
 		else
 		{
 			// Create the 3D offset table
 			offset = new int[DIR_X_OFFSET3.length];
 			for (int d = offset.length; d-- > 0;)
-			{
 				offset[d] = maxx_maxy * DIR_Z_OFFSET3[d] + maxx * DIR_Y_OFFSET3[d] + DIR_X_OFFSET3[d];
-			}
 		}
 	}
 
 	/**
 	 * returns whether the neighbour in a given direction is within the image. NOTE: it is assumed that the pixel x,y
 	 * itself is within the image! Uses class variables xlimit, ylimit: (dimensions of the image)-1
-	 * 
+	 *
 	 * @param x
 	 *            x-coordinate of the pixel that has a neighbour in the given direction
 	 * @param y
@@ -336,7 +318,7 @@ public class ObjectAnalyzer3D
 	/**
 	 * returns whether the neighbour in a given direction is within the image. NOTE: it is assumed that the pixel x,y,z
 	 * itself is within the image! Uses class variables xlimit, ylimit, zlimit: (dimensions of the image)-1
-	 * 
+	 *
 	 * @param x
 	 *            x-coordinate of the pixel that has a neighbour in the given direction
 	 * @param y
@@ -413,7 +395,7 @@ public class ObjectAnalyzer3D
 	/**
 	 * returns whether the neighbour in a given direction is within the image. NOTE: it is assumed that the pixel z
 	 * itself is within the image! Uses class variables zlimit: (dimensions of the image)-1
-	 * 
+	 *
 	 * @param z
 	 *            z-coordinate of the pixel that has a neighbour in the given direction
 	 * @param direction
@@ -468,15 +450,15 @@ public class ObjectAnalyzer3D
 	/**
 	 * Get the centre-of-mass and pixel count of each object. Data is stored indexed by the object value so processing
 	 * of results should start from 1.
-	 * 
+	 *
 	 * @return The centre-of-mass of each object (plus the pixel count) [object][cx,cy,cz,n]
 	 */
 	public double[][] getObjectCentres()
 	{
-		int[] count = new int[maxObject + 1];
-		double[] sumx = new double[count.length];
-		double[] sumy = new double[count.length];
-		double[] sumz = new double[count.length];
+		final int[] count = new int[maxObject + 1];
+		final double[] sumx = new double[count.length];
+		final double[] sumy = new double[count.length];
+		final double[] sumz = new double[count.length];
 		for (int z = 0, i = 0; z < maxz; z++)
 			for (int y = 0; y < maxy; y++)
 				for (int x = 0; x < maxx; x++, i++)
@@ -490,7 +472,7 @@ public class ObjectAnalyzer3D
 						count[value]++;
 					}
 				}
-		double[][] data = new double[count.length][3];
+		final double[][] data = new double[count.length][3];
 		for (int i = 1; i < count.length; i++)
 		{
 			data[i][0] = sumx[i] / count[i];

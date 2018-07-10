@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -39,7 +39,7 @@ import ij.plugin.frame.Recorder;
  */
 public class OptimiserController extends FindFociController implements Runnable
 {
-	private FindFociOptimiser optimiser = new FindFociOptimiser();
+	private final FindFociOptimiser optimiser = new FindFociOptimiser();
 
 	public OptimiserController(FindFociModel model)
 	{
@@ -48,7 +48,7 @@ public class OptimiserController extends FindFociController implements Runnable
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#getImageCount()
 	 */
 	@Override
@@ -59,33 +59,31 @@ public class OptimiserController extends FindFociController implements Runnable
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#updateImageList()
 	 */
 	@Override
 	public void updateImageList()
 	{
-		int noOfImages = WindowManager.getImageCount();
-		List<String> imageList = new ArrayList<String>(noOfImages);
-		for (int id : gdsc.core.ij.Utils.getIDList())
+		final int noOfImages = WindowManager.getImageCount();
+		final List<String> imageList = new ArrayList<>(noOfImages);
+		for (final int id : gdsc.core.ij.Utils.getIDList())
 		{
-			ImagePlus imp = WindowManager.getImage(id);
+			final ImagePlus imp = WindowManager.getImage(id);
 
 			// Image must be 8-bit/16-bit/32-bit && only contains XYZ dimensions
 			if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16 ||
 					imp.getType() == ImagePlus.GRAY32) && (imp.getNChannels() == 1 && imp.getNFrames() == 1))
 			{
-				Roi roi = imp.getRoi();
+				final Roi roi = imp.getRoi();
 				if (roi == null || roi.getType() != Roi.POINT)
 					continue;
 
 				// Check it is not one the result images
-				String imageTitle = imp.getTitle();
+				final String imageTitle = imp.getTitle();
 				if (!imageTitle.endsWith(FindFoci.TITLE) && !imageTitle.endsWith("clone") &&
 						!imageTitle.endsWith(" TP") && !imageTitle.endsWith(" FP") && !imageTitle.endsWith(" FN"))
-				{
 					imageList.add(imageTitle);
-				}
 			}
 		}
 
@@ -94,13 +92,13 @@ public class OptimiserController extends FindFociController implements Runnable
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#run()
 	 */
 	@Override
 	public void run()
 	{
-		ImagePlus imp = WindowManager.getImage(model.getSelectedImage());
+		final ImagePlus imp = WindowManager.getImage(model.getSelectedImage());
 
 		// Ensure the optimiser is recorded by the Macro recorder
 		Recorder.setCommand("FindFoci Optimiser");
@@ -110,7 +108,7 @@ public class OptimiserController extends FindFociController implements Runnable
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#run()
 	 */
 	@Override
@@ -120,7 +118,7 @@ public class OptimiserController extends FindFociController implements Runnable
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#endPreview()
 	 */
 	@Override
@@ -130,7 +128,7 @@ public class OptimiserController extends FindFociController implements Runnable
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#getImageLimits(int[])
 	 */
 	@Override

@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -62,7 +62,7 @@ public class ApplyMask implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
@@ -77,15 +77,13 @@ public class ApplyMask implements PlugInFilter
 		}
 		this.imp = imp;
 		if (showDialog())
-		{
 			applyMask();
-		}
 		return DONE;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
@@ -96,20 +94,18 @@ public class ApplyMask implements PlugInFilter
 
 	private boolean showDialog()
 	{
-		String sourceImage = "(Use target)";
-		ArrayList<String> imageList = new ArrayList<String>();
+		final String sourceImage = "(Use target)";
+		final ArrayList<String> imageList = new ArrayList<>();
 		imageList.add(sourceImage);
 
-		for (int id : Utils.getIDList())
+		for (final int id : Utils.getIDList())
 		{
-			ImagePlus imp = WindowManager.getImage(id);
+			final ImagePlus imp = WindowManager.getImage(id);
 			if (imp != null)
-			{
 				imageList.add(imp.getTitle());
-			}
 		}
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Create a mask from a source image and apply it.\nPixels outside the mask will be set to zero.");
 		gd.addChoice("Mask_Image", imageList.toArray(new String[0]), selectedImage);
 		gd.addChoice("Option", MaskCreater.options, MaskCreater.options[selectedOption]);
@@ -172,7 +168,7 @@ public class ApplyMask implements PlugInFilter
 		if (imp == null)
 			return;
 
-		MaskCreater mc = new MaskCreater();
+		final MaskCreater mc = new MaskCreater();
 		mc.setImp(maskImp);
 		mc.setOption(selectedOption);
 		mc.setThresholdMethod(selectedThresholdMethod);
@@ -194,14 +190,13 @@ public class ApplyMask implements PlugInFilter
 		}
 
 		// Check other dimensions && log dimension mismatch
-		int[] dimensions1 = imp.getDimensions();
-		int[] dimensions2 = maskImp.getDimensions();
+		final int[] dimensions1 = imp.getDimensions();
+		final int[] dimensions2 = maskImp.getDimensions();
 
-		String[] dimName = { "C", "Z", "T" };
+		final String[] dimName = { "C", "Z", "T" };
 
 		StringBuilder sb = null;
 		for (int i = 0, j = 2; i < 3; i++, j++)
-		{
 			if (dimensions1[j] != dimensions2[j])
 			{
 				// Log dimension mismatch
@@ -212,34 +207,29 @@ public class ApplyMask implements PlugInFilter
 				sb.append(" ").append(dimName[i]).append(" ").append(dimensions1[j]).append("!=")
 						.append(dimensions2[j]);
 			}
-		}
 		if (sb != null)
 			IJ.log(sb.toString());
 
 		// Apply the mask to the correct stack dimensions
-		int[] channels = createArray(dimensions1[2]);
-		int[] slices = createArray(dimensions1[3]);
-		int[] frames = createArray(dimensions1[4]);
+		final int[] channels = createArray(dimensions1[2]);
+		final int[] slices = createArray(dimensions1[3]);
+		final int[] frames = createArray(dimensions1[4]);
 
-		ImageStack imageStack = imp.getStack();
-		ImageStack maskStack = maskImp.getStack();
+		final ImageStack imageStack = imp.getStack();
+		final ImageStack maskStack = maskImp.getStack();
 
-		for (int frame : frames)
-			for (int slice : slices)
-				for (int channel : channels)
+		for (final int frame : frames)
+			for (final int slice : slices)
+				for (final int channel : channels)
 				{
-					ImageProcessor ip = imageStack.getProcessor(imp.getStackIndex(channel, slice, frame));
+					final ImageProcessor ip = imageStack.getProcessor(imp.getStackIndex(channel, slice, frame));
 
-					// getStackIndex will clip to the mask dimensions  
-					ImageProcessor maskIp = maskStack.getProcessor(maskImp.getStackIndex(channel, slice, frame));
+					// getStackIndex will clip to the mask dimensions
+					final ImageProcessor maskIp = maskStack.getProcessor(maskImp.getStackIndex(channel, slice, frame));
 
 					for (int i = maskIp.getPixelCount(); i-- > 0;)
-					{
 						if (maskIp.get(i) == 0)
-						{
 							ip.set(i, 0);
-						}
-					}
 				}
 
 		imp.updateAndDraw();
@@ -247,7 +237,7 @@ public class ApplyMask implements PlugInFilter
 
 	private int[] createArray(int total)
 	{
-		int[] array = new int[total];
+		final int[] array = new int[total];
 		for (int i = 0; i < array.length; i++)
 			array[i] = i + 1;
 		return array;

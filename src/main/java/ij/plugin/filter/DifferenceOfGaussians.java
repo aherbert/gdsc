@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -46,11 +46,11 @@ import ij.process.ImageProcessor;
  * from another, less blurred version of the original. The result is an image
  * containing only the information within the spatial frequency
  * between the two blurred images (i.e. a band-pass filter).
- * 
+ *
  * The filter is implemented using two {@link GaussianBlur } passes.
  * This takes advantage of the downscaling/upscaling performed within the GaussianBlur
  * class to increase speed for large radii.
- * 
+ *
  * Preview is supported and the two Gaussian filtered images are cached to
  * avoid recomputation if unchanged.
  */
@@ -92,7 +92,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 
 	/**
 	 * Method to return types supported
-	 * 
+	 *
 	 * @param arg
 	 *            unused
 	 * @param imp
@@ -108,7 +108,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 		{
 			if (imp.getRoi() != null)
 			{
-				Rectangle roiRect = imp.getRoi().getBounds();
+				final Rectangle roiRect = imp.getRoi().getBounds();
 				if (roiRect.y > 0 || roiRect.y + roiRect.height < imp.getDimensions()[1])
 					flags |= SNAPSHOT; // snapshot for pixels above and/or below roi rectangle
 			}
@@ -117,7 +117,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 				imp.resetDisplayRange();
 				if (enhanceContrast)
 				{
-					ContrastEnhancer ce = new ContrastEnhancer();
+					final ContrastEnhancer ce = new ContrastEnhancer();
 					ce.stretchHistogram(imp, 0.35);
 				}
 				imp.updateAndDraw();
@@ -133,20 +133,18 @@ public class DifferenceOfGaussians extends GaussianBlur
 	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
-		double min = imp.getDisplayRangeMin();
-		double max = imp.getDisplayRangeMax();
+		final double min = imp.getDisplayRangeMin();
+		final double max = imp.getDisplayRangeMax();
 		this.pfr = pfr;
-		String options = Macro.getOptions();
+		final String options = Macro.getOptions();
 		boolean oldMacro = false;
 		if (options != null)
-		{
 			if (options.indexOf("radius=") >= 0)
 			{ // ensure compatibility with old macros
 				oldMacro = true; // specifying "radius=", not "sigma=
 				Macro.setOptions(options.replaceAll("radius=", "sigma="));
 			}
-		}
-		GenericDialog gd = new GenericDialog(command);
+		final GenericDialog gd = new GenericDialog(command);
 		gd.addMessage(
 				"Subtracts blurred image 2 from 1:\n- Sigma1 = local contrast\n- Sigma2 = local noise\nUse Sigma1 > Sigma2");
 		gd.addNumericField("Sigma1 (Radius)", sigma1, 2);
@@ -163,6 +161,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 		gd.addPreviewCheckbox(pfr);
 		gd.addDialogListener(this);
 		@SuppressWarnings("rawtypes")
+		final
 		Vector fields = gd.getNumericFields();
 		sigma1field = (TextField) fields.elementAt(0);
 		sigma2field = (TextField) fields.elementAt(1);
@@ -205,7 +204,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 			if (maintainRatio)
 			{
 				computeSigma2 = true;
-				double ratio = sigma1 / sigma2;
+				final double ratio = sigma1 / sigma2;
 				sigma2 = Double.parseDouble(IJ.d2s(newSigma / ratio, 3));
 				//System.out.printf("New Sigma2 = %g\n", sigma2);
 				disableRun = true;
@@ -223,7 +222,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 			if (maintainRatio)
 			{
 				computeSigma1 = true;
-				double ratio = sigma1 / sigma2;
+				final double ratio = sigma1 / sigma2;
 				sigma1 = Double.parseDouble(IJ.d2s(newSigma * ratio, 3));
 				//System.out.printf("New Sigma1 = %s\n", sigma1);
 				disableRun = true;
@@ -237,7 +236,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 
 		if (hasScale)
 		{
-			boolean newSigmaScaled = gd.getNextBoolean();
+			final boolean newSigmaScaled = gd.getNextBoolean();
 			if (sigmaScaled != newSigmaScaled)
 			{
 				computeSigma1 = true;
@@ -255,21 +254,15 @@ public class DifferenceOfGaussians extends GaussianBlur
 		Prefs.set("DoG.sigmaScaled", sigmaScaled);
 		Prefs.set("DoG.enhanceContrast", enhanceContrast);
 
-		boolean newPreview = previewCheckbox.getState();
+		final boolean newPreview = previewCheckbox.getState();
 		if (preview != newPreview)
-		{
 			// Check if the preview has been turned off then reset the display range
 			if (!newPreview && imp != null)
-			{
 				imp.resetDisplayRange();
-			}
-		}
 		preview = newPreview;
 
 		if (disableRun)
-		{
 			ignoreChange = true;
-		}
 
 		return true;
 	}
@@ -286,7 +279,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 
 	/**
 	 * This method is invoked for each slice during execution
-	 * 
+	 *
 	 * @param ip
 	 *            The image subject to filtering. It must have a valid snapshot if
 	 *            the height of the roi is less than the full image height.
@@ -313,11 +306,11 @@ public class DifferenceOfGaussians extends GaussianBlur
 		}
 		currentSliceNumber = pfr.getSliceNumber();
 
-		double sigmaX = sigmaScaled ? sigma1 / imp.getCalibration().pixelWidth : sigma1;
-		double sigmaY = sigmaScaled ? sigma1 / imp.getCalibration().pixelHeight : sigma1;
-		double sigma2X = sigmaScaled ? sigma2 / imp.getCalibration().pixelWidth : sigma2;
-		double sigma2Y = sigmaScaled ? sigma2 / imp.getCalibration().pixelHeight : sigma2;
-		double accuracy = (ip instanceof ByteProcessor || ip instanceof ColorProcessor) ? 0.002 : 0.0002;
+		final double sigmaX = sigmaScaled ? sigma1 / imp.getCalibration().pixelWidth : sigma1;
+		final double sigmaY = sigmaScaled ? sigma1 / imp.getCalibration().pixelHeight : sigma1;
+		final double sigma2X = sigmaScaled ? sigma2 / imp.getCalibration().pixelWidth : sigma2;
+		final double sigma2Y = sigmaScaled ? sigma2 / imp.getCalibration().pixelHeight : sigma2;
+		final double accuracy = (ip instanceof ByteProcessor || ip instanceof ColorProcessor) ? 0.002 : 0.0002;
 
 		// Recompute only the parts necessary
 		if (computeSigma1)
@@ -351,7 +344,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 			imp.resetDisplayRange();
 			if (enhanceContrast)
 			{
-				ContrastEnhancer ce = new ContrastEnhancer();
+				final ContrastEnhancer ce = new ContrastEnhancer();
 				ce.stretchHistogram(imp, 0.35);
 			}
 			imp.updateAndDraw();
@@ -362,16 +355,16 @@ public class DifferenceOfGaussians extends GaussianBlur
 	/**
 	 * Perform a Difference of Gaussians (filteredImage2 - filteredImage1) on the image. Sigma1 should be greater than
 	 * sigma2.
-	 * 
+	 *
 	 * @param ip
 	 * @param sigma1
 	 * @param sigma2
 	 */
 	public static void run(ImageProcessor ip, double sigma1, double sigma2)
 	{
-		ImageProcessor ip1 = (sigma1 > 0) ? duplicateProcessor(ip) : ip;
-		ImageProcessor ip2 = (sigma2 > 0) ? duplicateProcessor(ip) : ip;
-		DifferenceOfGaussians filter = new DifferenceOfGaussians();
+		final ImageProcessor ip1 = (sigma1 > 0) ? duplicateProcessor(ip) : ip;
+		final ImageProcessor ip2 = (sigma2 > 0) ? duplicateProcessor(ip) : ip;
+		final DifferenceOfGaussians filter = new DifferenceOfGaussians();
 		filter.noProgress = true;
 		filter.showProgress(false);
 		filter.blurGaussian(ip1, sigma1);
@@ -381,7 +374,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 
 	/**
 	 * Subtract one image from the other (ip2 - ip1) and store in the result processor
-	 * 
+	 *
 	 * @param resultIp
 	 * @param ip1
 	 * @param ip2
@@ -399,28 +392,26 @@ public class DifferenceOfGaussians extends GaussianBlur
 		{
 			fp1 = ip1.toFloat(i, fp1);
 			fp2 = ip2.toFloat(i, fp2);
-			float[] ff1 = (float[]) fp1.getPixels();
-			float[] ff2 = (float[]) fp2.getPixels();
+			final float[] ff1 = (float[]) fp1.getPixels();
+			final float[] ff2 = (float[]) fp2.getPixels();
 
 			// If an ROI is present start with the original image
 			if (roi.height != resultIp.getHeight() || roi.width != resultIp.getWidth())
 			{
 				fp3 = resultIp.toFloat(i, fp3);
-				float[] ff3 = (float[]) fp3.getPixels();
+				final float[] ff3 = (float[]) fp3.getPixels();
 				// Copy within the ROI
 				for (int y = roi.y; y < yTo; y++)
 				{
 					int index = y * resultIp.getWidth() + roi.x;
 					for (int x = 0; x < roi.width; x++, index++)
-					{
 						ff3[index] = ff2[index] - ff1[index];
-					}
 				}
 			}
 			else
 			{
 				fp3 = new FloatProcessor(fp1.getWidth(), fp2.getHeight());
-				float[] ff3 = (float[]) fp3.getPixels();
+				final float[] ff3 = (float[]) fp3.getPixels();
 				for (int j = ff1.length; j-- > 0;)
 					ff3[j] = ff2[j] - ff1[j];
 			}
@@ -433,7 +424,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 
 	/**
 	 * Perform a Gaussian blur on the image processor
-	 * 
+	 *
 	 * @param ip
 	 * @param sigma
 	 *            The Gaussian width
@@ -441,13 +432,13 @@ public class DifferenceOfGaussians extends GaussianBlur
 	@Override
 	public void blurGaussian(ImageProcessor ip, double sigma)
 	{
-		double accuracy = (ip instanceof ByteProcessor || ip instanceof ColorProcessor) ? 0.002 : 0.0002;
+		final double accuracy = (ip instanceof ByteProcessor || ip instanceof ColorProcessor) ? 0.002 : 0.0002;
 		blurGaussian(ip, sigma, sigma, accuracy);
 	}
 
 	private static ImageProcessor duplicateProcessor(ImageProcessor ip)
 	{
-		ImageProcessor duplicateIp = ip.duplicate();
+		final ImageProcessor duplicateIp = ip.duplicate();
 		if (ip.getRoi().height != ip.getHeight() || ip.getRoi().width != ip.getWidth())
 		{
 			duplicateIp.snapshot();
@@ -468,7 +459,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 		// Ignore the input percent and use the internal one
 		percent = (double) (pass - 1) / nPasses + this.percentInternal / nPasses;
 
-		long time = System.currentTimeMillis();
+		final long time = System.currentTimeMillis();
 		if (time - lastTime < 100)
 			return;
 		lastTime = time;

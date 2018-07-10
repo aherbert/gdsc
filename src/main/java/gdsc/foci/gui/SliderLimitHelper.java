@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -70,11 +70,11 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	{
 		try
 		{
-			SliderLimitHelper dialog = new SliderLimitHelper();
+			final SliderLimitHelper dialog = new SliderLimitHelper();
 			dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			dialog.setVisible(true);
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			e.printStackTrace();
 		}
@@ -112,7 +112,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
-		GridBagLayout gridBagLayout = new GridBagLayout();
+		final GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[] { 0, 0, 0 };
 		gridBagLayout.rowHeights = new int[] { 0, 0, 0, 0 };
 		gridBagLayout.columnWeights = new double[] { 0.0, 1.0, Double.MIN_VALUE };
@@ -120,7 +120,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 		contentPanel.setLayout(gridBagLayout);
 		{
 			lblParametername = new JLabel("ParameterName");
-			GridBagConstraints gbc_lblParametername = new GridBagConstraints();
+			final GridBagConstraints gbc_lblParametername = new GridBagConstraints();
 			gbc_lblParametername.anchor = GridBagConstraints.WEST;
 			gbc_lblParametername.gridwidth = 2;
 			gbc_lblParametername.insets = new Insets(0, 0, 5, 5);
@@ -129,8 +129,8 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 			contentPanel.add(lblParametername, gbc_lblParametername);
 		}
 		{
-			JLabel lblMinimum = new JLabel("Minimum");
-			GridBagConstraints gbc_lblMinimum = new GridBagConstraints();
+			final JLabel lblMinimum = new JLabel("Minimum");
+			final GridBagConstraints gbc_lblMinimum = new GridBagConstraints();
 			gbc_lblMinimum.anchor = GridBagConstraints.EAST;
 			gbc_lblMinimum.insets = new Insets(0, 0, 5, 5);
 			gbc_lblMinimum.gridx = 0;
@@ -145,9 +145,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 				public void propertyChange(PropertyChangeEvent evt)
 				{
 					if (evt.getPropertyName().equals("textFormatter"))
-					{
 						validMin();
-					}
 				}
 			});
 			txtMinimum.addKeyListener(new KeyAdapter()
@@ -159,7 +157,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 				}
 			});
 			txtMinimum.setValue(new Double(0));
-			GridBagConstraints gbc_txtMinimum = new GridBagConstraints();
+			final GridBagConstraints gbc_txtMinimum = new GridBagConstraints();
 			gbc_txtMinimum.insets = new Insets(0, 0, 5, 0);
 			gbc_txtMinimum.fill = GridBagConstraints.HORIZONTAL;
 			gbc_txtMinimum.gridx = 1;
@@ -167,8 +165,8 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 			contentPanel.add(txtMinimum, gbc_txtMinimum);
 		}
 		{
-			JLabel lblMaximum = new JLabel("Maximum");
-			GridBagConstraints gbc_lblMaximum = new GridBagConstraints();
+			final JLabel lblMaximum = new JLabel("Maximum");
+			final GridBagConstraints gbc_lblMaximum = new GridBagConstraints();
 			gbc_lblMaximum.anchor = GridBagConstraints.EAST;
 			gbc_lblMaximum.insets = new Insets(0, 0, 0, 5);
 			gbc_lblMaximum.gridx = 0;
@@ -183,9 +181,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 				public void propertyChange(PropertyChangeEvent evt)
 				{
 					if (evt.getPropertyName().equals("textFormatter"))
-					{
 						validMax();
-					}
 				}
 			});
 			txtMaximum.addKeyListener(new KeyAdapter()
@@ -197,25 +193,25 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 				}
 			});
 			txtMaximum.setValue(new Double(10));
-			GridBagConstraints gbc_txtMaximum = new GridBagConstraints();
+			final GridBagConstraints gbc_txtMaximum = new GridBagConstraints();
 			gbc_txtMaximum.fill = GridBagConstraints.HORIZONTAL;
 			gbc_txtMaximum.gridx = 1;
 			gbc_txtMaximum.gridy = 2;
 			contentPanel.add(txtMaximum, gbc_txtMaximum);
 		}
 		{
-			JPanel buttonPane = new JPanel();
+			final JPanel buttonPane = new JPanel();
 			buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
 			getContentPane().add(buttonPane, BorderLayout.SOUTH);
 			{
-				JButton okButton = new JButton("OK");
+				final JButton okButton = new JButton("OK");
 				okButton.addActionListener(this);
 				okButton.setActionCommand("OK");
 				buttonPane.add(okButton);
 				getRootPane().setDefaultButton(okButton);
 			}
 			{
-				JButton cancelButton = new JButton("Cancel");
+				final JButton cancelButton = new JButton("Cancel");
 				cancelButton.addActionListener(this);
 				cancelButton.setActionCommand("Cancel");
 				buttonPane.add(cancelButton);
@@ -268,7 +264,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
 	 */
 	@Override
@@ -284,23 +280,17 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 			}
 		}
 		if (e.getActionCommand() == "Cancel")
-		{
 			dispose();
-		}
 	}
 
 	private boolean valid()
 	{
 		if (!validMin())
-		{
 			return false;
-		}
 		if (!validMax())
-		{
 			return false;
-		}
-		double min = getMinimum();
-		double max = getMaximum();
+		final double min = getMinimum();
+		final double max = getMaximum();
 		if (max <= min)
 		{
 			// Invert for convenience
@@ -327,14 +317,14 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 
 		try
 		{
-			double value = Double.parseDouble(txtField.getText());
+			final double value = Double.parseDouble(txtField.getText());
 			if (value >= lowerBound && value <= upperBound)
 			{
 				txtField.setForeground(Color.BLACK);
 				return true;
 			}
 		}
-		catch (NumberFormatException e)
+		catch (final NumberFormatException e)
 		{
 		}
 		txtField.setForeground(Color.RED);
@@ -368,9 +358,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 		this.lowerBound = lowerBound;
 		String tooltip = null;
 		if (lowerBound != Double.NEGATIVE_INFINITY)
-		{
 			tooltip = "Lower bound = " + lowerBound;
-		}
 		this.txtMinimum.setToolTipText(tooltip);
 	}
 
@@ -391,9 +379,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 		this.upperBound = upperBound;
 		String tooltip = null;
 		if (upperBound != Double.POSITIVE_INFINITY)
-		{
 			tooltip = "Upper bound = " + upperBound;
-		}
 		this.txtMaximum.setToolTipText(tooltip);
 	}
 
@@ -410,7 +396,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	 * configure the limits using text input. The limits will be multiplied by the
 	 * scale factor before setting the slider limits (allowing fractional input
 	 * to be modelled with the integer scale on the slider).
-	 * 
+	 *
 	 * @param slider
 	 * @param title
 	 *            The title of the dialog
@@ -428,7 +414,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	 * configure the limits using text input. The limits will be multiplied by the
 	 * scale factor before setting the slider limits (allowing fractional input
 	 * to be modelled with the integer scale on the slider).
-	 * 
+	 *
 	 * @param slider
 	 * @param title
 	 *            The title of the dialog
@@ -443,7 +429,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	public static boolean updateRangeLimits(JSlider slider, String title, double scaleFactor, double lowerBound,
 			double upperBound)
 	{
-		SliderLimitHelper dialog = new SliderLimitHelper(slider);
+		final SliderLimitHelper dialog = new SliderLimitHelper(slider);
 		dialog.setTitle(title);
 		dialog.setParameterName(title);
 		dialog.setMinimum(slider.getMinimum() / scaleFactor);

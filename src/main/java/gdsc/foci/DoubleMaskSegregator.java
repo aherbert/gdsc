@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -53,7 +53,7 @@ public class DoubleMaskSegregator implements PlugIn
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
 	@Override
@@ -62,16 +62,14 @@ public class DoubleMaskSegregator implements PlugIn
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
 		if (!showDialog())
-		{
 			return;
-		}
 
 		run();
 	}
 
 	private boolean showDialog()
 	{
-		String[] items = Utils.getImageList(Utils.GREY_8_16, null);
+		final String[] items = Utils.getImageList(Utils.GREY_8_16, null);
 
 		if (items.length < 2)
 		{
@@ -79,7 +77,7 @@ public class DoubleMaskSegregator implements PlugIn
 			return false;
 		}
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 
 		if (title1.equalsIgnoreCase(title2))
 			title2 = (title1.equalsIgnoreCase(items[0]) || title1 == "") ? items[1] : items[0];
@@ -125,13 +123,11 @@ public class DoubleMaskSegregator implements PlugIn
 
 		// Check the same pixels are non zero
 		for (int i = 0; i < i1.length; i++)
-		{
 			if (i1[i] == 0 && i2[i] != 0 || i1[i] != 0 && i2[i] == 0)
 			{
 				IJ.error(TITLE, "Masks must have the same non-zero pixels");
 				return;
 			}
-		}
 
 		// Find the continuous blocks of incrementing pixel values
 		final ArrayList<int[]> b1 = findBlocks(i1);
@@ -147,17 +143,17 @@ public class DoubleMaskSegregator implements PlugIn
 
 		// Find the block size required to separate blocks
 		int max = 0;
-		for (int[] b : b1)
+		for (final int[] b : b1)
 		{
 			//System.out.printf("B1 : %d - %d\n", b[0], b[1]);
-			int range = b[1] - b[0];
+			final int range = b[1] - b[0];
 			if (max < range)
 				max = range;
 		}
-		for (int[] b : b2)
+		for (final int[] b : b2)
 		{
 			//System.out.printf("B2 : %d - %d\n", b[0], b[1]);
-			int range = b[1] - b[0];
+			final int range = b[1] - b[0];
 			if (max < range)
 				max = range;
 		}
@@ -180,42 +176,38 @@ public class DoubleMaskSegregator implements PlugIn
 		final int[] out = new int[i1.length];
 		final int[] h = new int[65536];
 		for (int i = 0; i < i1.length; i++)
-		{
 			if (i1[i] != 0 && i2[i] != 0)
 			{
 				final int block1 = map1[i1[i]];
 				final int block2 = map2[i2[i]];
 				final int newBlock = block2 * size1 + block1;
 				final int base = newBlock * blockSize;
-				// Initially use the object value from mask 1. Which mask to use is arbitrary as  
+				// Initially use the object value from mask 1. Which mask to use is arbitrary as
 				// mask 2 will have the same non-zero pixels, just different object numbers and
 				// the numbers are later re-mapped
 				out[i] = base + i1[i] - offset1[block1];
 				h[out[i]]++;
 			}
-		}
 
 		// Re-map the object values to be continuous within blocks
-		int[] object = new int[size1 * b2.size()];
+		final int[] object = new int[size1 * b2.size()];
 		for (int i = 0; i < h.length; i++)
-		{
 			if (h[i] != 0)
 			{
 				// Find the block this object is in
-				int block = i / blockSize;
+				final int block = i / blockSize;
 				// Increment the object count and re-map the value
 				object[block]++;
 				h[i] = block * blockSize + object[block];
 			}
-		}
 
 		// Display
-		ShortProcessor sp = new ShortProcessor(imp1.getWidth(), imp1.getHeight());
+		final ShortProcessor sp = new ShortProcessor(imp1.getWidth(), imp1.getHeight());
 		for (int i = 0; i < out.length; i++)
 			sp.set(i, h[out[i]]);
 		if (applyLUT)
 			sp.setLut(createLUT());
-		ImagePlus imp = Utils.display(TITLE, sp);
+		final ImagePlus imp = Utils.display(TITLE, sp);
 
 		// Optionally outline each object
 		if (overlayOutline)
@@ -224,7 +216,7 @@ public class DoubleMaskSegregator implements PlugIn
 
 	private int[] getPixels(ImageProcessor ip)
 	{
-		int[] pixels = new int[ip.getPixelCount()];
+		final int[] pixels = new int[ip.getPixelCount()];
 		for (int i = 0; i < pixels.length; i++)
 			pixels[i] = ip.get(i);
 		return pixels;
@@ -234,19 +226,18 @@ public class DoubleMaskSegregator implements PlugIn
 	{
 		// Find unique values
 		int max = 0;
-		for (int i : image)
+		for (final int i : image)
 			if (max < i)
 				max = i;
 		// Histogram
-		int[] h = new int[max + 1];
-		for (int i : image)
+		final int[] h = new int[max + 1];
+		for (final int i : image)
 			h[i]++;
 
-		// Find contiguous blocks 
-		ArrayList<int[]> blocks = new ArrayList<int[]>();
+		// Find contiguous blocks
+		final ArrayList<int[]> blocks = new ArrayList<>();
 		int min = 0;
 		for (int i = 1; i < h.length; i++)
-		{
 			if (h[i] != 0)
 			{
 				if (min == 0)
@@ -259,7 +250,6 @@ public class DoubleMaskSegregator implements PlugIn
 					blocks.add(new int[] { min, max });
 				min = 0;
 			}
-		}
 		if (min != 0)
 			blocks.add(new int[] { min, max });
 
@@ -268,11 +258,11 @@ public class DoubleMaskSegregator implements PlugIn
 
 	private int[] createMap(ArrayList<int[]> blocks)
 	{
-		int max = blocks.get(blocks.size() - 1)[1];
-		int[] map = new int[max + 1];
+		final int max = blocks.get(blocks.size() - 1)[1];
+		final int[] map = new int[max + 1];
 		for (int b = 0; b < blocks.size(); b++)
 		{
-			int[] block = blocks.get(b);
+			final int[] block = blocks.get(b);
 			for (int i = block[0]; i <= block[1]; i++)
 				map[i] = b;
 		}
@@ -281,25 +271,23 @@ public class DoubleMaskSegregator implements PlugIn
 
 	private int[] createOffset(ArrayList<int[]> blocks)
 	{
-		int[] offset = new int[blocks.size()];
+		final int[] offset = new int[blocks.size()];
 		for (int b = 0; b < blocks.size(); b++)
-		{
 			offset[b] = blocks.get(b)[0] - 1;
-		}
 		return offset;
 	}
 
 	/**
 	 * Build a custom LUT that helps show the classes
-	 * 
+	 *
 	 * @return
 	 */
 	private LUT createLUT()
 	{
-		byte[] reds = new byte[256];
-		byte[] greens = new byte[256];
-		byte[] blues = new byte[256];
-		int nColors = ice(reds, greens, blues);
+		final byte[] reds = new byte[256];
+		final byte[] greens = new byte[256];
+		final byte[] blues = new byte[256];
+		final int nColors = ice(reds, greens, blues);
 		if (nColors < 256)
 			interpolateWithZero(reds, greens, blues, nColors);
 		return new LUT(reds, greens, blues);
@@ -307,7 +295,7 @@ public class DoubleMaskSegregator implements PlugIn
 
 	/**
 	 * Copied from ij.plugin.LutLoader
-	 * 
+	 *
 	 * @param reds
 	 * @param greens
 	 * @param blues
@@ -315,11 +303,11 @@ public class DoubleMaskSegregator implements PlugIn
 	 */
 	private int ice(byte[] reds, byte[] greens, byte[] blues)
 	{
-		int[] r = { 0, 0, 0, 0, 0, 0, 19, 29, 50, 48, 79, 112, 134, 158, 186, 201, 217, 229, 242, 250, 250, 250, 250,
+		final int[] r = { 0, 0, 0, 0, 0, 0, 19, 29, 50, 48, 79, 112, 134, 158, 186, 201, 217, 229, 242, 250, 250, 250, 250,
 				251, 250, 250, 250, 250, 251, 251, 243, 230 };
-		int[] g = { 156, 165, 176, 184, 190, 196, 193, 184, 171, 162, 146, 125, 107, 93, 81, 87, 92, 97, 95, 93, 93, 90,
+		final int[] g = { 156, 165, 176, 184, 190, 196, 193, 184, 171, 162, 146, 125, 107, 93, 81, 87, 92, 97, 95, 93, 93, 90,
 				85, 69, 64, 54, 47, 35, 19, 0, 4, 0 };
-		int[] b = { 140, 147, 158, 166, 170, 176, 209, 220, 234, 225, 236, 246, 250, 251, 250, 250, 245, 230, 230, 222,
+		final int[] b = { 140, 147, 158, 166, 170, 176, 209, 220, 234, 225, 236, 246, 250, 251, 250, 250, 245, 230, 230, 222,
 				202, 180, 163, 142, 123, 114, 106, 94, 84, 64, 26, 27 };
 		for (int i = 0; i < r.length; i++)
 		{
@@ -333,7 +321,7 @@ public class DoubleMaskSegregator implements PlugIn
 	/**
 	 * Copied from ij.plugin.LutLoader.
 	 * Modified to set the first position to zero.
-	 * 
+	 *
 	 * @param reds
 	 * @param greens
 	 * @param blues
@@ -341,13 +329,13 @@ public class DoubleMaskSegregator implements PlugIn
 	 */
 	private void interpolateWithZero(byte[] reds, byte[] greens, byte[] blues, int nColors)
 	{
-		byte[] r = new byte[nColors];
-		byte[] g = new byte[nColors];
-		byte[] b = new byte[nColors];
+		final byte[] r = new byte[nColors];
+		final byte[] g = new byte[nColors];
+		final byte[] b = new byte[nColors];
 		System.arraycopy(reds, 0, r, 0, nColors);
 		System.arraycopy(greens, 0, g, 0, nColors);
 		System.arraycopy(blues, 0, b, 0, nColors);
-		double scale = nColors / 255.0;
+		final double scale = nColors / 255.0;
 		int i1, i2;
 		double fraction;
 		reds[0] = greens[0] = blues[0] = 0;

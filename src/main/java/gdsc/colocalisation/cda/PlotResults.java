@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -49,7 +49,7 @@ public class PlotResults
 	private double[] histogramX;
 	private int[] histogramY;
 	private Color color = Color.blue;
-	private double sampleValue;
+	private final double sampleValue;
 	private double pValue = 0.05;
 
 	public PlotResults(double sampleValue, int bins, double[] sampleData, Color color)
@@ -77,13 +77,11 @@ public class PlotResults
 				max = sampleData[i];
 		}
 
-		double interval = (max - min) / bins;
+		final double interval = (max - min) / bins;
 
 		// Set the bins
 		for (int i = 0; i < bins; i++)
-		{
 			histogramX[i] = min + i * interval;
-		}
 
 		// Count the frequency
 		for (int i = 0; i < sampleData.length; i++)
@@ -113,12 +111,12 @@ public class PlotResults
 
 	private void createPlot()
 	{
-		double[] xValues = createHistogramAxis(histogramX);
-		double[] yValues = createHistogramValues(normalisedHistogram);
+		final double[] xValues = createHistogramAxis(histogramX);
+		final double[] yValues = createHistogramValues(normalisedHistogram);
 
 		// Set the upper limit for the plot
 		double maxHistogram = 0;
-		for (double d : normalisedHistogram)
+		for (final double d : normalisedHistogram)
 			if (maxHistogram < d)
 				maxHistogram = d;
 		maxHistogram *= 1.05;
@@ -127,8 +125,8 @@ public class PlotResults
 				Plot.X_NUMBERS + Plot.Y_NUMBERS + Plot.X_TICKS + Plot.Y_TICKS);
 
 		// Ensure the horizontal scale goes from 0 to 1 but add at least 0.05 to the limits.
-		double xMin = Math.min(xValues[0] - 0.05, Math.min(sampleValue - 0.05, 0));
-		double xMax = Math.max(xValues[xValues.length - 1] + 0.05, Math.max(sampleValue + 0.05, 1));
+		final double xMin = Math.min(xValues[0] - 0.05, Math.min(sampleValue - 0.05, 0));
+		final double xMax = Math.max(xValues[xValues.length - 1] + 0.05, Math.max(sampleValue + 0.05, 1));
 		plot.setLimits(xMin, xMax, 0, maxHistogram * 1.05);
 		plot.setLineWidth(1);
 
@@ -139,16 +137,16 @@ public class PlotResults
 		plot.drawLine(probabilityLimits[0], 0, probabilityLimits[0], maxHistogram);
 		plot.drawLine(probabilityLimits[1], 0, probabilityLimits[1], maxHistogram);
 
-		// Draw lines for the lower and upper probability limits 
-		double[][] markers = new double[2][2];
+		// Draw lines for the lower and upper probability limits
+		final double[][] markers = new double[2][2];
 		markers[0][0] = probabilityLimits[0];
 		markers[0][1] = probabilityLimits[1];
 		markers[1][0] = maxHistogram;
 		markers[1][1] = maxHistogram;
 		plot.addPoints(markers[0], markers[1], 4);
 
-		// Draw line for the data value 
-		double[][] valueMarker = new double[2][1];
+		// Draw line for the data value
+		final double[][] valueMarker = new double[2][1];
 		valueMarker[0][0] = sampleValue;
 		valueMarker[1][0] = maxHistogram;
 		plot.setColor(Color.magenta);
@@ -174,9 +172,7 @@ public class PlotResults
 	public Plot getPlot()
 	{
 		if (plot == null)
-		{
 			createPlot();
-		}
 		return plot;
 	}
 
@@ -192,14 +188,14 @@ public class PlotResults
 
 	private double[] createHistogramAxis(double[] histogramX)
 	{
-		double[] axis = new double[histogramX.length * 2 + 2];
+		final double[] axis = new double[histogramX.length * 2 + 2];
 		int index = 0;
 		for (int i = 0; i < histogramX.length; ++i)
 		{
 			axis[index++] = histogramX[i];
 			axis[index++] = histogramX[i];
 		}
-		double dx = (histogramX[1] - histogramX[0]);
+		final double dx = (histogramX[1] - histogramX[0]);
 		axis[index++] = histogramX[histogramX.length - 1] + dx;
 		axis[index++] = histogramX[histogramX.length - 1] + dx;
 		return axis;
@@ -207,7 +203,7 @@ public class PlotResults
 
 	private double[] createHistogramValues(double[] histogramY)
 	{
-		double[] axis = new double[histogramY.length * 2 + 2];
+		final double[] axis = new double[histogramY.length * 2 + 2];
 
 		int index = 0;
 		axis[index++] = 0;
@@ -223,16 +219,16 @@ public class PlotResults
 	private int getTotal(int[] histogram)
 	{
 		int total = 0;
-		for (int i : histogram)
+		for (final int i : histogram)
 			total += i;
 		return total;
 	}
 
 	private double[] normaliseHistogram(int[] histogram)
 	{
-		int total = getTotal(histogram);
+		final int total = getTotal(histogram);
 
-		double[] normalised = new double[histogram.length];
+		final double[] normalised = new double[histogram.length];
 
 		for (int j = 0; j < histogram.length; ++j)
 			normalised[j] = ((double) histogram[j] / total);
@@ -242,8 +238,8 @@ public class PlotResults
 
 	private double[] getProbabilityLimits(double[] p)
 	{
-		double[] limits = new double[2];
-		int pCut = (int) Math.ceil(p.length * pValue);
+		final double[] limits = new double[2];
+		final int pCut = (int) Math.ceil(p.length * pValue);
 		limits[0] = p[pCut];
 		limits[1] = p[(p.length - pCut - 1)];
 		return limits;
@@ -253,17 +249,11 @@ public class PlotResults
 	{
 		String outputString = "";
 		if (sampleValue >= limits[1])
-		{
 			outputString = " Value is significant! (colocalised)";
-		}
 		else if (sampleValue <= limits[0])
-		{
 			outputString = " Value is significant! (not colocalised)";
-		}
 		else
-		{
 			outputString = " Value is NOT significant! ";
-		}
 		return outputString;
 	}
 
@@ -274,13 +264,9 @@ public class PlotResults
 	public void setPValue(double pValue)
 	{
 		if (pValue >= 0 && pValue <= 1)
-		{
 			this.pValue = pValue;
-		}
 		else
-		{
 			throw new IllegalArgumentException("p-Value must be between 0 and 1: " + pValue);
-		}
 	}
 
 	/**

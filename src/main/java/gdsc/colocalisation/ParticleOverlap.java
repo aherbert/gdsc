@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -81,13 +81,13 @@ public class ParticleOverlap implements PlugIn
 
 	private boolean showDialog()
 	{
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage("For each particle in a mask (defined by unique pixel value)\n" +
 				"count the overlap and Manders coefficient with a second mask image");
 
-		String[] imageList = Utils.getImageList(Utils.GREY_SCALE, null);
-		String[] maskList = Utils.getImageList(Utils.GREY_8_16, null);
+		final String[] imageList = Utils.getImageList(Utils.GREY_SCALE, null);
+		final String[] maskList = Utils.getImageList(Utils.GREY_8_16, null);
 
 		gd.addChoice("Particle_mask", maskList, maskTitle1);
 		gd.addChoice("Particle_image", imageList, imageTitle);
@@ -144,10 +144,10 @@ public class ParticleOverlap implements PlugIn
 	{
 		if (imp2 == null)
 			return false;
-		int[] d1 = imp1.getDimensions();
-		int[] d2 = imp2.getDimensions();
-		// Just check width, height, depth 
-		for (int i : new int[] { 0, 1, 3 })
+		final int[] d1 = imp1.getDimensions();
+		final int[] d2 = imp2.getDimensions();
+		// Just check width, height, depth
+		for (final int i : new int[] { 0, 1, 3 })
 			if (d1[i] != d2[i])
 				return false;
 		return true;
@@ -156,25 +156,25 @@ public class ParticleOverlap implements PlugIn
 	private void analyse()
 	{
 		// Dimensions are the same. Extract a stack for each image;
-		ImageStack m1 = extractStack(mask1Imp);
-		ImageStack m2 = extractStack(mask2Imp);
-		ImageStack i1 = extractStack(imageImp);
+		final ImageStack m1 = extractStack(mask1Imp);
+		final ImageStack m2 = extractStack(mask2Imp);
+		final ImageStack i1 = extractStack(imageImp);
 
 		// Count the pixels in the particle mask
-		int[] n1 = new int[(mask1Imp.getBitDepth() == 8) ? 256 : 65536];
+		final int[] n1 = new int[(mask1Imp.getBitDepth() == 8) ? 256 : 65536];
 		// Count the pixels in the particle mask that overlap
-		int[] no1 = new int[n1.length];
+		final int[] no1 = new int[n1.length];
 		// Sum the pixels in the particle image
-		double[] s1 = new double[n1.length];
+		final double[] s1 = new double[n1.length];
 		// Sum the pixels in the particle image that overlap
-		double[] so1 = new double[n1.length];
+		final double[] so1 = new double[n1.length];
 
 		final int size = m1.getWidth() * m1.getHeight();
 		for (int n = 1; n <= m1.getSize(); n++)
 		{
-			ImageProcessor mask1 = m1.getProcessor(n);
-			ImageProcessor mask2 = m2.getProcessor(n);
-			ImageProcessor image1 = i1.getProcessor(n);
+			final ImageProcessor mask1 = m1.getProcessor(n);
+			final ImageProcessor mask2 = m2.getProcessor(n);
+			final ImageProcessor image1 = i1.getProcessor(n);
 
 			for (int i = 0; i < size; i++)
 			{
@@ -219,14 +219,14 @@ public class ParticleOverlap implements PlugIn
 
 	private ImageStack extractStack(ImagePlus imp)
 	{
-		ImageStack oldStack = imp.getImageStack();
-		int channel = imp.getChannel();
-		int frame = imp.getFrame();
-		int size = imp.getNSlices();
-		ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight(), size);
+		final ImageStack oldStack = imp.getImageStack();
+		final int channel = imp.getChannel();
+		final int frame = imp.getFrame();
+		final int size = imp.getNSlices();
+		final ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight(), size);
 		for (int slice = 1; slice <= size; slice++)
 		{
-			int index = imp.getStackIndex(channel, slice, frame);
+			final int index = imp.getStackIndex(channel, slice, frame);
 			stack.setPixels(oldStack.getPixels(index), slice);
 		}
 		return stack;
@@ -237,9 +237,7 @@ public class ParticleOverlap implements PlugIn
 		if (!showTable)
 			return;
 		if (tw == null || !tw.isShowing())
-		{
 			tw = new TextWindow(TITLE + " Results", header, "", 800, 500);
-		}
 	}
 
 	private void createResultsFile()
@@ -251,29 +249,29 @@ public class ParticleOverlap implements PlugIn
 		{
 			if (filename.lastIndexOf('.') < 0)
 				filename += ".xls";
-			FileOutputStream fos = new FileOutputStream(filename);
+			final FileOutputStream fos = new FileOutputStream(filename);
 			out = new OutputStreamWriter(fos, "UTF-8");
 			try
 			{
 				out.write(header);
 				out.write(newLine);
 			}
-			catch (IOException e)
+			catch (final IOException e)
 			{
 				closeResultsFile();
 			}
 		}
-		catch (FileNotFoundException e)
+		catch (final FileNotFoundException e)
 		{
 		}
-		catch (UnsupportedEncodingException e)
+		catch (final UnsupportedEncodingException e)
 		{
 		}
 	}
 
 	private String createTitle()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(getName(mask1Imp)).append('\t');
 		sb.append(getName(imageImp)).append('\t');
 		sb.append(getName(mask2Imp)).append('\t');
@@ -284,11 +282,9 @@ public class ParticleOverlap implements PlugIn
 	{
 		String name = imp.getTitle();
 		int suffix = 0;
-		String[] prefix = { " [", "," };
+		final String[] prefix = { " [", "," };
 		if (imp.getNChannels() > 1)
-		{
 			name += prefix[suffix++] + "C=" + imp.getChannel();
-		}
 		if (imp.getNFrames() > 1)
 			name += prefix[suffix++] + "T=" + imp.getFrame();
 		if (suffix > 0)
@@ -298,7 +294,7 @@ public class ParticleOverlap implements PlugIn
 
 	private void addResult(String title, int id, long n1, long no1, double s1, double so1)
 	{
-		StringBuilder sb = new StringBuilder(title);
+		final StringBuilder sb = new StringBuilder(title);
 		sb.append(id).append('\t');
 		sb.append(n1).append('\t');
 		sb.append(no1).append('\t');
@@ -315,34 +311,30 @@ public class ParticleOverlap implements PlugIn
 		if (showTable)
 			tw.append(string);
 		if (out != null)
-		{
 			try
 			{
 				out.write(string);
 				out.write(newLine);
 			}
-			catch (IOException e)
+			catch (final IOException e)
 			{
 				closeResultsFile();
 			}
-		}
 	}
 
 	private void closeResultsFile()
 	{
 		if (out != null)
-		{
 			try
 			{
 				out.close();
 			}
-			catch (IOException e)
+			catch (final IOException e)
 			{
 			}
 			finally
 			{
 				out = null;
 			}
-		}
 	}
 }

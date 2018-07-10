@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -52,7 +52,7 @@ public class ChainCode implements Comparable<ChainCode>
 	private int x = 0;
 	private int y = 0;
 
-	private LinkedList<Integer> run = new LinkedList<Integer>();
+	private final LinkedList<Integer> run = new LinkedList<>();
 	private float distance;
 	private String toString;
 
@@ -74,7 +74,7 @@ public class ChainCode implements Comparable<ChainCode>
 
 	/**
 	 * Extend the chain code in the given direction
-	 * 
+	 *
 	 * @param direction
 	 */
 	public void add(int direction)
@@ -107,10 +107,8 @@ public class ChainCode implements Comparable<ChainCode>
 		if (distance < 0)
 		{
 			distance = 0;
-			for (int code : run)
-			{
+			for (final int code : run)
 				distance += DIR_LENGTH[code];
-			}
 		}
 		return distance;
 	}
@@ -128,18 +126,16 @@ public class ChainCode implements Comparable<ChainCode>
 	 */
 	public int[] getRun()
 	{
-		int[] codes = new int[run.size()];
+		final int[] codes = new int[run.size()];
 		int i = 0;
-		for (int code : run)
-		{
+		for (final int code : run)
 			codes[i++] = code;
-		}
 		return codes;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
@@ -147,12 +143,10 @@ public class ChainCode implements Comparable<ChainCode>
 	{
 		if (toString == null)
 		{
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append(x).append(",").append(y);
-			for (int code : run)
-			{
+			for (final int code : run)
 				sb.append(":").append(DIR_X_OFFSET[code]).append(",").append(DIR_Y_OFFSET[code]);
-			}
 			toString = sb.toString();
 		}
 		return toString;
@@ -189,7 +183,7 @@ public class ChainCode implements Comparable<ChainCode>
 		int x = this.x;
 		int y = this.y;
 
-		for (int code : run)
+		for (final int code : run)
 		{
 			x += DIR_X_OFFSET[code];
 			y += DIR_Y_OFFSET[code];
@@ -209,15 +203,15 @@ public class ChainCode implements Comparable<ChainCode>
 		int y = this.y;
 
 		int i = 0;
-		int[] run2 = new int[run.size()];
-		for (int code : run)
+		final int[] run2 = new int[run.size()];
+		for (final int code : run)
 		{
 			x += DIR_X_OFFSET[code];
 			y += DIR_Y_OFFSET[code];
 			run2[i++] = code;
 		}
 
-		ChainCode reverse = new ChainCode(x, y);
+		final ChainCode reverse = new ChainCode(x, y);
 		while (i-- > 0)
 			reverse.add((run2[i] + 4) % 8);
 

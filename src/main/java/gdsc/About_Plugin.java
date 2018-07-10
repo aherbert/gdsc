@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -76,40 +76,34 @@ public class About_Plugin implements PlugIn
 	public static void showAbout()
 	{
 		if (IJ.altKeyDown() || IJ.shiftKeyDown() || Boolean.parseBoolean(System.getProperty("about-install", "false")))
-		{
 			if (installPlugins())
 				return;
-		}
 
 		// Locate the README.txt file and load that into the dialog. Include SVN revision
-		Class<About_Plugin> resourceClass = About_Plugin.class;
-		InputStream readmeStream = resourceClass.getResourceAsStream("/gdsc/README.txt");
+		final Class<About_Plugin> resourceClass = About_Plugin.class;
+		final InputStream readmeStream = resourceClass.getResourceAsStream("/gdsc/README.txt");
 
 		StringBuilder msg = new StringBuilder();
 		String helpURL = HELP_URL;
-		String version = Version.getVersion();
-		String buildDate = Version.getBuildDate();
+		final String version = Version.getVersion();
+		final String buildDate = Version.getBuildDate();
 
 		try
 		{
 			// Read the contents of the README file
-			BufferedReader input = new BufferedReader(new InputStreamReader(readmeStream));
+			final BufferedReader input = new BufferedReader(new InputStreamReader(readmeStream));
 			String line;
 			while ((line = input.readLine()) != null)
-			{
 				if (line.contains("http:"))
-				{
 					helpURL = line;
-				}
 				else
 				{
 					if (line.equals(""))
 						line = " "; // Required to insert a line in the GenericDialog
 					msg.append(line).append("\n");
 				}
-			}
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			// Default message
 			msg.append("GDSC Plugins for ImageJ\n");
@@ -130,7 +124,7 @@ public class About_Plugin implements PlugIn
 		if (helpURL != null)
 			msg.append("\n \n(Click help for more information)");
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage(msg.toString());
 		gd.addHelp(helpURL);
 		gd.hideCancelButton();
@@ -147,12 +141,12 @@ public class About_Plugin implements PlugIn
 		installed = true;
 
 		// Locate all the GDSC plugins using the plugins.config:
-		InputStream pluginsStream = getPluginsConfig();
+		final InputStream pluginsStream = getPluginsConfig();
 
 		ij.Menus.installPlugin("", ij.Menus.PLUGINS_MENU, "-", "", IJ.getInstance());
 
 		// Read into memory
-		ArrayList<String[]> plugins = new ArrayList<String[]>();
+		final ArrayList<String[]> plugins = new ArrayList<>();
 		int gaps = 0;
 		BufferedReader input = null;
 		try
@@ -163,20 +157,18 @@ public class About_Plugin implements PlugIn
 			{
 				if (line.startsWith("#"))
 					continue;
-				String[] tokens = line.split(",");
+				final String[] tokens = line.split(",");
 				if (tokens.length == 3)
 				{
 					// Only copy the entries from the Plugins menu
 					if (tokens[0].startsWith("Plugins"))
 					{
 						if (!plugins.isEmpty())
-						{
 							// Multiple gaps indicates a new column
 							if (gaps > 1)
 							{
 								//plugins.add(new String[] { "next", "" });
 							}
-						}
 						gaps = 0;
 						plugins.add(new String[] { tokens[1].trim(), tokens[2].trim() });
 					}
@@ -187,41 +179,35 @@ public class About_Plugin implements PlugIn
 				// Put a spacer between plugins if specified
 				if ((tokens.length == 2 && tokens[0].startsWith("Plugins") && tokens[1].trim().equals("\"-\"")) ||
 						line.length() == 0)
-				{
 					plugins.add(new String[] { "spacer", "" });
-				}
 			}
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
-			// Ignore 
+			// Ignore
 		}
 		finally
 		{
 			if (input != null)
-			{
 				try
 				{
 					input.close();
 				}
-				catch (IOException e)
+				catch (final IOException e)
 				{
 					// Ignore
 				}
-			}
 		}
 
 		if (plugins.isEmpty())
 			return false;
 
 		addSpacer = false;
-		for (String[] plugin : plugins)
-		{
+		for (final String[] plugin : plugins)
 			if (plugin[0].equals("spacer"))
 				addSpacer = true;
 			else
 				addPlugin(plugin[0], plugin[1]);
-		}
 
 		return true;
 	}
@@ -229,8 +215,8 @@ public class About_Plugin implements PlugIn
 	public static InputStream getPluginsConfig()
 	{
 		// Get the embedded config in the jar file
-		Class<About_Plugin> resourceClass = About_Plugin.class;
-		InputStream readmeStream = resourceClass.getResourceAsStream("/gdsc/plugins.config");
+		final Class<About_Plugin> resourceClass = About_Plugin.class;
+		final InputStream readmeStream = resourceClass.getResourceAsStream("/gdsc/plugins.config");
 		return readmeStream;
 	}
 
@@ -245,22 +231,18 @@ public class About_Plugin implements PlugIn
 		if (!ij.Menus.commandInUse(commandName))
 		{
 			if (addSpacer)
-			{
 				try
 				{
 					ij.Menus.getImageJMenu("Plugins").addSeparator();
 				}
-				catch (NoSuchMethodError e)
+				catch (final NoSuchMethodError e)
 				{
 					// Ignore. This ImageJ method is from IJ 1.48+
 				}
-			}
 			ij.Menus.installPlugin(command, ij.Menus.PLUGINS_MENU, commandName, "", IJ.getInstance());
 		}
 
 		if (addSpacer)
-		{
 			addSpacer = false;
-		}
 	}
 }

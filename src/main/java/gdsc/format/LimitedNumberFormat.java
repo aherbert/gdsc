@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -57,14 +57,14 @@ public class LimitedNumberFormat extends DecimalFormat
 	@Override
 	public StringBuffer format(double number, StringBuffer toAppendTo, FieldPosition pos)
 	{
-		StringBuffer sb = super.format(number, toAppendTo, pos);
+		final StringBuffer sb = super.format(number, toAppendTo, pos);
 		return sb;
 	}
 
 	@Override
 	public StringBuffer format(long number, StringBuffer toAppendTo, FieldPosition pos)
 	{
-		StringBuffer sb = super.format(number, toAppendTo, pos);
+		final StringBuffer sb = super.format(number, toAppendTo, pos);
 		return sb;
 	}
 
@@ -74,7 +74,6 @@ public class LimitedNumberFormat extends DecimalFormat
 		//		int currentIndex = parsePosition.getIndex();
 		Number n = super.parse(source, parsePosition);
 		if (n != null)
-		{
 			//			if (n.doubleValue() < min || n.doubleValue() > max)
 			//			{
 			//				parsePosition.setErrorIndex(currentIndex);
@@ -82,14 +81,9 @@ public class LimitedNumberFormat extends DecimalFormat
 			//				n = null;
 			//			}
 			if (n.doubleValue() < min)
-			{
 				n = Double.valueOf(min);
-			}
 			else if (n.doubleValue() > max)
-			{
 				n = Double.valueOf(max);
-			}
-		}
 		return n;
 	}
 

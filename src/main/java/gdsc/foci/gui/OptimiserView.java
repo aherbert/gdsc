@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -89,10 +89,10 @@ public class OptimiserView extends JFrame
 			{
 				try
 				{
-					OptimiserView frame = new OptimiserView();
+					final OptimiserView frame = new OptimiserView();
 					frame.setVisible(true);
 				}
-				catch (Exception e)
+				catch (final Exception e)
 				{
 					e.printStackTrace();
 				}
@@ -128,7 +128,7 @@ public class OptimiserView extends JFrame
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
-		GridBagLayout gbl_contentPane = new GridBagLayout();
+		final GridBagLayout gbl_contentPane = new GridBagLayout();
 		gbl_contentPane.columnWidths = new int[] { 62, 0, 0 };
 		gbl_contentPane.rowHeights = new int[] { 0, 0, 0 };
 		gbl_contentPane.columnWeights = new double[] { 0.0, 1.0, Double.MIN_VALUE };
@@ -136,14 +136,14 @@ public class OptimiserView extends JFrame
 		contentPane.setLayout(gbl_contentPane);
 
 		lblImage = new JLabel("Image");
-		GridBagConstraints gbc_lblImage = new GridBagConstraints();
+		final GridBagConstraints gbc_lblImage = new GridBagConstraints();
 		gbc_lblImage.anchor = GridBagConstraints.EAST;
 		gbc_lblImage.insets = new Insets(0, 0, 5, 5);
 		gbc_lblImage.gridx = 0;
 		gbc_lblImage.gridy = 0;
 		contentPane.add(lblImage, gbc_lblImage);
 
-		comboImageList = new JComboBox<String>();
+		comboImageList = new JComboBox<>();
 		comboImageList.setToolTipText("Select the input image");
 		comboImageList.addItemListener(new ItemListener()
 		{
@@ -161,7 +161,7 @@ public class OptimiserView extends JFrame
 				controller.updateImageList();
 			}
 		});
-		GridBagConstraints gbc_comboBox = new GridBagConstraints();
+		final GridBagConstraints gbc_comboBox = new GridBagConstraints();
 		gbc_comboBox.insets = new Insets(0, 0, 5, 0);
 		gbc_comboBox.fill = GridBagConstraints.HORIZONTAL;
 		gbc_comboBox.gridx = 1;
@@ -169,7 +169,7 @@ public class OptimiserView extends JFrame
 		contentPane.add(comboImageList, gbc_comboBox);
 
 		panel = new JPanel();
-		GridBagConstraints gbc_panel = new GridBagConstraints();
+		final GridBagConstraints gbc_panel = new GridBagConstraints();
 		gbc_panel.gridwidth = 2;
 		gbc_panel.fill = GridBagConstraints.BOTH;
 		gbc_panel.gridx = 0;
@@ -182,7 +182,7 @@ public class OptimiserView extends JFrame
 			@Override
 			public void mouseClicked(MouseEvent e)
 			{
-				String macro = "run('URL...', 'url=" + gdsc.help.URL.FIND_FOCI + "');";
+				final String macro = "run('URL...', 'url=" + gdsc.help.URL.FIND_FOCI + "');";
 				new MacroRunner(macro);
 			}
 		});
@@ -196,7 +196,7 @@ public class OptimiserView extends JFrame
 			public void actionPerformed(ActionEvent e)
 			{
 				// Run in a new thread to allow updates to the IJ progress bar
-				Thread thread = new Thread(controller);
+				final Thread thread = new Thread(controller);
 				thread.start();
 			}
 		});
@@ -209,7 +209,7 @@ public class OptimiserView extends JFrame
 	 */
 	public void setRunEnabled(boolean runEnabled)
 	{
-		boolean oldValue = this.runEnabled;
+		final boolean oldValue = this.runEnabled;
 		this.runEnabled = runEnabled;
 		this.firePropertyChange("runEnabled", oldValue, runEnabled);
 	}
@@ -225,19 +225,19 @@ public class OptimiserView extends JFrame
 	@SuppressWarnings("rawtypes")
 	protected void initDataBindings()
 	{
-		BeanProperty<FindFociModel, List<String>> findFociModelBeanProperty = BeanProperty.create("imageList");
-		JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding = SwingBindings
+		final BeanProperty<FindFociModel, List<String>> findFociModelBeanProperty = BeanProperty.create("imageList");
+		final JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding = SwingBindings
 				.createJComboBoxBinding(UpdateStrategy.READ, model, findFociModelBeanProperty, comboImageList);
 		jComboBinding.bind();
 		//
-		BeanProperty<FindFociModel, String> findFociModelBeanProperty_1 = BeanProperty.create("selectedImage");
-		BeanProperty<JComboBox, Object> jComboBoxBeanProperty = BeanProperty.create("selectedItem");
-		AutoBinding<FindFociModel, String, JComboBox, Object> autoBinding = Bindings.createAutoBinding(
+		final BeanProperty<FindFociModel, String> findFociModelBeanProperty_1 = BeanProperty.create("selectedImage");
+		final BeanProperty<JComboBox, Object> jComboBoxBeanProperty = BeanProperty.create("selectedItem");
+		final AutoBinding<FindFociModel, String, JComboBox, Object> autoBinding = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_1, comboImageList, jComboBoxBeanProperty);
 		autoBinding.bind();
 		//
-		BeanProperty<JButton, Boolean> jButtonBeanProperty = BeanProperty.create("enabled");
-		AutoBinding<FindFociModel, List<String>, JButton, Boolean> autoBinding_1 = Bindings
+		final BeanProperty<JButton, Boolean> jButtonBeanProperty = BeanProperty.create("enabled");
+		final AutoBinding<FindFociModel, List<String>, JButton, Boolean> autoBinding_1 = Bindings
 				.createAutoBinding(UpdateStrategy.READ, model, findFociModelBeanProperty, btnRun, jButtonBeanProperty);
 		autoBinding_1.setConverter(new ValidImagesConverter());
 		autoBinding_1.bind();

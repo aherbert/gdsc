@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -77,21 +77,21 @@ public class ForegroundAnalyser implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
 	public int setup(String arg, ImagePlus imp)
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
-		int flags = DOES_8G | DOES_16 | DOES_32 | NO_UNDO | NO_CHANGES;
+		final int flags = DOES_8G | DOES_16 | DOES_32 | NO_UNDO | NO_CHANGES;
 		this.imp = imp;
 		return flags;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
@@ -105,12 +105,12 @@ public class ForegroundAnalyser implements PlugInFilter
 
 	/**
 	 * Show an ImageJ Dialog and get the parameters
-	 * 
+	 *
 	 * @return False if the user cancelled
 	 */
 	private boolean showDialog()
 	{
-		ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
+		final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
 		isMultiZ = imp.getNSlices() > 1;
 		is32bit = imp.getBitDepth() == 32;
@@ -142,34 +142,30 @@ public class ForegroundAnalyser implements PlugInFilter
 	private void analyse(ImageProcessor ip)
 	{
 		// Build a stack of pixels to analyse
-		ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
-		int channel = imp.getChannel();
+		final ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
+		final int channel = imp.getChannel();
 		int slice = imp.getSlice();
-		int frame = imp.getFrame();
+		final int frame = imp.getFrame();
 		if (isMultiZ && doStack)
 		{
-			ImageStack inputStack = imp.getImageStack();
+			final ImageStack inputStack = imp.getImageStack();
 			slice = 0;
 			for (int n = 1, nSlices = imp.getNSlices(); n <= nSlices; n++)
-			{
 				stack.addSlice(null, inputStack.getPixels(imp.getStackIndex(channel, n, frame)));
-			}
 		}
 		else
-		{
 			stack.addSlice(ip);
-		}
 
-		Statistics stats = new Statistics();
+		final Statistics stats = new Statistics();
 		int n;
 		float t;
 
-		Roi roi = imp.getRoi();
+		final Roi roi = imp.getRoi();
 		if (imp.getBitDepth() == 32)
 		{
 			// Get the pixel values
 			final TFloatArrayList data = new TFloatArrayList(ip.getPixelCount());
-			FValueProcedure p = new FValueProcedure()
+			final FValueProcedure p = new FValueProcedure()
 			{
 				@Override
 				public void execute(float value)
@@ -180,12 +176,12 @@ public class ForegroundAnalyser implements PlugInFilter
 			RoiHelper.forEach(roi, stack, p);
 
 			// Count values
-			float[] values = data.toArray();
+			final float[] values = data.toArray();
 			n = values.length;
 
 			// Threshold
 			Arrays.sort(values);
-			FloatHistogram h = FloatHistogram.buildHistogram(values, false);
+			final FloatHistogram h = FloatHistogram.buildHistogram(values, false);
 
 			t = h.getThreshold(AutoThreshold.getMethod(method), getHistogramBins());
 
@@ -199,7 +195,7 @@ public class ForegroundAnalyser implements PlugInFilter
 		{
 			// Integer histogram
 			final int[] data = new int[(imp.getBitDepth() == 8) ? 256 : 65336];
-			IValueProcedure p = new IValueProcedure()
+			final IValueProcedure p = new IValueProcedure()
 			{
 				@Override
 				public void execute(int value)
@@ -215,14 +211,14 @@ public class ForegroundAnalyser implements PlugInFilter
 				n += data[i];
 
 			// Threshold
-			IntHistogram h = new IntHistogram(data, 0);
+			final IntHistogram h = new IntHistogram(data, 0);
 
 			t = h.getThreshold(AutoThreshold.getMethod(method));
 
 			// Analyse all pixels above the threshold
 			for (int i = (int) t; i < data.length; i++)
 			{
-				int c = data[i];
+				final int c = data[i];
 				if (c != 0)
 					stats.add(c, i);
 			}
@@ -240,14 +236,12 @@ public class ForegroundAnalyser implements PlugInFilter
 	private void createResultsWindow()
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
-		{
 			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300);
-		}
 	}
 
 	private String createResultsHeader()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Image\t");
 		sb.append("C\t");
 		sb.append("Z\t");
@@ -264,13 +258,11 @@ public class ForegroundAnalyser implements PlugInFilter
 
 	private void addResult(int channel, int slice, int frame, Roi roi, int n, float t, Statistics stats)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(imp.getTitle()).append('\t');
 		sb.append(channel).append('\t');
 		if (slice == 0)
-		{
 			sb.append("1-").append(imp.getNSlices()).append('\t');
-		}
 		else
 			sb.append(slice).append('\t');
 		sb.append(frame).append('\t');
@@ -278,15 +270,15 @@ public class ForegroundAnalyser implements PlugInFilter
 			sb.append('\t');
 		else
 		{
-			Rectangle bounds = roi.getBounds();
+			final Rectangle bounds = roi.getBounds();
 			sb.append(bounds.x).append(',').append(bounds.y).append(' ');
 			sb.append(bounds.width).append('x').append(bounds.height).append('\t');
 		}
 		sb.append(n).append('\t');
-		Rounder r = RounderFactory.create(4);
+		final Rounder r = RounderFactory.create(4);
 		sb.append(r.toString(t)).append('\t');
-		double sum = stats.getSum();
-		long lsum = (long) sum;
+		final double sum = stats.getSum();
+		final long lsum = (long) sum;
 		if (lsum == sum)
 			sb.append(lsum).append('\t');
 		else
@@ -301,20 +293,18 @@ public class ForegroundAnalyser implements PlugInFilter
 	{
 		final int maxx = stack.getWidth();
 		final int maxy = stack.getHeight();
-		ImageStack maskStack = new ImageStack(maxx, maxy);
+		final ImageStack maskStack = new ImageStack(maxx, maxy);
 		final int n = maxx * maxy;
 		if (roi == null)
-		{
 			for (int slice = 1; slice <= stack.getSize(); slice++)
 			{
-				byte[] pixels = new byte[n];
-				ImageProcessor ip = stack.getProcessor(slice);
+				final byte[] pixels = new byte[n];
+				final ImageProcessor ip = stack.getProcessor(slice);
 				for (int i = 0; i < n; i++)
 					if (ip.getf(i) >= t)
 						pixels[i] = -1;
 				maskStack.addSlice(null, pixels);
 			}
-		}
 		else
 		{
 			final Rectangle roiBounds = roi.getBounds();
@@ -323,41 +313,29 @@ public class ForegroundAnalyser implements PlugInFilter
 			final int rwidth = roiBounds.width;
 			final int rheight = roiBounds.height;
 
-			ImageProcessor mask = roi.getMask();
+			final ImageProcessor mask = roi.getMask();
 			if (mask == null)
-			{
 				for (int slice = 1; slice <= stack.getSize(); slice++)
 				{
-					byte[] pixels = new byte[n];
-					ImageProcessor ip = stack.getProcessor(slice);
+					final byte[] pixels = new byte[n];
+					final ImageProcessor ip = stack.getProcessor(slice);
 					for (int y = 0; y < rheight; y++)
-					{
 						for (int x = 0, i = (y + yOffset) * maxx + xOffset; x < rwidth; x++, i++)
-						{
 							if (ip.getf(i) >= t)
 								pixels[i] = -1;
-						}
-					}
 					maskStack.addSlice(null, pixels);
 				}
-			}
 			else
-			{
 				for (int slice = 1; slice <= stack.getSize(); slice++)
 				{
-					byte[] pixels = new byte[n];
-					ImageProcessor ip = stack.getProcessor(slice);
+					final byte[] pixels = new byte[n];
+					final ImageProcessor ip = stack.getProcessor(slice);
 					for (int y = 0, j = 0; y < rheight; y++)
-					{
 						for (int x = 0, i = (y + yOffset) * maxx + xOffset; x < rwidth; x++, i++, j++)
-						{
 							if (ip.getf(i) >= t && mask.get(j) != 0)
 								pixels[i] = -1;
-						}
-					}
 					maskStack.addSlice(null, pixels);
 				}
-			}
 		}
 
 		Utils.display(TITLE, maskStack);

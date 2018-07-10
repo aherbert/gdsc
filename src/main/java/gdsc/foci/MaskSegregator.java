@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -60,7 +60,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 {
 	public static final String TITLE = "Mask Segregator";
 
-	private int flags = DOES_16 + DOES_8G + FINAL_PROCESSING;
+	private final int flags = DOES_16 + DOES_8G + FINAL_PROCESSING;
 	private ImagePlus imp;
 	private ImageProcessor maskIp;
 	private int[] objectMask;
@@ -79,7 +79,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
@@ -103,26 +103,26 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus,
 	 * java.lang.String, ij.plugin.filter.PlugInFilterRunner)
 	 */
 	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
-		String[] names = getMasks(imp);
+		final String[] names = getMasks(imp);
 		if (names.length == 0)
 		{
 			IJ.error(TITLE, "No masks match the image dimensions");
 			return DONE;
 		}
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage(
 				"Overlay a mask on the current image and segregate objects into two classes.\n \nObjects are defined with contiguous pixels of the same value.\nThe mean image value for each object is used for segregation.");
 
-		ImageStatistics stats = ImageStatistics.getStatistics(imp.getProcessor(), Measurements.MIN_MAX, null);
+		final ImageStatistics stats = ImageStatistics.getStatistics(imp.getProcessor(), Measurements.MIN_MAX, null);
 		if (cutoff < stats.min)
 			cutoff = stats.min;
 		if (cutoff > stats.max)
@@ -159,17 +159,17 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Build a list of 8/16 bit images that match the width and height of the input image
-	 * 
+	 *
 	 * @param inputImp
 	 * @return
 	 */
 	private String[] getMasks(ImagePlus inputImp)
 	{
-		String[] names = new String[WindowManager.getImageCount()];
+		final String[] names = new String[WindowManager.getImageCount()];
 		int count = 0;
-		for (int id : gdsc.core.ij.Utils.getIDList())
+		for (final int id : gdsc.core.ij.Utils.getIDList())
 		{
-			ImagePlus imp = WindowManager.getImage(id);
+			final ImagePlus imp = WindowManager.getImage(id);
 			if (imp == null)
 				continue;
 			if ((imp.getBitDepth() == 24 || imp.getBitDepth() == 32))
@@ -186,7 +186,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog,
 	 * java.awt.AWTEvent)
 	 */
@@ -194,7 +194,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
 		// Preview checkbox will be null if running headless
-		boolean isPreview = (gd.getPreviewCheckbox() != null && gd.getPreviewCheckbox().getState());
+		final boolean isPreview = (gd.getPreviewCheckbox() != null && gd.getPreviewCheckbox().getState());
 
 		if (!isPreview)
 		{
@@ -211,24 +211,22 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		splitMask = gd.getNextBoolean();
 		overlayOutline = gd.getNextBoolean();
 
-		// Check if this is a change to the settings during a preview and update the 
+		// Check if this is a change to the settings during a preview and update the
 		// auto threshold property
 		if (isPreview && e.getSource() != null && e.getSource() != autoCheckbox &&
 				e.getSource() != gd.getPreviewCheckbox())
-		{
 			if (defaultCutoff >= 0) // Check we have computed the threshold
 			{
 				autoCutoff = (cutoff == defaultCutoff);
 				autoCheckbox.setState(autoCutoff);
 			}
-		}
 
 		return true;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
 	@Override
@@ -239,7 +237,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
@@ -250,10 +248,10 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		label.setText(String.format("N = %d, Min = %.2f, Max = %.2f, Av = %.2f", objects.length, stats[0], stats[1],
 				stats[2]));
 
-		int cutoff = getCutoff();
+		final int cutoff = getCutoff();
 
 		// Segregate using the object means
-		int[] color = new int[maxObject + 1];
+		final int[] color = new int[maxObject + 1];
 		final int exclude = getRGB(255, 0, 0);
 		final int include = getRGB(0, 255, 0);
 		int nExclude = 0;
@@ -267,14 +265,12 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 				nExclude++;
 			}
 			else
-			{
 				color[maskValue] = include;
-			}
 		}
 		final int nInclude = objects.length - nExclude;
 		label2.setText(String.format("Include = %d, Exclude = %d", nInclude, nExclude));
 
-		ColorProcessor cp = new ColorProcessor(inputIp.getWidth(), inputIp.getHeight());
+		final ColorProcessor cp = new ColorProcessor(inputIp.getWidth(), inputIp.getHeight());
 		for (int i = 0; i < objectMask.length; i++)
 		{
 			final int maskValue = objectMask[i];
@@ -283,10 +279,10 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		}
 
 		// Overlay the segregated mask objects on the image
-		ImageRoi roi = new ImageRoi(0, 0, cp);
+		final ImageRoi roi = new ImageRoi(0, 0, cp);
 		roi.setZeroTransparent(true);
 		roi.setOpacity(0.5);
-		Overlay overlay = new Overlay();
+		final Overlay overlay = new Overlay();
 		overlay.add(roi);
 		imp.setOverlay(overlay);
 	}
@@ -312,7 +308,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		defaultCutoff = -1;
 
 		// Get the mask
-		ImagePlus maskImp = WindowManager.getImage(maskTitle);
+		final ImagePlus maskImp = WindowManager.getImage(maskTitle);
 		if (maskImp == null)
 			return;
 
@@ -321,16 +317,16 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		for (int i = 0; i < maskImage.length; i++)
 			maskImage[i] = maskIp.get(i);
 
-		// Perform a search for objects. 
-		ObjectAnalyzer oa = new ObjectAnalyzer(maskIp, eightConnected);
+		// Perform a search for objects.
+		final ObjectAnalyzer oa = new ObjectAnalyzer(maskIp, eightConnected);
 		objectMask = oa.getObjectMask();
 		maxObject = oa.getMaxObject();
 
 		// Analyse the objects
-		int[] count = new int[maxObject + 1];
-		long[] sum = new long[count.length];
+		final int[] count = new int[maxObject + 1];
+		final long[] sum = new long[count.length];
 
-		ImageProcessor ch = imp.getProcessor();
+		final ImageProcessor ch = imp.getProcessor();
 		for (int i = 0; i < maskImage.length; i++)
 		{
 			final int value = objectMask[i];
@@ -341,12 +337,10 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 			}
 		}
 
-		ArrayList<double[]> tmpObjects = new ArrayList<double[]>();
+		final ArrayList<double[]> tmpObjects = new ArrayList<>();
 		for (int i = 0; i < count.length; i++)
-		{
 			if (count[i] > 0)
 				tmpObjects.add(new double[] { i, count[i], sum[i] / (double) count[i] });
-		}
 		objects = tmpObjects.toArray(new double[0][0]);
 
 		// Get the min, max and average pixel value
@@ -387,7 +381,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		if (defaultCutoff < 0)
 		{
 			// Build a histogram using the average pixel values per object
-			int[] h = new int[65336];
+			final int[] h = new int[65336];
 			for (int i = 0; i < objects.length; i++)
 			{
 				final int count = (int) objects[i][1];
@@ -401,12 +395,10 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		// Reset the position on the slider for the dialog
 		if (cutoffSlider != null)
 		{
-			String newValue = "" + defaultCutoff;
+			final String newValue = "" + defaultCutoff;
 			if (!cutoffText.getText().equals(newValue))
-			{
 				//cutoffSlider.setValue(cutoff);
 				cutoffText.setText(newValue);
-			}
 		}
 
 		return defaultCutoff;
@@ -438,7 +430,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		if (splitMask)
 		{
 			// Create a look-up table of objects to include or exclude
-			boolean[] exclude = new boolean[maxObject + 1];
+			final boolean[] exclude = new boolean[maxObject + 1];
 			for (int i = 0; i < objects.length; i++)
 			{
 				final int maskValue = (int) objects[i][0];
@@ -447,19 +439,17 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 			}
 
 			// Create two masks for the segregated objects
-			ImageProcessor excludeIp = maskIp.createProcessor(maxx, maxy);
-			ImageProcessor includeIp = maskIp.createProcessor(maxx, maxy);
+			final ImageProcessor excludeIp = maskIp.createProcessor(maxx, maxy);
+			final ImageProcessor includeIp = maskIp.createProcessor(maxx, maxy);
 
 			for (int i = 0; i < objectMask.length; i++)
 			{
 				final int maskValue = objectMask[i];
 				if (maskValue != 0)
-				{
 					if (exclude[maskValue])
 						excludeIp.set(i, maskIp.get(i));
 					else
 						includeIp.set(i, maskIp.get(i));
-				}
 			}
 
 			Utils.display(maskTitle + " Include", includeIp);
@@ -469,7 +459,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		{
 			// Create a lookup table for the new mask objects.
 			// Q. Should we maintain the old mask value? This version uses new numbering.
-			int[] newMaskValue = new int[maxObject + 1];
+			final int[] newMaskValue = new int[maxObject + 1];
 			int include = -1;
 			int exclude = 1;
 			for (int i = 0; i < objects.length; i++)
@@ -482,23 +472,19 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 			// Add the bonus to the new mask value for the include objects
 			final int bonus = getBonus(include);
 			for (int i = 1; i < newMaskValue.length; i++)
-			{
 				if (newMaskValue[i] < 0)
 					newMaskValue[i] = bonus - newMaskValue[i];
-			}
 
-			ImageProcessor ip = new ShortProcessor(maxx, maxy);
+			final ImageProcessor ip = new ShortProcessor(maxx, maxy);
 			for (int i = 0; i < objectMask.length; i++)
 			{
 				final int maskValue = objectMask[i];
 				if (maskValue != 0)
-				{
 					ip.set(i, newMaskValue[maskValue]);
-				}
 			}
 			ip.setMinAndMax(0, exclude);
 
-			ImagePlus segImp = Utils.display(maskTitle + " Segregated", ip);
+			final ImagePlus segImp = Utils.display(maskTitle + " Segregated", ip);
 
 			if (overlayOutline)
 				addOutline(segImp);
@@ -515,14 +501,14 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 
 	static void addOutline(ImagePlus imp)
 	{
-		ByteProcessor bp = new ByteProcessor(imp.getWidth(), imp.getHeight());
-		ImageProcessor ip = imp.getProcessor();
+		final ByteProcessor bp = new ByteProcessor(imp.getWidth(), imp.getHeight());
+		final ImageProcessor ip = imp.getProcessor();
 		for (int i = ip.getPixelCount(); i-- > 0;)
 			if (ip.get(i) == 0)
 				bp.set(i, 255);
 		bp.outline();
 		bp.invert();
-		ImageRoi roi = new ImageRoi(0, 0, bp);
+		final ImageRoi roi = new ImageRoi(0, 0, bp);
 		roi.setZeroTransparent(true);
 		imp.setOverlay(new Overlay(roi));
 	}

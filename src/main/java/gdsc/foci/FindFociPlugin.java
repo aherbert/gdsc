@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -127,28 +127,24 @@ public class FindFociPlugin implements PlugIn
 			// If the slice has changed then invalidate the model
 			if (imp.getTitle().equals(model.getSelectedImage()))
 			{
-				int oldCurrentChannel = currentChannel;
-				int oldCurrentFrame = currentFrame;
+				final int oldCurrentChannel = currentChannel;
+				final int oldCurrentFrame = currentFrame;
 				getCurrentSlice();
 				if (oldCurrentChannel != currentChannel || oldCurrentFrame != currentFrame)
-				{
 					model.invalidate();
-				}
 			}
 		}
 
 		private void getCurrentSlice()
 		{
-			ImagePlus imp = WindowManager.getImage(model.getSelectedImage());
+			final ImagePlus imp = WindowManager.getImage(model.getSelectedImage());
 			if (imp != null)
 			{
 				currentChannel = imp.getChannel();
 				currentFrame = imp.getFrame();
 			}
 			else
-			{
 				currentChannel = currentFrame = 0;
-			}
 		}
 
 		@Override
@@ -156,15 +152,13 @@ public class FindFociPlugin implements PlugIn
 		{
 			// Store the slice for the image when it changes.
 			if (evt.getPropertyName().equals("selectedImage"))
-			{
 				getCurrentSlice();
-			}
 		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
 	 */
 	@Override
@@ -183,7 +177,7 @@ public class FindFociPlugin implements PlugIn
 			if (instance.isVisible())
 			{
 				// Ask if the user would like a second instance
-				GenericDialog gd = new GenericDialog(FindFoci.TITLE);
+				final GenericDialog gd = new GenericDialog(FindFoci.TITLE);
 				gd.enableYesNoCancel();
 				gd.addMessage(FindFoci.TITLE + " is already open.\n \nDo you want to create another instance?");
 				gd.showDialog();
@@ -199,10 +193,10 @@ public class FindFociPlugin implements PlugIn
 			return;
 		}
 
-		FindFociModel model = new FindFociModel();
+		final FindFociModel model = new FindFociModel();
 		model.setResultsDirectory(System.getProperty("java.io.tmpdir"));
-		FindFociController controller = new ImageJController(model);
-		FindFociListener listener = new FindFociListener(model);
+		final FindFociController controller = new ImageJController(model);
+		final FindFociListener listener = new FindFociListener(model);
 
 		// Track when the image changes to a new slice
 		ImagePlus.addImageListener(listener);
@@ -227,23 +221,23 @@ public class FindFociPlugin implements PlugIn
 			showInstance(instance);
 			IJ.showStatus("FindFoci ready");
 		}
-		catch (ExceptionInInitializerError e)
+		catch (final ExceptionInInitializerError e)
 		{
 			exception = e;
 			errorMessage = "Failed to initialize class: " + e.getMessage();
 		}
-		catch (LinkageError e)
+		catch (final LinkageError e)
 		{
 			exception = e;
 			errorMessage = "Failed to link class: " + e.getMessage();
 		}
-		catch (ClassNotFoundException ex)
+		catch (final ClassNotFoundException ex)
 		{
 			exception = ex;
 			errorMessage = "Failed to find class: " + ex.getMessage() +
 					"\nCheck you have beansbinding-1.2.1.jar on your classpath\n";
 		}
-		catch (Throwable ex)
+		catch (final Throwable ex)
 		{
 			exception = ex;
 			errorMessage = ex.getMessage();
@@ -252,8 +246,8 @@ public class FindFociPlugin implements PlugIn
 		{
 			if (exception != null)
 			{
-				StringWriter sw = new StringWriter();
-				PrintWriter pw = new PrintWriter(sw);
+				final StringWriter sw = new StringWriter();
+				final PrintWriter pw = new PrintWriter(sw);
 				pw.write(errorMessage);
 				pw.append('\n');
 				exception.printStackTrace(pw);
@@ -264,16 +258,16 @@ public class FindFociPlugin implements PlugIn
 
 	private void showNewInstance()
 	{
-		FindFociModel model = new FindFociModel();
+		final FindFociModel model = new FindFociModel();
 		model.setResultsDirectory(System.getProperty("java.io.tmpdir"));
-		FindFociController controller = new ImageJController(model);
-		FindFociListener listener = new FindFociListener(model);
+		final FindFociController controller = new ImageJController(model);
+		final FindFociListener listener = new FindFociListener(model);
 
 		// Track when the image changes to a new slice
 		ImagePlus.addImageListener(listener);
 		model.addPropertyChangeListener("selectedImage", listener);
 
-		FindFociView instance = new FindFociView(model, controller);
+		final FindFociView instance = new FindFociView(model, controller);
 		listener.addWindowListener(instance);
 		instance.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 

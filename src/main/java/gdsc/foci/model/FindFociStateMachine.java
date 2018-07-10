@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -55,7 +55,7 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
 
 	private void init()
 	{
-		stateMap = new HashMap<String, FindFociState>();
+		stateMap = new HashMap<>();
 		stateMap.put("gaussianBlur", FindFociState.INITIAL);
 		stateMap.put("backgroundMethod", FindFociState.FIND_MAXIMA);
 		stateMap.put("thresholdMethod", FindFociState.FIND_MAXIMA);
@@ -86,13 +86,13 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
 	 */
 	@Override
 	public void propertyChange(PropertyChangeEvent evt)
 	{
-		String propertyName = evt.getPropertyName();
+		final String propertyName = evt.getPropertyName();
 
 		if ("state".equals(propertyName))
 		{
@@ -100,38 +100,32 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
 		}
 		else
 		{
-			FindFociState state = stateMap.get(propertyName);
+			final FindFociState state = stateMap.get(propertyName);
 			if (state != null)
-			{
 				//System.out.println("Changed : "+ propertyName);
 				reduceState(state);
-			}
 			else
-			{
 				// Default: Reset
 				setState(FindFociState.INITIAL);
-			}
 		}
 	}
 
 	/**
 	 * Updates the state to an earlier level
-	 * 
+	 *
 	 * @param state
 	 *            The level
 	 */
 	private void reduceState(FindFociState state)
 	{
 		if (state.ordinal() < this.state.ordinal())
-		{
 			//System.out.printf("%s [%d] => %s [%d]\n", this.state, currentLevel, state, newLevel);
 			setState(state);
-		}
 	}
 
 	/**
 	 * Updates the state to an earlier level
-	 * 
+	 *
 	 * @param state
 	 *            The level
 	 */
@@ -139,10 +133,8 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
 	private void increaseState(FindFociState state)
 	{
 		if (state.ordinal() > this.state.ordinal())
-		{
 			//System.out.printf("%s [%d] => %s [%d]\n", this.state, currentLevel, state, newLevel);
 			setState(state);
-		}
 	}
 
 	/**
@@ -151,7 +143,7 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
 	 */
 	public void setState(FindFociState state)
 	{
-		FindFociState oldValue = this.state;
+		final FindFociState oldValue = this.state;
 		//System.out.println(state);
 		this.state = state;
 		firePropertyChange("state", oldValue, state);

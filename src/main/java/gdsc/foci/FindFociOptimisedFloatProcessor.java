@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -30,17 +30,17 @@ package gdsc.foci;
  */
 public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 {
-	// There may be nothing to optimise. 
-	// We would just be replacing the call to getf(i) with image[i]. All the 
+	// There may be nothing to optimise.
+	// We would just be replacing the call to getf(i) with image[i]. All the
 	// processing in FindFociBaseProcessor is float specific anyway.
 	// So optimisation should be done by the JVM.
 
 	// For now I have just included those simple methods that use getf() for all pixels in the image.
-	// This means changes to the main algorithm methods will be inherited. 
+	// This means changes to the main algorithm methods will be inherited.
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.FindFociBaseProcessor#pruneMaxima(java.lang.Object, byte[], int, double,
 	 * gdsc.foci.FindFociStatistics, java.util.ArrayList, int[])
 	 */
@@ -55,28 +55,24 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 		final int nMaxima = resultsArray.length;
 		final float[] peakThreshold = new float[nMaxima + 1];
 		for (int i = 1; i < peakThreshold.length; i++)
-		{
 			peakThreshold[i] = getTolerance(searchMethod, searchParameter, stats, resultsArray[i - 1].maxValue);
-		}
 
 		for (int i = maxima.length; i-- > 0;)
 		{
 			final int id = maxima[i];
 			if (id != 0)
-			{
 				if (image[i] < peakThreshold[id])
 				{
 					// Unset this pixel as part of the peak
 					maxima[i] = 0;
 					types[i] &= ~MAX_AREA;
 				}
-			}
 		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.FindFociBaseProcessor#calculateInitialResults(java.lang.Object, int[], java.util.ArrayList)
 	 */
 	@Override
@@ -110,7 +106,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.FindFociBaseProcessor#calculateNativeResults(java.lang.Object, int[], java.util.ArrayList, int)
 	 */
 	@Override
@@ -191,7 +187,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.FindFociBaseProcessor#getIntensityAboveFloor(java.lang.Object, byte[], float)
 	 */
 	@Override
@@ -201,14 +197,12 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
 
 		double sum = 0;
 		for (int i = types.length; i-- > 0;)
-		{
 			if ((types[i] & EXCLUDED) == 0)
 			{
 				final float v = image[i];
 				if (v > floor)
 					sum += (v - floor);
 			}
-		}
 		return sum;
 	}
 }

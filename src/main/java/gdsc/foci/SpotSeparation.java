@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -61,9 +61,9 @@ public class SpotSeparation implements PlugInFilter
 	private static boolean showSpotImage = true;
 	private static boolean showLineProfiles = true;
 
-	private int flags = DOES_16 + DOES_8G;
+	private final int flags = DOES_16 + DOES_8G;
 
-	private LinkedList<String> plotProfiles = new LinkedList<String>();
+	private final LinkedList<String> plotProfiles = new LinkedList<>();
 	private static TextWindow resultsWindow = null;
 	private ImagePlus imp;
 	private String resultEntry = null;
@@ -71,7 +71,7 @@ public class SpotSeparation implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
@@ -87,7 +87,7 @@ public class SpotSeparation implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
@@ -106,17 +106,17 @@ public class SpotSeparation implements PlugInFilter
 		if (results == null)
 			return;
 
-		ImagePlus maximaImp = results.mask;
-		ImageProcessor spotIp = maximaImp.getProcessor();
-		ArrayList<FindFociResult> resultsArray = results.results;
+		final ImagePlus maximaImp = results.mask;
+		final ImageProcessor spotIp = maximaImp.getProcessor();
+		final ArrayList<FindFociResult> resultsArray = results.results;
 
 		showSpotImage(maximaImp, resultsArray);
 
-		AssignedPoint[] points = extractSpotCoordinates(resultsArray);
+		final AssignedPoint[] points = extractSpotCoordinates(resultsArray);
 
-		float[][] d = computeDistanceMatrix(points);
+		final float[][] d = computeDistanceMatrix(points);
 
-		int[] assigned = assignClosestPairs(d);
+		final int[] assigned = assignClosestPairs(d);
 
 		createResultsWindow();
 
@@ -134,18 +134,18 @@ public class SpotSeparation implements PlugInFilter
 
 				float xpos = points[i].x;
 				float ypos = points[i].y;
-				int peakId = points[i].id;
+				final int peakId = points[i].id;
 				profileTitle = TITLE + " Spot " + peakId + " Profile";
 
-				float[] com = new float[2];
+				final float[] com = new float[2];
 				//double angle = calculateOrientation(spotIp, xpos, ypos, peakId, com);
-				double angle = calculateOrientation(ip, spotIp, xpos, ypos, peakId, com);
+				final double angle = calculateOrientation(ip, spotIp, xpos, ypos, peakId, com);
 
-				// Angle is in Radians anti-clockwise from the X-axis 
+				// Angle is in Radians anti-clockwise from the X-axis
 
-				float step = 0.5f;
-				float dx = (float) (Math.cos(angle) * step);
-				float dy = (float) (Math.sin(angle) * step);
+				final float step = 0.5f;
+				final float dx = (float) (Math.cos(angle) * step);
+				final float dy = (float) (Math.sin(angle) * step);
 
 				System.out.printf("%s : Angle = %f, dx=%f, dy=%f. d(x,y)=%.2f,%.2f\n", profileTitle,
 						angle * 180.0 / Math.PI, dx, dy, points[i].x - com[0], points[i].y - com[1]);
@@ -160,7 +160,7 @@ public class SpotSeparation implements PlugInFilter
 				}
 
 				// Extend the line to the edge
-				LinkedList<float[]> before = new LinkedList<float[]>();
+				final LinkedList<float[]> before = new LinkedList<>();
 				xpos = com[0];
 				ypos = com[1];
 				for (int s = 1;; s++)
@@ -168,15 +168,13 @@ public class SpotSeparation implements PlugInFilter
 					xpos -= dx;
 					ypos -= dy;
 					if (isInPeak(spotIp, xpos, ypos, peakId))
-					{
 						before.add(new float[] { -step * s, (float) ip.getInterpolatedValue(xpos, ypos) });
-					}
 					else
 						break;
 				}
 
 				// Extend the line to the edge in the other direction
-				LinkedList<float[]> after = new LinkedList<float[]>();
+				final LinkedList<float[]> after = new LinkedList<>();
 				xpos = com[0];
 				ypos = com[1];
 				for (int s = 1;; s++)
@@ -184,14 +182,12 @@ public class SpotSeparation implements PlugInFilter
 					xpos += dx;
 					ypos += dy;
 					if (isInPeak(spotIp, xpos, ypos, peakId))
-					{
 						before.add(new float[] { step * s, (float) ip.getInterpolatedValue(xpos, ypos) });
-					}
 					else
 						break;
 				}
 
-				float[][] profileValues = convertToFloat(before, after);
+				final float[][] profileValues = convertToFloat(before, after);
 				xValues = profileValues[0];
 				yValues = profileValues[1];
 
@@ -207,18 +203,18 @@ public class SpotSeparation implements PlugInFilter
 				// For pairs draw a line between the spot centres and extend to
 				// the edge of the spots
 
-				int j = assigned[i];
+				final int j = assigned[i];
 				profileTitle = TITLE + " Spot " + points[i].id + " to " + points[j].id + " Profile";
 
-				float distance = (float) Math.sqrt(d[i][j]);
+				final float distance = (float) Math.sqrt(d[i][j]);
 
-				int samples = (int) Math.ceil(distance);
-				float dx = (float) (points[j].x - points[i].x) / samples;
-				float dy = (float) (points[j].y - points[i].y) / samples;
-				float step = (float) Math.sqrt(dx * dx + dy * dy);
+				final int samples = (int) Math.ceil(distance);
+				final float dx = (float) (points[j].x - points[i].x) / samples;
+				final float dy = (float) (points[j].y - points[i].y) / samples;
+				final float step = (float) Math.sqrt(dx * dx + dy * dy);
 
 				// The line between the two maxima
-				ArrayList<float[]> values = new ArrayList<float[]>(samples + 1);
+				final ArrayList<float[]> values = new ArrayList<>(samples + 1);
 				values.add(new float[] { 0, ip.getf(points[i].x, points[i].y) });
 				float xpos = points[i].x;
 				float ypos = points[i].y;
@@ -231,7 +227,7 @@ public class SpotSeparation implements PlugInFilter
 				values.add(new float[] { distance, ip.getf(points[j].x, points[j].y) });
 
 				// Extend the line to the edge of the first spot
-				LinkedList<float[]> before = new LinkedList<float[]>();
+				final LinkedList<float[]> before = new LinkedList<>();
 				int peakId = points[i].id;
 				xpos = points[i].x;
 				ypos = points[i].y;
@@ -240,15 +236,13 @@ public class SpotSeparation implements PlugInFilter
 					xpos -= dx;
 					ypos -= dy;
 					if (isInPeak(spotIp, xpos, ypos, peakId))
-					{
 						before.add(new float[] { -step * s, (float) ip.getInterpolatedValue(xpos, ypos) });
-					}
 					else
 						break;
 				}
 
 				// Extend the line to the edge of the second spot
-				LinkedList<float[]> after = new LinkedList<float[]>();
+				final LinkedList<float[]> after = new LinkedList<>();
 				peakId = points[j].id;
 				xpos = points[j].x;
 				ypos = points[j].y;
@@ -257,18 +251,16 @@ public class SpotSeparation implements PlugInFilter
 					xpos += dx;
 					ypos += dy;
 					if (isInPeak(spotIp, xpos, ypos, peakId))
-					{
 						before.add(new float[] { distance + step * s, (float) ip.getInterpolatedValue(xpos, ypos) });
-					}
 					else
 						break;
 				}
 
-				float[][] profileValues = convertToFloat(before, values, after);
+				final float[][] profileValues = convertToFloat(before, values, after);
 				xValues = profileValues[0];
 				yValues = profileValues[1];
 
-				float offset = sortValues(xValues, yValues);
+				final float offset = sortValues(xValues, yValues);
 				addPairResult(peakId, xValues, yValues, distance, offset);
 			}
 
@@ -292,17 +284,15 @@ public class SpotSeparation implements PlugInFilter
 			return 0;
 		Sort.sortArrays(yValues, xValues, true);
 		// Reset to start at zero
-		float offset = -xValues[0];
+		final float offset = -xValues[0];
 		for (int ii = 0; ii < xValues.length; ii++)
-		{
 			xValues[ii] += offset;
-		}
 		return offset;
 	}
 
 	public boolean showDialog()
 	{
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 		gd.addHelp(URL.UTILITY);
 
 		gd.addMessage("Analyse line profiles between spots within a separation distance");
@@ -326,20 +316,20 @@ public class SpotSeparation implements PlugInFilter
 
 	private FindFociResults cropToRoi(FindFociResults results, ImageProcessor ip)
 	{
-		Roi roi = imp.getRoi();
+		final Roi roi = imp.getRoi();
 		if (roi == null || results == null)
 			return results;
 
-		ImagePlus maximaImp = results.mask;
-		ImageProcessor spotIp = maximaImp.getProcessor();
-		ArrayList<FindFociResult> resultsArray = results.results;
+		final ImagePlus maximaImp = results.mask;
+		final ImageProcessor spotIp = maximaImp.getProcessor();
+		final ArrayList<FindFociResult> resultsArray = results.results;
 
 		// Find all maxima that are within the ROI bounds
 		final byte[] mask = (roi.getMask() == null) ? null : (byte[]) roi.getMask().getPixels();
 		final Rectangle bounds = roi.getBounds();
 		final int maxx = bounds.x + bounds.width;
 		final int maxy = bounds.y + bounds.height;
-		int[] newId = new int[resultsArray.size() + 1];
+		final int[] newId = new int[resultsArray.size() + 1];
 		int newCount = 0;
 
 		for (int i = 0; i < resultsArray.size(); i++)
@@ -364,8 +354,8 @@ public class SpotSeparation implements PlugInFilter
 			return null;
 
 		// Renumber the remaining valid spots
-		ArrayList<FindFociResult> newResultsArray = new ArrayList<FindFociResult>(newCount);
-		int[] maskIdMap = new int[resultsArray.size() + 1];
+		final ArrayList<FindFociResult> newResultsArray = new ArrayList<>(newCount);
+		final int[] maskIdMap = new int[resultsArray.size() + 1];
 		for (int i = 0; i < resultsArray.size(); i++)
 		{
 			final FindFociResult result = resultsArray.get(i);
@@ -375,7 +365,7 @@ public class SpotSeparation implements PlugInFilter
 				newResultsArray.add(result);
 				// Reverse peak IDs so the highest value is the first in the
 				// results list
-				int oldMaskId = resultsArray.size() - i;
+				final int oldMaskId = resultsArray.size() - i;
 				maskIdMap[oldMaskId] = newCount - newId[i] + 1;
 			}
 		}
@@ -385,9 +375,7 @@ public class SpotSeparation implements PlugInFilter
 		{
 			final int oldPeakId = spotIp.get(i);
 			if (oldPeakId > 0)
-			{
 				spotIp.set(i, maskIdMap[oldPeakId]);
-			}
 		}
 		maximaImp.setProcessor(spotIp);
 
@@ -411,23 +399,23 @@ public class SpotSeparation implements PlugInFilter
 
 		// TODO - Find the best method for this
 
-		FindFoci ff = new FindFoci();
-		String autoThresholdMethod = method;
-		int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
-		double searchParameter = 0;
-		int maxPeaks = 100;
-		int minSize = 3;
-		int peakMethod = FindFociProcessor.PEAK_ABSOLUTE;
-		double peakParameter = 5;
-		int outputType = FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
-		int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
-		int options = FindFociProcessor.OPTION_STATS_INSIDE;
-		double blur = 1.5;
-		int centreMethod = FindFoci.CENTRE_MAX_VALUE_SEARCH;
-		double centreParameter = 0;
-		double fractionParameter = 0;
+		final FindFoci ff = new FindFoci();
+		final String autoThresholdMethod = method;
+		final int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
+		final double searchParameter = 0;
+		final int maxPeaks = 100;
+		final int minSize = 3;
+		final int peakMethod = FindFociProcessor.PEAK_ABSOLUTE;
+		final double peakParameter = 5;
+		final int outputType = FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
+		final int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
+		final int options = FindFociProcessor.OPTION_STATS_INSIDE;
+		final double blur = 1.5;
+		final int centreMethod = FindFoci.CENTRE_MAX_VALUE_SEARCH;
+		final double centreParameter = 0;
+		final double fractionParameter = 0;
 
-		FindFociResults results = ff.findMaxima(new ImagePlus("tmp", ip), null, backgroundMethod, backgroundParameter,
+		final FindFociResults results = ff.findMaxima(new ImagePlus("tmp", ip), null, backgroundMethod, backgroundParameter,
 				autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
 				outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter);
 		return results;
@@ -437,10 +425,10 @@ public class SpotSeparation implements PlugInFilter
 	{
 		if (showSpotImage)
 		{
-			ImageProcessor spotIp = maximaImp.getProcessor();
+			final ImageProcessor spotIp = maximaImp.getProcessor();
 			spotIp.setMinAndMax(0, resultsArray.size());
-			String title = TITLE + " Spots";
-			ImagePlus spotImp = WindowManager.getImage(title);
+			final String title = TITLE + " Spots";
+			final ImagePlus spotImp = WindowManager.getImage(title);
 			if (spotImp == null)
 			{
 				maximaImp.setTitle(title);
@@ -456,16 +444,16 @@ public class SpotSeparation implements PlugInFilter
 
 	/**
 	 * Extract the centre of each maxima from the results
-	 * 
+	 *
 	 * @param resultsArray
 	 * @return
 	 */
 	private AssignedPoint[] extractSpotCoordinates(ArrayList<FindFociResult> resultsArray)
 	{
-		AssignedPoint[] points = new AssignedPoint[resultsArray.size()];
+		final AssignedPoint[] points = new AssignedPoint[resultsArray.size()];
 		int i = 0;
-		int maxId = resultsArray.size() + 1;
-		for (FindFociResult result : resultsArray)
+		final int maxId = resultsArray.size() + 1;
+		for (final FindFociResult result : resultsArray)
 		{
 			points[i] = new AssignedPoint(result.x, result.y, maxId - result.id);
 			i++;
@@ -475,21 +463,19 @@ public class SpotSeparation implements PlugInFilter
 
 	/**
 	 * Compute the all-vs-all squared distance matrix
-	 * 
+	 *
 	 * @param points
 	 * @return
 	 */
 	private float[][] computeDistanceMatrix(AssignedPoint[] points)
 	{
-		float[][] d = new float[points.length][points.length];
+		final float[][] d = new float[points.length][points.length];
 		for (int i = 0; i < d.length; i++)
-		{
 			for (int j = i + 1; j < d.length; j++)
 			{
 				d[i][j] = (float) points[i].distance2(points[j].x, points[j].y);
 				d[j][i] = d[i][j];
 			}
-		}
 		return d;
 	}
 
@@ -497,7 +483,7 @@ public class SpotSeparation implements PlugInFilter
 	 * Finds the pairs ij which are closer than the radius. Any given point can
 	 * only be assigned to one pair and so the closest remaining unassigned
 	 * points are processed until no more pairs are left.
-	 * 
+	 *
 	 * @param d
 	 *            Squared distance matrix
 	 * @return Array of indices that each point is assigned to. Unassigned
@@ -505,8 +491,8 @@ public class SpotSeparation implements PlugInFilter
 	 */
 	private int[] assignClosestPairs(float[][] d)
 	{
-		float d2 = (float) (radius * radius);
-		int[] assigned = new int[d.length];
+		final float d2 = (float) (radius * radius);
+		final int[] assigned = new int[d.length];
 		Arrays.fill(assigned, -1);
 		while (true)
 		{
@@ -545,32 +531,26 @@ public class SpotSeparation implements PlugInFilter
 	private void createResultsWindow()
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
-		{
 			resultsWindow = new TextWindow(TITLE + " Positions", createResultsHeader(), "", 700, 300);
-		}
 
 		// Create the image result prefix
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(imp.getTitle());
 		if (imp.getStackSize() > 1)
-		{
 			sb.append(" [Z").append(imp.getSlice()).append("C").append(imp.getChannel()).append("T")
 					.append(imp.getFrame()).append("]");
-		}
 		sb.append('\t');
 		cal = imp.getCalibration();
 		sb.append(cal.getXUnit());
 		if (!(cal.getYUnit().equalsIgnoreCase(cal.getXUnit()) && cal.getZUnit().equalsIgnoreCase(cal.getXUnit())))
-		{
 			sb.append(" ").append(cal.getYUnit()).append(" ").append(cal.getZUnit()).append(" ");
-		}
 		sb.append('\t');
 		resultEntry = sb.toString();
 	}
 
 	private String createResultsHeader()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Image\t");
 		sb.append("Units\t");
 		sb.append("Peak Id\t");
@@ -583,16 +563,16 @@ public class SpotSeparation implements PlugInFilter
 
 	private void addSingleResult(int id, float[] xValues, float[] yValues)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
 		sb.append(id).append("\tSingle\t");
 
-		int[] maxima = new int[2];
-		float[] d = ThreadAnalyser.countMaxima(xValues, yValues, maxima);
+		final int[] maxima = new int[2];
+		final float[] d = ThreadAnalyser.countMaxima(xValues, yValues, maxima);
 		if (d.length > 1)
 		{
 			// Find the plot range
-			int[] maxIndices = new int[d.length];
+			final int[] maxIndices = new int[d.length];
 			float max = yValues[0], min = yValues[0];
 			for (int i = 1; i < yValues.length; i++)
 			{
@@ -605,18 +585,17 @@ public class SpotSeparation implements PlugInFilter
 					min = yValues[i];
 			}
 			// Set the minimum height for a maxima using a a fraction of the plot range
-			float height = (max - min) * 0.1f;
+			final float height = (max - min) * 0.1f;
 
 			int maxCount = 1;
 			int start = findIndex(0, d[0], xValues);
 			for (int i = 1; i < d.length; i++)
 			{
-				int end = findIndex(start, d[i], xValues);
+				final int end = findIndex(start, d[i], xValues);
 
 				// Set threshold using the minimum height
-				float threshold = Math.min(yValues[start], yValues[end]) - height;
+				final float threshold = Math.min(yValues[start], yValues[end]) - height;
 				for (int j = start + 1; j < end; j++)
-				{
 					if (yValues[j] < threshold)
 					{
 						// Add to the maxima
@@ -626,7 +605,6 @@ public class SpotSeparation implements PlugInFilter
 							maxIndices[maxCount++] = end;
 						break;
 					}
-				}
 
 				start = end;
 			}
@@ -637,22 +615,20 @@ public class SpotSeparation implements PlugInFilter
 
 				// Find the widths of each peak
 				Arrays.sort(maxIndices);
-				float[] minD = new float[maxIndices.length];
+				final float[] minD = new float[maxIndices.length];
 				float lastMinD = 0;
 				start = maxIndices[0];
 				for (int i = 1; i < maxCount; i++)
 				{
-					int end = maxIndices[i];
+					final int end = maxIndices[i];
 					min = Float.POSITIVE_INFINITY;
 					float middle = xValues[end] - xValues[start];
 					for (int j = start + 1; j < end; j++)
-					{
 						if (min > yValues[j])
 						{
 							min = yValues[j];
 							middle = xValues[j];
 						}
-					}
 					minD[i - 1] = middle + lastMinD;
 					lastMinD = minD[i - 1];
 
@@ -671,7 +647,7 @@ public class SpotSeparation implements PlugInFilter
 			}
 		}
 
-		double width = xValues[xValues.length - 1];
+		final double width = xValues[xValues.length - 1];
 		sb.append(String.format("%.2f", width * cal.pixelWidth));
 		resultsWindow.append(sb.toString());
 	}
@@ -694,7 +670,7 @@ public class SpotSeparation implements PlugInFilter
 
 	private void addPairResult(int id, float[] xValues, float[] yValues, float distance, float peak1Start)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
 		sb.append(id).append("\tPair\t");
 		// Find the midpoint between the two peaks
@@ -713,8 +689,8 @@ public class SpotSeparation implements PlugInFilter
 			i++;
 		}
 
-		double width1 = middle;
-		double width2 = xValues[xValues.length - 1] - width1;
+		final double width1 = middle;
+		final double width2 = xValues[xValues.length - 1] - width1;
 		sb.append(String.format("%.2f\t%.2f\t%.2f", width1 * cal.pixelWidth, width2 * cal.pixelWidth,
 				distance * cal.pixelWidth));
 		resultsWindow.append(sb.toString());
@@ -724,7 +700,7 @@ public class SpotSeparation implements PlugInFilter
 	 * Estimate the angle using the central moments.
 	 * <p>
 	 * See Burger & Burge, Digital Image Processing, An Algorithmic Introduction using Java (1st Edition), pp231.
-	 * 
+	 *
 	 * @param spotIp
 	 * @param xpos
 	 * @param ypos
@@ -746,11 +722,10 @@ public class SpotSeparation implements PlugInFilter
 		double u00 = 0;
 		double xCtr = 0, yCtr = 0;
 		for (int ii = 0; ii < spotIp.getPixelCount(); ii++)
-		{
 			if (spotIp.get(ii) == peakId)
 			{
-				int u = ii % spotIp.getWidth();
-				int v = ii / spotIp.getWidth();
+				final int u = ii % spotIp.getWidth();
+				final int v = ii / spotIp.getWidth();
 				if (maxu < u)
 					maxu = u;
 				if (minu > u)
@@ -763,7 +738,6 @@ public class SpotSeparation implements PlugInFilter
 				xCtr += u;
 				yCtr += v;
 			}
-		}
 		xCtr /= u00;
 		yCtr /= u00;
 
@@ -778,24 +752,20 @@ public class SpotSeparation implements PlugInFilter
 		double u20 = 0;
 		double u02 = 0;
 		for (int v = minv; v <= maxv; v++)
-		{
 			for (int u = minu, ii = v * spotIp.getWidth() + minu; u <= maxu; u++, ii++)
-			{
 				if (spotIp.get(ii) == peakId)
 				{
-					double dx = u - xCtr;
-					double dy = v - yCtr;
+					final double dx = u - xCtr;
+					final double dy = v - yCtr;
 					u11 += dx * dy;
 					u20 += dx * dx;
 					u02 += dy * dy;
 				}
-			}
-		}
 
 		// Calculate the ellipsoid
-		double A = 2 * u11;
-		double B = u20 - u02;
-		double angle = 0.5 * Math.atan2(A, B);
+		final double A = 2 * u11;
+		final double B = u20 - u02;
+		final double angle = 0.5 * Math.atan2(A, B);
 		return angle;
 	}
 
@@ -803,7 +773,7 @@ public class SpotSeparation implements PlugInFilter
 	 * Estimate the angle using the central moments. Moments are weighted using the original image values
 	 * <p>
 	 * See Burger & Burge, Digital Image Processing, An Algorithmic Introduction using Java (1st Edition), pp231.
-	 * 
+	 *
 	 * @param ip
 	 * @param spotIp
 	 * @param xpos
@@ -826,12 +796,11 @@ public class SpotSeparation implements PlugInFilter
 		double u00 = 0;
 		double xCtr = 0, yCtr = 0;
 		for (int ii = 0; ii < spotIp.getPixelCount(); ii++)
-		{
 			if (spotIp.get(ii) == peakId)
 			{
 				final float value = ip.getf(ii);
-				int u = ii % spotIp.getWidth();
-				int v = ii / spotIp.getWidth();
+				final int u = ii % spotIp.getWidth();
+				final int v = ii / spotIp.getWidth();
 				if (maxu < u)
 					maxu = u;
 				if (minu > u)
@@ -844,7 +813,6 @@ public class SpotSeparation implements PlugInFilter
 				xCtr += u * value;
 				yCtr += v * value;
 			}
-		}
 		xCtr /= u00;
 		yCtr /= u00;
 
@@ -859,25 +827,21 @@ public class SpotSeparation implements PlugInFilter
 		double u20 = 0;
 		double u02 = 0;
 		for (int v = minv; v <= maxv; v++)
-		{
 			for (int u = minu, ii = v * spotIp.getWidth() + minu; u <= maxu; u++, ii++)
-			{
 				if (spotIp.get(ii) == peakId)
 				{
 					final float value = ip.getf(ii);
-					double dx = u - xCtr;
-					double dy = v - yCtr;
+					final double dx = u - xCtr;
+					final double dy = v - yCtr;
 					u11 += value * dx * dy;
 					u20 += value * dx * dx;
 					u02 += value * dy * dy;
 				}
-			}
-		}
 
 		// Calculate the ellipsoid
-		double A = 2 * u11;
-		double B = u20 - u02;
-		double angle = 0.5 * Math.atan2(A, B);
+		final double A = 2 * u11;
+		final double B = u20 - u02;
+		final double angle = 0.5 * Math.atan2(A, B);
 		return angle;
 	}
 
@@ -885,21 +849,17 @@ public class SpotSeparation implements PlugInFilter
 	private final float[][] convertToFloat(List<float[]>... lists)
 	{
 		int size = 0;
-		for (List<float[]> list : lists)
-		{
+		for (final List<float[]> list : lists)
 			size += list.size();
-		}
-		float[][] results = new float[2][size];
+		final float[][] results = new float[2][size];
 		int i = 0;
-		for (List<float[]> list : lists)
-		{
-			for (float[] f : list)
+		for (final List<float[]> list : lists)
+			for (final float[] f : list)
 			{
 				results[0][i] = f[0];
 				results[1][i] = f[1];
 				i++;
 			}
-		}
 		return results;
 	}
 
@@ -907,27 +867,25 @@ public class SpotSeparation implements PlugInFilter
 	{
 		if (!showLineProfiles)
 			return;
-		Frame[] frames = WindowManager.getNonImageWindows();
+		final Frame[] frames = WindowManager.getNonImageWindows();
 		if (frames == null)
 			return;
-		for (Frame f : frames)
+		for (final Frame f : frames)
 		{
 			if (plotProfiles.contains(f.getTitle()))
 				continue;
 			if (f.getTitle().startsWith(TITLE) && f.getTitle().endsWith("Profile"))
-			{
 				if (f instanceof PlotWindow)
 				{
-					PlotWindow p = ((PlotWindow) f);
+					final PlotWindow p = ((PlotWindow) f);
 					p.close();
 				}
-			}
 		}
 	}
 
 	/**
 	 * Show a plot of the line profile
-	 * 
+	 *
 	 * @param xValues
 	 * @param yValues
 	 * @param profileTitle
@@ -936,17 +894,15 @@ public class SpotSeparation implements PlugInFilter
 	{
 		if (showLineProfiles)
 		{
-			Frame f = WindowManager.getFrame(profileTitle);
-			Plot plot = new Plot(profileTitle, "Distance", "Value", xValues, yValues);
+			final Frame f = WindowManager.getFrame(profileTitle);
+			final Plot plot = new Plot(profileTitle, "Distance", "Value", xValues, yValues);
 			if (f instanceof PlotWindow)
 			{
-				PlotWindow p = ((PlotWindow) f);
+				final PlotWindow p = ((PlotWindow) f);
 				p.drawPlot(plot);
 			}
 			else
-			{
 				plot.show();
-			}
 
 			plotProfiles.add(profileTitle);
 		}

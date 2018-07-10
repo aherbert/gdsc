@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -42,7 +42,7 @@ import ij.process.ImageProcessor;
  */
 public class FindMaximaController extends ImageJController
 {
-	private ArrayList<FindFociResult> resultsArray = new ArrayList<FindFociResult>();
+	private ArrayList<FindFociResult> resultsArray = new ArrayList<>();
 	private ImageStack activeImageStack = null;
 	private int activeChannel = 1;
 	private int activeFrame = 1;
@@ -55,70 +55,64 @@ public class FindMaximaController extends ImageJController
 	/*
 	 * Allow N-Dimensional images. The controller can detect this and prompt the user for the desired channel and frame
 	 * for analysis.
-	 * 
+	 *
 	 * @see gdsc.foci.controller.ImageJController#updateImageList()
 	 */
 	@Override
 	public void updateImageList()
 	{
-		int noOfImages = WindowManager.getImageCount();
-		List<String> imageList = new ArrayList<String>(noOfImages);
-		for (int id : gdsc.core.ij.Utils.getIDList())
+		final int noOfImages = WindowManager.getImageCount();
+		final List<String> imageList = new ArrayList<>(noOfImages);
+		for (final int id : gdsc.core.ij.Utils.getIDList())
 		{
-			ImagePlus imp = WindowManager.getImage(id);
+			final ImagePlus imp = WindowManager.getImage(id);
 
 			// Image must be 8-bit/16-bit/32-bit
 			if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16 ||
 					imp.getType() == ImagePlus.GRAY32))
 			{
 				// Check it is not one the result images
-				String imageTitle = imp.getTitle();
+				final String imageTitle = imp.getTitle();
 				if (!imageTitle.endsWith(FindFoci.TITLE))
-				{
 					imageList.add(imageTitle);
-				}
 			}
 		}
 
 		model.setImageList(imageList);
 
 		// Get the selected image
-		String title = model.getSelectedImage();
-		ImagePlus imp = WindowManager.getImage(title);
+		final String title = model.getSelectedImage();
+		final ImagePlus imp = WindowManager.getImage(title);
 
 		model.setMaskImageList(FindFoci.buildMaskList(imp));
 	}
 
 	/*
 	 * Allow N-dimensional images. Prompt for the channel and frame.
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#run()
 	 */
 	@Override
 	public void run()
 	{
-		resultsArray = new ArrayList<FindFociResult>();
+		resultsArray = new ArrayList<>();
 
 		// Get the selected image
-		String title = model.getSelectedImage();
+		final String title = model.getSelectedImage();
 		ImagePlus imp = WindowManager.getImage(title);
 		if (null == imp)
-		{
 			return;
-		}
 
 		if (!FindFoci.isSupported(imp.getBitDepth()))
-		{
 			return;
-		}
 
 		// Allow N-dimensional images. Prompt for the channel and frame.
 		if (imp.getNChannels() != 1 || imp.getNFrames() != 1)
 		{
-			GenericDialog gd = new GenericDialog("Select Channel/Frame");
+			final GenericDialog gd = new GenericDialog("Select Channel/Frame");
 			gd.addMessage("Stack detected.\nPlease select the channel/frame.");
-			String[] channels = getChannels(imp);
-			String[] frames = getFrames(imp);
+			final String[] channels = getChannels(imp);
+			final String[] frames = getFrames(imp);
 
 			if (channels.length > 1)
 				gd.addChoice("Channel", channels, channels[channels.length >= activeChannel ? activeChannel - 1 : 0]);
@@ -138,38 +132,36 @@ public class FindMaximaController extends ImageJController
 			imp = new ImagePlus("", activeImageStack);
 		}
 		else
-		{
 			activeImageStack = imp.getStack();
-		}
 
 		// Set-up the FindFoci variables
-		String maskImage = model.getMaskImage();
-		int backgroundMethod = model.getBackgroundMethod();
-		double backgroundParameter = model.getBackgroundParameter();
-		String thresholdMethod = model.getThresholdMethod();
-		String statisticsMode = model.getStatisticsMode();
-		int searchMethod = model.getSearchMethod();
-		double searchParameter = model.getSearchParameter();
-		int minSize = model.getMinSize();
-		boolean minimumAboveSaddle = model.isMinimumAboveSaddle();
-		boolean connectedAboveSaddle = model.isConnectedAboveSaddle();
-		int peakMethod = model.getPeakMethod();
-		double peakParameter = model.getPeakParameter();
-		int sortMethod = model.getSortMethod();
-		int maxPeaks = model.getMaxPeaks();
-		int showMask = model.getShowMask();
-		boolean overlayMask = model.isOverlayMask();
-		boolean showTable = model.isShowTable();
-		boolean clearTable = model.isClearTable();
-		boolean markMaxima = model.isMarkMaxima();
-		boolean markROIMaxima = model.isMarkROIMaxima();
-		boolean markUsingOverlay = model.isMarkUsingOverlay();
-		boolean hideLabels = model.isHideLabels();
-		boolean showLogMessages = model.isShowLogMessages();
-		double gaussianBlur = model.getGaussianBlur();
-		int centreMethod = model.getCentreMethod();
-		double centreParameter = model.getCentreParameter();
-		double fractionParameter = model.getFractionParameter();
+		final String maskImage = model.getMaskImage();
+		final int backgroundMethod = model.getBackgroundMethod();
+		final double backgroundParameter = model.getBackgroundParameter();
+		final String thresholdMethod = model.getThresholdMethod();
+		final String statisticsMode = model.getStatisticsMode();
+		final int searchMethod = model.getSearchMethod();
+		final double searchParameter = model.getSearchParameter();
+		final int minSize = model.getMinSize();
+		final boolean minimumAboveSaddle = model.isMinimumAboveSaddle();
+		final boolean connectedAboveSaddle = model.isConnectedAboveSaddle();
+		final int peakMethod = model.getPeakMethod();
+		final double peakParameter = model.getPeakParameter();
+		final int sortMethod = model.getSortMethod();
+		final int maxPeaks = model.getMaxPeaks();
+		final int showMask = model.getShowMask();
+		final boolean overlayMask = model.isOverlayMask();
+		final boolean showTable = model.isShowTable();
+		final boolean clearTable = model.isClearTable();
+		final boolean markMaxima = model.isMarkMaxima();
+		final boolean markROIMaxima = model.isMarkROIMaxima();
+		final boolean markUsingOverlay = model.isMarkUsingOverlay();
+		final boolean hideLabels = model.isHideLabels();
+		final boolean showLogMessages = model.isShowLogMessages();
+		final double gaussianBlur = model.getGaussianBlur();
+		final int centreMethod = model.getCentreMethod();
+		final double centreParameter = model.getCentreParameter();
+		final double fractionParameter = model.getFractionParameter();
 
 		int outputType = FindFoci.getOutputMaskFlags(showMask);
 
@@ -201,22 +193,20 @@ public class FindMaximaController extends ImageJController
 			options |= FindFociProcessor.OPTION_STATS_OUTSIDE;
 
 		if (outputType == 0)
-		{
 			return;
-		}
 
 		model.setUnchanged();
 
-		ImagePlus mask = WindowManager.getImage(maskImage);
+		final ImagePlus mask = WindowManager.getImage(maskImage);
 
-		FindFoci ff = new FindFoci();
-		FindFociResults results = ff.findMaxima(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod,
+		final FindFoci ff = new FindFoci();
+		final FindFociResults results = ff.findMaxima(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod,
 				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortMethod,
 				options, gaussianBlur, centreMethod, centreParameter, fractionParameter);
 
 		if (results != null)
 		{
-			ArrayList<FindFociResult> newResultsArray = results.results;
+			final ArrayList<FindFociResult> newResultsArray = results.results;
 			if (newResultsArray != null)
 				resultsArray = newResultsArray;
 		}
@@ -224,8 +214,8 @@ public class FindMaximaController extends ImageJController
 
 	private String[] getChannels(ImagePlus imp)
 	{
-		int c = imp.getNChannels();
-		String[] result = new String[c];
+		final int c = imp.getNChannels();
+		final String[] result = new String[c];
 		for (int i = 0; i < c; i++)
 			result[i] = Integer.toString(i + 1);
 		return result;
@@ -233,8 +223,8 @@ public class FindMaximaController extends ImageJController
 
 	private String[] getFrames(ImagePlus imp)
 	{
-		int c = imp.getNFrames();
-		String[] result = new String[c];
+		final int c = imp.getNFrames();
+		final String[] result = new String[c];
 		for (int i = 0; i < c; i++)
 			result[i] = Integer.toString(i + 1);
 		return result;
@@ -242,15 +232,15 @@ public class FindMaximaController extends ImageJController
 
 	private ImageStack extractImage(ImagePlus imp, int channel, int frame)
 	{
-		int slices = imp.getNSlices();
+		final int slices = imp.getNSlices();
 
-		ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
-		ImageStack inputStack = imp.getImageStack();
+		final ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
+		final ImageStack inputStack = imp.getImageStack();
 
 		for (int slice = 1; slice <= slices; slice++)
 		{
 			// Convert to a short processor
-			ImageProcessor ip = inputStack.getProcessor(imp.getStackIndex(channel, slice, frame));
+			final ImageProcessor ip = inputStack.getProcessor(imp.getStackIndex(channel, slice, frame));
 			stack.addSlice(null, ip);
 		}
 		return stack;
@@ -258,7 +248,7 @@ public class FindMaximaController extends ImageJController
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#run()
 	 */
 	@Override
@@ -269,7 +259,7 @@ public class FindMaximaController extends ImageJController
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#endPreview()
 	 */
 	@Override
@@ -289,7 +279,7 @@ public class FindMaximaController extends ImageJController
 	/**
 	 * Gets the active image stack used within the find foci algorithm. This will be the sub-image stack if an
 	 * N-dimensional image was processed.
-	 * 
+	 *
 	 * @return The active image stack
 	 */
 	public ImageStack getActiveImageStack()

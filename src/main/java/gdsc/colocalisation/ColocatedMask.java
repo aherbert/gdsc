@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -125,7 +125,6 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 		public void run()
 		{
 			while (true)
-			{
 				try
 				{
 					synchronized (flag)
@@ -133,10 +132,8 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 						if (flag.isClean())
 						{
 							if (stop)
-							{
 								//System.out.println("Stopping");
 								break;
-							}
 							// Wait for changes
 							//System.out.println("Waiting");
 							flag.wait();
@@ -148,17 +145,16 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 					//System.out.println("Running");
 					createMask(true);
 				}
-				catch (InterruptedException e)
+				catch (final InterruptedException e)
 				{
 					break;
 				}
-			}
 		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
 	@Override
@@ -173,13 +169,13 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 
 	private boolean showDialog()
 	{
-		String[] list = Utils.getImageList(0, new String[] { TITLE });
+		final String[] list = Utils.getImageList(0, new String[] { TITLE });
 
 		gd = new NonBlockingExtendedGenericDialog(TITLE);
 		gd.addMessage("Create a mask from 2 images.\nImages must match XY dimensions.");
-		Choice c1 = gd.addAndGetChoice("Image_1", list, selectedImage1);
-		Choice c2 = gd.addAndGetChoice("Image_2", list, selectedImage2);
-		boolean dynamic = Utils.isShowGenericDialog();
+		final Choice c1 = gd.addAndGetChoice("Image_1", list, selectedImage1);
+		final Choice c2 = gd.addAndGetChoice("Image_2", list, selectedImage2);
+		final boolean dynamic = Utils.isShowGenericDialog();
 		Worker worker = null;
 		Thread t = null;
 		if (dynamic)
@@ -218,22 +214,19 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 			ImagePlus.removeImageListener(this);
 		}
 
-		boolean cancelled = gd.wasCanceled();
+		final boolean cancelled = gd.wasCanceled();
 		if (dynamic)
-		{
 			// Stop the worker thread
 			if (cancelled)
-			{
 				try
 				{
 					t.interrupt();
 				}
-				catch (SecurityException e)
+				catch (final SecurityException e)
 				{
 					// We should have permission to interrupt this thread.
 					e.printStackTrace();
 				}
-			}
 			else
 			{
 				worker.stop = true;
@@ -244,11 +237,10 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 				{
 					t.join(0);
 				}
-				catch (InterruptedException e)
+				catch (final InterruptedException e)
 				{
 				}
 			}
-		}
 		if (cancelled)
 			return false;
 
@@ -267,7 +259,7 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 
 	private int getId(String title)
 	{
-		ImagePlus imp = WindowManager.getImage(title);
+		final ImagePlus imp = WindowManager.getImage(title);
 		return (imp == null) ? 0 : imp.getID();
 	}
 
@@ -284,22 +276,18 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 	private void createMaskWork(boolean preview)
 	{
 		if (preview)
-		{
 			// Add work for the background thread
 			flag.dirty();
-		}
 		else
-		{
 			createMask(false);
-		}
 	}
 
 	private Settings lastSettings;
 
 	private void createMask(boolean preview)
 	{
-		ImagePlus imp1 = WindowManager.getImage(selectedImage1);
-		ImagePlus imp2 = WindowManager.getImage(selectedImage2);
+		final ImagePlus imp1 = WindowManager.getImage(selectedImage1);
+		final ImagePlus imp2 = WindowManager.getImage(selectedImage2);
 
 		if (imp1 == null)
 		{
@@ -319,8 +307,8 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 		id2 = imp2.getID();
 
 		// Check the dimensions
-		int width = imp1.getWidth();
-		int height = imp1.getHeight();
+		final int width = imp1.getWidth();
+		final int height = imp1.getHeight();
 		if (width != imp2.getWidth() || width != imp2.getHeight())
 		{
 			if (preview)
@@ -331,21 +319,18 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 		}
 
 		// Create a mask using the correct stack dimensions
-		int[] dimensions1 = imp1.getDimensions();
-		int[] dimensions2 = imp2.getDimensions();
+		final int[] dimensions1 = imp1.getDimensions();
+		final int[] dimensions2 = imp2.getDimensions();
 
 		// Produce the biggest hyperstack possible
-		String[] dimName = { "C", "Z", "T" };
+		final String[] dimName = { "C", "Z", "T" };
 
-		int[] index = new int[3];
+		final int[] index = new int[3];
 
 		StringBuilder sb = null;
 		for (int i = 0, j = 2; i < 3; i++, j++)
-		{
 			if (dimensions1[j] == dimensions2[j])
-			{
 				index[i] = dimensions1[j];
-			}
 			else
 			{
 				// If the CZT dimensions do not match then one must be 1
@@ -365,80 +350,63 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 				sb.append(" ").append(dimName[i]).append(" ").append(dimensions1[j]).append("!=")
 						.append(dimensions2[j]);
 			}
-		}
 		if (sb != null)
 			IJ.log(sb.toString());
 
 		// Get the thresholds
-		TDoubleArrayList list = new TDoubleArrayList(index[0] * 2);
+		final TDoubleArrayList list = new TDoubleArrayList(index[0] * 2);
 		for (int channel = 1; channel <= index[0]; channel++)
 		{
 			list.add(getMin(imp1, channel));
 			list.add(getMin(imp2, channel));
 		}
 
-		// Check if it is worth doing any work. 
-		Settings settings = new Settings(id1, id2, width, height, dimensions1[2], dimensions1[3], dimensions1[4],
+		// Check if it is worth doing any work.
+		final Settings settings = new Settings(id1, id2, width, height, dimensions1[2], dimensions1[3], dimensions1[4],
 				dimensions2[2], dimensions2[3], dimensions2[4], colocatedMode, list);
 		if (settings.equals(lastSettings))
-		{
 			//System.out.println("Ignoring");
 			return;
-		}
 		lastSettings = settings;
 
-		ImageStack imageStack1 = imp1.getStack();
-		ImageStack imageStack2 = imp2.getStack();
-		ImagePlus imp = IJ.createHyperStack(TITLE, width, height, index[0], index[1], index[2], 8);
-		ImageStack outputStack = imp.getStack();
+		final ImageStack imageStack1 = imp1.getStack();
+		final ImageStack imageStack2 = imp2.getStack();
+		final ImagePlus imp = IJ.createHyperStack(TITLE, width, height, index[0], index[1], index[2], 8);
+		final ImageStack outputStack = imp.getStack();
 
 		for (int channel = 1, next = 0; channel <= index[0]; channel++)
 		{
-			double min1 = list.getQuick(next++);
-			double min2 = list.getQuick(next++);
+			final double min1 = list.getQuick(next++);
+			final double min2 = list.getQuick(next++);
 			//System.out.printf("Min1 = %f, Min2 = %f\n", min1, min2);
 
 			for (int slice = 1; slice <= index[1]; slice++)
 				for (int frame = 1; frame <= index[2]; frame++)
 				{
-					ImageProcessor ip1 = imageStack1.getProcessor(imp1.getStackIndex(frame, slice, frame));
-					ImageProcessor ip2 = imageStack2.getProcessor(imp2.getStackIndex(frame, slice, frame));
-					byte[] b = (byte[]) outputStack.getPixels(imp1.getStackIndex(frame, slice, frame));
+					final ImageProcessor ip1 = imageStack1.getProcessor(imp1.getStackIndex(frame, slice, frame));
+					final ImageProcessor ip2 = imageStack2.getProcessor(imp2.getStackIndex(frame, slice, frame));
+					final byte[] b = (byte[]) outputStack.getPixels(imp1.getStackIndex(frame, slice, frame));
 
 					if (colocatedMode == 0)
 					{
 						// AND
 						for (int i = ip2.getPixelCount(); i-- > 0;)
-						{
 							if (ip1.getf(i) >= min1 && ip2.getf(i) >= min2)
-							{
 								b[i] = (byte) 255;
-							}
-						}
 					}
 					else
-					{
 						// OR
 						for (int i = ip2.getPixelCount(); i-- > 0;)
-						{
 							if (ip1.getf(i) >= min1 || ip2.getf(i) >= min2)
-							{
 								b[i] = (byte) 255;
-							}
-						}
-					}
 				}
 		}
 
-		ImagePlus oldImp = WindowManager.getImage(TITLE);
+		final ImagePlus oldImp = WindowManager.getImage(TITLE);
 		if (oldImp == null)
-		{
 			imp.show();
-		}
 		else
-		{
 			oldImp.setStack(outputStack, index[0], index[1], index[2]);
-		}
 	}
 
 	private double getMin(ImagePlus imp, int channel)
@@ -451,16 +419,16 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 	private double getThreshold(ImagePlus imp, int channel)
 	{
 		// Composite image have different processors
-		ImageProcessor ip = (imp.isComposite()) ? ((CompositeImage) imp).getProcessor(channel) : imp.getProcessor();
+		final ImageProcessor ip = (imp.isComposite()) ? ((CompositeImage) imp).getProcessor(channel) : imp.getProcessor();
 
-		double t = ip.getMinThreshold();
+		final double t = ip.getMinThreshold();
 		return (t != ImageProcessor.NO_THRESHOLD) ? t : Double.NEGATIVE_INFINITY;
 	}
 
 	private double getDisplayRangeMin(ImagePlus imp, int channel)
 	{
 		// Composite images can have a display range for each color channel
-		LUT[] luts = imp.getLuts();
+		final LUT[] luts = imp.getLuts();
 		if (luts != null && channel <= luts.length)
 			return luts[channel - 1].min;
 
@@ -483,13 +451,9 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 	public void imageUpdated(ImagePlus imp)
 	{
 		if (imp.getID() == id1 || imp.getID() == id2)
-		{
 			// We are monitoring these images so action this
 			if (preview.getState())
-			{
 				createMaskWork(true);
-			}
-		}
 	}
 
 	@Override

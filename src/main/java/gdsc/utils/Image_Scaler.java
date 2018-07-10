@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -50,7 +50,7 @@ public class Image_Scaler implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
@@ -59,16 +59,14 @@ public class Image_Scaler implements PlugInFilter
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
 		if (!showDialog())
-		{
 			return DONE;
-		}
 		this.imp = imp;
 		return DOES_ALL | NO_IMAGE_REQUIRED;
 	}
 
 	private boolean showDialog()
 	{
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage(
 				"Rescales the maxima of the image(s) to the given value.\nProcesses the image stack or a set of input images.");
@@ -89,48 +87,44 @@ public class Image_Scaler implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
 	public void run(ImageProcessor inputProcessor)
 	{
-		boolean listExists = (listFile != null && !listFile.equals(""));
+		final boolean listExists = (listFile != null && !listFile.equals(""));
 		if (imp == null && !listExists)
 			return;
 
 		if (listExists)
-		{
 			run(listFile, maxValue);
-		}
 		else
-		{
 			run(new ImagePlus[] { imp }, maxValue);
-		}
 	}
 
 	/**
 	 * Scales all the images by the same factor so that one image has the specified maximum.
-	 * 
+	 *
 	 * @param listFile
 	 *            File listing all the images to scale
 	 * @param maxValue
 	 */
 	public void run(String listFile, double maxValue)
 	{
-		boolean listExists = (listFile != null && !listFile.equals(""));
+		final boolean listExists = (listFile != null && !listFile.equals(""));
 		if (!listExists)
 			return;
 
 		if (!new File(listFile).exists())
 			return;
 
-		double[] limits = new double[] { Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
+		final double[] limits = new double[] { Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
 
 		// Read all images sequentially and find the limits
 		try
 		{
-			BufferedReader input = new BufferedReader(new FileReader(listFile));
+			final BufferedReader input = new BufferedReader(new FileReader(listFile));
 			String line = null; //not declared within while loop
 			while ((line = input.readLine()) != null)
 			{
@@ -139,15 +133,13 @@ public class Image_Scaler implements PlugInFilter
 
 				ImagePlus imp = new ImagePlus(line);
 				if (imp != null)
-				{
 					updateMinAndMax(imp, limits);
-				}
 				imp.flush();
 				imp = null; // Free memory
 			}
 			input.close();
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			IJ.error("Failed to read images in input list file: " + listFile);
 			return;
@@ -156,12 +148,12 @@ public class Image_Scaler implements PlugInFilter
 		if (limits[1] <= limits[0])
 			return;
 
-		double scaleFactor = maxValue / limits[1];
+		final double scaleFactor = maxValue / limits[1];
 
 		// Rewrite images
 		try
 		{
-			BufferedReader input = new BufferedReader(new FileReader(listFile));
+			final BufferedReader input = new BufferedReader(new FileReader(listFile));
 			String line = null; //not declared within while loop
 			while ((line = input.readLine()) != null)
 			{
@@ -179,7 +171,7 @@ public class Image_Scaler implements PlugInFilter
 			}
 			input.close();
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			IJ.error("Failed to re-write images in input list file: " + listFile);
 		}
@@ -187,36 +179,32 @@ public class Image_Scaler implements PlugInFilter
 
 	/**
 	 * Scales all the images by the same factor so that one image has the specified maximum.
-	 * 
+	 *
 	 * @param images
 	 * @param maxValue
 	 */
 	public void run(ImagePlus[] images, double maxValue)
 	{
-		double[] limits = new double[] { Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
+		final double[] limits = new double[] { Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
 
-		for (ImagePlus imp : images)
-		{
+		for (final ImagePlus imp : images)
 			updateMinAndMax(imp, limits);
-		}
 
 		if (limits[1] <= limits[0])
 			return;
 
-		double scaleFactor = maxValue / limits[1];
+		final double scaleFactor = maxValue / limits[1];
 
-		for (ImagePlus imp : images)
-		{
+		for (final ImagePlus imp : images)
 			multiply(imp, scaleFactor);
-		}
 	}
 
 	private void updateMinAndMax(ImagePlus imp, double[] limits)
 	{
-		ImageStack stack = imp.getImageStack();
+		final ImageStack stack = imp.getImageStack();
 		for (int slice = 1; slice <= stack.getSize(); slice++)
 		{
-			ImageStatistics stats = ImageStatistics.getStatistics(stack.getProcessor(slice), Measurements.MIN_MAX,
+			final ImageStatistics stats = ImageStatistics.getStatistics(stack.getProcessor(slice), Measurements.MIN_MAX,
 					null);
 			if (limits[0] > stats.min)
 				limits[0] = stats.min;
@@ -227,11 +215,9 @@ public class Image_Scaler implements PlugInFilter
 
 	private void multiply(ImagePlus imp, double scaleFactor)
 	{
-		ImageStack stack = imp.getImageStack();
+		final ImageStack stack = imp.getImageStack();
 		for (int slice = 1; slice <= stack.getSize(); slice++)
-		{
 			stack.getProcessor(slice).multiply(scaleFactor);
-		}
 		if (imp.isVisible())
 		{
 			imp.resetDisplayRange();

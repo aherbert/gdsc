@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -96,7 +96,7 @@ public class SpotDistance implements PlugIn
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see java.lang.Comparable#compareTo(java.lang.Object)
 		 */
 		@Override
@@ -178,9 +178,7 @@ public class SpotDistance implements PlugIn
 		}
 
 		if (arg != null && arg.equals("extra"))
-		{
 			extraOptions = true;
-		}
 
 		imp = WindowManager.getCurrentImage();
 
@@ -196,12 +194,12 @@ public class SpotDistance implements PlugIn
 			return;
 		}
 
-		boolean installOption = false; // TODO - Determine if the tool is already installed
+		final boolean installOption = false; // TODO - Determine if the tool is already installed
 
 		// Build a list of the open images
-		String[] maskImageList = buildMaskList(imp);
+		final String[] maskImageList = buildMaskList(imp);
 
-		Roi roi = imp.getRoi();
+		final Roi roi = imp.getRoi();
 		if (maskImageList.length == 1 && (roi == null || !roi.isArea()))
 		{
 			IJ.showMessage("Error", "No mask images and no area ROI");
@@ -210,7 +208,7 @@ public class SpotDistance implements PlugIn
 
 		if (arg == null || !arg.equals("redo")) // Allow repeat with same parameters
 		{
-			GenericDialog gd = new GenericDialog(TITLE);
+			final GenericDialog gd = new GenericDialog(TITLE);
 
 			gd.addMessage(
 					"Detects spots within a mask/ROI region\nand computes all-vs-all distances.\n(Hold shift for extra options)");
@@ -279,10 +277,8 @@ public class SpotDistance implements PlugIn
 			calibratedDistances = gd.getNextBoolean();
 			trackObjects = gd.getNextBoolean();
 			if (installOption)
-			{
 				if (gd.getNextBoolean())
 					installTool();
-			}
 			if (!(pixelDistances || calibratedDistances))
 				calibratedDistances = true;
 		}
@@ -294,15 +290,13 @@ public class SpotDistance implements PlugIn
 
 		if (doDualChannel)
 		{
-			GenericDialog gd = new GenericDialog(TITLE);
+			final GenericDialog gd = new GenericDialog(TITLE);
 			gd.addMessage("Select the channels for dual channel analysis");
 
-			String[] list = new String[imp.getNChannels()];
+			final String[] list = new String[imp.getNChannels()];
 			for (int i = 0; i < list.length; i++)
-			{
 				list[i] = "Channel " + (i + 1);
-			}
-			int myC1 = (c1 > list.length) ? 0 : c1 - 1;
+			final int myC1 = (c1 > list.length) ? 0 : c1 - 1;
 			int myC2 = (c2 > list.length) ? 0 : c2 - 1;
 			if (myC1 == myC2)
 				myC2 = (myC1 + 1) % list.length;
@@ -316,31 +310,29 @@ public class SpotDistance implements PlugIn
 			c2 = gd.getNextChoiceIndex() + 1;
 
 			if (c1 == c2)
-			{
 				doDualChannel = false;
-			}
 		}
 
 		initialise();
 
 		final int channel = (doDualChannel) ? c1 : imp.getChannel();
-		ImageStack imageStack = imp.getImageStack();
-		ImageStack maskStack = maskImp.getImageStack();
+		final ImageStack imageStack = imp.getImageStack();
+		final ImageStack maskStack = maskImp.getImageStack();
 
 		// Cache the mask image. Only recreate the mask if using multiple frames
 		ImageStack s2 = null;
 
-		int[] frames = buildFrameList();
+		final int[] frames = buildFrameList();
 
 		createProjection(frames, doDualChannel);
 
 		for (int i = 0; i < frames.length; i++)
 		{
-			int frame = frames[i];
+			final int frame = frames[i];
 
 			// Build an image and mask for the frame
-			ImageStack s1 = new ImageStack(imp.getWidth(), imp.getHeight(), imp.getNSlices());
-			ImageStack s1b = (doDualChannel) ? new ImageStack(imp.getWidth(), imp.getHeight(), imp.getNSlices()) : null;
+			final ImageStack s1 = new ImageStack(imp.getWidth(), imp.getHeight(), imp.getNSlices());
+			final ImageStack s1b = (doDualChannel) ? new ImageStack(imp.getWidth(), imp.getHeight(), imp.getNSlices()) : null;
 
 			for (int slice = 1; slice <= imp.getNSlices(); slice++)
 			{
@@ -362,12 +354,12 @@ public class SpotDistance implements PlugIn
 				// Only create a mask with 1 slice if necessary
 				for (int slice = 1; slice <= maskImp.getNSlices(); slice++)
 				{
-					int maskChannel = (maskImp.getNChannels() > 1) ? channel : 1;
-					int maskFrame = (maskImp.getNFrames() > 1) ? frame : 1;
-					int maskSlice = (maskImp.getNSlices() > 1) ? slice : 1;
+					final int maskChannel = (maskImp.getNChannels() > 1) ? channel : 1;
+					final int maskFrame = (maskImp.getNFrames() > 1) ? frame : 1;
+					final int maskSlice = (maskImp.getNSlices() > 1) ? slice : 1;
 
-					int maskStackIndex = maskImp.getStackIndex(maskChannel, maskSlice, maskFrame);
-					ImageProcessor maskIp = maskStack.getProcessor(maskStackIndex);
+					final int maskStackIndex = maskImp.getStackIndex(maskChannel, maskSlice, maskFrame);
+					final ImageProcessor maskIp = maskStack.getProcessor(maskStackIndex);
 
 					s2.setPixels(maskIp.getPixels(), slice);
 				}
@@ -407,8 +399,8 @@ public class SpotDistance implements PlugIn
 	{
 		if (window != null && line > 0)
 		{
-			TextPanel tp = window.getTextPanel();
-			int nLines = tp.getLineCount();
+			final TextPanel tp = window.getTextPanel();
+			final int nLines = tp.getLineCount();
 			if (line < nLines)
 			{
 				tp.setSelection(line, nLines);
@@ -439,9 +431,7 @@ public class SpotDistance implements PlugIn
 				frames[i] = i + 1;
 		}
 		else
-		{
 			frames = new int[] { imp.getFrame() };
-		}
 		return frames;
 	}
 
@@ -450,31 +440,21 @@ public class SpotDistance implements PlugIn
 		if (!showProjection)
 			return;
 
-		ImageStack stack = imp.createEmptyStack();
-		ImageProcessor ip = imp.getProcessor();
-		for (int f : frames)
-		{
+		final ImageStack stack = imp.createEmptyStack();
+		final ImageProcessor ip = imp.getProcessor();
+		for (final int f : frames)
 			stack.addSlice("Frame " + f, ip.createProcessor(ip.getWidth(), ip.getHeight()));
-		}
 		if (dualChannel)
-		{
-			for (int f : frames)
-			{
+			for (final int f : frames)
 				stack.addSlice("Frame " + f, ip.createProcessor(ip.getWidth(), ip.getHeight()));
-			}
-		}
 
-		String title = imp.getTitle() + " Spots Projection";
+		final String title = imp.getTitle() + " Spots Projection";
 		projectionImp = WindowManager.getImage(title);
 		final int nChannels = (dualChannel) ? 2 : 1;
 		if (projectionImp == null)
-		{
 			projectionImp = new ImagePlus(title, stack);
-		}
 		else
-		{
 			projectionImp.setStack(stack);
-		}
 		projectionImp.setSlice(1);
 		projectionImp.setOverlay(null);
 		projectionImp.setDimensions(nChannels, 1, frames.length);
@@ -484,12 +464,12 @@ public class SpotDistance implements PlugIn
 
 	private String[] buildMaskList(ImagePlus imp)
 	{
-		ArrayList<String> newImageList = new ArrayList<String>();
+		final ArrayList<String> newImageList = new ArrayList<>();
 		newImageList.add("[None]");
 
-		for (int id : gdsc.core.ij.Utils.getIDList())
+		for (final int id : gdsc.core.ij.Utils.getIDList())
 		{
-			ImagePlus maskImp = WindowManager.getImage(id);
+			final ImagePlus maskImp = WindowManager.getImage(id);
 			// Mask image must:
 			// - Not be the same image
 			// - Match XY dimensions of the input image
@@ -499,9 +479,7 @@ public class SpotDistance implements PlugIn
 					(maskImp.getNSlices() == imp.getNSlices() || maskImp.getNSlices() == 1) &&
 					(maskImp.getNChannels() == imp.getNChannels() || maskImp.getNChannels() == 1) &&
 					(maskImp.getNFrames() == imp.getNFrames() || maskImp.getNFrames() == 1))
-			{
 				newImageList.add(maskImp.getTitle());
-			}
 		}
 
 		return newImageList.toArray(new String[0]);
@@ -514,13 +492,13 @@ public class SpotDistance implements PlugIn
 		if (maskImp == null)
 		{
 			// Build a mask image using the input image ROI
-			Roi roi = imp.getRoi();
+			final Roi roi = imp.getRoi();
 			if (roi == null || !roi.isArea())
 			{
 				IJ.showMessage("Error", "No region defined (use an area ROI or an input mask)");
 				return null;
 			}
-			ShortProcessor ip = new ShortProcessor(imp.getWidth(), imp.getHeight());
+			final ShortProcessor ip = new ShortProcessor(imp.getWidth(), imp.getHeight());
 			ip.setValue(1);
 			ip.setRoi(roi);
 			ip.fill(roi);
@@ -556,25 +534,23 @@ public class SpotDistance implements PlugIn
 	 */
 	private void createResultsWindow()
 	{
-		String resultsHeader = createResultsHeader();
+		final String resultsHeader = createResultsHeader();
 		if (resultsWindow == null || !resultsWindow.isShowing() || !sameHeader(resultsWindow, resultsHeader))
-		{
 			resultsWindow = new TextWindow(TITLE + " Positions", createResultsHeader(), "", 700, 300);
-		}
-		String summaryHeader = createSummaryHeader();
+		final String summaryHeader = createSummaryHeader();
 		if (summaryWindow == null || !summaryWindow.isShowing() || !sameHeader(summaryWindow, summaryHeader))
 		{
 			summaryWindow = new TextWindow(TITLE + " Summary", createSummaryHeader(), "", 700, 300);
-			Point p = resultsWindow.getLocation();
+			final Point p = resultsWindow.getLocation();
 			p.y += resultsWindow.getHeight();
 			summaryWindow.setLocation(p);
 		}
-		String distancesHeader = createDistancesHeader();
+		final String distancesHeader = createDistancesHeader();
 		if (showDistances && (distancesWindow == null || !distancesWindow.isShowing() ||
 				!sameHeader(distancesWindow, distancesHeader)))
 		{
 			distancesWindow = new TextWindow(TITLE + " Distances", createDistancesHeader(), "", 700, 300);
-			Point p = summaryWindow.getLocation();
+			final Point p = summaryWindow.getLocation();
 			p.y += summaryWindow.getHeight();
 			distancesWindow.setLocation(p);
 		}
@@ -584,21 +560,17 @@ public class SpotDistance implements PlugIn
 		lastDistancesLineCount = (showDistances) ? distancesWindow.getTextPanel().getLineCount() : 0;
 
 		// Create the image result prefix
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(imp.getTitle()).append('\t');
 		if (calibratedDistances)
 		{
 			cal = imp.getCalibration();
 			sb.append(cal.getXUnit());
 			if (!(cal.getYUnit().equalsIgnoreCase(cal.getXUnit()) && cal.getZUnit().equalsIgnoreCase(cal.getXUnit())))
-			{
 				sb.append(" ").append(cal.getYUnit()).append(" ").append(cal.getZUnit());
-			}
 		}
 		else
-		{
 			sb.append("pixels");
-		}
 		sb.append('\t');
 		resultEntry = sb.toString();
 	}
@@ -610,7 +582,7 @@ public class SpotDistance implements PlugIn
 
 	private String createResultsHeader()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Image\t");
 		sb.append("Units\t");
 		sb.append("Frame\t");
@@ -634,7 +606,7 @@ public class SpotDistance implements PlugIn
 
 	private String createSummaryHeader()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Image\t");
 		sb.append("Units\t");
 		sb.append("Frame\t");
@@ -660,7 +632,7 @@ public class SpotDistance implements PlugIn
 
 	private String createDistancesHeader()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Image\t");
 		sb.append("Units\t");
 		sb.append("Frame\t");
@@ -688,7 +660,7 @@ public class SpotDistance implements PlugIn
 		//new ImagePlus("image " + frame, s1).show();
 		//new ImagePlus("mask " + frame, s2).show();
 
-		// Check the mask we are using. 
+		// Check the mask we are using.
 		// We can use a ROI bounds for the Gaussian blur to increase speed.
 		Rectangle blurBounds = cachedBlurBounds;
 		if (regions == null)
@@ -706,10 +678,8 @@ public class SpotDistance implements PlugIn
 			blurBounds = bounds;
 		}
 		else if (blurBounds == null)
-		{
 			// Create the bounds using the min and max of all the regions
 			blurBounds = findBounds(s2);
-		}
 
 		cachedBlurBounds = blurBounds;
 
@@ -736,8 +706,8 @@ public class SpotDistance implements PlugIn
 				s1b = runGaussianBlur(s1b, blurBounds);
 		}
 
-		ImagePlus spotImp = new ImagePlus(null, s1);
-		ImagePlus spotImp2 = (s1b != null) ? new ImagePlus(null, s1b) : null;
+		final ImagePlus spotImp = new ImagePlus(null, s1);
+		final ImagePlus spotImp2 = (s1b != null) ? new ImagePlus(null, s1b) : null;
 
 		// Process each region with FindFoci
 
@@ -746,22 +716,22 @@ public class SpotDistance implements PlugIn
 		// - Try Float IP for the DoG image
 		// - Bigger feature size for DoG?
 
-		FindFoci ff = new FindFoci();
-		int backgroundMethod = (autoThreshold) ? FindFociProcessor.BACKGROUND_AUTO_THRESHOLD
+		final FindFoci ff = new FindFoci();
+		final int backgroundMethod = (autoThreshold) ? FindFociProcessor.BACKGROUND_AUTO_THRESHOLD
 				: FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN;
-		double backgroundParameter = stdDevAboveBackground;
-		String autoThresholdMethod = AutoThreshold.Method.OTSU.name;
-		int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
-		double searchParameter = 0;
-		int minSize = minPeakSize;
-		int peakMethod = FindFociProcessor.PEAK_ABSOLUTE;
-		int outputType = FindFociProcessor.OUTPUT_RESULTS_TABLE | FindFociProcessor.OUTPUT_MASK_PEAKS |
+		final double backgroundParameter = stdDevAboveBackground;
+		final String autoThresholdMethod = AutoThreshold.Method.OTSU.name;
+		final int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
+		final double searchParameter = 0;
+		final int minSize = minPeakSize;
+		final int peakMethod = FindFociProcessor.PEAK_ABSOLUTE;
+		final int outputType = FindFociProcessor.OUTPUT_RESULTS_TABLE | FindFociProcessor.OUTPUT_MASK_PEAKS |
 				FindFociProcessor.OUTPUT_MASK_ABOVE_SADDLE | FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
-		int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
-		int options = FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE; // | FindFoci.OPTION_STATS_INSIDE;
-		double blur = 0;
-		int centreMethod = FindFoci.CENTRE_OF_MASS_ORIGINAL;
-		double centreParameter = 2;
+		final int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
+		final int options = FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE; // | FindFoci.OPTION_STATS_INSIDE;
+		final double blur = 0;
+		final int centreMethod = FindFoci.CENTRE_OF_MASS_ORIGINAL;
+		final double centreParameter = 2;
 
 		Overlay overlay = null, overlay2 = null;
 		if (showOverlay > 0)
@@ -771,7 +741,7 @@ public class SpotDistance implements PlugIn
 				overlay2 = new Overlay();
 		}
 
-		for (int region : regions)
+		for (final int region : regions)
 		{
 			// Cache the cropped mask if it has only one region
 			if (regions.length != 1)
@@ -794,8 +764,8 @@ public class SpotDistance implements PlugIn
 			if (s1b != null)
 			{
 				croppedImp2 = crop(spotImp2, bounds);
-				ImageStack stack2 = croppedImp2.getImageStack();
-				float scale2 = scaleImage(stack2);
+				final ImageStack stack2 = croppedImp2.getImageStack();
+				final float scale2 = scaleImage(stack2);
 				croppedImp2.setStack(stack2); // Updates the image bit depth
 				peakParameter2 = Math.round(minPeakHeight * scale2);
 			}
@@ -811,12 +781,10 @@ public class SpotDistance implements PlugIn
 			if (Utils.isInterrupted())
 				return;
 
-			ArrayList<DistanceResult> resultsArray = analyseResults(prevResultsArray, ff, croppedImp, ffResult, frame,
+			final ArrayList<DistanceResult> resultsArray = analyseResults(prevResultsArray, ff, croppedImp, ffResult, frame,
 					channel, overlay);
-			for (DistanceResult result : resultsArray)
-			{
+			for (final DistanceResult result : resultsArray)
 				addResult(frame, channel, region, bounds, result);
-			}
 
 			ArrayList<DistanceResult> resultsArray2 = null;
 			if (s1b != null)
@@ -829,10 +797,8 @@ public class SpotDistance implements PlugIn
 					return;
 
 				resultsArray2 = analyseResults(prevResultsArray2, ff, croppedImp2, results2, frame, c2, overlay2);
-				for (DistanceResult result : resultsArray2)
-				{
+				for (final DistanceResult result : resultsArray2)
 					addResult(frame, c2, region, bounds, result);
-				}
 			}
 
 			if (trackObjects)
@@ -844,7 +810,7 @@ public class SpotDistance implements PlugIn
 			if (s1b == null)
 			{
 				// Single channel analysis
-				String ch = Integer.toString(channel);
+				final String ch = Integer.toString(channel);
 
 				if (resultsArray.size() < 2)
 				{
@@ -859,11 +825,11 @@ public class SpotDistance implements PlugIn
 				int count = 0;
 				for (int i = 0; i < resultsArray.size(); i++)
 				{
-					DistanceResult r1 = resultsArray.get(i);
+					final DistanceResult r1 = resultsArray.get(i);
 					for (int j = i + 1; j < resultsArray.size(); j++)
 					{
-						DistanceResult r2 = resultsArray.get(j);
-						double[] diff = new double[] { (r1.x - r2.x), (r1.y - r2.y), (r1.z - r2.z) };
+						final DistanceResult r2 = resultsArray.get(j);
+						final double[] diff = new double[] { (r1.x - r2.x), (r1.y - r2.y), (r1.z - r2.z) };
 
 						// Ignore distances above the maximum
 						double diff2 = -1;
@@ -883,13 +849,9 @@ public class SpotDistance implements PlugIn
 								diff2 = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
 							d = Math.sqrt(diff2);
 							if (d < minD)
-							{
 								minD = d;
-							}
 							if (d > maxD)
-							{
 								maxD = d;
-							}
 							sumD += d;
 						}
 
@@ -901,13 +863,9 @@ public class SpotDistance implements PlugIn
 							// TODO - This will not be valid if the units are not the same for all dimensions
 							d2 = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
 							if (d2 < minD2)
-							{
 								minD2 = d2;
-							}
 							if (d2 > maxD2)
-							{
 								maxD2 = d2;
-							}
 							sumD2 += d2;
 						}
 
@@ -922,7 +880,7 @@ public class SpotDistance implements PlugIn
 			else
 			{
 				// Dual channel analysis
-				String ch = channel + " + " + c2;
+				final String ch = channel + " + " + c2;
 
 				if (resultsArray.isEmpty() || resultsArray2.isEmpty())
 				{
@@ -935,11 +893,10 @@ public class SpotDistance implements PlugIn
 				double maxD = 0, maxD2 = 0;
 				double sumD = 0, sumD2 = 0;
 				int count = 0;
-				for (DistanceResult r1 : resultsArray)
-				{
-					for (DistanceResult r2 : resultsArray2)
+				for (final DistanceResult r1 : resultsArray)
+					for (final DistanceResult r2 : resultsArray2)
 					{
-						double[] diff = new double[] { (r1.x - r2.x), (r1.y - r2.y), (r1.z - r2.z) };
+						final double[] diff = new double[] { (r1.x - r2.x), (r1.y - r2.y), (r1.z - r2.z) };
 
 						// Ignore distances above the maximum
 						double diff2 = -1;
@@ -959,13 +916,9 @@ public class SpotDistance implements PlugIn
 								diff2 = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
 							d = Math.sqrt(diff2);
 							if (d < minD)
-							{
 								minD = d;
-							}
 							if (d > maxD)
-							{
 								maxD = d;
-							}
 							sumD += d;
 						}
 
@@ -977,20 +930,15 @@ public class SpotDistance implements PlugIn
 							// TODO - This will not be valid if the units are not the same for all dimensions
 							d2 = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
 							if (d2 < minD2)
-							{
 								minD2 = d2;
-							}
 							if (d2 > maxD2)
-							{
 								maxD2 = d2;
-							}
 							sumD2 += d2;
 						}
 
 						if (showDistances)
 							addDistanceResult(frame, ch, region, r1, r2, d, d2);
 					}
-				}
 
 				addSummaryResult(frame, ch, region, resultsArray.size() + resultsArray2.size(), minD, maxD,
 						sumD / count, minD2, maxD2, sumD2 / count);
@@ -1021,7 +969,7 @@ public class SpotDistance implements PlugIn
 			if (overlay2 != null)
 				addToProjectionOverlay(projOverlay, overlay2, frame, 2);
 
-			int index = projectionImp.getStackIndex(1, 1, frame);
+			final int index = projectionImp.getStackIndex(1, 1, frame);
 			projectionImp.setSlice(index);
 			projectionImp.setOverlay(projOverlay);
 			projectionImp.updateAndDraw();
@@ -1038,13 +986,13 @@ public class SpotDistance implements PlugIn
 
 	private void runZProjection(int frame, int channel, ImageStack s1)
 	{
-		int index = projectionImp.getStackIndex(channel, 1, frame);
+		final int index = projectionImp.getStackIndex(channel, 1, frame);
 		projectionImp.setSliceWithoutUpdate(index);
-		ImageProcessor max = projectionImp.getProcessor();
+		final ImageProcessor max = projectionImp.getProcessor();
 		max.insert(s1.getProcessor(1), 0, 0);
 		for (int n = 2; n <= s1.getSize(); n++)
 		{
-			ImageProcessor ip = s1.getProcessor(n);
+			final ImageProcessor ip = s1.getProcessor(n);
 			for (int i = 0; i < ip.getPixelCount(); i++)
 				if (max.get(i) < ip.get(i))
 					max.set(i, ip.get(i));
@@ -1053,10 +1001,10 @@ public class SpotDistance implements PlugIn
 
 	private ImageStack runDifferenceOfGaussians(ImageStack s1, Rectangle blurBounds)
 	{
-		ImageStack newS1 = new ImageStack(s1.getWidth(), s1.getHeight(), s1.getSize());
+		final ImageStack newS1 = new ImageStack(s1.getWidth(), s1.getHeight(), s1.getSize());
 		for (int slice = 1; slice <= s1.getSize(); slice++)
 		{
-			ImageProcessor ip = s1.getProcessor(slice).toFloat(0, null);
+			final ImageProcessor ip = s1.getProcessor(slice).toFloat(0, null);
 			if (blurBounds != null)
 				ip.setRoi(blurBounds);
 			DifferenceOfGaussians.run(ip, featureSize, smoothingSize);
@@ -1068,12 +1016,12 @@ public class SpotDistance implements PlugIn
 
 	private ImageStack runGaussianBlur(ImageStack s1, Rectangle blurBounds)
 	{
-		DifferenceOfGaussians filter = new DifferenceOfGaussians();
+		final DifferenceOfGaussians filter = new DifferenceOfGaussians();
 		filter.noProgress = true;
-		ImageStack newS1 = new ImageStack(s1.getWidth(), s1.getHeight(), s1.getSize());
+		final ImageStack newS1 = new ImageStack(s1.getWidth(), s1.getHeight(), s1.getSize());
 		for (int slice = 1; slice <= s1.getSize(); slice++)
 		{
-			ImageProcessor ip = s1.getProcessor(slice).toFloat(0, null);
+			final ImageProcessor ip = s1.getProcessor(slice).toFloat(0, null);
 			if (blurBounds != null)
 			{
 				ip.setRoi(blurBounds);
@@ -1090,10 +1038,8 @@ public class SpotDistance implements PlugIn
 	{
 		overlay.setFillColor(color);
 		overlay.setStrokeColor(color);
-		for (Roi roi : overlay.toArray())
-		{
+		for (final Roi roi : overlay.toArray())
 			mainOverlay.add(roi);
-		}
 	}
 
 	private void addToProjectionOverlay(Overlay mainOverlay, Overlay overlay, int frame, int channel)
@@ -1101,8 +1047,8 @@ public class SpotDistance implements PlugIn
 		if (projectionImp.getNFrames() == 1)
 			frame = 1;
 		overlay = overlay.duplicate();
-		Roi[] rois = overlay.toArray();
-		for (Roi roi : rois)
+		final Roi[] rois = overlay.toArray();
+		for (final Roi roi : rois)
 		{
 			if (dualChannel)
 				roi.setPosition(channel, 1, frame);
@@ -1118,7 +1064,7 @@ public class SpotDistance implements PlugIn
 	 * <p>
 	 * Only scale the image if the input image stack is a FloatProcessor. The stack will be converted to a
 	 * ShortProcessor.
-	 * 
+	 *
 	 * @param s1
 	 *            The image
 	 * @return The scale
@@ -1133,8 +1079,8 @@ public class SpotDistance implements PlugIn
 		float max = 0;
 		for (int n = 1; n <= s1.getSize(); n++)
 		{
-			float[] pixels = (float[]) s1.getPixels(n);
-			for (float f : pixels)
+			final float[] pixels = (float[]) s1.getPixels(n);
+			for (final float f : pixels)
 			{
 				if (min > f)
 					min = f;
@@ -1144,14 +1090,14 @@ public class SpotDistance implements PlugIn
 		}
 
 		// Convert pixels to short[]
-		float range = max - min;
-		float scale = (range > 0) ? 65334 / range : 1;
+		final float range = max - min;
+		final float scale = (range > 0) ? 65334 / range : 1;
 		if (debug)
 			IJ.log(String.format("Scaling transformed image by %f (range: %f - %f)", scale, min, max));
 		for (int n = 1; n <= s1.getSize(); n++)
 		{
-			float[] pixels = (float[]) s1.getPixels(n);
-			short[] newPixels = new short[pixels.length];
+			final float[] pixels = (float[]) s1.getPixels(n);
+			final short[] newPixels = new short[pixels.length];
 			for (int i = 0; i < pixels.length; i++)
 				newPixels[i] = (short) Math.round((pixels[i] - min) * scale);
 			s1.setPixels(newPixels, n);
@@ -1193,10 +1139,10 @@ public class SpotDistance implements PlugIn
 	private int[] findRegions(ImageStack s2)
 	{
 		// Build a histogram. Any non-zero value defines a region.
-		int[] histogram = s2.getProcessor(1).getHistogram();
+		final int[] histogram = s2.getProcessor(1).getHistogram();
 		for (int slice = 2; slice <= maskImp.getNSlices(); slice++)
 		{
-			int[] tmp = s2.getProcessor(slice).getHistogram();
+			final int[] tmp = s2.getProcessor(slice).getHistogram();
 			for (int i = 1; i < tmp.length; i++)
 				histogram[i] += tmp[i];
 		}
@@ -1206,7 +1152,7 @@ public class SpotDistance implements PlugIn
 			if (histogram[i] != 0)
 				count++;
 
-		int[] regions = new int[count];
+		final int[] regions = new int[count];
 		count = 0;
 		for (int i = 1; i < histogram.length; i++)
 			if (histogram[i] != 0)
@@ -1220,18 +1166,18 @@ public class SpotDistance implements PlugIn
 		int minY = Integer.MAX_VALUE;
 		int maxX = 0;
 		int maxY = 0;
-		ImageStack outputStack = new ImageStack(inputStack.getWidth(), inputStack.getHeight(), inputStack.getSize());
+		final ImageStack outputStack = new ImageStack(inputStack.getWidth(), inputStack.getHeight(), inputStack.getSize());
 		for (int slice = 1; slice <= inputStack.getSize(); slice++)
 		{
-			ImageProcessor ip = inputStack.getProcessor(slice);
-			byte[] mask = new byte[inputStack.getWidth() * inputStack.getHeight()];
+			final ImageProcessor ip = inputStack.getProcessor(slice);
+			final byte[] mask = new byte[inputStack.getWidth() * inputStack.getHeight()];
 			for (int i = 0; i < ip.getPixelCount(); i++)
 				if (ip.get(i) == region)
 				{
 					mask[i] = 1;
 					// Calculate bounding rectangle
-					int x = i % inputStack.getWidth();
-					int y = i / inputStack.getWidth();
+					final int x = i % inputStack.getWidth();
+					final int y = i / inputStack.getWidth();
 					if (minX > x)
 						minX = x;
 					if (minY > y)
@@ -1259,13 +1205,13 @@ public class SpotDistance implements PlugIn
 		int maxY = 0;
 		for (int slice = 1; slice <= inputStack.getSize(); slice++)
 		{
-			ImageProcessor ip = inputStack.getProcessor(slice);
+			final ImageProcessor ip = inputStack.getProcessor(slice);
 			for (int i = 0; i < ip.getPixelCount(); i++)
 				if (ip.get(i) != 0)
 				{
 					// Calculate bounding rectangle
-					int x = i % inputStack.getWidth();
-					int y = i / inputStack.getWidth();
+					final int x = i % inputStack.getWidth();
+					final int y = i / inputStack.getWidth();
 					if (minX > x)
 						minX = x;
 					if (minY > y)
@@ -1277,7 +1223,7 @@ public class SpotDistance implements PlugIn
 				}
 		}
 
-		Rectangle bounds = new Rectangle();
+		final Rectangle bounds = new Rectangle();
 		bounds.x = minX;
 		bounds.y = minY;
 		bounds.width = maxX - minX + 1;
@@ -1287,7 +1233,7 @@ public class SpotDistance implements PlugIn
 
 	/**
 	 * Crop by duplication within the bounds
-	 * 
+	 *
 	 * @param imp
 	 * @param bounds
 	 * @return
@@ -1295,13 +1241,13 @@ public class SpotDistance implements PlugIn
 	private ImagePlus crop(ImagePlus imp, Rectangle bounds)
 	{
 		imp.setRoi(bounds);
-		ImagePlus croppedImp = imp.duplicate();
+		final ImagePlus croppedImp = imp.duplicate();
 		return croppedImp;
 	}
 
 	/**
 	 * Check the peak circularity. Add an overlay of the spots if requested.
-	 * 
+	 *
 	 * @param prev
 	 * @param ff
 	 * @param croppedImp
@@ -1315,45 +1261,45 @@ public class SpotDistance implements PlugIn
 			FindFociResults ffResult, int frame, int channel, Overlay overlay)
 	{
 		if (ffResult == null)
-			return new ArrayList<DistanceResult>(0);
+			return new ArrayList<>(0);
 
-		ImagePlus peaksImp = ffResult.mask;
-		ArrayList<FindFociResult> resultsArray = ffResult.results;
+		final ImagePlus peaksImp = ffResult.mask;
+		final ArrayList<FindFociResult> resultsArray = ffResult.results;
 
-		ArrayList<DistanceResult> newResultsArray = new ArrayList<DistanceResult>(resultsArray.size());
+		final ArrayList<DistanceResult> newResultsArray = new ArrayList<>(resultsArray.size());
 
 		// Process in XYZ order
-		FindFociBaseProcessor ffp = new FindFociIntProcessor();
+		final FindFociBaseProcessor ffp = new FindFociIntProcessor();
 		ffp.sortAscResults(resultsArray, FindFociProcessor.SORT_XYZ, null);
 
-		ImageStack maskStack = peaksImp.getImageStack();
+		final ImageStack maskStack = peaksImp.getImageStack();
 
-		for (FindFociResult result : resultsArray)
+		for (final FindFociResult result : resultsArray)
 		{
-			int x = bounds.x + result.x;
-			int y = bounds.y + result.y;
-			int z = result.z;
+			final int x = bounds.x + result.x;
+			final int y = bounds.y + result.y;
+			final int z = result.z;
 
 			// Filter peaks on circularity (spots should be circles)
-			// C = 4*pi*A / P^2 
+			// C = 4*pi*A / P^2
 			// where A = Area, P = Perimeter
 			// Q. Not sure if this will be valid for small spots.
 
 			// Extract the peak.
 			// This could extract by a % volume. At current just use the mask region.
 
-			ImageProcessor maskIp = maskStack.getProcessor(z + 1);
+			final ImageProcessor maskIp = maskStack.getProcessor(z + 1);
 
 			//new ImagePlus("peak", fp.duplicate()).show();
 			//new ImagePlus("mask", maskIp).show();
 
-			int peakId = result.id;
-			int maskId = resultsArray.size() - peakId + 1;
-			Roi roi = extractSelection(maskIp, maskId, channel, z + 1, frame);
-			double perimeter = roi.getLength();
-			double area = getArea(maskIp, maskId);
+			final int peakId = result.id;
+			final int maskId = resultsArray.size() - peakId + 1;
+			final Roi roi = extractSelection(maskIp, maskId, channel, z + 1, frame);
+			final double perimeter = roi.getLength();
+			final double area = getArea(maskIp, maskId);
 
-			double circularity = perimeter == 0.0 ? 0.0 : 4.0 * Math.PI * (area / (perimeter * perimeter));
+			final double circularity = perimeter == 0.0 ? 0.0 : 4.0 * Math.PI * (area / (perimeter * perimeter));
 
 			if (circularity < circularityLimit)
 			{
@@ -1363,37 +1309,33 @@ public class SpotDistance implements PlugIn
 			}
 
 			if (overlay != null)
-			{
 				//System.out.printf("%d, %d, %d\n", roi.getCPosition(), roi.getZPosition(), roi.getTPosition());
 				overlay.add(roi);
-			}
 
 			newResultsArray.add(new DistanceResult(x, y, z, circularity));
 		}
 
 		if (prev != null && !prev.isEmpty() && !newResultsArray.isEmpty())
 		{
-			// If we have results from a previous frame then try and assign an ID to each 
+			// If we have results from a previous frame then try and assign an ID to each
 			// result using closest distance tracking.
-			double d = Math.sqrt(
+			final double d = Math.sqrt(
 					croppedImp.getWidth() * croppedImp.getWidth() + croppedImp.getHeight() * croppedImp.getHeight() +
 							croppedImp.getNSlices() * croppedImp.getNSlices());
-			List<PointPair> matches = new ArrayList<PointPair>();
+			final List<PointPair> matches = new ArrayList<>();
 			MatchCalculator.analyseResults3D(prev.toArray(new DistanceResult[prev.size()]),
 					newResultsArray.toArray(new DistanceResult[newResultsArray.size()]), d, null, null, null, matches);
 
-			for (PointPair match : matches)
-			{
+			for (final PointPair match : matches)
 				((DistanceResult) match.getPoint2()).id = ((DistanceResult) match.getPoint1()).id;
-			}
 
 			// Find max ID
 			int id = 0;
-			for (DistanceResult r : newResultsArray)
+			for (final DistanceResult r : newResultsArray)
 				if (id < r.id)
 					id = r.id;
 			// Assign those that could not be tracked
-			for (DistanceResult r : newResultsArray)
+			for (final DistanceResult r : newResultsArray)
 				if (r.id == 0)
 					r.id = ++id;
 			// Sort
@@ -1406,12 +1348,10 @@ public class SpotDistance implements PlugIn
 	private Roi extractSelection(ImageProcessor maskIp, int maskId, int channel, int slice, int frame)
 	{
 		maskIp.setThreshold(maskId, maskId, ImageProcessor.NO_LUT_UPDATE);
-		ThresholdToSelection ts = new ThresholdToSelection();
-		Roi roi = ts.convert(maskIp);
+		final ThresholdToSelection ts = new ThresholdToSelection();
+		final Roi roi = ts.convert(maskIp);
 		if (imp.getStackSize() == 1)
-		{
 			roi.setPosition(0);
-		}
 		else if (imp.isDisplayedHyperStack())
 		{
 			if (showOverlay != 1)
@@ -1421,10 +1361,10 @@ public class SpotDistance implements PlugIn
 		else
 		{
 			// We cannot support display across the entire stack if this is not a hyperstack
-			int index = imp.getStackIndex(channel, slice, frame);
+			final int index = imp.getStackIndex(channel, slice, frame);
 			roi.setPosition(index);
 		}
-		Rectangle roiBounds = roi.getBounds();
+		final Rectangle roiBounds = roi.getBounds();
 		roi.setLocation(bounds.x + roiBounds.x, bounds.y + roiBounds.y);
 		return roi;
 	}
@@ -1433,15 +1373,15 @@ public class SpotDistance implements PlugIn
 	private double getPerimeter(ImageProcessor maskIp, int maskId, Overlay overlay, int z)
 	{
 		maskIp.setThreshold(maskId, maskId, ImageProcessor.NO_LUT_UPDATE);
-		ThresholdToSelection ts = new ThresholdToSelection();
-		Roi roi = ts.convert(maskIp);
+		final ThresholdToSelection ts = new ThresholdToSelection();
+		final Roi roi = ts.convert(maskIp);
 		if (overlay != null)
 		{
 			roi.setPosition(z);
 			roi.setLocation(bounds.x, bounds.y);
 			overlay.add(roi);
 		}
-		double perimeter = roi.getLength();
+		final double perimeter = roi.getLength();
 		return perimeter;
 	}
 
@@ -1456,19 +1396,15 @@ public class SpotDistance implements PlugIn
 
 	private void addResult(int frame, int channel, int region, Rectangle bounds, DistanceResult result)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
 		sb.append(frame).append('\t');
 		sb.append(channel).append('\t');
 		sb.append(region).append('\t');
 		if (pixelDistances)
-		{
 			sb.append(result.getPixelXYZ()).append('\t');
-		}
 		if (calibratedDistances)
-		{
 			sb.append(result.getCalXYZ()).append('\t');
-		}
 		sb.append(Utils.rounded(result.circularity));
 		resultsWindow.append(sb.toString());
 		allowUndo = true;
@@ -1476,7 +1412,7 @@ public class SpotDistance implements PlugIn
 
 	private void addSummaryResult(int frame, String channel, int region, int size)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
 		sb.append(frame).append('\t');
 		sb.append(channel).append('\t');
@@ -1492,7 +1428,7 @@ public class SpotDistance implements PlugIn
 	private void addSummaryResult(int frame, String channel, int region, int size, double minD, double maxD, double d,
 			double minD2, double maxD2, double d2)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
 		sb.append(frame).append('\t');
 		sb.append(channel).append('\t');
@@ -1516,7 +1452,7 @@ public class SpotDistance implements PlugIn
 	private void addDistanceResult(int frame, String channel, int region, DistanceResult r1, DistanceResult r2,
 			double d, double d2)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
 		sb.append(frame).append('\t');
 		sb.append(channel).append('\t');
@@ -1539,7 +1475,7 @@ public class SpotDistance implements PlugIn
 
 	private void installTool()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("macro 'Spot Distance Action Tool - C00fo4233o6922oa644Cf00O00ff' {\n");
 		sb.append("   call('").append(this.getClass().getName()).append(".run');\n");
 		sb.append("};\n");
@@ -1590,27 +1526,23 @@ public class SpotDistance implements PlugIn
 		// Create the offset table (for single array 2D neighbour comparisons)
 		offset = new int[DIR_X_OFFSET.length];
 		for (int d = offset.length; d-- > 0;)
-		{
 			offset[d] = maxx * DIR_Y_OFFSET[d] + DIR_X_OFFSET[d];
-		}
 
-		short[] mask = (short[]) ip.getPixels();
-		int[] pList = new int[mask.length];
+		final short[] mask = (short[]) ip.getPixels();
+		final int[] pList = new int[mask.length];
 
 		// Store all the non-zero positions
-		boolean[] binaryMask = new boolean[mask.length];
+		final boolean[] binaryMask = new boolean[mask.length];
 		for (int i = 0; i < binaryMask.length; i++)
 			binaryMask[i] = (mask[i] != 0);
 
-		// Find particles 
+		// Find particles
 		for (int i = 0; i < binaryMask.length; i++)
-		{
 			if (binaryMask[i])
 			{
 				expandParticle(binaryMask, mask, pList, i, (short) regionCounter);
 				regionCounter++;
 			}
-		}
 
 		// Free memory
 		offset = null;
@@ -1630,21 +1562,20 @@ public class SpotDistance implements PlugIn
 
 		do
 		{
-			int index1 = pList[listI];
+			final int index1 = pList[listI];
 			// Mark this position as part of the particle
 			mask[index1] = particle;
 
-			// Search the 8-connected neighbours 
-			int x1 = index1 % maxx;
-			int y1 = index1 / maxx;
+			// Search the 8-connected neighbours
+			final int x1 = index1 % maxx;
+			final int y1 = index1 / maxx;
 
-			boolean isInnerXY = (x1 != 0 && x1 != xlimit) && (y1 != 0 && y1 != ylimit);
+			final boolean isInnerXY = (x1 != 0 && x1 != xlimit) && (y1 != 0 && y1 != ylimit);
 
 			if (isInnerXY)
-			{
 				for (int d = 8; d-- > 0;)
 				{
-					int index2 = index1 + offset[d];
+					final int index2 = index1 + offset[d];
 					if (binaryMask[index2])
 					{
 						binaryMask[index2] = false; // mark as processed
@@ -1652,14 +1583,11 @@ public class SpotDistance implements PlugIn
 						pList[listLen++] = index2;
 					}
 				}
-			}
 			else
-			{
 				for (int d = 8; d-- > 0;)
-				{
 					if (isInside(x1, y1, d))
 					{
-						int index2 = index1 + offset[d];
+						final int index2 = index1 + offset[d];
 						if (binaryMask[index2])
 						{
 							binaryMask[index2] = false; // mark as processed
@@ -1667,8 +1595,6 @@ public class SpotDistance implements PlugIn
 							pList[listLen++] = index2;
 						}
 					}
-				}
-			}
 
 			listI++;
 
@@ -1678,7 +1604,7 @@ public class SpotDistance implements PlugIn
 	/**
 	 * Returns whether the neighbour in a given direction is within the image. NOTE: it is assumed that the pixel x,y
 	 * itself is within the image! Uses class variables xlimit, ylimit: (dimensions of the image)-1
-	 * 
+	 *
 	 * @param x
 	 *            x-coordinate of the pixel that has a neighbour in the given direction
 	 * @param y

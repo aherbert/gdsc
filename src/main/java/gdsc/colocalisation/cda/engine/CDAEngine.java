@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -40,12 +40,12 @@ import ij.ImageStack;
 public class CDAEngine
 {
 	private BlockingQueue<CDAJob> jobs = null;
-	private List<CDAWorker> workers = new LinkedList<CDAWorker>();
-	private List<Thread> threads = new LinkedList<Thread>();
+	private final List<CDAWorker> workers = new LinkedList<>();
+	private final List<Thread> threads = new LinkedList<>();
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param threads
 	 *            The number of threads to use (set to 1 if less than 1)
 	 */
@@ -62,9 +62,9 @@ public class CDAEngine
 		// Create the workers
 		for (int i = 0; i < threads; i++)
 		{
-			CDAWorker worker = new CDAWorker(imageStack1, roiStack1, imageStack2, roiStack2, confinedStack, denom1,
+			final CDAWorker worker = new CDAWorker(imageStack1, roiStack1, imageStack2, roiStack2, confinedStack, denom1,
 					denom2, results, jobs, totalSteps);
-			Thread t = new Thread(worker);
+			final Thread t = new Thread(worker);
 
 			workers.add(worker);
 			this.threads.add(t);
@@ -76,7 +76,7 @@ public class CDAEngine
 	/**
 	 * This method checks if all the worker threads are ready to accept jobs, waiting a short period if necessary.
 	 * Note that jobs can still be queued if this method returns false.
-	 * 
+	 *
 	 * @return True if ready to accept jobs, false if the workers are still initialising.
 	 */
 	public boolean isInitialised()
@@ -86,11 +86,9 @@ public class CDAEngine
 			return true;
 
 		ok = true;
-		for (CDAWorker worker : workers)
-		{
+		for (final CDAWorker worker : workers)
 			if (!checkWorkerWithDelay(worker))
 				ok = false;
-		}
 
 		if (ok)
 			return true;
@@ -102,21 +100,19 @@ public class CDAEngine
 	private boolean checkWorkerWithDelay(CDAWorker worker)
 	{
 		for (int i = 0; !worker.isInitialised() && i < 5; i++)
-		{
 			try
 			{
 				Thread.sleep(20);
 			}
-			catch (InterruptedException e)
+			catch (final InterruptedException e)
 			{
 			}
-		}
 		return worker.isInitialised();
 	}
 
 	private boolean checkWorkers()
 	{
-		for (CDAWorker worker : workers)
+		for (final CDAWorker worker : workers)
 			if (!worker.isInitialised())
 				return false;
 		return true;
@@ -124,7 +120,7 @@ public class CDAEngine
 
 	private void createQueue(int threads)
 	{
-		this.jobs = new ArrayBlockingQueue<CDAJob>(threads * 2);
+		this.jobs = new ArrayBlockingQueue<>(threads * 2);
 	}
 
 	/**
@@ -144,7 +140,7 @@ public class CDAEngine
 		{
 			jobs.put(new CDAJob(n, x, y));
 		}
-		catch (InterruptedException e)
+		catch (final InterruptedException e)
 		{
 			// TODO - Handle thread errors
 			throw new RuntimeException("Unexpected interruption", e);
@@ -153,7 +149,7 @@ public class CDAEngine
 
 	/**
 	 * Signal that no more fitting work will be added to the queue
-	 * 
+	 *
 	 * @param now
 	 *            Stop the work immediately, otherwise finish all work in the queue
 	 */
@@ -165,39 +161,31 @@ public class CDAEngine
 		if (now)
 		{
 			// Request worker shutdown
-			for (CDAWorker worker : workers)
+			for (final CDAWorker worker : workers)
 				worker.finish();
 
-			// Workers may be waiting for a job. 
+			// Workers may be waiting for a job.
 			// Add null jobs if the queue is not at capacity so they can be collected by alive workers.
 			// If there are already jobs then the worker will stop due to the finish() signal.
 			for (int i = 0; i < threads.size(); i++)
-			{
 				jobs.offer(new CDAJob(-1, 0, 0)); // non-blocking add to queue
-			}
 		}
 		else
-		{
 			// Finish all the worker threads by passing in a null job
 			for (int i = 0; i < threads.size(); i++)
-			{
 				put(-1, 0, 0); // blocking add to queue
-			}
-		}
 
 		// Collect all the threads
 		for (int i = 0; i < threads.size(); i++)
-		{
 			try
 			{
 				threads.get(i).join();
 			}
-			catch (InterruptedException e)
+			catch (final InterruptedException e)
 			{
 				// TODO - Handle thread errors
 				e.printStackTrace();
 			}
-		}
 
 		threads.clear();
 	}

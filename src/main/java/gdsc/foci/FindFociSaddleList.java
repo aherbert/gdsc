@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -90,6 +90,9 @@ public class FindFociSaddleList implements Cloneable
 
 	/**
 	 * Instantiates a new find foci saddle.
+	 *
+	 * @param list
+	 *            the list
 	 */
 	public FindFociSaddleList(FindFociSaddle[] list)
 	{
@@ -100,7 +103,7 @@ public class FindFociSaddleList implements Cloneable
 
 	/**
 	 * get the size of the list
-	 * 
+	 *
 	 * @return The size
 	 */
 	public int getSize()
@@ -110,7 +113,7 @@ public class FindFociSaddleList implements Cloneable
 
 	/**
 	 * Get the saddle for the index
-	 * 
+	 *
 	 * @param i
 	 *            The index
 	 * @return The saddle
@@ -122,7 +125,7 @@ public class FindFociSaddleList implements Cloneable
 
 	/**
 	 * Add a new saddle. Does not check there is capacity to do this. Call {@link #ensureExtraCapacity(int)} first.
-	 * 
+	 *
 	 * @param saddle
 	 *            The saddle
 	 */
@@ -150,7 +153,7 @@ public class FindFociSaddleList implements Cloneable
 
 	/**
 	 * Clear the list from the given position but do not reduce the capacity
-	 * 
+	 *
 	 * @param position
 	 *            The position
 	 */
@@ -178,7 +181,7 @@ public class FindFociSaddleList implements Cloneable
 	 * Ensure that n extra elements can be added to the list.
 	 * <p>
 	 * Note this is different from the ensureCapacity() method of ArrayList which checks total capacity.
-	 * 
+	 *
 	 * @param n
 	 *            The number of extra elements (this should not be negative)
 	 */
@@ -196,7 +199,7 @@ public class FindFociSaddleList implements Cloneable
 
 	/**
 	 * Get the total capacity of the list
-	 * 
+	 *
 	 * @return The total capacity
 	 */
 	public int getCapacity()
@@ -208,21 +211,18 @@ public class FindFociSaddleList implements Cloneable
 	 * Returns a hard copy of this saddle.
 	 *
 	 * @return the find foci saddle
-	 * @see java.lang.Object#clone()
 	 */
 	@Override
 	public FindFociSaddleList clone()
 	{
 		// Make same length so that add operations behave exactly the same
 		if (size == 0)
-		{
 			if (list == null)
 				// This is a list that has had the free() method called
 				return new FindFociSaddleList(null);
 			else
 				// This list is just empty
 				return new FindFociSaddleList();
-		}
 		final FindFociSaddle[] list = new FindFociSaddle[this.list.length];
 		for (int i = 0; i < size; i++)
 			list[i] = this.list[i].clone();
@@ -242,9 +242,10 @@ public class FindFociSaddleList implements Cloneable
 	}
 
 	/**
-	 * Sort the list using the comparator
-	 * 
+	 * Sort the list using the comparator.
+	 *
 	 * @param saddleComparator
+	 *            the saddle comparator
 	 */
 	public void sort(Comparator<FindFociSaddle> saddleComparator)
 	{
@@ -255,7 +256,7 @@ public class FindFociSaddleList implements Cloneable
 
 	/**
 	 * Remove duplicate Ids from the list and maintain the current order, or else do a default sort
-	 * 
+	 *
 	 * @param maintain
 	 *            Maintain the current order, otherwise do default sort
 	 */
@@ -269,13 +270,11 @@ public class FindFociSaddleList implements Cloneable
 		int lastId = 0;
 		int newSize = 0;
 		for (int i = 0; i < size; i++)
-		{
 			if (lastId != list[i].id)
 			{
 				list[newSize++] = list[i];
 				lastId = list[i].id;
 			}
-		}
 		clear(newSize);
 		if (maintain)
 			sort(orderSaddleComparator);
@@ -284,22 +283,17 @@ public class FindFociSaddleList implements Cloneable
 	}
 
 	/**
-	 * Remove duplicate Ids from the list and do a default sort
-	 * 
-	 * @param maintain
-	 *            Maintain the current order, otherwise do default sort
+	 * Remove duplicate Ids from the list and do a default sort.
 	 */
 	public void removeDuplicates()
 	{
 		if (size < 2)
 			return;
-		TIntHashSet set = new TIntHashSet(size);
+		final TIntHashSet set = new TIntHashSet(size);
 		int newSize = 0;
 		for (int i = 0; i < size; i++)
-		{
 			if (set.add(list[i].id))
 				list[newSize++] = list[i];
-		}
 		clear(newSize);
 		sort();
 	}

@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -50,7 +50,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	private static final String TITLE = "Multi Otsu Threshold";
 	private ImagePlus imp;
 
-	// Static to maintain state between plugin calls 
+	// Static to maintain state between plugin calls
 	private static int MLEVEL = 2;
 	private static boolean s_doStack = true;
 	private static boolean s_ignoreZero = true;
@@ -68,7 +68,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
@@ -87,15 +87,15 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
 	public void run(ImageProcessor ip)
 	{
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Multi-level Otsu thresholding on image stack");
-		String[] items = { "2", "3", "4", "5", };
+		final String[] items = { "2", "3", "4", "5", };
 		gd.addChoice("Levels", items, items[MLEVEL - 2]);
 		if (imp.getStackSize() > 1)
 			gd.addCheckbox("Do_stack", s_doStack);
@@ -135,7 +135,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 			run(imp, MLEVEL);
 		else
 		{
-			ImagePlus newImp = imp.createImagePlus();
+			final ImagePlus newImp = imp.createImagePlus();
 			newImp.setTitle(String.format("%s (c%d,z%d,t%d)", imp.getTitle(), imp.getChannel(), imp.getSlice(),
 					imp.getFrame()));
 			newImp.setProcessor(imp.getProcessor());
@@ -147,7 +147,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 * Calculate Otsu thresholds on the given image. Output the thresholds to the IJ log.
 	 * <p>
 	 * Optionally outputs the image histogram and the threshold regions depending on the class variables.
-	 * 
+	 *
 	 * @param imp
 	 *            The image
 	 * @param MLEVEL
@@ -155,11 +155,11 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 */
 	public void run(ImagePlus imp, int MLEVEL)
 	{
-		int[] offset = new int[1];
-		float[] h = buildHistogram(imp, offset);
+		final int[] offset = new int[1];
+		final float[] h = buildHistogram(imp, offset);
 
-		float[] maxSig = new float[1];
-		int[] threshold = getThresholds(MLEVEL, maxSig, offset, h);
+		final float[] maxSig = new float[1];
+		final int[] threshold = getThresholds(MLEVEL, maxSig, offset, h);
 
 		if (logMessages)
 			showThresholds(MLEVEL, maxSig, threshold);
@@ -173,7 +173,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 	/**
 	 * Calculate Otsu thresholds on the given image.
-	 * 
+	 *
 	 * @param imp
 	 *            The image
 	 * @param MLEVEL
@@ -187,7 +187,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 	/**
 	 * Calculate Otsu thresholds on the given image.
-	 * 
+	 *
 	 * @param imp
 	 *            The image
 	 * @param MLEVEL
@@ -198,15 +198,15 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 */
 	public int[] calculateThresholds(ImagePlus imp, int MLEVEL, float[] maxSig)
 	{
-		int[] offset = new int[1];
-		float[] h = buildHistogram(imp, offset);
+		final int[] offset = new int[1];
+		final float[] h = buildHistogram(imp, offset);
 
 		return getThresholds(MLEVEL, maxSig, offset, h);
 	}
 
 	/**
 	 * Calculate Otsu thresholds on the given image.
-	 * 
+	 *
 	 * @param data
 	 *            The histogram data
 	 * @param MLEVEL
@@ -220,7 +220,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 	/**
 	 * Calculate Otsu thresholds on the given image.
-	 * 
+	 *
 	 * @param data
 	 *            The histogram data
 	 * @param MLEVEL
@@ -231,8 +231,8 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 */
 	public int[] calculateThresholds(int[] data, int MLEVEL, float[] maxSig)
 	{
-		int[] offset = new int[1];
-		float[] h = buildHistogram(data, offset);
+		final int[] offset = new int[1];
+		final float[] h = buildHistogram(data, offset);
 
 		return getThresholds(MLEVEL, maxSig, offset, h);
 	}
@@ -242,14 +242,14 @@ public class Multi_OtsuThreshold implements PlugInFilter
 		/////////////////////////////////////////////
 		// Build lookup tables from h
 		////////////////////////////////////////////
-		float[][] H = buildLookupTables(h);
+		final float[][] H = buildLookupTables(h);
 
 		////////////////////////////////////////////////////////
 		// now M level loop   MLEVEL dependent term
 		////////////////////////////////////////////////////////
 		if (maxSig == null || maxSig.length < 1)
 			maxSig = new float[1];
-		int[] threshold = new int[MLEVEL];
+		final int[] threshold = new int[MLEVEL];
 		maxSig[0] = findMaxSigma(MLEVEL, H, threshold);
 
 		applyOffset(threshold, offset);
@@ -261,7 +261,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 * Create a histogram from image min to max. Normalise so integral is 1.
 	 * <p>
 	 * Return the image min in the offset variable
-	 * 
+	 *
 	 * @param imp
 	 *            Input image
 	 * @param offset
@@ -271,13 +271,13 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	private float[] buildHistogram(ImagePlus imp, int[] offset)
 	{
 		// Get stack histogram - Use ImagePlus to get the ImageProcessor so maintaining the ROI
-		int currentSlice = imp.getCurrentSlice();
+		final int currentSlice = imp.getCurrentSlice();
 		imp.setSliceWithoutUpdate(1);
-		int[] data = imp.getProcessor().getHistogram();
+		final int[] data = imp.getProcessor().getHistogram();
 		for (int slice = 2; slice <= imp.getStackSize(); slice++)
 		{
 			imp.setSliceWithoutUpdate(slice);
-			int[] tmp = imp.getProcessor().getHistogram();
+			final int[] tmp = imp.getProcessor().getHistogram();
 			for (int i = 0; i < data.length; i++)
 				data[i] += tmp[i];
 		}
@@ -290,7 +290,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 * Create a histogram from image min to max. Normalise so integral is 1.
 	 * <p>
 	 * Return the image min in the offset variable
-	 * 
+	 *
 	 * @param data
 	 *            The histogram data
 	 * @param offset
@@ -313,19 +313,17 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 		// ROI masking changes the histogram so total up the number of used pixels
 		long total = 0;
-		for (int d : data)
+		for (final int d : data)
 			total += d;
 
-		int[] data2 = new int[(maxbin - minbin) + 1];
+		final int[] data2 = new int[(maxbin - minbin) + 1];
 		for (int i = minbin; i <= maxbin; i++)
-		{
 			data2[i - minbin] = data[i];
-		}
 
 		// note the probability of grey i is h[i]/(pixel count)
-		double normalisation = 1.0 / total;
-		int NGRAY = data2.length;
-		float[] h = new float[NGRAY];
+		final double normalisation = 1.0 / total;
+		final int NGRAY = data2.length;
+		final float[] h = new float[NGRAY];
 
 		for (int i = 0; i < NGRAY; ++i)
 			h[i] = (float) (data2[i] * normalisation);
@@ -337,7 +335,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 	/**
 	 * Build the required lookup table for the {@link #findMaxSigma(int, float[][], int[])} method.
-	 * 
+	 *
 	 * @param h
 	 *            Image histogram (length N)
 	 * @return The lookup table
@@ -352,7 +350,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 * <p>
 	 * P and S can be provided to save reallocating memory. If null or less than h.length they will be reallocated. P
 	 * and S are destroyed and the lookup table is returned.
-	 * 
+	 *
 	 * @param h
 	 *            Image histogram (length N)
 	 * @param P
@@ -363,20 +361,20 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 */
 	public float[][] buildLookupTables(float[] h, float[][] P, float[][] S)
 	{
-		int NGRAY = h.length;
+		final int NGRAY = h.length;
 		// Error if not enough memory
 		try
 		{
 			P = initialise(P, NGRAY);
 			S = initialise(S, NGRAY);
 		}
-		catch (OutOfMemoryError e)
+		catch (final OutOfMemoryError e)
 		{
 			IJ.log(TITLE + ": Out-of-memory - Try again with a smaller histogram (e.g. 8-bit image)");
 			throw e;
 		}
 
-		// diagonal 
+		// diagonal
 		for (int i = 0; i < NGRAY; ++i)
 		{
 			P[i][i] = h[i];
@@ -398,12 +396,10 @@ public class Multi_OtsuThreshold implements PlugInFilter
 		// now calculate H[i][j]
 		for (int i = 1; i < NGRAY; ++i)
 			for (int j = i + 1; j < NGRAY; j++)
-			{
 				if (P[i][j] != 0)
 					S[i][j] = (S[i][j] * S[i][j]) / P[i][j];
 				else
 					S[i][j] = 0.f;
-			}
 
 		return S;
 	}
@@ -411,24 +407,18 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	private float[][] initialise(float[][] P, int NGRAY)
 	{
 		if (P == null || P.length < NGRAY)
-		{
 			P = new float[NGRAY][NGRAY];
-		}
 		else
-		{
 			// initialize to zero
 			for (int j = 0; j < NGRAY; j++)
 				for (int i = 0; i < NGRAY; ++i)
-				{
 					P[i][j] = 0.f;
-				}
-		}
 		return P;
 	}
 
 	/**
 	 * Find the threshold that maximises the between class variance
-	 * 
+	 *
 	 * @param mlevel
 	 *            The number of thresholds
 	 * @param H
@@ -439,13 +429,13 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 */
 	public float findMaxSigma(int mlevel, float[][] H, int[] t)
 	{
-		int NGRAY = H[0].length;
+		final int NGRAY = H[0].length;
 		return findMaxSigma(mlevel, H, t, NGRAY);
 	}
 
 	/**
 	 * Find the threshold that maximises the between class variance
-	 * 
+	 *
 	 * @param mlevel
 	 *            The number of thresholds
 	 * @param H
@@ -470,7 +460,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 			case 2:
 				for (int i = 1; i < NGRAY - mlevel; i++) // t1
 				{
-					float Sq = H[1][i] + H[i + 1][NGRAY - 1];
+					final float Sq = H[1][i] + H[i + 1][NGRAY - 1];
 					if (maxSig < Sq)
 					{
 						t[1] = i;
@@ -489,7 +479,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 					// t1
 					for (int j = i + 1; j < NGRAY - mlevel + 1; j++) // t2
 					{
-						float Sq = H[1][i] + H[i + 1][j] + H[j + 1][NGRAY - 1];
+						final float Sq = H[1][i] + H[i + 1][j] + H[j + 1][NGRAY - 1];
 						if (maxSig < Sq)
 						{
 							t[1] = i;
@@ -512,7 +502,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 						// t2
 						for (int k = j + 1; k < NGRAY - mlevel + 2; k++) // t3
 						{
-							float Sq = H[1][i] + H[i + 1][j] + H[j + 1][k] + H[k + 1][NGRAY - 1];
+							final float Sq = H[1][i] + H[i + 1][j] + H[j + 1][k] + H[k + 1][NGRAY - 1];
 							if (maxSig < Sq)
 							{
 								t[1] = i;
@@ -539,7 +529,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 							// t3
 							for (int m = k + 1; m < NGRAY - mlevel + 3; m++) // t4
 							{
-								float Sq = H[1][i] + H[i + 1][j] + H[j + 1][k] + H[k + 1][m] + H[m + 1][NGRAY - 1];
+								final float Sq = H[1][i] + H[i + 1][j] + H[j + 1][k] + H[k + 1][m] + H[m + 1][NGRAY - 1];
 								if (maxSig < Sq)
 								{
 									t[1] = i;
@@ -574,7 +564,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 	/**
 	 * Add back the histogram offset to produce the correct thresholds
-	 * 
+	 *
 	 * @param threshold
 	 *            output from {@link #findMaxSigma(int, float[][], int[])}
 	 * @param offset
@@ -588,7 +578,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 	private void showThresholds(int MLEVEL, float[] maxSig, int[] threshold)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Otsu thresholds: ");
 		for (int i = 0; i < MLEVEL; ++i)
 			sb.append(i).append("=").append(threshold[i]).append(", ");
@@ -598,10 +588,10 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 	private void showHistogram(float[] h, int[] thresholds, int minbin, String title)
 	{
-		int NGRAY = h.length;
+		final int NGRAY = h.length;
 
 		// X-axis values
-		float[] bin = new float[NGRAY];
+		final float[] bin = new float[NGRAY];
 
 		// Calculate the maximum
 		float hmax = 0.f;
@@ -620,21 +610,15 @@ public class Multi_OtsuThreshold implements PlugInFilter
 		// For example this removes a large peak at zero in masked images.
 		float hmax2 = 0; // Second highest point
 		for (int i = 0; i < h.length; i++)
-		{
 			if (hmax2 < h[i] && i != mode)
-			{
 				hmax2 = h[i];
-			}
-		}
 		if ((hmax > (hmax2 * 2)) && (hmax2 != 0))
-		{
 			// Set histogram limit to 50% higher than the second largest value
 			hmax = hmax2 * 1.5f;
-		}
 
 		if (title == null)
 			title = "Histogram";
-		Plot histogram = new Plot(title, "Intensity", "p(Intensity)", bin, h);
+		final Plot histogram = new Plot(title, "Intensity", "p(Intensity)", bin, h);
 		histogram.setLimits(minbin, minbin + NGRAY, 0.f, hmax);
 		histogram.draw();
 
@@ -643,7 +627,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 		histogram.setColor(Color.red);
 		for (int i = 1; i < thresholds.length; i++)
 		{
-			double x = thresholds[i];
+			final double x = thresholds[i];
 			histogram.drawLine(x, 0, x, hmax);
 		}
 
@@ -652,7 +636,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 	/**
 	 * Show new images using only pixels within the bounds of the given thresholds
-	 * 
+	 *
 	 * @param mlevel
 	 *            The number of thresholds
 	 * @param t
@@ -662,18 +646,18 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 */
 	public void showRegions(int mlevel, int[] t, ImagePlus imp)
 	{
-		int width = imp.getWidth();
-		int height = imp.getHeight();
-		int bitDepth = imp.getBitDepth();
+		final int width = imp.getWidth();
+		final int height = imp.getHeight();
+		final int bitDepth = imp.getBitDepth();
 
-		double max = imp.getDisplayRangeMax();
-		double min = imp.getDisplayRangeMin();
+		final double max = imp.getDisplayRangeMax();
+		final double min = imp.getDisplayRangeMin();
 
-		ImageStack stack = imp.getImageStack();
-		int slices = stack.getSize();
-		ImagePlus[] region = new ImagePlus[mlevel];
-		ImageStack[] rstack = new ImageStack[mlevel];
-		ImageProcessor[] rip = new ImageProcessor[mlevel];
+		final ImageStack stack = imp.getImageStack();
+		final int slices = stack.getSize();
+		final ImagePlus[] region = new ImagePlus[mlevel];
+		final ImageStack[] rstack = new ImageStack[mlevel];
+		final ImageProcessor[] rip = new ImageProcessor[mlevel];
 		for (int i = 0; i < mlevel; ++i)
 		{
 			region[i] = NewImage.createImage(imp.getTitle() + " Region " + i, width, height, slices, bitDepth,
@@ -681,21 +665,19 @@ public class Multi_OtsuThreshold implements PlugInFilter
 			rstack[i] = region[i].getImageStack();
 		}
 
-		int[] newT = new int[mlevel + 1];
+		final int[] newT = new int[mlevel + 1];
 		System.arraycopy(t, 0, newT, 0, mlevel);
 		newT[mlevel] = Integer.MAX_VALUE;
 		t = newT;
 
 		for (int slice = 1; slice <= slices; slice++)
 		{
-			ImageProcessor ip = stack.getProcessor(slice);
+			final ImageProcessor ip = stack.getProcessor(slice);
 			for (int i = 0; i < mlevel; ++i)
-			{
 				rip[i] = rstack[i].getProcessor(slice);
-			}
 			for (int i = 0; i < ip.getPixelCount(); ++i)
 			{
-				int val = ip.get(i);
+				final int val = ip.get(i);
 				int k = 0;
 				while (val > t[k + 1])
 					k++;
@@ -711,7 +693,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 	/**
 	 * Show new mask images using only pixels within the bounds of the given thresholds
-	 * 
+	 *
 	 * @param mlevel
 	 *            The number of thresholds
 	 * @param t
@@ -721,34 +703,32 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 */
 	public void showMasks(int mlevel, int[] t, ImagePlus imp)
 	{
-		int width = imp.getWidth();
-		int height = imp.getHeight();
+		final int width = imp.getWidth();
+		final int height = imp.getHeight();
 
-		ImageStack stack = imp.getImageStack();
-		int slices = stack.getSize();
-		ImagePlus[] region = new ImagePlus[mlevel];
-		ImageStack[] rstack = new ImageStack[mlevel];
-		ImageProcessor[] rip = new ImageProcessor[mlevel];
+		final ImageStack stack = imp.getImageStack();
+		final int slices = stack.getSize();
+		final ImagePlus[] region = new ImagePlus[mlevel];
+		final ImageStack[] rstack = new ImageStack[mlevel];
+		final ImageProcessor[] rip = new ImageProcessor[mlevel];
 		for (int i = 0; i < mlevel; ++i)
 		{
 			region[i] = NewImage.createImage(imp.getTitle() + " Mask " + i, width, height, slices, 8,
 					NewImage.FILL_BLACK);
 			rstack[i] = region[i].getImageStack();
 		}
-		int[] newT = new int[mlevel + 1];
+		final int[] newT = new int[mlevel + 1];
 		System.arraycopy(t, 0, newT, 0, mlevel);
 		newT[mlevel] = Integer.MAX_VALUE;
 		t = newT;
 		for (int slice = 1; slice <= slices; slice++)
 		{
-			ImageProcessor ip = stack.getProcessor(slice);
+			final ImageProcessor ip = stack.getProcessor(slice);
 			for (int i = 0; i < mlevel; ++i)
-			{
 				rip[i] = rstack[i].getProcessor(slice);
-			}
 			for (int i = 0; i < ip.getPixelCount(); ++i)
 			{
-				int val = ip.get(i);
+				final int val = ip.get(i);
 				int k = 0;
 				while (val > t[k + 1])
 					k++;

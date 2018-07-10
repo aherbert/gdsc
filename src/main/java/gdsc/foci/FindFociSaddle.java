@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -50,7 +50,6 @@ public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle>
 	 * Returns a copy of this saddle.
 	 *
 	 * @return the find foci saddle
-	 * @see java.lang.Object#clone()
 	 */
 	@Override
 	public FindFociSaddle clone()
@@ -59,7 +58,7 @@ public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle>
 		{
 			return (FindFociSaddle) super.clone();
 		}
-		catch (CloneNotSupportedException e)
+		catch (final CloneNotSupportedException e)
 		{
 			return null;
 		}
@@ -67,7 +66,7 @@ public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle>
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
 	@Override
@@ -78,7 +77,7 @@ public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle>
 		if (this.value < that.value)
 			return 1;
 		// For compatibility with the legacy code the saddles must be sorted by Id if they are the same value
-		//return 0; 
+		//return 0;
 		return this.id - that.id;
 	}
 }

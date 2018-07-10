@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -118,7 +118,7 @@ public class SpotPairDistance implements PlugIn
 		@Override
 		public void showOptionsDialog()
 		{
-			GenericDialog gd = new GenericDialog(TITLE + " Tool Options");
+			final GenericDialog gd = new GenericDialog(TITLE + " Tool Options");
 			gd.addMessage(
 				//@formatter:off
 				TextUtils.wrap(
@@ -175,9 +175,9 @@ public class SpotPairDistance implements PlugIn
 
 		private boolean hasMultiChannelImage()
 		{
-			for (int id : Utils.getIDList())
+			for (final int id : Utils.getIDList())
 			{
-				ImagePlus imp = WindowManager.getImage(id);
+				final ImagePlus imp = WindowManager.getImage(id);
 				if (imp != null && imp.getNChannels() > 1)
 					return true;
 			}
@@ -192,14 +192,14 @@ public class SpotPairDistance implements PlugIn
 		// - Find the CoM in both channels
 		// - Store press location
 
-		// Mouse drag 
+		// Mouse drag
 		// - Draw a line ROI from the start location
 
-		// Mouse released 
+		// Mouse released
 		// - Compute relative orientation
 		// - Output Euclidian distance and relative XY distance
 
-		// Mouse clicked with modifier key 
+		// Mouse clicked with modifier key
 		// - Find Overlay components within the region and remove from Overlay and table
 
 		// --------------
@@ -210,7 +210,7 @@ public class SpotPairDistance implements PlugIn
 			if (isRemoveEvent(e))
 				return;
 
-			int c = imp.getNChannels();
+			final int c = imp.getNChannels();
 			if (!active || c == 1)
 				return;
 
@@ -226,34 +226,31 @@ public class SpotPairDistance implements PlugIn
 					return;
 				}
 
-				ImageCanvas ic = imp.getCanvas();
-				int x = ic.offScreenX(e.getX());
-				int y = ic.offScreenY(e.getY());
+				final ImageCanvas ic = imp.getCanvas();
+				final int x = ic.offScreenX(e.getX());
+				final int y = ic.offScreenY(e.getY());
 
 				// Get the region bounds to search for maxima
 				bounds = new Rectangle(x - searchRange, y - searchRange, 2 * searchRange + 1, 2 * searchRange + 1)
 						.intersection(new Rectangle(imp.getWidth(), imp.getHeight()));
 				if (bounds.width == 0 || bounds.height == 0)
-				{
 					return;
-				}
 
 				slice = imp.getZ();
 				frame = imp.getFrame();
 
-				int i1 = imp.getStackIndex(channel1, slice, frame);
-				int i2 = imp.getStackIndex(channel2, slice, frame);
+				final int i1 = imp.getStackIndex(channel1, slice, frame);
+				final int i2 = imp.getStackIndex(channel2, slice, frame);
 
-				ImageStack stack = imp.getImageStack();
-				ImageProcessor ip1 = stack.getProcessor(i1);
-				ImageProcessor ip2 = stack.getProcessor(i2);
+				final ImageStack stack = imp.getImageStack();
+				final ImageProcessor ip1 = stack.getProcessor(i1);
+				final ImageProcessor ip2 = stack.getProcessor(i2);
 
 				// Get the maxima
-				int maxx = imp.getWidth();
+				final int maxx = imp.getWidth();
 				int m1 = bounds.y * maxx + bounds.x;
 				int m2 = m1;
 				for (int ys = 0; ys < bounds.height; ys++)
-				{
 					for (int xs = 0, i = (ys + bounds.y) * maxx + bounds.x; xs < bounds.width; xs++, i++)
 					{
 						if (ip1.getf(i) > ip1.getf(m1))
@@ -261,13 +258,12 @@ public class SpotPairDistance implements PlugIn
 						if (ip2.getf(i) > ip2.getf(m2))
 							m2 = i;
 					}
-				}
 
 				// Find centre-of-mass around each maxima
 				com1 = com(ip1, m1, r1);
 				com2 = com(ip2, m2, r2);
 
-				// Store the actual pixel position so it is clear when the mouse has 
+				// Store the actual pixel position so it is clear when the mouse has
 				// been dragged to a new position.
 				origX = e.getX();
 				origY = e.getY();
@@ -305,8 +301,8 @@ public class SpotPairDistance implements PlugIn
 
 		private double[] com(ImageProcessor ip, int m, Rectangle r)
 		{
-			int x = m % ip.getWidth();
-			int y = m / ip.getWidth();
+			final int x = m % ip.getWidth();
+			final int y = m / ip.getWidth();
 
 			// Make range +/- equal
 			int rx = comRange;
@@ -319,9 +315,9 @@ public class SpotPairDistance implements PlugIn
 				ry = ip.getHeight() - y - 1;
 			else if (y - comRange < 0)
 				ry = y;
-			int mx = x - rx;
+			final int mx = x - rx;
 			rx = 2 * rx + 1;
-			int my = y - ry;
+			final int my = y - ry;
 			ry = 2 * ry + 1;
 
 			r.x = mx;
@@ -337,7 +333,7 @@ public class SpotPairDistance implements PlugIn
 				double sumX = 0;
 				for (int xs = 0, i = (ys + my) * ip.getWidth() + mx; xs < rx; xs++, i++)
 				{
-					float f = ip.getf(i);
+					final float f = ip.getf(i);
 					sumX += f;
 					cx += f * xs;
 				}
@@ -352,14 +348,14 @@ public class SpotPairDistance implements PlugIn
 
 		private Roi createRoi(Rectangle bounds, Color color)
 		{
-			Roi roi = new Roi(bounds);
+			final Roi roi = new Roi(bounds);
 			roi.setStrokeColor(color);
 			return roi;
 		}
 
 		private Roi createLine(double x1, double y1, double x2, double y2, Color color)
 		{
-			Line roi = new Line(x1, y1, x2, y2);
+			final Line roi = new Line(x1, y1, x2, y2);
 			roi.setStrokeColor(color);
 			return roi;
 		}
@@ -374,12 +370,12 @@ public class SpotPairDistance implements PlugIn
 			// Only a drag if the mouse has moved position
 			if (origX != e.getX() || origY != e.getY())
 			{
-				ImageCanvas ic = imp.getCanvas();
-				double x = ic.offScreenXD(e.getX());
-				double y = ic.offScreenYD(e.getY());
+				final ImageCanvas ic = imp.getCanvas();
+				final double x = ic.offScreenXD(e.getX());
+				final double y = ic.offScreenYD(e.getY());
 
 				// - Draw a line ROI from the start location (it may be reversed)
-				double[] line = createOrientationLine(com1[0], com1[1], x, y);
+				final double[] line = createOrientationLine(com1[0], com1[1], x, y);
 				imp.setRoi(createLine(line[0], line[1], line[2], line[3], Color.yellow));
 				dragging++;
 			}
@@ -396,13 +392,13 @@ public class SpotPairDistance implements PlugIn
 			// Note: ImageJ bug
 			// ImageCanvas.activateOverlayRoi() may set the image ROI (if currently null)
 			// using the first ROI that contains a mouseReleased event if >250 milliseconds
-			// have elapsed from the mousePressed event. Nothing can currently be done to 
+			// have elapsed from the mousePressed event. Nothing can currently be done to
 			// stop this since it ignores the consumed flag.
 
 			synchronized (this)
 			{
 				// Halt dragging but check if a drag did occur
-				boolean hasDragged = dragging > 1;
+				final boolean hasDragged = dragging > 1;
 				dragging = 0;
 
 				double[] line = null;
@@ -411,9 +407,9 @@ public class SpotPairDistance implements PlugIn
 					// Remove drag line
 					imp.killRoi();
 
-					ImageCanvas ic = imp.getCanvas();
-					double x = ic.offScreenXD(e.getX());
-					double y = ic.offScreenYD(e.getY());
+					final ImageCanvas ic = imp.getCanvas();
+					final double x = ic.offScreenXD(e.getX());
+					final double y = ic.offScreenYD(e.getY());
 					line = createOrientationLine(com1[0], com1[1], x, y);
 
 					if (showOrientationLine)
@@ -440,25 +436,25 @@ public class SpotPairDistance implements PlugIn
 						// - Compute relative orientation
 						// Both vectors are are centred on com1. The drag end point
 						// specifies the vector direction origin not the end.
-						double[] v1 = createVector(line[2], line[3], line[0], line[1]);
-						double[] v2 = createVector(com2[0], com2[1], com1[0], com1[1]);
+						final double[] v1 = createVector(line[2], line[3], line[0], line[1]);
+						final double[] v2 = createVector(com2[0], com2[1], com1[0], com1[1]);
 
 						// Requires the vectors to have a length.
-						double l1 = normalise(v1);
-						double l2 = normalise(v2);
+						final double l1 = normalise(v1);
+						final double l2 = normalise(v2);
 						if (l1 != 0 && l2 != 0)
 						{
-							double dot = v1[0] * v2[0] + v1[1] * v2[1];
+							final double dot = v1[0] * v2[0] + v1[1] * v2[1];
 							angle = Math.acos(dot) * 180.0 / Math.PI;
 							// Scalar projection of v2 in direction of v1.
 							// This is the relative X component
 							relX = dot * l2;
-							// The relative Y component is determined using Pythagoras' rule 
+							// The relative Y component is determined using Pythagoras' rule
 							relY = Math.sqrt(l2 * l2 - relX * relX);
 							// Compute sign to get an orientation
 							if (angle != 0)
 							{
-								double sign = Math.signum(v1[0] * v2[1] - v1[1] * v2[0]);
+								final double sign = Math.signum(v1[0] * v2[1] - v1[1] * v2[0]);
 								angle *= sign;
 								relY *= -sign; // Positive rotation makes y below the x-axis direction
 							}
@@ -472,8 +468,8 @@ public class SpotPairDistance implements PlugIn
 
 		private double[] createVector(double x1, double y1, double x2, double y2)
 		{
-			double x = x1 - x2;
-			double y = y1 - y2;
+			final double x = x1 - x2;
+			final double y = y1 - y2;
 			return new double[] { x, y };
 		}
 
@@ -503,10 +499,10 @@ public class SpotPairDistance implements PlugIn
 
 		private double normalise(double[] vector)
 		{
-			double x = vector[0];
-			double y = vector[1];
+			final double x = vector[0];
+			final double y = vector[1];
 			// Normalise
-			double length = Math.sqrt(x * x + y * y);
+			final double length = Math.sqrt(x * x + y * y);
 			if (length != 0)
 			{
 				vector[0] /= length;
@@ -519,15 +515,15 @@ public class SpotPairDistance implements PlugIn
 		private double[] crossProduct(double[] vector1, double[] vector2)
 		{
 			// The cross product is only relevant in 3D!
-			double u1 = vector1[0];
-			double u2 = vector1[1];
-			double u3 = 0;
-			double v1 = vector2[0];
-			double v2 = vector2[1];
-			double v3 = 0;
-			double s1 = u2 * v3 - u3 * v2;
-			double s2 = u3 * v1 - u1 * v3;
-			double s3 = u1 * v2 - u2 * v1;
+			final double u1 = vector1[0];
+			final double u2 = vector1[1];
+			final double u3 = 0;
+			final double v1 = vector2[0];
+			final double v2 = vector2[1];
+			final double v3 = 0;
+			final double s1 = u2 * v3 - u3 * v2;
+			final double s2 = u3 * v1 - u1 * v3;
+			final double s3 = u1 * v2 - u2 * v1;
 			return new double[] { s1, s2, s3 };
 
 			// Simplifies to:
@@ -537,10 +533,10 @@ public class SpotPairDistance implements PlugIn
 		@SuppressWarnings("unused")
 		private double dotSign(double[] vector1, double[] vector2)
 		{
-			double u1 = vector1[0];
-			double u2 = vector1[1];
-			double v1 = vector2[0];
-			double v2 = vector2[1];
+			final double u1 = vector1[0];
+			final double u2 = vector1[1];
+			final double v1 = vector2[0];
+			final double v2 = vector2[1];
 			return u1 * v2 - u2 * v1;
 		}
 
@@ -550,14 +546,12 @@ public class SpotPairDistance implements PlugIn
 		private void createResultsWindow()
 		{
 			if (showDistances && (distancesWindow == null || !distancesWindow.isShowing()))
-			{
 				distancesWindow = new TextWindow(TITLE + " Distances", createDistancesHeader(), "", 700, 300);
-			}
 		}
 
 		private String createDistancesHeader()
 		{
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append("Image\t");
 			sb.append("Ch 1\t");
 			sb.append("Ch 2\t");
@@ -582,7 +576,7 @@ public class SpotPairDistance implements PlugIn
 		{
 			createResultsWindow();
 
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append(imp.getTitle()).append('\t');
 			sb.append(channel1).append('\t');
 			sb.append(channel2).append('\t');
@@ -605,8 +599,8 @@ public class SpotPairDistance implements PlugIn
 			sb.append('\t').append(Utils.rounded(relX));
 			sb.append('\t').append(Utils.rounded(relY));
 
-			Calibration cal = imp.getCalibration();
-			String unit = cal.getUnit();
+			final Calibration cal = imp.getCalibration();
+			final String unit = cal.getUnit();
 			// Only if matching units and pixel scaling
 			if (cal.getYUnit() == unit && (cal.pixelWidth != 1.0 || cal.pixelHeight != 1.0))
 			{
@@ -625,9 +619,7 @@ public class SpotPairDistance implements PlugIn
 					sb.append('\t').append(Utils.rounded(relY * cal.pixelWidth));
 				}
 				else
-				{
 					sb.append("'\t-\t-");
-				}
 				sb.append('\t').append(unit);
 			}
 			distancesWindow.append(sb.toString());
@@ -636,7 +628,7 @@ public class SpotPairDistance implements PlugIn
 		@Override
 		public void mouseClicked(ImagePlus imp, MouseEvent e)
 		{
-			int c = imp.getNChannels();
+			final int c = imp.getNChannels();
 			if (!active || c == 1)
 				return;
 
@@ -650,36 +642,34 @@ public class SpotPairDistance implements PlugIn
 			synchronized (this)
 			{
 				// Option to remove the result
-				ImageCanvas ic = imp.getCanvas();
-				int x = ic.offScreenX(e.getX());
-				int y = ic.offScreenY(e.getY());
+				final ImageCanvas ic = imp.getCanvas();
+				final int x = ic.offScreenX(e.getX());
+				final int y = ic.offScreenY(e.getY());
 
 				// Get the region bounds to search for maxima
-				Rectangle bounds = new Rectangle(x - searchRange, y - searchRange, 2 * searchRange + 1,
+				final Rectangle bounds = new Rectangle(x - searchRange, y - searchRange, 2 * searchRange + 1,
 						2 * searchRange + 1).intersection(new Rectangle(imp.getWidth(), imp.getHeight()));
 				if (bounds.width == 0 || bounds.height == 0)
-				{
 					return;
-				}
 
 				// Remove all the overlay components
 				Overlay o = imp.getOverlay();
 				if (o != null)
 				{
-					Roi[] rois = o.toArray();
+					final Roi[] rois = o.toArray();
 					o = new Overlay();
 					for (int i = 0; i < rois.length; i++)
 					{
-						Roi roi = rois[i];
+						final Roi roi = rois[i];
 						if (roi.isArea())
 						{
-							Rectangle r = roi.getBounds();
+							final Rectangle r = roi.getBounds();
 							if (r.intersects(bounds))
 								continue;
 						}
 						else if (roi instanceof Line)
 						{
-							Line line = (Line) roi;
+							final Line line = (Line) roi;
 							if (bounds.contains(line.x1d, line.y1d) || bounds.contains(line.x2d, line.y2d))
 								continue;
 						}
@@ -691,9 +681,9 @@ public class SpotPairDistance implements PlugIn
 						imp.setOverlay(o);
 
 					// Note:
-					// ImageCanvas.activateOverlayRoi() may set the image ROI using the first ROI 
+					// ImageCanvas.activateOverlayRoi() may set the image ROI using the first ROI
 					// that contains a mousePressed/mouseReleased event. Check if it should be removed.
-					Roi impRoi = imp.getRoi();
+					final Roi impRoi = imp.getRoi();
 					if (impRoi != null && bounds.intersects(impRoi.getBounds()))
 						imp.setRoi((Roi) null);
 				}
@@ -701,11 +691,11 @@ public class SpotPairDistance implements PlugIn
 				// Remove any distances from this image
 				if (distancesWindow != null && distancesWindow.isShowing())
 				{
-					TextPanel tp = distancesWindow.getTextPanel();
-					String title = imp.getTitle();
+					final TextPanel tp = distancesWindow.getTextPanel();
+					final String title = imp.getTitle();
 					for (int i = 0; i < tp.getLineCount(); i++)
 					{
-						String line = tp.getLine(i);
+						final String line = tp.getLine(i);
 						// Check the image name
 						int startIndex = line.indexOf('\t');
 						if (startIndex == -1)
@@ -722,24 +712,24 @@ public class SpotPairDistance implements PlugIn
 						}
 						if (startIndex == -1)
 							continue;
-						int endIndex = line.indexOf('\t', startIndex + 1);
+						final int endIndex = line.indexOf('\t', startIndex + 1);
 						if (endIndex == -1)
 							continue;
-						String text = line.substring(startIndex + 1, endIndex);
+						final String text = line.substring(startIndex + 1, endIndex);
 
 						// Region is formatted as 'x,y wxh'
-						int commaIndex = text.indexOf(',');
-						int spaceIndex = text.indexOf(' ');
-						int xIndex = text.indexOf('x');
+						final int commaIndex = text.indexOf(',');
+						final int spaceIndex = text.indexOf(' ');
+						final int xIndex = text.indexOf('x');
 						if (commaIndex == -1 || spaceIndex < commaIndex || xIndex < spaceIndex)
 							continue;
 						try
 						{
-							int xx = Integer.parseInt(text.substring(0, commaIndex));
-							int yy = Integer.parseInt(text.substring(commaIndex + 1, spaceIndex));
-							int w = Integer.parseInt(text.substring(spaceIndex + 1, xIndex));
-							int h = Integer.parseInt(text.substring(xIndex + 1));
-							Rectangle r = new Rectangle(xx, yy, w, h);
+							final int xx = Integer.parseInt(text.substring(0, commaIndex));
+							final int yy = Integer.parseInt(text.substring(commaIndex + 1, spaceIndex));
+							final int w = Integer.parseInt(text.substring(spaceIndex + 1, xIndex));
+							final int h = Integer.parseInt(text.substring(xIndex + 1));
+							final Rectangle r = new Rectangle(xx, yy, w, h);
 							if (r.intersects(bounds))
 							{
 								//tp.setLine(i, "");
@@ -750,7 +740,7 @@ public class SpotPairDistance implements PlugIn
 								i--;
 							}
 						}
-						catch (NumberFormatException ex)
+						catch (final NumberFormatException ex)
 						{
 						}
 					}
@@ -767,9 +757,7 @@ public class SpotPairDistance implements PlugIn
 	public static void addPluginTool()
 	{
 		if (toolInstance == null)
-		{
 			toolInstance = new SpotPairDistancePluginTool();
-		}
 
 		// Add the tool
 		Toolbar.addPlugInTool(toolInstance);
@@ -783,9 +771,9 @@ public class SpotPairDistance implements PlugIn
 
 		addPluginTool();
 
-		// Fiji restores the toolbar from the last session. 
+		// Fiji restores the toolbar from the last session.
 		// Do not show the options if this is happening.
-		ImageJ ij = IJ.getInstance();
+		final ImageJ ij = IJ.getInstance();
 		if (ij == null || !ij.isVisible())
 			return;
 

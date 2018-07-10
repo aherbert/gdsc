@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -29,15 +29,15 @@ import java.util.List;
 /**
  * Stores a set of GridPoints within a grid arrangement at a given resolution. Allows comparison of a coordinate with
  * any point within the sampling resolution to locate the highest unassigned grid point.
- * 
+ *
  * Currently only supports a 2D grid.
  */
 public class GridPointManager
 {
-	private List<GridPoint> allPoints;
+	private final List<GridPoint> allPoints;
 	@SuppressWarnings("rawtypes")
 	private List[][] grid;
-	private int resolution;
+	private final int resolution;
 	private int minX = Integer.MAX_VALUE;
 	private int minY = Integer.MAX_VALUE;
 	private int searchMode = 0;
@@ -62,7 +62,7 @@ public class GridPointManager
 		// Find the minimum and maximum x,y
 		int maxX = 0;
 		int maxY = maxX;
-		for (GridPoint p : allPoints)
+		for (final GridPoint p : allPoints)
 		{
 			if (p.getX() < minX)
 				minX = p.getXint();
@@ -77,8 +77,8 @@ public class GridPointManager
 		if (minX < 0 || minY < 0)
 			throw new GridException("Minimum grid coordinates must not be negative (x" + minX + ",y" + minY + ")");
 
-		int xBlocks = getXBlock(maxX) + 1;
-		int yBlocks = getYBlock(maxY) + 1;
+		final int xBlocks = getXBlock(maxX) + 1;
+		final int yBlocks = getYBlock(maxY) + 1;
 
 		if (xBlocks > 500 || yBlocks > 500)
 			throw new GridException("Maximum number of grid blocks exceeded, please increase the resolution parameter");
@@ -88,10 +88,8 @@ public class GridPointManager
 		grid = new List[xBlocks][yBlocks];
 
 		// Assign points
-		for (GridPoint p : allPoints)
-		{
+		for (final GridPoint p : allPoints)
 			addToGrid(p);
-		}
 	}
 
 	private int getXBlock(int x)
@@ -106,13 +104,13 @@ public class GridPointManager
 
 	private void addToGrid(GridPoint p)
 	{
-		int xBlock = getXBlock(p.getXint());
-		int yBlock = getYBlock(p.getYint());
+		final int xBlock = getXBlock(p.getXint());
+		final int yBlock = getYBlock(p.getYint());
 		@SuppressWarnings("unchecked")
 		LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[xBlock][yBlock];
 		if (points == null)
 		{
-			points = new LinkedList<GridPoint>();
+			points = new LinkedList<>();
 			grid[xBlock][yBlock] = points;
 		}
 
@@ -125,16 +123,14 @@ public class GridPointManager
 	 */
 	public void resetAssigned()
 	{
-		for (GridPoint p : allPoints)
-		{
+		for (final GridPoint p : allPoints)
 			p.setAssigned(false);
-		}
 	}
 
 	/**
 	 * Find the unassigned point using the current search mode
 	 * If a point is found it will have its assigned flag set to true.
-	 * 
+	 *
 	 * @param xCoord
 	 * @param yCoord
 	 * @return The GridPoint (or null)
@@ -152,7 +148,7 @@ public class GridPointManager
 
 	/**
 	 * Find the highest assigned point within the sampling resolution from the given coordinates.
-	 * 
+	 *
 	 * @param xCoord
 	 * @param yCoord
 	 * @return The GridPoint (or null)
@@ -165,14 +161,14 @@ public class GridPointManager
 	/**
 	 * Find the highest unassigned point within the sampling resolution from the given coordinates.
 	 * If a point is found it will have its assigned flag set to true.
-	 * 
+	 *
 	 * @param xCoord
 	 * @param yCoord
 	 * @return The GridPoint (or null)
 	 */
 	public GridPoint findHighestUnassignedPoint(int xCoord, int yCoord)
 	{
-		GridPoint point = findHighest(xCoord, yCoord, false);
+		final GridPoint point = findHighest(xCoord, yCoord, false);
 
 		if (point != null)
 			point.setAssigned(true);
@@ -183,7 +179,7 @@ public class GridPointManager
 	/**
 	 * Find the highest point within the sampling resolution from the given coordinates with the specified assigned
 	 * status.
-	 * 
+	 *
 	 * @param xCoord
 	 * @param yCoord
 	 * @return The GridPoint (or null)
@@ -192,14 +188,14 @@ public class GridPointManager
 	{
 		GridPoint point = null;
 
-		int xBlock = getXBlock(xCoord);
-		int yBlock = getYBlock(yCoord);
+		final int xBlock = getXBlock(xCoord);
+		final int yBlock = getYBlock(yCoord);
 
 		double resolution2 = resolution * resolution;
 		if (!assigned)
 		{
 			// Use closest assigned peak to set the resolution for the unassigned search
-			GridPoint closestPoint = findClosestAssignedPoint(xCoord, yCoord);
+			final GridPoint closestPoint = findClosestAssignedPoint(xCoord, yCoord);
 			if (closestPoint != null)
 				resolution2 = closestPoint.distance2(xCoord, yCoord);
 		}
@@ -207,39 +203,30 @@ public class GridPointManager
 		// Check all surrounding blocks for highest unassigned point
 		float maxValue = Float.NEGATIVE_INFINITY;
 		for (int x = Math.max(0, xBlock - 1); x <= Math.min(grid.length - 1, xBlock + 1); x++)
-		{
 			for (int y = Math.max(0, yBlock - 1); y <= Math.min(grid[0].length - 1, yBlock + 1); y++)
-			{
 				if (grid[x][y] != null)
 				{
 					@SuppressWarnings("unchecked")
+					final
 					LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[x][y];
 
-					for (GridPoint p : points)
-					{
+					for (final GridPoint p : points)
 						if (p.isAssigned() == assigned)
-						{
 							if (p.distance2(xCoord, yCoord) < resolution2)
-							{
 								//IJ.log(String.format("  x%d,y%d (%d) = %g", p.getX(), p.getY(), p.getValue(), p.distance(xCoord, yCoord)));
 								if (maxValue < p.getValue())
 								{
 									maxValue = p.getValue();
 									point = p;
 								}
-							}
-						}
-					}
 				}
-			}
-		}
 
 		return point;
 	}
 
 	/**
 	 * Find the assigned point that matches the given coordinates.
-	 * 
+	 *
 	 * @param xCoord
 	 * @param yCoord
 	 * @return The GridPoint (or null)
@@ -252,14 +239,14 @@ public class GridPointManager
 	/**
 	 * Find the unassigned point that matches the given coordinates.
 	 * If a point is found it will have its assigned flag set to true.
-	 * 
+	 *
 	 * @param xCoord
 	 * @param yCoord
 	 * @return The GridPoint (or null)
 	 */
 	public GridPoint findExactUnassignedPoint(int xCoord, int yCoord)
 	{
-		GridPoint point = findExact(xCoord, yCoord, false);
+		final GridPoint point = findExact(xCoord, yCoord, false);
 
 		if (point != null)
 			point.setAssigned(true);
@@ -269,7 +256,7 @@ public class GridPointManager
 
 	/**
 	 * Find the point that matches the given coordinates with the specified assigned status.
-	 * 
+	 *
 	 * @param xCoord
 	 * @param yCoord
 	 * @param assigned
@@ -277,24 +264,21 @@ public class GridPointManager
 	 */
 	public GridPoint findExact(int xCoord, int yCoord, boolean assigned)
 	{
-		int xBlock = getXBlock(xCoord);
-		int yBlock = getYBlock(yCoord);
+		final int xBlock = getXBlock(xCoord);
+		final int yBlock = getYBlock(yCoord);
 
-		int x = Math.min(grid.length - 1, Math.max(0, xBlock));
-		int y = Math.min(grid[0].length - 1, Math.max(0, yBlock));
+		final int x = Math.min(grid.length - 1, Math.max(0, xBlock));
+		final int y = Math.min(grid[0].length - 1, Math.max(0, yBlock));
 
 		if (grid[x][y] != null)
 		{
 			@SuppressWarnings("unchecked")
+			final
 			LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[x][y];
 
-			for (GridPoint p : points)
-			{
+			for (final GridPoint p : points)
 				if (p.isAssigned() == assigned && p.getX() == xCoord && p.getY() == yCoord)
-				{
 					return p;
-				}
-			}
 		}
 
 		return null;
@@ -302,7 +286,7 @@ public class GridPointManager
 
 	/**
 	 * Find the closest assigned point within the sampling resolution from the given coordinates
-	 * 
+	 *
 	 * @param xCoord
 	 * @param yCoord
 	 * @return The GridPoint (or null)
@@ -315,14 +299,14 @@ public class GridPointManager
 	/**
 	 * Find the closest unassigned point within the sampling resolution from the given coordinates.
 	 * If a point is found it will have its assigned flag set to true.
-	 * 
+	 *
 	 * @param xCoord
 	 * @param yCoord
 	 * @return The GridPoint (or null)
 	 */
 	public GridPoint findClosestUnassignedPoint(int xCoord, int yCoord)
 	{
-		GridPoint point = findClosest(xCoord, yCoord, false);
+		final GridPoint point = findClosest(xCoord, yCoord, false);
 
 		if (point != null)
 			point.setAssigned(true);
@@ -333,7 +317,7 @@ public class GridPointManager
 	/**
 	 * Find the closest point within the sampling resolution from the given coordinates with the specified assigned
 	 * status.
-	 * 
+	 *
 	 * @param xCoord
 	 * @param yCoord
 	 * @param assigned
@@ -343,21 +327,19 @@ public class GridPointManager
 	{
 		GridPoint point = null;
 
-		int xBlock = getXBlock(xCoord);
-		int yBlock = getYBlock(yCoord);
+		final int xBlock = getXBlock(xCoord);
+		final int yBlock = getYBlock(yCoord);
 
 		double resolution2 = resolution * resolution;
 		for (int x = Math.max(0, xBlock - 1); x <= Math.min(grid.length - 1, xBlock + 1); x++)
-		{
 			for (int y = Math.max(0, yBlock - 1); y <= Math.min(grid[0].length - 1, yBlock + 1); y++)
-			{
 				if (grid[x][y] != null)
 				{
 					@SuppressWarnings("unchecked")
+					final
 					LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[x][y];
 
-					for (GridPoint p : points)
-					{
+					for (final GridPoint p : points)
 						if (p.isAssigned() == assigned)
 						{
 							final double d2 = p.distance2(xCoord, yCoord);
@@ -367,10 +349,7 @@ public class GridPointManager
 								point = p;
 							}
 						}
-					}
 				}
-			}
-		}
 
 		return point;
 	}

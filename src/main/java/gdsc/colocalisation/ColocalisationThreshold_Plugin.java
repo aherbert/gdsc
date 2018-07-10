@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -70,7 +70,7 @@ import ij.text.TextWindow;
 /**
  * Compares two images for correlated pixel intensities. If the two images are correlated a search is performed for the
  * threshold below which the two images are not correlated.
- * 
+ *
  * Supports stacks. Only a specific channel and time frame can be used and all input images must have the same number
  * of z-sections for the chosen channel/time frame.
  */
@@ -160,8 +160,8 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	final String OPT_MAX_ITERATIONS = "CT.maxIterations";
 
 	// Options
-	private double DEFAULT_R_LIMIT = 0;
-	private double DEFAULT_SEARCH_TOLERANCE = 0.05;
+	private final double DEFAULT_R_LIMIT = 0;
+	private final double DEFAULT_SEARCH_TOLERANCE = 0.05;
 	private int channel1SelectedIndex = (int) Prefs.get(OPT_CHANNEL1_INDEX, 0);
 	private int channel2SelectedIndex = (int) Prefs.get(OPT_CHANNEL2_INDEX, 0);
 	private int roiIndex = (int) Prefs.get(OPT_ROI_INDEX, 0);
@@ -193,22 +193,22 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	// Windows that are opened by the plug-in.
 	// These should be closed on exit.
-	private ImagePlus scatterPlot = new ImagePlus();
-	private ImagePlus channel1RGB = new ImagePlus();
-	private ImagePlus channel2RGB = new ImagePlus();
-	private ImagePlus segmented1RGB = new ImagePlus();
-	private ImagePlus segmented2RGB = new ImagePlus();
-	private ImagePlus mixChannel = new ImagePlus();
+	private final ImagePlus scatterPlot = new ImagePlus();
+	private final ImagePlus channel1RGB = new ImagePlus();
+	private final ImagePlus channel2RGB = new ImagePlus();
+	private final ImagePlus segmented1RGB = new ImagePlus();
+	private final ImagePlus segmented2RGB = new ImagePlus();
+	private final ImagePlus mixChannel = new ImagePlus();
 
 	private PlotWindow rPlot;
 
 	private ImageJ ij;
 
 	// Store the channels and frames to use from image stacks
-	private int[] sliceOptions = new int[4];
+	private final int[] sliceOptions = new int[4];
 
 	// Stores the list of images last used in the selection options
-	private ArrayList<String> imageList = new ArrayList<String>();
+	private ArrayList<String> imageList = new ArrayList<>();
 
 	public ColocalisationThreshold_Plugin()
 	{
@@ -227,10 +227,9 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		}
 
 		if (instance != null)
-		{
 			if (!(instance.getTitle().equals(getTitle())))
 			{
-				ColocalisationThreshold_Plugin cda = (ColocalisationThreshold_Plugin) instance;
+				final ColocalisationThreshold_Plugin cda = (ColocalisationThreshold_Plugin) instance;
 				Prefs.saveLocation(OPT_LOCATION, cda.getLocation());
 				cda.close();
 			}
@@ -239,7 +238,6 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 				instance.toFront();
 				return;
 			}
-		}
 
 		instance = this;
 		IJ.register(ColocalisationThreshold_Plugin.class);
@@ -252,13 +250,11 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 		addKeyListener(ij);
 		pack();
-		Point loc = Prefs.getLocation(OPT_LOCATION);
+		final Point loc = Prefs.getLocation(OPT_LOCATION);
 		if (loc != null)
 			setLocation(loc);
 		else
-		{
 			GUI.center(this);
-		}
 		if (IJ.isMacOSX())
 			setResizable(false);
 		setVisible(true);
@@ -266,7 +262,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	private void setup()
 	{
-		ImagePlus imp = WindowManager.getCurrentImage();
+		final ImagePlus imp = WindowManager.getCurrentImage();
 		if (imp == null)
 			return;
 		fillImagesList();
@@ -275,19 +271,19 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	@Override
 	public synchronized void actionPerformed(ActionEvent e)
 	{
-		Object actioner = e.getSource();
+		final Object actioner = e.getSource();
 
 		if (actioner == null)
 			return;
 
 		if (((Button) actioner == okButton) && (parametersReady()))
 		{
-			Thread thread = new Thread(this, "ColicalisationThreshold_Plugin");
+			final Thread thread = new Thread(this, "ColicalisationThreshold_Plugin");
 			thread.start();
 		}
 		if ((Button) actioner == helpButton)
 		{
-			String macro = "run('URL...', 'url=" + gdsc.help.URL.COLOCALISATION + "');";
+			final String macro = "run('URL...', 'url=" + gdsc.help.URL.COLOCALISATION + "');";
 			new MacroRunner(macro);
 		}
 
@@ -301,7 +297,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		{
 			setResultsOptionsCheckbox.setState(false);
 
-			GenericDialog gd = new GenericDialog("Set Results Options");
+			final GenericDialog gd = new GenericDialog("Set Results Options");
 
 			gd.addCheckbox("Show linear regression solution", showLinearRegression);
 			gd.addCheckbox("Show thresholds", showThresholds);
@@ -364,9 +360,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 			closeImagePlus(scatterPlot);
 
 			if (tw != null && tw.isShowing())
-			{
 				tw.close();
-			}
 		}
 
 		instance = null;
@@ -376,9 +370,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	private void closeImagePlus(ImagePlus w)
 	{
 		if (w != null)
-		{
 			w.close();
-		}
 	}
 
 	@Override
@@ -392,7 +384,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
@@ -409,9 +401,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	private void findThreshold()
 	{
 		if (!parametersReady())
-		{
 			return;
-		}
 
 		// Read settings
 		channel1SelectedIndex = channel1List.getSelectedIndex();
@@ -428,10 +418,10 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		ImagePlus imp1 = WindowManager.getImage(channel1List.getSelectedItem());
 		ImagePlus imp2 = WindowManager.getImage(channel2List.getSelectedItem());
 
-		int width1 = imp1.getWidth();
-		int width2 = imp2.getWidth();
-		int height1 = imp1.getHeight();
-		int height2 = imp2.getHeight();
+		final int width1 = imp1.getWidth();
+		final int width2 = imp2.getWidth();
+		final int height1 = imp1.getHeight();
+		final int height2 = imp2.getHeight();
 
 		if ((width1 != width2) || (height1 != height2))
 		{
@@ -470,7 +460,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		{
 			return Double.parseDouble(value);
 		}
-		catch (Exception ex)
+		catch (final Exception ex)
 		{
 			return defaultValue;
 		}
@@ -480,7 +470,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	{
 		if (isStack(imp1) || isStack(imp1))
 		{
-			GenericDialog gd = new GenericDialog("Slice options");
+			final GenericDialog gd = new GenericDialog("Slice options");
 			gd.addMessage("Stacks detected. Please select the slices.");
 
 			boolean added = false;
@@ -512,8 +502,8 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		boolean added = false;
 		if (imp != null)
 		{
-			String[] channels = getChannels(imp);
-			String[] frames = getFrames(imp);
+			final String[] channels = getChannels(imp);
+			final String[] frames = getFrames(imp);
 
 			if (channels.length > 1 || frames.length > 1)
 			{
@@ -532,7 +522,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		if (choices.length > 1)
 		{
 			// Restore previous selection
-			int c = (sliceOptions[offset] > 0 && sliceOptions[offset] <= choices.length) ? sliceOptions[offset] - 1 : 0;
+			final int c = (sliceOptions[offset] > 0 && sliceOptions[offset] <= choices.length) ? sliceOptions[offset] - 1 : 0;
 			gd.addChoice(title, choices, choices[c]);
 			return true;
 		}
@@ -546,8 +536,8 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	private String[] getChannels(ImagePlus imp)
 	{
-		int c = imp.getNChannels();
-		String[] result = new String[c];
+		final int c = imp.getNChannels();
+		final String[] result = new String[c];
 		for (int i = 0; i < c; i++)
 			result[i] = Integer.toString(i + 1);
 		return result;
@@ -555,8 +545,8 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	private String[] getFrames(ImagePlus imp)
 	{
-		int c = imp.getNFrames();
-		String[] result = new String[c];
+		final int c = imp.getNFrames();
+		final String[] result = new String[c];
 		for (int i = 0; i < c; i++)
 			result[i] = Integer.toString(i + 1);
 		return result;
@@ -566,8 +556,8 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	{
 		if (imp != null)
 		{
-			String[] channels = getChannels(imp);
-			String[] frames = getFrames(imp);
+			final String[] channels = getChannels(imp);
+			final String[] frames = getFrames(imp);
 
 			if (channels.length > 1)
 				sliceOptions[offset] = gd.getNextChoiceIndex() + 1;
@@ -578,28 +568,26 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	private ImagePlus createImagePlus(ImagePlus originalImp, int offset)
 	{
-		int channel = sliceOptions[offset];
-		int frame = sliceOptions[offset + 1];
-		int slices = originalImp.getNSlices();
+		final int channel = sliceOptions[offset];
+		final int frame = sliceOptions[offset + 1];
+		final int slices = originalImp.getNSlices();
 
-		ImageStack stack = new ImageStack(originalImp.getWidth(), originalImp.getHeight());
-		ImageStack inputStack = originalImp.getImageStack();
+		final ImageStack stack = new ImageStack(originalImp.getWidth(), originalImp.getHeight());
+		final ImageStack inputStack = originalImp.getImageStack();
 
 		for (int slice = 1; slice <= slices; slice++)
 		{
 			// Convert to a short processor
-			ImageProcessor ip = inputStack.getProcessor(originalImp.getStackIndex(channel, slice, frame));
+			final ImageProcessor ip = inputStack.getProcessor(originalImp.getStackIndex(channel, slice, frame));
 			stack.addSlice(null, ip);
 		}
 
-		StringBuilder sb = new StringBuilder(originalImp.getTitle());
+		final StringBuilder sb = new StringBuilder(originalImp.getTitle());
 		if (slices > 1 && (originalImp.getNChannels() > 1 || originalImp.getNFrames() > 1))
-		{
 			sb.append(" (c").append(channel).append(",t").append(frame).append(")");
-		}
 
-		ImagePlus imp = new ImagePlus(sb.toString(), stack);
-		Roi roi = originalImp.getRoi();
+		final ImagePlus imp = new ImagePlus(sb.toString(), stack);
+		final Roi roi = originalImp.getRoi();
 		if (roi != null)
 			imp.setRoi(roi);
 		return imp;
@@ -607,8 +595,8 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	public void correlate(ImagePlus imp1, ImagePlus imp2)
 	{
-		ImageStack img1 = imp1.getStack();
-		ImageStack img2 = imp2.getStack();
+		final ImageStack img1 = imp1.getStack();
+		final ImageStack img2 = imp2.getStack();
 
 		// Start regression
 		IJ.showStatus("Performing regression. Press 'Esc' to abort");
@@ -629,7 +617,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 				return;
 			}
 		}
-		catch (Exception ex)
+		catch (final Exception ex)
 		{
 			IJ.error(TITLE, "Error: " + ex.getMessage());
 			IJ.showStatus("Done");
@@ -644,8 +632,8 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 		if (roiIndex != 0)
 		{
-			ImagePlus roiImage = (roiIndex == 1) ? imp1 : imp2;
-			Roi roi = roiImage.getRoi();
+			final ImagePlus roiImage = (roiIndex == 1) ? imp1 : imp2;
+			final Roi roi = roiImage.getRoi();
 
 			if (roi != null)
 			{
@@ -653,22 +641,18 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 				// Use a mask for an irregular ROI
 				if (roi.getType() != Roi.RECTANGLE)
-				{
 					ipMask = roiImage.getMask();
-				}
 			}
 			else
-			{
 				// Reset the choice for next time
 				roiIndex = 0;
-			}
 		}
 
 		saveOptions();
 
-		int nslices = imp1.getStackSize();
-		int width = imp1.getWidth();
-		int height = imp1.getHeight();
+		final int nslices = imp1.getStackSize();
+		final int width = imp1.getWidth();
+		final int height = imp1.getHeight();
 		int xOffset, yOffset, rwidth, rheight;
 
 		if (roiRect == null)
@@ -688,13 +672,13 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 		int mask = 0;
 
-		ImageProcessor plot16 = new ShortProcessor(256, 256);
+		final ImageProcessor plot16 = new ShortProcessor(256, 256);
 		int scaledC1ThresholdValue = 0;
 		int scaledC2ThresholdValue = 0;
 		imp1.getCurrentSlice();
 
-		int ch1threshmax = ct.getThreshold1();
-		int ch2threshmax = ct.getThreshold2();
+		final int ch1threshmax = ct.getThreshold1();
+		final int ch2threshmax = ct.getThreshold2();
 		int colocInt = 255;
 
 		long n = 0;
@@ -714,8 +698,8 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		long sumCh1_coloc = 0;
 		long sumCh2_coloc = 0;
 
-		int ch1Max = ct.getCh1Max();
-		int ch2Max = ct.getCh2Max();
+		final int ch1Max = ct.getCh1Max();
+		final int ch2Max = ct.getCh2Max();
 		double ch1Scaling = (double) 255 / (double) ch1Max;
 		double ch2Scaling = (double) 255 / (double) ch2Max;
 		if (ch1Scaling > 1)
@@ -723,14 +707,14 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		if (ch2Scaling > 1)
 			ch2Scaling = 1;
 
-		ImageStack stackColoc = new ImageStack(rwidth, rheight);
+		final ImageStack stackColoc = new ImageStack(rwidth, rheight);
 
 		// These will be used to store the output image ROIs
 		ImageStack outputStack1 = null;
 		ImageStack outputStack2 = null;
 		// These will be used to store the output masks
-		ImageStack outputMask1 = new ImageStack(rwidth, rheight);
-		ImageStack outputMask2 = new ImageStack(rwidth, rheight);
+		final ImageStack outputMask1 = new ImageStack(rwidth, rheight);
+		final ImageStack outputMask2 = new ImageStack(rwidth, rheight);
 
 		// If an ROI was used then an image should be extracted
 		if (roiRect != null)
@@ -739,17 +723,17 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 			outputStack2 = new ImageStack(rwidth, rheight);
 		}
 
-		int[] color = new int[3];
+		final int[] color = new int[3];
 		for (int s = 1; s <= nslices; s++)
 		{
-			ImageProcessor ip1 = img1.getProcessor(s);
-			ImageProcessor ip2 = img2.getProcessor(s);
+			final ImageProcessor ip1 = img1.getProcessor(s);
+			final ImageProcessor ip2 = img2.getProcessor(s);
 
-			ColorProcessor ipColoc = new ColorProcessor(rwidth, rheight);
+			final ColorProcessor ipColoc = new ColorProcessor(rwidth, rheight);
 			ImageProcessor out1 = null;
 			ImageProcessor out2 = null;
-			ByteProcessor mask1 = new ByteProcessor(rwidth, rheight);
-			ByteProcessor mask2 = new ByteProcessor(rwidth, rheight);
+			final ByteProcessor mask1 = new ByteProcessor(rwidth, rheight);
+			final ByteProcessor mask2 = new ByteProcessor(rwidth, rheight);
 
 			if (outputStack1 != null)
 			{
@@ -759,15 +743,14 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 			}
 
 			for (int y = 0; y < rheight; y++)
-			{
 				for (int x = 0; x < rwidth; x++)
 				{
 					mask = (ipMask != null) ? ipMask.get(x, y) : 1;
 
 					if (mask != 0)
 					{
-						int ch1 = ip1.getPixel(x + xOffset, y + yOffset);
-						int ch2 = ip2.getPixel(x + xOffset, y + yOffset);
+						final int ch1 = ip1.getPixel(x + xOffset, y + yOffset);
+						final int ch2 = ip2.getPixel(x + xOffset, y + yOffset);
 
 						if (out1 != null)
 						{
@@ -775,8 +758,8 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 							out2.set(x, y, ch2);
 						}
 
-						int scaledCh1 = (int) (ch1 * ch1Scaling);
-						int scaledCh2 = (int) (ch2 * ch2Scaling);
+						final int scaledCh1 = (int) (ch1 * ch1Scaling);
+						final int scaledCh2 = (int) (ch2 * ch2Scaling);
 
 						color[0] = scaledCh1;
 						color[1] = scaledCh2;
@@ -798,13 +781,9 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 							nZero++;
 
 						if (ch1 > 0)
-						{
 							sumCh2_ch1gt0 += ch2;
-						}
 						if (ch2 > 0)
-						{
 							sumCh1_ch2gt0 += ch1;
-						}
 
 						if (ch1 >= ch1threshmax)
 						{
@@ -827,9 +806,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 								nColoc++;
 
 								if (!useConstantIntensity)
-								{
 									colocInt = (int) Math.sqrt(scaledCh1 * scaledCh2);
-								}
 								color[2] = colocInt;
 
 								ipColoc.putPixel(x, y, color);
@@ -837,7 +814,6 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 						}
 					}
 				}
-			}
 
 			stackColoc.addSlice(colocalisedPixelsTitle + "." + s, ipColoc);
 
@@ -850,57 +826,55 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 			outputMask2.addSlice(threshold2Title + "." + s, mask2);
 		}
 
-		long totalPixels = n;
+		final long totalPixels = n;
 		if (!includeZeroZeroPixels)
 			n -= nZero;
 
 		// Pearsons for colocalised volume -
 		// Should get this directly from the Colocalisation object
-		double rColoc = ct.getRAboveThreshold();
+		final double rColoc = ct.getRAboveThreshold();
 
 		// Mander's original
 		// [i.e. E(ch1 if ch2>0) / E(ch1total)]
 		// (How much of channel 1 intensity occurs where channel 2 has signal)
 
-		double m1 = (double) sumCh1_ch2gt0 / sumCh1;
-		double m2 = (double) sumCh2_ch1gt0 / sumCh2;
+		final double m1 = (double) sumCh1_ch2gt0 / sumCh1;
+		final double m2 = (double) sumCh2_ch1gt0 / sumCh2;
 
 		// Manders using threshold
 		// [i.e. E(ch1 if ch2>ch2threshold) / E(ch1total)]
 		// This matches other plug-ins, i.e. how much of channel 1 intensity occurs where channel 2 is correlated
-		double m1threshold = (double) sumCh1_ch2gtT / sumCh1;
-		double m2threshold = (double) sumCh2_ch1gtT / sumCh2;
+		final double m1threshold = (double) sumCh1_ch2gtT / sumCh1;
+		final double m2threshold = (double) sumCh2_ch1gtT / sumCh2;
 
 		// as in Coste's paper
 		// [i.e. E(ch1 > ch1threshold) / E(ch1total)]
 		// This appears to be wrong when compared to other plug-ins
-		// m1threshold = (double) sumCh1gtT / sumCh1; 
+		// m1threshold = (double) sumCh1gtT / sumCh1;
 		// m2threshold = (double) sumCh2gtT / sumCh2;
 
 		// Imaris percentage volume
-		double percVolCh1 = (double) nColoc / (double) nCh1gtT;
-		double percVolCh2 = (double) nColoc / (double) nCh2gtT;
+		final double percVolCh1 = (double) nColoc / (double) nCh1gtT;
+		final double percVolCh2 = (double) nColoc / (double) nCh2gtT;
 
-		double percTotCh1 = (double) sumCh1_coloc / (double) sumCh1;
-		double percTotCh2 = (double) sumCh2_coloc / (double) sumCh2;
+		final double percTotCh1 = (double) sumCh1_coloc / (double) sumCh1;
+		final double percTotCh2 = (double) sumCh2_coloc / (double) sumCh2;
 
 		// Imaris percentage material
-		double percGtTCh1 = (double) sumCh1_coloc / (double) sumCh1gtT;
-		double percGtTCh2 = (double) sumCh2_coloc / (double) sumCh2gtT;
+		final double percGtTCh1 = (double) sumCh1_coloc / (double) sumCh1gtT;
+		final double percGtTCh2 = (double) sumCh2_coloc / (double) sumCh2gtT;
 
 		// Create results window
-		String resultsTitle = TITLE + " Results";
+		final String resultsTitle = TITLE + " Results";
 		openResultsWindow(resultsTitle);
-		String imageTitle = createImageTitle(imp1, imp2);
+		final String imageTitle = createImageTitle(imp1, imp2);
 
 		showResults(imageTitle, ch1threshmax, ch2threshmax, n, nZero, nCh1gtT, nCh2gtT, ct, nColoc, rColoc, m1, m2,
 				m1threshold, m2threshold, percVolCh1, percVolCh2, percTotCh1, percTotCh2, percGtTCh1, percGtTCh2,
 				totalPixels);
 
 		if (showColocalised)
-		{
 			refreshImage(mixChannel, colocalisedPixelsTitle, stackColoc);
-		}
 
 		if (showRoisAndMasks)
 		{
@@ -915,14 +889,10 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		}
 
 		if (showScatterPlot)
-		{
 			showScatterPlot(ct, ch1threshmax, ch2threshmax, plot16, ch1Max, ch1Scaling, ch2Scaling, imageTitle);
-		}
 
 		if (plotRValues)
-		{
 			plotResults(ct.getResults());
-		}
 
 		IJ.selectWindow(resultsTitle);
 		IJ.showStatus("Done");
@@ -954,22 +924,22 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		int scaledC2ThresholdValue;
 		double plotY = 0;
 		plot16.resetMinAndMax();
-		int plotmax2 = (int) (plot16.getMax());
-		int plotmax = plotmax2 / 2;
+		final int plotmax2 = (int) (plot16.getMax());
+		final int plotmax = plotmax2 / 2;
 
 		scaledC1ThresholdValue = (int) (ch1threshmax * ch1Scaling);
 		scaledC2ThresholdValue = 255 - (int) (ch2threshmax * ch2Scaling);
 
-		double m = ct.getM();
-		double b = ct.getB();
+		final double m = ct.getM();
+		final double b = ct.getB();
 
 		// Draw regression line
 		for (int c = (ch1Max < 256) ? 256 : ch1Max; c-- > 0;)
 		{
 			plotY = (c * m) + b;
 
-			int scaledXValue = (int) (c * ch1Scaling);
-			int scaledYValue = 255 - (int) (plotY * ch2Scaling);
+			final int scaledXValue = (int) (c * ch1Scaling);
+			final int scaledYValue = 255 - (int) (plotY * ch2Scaling);
 
 			plot16.putPixel(scaledXValue, scaledYValue, plotmax);
 
@@ -991,7 +961,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 			double m1threshold, double m2threshold, double percVolCh1, double percVolCh2, double percTotCh1,
 			double percTotCh2, double percGtTCh1, double percGtTCh2, double totalPixels)
 	{
-		StringBuilder str = new StringBuilder();
+		final StringBuilder str = new StringBuilder();
 		str.append(fileName).append('\t');
 		switch (roiIndex)
 		{
@@ -1006,11 +976,11 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 				break;
 		}
 
-		DecimalFormat df4 = new DecimalFormat("##0.0000");
-		DecimalFormat df3 = new DecimalFormat("##0.000");
-		DecimalFormat df2 = new DecimalFormat("##0.00");
-		DecimalFormat df1 = new DecimalFormat("##0.0");
-		DecimalFormat df0 = new DecimalFormat("##0");
+		final DecimalFormat df4 = new DecimalFormat("##0.0000");
+		final DecimalFormat df3 = new DecimalFormat("##0.000");
+		final DecimalFormat df2 = new DecimalFormat("##0.00");
+		final DecimalFormat df1 = new DecimalFormat("##0.0");
+		final DecimalFormat df0 = new DecimalFormat("##0");
 
 		str.append((includeZeroZeroPixels) ? "\tincl.\t" : "\texcl.\t");
 
@@ -1018,8 +988,8 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 			appendFormat(str, ct.getRTotal(), df3);
 		if (showLinearRegression)
 		{
-			double m = ct.getM();
-			double b = ct.getB();
+			final double m = ct.getM();
+			final double b = ct.getB();
 			appendFormat(str, m, df3);
 			appendFormat(str, b, df1);
 		}
@@ -1075,7 +1045,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	{
 		if (tw == null || !tw.isShowing())
 		{
-			StringBuilder heading = new StringBuilder("Images\tROI\tZeroZero\t");
+			final StringBuilder heading = new StringBuilder("Images\tROI\tZeroZero\t");
 
 			if (showRTotal)
 				heading.append("Rtotal\t");
@@ -1125,26 +1095,18 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	private void appendFormat(StringBuilder str, double value, DecimalFormat format)
 	{
 		if (Double.isNaN(value))
-		{
 			str.append("NaN");
-		}
 		else
-		{
 			str.append(format.format(value));
-		}
 		str.append('\t');
 	}
 
 	private void appendFormat(StringBuilder str, double value, DecimalFormat format, String units)
 	{
 		if (Double.isNaN(value))
-		{
 			str.append("NaN");
-		}
 		else
-		{
 			str.append(format.format(value)).append(units);
-		}
 		str.append('\t');
 	}
 
@@ -1194,11 +1156,11 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	public void fillImagesList()
 	{
 		// Find the currently open images
-		ArrayList<String> newImageList = new ArrayList<String>();
+		final ArrayList<String> newImageList = new ArrayList<>();
 
-		for (int id : gdsc.core.ij.Utils.getIDList())
+		for (final int id : gdsc.core.ij.Utils.getIDList())
 		{
-			ImagePlus imp = WindowManager.getImage(id);
+			final ImagePlus imp = WindowManager.getImage(id);
 
 			// Image must be 8-bit/16-bit
 			if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16))
@@ -1221,7 +1183,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		channel1List.removeAll();
 		channel2List.removeAll();
 
-		for (String imageTitle : newImageList)
+		for (final String imageTitle : newImageList)
 		{
 			channel1List.add(imageTitle);
 			channel2List.add(imageTitle);
@@ -1241,20 +1203,16 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	private boolean previousResult(String title)
 	{
-		for (String resultTitle : resultsTitles)
-		{
+		for (final String resultTitle : resultsTitles)
 			if (title.startsWith(resultTitle))
-			{
 				return true;
-			}
-		}
 		return false;
 	}
 
 	private void createFrame()
 	{
-		Panel mainPanel = new Panel();
-		GridLayout mainGrid = new GridLayout(0, 1);
+		final Panel mainPanel = new Panel();
+		final GridLayout mainGrid = new GridLayout(0, 1);
 		mainGrid.setHgap(10);
 		mainGrid.setVgap(10);
 		mainPanel.setLayout(mainGrid);
@@ -1304,8 +1262,8 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		helpButton = new Button(helpButtonLabel);
 		helpButton.addActionListener(this);
 
-		JPanel buttonPanel = new JPanel();
-		FlowLayout l = new FlowLayout();
+		final JPanel buttonPanel = new JPanel();
+		final FlowLayout l = new FlowLayout();
 		l.setVgap(0);
 		buttonPanel.setLayout(l);
 		buttonPanel.add(okButton, BorderLayout.CENTER);
@@ -1316,9 +1274,9 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	private Panel createChoicePanel(Choice list, String label)
 	{
-		Panel panel = new Panel();
+		final Panel panel = new Panel();
 		panel.setLayout(new BorderLayout());
-		Label listLabel = new Label(label, 0);
+		final Label listLabel = new Label(label, 0);
 		listLabel.setFont(monoFont);
 		list.setSize(fontWidth * 3, fontWidth);
 		panel.add(listLabel, BorderLayout.WEST);
@@ -1328,9 +1286,9 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	private Panel createTextPanel(TextField textField, String label, String value)
 	{
-		Panel panel = new Panel();
+		final Panel panel = new Panel();
 		panel.setLayout(new BorderLayout());
-		Label listLabel = new Label(label, 0);
+		final Label listLabel = new Label(label, 0);
 		listLabel.setFont(monoFont);
 		textField.setSize(fontWidth * 3, fontWidth);
 		textField.setText(value);
@@ -1341,9 +1299,9 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 	private Panel createCheckboxPanel(Checkbox checkbox, String label, boolean state)
 	{
-		Panel panel = new Panel();
+		final Panel panel = new Panel();
 		panel.setLayout(new BorderLayout());
-		Label listLabel = new Label(label, 0);
+		final Label listLabel = new Label(label, 0);
 		listLabel.setFont(monoFont);
 		checkbox.setState(state);
 		panel.add(listLabel, BorderLayout.WEST);
@@ -1356,9 +1314,9 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		if (results == null)
 			return;
 
-		double[] threshold = new double[results.size()];
-		double[] R = new double[results.size()];
-		double[] R2 = new double[results.size()];
+		final double[] threshold = new double[results.size()];
+		final double[] R = new double[results.size()];
+		final double[] R2 = new double[results.size()];
 
 		double yMin = 1, yMax = -1;
 
@@ -1368,7 +1326,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 		for (int i = 0, j = results.size() - 1; i < results.size(); i++, j--)
 		{
-			ColocalisationThreshold.ThresholdResult result = results.get(i);
+			final ColocalisationThreshold.ThresholdResult result = results.get(i);
 			threshold[j] = result.threshold1;
 			R[j] = result.r;
 			R2[j] = result.r2;
@@ -1381,19 +1339,15 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 			if (yMax < R2[j])
 				yMax = R2[j];
 			if (result.threshold1 == 0)
-			{
 				zeroThresholdIndex = j;
-			}
 			else if (minThreshold > result.threshold1)
-			{
 				minThreshold = result.threshold1;
-			}
 		}
 		threshold[zeroThresholdIndex] = (minThreshold > 0) ? minThreshold - 1 : 0;
 
 		if (rPlot != null && rPlot.isVisible())
 			rPlot.close();
-		Plot plot = new Plot(correlationValuesTitle, "Threshold", "R", threshold, R);
+		final Plot plot = new Plot(correlationValuesTitle, "Threshold", "R", threshold, R);
 		plot.setLimits(threshold[0], threshold[threshold.length - 1], yMin, yMax);
 		plot.setColor(Color.BLUE);
 		plot.draw();

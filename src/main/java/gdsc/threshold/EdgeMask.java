@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -70,7 +70,7 @@ import imagescience.utility.VersionChecker;
  * <p>
  * Requires the ImageScience library that supports the Laplacian plugin of FeatureJ. The imagescience.jar must be
  * installed in the ImageJ plugins folder.
- * 
+ *
  * @see http://www.imagescience.org/meijering/software/featurej/
  */
 public class EdgeMask implements ExtendedPlugInFilter, DialogListener
@@ -92,12 +92,12 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	private static boolean replaceImage;
 	private static double percent = Prefs.getDouble("gdsc.EdgeMaskPercent", 99);
 
-	private int flags = DOES_8G | DOES_16 | DOES_32 | FINAL_PROCESSING;
+	private final int flags = DOES_8G | DOES_16 | DOES_32 | FINAL_PROCESSING;
 	private int flags2 = 0;
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
@@ -112,11 +112,11 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 		}
 		try
 		{
-			// Entire block in try-catch as the library may not be present 
+			// Entire block in try-catch as the library may not be present
 			if (VersionChecker.compare(ImageScience.version(), MINISVERSION) < 0)
 				throw new IllegalStateException();
 		}
-		catch (Throwable e)
+		catch (final Throwable e)
 		{
 			IJ.error("This plugin requires ImageScience version " + MINISVERSION + " or higher");
 			return DONE;
@@ -124,7 +124,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 
 		if (arg.equals("final"))
 		{
-			boolean doesStacks = ((flags2 & DOES_STACKS) != 0);
+			final boolean doesStacks = ((flags2 & DOES_STACKS) != 0);
 
 			ImageProcessor maskIp = (doesStacks) ? null : imp.getProcessor();
 			if (!replaceImage)
@@ -134,7 +134,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 					maskIp = maskIp.duplicate();
 
 				// Reset the main image
-				ImageProcessor ip = imp.getProcessor();
+				final ImageProcessor ip = imp.getProcessor();
 				ip.reset();
 				ip.setMinAndMax(minDisplayValue, maxDisplayValue);
 				imp.updateAndDraw();
@@ -144,24 +144,24 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 			{
 				// Process all slices of the stack
 
-				// Disable the progress bar for the blur. 
+				// Disable the progress bar for the blur.
 				// This does not effect IJ.showProgress(int, int), only IJ.showProgress(double)
 				// Allows the progress to be correctly reported.
-				ImageJ ij = IJ.getInstance();
+				final ImageJ ij = IJ.getInstance();
 				if (ij != null)
 					ij.getProgressBar().setBatchMode(true);
 
-				Roi roi = imp.getRoi();
+				final Roi roi = imp.getRoi();
 				// Multi-thread for speed
-				ExecutorService threadPool = Executors.newCachedThreadPool();
-				List<Future<?>> futures = new LinkedList<Future<?>>();
-				ImageStack stack = imp.getImageStack();
-				ImageStack newStack = new ImageStack(stack.getWidth(), stack.getHeight(), stack.getSize());
+				final ExecutorService threadPool = Executors.newCachedThreadPool();
+				final List<Future<?>> futures = new LinkedList<>();
+				final ImageStack stack = imp.getImageStack();
+				final ImageStack newStack = new ImageStack(stack.getWidth(), stack.getHeight(), stack.getSize());
 				IJ.showStatus("Processing stack ...");
 				for (int slice = 1; slice <= stack.getSize(); slice++)
 				{
 					IJ.showProgress(slice - 1, stack.getSize());
-					ImageProcessor ip = stack.getProcessor(slice).duplicate();
+					final ImageProcessor ip = stack.getProcessor(slice).duplicate();
 					ip.setRoi(roi);
 					futures.add(threadPool.submit(new MaskCreator(ip, newStack, slice, this)));
 				}
@@ -170,22 +170,18 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 				IJ.showProgress(stack.getSize(), stack.getSize());
 
 				// Check the final stack for errors
-				Object[] images = newStack.getImageArray();
+				final Object[] images = newStack.getImageArray();
 				if (images == null)
-				{
 					IJ.log(TITLE + " Error: The output stack is empty");
-				}
 				else
 				{
 					boolean error = false;
 					for (int i = 0; i < images.length; i++)
-					{
 						if (images[i] == null)
 						{
 							IJ.log(TITLE + " Error: Output stack is empty at slice " + (i + 1));
 							error = true;
 						}
-					}
 					if (error)
 						return DONE;
 				}
@@ -196,24 +192,17 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 					imp.updateAndDraw();
 				}
 				else
-				{
 					new ImagePlus(imp.getTitle() + " Edge Mask", newStack).show();
-				}
+			}
+			else if (replaceImage)
+			{
+				// If it is a single frame then we can convert to a byte processor
+				if (imp.getStackSize() == 1)
+					imp.setProcessor(maskIp.convertToByte(false));
+				// Otherwise we have a strange mask image in the middle of a stack
 			}
 			else
-			{
-				if (replaceImage)
-				{
-					// If it is a single frame then we can convert to a byte processor
-					if (imp.getStackSize() == 1)
-						imp.setProcessor(maskIp.convertToByte(false));
-					// Otherwise we have a strange mask image in the middle of a stack 
-				}
-				else
-				{
-					new ImagePlus(imp.getTitle() + " Edge Mask", maskIp.convertToByte(false)).show();
-				}
-			}
+				new ImagePlus(imp.getTitle() + " Edge Mask", maskIp.convertToByte(false)).show();
 		}
 
 		return flags;
@@ -221,7 +210,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
@@ -232,28 +221,28 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
 	 * ij.plugin.filter.PlugInFilterRunner)
 	 */
 	@Override
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
 	{
-		ImageProcessor ip = imp.getProcessor();
+		final ImageProcessor ip = imp.getProcessor();
 		ip.snapshot();
 		minDisplayValue = ip.getMin();
 		maxDisplayValue = ip.getMax();
-		double[] limits = getLimits(ip);
-		double minValue = limits[0];
-		double maxValue = limits[1];
+		final double[] limits = getLimits(ip);
+		final double minValue = limits[0];
+		final double maxValue = limits[1];
 
 		if (background > maxValue)
 			background = 0;
 
 		// Show the Otsu threshold for the image
-		String threshold = (limits[2] > 0) ? ".\nOtsu threshold = " + (int) limits[2] : "";
+		final String threshold = (limits[2] > 0) ? ".\nOtsu threshold = " + (int) limits[2] : "";
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Create a new mask image" + threshold);
 
 		gd.addChoice("Method", METHODS, METHODS[method]);
@@ -284,11 +273,11 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 
 	private double[] getLimits(ImageProcessor ip)
 	{
-		ImageStatistics stats = ImageStatistics.getStatistics(ip, Measurements.MIN_MAX, null);
-		double[] limits = new double[] { stats.min, stats.max, 0 };
+		final ImageStatistics stats = ImageStatistics.getStatistics(ip, Measurements.MIN_MAX, null);
+		final double[] limits = new double[] { stats.min, stats.max, 0 };
 
 		// Use histogram to cover x% of the data
-		int[] data = ip.getHistogram();
+		final int[] data = ip.getHistogram();
 
 		if (data == null) // Float processor
 			return limits;
@@ -299,7 +288,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 		limits[2] = AutoThreshold.getThreshold(Method.OTSU, data);
 
 		// Get the upper limit using a fraction of the data
-		int limit = (int) (percent * ip.getPixelCount() / 100.0);
+		final int limit = (int) (percent * ip.getPixelCount() / 100.0);
 		int count = 0;
 		int i = 0;
 		while (i < data.length)
@@ -342,7 +331,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
 	@Override
@@ -353,7 +342,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Create a mask using the configured source image.
-	 * 
+	 *
 	 * @return The mask image
 	 */
 	public void createMask(ImageProcessor ip)
@@ -366,7 +355,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 		ImageProcessor smoothIp = ip;
 		if (smooth > 0)
 		{
-			GaussianBlur gb = new GaussianBlur();
+			final GaussianBlur gb = new GaussianBlur();
 			smoothIp = ip.duplicate();
 			gb.blurGaussian(smoothIp, smooth, smooth, 0.0002);
 		}
@@ -380,23 +369,23 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 			// Compute the Gradient image
 			final Aspects aspects = newimg.aspects();
 			final Edges edges = new Edges();
-			boolean nonmaxsup = method == 3;
+			final boolean nonmaxsup = method == 3;
 			newimg = edges.run(newimg, (smooth > 0) ? smooth : 1, nonmaxsup);
 			newimg.aspects(aspects);
 
 			FloatProcessor gradientIp = (FloatProcessor) newimg.imageplus().getProcessor();
 
 			// Keep all gradients above the configured percentile
-			boolean lowthres = lowerPercentile > 0;
-			boolean highthres = upperPercentile > 0;
+			final boolean lowthres = lowerPercentile > 0;
+			final boolean highthres = upperPercentile > 0;
 			final int thresmode = (lowthres ? 10 : 0) + (highthres ? 1 : 0);
 			if (thresmode > 0)
 			{
 				float[] data = (float[]) gradientIp.getPixels();
 				data = Arrays.copyOf(data, data.length);
 				Arrays.sort(data);
-				double highval = getLimit(data, upperPercentile);
-				double lowval = getLimit(data, lowerPercentile);
+				final double highval = getLimit(data, upperPercentile);
+				final double lowval = getLimit(data, lowerPercentile);
 
 				final Thresholder thres = new Thresholder();
 				switch (thresmode)
@@ -422,22 +411,18 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 			}
 
 			// Get the mask
-			ImageProcessor maskIp = gradientIp.convertToByte(false);
+			final ImageProcessor maskIp = gradientIp.convertToByte(false);
 
 			// Keep objects above a threshold value
-			int threshold = (int) background;
+			final int threshold = (int) background;
 			for (int i = ip.getPixelCount(); i-- > 0;)
-			{
 				if (smoothIp.get(i) < threshold)
 					maskIp.set(i, 0);
-			}
 
 			markExtraLines(maskIp, prune);
 
 			for (int i = ip.getPixelCount(); i-- > 0;)
-			{
 				ip.set(i, (maskIp.get(i) > 0) ? 255 : 0);
-			}
 		}
 		else if (method == 1)
 		{
@@ -461,15 +446,13 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 			zc.run(newimg);
 
 			// Get the mask
-			ImageProcessor maskIp = newimg.imageplus().getProcessor().convertToByte(false);
+			final ImageProcessor maskIp = newimg.imageplus().getProcessor().convertToByte(false);
 
 			// Keep objects above a threshold value
-			int threshold = (int) background;
+			final int threshold = (int) background;
 			for (int i = ip.getPixelCount(); i-- > 0;)
-			{
 				if (smoothIp.get(i) < threshold)
 					maskIp.set(i, 0);
-			}
 
 			markExtraLines(maskIp, prune);
 
@@ -478,31 +461,27 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 				fill(maskIp, laplacianIp);
 
 			for (int i = ip.getPixelCount(); i-- > 0;)
-			{
 				ip.set(i, (maskIp.get(i) > 0) ? 255 : 0);
-			}
 		}
 		else
 		{
 			// Simple mask using the background level
-			int threshold = (int) background;
+			final int threshold = (int) background;
 
 			// Keep objects above a threshold value
 			for (int i = ip.getPixelCount(); i-- > 0;)
-			{
 				ip.set(i, (smoothIp.get(i) >= threshold) ? 255 : 0);
-			}
 		}
 
 		// Support masking
-		Rectangle roi = ip.getRoi();
+		final Rectangle roi = ip.getRoi();
 		if (roi != null && roi.width < maxx && roi.height < maxy)
 		{
 			// Blank outside ROI
 			ip.setColor(0);
 			ip.fillOutside(new Roi(roi));
 
-			byte[] mask = ip.getMaskArray();
+			final byte[] mask = ip.getMaskArray();
 			if (mask != null)
 			{
 				int j = 0;
@@ -512,9 +491,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 					for (int x = 0; x < roi.width; x++, i++)
 					{
 						if (mask[j] == 0)
-						{
 							ip.set(i, 0);
-						}
 						j++;
 					}
 				}
@@ -543,7 +520,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	 */
 	void markExtraLines(ImageProcessor ip, boolean prune)
 	{
-		byte[] types = (byte[]) ip.getPixels();
+		final byte[] types = (byte[]) ip.getPixels();
 
 		// Mark edges
 		for (int index = types.length; index-- > 0;)
@@ -552,26 +529,20 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 
 		// Mark single lines
 		for (int index = types.length; index-- > 0;)
-		{
 			if ((types[index] & EDGE) == EDGE && (types[index] & SINGLE) != SINGLE)
 			{
-				int nRadii = nRadii(types, index); // number of lines radiating
-				if (nRadii == 0) // single point
-				{
+				final int nRadii = nRadii(types, index); // number of lines radiating
+				if (nRadii == 0)
 					types[index] |= SINGLE;
-				}
 				else if (nRadii == 1) // Line end
 					removeLineFrom(types, index);
 			}
-		}
 
 		// Prune single lines/points
 		if (prune)
-		{
 			for (int index = types.length; index-- > 0;)
 				if ((types[index] & SINGLE) == SINGLE)
 					types[index] = 0;
-		}
 	}
 
 	/** delete a line starting at x, y up to the next (8-connected) vertex */
@@ -581,20 +552,19 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 		boolean continues;
 		do
 		{
-			int y = index / maxx;
-			int x = index % maxx;
+			final int y = index / maxx;
+			final int x = index % maxx;
 
 			continues = false;
-			boolean isInner = (y != 0 && y != ylimit) && (x != 0 && x != xlimit); // not necessary, but faster
+			final boolean isInner = (y != 0 && y != ylimit) && (x != 0 && x != xlimit); // not necessary, but faster
 																				  // than isWithin
 			for (int d = 0; d < 8; d++)
-			{ // analyze neighbors
 				if (isInner || isWithinXY(x, y, d))
 				{
-					int index2 = index + offset[d];
+					final int index2 = index + offset[d];
 					if ((types[index2] & EDGE) == EDGE && (types[index2] & SINGLE) != SINGLE)
 					{
-						int nRadii = nRadii(types, index2);
+						final int nRadii = nRadii(types, index2);
 						if (nRadii <= 1)
 						{ // found a point or line end
 							index = index2;
@@ -604,14 +574,13 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 						}
 					}
 				}
-			}
 		} while (continues);
 	}
 
 	/**
 	 * Analyze the neighbors of a pixel (x, y) in a byte image; pixels != 0 are considered foreground.
 	 * Edge pixels are considered foreground.
-	 * 
+	 *
 	 * @param types
 	 *            the byte image
 	 * @param index
@@ -624,23 +593,19 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 		int countTransitions = 0;
 		boolean prevPixelSet = true;
 		boolean firstPixelSet = true; // initialize to make the compiler happy
-		int y = index / maxx;
-		int x = index % maxx;
+		final int y = index / maxx;
+		final int x = index % maxx;
 
-		boolean isInner = (y != 0 && y != ylimit) && (x != 0 && x != xlimit); // not necessary, but faster than
+		final boolean isInner = (y != 0 && y != ylimit) && (x != 0 && x != xlimit); // not necessary, but faster than
 																			  // isWithin
 		for (int d = 0; d < 8; d++)
 		{ // walk around the point and note every no-line->line transition
 			boolean pixelSet = prevPixelSet;
 			if (isInner || isWithinXY(x, y, d))
-			{
 				pixelSet = ((types[index + offset[d]] & EDGE) == EDGE && (types[index + offset[d]] & SINGLE) != SINGLE);
-			}
 			else
-			{
 				// Outside of boundary - count as foreground so lines touching the egde are not pruned.
 				pixelSet = true;
-			}
 			if (pixelSet && !prevPixelSet)
 				countTransitions++;
 			prevPixelSet = pixelSet;
@@ -654,7 +619,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Fill the image processor closed loops. Only fill background regions defined by the Laplacian image.
-	 * 
+	 *
 	 * @param maskIp
 	 *            The mask image
 	 * @param laplacianIp
@@ -662,13 +627,13 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	 */
 	void fill(ImageProcessor maskIp, ImageProcessor laplacianIp)
 	{
-		// TODO - Check the fill option is working ... 
+		// TODO - Check the fill option is working ...
 
 		// Adapted from ij.plugin.binary.Binary.fill(...)
-		int background = NONE;
-		int width = maskIp.getWidth();
-		int height = maskIp.getHeight();
-		FloodFiller ff = new FloodFiller(maskIp);
+		final int background = NONE;
+		final int width = maskIp.getWidth();
+		final int height = maskIp.getHeight();
+		final FloodFiller ff = new FloodFiller(maskIp);
 		maskIp.setColor(FILL);
 		for (int y = 0; y < height; y++)
 		{
@@ -721,14 +686,12 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 		// Create the offset table (for single array 3D neighbour comparisons)
 		offset = new int[DIR_X_OFFSET.length];
 		for (int d = offset.length; d-- > 0;)
-		{
 			offset[d] = getIndex(DIR_X_OFFSET[d], DIR_Y_OFFSET[d]);
-		}
 	}
 
 	/**
 	 * Return the single index associated with the x,y coordinates
-	 * 
+	 *
 	 * @param x
 	 * @param y
 	 * @return The index
@@ -741,7 +704,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	/**
 	 * returns whether the neighbour in a given direction is within the image. NOTE: it is assumed that the pixel x,y
 	 * itself is within the image! Uses class variables xlimit, ylimit: (dimensions of the image)-1
-	 * 
+	 *
 	 * @param x
 	 *            x-coordinate of the pixel that has a neighbour in the given direction
 	 * @param y
@@ -778,23 +741,21 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Waits for all threads to complete computation.
-	 * 
+	 *
 	 * @param futures
 	 */
 	public static void waitForCompletion(List<Future<?>> futures)
 	{
 		try
 		{
-			for (Future<?> f : futures)
-			{
+			for (final Future<?> f : futures)
 				f.get();
-			}
 		}
-		catch (ExecutionException ex)
+		catch (final ExecutionException ex)
 		{
 			ex.printStackTrace();
 		}
-		catch (InterruptedException e)
+		catch (final InterruptedException e)
 		{
 			e.printStackTrace();
 		}
@@ -821,7 +782,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see java.lang.Runnable#run()
 		 */
 		@Override

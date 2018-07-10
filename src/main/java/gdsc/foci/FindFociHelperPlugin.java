@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -47,7 +47,7 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
 	@Override
@@ -84,23 +84,23 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 			showInstance();
 			IJ.showStatus("FindFoci Helper ready");
 		}
-		catch (ExceptionInInitializerError e)
+		catch (final ExceptionInInitializerError e)
 		{
 			exception = e;
 			errorMessage = "Failed to initialize class: " + e.getMessage();
 		}
-		catch (LinkageError e)
+		catch (final LinkageError e)
 		{
 			exception = e;
 			errorMessage = "Failed to link class: " + e.getMessage();
 		}
-		catch (ClassNotFoundException ex)
+		catch (final ClassNotFoundException ex)
 		{
 			exception = ex;
 			errorMessage = "Failed to find class: " + ex.getMessage() +
 					"\nCheck you have beansbinding-1.2.1.jar on your classpath\n";
 		}
-		catch (Throwable ex)
+		catch (final Throwable ex)
 		{
 			exception = ex;
 			errorMessage = ex.getMessage();
@@ -109,8 +109,8 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 		{
 			if (exception != null)
 			{
-				StringWriter sw = new StringWriter();
-				PrintWriter pw = new PrintWriter(sw);
+				final StringWriter sw = new StringWriter();
+				final PrintWriter pw = new PrintWriter(sw);
 				pw.write(errorMessage);
 				pw.append('\n');
 				exception.printStackTrace(pw);

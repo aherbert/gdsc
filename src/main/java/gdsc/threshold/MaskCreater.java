@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -61,7 +61,7 @@ public class MaskCreater implements PlugIn
 	static
 	{
 		// Add options for multi-level Otsu threshold
-		ArrayList<String> m = new ArrayList<String>();
+		final ArrayList<String> m = new ArrayList<>();
 		m.addAll(Arrays.asList(AutoThreshold.getMethods(true)));
 		m.add("Otsu_3_level");
 		m.add("Otsu_4_level");
@@ -94,7 +94,7 @@ public class MaskCreater implements PlugIn
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
 	@Override
@@ -103,27 +103,21 @@ public class MaskCreater implements PlugIn
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
 		if (!showDialog())
-		{
 			return;
-		}
-		ImagePlus imp = createMask();
+		final ImagePlus imp = createMask();
 		if (imp != null)
-		{
 			imp.show();
-		}
 	}
 
 	private boolean showDialog()
 	{
-		ArrayList<String> imageList = new ArrayList<String>();
+		final ArrayList<String> imageList = new ArrayList<>();
 
-		for (int id : Utils.getIDList())
+		for (final int id : Utils.getIDList())
 		{
-			ImagePlus imp = WindowManager.getImage(id);
+			final ImagePlus imp = WindowManager.getImage(id);
 			if (imp != null)
-			{
 				imageList.add(imp.getTitle());
-			}
 		}
 
 		if (imageList.isEmpty())
@@ -132,7 +126,7 @@ public class MaskCreater implements PlugIn
 			return false;
 		}
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage("Create a new mask image");
 		gd.addChoice("Image", imageList.toArray(new String[0]), selectedImage);
 		gd.addChoice("Option", options, options[selectedOption]);
@@ -201,7 +195,7 @@ public class MaskCreater implements PlugIn
 
 	/**
 	 * Create a mask using the configured source image.
-	 * 
+	 *
 	 * @return The mask image
 	 */
 	public ImagePlus createMask()
@@ -213,22 +207,20 @@ public class MaskCreater implements PlugIn
 
 		ImageProcessor ip;
 
-		ImageStack inputStack = imp.getImageStack();
+		final ImageStack inputStack = imp.getImageStack();
 		ImageStack result = null;
-		int[] dimensions = imp.getDimensions();
-		int[] channels = createArray(dimensions[2], channel);
-		int[] slices = createArray(dimensions[3], slice);
-		int[] frames = createArray(dimensions[4], frame);
+		final int[] dimensions = imp.getDimensions();
+		final int[] channels = createArray(dimensions[2], channel);
+		final int[] slices = createArray(dimensions[3], slice);
+		final int[] frames = createArray(dimensions[4], frame);
 
-		int nChannels = channels.length;
-		int nSlices = slices.length;
-		int nFrames = frames.length;
+		final int nChannels = channels.length;
+		final int nSlices = slices.length;
+		final int nFrames = frames.length;
 
 		double[] thresholds = null;
 		if (option == OPTION_THRESHOLD)
-		{
 			thresholds = getThresholds(imp, channels, slices, frames);
-		}
 
 		// Find the global min and max XY values and create a bounding rectangle
 		final int w = imp.getWidth();
@@ -246,28 +238,24 @@ public class MaskCreater implements PlugIn
 
 			for (int f = 0; f < frames.length; f++)
 			{
-				int frame = frames[f];
+				final int frame = frames[f];
 				for (int c = 0; c < channels.length; c++)
 				{
-					int channel = channels[c];
+					final int channel = channels[c];
 
 					ImageStack channelStack = new ImageStack(imp.getWidth(), imp.getHeight());
 
-					for (int slice : slices)
+					for (final int slice : slices)
 					{
-						int stackIndex = imp.getStackIndex(channel, slice, frame);
-						ImageProcessor roiIp = inputStack.getProcessor(stackIndex);
+						final int stackIndex = imp.getStackIndex(channel, slice, frame);
+						final ImageProcessor roiIp = inputStack.getProcessor(stackIndex);
 
 						ip = new ByteProcessor(w, h);
 						if (option == OPTION_MASK)
 						{
 							for (int i = roiIp.getPixelCount(); i-- > 0;)
-							{
 								if (roiIp.getf(i) != 0)
-								{
 									ip.set(i, 255);
-								}
-							}
 						}
 						else
 						{
@@ -276,30 +264,22 @@ public class MaskCreater implements PlugIn
 							{
 								min = getDisplayRangeMin(imp, channel);
 								for (int i = roiIp.getPixelCount(); i-- > 0;)
-								{
-									// Only display pixels equal to or above the 
-									// min display threshold								
+									// Only display pixels equal to or above the
+									// min display threshold
 									if (roiIp.getf(i) >= min)
-									{
 										ip.set(i, 255);
-									}
-								}
 							}
 							else
 							// if (option == OPTION_THRESHOLD)
 							{
 								min = thresholds[stackIndex - 1];
 								for (int i = roiIp.getPixelCount(); i-- > 0;)
-								{
-									// When thresholding it is typical to only 
+									// When thresholding it is typical to only
 									// display pixels above the threshold. The IJ
 									// plugins compute the threshold for integer histograms
 									// then call ImageProcessor.setThreshold(t+1, [upper limit]).
 									if (roiIp.getf(i) > min)
-									{
 										ip.set(i, 255);
-									}
-								}
 							}
 						}
 
@@ -333,7 +313,7 @@ public class MaskCreater implements PlugIn
 							}
 
 						// Adapted from getStackIndex() to use zero-indexed frame (f) and channel (c)
-						int index = (f) * nChannels * nSlices + (slice - 1) * nChannels + c + 1;
+						final int index = (f) * nChannels * nSlices + (slice - 1) * nChannels + c + 1;
 						result.setPixels(ip.getPixels(), index);
 					}
 
@@ -342,7 +322,7 @@ public class MaskCreater implements PlugIn
 
 			if (max <= 255)
 			{
-				ImageStack result2 = new ImageStack(imp.getWidth(), imp.getHeight(), result.getSize());
+				final ImageStack result2 = new ImageStack(imp.getWidth(), imp.getHeight(), result.getSize());
 				for (int slice = 1; slice <= result.getSize(); slice++)
 					result2.setProcessor(result.getProcessor(slice).convertToByte(false), slice);
 				result = result2;
@@ -351,7 +331,7 @@ public class MaskCreater implements PlugIn
 		else if (option == OPTION_USE_ROI)
 		{
 			// Use the ROI from the ROI image
-			Roi roi = imp.getRoi();
+			final Roi roi = imp.getRoi();
 
 			Rectangle bounds;
 			if (roi != null)
@@ -361,27 +341,21 @@ public class MaskCreater implements PlugIn
 				bounds = new Rectangle(w, h);
 
 			// Use a mask for an irregular ROI
-			ImageProcessor ipMask = imp.getMask();
+			final ImageProcessor ipMask = imp.getMask();
 
 			// Create a mask from the ROI rectangle
-			int xOffset = bounds.x;
-			int yOffset = bounds.y;
-			int rwidth = bounds.width;
-			int rheight = bounds.height;
+			final int xOffset = bounds.x;
+			final int yOffset = bounds.y;
+			final int rwidth = bounds.width;
+			final int rheight = bounds.height;
 
 			result = new ImageStack(w, h);
 
 			ip = new ByteProcessor(w, h);
 			for (int y = 0; y < rheight; y++)
-			{
 				for (int x = 0; x < rwidth; x++)
-				{
 					if (ipMask == null || ipMask.get(x, y) != 0)
-					{
 						ip.set(x + xOffset, y + yOffset, 255);
-					}
-				}
-			}
 
 			ip = postProcess(ip);
 
@@ -411,9 +385,7 @@ public class MaskCreater implements PlugIn
 			for (int frame = frames.length; frame-- > 0;)
 				for (int slice = slices.length; slice-- > 0;)
 					for (int channel = channels.length; channel-- > 0;)
-					{
 						result.addSlice(null, ip.duplicate());
-					}
 		}
 
 		if (result == null)
@@ -421,13 +393,11 @@ public class MaskCreater implements PlugIn
 
 		maskImp = new ImagePlus(imp.getShortTitle() + " Mask", result);
 		if (imp.isDisplayedHyperStack())
-		{
 			if (nChannels * nSlices * nFrames > 1)
 			{
 				maskImp.setDimensions(nChannels, nSlices, nFrames);
 				maskImp.setOpenAsHyperStack(true);
 			}
-		}
 
 		// Add a bounding rectangle
 		if (minx < w && miny < h)
@@ -447,7 +417,7 @@ public class MaskCreater implements PlugIn
 	private int getDisplayRangeMin(ImagePlus imp, int channel)
 	{
 		// Composite images can have a display range for each color channel
-		LUT[] luts = imp.getLuts();
+		final LUT[] luts = imp.getLuts();
 		if (luts != null && channel <= luts.length)
 			return (int) luts[channel - 1].min;
 		return (int) imp.getDisplayRangeMin();
@@ -455,13 +425,13 @@ public class MaskCreater implements PlugIn
 
 	private double[] getThresholds(ImagePlus imp, int[] channels, int[] slices, int[] frames)
 	{
-		double[] thresholds = new double[imp.getStackSize()];
+		final double[] thresholds = new double[imp.getStackSize()];
 		ImageStack inputStack = imp.getImageStack();
 
 		// 32-bit images have no histogram.
 		// We convert to 16-bit using the min-max from each channel
-		float[][] min = new float[channels.length][frames.length];
-		float[][] max = new float[channels.length][frames.length];
+		final float[][] min = new float[channels.length][frames.length];
+		final float[][] max = new float[channels.length][frames.length];
 		if (imp.getBitDepth() == 32)
 		{
 			// Convert the image to 16-bit
@@ -474,23 +444,19 @@ public class MaskCreater implements PlugIn
 			}
 
 			for (int i = 0; i < channels.length; i++)
-			{
 				for (int j = 0; j < frames.length; j++)
-				{
 					// Find the min and max per channel across the z-stack
 					for (int k = 0; k < slices.length; k++)
 					{
-						int stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
-						float[] data = (float[]) inputStack.getProcessor(stackIndex).getPixels();
+						final int stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
+						final float[] data = (float[]) inputStack.getProcessor(stackIndex).getPixels();
 						float cmin = data[0];
 						float cmax = data[0];
-						for (float f : data)
-						{
+						for (final float f : data)
 							if (f < cmin)
 								cmin = f;
 							else if (f > cmax)
 								cmax = f;
-						}
 						if (cmin < min[i][j])
 							min[i][j] = cmin;
 						if (cmax > max[i][j])
@@ -498,14 +464,11 @@ public class MaskCreater implements PlugIn
 						//IJ.log(String.format("Channel %d, Frame %d, Slice %d : min = %f, max = %f", channels[i],
 						//		frames[j], slices[k], cmin, cmax));
 					}
-				}
-			}
 
 			// Convert
 			//IJ.log("Converting 32-bit image to 16-bit for thresholding");
-			ImageStack newStack = new ImageStack(imp.getWidth(), imp.getHeight(), imp.getStackSize());
+			final ImageStack newStack = new ImageStack(imp.getWidth(), imp.getHeight(), imp.getStackSize());
 			for (int i = 0; i < channels.length; i++)
-			{
 				for (int j = 0; j < frames.length; j++)
 				{
 					final float cmin = min[i][j];
@@ -514,16 +477,14 @@ public class MaskCreater implements PlugIn
 					//		cmax));
 					for (int k = 0; k < slices.length; k++)
 					{
-						int stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
+						final int stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
 						newStack.setPixels(convertToShort(inputStack.getProcessor(stackIndex), cmin, cmax), stackIndex);
 					}
 				}
-			}
 			inputStack = newStack;
 		}
 
 		for (int i = 0; i < channels.length; i++)
-		{
 			for (int j = 0; j < frames.length; j++)
 			{
 				final float cmin = min[i][j];
@@ -537,7 +498,7 @@ public class MaskCreater implements PlugIn
 					for (int k = 1; k < slices.length; k++)
 					{
 						stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
-						int[] tmp = inputStack.getProcessor(stackIndex).getHistogram();
+						final int[] tmp = inputStack.getProcessor(stackIndex).getHistogram();
 						for (int ii = tmp.length; ii-- > 0;)
 							data[ii] += tmp[ii];
 					}
@@ -545,7 +506,7 @@ public class MaskCreater implements PlugIn
 					if (imp.getBitDepth() == 32)
 					{
 						// Convert the 16-bit threshold back to the original 32-bit range
-						float scale = getScale(cmin, cmax);
+						final float scale = getScale(cmin, cmax);
 						threshold = (threshold / scale) + cmin;
 						//IJ.log(String.format("Channel %d, Frame %d : %f", channels[i], frames[j], threshold));
 					}
@@ -561,25 +522,22 @@ public class MaskCreater implements PlugIn
 					}
 				}
 				else
-				{
 					// Threshold each slice
 					for (int k = 0; k < slices.length; k++)
 					{
-						int stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
+						final int stackIndex = imp.getStackIndex(channels[i], slices[k], frames[j]);
 						final int[] data = inputStack.getProcessor(stackIndex).getHistogram();
 						double threshold = getThreshold(thresholdMethod, data);
 						if (imp.getBitDepth() == 32)
 						{
 							// Convert the 16-bit threshold back to the original 32-bit range
-							float scale = getScale(cmin, cmax);
+							final float scale = getScale(cmin, cmax);
 							threshold = (threshold / scale) + cmin;
 							//IJ.log(String.format("Channel %d, Frame %d : %f", channels[i], frames[j], threshold));
 						}
 						thresholds[stackIndex - 1] = threshold;
 					}
-				}
 			}
-		}
 
 		return thresholds;
 	}
@@ -588,10 +546,10 @@ public class MaskCreater implements PlugIn
 	{
 		if (autoThresholdMethod.endsWith("evel"))
 		{
-			Multi_OtsuThreshold multi = new Multi_OtsuThreshold();
+			final Multi_OtsuThreshold multi = new Multi_OtsuThreshold();
 			multi.ignoreZero = false;
-			int level = autoThresholdMethod.contains("_3_") ? 3 : 4;
-			int[] threshold = multi.calculateThresholds(statsHistogram, level);
+			final int level = autoThresholdMethod.contains("_3_") ? 3 : 4;
+			final int[] threshold = multi.calculateThresholds(statsHistogram, level);
 			return threshold[1];
 		}
 		return AutoThreshold.getThreshold(autoThresholdMethod, statsHistogram);
@@ -599,9 +557,9 @@ public class MaskCreater implements PlugIn
 
 	private short[] convertToShort(ImageProcessor ip, float min, float max)
 	{
-		float[] pixels32 = (float[]) ip.getPixels();
-		short[] pixels16 = new short[pixels32.length];
-		float scale = getScale(min, max);
+		final float[] pixels32 = (float[]) ip.getPixels();
+		final short[] pixels16 = new short[pixels32.length];
+		final float scale = getScale(min, max);
 		for (int i = 0; i < pixels16.length; i++)
 		{
 			double value = (pixels32[i] - min) * scale;
@@ -625,10 +583,8 @@ public class MaskCreater implements PlugIn
 	private int[] createArray(int total, int selected)
 	{
 		if (selected > 0 && selected <= total)
-		{
 			return new int[] { selected };
-		}
-		int[] array = new int[total];
+		final int[] array = new int[total];
 		for (int i = 0; i < array.length; i++)
 			array[i] = i + 1;
 		return array;
@@ -835,9 +791,9 @@ public class MaskCreater implements PlugIn
 			return ip;
 
 		// Assign all particles
-		ObjectAnalyzer oa = new ObjectAnalyzer(ip, eightConnected);
+		final ObjectAnalyzer oa = new ObjectAnalyzer(ip, eightConnected);
 		oa.setMinObjectSize(minParticleSize);
-		int[] mask = oa.getObjectMask();
+		final int[] mask = oa.getObjectMask();
 
 		final int maxx = ip.getWidth();
 		final int maxy = ip.getHeight();
@@ -852,24 +808,16 @@ public class MaskCreater implements PlugIn
 			for (int x1 = 0, x2 = ylimit * maxx; x1 < maxx; x1++, x2++)
 			{
 				if (mask[x1] != 0)
-				{
 					toZero[mask[x1]] = 0;
-				}
 				if (mask[x2] != 0)
-				{
 					toZero[mask[x2]] = 0;
-				}
 			}
 			for (int y1 = 0, y2 = xlimit; y1 < mask.length; y1 += maxx, y2 += maxx)
 			{
 				if (mask[y1] != 0)
-				{
 					toZero[mask[y1]] = 0;
-				}
 				if (mask[y2] != 0)
-				{
 					toZero[mask[y2]] = 0;
-				}
 			}
 
 			int newObjects = 0;
@@ -882,29 +830,21 @@ public class MaskCreater implements PlugIn
 				{
 					// No more objects can be stored in a 16-bit image
 					while (o < toZero.length)
-					{
 						toZero[o++] = 0;
-					}
 					break;
 				}
 			}
 			if (newObjects != oa.getMaxObject())
-			{
 				// At least one object to be zerod
 				for (int i = 0; i < mask.length; i++)
-				{
 					mask[i] = toZero[mask[i]];
-				}
-			}
 		}
 
 		if (!assignObjects)
-		{
 			// Create a binary mask
 			for (int i = 0; i < mask.length; i++)
 				if (mask[i] != 0)
 					mask[i] = 255;
-		}
 
 		final short[] newMask = new short[maxx * maxy];
 		for (int i = 0; i < newMask.length; i++)
@@ -926,15 +866,15 @@ public class MaskCreater implements PlugIn
 		final int[] image = new int[maxx_maxy * maxz];
 		for (int slice = 1, index = 0; slice <= maxz; slice++)
 		{
-			ImageProcessor ip = stack.getProcessor(slice);
+			final ImageProcessor ip = stack.getProcessor(slice);
 			for (int i = 0; i < maxx_maxy; i++)
 				image[index++] = ip.get(i);
 		}
 
 		// Assign all particles
-		ObjectAnalyzer3D oa = new ObjectAnalyzer3D(image, maxx, maxy, maxz, eightConnected);
+		final ObjectAnalyzer3D oa = new ObjectAnalyzer3D(image, maxx, maxy, maxz, eightConnected);
 		oa.setMinObjectSize(minParticleSize);
-		int[] mask = oa.getObjectMask();
+		final int[] mask = oa.getObjectMask();
 
 		if (removeEdgeParticles)
 		{
@@ -948,24 +888,16 @@ public class MaskCreater implements PlugIn
 				for (int x1 = 0, x2 = ylimit * maxx; x1 < maxx; x1++, x2++)
 				{
 					if (mask[offset + x1] != 0)
-					{
 						toZero[mask[offset + x1]] = 0;
-					}
 					if (mask[offset + x2] != 0)
-					{
 						toZero[mask[offset + x2]] = 0;
-					}
 				}
 				for (int y1 = 0, y2 = xlimit; y1 < maxx_maxy; y1 += maxx, y2 += maxx)
 				{
 					if (mask[offset + y1] != 0)
-					{
 						toZero[mask[offset + y1]] = 0;
-					}
 					if (mask[offset + y2] != 0)
-					{
 						toZero[mask[offset + y2]] = 0;
-					}
 				}
 			}
 
@@ -979,31 +911,23 @@ public class MaskCreater implements PlugIn
 				{
 					// No more objects can be stored in a 16-bit image
 					while (o < toZero.length)
-					{
 						toZero[o++] = 0;
-					}
 					break;
 				}
 			}
 			if (newObjects != oa.getMaxObject())
-			{
 				// At least one object to be zerod
 				for (int i = 0; i < mask.length; i++)
-				{
 					mask[i] = toZero[mask[i]];
-				}
-			}
 		}
 
 		if (!assignObjects)
-		{
 			// Create a binary mask
 			for (int i = 0; i < mask.length; i++)
 				if (mask[i] != 0)
 					mask[i] = 255;
-		}
 
-		ImageStack newStack = new ImageStack(maxx, maxy, maxz);
+		final ImageStack newStack = new ImageStack(maxx, maxy, maxz);
 		for (int slice = 1, index = 0; slice <= maxz; slice++)
 		{
 			final short[] newMask = new short[maxx_maxy];

@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -91,11 +91,11 @@ import ij.util.Tools;
 
 /**
  * Test for significant colocalisation within images using the Confined Displacement Algorithm (CDA).
- * 
+ *
  * Colocalisation of two channels is measured using Mander's coefficients (M1 & M2) and Pearson's correlation
  * coefficient (R). Significance is tested by shifting one image to all positions within a circular radius and computing
  * a probability distribution for M1, M2 and R. Significance is measured using a specified p-value.
- * 
+ *
  * Supports stacks. Only a specific channel and time frame can be used and all input images must have the same number
  * of z-sections for the chosen channel/time frame.
  * <p>
@@ -295,10 +295,10 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	// Store the channels and frames to use from image stacks
 	private static int[] sliceOptions = new int[10];
 	// Store the display range min for each ROI
-	private int[] displayMin = new int[3];
+	private final int[] displayMin = new int[3];
 
 	// Stores the list of images last used in the selection options
-	private ArrayList<String> imageList = new ArrayList<String>();
+	private ArrayList<String> imageList = new ArrayList<>();
 
 	public CDA_Plugin()
 	{
@@ -307,7 +307,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
 	 */
 	@Override
@@ -328,10 +328,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		}
 
 		if (instance != null)
-		{
 			if (!(instance.getTitle().equals(getTitle())))
 			{
-				CDA_Plugin cda = (CDA_Plugin) instance;
+				final CDA_Plugin cda = (CDA_Plugin) instance;
 				Prefs.saveLocation(OPT_LOCATION, cda.getLocation());
 				cda.close();
 			}
@@ -340,7 +339,6 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 				instance.toFront();
 				return;
 			}
-		}
 
 		instance = this;
 		IJ.register(CDA_Plugin.class);
@@ -351,13 +349,11 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 		addKeyListener(IJ.getInstance());
 		pack();
-		Point loc = Prefs.getLocation(OPT_LOCATION);
+		final Point loc = Prefs.getLocation(OPT_LOCATION);
 		if (loc != null)
 			setLocation(loc);
 		else
-		{
 			GUI.center(this);
-		}
 		if (IJ.isMacOSX())
 			setResizable(false);
 		setVisible(true);
@@ -365,7 +361,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	private void setup()
 	{
-		ImagePlus imp = WindowManager.getCurrentImage();
+		final ImagePlus imp = WindowManager.getCurrentImage();
 		if (imp == null)
 			return;
 		fillImagesList();
@@ -374,19 +370,19 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	@Override
 	public synchronized void actionPerformed(ActionEvent e)
 	{
-		Object actioner = e.getSource();
+		final Object actioner = e.getSource();
 
 		if (actioner == null)
 			return;
 
 		if (((Button) actioner == okButton) && (parametersReady()))
 		{
-			Thread thread = new Thread(this, "CDA_Plugin");
+			final Thread thread = new Thread(this, "CDA_Plugin");
 			thread.start();
 		}
 		if ((Button) actioner == helpButton)
 		{
-			String macro = "run('URL...', 'url=" + gdsc.help.URL.COLOCALISATION + "');";
+			final String macro = "run('URL...', 'url=" + gdsc.help.URL.COLOCALISATION + "');";
 			new MacroRunner(macro);
 		}
 
@@ -396,7 +392,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	@Override
 	public void itemStateChanged(ItemEvent e)
 	{
-		Object actioner = e.getSource();
+		final Object actioner = e.getSource();
 
 		if (actioner == null)
 			return;
@@ -417,7 +413,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	public void setResultsOptions()
 	{
-		GenericDialog gd = new GenericDialog("Set Results Options");
+		final GenericDialog gd = new GenericDialog("Set Results Options");
 
 		gd.addCheckbox("Show_channel_1", showChannel1RGB);
 		gd.addCheckbox("Show_channel_2", showChannel2RGB);
@@ -492,7 +488,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	@Override
 	public void keyReleased(KeyEvent e)
 	{
-		Object actioner = e.getSource();
+		final Object actioner = e.getSource();
 
 		if (actioner == null)
 			return;
@@ -536,9 +532,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			closeDisplayStatistics(rStatistics, OPT_LOCATION_STATS_R);
 
 			if (tw != null && tw.isShowing())
-			{
 				tw.close();
-			}
 		}
 
 		instance = null;
@@ -548,9 +542,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private void closeImagePlus(ImagePlus w)
 	{
 		if (w != null && w.isVisible())
-		{
 			w.close();
-		}
 	}
 
 	private void closePlotWindow(PlotWindow w, String locationKey)
@@ -565,13 +557,11 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private void closeDisplayStatistics(DisplayStatistics w, String locationKey)
 	{
 		if (w != null && w.getPlotWindow() != null)
-		{
 			if (w.getPlotWindow().isShowing())
 			{
 				Prefs.saveLocation(locationKey, w.getPlotWindow().getLocation());
 				w.close();
 			}
-		}
 	}
 
 	@Override
@@ -587,7 +577,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		if (instance != null)
 		{
-			CDA_Plugin cda = (CDA_Plugin) instance;
+			final CDA_Plugin cda = (CDA_Plugin) instance;
 
 			cda.fillImagesList();
 		}
@@ -595,7 +585,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
@@ -612,9 +602,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private void doCDA()
 	{
 		if (!(parametersReady()))
-		{
 			return;
-		}
 
 		IJ.showStatus(gettingConfigStatus);
 
@@ -636,11 +624,11 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 		closeWindowsOnExit = closeWindowsOnExitCheckbox.getState();
 
-		ImagePlus imp1 = WindowManager.getImage(channel1List.getSelectedItem());
-		ImagePlus imp2 = WindowManager.getImage(channel2List.getSelectedItem());
-		ImagePlus roi1 = getRoiSource(imp1, segmented1List, segmented1Option);
-		ImagePlus roi2 = getRoiSource(imp2, segmented2List, segmented2Option);
-		ImagePlus roi = getRoiSource(null, confinedList, confinedOption);
+		final ImagePlus imp1 = WindowManager.getImage(channel1List.getSelectedItem());
+		final ImagePlus imp2 = WindowManager.getImage(channel2List.getSelectedItem());
+		final ImagePlus roi1 = getRoiSource(imp1, segmented1List, segmented1Option);
+		final ImagePlus roi2 = getRoiSource(imp2, segmented2List, segmented2Option);
+		final ImagePlus roi = getRoiSource(null, confinedList, confinedOption);
 
 		runCDA(imp1, imp2, roi1, roi2, roi);
 	}
@@ -651,19 +639,19 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		if (!getStackOptions(imp1, imp2, roi1, roi2, roi))
 			return;
 
-		// TODO - Should the select channel/frames be saved (i.e. the slice options array)? 
+		// TODO - Should the select channel/frames be saved (i.e. the slice options array)?
 		saveOptions();
 
-		long startTime = System.currentTimeMillis();
+		final long startTime = System.currentTimeMillis();
 
 		// Extract images
-		ImageStack imageStack1 = getStack(imp1, 0);
-		ImageStack imageStack2 = getStack(imp2, 2);
+		final ImageStack imageStack1 = getStack(imp1, 0);
+		final ImageStack imageStack2 = getStack(imp2, 2);
 
 		// Get the ROIs
-		ImageStack roiStack1 = createROI(imp1, roi1, 4, segmented1OptionIndex);
-		ImageStack roiStack2 = createROI(imp2, roi2, 6, segmented2OptionIndex);
-		ImageStack confinedStack = createROI(imp1, roi, 8, confinedOptionIndex);
+		final ImageStack roiStack1 = createROI(imp1, roi1, 4, segmented1OptionIndex);
+		final ImageStack roiStack2 = createROI(imp2, roi2, 6, segmented2OptionIndex);
+		final ImageStack confinedStack = createROI(imp1, roi, 8, confinedOptionIndex);
 
 		// The images and the masks should be the same size.
 		if (!checkDimensions(imageStack1, imageStack2, roiStack1, roiStack2, confinedStack))
@@ -714,8 +702,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		IJ.showStatus(calculatingFirstMandersStatus);
 
 		// Pre-calculate constants
-		double denom1 = intersectSum(imageStack1, roiStack1);
-		double denom2 = intersectSum(imageStack2, roiStack2);
+		final double denom1 = intersectSum(imageStack1, roiStack1);
+		final double denom2 = intersectSum(imageStack2, roiStack2);
 
 		//System.out.printf("CDA total = %s (%d)  %s (%d) : %d)\n", denom1, intersectSum(roiStack1, roiStack1), denom2,
 		//		intersectSum(roiStack2, roiStack2), intersectSum(confinedStack, confinedStack));
@@ -723,9 +711,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		IJ.showStatus(mandersCalculationStatus);
 
 		// Build list of shifts above and below the random radius
-		int[] shiftIndices = buildShiftIndices(subRandomSamples, randomRadius, maximumRadius);
+		final int[] shiftIndices = buildShiftIndices(subRandomSamples, randomRadius, maximumRadius);
 
-		List<CalculationResult> results = calculateResults(imageStack1, roiStack1, confinedStack, imageStack2,
+		final List<CalculationResult> results = calculateResults(imageStack1, roiStack1, confinedStack, imageStack2,
 				roiStack2, denom1, denom2, shiftIndices);
 
 		if (Utils.isInterrupted())
@@ -733,21 +721,19 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 		// Get unshifted result
 		CalculationResult unshifted = null;
-		for (CalculationResult r : results)
-		{
+		for (final CalculationResult r : results)
 			if (r.distance == 0)
 			{
 				unshifted = r;
 				break;
 			}
-		}
 
 		// Display an image of the largest shift
 		ImageStack lastChannelShiftedRawStack = null;
 		ImageStack lastSegmentedShiftedRawStack = null;
 		if (showMergedChannelDisplacementRGB || showMergedSegmentedDisplacementRGB)
 		{
-			TwinStackShifter twinImageShifter = new TwinStackShifter(imageStack1, roiStack1, confinedStack);
+			final TwinStackShifter twinImageShifter = new TwinStackShifter(imageStack1, roiStack1, confinedStack);
 			twinImageShifter.run(maximumRadius, 0);
 			lastChannelShiftedRawStack = twinImageShifter.getResultStack();
 			lastSegmentedShiftedRawStack = twinImageShifter.getResultStack2();
@@ -762,9 +748,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	private int[] buildShiftIndices(boolean subRandomSamples, int randomRadius, int maximumRadius)
 	{
-		int[] shiftIndices1 = getRandomShiftIndices(randomRadius, maximumRadius, permutations);
-		int[] shiftIndices2 = (subRandomSamples) ? getRandomShiftIndices(0, randomRadius, permutations) : new int[0];
-		int[] shiftIndices = merge(shiftIndices1, shiftIndices2);
+		final int[] shiftIndices1 = getRandomShiftIndices(randomRadius, maximumRadius, permutations);
+		final int[] shiftIndices2 = (subRandomSamples) ? getRandomShiftIndices(0, randomRadius, permutations) : new int[0];
+		final int[] shiftIndices = merge(shiftIndices1, shiftIndices2);
 		return shiftIndices;
 	}
 
@@ -773,7 +759,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 * <p>
 	 * The indices are packed as unsigned bytes in the first 2 bytes of the integer. The signs are packed in the next 2
 	 * bits:
-	 * 
+	 *
 	 * <pre>
 	 * int index = (Math.abs(i) & 0xff) << 8 | Math.abs(j) & 0xff;
 	 * if (i < 0)
@@ -781,7 +767,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 * if (j < 0)
 	 * 	index |= 0x00020000;
 	 * </pre>
-	 * 
+	 *
 	 * <p>
 	 * This supports shifts up to +/-256 pixels.
 	 *
@@ -803,13 +789,12 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		// Count the number of permutations
 		final int maximumRadius2 = maximumRadius * maximumRadius;
 		final int minimumRadius2 = minimumRadius * minimumRadius;
-		TIntArrayList list = new TIntArrayList(512);
+		final TIntArrayList list = new TIntArrayList(512);
 		for (int i = -maximumRadius; i <= maximumRadius; ++i)
-		{
 			for (int j = -maximumRadius; j <= maximumRadius; ++j)
 			{
 				// Int is big enough to hold 256^2 * 2
-				int distance2 = i * i + j * j;
+				final int distance2 = i * i + j * j;
 				if (distance2 > maximumRadius2 || distance2 <= minimumRadius2)
 					continue;
 				// Pack the magnitude of the shift into the first 2 bytes and then pack the signs.
@@ -820,13 +805,12 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 					index |= 0x00020000;
 				list.add(index);
 			}
-		}
 
 		// Randomise the permutations
 		if (permutations < list.size() && permutations > 0)
 		{
-			int[] sample = Random.sample(permutations, list.size(), new Well19937c(30051977));
-			int[] indices = new int[permutations];
+			final int[] sample = Random.sample(permutations, list.size(), new Well19937c(30051977));
+			final int[] indices = new int[permutations];
 			for (int i = 0; i < permutations; i++)
 				indices[i] = list.getQuick(sample[i]);
 			return indices;
@@ -869,11 +853,11 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private int[] merge(int[] shiftIndices1, int[] shiftIndices2)
 	{
 		// Include an extra entry for zero shift
-		int[] indices = new int[shiftIndices1.length + shiftIndices2.length + 1];
+		final int[] indices = new int[shiftIndices1.length + shiftIndices2.length + 1];
 		int j = 0;
-		for (int index : shiftIndices1)
+		for (final int index : shiftIndices1)
 			indices[j++] = index;
-		for (int index : shiftIndices2)
+		for (final int index : shiftIndices2)
 			indices[j++] = index;
 		return indices;
 	}
@@ -883,13 +867,13 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			int[] shiftIndices)
 	{
 		// Initialise the progress count
-		int totalSteps = shiftIndices.length;
+		final int totalSteps = shiftIndices.length;
 		IJ.showStatus("Creating CDA Engine ...");
 
-		List<CalculationResult> results = new ArrayList<CalculationResult>(totalSteps);
+		final List<CalculationResult> results = new ArrayList<>(totalSteps);
 
-		int threads = Prefs.getThreads();
-		CDAEngine engine = new CDAEngine(imageStack1, roiStack1, confinedStack, imageStack2, roiStack2, denom1, denom2,
+		final int threads = Prefs.getThreads();
+		final CDAEngine engine = new CDAEngine(imageStack1, roiStack1, confinedStack, imageStack2, roiStack2, denom1, denom2,
 				results, totalSteps, threads);
 		// Wait for initialisation
 		engine.isInitialised();
@@ -899,9 +883,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 		for (int n = 0; n < shiftIndices.length; n++)
 		{
-			int index = shiftIndices[n];
-			int x = CDA_Plugin.getXShift(index);
-			int y = CDA_Plugin.getYShift(index);
+			final int index = shiftIndices[n];
+			final int x = CDA_Plugin.getXShift(index);
+			final int y = CDA_Plugin.getYShift(index);
 
 			engine.run(n, x, y);
 
@@ -924,9 +908,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private boolean checkDimensions(ImageStack imageStack1, ImageStack imageStack2, ImageStack roiStack1,
 			ImageStack roiStack2, ImageStack confinedStack)
 	{
-		int w = imageStack1.getWidth();
-		int h = imageStack1.getHeight();
-		int s = imageStack1.getSize();
+		final int w = imageStack1.getWidth();
+		final int h = imageStack1.getHeight();
+		final int s = imageStack1.getSize();
 
 		if (!checkDimensions(w, h, s, imageStack2))
 			return false;
@@ -953,17 +937,13 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		// Get the ROI option
 		if (optionList.getSelectedItem().equals(OPTION_NONE))
-		{
 			// No ROI image
 			return null;
-		}
 
 		// Find the image in the image list
 		if (imageList.getSelectedItem().equals(CHANNEL_IMAGE))
-		{
 			// Channel image is the source for the ROI
 			return imp;
-		}
 
 		return WindowManager.getImage(imageList.getSelectedItem());
 	}
@@ -972,7 +952,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		if (isStack(imp1) || isStack(imp1) || isStack(roi1) || isStack(roi2) || isStack(roi))
 		{
-			GenericDialog gd = new GenericDialog("Slice options");
+			final GenericDialog gd = new GenericDialog("Slice options");
 			gd.addMessage("Stacks detected. Please select the slices.");
 
 			boolean added = false;
@@ -1010,14 +990,12 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		boolean added = false;
 		if (imp != null)
 		{
-			String[] channels = getChannels(imp);
-			String[] frames = getFrames(imp);
+			final String[] channels = getChannels(imp);
+			final String[] frames = getFrames(imp);
 
 			if (channels.length > 1 || frames.length > 1)
-			{
 				added = true;
 				//gd.addMessage(title);
-			}
 
 			setOption(gd, channels, title + "_Channel", offset);
 			setOption(gd, frames, title + "_Frame", offset + 1);
@@ -1030,7 +1008,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		if (choices.length > 1)
 		{
 			// Restore previous selection
-			int c = (sliceOptions[offset] > 0 && sliceOptions[offset] <= choices.length) ? sliceOptions[offset] - 1 : 0;
+			final int c = (sliceOptions[offset] > 0 && sliceOptions[offset] <= choices.length) ? sliceOptions[offset] - 1 : 0;
 			gd.addChoice(title, choices, choices[c]);
 			return true;
 		}
@@ -1044,8 +1022,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	private String[] getChannels(ImagePlus imp)
 	{
-		int c = imp.getNChannels();
-		String[] result = new String[c];
+		final int c = imp.getNChannels();
+		final String[] result = new String[c];
 		for (int i = 0; i < c; i++)
 			result[i] = Integer.toString(i + 1);
 		return result;
@@ -1053,8 +1031,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	private String[] getFrames(ImagePlus imp)
 	{
-		int c = imp.getNFrames();
-		String[] result = new String[c];
+		final int c = imp.getNFrames();
+		final String[] result = new String[c];
 		for (int i = 0; i < c; i++)
 			result[i] = Integer.toString(i + 1);
 		return result;
@@ -1064,8 +1042,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		if (imp != null)
 		{
-			String[] channels = getChannels(imp);
-			String[] frames = getFrames(imp);
+			final String[] channels = getChannels(imp);
+			final String[] frames = getFrames(imp);
 
 			if (channels.length > 1)
 				sliceOptions[offset] = gd.getNextChoiceIndex() + 1;
@@ -1080,7 +1058,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		{
 			return Integer.parseInt(text);
 		}
-		catch (NumberFormatException e)
+		catch (final NumberFormatException e)
 		{
 			return defaultValue;
 		}
@@ -1088,17 +1066,17 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	private ImageStack getStack(ImagePlus imp, int offset)
 	{
-		int channel = sliceOptions[offset];
-		int frame = sliceOptions[offset + 1];
-		int slices = imp.getNSlices();
+		final int channel = sliceOptions[offset];
+		final int frame = sliceOptions[offset + 1];
+		final int slices = imp.getNSlices();
 
-		ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
-		ImageStack inputStack = imp.getImageStack();
+		final ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
+		final ImageStack inputStack = imp.getImageStack();
 
 		for (int slice = 1; slice <= slices; slice++)
 		{
 			// Convert to a short processor
-			ImageProcessor ip = inputStack.getProcessor(imp.getStackIndex(channel, slice, frame));
+			final ImageProcessor ip = inputStack.getProcessor(imp.getStackIndex(channel, slice, frame));
 			stack.addSlice(null, convertToShortProcessor(imp, ip, channel));
 		}
 		return stack;
@@ -1121,42 +1099,36 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		ByteProcessor bp;
 
 		// Get the ROI option
-		String option = ROI_OPTIONS[optionIndex];
+		final String option = ROI_OPTIONS[optionIndex];
 
 		if (option.equals(OPTION_NONE) || roiImp == null || roiImp.getWidth() != channelImp.getWidth() ||
 				roiImp.getHeight() != channelImp.getHeight())
-		{
 			// No ROI - create a mask that covers the entire image
 			return defaultMask(channelImp);
-		}
 
-		ImageStack inputStack = roiImp.getImageStack();
-		int channel = sliceOptions[offset];
-		int frame = sliceOptions[offset + 1];
-		int slices = roiImp.getNSlices();
+		final ImageStack inputStack = roiImp.getImageStack();
+		final int channel = sliceOptions[offset];
+		final int frame = sliceOptions[offset + 1];
+		final int slices = roiImp.getNSlices();
 
 		if (option.equals(OPTION_MIN_VALUE) || option.equals(OPTION_MASK))
 		{
 			// Use the ROI image to create a mask either using:
 			// - non-zero pixels (i.e. a mask)
 			// - all pixels above the minimum display value
-			ImageStack result = new ImageStack(roiImp.getWidth(), roiImp.getHeight());
+			final ImageStack result = new ImageStack(roiImp.getWidth(), roiImp.getHeight());
 
 			final int min = (option.equals(OPTION_MIN_VALUE)) ? getDisplayRangeMin(roiImp, channel) : 1;
-			int minIndex = (offset - 4) / 2;
+			final int minIndex = (offset - 4) / 2;
 			displayMin[minIndex] = min;
 
 			for (int slice = 1; slice <= slices; slice++)
 			{
 				bp = new ByteProcessor(roiImp.getWidth(), roiImp.getHeight());
-				ImageProcessor roiIp = inputStack.getProcessor(roiImp.getStackIndex(channel, slice, frame));
+				final ImageProcessor roiIp = inputStack.getProcessor(roiImp.getStackIndex(channel, slice, frame));
 				for (int i = roiIp.getPixelCount(); i-- > 0;)
-				{
 					if (roiIp.get(i) >= min)
-					{
 						bp.set(i, 255);
-					}
-				}
 				result.addSlice(null, bp);
 			}
 
@@ -1166,20 +1138,18 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		if (option.equals(OPTION_USE_ROI))
 		{
 			// Use the ROI from the ROI image
-			Roi roi = roiImp.getRoi();
+			final Roi roi = roiImp.getRoi();
 
 			if (roi != null)
 			{
-				ImageStack result = new ImageStack(roiImp.getWidth(), roiImp.getHeight());
+				final ImageStack result = new ImageStack(roiImp.getWidth(), roiImp.getHeight());
 
 				bp = new ByteProcessor(roiImp.getWidth(), roiImp.getHeight());
 				bp.setValue(255);
 				bp.fill(roi);
-				byte[] pixels = (byte[]) bp.getPixels();
+				final byte[] pixels = (byte[]) bp.getPixels();
 				for (int slice = 1; slice <= slices; slice++)
-				{
 					result.addSlice(null, pixels.clone());
-				}
 				return result;
 
 				//// Use a mask for an irregular ROI
@@ -1217,7 +1187,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private int getDisplayRangeMin(ImagePlus imp, int channel)
 	{
 		// Composite images can have a display range for each color channel
-		LUT[] luts = imp.getLuts();
+		final LUT[] luts = imp.getLuts();
 		if (luts != null && channel <= luts.length && channel > 0)
 			return (int) luts[channel - 1].min;
 		return (int) imp.getDisplayRangeMin();
@@ -1228,12 +1198,10 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		ImageProcessor roiIp = null;
 
 		if (index < 0)
-		{
 			roiIp = channelIp;
-		}
 		else
 		{
-			ImagePlus roiImage = WindowManager.getImage(imageList.get(index));
+			final ImagePlus roiImage = WindowManager.getImage(imageList.get(index));
 			if (roiImage != null)
 			{
 				roiIp = roiImage.getProcessor();
@@ -1248,14 +1216,12 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 */
 	private ImageStack defaultMask(ImagePlus imp)
 	{
-		ImageStack result = new ImageStack(imp.getWidth(), imp.getHeight());
-		ByteProcessor bp = new ByteProcessor(imp.getWidth(), imp.getHeight());
+		final ImageStack result = new ImageStack(imp.getWidth(), imp.getHeight());
+		final ByteProcessor bp = new ByteProcessor(imp.getWidth(), imp.getHeight());
 		bp.add(255);
-		byte[] pixels = (byte[]) bp.getPixels();
+		final byte[] pixels = (byte[]) bp.getPixels();
 		for (int s = imp.getNSlices(); s-- > 0;)
-		{
 			result.addSlice(null, pixels.clone());
-		}
 		return result;
 	}
 
@@ -1266,17 +1232,17 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		IJ.showStatus(processingMandersStatus);
 
 		// Extract the results into individual arrays
-		double[] distances = new double[results.size()];
-		double[] m1Values = new double[results.size()];
-		double[] m2Values = new double[results.size()];
-		double[] rValues = new double[results.size()];
+		final double[] distances = new double[results.size()];
+		final double[] m1Values = new double[results.size()];
+		final double[] m2Values = new double[results.size()];
+		final double[] rValues = new double[results.size()];
 
-		int[] indexDistance = new int[m1Values.length];
+		final int[] indexDistance = new int[m1Values.length];
 		int size = 0;
 
 		for (int i = 0; i < m1Values.length; ++i)
 		{
-			CalculationResult result = results.get(i);
+			final CalculationResult result = results.get(i);
 
 			distances[i] = result.distance;
 			m1Values[i] = result.m1;
@@ -1285,15 +1251,13 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 			// All results over the random distance threshold will be used for the significance calculation
 			if (distances[i] > randomRadius)
-			{
 				indexDistance[size++] = i;
-			}
 		}
 
 		// Extract the results above the random threshold
-		float[] m1ValuesForRandom = new float[size];
-		float[] m2ValuesForRandom = new float[size];
-		float[] rValuesForRandom = new float[size];
+		final float[] m1ValuesForRandom = new float[size];
+		final float[] m2ValuesForRandom = new float[size];
+		final float[] rValuesForRandom = new float[size];
 
 		for (int i = 0; i < m1ValuesForRandom.length; ++i)
 		{
@@ -1308,12 +1272,12 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		Arrays.sort(rValuesForRandom);
 
 		// Initialise the graph points
-		int deltaY = 10;
+		final int deltaY = 10;
 
-		double[] spacedX = new double[maximumRadius];
-		double[] spacedY = new double[deltaY];
-		double[] ceroValuesX = new double[maximumRadius];
-		double[] ceroValuesY = new double[deltaY];
+		final double[] spacedX = new double[maximumRadius];
+		final double[] spacedY = new double[deltaY];
+		final double[] ceroValuesX = new double[maximumRadius];
+		final double[] ceroValuesY = new double[deltaY];
 
 		for (int i = 0; i < maximumRadius; ++i)
 		{
@@ -1328,7 +1292,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		}
 
 		// TODO - Only compute the images that will be displayed or saved as results
-		boolean isSaveResults = (saveResults && checkResultsDirectory());
+		final boolean isSaveResults = (saveResults && checkResultsDirectory());
 
 		IJ.showStatus(preparingPlotsStatus);
 		Plot plotM1 = null, plotM2 = null, plotR = null;
@@ -1350,9 +1314,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		ImageStack mergedChannelIP = null, mergedSegmentedRGBIP = null, mergedChannelDisplacementIP = null,
 				mergedSegmentedDisplacementIP = null;
 
-		int w = imageStack1.getWidth();
-		int h = imageStack1.getHeight();
-		int slices = imageStack1.getSize();
+		final int w = imageStack1.getWidth();
+		final int h = imageStack1.getHeight();
+		final int slices = imageStack1.getSize();
 		if (showMergedChannelRGB)
 			mergedChannelIP = new ImageStack(w, h, slices);
 		if (showMergedSegmentedRGB)
@@ -1367,7 +1331,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			// Mix the channels
 			if (showMergedChannelRGB)
 			{
-				ColorProcessor cp = new ColorProcessor(w, h);
+				final ColorProcessor cp = new ColorProcessor(w, h);
 				cp.setChannel(1, (ByteProcessor) imageStack1.getProcessor(n).convertToByte(true));
 				cp.setChannel(2, (ByteProcessor) imageStack2.getProcessor(n).convertToByte(true));
 				mergedChannelIP.setPixels(cp.getPixels(), n);
@@ -1376,7 +1340,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			// Mix the masks
 			if (showMergedSegmentedRGB)
 			{
-				ColorProcessor cp = new ColorProcessor(w, h);
+				final ColorProcessor cp = new ColorProcessor(w, h);
 				cp.setChannel(1, (ByteProcessor) roiStack1.getProcessor(n));
 				cp.setChannel(2, (ByteProcessor) roiStack2.getProcessor(n));
 				mergedSegmentedRGBIP.setPixels(cp.getPixels(), n);
@@ -1385,7 +1349,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			// For reference output the maximum shift of channel 1 AND the original channel 2
 			if (showMergedChannelDisplacementRGB)
 			{
-				ColorProcessor cp = new ColorProcessor(w, h);
+				final ColorProcessor cp = new ColorProcessor(w, h);
 				cp.setChannel(1, (ByteProcessor) lastChannelShiftedRawStack.getProcessor(n).convertToByte(true));
 				cp.setChannel(2, (ByteProcessor) imageStack2.getProcessor(n).convertToByte(true));
 				mergedChannelDisplacementIP.setPixels(cp.getPixels(), n);
@@ -1393,7 +1357,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 			if (showMergedSegmentedDisplacementRGB)
 			{
-				ColorProcessor cp = new ColorProcessor(w, h);
+				final ColorProcessor cp = new ColorProcessor(w, h);
 				cp.setChannel(1, (ByteProcessor) lastSegmentedShiftedRawStack.getProcessor(n));
 				cp.setChannel(2, (ByteProcessor) roiStack2.getProcessor(n).convertToByte(true));
 				mergedSegmentedDisplacementIP.setPixels(cp.getPixels(), n);
@@ -1420,9 +1384,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		rPlotWindow = refreshPlotWindow(rPlotWindow, showRPlotWindow, plotR, OPT_LOCATION_PLOT_R);
 
 		// Create display statistics for the Mander's and correlation values
-		FloatProcessor m1ValuesFP = new FloatProcessor(m1ValuesForRandom.length, 1, m1ValuesForRandom, null);
-		FloatProcessor m2ValuesFP = new FloatProcessor(m2ValuesForRandom.length, 1, m2ValuesForRandom, null);
-		FloatProcessor rValuesFP = new FloatProcessor(rValuesForRandom.length, 1, rValuesForRandom, null);
+		final FloatProcessor m1ValuesFP = new FloatProcessor(m1ValuesForRandom.length, 1, m1ValuesForRandom, null);
+		final FloatProcessor m2ValuesFP = new FloatProcessor(m2ValuesForRandom.length, 1, m2ValuesForRandom, null);
+		final FloatProcessor rValuesFP = new FloatProcessor(rValuesForRandom.length, 1, rValuesForRandom, null);
 
 		m1Statistics = refreshDisplayStatistics(m1Statistics, showM1Statistics, m1ValuesFP, m1ValuesForRandom,
 				m1HistogramTitle, Color.red, "M1 ", M1, OPT_LOCATION_STATS_M1);
@@ -1431,7 +1395,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		rStatistics = refreshDisplayStatistics(rStatistics, showRStatistics, rValuesFP, rValuesForRandom,
 				rHistogramTitle, Color.blue, "R ", R, OPT_LOCATION_STATS_R);
 
-		String id = generateId();
+		final String id = generateId();
 
 		StringBuilder heading = null;
 
@@ -1442,13 +1406,13 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			tw = new TextWindow(TITLE + " Results", heading.toString(), "", 1000, 300);
 		}
 
-		StringBuilder resultsEntry = new StringBuilder();
+		final StringBuilder resultsEntry = new StringBuilder();
 		addField(resultsEntry, id);
 		addField(resultsEntry, getImageTitle(imp1, 0));
 		addField(resultsEntry, getImageTitle(imp2, 2));
 
 		// Note that the segmented indices must be offset by one to account for the extra option
-		// in the list of segmented images 
+		// in the list of segmented images
 		addRoiField(resultsEntry, segmented1OptionIndex, segmented1Index - 1,
 				getRoiIp(imageStack1.getProcessor(1), segmented1Index - 1), 4);
 		addRoiField(resultsEntry, segmented2OptionIndex, segmented2Index - 1,
@@ -1469,19 +1433,18 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		tw.append(resultsEntry.toString());
 
 		if (isSaveResults)
-		{
 			try
 			{
 				// Save results to file
-				String directory = Utils.combinePath(resultsDirectory, id);
+				final String directory = Utils.combinePath(resultsDirectory, id);
 				if (!new File(directory).mkdirs())
 					return;
 				IJ.save(mergedSegmentedRGB, directory + File.separatorChar + "MergedROI.tif");
 				IJ.save(mergedChannelRGB, directory + File.separatorChar + "MergedChannel.tif");
 
-				FileOutputStream fos = new FileOutputStream(directory + File.separatorChar + "results.txt");
-				OutputStreamWriter out = new OutputStreamWriter(fos, "UTF-8");
-				String newLine = System.getProperty("line.separator");
+				final FileOutputStream fos = new FileOutputStream(directory + File.separatorChar + "results.txt");
+				final OutputStreamWriter out = new OutputStreamWriter(fos, "UTF-8");
+				final String newLine = System.getProperty("line.separator");
 				heading = createHeading(heading);
 				out.write(heading.toString());
 				out.write(newLine);
@@ -1489,22 +1452,19 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 				out.write(newLine);
 				out.close();
 			}
-			catch (Exception e)
+			catch (final Exception e)
 			{
 				return;
 			}
-		}
 	}
 
 	private Object getImageTitle(ImagePlus imp, int offset)
 	{
 		if (imp != null)
 		{
-			StringBuilder sb = new StringBuilder(imp.getTitle());
+			final StringBuilder sb = new StringBuilder(imp.getTitle());
 			if (imp.getStackSize() > 1 && (imp.getNChannels() > 1 || imp.getNFrames() > 1))
-			{
 				sb.append(" (c").append(sliceOptions[offset]).append(",t").append(sliceOptions[offset + 1]).append(")");
-			}
 			return sb.toString();
 		}
 		else
@@ -1513,7 +1473,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	private String generateId()
 	{
-		DateFormat df = new SimpleDateFormat("yyyyMMdd_HHmmss");
+		final DateFormat df = new SimpleDateFormat("yyyyMMdd_HHmmss");
 		return "cda" + df.format(new Date());
 	}
 
@@ -1533,9 +1493,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 				imp.show();
 			}
 			else
-			{
 				imp.setStack(title, stack);
-			}
 			if (lutColor != null)
 				imp.setLut(LUTHelper.createLUT(lutColor, true));
 		}
@@ -1585,9 +1543,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		if (showPlotWindow && plot != null)
 		{
 			if (plotWindow != null && !plotWindow.isClosed())
-			{
 				plotWindow.drawPlot(plot);
-			}
 			else
 			{
 				plotWindow = plot.show();
@@ -1609,18 +1565,18 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			double value, String locationKey)
 	{
 		// Draw a plot of the values. This will be used within the DisplayStatistics chart
-		PlotResults statsPlot = new PlotResults(value, histogramBins, Tools.toDouble(valuesForRandom), colour);
+		final PlotResults statsPlot = new PlotResults(value, histogramBins, Tools.toDouble(valuesForRandom), colour);
 
 		statsPlot.setXTitle(xTitle);
 		statsPlot.setYTitle(plotPDFYLabel);
 		statsPlot.setTitle("CDA " + xTitle + " PDF");
 
-		// This is needed to calculate the probability limits for the results table 
+		// This is needed to calculate the probability limits for the results table
 		// even if the plot is not shown
 		statsPlot.calculate(pValue);
 
 		// Generate the statistics needed for the plot
-		FloatStatistics floatStatistics = new FloatStatistics(m1ValuesFP);
+		final FloatStatistics floatStatistics = new FloatStatistics(m1ValuesFP);
 
 		Point point = null;
 		if (displayStatistics == null)
@@ -1638,9 +1594,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			restoreLocation(displayStatistics.getPlotWindow(), point);
 		}
 		else
-		{
 			closeDisplayStatistics(displayStatistics, locationKey);
-		}
 
 		return displayStatistics;
 	}
@@ -1648,25 +1602,21 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private void restoreLocation(Frame frame, Point point)
 	{
 		if (point != null)
-		{
 			frame.setLocation(point);
-		}
 	}
 
 	private Plot createPlot(double[] distances, double[] values, Color color, Color avColor, String title,
 			String xLabel, String yLabel, double[] spacedX, double[] ceroValuesX, double[] ceroValuesY,
 			double[] spacedY)
 	{
-		float[] dummy = null;
-		Plot plot = new Plot(title, xLabel.concat(pixelsUnitString), yLabel, dummy, dummy,
+		final float[] dummy = null;
+		final Plot plot = new Plot(title, xLabel.concat(pixelsUnitString), yLabel, dummy, dummy,
 				Plot.X_NUMBERS + Plot.Y_NUMBERS + Plot.X_TICKS + Plot.Y_TICKS);
 
 		double min = 0;
-		for (double d : values)
-		{
+		for (final double d : values)
 			if (min > d)
 				min = d;
-		}
 
 		plot.setLimits(0.0D, maximumRadius, min, 1.0D);
 		plot.setColor(color);
@@ -1681,32 +1631,28 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private void addAverage(Plot plot, double[] distances, double[] values, Color color)
 	{
 		double maxDistance = 0;
-		for (double d : distances)
-		{
+		for (final double d : distances)
 			if (maxDistance < d)
 				maxDistance = d;
-		}
 
-		int n = (int) (maxDistance + 0.5) + 1;
-		double[] sum = new double[n];
-		int[] count = new int[n];
+		final int n = (int) (maxDistance + 0.5) + 1;
+		final double[] sum = new double[n];
+		final int[] count = new int[n];
 		for (int i = 0; i < distances.length; i++)
 		{
 			// Round up distance to nearest int
-			int d = (int) (distances[i] + 0.5);
+			final int d = (int) (distances[i] + 0.5);
 			sum[d] += values[i];
 			count[d]++;
 		}
-		StoredData avDistances = new StoredData(n);
-		StoredData avValues = new StoredData(n);
+		final StoredData avDistances = new StoredData(n);
+		final StoredData avValues = new StoredData(n);
 		for (int i = (subRandomSamples) ? 0 : 1; i < n; i++)
-		{
 			if (count[i] > 0)
 			{
 				avDistances.add(i);
 				avValues.add(sum[i] / count[i]);
 			}
-		}
 
 		plot.setColor(color);
 		plot.addPoints(avDistances.getValues(), avValues.getValues(), Plot.LINE);
@@ -1715,16 +1661,14 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private StringBuilder addField(StringBuilder buffer, Object field)
 	{
 		if (buffer.length() > 0)
-		{
 			buffer.append('\t');
-		}
 		buffer.append(field);
 		return buffer;
 	}
 
 	private void addRoiField(StringBuilder buffer, int roiIndex, int imageIndex, ImageProcessor roiIp, int offset)
 	{
-		String roiOption = ROI_OPTIONS[roiIndex];
+		final String roiOption = ROI_OPTIONS[roiIndex];
 		addField(buffer, roiOption);
 		if (!roiOption.equals(OPTION_NONE))
 		{
@@ -1738,17 +1682,16 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			{
 				if (roiIp != null)
 				{
-					int minIndex = (offset - 4) / 2;
+					final int minIndex = (offset - 4) / 2;
 					buffer.append(" (>");
 					buffer.append(displayMin[minIndex]);
 					buffer.append(")");
 				}
 			}
 			else if (roiOption.equals(OPTION_USE_ROI))
-			{
 				if (roiIp != null)
 				{
-					Rectangle r = roiIp.getRoi();
+					final Rectangle r = roiIp.getRoi();
 					if (r != null)
 					{
 						buffer.append(" (");
@@ -1757,31 +1700,24 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 						buffer.append(")");
 					}
 				}
-			}
 		}
 	}
 
 	private void addResults(StringBuilder sb, DisplayStatistics displayStatistics)
 	{
-		double value = displayStatistics.getValue();
-		double av = displayStatistics.getAverage();
-		double sd = displayStatistics.getStdDev();
-		double lowerLimit = displayStatistics.getLowerLimit();
-		double upperLimit = displayStatistics.getUpperLimit();
+		final double value = displayStatistics.getValue();
+		final double av = displayStatistics.getAverage();
+		final double sd = displayStatistics.getStdDev();
+		final double lowerLimit = displayStatistics.getLowerLimit();
+		final double upperLimit = displayStatistics.getUpperLimit();
 
 		String result;
 		if (value < lowerLimit)
-		{
 			result = "Significant (non-colocated)";
-		}
 		else if (value > upperLimit)
-		{
 			result = "Significant (colocated)";
-		}
 		else
-		{
 			result = "Not significant";
-		}
 
 		addField(sb, IJ.d2s(value, 4));
 		addField(sb, IJ.d2s(av, 4));
@@ -1793,14 +1729,14 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	@SuppressWarnings("unused")
 	private void showImage(String title, ImageProcessor ip)
 	{
-		ImagePlus img = new ImagePlus(title, ip);
+		final ImagePlus img = new ImagePlus(title, ip);
 		img.show();
 		IJ.showMessage(title);
 		try
 		{
 			Thread.sleep(100);
 		}
-		catch (InterruptedException e)
+		catch (final InterruptedException e)
 		{
 			e.printStackTrace();
 		}
@@ -1810,15 +1746,13 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private boolean parametersReady()
 	{
 		if (WindowManager.getImageCount() == 0)
-		{
 			// IJ.showMessage(TITLE, "No images opened.");
 			return false;
-		}
 
 		if (channel1List.getItemCount() < 2)
 		{
 			// Check for an image stack with more than one channel/frame
-			ImagePlus imp = WindowManager.getImage(channel1List.getSelectedItem());
+			final ImagePlus imp = WindowManager.getImage(channel1List.getSelectedItem());
 			if (imp == null || (imp.getNChannels() + imp.getNFrames() < 3))
 			{
 				IJ.showMessage(TITLE,
@@ -1846,7 +1780,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	public void fillImagesList()
 	{
 		// Find the currently open images
-		ArrayList<String> newImageList = createImageList();
+		final ArrayList<String> newImageList = createImageList();
 
 		// Check if the image list has changed
 		if (imageList.equals(newImageList))
@@ -1864,7 +1798,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		segmented1List.add(CHANNEL_IMAGE);
 		segmented2List.add(CHANNEL_IMAGE);
 
-		for (String imageTitle : newImageList)
+		for (final String imageTitle : newImageList)
 		{
 			segmented1List.add(imageTitle);
 			segmented2List.add(imageTitle);
@@ -1891,17 +1825,17 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	public ArrayList<String> createImageList()
 	{
-		ArrayList<String> newImageList = new ArrayList<String>();
+		final ArrayList<String> newImageList = new ArrayList<>();
 
-		for (int id : gdsc.core.ij.Utils.getIDList())
+		for (final int id : gdsc.core.ij.Utils.getIDList())
 		{
-			ImagePlus imp = WindowManager.getImage(id);
+			final ImagePlus imp = WindowManager.getImage(id);
 
 			// Image must be 8-bit/16-bit
 			if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16))
 			{
 				// Check it is not one the result images
-				String imageTitle = imp.getTitle();
+				final String imageTitle = imp.getTitle();
 				if ((imageTitle.equals(channel1RGBTitle)) || (imageTitle.equals(channel2RGBTitle)) ||
 						(imageTitle.equals(segmented1RGBTitle)) || (imageTitle.equals(segmented2RGBTitle)) ||
 						(imageTitle.equals(plotM1Title)) || (imageTitle.equals(plotM2Title)) ||
@@ -1918,8 +1852,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	private void createFrame()
 	{
-		Panel mainPanel = new Panel();
-		GridLayout mainGrid = new GridLayout(0, 1);
+		final Panel mainPanel = new Panel();
+		final GridLayout mainGrid = new GridLayout(0, 1);
 		mainGrid.setHgap(10);
 		mainGrid.setVgap(10);
 		mainPanel.setLayout(mainGrid);
@@ -1984,8 +1918,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		helpButton = new Button(helpButtonLabel);
 		helpButton.addActionListener(this);
 
-		JPanel buttonPanel = new JPanel();
-		FlowLayout l = new FlowLayout();
+		final JPanel buttonPanel = new JPanel();
+		final FlowLayout l = new FlowLayout();
 		l.setVgap(0);
 		buttonPanel.setLayout(l);
 		buttonPanel.add(okButton, BorderLayout.CENTER);
@@ -2001,13 +1935,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		subRandomSamples = subRandomSamplesCheckbox.getState();
 
 		if (randomRadius >= maximumRadius)
-		{
 			randomRadiusText.setBackground(Color.ORANGE);
-		}
 		else
-		{
 			randomRadiusText.setBackground(Color.WHITE);
-		}
 
 		double subNumber = approximateSamples(randomRadius);
 		double number = approximateSamples(maximumRadius) - subNumber;
@@ -2031,9 +1961,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	private Panel createChoicePanel(Choice list, String label)
 	{
-		Panel panel = new Panel();
+		final Panel panel = new Panel();
 		panel.setLayout(new BorderLayout());
-		Label listLabel = new Label(label, 0);
+		final Label listLabel = new Label(label, 0);
 		listLabel.setFont(monoFont);
 		list.setSize(fontWidth * 3, fontWidth);
 		panel.add(listLabel, BorderLayout.WEST);
@@ -2043,9 +1973,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	private Panel createRoiChoicePanel(Choice imageList, Choice optionList, String label, int selectedOptionIndex)
 	{
-		Panel panel = new Panel();
+		final Panel panel = new Panel();
 		panel.setLayout(new BorderLayout());
-		Label listLabel = new Label(label, 0);
+		final Label listLabel = new Label(label, 0);
 		listLabel.setFont(monoFont);
 		// imageList.setSize(fontWidth * 3, fontWidth);
 		panel.add(listLabel, BorderLayout.WEST);
@@ -2058,18 +1988,16 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		imageList.add(CHANNEL_IMAGE);
 
 		if (selectedOptionIndex < 4 && selectedOptionIndex >= 0)
-		{
 			optionList.select(selectedOptionIndex);
-		}
 
 		return panel;
 	}
 
 	private Panel createTextPanel(TextField textField, String label, String value)
 	{
-		Panel panel = new Panel();
+		final Panel panel = new Panel();
 		panel.setLayout(new BorderLayout());
-		Label listLabel = new Label(label, 0);
+		final Label listLabel = new Label(label, 0);
 		listLabel.setFont(monoFont);
 		textField.setSize(fontWidth * 3, fontWidth);
 		textField.setText(value);
@@ -2080,9 +2008,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	private Panel createCheckboxPanel(Checkbox checkbox, String label, boolean state)
 	{
-		Panel panel = new Panel();
+		final Panel panel = new Panel();
 		panel.setLayout(new BorderLayout());
-		Label listLabel = new Label(label, 0);
+		final Label listLabel = new Label(label, 0);
 		listLabel.setFont(monoFont);
 		checkbox.setState(state);
 		panel.add(listLabel, BorderLayout.WEST);
@@ -2092,9 +2020,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	private Panel createLabelPanel(Label labelField, String label, String value)
 	{
-		Panel panel = new Panel();
+		final Panel panel = new Panel();
 		panel.setLayout(new BorderLayout());
-		Label listLabel = new Label(label, 0);
+		final Label listLabel = new Label(label, 0);
 		listLabel.setFont(monoFont);
 		panel.add(listLabel, BorderLayout.WEST);
 		if (labelField != null)
@@ -2127,7 +2055,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	//
 	//	/**
 	//	 * Create the intersect of the two masks. Results are written back to the output image processor if specified.
-	//	 * 
+	//	 *
 	//	 * @return The sum of the source image intensity within the intersect
 	//	 */
 	//	private long intersectMask(ImageProcessor sourceImage, ByteProcessor maskImage, ImageProcessor outputImage)
@@ -2169,7 +2097,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	//
 	//	/**
 	//	 * Create the intersect of the two masks. Results are written back to the output image processor if specified.
-	//	 * 
+	//	 *
 	//	 * @return The sum of the source image intensity within the intersect
 	//	 */
 	//	private long intersectMask(ImageProcessor sourceImage, ByteProcessor maskImage)
@@ -2209,7 +2137,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	/**
 	 * Modify mask1 to include all non-zero pixels from mask 2
-	 * 
+	 *
 	 * @param mask1
 	 * @param mask2
 	 */
@@ -2221,7 +2149,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	/**
 	 * Modify mask1 to include all non-zero pixels from mask 2
-	 * 
+	 *
 	 * @param mask1
 	 * @param mask2
 	 */
@@ -2234,7 +2162,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
 	/**
 	 * Modify the stack to zero all zero pixels from the mask
-	 * 
+	 *
 	 * @param stack
 	 * @param mask
 	 */
@@ -2266,9 +2194,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		long sum = 0;
 		for (int s = 1; s <= stack.getSize(); s++)
-		{
 			sum += intersectSum(stack.getProcessor(s), (ByteProcessor) mask.getProcessor(s));
-		}
 		return sum;
 	}
 
@@ -2279,10 +2205,8 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	{
 		long sum = 0;
 		for (int i = mask.getPixelCount(); i-- > 0;)
-		{
 			if (mask.get(i) != 0)
 				sum += ip.get(i);
-		}
 		return sum;
 	}
 
@@ -2332,23 +2256,19 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 		if (imageList.size() < 2)
 		{
 			// Check for an image stack with more than one channel/frame
-			ImagePlus imp = (imageList.isEmpty()) ? null : WindowManager.getImage(imageList.get(0));
+			final ImagePlus imp = (imageList.isEmpty()) ? null : WindowManager.getImage(imageList.get(0));
 			if (imp == null || (imp.getNChannels() + imp.getNFrames() < 3))
-			{
 				IJ.showMessage(TITLE,
 						"Requires 2 images or a multi-channel/frame stack. Images must be 8-bit or 16-bit grayscale.");
-			}
 		}
 
-		String[] images = new String[imageList.size()];
-		String[] images2 = new String[imageList.size() + 1];
+		final String[] images = new String[imageList.size()];
+		final String[] images2 = new String[imageList.size() + 1];
 		images2[0] = CHANNEL_IMAGE;
 		for (int i = 0; i < imageList.size(); i++)
-		{
 			images[i] = images2[i + 1] = imageList.get(i);
-		}
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addChoice(choiceChannel1.replace(" ", "_"), images, getTitle(images, channel1Index));
 		gd.addChoice(choiceChannel2.replace(" ", "_"), images, getTitle(images, channel2Index));
@@ -2387,11 +2307,11 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			setResultsOptions();
 
 		// Get the images
-		ImagePlus imp1 = WindowManager.getImage(images[channel1Index]);
-		ImagePlus imp2 = WindowManager.getImage(images[channel2Index]);
-		ImagePlus roi1 = WindowManager.getImage(images2[segmented1Index]);
-		ImagePlus roi2 = WindowManager.getImage(images2[segmented2Index]);
-		ImagePlus roi = WindowManager.getImage(images[confinedIndex]);
+		final ImagePlus imp1 = WindowManager.getImage(images[channel1Index]);
+		final ImagePlus imp2 = WindowManager.getImage(images[channel2Index]);
+		final ImagePlus roi1 = WindowManager.getImage(images2[segmented1Index]);
+		final ImagePlus roi2 = WindowManager.getImage(images2[segmented2Index]);
+		final ImagePlus roi = WindowManager.getImage(images[confinedIndex]);
 
 		runCDA(imp1, imp2, roi1, roi2, roi);
 	}
@@ -2399,7 +2319,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	private void addRoiChoice(GenericDialog gd, String title, String[] roiOptions, String[] images, int optionIndex,
 			int index)
 	{
-		String name = title.replace(" ", "_");
+		final String name = title.replace(" ", "_");
 		gd.addChoice(name, roiOptions, getTitle(roiOptions, optionIndex));
 		gd.addChoice(name + "_image", images, getTitle(images, index));
 	}

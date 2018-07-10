@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -83,7 +83,7 @@ import ij.process.ShortProcessor;
  */
 public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 {
-	private int flags = DOES_8G + DOES_16 + DOES_32 + NO_CHANGES;
+	private final int flags = DOES_8G + DOES_16 + DOES_32 + NO_CHANGES;
 
 	private static final String TITLE = "Cell Outliner";
 	private static int cellRadius = 25;
@@ -107,7 +107,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	private Rectangle bounds;
 	private PointRoi roi;
 	private int[] xpoints, ypoints;
-	private ArrayList<Integer> rotationAngles = new ArrayList<Integer>();
+	private final ArrayList<Integer> rotationAngles = new ArrayList<>();
 
 	HashMap<Integer, float[]> kernels = null;
 	HashMap<Integer, FloatProcessor> convolved = null;
@@ -116,7 +116,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
@@ -125,9 +125,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
 		if (imp == null)
-		{
 			return DONE;
-		}
 		if (imp.getRoi() == null || imp.getRoi().getType() != Roi.POINT)
 		{
 			IJ.error("Please select a centre point using the ROI tool");
@@ -144,7 +142,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
 	 * ij.plugin.filter.PlugInFilterRunner)
 	 */
@@ -181,7 +179,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 		if (gd.wasCanceled() || !dialogItemChanged(gd, null))
 		{
-			imp.setOverlay(null); // Clear preview overlay 
+			imp.setOverlay(null); // Clear preview overlay
 			return DONE;
 		}
 
@@ -211,17 +209,17 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog, java.awt.AWTEvent)
 	 */
 	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
 	{
-		int oldCellRadius = cellRadius;
-		double oldTolerance = tolerance;
-		boolean oldDarkEdge = darkEdge;
-		double oldKernelSmoothing = kernelSmoothing;
-		int oldKernelWidth = kernelWidth;
+		final int oldCellRadius = cellRadius;
+		final double oldTolerance = tolerance;
+		final boolean oldDarkEdge = darkEdge;
+		final double oldKernelSmoothing = kernelSmoothing;
+		final int oldKernelWidth = kernelWidth;
 
 		cellRadius = (int) gd.getNextNumber();
 		tolerance = gd.getNextNumber();
@@ -256,18 +254,18 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
 	@Override
 	public void setNPasses(int nPasses)
 	{
-		// Do nothing		
+		// Do nothing
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
@@ -278,47 +276,46 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		// Final: Create a new mask image
 		if (buildMaskOutput)
 		{
-			int w = inputProcessor.getWidth();
-			int h = inputProcessor.getHeight();
-			boolean useShort = (xpoints.length > 255);
+			final int w = inputProcessor.getWidth();
+			final int h = inputProcessor.getHeight();
+			final boolean useShort = (xpoints.length > 255);
 
 			// Build a list of the frames to process
-			int channel = imp.getChannel();
-			int[] frames = (processAllFrames) ? sequence(imp.getNFrames()) : new int[] { imp.getFrame() };
-			int[] slices = (processAllSlices) ? sequence(imp.getNSlices()) : new int[] { imp.getSlice() };
+			final int channel = imp.getChannel();
+			final int[] frames = (processAllFrames) ? sequence(imp.getNFrames()) : new int[] { imp.getFrame() };
+			final int[] slices = (processAllSlices) ? sequence(imp.getNSlices()) : new int[] { imp.getSlice() };
 
-			int nFrames = frames.length;
-			int nSlices = slices.length;
-			int size = nFrames * nSlices;
-			boolean resetConvolved = (size > 1);
+			final int nFrames = frames.length;
+			final int nSlices = slices.length;
+			final int size = nFrames * nSlices;
+			final boolean resetConvolved = (size > 1);
 
-			ImageStack stack = new ImageStack(w, h, size);
-			ImageStack inputStack = this.imp.getImageStack();
+			final ImageStack stack = new ImageStack(w, h, size);
+			final ImageStack inputStack = this.imp.getImageStack();
 
 			int n = 1;
-			for (int frame : frames)
-			{
-				for (int slice : slices)
+			for (final int frame : frames)
+				for (final int slice : slices)
 				{
-					String label = "t" + frame + "z" + slice;
+					final String label = "t" + frame + "z" + slice;
 					IJ.showStatus("Processing " + label);
 					IJ.showProgress(n - 1, size);
 
-					ImageProcessor maskIp = (useShort) ? new ShortProcessor(w, h) : new ByteProcessor(w, h);
+					final ImageProcessor maskIp = (useShort) ? new ShortProcessor(w, h) : new ByteProcessor(w, h);
 
-					int index = imp.getStackIndex(channel, slice, frame);
-					ImageProcessor ip = inputStack.getProcessor(index);
+					final int index = imp.getStackIndex(channel, slice, frame);
+					final ImageProcessor ip = inputStack.getProcessor(index);
 
 					if (resetConvolved)
 						convolved = null;
-					PolygonRoi[] cells = findCells(ip);
+					final PolygonRoi[] cells = findCells(ip);
 
 					for (int i = 0; i < cells.length; i++)
 					{
-						PolygonRoi cell = cells[i];
-						Rectangle b = cell.getBounds();
+						final PolygonRoi cell = cells[i];
+						final Rectangle b = cell.getBounds();
 						cell.setLocation(0, 0); // Remove the cell offset to allow it to be created
-						ByteProcessor cellIp = createFilledCell(b.width, b.height, cell, i + 1);
+						final ByteProcessor cellIp = createFilledCell(b.width, b.height, cell, i + 1);
 						maskIp.copyBits(cellIp, b.x, b.y, Blitter.COPY_ZERO_TRANSPARENT);
 					}
 
@@ -326,10 +323,9 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 					stack.setSliceLabel(label, n);
 					n++;
 				}
-			}
 
 			// Create the output image
-			String title = imp.getTitle() + " Cell Outline";
+			final String title = imp.getTitle() + " Cell Outline";
 			ImagePlus maskImp = WindowManager.getImage(title);
 			if (maskImp == null)
 			{
@@ -339,9 +335,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 				maskImp.show();
 			}
 			else
-			{
 				maskImp.setStack(stack, 1, nSlices, nFrames);
-			}
 			maskImp.setRoi(roi);
 			applyColorModel(maskImp);
 			maskImp.setDisplayRange(0, xpoints.length);
@@ -350,28 +344,26 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		// Preview: Draw the polygon outline as an overlay
 		else
 		{
-			Overlay overlay = new Overlay();
+			final Overlay overlay = new Overlay();
 			overlay.setStrokeColor(Color.green);
 			overlay.setFillColor(null);
 
-			PolygonRoi[] cells = findCells(inputProcessor);
+			final PolygonRoi[] cells = findCells(inputProcessor);
 			IJ.showStatus("");
 			IJ.showProgress(1);
 
 			if (cells == null)
 				return;
 
-			for (PolygonRoi cell : cells)
-			{
+			for (final PolygonRoi cell : cells)
 				overlay.add(cell);
-			}
 			imp.setOverlay(overlay);
 		}
 	}
 
 	private int[] sequence(int n)
 	{
-		int[] s = new int[n];
+		final int[] s = new int[n];
 		for (int i = 0; i < n; i++)
 			s[i] = i + 1;
 		return s;
@@ -391,10 +383,8 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			convolved = null;
 		}
 		if (convolved == null)
-		{
 			convolved = convolveImage(ip, kernels);
 			//showConvolvedImages(convolved);
-		}
 
 		if (Thread.currentThread().isInterrupted())
 			return null;
@@ -410,7 +400,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			combinedImp = displayImage(combinedIp, "Combined edge projection");
 		}
 
-		PolygonRoi[] cells = new PolygonRoi[xpoints.length];
+		final PolygonRoi[] cells = new PolygonRoi[xpoints.length];
 
 		if (!this.buildMaskOutput)
 			IJ.showStatus("Finding cells ...");
@@ -421,43 +411,43 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			if (!this.buildMaskOutput)
 				IJ.showProgress(n, xpoints.length);
 
-			int cx = xpoints[n] - bounds.x;
-			int cy = ypoints[n] - bounds.y;
+			final int cx = xpoints[n] - bounds.x;
+			final int cy = ypoints[n] - bounds.y;
 
-			// Restrict bounds using the cell radius and tolerance 
-			int extra = (int) Math.ceil(cellRadius + cellRadius * tolerance + kernelWidth / 2);
-			int minx = Math.max(0, cx - extra);
-			int miny = Math.max(0, cy - extra);
-			int maxx = Math.min(ip.getWidth() - 1, cx + extra);
-			int maxy = Math.min(ip.getHeight() - 1, cy + extra);
-			Rectangle pointBounds = new Rectangle(minx, miny, maxx - minx + 1, maxy - miny + 1);
+			// Restrict bounds using the cell radius and tolerance
+			final int extra = (int) Math.ceil(cellRadius + cellRadius * tolerance + kernelWidth / 2);
+			final int minx = Math.max(0, cx - extra);
+			final int miny = Math.max(0, cy - extra);
+			final int maxx = Math.min(ip.getWidth() - 1, cx + extra);
+			final int maxy = Math.min(ip.getHeight() - 1, cy + extra);
+			final Rectangle pointBounds = new Rectangle(minx, miny, maxx - minx + 1, maxy - miny + 1);
 
 			// Calculate the angle
-			FloatProcessor angle = createAngleProcessor(ip, cx, cy, pointBounds);
+			final FloatProcessor angle = createAngleProcessor(ip, cx, cy, pointBounds);
 			//if (debug) displayImage(angle, "Angle");
 
 			if (Thread.currentThread().isInterrupted())
 				return null;
-			FloatProcessor edgeProjection = computeEdgeProjection(convolved, cx, cy, pointBounds, angle);
+			final FloatProcessor edgeProjection = computeEdgeProjection(convolved, cx, cy, pointBounds, angle);
 
 			// Initialise the edge as a circle.
 			PolygonRoi cell = null;
 			double[] params = { cx - minx, cy - miny, cellRadius, cellRadius, cellRadius, 0 };
-			double range = cellRadius * 0.9;
+			final double range = cellRadius * 0.9;
 
 			// Iterate to find the best cell outline
 			boolean returnEllipticalFit = ellipticalFit;
 			for (int iter = 0; iter < iterations; iter++)
 			{
 				// Use the current elliptical edge to define the weights for the edge projection
-				FloatProcessor weights = createWeightMap(pointBounds, params, range);
+				final FloatProcessor weights = createWeightMap(pointBounds, params, range);
 				if (Thread.currentThread().isInterrupted())
 					return null;
 
 				if (debug)
 					displayImage(weights, "Weight map");
 
-				FloatProcessor weightedEdgeProjection = applyWeights(edgeProjection, weights);
+				final FloatProcessor weightedEdgeProjection = applyWeights(edgeProjection, weights);
 
 				if (debug)
 				{
@@ -470,8 +460,8 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 				cell = findPolygonalCell((int) Math.round(params[0]), (int) Math.round(params[1]),
 						weightedEdgeProjection, angle);
 
-				FloatProcessor weightMap = weightedEdgeProjection; // weights
-				double[] newParams = fitPolygonalCell(cell, params, weightMap, angle);
+				final FloatProcessor weightMap = weightedEdgeProjection; // weights
+				final double[] newParams = fitPolygonalCell(cell, params, weightMap, angle);
 
 				if (newParams == null)
 				{
@@ -488,8 +478,8 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			// Return either the fitted elliptical cell or the last polygon outline
 			if (returnEllipticalFit)
 			{
-				EllipticalCell e = new EllipticalCell();
-				FloatPolygon ellipse = e.drawEllipse(params);
+				final EllipticalCell e = new EllipticalCell();
+				final FloatPolygon ellipse = e.drawEllipse(params);
 				cell = new PolygonRoi(ellipse.xpoints, ellipse.ypoints, ellipse.npoints, Roi.POLYGON);
 			}
 
@@ -497,7 +487,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			if (dilate > 0)
 			{
 				// Dilate the cell and then trace the new outline
-				ByteProcessor bp = new ByteProcessor(pointBounds.width, pointBounds.height);
+				final ByteProcessor bp = new ByteProcessor(pointBounds.width, pointBounds.height);
 				bp.setColor(CELL & 0xff);
 				bp.draw(cell);
 				for (int i = 0; i < dilate; i++)
@@ -507,16 +497,16 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 					finalCell = cell;
 			}
 
-			Rectangle pos = finalCell.getBounds();
+			final Rectangle pos = finalCell.getBounds();
 
 			// Does not work in IJ 1.46+
 			//finalCell.setLocation(pos.x + bounds.x + pointBounds.x, pos.y + bounds.y + pointBounds.y);
 
 			// Create a new Polygon with the correct coordinates. This is required since IJ 1.46
 			// since setting the location is not passed through when drawing an overlay
-			int[] xCoords = finalCell.getXCoordinates();
-			int[] yCoords = finalCell.getYCoordinates();
-			int nPoints = finalCell.getNCoordinates();
+			final int[] xCoords = finalCell.getXCoordinates();
+			final int[] yCoords = finalCell.getYCoordinates();
+			final int nPoints = finalCell.getNCoordinates();
 			for (int i = 0; i < nPoints; i++)
 			{
 				xCoords[i] += pos.x + bounds.x + pointBounds.x;
@@ -533,18 +523,18 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	private void applyColorModel(ImagePlus imp)
 	{
-		// Load the spectrum LUT 
+		// Load the spectrum LUT
 		WindowManager.setTempCurrentImage(imp);
-		LutLoader lut = new LutLoader();
+		final LutLoader lut = new LutLoader();
 		lut.run("spectrum");
 		WindowManager.setTempCurrentImage(null);
 
 		// Set zero to black
-		ImageProcessor ip = imp.getProcessor();
+		final ImageProcessor ip = imp.getProcessor();
 		IndexColorModel cm = (IndexColorModel) ip.getColorModel();
-		byte[] r = new byte[256];
-		byte[] b = new byte[256];
-		byte[] g = new byte[256];
+		final byte[] r = new byte[256];
+		final byte[] b = new byte[256];
+		final byte[] g = new byte[256];
 		cm.getReds(r);
 		cm.getBlues(b);
 		cm.getGreens(g);
@@ -558,7 +548,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	/**
 	 * Draw the current elliptical cell. Then create an Euclidian Distance Map to use as the weights
 	 * within the provided range. All other points a zeros.
-	 * 
+	 *
 	 * @param pointBounds
 	 * @param params
 	 * @param range
@@ -566,24 +556,22 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 */
 	private FloatProcessor createWeightMap(Rectangle pointBounds, double[] params, double range)
 	{
-		EllipticalCell cell = new EllipticalCell();
-		FloatPolygon ellipse = cell.drawEllipse(params);
+		final EllipticalCell cell = new EllipticalCell();
+		final FloatPolygon ellipse = cell.drawEllipse(params);
 
-		ByteProcessor mask = new ByteProcessor(pointBounds.width, pointBounds.height);
+		final ByteProcessor mask = new ByteProcessor(pointBounds.width, pointBounds.height);
 		mask.setValue(255);
 		mask.draw(new PolygonRoi(ellipse.xpoints, ellipse.ypoints, ellipse.npoints, Roi.POLYGON));
 
-		EDM edm = new EDM();
-		FloatProcessor map = edm.makeFloatEDM(mask, (byte) 255, false);
+		final EDM edm = new EDM();
+		final FloatProcessor map = edm.makeFloatEDM(mask, (byte) 255, false);
 		if (map == null)
-		{
 			// Preview thread has been interrupted
 			return null;
-		}
 		map.invert();
-		double max = map.getMax();
-		double min = Math.max(max - range, 0);
-		float[] data = (float[]) map.getPixels();
+		final double max = map.getMax();
+		final double min = Math.max(max - range, 0);
+		final float[] data = (float[]) map.getPixels();
 		for (int i = 0; i < data.length; i++)
 			data[i] = (float) ((data[i] > min) ? (data[i] - min) / range : 0f);
 
@@ -599,7 +587,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		if (debug)
 		{
 			map.resetMinAndMax();
-			ImagePlus mapImp = displayImage(map, "Current weight map");
+			final ImagePlus mapImp = displayImage(map, "Current weight map");
 			mapImp.updateAndDraw();
 		}
 
@@ -608,10 +596,10 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	private FloatProcessor applyWeights(FloatProcessor edgeProjection, FloatProcessor weights)
 	{
-		FloatProcessor ip = new FloatProcessor(edgeProjection.getWidth(), edgeProjection.getHeight());
-		float[] e = (float[]) edgeProjection.getPixels();
-		float[] w = (float[]) weights.getPixels();
-		float[] p = (float[]) ip.getPixels();
+		final FloatProcessor ip = new FloatProcessor(edgeProjection.getWidth(), edgeProjection.getHeight());
+		final float[] e = (float[]) edgeProjection.getPixels();
+		final float[] w = (float[]) weights.getPixels();
+		final float[] p = (float[]) ip.getPixels();
 		for (int i = 0; i < p.length; i++)
 			p[i] = e[i] * w[i];
 		return ip;
@@ -626,16 +614,14 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			maskImp.show();
 		}
 		else
-		{
 			maskImp.setProcessor(maskIp);
 			//maskImp.updateAndDraw();
-		}
 		return maskImp;
 	}
 
 	/**
 	 * Find the bounding rectangle that contains all the pixels that will be required for processing
-	 * 
+	 *
 	 * @param ip
 	 * @return
 	 */
@@ -644,7 +630,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		// Get the range of clicked points
 		int minx = Integer.MAX_VALUE;
 		int maxx = 0;
-		for (int x : xpoints)
+		for (final int x : xpoints)
 		{
 			if (minx > x)
 				minx = x;
@@ -653,7 +639,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		}
 		int miny = Integer.MAX_VALUE;
 		int maxy = 0;
-		for (int y : ypoints)
+		for (final int y : ypoints)
 		{
 			if (miny > y)
 				miny = y;
@@ -662,7 +648,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		}
 
 		// Add the cell width, tolerance and kernel size to get the total required limits
-		int extra = (int) Math.ceil(cellRadius + cellRadius * tolerance + kernelWidth / 2);
+		final int extra = (int) Math.ceil(cellRadius + cellRadius * tolerance + kernelWidth / 2);
 		minx -= extra;
 		miny -= extra;
 		maxx += extra;
@@ -677,12 +663,12 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Build the convolution kernels
-	 * 
+	 *
 	 * @return
 	 */
 	private HashMap<Integer, float[]> createKernels()
 	{
-		HashMap<Integer, float[]> kernels = new HashMap<Integer, float[]>();
+		final HashMap<Integer, float[]> kernels = new HashMap<>();
 		rotationAngles.clear();
 
 		// Used to weight the kernel from the distance to the centre
@@ -690,18 +676,18 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		maxDistance2 = halfWidth * halfWidth * 2;
 
 		// Build a set convolution kernels at 6 degree intervals
-		int cx = halfWidth, cy = halfWidth;
-		double degreesToRadians = Math.PI / 180.0;
+		final int cx = halfWidth, cy = halfWidth;
+		final double degreesToRadians = Math.PI / 180.0;
 		for (int rotation = 0; rotation < 180; rotation += 12)
 		{
 			rotationAngles.add(rotation);
-			FloatProcessor fp = new FloatProcessor(kernelWidth, kernelWidth);
+			final FloatProcessor fp = new FloatProcessor(kernelWidth, kernelWidth);
 
 			//createAliasedLines(halfWidth, cx, cy, degreesToRadians, rotation, fp);
 
 			// Build curves using the cell size.
-			double centreX = cx - Math.cos(rotation * degreesToRadians) * cellRadius;
-			double centreY = cy - Math.sin(rotation * degreesToRadians) * cellRadius;
+			final double centreX = cx - Math.cos(rotation * degreesToRadians) * cellRadius;
+			final double centreY = cy - Math.sin(rotation * degreesToRadians) * cellRadius;
 
 			createDoGKernel(fp, centreX, centreY, cellRadius, 1.0);
 
@@ -714,7 +700,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		}
 
 		// Copy the kernels for the second half of the circle
-		for (int rotation : rotationAngles.toArray(new Integer[0]))
+		for (final int rotation : rotationAngles.toArray(new Integer[0]))
 		{
 			rotationAngles.add(rotation + 180);
 			FloatProcessor fp = new FloatProcessor(kernelWidth, kernelWidth, kernels.get(rotation), null);
@@ -737,7 +723,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	/**
 	 * Create a 1D Difference-of-Gaussians kernel using the distance from the centre minus the cell radius to determine
 	 * the x distance.
-	 * 
+	 *
 	 * @param fp
 	 * @param centreX
 	 * @param centreY
@@ -756,14 +742,13 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			sigma2 *= kernelSmoothing;
 		}
 
-		float[] data = (float[]) fp.getPixels();
+		final float[] data = (float[]) fp.getPixels();
 		for (int y = 0, i = 0; y < fp.getHeight(); y++)
-		{
 			for (int x = 0; x < fp.getWidth(); x++, i++)
 			{
-				double dx = centreX - x;
-				double dy = centreY - y;
-				double x0 = cellRadius - Math.sqrt(dx * dx + dy * dy);
+				final double dx = centreX - x;
+				final double dy = centreY - y;
+				final double x0 = cellRadius - Math.sqrt(dx * dx + dy * dy);
 
 				float value = (float) (gaussian(x0, sigma1) - gaussian(x0, sigma2));
 
@@ -771,12 +756,11 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 					value = -value;
 
 				// Weight the amount using the distance from the centre
-				double d = (x - halfWidth) * (x - halfWidth) + (y - halfWidth) * (y - halfWidth);
+				final double d = (x - halfWidth) * (x - halfWidth) + (y - halfWidth) * (y - halfWidth);
 				value *= 1 - (d / maxDistance2);
 
 				data[i] = value;
 			}
-		}
 	}
 
 	private double gaussian(double x0, double sigma)
@@ -786,7 +770,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Old method used to create straight line kernels
-	 * 
+	 *
 	 * @param halfWidth
 	 * @param cx
 	 * @param cy
@@ -803,7 +787,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		double dy = Math.cos(rotation * degreesToRadians);
 
 		// Normalise so that each increment moves one pixel in either X or Y
-		double norm = Math.max(Math.abs(dx), Math.abs(dy));
+		final double norm = Math.max(Math.abs(dx), Math.abs(dy));
 		dx /= norm;
 		dy /= norm;
 
@@ -816,7 +800,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Spread a value of 1 using bilinear weighting around the point
-	 * 
+	 *
 	 * @param fp
 	 * @param x
 	 * @param y
@@ -824,19 +808,19 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 */
 	private void add(FloatProcessor fp, double x, double y, float value)
 	{
-		int x1 = (int) Math.floor(x);
-		int y1 = (int) Math.floor(y);
+		final int x1 = (int) Math.floor(x);
+		final int y1 = (int) Math.floor(y);
 
 		// Ignore out-of-bounds
 		if (x1 < -1 || x1 > fp.getWidth() || y1 < -1 || y1 > fp.getHeight())
 			return;
 
 		// Weight the amount using the distance from the centre
-		double d = (x - halfWidth) * (x - halfWidth) + (y - halfWidth) * (y - halfWidth);
+		final double d = (x - halfWidth) * (x - halfWidth) + (y - halfWidth) * (y - halfWidth);
 		value *= 1 - (d / maxDistance2);
 
-		double dx = x - x1;
-		double dy = y - y1;
+		final double dx = x - x1;
+		final double dy = y - y1;
 		add(fp, x1 + 1, y1 + 1, value * dx * dy);
 		add(fp, x1 + 1, y1, value * dx * (1 - dy));
 		add(fp, x1, y1 + 1, value * (1 - dx) * dy);
@@ -845,21 +829,21 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	private void add(FloatProcessor fp, int x, int y, double weight)
 	{
-		float value = fp.getPixelValue(x, y);
+		final float value = fp.getPixelValue(x, y);
 		fp.putPixelValue(x, y, value + weight);
 	}
 
 	private HashMap<Integer, FloatProcessor> convolveImage(ImageProcessor ip, HashMap<Integer, float[]> kernels)
 	{
-		HashMap<Integer, FloatProcessor> convolved = new HashMap<Integer, FloatProcessor>();
+		HashMap<Integer, FloatProcessor> convolved = new HashMap<>();
 
 		// Convolve image with each
-		for (int rotation : rotationAngles)
+		for (final int rotation : rotationAngles)
 		{
 			if (!this.buildMaskOutput)
 				IJ.showStatus("Convolving " + rotation);
-			float[] kernel = kernels.get(rotation);
-			FloatProcessor fp = (ip instanceof FloatProcessor) ? (FloatProcessor) ip.duplicate() : ip.toFloat(0, null);
+			final float[] kernel = kernels.get(rotation);
+			final FloatProcessor fp = (ip instanceof FloatProcessor) ? (FloatProcessor) ip.duplicate() : ip.toFloat(0, null);
 			fp.convolve(kernel, kernelWidth, kernelWidth);
 			convolved.put(rotation, fp);
 			if (Thread.currentThread().isInterrupted())
@@ -878,35 +862,35 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Debugging method to show the results of convolution
-	 * 
+	 *
 	 * @param convolved
 	 */
 	@SuppressWarnings("unused")
 	private void showConvolvedImages(HashMap<Integer, FloatProcessor> convolved)
 	{
-		ImageProcessor ip = convolved.get(0);
-		ImageStack stack = new ImageStack(ip.getWidth(), ip.getHeight());
-		for (int rotation : rotationAngles)
+		final ImageProcessor ip = convolved.get(0);
+		final ImageStack stack = new ImageStack(ip.getWidth(), ip.getHeight());
+		for (final int rotation : rotationAngles)
 			stack.addSlice("Rotation " + rotation, convolved.get(rotation));
 
-		ImagePlus imp = new ImagePlus("Membrane filter", stack);
+		final ImagePlus imp = new ImagePlus("Membrane filter", stack);
 		imp.show();
 
 		// Output different projections of the results
-		ZProjector projector = new ZProjector(imp);
+		final ZProjector projector = new ZProjector(imp);
 		for (int projectionMethod = 0; projectionMethod < ZProjector.METHODS.length; projectionMethod++)
 		{
 			IJ.showStatus("Projecting " + ZProjector.METHODS[projectionMethod]);
 			projector.setMethod(projectionMethod);
 			projector.doProjection();
-			ImagePlus projImp = projector.getProjection();
+			final ImagePlus projImp = projector.getProjection();
 			projImp.show();
 		}
 	}
 
 	/**
 	 * For the given point, compute the angle between pixels and the centre.
-	 * 
+	 *
 	 * @param ip
 	 * @param cx
 	 * @param cy
@@ -915,41 +899,39 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	private FloatProcessor createAngleProcessor(ImageProcessor ip, int cx, int cy, Rectangle pointBounds)
 	{
 		// Find the bounds to process
-		int minx = pointBounds.x;
-		int miny = pointBounds.y;
-		int maxx = minx + pointBounds.width;
-		int maxy = miny + pointBounds.height;
+		final int minx = pointBounds.x;
+		final int miny = pointBounds.y;
+		final int maxx = minx + pointBounds.width;
+		final int maxy = miny + pointBounds.height;
 
-		FloatProcessor angle = new FloatProcessor(pointBounds.width, pointBounds.height);
+		final FloatProcessor angle = new FloatProcessor(pointBounds.width, pointBounds.height);
 		for (int y = miny, index = 0; y < maxy; y++)
-		{
 			for (int x = minx; x < maxx; x++, index++)
 			{
-				int dx = cx - x;
-				int dy = cy - y;
-				float a = (float) (Math.atan2(dy, dx) * 180.0 / Math.PI);
+				final int dx = cx - x;
+				final int dy = cy - y;
+				final float a = (float) (Math.atan2(dy, dx) * 180.0 / Math.PI);
 				angle.setf(index, a + 180f); // Convert to 0-360 domain
 			}
-		}
 		return angle;
 	}
 
 	private FloatProcessor computeEdgeProjection(HashMap<Integer, FloatProcessor> convolved, int cx, int cy,
 			Rectangle pointBounds, FloatProcessor angle)
 	{
-		float[] a = (float[]) angle.getPixels();
+		final float[] a = (float[]) angle.getPixels();
 
-		// Do a projection of all membrane filters		
-		float[][] stack = new float[rotationAngles.size()][];
+		// Do a projection of all membrane filters
+		final float[][] stack = new float[rotationAngles.size()][];
 		for (int i = 0; i < rotationAngles.size(); i++)
 		{
-			int rotation = rotationAngles.get(i);
+			final int rotation = rotationAngles.get(i);
 			FloatProcessor fp = (FloatProcessor) convolved.get(rotation).duplicate();
 			fp.setRoi(pointBounds);
 			fp = (FloatProcessor) fp.crop();
 			if (darkEdge)
 				fp.invert();
-			float[] p = (float[]) fp.getPixels();
+			final float[] p = (float[]) fp.getPixels();
 
 			// Do a projection of membrane filters convolved with a filter roughly perpendicular to the edge
 			for (int j = 0; j < p.length; j++)
@@ -966,17 +948,13 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		}
 
 		// Perform Z-projection
-		FloatProcessor ip2 = new FloatProcessor(pointBounds.width, pointBounds.height);
-		float[] pixels = (float[]) ip2.getPixels();
-		for (float[] tmp : stack)
-		{
+		final FloatProcessor ip2 = new FloatProcessor(pointBounds.width, pointBounds.height);
+		final float[] pixels = (float[]) ip2.getPixels();
+		for (final float[] tmp : stack)
 			// Max intensity
 			for (int i = 0; i < tmp.length; i++)
-			{
 				if (pixels[i] < tmp[i])
 					pixels[i] = tmp[i];
-			}
-		}
 
 		return ip2;
 	}
@@ -990,13 +968,12 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		int miny = fp.getHeight();
 		int maxx = 0;
 		int maxy = 0;
-		float[] data = (float[]) fp.getPixels();
+		final float[] data = (float[]) fp.getPixels();
 		for (int i = 0; i < data.length; i++)
-		{
 			if (data[i] != 0)
 			{
-				int x = i % fp.getWidth();
-				int y = i / fp.getWidth();
+				final int x = i % fp.getWidth();
+				final int y = i / fp.getWidth();
 				if (minx > x)
 					minx = x;
 				if (maxx < x)
@@ -1006,7 +983,6 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 				if (maxy < y)
 					maxy = y;
 			}
-		}
 
 		// Crop to the bounds
 		cropBounds.x = minx;
@@ -1014,7 +990,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		cropBounds.width = maxx - minx + 1;
 		cropBounds.height = maxy - miny + 1;
 		fp.setRoi(cropBounds);
-		FloatProcessor fp2 = (FloatProcessor) fp.crop();
+		final FloatProcessor fp2 = (FloatProcessor) fp.crop();
 		fp.setRoi((Rectangle) null);
 
 		return fp2;
@@ -1032,7 +1008,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 		/**
 		 * Convert the input function parameters for the major axis into the first actual major axis
-		 * 
+		 *
 		 * @param axis1
 		 * @param axis2
 		 * @return
@@ -1044,7 +1020,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 		/**
 		 * Convert the input function parameters for the major axis into the second actual major axis
-		 * 
+		 *
 		 * @param axis1
 		 * @param axis2
 		 * @return
@@ -1056,7 +1032,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 		/**
 		 * Draws the elliptical cell
-		 * 
+		 *
 		 * @param params
 		 * @return
 		 */
@@ -1075,7 +1051,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		/**
 		 * Draw an elliptical path of points. The ellipse is constructed as two half ellipses allowing a two different
 		 * major axes lengths, one for each side (i.e. an egg shape).
-		 * 
+		 *
 		 * @param centreX
 		 * @param centreY
 		 * @param axis1
@@ -1088,21 +1064,21 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		public FloatPolygon drawEllipse(final double centreX, final double centreY, final double axis1,
 				final double axis2, final double minor, final double phi)
 		{
-			int nPoints = 90;
-			double arcAngle = 2 * Math.PI / nPoints;
-			float[] xPoints = new float[nPoints];
-			float[] yPoints = new float[nPoints];
+			final int nPoints = 90;
+			final double arcAngle = 2 * Math.PI / nPoints;
+			final float[] xPoints = new float[nPoints];
+			final float[] yPoints = new float[nPoints];
 
 			int n = 0;
 
-			double major1 = getMajor1(axis1, axis2);
-			double major2 = getMajor2(axis1, axis2);
+			final double major1 = getMajor1(axis1, axis2);
+			final double major2 = getMajor2(axis1, axis2);
 
-			double angleLimit = Math.PI / 2;
+			final double angleLimit = Math.PI / 2;
 			double a1 = major1 * Math.cos(phi);
 			double a2 = major1 * Math.sin(phi);
-			double b1 = minor * Math.sin(phi);
-			double b2 = minor * Math.cos(phi);
+			final double b1 = minor * Math.sin(phi);
+			final double b2 = minor * Math.cos(phi);
 
 			// Create points around the start of the first half
 			for (double angle = -Math.PI; angle < -angleLimit; angle += arcAngle)
@@ -1138,7 +1114,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Try and find a polygon that traces a path around the detected edges.
-	 * 
+	 *
 	 * @param cx
 	 * @param cy
 	 * @param fp
@@ -1147,14 +1123,14 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 */
 	private PolygonRoi findPolygonalCell(int cx, int cy, FloatProcessor fp, FloatProcessor angle)
 	{
-		Rectangle cropBounds = new Rectangle();
-		FloatProcessor cropFp = cropToValues(fp, cropBounds);
+		final Rectangle cropBounds = new Rectangle();
+		final FloatProcessor cropFp = cropToValues(fp, cropBounds);
 		angle.setRoi(cropBounds);
-		FloatProcessor cropAngles = (FloatProcessor) angle.crop();
+		final FloatProcessor cropAngles = (FloatProcessor) angle.crop();
 
 		if (debug)
 		{
-			ImagePlus fpImp = displayImage(cropFp, "Current edge outline");
+			final ImagePlus fpImp = displayImage(cropFp, "Current edge outline");
 			fpImp.updateAndDraw();
 		}
 
@@ -1163,15 +1139,15 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 		// Divide the region around the centre into segments and
 		// find the maxima in each segment
-		float[] a = (float[]) cropAngles.getPixels();
+		final float[] a = (float[]) cropAngles.getPixels();
 
-		int segmentArcWidth = 5;
-		float[] max = new float[360 / segmentArcWidth + 1];
-		int[] index = new int[max.length];
+		final int segmentArcWidth = 5;
+		final float[] max = new float[360 / segmentArcWidth + 1];
+		final int[] index = new int[max.length];
 
 		for (int i = 0; i < a.length; i++)
 		{
-			int segment = (int) (a[i] / segmentArcWidth);
+			final int segment = (int) (a[i] / segmentArcWidth);
 
 			if (max[segment] < cropFp.getf(i))
 			{
@@ -1180,7 +1156,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			}
 		}
 
-		// Count the number of points. 
+		// Count the number of points.
 		// Skip consecutive segments to ensure the sampled points are spread out.
 		int nPoints = 0;
 		for (int i = 0; i < 360 / segmentArcWidth; i += 2)
@@ -1204,16 +1180,16 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		int window = polygonSmoothing;
 		if (window > 0)
 		{
-			float[] newXPoints = new float[nPoints];
-			float[] newYPoints = new float[nPoints];
+			final float[] newXPoints = new float[nPoints];
+			final float[] newYPoints = new float[nPoints];
 			window = Math.min(nPoints / 4, window);
 			for (int i = 0; i < nPoints; i++)
 			{
 				double sumx = 0, sumy = 0, n = 0;
 				for (int j = -window; j <= window; j++)
 				{
-					double w = 1; //(window - Math.abs(j) + 1.0) / (window + 1);
-					int ii = (i + j + nPoints) % nPoints;
+					final double w = 1; //(window - Math.abs(j) + 1.0) / (window + 1);
+					final int ii = (i + j + nPoints) % nPoints;
 					sumx += xPoints[ii] * w;
 					sumy += yPoints[ii] * w;
 					n += w;
@@ -1230,7 +1206,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Create a byte processor of the specified dimensions and fill the ROI
-	 * 
+	 *
 	 * @param width
 	 * @param height
 	 * @param roi
@@ -1243,7 +1219,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Create a byte processor of the specified dimensions and fill the ROI
-	 * 
+	 *
 	 * @param width
 	 * @param height
 	 * @param roi
@@ -1252,7 +1228,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 */
 	private ByteProcessor createFilledCell(int width, int height, PolygonRoi roi, int value)
 	{
-		ByteProcessor bp = new ByteProcessor(width, height);
+		final ByteProcessor bp = new ByteProcessor(width, height);
 		bp.setColor(value);
 		bp.fill(roi);
 		return bp;
@@ -1260,7 +1236,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Find an ellipse that optimises the fit to the polygon detected edges.
-	 * 
+	 *
 	 * @param roi
 	 * @param params
 	 * @param weightMap
@@ -1273,26 +1249,26 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		double[] startPoint = params;
 		startPoint = estimateStartPoint(roi, weightMap.getWidth(), weightMap.getHeight());
 
-		int maxEval = 2000;
+		final int maxEval = 2000;
 		final DifferentiableEllipticalFitFunction func = new DifferentiableEllipticalFitFunction(roi, weightMap);
 
-		double relativeThreshold = 100 * Precision.EPSILON;
-		double absoluteThreshold = 100 * Precision.SAFE_MIN;
-		ConvergenceChecker<PointVectorValuePair> checker = new SimplePointChecker<PointVectorValuePair>(
+		final double relativeThreshold = 100 * Precision.EPSILON;
+		final double absoluteThreshold = 100 * Precision.SAFE_MIN;
+		final ConvergenceChecker<PointVectorValuePair> checker = new SimplePointChecker<>(
 				relativeThreshold, absoluteThreshold);
-		double initialStepBoundFactor = 10;
-		double costRelativeTolerance = 1e-10;
-		double parRelativeTolerance = 1e-10;
-		double orthoTolerance = 1e-10;
-		double threshold = Precision.SAFE_MIN;
+		final double initialStepBoundFactor = 10;
+		final double costRelativeTolerance = 1e-10;
+		final double parRelativeTolerance = 1e-10;
+		final double orthoTolerance = 1e-10;
+		final double threshold = Precision.SAFE_MIN;
 
-		LevenbergMarquardtOptimizer optimiser = new LevenbergMarquardtOptimizer(initialStepBoundFactor,
+		final LevenbergMarquardtOptimizer optimiser = new LevenbergMarquardtOptimizer(initialStepBoundFactor,
 				costRelativeTolerance, parRelativeTolerance, orthoTolerance, threshold);
 
 		try
 		{
 			//@formatter:off
-			LeastSquaresProblem problem = new LeastSquaresBuilder()
+			final LeastSquaresProblem problem = new LeastSquaresBuilder()
 					.maxEvaluations(Integer.MAX_VALUE)
 					.maxIterations(maxEval)
 					.start(startPoint)
@@ -1308,14 +1284,14 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 					.build();
 			//@formatter:on
 
-			Optimum solution = optimiser.optimize(problem);
+			final Optimum solution = optimiser.optimize(problem);
 
 			if (debug)
 				IJ.log(String.format("Eval = %d (Iter = %d), RMS = %f", solution.getEvaluations(),
 						solution.getIterations(), solution.getRMS()));
 			return solution.getPoint().toArray();
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			IJ.log("Failed to find an elliptical solution, defaulting to polygon");
 			e.printStackTrace();
@@ -1327,9 +1303,9 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	/**
 	 * Estimate the starting ellipse using the eccentricity around the central moments
 	 * <p>
-	 * 
+	 *
 	 * @see Burger & Burge, Digital Image Processing, An Algorithmic Introduction using Java (1st Edition), pp231
-	 * 
+	 *
 	 * @param roi
 	 * @param height
 	 * @param width
@@ -1338,7 +1314,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	private double[] estimateStartPoint(PolygonRoi roi, int width, int height)
 	{
 		ByteProcessor ip = createFilledCell(width, height, roi);
-		byte[] data = (byte[]) ip.getPixels();
+		final byte[] data = (byte[]) ip.getPixels();
 
 		//// Default processing
 		//double m00 = moment(ip, 0, 0); // region area
@@ -1352,22 +1328,18 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 		// Speed up processing of the moments
 		double u00 = 0;
-		for (byte b : data)
+		for (final byte b : data)
 			if (b != 0)
 				u00++;
 
 		double xCtr = 0, yCtr = 0;
 		for (int v = 0, i = 0; v < ip.getHeight(); v++)
-		{
 			for (int u = 0; u < ip.getWidth(); u++, i++)
-			{
 				if (data[i] != 0)
 				{
 					xCtr += u;
 					yCtr += v;
 				}
-			}
-		}
 		xCtr /= u00;
 		yCtr /= u00;
 
@@ -1375,38 +1347,34 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		double u20 = 0;
 		double u02 = 0;
 		for (int v = 0, i = 0; v < ip.getHeight(); v++)
-		{
 			for (int u = 0; u < ip.getWidth(); u++, i++)
-			{
 				if (data[i] != 0)
 				{
-					double dx = u - xCtr;
-					double dy = v - yCtr;
+					final double dx = u - xCtr;
+					final double dy = v - yCtr;
 					u11 += dx * dy;
 					u20 += dx * dx;
 					u02 += dy * dy;
 				}
-			}
-		}
 
 		// Calculate the ellipsoid
-		double A = 2 * u11;
-		double B = u20 - u02;
+		final double A = 2 * u11;
+		final double B = u20 - u02;
 
-		double angle = 0.5 * Math.atan2(A, B);
+		final double angle = 0.5 * Math.atan2(A, B);
 
-		double a1 = u20 + u02 + Math.sqrt((u20 - u02) * (u20 - u02) + 4 * u11 * u11);
-		double a2 = u20 + u02 - Math.sqrt((u20 - u02) * (u20 - u02) + 4 * u11 * u11);
+		final double a1 = u20 + u02 + Math.sqrt((u20 - u02) * (u20 - u02) + 4 * u11 * u11);
+		final double a2 = u20 + u02 - Math.sqrt((u20 - u02) * (u20 - u02) + 4 * u11 * u11);
 
-		double ra = Math.sqrt(2 * a1 / u00);
-		double rb = Math.sqrt(2 * a2 / u00);
+		final double ra = Math.sqrt(2 * a1 / u00);
+		final double rb = Math.sqrt(2 * a2 / u00);
 
-		double[] params = new double[] { xCtr, yCtr, ra, ra, rb, angle };
+		final double[] params = new double[] { xCtr, yCtr, ra, ra, rb, angle };
 
 		if (debug)
 		{
-			EllipticalCell cell = new EllipticalCell();
-			FloatPolygon ellipse = cell.drawEllipse(params);
+			final EllipticalCell cell = new EllipticalCell();
+			final FloatPolygon ellipse = cell.drawEllipse(params);
 			ip = createFilledCell(width, height,
 					new PolygonRoi(ellipse.xpoints, ellipse.ypoints, ellipse.npoints, Roi.POLYGON));
 			ip.setMinAndMax(0, CELL);
@@ -1422,40 +1390,28 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	{
 		double Mpq = 0.0;
 		for (int v = 0, i = 0; v < ip.getHeight(); v++)
-		{
 			for (int u = 0; u < ip.getWidth(); u++, i++)
-			{
 				if (ip.get(i) != BACKGROUND)
-				{
 					Mpq += Math.pow(u, p) * Math.pow(v, q);
-				}
-			}
-		}
 		return Mpq;
 	}
 
 	public static double centralMoment(ImageProcessor ip, int p, int q)
 	{
-		double m00 = moment(ip, 0, 0); // region area
-		double xCtr = moment(ip, 1, 0) / m00;
-		double yCtr = moment(ip, 0, 1) / m00;
+		final double m00 = moment(ip, 0, 0); // region area
+		final double xCtr = moment(ip, 1, 0) / m00;
+		final double yCtr = moment(ip, 0, 1) / m00;
 		double cMpq = 0.0;
 		for (int v = 0, i = 0; v < ip.getHeight(); v++)
-		{
 			for (int u = 0; u < ip.getWidth(); u++, i++)
-			{
 				if (ip.get(i) != BACKGROUND)
-				{
 					cMpq += Math.pow(u - xCtr, p) * Math.pow(v - yCtr, q);
-				}
-			}
-		}
 		return cMpq;
 	}
 
 	/**
 	 * Provides a function to score the ellipse for use in gradient based optimisation methods.
-	 * 
+	 *
 	 * @see http://commons.apache.org/math/userguide/optimization.html
 	 */
 	public class DifferentiableEllipticalFitFunction extends EllipticalCell implements MultivariateVectorFunction
@@ -1481,7 +1437,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			nPoints = roi.getNCoordinates();
 			xPoints = Arrays.copyOf(roi.getXCoordinates(), nPoints);
 			yPoints = Arrays.copyOf(roi.getYCoordinates(), nPoints);
-			Rectangle bounds = roi.getBounds();
+			final Rectangle bounds = roi.getBounds();
 			for (int i = 0; i < nPoints; i++)
 			{
 				xPoints[i] += bounds.x;
@@ -1494,7 +1450,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		 */
 		public double[] calculateTarget()
 		{
-			ByteProcessor bp = new ByteProcessor(weightMap.getWidth(), weightMap.getHeight());
+			final ByteProcessor bp = new ByteProcessor(weightMap.getWidth(), weightMap.getHeight());
 			for (int i = 0; i < nPoints; i++)
 				bp.putPixel(xPoints[i], yPoints[i], nPoints);
 
@@ -1504,9 +1460,9 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 				displayImage(bp, "Ellipse target");
 			}
 
-			// We want to minimise the distance to the polygon points. 
-			// Our values will be the distances so the target can be zeros. 
-			double[] target = new double[nPoints];
+			// We want to minimise the distance to the polygon points.
+			// Our values will be the distances so the target can be zeros.
+			final double[] target = new double[nPoints];
 			return target;
 		}
 
@@ -1515,18 +1471,16 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		 */
 		public double[] calculateWeights()
 		{
-			double[] weights = new double[nPoints];
+			final double[] weights = new double[nPoints];
 			for (int i = 0; i < weights.length; i++)
-			{
 				weights[i] = weightMap.getPixelValue(yPoints[i], yPoints[i]);
 				//weights[i] = 1;
-			}
 			return weights;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.commons.math3.analysis.MultivariateVectorFunction#value(double[])
 		 */
 		@Override
@@ -1540,26 +1494,26 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 		private double[] getValue(double[] point) throws IllegalArgumentException
 		{
-			double[] values = new double[nPoints];
+			final double[] values = new double[nPoints];
 
-			double cx = point[0];
-			double cy = point[1];
-			double axis1 = point[2];
-			double axis2 = point[3];
-			double minor = point[4];
-			double phi = point[5];
+			final double cx = point[0];
+			final double cy = point[1];
+			final double axis1 = point[2];
+			final double axis2 = point[3];
+			final double minor = point[4];
+			final double phi = point[5];
 
 			// Link the axes parameters so that each one will have a gradient for all points.
-			double major1 = getMajor1(axis1, axis2);
-			double major2 = getMajor2(axis1, axis2);
+			final double major1 = getMajor1(axis1, axis2);
+			final double major2 = getMajor2(axis1, axis2);
 
-			ByteProcessor bp = new ByteProcessor(weightMap.getWidth(), weightMap.getHeight());
+			final ByteProcessor bp = new ByteProcessor(weightMap.getWidth(), weightMap.getHeight());
 
 			// Calculate the distance of the ellipse to each point
 			for (int i = 0; i < values.length; i++)
 			{
 				// Get the angle between the point and the centre
-				double absAngle = Math.atan2(yPoints[i] - cy, xPoints[i] - cx);
+				final double absAngle = Math.atan2(yPoints[i] - cy, xPoints[i] - cx);
 
 				// Adjust for the ellipse rotation
 				double angle = absAngle - phi;
@@ -1570,8 +1524,8 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 					angle -= 2 * Math.PI;
 
 				double a1, a2;
-				double b1 = minor * Math.sin(phi);
-				double b2 = minor * Math.cos(phi);
+				final double b1 = minor * Math.sin(phi);
+				final double b2 = minor * Math.cos(phi);
 
 				// Create ellipse point. The shape is two ellipse halves so use the correct part.
 				if (angle < -Math.PI / 2 || angle > Math.PI / 2)
@@ -1585,8 +1539,8 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 					a2 = major2 * Math.sin(phi);
 				}
 
-				double x = cx + a1 * Math.cos(angle) - b1 * Math.sin(angle);
-				double y = cy + a2 * Math.cos(angle) + b2 * Math.sin(angle);
+				final double x = cx + a1 * Math.cos(angle) - b1 * Math.sin(angle);
+				final double y = cy + a2 * Math.cos(angle) + b2 * Math.sin(angle);
 
 				bp.putPixel((int) x, (int) y, nPoints);
 
@@ -1598,11 +1552,11 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 				// Check if it is inside or outside the ellipse
 				dx = cx - xPoints[i];
 				dy = cy - yPoints[i];
-				double pointToCentre = dx * dx + dy * dy;
+				final double pointToCentre = dx * dx + dy * dy;
 
 				dx = cx - x;
 				dy = cy - y;
-				double ellipseToCentre = dx * dx + dy * dy;
+				final double ellipseToCentre = dx * dx + dy * dy;
 
 				if (pointToCentre < ellipseToCentre)
 					values[i] = -values[i];
@@ -1619,34 +1573,30 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 		private double[][] jacobian(double[] variables)
 		{
-			double[][] jacobian = new double[nPoints][variables.length];
+			final double[][] jacobian = new double[nPoints][variables.length];
 
 			// Compute numerical differentiation
 			// Param order:
 			// centreX, centreY, major1, major2, minor, phi
-			double[] delta = { 1, 1, 2, 2, 2, 5 * Math.PI / 180.0 };
+			final double[] delta = { 1, 1, 2, 2, 2, 5 * Math.PI / 180.0 };
 
 			for (int i = 0; i < variables.length - 1; i++)
 			{
-				double[] upper = getValue(updateVariables(variables, i, delta, 1));
-				double[] lower = getValue(updateVariables(variables, i, delta, -1));
+				final double[] upper = getValue(updateVariables(variables, i, delta, 1));
+				final double[] lower = getValue(updateVariables(variables, i, delta, -1));
 
 				for (int j = 0; j < jacobian.length; ++j)
-				{
 					jacobian[j][i] = (upper[j] - lower[j]) / (2 * delta[i]);
-				}
 			}
 			// Only compute the angle gradient if the ellipse is not a circle
 			if (variables[2] != variables[3] || variables[2] != variables[4])
 			{
-				int i = variables.length - 1;
-				double[] upper = getValue(updateVariables(variables, i, delta, 1));
-				double[] lower = getValue(updateVariables(variables, i, delta, -1));
+				final int i = variables.length - 1;
+				final double[] upper = getValue(updateVariables(variables, i, delta, 1));
+				final double[] lower = getValue(updateVariables(variables, i, delta, -1));
 
 				for (int j = 0; j < jacobian.length; ++j)
-				{
 					jacobian[j][i] = (upper[j] - lower[j]) / (2 * delta[i]);
-				}
 			}
 
 			return jacobian;
@@ -1654,14 +1604,14 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 		private double[] updateVariables(double[] variables, int i, double[] delta, int sign)
 		{
-			double[] newVariables = Arrays.copyOf(variables, variables.length);
+			final double[] newVariables = Arrays.copyOf(variables, variables.length);
 			newVariables[i] += delta[i] * sign;
 			return newVariables;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.commons.math3.analysis.DifferentiableMultivariateVectorFunction#jacobian()
 		 */
 		public MultivariateMatrixFunction jacobian()
@@ -1679,44 +1629,34 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	private void dilate(ByteProcessor bp)
 	{
-		byte[] data = (byte[]) bp.getPixels();
-		byte[] newData = new byte[data.length];
+		final byte[] data = (byte[]) bp.getPixels();
+		final byte[] newData = new byte[data.length];
 		initialise(bp);
 
 		for (int index = 0; index < data.length; index++)
-		{
 			if (data[index] != 0)
 			{
 				newData[index] = CELL;
-				int x = index % maxx;
-				int y = index / maxx;
-				boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+				final int x = index % maxx;
+				final int y = index / maxx;
+				final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
 
 				// Use 4-connected cells
 				if (isInnerXY)
-				{
 					for (int d = 0; d < 8; d += 2)
-					{
 						newData[index + offset[d]] = CELL;
-					}
-				}
 				else
-				{
 					for (int d = 0; d < 8; d += 2)
-					{
 						if (isWithinXY(x, y, d))
 							newData[index + offset[d]] = CELL;
-					}
-				}
 			}
-		}
 
 		bp.setPixels(newData);
 	}
 
 	private PolygonRoi traceOutline(ByteProcessor bp, double cx, double cy)
 	{
-		byte[] data = (byte[]) bp.getPixels();
+		final byte[] data = (byte[]) bp.getPixels();
 
 		initialise(bp);
 
@@ -1727,7 +1667,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		if (startIndex == data.length)
 			return null;
 
-		ArrayList<Point> coords = new ArrayList<Point>(100);
+		final ArrayList<Point> coords = new ArrayList<>(100);
 		addPoint(coords, startIndex);
 
 		// Set start direction for search
@@ -1737,7 +1677,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		int limit = (bp.getWidth() + bp.getHeight()) * 2 - 2;
 		while (limit-- > 0)
 		{
-			int nextDirection = findNext(data, index, searchDirection);
+			final int nextDirection = findNext(data, index, searchDirection);
 			if (nextDirection >= 0)
 			{
 				index += offset[nextDirection];
@@ -1754,9 +1694,9 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 		// Return the outline
 		int nPoints = 0;
-		int[] xPoints = new int[coords.size()];
-		int[] yPoints = new int[coords.size()];
-		for (Point p : coords)
+		final int[] xPoints = new int[coords.size()];
+		final int[] yPoints = new int[coords.size()];
+		for (final Point p : coords)
 		{
 			xPoints[nPoints] = p.x;
 			yPoints[nPoints] = p.y;
@@ -1768,29 +1708,27 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	private void addPoint(ArrayList<Point> coords, int index)
 	{
-		Point p = new Point(index % maxx, index / maxx);
+		final Point p = new Point(index % maxx, index / maxx);
 		//System.out.printf("%d, %d\n", p.x, p.y);
 		coords.add(p);
 	}
 
 	private int findNext(byte[] data, int index, int direction)
 	{
-		int x = index % maxx;
-		int y = index / maxx;
-		boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+		final int x = index % maxx;
+		final int y = index / maxx;
+		final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
 
 		// Process the neighbours
 		for (int d = 0; d < 7; d++)
 		{
 			if (isInnerXY || isWithinXY(x, y, direction))
 			{
-				int index2 = index + offset[direction];
+				final int index2 = index + offset[direction];
 
 				// Check if foreground
 				if (data[index2] != 0)
-				{
 					return direction;
-				}
 			}
 			direction = (direction + 1) % 8;
 		}
@@ -1817,15 +1755,13 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		// Create the offset table (for single array 3D neighbour comparisons)
 		offset = new int[DIR_X_OFFSET.length];
 		for (int d = offset.length; d-- > 0;)
-		{
 			offset[d] = DIR_X_OFFSET[d] + maxx * DIR_Y_OFFSET[d];
-		}
 	}
 
 	/**
 	 * returns whether the neighbour in a given direction is within the image. NOTE: it is assumed that the pixel x,y
 	 * itself is within the image! Uses class variables xlimit, ylimit: (dimensions of the image)-1
-	 * 
+	 *
 	 * @param x
 	 *            x-coordinate of the pixel that has a neighbour in the given direction
 	 * @param y

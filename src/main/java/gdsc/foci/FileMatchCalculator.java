@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -111,7 +111,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
 	@Override
@@ -120,9 +120,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
 		if (!showDialog())
-		{
 			return;
-		}
 
 		TimeValuedPoint[] actualPoints = null;
 		TimeValuedPoint[] predictedPoints = null;
@@ -133,7 +131,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			actualPoints = TimeValuePointManager.loadPoints(title1);
 			predictedPoints = TimeValuePointManager.loadPoints(title2);
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			IJ.error("Failed to load the points: " + e.getMessage());
 			return;
@@ -143,7 +141,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		// Optionally filter points using a mask
 		if (myMask != null)
 		{
-			ImagePlus maskImp = WindowManager.getImage(myMask);
+			final ImagePlus maskImp = WindowManager.getImage(myMask);
 			if (maskImp != null)
 			{
 				actualPoints = filter(actualPoints, maskImp.getProcessor());
@@ -158,18 +156,14 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	{
 		int ok = 0;
 		for (int i = 0; i < points.length; i++)
-		{
 			if (processor.get(points[i].getXint(), points[i].getYint()) > 0)
-			{
 				points[ok++] = points[i];
-			}
-		}
 		return Arrays.copyOf(points, ok);
 	}
 
 	/**
 	 * Adds an ROI point overlay to the image using the specified colour
-	 * 
+	 *
 	 * @param imp
 	 * @param list
 	 * @param color
@@ -179,19 +173,17 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		if (list.isEmpty())
 			return;
 
-		Color strokeColor = color;
-		Color fillColor = color;
+		final Color strokeColor = color;
+		final Color fillColor = color;
 
-		Overlay o = imp.getOverlay();
-		PointRoi roi = (PointRoi) PointManager.createROI(list);
+		final Overlay o = imp.getOverlay();
+		final PointRoi roi = (PointRoi) PointManager.createROI(list);
 		roi.setStrokeColor(strokeColor);
 		roi.setFillColor(fillColor);
 		roi.setShowLabels(false);
 
 		if (o == null)
-		{
 			imp.setOverlay(roi, strokeColor, 2, fillColor);
-		}
 		else
 		{
 			o.add(roi);
@@ -201,10 +193,10 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	private boolean showDialog()
 	{
-		ArrayList<String> newImageList = buildMaskList();
+		final ArrayList<String> newImageList = buildMaskList();
 		final boolean haveImages = !newImageList.isEmpty();
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage(
 				"Compare the points in two files\nand compute the match statistics\n(Double click input fields to use a file chooser)");
@@ -212,7 +204,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		gd.addStringField("Input_2", title2, 30);
 		if (haveImages)
 		{
-			ArrayList<String> maskImageList = new ArrayList<String>(newImageList.size() + 1);
+			final ArrayList<String> maskImageList = new ArrayList<>(newImageList.size() + 1);
 			maskImageList.add("[None]");
 			maskImageList.addAll(newImageList);
 			gd.addChoice("mask", maskImageList.toArray(new String[0]), mask);
@@ -227,7 +219,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		{
 			gd.addCheckbox("Show_composite_image", showComposite);
 			gd.addCheckbox("Ignore_file_frames", ignoreFrames);
-			String[] items = newImageList.toArray(new String[newImageList.size()]);
+			final String[] items = newImageList.toArray(new String[newImageList.size()]);
 			gd.addChoice("Image_1", items, image1);
 			gd.addChoice("Image_2", items, image2);
 			gd.addCheckbox("Use_slice_position", useSlicePosition);
@@ -250,9 +242,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		title1 = gd.getNextString();
 		title2 = gd.getNextString();
 		if (haveImages)
-		{
 			myMask = mask = gd.getNextChoice();
-		}
 		dThreshold = gd.getNextNumber();
 		beta = gd.getNextNumber();
 		showPairs = gd.getNextBoolean();
@@ -272,11 +262,11 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	public static ArrayList<String> buildMaskList()
 	{
-		ArrayList<String> newImageList = new ArrayList<String>();
+		final ArrayList<String> newImageList = new ArrayList<>();
 
-		for (int id : gdsc.core.ij.Utils.getIDList())
+		for (final int id : gdsc.core.ij.Utils.getIDList())
 		{
-			ImagePlus imp = WindowManager.getImage(id);
+			final ImagePlus imp = WindowManager.getImage(id);
 			// Ignore RGB images
 			if (imp.getBitDepth() == 24)
 				continue;
@@ -296,13 +286,13 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		final boolean computePairs = showPairs || savePairs || savePairsSingleFile ||
 				(showComposite && myImage1 != null && myImage2 != null);
 
-		final List<PointPair> pairs = (computePairs) ? new LinkedList<PointPair>() : null;
+		final List<PointPair> pairs = (computePairs) ? new LinkedList<>() : null;
 
 		// Process each timepoint
-		for (Integer t : getTimepoints(actualPoints, predictedPoints))
+		for (final Integer t : getTimepoints(actualPoints, predictedPoints))
 		{
-			Coordinate[] actual = getCoordinates(actualPoints, t);
-			Coordinate[] predicted = getCoordinates(predictedPoints, t);
+			final Coordinate[] actual = getCoordinates(actualPoints, t);
+			final Coordinate[] predicted = getCoordinates(predictedPoints, t);
 
 			List<Coordinate> TP = null;
 			List<Coordinate> FP = null;
@@ -310,13 +300,13 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			List<PointPair> matches = null;
 			if (computePairs)
 			{
-				TP = new LinkedList<Coordinate>();
-				FP = new LinkedList<Coordinate>();
-				FN = new LinkedList<Coordinate>();
-				matches = new LinkedList<PointPair>();
+				TP = new LinkedList<>();
+				FP = new LinkedList<>();
+				FN = new LinkedList<>();
+				matches = new LinkedList<>();
 			}
 
-			MatchResult result = (is3D)
+			final MatchResult result = (is3D)
 					? MatchCalculator.analyseResults3D(actual, predicted, dThreshold, TP, FP, FN, matches)
 					: MatchCalculator.analyseResults2D(actual, predicted, dThreshold, TP, FP, FN, matches);
 
@@ -329,56 +319,47 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			if (computePairs)
 			{
 				pairs.addAll(matches);
-				for (Coordinate c : FN)
+				for (final Coordinate c : FN)
 					pairs.add(new PointPair(c, null));
-				for (Coordinate c : FP)
+				for (final Coordinate c : FP)
 					pairs.add(new PointPair(null, c));
 			}
 		}
 
 		if (showPairs || savePairs || savePairsSingleFile)
-		{
 			// Check if these are valued points
 			valued = isValued(actualPoints) && isValued(predictedPoints);
-		}
 
 		if (!java.awt.GraphicsEnvironment.isHeadless())
 		{
 			if (resultsWindow == null || !resultsWindow.isShowing())
-			{
 				resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300);
-			}
 			if (showPairs)
 			{
-				String header = createPairsHeader(title1, title2);
+				final String header = createPairsHeader(title1, title2);
 				if (pairsWindow == null || !pairsWindow.isShowing())
 				{
 					pairsWindow = new TextWindow(TITLE + " Pairs", header, "", 900, 300);
-					Point p = resultsWindow.getLocation();
+					final Point p = resultsWindow.getLocation();
 					p.y += resultsWindow.getHeight();
 					pairsWindow.setLocation(p);
 				}
-				for (PointPair pair : pairs)
+				for (final PointPair pair : pairs)
 					addPairResult(pair, is3D);
 			}
 		}
-		else
+		else if (writeHeader)
 		{
-			if (writeHeader)
-			{
-				writeHeader = false;
-				IJ.log(createResultsHeader());
-			}
+			writeHeader = false;
+			IJ.log(createResultsHeader());
 		}
 		if (tp > 0)
 			rmsd = Math.sqrt(rmsd / tp);
-		MatchResult result = new MatchResult(tp, fp, fn, rmsd);
+		final MatchResult result = new MatchResult(tp, fp, fn, rmsd);
 		addResult(title1, title2, dThreshold, result);
 
 		if (savePairs || savePairsSingleFile)
-		{
 			savePairs(pairs, is3D);
-		}
 
 		if (java.awt.GraphicsEnvironment.isHeadless())
 			return;
@@ -390,7 +371,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	/**
 	 * Checks if there is more than one z-value in the coordinates
-	 * 
+	 *
 	 * @param points
 	 * @return
 	 */
@@ -399,7 +380,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		if (points.length == 0)
 			return false;
 		final float z = points[0].getZ();
-		for (TimeValuedPoint p : points)
+		for (final TimeValuedPoint p : points)
 			if (p.getZ() != z)
 				return true;
 		return false;
@@ -407,7 +388,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	/**
 	 * Checks if there is a non-zero value within the points
-	 * 
+	 *
 	 * @param points
 	 * @return
 	 */
@@ -415,7 +396,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	{
 		if (points.length == 0)
 			return false;
-		for (TimeValuedPoint p : points)
+		for (final TimeValuedPoint p : points)
 			if (p.getValue() != 0)
 				return true;
 		return false;
@@ -423,12 +404,12 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	private int[] getTimepoints(TimeValuedPoint[] points, TimeValuedPoint[] points2)
 	{
-		TIntHashSet set = new TIntHashSet();
-		for (TimeValuedPoint p : points)
+		final TIntHashSet set = new TIntHashSet();
+		for (final TimeValuedPoint p : points)
 			set.add(p.getTime());
-		for (TimeValuedPoint p : points2)
+		for (final TimeValuedPoint p : points2)
 			set.add(p.getTime());
-		int[] data = set.toArray();
+		final int[] data = set.toArray();
 		if (showPairs)
 			// Sort so the table order is nice
 			Arrays.sort(data);
@@ -437,9 +418,9 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	private Coordinate[] getCoordinates(TimeValuedPoint[] points, int t)
 	{
-		LinkedList<Coordinate> coords = new LinkedList<Coordinate>();
+		final LinkedList<Coordinate> coords = new LinkedList<>();
 		int id = 1;
-		for (TimeValuedPoint p : points)
+		for (final TimeValuedPoint p : points)
 			if (p.getTime() == t)
 				coords.add(new IdTimeValuedPoint(id++, p));
 		return coords.toArray(new Coordinate[coords.size()]);
@@ -447,7 +428,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	private String createResultsHeader()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Image 1\t");
 		sb.append("Image 2\t");
 		sb.append("Distance (px)\t");
@@ -468,7 +449,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	private void addResult(String i1, String i2, double dThrehsold, MatchResult result)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(i1).append('\t');
 		sb.append(i2).append('\t');
 		sb.append(IJ.d2s(dThrehsold, 2)).append('\t');
@@ -486,20 +467,16 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		sb.append(IJ.d2s(result.getFScore(beta), 4));
 
 		if (java.awt.GraphicsEnvironment.isHeadless())
-		{
 			IJ.log(sb.toString());
-		}
 		else
-		{
 			resultsWindow.append(sb.toString());
-		}
 	}
 
 	private String pairsPrefix;
 
 	private String createPairsHeader(String i1, String i2)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(i1).append('\t');
 		sb.append(i2).append('\t');
 		pairsPrefix = sb.toString();
@@ -532,14 +509,14 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 	private String createPairResult(PointPair pair, boolean is3D)
 	{
-		StringBuilder sb = new StringBuilder(pairsPrefix);
-		IdTimeValuedPoint p1 = (IdTimeValuedPoint) pair.getPoint1();
-		IdTimeValuedPoint p2 = (IdTimeValuedPoint) pair.getPoint2();
-		int t = (p1 != null) ? p1.getTime() : p2.getTime();
+		final StringBuilder sb = new StringBuilder(pairsPrefix);
+		final IdTimeValuedPoint p1 = (IdTimeValuedPoint) pair.getPoint1();
+		final IdTimeValuedPoint p2 = (IdTimeValuedPoint) pair.getPoint2();
+		final int t = (p1 != null) ? p1.getTime() : p2.getTime();
 		sb.append(t).append('\t');
 		addPoint(sb, p1);
 		addPoint(sb, p2);
-		double d = (is3D) ? pair.getXYZDistance() : pair.getXYDistance();
+		final double d = (is3D) ? pair.getXYZDistance() : pair.getXYDistance();
 		if (d >= 0)
 			sb.append(d).append('\t');
 		else
@@ -600,16 +577,16 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			final String header = createPairsHeader(title1, title2);
 			if (fileSelected)
 			{
-				FileOutputStream fos = new FileOutputStream(filename);
+				final FileOutputStream fos = new FileOutputStream(filename);
 				out = new OutputStreamWriter(fos, "UTF-8");
 				out.write(header);
 				out.write(newLine);
 			}
 			if (fileSingleSelected)
 			{
-				File file = new File(filenameSingle);
-				boolean append = (file.length() != 0);
-				FileOutputStream fos = new FileOutputStream(file, append);
+				final File file = new File(filenameSingle);
+				final boolean append = (file.length() != 0);
+				final FileOutputStream fos = new FileOutputStream(file, append);
 				outSingle = new OutputStreamWriter(fos, "UTF-8");
 				if (!append)
 				{
@@ -618,7 +595,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 				}
 			}
 
-			for (PointPair pair : pairs)
+			for (final PointPair pair : pairs)
 			{
 				final String result = createPairResult(pair, is3D);
 				if (out != null)
@@ -633,34 +610,30 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 				}
 			}
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			IJ.log("Unable to save the matches to file: " + e.getMessage());
 		}
 		finally
 		{
 			if (out != null)
-			{
 				try
 				{
 					out.close();
 				}
-				catch (IOException e)
+				catch (final IOException e)
 				{
 					// Ignore
 				}
-			}
 			if (outSingle != null)
-			{
 				try
 				{
 					outSingle.close();
 				}
-				catch (IOException e)
+				catch (final IOException e)
 				{
 					// Ignore
 				}
-			}
 		}
 	}
 
@@ -690,18 +663,16 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 				text = text2;
 				title = "Coordinate_file_2";
 			}
-			String[] path = decodePath(text.getText());
-			OpenDialog chooser = new OpenDialog(title, path[0], path[1]);
+			final String[] path = decodePath(text.getText());
+			final OpenDialog chooser = new OpenDialog(title, path[0], path[1]);
 			if (chooser.getFileName() != null)
-			{
 				text.setText(chooser.getDirectory() + chooser.getFileName());
-			}
 		}
 	}
 
 	private String[] decodePath(String path)
 	{
-		String[] result = new String[2];
+		final String[] result = new String[2];
 		int i = path.lastIndexOf('/');
 		if (i == -1)
 			i = path.lastIndexOf('\\');
@@ -748,9 +719,9 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			return;
 		if (myImage1 == null || myImage2 == null)
 			return;
-		ImagePlus imp1 = WindowManager.getImage(myImage1);
+		final ImagePlus imp1 = WindowManager.getImage(myImage1);
 		ImagePlus imp2 = WindowManager.getImage(myImage2);
-		ImagePlus impM = WindowManager.getImage(myMask);
+		final ImagePlus impM = WindowManager.getImage(myMask);
 		if (myImage1 == null || myImage2 == null)
 		{
 			IJ.error(TITLE, "No images specified for composite");
@@ -790,7 +761,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		// Produce a composite for each time point.
 		// The input list will have pairs in order of time.
 		// So move through the list noting each new time.
-		ArrayList<Integer> upper = new ArrayList<Integer>();
+		final ArrayList<Integer> upper = new ArrayList<>();
 
 		int time = -1;
 		final IdTimeValuedPoint[] p1 = new IdTimeValuedPoint[pairs.size()];
@@ -812,23 +783,21 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		// Check if the input image has only one time frame but the points have multiple time points
 		boolean singleFrame = false;
 		if (upper.size() > 1 && imp1.getNFrames() == 1 && imp2.getNFrames() == 1)
-		{
 			if (ignoreFrames)
 			{
 				singleFrame = true;
 				upper.clear();
 				upper.add(pairs.size());
 			}
-		}
 
 		// Create an overlay to show the pairs
-		Overlay overlay = new Overlay();
+		final Overlay overlay = new Overlay();
 		final Color colorf = MatchPlugin.UNMATCH1;
 		final Color colors = MatchPlugin.UNMATCH2;
 		final Color colorc = MatchPlugin.MATCH;
 
 		int l = 0;
-		for (int u : upper)
+		for (final int u : upper)
 		{
 			nFrames++;
 			time = (p1[l] != null) ? p1[l].time : p2[l].time;
@@ -850,17 +819,16 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 			// Count number of First, Second, Colocalised.
 			int f = 0, s = 0, c = 0;
-			float[] fx = new float[u - l];
-			float[] fy = new float[fx.length];
-			float[] sx = new float[fx.length];
-			float[] sy = new float[fx.length];
-			float[] cx = new float[fx.length];
-			float[] cy = new float[fx.length];
-			int[] fz = new int[fx.length];
-			int[] sz = new int[fx.length];
-			int[] cz = new int[fx.length];
+			final float[] fx = new float[u - l];
+			final float[] fy = new float[fx.length];
+			final float[] sx = new float[fx.length];
+			final float[] sy = new float[fx.length];
+			final float[] cx = new float[fx.length];
+			final float[] cy = new float[fx.length];
+			final int[] fz = new int[fx.length];
+			final int[] sz = new int[fx.length];
+			final int[] cz = new int[fx.length];
 			for (int j = l; j < u; j++)
-			{
 				if (p1[j] == null)
 				{
 					sx[s] = p2[j].getX();
@@ -882,7 +850,6 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 					cz[c] = (p1[j].getZint() + p2[j].getZint()) / 2;
 					c++;
 				}
-			}
 
 			add(overlay, fx, fy, fz, f, colorf, nFrames);
 			add(overlay, sx, sy, sz, s, colors, nFrames);
@@ -891,8 +858,8 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 			l = u;
 		}
 
-		String title = "Match Composite";
-		ImagePlus imp = new ImagePlus(title, stack);
+		final String title = "Match Composite";
+		final ImagePlus imp = new ImagePlus(title, stack);
 		imp.setDimensions(nChannels, nSlices, nFrames);
 		imp.setOverlay(overlay);
 		imp.setOpenAsHyperStack(true);
@@ -927,13 +894,12 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	private void add(Overlay overlay, float[] x, float[] y, int[] z, int n, Color color, int frame)
 	{
 		if (n != 0)
-		{
 			// Option to position the ROI points on the z-slice.
 			// This requires an ROI for each slice that contains a point.
 			if (useSlicePosition)
 			{
 				// Sort points by slice position
-				float[][] data = new float[n][3];
+				final float[][] data = new float[n][3];
 				for (int i = n; i-- > 0;)
 				{
 					data[i][0] = z[i];
@@ -941,7 +907,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 					data[i][2] = y[i];
 				}
 
-				Comparator<float[]> comp = new Comparator<float[]>()
+				final Comparator<float[]> comp = new Comparator<float[]>()
 				{
 					@Override
 					public int compare(float[] o1, float[] o2)
@@ -959,22 +925,20 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
 				// Find blocks in the same slice
 				int l = 0;
-				ArrayList<Integer> upper = new ArrayList<Integer>(n);
+				final ArrayList<Integer> upper = new ArrayList<>(n);
 				for (int i = 0; i < n; i++)
-				{
 					if (data[l][0] != data[i][0])
 					{
 						upper.add(i);
 						l = i;
 					}
-				}
 				upper.add(n);
 
 				// Process each block
 				l = 0;
-				for (int u : upper)
+				for (final int u : upper)
 				{
-					int nPoints = u - l;
+					final int nPoints = u - l;
 					for (int i = l, j = 0; i < u; i++, j++)
 					{
 						x[j] = data[i][1];
@@ -985,10 +949,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 				}
 			}
 			else
-			{
 				add(overlay, new PointRoi(x, y, n), 0, frame, color);
-			}
-		}
 	}
 
 	private void add(Overlay overlay, PointRoi roi, int slice, int frame, Color color)

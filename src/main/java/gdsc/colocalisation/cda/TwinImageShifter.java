@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -29,9 +29,9 @@ import ij.process.ImageProcessor;
 
 public class TwinImageShifter
 {
-	private ImageProcessor imageIP;
-	private ImageProcessor image2IP;
-	private ImageProcessor roiIP;
+	private final ImageProcessor imageIP;
+	private final ImageProcessor image2IP;
+	private final ImageProcessor roiIP;
 	private ImageProcessor resultIP;
 	private ImageProcessor result2IP;
 	private int xShift = 0;
@@ -59,16 +59,10 @@ public class TwinImageShifter
 		this.h = this.imageIP.getHeight();
 
 		if (image2IP.getWidth() != w || image2IP.getHeight() != h)
-		{
 			throw new RuntimeException("The first and second channel image dimensions do not match");
-		}
 		if (roiIP != null)
-		{
 			if (roiIP.getWidth() != w || roiIP.getHeight() != h)
-			{
 				throw new RuntimeException("The channel image and confined image dimensions do not match");
-			}
-		}
 
 		buildHorizontalROIArrays();
 		buildVerticalROIArrays();
@@ -80,37 +74,27 @@ public class TwinImageShifter
 	{
 		this.horizontalROI = new int[h][];
 
-		int[] sites = new int[w];
+		final int[] sites = new int[w];
 
 		if (roiIP != null)
-		{
 			for (int y = 0; y < h; ++y)
 			{
 				int size = 0;
 				for (int x = 0, index = y * roiIP.getWidth(); x < w; x++, index++)
-				{
 					if (roiIP.get(index) != 0)
-					{
 						sites[size++] = x;
-					}
-				}
 
 				// This is the array for height position 'y'
 				horizontalROI[y] = Arrays.copyOf(sites, size);
 			}
-		}
 		else
 		{
 			for (int x = 0; x < w; x++)
-			{
 				sites[x] = x;
-			}
 
 			for (int y = 0; y < h; ++y)
-			{
 				// This is the array for height position 'y'
 				horizontalROI[y] = sites;
-			}
 		}
 	}
 
@@ -118,47 +102,37 @@ public class TwinImageShifter
 	{
 		this.verticalROI = new int[w][];
 
-		int[] sites = new int[h];
+		final int[] sites = new int[h];
 
 		if (roiIP != null)
-		{
 			for (int x = 0; x < w; ++x)
 			{
 				int size = 0;
 				for (int y = 0; y < h; ++y)
-				{
 					if (roiIP.get(x, y) != 0)
-					{
 						sites[size++] = y;
-					}
-				}
 
 				// This is the array for width position 'x'
 				verticalROI[x] = Arrays.copyOf(sites, size);
 			}
-		}
 		else
 		{
 			for (int y = 0; y < h; ++y)
-			{
 				sites[y] = y;
-			}
 
 			for (int x = 0; x < w; ++x)
-			{
 				// This is the array for width position 'x'
 				verticalROI[x] = sites;
-			}
 		}
 	}
 
 	private void createTempArrays()
 	{
 		int max = 0;
-		for (int[] list : horizontalROI)
+		for (final int[] list : horizontalROI)
 			if (max < list.length)
 				max = list.length;
-		for (int[] list : verticalROI)
+		for (final int[] list : verticalROI)
 			if (max < list.length)
 				max = list.length;
 		t1 = new int[max];
@@ -169,7 +143,7 @@ public class TwinImageShifter
 
 	public void run()
 	{
-		// Duplicate the image to ensure the same return type. 
+		// Duplicate the image to ensure the same return type.
 		// This will ensure get and put pixel sets the correct value.
 		this.resultIP = imageIP.duplicate();
 		this.result2IP = image2IP.duplicate();
@@ -191,15 +165,13 @@ public class TwinImageShifter
 		for (int y = 0; y < h; ++y)
 		{
 			// Find all the locations in this strip that need to be shifted
-			int[] sites = horizontalROI[y];
+			final int[] sites = horizontalROI[y];
 
 			if (sites.length == 0)
-			{
 				continue;
-			}
 
-			// Extract the values 
-			int index = y * resultIP.getWidth();
+			// Extract the values
+			final int index = y * resultIP.getWidth();
 			for (int i = 0; i < sites.length; i++)
 			{
 				t1[i] = resultIP.get(index + sites[i]);
@@ -226,17 +198,15 @@ public class TwinImageShifter
 		for (int x = 0; x < w; ++x)
 		{
 			// Find all the locations in this strip that need to be shifted
-			int[] sites = verticalROI[x];
+			final int[] sites = verticalROI[x];
 
 			if (sites.length == 0)
-			{
 				continue;
-			}
 
-			// Extract the values 
+			// Extract the values
 			for (int i = 0; i < sites.length; i++)
 			{
-				int index = sites[i] * resultIP.getWidth() + x;
+				final int index = sites[i] * resultIP.getWidth() + x;
 				t1[i] = resultIP.get(index);
 				t2[i] = result2IP.get(index);
 			}
@@ -247,7 +217,7 @@ public class TwinImageShifter
 			// Write back the values
 			for (int i = 0; i < sites.length; i++)
 			{
-				int index = sites[i] * resultIP.getWidth() + x;
+				final int index = sites[i] * resultIP.getWidth() + x;
 				resultIP.set(index, t3[i]);
 				result2IP.set(index, t4[i]);
 			}
@@ -283,9 +253,7 @@ public class TwinImageShifter
 	private void rotateArrays(int[] array1, int[] array2, int[] array3, int[] array4, int shift, int size)
 	{
 		while (shift < 0)
-		{
 			shift += size;
-		}
 
 		for (int i = 0; i < size; ++i)
 		{

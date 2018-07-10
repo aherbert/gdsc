@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -34,21 +34,21 @@ import ij.process.ImageProcessor;
 
 /**
  * Find the peak intensity regions of an image.
- * 
+ *
  * <P>
  * All local maxima above threshold are identified. For all other pixels the direction to the highest neighbour pixel is
  * stored (steepest gradient). In order of highest local maxima, regions are only grown down the steepest gradient to a
  * lower pixel. Provides many configuration options for regions growing thresholds.
- * 
+ *
  * <P>
  * This plugin was based on {@link ij.plugin.filter.MaximumFinder}. Options have been changed to only support greyscale
  * 2D images and 3D stacks and to perform region growing using configurable thresholds. Support for Watershed,
  * Previewing, and Euclidian Distance Map (EDM) have been removed.
- * 
+ *
  * <P>
  * Stopping criteria for region growing routines are partly based on the options in PRIISM
  * (http://www.msg.ucsf.edu/IVE/index.html).
- * 
+ *
  * <p>
  * Supports 8-, 16- or 32-bit images. Processing is performed using a float image values.
  */
@@ -73,9 +73,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 			final int stackIndex = imp.getStackIndex(c, slice, f);
 			final ImageProcessor ip = stack.getProcessor(stackIndex);
 			for (int index = 0; index < ip.getPixelCount(); index++)
-			{
 				image[i++] = ip.getf(index);
-			}
 		}
 		return image;
 	}
@@ -101,13 +99,9 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		final float[] image = (float[]) pixels;
 		float min = Float.POSITIVE_INFINITY;
 		for (int i = image.length; i-- > 0;)
-		{
 			if ((types[i] & EXCLUDED) == 0)
-			{
 				if (min > image[i])
 					min = image[i];
-			}
-		}
 		return min;
 	}
 
@@ -122,27 +116,21 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		if (statsMode == OPTION_STATS_INSIDE)
 		{
 			for (int i = 0; i < image.length; i++)
-			{
 				if ((types[i] & EXCLUDED) == 0)
 				{
 					image[c] = image[i];
 					indices[c] = i;
 					c++;
 				}
-			}
 		}
 		else
-		{
 			for (int i = 0; i < image.length; i++)
-			{
 				if ((types[i] & EXCLUDED) != 0)
 				{
 					image[c] = image[i];
 					indices[c] = i;
 					c++;
 				}
-			}
-		}
 		image = Arrays.copyOf(image, c);
 		indices = Arrays.copyOf(indices, c);
 		return buildHistogram(image, indices);
@@ -161,7 +149,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 	private FloatHistogram buildHistogram(float[] data, int[] indices)
 	{
 		// Convert data for sorting
-		float[][] sortData = new float[indices.length][2];
+		final float[][] sortData = new float[indices.length][2];
 		for (int i = indices.length; i-- > 0;)
 		{
 			sortData[i][0] = data[i];
@@ -246,18 +234,16 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 	@Override
 	protected Histogram buildHistogram(Object pixels, int[] maxima, int peakValue, float maxValue)
 	{
-		float[] image = (float[]) pixels;
+		final float[] image = (float[]) pixels;
 		int size = 0;
 		float[] data = new float[100];
 		for (int i = image.length; i-- > 0;)
-		{
 			if (maxima[i] == peakValue)
 			{
 				data[size++] = image[i];
 				if (size == data.length)
 					data = Arrays.copyOf(data, (int) (size * 1.5));
 			}
-		}
 		return FloatHistogram.buildHistogram(Arrays.copyOf(data, size), true);
 	}
 
@@ -308,10 +294,8 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 	protected int getBackgroundBin(Histogram histogram, float background)
 	{
 		for (int i = histogram.minBin; i < histogram.maxBin; i++)
-		{
 			if (histogram.getValue(i) >= background)
 				return i;
-		}
 		return histogram.maxBin;
 	}
 
@@ -319,9 +303,9 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 	protected int getBin(Histogram histogram, int i)
 	{
 		// We store the bin for each input index when building the histogram
-		int bin = this.bin[i];
+		final int bin = this.bin[i];
 
-		//// Check 
+		//// Check
 		//int bin2 = findBin(histogram, i);
 		//if (bin != bin2)
 		//{
@@ -345,13 +329,9 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 			final int mid = upper + lower >>> 1;
 
 			if (value >= values[mid])
-			{
 				lower = mid;
-			}
 			else
-			{
 				upper = mid;
-			}
 		}
 
 		/* sanity check the result */
@@ -404,11 +384,9 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 				break;
 		}
 		if (height <= 0)
-		{
 			// This is an edge case that will only happen if peakParameter is zero or below.
 			// Just make it small enough that there must be a peak above the saddle point.
 			height = ((v0 - stats.background) * 1e-6);
-		}
 		return height;
 	}
 

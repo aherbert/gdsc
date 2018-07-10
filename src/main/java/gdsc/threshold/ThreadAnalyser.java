@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -85,7 +85,7 @@ public class ThreadAnalyser implements PlugIn
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
 	@Override
@@ -94,13 +94,11 @@ public class ThreadAnalyser implements PlugIn
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
 		if (!showDialog())
-		{
 			return;
-		}
 
-		ImageProcessor ip = getImage(image, imageChannel);
-		ByteProcessor maskIp = getMask(getImage(maskImage, maskChannel));
-		ByteProcessor objectIp = getMask(getImage(objectImage, objectChannel));
+		final ImageProcessor ip = getImage(image, imageChannel);
+		final ByteProcessor maskIp = getMask(getImage(maskImage, maskChannel));
+		final ByteProcessor objectIp = getMask(getImage(objectImage, objectChannel));
 
 		if (ip.getWidth() != maskIp.getWidth() || ip.getHeight() != maskIp.getHeight())
 		{
@@ -108,64 +106,52 @@ public class ThreadAnalyser implements PlugIn
 			return;
 		}
 		if (objectIp != null)
-		{
 			if (ip.getWidth() != objectIp.getWidth() || ip.getHeight() != objectIp.getHeight())
 			{
 				IJ.error(TITLE, "Image and object image must have the same X,Y dimensions");
 				return;
 			}
-		}
 
 		// Create EDM
-		FloatProcessor floatEdm = createEDM(maskIp);
+		final FloatProcessor floatEdm = createEDM(maskIp);
 
 		// Create Skeleton
-		SkeletonAnalyser sa = new SkeletonAnalyser();
+		final SkeletonAnalyser sa = new SkeletonAnalyser();
 
 		sa.skeletonise(maskIp, true);
 
-		byte[] map = sa.findNodes(maskIp);
+		final byte[] map = sa.findNodes(maskIp);
 
 		// Need to create this before the map pixels are set to processed
-		ColorProcessor cp = sa.createMapImage(map, maskIp.getWidth(), maskIp.getHeight());
+		final ColorProcessor cp = sa.createMapImage(map, maskIp.getWidth(), maskIp.getHeight());
 
 		// Get the lines
-		LinkedList<ChainCode> chainCodes = new LinkedList<ChainCode>();
+		final LinkedList<ChainCode> chainCodes = new LinkedList<>();
 		sa.extractLines(map, chainCodes);
 
 		lengthFilter(chainCodes);
 
 		// Report statistics
-		ImageProcessor skeletonMap = createSkeletonMap(maskIp, chainCodes);
+		final ImageProcessor skeletonMap = createSkeletonMap(maskIp, chainCodes);
 		reportResults(ip, floatEdm, chainCodes, skeletonMap, objectIp);
 
 		if (minLength > 0)
-		{
 			// Skeleton Map is filtered for length. Use this to remove pixels from the other images
 			for (int i = map.length; i-- > 0;)
-			{
 				if (skeletonMap.get(i) == 0)
 				{
 					cp.set(i, 0);
 					map[i] = 0;
 				}
-			}
-		}
 
 		Roi roi = null;
 		if (labelThreads)
-		{
 			// Build a multi-point ROI using the centre of each thread
 			roi = createLabels(chainCodes);
-		}
 		if (showSkeletonEDM)
-		{
 			showImage(floatEdm, maskImage + " EDM", roi);
-		}
 		if (showSkeleton)
-		{
 			showImage(cp, maskImage + " SkeletonNodeMap", roi);
-		}
 		if (showSkeletonMap)
 		{
 			skeletonMap.setMinAndMax(0, chainCodes.size());
@@ -174,13 +160,11 @@ public class ThreadAnalyser implements PlugIn
 		if (showSkeletonImage)
 		{
 			// Put skeleton back on original image
-			ImageProcessor threadImage = createThreadImage(ip, map);
+			final ImageProcessor threadImage = createThreadImage(ip, map);
 			showImage(threadImage, image + " Threads", roi);
 		}
 		if (showObjectImage)
-		{
 			showImage(objectIp, objectImage + " Objects", null);
-		}
 	}
 
 	private ByteProcessor getMask(ImageProcessor ip)
@@ -192,28 +176,24 @@ public class ThreadAnalyser implements PlugIn
 		int value = 0;
 		int i = 0;
 		for (; i < ip.getPixelCount(); i++)
-		{
 			if (ip.get(i) != 0)
 			{
 				value = ip.get(i);
 				break;
 			}
-		}
 		boolean isMask = true;
 		for (; i < ip.getPixelCount(); i++)
-		{
 			if (ip.get(i) != 0 && value != ip.get(i))
 			{
 				isMask = false;
 				break;
 			}
-		}
 
 		ip = ip.duplicate();
 		if (!isMask)
 		{
-			int[] data = ip.getHistogram();
-			int level = AutoThreshold.getThreshold(method, data);
+			final int[] data = ip.getHistogram();
+			final int level = AutoThreshold.getThreshold(method, data);
 			ip.threshold(level);
 			if (!Prefs.blackBackground)
 				ip.invert();
@@ -224,21 +204,21 @@ public class ThreadAnalyser implements PlugIn
 
 	private ImageProcessor getImage(String title, int channel)
 	{
-		ImagePlus imp = WindowManager.getImage(title);
+		final ImagePlus imp = WindowManager.getImage(title);
 		if (imp == null)
 			return null;
 		if (imp.getNChannels() == 1)
 			return imp.getProcessor();
 
 		// Channels should be one-based index
-		int index = imp.getStackIndex(channel + 1, 1, 1);
-		ImageStack stack = imp.getImageStack();
+		final int index = imp.getStackIndex(channel + 1, 1, 1);
+		final ImageStack stack = imp.getImageStack();
 		return stack.getProcessor(index);
 	}
 
 	/**
 	 * Show an ImageJ Dialog and get the parameters
-	 * 
+	 *
 	 * @return False if the user cancelled
 	 */
 	private boolean showDialog()
@@ -247,8 +227,8 @@ public class ThreadAnalyser implements PlugIn
 
 		// Add a second mask image to threshold (if necessary) for objects to find on the threads
 
-		String[] imageList = Utils.getImageList(Utils.GREY_8_16, ignoreSuffix);
-		String[] objectList = Utils.getImageList(Utils.GREY_8_16 | Utils.NO_IMAGE, ignoreSuffix);
+		final String[] imageList = Utils.getImageList(Utils.GREY_8_16, ignoreSuffix);
+		final String[] objectList = Utils.getImageList(Utils.GREY_8_16 | Utils.NO_IMAGE, ignoreSuffix);
 
 		if (imageList.length == 0)
 		{
@@ -288,9 +268,9 @@ public class ThreadAnalyser implements PlugIn
 		labelThreads = gd.getNextBoolean();
 
 		// Check if the images have multiple channels. If so ask the user which channel to use.
-		int imageChannels = getChannels(image);
-		int maskChannels = getChannels(maskImage);
-		int objectChannels = getChannels(objectImage);
+		final int imageChannels = getChannels(image);
+		final int maskChannels = getChannels(maskImage);
+		final int objectChannels = getChannels(objectImage);
 
 		if (imageChannels + maskChannels + objectChannels > 3)
 		{
@@ -318,7 +298,7 @@ public class ThreadAnalyser implements PlugIn
 
 	private int getChannels(String title)
 	{
-		ImagePlus imp = WindowManager.getImage(title);
+		final ImagePlus imp = WindowManager.getImage(title);
 		if (imp != null)
 			return imp.getNChannels();
 		return 1;
@@ -328,7 +308,7 @@ public class ThreadAnalyser implements PlugIn
 	{
 		if (nChannels == 1)
 			return;
-		String[] items = new String[nChannels];
+		final String[] items = new String[nChannels];
 		for (int c = 0; c < nChannels; c++)
 			items[c] = Integer.toString(c + 1);
 		if (index >= nChannels)
@@ -338,23 +318,23 @@ public class ThreadAnalyser implements PlugIn
 
 	/**
 	 * Create a Euclidian Distance Map (EDM) of the mask
-	 * 
+	 *
 	 * @param bp
 	 * @return
 	 */
 	private FloatProcessor createEDM(ByteProcessor bp)
 	{
-		EDM edm = new EDM();
+		final EDM edm = new EDM();
 		byte backgroundValue = (byte) (Prefs.blackBackground ? 0 : 255);
 		if (bp.isInvertedLut())
 			backgroundValue = (byte) (255 - backgroundValue);
-		FloatProcessor floatEdm = edm.makeFloatEDM(bp, backgroundValue, false);
+		final FloatProcessor floatEdm = edm.makeFloatEDM(bp, backgroundValue, false);
 		return floatEdm;
 	}
 
 	/**
 	 * Remove all chain codes below a certain length
-	 * 
+	 *
 	 * @param chainCodes
 	 */
 	private void lengthFilter(LinkedList<ChainCode> chainCodes)
@@ -362,21 +342,15 @@ public class ThreadAnalyser implements PlugIn
 		Collections.sort(chainCodes);
 
 		while (!chainCodes.isEmpty())
-		{
 			if (chainCodes.getFirst().getDistance() < minLength)
-			{
 				chainCodes.removeFirst();
-			}
 			else
-			{
 				break;
-			}
-		}
 	}
 
 	/**
 	 * If showSkeletonMap is true return an image processor that can store the total count of chain codes.
-	 * 
+	 *
 	 * @param bp
 	 * @param chainCodes
 	 * @return
@@ -386,8 +360,8 @@ public class ThreadAnalyser implements PlugIn
 		// Need a map if displaying it or using to filter for length
 		if (showSkeletonMap || minLength > 0)
 		{
-			int size = chainCodes.size();
-			ImageProcessor ip = (size > 255) ? new ShortProcessor(bp.getWidth(), bp.getHeight())
+			final int size = chainCodes.size();
+			final ImageProcessor ip = (size > 255) ? new ShortProcessor(bp.getWidth(), bp.getHeight())
 					: new ByteProcessor(bp.getWidth(), bp.getHeight());
 			return ip;
 		}
@@ -396,7 +370,7 @@ public class ThreadAnalyser implements PlugIn
 
 	/**
 	 * Sets all points in the original image outside the skeleton to zero
-	 * 
+	 *
 	 * @param ip
 	 * @param map
 	 * @return
@@ -405,25 +379,21 @@ public class ThreadAnalyser implements PlugIn
 	{
 		ip = ip.duplicate();
 		for (int i = map.length; i-- > 0;)
-		{
 			if (map[i] == 0)
-			{
 				ip.set(i, 0);
-			}
-		}
 		return ip;
 	}
 
 	private Roi createLabels(LinkedList<ChainCode> chainCodes)
 	{
 		int nPoints = 0;
-		int[] xPoints = new int[chainCodes.size()];
-		int[] yPoints = new int[xPoints.length];
-		for (ChainCode code : chainCodes)
+		final int[] xPoints = new int[chainCodes.size()];
+		final int[] yPoints = new int[xPoints.length];
+		for (final ChainCode code : chainCodes)
 		{
 			int x = code.getX();
 			int y = code.getY();
-			int[] run = code.getRun();
+			final int[] run = code.getRun();
 			for (int i = 0; i < run.length / 2; i++)
 			{
 				x += ChainCode.DIR_X_OFFSET[run[i]];
@@ -440,9 +410,7 @@ public class ThreadAnalyser implements PlugIn
 	{
 		ImagePlus imp = WindowManager.getImage(title);
 		if (imp == null)
-		{
 			imp = new ImagePlus(title, ip);
-		}
 		else
 		{
 			imp.setProcessor(ip);
@@ -454,7 +422,7 @@ public class ThreadAnalyser implements PlugIn
 
 	/**
 	 * Return the statistics
-	 * 
+	 *
 	 * @param data
 	 *            The input data
 	 * @return Array containing: min, max, av, stdDev
@@ -468,8 +436,8 @@ public class ThreadAnalyser implements PlugIn
 		// Get the average
 		double sum = 0.0;
 		double sum2 = 0.0;
-		long n = data.length;
-		for (float value : data)
+		final long n = data.length;
+		for (final float value : data)
 		{
 			if (min > value)
 				min = value;
@@ -485,7 +453,7 @@ public class ThreadAnalyser implements PlugIn
 		if (n > 0)
 		{
 			av = sum / n;
-			double d = n;
+			final double d = n;
 			stdDev = (d * sum2 - sum * sum) / d;
 			if (stdDev > 0.0)
 				stdDev = Math.sqrt(stdDev / (d - 1.0));
@@ -503,7 +471,7 @@ public class ThreadAnalyser implements PlugIn
 
 	/**
 	 * Report the results to a table and saving to file
-	 * 
+	 *
 	 * @param ip
 	 *            The original image
 	 * @param floatEdm
@@ -520,15 +488,15 @@ public class ThreadAnalyser implements PlugIn
 	{
 		if (chainCodes.size() > 1000)
 		{
-			YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE,
+			final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE,
 					"Do you want to show all " + chainCodes.size() + " results?");
 			d.setVisible(true);
 			if (!d.yesPressed())
 				return;
 		}
 
-		FloatProcessor floatImage = ip.toFloat(1, null);
-		FloatProcessor floatObjectImage = (objectIp == null) ? null : objectIp.toFloat(1, null);
+		final FloatProcessor floatImage = ip.toFloat(1, null);
+		final FloatProcessor floatObjectImage = (objectIp == null) ? null : objectIp.toFloat(1, null);
 		float[] objectMaximaDistances = null;
 
 		Collections.sort(chainCodes);
@@ -537,48 +505,44 @@ public class ThreadAnalyser implements PlugIn
 
 		createResultsWindow();
 		int id = 1;
-		int[] maxima = new int[2];
-		int[] objectMaxima = new int[2];
-		for (ChainCode code : chainCodes)
+		final int[] maxima = new int[2];
+		final int[] objectMaxima = new int[2];
+		for (final ChainCode code : chainCodes)
 		{
 			// Extract line coordinates
-			int[] x = new int[code.getSize()];
-			int[] y = new int[code.getSize()];
-			float[] d = new float[code.getSize()];
+			final int[] x = new int[code.getSize()];
+			final int[] y = new int[code.getSize()];
+			final float[] d = new float[code.getSize()];
 			getPoints(code, x, y, d);
 
-			float[] line = new float[] { x[0], y[0], x[x.length - 1], y[x.length - 1], code.getDistance() };
+			final float[] line = new float[] { x[0], y[0], x[x.length - 1], y[x.length - 1], code.getDistance() };
 
 			out = saveResult(out, id, line);
 			out = saveResult(out, "Distance", d);
 
 			if (skeletonMap != null)
-			{
 				for (int i = x.length; i-- > 0;)
-				{
 					skeletonMap.set(x[i], y[i], id);
-				}
-			}
 
 			// calculate average/sd height for each line from original image
-			float[] data = new float[x.length];
-			double[] imageStats = extractStatistics(x, y, floatImage, data);
+			final float[] data = new float[x.length];
+			final double[] imageStats = extractStatistics(x, y, floatImage, data);
 			out = saveResult(out, "Image Intensity", data);
 
 			// Count maxima along the line
 			// TODO - Add smoothing to the data?
 			// Note that the spacing between points is not equal.
-			// Use a weighted sum for each point using the distance to neighbour 
+			// Use a weighted sum for each point using the distance to neighbour
 			// points within a distance window.
-			float[] imageMaximaDistances = countMaxima(d, data, maxima);
+			final float[] imageMaximaDistances = countMaxima(d, data, maxima);
 
 			// calculate average/sd height for each line from EDM
-			double[] edmStats = extractStatistics(x, y, floatEdm, data);
+			final double[] edmStats = extractStatistics(x, y, floatEdm, data);
 			out = saveResult(out, "EDM Intensity", data);
 
 			if (floatObjectImage != null)
 			{
-				// If using a 2nd mask image then count the number of foreground objects  
+				// If using a 2nd mask image then count the number of foreground objects
 				// on the thread.
 				extractStatistics(x, y, floatObjectImage, data);
 				convertObjects(data);
@@ -596,15 +560,13 @@ public class ThreadAnalyser implements PlugIn
 		}
 
 		if (out != null)
-		{
 			try
 			{
 				out.close();
 			}
-			catch (IOException ex)
+			catch (final IOException ex)
 			{
 			}
-		}
 	}
 
 	private OutputStreamWriter createResultsFile()
@@ -613,19 +575,17 @@ public class ThreadAnalyser implements PlugIn
 			return null;
 
 		OutputStreamWriter out = null;
-		String filename = resultDirectory + System.getProperty("file.separator") + image + "_" + maskImage +
+		final String filename = resultDirectory + System.getProperty("file.separator") + image + "_" + maskImage +
 				".threads.csv";
 		try
 		{
-			File file = new File(filename);
+			final File file = new File(filename);
 			if (!file.exists())
-			{
 				if (file.getParent() != null)
 					new File(file.getParent()).mkdirs();
-			}
 
 			// Save results to file
-			FileOutputStream fos = new FileOutputStream(filename);
+			final FileOutputStream fos = new FileOutputStream(filename);
 			out = new OutputStreamWriter(fos, "UTF-8");
 
 			out.write("# Intensity profiles of threads:\n");
@@ -636,19 +596,17 @@ public class ThreadAnalyser implements PlugIn
 
 			return out;
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			IJ.log("Failed to create results file '" + filename + "': " + e.getMessage());
 			if (out != null)
-			{
 				try
 				{
 					out.close();
 				}
-				catch (IOException ioe)
+				catch (final IOException ioe)
 				{
 				}
-			}
 		}
 		return null;
 	}
@@ -660,24 +618,22 @@ public class ThreadAnalyser implements PlugIn
 
 		try
 		{
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append(id).append(",");
 			for (int i = 0; i < 4; i++)
-			{
 				sb.append((int) line[i]).append(",");
-			}
 			sb.append(IJ.d2s(line[4], 2)).append("\n");
 
 			out.write(sb.toString());
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			IJ.log("Failed to write to the output file : " + e.getMessage());
 			try
 			{
 				out.close();
 			}
-			catch (IOException ex)
+			catch (final IOException ex)
 			{
 			}
 			out = null;
@@ -700,14 +656,14 @@ public class ThreadAnalyser implements PlugIn
 			}
 			out.write("\n");
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			IJ.log("Failed to write to the output file : " + e.getMessage());
 			try
 			{
 				out.close();
 			}
-			catch (IOException ex)
+			catch (final IOException ex)
 			{
 			}
 			out = null;
@@ -721,7 +677,7 @@ public class ThreadAnalyser implements PlugIn
 		x[i] = code.getX();
 		y[i] = code.getY();
 		d[i] = 0;
-		for (int direction : code.getRun())
+		for (final int direction : code.getRun())
 		{
 			x[i + 1] = x[i] + ChainCode.DIR_X_OFFSET[direction];
 			y[i + 1] = y[i] + ChainCode.DIR_Y_OFFSET[direction];
@@ -733,7 +689,7 @@ public class ThreadAnalyser implements PlugIn
 	/**
 	 * Process the 1-D line and count the number of maxima. Total count will be set into the first index, internal
 	 * maxima are set in the second index.
-	 * 
+	 *
 	 * @param x
 	 * @param y
 	 * @param maxima
@@ -772,20 +728,18 @@ public class ThreadAnalyser implements PlugIn
 			return new float[0];
 		}
 
-		float[] max = new float[x.length];
+		final float[] max = new float[x.length];
 
 		// Move along the line moving up to a maxima or down to a minima.
 		boolean upDirection = (y[0] <= y[1]);
 		int starti = 0; // last position known to be higher than the previous
 		if (!upDirection)
-		{
 			// Maxima at first point
 			max[total++] = x[starti];
-		}
 
 		for (int i = 0; i < x.length; i++)
 		{
-			int j = i + 1;
+			final int j = i + 1;
 			if (upDirection)
 			{
 				// Search for next maxima
@@ -793,9 +747,7 @@ public class ThreadAnalyser implements PlugIn
 				if (j < x.length)
 				{
 					if (y[i] > y[j])
-					{
 						isMaxima = true;
-					}
 					else if (y[i] < y[j])
 						starti = j;
 				}
@@ -808,7 +760,7 @@ public class ThreadAnalyser implements PlugIn
 					if (y[i] > 0)
 					{
 						// Record the centre of the maxima between starti and i
-						double centre = (i + starti) / 2.0;
+						final double centre = (i + starti) / 2.0;
 						max[total++] = distance(x[(int) Math.floor(centre)], x[(int) Math.ceil(centre)]);
 						if (starti != 0 && j < x.length)
 							internal++;
@@ -832,9 +784,7 @@ public class ThreadAnalyser implements PlugIn
 					isMinima = true;
 
 				if (isMinima)
-				{
 					upDirection = true;
-				}
 			}
 		}
 
@@ -854,16 +804,14 @@ public class ThreadAnalyser implements PlugIn
 		if (data == null)
 			data = new float[x.length];
 		for (int i = 0; i < x.length; i++)
-		{
 			data[i] = floatImage.getf(x[i], y[i]);
-		}
 
 		return getStatistics(data);
 	}
 
 	private void convertObjects(float[] data)
 	{
-		float foreground = (Prefs.blackBackground) ? 255 : 0;
+		final float foreground = (Prefs.blackBackground) ? 255 : 0;
 		for (int i = 0; i < data.length; i++)
 			data[i] = (data[i] == foreground) ? 1 : 0;
 	}
@@ -878,18 +826,13 @@ public class ThreadAnalyser implements PlugIn
 				IJ.log(createResultsHeader());
 			}
 		}
-		else
-		{
-			if (resultsWindow == null || !resultsWindow.isShowing())
-			{
-				resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 400, 500);
-			}
-		}
+		else if (resultsWindow == null || !resultsWindow.isShowing())
+			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 400, 500);
 	}
 
 	private String createResultsHeader()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("ID\t");
 		sb.append("StartX\t");
 		sb.append("StartY\t");
@@ -914,37 +857,23 @@ public class ThreadAnalyser implements PlugIn
 	private void addResult(int id, float[] line, int[] maxima, int[] objectMaxima, double[] imageStats,
 			double[] edmStats)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(id).append('\t');
 		for (int i = 0; i < 4; i++)
-		{
 			sb.append((int) line[i]).append('\t');
-		}
 		sb.append(IJ.d2s(line[4], 2)).append('\t');
 		for (int i = 0; i < 2; i++)
-		{
 			sb.append(maxima[i]).append('\t');
-		}
 		for (int i = 0; i < 2; i++)
-		{
 			sb.append(objectMaxima[i]).append('\t');
-		}
 		for (int i = 0; i < 4; i++)
-		{
 			sb.append(IJ.d2s(imageStats[i], 2)).append('\t');
-		}
 		for (int i = 0; i < 4; i++)
-		{
 			sb.append(IJ.d2s(edmStats[i], 2)).append('\t');
-		}
 
 		if (java.awt.GraphicsEnvironment.isHeadless())
-		{
 			IJ.log(sb.toString());
-		}
 		else
-		{
 			resultsWindow.append(sb.toString());
-		}
 	}
 }

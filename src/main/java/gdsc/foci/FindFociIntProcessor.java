@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -30,21 +30,21 @@ import ij.process.ImageProcessor;
 
 /**
  * Find the peak intensity regions of an image.
- * 
+ *
  * <P>
  * All local maxima above threshold are identified. For all other pixels the direction to the highest neighbour pixel is
  * stored (steepest gradient). In order of highest local maxima, regions are only grown down the steepest gradient to a
  * lower pixel. Provides many configuration options for regions growing thresholds.
- * 
+ *
  * <P>
  * This plugin was based on {@link ij.plugin.filter.MaximumFinder}. Options have been changed to only support greyscale
  * 2D images and 3D stacks and to perform region growing using configurable thresholds. Support for Watershed,
  * Previewing, and Euclidian Distance Map (EDM) have been removed.
- * 
+ *
  * <P>
  * Stopping criteria for region growing routines are partly based on the options in PRIISM
  * (http://www.msg.ucsf.edu/IVE/index.html).
- * 
+ *
  * <p>
  * Supports 8- or 16-bit images
  */
@@ -67,9 +67,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 			final int stackIndex = imp.getStackIndex(c, slice, f);
 			final ImageProcessor ip = stack.getProcessor(stackIndex);
 			for (int index = 0; index < ip.getPixelCount(); index++)
-			{
 				image[i++] = ip.get(index);
-			}
 		}
 		return image;
 	}
@@ -86,13 +84,9 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		final int[] image = (int[]) pixels;
 		int min = Integer.MAX_VALUE;
 		for (int i = image.length; i-- > 0;)
-		{
 			if ((types[i] & EXCLUDED) == 0)
-			{
 				if (min > image[i])
 					min = image[i];
-			}
-		}
 		return min;
 	}
 
@@ -108,23 +102,13 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		if (statsMode == OPTION_STATS_INSIDE)
 		{
 			for (int i = image.length; i-- > 0;)
-			{
 				if ((types[i] & EXCLUDED) == 0)
-				{
 					data[image[i]]++;
-				}
-			}
 		}
 		else
-		{
 			for (int i = image.length; i-- > 0;)
-			{
 				if ((types[i] & EXCLUDED) != 0)
-				{
 					data[image[i]]++;
-				}
-			}
-		}
 
 		return new Histogram(data);
 	}
@@ -139,9 +123,7 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		final int[] data = new int[size];
 
 		for (int i = image.length; i-- > 0;)
-		{
 			data[image[i]]++;
-		}
 
 		return new Histogram(data);
 	}
@@ -153,12 +135,8 @@ public class FindFociIntProcessor extends FindFociBaseProcessor
 		final int[] histogram = new int[(int) maxValue + 1];
 
 		for (int i = image.length; i-- > 0;)
-		{
 			if (maxima[i] == peakValue)
-			{
 				histogram[image[i]]++;
-			}
-		}
 		return new Histogram(histogram);
 	}
 

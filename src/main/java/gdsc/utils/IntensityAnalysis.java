@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -74,7 +74,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
@@ -94,7 +94,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 			return DONE;
 		}
 
-		Roi roi = imp.getRoi();
+		final Roi roi = imp.getRoi();
 		if (roi == null || !roi.isArea())
 		{
 			IJ.error(TITLE, "Require an area ROI");
@@ -110,17 +110,15 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		}
 
 		// Try to determine the common prefix to the slice labels
-		String master = stack.getSliceLabel(1);
+		final String master = stack.getSliceLabel(1);
 		// Find the first index where the labels are different
 		int index = 0;
 		OUTER: while (index < master.length())
 		{
 			final char c = master.charAt(index);
 			for (int i = 2; i <= stack.getSize(); i++)
-			{
 				if (c != stack.getSliceLabel(i).charAt(index))
 					break OUTER;
-			}
 			index++;
 		}
 		if (index == master.length())
@@ -135,7 +133,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
 	 * ij.plugin.filter.PlugInFilterRunner)
 	 */
@@ -148,7 +146,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		bitDepth = Math.min(bitDepth, imp.getBitDepth());
 
 		// Get the user options
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 		gd.addMessage(
 				"Calculate the normalised intensity within an ROI.\nImages should have a linear response with respect to exposure.");
 		gd.addSlider("Window", 3, stack.getSize(), window);
@@ -169,7 +167,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		exposures = new float[stack.getSize()];
 		for (int i = 1; i <= stack.getSize(); i++)
 		{
-			String label = stack.getSliceLabel(i);
+			final String label = stack.getSliceLabel(i);
 			// Find the first digit
 			int startIndex = commonIndex;
 			while (startIndex < label.length())
@@ -215,7 +213,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 			{
 				exposures[i - 1] = Float.parseFloat(label.substring(startIndex, endIndex));
 			}
-			catch (NumberFormatException e)
+			catch (final NumberFormatException e)
 			{
 				IJ.error(TITLE, "Unable to determine exposure for slice label: " + label);
 				return DONE;
@@ -223,9 +221,9 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		}
 
 		// Initialise for processing the ROI pixels
-		Roi roi = imp.getRoi();
+		final Roi roi = imp.getRoi();
 		bounds = roi.getBounds();
-		ImageProcessor ip = roi.getMask();
+		final ImageProcessor ip = roi.getMask();
 		if (ip != null)
 		{
 			mask = new boolean[ip.getPixelCount()];
@@ -238,9 +236,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 				}
 		}
 		else
-		{
 			n = bounds.width * bounds.height;
-		}
 
 		if (debug)
 			debug("Exposures = %s ...\n", Arrays.toString(Arrays.copyOf(exposures, Math.min(10, exposures.length))));
@@ -253,7 +249,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
@@ -266,23 +262,18 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 
 		double sum = 0;
 		if (mask != null)
-		{
 			for (int y = 0, i = 0; y < bounds.height; y++)
 			{
 				int index = (y + bounds.y) * ip.getWidth() + bounds.x;
 				for (int x = 0; x < bounds.width; x++, i++, index++)
-				{
 					if (mask[i])
 					{
 						if (ip.getf(index) >= saturated)
 							sat = true;
 						sum += ip.getf(index);
 					}
-				}
 			}
-		}
 		else
-		{
 			for (int y = 0; y < bounds.height; y++)
 			{
 				int index = (y + bounds.y) * ip.getWidth() + bounds.x;
@@ -293,7 +284,6 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 					sum += ip.getf(index);
 				}
 			}
-		}
 
 		// Use negative for means with saturated pixels
 		means[slice] = ((sat) ? -1 : 1) * (float) (sum / n);
@@ -301,7 +291,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
 	@Override
@@ -319,7 +309,6 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		float[] means2 = new float[means.length];
 		float[] exposures2 = new float[means.length];
 		for (int i = 0; i < means.length; i++)
-		{
 			if (means[i] < 0)
 			{
 				debug("Saturated pixels in slice %d : %s", i + 1, stack.getShortSliceLabel(i + 1));
@@ -331,18 +320,17 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 				exposures2[valid] = exposures[i];
 				valid++;
 			}
-		}
 
 		means2 = Arrays.copyOf(means2, valid);
 		exposures2 = Arrays.copyOf(exposures2, valid);
 
-		String title = TITLE;
-		Plot plot = new Plot(title, "Exposure", "Mean");
-		double[] a = Tools.getMinMax(exposures);
-		double[] b = Tools.getMinMax(means);
+		final String title = TITLE;
+		final Plot plot = new Plot(title, "Exposure", "Mean");
+		final double[] a = Tools.getMinMax(exposures);
+		final double[] b = Tools.getMinMax(means);
 		// Add some space to the limits for plotting
-		double ra = (a[1] - a[0]) * 0.05;
-		double rb = (b[1] - b[0]) * 0.05;
+		final double ra = (a[1] - a[0]) * 0.05;
+		final double rb = (b[1] - b[0]) * 0.05;
 		plot.setLimits(a[0] - ra, a[1] + ra, b[0] - rb, b[1] + rb);
 		plot.setColor(Color.blue);
 		plot.addPoints(exposures, means, Plot.CIRCLE);
@@ -356,7 +344,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 			results.setVisible(true);
 			if (Utils.isNewWindow())
 			{
-				Point p = results.getLocation();
+				final Point p = results.getLocation();
 				p.x = pw.getX();
 				p.y = pw.getY() + pw.getHeight();
 				results.setLocation(p);
@@ -364,7 +352,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		}
 
 		// Initialise result output
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(imp.getTitle());
 		sb.append('\t').append(bounds.x);
 		sb.append('\t').append(bounds.y);
@@ -386,7 +374,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 			double[] bestFit = null;
 			for (int start = 0; start < means2.length; start++)
 			{
-				int end = start + window;
+				final int end = start + window;
 				if (end > means2.length)
 					break;
 
@@ -435,10 +423,10 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 			{
 				plot.setColor(Color.red);
 				final PolynomialFunction fitted = new PolynomialFunction(bestFit);
-				double x1 = exposures2[bestStart];
-				double y1 = fitted.value(x1);
-				double x2 = exposures2[bestStart + window - 1];
-				double y2 = fitted.value(x2);
+				final double x1 = exposures2[bestStart];
+				final double y1 = fitted.value(x1);
+				final double x2 = exposures2[bestStart + window - 1];
+				final double y2 = fitted.value(x2);
 				plot.drawLine(x1, y1, x2, y2);
 				pw = Utils.display(title, plot);
 

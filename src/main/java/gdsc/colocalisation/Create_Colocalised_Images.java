@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -76,7 +76,7 @@ public class Create_Colocalised_Images implements PlugIn
 
 		if (createMasks)
 		{
-			ImagePlus imRoi = new ImagePlus("roi" + sequenceNumber, roi);
+			final ImagePlus imRoi = new ImagePlus("roi" + sequenceNumber, roi);
 			imRoi.updateAndDraw();
 			imRoi.show();
 		}
@@ -85,8 +85,8 @@ public class Create_Colocalised_Images implements PlugIn
 
 	private boolean getBitDepth()
 	{
-		GenericDialog param = new GenericDialog(TITLE, IJ.getInstance());
-		String bitDepthChoice[] = { "8bit", "12bit", "16bit" };// bit depth of images
+		final GenericDialog param = new GenericDialog(TITLE, IJ.getInstance());
+		final String bitDepthChoice[] = { "8bit", "12bit", "16bit" };// bit depth of images
 		param.addChoice("Create ...", bitDepthChoice, bitDepthChoice[bitDepth]);
 		param.addCheckbox("Create masks", createMasks);
 		param.showDialog();
@@ -126,42 +126,34 @@ public class Create_Colocalised_Images implements PlugIn
 		roi.add(background);
 
 		for (int x = padding; x < width - padding; x++)
-		{
 			for (int y = 0; y < height; y++)
-			{
 				roi.set(x, y, foreground);
-			}
-		}
 	}
 
 	private void createColorChannel(String title)
 	{
-		ImageProcessor cp = getImageProcessor();
+		final ImageProcessor cp = getImageProcessor();
 		ByteProcessor bp = null;
 
-		Random rng = new Random(seed++);
+		final Random rng = new Random(seed++);
 
 		for (int point = 0; point < NUMBER_OF_POINTS; point++)
 		{
-			int x = rng.nextInt(width - 2 * padding) + padding;
-			int y = minSize + maxExpansionSize + rng.nextInt(height - 2 * (minSize + maxExpansionSize));
+			final int x = rng.nextInt(width - 2 * padding) + padding;
+			final int y = minSize + maxExpansionSize + rng.nextInt(height - 2 * (minSize + maxExpansionSize));
 
-			int xSize = minSize + rng.nextInt(maxExpansionSize);
-			int ySize = minSize + rng.nextInt(maxExpansionSize);
+			final int xSize = minSize + rng.nextInt(maxExpansionSize);
+			final int ySize = minSize + rng.nextInt(maxExpansionSize);
 
-			int value = rng.nextInt(CHANNEL_MAX - CHANNEL_MIN) + CHANNEL_MIN;
+			final int value = rng.nextInt(CHANNEL_MAX - CHANNEL_MIN) + CHANNEL_MIN;
 			cp.set(x, y, value);
 
 			for (int i = -xSize; i < xSize; i++)
-			{
 				for (int j = -ySize; j < ySize; j++)
-				{
 					cp.set(x + i, y + j, value);
-				}
-			}
 		}
 
-		GaussianBlur gb = new GaussianBlur();
+		final GaussianBlur gb = new GaussianBlur();
 		gb.blurGaussian(cp, 20, 20, 0.02);
 
 		// Get all values above zero as the ROI
@@ -171,25 +163,23 @@ public class Create_Colocalised_Images implements PlugIn
 			bp.add(background);
 
 			for (int i = cp.getPixelCount(); i-- > 0;)
-			{
 				if (cp.get(i) > CHANNEL_MIN)
 				{
 					bp.set(i, foreground);
 					roi.set(i, foreground);
 				}
-			}
 		}
 
 		// Add some noise to the image
 		cp.noise(CHANNEL_MAX / 16);
 
 		// Show the images
-		ImagePlus im = new ImagePlus(title, cp);
+		final ImagePlus im = new ImagePlus(title, cp);
 		im.show();
 
 		if (bp != null)
 		{
-			ImagePlus imRoi = new ImagePlus(title + "roi" + sequenceNumber, bp);
+			final ImagePlus imRoi = new ImagePlus(title + "roi" + sequenceNumber, bp);
 			imRoi.show();
 		}
 	}

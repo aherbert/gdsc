@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -82,12 +82,12 @@ public class Align_Images_FFT implements PlugIn
 
 	static
 	{
-		WindowMethod[] m = AlignImagesFFT.WindowMethod.values();
+		final WindowMethod[] m = AlignImagesFFT.WindowMethod.values();
 		windowFunctions = new String[m.length];
 		for (int i = 0; i < m.length; i++)
 			windowFunctions[i] = m[i].toString();
 
-		SubPixelMethod[] m2 = AlignImagesFFT.SubPixelMethod.values();
+		final SubPixelMethod[] m2 = AlignImagesFFT.SubPixelMethod.values();
 		subPixelMethods = new String[m2.length];
 		for (int i = 0; i < m2.length; i++)
 			subPixelMethods[i] = m2[i].toString();
@@ -99,7 +99,7 @@ public class Align_Images_FFT implements PlugIn
 	{
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
-		String[] imageList = getImagesList();
+		final String[] imageList = getImagesList();
 
 		if (imageList.length < 1)
 		{
@@ -110,17 +110,15 @@ public class Align_Images_FFT implements PlugIn
 		if (!showDialog(imageList))
 			return;
 
-		ImagePlus refImp = WindowManager.getImage(reference);
-		ImagePlus targetImp = WindowManager.getImage(target);
+		final ImagePlus refImp = WindowManager.getImage(reference);
+		final ImagePlus targetImp = WindowManager.getImage(target);
 
 		Rectangle bounds = null;
 		if (restrictTranslation)
-		{
 			bounds = createBounds(myMinXShift, myMaxXShift, myMinYShift, myMaxYShift);
-		}
 
-		AlignImagesFFT align = new AlignImagesFFT();
-		ImagePlus alignedImp = align.align(refImp, targetImp, WindowMethod.values()[myWindowFunction], bounds,
+		final AlignImagesFFT align = new AlignImagesFFT();
+		final ImagePlus alignedImp = align.align(refImp, targetImp, WindowMethod.values()[myWindowFunction], bounds,
 				SubPixelMethod.values()[subPixelMethod], interpolationMethod, normalised, showCorrelationImage,
 				showNormalisedImage, clipOutput);
 
@@ -131,18 +129,18 @@ public class Align_Images_FFT implements PlugIn
 	private String[] getImagesList()
 	{
 		// Find the currently open images
-		ArrayList<String> newImageList = new ArrayList<String>();
+		final ArrayList<String> newImageList = new ArrayList<>();
 
-		for (int id : gdsc.core.ij.Utils.getIDList())
+		for (final int id : gdsc.core.ij.Utils.getIDList())
 		{
-			ImagePlus imp = WindowManager.getImage(id);
+			final ImagePlus imp = WindowManager.getImage(id);
 
 			// Image must be 8-bit/16-bit
 			if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16 ||
 					imp.getType() == ImagePlus.GRAY32))
 			{
 				// Check it is not one the result images
-				String imageTitle = imp.getTitle();
+				final String imageTitle = imp.getTitle();
 				newImageList.add(imageTitle);
 			}
 		}
@@ -152,18 +150,16 @@ public class Align_Images_FFT implements PlugIn
 
 	private boolean showDialog(String[] imageList)
 	{
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 
 		if (!contains(imageList, reference))
 			reference = imageList[0];
 
 		// Add option to have no target
-		String[] targetList = new String[imageList.length + 1];
+		final String[] targetList = new String[imageList.length + 1];
 		targetList[0] = NONE;
 		for (int i = 0; i < imageList.length; i++)
-		{
 			targetList[i + 1] = imageList[i];
-		}
 		if (!contains(targetList, target))
 			target = targetList[0];
 
@@ -211,7 +207,7 @@ public class Align_Images_FFT implements PlugIn
 
 	private boolean contains(String[] imageList, String title)
 	{
-		for (String t : imageList)
+		for (final String t : imageList)
 			if (t.equals(title))
 				return true;
 		return false;
@@ -219,9 +215,9 @@ public class Align_Images_FFT implements PlugIn
 
 	public static Rectangle createBounds(int minXShift, int maxXShift, int minYShift, int maxYShift)
 	{
-		int w = maxXShift - minXShift;
-		int h = maxYShift - minYShift;
-		Rectangle bounds = new Rectangle(minXShift, minYShift, w, h);
+		final int w = maxXShift - minXShift;
+		final int h = maxYShift - minYShift;
+		final Rectangle bounds = new Rectangle(minXShift, minYShift, w, h);
 		return bounds;
 	}
 }

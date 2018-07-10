@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -40,7 +40,7 @@ import ij.process.ShortProcessor;
 /**
  * This plugin performs a z-projection of the input stack. Type of
  * output image is same as type of input image.
- * 
+ *
  * @author Patrick Kelly <phkelly@ucsd.edu>
  */
 public class ZProjectorCopy implements PlugIn
@@ -133,7 +133,7 @@ public class ZProjectorCopy implements PlugIn
 	public void run(String arg)
 	{
 		imp = IJ.getImage();
-		int stackSize = imp.getStackSize();
+		final int stackSize = imp.getStackSize();
 		if (imp == null)
 		{
 			IJ.noImage();
@@ -149,24 +149,22 @@ public class ZProjectorCopy implements PlugIn
 
 		//  Check for inverting LUT.
 		if (imp.getProcessor().isInvertedLut())
-		{
 			if (!IJ.showMessageWithCancel("ZProjection", lutMessage))
 				return;
-		}
 
 		// Set default bounds.
-		int channels = imp.getNChannels();
-		int frames = imp.getNFrames();
-		int slices = imp.getNSlices();
+		final int channels = imp.getNChannels();
+		final int frames = imp.getNFrames();
+		final int slices = imp.getNSlices();
 		isHyperstack = imp.isHyperStack() || (ij.macro.Interpreter.isBatchMode() &&
 				((frames > 1 && frames < stackSize) || (slices > 1 && slices < stackSize)));
-		boolean simpleComposite = channels == stackSize;
+		final boolean simpleComposite = channels == stackSize;
 		if (simpleComposite)
 			isHyperstack = false;
 		startSlice = 1;
 		if (isHyperstack)
 		{
-			int nSlices = imp.getNSlices();
+			final int nSlices = imp.getNSlices();
 			if (nSlices > 1)
 				stopSlice = nSlices;
 			else
@@ -176,14 +174,14 @@ public class ZProjectorCopy implements PlugIn
 			stopSlice = stackSize;
 
 		// Build control dialog
-		GenericDialog gd = buildControlDialog(startSlice, stopSlice);
+		final GenericDialog gd = buildControlDialog(startSlice, stopSlice);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 
 		if (!imp.lock())
 			return; // exit if in use
-		long tstart = System.currentTimeMillis();
+		final long tstart = System.currentTimeMillis();
 		setStartSlice((int) gd.getNextNumber());
 		setStopSlice((int) gd.getNextNumber());
 		method = gd.getNextChoiceIndex();
@@ -200,7 +198,7 @@ public class ZProjectorCopy implements PlugIn
 
 		if (arg.equals("") && projImage != null)
 		{
-			long tstop = System.currentTimeMillis();
+			final long tstop = System.currentTimeMillis();
 			projImage.setCalibration(imp.getCalibration());
 			if (simpleComposite)
 				IJ.run(projImage, "Grays", "");
@@ -219,41 +217,41 @@ public class ZProjectorCopy implements PlugIn
 
 	private void doRGBProjection(ImageStack stack)
 	{
-		ImageStack[] channels = ChannelSplitter.splitRGB(stack, true);
-		ImagePlus red = new ImagePlus("Red", channels[0]);
-		ImagePlus green = new ImagePlus("Green", channels[1]);
-		ImagePlus blue = new ImagePlus("Blue", channels[2]);
+		final ImageStack[] channels = ChannelSplitter.splitRGB(stack, true);
+		final ImagePlus red = new ImagePlus("Red", channels[0]);
+		final ImagePlus green = new ImagePlus("Green", channels[1]);
+		final ImagePlus blue = new ImagePlus("Blue", channels[2]);
 		imp.unlock();
-		ImagePlus saveImp = imp;
+		final ImagePlus saveImp = imp;
 		imp = red;
 		color = "(red)";
 		doProjection();
-		ImagePlus red2 = projImage;
+		final ImagePlus red2 = projImage;
 		imp = green;
 		color = "(green)";
 		doProjection();
-		ImagePlus green2 = projImage;
+		final ImagePlus green2 = projImage;
 		imp = blue;
 		color = "(blue)";
 		doProjection();
-		ImagePlus blue2 = projImage;
-		int w = red2.getWidth(), h = red2.getHeight(), d = red2.getStackSize();
+		final ImagePlus blue2 = projImage;
+		final int w = red2.getWidth(), h = red2.getHeight(), d = red2.getStackSize();
 		if (method == SD_METHOD)
 		{
-			ImageProcessor r = red2.getProcessor();
-			ImageProcessor g = green2.getProcessor();
-			ImageProcessor b = blue2.getProcessor();
+			final ImageProcessor r = red2.getProcessor();
+			final ImageProcessor g = green2.getProcessor();
+			final ImageProcessor b = blue2.getProcessor();
 			double max = 0;
-			double rmax = r.getStatistics().max;
+			final double rmax = r.getStatistics().max;
 			if (rmax > max)
 				max = rmax;
-			double gmax = g.getStatistics().max;
+			final double gmax = g.getStatistics().max;
 			if (gmax > max)
 				max = gmax;
-			double bmax = b.getStatistics().max;
+			final double bmax = b.getStatistics().max;
 			if (bmax > max)
 				max = bmax;
-			double scale = 255 / max;
+			final double scale = 255 / max;
 			r.multiply(scale);
 			g.multiply(scale);
 			b.multiply(scale);
@@ -261,15 +259,15 @@ public class ZProjectorCopy implements PlugIn
 			green2.setProcessor(g.convertToByte(false));
 			blue2.setProcessor(b.convertToByte(false));
 		}
-		RGBStackMerge merge = new RGBStackMerge();
-		ImageStack stack2 = merge.mergeStacks(w, h, d, red2.getStack(), green2.getStack(), blue2.getStack(), true);
+		final RGBStackMerge merge = new RGBStackMerge();
+		final ImageStack stack2 = merge.mergeStacks(w, h, d, red2.getStack(), green2.getStack(), blue2.getStack(), true);
 		imp = saveImp;
 		projImage = new ImagePlus(makeTitle(), stack2);
 	}
 
 	/**
 	 * Builds dialog to query users for projection parameters.
-	 * 
+	 *
 	 * @param start
 	 *            starting slice to display
 	 * @param stop
@@ -277,7 +275,7 @@ public class ZProjectorCopy implements PlugIn
 	 */
 	protected GenericDialog buildControlDialog(int start, int stop)
 	{
-		GenericDialog gd = new GenericDialog("ZProjection", IJ.getInstance());
+		final GenericDialog gd = new GenericDialog("ZProjection", IJ.getInstance());
 		gd.addNumericField("Start slice:", startSlice, 0/* digits */);
 		gd.addNumericField("Stop slice:", stopSlice, 0/* digits */);
 		gd.addChoice("Projection type", METHODS, METHODS[method]);
@@ -303,13 +301,11 @@ public class ZProjectorCopy implements PlugIn
 		}
 
 		// Create new float processor for projected pixels.
-		FloatProcessor fp = new FloatProcessor(imp.getWidth(), imp.getHeight());
-		ImageStack stack = imp.getStack();
-		RayFunction rayFunc = getRayFunction(method, fp);
+		final FloatProcessor fp = new FloatProcessor(imp.getWidth(), imp.getHeight());
+		final ImageStack stack = imp.getStack();
+		final RayFunction rayFunc = getRayFunction(method, fp);
 		if (IJ.debugMode == true)
-		{
 			IJ.log("\nProjecting stack from: " + startSlice + " to: " + stopSlice);
-		}
 
 		// Determine type of input image. Explicit determination of
 		// processor type is required for subsequent pixel
@@ -361,25 +357,24 @@ public class ZProjectorCopy implements PlugIn
 
 	public void doHyperStackProjection(boolean allTimeFrames)
 	{
-		int start = startSlice;
-		int stop = stopSlice;
+		final int start = startSlice;
+		final int stop = stopSlice;
 		int firstFrame = 1;
 		int lastFrame = imp.getNFrames();
 		if (!allTimeFrames)
 			firstFrame = lastFrame = imp.getFrame();
-		ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
-		int channels = imp.getNChannels();
+		final ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
+		final int channels = imp.getNChannels();
 		int slices = imp.getNSlices();
 		if (slices == 1)
 		{
 			slices = imp.getNFrames();
 			firstFrame = lastFrame = 1;
 		}
-		int frames = lastFrame - firstFrame + 1;
+		final int frames = lastFrame - firstFrame + 1;
 		increment = channels;
-		boolean rgb = imp.getBitDepth() == 24;
+		final boolean rgb = imp.getBitDepth() == 24;
 		for (int frame = firstFrame; frame <= lastFrame; frame++)
-		{
 			for (int channel = 1; channel <= channels; channel++)
 			{
 				startSlice = (frame - 1) * channels * slices + (start - 1) * channels + channel;
@@ -390,7 +385,6 @@ public class ZProjectorCopy implements PlugIn
 					doProjection();
 				stack.addSlice(null, projImage.getProcessor());
 			}
-		}
 		projImage = new ImagePlus(makeTitle(), stack);
 		projImage.setDimensions(channels, 1, frames);
 		if (channels > 1)
@@ -407,8 +401,8 @@ public class ZProjectorCopy implements PlugIn
 
 	private void doHSRGBProjection(ImagePlus rgbImp)
 	{
-		ImageStack stack = rgbImp.getStack();
-		ImageStack stack2 = new ImageStack(stack.getWidth(), stack.getHeight());
+		final ImageStack stack = rgbImp.getStack();
+		final ImageStack stack2 = new ImageStack(stack.getWidth(), stack.getHeight());
 		for (int i = startSlice; i <= stopSlice; i++)
 			stack2.addSlice(null, stack.getProcessor(i));
 		startSlice = 1;
@@ -438,24 +432,24 @@ public class ZProjectorCopy implements PlugIn
 	/** Generate output image whose type is same as input image. */
 	protected ImagePlus makeOutputImage(ImagePlus imp, FloatProcessor fp, int ptype)
 	{
-		int width = imp.getWidth();
-		int height = imp.getHeight();
-		float[] pixels = (float[]) fp.getPixels();
+		final int width = imp.getWidth();
+		final int height = imp.getHeight();
+		final float[] pixels = (float[]) fp.getPixels();
 		ImageProcessor oip = null;
 
 		// Create output image consistent w/ type of input image.
-		int size = pixels.length;
+		final int size = pixels.length;
 		switch (ptype)
 		{
 			case BYTE_TYPE:
 				oip = imp.getProcessor().createProcessor(width, height);
-				byte[] pixels8 = (byte[]) oip.getPixels();
+				final byte[] pixels8 = (byte[]) oip.getPixels();
 				for (int i = 0; i < size; i++)
 					pixels8[i] = (byte) pixels[i];
 				break;
 			case SHORT_TYPE:
 				oip = imp.getProcessor().createProcessor(width, height);
-				short[] pixels16 = (short[]) oip.getPixels();
+				final short[] pixels16 = (short[]) oip.getPixels();
 				for (int i = 0; i < size; i++)
 					pixels16[i] = (short) pixels[i];
 				break;
@@ -525,17 +519,17 @@ public class ZProjectorCopy implements PlugIn
 	protected ImagePlus doMedianProjection()
 	{
 		IJ.showStatus("Calculating median...");
-		ImageStack stack = imp.getStack();
-		ImageProcessor[] slices = new ImageProcessor[sliceCount];
+		final ImageStack stack = imp.getStack();
+		final ImageProcessor[] slices = new ImageProcessor[sliceCount];
 		int index = 0;
 		for (int slice = startSlice; slice <= stopSlice; slice += increment)
 			slices[index++] = stack.getProcessor(slice);
 		ImageProcessor ip2 = slices[0].duplicate();
 		ip2 = ip2.convertToFloat();
-		float[] values = new float[sliceCount];
-		int width = ip2.getWidth();
-		int height = ip2.getHeight();
-		int inc = Math.max(height / 30, 1);
+		final float[] values = new float[sliceCount];
+		final int width = ip2.getWidth();
+		final int height = ip2.getHeight();
+		final int inc = Math.max(height / 30, 1);
 		for (int y = 0; y < height; y++)
 		{
 			if (y % inc == 0)
@@ -556,7 +550,7 @@ public class ZProjectorCopy implements PlugIn
 	protected float median(float[] a)
 	{
 		Arrays.sort(a);
-		int middle = a.length / 2;
+		final int middle = a.length / 2;
 		if ((a.length & 1) == 0) //even
 			return (a[middle - 1] + a[middle]) / 2f;
 		else
@@ -590,8 +584,8 @@ public class ZProjectorCopy implements PlugIn
 	/** Compute average intensity projection. */
 	class AverageIntensity extends RayFunction
 	{
-		private float[] fpixels;
-		private int num, len;
+		private final float[] fpixels;
+		private final int num, len;
 
 		/**
 		 * Constructor requires number of slices to be
@@ -629,7 +623,7 @@ public class ZProjectorCopy implements PlugIn
 		@Override
 		public void postProcess()
 		{
-			float fnum = num;
+			final float fnum = num;
 			for (int i = 0; i < len; i++)
 				fpixels[i] /= fnum;
 		}
@@ -639,8 +633,8 @@ public class ZProjectorCopy implements PlugIn
 	/** Compute max intensity projection. */
 	class MaxIntensity extends RayFunction
 	{
-		private float[] fpixels;
-		private int len;
+		private final float[] fpixels;
+		private final int len;
 
 		/** Simple constructor since no preprocessing is necessary. */
 		public MaxIntensity(FloatProcessor fp)
@@ -655,30 +649,24 @@ public class ZProjectorCopy implements PlugIn
 		public void projectSlice(byte[] pixels)
 		{
 			for (int i = 0; i < len; i++)
-			{
 				if ((pixels[i] & 0xff) > fpixels[i])
 					fpixels[i] = (pixels[i] & 0xff);
-			}
 		}
 
 		@Override
 		public void projectSlice(short[] pixels)
 		{
 			for (int i = 0; i < len; i++)
-			{
 				if ((pixels[i] & 0xffff) > fpixels[i])
 					fpixels[i] = pixels[i] & 0xffff;
-			}
 		}
 
 		@Override
 		public void projectSlice(float[] pixels)
 		{
 			for (int i = 0; i < len; i++)
-			{
 				if (pixels[i] > fpixels[i])
 					fpixels[i] = pixels[i];
-			}
 		}
 
 	} // end MaxIntensity
@@ -686,8 +674,8 @@ public class ZProjectorCopy implements PlugIn
 	/** Compute min intensity projection. */
 	class MinIntensity extends RayFunction
 	{
-		private float[] fpixels;
-		private int len;
+		private final float[] fpixels;
+		private final int len;
 
 		/** Simple constructor since no preprocessing is necessary. */
 		public MinIntensity(FloatProcessor fp)
@@ -702,30 +690,24 @@ public class ZProjectorCopy implements PlugIn
 		public void projectSlice(byte[] pixels)
 		{
 			for (int i = 0; i < len; i++)
-			{
 				if ((pixels[i] & 0xff) < fpixels[i])
 					fpixels[i] = (pixels[i] & 0xff);
-			}
 		}
 
 		@Override
 		public void projectSlice(short[] pixels)
 		{
 			for (int i = 0; i < len; i++)
-			{
 				if ((pixels[i] & 0xffff) < fpixels[i])
 					fpixels[i] = pixels[i] & 0xffff;
-			}
 		}
 
 		@Override
 		public void projectSlice(float[] pixels)
 		{
 			for (int i = 0; i < len; i++)
-			{
 				if (pixels[i] < fpixels[i])
 					fpixels[i] = pixels[i];
-			}
 		}
 
 	} // end MaxIntensity
@@ -733,9 +715,9 @@ public class ZProjectorCopy implements PlugIn
 	/** Compute standard deviation projection. */
 	class StandardDeviation extends RayFunction
 	{
-		private float[] result;
-		private double[] sum, sum2;
-		private int num, len;
+		private final float[] result;
+		private final double[] sum, sum2;
+		private final int num, len;
 
 		public StandardDeviation(FloatProcessor fp, int num)
 		{
@@ -786,9 +768,8 @@ public class ZProjectorCopy implements PlugIn
 		public void postProcess()
 		{
 			double stdDev;
-			double n = num;
+			final double n = num;
 			for (int i = 0; i < len; i++)
-			{
 				if (num > 1)
 				{
 					stdDev = (n * sum2[i] - sum[i] * sum[i]) / n;
@@ -799,7 +780,6 @@ public class ZProjectorCopy implements PlugIn
 				}
 				else
 					result[i] = 0f;
-			}
 		}
 
 	} // end StandardDeviation

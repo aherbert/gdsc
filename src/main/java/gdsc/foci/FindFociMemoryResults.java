@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -46,12 +46,10 @@ public class FindFociMemoryResults implements Cloneable
 	/**
 	 * Instantiates a new find foci result.
 	 *
-	 * @param id
-	 *            the id
+	 * @param imp
+	 *            the image
 	 * @param results
 	 *            the results
-	 * @param stats
-	 *            the stats
 	 */
 	public FindFociMemoryResults(ImagePlus imp, ArrayList<FindFociResult> results)
 	{
@@ -63,34 +61,31 @@ public class FindFociMemoryResults implements Cloneable
 	/**
 	 * Instantiates a new find foci results.
 	 *
-	 * @param id
-	 *            the id
+	 * @param imp
+	 *            the image
 	 * @param results
 	 *            the results
-	 * @param stats
-	 *            the stats
 	 */
 	public FindFociMemoryResults(ImagePlus imp, FindFociResult[] results)
 	{
 		this(imp, (results == null) ? new ArrayList<FindFociResult>(0)
-				: new ArrayList<FindFociResult>(Arrays.asList(results)));
+				: new ArrayList<>(Arrays.asList(results)));
 	}
 
 	/**
 	 * Returns a shallow copy of this set of results.
 	 *
 	 * @return the find foci results
-	 * @see java.lang.Object#clone()
 	 */
 	@Override
 	public FindFociMemoryResults clone()
 	{
 		try
 		{
-			FindFociMemoryResults copy = (FindFociMemoryResults) super.clone();
+			final FindFociMemoryResults copy = (FindFociMemoryResults) super.clone();
 			return copy;
 		}
-		catch (CloneNotSupportedException e)
+		catch (final CloneNotSupportedException e)
 		{
 			return null;
 		}

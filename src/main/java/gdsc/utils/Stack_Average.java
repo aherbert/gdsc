@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -42,7 +42,7 @@ public class Stack_Average implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
@@ -60,33 +60,33 @@ public class Stack_Average implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
 	public void run(ImageProcessor ip)
 	{
-		ArrayList<ImagePlus> images = getImages();
+		final ArrayList<ImagePlus> images = getImages();
 
-		int bufferSize = imp.getWidth() * imp.getHeight();
-		int count = images.size();
+		final int bufferSize = imp.getWidth() * imp.getHeight();
+		final int count = images.size();
 
-		ImageStack result = createResult();
+		final ImageStack result = createResult();
 
 		// Add all the images - Process each stack slice individually
 		for (int n = imp.getStackSize(); n > 0; n--)
 		{
 			// Sum all the images
-			double[] sum = new double[bufferSize];
-			for (ImagePlus imp2 : images)
+			final double[] sum = new double[bufferSize];
+			for (final ImagePlus imp2 : images)
 			{
-				ImageProcessor ip2 = imp2.getStack().getProcessor(n);
+				final ImageProcessor ip2 = imp2.getStack().getProcessor(n);
 				for (int i = sum.length; i-- > 0;)
 					sum[i] += ip2.get(i);
 			}
 
 			// Average
-			ImageProcessor ip2 = result.getProcessor(n);
+			final ImageProcessor ip2 = result.getProcessor(n);
 			for (int i = sum.length; i-- > 0;)
 				ip2.set(i, (int) (sum[i] / count));
 		}
@@ -97,25 +97,21 @@ public class Stack_Average implements PlugInFilter
 
 	private ArrayList<ImagePlus> getImages()
 	{
-		int[] dimensions = imp.getDimensions();
-		int bitDepth = imp.getBitDepth();
+		final int[] dimensions = imp.getDimensions();
+		final int bitDepth = imp.getBitDepth();
 
 		// Build a list of the images
-		int[] wList = gdsc.core.ij.Utils.getIDList();
+		final int[] wList = gdsc.core.ij.Utils.getIDList();
 
-		ArrayList<ImagePlus> images = new ArrayList<ImagePlus>(wList.length);
+		final ArrayList<ImagePlus> images = new ArrayList<>(wList.length);
 
 		for (int i = 0; i < wList.length; i++)
 		{
-			ImagePlus imp2 = WindowManager.getImage(wList[i]);
+			final ImagePlus imp2 = WindowManager.getImage(wList[i]);
 			if (imp2 != null)
-			{
 				if (!imp2.getTitle().startsWith("Stack Average") && sameDimensions(dimensions, imp2.getDimensions()) &&
 						bitDepth == imp2.getBitDepth())
-				{
 					images.add(imp2);
-				}
-			}
 		}
 
 		return images;
@@ -124,27 +120,21 @@ public class Stack_Average implements PlugInFilter
 	private boolean sameDimensions(int[] dimensions, int[] dimensions2)
 	{
 		for (int i = dimensions.length; i-- > 0;)
-		{
 			if (dimensions[i] != dimensions2[i])
-			{
 				return false;
-			}
-		}
 		return true;
 	}
 
 	private ImageStack createResult()
 	{
-		int width = imp.getWidth();
-		int height = imp.getHeight();
+		final int width = imp.getWidth();
+		final int height = imp.getHeight();
 
-		ImageStack inStack = imp.getImageStack();
-		ImageStack outStack = new ImageStack(width, height);
+		final ImageStack inStack = imp.getImageStack();
+		final ImageStack outStack = new ImageStack(width, height);
 
 		for (int n = inStack.getSize(); n > 0; n--)
-		{
 			outStack.addSlice(null, inStack.getProcessor(n).createProcessor(width, height));
-		}
 
 		return outStack;
 	}

@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -72,7 +72,7 @@ public class Measure3D extends PlugInFrame
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
 	 */
 	@Override
@@ -87,14 +87,13 @@ public class Measure3D extends PlugInFrame
 		}
 
 		// Install the macro that is called when the image is clicked.
-		// Do this each time since the toolbar could change.	
+		// Do this each time since the toolbar could change.
 		installTool();
 
 		if (instance != null)
-		{
 			if (!(instance.getTitle().equals(getTitle())))
 			{
-				Measure3D oldInstance = instance;
+				final Measure3D oldInstance = instance;
 				Prefs.saveLocation(OPT_LOCATION, oldInstance.getLocation());
 				oldInstance.close();
 			}
@@ -103,7 +102,6 @@ public class Measure3D extends PlugInFrame
 				instance.toFront();
 				return;
 			}
-		}
 
 		instance = this;
 		IJ.register(Measure3D.class);
@@ -113,13 +111,11 @@ public class Measure3D extends PlugInFrame
 
 		addKeyListener(IJ.getInstance());
 		pack();
-		Point loc = Prefs.getLocation(OPT_LOCATION);
+		final Point loc = Prefs.getLocation(OPT_LOCATION);
 		if (loc != null)
 			setLocation(loc);
 		else
-		{
 			GUI.center(this);
-		}
 		if (IJ.isMacOSX())
 			setResizable(false);
 		setVisible(true);
@@ -127,10 +123,10 @@ public class Measure3D extends PlugInFrame
 
 	private void installTool()
 	{
-		String name = "Measure 3D Tool";
+		final String name = "Measure 3D Tool";
 		if (Toolbar.getInstance().getToolId(name) == -1)
 		{
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append("macro 'Measure 3D Tool - L0ef7F0d22Fe722C00fT06103T5610D' {\n");
 			sb.append("   call('").append(this.getClass().getName()).append(".run');\n");
 			sb.append("};\n");
@@ -142,33 +138,31 @@ public class Measure3D extends PlugInFrame
 	public static void run()
 	{
 		if (instance != null)
-		{
 			instance.imageClicked();
-		}
 		else
 		{
-			ImagePlus imp = getCurrentImage();
+			final ImagePlus imp = getCurrentImage();
 			if (imp == null)
 				return;
 			// Create a new instance
-			Measure3D p = new Measure3D();
+			final Measure3D p = new Measure3D();
 			p.run("");
 		}
 	}
 
 	private void imageClicked()
 	{
-		ImagePlus imp = getCurrentImage();
+		final ImagePlus imp = getCurrentImage();
 		if (imp == null)
 			return;
-		Point p = imp.getCanvas().getCursorLoc();
+		final Point p = imp.getCanvas().getCursorLoc();
 		if (p == null)
 			return;
-		int x = p.x;
-		int y = p.y;
-		int c = imp.getC();
-		int z = imp.getZ();
-		int t = imp.getT();
+		final int x = p.x;
+		final int y = p.y;
+		final int c = imp.getC();
+		final int z = imp.getZ();
+		final int t = imp.getT();
 
 		if (lastID == imp.getID() && lastC == c && lastT == t)
 		{
@@ -183,13 +177,12 @@ public class Measure3D extends PlugInFrame
 			double dx = x - lastX;
 			double dy = y - lastY;
 			double dz = z - lastZ;
-			double d = Math.sqrt(dx * dx + dy * dy + dz + dz);
+			final double d = Math.sqrt(dx * dx + dy * dy + dz + dz);
 
 			// Compute calibrated distance
-			Calibration cal = imp.getCalibration();
+			final Calibration cal = imp.getCalibration();
 			double d2 = -1;
 			if (cal != null)
-			{
 				// Assume X and Y units are the same. Check the z-unit.
 				if (cal.getXUnit().equals(cal.getZUnit()))
 				{
@@ -198,7 +191,6 @@ public class Measure3D extends PlugInFrame
 					dz *= cal.pixelDepth;
 					d2 = Math.sqrt(dx * dx + dy * dy + dz + dz);
 				}
-			}
 
 			// Record to a table
 			record(imp, x, y, z, c, t, d, d2, cal.getXUnit());
@@ -206,8 +198,8 @@ public class Measure3D extends PlugInFrame
 			// Overlay the line on the image
 			if (overlayCheckbox.getState())
 			{
-				Line roi = new Line(lastX, lastY, x, y);
-				Overlay o = new Overlay(roi);
+				final Line roi = new Line(lastX, lastY, x, y);
+				final Overlay o = new Overlay(roi);
 				imp.setOverlay(o);
 			}
 		}
@@ -235,8 +227,8 @@ public class Measure3D extends PlugInFrame
 			// Overlay the first point on the image
 			if (overlayCheckbox.getState())
 			{
-				PointRoi roi = new PointRoi(lastX, lastY);
-				Overlay o = new Overlay(roi);
+				final PointRoi roi = new PointRoi(lastX, lastY);
+				final Overlay o = new Overlay(roi);
 				imp.setOverlay(o);
 			}
 		}
@@ -247,7 +239,7 @@ public class Measure3D extends PlugInFrame
 		if (results == null || !results.isVisible())
 		{
 			results = new TextWindow(TITLE, "Image\tc\tt\tx1\ty1\tz1\tx2\ty2\tz2\tD (px)\tD\tUnits", "", 800, 400);
-			Point loc = Prefs.getLocation(OPT_LOCATION_RESULTS);
+			final Point loc = Prefs.getLocation(OPT_LOCATION_RESULTS);
 			if (loc != null)
 				results.setLocation(loc);
 
@@ -296,7 +288,7 @@ public class Measure3D extends PlugInFrame
 	private void record(ImagePlus imp, int x, int y, int z, int c2, int t, double d, double d2, String units)
 	{
 		createResultsTable();
-		StringBuilder sb = new StringBuilder(imp.getTitle());
+		final StringBuilder sb = new StringBuilder(imp.getTitle());
 		sb.append('\t').append(lastC);
 		sb.append('\t').append(lastT);
 		sb.append('\t').append(lastX);
@@ -312,9 +304,7 @@ public class Measure3D extends PlugInFrame
 			sb.append('\t').append(units);
 		}
 		else
-		{
 			sb.append("\t\t");
-		}
 		results.append(sb.toString());
 	}
 
@@ -338,7 +328,7 @@ public class Measure3D extends PlugInFrame
 		//   WindowManager.setCurrentWindow(win);
 		// in the ImageCanvas.mousePressed(...) method.
 
-		ImagePlus imp = WindowManager.getCurrentImage();
+		final ImagePlus imp = WindowManager.getCurrentImage();
 		if (imp == null || imp.getCanvas() == null)
 			return null;
 		return imp;
@@ -346,7 +336,7 @@ public class Measure3D extends PlugInFrame
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.frame.PlugInFrame#close()
 	 */
 	@Override
@@ -369,8 +359,8 @@ public class Measure3D extends PlugInFrame
 
 		// Build a grid that shows the last pressed position.
 		labels = new Label[6];
-		ImagePlus imp = getCurrentImage();
-		String title = (imp == null) ? "" : imp.getTitle();
+		final ImagePlus imp = getCurrentImage();
+		final String title = (imp == null) ? "" : imp.getTitle();
 		createLabelPanel(labels[0] = new Label(), "Image", title);
 		createLabelPanel(labels[1] = new Label(), "X", "");
 		createLabelPanel(labels[2] = new Label(), "Y", "");
@@ -384,7 +374,7 @@ public class Measure3D extends PlugInFrame
 
 	private void createLabelPanel(Label labelField, String label, String value)
 	{
-		Label listLabel = new Label(label, 0);
+		final Label listLabel = new Label(label, 0);
 		add(listLabel, 0, 1);
 		if (labelField != null)
 		{

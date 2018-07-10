@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -64,7 +64,7 @@ import ij.text.TextWindow;
 
 /**
  * Compares the ROI points on two images and computes the match statistics.
- * 
+ *
  * Can output the matches for each quartile when the points are ranked using their height. Only supports 2D images (no
  * Z-stacks) but does allow selection of channel/frame that is used for the heights.
  */
@@ -108,13 +108,13 @@ public class MatchPlugin implements PlugIn
 	private static String filename = "";
 	private static int findFociImageIndex = 0;
 	//@formatter:off
-	private static String[] findFociResult = new String[] { 
-			"Intensity", 
+	private static String[] findFociResult = new String[] {
+			"Intensity",
 			"Intensity above saddle",
-			"Intensity above background", 
-			"Count", 
-			"Count above saddle", 
-			"Max value", 
+			"Intensity above background",
+			"Count",
+			"Count above saddle",
+			"Max value",
 			"Highest saddle value", };
 	//@formatter:on
 	private static int findFociResultChoiceIndex = 0;
@@ -145,13 +145,13 @@ public class MatchPlugin implements PlugIn
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * // Build the values to plot
 	 * float[] xMatch = new float[matches.size()];
 	 * float[] yMatch = new float[matches.size()];
 	 * float[] xNoMatch = new float[falsePositives.size() + falseNegatives.size()];
 	 * float[] yNoMatch = new float[falsePositives.size() + falseNegatives.size()];
-	 * 
+	 *
 	 * int n = 0;
 	 * for (PointPair pair : matches)
 	 * {
@@ -174,7 +174,7 @@ public class MatchPlugin implements PlugIn
 	 * TimeValuedPoint p = (TimeValuedPoint) point;
 	 * yNoMatch[n++] = p.getValue();
 	 * }
-	 * 
+	 *
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
 	@Override
@@ -188,9 +188,7 @@ public class MatchPlugin implements PlugIn
 		imageMode = !memoryMode && !fileMode;
 
 		if (!showDialog())
-		{
 			return;
-		}
 
 		actualPoints = null;
 		predictedPoints = null;
@@ -218,7 +216,7 @@ public class MatchPlugin implements PlugIn
 				m2 = getFindFociMemoryResults(t2);
 				predictedPoints = getFindFociPoints(m2, t2);
 			}
-			catch (IllegalStateException e)
+			catch (final IllegalStateException e)
 			{
 				IJ.error("Failed to load the points: " + e.getMessage());
 				return;
@@ -229,7 +227,7 @@ public class MatchPlugin implements PlugIn
 			imp1 = WindowManager.getImage(m1.imageId);
 			imp2 = WindowManager.getImage(m2.imageId);
 
-			boolean canExtractHeights = canExtractHeights(imp1, imp2);
+			final boolean canExtractHeights = canExtractHeights(imp1, imp2);
 			doQuartiles = quartiles && canExtractHeights;
 			doScatter = scatter && canExtractHeights;
 			doUnmatched = unmatchedDistribution && canExtractHeights;
@@ -248,7 +246,7 @@ public class MatchPlugin implements PlugIn
 				actualPoints = PointManager.loadPoints(t1);
 				predictedPoints = PointManager.loadPoints(t2);
 			}
-			catch (IOException e)
+			catch (final IOException e)
 			{
 				IJ.error("Failed to load the points: " + e.getMessage());
 				return;
@@ -271,20 +269,18 @@ public class MatchPlugin implements PlugIn
 			}
 
 			if (dType == 1)
-			{
 				d = dThreshold;
-			}
 			else
 			{
-				int length1 = Math.min(imp1.getWidth(), imp1.getHeight());
-				int length2 = Math.min(imp2.getWidth(), imp2.getHeight());
+				final int length1 = Math.min(imp1.getWidth(), imp1.getHeight());
+				final int length2 = Math.min(imp2.getWidth(), imp2.getHeight());
 				d = Math.ceil(dThreshold * Math.max(length1, length2));
 			}
 
 			actualPoints = PointManager.extractRoiPoints(imp1.getRoi());
 			predictedPoints = PointManager.extractRoiPoints(imp2.getRoi());
 
-			boolean canExtractHeights = canExtractHeights(imp1, imp2);
+			final boolean canExtractHeights = canExtractHeights(imp1, imp2);
 			doQuartiles = quartiles && canExtractHeights;
 			doScatter = scatter && canExtractHeights;
 			doUnmatched = unmatchedDistribution && canExtractHeights;
@@ -300,13 +296,13 @@ public class MatchPlugin implements PlugIn
 		if (unit == null)
 			unit = "px";
 
-		Object[] points = compareROI(actualPoints, predictedPoints, d, doQuartiles);
+		final Object[] points = compareROI(actualPoints, predictedPoints, d, doQuartiles);
 
-		List<Coordinate> TP = (List<Coordinate>) points[0];
-		List<Coordinate> FP = (List<Coordinate>) points[1];
-		List<Coordinate> FN = (List<Coordinate>) points[2];
-		List<PointPair> matches = (List<PointPair>) points[3];
-		MatchResult result = (MatchResult) points[4];
+		final List<Coordinate> TP = (List<Coordinate>) points[0];
+		final List<Coordinate> FP = (List<Coordinate>) points[1];
+		final List<Coordinate> FN = (List<Coordinate>) points[2];
+		final List<PointPair> matches = (List<PointPair>) points[3];
+		final MatchResult result = (MatchResult) points[4];
 
 		if (overlay > 0 && (imageMode || memoryMode))
 		{
@@ -336,20 +332,14 @@ public class MatchPlugin implements PlugIn
 
 		// Output a scatter plot of actual vs predicted
 		if (doScatter)
-		{
 			scatterPlot(imp1, imp2, matches, FP, FN);
-		}
 
-		// Show analysis of the height distribution of the unmatched points 
+		// Show analysis of the height distribution of the unmatched points
 		if (doUnmatched)
-		{
 			unmatchedAnalysis(t1, t2, matches, FP, FN);
-		}
 
 		if (saveMatches)
-		{
 			saveMatches(d, matches, FP, FN, result);
-		}
 
 		if (matchTable)
 		{
@@ -360,33 +350,29 @@ public class MatchPlugin implements PlugIn
 
 	private FindFociMemoryResults getFindFociMemoryResults(String resultsName) throws IllegalStateException
 	{
-		FindFociMemoryResults memoryResults = FindFoci.getResults(resultsName);
+		final FindFociMemoryResults memoryResults = FindFoci.getResults(resultsName);
 		if (memoryResults == null)
-		{
 			throw new IllegalStateException("No foci with the name " + resultsName);
-		}
-		ArrayList<FindFociResult> results = memoryResults.results;
+		final ArrayList<FindFociResult> results = memoryResults.results;
 		if (results.size() == 0)
-		{
 			throw new IllegalStateException("Zero foci in the results with the name " + resultsName);
-		}
 		return memoryResults;
 	}
 
 	private Coordinate[] getFindFociPoints(FindFociMemoryResults memoryResults, String resultsName)
 			throws IllegalStateException
 	{
-		ArrayList<FindFociResult> results = memoryResults.results;
+		final ArrayList<FindFociResult> results = memoryResults.results;
 
 		// If using calibration then we must convert the coordinates
 		if (unitType == 1)
 		{
 			// Get the calibration
-			Calibration calibration = memoryResults.calibration;
+			final Calibration calibration = memoryResults.calibration;
 			if (calibration == null)
 				throw new IllegalStateException("No calibration for the results with the name " + resultsName);
 
-			String unit = calibration.getUnit();
+			final String unit = calibration.getUnit();
 			if (this.unit != null && !this.unit.equals(unit))
 				throw new IllegalStateException("Calibration units for the results are different");
 			this.unit = unit;
@@ -401,24 +387,20 @@ public class MatchPlugin implements PlugIn
 			scaleY = calibration.pixelHeight;
 			scaleZ = calibration.pixelDepth;
 
-			gdsc.core.match.BasePoint[] points = new gdsc.core.match.BasePoint[results.size()];
+			final gdsc.core.match.BasePoint[] points = new gdsc.core.match.BasePoint[results.size()];
 			int i = 0;
-			for (FindFociResult result : results)
-			{
+			for (final FindFociResult result : results)
 				points[i++] = new gdsc.core.match.BasePoint(convert(result.x, scaleX), convert(result.y, scaleY),
 						convert(result.z, scaleZ));
-			}
 			return points;
 		}
 		else
 		{
 			// Native pixel units
-			AssignedPoint[] points = new AssignedPoint[results.size()];
+			final AssignedPoint[] points = new AssignedPoint[results.size()];
 			int i = 0;
-			for (FindFociResult result : results)
-			{
+			for (final FindFociResult result : results)
 				points[i++] = new AssignedPoint(result.x, result.y, result.z, 0);
-			}
 			return points;
 		}
 	}
@@ -433,8 +415,8 @@ public class MatchPlugin implements PlugIn
 	 */
 	private boolean canExtractHeights(ImagePlus imp1, ImagePlus imp2)
 	{
-		int[] dim1 = imp1.getDimensions();
-		int[] dim2 = imp2.getDimensions();
+		final int[] dim1 = imp1.getDimensions();
+		final int[] dim2 = imp2.getDimensions();
 
 		// Uncomment to prevent Z-stacks. Using the z-projection for heights so this should not matter
 		//if (dim1[3] != 1 && dim2[3] != 1)
@@ -443,12 +425,12 @@ public class MatchPlugin implements PlugIn
 		if ((dim1[2] != 1 || dim1[4] != 1) || (dim2[2] != 1 || dim2[4] != 1))
 		{
 			// Select channel/frame
-			GenericDialog gd = new GenericDialog("Select Channel/Frame");
+			final GenericDialog gd = new GenericDialog("Select Channel/Frame");
 			gd.addMessage("Stacks detected.\nPlease select the channel/frame.");
-			String[] channels1 = getChannels(imp1);
-			String[] frames1 = getFrames(imp1);
-			String[] channels2 = getChannels(imp2);
-			String[] frames2 = getFrames(imp2);
+			final String[] channels1 = getChannels(imp1);
+			final String[] frames1 = getFrames(imp1);
+			final String[] channels2 = getChannels(imp2);
+			final String[] frames2 = getFrames(imp2);
 
 			if (channels1.length > 1)
 				gd.addChoice("Image1_Channel", channels1, channels1[channels1.length >= channel1 ? channel1 - 1 : 0]);
@@ -479,8 +461,8 @@ public class MatchPlugin implements PlugIn
 
 	private String[] getChannels(ImagePlus imp)
 	{
-		int c = imp.getNChannels();
-		String[] result = new String[c];
+		final int c = imp.getNChannels();
+		final String[] result = new String[c];
 		for (int i = 0; i < c; i++)
 			result[i] = Integer.toString(i + 1);
 		return result;
@@ -488,8 +470,8 @@ public class MatchPlugin implements PlugIn
 
 	private String[] getFrames(ImagePlus imp)
 	{
-		int c = imp.getNFrames();
-		String[] result = new String[c];
+		final int c = imp.getNFrames();
+		final String[] result = new String[c];
 		for (int i = 0; i < c; i++)
 			result[i] = Integer.toString(i + 1);
 		return result;
@@ -498,16 +480,16 @@ public class MatchPlugin implements PlugIn
 	private TimeValuedPoint[] extractHeights(ImagePlus imp, Coordinate[] actualPoints, int channel, int frame)
 	{
 		// Use maximum intensity projection
-		ImageProcessor ip = Utils.extractTile(imp, frame, channel, ZProjector.MAX_METHOD);
-		//new ImagePlus("height", ip).show(); 
+		final ImageProcessor ip = Utils.extractTile(imp, frame, channel, ZProjector.MAX_METHOD);
+		//new ImagePlus("height", ip).show();
 
 		// Store ID as the time
-		TimeValuedPoint[] newPoints = new TimeValuedPoint[actualPoints.length];
+		final TimeValuedPoint[] newPoints = new TimeValuedPoint[actualPoints.length];
 		for (int i = 0; i < newPoints.length; i++)
 		{
-			int x = (int) Math.round(actualPoints[i].getX() / scaleX);
-			int y = (int) Math.round(actualPoints[i].getY() / scaleY);
-			int value = ip.get(x, y);
+			final int x = (int) Math.round(actualPoints[i].getX() / scaleX);
+			final int y = (int) Math.round(actualPoints[i].getY() / scaleY);
+			final int value = ip.get(x, y);
 			newPoints[i] = new TimeValuedPoint(actualPoints[i].getX(), actualPoints[i].getY(), actualPoints[i].getZ(),
 					i + 1, value);
 		}
@@ -552,14 +534,14 @@ public class MatchPlugin implements PlugIn
 		if (list.isEmpty())
 			return;
 
-		Color strokeColor = color;
-		Color fillColor = color;
+		final Color strokeColor = color;
+		final Color fillColor = color;
 
 		Overlay o = imp.getOverlay();
 		if (o == null)
 			o = new Overlay();
 
-		for (PointRoi roi : createROI(imp, list, scaleX, scaleY, scaleZ))
+		for (final PointRoi roi : createROI(imp, list, scaleX, scaleY, scaleZ))
 		{
 			roi.setStrokeColor(strokeColor);
 			roi.setFillColor(fillColor);
@@ -586,14 +568,14 @@ public class MatchPlugin implements PlugIn
 			double scaleY, double scaleZ)
 	{
 		// We have to create an overlay per z-slice using the calibration scale
-		TIntObjectHashMap<TIntArrayList> xpoints = new TIntObjectHashMap<TIntArrayList>();
+		final TIntObjectHashMap<TIntArrayList> xpoints = new TIntObjectHashMap<>();
 		TIntArrayList nextlist = new TIntArrayList();
 
-		for (Coordinate point : array)
+		for (final Coordinate point : array)
 		{
-			int x = (int) Math.round(point.getX() / scaleX);
-			int y = (int) Math.round(point.getY() / scaleY);
-			int z = (int) Math.round(point.getZ() / scaleZ);
+			final int x = (int) Math.round(point.getX() / scaleX);
+			final int y = (int) Math.round(point.getY() / scaleY);
+			final int z = (int) Math.round(point.getZ() / scaleZ);
 
 			TIntArrayList list = xpoints.putIfAbsent(z, nextlist);
 			if (list == null)
@@ -610,29 +592,25 @@ public class MatchPlugin implements PlugIn
 		final int frame = 0;
 		final boolean isHyperStack = imp.isDisplayedHyperStack();
 
-		final TurboList<PointRoi> rois = new TurboList<PointRoi>(xpoints.size());
+		final TurboList<PointRoi> rois = new TurboList<>(xpoints.size());
 		xpoints.forEachEntry(new TIntObjectProcedure<TIntArrayList>()
 		{
 			@Override
 			public boolean execute(int z, TIntArrayList b)
 			{
-				int[] data = b.toArray();
-				float[] x = new float[data.length / 2];
-				float[] y = new float[x.length];
+				final int[] data = b.toArray();
+				final float[] x = new float[data.length / 2];
+				final float[] y = new float[x.length];
 				for (int i = 0, j = 0; j < x.length; j++)
 				{
 					x[j] = data[i++];
 					y[j] = data[i++];
 				}
-				PointRoi roi = new PointRoi(x, y);
+				final PointRoi roi = new PointRoi(x, y);
 				if (isHyperStack)
-				{
 					roi.setPosition(channel, z, frame);
-				}
 				else
-				{
 					roi.setPosition(imp.getStackIndex(channel, z, frame));
-				}
 				rois.add(roi);
 				return true;
 			}
@@ -657,7 +635,7 @@ public class MatchPlugin implements PlugIn
 				return false;
 			}
 
-			List<String> imageList = Arrays.asList(items);
+			final List<String> imageList = Arrays.asList(items);
 			int index = 0;
 			t1 = (imageList.contains(name1) ? name1 : imageList.get(index++));
 			t2 = (imageList.contains(name2) ? name2 : imageList.get(index));
@@ -665,18 +643,16 @@ public class MatchPlugin implements PlugIn
 		}
 		if (imageMode)
 		{
-			List<String> imageList = new LinkedList<String>();
-			for (int id : gdsc.core.ij.Utils.getIDList())
+			final List<String> imageList = new LinkedList<>();
+			for (final int id : gdsc.core.ij.Utils.getIDList())
 			{
-				ImagePlus imp = WindowManager.getImage(id);
+				final ImagePlus imp = WindowManager.getImage(id);
 				if (imp != null)
 				{
-					Roi roi = imp.getRoi();
+					final Roi roi = imp.getRoi();
 					// Allow no ROI => No points
 					if ((roi == null || roi.getType() == Roi.POINT) && !imp.getTitle().startsWith(TITLE))
-					{
 						imageList.add(imp.getTitle());
-					}
 				}
 			}
 
@@ -692,7 +668,7 @@ public class MatchPlugin implements PlugIn
 			t2 = (imageList.contains(title2) ? title2 : imageList.get(index));
 		}
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 
 		if (memoryMode)
 		{
@@ -733,7 +709,7 @@ public class MatchPlugin implements PlugIn
 			resultsArray = FindFoci.getResults();
 			if (resultsArray != null)
 			{
-				String[] imageItems = new String[] { "[None]", "Image1", "Image2" };
+				final String[] imageItems = new String[] { "[None]", "Image1", "Image2" };
 				gd.addChoice("FindFoci_image", imageItems, imageItems[findFociImageIndex]);
 				gd.addChoice("FindFoci_result", findFociResult, findFociResult[findFociResultChoiceIndex]);
 			}
@@ -764,13 +740,9 @@ public class MatchPlugin implements PlugIn
 		}
 		d = gd.getNextNumber();
 		if (memoryMode)
-		{
 			memoryThreshold = d;
-		}
 		else
-		{
 			dThreshold = d;
-		}
 		if (imageMode || memoryMode)
 		{
 			overlay = gd.getNextChoiceIndex();
@@ -793,11 +765,11 @@ public class MatchPlugin implements PlugIn
 	private Object[] compareROI(Coordinate[] actualPoints, Coordinate[] predictedPoints, double dThreshold,
 			boolean doQuartiles)
 	{
-		List<Coordinate> TP = new LinkedList<Coordinate>();
-		List<Coordinate> FP = new LinkedList<Coordinate>();
-		List<Coordinate> FN = new LinkedList<Coordinate>();
-		List<PointPair> matches = new LinkedList<PointPair>();
-		MatchResult result = (memoryMode)
+		final List<Coordinate> TP = new LinkedList<>();
+		final List<Coordinate> FP = new LinkedList<>();
+		final List<Coordinate> FN = new LinkedList<>();
+		final List<PointPair> matches = new LinkedList<>();
+		final MatchResult result = (memoryMode)
 				? MatchCalculator.analyseResults3D(actualPoints, predictedPoints, dThreshold, TP, FP, FN, matches)
 				: MatchCalculator.analyseResults2D(actualPoints, predictedPoints, dThreshold, TP, FP, FN, matches);
 		MatchResult[] qResults = null;
@@ -822,14 +794,11 @@ public class MatchPlugin implements PlugIn
 				resultsWindow = new TextWindow(TITLE + " Results", header, "", 900, 300);
 			}
 		}
-		else
+		else if (writeHeader)
 		{
-			if (writeHeader)
-			{
-				header = createResultsHeader(qResults);
-				writeHeader = false;
-				IJ.log(header);
-			}
+			header = createResultsHeader(qResults);
+			writeHeader = false;
+			IJ.log(header);
 		}
 		addResult(t1, t2, dThreshold, result, qResults);
 
@@ -838,7 +807,7 @@ public class MatchPlugin implements PlugIn
 
 	/**
 	 * Compare the match results for the points within each height quartile
-	 * 
+	 *
 	 * @param actualPoints
 	 * @param predictedPoints
 	 * @param dThreshold
@@ -846,23 +815,23 @@ public class MatchPlugin implements PlugIn
 	 */
 	private MatchResult[] compareQuartiles(Coordinate[] actualPoints, Coordinate[] predictedPoints, double dThreshold)
 	{
-		TimeValuedPoint[] actualValuedPoints = (TimeValuedPoint[]) actualPoints;
-		TimeValuedPoint[] predictedValuedPoints = (TimeValuedPoint[]) predictedPoints;
+		final TimeValuedPoint[] actualValuedPoints = (TimeValuedPoint[]) actualPoints;
+		final TimeValuedPoint[] predictedValuedPoints = (TimeValuedPoint[]) predictedPoints;
 
 		// Combine points and sort
-		ArrayList<Float> heights = extractHeights(actualValuedPoints, predictedValuedPoints);
+		final ArrayList<Float> heights = extractHeights(actualValuedPoints, predictedValuedPoints);
 
 		if (heights.isEmpty())
 			return null;
 
-		float[] Q = getQuartiles(heights);
+		final float[] Q = getQuartiles(heights);
 
 		// Process each quartile
-		MatchResult[] qResults = new MatchResult[4];
+		final MatchResult[] qResults = new MatchResult[4];
 		for (int q = 0; q < 4; q++)
 		{
-			TimeValuedPoint[] actual = extractPoints(actualValuedPoints, Q[q], Q[q + 1]);
-			TimeValuedPoint[] predicted = extractPoints(predictedValuedPoints, Q[q], Q[q + 1]);
+			final TimeValuedPoint[] actual = extractPoints(actualValuedPoints, Q[q], Q[q + 1]);
+			final TimeValuedPoint[] predicted = extractPoints(predictedValuedPoints, Q[q], Q[q + 1]);
 			qResults[q] = MatchCalculator.analyseResults2D(actual, predicted, dThreshold);
 		}
 
@@ -874,15 +843,13 @@ public class MatchPlugin implements PlugIn
 	 */
 	private ArrayList<Float> extractHeights(TimeValuedPoint[] actualPoints, TimeValuedPoint[] predictedPoints)
 	{
-		HashSet<TimeValuedPoint> nonDuplicates = new HashSet<TimeValuedPoint>();
+		final HashSet<TimeValuedPoint> nonDuplicates = new HashSet<>();
 		nonDuplicates.addAll(Arrays.asList(actualPoints));
 		nonDuplicates.addAll(Arrays.asList(predictedPoints));
 
-		ArrayList<Float> heights = new ArrayList<Float>(nonDuplicates.size());
-		for (TimeValuedPoint p : nonDuplicates)
-		{
+		final ArrayList<Float> heights = new ArrayList<>(nonDuplicates.size());
+		for (final TimeValuedPoint p : nonDuplicates)
 			heights.add(p.getValue());
-		}
 		Collections.sort(heights);
 		return heights;
 	}
@@ -892,12 +859,10 @@ public class MatchPlugin implements PlugIn
 	 */
 	private TimeValuedPoint[] extractPoints(TimeValuedPoint[] points, float lower, float upper)
 	{
-		LinkedList<TimeValuedPoint> list = new LinkedList<TimeValuedPoint>();
-		for (TimeValuedPoint p : points)
-		{
+		final LinkedList<TimeValuedPoint> list = new LinkedList<>();
+		for (final TimeValuedPoint p : points)
 			if (p.getValue() >= lower && p.getValue() < upper)
 				list.add(p);
-		}
 		return list.toArray(new TimeValuedPoint[list.size()]);
 	}
 
@@ -907,17 +872,15 @@ public class MatchPlugin implements PlugIn
 	private int countPoints(TimeValuedPoint[] points, float lower, float upper)
 	{
 		int n = 0;
-		for (TimeValuedPoint p : points)
-		{
+		for (final TimeValuedPoint p : points)
 			if (p.getValue() >= lower && p.getValue() < upper)
 				n++;
-		}
 		return n;
 	}
 
 	private String createResultsHeader(MatchResult[] qResults)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Image 1\t");
 		sb.append("Image 2\t");
 		sb.append("Distance\t");
@@ -932,10 +895,8 @@ public class MatchPlugin implements PlugIn
 		sb.append("Recall 2\t");
 		sb.append("F1");
 		if (qResults != null)
-		{
 			for (int q = 0; q < 4; q++)
 				addQuartileHeader(sb, "Q" + (q + 1));
-		}
 		return sb.toString();
 	}
 
@@ -955,7 +916,7 @@ public class MatchPlugin implements PlugIn
 
 	private void addResult(String i1, String i2, double dThrehsold, MatchResult result, MatchResult[] qResults)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(i1).append('\t');
 		sb.append(i2).append('\t');
 		sb.append(IJ.d2s(dThrehsold, 2)).append('\t');
@@ -971,19 +932,13 @@ public class MatchPlugin implements PlugIn
 		sb.append(IJ.d2s(result.getFScore(1.0), 4));
 
 		if (qResults != null)
-		{
 			for (int q = 0; q < 4; q++)
 				addQuartileResult(sb, qResults[q]);
-		}
 
 		if (java.awt.GraphicsEnvironment.isHeadless())
-		{
 			IJ.log(sb.toString());
-		}
 		else
-		{
 			resultsWindow.append(sb.toString());
-		}
 	}
 
 	private void addQuartileResult(StringBuilder sb, MatchResult result)
@@ -1002,7 +957,7 @@ public class MatchPlugin implements PlugIn
 
 	/**
 	 * Build a scatter plot of the matches and the false positives/negatives using the image values for the X/Y axes
-	 * 
+	 *
 	 * @param imp1
 	 *            - Actual
 	 * @param imp2
@@ -1018,19 +973,19 @@ public class MatchPlugin implements PlugIn
 			return;
 
 		// Build the values to plot
-		float[] xMatch = new float[matches.size()];
-		float[] yMatch = new float[matches.size()];
-		float[] xNoMatch1 = new float[falseNegatives.size()];
-		float[] yNoMatch1 = new float[falseNegatives.size()];
-		float[] xNoMatch2 = new float[falsePositives.size()];
-		float[] yNoMatch2 = new float[falsePositives.size()];
+		final float[] xMatch = new float[matches.size()];
+		final float[] yMatch = new float[matches.size()];
+		final float[] xNoMatch1 = new float[falseNegatives.size()];
+		final float[] yNoMatch1 = new float[falseNegatives.size()];
+		final float[] xNoMatch2 = new float[falsePositives.size()];
+		final float[] yNoMatch2 = new float[falsePositives.size()];
 
 		int n = 0;
 		float minimum = Float.POSITIVE_INFINITY, maximum = 0;
-		for (PointPair pair : matches)
+		for (final PointPair pair : matches)
 		{
-			TimeValuedPoint p1 = (TimeValuedPoint) pair.getPoint1();
-			TimeValuedPoint p2 = (TimeValuedPoint) pair.getPoint2();
+			final TimeValuedPoint p1 = (TimeValuedPoint) pair.getPoint1();
+			final TimeValuedPoint p2 = (TimeValuedPoint) pair.getPoint2();
 			xMatch[n] = p1.getValue(); // Actual
 			yMatch[n] = p2.getValue(); // Predicted
 			final float max = Math.max(xMatch[n], yMatch[n]);
@@ -1043,9 +998,9 @@ public class MatchPlugin implements PlugIn
 		}
 		n = 0;
 		// Actual
-		for (Coordinate point : falseNegatives)
+		for (final Coordinate point : falseNegatives)
 		{
-			TimeValuedPoint p = (TimeValuedPoint) point;
+			final TimeValuedPoint p = (TimeValuedPoint) point;
 			xNoMatch1[n++] = p.getValue();
 			if (maximum < p.getValue())
 				maximum = p.getValue();
@@ -1053,9 +1008,9 @@ public class MatchPlugin implements PlugIn
 		}
 		// Predicted
 		n = 0;
-		for (Coordinate point : falsePositives)
+		for (final Coordinate point : falsePositives)
 		{
-			TimeValuedPoint p = (TimeValuedPoint) point;
+			final TimeValuedPoint p = (TimeValuedPoint) point;
 			yNoMatch2[n++] = p.getValue();
 			if (maximum < p.getValue())
 				maximum = p.getValue();
@@ -1063,9 +1018,9 @@ public class MatchPlugin implements PlugIn
 		}
 
 		// Create a new plot
-		String title = TITLE + " : " + imp1.getTitle() + " vs " + imp2.getTitle();
+		final String title = TITLE + " : " + imp1.getTitle() + " vs " + imp2.getTitle();
 
-		Plot plot = new Plot(title, imp1.getTitle(), imp2.getTitle(), (float[]) null, (float[]) null);
+		final Plot plot = new Plot(title, imp1.getTitle(), imp2.getTitle(), (float[]) null, (float[]) null);
 		// Ensure the plot is square
 		float range = maximum - minimum;
 		if (range == 0)
@@ -1084,9 +1039,9 @@ public class MatchPlugin implements PlugIn
 
 		// Find old plot
 		ImagePlus oldPlot = null;
-		for (int id : Utils.getIDList())
+		for (final int id : Utils.getIDList())
 		{
-			ImagePlus imp = WindowManager.getImage(id);
+			final ImagePlus imp = WindowManager.getImage(id);
 			if (imp != null && imp.getTitle().equals(title))
 			{
 				oldPlot = imp;
@@ -1101,14 +1056,12 @@ public class MatchPlugin implements PlugIn
 			oldPlot.updateAndDraw();
 		}
 		else
-		{
 			plot.show();
-		}
 	}
 
 	/**
 	 * Build a table showing the percentage of unmatched points that fall within each quartile of the matched points
-	 * 
+	 *
 	 * @param title1
 	 *            - Actual
 	 * @param title2
@@ -1124,25 +1077,25 @@ public class MatchPlugin implements PlugIn
 			return;
 
 		// Extract the heights of the matched points. Use the average height of each match.
-		ArrayList<Float> heights = new ArrayList<Float>(matches.size());
-		for (PointPair pair : matches)
+		final ArrayList<Float> heights = new ArrayList<>(matches.size());
+		for (final PointPair pair : matches)
 		{
-			TimeValuedPoint p1 = (TimeValuedPoint) pair.getPoint1();
-			TimeValuedPoint p2 = (TimeValuedPoint) pair.getPoint2();
+			final TimeValuedPoint p1 = (TimeValuedPoint) pair.getPoint1();
+			final TimeValuedPoint p2 = (TimeValuedPoint) pair.getPoint2();
 			heights.add((float) ((p1.getValue() + p2.getValue()) / 2.0));
 		}
 		Collections.sort(heights);
 
 		// Get the quartile ranges
-		float[] Q = getQuartiles(heights);
+		final float[] Q = getQuartiles(heights);
 
 		// Extract the valued points
-		TimeValuedPoint[] actualPoints = extractValuedPoints(falseNegatives);
-		TimeValuedPoint[] predictedPoints = extractValuedPoints(falsePositives);
+		final TimeValuedPoint[] actualPoints = extractValuedPoints(falseNegatives);
+		final TimeValuedPoint[] predictedPoints = extractValuedPoints(falsePositives);
 
 		// Count the number of unmatched points from each image in each quartile
-		int[] actualCount = new int[6];
-		int[] predictedCount = new int[6];
+		final int[] actualCount = new int[6];
+		final int[] predictedCount = new int[6];
 
 		actualCount[0] = countPoints(actualPoints, Float.NEGATIVE_INFINITY, Q[0]);
 		predictedCount[0] = countPoints(predictedPoints, Float.NEGATIVE_INFINITY, Q[0]);
@@ -1155,21 +1108,16 @@ public class MatchPlugin implements PlugIn
 		predictedCount[5] = countPoints(predictedPoints, Q[4], Float.POSITIVE_INFINITY);
 
 		// Show a result table
-		String header = "Image 1\tN\t% <Q1\t% Q1\t% Q2\t% Q3\t% Q4\t% >Q4\tImage2\tN\t% <Q1\t% Q1\t% Q2\t% Q3\t% Q4\t% >Q4";
+		final String header = "Image 1\tN\t% <Q1\t% Q1\t% Q2\t% Q3\t% Q4\t% >Q4\tImage2\tN\t% <Q1\t% Q1\t% Q2\t% Q3\t% Q4\t% >Q4";
 		if (!java.awt.GraphicsEnvironment.isHeadless())
 		{
 			if (unmatchedWindow == null || !unmatchedWindow.isShowing())
-			{
 				unmatchedWindow = new TextWindow(TITLE + " Unmatched", header, "", 900, 300);
-			}
 		}
-		else
+		else if (writeUnmatchedHeader)
 		{
-			if (writeUnmatchedHeader)
-			{
-				writeUnmatchedHeader = false;
-				IJ.log(header);
-			}
+			writeUnmatchedHeader = false;
+			IJ.log(header);
 		}
 		addUnmatchedResult(title1, title2, actualCount, predictedCount);
 	}
@@ -1187,60 +1135,52 @@ public class MatchPlugin implements PlugIn
 
 	private TimeValuedPoint[] extractValuedPoints(List<Coordinate> list)
 	{
-		TimeValuedPoint[] points = new TimeValuedPoint[list.size()];
+		final TimeValuedPoint[] points = new TimeValuedPoint[list.size()];
 		int i = 0;
-		for (Coordinate p : list)
+		for (final Coordinate p : list)
 			points[i++] = (TimeValuedPoint) p;
 		return points;
 	}
 
 	private void addUnmatchedResult(String title1, String title2, int[] actualCount, int[] predictedCount)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		addQuartiles(sb, title1, actualCount);
 		sb.append('\t');
 		addQuartiles(sb, title2, predictedCount);
 
 		if (java.awt.GraphicsEnvironment.isHeadless())
-		{
 			IJ.log(sb.toString());
-		}
 		else
-		{
 			unmatchedWindow.append(sb.toString());
-		}
 	}
 
 	private void addQuartiles(StringBuilder sb, String imageTitle, int[] counts)
 	{
 		// Count the total number of create a scale factor to calculate the percentage
 		int total = 0;
-		for (int c : counts)
+		for (final int c : counts)
 			total += c;
 
 		sb.append(imageTitle).append('\t').append(total);
 
 		if (total > 0)
 		{
-			double factor = total / 100.0;
-			for (int c : counts)
+			final double factor = total / 100.0;
+			for (final int c : counts)
 			{
 				sb.append('\t');
 				sb.append(IJ.d2s(c / factor, 1));
 			}
 		}
 		else
-		{
 			for (int c = counts.length; c-- > 0;)
-			{
 				sb.append("\t-");
-			}
-		}
 	}
 
 	/**
 	 * Saves the matches and the false positives/negatives to file
-	 * 
+	 *
 	 * @param d
 	 * @param matches
 	 * @param falsePositives
@@ -1253,8 +1193,8 @@ public class MatchPlugin implements PlugIn
 		if (matches.isEmpty() && falsePositives.isEmpty() && falseNegatives.isEmpty())
 			return;
 
-		String[] path = Utils.decodePath(filename);
-		OpenDialog chooser = new OpenDialog("matches_file", path[0], path[1]);
+		final String[] path = Utils.decodePath(filename);
+		final OpenDialog chooser = new OpenDialog("matches_file", path[0], path[1]);
 		if (chooser.getFileName() == null)
 			return;
 
@@ -1263,10 +1203,10 @@ public class MatchPlugin implements PlugIn
 		OutputStreamWriter out = null;
 		try
 		{
-			FileOutputStream fos = new FileOutputStream(filename);
+			final FileOutputStream fos = new FileOutputStream(filename);
 			out = new OutputStreamWriter(fos, "UTF-8");
 
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			final String newLine = System.getProperty("line.separator");
 			sb.append("# Image 1   = ").append(t1).append(newLine);
 			sb.append("# Image 2   = ").append(t2).append(newLine);
@@ -1283,19 +1223,19 @@ public class MatchPlugin implements PlugIn
 			sb.append("# F-score   = ").append(Utils.rounded(result.getFScore(1.0), 4)).append(newLine);
 			sb.append("# X1\tY1\tV1\tX2\tY2\tV2").append(newLine);
 
-			Rounder r = RounderFactory.create(4);
+			final Rounder r = RounderFactory.create(4);
 
 			out.write(sb.toString());
 
-			for (PointPair pair : matches)
+			for (final PointPair pair : matches)
 			{
-				Coordinate c1 = pair.getPoint1();
-				Coordinate c2 = pair.getPoint2();
+				final Coordinate c1 = pair.getPoint1();
+				final Coordinate c2 = pair.getPoint2();
 				float v1 = 0, v2 = 0;
 				if (pair.getPoint1() instanceof TimeValuedPoint)
 				{
-					TimeValuedPoint p1 = (TimeValuedPoint) c1;
-					TimeValuedPoint p2 = (TimeValuedPoint) c2;
+					final TimeValuedPoint p1 = (TimeValuedPoint) c1;
+					final TimeValuedPoint p2 = (TimeValuedPoint) c2;
 					v1 = p1.getValue(); // Actual
 					v2 = p2.getValue(); // Predicted
 				}
@@ -1303,53 +1243,51 @@ public class MatchPlugin implements PlugIn
 						r.round(c2.getX()), r.round(c2.getY()), r.round(v2), newLine));
 			}
 			// Actual
-			for (Coordinate c : falseNegatives)
+			for (final Coordinate c : falseNegatives)
 			{
 				float v1 = 0;
 				if (c instanceof TimeValuedPoint)
 				{
-					TimeValuedPoint p = (TimeValuedPoint) c;
+					final TimeValuedPoint p = (TimeValuedPoint) c;
 					v1 = p.getValue();
 				}
 				out.write(String.format("%s\t%s\t%.0f\t0\t0\t0%s", r.round(c.getX()), r.round(c.getY()), r.round(v1),
 						newLine));
 			}
 			// Predicted
-			for (Coordinate c : falsePositives)
+			for (final Coordinate c : falsePositives)
 			{
 				float v1 = 0;
 				if (c instanceof TimeValuedPoint)
 				{
-					TimeValuedPoint p = (TimeValuedPoint) c;
+					final TimeValuedPoint p = (TimeValuedPoint) c;
 					v1 = p.getValue();
 				}
 				out.write(String.format("0\t0\t0\t%s\t%s\t%.0f%s", r.round(c.getX()), r.round(c.getY()), r.round(v1),
 						newLine));
 			}
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			IJ.log("Unable to save the matches to file: " + e.getMessage());
 		}
 		finally
 		{
 			if (out != null)
-			{
 				try
 				{
 					out.close();
 				}
-				catch (IOException e)
+				catch (final IOException e)
 				{
 					// Ignore
 				}
-			}
 		}
 	}
 
 	/**
 	 * Build a table showing the matched pairs and unmatched points
-	 * 
+	 *
 	 * @param title1
 	 *            - Actual
 	 * @param title2
@@ -1366,27 +1304,18 @@ public class MatchPlugin implements PlugIn
 		// Show a result table
 		String header = "Image 1\tId\tX\tY\tSlice\tImage 2\tId\tX\tY\tSlice\tDistance";
 		if (findFociImageIndex > 0)
-		{
 			header += "\tImage " + findFociImageIndex + ": " + findFociResult[findFociResultChoiceIndex];
-		}
 		if (!java.awt.GraphicsEnvironment.isHeadless())
 		{
 			if (matchedWindow == null || !matchedWindow.isShowing())
-			{
 				matchedWindow = new TextWindow(TITLE + " Matched", header, "", 800, 300);
-			}
 			else
-			{
 				Utils.refreshHeadings(matchedWindow, header, true);
-			}
 		}
-		else
+		else if (writeMatchedHeader)
 		{
-			if (writeMatchedHeader)
-			{
-				writeMatchedHeader = false;
-				IJ.log(header);
-			}
+			writeMatchedHeader = false;
+			IJ.log(header);
 		}
 
 		Collections.sort(matches, new Comparator<PointPair>()
@@ -1394,26 +1323,26 @@ public class MatchPlugin implements PlugIn
 			@Override
 			public int compare(PointPair o1, PointPair o2)
 			{
-				TimeValuedPoint p1 = (TimeValuedPoint) o1.getPoint1();
-				TimeValuedPoint p2 = (TimeValuedPoint) o2.getPoint1();
+				final TimeValuedPoint p1 = (TimeValuedPoint) o1.getPoint1();
+				final TimeValuedPoint p2 = (TimeValuedPoint) o2.getPoint1();
 				return (p1.getTime() < p2.getTime()) ? -1 : 1;
 			}
 		});
 
-		for (PointPair pair : matches)
+		for (final PointPair pair : matches)
 		{
 			int value = -1;
 			if (findFociImageIndex > 0)
 			{
-				TimeValuedPoint point = (TimeValuedPoint) ((findFociImageIndex == 1) ? pair.getPoint1()
+				final TimeValuedPoint point = (TimeValuedPoint) ((findFociImageIndex == 1) ? pair.getPoint1()
 						: pair.getPoint2());
 				value = (int) point.value;
 			}
 			addMatchedPair(pair.getPoint1(), pair.getPoint2(), pair.getXYZDistance(), value);
 		}
 
-		TimeValuedPoint[] actualPoints = extractValuedPoints(falseNegatives);
-		TimeValuedPoint[] predictedPoints = extractValuedPoints(falsePositives);
+		final TimeValuedPoint[] actualPoints = extractValuedPoints(falseNegatives);
+		final TimeValuedPoint[] predictedPoints = extractValuedPoints(falsePositives);
 
 		Arrays.sort(actualPoints, new Comparator<TimeValuedPoint>()
 		{
@@ -1432,22 +1361,22 @@ public class MatchPlugin implements PlugIn
 			}
 		});
 
-		for (TimeValuedPoint point : actualPoints)
+		for (final TimeValuedPoint point : actualPoints)
 		{
-			int value = (findFociImageIndex == 1) ? (int) point.value : -1;
+			final int value = (findFociImageIndex == 1) ? (int) point.value : -1;
 			addMatchedPair(point, null, -1, value);
 		}
 
-		for (TimeValuedPoint point : predictedPoints)
+		for (final TimeValuedPoint point : predictedPoints)
 		{
-			int value = (findFociImageIndex == 2) ? (int) point.value : -1;
+			final int value = (findFociImageIndex == 2) ? (int) point.value : -1;
 			addMatchedPair(null, point, -1, value);
 		}
 	}
 
 	private void addMatchedPair(Coordinate point1, Coordinate point2, double xyzDistance, int value)
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		addPoint(sb, t1, point1);
 		addPoint(sb, t2, point2);
 		if ((xyzDistance > -1))
@@ -1457,21 +1386,17 @@ public class MatchPlugin implements PlugIn
 		if ((value > -1))
 			sb.append('\t').append(value);
 		if (!java.awt.GraphicsEnvironment.isHeadless())
-		{
 			matchedWindow.append(sb.toString());
-		}
 		else
-		{
 			IJ.log(sb.toString());
-		}
 	}
 
 	private void addPoint(StringBuilder sb, String title, Coordinate point)
 	{
 		if (point != null)
 		{
-			TimeValuedPoint p = (TimeValuedPoint) point;
-			Rounder r = RounderFactory.create(4);
+			final TimeValuedPoint p = (TimeValuedPoint) point;
+			final Rounder r = RounderFactory.create(4);
 			//@formatter:off
 			sb.append(title)
     			.append('\t').append(p.getTime())
@@ -1483,16 +1408,14 @@ public class MatchPlugin implements PlugIn
 			//@formatter:on
 		}
 		else
-		{
 			sb.append("-\t-\t-\t-\t-\t");
-		}
 	}
 
 	private void addIntensityFromFindFoci(List<PointPair> matches, List<Coordinate> fP, List<Coordinate> fN)
 	{
 		if (findFociImageIndex == 0)
 			return;
-		ArrayList<FindFociResult> resultsArray = FindFoci.getResults();
+		final ArrayList<FindFociResult> resultsArray = FindFoci.getResults();
 
 		// Check the arrays are the correct size
 		if (resultsArray.size() != ((findFociImageIndex == 1) ? actualPoints.length : predictedPoints.length))
@@ -1501,16 +1424,14 @@ public class MatchPlugin implements PlugIn
 			return;
 		}
 
-		for (PointPair pair : matches)
+		for (final PointPair pair : matches)
 		{
-			TimeValuedPoint point = (TimeValuedPoint) ((findFociImageIndex == 1) ? pair.getPoint1() : pair.getPoint2());
+			final TimeValuedPoint point = (TimeValuedPoint) ((findFociImageIndex == 1) ? pair.getPoint1() : pair.getPoint2());
 			point.value = getValue(resultsArray.get(point.time - 1));
 		}
-		TimeValuedPoint[] points = extractValuedPoints((findFociImageIndex == 1) ? fN : fP);
-		for (TimeValuedPoint point : points)
-		{
+		final TimeValuedPoint[] points = extractValuedPoints((findFociImageIndex == 1) ? fN : fP);
+		for (final TimeValuedPoint point : points)
 			point.value = getValue(resultsArray.get(point.time - 1));
-		}
 	}
 
 	private float getValue(FindFociResult result)

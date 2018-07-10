@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -52,7 +52,7 @@ public class MaskObjectDimensions implements PlugInFilter
 {
 	public static final String TITLE = "Mask Object Dimensions";
 
-	private int flags = DOES_16 + DOES_8G;
+	private final int flags = DOES_16 + DOES_8G;
 	private ImagePlus imp;
 
 	private static String[] sortMethods = new String[] { "Value", "Area", "CoM" };
@@ -106,7 +106,7 @@ public class MaskObjectDimensions implements PlugInFilter
 			this.n = n2;
 
 			// Merge the values
-			int[] newValues = new int[this.values.length + that.values.length];
+			final int[] newValues = new int[this.values.length + that.values.length];
 			System.arraycopy(this.values, 0, newValues, 0, this.values.length);
 			System.arraycopy(that.values, 0, newValues, this.values.length, that.values.length);
 			this.values = newValues;
@@ -139,7 +139,7 @@ public class MaskObjectDimensions implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
@@ -160,13 +160,13 @@ public class MaskObjectDimensions implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus,
 	 * java.lang.String, ij.plugin.filter.PlugInFilterRunner)
 	 */
 	private boolean showDialog()
 	{
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage(
 				"For each object defined with a unique pixel value,\ncompute the dimensions along the axes of the inertia tensor");
@@ -195,7 +195,7 @@ public class MaskObjectDimensions implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
@@ -209,14 +209,14 @@ public class MaskObjectDimensions implements PlugInFilter
 		final int maxy = dimensions[1];
 		final int maxz = dimensions[3];
 
-		int[] histogram = new int[(imp.getBitDepth() == 8) ? 256 : 65536];
-		int size = maxx * maxy;
-		int[] image = new int[size * maxz];
-		ImageStack stack = imp.getImageStack();
+		final int[] histogram = new int[(imp.getBitDepth() == 8) ? 256 : 65536];
+		final int size = maxx * maxy;
+		final int[] image = new int[size * maxz];
+		final ImageStack stack = imp.getImageStack();
 		for (int slice = 1, j = 0; slice <= maxz; slice++)
 		{
 			final int index = imp.getStackIndex(channel, slice, frame);
-			ImageProcessor ip = stack.getProcessor(index);
+			final ImageProcessor ip = stack.getProcessor(index);
 			for (int i = 0; i < size; i++, j++)
 			{
 				final int value = ip.get(i);
@@ -267,7 +267,6 @@ public class MaskObjectDimensions implements PlugInFilter
 
 		// Iteratively join closest objects
 		if (mergeDistance > 0)
-		{
 			while (true)
 			{
 				// Find closest pairs
@@ -283,7 +282,7 @@ public class MaskObjectDimensions implements PlugInFilter
 						// Skip empty objects
 						if (objects[j].n == 0)
 							continue;
-						double d2 = objects[i].distance2(objects[j]);
+						final double d2 = objects[i].distance2(objects[j]);
 						if (d > d2)
 						{
 							d = d2;
@@ -319,10 +318,9 @@ public class MaskObjectDimensions implements PlugInFilter
 					if (image[i] == oldValue)
 						image[i] = newValue;
 			}
-		}
 
 		// Remove merged objects and map the value to the new index
-		int[] objectMap = new int[max + 1];
+		final int[] objectMap = new int[max + 1];
 		int newLength = 0;
 		for (int i = 0; i < objects.length; i++)
 		{
@@ -335,23 +333,20 @@ public class MaskObjectDimensions implements PlugInFilter
 		objects = Arrays.copyOf(objects, newLength);
 
 		// Output lines
-		Overlay overlay = (showOverlay) ? new Overlay() : null;
+		final Overlay overlay = (showOverlay) ? new Overlay() : null;
 
 		// Compute the bounding box for each object. This increases the speed of processing later
-		for (MaskObject o : objects)
+		for (final MaskObject o : objects)
 			o.initialiseBounds();
 		for (int z = 0, i = 0; z < maxz; z++)
 			for (int y = 0; y < maxy; y++)
 				for (int x = 0; x < maxx; x++, i++)
 					if (image[i] != 0)
-					{
 						objects[objectMap[image[i]]].updateBounds(x, y, z);
-					}
 
 		// Sort the objects
 		Comparator<MaskObject> c = null;
 		if (sortMethod == SORT_COM)
-		{
 			c = new Comparator<MaskObjectDimensions.MaskObject>()
 			{
 				@Override
@@ -372,9 +367,7 @@ public class MaskObjectDimensions implements PlugInFilter
 					return 0;
 				}
 			};
-		}
 		else if (sortMethod == SORT_AREA)
-		{
 			c = new Comparator<MaskObjectDimensions.MaskObject>()
 			{
 				@Override
@@ -387,7 +380,6 @@ public class MaskObjectDimensions implements PlugInFilter
 					return 0;
 				}
 			};
-		}
 		else
 		// if (sortMethod == SORT_VALUE)
 		{
@@ -397,7 +389,7 @@ public class MaskObjectDimensions implements PlugInFilter
 			Arrays.sort(objects, c);
 
 		// Get the calibrated units
-		Calibration cal = imp.getCalibration();
+		final Calibration cal = imp.getCalibration();
 		String units = cal.getUnits();
 		final double calx, caly, calz;
 		if (cal.getXUnit().equals(cal.getYUnit()) && cal.getXUnit().equals(cal.getZUnit()))
@@ -413,19 +405,19 @@ public class MaskObjectDimensions implements PlugInFilter
 		}
 
 		// For each object
-		for (MaskObject object : objects)
+		for (final MaskObject object : objects)
 		{
 			final int objectValue = object.getValue();
 
 			// Set bounds
 			final int[] mind = object.lower;
 			final int[] maxd = object.upper.clone();
-			// Increase the upper bounds by 1 to allow < and >= range checks 
+			// Increase the upper bounds by 1 to allow < and >= range checks
 			for (int i = 0; i < 3; i++)
 				maxd[i] += 1;
 
 			// Calculate the inertia tensor
-			double[][] tensor = new double[3][3];
+			final double[][] tensor = new double[3][3];
 
 			// Remove 0.5 pixel offset for convenience
 			final double cx = object.cx - 0.5;
@@ -451,24 +443,24 @@ public class MaskObjectDimensions implements PlugInFilter
 							tensor[2][2] += dx2 + dy2;
 						}
 
-			// Inertia tensor is symmetric    
+			// Inertia tensor is symmetric
 			tensor[1][0] = tensor[0][1];
 			tensor[2][0] = tensor[0][2];
 			tensor[2][1] = tensor[1][2];
 
 			// Eigen decompose
-			double[] eigenValues = new double[3];
-			double[][] eigenVectors = new double[3][3];
+			final double[] eigenValues = new double[3];
+			final double[][] eigenVectors = new double[3][3];
 
-			BlockRealMatrix matrix = new BlockRealMatrix(3, 3);
+			final BlockRealMatrix matrix = new BlockRealMatrix(3, 3);
 			for (int i = 0; i < 3; i++)
 				matrix.setColumn(i, tensor[i]);
 
-			EigenDecomposition eigen = new EigenDecomposition(matrix);
+			final EigenDecomposition eigen = new EigenDecomposition(matrix);
 			for (int i = 0; i < 3; i++)
 			{
 				eigenValues[i] = eigen.getRealEigenvalue(i);
-				RealVector v = eigen.getEigenvector(i);
+				final RealVector v = eigen.getEigenvector(i);
 				for (int j = 0; j < 3; j++)
 					eigenVectors[i][j] = v.getEntry(j);
 			}
@@ -477,13 +469,13 @@ public class MaskObjectDimensions implements PlugInFilter
 			eigen_sort3(eigenValues, eigenVectors);
 
 			// Compute the distance along each axis that is within the object.
-			// Do this by constructing a line across the entire image in pixel increments, 
+			// Do this by constructing a line across the entire image in pixel increments,
 			// then checking the max and min pixel that are the object
 
 			// TODO - This currently works for blobs where the COM is in the centre.
-			// It does not work for objects that are joined that do not touch. It could be 
+			// It does not work for objects that are joined that do not touch. It could be
 			// made far better by finding the bounding rectangle of an object and then computing
-			// the longest line that can be drawn across the bounding rectangle using the 
+			// the longest line that can be drawn across the bounding rectangle using the
 			// tensor axes.
 
 			final double[] com = new double[] { cx + 0.5, cy + 0.5, cz + 0.5 };
@@ -493,7 +485,7 @@ public class MaskObjectDimensions implements PlugInFilter
 			//	System.out.printf("Object %2d Axis %d   : %8.3f %8.3f %8.3f  == %12g\n", object, i + 1, axes[i][0],
 			//			axes[i][1], axes[i][2], values[i]);
 
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			sb.append(imp.getTitle());
 			sb.append('\t').append(units);
 			Arrays.sort(object.values);
@@ -518,11 +510,11 @@ public class MaskObjectDimensions implements PlugInFilter
 						longest = v;
 					s += direction[i];
 				}
-				double[] direction1 = com.clone();
-				double[] direction2 = com.clone();
+				final double[] direction1 = com.clone();
+				final double[] direction2 = com.clone();
 				if (s != 0)
 				{
-					// Assuming unit vector then moving in increments of 1 should never skip pixels 
+					// Assuming unit vector then moving in increments of 1 should never skip pixels
 					// in any dimension. Normalise to 1 in the longest dimension should still be OK.
 					for (int i = 0; i < 3; i++)
 					{
@@ -531,12 +523,12 @@ public class MaskObjectDimensions implements PlugInFilter
 							direction[i] = 1;
 					}
 
-					double[] pos = new double[3];
+					final double[] pos = new double[3];
 
 					// Move one way, then the other
-					for (int dir : new int[] { -1, 1 })
+					for (final int dir : new int[] { -1, 1 })
 					{
-						double[] tmp = (dir == 1) ? direction1 : direction2;
+						final double[] tmp = (dir == 1) ? direction1 : direction2;
 						moveDirection: for (int n = dir;; n += dir)
 						{
 							for (int i = 0; i < 3; i++)
@@ -590,7 +582,7 @@ public class MaskObjectDimensions implements PlugInFilter
 				// Draw lines on the image
 				if (showOverlay)
 				{
-					Line roi = new Line(direction1[0], direction1[1], direction2[0], direction2[1]);
+					final Line roi = new Line(direction1[0], direction1[1], direction2[0], direction2[1]);
 					overlay.add(roi);
 				}
 			}
@@ -605,22 +597,18 @@ public class MaskObjectDimensions implements PlugInFilter
 	private void createResultsWindow()
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
-		{
 			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300);
-		}
 	}
 
 	private void clearResultsWindow()
 	{
 		if (resultsWindow != null && resultsWindow.isShowing())
-		{
 			resultsWindow.getTextPanel().clear();
-		}
 	}
 
 	private String createResultsHeader()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Image");
 		sb.append("\tUnits");
 		sb.append("\tObject");
@@ -645,7 +633,7 @@ public class MaskObjectDimensions implements PlugInFilter
 
 	/**
 	 * Vector sorting routine for 3x3 set of vectors
-	 * 
+	 *
 	 * @param w
 	 *            Vector weights
 	 * @param v

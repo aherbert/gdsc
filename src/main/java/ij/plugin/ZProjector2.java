@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -39,7 +39,7 @@ import ij.process.ShortProcessor;
 
 /**
  * Extend the ZProjector to support mode intensity projection.
- * 
+ *
  * Note: This class extends a copy of the default ImageJ ZProjector so that certain methods and properties can be
  * changed to protected from the private/default scope. Extending a copy allows easier update when the super class
  * changes.
@@ -61,21 +61,19 @@ public class ZProjector2 extends ZProjectorCopy
 			ImageProcessor ip = projImage.getProcessor();
 			if (ip instanceof ByteProcessor)
 			{
-				// We do not want the standard 0-255 range for ByteProcessor but the min/max range 
+				// We do not want the standard 0-255 range for ByteProcessor but the min/max range
 				for (int c = 1; c <= projImage.getNChannels(); c++)
 				{
-					int index = projImage.getStackIndex(c, 1, 1);
+					final int index = projImage.getStackIndex(c, 1, 1);
 					projImage.setSliceWithoutUpdate(index);
 					ip = projImage.getProcessor();
-					ImageStatistics stats = ImageStatistics.getStatistics(ip, Measurements.MIN_MAX, null);
+					final ImageStatistics stats = ImageStatistics.getStatistics(ip, Measurements.MIN_MAX, null);
 					ip.setMinAndMax(stats.min, stats.max);
 				}
 				projImage.setSliceWithoutUpdate(projImage.getStackIndex(1, 1, 1));
 			}
 			else
-			{
 				projImage.resetDisplayRange();
-			}
 			projImage.updateAndDraw();
 		}
 	}
@@ -83,7 +81,7 @@ public class ZProjector2 extends ZProjectorCopy
 	@Override
 	protected GenericDialog buildControlDialog(int start, int stop)
 	{
-		GenericDialog gd = new GenericDialog("ZProjection", IJ.getInstance());
+		final GenericDialog gd = new GenericDialog("ZProjection", IJ.getInstance());
 		gd.addNumericField("Start slice:", startSlice, 0/* digits */);
 		gd.addNumericField("Stop slice:", stopSlice, 0/* digits */);
 		gd.addChoice("Projection type", METHODS, METHODS[method]);
@@ -152,7 +150,7 @@ public class ZProjector2 extends ZProjectorCopy
 	private ImagePlus doProjection(String name, Projector p)
 	{
 		IJ.showStatus("Calculating " + name + "...");
-		ImageStack stack = imp.getStack();
+		final ImageStack stack = imp.getStack();
 		// Check not an RGB stack
 		int ptype;
 		if (stack.getProcessor(1) instanceof ByteProcessor)
@@ -166,16 +164,16 @@ public class ZProjector2 extends ZProjectorCopy
 			IJ.error("Z Project", "Non-RGB stack required");
 			return null;
 		}
-		ImageProcessor[] slices = new ImageProcessor[sliceCount];
+		final ImageProcessor[] slices = new ImageProcessor[sliceCount];
 		int index = 0;
 		for (int slice = startSlice; slice <= stopSlice; slice += increment)
 			slices[index++] = stack.getProcessor(slice);
 		ImageProcessor ip2 = slices[0].duplicate();
 		ip2 = ip2.convertToFloat();
-		float[] values = new float[sliceCount];
-		int width = ip2.getWidth();
-		int height = ip2.getHeight();
-		int inc = Math.max(height / 30, 1);
+		final float[] values = new float[sliceCount];
+		final int width = ip2.getWidth();
+		final int height = ip2.getHeight();
+		final int inc = Math.max(height / 30, 1);
 		for (int y = 0, k = 0; y < height; y++)
 		{
 			if (y % inc == 0)
@@ -189,20 +187,20 @@ public class ZProjector2 extends ZProjectorCopy
 				ip2.setf(k, p.value(values));
 			}
 		}
-		ImagePlus projImage = makeOutputImage(imp, (FloatProcessor) ip2, ptype);
+		final ImagePlus projImage = makeOutputImage(imp, (FloatProcessor) ip2, ptype);
 		IJ.showProgress(1, 1);
 		return projImage;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.ZProjectorCopy#doMedianProjection()
 	 */
 	@Override
 	protected ImagePlus doMedianProjection()
 	{
-		// Override to change the method for accessing pixel values to getf() 
+		// Override to change the method for accessing pixel values to getf()
 		return doProjection("median", new Projector()
 		{
 			@Override
@@ -227,9 +225,9 @@ public class ZProjector2 extends ZProjectorCopy
 
 	/**
 	 * Return the mode of the array. Return the mode with the highest value in the event of a tie.
-	 * 
+	 *
 	 * NaN values are ignored. The mode may be NaN only if the array is zero length or contains only NaN.
-	 * 
+	 *
 	 * @param a
 	 *            Array
 	 * @param ignoreBelowZero
@@ -246,9 +244,9 @@ public class ZProjector2 extends ZProjectorCopy
 
 	/**
 	 * Return the mode of the array. Return the mode with the highest value in the event of a tie.
-	 * 
+	 *
 	 * NaN values are ignored. The mode may be NaN only if the array is zero length or contains only NaN.
-	 * 
+	 *
 	 * @param a
 	 *            Array
 	 * @param ignoreBelowZero
@@ -269,18 +267,14 @@ public class ZProjector2 extends ZProjectorCopy
 			// Ignore NaN values
 			int i = a.length;
 			while (i-- > 0)
-			{
 				if (!Float.isNaN(a[i]))
 					break;
-			}
 			length = i + 1;
 			if (length == 0)
 				return Float.NaN;
 		}
 		else
-		{
 			length = a.length;
-		}
 
 		int modeCount = 0;
 		float mode = 0;
@@ -308,9 +302,7 @@ public class ZProjector2 extends ZProjectorCopy
 				currentCount = 1;
 			}
 			else
-			{
 				currentCount++;
-			}
 			currentValue = a[i];
 		}
 		// Do the final check

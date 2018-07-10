@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -82,7 +82,7 @@ public class CDAWorker implements Runnable
 
 		twinImageShifter.run(x, y);
 
-		IntersectResult intersectResult = calculateResults(twinImageShifter.getResultStack(),
+		final IntersectResult intersectResult = calculateResults(twinImageShifter.getResultStack(),
 				twinImageShifter.getResultStack2(), imageStack2, roiStack2);
 
 		final double m1 = intersectResult.sum1 / denom1;
@@ -108,7 +108,6 @@ public class CDAWorker implements Runnable
 
 			int n = 0;
 			for (int i = i1.length; i-- > 0;)
-			{
 				if ((m1[i] != 0) && (m2[i] != 0))
 				{
 					// ImageJ stores unsigned values
@@ -116,7 +115,6 @@ public class CDAWorker implements Runnable
 					ii2[n] = i2[i] & 0xffff;
 					n++;
 				}
-			}
 			c.add(ii1, ii2, n);
 		}
 
@@ -125,7 +123,7 @@ public class CDAWorker implements Runnable
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
@@ -137,13 +135,13 @@ public class CDAWorker implements Runnable
 		{
 			while (!finished)
 			{
-				CDAJob job = jobs.take();
+				final CDAJob job = jobs.take();
 				if (job == null || job.n < 0 || finished)
 					break;
 				run(job.n, job.x, job.y);
 			}
 		}
-		catch (InterruptedException e)
+		catch (final InterruptedException e)
 		{
 			System.out.println(e.toString());
 			throw new RuntimeException(e);

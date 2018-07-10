@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -79,7 +79,7 @@ public class SpotDensity implements PlugIn
 		}
 	}
 
-	private static ArrayList<PC> results = new ArrayList<PC>();
+	private static ArrayList<PC> results = new ArrayList<>();
 
 	private ImagePlus imp;
 
@@ -108,7 +108,7 @@ public class SpotDensity implements PlugIn
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
 		// List the foci results
-		String[] names = FindFoci.getResultsNames();
+		final String[] names = FindFoci.getResultsNames();
 		if (names == null || names.length == 0)
 		{
 			IJ.error(TITLE, "Spots must be stored in memory using the " + FindFoci.TITLE + " plugin");
@@ -121,7 +121,7 @@ public class SpotDensity implements PlugIn
 			roi = imp.getRoi();
 
 		// Build a list of the open images for use as a mask
-		String[] maskImageList = buildMaskList(roi);
+		final String[] maskImageList = buildMaskList(roi);
 
 		if (maskImageList.length == 0)
 		{
@@ -129,7 +129,7 @@ public class SpotDensity implements PlugIn
 			return;
 		}
 
-		GenericDialog gd = new GenericDialog(TITLE);
+		final GenericDialog gd = new GenericDialog(TITLE);
 
 		gd.addMessage("Analyses spots within a mask/ROI region\nand computes density and closest distances.");
 
@@ -150,13 +150,13 @@ public class SpotDensity implements PlugIn
 		distance = gd.getNextNumber();
 		interval = gd.getNextNumber();
 
-		FloatProcessor fp = createDistanceMap(imp, maskImage);
+		final FloatProcessor fp = createDistanceMap(imp, maskImage);
 		if (fp == null)
 			return;
 
 		// Get the foci
-		Foci[] foci1 = getFoci(resultsName1);
-		Foci[] foci2 = getFoci(resultsName2);
+		final Foci[] foci1 = getFoci(resultsName1);
+		final Foci[] foci2 = getFoci(resultsName2);
 
 		if (foci1 == null || foci2 == null)
 			return;
@@ -166,7 +166,7 @@ public class SpotDensity implements PlugIn
 
 	private String[] buildMaskList(Roi roi)
 	{
-		ArrayList<String> newImageList = new ArrayList<String>();
+		final ArrayList<String> newImageList = new ArrayList<>();
 		if (roi != null && roi.isArea())
 			newImageList.add("[ROI]");
 		newImageList.addAll(Arrays.asList(Utils.getImageList(Utils.GREY_8_16, null)));
@@ -175,13 +175,13 @@ public class SpotDensity implements PlugIn
 
 	private FloatProcessor createDistanceMap(ImagePlus imp, String maskImage)
 	{
-		ImagePlus maskImp = WindowManager.getImage(maskImage);
+		final ImagePlus maskImp = WindowManager.getImage(maskImage);
 
 		ByteProcessor bp = null;
 		if (maskImp == null)
 		{
 			// Build a mask image using the input image ROI
-			Roi roi = (imp == null) ? null : imp.getRoi();
+			final Roi roi = (imp == null) ? null : imp.getRoi();
 			if (roi == null || !roi.isArea())
 			{
 				IJ.showMessage("Error", "No region defined (use an area ROI or an input mask)");
@@ -194,7 +194,7 @@ public class SpotDensity implements PlugIn
 		}
 		else
 		{
-			ImageProcessor ip = maskImp.getProcessor();
+			final ImageProcessor ip = maskImp.getProcessor();
 			bp = new ByteProcessor(maskImp.getWidth(), maskImp.getHeight());
 			for (int i = 0; i < bp.getPixelCount(); i++)
 				if (ip.get(i) != 0)
@@ -204,11 +204,11 @@ public class SpotDensity implements PlugIn
 		//		Utils.display("Mask", bp);
 
 		// Create a distance map from the mask
-		EDM edm = new EDM();
-		FloatProcessor map = edm.makeFloatEDM(bp, 0, true);
+		final EDM edm = new EDM();
+		final FloatProcessor map = edm.makeFloatEDM(bp, 0, true);
 
 		//		Utils.display("Map", map);
-		//		
+		//
 		//		float[] fmap = (float[])map.getPixels();
 		//		byte[] mask = new byte[fmap.length];
 		//		for (int i = 0; i < mask.length; i++)
@@ -221,21 +221,21 @@ public class SpotDensity implements PlugIn
 
 	private Foci[] getFoci(String resultsName)
 	{
-		FindFociMemoryResults memoryResults = FindFoci.getResults(resultsName);
+		final FindFociMemoryResults memoryResults = FindFoci.getResults(resultsName);
 		if (memoryResults == null)
 		{
 			IJ.showMessage("Error", "No foci with the name " + resultsName);
 			return null;
 		}
-		ArrayList<FindFociResult> results = memoryResults.results;
+		final ArrayList<FindFociResult> results = memoryResults.results;
 		if (results.size() == 0)
 		{
 			IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
 			return null;
 		}
-		Foci[] foci = new Foci[results.size()];
+		final Foci[] foci = new Foci[results.size()];
 		int i = 0;
-		for (FindFociResult result : results)
+		for (final FindFociResult result : results)
 			foci[i++] = new Foci(i, result.x, result.y);
 		return foci;
 	}
@@ -243,7 +243,7 @@ public class SpotDensity implements PlugIn
 	/**
 	 * For all foci in set 1, compare to set 2 and output a histogram of the average density around each foci (pair
 	 * correlation) and the minimum distance to another foci.
-	 * 
+	 *
 	 * @param foci1
 	 * @param foci2
 	 * @param identical
@@ -253,21 +253,19 @@ public class SpotDensity implements PlugIn
 	{
 		final int nBins = (int) (distance / interval) + 1;
 		final double maxDistance2 = distance * distance;
-		int[] H = new int[nBins];
-		int[] H2 = new int[nBins];
+		final int[] H = new int[nBins];
+		final int[] H2 = new int[nBins];
 
-		double[] distances = new double[foci1.length];
+		final double[] distances = new double[foci1.length];
 		int count = 0;
 
-		// Update the second set to foci inside the mask 
+		// Update the second set to foci inside the mask
 		int N2 = 0;
 		for (int j = foci2.length; j-- > 0;)
 		{
 			final Foci m2 = foci2[j];
 			if (map.getPixelValue(m2.x, m2.y) != 0)
-			{
 				foci2[N2++] = m2;
-			}
 		}
 
 		int N = 0;
@@ -289,13 +287,9 @@ public class SpotDensity implements PlugIn
 
 				final double d2 = m.distance2(m2);
 				if (d2 < maxDistance2)
-				{
 					H[(int) (Math.sqrt(d2) / interval)]++;
-				}
 				if (d2 < min)
-				{
 					min = d2;
-				}
 			}
 
 			if (min != Double.POSITIVE_INFINITY)
@@ -311,13 +305,13 @@ public class SpotDensity implements PlugIn
 		for (int i = 0; i <= nBins; i++)
 			r[i] = i * interval;
 		double[] pcf = new double[nBins];
-		double[] dMin = new double[nBins];
+		final double[] dMin = new double[nBins];
 		if (N > 0)
 		{
 			final double N_pi = N * Math.PI;
 			for (int i = 0; i < nBins; i++)
 			{
-				// Pair-correlation is the count at the given distance divided by N (the number of items analysed) 
+				// Pair-correlation is the count at the given distance divided by N (the number of items analysed)
 				// and the area at distance ri:
 				// H[i] / (N x (pi x (r_i+1)^2 - pi x r_i^2))
 				pcf[i] = H[i] / (N_pi * (r[i + 1] * r[i + 1] - r[i] * r[i]));
@@ -328,8 +322,8 @@ public class SpotDensity implements PlugIn
 
 		// Truncate the unused r for the plot
 		r = Arrays.copyOf(r, nBins);
-		Plot plot1 = new Plot(TITLE + " Min Distance", "Distance (px)", "Frequency", r, dMin);
-		PlotWindow pw1 = Utils.display(TITLE + " Min Distance", plot1);
+		final Plot plot1 = new Plot(TITLE + " Min Distance", "Distance (px)", "Frequency", r, dMin);
+		final PlotWindow pw1 = Utils.display(TITLE + " Min Distance", plot1);
 
 		// The final bin may be empty if the correlation interval was a factor of the correlation distance
 		if (pcf[pcf.length - 1] == 0)
@@ -340,12 +334,12 @@ public class SpotDensity implements PlugIn
 
 		// Get the pixels in the entire mask
 		int area = 0;
-		float[] dMap = (float[]) map.getPixels();
+		final float[] dMap = (float[]) map.getPixels();
 		for (int i = dMap.length; i-- > 0;)
 			if (dMap[i] != 0)
 				area++;
 
-		double avDensity = (double) N2 / area;
+		final double avDensity = (double) N2 / area;
 
 		// Normalisation of the density chart to produce the pair correlation.
 		// Get the maximum response for the summary.
@@ -362,19 +356,19 @@ public class SpotDensity implements PlugIn
 		}
 
 		// Store the result
-		PC pc = new PC(N2, area, r, pcf);
+		final PC pc = new PC(N2, area, r, pcf);
 		results.add(pc);
 
 		// Display
-		PlotWindow pw2 = showPairCorrelation(pc);
+		final PlotWindow pw2 = showPairCorrelation(pc);
 
-		Point p = pw1.getLocation();
+		final Point p = pw1.getLocation();
 		p.y += pw1.getHeight();
 		pw2.setLocation(p);
 
 		// Table of results
 		createResultsWindow();
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(results.size());
 		sb.append('\t').append(foci1.length);
 		sb.append('\t').append(N);
@@ -397,9 +391,9 @@ public class SpotDensity implements PlugIn
 
 	private PlotWindow showPairCorrelation(PC pc)
 	{
-		double avDensity = (double) pc.n / pc.area;
-		String title = "Pair Correlation";
-		Plot plot2 = new Plot(TITLE + " " + title, "r (px)", "g(r)", pc.r, pc.pcf);
+		final double avDensity = (double) pc.n / pc.area;
+		final String title = "Pair Correlation";
+		final Plot plot2 = new Plot(TITLE + " " + title, "r (px)", "g(r)", pc.r, pc.pcf);
 		plot2.setColor(Color.red);
 		plot2.drawLine(pc.r[0], 1, pc.r[pc.r.length - 1], 1);
 		plot2.addLabel(0, 0, "Av.Density = " + IJ.d2s(avDensity, -3) + " px^-2");
@@ -421,28 +415,24 @@ public class SpotDensity implements PlugIn
 				{
 					TextPanel tp = null;
 					if (e.getSource() instanceof TextPanel)
-					{
 						tp = (TextPanel) e.getSource();
-					}
 					else if (e.getSource() instanceof Canvas &&
 							((Canvas) e.getSource()).getParent() instanceof TextPanel)
-					{
 						tp = (TextPanel) ((Canvas) e.getSource()).getParent();
-					}
 
-					int[] ids = new int[results.size()];
+					final int[] ids = new int[results.size()];
 					int count = 0;
 					for (int i = tp.getSelectionStart(); i <= tp.getSelectionEnd(); i++)
 					{
-						String line = tp.getLine(i);
+						final String line = tp.getLine(i);
 						try
 						{
-							String sid = line.substring(0, line.indexOf('\t'));
-							int id = Integer.parseInt(sid);
+							final String sid = line.substring(0, line.indexOf('\t'));
+							final int id = Integer.parseInt(sid);
 							if (id > 0 && id <= results.size())
 								ids[count++] = id;
 						}
-						catch (Exception ex)
+						catch (final Exception ex)
 						{
 							// Ignore for now
 						}
@@ -450,13 +440,13 @@ public class SpotDensity implements PlugIn
 
 					if (count > 2)
 					{
-						// Ask the user which curves to combine since we may want to ignore some 
+						// Ask the user which curves to combine since we may want to ignore some
 						// between start and end
-						GenericDialog gd = new GenericDialog(TITLE);
+						final GenericDialog gd = new GenericDialog(TITLE);
 						gd.addMessage("Select which curves to combine");
 
 						int count2 = 0;
-						int rowLimit = 20;
+						final int rowLimit = 20;
 						if (count <= rowLimit)
 						{
 							// Use checkboxes
@@ -472,26 +462,24 @@ public class SpotDensity implements PlugIn
 						else
 						{
 							// Use a text area
-							StringBuilder sb = new StringBuilder(Integer.toString(ids[0]));
+							final StringBuilder sb = new StringBuilder(Integer.toString(ids[0]));
 							for (int i = 1; i < count; i++)
 								sb.append("\n").append(ids[i]);
 							gd.addTextAreas(sb.toString(), null, rowLimit, 10);
 							gd.showDialog();
 							if (gd.wasCanceled())
 								return;
-							for (String token : gd.getNextText().split("[ \t\n\r]+"))
-							{
+							for (final String token : gd.getNextText().split("[ \t\n\r]+"))
 								try
 								{
-									int id = Integer.parseInt(token);
+									final int id = Integer.parseInt(token);
 									if (id > 0 && id <= results.size())
 										ids[count2++] = id;
 								}
-								catch (Exception ex)
+								catch (final Exception ex)
 								{
 									// Ignore for now
 								}
-							}
 						}
 						count = count2;
 					}
@@ -501,11 +489,11 @@ public class SpotDensity implements PlugIn
 
 					// Check all curves are the same size and build an average
 					PC pc = results.get(ids[0] - 1);
-					int length = pc.r.length;
+					final int length = pc.r.length;
 					int n = pc.n;
 					int area = pc.area;
-					double[] r = pc.r;
-					double[] pcf = pc.pcf.clone();
+					final double[] r = pc.r;
+					final double[] pcf = pc.pcf.clone();
 					for (int i = 1; i < count; i++)
 					{
 						pc = results.get(ids[i] - 1);
@@ -552,7 +540,7 @@ public class SpotDensity implements PlugIn
 
 	private String createResultsHeader()
 	{
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("ID");
 		sb.append("\tN1");
 		sb.append("\tN1_internal");

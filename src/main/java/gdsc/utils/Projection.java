@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -40,7 +40,7 @@ public class Projection implements PlugInFilter
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
 	@Override
@@ -49,22 +49,20 @@ public class Projection implements PlugInFilter
 		UsageTracker.recordPlugin(this.getClass(), arg);
 
 		if (imp == null || imp.getNSlices() == 1)
-		{
 			return DONE;
-		}
 		this.imp = imp;
 		return DOES_ALL;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
 	public void run(ImageProcessor inputProcessor)
 	{
-		ImageStack stack = imp.getStack();
+		final ImageStack stack = imp.getStack();
 
 		ImageProcessor ip1 = null;
 		ImageProcessor ip2 = null;
@@ -93,10 +91,8 @@ public class Projection implements PlugInFilter
 			// Check for maxima going backward
 			System.out.printf("%d < %d : ", n - 2, n - 1);
 			for (int i = ip2.getPixelCount(); i-- > 0;)
-			{
 				if (ip1.get(i) > ip2.get(i))
 					ip2.set(i, 0);
-			}
 		}
 
 		if (ip3 != null)
@@ -104,10 +100,8 @@ public class Projection implements PlugInFilter
 			// Check for maxima going forward
 			System.out.printf("%d > %d", n - 1, n);
 			for (int i = ip2.getPixelCount(); i-- > 0;)
-			{
 				if (ip3.get(i) > ip2.get(i))
 					ip2.set(i, 0);
-			}
 		}
 
 		System.out.printf("\n");

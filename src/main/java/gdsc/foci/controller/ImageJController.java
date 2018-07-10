@@ -1,7 +1,7 @@
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
- * 
+ *
  * Software for microscopy image analysis
  * %%
  * Copyright (C) 2011 - 2018 Alex Herbert
@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -50,7 +50,7 @@ public class ImageJController extends FindFociController
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#getImageCount()
 	 */
 	@Override
@@ -61,96 +61,90 @@ public class ImageJController extends FindFociController
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#updateImageList()
 	 */
 	@Override
 	public void updateImageList()
 	{
-		int noOfImages = WindowManager.getImageCount();
-		List<String> imageList = new ArrayList<String>(noOfImages);
-		for (int id : gdsc.core.ij.Utils.getIDList())
+		final int noOfImages = WindowManager.getImageCount();
+		final List<String> imageList = new ArrayList<>(noOfImages);
+		for (final int id : gdsc.core.ij.Utils.getIDList())
 		{
-			ImagePlus imp = WindowManager.getImage(id);
+			final ImagePlus imp = WindowManager.getImage(id);
 
 			// Image must be 8-bit/16-bit/32-bit
 			if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16 ||
 					imp.getType() == ImagePlus.GRAY32))
 			{
 				// Check it is not one the result images
-				String imageTitle = imp.getTitle();
+				final String imageTitle = imp.getTitle();
 				if (!imageTitle.endsWith(FindFoci.TITLE))
-				{
 					imageList.add(imageTitle);
-				}
 			}
 		}
 
 		model.setImageList(imageList);
 
 		// Get the selected image
-		String title = model.getSelectedImage();
-		ImagePlus imp = WindowManager.getImage(title);
+		final String title = model.getSelectedImage();
+		final ImagePlus imp = WindowManager.getImage(title);
 
 		model.setMaskImageList(FindFoci.buildMaskList(imp));
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#run()
 	 */
 	@Override
 	public void run()
 	{
 		// Get the selected image
-		String title = model.getSelectedImage();
-		ImagePlus imp = WindowManager.getImage(title);
+		final String title = model.getSelectedImage();
+		final ImagePlus imp = WindowManager.getImage(title);
 		if (null == imp)
-		{
 			return;
-		}
 
 		if (!FindFoci.isSupported(imp.getBitDepth()))
-		{
 			return;
-		}
 
 		// Set-up the FindFoci variables
-		String maskImage = model.getMaskImage();
-		int backgroundMethod = model.getBackgroundMethod();
-		double backgroundParameter = model.getBackgroundParameter();
-		String thresholdMethod = model.getThresholdMethod();
-		String statisticsMode = model.getStatisticsMode();
-		int searchMethod = model.getSearchMethod();
-		double searchParameter = model.getSearchParameter();
-		int minSize = model.getMinSize();
-		boolean minimumAboveSaddle = model.isMinimumAboveSaddle();
-		boolean connectedAboveSaddle = model.isConnectedAboveSaddle();
-		int peakMethod = model.getPeakMethod();
-		double peakParameter = model.getPeakParameter();
-		int sortMethod = model.getSortMethod();
-		int maxPeaks = model.getMaxPeaks();
-		int showMask = model.getShowMask();
-		boolean overlayMask = model.isOverlayMask();
-		boolean showTable = model.isShowTable();
-		boolean clearTable = model.isClearTable();
-		boolean markMaxima = model.isMarkMaxima();
-		boolean markROIMaxima = model.isMarkROIMaxima();
-		boolean markUsingOverlay = model.isMarkUsingOverlay();
-		boolean hideLabels = model.isHideLabels();
-		boolean showMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
-		boolean showLogMessages = model.isShowLogMessages();
-		boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
-		boolean saveResults = model.isSaveResults();
-		String resultsDirectory = model.getResultsDirectory();
-		boolean objectAnalysis = model.isObjectAnalysis();
-		boolean saveToMemory = model.isSaveToMemory();
-		boolean showObjectMask = model.isShowObjectMask();
-		double gaussianBlur = model.getGaussianBlur();
-		int centreMethod = model.getCentreMethod();
-		double centreParameter = model.getCentreParameter();
-		double fractionParameter = model.getFractionParameter();
+		final String maskImage = model.getMaskImage();
+		final int backgroundMethod = model.getBackgroundMethod();
+		final double backgroundParameter = model.getBackgroundParameter();
+		final String thresholdMethod = model.getThresholdMethod();
+		final String statisticsMode = model.getStatisticsMode();
+		final int searchMethod = model.getSearchMethod();
+		final double searchParameter = model.getSearchParameter();
+		final int minSize = model.getMinSize();
+		final boolean minimumAboveSaddle = model.isMinimumAboveSaddle();
+		final boolean connectedAboveSaddle = model.isConnectedAboveSaddle();
+		final int peakMethod = model.getPeakMethod();
+		final double peakParameter = model.getPeakParameter();
+		final int sortMethod = model.getSortMethod();
+		final int maxPeaks = model.getMaxPeaks();
+		final int showMask = model.getShowMask();
+		final boolean overlayMask = model.isOverlayMask();
+		final boolean showTable = model.isShowTable();
+		final boolean clearTable = model.isClearTable();
+		final boolean markMaxima = model.isMarkMaxima();
+		final boolean markROIMaxima = model.isMarkROIMaxima();
+		final boolean markUsingOverlay = model.isMarkUsingOverlay();
+		final boolean hideLabels = model.isHideLabels();
+		final boolean showMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
+		final boolean showLogMessages = model.isShowLogMessages();
+		final boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
+		final boolean saveResults = model.isSaveResults();
+		final String resultsDirectory = model.getResultsDirectory();
+		final boolean objectAnalysis = model.isObjectAnalysis();
+		final boolean saveToMemory = model.isSaveToMemory();
+		final boolean showObjectMask = model.isShowObjectMask();
+		final double gaussianBlur = model.getGaussianBlur();
+		final int centreMethod = model.getCentreMethod();
+		final double centreParameter = model.getCentreParameter();
+		final double fractionParameter = model.getFractionParameter();
 
 		int outputType = FindFoci.getOutputMaskFlags(showMask);
 
@@ -260,11 +254,11 @@ public class ImageJController extends FindFociController
 
 		model.setUnchanged();
 
-		ImagePlus mask = WindowManager.getImage(maskImage);
+		final ImagePlus mask = WindowManager.getImage(maskImage);
 
 		// Run the plugin
 		UsageTracker.recordPlugin(FindFoci.class, "");
-		FindFoci ff = new FindFoci();
+		final FindFoci ff = new FindFoci();
 		if (saveResults)
 			ff.setResultsDirectory(resultsDirectory);
 		ff.exec(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod, searchMethod, searchParameter,
@@ -274,24 +268,20 @@ public class ImageJController extends FindFociController
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#run()
 	 */
 	@Override
 	public void preview()
 	{
 		// Get the selected image
-		String title = model.getSelectedImage();
-		ImagePlus imp = WindowManager.getImage(title);
+		final String title = model.getSelectedImage();
+		final ImagePlus imp = WindowManager.getImage(title);
 		if (null == imp)
-		{
 			return;
-		}
 
 		if (!FindFoci.isSupported(imp.getBitDepth()))
-		{
 			return;
-		}
 
 		startRunner();
 
@@ -309,7 +299,7 @@ public class ImageJController extends FindFociController
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#endPreview()
 	 */
 	@Override
@@ -326,20 +316,18 @@ public class ImageJController extends FindFociController
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see gdsc.foci.controller.FindFociController#getImageLimits(int[])
 	 */
 	@Override
 	public int[] getImageLimits(int[] limits)
 	{
 		if (limits == null || limits.length < 2)
-		{
 			limits = new int[2];
-		}
-		ImagePlus imp = WindowManager.getImage(model.getSelectedImage());
+		final ImagePlus imp = WindowManager.getImage(model.getSelectedImage());
 		if (imp != null)
 		{
-			ImageStatistics stats = imp.getStatistics(ij.measure.Measurements.MIN_MAX);
+			final ImageStatistics stats = imp.getStatistics(ij.measure.Measurements.MIN_MAX);
 			limits[0] = (int) stats.min;
 			limits[1] = (int) stats.max;
 		}
