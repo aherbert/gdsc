@@ -61,10 +61,14 @@ public class ZProjectorCopy implements PlugIn
 	public static final String[] METHODS = { "Average Intensity", "Max Intensity", "Min Intensity", "Sum Slices",
 			"Standard Deviation", "Median" };
 	private static final String METHOD_KEY = "zproject.method";
+	/** The method */
 	protected int method = (int) Prefs.get(METHOD_KEY, AVG_METHOD);
 
+	/** Constant for byte images */
 	protected static final int BYTE_TYPE = 0;
+	/** Constant for short images */
 	protected static final int SHORT_TYPE = 1;
+	/** Constant for float images */
 	protected static final int FLOAT_TYPE = 2;
 
 	private static final String lutMessage = "Stacks with inverter LUTs may not project correctly.\n" +
@@ -85,8 +89,14 @@ public class ZProjectorCopy implements PlugIn
 	protected boolean allTimeFrames = true;
 
 	private String color = "";
+	
+	/** The is hyperstack flag. */
 	protected boolean isHyperstack;
+	
+	/** The increment. */
 	protected int increment = 1;
+	
+	/** The slice count. */
 	protected int sliceCount;
 
 	/**
@@ -316,6 +326,7 @@ public class ZProjectorCopy implements PlugIn
 	 *            starting slice to display
 	 * @param stop
 	 *            last slice
+	 * @return the generic dialog
 	 */
 	protected GenericDialog buildControlDialog(int start, int stop)
 	{
@@ -479,7 +490,17 @@ public class ZProjectorCopy implements PlugIn
 		}
 	}
 
-	/** Generate output image whose type is same as input image. */
+	/**
+	 * Generate output image whose type is same as input image.
+	 *
+	 * @param imp
+	 *            the imp
+	 * @param fp
+	 *            the fp
+	 * @param ptype
+	 *            the ptype
+	 * @return the image plus
+	 */
 	protected ImagePlus makeOutputImage(ImagePlus imp, FloatProcessor fp, int ptype)
 	{
 		final int width = imp.getWidth();
@@ -542,6 +563,11 @@ public class ZProjectorCopy implements PlugIn
 		}
 	}
 
+	/**
+	 * Make title.
+	 *
+	 * @return the string
+	 */
 	protected String makeTitle()
 	{
 		String prefix = "AVG_";
@@ -566,6 +592,11 @@ public class ZProjectorCopy implements PlugIn
 		return WindowManager.makeUniqueName(prefix + imp.getTitle());
 	}
 
+	/**
+	 * Do median projection.
+	 *
+	 * @return the image plus
+	 */
 	protected ImagePlus doMedianProjection()
 	{
 		IJ.showStatus("Calculating median...");
@@ -597,6 +628,13 @@ public class ZProjectorCopy implements PlugIn
 		return new ImagePlus(makeTitle(), ip2);
 	}
 
+	/**
+	 * Compute the median.
+	 *
+	 * @param a
+	 *            the data
+	 * @return the float
+	 */
 	protected float median(float[] a)
 	{
 		Arrays.sort(a);

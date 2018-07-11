@@ -597,6 +597,9 @@ public class FindFociAdvancedOptions extends JDialog
 		this.pack();
 	}
 
+	/**
+	 * Inits the data bindings.
+	 */
 	protected void initDataBindings()
 	{
 		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty = BeanProperty.create("showTable");

@@ -226,6 +226,9 @@ public class OptimiserView extends JFrame
 		return runEnabled;
 	}
 
+	/**
+	 * Inits the data bindings.
+	 */
 	@SuppressWarnings("rawtypes")
 	protected void initDataBindings()
 	{

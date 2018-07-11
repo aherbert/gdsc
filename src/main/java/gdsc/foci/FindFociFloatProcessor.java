@@ -54,8 +54,10 @@ import ij.process.ImageProcessor;
  */
 public class FindFociFloatProcessor extends FindFociBaseProcessor
 {
+	
+	/** The image. */
 	protected float[] image;
-	// Cache the bin for each index
+	/** Cache the bin for each index */
 	protected int[] bin;
 
 	/**
@@ -315,6 +317,15 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 		return bin;
 	}
 
+	/**
+	 * Find the histogram bin for the index.
+	 *
+	 * @param histogram
+	 *            the histogram
+	 * @param i
+	 *            the index
+	 * @return the bin
+	 */
 	protected int findBin(Histogram histogram, int i)
 	{
 		/* perform binary search - relies on having sorted data */

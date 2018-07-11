@@ -85,7 +85,6 @@ import ij.util.Tools;
 @SuppressWarnings("unused")
 public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 {
-
 	/** Display results in the ImageJ console. */
 	public static final int SHOW_RESULTS = 1;
 
@@ -152,17 +151,72 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	private static double staticMinCircularity = 0.0, staticMaxCircularity = 1.0;
 	private static String prevHdr;
 
-	protected static final int NOTHING = 0, OUTLINES = 1, BARE_OUTLINES = 2, ELLIPSES = 3, MASKS = 4, ROI_MASKS = 5,
-			OVERLAY_OUTLINES = 6, OVERLAY_MASKS = 7;
+	/** Show nothing. */
+	protected static final int NOTHING = 0;
+	/** Show outlines */
+	protected static final int OUTLINES = 1;
+	/** Show bare outlines */
+	protected static final int BARE_OUTLINES = 2;
+	/** Show ellipses */
+	protected static final int ELLIPSES = 3;
+	/** Show masks */
+	protected static final int MASKS = 4;
+	/** Create ROI masks */
+	protected static final int ROI_MASKS = 5;
+	/** Overlay outlines */
+	protected static final int OVERLAY_OUTLINES = 6;
+	/** Overlay masks */
+	protected static final int OVERLAY_MASKS = 7;
+	
+	/** The static show choice option. */
 	protected static int staticShowChoice;
-	protected ImagePlus imp;
-	protected ResultsTable rt;
-	protected Analyzer analyzer;
-	protected int slice;
-	protected boolean processStack;
-	protected boolean showResults, excludeEdgeParticles, showSizeDistribution, resetCounter, showProgress, recordStarts,
-			displaySummary, floodFill, addToManager, inSituShow;
 
+	/** The image. */
+	protected ImagePlus imp;
+
+	/** The results table. */
+	protected ResultsTable rt;
+
+	/** The analyzer. */
+	protected Analyzer analyzer;
+
+	/** The slice. */
+	protected int slice;
+
+	/** The process stack flag. */
+	protected boolean processStack;
+
+	/** The show results flag. */
+	protected boolean showResults;
+
+	/** The exclude edge particles flag. */
+	protected boolean excludeEdgeParticles;
+
+	/** The show size distribution flag. */
+	protected boolean showSizeDistribution;
+
+	/** The reset counter flag. */
+	protected boolean resetCounter;
+
+	/** The show progress flag. */
+	protected boolean showProgress;
+
+	/** The record starts flag. */
+	protected boolean recordStarts;
+
+	/** The display summary flag. */
+	protected boolean displaySummary;
+
+	/** The flood fill flag. */
+	protected boolean floodFill;
+
+	/** The add to manager flag. */
+	protected boolean addToManager;
+
+	/** The in situ show flag. */
+	protected boolean inSituShow;
+
+	/** The show results window flag. */
 	protected boolean showResultsWindow = true;
 	private String summaryHdr = "Slice\tCount\tTotal Area\tAverage Size\t%Area";
 	private double level1, level2;
@@ -198,6 +252,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	private double totalArea;
 	private FloodFiller ff;
 	private Polygon polygon;
+	/** The roi manager. */
 	protected RoiManager roiManager;
 	private static RoiManager staticRoiManager;
 	private static ResultsTable staticResultsTable;
@@ -214,6 +269,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	private static int nextLineWidth = 1;
 	private final int fontSize = nextFontSize;
 	private final Color fontColor = nextFontColor;
+	/** The line width. */
 	protected int lineWidth = nextLineWidth;
 
 	/**
@@ -1028,6 +1084,18 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 
 	int counter = 0;
 
+	/**
+	 * Analyze particle.
+	 *
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 * @param imp
+	 *            the imp
+	 * @param ip
+	 *            the ip
+	 */
 	protected void analyzeParticle(int x, int y, ImagePlus imp, ImageProcessor ip)
 	{
 		//Wand wand = new Wand(ip);
@@ -1145,6 +1213,11 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	/**
 	 * Saves statistics for one particle in a results table. This is
 	 * a method subclasses may want to override.
+	 *
+	 * @param stats
+	 *            the stats
+	 * @param roi
+	 *            the roi
 	 */
 	protected void saveResults(ImageStatistics stats, Roi roi)
 	{
@@ -1189,6 +1262,15 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	/**
 	 * Draws a selected particle in a separate image. This is
 	 * another method subclasses may want to override.
+	 *
+	 * @param drawIP
+	 *            the separate image
+	 * @param roi
+	 *            the roi
+	 * @param stats
+	 *            the stats
+	 * @param mask
+	 *            the mask
 	 */
 	protected void drawParticle(ImageProcessor drawIP, Roi roi, ImageStatistics stats, ImageProcessor mask)
 	{

@@ -796,7 +796,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	private int[] highestSaddleValues = null;
 
 	/**
-	 * Set up processing for {@link #findHighestSaddleValues(FindFociResult, int[], byte[], ArrayList)}
+	 * Set up processing for {@link #findHighestSaddleValues(FindFociResult, int[], byte[], FindFociSaddleList[])}
 	 *
 	 * @param nMaxima
 	 *            the number of maxima
@@ -823,8 +823,8 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	 *            the maxima
 	 * @param types
 	 *            the types
-	 * @param highestSaddleValues
-	 *            the highest saddle values
+	 * @param saddlePoints
+	 *            the saddle points
 	 */
 	@Override
 	protected void findHighestSaddleValues(FindFociResult result, int[] maxima, byte[] types,

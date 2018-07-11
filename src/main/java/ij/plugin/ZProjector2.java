@@ -215,6 +215,13 @@ public class ZProjector2 extends ZProjectorCopy
 		});
 	}
 
+	/**
+	 * Do mode projection.
+	 *
+	 * @param ignoreZero
+	 *            the ignore zero flag
+	 * @return the image plus
+	 */
 	protected ImagePlus doModeProjection(final boolean ignoreZero)
 	{
 		return doProjection("mode", new Projector()

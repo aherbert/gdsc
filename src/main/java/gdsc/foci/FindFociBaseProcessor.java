@@ -71,12 +71,35 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 */
 	private static final int MAXIMA_CAPCITY = 65535;
 
-	// the following are class variables for having shorter argument lists
-	protected int maxx, maxy, maxz; // image dimensions
-	protected int xlimit, ylimit, zlimit;
-	protected int maxx_maxy, maxx_maxy_maxz;
-	protected int[] offset, offset2;
+	/** The max in the x dimension. */
+	protected int maxx;
+	/** The max in the y dimension. */
+	protected int maxy;
+	/** The max in the z dimension. */
+	protected int maxz;
+	/** The limit in the x dimension (max-1). */
+	protected int xlimit;
+	/** The limit in the y dimension (max-1). */
+	protected int ylimit;
+	/** The limit in the z dimension (max-1). */
+	protected int zlimit;
+	/** {@link #maxx} * {@link #maxy} */
+	protected int maxx_maxy;
+	/** {@link #maxx} * {@link #maxy} * {@link #maxz} */
+	protected int maxx_maxy_maxz;
+	/**
+	 * The index offset table using for 26-connected search.
+	 * Computed using the image dimensions for the 3D image packed as a single array.
+	 */
+	protected int[] offset;
+	/**
+	 * The index offset table using for half of a 26-connected search.
+	 * Computed using the image dimensions for the 3D image packed as a single array.
+	 */
+	protected int[] offset2;
 	//protected int dStart;
+	
+	/** Array storing a flag for each offset if the total shift is 1, e.g. 1,0,0 or 0,1,0. */
 	protected boolean[] flatEdge;
 	private Rectangle bounds = null;
 
@@ -89,30 +112,47 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	// This preserves the isWithin() functionality of ij.plugin.filter.MaximumFinder.
 
 	//@formatter:off
+	/** The direction offsets for the x-coordinate for a 3D 26-connected search. */
 	protected final int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
+	/** The direction offsets for the y-coordinate for a 3D 26-connected search. */
 	protected final int[] DIR_Y_OFFSET = new int[] {-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1, 0,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
+	/** The direction offsets for the z-coordinate for a 3D 26-connected search. */
 	protected final int[] DIR_Z_OFFSET = new int[] { 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 	// Half-neighbours
+	/** The direction offsets for the x-coordinate for half the neighbours of a 3D 26-connected search. */
 	protected final int[] DIR_X_OFFSET2 = new int[] { 0, 1, 1, 1, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
+	/** The direction offsets for the y-coordinate for half the neighbours of a 3D 26-connected search. */
 	protected final int[] DIR_Y_OFFSET2 = new int[] {-1,-1, 0, 1,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
+	/** The direction offsets for the z-coordinate for half the neighbours of a 3D 26-connected search. */
 	protected final int[] DIR_Z_OFFSET2 = new int[] { 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
 	//@formatter:on
 
 	/* the following constants are used to set bits corresponding to pixel types */
-	protected final static byte EXCLUDED = (byte) 1; // marks points outside the ROI
-	protected final static byte MAXIMUM = (byte) 2; // marks local maxima (irrespective of noise tolerance)
-	protected final static byte LISTED = (byte) 4; // marks points currently in the list
-	protected final static byte MAX_AREA = (byte) 8; // marks areas near a maximum, within the tolerance
-	protected final static byte SADDLE = (byte) 16; // marks a potential saddle between maxima
-	protected final static byte SADDLE_POINT = (byte) 32; // marks a saddle between maxima
-	protected final static byte SADDLE_WITHIN = (byte) 64; // marks a point within a maxima next to a saddle
-	protected final static byte PLATEAU = (byte) 128; // marks a point as a plateau region
-	protected final static byte NOT_MAXIMUM = (byte) 32; // marks a point as not a maximum
-	protected final static byte SADDLE_SEARCH = (byte) 32; // marks a point to use in the saddle search
+	/** marks points outside the ROI */
+	protected final static byte EXCLUDED = (byte) 1;
+	/** marks local maxima (irrespective of noise tolerance) */
+	protected final static byte MAXIMUM = (byte) 2;
+	/** marks points currently in the list */
+	protected final static byte LISTED = (byte) 4;
+	/** marks areas near a maximum, within the tolerance */
+	protected final static byte MAX_AREA = (byte) 8;
+	/** marks a potential saddle between maxima */
+	protected final static byte SADDLE = (byte) 16;
+	/** marks a saddle between maxima */
+	protected final static byte SADDLE_POINT = (byte) 32;
+	/** marks a point within a maxima next to a saddle */
+	protected final static byte SADDLE_WITHIN = (byte) 64;
+	/** marks a point as a plateau region */
+	protected final static byte PLATEAU = (byte) 128;
+	/** marks a point as not a maximum */
+	protected final static byte NOT_MAXIMUM = (byte) 32;
+	/** marks a point to use in the saddle search */
+	protected final static byte SADDLE_SEARCH = (byte) 32;
+	/** marks a point as falling below the highest saddle point */
+	protected final static byte BELOW_SADDLE = (byte) 128;
 
-	protected final static byte BELOW_SADDLE = (byte) 128; // marks a point as falling below the highest saddle point
-
-	protected final static byte IGNORE = EXCLUDED | LISTED; // marks point to be ignored in stage 1
+	/** marks point to be ignored in stage 1 */
+	protected final static byte IGNORE = EXCLUDED | LISTED;
 
 	/*
 	 * (non-Javadoc)
@@ -1325,11 +1365,15 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/**
 	 * Build a histogram using only the specified peak area.
 	 *
-	 * @param image
+	 * @param pixels
+	 *            the pixels
 	 * @param maxima
+	 *            the maxima
 	 * @param peakValue
+	 *            the peak value
 	 * @param maxValue
-	 * @return
+	 *            the max value
+	 * @return the histogram
 	 */
 	protected abstract Histogram buildHistogram(Object pixels, int[] maxima, int peakValue, float maxValue);
 
@@ -1647,6 +1691,17 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		stats.totalAboveImageMinimum = getIntensityAboveFloor(originalImage, types, stats.imageMinimum);
 	}
 
+	/**
+	 * Gets the intensity above floor.
+	 *
+	 * @param pixels
+	 *            the pixels
+	 * @param types
+	 *            the types
+	 * @param floor
+	 *            the floor
+	 * @return the intensity above floor
+	 */
 	protected double getIntensityAboveFloor(Object pixels, byte[] types, final float floor)
 	{
 		setPixels(pixels);
@@ -2187,6 +2242,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		return isPlateau;
 	}
 
+	/**
+	 * The value to use for no saddle (usually zero or -Inf when the background is zero)
+	 */
 	protected float NO_SADDLE_VALUE;
 
 	private void setNoSaddleValue(FindFociStatistics stats)
@@ -2591,6 +2649,19 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 	/**
 	 * Searches from the specified point to find all coordinates of the same value and assigns them to given maximum.
+	 *
+	 * @param maxima
+	 *            the maxima
+	 * @param types
+	 *            the types
+	 * @param index0
+	 *            the index 0
+	 * @param v0
+	 *            the v 0
+	 * @param id
+	 *            the id
+	 * @param pList
+	 *            the list
 	 */
 	protected void expandPlateau(int[] maxima, byte[] types, int index0, float v0, int id, int[] pList)
 	{
@@ -2688,17 +2759,22 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Loop over all points that have been assigned to a peak area and clear any pixels below the peak growth threshold
+	 * Loop over all points that have been assigned to a peak area and clear any pixels below the peak growth threshold.
 	 *
-	 * @param image
-	 * @param roiBounds
+	 * @param pixels
+	 *            the pixels
 	 * @param types
-	 * @param maxPoints
+	 *            the types
 	 * @param searchMethod
+	 *            the search method
 	 * @param searchParameter
+	 *            the search parameter
 	 * @param stats
+	 *            the stats
 	 * @param resultsArray
+	 *            the results array
 	 * @param maxima
+	 *            the maxima
 	 */
 	protected void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
 			FindFociStatistics stats, FindFociResult[] resultsArray, int[] maxima)
@@ -2740,23 +2816,39 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 */
 	protected abstract float getTolerance(int searchMethod, double searchParameter, FindFociStatistics stats, float v0);
 
+	/**
+	 * Round the number.
+	 *
+	 * @param d
+	 *            the d
+	 * @return the int
+	 */
 	protected int round(double d)
 	{
 		return (int) Math.round(d);
 	}
 
+	/**
+	 * Round the number.
+	 *
+	 * @param d
+	 *            the d
+	 * @return the int
+	 */
 	protected int round(float d)
 	{
 		return Math.round(d);
 	}
 
 	/**
-	 * Loop over the image and sum the intensity and size of each peak area, storing this into the results array
+	 * Loop over the image and sum the intensity and size of each peak area, storing this into the results array.
 	 *
-	 * @param image
-	 * @param roi
+	 * @param pixels
+	 *            the pixels
 	 * @param maxima
+	 *            the maxima
 	 * @param resultsArray
+	 *            the results array
 	 */
 	protected void calculateInitialResults(Object pixels, int[] maxima, FindFociResult[] resultsArray)
 	{
@@ -2790,6 +2882,15 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	/**
 	 * Loop over the image and sum the intensity of each peak area using the original image, storing this into the
 	 * results array.
+	 *
+	 * @param pixels
+	 *            the pixels
+	 * @param maxima
+	 *            the maxima
+	 * @param resultsArray
+	 *            the results array
+	 * @param originalNumberOfPeaks
+	 *            the original number of peaks
 	 */
 	protected void calculateNativeResults(Object pixels, int[] maxima, FindFociResult[] resultsArray,
 			int originalNumberOfPeaks)
@@ -3590,7 +3691,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	private float[] highestSaddleValues = null;
 
 	/**
-	 * Set up processing for {@link #findHighestSaddleValues(FindFociResult, int[], byte[], ArrayList)}
+	 * Set up processing for {@link #findHighestSaddleValues(FindFociResult, int[], byte[], FindFociSaddleList[])}
 	 *
 	 * @param nMaxima
 	 *            the number of maxima
@@ -3759,12 +3860,19 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Called after all calls to {@link #findHighestSaddleValues(FindFociResult, int[], byte[], ArrayList)}
+	 * Called after all calls to {@link #findHighestSaddleValues(FindFociResult, int[], byte[], FindFociSaddleList[])}
 	 */
 	protected void finaliseFindHighestSaddleValues()
 	{
 	}
 
+	/**
+	 * Gets the max peak size. The default implementation uses the {@link FindFociResult#count}.
+	 *
+	 * @param resultsArray
+	 *            the results array
+	 * @return the max peak size
+	 */
 	protected int getMaxPeakSize(FindFociResult[] resultsArray)
 	{
 		int maxPeakSize = 0;
@@ -4195,6 +4303,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 	/**
 	 * Find the size and intensity of peaks above their saddle heights.
+	 *
+	 * @param resultsArray
+	 *            the results array
+	 * @param pixels
+	 *            the pixels
+	 * @param maxima
+	 *            the maxima
 	 */
 	protected void analysePeaksWithBounds(FindFociResult[] resultsArray, Object pixels, int[] maxima)
 	{
@@ -4986,10 +5101,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Reassign the maxima using the peak Id map
+	 * Reassign the maxima using the peak Id map.
 	 *
 	 * @param maxima
+	 *            the maxima
 	 * @param peakIdMap
+	 *            the peak id map
 	 */
 	protected void reassignMaxima(int[] maxima, int[] peakIdMap)
 	{
@@ -5309,11 +5426,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Return the single index associated with the x,y,z coordinates
+	 * Return the single index associated with the x,y,z coordinates.
 	 *
 	 * @param x
+	 *            the x
 	 * @param y
+	 *            the y
 	 * @param z
+	 *            the z
 	 * @return The index
 	 */
 	protected int getIndex(int x, int y, int z)
@@ -5322,10 +5442,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Return the single index associated with the x,y coordinates
+	 * Return the single index associated with the x,y coordinates.
 	 *
 	 * @param x
+	 *            the x
 	 * @param y
+	 *            the y
 	 * @return The index
 	 */
 	protected int getIndex(int x, int y)
@@ -5337,7 +5459,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * Convert the single index into x,y,z coords, Input array must be length >= 3.
 	 *
 	 * @param index
+	 *            the index
 	 * @param xyz
+	 *            the xyz
 	 * @return The xyz array
 	 */
 	protected int[] getXYZ(int index, int[] xyz)
@@ -5353,7 +5477,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * Convert the single index into x,y,z coords, Input array must be length >= 3.
 	 *
 	 * @param index
+	 *            the index
 	 * @param xyz
+	 *            the xyz
 	 * @return The xyz array
 	 */
 	protected int[] getXY(int index, int[] xyz)
@@ -5654,10 +5780,25 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 */
 	protected class Coordinate implements Comparable<Coordinate>
 	{
+		/** The index. */
 		public int index;
+
+		/** The id. */
 		public int id;
+
+		/** The value. */
 		public float value;
 
+		/**
+		 * Instantiates a new coordinate.
+		 *
+		 * @param index
+		 *            the index
+		 * @param id
+		 *            the id
+		 * @param value
+		 *            the value
+		 */
 		public Coordinate(int index, int id, float value)
 		{
 			this.index = index;
@@ -5665,6 +5806,20 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			this.value = value;
 		}
 
+		/**
+		 * Instantiates a new coordinate.
+		 *
+		 * @param x
+		 *            the x
+		 * @param y
+		 *            the y
+		 * @param z
+		 *            the z
+		 * @param id
+		 *            the id
+		 * @param value
+		 *            the value
+		 */
 		public Coordinate(int x, int y, int z, int id, float value)
 		{
 			this.index = getIndex(x, y, z);

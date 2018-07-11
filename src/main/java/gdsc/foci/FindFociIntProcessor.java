@@ -50,6 +50,7 @@ import ij.process.ImageProcessor;
  */
 public class FindFociIntProcessor extends FindFociBaseProcessor
 {
+	/** The image. */
 	protected int[] image;
 
 	@Override

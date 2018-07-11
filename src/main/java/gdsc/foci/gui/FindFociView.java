@@ -1473,6 +1473,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		}
 	}
 
+	/**
+	 * Inits the data bindings.
+	 */
 	@SuppressWarnings("rawtypes")
 	protected void initDataBindings()
 	{
