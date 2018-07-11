@@ -603,9 +603,9 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	 * Perform correlation analysis on two images.
 	 *
 	 * @param imp1
-	 *            the imp 1
+*            the image 1
 	 * @param imp2
-	 *            the imp 2
+*            the image 2
 	 */
 	public void correlate(ImagePlus imp1, ImagePlus imp2)
 	{

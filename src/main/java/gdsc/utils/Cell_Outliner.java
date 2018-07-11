@@ -893,7 +893,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * For the given point, compute the angle between pixels and the centre.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param cx
 	 *            the cx
 	 * @param cy
@@ -1416,7 +1416,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * Compute the moment of an image.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param p
 	 *            the p
 	 * @param q
@@ -1437,7 +1437,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * Compute the central moment of an image
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param p
 	 *            the p
 	 * @param q

@@ -110,7 +110,7 @@ public class ZProjectorCopy implements PlugIn
 	 * Construction of ZProjector with image to be projected.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 */
 	public ZProjectorCopy(ImagePlus imp)
 	{
@@ -494,7 +494,7 @@ public class ZProjectorCopy implements PlugIn
 	 * Generate output image whose type is same as input image.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param fp
 	 *            the fp
 	 * @param ptype

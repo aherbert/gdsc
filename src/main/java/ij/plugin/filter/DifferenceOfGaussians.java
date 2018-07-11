@@ -359,7 +359,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 	 * sigma2.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param sigma1
 	 *            the sigma 1
 	 * @param sigma2
@@ -383,9 +383,9 @@ public class DifferenceOfGaussians extends GaussianBlur
 	 * @param resultIp
 	 *            the result ip
 	 * @param ip1
-	 *            the ip 1
+*            the image 1
 	 * @param ip2
-	 *            the ip 2
+*            the image 2
 	 */
 	private static void differenceOfGaussians(ImageProcessor resultIp, ImageProcessor ip1, ImageProcessor ip2)
 	{
@@ -434,7 +434,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 	 * Perform a Gaussian blur on the image processor.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param sigma
 	 *            The Gaussian width
 	 */

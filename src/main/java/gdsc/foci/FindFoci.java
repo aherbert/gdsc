@@ -1781,7 +1781,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * Only blurs the current channel and frame for use in the FindFoci algorithm.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param blur
 	 *            The blur standard deviation
 	 * @return the blurred image
@@ -2915,7 +2915,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @param batchId
 	 *            the batch id
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param mask
 	 *            the mask
 	 * @param p
@@ -3112,7 +3112,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @param resultsArray
 	 *            the results array
 	 * @param imp
-	 *            the imp
+*            the image
 	 */
 	private static void saveToMemory(ArrayList<FindFociResult> resultsArray, ImagePlus imp)
 	{
@@ -3125,7 +3125,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @param resultsArray
 	 *            the results array
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param c
 	 *            the c
 	 * @param z

@@ -502,7 +502,7 @@ public class MatchPlugin implements PlugIn
 	 * Adds an ROI point overlay to the image using the specified colour.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param list
 	 *            the list
 	 * @param color
@@ -517,7 +517,7 @@ public class MatchPlugin implements PlugIn
 	 * Adds an ROI point overlay to the image using the specified colour.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param list
 	 *            the list
 	 * @param color
@@ -556,7 +556,7 @@ public class MatchPlugin implements PlugIn
 	 * Creates an ImageJ PointRoi from the list of points, one per slice.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param array
 	 *            List of points
 	 * @param scaleX

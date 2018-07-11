@@ -376,7 +376,7 @@ public class ThreadAnalyser implements PlugIn
 	 * Sets all points in the original image outside the skeleton to zero.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param map
 	 *            the map
 	 * @return the image processor

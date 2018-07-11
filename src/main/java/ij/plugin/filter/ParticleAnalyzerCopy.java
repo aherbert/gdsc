@@ -609,7 +609,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	 * false if there is an error.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @return true, if successful
 	 */
 	public boolean analyze(ImagePlus imp)
@@ -622,9 +622,9 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	 * ImageProcessor. Returns false if there is an error.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @return true, if successful
 	 */
 	public boolean analyze(ImagePlus imp, ImageProcessor ip)
@@ -1092,9 +1092,9 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	 * @param y
 	 *            the y
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param ip
-	 *            the ip
+*            the image
 	 */
 	protected void analyzeParticle(int x, int y, ImagePlus imp, ImageProcessor ip)
 	{

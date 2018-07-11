@@ -195,7 +195,7 @@ public class MaskCreater implements PlugIn
 	 * Instantiates a new mask creater.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 */
 	public MaskCreater(ImagePlus imp)
 	{
@@ -206,7 +206,7 @@ public class MaskCreater implements PlugIn
 	 * Instantiates a new mask creater.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param option
 	 *            the option
 	 */

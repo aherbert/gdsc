@@ -205,7 +205,7 @@ public class Auto_Local_Threshold implements PlugIn
 	 * Execute the plugin functionality: duplicate and scale the given image.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param myMethod
 	 *            the threshold method
 	 * @param radius

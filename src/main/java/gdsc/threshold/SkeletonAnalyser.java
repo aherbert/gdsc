@@ -204,7 +204,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * Skeltonise the image processor. Must be a binary image.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param trim
 	 *            Eliminate redundant 4-connected pixels if possible.
 	 * @return False if not a binary image
@@ -1000,7 +1000,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * Skeletonize.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param trim
 	 *            the trim
 	 */
@@ -1024,7 +1024,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * Checks for edge pixels.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @return true, if successful
 	 */
 	boolean hasEdgePixels(ImageProcessor ip)
@@ -1051,7 +1051,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * Expand.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param hasEdgePixels
 	 *            the has edge pixels
 	 * @return the image processor
@@ -1078,9 +1078,9 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * Shrink.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param ip2
-	 *            the ip 2
+*            the image 2
 	 * @param hasEdgePixels
 	 *            the has edge pixels
 	 * @return the image processor

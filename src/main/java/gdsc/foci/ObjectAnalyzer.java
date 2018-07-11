@@ -45,7 +45,7 @@ public class ObjectAnalyzer
 	 * Instantiates a new object analyzer.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 */
 	public ObjectAnalyzer(ImageProcessor ip)
 	{
@@ -56,7 +56,7 @@ public class ObjectAnalyzer
 	 * Instantiates a new object analyzer.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param eightConnected
 	 *            the eight connected flag
 	 */

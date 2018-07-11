@@ -1238,7 +1238,7 @@ public class SpotDistance implements PlugIn
 	 * Crop by duplication within the bounds.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param bounds
 	 *            the bounds
 	 * @return the image plus

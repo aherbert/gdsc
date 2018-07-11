@@ -313,7 +313,7 @@ public class Stack_Threshold implements PlugInFilter
 		 * Extracts the configured slices from the image into a stack.
 		 *
 		 * @param imp
-		 *            the imp
+*            the image
 		 */
 		void createStack(ImagePlus imp)
 		{

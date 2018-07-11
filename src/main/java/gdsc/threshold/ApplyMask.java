@@ -150,7 +150,7 @@ public class ApplyMask implements PlugInFilter
 	 * Instantiates a new apply mask.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 */
 	public ApplyMask(ImagePlus imp)
 	{
@@ -161,7 +161,7 @@ public class ApplyMask implements PlugInFilter
 	 * Instantiates a new apply mask.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param option
 	 *            the option
 	 */

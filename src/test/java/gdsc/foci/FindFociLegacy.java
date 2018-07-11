@@ -874,7 +874,7 @@ public class FindFociLegacy
 	 * Only blurs the current channel and frame for use in the FindFoci algorithm.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param blur
 	 *            The blur standard deviation
 	 * @return the blurred image
@@ -1581,7 +1581,7 @@ public class FindFociLegacy
 	 * Build a histogram using all pixels not marked as EXCLUDED.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param image
 	 *            the image
 	 * @param types
@@ -1619,7 +1619,7 @@ public class FindFociLegacy
 	 * Build a histogram using all pixels.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param image
 	 *            The image
 	 * @return The image histogram

@@ -165,7 +165,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	 * Adds an ROI point overlay to the image using the specified colour.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param list
 	 *            the list
 	 * @param color

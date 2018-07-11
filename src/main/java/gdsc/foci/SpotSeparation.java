@@ -782,7 +782,7 @@ public class SpotSeparation implements PlugInFilter
 	 * See Burger & Burge, Digital Image Processing, An Algorithmic Introduction using Java (1st Edition), pp231.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param spotIp
 	 *            the spot ip
 	 * @param xpos

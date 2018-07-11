@@ -2088,7 +2088,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 * Modify the processor to zero all zero pixels from the mask.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param mask
 	 *            the mask
 	 */
@@ -2120,7 +2120,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 * Sum the processor within the mask.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param mask
 	 *            the mask
 	 * @return the long

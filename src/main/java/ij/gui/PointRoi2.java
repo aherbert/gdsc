@@ -132,7 +132,7 @@ public class PointRoi2 extends PointRoi
 	 * @param sy
 	 *            the sy
 	 * @param imp
-	 *            the imp
+*            the image
 	 */
 	public PointRoi2(int sx, int sy, ImagePlus imp)
 	{

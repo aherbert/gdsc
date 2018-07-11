@@ -442,7 +442,7 @@ public class Align_Stacks implements PlugIn
 	 * Extracts the specified frame from the hyperstack.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param frame
 	 *            the frame
 	 * @return the image plus

@@ -375,7 +375,7 @@ public class Auto_Threshold implements PlugIn
 	 * Execute the plugin functionality.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param myMethod
 	 *            the my method
 	 * @param noWhite

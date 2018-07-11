@@ -415,7 +415,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * Extract the image into a linear array stacked in zyx order.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @return the image object
 	 */
 	protected abstract Object extractImage(ImagePlus imp);

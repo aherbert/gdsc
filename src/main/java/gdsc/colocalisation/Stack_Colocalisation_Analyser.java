@@ -387,9 +387,9 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	 * Create the combination of the two processors.
 	 *
 	 * @param ip1
-	 *            the ip 1
+*            the image 1
 	 * @param ip2
-	 *            the ip 2
+*            the image 2
 	 * @param operation
 	 *            the blitter operation
 	 * @return the new processor

@@ -263,7 +263,7 @@ public class FindFociOptimiser
 	 * Run the optimiser on the given image. If the image is null then process in multi-image mode.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 */
 	public void run(ImagePlus imp)
 	{
@@ -949,7 +949,7 @@ public class FindFociOptimiser
 	 * provided.
 	 *
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param mask
 	 *            the mask
 	 * @param results
@@ -2356,7 +2356,7 @@ public class FindFociOptimiser
 	 * @param roi
 	 *            the roi
 	 * @param imp
-	 *            the imp
+*            the image
 	 * @param mask
 	 *            the mask
 	 * @return the assigned points

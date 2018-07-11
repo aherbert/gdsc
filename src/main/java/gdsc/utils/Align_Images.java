@@ -267,7 +267,7 @@ public class Align_Images implements PlugIn
 	 * Subtract mean from the image and return a float processor.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @return the float processor
 	 */
 	public static FloatProcessor centre(ImageProcessor ip)
@@ -289,7 +289,7 @@ public class Align_Images implements PlugIn
 	 * Convert to unit length, return a float processor.
 	 *
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @return the float processor
 	 */
 	public static FloatProcessor normalise(ImageProcessor ip)
@@ -389,7 +389,7 @@ public class Align_Images implements PlugIn
 	 * @param interpolationMethod
 	 *            the interpolation method
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param xOffset
 	 *            the x offset
 	 * @param yOffset
@@ -413,7 +413,7 @@ public class Align_Images implements PlugIn
 	 * @param interpolationMethod
 	 *            the interpolation method
 	 * @param ip
-	 *            the ip
+*            the image
 	 * @param xOffset
 	 *            the x offset
 	 * @param yOffset
