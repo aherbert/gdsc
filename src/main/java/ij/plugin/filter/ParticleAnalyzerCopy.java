@@ -167,7 +167,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	protected static final int OVERLAY_OUTLINES = 6;
 	/** Overlay masks */
 	protected static final int OVERLAY_MASKS = 7;
-	
+
 	/** The static show choice option. */
 	protected static int staticShowChoice;
 
@@ -276,9 +276,9 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	 * Constructs a ParticleAnalyzerCopy.
 	 *
 	 * @param options
-	 *            a flag word created by Oring SHOW_RESULTS, EXCLUDE_EDGE_PARTICLES, etc.
+	 *            a flag word created by SHOW_RESULTS, EXCLUDE_EDGE_PARTICLES, etc.
 	 * @param measurements
-	 *            a flag word created by ORing constants defined in the Measurements interface
+	 *            a flag word created by constants defined in the Measurements interface
 	 * @param rt
 	 *            a ResultsTable where the measurements will be stored
 	 * @param minSize
@@ -609,7 +609,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	 * false if there is an error.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 * @return true, if successful
 	 */
 	public boolean analyze(ImagePlus imp)
@@ -622,9 +622,9 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	 * ImageProcessor. Returns false if there is an error.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param ip
-*            the image
+	 *            the image
 	 * @return true, if successful
 	 */
 	public boolean analyze(ImagePlus imp, ImageProcessor ip)
@@ -1092,9 +1092,9 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	 * @param y
 	 *            the y
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param ip
-*            the image
+	 *            the image
 	 */
 	protected void analyzeParticle(int x, int y, ImagePlus imp, ImageProcessor ip)
 	{
