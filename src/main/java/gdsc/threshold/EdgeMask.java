@@ -71,7 +71,8 @@ import imagescience.utility.VersionChecker;
  * Requires the ImageScience library that supports the Laplacian plugin of FeatureJ. The imagescience.jar must be
  * installed in the ImageJ plugins folder.
  *
- * @see http://www.imagescience.org/meijering/software/featurej/
+ * @see <a href=
+ *      "http://www.imagescience.org/meijering/software/featurej">http://www.imagescience.org/meijering/software/featurej/</a>
  */
 public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 {
@@ -271,7 +272,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 		return flags;
 	}
 
-	private double[] getLimits(ImageProcessor ip)
+	private static double[] getLimits(ImageProcessor ip)
 	{
 		final ImageStatistics stats = ImageStatistics.getStatistics(ip, Measurements.MIN_MAX, null);
 		final double[] limits = new double[] { stats.min, stats.max, 0 };
@@ -337,13 +338,13 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	@Override
 	public void setNPasses(int nPasses)
 	{
-
 	}
 
 	/**
 	 * Create a mask using the configured source image.
 	 *
-	 * @return The mask image
+	 * @param ip
+	 *            the image
 	 */
 	public void createMask(ImageProcessor ip)
 	{
@@ -501,7 +502,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 		ip.setMinAndMax(0, 255);
 	}
 
-	private double getLimit(float[] data, double percentile)
+	private static double getLimit(float[] data, double percentile)
 	{
 		if (percentile < 0 || percentile >= 100)
 			return 0;
@@ -557,7 +558,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 
 			continues = false;
 			final boolean isInner = (y != 0 && y != ylimit) && (x != 0 && x != xlimit); // not necessary, but faster
-																				  // than isWithin
+			// than isWithin
 			for (int d = 0; d < 8; d++)
 				if (isInner || isWithinXY(x, y, d))
 				{
@@ -597,7 +598,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 		final int x = index % maxx;
 
 		final boolean isInner = (y != 0 && y != ylimit) && (x != 0 && x != xlimit); // not necessary, but faster than
-																			  // isWithin
+		// isWithin
 		for (int d = 0; d < 8; d++)
 		{ // walk around the point and note every no-line->line transition
 			boolean pixelSet = prevPixelSet;
@@ -671,6 +672,11 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Initialises the global width and height variables. Creates the direction offset tables.
+	 *
+	 * @param width
+	 *            the width
+	 * @param height
+	 *            the height
 	 */
 	public void initialise(int width, int height)
 	{
@@ -743,6 +749,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	 * Waits for all threads to complete computation.
 	 *
 	 * @param futures
+	 *            the futures
 	 */
 	public static void waitForCompletion(List<Future<?>> futures)
 	{

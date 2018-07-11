@@ -119,7 +119,7 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 		}
 	}
 
-	private void showInstance()
+	private static void showInstance()
 	{
 		WindowManager.addWindow(instance);
 		instance.setVisible(true);

@@ -27,13 +27,16 @@ import java.util.Arrays;
 
 import ij.process.ImageProcessor;
 
+/**
+ * A class to shift two images simultaneously within a mask.
+ */
 public class TwinImageShifter
 {
-	private final ImageProcessor imageIP;
-	private final ImageProcessor image2IP;
-	private final ImageProcessor roiIP;
+	private final ImageProcessor image1;
+	private final ImageProcessor image2;
+	private final ImageProcessor mask;
 	private ImageProcessor resultIP;
-	private ImageProcessor result2IP;
+	private ImageProcessor result2;
 	private int xShift = 0;
 	private int yShift = 0;
 	private int w;
@@ -44,24 +47,33 @@ public class TwinImageShifter
 	// Used as working space
 	private int[] t1 = null, t2 = null, t3 = null, t4 = null;
 
-	public TwinImageShifter(ImageProcessor imageIP, ImageProcessor image2IP, ImageProcessor roiIP)
+	/**
+	 * Instantiates a new twin image shifter.
+	 *
+	 * @param image1
+	 *            the first input image
+	 * @param image2
+	 *            the second input image
+	 * @param mask
+	 *            the mask image
+	 */
+	public TwinImageShifter(ImageProcessor image1, ImageProcessor image2, ImageProcessor mask)
 	{
-		this.imageIP = imageIP;
-		this.image2IP = image2IP;
-		this.roiIP = roiIP;
-
+		this.image1 = image1;
+		this.image2 = image2;
+		this.mask = mask;
 		setup();
 	}
 
 	private void setup()
 	{
-		this.w = this.imageIP.getWidth();
-		this.h = this.imageIP.getHeight();
+		this.w = this.image1.getWidth();
+		this.h = this.image1.getHeight();
 
-		if (image2IP.getWidth() != w || image2IP.getHeight() != h)
+		if (image2.getWidth() != w || image2.getHeight() != h)
 			throw new RuntimeException("The first and second channel image dimensions do not match");
-		if (roiIP != null)
-			if (roiIP.getWidth() != w || roiIP.getHeight() != h)
+		if (mask != null)
+			if (mask.getWidth() != w || mask.getHeight() != h)
 				throw new RuntimeException("The channel image and confined image dimensions do not match");
 
 		buildHorizontalROIArrays();
@@ -76,12 +88,12 @@ public class TwinImageShifter
 
 		final int[] sites = new int[w];
 
-		if (roiIP != null)
+		if (mask != null)
 			for (int y = 0; y < h; ++y)
 			{
 				int size = 0;
-				for (int x = 0, index = y * roiIP.getWidth(); x < w; x++, index++)
-					if (roiIP.get(index) != 0)
+				for (int x = 0, index = y * mask.getWidth(); x < w; x++, index++)
+					if (mask.get(index) != 0)
 						sites[size++] = x;
 
 				// This is the array for height position 'y'
@@ -104,12 +116,12 @@ public class TwinImageShifter
 
 		final int[] sites = new int[h];
 
-		if (roiIP != null)
+		if (mask != null)
 			for (int x = 0; x < w; ++x)
 			{
 				int size = 0;
 				for (int y = 0; y < h; ++y)
-					if (roiIP.get(x, y) != 0)
+					if (mask.get(x, y) != 0)
 						sites[size++] = y;
 
 				// This is the array for width position 'x'
@@ -141,12 +153,15 @@ public class TwinImageShifter
 		t4 = new int[max];
 	}
 
+	/**
+	 * Run.
+	 */
 	public void run()
 	{
 		// Duplicate the image to ensure the same return type.
 		// This will ensure get and put pixel sets the correct value.
-		this.resultIP = imageIP.duplicate();
-		this.result2IP = image2IP.duplicate();
+		this.resultIP = image1.duplicate();
+		this.result2 = image2.duplicate();
 
 		// shift and wrap the pixel values in the X-direction
 		// (stores the result in the resultImage)
@@ -175,7 +190,7 @@ public class TwinImageShifter
 			for (int i = 0; i < sites.length; i++)
 			{
 				t1[i] = resultIP.get(index + sites[i]);
-				t2[i] = result2IP.get(index + sites[i]);
+				t2[i] = result2.get(index + sites[i]);
 			}
 
 			// Perform a shift
@@ -185,7 +200,7 @@ public class TwinImageShifter
 			for (int i = 0; i < sites.length; i++)
 			{
 				resultIP.set(index + sites[i], t3[i]);
-				result2IP.set(index + sites[i], t4[i]);
+				result2.set(index + sites[i], t4[i]);
 			}
 		}
 	}
@@ -208,7 +223,7 @@ public class TwinImageShifter
 			{
 				final int index = sites[i] * resultIP.getWidth() + x;
 				t1[i] = resultIP.get(index);
-				t2[i] = result2IP.get(index);
+				t2[i] = result2.get(index);
 			}
 
 			// Perform a shift
@@ -219,38 +234,68 @@ public class TwinImageShifter
 			{
 				final int index = sites[i] * resultIP.getWidth() + x;
 				resultIP.set(index, t3[i]);
-				result2IP.set(index, t4[i]);
+				result2.set(index, t4[i]);
 			}
 		}
 	}
 
+	/**
+	 * Sets the shift X.
+	 *
+	 * @param x
+	 *            the new shift X
+	 */
 	public void setShiftX(int x)
 	{
 		this.xShift = x;
 	}
 
+	/**
+	 * Sets the shift Y.
+	 *
+	 * @param y
+	 *            the new shift Y
+	 */
 	public void setShiftY(int y)
 	{
 		this.yShift = y;
 	}
 
+	/**
+	 * Sets the shift.
+	 *
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 */
 	public void setShift(int x, int y)
 	{
 		this.xShift = x;
 		this.yShift = y;
 	}
 
+	/**
+	 * Gets the result image.
+	 *
+	 * @return the result image
+	 */
 	public ImageProcessor getResultImage()
 	{
 		return this.resultIP;
 	}
 
+	/**
+	 * Gets the result image 2.
+	 *
+	 * @return the result image 2
+	 */
 	public ImageProcessor getResultImage2()
 	{
-		return this.result2IP;
+		return this.result2;
 	}
 
-	private void rotateArrays(int[] array1, int[] array2, int[] array3, int[] array4, int shift, int size)
+	private static void rotateArrays(int[] array1, int[] array2, int[] array3, int[] array4, int shift, int size)
 	{
 		while (shift < 0)
 			shift += size;

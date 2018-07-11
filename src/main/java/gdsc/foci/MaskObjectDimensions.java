@@ -50,7 +50,8 @@ import ij.text.TextWindow;
  */
 public class MaskObjectDimensions implements PlugInFilter
 {
-	public static final String TITLE = "Mask Object Dimensions";
+	/** The plugin title. */
+	private static final String TITLE = "Mask Object Dimensions";
 
 	private final int flags = DOES_16 + DOES_8G;
 	private ImagePlus imp;
@@ -158,13 +159,7 @@ public class MaskObjectDimensions implements PlugInFilter
 		return flags;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus,
-	 * java.lang.String, ij.plugin.filter.PlugInFilterRunner)
-	 */
-	private boolean showDialog()
+	private static boolean showDialog()
 	{
 		final GenericDialog gd = new GenericDialog(TITLE);
 
@@ -594,19 +589,19 @@ public class MaskObjectDimensions implements PlugInFilter
 			imp.setOverlay(overlay);
 	}
 
-	private void createResultsWindow()
+	private static void createResultsWindow()
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
 			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300);
 	}
 
-	private void clearResultsWindow()
+	private static void clearResultsWindow()
 	{
 		if (resultsWindow != null && resultsWindow.isShowing())
 			resultsWindow.getTextPanel().clear();
 	}
 
-	private String createResultsHeader()
+	private static String createResultsHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Image");

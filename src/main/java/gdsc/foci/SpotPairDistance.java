@@ -55,7 +55,7 @@ import ij.text.TextWindow;
  */
 public class SpotPairDistance implements PlugIn
 {
-	public static final String TITLE = "Spot Pair Distance";
+	private static final String TITLE = "Spot Pair Distance";
 
 	private static final String PREFS_CHANNEL_1 = "gdsc.foci.spotpairdistance.channel_1";
 	private static final String PREFS_CHANNEL_2 = "gdsc.foci.spotpairdistance.channel_2";
@@ -173,7 +173,7 @@ public class SpotPairDistance implements PlugIn
 			}
 		}
 
-		private boolean hasMultiChannelImage()
+		private static boolean hasMultiChannelImage()
 		{
 			for (final int id : Utils.getIDList())
 			{
@@ -294,7 +294,7 @@ public class SpotPairDistance implements PlugIn
 			}
 		}
 
-		private boolean isRemoveEvent(MouseEvent e)
+		private static boolean isRemoveEvent(MouseEvent e)
 		{
 			return e.isAltDown() || e.isShiftDown() || e.isControlDown();
 		}
@@ -346,14 +346,14 @@ public class SpotPairDistance implements PlugIn
 			return new double[] { mx + cx, my + cy };
 		}
 
-		private Roi createRoi(Rectangle bounds, Color color)
+		private static Roi createRoi(Rectangle bounds, Color color)
 		{
 			final Roi roi = new Roi(bounds);
 			roi.setStrokeColor(color);
 			return roi;
 		}
 
-		private Roi createLine(double x1, double y1, double x2, double y2, Color color)
+		private static Roi createLine(double x1, double y1, double x2, double y2, Color color)
 		{
 			final Line roi = new Line(x1, y1, x2, y2);
 			roi.setStrokeColor(color);
@@ -466,7 +466,7 @@ public class SpotPairDistance implements PlugIn
 			}
 		}
 
-		private double[] createVector(double x1, double y1, double x2, double y2)
+		private static double[] createVector(double x1, double y1, double x2, double y2)
 		{
 			final double x = x1 - x2;
 			final double y = y1 - y2;
@@ -497,7 +497,7 @@ public class SpotPairDistance implements PlugIn
 			return new double[] { x1, y1, x2, y2 };
 		}
 
-		private double normalise(double[] vector)
+		private static double normalise(double[] vector)
 		{
 			final double x = vector[0];
 			final double y = vector[1];
@@ -512,7 +512,7 @@ public class SpotPairDistance implements PlugIn
 		}
 
 		@SuppressWarnings("unused")
-		private double[] crossProduct(double[] vector1, double[] vector2)
+		private static double[] crossProduct(double[] vector1, double[] vector2)
 		{
 			// The cross product is only relevant in 3D!
 			final double u1 = vector1[0];
@@ -531,7 +531,7 @@ public class SpotPairDistance implements PlugIn
 		}
 
 		@SuppressWarnings("unused")
-		private double dotSign(double[] vector1, double[] vector2)
+		private static double dotSign(double[] vector1, double[] vector2)
 		{
 			final double u1 = vector1[0];
 			final double u2 = vector1[1];
@@ -549,7 +549,7 @@ public class SpotPairDistance implements PlugIn
 				distancesWindow = new TextWindow(TITLE + " Distances", createDistancesHeader(), "", 700, 300);
 		}
 
-		private String createDistancesHeader()
+		private static String createDistancesHeader()
 		{
 			final StringBuilder sb = new StringBuilder();
 			sb.append("Image\t");

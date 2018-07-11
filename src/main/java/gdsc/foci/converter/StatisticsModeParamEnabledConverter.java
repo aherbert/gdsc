@@ -27,14 +27,17 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFociProcessor;
 
+/**
+ * Convert the statistics mode to a flag indicating if the statistics parameter is enabled  
+ */
 public class StatisticsModeParamEnabledConverter extends Converter<Integer, Boolean>
 {
 	@Override
 	public Boolean convertForward(Integer paramS)
 	{
-		final int backgroundMethod = paramS.intValue();
-		return Boolean.valueOf(backgroundMethod != FindFociProcessor.BACKGROUND_ABSOLUTE &&
-				backgroundMethod != FindFociProcessor.BACKGROUND_NONE);
+		final int statisticsMode = paramS.intValue();
+		return Boolean.valueOf(statisticsMode != FindFociProcessor.BACKGROUND_ABSOLUTE &&
+				statisticsMode != FindFociProcessor.BACKGROUND_NONE);
 	}
 
 	@Override

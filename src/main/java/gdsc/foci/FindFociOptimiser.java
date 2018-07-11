@@ -119,51 +119,41 @@ public class FindFociOptimiser
 	private static String myMinSizeParameter = "1, 9, 2";
 	private static String[] saddleOptions = { "Yes", "Yes - Connected", "No", "All" };
 	private static int myMinimumAboveSaddle = 0;
-	private static int myPeakMethod = FindFoci.PEAK_RELATIVE_ABOVE_BACKGROUND;
+	private static int myPeakMethod = FindFociProcessor.PEAK_RELATIVE_ABOVE_BACKGROUND;
 	private static String myPeakParameter = "0, 0.6, 0.2";
-	private static String mySortMethod = "" + FindFoci.SORT_INTENSITY;
+	private static String mySortMethod = "" + FindFociProcessor.SORT_INTENSITY;
 	private static int myMaxPeaks = 500;
 	private static String myGaussianBlur = "0, 0.5, 1";
 	private static String myCentreMethod = "" + FindFoci.CENTRE_MAX_VALUE_SEARCH;
 	private static String myCentreParameter = "2";
 
-	/**
-	 * The list of recognised methods for sorting the results
-	 */
+	/** The list of recognised methods for sorting the results. */
 	public final static String[] sortMethods = { "None", "Precision", "Recall", "F0.5", "F1", "F2", "F-beta", "Jaccard",
 			"RMSD" };
 
-	/**
-	 * Do not sort the results
-	 */
+	/** Do not sort the results. */
 	public final static int SORT_NONE = 0;
-	/**
-	 * Sort the results using the Precision
-	 */
+
+	/** Sort the results using the Precision. */
 	public final static int SORT_PRECISION = 1;
-	/**
-	 * Sort the results using the Recall
-	 */
+
+	/** Sort the results using the Recall. */
 	public final static int SORT_RECALL = 2;
 	/**
 	 * Sort the results using the F0.5 score (weights precision over recall)
 	 */
 	public final static int SORT_F05 = 3;
-	/**
-	 * Sort the results using the F1 score (precision and recall equally weighted)
-	 */
+
+	/** Sort the results using the F1 score (precision and recall equally weighted). */
 	public final static int SORT_F1 = 4;
-	/**
-	 * Sort the results using the F2 score (weights recall over precision)
-	 */
+
+	/** Sort the results using the F2 score (weights recall over precision). */
 	public final static int SORT_F2 = 5;
-	/**
-	 * Sort the results using the F-beta score
-	 */
+
+	/** Sort the results using the F-beta score. */
 	public final static int SORT_FBETA = 6;
-	/**
-	 * Sort the results using the Jaccard
-	 */
+
+	/** Sort the results using the Jaccard. */
 	public final static int SORT_JACCARD = 7;
 	/**
 	 * Sort the results using the RMSD. Note that the RMSD is only computed using the TP so is therefore only of use
@@ -171,6 +161,7 @@ public class FindFociOptimiser
 	 */
 	public final static int SORT_RMSD = 8;
 
+	/** The search methods used for matching. */
 	public final static String[] matchSearchMethods = { "Relative", "Absolute" };
 	private static int myMatchSearchMethod = 0;
 	private static double myMatchSearchDistance = 0.05;
@@ -272,6 +263,7 @@ public class FindFociOptimiser
 	 * Run the optimiser on the given image. If the image is null then process in multi-image mode.
 	 *
 	 * @param imp
+	 *            the imp
 	 */
 	public void run(ImagePlus imp)
 	{
@@ -424,12 +416,13 @@ public class FindFociOptimiser
 	}
 
 	/**
-	 * Check if the output directory has any results already
+	 * Check if the output directory has any results already.
 	 *
 	 * @param imageList
+	 *            the image list
 	 * @return true if results exist
 	 */
-	private boolean resultsExist(String[] imageList)
+	private static boolean resultsExist(String[] imageList)
 	{
 		// List the results in the output directory
 		final String[] results = new File(outputDirectory).list(new FilenameFilter()
@@ -457,9 +450,10 @@ public class FindFociOptimiser
 	 * Copied from ImagePlus.getShortTitle()
 	 *
 	 * @param title
+	 *            the title
 	 * @return the title with no spaces or extension
 	 */
-	private String getShortTitle(String title)
+	private static String getShortTitle(String title)
 	{
 		int index = title.indexOf(' ');
 		if (index > -1)
@@ -545,7 +539,13 @@ public class FindFociOptimiser
 			IJ.showMessage(sb.toString());
 	}
 
-	private void getScore(ArrayList<Result> results)
+	/**
+	 * Gets the score.
+	 *
+	 * @param results
+	 *            the results
+	 */
+	private static void getScore(ArrayList<Result> results)
 	{
 		getScore(results, scoringMode);
 	}
@@ -556,8 +556,11 @@ public class FindFociOptimiser
 	 * is better.
 	 *
 	 * @param results
+	 *            the results
+	 * @param scoringMode
+	 *            the scoring mode
 	 */
-	private void getScore(ArrayList<Result> results, int scoringMode)
+	private static void getScore(ArrayList<Result> results, int scoringMode)
 	{
 		// Extract the score from the results
 		final int scoreIndex;
@@ -615,12 +618,13 @@ public class FindFociOptimiser
 	}
 
 	/**
-	 * Get the statistics
+	 * Get the statistics.
 	 *
 	 * @param score
+	 *            the score
 	 * @return The average and standard deviation
 	 */
-	private double[] getStatistics(double[] score)
+	private static double[] getStatistics(double[] score)
 	{
 		// Get the average
 		double sum = 0.0;
@@ -654,9 +658,10 @@ public class FindFociOptimiser
 	 * Get the highest score. Assumes the lowest is zero
 	 *
 	 * @param score
+	 *            the score
 	 * @return The top score
 	 */
-	private double getTop(double[] score)
+	private static double getTop(double[] score)
 	{
 		double top = score[0];
 		for (int i = 1; i < score.length; i++)
@@ -761,9 +766,11 @@ public class FindFociOptimiser
 			for (int b = 0; b < backgroundMethodArray.length; b++)
 			{
 				final String thresholdMethod = (backgroundMethodArray[b] == FindFociProcessor.BACKGROUND_AUTO_THRESHOLD)
-						? thresholdMethods[thresholdMethodIndex++] : "";
+						? thresholdMethods[thresholdMethodIndex++]
+						: "";
 
-				final String[] myStatsModes = backgroundMethodHasStatisticsMode(backgroundMethodArray[b]) ? statisticsModes
+				final String[] myStatsModes = backgroundMethodHasStatisticsMode(backgroundMethodArray[b])
+						? statisticsModes
 						: new String[] { "Both" };
 				for (final String statsMode : myStatsModes)
 				{
@@ -783,14 +790,16 @@ public class FindFociOptimiser
 						boolean logBackground = (blurCount == 0) && !multiMode; // Log on first blur iteration
 						// Use zero when there is no parameter
 						final double thisBackgroundParameter = (backgroundMethodHasParameter(backgroundMethodArray[b]))
-								? backgroundParameter : 0;
+								? backgroundParameter
+								: 0;
 
 						for (int s = 0; s < searchMethodArray.length; s++)
 							for (double searchParameter = mySearchParameterMinArray[s]; searchParameter <= mySearchParameterMax; searchParameter += mySearchParameterInterval)
 							{
 								// Use zero when there is no parameter
 								final double thisSearchParameter = (searchMethodHasParameter(searchMethodArray[s]))
-										? searchParameter : 0;
+										? searchParameter
+										: 0;
 
 								searchInitArray = ff.clone(initResults, searchInitArray);
 								final StopWatch sw2 = sw1.create();
@@ -810,17 +819,19 @@ public class FindFociOptimiser
 									IJ.log(String.format("Background level - %s %s: %s = %g",
 											FindFoci.backgroundMethods[backgroundMethodArray[b]],
 											backgroundMethodHasStatisticsMode(backgroundMethodArray[b])
-													? "(" + statsMode + ") " : "",
+													? "(" + statsMode + ") "
+													: "",
 											((backgroundMethodHasParameter(backgroundMethodArray[b]))
-													? IJ.d2s(backgroundParameter, 2) : thresholdMethod),
+													? IJ.d2s(backgroundParameter, 2)
+													: thresholdMethod),
 											backgroundLevel));
 								}
 
 								for (double peakParameter = myPeakParameterMin; peakParameter <= myPeakParameterMax; peakParameter += myPeakParameterInterval)
 								{
 									final StopWatch sw3 = sw2.create();
-									final FindFociMergeTempResults mergePeakResults = ff.findMaximaMergePeak(searchInitArray,
-											searchArray, myPeakMethod, peakParameter);
+									final FindFociMergeTempResults mergePeakResults = ff.findMaximaMergePeak(
+											searchInitArray, searchArray, myPeakMethod, peakParameter);
 									sw3.stop();
 									//System.out.printf("3");
 
@@ -837,8 +848,8 @@ public class FindFociOptimiser
 										{
 											mergeInitArray = ff.clone(searchInitArray, mergeInitArray);
 											final StopWatch sw5 = sw4.create();
-											final FindFociMergeResults mergeArray = ff.findMaximaMergeFinal(mergeInitArray,
-													mergeSizeResults, minSize, options, blur);
+											final FindFociMergeResults mergeArray = ff.findMaximaMergeFinal(
+													mergeInitArray, mergeSizeResults, minSize, options, blur);
 											sw5.stop();
 											//System.out.printf("5");
 											if (mergeArray == null)
@@ -938,14 +949,18 @@ public class FindFociOptimiser
 	 * provided.
 	 *
 	 * @param imp
+	 *            the imp
 	 * @param mask
+	 *            the mask
 	 * @param results
+	 *            the results
 	 * @param predictedPoints
 	 *            can be null
 	 * @param resultFile
+	 *            the result file
 	 */
-	private void saveResults(ImagePlus imp, ImagePlus mask, ArrayList<Result> results, AssignedPoint[] predictedPoints,
-			String resultFile)
+	private static void saveResults(ImagePlus imp, ImagePlus mask, ArrayList<Result> results,
+			AssignedPoint[] predictedPoints, String resultFile)
 	{
 		if (TextUtils.isNullOrEmpty(resultFile))
 			return;
@@ -963,12 +978,11 @@ public class FindFociOptimiser
 				bestOptions.peakParameter, outputType, bestOptions.sortIndex, bestOptions.options, bestOptions.blur,
 				bestOptions.centreMethod, bestOptions.centreParameter, fractionParameter, "");
 
-		final OutputStreamWriter out = createResultsFile(bestOptions, imp, mask, resultFile);
-		if (out == null)
-			return;
-
-		try
+		try (final OutputStreamWriter out = createResultsFile(bestOptions, imp, mask, resultFile))
 		{
+			if (out == null)
+				return;
+
 			out.write("#\n# Results\n# " + createResultsHeader(true, false));
 
 			// Output all results in ascending rank order
@@ -999,24 +1013,13 @@ public class FindFociOptimiser
 			if (predictedPoints != null)
 				PointManager.savePoints(predictedPoints, resultFile + ".points.csv");
 		}
-		catch (final IOException e)
+		catch (IOException e)
 		{
 			IJ.log("Failed to write to the output file '" + resultFile + ".points.csv': " + e.getMessage());
 		}
-		finally
-		{
-			try
-			{
-				out.close();
-			}
-			catch (final IOException e)
-			{
-			}
-		}
-
 	}
 
-	private synchronized void addFindFociCommand(OutputStreamWriter out, Options bestOptions, String maskTitle)
+	private synchronized static void addFindFociCommand(OutputStreamWriter out, Options bestOptions, String maskTitle)
 			throws IOException
 	{
 		if (bestOptions == null)
@@ -1070,7 +1073,7 @@ public class FindFociOptimiser
 		return Math.ceil(myMatchSearchDistance * length);
 	}
 
-	private void append(StringBuilder sb, String format, Object... args)
+	private static void append(StringBuilder sb, String format, Object... args)
 	{
 		sb.append(String.format(format, args));
 	}
@@ -1210,7 +1213,7 @@ public class FindFociOptimiser
 		}
 	}
 
-	private int[] createOptionsArray()
+	private static int[] createOptionsArray()
 	{
 		if (myMinimumAboveSaddle == 0)
 			return new int[] { FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE };
@@ -1225,7 +1228,7 @@ public class FindFociOptimiser
 					0 };
 	}
 
-	private boolean invalidImage(ImagePlus imp)
+	private static boolean invalidImage(ImagePlus imp)
 	{
 		if (null == imp)
 		{
@@ -1508,8 +1511,7 @@ public class FindFociOptimiser
 		gd.addChoice("Score_conversion", SCORING_MODES, SCORING_MODES[scoringMode]);
 		gd.addCheckbox("Re-use_results", reuseResults);
 		@SuppressWarnings("unchecked")
-		final
-		Vector<TextField> texts = gd.getStringFields();
+		final Vector<TextField> texts = gd.getStringFields();
 		for (final TextField tf : texts)
 		{
 			tf.addMouseListener(this);
@@ -1554,7 +1556,7 @@ public class FindFociOptimiser
 		return true;
 	}
 
-	private String createSortOptions()
+	private static String createSortOptions()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Sort options (comma-delimited). Use if total peaks > max peaks:\n");
@@ -1571,13 +1573,13 @@ public class FindFociOptimiser
 		return sb.toString();
 	}
 
-	private StringBuilder addSortOption(StringBuilder sb, int method)
+	private static StringBuilder addSortOption(StringBuilder sb, int method)
 	{
 		sb.append("[").append(method).append("] ").append(FindFoci.sortIndexMethods[method]);
 		return sb;
 	}
 
-	private String createCentreOptions()
+	private static String createCentreOptions()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Centre options (comma-delimited):\n");
@@ -1590,7 +1592,7 @@ public class FindFociOptimiser
 		return sb.toString();
 	}
 
-	private StringBuilder addCentreOption(StringBuilder sb, int method)
+	private static StringBuilder addCentreOption(StringBuilder sb, int method)
 	{
 		sb.append("[").append(method).append("] ").append(FindFoci.getCentreMethods()[method]);
 		return sb;
@@ -1605,7 +1607,7 @@ public class FindFociOptimiser
 		thresholdMethods = methods.toArray(new String[0]);
 	}
 
-	private void validThresholdMethod(String method, LinkedList<String> methods)
+	private static void validThresholdMethod(String method, LinkedList<String> methods)
 	{
 		for (final String m : FindFoci.autoThresholdMethods)
 			if (m.equalsIgnoreCase(method))
@@ -1626,7 +1628,7 @@ public class FindFociOptimiser
 		statisticsModes = modes.toArray(new String[0]);
 	}
 
-	private void validStatisticsMode(String mode, LinkedList<String> modes)
+	private static void validStatisticsMode(String mode, LinkedList<String> modes)
 	{
 		for (final String m : FindFoci.statisticsModes)
 			if (m.equalsIgnoreCase(mode))
@@ -1636,7 +1638,7 @@ public class FindFociOptimiser
 			}
 	}
 
-	private int convertStatisticsMode(String mode)
+	private static int convertStatisticsMode(String mode)
 	{
 		if (mode.equalsIgnoreCase("inside"))
 			return FindFociProcessor.OPTION_STATS_INSIDE;
@@ -1655,8 +1657,8 @@ public class FindFociOptimiser
 			i++;
 		}
 		if (myBackgroundAuto)
-			for (@SuppressWarnings("unused") final
-			String method : thresholdMethods)
+			for (@SuppressWarnings("unused")
+			final String method : thresholdMethods)
 			{
 				array[i] = FindFociProcessor.BACKGROUND_AUTO_THRESHOLD;
 				i++;
@@ -1690,7 +1692,7 @@ public class FindFociOptimiser
 		myBackgroundParameterInterval = values[2];
 	}
 
-	private double[] checkValuesTriplet(String name, double[] values, double defaultMin, double defaultInterval)
+	private static double[] checkValuesTriplet(String name, double[] values, double defaultMin, double defaultInterval)
 	{
 		if (values.length == 0)
 		{
@@ -1735,7 +1737,7 @@ public class FindFociOptimiser
 		return new double[] { min, max, interval };
 	}
 
-	private double[] splitValues(String text)
+	private static double[] splitValues(String text)
 	{
 		final String[] tokens = text.split(";|,|:");
 		final StoredData list = new StoredData(tokens.length);
@@ -1777,7 +1779,7 @@ public class FindFociOptimiser
 				backgroundMethod == FindFociProcessor.BACKGROUND_AUTO_THRESHOLD);
 	}
 
-	private int[] createSearchArray()
+	private static int[] createSearchArray()
 	{
 		final int[] array = new int[countSearchFlags()];
 		int i = 0;
@@ -1794,7 +1796,7 @@ public class FindFociOptimiser
 		return array;
 	}
 
-	private int countSearchFlags()
+	private static int countSearchFlags()
 	{
 		int i = 0;
 		if (mySearchAboveBackground)
@@ -1849,7 +1851,7 @@ public class FindFociOptimiser
 		myPeakParameterInterval = values[2];
 	}
 
-	private int[] createSortArray()
+	private static int[] createSortArray()
 	{
 		final double[] values = splitValues(mySortMethod);
 		final TIntHashSet set = new TIntHashSet(values.length);
@@ -1870,7 +1872,7 @@ public class FindFociOptimiser
 		return array;
 	}
 
-	private double[] createBlurArray()
+	private static double[] createBlurArray()
 	{
 		final double[] values = splitValues(myGaussianBlur);
 		final TDoubleHashSet set = new TDoubleHashSet(values.length);
@@ -1887,7 +1889,7 @@ public class FindFociOptimiser
 		return array;
 	}
 
-	private int[] createCentreArray()
+	private static int[] createCentreArray()
 	{
 		final double[] values = splitValues(myCentreMethod);
 		final TIntHashSet set = new TIntHashSet(values.length);
@@ -1985,7 +1987,8 @@ public class FindFociOptimiser
 		for (final double blur : blurArray)
 			for (int b = 0; b < backgroundMethodArray.length; b++)
 			{
-				final String[] myStatsModes = backgroundMethodHasStatisticsMode(backgroundMethodArray[b]) ? statisticsModes
+				final String[] myStatsModes = backgroundMethodHasStatisticsMode(backgroundMethodArray[b])
+						? statisticsModes
 						: new String[] { "Both" };
 				for (final String statsMode : myStatsModes)
 					for (double backgroundParameter = myBackgroundParameterMinArray[b]; backgroundParameter <= myBackgroundParameterMax; backgroundParameter += myBackgroundParameterInterval)
@@ -2019,7 +2022,8 @@ public class FindFociOptimiser
 		}
 	}
 
-	private OutputStreamWriter createResultsFile(Options bestOptions, ImagePlus imp, ImagePlus mask, String resultFile)
+	private static OutputStreamWriter createResultsFile(Options bestOptions, ImagePlus imp, ImagePlus mask,
+			String resultFile)
 	{
 		OutputStreamWriter out = null;
 		try
@@ -2069,7 +2073,7 @@ public class FindFociOptimiser
 		return null;
 	}
 
-	private String getFilename(ImagePlus imp)
+	private static String getFilename(ImagePlus imp)
 	{
 		final FileInfo info = imp.getOriginalFileInfo();
 		if (info != null)
@@ -2078,7 +2082,7 @@ public class FindFociOptimiser
 			return imp.getTitle();
 	}
 
-	private String createResultsHeader(boolean withScore, boolean milliSeconds)
+	private static String createResultsHeader(boolean withScore, boolean milliSeconds)
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Rank\t");
@@ -2127,7 +2131,7 @@ public class FindFociOptimiser
 				matchResult.getFalsePositives(), matchResult.getFalseNegatives(), time, beta, matchResult.getRMSD());
 	}
 
-	private AssignedPoint[] extractedPredictedPoints(ArrayList<FindFociResult> resultsArray)
+	private static AssignedPoint[] extractedPredictedPoints(ArrayList<FindFociResult> resultsArray)
 	{
 		final AssignedPoint[] predictedPoints = new AssignedPoint[resultsArray.size()];
 		for (int i = 0; i < resultsArray.size(); i++)
@@ -2139,23 +2143,37 @@ public class FindFociOptimiser
 	}
 
 	/**
-	 * Convert the FindFoci parameters into a text representation
+	 * Convert the FindFoci parameters into a text representation.
 	 *
 	 * @param blur
+	 *            the blur
 	 * @param backgroundMethod
+	 *            the background method
 	 * @param thresholdMethod
+	 *            the threshold method
 	 * @param backgroundParameter
+	 *            the background parameter
 	 * @param maxPeaks
+	 *            the max peaks
 	 * @param minSize
+	 *            the min size
 	 * @param searchMethod
+	 *            the search method
 	 * @param searchParameter
+	 *            the search parameter
 	 * @param peakMethod
+	 *            the peak method
 	 * @param peakParameter
+	 *            the peak parameter
 	 * @param sortMethod
+	 *            the sort method
 	 * @param options
+	 *            the options
 	 * @param centreMethod
+	 *            the centre method
 	 * @param centreParameter
-	 * @return
+	 *            the centre parameter
+	 * @return the string
 	 */
 	static String createParameters(double blur, int backgroundMethod, String thresholdMethod,
 			double backgroundParameter, int maxPeaks, int minSize, int searchMethod, double searchParameter,
@@ -2331,14 +2349,17 @@ public class FindFociOptimiser
 	 * Extract the points for the given image. If a file exists in the same directory as the image with the suffix .csv,
 	 * .xyz, or .txt then the program will attempt to load 3D coordinates from file. Otherwise the points are taken from
 	 * the the ROI.
-	 *
+	 * 
 	 * The points are then filtered to include only those within the mask region (if the mask dimensions match those of
 	 * the image).
 	 *
 	 * @param roi
+	 *            the roi
 	 * @param imp
+	 *            the imp
 	 * @param mask
-	 * @return
+	 *            the mask
+	 * @return the assigned points
 	 */
 	public static AssignedPoint[] extractRoiPoints(Roi roi, ImagePlus imp, ImagePlus mask)
 	{
@@ -2364,11 +2385,13 @@ public class FindFociOptimiser
 	}
 
 	/**
-	 * Restrict the given points to the mask
+	 * Restrict the given points to the mask.
 	 *
 	 * @param mask
+	 *            the mask
 	 * @param roiPoints
-	 * @return
+	 *            the roi points
+	 * @return the assigned points
 	 */
 	public static AssignedPoint[] restrictToMask(ImagePlus mask, AssignedPoint[] roiPoints)
 	{
@@ -2457,12 +2480,9 @@ public class FindFociOptimiser
 		if (!file.exists())
 			return null;
 
-		BufferedReader input = null;
-		try
+		final int MAX_ERROR = 5;
+		try (BufferedReader input = new BufferedReader(new UnicodeReader(new FileInputStream(filename), null)))
 		{
-			final FileInputStream fis = new FileInputStream(filename);
-			input = new BufferedReader(new UnicodeReader(fis, null));
-
 			String line;
 			int id = 0;
 			int errors = 0;
@@ -2487,27 +2507,19 @@ public class FindFociOptimiser
 					catch (final NumberFormatException e)
 					{
 						// Abort if too many errors
-						if (++errors == 5)
-							return null;
+						if (++errors == MAX_ERROR)
+							break;
 					}
 			}
-			return points.toArray(new AssignedPoint[points.size()]);
+			return (errors == MAX_ERROR) ? null : points.toArray(new AssignedPoint[points.size()]);
+		}
+		catch (final NumberFormatException e)
+		{
+			// ignore
 		}
 		catch (final IOException e)
 		{
 			// ignore
-		}
-		finally
-		{
-			try
-			{
-				if (input != null)
-					input.close();
-			}
-			catch (final IOException e)
-			{
-				// Ignore
-			}
 		}
 		return null;
 	}
@@ -2599,7 +2611,7 @@ public class FindFociOptimiser
 		}
 	}
 
-	private int getSortIndex(int sortMethod)
+	private static int getSortIndex(int sortMethod)
 	{
 		// Most of the sort methods correspond to the first items of the metrics array
 		if (sortMethod <= SORT_JACCARD)
@@ -2623,6 +2635,16 @@ public class FindFociOptimiser
 		sortAndAssignRank(results, sortIndex, c);
 	}
 
+	/**
+	 * Sort and assign rank.
+	 *
+	 * @param results
+	 *            the results
+	 * @param sortIndex
+	 *            the sort index
+	 * @param c
+	 *            the c
+	 */
 	public void sortAndAssignRank(ArrayList<Result> results, int sortIndex, ResultComparator c)
 	{
 		Collections.sort(results, c);
@@ -2644,7 +2666,7 @@ public class FindFociOptimiser
 		}
 	}
 
-	private void sortResultsById(ArrayList<Result> results)
+	private static void sortResultsById(ArrayList<Result> results)
 	{
 		Collections.sort(results);
 	}
@@ -2695,9 +2717,10 @@ public class FindFociOptimiser
 		}
 
 		/**
-		 * Add the values stored in the given result to the current values
+		 * Add the values stored in the given result to the current values.
 		 *
 		 * @param result
+		 *            the result
 		 */
 		public void add(Result result)
 		{
@@ -2743,9 +2766,6 @@ public class FindFociOptimiser
 		private final int tieIndex;
 		private final int sortRank;
 		private final int tieRank;
-
-		// Set this to zero to not perform a comparison of the result parameter options
-		private final int tieMethod = 1;
 
 		public ResultComparator(int sortIndex, boolean lowestFirst)
 		{
@@ -2802,7 +2822,8 @@ public class FindFociOptimiser
 			if (o1.metrics[tieIndex] < o2.metrics[tieIndex])
 				return -tieRank;
 
-			if (tieMethod == 1 && o1.options != null && o2.options != null)
+			// Update this to not perform a comparison of the result parameter options
+			if (o1.options != null && o2.options != null)
 			{
 				// Return method with most conservative settings
 				final int[] result = new int[1];
@@ -3008,18 +3029,40 @@ public class FindFociOptimiser
 		}
 	}
 
+	/**
+	 * The Class OptimisationWorker.
+	 */
 	public class OptimisationWorker implements Runnable
 	{
+
+		/** The image. */
 		String image;
+
+		/** The counter. */
 		Counter counter;
+
+		/** The result. */
 		OptimiserResult result = null;
 
+		/**
+		 * Instantiates a new optimisation worker.
+		 *
+		 * @param image
+		 *            the image
+		 * @param counter
+		 *            the counter
+		 */
 		public OptimisationWorker(String image, Counter counter)
 		{
 			this.image = image;
 			this.counter = counter;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.lang.Runnable#run()
+		 */
 		@Override
 		public void run()
 		{
@@ -3077,21 +3120,18 @@ public class FindFociOptimiser
 	 * of parameters.
 	 *
 	 * @param filename
+	 *            the filename
 	 * @return The results
 	 */
 	private ArrayList<Result> loadResults(String filename)
 	{
 		final ArrayList<Result> results = new ArrayList<>();
 
-		BufferedReader input = null;
-		try
+		if (countLines(filename) != combinations)
+			return null;
+
+		try (BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(filename))))
 		{
-			if (countLines(filename) != combinations)
-				return null;
-
-			final FileInputStream fis = new FileInputStream(filename);
-			input = new BufferedReader(new InputStreamReader(fis));
-
 			String line;
 			boolean isRMSD = false;
 			while ((line = input.readLine()) != null)
@@ -3147,38 +3187,21 @@ public class FindFociOptimiser
 		{
 			return null;
 		}
-		finally
-		{
-			try
-			{
-				if (input != null)
-					input.close();
-			}
-			catch (final IOException e)
-			{
-				// Ignore
-			}
-		}
-
 		return results;
 	}
 
 	/**
-	 * Count the number of valid lines in the file
+	 * Count the number of valid lines in the file.
 	 *
 	 * @param filename
+	 *            the filename
 	 * @return The number of lines
 	 */
-	private int countLines(String filename)
+	private static int countLines(String filename)
 	{
-		BufferedReader input = null;
-		try
+		try (BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(filename))))
 		{
 			int count = 0;
-
-			final FileInputStream fis = new FileInputStream(filename);
-			input = new BufferedReader(new InputStreamReader(fis));
-
 			String line;
 			while ((line = input.readLine()) != null)
 			{
@@ -3194,28 +3217,18 @@ public class FindFociOptimiser
 		{
 			return 0;
 		}
-		finally
-		{
-			try
-			{
-				if (input != null)
-					input.close();
-			}
-			catch (final IOException e)
-			{
-				// Ignore
-			}
-		}
 	}
 
 	/**
-	 * Get the index of the nth occurrence of the tab character
+	 * Get the index of the nth occurrence of the tab character.
 	 *
 	 * @param line
+	 *            the line
 	 * @param n
-	 * @return
+	 *            the n
+	 * @return the index
 	 */
-	private int getIndex(String line, int n)
+	private static int getIndex(String line, int n)
 	{
 		final char[] value = line.toCharArray();
 		for (int i = 0; i < value.length; i++)
@@ -3298,21 +3311,41 @@ public class FindFociOptimiser
 			}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
+	 */
 	@Override
 	public void mousePressed(MouseEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
+	 */
 	@Override
 	public void mouseReleased(MouseEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
+	 */
 	@Override
 	public void mouseEntered(MouseEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
+	 */
 	@Override
 	public void mouseExited(MouseEvent e)
 	{
@@ -3380,44 +3413,79 @@ public class FindFociOptimiser
 		}
 	}
 
-	private void showInstance()
+	private static void showInstance()
 	{
 		WindowManager.addWindow(instance);
 		instance.setVisible(true);
 		instance.toFront();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowOpened(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowOpened(WindowEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowClosing(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowClosing(WindowEvent e)
 	{
 		WindowManager.removeWindow(instance);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowClosed(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowClosed(WindowEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowIconified(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowIconified(WindowEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowDeiconified(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowDeiconified(WindowEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowActivated(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowActivated(WindowEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowDeactivated(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowDeactivated(WindowEvent e)
 	{
@@ -3653,17 +3721,33 @@ public class FindFociOptimiser
 		//System.out.println("Done Applying " + s.name + " " + updating);
 	}
 
+	/**
+	 * Action performed.
+	 *
+	 * @param e
+	 *            the e
+	 */
 	public void actionPerformed(ActionEvent e)
 	{
 		dialogItemChanged(listenerGd, e);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.TextListener#textValueChanged(java.awt.event.TextEvent)
+	 */
 	@Override
 	public void textValueChanged(TextEvent e)
 	{
 		dialogItemChanged(listenerGd, e);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
+	 */
 	@Override
 	public void itemStateChanged(ItemEvent e)
 	{

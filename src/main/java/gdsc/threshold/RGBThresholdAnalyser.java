@@ -141,7 +141,7 @@ public class RGBThresholdAnalyser implements PlugIn
 		IJ.showStatus(TITLE + " Finished");
 	}
 
-	private void analyse(String name, ColorProcessor cp, int channel, ImageProcessor ip, ImageProcessor maskIp)
+	private static void analyse(String name, ColorProcessor cp, int channel, ImageProcessor ip, ImageProcessor maskIp)
 	{
 		final byte[] mask = cp.getChannel(channel);
 
@@ -189,7 +189,7 @@ public class RGBThresholdAnalyser implements PlugIn
 		addResult(name, channel, stats, manual, thresholds, h);
 	}
 
-	private ImageProcessor getProcessor(ImagePlus imp, int channel)
+	private static ImageProcessor getProcessor(ImagePlus imp, int channel)
 	{
 		imp.setC(channel);
 		return imp.getProcessor().duplicate();
@@ -202,7 +202,7 @@ public class RGBThresholdAnalyser implements PlugIn
 	 *            The image histogram
 	 * @return Array containing: min, max, av, stdDev
 	 */
-	private double[] getStatistics(int[] hist)
+	private static double[] getStatistics(int[] hist)
 	{
 		// Get the limits
 		int min = 0;
@@ -246,13 +246,13 @@ public class RGBThresholdAnalyser implements PlugIn
 		return new double[] { min, max, av, stdDev };
 	}
 
-	private void createResultsWindow()
+	private static void createResultsWindow()
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
 			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 500);
 	}
 
-	private String createResultsHeader()
+	private static String createResultsHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Image\t");
@@ -266,12 +266,12 @@ public class RGBThresholdAnalyser implements PlugIn
 		return sb.toString();
 	}
 
-	private void addMethod(StringBuilder sb, String method)
+	private static void addMethod(StringBuilder sb, String method)
 	{
 		sb.append('\t').append(method).append("\tCount\tSum");
 	}
 
-	private void addResult(String name, int channel, double[] stats, int manual, int[] thresholds, int[] h)
+	private static void addResult(String name, int channel, double[] stats, int manual, int[] thresholds, int[] h)
 	{
 		// The threshold levels is expressed as:
 		// Absolute
@@ -310,7 +310,7 @@ public class RGBThresholdAnalyser implements PlugIn
 		resultsWindow.append(sb.toString());
 	}
 
-	private void addResult(StringBuilder sb, int t, double[] area, double[] intensity)
+	private static void addResult(StringBuilder sb, int t, double[] area, double[] intensity)
 	{
 		sb.append('\t').append(t);
 		sb.append('\t').append(IJ.d2s(area[t], 5));

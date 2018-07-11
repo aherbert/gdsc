@@ -172,7 +172,7 @@ public class ParticleCorrelation implements PlugIn
 		return true;
 	}
 
-	private boolean checkDimensions(ImagePlus imp1, ImagePlus imp2)
+	private static boolean checkDimensions(ImagePlus imp1, ImagePlus imp2)
 	{
 		if (imp2 == null)
 			return false;
@@ -278,7 +278,7 @@ public class ParticleCorrelation implements PlugIn
 		}
 	}
 
-	private int[] extractStack(ImagePlus imp, int channel)
+	private static int[] extractStack(ImagePlus imp, int channel)
 	{
 		final ImageStack stack = imp.getImageStack();
 		final int frame = imp.getFrame();
@@ -294,7 +294,7 @@ public class ParticleCorrelation implements PlugIn
 		return image;
 	}
 
-	private float[] extractFloatStack(ImagePlus imp, int channel)
+	private static float[] extractFloatStack(ImagePlus imp, int channel)
 	{
 		final ImageStack stack = imp.getImageStack();
 		final int frame = imp.getFrame();
@@ -310,7 +310,7 @@ public class ParticleCorrelation implements PlugIn
 		return image;
 	}
 
-	private void createResultsTable()
+	private static void createResultsTable()
 	{
 		if (twSummary == null || !twSummary.isShowing())
 			twSummary = new TextWindow(TITLE + " Summary",
@@ -335,7 +335,7 @@ public class ParticleCorrelation implements PlugIn
 		return sb.toString();
 	}
 
-	private String getName(ImagePlus imp, int channel)
+	private static String getName(ImagePlus imp, int channel)
 	{
 		String name = imp.getTitle();
 		int suffix = 0;
@@ -349,7 +349,7 @@ public class ParticleCorrelation implements PlugIn
 		return name;
 	}
 
-	private int getValue(int[] mask, int[] objectMask, int value)
+	private static int getValue(int[] mask, int[] objectMask, int value)
 	{
 		for (int i = 0; i < objectMask.length; i++)
 			if (objectMask[i] == value)
@@ -357,7 +357,7 @@ public class ParticleCorrelation implements PlugIn
 		return 0;
 	}
 
-	private void addSummary(String title, double[] sum1, double[] sum2)
+	private static void addSummary(String title, double[] sum1, double[] sum2)
 	{
 		final BlockRealMatrix rm = new BlockRealMatrix(sum1.length, 2);
 		rm.setColumn(0, sum1);
@@ -376,7 +376,7 @@ public class ParticleCorrelation implements PlugIn
 		twSummary.append(sb.toString());
 	}
 
-	private void addResult(String title, int id, int value, double x, double y, double z, int n, double s1, double s2)
+	private static void addResult(String title, int id, int value, double x, double y, double z, int n, double s1, double s2)
 	{
 		final StringBuilder sb = new StringBuilder(title);
 		sb.append(id).append('\t');

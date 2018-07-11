@@ -135,12 +135,12 @@ public class ParticleOverlap implements PlugIn
 		return true;
 	}
 
-	private boolean emptyFilename()
+	private static boolean emptyFilename()
 	{
 		return (filename == null || filename.length() == 0);
 	}
 
-	private boolean checkDimensions(ImagePlus imp1, ImagePlus imp2)
+	private static boolean checkDimensions(ImagePlus imp1, ImagePlus imp2)
 	{
 		if (imp2 == null)
 			return false;
@@ -217,7 +217,7 @@ public class ParticleOverlap implements PlugIn
 		closeResultsFile();
 	}
 
-	private ImageStack extractStack(ImagePlus imp)
+	private static ImageStack extractStack(ImagePlus imp)
 	{
 		final ImageStack oldStack = imp.getImageStack();
 		final int channel = imp.getChannel();
@@ -232,7 +232,7 @@ public class ParticleOverlap implements PlugIn
 		return stack;
 	}
 
-	private void createResultsTable()
+	private static void createResultsTable()
 	{
 		if (!showTable)
 			return;
@@ -278,7 +278,7 @@ public class ParticleOverlap implements PlugIn
 		return sb.toString();
 	}
 
-	private String getName(ImagePlus imp)
+	private static String getName(ImagePlus imp)
 	{
 		String name = imp.getTitle();
 		int suffix = 0;

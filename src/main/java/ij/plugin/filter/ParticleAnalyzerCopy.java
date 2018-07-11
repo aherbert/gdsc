@@ -269,7 +269,20 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 		nextLineWidth = 1;
 	}
 
-	/** Constructs a ParticleAnalyzerCopy using the default min and max circularity values (0 and 1). */
+	/**
+	 * Constructs a ParticleAnalyzerCopy using the default min and max circularity values (0 and 1).
+	 *
+	 * @param options
+	 *            the options
+	 * @param measurements
+	 *            the measurements
+	 * @param rt
+	 *            the rt
+	 * @param minSize
+	 *            the min size
+	 * @param maxSize
+	 *            the max size
+	 */
 	public ParticleAnalyzerCopy(int options, int measurements, ResultsTable rt, double minSize, double maxSize)
 	{
 		this(options, measurements, rt, minSize, maxSize, 0.0, 1.0);
@@ -336,7 +349,11 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 		}
 	}
 
-	/** Displays a modal options dialog. */
+	/**
+	 * Displays a modal options dialog.
+	 *
+	 * @return true, if successful
+	 */
 	public boolean showDialog()
 	{
 		final Calibration cal = imp != null ? imp.getCalibration() : (new Calibration());
@@ -503,7 +520,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 		return true;
 	}
 
-	private boolean isThresholdedRGB(ImagePlus imp)
+	private static boolean isThresholdedRGB(ImagePlus imp)
 	{
 		final Object obj = imp.getProperty("Mask");
 		if (obj == null || !(obj instanceof ImageProcessor))
@@ -534,6 +551,10 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	/**
 	 * Performs particle analysis on the specified image. Returns
 	 * false if there is an error.
+	 *
+	 * @param imp
+	 *            the imp
+	 * @return true, if successful
 	 */
 	public boolean analyze(ImagePlus imp)
 	{
@@ -543,6 +564,12 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	/**
 	 * Performs particle analysis on the specified ImagePlus and
 	 * ImageProcessor. Returns false if there is an error.
+	 *
+	 * @param imp
+	 *            the imp
+	 * @param ip
+	 *            the ip
+	 * @return true, if successful
 	 */
 	public boolean analyze(ImagePlus imp, ImageProcessor ip)
 	{
@@ -1302,19 +1329,31 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	/**
 	 * Returns the "Outlines", "Masks", "Elipses" or "Count Masks" image,
 	 * or null if "Nothing" is selected in the "Show:" menu.
+	 *
+	 * @return the output image
 	 */
 	public ImagePlus getOutputImage()
 	{
 		return outputImage;
 	}
 
-	/** Set 'hideOutputImage' true to not display the "Show:" image. */
+	/**
+	 * Set 'hideOutputImage' true to not display the "Show:" image.
+	 *
+	 * @param hideOutputImage
+	 *            the new hide output image
+	 */
 	public void setHideOutputImage(boolean hideOutputImage)
 	{
 		this.hideOutputImage = hideOutputImage;
 	}
 
-	/** Sets the size of the font used to label outlines in the next particle analyzer instance. */
+	/**
+	 * Sets the size of the font used to label outlines in the next particle analyzer instance.
+	 *
+	 * @param size
+	 *            the new font size
+	 */
 	public static void setFontSize(int size)
 	{
 		nextFontSize = size;
@@ -1322,13 +1361,21 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 
 	/**
 	 * Sets the color ("blue", "black", etc.) of the font used to label outlines in the next particle analyzer instance.
+	 *
+	 * @param color
+	 *            the new font color
 	 */
 	public static void setFontColor(String color)
 	{
 		nextFontColor = Colors.decode(color, defaultFontColor);
 	}
 
-	/** Sets the outline line width for the next ParticleAnalyzerCopy instance. */
+	/**
+	 * Sets the outline line width for the next ParticleAnalyzerCopy instance.
+	 *
+	 * @param width
+	 *            the new line width
+	 */
 	public static void setLineWidth(int width)
 	{
 		nextLineWidth = width;
@@ -1338,6 +1385,9 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	 * Sets the RoiManager to be used by the next ParticleAnalyzerCopy
 	 * instance. There is a JavaScript example at
 	 * http://imagej.nih.gov/ij/macros/js/HiddenRoiManager.js
+	 *
+	 * @param manager
+	 *            the new roi manager
 	 */
 	public static void setRoiManager(RoiManager manager)
 	{
@@ -1347,6 +1397,9 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 	/**
 	 * Sets the ResultsTable to be used by the next
 	 * ParticleAnalyzerCopy instance.
+	 *
+	 * @param rt
+	 *            the new results table
 	 */
 	public static void setResultsTable(ResultsTable rt)
 	{
@@ -1372,16 +1425,18 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 		cm.getBlues(blues);
 		reds[1] = (byte) fontColor.getRed();
 		greens[1] = (byte) fontColor.getGreen();
-		;
 		blues[1] = (byte) fontColor.getBlue();
-		;
 		customLut = new IndexColorModel(8, 256, reds, greens, blues);
 	}
 
-	/** Called once when ImageJ quits. */
+	/**
+	 * Called once when ImageJ quits.
+	 *
+	 * @param prefs
+	 *            the prefs
+	 */
 	public static void savePreferences(Properties prefs)
 	{
 		prefs.put(OPTIONS, Integer.toString(staticOptions));
 	}
-
 }

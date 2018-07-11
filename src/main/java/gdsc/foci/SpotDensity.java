@@ -56,7 +56,7 @@ import ij.text.TextWindow;
  */
 public class SpotDensity implements PlugIn
 {
-	public static String TITLE = "Spot Density";
+	private static final String TITLE = "Spot Density";
 	private static TextWindow resultsWindow = null;
 
 	private static String resultsName1 = "";
@@ -164,7 +164,7 @@ public class SpotDensity implements PlugIn
 		analyse(foci1, foci2, resultsName1.equals(resultsName2), fp);
 	}
 
-	private String[] buildMaskList(Roi roi)
+	private static String[] buildMaskList(Roi roi)
 	{
 		final ArrayList<String> newImageList = new ArrayList<>();
 		if (roi != null && roi.isArea())
@@ -173,7 +173,7 @@ public class SpotDensity implements PlugIn
 		return newImageList.toArray(new String[newImageList.size()]);
 	}
 
-	private FloatProcessor createDistanceMap(ImagePlus imp, String maskImage)
+	private static FloatProcessor createDistanceMap(ImagePlus imp, String maskImage)
 	{
 		final ImagePlus maskImp = WindowManager.getImage(maskImage);
 
@@ -389,7 +389,7 @@ public class SpotDensity implements PlugIn
 		resultsWindow.append(sb.toString());
 	}
 
-	private PlotWindow showPairCorrelation(PC pc)
+	private static PlotWindow showPairCorrelation(PC pc)
 	{
 		final double avDensity = (double) pc.n / pc.area;
 		final String title = "Pair Correlation";
@@ -538,7 +538,7 @@ public class SpotDensity implements PlugIn
 		}
 	}
 
-	private String createResultsHeader()
+	private static String createResultsHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("ID");

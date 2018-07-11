@@ -64,7 +64,7 @@ public class Image_Scaler implements PlugInFilter
 		return DOES_ALL | NO_IMAGE_REQUIRED;
 	}
 
-	private boolean showDialog()
+	private static boolean showDialog()
 	{
 		final GenericDialog gd = new GenericDialog(TITLE);
 
@@ -109,6 +109,7 @@ public class Image_Scaler implements PlugInFilter
 	 * @param listFile
 	 *            File listing all the images to scale
 	 * @param maxValue
+	 *            the max value
 	 */
 	public void run(String listFile, double maxValue)
 	{
@@ -122,22 +123,19 @@ public class Image_Scaler implements PlugInFilter
 		final double[] limits = new double[] { Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
 
 		// Read all images sequentially and find the limits
-		try
+		try (final BufferedReader input = new BufferedReader(new FileReader(listFile)))
 		{
-			final BufferedReader input = new BufferedReader(new FileReader(listFile));
 			String line = null; //not declared within while loop
 			while ((line = input.readLine()) != null)
 			{
 				if (!new File(line).exists())
 					continue;
-
 				ImagePlus imp = new ImagePlus(line);
 				if (imp != null)
 					updateMinAndMax(imp, limits);
 				imp.flush();
 				imp = null; // Free memory
 			}
-			input.close();
 		}
 		catch (final Exception e)
 		{
@@ -151,9 +149,8 @@ public class Image_Scaler implements PlugInFilter
 		final double scaleFactor = maxValue / limits[1];
 
 		// Rewrite images
-		try
+		try (final BufferedReader input = new BufferedReader(new FileReader(listFile)))
 		{
-			final BufferedReader input = new BufferedReader(new FileReader(listFile));
 			String line = null; //not declared within while loop
 			while ((line = input.readLine()) != null)
 			{
@@ -181,7 +178,9 @@ public class Image_Scaler implements PlugInFilter
 	 * Scales all the images by the same factor so that one image has the specified maximum.
 	 *
 	 * @param images
+	 *            the images
 	 * @param maxValue
+	 *            the max value
 	 */
 	public void run(ImagePlus[] images, double maxValue)
 	{
@@ -199,7 +198,7 @@ public class Image_Scaler implements PlugInFilter
 			multiply(imp, scaleFactor);
 	}
 
-	private void updateMinAndMax(ImagePlus imp, double[] limits)
+	private static void updateMinAndMax(ImagePlus imp, double[] limits)
 	{
 		final ImageStack stack = imp.getImageStack();
 		for (int slice = 1; slice <= stack.getSize(); slice++)
@@ -213,7 +212,7 @@ public class Image_Scaler implements PlugInFilter
 		}
 	}
 
-	private void multiply(ImagePlus imp, double scaleFactor)
+	private static void multiply(ImagePlus imp, double scaleFactor)
 	{
 		final ImageStack stack = imp.getImageStack();
 		for (int slice = 1; slice <= stack.getSize(); slice++)

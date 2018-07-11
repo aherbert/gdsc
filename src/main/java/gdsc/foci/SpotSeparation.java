@@ -52,7 +52,8 @@ import ij.text.TextWindow;
  */
 public class SpotSeparation implements PlugInFilter
 {
-	public static final String TITLE = "Spot Separation";
+	/** The plugin title */
+	private static final String TITLE = "Spot Separation";
 
 	private final static String[] methods = { "MaxEntropy", "Yen" };
 
@@ -101,7 +102,7 @@ public class SpotSeparation implements PlugInFilter
 		FindFociResults results = runFindFoci(ip);
 
 		// Respect the image ROI
-		results = cropToRoi(results, ip);
+		results = cropToRoi(results);
 
 		if (results == null)
 			return;
@@ -272,13 +273,13 @@ public class SpotSeparation implements PlugInFilter
 		closeOtherLineProfiles();
 	}
 
-	private boolean isInPeak(ImageProcessor spotIp, float xpos, float ypos, int peakId)
+	private static boolean isInPeak(ImageProcessor spotIp, float xpos, float ypos, int peakId)
 	{
 		//return (int) spotIp.getInterpolatedValue(xpos, ypos) == peakId;
 		return spotIp.get(Math.round(xpos), Math.round(ypos)) == peakId;
 	}
 
-	private float sortValues(float[] xValues, float[] yValues)
+	private static float sortValues(float[] xValues, float[] yValues)
 	{
 		if (xValues.length == 0)
 			return 0;
@@ -290,7 +291,7 @@ public class SpotSeparation implements PlugInFilter
 		return offset;
 	}
 
-	public boolean showDialog()
+	private static boolean showDialog()
 	{
 		final GenericDialog gd = new GenericDialog(TITLE);
 		gd.addHelp(URL.UTILITY);
@@ -314,7 +315,7 @@ public class SpotSeparation implements PlugInFilter
 		return true;
 	}
 
-	private FindFociResults cropToRoi(FindFociResults results, ImageProcessor ip)
+	private FindFociResults cropToRoi(FindFociResults results)
 	{
 		final Roi roi = imp.getRoi();
 		if (roi == null || results == null)
@@ -382,7 +383,7 @@ public class SpotSeparation implements PlugInFilter
 		return new FindFociResults(maximaImp, newResultsArray, null);
 	}
 
-	private FindFociResults runFindFoci(ImageProcessor ip)
+	private static FindFociResults runFindFoci(ImageProcessor ip)
 	{
 		// Run FindFoci to get the spots
 		// Get each spot as a different number with the centre using the search
@@ -421,7 +422,7 @@ public class SpotSeparation implements PlugInFilter
 		return results;
 	}
 
-	private void showSpotImage(ImagePlus maximaImp, ArrayList<FindFociResult> resultsArray)
+	private static void showSpotImage(ImagePlus maximaImp, ArrayList<FindFociResult> resultsArray)
 	{
 		if (showSpotImage)
 		{
@@ -443,12 +444,13 @@ public class SpotSeparation implements PlugInFilter
 	}
 
 	/**
-	 * Extract the centre of each maxima from the results
+	 * Extract the centre of each maxima from the results.
 	 *
 	 * @param resultsArray
-	 * @return
+	 *            the results array
+	 * @return the assigned points
 	 */
-	private AssignedPoint[] extractSpotCoordinates(ArrayList<FindFociResult> resultsArray)
+	private static AssignedPoint[] extractSpotCoordinates(ArrayList<FindFociResult> resultsArray)
 	{
 		final AssignedPoint[] points = new AssignedPoint[resultsArray.size()];
 		int i = 0;
@@ -462,12 +464,13 @@ public class SpotSeparation implements PlugInFilter
 	}
 
 	/**
-	 * Compute the all-vs-all squared distance matrix
+	 * Compute the all-vs-all squared distance matrix.
 	 *
 	 * @param points
-	 * @return
+	 *            the points
+	 * @return the float[][] distance matrix
 	 */
-	private float[][] computeDistanceMatrix(AssignedPoint[] points)
+	private static float[][] computeDistanceMatrix(AssignedPoint[] points)
 	{
 		final float[][] d = new float[points.length][points.length];
 		for (int i = 0; i < d.length; i++)
@@ -489,7 +492,7 @@ public class SpotSeparation implements PlugInFilter
 	 * @return Array of indices that each point is assigned to. Unassigned
 	 *         points will have an index of -1.
 	 */
-	private int[] assignClosestPairs(float[][] d)
+	private static int[] assignClosestPairs(float[][] d)
 	{
 		final float d2 = (float) (radius * radius);
 		final int[] assigned = new int[d.length];
@@ -548,7 +551,7 @@ public class SpotSeparation implements PlugInFilter
 		resultEntry = sb.toString();
 	}
 
-	private String createResultsHeader()
+	private static String createResultsHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Image\t");
@@ -652,7 +655,7 @@ public class SpotSeparation implements PlugInFilter
 		resultsWindow.append(sb.toString());
 	}
 
-	private boolean findIndex(int[] maxIndices, int maxCount, int index)
+	private static boolean findIndex(int[] maxIndices, int maxCount, int index)
 	{
 		for (int i = maxCount; i-- > 0;)
 			if (maxIndices[i] == index)
@@ -660,7 +663,7 @@ public class SpotSeparation implements PlugInFilter
 		return false;
 	}
 
-	private int findIndex(int i, float f, float[] xValues)
+	private static int findIndex(int i, float f, float[] xValues)
 	{
 		for (; i < xValues.length; i++)
 			if (f == xValues[i])
@@ -702,16 +705,20 @@ public class SpotSeparation implements PlugInFilter
 	 * See Burger & Burge, Digital Image Processing, An Algorithmic Introduction using Java (1st Edition), pp231.
 	 *
 	 * @param spotIp
+	 *            the spot ip
 	 * @param xpos
+	 *            the xpos
 	 * @param ypos
+	 *            the ypos
 	 * @param peakId
+	 *            the peak id
 	 * @param com
 	 *            The calculated centre-of-mass
 	 * @return The orientation in range -pi/2 to pi/2 from the x-axis, incrementing clockwise if the Y-axis points
 	 *         downwards
 	 */
 	@SuppressWarnings("unused")
-	private double calculateOrientation(ImageProcessor spotIp, float xpos, float ypos, int peakId, float[] com)
+	private static double calculateOrientation(ImageProcessor spotIp, float xpos, float ypos, int peakId, float[] com)
 	{
 		// Find the limits of the spot and calculate the centre of mass
 		int maxu = (int) xpos;
@@ -775,16 +782,21 @@ public class SpotSeparation implements PlugInFilter
 	 * See Burger & Burge, Digital Image Processing, An Algorithmic Introduction using Java (1st Edition), pp231.
 	 *
 	 * @param ip
+	 *            the ip
 	 * @param spotIp
+	 *            the spot ip
 	 * @param xpos
+	 *            the xpos
 	 * @param ypos
+	 *            the ypos
 	 * @param peakId
+	 *            the peak id
 	 * @param com
 	 *            The calculated centre-of-mass
 	 * @return The orientation in range -pi/2 to pi/2 from the x-axis, incrementing clockwise if the Y-axis points
 	 *         downwards
 	 */
-	private double calculateOrientation(ImageProcessor ip, ImageProcessor spotIp, float xpos, float ypos, int peakId,
+	private static double calculateOrientation(ImageProcessor ip, ImageProcessor spotIp, float xpos, float ypos, int peakId,
 			float[] com)
 	{
 		// Find the limits of the spot and calculate the centre of mass
@@ -846,7 +858,7 @@ public class SpotSeparation implements PlugInFilter
 	}
 
 	@SafeVarargs
-	private final float[][] convertToFloat(List<float[]>... lists)
+	private final static float[][] convertToFloat(List<float[]>... lists)
 	{
 		int size = 0;
 		for (final List<float[]> list : lists)

@@ -115,7 +115,7 @@ public class Align_Stacks implements PlugIn
 				exec(refImp, targetImp, projectionMethod, wm, bounds, spm, interpolationMethod, clipOutput);
 	}
 
-	private String[] getImagesList()
+	private static String[] getImagesList()
 	{
 		// Find the currently open images
 		final ArrayList<String> newImageList = new ArrayList<>();
@@ -200,7 +200,7 @@ public class Align_Stacks implements PlugIn
 		return true;
 	}
 
-	private ArrayList<ImagePlus> getTargetImages(ImagePlus referenceImp)
+	private static ArrayList<ImagePlus> getTargetImages(ImagePlus referenceImp)
 	{
 		final ArrayList<ImagePlus> imageList = new ArrayList<>();
 
@@ -219,7 +219,7 @@ public class Align_Stacks implements PlugIn
 		return imageList;
 	}
 
-	private boolean isMatchingDimensions(int[] referenceDimensions, int[] dimensions)
+	private static boolean isMatchingDimensions(int[] referenceDimensions, int[] dimensions)
 	{
 		// Allow aligning a stack to an image of the same dimensions XYC if the reference has only one frame
 		if (referenceDimensions[4] == 1)
@@ -237,7 +237,7 @@ public class Align_Stacks implements PlugIn
 		return true;
 	}
 
-	private void exec(ImagePlus refImp, ImagePlus targetImp, int projectionMethod, WindowMethod windowFunction,
+	private static void exec(ImagePlus refImp, ImagePlus targetImp, int projectionMethod, WindowMethod windowFunction,
 			Rectangle bounds, SubPixelMethod subPixelMethod, int interpolationMethod, boolean clipOutput)
 	{
 		// Check same size
@@ -328,6 +328,19 @@ public class Align_Stacks implements PlugIn
 		targetImp.updateAndDraw();
 	}
 
+	/**
+	 * Creates the bounds for the shift.
+	 *
+	 * @param minXShift
+	 *            the min X shift
+	 * @param maxXShift
+	 *            the max X shift
+	 * @param minYShift
+	 *            the min Y shift
+	 * @param maxYShift
+	 *            the max Y shift
+	 * @return the rectangle
+	 */
 	public static Rectangle createBounds(int minXShift, int maxXShift, int minYShift, int maxYShift)
 	{
 		final int w = maxXShift - minXShift;
@@ -336,7 +349,7 @@ public class Align_Stacks implements PlugIn
 		return bounds;
 	}
 
-	private boolean isValid(ImagePlus refImp, ImagePlus targetImp)
+	private static boolean isValid(ImagePlus refImp, ImagePlus targetImp)
 	{
 		if (refImp == null || targetImp == null)
 			return false;
@@ -345,7 +358,7 @@ public class Align_Stacks implements PlugIn
 		return isMatchingDimensions(refImp.getDimensions(), targetImp.getDimensions());
 	}
 
-	private ImageProcessor createComposite(ImagePlus imp, int frame, int projectionMethod, WindowMethod windowFunction)
+	private static ImageProcessor createComposite(ImagePlus imp, int frame, int projectionMethod, WindowMethod windowFunction)
 	{
 		// Extract the channels using the specified projection method
 		final FloatProcessor[] tiles = new FloatProcessor[imp.getNChannels()];
@@ -396,7 +409,7 @@ public class Align_Stacks implements PlugIn
 		return ip;
 	}
 
-	private FloatProcessor extractTile(ImagePlus imp, int frame, int channel, int projectionMethod)
+	private static FloatProcessor extractTile(ImagePlus imp, int frame, int channel, int projectionMethod)
 	{
 		return Utils.extractTile(imp, frame, channel, projectionMethod).toFloat(1, null);
 	}
@@ -408,7 +421,7 @@ public class Align_Stacks implements PlugIn
 	 * @param ip
 	 *            The input image
 	 */
-	private void normalise(FloatProcessor ip)
+	private static void normalise(FloatProcessor ip)
 	{
 		final float[] pixels = (float[]) ip.getPixels();
 
@@ -425,11 +438,13 @@ public class Align_Stacks implements PlugIn
 	}
 
 	/**
-	 * Extracts the specified frame from the hyperstack
+	 * Extracts the specified frame from the hyperstack.
 	 *
 	 * @param imp
+	 *            the imp
 	 * @param frame
-	 * @return
+	 *            the frame
+	 * @return the image plus
 	 */
 	public static ImagePlus extractFrame(ImagePlus imp, int frame)
 	{

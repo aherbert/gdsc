@@ -53,22 +53,22 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	/**
 	 * Used to store information about a cluster in the clustering analysis
 	 */
-	public class Cluster
+	class Cluster
 	{
-		public double x, y, sumx, sumy;
-		public int n;
+		double x, y, sumx, sumy;
+		int n;
 
 		// Used to construct a single linked list of clusters
-		public Cluster next = null;
+		Cluster next = null;
 
 		// Used to store potential clustering links
-		public Cluster closest = null;
-		public double d2;
+		Cluster closest = null;
+		double d2;
 
 		// Used to construct a single linked list of cluster points
-		public ClusterPoint head = null;
+		ClusterPoint head = null;
 
-		public Cluster(ClusterPoint point)
+		Cluster(ClusterPoint point)
 		{
 			point.next = null;
 			head = point;
@@ -77,14 +77,14 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 			n = 1;
 		}
 
-		public double distance2(Cluster other)
+		double distance2(Cluster other)
 		{
 			final double dx = x - other.x;
 			final double dy = y - other.y;
 			return dx * dx + dy * dy;
 		}
 
-		public void add(Cluster other)
+		void add(Cluster other)
 		{
 			// Do not check if the other cluster is null or has no points
 
@@ -131,12 +131,14 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 
 		/**
 		 * Link the two clusters as potential merge candidates only if the squared distance is smaller than the other
-		 * clusters current closest
+		 * clusters current closest.
 		 *
 		 * @param other
+		 *            the other
 		 * @param d2
+		 *            the squared distance
 		 */
-		public void link(Cluster other, double d2)
+		void link(Cluster other, double d2)
 		{
 			// Check if the other cluster has a closer candidate
 			if (other.closest != null && other.d2 < d2)
@@ -152,7 +154,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 		/**
 		 * @return True if the closest cluster links back to this cluster
 		 */
-		public boolean validLink()
+		boolean validLink()
 		{
 			// Check if the other cluster has an updated link to another candidate
 			if (closest != null)
@@ -164,7 +166,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 		/**
 		 * Sorts the points in ID order. This only works for the first two points in the list.
 		 */
-		public void sort()
+		void sort()
 		{
 			if (n < 2)
 				return;
@@ -182,22 +184,22 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	/**
 	 * Used to store information about a point in the clustering analysis
 	 */
-	public class ClusterPoint
+	class ClusterPoint
 	{
-		public double x, y;
-		public int id;
+		double x, y;
+		int id;
 
 		// Used to construct a single linked list of points
-		public ClusterPoint next = null;
+		ClusterPoint next = null;
 
-		public ClusterPoint(int id, double x, double y)
+		ClusterPoint(int id, double x, double y)
 		{
 			this.id = id;
 			this.x = x;
 			this.y = y;
 		}
 
-		public double distance(ClusterPoint other)
+		double distance(ClusterPoint other)
 		{
 			final double dx = x - other.x;
 			final double dy = y - other.y;
@@ -205,7 +207,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 		}
 	}
 
-	public static final String TITLE = "Spot Pairs";
+	private static final String TITLE = "Spot Pairs";
 	private static TextWindow resultsWindow = null;
 
 	private static double radius = 10;
@@ -449,13 +451,16 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	 * have any neighbours within 2*r^2.
 	 *
 	 * @param grid
+	 *            the grid
 	 * @param nXBins
+	 *            the number of X bins
 	 * @param nYBins
+	 *            the number of Y bins
 	 * @param r2
 	 *            The squared radius distance
 	 * @return True if any links were made
 	 */
-	private boolean findLinks(Cluster[][] grid, final int nXBins, final int nYBins, final double r2)
+	private static boolean findLinks(Cluster[][] grid, final int nXBins, final int nYBins, final double r2)
 	{
 		final Cluster[] neighbours = new Cluster[5];
 		boolean linked = false;
@@ -514,12 +519,15 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	 * Join valid links between clusters. Resets the link candidates.
 	 *
 	 * @param grid
+	 *            the grid
 	 * @param nXBins
+	 *            the number of X bins
 	 * @param nYBins
+	 *            the number of Y bins
 	 * @param candidates
 	 *            Re-populate will all the remaining clusters
 	 */
-	private void joinLinks(Cluster[][] grid, int nXBins, int nYBins, ArrayList<Cluster> candidates)
+	private static void joinLinks(Cluster[][] grid, int nXBins, int nYBins, ArrayList<Cluster> candidates)
 	{
 		candidates.clear();
 
@@ -575,12 +583,10 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 		return DOES_ALL | FINAL_PROCESSING;
 	}
 
-	/**
-	 * Listener to modifications of the input fields of the dialog
-	 *
-	 * @param gd
-	 * @param e
-	 * @return
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog, java.awt.AWTEvent)
 	 */
 	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
@@ -593,8 +599,10 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 		return true;
 	}
 
-	/**
-	 * @param nPasses
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
 	 */
 	@Override
 	public void setNPasses(int nPasses)

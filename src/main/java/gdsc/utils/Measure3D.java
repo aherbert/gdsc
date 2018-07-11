@@ -135,6 +135,9 @@ public class Measure3D extends PlugInFrame
 		Toolbar.getInstance().setTool(name);
 	}
 
+	/**
+	 * Run the Measure3D plugin using the cursor position on the current image.
+	 */
 	public static void run()
 	{
 		if (instance != null)
@@ -193,7 +196,7 @@ public class Measure3D extends PlugInFrame
 				}
 
 			// Record to a table
-			record(imp, x, y, z, c, t, d, d2, cal.getXUnit());
+			record(imp, x, y, z, d, d2, cal.getXUnit());
 
 			// Overlay the line on the image
 			if (overlayCheckbox.getState())
@@ -234,7 +237,7 @@ public class Measure3D extends PlugInFrame
 		}
 	}
 
-	private void createResultsTable()
+	private static void createResultsTable()
 	{
 		if (results == null || !results.isVisible())
 		{
@@ -285,7 +288,7 @@ public class Measure3D extends PlugInFrame
 		}
 	}
 
-	private void record(ImagePlus imp, int x, int y, int z, int c2, int t, double d, double d2, String units)
+	private void record(ImagePlus imp, int x, int y, int z, double d, double d2, String units)
 	{
 		createResultsTable();
 		final StringBuilder sb = new StringBuilder(imp.getTitle());

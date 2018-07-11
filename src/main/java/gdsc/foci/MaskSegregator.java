@@ -58,7 +58,7 @@ import ij.process.ShortProcessor;
  */
 public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 {
-	public static final String TITLE = "Mask Segregator";
+	private static final String TITLE = "Mask Segregator";
 
 	private final int flags = DOES_16 + DOES_8G + FINAL_PROCESSING;
 	private ImagePlus imp;
@@ -158,12 +158,13 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 	}
 
 	/**
-	 * Build a list of 8/16 bit images that match the width and height of the input image
+	 * Build a list of 8/16 bit images that match the width and height of the input image.
 	 *
 	 * @param inputImp
-	 * @return
+	 *            the input imp
+	 * @return the masks
 	 */
-	private String[] getMasks(ImagePlus inputImp)
+	private static String[] getMasks(ImagePlus inputImp)
 	{
 		final String[] names = new String[WindowManager.getImageCount()];
 		int count = 0;
@@ -287,7 +288,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		imp.setOverlay(overlay);
 	}
 
-	private int getRGB(int r, int g, int b)
+	private static int getRGB(int r, int g, int b)
 	{
 		return ((r << 16) + (g << 8) + b);
 	}

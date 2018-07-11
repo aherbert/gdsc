@@ -45,32 +45,31 @@ import ij.gui.Roi;
  */
 public class PointManager
 {
-	public static final String newline = System.getProperty("line.separator");
+	private static final String newline = System.getProperty("line.separator");
 
 	/**
-	 * Save the predicted points to the given file
+	 * Save the predicted points to the given file.
 	 *
 	 * @param points
+	 *            the points
 	 * @param filename
+	 *            the filename
 	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
 	public static void savePoints(AssignedPoint[] points, String filename) throws IOException
 	{
 		if (points == null)
 			return;
 
-		OutputStreamWriter out = null;
-		try
+		final File file = new File(filename);
+		if (!file.exists())
+			if (file.getParent() != null)
+				new File(file.getParent()).mkdirs();
+		
+		try (final OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(filename)))
 		{
-			final File file = new File(filename);
-			if (!file.exists())
-				if (file.getParent() != null)
-					new File(file.getParent()).mkdirs();
-
 			// Save results to file
-			final FileOutputStream fos = new FileOutputStream(filename);
-			out = new OutputStreamWriter(fos);
-
 			final StringBuilder sb = new StringBuilder();
 
 			out.write("X,Y,Z" + newline);
@@ -85,35 +84,23 @@ public class PointManager
 				sb.setLength(0);
 			}
 		}
-		finally
-		{
-			try
-			{
-				if (out != null)
-					out.close();
-			}
-			catch (final IOException e)
-			{
-			}
-		}
 	}
 
 	/**
-	 * Loads the points from the file
+	 * Loads the points from the file.
 	 *
 	 * @param filename
-	 * @return
+	 *            the filename
+	 * @return the assigned points
 	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
 	public static AssignedPoint[] loadPoints(String filename) throws IOException
 	{
 		final LinkedList<AssignedPoint> points = new LinkedList<>();
-		BufferedReader input = null;
-		try
+		// Load results from file
+		try (BufferedReader input = new BufferedReader(new FileReader(filename)))
 		{
-			// Load results from file
-			input = new BufferedReader(new FileReader(filename));
-
 			String line = input.readLine();
 
 			if (line != null)
@@ -140,23 +127,13 @@ public class PointManager
 
 			return points.toArray(new AssignedPoint[0]);
 		}
-		finally
-		{
-			try
-			{
-				if (input != null)
-					input.close();
-			}
-			catch (final IOException e)
-			{
-			}
-		}
 	}
 
 	/**
-	 * Extracts the points from the given Point ROI
+	 * Extracts the points from the given Point ROI.
 	 *
 	 * @param roi
+	 *            the roi
 	 * @return The list of points (can be zero length)
 	 */
 	public static AssignedPoint[] extractRoiPoints(Roi roi)
@@ -230,6 +207,7 @@ public class PointManager
 	 * Eliminates duplicate coordinates. Destructively alters the IDs in the input array since the objects are recycled
 	 *
 	 * @param points
+	 *            the points
 	 * @return new list of points with Ids from zero
 	 */
 	public static AssignedPoint[] eliminateDuplicates(AssignedPoint[] points)

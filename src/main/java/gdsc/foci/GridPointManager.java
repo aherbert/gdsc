@@ -42,14 +42,25 @@ public class GridPointManager
 	private int minY = Integer.MAX_VALUE;
 	private int searchMode = 0;
 
-	/**
-	 * Define the search modes for the {@link #findUnassignedPoint(int, int)} method
-	 */
+	/** Define the search modes for the {@link #findUnassignedPoint(int, int)} method. */
 	public static final String[] SEARCH_MODES = new String[] { "Highest", "Closest" };
 
+	/** Constant for finding the highest point. */
 	public static final int HIGHEST = 0;
+	
+	/** Constant for finding the closest point. */
 	public static final int CLOSEST = 1;
 
+	/**
+	 * Instantiates a new grid point manager.
+	 *
+	 * @param points
+	 *            the points
+	 * @param resolution
+	 *            the resolution
+	 * @throws GridException
+	 *             the grid exception
+	 */
 	public GridPointManager(List<GridPoint> points, int resolution) throws GridException
 	{
 		this.resolution = resolution;
@@ -119,7 +130,7 @@ public class GridPointManager
 	}
 
 	/**
-	 * Resets the assigned flag on all the points
+	 * Resets the assigned flag on all the points.
 	 */
 	public void resetAssigned()
 	{
@@ -132,7 +143,9 @@ public class GridPointManager
 	 * If a point is found it will have its assigned flag set to true.
 	 *
 	 * @param xCoord
+	 *            the x coord
 	 * @param yCoord
+	 *            the y coord
 	 * @return The GridPoint (or null)
 	 */
 	public GridPoint findUnassignedPoint(int xCoord, int yCoord)
@@ -150,7 +163,9 @@ public class GridPointManager
 	 * Find the highest assigned point within the sampling resolution from the given coordinates.
 	 *
 	 * @param xCoord
+	 *            the x coord
 	 * @param yCoord
+	 *            the y coord
 	 * @return The GridPoint (or null)
 	 */
 	public GridPoint findHighestAssignedPoint(int xCoord, int yCoord)
@@ -163,7 +178,9 @@ public class GridPointManager
 	 * If a point is found it will have its assigned flag set to true.
 	 *
 	 * @param xCoord
+	 *            the x coord
 	 * @param yCoord
+	 *            the y coord
 	 * @return The GridPoint (or null)
 	 */
 	public GridPoint findHighestUnassignedPoint(int xCoord, int yCoord)
@@ -181,7 +198,11 @@ public class GridPointManager
 	 * status.
 	 *
 	 * @param xCoord
+	 *            the x coord
 	 * @param yCoord
+	 *            the y coord
+	 * @param assigned
+	 *            the assigned
 	 * @return The GridPoint (or null)
 	 */
 	public GridPoint findHighest(int xCoord, int yCoord, boolean assigned)
@@ -228,7 +249,9 @@ public class GridPointManager
 	 * Find the assigned point that matches the given coordinates.
 	 *
 	 * @param xCoord
+	 *            the x coord
 	 * @param yCoord
+	 *            the y coord
 	 * @return The GridPoint (or null)
 	 */
 	public GridPoint findExactAssignedPoint(int xCoord, int yCoord)
@@ -241,7 +264,9 @@ public class GridPointManager
 	 * If a point is found it will have its assigned flag set to true.
 	 *
 	 * @param xCoord
+	 *            the x coord
 	 * @param yCoord
+	 *            the y coord
 	 * @return The GridPoint (or null)
 	 */
 	public GridPoint findExactUnassignedPoint(int xCoord, int yCoord)
@@ -258,8 +283,11 @@ public class GridPointManager
 	 * Find the point that matches the given coordinates with the specified assigned status.
 	 *
 	 * @param xCoord
+	 *            the x coord
 	 * @param yCoord
+	 *            the y coord
 	 * @param assigned
+	 *            the assigned
 	 * @return The GridPoint (or null)
 	 */
 	public GridPoint findExact(int xCoord, int yCoord, boolean assigned)
@@ -285,10 +313,12 @@ public class GridPointManager
 	}
 
 	/**
-	 * Find the closest assigned point within the sampling resolution from the given coordinates
+	 * Find the closest assigned point within the sampling resolution from the given coordinates.
 	 *
 	 * @param xCoord
+	 *            the x coord
 	 * @param yCoord
+	 *            the y coord
 	 * @return The GridPoint (or null)
 	 */
 	public GridPoint findClosestAssignedPoint(int xCoord, int yCoord)
@@ -301,7 +331,9 @@ public class GridPointManager
 	 * If a point is found it will have its assigned flag set to true.
 	 *
 	 * @param xCoord
+	 *            the x coord
 	 * @param yCoord
+	 *            the y coord
 	 * @return The GridPoint (or null)
 	 */
 	public GridPoint findClosestUnassignedPoint(int xCoord, int yCoord)
@@ -319,8 +351,11 @@ public class GridPointManager
 	 * status.
 	 *
 	 * @param xCoord
+	 *            the x coord
 	 * @param yCoord
+	 *            the y coord
 	 * @param assigned
+	 *            the assigned
 	 * @return The GridPoint (or null)
 	 */
 	public GridPoint findClosest(int xCoord, int yCoord, boolean assigned)
@@ -355,6 +390,8 @@ public class GridPointManager
 	}
 
 	/**
+	 * Gets the resolution.
+	 *
 	 * @return the resolution
 	 */
 	public int getResolution()
@@ -363,6 +400,8 @@ public class GridPointManager
 	}
 
 	/**
+	 * Sets the search mode.
+	 *
 	 * @param searchMode
 	 *            the searchMode to set (see {@link #SEARCH_MODES} )
 	 */
@@ -372,6 +411,8 @@ public class GridPointManager
 	}
 
 	/**
+	 * Gets the search mode.
+	 *
 	 * @return the searchMode
 	 */
 	public int getSearchMode()

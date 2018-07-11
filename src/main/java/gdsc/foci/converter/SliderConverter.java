@@ -25,8 +25,12 @@ package gdsc.foci.converter;
 
 import org.jdesktop.beansbinding.Converter;
 
+/**
+ * Convert the slider value to an integer  
+ */
 public class SliderConverter extends Converter<Double, Integer>
 {
+	/** The scale factor applied to a double before converting to an integer. */
 	public static double SCALE_FACTOR = 1000;
 
 	@Override

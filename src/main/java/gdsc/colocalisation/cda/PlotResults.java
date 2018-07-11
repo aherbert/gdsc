@@ -52,6 +52,18 @@ public class PlotResults
 	private final double sampleValue;
 	private double pValue = 0.05;
 
+	/**
+	 * Instantiates a new plot results.
+	 *
+	 * @param sampleValue
+	 *            the sample value
+	 * @param bins
+	 *            the bins
+	 * @param sampleData
+	 *            the sample data
+	 * @param color
+	 *            the color
+	 */
 	public PlotResults(double sampleValue, int bins, double[] sampleData, Color color)
 	{
 		createHistogram(sampleData, bins);
@@ -95,12 +107,21 @@ public class PlotResults
 		}
 	}
 
+	/**
+	 * Calculate the plot using the provided p-value.
+	 *
+	 * @param pValue
+	 *            the value
+	 */
 	public void calculate(double pValue)
 	{
 		setPValue(pValue);
 		calculate();
 	}
 
+	/**
+	 * Calculate the plot.
+	 */
 	public void calculate()
 	{
 		probabilityLimits = getProbabilityLimits(sampleData);
@@ -154,21 +175,44 @@ public class PlotResults
 		plot.addPoints(valueMarker[0], valueMarker[1], 0);
 	}
 
+	/**
+	 * Sets the x title.
+	 *
+	 * @param title
+	 *            the new x title
+	 */
 	public void setXTitle(String title)
 	{
 		plotXTitle = title;
 	}
 
+	/**
+	 * Sets the y title.
+	 *
+	 * @param title
+	 *            the new y title
+	 */
 	public void setYTitle(String title)
 	{
 		plotYTitle = title;
 	}
 
+	/**
+	 * Sets the title.
+	 *
+	 * @param title
+	 *            the new title
+	 */
 	public void setTitle(String title)
 	{
 		plotTitle = title;
 	}
 
+	/**
+	 * Gets the plot.
+	 *
+	 * @return the plot
+	 */
 	public Plot getPlot()
 	{
 		if (plot == null)
@@ -176,17 +220,27 @@ public class PlotResults
 		return plot;
 	}
 
+	/**
+	 * Gets the probability limits.
+	 *
+	 * @return the probability limits
+	 */
 	public double[] getProbabilityLimits()
 	{
 		return probabilityLimits;
 	}
 
+	/**
+	 * Gets the significance test.
+	 *
+	 * @return the significance test
+	 */
 	public String getSignificanceTest()
 	{
 		return significanceTest;
 	}
 
-	private double[] createHistogramAxis(double[] histogramX)
+	private static double[] createHistogramAxis(double[] histogramX)
 	{
 		final double[] axis = new double[histogramX.length * 2 + 2];
 		int index = 0;
@@ -201,7 +255,7 @@ public class PlotResults
 		return axis;
 	}
 
-	private double[] createHistogramValues(double[] histogramY)
+	private static double[] createHistogramValues(double[] histogramY)
 	{
 		final double[] axis = new double[histogramY.length * 2 + 2];
 
@@ -216,7 +270,7 @@ public class PlotResults
 		return axis;
 	}
 
-	private int getTotal(int[] histogram)
+	private static int getTotal(int[] histogram)
 	{
 		int total = 0;
 		for (final int i : histogram)
@@ -224,7 +278,7 @@ public class PlotResults
 		return total;
 	}
 
-	private double[] normaliseHistogram(int[] histogram)
+	private static double[] normaliseHistogram(int[] histogram)
 	{
 		final int total = getTotal(histogram);
 
@@ -245,7 +299,7 @@ public class PlotResults
 		return limits;
 	}
 
-	private String testSignificance(double[] limits, double sampleValue)
+	private static String testSignificance(double[] limits, double sampleValue)
 	{
 		String outputString = "";
 		if (sampleValue >= limits[1])

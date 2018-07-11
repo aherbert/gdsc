@@ -167,7 +167,7 @@ public class ThreadAnalyser implements PlugIn
 			showImage(objectIp, objectImage + " Objects", null);
 	}
 
-	private ByteProcessor getMask(ImageProcessor ip)
+	private static ByteProcessor getMask(ImageProcessor ip)
 	{
 		if (ip == null)
 			return null;
@@ -202,7 +202,7 @@ public class ThreadAnalyser implements PlugIn
 		return (ByteProcessor) ip.convertToByte(false);
 	}
 
-	private ImageProcessor getImage(String title, int channel)
+	private static ImageProcessor getImage(String title, int channel)
 	{
 		final ImagePlus imp = WindowManager.getImage(title);
 		if (imp == null)
@@ -221,7 +221,7 @@ public class ThreadAnalyser implements PlugIn
 	 *
 	 * @return False if the user cancelled
 	 */
-	private boolean showDialog()
+	private static boolean showDialog()
 	{
 		GenericDialog gd = new GenericDialog(TITLE);
 
@@ -296,7 +296,7 @@ public class ThreadAnalyser implements PlugIn
 		return true;
 	}
 
-	private int getChannels(String title)
+	private static int getChannels(String title)
 	{
 		final ImagePlus imp = WindowManager.getImage(title);
 		if (imp != null)
@@ -304,7 +304,7 @@ public class ThreadAnalyser implements PlugIn
 		return 1;
 	}
 
-	private void addChoice(GenericDialog gd, String label, int nChannels, int index)
+	private static void addChoice(GenericDialog gd, String label, int nChannels, int index)
 	{
 		if (nChannels == 1)
 			return;
@@ -317,12 +317,13 @@ public class ThreadAnalyser implements PlugIn
 	}
 
 	/**
-	 * Create a Euclidian Distance Map (EDM) of the mask
+	 * Create a Euclidian Distance Map (EDM) of the mask.
 	 *
 	 * @param bp
-	 * @return
+	 *            the mask
+	 * @return the EDM float processor
 	 */
-	private FloatProcessor createEDM(ByteProcessor bp)
+	private static FloatProcessor createEDM(ByteProcessor bp)
 	{
 		final EDM edm = new EDM();
 		byte backgroundValue = (byte) (Prefs.blackBackground ? 0 : 255);
@@ -333,11 +334,12 @@ public class ThreadAnalyser implements PlugIn
 	}
 
 	/**
-	 * Remove all chain codes below a certain length
+	 * Remove all chain codes below a certain length.
 	 *
 	 * @param chainCodes
+	 *            the chain codes
 	 */
-	private void lengthFilter(LinkedList<ChainCode> chainCodes)
+	private static void lengthFilter(LinkedList<ChainCode> chainCodes)
 	{
 		Collections.sort(chainCodes);
 
@@ -352,10 +354,12 @@ public class ThreadAnalyser implements PlugIn
 	 * If showSkeletonMap is true return an image processor that can store the total count of chain codes.
 	 *
 	 * @param bp
+	 *            the mask (used for dimensions)
 	 * @param chainCodes
-	 * @return
+	 *            the chain codes
+	 * @return the image processor
 	 */
-	private ImageProcessor createSkeletonMap(ByteProcessor bp, LinkedList<ChainCode> chainCodes)
+	private static ImageProcessor createSkeletonMap(ByteProcessor bp, LinkedList<ChainCode> chainCodes)
 	{
 		// Need a map if displaying it or using to filter for length
 		if (showSkeletonMap || minLength > 0)
@@ -369,13 +373,15 @@ public class ThreadAnalyser implements PlugIn
 	}
 
 	/**
-	 * Sets all points in the original image outside the skeleton to zero
+	 * Sets all points in the original image outside the skeleton to zero.
 	 *
 	 * @param ip
+	 *            the ip
 	 * @param map
-	 * @return
+	 *            the map
+	 * @return the image processor
 	 */
-	private ImageProcessor createThreadImage(ImageProcessor ip, byte[] map)
+	private static ImageProcessor createThreadImage(ImageProcessor ip, byte[] map)
 	{
 		ip = ip.duplicate();
 		for (int i = map.length; i-- > 0;)
@@ -384,7 +390,7 @@ public class ThreadAnalyser implements PlugIn
 		return ip;
 	}
 
-	private Roi createLabels(LinkedList<ChainCode> chainCodes)
+	private static Roi createLabels(LinkedList<ChainCode> chainCodes)
 	{
 		int nPoints = 0;
 		final int[] xPoints = new int[chainCodes.size()];
@@ -406,7 +412,7 @@ public class ThreadAnalyser implements PlugIn
 		return new PointRoi(xPoints, yPoints, nPoints);
 	}
 
-	private void showImage(ImageProcessor ip, String title, Roi roi)
+	private static void showImage(ImageProcessor ip, String title, Roi roi)
 	{
 		ImagePlus imp = WindowManager.getImage(title);
 		if (imp == null)
@@ -427,7 +433,7 @@ public class ThreadAnalyser implements PlugIn
 	 *            The input data
 	 * @return Array containing: min, max, av, stdDev
 	 */
-	private double[] getStatistics(float[] data)
+	private static double[] getStatistics(float[] data)
 	{
 		// Get the limits
 		float min = Float.POSITIVE_INFINITY;
@@ -483,7 +489,8 @@ public class ThreadAnalyser implements PlugIn
 	 * @param objectIp
 	 *            Mask containing objects that overlap the skeleton threads
 	 */
-	private void reportResults(ImageProcessor ip, FloatProcessor floatEdm, LinkedList<ChainCode> chainCodes,
+	@SuppressWarnings("resource")
+	private static void reportResults(ImageProcessor ip, FloatProcessor floatEdm, LinkedList<ChainCode> chainCodes,
 			ImageProcessor skeletonMap, ByteProcessor objectIp)
 	{
 		if (chainCodes.size() > 1000)
@@ -569,7 +576,7 @@ public class ThreadAnalyser implements PlugIn
 			}
 	}
 
-	private OutputStreamWriter createResultsFile()
+	private static OutputStreamWriter createResultsFile()
 	{
 		if (resultDirectory == null || resultDirectory.equals(""))
 			return null;
@@ -611,7 +618,7 @@ public class ThreadAnalyser implements PlugIn
 		return null;
 	}
 
-	private OutputStreamWriter saveResult(OutputStreamWriter out, int id, float[] line)
+	private static OutputStreamWriter saveResult(OutputStreamWriter out, int id, float[] line)
 	{
 		if (out == null)
 			return null;
@@ -641,7 +648,7 @@ public class ThreadAnalyser implements PlugIn
 		return out;
 	}
 
-	private OutputStreamWriter saveResult(OutputStreamWriter out, String string, float[] d)
+	private static OutputStreamWriter saveResult(OutputStreamWriter out, String string, float[] d)
 	{
 		if (out == null)
 			return null;
@@ -671,7 +678,7 @@ public class ThreadAnalyser implements PlugIn
 		return out;
 	}
 
-	private void getPoints(ChainCode code, int[] x, int[] y, float[] d)
+	private static void getPoints(ChainCode code, int[] x, int[] y, float[] d)
 	{
 		int i = 0;
 		x[i] = code.getX();
@@ -691,8 +698,11 @@ public class ThreadAnalyser implements PlugIn
 	 * maxima are set in the second index.
 	 *
 	 * @param x
+	 *            the x
 	 * @param y
+	 *            the y
 	 * @param maxima
+	 *            the maxima
 	 * @return The distance from the start for each maxima
 	 */
 	public static float[] countMaxima(float[] x, float[] y, int[] maxima)
@@ -799,7 +809,7 @@ public class ThreadAnalyser implements PlugIn
 		return (f + g) * 0.5f;
 	}
 
-	private double[] extractStatistics(int[] x, int[] y, FloatProcessor floatImage, float[] data)
+	private static double[] extractStatistics(int[] x, int[] y, FloatProcessor floatImage, float[] data)
 	{
 		if (data == null)
 			data = new float[x.length];
@@ -809,14 +819,14 @@ public class ThreadAnalyser implements PlugIn
 		return getStatistics(data);
 	}
 
-	private void convertObjects(float[] data)
+	private static void convertObjects(float[] data)
 	{
 		final float foreground = (Prefs.blackBackground) ? 255 : 0;
 		for (int i = 0; i < data.length; i++)
 			data[i] = (data[i] == foreground) ? 1 : 0;
 	}
 
-	private void createResultsWindow()
+	private static void createResultsWindow()
 	{
 		if (java.awt.GraphicsEnvironment.isHeadless())
 		{
@@ -830,7 +840,7 @@ public class ThreadAnalyser implements PlugIn
 			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 400, 500);
 	}
 
-	private String createResultsHeader()
+	private static String createResultsHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("ID\t");
@@ -854,7 +864,7 @@ public class ThreadAnalyser implements PlugIn
 		return sb.toString();
 	}
 
-	private void addResult(int id, float[] line, int[] maxima, int[] objectMaxima, double[] imageStats,
+	private static void addResult(int id, float[] line, int[] maxima, int[] objectMaxima, double[] imageStats,
 			double[] edmStats)
 	{
 		final StringBuilder sb = new StringBuilder();

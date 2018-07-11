@@ -79,6 +79,9 @@ public class OptimiserView extends JFrame
 
 	/**
 	 * Launch the application.
+	 *
+	 * @param args
+	 *            the arguments
 	 */
 	public static void main(String[] args)
 	{
@@ -179,6 +182,7 @@ public class OptimiserView extends JFrame
 		btnHelp = new JButton("Help");
 		btnHelp.addMouseListener(new MouseAdapter()
 		{
+			@SuppressWarnings("unused")
 			@Override
 			public void mouseClicked(MouseEvent e)
 			{

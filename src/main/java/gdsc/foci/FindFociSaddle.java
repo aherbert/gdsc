@@ -39,6 +39,11 @@ public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle>
 
 	/**
 	 * Instantiates a new find foci saddle.
+	 *
+	 * @param id
+	 *            the id
+	 * @param value
+	 *            the value
 	 */
 	public FindFociSaddle(int id, float value)
 	{

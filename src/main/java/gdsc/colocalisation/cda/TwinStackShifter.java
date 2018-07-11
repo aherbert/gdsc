@@ -26,6 +26,9 @@ package gdsc.colocalisation.cda;
 import ij.ImagePlus;
 import ij.ImageStack;
 
+/**
+ * A class to shift two stacks simultaneously within a mask.
+ */
 public class TwinStackShifter
 {
 	private ImageStack result1;
@@ -37,15 +40,34 @@ public class TwinStackShifter
 	private int s;
 	private TwinImageShifter[] imageShifters;
 
-	public TwinStackShifter(ImagePlus imageImp, ImagePlus image2Imp, ImagePlus roiImp)
+	/**
+	 * Instantiates a new twin stack shifter.
+	 *
+	 * @param image1
+	 *            the first input image
+	 * @param image2
+	 *            the second input image
+	 * @param mask
+	 *            the mask image
+	 */
+	public TwinStackShifter(ImagePlus image1, ImagePlus image2, ImagePlus mask)
 	{
-		initialise(imageImp.getImageStack(), image2Imp.getImageStack(),
-				(roiImp != null) ? roiImp.getImageStack() : null);
+		initialise(image1.getImageStack(), image2.getImageStack(), (mask != null) ? mask.getImageStack() : null);
 	}
 
-	public TwinStackShifter(ImageStack imageStack, ImageStack image2Stack, ImageStack roiStack)
+	/**
+	 * Instantiates a new twin stack shifter.
+	 *
+	 * @param image1
+	 *            the first input image
+	 * @param image2
+	 *            the second input image
+	 * @param mask
+	 *            the mask image
+	 */
+	public TwinStackShifter(ImageStack image1, ImageStack image2, ImageStack mask)
 	{
-		initialise(imageStack, image2Stack, roiStack);
+		initialise(image1, image2, mask);
 	}
 
 	private void initialise(ImageStack s1, ImageStack s2, ImageStack s3)
@@ -67,12 +89,23 @@ public class TwinStackShifter
 					(s3 != null) ? s3.getProcessor(n) : null);
 	}
 
+	/**
+	 * Run with the given shift.
+	 *
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 */
 	public void run(int x, int y)
 	{
 		setShift(x, y);
 		run();
 	}
 
+	/**
+	 * Run.
+	 */
 	public void run()
 	{
 		result1 = new ImageStack(w, h, s);
@@ -88,37 +121,77 @@ public class TwinStackShifter
 		}
 	}
 
+	/**
+	 * Sets the shift X.
+	 *
+	 * @param x
+	 *            the new shift X
+	 */
 	public void setShiftX(int x)
 	{
 		this.xShift = x;
 	}
 
+	/**
+	 * Sets the shift Y.
+	 *
+	 * @param y
+	 *            the new shift Y
+	 */
 	public void setShiftY(int y)
 	{
 		this.yShift = y;
 	}
 
+	/**
+	 * Sets the shift.
+	 *
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 */
 	public void setShift(int x, int y)
 	{
 		this.xShift = x;
 		this.yShift = y;
 	}
 
+	/**
+	 * Gets the result image.
+	 *
+	 * @return the result image
+	 */
 	public ImagePlus getResultImage()
 	{
 		return new ImagePlus(null, result1);
 	}
 
+	/**
+	 * Gets the result image 2.
+	 *
+	 * @return the result image 2
+	 */
 	public ImagePlus getResultImage2()
 	{
 		return new ImagePlus(null, result2);
 	}
 
+	/**
+	 * Gets the result stack.
+	 *
+	 * @return the result stack
+	 */
 	public ImageStack getResultStack()
 	{
 		return this.result1;
 	}
 
+	/**
+	 * Gets the result stack 2.
+	 *
+	 * @return the result stack 2
+	 */
 	public ImageStack getResultStack2()
 	{
 		return this.result2;

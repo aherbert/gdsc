@@ -238,26 +238,18 @@ public class FindFociLegacy
 	public final static int STATS_SUM_ABOVE_BACKGROUND = 6;
 	/**
 	 * The index of the minimum of the background region in the results statistics array
-	 *
-	 * @see {@link #OPTION_STATS_INSIDE } and {@link #OPTION_STATS_OUTSIDE }
 	 */
 	public final static int STATS_MIN_BACKGROUND = 7;
 	/**
 	 * The index of the maximum of the background region in the results statistics array
-	 *
-	 * @see {@link #OPTION_STATS_INSIDE } and {@link #OPTION_STATS_OUTSIDE }
 	 */
 	public final static int STATS_MAX_BACKGROUND = 8;
 	/**
 	 * The index of the mean of the background region in the results statistics array
-	 *
-	 * @see {@link #OPTION_STATS_INSIDE } and {@link #OPTION_STATS_OUTSIDE }
 	 */
 	public final static int STATS_AV_BACKGROUND = 9;
 	/**
 	 * The index of the standard deviation of the background region in the results statistics array.
-	 *
-	 * @see {@link #OPTION_STATS_INSIDE } and {@link #OPTION_STATS_OUTSIDE }
 	 */
 	public final static int STATS_SD_BACKGROUND = 10;
 
@@ -462,7 +454,7 @@ public class FindFociLegacy
 	public static String[] getCentreMethods()
 	{
 		return centreMethods;
-	};
+	}
 
 	/**
 	 * Define the peak centre using the highest pixel value of the search image (default). In the case of multiple
@@ -561,8 +553,7 @@ public class FindFociLegacy
 	 *
 	 * <P>
 	 * Peak expansion stopping criteria are defined using the method parameter. See {@link #SEARCH_ABOVE_BACKGROUND};
-	 * {@link #SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND}; {@link #SEARCH_HALF_PEAK_VALUE};
-	 * {@link #SEARCH_STD_DEV_FROM_BACKGROUND}
+	 * {@link #SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND}; {@link #SEARCH_HALF_PEAK_VALUE}.
 	 *
 	 * @param imp
 	 *            The input image
@@ -747,7 +738,7 @@ public class FindFociLegacy
 			return null;
 
 		// Find the peak sizes above their saddle points.
-		analysePeaks(resultsArray, image, maxima, stats);
+		analysePeaks(resultsArray, image, maxima);
 
 		if (isLogging)
 			timingSplit("Mapped saddle points");
@@ -830,7 +821,7 @@ public class FindFociLegacy
 		return new Object[] { outImp, resultsArray, stats };
 	}
 
-	private int getThreshold(String autoThresholdMethod, int[] statsHistogram)
+	private static int getThreshold(String autoThresholdMethod, int[] statsHistogram)
 	{
 		if (autoThresholdMethod.endsWith("evel"))
 		{
@@ -883,6 +874,7 @@ public class FindFociLegacy
 	 * Only blurs the current channel and frame for use in the FindFoci algorithm.
 	 *
 	 * @param imp
+	 *            the imp
 	 * @param blur
 	 *            The blur standard deviation
 	 * @return the blurred image
@@ -1057,7 +1049,7 @@ public class FindFociLegacy
 		return result;
 	}
 
-	private void calculateFractionOfIntensityDisplayValues(double fractionParameter, int[] image, int[] maxima,
+	private static void calculateFractionOfIntensityDisplayValues(double fractionParameter, int[] image, int[] maxima,
 			double[] stats, int[] maximaPeakIds, int[] displayValues)
 	{
 		// For each maxima
@@ -1092,7 +1084,7 @@ public class FindFociLegacy
 	/**
 	 * Update the peak Ids to use the sorted order
 	 */
-	private void renumberPeaks(ArrayList<int[]> resultsArray, int originalNumberOfPeaks)
+	private static void renumberPeaks(ArrayList<int[]> resultsArray, int originalNumberOfPeaks)
 	{
 		// Build a map between the original peak number and the new sorted order
 		final int[] peakIdMap = new int[originalNumberOfPeaks + 1];
@@ -1318,11 +1310,17 @@ public class FindFociLegacy
 	 * For each peak in the maxima image, perform thresholding using the specified method.
 	 *
 	 * @param image
+	 *            the image
 	 * @param maxima
-	 * @param s
+	 *            the maxima
+	 * @param peakValue
+	 *            the peak value
 	 * @param autoThresholdMethod
+	 *            the auto threshold method
+	 * @param stats
+	 *            the stats
 	 */
-	private void thresholdMask(int[] image, int[] maxima, int peakValue, String autoThresholdMethod, double[] stats)
+	private static void thresholdMask(int[] image, int[] maxima, int peakValue, String autoThresholdMethod, double[] stats)
 	{
 		final int[] histogram = buildHistogram(image, maxima, peakValue, round(stats[STATS_MAX]));
 		final int threshold = getThreshold(autoThresholdMethod, histogram);
@@ -1337,12 +1335,16 @@ public class FindFociLegacy
 	 * Build a histogram using only the specified peak area.
 	 *
 	 * @param image
+	 *            the image
 	 * @param maxima
+	 *            the maxima
 	 * @param peakValue
+	 *            the peak value
 	 * @param maxValue
-	 * @return
+	 *            the max value
+	 * @return the histogram
 	 */
-	private int[] buildHistogram(int[] image, int[] maxima, int peakValue, int maxValue)
+	private static int[] buildHistogram(int[] image, int[] maxima, int peakValue, int maxValue)
 	{
 		final int[] histogram = new int[maxValue + 1];
 
@@ -1353,11 +1355,12 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Changes all negative value to positive
+	 * Changes all negative value to positive.
 	 *
 	 * @param maxima
+	 *            the maxima
 	 */
-	private void invertMask(int[] maxima)
+	private static void invertMask(int[] maxima)
 	{
 		for (int i = maxima.length; i-- > 0;)
 			if (maxima[i] < 0)
@@ -1365,12 +1368,14 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Adds the borders to the peaks
+	 * Adds the borders to the peaks.
 	 *
 	 * @param maxima
+	 *            the maxima
 	 * @param types
+	 *            the types
 	 */
-	private void addBorders(int[] maxima, byte[] types)
+	private static void addBorders(int[] maxima, byte[] types)
 	{
 		for (int i = maxima.length; i-- > 0;)
 			if ((types[i] & SADDLE_POINT) != 0)
@@ -1387,7 +1392,7 @@ public class FindFociLegacy
 	 * @param options
 	 *            The options (used to get the statistics mode)
 	 */
-	private void recordStatistics(double[] stats, int exclusion, int options)
+	private static void recordStatistics(double[] stats, int exclusion, int options)
 	{
 		final StringBuilder sb = new StringBuilder();
 		if (exclusion > 0)
@@ -1412,7 +1417,7 @@ public class FindFociLegacy
 		IJ.log(sb.toString());
 	}
 
-	private int getAbsoluteHeight(int[] result, double noise)
+	private static int getAbsoluteHeight(int[] result, double noise)
 	{
 		int absoluteHeight = 0;
 		if (result[RESULT_HIGHEST_SADDLE_VALUE] > 0)
@@ -1422,7 +1427,7 @@ public class FindFociLegacy
 		return absoluteHeight;
 	}
 
-	private double getRelativeHeight(int[] result, double noise, int absoluteHeight)
+	private static double getRelativeHeight(int[] result, double noise, int absoluteHeight)
 	{
 		return absoluteHeight / (result[RESULT_MAX_VALUE] - noise);
 	}
@@ -1572,17 +1577,19 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Build a histogram using all pixels not marked as EXCLUDED
+	 * Build a histogram using all pixels not marked as EXCLUDED.
 	 *
-	 * @param ip
-	 *            The image
+	 * @param imp
+	 *            the imp
+	 * @param image
+	 *            the image
 	 * @param types
 	 *            A byte image, same size as ip, where the points can be marked as EXCLUDED
 	 * @param statsMode
 	 *            OPTION_STATS_INSIDE or OPTION_STATS_OUTSIDE
 	 * @return The image histogram
 	 */
-	private int[] buildHistogram(ImagePlus imp, int[] image, byte[] types, int statsMode)
+	private static int[] buildHistogram(ImagePlus imp, int[] image, byte[] types, int statsMode)
 	{
 		// Just in case the image is not 8 or 16-bit
 		final int bitDepth = imp.getBitDepth();
@@ -1608,13 +1615,15 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Build a histogram using all pixels
+	 * Build a histogram using all pixels.
 	 *
+	 * @param imp
+	 *            the imp
 	 * @param image
 	 *            The image
 	 * @return The image histogram
 	 */
-	private int[] buildHistogram(ImagePlus imp, int[] image)
+	private static int[] buildHistogram(ImagePlus imp, int[] image)
 	{
 		// Just in case the image is not 8 or 16-bit
 		final int bitDepth = imp.getBitDepth();
@@ -1631,7 +1640,7 @@ public class FindFociLegacy
 		return data;
 	}
 
-	private double getIntensityAboveBackground(int[] image, byte[] types, int background)
+	private static double getIntensityAboveBackground(int[] image, byte[] types, int background)
 	{
 		long sum = 0;
 		for (int i = image.length; i-- > 0;)
@@ -1648,7 +1657,7 @@ public class FindFociLegacy
 	 *            The image histogram
 	 * @return Array containing: min, max, av, stdDev
 	 */
-	private double[] getStatistics(int[] hist)
+	private static double[] getStatistics(int[] hist)
 	{
 		// Get the limits
 		int min = 0;
@@ -1708,7 +1717,7 @@ public class FindFociLegacy
 	 *            The image statistics
 	 * @return The threshold
 	 */
-	private int getSearchThreshold(int backgroundMethod, double backgroundParameter, double[] stats)
+	private static int getSearchThreshold(int backgroundMethod, double backgroundParameter, double[] stats)
 	{
 		switch (backgroundMethod)
 		{
@@ -1736,7 +1745,7 @@ public class FindFociLegacy
 		}
 	}
 
-	private int round(double d)
+	private static int round(double d)
 	{
 		return (int) Math.round(d);
 	}
@@ -1754,7 +1763,7 @@ public class FindFociLegacy
 	 *            The current maxima value
 	 * @return The threshold
 	 */
-	private int getTolerance(int searchMethod, double searchParameter, double[] stats, int v0)
+	private static int getTolerance(int searchMethod, double searchParameter, double[] stats, int v0)
 	{
 		switch (searchMethod)
 		{
@@ -1785,7 +1794,7 @@ public class FindFociLegacy
 	 *            The current maxima value
 	 * @return The minimum height
 	 */
-	private int getPeakHeight(int peakMethod, double peakParameter, double[] stats, int v0)
+	private static int getPeakHeight(int peakMethod, double peakParameter, double[] stats, int v0)
 	{
 		int height = 1;
 		if (peakParameter < 0)
@@ -2348,19 +2357,24 @@ public class FindFociLegacy
 	}// processLevel
 
 	/**
-	 * Loop over all points that have been assigned to a peak area and clear any pixels below the peak growth threshold
+	 * Loop over all points that have been assigned to a peak area and clear any pixels below the peak growth threshold.
 	 *
 	 * @param image
-	 * @param roiBounds
+	 *            the image
 	 * @param types
-	 * @param maxPoints
+	 *            the types
 	 * @param searchMethod
+	 *            the search method
 	 * @param searchParameter
+	 *            the search parameter
 	 * @param stats
+	 *            the stats
 	 * @param resultsArray
+	 *            the results array
 	 * @param maxima
+	 *            the maxima
 	 */
-	private void pruneMaxima(int[] image, byte[] types, int searchMethod, double searchParameter, double[] stats,
+	private static void pruneMaxima(int[] image, byte[] types, int searchMethod, double searchParameter, double[] stats,
 			ArrayList<int[]> resultsArray, int[] maxima)
 	{
 		// Build an array containing the threshold for each peak.
@@ -2384,14 +2398,16 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Loop over the image and sum the intensity and size of each peak area, storing this into the results array
+	 * Loop over the image and sum the intensity and size of each peak area, storing this into the results array.
 	 *
 	 * @param image
-	 * @param roi
+	 *            the image
 	 * @param maxima
+	 *            the maxima
 	 * @param resultsArray
+	 *            the results array
 	 */
-	private void calculateInitialResults(int[] image, int[] maxima, ArrayList<int[]> resultsArray)
+	private static void calculateInitialResults(int[] image, int[] maxima, ArrayList<int[]> resultsArray)
 	{
 		final int nMaxima = resultsArray.size();
 
@@ -2418,7 +2434,7 @@ public class FindFociLegacy
 	 * Loop over the image and sum the intensity of each peak area using the original image, storing this into the
 	 * results array.
 	 */
-	private void calculateNativeResults(int[] image, int[] maxima, ArrayList<int[]> resultsArray,
+	private static void calculateNativeResults(int[] image, int[] maxima, ArrayList<int[]> resultsArray,
 			int originalNumberOfPeaks)
 	{
 		// Maxima are numbered from 1
@@ -2654,8 +2670,14 @@ public class FindFociLegacy
 	/**
 	 * Finds the centre of the image using the maximum pixel value.
 	 * If many pixels have the same value the closest pixel to the geometric mean of the coordinates is returned.
+	 *
+	 * @param image
+	 *            the image
+	 * @param dimensions
+	 *            the dimensions
+	 * @return the centre
 	 */
-	private int[] findCentreMaxValue(int[] image, int[] dimensions)
+	private static int[] findCentreMaxValue(int[] image, int[] dimensions)
 	{
 		// Find the maximum value in the image
 		int maxValue = 0;
@@ -2727,7 +2749,7 @@ public class FindFociLegacy
 	/**
 	 * Finds the centre of the image using the centre of mass within the given range of the maximum pixel value.
 	 */
-	private int[] findCentreOfMass(int[] subImage, int[] dimensions, int range)
+	private static int[] findCentreOfMass(int[] subImage, int[] dimensions, int range)
 	{
 		final int[] centre = findCentreMaxValue(subImage, dimensions);
 		double[] com = new double[] { centre[0], centre[1], centre[2] };
@@ -2749,8 +2771,18 @@ public class FindFociLegacy
 
 	/**
 	 * Finds the centre of the image using the centre of mass within the given range of the specified centre-of-mass.
+	 *
+	 * @param subImage
+	 *            the sub image
+	 * @param dimensions
+	 *            the dimensions
+	 * @param range
+	 *            the range
+	 * @param com
+	 *            the com
+	 * @return the centre
 	 */
-	private double[] findCentreOfMass(int[] subImage, int[] dimensions, int range, double[] com)
+	private static double[] findCentreOfMass(int[] subImage, int[] dimensions, int range, double[] com)
 	{
 		final int[] centre = convertCentre(com);
 
@@ -2799,12 +2831,14 @@ public class FindFociLegacy
 	 * Finds the centre of the image using a 2D Gaussian fit to projection along the Z-axis.
 	 *
 	 * @param subImage
+	 *            the sub image
 	 * @param dimensions
+	 *            the dimensions
 	 * @param projectionMethod
 	 *            (0) Average value; (1) Maximum value
-	 * @return
+	 * @return the int[]
 	 */
-	private int[] findCentreGaussianFit(int[] subImage, int[] dimensions, int projectionMethod)
+	private static int[] findCentreGaussianFit(int[] subImage, int[] dimensions, int projectionMethod)
 	{
 		if (isGaussianFitEnabled < 1)
 			return null;
@@ -2868,7 +2902,7 @@ public class FindFociLegacy
 	/**
 	 * Convert the centre from double to int. Handles input arrays of length 2 or 3.
 	 */
-	private int[] convertCentre(double[] centre)
+	private static int[] convertCentre(double[] centre)
 	{
 		final int[] newCentre = new int[3];
 		for (int i = centre.length; i-- > 0;)
@@ -2877,12 +2911,14 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Loop over the results array and calculate the average intensity and the intensity above the background
+	 * Loop over the results array and calculate the average intensity and the intensity above the background.
 	 *
 	 * @param resultsArray
+	 *            the results array
 	 * @param background
+	 *            the background
 	 */
-	private void calculateFinalResults(ArrayList<int[]> resultsArray, int background)
+	private static void calculateFinalResults(ArrayList<int[]> resultsArray, int background)
 	{
 		for (final int[] result : resultsArray)
 		{
@@ -3033,7 +3069,7 @@ public class FindFociLegacy
 		} // for all maxima
 	}
 
-	private int getMaxPeakSize(ArrayList<int[]> resultsArray)
+	private static int getMaxPeakSize(ArrayList<int[]> resultsArray)
 	{
 		int maxPeakSize = 0;
 		for (final int[] result : resultsArray)
@@ -3045,7 +3081,7 @@ public class FindFociLegacy
 	/**
 	 * Find the size and intensity of peaks above their saddle heights.
 	 */
-	private void analysePeaks(ArrayList<int[]> resultsArray, int[] image, int[] maxima, double[] stats)
+	private static void analysePeaks(ArrayList<int[]> resultsArray, int[] image, int[] maxima)
 	{
 		// Create an array of the size/intensity of each peak above the highest saddle
 		final int[] peakIntensity = new int[resultsArray.size() + 1];
@@ -3170,7 +3206,7 @@ public class FindFociLegacy
 		{
 			updateSaddleDetails(resultsArray, peakIdMap);
 			reassignMaxima(maxima, peakIdMap);
-			analysePeaks(resultsArray, image, maxima, stats);
+			analysePeaks(resultsArray, image, maxima);
 
 			// Process all the peaks for the minimum size above the saddle points. Process in order of smallest first
 			sortAscResults(resultsArray, SORT_COUNT_ABOVE_SADDLE, stats);
@@ -3236,7 +3272,7 @@ public class FindFociLegacy
 		mergePeak(image, maxima, peakIdMap, peakId, result, 0, null, null, null, null, false);
 	}
 
-	private int countPeaks(int[] peakIdMap)
+	private static int countPeaks(int[] peakIdMap)
 	{
 		int count = 0;
 		for (int i = 1; i < peakIdMap.length; i++)
@@ -3245,7 +3281,7 @@ public class FindFociLegacy
 		return count;
 	}
 
-	private void updateSaddleDetails(ArrayList<int[]> resultsArray, int[] peakIdMap)
+	private static void updateSaddleDetails(ArrayList<int[]> resultsArray, int[] peakIdMap)
 	{
 		for (final int[] result : resultsArray)
 		{
@@ -3262,7 +3298,7 @@ public class FindFociLegacy
 		}
 	}
 
-	private void clearSaddle(int[] result)
+	private static void clearSaddle(int[] result)
 	{
 		result[RESULT_COUNT_ABOVE_SADDLE] = result[RESULT_COUNT];
 		result[RESULT_INTENSITY_ABOVE_SADDLE] = result[RESULT_INTENSITY];
@@ -3271,14 +3307,17 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Find the highest saddle that has not been assigned to the specified peak
+	 * Find the highest saddle that has not been assigned to the specified peak.
 	 *
 	 * @param peakIdMap
-	 * @param peakId
+	 *            the peak id map
 	 * @param saddles
-	 * @return
+	 *            the saddles
+	 * @param peakId
+	 *            the peak id
+	 * @return the result
 	 */
-	private int[] findHighestNeighbourSaddle(int[] peakIdMap, LinkedList<int[]> saddles, int peakId)
+	private static int[] findHighestNeighbourSaddle(int[] peakIdMap, LinkedList<int[]> saddles, int peakId)
 	{
 		int[] maxSaddle = null;
 		int max = 0;
@@ -3297,14 +3336,17 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Find the highest saddle that has been assigned to the specified peak
+	 * Find the highest saddle that has been assigned to the specified peak.
 	 *
 	 * @param peakIdMap
-	 * @param peakId
+	 *            the peak id map
 	 * @param saddles
-	 * @return
+	 *            the saddles
+	 * @param peakId
+	 *            the peak id
+	 * @return the result
 	 */
-	private int[] findHighestSaddle(int[] peakIdMap, LinkedList<int[]> saddles, int peakId)
+	private static int[] findHighestSaddle(int[] peakIdMap, LinkedList<int[]> saddles, int peakId)
 	{
 		int[] maxSaddle = null;
 		int max = 0;
@@ -3323,13 +3365,15 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Find the result for the peak in the results array
+	 * Find the result for the peak in the results array.
 	 *
 	 * @param resultsArray
+	 *            the results array
 	 * @param id
-	 * @return
+	 *            the id
+	 * @return the result
 	 */
-	private int[] findResult(ArrayList<int[]> resultsArray, int id)
+	private static int[] findResult(ArrayList<int[]> resultsArray, int id)
 	{
 		for (final int[] result : resultsArray)
 			if (result[RESULT_PEAK_ID] == id)
@@ -3517,11 +3561,22 @@ public class FindFociLegacy
 	/**
 	 * Reassign the maxima using the peak Id map and recounts all pixels above the saddle height.
 	 *
+	 * @param image
+	 *            the image
 	 * @param maxima
+	 *            the maxima
 	 * @param peakIdMap
+	 *            the peak id map
+	 * @param peakId
+	 *            the peak id
+	 * @param saddle
+	 *            the saddle
+	 * @param result
+	 *            the result
 	 * @param updatePeakAboveSaddle
+	 *            the update peak above saddle
 	 */
-	private void reanalysePeak(int[] image, int[] maxima, int[] peakIdMap, int peakId, int[] saddle, int[] result,
+	private static void reanalysePeak(int[] image, int[] maxima, int[] peakIdMap, int peakId, int[] saddle, int[] result,
 			boolean updatePeakAboveSaddle)
 	{
 		if (updatePeakAboveSaddle)
@@ -3550,12 +3605,14 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Reassign the maxima using the peak Id map
+	 * Reassign the maxima using the peak Id map.
 	 *
 	 * @param maxima
+	 *            the maxima
 	 * @param peakIdMap
+	 *            the peak id map
 	 */
-	private void reassignMaxima(int[] maxima, int[] peakIdMap)
+	private static void reassignMaxima(int[] maxima, int[] peakIdMap)
 	{
 		for (int i = maxima.length; i-- > 0;)
 			if (maxima[i] != 0)
@@ -3703,13 +3760,13 @@ public class FindFociLegacy
 		return RESULT_INTENSITY;
 	}
 
-	private void customSortAbsoluteHeight(ArrayList<int[]> resultsArray, int background)
+	private static void customSortAbsoluteHeight(ArrayList<int[]> resultsArray, int background)
 	{
 		for (final int[] result : resultsArray)
 			result[RESULT_CUSTOM_SORT_VALUE] = getAbsoluteHeight(result, background);
 	}
 
-	private void customSortRelativeHeightAboveBackground(ArrayList<int[]> resultsArray, int background)
+	private static void customSortRelativeHeightAboveBackground(ArrayList<int[]> resultsArray, int background)
 	{
 		for (final int[] result : resultsArray)
 		{
@@ -3946,7 +4003,7 @@ public class FindFociLegacy
 	 *            The output options flag
 	 * @return True if logging
 	 */
-	private boolean isLogging(int outputType)
+	private static boolean isLogging(int outputType)
 	{
 		return (outputType & OUTPUT_LOG_MESSAGES) != 0;
 	}

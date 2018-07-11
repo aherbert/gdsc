@@ -41,11 +41,25 @@ public class ObjectAnalyzer
 	private int maxObject;
 	private int minObjectSize = 0;
 
+	/**
+	 * Instantiates a new object analyzer.
+	 *
+	 * @param ip
+	 *            the ip
+	 */
 	public ObjectAnalyzer(ImageProcessor ip)
 	{
 		this(ip, false);
 	}
 
+	/**
+	 * Instantiates a new object analyzer.
+	 *
+	 * @param ip
+	 *            the ip
+	 * @param eightConnected
+	 *            the eight connected flag
+	 */
 	public ObjectAnalyzer(ImageProcessor ip, boolean eightConnected)
 	{
 		this.ip = ip;
@@ -324,8 +338,10 @@ public class ObjectAnalyzer
 	public ImageProcessor toProcessor()
 	{
 		final int max = getMaxObject();
-		final ImageProcessor ip = (max > 255) ? (max > 65535) ? new FloatProcessor(getWidth(), getHeight())
-				: new ShortProcessor(getWidth(), getHeight()) : new ByteProcessor(getWidth(), getHeight());
+		final ImageProcessor ip = (max > 255)
+				? (max > 65535) ? new FloatProcessor(getWidth(), getHeight())
+						: new ShortProcessor(getWidth(), getHeight())
+				: new ByteProcessor(getWidth(), getHeight());
 		if (max > 65535)
 			for (int i = objectMask.length; i-- > 0;)
 				ip.setf(i, objectMask[i]);

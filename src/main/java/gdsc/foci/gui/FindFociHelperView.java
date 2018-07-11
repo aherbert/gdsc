@@ -168,6 +168,9 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/**
 	 * Launch the application.
+	 *
+	 * @param args
+	 *            the arguments
 	 */
 	public static void main(String[] args)
 	{
@@ -547,6 +550,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		btnHelp = new JButton("Help");
 		btnHelp.addMouseListener(new MouseAdapter()
 		{
+			@SuppressWarnings("unused")
 			@Override
 			public void mouseClicked(MouseEvent e)
 			{
@@ -591,6 +595,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Sets the run enabled.
+	 *
 	 * @param runEnabled
 	 *            the runEnabled to set
 	 */
@@ -604,6 +610,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Checks if is run enabled.
+	 *
 	 * @return the runEnabled
 	 */
 	public boolean isRunEnabled()
@@ -612,6 +620,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Sets the logging.
+	 *
 	 * @param logging
 	 *            the logging to set
 	 */
@@ -623,6 +633,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Checks if is logging.
+	 *
 	 * @return the logging
 	 */
 	public boolean isLogging()
@@ -631,6 +643,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Sets the search mode.
+	 *
 	 * @param searchMode
 	 *            the searchMode to set
 	 */
@@ -644,6 +658,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Gets the search mode.
+	 *
 	 * @return the searchMode
 	 */
 	public int getSearchMode()
@@ -652,6 +668,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Sets the assign dragged.
+	 *
 	 * @param assignDragged
 	 *            the assignDragged to set
 	 */
@@ -663,6 +681,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Checks if is assign dragged.
+	 *
 	 * @return the assignDragged
 	 */
 	public boolean isAssignDragged()
@@ -682,6 +702,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Gets the potential maxima.
+	 *
 	 * @return the potentialMaxima
 	 */
 	public int getPotentialMaxima()
@@ -690,6 +712,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Sets the resolution.
+	 *
 	 * @param resolution
 	 *            the resolution to set
 	 */
@@ -701,6 +725,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Gets the resolution.
+	 *
 	 * @return the resolution
 	 */
 	public int getResolution()
@@ -709,6 +735,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Sets the mapped points.
+	 *
 	 * @param mappedPoints
 	 *            the mappedPoints to set
 	 */
@@ -724,6 +752,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Gets the mapped points.
+	 *
 	 * @return the mappedPoints
 	 */
 	public int getMappedPoints()
@@ -732,6 +762,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Sets the unmapped points.
+	 *
 	 * @param unmappedPoints
 	 *            the unmappedPoints to set
 	 */
@@ -747,6 +779,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Gets the unmapped points.
+	 *
 	 * @return the unmappedPoints
 	 */
 	public int getUnmappedPoints()
@@ -755,6 +789,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Gets the total points.
+	 *
 	 * @return the unmappedPoints
 	 */
 	public int getTotalPoints()
@@ -763,6 +799,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Sets the show overlay.
+	 *
 	 * @param showOverlay
 	 *            the showOverlay to set
 	 */
@@ -780,6 +818,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Checks if is show overlay.
+	 *
 	 * @return the showOverlay
 	 */
 	public boolean isShowOverlay()
@@ -799,6 +839,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
+	 * Gets the active image.
+	 *
 	 * @return the activeImage
 	 */
 	public String getActiveImage()
@@ -1064,7 +1106,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		return activeImp != null;
 	}
 
-	private List<GridPoint> extractGridPoints(ArrayList<FindFociResult> resultsArray)
+	private static List<GridPoint> extractGridPoints(ArrayList<FindFociResult> resultsArray)
 	{
 		final List<GridPoint> points = new ArrayList<>(resultsArray.size());
 		for (final FindFociResult result : resultsArray)
@@ -1102,42 +1144,82 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		dragging = false;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowOpened(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowOpened(WindowEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowClosing(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowClosing(WindowEvent e)
 	{
 		killPicker();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowClosed(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowClosed(WindowEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowIconified(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowIconified(WindowEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowDeiconified(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowDeiconified(WindowEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowActivated(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowActivated(WindowEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.WindowListener#windowDeactivated(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowDeactivated(WindowEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
+	 */
 	@Override
 	public void mouseClicked(MouseEvent e)
 	{
@@ -1229,11 +1311,21 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
+	 */
 	@Override
 	public void mousePressed(MouseEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
+	 */
 	/*
 	 * If the user has dragged an ROI point then it should be reassigned when it is dropped.
 	 */
@@ -1264,7 +1356,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		}
 	}
 
-	private int findRoiPointIndex(PointRoi roi, int ox, int oy)
+	private static int findRoiPointIndex(PointRoi roi, int ox, int oy)
 	{
 		final Polygon p = ((PolygonRoi) roi).getNonSplineCoordinates();
 		final int n = p.npoints;
@@ -1281,16 +1373,31 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		return -1;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
+	 */
 	@Override
 	public void mouseEntered(MouseEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
+	 */
 	@Override
 	public void mouseExited(MouseEvent e)
 	{
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
+	 */
 	/*
 	 * If the user is dragging a multi-point ROI position then this method will detect the
 	 * point and set it to unassigned. This is done once at the start of the drag.
@@ -1340,6 +1447,11 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 			}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
+	 */
 	@Override
 	public void mouseMoved(MouseEvent e)
 	{
@@ -1425,7 +1537,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		return sb.toString();
 	}
 
-	private void addResult(int index, double x, double y, int height, boolean assigned)
+	private static void addResult(int index, double x, double y, int height, boolean assigned)
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append(index).append('\t');
@@ -1494,6 +1606,9 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		savedRoi = null;
 	}
 
+	/**
+	 * Inits the data bindings.
+	 */
 	@SuppressWarnings("rawtypes")
 	protected void initDataBindings()
 	{
@@ -1516,7 +1631,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 				jLabelBeanProperty);
 		autoBinding_2.bind();
 		//
-		final BeanProperty<FindFociHelperView, Boolean> findFociPickerViewBeanProperty_1 = BeanProperty.create("runEnabled");
+		final BeanProperty<FindFociHelperView, Boolean> findFociPickerViewBeanProperty_1 = BeanProperty
+				.create("runEnabled");
 		final AutoBinding<FindFociModel, List<String>, FindFociHelperView, Boolean> autoBinding_3 = Bindings
 				.createAutoBinding(UpdateStrategy.READ, model, findFociModelBeanProperty, instance,
 						findFociPickerViewBeanProperty_1);
@@ -1528,21 +1644,24 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_1, btnRun, jButtonBeanProperty);
 		autoBinding_4.bind();
 		//
-		final BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty_2 = BeanProperty.create("resolution");
+		final BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty_2 = BeanProperty
+				.create("resolution");
 		final BeanProperty<JFormattedTextField, String> jFormattedTextFieldBeanProperty = BeanProperty.create("text");
 		final AutoBinding<FindFociHelperView, Integer, JFormattedTextField, String> autoBinding_1 = Bindings
 				.createAutoBinding(UpdateStrategy.READ_WRITE, instance, findFociPickerViewBeanProperty_2, txtResolution,
 						jFormattedTextFieldBeanProperty);
 		autoBinding_1.bind();
 		//
-		final BeanProperty<FindFociHelperView, Boolean> findFociPickerViewBeanProperty_3 = BeanProperty.create("logging");
+		final BeanProperty<FindFociHelperView, Boolean> findFociPickerViewBeanProperty_3 = BeanProperty
+				.create("logging");
 		final BeanProperty<JCheckBox, Boolean> jCheckBoxBeanProperty = BeanProperty.create("selected");
 		final AutoBinding<FindFociHelperView, Boolean, JCheckBox, Boolean> autoBinding_5 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, instance, findFociPickerViewBeanProperty_3, chckbxLogmessages,
 				jCheckBoxBeanProperty);
 		autoBinding_5.bind();
 		//
-		final BeanProperty<FindFociHelperView, String> findFociPickerViewBeanProperty_4 = BeanProperty.create("activeImage");
+		final BeanProperty<FindFociHelperView, String> findFociPickerViewBeanProperty_4 = BeanProperty
+				.create("activeImage");
 		final AutoBinding<FindFociHelperView, String, JLabel, String> autoBinding_6 = Bindings.createAutoBinding(
 				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_4, txtActiveImage, jLabelBeanProperty);
 		autoBinding_6.bind();
@@ -1559,7 +1678,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_6, txtUnmappedPoints, jLabelBeanProperty);
 		autoBinding_8.bind();
 		//
-		final BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty_7 = BeanProperty.create("totalPoints");
+		final BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty_7 = BeanProperty
+				.create("totalPoints");
 		final AutoBinding<FindFociHelperView, Integer, JLabel, String> autoBinding_9 = Bindings.createAutoBinding(
 				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_7, txtTotal, jLabelBeanProperty);
 		autoBinding_9.bind();
@@ -1569,7 +1689,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		autoBinding_10.setConverter(new StringToBooleanConverter());
 		autoBinding_10.bind();
 		//
-		final BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty_8 = BeanProperty.create("searchMode");
+		final BeanProperty<FindFociHelperView, Integer> findFociPickerViewBeanProperty_8 = BeanProperty
+				.create("searchMode");
 		final AutoBinding<FindFociHelperView, Integer, JComboBox, Object> autoBinding_12 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, instance, findFociPickerViewBeanProperty_8, comboSearchMode,
 				jComboBoxBeanProperty);
@@ -1588,21 +1709,23 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 		autoBinding_13.setConverter(new StringToBooleanConverter());
 		autoBinding_13.bind();
 		//
-		final BeanProperty<FindFociHelperView, Boolean> FindFociHelperView2BeanProperty = BeanProperty.create("showOverlay");
+		final BeanProperty<FindFociHelperView, Boolean> FindFociHelperView2BeanProperty = BeanProperty
+				.create("showOverlay");
 		final BeanProperty<JToggleButton, Boolean> jToggleButtonBeanProperty = BeanProperty.create("selected");
-		final AutoBinding<FindFociHelperView, Boolean, JToggleButton, Boolean> autoBinding_14 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, instance, FindFociHelperView2BeanProperty, tglbtnOverlay,
-				jToggleButtonBeanProperty);
+		final AutoBinding<FindFociHelperView, Boolean, JToggleButton, Boolean> autoBinding_14 = Bindings
+				.createAutoBinding(UpdateStrategy.READ_WRITE, instance, FindFociHelperView2BeanProperty, tglbtnOverlay,
+						jToggleButtonBeanProperty);
 		autoBinding_14.bind();
 		//
 		final BeanProperty<JToggleButton, Boolean> jToggleButtonBeanProperty_1 = BeanProperty.create("enabled");
-		final AutoBinding<FindFociHelperView, String, JToggleButton, Boolean> autoBinding_15 = Bindings.createAutoBinding(
-				UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_4, tglbtnOverlay,
-				jToggleButtonBeanProperty_1);
+		final AutoBinding<FindFociHelperView, String, JToggleButton, Boolean> autoBinding_15 = Bindings
+				.createAutoBinding(UpdateStrategy.READ, instance, findFociPickerViewBeanProperty_4, tglbtnOverlay,
+						jToggleButtonBeanProperty_1);
 		autoBinding_15.setConverter(new StringToBooleanConverter());
 		autoBinding_15.bind();
 		//
-		final BeanProperty<FindFociModel, List<String>> findFociModelBeanProperty_2 = BeanProperty.create("maskImageList");
+		final BeanProperty<FindFociModel, List<String>> findFociModelBeanProperty_2 = BeanProperty
+				.create("maskImageList");
 		final JComboBoxBinding<String, FindFociModel, JComboBox> jComboBinding_1 = SwingBindings
 				.createJComboBoxBinding(UpdateStrategy.READ, model, findFociModelBeanProperty_2, comboMaskImageList);
 		jComboBinding_1.bind();

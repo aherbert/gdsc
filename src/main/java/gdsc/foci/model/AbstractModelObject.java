@@ -28,27 +28,55 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 /**
- * Abstract implementation of {@link Model} interface that provides methods for property change notification.
+ * Abstract model that provides methods for property change notification.
  */
 public abstract class AbstractModelObject
 {
 	private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
+	/**
+	 * Adds the property change listener.
+	 *
+	 * @param listener
+	 *            the listener
+	 */
 	public void addPropertyChangeListener(PropertyChangeListener listener)
 	{
 		propertyChangeSupport.addPropertyChangeListener(listener);
 	}
 
+	/**
+	 * Adds the property change listener.
+	 *
+	 * @param propertyName
+	 *            the property name
+	 * @param listener
+	 *            the listener
+	 */
 	public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener)
 	{
 		propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
 	}
 
+	/**
+	 * Removes the property change listener.
+	 *
+	 * @param listener
+	 *            the listener
+	 */
 	public void removePropertyChangeListener(PropertyChangeListener listener)
 	{
 		propertyChangeSupport.removePropertyChangeListener(listener);
 	}
 
+	/**
+	 * Removes the property change listener.
+	 *
+	 * @param propertyName
+	 *            the property name
+	 * @param listener
+	 *            the listener
+	 */
 	public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener)
 	{
 		propertyChangeSupport.removePropertyChangeListener(propertyName, listener);

@@ -27,16 +27,19 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFoci;
 
+/**
+ * Convert the centre method to a flag indicating if the centre parameter is enabled  
+ */
 public class CentreParamEnabledConverter extends Converter<Integer, Boolean>
 {
 	@Override
 	public Boolean convertForward(Integer paramS)
 	{
-		final int backgroundMethod = paramS.intValue();
-		return Boolean.valueOf(backgroundMethod == FindFoci.CENTRE_GAUSSIAN_SEARCH ||
-				backgroundMethod == FindFoci.CENTRE_GAUSSIAN_ORIGINAL ||
-				backgroundMethod == FindFoci.CENTRE_OF_MASS_SEARCH ||
-				backgroundMethod == FindFoci.CENTRE_OF_MASS_ORIGINAL);
+		final int centreMethod = paramS.intValue();
+		return Boolean.valueOf(centreMethod == FindFoci.CENTRE_GAUSSIAN_SEARCH ||
+				centreMethod == FindFoci.CENTRE_GAUSSIAN_ORIGINAL ||
+				centreMethod == FindFoci.CENTRE_OF_MASS_SEARCH ||
+				centreMethod == FindFoci.CENTRE_OF_MASS_ORIGINAL);
 	}
 
 	@Override

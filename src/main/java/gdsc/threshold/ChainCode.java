@@ -57,7 +57,12 @@ public class ChainCode implements Comparable<ChainCode>
 	private String toString;
 
 	/**
-	 * Default constructor
+	 * Default constructor.
+	 *
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
 	 */
 	public ChainCode(int x, int y)
 	{
@@ -73,9 +78,10 @@ public class ChainCode implements Comparable<ChainCode>
 	}
 
 	/**
-	 * Extend the chain code in the given direction
+	 * Extend the chain code in the given direction.
 	 *
 	 * @param direction
+	 *            the direction
 	 */
 	public void add(int direction)
 	{

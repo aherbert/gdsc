@@ -443,13 +443,13 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 		results.append(sb.toString());
 	}
 
-	private void addNullFitResult(StringBuilder sb)
+	private static void addNullFitResult(StringBuilder sb)
 	{
 		for (int i = 0; i < 7; i++)
 			sb.append('\t');
 	}
 
-	private void debug(String format, Object... args)
+	private static void debug(String format, Object... args)
 	{
 		if (debug)
 			IJ.log(String.format(format, args));

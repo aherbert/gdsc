@@ -101,7 +101,7 @@ public class Align_Images implements PlugIn
 			alignedImp.show();
 	}
 
-	private ImageProcessor getProcessor(String title)
+	private static ImageProcessor getProcessor(String title)
 	{
 		final ImagePlus imp = WindowManager.getImage(title);
 		if (imp != null)
@@ -109,7 +109,7 @@ public class Align_Images implements PlugIn
 		return null;
 	}
 
-	private String[] getImagesList()
+	private static String[] getImagesList()
 	{
 		// Find the currently open images
 		final ArrayList<String> newImageList = new ArrayList<>();
@@ -185,7 +185,7 @@ public class Align_Images implements PlugIn
 		return true;
 	}
 
-	private boolean contains(String[] imageList, String title)
+	private static boolean contains(String[] imageList, String title)
 	{
 		for (final String t : imageList)
 			if (t.equals(title))
@@ -193,6 +193,33 @@ public class Align_Images implements PlugIn
 		return false;
 	}
 
+	/**
+	 * Execute the plugin.
+	 *
+	 * @param refImp
+	 *            the reference image
+	 * @param maskIp
+	 *            the mask image
+	 * @param targetImp
+	 *            the target image
+	 * @param minXShift
+	 *            the min X shift
+	 * @param maxXShift
+	 *            the max X shift
+	 * @param minYShift
+	 *            the min Y shift
+	 * @param maxYShift
+	 *            the max Y shift
+	 * @param subPixelMethod
+	 *            the sub pixel method
+	 * @param interpolationMethod
+	 *            the interpolation method
+	 * @param showCorrelationImage
+	 *            the show correlation image flag
+	 * @param clipOutput
+	 *            the clip output flag
+	 * @return the aligned image plus
+	 */
 	public ImagePlus exec(ImagePlus refImp, ImageProcessor maskIp, ImagePlus targetImp, int minXShift, int maxXShift,
 			int minYShift, int maxYShift, int subPixelMethod, int interpolationMethod, boolean showCorrelationImage,
 			boolean clipOutput)
@@ -237,10 +264,11 @@ public class Align_Images implements PlugIn
 	}
 
 	/**
-	 * Subtract mean from the image and return a float processor
+	 * Subtract mean from the image and return a float processor.
 	 *
 	 * @param ip
-	 * @return
+	 *            the ip
+	 * @return the float processor
 	 */
 	public static FloatProcessor centre(ImageProcessor ip)
 	{
@@ -258,10 +286,11 @@ public class Align_Images implements PlugIn
 	}
 
 	/**
-	 * Convert to unit length, return a float processor
+	 * Convert to unit length, return a float processor.
 	 *
 	 * @param ip
-	 * @return
+	 *            the ip
+	 * @return the float processor
 	 */
 	public static FloatProcessor normalise(ImageProcessor ip)
 	{
@@ -281,7 +310,7 @@ public class Align_Images implements PlugIn
 		return new FloatProcessor(ip.getWidth(), ip.getHeight(), pixels, null);
 	}
 
-	private boolean isValid(ImageProcessor refIp, ImageProcessor maskIp, ImagePlus targetImp)
+	private static boolean isValid(ImageProcessor refIp, ImageProcessor maskIp, ImagePlus targetImp)
 	{
 		if (refIp == null || targetImp == null)
 			return false;
@@ -293,7 +322,7 @@ public class Align_Images implements PlugIn
 		return true;
 	}
 
-	private ImageProcessor alignImages(ImageProcessor refIp, ImageProcessor maskIp, ImageProcessor targetIp, int slice,
+	private static ImageProcessor alignImages(ImageProcessor refIp, ImageProcessor maskIp, ImageProcessor targetIp, int slice,
 			int minXShift, int maxXShift, int minYShift, int maxYShift, FloatProcessor fp, int subPixelMethod,
 			int interpolationMethod, boolean clipOutput)
 	{
@@ -355,12 +384,16 @@ public class Align_Images implements PlugIn
 	}
 
 	/**
-	 * Duplicate and translate the image processor
+	 * Duplicate and translate the image processor.
 	 *
 	 * @param interpolationMethod
+	 *            the interpolation method
 	 * @param ip
+	 *            the ip
 	 * @param xOffset
+	 *            the x offset
 	 * @param yOffset
+	 *            the y offset
 	 * @param clipOutput
 	 *            Set to true to ensure the output image has the same max as the input. Applies to bicubic
 	 *            interpolation
@@ -375,12 +408,16 @@ public class Align_Images implements PlugIn
 	}
 
 	/**
-	 * Translate the image processor in place
+	 * Translate the image processor in place.
 	 *
 	 * @param interpolationMethod
+	 *            the interpolation method
 	 * @param ip
+	 *            the ip
 	 * @param xOffset
+	 *            the x offset
 	 * @param yOffset
+	 *            the y offset
 	 * @param clipOutput
 	 *            Set to true to ensure the output image has the same max as the input. Applies to bicubic
 	 *            interpolation
@@ -592,7 +629,7 @@ public class Align_Images implements PlugIn
 		return (coord);
 	}
 
-	private double calculateScore(ImageProcessor refIp, ImageProcessor maskIp, ImageProcessor targetIp, int xShift,
+	private static double calculateScore(ImageProcessor refIp, ImageProcessor maskIp, ImageProcessor targetIp, int xShift,
 			int yShift)
 	{
 		// Same dimensions at current
@@ -701,7 +738,7 @@ public class Align_Images implements PlugIn
 		return r;
 	}
 
-	private int getBitClippedMax(ImageProcessor ip)
+	private static int getBitClippedMax(ImageProcessor ip)
 	{
 		final int max = (int) ip.getMax();
 		// Check for bit clipped maximum values

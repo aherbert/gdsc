@@ -30,9 +30,27 @@ import gdsc.core.match.BasePoint;
  */
 public class TimeValuedPoint extends BasePoint
 {
+	
+	/** The time. */
 	protected int time;
+	
+	/** The value. */
 	protected float value;
 
+	/**
+	 * Instantiates a new time valued point.
+	 *
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 * @param z
+	 *            the z
+	 * @param time
+	 *            the time
+	 * @param value
+	 *            the value
+	 */
 	public TimeValuedPoint(float x, float y, float z, int time, float value)
 	{
 		super(x, y, z);
@@ -40,6 +58,18 @@ public class TimeValuedPoint extends BasePoint
 		this.value = value;
 	}
 
+	/**
+	 * Instantiates a new time valued point.
+	 *
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 * @param z
+	 *            the z
+	 * @param value
+	 *            the value
+	 */
 	public TimeValuedPoint(float x, float y, float z, float value)
 	{
 		super(x, y, z);
@@ -47,6 +77,8 @@ public class TimeValuedPoint extends BasePoint
 	}
 
 	/**
+	 * Gets the time.
+	 *
 	 * @return the time
 	 */
 	public int getTime()
@@ -55,6 +87,8 @@ public class TimeValuedPoint extends BasePoint
 	}
 
 	/**
+	 * Gets the value.
+	 *
 	 * @return the value
 	 */
 	public float getValue()

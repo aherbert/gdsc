@@ -117,7 +117,7 @@ public class Stack_Average implements PlugInFilter
 		return images;
 	}
 
-	private boolean sameDimensions(int[] dimensions, int[] dimensions2)
+	private static boolean sameDimensions(int[] dimensions, int[] dimensions2)
 	{
 		for (int i = dimensions.length; i-- > 0;)
 			if (dimensions[i] != dimensions2[i])

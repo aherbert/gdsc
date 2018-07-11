@@ -41,6 +41,14 @@ public class LimitedNumberFormat extends DecimalFormat
 	private double min = Double.MIN_VALUE;
 	private double max = Double.MAX_VALUE;
 
+	/**
+	 * Instantiates a new limited number format.
+	 *
+	 * @param min
+	 *            the min
+	 * @param max
+	 *            the max
+	 */
 	public LimitedNumberFormat(double min, double max)
 	{
 		super();
@@ -48,6 +56,12 @@ public class LimitedNumberFormat extends DecimalFormat
 		this.max = max;
 	}
 
+	/**
+	 * Instantiates a new limited number format.
+	 *
+	 * @param min
+	 *            the min
+	 */
 	public LimitedNumberFormat(double min)
 	{
 		super();

@@ -65,7 +65,7 @@ import ij.text.TextWindow;
  */
 public class TranslocationFinder implements PlugIn
 {
-	public static String TITLE = "Translocation Finder";
+	private static String TITLE = "Translocation Finder";
 	private static TextWindow resultsWindow = null;
 	private static final int UNKNOWN = 0;
 	private static final int NO_TRANSLOCATION = 1;
@@ -155,7 +155,7 @@ public class TranslocationFinder implements PlugIn
 		analyse();
 	}
 
-	private AssignedPoint[] getFoci(String resultsName)
+	private static AssignedPoint[] getFoci(String resultsName)
 	{
 		final FindFociMemoryResults memoryResults = FindFoci.getResults(resultsName);
 		if (memoryResults == null)
@@ -261,7 +261,7 @@ public class TranslocationFinder implements PlugIn
 		overlayTriplets();
 	}
 
-	private boolean is3D(AssignedPoint[] foci)
+	private static boolean is3D(AssignedPoint[] foci)
 	{
 		final int z = foci[0].z;
 		for (int i = 1; i < foci.length; i++)
@@ -270,7 +270,7 @@ public class TranslocationFinder implements PlugIn
 		return false;
 	}
 
-	private void add(Overlay ov, List<PointPair> matches, int n)
+	private static void add(Overlay ov, List<PointPair> matches, int n)
 	{
 		for (final PointPair pair : matches)
 		{
@@ -447,7 +447,7 @@ public class TranslocationFinder implements PlugIn
 		}
 	}
 
-	private String createResultsHeader()
+	private static String createResultsHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Name");
@@ -463,6 +463,14 @@ public class TranslocationFinder implements PlugIn
 		return sb.toString();
 	}
 
+	/**
+	 * Adds the result.
+	 *
+	 * @param count
+	 *            the count
+	 * @param triplet
+	 *            the triplet
+	 */
 	private void addResult(int count, int[] triplet)
 	{
 		final AssignedPoint p1 = foci1[triplet[0]];
@@ -471,7 +479,22 @@ public class TranslocationFinder implements PlugIn
 		triplet[3] = addResult(count, name, p1, p2, p3);
 	}
 
-	private int addResult(int count, String name, AssignedPoint p1, AssignedPoint p2, AssignedPoint p3)
+	/**
+	 * Adds the result.
+	 *
+	 * @param count
+	 *            the count
+	 * @param name
+	 *            the name
+	 * @param p1
+	 *            the p 1
+	 * @param p2
+	 *            the p 2
+	 * @param p3
+	 *            the p 3
+	 * @return the classification
+	 */
+	private static int addResult(int count, String name, AssignedPoint p1, AssignedPoint p2, AssignedPoint p3)
 	{
 		return addResult(count, name, p1, p2, p3, -1);
 	}
@@ -493,7 +516,7 @@ public class TranslocationFinder implements PlugIn
 	 *            the classification (set to -1 to auto compute)
 	 * @return the classification
 	 */
-	private int addResult(int count, String name, AssignedPoint p1, AssignedPoint p2, AssignedPoint p3,
+	private static int addResult(int count, String name, AssignedPoint p1, AssignedPoint p2, AssignedPoint p3,
 			int classification)
 	{
 		final StringBuilder sb = new StringBuilder();
@@ -526,7 +549,7 @@ public class TranslocationFinder implements PlugIn
 		return classification;
 	}
 
-	private void addTriplet(StringBuilder sb, AssignedPoint p)
+	private static void addTriplet(StringBuilder sb, AssignedPoint p)
 	{
 		sb.append('\t').append(p.x);
 		sb.append('\t').append(p.y);
@@ -545,7 +568,7 @@ public class TranslocationFinder implements PlugIn
 	 *            the d23
 	 * @return true, if successful
 	 */
-	private boolean isSeparated(double d12, double d13, double d23)
+	private static boolean isSeparated(double d12, double d13, double d23)
 	{
 		return d13 / d12 > factor && d23 / d12 > factor;
 	}
@@ -565,7 +588,7 @@ public class TranslocationFinder implements PlugIn
 	 *            the min distance
 	 * @return true, if successful
 	 */
-	private boolean isSeparated(double d12, double d13, double d23, double minDistance)
+	private static boolean isSeparated(double d12, double d13, double d23, double minDistance)
 	{
 		return d13 > minDistance && d23 > minDistance && d13 / d12 > factor && d23 / d12 > factor;
 	}
@@ -573,7 +596,7 @@ public class TranslocationFinder implements PlugIn
 	/**
 	 * Overlay triplets on image
 	 */
-	private void overlayTriplets()
+	private static void overlayTriplets()
 	{
 		Overlay o = null;
 		if (imp != null)
@@ -609,7 +632,7 @@ public class TranslocationFinder implements PlugIn
 		}
 	}
 
-	private void addTriplet(int count, Overlay o, AssignedPoint p1, AssignedPoint p2, AssignedPoint p3,
+	private static void addTriplet(int count, Overlay o, AssignedPoint p1, AssignedPoint p2, AssignedPoint p3,
 			int classification)
 	{
 		final float[] x = new float[3];

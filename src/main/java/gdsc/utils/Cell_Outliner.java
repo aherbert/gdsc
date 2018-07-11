@@ -361,7 +361,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		}
 	}
 
-	private int[] sequence(int n)
+	private static int[] sequence(int n)
 	{
 		final int[] s = new int[n];
 		for (int i = 0; i < n; i++)
@@ -384,7 +384,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		}
 		if (convolved == null)
 			convolved = convolveImage(ip, kernels);
-			//showConvolvedImages(convolved);
+		//showConvolvedImages(convolved);
 
 		if (Thread.currentThread().isInterrupted())
 			return null;
@@ -428,7 +428,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 			if (Thread.currentThread().isInterrupted())
 				return null;
-			final FloatProcessor edgeProjection = computeEdgeProjection(convolved, cx, cy, pointBounds, angle);
+			final FloatProcessor edgeProjection = computeEdgeProjection(convolved, pointBounds, angle);
 
 			// Initialise the edge as a circle.
 			PolygonRoi cell = null;
@@ -492,7 +492,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 				bp.draw(cell);
 				for (int i = 0; i < dilate; i++)
 					dilate(bp);
-				cell = traceOutline(bp, params[0], params[1]);
+				cell = traceOutline(bp);
 				if (cell != null)
 					finalCell = cell;
 			}
@@ -521,7 +521,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		return cells;
 	}
 
-	private void applyColorModel(ImagePlus imp)
+	private static void applyColorModel(ImagePlus imp)
 	{
 		// Load the spectrum LUT
 		WindowManager.setTempCurrentImage(imp);
@@ -594,7 +594,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		return map;
 	}
 
-	private FloatProcessor applyWeights(FloatProcessor edgeProjection, FloatProcessor weights)
+	private static FloatProcessor applyWeights(FloatProcessor edgeProjection, FloatProcessor weights)
 	{
 		final FloatProcessor ip = new FloatProcessor(edgeProjection.getWidth(), edgeProjection.getHeight());
 		final float[] e = (float[]) edgeProjection.getPixels();
@@ -605,7 +605,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		return ip;
 	}
 
-	private ImagePlus displayImage(ImageProcessor maskIp, String title)
+	private static ImagePlus displayImage(ImageProcessor maskIp, String title)
 	{
 		ImagePlus maskImp = WindowManager.getImage(title);
 		if (maskImp == null)
@@ -615,7 +615,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		}
 		else
 			maskImp.setProcessor(maskIp);
-			//maskImp.updateAndDraw();
+		//maskImp.updateAndDraw();
 		return maskImp;
 	}
 
@@ -763,7 +763,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			}
 	}
 
-	private double gaussian(double x0, double sigma)
+	private static double gaussian(double x0, double sigma)
 	{
 		return 1.0 / (2 * Math.PI * sigma * sigma) * Math.exp(-0.5 * x0 * x0 / (sigma * sigma));
 	}
@@ -827,7 +827,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		add(fp, x1, y1, value * (1 - dx) * (1 - dy));
 	}
 
-	private void add(FloatProcessor fp, int x, int y, double weight)
+	private static void add(FloatProcessor fp, int x, int y, double weight)
 	{
 		final float value = fp.getPixelValue(x, y);
 		fp.putPixelValue(x, y, value + weight);
@@ -843,7 +843,8 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 			if (!this.buildMaskOutput)
 				IJ.showStatus("Convolving " + rotation);
 			final float[] kernel = kernels.get(rotation);
-			final FloatProcessor fp = (ip instanceof FloatProcessor) ? (FloatProcessor) ip.duplicate() : ip.toFloat(0, null);
+			final FloatProcessor fp = (ip instanceof FloatProcessor) ? (FloatProcessor) ip.duplicate()
+					: ip.toFloat(0, null);
 			fp.convolve(kernel, kernelWidth, kernelWidth);
 			convolved.put(rotation, fp);
 			if (Thread.currentThread().isInterrupted())
@@ -892,11 +893,16 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * For the given point, compute the angle between pixels and the centre.
 	 *
 	 * @param ip
+	 *            the ip
 	 * @param cx
+	 *            the cx
 	 * @param cy
+	 *            the cy
 	 * @param pointBounds
+	 *            the point bounds
+	 * @return the float processor
 	 */
-	private FloatProcessor createAngleProcessor(ImageProcessor ip, int cx, int cy, Rectangle pointBounds)
+	private static FloatProcessor createAngleProcessor(ImageProcessor ip, int cx, int cy, Rectangle pointBounds)
 	{
 		// Find the bounds to process
 		final int minx = pointBounds.x;
@@ -916,8 +922,8 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		return angle;
 	}
 
-	private FloatProcessor computeEdgeProjection(HashMap<Integer, FloatProcessor> convolved, int cx, int cy,
-			Rectangle pointBounds, FloatProcessor angle)
+	private FloatProcessor computeEdgeProjection(HashMap<Integer, FloatProcessor> convolved, Rectangle pointBounds,
+			FloatProcessor angle)
 	{
 		final float[] a = (float[]) angle.getPixels();
 
@@ -961,7 +967,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	private static final byte CELL = (byte) 255;
 
-	private FloatProcessor cropToValues(FloatProcessor fp, Rectangle cropBounds)
+	private static FloatProcessor cropToValues(FloatProcessor fp, Rectangle cropBounds)
 	{
 		// Find the bounds
 		int minx = fp.getWidth();
@@ -1003,40 +1009,44 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * back-to-back. The input parameters can be converted into the actual first and second major axis values using the
 	 * helper functions.
 	 */
-	public class EllipticalCell
+	class EllipticalCell
 	{
-
 		/**
-		 * Convert the input function parameters for the major axis into the first actual major axis
+		 * Convert the input function parameters for the major axis into the first actual major axis.
 		 *
 		 * @param axis1
+		 *            the axis 1
 		 * @param axis2
-		 * @return
+		 *            the axis 2
+		 * @return the major 1
 		 */
-		public double getMajor1(double axis1, double axis2)
+		double getMajor1(double axis1, double axis2)
 		{
 			return (2 * axis1 + axis2) / 3;
 		}
 
 		/**
-		 * Convert the input function parameters for the major axis into the second actual major axis
+		 * Convert the input function parameters for the major axis into the second actual major axis.
 		 *
 		 * @param axis1
+		 *            the axis 1
 		 * @param axis2
-		 * @return
+		 *            the axis 2
+		 * @return the major 2
 		 */
-		public double getMajor2(double axis1, double axis2)
+		double getMajor2(double axis1, double axis2)
 		{
 			return (2 * axis2 + axis1) / 3;
 		}
 
 		/**
-		 * Draws the elliptical cell
+		 * Draws the elliptical cell.
 		 *
 		 * @param params
-		 * @return
+		 *            the params
+		 * @return the float polygon
 		 */
-		public FloatPolygon drawEllipse(final double[] params)
+		FloatPolygon drawEllipse(final double[] params)
 		{
 			final double centreX = params[0];
 			final double centreY = params[1];
@@ -1053,16 +1063,21 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		 * major axes lengths, one for each side (i.e. an egg shape).
 		 *
 		 * @param centreX
+		 *            the centre X
 		 * @param centreY
+		 *            the centre Y
 		 * @param axis1
+		 *            the axis 1
 		 * @param axis2
+		 *            the axis 2
 		 * @param minor
+		 *            the minor
 		 * @param phi
 		 *            The angle from X-axis and the major axis of the ellipse
-		 * @return
+		 * @return the float polygon
 		 */
-		public FloatPolygon drawEllipse(final double centreX, final double centreY, final double axis1,
-				final double axis2, final double minor, final double phi)
+		FloatPolygon drawEllipse(final double centreX, final double centreY, final double axis1, final double axis2,
+				final double minor, final double phi)
 		{
 			final int nPoints = 90;
 			final double arcAngle = 2 * Math.PI / nPoints;
@@ -1116,10 +1131,14 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * Try and find a polygon that traces a path around the detected edges.
 	 *
 	 * @param cx
+	 *            the cx
 	 * @param cy
+	 *            the cy
 	 * @param fp
+	 *            the fp
 	 * @param angle
-	 * @return
+	 *            the angle
+	 * @return the polygon roi
 	 */
 	private PolygonRoi findPolygonalCell(int cx, int cy, FloatProcessor fp, FloatProcessor angle)
 	{
@@ -1205,28 +1224,35 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	}
 
 	/**
-	 * Create a byte processor of the specified dimensions and fill the ROI
+	 * Create a byte processor of the specified dimensions and fill the ROI.
 	 *
 	 * @param width
+	 *            the width
 	 * @param height
+	 *            the height
 	 * @param roi
-	 * @return
+	 *            the roi
+	 * @return the byte processor
 	 */
-	private ByteProcessor createFilledCell(int width, int height, PolygonRoi roi)
+	private static ByteProcessor createFilledCell(int width, int height, PolygonRoi roi)
 	{
 		return createFilledCell(width, height, roi, CELL & 0xff);
 	}
 
 	/**
-	 * Create a byte processor of the specified dimensions and fill the ROI
+	 * Create a byte processor of the specified dimensions and fill the ROI.
 	 *
 	 * @param width
+	 *            the width
 	 * @param height
+	 *            the height
 	 * @param roi
+	 *            the roi
 	 * @param value
-	 * @return
+	 *            the value
+	 * @return the byte processor
 	 */
-	private ByteProcessor createFilledCell(int width, int height, PolygonRoi roi, int value)
+	private static ByteProcessor createFilledCell(int width, int height, PolygonRoi roi, int value)
 	{
 		final ByteProcessor bp = new ByteProcessor(width, height);
 		bp.setColor(value);
@@ -1254,8 +1280,8 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 		final double relativeThreshold = 100 * Precision.EPSILON;
 		final double absoluteThreshold = 100 * Precision.SAFE_MIN;
-		final ConvergenceChecker<PointVectorValuePair> checker = new SimplePointChecker<>(
-				relativeThreshold, absoluteThreshold);
+		final ConvergenceChecker<PointVectorValuePair> checker = new SimplePointChecker<>(relativeThreshold,
+				absoluteThreshold);
 		final double initialStepBoundFactor = 10;
 		final double costRelativeTolerance = 1e-10;
 		final double parRelativeTolerance = 1e-10;
@@ -1386,6 +1412,17 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	static final int BACKGROUND = 0;
 
+	/**
+	 * Compute the moment of an image.
+	 *
+	 * @param ip
+	 *            the ip
+	 * @param p
+	 *            the p
+	 * @param q
+	 *            the q
+	 * @return the double
+	 */
 	public static double moment(ImageProcessor ip, int p, int q)
 	{
 		double Mpq = 0.0;
@@ -1396,6 +1433,17 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		return Mpq;
 	}
 
+	/**
+	 * Compute the central moment of an image
+	 *
+	 * @param ip
+	 *            the ip
+	 * @param p
+	 *            the p
+	 * @param q
+	 *            the q
+	 * @return the double
+	 */
 	public static double centralMoment(ImageProcessor ip, int p, int q)
 	{
 		final double m00 = moment(ip, 0, 0); // region area
@@ -1412,9 +1460,9 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	/**
 	 * Provides a function to score the ellipse for use in gradient based optimisation methods.
 	 *
-	 * @see http://commons.apache.org/math/userguide/optimization.html
+	 * @see "http://commons.apache.org/math/userguide/optimization.html"
 	 */
-	public class DifferentiableEllipticalFitFunction extends EllipticalCell implements MultivariateVectorFunction
+	class DifferentiableEllipticalFitFunction extends EllipticalCell implements MultivariateVectorFunction
 	{
 		FloatProcessor weightMap;
 		int nPoints;
@@ -1425,11 +1473,14 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		int iter = 0;
 
 		/**
+		 * Instantiates a new differentiable elliptical fit function.
+		 *
 		 * @param roi
 		 *            The polygon to fit
 		 * @param weightMap
+		 *            the weight map
 		 */
-		public DifferentiableEllipticalFitFunction(PolygonRoi roi, FloatProcessor weightMap)
+		DifferentiableEllipticalFitFunction(PolygonRoi roi, FloatProcessor weightMap)
 		{
 			// These methods try to minimise the difference between a target value and your model value.
 			// The target value is the polygon outline. The model is currently an elliptical path.
@@ -1446,9 +1497,11 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		}
 
 		/**
+		 * Calculate target.
+		 *
 		 * @return Each point to be fitted
 		 */
-		public double[] calculateTarget()
+		double[] calculateTarget()
 		{
 			final ByteProcessor bp = new ByteProcessor(weightMap.getWidth(), weightMap.getHeight());
 			for (int i = 0; i < nPoints; i++)
@@ -1467,14 +1520,16 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		}
 
 		/**
+		 * Calculate weights.
+		 *
 		 * @return The weights for each point to be fitted
 		 */
-		public double[] calculateWeights()
+		double[] calculateWeights()
 		{
 			final double[] weights = new double[nPoints];
 			for (int i = 0; i < weights.length; i++)
 				weights[i] = weightMap.getPixelValue(yPoints[i], yPoints[i]);
-				//weights[i] = 1;
+			//weights[i] = 1;
 			return weights;
 		}
 
@@ -1654,7 +1709,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		bp.setPixels(newData);
 	}
 
-	private PolygonRoi traceOutline(ByteProcessor bp, double cx, double cy)
+	private PolygonRoi traceOutline(ByteProcessor bp)
 	{
 		final byte[] data = (byte[]) bp.getPixels();
 

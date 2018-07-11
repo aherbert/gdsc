@@ -27,6 +27,9 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFoci;
 
+/**
+ * Convert the mask options  
+ */
 public class ShowMaskConverter extends Converter<Integer, Object>
 {
 	@Override

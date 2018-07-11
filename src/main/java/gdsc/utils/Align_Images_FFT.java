@@ -62,13 +62,17 @@ import ij.process.ImageProcessor;
 public class Align_Images_FFT implements PlugIn
 {
 	private static final String TITLE = "Align Images FFT";
+	
+	/** The available window function. */
 	public static final String[] windowFunctions;
 	private static int myWindowFunction = 3;
 	private static boolean restrictTranslation = false;
 	private static int myMinXShift = -20, myMaxXShift = 20;
 	private static int myMinYShift = -20, myMaxYShift = 20;
+	/** The available sub-pixel registration methods. */
 	public static final String[] subPixelMethods;
 	private static int subPixelMethod = 2;
+	/** The available interpolation methods. */
 	public static final String[] methods = ImageProcessor.getInterpolationMethods();
 	private static int interpolationMethod = ImageProcessor.NONE;
 
@@ -126,7 +130,7 @@ public class Align_Images_FFT implements PlugIn
 			alignedImp.show();
 	}
 
-	private String[] getImagesList()
+	private static String[] getImagesList()
 	{
 		// Find the currently open images
 		final ArrayList<String> newImageList = new ArrayList<>();
@@ -148,7 +152,7 @@ public class Align_Images_FFT implements PlugIn
 		return newImageList.toArray(new String[0]);
 	}
 
-	private boolean showDialog(String[] imageList)
+	private static boolean showDialog(String[] imageList)
 	{
 		final GenericDialog gd = new GenericDialog(TITLE);
 
@@ -205,7 +209,7 @@ public class Align_Images_FFT implements PlugIn
 		return true;
 	}
 
-	private boolean contains(String[] imageList, String title)
+	private static boolean contains(String[] imageList, String title)
 	{
 		for (final String t : imageList)
 			if (t.equals(title))
@@ -213,6 +217,19 @@ public class Align_Images_FFT implements PlugIn
 		return false;
 	}
 
+	/**
+	 * Creates the bounds for alignment.
+	 *
+	 * @param minXShift
+	 *            the min X shift
+	 * @param maxXShift
+	 *            the max X shift
+	 * @param minYShift
+	 *            the min Y shift
+	 * @param maxYShift
+	 *            the max Y shift
+	 * @return the rectangle
+	 */
 	public static Rectangle createBounds(int minXShift, int maxXShift, int minYShift, int maxYShift)
 	{
 		final int w = maxXShift - minXShift;

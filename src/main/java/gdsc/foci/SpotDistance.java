@@ -107,7 +107,8 @@ public class SpotDistance implements PlugIn
 		}
 	}
 
-	public static final String TITLE = "Spot Distance";
+	/** The plugin title. */
+	private static final String TITLE = "Spot Distance";
 	private static TextWindow resultsWindow = null;
 	private static TextWindow summaryWindow = null;
 	private static TextWindow distancesWindow = null;
@@ -384,7 +385,7 @@ public class SpotDistance implements PlugIn
 			projectionImp.setSlice(1);
 	}
 
-	private void undoLastResult()
+	private static void undoLastResult()
 	{
 		if (allowUndo)
 		{
@@ -395,7 +396,7 @@ public class SpotDistance implements PlugIn
 		}
 	}
 
-	private void removeAfterLine(TextWindow window, int line)
+	private static void removeAfterLine(TextWindow window, int line)
 	{
 		if (window != null && line > 0)
 		{
@@ -462,7 +463,7 @@ public class SpotDistance implements PlugIn
 		projectionImp.show();
 	}
 
-	private String[] buildMaskList(ImagePlus imp)
+	private static String[] buildMaskList(ImagePlus imp)
 	{
 		final ArrayList<String> newImageList = new ArrayList<>();
 		newImageList.add("[None]");
@@ -575,12 +576,12 @@ public class SpotDistance implements PlugIn
 		resultEntry = sb.toString();
 	}
 
-	private boolean sameHeader(TextWindow results, String header)
+	private static boolean sameHeader(TextWindow results, String header)
 	{
 		return results.getTextPanel().getColumnHeadings().equals(header);
 	}
 
-	private String createResultsHeader()
+	private static String createResultsHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Image\t");
@@ -604,7 +605,7 @@ public class SpotDistance implements PlugIn
 		return sb.toString();
 	}
 
-	private String createSummaryHeader()
+	private static String createSummaryHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Image\t");
@@ -630,7 +631,7 @@ public class SpotDistance implements PlugIn
 		return sb.toString();
 	}
 
-	private String createDistancesHeader()
+	private static String createDistancesHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Image\t");
@@ -771,7 +772,7 @@ public class SpotDistance implements PlugIn
 			}
 
 			if (debug)
-				showSpotImage(croppedImp, croppedImp2, region);
+				showSpotImage(croppedImp, croppedImp2);
 
 			final FindFociResults ffResult = ff.findMaxima(croppedImp, regionImp, backgroundMethod, backgroundParameter,
 					autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
@@ -784,7 +785,7 @@ public class SpotDistance implements PlugIn
 			final ArrayList<DistanceResult> resultsArray = analyseResults(prevResultsArray, ff, croppedImp, ffResult, frame,
 					channel, overlay);
 			for (final DistanceResult result : resultsArray)
-				addResult(frame, channel, region, bounds, result);
+				addResult(frame, channel, region,  result);
 
 			ArrayList<DistanceResult> resultsArray2 = null;
 			if (s1b != null)
@@ -798,7 +799,7 @@ public class SpotDistance implements PlugIn
 
 				resultsArray2 = analyseResults(prevResultsArray2, ff, croppedImp2, results2, frame, c2, overlay2);
 				for (final DistanceResult result : resultsArray2)
-					addResult(frame, c2, region, bounds, result);
+					addResult(frame, c2, region,  result);
 			}
 
 			if (trackObjects)
@@ -999,7 +1000,7 @@ public class SpotDistance implements PlugIn
 		}
 	}
 
-	private ImageStack runDifferenceOfGaussians(ImageStack s1, Rectangle blurBounds)
+	private static ImageStack runDifferenceOfGaussians(ImageStack s1, Rectangle blurBounds)
 	{
 		final ImageStack newS1 = new ImageStack(s1.getWidth(), s1.getHeight(), s1.getSize());
 		for (int slice = 1; slice <= s1.getSize(); slice++)
@@ -1014,7 +1015,7 @@ public class SpotDistance implements PlugIn
 		return s1;
 	}
 
-	private ImageStack runGaussianBlur(ImageStack s1, Rectangle blurBounds)
+	private static ImageStack runGaussianBlur(ImageStack s1, Rectangle blurBounds)
 	{
 		final DifferenceOfGaussians filter = new DifferenceOfGaussians();
 		filter.noProgress = true;
@@ -1034,7 +1035,7 @@ public class SpotDistance implements PlugIn
 		return s1;
 	}
 
-	private void addToOverlay(Overlay mainOverlay, Overlay overlay, Color color)
+	private static void addToOverlay(Overlay mainOverlay, Overlay overlay, Color color)
 	{
 		overlay.setFillColor(color);
 		overlay.setStrokeColor(color);
@@ -1069,7 +1070,7 @@ public class SpotDistance implements PlugIn
 	 *            The image
 	 * @return The scale
 	 */
-	private float scaleImage(ImageStack s1)
+	private static float scaleImage(ImageStack s1)
 	{
 		if (!(s1.getPixels(1) instanceof float[]))
 			return 1;
@@ -1105,7 +1106,7 @@ public class SpotDistance implements PlugIn
 		return scale;
 	}
 
-	private void showSpotImage(ImagePlus croppedImp, ImagePlus croppedImp2, int region)
+	private void showSpotImage(ImagePlus croppedImp, ImagePlus croppedImp2)
 	{
 		debugSpotImp = createImage(croppedImp, debugSpotImp, TITLE + " Pixels", 0);
 		if (croppedImp2 != null)
@@ -1160,7 +1161,7 @@ public class SpotDistance implements PlugIn
 		return regions;
 	}
 
-	private ImagePlus extractRegion(ImageStack inputStack, int region, Rectangle bounds)
+	private static ImagePlus extractRegion(ImageStack inputStack, int region, Rectangle bounds)
 	{
 		int minX = Integer.MAX_VALUE;
 		int minY = Integer.MAX_VALUE;
@@ -1197,7 +1198,7 @@ public class SpotDistance implements PlugIn
 		return new ImagePlus(null, outputStack);
 	}
 
-	private Rectangle findBounds(ImageStack inputStack)
+	private static Rectangle findBounds(ImageStack inputStack)
 	{
 		int minX = Integer.MAX_VALUE;
 		int minY = Integer.MAX_VALUE;
@@ -1232,13 +1233,15 @@ public class SpotDistance implements PlugIn
 	}
 
 	/**
-	 * Crop by duplication within the bounds
+	 * Crop by duplication within the bounds.
 	 *
 	 * @param imp
+	 *            the imp
 	 * @param bounds
-	 * @return
+	 *            the bounds
+	 * @return the image plus
 	 */
-	private ImagePlus crop(ImagePlus imp, Rectangle bounds)
+	private static ImagePlus crop(ImagePlus imp, Rectangle bounds)
 	{
 		imp.setRoi(bounds);
 		final ImagePlus croppedImp = imp.duplicate();
@@ -1385,7 +1388,7 @@ public class SpotDistance implements PlugIn
 		return perimeter;
 	}
 
-	private double getArea(ImageProcessor maskIp, int maskId)
+	private static double getArea(ImageProcessor maskIp, int maskId)
 	{
 		int area = 0;
 		for (int i = 0; i < maskIp.getPixelCount(); i++)
@@ -1394,7 +1397,7 @@ public class SpotDistance implements PlugIn
 		return area;
 	}
 
-	private void addResult(int frame, int channel, int region, Rectangle bounds, DistanceResult result)
+	private void addResult(int frame, int channel, int region,  DistanceResult result)
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);
@@ -1485,21 +1488,33 @@ public class SpotDistance implements PlugIn
 		new MacroInstaller().install(sb.toString());
 	}
 
+	/**
+	 * Run the SpotDistance plugin.
+	 */
 	public static void run()
 	{
 		new SpotDistance().run(null);
 	}
 
+	/**
+	 * Run the SpotDistance plugin with the argument "redo".
+	 */
 	public static void redo()
 	{
 		new SpotDistance().run("redo");
 	}
 
+	/**
+	 * Run the SpotDistance plugin with the argument "undo".
+	 */
 	public static void undo()
 	{
 		new SpotDistance().run("undo");
 	}
 
+	/**
+	 * Run the SpotDistance plugin with the argument "extra".
+	 */
 	public static void extra()
 	{
 		new SpotDistance().run("extra");

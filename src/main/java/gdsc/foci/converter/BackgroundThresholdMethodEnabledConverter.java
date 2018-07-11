@@ -27,6 +27,9 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFociProcessor;
 
+/**
+ * Convert the background method to a flag indicating if threshold method is enabled  
+ */
 public class BackgroundThresholdMethodEnabledConverter extends Converter<Integer, Boolean>
 {
 	@Override

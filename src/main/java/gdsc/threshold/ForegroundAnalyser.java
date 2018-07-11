@@ -233,13 +233,13 @@ public class ForegroundAnalyser implements PlugInFilter
 			showMask(roi, stack, t);
 	}
 
-	private void createResultsWindow()
+	private static void createResultsWindow()
 	{
 		if (resultsWindow == null || !resultsWindow.isShowing())
 			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300);
 	}
 
-	private String createResultsHeader()
+	private static String createResultsHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Image\t");
@@ -289,7 +289,7 @@ public class ForegroundAnalyser implements PlugInFilter
 		resultsWindow.append(sb.toString());
 	}
 
-	private void showMask(Roi roi, ImageStack stack, float t)
+	private static void showMask(Roi roi, ImageStack stack, float t)
 	{
 		final int maxx = stack.getWidth();
 		final int maxy = stack.getHeight();

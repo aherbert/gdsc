@@ -112,16 +112,21 @@ public class GaussianFit implements PlugInFilter
 			System.out.println(errorMessage);
 	}
 
-	private void init(float[] data, int width, int height)
+	private static void init(float[] data, int width, int height)
 	{
 		if (data == null || data.length != width * height || width < 1 || height < 1)
 			throw new IllegalArgumentException("Data must be same length as width * height");
 	}
 
 	/**
+	 * Fit the data using a 2D Gaussian.
+	 *
 	 * @param data
+	 *            the data
 	 * @param width
+	 *            the width
 	 * @param height
+	 *            the height
 	 * @return The fitted Gaussian parameters (Background, Amplitude, x0, x1, s)
 	 */
 	public double[] fit(float[] data, int width, int height)

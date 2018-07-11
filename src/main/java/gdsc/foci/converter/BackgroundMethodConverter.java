@@ -27,6 +27,9 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFoci;
 
+/**
+ * Convert the background method parameter 
+ */
 public class BackgroundMethodConverter extends Converter<Integer, Object>
 {
 	@Override

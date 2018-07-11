@@ -254,7 +254,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 		return super.setup(arg, imp) + flags;
 	}
 
-	private BufferedWriter createOutput(String filename)
+	private static BufferedWriter createOutput(String filename)
 	{
 		try
 		{
@@ -271,7 +271,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 		}
 	}
 
-	private BufferedWriter writeHistogram(BufferedWriter out, int id, double particleValue, int[] histogram)
+	private static BufferedWriter writeHistogram(BufferedWriter out, int id, double particleValue, int[] histogram)
 	{
 		if (out == null || histogram == null)
 			return null;
@@ -299,7 +299,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 		return out;
 	}
 
-	private void close(BufferedWriter out)
+	private static void close(BufferedWriter out)
 	{
 		if (out != null)
 			try
@@ -311,7 +311,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			}
 	}
 
-	public boolean isNoThreshold(ImagePlus imp)
+	private static boolean isNoThreshold(ImagePlus imp)
 	{
 		boolean noThreshold = false;
 		final ImageProcessor ip = imp.getProcessor();
@@ -663,6 +663,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			saveSummaryHistogram(order);
 	}
 
+	@SuppressWarnings("resource")
 	private void saveSummaryHistogram(List<Double> order)
 	{
 		if (summaryHistogram.isEmpty())
@@ -675,7 +676,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 		close(out);
 	}
 
-	private String createSummaryFilename(String filename)
+	private static String createSummaryFilename(String filename)
 	{
 		// The histogramFile had a default .txt, so look for the extension and insert 'summary'
 		final int i = filename.lastIndexOf('.');

@@ -70,7 +70,8 @@ import ij.text.TextWindow;
  */
 public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListener
 {
-	public static final String TITLE = "Assign Foci To Clusters";
+	/** The title of the plugin */
+	private static final String TITLE = "Assign Foci To Clusters";
 
 	private static int imageFlags = DOES_8G + DOES_16 + SNAPSHOT;
 	private static int noImageFlags = NO_IMAGE_REQUIRED + FINAL_PROCESSING;
@@ -151,7 +152,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		return (this.imp == null) ? noImageFlags : imageFlags;
 	}
 
-	public void resetPreview()
+	private void resetPreview()
 	{
 		if (this.imp != null)
 		{
@@ -391,7 +392,8 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 
 			minSizeClusters = null;
 
-			final ClusteringEngine e = new ClusteringEngine(Prefs.getThreads(), algorithms[algorithm], new IJTrackProgress());
+			final ClusteringEngine e = new ClusteringEngine(Prefs.getThreads(), algorithms[algorithm],
+					new IJTrackProgress());
 			final ArrayList<ClusterPoint> points = getPoints();
 			clusters = e.findClusters(points, radius);
 			Collections.sort(clusters, new Comparator<Cluster>()
@@ -497,7 +499,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 				TextUtils.pleural(filteredClusters.size(), "cluster") + " in " + Utils.rounded(seconds) + " seconds");
 	}
 
-	private Coordinate[] toCoordinates(ArrayList<Cluster> clusters)
+	private static Coordinate[] toCoordinates(ArrayList<Cluster> clusters)
 	{
 		final Coordinate[] coords = new Coordinate[clusters.size()];
 		for (int i = 0; i < clusters.size(); i++)
@@ -626,7 +628,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		clusterImp.setOverlay(o);
 	}
 
-	private void findEdgeObjects(ImageProcessor ip, boolean[] edge)
+	private static void findEdgeObjects(ImageProcessor ip, boolean[] edge)
 	{
 		final int w = ip.getWidth();
 		final int h = ip.getHeight();
@@ -659,7 +661,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		}
 	}
 
-	private Roi getClusterRoi(ArrayList<Cluster> clusters)
+	private static Roi getClusterRoi(ArrayList<Cluster> clusters)
 	{
 		if (clusters == null || clusters.isEmpty())
 			return null;
@@ -692,7 +694,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		return points;
 	}
 
-	private double getWeight(FindFociResult result)
+	private static double getWeight(FindFociResult result)
 	{
 		switch (weight)
 		{
@@ -740,7 +742,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 		}
 	}
 
-	private TextWindow createWindow(TextWindow window, String title, String header, int h)
+	private static TextWindow createWindow(TextWindow window, String title, String header, int h)
 	{
 		if (window == null || !window.isVisible())
 			window = new TextWindow(TITLE + " " + title, header, "", 800, h);

@@ -25,6 +25,9 @@ package gdsc.foci.converter;
 
 import org.jdesktop.beansbinding.Converter;
 
+/**
+ * Convert the slider value to an integer  
+ */
 public class SliderDoubleConverter extends Converter<Double, Integer>
 {
 	@Override

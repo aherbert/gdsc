@@ -52,7 +52,9 @@ public abstract class FindFociController implements Runnable
 	}
 
 	/**
-	 * Returns the number of images
+	 * Returns the number of images.
+	 *
+	 * @return the image count
 	 */
 	public abstract int getImageCount();
 
@@ -90,6 +92,7 @@ public abstract class FindFociController implements Runnable
 	 * Adds a listener. Allows objects to be notified of processing details.
 	 *
 	 * @param listener
+	 *            the listener
 	 */
 	public void addMessageListener(MessageListener listener)
 	{

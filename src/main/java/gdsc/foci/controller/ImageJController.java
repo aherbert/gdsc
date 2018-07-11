@@ -43,6 +43,12 @@ public class ImageJController extends FindFociController
 {
 	private FindFociRunner runner = null;
 
+	/**
+	 * Instantiates a new image J controller.
+	 *
+	 * @param model
+	 *            the model
+	 */
 	public ImageJController(FindFociModel model)
 	{
 		super(model);

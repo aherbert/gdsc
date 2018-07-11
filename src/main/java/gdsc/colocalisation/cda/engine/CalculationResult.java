@@ -28,11 +28,30 @@ package gdsc.colocalisation.cda.engine;
  */
 public class CalculationResult
 {
-	public double distance; // Shift distance
-	public double m1; // Mander's 1
-	public double m2; // Mander's 2
-	public double r; // Correlation
+	/** The shift distance. */
+	public double distance;
+	
+	/** The first Mander's coefficient */
+	public double m1; 
+	
+	/** The second Mander's coefficient */
+	public double m2;
+	
+	/** The correlation */
+	public double r; 
 
+	/**
+	 * Instantiates a new calculation result.
+	 *
+	 * @param distance
+	 *            the shift distance
+	 * @param m1
+	 *            The first Mander's coefficient
+	 * @param m2
+	 *            The second Mander's coefficient
+	 * @param r
+	 *            the corrrelation
+	 */
 	public CalculationResult(double distance, double m1, double m2, double r)
 	{
 		this.distance = distance;

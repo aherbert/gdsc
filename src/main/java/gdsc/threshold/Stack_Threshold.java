@@ -213,7 +213,7 @@ public class Stack_Threshold implements PlugInFilter
 		return methods;
 	}
 
-	private String[] failed(String message)
+	private static String[] failed(String message)
 	{
 		IJ.error(TITLE, message);
 		return new String[0];
@@ -223,10 +223,12 @@ public class Stack_Threshold implements PlugInFilter
 	 * Filtered the set of options using the allowed methods array.
 	 *
 	 * @param options
+	 *            the options
 	 * @param allowedMethods
+	 *            the allowed methods
 	 * @return filtered options
 	 */
-	private String[] extractMethods(String[] options, String[] allowedMethods)
+	private static String[] extractMethods(String[] options, String[] allowedMethods)
 	{
 		final ArrayList<String> methods = new ArrayList<>();
 		for (final String option : options)
@@ -242,17 +244,17 @@ public class Stack_Threshold implements PlugInFilter
 	/**
 	 * Provides functionality to process a collection of slices from an Image
 	 */
-	public class SliceCollection
+	class SliceCollection
 	{
-		public int c;
-		public int z;
-		public ArrayList<Integer> slices;
+		int c;
+		int z;
+		ArrayList<Integer> slices;
 
 		private String sliceName = null;
 
-		public ImageStack imageStack;
-		public ImageStack maskStack;
-		public int threshold;
+		ImageStack imageStack;
+		ImageStack maskStack;
+		int threshold;
 
 		/**
 		 * @param c
@@ -279,16 +281,22 @@ public class Stack_Threshold implements PlugInFilter
 		}
 
 		/**
-		 * Utility method
+		 * Utility method.
 		 *
 		 * @param i
+		 *            the i
 		 */
-		public void add(Integer i)
+		void add(Integer i)
 		{
 			slices.add(i);
 		}
 
-		public String getSliceName()
+		/**
+		 * Gets the slice name.
+		 *
+		 * @return the slice name
+		 */
+		String getSliceName()
 		{
 			if (sliceName == null)
 			{
@@ -302,11 +310,12 @@ public class Stack_Threshold implements PlugInFilter
 		}
 
 		/**
-		 * Extracts the configured slices from the image into a stack
+		 * Extracts the configured slices from the image into a stack.
 		 *
 		 * @param imp
+		 *            the imp
 		 */
-		public void createStack(ImagePlus imp)
+		void createStack(ImagePlus imp)
 		{
 			imageStack = new ImageStack(imp.getWidth(), imp.getHeight());
 			for (final int slice : slices)
@@ -317,11 +326,10 @@ public class Stack_Threshold implements PlugInFilter
 		}
 
 		/**
-		 * Creates a mask using the specified thresholding method
+		 * Creates a mask using the specified thresholding method.
 		 *
-		 * @param ip
 		 * @param method
-		 * @return the mask
+		 *            the method
 		 */
 		private void createMask(String method)
 		{

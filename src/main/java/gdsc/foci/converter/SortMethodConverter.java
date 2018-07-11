@@ -27,6 +27,9 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFoci;
 
+/**
+ * Convert the sort method  
+ */
 public class SortMethodConverter extends Converter<Integer, Object>
 {
 	@Override

@@ -30,11 +30,31 @@ public class GridPoint extends ValuedPoint
 {
 	private boolean assigned = false;
 
+	/**
+	 * Instantiates a new grid point.
+	 *
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 * @param z
+	 *            the z
+	 * @param value
+	 *            the value
+	 */
 	public GridPoint(int x, int y, int z, float value)
 	{
 		super(x, y, z, value);
 	}
 
+	/**
+	 * Instantiates a new grid point.
+	 *
+	 * @param point
+	 *            the point
+	 * @param value
+	 *            the value
+	 */
 	public GridPoint(AssignedPoint point, float value)
 	{
 		super(point, value);

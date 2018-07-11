@@ -87,7 +87,7 @@ public class GaussianPlugin implements PlugIn
 		new ImagePlus("Gaussian", fp).show();
 	}
 
-	private float[] createGaussian(int width, int height, float[] amplitude, float[] xpos, float[] ypos, float[] sx,
+	private static float[] createGaussian(int width, int height, float[] amplitude, float[] xpos, float[] ypos, float[] sx,
 			float[] sy, float[] angle)
 	{
 		final float[] img = new float[width * height];
@@ -116,12 +116,8 @@ public class GaussianPlugin implements PlugIn
 
 	/**
 	 * Generic form of the 2D Gaussian
-	 *
-	 * @param x
-	 * @param y
-	 * @return
 	 */
-	private float gaussian(float x, float y, float A, float x0, float y0, float a, float b, float c)
+	private static float gaussian(float x, float y, float A, float x0, float y0, float a, float b, float c)
 	{
 		return (float) (A *
 				Math.exp(-(a * (x - x0) * (x - x0) + 2 * b * (x - x0) * (y - y0) + c * (y - y0) * (y - y0))));

@@ -52,7 +52,8 @@ import ij.text.TextWindow;
  */
 public class AssignFociToObjects implements PlugInFilter
 {
-	public static final String TITLE = "Assign Foci";
+	/** The title of the plugin. */
+	private static final String TITLE = "Assign Foci";
 
 	private static final int flags = DOES_16 + DOES_8G + NO_CHANGES + NO_UNDO;
 	private static String input = "";
@@ -335,7 +336,7 @@ public class AssignFociToObjects implements PlugInFilter
 		distancesWindow.append(sb.toString());
 	}
 
-	public boolean showDialog()
+	private boolean showDialog()
 	{
 		final ArrayList<int[]> findFociResults = getFindFociResults();
 		final ArrayList<int[]> roiResults = getRoiResults();
@@ -403,7 +404,7 @@ public class AssignFociToObjects implements PlugInFilter
 		return true;
 	}
 
-	private ArrayList<int[]> getFindFociResults()
+	private static ArrayList<int[]> getFindFociResults()
 	{
 		if (FindFoci.getResults() == null)
 			return null;
@@ -480,7 +481,7 @@ public class AssignFociToObjects implements PlugInFilter
 		}
 	}
 
-	private void createResultsTables()
+	private static void createResultsTables()
 	{
 		resultsWindow = createWindow(resultsWindow, "Results", "Image\tObject\tcx\tcy\tSize\tValid\tCount");
 		summaryWindow = createWindow(summaryWindow, "Summary",
@@ -505,7 +506,7 @@ public class AssignFociToObjects implements PlugInFilter
 		}
 	}
 
-	private TextWindow createWindow(TextWindow window, String title, String header)
+	private static TextWindow createWindow(TextWindow window, String title, String header)
 	{
 		if (window == null || !window.isVisible())
 			window = new TextWindow(TITLE + " " + title, header, "", 800, 400);
@@ -566,7 +567,7 @@ public class AssignFociToObjects implements PlugInFilter
 		}
 	}
 
-	private void addRoi(int[] x, int[] y, int n, Overlay o, Color color)
+	private static void addRoi(int[] x, int[] y, int n, Overlay o, Color color)
 	{
 		final PointRoi roi = new PointRoi(x, y, n);
 		roi.setShowLabels(false);

@@ -39,13 +39,19 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
 
 	private Map<String, FindFociState> stateMap;
 
+	/**
+	 * Instantiates a new find foci state machine.
+	 */
 	public FindFociStateMachine()
 	{
 		init();
 	}
 
 	/**
+	 * Instantiates a new find foci state machine.
+	 *
 	 * @param state
+	 *            the state
 	 */
 	public FindFociStateMachine(FindFociState state)
 	{

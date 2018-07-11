@@ -34,7 +34,6 @@ import ij.ImageStack;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
 
-// TODO: Auto-generated Javadoc
 /**
  * Class that allow the threshold for colocalisation analysis to be calculated for two images. A regression is performed
  * between the two images. If the correlation is positive a search is performed to iteratively reduce two image
@@ -322,7 +321,7 @@ public class ColocalisationThreshold
 	 *            the sum Y
 	 * @param n
 	 *            the n
-	 * @return the double
+	 * @return the correlation
 	 */
 	public static double calculateCorrelation(long sumX, long sumXY, long sumXX, long sumYY, long sumY, long n)
 	{
@@ -711,12 +710,12 @@ public class ColocalisationThreshold
 		for (final ThresholdResult result : results)
 			// Look for results where the correlation above the threshold is positive
 			// and the correlation below the threshold (RltT) is closer to the target R-threshold.
-			if (result.r > rThreshold &&
+			if (result.r1 > rThreshold &&
 					//result.r2 < rThreshold &&
 					//Math.abs(result.r2 - rThreshold) < Math.abs(convergenceTolerance) &&
 					Math.abs(result.r2 - rThreshold) < Math.abs(rBelowThreshold - rThreshold))
 			{
-				rAboveThreshold = result.r;
+				rAboveThreshold = result.r1;
 				rBelowThreshold = result.r2;
 				threshold1 = result.threshold1;
 				threshold2 = result.threshold2;
@@ -732,7 +731,7 @@ public class ColocalisationThreshold
 		if (rBelowThreshold == 2)
 		{
 			final ThresholdResult result = results.get(results.size() - 1);
-			rAboveThreshold = result.r;
+			rAboveThreshold = result.r1;
 			rBelowThreshold = result.r2;
 			threshold1 = result.threshold1;
 			threshold2 = result.threshold2;
@@ -901,7 +900,7 @@ public class ColocalisationThreshold
 	}
 
 	/**
-	 * Gets the m.
+	 * Gets the m from y = mx+b.
 	 *
 	 * @return the m
 	 */
@@ -911,7 +910,7 @@ public class ColocalisationThreshold
 	}
 
 	/**
-	 * Gets the b.
+	 * Gets the b from y = mx+b.
 	 *
 	 * @return the b
 	 */
@@ -921,9 +920,9 @@ public class ColocalisationThreshold
 	}
 
 	/**
-	 * Gets the r total.
+	 * Gets the correlation total.
 	 *
-	 * @return the r total
+	 * @return the correlation total
 	 */
 	public double getRTotal()
 	{
@@ -931,9 +930,9 @@ public class ColocalisationThreshold
 	}
 
 	/**
-	 * Gets the r below threshold.
+	 * Gets the correlation below threshold.
 	 *
-	 * @return the r below threshold
+	 * @return the correlation below threshold
 	 */
 	public double getRBelowThreshold()
 	{
@@ -941,9 +940,9 @@ public class ColocalisationThreshold
 	}
 
 	/**
-	 * Gets the r above threshold.
+	 * Gets the correlation above threshold.
 	 *
-	 * @return the r above threshold
+	 * @return the correlation above threshold
 	 */
 	public double getRAboveThreshold()
 	{
@@ -955,7 +954,7 @@ public class ColocalisationThreshold
 	 * below threshold is with the convergence tolerance distance of this R, i.e. is R = R-threshold +/- tolerance.
 	 *
 	 * @param r
-	 *            the new r threshold
+	 *            the new correlation threshold
 	 */
 	public void setRThreshold(double r)
 	{
@@ -963,9 +962,9 @@ public class ColocalisationThreshold
 	}
 
 	/**
-	 * Gets the r threshold.
+	 * Gets the correlation threshold.
 	 *
-	 * @return the r threshold
+	 * @return the correlation threshold
 	 */
 	public double getRThreshold()
 	{
@@ -1061,17 +1060,16 @@ public class ColocalisationThreshold
 	 */
 	public class ThresholdResult implements Comparable<ThresholdResult>
 	{
-
 		/** The threshold 1. */
 		public int threshold1;
 
 		/** The threshold 2. */
 		public int threshold2;
 
-		/** The r. */
-		public double r;
+		/** The correlation 1. */
+		public double r1;
 
-		/** The r 2. */
+		/** The correlation 2. */
 		public double r2;
 
 		/**
@@ -1082,19 +1080,21 @@ public class ColocalisationThreshold
 		 * @param threshold2
 		 *            the threshold 2
 		 * @param r
-		 *            the r
+		 *            the correlation 1
 		 * @param r2
-		 *            the r 2
+		 *            the correlation 2
 		 */
 		public ThresholdResult(int threshold1, int threshold2, double r, double r2)
 		{
 			this.threshold1 = threshold1;
 			this.threshold2 = threshold2;
-			this.r = r;
+			this.r1 = r;
 			this.r2 = r2;
 		}
 
-		/* (non-Javadoc)
+		/*
+		 * (non-Javadoc)
+		 * 
 		 * @see java.lang.Comparable#compareTo(java.lang.Object)
 		 */
 		@Override

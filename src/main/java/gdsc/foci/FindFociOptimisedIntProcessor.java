@@ -1247,11 +1247,8 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 		return pList;
 	}
 
-	/**
-	 * Find the size and intensity of peaks above their saddle heights.
-	 */
-	protected void analysePeaksWithBounds(FindFociResult[] resultsArray, Object pixels, int[] maxima,
-			FindFociStatistics stats)
+	@Override
+	protected void analysePeaksWithBounds(FindFociResult[] resultsArray, Object pixels, int[] maxima)
 	{
 		setPixels(pixels);
 

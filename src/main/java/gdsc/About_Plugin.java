@@ -38,7 +38,8 @@ import ij.plugin.PlugIn;
  */
 public class About_Plugin implements PlugIn
 {
-	public static String TITLE = "GDSC ImageJ Plugins";
+	/** The title of the plugin. */
+	private static final String TITLE = "GDSC ImageJ Plugins";
 	private static String HELP_URL = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/plugins";
 	private static String YEAR = "2016";
 
@@ -57,7 +58,7 @@ public class About_Plugin implements PlugIn
 
 		if (arg.equals("uninstall"))
 		{
-			showUnintallDialog();
+			showUninstallDialog();
 			return;
 		}
 
@@ -67,12 +68,18 @@ public class About_Plugin implements PlugIn
 		showAbout();
 	}
 
-	public void showUnintallDialog()
+	/**
+	 * Show uninstall dialog.
+	 */
+	public void showUninstallDialog()
 	{
 		IJ.showMessage(TITLE,
 				"To uninstall this plugin, move gdsc_.jar out\n" + "of the plugins folder and restart ImageJ.");
 	}
 
+	/**
+	 * Show about dialog.
+	 */
 	public static void showAbout()
 	{
 		if (IJ.altKeyDown() || IJ.shiftKeyDown() || Boolean.parseBoolean(System.getProperty("about-install", "false")))
@@ -88,10 +95,9 @@ public class About_Plugin implements PlugIn
 		final String version = Version.getVersion();
 		final String buildDate = Version.getBuildDate();
 
-		try
+		// Read the contents of the README file
+		try (final BufferedReader input = new BufferedReader(new InputStreamReader(readmeStream)))
 		{
-			// Read the contents of the README file
-			final BufferedReader input = new BufferedReader(new InputStreamReader(readmeStream));
 			String line;
 			while ((line = input.readLine()) != null)
 				if (line.contains("http:"))
@@ -148,10 +154,8 @@ public class About_Plugin implements PlugIn
 		// Read into memory
 		final ArrayList<String[]> plugins = new ArrayList<>();
 		int gaps = 0;
-		BufferedReader input = null;
-		try
+		try (BufferedReader input = new BufferedReader(new InputStreamReader(pluginsStream)))
 		{
-			input = new BufferedReader(new InputStreamReader(pluginsStream));
 			String line;
 			while ((line = input.readLine()) != null)
 			{
@@ -186,18 +190,6 @@ public class About_Plugin implements PlugIn
 		{
 			// Ignore
 		}
-		finally
-		{
-			if (input != null)
-				try
-				{
-					input.close();
-				}
-				catch (final IOException e)
-				{
-					// Ignore
-				}
-		}
 
 		if (plugins.isEmpty())
 			return false;
@@ -212,6 +204,11 @@ public class About_Plugin implements PlugIn
 		return true;
 	}
 
+	/**
+	 * Gets the plugins.config from the jar resources.
+	 *
+	 * @return the plugins config
+	 */
 	public static InputStream getPluginsConfig()
 	{
 		// Get the embedded config in the jar file

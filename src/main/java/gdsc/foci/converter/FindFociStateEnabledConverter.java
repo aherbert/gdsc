@@ -27,6 +27,9 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.model.FindFociState;
 
+/**
+ * Convert the FindFoci state to a flag indicating if it is not complete  
+ */
 public class FindFociStateEnabledConverter extends Converter<FindFociState, Boolean>
 {
 	@Override

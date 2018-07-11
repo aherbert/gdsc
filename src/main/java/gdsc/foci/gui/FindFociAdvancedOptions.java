@@ -101,6 +101,9 @@ public class FindFociAdvancedOptions extends JDialog
 
 	/**
 	 * Launch the application.
+	 *
+	 * @param args
+	 *            the arguments
 	 */
 	public static void main(String[] args)
 	{
@@ -118,6 +121,9 @@ public class FindFociAdvancedOptions extends JDialog
 
 	/**
 	 * Create the dialog.
+	 *
+	 * @param model
+	 *            the model
 	 */
 	public FindFociAdvancedOptions(FindFociModel model)
 	{

@@ -47,6 +47,12 @@ public class FindMaximaController extends ImageJController
 	private int activeChannel = 1;
 	private int activeFrame = 1;
 
+	/**
+	 * Instantiates a new find maxima controller.
+	 *
+	 * @param model
+	 *            the model
+	 */
 	public FindMaximaController(FindFociModel model)
 	{
 		super(model);
@@ -212,7 +218,7 @@ public class FindMaximaController extends ImageJController
 		}
 	}
 
-	private String[] getChannels(ImagePlus imp)
+	private static String[] getChannels(ImagePlus imp)
 	{
 		final int c = imp.getNChannels();
 		final String[] result = new String[c];
@@ -221,7 +227,7 @@ public class FindMaximaController extends ImageJController
 		return result;
 	}
 
-	private String[] getFrames(ImagePlus imp)
+	private static String[] getFrames(ImagePlus imp)
 	{
 		final int c = imp.getNFrames();
 		final String[] result = new String[c];
@@ -230,7 +236,7 @@ public class FindMaximaController extends ImageJController
 		return result;
 	}
 
-	private ImageStack extractImage(ImagePlus imp, int channel, int frame)
+	private static ImageStack extractImage(ImagePlus imp, int channel, int frame)
 	{
 		final int slices = imp.getNSlices();
 

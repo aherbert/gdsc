@@ -26,15 +26,13 @@ package gdsc.foci;
 import gdsc.core.match.Coordinate;
 
 /**
- * <p>
  * Stores a 2D/3D point.
- *
  * <p>
  * Overrides equals and hashCode methods using x,y,z, coordinates for equivalence. Derived classes can optionally
  * override this.
  *
- * @see {@link java.lang.Object#equals(java.lang.Object) }
- * @see {@link java.lang.Object#hashCode() }
+ * @see java.lang.Object#equals(java.lang.Object)
+ * @see java.lang.Object#hashCode()
  */
 public class BasePoint implements Coordinate
 {
@@ -42,6 +40,16 @@ public class BasePoint implements Coordinate
 	protected int y = 0;
 	protected int z = 0;
 
+	/**
+	 * Instantiates a new base point.
+	 *
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 * @param z
+	 *            the z
+	 */
 	public BasePoint(int x, int y, int z)
 	{
 		this.x = x;
@@ -49,6 +57,14 @@ public class BasePoint implements Coordinate
 		this.z = z;
 	}
 
+	/**
+	 * Instantiates a new base point.
+	 *
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 */
 	public BasePoint(int x, int y)
 	{
 		this.x = x;

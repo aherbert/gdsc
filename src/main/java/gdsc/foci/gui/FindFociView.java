@@ -178,6 +178,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
 	/**
 	 * Launch the application.
+	 *
+	 * @param args
+	 *            the arguments
 	 */
 	public static void main(String[] args)
 	{
@@ -1179,6 +1182,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 		btnHelp = new JButton("Help");
 		btnHelp.addMouseListener(new MouseAdapter()
 		{
+			@SuppressWarnings("unused")
 			@Override
 			public void mouseClicked(MouseEvent e)
 			{
@@ -1313,7 +1317,10 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 	}
 
 	/**
+	 * Sets the background level.
+	 *
 	 * @param backgroundLevel
+	 *            the new background level
 	 */
 	public void setBackgroundLevel(double backgroundLevel)
 	{

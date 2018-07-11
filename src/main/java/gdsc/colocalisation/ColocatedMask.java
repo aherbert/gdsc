@@ -257,7 +257,7 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 		return true;
 	}
 
-	private int getId(String title)
+	private static int getId(String title)
 	{
 		final ImagePlus imp = WindowManager.getImage(title);
 		return (imp == null) ? 0 : imp.getID();
@@ -409,14 +409,14 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 			oldImp.setStack(outputStack, index[0], index[1], index[2]);
 	}
 
-	private double getMin(ImagePlus imp, int channel)
+	private static double getMin(ImagePlus imp, int channel)
 	{
 		// Clip channel
 		channel = Math.min(channel, imp.getNChannels());
 		return (maskMode == 0) ? getThreshold(imp, channel) : getDisplayRangeMin(imp, channel);
 	}
 
-	private double getThreshold(ImagePlus imp, int channel)
+	private static double getThreshold(ImagePlus imp, int channel)
 	{
 		// Composite image have different processors
 		final ImageProcessor ip = (imp.isComposite()) ? ((CompositeImage) imp).getProcessor(channel) : imp.getProcessor();
@@ -425,7 +425,7 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 		return (t != ImageProcessor.NO_THRESHOLD) ? t : Double.NEGATIVE_INFINITY;
 	}
 
-	private double getDisplayRangeMin(ImagePlus imp, int channel)
+	private static double getDisplayRangeMin(ImagePlus imp, int channel)
 	{
 		// Composite images can have a display range for each color channel
 		final LUT[] luts = imp.getLuts();

@@ -35,7 +35,7 @@ import ij.process.FloatPolygon;
 import ij.util.Java2;
 
 /**
- * Extend the PointRoi class to allow custom number labels for each point
+ * Extend the PointRoi class to allow custom number labels for each point.
  */
 public class PointRoi2 extends PointRoi
 {
@@ -46,48 +46,105 @@ public class PointRoi2 extends PointRoi
 	private boolean hideLabels;
 	private int[] labels = null;
 
+	/**
+	 * Instantiates a new point roi 2.
+	 *
+	 * @param ox
+	 *            the ox
+	 * @param oy
+	 *            the oy
+	 * @param points
+	 *            the points
+	 */
 	public PointRoi2(int[] ox, int[] oy, int points)
 	{
 		super(ox, oy, points);
 	}
 
-	/** Creates a new PointRoi2 using the specified float arrays of offscreen coordinates. */
+	/**
+	 * Creates a new PointRoi2 using the specified float arrays of offscreen coordinates.
+	 *
+	 * @param ox
+	 *            the ox
+	 * @param oy
+	 *            the oy
+	 * @param points
+	 *            the points
+	 */
 	public PointRoi2(float[] ox, float[] oy, int points)
 	{
 		super(ox, oy, points);
 	}
 
-	/** Creates a new PointRoi2 from a FloatPolygon. */
+	/**
+	 * Creates a new PointRoi2 from a FloatPolygon.
+	 *
+	 * @param poly
+	 *            the polygon
+	 */
 	public PointRoi2(FloatPolygon poly)
 	{
 		super(poly);
 	}
 
-	/** Creates a new PointRoi2 from a Polygon. */
+	/**
+	 * Creates a new PointRoi2 from a Polygon.
+	 *
+	 * @param poly
+	 *            the polygon
+	 */
 	public PointRoi2(Polygon poly)
 	{
 		super(poly);
 	}
 
-	/** Creates a new PointRoi2 using the specified offscreen int coordinates. */
+	/**
+	 * Creates a new PointRoi2 using the specified offscreen int coordinates.
+	 *
+	 * @param ox
+	 *            the ox
+	 * @param oy
+	 *            the oy
+	 */
 	public PointRoi2(int ox, int oy)
 	{
 		super(ox, oy);
 	}
 
-	/** Creates a new PointRoi2 using the specified offscreen double coordinates. */
+	/**
+	 * Creates a new PointRoi2 using the specified offscreen double coordinates.
+	 *
+	 * @param ox
+	 *            the ox
+	 * @param oy
+	 *            the oy
+	 */
 	public PointRoi2(double ox, double oy)
 	{
 		super(ox, oy);
 	}
 
-	/** Creates a new PointRoi2 using the specified screen coordinates. */
+	/**
+	 * Creates a new PointRoi2 using the specified screen coordinates.
+	 *
+	 * @param sx
+	 *            the sx
+	 * @param sy
+	 *            the sy
+	 * @param imp
+	 *            the imp
+	 */
 	public PointRoi2(int sx, int sy, ImagePlus imp)
 	{
 		super(sx, sy, imp);
 	}
 
-	/** Draws the points on the image. */
+	/**
+	 * Draws the points on the image.
+	 *
+	 * @param g
+	 *            the g
+	 */
 	@Override
 	public void draw(Graphics g)
 	{
@@ -121,6 +178,18 @@ public class PointRoi2 extends PointRoi
 		}
 	}
 
+	/**
+	 * Draw point.
+	 *
+	 * @param g
+	 *            the g
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 * @param n
+	 *            the n
+	 */
 	@Override
 	void drawPoint(Graphics g, int x, int y, int n)
 	{
@@ -150,6 +219,7 @@ public class PointRoi2 extends PointRoi
 	 * Set the labels to use for each point. Default uses numbers counting from 1.
 	 *
 	 * @param labels
+	 *            the new labels
 	 */
 	public void setLabels(int[] labels)
 	{

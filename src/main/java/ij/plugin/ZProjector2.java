@@ -46,8 +46,12 @@ import ij.process.ShortProcessor;
  */
 public class ZProjector2 extends ZProjectorCopy
 {
+	/** Use Mode projection. */
 	public static final int MODE_METHOD = 6;
+	/** Use Mode projection (ignoring zero from the image). */
 	public static final int MODE_IGNORE_ZERO_METHOD = 7;
+
+	/** The available projection methods. */
 	public static final String[] METHODS = { "Average Intensity", "Max Intensity", "Min Intensity", "Sum Slices",
 			"Standard Deviation", "Median", "Mode", "Mode (ignore zero)" };
 

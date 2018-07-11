@@ -68,11 +68,11 @@ import ij.text.TextWindow;
  */
 public class FileMatchCalculator implements PlugIn, MouseListener
 {
-	public class IdTimeValuedPoint extends TimeValuedPoint
+	class IdTimeValuedPoint extends TimeValuedPoint
 	{
-		public int id;
+		int id;
 
-		public IdTimeValuedPoint(int id, TimeValuedPoint p)
+		IdTimeValuedPoint(int id, TimeValuedPoint p)
 		{
 			super(p.getX(), p.getY(), p.getZ(), p.time, p.value);
 			this.id = id;
@@ -152,7 +152,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		compareCoordinates(actualPoints, predictedPoints, d);
 	}
 
-	private TimeValuedPoint[] filter(TimeValuedPoint[] points, ImageProcessor processor)
+	private static TimeValuedPoint[] filter(TimeValuedPoint[] points, ImageProcessor processor)
 	{
 		int ok = 0;
 		for (int i = 0; i < points.length; i++)
@@ -162,11 +162,14 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	}
 
 	/**
-	 * Adds an ROI point overlay to the image using the specified colour
+	 * Adds an ROI point overlay to the image using the specified colour.
 	 *
 	 * @param imp
+	 *            the imp
 	 * @param list
+	 *            the list
 	 * @param color
+	 *            the color
 	 */
 	public static void addOverlay(ImagePlus imp, List<? extends Coordinate> list, Color color)
 	{
@@ -260,7 +263,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		return true;
 	}
 
-	public static ArrayList<String> buildMaskList()
+	private static ArrayList<String> buildMaskList()
 	{
 		final ArrayList<String> newImageList = new ArrayList<>();
 
@@ -375,7 +378,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	 * @param points
 	 * @return
 	 */
-	private boolean is3D(TimeValuedPoint[] points)
+	private static boolean is3D(TimeValuedPoint[] points)
 	{
 		if (points.length == 0)
 			return false;
@@ -392,7 +395,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	 * @param points
 	 * @return
 	 */
-	private boolean isValued(TimeValuedPoint[] points)
+	private static boolean isValued(TimeValuedPoint[] points)
 	{
 		if (points.length == 0)
 			return false;
@@ -402,7 +405,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		return false;
 	}
 
-	private int[] getTimepoints(TimeValuedPoint[] points, TimeValuedPoint[] points2)
+	private static int[] getTimepoints(TimeValuedPoint[] points, TimeValuedPoint[] points2)
 	{
 		final TIntHashSet set = new TIntHashSet();
 		for (final TimeValuedPoint p : points)
@@ -426,7 +429,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		return coords.toArray(new Coordinate[coords.size()]);
 	}
 
-	private String createResultsHeader()
+	private static String createResultsHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Image 1\t");
@@ -447,7 +450,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		return sb.toString();
 	}
 
-	private void addResult(String i1, String i2, double dThrehsold, MatchResult result)
+	private static void addResult(String i1, String i2, double dThrehsold, MatchResult result)
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append(i1).append('\t');
@@ -550,6 +553,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		}
 	}
 
+	@SuppressWarnings("resource")
 	private void savePairs(List<PointPair> pairs, boolean is3D)
 	{
 		boolean fileSelected = false;
@@ -637,7 +641,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		}
 	}
 
-	private String getFilename(String title, String filename)
+	private static String getFilename(String title, String filename)
 	{
 		final String[] path = Utils.decodePath(filename);
 		final OpenDialog chooser = new OpenDialog(title, path[0], path[1]);
@@ -670,7 +674,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		}
 	}
 
-	private String[] decodePath(String path)
+	private static String[] decodePath(String path)
 	{
 		final String[] result = new String[2];
 		int i = path.lastIndexOf('/');
@@ -882,7 +886,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		imp.show();
 	}
 
-	private ImageProcessor convert(ImageProcessor processor, int depth)
+	private static ImageProcessor convert(ImageProcessor processor, int depth)
 	{
 		if (depth == 8)
 			return processor.convertToByte(true);
@@ -891,7 +895,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 		return processor.convertToFloat();
 	}
 
-	private void add(Overlay overlay, float[] x, float[] y, int[] z, int n, Color color, int frame)
+	private static void add(Overlay overlay, float[] x, float[] y, int[] z, int n, Color color, int frame)
 	{
 		if (n != 0)
 			// Option to position the ROI points on the z-slice.
@@ -952,7 +956,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 				add(overlay, new PointRoi(x, y, n), 0, frame, color);
 	}
 
-	private void add(Overlay overlay, PointRoi roi, int slice, int frame, Color color)
+	private static void add(Overlay overlay, PointRoi roi, int slice, int frame, Color color)
 	{
 		// Tie position to the frame but not the channel or slice
 		//System.out.printf("Add %d to z=%d,t=%d\n", roi.getNCoordinates(), slice, frame);

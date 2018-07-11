@@ -45,12 +45,19 @@ import ij.process.ShortProcessor;
  */
 public class ZProjectorCopy implements PlugIn
 {
+	/** Use Average projection. */
 	public static final int AVG_METHOD = 0;
+	/** Use Max projection. */
 	public static final int MAX_METHOD = 1;
+	/** Use Min projection. */
 	public static final int MIN_METHOD = 2;
+	/** Use Sum projection. */
 	public static final int SUM_METHOD = 3;
+	/** Use Standard Deviation projection. */
 	public static final int SD_METHOD = 4;
+	/** Use Median projection. */
 	public static final int MEDIAN_METHOD = 5;
+	/** The available projection methods. */
 	public static final String[] METHODS = { "Average Intensity", "Max Intensity", "Min Intensity", "Sum Slices",
 			"Standard Deviation", "Median" };
 	private static final String METHOD_KEY = "zproject.method";
@@ -60,7 +67,7 @@ public class ZProjectorCopy implements PlugIn
 	protected static final int SHORT_TYPE = 1;
 	protected static final int FLOAT_TYPE = 2;
 
-	public static final String lutMessage = "Stacks with inverter LUTs may not project correctly.\n" +
+	private static final String lutMessage = "Stacks with inverter LUTs may not project correctly.\n" +
 			"To create a standard LUT, invert the stack (Edit/Invert)\n" +
 			"and invert the LUT (Image/Lookup Tables/Invert LUT).";
 
@@ -82,11 +89,19 @@ public class ZProjectorCopy implements PlugIn
 	protected int increment = 1;
 	protected int sliceCount;
 
+	/**
+	 * Construction of ZProjector
+	 */
 	public ZProjectorCopy()
 	{
 	}
 
-	/** Construction of ZProjector with image to be projected. */
+	/**
+	 * Construction of ZProjector with image to be projected.
+	 *
+	 * @param imp
+	 *            the imp
+	 */
 	public ZProjectorCopy(ImagePlus imp)
 	{
 		setImage(imp);
@@ -96,6 +111,9 @@ public class ZProjectorCopy implements PlugIn
 	 * Explicitly set image to be projected. This is useful if
 	 * ZProjection_ object is to be used not as a plugin but as a
 	 * stand alone processing object.
+	 *
+	 * @param imp
+	 *            the new image
 	 */
 	public void setImage(ImagePlus imp)
 	{
@@ -104,6 +122,12 @@ public class ZProjectorCopy implements PlugIn
 		stopSlice = imp.getStackSize();
 	}
 
+	/**
+	 * Sets the start slice.
+	 *
+	 * @param slice
+	 *            the new start slice
+	 */
 	public void setStartSlice(int slice)
 	{
 		if (imp == null || slice < 1 || slice > imp.getStackSize())
@@ -111,6 +135,12 @@ public class ZProjectorCopy implements PlugIn
 		startSlice = slice;
 	}
 
+	/**
+	 * Sets the stop slice.
+	 *
+	 * @param slice
+	 *            the new stop slice
+	 */
 	public void setStopSlice(int slice)
 	{
 		if (imp == null || slice < 1 || slice > imp.getStackSize())
@@ -118,12 +148,22 @@ public class ZProjectorCopy implements PlugIn
 		stopSlice = slice;
 	}
 
+	/**
+	 * Sets the method.
+	 *
+	 * @param projMethod
+	 *            the new method
+	 */
 	public void setMethod(int projMethod)
 	{
 		method = projMethod;
 	}
 
-	/** Retrieve results of most recent projection operation. */
+	/**
+	 * Retrieve results of most recent projection operation.
+	 *
+	 * @return the projection
+	 */
 	public ImagePlus getProjection()
 	{
 		return projImage;
@@ -210,6 +250,9 @@ public class ZProjectorCopy implements PlugIn
 		return;
 	}
 
+	/**
+	 * Do RGB projection.
+	 */
 	public void doRGBProjection()
 	{
 		doRGBProjection(imp.getStack());
@@ -260,7 +303,8 @@ public class ZProjectorCopy implements PlugIn
 			blue2.setProcessor(b.convertToByte(false));
 		}
 		final RGBStackMerge merge = new RGBStackMerge();
-		final ImageStack stack2 = merge.mergeStacks(w, h, d, red2.getStack(), green2.getStack(), blue2.getStack(), true);
+		final ImageStack stack2 = merge.mergeStacks(w, h, d, red2.getStack(), green2.getStack(), blue2.getStack(),
+				true);
 		imp = saveImp;
 		projImage = new ImagePlus(makeTitle(), stack2);
 	}
@@ -355,6 +399,12 @@ public class ZProjectorCopy implements PlugIn
 			IJ.error("Z Project", "Error computing projection.");
 	}
 
+	/**
+	 * Do hyper stack projection.
+	 *
+	 * @param allTimeFrames
+	 *            the all time frames flag
+	 */
 	public void doHyperStackProjection(boolean allTimeFrames)
 	{
 		final int start = startSlice;
@@ -476,7 +526,7 @@ public class ZProjectorCopy implements PlugIn
 	 * ImageProcessor getPixelValue() and putPixel() methods because
 	 * direct manipulation of pixel arrays is much more efficient.
 	 */
-	private void projectSlice(Object pixelArray, RayFunction rayFunc, int ptype)
+	private static void projectSlice(Object pixelArray, RayFunction rayFunc, int ptype)
 	{
 		switch (ptype)
 		{
@@ -564,18 +614,17 @@ public class ZProjectorCopy implements PlugIn
 	 */
 	abstract class RayFunction
 	{
-		/** Do actual slice projection for specific data types. */
-		public abstract void projectSlice(byte[] pixels);
+		abstract void projectSlice(byte[] pixels);
 
-		public abstract void projectSlice(short[] pixels);
+		abstract void projectSlice(short[] pixels);
 
-		public abstract void projectSlice(float[] pixels);
+		abstract void projectSlice(float[] pixels);
 
 		/**
 		 * Perform any necessary post processing operations, e.g.
 		 * averging values.
 		 */
-		public void postProcess()
+		void postProcess()
 		{
 		}
 
@@ -592,7 +641,7 @@ public class ZProjectorCopy implements PlugIn
 		 * projected. This is used to determine average at each
 		 * pixel.
 		 */
-		public AverageIntensity(FloatProcessor fp, int num)
+		AverageIntensity(FloatProcessor fp, int num)
 		{
 			fpixels = (float[]) fp.getPixels();
 			len = fpixels.length;
@@ -600,28 +649,28 @@ public class ZProjectorCopy implements PlugIn
 		}
 
 		@Override
-		public void projectSlice(byte[] pixels)
+		void projectSlice(byte[] pixels)
 		{
 			for (int i = 0; i < len; i++)
 				fpixels[i] += (pixels[i] & 0xff);
 		}
 
 		@Override
-		public void projectSlice(short[] pixels)
+		void projectSlice(short[] pixels)
 		{
 			for (int i = 0; i < len; i++)
 				fpixels[i] += pixels[i] & 0xffff;
 		}
 
 		@Override
-		public void projectSlice(float[] pixels)
+		void projectSlice(float[] pixels)
 		{
 			for (int i = 0; i < len; i++)
 				fpixels[i] += pixels[i];
 		}
 
 		@Override
-		public void postProcess()
+		void postProcess()
 		{
 			final float fnum = num;
 			for (int i = 0; i < len; i++)
@@ -637,7 +686,7 @@ public class ZProjectorCopy implements PlugIn
 		private final int len;
 
 		/** Simple constructor since no preprocessing is necessary. */
-		public MaxIntensity(FloatProcessor fp)
+		MaxIntensity(FloatProcessor fp)
 		{
 			fpixels = (float[]) fp.getPixels();
 			len = fpixels.length;
@@ -646,7 +695,7 @@ public class ZProjectorCopy implements PlugIn
 		}
 
 		@Override
-		public void projectSlice(byte[] pixels)
+		void projectSlice(byte[] pixels)
 		{
 			for (int i = 0; i < len; i++)
 				if ((pixels[i] & 0xff) > fpixels[i])
@@ -654,7 +703,7 @@ public class ZProjectorCopy implements PlugIn
 		}
 
 		@Override
-		public void projectSlice(short[] pixels)
+		void projectSlice(short[] pixels)
 		{
 			for (int i = 0; i < len; i++)
 				if ((pixels[i] & 0xffff) > fpixels[i])
@@ -662,7 +711,7 @@ public class ZProjectorCopy implements PlugIn
 		}
 
 		@Override
-		public void projectSlice(float[] pixels)
+		void projectSlice(float[] pixels)
 		{
 			for (int i = 0; i < len; i++)
 				if (pixels[i] > fpixels[i])
@@ -678,7 +727,7 @@ public class ZProjectorCopy implements PlugIn
 		private final int len;
 
 		/** Simple constructor since no preprocessing is necessary. */
-		public MinIntensity(FloatProcessor fp)
+		MinIntensity(FloatProcessor fp)
 		{
 			fpixels = (float[]) fp.getPixels();
 			len = fpixels.length;
@@ -687,7 +736,7 @@ public class ZProjectorCopy implements PlugIn
 		}
 
 		@Override
-		public void projectSlice(byte[] pixels)
+		void projectSlice(byte[] pixels)
 		{
 			for (int i = 0; i < len; i++)
 				if ((pixels[i] & 0xff) < fpixels[i])
@@ -695,7 +744,7 @@ public class ZProjectorCopy implements PlugIn
 		}
 
 		@Override
-		public void projectSlice(short[] pixels)
+		void projectSlice(short[] pixels)
 		{
 			for (int i = 0; i < len; i++)
 				if ((pixels[i] & 0xffff) < fpixels[i])
@@ -703,7 +752,7 @@ public class ZProjectorCopy implements PlugIn
 		}
 
 		@Override
-		public void projectSlice(float[] pixels)
+		void projectSlice(float[] pixels)
 		{
 			for (int i = 0; i < len; i++)
 				if (pixels[i] < fpixels[i])

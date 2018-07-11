@@ -274,7 +274,7 @@ public class FindFociPlugin implements PlugIn
 		showInstance(instance);
 	}
 
-	private void showInstance(FindFociView instance)
+	private static void showInstance(FindFociView instance)
 	{
 		WindowManager.addWindow(instance);
 		instance.setVisible(true);

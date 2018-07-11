@@ -46,17 +46,28 @@ import ij.process.LUT;
 import ij.process.ShortProcessor;
 
 /**
- * Create a mask from an image
+ * Create a mask from an image.
  */
 public class MaskCreater implements PlugIn
 {
 	private static final String TITLE = "Mask Creator";
+	
+	/** The options string. */
 	public static String[] options = new String[] { "Use as mask", "Min Display Value", "Use ROI", "Threshold" };
+	
+	/** The option for using a mask. */
 	public static int OPTION_MASK = 0;
+	
+	/** The option for using the min display value. */
 	public static int OPTION_MIN_VALUE = 1;
+	
+	/** The option for using the ROI. */
 	public static int OPTION_USE_ROI = 2;
+	
+	/** The option to perform thresholding. */
 	public static int OPTION_THRESHOLD = 3;
 
+	/** The methods. */
 	public static String[] methods;
 	static
 	{
@@ -172,16 +183,33 @@ public class MaskCreater implements PlugIn
 		return true;
 	}
 
+	/**
+	 * Instantiates a new mask creater.
+	 */
 	public MaskCreater()
 	{
 		init(null, OPTION_MASK);
 	}
 
+	/**
+	 * Instantiates a new mask creater.
+	 *
+	 * @param imp
+	 *            the imp
+	 */
 	public MaskCreater(ImagePlus imp)
 	{
 		init(imp, OPTION_MASK);
 	}
 
+	/**
+	 * Instantiates a new mask creater.
+	 *
+	 * @param imp
+	 *            the imp
+	 * @param option
+	 *            the option
+	 */
 	public MaskCreater(ImagePlus imp, int option)
 	{
 		init(imp, option);
@@ -414,7 +442,7 @@ public class MaskCreater implements PlugIn
 		return maskImp;
 	}
 
-	private int getDisplayRangeMin(ImagePlus imp, int channel)
+	private static int getDisplayRangeMin(ImagePlus imp, int channel)
 	{
 		// Composite images can have a display range for each color channel
 		final LUT[] luts = imp.getLuts();
@@ -542,7 +570,7 @@ public class MaskCreater implements PlugIn
 		return thresholds;
 	}
 
-	private int getThreshold(String autoThresholdMethod, int[] statsHistogram)
+	private static int getThreshold(String autoThresholdMethod, int[] statsHistogram)
 	{
 		if (autoThresholdMethod.endsWith("evel"))
 		{
@@ -555,7 +583,7 @@ public class MaskCreater implements PlugIn
 		return AutoThreshold.getThreshold(autoThresholdMethod, statsHistogram);
 	}
 
-	private short[] convertToShort(ImageProcessor ip, float min, float max)
+	private static short[] convertToShort(ImageProcessor ip, float min, float max)
 	{
 		final float[] pixels32 = (float[]) ip.getPixels();
 		final short[] pixels16 = new short[pixels32.length];
@@ -572,7 +600,7 @@ public class MaskCreater implements PlugIn
 		return pixels16;
 	}
 
-	private float getScale(float min, float max)
+	private static float getScale(float min, float max)
 	{
 		if ((max - min) == 0.0)
 			return 1.0f;
@@ -580,7 +608,7 @@ public class MaskCreater implements PlugIn
 			return 65535.0f / (max - min);
 	}
 
-	private int[] createArray(int total, int selected)
+	private static int[] createArray(int total, int selected)
 	{
 		if (selected > 0 && selected <= total)
 			return new int[] { selected };
@@ -591,6 +619,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Sets the imp.
+	 *
 	 * @param imp
 	 *            the source image for the mask generation
 	 */
@@ -600,6 +630,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Gets the imp.
+	 *
 	 * @return the source image for the mask generation
 	 */
 	public ImagePlus getImp()
@@ -608,6 +640,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Sets the option.
+	 *
 	 * @param option
 	 *            the option for defining the mask
 	 */
@@ -617,6 +651,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Gets the option.
+	 *
 	 * @return the option for defining the mask
 	 */
 	public int getOption()
@@ -625,6 +661,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Sets the threshold method.
+	 *
 	 * @param thresholdMethod
 	 *            the thresholdMethod to set
 	 */
@@ -634,6 +672,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Gets the threshold method.
+	 *
 	 * @return the thresholdMethod
 	 */
 	public String getThresholdMethod()
@@ -642,6 +682,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Sets the channel.
+	 *
 	 * @param channel
 	 *            the channel to set
 	 */
@@ -651,6 +693,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Gets the channel.
+	 *
 	 * @return the channel
 	 */
 	public int getChannel()
@@ -659,6 +703,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Sets the frame.
+	 *
 	 * @param frame
 	 *            the frame to set
 	 */
@@ -668,6 +714,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Gets the frame.
+	 *
 	 * @return the frame
 	 */
 	public int getFrame()
@@ -676,6 +724,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Sets the slice.
+	 *
 	 * @param slice
 	 *            the slice to set
 	 */
@@ -685,6 +735,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Gets the slice.
+	 *
 	 * @return the slice
 	 */
 	public int getSlice()
@@ -693,6 +745,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Checks if is removes the edge particles.
+	 *
 	 * @return the removeEdgeParticles
 	 */
 	public boolean isRemoveEdgeParticles()
@@ -701,6 +755,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Sets the removes the edge particles.
+	 *
 	 * @param removeEdgeParticles
 	 *            the removeEdgeParticles to set
 	 */
@@ -710,6 +766,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Gets the min particle size.
+	 *
 	 * @return the minParticleSize
 	 */
 	public int getMinParticleSize()
@@ -718,6 +776,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Sets the min particle size.
+	 *
 	 * @param minParticleSize
 	 *            the minParticleSize to set
 	 */
@@ -727,6 +787,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Checks if is stack histogram.
+	 *
 	 * @return the stackHistogram
 	 */
 	public boolean isStackHistogram()
@@ -777,6 +839,8 @@ public class MaskCreater implements PlugIn
 	}
 
 	/**
+	 * Sets the stack histogram.
+	 *
 	 * @param stackHistogram
 	 *            the stackHistogram to set
 	 */

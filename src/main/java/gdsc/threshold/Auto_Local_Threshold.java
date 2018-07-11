@@ -46,6 +46,11 @@ import ij.process.ImageProcessor;
 // 1.1  01/Jun/2009
 // 1.2  25/May/2010
 
+/**
+ * AutoLocalThreshold segmentation plugin.
+ * <p>
+ * Adapted from the ImageJ plugin by G. Landini at bham. ac. uk.
+ */
 public class Auto_Local_Threshold implements PlugIn
 {
 	private static final String TITLE = "Auto Local Threshold";
@@ -179,7 +184,7 @@ public class Auto_Local_Threshold implements PlugIn
 		}
 		else if (stackSize > 1 && doIstack)
 		{ //whole stack
-			  //				if (doIstackHistogram) {// one global histogram
+		  //				if (doIstackHistogram) {// one global histogram
 		  //					Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram );
 		  //				}
 		  //				else{ // slice by slice
@@ -191,19 +196,31 @@ public class Auto_Local_Threshold implements PlugIn
 			//				}
 			imp.setSlice(1);
 		}
-		else exec(imp, myMethod, radius, par1, par2, doIwhite);
+		else
+			exec(imp, myMethod, radius, par1, par2, doIwhite);
 	}
 	//IJ.showStatus(IJ.d2s((System.currentTimeMillis()-start)/1000.0, 2)+" seconds");
 
 	/**
 	 * Execute the plugin functionality: duplicate and scale the given image.
 	 *
+	 * @param imp
+	 *            the imp
+	 * @param myMethod
+	 *            the threshold method
+	 * @param radius
+	 *            the radius
+	 * @param par1
+	 *            the parameter 1
+	 * @param par2
+	 *            the parameter 2
+	 * @param doIwhite
+	 *            flag to set the foreground as white
 	 * @return an Object[] array with the name and the scaled ImagePlus.
 	 *         Does NOT show the new, image; just returns it.
 	 */
 	public Object[] exec(ImagePlus imp, String myMethod, int radius, double par1, double par2, boolean doIwhite)
 	{
-
 		// 0 - Check validity of parameters
 		if (null == imp)
 			return null;
@@ -221,15 +238,15 @@ public class Auto_Local_Threshold implements PlugIn
 		}
 		// Apply the selected algorithm
 		if (myMethod.equals("Bernsen"))
-			Bernsen(imp, radius, par1, par2, doIwhite);
+			Bernsen(imp, radius, par1, doIwhite);
 		else if (myMethod.equals("Mean"))
-			Mean(imp, radius, par1, par2, doIwhite);
+			Mean(imp, radius, par1, doIwhite);
 		else if (myMethod.equals("Median"))
-			Median(imp, radius, par1, par2, doIwhite);
+			Median(imp, radius, par1, doIwhite);
 		else if (myMethod.equals("MidGrey"))
-			MidGrey(imp, radius, par1, par2, doIwhite);
+			MidGrey(imp, radius, par1, doIwhite);
 		else if (myMethod.equals("Niblack"))
-			Niblack(imp, radius, par1, par2, doIwhite);
+			Niblack(imp, radius, par1, doIwhite);
 		else if (myMethod.equals("Sauvola"))
 			Sauvola(imp, radius, par1, par2, doIwhite);
 		//IJ.showProgress((double)(255-i)/255);
@@ -239,7 +256,7 @@ public class Auto_Local_Threshold implements PlugIn
 		return new Object[] { imp };
 	}
 
-	void Bernsen(ImagePlus imp, int radius, double par1, double par2, boolean doIwhite)
+	void Bernsen(ImagePlus imp, int radius, double par1, boolean doIwhite)
 	{
 		// Bernsen recommends WIN_SIZE = 31 and CONTRAST_THRESHOLD = 15.
 		//  1) Bernsen J. (1986) "Dynamic Thresholding of Grey-Level Images"
@@ -304,7 +321,7 @@ public class Auto_Local_Threshold implements PlugIn
 		return;
 	}
 
-	void Mean(ImagePlus imp, int radius, double par1, double par2, boolean doIwhite)
+	void Mean(ImagePlus imp, int radius, double par1, boolean doIwhite)
 	{
 		// See: Image Processing Learning Resourches HIPR2
 		// http://homepages.inf.ed.ac.uk/rbf/HIPR2/adpthrsh.htm
@@ -349,7 +366,7 @@ public class Auto_Local_Threshold implements PlugIn
 		return;
 	}
 
-	void Median(ImagePlus imp, int radius, double par1, double par2, boolean doIwhite)
+	void Median(ImagePlus imp, int radius, double par1, boolean doIwhite)
 	{
 		// See: Image Processing Learning Resourches HIPR2
 		// http://homepages.inf.ed.ac.uk/rbf/HIPR2/adpthrsh.htm
@@ -391,7 +408,7 @@ public class Auto_Local_Threshold implements PlugIn
 		return;
 	}
 
-	void MidGrey(ImagePlus imp, int radius, double par1, double par2, boolean doIwhite)
+	void MidGrey(ImagePlus imp, int radius, double par1, boolean doIwhite)
 	{
 		// See: Image Processing Learning Resourches HIPR2
 		// http://homepages.inf.ed.ac.uk/rbf/HIPR2/adpthrsh.htm
@@ -438,7 +455,7 @@ public class Auto_Local_Threshold implements PlugIn
 		return;
 	}
 
-	void Niblack(ImagePlus imp, int radius, double par1, double par2, boolean doIwhite)
+	void Niblack(ImagePlus imp, int radius, double par1, boolean doIwhite)
 	{
 		// Niblack recommends K_VALUE = -0.2 for images with black foreground
 		// objects, and K_VALUE = +0.2 for images with white foreground objects.
@@ -557,12 +574,13 @@ public class Auto_Local_Threshold implements PlugIn
 
 		for (int i = 0; i < pixels.length; i++)
 			pixels[i] = ((pixels[i] & 0xff) > (int) (mean[i] * (1.0 + k_value * ((Math.sqrt(var[i]) / r_value) - 1.0))))
-					? object : backg;
+					? object
+					: backg;
 		//imp.updateAndDraw();
 		return;
 	}
 
-	private ImagePlus duplicateImage(ImageProcessor iProcessor)
+	private static ImagePlus duplicateImage(ImageProcessor iProcessor)
 	{
 		final int w = iProcessor.getWidth();
 		final int h = iProcessor.getHeight();

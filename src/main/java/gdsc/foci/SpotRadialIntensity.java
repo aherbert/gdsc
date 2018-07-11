@@ -52,7 +52,7 @@ import ij.text.TextWindow;
  */
 public class SpotRadialIntensity implements PlugIn
 {
-	public static String TITLE = "Spot Radial Intensity";
+	private static final String TITLE = "Spot Radial Intensity";
 	private static TextWindow resultsWindow = null;
 
 	private static String resultsName = "";
@@ -212,7 +212,7 @@ public class SpotRadialIntensity implements PlugIn
 	 *            the mask image
 	 * @return the object analyzer
 	 */
-	private ObjectAnalyzer createObjectAnalyzer(String maskImage)
+	private static ObjectAnalyzer createObjectAnalyzer(String maskImage)
 	{
 		final ImagePlus maskImp = WindowManager.getImage(maskImage);
 		if (maskImp == null)
@@ -271,7 +271,7 @@ public class SpotRadialIntensity implements PlugIn
 	 *            the foci
 	 * @return the point roi
 	 */
-	private PointRoi createPointRoi(Foci[] foci)
+	private static PointRoi createPointRoi(Foci[] foci)
 	{
 		final float[] x = new float[foci.length];
 		final float[] y = new float[foci.length];
@@ -458,7 +458,7 @@ public class SpotRadialIntensity implements PlugIn
 		prefix = String.format("%s (C=%d,Z=%d,T=%d)", imp.getTitle(), imp.getChannel(), imp.getSlice(), imp.getFrame());
 	}
 
-	private String createResultsHeader()
+	private static String createResultsHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Image");

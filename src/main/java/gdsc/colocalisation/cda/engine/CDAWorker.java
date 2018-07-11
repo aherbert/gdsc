@@ -52,6 +52,30 @@ public class CDAWorker implements Runnable
 
 	private volatile boolean finished = false;
 
+	/**
+	 * Instantiates a new CDA worker.
+	 *
+	 * @param imageStack1
+	 *            the image stack 1
+	 * @param roiStack1
+	 *            the roi stack 1
+	 * @param imageStack2
+	 *            the image stack 2
+	 * @param roiStack2
+	 *            the roi stack 2
+	 * @param confinedStack
+	 *            the confined stack
+	 * @param denom1
+	 *            the denominator 1 (sum of image stack 1)
+	 * @param denom2
+	 *            the denominator 2 (sum of image stack 2)
+	 * @param results
+	 *            the results
+	 * @param jobs
+	 *            the jobs
+	 * @param totalSteps
+	 *            the total steps
+	 */
 	public CDAWorker(ImageStack imageStack1, ImageStack roiStack1, ImageStack imageStack2, ImageStack roiStack2,
 			ImageStack confinedStack, double denom1, double denom2, List<CalculationResult> results,
 			BlockingQueue<CDAJob> jobs, int totalSteps)
@@ -72,6 +96,13 @@ public class CDAWorker implements Runnable
 
 	/**
 	 * Perform the CDA shift and calculate the results
+	 * 
+	 * @param n
+	 *            the job number
+	 * @param x
+	 *            the x shift
+	 * @param y
+	 *            the y shift
 	 */
 	public void run(int n, int x, int y)
 	{

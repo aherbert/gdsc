@@ -61,31 +61,59 @@ public class DisplayStatistics
 	private NumberFormat formatter;
 	private PlotWindow plotWindow;
 
+	/**
+	 * Gets the value.
+	 *
+	 * @return the value
+	 */
 	public double getValue()
 	{
 		return d0Value;
 	}
 
+	/**
+	 * Gets the average.
+	 *
+	 * @return the average
+	 */
 	public double getAverage()
 	{
 		return statistics.mean;
 	}
 
+	/**
+	 * Gets the std dev.
+	 *
+	 * @return the std dev
+	 */
 	public double getStdDev()
 	{
 		return statistics.stdDev;
 	}
 
+	/**
+	 * Gets the lower limit.
+	 *
+	 * @return the lower limit
+	 */
 	public double getLowerLimit()
 	{
 		return plotResults.getProbabilityLimits()[0];
 	}
 
+	/**
+	 * Gets the upper limit.
+	 *
+	 * @return the upper limit
+	 */
 	public double getUpperLimit()
 	{
 		return plotResults.getProbabilityLimits()[1];
 	}
 
+	/**
+	 * Close the plot.
+	 */
 	public void close()
 	{
 		if (plotWindow != null && plotWindow.isShowing())
@@ -95,12 +123,30 @@ public class DisplayStatistics
 		}
 	}
 
+	/**
+	 * Instantiates a new display statistics.
+	 *
+	 * @param title
+	 *            the title
+	 * @param prefix
+	 *            the prefix
+	 */
 	public DisplayStatistics(String title, String prefix)
 	{
 		this.title = title;
 		this.prefix = prefix;
 	}
 
+	/**
+	 * Sets the data.
+	 *
+	 * @param histogram
+	 *            the histogram
+	 * @param statistics
+	 *            the statistics
+	 * @param d0Value
+	 *            the d 0 value
+	 */
 	public void setData(PlotResults histogram, ImageStatistics statistics, double d0Value)
 	{
 		this.statistics = statistics;
@@ -108,6 +154,9 @@ public class DisplayStatistics
 		this.d0Value = d0Value;
 	}
 
+	/**
+	 * Draw the plot.
+	 */
 	public void draw()
 	{
 		if (statistics == null || plotResults == null || createFrame())
@@ -168,12 +217,19 @@ public class DisplayStatistics
 		significanceLabel.setText(prefix.concat(plotResults.getSignificanceTest()));
 	}
 
+	/**
+	 * Gets the plot results.
+	 *
+	 * @return the plot results
+	 */
 	public PlotResults getPlotResults()
 	{
 		return plotResults;
 	}
 
 	/**
+	 * Gets the plot window.
+	 *
 	 * @return the plotWindow
 	 */
 	public PlotWindow getPlotWindow()

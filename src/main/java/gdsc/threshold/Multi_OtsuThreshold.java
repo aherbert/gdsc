@@ -59,11 +59,19 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	private static boolean s_ShowMasks = false;
 	private static boolean s_LogMessages = true;
 
-	// Instance variables to control plugin. Allow use of plugin from other code without GUI.
+	/** Set to true to ignore zero. Allow use of plugin from other code. */
 	public boolean ignoreZero = false;
+	
+	/** Set to true to show histogram. Allow use of plugin from other code. */
 	public boolean showHistogram = false;
+	
+	/** Set to true to show regions. Allow use of plugin from other code. */
 	public boolean showRegions = false;
+	
+	/** Set to true to show masks. Allow use of plugin from other code. */
 	public boolean showMasks = false;
+	
+	/** Set to true to log messages. Allow use of plugin from other code. */
 	public boolean logMessages = false;
 
 	/*
@@ -404,7 +412,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 		return S;
 	}
 
-	private float[][] initialise(float[][] P, int NGRAY)
+	private static float[][] initialise(float[][] P, int NGRAY)
 	{
 		if (P == null || P.length < NGRAY)
 			P = new float[NGRAY][NGRAY];
@@ -568,15 +576,15 @@ public class Multi_OtsuThreshold implements PlugInFilter
 	 * @param threshold
 	 *            output from {@link #findMaxSigma(int, float[][], int[])}
 	 * @param offset
-	 *            output from {@link #buildHistogram(ImageProcessor, int[])}
+	 *            output from {@link #buildHistogram(ImagePlus, int[])}
 	 */
-	public void applyOffset(int[] threshold, int[] offset)
+	private static void applyOffset(int[] threshold, int[] offset)
 	{
 		for (int i = 0; i < threshold.length; ++i)
 			threshold[i] += offset[0];
 	}
 
-	private void showThresholds(int MLEVEL, float[] maxSig, int[] threshold)
+	private static void showThresholds(int MLEVEL, float[] maxSig, int[] threshold)
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Otsu thresholds: ");
@@ -586,7 +594,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
 		IJ.log(sb.toString());
 	}
 
-	private void showHistogram(float[] h, int[] thresholds, int minbin, String title)
+	private static void showHistogram(float[] h, int[] thresholds, int minbin, String title)
 	{
 		final int NGRAY = h.length;
 

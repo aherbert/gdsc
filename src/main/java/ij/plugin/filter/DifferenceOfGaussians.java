@@ -88,6 +88,9 @@ public class DifferenceOfGaussians extends GaussianBlur
 	private double percentInternal = 0;
 	long lastTime = 0;
 
+	/**
+	 * Set to true to suppress progress reporting to the ImageJ window
+	 */
 	public boolean noProgress = false;
 
 	/**
@@ -357,8 +360,11 @@ public class DifferenceOfGaussians extends GaussianBlur
 	 * sigma2.
 	 *
 	 * @param ip
+	 *            the ip
 	 * @param sigma1
+	 *            the sigma 1
 	 * @param sigma2
+	 *            the sigma 2
 	 */
 	public static void run(ImageProcessor ip, double sigma1, double sigma2)
 	{
@@ -369,17 +375,20 @@ public class DifferenceOfGaussians extends GaussianBlur
 		filter.showProgress(false);
 		filter.blurGaussian(ip1, sigma1);
 		filter.blurGaussian(ip2, sigma2);
-		filter.differenceOfGaussians(ip, ip1, ip2);
+		differenceOfGaussians(ip, ip1, ip2);
 	}
 
 	/**
-	 * Subtract one image from the other (ip2 - ip1) and store in the result processor
+	 * Subtract one image from the other (ip2 - ip1) and store in the result processor.
 	 *
 	 * @param resultIp
+	 *            the result ip
 	 * @param ip1
+	 *            the ip 1
 	 * @param ip2
+	 *            the ip 2
 	 */
-	private void differenceOfGaussians(ImageProcessor resultIp, ImageProcessor ip1, ImageProcessor ip2)
+	private static void differenceOfGaussians(ImageProcessor resultIp, ImageProcessor ip1, ImageProcessor ip2)
 	{
 		FloatProcessor fp1 = null;
 		FloatProcessor fp2 = null;
@@ -423,9 +432,10 @@ public class DifferenceOfGaussians extends GaussianBlur
 	}
 
 	/**
-	 * Perform a Gaussian blur on the image processor
+	 * Perform a Gaussian blur on the image processor.
 	 *
 	 * @param ip
+	 *            the ip
 	 * @param sigma
 	 *            The Gaussian width
 	 */

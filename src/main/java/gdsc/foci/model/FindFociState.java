@@ -24,9 +24,28 @@
 package gdsc.foci.model;
 
 /**
- * Defines the different processing states for the FindFoci algorithm
+ * Defines the different processing states for the FindFoci algorithm.
  */
 public enum FindFociState
 {
-	INITIAL, FIND_MAXIMA, SEARCH, MERGE_HEIGHT, MERGE_SIZE, MERGE_SADDLE, CALCULATE_RESULTS, CALCULATE_OUTPUT_MASK, SHOW_RESULTS, COMPLETE
+	/** The initial state. */
+	INITIAL,
+	/** The find maxima state. */
+	FIND_MAXIMA,
+	/** The search state. */
+	SEARCH,
+	/** The merge height state. */
+	MERGE_HEIGHT,
+	/** The merge size state. */
+	MERGE_SIZE,
+	/** The merge saddle state. */
+	MERGE_SADDLE,
+	/** The calculate results state. */
+	CALCULATE_RESULTS,
+	/** The calculate output mask state. */
+	CALCULATE_OUTPUT_MASK,
+	/** The show results state. */
+	SHOW_RESULTS,
+	/** The complete state. */
+	COMPLETE
 }

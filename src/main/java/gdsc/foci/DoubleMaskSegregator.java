@@ -214,7 +214,7 @@ public class DoubleMaskSegregator implements PlugIn
 			MaskSegregator.addOutline(imp);
 	}
 
-	private int[] getPixels(ImageProcessor ip)
+	private static int[] getPixels(ImageProcessor ip)
 	{
 		final int[] pixels = new int[ip.getPixelCount()];
 		for (int i = 0; i < pixels.length; i++)
@@ -222,7 +222,7 @@ public class DoubleMaskSegregator implements PlugIn
 		return pixels;
 	}
 
-	private ArrayList<int[]> findBlocks(int[] image)
+	private static ArrayList<int[]> findBlocks(int[] image)
 	{
 		// Find unique values
 		int max = 0;
@@ -256,7 +256,7 @@ public class DoubleMaskSegregator implements PlugIn
 		return blocks;
 	}
 
-	private int[] createMap(ArrayList<int[]> blocks)
+	private static int[] createMap(ArrayList<int[]> blocks)
 	{
 		final int max = blocks.get(blocks.size() - 1)[1];
 		final int[] map = new int[max + 1];
@@ -269,7 +269,7 @@ public class DoubleMaskSegregator implements PlugIn
 		return map;
 	}
 
-	private int[] createOffset(ArrayList<int[]> blocks)
+	private static int[] createOffset(ArrayList<int[]> blocks)
 	{
 		final int[] offset = new int[blocks.size()];
 		for (int b = 0; b < blocks.size(); b++)
@@ -282,7 +282,7 @@ public class DoubleMaskSegregator implements PlugIn
 	 *
 	 * @return
 	 */
-	private LUT createLUT()
+	private static LUT createLUT()
 	{
 		final byte[] reds = new byte[256];
 		final byte[] greens = new byte[256];
@@ -301,14 +301,14 @@ public class DoubleMaskSegregator implements PlugIn
 	 * @param blues
 	 * @return
 	 */
-	private int ice(byte[] reds, byte[] greens, byte[] blues)
+	private static int ice(byte[] reds, byte[] greens, byte[] blues)
 	{
-		final int[] r = { 0, 0, 0, 0, 0, 0, 19, 29, 50, 48, 79, 112, 134, 158, 186, 201, 217, 229, 242, 250, 250, 250, 250,
-				251, 250, 250, 250, 250, 251, 251, 243, 230 };
-		final int[] g = { 156, 165, 176, 184, 190, 196, 193, 184, 171, 162, 146, 125, 107, 93, 81, 87, 92, 97, 95, 93, 93, 90,
-				85, 69, 64, 54, 47, 35, 19, 0, 4, 0 };
-		final int[] b = { 140, 147, 158, 166, 170, 176, 209, 220, 234, 225, 236, 246, 250, 251, 250, 250, 245, 230, 230, 222,
-				202, 180, 163, 142, 123, 114, 106, 94, 84, 64, 26, 27 };
+		final int[] r = { 0, 0, 0, 0, 0, 0, 19, 29, 50, 48, 79, 112, 134, 158, 186, 201, 217, 229, 242, 250, 250, 250,
+				250, 251, 250, 250, 250, 250, 251, 251, 243, 230 };
+		final int[] g = { 156, 165, 176, 184, 190, 196, 193, 184, 171, 162, 146, 125, 107, 93, 81, 87, 92, 97, 95, 93,
+				93, 90, 85, 69, 64, 54, 47, 35, 19, 0, 4, 0 };
+		final int[] b = { 140, 147, 158, 166, 170, 176, 209, 220, 234, 225, 236, 246, 250, 251, 250, 250, 245, 230, 230,
+				222, 202, 180, 163, 142, 123, 114, 106, 94, 84, 64, 26, 27 };
 		for (int i = 0; i < r.length; i++)
 		{
 			reds[i] = (byte) r[i];
@@ -327,7 +327,7 @@ public class DoubleMaskSegregator implements PlugIn
 	 * @param blues
 	 * @param nColors
 	 */
-	private void interpolateWithZero(byte[] reds, byte[] greens, byte[] blues, int nColors)
+	private static void interpolateWithZero(byte[] reds, byte[] greens, byte[] blues, int nColors)
 	{
 		final byte[] r = new byte[nColors];
 		final byte[] g = new byte[nColors];

@@ -38,11 +38,37 @@ public class ObjectAnalyzer3D
 	private int maxObject;
 	private int minObjectSize = 0;
 
+	/**
+	 * Instantiates a new object analyzer 3D.
+	 *
+	 * @param image
+	 *            the image
+	 * @param maxx
+	 *            the maxx
+	 * @param maxy
+	 *            the maxy
+	 * @param maxz
+	 *            the maxz
+	 */
 	public ObjectAnalyzer3D(int[] image, int maxx, int maxy, int maxz)
 	{
 		this(image, maxx, maxy, maxz, false);
 	}
 
+	/**
+	 * Instantiates a new object analyzer 3D.
+	 *
+	 * @param image
+	 *            the image
+	 * @param maxx
+	 *            the maxx
+	 * @param maxy
+	 *            the maxy
+	 * @param maxz
+	 *            the maxz
+	 * @param eightConnected
+	 *            the eight connected flag
+	 */
 	public ObjectAnalyzer3D(int[] image, int maxx, int maxy, int maxz, boolean eightConnected)
 	{
 		this.maskImage = image;

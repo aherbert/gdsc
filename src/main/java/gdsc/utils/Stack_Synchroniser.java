@@ -246,6 +246,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 		helpButton = new JButton("Help");
 		helpButton.addMouseListener(new MouseAdapter()
 		{
+			@SuppressWarnings("unused")
 			@Override
 			public void mouseClicked(MouseEvent e)
 			{
@@ -290,7 +291,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 		mainPanel.setLayout(mainGrid);
 	}
 
-	private Panel createChoicePanel(Choice list, String[] options, String selected, String label)
+	private static Panel createChoicePanel(Choice list, String[] options, String selected, String label)
 	{
 		final Panel panel = new Panel();
 		panel.setLayout(new BorderLayout());
@@ -313,7 +314,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 		return panel;
 	}
 
-	private Panel createLabelPanel(String label)
+	private static Panel createLabelPanel(String label)
 	{
 		final Panel panel = new Panel();
 		panel.setLayout(new BorderLayout());
@@ -429,7 +430,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 		}
 	}
 
-	private int extractId(String imageTitle)
+	private static int extractId(String imageTitle)
 	{
 		final String[] data = imageTitle.split(" : ");
 		int id = 0;

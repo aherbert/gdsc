@@ -139,9 +139,9 @@ public class PointAlignerPlugin implements PlugIn
 		final int centreMethod = FindFoci.CENTRE_MAX_VALUE_ORIGINAL;
 		final double centreParameter = 0;
 
-		final FindFociResults results = ff.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
-				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
-				options, blur, centreMethod, centreParameter, 1);
+		final FindFociResults results = ff.findMaxima(imp, mask, backgroundMethod, backgroundParameter,
+				autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
+				outputType, sortIndex, options, blur, centreMethod, centreParameter, 1);
 
 		if (results == null)
 		{
@@ -439,7 +439,7 @@ public class PointAlignerPlugin implements PlugIn
 				missed);
 	}
 
-	private double distance2(int x, int y, int z, int x2, int y2, int z2)
+	private static double distance2(int x, int y, int z, int x2, int y2, int z2)
 	{
 		final int dx = x - x2;
 		final int dy = y - y2;
@@ -447,6 +447,14 @@ public class PointAlignerPlugin implements PlugIn
 		return dx * dx + dy * dy + dz * dz;
 	}
 
+	/**
+	 * Sort the points using the value from the image stack for each xyz point position.
+	 *
+	 * @param points
+	 *            the points
+	 * @param impStack
+	 *            the image stack
+	 */
 	public void sortPoints(AssignedPoint[] points, ImageStack impStack)
 	{
 		if (points == null || impStack == null)
@@ -467,7 +475,7 @@ public class PointAlignerPlugin implements PlugIn
 			points[pointId].setId(pointId);
 	}
 
-	private LinkedList<AssignedPoint> findMissedPoints(ArrayList<FindFociResult> resultsArray, int[] assigned,
+	private static LinkedList<AssignedPoint> findMissedPoints(ArrayList<FindFociResult> resultsArray, int[] assigned,
 			float minAssignedHeight)
 	{
 		// List maxima above the minimum height that have not been picked
@@ -494,7 +502,7 @@ public class PointAlignerPlugin implements PlugIn
 		return missed;
 	}
 
-	private LinkedList<Float> findMissedHeights(ArrayList<FindFociResult> resultsArray, int[] assigned, double t)
+	private static LinkedList<Float> findMissedHeights(ArrayList<FindFociResult> resultsArray, int[] assigned, double t)
 	{
 		// List maxima above the minimum height that have not been picked
 		final ImageStack maskStack = getMaskStack();
@@ -521,11 +529,17 @@ public class PointAlignerPlugin implements PlugIn
 	}
 
 	/**
-	 * Analyse the assigned heights and attempt to identify any errornous points
+	 * Analyse the assigned heights and attempt to identify any errornous points.
 	 *
+	 * @param points
+	 *            the points
+	 * @param assigned
+	 *            the assigned
+	 * @param resultsArray
+	 *            the results array
 	 * @return The height below which any point is considered an error
 	 */
-	private float getThresholdHeight(AssignedPoint[] points, int[] assigned, ArrayList<FindFociResult> resultsArray)
+	private static float getThresholdHeight(AssignedPoint[] points, int[] assigned, ArrayList<FindFociResult> resultsArray)
 	{
 		final ArrayList<Float> heights = new ArrayList<>(points.length);
 		for (int maximaId = 0; maximaId < assigned.length; maximaId++)
@@ -621,12 +635,11 @@ public class PointAlignerPlugin implements PlugIn
 		return (float) t;
 	}
 
-	private boolean integerData(ArrayList<Float> heights)
+	private static boolean integerData(ArrayList<Float> heights)
 	{
 		for (final double d : heights)
 			if ((int) d != d)
 				return false;
-
 		return true;
 	}
 
@@ -637,7 +650,7 @@ public class PointAlignerPlugin implements PlugIn
 	 * @param height
 	 * @return The count
 	 */
-	private int countPoints(List<Float> missedHeights, double height)
+	private static int countPoints(List<Float> missedHeights, double height)
 	{
 		int count = missedHeights.size();
 		for (final double h : missedHeights)
@@ -648,7 +661,7 @@ public class PointAlignerPlugin implements PlugIn
 		return count;
 	}
 
-	private int round(double d)
+	private static int round(double d)
 	{
 		return (int) (d + 0.5);
 	}
@@ -657,7 +670,9 @@ public class PointAlignerPlugin implements PlugIn
 	 * Get the quartile boundary for the given fraction, e.g. fraction 0.25 is Q1-Q2 interquartile.
 	 *
 	 * @param heights
+	 *            the heights
 	 * @param fraction
+	 *            the fraction
 	 * @return The boundary
 	 */
 	public static float getQuartileBoundary(ArrayList<Float> heights, double fraction)
@@ -676,7 +691,7 @@ public class PointAlignerPlugin implements PlugIn
 		return (float) ((heights.get(upper) + heights.get(lower)) / 2.0);
 	}
 
-	private double[] getStatistics(ArrayList<Float> heights)
+	private static double[] getStatistics(ArrayList<Float> heights)
 	{
 		double sum = 0.0;
 		double sum2 = 0.0;
@@ -705,7 +720,7 @@ public class PointAlignerPlugin implements PlugIn
 		return new double[] { av, stdDev };
 	}
 
-	private ImageStack getMaskStack()
+	private static ImageStack getMaskStack()
 	{
 		final ImagePlus mask = WindowManager.getImage(maskImage);
 		if (mask != null)
@@ -713,14 +728,14 @@ public class PointAlignerPlugin implements PlugIn
 		return null;
 	}
 
-	private Object getCoords(boolean is3d, int x, int y, int z)
+	private static Object getCoords(boolean is3d, int x, int y, int z)
 	{
 		if (is3d)
 			return String.format("%d,%d,%d", x, y, z);
 		return String.format("%d,%d", x, y);
 	}
 
-	private void log(String format, Object... args)
+	private static void log(String format, Object... args)
 	{
 		if (logAlignments)
 			IJ.log(String.format(format, args));
@@ -809,7 +824,7 @@ public class PointAlignerPlugin implements PlugIn
 		}
 	}
 
-	private void createResultsWindow()
+	private static void createResultsWindow()
 	{
 		if (java.awt.GraphicsEnvironment.isHeadless())
 		{
@@ -823,7 +838,7 @@ public class PointAlignerPlugin implements PlugIn
 			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300);
 	}
 
-	private String createResultsHeader()
+	private static String createResultsHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Title\t");
@@ -889,11 +904,11 @@ public class PointAlignerPlugin implements PlugIn
 			resultsWindow.append(sb.toString());
 	}
 
-	public class PointHeightComparator implements Comparator<AssignedPoint>
+	class PointHeightComparator implements Comparator<AssignedPoint>
 	{
 		private final int[] pointHeight;
 
-		public PointHeightComparator(int[] pointHeight)
+		PointHeightComparator(int[] pointHeight)
 		{
 			this.pointHeight = pointHeight;
 		}

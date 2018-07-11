@@ -150,6 +150,9 @@ public class HSB_Picker extends PlugInFrame
 		Toolbar.getInstance().setTool(Toolbar.SPARE1);
 	}
 
+	/**
+	 * Run the HSB Picker using the cursor position on the current image.
+	 */
 	public static void run()
 	{
 		if (instance != null)
@@ -253,7 +256,7 @@ public class HSB_Picker extends PlugInFrame
 		IJ.doCommand("HSB Filter");
 	}
 
-	private float clip(double d)
+	private static float clip(double d)
 	{
 		return (float) (Math.max(0, Math.min(d, 1)));
 	}
@@ -265,7 +268,7 @@ public class HSB_Picker extends PlugInFrame
 			statsLabel[i].setText(summary(stats[i]));
 	}
 
-	private String summary(SummaryStatistics stats)
+	private static String summary(SummaryStatistics stats)
 	{
 		return String.format("%.3f +/- %.4f", stats.getMean(), stats.getStandardDeviation());
 	}
@@ -337,6 +340,7 @@ public class HSB_Picker extends PlugInFrame
 		helpButton = new Button("Help");
 		helpButton.addActionListener(new ActionListener()
 		{
+			@SuppressWarnings("unused")
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
@@ -393,7 +397,7 @@ public class HSB_Picker extends PlugInFrame
 		row++;
 	}
 
-	private void setSliderLabel(final Scrollbar sliderField, final Label sliderLabel, double scale)
+	private static void setSliderLabel(final Scrollbar sliderField, final Label sliderLabel, double scale)
 	{
 		final double value = sliderField.getValue() / scale;
 		sliderLabel.setText(String.format("%.2f", value));

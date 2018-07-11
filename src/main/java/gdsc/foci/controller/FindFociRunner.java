@@ -70,6 +70,12 @@ public class FindFociRunner extends Thread
 	FindFociPrelimResults prelimResults;
 	FindFociResults results;
 
+	/**
+	 * Instantiates a new find foci runner.
+	 *
+	 * @param listener
+	 *            the listener
+	 */
 	public FindFociRunner(MessageListener listener)
 	{
 		this.listener = listener;
@@ -165,9 +171,10 @@ public class FindFociRunner extends Thread
 	}
 
 	/**
-	 * Add a FindFociModel for processing
+	 * Add a FindFociModel for processing.
 	 *
 	 * @param newModel
+	 *            the new model
 	 */
 	public synchronized void queue(FindFociModel newModel)
 	{
@@ -363,7 +370,7 @@ public class FindFociRunner extends Thread
 		if (state.ordinal() <= FindFociState.CALCULATE_RESULTS.ordinal())
 		{
 			if (initResults.stats.imageMinimum < 0 &&
-					FindFociBaseProcessor.isSortIndexSenstiveToNegativeValues(sortMethod))
+					FindFociBaseProcessor.isSortIndexSensitiveToNegativeValues(sortMethod))
 				notify(MessageType.SORT_INDEX_SENSITIVE_TO_NEGATIVE_VALUES, initResults.stats.imageMinimum);
 			else
 				notify(MessageType.SORT_INDEX_OK, initResults.stats.imageMinimum);
@@ -519,26 +526,31 @@ public class FindFociRunner extends Thread
 		return FindFociState.INITIAL;
 	}
 
-	private boolean notEqual(double newValue, double oldValue)
+	private static boolean notEqual(double newValue, double oldValue)
 	{
 		return newValue != oldValue;
 	}
 
-	private boolean notEqual(int newValue, int oldValue)
+	private static boolean notEqual(int newValue, int oldValue)
 	{
 		return newValue != oldValue;
 	}
 
-	private boolean notEqual(boolean newValue, boolean oldValue)
+	private static boolean notEqual(boolean newValue, boolean oldValue)
 	{
 		return newValue != oldValue;
 	}
 
-	private boolean notEqual(String newValue, String oldValue)
+	private static boolean notEqual(String newValue, String oldValue)
 	{
 		return !(oldValue != null && newValue != null && oldValue.equals(newValue));
 	}
 
+	/**
+	 * Finish. Call this to shut down the thread.
+	 * 
+	 * @see java.lang.Thread#run()
+	 */
 	public void finish()
 	{
 		notify(MessageType.BACKGROUND_LEVEL, 0.0f);

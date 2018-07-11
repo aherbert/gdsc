@@ -58,6 +58,11 @@ import ij.process.StackConverter;
 // 1.13 2011/Apr/13 Revised the way 16bit thresholds are shown
 // 1.14 2011/Apr/14 IsoData issues a warning if threhsold not found
 
+/**
+ * AutoThreshold segmentation plugin.
+ * <p>
+ * Adapted from the ImageJ plugin by G. Landini at bham. ac. uk.
+ */
 public class Auto_Threshold implements PlugIn
 {
 	private static final String TITLE = "Auto Threshold";
@@ -345,7 +350,7 @@ public class Auto_Threshold implements PlugIn
 		}
 	}
 
-	private ImageStack expandStack(ImageStack stackOld, int wNew, int hNew, int xOff, int yOff)
+	private static ImageStack expandStack(ImageStack stackOld, int wNew, int hNew, int xOff, int yOff)
 	{
 		final int nFrames = stackOld.getSize();
 		final ImageProcessor ipOld = stackOld.getProcessor(1);
@@ -368,13 +373,28 @@ public class Auto_Threshold implements PlugIn
 	/**
 	 * Execute the plugin functionality.
 	 *
+	 * @param imp
+	 *            the imp
+	 * @param myMethod
+	 *            the my method
+	 * @param noWhite
+	 *            the no white
+	 * @param noBlack
+	 *            the no black
+	 * @param doIwhite
+	 *            flag to set the foreground as white
+	 * @param doIset
+	 *            flag to set the threshold on the image
+	 * @param doIlog
+	 *            flag to log the threshold 
+	 * @param doIstackHistogram
+	 *            flag to use the stack histogram 
 	 * @return an Object[] array with the threshold and the ImagePlus.
 	 *         Does NOT show the new, image; just returns it.
 	 */
 	public Object[] exec(ImagePlus imp, String myMethod, boolean noWhite, boolean noBlack, boolean doIwhite,
 			boolean doIset, boolean doIlog, boolean doIstackHistogram)
 	{
-
 		// 0 - Check validity of parameters
 		if (null == imp)
 			return null;

@@ -37,18 +37,18 @@ import gdsc.foci.FindFociProcessor;
  */
 public class FindFociModel extends AbstractModelObject implements Cloneable
 {
-	private int backgroundMethod = FindFoci.BACKGROUND_AUTO_THRESHOLD;
+	private int backgroundMethod = FindFociProcessor.BACKGROUND_AUTO_THRESHOLD;
 	private double backgroundParameter = 3;
 	private String thresholdMethod = AutoThreshold.Method.OTSU.name;
 	private String statisticsMode = "Both";
-	private int searchMethod = FindFoci.SEARCH_ABOVE_BACKGROUND;
+	private int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
 	private double searchParameter = 0.3;
 	private int minSize = 5;
 	private boolean minimumAboveSaddle = true;
 	private boolean connectedAboveSaddle = false;
-	private int peakMethod = FindFoci.PEAK_RELATIVE_ABOVE_BACKGROUND;
+	private int peakMethod = FindFociProcessor.PEAK_RELATIVE_ABOVE_BACKGROUND;
 	private double peakParameter = 0.5;
-	private int sortMethod = FindFoci.SORT_INTENSITY;
+	private int sortMethod = FindFociProcessor.SORT_INTENSITY;
 	private int maxPeaks = 50;
 	private int showMask = 3;
 	private boolean overlayMask = true;

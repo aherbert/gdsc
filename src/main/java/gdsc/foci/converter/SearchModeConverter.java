@@ -27,6 +27,9 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.GridPointManager;
 
+/**
+ * Convert the search mode  
+ */
 public class SearchModeConverter extends Converter<Integer, Object>
 {
 	@Override

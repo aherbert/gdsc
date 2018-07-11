@@ -59,7 +59,7 @@ import ij.text.TextWindow;
  */
 public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 {
-	public static final String TITLE = "Spot Analyser";
+	private static final String TITLE = "Spot Analyser";
 	private static String[] maskOptions = new String[] { "Threshold", "Use ROI" };
 
 	private static final int INSIDE = 0;
@@ -288,7 +288,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 		imp.updateAndDraw();
 	}
 
-	private boolean checkData(ImageProcessor ip)
+	private static boolean checkData(ImageProcessor ip)
 	{
 		final int firstValue = ip.get(0);
 		for (int i = 1; i < ip.getPixelCount(); i++)
@@ -423,7 +423,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 				addResult(channel, particle, stats);
 	}
 
-	private ImagePlus showImage(String title, ImageProcessor ip)
+	private static ImagePlus showImage(String title, ImageProcessor ip)
 	{
 		ImagePlus imp = WindowManager.getImage(title);
 		if (imp == null)
@@ -440,13 +440,15 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 	}
 
 	/**
-	 * Zero all pixels that are not the given value
+	 * Zero all pixels that are not the given value.
 	 *
 	 * @param ip
+	 *            the image
 	 * @param value
-	 * @return
+	 *            the value
+	 * @return the new image
 	 */
-	private ImagePlus createMask(ImageProcessor ip, int value)
+	private static ImagePlus createMask(ImageProcessor ip, int value)
 	{
 		ip = ip.duplicate();
 		for (int i = 0; i < ip.getPixelCount(); i++)
@@ -455,7 +457,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 		return new ImagePlus("Mask", ip);
 	}
 
-	private void createResultsWindow()
+	private static void createResultsWindow()
 	{
 		if (!java.awt.GraphicsEnvironment.isHeadless())
 		{

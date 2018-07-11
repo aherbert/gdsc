@@ -214,29 +214,13 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		private void readParameters(String filename) throws IOException
 		{
 			final ArrayList<String> parameters = new ArrayList<>();
-			BufferedReader input = null;
-			try
+			try (final BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(filename))))
 			{
-				final FileInputStream fis = new FileInputStream(filename);
-				input = new BufferedReader(new InputStreamReader(fis));
-
 				String line;
 				while ((line = input.readLine()) != null)
 					// Only use lines that have key-value pairs
 					if (line.contains("="))
 						parameters.add(line);
-			}
-			finally
-			{
-				try
-				{
-					if (input != null)
-						input.close();
-				}
-				catch (final IOException e)
-				{
-					// Ignore
-				}
 			}
 			if (parameters.isEmpty())
 				throw new RuntimeException("No key=value parameters in the file");
@@ -394,6 +378,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 	}
 
+	/** Get the title of the ImageJ plugin */
 	public static final String TITLE = "FindFoci";
 
 	private static TextWindow resultsWindow = null;
@@ -510,12 +495,14 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	}
 
 	/**
-	 * List of methods for defining the centre of each peak
+	 * List of methods for defining the centre of each peak.
+	 *
+	 * @return the centre methods
 	 */
 	public static String[] getCentreMethods()
 	{
 		return centreMethods;
-	};
+	}
 
 	/**
 	 * Define the peak centre using the highest pixel value of the search image (default). In the case of multiple
@@ -564,6 +551,10 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		Collections.sort(m);
 		autoThresholdMethods = m.toArray(new String[m.size()]);
 	}
+
+	/**
+	 * The list of recognised modes for collecting statistics
+	 */
 	public final static String[] statisticsModes = { "Both", "Inside", "Outside" };
 
 	private static String myMaskImage;
@@ -681,7 +672,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 		if (!isSupported(imp.getBitDepth()))
 		{
-			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
+			IJ.error(TITLE, "Only " + getSupported() + " images are supported");
 			return;
 		}
 
@@ -830,9 +821,10 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	/**
 	 * Get the output flags required for the specified index in the mask options
 	 * <p>
-	 * See {@link #maskOptions}
+	 * See {@link #maskOptions}.
 	 *
 	 * @param showMask
+	 *            the show mask index
 	 * @return The output flags
 	 */
 	public static int getOutputMaskFlags(int showMask)
@@ -860,7 +852,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * Build a list of all the images with the correct dimensions to be used as a mask for the specified image.
 	 *
 	 * @param imp
-	 * @return
+	 *            the image
+	 * @return the array list
 	 */
 	public static ArrayList<String> buildMaskList(ImagePlus imp)
 	{
@@ -886,33 +879,51 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	}
 
 	/**
-	 * Perform peak finding. Parameters as described in
-	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int) }
+	 * Perform peak finding.
+	 * <p>
+	 * Parameters as described in
+	 * {@link FindFociProcessor#findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }.
 	 *
 	 * @param imp
+	 *            the image
 	 * @param mask
+	 *            A mask image used to define the region to search for peaks
 	 * @param backgroundMethod
+	 *            Method for calculating the background level (use the constants with prefix BACKGROUND_)
 	 * @param backgroundParameter
+	 *            parameter for calculating the background level
 	 * @param autoThresholdMethod
+	 *            The thresholding method (use a string from {@link gdsc.core.threshold.AutoThreshold#getMethods() } )
 	 * @param searchMethod
+	 *            Method for calculating the region growing stopping criteria (use the constants with prefix SEARCH_)
 	 * @param searchParameter
+	 *            parameter for calculating the stopping criteria
 	 * @param maxPeaks
+	 *            The maximum number of peaks to report
 	 * @param minSize
+	 *            The minimum size for a peak
 	 * @param peakMethod
+	 *            Method for calculating the minimum peak height above the highest saddle (use the constants with prefix
+	 *            PEAK_)
 	 * @param peakParameter
+	 *            parameter for calculating the minimum peak height
 	 * @param outputType
-	 *            See {@link #OUTPUT_LOG_MESSAGES}; {@link #OUTPUT_MASK_PEAKS}; {@link #OUTPUT_MASK_THRESHOLD};
-	 *            {@link #OUTPUT_ROI_SELECTION}; {@link #OUTPUT_RESULTS_TABLE}. In the case of OUTPUT_MASK the ImagePlus
-	 *            returned by
-	 *            {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int) }
-	 *            will
-	 *            be displayed.
+	 *            Use {@link #OUTPUT_MASK_PEAKS} to get an ImagePlus in the result Object array. Use
+	 *            {@link #OUTPUT_LOG_MESSAGES} to get runtime information.
 	 * @param sortIndex
+	 *            The index of the result statistic to use for the peak sorting
 	 * @param options
+	 *            An options flag (use the constants with prefix OPTION_)
 	 * @param blur
+	 *            Apply a Gaussian blur of the specified radius before processing (helps smooth noisy images for better
+	 *            peak identification)
 	 * @param centreMethod
+	 *            Define the method used to calculate the peak centre (use the constants with prefix
+	 *            CENTRE_)
 	 * @param centreParameter
+	 *            Parameter for calculating the peak centre
 	 * @param fractionParameter
+	 *            Used to specify the fraction of the peak to show in the mask
 	 */
 	public void exec(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
 			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
@@ -921,7 +932,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	{
 		if (!isSupported(imp.getBitDepth()))
 		{
-			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
+			IJ.error(TITLE, "Only " + getSupported() + " images are supported");
 			return;
 		}
 		if ((centreMethod == CENTRE_GAUSSIAN_ORIGINAL || centreMethod == CENTRE_GAUSSIAN_SEARCH) &&
@@ -1361,13 +1372,10 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 	private void sortBatchResultsFile(String filename)
 	{
-		BufferedReader input = null;
 		ArrayList<BatchResult> results = null;
 		String header = null;
-		try
+		try (BufferedReader input = new BufferedReader(new UnicodeReader(new FileInputStream(filename), null)))
 		{
-			final FileInputStream fis = new FileInputStream(filename);
-			input = new BufferedReader(new UnicodeReader(fis, null));
 			header = input.readLine();
 			String line;
 			int id = 0;
@@ -1391,18 +1399,6 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		{
 			logError(e.getMessage());
 			return;
-		}
-		finally
-		{
-			try
-			{
-				if (input != null)
-					input.close();
-			}
-			catch (final Exception e)
-			{
-				logError(e.getMessage());
-			}
 		}
 
 		Collections.sort(results);
@@ -1430,7 +1426,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 	}
 
-	private String initialiseBatchPrefix(int batchId, String title)
+	private static String initialiseBatchPrefix(int batchId, String title)
 	{
 		return batchId + "\t" + title + "\t";
 	}
@@ -1454,7 +1450,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 	}
 
-	private void writeEmptyObjectsToBatchResultsFile(ArrayList<String> batchResults,
+	private static void writeEmptyObjectsToBatchResultsFile(ArrayList<String> batchResults,
 			ObjectAnalysisResult objectAnalysisResult)
 	{
 		for (int id = 1; id <= objectAnalysisResult.numberOfObjects; id++)
@@ -1475,11 +1471,10 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			FindFociStatistics stats, String resultsDirectory, ObjectAnalysisResult objectAnalysisResult,
 			String batchPrefix)
 	{
-		try
+		try (final OutputStreamWriter out = new OutputStreamWriter(
+				new FileOutputStream(resultsDirectory + File.separatorChar + expId + ".xls"), "UTF-8"))
 		{
 			// Save results to file
-			final FileOutputStream fos = new FileOutputStream(resultsDirectory + File.separatorChar + expId + ".xls");
-			final OutputStreamWriter out = new OutputStreamWriter(fos, "UTF-8");
 			if (imageDimension == null)
 				imageDimension = new int[] { imp.getC(), 0, imp.getT() };
 			out.write(createResultsHeader(imp, imageDimension, stats, newLine));
@@ -1545,11 +1540,9 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			int outputType, int sortIndex, int options, double blur, int centreMethod, double centreParameter,
 			double fractionParameter, String resultsDirectory)
 	{
-		try
+		try (final OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(filename), "UTF-8"))
 		{
 			// Save parameters to file
-			final FileOutputStream fos = new FileOutputStream(filename);
-			final OutputStreamWriter out = new OutputStreamWriter(fos, "UTF-8");
 			if (imp != null)
 			{
 				writeParam(out, "Image", imp.getTitle());
@@ -1624,6 +1617,13 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return false;
 	}
 
+	/**
+	 * Gets the statistics mode.
+	 *
+	 * @param options
+	 *            the options
+	 * @return the statistics mode
+	 */
 	public static String getStatisticsMode(int options)
 	{
 		if ((options & (FindFociProcessor.OPTION_STATS_INSIDE |
@@ -1637,7 +1637,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return "Both";
 	}
 
-	private void killPointRoi(ImagePlus imp)
+	private static void killPointRoi(ImagePlus imp)
 	{
 		if (imp != null)
 			if (imp.getRoi() != null && imp.getRoi().getType() == Roi.POINT)
@@ -1651,7 +1651,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		roi.setFillColor(Color.YELLOW);
 	}
 
-	private void killOverlayPointRoi(ImagePlus imp)
+	private static void killOverlayPointRoi(ImagePlus imp)
 	{
 		if (imp != null && imp.getOverlay() != null)
 			imp.setOverlay(removeOverlayPointRoi(imp.getOverlay()));
@@ -1739,27 +1739,27 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			return null;
 		if (!isSupported(imp.getBitDepth()))
 		{
-			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
+			IJ.error(TITLE, "Only " + getSupported() + " images are supported");
 			return null;
 		}
 
 		// Support int[] or float[] images using a dedicated processor
-		final FindFociResults result = findMaxima(createFFProcessor(imp), imp, mask, backgroundMethod, backgroundParameter,
-				autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
-				outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter);
+		final FindFociResults result = findMaxima(createFFProcessor(imp), imp, mask, backgroundMethod,
+				backgroundParameter, autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod,
+				peakParameter, outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter);
 		if (result != null)
 			lastResultsArray = result.results;
 		return result;
 	}
 
-	private FindFociResults findMaxima(FindFociBaseProcessor ffp, ImagePlus imp, ImagePlus mask, int backgroundMethod,
-			double backgroundParameter, String autoThresholdMethod, int searchMethod, double searchParameter,
-			int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex, int options,
-			double blur, int centreMethod, double centreParameter, double fractionParameter)
+	private static FindFociResults findMaxima(FindFociBaseProcessor ffp, ImagePlus imp, ImagePlus mask,
+			int backgroundMethod, double backgroundParameter, String autoThresholdMethod, int searchMethod,
+			double searchParameter, int maxPeaks, int minSize, int peakMethod, double peakParameter, int outputType,
+			int sortIndex, int options, double blur, int centreMethod, double centreParameter, double fractionParameter)
 	{
-		final FindFociResults result = ffp.findMaxima(imp, mask, backgroundMethod, backgroundParameter, autoThresholdMethod,
-				searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex,
-				options, blur, centreMethod, centreParameter, fractionParameter);
+		final FindFociResults result = ffp.findMaxima(imp, mask, backgroundMethod, backgroundParameter,
+				autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
+				outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter);
 		return result;
 	}
 
@@ -1781,6 +1781,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * Only blurs the current channel and frame for use in the FindFoci algorithm.
 	 *
 	 * @param imp
+	 *            the imp
 	 * @param blur
 	 *            The blur standard deviation
 	 * @return the blurred image
@@ -1818,7 +1819,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			return null;
 		if (!isSupported(imp.getBitDepth()))
 		{
-			IJ.error(TITLE, "Only " + FindFoci.getSupported() + " images are supported");
+			IJ.error(TITLE, "Only " + getSupported() + " images are supported");
 			return null;
 		}
 
@@ -1925,11 +1926,10 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			FindFociMergeResults mergeResults, int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
 	{
 		lastResultsArray = null;
-		final FindFociPrelimResults result = ffpStaged.findMaximaPrelimResults(initResults, mergeResults, maxPeaks, sortIndex,
-				centreMethod, centreParameter);
+		final FindFociPrelimResults result = ffpStaged.findMaximaPrelimResults(initResults, mergeResults, maxPeaks,
+				sortIndex, centreMethod, centreParameter);
 		if (result != null)
-			lastResultsArray = (result.results == null) ? null
-					: new ArrayList<>(Arrays.asList(result.results));
+			lastResultsArray = (result.results == null) ? null : new ArrayList<>(Arrays.asList(result.results));
 		return result;
 
 	}
@@ -1946,8 +1946,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			double fractionParameter)
 	{
 		lastResultsArray = null;
-		final FindFociResults result = ffpStaged.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType,
-				autoThresholdMethod, imageTitle, fractionParameter);
+		final FindFociResults result = ffpStaged.findMaximaMaskResults(initResults, mergeResults, prelimResults,
+				outputType, autoThresholdMethod, imageTitle, fractionParameter);
 		if (result != null)
 			lastResultsArray = result.results;
 		return result;
@@ -1958,7 +1958,38 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * methods.
 	 * <p>
 	 * The method must be called with the output from
-	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double)}
+	 * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double)}
+	 *
+	 * @param imp
+	 *            the image
+	 * @param mask
+	 *            A mask image used to define the region to search for peaks
+	 * @param backgroundMethod
+	 *            Method for calculating the background level (use the constants with prefix BACKGROUND_)
+	 * @param backgroundParameter
+	 *            parameter for calculating the background level
+	 * @param autoThresholdMethod
+	 *            The thresholding method (use a string from {@link gdsc.core.threshold.AutoThreshold#getMethods() } )
+	 * @param searchParameter
+	 *            parameter for calculating the stopping criteria
+	 * @param maxPeaks
+	 *            The maximum number of peaks to report
+	 * @param minSize
+	 *            The minimum size for a peak
+	 * @param peakMethod
+	 *            Method for calculating the minimum peak height above the highest saddle (use the constants with prefix
+	 *            PEAK_)
+	 * @param peakParameter
+	 *            parameter for calculating the minimum peak height
+	 * @param outputType
+	 *            Use {@link #OUTPUT_MASK_PEAKS} to get an ImagePlus in the result Object array. Use
+	 *            {@link #OUTPUT_LOG_MESSAGES} to get runtime information.
+	 * @param sortIndex
+	 *            The index of the result statistic to use for the peak sorting
+	 * @param options
+	 *            An options flag (use the constants with prefix OPTION_)
+	 * @param results
+	 *            the results
 	 */
 	public void showResults(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
 			String autoThresholdMethod, double searchParameter, int maxPeaks, int minSize, int peakMethod,
@@ -2293,7 +2324,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		resultsCount++;
 	}
 
-	private void addValue(StringBuilder sb, double value, boolean floatImage)
+	private static void addValue(StringBuilder sb, double value, boolean floatImage)
 	{
 		if (floatImage)
 			addValue(sb, value);
@@ -2301,7 +2332,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			sb.append((int) value).append('\t');
 	}
 
-	private void addValue(StringBuilder sb, double value)
+	private static void addValue(StringBuilder sb, double value)
 	{
 		sb.append(getFormat(value)).append('\t');
 	}
@@ -2322,7 +2353,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 			return Utils.rounded(value, 4);
 	}
 
-	private String buildEmptyObjectResultEntry(int objectId, int objectState)
+	private static String buildEmptyObjectResultEntry(int objectId, int objectState)
 	{
 		final StringBuilder sb = new StringBuilder();
 		// We subtract 1 since we want to add the objectId and another tab
@@ -2355,7 +2386,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return emptyEntry;
 	}
 
-	private String generateId(ImagePlus imp)
+	private static String generateId(ImagePlus imp)
 	{
 		final DateFormat df = new SimpleDateFormat("-yyyyMMdd_HHmmss");
 		return "FindFoci-" + imp.getShortTitle() + df.format(new Date());
@@ -2366,6 +2397,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * Text results are saved in simple text files and Point ROIs in ImageJ ROI files.
 	 *
 	 * @param directory
+	 *            the new results directory
 	 */
 	public void setResultsDirectory(String directory)
 	{
@@ -2382,7 +2414,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
 	private static void logError(String message)
 	{
-		IJ.log("ERROR - " + FindFoci.TITLE + ": " + message);
+		IJ.log("ERROR - " + TITLE + ": " + message);
 	}
 
 	/**
@@ -2627,8 +2659,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		gd.addCheckbox("Multi-thread", batchMultiThread);
 		gd.addMessage("[Note: Double-click a text field to open a selection dialog]");
 		@SuppressWarnings("unchecked")
-		final
-		Vector<TextField> texts = gd.getStringFields();
+		final Vector<TextField> texts = gd.getStringFields();
 		for (final TextField tf : texts)
 		{
 			tf.addMouseListener(this);
@@ -2673,6 +2704,13 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return true;
 	}
 
+	/**
+	 * Gets the batch images.
+	 *
+	 * @param directory
+	 *            the directory
+	 * @return the batch images
+	 */
 	public static String[] getBatchImages(String directory)
 	{
 		if (directory == null)
@@ -2766,9 +2804,13 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * flag is reset each time.
 	 *
 	 * @param ff
+	 *            the FindFoci instance
+	 * @param logger
+	 *            the logger
 	 * @param parameters
-	 *
+	 *            the parameters
 	 * @param msg
+	 *            the msg
 	 */
 	public static void error(FindFoci ff, MemoryLogger logger, BatchParameters parameters, String msg)
 	{
@@ -2793,8 +2835,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * [image_name].mask.[ext] in either directory.
 	 *
 	 * @param directory
+	 *            the first directory
 	 * @param directory2
+	 *            the second directory
 	 * @param filename
+	 *            the filename
 	 * @return array of [directory, filename]
 	 */
 	public static String[] getMaskImage(String directory, String directory2, String filename)
@@ -2818,6 +2863,15 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return new String[2];
 	}
 
+	/**
+	 * Open the image.
+	 *
+	 * @param directory
+	 *            the directory
+	 * @param filename
+	 *            the filename
+	 * @return the image plus
+	 */
 	public static ImagePlus openImage(String directory, String filename)
 	{
 		if (filename == null)
@@ -2879,7 +2933,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	{
 		if (!isSupported(imp.getBitDepth()))
 		{
-			error(ff, logger, p, "Only " + FindFoci.getSupported() + " images are supported");
+			error(ff, logger, p, "Only " + getSupported() + " images are supported");
 			return false;
 		}
 
@@ -2890,7 +2944,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		ffp.setShowStatus(false);
 		ffp.setLogger(logger);
 		ff.batchImages.incrementAndGet();
-		final FindFociResults ffResult = ff.findMaxima(ffp, imp, mask, p.backgroundMethod, p.backgroundParameter,
+		final FindFociResults ffResult = findMaxima(ffp, imp, mask, p.backgroundMethod, p.backgroundParameter,
 				p.autoThresholdMethod, p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod,
 				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
 				p.fractionParameter);
@@ -2923,11 +2977,11 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		}
 
 		if ((options & OPTION_SAVE_TO_MEMORY) != 0)
-			ff.saveToMemory(resultsArray, imp, imageDimension[BatchParameters.C], imageDimension[BatchParameters.Z],
+			saveToMemory(resultsArray, imp, imageDimension[BatchParameters.C], imageDimension[BatchParameters.Z],
 					imageDimension[BatchParameters.T]);
 
 		// Record all the results to file
-		final String batchPrefix = ff.initialiseBatchPrefix(batchId, expId);
+		final String batchPrefix = initialiseBatchPrefix(batchId, expId);
 		ff.saveResults(ffp, expId, imp, imageDimension, mask, maskDimension, p.backgroundMethod, p.backgroundParameter,
 				p.autoThresholdMethod, p.searchMethod, p.searchParameter, p.maxPeaks, p.minSize, p.peakMethod,
 				p.peakParameter, outputType, p.sortIndex, options, p.blur, p.centreMethod, p.centreParameter,
@@ -3053,23 +3107,33 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	}
 
 	/**
-	 * Save the results array to memory using the image name and current channel and frame
+	 * Save the results array to memory using the image name and current channel and frame.
 	 *
 	 * @param resultsArray
+	 *            the results array
 	 * @param imp
+	 *            the imp
 	 */
-	private void saveToMemory(ArrayList<FindFociResult> resultsArray, ImagePlus imp)
+	private static void saveToMemory(ArrayList<FindFociResult> resultsArray, ImagePlus imp)
 	{
 		saveToMemory(resultsArray, imp, imp.getChannel(), 0, imp.getFrame());
 	}
 
 	/**
-	 * Save the results array to memory using the image name and current channel and frame
+	 * Save the results array to memory using the image name and current channel and frame.
 	 *
 	 * @param resultsArray
+	 *            the results array
 	 * @param imp
+	 *            the imp
+	 * @param c
+	 *            the c
+	 * @param z
+	 *            the z
+	 * @param t
+	 *            the t
 	 */
-	private void saveToMemory(ArrayList<FindFociResult> resultsArray, ImagePlus imp, int c, int z, int t)
+	private static void saveToMemory(ArrayList<FindFociResult> resultsArray, ImagePlus imp, int c, int z, int t)
 	{
 		if (resultsArray == null)
 			return;

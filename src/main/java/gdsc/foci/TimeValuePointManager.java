@@ -32,13 +32,36 @@ import java.io.OutputStreamWriter;
 import java.util.LinkedList;
 
 /**
- * Manages I/O of the TimeValuePoint class
+ * Manages I/O of the TimeValuePoint class.
  */
 public class TimeValuePointManager
 {
+	/**
+	 * The file type.
+	 */
 	public enum FileType
 	{
-		FIND_FOCI, CSV_IdTXYZV, CSV_IdTXY, TAB_IdTXYZV, TAB_IdTXY, QuickPALM, STORMJ, TAB_XYZ, CSV_XYZ, Unknown
+		/** The find foci. */
+		FIND_FOCI,
+		/** Comma-separated values using format [id,t,x,y,z,v]. */
+		CSV_IdTXYZV,
+		/** Comma-separated values using format [id,t,x,y]. */
+		CSV_IdTXY,
+		/** Tab delimited using format [id,t,x,y,z,v]. */
+		TAB_IdTXYZV,
+		/** Tab delimited using format [id,t,x,y]. */
+		TAB_IdTXY,
+		/** The Quick PALM format. */
+		QuickPALM,
+		/** The STORMJ format. */
+		STORMJ,
+		/** Tab delimited using format [x,y,z]. */
+		TAB_XYZ,
+		/** Comma-separated values using format [x,y,z]. */
+		CSV_XYZ,
+		/** Unknown file-format. */
+		Unknown
+
 	}
 
 	private static final String newline = System.getProperty("line.separator");
@@ -53,28 +76,32 @@ public class TimeValuePointManager
 	private String line;
 	private int lineCount;
 
+	/**
+	 * Instantiates a new time value point manager.
+	 *
+	 * @param filename
+	 *            the filename
+	 */
 	public TimeValuePointManager(String filename)
 	{
 		this.filename = filename;
 	}
 
 	/**
-	 * Attempts to detect the file type by reading the initial lines
+	 * Attempts to detect the file type by reading the initial lines.
 	 *
 	 * @return The type of file containing the points
 	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
 	public FileType getFileType() throws IOException
 	{
 		if (type != null)
 			return type;
 
-		BufferedReader input = null;
-		try
+		try (final BufferedReader input = new BufferedReader(new FileReader(filename)))
 		{
 			// Load results from file
-			input = new BufferedReader(new FileReader(filename));
-
 			String line;
 			int lineCount = 1;
 			int nonHeaderLines = 0;
@@ -90,22 +117,11 @@ public class TimeValuePointManager
 					break;
 			}
 		}
-		finally
-		{
-			try
-			{
-				if (input != null)
-					input.close();
-			}
-			catch (final IOException e)
-			{
-			}
-		}
 
 		return type;
 	}
 
-	private FileType guessFiletype(String line, int lineCount)
+	private static FileType guessFiletype(String line, int lineCount)
 	{
 		int delimiterCount = countDelimeters(line, "\t");
 
@@ -143,34 +159,32 @@ public class TimeValuePointManager
 		return FileType.Unknown;
 	}
 
-	private int countDelimeters(String text, String delimiter)
+	private static int countDelimeters(String text, String delimiter)
 	{
 		return text.split(delimiter).length - 1;
 	}
 
 	/**
-	 * Save the points to file
+	 * Save the points to file.
 	 *
 	 * @param points
+	 *            the points
 	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
 	public void savePoints(TimeValuedPoint[] points) throws IOException
 	{
 		if (points == null)
 			return;
 
-		OutputStreamWriter out = null;
-		try
+		final File file = new File(filename);
+		if (!file.exists())
+			if (file.getParent() != null)
+				new File(file.getParent()).mkdirs();
+
+		try (final OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(filename)))
 		{
-			final File file = new File(filename);
-			if (!file.exists())
-				if (file.getParent() != null)
-					new File(file.getParent()).mkdirs();
-
 			// Save results to file
-			final FileOutputStream fos = new FileOutputStream(filename);
-			out = new OutputStreamWriter(fos);
-
 			final StringBuilder sb = new StringBuilder();
 
 			out.write("ID,T,X,Y,Z,Value" + newline);
@@ -189,24 +203,14 @@ public class TimeValuePointManager
 				sb.setLength(0);
 			}
 		}
-		finally
-		{
-			try
-			{
-				if (out != null)
-					out.close();
-			}
-			catch (final IOException e)
-			{
-			}
-		}
 	}
 
 	/**
-	 * Loads the points from the file
+	 * Loads the points from the file.
 	 *
-	 * @return
+	 * @return the time valued point[]
 	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
 	public TimeValuedPoint[] loadPoints() throws IOException
 	{
@@ -216,13 +220,9 @@ public class TimeValuePointManager
 			return new TimeValuedPoint[0];
 
 		final LinkedList<TimeValuedPoint> points = new LinkedList<>();
-		BufferedReader input = null;
-		try
+		try (final BufferedReader input = new BufferedReader(new FileReader(filename)))
 		{
 			// Load results from file
-			input = new BufferedReader(new FileReader(filename));
-
-			// TODO - Read in binary files from STORMJ
 
 			skipHeader(input);
 
@@ -265,17 +265,6 @@ public class TimeValuePointManager
 			}
 
 			return points.toArray(new TimeValuedPoint[0]);
-		}
-		finally
-		{
-			try
-			{
-				if (input != null)
-					input.close();
-			}
-			catch (final IOException e)
-			{
-			}
 		}
 	}
 
@@ -391,11 +380,14 @@ public class TimeValuePointManager
 	}
 
 	/**
-	 * Save the points to the given file
+	 * Save the points to the given file.
 	 *
 	 * @param points
+	 *            the points
 	 * @param filename
+	 *            the filename
 	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
 	public static void savePoints(TimeValuedPoint[] points, String filename) throws IOException
 	{
@@ -404,11 +396,13 @@ public class TimeValuePointManager
 	}
 
 	/**
-	 * Loads the points from the file
+	 * Loads the points from the file.
 	 *
 	 * @param filename
+	 *            the filename
 	 * @return The points
 	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
 	public static TimeValuedPoint[] loadPoints(String filename) throws IOException
 	{

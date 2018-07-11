@@ -44,10 +44,28 @@ public class CDAEngine
 	private final List<Thread> threads = new LinkedList<>();
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 *
+	 * @param imageStack1
+	 *            the image stack 1
+	 * @param roiStack1
+	 *            the roi stack 1
+	 * @param confinedStack
+	 *            the confined stack
+	 * @param imageStack2
+	 *            the image stack 2
+	 * @param roiStack2
+	 *            the roi stack 2
+	 * @param denom1
+	 *            the denominator 1 (sum of image stack 1)
+	 * @param denom2
+	 *            the denominator 2 (sum of image stack 2)
+	 * @param results
+	 *            the results
+	 * @param totalSteps
+	 *            the total steps
 	 * @param threads
-	 *            The number of threads to use (set to 1 if less than 1)
+	 *            The number of threads to use
 	 */
 	public CDAEngine(ImageStack imageStack1, ImageStack roiStack1, ImageStack confinedStack, ImageStack imageStack2,
 			ImageStack roiStack2, double denom1, double denom2, List<CalculationResult> results, int totalSteps,
@@ -97,7 +115,7 @@ public class CDAEngine
 		return checkWorkers();
 	}
 
-	private boolean checkWorkerWithDelay(CDAWorker worker)
+	private static boolean checkWorkerWithDelay(CDAWorker worker)
 	{
 		for (int i = 0; !worker.isInitialised() && i < 5; i++)
 			try
@@ -125,6 +143,13 @@ public class CDAEngine
 
 	/**
 	 * Adds the work to the current queue.
+	 *
+	 * @param n
+	 *            the job number
+	 * @param x
+	 *            the x shift
+	 * @param y
+	 *            the y shift
 	 */
 	public void run(int n, int x, int y)
 	{

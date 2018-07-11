@@ -23,8 +23,6 @@
  */
 package gdsc.foci;
 
-import gdsc.threshold.Auto_Local_Threshold;
-import gdsc.threshold.Auto_Threshold;
 import ij.ImagePlus;
 
 /**
@@ -305,8 +303,7 @@ public interface FindFociProcessor
 	 *
 	 * <P>
 	 * Peak expansion stopping criteria are defined using the method parameter. See {@link #SEARCH_ABOVE_BACKGROUND};
-	 * {@link #SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND}; {@link #SEARCH_HALF_PEAK_VALUE};
-	 * {@link #SEARCH_STD_DEV_FROM_BACKGROUND}
+	 * {@link #SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND}; {@link #SEARCH_HALF_PEAK_VALUE}.
 	 *
 	 * @param imp
 	 *            the image
@@ -378,11 +375,10 @@ public interface FindFociProcessor
 
 	/**
 	 * This method is a stripped-down version of the
-	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double)}
-	 * routine.
-	 * It does not support logging, interruption or mask generation. The method initialises the system up to the point
-	 * of background generation. The result object can be cloned and passed multiple times to later methods for further
-	 * processing.
+	 * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
+	 * routine. It does not support logging, interruption or mask generation. The method initialises the system up to
+	 * the point of background generation. The result object can be cloned and passed multiple times to later methods
+	 * for further processing.
 	 * <p>
 	 * This method is intended for benchmarking.
 	 *
@@ -401,8 +397,8 @@ public interface FindFociProcessor
 	 *            An options flag (use the constants with prefix FindFoci.OPTION_)
 	 * @return the initialisation results
 	 */
-	public FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask, int backgroundMethod,
-			String autoThresholdMethod, int options);
+	public FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask,
+			int backgroundMethod, String autoThresholdMethod, int options);
 
 	/**
 	 * Clones the init array for use in findMaxima staged methods.
@@ -419,10 +415,8 @@ public interface FindFociProcessor
 
 	/**
 	 * This method is a stripped-down version of the
-	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
-	 * routine.
-	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 *
+	 * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
+	 * routine. It does not support logging, interruption or mask generation. Only the result array is generated.
 	 * <p>
 	 * This method is intended for benchmarking.
 	 *
@@ -444,17 +438,15 @@ public interface FindFociProcessor
 
 	/**
 	 * This method is a stripped-down version of the
-	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
-	 * routine.
-	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 *
+	 * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
+	 * routine. It does not support logging, interruption or mask generation. Only the result array is generated.
 	 * <p>
 	 * This method is intended for benchmarking.
 	 *
 	 * @param initResults
 	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
 	 * @param searchResults
-	 *            The output from {@link #findMaximaSearch(Object[], int, double, int, double)}.
+	 *            The output from {@link #findMaximaSearch(FindFociInitResults, int, double, int, double) }.
 	 *            Contents are unchanged.
 	 * @param peakMethod
 	 *            Method for calculating the minimum peak height above the highest saddle (use the constants with prefix
@@ -463,15 +455,13 @@ public interface FindFociProcessor
 	 *            parameter for calculating the minimum peak height
 	 * @return the find foci merge results
 	 */
-	public FindFociMergeTempResults findMaximaMergePeak(FindFociInitResults initResults, FindFociSearchResults searchResults,
-			int peakMethod, double peakParameter);
+	public FindFociMergeTempResults findMaximaMergePeak(FindFociInitResults initResults,
+			FindFociSearchResults searchResults, int peakMethod, double peakParameter);
 
 	/**
 	 * This method is a stripped-down version of the
-	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
-	 * routine.
-	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 *
+	 * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
+	 * routine. It does not support logging, interruption or mask generation. Only the result array is generated.
 	 * <p>
 	 * This method is intended for benchmarking.
 	 *
@@ -483,15 +473,13 @@ public interface FindFociProcessor
 	 *            The minimum size for a peak
 	 * @return the find foci merge results
 	 */
-	public FindFociMergeTempResults findMaximaMergeSize(FindFociInitResults initResults, FindFociMergeTempResults mergeResults,
-			int minSize);
+	public FindFociMergeTempResults findMaximaMergeSize(FindFociInitResults initResults,
+			FindFociMergeTempResults mergeResults, int minSize);
 
 	/**
 	 * This method is a stripped-down version of the
-	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
-	 * routine.
-	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 *
+	 * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
+	 * routine. It does not support logging, interruption or mask generation. Only the result array is generated.
 	 * <p>
 	 * This method is intended for benchmarking.
 	 *
@@ -509,15 +497,13 @@ public interface FindFociProcessor
 	 *            peak identification)
 	 * @return the find foci merge results
 	 */
-	public FindFociMergeResults findMaximaMergeFinal(FindFociInitResults initResults, FindFociMergeTempResults mergeResults,
-			int minSize, int options, double blur);
+	public FindFociMergeResults findMaximaMergeFinal(FindFociInitResults initResults,
+			FindFociMergeTempResults mergeResults, int minSize, int options, double blur);
 
 	/**
 	 * This method is a stripped-down version of the
-	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
-	 * routine.
-	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 *
+	 * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
+	 * routine. It does not support logging, interruption or mask generation. Only the result array is generated.
 	 * <p>
 	 * This method is intended for benchmarking.
 	 *
@@ -526,7 +512,7 @@ public interface FindFociProcessor
 	 *            Contents are destructively modified so should be cloned before input.
 	 * @param mergeResults
 	 *            The output from
-	 *            {@link #findMaximaMerge(FindFociInitResults, FindFociSearchResults, int, int, double, int, double)}.
+	 *            {@link #findMaximaMergeFinal(FindFociInitResults, FindFociMergeTempResults, int, int, double)}
 	 *            Contents are unchanged.
 	 * @param maxPeaks
 	 *            The maximum number of peaks to report
@@ -539,45 +525,13 @@ public interface FindFociProcessor
 	 *            Parameter for calculating the peak centre
 	 * @return the find foci results
 	 */
-	public FindFociResults findMaximaResults(FindFociInitResults initResults, FindFociMergeResults mergeResults, int maxPeaks,
-			int sortIndex, int centreMethod, double centreParameter);
-
-	/**
-	 * This method is a stripped-down version of the
-	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
-	 * routine.
-	 * It does not support logging, interruption or mask generation. Only the result array is generated.
-	 *
-	 * <p>
-	 * This method is intended for staged processing.
-	 *
-	 * @param initResults
-	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
-	 *            Contents are destructively modified so should be cloned before input.
-	 * @param mergeResults
-	 *            The output from
-	 *            {@link #findMaximaMerge(FindFociInitResults, FindFociSearchResults, int, int, double, int, double)}.
-	 *            Contents are unchanged.
-	 * @param maxPeaks
-	 *            The maximum number of peaks to report
-	 * @param sortIndex
-	 *            The index of the result statistic to use for the peak sorting
-	 * @param centreMethod
-	 *            Define the method used to calculate the peak centre (use the constants with prefix
-	 *            FindFociProcessor.CENTRE_)
-	 * @param centreParameter
-	 *            Parameter for calculating the peak centre
-	 * @return the find foci results
-	 */
-	public FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
+	public FindFociResults findMaximaResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
 			int maxPeaks, int sortIndex, int centreMethod, double centreParameter);
 
 	/**
 	 * This method is a stripped-down version of the
-	 * {@link #findMaxima(ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double)}
-	 * routine.
-	 * It does not support logging or interruption.
-	 *
+	 * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
+	 * routine. It does not support logging, interruption or mask generation. Only the result array is generated.
 	 * <p>
 	 * This method is intended for staged processing.
 	 *
@@ -586,7 +540,35 @@ public interface FindFociProcessor
 	 *            Contents are destructively modified so should be cloned before input.
 	 * @param mergeResults
 	 *            The output from
-	 *            {@link #findMaximaMerge(FindFociInitResults, FindFociSearchResults, int, int, double, int, double)}.
+	 *            {@link #findMaximaMergeFinal(FindFociInitResults, FindFociMergeTempResults, int, int, double)}
+	 *            Contents are unchanged.
+	 * @param maxPeaks
+	 *            The maximum number of peaks to report
+	 * @param sortIndex
+	 *            The index of the result statistic to use for the peak sorting
+	 * @param centreMethod
+	 *            Define the method used to calculate the peak centre (use the constants with prefix
+	 *            FindFociProcessor.CENTRE_)
+	 * @param centreParameter
+	 *            Parameter for calculating the peak centre
+	 * @return the find foci results
+	 */
+	public FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults,
+			FindFociMergeResults mergeResults, int maxPeaks, int sortIndex, int centreMethod, double centreParameter);
+
+	/**
+	 * This method is a stripped-down version of the
+	 * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
+	 * routine. It does not support logging, interruption or mask generation. Only the result array is generated.
+	 * <p>
+	 * This method is intended for staged processing.
+	 *
+	 * @param initResults
+	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
+	 *            Contents are destructively modified so should be cloned before input.
+	 * @param mergeResults
+	 *            The output from
+	 *            {@link #findMaximaMergeFinal(FindFociInitResults, FindFociMergeTempResults, int, int, double)}
 	 *            Contents are unchanged.
 	 * @param prelimResults
 	 *            The output from

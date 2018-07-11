@@ -65,6 +65,9 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 
 	/**
 	 * Launch the application.
+	 *
+	 * @param args
+	 *            the arguments
 	 */
 	public static void main(String[] args)
 	{
@@ -80,6 +83,12 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 		}
 	}
 
+	/**
+	 * Instantiates a new slider limit helper.
+	 *
+	 * @param parent
+	 *            the parent
+	 */
 	public SliderLimitHelper(Component parent)
 	{
 		init();
@@ -331,7 +340,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 		return false;
 	}
 
-	private boolean isEmpty(JFormattedTextField txtField)
+	private static boolean isEmpty(JFormattedTextField txtField)
 	{
 		if (txtField.getText() == null || txtField.getText().equals(""))
 		{
@@ -398,6 +407,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	 * to be modelled with the integer scale on the slider).
 	 *
 	 * @param slider
+	 *            the slider
 	 * @param title
 	 *            The title of the dialog
 	 * @param scaleFactor
@@ -416,6 +426,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 	 * to be modelled with the integer scale on the slider).
 	 *
 	 * @param slider
+	 *            the slider
 	 * @param title
 	 *            The title of the dialog
 	 * @param scaleFactor

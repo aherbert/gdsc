@@ -81,7 +81,7 @@ public class Projection implements PlugInFilter
 		process(imp.getNSlices() + 1, ip2, ip3, null);
 	}
 
-	private void process(int n, ImageProcessor ip1, ImageProcessor ip2, ImageProcessor ip3)
+	private static void process(int n, ImageProcessor ip1, ImageProcessor ip2, ImageProcessor ip3)
 	{
 		if (ip2 == null)
 			return;

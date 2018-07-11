@@ -210,6 +210,9 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	// Stores the list of images last used in the selection options
 	private ArrayList<String> imageList = new ArrayList<>();
 
+	/**
+	 * Instantiates a new colocalisation threshold plugin.
+	 */
 	public ColocalisationThreshold_Plugin()
 	{
 		super(TITLE);
@@ -268,6 +271,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		fillImagesList();
 	}
 
+	@SuppressWarnings("unused")
 	@Override
 	public synchronized void actionPerformed(ActionEvent e)
 	{
@@ -367,7 +371,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		super.close();
 	}
 
-	private void closeImagePlus(ImagePlus w)
+	private static void closeImagePlus(ImagePlus w)
 	{
 		if (w != null)
 			w.close();
@@ -454,7 +458,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		correlate(imp1, imp2);
 	}
 
-	private double getDouble(String value, double defaultValue)
+	private static double getDouble(String value, double defaultValue)
 	{
 		try
 		{
@@ -492,7 +496,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		return true;
 	}
 
-	private boolean isStack(ImagePlus imp)
+	private static boolean isStack(ImagePlus imp)
 	{
 		return (imp != null && imp.getStackSize() > 1);
 	}
@@ -534,7 +538,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		}
 	}
 
-	private String[] getChannels(ImagePlus imp)
+	private static String[] getChannels(ImagePlus imp)
 	{
 		final int c = imp.getNChannels();
 		final String[] result = new String[c];
@@ -543,7 +547,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		return result;
 	}
 
-	private String[] getFrames(ImagePlus imp)
+	private static String[] getFrames(ImagePlus imp)
 	{
 		final int c = imp.getNFrames();
 		final String[] result = new String[c];
@@ -593,6 +597,14 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		return imp;
 	}
 
+	/**
+	 * Perform correlation analysis on two images.
+	 *
+	 * @param imp1
+	 *            the imp 1
+	 * @param imp2
+	 *            the imp 2
+	 */
 	public void correlate(ImagePlus imp1, ImagePlus imp2)
 	{
 		final ImageStack img1 = imp1.getStack();
@@ -898,19 +910,19 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		IJ.showStatus("Done");
 	}
 
-	private String createImageTitle(ImagePlus imp1, ImagePlus imp2)
+	private static String createImageTitle(ImagePlus imp1, ImagePlus imp2)
 	{
 		return imp1.getTitle() + " & " + imp2.getTitle();
 	}
 
-	private void refreshImage(ImagePlus imp, String title, ImageStack img)
+	private static void refreshImage(ImagePlus imp, String title, ImageStack img)
 	{
 		imp.setStack(title, img);
 		imp.show();
 		imp.updateAndDraw();
 	}
 
-	private ImageProcessor createProcessor(ImagePlus imp, int rwidth, int rheight)
+	private static ImageProcessor createProcessor(ImagePlus imp, int rwidth, int rheight)
 	{
 		if (imp.getType() == ImagePlus.GRAY8)
 			return new ByteProcessor(rwidth, rheight);
@@ -1092,7 +1104,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		}
 	}
 
-	private void appendFormat(StringBuilder str, double value, DecimalFormat format)
+	private static void appendFormat(StringBuilder str, double value, DecimalFormat format)
 	{
 		if (Double.isNaN(value))
 			str.append("NaN");
@@ -1101,7 +1113,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		str.append('\t');
 	}
 
-	private void appendFormat(StringBuilder str, double value, DecimalFormat format, String units)
+	private static void appendFormat(StringBuilder str, double value, DecimalFormat format, String units)
 	{
 		if (Double.isNaN(value))
 			str.append("NaN");
@@ -1153,6 +1165,9 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 				(channel1List.getItemCount() != 0) && (channel2List.getItemCount() != 0));
 	}
 
+	/**
+	 * Fill the image list with currently open images.
+	 */
 	public void fillImagesList()
 	{
 		// Find the currently open images
@@ -1179,7 +1194,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 
 		imageList = newImageList;
 
-		// Repopulate the image lists
+		// Re-populate the image lists
 		channel1List.removeAll();
 		channel2List.removeAll();
 
@@ -1201,7 +1216,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		roiList.select(roiIndex);
 	}
 
-	private boolean previousResult(String title)
+	private static boolean previousResult(String title)
 	{
 		for (final String resultTitle : resultsTitles)
 			if (title.startsWith(resultTitle))
@@ -1328,7 +1343,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		{
 			final ColocalisationThreshold.ThresholdResult result = results.get(i);
 			threshold[j] = result.threshold1;
-			R[j] = result.r;
+			R[j] = result.r1;
 			R2[j] = result.r2;
 			if (yMin > R[j])
 				yMin = R[j];

@@ -28,7 +28,10 @@ package gdsc.help;
  */
 public class URL
 {
+	/** The URL for the colocalisation web page. */
 	public static String COLOCALISATION = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/colocalisation";
+	/** The URL for the utility plugins web page. */
 	public static String UTILITY = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/utility";
+	/** The URL for the FindFoci web page. */
 	public static String FIND_FOCI = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/findfoci";
 }

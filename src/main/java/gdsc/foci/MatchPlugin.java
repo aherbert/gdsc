@@ -83,6 +83,7 @@ public class MatchPlugin implements PlugIn
 	 */
 	public static Color UNMATCH2 = new Color(86, 180, 233);
 
+	/** The plugin title. */
 	private static String TITLE = "Match Calculator";
 	private static String[] dTypes = new String[] { "Relative", "Absolute" };
 
@@ -348,7 +349,7 @@ public class MatchPlugin implements PlugIn
 		}
 	}
 
-	private FindFociMemoryResults getFindFociMemoryResults(String resultsName) throws IllegalStateException
+	private static FindFociMemoryResults getFindFociMemoryResults(String resultsName) throws IllegalStateException
 	{
 		final FindFociMemoryResults memoryResults = FindFoci.getResults(resultsName);
 		if (memoryResults == null)
@@ -459,7 +460,7 @@ public class MatchPlugin implements PlugIn
 		return true;
 	}
 
-	private String[] getChannels(ImagePlus imp)
+	private static String[] getChannels(ImagePlus imp)
 	{
 		final int c = imp.getNChannels();
 		final String[] result = new String[c];
@@ -468,7 +469,7 @@ public class MatchPlugin implements PlugIn
 		return result;
 	}
 
-	private String[] getFrames(ImagePlus imp)
+	private static String[] getFrames(ImagePlus imp)
 	{
 		final int c = imp.getNFrames();
 		final String[] result = new String[c];
@@ -554,6 +555,8 @@ public class MatchPlugin implements PlugIn
 	/**
 	 * Creates an ImageJ PointRoi from the list of points, one per slice.
 	 *
+	 * @param imp
+	 *            the imp
 	 * @param array
 	 *            List of points
 	 * @param scaleX
@@ -813,7 +816,7 @@ public class MatchPlugin implements PlugIn
 	 * @param dThreshold
 	 * @return An array of 4 quartile results (or null if there are no points)
 	 */
-	private MatchResult[] compareQuartiles(Coordinate[] actualPoints, Coordinate[] predictedPoints, double dThreshold)
+	private static MatchResult[] compareQuartiles(Coordinate[] actualPoints, Coordinate[] predictedPoints, double dThreshold)
 	{
 		final TimeValuedPoint[] actualValuedPoints = (TimeValuedPoint[]) actualPoints;
 		final TimeValuedPoint[] predictedValuedPoints = (TimeValuedPoint[]) predictedPoints;
@@ -841,7 +844,7 @@ public class MatchPlugin implements PlugIn
 	/**
 	 * Extract all the heights from the two sets of valued points
 	 */
-	private ArrayList<Float> extractHeights(TimeValuedPoint[] actualPoints, TimeValuedPoint[] predictedPoints)
+	private static ArrayList<Float> extractHeights(TimeValuedPoint[] actualPoints, TimeValuedPoint[] predictedPoints)
 	{
 		final HashSet<TimeValuedPoint> nonDuplicates = new HashSet<>();
 		nonDuplicates.addAll(Arrays.asList(actualPoints));
@@ -857,7 +860,7 @@ public class MatchPlugin implements PlugIn
 	/**
 	 * Extract the points that are within the specified limits
 	 */
-	private TimeValuedPoint[] extractPoints(TimeValuedPoint[] points, float lower, float upper)
+	private static TimeValuedPoint[] extractPoints(TimeValuedPoint[] points, float lower, float upper)
 	{
 		final LinkedList<TimeValuedPoint> list = new LinkedList<>();
 		for (final TimeValuedPoint p : points)
@@ -869,7 +872,7 @@ public class MatchPlugin implements PlugIn
 	/**
 	 * Count the points that are within the specified limits
 	 */
-	private int countPoints(TimeValuedPoint[] points, float lower, float upper)
+	private static int countPoints(TimeValuedPoint[] points, float lower, float upper)
 	{
 		int n = 0;
 		for (final TimeValuedPoint p : points)
@@ -878,7 +881,7 @@ public class MatchPlugin implements PlugIn
 		return n;
 	}
 
-	private String createResultsHeader(MatchResult[] qResults)
+	private static String createResultsHeader(MatchResult[] qResults)
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Image 1\t");
@@ -900,7 +903,7 @@ public class MatchPlugin implements PlugIn
 		return sb.toString();
 	}
 
-	private void addQuartileHeader(StringBuilder sb, String quartile)
+	private static void addQuartileHeader(StringBuilder sb, String quartile)
 	{
 		sb.append("\t \t");
 		sb.append(quartile).append(" ").append("N1\t");
@@ -941,7 +944,7 @@ public class MatchPlugin implements PlugIn
 			resultsWindow.append(sb.toString());
 	}
 
-	private void addQuartileResult(StringBuilder sb, MatchResult result)
+	private static void addQuartileResult(StringBuilder sb, MatchResult result)
 	{
 		sb.append("\t \t");
 		sb.append(result.getNumberActual()).append('\t');
@@ -966,7 +969,7 @@ public class MatchPlugin implements PlugIn
 	 * @param falsePositives
 	 * @param falseNegatives
 	 */
-	private void scatterPlot(ImagePlus imp1, ImagePlus imp2, List<PointPair> matches, List<Coordinate> falsePositives,
+	private static void scatterPlot(ImagePlus imp1, ImagePlus imp2, List<PointPair> matches, List<Coordinate> falsePositives,
 			List<Coordinate> falseNegatives)
 	{
 		if (matches.isEmpty() && falsePositives.isEmpty() && falseNegatives.isEmpty())
@@ -1070,7 +1073,7 @@ public class MatchPlugin implements PlugIn
 	 * @param falsePositives
 	 * @param falseNegatives
 	 */
-	private void unmatchedAnalysis(String title1, String title2, List<PointPair> matches,
+	private static void unmatchedAnalysis(String title1, String title2, List<PointPair> matches,
 			List<Coordinate> falsePositives, List<Coordinate> falseNegatives)
 	{
 		if (matches.isEmpty() && falsePositives.isEmpty() && falseNegatives.isEmpty())
@@ -1122,7 +1125,7 @@ public class MatchPlugin implements PlugIn
 		addUnmatchedResult(title1, title2, actualCount, predictedCount);
 	}
 
-	private float[] getQuartiles(ArrayList<Float> heights)
+	private static float[] getQuartiles(ArrayList<Float> heights)
 	{
 		if (heights.isEmpty())
 			return new float[] { 0, 0, 0, 0, 0 };
@@ -1133,7 +1136,7 @@ public class MatchPlugin implements PlugIn
 				heights.get(heights.size() - 1).floatValue() + 1 };
 	}
 
-	private TimeValuedPoint[] extractValuedPoints(List<Coordinate> list)
+	private static TimeValuedPoint[] extractValuedPoints(List<Coordinate> list)
 	{
 		final TimeValuedPoint[] points = new TimeValuedPoint[list.size()];
 		int i = 0;
@@ -1142,7 +1145,7 @@ public class MatchPlugin implements PlugIn
 		return points;
 	}
 
-	private void addUnmatchedResult(String title1, String title2, int[] actualCount, int[] predictedCount)
+	private static void addUnmatchedResult(String title1, String title2, int[] actualCount, int[] predictedCount)
 	{
 		final StringBuilder sb = new StringBuilder();
 		addQuartiles(sb, title1, actualCount);
@@ -1155,7 +1158,7 @@ public class MatchPlugin implements PlugIn
 			unmatchedWindow.append(sb.toString());
 	}
 
-	private void addQuartiles(StringBuilder sb, String imageTitle, int[] counts)
+	private static void addQuartiles(StringBuilder sb, String imageTitle, int[] counts)
 	{
 		// Count the total number of create a scale factor to calculate the percentage
 		int total = 0;
@@ -1200,12 +1203,8 @@ public class MatchPlugin implements PlugIn
 
 		filename = chooser.getDirectory() + chooser.getFileName();
 
-		OutputStreamWriter out = null;
-		try
+		try (final OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(filename), "UTF-8"))
 		{
-			final FileOutputStream fos = new FileOutputStream(filename);
-			out = new OutputStreamWriter(fos, "UTF-8");
-
 			final StringBuilder sb = new StringBuilder();
 			final String newLine = System.getProperty("line.separator");
 			sb.append("# Image 1   = ").append(t1).append(newLine);
@@ -1270,18 +1269,6 @@ public class MatchPlugin implements PlugIn
 		catch (final Exception e)
 		{
 			IJ.log("Unable to save the matches to file: " + e.getMessage());
-		}
-		finally
-		{
-			if (out != null)
-				try
-				{
-					out.close();
-				}
-				catch (final IOException e)
-				{
-					// Ignore
-				}
 		}
 	}
 
@@ -1434,7 +1421,7 @@ public class MatchPlugin implements PlugIn
 			point.value = getValue(resultsArray.get(point.time - 1));
 	}
 
-	private float getValue(FindFociResult result)
+	private static float getValue(FindFociResult result)
 	{
 		switch (findFociResultChoiceIndex)
 		{

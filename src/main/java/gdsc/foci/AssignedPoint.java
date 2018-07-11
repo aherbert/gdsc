@@ -24,19 +24,44 @@
 package gdsc.foci;
 
 /**
- * Stores a 2D/3D point with an assigned Id
+ * Stores a 2D/3D point with an assigned Id.
  */
 public class AssignedPoint extends BasePoint implements Comparable<AssignedPoint>
 {
+	/** The id. */
 	protected int id = 0;
+	
+	/** The assigned id. */
 	protected int assignedId = 0;
 
+	/**
+	 * Instantiates a new assigned point.
+	 *
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 * @param z
+	 *            the z
+	 * @param id
+	 *            the id
+	 */
 	public AssignedPoint(int x, int y, int z, int id)
 	{
 		super(x, y, z);
 		this.id = id;
 	}
 
+	/**
+	 * Instantiates a new assigned point.
+	 *
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 * @param id
+	 *            the id
+	 */
 	public AssignedPoint(int x, int y, int id)
 	{
 		super(x, y);
@@ -44,9 +69,10 @@ public class AssignedPoint extends BasePoint implements Comparable<AssignedPoint
 	}
 
 	/**
-	 * Sets the point Id
+	 * Sets the point Id.
 	 *
 	 * @param id
+	 *            the new id
 	 */
 	public void setId(int id)
 	{
@@ -54,6 +80,8 @@ public class AssignedPoint extends BasePoint implements Comparable<AssignedPoint
 	}
 
 	/**
+	 * Gets the id.
+	 *
 	 * @return the id
 	 */
 	public int getId()
@@ -62,6 +90,8 @@ public class AssignedPoint extends BasePoint implements Comparable<AssignedPoint
 	}
 
 	/**
+	 * Sets the assigned id.
+	 *
 	 * @param assignedId
 	 *            the assignedId to set
 	 */
@@ -71,6 +101,8 @@ public class AssignedPoint extends BasePoint implements Comparable<AssignedPoint
 	}
 
 	/**
+	 * Gets the assigned id.
+	 *
 	 * @return the assignedId
 	 */
 	public int getAssignedId()

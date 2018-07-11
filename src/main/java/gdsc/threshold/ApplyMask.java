@@ -138,16 +138,33 @@ public class ApplyMask implements PlugInFilter
 		return true;
 	}
 
+	/**
+	 * Instantiates a new apply mask.
+	 */
 	public ApplyMask()
 	{
 		init(null, MaskCreater.OPTION_MASK);
 	}
 
+	/**
+	 * Instantiates a new apply mask.
+	 *
+	 * @param imp
+	 *            the imp
+	 */
 	public ApplyMask(ImagePlus imp)
 	{
 		init(imp, MaskCreater.OPTION_MASK);
 	}
 
+	/**
+	 * Instantiates a new apply mask.
+	 *
+	 * @param imp
+	 *            the imp
+	 * @param option
+	 *            the option
+	 */
 	public ApplyMask(ImagePlus imp, int option)
 	{
 		init(imp, option);
@@ -235,7 +252,7 @@ public class ApplyMask implements PlugInFilter
 		imp.updateAndDraw();
 	}
 
-	private int[] createArray(int total)
+	private static int[] createArray(int total)
 	{
 		final int[] array = new int[total];
 		for (int i = 0; i < array.length; i++)

@@ -27,6 +27,9 @@ import org.jdesktop.beansbinding.Converter;
 
 import gdsc.foci.FindFoci;
 
+/**
+ * Convert the centre method  
+ */
 public class CentreMethodConverter extends Converter<Integer, Object>
 {
 	@Override

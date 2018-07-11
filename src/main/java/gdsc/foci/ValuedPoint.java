@@ -30,12 +30,32 @@ public class ValuedPoint extends BasePoint
 {
 	private float value = 0;
 
+	/**
+	 * Instantiates a new valued point.
+	 *
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 * @param z
+	 *            the z
+	 * @param value
+	 *            the value
+	 */
 	public ValuedPoint(int x, int y, int z, float value)
 	{
 		super(x, y, z);
 		this.value = value;
 	}
 
+	/**
+	 * Instantiates a new valued point.
+	 *
+	 * @param point
+	 *            the point
+	 * @param value
+	 *            the value
+	 */
 	public ValuedPoint(AssignedPoint point, float value)
 	{
 		super(point.getXint(), point.getYint(), point.getZint());
@@ -43,6 +63,8 @@ public class ValuedPoint extends BasePoint
 	}
 
 	/**
+	 * Gets the value.
+	 *
 	 * @return the value
 	 */
 	public float getValue()

@@ -41,6 +41,12 @@ public class OptimiserController extends FindFociController implements Runnable
 {
 	private final FindFociOptimiser optimiser = new FindFociOptimiser();
 
+	/**
+	 * Instantiates a new optimiser controller.
+	 *
+	 * @param model
+	 *            the model
+	 */
 	public OptimiserController(FindFociModel model)
 	{
 		super(model);

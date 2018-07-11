@@ -65,24 +65,47 @@ public class SkeletonAnalyser implements PlugInFilter
 	private static boolean s_showOverlay = false;
 	private static boolean s_showTable = true;
 
+	/** The prune junctions. */
 	// Public to allow control of the algorithm in the run(ImageProcessor) method
 	boolean pruneJunctions = false;
+	
+	/** The min length. */
 	int minLength = 0;
+	
+	/** The show node map. */
 	boolean showNodeMap = true;
+	
+	/** The show overlay. */
 	boolean showOverlay = false;
+	
+	/** The show table. */
 	boolean showTable = true;
 
 	private int foreground;
 	private ImagePlus imp;
 
+	/** The constant for a line terminus (end). */
 	public final static byte TERMINUS = (byte) 1;
+	
+	/** The constant for a line edge (middle of the line). */
 	public final static byte EDGE = (byte) 2;
+	
+	/** The constant for a line junction (more than two lines join). */
 	public final static byte JUNCTION = (byte) 4;
+	
+	/** The constant for a line (end or middle). */
 	public final static byte LINE = TERMINUS | EDGE;
+	
+	/** The constant for a node point in a line (terminus or junction). */
 	public final static byte NODE = TERMINUS | JUNCTION;
+	
+	/** The constant for a line skeleton (edge or node). */
 	public final static byte SKELETON = EDGE | NODE;
+	
+	/** The constant to show a pixel has been processed. */
 	public final static byte PROCESSED = (byte) 8;
 
+	/** The constant for each of the 8-connected directions for processing pixels. */
 	public final static byte[] PROCESSED_DIRECTIONS = new byte[] { (byte) 1, (byte) 2, (byte) 4, (byte) 8, (byte) 16,
 			(byte) 32, (byte) 64, (byte) 128 };
 
@@ -181,6 +204,7 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * Skeltonise the image processor. Must be a binary image.
 	 *
 	 * @param ip
+	 *            the ip
 	 * @param trim
 	 *            Eliminate redundant 4-connected pixels if possible.
 	 * @return False if not a binary image
@@ -500,12 +524,14 @@ public class SkeletonAnalyser implements PlugInFilter
 	}
 
 	/**
-	 * Creates a colour image of the skeleton node map: TERMINUS = blue; EDGE = red; JUNCTION = green; PROCESSED = cyan
+	 * Creates a colour image of the skeleton node map: TERMINUS = blue; EDGE = red; JUNCTION = green; PROCESSED = cyan.
 	 *
 	 * @param map
 	 *            The skeleton node map
 	 * @param width
+	 *            the width
 	 * @param height
+	 *            the height
 	 * @return The colour image processor
 	 */
 	public ColorProcessor createMapImage(byte[] map, int width, int height)
@@ -810,13 +836,15 @@ public class SkeletonAnalyser implements PlugInFilter
 	}
 
 	/**
-	 * Add the direction to the set that have been processed
+	 * Add the direction to the set that have been processed.
 	 *
 	 * @param direction
+	 *            the direction
 	 * @param processedDirections
+	 *            the processed directions
 	 * @return The direction
 	 */
-	private int addDirection(int direction, byte[] processedDirections)
+	private static int addDirection(int direction, byte[] processedDirections)
 	{
 		processedDirections[0] |= PROCESSED_DIRECTIONS[direction];
 		return direction;
@@ -936,7 +964,7 @@ public class SkeletonAnalyser implements PlugInFilter
 			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 400, 500);
 	}
 
-	private String createResultsHeader()
+	private static String createResultsHeader()
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("ID\t");
@@ -968,6 +996,14 @@ public class SkeletonAnalyser implements PlugInFilter
 
 	// ------------------------------------
 	// Adapted from ij.plugin.filter.Binary
+	/**
+	 * Skeletonize.
+	 *
+	 * @param ip
+	 *            the ip
+	 * @param trim
+	 *            the trim
+	 */
 	// ------------------------------------
 	void skeletonize(ImageProcessor ip, boolean trim)
 	{
@@ -984,6 +1020,13 @@ public class SkeletonAnalyser implements PlugInFilter
 			cleanupExtraCornerPixels(ip);
 	}
 
+	/**
+	 * Checks for edge pixels.
+	 *
+	 * @param ip
+	 *            the ip
+	 * @return true, if successful
+	 */
 	boolean hasEdgePixels(ImageProcessor ip)
 	{
 		final int width = ip.getWidth();
@@ -1004,6 +1047,15 @@ public class SkeletonAnalyser implements PlugInFilter
 		return edgePixels;
 	}
 
+	/**
+	 * Expand.
+	 *
+	 * @param ip
+	 *            the ip
+	 * @param hasEdgePixels
+	 *            the has edge pixels
+	 * @return the image processor
+	 */
 	ImageProcessor expand(ImageProcessor ip, boolean hasEdgePixels)
 	{
 		if (hasEdgePixels)
@@ -1022,6 +1074,17 @@ public class SkeletonAnalyser implements PlugInFilter
 			return ip;
 	}
 
+	/**
+	 * Shrink.
+	 *
+	 * @param ip
+	 *            the ip
+	 * @param ip2
+	 *            the ip 2
+	 * @param hasEdgePixels
+	 *            the has edge pixels
+	 * @return the image processor
+	 */
 	ImageProcessor shrink(ImageProcessor ip, ImageProcessor ip2, boolean hasEdgePixels)
 	{
 		if (hasEdgePixels)
@@ -1088,6 +1151,11 @@ public class SkeletonAnalyser implements PlugInFilter
 
 	/**
 	 * Initialises the global width and height variables. Creates the direction offset tables.
+	 *
+	 * @param width
+	 *            the width
+	 * @param height
+	 *            the height
 	 */
 	public void initialise(int width, int height)
 	{

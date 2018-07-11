@@ -37,6 +37,12 @@ public class NullController extends FindFociController
 	private int lowerLimit = 15;
 	private int upperLimit = 220;
 
+	/**
+	 * Instantiates a new null controller.
+	 *
+	 * @param model
+	 *            the model
+	 */
 	public NullController(FindFociModel model)
 	{
 		super(model);
