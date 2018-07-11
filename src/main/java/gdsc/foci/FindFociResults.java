@@ -73,8 +73,7 @@ public class FindFociResults implements Cloneable
 	public FindFociResults(ImagePlus mask, FindFociResult[] results, FindFociStatistics stats)
 	{
 		this.mask = mask;
-		this.results = (results == null) ? new ArrayList<>(0)
-				: new ArrayList<>(Arrays.asList(results));
+		this.results = (results == null) ? new ArrayList<>(0) : new ArrayList<>(Arrays.asList(results));
 		this.stats = stats;
 	}
 

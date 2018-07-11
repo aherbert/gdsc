@@ -1146,7 +1146,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowOpened(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -1156,7 +1156,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowClosing(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -1167,7 +1167,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowClosed(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -1177,7 +1177,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowIconified(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -1187,7 +1187,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowDeiconified(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -1197,7 +1197,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowActivated(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -1207,7 +1207,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowDeactivated(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -1217,7 +1217,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
 	 */
 	@Override
@@ -1313,7 +1313,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
 	 */
 	@Override
@@ -1323,7 +1323,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
 	 */
 	/*
@@ -1375,7 +1375,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
 	 */
 	@Override
@@ -1385,7 +1385,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
 	 */
 	@Override
@@ -1395,7 +1395,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
 	 */
 	/*
@@ -1449,7 +1449,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
 	 */
 	@Override

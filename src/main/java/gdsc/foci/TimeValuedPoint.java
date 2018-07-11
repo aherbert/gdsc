@@ -30,10 +30,10 @@ import gdsc.core.match.BasePoint;
  */
 public class TimeValuedPoint extends BasePoint
 {
-	
+
 	/** The time. */
 	protected int time;
-	
+
 	/** The value. */
 	protected float value;
 

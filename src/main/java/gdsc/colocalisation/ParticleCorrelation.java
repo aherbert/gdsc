@@ -376,7 +376,8 @@ public class ParticleCorrelation implements PlugIn
 		twSummary.append(sb.toString());
 	}
 
-	private static void addResult(String title, int id, int value, double x, double y, double z, int n, double s1, double s2)
+	private static void addResult(String title, int id, int value, double x, double y, double z, int n, double s1,
+			double s2)
 	{
 		final StringBuilder sb = new StringBuilder(title);
 		sb.append(id).append('\t');

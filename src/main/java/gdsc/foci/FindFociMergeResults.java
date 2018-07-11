@@ -30,7 +30,7 @@ public class FindFociMergeResults
 {
 	/** The results array. */
 	public FindFociResult[] resultsArray;
-	
+
 	/** The original number of peaks. */
 	public int originalNumberOfPeaks;
 

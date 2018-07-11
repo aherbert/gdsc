@@ -539,7 +539,8 @@ public class PointAlignerPlugin implements PlugIn
 	 *            the results array
 	 * @return The height below which any point is considered an error
 	 */
-	private static float getThresholdHeight(AssignedPoint[] points, int[] assigned, ArrayList<FindFociResult> resultsArray)
+	private static float getThresholdHeight(AssignedPoint[] points, int[] assigned,
+			ArrayList<FindFociResult> resultsArray)
 	{
 		final ArrayList<Float> heights = new ArrayList<>(points.length);
 		for (int maximaId = 0; maximaId < assigned.length; maximaId++)

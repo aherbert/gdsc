@@ -322,9 +322,9 @@ public class Align_Images implements PlugIn
 		return true;
 	}
 
-	private static ImageProcessor alignImages(ImageProcessor refIp, ImageProcessor maskIp, ImageProcessor targetIp, int slice,
-			int minXShift, int maxXShift, int minYShift, int maxYShift, FloatProcessor fp, int subPixelMethod,
-			int interpolationMethod, boolean clipOutput)
+	private static ImageProcessor alignImages(ImageProcessor refIp, ImageProcessor maskIp, ImageProcessor targetIp,
+			int slice, int minXShift, int maxXShift, int minYShift, int maxYShift, FloatProcessor fp,
+			int subPixelMethod, int interpolationMethod, boolean clipOutput)
 	{
 		double scoreMax = 0;
 		int xShiftMax = 0, yShiftMax = 0;
@@ -629,8 +629,8 @@ public class Align_Images implements PlugIn
 		return (coord);
 	}
 
-	private static double calculateScore(ImageProcessor refIp, ImageProcessor maskIp, ImageProcessor targetIp, int xShift,
-			int yShift)
+	private static double calculateScore(ImageProcessor refIp, ImageProcessor maskIp, ImageProcessor targetIp,
+			int xShift, int yShift)
 	{
 		// Same dimensions at current
 		double sumX = 0;

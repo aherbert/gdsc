@@ -526,7 +526,9 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 		if (choices.length > 1)
 		{
 			// Restore previous selection
-			final int c = (sliceOptions[offset] > 0 && sliceOptions[offset] <= choices.length) ? sliceOptions[offset] - 1 : 0;
+			final int c = (sliceOptions[offset] > 0 && sliceOptions[offset] <= choices.length)
+					? sliceOptions[offset] - 1
+					: 0;
 			gd.addChoice(title, choices, choices[c]);
 			return true;
 		}

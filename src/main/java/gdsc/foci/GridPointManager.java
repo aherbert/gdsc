@@ -47,7 +47,7 @@ public class GridPointManager
 
 	/** Constant for finding the highest point. */
 	public static final int HIGHEST = 0;
-	
+
 	/** Constant for finding the closest point. */
 	public static final int CLOSEST = 1;
 
@@ -228,8 +228,7 @@ public class GridPointManager
 				if (grid[x][y] != null)
 				{
 					@SuppressWarnings("unchecked")
-					final
-					LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[x][y];
+					final LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[x][y];
 
 					for (final GridPoint p : points)
 						if (p.isAssigned() == assigned)
@@ -301,8 +300,7 @@ public class GridPointManager
 		if (grid[x][y] != null)
 		{
 			@SuppressWarnings("unchecked")
-			final
-			LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[x][y];
+			final LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[x][y];
 
 			for (final GridPoint p : points)
 				if (p.isAssigned() == assigned && p.getX() == xCoord && p.getY() == yCoord)
@@ -371,8 +369,7 @@ public class GridPointManager
 				if (grid[x][y] != null)
 				{
 					@SuppressWarnings("unchecked")
-					final
-					LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[x][y];
+					final LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[x][y];
 
 					for (final GridPoint p : points)
 						if (p.isAssigned() == assigned)

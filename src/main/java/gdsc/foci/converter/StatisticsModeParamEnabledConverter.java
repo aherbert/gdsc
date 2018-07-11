@@ -28,7 +28,7 @@ import org.jdesktop.beansbinding.Converter;
 import gdsc.foci.FindFociProcessor;
 
 /**
- * Convert the statistics mode to a flag indicating if the statistics parameter is enabled  
+ * Convert the statistics mode to a flag indicating if the statistics parameter is enabled
  */
 public class StatisticsModeParamEnabledConverter extends Converter<Integer, Boolean>
 {

@@ -51,19 +51,19 @@ import ij.process.ShortProcessor;
 public class MaskCreater implements PlugIn
 {
 	private static final String TITLE = "Mask Creator";
-	
+
 	/** The options string. */
 	public static String[] options = new String[] { "Use as mask", "Min Display Value", "Use ROI", "Threshold" };
-	
+
 	/** The option for using a mask. */
 	public static int OPTION_MASK = 0;
-	
+
 	/** The option for using the min display value. */
 	public static int OPTION_MIN_VALUE = 1;
-	
+
 	/** The option for using the ROI. */
 	public static int OPTION_USE_ROI = 2;
-	
+
 	/** The option to perform thresholding. */
 	public static int OPTION_THRESHOLD = 3;
 

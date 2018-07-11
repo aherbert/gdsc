@@ -358,7 +358,8 @@ public class Align_Stacks implements PlugIn
 		return isMatchingDimensions(refImp.getDimensions(), targetImp.getDimensions());
 	}
 
-	private static ImageProcessor createComposite(ImagePlus imp, int frame, int projectionMethod, WindowMethod windowFunction)
+	private static ImageProcessor createComposite(ImagePlus imp, int frame, int projectionMethod,
+			WindowMethod windowFunction)
 	{
 		// Extract the channels using the specified projection method
 		final FloatProcessor[] tiles = new FloatProcessor[imp.getNChannels()];

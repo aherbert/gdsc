@@ -164,8 +164,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 		gd.addPreviewCheckbox(pfr);
 		gd.addDialogListener(this);
 		@SuppressWarnings("rawtypes")
-		final
-		Vector fields = gd.getNumericFields();
+		final Vector fields = gd.getNumericFields();
 		sigma1field = (TextField) fields.elementAt(0);
 		sigma2field = (TextField) fields.elementAt(1);
 		previewCheckbox = gd.getPreviewCheckbox();

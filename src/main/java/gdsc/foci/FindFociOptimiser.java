@@ -1013,7 +1013,7 @@ public class FindFociOptimiser
 			if (predictedPoints != null)
 				PointManager.savePoints(predictedPoints, resultFile + ".points.csv");
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			IJ.log("Failed to write to the output file '" + resultFile + ".points.csv': " + e.getMessage());
 		}
@@ -2349,7 +2349,7 @@ public class FindFociOptimiser
 	 * Extract the points for the given image. If a file exists in the same directory as the image with the suffix .csv,
 	 * .xyz, or .txt then the program will attempt to load 3D coordinates from file. Otherwise the points are taken from
 	 * the the ROI.
-	 * 
+	 *
 	 * The points are then filtered to include only those within the mask region (if the mask dimensions match those of
 	 * the image).
 	 *
@@ -3060,7 +3060,7 @@ public class FindFociOptimiser
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see java.lang.Runnable#run()
 		 */
 		@Override
@@ -3313,7 +3313,7 @@ public class FindFociOptimiser
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
 	 */
 	@Override
@@ -3323,7 +3323,7 @@ public class FindFociOptimiser
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
 	 */
 	@Override
@@ -3333,7 +3333,7 @@ public class FindFociOptimiser
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
 	 */
 	@Override
@@ -3343,7 +3343,7 @@ public class FindFociOptimiser
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
 	 */
 	@Override
@@ -3422,7 +3422,7 @@ public class FindFociOptimiser
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowOpened(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -3432,7 +3432,7 @@ public class FindFociOptimiser
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowClosing(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -3443,7 +3443,7 @@ public class FindFociOptimiser
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowClosed(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -3453,7 +3453,7 @@ public class FindFociOptimiser
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowIconified(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -3463,7 +3463,7 @@ public class FindFociOptimiser
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowDeiconified(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -3473,7 +3473,7 @@ public class FindFociOptimiser
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowActivated(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -3483,7 +3483,7 @@ public class FindFociOptimiser
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.WindowListener#windowDeactivated(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -3734,7 +3734,7 @@ public class FindFociOptimiser
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.TextListener#textValueChanged(java.awt.event.TextEvent)
 	 */
 	@Override
@@ -3745,7 +3745,7 @@ public class FindFociOptimiser
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
 	 */
 	@Override

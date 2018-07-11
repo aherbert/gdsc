@@ -333,7 +333,8 @@ public class SpotDistance implements PlugIn
 
 			// Build an image and mask for the frame
 			final ImageStack s1 = new ImageStack(imp.getWidth(), imp.getHeight(), imp.getNSlices());
-			final ImageStack s1b = (doDualChannel) ? new ImageStack(imp.getWidth(), imp.getHeight(), imp.getNSlices()) : null;
+			final ImageStack s1b = (doDualChannel) ? new ImageStack(imp.getWidth(), imp.getHeight(), imp.getNSlices())
+					: null;
 
 			for (int slice = 1; slice <= imp.getNSlices(); slice++)
 			{
@@ -782,10 +783,10 @@ public class SpotDistance implements PlugIn
 			if (Utils.isInterrupted())
 				return;
 
-			final ArrayList<DistanceResult> resultsArray = analyseResults(prevResultsArray, ff, croppedImp, ffResult, frame,
-					channel, overlay);
+			final ArrayList<DistanceResult> resultsArray = analyseResults(prevResultsArray, ff, croppedImp, ffResult,
+					frame, channel, overlay);
 			for (final DistanceResult result : resultsArray)
-				addResult(frame, channel, region,  result);
+				addResult(frame, channel, region, result);
 
 			ArrayList<DistanceResult> resultsArray2 = null;
 			if (s1b != null)
@@ -799,7 +800,7 @@ public class SpotDistance implements PlugIn
 
 				resultsArray2 = analyseResults(prevResultsArray2, ff, croppedImp2, results2, frame, c2, overlay2);
 				for (final DistanceResult result : resultsArray2)
-					addResult(frame, c2, region,  result);
+					addResult(frame, c2, region, result);
 			}
 
 			if (trackObjects)
@@ -1167,7 +1168,8 @@ public class SpotDistance implements PlugIn
 		int minY = Integer.MAX_VALUE;
 		int maxX = 0;
 		int maxY = 0;
-		final ImageStack outputStack = new ImageStack(inputStack.getWidth(), inputStack.getHeight(), inputStack.getSize());
+		final ImageStack outputStack = new ImageStack(inputStack.getWidth(), inputStack.getHeight(),
+				inputStack.getSize());
 		for (int slice = 1; slice <= inputStack.getSize(); slice++)
 		{
 			final ImageProcessor ip = inputStack.getProcessor(slice);
@@ -1397,7 +1399,7 @@ public class SpotDistance implements PlugIn
 		return area;
 	}
 
-	private void addResult(int frame, int channel, int region,  DistanceResult result)
+	private void addResult(int frame, int channel, int region, DistanceResult result)
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append(resultEntry);

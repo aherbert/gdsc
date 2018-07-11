@@ -28,7 +28,7 @@ import org.jdesktop.beansbinding.Converter;
 import gdsc.foci.FindFoci;
 
 /**
- * Convert the peak method  
+ * Convert the peak method
  */
 public class PeakMethodConverter extends Converter<Integer, Object>
 {

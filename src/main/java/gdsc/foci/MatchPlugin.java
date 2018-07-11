@@ -816,7 +816,8 @@ public class MatchPlugin implements PlugIn
 	 * @param dThreshold
 	 * @return An array of 4 quartile results (or null if there are no points)
 	 */
-	private static MatchResult[] compareQuartiles(Coordinate[] actualPoints, Coordinate[] predictedPoints, double dThreshold)
+	private static MatchResult[] compareQuartiles(Coordinate[] actualPoints, Coordinate[] predictedPoints,
+			double dThreshold)
 	{
 		final TimeValuedPoint[] actualValuedPoints = (TimeValuedPoint[]) actualPoints;
 		final TimeValuedPoint[] predictedValuedPoints = (TimeValuedPoint[]) predictedPoints;
@@ -969,8 +970,8 @@ public class MatchPlugin implements PlugIn
 	 * @param falsePositives
 	 * @param falseNegatives
 	 */
-	private static void scatterPlot(ImagePlus imp1, ImagePlus imp2, List<PointPair> matches, List<Coordinate> falsePositives,
-			List<Coordinate> falseNegatives)
+	private static void scatterPlot(ImagePlus imp1, ImagePlus imp2, List<PointPair> matches,
+			List<Coordinate> falsePositives, List<Coordinate> falseNegatives)
 	{
 		if (matches.isEmpty() && falsePositives.isEmpty() && falseNegatives.isEmpty())
 			return;
@@ -1413,7 +1414,8 @@ public class MatchPlugin implements PlugIn
 
 		for (final PointPair pair : matches)
 		{
-			final TimeValuedPoint point = (TimeValuedPoint) ((findFociImageIndex == 1) ? pair.getPoint1() : pair.getPoint2());
+			final TimeValuedPoint point = (TimeValuedPoint) ((findFociImageIndex == 1) ? pair.getPoint1()
+					: pair.getPoint2());
 			point.value = getValue(resultsArray.get(point.time - 1));
 		}
 		final TimeValuedPoint[] points = extractValuedPoints((findFociImageIndex == 1) ? fN : fP);

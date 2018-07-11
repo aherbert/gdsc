@@ -62,7 +62,7 @@ import ij.process.ImageProcessor;
 public class Align_Images_FFT implements PlugIn
 {
 	private static final String TITLE = "Align Images FFT";
-	
+
 	/** The available window function. */
 	public static final String[] windowFunctions;
 	private static int myWindowFunction = 3;

@@ -30,15 +30,15 @@ public class CalculationResult
 {
 	/** The shift distance. */
 	public double distance;
-	
+
 	/** The first Mander's coefficient */
-	public double m1; 
-	
+	public double m1;
+
 	/** The second Mander's coefficient */
 	public double m2;
-	
+
 	/** The correlation */
-	public double r; 
+	public double r;
 
 	/**
 	 * Instantiates a new calculation result.

@@ -28,7 +28,7 @@ import java.text.DecimalFormat;
 import org.jdesktop.beansbinding.Converter;
 
 /**
- * Convert a double to a formatted string  
+ * Convert a double to a formatted string
  */
 public class DoubleConverter extends Converter<Double, String>
 {

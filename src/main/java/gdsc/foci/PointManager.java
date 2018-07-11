@@ -66,7 +66,7 @@ public class PointManager
 		if (!file.exists())
 			if (file.getParent() != null)
 				new File(file.getParent()).mkdirs();
-		
+
 		try (final OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(filename)))
 		{
 			// Save results to file

@@ -548,7 +548,7 @@ public class FindFociRunner extends Thread
 
 	/**
 	 * Finish. Call this to shut down the thread.
-	 * 
+	 *
 	 * @see java.lang.Thread#run()
 	 */
 	public void finish()

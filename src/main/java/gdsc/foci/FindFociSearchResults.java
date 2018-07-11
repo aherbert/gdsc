@@ -30,7 +30,7 @@ public class FindFociSearchResults
 {
 	/** The results array. */
 	public FindFociResult[] resultsArray;
-	
+
 	/** The saddle points. */
 	public FindFociSaddleList[] saddlePoints;
 

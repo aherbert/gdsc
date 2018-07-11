@@ -30,10 +30,10 @@ public class IntersectResult
 {
 	/** The first sum. */
 	public long sum1;
-	
+
 	/** The second sum. */
 	public long sum2;
-	
+
 	/** The correlation. */
 	public double r;
 

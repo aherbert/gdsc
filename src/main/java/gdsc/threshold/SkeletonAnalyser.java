@@ -68,16 +68,16 @@ public class SkeletonAnalyser implements PlugInFilter
 	/** The prune junctions. */
 	// Public to allow control of the algorithm in the run(ImageProcessor) method
 	boolean pruneJunctions = false;
-	
+
 	/** The min length. */
 	int minLength = 0;
-	
+
 	/** The show node map. */
 	boolean showNodeMap = true;
-	
+
 	/** The show overlay. */
 	boolean showOverlay = false;
-	
+
 	/** The show table. */
 	boolean showTable = true;
 
@@ -86,22 +86,22 @@ public class SkeletonAnalyser implements PlugInFilter
 
 	/** The constant for a line terminus (end). */
 	public final static byte TERMINUS = (byte) 1;
-	
+
 	/** The constant for a line edge (middle of the line). */
 	public final static byte EDGE = (byte) 2;
-	
+
 	/** The constant for a line junction (more than two lines join). */
 	public final static byte JUNCTION = (byte) 4;
-	
+
 	/** The constant for a line (end or middle). */
 	public final static byte LINE = TERMINUS | EDGE;
-	
+
 	/** The constant for a node point in a line (terminus or junction). */
 	public final static byte NODE = TERMINUS | JUNCTION;
-	
+
 	/** The constant for a line skeleton (edge or node). */
 	public final static byte SKELETON = EDGE | NODE;
-	
+
 	/** The constant to show a pixel has been processed. */
 	public final static byte PROCESSED = (byte) 8;
 
@@ -582,7 +582,7 @@ public class SkeletonAnalyser implements PlugInFilter
 		final int y = xyz[1];
 
 		final boolean isInner = (y != 0 && y != maxy - 1) && (x != 0 && x != maxx - 1); // not necessary, but faster than
-																				  // isWithin
+		// isWithin
 		for (int d = 0; d < 8; d++)
 		{ // walk around the point and note every no-line->line transition
 			boolean pixelSet = prevPixelSet;

@@ -117,7 +117,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 					{
 						// Initialise the working list
 						if (pList == null)
-						 // Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
+							// Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
 							pList = new int[i + 1];
 
 						// Search the local area marking all equal neighbour points as maximum
@@ -192,7 +192,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 					{
 						// Initialise the working list
 						if (pList == null)
-						 // Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
+							// Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
 							pList = new int[i + 1];
 
 						// Search the local area marking all equal neighbour points as maximum
@@ -300,7 +300,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 
 						if (v2 > v0)
 							isPlateau = false;
-							//break; // Cannot break as we want to label the entire plateau.
+						//break; // Cannot break as we want to label the entire plateau.
 						else if (v2 == v0)
 						{
 							// Add this to the search
@@ -341,7 +341,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 
 						if (v2 > v0)
 							isPlateau = false;
-							//break; // Cannot break as we want to label the entire plateau.
+						//break; // Cannot break as we want to label the entire plateau.
 						else if (v2 == v0)
 						{
 							// Add this to the search
@@ -478,7 +478,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 			int remaining = histogram[level];
 
 			if (remaining == 0)
-			 continue;
+				continue;
 
 			// Use the idle counter to ensure that we exit the loop if no pixels have been processed for two cycles
 			while (remaining > 0)

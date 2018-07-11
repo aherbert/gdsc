@@ -28,7 +28,7 @@ import org.jdesktop.beansbinding.Converter;
 import gdsc.foci.FindFociProcessor;
 
 /**
- * Convert the search method to a flag indicating if the search parameter is enabled  
+ * Convert the search method to a flag indicating if the search parameter is enabled
  */
 public class SearchParamEnabledConverter extends Converter<Integer, Boolean>
 {

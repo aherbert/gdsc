@@ -79,16 +79,17 @@ public class GaussianPlugin implements PlugIn
 		angle = (float) gd.getNextNumber();
 		noise = (float) gd.getNextNumber();
 
-		final float[] img = createGaussian(width, height, new float[] { amplitude }, new float[] { x }, new float[] { y },
-				new float[] { x_sd }, new float[] { y_sd }, new float[] { (float) (angle * Math.PI / 180.0) });
+		final float[] img = createGaussian(width, height, new float[] { amplitude }, new float[] { x },
+				new float[] { y }, new float[] { x_sd }, new float[] { y_sd },
+				new float[] { (float) (angle * Math.PI / 180.0) });
 		final FloatProcessor fp = new FloatProcessor(width, height, img, null);
 		if (noise > 0)
 			fp.noise(noise);
 		new ImagePlus("Gaussian", fp).show();
 	}
 
-	private static float[] createGaussian(int width, int height, float[] amplitude, float[] xpos, float[] ypos, float[] sx,
-			float[] sy, float[] angle)
+	private static float[] createGaussian(int width, int height, float[] amplitude, float[] xpos, float[] ypos,
+			float[] sx, float[] sy, float[] angle)
 	{
 		final float[] img = new float[width * height];
 

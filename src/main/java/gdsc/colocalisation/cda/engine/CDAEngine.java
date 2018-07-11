@@ -80,8 +80,8 @@ public class CDAEngine
 		// Create the workers
 		for (int i = 0; i < threads; i++)
 		{
-			final CDAWorker worker = new CDAWorker(imageStack1, roiStack1, imageStack2, roiStack2, confinedStack, denom1,
-					denom2, results, jobs, totalSteps);
+			final CDAWorker worker = new CDAWorker(imageStack1, roiStack1, imageStack2, roiStack2, confinedStack,
+					denom1, denom2, results, jobs, totalSteps);
 			final Thread t = new Thread(worker);
 
 			workers.add(worker);

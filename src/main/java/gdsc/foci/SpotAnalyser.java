@@ -389,7 +389,8 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 		createResultsWindow();
 
 		// Create a statistical summary for [channel][inside/outside][particle]
-		final DescriptiveStatistics[][][] stats = new DescriptiveStatistics[imp.getNChannels() + 1][2][noOfParticles + 1];
+		final DescriptiveStatistics[][][] stats = new DescriptiveStatistics[imp.getNChannels() + 1][2][noOfParticles +
+				1];
 
 		final ImageStack stack = imp.getImageStack();
 		for (int channel = 1; channel <= imp.getNChannels(); channel++)

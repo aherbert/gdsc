@@ -177,7 +177,7 @@ public class RGBThresholdAnalyser implements PlugIn
 				}
 		if (error != 0)
 			System.out.printf("%s [%d] %d error pixels (sum = %d)\n", name, channel, error, sum);
-			//Utils.display("Error ch "+channel, ep);
+		//Utils.display("Error ch "+channel, ep);
 
 		final double[] stats = getStatistics(h);
 

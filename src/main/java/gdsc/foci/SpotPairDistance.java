@@ -120,7 +120,7 @@ public class SpotPairDistance implements PlugIn
 		{
 			final GenericDialog gd = new GenericDialog(TITLE + " Tool Options");
 			gd.addMessage(
-				//@formatter:off
+			//@formatter:off
 				TextUtils.wrap(
 				"Click on a multi-channel image and the distance between the " +
 				"center-of-mass of spots in two channels will be measured. " +

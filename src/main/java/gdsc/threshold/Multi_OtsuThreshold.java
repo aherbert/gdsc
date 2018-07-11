@@ -61,16 +61,16 @@ public class Multi_OtsuThreshold implements PlugInFilter
 
 	/** Set to true to ignore zero. Allow use of plugin from other code. */
 	public boolean ignoreZero = false;
-	
+
 	/** Set to true to show histogram. Allow use of plugin from other code. */
 	public boolean showHistogram = false;
-	
+
 	/** Set to true to show regions. Allow use of plugin from other code. */
 	public boolean showRegions = false;
-	
+
 	/** Set to true to show masks. Allow use of plugin from other code. */
 	public boolean showMasks = false;
-	
+
 	/** Set to true to log messages. Allow use of plugin from other code. */
 	public boolean logMessages = false;
 
@@ -537,7 +537,8 @@ public class Multi_OtsuThreshold implements PlugInFilter
 							// t3
 							for (int m = k + 1; m < NGRAY - mlevel + 3; m++) // t4
 							{
-								final float Sq = H[1][i] + H[i + 1][j] + H[j + 1][k] + H[k + 1][m] + H[m + 1][NGRAY - 1];
+								final float Sq = H[1][i] + H[i + 1][j] + H[j + 1][k] + H[k + 1][m] +
+										H[m + 1][NGRAY - 1];
 								if (maxSig < Sq)
 								{
 									t[1] = i;

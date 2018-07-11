@@ -650,10 +650,11 @@ public class FindFociAdvancedOptions extends JDialog
 		autoBinding_7.setConverter(new SliderDoubleConverter());
 		autoBinding_7.bind();
 		//
-		final BeanProperty<JFormattedTextField, Boolean> jFormattedTextFieldBeanProperty_1 = BeanProperty.create("enabled");
-		final AutoBinding<FindFociModel, Integer, JFormattedTextField, Boolean> autoBinding_9 = Bindings.createAutoBinding(
-				UpdateStrategy.READ, model, findFociModelBeanProperty_6, txtCentreParam,
-				jFormattedTextFieldBeanProperty_1);
+		final BeanProperty<JFormattedTextField, Boolean> jFormattedTextFieldBeanProperty_1 = BeanProperty
+				.create("enabled");
+		final AutoBinding<FindFociModel, Integer, JFormattedTextField, Boolean> autoBinding_9 = Bindings
+				.createAutoBinding(UpdateStrategy.READ, model, findFociModelBeanProperty_6, txtCentreParam,
+						jFormattedTextFieldBeanProperty_1);
 		autoBinding_9.setConverter(new CentreParamEnabledConverter());
 		autoBinding_9.bind();
 		//
@@ -664,19 +665,21 @@ public class FindFociAdvancedOptions extends JDialog
 		autoBinding_10.bind();
 		//
 		final BeanProperty<JFormattedTextField, String> jFormattedTextFieldBeanProperty_2 = BeanProperty.create("text");
-		final AutoBinding<FindFociModel, Double, JFormattedTextField, String> autoBinding_11 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_7, txtCentreParam,
-				jFormattedTextFieldBeanProperty_2);
+		final AutoBinding<FindFociModel, Double, JFormattedTextField, String> autoBinding_11 = Bindings
+				.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_7, txtCentreParam,
+						jFormattedTextFieldBeanProperty_2);
 		autoBinding_11.setConverter(new DoubleConverter());
 		autoBinding_11.bind();
 		//
-		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_8 = BeanProperty.create("showMaskMaximaAsDots");
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_8 = BeanProperty
+				.create("showMaskMaximaAsDots");
 		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_8 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_8, chckbxShowMaskMaxima,
 				jCheckBoxBeanProperty);
 		autoBinding_8.bind();
 		//
-		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_9 = BeanProperty.create("removeEdgeMaxima");
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_9 = BeanProperty
+				.create("removeEdgeMaxima");
 		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_12 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_9, chckbxRemoveEdgeMaxima,
 				jCheckBoxBeanProperty);
@@ -718,7 +721,8 @@ public class FindFociAdvancedOptions extends JDialog
 				jCheckBoxBeanProperty);
 		autoBinding_18.bind();
 		//
-		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_16 = BeanProperty.create("markUsingOverlay");
+		final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_16 = BeanProperty
+				.create("markUsingOverlay");
 		final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_19 = Bindings.createAutoBinding(
 				UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_16, chckbxMarkUsingOverlay,
 				jCheckBoxBeanProperty);

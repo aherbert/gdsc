@@ -28,7 +28,7 @@ import java.util.List;
 import org.jdesktop.beansbinding.Converter;
 
 /**
- * Convert the image list to true if not empty  
+ * Convert the image list to true if not empty
  */
 public class ValidImagesConverter extends Converter<List<String>, Boolean>
 {

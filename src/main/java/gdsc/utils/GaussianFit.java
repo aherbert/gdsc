@@ -55,7 +55,8 @@ public class GaussianFit implements PlugInFilter
 		{
 			// Get a class in this package to find the package class loader
 			final GaussianPlugin pluginClass = new GaussianPlugin();
-			final Class c = Class.forName("gdsc.smlm.ij.plugins.GaussianFit", true, pluginClass.getClass().getClassLoader());
+			final Class c = Class.forName("gdsc.smlm.ij.plugins.GaussianFit", true,
+					pluginClass.getClass().getClassLoader());
 
 			// ... it exists on the classpath
 

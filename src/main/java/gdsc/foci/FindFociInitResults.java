@@ -33,22 +33,22 @@ public class FindFociInitResults
 {
 	/** The image pixel array. */
 	public Object image;
-	
+
 	/** The types pixel array (marks saddles, maxima, etc). */
 	public byte[] types;
-	
+
 	/** The maxima pixel array. */
 	public int[] maxima;
-	
+
 	/** The histogram. */
 	public Histogram histogram;
-	
+
 	/** The statistics. */
 	public FindFociStatistics stats;
-	
+
 	/** The original image pixel array. */
 	public Object originalImage;
-	
+
 	/** The original image plus. */
 	public ImagePlus originalImp;
 

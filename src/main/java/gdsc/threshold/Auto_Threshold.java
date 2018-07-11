@@ -338,7 +338,8 @@ public class Auto_Threshold implements PlugIn
 			}
 			else
 			{ //just one slice, leave as it is
-				final Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram);
+				final Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog,
+						doIstackHistogram);
 				if (((Integer) result[0]) != -1 && stackSize == 1 && imp.getBitDepth() == 16)
 				{
 					imp.setDisplayRange(0, 65535);
@@ -386,9 +387,9 @@ public class Auto_Threshold implements PlugIn
 	 * @param doIset
 	 *            flag to set the threshold on the image
 	 * @param doIlog
-	 *            flag to log the threshold 
+	 *            flag to log the threshold
 	 * @param doIstackHistogram
-	 *            flag to use the stack histogram 
+	 *            flag to use the stack histogram
 	 * @return an Object[] array with the threshold and the ImagePlus.
 	 *         Does NOT show the new, image; just returns it.
 	 */
@@ -435,7 +436,7 @@ public class Auto_Threshold implements PlugIn
 				temp = ip.getHistogram();
 				for (int j = 0; j < data.length; j++)
 					data[j] += temp[j];
-					//IJ.log(""+j+": "+ data[j]);
+				//IJ.log(""+j+": "+ data[j]);
 			}
 			imp.setSliceWithoutUpdate(currentSlice);
 		}
@@ -478,7 +479,8 @@ public class Auto_Threshold implements PlugIn
 					} //threshold all of them
 					imp.setSliceWithoutUpdate(currentSlice);
 				}
-				else for (y = 0; y < ye; y++)
+				else
+					for (y = 0; y < ye; y++)
 						for (x = 0; x < xe; x++)
 							if (ip.getPixel(x, y) > threshold)
 								ip.putPixel(x, y, c);

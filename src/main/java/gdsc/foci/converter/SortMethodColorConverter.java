@@ -28,7 +28,7 @@ import java.awt.Color;
 import org.jdesktop.beansbinding.Converter;
 
 /**
- * Convert the sort method to a colour  
+ * Convert the sort method to a colour
  */
 public class SortMethodColorConverter extends Converter<Boolean, Color>
 {

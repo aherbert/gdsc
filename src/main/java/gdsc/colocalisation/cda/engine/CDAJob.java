@@ -30,10 +30,10 @@ public class CDAJob
 {
 	/** The job number. */
 	public int n;
-	
+
 	/** The x shift. */
 	public int x;
-	
+
 	/** The y shift. */
 	public int y;
 

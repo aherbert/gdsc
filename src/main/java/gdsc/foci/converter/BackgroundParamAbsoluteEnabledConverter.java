@@ -28,7 +28,7 @@ import org.jdesktop.beansbinding.Converter;
 import gdsc.foci.FindFociProcessor;
 
 /**
- * Convert the background method to a flag indicating if absolute is enabled  
+ * Convert the background method to a flag indicating if absolute is enabled
  */
 public class BackgroundParamAbsoluteEnabledConverter extends Converter<Integer, Boolean>
 {

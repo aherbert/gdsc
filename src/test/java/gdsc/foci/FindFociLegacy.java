@@ -1239,7 +1239,7 @@ public class FindFociLegacy
 			final boolean isInner = (y != 0 && y != maxy - 1) && (x != 0 && x != maxx - 1); // not necessary, but faster
 			// than isWithin
 			for (int d = 0; d < 8; d += 2)
-			 if (isInner || isWithinXY(x, y, d))
+				if (isInner || isWithinXY(x, y, d))
 				{
 					final int index2 = index + offset[d];
 					final byte v = types[index2];
@@ -1320,7 +1320,8 @@ public class FindFociLegacy
 	 * @param stats
 	 *            the stats
 	 */
-	private static void thresholdMask(int[] image, int[] maxima, int peakValue, String autoThresholdMethod, double[] stats)
+	private static void thresholdMask(int[] image, int[] maxima, int peakValue, String autoThresholdMethod,
+			double[] stats)
 	{
 		final int[] histogram = buildHistogram(image, maxima, peakValue, round(stats[STATS_MAX]));
 		final int threshold = getThreshold(autoThresholdMethod, histogram);
@@ -1902,7 +1903,7 @@ public class FindFociLegacy
 				{
 					// Initialise the working list
 					if (pList == null)
-					 // Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
+						// Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
 						pList = new int[i + 1];
 
 					// Search the local area marking all equal neighbour points as maximum
@@ -2007,7 +2008,7 @@ public class FindFociLegacy
 
 					if (v2 > v0)
 						isPlateau = false;
-						//break; // Cannot break as we want to label the entire plateau.
+					//break; // Cannot break as we want to label the entire plateau.
 					else if (v2 == v0)
 					{
 						// Add this to the search
@@ -2162,7 +2163,7 @@ public class FindFociLegacy
 			int remaining = histogram[level];
 
 			if (remaining == 0)
-			 continue;
+				continue;
 
 			// Use the idle counter to ensure that we exit the loop if no pixels have been processed for two cycles
 			while (remaining > 0)
@@ -3576,8 +3577,8 @@ public class FindFociLegacy
 	 * @param updatePeakAboveSaddle
 	 *            the update peak above saddle
 	 */
-	private static void reanalysePeak(int[] image, int[] maxima, int[] peakIdMap, int peakId, int[] saddle, int[] result,
-			boolean updatePeakAboveSaddle)
+	private static void reanalysePeak(int[] image, int[] maxima, int[] peakIdMap, int peakId, int[] saddle,
+			int[] result, boolean updatePeakAboveSaddle)
 	{
 		if (updatePeakAboveSaddle)
 		{

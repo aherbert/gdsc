@@ -68,8 +68,7 @@ public class FindFociMemoryResults implements Cloneable
 	 */
 	public FindFociMemoryResults(ImagePlus imp, FindFociResult[] results)
 	{
-		this(imp, (results == null) ? new ArrayList<FindFociResult>(0)
-				: new ArrayList<>(Arrays.asList(results)));
+		this(imp, (results == null) ? new ArrayList<FindFociResult>(0) : new ArrayList<>(Arrays.asList(results)));
 	}
 
 	/**

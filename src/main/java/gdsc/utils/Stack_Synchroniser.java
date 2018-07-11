@@ -389,7 +389,8 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 				fillChildList();
 
 		parentImage = (synchroniseButton.isSelected())
-				? WindowManager.getImage(extractId(this.imageChoice.getSelectedItem())) : null;
+				? WindowManager.getImage(extractId(this.imageChoice.getSelectedItem()))
+				: null;
 
 		updateSynchronisation();
 	}

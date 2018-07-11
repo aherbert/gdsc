@@ -30,7 +30,7 @@ public class AssignedPoint extends BasePoint implements Comparable<AssignedPoint
 {
 	/** The id. */
 	protected int id = 0;
-	
+
 	/** The assigned id. */
 	protected int assignedId = 0;
 

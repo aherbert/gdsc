@@ -416,9 +416,9 @@ public class SpotSeparation implements PlugInFilter
 		final double centreParameter = 0;
 		final double fractionParameter = 0;
 
-		final FindFociResults results = ff.findMaxima(new ImagePlus("tmp", ip), null, backgroundMethod, backgroundParameter,
-				autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter,
-				outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter);
+		final FindFociResults results = ff.findMaxima(new ImagePlus("tmp", ip), null, backgroundMethod,
+				backgroundParameter, autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod,
+				peakParameter, outputType, sortIndex, options, blur, centreMethod, centreParameter, fractionParameter);
 		return results;
 	}
 
@@ -796,8 +796,8 @@ public class SpotSeparation implements PlugInFilter
 	 * @return The orientation in range -pi/2 to pi/2 from the x-axis, incrementing clockwise if the Y-axis points
 	 *         downwards
 	 */
-	private static double calculateOrientation(ImageProcessor ip, ImageProcessor spotIp, float xpos, float ypos, int peakId,
-			float[] com)
+	private static double calculateOrientation(ImageProcessor ip, ImageProcessor spotIp, float xpos, float ypos,
+			int peakId, float[] com)
 	{
 		// Find the limits of the spot and calculate the centre of mass
 		int maxu = (int) xpos;

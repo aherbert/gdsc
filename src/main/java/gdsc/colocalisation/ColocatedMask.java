@@ -419,7 +419,8 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 	private static double getThreshold(ImagePlus imp, int channel)
 	{
 		// Composite image have different processors
-		final ImageProcessor ip = (imp.isComposite()) ? ((CompositeImage) imp).getProcessor(channel) : imp.getProcessor();
+		final ImageProcessor ip = (imp.isComposite()) ? ((CompositeImage) imp).getProcessor(channel)
+				: imp.getProcessor();
 
 		final double t = ip.getMinThreshold();
 		return (t != ImageProcessor.NO_THRESHOLD) ? t : Double.NEGATIVE_INFINITY;

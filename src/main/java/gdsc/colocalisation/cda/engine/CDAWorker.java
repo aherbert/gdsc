@@ -96,7 +96,7 @@ public class CDAWorker implements Runnable
 
 	/**
 	 * Perform the CDA shift and calculate the results
-	 * 
+	 *
 	 * @param n
 	 *            the job number
 	 * @param x
