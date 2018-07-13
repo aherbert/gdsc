@@ -645,10 +645,12 @@ public class PointAlignerPlugin implements PlugIn
 	}
 
 	/**
-	 * Count points that are above the given height
+	 * Count points that are above the given height.
 	 *
 	 * @param missedHeights
+	 *            the missed heights
 	 * @param height
+	 *            the height
 	 * @return The count
 	 */
 	private static int countPoints(List<Float> missedHeights, double height)

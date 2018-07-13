@@ -708,6 +708,9 @@ public class FindFociTest
 	 * Generate a scale so that at the configured zDepth the scale is 1.5.
 	 *
 	 * @param z
+	 *            the z
+	 * @param depth
+	 *            the depth
 	 * @return The scale
 	 */
 	private static double createWidthScale(double z, double depth)

@@ -348,7 +348,9 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	 * Filtered the set of options using the allowed methods array.
 	 *
 	 * @param options
+	 *            the options
 	 * @param allowedMethods
+	 *            the allowed methods
 	 * @return filtered options
 	 */
 	private static String[] extractMethods(String[] options, String[] allowedMethods)
@@ -403,14 +405,15 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 
 	/**
 	 * Calculate the Mander's coefficients and Pearson correlation coefficient (R) between the two input channels within
-	 * the intersect of
-	 * their masks.
+	 * the intersect of their masks.
 	 *
 	 * @param s1
+	 *            the s 1
 	 * @param s2
+	 *            the s 2
 	 * @param s3
+	 *            the s 3
 	 * @return an array containing: M1, M2, R, the number of overlapping pixels; the % total area for the overlap;
-	 *
 	 */
 	private double[] correlate(SliceCollection s1, SliceCollection s2, SliceCollection s3)
 	{
@@ -745,9 +748,10 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		}
 
 		/**
-		 * Creates a mask using the specified thresholding method
+		 * Creates a mask using the specified thresholding method.
 		 *
 		 * @param method
+		 *            the method
 		 */
 		private void createMask(String method)
 		{

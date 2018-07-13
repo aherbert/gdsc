@@ -373,10 +373,11 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	}
 
 	/**
-	 * Checks if there is more than one z-value in the coordinates
+	 * Checks if there is more than one z-value in the coordinates.
 	 *
 	 * @param points
-	 * @return
+	 *            the points
+	 * @return true, if is 3d
 	 */
 	private static boolean is3D(TimeValuedPoint[] points)
 	{
@@ -390,10 +391,11 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	}
 
 	/**
-	 * Checks if there is a non-zero value within the points
+	 * Checks if there is a non-zero value within the points.
 	 *
 	 * @param points
-	 * @return
+	 *            the points
+	 * @return true, if is valued
 	 */
 	private static boolean isValued(TimeValuedPoint[] points)
 	{

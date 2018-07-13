@@ -1254,13 +1254,20 @@ public class SpotDistance implements PlugIn
 	 * Check the peak circularity. Add an overlay of the spots if requested.
 	 *
 	 * @param prev
+	 *            the prev
 	 * @param ff
+	 *            the ff
 	 * @param croppedImp
+	 *            the cropped imp
 	 * @param ffResult
+	 *            the ff result
 	 * @param frame
+	 *            the frame
 	 * @param channel
+	 *            the channel
 	 * @param overlay
-	 * @return
+	 *            the overlay
+	 * @return the results
 	 */
 	private ArrayList<DistanceResult> analyseResults(ArrayList<DistanceResult> prev, FindFoci ff, ImagePlus croppedImp,
 			FindFociResults ffResult, int frame, int channel, Overlay overlay)

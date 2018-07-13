@@ -502,7 +502,7 @@ public class MatchPlugin implements PlugIn
 	 * Adds an ROI point overlay to the image using the specified colour.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param list
 	 *            the list
 	 * @param color
@@ -517,7 +517,7 @@ public class MatchPlugin implements PlugIn
 	 * Adds an ROI point overlay to the image using the specified colour.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param list
 	 *            the list
 	 * @param color
@@ -556,7 +556,7 @@ public class MatchPlugin implements PlugIn
 	 * Creates an ImageJ PointRoi from the list of points, one per slice.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param array
 	 *            List of points
 	 * @param scaleX
@@ -809,11 +809,14 @@ public class MatchPlugin implements PlugIn
 	}
 
 	/**
-	 * Compare the match results for the points within each height quartile
+	 * Compare the match results for the points within each height quartile.
 	 *
 	 * @param actualPoints
+	 *            the actual points
 	 * @param predictedPoints
+	 *            the predicted points
 	 * @param dThreshold
+	 *            the d threshold
 	 * @return An array of 4 quartile results (or null if there are no points)
 	 */
 	private static MatchResult[] compareQuartiles(Coordinate[] actualPoints, Coordinate[] predictedPoints,
@@ -960,15 +963,18 @@ public class MatchPlugin implements PlugIn
 	}
 
 	/**
-	 * Build a scatter plot of the matches and the false positives/negatives using the image values for the X/Y axes
+	 * Build a scatter plot of the matches and the false positives/negatives using the image values for the X/Y axes.
 	 *
 	 * @param imp1
 	 *            - Actual
 	 * @param imp2
 	 *            - Predicted
 	 * @param matches
+	 *            the matches
 	 * @param falsePositives
+	 *            the false positives
 	 * @param falseNegatives
+	 *            the false negatives
 	 */
 	private static void scatterPlot(ImagePlus imp1, ImagePlus imp2, List<PointPair> matches,
 			List<Coordinate> falsePositives, List<Coordinate> falseNegatives)
@@ -1064,15 +1070,18 @@ public class MatchPlugin implements PlugIn
 	}
 
 	/**
-	 * Build a table showing the percentage of unmatched points that fall within each quartile of the matched points
+	 * Build a table showing the percentage of unmatched points that fall within each quartile of the matched points.
 	 *
 	 * @param title1
 	 *            - Actual
 	 * @param title2
 	 *            - Predicted
 	 * @param matches
+	 *            the matches
 	 * @param falsePositives
+	 *            the false positives
 	 * @param falseNegatives
+	 *            the false negatives
 	 */
 	private static void unmatchedAnalysis(String title1, String title2, List<PointPair> matches,
 			List<Coordinate> falsePositives, List<Coordinate> falseNegatives)
@@ -1183,13 +1192,18 @@ public class MatchPlugin implements PlugIn
 	}
 
 	/**
-	 * Saves the matches and the false positives/negatives to file
+	 * Saves the matches and the false positives/negatives to file.
 	 *
 	 * @param d
+	 *            the d
 	 * @param matches
+	 *            the matches
 	 * @param falsePositives
+	 *            the false positives
 	 * @param falseNegatives
+	 *            the false negatives
 	 * @param result
+	 *            the result
 	 */
 	private void saveMatches(double d, List<PointPair> matches, List<Coordinate> falsePositives,
 			List<Coordinate> falseNegatives, MatchResult result)
@@ -1274,15 +1288,14 @@ public class MatchPlugin implements PlugIn
 	}
 
 	/**
-	 * Build a table showing the matched pairs and unmatched points
+	 * Build a table showing the matched pairs and unmatched points.
 	 *
-	 * @param title1
-	 *            - Actual
-	 * @param title2
-	 *            - Predicted
 	 * @param matches
+	 *            the matches
 	 * @param falsePositives
+	 *            the false positives
 	 * @param falseNegatives
+	 *            the false negatives
 	 */
 	private void showMatches(List<PointPair> matches, List<Coordinate> falsePositives, List<Coordinate> falseNegatives)
 	{

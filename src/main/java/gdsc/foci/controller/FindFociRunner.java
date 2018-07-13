@@ -164,6 +164,8 @@ public class FindFociRunner extends Thread
 	 * Invoke the Thread.wait() method
 	 *
 	 * @throws InterruptedException
+	 *             if any thread interrupted the current thread before or while the current thread was waiting for a
+	 *             notification. The interrupted status of the current thread is cleared when this exception is thrown.
 	 */
 	private synchronized void pause() throws InterruptedException
 	{
@@ -408,10 +410,12 @@ public class FindFociRunner extends Thread
 	}
 
 	/**
-	 * Compare two models and identify the state of the calculation
+	 * Compare two models and identify the state of the calculation.
 	 *
 	 * @param model
+	 *            the model
 	 * @param previousModel
+	 *            the previous model
 	 * @return The state
 	 */
 	private FindFociState compareModels(FindFociModel model, FindFociModel previousModel)

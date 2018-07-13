@@ -696,10 +696,12 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	}
 
 	/**
-	 * Return the single index associated with the x,y coordinates
+	 * Return the single index associated with the x,y coordinates.
 	 *
 	 * @param x
+	 *            the x
 	 * @param y
+	 *            the y
 	 * @return The index
 	 */
 	private int getIndex(int x, int y)

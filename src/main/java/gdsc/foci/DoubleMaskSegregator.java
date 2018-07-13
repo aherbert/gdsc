@@ -278,9 +278,9 @@ public class DoubleMaskSegregator implements PlugIn
 	}
 
 	/**
-	 * Build a custom LUT that helps show the classes
+	 * Build a custom LUT that helps show the classes.
 	 *
-	 * @return
+	 * @return the lut
 	 */
 	private static LUT createLUT()
 	{
@@ -297,9 +297,12 @@ public class DoubleMaskSegregator implements PlugIn
 	 * Copied from ij.plugin.LutLoader
 	 *
 	 * @param reds
+	 *            the reds
 	 * @param greens
+	 *            the greens
 	 * @param blues
-	 * @return
+	 *            the blues
+	 * @return the number of colours
 	 */
 	private static int ice(byte[] reds, byte[] greens, byte[] blues)
 	{
@@ -323,9 +326,13 @@ public class DoubleMaskSegregator implements PlugIn
 	 * Modified to set the first position to zero.
 	 *
 	 * @param reds
+	 *            the reds
 	 * @param greens
+	 *            the greens
 	 * @param blues
+	 *            the blues
 	 * @param nColors
+	 *            the number of colors
 	 */
 	private static void interpolateWithZero(byte[] reds, byte[] greens, byte[] blues, int nColors)
 	{

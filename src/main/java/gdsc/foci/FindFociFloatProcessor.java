@@ -143,9 +143,8 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 	 *
 	 * @param data
 	 *            The image data (must be sorted)
-	 * @param doSort
-	 *            True if the data should be sorted
 	 * @param indices
+	 *            the indices
 	 * @return The image histogram
 	 */
 	private FloatHistogram buildHistogram(float[] data, int[] indices)

@@ -246,7 +246,9 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	 * Filtered the set of options using the allowed methods array.
 	 *
 	 * @param options
+	 *            the options
 	 * @param allowedMethods
+	 *            the allowed methods
 	 * @return filtered options
 	 */
 	private static String[] extractMethods(String[] options, String[] allowedMethods)
@@ -263,10 +265,12 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	}
 
 	/**
-	 * Create the union of the two masks
+	 * Create the union of the two masks.
 	 *
 	 * @param maskStack
+	 *            the mask stack
 	 * @param maskStack2
+	 *            the mask stack 2
 	 * @return the new mask
 	 */
 	private static ImageStack unionMask(ImageStack maskStack, ImageStack maskStack2)
@@ -279,10 +283,12 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	}
 
 	/**
-	 * Create the intersect of the two masks
+	 * Create the intersect of the two masks.
 	 *
 	 * @param maskStack
+	 *            the mask stack
 	 * @param maskStack2
+	 *            the mask stack 2
 	 * @return the new mask
 	 */
 	private static ImageStack intersectMask(ImageStack maskStack, ImageStack maskStack2)
@@ -295,10 +301,12 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	}
 
 	/**
-	 * Create the union of the two masks
+	 * Create the union of the two masks.
 	 *
 	 * @param mask1
+	 *            the mask 1
 	 * @param mask2
+	 *            the mask 2
 	 * @return the new mask
 	 */
 	private static ByteProcessor unionMask(ByteProcessor mask1, ByteProcessor mask2)
@@ -315,10 +323,12 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	}
 
 	/**
-	 * Create the intersect of the two masks
+	 * Create the intersect of the two masks.
 	 *
 	 * @param mask1
+	 *            the mask 1
 	 * @param mask2
+	 *            the mask 2
 	 * @return the new mask
 	 */
 	private static ByteProcessor intersectMask(ByteProcessor mask1, ByteProcessor mask2)
@@ -339,7 +349,9 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	 * their masks.
 	 *
 	 * @param s1
+	 *            the s 1
 	 * @param s2
+	 *            the s 2
 	 * @return an array containing: the number of overlapping pixels; the % total area for the overlap; R; M1; M2
 	 */
 	private double[] correlate(SliceCollection s1, SliceCollection s2)
@@ -510,10 +522,10 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 		}
 
 		/**
-		 * Creates a mask using the specified thresholding method
+		 * Creates a mask using the specified thresholding method.
 		 *
-		 * @param ip
 		 * @param method
+		 *            the method
 		 */
 		private void createMask(String method)
 		{

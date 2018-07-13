@@ -550,9 +550,12 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * within the provided range. All other points a zeros.
 	 *
 	 * @param pointBounds
+	 *            the point bounds
 	 * @param params
+	 *            the params
 	 * @param range
-	 * @return
+	 *            the range
+	 * @return the float processor
 	 */
 	private FloatProcessor createWeightMap(Rectangle pointBounds, double[] params, double range)
 	{
@@ -620,10 +623,11 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	}
 
 	/**
-	 * Find the bounding rectangle that contains all the pixels that will be required for processing
+	 * Find the bounding rectangle that contains all the pixels that will be required for processing.
 	 *
 	 * @param ip
-	 * @return
+	 *            the ip
+	 * @return the rectangle
 	 */
 	private Rectangle createBounds(ImageProcessor ip)
 	{
@@ -662,9 +666,9 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	}
 
 	/**
-	 * Build the convolution kernels
+	 * Build the convolution kernels.
 	 *
-	 * @return
+	 * @return the convolution kernels
 	 */
 	private HashMap<Integer, float[]> createKernels()
 	{
@@ -725,10 +729,15 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * the x distance.
 	 *
 	 * @param fp
+	 *            the fp
 	 * @param centreX
+	 *            the centre X
 	 * @param centreY
+	 *            the centre Y
 	 * @param cellRadius
+	 *            the cell radius
 	 * @param width
+	 *            the width
 	 */
 	private void createDoGKernel(FloatProcessor fp, double centreX, double centreY, int cellRadius, double width)
 	{
@@ -769,14 +778,20 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	}
 
 	/**
-	 * Old method used to create straight line kernels
+	 * Old method used to create straight line kernels.
 	 *
 	 * @param halfWidth
+	 *            the half width
 	 * @param cx
+	 *            the cx
 	 * @param cy
+	 *            the cy
 	 * @param degreesToRadians
+	 *            the degrees to radians
 	 * @param rotation
+	 *            the rotation
 	 * @param fp
+	 *            the fp
 	 */
 	@SuppressWarnings("unused")
 	private void createAliasedLines(int halfWidth, int cx, int cy, double degreesToRadians, int rotation,
@@ -799,12 +814,16 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	}
 
 	/**
-	 * Spread a value of 1 using bilinear weighting around the point
+	 * Spread a value of 1 using bilinear weighting around the point.
 	 *
 	 * @param fp
+	 *            the fp
 	 * @param x
+	 *            the x
 	 * @param y
+	 *            the y
 	 * @param value
+	 *            the value
 	 */
 	private void add(FloatProcessor fp, double x, double y, float value)
 	{
@@ -862,9 +881,10 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	}
 
 	/**
-	 * Debugging method to show the results of convolution
+	 * Debugging method to show the results of convolution.
 	 *
 	 * @param convolved
+	 *            the convolved
 	 */
 	@SuppressWarnings("unused")
 	private void showConvolvedImages(HashMap<Integer, FloatProcessor> convolved)
@@ -1264,10 +1284,14 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 * Find an ellipse that optimises the fit to the polygon detected edges.
 	 *
 	 * @param roi
+	 *            the roi
 	 * @param params
+	 *            the params
 	 * @param weightMap
+	 *            the weight map
 	 * @param angle
-	 * @return
+	 *            the angle
+	 * @return the ellipse parameters
 	 */
 	private double[] fitPolygonalCell(PolygonRoi roi, double[] params, FloatProcessor weightMap, FloatProcessor angle)
 	{
@@ -1328,14 +1352,15 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 
 	/**
 	 * Estimate the starting ellipse using the eccentricity around the central moments
-	 * <p>
-	 *
-	 * @see Burger & Burge, Digital Image Processing, An Algorithmic Introduction using Java (1st Edition), pp231
 	 *
 	 * @param roi
-	 * @param height
+	 *            the roi
 	 * @param width
-	 * @return
+	 *            the width
+	 * @param height
+	 *            the height
+	 * @return the double[]
+	 * @see "Burger & Burge, Digital Image Processing, An Algorithmic Introduction using Java (1st Edition), pp231"
 	 */
 	private double[] estimateStartPoint(PolygonRoi roi, int width, int height)
 	{

@@ -1129,8 +1129,9 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * Add the point rois to the overlay configuring the hyperstack position if necessary.
 	 *
 	 * @param imp
+	 *            the imp
 	 * @param rois
-	 * @param overlay
+	 *            the rois
 	 */
 	private static void addRoiToOverlay(ImagePlus imp, Roi[] rois)
 	{
@@ -1141,8 +1142,12 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * Add the point rois to the overlay configuring the hyperstack position if necessary.
 	 *
 	 * @param imp
+	 *            the imp
 	 * @param rois
+	 *            the rois
 	 * @param overlay
+	 *            the overlay
+	 * @return the overlay
 	 */
 	private static Overlay addRoiToOverlay(ImagePlus imp, Roi[] rois, Overlay overlay)
 	{
@@ -1659,9 +1664,10 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	}
 
 	/**
-	 * Removes any PointRoi from the overlay
+	 * Removes any PointRoi from the overlay.
 	 *
 	 * @param overlay
+	 *            the overlay
 	 * @return The reduced overlay (or null)
 	 */
 	private static Overlay removeOverlayPointRoi(Overlay overlay)
@@ -2369,8 +2375,6 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	/**
 	 * Builds the empty result entry. This can be used to build
 	 *
-	 * @param extraTabs
-	 *            the extra tabs
 	 * @return the string
 	 */
 	private synchronized String buildEmptyResultEntry()

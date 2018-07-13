@@ -746,7 +746,11 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * Edge/terminus points are marked as processed.
 	 *
 	 * @param map
+	 *            the map
 	 * @param startIndex
+	 *            the start index
+	 * @param code
+	 *            the code
 	 * @return The line data: startX, startY, endX, endY, length
 	 */
 	private float[] extend(byte[] map, int startIndex, ChainCode code)
@@ -762,8 +766,11 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * Will not start in any direction that has previously been used.
 	 *
 	 * @param map
+	 *            the map
 	 * @param startIndex
+	 *            the start index
 	 * @param code
+	 *            the code
 	 * @param processedDirections
 	 *            Single byte flag containing previously used directions
 	 * @return The line data: startX, startY, endX, endY, length
@@ -1172,10 +1179,12 @@ public class SkeletonAnalyser implements PlugInFilter
 	}
 
 	/**
-	 * Return the single index associated with the x,y coordinates
+	 * Return the single index associated with the x,y coordinates.
 	 *
 	 * @param x
+	 *            the x
 	 * @param y
+	 *            the y
 	 * @return The index
 	 */
 	private int getIndex(int x, int y)
@@ -1187,7 +1196,9 @@ public class SkeletonAnalyser implements PlugInFilter
 	 * Convert the single index into x,y coords, Input array must be length >= 2.
 	 *
 	 * @param index
+	 *            the index
 	 * @param xy
+	 *            the xy
 	 * @return The xy array
 	 */
 	private int[] getXY(int index, int[] xy)

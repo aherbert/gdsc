@@ -344,7 +344,9 @@ public class TimeValuePointManager
 	 * Reads lines from the input until the first record is reached. Leaves the line variable at the first record.
 	 *
 	 * @param input
+	 *            the input
 	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
 	private void skipHeader(BufferedReader input) throws IOException
 	{

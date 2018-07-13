@@ -98,7 +98,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 */
 	protected int[] offset2;
 	//protected int dStart;
-	
+
 	/** Array storing a flag for each offset if the total shift is 1, e.g. 1,0,0 or 0,1,0. */
 	protected boolean[] flatEdge;
 	private Rectangle bounds = null;
@@ -415,7 +415,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * Extract the image into a linear array stacked in zyx order.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 * @return the image object
 	 */
 	protected abstract Object extractImage(ImagePlus imp);
@@ -1124,10 +1124,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Finds the borders of peak regions
+	 * Finds the borders of peak regions.
 	 *
 	 * @param maxima
+	 *            the maxima
 	 * @param types
+	 *            the types
 	 */
 	private void findBorders(int[] maxima, byte[] types)
 	{
@@ -1333,9 +1335,15 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * For each peak in the maxima image, perform thresholding using the specified method.
 	 *
 	 * @param pixels
+	 *            the pixels
 	 * @param maxima
-	 * @param s
+	 *            the maxima
+	 * @param peakValue
+	 *            the peak value
 	 * @param autoThresholdMethod
+	 *            the auto threshold method
+	 * @param stats
+	 *            the stats
 	 */
 	private void thresholdMask(Object pixels, int[] maxima, int peakValue, String autoThresholdMethod,
 			FindFociStatistics stats)
@@ -1515,13 +1523,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Set all pixels outside the ROI to EXCLUDED
+	 * Set all pixels outside the ROI to EXCLUDED.
 	 *
 	 * @param imp
 	 *            The input image
 	 * @param types
 	 *            The types array used within the peak finding routine (same size as imp)
 	 * @param isLogging
+	 *            True if logging
 	 * @return 1 if masking was performed, else 0
 	 */
 	private int excludeOutsideROI(ImagePlus imp, byte[] types, boolean isLogging)
@@ -1599,12 +1608,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Set all pixels outside the Mask to EXCLUDED
+	 * Set all pixels outside the Mask to EXCLUDED.
 	 *
-	 * @param imp
-	 *            The mask image
+	 * @param mask
+	 *            the mask
 	 * @param types
 	 *            The types array used within the peak finding routine
+	 * @param isLogging
+	 *            the is logging
 	 * @return 1 if masking was performed, else 0
 	 */
 	private int excludeOutsideMask(ImagePlus mask, byte[] types, boolean isLogging)
@@ -1763,8 +1774,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 *
 	 * @param histogram
 	 *            The image histogram
-	 * @param stats
-	 *            the stats
 	 * @return Array containing: min, max, av, stdDev, sum
 	 */
 	private static double[] getStatistics(Histogram histogram)
@@ -2931,13 +2940,22 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * - Centre-of-mass (within a bounding box of max value defined by the centreParameter)
 	 * - Gaussian fit (Using a 2D projection defined by the centreParameter: (1) Maximum value; (other) Average value)
 	 *
-	 * @param image
+	 * @param pixels
+	 *            the pixels
+	 * @param searchPixels
+	 *            the search pixels
 	 * @param maxima
+	 *            the maxima
 	 * @param types
+	 *            the types
 	 * @param resultsArray
+	 *            the results array
 	 * @param originalNumberOfPeaks
+	 *            the original number of peaks
 	 * @param centreMethod
+	 *            the centre method
 	 * @param centreParameter
+	 *            the centre parameter
 	 */
 	private void locateMaxima(Object pixels, Object searchPixels, int[] maxima, byte[] types,
 			FindFociResult[] resultsArray, int originalNumberOfPeaks, int centreMethod, double centreParameter)
@@ -3142,8 +3160,17 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * Extract a sub-image from the given input image using the specified boundaries. The minValue is subtracted from
 	 * all pixels. All pixels below the minValue are ignored (set to zero).
 	 *
-	 * @param result
 	 * @param maxima
+	 *            the maxima
+	 * @param min_xyz
+	 *            the min xyz
+	 * @param dimensions
+	 *            the dimensions
+	 * @param maximaId
+	 *            the maxima id
+	 * @param minValue
+	 *            the min value
+	 * @return the float[]
 	 */
 	private float[] extractSubImage(int[] maxima, int[] min_xyz, int[] dimensions, int maximaId, float minValue)
 	{
@@ -3320,10 +3347,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * Finds the centre of the image using a 2D Gaussian fit to projection along the Z-axis.
 	 *
 	 * @param subImage
+	 *            the sub image
 	 * @param dimensions
+	 *            the dimensions
 	 * @param projectionMethod
 	 *            (0) Average value; (1) Maximum value
-	 * @return
+	 * @return the centre of the image
 	 */
 	private int[] findCentreGaussianFit(float[] subImage, int[] dimensions, int projectionMethod)
 	{

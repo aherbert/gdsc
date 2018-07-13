@@ -874,7 +874,7 @@ public class FindFociLegacy
 	 * Only blurs the current channel and frame for use in the FindFoci algorithm.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param blur
 	 *            The blur standard deviation
 	 * @return the blurred image
@@ -1101,10 +1101,12 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Finds the borders of peak regions
+	 * Finds the borders of peak regions.
 	 *
 	 * @param maxima
+	 *            the maxima
 	 * @param types
+	 *            the types
 	 */
 	private void findBorders(int[] maxima, byte[] types)
 	{
@@ -1434,13 +1436,14 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Set all pixels outside the ROI to PROCESSED
+	 * Set all pixels outside the ROI to PROCESSED.
 	 *
 	 * @param imp
 	 *            The input image
 	 * @param types
 	 *            The types array used within the peak finding routine (same size as imp)
 	 * @param isLogging
+	 *            True if logging
 	 * @return 1 if masking was performed, else 0
 	 */
 	private int excludeOutsideROI(ImagePlus imp, byte[] types, boolean isLogging)
@@ -1518,12 +1521,14 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Set all pixels outside the Mask to PROCESSED
+	 * Set all pixels outside the Mask to PROCESSED.
 	 *
-	 * @param imp
-	 *            The mask image
+	 * @param mask
+	 *            the mask
 	 * @param types
 	 *            The types array used within the peak finding routine
+	 * @param isLogging
+	 *            the is logging
 	 * @return 1 if masking was performed, else 0
 	 */
 	private int excludeOutsideMask(ImagePlus mask, byte[] types, boolean isLogging)
@@ -1581,7 +1586,7 @@ public class FindFociLegacy
 	 * Build a histogram using all pixels not marked as EXCLUDED.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param image
 	 *            the image
 	 * @param types
@@ -1619,7 +1624,7 @@ public class FindFociLegacy
 	 * Build a histogram using all pixels.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param image
 	 *            The image
 	 * @return The image histogram
@@ -1832,12 +1837,6 @@ public class FindFociLegacy
 	 *            The threshold below which no pixels are processed.
 	 * @return Maxima sorted by value.
 	 */
-	/**
-	 * @param image
-	 * @param types
-	 * @param threshold
-	 * @return
-	 */
 	private Coordinate[] getSortedMaxPoints(int[] image, int[] maxima, byte[] types, int globalMin, int threshold)
 	{
 		final ArrayList<Coordinate> maxPoints = new ArrayList<>(500);
@@ -1954,18 +1953,25 @@ public class FindFociLegacy
 	 * plateau maximum.
 	 *
 	 * @param image
+	 *            the image
 	 * @param maxima
+	 *            the maxima
 	 * @param types
+	 *            the types
 	 * @param globalMin
+	 *            the global min
 	 * @param threshold
+	 *            the threshold
 	 * @param index0
-	 * @param x0
-	 * @param y0
-	 * @param z0
+	 *            the index 0
 	 * @param v0
+	 *            the v 0
 	 * @param id
+	 *            the id
 	 * @param maxPoints
+	 *            the max points
 	 * @param pList
+	 *            the list
 	 * @return True if this is a true plateau, false if the plateau reaches a higher point
 	 */
 	private boolean expandMaximum(int[] image, int[] maxima, byte[] types, int globalMin, int threshold, int index0,
@@ -2084,10 +2090,14 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Initialises the maxima image using the maxima Id for each point
+	 * Initialises the maxima image using the maxima Id for each point.
 	 *
 	 * @param maxima
+	 *            the maxima
 	 * @param maxPoints
+	 *            the max points
+	 * @param resultsArray
+	 *            the results array
 	 */
 	private void assignMaxima(int[] maxima, Coordinate[] maxPoints, ArrayList<int[]> resultsArray)
 	{
@@ -2465,12 +2475,21 @@ public class FindFociLegacy
 	 * - Gaussian fit (Using a 2D projection defined by the centreParameter: (1) Maximum value; (other) Average value)
 	 *
 	 * @param image
+	 *            the image
+	 * @param searchImage
+	 *            the search image
 	 * @param maxima
+	 *            the maxima
 	 * @param types
+	 *            the types
 	 * @param resultsArray
+	 *            the results array
 	 * @param originalNumberOfPeaks
+	 *            the original number of peaks
 	 * @param centreMethod
+	 *            the centre method
 	 * @param centreParameter
+	 *            the centre parameter
 	 */
 	private void locateMaxima(int[] image, int[] searchImage, int[] maxima, byte[] types, ArrayList<int[]> resultsArray,
 			int originalNumberOfPeaks, int centreMethod, double centreParameter)
@@ -2641,8 +2660,19 @@ public class FindFociLegacy
 	 * Extract a sub-image from the given input image using the specified boundaries. The minValue is subtracted from
 	 * all pixels. All pixels below the minValue are ignored (set to zero).
 	 *
-	 * @param result
+	 * @param image
+	 *            the image
 	 * @param maxima
+	 *            the maxima
+	 * @param min_xyz
+	 *            the min xyz
+	 * @param dimensions
+	 *            the dimensions
+	 * @param maximaId
+	 *            the maxima id
+	 * @param minValue
+	 *            the min value
+	 * @return the int[]
 	 */
 	private int[] extractSubImage(int[] image, int[] maxima, int[] min_xyz, int[] dimensions, int maximaId,
 			int minValue)
@@ -2931,12 +2961,16 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Finds the highest saddle point for each peak
+	 * Finds the highest saddle point for each peak.
 	 *
 	 * @param image
+	 *            the image
 	 * @param types
+	 *            the types
 	 * @param resultsArray
+	 *            the results array
 	 * @param maxima
+	 *            the maxima
 	 * @param saddlePoints
 	 *            Contains an entry for each peak indexed from 1. The entry is a linked list of saddle points. Each
 	 *            saddle point is an array containing the neighbouring peak ID and the saddle value.
@@ -3419,15 +3453,28 @@ public class FindFociLegacy
 	 * Assigns the peak to the neighbour. Flags the peak as merged by setting the intensity to zero.
 	 * If the highest saddle is lowered then recomputes the size/intensity above the saddle.
 	 *
+	 * @param image
+	 *            the image
 	 * @param maxima
+	 *            the maxima
 	 * @param peakIdMap
+	 *            the peak id map
 	 * @param peakId
+	 *            the peak id
 	 * @param result
+	 *            the result
 	 * @param neighbourPeakId
+	 *            the neighbour peak id
 	 * @param neighbourResult
-	 * @param linkedList
+	 *            the neighbour result
 	 * @param peakSaddles
+	 *            the peak saddles
+	 * @param neighbourSaddles
+	 *            the neighbour saddles
 	 * @param highestSaddle
+	 *            the highest saddle
+	 * @param updatePeakAboveSaddle
+	 *            the update peak above saddle
 	 */
 	private void mergePeak(int[] image, int[] maxima, int[] peakIdMap, int peakId, int[] result, int neighbourPeakId,
 			int[] neighbourResult, LinkedList<int[]> peakSaddles, LinkedList<int[]> neighbourSaddles,
@@ -3621,13 +3668,18 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Removes any maxima that have pixels that touch the edge
+	 * Removes any maxima that have pixels that touch the edge.
 	 *
 	 * @param resultsArray
+	 *            the results array
 	 * @param image
+	 *            the image
 	 * @param maxima
+	 *            the maxima
 	 * @param stats
+	 *            the stats
 	 * @param isLogging
+	 *            the is logging
 	 */
 	private void removeEdgeMaxima(ArrayList<int[]> resultsArray, int[] image, int[] maxima, double[] stats,
 			boolean isLogging)
@@ -3828,11 +3880,14 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Return the single index associated with the x,y,z coordinates
+	 * Return the single index associated with the x,y,z coordinates.
 	 *
 	 * @param x
+	 *            the x
 	 * @param y
+	 *            the y
 	 * @param z
+	 *            the z
 	 * @return The index
 	 */
 	private int getIndex(int x, int y, int z)
@@ -3844,7 +3899,9 @@ public class FindFociLegacy
 	 * Convert the single index into x,y,z coords, Input array must be length >= 3.
 	 *
 	 * @param index
+	 *            the index
 	 * @param xyz
+	 *            the xyz
 	 * @return The xyz array
 	 */
 	private int[] getXYZ(int index, int[] xyz)
@@ -3860,7 +3917,9 @@ public class FindFociLegacy
 	 * Convert the single index into x,y,z coords, Input array must be length >= 3.
 	 *
 	 * @param index
+	 *            the index
 	 * @param xyz
+	 *            the xyz
 	 * @return The xyz array
 	 */
 	private int[] getXY(int index, int[] xyz)

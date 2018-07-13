@@ -896,11 +896,14 @@ public class SpotSeparation implements PlugInFilter
 	}
 
 	/**
-	 * Show a plot of the line profile
+	 * Show a plot of the line profile.
 	 *
 	 * @param xValues
+	 *            the x values
 	 * @param yValues
+	 *            the y values
 	 * @param profileTitle
+	 *            the profile title
 	 */
 	private void showLineProfile(float[] xValues, float[] yValues, String profileTitle)
 	{

@@ -245,9 +245,13 @@ public class SpotDensity implements PlugIn
 	 * correlation) and the minimum distance to another foci.
 	 *
 	 * @param foci1
+	 *            the foci 1
 	 * @param foci2
+	 *            the foci 2
 	 * @param identical
 	 *            True if the two sets are the same foci (self comparisons will be ignored)
+	 * @param map
+	 *            the map
 	 */
 	private void analyse(Foci[] foci1, Foci[] foci2, boolean identical, FloatProcessor map)
 	{

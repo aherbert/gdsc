@@ -465,10 +465,12 @@ public class FindFociOptimiser
 	}
 
 	/**
-	 * Check if the optimal results was obtained at the edge of the optimisation search space
+	 * Check if the optimal results was obtained at the edge of the optimisation search space.
 	 *
 	 * @param result
+	 *            the result
 	 * @param imp
+	 *            the imp
 	 */
 	private void checkOptimisationSpace(OptimiserResult result, ImagePlus imp)
 	{
@@ -2213,9 +2215,10 @@ public class FindFociOptimiser
 	}
 
 	/**
-	 * Convert the FindFoci text representation into Options
+	 * Convert the FindFoci text representation into Options.
 	 *
 	 * @param parameters
+	 *            the parameters
 	 * @return the options
 	 */
 	private Options createOptions(String parameters)
@@ -3243,9 +3246,10 @@ public class FindFociOptimiser
 	private int nextId = 1;
 
 	/**
-	 * Get a unique ID for the parameters string
+	 * Get a unique ID for the parameters string.
 	 *
 	 * @param parameters
+	 *            the parameters
 	 * @return the ID
 	 */
 	private int getId(String parameters)
@@ -3257,9 +3261,10 @@ public class FindFociOptimiser
 	}
 
 	/**
-	 * Create a unique ID for the parameters string
+	 * Create a unique ID for the parameters string.
 	 *
 	 * @param parameters
+	 *            the parameters
 	 * @return the ID
 	 */
 	private synchronized Integer createId(String parameters)
@@ -3659,6 +3664,7 @@ public class FindFociOptimiser
 	 * macro recorder off before we read the fields.
 	 *
 	 * @param gd
+	 *            the dialog
 	 */
 	@SuppressWarnings("unchecked")
 	private void addListeners(GenericDialog gd)

@@ -1251,10 +1251,12 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
-	 * Maps the given roi point to the highest unassigned grid point using the GridPointManager
+	 * Maps the given roi point to the highest unassigned grid point using the GridPointManager.
 	 *
 	 * @param roi
+	 *            the roi
 	 * @param roiIndex
+	 *            the roi index
 	 */
 	private void mapRoiPoint(PointRoi roi, int roiIndex)
 	{
@@ -1292,10 +1294,12 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	}
 
 	/**
-	 * Add the given roi point without mapping
+	 * Add the given roi point without mapping.
 	 *
 	 * @param roi
+	 *            the roi
 	 * @param roiIndex
+	 *            the roi index
 	 */
 	private void addRoiPoint(PointRoi roi, int roiIndex)
 	{
@@ -1509,7 +1513,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	/**
 	 * Get the list of ROI points. Any that are unmapped have the assigned id set to -1
 	 *
-	 * @return
+	 * @return the roi points
 	 */
 	private AssignedPoint[] getRoiPoints()
 	{

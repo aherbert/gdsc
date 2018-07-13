@@ -169,6 +169,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 	 * FindFoci mask for the results.
 	 *
 	 * @param imp
+	 *            the imp
 	 * @return The image if valid
 	 */
 	private ImagePlus validateInputImage(ImagePlus imp)
