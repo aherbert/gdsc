@@ -395,15 +395,12 @@ public class MatchPlugin implements PlugIn
 						convert(result.z, scaleZ));
 			return points;
 		}
-		else
-		{
-			// Native pixel units
-			final AssignedPoint[] points = new AssignedPoint[results.size()];
-			int i = 0;
-			for (final FindFociResult result : results)
-				points[i++] = new AssignedPoint(result.x, result.y, result.z, 0);
-			return points;
-		}
+		// Native pixel units
+		final AssignedPoint[] points = new AssignedPoint[results.size()];
+		int i = 0;
+		for (final FindFociResult result : results)
+			points[i++] = new AssignedPoint(result.x, result.y, result.z, 0);
+		return points;
 	}
 
 	private static float convert(int x, double cx)

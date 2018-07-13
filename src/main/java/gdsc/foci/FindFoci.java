@@ -2348,7 +2348,6 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	{
 		if (floatImage)
 			return getFormat(value);
-		else
 			return Integer.toString((int) value);
 	}
 
@@ -2356,7 +2355,6 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	{
 		if (value > 100)
 			return IJ.d2s(value, 2);
-		else
 			return Utils.rounded(value, 4);
 	}
 
@@ -2663,7 +2661,6 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		gd.addStringField("Output_directory", batchOutputDirectory);
 		gd.addCheckbox("Multi-thread", batchMultiThread);
 		gd.addMessage("[Note: Double-click a text field to open a selection dialog]");
-		@SuppressWarnings("unchecked")
 		final Vector<TextField> texts = gd.getStringFields();
 		for (final TextField tf : texts)
 		{

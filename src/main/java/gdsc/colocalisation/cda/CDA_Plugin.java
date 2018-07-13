@@ -1010,12 +1010,9 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 			gd.addChoice(title, choices, choices[c]);
 			return true;
 		}
-		else
-		{
-			// Set to default
-			sliceOptions[offset] = 1;
-			return false;
-		}
+		// Set to default
+		sliceOptions[offset] = 1;
+		return false;
 	}
 
 	private static String[] getChannels(ImagePlus imp)
@@ -1472,8 +1469,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 				sb.append(" (c").append(sliceOptions[offset]).append(",t").append(sliceOptions[offset + 1]).append(")");
 			return sb.toString();
 		}
-		else
-			return "[Unknown]";
+		return "[Unknown]";
 	}
 
 	private static String generateId()
@@ -2088,7 +2084,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 * Modify the processor to zero all zero pixels from the mask.
 	 *
 	 * @param ip
-*            the image
+	 *            the image
 	 * @param mask
 	 *            the mask
 	 */
@@ -2120,7 +2116,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 * Sum the processor within the mask.
 	 *
 	 * @param ip
-*            the image
+	 *            the image
 	 * @param mask
 	 *            the mask
 	 * @return the long

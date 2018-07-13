@@ -263,7 +263,7 @@ public class FindFociOptimiser
 	 * Run the optimiser on the given image. If the image is null then process in multi-image mode.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 */
 	public void run(ImagePlus imp)
 	{
@@ -951,7 +951,7 @@ public class FindFociOptimiser
 	 * provided.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param mask
 	 *            the mask
 	 * @param results
@@ -1512,7 +1512,6 @@ public class FindFociOptimiser
 				"The score metric for each parameter combination is computed per image.\nThe scores are converted then averaged across all images.");
 		gd.addChoice("Score_conversion", SCORING_MODES, SCORING_MODES[scoringMode]);
 		gd.addCheckbox("Re-use_results", reuseResults);
-		@SuppressWarnings("unchecked")
 		final Vector<TextField> texts = gd.getStringFields();
 		for (final TextField tf : texts)
 		{
@@ -2080,8 +2079,7 @@ public class FindFociOptimiser
 		final FileInfo info = imp.getOriginalFileInfo();
 		if (info != null)
 			return Utils.combinePath(info.directory, info.fileName);
-		else
-			return imp.getTitle();
+		return imp.getTitle();
 	}
 
 	private static String createResultsHeader(boolean withScore, boolean milliSeconds)
@@ -2359,7 +2357,7 @@ public class FindFociOptimiser
 	 * @param roi
 	 *            the roi
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param mask
 	 *            the mask
 	 * @return the assigned points
@@ -3666,7 +3664,6 @@ public class FindFociOptimiser
 	 * @param gd
 	 *            the dialog
 	 */
-	@SuppressWarnings("unchecked")
 	private void addListeners(GenericDialog gd)
 	{
 		listenerGd = gd;
@@ -3683,7 +3680,6 @@ public class FindFociOptimiser
 			field.addItemListener(this);
 	}
 
-	@SuppressWarnings("unchecked")
 	private void saveCustomSettings(GenericDialog gd)
 	{
 		final DialogSettings s = settings.get(0);
@@ -3704,7 +3700,6 @@ public class FindFociOptimiser
 			s.option.add(field.getState());
 	}
 
-	@SuppressWarnings("unchecked")
 	private void applySettings(GenericDialog gd, DialogSettings s)
 	{
 		//System.out.println("Applying " + s.name + " " + updating);

@@ -604,7 +604,6 @@ public class MaskCreater implements PlugIn
 	{
 		if ((max - min) == 0.0)
 			return 1.0f;
-		else
 			return 65535.0f / (max - min);
 	}
 

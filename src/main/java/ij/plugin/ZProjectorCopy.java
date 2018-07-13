@@ -89,13 +89,13 @@ public class ZProjectorCopy implements PlugIn
 	protected boolean allTimeFrames = true;
 
 	private String color = "";
-	
+
 	/** The is hyperstack flag. */
 	protected boolean isHyperstack;
-	
+
 	/** The increment. */
 	protected int increment = 1;
-	
+
 	/** The slice count. */
 	protected int sliceCount;
 
@@ -110,7 +110,7 @@ public class ZProjectorCopy implements PlugIn
 	 * Construction of ZProjector with image to be projected.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 */
 	public ZProjectorCopy(ImagePlus imp)
 	{
@@ -494,7 +494,7 @@ public class ZProjectorCopy implements PlugIn
 	 * Generate output image whose type is same as input image.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param fp
 	 *            the fp
 	 * @param ptype
@@ -641,8 +641,7 @@ public class ZProjectorCopy implements PlugIn
 		final int middle = a.length / 2;
 		if ((a.length & 1) == 0) //even
 			return (a[middle - 1] + a[middle]) / 2f;
-		else
-			return a[middle];
+		return a[middle];
 	}
 
 	/**

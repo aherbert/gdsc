@@ -931,13 +931,9 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 			if (c != null)
 			{
 				ImageProcessor ip = new FloatProcessor(c.length, 1, c, null);
-				if (ip == null)
-					return line;
 				ip.setRoi(start, 0, ip.getWidth() - start, 1);
 				ip = ip.crop();
 				final ImageStatistics stats = new FloatStatistics(ip);
-				if (stats == null)
-					return line;
 				line += n(stats.mean);
 			}
 			else

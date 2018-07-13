@@ -158,29 +158,27 @@ public class Auto_Local_Threshold implements PlugIn
 				IJ.run("Images to Stack", "method=[Copy (center)] title=Montage");
 				return;
 			}
-			else
-			{ //single image try all
-				tstack = new ImageStack(xe, ye);
-				for (int k = 1; k < ml; k++)
-					tstack.addSlice(methods[k], ip.duplicate());
-				imp2 = new ImagePlus("Auto Threshold", tstack);
-				imp2.updateAndDraw();
+			//single image try all
+			tstack = new ImageStack(xe, ye);
+			for (int k = 1; k < ml; k++)
+				tstack.addSlice(methods[k], ip.duplicate());
+			imp2 = new ImagePlus("Auto Threshold", tstack);
+			imp2.updateAndDraw();
 
-				for (int k = 1; k < ml; k++)
-				{
-					imp2.setSlice(k);
-					//IJ.log("analyzing slice with "+methods[k]);
-					exec(imp2, methods[k], radius, par1, par2, doIwhite);
-				}
-				//imp2.setSlice(1);
-				final CanvasResizer cr = new CanvasResizer();
-				stackNew = cr.expandStack(tstack, (xe + 2), (ye + 18), 1, 1);
-				imp3 = new ImagePlus("Auto Threshold", stackNew);
-				imp3.updateAndDraw();
-				final MontageMaker mm = new MontageMaker();
-				mm.makeMontage(imp3, 3, 2, 1.0, 1, (ml - 1), 1, 0, true);
-				return;
+			for (int k = 1; k < ml; k++)
+			{
+				imp2.setSlice(k);
+				//IJ.log("analyzing slice with "+methods[k]);
+				exec(imp2, methods[k], radius, par1, par2, doIwhite);
 			}
+			//imp2.setSlice(1);
+			final CanvasResizer cr = new CanvasResizer();
+			stackNew = cr.expandStack(tstack, (xe + 2), (ye + 18), 1, 1);
+			imp3 = new ImagePlus("Auto Threshold", stackNew);
+			imp3.updateAndDraw();
+			final MontageMaker mm = new MontageMaker();
+			mm.makeMontage(imp3, 3, 2, 1.0, 1, (ml - 1), 1, 0, true);
+			return;
 		}
 		else if (stackSize > 1 && doIstack)
 		{ //whole stack
@@ -205,7 +203,7 @@ public class Auto_Local_Threshold implements PlugIn
 	 * Execute the plugin functionality: duplicate and scale the given image.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param myMethod
 	 *            the threshold method
 	 * @param radius

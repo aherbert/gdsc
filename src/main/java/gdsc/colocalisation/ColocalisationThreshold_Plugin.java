@@ -532,12 +532,9 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 			gd.addChoice(title, choices, choices[c]);
 			return true;
 		}
-		else
-		{
-			// Set to default
-			sliceOptions[offset] = 1;
-			return false;
-		}
+		// Set to default
+		sliceOptions[offset] = 1;
+		return false;
 	}
 
 	private static String[] getChannels(ImagePlus imp)

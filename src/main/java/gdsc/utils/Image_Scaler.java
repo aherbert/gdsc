@@ -131,8 +131,7 @@ public class Image_Scaler implements PlugInFilter
 				if (!new File(line).exists())
 					continue;
 				ImagePlus imp = new ImagePlus(line);
-				if (imp != null)
-					updateMinAndMax(imp, limits);
+				updateMinAndMax(imp, limits);
 				imp.flush();
 				imp = null; // Free memory
 			}
@@ -158,11 +157,8 @@ public class Image_Scaler implements PlugInFilter
 					continue;
 
 				ImagePlus imp = new ImagePlus(line);
-				if (imp != null)
-				{
-					multiply(imp, scaleFactor);
-					new FileSaver(imp).save();
-				}
+				multiply(imp, scaleFactor);
+				new FileSaver(imp).save();
 				imp.flush();
 				imp = null; // Free memory
 			}
