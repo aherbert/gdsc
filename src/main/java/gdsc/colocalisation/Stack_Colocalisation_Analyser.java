@@ -694,15 +694,21 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		}
 
 		/**
-		 * Utility method
+		 * Utility method.
 		 *
 		 * @param i
+		 *            the i
 		 */
 		void add(Integer i)
 		{
 			slices.add(i);
 		}
 
+		/**
+		 * Gets the slice name.
+		 *
+		 * @return the slice name
+		 */
 		String getSliceName()
 		{
 			if (sliceName == null || sliceName == NONE)
@@ -720,9 +726,10 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		}
 
 		/**
-		 * Extracts the configured slices from the image into a stack
+		 * Extracts the configured slices from the image into a stack.
 		 *
 		 * @param imp
+		 *            the image
 		 */
 		void createStack(ImagePlus imp)
 		{

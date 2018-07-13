@@ -5202,10 +5202,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	private final ResultAscComparator ascComparator = new ResultAscComparator();
 
 	/**
-	 * Sort the results using the specified index in descending order
+	 * Sort the results using the specified index in descending order.
 	 *
 	 * @param resultsArray
+	 *            the results array
 	 * @param sortIndex
+	 *            the sort index
+	 * @param stats
+	 *            the stats
 	 */
 	void sortDescResults(FindFociResult[] resultsArray, int sortIndex, FindFociStatistics stats)
 	{
@@ -5214,10 +5218,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Sort the results using the specified index in ascending order
+	 * Sort the results using the specified index in ascending order.
 	 *
 	 * @param resultsArray
+	 *            the results array
 	 * @param sortIndex
+	 *            the sort index
+	 * @param stats
+	 *            the stats
 	 */
 	void sortAscResults(FindFociResult[] resultsArray, int sortIndex, FindFociStatistics stats)
 	{
@@ -5226,10 +5234,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Sort the results using the specified index in ascending order
+	 * Sort the results using the specified index in ascending order.
 	 *
 	 * @param resultsArray
+	 *            the results array
 	 * @param sortIndex
+	 *            the sort index
+	 * @param stats
+	 *            the stats
 	 */
 	void sortAscResults(ArrayList<FindFociResult> resultsArray, int sortIndex, FindFociStatistics stats)
 	{
@@ -5948,8 +5960,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 * @param mask
 	 *            The mask containing objects
 	 * @param maximaImp
+	 *            the maxima imp
 	 * @param resultsArray
+	 *            the results array
 	 * @param createObjectMask
+	 *            the create object mask
+	 * @param objectAnalysisResult
+	 *            the object analysis result
 	 * @return The mask image if created
 	 */
 	ImagePlus doObjectAnalysis(ImagePlus mask, ImagePlus maximaImp, ArrayList<FindFociResult> resultsArray,

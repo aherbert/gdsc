@@ -3697,10 +3697,14 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Sort the results using the specified index in descending order
+	 * Sort the results using the specified index in descending order.
 	 *
 	 * @param resultsArray
+	 *            the results array
 	 * @param sortIndex
+	 *            the sort index
+	 * @param stats
+	 *            the stats
 	 */
 	void sortDescResults(ArrayList<int[]> resultsArray, int sortIndex, double[] stats)
 	{
@@ -3708,10 +3712,14 @@ public class FindFociLegacy
 	}
 
 	/**
-	 * Sort the results using the specified index in ascending order
+	 * Sort the results using the specified index in ascending order.
 	 *
 	 * @param resultsArray
+	 *            the results array
 	 * @param sortIndex
+	 *            the sort index
+	 * @param stats
+	 *            the stats
 	 */
 	void sortAscResults(ArrayList<int[]> resultsArray, int sortIndex, double[] stats)
 	{

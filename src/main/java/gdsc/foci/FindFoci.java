@@ -290,15 +290,14 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		{
 			if (parameterOptions != null)
 				return isMatch(parameterOptions, key.toLowerCase() + " ");
-			else
-				try
-				{
-					return Boolean.parseBoolean(findString(key));
-				}
-				catch (final RuntimeException e)
-				{
-					return false;
-				}
+			try
+			{
+				return Boolean.parseBoolean(findString(key));
+			}
+			catch (final RuntimeException e)
+			{
+				return false;
+			}
 		}
 
 		/**
@@ -307,8 +306,10 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		 * Copied from ij.gui.GenericDialog since the recorder options do not show key=value pairs for booleans
 		 *
 		 * @param s1
+		 *            the s1
 		 * @param s2
-		 * @return
+		 *            the s2
+		 * @return true, if is match
 		 */
 		boolean isMatch(String s1, String s2)
 		{

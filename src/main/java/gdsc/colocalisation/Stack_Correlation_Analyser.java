@@ -465,15 +465,21 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 		}
 
 		/**
-		 * Utility method
+		 * Utility method.
 		 *
 		 * @param i
+		 *            the i
 		 */
 		void add(Integer i)
 		{
 			slices.add(i);
 		}
 
+		/**
+		 * Gets the slice name.
+		 *
+		 * @return the slice name
+		 */
 		String getSliceName()
 		{
 			if (sliceName == null)
