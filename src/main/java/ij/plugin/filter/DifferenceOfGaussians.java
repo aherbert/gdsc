@@ -86,7 +86,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 	private PlugInFilterRunner pfr = null;
 	private int currentSliceNumber = -1;
 	private double percentInternal = 0;
-	long lastTime = 0;
+	private long lastTime = 0;
 
 	/**
 	 * Set to true to suppress progress reporting to the ImageJ window
@@ -458,9 +458,12 @@ public class DifferenceOfGaussians extends GaussianBlur
 	}
 
 	/**
-	 * Overridden to prevent the GaussianBlur class from changing the ImageJ progress bar
+	 * Show the progress on the ImageJ progress bar.
+	 *
+	 * @param percent
+	 *            the percent
 	 */
-	void showProgress(double percent)
+	private void showProgress(double percent)
 	{
 		if (noProgress)
 			return;
@@ -477,7 +480,13 @@ public class DifferenceOfGaussians extends GaussianBlur
 		IJ.showStatus(String.format("Difference of Gaussians: %.3g%%", percent * 100));
 	}
 
-	void showProgressInternal(double percent)
+	/**
+	 * Show the progress on the ImageJ progress bar.
+	 *
+	 * @param percent
+	 *            the percent
+	 */
+	private void showProgressInternal(double percent)
 	{
 		this.percentInternal = percent;
 		showProgress(0);

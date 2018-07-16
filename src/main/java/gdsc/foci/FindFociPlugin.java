@@ -72,6 +72,7 @@ public class FindFociPlugin implements PlugIn
 		@Override
 		public void windowOpened(WindowEvent e)
 		{
+			// Ignore
 		}
 
 		@Override
@@ -83,26 +84,31 @@ public class FindFociPlugin implements PlugIn
 		@Override
 		public void windowClosed(WindowEvent e)
 		{
+			// Ignore
 		}
 
 		@Override
 		public void windowIconified(WindowEvent e)
 		{
+			// Ignore
 		}
 
 		@Override
 		public void windowDeiconified(WindowEvent e)
 		{
+			// Ignore
 		}
 
 		@Override
 		public void windowActivated(WindowEvent e)
 		{
+			// Ignore
 		}
 
 		@Override
 		public void windowDeactivated(WindowEvent e)
 		{
+			// Ignore
 		}
 
 		@Override

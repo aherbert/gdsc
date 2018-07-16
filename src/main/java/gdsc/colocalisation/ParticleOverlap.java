@@ -263,9 +263,11 @@ public class ParticleOverlap implements PlugIn
 		}
 		catch (final FileNotFoundException e)
 		{
+			// Ignore
 		}
 		catch (final UnsupportedEncodingException e)
 		{
+			// Ignore
 		}
 	}
 
@@ -331,6 +333,7 @@ public class ParticleOverlap implements PlugIn
 			}
 			catch (final IOException e)
 			{
+				// Ignore
 			}
 			finally
 			{

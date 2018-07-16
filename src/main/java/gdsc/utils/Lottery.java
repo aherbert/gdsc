@@ -37,11 +37,11 @@ import ij.plugin.PlugIn;
  */
 public class Lottery implements PlugIn
 {
-	final static String TITLE = "Lottery";
-	static int numbers = 59;
-	static int pick = 6;
-	static int match = 3;
-	static long simulations = 0;
+	private final static String TITLE = "Lottery";
+	private static int numbers = 59;
+	private static int pick = 6;
+	private static int match = 3;
+	private static long simulations = 0;
 
 	/*
 	 * (non-Javadoc)

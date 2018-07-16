@@ -1230,6 +1230,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 	/**
 	 * Delete saddle lines that do not divide two peak areas. Adapted from {@link ij.plugin.filter.MaximumFinder}
+	 *
+	 * @param types
+	 *            the types
+	 * @param z
+	 *            the z
 	 */
 	void cleanupExtraLines(byte[] types, int z)
 	{
@@ -1247,7 +1252,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 			}
 	}
 
-	/** delete a line starting at x, y up to the next (4-connected) vertex */
+	/**
+	 * delete a line starting at x, y up to the next (4-connected) vertex.
+	 *
+	 * @param types
+	 *            the types
+	 * @param index
+	 *            the index
+	 */
 	void removeLineFrom(byte[] types, int index)
 	{
 		types[index] &= ~SADDLE_POINT;
@@ -1517,7 +1529,18 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 		return absoluteHeight;
 	}
 
-	double getRelativeHeight(FindFociResult result, double floor, double absoluteHeight)
+	/**
+	 * Gets the relative height.
+	 *
+	 * @param result
+	 *            the result
+	 * @param floor
+	 *            the floor
+	 * @param absoluteHeight
+	 *            the absolute height
+	 * @return the relative height
+	 */
+	static double getRelativeHeight(FindFociResult result, double floor, double absoluteHeight)
 	{
 		return absoluteHeight / (result.maxValue - floor);
 	}
@@ -3893,6 +3916,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 */
 	protected void finaliseFindHighestSaddleValues()
 	{
+		// Do nothing
 	}
 
 	/**
@@ -5977,8 +6001,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	 */
 	class ObjectAnalysisResult
 	{
+		/** The number of objects. */
 		int numberOfObjects;
+		
+		/** The object state. */
 		int[] objectState;
+		
+		/** The foci count. */
 		int[] fociCount;
 	}
 

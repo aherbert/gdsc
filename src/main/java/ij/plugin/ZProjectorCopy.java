@@ -496,7 +496,7 @@ public class ZProjectorCopy implements PlugIn
 	 * @param imp
 	 *            the image
 	 * @param fp
-	 *            the fp
+	 * the image
 	 * @param ptype
 	 *            the ptype
 	 * @return the image plus
@@ -649,7 +649,7 @@ public class ZProjectorCopy implements PlugIn
 	 * function. Preprocessing should be done in derived class
 	 * constructors.
 	 */
-	abstract class RayFunction
+	private abstract class RayFunction
 	{
 		abstract void projectSlice(byte[] pixels);
 
@@ -659,16 +659,17 @@ public class ZProjectorCopy implements PlugIn
 
 		/**
 		 * Perform any necessary post processing operations, e.g.
-		 * averging values.
+		 * averaging values.
 		 */
 		void postProcess()
 		{
+			// Do nothing
 		}
 
 	} // end RayFunction
 
 	/** Compute average intensity projection. */
-	class AverageIntensity extends RayFunction
+	private class AverageIntensity extends RayFunction
 	{
 		private final float[] fpixels;
 		private final int num, len;
@@ -677,6 +678,11 @@ public class ZProjectorCopy implements PlugIn
 		 * Constructor requires number of slices to be
 		 * projected. This is used to determine average at each
 		 * pixel.
+		 *
+		 * @param fp
+		 * the image
+		 * @param num
+		 *            the number of slices
 		 */
 		AverageIntensity(FloatProcessor fp, int num)
 		{
@@ -717,12 +723,17 @@ public class ZProjectorCopy implements PlugIn
 	} // end AverageIntensity
 
 	/** Compute max intensity projection. */
-	class MaxIntensity extends RayFunction
+	private class MaxIntensity extends RayFunction
 	{
 		private final float[] fpixels;
 		private final int len;
 
-		/** Simple constructor since no preprocessing is necessary. */
+		/**
+		 * Simple constructor since no preprocessing is necessary.
+		 *
+		 * @param fp
+		 * the image
+		 */
 		MaxIntensity(FloatProcessor fp)
 		{
 			fpixels = (float[]) fp.getPixels();
@@ -758,12 +769,17 @@ public class ZProjectorCopy implements PlugIn
 	} // end MaxIntensity
 
 	/** Compute min intensity projection. */
-	class MinIntensity extends RayFunction
+	private class MinIntensity extends RayFunction
 	{
 		private final float[] fpixels;
 		private final int len;
 
-		/** Simple constructor since no preprocessing is necessary. */
+		/**
+		 * Simple constructor since no preprocessing is necessary.
+		 *
+		 * @param fp
+		 *            the image
+		 */
 		MinIntensity(FloatProcessor fp)
 		{
 			fpixels = (float[]) fp.getPixels();
@@ -799,7 +815,7 @@ public class ZProjectorCopy implements PlugIn
 	} // end MaxIntensity
 
 	/** Compute standard deviation projection. */
-	class StandardDeviation extends RayFunction
+	private class StandardDeviation extends RayFunction
 	{
 		private final float[] result;
 		private final double[] sum, sum2;

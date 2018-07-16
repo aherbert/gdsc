@@ -56,19 +56,19 @@ public class FindFociRunner extends Thread
 	private boolean running = true;
 
 	// Used for the staged FindFoci results
-	FindFoci ff = new FindFoci();
-	ImagePlus imp2;
-	FindFociInitResults initResults;
-	FindFociInitResults searchInitResults;
-	FindFociSearchResults searchArray;
-	FindFociInitResults mergeInitResults;
-	FindFociInitResults resultsInitResults;
-	FindFociInitResults maskInitResults;
-	FindFociMergeTempResults mergePeakResults;
-	FindFociMergeTempResults mergeSizeResults;
-	FindFociMergeResults mergeResults;
-	FindFociPrelimResults prelimResults;
-	FindFociResults results;
+	private FindFoci ff = new FindFoci();
+	private ImagePlus imp2;
+	private FindFociInitResults initResults;
+	private FindFociInitResults searchInitResults;
+	private FindFociSearchResults searchArray;
+	private FindFociInitResults mergeInitResults;
+	private FindFociInitResults resultsInitResults;
+	private FindFociInitResults maskInitResults;
+	private FindFociMergeTempResults mergePeakResults;
+	private FindFociMergeTempResults mergeSizeResults;
+	private FindFociMergeResults mergeResults;
+	private FindFociPrelimResults prelimResults;
+	private FindFociResults results;
 
 	/**
 	 * Instantiates a new find foci runner.

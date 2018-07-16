@@ -573,6 +573,7 @@ public class ThreadAnalyser implements PlugIn
 			}
 			catch (final IOException ex)
 			{
+				// Ignore
 			}
 	}
 
@@ -613,6 +614,7 @@ public class ThreadAnalyser implements PlugIn
 				}
 				catch (final IOException ioe)
 				{
+					// Ignore
 				}
 		}
 		return null;
@@ -642,6 +644,7 @@ public class ThreadAnalyser implements PlugIn
 			}
 			catch (final IOException ex)
 			{
+				// Ignore
 			}
 			out = null;
 		}
@@ -672,6 +675,7 @@ public class ThreadAnalyser implements PlugIn
 			}
 			catch (final IOException ex)
 			{
+				// Ignore
 			}
 			out = null;
 		}

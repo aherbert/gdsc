@@ -812,6 +812,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 	@Override
 	protected void finaliseFindHighestSaddleValues()
 	{
+		// Do nothing
 	}
 
 	/**

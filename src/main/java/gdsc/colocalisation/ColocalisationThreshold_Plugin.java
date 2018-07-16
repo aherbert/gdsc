@@ -125,39 +125,38 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
 	private Button okButton;
 	private Button helpButton;
 
-	final int fontWidth = 12;
-	final Font monoFont = new Font("Monospaced", 0, fontWidth);
+	private final int fontWidth = 12;
+	private final Font monoFont = new Font("Monospaced", 0, fontWidth);
 
-	final String OPT_LOCATION = "CT.location";
+	private final String OPT_LOCATION = "CT.location";
 
-	final String OPT_CHANNEL1_INDEX = "CT.channel1SelectedIndex";
-	final String OPT_CHANNEL2_INDEX = "CT.channel2SelectedIndex";
-	final String OPT_ROI_INDEX = "CT.roiIndex";
-	final String OPT_R_THRESHOLD = "CT.rThreshold";
-	final String OPT_SEARCH_TOLERANCE = "CT.searchTolerance";
-	final String OPT_SHOW_COLOCALISED = "CT.showColocalised";
-	final String OPT_USE_CONSTANT_INTENSITY = "CT.useConstantIntensity";
-	final String OPT_SHOW_SCATTER_PLOT = "CT.showScatterPlot";
-	final String OPT_INCLUDE_ZERO_ZERO_PIXELS = "CT.includeZeroZeroPixels";
-	final String OPT_CLOSE_WINDOWS_ON_EXIT = "CT.closeWindowsOnExit";
-	final String OPT_BIG_NUMBERS = "CT.bigNumbers";
+	private final String OPT_CHANNEL1_INDEX = "CT.channel1SelectedIndex";
+	private final String OPT_CHANNEL2_INDEX = "CT.channel2SelectedIndex";
+	private final String OPT_ROI_INDEX = "CT.roiIndex";
+	private final String OPT_R_THRESHOLD = "CT.rThreshold";
+	private final String OPT_SEARCH_TOLERANCE = "CT.searchTolerance";
+	private final String OPT_SHOW_COLOCALISED = "CT.showColocalised";
+	private final String OPT_USE_CONSTANT_INTENSITY = "CT.useConstantIntensity";
+	private final String OPT_SHOW_SCATTER_PLOT = "CT.showScatterPlot";
+	private final String OPT_INCLUDE_ZERO_ZERO_PIXELS = "CT.includeZeroZeroPixels";
+	private final String OPT_CLOSE_WINDOWS_ON_EXIT = "CT.closeWindowsOnExit";
 
-	final String OPT_SHOW_THRESHOLDS = "CT.showThresholds";
-	final String OPT_SHOW_LINEAR_REGRESSION = "CT.showLinearRegression";
-	final String OPT_SHOW_R_TOTAL = "CT.showRTotal";
-	final String OPT_SHOW_R_GT_T = "CT.showRForGtT";
-	final String OPT_SHOW_R_LT_T = "CT.showRForLtT";
-	final String OPT_SHOW_MANDERS = "CT.showManders";
-	final String OPT_SHOW_MANDERS_GT_T = "CT.showMandersGtT";
-	final String OPT_SHOW_N_COLOC = "CT.showNColoc";
-	final String OPT_SHOW_VOLUME_COLOC = "CT.showVolumeColoc";
-	final String OPT_SHOW_VOLUME_GT_T_COLOC = "CT.showVolumeGtTColoc";
-	final String OPT_SHOW_INTENSITY_COLOC = "CT.showIntensityColoc";
-	final String OPT_SHOW_INTENSITY_GT_T_COLOC = "CT.showIntensityGtTColoc";
-	final String OPT_SHOW_ROIS_AND_MASKS = "CT.showRoisAndMasks";
-	final String OPT_EXHAUSTIVE_SEARCH = "CT.exhaustiveSearch";
-	final String OPT_PLOT_R_VALUES = "CT.plotRValues";
-	final String OPT_MAX_ITERATIONS = "CT.maxIterations";
+	private final String OPT_SHOW_THRESHOLDS = "CT.showThresholds";
+	private final String OPT_SHOW_LINEAR_REGRESSION = "CT.showLinearRegression";
+	private final String OPT_SHOW_R_TOTAL = "CT.showRTotal";
+	private final String OPT_SHOW_R_GT_T = "CT.showRForGtT";
+	private final String OPT_SHOW_R_LT_T = "CT.showRForLtT";
+	private final String OPT_SHOW_MANDERS = "CT.showManders";
+	private final String OPT_SHOW_MANDERS_GT_T = "CT.showMandersGtT";
+	private final String OPT_SHOW_N_COLOC = "CT.showNColoc";
+	private final String OPT_SHOW_VOLUME_COLOC = "CT.showVolumeColoc";
+	private final String OPT_SHOW_VOLUME_GT_T_COLOC = "CT.showVolumeGtTColoc";
+	private final String OPT_SHOW_INTENSITY_COLOC = "CT.showIntensityColoc";
+	private final String OPT_SHOW_INTENSITY_GT_T_COLOC = "CT.showIntensityGtTColoc";
+	private final String OPT_SHOW_ROIS_AND_MASKS = "CT.showRoisAndMasks";
+	private final String OPT_EXHAUSTIVE_SEARCH = "CT.exhaustiveSearch";
+	private final String OPT_PLOT_R_VALUES = "CT.plotRValues";
+	private final String OPT_MAX_ITERATIONS = "CT.maxIterations";
 
 	// Options
 	private final double DEFAULT_R_LIMIT = 0;

@@ -120,6 +120,7 @@ public class OptimiserController extends FindFociController implements Runnable
 	@Override
 	public void preview()
 	{
+		// Ignore
 	}
 
 	/*
@@ -130,6 +131,7 @@ public class OptimiserController extends FindFociController implements Runnable
 	@Override
 	public void endPreview()
 	{
+		// Ignore
 	}
 
 	/*

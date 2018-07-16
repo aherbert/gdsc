@@ -53,7 +53,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	/**
 	 * Used to store information about a cluster in the clustering analysis
 	 */
-	class Cluster
+	private class Cluster
 	{
 		double x, y, sumx, sumy;
 		int n;
@@ -184,7 +184,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 	/**
 	 * Used to store information about a point in the clustering analysis
 	 */
-	class ClusterPoint
+	private class ClusterPoint
 	{
 		double x, y;
 		int id;

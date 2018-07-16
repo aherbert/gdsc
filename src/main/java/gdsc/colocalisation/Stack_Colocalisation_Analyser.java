@@ -660,7 +660,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 	/**
 	 * Provides functionality to process a collection of slices from an Image
 	 */
-	class SliceCollection
+	private class SliceCollection
 	{
 		int c;
 		int z;
@@ -671,19 +671,6 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
 		ImageStack imageStack = null;
 		ImageStack maskStack = null;
 		int threshold = 0;
-
-		/**
-		 * @param c
-		 *            The channel
-		 * @param z
-		 *            The z dimension
-		 */
-		SliceCollection(int c, int z)
-		{
-			this.c = c;
-			this.z = z;
-			slices = new ArrayList<>(1);
-		}
 
 		/**
 		 * @param c

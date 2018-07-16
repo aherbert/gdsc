@@ -907,10 +907,17 @@ public class PointAlignerPlugin implements PlugIn
 			resultsWindow.append(sb.toString());
 	}
 
-	class PointHeightComparator implements Comparator<AssignedPoint>
+	private class PointHeightComparator implements Comparator<AssignedPoint>
 	{
+		/** The point height. */
 		private final int[] pointHeight;
 
+		/**
+		 * Instantiates a new point height comparator.
+		 *
+		 * @param pointHeight
+		 *            the point height
+		 */
 		PointHeightComparator(int[] pointHeight)
 		{
 			this.pointHeight = pointHeight;

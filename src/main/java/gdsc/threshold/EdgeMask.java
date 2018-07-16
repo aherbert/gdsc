@@ -338,6 +338,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	@Override
 	public void setNPasses(int nPasses)
 	{
+		// Ignore
 	}
 
 	/**
@@ -518,6 +519,11 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	/**
 	 * Mark lines that do form closed loops. Adapted from {@link ij.plugin.filter.MaximumFinder} Optionally prune these
 	 * lines
+	 *
+	 * @param ip
+	 *            the ip
+	 * @param prune
+	 *            the prune flag
 	 */
 	void markExtraLines(ImageProcessor ip, boolean prune)
 	{
@@ -546,7 +552,14 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 					types[index] = 0;
 	}
 
-	/** delete a line starting at x, y up to the next (8-connected) vertex */
+	/**
+	 * Delete a line starting at (x,y) up to the next (8-connected) vertex.
+	 *
+	 * @param types
+	 *            the types
+	 * @param index
+	 *            the index
+	 */
 	void removeLineFrom(byte[] types, int index)
 	{
 		types[index] |= SINGLE;

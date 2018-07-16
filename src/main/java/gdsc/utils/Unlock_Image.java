@@ -55,5 +55,6 @@ public class Unlock_Image implements PlugInFilter
 	@Override
 	public void run(ImageProcessor inputProcessor)
 	{
+		// Ignore
 	}
 }

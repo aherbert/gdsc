@@ -53,8 +53,8 @@ import ij.util.Tools;
  */
 public class IntensityAnalysis implements ExtendedPlugInFilter
 {
-	final static String TITLE = "Intensity Analysis";
-	final int flags = DOES_8G + DOES_16 + NO_CHANGES + DOES_STACKS + PARALLELIZE_STACKS + FINAL_PROCESSING;
+	private final static String TITLE = "Intensity Analysis";
+	private final int flags = DOES_8G + DOES_16 + NO_CHANGES + DOES_STACKS + PARALLELIZE_STACKS + FINAL_PROCESSING;
 	private static int window = 4;
 	private static int bitDepth = 16;
 	private static boolean debug = false;
@@ -297,6 +297,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
 	@Override
 	public void setNPasses(int nPasses)
 	{
+		// Ignore
 	}
 
 	/**

@@ -124,6 +124,7 @@ public class CDAEngine
 			}
 			catch (final InterruptedException e)
 			{
+				// Ignore
 			}
 		return worker.isInitialised();
 	}

@@ -254,7 +254,7 @@ public class Auto_Local_Threshold implements PlugIn
 		return new Object[] { imp };
 	}
 
-	void Bernsen(ImagePlus imp, int radius, double par1, boolean doIwhite)
+	private static void Bernsen(ImagePlus imp, int radius, double par1, boolean doIwhite)
 	{
 		// Bernsen recommends WIN_SIZE = 31 and CONTRAST_THRESHOLD = 15.
 		//  1) Bernsen J. (1986) "Dynamic Thresholding of Grey-Level Images"
@@ -319,7 +319,7 @@ public class Auto_Local_Threshold implements PlugIn
 		return;
 	}
 
-	void Mean(ImagePlus imp, int radius, double par1, boolean doIwhite)
+	private static void Mean(ImagePlus imp, int radius, double par1, boolean doIwhite)
 	{
 		// See: Image Processing Learning Resourches HIPR2
 		// http://homepages.inf.ed.ac.uk/rbf/HIPR2/adpthrsh.htm
@@ -364,7 +364,7 @@ public class Auto_Local_Threshold implements PlugIn
 		return;
 	}
 
-	void Median(ImagePlus imp, int radius, double par1, boolean doIwhite)
+	private static void Median(ImagePlus imp, int radius, double par1, boolean doIwhite)
 	{
 		// See: Image Processing Learning Resourches HIPR2
 		// http://homepages.inf.ed.ac.uk/rbf/HIPR2/adpthrsh.htm
@@ -406,7 +406,7 @@ public class Auto_Local_Threshold implements PlugIn
 		return;
 	}
 
-	void MidGrey(ImagePlus imp, int radius, double par1, boolean doIwhite)
+	private static void MidGrey(ImagePlus imp, int radius, double par1, boolean doIwhite)
 	{
 		// See: Image Processing Learning Resourches HIPR2
 		// http://homepages.inf.ed.ac.uk/rbf/HIPR2/adpthrsh.htm
@@ -453,7 +453,7 @@ public class Auto_Local_Threshold implements PlugIn
 		return;
 	}
 
-	void Niblack(ImagePlus imp, int radius, double par1, boolean doIwhite)
+	private static void Niblack(ImagePlus imp, int radius, double par1, boolean doIwhite)
 	{
 		// Niblack recommends K_VALUE = -0.2 for images with black foreground
 		// objects, and K_VALUE = +0.2 for images with white foreground objects.
@@ -511,7 +511,7 @@ public class Auto_Local_Threshold implements PlugIn
 		return;
 	}
 
-	void Sauvola(ImagePlus imp, int radius, double par1, double par2, boolean doIwhite)
+	private static void Sauvola(ImagePlus imp, int radius, double par1, double par2, boolean doIwhite)
 	{
 		// Sauvola recommends K_VALUE = 0.5 and R_VALUE = 128.
 		// This is a modification of Niblack's thresholding method.

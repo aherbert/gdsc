@@ -492,6 +492,13 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		}
 	}
 
+	/**
+	 * Gets the bonus to add to a number so that it exceeds the include level.
+	 *
+	 * @param include
+	 *            the include
+	 * @return the bonus
+	 */
 	static int getBonus(int include)
 	{
 		int bonus = 1000;
@@ -500,6 +507,12 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
 		return bonus;
 	}
 
+	/**
+	 * Adds the outline.
+	 *
+	 * @param imp
+	 *            the imp
+	 */
 	static void addOutline(ImagePlus imp)
 	{
 		final ByteProcessor bp = new ByteProcessor(imp.getWidth(), imp.getHeight());

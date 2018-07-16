@@ -109,8 +109,8 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	private int[] xpoints, ypoints;
 	private final ArrayList<Integer> rotationAngles = new ArrayList<>();
 
-	HashMap<Integer, float[]> kernels = null;
-	HashMap<Integer, FloatProcessor> convolved = null;
+	private HashMap<Integer, float[]> kernels = null;
+	private HashMap<Integer, FloatProcessor> convolved = null;
 	private int halfWidth;
 	private double maxDistance2;
 
@@ -1435,7 +1435,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		return params;
 	}
 
-	static final int BACKGROUND = 0;
+	private static final int BACKGROUND = 0;
 
 	/**
 	 * Compute the moment of an image.
@@ -1487,7 +1487,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 	 *
 	 * @see "http://commons.apache.org/math/userguide/optimization.html"
 	 */
-	class DifferentiableEllipticalFitFunction extends EllipticalCell implements MultivariateVectorFunction
+	private class DifferentiableEllipticalFitFunction extends EllipticalCell implements MultivariateVectorFunction
 	{
 		FloatProcessor weightMap;
 		int nPoints;
@@ -1694,6 +1694,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
 		 *
 		 * @see org.apache.commons.math3.analysis.DifferentiableMultivariateVectorFunction#jacobian()
 		 */
+		@SuppressWarnings("unused")
 		public MultivariateMatrixFunction jacobian()
 		{
 			return new MultivariateMatrixFunction()

@@ -25,8 +25,8 @@ package gdsc.foci;
 
 import java.awt.Canvas;
 import java.awt.Color;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -312,7 +312,7 @@ public class TranslocationFinder implements PlugIn
 			resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 1000, 300);
 
 			// Allow the results to be manually changed
-			resultsWindow.getTextPanel().addMouseListener(new MouseListener()
+			resultsWindow.getTextPanel().addMouseListener(new MouseAdapter()
 			{
 				@Override
 				public void mouseClicked(MouseEvent e)
@@ -422,26 +422,6 @@ public class TranslocationFinder implements PlugIn
 					}
 
 					overlayTriplets();
-				}
-
-				@Override
-				public void mouseEntered(MouseEvent arg0)
-				{
-				}
-
-				@Override
-				public void mouseExited(MouseEvent arg0)
-				{
-				}
-
-				@Override
-				public void mousePressed(MouseEvent arg0)
-				{
-				}
-
-				@Override
-				public void mouseReleased(MouseEvent arg0)
-				{
 				}
 			});
 		}
@@ -672,13 +652,15 @@ public class TranslocationFinder implements PlugIn
 	 */
 	public class TranslocationFinderPluginTool extends PlugInTool
 	{
-		final String[] labels = { "C1", "C2", "C3" };
-		final String[] items = Arrays.copyOf(CLASSIFICATION, CLASSIFICATION.length + 1);
-		int imageId = 0;
-		int[] ox = new int[3], oy = new int[3], oz = new int[3];
-		int points = 0;
-		boolean prompt = true;
+		private final String[] items = Arrays.copyOf(CLASSIFICATION, CLASSIFICATION.length + 1);
+		private int imageId = 0;
+		private int[] ox = new int[3], oy = new int[3], oz = new int[3];
+		private int points = 0;
+		private boolean prompt = true;
 
+		/**
+		 * Instantiates a new translocation finder plugin tool.
+		 */
 		TranslocationFinderPluginTool()
 		{
 			items[items.length - 1] = "Auto";

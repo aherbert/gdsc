@@ -29,8 +29,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Label;
 import java.awt.Point;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 
 import gdsc.UsageTracker;
 import gdsc.core.ij.Utils;
@@ -246,43 +246,12 @@ public class Measure3D extends PlugInFrame
 			if (loc != null)
 				results.setLocation(loc);
 
-			results.addWindowListener(new WindowListener()
+			results.addWindowListener(new WindowAdapter()
 			{
-
-				@Override
-				public void windowActivated(WindowEvent e)
-				{
-				}
-
-				@Override
-				public void windowClosed(WindowEvent e)
-				{
-				}
-
 				@Override
 				public void windowClosing(WindowEvent e)
 				{
 					Prefs.saveLocation(OPT_LOCATION_RESULTS, results.getLocation());
-				}
-
-				@Override
-				public void windowDeactivated(WindowEvent e)
-				{
-				}
-
-				@Override
-				public void windowDeiconified(WindowEvent e)
-				{
-				}
-
-				@Override
-				public void windowIconified(WindowEvent e)
-				{
-				}
-
-				@Override
-				public void windowOpened(WindowEvent e)
-				{
 				}
 			});
 		}
@@ -350,11 +319,11 @@ public class Measure3D extends PlugInFrame
 		super.close();
 	}
 
-	GridBagLayout mainGrid = new GridBagLayout();
-	GridBagConstraints c = new GridBagConstraints();
-	int row = 0;
-	Label[] labels;
-	Checkbox overlayCheckbox;
+	private GridBagLayout mainGrid = new GridBagLayout();
+	private GridBagConstraints c = new GridBagConstraints();
+	private int row = 0;
+	private Label[] labels;
+	private Checkbox overlayCheckbox;
 
 	private void createFrame()
 	{

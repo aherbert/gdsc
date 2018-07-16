@@ -129,6 +129,7 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 	@Override
 	public void windowOpened(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	@Override
@@ -140,25 +141,30 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 	@Override
 	public void windowClosed(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	@Override
 	public void windowIconified(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	@Override
 	public void windowDeiconified(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	@Override
 	public void windowActivated(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	@Override
 	public void windowDeactivated(WindowEvent e)
 	{
+		// Ignore
 	}
 }

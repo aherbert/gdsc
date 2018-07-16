@@ -26,8 +26,8 @@ package gdsc.foci;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -412,7 +412,7 @@ public class SpotDensity implements PlugIn
 			resultsWindow = new TextWindow(TITLE + " Summary", createResultsHeader(), "", 700, 300);
 
 			// Allow clicking multiple results in the window to show a combined curve
-			resultsWindow.getTextPanel().addMouseListener(new MouseListener()
+			resultsWindow.getTextPanel().addMouseListener(new MouseAdapter()
 			{
 				@Override
 				public void mouseClicked(MouseEvent e)
@@ -517,26 +517,6 @@ public class SpotDensity implements PlugIn
 						pcf[j] /= count;
 
 					showPairCorrelation(new PC(n, area, r, pcf));
-				}
-
-				@Override
-				public void mouseEntered(MouseEvent arg0)
-				{
-				}
-
-				@Override
-				public void mouseExited(MouseEvent arg0)
-				{
-				}
-
-				@Override
-				public void mousePressed(MouseEvent arg0)
-				{
-				}
-
-				@Override
-				public void mouseReleased(MouseEvent arg0)
-				{
 				}
 			});
 		}

@@ -68,7 +68,7 @@ import ij.text.TextWindow;
  */
 public class FileMatchCalculator implements PlugIn, MouseListener
 {
-	class IdTimeValuedPoint extends TimeValuedPoint
+	private class IdTimeValuedPoint extends TimeValuedPoint
 	{
 		int id;
 
@@ -698,25 +698,25 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 	@Override
 	public void mousePressed(MouseEvent e)
 	{
-
+		// Ignore
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e)
 	{
-
+		// Ignore
 	}
 
 	@Override
 	public void mouseEntered(MouseEvent e)
 	{
-
+		// Ignore
 	}
 
 	@Override
 	public void mouseExited(MouseEvent e)
 	{
-
+		// Ignore
 	}
 
 	private void produceComposite(List<PointPair> pairs)

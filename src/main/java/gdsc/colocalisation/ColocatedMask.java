@@ -239,6 +239,7 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 				}
 				catch (final InterruptedException e)
 				{
+					// Ignore
 				}
 			}
 		if (cancelled)

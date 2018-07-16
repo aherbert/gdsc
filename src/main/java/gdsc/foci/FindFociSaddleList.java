@@ -76,7 +76,10 @@ public class FindFociSaddleList implements Cloneable
 		orderSaddleComparator = new OrderSaddleComparator();
 	}
 
+	/** The size. */
 	int size;
+	
+	/** The list of saddles. */
 	FindFociSaddle[] list;
 
 	/**

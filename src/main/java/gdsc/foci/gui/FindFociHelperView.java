@@ -1152,6 +1152,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	@Override
 	public void windowOpened(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -1173,6 +1174,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	@Override
 	public void windowClosed(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -1183,6 +1185,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	@Override
 	public void windowIconified(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -1193,6 +1196,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	@Override
 	public void windowDeiconified(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -1203,6 +1207,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	@Override
 	public void windowActivated(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -1213,6 +1218,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	@Override
 	public void windowDeactivated(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -1323,6 +1329,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	@Override
 	public void mousePressed(MouseEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -1385,6 +1392,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	@Override
 	public void mouseEntered(MouseEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -1395,6 +1403,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	@Override
 	public void mouseExited(MouseEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -1459,6 +1468,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
 	@Override
 	public void mouseMoved(MouseEvent e)
 	{
+		// Ignore
 	}
 
 	private void logMessage(String format, Object... args)

@@ -286,9 +286,9 @@ public class HSB_Picker extends PlugInFrame
 		super.close();
 	}
 
-	GridBagLayout mainGrid = new GridBagLayout();
-	GridBagConstraints c = new GridBagConstraints();
-	int row = 0;
+	private GridBagLayout mainGrid = new GridBagLayout();
+	private GridBagConstraints c = new GridBagConstraints();
+	private int row = 0;
 
 	private void createFrame()
 	{

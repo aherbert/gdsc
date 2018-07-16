@@ -441,6 +441,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
 		}
 		catch (final NumberFormatException ex)
 		{
+			// Ignore
 		}
 		return -id;
 	}

@@ -82,7 +82,7 @@ import ij.util.Tools;
  * 				continue the scan
  * </pre>
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({ "unused", "javadoc" })
 public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 {
 	/** Display results in the ImageJ console. */
@@ -694,7 +694,8 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 			drawIP.setLineWidth(lineWidth);
 			if (showChoice == ROI_MASKS)
 			{
-			} // Place holder for now...
+				// Place holder for now...
+			}
 			else if (showChoice == MASKS && !blackBackground)
 				drawIP.invertLut();
 			else if (showChoice == OUTLINES)

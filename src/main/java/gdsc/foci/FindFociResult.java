@@ -164,6 +164,12 @@ public class FindFociResult implements Cloneable
 		return new int[] { x, y, z };
 	}
 
+	/**
+	 * Update the bounds using the union with the given result.
+	 *
+	 * @param result
+	 *            the result
+	 */
 	void updateBounds(FindFociResult result)
 	{
 		minx = Math.min(minx, result.minx);

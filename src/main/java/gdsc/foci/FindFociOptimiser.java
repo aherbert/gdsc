@@ -1749,6 +1749,7 @@ public class FindFociOptimiser
 			}
 			catch (final Exception e)
 			{
+				// Ignore
 			}
 
 		return list.getValues();
@@ -2069,6 +2070,7 @@ public class FindFociOptimiser
 				}
 				catch (final IOException ioe)
 				{
+					// Ignore
 				}
 		}
 		return null;
@@ -3322,6 +3324,7 @@ public class FindFociOptimiser
 	@Override
 	public void mousePressed(MouseEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -3332,6 +3335,7 @@ public class FindFociOptimiser
 	@Override
 	public void mouseReleased(MouseEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -3342,6 +3346,7 @@ public class FindFociOptimiser
 	@Override
 	public void mouseEntered(MouseEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -3352,6 +3357,7 @@ public class FindFociOptimiser
 	@Override
 	public void mouseExited(MouseEvent e)
 	{
+		// Ignore
 	}
 
 	private void showOptimiserWindow()
@@ -3431,6 +3437,7 @@ public class FindFociOptimiser
 	@Override
 	public void windowOpened(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -3452,6 +3459,7 @@ public class FindFociOptimiser
 	@Override
 	public void windowClosed(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -3462,6 +3470,7 @@ public class FindFociOptimiser
 	@Override
 	public void windowIconified(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -3472,6 +3481,7 @@ public class FindFociOptimiser
 	@Override
 	public void windowDeiconified(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -3482,6 +3492,7 @@ public class FindFociOptimiser
 	@Override
 	public void windowActivated(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	/*
@@ -3492,6 +3503,7 @@ public class FindFociOptimiser
 	@Override
 	public void windowDeactivated(WindowEvent e)
 	{
+		// Ignore
 	}
 
 	// ---------------------------------------------------------------------------

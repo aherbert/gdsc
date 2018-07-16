@@ -390,7 +390,14 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	private int flushCount = 0;
 
 	private static ArrayList<FindFociResult> lastResultsArray = null;
+
+	/**
+	 * Set to true if the Gaussian fit option is enabled.
+	 * This requires the GDSC SMLM library to be available.
+	 */
 	static int isGaussianFitEnabled = 0;
+
+	/** The new line string from System.getProperty("line.separator"). */
 	static String newLine = System.getProperty("line.separator");
 
 	private static String BATCH_INPUT_DIRECTORY = "findfoci.batchInputDirectory";
@@ -405,6 +412,12 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	private static String batchParameterFile = Prefs.get(BATCH_PARAMETER_FILE, "");
 	private static String batchOutputDirectory = Prefs.get(BATCH_OUTPUT_DIRECTORY, "");
 	private static boolean batchMultiThread = Prefs.get(BATCH_MULTI_THREAD, true);
+
+	/**
+	 * The search capacity.
+	 * This is the maximum number of potential maxima for the algorithm.
+	 * The default value for legacy reasons is {@value Short#MAX_VALUE}.
+	 */
 	static int searchCapacity = (int) Prefs.get(SEARCH_CAPACITY, Short.MAX_VALUE);
 	private static String emptyField = Prefs.get(EMPTY_FIELD, "");
 	private TextField textParamFile;
@@ -1281,11 +1294,22 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		return o;
 	}
 
-	static ImagePlus showImage(ImagePlus imp, String title)
+	private static ImagePlus showImage(ImagePlus imp, String title)
 	{
 		return showImage(imp, title, true);
 	}
 
+	/**
+	 * Create a new image or recycle an existing image window.
+	 *
+	 * @param imp
+	 *            the image
+	 * @param title
+	 *            the title
+	 * @param show
+	 *            Set to true to show the image
+	 * @return the image plus
+	 */
 	static ImagePlus showImage(ImagePlus imp, String title, boolean show)
 	{
 		ImagePlus maxImp = WindowManager.getImage(title);
@@ -1536,8 +1560,52 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	}
 
 	/**
-	 * Save the FindFoci parameters to file
+	 * Save the FindFoci parameters to file.
 	 *
+	 * @param filename
+	 *            the filename
+	 * @param imp
+	 *            the imp
+	 * @param imageDimension
+	 *            the image dimension
+	 * @param mask
+	 *            the mask
+	 * @param maskDimension
+	 *            the mask dimension
+	 * @param backgroundMethod
+	 *            the background method
+	 * @param backgroundParameter
+	 *            the background parameter
+	 * @param autoThresholdMethod
+	 *            the auto threshold method
+	 * @param searchMethod
+	 *            the search method
+	 * @param searchParameter
+	 *            the search parameter
+	 * @param maxPeaks
+	 *            the max peaks
+	 * @param minSize
+	 *            the min size
+	 * @param peakMethod
+	 *            the peak method
+	 * @param peakParameter
+	 *            the peak parameter
+	 * @param outputType
+	 *            the output type
+	 * @param sortIndex
+	 *            the sort index
+	 * @param options
+	 *            the options
+	 * @param blur
+	 *            the blur
+	 * @param centreMethod
+	 *            the centre method
+	 * @param centreParameter
+	 *            the centre parameter
+	 * @param fractionParameter
+	 *            the fraction parameter
+	 * @param resultsDirectory
+	 *            the results directory
 	 * @return True if the parameters were saved
 	 */
 	static boolean saveParameters(String filename, ImagePlus imp, int[] imageDimension, ImagePlus mask,
@@ -1788,7 +1856,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * Only blurs the current channel and frame for use in the FindFoci algorithm.
 	 *
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param blur
 	 *            The blur standard deviation
 	 * @return the blurred image
@@ -2293,7 +2361,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		final double noise = stats.background;
 
 		final double absoluteHeight = ffp.getAbsoluteHeight(result, noise);
-		final double relativeHeight = ffp.getRelativeHeight(result, noise, absoluteHeight);
+		final double relativeHeight = FindFociBaseProcessor.getRelativeHeight(result, noise, absoluteHeight);
 
 		final boolean floatImage = ffp.isFloatProcessor();
 
@@ -2344,18 +2412,34 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 		sb.append(getFormat(value)).append('\t');
 	}
 
+	/**
+	 * Gets the formatted text for the value.
+	 *
+	 * @param value
+	 *            the value
+	 * @param floatImage
+	 *            Set to true for floating-point value
+	 * @return the text
+	 */
 	static String getFormat(double value, boolean floatImage)
 	{
 		if (floatImage)
 			return getFormat(value);
-			return Integer.toString((int) value);
+		return Integer.toString((int) value);
 	}
 
+	/**
+	 * Gets the formatted text for the value.
+	 *
+	 * @param value
+	 *            the value
+	 * @return the text
+	 */
 	static String getFormat(double value)
 	{
 		if (value > 100)
 			return IJ.d2s(value, 2);
-			return Utils.rounded(value, 4);
+		return Utils.rounded(value, 4);
 	}
 
 	private static String buildEmptyObjectResultEntry(int objectId, int objectState)
@@ -2429,8 +2513,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	}
 
 	// Used for multi-threaded batch mode processing
-	/** The total progress. */
-	int progress, stepProgress, totalProgress;
+	private int progress, stepProgress, totalProgress;
 
 	/**
 	 * Show progress.
@@ -2917,7 +3000,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @param batchId
 	 *            the batch id
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param mask
 	 *            the mask
 	 * @param p
@@ -3091,21 +3174,25 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	@Override
 	public void mousePressed(MouseEvent paramMouseEvent)
 	{
+		// Ignore
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent paramMouseEvent)
 	{
+		// Ignore
 	}
 
 	@Override
 	public void mouseEntered(MouseEvent paramMouseEvent)
 	{
+		// Ignore
 	}
 
 	@Override
 	public void mouseExited(MouseEvent paramMouseEvent)
 	{
+		// Ignore
 	}
 
 	/**
@@ -3114,7 +3201,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @param resultsArray
 	 *            the results array
 	 * @param imp
-*            the image
+	 *            the image
 	 */
 	private static void saveToMemory(ArrayList<FindFociResult> resultsArray, ImagePlus imp)
 	{
@@ -3127,7 +3214,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 	 * @param resultsArray
 	 *            the results array
 	 * @param imp
-*            the image
+	 *            the image
 	 * @param c
 	 *            the c
 	 * @param z

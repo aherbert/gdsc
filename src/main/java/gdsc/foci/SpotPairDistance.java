@@ -742,6 +742,7 @@ public class SpotPairDistance implements PlugIn
 						}
 						catch (final NumberFormatException ex)
 						{
+							// Ignore
 						}
 					}
 				}

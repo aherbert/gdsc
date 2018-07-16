@@ -438,7 +438,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 	/**
 	 * Provides functionality to process a collection of slices from an Image
 	 */
-	class SliceCollection
+	private class SliceCollection
 	{
 		int c;
 		int z;

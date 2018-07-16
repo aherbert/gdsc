@@ -86,7 +86,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 
 	// Methods to allow the Analyzer class package level fields to be set.
 	// This is not possible on the Windows JVM but is OK on linux.
-	static Field firstParticle, lastParticle;
+	private static Field firstParticle, lastParticle;
 	static
 	{
 		try
@@ -104,6 +104,12 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 		}
 	}
 
+	/**
+	 * Sets the {@link Analyzer} first particle.
+	 *
+	 * @param value
+	 *            the new analyzer first particle
+	 */
 	static void setAnalyzerFirstParticle(int value)
 	{
 		//Analyzer.firstParticle = value;
@@ -120,6 +126,12 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			}
 	}
 
+	/**
+	 * Sets the {@link Analyzer} last particle.
+	 *
+	 * @param value
+	 *            the new analyzer last particle
+	 */
 	static void setAnalyzerLastParticle(int value)
 	{
 		//Analyzer.lastParticle = value;
@@ -308,6 +320,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			}
 			catch (final Exception e)
 			{
+				// Ignore this
 			}
 	}
 

@@ -335,6 +335,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
 		}
 		catch (final NumberFormatException e)
 		{
+			// Ignore
 		}
 		txtField.setForeground(Color.RED);
 		return false;
