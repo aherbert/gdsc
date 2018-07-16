@@ -38,10 +38,10 @@ public class BasePoint implements Coordinate
 {
 	/** The x. */
 	protected int x = 0;
-	
+
 	/** The y. */
 	protected int y = 0;
-	
+
 	/** The z. */
 	protected int z = 0;
 

@@ -319,8 +319,8 @@ public class Measure3D extends PlugInFrame
 		super.close();
 	}
 
-	private GridBagLayout mainGrid = new GridBagLayout();
-	private GridBagConstraints c = new GridBagConstraints();
+	private final GridBagLayout mainGrid = new GridBagLayout();
+	private final GridBagConstraints c = new GridBagConstraints();
 	private int row = 0;
 	private Label[] labels;
 	private Checkbox overlayCheckbox;

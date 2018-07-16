@@ -47,22 +47,22 @@ public class HSB_Filter implements ExtendedPlugInFilter, DialogListener
 	private float[] h = null, s = null, b = null;
 
 	// Allow to be set by others in the package
-	
+
 	/** The hue. */
 	static float hue = 0;
-	
+
 	/** The hue width. */
 	static float hueWidth = 1f / 6f;
-	
+
 	/** The saturation. */
 	static float saturation = 0.5f;
-	
+
 	/** The saturation width. */
 	static float saturationWidth = 0.5f;
-	
+
 	/** The brightness. */
 	static float brightness = 0.5f;
-	
+
 	/** The brightness width. */
 	static float brightnessWidth = 0.5f;
 

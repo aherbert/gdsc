@@ -78,7 +78,7 @@ public class FindFociSaddleList implements Cloneable
 
 	/** The size. */
 	int size;
-	
+
 	/** The list of saddles. */
 	FindFociSaddle[] list;
 

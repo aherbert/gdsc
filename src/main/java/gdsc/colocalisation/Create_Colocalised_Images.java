@@ -41,9 +41,9 @@ import ij.process.ShortProcessor;
 public class Create_Colocalised_Images implements PlugIn
 {
 	private static final String TITLE = "Colocalisaed Images";
-	private 	ByteProcessor roi;
-	private int background = 0;
-	private int foreground = 255;
+	private ByteProcessor roi;
+	private final int background = 0;
+	private final int foreground = 255;
 
 	private static int seed = 30051977;
 	private static int sequenceNumber = 0;
@@ -51,13 +51,13 @@ public class Create_Colocalised_Images implements PlugIn
 	private static boolean createMasks = false;
 	private int CHANNEL_MAX;
 	private int CHANNEL_MIN;
-	private int NUMBER_OF_POINTS = 20;
+	private final int NUMBER_OF_POINTS = 20;
 
-	private int width = 256;
-	private int height = 256;
-	private int padding = 40;
-	private int minSize = 5;
-	private int maxExpansionSize = 15;
+	private final int width = 256;
+	private final int height = 256;
+	private final int padding = 40;
+	private final int minSize = 5;
+	private final int maxExpansionSize = 15;
 
 	@Override
 	public void run(String arg)

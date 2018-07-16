@@ -36,18 +36,18 @@ import ij.ImageStack;
  */
 public class CDAWorker implements Runnable
 {
-	private ImageStack imageStack1;
-	private ImageStack roiStack1;
-	private ImageStack imageStack2;
-	private ImageStack roiStack2;
-	private ImageStack confinedStack;
-	private double denom1;
-	private double denom2;
-	private List<CalculationResult> results;
+	private final ImageStack imageStack1;
+	private final ImageStack roiStack1;
+	private final ImageStack imageStack2;
+	private final ImageStack roiStack2;
+	private final ImageStack confinedStack;
+	private final double denom1;
+	private final double denom2;
+	private final List<CalculationResult> results;
 	private TwinStackShifter twinImageShifter;
-	private BlockingQueue<CDAJob> jobs;
-	private int totalSteps;
-	private Correlator c = new Correlator();
+	private final BlockingQueue<CDAJob> jobs;
+	private final int totalSteps;
+	private final Correlator c = new Correlator();
 	private final int[] ii1, ii2;
 
 	private volatile boolean finished = false;

@@ -54,7 +54,7 @@ import ij.process.ImageProcessor;
  */
 public class FindFociFloatProcessor extends FindFociBaseProcessor
 {
-	
+
 	/** The image. */
 	protected float[] image;
 	/** Cache the bin for each index */

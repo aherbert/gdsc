@@ -6003,10 +6003,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	{
 		/** The number of objects. */
 		int numberOfObjects;
-		
+
 		/** The object state. */
 		int[] objectState;
-		
+
 		/** The foci count. */
 		int[] fociCount;
 	}

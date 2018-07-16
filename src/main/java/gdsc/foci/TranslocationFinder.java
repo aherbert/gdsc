@@ -654,7 +654,7 @@ public class TranslocationFinder implements PlugIn
 	{
 		private final String[] items = Arrays.copyOf(CLASSIFICATION, CLASSIFICATION.length + 1);
 		private int imageId = 0;
-		private int[] ox = new int[3], oy = new int[3], oz = new int[3];
+		private final int[] ox = new int[3], oy = new int[3], oz = new int[3];
 		private int points = 0;
 		private boolean prompt = true;
 
