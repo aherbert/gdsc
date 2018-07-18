@@ -32,8 +32,9 @@ import org.junit.Test;
 
 import gdsc.core.threshold.AutoThreshold;
 import gdsc.test.TestAssert;
+import gdsc.test.TestComplexity;
+import gdsc.test.TestLog;
 import gdsc.test.TestSettings;
-import gdsc.test.TestSettings.TestComplexity;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.filter.GaussianBlur;
@@ -273,7 +274,7 @@ public class FindFociTest
 						runInt(imp, i, true, nonContiguous);
 			time2 = stop(time2);
 		}
-		TestSettings.info("Int %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
+		TestLog.info("Int %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
 		Assert.assertTrue(time2 < time1);
 	}
 
@@ -317,7 +318,7 @@ public class FindFociTest
 		// I am not worried the optimisation has worse performance.
 
 		//Assert.assertTrue(time2 < time1 * 1.4); // Allow discretion so test will pass
-		TestSettings.logSpeedTestResult(time2 < time1, "Float %d, Opt Float %d, %fx faster\n", time1, time2,
+		TestLog.logSpeedTestResult(time2 < time1, "Float %d, Opt Float %d, %fx faster\n", time1, time2,
 				(double) time1 / time2);
 	}
 
@@ -359,7 +360,7 @@ public class FindFociTest
 		// I am not worried the new code has worse performance.
 
 		//Assert.assertTrue(time2 < time1 * 1.4); // Allow some discretion over the legacy method
-		TestSettings.logSpeedTestResult(time2 < time1, "Legacy %d, Opt Int %d, %fx faster\n", time1, time2,
+		TestLog.logSpeedTestResult(time2 < time1, "Legacy %d, Opt Int %d, %fx faster\n", time1, time2,
 				(double) time1 / time2);
 	}
 
@@ -400,7 +401,7 @@ public class FindFociTest
 						runInt(imp, i, true, nonContiguous);
 			time2 = stop(time2);
 		}
-		TestSettings.info("Opt Float %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
+		TestLog.info("Opt Float %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
 		Assert.assertTrue(time2 < time1);
 	}
 
@@ -424,7 +425,7 @@ public class FindFociTest
 		}
 		final ArrayList<FindFociResult> results1 = r1.results;
 		final ArrayList<FindFociResult> results2 = r2.results;
-		//TestSettings.info("N1=%d, N2=%d\n", results1.size(), results2.size());
+		//TestLog.info("N1=%d, N2=%d\n", results1.size(), results2.size());
 		Assert.assertEquals(setName + " Results Size", results1.size(), results2.size());
 		int counter = 0;
 		final int offset = (negativeValues) ? FindFociTest.offset : 0;
@@ -436,7 +437,7 @@ public class FindFociTest
 				//@formatter:off
     			final FindFociResult o1 = results1.get(i);
     			final FindFociResult o2 = results2.get(i);
-    			//TestSettings.info("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d\n", i,
+    			//TestLog.info("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d\n", i,
     			//		o1.x, o1.y, o1.maxValue, o1.count, o1.saddleNeighbourId,
     			//		o2.x, o2.y, o2.maxValue, o2.count, o2.saddleNeighbourId);
     			Assert.assertEquals("X", o1.x, o2.x);
@@ -597,14 +598,14 @@ public class FindFociTest
 		if (data == null)
 		{
 			final RandomGenerator rg = TestSettings.getRandomGenerator();
-			TestSettings.infoln("Creating data ...");
+			TestLog.infoln("Creating data ...");
 			data = new ImagePlus[numberOfTestImages + numberOfTestImages3D];
 			int index = 0;
 			for (int i = 0; i < numberOfTestImages; i++)
 				data[index++] = createImageData(rg);
 			for (int i = 0; i < numberOfTestImages3D; i++)
 				data[index++] = createImageData3D(rg);
-			TestSettings.infoln("Created data");
+			TestLog.infoln("Created data");
 		}
 		return data;
 	}
