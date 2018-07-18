@@ -88,7 +88,7 @@ public class About_Plugin implements PlugIn
 
 		// Locate the README.txt file and load that into the dialog. Include SVN revision
 		final Class<About_Plugin> resourceClass = About_Plugin.class;
-		final InputStream readmeStream = resourceClass.getResourceAsStream("/uk.ac.sussex.gdsc/README.txt");
+		final InputStream readmeStream = resourceClass.getResourceAsStream("/uk/ac/sussex/gdsc/README.txt");
 
 		StringBuilder msg = new StringBuilder();
 		String helpURL = HELP_URL;
@@ -213,7 +213,7 @@ public class About_Plugin implements PlugIn
 	{
 		// Get the embedded config in the jar file
 		final Class<About_Plugin> resourceClass = About_Plugin.class;
-		final InputStream readmeStream = resourceClass.getResourceAsStream("/uk.ac.sussex.gdsc/plugins.config");
+		final InputStream readmeStream = resourceClass.getResourceAsStream("/uk/ac/sussex/gdsc/plugins.config");
 		return readmeStream;
 	}
 

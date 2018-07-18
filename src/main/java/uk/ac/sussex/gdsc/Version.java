@@ -30,7 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Show the version information contained in the uk.ac.sussex.gdsc/Version.txt file.
+ * Show the version information contained in the /uk/ac/sussex/gdsc/Version.txt file.
  * <p>
  * Uses Semantic Versioning.
  *
@@ -47,7 +47,7 @@ public class Version
 	{
 		// Locate the SVN revision
 		final Class<Version> resourceClass = Version.class;
-		try (InputStream propertiesStream = resourceClass.getResourceAsStream("/uk.ac.sussex.gdsc/Version.txt"))
+		try (InputStream propertiesStream = resourceClass.getResourceAsStream("/uk/ac/sussex/gdsc/Version.txt"))
 		{
 			// Read the version properties
 			final Properties props = new Properties();
