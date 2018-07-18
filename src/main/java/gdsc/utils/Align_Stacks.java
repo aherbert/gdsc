@@ -206,7 +206,7 @@ public class Align_Stacks implements PlugIn
 
 		final int[] referenceDimensions = referenceImp.getDimensions();
 
-		for (final int id : WindowManager.getIDList())
+		for (final int id : Utils.getIDList())
 		{
 			final ImagePlus imp = WindowManager.getImage(id);
 
