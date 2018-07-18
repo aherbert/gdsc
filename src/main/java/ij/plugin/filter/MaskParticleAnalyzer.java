@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import gdsc.core.ij.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Macro;
@@ -51,6 +50,7 @@ import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
+import uk.ac.sussex.gdsc.core.ij.Utils;
 
 /**
  * Extend the ImageJ Particle Analyser to allow the particles to be obtained from an input mask with objects
@@ -198,7 +198,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 			if (noThreshold)
 				gd.addMessage(
 						"Warning: The image is not thresholded / 8-bit binary mask.\nContinuing will use the min/max values in the image which\nmay produce many objects.");
-			gd.addHelp(gdsc.help.URL.FIND_FOCI);
+			gd.addHelp(uk.ac.sussex.gdsc.help.URL.FIND_FOCI);
 			gd.showDialog();
 			if (gd.wasCanceled())
 				return DONE;

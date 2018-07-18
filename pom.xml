@@ -87,7 +87,7 @@ Software for microscopy image analysis
 						<archive>
 							<manifest>
 								<addClasspath>true</addClasspath>
-								<mainClass>gdsc.Version</mainClass>
+								<mainClass>uk.ac.sussex.gdsc.Version</mainClass>
 								<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 								<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
 							</manifest>

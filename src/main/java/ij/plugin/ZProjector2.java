@@ -91,7 +91,7 @@ public class ZProjector2 extends ZProjectorCopy
 		gd.addChoice("Projection type", METHODS, METHODS[method]);
 		if (isHyperstack && imp.getNFrames() > 1 && imp.getNSlices() > 1)
 			gd.addCheckbox("All time frames", allTimeFrames);
-		gd.addHelp(gdsc.help.URL.UTILITY);
+		gd.addHelp(uk.ac.sussex.gdsc.help.URL.UTILITY);
 		return gd;
 	}
 

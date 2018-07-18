@@ -169,7 +169,7 @@ public class DifferenceOfGaussians extends GaussianBlur
 		sigma2field = (TextField) fields.elementAt(1);
 		previewCheckbox = gd.getPreviewCheckbox();
 		preview = previewCheckbox.getState();
-		gd.addHelp(gdsc.help.URL.UTILITY);
+		gd.addHelp(uk.ac.sussex.gdsc.help.URL.UTILITY);
 		gd.showDialog(); // input by the user (or macro) happens here
 		if (gd.wasCanceled())
 		{
