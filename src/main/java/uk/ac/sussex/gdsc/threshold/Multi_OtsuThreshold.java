@@ -40,7 +40,7 @@ import uk.ac.sussex.gdsc.UsageTracker;
  * <p>
  * Algorithm: PS.Liao, TS.Chen, and PC. Chung, Journal of Information Science and Engineering, vol 17, 713-727 (2001)
  * <p>
- * Original Coding by Yasunari Tosa (ytosa@att.net) (Feb. 19th, 2005) and available from the ImageJ plugins site:<br/>
+ * Original Coding by Yasunari Tosa (ytosa@att.net) (Feb. 19th, 2005) and available from the ImageJ plugins site:<br>
  * http://rsb.info.nih.gov/ij/plugins/multi-otsu-threshold.html
  * <p>
  * Adapted to allow 8/16 bit stack images and used a clipped histogram to increase speed. Added output options.

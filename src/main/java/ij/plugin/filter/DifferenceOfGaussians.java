@@ -101,7 +101,6 @@ public class DifferenceOfGaussians extends GaussianBlur
 	 * @param imp
 	 *            The ImagePlus, used to get the spatial calibration
 	 * @return Code describing supported formats etc.
-	 *         (see ij.plugin.filter.PlugInFilter & ExtendedPlugInFilter)
 	 */
 	@Override
 	public int setup(String arg, ImagePlus imp)

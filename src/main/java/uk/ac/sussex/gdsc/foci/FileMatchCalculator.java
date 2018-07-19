@@ -62,8 +62,8 @@ import uk.ac.sussex.gdsc.core.match.PointPair;
  * <p>
  * Can read QuickPALM xls files; STORMJ xls files; and a generic CSV file.
  * <p>
- * The generic CSV file has records of the following:<br/>
- * ID,T,X,Y,Z,Value<br/>
+ * The generic CSV file has records of the following:<br>
+ * ID,T,X,Y,Z,Value<br>
  * Z and Value can be missing. The generic file can also be tab delimited.
  */
 public class FileMatchCalculator implements PlugIn, MouseListener

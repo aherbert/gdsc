@@ -310,13 +310,16 @@ public interface FindFociProcessor
 	 * @param mask
 	 *            A mask image used to define the region to search for peaks
 	 * @param backgroundMethod
-	 *            Method for calculating the background level (use the constants with prefix FindFoci.BACKGROUND_)
+	 *            Method for calculating the background level (use the constants with prefix {@code BACKGROUND_}, e.g.
+	 *            {@link #BACKGROUND_AUTO_THRESHOLD}).
 	 * @param backgroundParameter
 	 *            parameter for calculating the background level
 	 * @param autoThresholdMethod
-	 *            The thresholding method (use a string from {@link uk.ac.sussex.gdsc.core.threshold.AutoThreshold#getMethods() } )
+	 *            The thresholding method (use a string from
+	 *            {@link uk.ac.sussex.gdsc.core.threshold.AutoThreshold#getMethods() } )
 	 * @param searchMethod
-	 *            Method for calculating the region growing stopping criteria (use the constants with prefix SEARCH_)
+	 *            Method for calculating the region growing stopping criteria (use the constants with prefix
+	 *            {@code SEARCH_}, e.g. {@link #SEARCH_ABOVE_BACKGROUND}).
 	 * @param searchParameter
 	 *            parameter for calculating the stopping criteria
 	 * @param maxPeaks
@@ -325,7 +328,7 @@ public interface FindFociProcessor
 	 *            The minimum size for a peak
 	 * @param peakMethod
 	 *            Method for calculating the minimum peak height above the highest saddle (use the constants with prefix
-	 *            PEAK_)
+	 *            {@code PEAK_}, e.g. {@link #PEAK_RELATIVE}).
 	 * @param peakParameter
 	 *            parameter for calculating the minimum peak height
 	 * @param outputType
@@ -334,25 +337,30 @@ public interface FindFociProcessor
 	 * @param sortIndex
 	 *            The index of the result statistic to use for the peak sorting
 	 * @param options
-	 *            An options flag (use the constants with prefix FindFoci.OPTION_)
+	 *            An options flag (use the constants with prefix {@code OPTION_}, e.g.
+	 *            {@link #OPTION_MINIMUM_ABOVE_SADDLE}).
 	 * @param blur
 	 *            Apply a Gaussian blur of the specified radius before processing (helps smooth noisy images for better
 	 *            peak identification)
 	 * @param centreMethod
 	 *            Define the method used to calculate the peak centre (use the constants with prefix
-	 *            FindFoci.FindFoci.CENTRE_)
+	 *            {@code CENTRE_}, e.g. {@link #CENTRE_MAX_VALUE_SEARCH}
 	 * @param centreParameter
 	 *            Parameter for calculating the peak centre
 	 * @param fractionParameter
 	 *            Used to specify the fraction of the peak to show in the mask
-	 * @return Result containing: (1) a new ImagePlus (with a stack) where the maxima are set to nMaxima+1 and
-	 *         peak areas numbered starting from nMaxima (Background 0). Pixels outside of the roi of the input ip are
-	 *         not set. Alternatively the peak areas can be thresholded using the auto-threshold method and coloured
-	 *         1(saddle), 2(background), 3(threshold), 4(peak); (2) a result ArrayList<double[]> with details of the
+	 * @return Result containing:
+	 *         <ol>
+	 *         <li>a new ImagePlus (with a stack) where the maxima are set to {@code nMaxima+1} and
+	 *         peak areas numbered starting from {@code nMaxima} (Background 0). Pixels outside of the ROI of the input
+	 *         image are not set. Alternatively the peak areas can be thresholded using the auto-threshold method and
+	 *         coloured 1(saddle), 2(background), 3(threshold), 4(peak);</li>
+	 *         <li>a result {@code ArrayList<double[]>} with details of the
 	 *         maxima. The details can be extracted for each result using the constants defined with the prefix
-	 *         FindFoci.RESULT_;
-	 *         (3) the image statistics double[] array. The details can be extracted using the constants defined with
-	 *         the FindFoci.STATS_ prefix. Returns null if cancelled by escape.
+	 *         FindFoci.RESULT_;</li>
+	 *         <li>the image statistics: {@link FindFociStatistics}.</li>
+	 *         </ol>
+	 *         Returns null if cancelled by escape.
 	 */
 	public FindFociResults findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
 			String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
@@ -361,7 +369,7 @@ public interface FindFociProcessor
 
 	/**
 	 * Apply a Gaussian blur to the image and returns a new image.
-	 * Returns the original image if blur <= 0.
+	 * Returns the original image if {@code blur <= 0}.
 	 * <p>
 	 * Only blurs the current channel and frame for use in the FindFoci algorithm.
 	 *
@@ -390,11 +398,14 @@ public interface FindFociProcessor
 	 * @param mask
 	 *            A mask image used to define the region to search for peaks
 	 * @param backgroundMethod
-	 *            Method for calculating the background level (use the constants with prefix FindFoci.BACKGROUND_)
+	 *            Method for calculating the background level (use the constants with prefix {@code BACKGROUND_}, e.g.
+	 *            {@link #BACKGROUND_AUTO_THRESHOLD}).
 	 * @param autoThresholdMethod
-	 *            The thresholding method (use a string from {@link uk.ac.sussex.gdsc.core.threshold.AutoThreshold#getMethods() } )
+	 *            The thresholding method (use a string from
+	 *            {@link uk.ac.sussex.gdsc.core.threshold.AutoThreshold#getMethods() } )
 	 * @param options
-	 *            An options flag (use the constants with prefix FindFoci.OPTION_)
+	 *            An options flag (use the constants with prefix {@code OPTION_}, e.g.
+	 *            {@link #OPTION_MINIMUM_ABOVE_SADDLE}).
 	 * @return the initialisation results
 	 */
 	public FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask,
@@ -424,11 +435,13 @@ public interface FindFociProcessor
 	 *            The output from {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
 	 *            Contents are destructively modified so should be cloned before input.
 	 * @param backgroundMethod
-	 *            Method for calculating the background level (use the constants with prefix FindFoci.BACKGROUND_)
+	 *            Method for calculating the background level (use the constants with prefix {@code BACKGROUND_}, e.g.
+	 *            {@link #BACKGROUND_AUTO_THRESHOLD}).
 	 * @param backgroundParameter
 	 *            parameter for calculating the background level
 	 * @param searchMethod
-	 *            Method for calculating the region growing stopping criteria (use the constants with prefix SEARCH_)
+	 *            Method for calculating the region growing stopping criteria (use the constants with prefix
+	 *            {@code SEARCH_}, e.g. {@link #SEARCH_ABOVE_BACKGROUND}).
 	 * @param searchParameter
 	 *            parameter for calculating the stopping criteria
 	 * @return the find foci search results
@@ -450,7 +463,7 @@ public interface FindFociProcessor
 	 *            Contents are unchanged.
 	 * @param peakMethod
 	 *            Method for calculating the minimum peak height above the highest saddle (use the constants with prefix
-	 *            PEAK_)
+	 *            {@code PEAK_}, e.g. {@link #PEAK_RELATIVE}).
 	 * @param peakParameter
 	 *            parameter for calculating the minimum peak height
 	 * @return the find foci merge results
@@ -491,7 +504,8 @@ public interface FindFociProcessor
 	 * @param minSize
 	 *            The minimum size for a peak
 	 * @param options
-	 *            An options flag (use the constants with prefix FindFoci.OPTION_)
+	 *            An options flag (use the constants with prefix {@code OPTION_}, e.g.
+	 *            {@link #OPTION_MINIMUM_ABOVE_SADDLE}).
 	 * @param blur
 	 *            Apply a Gaussian blur of the specified radius before processing (helps smooth noisy images for better
 	 *            peak identification)
@@ -520,7 +534,7 @@ public interface FindFociProcessor
 	 *            The index of the result statistic to use for the peak sorting
 	 * @param centreMethod
 	 *            Define the method used to calculate the peak centre (use the constants with prefix
-	 *            FindFociProcessor.CENTRE_)
+	 *            {@code CENTRE_}, e.g. {@link #CENTRE_MAX_VALUE_SEARCH}
 	 * @param centreParameter
 	 *            Parameter for calculating the peak centre
 	 * @return the find foci results
@@ -548,7 +562,7 @@ public interface FindFociProcessor
 	 *            The index of the result statistic to use for the peak sorting
 	 * @param centreMethod
 	 *            Define the method used to calculate the peak centre (use the constants with prefix
-	 *            FindFociProcessor.CENTRE_)
+	 *            {@code CENTRE_}, e.g. {@link #CENTRE_MAX_VALUE_SEARCH}
 	 * @param centreParameter
 	 *            Parameter for calculating the peak centre
 	 * @return the find foci results
@@ -575,10 +589,11 @@ public interface FindFociProcessor
 	 *            {@link #findMaximaPrelimResults(FindFociInitResults, FindFociMergeResults, int, int, int, double)}
 	 *            Contents are unchanged.
 	 * @param outputType
-	 *            Use {@link #OUTPUT_MASK_PEAKS} to get an ImagePlus in the result Object array. Use
+	 *            Use {@link #OUTPUT_MASK_PEAKS} to get an ImagePlus in the results. Use
 	 *            {@link #OUTPUT_LOG_MESSAGES} to get runtime information.
 	 * @param autoThresholdMethod
-	 *            The thresholding method (use a string from {@link uk.ac.sussex.gdsc.core.threshold.AutoThreshold#getMethods() } )
+	 *            The thresholding method (use a string from
+	 *            {@link uk.ac.sussex.gdsc.core.threshold.AutoThreshold#getMethods() } )
 	 * @param imageTitle
 	 *            the image title
 	 * @param fractionParameter

@@ -50,7 +50,7 @@ import uk.ac.sussex.gdsc.core.ij.Utils;
  * Skeletonise a mask image. Then produce a set of lines connecting node points on the skeleton.
  * <p>
  * The skeleton is modified from the ImageJ default by removing pixels that are 4-connected to
- * adjacent 8-connected pixels (e.g. North & East, East & South, South & West, West & North) unless
+ * adjacent 8-connected pixels (e.g. North &amp; East, East &amp; South, South &amp; West, West &amp; North) unless
  * 8-connected on the opposite side or 4-connected on the other two sides. This eliminates redundant pixels.
  */
 public class SkeletonAnalyser implements PlugInFilter

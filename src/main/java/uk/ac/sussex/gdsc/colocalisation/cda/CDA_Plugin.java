@@ -92,7 +92,7 @@ import uk.ac.sussex.gdsc.core.utils.StoredData;
 /**
  * Test for significant colocalisation within images using the Confined Displacement Algorithm (CDA).
  *
- * Colocalisation of two channels is measured using Mander's coefficients (M1 & M2) and Pearson's correlation
+ * Colocalisation of two channels is measured using Mander's coefficients (M1 &amp; M2) and Pearson's correlation
  * coefficient (R). Significance is tested by shifting one image to all positions within a circular radius and computing
  * a probability distribution for M1, M2 and R. Significance is measured using a specified p-value.
  *
@@ -756,11 +756,13 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 	 * bits:
 	 *
 	 * <pre>
+	 * {@code
 	 * int index = (Math.abs(i) & 0xff) << 8 | Math.abs(j) & 0xff;
 	 * if (i < 0)
 	 * 	index |= 0x00010000;
 	 * if (j < 0)
 	 * 	index |= 0x00020000;
+	 * }
 	 * </pre>
 	 *
 	 * <p>

@@ -442,7 +442,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
 	/**
 	 * Apply a Gaussian blur to the image and returns a new image.
-	 * Returns the original image if blur <= 0.
+	 * Returns the original image if {@code blur <= 0}.
 	 * <p>
 	 * Only blurs the current channel and frame for use in the FindFoci algorithm.
 	 *
@@ -5521,7 +5521,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Convert the single index into x,y,z coords, Input array must be length >= 3.
+	 * Convert the single index into x,y,z coords, Input array must be length &gt;= 3.
 	 *
 	 * @param index
 	 *            the index
@@ -5539,7 +5539,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	}
 
 	/**
-	 * Convert the single index into x,y,z coords, Input array must be length >= 3.
+	 * Convert the single index into x,y,z coords, Input array must be length &gt;= 3.
 	 *
 	 * @param index
 	 *            the index

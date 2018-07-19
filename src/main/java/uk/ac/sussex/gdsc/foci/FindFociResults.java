@@ -33,7 +33,6 @@ import ij.ImagePlus;
  */
 public class FindFociResults implements Cloneable
 {
-
 	/** The mask. */
 	public final ImagePlus mask;
 

@@ -69,7 +69,6 @@ import ij.util.Tools;
 
 /**
  * Implements ImageJ's Analyze Particles command.
- * <p>
  *
  * <pre>
  * 	for each line do

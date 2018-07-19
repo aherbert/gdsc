@@ -41,7 +41,7 @@ import ij.process.ShortProcessor;
  * This plugin performs a z-projection of the input stack. Type of
  * output image is same as type of input image.
  *
- * @author Patrick Kelly <phkelly@ucsd.edu>
+ * @author Patrick Kelly &lt;phkelly@ucsd.edu&gt;
  */
 public class ZProjectorCopy implements PlugIn
 {
