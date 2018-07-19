@@ -37,10 +37,11 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.test.TestAssert;
 import uk.ac.sussex.gdsc.test.TestComplexity;
 import uk.ac.sussex.gdsc.test.TestLog;
 import uk.ac.sussex.gdsc.test.TestSettings;
+import uk.ac.sussex.gdsc.test.junit4.TestAssert;
+import uk.ac.sussex.gdsc.test.junit4.TestAssume;
 
 @SuppressWarnings({ "javadoc" })
 public class FindFociTest
@@ -244,7 +245,7 @@ public class FindFociTest
 	@Test
 	public void isFasterUsingOptimisedIntProcessor()
 	{
-		TestSettings.assumeLowComplexity();
+		TestAssume.assumeLowComplexity();
 
 		// Get settings to try for the speed test
 		final int[] indices = new int[] { 1 };
@@ -281,7 +282,7 @@ public class FindFociTest
 	@Test
 	public void isFasterUsingOptimisedFloatProcessor()
 	{
-		TestSettings.assumeSpeedTest(TestComplexity.MEDIUM);
+		TestAssume.assumeSpeedTest(TestComplexity.MEDIUM);
 
 		// Get settings to try for the speed test
 		final int[] indices = new int[] { 1 };
@@ -325,7 +326,7 @@ public class FindFociTest
 	@Test
 	public void isNotSlowerthanLegacyUsingOptimisedIntProcessor()
 	{
-		TestSettings.assumeSpeedTest(TestComplexity.MEDIUM);
+		TestAssume.assumeSpeedTest(TestComplexity.MEDIUM);
 
 		// Get settings to try for the speed test
 		final int[] indices = new int[] { 1 };
@@ -367,7 +368,7 @@ public class FindFociTest
 	@Test
 	public void isFasterUsingOptimisedIntProcessorOverOptimisedFloatProcessor()
 	{
-		TestSettings.assumeLowComplexity();
+		TestAssume.assumeLowComplexity();
 
 		// Get settings to try for the speed test
 		final int[] indices = new int[] { 1 };
