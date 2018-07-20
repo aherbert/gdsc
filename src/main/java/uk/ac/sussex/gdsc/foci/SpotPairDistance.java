@@ -57,17 +57,17 @@ public class SpotPairDistance implements PlugIn
 {
 	private static final String TITLE = "Spot Pair Distance";
 
-	private static final String PREFS_CHANNEL_1 = "uk.ac.sussex.gdsc.foci.spotpairdistance.channel_1";
-	private static final String PREFS_CHANNEL_2 = "uk.ac.sussex.gdsc.foci.spotpairdistance.channel_2";
-	private static final String PREFS_SEARCH_RANGE = "uk.ac.sussex.gdsc.foci.spotpairdistance.search_range";
-	private static final String PREFS_COM_RANGE = "uk.ac.sussex.gdsc.foci.spotpairdistance.com_range";
-	private static final String PREFS_REVERSE_ORIENTATION_LINE = "uk.ac.sussex.gdsc.foci.spotpairdistance.reverse_orientation_line";
-	private static final String PREFS_SHOW_DISTANCES = "uk.ac.sussex.gdsc.foci.spotpairdistance.show_distances";
-	private static final String PREFS_SHOW_SEARCH_REGION = "uk.ac.sussex.gdsc.foci.spotpairdistance.show_search_region";
-	private static final String PREFS_SHOW_COM_REGION = "uk.ac.sussex.gdsc.foci.spotpairdistance.show_com_region";
-	private static final String PREFS_SHOW_LINE = "uk.ac.sussex.gdsc.foci.spotpairdistance.show_line";
-	private static final String PREFS_SHOW_ORIENTATION_LINE = "uk.ac.sussex.gdsc.foci.spotpairdistance.show_orientation_line";
-	private static final String PREFS_ADD_TO_OVERLAY = "uk.ac.sussex.gdsc.foci.spotpairdistance.add_to_overlay";
+	private static final String PREFS_CHANNEL_1 = "gdsc.foci.spotpairdistance.channel_1";
+	private static final String PREFS_CHANNEL_2 = "gdsc.foci.spotpairdistance.channel_2";
+	private static final String PREFS_SEARCH_RANGE = "gdsc.foci.spotpairdistance.search_range";
+	private static final String PREFS_COM_RANGE = "gdsc.foci.spotpairdistance.com_range";
+	private static final String PREFS_REVERSE_ORIENTATION_LINE = "gdsc.foci.spotpairdistance.reverse_orientation_line";
+	private static final String PREFS_SHOW_DISTANCES = "gdsc.foci.spotpairdistance.show_distances";
+	private static final String PREFS_SHOW_SEARCH_REGION = "gdsc.foci.spotpairdistance.show_search_region";
+	private static final String PREFS_SHOW_COM_REGION = "gdsc.foci.spotpairdistance.show_com_region";
+	private static final String PREFS_SHOW_LINE = "gdsc.foci.spotpairdistance.show_line";
+	private static final String PREFS_SHOW_ORIENTATION_LINE = "gdsc.foci.spotpairdistance.show_orientation_line";
+	private static final String PREFS_ADD_TO_OVERLAY = "gdsc.foci.spotpairdistance.add_to_overlay";
 
 	/**
 	 * All the work for this plugin is done with the plugin tool.

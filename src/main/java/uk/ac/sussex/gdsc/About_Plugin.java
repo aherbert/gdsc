@@ -40,7 +40,7 @@ public class About_Plugin implements PlugIn
 {
 	/** The title of the plugin. */
 	private static final String TITLE = "GDSC ImageJ Plugins";
-	private static String HELP_URL = "http://www.sussex.ac.uk/uk.ac.sussex.gdsc/intranet/microscopy/imagej/plugins";
+	private static String HELP_URL = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/plugins";
 	private static String YEAR = "2016";
 
 	@Override
