@@ -34,7 +34,7 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 /**
- * Contains help dialogs for the GDSC ImageJ plugins
+ * Contains help dialogs for the GDSC ImageJ plugins.
  */
 public class About_Plugin implements PlugIn
 {

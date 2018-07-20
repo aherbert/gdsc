@@ -30,7 +30,7 @@ import ij.process.FloatProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
- * Creates a Gaussian image
+ * Creates a Gaussian image.
  */
 public class GaussianPlugin implements PlugIn
 {

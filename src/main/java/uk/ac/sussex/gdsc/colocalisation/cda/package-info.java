@@ -21,24 +21,12 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-package uk.ac.sussex.gdsc.utils;
-
-import ij.plugin.PlugIn;
-import ij.plugin.ZProjector2;
-import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
- * Pass through class allowing the {@link ij.plugin.filter.MaskParticleAnalyzer }
- * to be loaded by the ImageJ plugin class loader.
+ * Provides code for the Confined Displacement Algorithm (<a href="https://doi.org/10.1111/j.1365-2818.2010.03369.x">CDA</a>).
+ * 
+ * @see <a href="https://doi.org/10.1111/j.1365-2818.2010.03369.x">Confined displacement algorithm determines true and
+ *      random colocalization in fluorescence microscopy</a>
+ * @since 1.3.0
  */
-public class ZProjector2Runner implements PlugIn
-{
-	private final ZProjector2 filter = new ZProjector2();
-
-	@Override
-	public void run(String arg)
-	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
-		filter.run(arg);
-	}
-}
+package uk.ac.sussex.gdsc.colocalisation.cda;

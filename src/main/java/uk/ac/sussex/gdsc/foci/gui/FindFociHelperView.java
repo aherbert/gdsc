@@ -100,8 +100,8 @@ import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
 
 /**
- * Provides a permanent form front-end that allows the user to pick ROI points and have them mapped to the closest
- * maxima found by the FindFoci algorithm.
+ * Provides a permanent form front-end that allows the user to pick ROI points
+ * and have them mapped to the closest maxima found by the FindFoci algorithm.
  */
 public class FindFociHelperView extends JFrame implements WindowListener, MouseListener, MouseMotionListener
 {

@@ -28,7 +28,7 @@ import org.jdesktop.beansbinding.Converter;
 import uk.ac.sussex.gdsc.foci.FindFoci;
 
 /**
- * Convert the centre method to a flag indicating if the centre parameter is enabled
+ * Convert the centre method to a flag indicating if the centre parameter is enabled.
  */
 public class CentreParamEnabledConverter extends Converter<Integer, Boolean>
 {

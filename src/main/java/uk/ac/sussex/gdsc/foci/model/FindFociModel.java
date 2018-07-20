@@ -33,7 +33,7 @@ import uk.ac.sussex.gdsc.foci.FindFoci;
 import uk.ac.sussex.gdsc.foci.FindFociProcessor;
 
 /**
- * Provides a bean property model for the FindFoci algorithm
+ * Provides a bean property model for the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.
  */
 public class FindFociModel extends AbstractModelObject implements Cloneable
 {

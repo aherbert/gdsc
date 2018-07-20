@@ -28,7 +28,7 @@ import org.jdesktop.beansbinding.Converter;
 import uk.ac.sussex.gdsc.foci.FindFociProcessor;
 
 /**
- * Convert the peak search method to a flag indicating if absolute is enabled
+ * Convert the peak search method to a flag indicating if absolute is enabled.
  */
 public class PeakParamAbsoluteEnabledConverter extends Converter<Integer, Boolean>
 {

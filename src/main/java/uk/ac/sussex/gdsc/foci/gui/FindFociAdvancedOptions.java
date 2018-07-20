@@ -68,7 +68,7 @@ import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
 
 /**
- * Provides additional options for the FindFociView
+ * Provides additional options for the {@link FindFociView}.
  */
 public class FindFociAdvancedOptions extends JDialog
 {

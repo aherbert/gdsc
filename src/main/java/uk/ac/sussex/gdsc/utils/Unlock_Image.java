@@ -29,7 +29,7 @@ import ij.process.ImageProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
- * Unlocks the image
+ * Unlocks the image.
  */
 public class Unlock_Image implements PlugInFilter
 {

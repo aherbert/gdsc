@@ -103,6 +103,8 @@ import uk.ac.sussex.gdsc.core.utils.StoredData;
  * <a href=
  * "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:confined_displacement_algorithm_determines_true_and_random_colocalization_:start">Confined
  * Displacement Algorithm Determines True and Random Colocalization</a>
+ * 
+ * @see <a href="https://doi.org/10.1111/j.1365-2818.2010.03369.x">Confined displacement algorithm determines true and random colocalization in fluorescence microscopy</a>
  */
 public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListener, KeyListener, Runnable
 {

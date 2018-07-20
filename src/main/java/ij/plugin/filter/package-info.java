@@ -21,24 +21,11 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-package uk.ac.sussex.gdsc.utils;
-
-import ij.plugin.PlugIn;
-import ij.plugin.ZProjector2;
-import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
- * Pass through class allowing the {@link ij.plugin.filter.MaskParticleAnalyzer }
- * to be loaded by the ImageJ plugin class loader.
+ * Extend the functionality of the <a href="https://imagej.nih.gov/ij/">ImageJ</a> {@code ij.plugin.filter} package.
+ *
+ * @see <a href="https://imagej.nih.gov/ij/">ImageJ</a>
+ * @since 1.3.0
  */
-public class ZProjector2Runner implements PlugIn
-{
-	private final ZProjector2 filter = new ZProjector2();
-
-	@Override
-	public void run(String arg)
-	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
-		filter.run(arg);
-	}
-}
+package ij.plugin.filter;

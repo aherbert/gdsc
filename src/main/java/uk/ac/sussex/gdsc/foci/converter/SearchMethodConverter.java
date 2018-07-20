@@ -28,7 +28,7 @@ import org.jdesktop.beansbinding.Converter;
 import uk.ac.sussex.gdsc.foci.FindFoci;
 
 /**
- * Convert the search method
+ * Convert the search method.
  */
 public class SearchMethodConverter extends Converter<Integer, Object>
 {

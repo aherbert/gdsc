@@ -28,7 +28,7 @@ import org.jdesktop.beansbinding.Converter;
 import uk.ac.sussex.gdsc.foci.FindFociProcessor;
 
 /**
- * Convert the background method to a flag indicating if the background parameter is enabled
+ * Convert the background method to a flag indicating if the background parameter is enabled.
  */
 public class BackgroundParamEnabledConverter extends Converter<Integer, Boolean>
 {

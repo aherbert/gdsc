@@ -26,7 +26,7 @@ package uk.ac.sussex.gdsc.foci.controller;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 /**
- * Controls the FindFoci algorithm
+ * Controls the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.
  */
 public abstract class FindFociController implements Runnable
 {

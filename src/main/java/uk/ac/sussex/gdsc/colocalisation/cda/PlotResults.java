@@ -28,8 +28,9 @@ import java.awt.Color;
 import ij.gui.Plot;
 
 /**
- * Provides functionality to plot a histogram of sampleData and then determine if a value is
- * significant using a specified p-value, i.e. it lies outside the upper/lower tails of the histogram sampleData.
+ * Provides functionality to plot a histogram of sample data and then determine if a value is
+ * significant using a specified p-value. I.e. it lies outside the upper/lower tails of the 
+ * histogram sample data.
  * <p>
  * This class is based on the original CDA_Plugin developed by Maria Osorio-Reich:
  * <a href=

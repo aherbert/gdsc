@@ -33,7 +33,7 @@ import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.Utils;
 
 /**
- * Computes the odds of winning the lottery using random sampling
+ * Computes the odds of winning the lottery using random sampling.
  */
 public class Lottery implements PlugIn
 {

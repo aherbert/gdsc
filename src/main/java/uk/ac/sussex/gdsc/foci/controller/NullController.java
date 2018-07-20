@@ -30,7 +30,7 @@ import java.util.Random;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 /**
- * Dummy controller that provides stub functionality to {@link uk.ac.sussex.gdsc.foci.gui.FindFociView }
+ * Dummy controller that provides stub functionality to {@link uk.ac.sussex.gdsc.foci.gui.FindFociView}.
  */
 public class NullController extends FindFociController
 {

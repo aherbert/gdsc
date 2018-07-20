@@ -37,7 +37,7 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessor;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 /**
- * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci } algorithm
+ * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci } algorithm.
  */
 public class ImageJController extends FindFociController
 {

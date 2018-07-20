@@ -35,7 +35,7 @@ import ij.process.FloatPolygon;
 import ij.util.Java2;
 
 /**
- * Extend the PointRoi class to allow custom number labels for each point.
+ * Extend the {@link PointRoi} class to allow custom number labels for each point.
  */
 public class PointRoi2 extends PointRoi
 {

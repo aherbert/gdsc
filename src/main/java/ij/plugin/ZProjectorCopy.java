@@ -40,6 +40,8 @@ import ij.process.ShortProcessor;
 /**
  * This plugin performs a z-projection of the input stack. Type of
  * output image is same as type of input image.
+ * <p>
+ * Copied from {@link ij.plugin.ZProjector}.
  *
  * @author Patrick Kelly &lt;phkelly@ucsd.edu&gt;
  */
@@ -496,7 +498,7 @@ public class ZProjectorCopy implements PlugIn
 	 * @param imp
 	 *            the image
 	 * @param fp
-	 * the image
+	 *            the image
 	 * @param ptype
 	 *            the ptype
 	 * @return the image plus
@@ -680,7 +682,7 @@ public class ZProjectorCopy implements PlugIn
 		 * pixel.
 		 *
 		 * @param fp
-		 * the image
+		 *            the image
 		 * @param num
 		 *            the number of slices
 		 */
@@ -732,7 +734,7 @@ public class ZProjectorCopy implements PlugIn
 		 * Simple constructor since no preprocessing is necessary.
 		 *
 		 * @param fp
-		 * the image
+		 *            the image
 		 */
 		MaxIntensity(FloatProcessor fp)
 		{

@@ -41,7 +41,7 @@ import ij.gui.Roi;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
 
 /**
- * Manages I/O of the Point class
+ * Manages I/O of the {@link AssignedPoint} class.
  */
 public class PointManager
 {

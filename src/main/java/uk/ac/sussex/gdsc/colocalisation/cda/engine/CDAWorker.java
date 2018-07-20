@@ -32,7 +32,7 @@ import uk.ac.sussex.gdsc.colocalisation.cda.TwinStackShifter;
 import uk.ac.sussex.gdsc.core.utils.Correlator;
 
 /**
- * Performs the CDA algorithm
+ * Performs the CDA algorithm.
  */
 public class CDAWorker implements Runnable
 {

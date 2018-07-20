@@ -68,7 +68,8 @@ import ij.text.TextWindow;
 import ij.util.Tools;
 
 /**
- * Implements ImageJ's Analyze Particles command.
+ * A copy of ImageJ's Analyze Particles command. 
+ * Copied from {@link ij.plugin.filter.ParticleAnalyzer}.
  *
  * <pre>
  * 	for each line do

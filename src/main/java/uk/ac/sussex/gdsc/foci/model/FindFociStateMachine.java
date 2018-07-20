@@ -30,8 +30,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Provides a state-machine for the processing steps required to recompute the FindFoci result
- * following a change to the model parameters
+ * Provides a state-machine for the processing steps required to recompute the 
+ * {@link uk.ac.sussex.gdsc.foci.FindFoci} result following a change to the model parameters.
  */
 public class FindFociStateMachine extends AbstractModelObject implements PropertyChangeListener
 {

@@ -31,7 +31,7 @@ import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
  * Pass through class allowing the {@link ij.plugin.filter.MaskParticleAnalyzer }
- * to be loaded by the ImageJ plugin class loader
+ * to be loaded by the ImageJ plugin class loader.
  */
 public class MaskParticleAnalyzerRunner implements PlugInFilter
 {

@@ -57,7 +57,7 @@ import uk.ac.sussex.gdsc.foci.converter.ValidImagesConverter;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 /**
- * Provides a permanent form front-end for the FindFoci algorithm
+ * Provides a permanent form front-end for the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.
  */
 public class OptimiserView extends JFrame
 {

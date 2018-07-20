@@ -39,7 +39,7 @@ import ij.process.ShortProcessor;
 
 /**
  * Extend the ZProjector to support mode intensity projection.
- *
+ * <p>
  * Note: This class extends a copy of the default ImageJ ZProjector so that certain methods and properties can be
  * changed to protected from the private/default scope. Extending a copy allows easier update when the super class
  * changes.

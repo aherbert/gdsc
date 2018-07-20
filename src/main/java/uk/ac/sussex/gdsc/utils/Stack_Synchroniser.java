@@ -62,8 +62,13 @@ import ij.plugin.frame.PlugInFrame;
 import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
- * Provides the ability to synchronise the display frame of multiple stack windows
+ * Provides the ability to synchronise the display frame of multiple stack windows.
+ * <p>
+ * 
+ * @deprecated This class has been superceded by standard functionality in the ImageJ
+ *             '{@code Analyze>Tools>Synchronize Windows}' command.
  */
+@Deprecated
 public class Stack_Synchroniser extends PlugInFrame implements ItemListener, ImageListener, ListSelectionListener
 {
 	private static final long serialVersionUID = 1L;

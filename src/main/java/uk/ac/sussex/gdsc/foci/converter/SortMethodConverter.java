@@ -28,7 +28,7 @@ import org.jdesktop.beansbinding.Converter;
 import uk.ac.sussex.gdsc.foci.FindFoci;
 
 /**
- * Convert the sort method
+ * Convert the sort method.
  */
 public class SortMethodConverter extends Converter<Integer, Object>
 {

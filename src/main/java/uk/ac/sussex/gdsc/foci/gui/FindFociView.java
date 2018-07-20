@@ -97,7 +97,7 @@ import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
 
 /**
- * Provides a permanent form front-end for the FindFoci algorithm
+ * Provides a permanent form front-end for the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.
  */
 public class FindFociView extends JFrame implements PropertyChangeListener, MessageListener
 {

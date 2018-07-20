@@ -49,7 +49,7 @@ import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 
 /**
- * Dialog that can be used to reconfigure the minimum and maximum limits for a JSlider
+ * Dialog that can be used to reconfigure the minimum and maximum limits for a JSlider.
  */
 public class SliderLimitHelper extends JDialog implements ActionListener
 {

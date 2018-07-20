@@ -29,7 +29,7 @@ import ij.plugin.PlugIn;
 import uk.ac.sussex.gdsc.core.ij.ImageJAnalyticsTracker;
 
 /**
- * Provide methods to track code usage within ImageJ
+ * Provide methods to track code usage within ImageJ.
  */
 public class UsageTracker implements PlugIn
 {

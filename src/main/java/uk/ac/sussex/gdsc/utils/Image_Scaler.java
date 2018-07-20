@@ -39,7 +39,7 @@ import ij.process.ImageStatistics;
 import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
- * Scales all planes in an image to the given maximim
+ * Scales all planes in an image to the given maximum.
  */
 public class Image_Scaler implements PlugInFilter
 {

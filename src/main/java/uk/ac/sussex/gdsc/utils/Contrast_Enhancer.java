@@ -31,7 +31,7 @@ import ij.process.ImageProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
- * Runs the contrast enhancer on all the open images
+ * Runs the contrast enhancer on all the open images.
  */
 public class Contrast_Enhancer implements PlugInFilter
 {

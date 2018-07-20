@@ -24,7 +24,7 @@
 package uk.ac.sussex.gdsc.help;
 
 /**
- * Help URLs
+ * Provides URLs.
  */
 public class URL
 {

@@ -45,7 +45,7 @@ import uk.ac.sussex.gdsc.foci.gui.FindFociView;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 /**
- * Provides a permanent form front-end for the FindFoci plugin filter
+ * Provides a permanent form front-end for the FindFoci plugin filter.
  */
 public class FindFociPlugin implements PlugIn
 {

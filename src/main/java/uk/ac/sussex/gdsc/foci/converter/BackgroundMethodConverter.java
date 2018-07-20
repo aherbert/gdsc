@@ -28,7 +28,7 @@ import org.jdesktop.beansbinding.Converter;
 import uk.ac.sussex.gdsc.foci.FindFoci;
 
 /**
- * Convert the background method parameter
+ * Convert the background method parameter.
  */
 public class BackgroundMethodConverter extends Converter<Integer, Object>
 {

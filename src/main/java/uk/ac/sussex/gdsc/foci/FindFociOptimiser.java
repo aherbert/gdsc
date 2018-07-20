@@ -94,7 +94,8 @@ import uk.ac.sussex.gdsc.core.utils.UnicodeReader;
 import uk.ac.sussex.gdsc.foci.gui.OptimiserView;
 
 /**
- * Runs the FindFoci plugin with various settings and compares the results to the reference image point ROI.
+ * Runs the FindFoci plugin with various settings and compares the results to the 
+ * reference image point ROI.
  */
 public class FindFociOptimiser
 		implements PlugIn, MouseListener, WindowListener, DialogListener, TextListener, ItemListener
