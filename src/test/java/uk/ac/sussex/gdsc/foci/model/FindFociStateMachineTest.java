@@ -26,7 +26,7 @@ package uk.ac.sussex.gdsc.foci.model;
 import java.beans.PropertyChangeEvent;
 import java.util.Random;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings({ "javadoc" })
 public class FindFociStateMachineTest
@@ -60,7 +60,7 @@ public class FindFociStateMachineTest
 				}
 				sm.setState(FindFociState.COMPLETE);
 			}
-
+		
 		System.out.printf("%d steps : %f ms\n", steps, (System.nanoTime() - start) / 1000000.0);
 	}
 }

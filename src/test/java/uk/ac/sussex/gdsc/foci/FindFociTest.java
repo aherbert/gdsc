@@ -27,8 +27,9 @@ import java.util.ArrayList;
 
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.random.RandomGenerator;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.opentest4j.AssertionFailedError;
 
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -40,8 +41,8 @@ import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.test.TestComplexity;
 import uk.ac.sussex.gdsc.test.TestLog;
 import uk.ac.sussex.gdsc.test.TestSettings;
-import uk.ac.sussex.gdsc.test.junit4.TestAssert;
-import uk.ac.sussex.gdsc.test.junit4.TestAssume;
+import uk.ac.sussex.gdsc.test.junit5.TestAssertions;
+import uk.ac.sussex.gdsc.test.junit5.TestAssumptions;
 
 @SuppressWarnings({ "javadoc" })
 public class FindFociTest
@@ -245,7 +246,7 @@ public class FindFociTest
 	@Test
 	public void isFasterUsingOptimisedIntProcessor()
 	{
-		TestAssume.assumeLowComplexity();
+		TestAssumptions.assumeLowComplexity();
 
 		// Get settings to try for the speed test
 		final int[] indices = new int[] { 1 };
@@ -276,13 +277,13 @@ public class FindFociTest
 			time2 = stop(time2);
 		}
 		TestLog.info("Int %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
-		Assert.assertTrue(time2 < time1);
+		Assertions.assertTrue(time2 < time1);
 	}
 
 	@Test
 	public void isFasterUsingOptimisedFloatProcessor()
 	{
-		TestAssume.assumeSpeedTest(TestComplexity.MEDIUM);
+		TestAssumptions.assumeSpeedTest(TestComplexity.MEDIUM);
 
 		// Get settings to try for the speed test
 		final int[] indices = new int[] { 1 };
@@ -318,7 +319,7 @@ public class FindFociTest
 		// the JVM has had time to optimise it. When running the test alone the optimised processor is comparable.
 		// I am not worried the optimisation has worse performance.
 
-		//Assert.assertTrue(time2 < time1 * 1.4); // Allow discretion so test will pass
+		//Assertions.assertTrue(time2 < time1 * 1.4); // Allow discretion so test will pass
 		TestLog.logSpeedTestResult(time2 < time1, "Float %d, Opt Float %d, %fx faster\n", time1, time2,
 				(double) time1 / time2);
 	}
@@ -326,7 +327,7 @@ public class FindFociTest
 	@Test
 	public void isNotSlowerthanLegacyUsingOptimisedIntProcessor()
 	{
-		TestAssume.assumeSpeedTest(TestComplexity.MEDIUM);
+		TestAssumptions.assumeSpeedTest(TestComplexity.MEDIUM);
 
 		// Get settings to try for the speed test
 		final int[] indices = new int[] { 1 };
@@ -360,7 +361,7 @@ public class FindFociTest
 		// the JVM has had time to optimise it. When running the test alone the two are comparable.
 		// I am not worried the new code has worse performance.
 
-		//Assert.assertTrue(time2 < time1 * 1.4); // Allow some discretion over the legacy method
+		//Assertions.assertTrue(time2 < time1 * 1.4); // Allow some discretion over the legacy method
 		TestLog.logSpeedTestResult(time2 < time1, "Legacy %d, Opt Int %d, %fx faster\n", time1, time2,
 				(double) time1 / time2);
 	}
@@ -368,7 +369,7 @@ public class FindFociTest
 	@Test
 	public void isFasterUsingOptimisedIntProcessorOverOptimisedFloatProcessor()
 	{
-		TestAssume.assumeLowComplexity();
+		TestAssumptions.assumeLowComplexity();
 
 		// Get settings to try for the speed test
 		final int[] indices = new int[] { 1 };
@@ -403,7 +404,7 @@ public class FindFociTest
 			time2 = stop(time2);
 		}
 		TestLog.info("Opt Float %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
-		Assert.assertTrue(time2 < time1);
+		Assertions.assertTrue(time2 < time1);
 	}
 
 	private static void isEqual(boolean legacy, FindFociResults r1, FindFociResults r2, int set, boolean nonContiguous)
@@ -418,16 +419,16 @@ public class FindFociTest
 
 		final ImagePlus imp1 = r1.mask;
 		final ImagePlus imp2 = r2.mask;
-		Assert.assertEquals(setName + " Mask", imp1 != null, imp2 != null);
+		Assertions.assertEquals(imp1 != null, imp2 != null, setName + " Mask");
 		if (imp1 != null)
 		{
-			//Assert.assertArrayEquals(set + " Mask values", (float[]) (imp1.getProcessor().convertToFloat().getPixels()),
+			//Assertions.assertArrayEquals(set + " Mask values", (float[]) (imp1.getProcessor().convertToFloat().getPixels()),
 			//		(float[]) (imp2.getProcessor().convertToFloat().getPixels()), 0);
 		}
 		final ArrayList<FindFociResult> results1 = r1.results;
 		final ArrayList<FindFociResult> results2 = r2.results;
 		//TestLog.info("N1=%d, N2=%d\n", results1.size(), results2.size());
-		Assert.assertEquals(setName + " Results Size", results1.size(), results2.size());
+		Assertions.assertEquals(results1.size(), results2.size(), setName + " Results Size");
 		int counter = 0;
 		final int offset = (negativeValues) ? FindFociTest.offset : 0;
 		try
@@ -441,40 +442,40 @@ public class FindFociTest
     			//TestLog.info("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d\n", i,
     			//		o1.x, o1.y, o1.maxValue, o1.count, o1.saddleNeighbourId,
     			//		o2.x, o2.y, o2.maxValue, o2.count, o2.saddleNeighbourId);
-    			Assert.assertEquals("X", o1.x, o2.x);
-    			Assert.assertEquals("Y", o1.y, o2.y);
-    			Assert.assertEquals("Z", o1.z, o2.z);
-    			Assert.assertEquals("ID", o1.id, o2.id);
-    			Assert.assertEquals("Count", o1.count, o2.count);
-    			Assert.assertEquals("Saddle ID", o1.saddleNeighbourId, o2.saddleNeighbourId);
-    			Assert.assertEquals("Count >Saddle", o1.countAboveSaddle, o2.countAboveSaddle);
+    			Assertions.assertEquals(o1.x, o2.x, "X");
+    			Assertions.assertEquals(o1.y, o2.y, "Y");
+    			Assertions.assertEquals(o1.z, o2.z, "Z");
+    			Assertions.assertEquals(o1.id, o2.id,"ID");
+    			Assertions.assertEquals(o1.count, o2.count, "Count");
+    			Assertions.assertEquals(o1.saddleNeighbourId, o2.saddleNeighbourId, "Saddle ID");
+    			Assertions.assertEquals(o1.countAboveSaddle, o2.countAboveSaddle, "Count >Saddle");
     			// Single/Summed values can be cast to long as they should be 16-bit integers
-    			Assert.assertEquals("Max", (long)o1.maxValue, (long)o2.maxValue + offset);
+    			Assertions.assertEquals((long)o1.maxValue, (long)o2.maxValue + offset, "Max");
     			if (o2.highestSaddleValue != Float.NEGATIVE_INFINITY && o2.highestSaddleValue != 0)
-    				Assert.assertEquals("Saddle value", (long)o1.highestSaddleValue, (long)o2.highestSaddleValue + offset);
+    				Assertions.assertEquals((long)o1.highestSaddleValue, (long)o2.highestSaddleValue + offset, "Saddle value");
     			if (legacy)
     			{
         			// Cast to integer as this is the result format of the legacy FindFoci code
-        			Assert.assertEquals("Av Intensity", (long)o1.averageIntensity, (long)o2.averageIntensity + offset);
-        			Assert.assertEquals("Av Intensity >background", (long)o1.averageIntensityAboveBackground, (long)o2.averageIntensityAboveBackground);
+        			Assertions.assertEquals((long)o1.averageIntensity, (long)o2.averageIntensity + offset, "Av Intensity");
+        			Assertions.assertEquals((long)o1.averageIntensityAboveBackground, (long)o2.averageIntensityAboveBackground, "Av Intensity >background");
     			}
     			else
     			{
         			// Averages cannot be cast and are compared as floating-point values
-        			TestAssert.assertEqualsRelative("Av Intensity", o1.averageIntensity, o2.averageIntensity + offset, 1e-9);
-        			TestAssert.assertEqualsRelative("Av Intensity >background", o1.averageIntensityAboveBackground, o2.averageIntensityAboveBackground, 1e-9);
+        			TestAssertions.assertEqualsRelative( o1.averageIntensity, o2.averageIntensity + offset, 1e-9, "Av Intensity");
+        			TestAssertions.assertEqualsRelative(o1.averageIntensityAboveBackground, o2.averageIntensityAboveBackground, 1e-9, "Av Intensity >background");
     			}
     			if (negativeValues)
     				continue;
-    			Assert.assertEquals("Intensity", (long)o1.totalIntensity, (long)o2.totalIntensity);
-    			Assert.assertEquals("Intensity >background", (long)o1.totalIntensityAboveBackground, (long)o2.totalIntensityAboveBackground);
-    			Assert.assertEquals("Intensity > Saddle", (long)o1.intensityAboveSaddle, (long)o2.intensityAboveSaddle);
+    			Assertions.assertEquals((long)o1.totalIntensity, (long)o2.totalIntensity, "Intensity");
+    			Assertions.assertEquals((long)o1.totalIntensityAboveBackground, (long)o2.totalIntensityAboveBackground, "Intensity >background");
+    			Assertions.assertEquals((long)o1.intensityAboveSaddle, (long)o2.intensityAboveSaddle, "Intensity > Saddle");
     			//@formatter:on
 			}
 		}
-		catch (final AssertionError e)
+		catch (final AssertionFailedError e)
 		{
-			TestAssert.wrapAssertionError(e, "%s [%d]", setName, counter);
+			TestAssertions.wrapAssertionFailedError(e, "%s [%d]", setName, counter);
 		}
 	}
 
