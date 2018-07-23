@@ -91,7 +91,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 	private static boolean prune;
 	private static boolean fill;
 	private static boolean replaceImage;
-	private static double percent = Prefs.getDouble("uk.ac.sussex.gdsc.EdgeMaskPercent", 99);
+	private static double percent = Prefs.getDouble("gdsc.EdgeMaskPercent", 99);
 
 	private final int flags = DOES_8G | DOES_16 | DOES_32 | FINAL_PROCESSING;
 	private int flags2 = 0;
@@ -326,7 +326,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
 		fill = gd.getNextBoolean();
 		replaceImage = gd.getNextBoolean();
 		//percent = gd.getNextNumber();
-		//Prefs.set("uk.ac.sussex.gdsc.EdgeMaskPercent", percent);
+		//Prefs.set("gdsc.EdgeMaskPercent", percent);
 		return true;
 	}
 
