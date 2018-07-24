@@ -21,7 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-package ij.plugin;
+package uk.ac.sussex.gdsc.ij.plugin;
 
 import java.util.Arrays;
 
@@ -32,6 +32,10 @@ import ij.ImageStack;
 import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.plugin.ChannelSplitter;
+import ij.plugin.PlugIn;
+import ij.plugin.RGBStackMerge;
+import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;

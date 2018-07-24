@@ -21,7 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-package ij.plugin;
+package uk.ac.sussex.gdsc.ij.plugin;
 
 import java.util.Arrays;
 

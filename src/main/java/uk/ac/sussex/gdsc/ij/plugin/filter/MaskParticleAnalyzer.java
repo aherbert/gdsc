@@ -21,7 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-package ij.plugin.filter;
+package uk.ac.sussex.gdsc.ij.plugin.filter;
 
 import java.awt.Frame;
 import java.io.BufferedWriter;
@@ -42,6 +42,7 @@ import ij.gui.GenericDialog;
 import ij.gui.Roi;
 import ij.macro.Interpreter;
 import ij.measure.ResultsTable;
+import ij.plugin.filter.Analyzer;
 import ij.plugin.frame.RoiManager;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;

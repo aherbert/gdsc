@@ -55,12 +55,10 @@ import ij.ImageStack;
 import ij.Macro;
 import ij.Prefs;
 import ij.WindowManager;
-import ij.gui.ExtendedGenericDialog;
 import ij.gui.GenericDialog;
 import ij.gui.ImageRoi;
 import ij.gui.Overlay;
 import ij.gui.PointRoi;
-import ij.gui.PointRoi2;
 import ij.gui.Roi;
 import ij.io.Opener;
 import ij.io.RoiEncoder;
@@ -72,6 +70,7 @@ import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.logging.MemoryLogger;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.Maths;
@@ -79,6 +78,7 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.core.utils.UnicodeReader;
 import uk.ac.sussex.gdsc.foci.FindFociBaseProcessor.ObjectAnalysisResult;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
+import uk.ac.sussex.gdsc.ij.gui.PointRoi2;
 import uk.ac.sussex.gdsc.utils.GaussianFit;
 
 /**

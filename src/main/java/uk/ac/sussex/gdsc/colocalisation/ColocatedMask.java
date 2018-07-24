@@ -36,13 +36,13 @@ import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
-import ij.gui.NonBlockingExtendedGenericDialog;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.Recorder;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.gui.NonBlockingExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.utils.Settings;
 
 /**

@@ -31,7 +31,6 @@ import java.util.Comparator;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.gui.ExtendedGenericDialog;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.Blitter;
 import ij.process.ByteProcessor;
@@ -40,6 +39,7 @@ import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.colocalisation.cda.CDA_Plugin;
 import uk.ac.sussex.gdsc.colocalisation.cda.TwinStackShifter;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.Correlator;
 

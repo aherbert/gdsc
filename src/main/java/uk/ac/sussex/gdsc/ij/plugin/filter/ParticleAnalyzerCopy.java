@@ -21,7 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-package ij.plugin.filter;
+package uk.ac.sussex.gdsc.ij.plugin.filter;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -50,6 +50,8 @@ import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.Colors;
+import ij.plugin.filter.Analyzer;
+import ij.plugin.filter.PlugInFilter;
 import ij.plugin.frame.RoiManager;
 import ij.process.ByteProcessor;
 import ij.process.ByteStatistics;

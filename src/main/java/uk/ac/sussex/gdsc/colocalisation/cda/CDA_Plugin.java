@@ -77,8 +77,6 @@ import ij.process.FloatProcessor;
 import ij.process.FloatStatistics;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
-import ij.process.LUTHelper;
-import ij.process.LUTHelper.LutColour;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
 import ij.util.Tools;
@@ -86,6 +84,8 @@ import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.colocalisation.cda.engine.CDAEngine;
 import uk.ac.sussex.gdsc.colocalisation.cda.engine.CalculationResult;
 import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.process.LUTHelper;
+import uk.ac.sussex.gdsc.core.ij.process.LUTHelper.LutColour;
 import uk.ac.sussex.gdsc.core.utils.Random;
 import uk.ac.sussex.gdsc.core.utils.StoredData;
 

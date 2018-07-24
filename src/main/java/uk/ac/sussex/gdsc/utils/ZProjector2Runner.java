@@ -24,11 +24,11 @@
 package uk.ac.sussex.gdsc.utils;
 
 import ij.plugin.PlugIn;
-import ij.plugin.ZProjector2;
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.ij.plugin.ZProjector2;
 
 /**
- * Pass through class allowing the {@link ij.plugin.filter.MaskParticleAnalyzer }
+ * Pass through class allowing the {@link uk.ac.sussex.gdsc.ij.plugin.filter.MaskParticleAnalyzer }
  * to be loaded by the ImageJ plugin class loader.
  */
 public class ZProjector2Runner implements PlugIn

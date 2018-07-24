@@ -21,7 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-package ij.plugin.filter;
+package uk.ac.sussex.gdsc.ij.plugin.filter;
 
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
@@ -35,6 +35,8 @@ import ij.Macro;
 import ij.Prefs;
 import ij.gui.GenericDialog;
 import ij.plugin.ContrastEnhancer;
+import ij.plugin.filter.GaussianBlur;
+import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;

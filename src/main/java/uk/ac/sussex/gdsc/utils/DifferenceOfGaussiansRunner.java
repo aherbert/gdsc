@@ -28,14 +28,14 @@ import java.awt.AWTEvent;
 import ij.ImagePlus;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
-import ij.plugin.filter.DifferenceOfGaussians;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ImageProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.ij.plugin.filter.DifferenceOfGaussians;
 
 /**
- * Pass through class allowing the {@link ij.plugin.filter.DifferenceOfGaussians }
+ * Pass through class allowing the {@link uk.ac.sussex.gdsc.ij.plugin.filter.DifferenceOfGaussians }
  * to be loaded by the ImageJ plugin class loader
  */
 public class DifferenceOfGaussiansRunner implements ExtendedPlugInFilter, DialogListener

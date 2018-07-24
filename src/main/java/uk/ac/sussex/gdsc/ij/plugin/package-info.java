@@ -21,32 +21,11 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-package uk.ac.sussex.gdsc.utils;
-
-import ij.ImagePlus;
-import ij.plugin.filter.PlugInFilter;
-import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.ij.plugin.filter.MaskParticleAnalyzer;
 
 /**
- * Pass through class allowing the {@link uk.ac.sussex.gdsc.ij.plugin.filter.MaskParticleAnalyzer }
- * to be loaded by the ImageJ plugin class loader.
+ * Extend the functionality of the <a href="https://imagej.nih.gov/ij/">ImageJ</a> {@code ij.plugin} package.
+ *
+ * @see <a href="https://imagej.nih.gov/ij/">ImageJ</a>
+ * @since 1.3.0
  */
-public class MaskParticleAnalyzerRunner implements PlugInFilter
-{
-	private final MaskParticleAnalyzer filter = new MaskParticleAnalyzer();
-
-	@Override
-	public int setup(String arg, ImagePlus imp)
-	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
-		return filter.setup(arg, imp);
-	}
-
-	@Override
-	public void run(ImageProcessor ip)
-	{
-		filter.run(ip);
-	}
-}
+package uk.ac.sussex.gdsc.ij.plugin;

@@ -23,9 +23,9 @@
  */
 
 /**
- * Extend the functionality of the <a href="https://imagej.nih.gov/ij/">ImageJ</a> {@code ij.plugin} package.
+ * Extend the functionality of the <a href="https://imagej.nih.gov/ij/">ImageJ</a> {@code ij.gui} package.
  *
  * @see <a href="https://imagej.nih.gov/ij/">ImageJ</a>
  * @since 1.3.0
  */
-package ij.plugin;
+package uk.ac.sussex.gdsc.ij.gui;

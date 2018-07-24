@@ -40,7 +40,6 @@ import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.plugin.MacroInstaller;
 import ij.plugin.PlugIn;
-import ij.plugin.filter.DifferenceOfGaussians;
 import ij.plugin.filter.ThresholdToSelection;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -51,6 +50,7 @@ import uk.ac.sussex.gdsc.core.ij.Utils;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.PointPair;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.ij.plugin.filter.DifferenceOfGaussians;
 
 /**
  * Output the distances between spots within a mask region.

@@ -21,7 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-package ij.gui;
+package uk.ac.sussex.gdsc.ij.gui;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -31,6 +31,7 @@ import java.util.Arrays;
 
 import ij.ImagePlus;
 import ij.Prefs;
+import ij.gui.PointRoi;
 import ij.process.FloatPolygon;
 import ij.util.Java2;
 
@@ -169,7 +170,7 @@ public class PointRoi2 extends PointRoi
 		for (int i = 0; i < nPoints; i++)
 		{
 			final int n = (labels != null) ? labels[i] : i + 1;
-			drawPoint(g, xp2[i] - size2, yp2[i] - size2, n);
+			drawPoint2(g, xp2[i] - size2, yp2[i] - size2, n);
 		}
 		if (updateFullWindow)
 		{
@@ -190,8 +191,7 @@ public class PointRoi2 extends PointRoi
 	 * @param n
 	 *            the n
 	 */
-	@Override
-	void drawPoint(Graphics g, int x, int y, int n)
+	private void drawPoint2(Graphics g, int x, int y, int n)
 	{
 		g.setColor(fillColor != null ? fillColor : Color.white);
 		g.drawLine(x - 4, y + 2, x + 8, y + 2);
