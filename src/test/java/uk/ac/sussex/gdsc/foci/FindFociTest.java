@@ -43,6 +43,7 @@ import uk.ac.sussex.gdsc.test.TestLog;
 import uk.ac.sussex.gdsc.test.TestSettings;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssertions;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssumptions;
+import uk.ac.sussex.gdsc.test.junit5.SpeedTest;
 
 @SuppressWarnings({ "javadoc" })
 public class FindFociTest
@@ -243,7 +244,7 @@ public class FindFociTest
 				}
 	}
 
-	@Test
+	@SpeedTest
 	public void isFasterUsingOptimisedIntProcessor()
 	{
 		ExtraAssumptions.assumeLowComplexity();
@@ -280,7 +281,7 @@ public class FindFociTest
 		Assertions.assertTrue(time2 < time1);
 	}
 
-	@Test
+	@SpeedTest
 	public void isFasterUsingOptimisedFloatProcessor()
 	{
 		ExtraAssumptions.assumeSpeedTest(TestComplexity.MEDIUM);
@@ -324,7 +325,7 @@ public class FindFociTest
 				(double) time1 / time2);
 	}
 
-	@Test
+	@SpeedTest
 	public void isNotSlowerthanLegacyUsingOptimisedIntProcessor()
 	{
 		ExtraAssumptions.assumeSpeedTest(TestComplexity.MEDIUM);
