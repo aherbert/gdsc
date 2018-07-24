@@ -41,8 +41,8 @@ import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.test.TestComplexity;
 import uk.ac.sussex.gdsc.test.TestLog;
 import uk.ac.sussex.gdsc.test.TestSettings;
-import uk.ac.sussex.gdsc.test.junit5.TestAssertions;
-import uk.ac.sussex.gdsc.test.junit5.TestAssumptions;
+import uk.ac.sussex.gdsc.test.junit5.ExtraAssertions;
+import uk.ac.sussex.gdsc.test.junit5.ExtraAssumptions;
 
 @SuppressWarnings({ "javadoc" })
 public class FindFociTest
@@ -246,7 +246,7 @@ public class FindFociTest
 	@Test
 	public void isFasterUsingOptimisedIntProcessor()
 	{
-		TestAssumptions.assumeLowComplexity();
+		ExtraAssumptions.assumeLowComplexity();
 
 		// Get settings to try for the speed test
 		final int[] indices = new int[] { 1 };
@@ -283,7 +283,7 @@ public class FindFociTest
 	@Test
 	public void isFasterUsingOptimisedFloatProcessor()
 	{
-		TestAssumptions.assumeSpeedTest(TestComplexity.MEDIUM);
+		ExtraAssumptions.assumeSpeedTest(TestComplexity.MEDIUM);
 
 		// Get settings to try for the speed test
 		final int[] indices = new int[] { 1 };
@@ -327,7 +327,7 @@ public class FindFociTest
 	@Test
 	public void isNotSlowerthanLegacyUsingOptimisedIntProcessor()
 	{
-		TestAssumptions.assumeSpeedTest(TestComplexity.MEDIUM);
+		ExtraAssumptions.assumeSpeedTest(TestComplexity.MEDIUM);
 
 		// Get settings to try for the speed test
 		final int[] indices = new int[] { 1 };
@@ -369,7 +369,7 @@ public class FindFociTest
 	@Test
 	public void isFasterUsingOptimisedIntProcessorOverOptimisedFloatProcessor()
 	{
-		TestAssumptions.assumeLowComplexity();
+		ExtraAssumptions.assumeLowComplexity();
 
 		// Get settings to try for the speed test
 		final int[] indices = new int[] { 1 };
@@ -462,8 +462,8 @@ public class FindFociTest
     			else
     			{
         			// Averages cannot be cast and are compared as floating-point values
-        			TestAssertions.assertEqualsRelative( o1.averageIntensity, o2.averageIntensity + offset, 1e-9, "Av Intensity");
-        			TestAssertions.assertEqualsRelative(o1.averageIntensityAboveBackground, o2.averageIntensityAboveBackground, 1e-9, "Av Intensity >background");
+        			ExtraAssertions.assertEqualsRelative( o1.averageIntensity, o2.averageIntensity + offset, 1e-9, "Av Intensity");
+        			ExtraAssertions.assertEqualsRelative(o1.averageIntensityAboveBackground, o2.averageIntensityAboveBackground, 1e-9, "Av Intensity >background");
     			}
     			if (negativeValues)
     				continue;
@@ -475,7 +475,7 @@ public class FindFociTest
 		}
 		catch (final AssertionFailedError e)
 		{
-			TestAssertions.wrapAssertionFailedError(e, "%s [%d]", setName, counter);
+			ExtraAssertions.wrapAssertionFailedError(e, "%s [%d]", setName, counter);
 		}
 	}
 
