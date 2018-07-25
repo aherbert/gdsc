@@ -52,7 +52,6 @@ public class GDSC_Plugins implements PlugIn
 	 *
 	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
-	@SuppressWarnings("unused")
 	@Override
 	public void run(String arg)
 	{
