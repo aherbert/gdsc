@@ -24,11 +24,11 @@
 package uk.ac.sussex.gdsc.foci;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 
 import ij.ImagePlus;
@@ -43,6 +43,8 @@ import uk.ac.sussex.gdsc.test.TestLog;
 import uk.ac.sussex.gdsc.test.TestSettings;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssertions;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssumptions;
+import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
+import uk.ac.sussex.gdsc.test.junit5.SeededTest;
 import uk.ac.sussex.gdsc.test.junit5.SpeedTag;
 
 @SuppressWarnings({ "javadoc" })
@@ -52,7 +54,7 @@ public class FindFociTest
 	// Offset to create negative values.
 	// Power of 2 should not effect the mantissa precision
 	static int offset = 1024;
-	static ImagePlus[] data;
+	static HashMap<Long, ImagePlus[]> data = new HashMap<>();
 	static int numberOfTestImages = 2;
 	static int numberOfTestImages3D = 2;
 	static final int LOOPS = 20;
@@ -80,11 +82,11 @@ public class FindFociTest
 	double[] centreParameter = new double[] { 2, 2 };
 	double[] fractionParameter = new double[] { 0.5, 0 };
 
-	@Test
-	public void isSameResultUsingIntProcessor()
+	@SeededTest
+	public void isSameResultUsingIntProcessor(RandomSeed seed)
 	{
 		final boolean nonContiguous = true;
-		for (final ImagePlus imp : createData())
+		for (final ImagePlus imp : createData(seed.getSeed()))
 			for (int i = 0; i < backgroundMethod.length; i++)
 			{
 				final FindFociResults r1 = runLegacy(imp, i);
@@ -93,10 +95,10 @@ public class FindFociTest
 			}
 	}
 
-	@Test
-	public void isSameResultUsingOptimisedIntProcessor()
+	@SeededTest
+	public void isSameResultUsingOptimisedIntProcessor(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData())
+		for (final ImagePlus imp : createData(seed.getSeed()))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -106,10 +108,10 @@ public class FindFociTest
 				}
 	}
 
-	@Test
-	public void isSameResultUsingFloatProcessor()
+	@SeededTest
+	public void isSameResultUsingFloatProcessor(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData())
+		for (final ImagePlus imp : createData(seed.getSeed()))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -119,10 +121,10 @@ public class FindFociTest
 				}
 	}
 
-	@Test
-	public void isSameResultUsingOptimisedFloatProcessor()
+	@SeededTest
+	public void isSameResultUsingOptimisedFloatProcessor(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData())
+		for (final ImagePlus imp : createData(seed.getSeed()))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -132,10 +134,10 @@ public class FindFociTest
 				}
 	}
 
-	@Test
-	public void isSameResultUsingFloatProcessorWithNegativeValues()
+	@SeededTest
+	public void isSameResultUsingFloatProcessorWithNegativeValues(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData())
+		for (final ImagePlus imp : createData(seed.getSeed()))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -147,10 +149,10 @@ public class FindFociTest
 				}
 	}
 
-	@Test
-	public void isSameResultUsingOptimisedFloatProcessorWithNegativeValues()
+	@SeededTest
+	public void isSameResultUsingOptimisedFloatProcessorWithNegativeValues(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData())
+		for (final ImagePlus imp : createData(seed.getSeed()))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -162,10 +164,10 @@ public class FindFociTest
 				}
 	}
 
-	@Test
-	public void isSameResultUsingIntProcessorWithStagedMethods()
+	@SeededTest
+	public void isSameResultUsingIntProcessorWithStagedMethods(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData())
+		for (final ImagePlus imp : createData(seed.getSeed()))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -175,10 +177,10 @@ public class FindFociTest
 				}
 	}
 
-	@Test
-	public void isSameResultUsingOptimisedIntProcessorWithStagedMethods()
+	@SeededTest
+	public void isSameResultUsingOptimisedIntProcessorWithStagedMethods(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData())
+		for (final ImagePlus imp : createData(seed.getSeed()))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -188,10 +190,10 @@ public class FindFociTest
 				}
 	}
 
-	@Test
-	public void isSameResultUsingFloatProcessorWithStagedMethods()
+	@SeededTest
+	public void isSameResultUsingFloatProcessorWithStagedMethods(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData())
+		for (final ImagePlus imp : createData(seed.getSeed()))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -201,10 +203,10 @@ public class FindFociTest
 				}
 	}
 
-	@Test
-	public void isSameResultUsingOptimisedFloatProcessorWithStagedMethods()
+	@SeededTest
+	public void isSameResultUsingOptimisedFloatProcessorWithStagedMethods(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData())
+		for (final ImagePlus imp : createData(seed.getSeed()))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -214,10 +216,10 @@ public class FindFociTest
 				}
 	}
 
-	@Test
-	public void isSameResultUsingFloatProcessorWithStagedMethodsWithNegativeValues()
+	@SeededTest
+	public void isSameResultUsingFloatProcessorWithStagedMethodsWithNegativeValues(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData())
+		for (final ImagePlus imp : createData(seed.getSeed()))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -229,10 +231,10 @@ public class FindFociTest
 				}
 	}
 
-	@Test
-	public void isSameResultUsingOptimisedFloatProcessorWithStagedMethodsWithNegativeValues()
+	@SeededTest
+	public void isSameResultUsingOptimisedFloatProcessorWithStagedMethodsWithNegativeValues(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData())
+		for (final ImagePlus imp : createData(seed.getSeed()))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -245,8 +247,8 @@ public class FindFociTest
 	}
 
 	@SpeedTag
-	@Test
-	public void isFasterUsingOptimisedIntProcessor()
+	@SeededTest
+	public void isFasterUsingOptimisedIntProcessor(RandomSeed seed)
 	{
 		ExtraAssumptions.assumeLowComplexity();
 
@@ -254,7 +256,7 @@ public class FindFociTest
 		final int[] indices = new int[] { 1 };
 
 		// Warm up
-		createData();
+		ImagePlus[] data = createData(seed.getSeed());
 		//runInt(data[0], indices[0], false);
 		//runInt(data[0], indices[0], true);
 
@@ -283,8 +285,8 @@ public class FindFociTest
 	}
 
 	@SpeedTag
-	@Test
-	public void isFasterUsingOptimisedFloatProcessor()
+	@SeededTest
+	public void isFasterUsingOptimisedFloatProcessor(RandomSeed seed)
 	{
 		ExtraAssumptions.assumeSpeedTest(TestComplexity.MEDIUM);
 
@@ -292,7 +294,7 @@ public class FindFociTest
 		final int[] indices = new int[] { 1 };
 
 		// Warm up
-		createData();
+		ImagePlus[] data = createData(seed.getSeed());
 		//runFloat(data[0], indices[0], false, false);
 		//runFloat(data[0], indices[0], true, false);
 
@@ -328,8 +330,8 @@ public class FindFociTest
 	}
 
 	@SpeedTag
-	@Test
-	public void isNotSlowerthanLegacyUsingOptimisedIntProcessor()
+	@SeededTest
+	public void isNotSlowerthanLegacyUsingOptimisedIntProcessor(RandomSeed seed)
 	{
 		ExtraAssumptions.assumeSpeedTest(TestComplexity.MEDIUM);
 
@@ -337,7 +339,7 @@ public class FindFociTest
 		final int[] indices = new int[] { 1 };
 
 		// Warm up
-		createData();
+		ImagePlus[] data = createData(seed.getSeed());
 		//runLegacy(data[0], indices[0]);
 		//runInt(data[0], indices[0], true);
 
@@ -370,8 +372,8 @@ public class FindFociTest
 				(double) time1 / time2);
 	}
 
-	@Test
-	public void isFasterUsingOptimisedIntProcessorOverOptimisedFloatProcessor()
+	@SeededTest
+	public void isFasterUsingOptimisedIntProcessorOverOptimisedFloatProcessor(RandomSeed seed)
 	{
 		ExtraAssumptions.assumeLowComplexity();
 
@@ -379,7 +381,7 @@ public class FindFociTest
 		final int[] indices = new int[] { 1 };
 
 		// Warm up
-		createData();
+		ImagePlus[] data = createData(seed.getSeed());
 		//runFloat(data[0], indices[0], true, false);
 		//runInt(data[0], indices[0], true);
 
@@ -599,21 +601,22 @@ public class FindFociTest
 				"FindFociTest", fractionParameter[i]);
 	}
 
-	private static synchronized ImagePlus[] createData()
+	private static synchronized ImagePlus[] createData(long seed)
 	{
-		if (data == null)
+		ImagePlus[] images = data.get(seed);
+		if (images == null)
 		{
-			final RandomGenerator rg = TestSettings.getRandomGenerator();
-			TestLog.infoln("Creating data ...");
-			data = new ImagePlus[numberOfTestImages + numberOfTestImages3D];
+			final RandomGenerator rg = TestSettings.getRandomGenerator(seed);
+			images = new ImagePlus[numberOfTestImages + numberOfTestImages3D];
 			int index = 0;
 			for (int i = 0; i < numberOfTestImages; i++)
-				data[index++] = createImageData(rg);
+				images[index++] = createImageData(rg);
 			for (int i = 0; i < numberOfTestImages3D; i++)
-				data[index++] = createImageData3D(rg);
-			TestLog.infoln("Created data");
+				images[index++] = createImageData3D(rg);
+			TestLog.info("Created data for seed %d\n", seed);
+			data.put(seed, images);
 		}
-		return data;
+		return images;
 	}
 
 	private static ImagePlus createImageData(RandomGenerator rg)
