@@ -26,8 +26,9 @@ package uk.ac.sussex.gdsc.foci;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.apache.commons.math3.random.RandomDataGenerator;
-import org.apache.commons.math3.random.RandomGenerator;
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.sampling.distribution.BoxMullerGaussianSampler;
+import org.apache.commons.rng.sampling.distribution.PoissonSampler;
 import org.junit.jupiter.api.Assertions;
 import org.opentest4j.AssertionFailedError;
 
@@ -606,7 +607,7 @@ public class FindFociTest
 		ImagePlus[] images = data.get(seed);
 		if (images == null)
 		{
-			final RandomGenerator rg = TestSettings.getRandomGenerator(seed);
+			final UniformRandomProvider rg = TestSettings.getRandomGenerator(seed);
 			images = new ImagePlus[numberOfTestImages + numberOfTestImages3D];
 			int index = 0;
 			for (int i = 0; i < numberOfTestImages; i++)
@@ -619,7 +620,7 @@ public class FindFociTest
 		return images;
 	}
 
-	private static ImagePlus createImageData(RandomGenerator rg)
+	private static ImagePlus createImageData(UniformRandomProvider rg)
 	{
 		// Create an image with peaks
 		final int size = 256;
@@ -635,15 +636,17 @@ public class FindFociTest
 		return new ImagePlus(title, ip);
 	}
 
-	private static short[] combine(RandomGenerator rg, float[] data1, float[] data2, float[] data3)
+	private static short[] combine(UniformRandomProvider rg, float[] data1, float[] data2, float[] data3)
 	{
 		// Combine images and add a bias and read noise
-		final RandomDataGenerator rdg = new RandomDataGenerator(rg);
+		final BoxMullerGaussianSampler g = new BoxMullerGaussianSampler(rg, bias, 5);
 		final short[] data = new short[data1.length];
 		for (int i = 0; i < data.length; i++)
 		{
 			final double mu = data1[i] + data2[i] + data3[i];
-			double v = (((mu != 0) ? rdg.nextPoisson(mu) : 0) + rdg.nextGaussian(bias, 5));
+			double v = g.sample();
+			if (mu != 0)
+				v += new PoissonSampler(rg, mu).sample();				
 			if (v < 0)
 				v = 0;
 			else if (v > 65535)
@@ -653,14 +656,14 @@ public class FindFociTest
 		return data;
 	}
 
-	private static float[] createSpots(RandomGenerator rg, int size, int n, int min, int max, double sigmaX,
+	private static float[] createSpots(UniformRandomProvider rg, int size, int n, int min, int max, double sigmaX,
 			double sigmaY)
 	{
 		final float[] data = new float[size * size];
 		// Randomly put on spots
-		final RandomDataGenerator rdg = new RandomDataGenerator(rg);
+		final int range = max - min;
 		while (n-- > 0)
-			data[rg.nextInt(data.length)] = rdg.nextInt(min, max);
+			data[rg.nextInt(data.length)] = min + rg.nextInt(range);
 
 		// Blur
 		final FloatProcessor fp = new FloatProcessor(size, size, data);
@@ -670,7 +673,7 @@ public class FindFociTest
 		return (float[]) fp.getPixels();
 	}
 
-	private static ImagePlus createImageData3D(RandomGenerator rg)
+	private static ImagePlus createImageData3D(UniformRandomProvider rg)
 	{
 		// Create an image with peaks
 		final int size = 64;
@@ -691,14 +694,14 @@ public class FindFociTest
 		return new ImagePlus(title, stack);
 	}
 
-	private static float[][] createSpots3D(RandomGenerator rg, int size, int z, int n, int min, int max, double sigmaX,
-			double sigmaY)
+	private static float[][] createSpots3D(UniformRandomProvider rg, int size, int z, int n, int min, int max,
+			double sigmaX, double sigmaY)
 	{
 		final float[] data = new float[size * size];
 		// Randomly put on spots
-		final RandomDataGenerator rdg = new RandomDataGenerator(rg);
+		final int range = max - min;
 		while (n-- > 0)
-			data[rg.nextInt(data.length)] = rdg.nextInt(min, max);
+			data[rg.nextInt(data.length)] = min + rg.nextInt(range);
 
 		final int middle = z / 2;
 		final float[][] result = new float[z][];
