@@ -24,7 +24,6 @@
 package uk.ac.sussex.gdsc.foci;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import org.apache.commons.rng.UniformRandomProvider;
 import org.apache.commons.rng.sampling.distribution.BoxMullerGaussianSampler;
@@ -39,6 +38,8 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.test.DataCache;
+import uk.ac.sussex.gdsc.test.DataProvider;
 import uk.ac.sussex.gdsc.test.TestComplexity;
 import uk.ac.sussex.gdsc.test.TestLog;
 import uk.ac.sussex.gdsc.test.TestSettings;
@@ -49,13 +50,13 @@ import uk.ac.sussex.gdsc.test.junit5.SeededTest;
 import uk.ac.sussex.gdsc.test.junit5.SpeedTag;
 
 @SuppressWarnings({ "javadoc" })
-public class FindFociTest
+public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 {
 	static int bias = 500;
 	// Offset to create negative values.
 	// Power of 2 should not effect the mantissa precision
 	static int offset = 1024;
-	static HashMap<Long, ImagePlus[]> data = new HashMap<>();
+	static DataCache<RandomSeed, ImagePlus[]> dataCache = new DataCache<>();
 	static int numberOfTestImages = 2;
 	static int numberOfTestImages3D = 2;
 	static final int LOOPS = 20;
@@ -87,7 +88,7 @@ public class FindFociTest
 	public void isSameResultUsingIntProcessor(RandomSeed seed)
 	{
 		final boolean nonContiguous = true;
-		for (final ImagePlus imp : createData(seed.getSeed()))
+		for (final ImagePlus imp : dataCache.getData(seed, this))
 			for (int i = 0; i < backgroundMethod.length; i++)
 			{
 				final FindFociResults r1 = runLegacy(imp, i);
@@ -99,7 +100,7 @@ public class FindFociTest
 	@SeededTest
 	public void isSameResultUsingOptimisedIntProcessor(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData(seed.getSeed()))
+		for (final ImagePlus imp : dataCache.getData(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -112,7 +113,7 @@ public class FindFociTest
 	@SeededTest
 	public void isSameResultUsingFloatProcessor(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData(seed.getSeed()))
+		for (final ImagePlus imp : dataCache.getData(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -125,7 +126,7 @@ public class FindFociTest
 	@SeededTest
 	public void isSameResultUsingOptimisedFloatProcessor(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData(seed.getSeed()))
+		for (final ImagePlus imp : dataCache.getData(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -138,7 +139,7 @@ public class FindFociTest
 	@SeededTest
 	public void isSameResultUsingFloatProcessorWithNegativeValues(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData(seed.getSeed()))
+		for (final ImagePlus imp : dataCache.getData(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -153,7 +154,7 @@ public class FindFociTest
 	@SeededTest
 	public void isSameResultUsingOptimisedFloatProcessorWithNegativeValues(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData(seed.getSeed()))
+		for (final ImagePlus imp : dataCache.getData(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -168,7 +169,7 @@ public class FindFociTest
 	@SeededTest
 	public void isSameResultUsingIntProcessorWithStagedMethods(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData(seed.getSeed()))
+		for (final ImagePlus imp : dataCache.getData(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -181,7 +182,7 @@ public class FindFociTest
 	@SeededTest
 	public void isSameResultUsingOptimisedIntProcessorWithStagedMethods(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData(seed.getSeed()))
+		for (final ImagePlus imp : dataCache.getData(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -194,7 +195,7 @@ public class FindFociTest
 	@SeededTest
 	public void isSameResultUsingFloatProcessorWithStagedMethods(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData(seed.getSeed()))
+		for (final ImagePlus imp : dataCache.getData(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -207,7 +208,7 @@ public class FindFociTest
 	@SeededTest
 	public void isSameResultUsingOptimisedFloatProcessorWithStagedMethods(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData(seed.getSeed()))
+		for (final ImagePlus imp : dataCache.getData(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -220,7 +221,7 @@ public class FindFociTest
 	@SeededTest
 	public void isSameResultUsingFloatProcessorWithStagedMethodsWithNegativeValues(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData(seed.getSeed()))
+		for (final ImagePlus imp : dataCache.getData(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -235,7 +236,7 @@ public class FindFociTest
 	@SeededTest
 	public void isSameResultUsingOptimisedFloatProcessorWithStagedMethodsWithNegativeValues(RandomSeed seed)
 	{
-		for (final ImagePlus imp : createData(seed.getSeed()))
+		for (final ImagePlus imp : dataCache.getData(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -257,7 +258,7 @@ public class FindFociTest
 		final int[] indices = new int[] { 1 };
 
 		// Warm up
-		ImagePlus[] data = createData(seed.getSeed());
+		ImagePlus[] data = dataCache.getData(seed, this);
 		//runInt(data[0], indices[0], false);
 		//runInt(data[0], indices[0], true);
 
@@ -295,7 +296,7 @@ public class FindFociTest
 		final int[] indices = new int[] { 1 };
 
 		// Warm up
-		ImagePlus[] data = createData(seed.getSeed());
+		ImagePlus[] data = dataCache.getData(seed, this);
 		//runFloat(data[0], indices[0], false, false);
 		//runFloat(data[0], indices[0], true, false);
 
@@ -340,7 +341,7 @@ public class FindFociTest
 		final int[] indices = new int[] { 1 };
 
 		// Warm up
-		ImagePlus[] data = createData(seed.getSeed());
+		ImagePlus[] data = dataCache.getData(seed, this);
 		//runLegacy(data[0], indices[0]);
 		//runInt(data[0], indices[0], true);
 
@@ -382,7 +383,7 @@ public class FindFociTest
 		final int[] indices = new int[] { 1 };
 
 		// Warm up
-		ImagePlus[] data = createData(seed.getSeed());
+		ImagePlus[] data = dataCache.getData(seed, this);
 		//runFloat(data[0], indices[0], true, false);
 		//runInt(data[0], indices[0], true);
 
@@ -602,24 +603,6 @@ public class FindFociTest
 				"FindFociTest", fractionParameter[i]);
 	}
 
-	private static synchronized ImagePlus[] createData(long seed)
-	{
-		ImagePlus[] images = data.get(seed);
-		if (images == null)
-		{
-			final UniformRandomProvider rg = TestSettings.getRandomGenerator(seed);
-			images = new ImagePlus[numberOfTestImages + numberOfTestImages3D];
-			int index = 0;
-			for (int i = 0; i < numberOfTestImages; i++)
-				images[index++] = createImageData(rg);
-			for (int i = 0; i < numberOfTestImages3D; i++)
-				images[index++] = createImageData3D(rg);
-			TestLog.info("Created data for seed %d\n", seed);
-			data.put(seed, images);
-		}
-		return images;
-	}
-
 	private static ImagePlus createImageData(UniformRandomProvider rg)
 	{
 		// Create an image with peaks
@@ -646,7 +629,7 @@ public class FindFociTest
 			final double mu = data1[i] + data2[i] + data3[i];
 			double v = g.sample();
 			if (mu != 0)
-				v += new PoissonSampler(rg, mu).sample();				
+				v += new PoissonSampler(rg, mu).sample();
 			if (v < 0)
 				v = 0;
 			else if (v > 65535)
@@ -745,4 +728,17 @@ public class FindFociTest
 		return Math.min(t, System.nanoTime() - time);
 	}
 
+	@Override
+	public ImagePlus[] getData(RandomSeed seed)
+	{
+		UniformRandomProvider rg = TestSettings.getRandomGenerator(seed.getSeed());		
+		System.out.println("Creating data...");
+		ImagePlus[] images = new ImagePlus[numberOfTestImages + numberOfTestImages3D];
+		int index = 0;
+		for (int i = 0; i < numberOfTestImages; i++)
+			images[index++] = createImageData(rg);
+		for (int i = 0; i < numberOfTestImages3D; i++)
+			images[index++] = createImageData3D(rg);
+		return images;
+	}
 }
