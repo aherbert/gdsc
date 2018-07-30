@@ -121,7 +121,7 @@ Running from source
 Legal
 -----
 
-See [LICENSE](LICENSE)
+See [LICENSE](LICENSE.txt)
 
 
 # About #
