@@ -24,10 +24,13 @@
 package uk.ac.sussex.gdsc.foci.model;
 
 import java.beans.PropertyChangeEvent;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.rng.UniformRandomProvider;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
-import uk.ac.sussex.gdsc.test.LogLevel;
 import uk.ac.sussex.gdsc.test.TestLog;
 import uk.ac.sussex.gdsc.test.TestSettings;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssumptions;
@@ -37,14 +40,28 @@ import uk.ac.sussex.gdsc.test.junit5.SeededTest;
 @SuppressWarnings({ "javadoc" })
 public class FindFociStateMachineTest
 {
+	private static Logger logger;
+
+	@BeforeAll
+	public static void beforeAll()
+	{
+		logger = Logger.getLogger(FindFociStateMachineTest.class.getName());
+	}
+
+	@AfterAll
+	public static void afterAll()
+	{
+		logger = null;
+	}
+	
 	/**
 	 * Performs multiple state changes and outputs the time.
 	 */
 	@SeededTest
 	public void timeStateTransitions(RandomSeed seed)
 	{
-		LogLevel level = LogLevel.INFO;
-		ExtraAssumptions.assume(level);
+		Level level = Level.INFO;
+		ExtraAssumptions.assume(logger, level);
 
 		final FindFociStateMachine sm = new FindFociStateMachine();
 		final String[] propertyNames = sm.getObservedProperties().toArray(new String[0]);
@@ -70,6 +87,6 @@ public class FindFociStateMachineTest
 				sm.setState(FindFociState.COMPLETE);
 			}
 
-		TestLog.log(level, "%d steps : %f ms\n", steps, (System.nanoTime() - start) / 1000000.0);
+		TestLog.log(logger, level, "%d steps : %f ms", steps, (System.nanoTime() - start) / 1000000.0);
 	}
 }

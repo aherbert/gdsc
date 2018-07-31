@@ -24,11 +24,14 @@
 package uk.ac.sussex.gdsc.foci;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 import org.apache.commons.rng.UniformRandomProvider;
 import org.apache.commons.rng.sampling.distribution.BoxMullerGaussianSampler;
 import org.apache.commons.rng.sampling.distribution.PoissonSampler;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.opentest4j.AssertionFailedError;
 
 import ij.ImagePlus;
@@ -52,37 +55,54 @@ import uk.ac.sussex.gdsc.test.junit5.SpeedTag;
 @SuppressWarnings({ "javadoc" })
 public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 {
-	static int bias = 500;
+	private static Logger logger;
+	static DataCache<RandomSeed, ImagePlus[]> dataCache;
+
+	@BeforeAll
+	public static void beforeAll()
+	{
+		logger = Logger.getLogger(FindFociTest.class.getName());
+		dataCache = new DataCache<>();
+	}
+
+	@AfterAll
+	public static void afterAll()
+	{
+		dataCache.clear();
+		dataCache = null;
+		logger = null;
+	}
+
+	final int bias = 500;
 	// Offset to create negative values.
 	// Power of 2 should not effect the mantissa precision
-	static int offset = 1024;
-	static DataCache<RandomSeed, ImagePlus[]> dataCache = new DataCache<>();
-	static int numberOfTestImages = 2;
-	static int numberOfTestImages3D = 2;
-	static final int LOOPS = 20;
+	final int offset = 1024;
+	final int numberOfTestImages = 2;
+	final int numberOfTestImages3D = 2;
+	final int LOOPS = 20;
 
 	// Allow testing different settings.
 	// Note that the float processor must use absolute values as the relative ones are converted to floats
 	// and this may result in different output.
 	// The second method will be used with negative values so use Auto-threshold
-	int[] backgroundMethod = new int[] { FindFociProcessor.BACKGROUND_ABSOLUTE,
+	final int[] backgroundMethod = new int[] { FindFociProcessor.BACKGROUND_ABSOLUTE,
 			FindFociProcessor.BACKGROUND_AUTO_THRESHOLD };
-	double[] backgroundParameter = new double[] { bias, 0 };
-	String[] autoThresholdMethod = new String[] { "", AutoThreshold.Method.OTSU.name };
-	int[] searchMethod = new int[] { FindFociProcessor.SEARCH_ABOVE_BACKGROUND,
+	final double[] backgroundParameter = new double[] { bias, 0 };
+	final String[] autoThresholdMethod = new String[] { "", AutoThreshold.Method.OTSU.name };
+	final int[] searchMethod = new int[] { FindFociProcessor.SEARCH_ABOVE_BACKGROUND,
 			FindFociProcessor.SEARCH_ABOVE_BACKGROUND };
-	double[] searchParameter = new double[] { 0.3, 0.7 };
-	int[] maxPeaks = new int[] { 1000, 1000 };
-	int[] minSize = new int[] { 5, 3 };
-	int[] peakMethod = new int[] { FindFociProcessor.PEAK_ABSOLUTE, FindFociProcessor.PEAK_ABSOLUTE };
-	double[] peakParameter = new double[] { 10, 20 };
-	int[] outputType = new int[] { FindFociProcessor.OUTPUT_MASK, FindFociProcessor.OUTPUT_MASK_PEAKS };
-	int[] sortIndex = new int[] { FindFociProcessor.SORT_INTENSITY, FindFociProcessor.SORT_MAX_VALUE };
-	int[] options = new int[] { FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE, 0 };
-	double[] blur = new double[] { 0, 0 };
-	int[] centreMethod = new int[] { FindFoci.CENTRE_MAX_VALUE_SEARCH, FindFoci.CENTRE_MAX_VALUE_ORIGINAL };
-	double[] centreParameter = new double[] { 2, 2 };
-	double[] fractionParameter = new double[] { 0.5, 0 };
+	final double[] searchParameter = new double[] { 0.3, 0.7 };
+	final int[] maxPeaks = new int[] { 1000, 1000 };
+	final int[] minSize = new int[] { 5, 3 };
+	final int[] peakMethod = new int[] { FindFociProcessor.PEAK_ABSOLUTE, FindFociProcessor.PEAK_ABSOLUTE };
+	final double[] peakParameter = new double[] { 10, 20 };
+	final int[] outputType = new int[] { FindFociProcessor.OUTPUT_MASK, FindFociProcessor.OUTPUT_MASK_PEAKS };
+	final int[] sortIndex = new int[] { FindFociProcessor.SORT_INTENSITY, FindFociProcessor.SORT_MAX_VALUE };
+	final int[] options = new int[] { FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE, 0 };
+	final double[] blur = new double[] { 0, 0 };
+	final int[] centreMethod = new int[] { FindFoci.CENTRE_MAX_VALUE_SEARCH, FindFoci.CENTRE_MAX_VALUE_ORIGINAL };
+	final double[] centreParameter = new double[] { 2, 2 };
+	final double[] fractionParameter = new double[] { 0.5, 0 };
 
 	@SeededTest
 	public void isSameResultUsingIntProcessor(RandomSeed seed)
@@ -282,7 +302,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 						runInt(imp, i, true, nonContiguous);
 			time2 = stop(time2);
 		}
-		TestLog.info("Int %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
+		TestLog.info(logger, "Int %d, Opt Int %d, %fx faster", time1, time2, (double) time1 / time2);
 		Assertions.assertTrue(time2 < time1);
 	}
 
@@ -327,7 +347,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 		// I am not worried the optimisation has worse performance.
 
 		//Assertions.assertTrue(time2 < time1 * 1.4); // Allow discretion so test will pass
-		TestLog.logSpeedTestResult(time2 < time1, "Float %d, Opt Float %d, %fx faster\n", time1, time2,
+		TestLog.logSpeedTestResult(logger, time2 < time1, "Float %d, Opt Float %d, %fx faster", time1, time2,
 				(double) time1 / time2);
 	}
 
@@ -370,7 +390,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 		// I am not worried the new code has worse performance.
 
 		//Assertions.assertTrue(time2 < time1 * 1.4); // Allow some discretion over the legacy method
-		TestLog.logSpeedTestResult(time2 < time1, "Legacy %d, Opt Int %d, %fx faster\n", time1, time2,
+		TestLog.logSpeedTestResult(logger, time2 < time1, "Legacy %d, Opt Int %d, %fx faster", time1, time2,
 				(double) time1 / time2);
 	}
 
@@ -411,16 +431,16 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 						runInt(imp, i, true, nonContiguous);
 			time2 = stop(time2);
 		}
-		TestLog.info("Opt Float %d, Opt Int %d, %fx faster\n", time1, time2, (double) time1 / time2);
+		TestLog.info(logger, "Opt Float %d, Opt Int %d, %fx faster", time1, time2, (double) time1 / time2);
 		Assertions.assertTrue(time2 < time1);
 	}
 
-	private static void isEqual(boolean legacy, FindFociResults r1, FindFociResults r2, int set, boolean nonContiguous)
+	private void isEqual(boolean legacy, FindFociResults r1, FindFociResults r2, int set, boolean nonContiguous)
 	{
 		isEqual(legacy, r1, r2, set, false, nonContiguous);
 	}
 
-	private static void isEqual(boolean legacy, FindFociResults r1, FindFociResults r2, int set, boolean negativeValues,
+	private void isEqual(boolean legacy, FindFociResults r1, FindFociResults r2, int set, boolean negativeValues,
 			boolean nonContiguous)
 	{
 		final String setName = String.format("Set %d (%b)", set, nonContiguous);
@@ -435,10 +455,10 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 		}
 		final ArrayList<FindFociResult> results1 = r1.results;
 		final ArrayList<FindFociResult> results2 = r2.results;
-		//TestLog.info("N1=%d, N2=%d\n", results1.size(), results2.size());
+		//TestLog.info(logger, "N1=%d, N2=%d", results1.size(), results2.size());
 		Assertions.assertEquals(results1.size(), results2.size(), setName + " Results Size");
 		int counter = 0;
-		final int offset = (negativeValues) ? FindFociTest.offset : 0;
+		final int offset = (negativeValues) ? this.offset : 0;
 		try
 		{
 			for (int i = 0; i < results1.size(); i++)
@@ -447,7 +467,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 				//@formatter:off
     			final FindFociResult o1 = results1.get(i);
     			final FindFociResult o2 = results2.get(i);
-    			//TestLog.info("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d\n", i,
+    			//TestLog.info(logger, "[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d", i,
     			//		o1.x, o1.y, o1.maxValue, o1.count, o1.saddleNeighbourId,
     			//		o2.x, o2.y, o2.maxValue, o2.count, o2.saddleNeighbourId);
     			Assertions.assertEquals(o1.x, o2.x, "X");
@@ -545,7 +565,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 				outputType[i], sortIndex[i], flags, blur[i], centreMethod[i], centreParameter[i], fractionParameter[i]);
 	}
 
-	private static ImagePlus toFloat(ImagePlus imp, boolean negative)
+	private ImagePlus toFloat(ImagePlus imp, boolean negative)
 	{
 		final ImageStack stack = imp.getImageStack();
 		final ImageStack newStack = new ImageStack(stack.getWidth(), stack.getHeight());
@@ -603,7 +623,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 				"FindFociTest", fractionParameter[i]);
 	}
 
-	private static ImagePlus createImageData(UniformRandomProvider rg)
+	private ImagePlus createImageData(UniformRandomProvider rg)
 	{
 		// Create an image with peaks
 		final int size = 256;
@@ -619,7 +639,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 		return new ImagePlus(title, ip);
 	}
 
-	private static short[] combine(UniformRandomProvider rg, float[] data1, float[] data2, float[] data3)
+	private short[] combine(UniformRandomProvider rg, float[] data1, float[] data2, float[] data3)
 	{
 		// Combine images and add a bias and read noise
 		final BoxMullerGaussianSampler g = new BoxMullerGaussianSampler(rg, bias, 5);
@@ -656,7 +676,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 		return (float[]) fp.getPixels();
 	}
 
-	private static ImagePlus createImageData3D(UniformRandomProvider rg)
+	private ImagePlus createImageData3D(UniformRandomProvider rg)
 	{
 		// Create an image with peaks
 		final int size = 64;
@@ -731,8 +751,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	@Override
 	public ImagePlus[] getData(RandomSeed seed)
 	{
-		UniformRandomProvider rg = TestSettings.getRandomGenerator(seed.getSeed());		
-		System.out.println("Creating data...");
+		UniformRandomProvider rg = TestSettings.getRandomGenerator(seed.getSeed());
 		ImagePlus[] images = new ImagePlus[numberOfTestImages + numberOfTestImages3D];
 		int index = 0;
 		for (int i = 0; i < numberOfTestImages; i++)
