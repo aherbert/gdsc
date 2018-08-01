@@ -347,7 +347,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 		// I am not worried the optimisation has worse performance.
 
 		//Assertions.assertTrue(time2 < time1 * 1.4); // Allow discretion so test will pass
-		TestLog.logSpeedTestResult(logger, time2 < time1, "Float %d, Opt Float %d, %fx faster", time1, time2,
+		TestLog.logTestResult(logger, time2 < time1, "Float %d, Opt Float %d, %fx faster", time1, time2,
 				(double) time1 / time2);
 	}
 
@@ -390,7 +390,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 		// I am not worried the new code has worse performance.
 
 		//Assertions.assertTrue(time2 < time1 * 1.4); // Allow some discretion over the legacy method
-		TestLog.logSpeedTestResult(logger, time2 < time1, "Legacy %d, Opt Int %d, %fx faster", time1, time2,
+		TestLog.logTestResult(logger, time2 < time1, "Legacy %d, Opt Int %d, %fx faster", time1, time2,
 				(double) time1 / time2);
 	}
 
