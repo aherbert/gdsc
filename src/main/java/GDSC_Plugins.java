@@ -1,3 +1,4 @@
+
 /*-
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
@@ -47,15 +48,15 @@ import uk.ac.sussex.gdsc.About_Plugin;
  */
 public class GDSC_Plugins implements PlugIn
 {
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.PlugIn#run(java.lang.String)
-	 */
-	@Override
-	public void run(String arg)
-	{
-		// Show the About plugin
-		About_Plugin.showAbout();
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.plugin.PlugIn#run(java.lang.String)
+     */
+    @Override
+    public void run(String arg)
+    {
+        // Show the About plugin
+        About_Plugin.showAbout();
+    }
 }

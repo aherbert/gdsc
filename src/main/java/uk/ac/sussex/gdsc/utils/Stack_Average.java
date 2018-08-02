@@ -38,104 +38,104 @@ import uk.ac.sussex.gdsc.UsageTracker;
  */
 public class Stack_Average implements PlugInFilter
 {
-	private ImagePlus imp;
+    private ImagePlus imp;
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-	 */
-	@Override
-	public int setup(String arg, ImagePlus imp)
-	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
-		if (imp == null)
-		{
-			IJ.noImage();
-			return DONE;
-		}
-		this.imp = imp;
-		return DOES_8G + DOES_16 + DOES_32 + NO_CHANGES;
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
+     */
+    @Override
+    public int setup(String arg, ImagePlus imp)
+    {
+        UsageTracker.recordPlugin(this.getClass(), arg);
+        if (imp == null)
+        {
+            IJ.noImage();
+            return DONE;
+        }
+        this.imp = imp;
+        return DOES_8G + DOES_16 + DOES_32 + NO_CHANGES;
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-	 */
-	@Override
-	public void run(ImageProcessor ip)
-	{
-		final ArrayList<ImagePlus> images = getImages();
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
+     */
+    @Override
+    public void run(ImageProcessor ip)
+    {
+        final ArrayList<ImagePlus> images = getImages();
 
-		final int bufferSize = imp.getWidth() * imp.getHeight();
-		final int count = images.size();
+        final int bufferSize = imp.getWidth() * imp.getHeight();
+        final int count = images.size();
 
-		final ImageStack result = createResult();
+        final ImageStack result = createResult();
 
-		// Add all the images - Process each stack slice individually
-		for (int n = imp.getStackSize(); n > 0; n--)
-		{
-			// Sum all the images
-			final double[] sum = new double[bufferSize];
-			for (final ImagePlus imp2 : images)
-			{
-				final ImageProcessor ip2 = imp2.getStack().getProcessor(n);
-				for (int i = sum.length; i-- > 0;)
-					sum[i] += ip2.get(i);
-			}
+        // Add all the images - Process each stack slice individually
+        for (int n = imp.getStackSize(); n > 0; n--)
+        {
+            // Sum all the images
+            final double[] sum = new double[bufferSize];
+            for (final ImagePlus imp2 : images)
+            {
+                final ImageProcessor ip2 = imp2.getStack().getProcessor(n);
+                for (int i = sum.length; i-- > 0;)
+                    sum[i] += ip2.get(i);
+            }
 
-			// Average
-			final ImageProcessor ip2 = result.getProcessor(n);
-			for (int i = sum.length; i-- > 0;)
-				ip2.set(i, (int) (sum[i] / count));
-		}
+            // Average
+            final ImageProcessor ip2 = result.getProcessor(n);
+            for (int i = sum.length; i-- > 0;)
+                ip2.set(i, (int) (sum[i] / count));
+        }
 
-		// Show result
-		new ImagePlus("Stack Average", result).show();
-	}
+        // Show result
+        new ImagePlus("Stack Average", result).show();
+    }
 
-	private ArrayList<ImagePlus> getImages()
-	{
-		final int[] dimensions = imp.getDimensions();
-		final int bitDepth = imp.getBitDepth();
+    private ArrayList<ImagePlus> getImages()
+    {
+        final int[] dimensions = imp.getDimensions();
+        final int bitDepth = imp.getBitDepth();
 
-		// Build a list of the images
-		final int[] wList = uk.ac.sussex.gdsc.core.ij.Utils.getIDList();
+        // Build a list of the images
+        final int[] wList = uk.ac.sussex.gdsc.core.ij.Utils.getIDList();
 
-		final ArrayList<ImagePlus> images = new ArrayList<>(wList.length);
+        final ArrayList<ImagePlus> images = new ArrayList<>(wList.length);
 
-		for (int i = 0; i < wList.length; i++)
-		{
-			final ImagePlus imp2 = WindowManager.getImage(wList[i]);
-			if (imp2 != null)
-				if (!imp2.getTitle().startsWith("Stack Average") && sameDimensions(dimensions, imp2.getDimensions()) &&
-						bitDepth == imp2.getBitDepth())
-					images.add(imp2);
-		}
+        for (int i = 0; i < wList.length; i++)
+        {
+            final ImagePlus imp2 = WindowManager.getImage(wList[i]);
+            if (imp2 != null)
+                if (!imp2.getTitle().startsWith("Stack Average") && sameDimensions(dimensions, imp2.getDimensions()) &&
+                        bitDepth == imp2.getBitDepth())
+                    images.add(imp2);
+        }
 
-		return images;
-	}
+        return images;
+    }
 
-	private static boolean sameDimensions(int[] dimensions, int[] dimensions2)
-	{
-		for (int i = dimensions.length; i-- > 0;)
-			if (dimensions[i] != dimensions2[i])
-				return false;
-		return true;
-	}
+    private static boolean sameDimensions(int[] dimensions, int[] dimensions2)
+    {
+        for (int i = dimensions.length; i-- > 0;)
+            if (dimensions[i] != dimensions2[i])
+                return false;
+        return true;
+    }
 
-	private ImageStack createResult()
-	{
-		final int width = imp.getWidth();
-		final int height = imp.getHeight();
+    private ImageStack createResult()
+    {
+        final int width = imp.getWidth();
+        final int height = imp.getHeight();
 
-		final ImageStack inStack = imp.getImageStack();
-		final ImageStack outStack = new ImageStack(width, height);
+        final ImageStack inStack = imp.getImageStack();
+        final ImageStack outStack = new ImageStack(width, height);
 
-		for (int n = inStack.getSize(); n > 0; n--)
-			outStack.addSlice(null, inStack.getProcessor(n).createProcessor(width, height));
+        for (int n = inStack.getSize(); n > 0; n--)
+            outStack.addSlice(null, inStack.getProcessor(n).createProcessor(width, height));
 
-		return outStack;
-	}
+        return outStack;
+    }
 }

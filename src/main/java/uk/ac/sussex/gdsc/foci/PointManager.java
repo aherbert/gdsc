@@ -45,178 +45,178 @@ import uk.ac.sussex.gdsc.core.match.Coordinate;
  */
 public class PointManager
 {
-	private static final String newline = System.getProperty("line.separator");
+    private static final String newline = System.getProperty("line.separator");
 
-	/**
-	 * Save the predicted points to the given file.
-	 *
-	 * @param points
-	 *            the points
-	 * @param filename
-	 *            the filename
-	 * @throws IOException
-	 *             Signals that an I/O exception has occurred.
-	 */
-	public static void savePoints(AssignedPoint[] points, String filename) throws IOException
-	{
-		if (points == null)
-			return;
+    /**
+     * Save the predicted points to the given file.
+     *
+     * @param points
+     *            the points
+     * @param filename
+     *            the filename
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     */
+    public static void savePoints(AssignedPoint[] points, String filename) throws IOException
+    {
+        if (points == null)
+            return;
 
-		final File file = new File(filename);
-		if (!file.exists())
-			if (file.getParent() != null)
-				new File(file.getParent()).mkdirs();
+        final File file = new File(filename);
+        if (!file.exists())
+            if (file.getParent() != null)
+                new File(file.getParent()).mkdirs();
 
-		try (final OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(filename)))
-		{
-			// Save results to file
-			final StringBuilder sb = new StringBuilder();
+        try (final OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(filename)))
+        {
+            // Save results to file
+            final StringBuilder sb = new StringBuilder();
 
-			out.write("X,Y,Z" + newline);
+            out.write("X,Y,Z" + newline);
 
-			// Output all results in ascending rank order
-			for (final AssignedPoint point : points)
-			{
-				sb.append(point.getX()).append(',');
-				sb.append(point.getY()).append(',');
-				sb.append(point.getZ()).append(newline);
-				out.write(sb.toString());
-				sb.setLength(0);
-			}
-		}
-	}
+            // Output all results in ascending rank order
+            for (final AssignedPoint point : points)
+            {
+                sb.append(point.getX()).append(',');
+                sb.append(point.getY()).append(',');
+                sb.append(point.getZ()).append(newline);
+                out.write(sb.toString());
+                sb.setLength(0);
+            }
+        }
+    }
 
-	/**
-	 * Loads the points from the file.
-	 *
-	 * @param filename
-	 *            the filename
-	 * @return the assigned points
-	 * @throws IOException
-	 *             Signals that an I/O exception has occurred.
-	 */
-	public static AssignedPoint[] loadPoints(String filename) throws IOException
-	{
-		final LinkedList<AssignedPoint> points = new LinkedList<>();
-		// Load results from file
-		try (BufferedReader input = new BufferedReader(new FileReader(filename)))
-		{
-			String line = input.readLine();
+    /**
+     * Loads the points from the file.
+     *
+     * @param filename
+     *            the filename
+     * @return the assigned points
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     */
+    public static AssignedPoint[] loadPoints(String filename) throws IOException
+    {
+        final LinkedList<AssignedPoint> points = new LinkedList<>();
+        // Load results from file
+        try (BufferedReader input = new BufferedReader(new FileReader(filename)))
+        {
+            String line = input.readLine();
 
-			if (line != null)
-			{
-				int lineCount = 1;
-				while ((line = input.readLine()) != null)
-				{
-					lineCount++;
-					final String[] tokens = line.split(",");
-					if (tokens.length == 3)
-						try
-						{
-							final int x = Integer.parseInt(tokens[0]);
-							final int y = Integer.parseInt(tokens[1]);
-							final int z = Integer.parseInt(tokens[2]);
-							points.add(new AssignedPoint(x, y, z, lineCount - 1));
-						}
-						catch (final NumberFormatException e)
-						{
-							System.err.println("Invalid numbers on line: " + lineCount);
-						}
-				}
-			}
+            if (line != null)
+            {
+                int lineCount = 1;
+                while ((line = input.readLine()) != null)
+                {
+                    lineCount++;
+                    final String[] tokens = line.split(",");
+                    if (tokens.length == 3)
+                        try
+                        {
+                            final int x = Integer.parseInt(tokens[0]);
+                            final int y = Integer.parseInt(tokens[1]);
+                            final int z = Integer.parseInt(tokens[2]);
+                            points.add(new AssignedPoint(x, y, z, lineCount - 1));
+                        }
+                        catch (final NumberFormatException e)
+                        {
+                            System.err.println("Invalid numbers on line: " + lineCount);
+                        }
+                }
+            }
 
-			return points.toArray(new AssignedPoint[0]);
-		}
-	}
+            return points.toArray(new AssignedPoint[0]);
+        }
+    }
 
-	/**
-	 * Extracts the points from the given Point ROI.
-	 *
-	 * @param roi
-	 *            the roi
-	 * @return The list of points (can be zero length)
-	 */
-	public static AssignedPoint[] extractRoiPoints(Roi roi)
-	{
-		AssignedPoint[] roiPoints = null;
+    /**
+     * Extracts the points from the given Point ROI.
+     *
+     * @param roi
+     *            the roi
+     * @return The list of points (can be zero length)
+     */
+    public static AssignedPoint[] extractRoiPoints(Roi roi)
+    {
+        AssignedPoint[] roiPoints = null;
 
-		if (roi != null && roi.getType() == Roi.POINT)
-		{
-			final Polygon p = ((PolygonRoi) roi).getNonSplineCoordinates();
-			final int n = p.npoints;
-			final Rectangle bounds = roi.getBounds();
-			// The ROI has either a hyperstack position or a stack position, but not both.
-			// Both will be zero if the ROI has no 3D information.
-			int z = roi.getZPosition();
-			if (z == 0)
-				z = roi.getPosition();
+        if (roi != null && roi.getType() == Roi.POINT)
+        {
+            final Polygon p = ((PolygonRoi) roi).getNonSplineCoordinates();
+            final int n = p.npoints;
+            final Rectangle bounds = roi.getBounds();
+            // The ROI has either a hyperstack position or a stack position, but not both.
+            // Both will be zero if the ROI has no 3D information.
+            int z = roi.getZPosition();
+            if (z == 0)
+                z = roi.getPosition();
 
-			roiPoints = new AssignedPoint[n];
-			for (int i = 0; i < n; i++)
-				roiPoints[i] = new AssignedPoint(bounds.x + p.xpoints[i], bounds.y + p.ypoints[i], z, i);
-		}
-		else
-			roiPoints = new AssignedPoint[0];
+            roiPoints = new AssignedPoint[n];
+            for (int i = 0; i < n; i++)
+                roiPoints[i] = new AssignedPoint(bounds.x + p.xpoints[i], bounds.y + p.ypoints[i], z, i);
+        }
+        else
+            roiPoints = new AssignedPoint[0];
 
-		return roiPoints;
-	}
+        return roiPoints;
+    }
 
-	/**
-	 * Creates an ImageJ PointRoi from the list of points
-	 *
-	 * @param array
-	 *            List of points
-	 * @return The PointRoi
-	 */
-	public static Roi createROI(List<? extends Coordinate> array)
-	{
-		final int nMaxima = array.size();
-		final float[] xpoints = new float[nMaxima];
-		final float[] ypoints = new float[nMaxima];
-		int i = 0;
-		for (final Coordinate point : array)
-		{
-			xpoints[i] = point.getX();
-			ypoints[i] = point.getY();
-			i++;
-		}
-		return new PointRoi(xpoints, ypoints, nMaxima);
-	}
+    /**
+     * Creates an ImageJ PointRoi from the list of points
+     *
+     * @param array
+     *            List of points
+     * @return The PointRoi
+     */
+    public static Roi createROI(List<? extends Coordinate> array)
+    {
+        final int nMaxima = array.size();
+        final float[] xpoints = new float[nMaxima];
+        final float[] ypoints = new float[nMaxima];
+        int i = 0;
+        for (final Coordinate point : array)
+        {
+            xpoints[i] = point.getX();
+            ypoints[i] = point.getY();
+            i++;
+        }
+        return new PointRoi(xpoints, ypoints, nMaxima);
+    }
 
-	/**
-	 * Creates an ImageJ PointRoi from the list of points
-	 *
-	 * @param array
-	 *            List of points
-	 * @return The PointRoi
-	 */
-	public static Roi createROI(AssignedPoint[] array)
-	{
-		final int nMaxima = array.length;
-		final float[] xpoints = new float[nMaxima];
-		final float[] ypoints = new float[nMaxima];
-		for (int i = 0; i < nMaxima; i++)
-		{
-			xpoints[i] = array[i].getX();
-			ypoints[i] = array[i].getY();
-		}
-		return new PointRoi(xpoints, ypoints, nMaxima);
-	}
+    /**
+     * Creates an ImageJ PointRoi from the list of points
+     *
+     * @param array
+     *            List of points
+     * @return The PointRoi
+     */
+    public static Roi createROI(AssignedPoint[] array)
+    {
+        final int nMaxima = array.length;
+        final float[] xpoints = new float[nMaxima];
+        final float[] ypoints = new float[nMaxima];
+        for (int i = 0; i < nMaxima; i++)
+        {
+            xpoints[i] = array[i].getX();
+            ypoints[i] = array[i].getY();
+        }
+        return new PointRoi(xpoints, ypoints, nMaxima);
+    }
 
-	/**
-	 * Eliminates duplicate coordinates. Destructively alters the IDs in the input array since the objects are recycled
-	 *
-	 * @param points
-	 *            the points
-	 * @return new list of points with Ids from zero
-	 */
-	public static AssignedPoint[] eliminateDuplicates(AssignedPoint[] points)
-	{
-		final HashSet<AssignedPoint> newPoints = new HashSet<>();
-		int id = 0;
-		for (final AssignedPoint p : points)
-			if (newPoints.add(p))
-				p.setId(id++);
-		return newPoints.toArray(new AssignedPoint[0]);
-	}
+    /**
+     * Eliminates duplicate coordinates. Destructively alters the IDs in the input array since the objects are recycled
+     *
+     * @param points
+     *            the points
+     * @return new list of points with Ids from zero
+     */
+    public static AssignedPoint[] eliminateDuplicates(AssignedPoint[] points)
+    {
+        final HashSet<AssignedPoint> newPoints = new HashSet<>();
+        int id = 0;
+        for (final AssignedPoint p : points)
+            if (newPoints.add(p))
+                p.setId(id++);
+        return newPoints.toArray(new AssignedPoint[0]);
+    }
 }

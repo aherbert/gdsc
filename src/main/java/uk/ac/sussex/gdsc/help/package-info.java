@@ -23,7 +23,7 @@
  */
 
 /**
- * Provides common help information for ImageJ plugins. 
+ * Provides common help information for ImageJ plugins.
  * 
  * @since 1.3.0
  */

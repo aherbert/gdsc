@@ -28,23 +28,23 @@ package uk.ac.sussex.gdsc.foci;
  */
 public class FindFociSearchResults
 {
-	/** The results array. */
-	public FindFociResult[] resultsArray;
+    /** The results array. */
+    public FindFociResult[] resultsArray;
 
-	/** The saddle points. */
-	public FindFociSaddleList[] saddlePoints;
+    /** The saddle points. */
+    public FindFociSaddleList[] saddlePoints;
 
-	/**
-	 * Instantiates a new find foci merge results.
-	 *
-	 * @param resultsArray
-	 *            the results array
-	 * @param saddlePoints
-	 *            the saddle points
-	 */
-	public FindFociSearchResults(FindFociResult[] resultsArray, FindFociSaddleList[] saddlePoints)
-	{
-		this.resultsArray = resultsArray;
-		this.saddlePoints = saddlePoints;
-	}
+    /**
+     * Instantiates a new find foci merge results.
+     *
+     * @param resultsArray
+     *            the results array
+     * @param saddlePoints
+     *            the saddle points
+     */
+    public FindFociSearchResults(FindFociResult[] resultsArray, FindFociSaddleList[] saddlePoints)
+    {
+        this.resultsArray = resultsArray;
+        this.saddlePoints = saddlePoints;
+    }
 }

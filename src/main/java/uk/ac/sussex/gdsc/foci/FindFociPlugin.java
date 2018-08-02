@@ -49,241 +49,241 @@ import uk.ac.sussex.gdsc.foci.model.FindFociModel;
  */
 public class FindFociPlugin implements PlugIn
 {
-	private static FindFociView instance = null;
+    private static FindFociView instance = null;
 
-	private class FindFociListener implements WindowListener, ImageListener, PropertyChangeListener
-	{
-		FindFociModel model;
-		FindFociView instance;
-		int currentChannel = 0;
-		int currentFrame = 0;
+    private class FindFociListener implements WindowListener, ImageListener, PropertyChangeListener
+    {
+        FindFociModel model;
+        FindFociView instance;
+        int currentChannel = 0;
+        int currentFrame = 0;
 
-		FindFociListener(FindFociModel model)
-		{
-			this.model = model;
-		}
+        FindFociListener(FindFociModel model)
+        {
+            this.model = model;
+        }
 
-		public void addWindowListener(FindFociView instance)
-		{
-			this.instance = instance;
-			instance.addWindowListener(this);
-		}
+        public void addWindowListener(FindFociView instance)
+        {
+            this.instance = instance;
+            instance.addWindowListener(this);
+        }
 
-		@Override
-		public void windowOpened(WindowEvent e)
-		{
-			// Ignore
-		}
+        @Override
+        public void windowOpened(WindowEvent e)
+        {
+            // Ignore
+        }
 
-		@Override
-		public void windowClosing(WindowEvent e)
-		{
-			WindowManager.removeWindow(instance);
-		}
+        @Override
+        public void windowClosing(WindowEvent e)
+        {
+            WindowManager.removeWindow(instance);
+        }
 
-		@Override
-		public void windowClosed(WindowEvent e)
-		{
-			// Ignore
-		}
+        @Override
+        public void windowClosed(WindowEvent e)
+        {
+            // Ignore
+        }
 
-		@Override
-		public void windowIconified(WindowEvent e)
-		{
-			// Ignore
-		}
+        @Override
+        public void windowIconified(WindowEvent e)
+        {
+            // Ignore
+        }
 
-		@Override
-		public void windowDeiconified(WindowEvent e)
-		{
-			// Ignore
-		}
+        @Override
+        public void windowDeiconified(WindowEvent e)
+        {
+            // Ignore
+        }
 
-		@Override
-		public void windowActivated(WindowEvent e)
-		{
-			// Ignore
-		}
+        @Override
+        public void windowActivated(WindowEvent e)
+        {
+            // Ignore
+        }
 
-		@Override
-		public void windowDeactivated(WindowEvent e)
-		{
-			// Ignore
-		}
+        @Override
+        public void windowDeactivated(WindowEvent e)
+        {
+            // Ignore
+        }
 
-		@Override
-		public void imageOpened(ImagePlus imp)
-		{
-			// Ignore
-		}
+        @Override
+        public void imageOpened(ImagePlus imp)
+        {
+            // Ignore
+        }
 
-		@Override
-		public void imageClosed(ImagePlus imp)
-		{
-			// Ignore
-		}
+        @Override
+        public void imageClosed(ImagePlus imp)
+        {
+            // Ignore
+        }
 
-		@Override
-		public void imageUpdated(ImagePlus imp)
-		{
-			if (imp == null)
-				return;
+        @Override
+        public void imageUpdated(ImagePlus imp)
+        {
+            if (imp == null)
+                return;
 
-			// Check if the image is the selected image in the model.
-			// If the slice has changed then invalidate the model
-			if (imp.getTitle().equals(model.getSelectedImage()))
-			{
-				final int oldCurrentChannel = currentChannel;
-				final int oldCurrentFrame = currentFrame;
-				getCurrentSlice();
-				if (oldCurrentChannel != currentChannel || oldCurrentFrame != currentFrame)
-					model.invalidate();
-			}
-		}
+            // Check if the image is the selected image in the model.
+            // If the slice has changed then invalidate the model
+            if (imp.getTitle().equals(model.getSelectedImage()))
+            {
+                final int oldCurrentChannel = currentChannel;
+                final int oldCurrentFrame = currentFrame;
+                getCurrentSlice();
+                if (oldCurrentChannel != currentChannel || oldCurrentFrame != currentFrame)
+                    model.invalidate();
+            }
+        }
 
-		private void getCurrentSlice()
-		{
-			final ImagePlus imp = WindowManager.getImage(model.getSelectedImage());
-			if (imp != null)
-			{
-				currentChannel = imp.getChannel();
-				currentFrame = imp.getFrame();
-			}
-			else
-				currentChannel = currentFrame = 0;
-		}
+        private void getCurrentSlice()
+        {
+            final ImagePlus imp = WindowManager.getImage(model.getSelectedImage());
+            if (imp != null)
+            {
+                currentChannel = imp.getChannel();
+                currentFrame = imp.getFrame();
+            }
+            else
+                currentChannel = currentFrame = 0;
+        }
 
-		@Override
-		public void propertyChange(PropertyChangeEvent evt)
-		{
-			// Store the slice for the image when it changes.
-			if (evt.getPropertyName().equals("selectedImage"))
-				getCurrentSlice();
-		}
-	}
+        @Override
+        public void propertyChange(PropertyChangeEvent evt)
+        {
+            // Store the slice for the image when it changes.
+            if (evt.getPropertyName().equals("selectedImage"))
+                getCurrentSlice();
+        }
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
-	 */
-	@Override
-	public void run(String arg)
-	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
+     */
+    @Override
+    public void run(String arg)
+    {
+        UsageTracker.recordPlugin(this.getClass(), arg);
 
-		if (WindowManager.getImageCount() < 1)
-		{
-			IJ.showMessage("No images opened.");
-			return;
-		}
+        if (WindowManager.getImageCount() < 1)
+        {
+            IJ.showMessage("No images opened.");
+            return;
+        }
 
-		if (instance != null)
-		{
-			if (instance.isVisible())
-			{
-				// Ask if the user would like a second instance
-				final GenericDialog gd = new GenericDialog(FindFoci.TITLE);
-				gd.enableYesNoCancel();
-				gd.addMessage(FindFoci.TITLE + " is already open.\n \nDo you want to create another instance?");
-				gd.showDialog();
-				if (gd.wasCanceled())
-					return;
-				if (gd.wasOKed())
-				{
-					showNewInstance();
-					return;
-				}
-			}
-			showInstance(instance);
-			return;
-		}
+        if (instance != null)
+        {
+            if (instance.isVisible())
+            {
+                // Ask if the user would like a second instance
+                final GenericDialog gd = new GenericDialog(FindFoci.TITLE);
+                gd.enableYesNoCancel();
+                gd.addMessage(FindFoci.TITLE + " is already open.\n \nDo you want to create another instance?");
+                gd.showDialog();
+                if (gd.wasCanceled())
+                    return;
+                if (gd.wasOKed())
+                {
+                    showNewInstance();
+                    return;
+                }
+            }
+            showInstance(instance);
+            return;
+        }
 
-		final FindFociModel model = new FindFociModel();
-		model.setResultsDirectory(System.getProperty("java.io.tmpdir"));
-		final FindFociController controller = new ImageJController(model);
-		final FindFociListener listener = new FindFociListener(model);
+        final FindFociModel model = new FindFociModel();
+        model.setResultsDirectory(System.getProperty("java.io.tmpdir"));
+        final FindFociController controller = new ImageJController(model);
+        final FindFociListener listener = new FindFociListener(model);
 
-		// Track when the image changes to a new slice
-		ImagePlus.addImageListener(listener);
-		model.addPropertyChangeListener("selectedImage", listener);
+        // Track when the image changes to a new slice
+        ImagePlus.addImageListener(listener);
+        model.addPropertyChangeListener("selectedImage", listener);
 
-		IJ.showStatus("Initialising FindFoci ...");
+        IJ.showStatus("Initialising FindFoci ...");
 
-		String errorMessage = null;
-		Throwable exception = null;
+        String errorMessage = null;
+        Throwable exception = null;
 
-		try
-		{
-			Class.forName("org.jdesktop.beansbinding.Property", false, this.getClass().getClassLoader());
+        try
+        {
+            Class.forName("org.jdesktop.beansbinding.Property", false, this.getClass().getClassLoader());
 
-			// it exists on the classpath
-			instance = new FindFociView(model, controller);
-			listener.addWindowListener(instance);
-			instance.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+            // it exists on the classpath
+            instance = new FindFociView(model, controller);
+            listener.addWindowListener(instance);
+            instance.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 
-			IJ.register(FindFociView.class);
+            IJ.register(FindFociView.class);
 
-			showInstance(instance);
-			IJ.showStatus("FindFoci ready");
-		}
-		catch (final ExceptionInInitializerError e)
-		{
-			exception = e;
-			errorMessage = "Failed to initialize class: " + e.getMessage();
-		}
-		catch (final LinkageError e)
-		{
-			exception = e;
-			errorMessage = "Failed to link class: " + e.getMessage();
-		}
-		catch (final ClassNotFoundException ex)
-		{
-			exception = ex;
-			errorMessage = "Failed to find class: " + ex.getMessage() +
-					"\nCheck you have beansbinding-1.2.1.jar on your classpath\n";
-		}
-		catch (final Throwable ex)
-		{
-			exception = ex;
-			errorMessage = ex.getMessage();
-		}
-		finally
-		{
-			if (exception != null)
-			{
-				final StringWriter sw = new StringWriter();
-				final PrintWriter pw = new PrintWriter(sw);
-				pw.write(errorMessage);
-				pw.append('\n');
-				exception.printStackTrace(pw);
-				IJ.log(sw.toString());
-			}
-		}
-	}
+            showInstance(instance);
+            IJ.showStatus("FindFoci ready");
+        }
+        catch (final ExceptionInInitializerError e)
+        {
+            exception = e;
+            errorMessage = "Failed to initialize class: " + e.getMessage();
+        }
+        catch (final LinkageError e)
+        {
+            exception = e;
+            errorMessage = "Failed to link class: " + e.getMessage();
+        }
+        catch (final ClassNotFoundException ex)
+        {
+            exception = ex;
+            errorMessage = "Failed to find class: " + ex.getMessage() +
+                    "\nCheck you have beansbinding-1.2.1.jar on your classpath\n";
+        }
+        catch (final Throwable ex)
+        {
+            exception = ex;
+            errorMessage = ex.getMessage();
+        }
+        finally
+        {
+            if (exception != null)
+            {
+                final StringWriter sw = new StringWriter();
+                final PrintWriter pw = new PrintWriter(sw);
+                pw.write(errorMessage);
+                pw.append('\n');
+                exception.printStackTrace(pw);
+                IJ.log(sw.toString());
+            }
+        }
+    }
 
-	private void showNewInstance()
-	{
-		final FindFociModel model = new FindFociModel();
-		model.setResultsDirectory(System.getProperty("java.io.tmpdir"));
-		final FindFociController controller = new ImageJController(model);
-		final FindFociListener listener = new FindFociListener(model);
+    private void showNewInstance()
+    {
+        final FindFociModel model = new FindFociModel();
+        model.setResultsDirectory(System.getProperty("java.io.tmpdir"));
+        final FindFociController controller = new ImageJController(model);
+        final FindFociListener listener = new FindFociListener(model);
 
-		// Track when the image changes to a new slice
-		ImagePlus.addImageListener(listener);
-		model.addPropertyChangeListener("selectedImage", listener);
+        // Track when the image changes to a new slice
+        ImagePlus.addImageListener(listener);
+        model.addPropertyChangeListener("selectedImage", listener);
 
-		final FindFociView instance = new FindFociView(model, controller);
-		listener.addWindowListener(instance);
-		instance.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        final FindFociView instance = new FindFociView(model, controller);
+        listener.addWindowListener(instance);
+        instance.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-		showInstance(instance);
-	}
+        showInstance(instance);
+    }
 
-	private static void showInstance(FindFociView instance)
-	{
-		WindowManager.addWindow(instance);
-		instance.setVisible(true);
-		instance.toFront();
-	}
+    private static void showInstance(FindFociView instance)
+    {
+        WindowManager.addWindow(instance);
+        instance.setVisible(true);
+        instance.toFront();
+    }
 }

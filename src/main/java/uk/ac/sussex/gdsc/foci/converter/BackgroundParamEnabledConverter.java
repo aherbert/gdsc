@@ -32,18 +32,18 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessor;
  */
 public class BackgroundParamEnabledConverter extends Converter<Integer, Boolean>
 {
-	@Override
-	public Boolean convertForward(Integer paramS)
-	{
-		final int backgroundMethod = paramS.intValue();
-		return Boolean.valueOf(backgroundMethod == FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN ||
-				backgroundMethod == FindFociProcessor.BACKGROUND_ABSOLUTE);
-	}
+    @Override
+    public Boolean convertForward(Integer paramS)
+    {
+        final int backgroundMethod = paramS.intValue();
+        return Boolean.valueOf(backgroundMethod == FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN ||
+                backgroundMethod == FindFociProcessor.BACKGROUND_ABSOLUTE);
+    }
 
-	@Override
-	public Integer convertReverse(Boolean paramT)
-	{
-		// N/A
-		return null;
-	}
+    @Override
+    public Integer convertReverse(Boolean paramT)
+    {
+        // N/A
+        return null;
+    }
 }

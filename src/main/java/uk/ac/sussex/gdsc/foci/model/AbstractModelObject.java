@@ -32,160 +32,160 @@ import java.beans.PropertyChangeSupport;
  */
 public abstract class AbstractModelObject
 {
-	private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+    private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
-	/**
-	 * Adds the property change listener.
-	 *
-	 * @param listener
-	 *            the listener
-	 */
-	public void addPropertyChangeListener(PropertyChangeListener listener)
-	{
-		propertyChangeSupport.addPropertyChangeListener(listener);
-	}
+    /**
+     * Adds the property change listener.
+     *
+     * @param listener
+     *            the listener
+     */
+    public void addPropertyChangeListener(PropertyChangeListener listener)
+    {
+        propertyChangeSupport.addPropertyChangeListener(listener);
+    }
 
-	/**
-	 * Adds the property change listener.
-	 *
-	 * @param propertyName
-	 *            the property name
-	 * @param listener
-	 *            the listener
-	 */
-	public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener)
-	{
-		propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
-	}
+    /**
+     * Adds the property change listener.
+     *
+     * @param propertyName
+     *            the property name
+     * @param listener
+     *            the listener
+     */
+    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener)
+    {
+        propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
+    }
 
-	/**
-	 * Removes the property change listener.
-	 *
-	 * @param listener
-	 *            the listener
-	 */
-	public void removePropertyChangeListener(PropertyChangeListener listener)
-	{
-		propertyChangeSupport.removePropertyChangeListener(listener);
-	}
+    /**
+     * Removes the property change listener.
+     *
+     * @param listener
+     *            the listener
+     */
+    public void removePropertyChangeListener(PropertyChangeListener listener)
+    {
+        propertyChangeSupport.removePropertyChangeListener(listener);
+    }
 
-	/**
-	 * Removes the property change listener.
-	 *
-	 * @param propertyName
-	 *            the property name
-	 * @param listener
-	 *            the listener
-	 */
-	public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener)
-	{
-		propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
-	}
+    /**
+     * Removes the property change listener.
+     *
+     * @param propertyName
+     *            the property name
+     * @param listener
+     *            the listener
+     */
+    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener)
+    {
+        propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
+    }
 
-	/**
-	 * Fire property change.
-	 *
-	 * @param propertyName
-	 *            the property name
-	 * @param oldValue
-	 *            the old value
-	 * @param newValue
-	 *            the new value
-	 */
-	protected void firePropertyChange(String propertyName, Object oldValue, Object newValue)
-	{
-		propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
-	}
+    /**
+     * Fire property change.
+     *
+     * @param propertyName
+     *            the property name
+     * @param oldValue
+     *            the old value
+     * @param newValue
+     *            the new value
+     */
+    protected void firePropertyChange(String propertyName, Object oldValue, Object newValue)
+    {
+        propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    }
 
-	/**
-	 * Fire property change.
-	 *
-	 * @param propertyName
-	 *            the property name
-	 * @param oldValue
-	 *            the old value
-	 * @param newValue
-	 *            the new value
-	 */
-	protected void firePropertyChange(String propertyName, int oldValue, int newValue)
-	{
-		propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
-	}
+    /**
+     * Fire property change.
+     *
+     * @param propertyName
+     *            the property name
+     * @param oldValue
+     *            the old value
+     * @param newValue
+     *            the new value
+     */
+    protected void firePropertyChange(String propertyName, int oldValue, int newValue)
+    {
+        propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    }
 
-	/**
-	 * Fire property change.
-	 *
-	 * @param propertyName
-	 *            the property name
-	 * @param oldValue
-	 *            the old value
-	 * @param newValue
-	 *            the new value
-	 */
-	protected void firePropertyChange(String propertyName, boolean oldValue, boolean newValue)
-	{
-		propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
-	}
+    /**
+     * Fire property change.
+     *
+     * @param propertyName
+     *            the property name
+     * @param oldValue
+     *            the old value
+     * @param newValue
+     *            the new value
+     */
+    protected void firePropertyChange(String propertyName, boolean oldValue, boolean newValue)
+    {
+        propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    }
 
-	/**
-	 * Fire property change.
-	 *
-	 * @param evt
-	 *            the evt
-	 */
-	protected void firePropertyChange(PropertyChangeEvent evt)
-	{
-		propertyChangeSupport.firePropertyChange(evt);
-	}
+    /**
+     * Fire property change.
+     *
+     * @param evt
+     *            the evt
+     */
+    protected void firePropertyChange(PropertyChangeEvent evt)
+    {
+        propertyChangeSupport.firePropertyChange(evt);
+    }
 
-	/**
-	 * Fire indexed property change.
-	 *
-	 * @param propertyName
-	 *            the property name
-	 * @param index
-	 *            the index
-	 * @param oldValue
-	 *            the old value
-	 * @param newValue
-	 *            the new value
-	 */
-	protected void fireIndexedPropertyChange(String propertyName, int index, Object oldValue, Object newValue)
-	{
-		propertyChangeSupport.fireIndexedPropertyChange(propertyName, index, oldValue, newValue);
-	}
+    /**
+     * Fire indexed property change.
+     *
+     * @param propertyName
+     *            the property name
+     * @param index
+     *            the index
+     * @param oldValue
+     *            the old value
+     * @param newValue
+     *            the new value
+     */
+    protected void fireIndexedPropertyChange(String propertyName, int index, Object oldValue, Object newValue)
+    {
+        propertyChangeSupport.fireIndexedPropertyChange(propertyName, index, oldValue, newValue);
+    }
 
-	/**
-	 * Fire indexed property change.
-	 *
-	 * @param propertyName
-	 *            the property name
-	 * @param index
-	 *            the index
-	 * @param oldValue
-	 *            the old value
-	 * @param newValue
-	 *            the new value
-	 */
-	protected void fireIndexedPropertyChange(String propertyName, int index, int oldValue, int newValue)
-	{
-		propertyChangeSupport.fireIndexedPropertyChange(propertyName, index, oldValue, newValue);
-	}
+    /**
+     * Fire indexed property change.
+     *
+     * @param propertyName
+     *            the property name
+     * @param index
+     *            the index
+     * @param oldValue
+     *            the old value
+     * @param newValue
+     *            the new value
+     */
+    protected void fireIndexedPropertyChange(String propertyName, int index, int oldValue, int newValue)
+    {
+        propertyChangeSupport.fireIndexedPropertyChange(propertyName, index, oldValue, newValue);
+    }
 
-	/**
-	 * Fire indexed property change.
-	 *
-	 * @param propertyName
-	 *            the property name
-	 * @param index
-	 *            the index
-	 * @param oldValue
-	 *            the old value
-	 * @param newValue
-	 *            the new value
-	 */
-	protected void fireIndexedPropertyChange(String propertyName, int index, boolean oldValue, boolean newValue)
-	{
-		propertyChangeSupport.fireIndexedPropertyChange(propertyName, index, oldValue, newValue);
-	}
+    /**
+     * Fire indexed property change.
+     *
+     * @param propertyName
+     *            the property name
+     * @param index
+     *            the index
+     * @param oldValue
+     *            the old value
+     * @param newValue
+     *            the new value
+     */
+    protected void fireIndexedPropertyChange(String propertyName, int index, boolean oldValue, boolean newValue)
+    {
+        propertyChangeSupport.fireIndexedPropertyChange(propertyName, index, oldValue, newValue);
+    }
 }

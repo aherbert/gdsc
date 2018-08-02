@@ -28,24 +28,24 @@ package uk.ac.sussex.gdsc.foci.model;
  */
 public enum FindFociState
 {
-	/** The initial state. */
-	INITIAL,
-	/** The find maxima state. */
-	FIND_MAXIMA,
-	/** The search state. */
-	SEARCH,
-	/** The merge height state. */
-	MERGE_HEIGHT,
-	/** The merge size state. */
-	MERGE_SIZE,
-	/** The merge saddle state. */
-	MERGE_SADDLE,
-	/** The calculate results state. */
-	CALCULATE_RESULTS,
-	/** The calculate output mask state. */
-	CALCULATE_OUTPUT_MASK,
-	/** The show results state. */
-	SHOW_RESULTS,
-	/** The complete state. */
-	COMPLETE
+    /** The initial state. */
+    INITIAL,
+    /** The find maxima state. */
+    FIND_MAXIMA,
+    /** The search state. */
+    SEARCH,
+    /** The merge height state. */
+    MERGE_HEIGHT,
+    /** The merge size state. */
+    MERGE_SIZE,
+    /** The merge saddle state. */
+    MERGE_SADDLE,
+    /** The calculate results state. */
+    CALCULATE_RESULTS,
+    /** The calculate output mask state. */
+    CALCULATE_OUTPUT_MASK,
+    /** The show results state. */
+    SHOW_RESULTS,
+    /** The complete state. */
+    COMPLETE
 }

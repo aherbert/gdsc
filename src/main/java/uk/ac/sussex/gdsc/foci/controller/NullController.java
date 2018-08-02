@@ -34,105 +34,105 @@ import uk.ac.sussex.gdsc.foci.model.FindFociModel;
  */
 public class NullController extends FindFociController
 {
-	private int lowerLimit = 15;
-	private int upperLimit = 220;
+    private int lowerLimit = 15;
+    private int upperLimit = 220;
 
-	/**
-	 * Instantiates a new null controller.
-	 *
-	 * @param model
-	 *            the model
-	 */
-	public NullController(FindFociModel model)
-	{
-		super(model);
-	}
+    /**
+     * Instantiates a new null controller.
+     *
+     * @param model
+     *            the model
+     */
+    public NullController(FindFociModel model)
+    {
+        super(model);
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#getImageCount()
-	 */
-	@Override
-	public int getImageCount()
-	{
-		return 3;
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#getImageCount()
+     */
+    @Override
+    public int getImageCount()
+    {
+        return 3;
+    }
 
-	private final int updateCounter = 0;
+    private final int updateCounter = 0;
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#updateImageList()
-	 */
-	@Override
-	public void updateImageList()
-	{
-		//System.out.println("updateImageList");
+    /*
+     * (non-Javadoc)
+     *
+     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#updateImageList()
+     */
+    @Override
+    public void updateImageList()
+    {
+        //System.out.println("updateImageList");
 
-		// Note: Increment the updateCounter to ensure the list is refreshed
-		//updateCounter++;
+        // Note: Increment the updateCounter to ensure the list is refreshed
+        //updateCounter++;
 
-		final List<String> imageList = new ArrayList<>();
-		imageList.add(updateCounter + " : One");
-		imageList.add(updateCounter + " : Two");
-		imageList.add(updateCounter + " : Three");
-		model.setImageList(imageList);
+        final List<String> imageList = new ArrayList<>();
+        imageList.add(updateCounter + " : One");
+        imageList.add(updateCounter + " : Two");
+        imageList.add(updateCounter + " : Three");
+        model.setImageList(imageList);
 
-		// Make up some random limits
-		final Random rand = new Random();
-		final int base = 25;
-		lowerLimit = rand.nextInt(base);
-		upperLimit = rand.nextInt(255 - base) + base;
-	}
+        // Make up some random limits
+        final Random rand = new Random();
+        final int base = 25;
+        lowerLimit = rand.nextInt(base);
+        upperLimit = rand.nextInt(255 - base) + base;
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#run()
-	 */
-	@Override
-	public void run()
-	{
-		model.setUnchanged();
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#run()
+     */
+    @Override
+    public void run()
+    {
+        model.setUnchanged();
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#preview()
-	 */
-	@Override
-	public void preview()
-	{
-		System.out.println("FindFoci Preview");
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#preview()
+     */
+    @Override
+    public void preview()
+    {
+        System.out.println("FindFoci Preview");
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#endPreview()
-	 */
-	@Override
-	public void endPreview()
-	{
-		System.out.println("FindFoci EndPreview");
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#endPreview()
+     */
+    @Override
+    public void endPreview()
+    {
+        System.out.println("FindFoci EndPreview");
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#getImageLimits(int[])
-	 */
-	@Override
-	public int[] getImageLimits(int[] limits)
-	{
-		//System.out.println("getImageLimits");
-		if (limits == null || limits.length < 2)
-			limits = new int[2];
-		limits[0] = lowerLimit;
-		limits[1] = upperLimit;
-		return limits;
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#getImageLimits(int[])
+     */
+    @Override
+    public int[] getImageLimits(int[] limits)
+    {
+        //System.out.println("getImageLimits");
+        if (limits == null || limits.length < 2)
+            limits = new int[2];
+        limits[0] = lowerLimit;
+        limits[1] = upperLimit;
+        return limits;
+    }
 }

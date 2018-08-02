@@ -28,23 +28,23 @@ package uk.ac.sussex.gdsc.foci;
  */
 public class FindFociMergeResults
 {
-	/** The results array. */
-	public FindFociResult[] resultsArray;
+    /** The results array. */
+    public FindFociResult[] resultsArray;
 
-	/** The original number of peaks. */
-	public int originalNumberOfPeaks;
+    /** The original number of peaks. */
+    public int originalNumberOfPeaks;
 
-	/**
-	 * Instantiates a new find foci merge results.
-	 *
-	 * @param resultsArray
-	 *            the results array
-	 * @param originalNumberOfPeaks
-	 *            the original number of peaks
-	 */
-	public FindFociMergeResults(FindFociResult[] resultsArray, int originalNumberOfPeaks)
-	{
-		this.resultsArray = resultsArray;
-		this.originalNumberOfPeaks = originalNumberOfPeaks;
-	}
+    /**
+     * Instantiates a new find foci merge results.
+     *
+     * @param resultsArray
+     *            the results array
+     * @param originalNumberOfPeaks
+     *            the original number of peaks
+     */
+    public FindFociMergeResults(FindFociResult[] resultsArray, int originalNumberOfPeaks)
+    {
+        this.resultsArray = resultsArray;
+        this.originalNumberOfPeaks = originalNumberOfPeaks;
+    }
 }

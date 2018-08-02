@@ -28,102 +28,102 @@ package uk.ac.sussex.gdsc.foci;
  */
 public class AssignedPoint extends BasePoint implements Comparable<AssignedPoint>
 {
-	/** The id. */
-	protected int id = 0;
+    /** The id. */
+    protected int id = 0;
 
-	/** The assigned id. */
-	protected int assignedId = 0;
+    /** The assigned id. */
+    protected int assignedId = 0;
 
-	/**
-	 * Instantiates a new assigned point.
-	 *
-	 * @param x
-	 *            the x
-	 * @param y
-	 *            the y
-	 * @param z
-	 *            the z
-	 * @param id
-	 *            the id
-	 */
-	public AssignedPoint(int x, int y, int z, int id)
-	{
-		super(x, y, z);
-		this.id = id;
-	}
+    /**
+     * Instantiates a new assigned point.
+     *
+     * @param x
+     *            the x
+     * @param y
+     *            the y
+     * @param z
+     *            the z
+     * @param id
+     *            the id
+     */
+    public AssignedPoint(int x, int y, int z, int id)
+    {
+        super(x, y, z);
+        this.id = id;
+    }
 
-	/**
-	 * Instantiates a new assigned point.
-	 *
-	 * @param x
-	 *            the x
-	 * @param y
-	 *            the y
-	 * @param id
-	 *            the id
-	 */
-	public AssignedPoint(int x, int y, int id)
-	{
-		super(x, y);
-		this.id = id;
-	}
+    /**
+     * Instantiates a new assigned point.
+     *
+     * @param x
+     *            the x
+     * @param y
+     *            the y
+     * @param id
+     *            the id
+     */
+    public AssignedPoint(int x, int y, int id)
+    {
+        super(x, y);
+        this.id = id;
+    }
 
-	/**
-	 * Sets the point Id.
-	 *
-	 * @param id
-	 *            the new id
-	 */
-	public void setId(int id)
-	{
-		this.id = id;
-	}
+    /**
+     * Sets the point Id.
+     *
+     * @param id
+     *            the new id
+     */
+    public void setId(int id)
+    {
+        this.id = id;
+    }
 
-	/**
-	 * Gets the id.
-	 *
-	 * @return the id
-	 */
-	public int getId()
-	{
-		return id;
-	}
+    /**
+     * Gets the id.
+     *
+     * @return the id
+     */
+    public int getId()
+    {
+        return id;
+    }
 
-	/**
-	 * Sets the assigned id.
-	 *
-	 * @param assignedId
-	 *            the assignedId to set
-	 */
-	public void setAssignedId(int assignedId)
-	{
-		this.assignedId = assignedId;
-	}
+    /**
+     * Sets the assigned id.
+     *
+     * @param assignedId
+     *            the assignedId to set
+     */
+    public void setAssignedId(int assignedId)
+    {
+        this.assignedId = assignedId;
+    }
 
-	/**
-	 * Gets the assigned id.
-	 *
-	 * @return the assignedId
-	 */
-	public int getAssignedId()
-	{
-		return assignedId;
-	}
+    /**
+     * Gets the assigned id.
+     *
+     * @return the assignedId
+     */
+    public int getAssignedId()
+    {
+        return assignedId;
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
-	@Override
-	public int compareTo(AssignedPoint that)
-	{
-		int d = this.x - that.x;
-		if (d != 0)
-			return d;
-		d = this.y - that.y;
-		if (d != 0)
-			return d;
-		return this.z - that.z;
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Comparable#compareTo(java.lang.Object)
+     */
+    @Override
+    public int compareTo(AssignedPoint that)
+    {
+        int d = this.x - that.x;
+        if (d != 0)
+            return d;
+        d = this.y - that.y;
+        if (d != 0)
+            return d;
+        return this.z - that.z;
+    }
 }

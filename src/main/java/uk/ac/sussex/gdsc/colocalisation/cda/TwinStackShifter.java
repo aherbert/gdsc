@@ -31,169 +31,169 @@ import ij.ImageStack;
  */
 public class TwinStackShifter
 {
-	private ImageStack result1;
-	private ImageStack result2;
-	private int xShift = 0;
-	private int yShift = 0;
-	private int w;
-	private int h;
-	private int s;
-	private TwinImageShifter[] imageShifters;
+    private ImageStack result1;
+    private ImageStack result2;
+    private int xShift = 0;
+    private int yShift = 0;
+    private int w;
+    private int h;
+    private int s;
+    private TwinImageShifter[] imageShifters;
 
-	/**
-	 * Instantiates a new twin stack shifter.
-	 *
-	 * @param image1
-	 *            the first input image
-	 * @param image2
-	 *            the second input image
-	 * @param mask
-	 *            the mask image
-	 */
-	public TwinStackShifter(ImagePlus image1, ImagePlus image2, ImagePlus mask)
-	{
-		initialise(image1.getImageStack(), image2.getImageStack(), (mask != null) ? mask.getImageStack() : null);
-	}
+    /**
+     * Instantiates a new twin stack shifter.
+     *
+     * @param image1
+     *            the first input image
+     * @param image2
+     *            the second input image
+     * @param mask
+     *            the mask image
+     */
+    public TwinStackShifter(ImagePlus image1, ImagePlus image2, ImagePlus mask)
+    {
+        initialise(image1.getImageStack(), image2.getImageStack(), (mask != null) ? mask.getImageStack() : null);
+    }
 
-	/**
-	 * Instantiates a new twin stack shifter.
-	 *
-	 * @param image1
-	 *            the first input image
-	 * @param image2
-	 *            the second input image
-	 * @param mask
-	 *            the mask image
-	 */
-	public TwinStackShifter(ImageStack image1, ImageStack image2, ImageStack mask)
-	{
-		initialise(image1, image2, mask);
-	}
+    /**
+     * Instantiates a new twin stack shifter.
+     *
+     * @param image1
+     *            the first input image
+     * @param image2
+     *            the second input image
+     * @param mask
+     *            the mask image
+     */
+    public TwinStackShifter(ImageStack image1, ImageStack image2, ImageStack mask)
+    {
+        initialise(image1, image2, mask);
+    }
 
-	private void initialise(ImageStack s1, ImageStack s2, ImageStack s3)
-	{
-		w = s1.getWidth();
-		h = s1.getHeight();
-		s = s1.getSize();
+    private void initialise(ImageStack s1, ImageStack s2, ImageStack s3)
+    {
+        w = s1.getWidth();
+        h = s1.getHeight();
+        s = s1.getSize();
 
-		if (s2.getWidth() != w || s2.getHeight() != h || s2.getSize() != s)
-			throw new RuntimeException("The first and second stack dimensions do not match");
-		if (s3 != null)
-			if (s3.getWidth() != w || s3.getHeight() != h || s3.getSize() != s)
-				throw new RuntimeException("The first and third stack dimensions do not match");
+        if (s2.getWidth() != w || s2.getHeight() != h || s2.getSize() != s)
+            throw new RuntimeException("The first and second stack dimensions do not match");
+        if (s3 != null)
+            if (s3.getWidth() != w || s3.getHeight() != h || s3.getSize() != s)
+                throw new RuntimeException("The first and third stack dimensions do not match");
 
-		imageShifters = new TwinImageShifter[s];
+        imageShifters = new TwinImageShifter[s];
 
-		for (int n = 1; n <= s; n++)
-			imageShifters[n - 1] = new TwinImageShifter(s1.getProcessor(n), s2.getProcessor(n),
-					(s3 != null) ? s3.getProcessor(n) : null);
-	}
+        for (int n = 1; n <= s; n++)
+            imageShifters[n - 1] = new TwinImageShifter(s1.getProcessor(n), s2.getProcessor(n),
+                    (s3 != null) ? s3.getProcessor(n) : null);
+    }
 
-	/**
-	 * Run with the given shift.
-	 *
-	 * @param x
-	 *            the x
-	 * @param y
-	 *            the y
-	 */
-	public void run(int x, int y)
-	{
-		setShift(x, y);
-		run();
-	}
+    /**
+     * Run with the given shift.
+     *
+     * @param x
+     *            the x
+     * @param y
+     *            the y
+     */
+    public void run(int x, int y)
+    {
+        setShift(x, y);
+        run();
+    }
 
-	/**
-	 * Run.
-	 */
-	public void run()
-	{
-		result1 = new ImageStack(w, h, s);
-		result2 = new ImageStack(w, h, s);
+    /**
+     * Run.
+     */
+    public void run()
+    {
+        result1 = new ImageStack(w, h, s);
+        result2 = new ImageStack(w, h, s);
 
-		for (int n = 1; n <= s; n++)
-		{
-			final TwinImageShifter shifter = imageShifters[n - 1];
-			shifter.setShift(xShift, yShift);
-			shifter.run();
-			result1.setPixels(shifter.getResultImage().getPixels(), n);
-			result2.setPixels(shifter.getResultImage2().getPixels(), n);
-		}
-	}
+        for (int n = 1; n <= s; n++)
+        {
+            final TwinImageShifter shifter = imageShifters[n - 1];
+            shifter.setShift(xShift, yShift);
+            shifter.run();
+            result1.setPixels(shifter.getResultImage().getPixels(), n);
+            result2.setPixels(shifter.getResultImage2().getPixels(), n);
+        }
+    }
 
-	/**
-	 * Sets the shift X.
-	 *
-	 * @param x
-	 *            the new shift X
-	 */
-	public void setShiftX(int x)
-	{
-		this.xShift = x;
-	}
+    /**
+     * Sets the shift X.
+     *
+     * @param x
+     *            the new shift X
+     */
+    public void setShiftX(int x)
+    {
+        this.xShift = x;
+    }
 
-	/**
-	 * Sets the shift Y.
-	 *
-	 * @param y
-	 *            the new shift Y
-	 */
-	public void setShiftY(int y)
-	{
-		this.yShift = y;
-	}
+    /**
+     * Sets the shift Y.
+     *
+     * @param y
+     *            the new shift Y
+     */
+    public void setShiftY(int y)
+    {
+        this.yShift = y;
+    }
 
-	/**
-	 * Sets the shift.
-	 *
-	 * @param x
-	 *            the x
-	 * @param y
-	 *            the y
-	 */
-	public void setShift(int x, int y)
-	{
-		this.xShift = x;
-		this.yShift = y;
-	}
+    /**
+     * Sets the shift.
+     *
+     * @param x
+     *            the x
+     * @param y
+     *            the y
+     */
+    public void setShift(int x, int y)
+    {
+        this.xShift = x;
+        this.yShift = y;
+    }
 
-	/**
-	 * Gets the result image.
-	 *
-	 * @return the result image
-	 */
-	public ImagePlus getResultImage()
-	{
-		return new ImagePlus(null, result1);
-	}
+    /**
+     * Gets the result image.
+     *
+     * @return the result image
+     */
+    public ImagePlus getResultImage()
+    {
+        return new ImagePlus(null, result1);
+    }
 
-	/**
-	 * Gets the result image 2.
-	 *
-	 * @return the result image 2
-	 */
-	public ImagePlus getResultImage2()
-	{
-		return new ImagePlus(null, result2);
-	}
+    /**
+     * Gets the result image 2.
+     *
+     * @return the result image 2
+     */
+    public ImagePlus getResultImage2()
+    {
+        return new ImagePlus(null, result2);
+    }
 
-	/**
-	 * Gets the result stack.
-	 *
-	 * @return the result stack
-	 */
-	public ImageStack getResultStack()
-	{
-		return this.result1;
-	}
+    /**
+     * Gets the result stack.
+     *
+     * @return the result stack
+     */
+    public ImageStack getResultStack()
+    {
+        return this.result1;
+    }
 
-	/**
-	 * Gets the result stack 2.
-	 *
-	 * @return the result stack 2
-	 */
-	public ImageStack getResultStack2()
-	{
-		return this.result2;
-	}
+    /**
+     * Gets the result stack 2.
+     *
+     * @return the result stack 2
+     */
+    public ImageStack getResultStack2()
+    {
+        return this.result2;
+    }
 }

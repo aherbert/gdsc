@@ -23,7 +23,7 @@
  */
 
 /**
- * Provides utility <a href="https://imagej.nih.gov/ij/">ImageJ</a> plugins. 
+ * Provides utility <a href="https://imagej.nih.gov/ij/">ImageJ</a> plugins.
  * 
  * @since 1.3.0
  */

@@ -40,166 +40,166 @@ import uk.ac.sussex.gdsc.UsageTracker;
  */
 public class HSB_Filter implements ExtendedPlugInFilter, DialogListener
 {
-	private final int flags = DOES_RGB | SNAPSHOT;
+    private final int flags = DOES_RGB | SNAPSHOT;
 
-	private static final String TITLE = "HSB Filter";
+    private static final String TITLE = "HSB Filter";
 
-	private float[] h = null, s = null, b = null;
+    private float[] h = null, s = null, b = null;
 
-	// Allow to be set by others in the package
+    // Allow to be set by others in the package
 
-	/** The hue. */
-	static float hue = 0;
+    /** The hue. */
+    static float hue = 0;
 
-	/** The hue width. */
-	static float hueWidth = 1f / 6f;
+    /** The hue width. */
+    static float hueWidth = 1f / 6f;
 
-	/** The saturation. */
-	static float saturation = 0.5f;
+    /** The saturation. */
+    static float saturation = 0.5f;
 
-	/** The saturation width. */
-	static float saturationWidth = 0.5f;
+    /** The saturation width. */
+    static float saturationWidth = 0.5f;
 
-	/** The brightness. */
-	static float brightness = 0.5f;
+    /** The brightness. */
+    static float brightness = 0.5f;
 
-	/** The brightness width. */
-	static float brightnessWidth = 0.5f;
+    /** The brightness width. */
+    static float brightnessWidth = 0.5f;
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-	 */
-	@Override
-	public int setup(String arg, ImagePlus imp)
-	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
+     */
+    @Override
+    public int setup(String arg, ImagePlus imp)
+    {
+        UsageTracker.recordPlugin(this.getClass(), arg);
 
-		if (imp == null)
-			return DONE;
-		return flags;
-	}
+        if (imp == null)
+            return DONE;
+        return flags;
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
-	 * ij.plugin.filter.PlugInFilterRunner)
-	 */
-	@Override
-	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
-	{
-		final GenericDialog gd = new GenericDialog(TITLE);
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
+     * ij.plugin.filter.PlugInFilterRunner)
+     */
+    @Override
+    public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
+    {
+        final GenericDialog gd = new GenericDialog(TITLE);
 
-		// Set-up the HSB images
-		final ColorProcessor cp = (ColorProcessor) imp.getProcessor().duplicate();
-		getHSB((int[]) cp.getPixels());
+        // Set-up the HSB images
+        final ColorProcessor cp = (ColorProcessor) imp.getProcessor().duplicate();
+        getHSB((int[]) cp.getPixels());
 
-		gd.addSlider("Hue", 0.01, 1, hue);
-		gd.addSlider("Hue_width", 0.01, 1, hueWidth);
-		gd.addSlider("Saturation", 0.01, 1, saturation);
-		gd.addSlider("Saturation_width", 0.01, 1, saturationWidth);
-		gd.addSlider("Brightness", 0.01, 1, brightness);
-		gd.addSlider("Brightness_width", 0.01, 1, brightnessWidth);
+        gd.addSlider("Hue", 0.01, 1, hue);
+        gd.addSlider("Hue_width", 0.01, 1, hueWidth);
+        gd.addSlider("Saturation", 0.01, 1, saturation);
+        gd.addSlider("Saturation_width", 0.01, 1, saturationWidth);
+        gd.addSlider("Brightness", 0.01, 1, brightness);
+        gd.addSlider("Brightness_width", 0.01, 1, brightnessWidth);
 
-		gd.addHelp(uk.ac.sussex.gdsc.help.URL.UTILITY);
+        gd.addHelp(uk.ac.sussex.gdsc.help.URL.UTILITY);
 
-		gd.addPreviewCheckbox(pfr);
-		gd.addDialogListener(this);
-		gd.showDialog();
+        gd.addPreviewCheckbox(pfr);
+        gd.addDialogListener(this);
+        gd.showDialog();
 
-		if (gd.wasCanceled() || !dialogItemChanged(gd, null))
-			return DONE;
+        if (gd.wasCanceled() || !dialogItemChanged(gd, null))
+            return DONE;
 
-		return flags;
-	}
+        return flags;
+    }
 
-	private void getHSB(int[] pixels)
-	{
-		int c, rr, gg, bb;
-		float[] hsb = new float[3];
-		h = new float[pixels.length];
-		s = new float[pixels.length];
-		b = new float[pixels.length];
-		for (int i = 0; i < pixels.length; i++)
-		{
-			c = pixels[i];
-			rr = (c & 0xff0000) >> 16;
-			gg = (c & 0xff00) >> 8;
-			bb = c & 0xff;
-			hsb = Color.RGBtoHSB(rr, gg, bb, hsb);
-			h[i] = hsb[0];
-			s[i] = hsb[1];
-			b[i] = hsb[2];
-		}
-	}
+    private void getHSB(int[] pixels)
+    {
+        int c, rr, gg, bb;
+        float[] hsb = new float[3];
+        h = new float[pixels.length];
+        s = new float[pixels.length];
+        b = new float[pixels.length];
+        for (int i = 0; i < pixels.length; i++)
+        {
+            c = pixels[i];
+            rr = (c & 0xff0000) >> 16;
+            gg = (c & 0xff00) >> 8;
+            bb = c & 0xff;
+            hsb = Color.RGBtoHSB(rr, gg, bb, hsb);
+            h[i] = hsb[0];
+            s[i] = hsb[1];
+            b[i] = hsb[2];
+        }
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog, java.awt.AWTEvent)
-	 */
-	@Override
-	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
-	{
-		hue = (float) gd.getNextNumber();
-		hueWidth = (float) gd.getNextNumber();
-		saturation = (float) gd.getNextNumber();
-		saturationWidth = (float) gd.getNextNumber();
-		brightness = (float) gd.getNextNumber();
-		brightnessWidth = (float) gd.getNextNumber();
-		return !gd.invalidNumber();
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog, java.awt.AWTEvent)
+     */
+    @Override
+    public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
+    {
+        hue = (float) gd.getNextNumber();
+        hueWidth = (float) gd.getNextNumber();
+        saturation = (float) gd.getNextNumber();
+        saturationWidth = (float) gd.getNextNumber();
+        brightness = (float) gd.getNextNumber();
+        brightnessWidth = (float) gd.getNextNumber();
+        return !gd.invalidNumber();
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
-	 */
-	@Override
-	public void setNPasses(int nPasses)
-	{
-		// Do nothing
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
+     */
+    @Override
+    public void setNPasses(int nPasses)
+    {
+        // Do nothing
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-	 */
-	@Override
-	public void run(ImageProcessor inputProcessor)
-	{
-		final float minH = hue - hueWidth;
-		final float maxH = hue + hueWidth;
-		final float minS = saturation - saturationWidth;
-		final float maxS = saturation + saturationWidth;
-		final float minB = brightness - brightnessWidth;
-		final float maxB = brightness + brightnessWidth;
-		for (int i = 0; i < s.length; i++)
-		{
-			float hh = h[i];
-			final float ss = s[i];
-			final float bb = b[i];
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
+     */
+    @Override
+    public void run(ImageProcessor inputProcessor)
+    {
+        final float minH = hue - hueWidth;
+        final float maxH = hue + hueWidth;
+        final float minS = saturation - saturationWidth;
+        final float maxS = saturation + saturationWidth;
+        final float minB = brightness - brightnessWidth;
+        final float maxB = brightness + brightnessWidth;
+        for (int i = 0; i < s.length; i++)
+        {
+            float hh = h[i];
+            final float ss = s[i];
+            final float bb = b[i];
 
-			if (hh < minH) // Hue wraps around 0-1 values
-				hh += 1;
-			if (hh > maxH)
-			{
-				inputProcessor.set(i, 0);
-				continue;
-			}
-			if (ss < minS || ss > maxS)
-			{
-				inputProcessor.set(i, 0);
-				continue;
-			}
-			if (bb < minB || bb > maxB)
-			{
-				inputProcessor.set(i, 0);
-				continue;
-			}
-		}
-	}
+            if (hh < minH) // Hue wraps around 0-1 values
+                hh += 1;
+            if (hh > maxH)
+            {
+                inputProcessor.set(i, 0);
+                continue;
+            }
+            if (ss < minS || ss > maxS)
+            {
+                inputProcessor.set(i, 0);
+                continue;
+            }
+            if (bb < minB || bb > maxB)
+            {
+                inputProcessor.set(i, 0);
+                continue;
+            }
+        }
+    }
 }

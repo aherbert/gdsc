@@ -34,59 +34,59 @@ import ij.measure.Calibration;
  */
 public class FindFociMemoryResults implements Cloneable
 {
-	/** The image Id. */
-	public final int imageId;
+    /** The image Id. */
+    public final int imageId;
 
-	/** The image calibration. */
-	public final Calibration calibration;
+    /** The image calibration. */
+    public final Calibration calibration;
 
-	/** The results. */
-	public final ArrayList<FindFociResult> results;
+    /** The results. */
+    public final ArrayList<FindFociResult> results;
 
-	/**
-	 * Instantiates a new find foci result.
-	 *
-	 * @param imp
-	 *            the image
-	 * @param results
-	 *            the results
-	 */
-	public FindFociMemoryResults(ImagePlus imp, ArrayList<FindFociResult> results)
-	{
-		this.imageId = imp.getID();
-		this.calibration = imp.getCalibration();
-		this.results = results;
-	}
+    /**
+     * Instantiates a new find foci result.
+     *
+     * @param imp
+     *            the image
+     * @param results
+     *            the results
+     */
+    public FindFociMemoryResults(ImagePlus imp, ArrayList<FindFociResult> results)
+    {
+        this.imageId = imp.getID();
+        this.calibration = imp.getCalibration();
+        this.results = results;
+    }
 
-	/**
-	 * Instantiates a new find foci results.
-	 *
-	 * @param imp
-	 *            the image
-	 * @param results
-	 *            the results
-	 */
-	public FindFociMemoryResults(ImagePlus imp, FindFociResult[] results)
-	{
-		this(imp, (results == null) ? new ArrayList<FindFociResult>(0) : new ArrayList<>(Arrays.asList(results)));
-	}
+    /**
+     * Instantiates a new find foci results.
+     *
+     * @param imp
+     *            the image
+     * @param results
+     *            the results
+     */
+    public FindFociMemoryResults(ImagePlus imp, FindFociResult[] results)
+    {
+        this(imp, (results == null) ? new ArrayList<FindFociResult>(0) : new ArrayList<>(Arrays.asList(results)));
+    }
 
-	/**
-	 * Returns a shallow copy of this set of results.
-	 *
-	 * @return the find foci results
-	 */
-	@Override
-	public FindFociMemoryResults clone()
-	{
-		try
-		{
-			final FindFociMemoryResults copy = (FindFociMemoryResults) super.clone();
-			return copy;
-		}
-		catch (final CloneNotSupportedException e)
-		{
-			return null;
-		}
-	}
+    /**
+     * Returns a shallow copy of this set of results.
+     *
+     * @return the find foci results
+     */
+    @Override
+    public FindFociMemoryResults clone()
+    {
+        try
+        {
+            final FindFociMemoryResults copy = (FindFociMemoryResults) super.clone();
+            return copy;
+        }
+        catch (final CloneNotSupportedException e)
+        {
+            return null;
+        }
+    }
 }

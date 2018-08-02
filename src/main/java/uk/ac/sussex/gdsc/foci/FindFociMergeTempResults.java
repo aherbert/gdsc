@@ -29,36 +29,36 @@ package uk.ac.sussex.gdsc.foci;
 public class FindFociMergeTempResults
 {
 
-	/** The results array. */
-	public FindFociResult[] resultsArray;
+    /** The results array. */
+    public FindFociResult[] resultsArray;
 
-	/** The saddle points. */
-	public FindFociSaddleList[] saddlePoints;
+    /** The saddle points. */
+    public FindFociSaddleList[] saddlePoints;
 
-	/** The peak id map. */
-	public int[] peakIdMap;
+    /** The peak id map. */
+    public int[] peakIdMap;
 
-	/** The result list. */
-	public FindFociResult[] resultList;
+    /** The result list. */
+    public FindFociResult[] resultList;
 
-	/**
-	 * Instantiates a new find foci merge results.
-	 *
-	 * @param resultsArray
-	 *            the results array
-	 * @param saddlePoints
-	 *            the saddle points
-	 * @param peakIdMap
-	 *            the peak id map
-	 * @param resultList
-	 *            the result list
-	 */
-	public FindFociMergeTempResults(FindFociResult[] resultsArray, FindFociSaddleList[] saddlePoints, int[] peakIdMap,
-			FindFociResult[] resultList)
-	{
-		this.resultsArray = resultsArray;
-		this.saddlePoints = saddlePoints;
-		this.peakIdMap = peakIdMap;
-		this.resultList = resultList;
-	}
+    /**
+     * Instantiates a new find foci merge results.
+     *
+     * @param resultsArray
+     *            the results array
+     * @param saddlePoints
+     *            the saddle points
+     * @param peakIdMap
+     *            the peak id map
+     * @param resultList
+     *            the result list
+     */
+    public FindFociMergeTempResults(FindFociResult[] resultsArray, FindFociSaddleList[] saddlePoints, int[] peakIdMap,
+            FindFociResult[] resultList)
+    {
+        this.resultsArray = resultsArray;
+        this.saddlePoints = saddlePoints;
+        this.peakIdMap = peakIdMap;
+        this.resultList = resultList;
+    }
 }

@@ -33,65 +33,65 @@ import ij.ImagePlus;
  */
 public class FindFociResults implements Cloneable
 {
-	/** The mask. */
-	public final ImagePlus mask;
+    /** The mask. */
+    public final ImagePlus mask;
 
-	/** The results. */
-	public final ArrayList<FindFociResult> results;
+    /** The results. */
+    public final ArrayList<FindFociResult> results;
 
-	/** The statistics. */
-	public final FindFociStatistics stats;
+    /** The statistics. */
+    public final FindFociStatistics stats;
 
-	/**
-	 * Instantiates a new find foci result.
-	 *
-	 * @param mask
-	 *            the mask
-	 * @param results
-	 *            the results
-	 * @param stats
-	 *            the stats
-	 */
-	public FindFociResults(ImagePlus mask, ArrayList<FindFociResult> results, FindFociStatistics stats)
-	{
-		this.mask = mask;
-		this.results = results;
-		this.stats = stats;
-	}
+    /**
+     * Instantiates a new find foci result.
+     *
+     * @param mask
+     *            the mask
+     * @param results
+     *            the results
+     * @param stats
+     *            the stats
+     */
+    public FindFociResults(ImagePlus mask, ArrayList<FindFociResult> results, FindFociStatistics stats)
+    {
+        this.mask = mask;
+        this.results = results;
+        this.stats = stats;
+    }
 
-	/**
-	 * Instantiates a new find foci results.
-	 *
-	 * @param mask
-	 *            the mask
-	 * @param results
-	 *            the results
-	 * @param stats
-	 *            the stats
-	 */
-	public FindFociResults(ImagePlus mask, FindFociResult[] results, FindFociStatistics stats)
-	{
-		this.mask = mask;
-		this.results = (results == null) ? new ArrayList<>(0) : new ArrayList<>(Arrays.asList(results));
-		this.stats = stats;
-	}
+    /**
+     * Instantiates a new find foci results.
+     *
+     * @param mask
+     *            the mask
+     * @param results
+     *            the results
+     * @param stats
+     *            the stats
+     */
+    public FindFociResults(ImagePlus mask, FindFociResult[] results, FindFociStatistics stats)
+    {
+        this.mask = mask;
+        this.results = (results == null) ? new ArrayList<>(0) : new ArrayList<>(Arrays.asList(results));
+        this.stats = stats;
+    }
 
-	/**
-	 * Returns a shallow copy of this set of results.
-	 *
-	 * @return the find foci results
-	 */
-	@Override
-	public FindFociResults clone()
-	{
-		try
-		{
-			final FindFociResults copy = (FindFociResults) super.clone();
-			return copy;
-		}
-		catch (final CloneNotSupportedException e)
-		{
-			return null;
-		}
-	}
+    /**
+     * Returns a shallow copy of this set of results.
+     *
+     * @return the find foci results
+     */
+    @Override
+    public FindFociResults clone()
+    {
+        try
+        {
+            final FindFociResults copy = (FindFociResults) super.clone();
+            return copy;
+        }
+        catch (final CloneNotSupportedException e)
+        {
+            return null;
+        }
+    }
 }

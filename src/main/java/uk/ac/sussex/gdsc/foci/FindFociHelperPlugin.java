@@ -43,128 +43,128 @@ import uk.ac.sussex.gdsc.foci.gui.OptimiserView;
  */
 public class FindFociHelperPlugin implements PlugIn, WindowListener
 {
-	private static FindFociHelperView instance;
+    private static FindFociHelperView instance;
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.PlugIn#run(java.lang.String)
-	 */
-	@Override
-	public void run(String arg)
-	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
-		showFindFociPickerWindow();
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.plugin.PlugIn#run(java.lang.String)
+     */
+    @Override
+    public void run(String arg)
+    {
+        UsageTracker.recordPlugin(this.getClass(), arg);
+        showFindFociPickerWindow();
+    }
 
-	private void showFindFociPickerWindow()
-	{
-		if (instance != null)
-		{
-			showInstance();
-			return;
-		}
+    private void showFindFociPickerWindow()
+    {
+        if (instance != null)
+        {
+            showInstance();
+            return;
+        }
 
-		IJ.showStatus("Initialising FindFoci Helper ...");
+        IJ.showStatus("Initialising FindFoci Helper ...");
 
-		String errorMessage = null;
-		Throwable exception = null;
+        String errorMessage = null;
+        Throwable exception = null;
 
-		try
-		{
-			Class.forName("org.jdesktop.beansbinding.Property", false, this.getClass().getClassLoader());
+        try
+        {
+            Class.forName("org.jdesktop.beansbinding.Property", false, this.getClass().getClassLoader());
 
-			// it exists on the classpath
-			instance = new FindFociHelperView();
-			instance.addWindowListener(this);
-			instance.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+            // it exists on the classpath
+            instance = new FindFociHelperView();
+            instance.addWindowListener(this);
+            instance.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 
-			IJ.register(OptimiserView.class);
+            IJ.register(OptimiserView.class);
 
-			showInstance();
-			IJ.showStatus("FindFoci Helper ready");
-		}
-		catch (final ExceptionInInitializerError e)
-		{
-			exception = e;
-			errorMessage = "Failed to initialize class: " + e.getMessage();
-		}
-		catch (final LinkageError e)
-		{
-			exception = e;
-			errorMessage = "Failed to link class: " + e.getMessage();
-		}
-		catch (final ClassNotFoundException ex)
-		{
-			exception = ex;
-			errorMessage = "Failed to find class: " + ex.getMessage() +
-					"\nCheck you have beansbinding-1.2.1.jar on your classpath\n";
-		}
-		catch (final Throwable ex)
-		{
-			exception = ex;
-			errorMessage = ex.getMessage();
-		}
-		finally
-		{
-			if (exception != null)
-			{
-				final StringWriter sw = new StringWriter();
-				final PrintWriter pw = new PrintWriter(sw);
-				pw.write(errorMessage);
-				pw.append('\n');
-				exception.printStackTrace(pw);
-				IJ.log(sw.toString());
-			}
-		}
-	}
+            showInstance();
+            IJ.showStatus("FindFoci Helper ready");
+        }
+        catch (final ExceptionInInitializerError e)
+        {
+            exception = e;
+            errorMessage = "Failed to initialize class: " + e.getMessage();
+        }
+        catch (final LinkageError e)
+        {
+            exception = e;
+            errorMessage = "Failed to link class: " + e.getMessage();
+        }
+        catch (final ClassNotFoundException ex)
+        {
+            exception = ex;
+            errorMessage = "Failed to find class: " + ex.getMessage() +
+                    "\nCheck you have beansbinding-1.2.1.jar on your classpath\n";
+        }
+        catch (final Throwable ex)
+        {
+            exception = ex;
+            errorMessage = ex.getMessage();
+        }
+        finally
+        {
+            if (exception != null)
+            {
+                final StringWriter sw = new StringWriter();
+                final PrintWriter pw = new PrintWriter(sw);
+                pw.write(errorMessage);
+                pw.append('\n');
+                exception.printStackTrace(pw);
+                IJ.log(sw.toString());
+            }
+        }
+    }
 
-	private static void showInstance()
-	{
-		WindowManager.addWindow(instance);
-		instance.setVisible(true);
-		instance.toFront();
-	}
+    private static void showInstance()
+    {
+        WindowManager.addWindow(instance);
+        instance.setVisible(true);
+        instance.toFront();
+    }
 
-	@Override
-	public void windowOpened(WindowEvent e)
-	{
-		// Ignore
-	}
+    @Override
+    public void windowOpened(WindowEvent e)
+    {
+        // Ignore
+    }
 
-	@Override
-	public void windowClosing(WindowEvent e)
-	{
-		WindowManager.removeWindow(instance);
-	}
+    @Override
+    public void windowClosing(WindowEvent e)
+    {
+        WindowManager.removeWindow(instance);
+    }
 
-	@Override
-	public void windowClosed(WindowEvent e)
-	{
-		// Ignore
-	}
+    @Override
+    public void windowClosed(WindowEvent e)
+    {
+        // Ignore
+    }
 
-	@Override
-	public void windowIconified(WindowEvent e)
-	{
-		// Ignore
-	}
+    @Override
+    public void windowIconified(WindowEvent e)
+    {
+        // Ignore
+    }
 
-	@Override
-	public void windowDeiconified(WindowEvent e)
-	{
-		// Ignore
-	}
+    @Override
+    public void windowDeiconified(WindowEvent e)
+    {
+        // Ignore
+    }
 
-	@Override
-	public void windowActivated(WindowEvent e)
-	{
-		// Ignore
-	}
+    @Override
+    public void windowActivated(WindowEvent e)
+    {
+        // Ignore
+    }
 
-	@Override
-	public void windowDeactivated(WindowEvent e)
-	{
-		// Ignore
-	}
+    @Override
+    public void windowDeactivated(WindowEvent e)
+    {
+        // Ignore
+    }
 }

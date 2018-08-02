@@ -32,16 +32,16 @@ import org.jdesktop.beansbinding.Converter;
  */
 public class ValidImagesConverter extends Converter<List<String>, Boolean>
 {
-	@Override
-	public Boolean convertForward(List<String> paramS)
-	{
-		return !paramS.isEmpty();
-	}
+    @Override
+    public Boolean convertForward(List<String> paramS)
+    {
+        return !paramS.isEmpty();
+    }
 
-	@Override
-	public List<String> convertReverse(Boolean paramT)
-	{
-		// N/A
-		return null;
-	}
+    @Override
+    public List<String> convertReverse(Boolean paramT)
+    {
+        // N/A
+        return null;
+    }
 }

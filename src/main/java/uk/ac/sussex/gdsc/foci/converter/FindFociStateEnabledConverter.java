@@ -32,15 +32,15 @@ import uk.ac.sussex.gdsc.foci.model.FindFociState;
  */
 public class FindFociStateEnabledConverter extends Converter<FindFociState, Boolean>
 {
-	@Override
-	public Boolean convertForward(FindFociState paramT)
-	{
-		return paramT != FindFociState.COMPLETE;
-	}
+    @Override
+    public Boolean convertForward(FindFociState paramT)
+    {
+        return paramT != FindFociState.COMPLETE;
+    }
 
-	@Override
-	public FindFociState convertReverse(Boolean paramS)
-	{
-		return null;
-	}
+    @Override
+    public FindFociState convertReverse(Boolean paramS)
+    {
+        return null;
+    }
 }

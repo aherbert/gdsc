@@ -28,29 +28,29 @@ package uk.ac.sussex.gdsc.foci;
  */
 public class GridException extends Exception
 {
-	private static final long serialVersionUID = 5920992981718121344L;
+    private static final long serialVersionUID = 5920992981718121344L;
 
-	/**
-	 * Instantiates a new grid exception.
-	 *
-	 * @param message
-	 *            the message
-	 */
-	public GridException(String message)
-	{
-		super(message);
-	}
+    /**
+     * Instantiates a new grid exception.
+     *
+     * @param message
+     *            the message
+     */
+    public GridException(String message)
+    {
+        super(message);
+    }
 
-	/**
-	 * Instantiates a new grid exception.
-	 *
-	 * @param message
-	 *            the message
-	 * @param cause
-	 *            the cause
-	 */
-	public GridException(String message, Throwable cause)
-	{
-		super(message, cause);
-	}
+    /**
+     * Instantiates a new grid exception.
+     *
+     * @param message
+     *            the message
+     * @param cause
+     *            the cause
+     */
+    public GridException(String message, Throwable cause)
+    {
+        super(message, cause);
+    }
 }

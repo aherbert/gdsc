@@ -30,15 +30,15 @@ import org.jdesktop.beansbinding.Converter;
  */
 public class StringToBooleanConverter extends Converter<String, Boolean>
 {
-	@Override
-	public Boolean convertForward(String paramS)
-	{
-		return (paramS != null && !paramS.equalsIgnoreCase("")) ? true : false;
-	}
+    @Override
+    public Boolean convertForward(String paramS)
+    {
+        return (paramS != null && !paramS.equalsIgnoreCase("")) ? true : false;
+    }
 
-	@Override
-	public String convertReverse(Boolean paramT)
-	{
-		return (paramT) ? paramT.toString() : "";
-	}
+    @Override
+    public String convertReverse(Boolean paramT)
+    {
+        return (paramT) ? paramT.toString() : "";
+    }
 }

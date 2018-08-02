@@ -30,72 +30,72 @@ import uk.ac.sussex.gdsc.foci.model.FindFociModel;
  */
 public abstract class FindFociController implements Runnable
 {
-	/**
-	 * Used to pass messages about the processing state
-	 */
-	protected MessageListener listener = null;
+    /**
+     * Used to pass messages about the processing state
+     */
+    protected MessageListener listener = null;
 
-	/**
-	 * Contains the model defining the parameters for the FindFoci algorithm
-	 */
-	protected FindFociModel model;
+    /**
+     * Contains the model defining the parameters for the FindFoci algorithm
+     */
+    protected FindFociModel model;
 
-	/**
-	 * Constructor
-	 *
-	 * @param model
-	 *            The model for the FindFoci algorithm
-	 */
-	public FindFociController(FindFociModel model)
-	{
-		this.model = model;
-	}
+    /**
+     * Constructor
+     *
+     * @param model
+     *            The model for the FindFoci algorithm
+     */
+    public FindFociController(FindFociModel model)
+    {
+        this.model = model;
+    }
 
-	/**
-	 * Returns the number of images.
-	 *
-	 * @return the image count
-	 */
-	public abstract int getImageCount();
+    /**
+     * Returns the number of images.
+     *
+     * @return the image count
+     */
+    public abstract int getImageCount();
 
-	/**
-	 * Updates the list of images
-	 */
-	public abstract void updateImageList();
+    /**
+     * Updates the list of images
+     */
+    public abstract void updateImageList();
 
-	/**
-	 * Run the FindFoci algorithm
-	 */
-	@Override
-	public abstract void run();
+    /**
+     * Run the FindFoci algorithm
+     */
+    @Override
+    public abstract void run();
 
-	/**
-	 * Preview the results of the FindFoci algorithm
-	 */
-	public abstract void preview();
+    /**
+     * Preview the results of the FindFoci algorithm
+     */
+    public abstract void preview();
 
-	/**
-	 * Ends preview the results of the FindFoci algorithm
-	 */
-	public abstract void endPreview();
+    /**
+     * Ends preview the results of the FindFoci algorithm
+     */
+    public abstract void endPreview();
 
-	/**
-	 * Returns the min and max of the current image
-	 *
-	 * @param limits
-	 *            Optional input array
-	 * @return array containing min and max of image (or 0,255 if no valid image)
-	 */
-	public abstract int[] getImageLimits(int[] limits);
+    /**
+     * Returns the min and max of the current image
+     *
+     * @param limits
+     *            Optional input array
+     * @return array containing min and max of image (or 0,255 if no valid image)
+     */
+    public abstract int[] getImageLimits(int[] limits);
 
-	/**
-	 * Adds a listener. Allows objects to be notified of processing details.
-	 *
-	 * @param listener
-	 *            the listener
-	 */
-	public void addMessageListener(MessageListener listener)
-	{
-		this.listener = listener;
-	}
+    /**
+     * Adds a listener. Allows objects to be notified of processing details.
+     *
+     * @param listener
+     *            the listener
+     */
+    public void addMessageListener(MessageListener listener)
+    {
+        this.listener = listener;
+    }
 }

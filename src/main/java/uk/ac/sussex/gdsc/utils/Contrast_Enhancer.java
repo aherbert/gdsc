@@ -35,37 +35,37 @@ import uk.ac.sussex.gdsc.UsageTracker;
  */
 public class Contrast_Enhancer implements PlugInFilter
 {
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-	 */
-	@Override
-	public int setup(String arg, ImagePlus imp)
-	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
+     */
+    @Override
+    public int setup(String arg, ImagePlus imp)
+    {
+        UsageTracker.recordPlugin(this.getClass(), arg);
 
-		if (imp == null)
-			return DONE;
-		return DOES_ALL | NO_CHANGES;
-	}
+        if (imp == null)
+            return DONE;
+        return DOES_ALL | NO_CHANGES;
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-	 */
-	@Override
-	public void run(ImageProcessor inputProcessor)
-	{
-		final ContrastEnhancer ce = new ContrastEnhancer();
-		final double saturated = 0.35;
-		for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
-		{
-			final ImagePlus imp = WindowManager.getImage(id);
-			imp.resetDisplayRange();
-			ce.stretchHistogram(imp, saturated);
-			imp.updateAndDraw();
-		}
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
+     */
+    @Override
+    public void run(ImageProcessor inputProcessor)
+    {
+        final ContrastEnhancer ce = new ContrastEnhancer();
+        final double saturated = 0.35;
+        for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
+        {
+            final ImagePlus imp = WindowManager.getImage(id);
+            imp.resetDisplayRange();
+            ce.stretchHistogram(imp, saturated);
+            imp.updateAndDraw();
+        }
+    }
 }

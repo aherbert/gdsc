@@ -28,29 +28,29 @@ package uk.ac.sussex.gdsc.colocalisation.cda.engine;
  */
 public class CDAJob
 {
-	/** The job number. */
-	public int n;
+    /** The job number. */
+    public int n;
 
-	/** The x shift. */
-	public int x;
+    /** The x shift. */
+    public int x;
 
-	/** The y shift. */
-	public int y;
+    /** The y shift. */
+    public int y;
 
-	/**
-	 * Instantiates a new CDA job.
-	 *
-	 * @param n
-	 *            the job number
-	 * @param x
-	 *            the x shift
-	 * @param y
-	 *            the y shift
-	 */
-	public CDAJob(int n, int x, int y)
-	{
-		this.n = n;
-		this.x = x;
-		this.y = y;
-	}
+    /**
+     * Instantiates a new CDA job.
+     *
+     * @param n
+     *            the job number
+     * @param x
+     *            the x shift
+     * @param y
+     *            the y shift
+     */
+    public CDAJob(int n, int x, int y)
+    {
+        this.n = n;
+        this.x = x;
+        this.y = y;
+    }
 }

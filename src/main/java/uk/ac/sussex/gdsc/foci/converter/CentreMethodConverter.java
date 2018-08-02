@@ -32,18 +32,18 @@ import uk.ac.sussex.gdsc.foci.FindFoci;
  */
 public class CentreMethodConverter extends Converter<Integer, Object>
 {
-	@Override
-	public String convertForward(Integer paramT)
-	{
-		return FindFoci.getCentreMethods()[paramT.intValue()];
-	}
+    @Override
+    public String convertForward(Integer paramT)
+    {
+        return FindFoci.getCentreMethods()[paramT.intValue()];
+    }
 
-	@Override
-	public Integer convertReverse(Object paramS)
-	{
-		for (int i = 0; i < FindFoci.getCentreMethods().length; i++)
-			if (FindFoci.getCentreMethods()[i].equals(paramS))
-				return Integer.valueOf(i);
-		return null;
-	}
+    @Override
+    public Integer convertReverse(Object paramS)
+    {
+        for (int i = 0; i < FindFoci.getCentreMethods().length; i++)
+            if (FindFoci.getCentreMethods()[i].equals(paramS))
+                return Integer.valueOf(i);
+        return null;
+    }
 }

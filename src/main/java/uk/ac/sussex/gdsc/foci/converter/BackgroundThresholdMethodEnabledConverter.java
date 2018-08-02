@@ -32,17 +32,17 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessor;
  */
 public class BackgroundThresholdMethodEnabledConverter extends Converter<Integer, Boolean>
 {
-	@Override
-	public Boolean convertForward(Integer paramS)
-	{
-		final int backgroundMethod = paramS.intValue();
-		return Boolean.valueOf(backgroundMethod == FindFociProcessor.BACKGROUND_AUTO_THRESHOLD);
-	}
+    @Override
+    public Boolean convertForward(Integer paramS)
+    {
+        final int backgroundMethod = paramS.intValue();
+        return Boolean.valueOf(backgroundMethod == FindFociProcessor.BACKGROUND_AUTO_THRESHOLD);
+    }
 
-	@Override
-	public Integer convertReverse(Boolean paramT)
-	{
-		// N/A
-		return null;
-	}
+    @Override
+    public Integer convertReverse(Boolean paramT)
+    {
+        // N/A
+        return null;
+    }
 }

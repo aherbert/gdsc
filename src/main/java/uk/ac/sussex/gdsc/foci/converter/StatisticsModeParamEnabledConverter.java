@@ -32,18 +32,18 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessor;
  */
 public class StatisticsModeParamEnabledConverter extends Converter<Integer, Boolean>
 {
-	@Override
-	public Boolean convertForward(Integer paramS)
-	{
-		final int statisticsMode = paramS.intValue();
-		return Boolean.valueOf(statisticsMode != FindFociProcessor.BACKGROUND_ABSOLUTE &&
-				statisticsMode != FindFociProcessor.BACKGROUND_NONE);
-	}
+    @Override
+    public Boolean convertForward(Integer paramS)
+    {
+        final int statisticsMode = paramS.intValue();
+        return Boolean.valueOf(statisticsMode != FindFociProcessor.BACKGROUND_ABSOLUTE &&
+                statisticsMode != FindFociProcessor.BACKGROUND_NONE);
+    }
 
-	@Override
-	public Integer convertReverse(Boolean paramT)
-	{
-		// N/A
-		return null;
-	}
+    @Override
+    public Integer convertReverse(Boolean paramT)
+    {
+        // N/A
+        return null;
+    }
 }

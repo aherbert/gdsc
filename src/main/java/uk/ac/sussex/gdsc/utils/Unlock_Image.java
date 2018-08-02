@@ -33,28 +33,28 @@ import uk.ac.sussex.gdsc.UsageTracker;
  */
 public class Unlock_Image implements PlugInFilter
 {
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-	 */
-	@Override
-	public int setup(String arg, ImagePlus imp)
-	{
-		UsageTracker.recordPlugin(this.getClass(), arg);
-		if (imp != null)
-			imp.unlock();
-		return DONE;
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
+     */
+    @Override
+    public int setup(String arg, ImagePlus imp)
+    {
+        UsageTracker.recordPlugin(this.getClass(), arg);
+        if (imp != null)
+            imp.unlock();
+        return DONE;
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-	 */
-	@Override
-	public void run(ImageProcessor inputProcessor)
-	{
-		// Ignore
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
+     */
+    @Override
+    public void run(ImageProcessor inputProcessor)
+    {
+        // Ignore
+    }
 }

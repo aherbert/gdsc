@@ -28,61 +28,61 @@ package uk.ac.sussex.gdsc.foci;
  */
 public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle>
 {
-	/** The saddle peak id. */
-	public int id;
+    /** The saddle peak id. */
+    public int id;
 
-	/** The saddle value. */
-	public float value;
+    /** The saddle value. */
+    public float value;
 
-	/** Used for sorting */
-	int order;
+    /** Used for sorting */
+    int order;
 
-	/**
-	 * Instantiates a new find foci saddle.
-	 *
-	 * @param id
-	 *            the id
-	 * @param value
-	 *            the value
-	 */
-	public FindFociSaddle(int id, float value)
-	{
-		this.id = id;
-		this.value = value;
-	}
+    /**
+     * Instantiates a new find foci saddle.
+     *
+     * @param id
+     *            the id
+     * @param value
+     *            the value
+     */
+    public FindFociSaddle(int id, float value)
+    {
+        this.id = id;
+        this.value = value;
+    }
 
-	/**
-	 * Returns a copy of this saddle.
-	 *
-	 * @return the find foci saddle
-	 */
-	@Override
-	public FindFociSaddle clone()
-	{
-		try
-		{
-			return (FindFociSaddle) super.clone();
-		}
-		catch (final CloneNotSupportedException e)
-		{
-			return null;
-		}
-	}
+    /**
+     * Returns a copy of this saddle.
+     *
+     * @return the find foci saddle
+     */
+    @Override
+    public FindFociSaddle clone()
+    {
+        try
+        {
+            return (FindFociSaddle) super.clone();
+        }
+        catch (final CloneNotSupportedException e)
+        {
+            return null;
+        }
+    }
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
-	@Override
-	public int compareTo(FindFociSaddle that)
-	{
-		if (this.value > that.value)
-			return -1;
-		if (this.value < that.value)
-			return 1;
-		// For compatibility with the legacy code the saddles must be sorted by Id if they are the same value
-		//return 0;
-		return this.id - that.id;
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Comparable#compareTo(java.lang.Object)
+     */
+    @Override
+    public int compareTo(FindFociSaddle that)
+    {
+        if (this.value > that.value)
+            return -1;
+        if (this.value < that.value)
+            return 1;
+        // For compatibility with the legacy code the saddles must be sorted by Id if they are the same value
+        //return 0;
+        return this.id - that.id;
+    }
 }
