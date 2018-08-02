@@ -1920,7 +1920,7 @@ public class FindFociLegacy
 		}
 
 		//if (pCount > 0)
-		//	System.out.printf("Plateau count = %d\n", pCount);
+		//	logger.fine(TestLog.getSupplier("Plateau count = %d\n", pCount));
 
 		if (Utils.isInterrupted())
 			return null;
@@ -1944,7 +1944,7 @@ public class FindFociLegacy
 		final Coordinate[] results = maxPoints.toArray(new Coordinate[maxPoints.size()]);
 		// XXX - Debug
 		//for (Coordinate r : results)
-		//	System.out.printf("[%d] %d = %d\n", r.id, r.index, r.value);
+		//	logger.fine(TestLog.getSupplier("[%d] %d = %d\n", r.id, r.index, r.value));
 		return results;
 	} // getSortedMaxPoints
 
@@ -2362,7 +2362,7 @@ public class FindFociLegacy
 		} // for pixel i
 
 		//if (nUnchanged > 0)
-		//	System.out.printf("nUnchanged = %d\n", nUnchanged);
+		//	logger.fine(TestLog.getSupplier("nUnchanged = %d\n", nUnchanged));
 
 		return nChanged;
 	}// processLevel
