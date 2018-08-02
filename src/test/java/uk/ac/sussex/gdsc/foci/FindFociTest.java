@@ -42,7 +42,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.test.DataCache;
-import uk.ac.sussex.gdsc.test.DataProvider;
+import java.util.function.Function;
 import uk.ac.sussex.gdsc.test.TestComplexity;
 import uk.ac.sussex.gdsc.test.TestLog;
 import uk.ac.sussex.gdsc.test.TestSettings;
@@ -53,7 +53,7 @@ import uk.ac.sussex.gdsc.test.junit5.SeededTest;
 import uk.ac.sussex.gdsc.test.junit5.SpeedTag;
 
 @SuppressWarnings({ "javadoc" })
-public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
+public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
 {
 	private static Logger logger;
 	static DataCache<RandomSeed, ImagePlus[]> dataCache;
@@ -108,7 +108,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	public void isSameResultUsingIntProcessor(RandomSeed seed)
 	{
 		final boolean nonContiguous = true;
-		for (final ImagePlus imp : dataCache.getData(seed, this))
+		for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
 			for (int i = 0; i < backgroundMethod.length; i++)
 			{
 				final FindFociResults r1 = runLegacy(imp, i);
@@ -120,7 +120,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	@SeededTest
 	public void isSameResultUsingOptimisedIntProcessor(RandomSeed seed)
 	{
-		for (final ImagePlus imp : dataCache.getData(seed, this))
+		for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -133,7 +133,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	@SeededTest
 	public void isSameResultUsingFloatProcessor(RandomSeed seed)
 	{
-		for (final ImagePlus imp : dataCache.getData(seed, this))
+		for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -146,7 +146,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	@SeededTest
 	public void isSameResultUsingOptimisedFloatProcessor(RandomSeed seed)
 	{
-		for (final ImagePlus imp : dataCache.getData(seed, this))
+		for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -159,7 +159,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	@SeededTest
 	public void isSameResultUsingFloatProcessorWithNegativeValues(RandomSeed seed)
 	{
-		for (final ImagePlus imp : dataCache.getData(seed, this))
+		for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -174,7 +174,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	@SeededTest
 	public void isSameResultUsingOptimisedFloatProcessorWithNegativeValues(RandomSeed seed)
 	{
-		for (final ImagePlus imp : dataCache.getData(seed, this))
+		for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -189,7 +189,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	@SeededTest
 	public void isSameResultUsingIntProcessorWithStagedMethods(RandomSeed seed)
 	{
-		for (final ImagePlus imp : dataCache.getData(seed, this))
+		for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -202,7 +202,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	@SeededTest
 	public void isSameResultUsingOptimisedIntProcessorWithStagedMethods(RandomSeed seed)
 	{
-		for (final ImagePlus imp : dataCache.getData(seed, this))
+		for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -215,7 +215,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	@SeededTest
 	public void isSameResultUsingFloatProcessorWithStagedMethods(RandomSeed seed)
 	{
-		for (final ImagePlus imp : dataCache.getData(seed, this))
+		for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -228,7 +228,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	@SeededTest
 	public void isSameResultUsingOptimisedFloatProcessorWithStagedMethods(RandomSeed seed)
 	{
-		for (final ImagePlus imp : dataCache.getData(seed, this))
+		for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -241,7 +241,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	@SeededTest
 	public void isSameResultUsingFloatProcessorWithStagedMethodsWithNegativeValues(RandomSeed seed)
 	{
-		for (final ImagePlus imp : dataCache.getData(seed, this))
+		for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -256,7 +256,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	@SeededTest
 	public void isSameResultUsingOptimisedFloatProcessorWithStagedMethodsWithNegativeValues(RandomSeed seed)
 	{
-		for (final ImagePlus imp : dataCache.getData(seed, this))
+		for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
 			for (final boolean nonContiguous : new boolean[] { true, false })
 				for (int i = 0; i < backgroundMethod.length; i++)
 				{
@@ -278,7 +278,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 		final int[] indices = new int[] { 1 };
 
 		// Warm up
-		ImagePlus[] data = dataCache.getData(seed, this);
+		ImagePlus[] data = dataCache.getOrComputeIfAbsent(seed, this);
 		//runInt(data[0], indices[0], false);
 		//runInt(data[0], indices[0], true);
 
@@ -316,7 +316,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 		final int[] indices = new int[] { 1 };
 
 		// Warm up
-		ImagePlus[] data = dataCache.getData(seed, this);
+		ImagePlus[] data = dataCache.getOrComputeIfAbsent(seed, this);
 		//runFloat(data[0], indices[0], false, false);
 		//runFloat(data[0], indices[0], true, false);
 
@@ -361,7 +361,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 		final int[] indices = new int[] { 1 };
 
 		// Warm up
-		ImagePlus[] data = dataCache.getData(seed, this);
+		ImagePlus[] data = dataCache.getOrComputeIfAbsent(seed, this);
 		//runLegacy(data[0], indices[0]);
 		//runInt(data[0], indices[0], true);
 
@@ -403,7 +403,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 		final int[] indices = new int[] { 1 };
 
 		// Warm up
-		ImagePlus[] data = dataCache.getData(seed, this);
+		ImagePlus[] data = dataCache.getOrComputeIfAbsent(seed, this);
 		//runFloat(data[0], indices[0], true, false);
 		//runInt(data[0], indices[0], true);
 
@@ -749,7 +749,7 @@ public class FindFociTest implements DataProvider<RandomSeed, ImagePlus[]>
 	}
 
 	@Override
-	public ImagePlus[] getData(RandomSeed seed)
+	public ImagePlus[] apply(RandomSeed seed)
 	{
 		UniformRandomProvider rg = TestSettings.getRandomGenerator(seed.getSeed());
 		ImagePlus[] images = new ImagePlus[numberOfTestImages + numberOfTestImages3D];
