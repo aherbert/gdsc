@@ -87,6 +87,6 @@ public class FindFociStateMachineTest
                 sm.setState(FindFociState.COMPLETE);
             }
 
-        TestLog.log(logger, level, "%d steps : %f ms", steps, (System.nanoTime() - start) / 1000000.0);
+        logger.log(TestLog.getRecord(level, "%d steps : %f ms", steps, (System.nanoTime() - start) / 1000000.0));
     }
 }
