@@ -24,7 +24,7 @@
 package uk.ac.sussex.gdsc.foci;
 
 import java.util.ArrayList;
-import java.util.logging.Level;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 import org.apache.commons.rng.UniformRandomProvider;
@@ -43,10 +43,10 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.test.DataCache;
-import java.util.function.Function;
 import uk.ac.sussex.gdsc.test.TestComplexity;
 import uk.ac.sussex.gdsc.test.TestLog;
 import uk.ac.sussex.gdsc.test.TestSettings;
+import uk.ac.sussex.gdsc.test.TimingResult;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssertions;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssumptions;
 import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
@@ -303,8 +303,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
                         runInt(imp, i, true, nonContiguous);
             time2 = stop(time2);
         }
-        logger.log(
-                TestLog.getRecord(Level.INFO, "Int %d, Opt Int %d, %fx faster", time1, time2, (double) time1 / time2));
+        logger.log(TestLog.getRecord(new TimingResult("Int", time1), new TimingResult("Opt Int", time2)));
         Assertions.assertTrue(time2 < time1);
     }
 
@@ -349,8 +348,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
         // I am not worried the optimisation has worse performance.
 
         //Assertions.assertTrue(time2 < time1 * 1.4); // Allow discretion so test will pass
-        logger.log(TestLog.getRecord(time2 < time1, "Float %d, Opt Float %d, %fx faster", time1, time2,
-                (double) time1 / time2));
+        logger.log(TestLog.getRecord(new TimingResult("Float", time1), new TimingResult("Opt Float", time2)));
     }
 
     @SpeedTag
@@ -392,8 +390,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
         // I am not worried the new code has worse performance.
 
         //Assertions.assertTrue(time2 < time1 * 1.4); // Allow some discretion over the legacy method
-        logger.log(TestLog.getRecord(time2 < time1, "Legacy %d, Opt Int %d, %fx faster", time1, time2,
-                (double) time1 / time2));
+        logger.log(TestLog.getRecord(new TimingResult("Legacy", time1), new TimingResult("Opt Int", time2)));
     }
 
     @SeededTest
@@ -433,8 +430,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
                         runInt(imp, i, true, nonContiguous);
             time2 = stop(time2);
         }
-        logger.log(TestLog.getRecord(Level.INFO, "Opt Float %d, Opt Int %d, %fx faster", time1, time2,
-                (double) time1 / time2));
+        logger.log(TestLog.getRecord(new TimingResult("Opt Float", time1), new TimingResult("Opt Int", time2)));
         Assertions.assertTrue(time2 < time1);
     }
 
