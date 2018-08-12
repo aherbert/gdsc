@@ -758,16 +758,15 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
      * The indices are packed as unsigned bytes in the first 2 bytes of the integer. The signs are packed in the next 2
      * bits:
      *
-     * <pre>
+     * <pre><code>
      * {
-     *     &#64;code
-     *     int index = (Math.abs(i) & 0xff) << 8 | Math.abs(j) & 0xff;
-     *     if (i < 0)
+     *     int index = (Math.abs(i) &amp; 0xff) &lt;&lt; 8 | Math.abs(j) &amp; 0xff;
+     *     if (i &lt; 0)
      *         index |= 0x00010000;
-     *     if (j < 0)
+     *     if (j &lt; 0)
      *         index |= 0x00020000;
      * }
-     * </pre>
+     * </code></pre>
      *
      * <p>
      * This supports shifts up to +/-256 pixels.
