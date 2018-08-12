@@ -273,7 +273,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isFasterUsingOptimisedIntProcessor(RandomSeed seed)
     {
-        ExtraAssumptions.assumeLowComplexity();
+        ExtraAssumptions.assume(TestComplexity.LOW);
 
         // Get settings to try for the speed test
         final int[] indices = new int[] { 1 };
@@ -303,7 +303,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
                         runInt(imp, i, true, nonContiguous);
             time2 = stop(time2);
         }
-        logger.log(TestLog.getRecord(new TimingResult("Int", time1), new TimingResult("Opt Int", time2)));
+        logger.log(TestLog.getTimingRecord(new TimingResult("Int", time1), new TimingResult("Opt Int", time2)));
         Assertions.assertTrue(time2 < time1);
     }
 
@@ -311,7 +311,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isFasterUsingOptimisedFloatProcessor(RandomSeed seed)
     {
-        ExtraAssumptions.assumeSpeedTest(TestComplexity.MEDIUM);
+        ExtraAssumptions.assume(TestComplexity.MEDIUM);
 
         // Get settings to try for the speed test
         final int[] indices = new int[] { 1 };
@@ -348,14 +348,14 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
         // I am not worried the optimisation has worse performance.
 
         //Assertions.assertTrue(time2 < time1 * 1.4); // Allow discretion so test will pass
-        logger.log(TestLog.getRecord(new TimingResult("Float", time1), new TimingResult("Opt Float", time2)));
+        logger.log(TestLog.getTimingRecord(new TimingResult("Float", time1), new TimingResult("Opt Float", time2)));
     }
 
     @SpeedTag
     @SeededTest
     public void isNotSlowerthanLegacyUsingOptimisedIntProcessor(RandomSeed seed)
     {
-        ExtraAssumptions.assumeSpeedTest(TestComplexity.MEDIUM);
+        ExtraAssumptions.assume(TestComplexity.MEDIUM);
 
         // Get settings to try for the speed test
         final int[] indices = new int[] { 1 };
@@ -390,13 +390,13 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
         // I am not worried the new code has worse performance.
 
         //Assertions.assertTrue(time2 < time1 * 1.4); // Allow some discretion over the legacy method
-        logger.log(TestLog.getRecord(new TimingResult("Legacy", time1), new TimingResult("Opt Int", time2)));
+        logger.log(TestLog.getTimingRecord(new TimingResult("Legacy", time1), new TimingResult("Opt Int", time2)));
     }
 
     @SeededTest
     public void isFasterUsingOptimisedIntProcessorOverOptimisedFloatProcessor(RandomSeed seed)
     {
-        ExtraAssumptions.assumeLowComplexity();
+        ExtraAssumptions.assume(TestComplexity.LOW);
 
         // Get settings to try for the speed test
         final int[] indices = new int[] { 1 };
@@ -430,7 +430,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
                         runInt(imp, i, true, nonContiguous);
             time2 = stop(time2);
         }
-        logger.log(TestLog.getRecord(new TimingResult("Opt Float", time1), new TimingResult("Opt Int", time2)));
+        logger.log(TestLog.getTimingRecord(new TimingResult("Opt Float", time1), new TimingResult("Opt Int", time2)));
         Assertions.assertTrue(time2 < time1);
     }
 
