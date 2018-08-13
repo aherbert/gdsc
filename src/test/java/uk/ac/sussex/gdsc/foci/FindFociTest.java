@@ -46,6 +46,7 @@ import uk.ac.sussex.gdsc.test.DataCache;
 import uk.ac.sussex.gdsc.test.TestComplexity;
 import uk.ac.sussex.gdsc.test.TestLog;
 import uk.ac.sussex.gdsc.test.TestSettings;
+import uk.ac.sussex.gdsc.test.TestUtils;
 import uk.ac.sussex.gdsc.test.TimingResult;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssertions;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssumptions;
@@ -502,7 +503,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
         }
         catch (final AssertionFailedError e)
         {
-            ExtraAssertions.wrapAssertionFailedError(e, "%s [%d]", setName, counter);
+            TestUtils.wrapAssertionFailedError(e, TestLog.getSupplier("%s [%d]", setName, counter));
         }
     }
 
