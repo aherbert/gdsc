@@ -48,6 +48,7 @@ import uk.ac.sussex.gdsc.test.TestLog;
 import uk.ac.sussex.gdsc.test.TestSettings;
 import uk.ac.sussex.gdsc.test.TestUtils;
 import uk.ac.sussex.gdsc.test.TimingResult;
+import uk.ac.sussex.gdsc.test.functions.FunctionUtils;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssertions;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssumptions;
 import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
@@ -455,7 +456,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
         }
         final ArrayList<FindFociResult> results1 = r1.results;
         final ArrayList<FindFociResult> results2 = r2.results;
-        //logger.info(TestLog.getSupplier("N1=%d, N2=%d", results1.size(), results2.size());
+        //logger.info(FunctionUtils.getSupplier("N1=%d, N2=%d", results1.size(), results2.size());
         Assertions.assertEquals(results1.size(), results2.size(), setName + " Results Size");
         int counter = 0;
         final int offset = (negativeValues) ? this.offset : 0;
@@ -467,7 +468,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
                 //@formatter:off
     			final FindFociResult o1 = results1.get(i);
     			final FindFociResult o2 = results2.get(i);
-    			//logger.info(TestLog.getSupplier("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d", i,
+    			//logger.info(FunctionUtils.getSupplier("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d", i,
     			//		o1.x, o1.y, o1.maxValue, o1.count, o1.saddleNeighbourId,
     			//		o2.x, o2.y, o2.maxValue, o2.count, o2.saddleNeighbourId);
     			Assertions.assertEquals(o1.x, o2.x, "X");
@@ -503,7 +504,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
         }
         catch (final AssertionFailedError e)
         {
-            TestUtils.wrapAssertionFailedError(e, TestLog.getSupplier("%s [%d]", setName, counter));
+            TestUtils.wrapAssertionFailedError(e, FunctionUtils.getSupplier("%s [%d]", setName, counter));
         }
     }
 
