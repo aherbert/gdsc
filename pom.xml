@@ -134,8 +134,10 @@ Software for microscopy image analysis
             <!-- Set JUL Formatting -->
             <java.util.logging.SimpleFormatter.format><![CDATA[%4$-7s %2$s %5$s%6$s%n]]></java.util.logging.SimpleFormatter.format>
           </systemPropertyVariables>
-          <!--  Ensure the JaCoCo settings are preserved in argLine when ImageJ settings are added -->
-          <argLine>@{argLine} -Xms512m -Xmx512m -Dapple.awt.UIElement="true"</argLine>
+          <!-- Ensure the JaCoCo settings are preserved in argLine when ImageJ 
+            settings are added -->
+          <argLine>@{argLine} -Xms512m -Xmx1024m
+            -Dapple.awt.UIElement="true"</argLine>
         </configuration>
         <dependencies>
           <dependency>
@@ -191,6 +193,11 @@ Software for microscopy image analysis
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.8.1</version>
+        <configuration>
+          <excludes>
+            <!-- Add plugins with no testable code -->
+          </excludes>
+        </configuration>
         <executions>
           <execution>
             <id>default-prepare-agent</id>

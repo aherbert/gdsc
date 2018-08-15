@@ -28,7 +28,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 
 import org.apache.commons.rng.UniformRandomProvider;
-import org.apache.commons.rng.sampling.distribution.BoxMullerGaussianSampler;
+import org.apache.commons.rng.sampling.distribution.GaussianSampler;
 import org.apache.commons.rng.sampling.distribution.PoissonSampler;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -42,6 +42,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.utils.rng.GaussianSamplerFactory;
 import uk.ac.sussex.gdsc.test.DataCache;
 import uk.ac.sussex.gdsc.test.TestComplexity;
 import uk.ac.sussex.gdsc.test.TestLog;
@@ -643,7 +644,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     private short[] combine(UniformRandomProvider rg, float[] data1, float[] data2, float[] data3)
     {
         // Combine images and add a bias and read noise
-        final BoxMullerGaussianSampler g = new BoxMullerGaussianSampler(rg, bias, 5);
+        final GaussianSampler g = GaussianSamplerFactory.createGaussianSampler(rg, bias, 5);
         final short[] data = new short[data1.length];
         for (int i = 0; i < data.length; i++)
         {
