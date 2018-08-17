@@ -16,7 +16,7 @@
   <packaging>jar</packaging>
 
   <name>GDSC plugins for ImageJ</name>
-  <url>http:///github.com/aherbert/GDSC</url>
+  <url>http:///github.com/aherbert/gdsc</url>
   <organization>
     <name>Genome Damage and Stability Centre</name>
     <url>http://www.sussex.ac.uk/gdsc/</url>
@@ -43,15 +43,15 @@ Software for microscopy image analysis
   </mailingLists>
   <issueManagement>
     <system>GitHub Issues</system>
-    <url>https://github.com/aherbert/GDSC/issues</url>
+    <url>https://github.com/aherbert/gdsc/issues</url>
   </issueManagement>
   <ciManagement>
     <system>None</system>
   </ciManagement>
   <scm>
-    <connection>scm:git:git://github.com/aherbert/GDSC.git</connection>
-    <developerConnection>scm:git:ssh://github.com:aherbert/GDSC.git</developerConnection>
-    <url>https://github.com/aherbert/GDSC</url>
+    <connection>scm:git:git://github.com/aherbert/gdsc.git</connection>
+    <developerConnection>scm:git:ssh://github.com:aherbert/gdsc.git</developerConnection>
+    <url>https://github.com/aherbert/gdsc</url>
   </scm>
 
   <developers>
