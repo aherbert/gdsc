@@ -136,8 +136,7 @@ Software for microscopy image analysis
           </systemPropertyVariables>
           <!-- Ensure the JaCoCo settings are preserved in argLine when ImageJ 
             settings are added -->
-          <argLine>@{argLine} -Xms512m -Xmx1024m
-            -Dapple.awt.UIElement="true"</argLine>
+          <argLine>@{argLine} -Xms512m -Dapple.awt.UIElement="true"</argLine>
         </configuration>
         <dependencies>
           <dependency>
