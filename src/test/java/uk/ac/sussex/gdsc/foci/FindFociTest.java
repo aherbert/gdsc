@@ -43,18 +43,18 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.rng.GaussianSamplerFactory;
-import uk.ac.sussex.gdsc.test.DataCache;
-import uk.ac.sussex.gdsc.test.TestComplexity;
-import uk.ac.sussex.gdsc.test.TestLog;
-import uk.ac.sussex.gdsc.test.TestSettings;
-import uk.ac.sussex.gdsc.test.TestUtils;
-import uk.ac.sussex.gdsc.test.TimingResult;
-import uk.ac.sussex.gdsc.test.functions.FunctionUtils;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssertions;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssumptions;
 import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
 import uk.ac.sussex.gdsc.test.junit5.SpeedTag;
+import uk.ac.sussex.gdsc.test.rng.RNGFactory;
+import uk.ac.sussex.gdsc.test.utils.DataCache;
+import uk.ac.sussex.gdsc.test.utils.TestComplexity;
+import uk.ac.sussex.gdsc.test.utils.TestLog;
+import uk.ac.sussex.gdsc.test.utils.TestUtils;
+import uk.ac.sussex.gdsc.test.utils.TimingResult;
+import uk.ac.sussex.gdsc.test.utils.functions.FunctionUtils;
 
 @SuppressWarnings({ "javadoc" })
 public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
@@ -753,7 +753,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @Override
     public ImagePlus[] apply(RandomSeed seed)
     {
-        UniformRandomProvider rg = TestSettings.getRandomGenerator(seed.getSeed());
+        UniformRandomProvider rg = RNGFactory.create(seed.getSeed());
         ImagePlus[] images = new ImagePlus[numberOfTestImages + numberOfTestImages3D];
         int index = 0;
         for (int i = 0; i < numberOfTestImages; i++)

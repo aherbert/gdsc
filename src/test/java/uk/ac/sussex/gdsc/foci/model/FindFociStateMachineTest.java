@@ -31,11 +31,11 @@ import org.apache.commons.rng.UniformRandomProvider;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 
-import uk.ac.sussex.gdsc.test.TestLog;
-import uk.ac.sussex.gdsc.test.TestSettings;
 import uk.ac.sussex.gdsc.test.junit5.ExtraAssumptions;
 import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
+import uk.ac.sussex.gdsc.test.rng.RNGFactory;
+import uk.ac.sussex.gdsc.test.utils.TestLog;
 
 @SuppressWarnings({ "javadoc" })
 public class FindFociStateMachineTest
@@ -65,7 +65,7 @@ public class FindFociStateMachineTest
 
         final FindFociStateMachine sm = new FindFociStateMachine();
         final String[] propertyNames = sm.getObservedProperties().toArray(new String[0]);
-        UniformRandomProvider rand = TestSettings.getRandomGenerator(seed.getSeed());
+        UniformRandomProvider rand = RNGFactory.create(seed.getSeed());
         final Integer oldValue = new Integer(0);
         final Integer newValue = new Integer(1);
 
