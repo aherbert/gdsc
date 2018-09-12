@@ -50,7 +50,7 @@ Software for microscopy image analysis
   </ciManagement>
   <scm>
     <connection>scm:git:git://github.com/aherbert/gdsc.git</connection>
-    <developerConnection>scm:git:ssh://github.com:aherbert/gdsc.git</developerConnection>
+    <developerConnection>scm:git:ssh://github.com/aherbert/gdsc.git</developerConnection>
     <url>https://github.com/aherbert/gdsc</url>
   </scm>
 
@@ -75,6 +75,8 @@ Software for microscopy image analysis
   <properties>
     <license.licenseName>gpl_v3</license.licenseName>
     <license.copyrightOwners>Alex Herbert</license.copyrightOwners>
+    <org.junit.platform.version>1.2.0</org.junit.platform.version>
+    <org.junit.jupiter.version>5.2.0</org.junit.jupiter.version>
   </properties>
 
   <build>
@@ -142,12 +144,12 @@ Software for microscopy image analysis
           <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-surefire-provider</artifactId>
-            <version>1.2.0</version>
+            <version>${org.junit.platform.version}</version>
           </dependency>
           <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.2.0</version>
+            <version>${org.junit.jupiter.version}</version>
           </dependency>
         </dependencies>
       </plugin>
@@ -286,6 +288,34 @@ Software for microscopy image analysis
           </plugin>
         </plugins>
       </build>
+    </profile>
+    <profile>
+      <id>eclipse</id>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${org.junit.jupiter.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <version>${org.junit.platform.version}</version>
+            <scope>test</scope>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+      <dependencies>
+        <dependency>
+          <groupId>org.junit.platform</groupId>
+          <artifactId>junit-platform-launcher</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>org.junit.jupiter</groupId>
+          <artifactId>junit-jupiter-engine</artifactId>
+        </dependency>
+      </dependencies>
     </profile>
   </profiles>
 
