@@ -51,7 +51,9 @@ public class DifferenceOfGaussiansRunner implements ExtendedPlugInFilter, Dialog
     @Override
     public int setup(String arg, ImagePlus imp)
     {
-        UsageTracker.recordPlugin(this.getClass(), arg);
+        if (!("final".equals(arg))) {
+            UsageTracker.recordPlugin(this.getClass(), arg);
+        }
         return filter.setup(arg, imp);
     }
 
