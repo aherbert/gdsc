@@ -249,6 +249,7 @@ Software for microscopy image analysis
           </execution>
         </executions>
         <configuration>
+          <getRevisionOnlyOnce>false</getRevisionOnlyOnce>
           <doCheck>false</doCheck>
           <doUpdate>false</doUpdate>
         </configuration>
