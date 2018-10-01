@@ -107,6 +107,13 @@ Software for microscopy image analysis
             </descriptorRefs>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>buildnumber-maven-plugin</artifactId>
+          <configuration>
+            <getRevisionOnlyOnce>false</getRevisionOnlyOnce>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
     <resources>
@@ -236,22 +243,6 @@ Software for microscopy image analysis
             </configuration>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>buildnumber-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>compile</phase>
-            <goals>
-              <goal>create</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <doCheck>false</doCheck>
-          <doUpdate>false</doUpdate>
-        </configuration>
       </plugin>
     </plugins>
   </build>
