@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
@@ -73,6 +72,8 @@ Software for microscopy image analysis
   </contributors>
 
   <properties>
+    <maven.build.timestamp.format>yyyy/MM/dd HH:mm</maven.build.timestamp.format>
+    <build.date>${maven.build.timestamp}</build.date>
     <license.licenseName>gpl_v3</license.licenseName>
     <license.copyrightOwners>Alex Herbert</license.copyrightOwners>
     <org.junit.platform.version>1.2.0</org.junit.platform.version>
@@ -136,8 +137,7 @@ Software for microscopy image analysis
             <!-- Set JUL Formatting -->
             <java.util.logging.SimpleFormatter.format><![CDATA[%4$-7s %2$s %5$s%6$s%n]]></java.util.logging.SimpleFormatter.format>
           </systemPropertyVariables>
-          <!-- Ensure the JaCoCo settings are preserved in argLine when ImageJ 
-            settings are added -->
+          <!-- Ensure the JaCoCo settings are preserved in argLine when ImageJ settings are added -->
           <argLine>@{argLine} -Xms512m -Dapple.awt.UIElement="true"</argLine>
         </configuration>
         <dependencies>
@@ -220,13 +220,11 @@ Software for microscopy image analysis
             <configuration>
               <rules>
                 <!-- implementation is needed only for Maven 2 -->
-                <rule
-                  implementation="org.jacoco.maven.RuleConfiguration">
+                <rule implementation="org.jacoco.maven.RuleConfiguration">
                   <element>BUNDLE</element>
                   <limits>
                     <!-- implementation is needed only for Maven 2 -->
-                    <limit
-                      implementation="org.jacoco.report.check.Limit">
+                    <limit implementation="org.jacoco.report.check.Limit">
                       <counter>COMPLEXITY</counter>
                       <value>COVEREDRATIO</value>
                       <minimum>0.60</minimum>
@@ -238,6 +236,22 @@ Software for microscopy image analysis
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>buildnumber-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>create</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <doCheck>false</doCheck>
+          <doUpdate>false</doUpdate>
+        </configuration>
       </plugin>
     </plugins>
   </build>

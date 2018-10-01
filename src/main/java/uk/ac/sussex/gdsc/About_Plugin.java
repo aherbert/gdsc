@@ -23,6 +23,8 @@
  */
 package uk.ac.sussex.gdsc;
 
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -92,8 +94,6 @@ public class About_Plugin implements PlugIn
 
         StringBuilder msg = new StringBuilder();
         String helpURL = HELP_URL;
-        final String version = Version.getVersion();
-        final String buildDate = Version.getBuildDate();
 
         // Read the contents of the README file
         try (final BufferedReader input = new BufferedReader(new InputStreamReader(readmeStream)))
@@ -121,12 +121,12 @@ public class About_Plugin implements PlugIn
 
         // Build final message
         msg = new StringBuilder(msg.toString().trim());
-        if (version != Version.UNKNOWN || buildDate != Version.UNKNOWN)
-            msg.append("\n \n");
-        if (version != Version.UNKNOWN)
-            msg.append("Version : ").append(version).append("\n");
-        if (buildDate != Version.UNKNOWN)
-            msg.append("Build Date : ").append(buildDate).append("\n");
+        addVersion(msg, "GDSC", Version.getVersion(), Version.getBuildDate(), Version.getBuildNumber());
+        addVersion(msg, "GDSC-Core", 
+            uk.ac.sussex.gdsc.core.Version.getVersion(), 
+            uk.ac.sussex.gdsc.core.Version.getBuildDate(), 
+            uk.ac.sussex.gdsc.core.Version.getBuildNumber());
+
         if (helpURL != null)
             msg.append("\n \n(Click help for more information)");
 
@@ -135,6 +135,21 @@ public class About_Plugin implements PlugIn
         gd.addHelp(helpURL);
         gd.hideCancelButton();
         gd.showDialog();
+    }
+
+    private static void addVersion(StringBuilder msg, String name, String version, String buildDate,
+        String buildNumber) {
+      boolean hasVersion = !TextUtils.isNullOrEmpty(version);
+      boolean hasBuildDate = !TextUtils.isNullOrEmpty(buildDate);
+      boolean hasBuildNumber = !TextUtils.isNullOrEmpty(buildNumber);
+      if (hasVersion || hasBuildDate || hasBuildNumber)
+          msg.append("\n \n").append(name).append("\n");
+      if (hasVersion)
+          msg.append("Version : ").append(version).append("\n");
+      if (hasBuildDate)
+          msg.append("Build Date : ").append(buildDate).append("\n");
+      if (hasBuildNumber)
+          msg.append("Build Number : ").append(buildNumber).append("\n");
     }
 
     private static boolean addSpacer = false;
