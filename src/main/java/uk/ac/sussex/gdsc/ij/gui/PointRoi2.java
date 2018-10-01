@@ -204,11 +204,7 @@ public class PointRoi2 extends PointRoi
         g.drawRect(x, y, 4, 4);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.gui.PointRoi#setHideLabels(boolean)
-     */
+    /** {@inheritDoc} */
     @Override
     public void setHideLabels(boolean hideLabels)
     {

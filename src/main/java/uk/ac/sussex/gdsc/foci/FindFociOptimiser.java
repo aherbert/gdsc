@@ -232,11 +232,7 @@ public class FindFociOptimiser
     // The number of combinations
     private int combinations;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.PlugIn#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {
@@ -2749,11 +2745,7 @@ public class FindFociOptimiser
             return parameters;
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.lang.Comparable#compareTo(java.lang.Object)
-         */
+        /** {@inheritDoc} */
         @Override
         public int compareTo(Result paramT)
         {
@@ -2806,11 +2798,7 @@ public class FindFociOptimiser
             return -1;
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-         */
+        /** {@inheritDoc} */
         @Override
         public int compare(Result o1, Result o2)
         {
@@ -3062,11 +3050,7 @@ public class FindFociOptimiser
             this.counter = counter;
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.lang.Runnable#run()
-         */
+        /** {@inheritDoc} */
         @Override
         public void run()
         {
@@ -3282,11 +3266,7 @@ public class FindFociOptimiser
         return i;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void mouseClicked(MouseEvent e)
     {
@@ -3317,44 +3297,28 @@ public class FindFociOptimiser
             }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void mousePressed(MouseEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void mouseReleased(MouseEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void mouseEntered(MouseEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void mouseExited(MouseEvent e)
     {
@@ -3430,77 +3394,49 @@ public class FindFociOptimiser
         instance.toFront();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowOpened(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowOpened(WindowEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowClosing(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowClosing(WindowEvent e)
     {
         WindowManager.removeWindow(instance);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowClosed(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowClosed(WindowEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowIconified(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowIconified(WindowEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowDeiconified(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowDeiconified(WindowEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowActivated(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowActivated(WindowEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowDeactivated(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowDeactivated(WindowEvent e)
     {
@@ -3746,33 +3682,21 @@ public class FindFociOptimiser
         dialogItemChanged(listenerGd, e);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.TextListener#textValueChanged(java.awt.event.TextEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void textValueChanged(TextEvent e)
     {
         dialogItemChanged(listenerGd, e);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void itemStateChanged(ItemEvent e)
     {
         dialogItemChanged(listenerGd, e);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.gui.DialogListener#dialogItemChanged(ij.gui.GenericDialog, java.awt.AWTEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
     {

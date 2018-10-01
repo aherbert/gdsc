@@ -139,11 +139,7 @@ public class ChainCode implements Comparable<ChainCode>
         return codes;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Object#toString()
-     */
+    /** {@inheritDoc} */
     @Override
     public String toString()
     {

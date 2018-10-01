@@ -43,11 +43,7 @@ public class Lottery implements PlugIn
     private static int match = 3;
     private static long simulations = 0;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.PlugIn#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {

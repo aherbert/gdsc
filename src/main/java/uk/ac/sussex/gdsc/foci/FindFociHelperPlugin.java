@@ -45,11 +45,7 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener
 {
     private static FindFociHelperView instance;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.PlugIn#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {

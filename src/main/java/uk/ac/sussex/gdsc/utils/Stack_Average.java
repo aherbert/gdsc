@@ -40,11 +40,7 @@ public class Stack_Average implements PlugInFilter
 {
     private ImagePlus imp;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public int setup(String arg, ImagePlus imp)
     {
@@ -58,11 +54,7 @@ public class Stack_Average implements PlugInFilter
         return DOES_8G + DOES_16 + DOES_32 + NO_CHANGES;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(ImageProcessor ip)
     {

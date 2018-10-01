@@ -311,11 +311,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
         super(TITLE);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {
@@ -580,11 +576,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
         WindowManager.setWindow(this);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Runnable#run()
-     */
+    /** {@inheritDoc} */
     @Override
     public void run()
     {

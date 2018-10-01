@@ -96,11 +96,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
     private final int flags = DOES_8G | DOES_16 | DOES_32 | FINAL_PROCESSING;
     private int flags2 = 0;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public int setup(String arg, ImagePlus imp)
     {
@@ -209,23 +205,14 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
         return flags;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(ImageProcessor ip)
     {
         createMask(ip);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
-     * ij.plugin.filter.PlugInFilterRunner)
-     */
+    /** {@inheritDoc} */
     @Override
     public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
     {
@@ -330,11 +317,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
-     */
+    /** {@inheritDoc} */
     @Override
     public void setNPasses(int nPasses)
     {
@@ -802,11 +785,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
             this.mask = mask;
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.lang.Runnable#run()
-         */
+        /** {@inheritDoc} */
         @Override
         public void run()
         {

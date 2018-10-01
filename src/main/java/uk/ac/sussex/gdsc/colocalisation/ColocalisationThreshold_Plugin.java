@@ -385,11 +385,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
         WindowManager.setWindow(this);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Runnable#run()
-     */
+    /** {@inheritDoc} */
     @Override
     public void run()
     {

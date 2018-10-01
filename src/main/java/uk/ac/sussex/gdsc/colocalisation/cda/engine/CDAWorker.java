@@ -152,11 +152,7 @@ public class CDAWorker implements Runnable
         return new IntersectResult(c.getSumX(), c.getSumY(), c.getCorrelation());
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Runnable#run()
-     */
+    /** {@inheritDoc} */
     @Override
     public void run()
     {

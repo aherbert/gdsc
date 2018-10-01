@@ -138,11 +138,7 @@ public class MaskObjectDimensions implements PlugInFilter
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public int setup(String arg, ImagePlus imp)
     {
@@ -188,11 +184,7 @@ public class MaskObjectDimensions implements PlugInFilter
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(ImageProcessor inputProcessor)
     {

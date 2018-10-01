@@ -52,22 +52,14 @@ public class OptimiserController extends FindFociController implements Runnable
         super(model);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#getImageCount()
-     */
+    /** {@inheritDoc} */
     @Override
     public int getImageCount()
     {
         return 0;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#updateImageList()
-     */
+    /** {@inheritDoc} */
     @Override
     public void updateImageList()
     {
@@ -96,11 +88,7 @@ public class OptimiserController extends FindFociController implements Runnable
         model.setImageList(imageList);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#run()
-     */
+    /** {@inheritDoc} */
     @Override
     public void run()
     {
@@ -112,33 +100,21 @@ public class OptimiserController extends FindFociController implements Runnable
         Recorder.saveCommand();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#run()
-     */
+    /** {@inheritDoc} */
     @Override
     public void preview()
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#endPreview()
-     */
+    /** {@inheritDoc} */
     @Override
     public void endPreview()
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#getImageLimits(int[])
-     */
+    /** {@inheritDoc} */
     @Override
     public int[] getImageLimits(int[] limits)
     {

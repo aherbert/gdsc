@@ -51,11 +51,7 @@ public class DoubleMaskSegregator implements PlugIn
 
     private ImagePlus imp1, imp2;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.PlugIn#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {

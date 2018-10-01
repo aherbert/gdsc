@@ -174,11 +174,7 @@ public class GaussianFit implements PlugInFilter
         return exception;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public int setup(String arg, ImagePlus imp)
     {
@@ -192,11 +188,7 @@ public class GaussianFit implements PlugInFilter
         return DOES_ALL | NO_CHANGES;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(ImageProcessor ip)
     {

@@ -60,11 +60,7 @@ public class ApplyMask implements PlugInFilter
     private int slice = 0;
     private int frame = 0;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public int setup(String arg, ImagePlus imp)
     {
@@ -81,11 +77,7 @@ public class ApplyMask implements PlugInFilter
         return DONE;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(ImageProcessor ip)
     {

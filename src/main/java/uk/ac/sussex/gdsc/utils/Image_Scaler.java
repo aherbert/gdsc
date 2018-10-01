@@ -48,11 +48,7 @@ public class Image_Scaler implements PlugInFilter
     private static double maxValue = 255;
     private static String listFile = "";
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public int setup(String arg, ImagePlus imp)
     {
@@ -85,11 +81,7 @@ public class Image_Scaler implements PlugInFilter
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(ImageProcessor inputProcessor)
     {

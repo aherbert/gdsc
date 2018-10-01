@@ -144,40 +144,7 @@ public class MatchPlugin implements PlugIn
 
     private double scaleX = 1, scaleY = 1, scaleZ = 1;
 
-    /*
-     * (non-Javadoc)
-     *
-     * // Build the values to plot
-     * float[] xMatch = new float[matches.size()];
-     * float[] yMatch = new float[matches.size()];
-     * float[] xNoMatch = new float[falsePositives.size() + falseNegatives.size()];
-     * float[] yNoMatch = new float[falsePositives.size() + falseNegatives.size()];
-     *
-     * int n = 0;
-     * for (PointPair pair : matches)
-     * {
-     * TimeValuedPoint p1 = (TimeValuedPoint) pair.getPoint1();
-     * TimeValuedPoint p2 = (TimeValuedPoint) pair.getPoint2();
-     * xMatch[n] = p1.getValue(); // Actual
-     * yMatch[n] = p2.getValue(); // Predicted
-     * n++;
-     * }
-     * n = 0;
-     * // Actual
-     * for (Coordinate point : falseNegatives)
-     * {
-     * TimeValuedPoint p = (TimeValuedPoint) point;
-     * xNoMatch[n++] = p.getValue();
-     * }
-     * // Predicted
-     * for (Coordinate point : falsePositives)
-     * {
-     * TimeValuedPoint p = (TimeValuedPoint) point;
-     * yNoMatch[n++] = p.getValue();
-     * }
-     *
-     * @see ij.plugin.PlugIn#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     @SuppressWarnings("unchecked")
     public void run(String arg)

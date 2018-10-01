@@ -90,11 +90,7 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
         stateMap.put("showLogMessages", FindFociState.INITIAL);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void propertyChange(PropertyChangeEvent evt)
     {

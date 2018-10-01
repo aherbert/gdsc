@@ -77,11 +77,7 @@ public class PointAlignerPlugin implements PlugIn
     private ImagePlus imp;
     private boolean saveResults;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {

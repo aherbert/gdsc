@@ -54,22 +54,14 @@ public class ImageJController extends FindFociController
         super(model);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#getImageCount()
-     */
+    /** {@inheritDoc} */
     @Override
     public int getImageCount()
     {
         return WindowManager.getImageCount();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#updateImageList()
-     */
+    /** {@inheritDoc} */
     @Override
     public void updateImageList()
     {
@@ -99,11 +91,7 @@ public class ImageJController extends FindFociController
         model.setMaskImageList(FindFoci.buildMaskList(imp));
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#run()
-     */
+    /** {@inheritDoc} */
     @Override
     public void run()
     {
@@ -272,11 +260,7 @@ public class ImageJController extends FindFociController
                 centreMethod, centreParameter, fractionParameter);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#run()
-     */
+    /** {@inheritDoc} */
     @Override
     public void preview()
     {
@@ -303,11 +287,7 @@ public class ImageJController extends FindFociController
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#endPreview()
-     */
+    /** {@inheritDoc} */
     @Override
     public void endPreview()
     {
@@ -320,11 +300,7 @@ public class ImageJController extends FindFociController
         System.gc();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#getImageLimits(int[])
-     */
+    /** {@inheritDoc} */
     @Override
     public int[] getImageLimits(int[] limits)
     {

@@ -68,11 +68,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
 
     private Correlator c;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public int setup(String arg, ImagePlus imp)
     {
@@ -97,11 +93,7 @@ public class Stack_Correlation_Analyser implements PlugInFilter
         return DOES_16 + DOES_8G + NO_CHANGES;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(ImageProcessor inputProcessor)
     {

@@ -1382,11 +1382,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         return limits[1];
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void propertyChange(PropertyChangeEvent evt)
     {
@@ -1417,11 +1413,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         model.setBackgroundParameter(backgroundParam);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.gui.MessageListener#notify(java.lang.String, java.lang.Object[])
-     */
+    /** {@inheritDoc} */
     @Override
     public void notify(MessageType message, Object... params)
     {

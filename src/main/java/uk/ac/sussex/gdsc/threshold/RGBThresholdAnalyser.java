@@ -50,11 +50,7 @@ public class RGBThresholdAnalyser implements PlugIn
 
     private static String dir1 = "", dir2 = "";
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.PlugIn#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {

@@ -162,11 +162,7 @@ public class FindFociPlugin implements PlugIn
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {

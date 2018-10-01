@@ -33,11 +33,7 @@ import uk.ac.sussex.gdsc.UsageTracker;
  */
 public class Unlock_Image implements PlugInFilter
 {
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public int setup(String arg, ImagePlus imp)
     {
@@ -47,11 +43,7 @@ public class Unlock_Image implements PlugInFilter
         return DONE;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(ImageProcessor inputProcessor)
     {

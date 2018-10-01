@@ -1092,11 +1092,7 @@ public class ColocalisationThreshold
             this.r2 = r2;
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.lang.Comparable#compareTo(java.lang.Object)
-         */
+        /** {@inheritDoc} */
         @Override
         public int compareTo(ThresholdResult otherResult) throws ClassCastException
         {

@@ -109,11 +109,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
     // flag indicating the pairs have values that should be output
     private boolean valued = false;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.PlugIn#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {

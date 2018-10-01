@@ -90,11 +90,7 @@ public class HSB_Picker extends PlugInFrame
             stats[i] = new SummaryStatistics();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {
@@ -273,11 +269,7 @@ public class HSB_Picker extends PlugInFrame
         return String.format("%.3f +/- %.4f", stats.getMean(), stats.getStandardDeviation());
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.frame.PlugInFrame#close()
-     */
+    /** {@inheritDoc} */
     @Override
     public void close()
     {

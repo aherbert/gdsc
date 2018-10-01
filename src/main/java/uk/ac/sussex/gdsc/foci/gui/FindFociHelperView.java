@@ -1144,88 +1144,56 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
         dragging = false;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowOpened(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowOpened(WindowEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowClosing(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowClosing(WindowEvent e)
     {
         killPicker();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowClosed(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowClosed(WindowEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowIconified(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowIconified(WindowEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowDeiconified(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowDeiconified(WindowEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowActivated(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowActivated(WindowEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.WindowListener#windowDeactivated(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowDeactivated(WindowEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void mouseClicked(MouseEvent e)
     {
@@ -1321,22 +1289,14 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void mousePressed(MouseEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
-     */
+    /** {@inheritDoc} */
     /*
      * If the user has dragged an ROI point then it should be reassigned when it is dropped.
      */
@@ -1384,33 +1344,21 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
         return -1;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void mouseEntered(MouseEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void mouseExited(MouseEvent e)
     {
         // Ignore
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
-     */
+    /** {@inheritDoc} */
     /*
      * If the user is dragging a multi-point ROI position then this method will detect the
      * point and set it to unassigned. This is done once at the start of the drag.
@@ -1460,11 +1408,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
             }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void mouseMoved(MouseEvent e)
     {

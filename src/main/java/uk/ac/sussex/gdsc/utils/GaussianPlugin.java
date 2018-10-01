@@ -45,11 +45,7 @@ public class GaussianPlugin implements PlugIn
     private static float angle = 0f;
     private static float noise = 10f;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.PlugIn#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {

@@ -110,11 +110,7 @@ public class AssignedPoint extends BasePoint implements Comparable<AssignedPoint
         return assignedId;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Comparable#compareTo(java.lang.Object)
-     */
+    /** {@inheritDoc} */
     @Override
     public int compareTo(AssignedPoint that)
     {

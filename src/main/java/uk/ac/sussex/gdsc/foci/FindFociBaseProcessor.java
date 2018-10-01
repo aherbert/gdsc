@@ -154,13 +154,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     /** marks point to be ignored in stage 1 */
     protected final static byte IGNORE = EXCLUDED | LISTED;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaxima(ij.ImagePlus, ij.ImagePlus, int, double,
-     * java.lang.String, int,
-     * double, int, int, int, double, int, int, int, double, int, double, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociResults findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
             String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
@@ -484,24 +478,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         return imp;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#blur(ij.ImagePlus, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public ImagePlus blur(ImagePlus imp, double blur)
     {
         return applyBlur(imp, blur);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaInit(ij.ImagePlus, ij.ImagePlus, ij.ImagePlus, int,
-     * java.lang.String,
-     * int)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask,
             int backgroundMethod, String autoThresholdMethod, int options)
@@ -552,13 +536,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         return new FindFociInitResults(image, types, maxima, histogram, stats, originalImage, originalImp);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#clone(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociInitResults, boolean,
-     * boolean)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
     {
@@ -609,12 +587,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         return clonedInitResults;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaSearch(uk.ac.sussex.gdsc.foci.FindFociInitResults, int,
-     * double, int, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociSearchResults findMaximaSearch(FindFociInitResults initResults, int backgroundMethod,
             double backgroundParameter, int searchMethod, double searchParameter)
@@ -652,12 +625,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         return new FindFociSearchResults(resultsArray, saddlePoints);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaMergePeak(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociSearchResults, int, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociMergeTempResults findMaximaMergePeak(FindFociInitResults initResults,
             FindFociSearchResults searchResults, int peakMethod, double peakParameter)
@@ -688,12 +656,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         //return originalResultsArray;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaMergeSize(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociMergeTempResults, int)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociMergeTempResults findMaximaMergeSize(FindFociInitResults initResults,
             FindFociMergeTempResults mergeResults, int minSize)
@@ -726,12 +689,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         return list;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaMergeFinal(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociMergeTempResults, int, int, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociMergeResults findMaximaMergeFinal(FindFociInitResults initResults,
             FindFociMergeTempResults mergeResults, int minSize, int options, double blur)
@@ -774,13 +732,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         return new FindFociMergeResults(resultsArray, originalNumberOfPeaks);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaResults(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociMergeResults,
-     * int, int, int, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociResults findMaximaResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
             int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
@@ -818,12 +770,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         return new FindFociResults(null, resultsArray, stats);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaPrelimResults(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociMergeResults, int, int, int, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults,
             FindFociMergeResults mergeResults, int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
@@ -859,13 +806,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         return new FindFociPrelimResults(null, resultsArray, stats);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaMaskResults(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociMergeResults, uk.ac.sussex.gdsc.foci.FindFociResults, int, java.lang.String,
-     * java.lang.String, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
             FindFociPrelimResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
@@ -5898,11 +5839,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
             this.value = value;
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.lang.Comparable#compareTo(java.lang.Object)
-         */
+        /** {@inheritDoc} */
         @Override
         public int compareTo(Coordinate o)
         {
@@ -5921,11 +5858,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
      */
     private class ResultComparator implements Comparator<FindFociResult>
     {
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-         */
+        /** {@inheritDoc} */
         @Override
         public int compare(FindFociResult o1, FindFociResult o2)
         {
@@ -5959,11 +5892,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
      */
     private class ResultDescComparator extends ResultComparator
     {
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-         */
+        /** {@inheritDoc} */
         @Override
         public int compare(FindFociResult o1, FindFociResult o2)
         {
@@ -5983,11 +5912,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
      */
     private class ResultAscComparator extends ResultComparator
     {
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-         */
+        /** {@inheritDoc} */
         @Override
         public int compare(FindFociResult o1, FindFociResult o2)
         {

@@ -72,11 +72,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
     private boolean[] mask;
     private int n;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public int setup(String arg, ImagePlus imp)
     {
@@ -131,12 +127,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
         return flags;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.ExtendedPlugInFilter#showDialog(ij.ImagePlus, java.lang.String,
-     * ij.plugin.filter.PlugInFilterRunner)
-     */
+    /** {@inheritDoc} */
     @Override
     public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
     {
@@ -247,11 +238,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
         return flags;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(ImageProcessor ip)
     {
@@ -289,11 +276,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
         means[slice] = ((sat) ? -1 : 1) * (float) (sum / n);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.ExtendedPlugInFilter#setNPasses(int)
-     */
+    /** {@inheritDoc} */
     @Override
     public void setNPasses(int nPasses)
     {

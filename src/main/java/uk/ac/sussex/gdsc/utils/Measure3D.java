@@ -70,11 +70,7 @@ public class Measure3D extends PlugInFrame
         super(TITLE);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {
@@ -306,11 +302,7 @@ public class Measure3D extends PlugInFrame
         return imp;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.frame.PlugInFrame#close()
-     */
+    /** {@inheritDoc} */
     @Override
     public void close()
     {

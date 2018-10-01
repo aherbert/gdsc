@@ -38,12 +38,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
     // For now I have just included those simple methods that use getf() for all pixels in the image.
     // This means changes to the main algorithm methods will be inherited.
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociBaseProcessor#pruneMaxima(java.lang.Object, byte[], int, double,
-     * uk.ac.sussex.gdsc.foci.FindFociStatistics, java.util.ArrayList, int[])
-     */
+    /** {@inheritDoc} */
     @Override
     protected void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
             FindFociStatistics stats, FindFociResult[] resultsArray, int[] maxima)
@@ -70,12 +65,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociBaseProcessor#calculateInitialResults(java.lang.Object, int[],
-     * java.util.ArrayList)
-     */
+    /** {@inheritDoc} */
     @Override
     protected void calculateInitialResults(Object pixels, int[] maxima, FindFociResult[] resultsArray)
     {
@@ -105,12 +95,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociBaseProcessor#calculateNativeResults(java.lang.Object, int[],
-     * java.util.ArrayList, int)
-     */
+    /** {@inheritDoc} */
     @Override
     protected void calculateNativeResults(Object pixels, int[] maxima, FindFociResult[] resultsArray,
             int originalNumberOfPeaks)
@@ -187,11 +172,7 @@ public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
         result.intensityAboveSaddle = peakIntensity;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociBaseProcessor#getIntensityAboveFloor(java.lang.Object, byte[], float)
-     */
+    /** {@inheritDoc} */
     @Override
     protected double getIntensityAboveFloor(Object pixels, byte[] types, final float floor)
     {

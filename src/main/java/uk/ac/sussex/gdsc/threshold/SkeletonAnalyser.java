@@ -109,11 +109,7 @@ public class SkeletonAnalyser implements PlugInFilter
     public final static byte[] PROCESSED_DIRECTIONS = new byte[] { (byte) 1, (byte) 2, (byte) 4, (byte) 8, (byte) 16,
             (byte) 32, (byte) 64, (byte) 128 };
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public int setup(String arg, ImagePlus imp)
     {
@@ -162,11 +158,7 @@ public class SkeletonAnalyser implements PlugInFilter
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(ImageProcessor ip)
     {

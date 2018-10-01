@@ -1388,11 +1388,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
             batchId = Integer.parseInt(entry.substring(0, index));
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.lang.Comparable#compareTo(java.lang.Object)
-         */
+        /** {@inheritDoc} */
         @Override
         public int compareTo(BatchResult that)
         {
@@ -1797,13 +1793,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
         out.write(newLine);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaxima(ij.ImagePlus, ij.ImagePlus, int, double,
-     * java.lang.String, int,
-     * double, int, int, int, double, int, int, int, double, int, double, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociResults findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod, double backgroundParameter,
             String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks, int minSize,
@@ -1868,11 +1858,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
         return FindFociBaseProcessor.applyBlur(imp, blur);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#blur(ij.ImagePlus, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public ImagePlus blur(ImagePlus imp, double blur)
     {
@@ -1880,13 +1866,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
         return FindFociBaseProcessor.applyBlur(imp, blur);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaInit(ij.ImagePlus, ij.ImagePlus, ij.ImagePlus, int,
-     * java.lang.String,
-     * int)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask,
             int backgroundMethod, String autoThresholdMethod, int options)
@@ -1907,24 +1887,14 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
         return ffpStaged.findMaximaInit(originalImp, imp, mask, backgroundMethod, autoThresholdMethod, options);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#clone(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociInitResults)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociInitResults clone(FindFociInitResults initResults, FindFociInitResults clonedInitResults)
     {
         return ffpStaged.clone(initResults, clonedInitResults);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaSearch(uk.ac.sussex.gdsc.foci.FindFociInitResults, int,
-     * double, int, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociSearchResults findMaximaSearch(FindFociInitResults initResults, int backgroundMethod,
             double backgroundParameter, int searchMethod, double searchParameter)
@@ -1934,12 +1904,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
                 searchParameter);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaMergePeak(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociSearchResults, int, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociMergeTempResults findMaximaMergePeak(FindFociInitResults initResults,
             FindFociSearchResults searchResults, int peakMethod, double peakParameter)
@@ -1948,12 +1913,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
         return ffpStaged.findMaximaMergePeak(initResults, searchResults, peakMethod, peakParameter);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaMergeSize(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociMergeTempResults, int)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociMergeTempResults findMaximaMergeSize(FindFociInitResults initResults,
             FindFociMergeTempResults mergeResults, int minSize)
@@ -1962,12 +1922,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
         return ffpStaged.findMaximaMergeSize(initResults, mergeResults, minSize);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaMergeFinal(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociMergeTempResults, int, int, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociMergeResults findMaximaMergeFinal(FindFociInitResults initResults,
             FindFociMergeTempResults mergeResults, int minSize, int options, double blur)
@@ -1976,13 +1931,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
         return ffpStaged.findMaximaMergeFinal(initResults, mergeResults, minSize, options, blur);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaResults(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociMergeResults,
-     * int, int, int, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociResults findMaximaResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
             int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
@@ -1996,12 +1945,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaPrelimResults(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociMergeResults, int, int, int, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults,
             FindFociMergeResults mergeResults, int maxPeaks, int sortIndex, int centreMethod, double centreParameter)
@@ -2015,13 +1959,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
 
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociProcessor#findMaximaMaskResults(uk.ac.sussex.gdsc.foci.FindFociInitResults,
-     * uk.ac.sussex.gdsc.foci.FindFociMergeResults, uk.ac.sussex.gdsc.foci.FindFociResults, int, java.lang.String,
-     * java.lang.String, double)
-     */
+    /** {@inheritDoc} */
     @Override
     public FindFociResults findMaximaMaskResults(FindFociInitResults initResults, FindFociMergeResults mergeResults,
             FindFociPrelimResults prelimResults, int outputType, String autoThresholdMethod, String imageTitle,
@@ -2569,11 +2507,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
             this.parameters = parameters;
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.lang.Runnable#run()
-         */
+        /** {@inheritDoc} */
         @Override
         public void run()
         {
@@ -3155,11 +3089,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
             IJ.log(message);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void mouseClicked(MouseEvent e)
     {

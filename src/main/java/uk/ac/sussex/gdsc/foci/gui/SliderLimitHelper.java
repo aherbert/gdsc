@@ -271,11 +271,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
         return (Double) txtMaximum.getValue();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void actionPerformed(ActionEvent e)
     {

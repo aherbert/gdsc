@@ -80,11 +80,7 @@ public class SpotRadialIntensity implements PlugIn
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.PlugIn#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {

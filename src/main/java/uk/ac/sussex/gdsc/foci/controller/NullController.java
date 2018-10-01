@@ -48,11 +48,7 @@ public class NullController extends FindFociController
         super(model);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#getImageCount()
-     */
+    /** {@inheritDoc} */
     @Override
     public int getImageCount()
     {
@@ -61,11 +57,7 @@ public class NullController extends FindFociController
 
     private final int updateCounter = 0;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#updateImageList()
-     */
+    /** {@inheritDoc} */
     @Override
     public void updateImageList()
     {
@@ -87,44 +79,28 @@ public class NullController extends FindFociController
         upperLimit = rand.nextInt(255 - base) + base;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#run()
-     */
+    /** {@inheritDoc} */
     @Override
     public void run()
     {
         model.setUnchanged();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#preview()
-     */
+    /** {@inheritDoc} */
     @Override
     public void preview()
     {
         System.out.println("FindFoci Preview");
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#endPreview()
-     */
+    /** {@inheritDoc} */
     @Override
     public void endPreview()
     {
         System.out.println("FindFoci EndPreview");
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#getImageLimits(int[])
-     */
+    /** {@inheritDoc} */
     @Override
     public int[] getImageLimits(int[] limits)
     {

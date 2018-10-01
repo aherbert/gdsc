@@ -35,11 +35,7 @@ import uk.ac.sussex.gdsc.UsageTracker;
  */
 public class Contrast_Enhancer implements PlugInFilter
 {
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public int setup(String arg, ImagePlus imp)
     {
@@ -50,11 +46,7 @@ public class Contrast_Enhancer implements PlugInFilter
         return DOES_ALL | NO_CHANGES;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(ImageProcessor inputProcessor)
     {

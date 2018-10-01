@@ -74,11 +74,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
     /** Set to true to log messages. Allow use of plugin from other code. */
     public boolean logMessages = false;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public int setup(String arg, ImagePlus imp)
     {
@@ -93,11 +89,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
         return DOES_8G + DOES_16 + NO_CHANGES;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(ImageProcessor ip)
     {

@@ -4099,11 +4099,7 @@ public class FindFociLegacy
             this.value = value;
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.lang.Comparable#compareTo(java.lang.Object)
-         */
+        /** {@inheritDoc} */
         @Override
         public int compareTo(Coordinate o)
         {
@@ -4119,11 +4115,7 @@ public class FindFociLegacy
 
     private class ResultComparator implements Comparator<int[]>
     {
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-         */
+        /** {@inheritDoc} */
         @Override
         public int compare(int[] o1, int[] o2)
         {
@@ -4164,11 +4156,7 @@ public class FindFociLegacy
             this.sortIndex = sortIndex;
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-         */
+        /** {@inheritDoc} */
         @Override
         public int compare(int[] o1, int[] o2)
         {
@@ -4193,11 +4181,7 @@ public class FindFociLegacy
             this.sortIndex = sortIndex;
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-         */
+        /** {@inheritDoc} */
         @Override
         public int compare(int[] o1, int[] o2)
         {

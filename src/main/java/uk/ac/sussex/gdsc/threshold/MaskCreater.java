@@ -103,11 +103,7 @@ public class MaskCreater implements PlugIn
     private boolean assignObjects = false;
     private boolean eightConnected = false;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.PlugIn#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {

@@ -94,11 +94,7 @@ public class SpotDistance implements PlugIn
             return calXYZ;
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.lang.Comparable#compareTo(java.lang.Object)
-         */
+        /** {@inheritDoc} */
         @Override
         public int compareTo(DistanceResult paramT)
         {

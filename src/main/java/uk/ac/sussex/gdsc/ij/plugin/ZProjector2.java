@@ -196,11 +196,7 @@ public class ZProjector2 extends ZProjectorCopy
         return projImage;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.ZProjectorCopy#doMedianProjection()
-     */
+    /** {@inheritDoc} */
     @Override
     protected ImagePlus doMedianProjection()
     {

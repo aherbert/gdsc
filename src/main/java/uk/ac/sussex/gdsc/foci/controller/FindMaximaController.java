@@ -252,22 +252,14 @@ public class FindMaximaController extends ImageJController
         return stack;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#run()
-     */
+    /** {@inheritDoc} */
     @Override
     public void preview()
     {
         // Do nothing
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.controller.FindFociController#endPreview()
-     */
+    /** {@inheritDoc} */
     @Override
     public void endPreview()
     {

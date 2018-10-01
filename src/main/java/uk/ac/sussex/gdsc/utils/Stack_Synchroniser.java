@@ -102,11 +102,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
         super(TITLE);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.frame.PlugInFrame#run(java.lang.String)
-     */
+    /** {@inheritDoc} */
     @Override
     public void run(String arg)
     {
@@ -145,11 +141,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
         setVisible(true);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.frame.PlugInFrame#windowActivated(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowActivated(WindowEvent e)
     {
@@ -221,11 +213,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.plugin.frame.PlugInFrame#windowClosing(java.awt.event.WindowEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void windowClosing(WindowEvent e)
     {
@@ -328,22 +316,14 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
         return panel;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.ImageListener#imageOpened(ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public void imageOpened(ImagePlus imp)
     {
         fillImagesList();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.ImageListener#imageClosed(ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public void imageClosed(ImagePlus imp)
     {
@@ -354,11 +334,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
         fillImagesList();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see ij.ImageListener#imageUpdated(ij.ImagePlus)
-     */
+    /** {@inheritDoc} */
     @Override
     public void imageUpdated(ImagePlus imp)
     {
@@ -379,11 +355,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void itemStateChanged(ItemEvent e)
     {
@@ -400,11 +372,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
         updateSynchronisation();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see javax.swing.event.ListSelectionListener#valueChanged(javax.swing.event.ListSelectionEvent)
-     */
+    /** {@inheritDoc} */
     @Override
     public void valueChanged(ListSelectionEvent e)
     {

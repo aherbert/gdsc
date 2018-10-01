@@ -38,12 +38,7 @@ import uk.ac.sussex.gdsc.core.threshold.Histogram;
  */
 public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
 {
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociBaseProcessor#getSortedMaxPoints(java.lang.Object, int[], byte[], float,
-     * float)
-     */
+    /** {@inheritDoc} */
     @Override
     protected Coordinate[] getSortedMaxPoints(Object pixels, int[] maxima, byte[] types, float fGlobalMin,
             float fThreshold)
@@ -419,13 +414,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
         return isPlateau;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociBaseProcessor#assignPointsToMaxima(java.lang.Object,
-     * uk.ac.sussex.gdsc.foci.Histogram, byte[],
-     * uk.ac.sussex.gdsc.foci.FindFociStatistics, int[])
-     */
+    /** {@inheritDoc} */
     @Override
     protected void assignPointsToMaxima(Object pixels, Histogram hist, byte[] types, FindFociStatistics stats,
             int[] maxima)
@@ -532,11 +521,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
         //System.out.printf("Processed %d levels [%d steps], %d plateau points\n", levels, processedLevel, nP);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociBaseProcessor#processLevel(byte[], int[], int, int, int[], int)
-     */
+    /** {@inheritDoc} */
     @Override
     protected int processLevel(byte[] types, int[] maxima, int levelStart, int levelNPoints, int[] coordinates,
             int background)
@@ -690,12 +675,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
         return nChanged;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociBaseProcessor#pruneMaxima(java.lang.Object, byte[], int, double,
-     * uk.ac.sussex.gdsc.foci.FindFociStatistics, java.util.ArrayList, int[])
-     */
+    /** {@inheritDoc} */
     @Override
     protected void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
             FindFociStatistics stats, FindFociResult[] resultsArray, int[] maxima)
@@ -722,12 +702,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociBaseProcessor#calculateInitialResults(java.lang.Object, int[],
-     * java.util.ArrayList)
-     */
+    /** {@inheritDoc} */
     @Override
     protected void calculateInitialResults(Object pixels, int[] maxima, FindFociResult[] resultsArray)
     {
@@ -757,12 +732,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociBaseProcessor#calculateNativeResults(java.lang.Object, int[],
-     * java.util.ArrayList, int)
-     */
+    /** {@inheritDoc} */
     @Override
     protected void calculateNativeResults(Object pixels, int[] maxima, FindFociResult[] resultsArray,
             int originalNumberOfPeaks)
@@ -1363,11 +1333,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
         result.intensityAboveSaddle = peakIntensity;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see uk.ac.sussex.gdsc.foci.FindFociBaseProcessor#getIntensityAboveFloor(java.lang.Object, byte[], float)
-     */
+    /** {@inheritDoc} */
     @Override
     protected double getIntensityAboveFloor(Object pixels, byte[] types, final float fFloor)
     {
