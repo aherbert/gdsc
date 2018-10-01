@@ -24,7 +24,6 @@
 package uk.ac.sussex.gdsc.foci;
 
 import java.util.Arrays;
-import java.util.Comparator;
 
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -126,6 +125,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
                 }
         }
         else
+        {
             for (int i = 0; i < image.length; i++)
                 if ((types[i] & EXCLUDED) != 0)
                 {
@@ -133,103 +133,136 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
                     indices[c] = i;
                     c++;
                 }
-        image = Arrays.copyOf(image, c);
-        indices = Arrays.copyOf(indices, c);
+        }
+        if (c < image.length) {
+            image = Arrays.copyOf(image, c);
+            indices = Arrays.copyOf(indices, c);
+        }
         return buildHistogram(image, indices);
     }
 
     /**
-     * Build a histogram using all pixels.
+     * Build a histogram using all pixels up to the specified length.
+     * 
+     * <p>The input arrays are modified. 
      *
-     * @param data
-     *            The image data (must be sorted)
-     * @param indices
-     *            the indices
+     * @param data The image data
+     * @param indices the indices
+     * @param dataLength the length of the data
      * @return The image histogram
      */
     private FloatHistogram buildHistogram(float[] data, int[] indices)
     {
-        // Convert data for sorting
-        final float[][] sortData = new float[indices.length][2];
-        for (int i = indices.length; i-- > 0;)
-        {
-            sortData[i][0] = data[i];
-            sortData[i][1] = indices[i];
-        }
-
-        Arrays.sort(sortData, new Comparator<float[]>()
-        {
-            @Override
-            public int compare(float[] o1, float[] o2)
-            {
-                // Smallest first
-                if (o1[0] > o2[0])
-                    return 1;
-                if (o1[0] < o2[0])
-                    return -1;
-                return 0;
-            }
-        });
-
-        // Copy back
-        for (int i = indices.length; i-- > 0;)
-        {
-            indices[i] = (int) sortData[i][1];
-            data[i] = sortData[i][0];
-        }
+        sortData(data, indices);
 
         float lastValue = data[0];
         int count = 0;
 
         int size = 0;
-        float[] value = new float[data.length];
-        int[] h = new int[data.length];
+        // This can re-use the same array
+        float[] value = data;
+        int[] h = indices;
 
         for (int i = 0; i < data.length; i++)
         {
-            if (lastValue != data[i])
+            final float currentValue = data[i];
+            if (currentValue != lastValue)
             {
-                value[size] = lastValue;
-                h[size] = count;
-                while (count > 0)
+                for (int j = count; j > 0; j--) 
                 {
                     // store the bin for the input indices
-                    bin[indices[i - count]] = size;
-                    count--;
+                    bin[indices[i - j]] = size;
                 }
+                // Since the arrays are reused update after
+                value[size] = lastValue;
+                h[size] = count;
+                count = 0;
                 size++;
             }
-            lastValue = data[i];
+            lastValue = currentValue;
             count++;
         }
         // Final count
-        value[size] = lastValue;
-        h[size] = count;
-        while (count > 0)
+        for (int j = count; j > 0; j--) 
         {
             // store the bin for the input indices
-            bin[indices[data.length - count]] = size;
-            count--;
+            bin[indices[data.length - j]] = size;
         }
+        value[size] = lastValue;
+        h[size] = count;
         size++;
 
-        h = Arrays.copyOf(h, size);
-        value = Arrays.copyOf(value, size);
-
-        //// Check
-        //int total = 0;
-        //for (int i : h)
-        //	total += i;
-        //if (total != data.length)
-        //	throw new RuntimeException("Failed to compute float histogram");
+        // Truncate
+        if (size < value.length) {
+            h = Arrays.copyOf(h, size);
+            value = Arrays.copyOf(value, size);
+        }
 
         return new FloatHistogram(value, h);
+    }
+
+    /**
+     * Custom class for sorting indexes using a float value.
+     */
+    private static final class SortData implements Comparable<SortData>
+    {
+        /** The value. */
+        final float value;
+        /** The index. */
+        final int index;
+
+        /**
+         * Instantiates a new sort data.
+         *
+         * @param value the value
+         * @param index the index
+         */
+        SortData(float value, int index) {
+            this.value = value;
+            this.index = index;
+        }
+
+        @Override
+        public int compareTo(SortData o) {
+            // Smallest first
+            if (value < o.value)
+                return -1;
+            if (value > o.value)
+                return 1;
+            return 0;
+        }
+    }
+
+    /**
+     * Sort the data and indices.
+     *
+     * @param data the data
+     * @param indices the indices
+     * @param dataLength the data length
+     */
+    private static void sortData(float[] data, int[] indices) {
+        // Convert data for sorting.
+        // Preserve integers exactly.
+        final SortData[] sortData = new SortData[data.length];
+        for (int i = data.length; i-- > 0;)
+        {
+            sortData[i] = new SortData(data[i], indices[i]);
+        }
+
+        Arrays.sort(sortData);
+
+        // Copy back
+        for (int i = data.length; i-- > 0;)
+        {
+            data[i] = sortData[i].value;
+            indices[i] = sortData[i].index;
+        }
     }
 
     @Override
     protected Histogram buildHistogram(int bitDepth, Object pixels)
     {
-        return FloatHistogram.buildHistogram(((float[]) pixels).clone(), true);
+        return FloatHistogram.buildHistogram(((float[]) pixels).clone(), true, true);
     }
 
     @Override
@@ -245,7 +278,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
                 if (size == data.length)
                     data = Arrays.copyOf(data, (int) (size * 1.5));
             }
-        return FloatHistogram.buildHistogram(Arrays.copyOf(data, size), true);
+        return FloatHistogram.buildHistogram(Arrays.copyOf(data, size), true, true);
     }
 
     @Override
