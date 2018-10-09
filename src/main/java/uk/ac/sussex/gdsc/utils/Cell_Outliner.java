@@ -1664,7 +1664,6 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
             return newVariables;
         }
 
-        /** {@inheritDoc} */
         @SuppressWarnings("unused")
         public MultivariateMatrixFunction jacobian()
         {
