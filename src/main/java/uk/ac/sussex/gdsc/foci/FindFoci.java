@@ -827,9 +827,18 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor
         if (mySaveToMemory)
             options |= OPTION_SAVE_TO_MEMORY;
 
-        exec(imp, mask, myBackgroundMethod, myBackgroundParameter, myThresholdMethod, mySearchMethod, mySearchParameter,
+        try
+        {
+            exec(imp, mask, myBackgroundMethod, myBackgroundParameter, myThresholdMethod, mySearchMethod, mySearchParameter,
                 myMaxPeaks, myMinSize, myPeakMethod, myPeakParameter, outputType, mySortMethod, options, myGaussianBlur,
                 myCentreMethod, myCentreParameter, myFractionParameter);
+        }
+        catch (final Throwable thrown)
+        {
+            // Because we have no underscore '_' in the class name ImageJ will not print
+            // the error so handle it here
+            IJ.handleException(thrown);
+        }
     }
 
     /**

@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
 import ij.IJ;
 import ij.ImagePlus;
@@ -1836,7 +1837,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
             float threshold)
     {
         final ArrayList<Coordinate> maxPoints = new ArrayList<>(500);
-        int[] pList = null; // working list for expanding local plateaus
+        TIntArrayList pList = new TIntArrayList(); // working list for expanding local plateaus
 
         int id = 0;
         final int[] xyz = new int[3];
@@ -1897,11 +1898,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
                     if (equalNeighbour)
                     {
-                        // Initialise the working list
-                        if (pList == null)
-                            // Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
-                            pList = new int[i + 1];
-
                         // Search the local area marking all equal neighbour points as maximum
                         if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxPoints, pList))
                             // Not a true maximum, ignore this
@@ -1971,11 +1967,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
                     if (equalNeighbour)
                     {
-                        // Initialise the working list
-                        if (pList == null)
-                            // Create an array to hold the rest of the points (worst case scenario for the maxima expansion)
-                            pList = new int[i + 1];
-
                         // Search the local area marking all equal neighbour points as maximum
                         if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxPoints, pList))
                             // Not a true maximum, ignore this
@@ -2065,14 +2056,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
      * @return True if this is a true plateau, false if the plateau reaches a higher point
      */
     protected boolean expandMaximum(int[] maxima, byte[] types, float globalMin, float threshold, int index0, float v0,
-            int id, ArrayList<Coordinate> maxPoints, int[] pList)
+            int id, ArrayList<Coordinate> maxPoints, TIntArrayList pList)
     {
         types[index0] |= LISTED | PLATEAU; // mark first point as listed
         int listI = 0; // index of current search element in the list
-        int listLen = 1; // number of elements in the list
 
         // we create a list of connected points and start the list at the current maximum
-        pList[listI] = index0;
+        pList.resetQuick();
+        pList.add(index0);
 
         // Calculate the center of plateau
         boolean isPlateau = true;
@@ -2081,7 +2072,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         if (is2D())
             do
             {
-                final int index1 = pList[listI];
+                final int index1 = pList.getQuick(listI);
                 getXY(index1, xyz);
                 final int x1 = xyz[0];
                 final int y1 = xyz[1];
@@ -2107,7 +2098,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
                         else if (v2 == v0)
                         {
                             // Add this to the search
-                            pList[listLen++] = index2;
+                            pList.add(index2);
                             types[index2] |= LISTED | PLATEAU;
                         }
                         else
@@ -2116,11 +2107,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
                 listI++;
 
-            } while (listI < listLen && isPlateau);
+            } while (listI < pList.size() && isPlateau);
         else
             do
             {
-                final int index1 = pList[listI];
+                final int index1 = pList.getQuick(listI);
                 getXYZ(index1, xyz);
                 final int x1 = xyz[0];
                 final int y1 = xyz[1];
@@ -2148,7 +2139,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
                         else if (v2 == v0)
                         {
                             // Add this to the search
-                            pList[listLen++] = index2;
+                            pList.add(index2);
                             types[index2] |= LISTED | PLATEAU;
                         }
                         else
@@ -2157,7 +2148,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
                 listI++;
 
-            } while (listI < listLen && isPlateau);
+            } while (listI < pList.size() && isPlateau);
 
         // log("Potential plateau "+ x0 + ","+y0+","+z0+" : "+listLen);
 
@@ -2167,9 +2158,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         double zEqual = 0;
         int nEqual = 0;
         if (isPlateau)
-            for (int i = listLen; i-- > 0;)
+            for (int i = pList.size(); i-- > 0;)
             {
-                getXYZ(pList[i], xyz);
+                getXYZ(pList.getQuick(i), xyz);
                 xEqual += xyz[0];
                 yEqual += xyz[1];
                 zEqual += xyz[2];
@@ -2183,9 +2174,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         int iMax = 0;
 
         // Calculate the maxima origin as the closest pixel to the centre-of-mass
-        for (int i = listLen; i-- > 0;)
+        for (int i = pList.size(); i-- > 0;)
         {
-            final int index = pList[i];
+            final int index = pList.getQuick(i);
             types[index] &= ~LISTED; // reset attributes no longer needed
 
             if (isPlateau)
@@ -2213,7 +2204,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         // Assign the maximum
         if (isPlateau)
         {
-            final int index = pList[iMax];
+            final int index = pList.getQuick(iMax);
             types[index] |= MAXIMUM;
             maxPoints.add(new Coordinate(index, id, v0));
         }
