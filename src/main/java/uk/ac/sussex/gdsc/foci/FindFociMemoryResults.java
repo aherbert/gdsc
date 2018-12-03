@@ -23,11 +23,11 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 import ij.ImagePlus;
 import ij.measure.Calibration;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Contains the results of the FindFoci algorithm saved to memory.

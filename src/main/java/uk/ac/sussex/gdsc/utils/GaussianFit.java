@@ -23,8 +23,8 @@
  */
 package uk.ac.sussex.gdsc.utils;
 
-import java.awt.Rectangle;
-import java.lang.reflect.Method;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -32,8 +32,9 @@ import ij.gui.Roi;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
+
+import java.awt.Rectangle;
+import java.lang.reflect.Method;
 
 /**
  * Fits a circular 2D Gaussian.

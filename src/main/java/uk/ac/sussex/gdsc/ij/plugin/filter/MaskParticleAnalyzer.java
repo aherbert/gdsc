@@ -23,15 +23,7 @@
  */
 package uk.ac.sussex.gdsc.ij.plugin.filter;
 
-import java.awt.Frame;
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -51,7 +43,16 @@ import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+
+import java.awt.Frame;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Extend the ImageJ Particle Analyser to allow the particles to be obtained from an input mask with

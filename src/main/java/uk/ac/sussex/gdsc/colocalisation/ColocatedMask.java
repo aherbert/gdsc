@@ -23,11 +23,13 @@
  */
 package uk.ac.sussex.gdsc.colocalisation;
 
-import java.awt.AWTEvent;
-import java.awt.Checkbox;
-import java.awt.Choice;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.gui.NonBlockingExtendedGenericDialog;
+import uk.ac.sussex.gdsc.core.utils.Settings;
 
 import gnu.trove.list.array.TDoubleArrayList;
+
 import ij.CompositeImage;
 import ij.IJ;
 import ij.ImageListener;
@@ -40,10 +42,10 @@ import ij.plugin.PlugIn;
 import ij.plugin.frame.Recorder;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.ij.gui.NonBlockingExtendedGenericDialog;
-import uk.ac.sussex.gdsc.core.utils.Settings;
+
+import java.awt.AWTEvent;
+import java.awt.Checkbox;
+import java.awt.Choice;
 
 /**
  * Create a colocated mask from two source images using the threshold or minimum display value from

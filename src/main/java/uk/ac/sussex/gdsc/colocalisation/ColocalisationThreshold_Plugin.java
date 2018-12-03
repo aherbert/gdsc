@@ -23,6 +23,27 @@
  */
 package uk.ac.sussex.gdsc.colocalisation;
 
+import uk.ac.sussex.gdsc.UsageTracker;
+
+import ij.IJ;
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GUI;
+import ij.gui.GenericDialog;
+import ij.gui.Plot;
+import ij.gui.PlotWindow;
+import ij.gui.Roi;
+import ij.macro.MacroRunner;
+import ij.plugin.frame.PlugInFrame;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
+import ij.text.TextWindow;
+
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Checkbox;
@@ -46,26 +67,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import javax.swing.JPanel;
-
-import ij.IJ;
-import ij.ImageJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.Prefs;
-import ij.WindowManager;
-import ij.gui.GUI;
-import ij.gui.GenericDialog;
-import ij.gui.Plot;
-import ij.gui.PlotWindow;
-import ij.gui.Roi;
-import ij.macro.MacroRunner;
-import ij.plugin.frame.PlugInFrame;
-import ij.process.ByteProcessor;
-import ij.process.ColorProcessor;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
-import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
  * Compares two images for correlated pixel intensities. If the two images are correlated a search

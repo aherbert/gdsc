@@ -23,10 +23,11 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
+import uk.ac.sussex.gdsc.core.threshold.Histogram;
+
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.core.threshold.Histogram;
 
 /**
  * Find the peak intensity regions of an image.

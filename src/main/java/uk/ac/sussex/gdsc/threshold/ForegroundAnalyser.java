@@ -23,16 +23,6 @@
  */
 package uk.ac.sussex.gdsc.threshold;
 
-import java.awt.Rectangle;
-import java.util.Arrays;
-
-import gnu.trove.list.array.TFloatArrayList;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.gui.Roi;
-import ij.plugin.filter.PlugInFilter;
-import ij.process.ImageProcessor;
-import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.data.procedures.FValueProcedure;
 import uk.ac.sussex.gdsc.core.data.procedures.IValueProcedure;
@@ -45,6 +35,18 @@ import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.FloatHistogram;
 import uk.ac.sussex.gdsc.core.threshold.IntHistogram;
 import uk.ac.sussex.gdsc.core.utils.Statistics;
+
+import gnu.trove.list.array.TFloatArrayList;
+
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.gui.Roi;
+import ij.plugin.filter.PlugInFilter;
+import ij.process.ImageProcessor;
+import ij.text.TextWindow;
+
+import java.awt.Rectangle;
+import java.util.Arrays;
 
 /**
  * Analyses the foreground pixels in an image.

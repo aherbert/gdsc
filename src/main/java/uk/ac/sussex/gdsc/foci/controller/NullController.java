@@ -23,11 +23,11 @@
  */
 package uk.ac.sussex.gdsc.foci.controller;
 
+import uk.ac.sussex.gdsc.foci.model.FindFociModel;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
-import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 /**
  * Dummy controller that provides stub functionality to

@@ -23,19 +23,20 @@
  */
 package uk.ac.sussex.gdsc.foci.controller;
 
-import java.util.ArrayList;
-import java.util.List;
+import uk.ac.sussex.gdsc.foci.FindFoci;
+import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.FindFociResult;
+import uk.ac.sussex.gdsc.foci.FindFociResults;
+import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.foci.FindFoci;
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
-import uk.ac.sussex.gdsc.foci.FindFociResult;
-import uk.ac.sussex.gdsc.foci.FindFociResults;
-import uk.ac.sussex.gdsc.foci.model.FindFociModel;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci } algorithm and return the

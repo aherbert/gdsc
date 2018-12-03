@@ -23,13 +23,14 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.util.Arrays;
+import uk.ac.sussex.gdsc.core.threshold.FloatHistogram;
+import uk.ac.sussex.gdsc.core.threshold.Histogram;
 
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.core.threshold.FloatHistogram;
-import uk.ac.sussex.gdsc.core.threshold.Histogram;
+
+import java.util.Arrays;
 
 /**
  * Find the peak intensity regions of an image.

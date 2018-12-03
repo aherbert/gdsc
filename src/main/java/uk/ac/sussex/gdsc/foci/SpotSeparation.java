@@ -23,12 +23,10 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.awt.Frame;
-import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.utils.SortUtils;
+import uk.ac.sussex.gdsc.help.URL;
+import uk.ac.sussex.gdsc.threshold.ThreadAnalyser;
 
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -40,10 +38,13 @@ import ij.measure.Calibration;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.utils.SortUtils;
-import uk.ac.sussex.gdsc.help.URL;
-import uk.ac.sussex.gdsc.threshold.ThreadAnalyser;
+
+import java.awt.Frame;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Finds spots in an image. Locates the closest neighbour spot within a radius and produces a line

@@ -23,17 +23,21 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.awt.AWTEvent;
-import java.awt.Color;
-import java.awt.Label;
-import java.awt.Point;
-import java.awt.image.ColorModel;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.clustering.Cluster;
+import uk.ac.sussex.gdsc.core.clustering.ClusterPoint;
+import uk.ac.sussex.gdsc.core.clustering.ClusteringAlgorithm;
+import uk.ac.sussex.gdsc.core.clustering.ClusteringEngine;
+import uk.ac.sussex.gdsc.core.ij.ImageJTrackProgress;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
+import uk.ac.sussex.gdsc.core.match.Coordinate;
+import uk.ac.sussex.gdsc.core.match.MatchCalculator;
+import uk.ac.sussex.gdsc.core.match.MatchResult;
+import uk.ac.sussex.gdsc.core.match.PointPair;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
+import uk.ac.sussex.gdsc.help.URL;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -49,21 +53,18 @@ import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.clustering.Cluster;
-import uk.ac.sussex.gdsc.core.clustering.ClusterPoint;
-import uk.ac.sussex.gdsc.core.clustering.ClusteringAlgorithm;
-import uk.ac.sussex.gdsc.core.clustering.ClusteringEngine;
-import uk.ac.sussex.gdsc.core.ij.ImageJTrackProgress;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
-import uk.ac.sussex.gdsc.core.match.Coordinate;
-import uk.ac.sussex.gdsc.core.match.MatchCalculator;
-import uk.ac.sussex.gdsc.core.match.MatchResult;
-import uk.ac.sussex.gdsc.core.match.PointPair;
-import uk.ac.sussex.gdsc.core.utils.TextUtils;
-import uk.ac.sussex.gdsc.help.URL;
+
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Label;
+import java.awt.Point;
+import java.awt.image.ColorModel;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Performs clustering on the latest Find Foci result held in memory. Optionally can draw the

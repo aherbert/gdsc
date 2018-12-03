@@ -23,11 +23,12 @@
  */
 package uk.ac.sussex.gdsc.utils;
 
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.ij.plugin.filter.MaskParticleAnalyzer;
+
 import ij.ImagePlus;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.ij.plugin.filter.MaskParticleAnalyzer;
 
 /**
  * Pass through class allowing the {@link uk.ac.sussex.gdsc.ij.plugin.filter.MaskParticleAnalyzer }

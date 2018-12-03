@@ -23,21 +23,21 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.awt.Color;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.data.utils.Rounder;
+import uk.ac.sussex.gdsc.core.data.utils.RounderUtils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.match.Coordinate;
+import uk.ac.sussex.gdsc.core.match.MatchCalculator;
+import uk.ac.sussex.gdsc.core.match.MatchResult;
+import uk.ac.sussex.gdsc.core.match.PointPair;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.TurboList;
 
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.procedure.TIntObjectProcedure;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -52,16 +52,18 @@ import ij.plugin.PlugIn;
 import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.data.utils.Rounder;
-import uk.ac.sussex.gdsc.core.data.utils.RounderUtils;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.core.match.Coordinate;
-import uk.ac.sussex.gdsc.core.match.MatchCalculator;
-import uk.ac.sussex.gdsc.core.match.MatchResult;
-import uk.ac.sussex.gdsc.core.match.PointPair;
-import uk.ac.sussex.gdsc.core.utils.TurboList;
+
+import java.awt.Color;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Compares the ROI points on two images and computes the match statistics.

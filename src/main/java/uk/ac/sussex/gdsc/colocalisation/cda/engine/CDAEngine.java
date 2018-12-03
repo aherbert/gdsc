@@ -23,13 +23,13 @@
  */
 package uk.ac.sussex.gdsc.colocalisation.cda.engine;
 
+import ij.ImageStack;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-
-import ij.ImageStack;
 
 /**
  * Performs the Confined Displacement Algorithm (CDA). <p> Multi-threaded for speed. Uses a

@@ -23,6 +23,43 @@
  */
 package uk.ac.sussex.gdsc.foci.gui;
 
+import uk.ac.sussex.gdsc.foci.FindFoci;
+import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.controller.FindFociController;
+import uk.ac.sussex.gdsc.foci.controller.MessageListener;
+import uk.ac.sussex.gdsc.foci.controller.NullController;
+import uk.ac.sussex.gdsc.foci.converter.BackgroundMethodConverter;
+import uk.ac.sussex.gdsc.foci.converter.BackgroundParamAbsoluteDisabledConverter;
+import uk.ac.sussex.gdsc.foci.converter.BackgroundParamAbsoluteEnabledConverter;
+import uk.ac.sussex.gdsc.foci.converter.BackgroundParamEnabledConverter;
+import uk.ac.sussex.gdsc.foci.converter.BackgroundThresholdMethodEnabledConverter;
+import uk.ac.sussex.gdsc.foci.converter.DoubleConverter;
+import uk.ac.sussex.gdsc.foci.converter.PeakMethodConverter;
+import uk.ac.sussex.gdsc.foci.converter.PeakParamAbsoluteDisabledConverter;
+import uk.ac.sussex.gdsc.foci.converter.PeakParamAbsoluteEnabledConverter;
+import uk.ac.sussex.gdsc.foci.converter.SearchMethodConverter;
+import uk.ac.sussex.gdsc.foci.converter.SearchParamEnabledConverter;
+import uk.ac.sussex.gdsc.foci.converter.ShowMaskConverter;
+import uk.ac.sussex.gdsc.foci.converter.SliderConverter;
+import uk.ac.sussex.gdsc.foci.converter.SliderDoubleConverter;
+import uk.ac.sussex.gdsc.foci.converter.SortMethodColorConverter;
+import uk.ac.sussex.gdsc.foci.converter.SortMethodConverter;
+import uk.ac.sussex.gdsc.foci.converter.StatisticsModeParamEnabledConverter;
+import uk.ac.sussex.gdsc.foci.converter.ValidImagesConverter;
+import uk.ac.sussex.gdsc.foci.model.FindFociModel;
+import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
+
+import ij.IJ;
+import ij.macro.MacroRunner;
+
+import org.jdesktop.beansbinding.AutoBinding;
+import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
+import org.jdesktop.beansbinding.BeanProperty;
+import org.jdesktop.beansbinding.Bindings;
+import org.jdesktop.beansbinding.ELProperty;
+import org.jdesktop.swingbinding.JComboBoxBinding;
+import org.jdesktop.swingbinding.SwingBindings;
+
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -59,42 +96,6 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import org.jdesktop.beansbinding.AutoBinding;
-import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
-import org.jdesktop.beansbinding.BeanProperty;
-import org.jdesktop.beansbinding.Bindings;
-import org.jdesktop.beansbinding.ELProperty;
-import org.jdesktop.swingbinding.JComboBoxBinding;
-import org.jdesktop.swingbinding.SwingBindings;
-
-import ij.IJ;
-import ij.macro.MacroRunner;
-import uk.ac.sussex.gdsc.foci.FindFoci;
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
-import uk.ac.sussex.gdsc.foci.controller.FindFociController;
-import uk.ac.sussex.gdsc.foci.controller.MessageListener;
-import uk.ac.sussex.gdsc.foci.controller.NullController;
-import uk.ac.sussex.gdsc.foci.converter.BackgroundMethodConverter;
-import uk.ac.sussex.gdsc.foci.converter.BackgroundParamAbsoluteDisabledConverter;
-import uk.ac.sussex.gdsc.foci.converter.BackgroundParamAbsoluteEnabledConverter;
-import uk.ac.sussex.gdsc.foci.converter.BackgroundParamEnabledConverter;
-import uk.ac.sussex.gdsc.foci.converter.BackgroundThresholdMethodEnabledConverter;
-import uk.ac.sussex.gdsc.foci.converter.DoubleConverter;
-import uk.ac.sussex.gdsc.foci.converter.PeakMethodConverter;
-import uk.ac.sussex.gdsc.foci.converter.PeakParamAbsoluteDisabledConverter;
-import uk.ac.sussex.gdsc.foci.converter.PeakParamAbsoluteEnabledConverter;
-import uk.ac.sussex.gdsc.foci.converter.SearchMethodConverter;
-import uk.ac.sussex.gdsc.foci.converter.SearchParamEnabledConverter;
-import uk.ac.sussex.gdsc.foci.converter.ShowMaskConverter;
-import uk.ac.sussex.gdsc.foci.converter.SliderConverter;
-import uk.ac.sussex.gdsc.foci.converter.SliderDoubleConverter;
-import uk.ac.sussex.gdsc.foci.converter.SortMethodColorConverter;
-import uk.ac.sussex.gdsc.foci.converter.SortMethodConverter;
-import uk.ac.sussex.gdsc.foci.converter.StatisticsModeParamEnabledConverter;
-import uk.ac.sussex.gdsc.foci.converter.ValidImagesConverter;
-import uk.ac.sussex.gdsc.foci.model.FindFociModel;
-import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
 
 /**
  * Provides a permanent form front-end for the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.

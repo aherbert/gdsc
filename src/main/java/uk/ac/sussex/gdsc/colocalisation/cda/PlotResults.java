@@ -23,9 +23,9 @@
  */
 package uk.ac.sussex.gdsc.colocalisation.cda;
 
-import java.awt.Color;
-
 import ij.gui.Plot;
+
+import java.awt.Color;
 
 /**
  * Provides functionality to plot a histogram of sample data and then determine if a value is

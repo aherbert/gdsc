@@ -23,17 +23,17 @@
  */
 package uk.ac.sussex.gdsc.ij.gui;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Polygon;
-import java.util.Arrays;
-
 import ij.ImagePlus;
 import ij.Prefs;
 import ij.gui.PointRoi;
 import ij.process.FloatPolygon;
 import ij.util.Java2;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Polygon;
+import java.util.Arrays;
 
 /**
  * Extend the {@link PointRoi} class to allow custom number labels for each point.

@@ -23,8 +23,9 @@
  */
 package uk.ac.sussex.gdsc.threshold;
 
-import java.io.File;
-import java.io.FilenameFilter;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -33,9 +34,9 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+
+import java.io.File;
+import java.io.FilenameFilter;
 
 /**
  * For all the RGB images in one directory, look for a matching image in a second directory that has

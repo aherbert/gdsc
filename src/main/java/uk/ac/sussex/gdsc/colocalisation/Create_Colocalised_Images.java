@@ -23,7 +23,7 @@
  */
 package uk.ac.sussex.gdsc.colocalisation;
 
-import java.util.Random;
+import uk.ac.sussex.gdsc.UsageTracker;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -33,7 +33,8 @@ import ij.plugin.filter.GaussianBlur;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
+
+import java.util.Random;
 
 /**
  * Create some dummy images to test for colocalisation.

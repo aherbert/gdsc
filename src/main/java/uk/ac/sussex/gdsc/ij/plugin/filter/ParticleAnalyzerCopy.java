@@ -23,14 +23,6 @@
  */
 package uk.ac.sussex.gdsc.ij.plugin.filter;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Frame;
-import java.awt.Polygon;
-import java.awt.Rectangle;
-import java.awt.image.IndexColorModel;
-import java.util.Properties;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -68,6 +60,14 @@ import ij.process.ShortStatistics;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
 import ij.util.Tools;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.image.IndexColorModel;
+import java.util.Properties;
 
 /**
  * A copy of ImageJ's Analyze Particles command. Copied from

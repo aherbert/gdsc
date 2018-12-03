@@ -23,12 +23,11 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.awt.Color;
-import java.awt.Point;
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
+import uk.ac.sussex.gdsc.help.URL;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -41,11 +40,13 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.core.utils.TextUtils;
-import uk.ac.sussex.gdsc.help.URL;
+
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+
+import java.awt.Color;
+import java.awt.Point;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Finds objects in an image using contiguous pixels of the same value. Locates the closest object

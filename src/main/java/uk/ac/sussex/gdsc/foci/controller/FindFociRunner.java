@@ -23,11 +23,6 @@
  */
 package uk.ac.sussex.gdsc.foci.controller;
 
-import java.util.ArrayList;
-
-import ij.IJ;
-import ij.ImagePlus;
-import ij.WindowManager;
 import uk.ac.sussex.gdsc.foci.FindFoci;
 import uk.ac.sussex.gdsc.foci.FindFociBaseProcessor;
 import uk.ac.sussex.gdsc.foci.FindFociInitResults;
@@ -41,6 +36,12 @@ import uk.ac.sussex.gdsc.foci.FindFociSearchResults;
 import uk.ac.sussex.gdsc.foci.controller.MessageListener.MessageType;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 import uk.ac.sussex.gdsc.foci.model.FindFociState;
+
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+
+import java.util.ArrayList;
 
 /**
  * Runs the {@link uk.ac.sussex.gdsc.foci.FindFoci } algorithm using input from a synchronised

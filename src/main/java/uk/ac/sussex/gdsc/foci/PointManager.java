@@ -23,6 +23,12 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
+import uk.ac.sussex.gdsc.core.match.Coordinate;
+
+import ij.gui.PointRoi;
+import ij.gui.PolygonRoi;
+import ij.gui.Roi;
+
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.io.BufferedReader;
@@ -34,11 +40,6 @@ import java.io.OutputStreamWriter;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-
-import ij.gui.PointRoi;
-import ij.gui.PolygonRoi;
-import ij.gui.Roi;
-import uk.ac.sussex.gdsc.core.match.Coordinate;
 
 /**
  * Manages I/O of the {@link AssignedPoint} class.

@@ -23,12 +23,13 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.awt.Color;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.match.MatchCalculator;
+import uk.ac.sussex.gdsc.core.match.PointPair;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.ij.plugin.filter.DifferenceOfGaussians;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -45,13 +46,13 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.core.match.MatchCalculator;
-import uk.ac.sussex.gdsc.core.match.PointPair;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.ij.plugin.filter.DifferenceOfGaussians;
+
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Output the distances between spots within a mask region. <P> For each mask region a Difference of

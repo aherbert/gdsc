@@ -23,9 +23,9 @@
  */
 package uk.ac.sussex.gdsc.foci.converter;
 
-import java.awt.Color;
-
 import org.jdesktop.beansbinding.Converter;
+
+import java.awt.Color;
 
 /**
  * Convert the sort method to a colour.

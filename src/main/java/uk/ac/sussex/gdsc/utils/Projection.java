@@ -23,11 +23,12 @@
  */
 package uk.ac.sussex.gdsc.utils;
 
+import uk.ac.sussex.gdsc.UsageTracker;
+
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
  * Provides methods to filter the image in the z-axis for better 3-D projections. Performs a local

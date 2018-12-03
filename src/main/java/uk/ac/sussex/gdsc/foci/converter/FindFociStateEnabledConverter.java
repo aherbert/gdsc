@@ -23,9 +23,9 @@
  */
 package uk.ac.sussex.gdsc.foci.converter;
 
-import org.jdesktop.beansbinding.Converter;
-
 import uk.ac.sussex.gdsc.foci.model.FindFociState;
+
+import org.jdesktop.beansbinding.Converter;
 
 /**
  * Convert the FindFoci state to a flag indicating if it is not complete.

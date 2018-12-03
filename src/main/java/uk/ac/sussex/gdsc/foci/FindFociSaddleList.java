@@ -23,10 +23,10 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
+import gnu.trove.set.hash.TIntHashSet;
+
 import java.util.Arrays;
 import java.util.Comparator;
-
-import gnu.trove.set.hash.TIntHashSet;
 
 /**
  * Contains the foci saddle results of the FindFoci algorithm.

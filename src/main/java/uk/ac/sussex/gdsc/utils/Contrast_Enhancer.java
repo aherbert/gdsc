@@ -23,12 +23,13 @@
  */
 package uk.ac.sussex.gdsc.utils;
 
+import uk.ac.sussex.gdsc.UsageTracker;
+
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.plugin.ContrastEnhancer;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
  * Runs the contrast enhancer on all the open images.

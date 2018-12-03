@@ -23,11 +23,12 @@
  */
 package uk.ac.sussex.gdsc.utils;
 
+import uk.ac.sussex.gdsc.UsageTracker;
+
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import ij.process.FloatProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
  * Creates a Gaussian image.

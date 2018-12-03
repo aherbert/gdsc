@@ -23,13 +23,8 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.awt.Canvas;
-import java.awt.Color;
-import java.awt.Point;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -45,8 +40,14 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Output the density around spots within a mask region. Spots are defined using FindFoci results

@@ -23,7 +23,8 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.util.ArrayList;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -33,8 +34,8 @@ import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+
+import java.util.ArrayList;
 
 /**
  * Compares two masks created using the Mask Segregator with pixels of AB and A'B' and creates a new

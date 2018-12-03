@@ -23,6 +23,27 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.match.Coordinate;
+import uk.ac.sussex.gdsc.core.match.MatchCalculator;
+import uk.ac.sussex.gdsc.core.match.MatchResult;
+import uk.ac.sussex.gdsc.core.match.PointPair;
+
+import gnu.trove.set.hash.TIntHashSet;
+
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.Overlay;
+import ij.gui.PointRoi;
+import ij.io.OpenDialog;
+import ij.plugin.PlugIn;
+import ij.process.ImageProcessor;
+import ij.text.TextWindow;
+
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.TextField;
@@ -37,25 +58,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-
-import gnu.trove.set.hash.TIntHashSet;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
-import ij.gui.Overlay;
-import ij.gui.PointRoi;
-import ij.io.OpenDialog;
-import ij.plugin.PlugIn;
-import ij.process.ImageProcessor;
-import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.match.Coordinate;
-import uk.ac.sussex.gdsc.core.match.MatchCalculator;
-import uk.ac.sussex.gdsc.core.match.MatchResult;
-import uk.ac.sussex.gdsc.core.match.PointPair;
 
 /**
  * Compares the coordinates in two files and computes the match statistics. <p> Can read QuickPALM

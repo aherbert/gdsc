@@ -23,9 +23,7 @@
  */
 package uk.ac.sussex.gdsc.utils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import uk.ac.sussex.gdsc.UsageTracker;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -36,7 +34,10 @@ import ij.measure.Measurements;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-import uk.ac.sussex.gdsc.UsageTracker;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 
 /**
  * Scales all planes in an image to the given maximum.

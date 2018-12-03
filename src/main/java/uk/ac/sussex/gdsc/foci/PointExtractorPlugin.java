@@ -23,9 +23,9 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -37,9 +37,10 @@ import ij.gui.Roi;
 import ij.plugin.filter.PlugInFilter;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.utils.TextUtils;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Extracts the ROI points from an image to file.

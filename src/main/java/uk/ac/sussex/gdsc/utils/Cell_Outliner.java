@@ -23,26 +23,7 @@
  */
 package uk.ac.sussex.gdsc.utils;
 
-import java.awt.AWTEvent;
-import java.awt.Color;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.image.IndexColorModel;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-
-import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
-import org.apache.commons.math3.analysis.MultivariateVectorFunction;
-import org.apache.commons.math3.fitting.leastsquares.LeastSquaresBuilder;
-import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer.Optimum;
-import org.apache.commons.math3.fitting.leastsquares.LeastSquaresProblem;
-import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
-import org.apache.commons.math3.linear.DiagonalMatrix;
-import org.apache.commons.math3.optim.ConvergenceChecker;
-import org.apache.commons.math3.optim.PointVectorValuePair;
-import org.apache.commons.math3.optim.SimplePointChecker;
-import org.apache.commons.math3.util.Precision;
+import uk.ac.sussex.gdsc.UsageTracker;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -66,7 +47,27 @@ import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
+
+import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
+import org.apache.commons.math3.analysis.MultivariateVectorFunction;
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresBuilder;
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer.Optimum;
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresProblem;
+import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
+import org.apache.commons.math3.linear.DiagonalMatrix;
+import org.apache.commons.math3.optim.ConvergenceChecker;
+import org.apache.commons.math3.optim.PointVectorValuePair;
+import org.apache.commons.math3.optim.SimplePointChecker;
+import org.apache.commons.math3.util.Precision;
+
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.image.IndexColorModel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * Outlines a circular cell using the optimal path through a membrane scoring map. <p> The centre of

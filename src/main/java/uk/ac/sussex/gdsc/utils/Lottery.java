@@ -23,14 +23,15 @@
  */
 package uk.ac.sussex.gdsc.utils;
 
-import org.apache.commons.math3.random.RandomGenerator;
-import org.apache.commons.math3.random.Well44497b;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 
 import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+
+import org.apache.commons.math3.random.RandomGenerator;
+import org.apache.commons.math3.random.Well44497b;
 
 /**
  * Computes the odds of winning the lottery using random sampling.

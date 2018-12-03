@@ -23,6 +23,43 @@
  */
 package uk.ac.sussex.gdsc.foci.gui;
 
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.foci.AssignedPoint;
+import uk.ac.sussex.gdsc.foci.FindFoci;
+import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.FindFociResult;
+import uk.ac.sussex.gdsc.foci.GridException;
+import uk.ac.sussex.gdsc.foci.GridPoint;
+import uk.ac.sussex.gdsc.foci.GridPointManager;
+import uk.ac.sussex.gdsc.foci.MatchPlugin;
+import uk.ac.sussex.gdsc.foci.PointAlignerPlugin;
+import uk.ac.sussex.gdsc.foci.PointManager;
+import uk.ac.sussex.gdsc.foci.controller.FindMaximaController;
+import uk.ac.sussex.gdsc.foci.converter.SearchModeConverter;
+import uk.ac.sussex.gdsc.foci.converter.StringToBooleanConverter;
+import uk.ac.sussex.gdsc.foci.converter.ValidImagesConverter;
+import uk.ac.sussex.gdsc.foci.model.FindFociModel;
+import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
+
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.ImageCanvas;
+import ij.gui.PointRoi;
+import ij.gui.PolygonRoi;
+import ij.gui.Roi;
+import ij.macro.MacroRunner;
+import ij.measure.Calibration;
+import ij.text.TextWindow;
+
+import org.jdesktop.beansbinding.AutoBinding;
+import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
+import org.jdesktop.beansbinding.BeanProperty;
+import org.jdesktop.beansbinding.Bindings;
+import org.jdesktop.swingbinding.JComboBoxBinding;
+import org.jdesktop.swingbinding.SwingBindings;
+
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
@@ -62,42 +99,6 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-
-import org.jdesktop.beansbinding.AutoBinding;
-import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
-import org.jdesktop.beansbinding.BeanProperty;
-import org.jdesktop.beansbinding.Bindings;
-import org.jdesktop.swingbinding.JComboBoxBinding;
-import org.jdesktop.swingbinding.SwingBindings;
-
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.WindowManager;
-import ij.gui.ImageCanvas;
-import ij.gui.PointRoi;
-import ij.gui.PolygonRoi;
-import ij.gui.Roi;
-import ij.macro.MacroRunner;
-import ij.measure.Calibration;
-import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.foci.AssignedPoint;
-import uk.ac.sussex.gdsc.foci.FindFoci;
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
-import uk.ac.sussex.gdsc.foci.FindFociResult;
-import uk.ac.sussex.gdsc.foci.GridException;
-import uk.ac.sussex.gdsc.foci.GridPoint;
-import uk.ac.sussex.gdsc.foci.GridPointManager;
-import uk.ac.sussex.gdsc.foci.MatchPlugin;
-import uk.ac.sussex.gdsc.foci.PointAlignerPlugin;
-import uk.ac.sussex.gdsc.foci.PointManager;
-import uk.ac.sussex.gdsc.foci.controller.FindMaximaController;
-import uk.ac.sussex.gdsc.foci.converter.SearchModeConverter;
-import uk.ac.sussex.gdsc.foci.converter.StringToBooleanConverter;
-import uk.ac.sussex.gdsc.foci.converter.ValidImagesConverter;
-import uk.ac.sussex.gdsc.foci.model.FindFociModel;
-import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
 
 /**
  * Provides a permanent form front-end that allows the user to pick ROI points and have them mapped

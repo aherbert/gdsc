@@ -23,8 +23,10 @@
  */
 package uk.ac.sussex.gdsc.utils;
 
-import java.awt.Rectangle;
-import java.util.ArrayList;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
+import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
+import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -32,10 +34,9 @@ import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
-import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
-import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
+
+import java.awt.Rectangle;
+import java.util.ArrayList;
 
 /**
  * Aligns an image stack to a reference image using XY translation to maximise the correlation.

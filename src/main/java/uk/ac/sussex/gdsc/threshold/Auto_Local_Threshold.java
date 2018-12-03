@@ -23,6 +23,8 @@
  */
 package uk.ac.sussex.gdsc.threshold;
 
+import uk.ac.sussex.gdsc.UsageTracker;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -37,7 +39,6 @@ import ij.plugin.filter.RankFilters;
 import ij.process.Blitter;
 import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
 
 // AutoLocalThreshold segmentation
 // Following the guidelines at http://pacific.mpi-cbg.de/wiki/index.php/PlugIn_Design_Guidelines

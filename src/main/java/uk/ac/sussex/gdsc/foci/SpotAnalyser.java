@@ -23,13 +23,8 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.awt.AWTEvent;
-import java.awt.Label;
-
-import org.apache.commons.math3.exception.NumberIsTooSmallException;
-import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.apache.commons.math3.stat.inference.TestUtils;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -47,8 +42,14 @@ import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+
+import org.apache.commons.math3.exception.NumberIsTooSmallException;
+import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.inference.TestUtils;
+
+import java.awt.AWTEvent;
+import java.awt.Label;
 
 /**
  * Analyses the intensity of each channel within the brightest spot of the selected channel. <P>

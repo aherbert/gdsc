@@ -23,6 +23,17 @@
  */
 package uk.ac.sussex.gdsc.utils;
 
+import uk.ac.sussex.gdsc.UsageTracker;
+
+import ij.IJ;
+import ij.ImageListener;
+import ij.ImagePlus;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GUI;
+import ij.macro.MacroRunner;
+import ij.plugin.frame.PlugInFrame;
+
 import java.awt.BorderLayout;
 import java.awt.Choice;
 import java.awt.Component;
@@ -50,16 +61,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
-import ij.IJ;
-import ij.ImageListener;
-import ij.ImagePlus;
-import ij.Prefs;
-import ij.WindowManager;
-import ij.gui.GUI;
-import ij.macro.MacroRunner;
-import ij.plugin.frame.PlugInFrame;
-import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
  * Provides the ability to synchronise the display frame of multiple stack windows. <p>

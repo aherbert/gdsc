@@ -23,14 +23,14 @@
  */
 package uk.ac.sussex.gdsc.colocalisation.cda;
 
+import ij.gui.PlotWindow;
+import ij.process.ImageStatistics;
+
 import java.awt.GridLayout;
 import java.awt.Label;
 import java.awt.Panel;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-
-import ij.gui.PlotWindow;
-import ij.process.ImageStatistics;
 
 /**
  * Wraps the plot window of a PlotResults object. Adds a panel to the bottom containing the

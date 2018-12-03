@@ -23,14 +23,14 @@
  */
 package uk.ac.sussex.gdsc.foci.model;
 
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.foci.FindFoci;
+import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
-
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.foci.FindFoci;
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
 
 /**
  * Provides a bean property model for the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.

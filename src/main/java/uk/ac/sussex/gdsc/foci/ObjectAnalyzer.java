@@ -23,12 +23,12 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.util.Arrays;
-
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+
+import java.util.Arrays;
 
 /**
  * Find objects defined by contiguous pixels of the same value.

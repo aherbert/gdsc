@@ -23,14 +23,8 @@
  */
 package uk.ac.sussex.gdsc.utils;
 
-import java.awt.Checkbox;
-import java.awt.Component;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Label;
-import java.awt.Point;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -45,8 +39,15 @@ import ij.measure.Calibration;
 import ij.plugin.MacroInstaller;
 import ij.plugin.frame.PlugInFrame;
 import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
+
+import java.awt.Checkbox;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Label;
+import java.awt.Point;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * Measures the distance between two consecutive points in XYZ.

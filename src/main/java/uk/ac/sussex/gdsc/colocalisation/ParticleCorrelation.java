@@ -23,12 +23,10 @@
  */
 package uk.ac.sussex.gdsc.colocalisation;
 
-import java.awt.Color;
-import java.awt.Point;
-
-import org.apache.commons.math3.linear.BlockRealMatrix;
-import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
-import org.apache.commons.math3.stat.correlation.SpearmansCorrelation;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.foci.ObjectAnalyzer3D;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -41,10 +39,13 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.foci.ObjectAnalyzer3D;
+
+import org.apache.commons.math3.linear.BlockRealMatrix;
+import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
+import org.apache.commons.math3.stat.correlation.SpearmansCorrelation;
+
+import java.awt.Color;
+import java.awt.Point;
 
 /**
  * For all particles in a mask (defined by their unique pixel value), sum the pixel intensity in two

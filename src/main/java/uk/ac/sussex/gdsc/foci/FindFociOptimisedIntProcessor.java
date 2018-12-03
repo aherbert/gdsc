@@ -23,14 +23,16 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.threshold.Histogram;
+
+import gnu.trove.list.array.TIntArrayList;
+
+import ij.IJ;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-
-import gnu.trove.list.array.TIntArrayList;
-import ij.IJ;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.threshold.Histogram;
 
 /**
  * Find the peak intensity regions of an image. <P> Extends the FindFociIntProcessor to override the

@@ -23,8 +23,7 @@
  */
 package uk.ac.sussex.gdsc.utils;
 
-import java.awt.Rectangle;
-import java.util.ArrayList;
+import uk.ac.sussex.gdsc.UsageTracker;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -37,7 +36,9 @@ import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-import uk.ac.sussex.gdsc.UsageTracker;
+
+import java.awt.Rectangle;
+import java.util.ArrayList;
 
 /**
  * Aligns an image stack to a reference image using XY translation to maximise the normalised

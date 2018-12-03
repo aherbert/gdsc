@@ -23,7 +23,8 @@
  */
 package uk.ac.sussex.gdsc.threshold;
 
-import java.util.ArrayList;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -32,8 +33,8 @@ import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+
+import java.util.ArrayList;
 
 /**
  * Processes an image stack and applies thresholding to create a mask for each channel+frame

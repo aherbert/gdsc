@@ -23,9 +23,9 @@
  */
 package uk.ac.sussex.gdsc.foci.converter;
 
-import org.jdesktop.beansbinding.Converter;
-
 import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+
+import org.jdesktop.beansbinding.Converter;
 
 /**
  * Convert the peak search method to a flag indicating if absolute is disabled.

@@ -23,8 +23,6 @@
  */
 package uk.ac.sussex.gdsc.ij.plugin;
 
-import java.util.Arrays;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -36,6 +34,8 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
+
+import java.util.Arrays;
 
 /**
  * Extend the ZProjector to support mode intensity projection. <p> Note: This class extends a copy

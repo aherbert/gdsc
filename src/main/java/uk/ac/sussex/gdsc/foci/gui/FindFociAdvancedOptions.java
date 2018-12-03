@@ -23,6 +23,20 @@
  */
 package uk.ac.sussex.gdsc.foci.gui;
 
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.foci.FindFoci;
+import uk.ac.sussex.gdsc.foci.converter.CentreMethodConverter;
+import uk.ac.sussex.gdsc.foci.converter.CentreParamEnabledConverter;
+import uk.ac.sussex.gdsc.foci.converter.DoubleConverter;
+import uk.ac.sussex.gdsc.foci.converter.SliderDoubleConverter;
+import uk.ac.sussex.gdsc.foci.model.FindFociModel;
+import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
+
+import org.jdesktop.beansbinding.AutoBinding;
+import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
+import org.jdesktop.beansbinding.BeanProperty;
+import org.jdesktop.beansbinding.Bindings;
+
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -52,20 +66,6 @@ import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import org.jdesktop.beansbinding.AutoBinding;
-import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
-import org.jdesktop.beansbinding.BeanProperty;
-import org.jdesktop.beansbinding.Bindings;
-
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.foci.FindFoci;
-import uk.ac.sussex.gdsc.foci.converter.CentreMethodConverter;
-import uk.ac.sussex.gdsc.foci.converter.CentreParamEnabledConverter;
-import uk.ac.sussex.gdsc.foci.converter.DoubleConverter;
-import uk.ac.sussex.gdsc.foci.converter.SliderDoubleConverter;
-import uk.ac.sussex.gdsc.foci.model.FindFociModel;
-import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
 
 /**
  * Provides additional options for the {@link FindFociView}.

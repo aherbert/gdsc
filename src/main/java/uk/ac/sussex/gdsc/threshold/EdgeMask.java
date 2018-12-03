@@ -23,15 +23,9 @@
  */
 package uk.ac.sussex.gdsc.threshold;
 
-import java.awt.AWTEvent;
-import java.awt.Rectangle;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 
 import ij.IJ;
 import ij.ImageJ;
@@ -49,6 +43,17 @@ import ij.process.FloatProcessor;
 import ij.process.FloodFiller;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+
+import java.awt.AWTEvent;
+import java.awt.Rectangle;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import imagescience.ImageScience;
 import imagescience.feature.Edges;
 import imagescience.feature.Laplacian;
@@ -58,9 +63,6 @@ import imagescience.image.Image;
 import imagescience.segment.Thresholder;
 import imagescience.segment.ZeroCrosser;
 import imagescience.utility.VersionChecker;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 
 /**
  * Create an edge mask from an image. <p> Computes the Laplacian zero crossing points of an image

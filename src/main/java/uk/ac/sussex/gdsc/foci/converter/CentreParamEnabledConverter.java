@@ -23,9 +23,9 @@
  */
 package uk.ac.sussex.gdsc.foci.converter;
 
-import org.jdesktop.beansbinding.Converter;
-
 import uk.ac.sussex.gdsc.foci.FindFoci;
+
+import org.jdesktop.beansbinding.Converter;
 
 /**
  * Convert the centre method to a flag indicating if the centre parameter is enabled.

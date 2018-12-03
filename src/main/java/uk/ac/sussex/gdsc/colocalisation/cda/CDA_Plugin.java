@@ -23,6 +23,41 @@
  */
 package uk.ac.sussex.gdsc.colocalisation.cda;
 
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.colocalisation.cda.engine.CDAEngine;
+import uk.ac.sussex.gdsc.colocalisation.cda.engine.CalculationResult;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
+import uk.ac.sussex.gdsc.core.ij.process.LutHelper.LutColour;
+import uk.ac.sussex.gdsc.core.utils.RandomUtils;
+import uk.ac.sussex.gdsc.core.utils.StoredData;
+
+import gnu.trove.list.array.TIntArrayList;
+
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GUI;
+import ij.gui.GenericDialog;
+import ij.gui.Plot;
+import ij.gui.PlotWindow;
+import ij.gui.Roi;
+import ij.macro.MacroRunner;
+import ij.plugin.frame.PlugInFrame;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
+import ij.process.FloatStatistics;
+import ij.process.ImageProcessor;
+import ij.process.LUT;
+import ij.process.ShortProcessor;
+import ij.text.TextWindow;
+import ij.util.Tools;
+
+import org.apache.commons.math3.random.Well19937c;
+
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Checkbox;
@@ -55,39 +90,6 @@ import java.util.Date;
 import java.util.List;
 
 import javax.swing.JPanel;
-
-import org.apache.commons.math3.random.Well19937c;
-
-import gnu.trove.list.array.TIntArrayList;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.Prefs;
-import ij.WindowManager;
-import ij.gui.GUI;
-import ij.gui.GenericDialog;
-import ij.gui.Plot;
-import ij.gui.PlotWindow;
-import ij.gui.Roi;
-import ij.macro.MacroRunner;
-import ij.plugin.frame.PlugInFrame;
-import ij.process.ByteProcessor;
-import ij.process.ColorProcessor;
-import ij.process.FloatProcessor;
-import ij.process.FloatStatistics;
-import ij.process.ImageProcessor;
-import ij.process.LUT;
-import ij.process.ShortProcessor;
-import ij.text.TextWindow;
-import ij.util.Tools;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.colocalisation.cda.engine.CDAEngine;
-import uk.ac.sussex.gdsc.colocalisation.cda.engine.CalculationResult;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
-import uk.ac.sussex.gdsc.core.ij.process.LutHelper.LutColour;
-import uk.ac.sussex.gdsc.core.utils.RandomUtils;
-import uk.ac.sussex.gdsc.core.utils.StoredData;
 
 /**
  * Test for significant colocalisation within images using the Confined Displacement Algorithm

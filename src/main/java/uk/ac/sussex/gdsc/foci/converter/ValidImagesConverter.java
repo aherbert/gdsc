@@ -23,9 +23,9 @@
  */
 package uk.ac.sussex.gdsc.foci.converter;
 
-import java.util.List;
-
 import org.jdesktop.beansbinding.Converter;
+
+import java.util.List;
 
 /**
  * Convert the image list to true if not empty.

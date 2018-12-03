@@ -23,7 +23,7 @@
  */
 package uk.ac.sussex.gdsc.threshold;
 
-import java.awt.Color;
+import uk.ac.sussex.gdsc.UsageTracker;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -33,7 +33,8 @@ import ij.gui.NewImage;
 import ij.gui.Plot;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
+
+import java.awt.Color;
 
 /**
  * Calculate multiple Otsu thresholds on the given image. <p> Algorithm: PS.Liao, TS.Chen, and PC.

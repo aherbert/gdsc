@@ -23,9 +23,9 @@
  */
 package uk.ac.sussex.gdsc.colocalisation.cda;
 
-import java.util.Arrays;
-
 import ij.process.ImageProcessor;
+
+import java.util.Arrays;
 
 /**
  * A class to shift two images simultaneously within a mask.

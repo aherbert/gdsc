@@ -23,8 +23,13 @@
  */
 package uk.ac.sussex.gdsc.utils;
 
-import java.awt.Rectangle;
-import java.util.ArrayList;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
+import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
+import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -37,13 +42,9 @@ import ij.plugin.ZProjector;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
-import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
+
+import java.awt.Rectangle;
+import java.util.ArrayList;
 
 /**
  * Aligns open image stacks to a reference stack using XY translation to maximise the correlation.

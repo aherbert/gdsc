@@ -23,12 +23,6 @@
  */
 package uk.ac.sussex.gdsc.ij.plugin.filter;
 
-import java.awt.AWTEvent;
-import java.awt.Checkbox;
-import java.awt.Rectangle;
-import java.awt.TextField;
-import java.util.Vector;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Macro;
@@ -41,6 +35,12 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+
+import java.awt.AWTEvent;
+import java.awt.Checkbox;
+import java.awt.Rectangle;
+import java.awt.TextField;
+import java.util.Vector;
 
 /**
  * This plug-in filter implements the Difference of Gaussians method for image enhancement. The

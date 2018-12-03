@@ -23,13 +23,14 @@
  */
 package uk.ac.sussex.gdsc.colocalisation.cda.engine;
 
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
+import uk.ac.sussex.gdsc.colocalisation.cda.TwinStackShifter;
+import uk.ac.sussex.gdsc.core.utils.Correlator;
 
 import ij.IJ;
 import ij.ImageStack;
-import uk.ac.sussex.gdsc.colocalisation.cda.TwinStackShifter;
-import uk.ac.sussex.gdsc.core.utils.Correlator;
+
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Performs the CDA algorithm.

@@ -23,7 +23,9 @@
  */
 package uk.ac.sussex.gdsc.colocalisation;
 
-import java.util.ArrayList;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.utils.Correlator;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -32,9 +34,8 @@ import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.core.utils.Correlator;
+
+import java.util.ArrayList;
 
 /**
  * Processes a stack image with multiple channels. Each frame and z-slice are processed together.

@@ -348,7 +348,7 @@ Software for microscopy image analysis
         <configuration>
           <configLocation>${basedir}/src/main/resources/checkstyle/checkstyle.xml</configLocation>
           <encoding>UTF-8</encoding>
-          <consoleOutput>true</consoleOutput>
+          <consoleOutput>false</consoleOutput>
           <failsOnError>true</failsOnError>
           <linkXRef>true</linkXRef>
           <includeTestSourceDirectory>false</includeTestSourceDirectory>

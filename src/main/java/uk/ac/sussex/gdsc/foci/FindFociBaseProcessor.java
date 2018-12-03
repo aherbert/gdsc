@@ -23,28 +23,30 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.awt.Rectangle;
-import java.awt.geom.RoundRectangle2D;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.threshold.FloatHistogram;
+import uk.ac.sussex.gdsc.core.threshold.Histogram;
+import uk.ac.sussex.gdsc.threshold.Multi_OtsuThreshold;
+import uk.ac.sussex.gdsc.utils.GaussianFit;
 
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
 import ij.plugin.filter.GaussianBlur;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+
+import java.awt.Rectangle;
+import java.awt.geom.RoundRectangle2D;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.logging.Logger;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.core.threshold.FloatHistogram;
-import uk.ac.sussex.gdsc.core.threshold.Histogram;
-import uk.ac.sussex.gdsc.threshold.Multi_OtsuThreshold;
-import uk.ac.sussex.gdsc.utils.GaussianFit;
 
 /**
  * Find the peak intensity regions of an image.
