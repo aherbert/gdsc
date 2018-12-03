@@ -134,7 +134,7 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener {
 
           // System.out.println("Running");
           createMask(true);
-        } catch (final InterruptedException e) {
+        } catch (final InterruptedException ex) {
           break;
         }
       }
@@ -202,9 +202,9 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener {
       if (cancelled) {
         try {
           t.interrupt();
-        } catch (final SecurityException e) {
+        } catch (final SecurityException ex) {
           // We should have permission to interrupt this thread.
-          e.printStackTrace();
+          ex.printStackTrace();
         }
       } else {
         worker.stop = true;
@@ -213,7 +213,7 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener {
         // Leave to finish the work
         try {
           t.join(0);
-        } catch (final InterruptedException e) {
+        } catch (final InterruptedException ex) {
           // Ignore
         }
       }

@@ -149,9 +149,9 @@ public class CDAWorker implements Runnable {
         }
         run(job.n, job.x, job.y);
       }
-    } catch (final InterruptedException e) {
-      System.out.println(e.toString());
-      throw new RuntimeException(e);
+    } catch (final InterruptedException ex) {
+      System.out.println(ex.toString());
+      throw new RuntimeException(ex);
     } finally {
       finished = true;
       // notifyAll();

@@ -196,7 +196,7 @@ public class IntensityAnalysis implements ExtendedPlugInFilter {
       }
       try {
         exposures[i - 1] = Float.parseFloat(label.substring(startIndex, endIndex));
-      } catch (final NumberFormatException e) {
+      } catch (final NumberFormatException ex) {
         IJ.error(TITLE, "Unable to determine exposure for slice label: " + label);
         return DONE;
       }

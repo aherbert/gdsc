@@ -108,7 +108,7 @@ public class CDAEngine {
     for (int i = 0; !worker.isInitialised() && i < 5; i++) {
       try {
         Thread.sleep(20);
-      } catch (final InterruptedException e) {
+      } catch (final InterruptedException ex) {
         // Ignore
       }
     }
@@ -146,9 +146,9 @@ public class CDAEngine {
   private void put(int n, int x, int y) {
     try {
       jobs.put(new CDAJob(n, x, y));
-    } catch (final InterruptedException e) {
+    } catch (final InterruptedException ex) {
       // TODO - Handle thread errors
-      throw new RuntimeException("Unexpected interruption", e);
+      throw new RuntimeException("Unexpected interruption", ex);
     }
   }
 
@@ -185,9 +185,9 @@ public class CDAEngine {
     for (int i = 0; i < threads.size(); i++) {
       try {
         threads.get(i).join();
-      } catch (final InterruptedException e) {
+      } catch (final InterruptedException ex) {
         // TODO - Handle thread errors
-        e.printStackTrace();
+        ex.printStackTrace();
       }
     }
 

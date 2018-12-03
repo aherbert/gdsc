@@ -791,7 +791,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable {
       }
 
       return newModel;
-    } catch (final CloneNotSupportedException e) {
+    } catch (final CloneNotSupportedException ex) {
       return null;
     }
   }

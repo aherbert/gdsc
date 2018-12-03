@@ -250,7 +250,7 @@ public class TimeValuePointManager {
               value = Float.parseFloat(tokens[fields[5]]);
             }
             points.add(new TimeValuedPoint(x, y, z, (int) t, value));
-          } catch (final NumberFormatException e) {
+          } catch (final NumberFormatException ex) {
             System.err.println("Invalid numbers on line: " + lineCount);
             if (++errors > 10) {
               break;

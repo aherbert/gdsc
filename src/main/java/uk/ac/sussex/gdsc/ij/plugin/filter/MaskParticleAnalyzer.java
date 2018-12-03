@@ -92,7 +92,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
 
       lastParticle = Analyzer.class.getDeclaredField("lastParticle");
       lastParticle.setAccessible(true);
-    } catch (final Throwable e) {
+    } catch (final Throwable ex) {
       // Reflection has failed
       firstParticle = lastParticle = null;
     }
@@ -109,7 +109,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       try {
         firstParticle.set(Analyzer.class, value);
         // IJ.log("Set firstParticle to "+value);
-      } catch (final Throwable e) {
+      } catch (final Throwable ex) {
         // Reflection has failed
         firstParticle = null;
       }
@@ -127,7 +127,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       try {
         lastParticle.set(Analyzer.class, value);
         // IJ.log("Set lastParticle to "+value);
-      } catch (final Throwable e) {
+      } catch (final Throwable ex) {
         // Reflection has failed
         lastParticle = null;
       }
@@ -219,7 +219,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
           restoreRedirectImp = WindowManager.getImage(redirectTarget);
           // if (restoreRedirectImp != null)
           // System.out.println("Redirect image = " + restoreRedirectImp.getTitle());
-        } catch (final Throwable e) {
+        } catch (final Throwable ex) {
           // Reflection has failed
         }
       }
@@ -260,7 +260,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       out.write("Histogram\tParticle Value\tPixel Value\tCount");
       out.newLine();
       return out;
-    } catch (final Exception e) {
+    } catch (final Exception ex) {
       IJ.error("Failed to create histogram file: " + filename);
       return null;
     }
@@ -283,7 +283,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
         out.write('\t');
         out.write(Integer.toString(histogram[i]));
         out.newLine();
-      } catch (final Exception e) {
+      } catch (final Exception ex) {
         close(out);
         return null;
       }
@@ -296,7 +296,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     if (out != null) {
       try {
         out.close();
-      } catch (final Exception e) {
+      } catch (final Exception ex) {
         // Ignore this
       }
     }

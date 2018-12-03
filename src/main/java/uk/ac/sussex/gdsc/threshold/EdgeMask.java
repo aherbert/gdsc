@@ -107,7 +107,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener {
       if (VersionChecker.compare(ImageScience.version(), MINISVERSION) < 0) {
         throw new IllegalStateException();
       }
-    } catch (final Throwable e) {
+    } catch (final Throwable ex) {
       IJ.error("This plugin requires ImageScience version " + MINISVERSION + " or higher");
       return DONE;
     }
@@ -734,8 +734,8 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener {
       }
     } catch (final ExecutionException ex) {
       ex.printStackTrace();
-    } catch (final InterruptedException e) {
-      e.printStackTrace();
+    } catch (final InterruptedException ex) {
+      ex.printStackTrace();
     }
   }
 

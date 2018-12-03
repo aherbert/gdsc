@@ -340,9 +340,9 @@ public class Multi_OtsuThreshold implements PlugInFilter {
     try {
       P = initialise(P, NGRAY);
       S = initialise(S, NGRAY);
-    } catch (final OutOfMemoryError e) {
-      IJ.log(TITLE + ": Out-of-memory - Try again with a smaller histogram (e.g. 8-bit image)");
-      throw e;
+    } catch (final OutOfMemoryError ex) {
+      IJ.log(TITLE + ": Out-of-memory - Try again with a smaller histogram (ex.g. 8-bit image)");
+      throw ex;
     }
 
     // diagonal

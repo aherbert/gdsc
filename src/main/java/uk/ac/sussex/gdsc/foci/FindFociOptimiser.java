@@ -245,10 +245,10 @@ public class FindFociOptimiser
         final ImagePlus imp = (arg.equals("multi")) ? null : WindowManager.getCurrentImage();
         run(imp);
       }
-    } catch (final NoClassDefFoundError e) {
+    } catch (final NoClassDefFoundError ex) {
       // Because we have no underscore '_' in the class name ImageJ will not print
       // the error so handle it here
-      IJ.handleException(e);
+      IJ.handleException(ex);
     }
   }
 
@@ -987,9 +987,9 @@ public class FindFociOptimiser
       if (predictedPoints != null) {
         PointManager.savePoints(predictedPoints, resultFile + ".points.csv");
       }
-    } catch (final IOException e) {
+    } catch (final IOException ex) {
       IJ.log(
-          "Failed to write to the output file '" + resultFile + ".points.csv': " + e.getMessage());
+          "Failed to write to the output file '" + resultFile + ".points.csv': " + ex.getMessage());
     }
   }
 
@@ -1691,7 +1691,7 @@ public class FindFociOptimiser
     for (final String token : tokens) {
       try {
         list.add(Double.parseDouble(token));
-      } catch (final Exception e) {
+      } catch (final Exception ex) {
         // Ignore
       }
     }
@@ -2010,8 +2010,8 @@ public class FindFociOptimiser
       addFindFociCommand(out, bestOptions, maskTitle);
 
       return out;
-    } catch (final Exception e) {
-      IJ.log("Failed to create results file '" + resultFile + ".results.xls': " + e.getMessage());
+    } catch (final Exception ex) {
+      IJ.log("Failed to create results file '" + resultFile + ".results.xls': " + ex.getMessage());
       if (out != null) {
         try {
           out.close();
@@ -2267,9 +2267,9 @@ public class FindFociOptimiser
       }
 
       return o;
-    } catch (final Exception e) {
+    } catch (final Exception ex) {
       System.out.println(
-          "Error converting parameters to FindFoci options: " + parameters + "\n" + e.getMessage());
+          "Error converting parameters to FindFoci options: " + parameters + "\n" + ex.getMessage());
       return null;
     }
   }
@@ -2437,7 +2437,7 @@ public class FindFociOptimiser
               z = (int) Double.parseDouble(fields[2]);
             }
             points.add(new AssignedPoint(x, y, z, ++id));
-          } catch (final NumberFormatException e) {
+          } catch (final NumberFormatException ex) {
             // Abort if too many errors
             if (++errors == MAX_ERROR) {
               break;
@@ -2446,9 +2446,9 @@ public class FindFociOptimiser
         }
       }
       return (errors == MAX_ERROR) ? null : points.toArray(new AssignedPoint[points.size()]);
-    } catch (final NumberFormatException e) {
+    } catch (final NumberFormatException ex) {
       // ignore
-    } catch (final IOException e) {
+    } catch (final IOException ex) {
       // ignore
     }
     return null;
@@ -3061,11 +3061,11 @@ public class FindFociOptimiser
 
       // If the results were loaded then we must sort them to get a rank
       sortResults(results, myResultsSortMethod);
-    } catch (final ArrayIndexOutOfBoundsException e) {
+    } catch (final ArrayIndexOutOfBoundsException ex) {
       return null;
-    } catch (final IOException e) {
+    } catch (final IOException ex) {
       return null;
-    } catch (final NumberFormatException e) {
+    } catch (final NumberFormatException ex) {
       return null;
     }
     return results;
@@ -3092,7 +3092,7 @@ public class FindFociOptimiser
         count++;
       }
       return count;
-    } catch (final IOException e) {
+    } catch (final IOException ex) {
       return 0;
     }
   }
@@ -3230,12 +3230,12 @@ public class FindFociOptimiser
 
       showInstance();
       IJ.showStatus("FindFoci Optimiser ready");
-    } catch (final ExceptionInInitializerError e) {
-      exception = e;
-      errorMessage = "Failed to initialize class: " + e.getMessage();
-    } catch (final LinkageError e) {
-      exception = e;
-      errorMessage = "Failed to link class: " + e.getMessage();
+    } catch (final ExceptionInInitializerError ex) {
+      exception = ex;
+      errorMessage = "Failed to initialize class: " + ex.getMessage();
+    } catch (final LinkageError ex) {
+      exception = ex;
+      errorMessage = "Failed to link class: " + ex.getMessage();
     } catch (final ClassNotFoundException ex) {
       exception = ex;
       errorMessage = "Failed to find class: " + ex.getMessage()
@@ -3562,7 +3562,7 @@ public class FindFociOptimiser
       return true;
     }
 
-    // System.out.println("changed " + e.getSource());
+    // System.out.println("changed " + ex.getSource());
 
     // Check if this is the settings checkbox
     if (e.getSource() == choice.get(0)) {

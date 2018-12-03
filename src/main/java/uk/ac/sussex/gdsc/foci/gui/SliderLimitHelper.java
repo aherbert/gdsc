@@ -72,8 +72,8 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
       final SliderLimitHelper dialog = new SliderLimitHelper();
       dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       dialog.setVisible(true);
-    } catch (final Exception e) {
-      e.printStackTrace();
+    } catch (final Exception ex) {
+      ex.printStackTrace();
     }
   }
 
@@ -296,7 +296,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
         txtField.setForeground(Color.BLACK);
         return true;
       }
-    } catch (final NumberFormatException e) {
+    } catch (final NumberFormatException ex) {
       // Ignore
     }
     txtField.setForeground(Color.RED);

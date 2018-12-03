@@ -125,7 +125,7 @@ public class Image_Scaler implements PlugInFilter {
         imp.flush();
         imp = null; // Free memory
       }
-    } catch (final Exception e) {
+    } catch (final Exception ex) {
       IJ.error("Failed to read images in input list file: " + listFile);
       return;
     }
@@ -151,7 +151,7 @@ public class Image_Scaler implements PlugInFilter {
         imp = null; // Free memory
       }
       input.close();
-    } catch (final Exception e) {
+    } catch (final Exception ex) {
       IJ.error("Failed to re-write images in input list file: " + listFile);
     }
   }

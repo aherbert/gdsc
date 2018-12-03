@@ -78,7 +78,7 @@ public class FindFociResults implements Cloneable {
     try {
       final FindFociResults copy = (FindFociResults) super.clone();
       return copy;
-    } catch (final CloneNotSupportedException e) {
+    } catch (final CloneNotSupportedException ex) {
       return null;
     }
   }

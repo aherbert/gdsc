@@ -187,8 +187,8 @@ public class PointAlignerPlugin implements PlugIn {
       if (!dir.isDirectory()) {
         try {
           dir.mkdirs();
-        } catch (final SecurityException e) {
-          IJ.log("Failed to create directory: " + resultsDirectory + ". " + e.getMessage());
+        } catch (final SecurityException ex) {
+          IJ.log("Failed to create directory: " + resultsDirectory + ". " + ex.getMessage());
         }
       }
       saveResults = new File(resultsDirectory).isDirectory();

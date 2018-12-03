@@ -108,7 +108,7 @@ public class About_Plugin implements PlugIn {
           msg.append(line).append("\n");
         }
       }
-    } catch (final IOException e) {
+    } catch (final IOException ex) {
       // Default message
       msg.append("GDSC Plugins for ImageJ\n");
       msg.append(" \n");
@@ -200,7 +200,7 @@ public class About_Plugin implements PlugIn {
           plugins.add(new String[] {"spacer", ""});
         }
       }
-    } catch (final IOException e) {
+    } catch (final IOException ex) {
       // Ignore
     }
 
@@ -244,7 +244,7 @@ public class About_Plugin implements PlugIn {
       if (addSpacer) {
         try {
           ij.Menus.getImageJMenu("Plugins").addSeparator();
-        } catch (final NoSuchMethodError e) {
+        } catch (final NoSuchMethodError ex) {
           // Ignore. This ImageJ method is from IJ 1.48+
         }
       }

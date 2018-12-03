@@ -56,7 +56,7 @@ public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle> {
   public FindFociSaddle clone() {
     try {
       return (FindFociSaddle) super.clone();
-    } catch (final CloneNotSupportedException e) {
+    } catch (final CloneNotSupportedException ex) {
       return null;
     }
   }

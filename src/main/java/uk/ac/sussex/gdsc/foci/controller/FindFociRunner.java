@@ -109,9 +109,9 @@ public class FindFociRunner extends Thread {
           pause();
         }
       }
-    } catch (final InterruptedException e) {
+    } catch (final InterruptedException ex) {
       if (running) {
-        IJ.log("FindPeakRunner interupted: " + e.getLocalizedMessage());
+        IJ.log("FindPeakRunner interupted: " + ex.getLocalizedMessage());
       }
     } catch (final Throwable t) {
       // Log this to ImageJ. Do not bubble up exceptions

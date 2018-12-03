@@ -74,12 +74,12 @@ public class FindFociHelperPlugin implements PlugIn, WindowListener {
 
       showInstance();
       IJ.showStatus("FindFoci Helper ready");
-    } catch (final ExceptionInInitializerError e) {
-      exception = e;
-      errorMessage = "Failed to initialize class: " + e.getMessage();
-    } catch (final LinkageError e) {
-      exception = e;
-      errorMessage = "Failed to link class: " + e.getMessage();
+    } catch (final ExceptionInInitializerError ex) {
+      exception = ex;
+      errorMessage = "Failed to initialize class: " + ex.getMessage();
+    } catch (final LinkageError ex) {
+      exception = ex;
+      errorMessage = "Failed to link class: " + ex.getMessage();
     } catch (final ClassNotFoundException ex) {
       exception = ex;
       errorMessage = "Failed to find class: " + ex.getMessage()

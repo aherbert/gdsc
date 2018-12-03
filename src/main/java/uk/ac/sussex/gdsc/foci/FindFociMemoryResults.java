@@ -75,7 +75,7 @@ public class FindFociMemoryResults implements Cloneable {
     try {
       final FindFociMemoryResults copy = (FindFociMemoryResults) super.clone();
       return copy;
-    } catch (final CloneNotSupportedException e) {
+    } catch (final CloneNotSupportedException ex) {
       return null;
     }
   }

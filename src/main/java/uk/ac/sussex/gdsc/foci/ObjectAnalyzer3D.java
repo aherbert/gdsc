@@ -232,7 +232,7 @@ public class ObjectAnalyzer3D {
               // This has been done already, ignore this point
               continue;
             }
-          } catch (final ArrayIndexOutOfBoundsException e) {
+          } catch (final ArrayIndexOutOfBoundsException ex) {
             continue;
           }
 

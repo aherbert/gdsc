@@ -149,7 +149,7 @@ public class FindFociResult implements Cloneable {
   public FindFociResult clone() {
     try {
       return (FindFociResult) super.clone();
-    } catch (final CloneNotSupportedException e) {
+    } catch (final CloneNotSupportedException ex) {
       return null;
     }
   }

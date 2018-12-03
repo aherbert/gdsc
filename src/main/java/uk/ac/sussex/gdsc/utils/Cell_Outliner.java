@@ -1262,9 +1262,9 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener {
             solution.getIterations(), solution.getRMS()));
       }
       return solution.getPoint().toArray();
-    } catch (final Exception e) {
+    } catch (final Exception ex) {
       IJ.log("Failed to find an elliptical solution, defaulting to polygon");
-      e.printStackTrace();
+      ex.printStackTrace();
     }
 
     return null;

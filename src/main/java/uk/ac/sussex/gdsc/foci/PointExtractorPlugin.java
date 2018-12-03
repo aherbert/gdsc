@@ -147,8 +147,8 @@ public class PointExtractorPlugin implements PlugInFilter {
 
         TimeValuePointManager.savePoints(p, filename);
       }
-    } catch (final IOException e) {
-      IJ.error("Failed to save the ROI points:\n" + e.getMessage());
+    } catch (final IOException ex) {
+      IJ.error("Failed to save the ROI points:\n" + ex.getMessage());
     }
   }
 

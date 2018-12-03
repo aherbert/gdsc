@@ -182,8 +182,8 @@ public class MatchPlugin implements PlugIn {
         actualPoints = getFindFociPoints(m1, t1);
         m2 = getFindFociMemoryResults(t2);
         predictedPoints = getFindFociPoints(m2, t2);
-      } catch (final IllegalStateException e) {
-        IJ.error("Failed to load the points: " + e.getMessage());
+      } catch (final IllegalStateException ex) {
+        IJ.error("Failed to load the points: " + ex.getMessage());
         return;
       }
       d = memoryThreshold;
@@ -206,8 +206,8 @@ public class MatchPlugin implements PlugIn {
       try {
         actualPoints = PointManager.loadPoints(t1);
         predictedPoints = PointManager.loadPoints(t2);
-      } catch (final IOException e) {
-        IJ.error("Failed to load the points: " + e.getMessage());
+      } catch (final IOException ex) {
+        IJ.error("Failed to load the points: " + ex.getMessage());
         return;
       }
       d = dThreshold;
@@ -1183,8 +1183,8 @@ public class MatchPlugin implements PlugIn {
         out.write(String.format("0\t0\t0\t%s\t%s\t%.0f%s", r.round(c.getX()), r.round(c.getY()),
             r.round(v1), newLine));
       }
-    } catch (final Exception e) {
-      IJ.log("Unable to save the matches to file: " + e.getMessage());
+    } catch (final Exception ex) {
+      IJ.log("Unable to save the matches to file: " + ex.getMessage());
     }
   }
 

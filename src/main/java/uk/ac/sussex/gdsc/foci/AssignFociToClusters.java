@@ -214,9 +214,9 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
           System.out.printf("x%d,y%d,z%d %d != %d\n", x, y, z + 1, value, id);
           return null;
         }
-      } catch (final IllegalArgumentException e) {
+      } catch (final IllegalArgumentException ex) {
         // The stack is not the correct size
-        System.out.println(e.getMessage());
+        System.out.println(ex.getMessage());
         return null;
       }
     }

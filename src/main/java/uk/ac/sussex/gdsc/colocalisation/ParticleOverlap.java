@@ -246,12 +246,12 @@ public class ParticleOverlap implements PlugIn {
       try {
         out.write(header);
         out.write(newLine);
-      } catch (final IOException e) {
+      } catch (final IOException ex) {
         closeResultsFile();
       }
-    } catch (final FileNotFoundException e) {
+    } catch (final FileNotFoundException ex) {
       // Ignore
-    } catch (final UnsupportedEncodingException e) {
+    } catch (final UnsupportedEncodingException ex) {
       // Ignore
     }
   }
@@ -301,7 +301,7 @@ public class ParticleOverlap implements PlugIn {
       try {
         out.write(string);
         out.write(newLine);
-      } catch (final IOException e) {
+      } catch (final IOException ex) {
         closeResultsFile();
       }
     }
@@ -311,7 +311,7 @@ public class ParticleOverlap implements PlugIn {
     if (out != null) {
       try {
         out.close();
-      } catch (final IOException e) {
+      } catch (final IOException ex) {
         // Ignore
       } finally {
         out = null;

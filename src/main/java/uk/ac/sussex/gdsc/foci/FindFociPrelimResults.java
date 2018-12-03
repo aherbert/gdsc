@@ -62,7 +62,7 @@ public class FindFociPrelimResults implements Cloneable {
     try {
       final FindFociPrelimResults copy = (FindFociPrelimResults) super.clone();
       return copy;
-    } catch (final CloneNotSupportedException e) {
+    } catch (final CloneNotSupportedException ex) {
       return null;
     }
   }

@@ -106,7 +106,7 @@ public class PointManager {
               final int y = Integer.parseInt(tokens[1]);
               final int z = Integer.parseInt(tokens[2]);
               points.add(new AssignedPoint(x, y, z, lineCount - 1));
-            } catch (final NumberFormatException e) {
+            } catch (final NumberFormatException ex) {
               System.err.println("Invalid numbers on line: " + lineCount);
             }
           }

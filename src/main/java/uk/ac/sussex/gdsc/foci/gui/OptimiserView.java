@@ -88,8 +88,8 @@ public class OptimiserView extends JFrame {
         try {
           final OptimiserView frame = new OptimiserView();
           frame.setVisible(true);
-        } catch (final Exception e) {
-          e.printStackTrace();
+        } catch (final Exception ex) {
+          ex.printStackTrace();
         }
       }
     });

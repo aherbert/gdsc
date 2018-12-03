@@ -303,7 +303,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor {
       }
       try {
         return Boolean.parseBoolean(findString(key));
-      } catch (final RuntimeException e) {
+      } catch (final RuntimeException ex) {
         return false;
       }
     }
@@ -1318,8 +1318,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor {
       allOut = new OutputStreamWriter(fos, "UTF-8");
       allOut.write("Image ID\tImage\t" + createResultsHeader(newLine));
       return filename;
-    } catch (final Exception e) {
-      logError(e.getMessage());
+    } catch (final Exception ex) {
+      logError(ex.getMessage());
       closeBatchResultsFile();
       return null;
     }
@@ -1331,8 +1331,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor {
     }
     try {
       allOut.close();
-    } catch (final Exception e) {
-      logError(e.getMessage());
+    } catch (final Exception ex) {
+      logError(ex.getMessage());
     } finally {
       allOut = null;
     }
@@ -1371,7 +1371,7 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor {
       while ((line = input.readLine()) != null) {
         results.add(new BatchResult(line, ++id));
       }
-    } catch (final OutOfMemoryError e) {
+    } catch (final OutOfMemoryError ex) {
       // In case the file is too big to read in for a sort
       results.clear();
       results = null;
@@ -1379,10 +1379,10 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor {
       final Runtime runtime = Runtime.getRuntime();
       runtime.runFinalization();
       runtime.gc();
-      logError(e.getMessage());
+      logError(ex.getMessage());
       return;
-    } catch (final Exception e) {
-      logError(e.getMessage());
+    } catch (final Exception ex) {
+      logError(ex.getMessage());
       return;
     }
 
@@ -1398,8 +1398,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor {
         allOut.write(r.entry);
         allOut.write(newLine);
       }
-    } catch (final Exception e) {
-      logError(e.getMessage());
+    } catch (final Exception ex) {
+      logError(ex.getMessage());
     } finally {
       closeBatchResultsFile();
     }
@@ -1418,8 +1418,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor {
         allOut.write(batchPrefix);
         allOut.write(result);
       }
-    } catch (final Exception e) {
-      logError(e.getMessage());
+    } catch (final Exception ex) {
+      logError(ex.getMessage());
       closeBatchResultsFile();
     }
   }
@@ -1499,8 +1499,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor {
           sortIndex, options, blur, centreMethod, centreParameter, fractionParameter,
           resultsDirectory);
       return expId;
-    } catch (final Exception e) {
-      logError(e.getMessage());
+    } catch (final Exception ex) {
+      logError(ex.getMessage());
     }
     return "";
   }
@@ -1613,8 +1613,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor {
       writeParam(out, "Centre_parameter", "" + centreParameter);
       out.close();
       return true;
-    } catch (final Exception e) {
-      logError(e.getMessage());
+    } catch (final Exception ex) {
+      logError(ex.getMessage());
     }
     return false;
   }
@@ -2408,9 +2408,9 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor {
             run(job.filename, job.batchId);
           }
         }
-      } catch (final InterruptedException e) {
-        System.out.println(e.toString());
-        throw new RuntimeException(e);
+      } catch (final InterruptedException ex) {
+        System.out.println(ex.toString());
+        throw new RuntimeException(ex);
       } finally {
         finished = true;
       }
@@ -2445,8 +2445,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor {
     BatchParameters parameters;
     try {
       parameters = new BatchParameters(batchParameterFile);
-    } catch (final Exception e) {
-      IJ.error(TITLE, "Unable to read parameters file: " + e.getMessage());
+    } catch (final Exception ex) {
+      IJ.error(TITLE, "Unable to read parameters file: " + ex.getMessage());
       return;
     }
     if ((parameters.centreMethod == CENTRE_GAUSSIAN_ORIGINAL
@@ -2508,8 +2508,8 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor {
       for (int i = 0; i < threads.size(); i++) {
         try {
           threads.get(i).join();
-        } catch (final InterruptedException e) {
-          e.printStackTrace();
+        } catch (final InterruptedException ex) {
+          ex.printStackTrace();
         }
       }
       threads.clear();
@@ -2649,16 +2649,16 @@ public class FindFoci implements PlugIn, MouseListener, FindFociProcessor {
   private void putJob(BlockingQueue<Job> jobs, String filename, int batchId) {
     try {
       jobs.put(new Job(filename, batchId));
-    } catch (final InterruptedException e) {
-      throw new RuntimeException("Unexpected interruption", e);
+    } catch (final InterruptedException ex) {
+      throw new RuntimeException("Unexpected interruption", ex);
     }
   }
 
   private void putEmptyJob(BlockingQueue<Job> jobs) {
     try {
       jobs.put(new Job());
-    } catch (final InterruptedException e) {
-      throw new RuntimeException("Unexpected interruption", e);
+    } catch (final InterruptedException ex) {
+      throw new RuntimeException("Unexpected interruption", ex);
     }
   }
 

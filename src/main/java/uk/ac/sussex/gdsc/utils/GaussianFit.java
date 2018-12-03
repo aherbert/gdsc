@@ -90,12 +90,12 @@ public class GaussianFit implements PlugInFilter {
       if (fit != null) {
         fittingEnabled = true;
       }
-    } catch (final ExceptionInInitializerError e) {
-      exception = e;
-      errorMessage = "Failed to initialize class: " + e.getMessage();
-    } catch (final LinkageError e) {
-      exception = e;
-      errorMessage = "Failed to link class: " + e.getMessage();
+    } catch (final ExceptionInInitializerError ex) {
+      exception = ex;
+      errorMessage = "Failed to initialize class: " + ex.getMessage();
+    } catch (final LinkageError ex) {
+      exception = ex;
+      errorMessage = "Failed to link class: " + ex.getMessage();
     } catch (final ClassNotFoundException ex) {
       exception = ex;
       errorMessage = "Failed to find class: " + ex.getMessage();
@@ -139,7 +139,7 @@ public class GaussianFit implements PlugInFilter {
       final Method m =
           c.getDeclaredMethod("fit", new Class[] {float[].class, int.class, int.class});
       return (double[]) m.invoke(c.newInstance(), data, width, height);
-    } catch (final Exception e) {
+    } catch (final Exception ex) {
       return null;
     }
   }

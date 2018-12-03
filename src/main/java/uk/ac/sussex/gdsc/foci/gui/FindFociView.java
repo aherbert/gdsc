@@ -187,8 +187,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         try {
           final FindFociView frame = new FindFociView();
           frame.setVisible(true);
-        } catch (final Exception e) {
-          e.printStackTrace();
+        } catch (final Exception ex) {
+          ex.printStackTrace();
         }
       }
     });

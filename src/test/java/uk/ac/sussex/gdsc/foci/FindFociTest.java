@@ -528,8 +528,8 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
           Assertions.assertEquals((long)o1.intensityAboveSaddle, (long)o2.intensityAboveSaddle, "Intensity > Saddle");
           //@formatter:on
       }
-    } catch (final AssertionFailedError e) {
-      TestUtils.wrapAssertionFailedError(e, FunctionUtils.getSupplier("%s [%d]", setName, counter));
+    } catch (final AssertionFailedError ex) {
+      TestUtils.wrapAssertionFailedError(ex, FunctionUtils.getSupplier("%s [%d]", setName, counter));
     }
   }
 

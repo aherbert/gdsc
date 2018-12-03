@@ -119,8 +119,8 @@ public class FileMatchCalculator implements PlugIn, MouseListener {
     try {
       actualPoints = TimeValuePointManager.loadPoints(title1);
       predictedPoints = TimeValuePointManager.loadPoints(title2);
-    } catch (final IOException e) {
-      IJ.error("Failed to load the points: " + e.getMessage());
+    } catch (final IOException ex) {
+      IJ.error("Failed to load the points: " + ex.getMessage());
       return;
     }
     d = dThreshold;
@@ -585,20 +585,20 @@ public class FileMatchCalculator implements PlugIn, MouseListener {
           outSingle.write(newLine);
         }
       }
-    } catch (final Exception e) {
-      IJ.log("Unable to save the matches to file: " + e.getMessage());
+    } catch (final Exception ex) {
+      IJ.log("Unable to save the matches to file: " + ex.getMessage());
     } finally {
       if (out != null) {
         try {
           out.close();
-        } catch (final IOException e) {
+        } catch (final IOException ex) {
           // Ignore
         }
       }
       if (outSingle != null) {
         try {
           outSingle.close();
-        } catch (final IOException e) {
+        } catch (final IOException ex) {
           // Ignore
         }
       }

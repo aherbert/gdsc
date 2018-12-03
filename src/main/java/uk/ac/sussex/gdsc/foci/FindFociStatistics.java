@@ -94,7 +94,7 @@ public class FindFociStatistics implements Cloneable {
   public FindFociStatistics clone() {
     try {
       return (FindFociStatistics) super.clone();
-    } catch (final CloneNotSupportedException e) {
+    } catch (final CloneNotSupportedException ex) {
       return null;
     }
   }

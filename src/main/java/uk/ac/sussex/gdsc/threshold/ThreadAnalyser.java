@@ -589,8 +589,8 @@ public class ThreadAnalyser implements PlugIn {
       out.write("#EDM Intensity, ...\n");
 
       return out;
-    } catch (final Exception e) {
-      IJ.log("Failed to create results file '" + filename + "': " + e.getMessage());
+    } catch (final Exception ex) {
+      IJ.log("Failed to create results file '" + filename + "': " + ex.getMessage());
       if (out != null) {
         try {
           out.close();
@@ -616,14 +616,15 @@ public class ThreadAnalyser implements PlugIn {
       sb.append(IJ.d2s(line[4], 2)).append("\n");
 
       out.write(sb.toString());
-    } catch (final IOException e) {
-      IJ.log("Failed to write to the output file : " + e.getMessage());
+    } catch (final IOException ex) {
+      IJ.log("Failed to write to the output file : " + ex.getMessage());
       try {
         out.close();
-      } catch (final IOException ex) {
+      } catch (final IOException ex2) {
         // Ignore
+      } finally {
+        out = null;
       }
-      out = null;
     }
     return out;
   }
@@ -640,14 +641,15 @@ public class ThreadAnalyser implements PlugIn {
         out.write(IJ.d2s(d[i], 2));
       }
       out.write("\n");
-    } catch (final IOException e) {
-      IJ.log("Failed to write to the output file : " + e.getMessage());
+    } catch (final IOException ex) {
+      IJ.log("Failed to write to the output file : " + ex.getMessage());
       try {
         out.close();
-      } catch (final IOException ex) {
+      } catch (final IOException ex2) {
         // Ignore
+      } finally {
+        out = null;
       }
-      out = null;
     }
     return out;
   }

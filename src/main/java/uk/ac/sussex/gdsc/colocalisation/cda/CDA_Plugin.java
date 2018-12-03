@@ -1028,7 +1028,7 @@ public class CDA_Plugin extends PlugInFrame
   private static int getIntValue(String text, int defaultValue) {
     try {
       return Integer.parseInt(text);
-    } catch (final NumberFormatException e) {
+    } catch (final NumberFormatException ex) {
       return defaultValue;
     }
   }
@@ -1414,7 +1414,7 @@ public class CDA_Plugin extends PlugInFrame
         if (!new File(directory).mkdirs()) {
           return;
         }
-      } catch (final Exception e) {
+      } catch (final Exception ex) {
         return;
       }
       IJ.save(mergedSegmentedRGB, directory + File.separatorChar + "MergedROI.tif");
@@ -1428,7 +1428,7 @@ public class CDA_Plugin extends PlugInFrame
         out.write(newLine);
         out.write(resultsEntry.toString());
         out.write(newLine);
-      } catch (final Exception e) {
+      } catch (final Exception ex) {
         return;
       }
     }

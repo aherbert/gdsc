@@ -178,8 +178,8 @@ public class FindFociHelperView extends JFrame
         try {
           final FindFociHelperView frame = new FindFociHelperView();
           frame.setVisible(true);
-        } catch (final Exception e) {
-          e.printStackTrace();
+        } catch (final Exception ex) {
+          ex.printStackTrace();
         }
       }
     });
@@ -814,8 +814,8 @@ public class FindFociHelperView extends JFrame
         activeImp.getWindow().addWindowListener(this);
         activeImp.getCanvas().addMouseListener(this);
         activeImp.getCanvas().addMouseMotionListener(this);
-      } catch (final GridException e) {
-        logMessage("Failed to create the grid of potential maxima: %s", e.getMessage());
+      } catch (final GridException ex) {
+        logMessage("Failed to create the grid of potential maxima: %s", ex.getMessage());
         killPicker();
       }
     }
@@ -1043,7 +1043,7 @@ public class FindFociHelperView extends JFrame
         activeImp.getWindow().removeWindowListener(this);
         activeImp.getCanvas().removeMouseListener(this);
         activeImp.getCanvas().removeMouseMotionListener(this);
-      } catch (final Exception e) {
+      } catch (final Exception ex) {
         logMessage("Failed to unregister from image %s", activeImp.getTitle());
       }
     }

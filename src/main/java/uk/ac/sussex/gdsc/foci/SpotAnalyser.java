@@ -473,7 +473,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener {
     double p = 0;
     try {
       p = TestUtils.tTest(stats[channel][INSIDE][particle], stats[channel][OUTSIDE][particle]);
-    } catch (final NumberIsTooSmallException e) {
+    } catch (final NumberIsTooSmallException ex) {
       // Ignore
     }
 

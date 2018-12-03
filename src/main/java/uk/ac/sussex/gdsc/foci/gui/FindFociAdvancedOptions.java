@@ -108,8 +108,8 @@ public class FindFociAdvancedOptions extends JDialog {
       final FindFociAdvancedOptions dialog = new FindFociAdvancedOptions();
       dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       dialog.setVisible(true);
-    } catch (final Exception e) {
-      e.printStackTrace();
+    } catch (final Exception ex) {
+      ex.printStackTrace();
     }
   }
 
