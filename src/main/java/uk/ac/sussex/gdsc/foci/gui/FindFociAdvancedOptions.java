@@ -58,7 +58,7 @@ import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
 
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.foci.FindFoci;
 import uk.ac.sussex.gdsc.foci.converter.CentreMethodConverter;
 import uk.ac.sussex.gdsc.foci.converter.CentreParamEnabledConverter;
@@ -503,7 +503,7 @@ public class FindFociAdvancedOptions extends JDialog
                 @Override
                 public void mouseClicked(MouseEvent e)
                 {
-                    final String dir = Utils.getDirectory(getTitle(), model.getResultsDirectory());
+                    final String dir = ImageJUtils.getDirectory(getTitle(), model.getResultsDirectory());
                     if (dir != null)
                         model.setResultsDirectory(dir);
                 }

@@ -51,7 +51,7 @@ import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
@@ -263,7 +263,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
     {
         final ArrayList<String> newImageList = new ArrayList<>();
 
-        for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
+        for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
             // Ignore RGB images
@@ -313,7 +313,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
             tp += result.getTruePositives();
             fp += result.getFalsePositives();
             fn += result.getFalseNegatives();
-            rmsd += (result.getRMSD() * result.getRMSD()) * result.getTruePositives();
+            rmsd += (result.getRmsd() * result.getRmsd()) * result.getTruePositives();
 
             if (computePairs)
             {
@@ -459,7 +459,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
         sb.append(result.getFalsePositives()).append('\t');
         sb.append(result.getFalseNegatives()).append('\t');
         sb.append(IJ.d2s(result.getJaccard(), 4)).append('\t');
-        sb.append(IJ.d2s(result.getRMSD(), 4)).append('\t');
+        sb.append(IJ.d2s(result.getRmsd(), 4)).append('\t');
         sb.append(IJ.d2s(result.getPrecision(), 4)).append('\t');
         sb.append(IJ.d2s(result.getRecall(), 4)).append('\t');
         sb.append(IJ.d2s(result.getFScore(0.5), 4)).append('\t');
@@ -517,7 +517,7 @@ public class FileMatchCalculator implements PlugIn, MouseListener
         sb.append(t).append('\t');
         addPoint(sb, p1);
         addPoint(sb, p2);
-        final double d = (is3D) ? pair.getXYZDistance() : pair.getXYDistance();
+        final double d = (is3D) ? pair.getXyzDistance() : pair.getXyDistance();
         if (d >= 0)
             sb.append(d).append('\t');
         else
@@ -641,11 +641,11 @@ public class FileMatchCalculator implements PlugIn, MouseListener
 
     private static String getFilename(String title, String filename)
     {
-        final String[] path = Utils.decodePath(filename);
+        final String[] path = ImageJUtils.decodePath(filename);
         final OpenDialog chooser = new OpenDialog(title, path[0], path[1]);
         if (chooser.getFileName() == null)
             return null;
-        return Utils.replaceExtension(chooser.getDirectory() + chooser.getFileName(), ".xls");
+        return ImageJUtils.replaceExtension(chooser.getDirectory() + chooser.getFileName(), ".xls");
     }
 
     @Override

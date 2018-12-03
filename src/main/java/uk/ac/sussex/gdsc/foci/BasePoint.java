@@ -144,55 +144,55 @@ public class BasePoint implements Coordinate
     @Override
     public double distance(float x, float y, float z)
     {
-        return Math.sqrt(distance2(x, y, z));
+        return Math.sqrt(distanceSquared(x, y, z));
     }
 
     /** {@inheritDoc} */
     @Override
     public double distance(float x, float y)
     {
-        return Math.sqrt(distance2(x, y));
+        return Math.sqrt(distanceSquared(x, y));
     }
 
     /** {@inheritDoc} */
     @Override
-    public double distance2(float x, float y, float z)
+    public double distanceSquared(float x, float y, float z)
     {
         return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y) + (this.z - z) * (this.z - z);
     }
 
     /** {@inheritDoc} */
     @Override
-    public double distance2(float x, float y)
+    public double distanceSquared(float x, float y)
     {
         return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y);
     }
 
     /** {@inheritDoc} */
     @Override
-    public double distanceXY(Coordinate other)
+    public double distanceXy(Coordinate other)
     {
         return distance(other.getX(), other.getY());
     }
 
     /** {@inheritDoc} */
     @Override
-    public double distanceXY2(Coordinate other)
+    public double distanceXySquared(Coordinate other)
     {
-        return distance2(other.getX(), other.getY());
+        return distanceSquared(other.getX(), other.getY());
     }
 
     /** {@inheritDoc} */
     @Override
-    public double distanceXYZ(Coordinate other)
+    public double distanceXyz(Coordinate other)
     {
         return distance(other.getX(), other.getY(), other.getZ());
     }
 
     /** {@inheritDoc} */
     @Override
-    public double distanceXYZ2(Coordinate other)
+    public double distanceXyzSquared(Coordinate other)
     {
-        return distance2(other.getX(), other.getY(), other.getZ());
+        return distanceSquared(other.getX(), other.getY(), other.getZ());
     }
 }

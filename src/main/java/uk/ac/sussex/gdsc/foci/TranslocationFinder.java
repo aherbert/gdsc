@@ -50,10 +50,10 @@ import ij.process.ByteProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.PointPair;
-import uk.ac.sussex.gdsc.core.utils.Maths;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * Find translocations using markers for colocalisation.
@@ -116,7 +116,7 @@ public class TranslocationFinder implements PlugIn
         }
 
         // Build a list of the open images to add an overlay
-        final String[] imageList = Utils.getImageList(Utils.GREY_8_16 | Utils.NO_IMAGE, null);
+        final String[] imageList = ImageJUtils.getImageList(ImageJUtils.GREY_8_16 | ImageJUtils.NO_IMAGE, null);
 
         final GenericDialog gd = new GenericDialog(TITLE);
 
@@ -218,7 +218,7 @@ public class TranslocationFinder implements PlugIn
             add(ov, matches12, 1);
             add(ov, matches13, 2);
             add(ov, matches23, 3);
-            Utils.display(TITLE, stack).setOverlay(ov);
+            ImageJUtils.display(TITLE, stack).setOverlay(ov);
         }
 
         // Find triplets with mutual closest neighbours
@@ -295,7 +295,7 @@ public class TranslocationFinder implements PlugIn
         // Look for this and then output:
         // ImageTitle (c1,t1); (c2,t1); (c3,t1)
 
-        final int len = Maths.min(resultsName1.length(), resultsName2.length(), resultsName3.length());
+        final int len = MathUtils.min(resultsName1.length(), resultsName2.length(), resultsName3.length());
         int i = 0;
         while (i < len)
         {
@@ -505,12 +505,12 @@ public class TranslocationFinder implements PlugIn
         addTriplet(sb, p1);
         addTriplet(sb, p2);
         addTriplet(sb, p3);
-        final double d12 = p1.distanceXYZ(p2);
-        final double d13 = p1.distanceXYZ(p3);
-        final double d23 = p2.distanceXYZ(p3);
-        sb.append('\t').append(Utils.rounded(d12));
-        sb.append('\t').append(Utils.rounded(d13));
-        sb.append('\t').append(Utils.rounded(d23));
+        final double d12 = p1.distanceXyz(p2);
+        final double d13 = p1.distanceXyz(p3);
+        final double d23 = p2.distanceXyz(p3);
+        sb.append('\t').append(MathUtils.rounded(d12));
+        sb.append('\t').append(MathUtils.rounded(d13));
+        sb.append('\t').append(MathUtils.rounded(d23));
 
         // Compute classification
         if (classification >= CLASSIFICATION.length || classification < 0)
@@ -575,7 +575,7 @@ public class TranslocationFinder implements PlugIn
     }
 
     /**
-     * Overlay triplets on image
+     * Overlay triplets on image.
      */
     private static void overlayTriplets()
     {
@@ -641,7 +641,7 @@ public class TranslocationFinder implements PlugIn
         roi.setStrokeColor(color);
         o.add(roi);
 
-        final TextRoi text = new TextRoi(Maths.max(x) + 1, Maths.min(y),
+        final TextRoi text = new TextRoi(MathUtils.max(x) + 1, MathUtils.min(y),
                 Integer.toString(count) + CLASSIFICATION[classification].charAt(0));
         text.setStrokeColor(color);
         o.add(text);

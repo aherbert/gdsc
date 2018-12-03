@@ -34,7 +34,7 @@ import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * Compares two masks created using the Mask Segregator with pixels of AB and A'B' and creates a new mask with pixels of
@@ -65,7 +65,7 @@ public class DoubleMaskSegregator implements PlugIn
 
     private boolean showDialog()
     {
-        final String[] items = Utils.getImageList(Utils.GREY_8_16, null);
+        final String[] items = ImageJUtils.getImageList(ImageJUtils.GREY_8_16, null);
 
         if (items.length < 2)
         {
@@ -203,7 +203,7 @@ public class DoubleMaskSegregator implements PlugIn
             sp.set(i, h[out[i]]);
         if (applyLUT)
             sp.setLut(createLUT());
-        final ImagePlus imp = Utils.display(TITLE, sp);
+        final ImagePlus imp = ImageJUtils.display(TITLE, sp);
 
         // Optionally outline each object
         if (overlayOutline)

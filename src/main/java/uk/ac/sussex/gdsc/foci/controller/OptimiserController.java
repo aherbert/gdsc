@@ -65,7 +65,7 @@ public class OptimiserController extends FindFociController implements Runnable
     {
         final int noOfImages = WindowManager.getImageCount();
         final List<String> imageList = new ArrayList<>(noOfImages);
-        for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
+        for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
 

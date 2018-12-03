@@ -31,7 +31,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 /**
- * Find objects defined by contiguous pixels of the same value
+ * Find objects defined by contiguous pixels of the same value.
  */
 public class ObjectAnalyzer
 {
@@ -67,7 +67,7 @@ public class ObjectAnalyzer
     }
 
     /**
-     * @return A pixel array containing the object number for each pixel in the input image
+     * @return A pixel array containing the object number for each pixel in the input image.
      */
     public int[] getObjectMask()
     {
@@ -76,7 +76,7 @@ public class ObjectAnalyzer
     }
 
     /**
-     * @return The maximum object number
+     * @return The maximum object number.
      */
     public int getMaxObject()
     {
@@ -247,7 +247,7 @@ public class ObjectAnalyzer
     }
 
     /**
-     * @return The image width
+     * @return The image width.
      */
     public int getWidth()
     {
@@ -255,7 +255,7 @@ public class ObjectAnalyzer
     }
 
     /**
-     * @return The image height
+     * @return The image height.
      */
     public int getHeight()
     {

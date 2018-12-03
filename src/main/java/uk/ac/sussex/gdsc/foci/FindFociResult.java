@@ -29,15 +29,15 @@ package uk.ac.sussex.gdsc.foci;
 public class FindFociResult implements Cloneable
 {
     /**
-     * The X coordinate
+     * The X coordinate.
      */
     public int x;
     /**
-     * The Y coordinate
+     * The Y coordinate.
      */
     public int y;
     /**
-     * The Z coordinate (this is zero-indexed, not one-indexed as per ImageJ stack slices)
+     * The Z coordinate (this is zero-indexed, not one-indexed as per ImageJ stack slices).
      */
     public int z;
     /**
@@ -45,51 +45,51 @@ public class FindFociResult implements Cloneable
      */
     public int id;
     /**
-     * The number of pixels in the peak
+     * The number of pixels in the peak.
      */
     public int count;
     /**
-     * The sum of the peak intensity
+     * The sum of the peak intensity.
      */
     public double totalIntensity;
     /**
-     * The peak maximum value
+     * The peak maximum value.
      */
     public float maxValue;
     /**
-     * The peak highest saddle point
+     * The peak highest saddle point.
      */
     public float highestSaddleValue;
     /**
-     * The peak ID of the touching peak with the highest saddle point
+     * The peak ID of the touching peak with the highest saddle point.
      */
     public int saddleNeighbourId;
     /**
-     * The average of the peak intensity
+     * The average of the peak intensity.
      */
     public double averageIntensity;
     /**
-     * The sum of the peak intensity above the background
+     * The sum of the peak intensity above the background.
      */
     public double totalIntensityAboveBackground;
     /**
-     * The average of the peak intensity above the background
+     * The average of the peak intensity above the background.
      */
     public double averageIntensityAboveBackground;
     /**
-     * The number of pixels in the peak above the highest saddle
+     * The number of pixels in the peak above the highest saddle.
      */
     public int countAboveSaddle;
     /**
-     * The sum of the peak intensity above the highest saddle
+     * The sum of the peak intensity above the highest saddle.
      */
     public double intensityAboveSaddle;
     /**
-     * The sum of the peak intensity above the minimum value of the analysed image
+     * The sum of the peak intensity above the minimum value of the analysed image.
      */
     public double totalIntensityAboveImageMinimum;
     /**
-     * The average of the peak intensity above the minimum value of the analysed image
+     * The average of the peak intensity above the minimum value of the analysed image.
      */
     public double averageIntensityAboveImageMinimum;
     /**
@@ -101,7 +101,7 @@ public class FindFociResult implements Cloneable
      */
     public int state;
     /**
-     * The allocated object from the mask image
+     * The allocated object from the mask image.
      */
     public int object;
     /**

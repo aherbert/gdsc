@@ -67,7 +67,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
     private final int Z = 3;
     private final int T = 4;
 
-    private static String methodOption = AutoThreshold.Method.OTSU.name;
+    private static String methodOption = AutoThreshold.Method.OTSU.toString();
     private static int channel1 = 1;
     private static int channel2 = 2;
     private static int channel3 = 0;
@@ -254,17 +254,17 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
         gd.addChoice("Channel_3", indices, channel3);
 
         // Commented out the methods that take a long time on 16-bit images.
-        String[] methods = { "Try all", AutoThreshold.Method.DEFAULT.name,
+        String[] methods = { "Try all", AutoThreshold.Method.DEFAULT.toString(),
                 // "Huang",
                 // "Intermodes",
                 // "IsoData",
-                AutoThreshold.Method.LI.name, AutoThreshold.Method.MAX_ENTROPY.name, AutoThreshold.Method.MEAN.name,
-                AutoThreshold.Method.MIN_ERROR_I.name,
+                AutoThreshold.Method.LI.toString(), AutoThreshold.Method.MAX_ENTROPY.toString(), AutoThreshold.Method.MEAN.toString(),
+                AutoThreshold.Method.MIN_ERROR_I.toString(),
                 // "Minimum",
-                AutoThreshold.Method.MOMENTS.name, AutoThreshold.Method.OTSU.name, AutoThreshold.Method.PERCENTILE.name,
-                AutoThreshold.Method.RENYI_ENTROPY.name,
+                AutoThreshold.Method.MOMENTS.toString(), AutoThreshold.Method.OTSU.toString(), AutoThreshold.Method.PERCENTILE.toString(),
+                AutoThreshold.Method.RENYI_ENTROPY.toString(),
                 // "Shanbhag",
-                AutoThreshold.Method.TRIANGLE.name, AutoThreshold.Method.YEN.name, AutoThreshold.Method.NONE.name };
+                AutoThreshold.Method.TRIANGLE.toString(), AutoThreshold.Method.YEN.toString(), AutoThreshold.Method.NONE.toString() };
 
         gd.addChoice("Method", methods, methodOption);
         gd.addCheckbox("Log_thresholds", logThresholds);
@@ -574,7 +574,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
     }
 
     /**
-     * Reports the results for the correlation to the IJ log window
+     * Reports the results for the correlation to the IJ log window.
      *
      * @param t
      *            The timeframe
@@ -650,7 +650,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
     }
 
     /**
-     * Provides functionality to process a collection of slices from an Image
+     * Provides functionality to process a collection of slices from an Image.
      */
     private class SliceCollection
     {
@@ -794,15 +794,15 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
      */
     public class CalculationResult
     {
-        /** Shift distance */
+        /** Shift distance. */
         public double distance;
         /** Mander's 1 */
         public double m1;
         /** Mander's 2 */
         public double m2;
-        /** Correlation */
+        /** Correlation. */
         public double r;
-        /** the number of overlapping pixels */
+        /** the number of overlapping pixels. */
         public int n;
         /** the % total area for the overlap */
         public double area;
@@ -867,7 +867,7 @@ public class Stack_Colocalisation_Analyser implements PlugInFilter
     }
 
     /**
-     * Compare the results using the correlation coefficient
+     * Compare the results using the correlation coefficient.
      */
     private class RComparator implements Comparator<CalculationResult>
     {

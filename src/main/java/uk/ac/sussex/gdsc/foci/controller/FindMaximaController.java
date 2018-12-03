@@ -69,7 +69,7 @@ public class FindMaximaController extends ImageJController
     {
         final int noOfImages = WindowManager.getImageCount();
         final List<String> imageList = new ArrayList<>(noOfImages);
-        for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
+        for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
 
@@ -267,7 +267,7 @@ public class FindMaximaController extends ImageJController
     }
 
     /**
-     * @return the resultsArray
+     * @return the resultsArray.
      */
     public ArrayList<FindFociResult> getResultsArray()
     {
@@ -286,7 +286,7 @@ public class FindMaximaController extends ImageJController
     }
 
     /**
-     * @return the activeChannel
+     * @return the activeChannel.
      */
     public int getActiveChannel()
     {
@@ -294,7 +294,7 @@ public class FindMaximaController extends ImageJController
     }
 
     /**
-     * @return the activeFrame
+     * @return the activeFrame.
      */
     public int getActiveFrame()
     {

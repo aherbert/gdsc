@@ -417,7 +417,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
     }
 
     /**
-     * Find the threshold that maximises the between class variance
+     * Find the threshold that maximises the between class variance.
      *
      * @param mlevel
      *            The number of thresholds
@@ -434,7 +434,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
     }
 
     /**
-     * Find the threshold that maximises the between class variance
+     * Find the threshold that maximises the between class variance.
      *
      * @param mlevel
      *            The number of thresholds
@@ -564,7 +564,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
     }
 
     /**
-     * Add back the histogram offset to produce the correct thresholds
+     * Add back the histogram offset to produce the correct thresholds.
      *
      * @param threshold
      *            output from {@link #findMaxSigma(int, float[][], int[])}
@@ -636,7 +636,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
     }
 
     /**
-     * Show new images using only pixels within the bounds of the given thresholds
+     * Show new images using only pixels within the bounds of the given thresholds.
      *
      * @param mlevel
      *            The number of thresholds
@@ -693,7 +693,7 @@ public class Multi_OtsuThreshold implements PlugInFilter
     }
 
     /**
-     * Show new mask images using only pixels within the bounds of the given thresholds
+     * Show new mask images using only pixels within the bounds of the given thresholds.
      *
      * @param mlevel
      *            The number of thresholds

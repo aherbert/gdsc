@@ -52,7 +52,7 @@ public class Contrast_Enhancer implements PlugInFilter
     {
         final ContrastEnhancer ce = new ContrastEnhancer();
         final double saturated = 0.35;
-        for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
+        for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
             imp.resetDisplayRange();

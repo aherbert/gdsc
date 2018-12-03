@@ -38,10 +38,11 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.AlignImagesFFT;
-import uk.ac.sussex.gdsc.core.ij.AlignImagesFFT.SubPixelMethod;
-import uk.ac.sussex.gdsc.core.ij.AlignImagesFFT.WindowMethod;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
+import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 
@@ -120,7 +121,7 @@ public class Align_Stacks implements PlugIn
         // Find the currently open images
         final ArrayList<String> newImageList = new ArrayList<>();
 
-        for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
+        for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
 
@@ -206,7 +207,7 @@ public class Align_Stacks implements PlugIn
 
         final int[] referenceDimensions = referenceImp.getDimensions();
 
-        for (final int id : Utils.getIDList())
+        for (final int id : ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
 
@@ -256,9 +257,9 @@ public class Align_Stacks implements PlugIn
         {
             final ImageProcessor ip1 = createComposite(refImp, t1, projectionMethod, windowFunction);
             final ImagePlus imp1 = new ImagePlus("ip1", ip1);
-            final AlignImagesFFT align = new AlignImagesFFT();
+            final AlignImagesFft align = new AlignImagesFft();
             align.setDoTranslation(false);
-            align.init(imp1, windowFunction, true);
+            align.initialiseReference(imp1, windowFunction, true);
 
             // For each time point
             for (int frame = 1; frame <= targetImp.getNFrames(); frame++)
@@ -286,7 +287,7 @@ public class Align_Stacks implements PlugIn
                                 align.getLastYOffset(), clipOutput);
                     }
 
-                if (Utils.isInterrupted())
+                if (ImageJUtils.isInterrupted())
                     return;
             }
         }
@@ -303,7 +304,7 @@ public class Align_Stacks implements PlugIn
                 // Align the image
                 final ImagePlus imp1 = new ImagePlus("ip1", ip1);
                 final ImagePlus imp2 = new ImagePlus("ip2", ip2);
-                final AlignImagesFFT align = new AlignImagesFFT();
+                final AlignImagesFft align = new AlignImagesFft();
                 align.align(imp1, imp2, WindowMethod.NONE, bounds, subPixelMethod, interpolationMethod, true, false,
                         false, clipOutput);
 
@@ -318,7 +319,7 @@ public class Align_Stacks implements PlugIn
                                 align.getLastYOffset(), clipOutput);
                     }
 
-                if (Utils.isInterrupted())
+                if (ImageJUtils.isInterrupted())
                     return;
             }
 
@@ -366,7 +367,7 @@ public class Align_Stacks implements PlugIn
         for (int channel = 1; channel <= imp.getNChannels(); channel++)
         {
             tiles[channel - 1] = extractTile(imp, frame, channel, projectionMethod);
-            tiles[channel - 1] = AlignImagesFFT.applyWindowSeparable(tiles[channel - 1], windowFunction);
+            tiles[channel - 1] = AlignImagesFft.applyWindowSeparable(tiles[channel - 1], windowFunction);
 
             // Normalise so each image contributes equally to the alignment
             normalise(tiles[channel - 1]);
@@ -412,7 +413,7 @@ public class Align_Stacks implements PlugIn
 
     private static FloatProcessor extractTile(ImagePlus imp, int frame, int channel, int projectionMethod)
     {
-        return Utils.extractTile(imp, frame, channel, projectionMethod).toFloat(1, null);
+        return ImageJUtils.extractTile(imp, frame, channel, projectionMethod).toFloat(1, null);
     }
 
     /**
@@ -462,7 +463,7 @@ public class Align_Stacks implements PlugIn
     }
 
     /**
-     * Run the plugin with self-alignment parameters
+     * Run the plugin with self-alignment parameters.
      */
     public static void selfAlign()
     {

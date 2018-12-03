@@ -49,7 +49,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 
 /**
@@ -73,7 +73,7 @@ public class ThreadAnalyser implements PlugIn
     private static int maskChannel = 0;
     private static String objectImage = "";
     private static int objectChannel = 0;
-    private static String method = AutoThreshold.Method.OTSU.name;
+    private static String method = AutoThreshold.Method.OTSU.toString();
     private static String resultDirectory = "";
     private static int minLength = 0;
     private static boolean showSkeleton = false;
@@ -213,7 +213,7 @@ public class ThreadAnalyser implements PlugIn
     }
 
     /**
-     * Show an ImageJ Dialog and get the parameters
+     * Show an ImageJ Dialog and get the parameters.
      *
      * @return False if the user cancelled
      */
@@ -223,8 +223,8 @@ public class ThreadAnalyser implements PlugIn
 
         // Add a second mask image to threshold (if necessary) for objects to find on the threads
 
-        final String[] imageList = Utils.getImageList(Utils.GREY_8_16, ignoreSuffix);
-        final String[] objectList = Utils.getImageList(Utils.GREY_8_16 | Utils.NO_IMAGE, ignoreSuffix);
+        final String[] imageList = ImageJUtils.getImageList(ImageJUtils.GREY_8_16, ignoreSuffix);
+        final String[] objectList = ImageJUtils.getImageList(ImageJUtils.GREY_8_16 | ImageJUtils.NO_IMAGE, ignoreSuffix);
 
         if (imageList.length == 0)
         {
@@ -423,7 +423,7 @@ public class ThreadAnalyser implements PlugIn
     }
 
     /**
-     * Return the statistics
+     * Return the statistics.
      *
      * @param data
      *            The input data
@@ -472,7 +472,7 @@ public class ThreadAnalyser implements PlugIn
     }
 
     /**
-     * Report the results to a table and saving to file
+     * Report the results to a table and saving to file.
      *
      * @param ip
      *            The original image

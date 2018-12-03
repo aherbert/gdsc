@@ -112,7 +112,7 @@ public class GaussianPlugin implements PlugIn
     }
 
     /**
-     * Generic form of the 2D Gaussian
+     * Generic form of the 2D Gaussian.
      */
     private static float gaussian(float x, float y, float A, float x0, float y0, float a, float b, float c)
     {

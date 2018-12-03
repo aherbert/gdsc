@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 public class Version {
   /** Constant for the string "unknown" */
   public static final String UNKNOWN = "";
-  private static String version = null;
+  private static String versionNumber = null;
   private static String buildDate = null;
   private static String buildNumber = null;
 
@@ -45,13 +45,13 @@ public class Version {
     Manifest manifest = loadManifest(Version.class);
     if (manifest != null) {
       Attributes attributes = manifest.getMainAttributes();
-      version = attributes.getValue("Specification-Version");
+      versionNumber = attributes.getValue("Specification-Version");
       buildDate = attributes.getValue("Implementation-Date");
       buildNumber = attributes.getValue("Implementation-Build");
     }
 
-    if (version == null)
-      version = UNKNOWN;
+    if (versionNumber == null)
+      versionNumber = UNKNOWN;
     if (buildDate == null)
       buildDate = UNKNOWN;
     if (buildNumber == null)
@@ -66,23 +66,23 @@ public class Version {
   public static void main(String[] args) {
     final StringBuilder msg = new StringBuilder();
     final String newLine = System.getProperty("line.separator");
-    msg.append("Version : ").append(version).append(newLine);
+    msg.append("Version : ").append(versionNumber).append(newLine);
     msg.append("Build Date : ").append(buildDate).append(newLine);
     msg.append("Build Number : ").append(buildNumber).append(newLine);
     System.out.print(msg);
   }
 
   /**
-   * Get the GDSC version
+   * Get the GDSC version.
    *
    * @return The uk.ac.sussex.gdsc package version
    */
   public static String getVersion() {
-    return version;
+    return versionNumber;
   }
 
   /**
-   * Get the GDSC package build date
+   * Get the GDSC package build date.
    *
    * @return The uk.ac.sussex.gdsc package build date
    */
@@ -91,7 +91,7 @@ public class Version {
   }
 
   /**
-   * Get the GDSC package build number
+   * Get the GDSC package build number.
    *
    * @return The uk.ac.sussex.gdsc package build number
    */
@@ -100,52 +100,52 @@ public class Version {
   }
 
   /**
-   * Get the major version
+   * Get the major version.
    *
    * @return The major version (or 0 if unknown)
    */
   public static int getMajorVersion() {
     final Pattern p = Pattern.compile("^\\d+");
-    final Matcher m = p.matcher(version);
+    final Matcher m = p.matcher(versionNumber);
     if (m.find())
       return Integer.parseInt(m.group());
     return 0;
   }
 
   /**
-   * Get the minor version
+   * Get the minor version.
    *
    * @return The minor version (or 0 if unknown)
    */
   public static int getMinorVersion() {
     final Pattern p = Pattern.compile("^\\d+\\.(\\d+)");
-    final Matcher m = p.matcher(version);
+    final Matcher m = p.matcher(versionNumber);
     if (m.find())
       return Integer.parseInt(m.group(1));
     return 0;
   }
 
   /**
-   * Get the patch version
+   * Get the patch version.
    *
    * @return The patch version (or 0 if unknown)
    */
   public static int getPatchVersion() {
     final Pattern p = Pattern.compile("^\\d+\\.\\d+\\.(\\d+)");
-    final Matcher m = p.matcher(version);
+    final Matcher m = p.matcher(versionNumber);
     if (m.find())
       return Integer.parseInt(m.group(1));
     return 0;
   }
 
   /**
-   * Get a string with the major, minor and patch versions
+   * Get a string with the major, minor and patch versions.
    *
    * @return Major.Minor.Patch
    */
   public static String getMajorMinorPatch() {
     final Pattern p = Pattern.compile("^\\d+\\.\\d+\\.\\d+");
-    final Matcher m = p.matcher(version);
+    final Matcher m = p.matcher(versionNumber);
     if (m.find())
       return m.group();
     return "";

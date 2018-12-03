@@ -26,7 +26,7 @@ package uk.ac.sussex.gdsc.foci;
 import java.util.Arrays;
 
 /**
- * Find objects defined by contiguous pixels of the same value
+ * Find objects defined by contiguous pixels of the same value.
  */
 public class ObjectAnalyzer3D
 {
@@ -83,7 +83,7 @@ public class ObjectAnalyzer3D
     }
 
     /**
-     * @return A pixel array containing the object number for each pixel in the input image
+     * @return A pixel array containing the object number for each pixel in the input image.
      */
     public int[] getObjectMask()
     {
@@ -92,7 +92,7 @@ public class ObjectAnalyzer3D
     }
 
     /**
-     * @return The maximum object number
+     * @return The maximum object number.
      */
     public int getMaxObject()
     {
@@ -450,7 +450,7 @@ public class ObjectAnalyzer3D
     }
 
     /**
-     * @return The image width (maxx)
+     * @return The image width (maxx).
      */
     public int getMaxX()
     {
@@ -458,7 +458,7 @@ public class ObjectAnalyzer3D
     }
 
     /**
-     * @return The image height (maxy)
+     * @return The image height (maxy).
      */
     public int getMaxY()
     {
@@ -466,7 +466,7 @@ public class ObjectAnalyzer3D
     }
 
     /**
-     * @return The image depth (maxz)
+     * @return The image depth (maxz).
      */
     public int getMaxZ()
     {

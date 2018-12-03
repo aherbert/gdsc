@@ -82,7 +82,8 @@ import ij.plugin.frame.Recorder;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
@@ -91,6 +92,7 @@ import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.StoredData;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.core.utils.UnicodeReader;
+import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 import uk.ac.sussex.gdsc.foci.gui.OptimiserView;
 
 /**
@@ -112,7 +114,7 @@ public class FindFociOptimiser
     private static boolean myBackgroundAuto = true;
     private static boolean myBackgroundAbsolute = false;
     private static String myBackgroundParameter = "2.5, 3.5, 0.5";
-    private static String myThresholdMethod = AutoThreshold.Method.OTSU.name;
+    private static String myThresholdMethod = AutoThreshold.Method.OTSU.toString();
     private static String myStatisticsMode = "Both";
     private static boolean mySearchAboveBackground = true;
     private static boolean mySearchFractionOfPeak = true;
@@ -129,41 +131,41 @@ public class FindFociOptimiser
     private static String myCentreParameter = "2";
 
     /** The list of recognised methods for sorting the results. */
-    public final static String[] sortMethods = { "None", "Precision", "Recall", "F0.5", "F1", "F2", "F-beta", "Jaccard",
+    public static final String[] sortMethods = { "None", "Precision", "Recall", "F0.5", "F1", "F2", "F-beta", "Jaccard",
             "RMSD" };
 
     /** Do not sort the results. */
-    public final static int SORT_NONE = 0;
+    public static final int SORT_NONE = 0;
 
     /** Sort the results using the Precision. */
-    public final static int SORT_PRECISION = 1;
+    public static final int SORT_PRECISION = 1;
 
     /** Sort the results using the Recall. */
-    public final static int SORT_RECALL = 2;
+    public static final int SORT_RECALL = 2;
     /**
      * Sort the results using the F0.5 score (weights precision over recall)
      */
-    public final static int SORT_F05 = 3;
+    public static final int SORT_F05 = 3;
 
     /** Sort the results using the F1 score (precision and recall equally weighted). */
-    public final static int SORT_F1 = 4;
+    public static final int SORT_F1 = 4;
 
     /** Sort the results using the F2 score (weights recall over precision). */
-    public final static int SORT_F2 = 5;
+    public static final int SORT_F2 = 5;
 
     /** Sort the results using the F-beta score. */
-    public final static int SORT_FBETA = 6;
+    public static final int SORT_FBETA = 6;
 
     /** Sort the results using the Jaccard. */
-    public final static int SORT_JACCARD = 7;
+    public static final int SORT_JACCARD = 7;
     /**
      * Sort the results using the RMSD. Note that the RMSD is only computed using the TP so is therefore only of use
      * when the TP values are the same (i.e. for a tie breaker)
      */
-    public final static int SORT_RMSD = 8;
+    public static final int SORT_RMSD = 8;
 
     /** The search methods used for matching. */
-    public final static String[] matchSearchMethods = { "Relative", "Absolute" };
+    public static final String[] matchSearchMethods = { "Relative", "Absolute" };
     private static int myMatchSearchMethod = 0;
     private static double myMatchSearchDistance = 0.05;
     private static int myResultsSortMethod = SORT_JACCARD;
@@ -303,12 +305,11 @@ public class FindFociOptimiser
             }
 
             // Collect all the results
-            Utils.waitForCompletion(futures);
-            threadPool.shutdown();
+            ConcurrencyUtils.waitForCompletionUnchecked(futures);
             IJ.showProgress(1);
             IJ.showStatus("");
 
-            if (Utils.isInterrupted())
+            if (ImageJUtils.isInterrupted())
                 return;
 
             // Check all results are the same size
@@ -382,7 +383,7 @@ public class FindFociOptimiser
             final OptimiserResult result = runOptimiser(imp, mask, new StandardCounter(combinations));
             IJ.showProgress(1);
 
-            if (Utils.isInterrupted())
+            if (ImageJUtils.isInterrupted())
                 return;
 
             if (result == null)
@@ -721,7 +722,7 @@ public class FindFociOptimiser
     }
 
     /**
-     * Enumerate the parameters for FindFoci on the provided image
+     * Enumerate the parameters for FindFoci on the provided image.
      *
      * @param imp
      *            The image
@@ -1018,7 +1019,7 @@ public class FindFociOptimiser
         }
     }
 
-    private synchronized static void addFindFociCommand(OutputStreamWriter out, Options bestOptions, String maskTitle)
+    private static synchronized void addFindFociCommand(OutputStreamWriter out, Options bestOptions, String maskTitle)
             throws IOException
     {
         if (bestOptions == null)
@@ -1540,9 +1541,9 @@ public class FindFociOptimiser
             return false;
         }
 
-        inputDirectory = Utils.addFileSeparator(inputDirectory);
-        maskDirectory = Utils.addFileSeparator(maskDirectory);
-        outputDirectory = Utils.addFileSeparator(outputDirectory);
+        inputDirectory = ImageJUtils.addFileSeparator(inputDirectory);
+        maskDirectory = ImageJUtils.addFileSeparator(maskDirectory);
+        outputDirectory = ImageJUtils.addFileSeparator(outputDirectory);
 
         scoringMode = gd.getNextChoiceIndex();
         reuseResults = gd.getNextBoolean();
@@ -1694,8 +1695,8 @@ public class FindFociOptimiser
     {
         if (values.length == 0)
         {
-            Utils.log("%s Warning : %s : No min:max:increment, setting to default minimum %s", TITLE, name,
-                    Utils.rounded(defaultMin));
+            ImageJUtils.log("%s Warning : %s : No min:max:increment, setting to default minimum %s", TITLE, name,
+                    MathUtils.rounded(defaultMin));
             return new double[] { defaultMin, defaultMin, defaultInterval };
         }
         double min, max, interval;
@@ -1703,8 +1704,8 @@ public class FindFociOptimiser
         min = values[0];
         if (min < defaultMin)
         {
-            Utils.log("%s Warning : %s : Minimum below default (%f < %s), setting to default", TITLE, name, min,
-                    Utils.rounded(defaultMin));
+            ImageJUtils.log("%s Warning : %s : Minimum below default (%f < %s), setting to default", TITLE, name, min,
+                    MathUtils.rounded(defaultMin));
             min = defaultMin;
         }
 
@@ -1715,7 +1716,7 @@ public class FindFociOptimiser
             max = values[1];
             if (max < min)
             {
-                Utils.log("%s Warning : %s : Maximum below minimum (%f < %f), setting to minimum", TITLE, name, max,
+                ImageJUtils.log("%s Warning : %s : Maximum below minimum (%f < %f), setting to minimum", TITLE, name, max,
                         min);
                 max = min;
             }
@@ -1725,8 +1726,8 @@ public class FindFociOptimiser
                 interval = values[2];
                 if (interval <= 0)
                 {
-                    Utils.log("%s Warning : %s : Interval is not strictly positive (%f), setting to default (%s)",
-                            TITLE, name, interval, Utils.rounded(defaultInterval));
+                    ImageJUtils.log("%s Warning : %s : Interval is not strictly positive (%f), setting to default (%s)",
+                            TITLE, name, interval, MathUtils.rounded(defaultInterval));
                     interval = defaultInterval;
                 }
             }
@@ -1862,7 +1863,7 @@ public class FindFociOptimiser
         }
         if (set.isEmpty())
         {
-            Utils.log("%s Warning : Sort method : No values, setting to default %d", TITLE,
+            ImageJUtils.log("%s Warning : Sort method : No values, setting to default %d", TITLE,
                     FindFociProcessor.SORT_INTENSITY);
             return new int[] { FindFociProcessor.SORT_INTENSITY }; // Default
         }
@@ -1880,7 +1881,7 @@ public class FindFociOptimiser
                 set.add(v);
         if (set.isEmpty())
         {
-            Utils.log("%s Warning : Gaussian blur : No values, setting to default 0", TITLE);
+            ImageJUtils.log("%s Warning : Gaussian blur : No values, setting to default 0", TITLE);
             return new double[] { 0 }; // Default
         }
         final double[] array = set.toArray();
@@ -1900,7 +1901,7 @@ public class FindFociOptimiser
         }
         if (set.isEmpty())
         {
-            Utils.log("%s Warning : Centre method : No values, setting to default %d", TITLE,
+            ImageJUtils.log("%s Warning : Centre method : No values, setting to default %d", TITLE,
                     FindFoci.CENTRE_MAX_VALUE_SEARCH);
             return new int[] { FindFoci.CENTRE_MAX_VALUE_SEARCH }; // Default
         }
@@ -2077,7 +2078,7 @@ public class FindFociOptimiser
     {
         final FileInfo info = imp.getOriginalFileInfo();
         if (info != null)
-            return Utils.combinePath(info.directory, info.fileName);
+            return ImageJUtils.combinePath(info.directory, info.fileName);
         return imp.getTitle();
     }
 
@@ -2127,7 +2128,7 @@ public class FindFociOptimiser
             matchResult = MatchCalculator.analyseResults2D(roiPoints, predictedPoints, dThreshold);
 
         return new Result(id, options, matchResult.getNumberPredicted(), matchResult.getTruePositives(),
-                matchResult.getFalsePositives(), matchResult.getFalseNegatives(), time, beta, matchResult.getRMSD());
+                matchResult.getFalsePositives(), matchResult.getFalseNegatives(), time, beta, matchResult.getRmsd());
     }
 
     private static AssignedPoint[] extractedPredictedPoints(ArrayList<FindFociResult> resultsArray)
@@ -2754,7 +2755,7 @@ public class FindFociOptimiser
     }
 
     /**
-     * Provides the ability to sort the results arrays in ascending order
+     * Provides the ability to sort the results arrays in ascending order.
      */
     private class ResultComparator implements Comparator<Result>
     {
@@ -2912,7 +2913,7 @@ public class FindFociOptimiser
         }
 
         /**
-         * @return the string representation of the parameters (the value is computed once and cached)
+         * @return the string representation of the parameters (the value is computed once and cached).
          */
         public String createParameters()
         {
@@ -3279,7 +3280,7 @@ public class FindFociOptimiser
                 String path = tf.getText();
                 final boolean recording = Recorder.record;
                 Recorder.record = false;
-                path = Utils.getDirectory("Choose_a_directory", path);
+                path = ImageJUtils.getDirectory("Choose_a_directory", path);
                 Recorder.record = recording;
                 if (path != null)
                     tf.setText(path);
@@ -3469,105 +3470,105 @@ public class FindFociOptimiser
     // Store the preset values for the Text fields, Choices, Numeric field.
     // Preceed with a '-' character if the field is for single mode only.
     //@formatter:off
-	private final String[][] textPreset = new String[][] { { "Testing", // preset name
-			// Text fields
-			"3", // Background_parameter
-			AutoThreshold.Method.OTSU.name, // Auto_threshold
-			"Both", // Statistics_mode
-			"0, 0.6, 0.2", // Search_parameter
-			"0, 0.6, 0.2", // Peak_parameter
-			"3, 9, 2", // Minimum_size
-			"1", // Sort_method
-			"1", // Gaussian_blur
-			"0", // Centre_method
-			"2", // Centre_parameter
-			// Choices
-			"-", // Mask
-			"Yes", // Minimum_above_saddle
-			"Relative above background", // Minimum_peak_height
-			"Relative", // Match_search_method
-			"Jaccard", // Result_sort_method
-			// Numeric fields
-			"500", // Maximum_peaks
-			"0.05", // Match_search_distance
-			"4.0", // F-beta
-			"100", // Maximum_results
-			"10000", // Step_limit
-	}, { "Default", // preset name
-			// Text fields
-			"2.5, 3.5, 0.5", // Background_parameter
-			AutoThreshold.Method.OTSU.name, // Auto_threshold
-			"Both", // Statistics_mode
-			"0, 0.6, 0.2", // Search_parameter
-			"0, 0.6, 0.2", // Peak_parameter
-			"1, 9, 2", // Minimum_size
-			"1", // Sort_method
-			"0, 0.5, 1", // Gaussian_blur
-			"0", // Centre_method
-			"2", // Centre_parameter
-			// Choices
-			"-", // Mask
-			"Yes", // Minimum_above_saddle
-			"Relative above background", // Minimum_peak_height
-			"Relative", // Match_search_method
-			"Jaccard", // Result_sort_method
-			// Numeric fields
-			"500", // Maximum_peaks
-			"0.05", // Match_search_distance
-			"4.0", // F-beta
-			"100", // Maximum_results
-			"10000", // Step_limit
-	}, { "Benchmark", // preset name
-			// Text fields
-			"0, 4.7, 0.667", // Background_parameter
-			AutoThreshold.Method.OTSU.name + ", "+AutoThreshold.Method.RENYI_ENTROPY.name+
-			", "+AutoThreshold.Method.TRIANGLE.name, // Auto_threshold
-			"Both", // Statistics_mode
-			"0, 0.8, 0.1", // Search_parameter
-			"0, 0.8, 0.1", // Peak_parameter
-			"1, 9, 2", // Minimum_size
-			"1", // Sort_method
-			"0, 0.5, 1, 2", // Gaussian_blur
-			"0", // Centre_method
-			"2", // Centre_parameter
-			// Choices
-			"-", // Mask
-			"Yes", // Minimum_above_saddle
-			"Relative above background", // Minimum_peak_height
-			"Relative", // Match_search_method
-			"Jaccard", // Result_sort_method
-			// Numeric fields
-			"500", // Maximum_peaks
-			"0.05", // Match_search_distance
-			"4.0", // F-beta
-			"100", // Maximum_results
-			"30000", // Step_limit
-	} };
-	// Store the preset values for the Checkboxes.
-	// Use int so that the flags can be checked if they are for single mode only.
-	private final int FLAG_FALSE = 0;
-	private final int FLAG_TRUE = 1;
-	private final int FLAG_SINGLE = 2;
-	private final int[][] optionPreset = new int[][] { { FLAG_FALSE, // Background_SD_above_mean
-			FLAG_FALSE, // Background_Absolute
-			FLAG_TRUE, // Background_Auto_Threshold
-			FLAG_TRUE, // Search_above_background
-			FLAG_FALSE, // Search_fraction_of_peak
-			FLAG_FALSE + FLAG_SINGLE // Show_score_images
-	}, { FLAG_TRUE, // Background_SD_above_mean
-			FLAG_FALSE, // Background_Absolute
-			FLAG_TRUE, // Background_Auto_Threshold
-			FLAG_TRUE, // Search_above_background
-			FLAG_TRUE, // Search_fraction_of_peak
-			FLAG_FALSE + FLAG_SINGLE // Show_score_images
-	}, { FLAG_TRUE, // Background_SD_above_mean
-			FLAG_FALSE, // Background_Absolute
-			FLAG_TRUE, // Background_Auto_Threshold
-			FLAG_TRUE, // Search_above_background
-			FLAG_TRUE, // Search_fraction_of_peak
-			FLAG_FALSE + FLAG_SINGLE // Show_score_images
-	} };
-	//@formatter:on
+  private final String[][] textPreset = new String[][] { { "Testing", // preset.toString()
+      // Text fields
+      "3", // Background_parameter
+      AutoThreshold.Method.OTSU.toString(), // Auto_threshold
+      "Both", // Statistics_mode
+      "0, 0.6, 0.2", // Search_parameter
+      "0, 0.6, 0.2", // Peak_parameter
+      "3, 9, 2", // Minimum_size
+      "1", // Sort_method
+      "1", // Gaussian_blur
+      "0", // Centre_method
+      "2", // Centre_parameter
+      // Choices
+      "-", // Mask
+      "Yes", // Minimum_above_saddle
+      "Relative above background", // Minimum_peak_height
+      "Relative", // Match_search_method
+      "Jaccard", // Result_sort_method
+      // Numeric fields
+      "500", // Maximum_peaks
+      "0.05", // Match_search_distance
+      "4.0", // F-beta
+      "100", // Maximum_results
+      "10000", // Step_limit
+  }, { "Default", // preset.toString()
+      // Text fields
+      "2.5, 3.5, 0.5", // Background_parameter
+      AutoThreshold.Method.OTSU.toString(), // Auto_threshold
+      "Both", // Statistics_mode
+      "0, 0.6, 0.2", // Search_parameter
+      "0, 0.6, 0.2", // Peak_parameter
+      "1, 9, 2", // Minimum_size
+      "1", // Sort_method
+      "0, 0.5, 1", // Gaussian_blur
+      "0", // Centre_method
+      "2", // Centre_parameter
+      // Choices
+      "-", // Mask
+      "Yes", // Minimum_above_saddle
+      "Relative above background", // Minimum_peak_height
+      "Relative", // Match_search_method
+      "Jaccard", // Result_sort_method
+      // Numeric fields
+      "500", // Maximum_peaks
+      "0.05", // Match_search_distance
+      "4.0", // F-beta
+      "100", // Maximum_results
+      "10000", // Step_limit
+  }, { "Benchmark", // preset.toString()
+      // Text fields
+      "0, 4.7, 0.667", // Background_parameter
+      AutoThreshold.Method.OTSU.toString() + ", "+AutoThreshold.Method.RENYI_ENTROPY.toString()+
+      ", "+AutoThreshold.Method.TRIANGLE.toString(), // Auto_threshold
+      "Both", // Statistics_mode
+      "0, 0.8, 0.1", // Search_parameter
+      "0, 0.8, 0.1", // Peak_parameter
+      "1, 9, 2", // Minimum_size
+      "1", // Sort_method
+      "0, 0.5, 1, 2", // Gaussian_blur
+      "0", // Centre_method
+      "2", // Centre_parameter
+      // Choices
+      "-", // Mask
+      "Yes", // Minimum_above_saddle
+      "Relative above background", // Minimum_peak_height
+      "Relative", // Match_search_method
+      "Jaccard", // Result_sort_method
+      // Numeric fields
+      "500", // Maximum_peaks
+      "0.05", // Match_search_distance
+      "4.0", // F-beta
+      "100", // Maximum_results
+      "30000", // Step_limit
+  } };
+  // Store the preset values for the Checkboxes.
+  // Use int so that the flags can be checked if they are for single mode only.
+  private final int FLAG_FALSE = 0;
+  private final int FLAG_TRUE = 1;
+  private final int FLAG_SINGLE = 2;
+  private final int[][] optionPreset = new int[][] { { FLAG_FALSE, // Background_SD_above_mean
+      FLAG_FALSE, // Background_Absolute
+      FLAG_TRUE, // Background_Auto_Threshold
+      FLAG_TRUE, // Search_above_background
+      FLAG_FALSE, // Search_fraction_of_peak
+      FLAG_FALSE + FLAG_SINGLE // Show_score_images
+  }, { FLAG_TRUE, // Background_SD_above_mean
+      FLAG_FALSE, // Background_Absolute
+      FLAG_TRUE, // Background_Auto_Threshold
+      FLAG_TRUE, // Search_above_background
+      FLAG_TRUE, // Search_fraction_of_peak
+      FLAG_FALSE + FLAG_SINGLE // Show_score_images
+  }, { FLAG_TRUE, // Background_SD_above_mean
+      FLAG_FALSE, // Background_Absolute
+      FLAG_TRUE, // Background_Auto_Threshold
+      FLAG_TRUE, // Search_above_background
+      FLAG_TRUE, // Search_fraction_of_peak
+      FLAG_FALSE + FLAG_SINGLE // Show_score_images
+  } };
+  //@formatter:on
 
     private void createSettings()
     {

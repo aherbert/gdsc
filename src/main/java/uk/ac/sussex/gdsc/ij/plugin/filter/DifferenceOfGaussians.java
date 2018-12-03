@@ -59,14 +59,14 @@ import ij.process.ImageProcessor;
 public class DifferenceOfGaussians extends GaussianBlur
 {
 
-    /** the standard deviation of the Gaussian */
+    /** the standard deviation of the Gaussian. */
     private static double sigma1 = Prefs.get("DoG.sigma1", 6.0);
     private static double sigma2 = Prefs.get("DoG.sigma2", 1.5);
-    /** whether sigma is given in units corresponding to the pixel scale (not pixels) */
+    /** whether sigma is given in units corresponding to the pixel scale (not pixels). */
     private static boolean sigmaScaled = Prefs.getBoolean("DoG.sigmaScaled", false);
     private static boolean enhanceContrast = Prefs.getBoolean("DoG.enhanceContrast", false);
     private static boolean maintainRatio = Prefs.getBoolean("DoG.maintainRatio", false);
-    /** The flags specifying the capabilities and needs */
+    /** The flags specifying the capabilities and needs. */
     private int flags = DOES_ALL | SUPPORTS_MASKING | KEEP_PREVIEW | FINAL_PROCESSING;
     private ImagePlus imp; // The ImagePlus of the setup call, needed to get the spatial calibration
     private boolean hasScale = false; // whether the image has an x&y scale
@@ -91,12 +91,12 @@ public class DifferenceOfGaussians extends GaussianBlur
     private long lastTime = 0;
 
     /**
-     * Set to true to suppress progress reporting to the ImageJ window
+     * Set to true to suppress progress reporting to the ImageJ window.
      */
     public boolean noProgress = false;
 
     /**
-     * Method to return types supported
+     * Method to return types supported.
      *
      * @param arg
      *            unused
@@ -132,7 +132,7 @@ public class DifferenceOfGaussians extends GaussianBlur
     }
 
     /**
-     * Ask the user for the parameters
+     * Ask the user for the parameters.
      */
     @Override
     public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
@@ -186,7 +186,7 @@ public class DifferenceOfGaussians extends GaussianBlur
         return IJ.setupDialog(imp, flags); // ask whether to process all slices of stack (if a stack)
     }
 
-    /** Listener to modifications of the input fields of the dialog */
+    /** Listener to modifications of the input fields of the dialog. */
     @Override
     public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
     {
@@ -281,7 +281,7 @@ public class DifferenceOfGaussians extends GaussianBlur
     }
 
     /**
-     * This method is invoked for each slice during execution
+     * This method is invoked for each slice during execution.
      *
      * @param ip
      *            The image subject to filtering. It must have a valid snapshot if

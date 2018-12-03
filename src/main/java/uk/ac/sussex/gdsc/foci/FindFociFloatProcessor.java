@@ -56,11 +56,11 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor
 
     /** The image. */
     protected float[] image;
-    /** Cache the bin for each index */
+    /** Cache the bin for each index. */
     protected int[] bin;
 
     /**
-     * Extract the image into a linear array stacked in zyx order
+     * Extract the image into a linear array stacked in zyx order.
      */
     @Override
     protected Object extractImage(ImagePlus imp)

@@ -30,14 +30,14 @@ import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * Computes the odds of winning the lottery using random sampling.
  */
 public class Lottery implements PlugIn
 {
-    private final static String TITLE = "Lottery";
+    private static final String TITLE = "Lottery";
     private static int numbers = 59;
     private static int pick = 6;
     private static int match = 3;
@@ -119,7 +119,7 @@ public class Lottery implements PlugIn
                 final double f = (double) ok / count;
                 IJ.log(String.format("%d / %d = %f (1 in %f)", ok, count, f, 1.0 / f));
                 c = 0;
-                if (Utils.isInterrupted())
+                if (ImageJUtils.isInterrupted())
                     return;
             }
 

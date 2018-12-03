@@ -38,9 +38,9 @@ import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
-import uk.ac.sussex.gdsc.core.ij.process.LUTHelper;
-import uk.ac.sussex.gdsc.core.utils.Maths;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
 import uk.ac.sussex.gdsc.core.utils.TurboList;
 
@@ -138,7 +138,7 @@ public class SpotRadialIntensity implements PlugIn
         showPlot = gd.getNextBoolean();
 
         // Validate options
-        if (!Maths.isFinite(distance) || !Maths.isFinite(interval) || distance <= 0 || interval <= 0 ||
+        if (!Double.isFinite(distance) || !Double.isFinite(interval) || distance <= 0 || interval <= 0 ||
                 (int) (distance / interval) <= 1)
         {
             IJ.error(TITLE, "No valid distances using the given interval");
@@ -170,7 +170,7 @@ public class SpotRadialIntensity implements PlugIn
         if (showFoci)
             imp.setRoi(roi);
         if (showObjects)
-            Utils.display(TITLE + " Objects", objects.toProcessor()).setRoi(roi);
+            ImageJUtils.display(TITLE + " Objects", objects.toProcessor()).setRoi(roi);
 
         analyse(foci, objects);
     }
@@ -185,7 +185,7 @@ public class SpotRadialIntensity implements PlugIn
         final ArrayList<String> newImageList = new ArrayList<>();
         final int w = imp.getWidth();
         final int h = imp.getHeight();
-        for (final int id : Utils.getIDList())
+        for (final int id : ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
             if (imp == null)
@@ -308,7 +308,7 @@ public class SpotRadialIntensity implements PlugIn
         // The lower limit of the squared distance for each bin
         final double[] distances = new double[maxBin];
         for (int i = 0; i < distances.length; i++)
-            distances[i] = Maths.pow2(i * interval);
+            distances[i] = MathUtils.pow2(i * interval);
 
         // Table of dx^2
         final int[] dx2 = new int[2 * distance + 1];
@@ -317,7 +317,7 @@ public class SpotRadialIntensity implements PlugIn
         final Plot plot = (showPlot) ? new Plot(TITLE, "Distance", "Average") : null;
         final double[] xAxis = SimpleArrayUtils.newArray(maxBin, 0, interval);
         final double[] yAxis = new double[xAxis.length];
-        final LUT lut = LUTHelper.createLUT(LUTHelper.LutColour.FIRE_GLOW);
+        final LUT lut = LutHelper.createLut(LutHelper.LutColour.FIRE_GLOW);
 
         final int w = imp.getWidth();
         final int upperx = imp.getWidth() - 1;
@@ -334,7 +334,7 @@ public class SpotRadialIntensity implements PlugIn
 
             // Table of dx^2
             for (int x = minx, j = 0; x <= maxx; x++, j++)
-                dx2[j] = Maths.pow2(f.x - x);
+                dx2[j] = MathUtils.pow2(f.x - x);
 
             // Reset radial stats
             for (int i = 0, len = count.length; i < len; i++)
@@ -346,7 +346,7 @@ public class SpotRadialIntensity implements PlugIn
             // For all pixels
             for (int y = miny; y <= maxy; y++)
             {
-                final int dy2 = Maths.pow2(f.y - y);
+                final int dy2 = MathUtils.pow2(f.y - y);
                 for (int x = minx, i = y * w + minx, j = 0; x <= maxx; x++, i++, j++)
                     // If correct object
                     if (mask[i] == f.object)
@@ -380,14 +380,14 @@ public class SpotRadialIntensity implements PlugIn
                 sb.append('\t').append(f.id);
                 sb.append('\t').append(f.object);
                 final float b = background[f.object];
-                sb.append('\t').append(Utils.rounded(b));
+                sb.append('\t').append(MathUtils.rounded(b));
                 sb.append('\t').append(f.x);
                 sb.append('\t').append(f.y);
                 for (int i = 0; i < maxBin; i++)
                 {
                     final double v = sum[i] / count[i] - b * count[i];
                     yAxis[i] = v;
-                    sb.append('\t').append(Utils.rounded(v));
+                    sb.append('\t').append(MathUtils.rounded(v));
                 }
                 for (int i = 0; i < maxBin; i++)
                     sb.append('\t').append(count[i]);
@@ -403,7 +403,7 @@ public class SpotRadialIntensity implements PlugIn
                     if (count[i] != 0)
                         xLimit = i + 1;
 
-                plot.setColor(LUTHelper.getColour(lut, ii + 1, 0, foci.length));
+                plot.setColor(LutHelper.getColour(lut, ii + 1, 0, foci.length));
                 if (xLimit < xAxis.length)
                     plot.addPoints(Arrays.copyOf(xAxis, xLimit), Arrays.copyOf(yAxis, xLimit), Plot.LINE);
                 else
@@ -414,13 +414,13 @@ public class SpotRadialIntensity implements PlugIn
         if (showPlot)
         {
             plot.setColor(Color.BLACK);
-            Utils.display(TITLE, plot);
+            ImageJUtils.display(TITLE, plot);
             plot.setLimitsToFit(true); // Seems to only work after drawing
         }
     }
 
     /**
-     * Gets the background using a 3x3 block mean
+     * Gets the background using a 3x3 block mean.
      *
      * @param objects
      *            the objects
@@ -468,15 +468,15 @@ public class SpotRadialIntensity implements PlugIn
         {
             final double low = interval * i;
             final double high = interval * (i + 1);
-            sb.append("\tAv ").append(Utils.rounded(low));
-            sb.append("-").append(Utils.rounded(high));
+            sb.append("\tAv ").append(MathUtils.rounded(low));
+            sb.append("-").append(MathUtils.rounded(high));
         }
         for (int i = 0; i < maxBin; i++)
         {
             final double low = interval * i;
             final double high = interval * (i + 1);
-            sb.append("\tN ").append(Utils.rounded(low));
-            sb.append("-").append(Utils.rounded(high));
+            sb.append("\tN ").append(MathUtils.rounded(low));
+            sb.append("-").append(MathUtils.rounded(high));
         }
         return sb.toString();
     }

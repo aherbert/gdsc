@@ -90,7 +90,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
     /** Display results in the ImageJ console. */
     public static final int SHOW_RESULTS = 1;
 
-    /** Obsolete, replaced by DISPLAY_SUMMARY */
+    /** Obsolete, replaced by DISPLAY_SUMMARY. */
     public static final int SHOW_SUMMARY = 2;
 
     /** Display image containing outlines of measured particles. */
@@ -155,19 +155,19 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
 
     /** Show nothing. */
     protected static final int NOTHING = 0;
-    /** Show outlines */
+    /** Show outlines. */
     protected static final int OUTLINES = 1;
-    /** Show bare outlines */
+    /** Show bare outlines. */
     protected static final int BARE_OUTLINES = 2;
-    /** Show ellipses */
+    /** Show ellipses. */
     protected static final int ELLIPSES = 3;
-    /** Show masks */
+    /** Show masks. */
     protected static final int MASKS = 4;
-    /** Create ROI masks */
+    /** Create ROI masks. */
     protected static final int ROI_MASKS = 5;
-    /** Overlay outlines */
+    /** Overlay outlines. */
     protected static final int OVERLAY_OUTLINES = 6;
-    /** Overlay masks */
+    /** Overlay masks. */
     protected static final int OVERLAY_MASKS = 7;
 
     /** The static show choice option. */
@@ -346,7 +346,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements
         this(options, measurements, rt, minSize, maxSize, 0.0, 1.0);
     }
 
-    /** Default constructor */
+    /** Default constructor. */
     public ParticleAnalyzerCopy()
     {
         slice = 1;

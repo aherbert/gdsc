@@ -93,7 +93,7 @@ public class Stack_Average implements PlugInFilter
         final int bitDepth = imp.getBitDepth();
 
         // Build a list of the images
-        final int[] wList = uk.ac.sussex.gdsc.core.ij.Utils.getIDList();
+        final int[] wList = uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList();
 
         final ArrayList<ImagePlus> images = new ArrayList<>(wList.length);
 

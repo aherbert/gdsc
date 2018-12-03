@@ -38,8 +38,8 @@ import ij.ImageStack;
 import ij.gui.Roi;
 import ij.plugin.filter.GaussianBlur;
 import ij.process.ImageProcessor;
-import uk.ac.sussex.gdsc.core.ij.Utils;
-import uk.ac.sussex.gdsc.core.logging.Logger;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import java.util.logging.Logger;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.FloatHistogram;
 import uk.ac.sussex.gdsc.core.threshold.Histogram;
@@ -129,31 +129,31 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 	//@formatter:on
 
     /* the following constants are used to set bits corresponding to pixel types */
-    /** marks points outside the ROI */
-    protected final static byte EXCLUDED = (byte) 1;
-    /** marks local maxima (irrespective of noise tolerance) */
-    protected final static byte MAXIMUM = (byte) 2;
-    /** marks points currently in the list */
-    protected final static byte LISTED = (byte) 4;
-    /** marks areas near a maximum, within the tolerance */
-    protected final static byte MAX_AREA = (byte) 8;
-    /** marks a potential saddle between maxima */
-    protected final static byte SADDLE = (byte) 16;
-    /** marks a saddle between maxima */
-    protected final static byte SADDLE_POINT = (byte) 32;
-    /** marks a point within a maxima next to a saddle */
-    protected final static byte SADDLE_WITHIN = (byte) 64;
-    /** marks a point as a plateau region */
-    protected final static byte PLATEAU = (byte) 128;
-    /** marks a point as not a maximum */
-    protected final static byte NOT_MAXIMUM = (byte) 32;
-    /** marks a point to use in the saddle search */
-    protected final static byte SADDLE_SEARCH = (byte) 32;
-    /** marks a point as falling below the highest saddle point */
-    protected final static byte BELOW_SADDLE = (byte) 128;
+    /** marks points outside the ROI. */
+    protected static final byte EXCLUDED = (byte) 1;
+    /** marks local maxima (irrespective of noise tolerance). */
+    protected static final byte MAXIMUM = (byte) 2;
+    /** marks points currently in the list. */
+    protected static final byte LISTED = (byte) 4;
+    /** marks areas near a maximum, within the tolerance. */
+    protected static final byte MAX_AREA = (byte) 8;
+    /** marks a potential saddle between maxima. */
+    protected static final byte SADDLE = (byte) 16;
+    /** marks a saddle between maxima. */
+    protected static final byte SADDLE_POINT = (byte) 32;
+    /** marks a point within a maxima next to a saddle. */
+    protected static final byte SADDLE_WITHIN = (byte) 64;
+    /** marks a point as a plateau region. */
+    protected static final byte PLATEAU = (byte) 128;
+    /** marks a point as not a maximum. */
+    protected static final byte NOT_MAXIMUM = (byte) 32;
+    /** marks a point to use in the saddle search. */
+    protected static final byte SADDLE_SEARCH = (byte) 32;
+    /** marks a point as falling below the highest saddle point. */
+    protected static final byte BELOW_SADDLE = (byte) 128;
 
-    /** marks point to be ignored in stage 1 */
-    protected final static byte IGNORE = EXCLUDED | LISTED;
+    /** marks point to be ignored in stage 1. */
+    protected static final byte IGNORE = EXCLUDED | LISTED;
 
     /** {@inheritDoc} */
     @Override
@@ -227,7 +227,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         if (isLogging)
             recordStatistics(stats, exclusion, options, sortIndex);
 
-        if (Utils.isInterrupted())
+        if (ImageJUtils.isInterrupted())
             return null;
 
         if (isLogging)
@@ -245,7 +245,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
             log("Background level = " + getFormat(stats.background));
         Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, stats.regionMinimum, stats.background);
 
-        if (Utils.isInterrupted() || maxPoints == null)
+        if (ImageJUtils.isInterrupted() || maxPoints == null)
             return null;
 
         if (isLogging)
@@ -259,7 +259,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
         assignPointsToMaxima(image, histogram, types, stats, maxima);
 
-        if (Utils.isInterrupted())
+        if (ImageJUtils.isInterrupted())
             return null;
 
         if (isLogging)
@@ -279,7 +279,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         // Calculate the highest saddle point for each peak
         final FindFociSaddleList[] saddlePoints = findSaddlePoints(image, types, resultsArray, maxima);
 
-        if (Utils.isInterrupted())
+        if (ImageJUtils.isInterrupted())
             return null;
 
         // Find the peak sizes above their saddle points.
@@ -298,7 +298,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         //if (isLogging)
         //	timingSplit("Merged peaks");
 
-        if (resultsArray == null || Utils.isInterrupted())
+        if (resultsArray == null || ImageJUtils.isInterrupted())
             return null;
 
         if ((options & OPTION_REMOVE_EDGE_MAXIMA) != 0)
@@ -375,7 +375,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
             // is converted to a float image it will achieve the same results.
             histogram = histogram.compact(65536);
         //histogram = histogram.compact(4096);
-        final int[] statsHistogram = histogram.h;
+        final int[] statsHistogram = histogram.histogramCounts;
         final int t;
         if (autoThresholdMethod.endsWith("evel"))
         {
@@ -1000,7 +1000,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
                 // Sum above background
                 double sum = 0;
                 for (int bin = hist.minBin; bin <= hist.maxBin; bin++)
-                    sum += hist.h[bin] * (hist.getValue(bin) - background);
+                    sum += hist.histogramCounts[bin] * (hist.getValue(bin) - background);
 
                 // Determine the cut-off using fraction of cumulative intensity
                 final double total = sum * fractionParameter;
@@ -1010,7 +1010,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
                 int bin = hist.maxBin;
                 while (bin >= hist.minBin)
                 {
-                    sum += hist.h[bin] * (hist.getValue(bin) - background);
+                    sum += hist.histogramCounts[bin] * (hist.getValue(bin) - background);
                     if (sum > total)
                         break;
                     bin--;
@@ -1025,7 +1025,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
                 // Sum above background
                 long sum = 0;
                 for (int bin = hist.minBin; bin <= hist.maxBin; bin++)
-                    sum += hist.h[bin] * (bin - background);
+                    sum += hist.histogramCounts[bin] * (bin - background);
 
                 // Determine the cut-off using fraction of cumulative intensity
                 final long total = (long) (sum * fractionParameter);
@@ -1035,7 +1035,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
                 int bin = hist.maxBin;
                 while (bin >= hist.minBin)
                 {
-                    sum += hist.h[bin] * (bin - background);
+                    sum += hist.histogramCounts[bin] * (bin - background);
                     if (sum > total)
                         break;
                     bin--;
@@ -1721,7 +1721,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Compute the image statistics for the background
+     * Compute the image statistics for the background.
      *
      * @param histogram
      *            The image histogram
@@ -1750,7 +1750,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     private static double[] getStatistics(Histogram histogram)
     {
         // Check for an empty histogram
-        if (histogram.minBin == histogram.maxBin && histogram.h[histogram.maxBin] == 0)
+        if (histogram.minBin == histogram.maxBin && histogram.histogramCounts[histogram.maxBin] == 0)
             return new double[5];
 
         // Get the average
@@ -1760,20 +1760,21 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         double sum2 = 0.0;
         long n = 0;
         for (int i = histogram.minBin; i <= histogram.maxBin; i++)
-            if (histogram.h[i] != 0)
+            if (histogram.histogramCounts[i] != 0)
             {
-                count = histogram.h[i];
+                count = histogram.histogramCounts[i];
                 n += count;
                 value = histogram.getValue(i);
                 sum += value * count;
                 sum2 += (value * value) * count;
             }
-        final double av = sum / n;
 
         // Get the Std.Dev
         double stdDev;
+        double av;
         if (n > 0)
         {
+            av = sum / n;
             final double d = n;
             stdDev = (d * sum2 - sum * sum) / d;
             if (stdDev > 0.0)
@@ -1781,8 +1782,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
             else
                 stdDev = 0.0;
         }
-        else
+        else {
+            av = 0;
             stdDev = 0.0;
+        }
 
         final double min = histogram.getValue(histogram.minBin);
         final double max = histogram.getValue(histogram.maxBin);
@@ -1790,7 +1793,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Get the threshold for searching for maxima
+     * Get the threshold for searching for maxima.
      *
      * @param backgroundMethod
      *            The background thresholding method
@@ -1804,7 +1807,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
             FindFociStatistics stats);
 
     /**
-     * Get the minimum height for this peak above the highest saddle point
+     * Get the minimum height for this peak above the highest saddle point.
      *
      * @param peakMethod
      *            The method
@@ -1984,7 +1987,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
         //if (pCount > 0)
         //	System.out.printf("Plateau count = %d\n", pCount);
 
-        if (Utils.isInterrupted())
+        if (ImageJUtils.isInterrupted())
             return null;
 
         for (int i = maxx_maxy_maxz; i-- > 0;)
@@ -2213,7 +2216,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * The value to use for no saddle (usually zero or -Inf when the background is zero)
+     * The value to use for no saddle (usually zero or -Inf when the background is zero).
      */
     protected float NO_SADDLE_VALUE;
 
@@ -2286,7 +2289,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     {
         setPixels(pixels);
         // This is modified so clone it
-        final int[] histogram = hist.h.clone();
+        final int[] histogram = hist.histogramCounts.clone();
 
         final int minBin = getBackgroundBin(hist, stats.background);
         final int maxBin = hist.maxBin;
@@ -2348,7 +2351,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
                     break;
             }
 
-            if ((processedLevel % 64 == 0) && Utils.isInterrupted())
+            if ((processedLevel % 64 == 0) && ImageJUtils.isInterrupted())
                 return;
 
             if (remaining > 0 && level > minBin)
@@ -2772,7 +2775,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Get the threshold that limits the maxima region growing
+     * Get the threshold that limits the maxima region growing.
      *
      * @param searchMethod
      *            The thresholding method
@@ -3980,7 +3983,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Searches from the specified maximum to find all contiguous points above the saddle
+     * Searches from the specified maximum to find all contiguous points above the saddle.
      *
      * @param maxima
      *            the maxima
@@ -4371,7 +4374,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Merge sub-peaks into their highest neighbour peak using the highest saddle point
+     * Merge sub-peaks into their highest neighbour peak using the highest saddle point.
      */
     private FindFociResult[] mergeSubPeaks(FindFociResult[] resultsArray, Object pixels, int[] maxima, byte[] types,
             int minSize, int peakMethod, double peakParameter, FindFociStatistics stats,
@@ -4385,7 +4388,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
         if (isLogging)
             timingSplit("Height filter : Number of peaks = " + countPeaks(mergeResults.peakIdMap));
-        if (Utils.isInterrupted())
+        if (ImageJUtils.isInterrupted())
             return null;
 
         if (minSize > 1)
@@ -4393,7 +4396,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
         if (isLogging)
             timingSplit("Size filter : Number of peaks = " + countPeaks(mergeResults.peakIdMap));
-        if (Utils.isInterrupted())
+        if (ImageJUtils.isInterrupted())
             return null;
 
         // This can be intensive due to the requirement to recount the peak size above the saddle, so it is optional
@@ -4403,7 +4406,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
 
             if (isLogging)
                 timingSplit("Size above saddle filter : Number of peaks = " + countPeaks(mergeResults.peakIdMap));
-            if (Utils.isInterrupted())
+            if (ImageJUtils.isInterrupted())
                 return null;
 
             // TODO - Add an intensity above saddle filter.
@@ -4417,7 +4420,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Merge sub-peaks into their highest neighbour peak using the highest saddle point based on a min height criteria
+     * Merge sub-peaks into their highest neighbour peak using the highest saddle point based on a min height criteria.
      */
     private FindFociMergeTempResults mergeUsingHeight(FindFociResult[] resultsArray, Object pixels, int[] maxima,
             int peakMethod, double peakParameter, FindFociStatistics stats, FindFociSaddleList[] saddlePoints)
@@ -4485,7 +4488,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Merge sub-peaks into their highest neighbour peak using the highest saddle point based on a min size criteria
+     * Merge sub-peaks into their highest neighbour peak using the highest saddle point based on a min size criteria.
      */
     private void mergeUsingSize(FindFociMergeTempResults mergeResult, int[] maxima, int minSize)
     {
@@ -4537,7 +4540,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Merge sub-peaks into their highest neighbour peak using the highest saddle point
+     * Merge sub-peaks into their highest neighbour peak using the highest saddle point.
      */
     private void mergeAboveSaddle(FindFociMergeTempResults mergeResult, Object pixels, int[] maxima, byte[] types,
             int minSize, boolean nonContiguous)
@@ -4597,7 +4600,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Finalised the merge of sub-peaks into their highest neighbour peak using the highest saddle point
+     * Finalised the merge of sub-peaks into their highest neighbour peak using the highest saddle point.
      */
     private FindFociResult[] mergeFinal(FindFociResult[] resultsArray, int[] peakIdMap, int[] maxima)
     {
@@ -5419,7 +5422,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Checks if is a 2D image
+     * Checks if is a 2D image.
      *
      * @return true, if is 2D image
      */
@@ -5494,7 +5497,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Debugging method
+     * Debugging method.
      *
      * @param index
      *            the single x,y,z index
@@ -5507,7 +5510,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Debugging method
+     * Debugging method.
      *
      * @param index
      *            the single x,y,z index
@@ -5520,7 +5523,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Debugging method
+     * Debugging method.
      *
      * @param index
      *            the single x,y,z index
@@ -5767,7 +5770,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Check if the logging flag is enabled
+     * Check if the logging flag is enabled.
      *
      * @param outputType
      *            The output options flag
@@ -5845,7 +5848,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Provides the ability to sort the results arrays in descending order
+     * Provides the ability to sort the results arrays in descending order.
      */
     private class ResultComparator implements Comparator<FindFociResult>
     {
@@ -5879,7 +5882,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Provides the ability to sort the results arrays in descending order
+     * Provides the ability to sort the results arrays in descending order.
      */
     private class ResultDescComparator extends ResultComparator
     {
@@ -5899,7 +5902,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Provides the ability to sort the results arrays in ascending order
+     * Provides the ability to sort the results arrays in ascending order.
      */
     private class ResultAscComparator extends ResultComparator
     {
@@ -5919,7 +5922,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * Used to store the number of objects and their original mask value (state)
+     * Used to store the number of objects and their original mask value (state).
      */
     class ObjectAnalysisResult
     {
@@ -6208,7 +6211,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     public abstract boolean isFloatProcessor();
 
     /**
-     * @return Set to true if showing progress in the ImageJ status bar
+     * @return Set to true if showing progress in the ImageJ status bar.
      */
     public boolean isShowStatus()
     {
@@ -6231,7 +6234,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor
     }
 
     /**
-     * @return the logger
+     * @return the logger.
      */
     public Logger getLogger()
     {

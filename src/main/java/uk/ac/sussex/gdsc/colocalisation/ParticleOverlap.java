@@ -38,7 +38,8 @@ import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * For all particles in a mask (defined by their unique pixel value), count the overlap with a second mask image. An
@@ -86,8 +87,8 @@ public class ParticleOverlap implements PlugIn
         gd.addMessage("For each particle in a mask (defined by unique pixel value)\n" +
                 "count the overlap and Manders coefficient with a second mask image");
 
-        final String[] imageList = Utils.getImageList(Utils.GREY_SCALE, null);
-        final String[] maskList = Utils.getImageList(Utils.GREY_8_16, null);
+        final String[] imageList = ImageJUtils.getImageList(ImageJUtils.GREY_SCALE, null);
+        final String[] maskList = ImageJUtils.getImageList(ImageJUtils.GREY_8_16, null);
 
         gd.addChoice("Particle_mask", maskList, maskTitle1);
         gd.addChoice("Particle_image", imageList, imageTitle);
@@ -300,10 +301,10 @@ public class ParticleOverlap implements PlugIn
         sb.append(id).append('\t');
         sb.append(n1).append('\t');
         sb.append(no1).append('\t');
-        sb.append(Utils.rounded((100.0 * no1) / n1)).append('\t');
+        sb.append(MathUtils.rounded((100.0 * no1) / n1)).append('\t');
         sb.append(s1).append('\t');
         sb.append(so1).append('\t');
-        sb.append(Utils.rounded(so1 / s1, 5)).append('\t');
+        sb.append(MathUtils.rounded(so1 / s1, 5)).append('\t');
 
         recordResult(sb.toString());
     }

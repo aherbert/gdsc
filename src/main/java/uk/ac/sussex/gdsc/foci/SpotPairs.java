@@ -42,7 +42,7 @@ import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.help.URL;
 
 /**
@@ -51,7 +51,7 @@ import uk.ac.sussex.gdsc.help.URL;
 public class SpotPairs implements ExtendedPlugInFilter, DialogListener
 {
     /**
-     * Used to store information about a cluster in the clustering analysis
+     * Used to store information about a cluster in the clustering analysis.
      */
     private class Cluster
     {
@@ -152,7 +152,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
         }
 
         /**
-         * @return True if the closest cluster links back to this cluster
+         * @return True if the closest cluster links back to this cluster.
          */
         boolean validLink()
         {
@@ -182,7 +182,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
     }
 
     /**
-     * Used to store information about a point in the clustering analysis
+     * Used to store information about a point in the clustering analysis.
      */
     private class ClusterPoint
     {
@@ -325,7 +325,7 @@ public class SpotPairs implements ExtendedPlugInFilter, DialogListener
             final ClusterPoint p2 = p1.next;
             final double d = p1.distance(p2);
             resultsWindow.append(String.format("\t%d\t%.0f\t%.0f\t%d\t%.0f\t%.0f\t%s\t%s\n", p1.id, p1.x, p1.y, p2.id,
-                    p2.x, p2.y, Utils.rounded(d), Utils.rounded(d * cal.pixelWidth)));
+                    p2.x, p2.y, MathUtils.rounded(d), MathUtils.rounded(d * cal.pixelWidth)));
         }
     }
 

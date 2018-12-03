@@ -33,6 +33,7 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 
 /**
  * Fits a circular 2D Gaussian.
@@ -40,22 +41,30 @@ import uk.ac.sussex.gdsc.UsageTracker;
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class GaussianFit implements PlugInFilter
 {
-    private static boolean fittingEnabled;
-    private static String errorMessage;
-    private static Throwable exception;
+    /**
+     * The name of the class implementing the Gaussian fit method. 
+     *
+     * <p>This class requires another package on the runtime classpath and is created using 
+     * reflection.
+     */
+    private static final String GAUSSIAN_FIT_CLASS = "uk.ac.sussex.gdsc.smlm.ij.plugins.GaussianFit";
+
+    private static final boolean FITTING_ENABLED;
+    private static final String ERROR_MESSAGE;
+    private static final Throwable EXCEPTION;
 
     // Try and perform a Gaussian fit
     static
     {
-        fittingEnabled = false;
-        errorMessage = "";
-        exception = null;
+        boolean fittingEnabled = false;
+        String errorMessage = null;
+        Throwable exception = null;
 
         try
         {
             // Get a class in this package to find the package class loader
             final GaussianPlugin pluginClass = new GaussianPlugin();
-            final Class c = Class.forName("uk.ac.sussex.gdsc.smlm.ij.plugins.GaussianFit", true,
+            final Class c = Class.forName(GAUSSIAN_FIT_CLASS, true,
                     pluginClass.getClass().getClassLoader());
 
             // ... it exists on the classpath
@@ -74,8 +83,6 @@ public class GaussianFit implements PlugInFilter
 
             // Try a fit.
             double[] fit = null;
-            //uk.ac.sussex.gdsc.smlm.ij.plugins.GaussianFit gf = new uk.ac.sussex.gdsc.smlm.ij.plugins.GaussianFit();
-            //fit = gf.fit(data, size, size);
 
             // Use reflection to allow building without the SMLM plugins on the classpath
             final Method m = c.getDeclaredMethod("fit", new Class[] { float[].class, int.class, int.class });
@@ -97,20 +104,21 @@ public class GaussianFit implements PlugInFilter
         {
             exception = ex;
             errorMessage = "Failed to find class: " + ex.getMessage();
-
-            //StringWriter sw = new StringWriter();
-            //PrintWriter pw = new PrintWriter(sw);
-            //ex.printStackTrace(pw);
-            //IJ.log(sw.toString());
         }
         catch (final Exception ex)
         {
             exception = ex;
             errorMessage = ex.getMessage();
         }
+        finally 
+        {
+            FITTING_ENABLED = fittingEnabled;
+            ERROR_MESSAGE = errorMessage;
+            EXCEPTION = exception;
+        }
 
         if (!fittingEnabled)
-            System.out.println(errorMessage);
+          ImageJPluginLoggerHelper.getLogger(GaussianFit.class.getName()).warning(errorMessage);
     }
 
     private static void init(float[] data, int width, int height)
@@ -139,7 +147,7 @@ public class GaussianFit implements PlugInFilter
         try
         {
             // Use reflection to allow building without the SMLM plugins on the classpath
-            final Class c = Class.forName("uk.ac.sussex.gdsc.smlm.ij.plugins.GaussianFit", true,
+            final Class c = Class.forName(GAUSSIAN_FIT_CLASS, true,
                     this.getClass().getClassLoader());
             final Method m = c.getDeclaredMethod("fit", new Class[] { float[].class, int.class, int.class });
             return (double[]) m.invoke(c.newInstance(), data, width, height);
@@ -151,27 +159,27 @@ public class GaussianFit implements PlugInFilter
     }
 
     /**
-     * @return true if fitting is possible
+     * @return true if fitting is possible.
      */
-    public boolean isFittingEnabled()
+    public static boolean isFittingEnabled()
     {
-        return fittingEnabled;
+        return FITTING_ENABLED;
     }
 
     /**
-     * @return the errorMessage if fitting is not possible
+     * @return the errorMessage if fitting is not possible.
      */
-    public String getErrorMessage()
+    public static String getErrorMessage()
     {
-        return errorMessage;
+        return ERROR_MESSAGE;
     }
 
     /**
-     * @return the exception if fitting is not possible
+     * @return the exception if fitting is not possible.
      */
-    public Throwable getException()
+    public static Throwable getException()
     {
-        return exception;
+        return EXCEPTION;
     }
 
     /** {@inheritDoc} */
@@ -179,6 +187,11 @@ public class GaussianFit implements PlugInFilter
     public int setup(String arg, ImagePlus imp)
     {
         UsageTracker.recordPlugin(this.getClass(), arg);
+        if (!isFittingEnabled())
+        {
+            IJ.error("Fitting is not enabled");
+            return DONE;
+        }
         final Roi roi = imp.getRoi();
         if (roi == null || !roi.isArea())
         {
@@ -192,6 +205,11 @@ public class GaussianFit implements PlugInFilter
     @Override
     public void run(ImageProcessor ip)
     {
+        if (!isFittingEnabled())
+        {
+            IJ.error("Fitting is not enabled");
+            return;
+        }
         FloatProcessor fp = ip.toFloat(0, null);
         final Rectangle bounds = fp.getRoi();
         fp = (FloatProcessor) fp.crop();

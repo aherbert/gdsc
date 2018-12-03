@@ -218,7 +218,7 @@ public class GridPointManager
             // Use closest assigned peak to set the resolution for the unassigned search
             final GridPoint closestPoint = findClosestAssignedPoint(xCoord, yCoord);
             if (closestPoint != null)
-                resolution2 = closestPoint.distance2(xCoord, yCoord);
+                resolution2 = closestPoint.distanceSquared(xCoord, yCoord);
         }
 
         // Check all surrounding blocks for highest unassigned point
@@ -232,7 +232,7 @@ public class GridPointManager
 
                     for (final GridPoint p : points)
                         if (p.isAssigned() == assigned)
-                            if (p.distance2(xCoord, yCoord) < resolution2)
+                            if (p.distanceSquared(xCoord, yCoord) < resolution2)
                                 //IJ.log(String.format("  x%d,y%d (%d) = %g", p.getX(), p.getY(), p.getValue(), p.distance(xCoord, yCoord)));
                                 if (maxValue < p.getValue())
                                 {
@@ -374,7 +374,7 @@ public class GridPointManager
                     for (final GridPoint p : points)
                         if (p.isAssigned() == assigned)
                         {
-                            final double d2 = p.distance2(xCoord, yCoord);
+                            final double d2 = p.distanceSquared(xCoord, yCoord);
                             if (d2 < resolution2)
                             {
                                 resolution2 = d2;

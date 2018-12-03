@@ -162,7 +162,7 @@ public class PointManager
     }
 
     /**
-     * Creates an ImageJ PointRoi from the list of points
+     * Creates an ImageJ PointRoi from the list of points.
      *
      * @param array
      *            List of points
@@ -184,7 +184,7 @@ public class PointManager
     }
 
     /**
-     * Creates an ImageJ PointRoi from the list of points
+     * Creates an ImageJ PointRoi from the list of points.
      *
      * @param array
      *            List of points

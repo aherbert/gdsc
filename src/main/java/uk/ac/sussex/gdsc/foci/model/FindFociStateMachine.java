@@ -113,7 +113,7 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
     }
 
     /**
-     * Updates the state to an earlier level
+     * Updates the state to an earlier level.
      *
      * @param state
      *            The level
@@ -126,7 +126,7 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
     }
 
     /**
-     * Updates the state to an earlier level
+     * Updates the state to an earlier level.
      *
      * @param state
      *            The level
@@ -152,7 +152,7 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
     }
 
     /**
-     * @return the state
+     * @return the state.
      */
     public FindFociState getState()
     {

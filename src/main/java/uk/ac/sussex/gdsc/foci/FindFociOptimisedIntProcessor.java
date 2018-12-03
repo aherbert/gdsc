@@ -29,7 +29,7 @@ import java.util.Collections;
 
 import gnu.trove.list.array.TIntArrayList;
 import ij.IJ;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.threshold.Histogram;
 
 /**
@@ -199,7 +199,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
         //if (pCount > 0)
         //	System.out.printf("Plateau count = %d\n", pCount);
 
-        if (Utils.isInterrupted())
+        if (ImageJUtils.isInterrupted())
             return null;
 
         for (int i = maxx_maxy_maxz; i-- > 0;)
@@ -412,7 +412,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
     {
         setPixels(pixels);
         // This is modified so clone it
-        final int[] histogram = hist.h.clone();
+        final int[] histogram = hist.histogramCounts.clone();
 
         final int minBin = getBackgroundBin(hist, stats.background);
         final int maxBin = hist.maxBin;
@@ -474,7 +474,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
                     break;
             }
 
-            if ((processedLevel % 64 == 0) && Utils.isInterrupted())
+            if ((processedLevel % 64 == 0) && ImageJUtils.isInterrupted())
                 return;
 
             if (remaining > 0 && level > minBin)
@@ -983,7 +983,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor
     }
 
     /**
-     * Searches from the specified maximum to find all contiguous points above the saddle
+     * Searches from the specified maximum to find all contiguous points above the saddle.
      *
      * @param maxima
      *            the maxima

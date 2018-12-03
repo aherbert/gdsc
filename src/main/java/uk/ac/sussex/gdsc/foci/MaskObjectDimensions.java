@@ -41,7 +41,7 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * For each unique pixel value in the mask (defining an object), analyse the pixels
@@ -479,7 +479,7 @@ public class MaskObjectDimensions implements PlugInFilter
             sb.append('\t').append(Arrays.toString(object.values));
             sb.append('\t').append(object.n);
             for (int i = 0; i < 3; i++)
-                sb.append('\t').append(Utils.rounded(com[i]));
+                sb.append('\t').append(MathUtils.rounded(com[i]));
 
             // The minor moment of inertia will be around the longest axis of the object, so start downwards
             for (int axis = 3; axis-- > 0;)
@@ -545,9 +545,9 @@ public class MaskObjectDimensions implements PlugInFilter
                 if (showVectors)
                 {
                     for (int i = 0; i < 3; i++)
-                        sb.append('\t').append(Utils.rounded(direction1[i]));
+                        sb.append('\t').append(MathUtils.rounded(direction1[i]));
                     for (int i = 0; i < 3; i++)
-                        sb.append('\t').append(Utils.rounded(direction2[i]));
+                        sb.append('\t').append(MathUtils.rounded(direction2[i]));
                 }
 
                 // Distance in pixels
@@ -557,14 +557,14 @@ public class MaskObjectDimensions implements PlugInFilter
                 double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
                 //System.out.printf("Object %2d Axis %d   : %8.3f %8.3f %8.3f - %8.3f %8.3f %8.3f == %12g\n", object,
                 //		axis + 1, lower[0], lower[1], lower[2], upper[0], upper[1], upper[2], d);
-                sb.append('\t').append(Utils.rounded(d));
+                sb.append('\t').append(MathUtils.rounded(d));
 
                 // Calibrated length
                 dx *= calx;
                 dy *= caly;
                 dz *= calz;
                 d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                sb.append('\t').append(Utils.rounded(d));
+                sb.append('\t').append(MathUtils.rounded(d));
 
                 // Draw lines on the image
                 if (showOverlay)
@@ -619,7 +619,7 @@ public class MaskObjectDimensions implements PlugInFilter
     }
 
     /**
-     * Vector sorting routine for 3x3 set of vectors
+     * Vector sorting routine for 3x3 set of vectors.
      *
      * @param w
      *            Vector weights

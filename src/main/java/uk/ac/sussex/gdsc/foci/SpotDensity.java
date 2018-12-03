@@ -46,7 +46,7 @@ import ij.process.ImageProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * Output the density around spots within a mask region. Spots are defined using FindFoci results loaded from memory.
@@ -169,7 +169,7 @@ public class SpotDensity implements PlugIn
         final ArrayList<String> newImageList = new ArrayList<>();
         if (roi != null && roi.isArea())
             newImageList.add("[ROI]");
-        newImageList.addAll(Arrays.asList(Utils.getImageList(Utils.GREY_8_16, null)));
+        newImageList.addAll(Arrays.asList(ImageJUtils.getImageList(ImageJUtils.GREY_8_16, null)));
         return newImageList.toArray(new String[newImageList.size()]);
     }
 
@@ -327,7 +327,7 @@ public class SpotDensity implements PlugIn
         // Truncate the unused r for the plot
         r = Arrays.copyOf(r, nBins);
         final Plot plot1 = new Plot(TITLE + " Min Distance", "Distance (px)", "Frequency", r, dMin);
-        final PlotWindow pw1 = Utils.display(TITLE + " Min Distance", plot1);
+        final PlotWindow pw1 = ImageJUtils.display(TITLE + " Min Distance", plot1);
 
         // The final bin may be empty if the correlation interval was a factor of the correlation distance
         if (pcf[pcf.length - 1] == 0)
@@ -402,7 +402,7 @@ public class SpotDensity implements PlugIn
         plot2.drawLine(pc.r[0], 1, pc.r[pc.r.length - 1], 1);
         plot2.addLabel(0, 0, "Av.Density = " + IJ.d2s(avDensity, -3) + " px^-2");
         plot2.setColor(Color.blue);
-        return Utils.display(TITLE + " " + title, plot2);
+        return ImageJUtils.display(TITLE + " " + title, plot2);
     }
 
     private void createResultsWindow()

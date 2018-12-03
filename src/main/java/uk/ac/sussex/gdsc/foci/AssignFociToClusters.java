@@ -54,9 +54,9 @@ import uk.ac.sussex.gdsc.core.clustering.Cluster;
 import uk.ac.sussex.gdsc.core.clustering.ClusterPoint;
 import uk.ac.sussex.gdsc.core.clustering.ClusteringAlgorithm;
 import uk.ac.sussex.gdsc.core.clustering.ClusteringEngine;
-import uk.ac.sussex.gdsc.core.ij.IJTrackProgress;
-import uk.ac.sussex.gdsc.core.ij.Utils;
-import uk.ac.sussex.gdsc.core.ij.process.LUTHelper;
+import uk.ac.sussex.gdsc.core.ij.ImageJTrackProgress;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
@@ -70,7 +70,7 @@ import uk.ac.sussex.gdsc.help.URL;
  */
 public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListener
 {
-    /** The title of the plugin */
+    /** The title of the plugin. */
     private static final String TITLE = "Assign Foci To Clusters";
 
     private static int imageFlags = DOES_8G + DOES_16 + SNAPSHOT;
@@ -124,7 +124,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
     private boolean[] edge = null;
     private AssignedPoint[] roiPoints;
     private ArrayList<FindFociResult> results;
-    private ArrayList<Cluster> clusters, minSizeClusters, edgeClusters, filteredClusters;
+    private List<Cluster> clusters, minSizeClusters, edgeClusters, filteredClusters;
     private MatchResult matchResult;
     private ColorModel cm;
     private Label label = null;
@@ -266,15 +266,15 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
             // Create a map to convert original foci pixels to clusters.
             final int[] map = new int[results.size() + 1];
             for (int i = 0; i < filteredClusters.size(); i++)
-                for (ClusterPoint p = filteredClusters.get(i).head; p != null; p = p.next)
-                    map[p.id] = i + 1;
+                for (ClusterPoint p = filteredClusters.get(i).getHeadClusterPoint(); p != null; p = p.getNext())
+                    map[p.getId()] = i + 1;
 
             // Update the preview processor with the filteredClusters
             for (int i = 0; i < ip.getPixelCount(); i++)
                 if (ip.get(i) != 0)
                     ip.set(i, map[ip.get(i)]);
 
-            ip.setColorModel(LUTHelper.getColorModel());
+            ip.setColorModel(LutHelper.getColorModel());
             ip.setMinAndMax(0, filteredClusters.size());
 
             labelClusters(imp);
@@ -394,7 +394,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
             minSizeClusters = null;
 
             final ClusteringEngine e = new ClusteringEngine(Prefs.getThreads(), algorithms[algorithm],
-                    new IJTrackProgress());
+                    new ImageJTrackProgress());
             final ArrayList<ClusterPoint> points = getPoints();
             clusters = e.findClusters(points, radius);
             Collections.sort(clusters, new Comparator<Cluster>()
@@ -402,9 +402,9 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
                 @Override
                 public int compare(Cluster o1, Cluster o2)
                 {
-                    if (o1.sumw > o2.sumw)
+                    if (o1.getSumOfWeights() > o2.getSumOfWeights())
                         return -1;
-                    if (o1.sumw < o2.sumw)
+                    if (o1.getSumOfWeights() < o2.getSumOfWeights())
                         return 1;
                     return 0;
                 }
@@ -422,7 +422,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
                 //System.out.println("clustering 2");
                 minSizeClusters = new ArrayList<>(clusters.size());
                 for (final Cluster c : clusters)
-                    if (c.n >= minSize)
+                    if (c.getSize() >= minSize)
                         minSizeClusters.add(c);
             }
 
@@ -451,8 +451,8 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
                 edgeClusters = new ArrayList<>(minSizeClusters.size());
                 NextCluster: for (final Cluster c : minSizeClusters)
                 {
-                    for (ClusterPoint p = c.head; p != null; p = p.next)
-                        if (edge[p.id])
+                    for (ClusterPoint p = c.getHeadClusterPoint(); p != null; p = p.getNext())
+                        if (edge[p.getId()])
                             continue NextCluster;
                     edgeClusters.add(c);
                 }
@@ -497,16 +497,16 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 
         final double seconds = (System.currentTimeMillis() - start) / 1000.0;
         IJ.showStatus(
-                TextUtils.pleural(filteredClusters.size(), "cluster") + " in " + Utils.rounded(seconds) + " seconds");
+                TextUtils.pleural(filteredClusters.size(), "cluster") + " in " + MathUtils.rounded(seconds) + " seconds");
     }
 
-    private static Coordinate[] toCoordinates(ArrayList<Cluster> clusters)
+    private static Coordinate[] toCoordinates(List<Cluster> clusters)
     {
         final Coordinate[] coords = new Coordinate[clusters.size()];
         for (int i = 0; i < clusters.size(); i++)
         {
             final Cluster c = clusters.get(i);
-            coords[i] = new TimeValuedPoint((float) c.x, (float) c.y, 0, i, 0);
+            coords[i] = new TimeValuedPoint((float) c.getX(), (float) c.getY(), 0, i, 0);
         }
         return coords;
     }
@@ -526,8 +526,8 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
             // Create a map to convert original foci pixels to clusters.
             final int[] map = new int[results.size() + 1];
             for (int i = 0; i < filteredClusters.size(); i++)
-                for (ClusterPoint p = filteredClusters.get(i).head; p != null; p = p.next)
-                    map[p.id] = i + 1;
+                for (ClusterPoint p = filteredClusters.get(i).getHeadClusterPoint(); p != null; p = p.getNext())
+                    map[p.getId()] = i + 1;
 
             final ImageStack stack = imp.getImageStack();
             final ImageStack newStack = new ImageStack(stack.getWidth(), stack.getHeight(), stack.getSize());
@@ -544,9 +544,9 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
             // Set a colour table if this is a new image. Otherwise the existing one is preserved.
             ImagePlus clusterImp = WindowManager.getImage(TITLE);
             if (clusterImp == null)
-                newStack.setColorModel(LUTHelper.getColorModel());
+                newStack.setColorModel(LutHelper.getColorModel());
 
-            clusterImp = Utils.display(TITLE, newStack);
+            clusterImp = ImageJUtils.display(TITLE, newStack);
 
             labelClusters(clusterImp);
         }
@@ -563,12 +563,12 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
             final Cluster cluster = filteredClusters.get(i);
             sb.append(title).append('\t');
             sb.append(i + 1).append('\t');
-            sb.append(Utils.rounded(cluster.x)).append('\t');
-            sb.append(Utils.rounded(cluster.y)).append('\t');
-            sb.append(Utils.rounded(cluster.n)).append('\t');
-            sb.append(Utils.rounded(cluster.sumw)).append('\t');
-            stats.addValue(cluster.n);
-            stats2.addValue(cluster.sumw);
+            sb.append(MathUtils.rounded(cluster.getX())).append('\t');
+            sb.append(MathUtils.rounded(cluster.getY())).append('\t');
+            sb.append(MathUtils.rounded(cluster.getSize())).append('\t');
+            sb.append(MathUtils.rounded(cluster.getSumOfWeights())).append('\t');
+            stats.addValue(cluster.getSize());
+            stats2.addValue(cluster.getSumOfWeights());
             sb.append('\n');
 
             // Auto-width adjustment is only performed when number of rows is less than 10
@@ -583,31 +583,31 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
 
         sb.setLength(0);
         sb.append(title).append('\t');
-        sb.append(Utils.rounded(radius)).append('\t');
+        sb.append(MathUtils.rounded(radius)).append('\t');
         sb.append(results.size()).append('\t');
         sb.append(filteredClusters.size()).append('\t');
         sb.append((int) stats.getMin()).append('\t');
         sb.append((int) stats.getMax()).append('\t');
-        sb.append(Utils.rounded(stats.getMean())).append('\t');
-        sb.append(Utils.rounded(stats2.getMin())).append('\t');
-        sb.append(Utils.rounded(stats2.getMax())).append('\t');
-        sb.append(Utils.rounded(stats2.getMean())).append('\t');
+        sb.append(MathUtils.rounded(stats.getMean())).append('\t');
+        sb.append(MathUtils.rounded(stats2.getMin())).append('\t');
+        sb.append(MathUtils.rounded(stats2.getMax())).append('\t');
+        sb.append(MathUtils.rounded(stats2.getMean())).append('\t');
         summaryWindow.append(sb.toString());
 
         if (matchResult != null)
         {
             sb.setLength(0);
             sb.append(title).append('\t');
-            sb.append(Utils.rounded(filterRadius)).append('\t');
+            sb.append(MathUtils.rounded(filterRadius)).append('\t');
             sb.append(matchResult.getNumberActual()).append('\t');
             sb.append(matchResult.getNumberPredicted()).append('\t');
             sb.append(matchResult.getTruePositives()).append('\t');
             sb.append(matchResult.getFalseNegatives()).append('\t');
             sb.append(matchResult.getFalsePositives()).append('\t');
-            sb.append(Utils.rounded(matchResult.getJaccard())).append('\t');
-            sb.append(Utils.rounded(matchResult.getRecall())).append('\t');
-            sb.append(Utils.rounded(matchResult.getPrecision())).append('\t');
-            sb.append(Utils.rounded(matchResult.getFScore(1))).append('\t');
+            sb.append(MathUtils.rounded(matchResult.getJaccard())).append('\t');
+            sb.append(MathUtils.rounded(matchResult.getRecall())).append('\t');
+            sb.append(MathUtils.rounded(matchResult.getPrecision())).append('\t');
+            sb.append(MathUtils.rounded(matchResult.getFScore(1))).append('\t');
             matchWindow.append(sb.toString());
         }
 
@@ -662,7 +662,7 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
         }
     }
 
-    private static Roi getClusterRoi(ArrayList<Cluster> clusters)
+    private static Roi getClusterRoi(List<Cluster> clusters)
     {
         if (clusters == null || clusters.isEmpty())
             return null;
@@ -672,8 +672,8 @@ public class AssignFociToClusters implements ExtendedPlugInFilter, DialogListene
         int i = 0;
         for (final Cluster point : clusters)
         {
-            xpoints[i] = (float) point.x;
-            ypoints[i] = (float) point.y;
+            xpoints[i] = (float) point.getX();
+            ypoints[i] = (float) point.getY();
             i++;
         }
         final PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);

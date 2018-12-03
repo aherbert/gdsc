@@ -71,4 +71,29 @@ public class ValuedPoint extends BasePoint
     {
         return value;
     }
+
+    @Override
+    public boolean equals(Object object) {
+      if (this == object) {
+        return true;
+      }
+      // Must be the same class, allowing subtypes their own implementation
+      if (object == null || getClass() != object.getClass()) {
+        return false;
+      }
+
+      // cast to native object is now safe
+      final ValuedPoint that = (ValuedPoint) object;
+
+      return x == that.x && y == that.y && z == that.z && value == that.value;
+    }
+
+    @Override
+    public int hashCode() {
+      // Note: floatToRawIntBits does not unify all possible NaN values
+      // However since the equals() will fail for NaN values we are not
+      // breaking the java contract.
+      return (41 * (41 * (41 * (41 + Float.floatToRawIntBits(x)) + Float.floatToRawIntBits(y))
+          + Float.floatToRawIntBits(z)) + Float.floatToRawIntBits(value));
+    }
 }

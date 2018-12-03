@@ -95,7 +95,7 @@ public class CDAWorker implements Runnable
     }
 
     /**
-     * Perform the CDA shift and calculate the results
+     * Perform the CDA shift and calculate the results.
      *
      * @param n
      *            the job number
@@ -152,7 +152,6 @@ public class CDAWorker implements Runnable
         return new IntersectResult(c.getSumX(), c.getSumY(), c.getCorrelation());
     }
 
-    /** {@inheritDoc} */
     @Override
     public void run()
     {
@@ -181,7 +180,7 @@ public class CDAWorker implements Runnable
     }
 
     /**
-     * Signal that the worker should end
+     * Signal that the worker should end.
      */
     public void finish()
     {
@@ -189,7 +188,7 @@ public class CDAWorker implements Runnable
     }
 
     /**
-     * @return True if the worker has finished
+     * @return True if the worker has finished.
      */
     public boolean isFinished()
     {
@@ -197,7 +196,7 @@ public class CDAWorker implements Runnable
     }
 
     /**
-     * @return True if the worker is ready to run jobs
+     * @return True if the worker is ready to run jobs.
      */
     public boolean isInitialised()
     {

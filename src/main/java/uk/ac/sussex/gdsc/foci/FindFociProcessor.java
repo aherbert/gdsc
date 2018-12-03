@@ -35,262 +35,262 @@ public interface FindFociProcessor
     /**
      * The background intensity is set using the input value.
      */
-    public final static int BACKGROUND_ABSOLUTE = 0;
+    public static final int BACKGROUND_ABSOLUTE = 0;
     /**
      * The background intensity is set using the mean.
      */
-    public final static int BACKGROUND_MEAN = 1;
+    public static final int BACKGROUND_MEAN = 1;
     /**
      * The background intensity is set as the threshold value field times the standard deviation plus the mean.
      */
-    public final static int BACKGROUND_STD_DEV_ABOVE_MEAN = 2;
+    public static final int BACKGROUND_STD_DEV_ABOVE_MEAN = 2;
     /**
      * The background intensity is set using the input auto-threshold method.
      */
-    public final static int BACKGROUND_AUTO_THRESHOLD = 3;
+    public static final int BACKGROUND_AUTO_THRESHOLD = 3;
     /**
      * The background intensity is set as the minimum image intensity within the ROI or mask.
      */
-    public final static int BACKGROUND_MIN_ROI = 4;
+    public static final int BACKGROUND_MIN_ROI = 4;
     /**
      * The background intensity is set as 0. Equivalent to using {@link #BACKGROUND_ABSOLUTE} with a value of zero.
      */
-    public final static int BACKGROUND_NONE = 5;
+    public static final int BACKGROUND_NONE = 5;
 
     /**
      * A region is grown until the intensity drops below the background.
      */
-    public final static int SEARCH_ABOVE_BACKGROUND = 0;
+    public static final int SEARCH_ABOVE_BACKGROUND = 0;
     /**
      * A region is grown until the intensity drops to: background + (parameter value) * (peak intensity - background).
      */
-    public final static int SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND = 1;
+    public static final int SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND = 1;
     /**
      * A region is grown until the intensity drops to halfway between the value at the peak (the seed for the region)
      * and the background level. This is equivalent to using the "fraction of peak - background" option with the
      * threshold value set to 0.5.
      */
-    public final static int SEARCH_HALF_PEAK_VALUE = 2;
+    public static final int SEARCH_HALF_PEAK_VALUE = 2;
 
     /**
      * The peak must be an absolute height above the highest saddle point.
      */
-    public final static int PEAK_ABSOLUTE = 0;
+    public static final int PEAK_ABSOLUTE = 0;
     /**
      * The peak must be a relative height above the highest saddle point. The height is calculated as peak intensity *
      * threshold value. The threshold value should be between 0 and 1.
      */
-    public final static int PEAK_RELATIVE = 1;
+    public static final int PEAK_RELATIVE = 1;
     /**
      * The peak must be a relative height above the highest saddle point. The height is calculated as (peak intensity -
      * background) * threshold value. The threshold value should be between 0 and 1.
      */
-    public final static int PEAK_RELATIVE_ABOVE_BACKGROUND = 2;
+    public static final int PEAK_RELATIVE_ABOVE_BACKGROUND = 2;
 
     /**
-     * Output the peak statistics to a results window
+     * Output the peak statistics to a results window.
      */
-    public final static int OUTPUT_RESULTS_TABLE = 1;
+    public static final int OUTPUT_RESULTS_TABLE = 1;
     /**
-     * Create an output mask with values corresponding to the peak Ids
+     * Create an output mask with values corresponding to the peak Ids.
      */
-    public final static int OUTPUT_MASK_PEAKS = 2;
+    public static final int OUTPUT_MASK_PEAKS = 2;
     /**
-     * Mark the peak locations on the input ImagePlus using point ROIs
+     * Mark the peak locations on the input ImagePlus using point ROIs.
      */
-    public final static int OUTPUT_ROI_SELECTION = 4;
+    public static final int OUTPUT_ROI_SELECTION = 4;
     /**
-     * Output processing messages to the log window
+     * Output processing messages to the log window.
      */
-    public final static int OUTPUT_LOG_MESSAGES = 8;
+    public static final int OUTPUT_LOG_MESSAGES = 8;
     /**
-     * Mark the peak locations on the mask ImagePlus using point ROIs
+     * Mark the peak locations on the mask ImagePlus using point ROIs.
      */
-    public final static int OUTPUT_MASK_ROI_SELECTION = 16;
+    public static final int OUTPUT_MASK_ROI_SELECTION = 16;
     /**
-     * Create an output mask with each peak region thresholded using the auto-threshold method
+     * Create an output mask with each peak region thresholded using the auto-threshold method.
      */
-    public final static int OUTPUT_MASK_THRESHOLD = 32;
+    public static final int OUTPUT_MASK_THRESHOLD = 32;
     /**
      * Create an output mask showing only pixels above the peak's highest saddle value
      */
-    public final static int OUTPUT_MASK_ABOVE_SADDLE = 64;
+    public static final int OUTPUT_MASK_ABOVE_SADDLE = 64;
     /**
      * Do not mark the peaks location on the output mask using a single pixel dot.
      * The pixel dot will use the brightest available value, which is the number of maxima + 1.
      */
-    public final static int OUTPUT_MASK_NO_PEAK_DOTS = 128;
+    public static final int OUTPUT_MASK_NO_PEAK_DOTS = 128;
     /**
      * Create an output mask showing only the pixels contributing to a cumulative fraction of the peak's total intensity
      */
-    public final static int OUTPUT_MASK_FRACTION_OF_INTENSITY = 256;
+    public static final int OUTPUT_MASK_FRACTION_OF_INTENSITY = 256;
     /**
      * Create an output mask showing only pixels above a fraction of the peak's highest value
      */
-    public final static int OUTPUT_MASK_FRACTION_OF_HEIGHT = 512;
+    public static final int OUTPUT_MASK_FRACTION_OF_HEIGHT = 512;
     /**
-     * Output the peak statistics to a results window
+     * Output the peak statistics to a results window.
      */
-    public final static int OUTPUT_CLEAR_RESULTS_TABLE = 1024;
+    public static final int OUTPUT_CLEAR_RESULTS_TABLE = 1024;
     /**
-     * When marking the peak locations on the input ImagePlus using point ROIs hide the number labels
+     * When marking the peak locations on the input ImagePlus using point ROIs hide the number labels.
      */
-    public final static int OUTPUT_HIDE_LABELS = 2048;
+    public static final int OUTPUT_HIDE_LABELS = 2048;
     /**
-     * Overlay the mask on the image
+     * Overlay the mask on the image.
      */
-    public final static int OUTPUT_OVERLAY_MASK = 4096;
+    public static final int OUTPUT_OVERLAY_MASK = 4096;
     /**
-     * Overlay the ROI points on the image (preserving any current ROI)
+     * Overlay the ROI points on the image (preserving any current ROI).
      */
-    public final static int OUTPUT_ROI_USING_OVERLAY = 8192;
+    public static final int OUTPUT_ROI_USING_OVERLAY = 8192;
     /**
-     * Create an output mask
+     * Create an output mask.
      */
-    public final static int CREATE_OUTPUT_MASK = OUTPUT_MASK_PEAKS | OUTPUT_MASK_THRESHOLD | OUTPUT_OVERLAY_MASK;
+    public static final int CREATE_OUTPUT_MASK = OUTPUT_MASK_PEAKS | OUTPUT_MASK_THRESHOLD | OUTPUT_OVERLAY_MASK;
     /**
-     * Show an output mask
+     * Show an output mask.
      */
-    public final static int OUTPUT_MASK = OUTPUT_MASK_PEAKS | OUTPUT_MASK_THRESHOLD;
+    public static final int OUTPUT_MASK = OUTPUT_MASK_PEAKS | OUTPUT_MASK_THRESHOLD;
 
     /**
-     * Sort the peaks using the pixel count
+     * Sort the peaks using the pixel count.
      */
-    public final static int SORT_COUNT = 0;
+    public static final int SORT_COUNT = 0;
     /**
-     * Sort the peaks using the sum of pixel intensity
+     * Sort the peaks using the sum of pixel intensity.
      */
-    public final static int SORT_INTENSITY = 1;
+    public static final int SORT_INTENSITY = 1;
     /**
-     * Sort the peaks using the maximum pixel value
+     * Sort the peaks using the maximum pixel value.
      */
-    public final static int SORT_MAX_VALUE = 2;
+    public static final int SORT_MAX_VALUE = 2;
     /**
-     * Sort the peaks using the average pixel value
+     * Sort the peaks using the average pixel value.
      */
-    public final static int SORT_AVERAGE_INTENSITY = 3;
+    public static final int SORT_AVERAGE_INTENSITY = 3;
     /**
-     * Sort the peaks using the sum of pixel intensity (minus the background)
+     * Sort the peaks using the sum of pixel intensity (minus the background).
      */
-    public final static int SORT_INTENSITY_MINUS_BACKGROUND = 4;
+    public static final int SORT_INTENSITY_MINUS_BACKGROUND = 4;
     /**
-     * Sort the peaks using the average pixel value (minus the background)
+     * Sort the peaks using the average pixel value (minus the background).
      */
-    public final static int SORT_AVERAGE_INTENSITY_MINUS_BACKGROUND = 5;
+    public static final int SORT_AVERAGE_INTENSITY_MINUS_BACKGROUND = 5;
     /**
-     * Sort the peaks using the X coordinate
+     * Sort the peaks using the X coordinate.
      */
-    public final static int SORT_X = 6;
+    public static final int SORT_X = 6;
     /**
-     * Sort the peaks using the Y coordinate
+     * Sort the peaks using the Y coordinate.
      */
-    public final static int SORT_Y = 7;
+    public static final int SORT_Y = 7;
     /**
-     * Sort the peaks using the Z coordinate
+     * Sort the peaks using the Z coordinate.
      */
-    public final static int SORT_Z = 8;
+    public static final int SORT_Z = 8;
     /**
-     * Sort the peaks using the saddle height
+     * Sort the peaks using the saddle height.
      */
-    public final static int SORT_SADDLE_HEIGHT = 9;
+    public static final int SORT_SADDLE_HEIGHT = 9;
     /**
-     * Sort the peaks using the pixel count above the saddle height
+     * Sort the peaks using the pixel count above the saddle height.
      */
-    public final static int SORT_COUNT_ABOVE_SADDLE = 10;
+    public static final int SORT_COUNT_ABOVE_SADDLE = 10;
     /**
-     * Sort the peaks using the sum of pixel intensity above the saddle height
+     * Sort the peaks using the sum of pixel intensity above the saddle height.
      */
-    public final static int SORT_INTENSITY_ABOVE_SADDLE = 11;
+    public static final int SORT_INTENSITY_ABOVE_SADDLE = 11;
     /**
-     * Sort the peaks using the absolute height above the highest saddle
+     * Sort the peaks using the absolute height above the highest saddle.
      */
-    public final static int SORT_ABSOLUTE_HEIGHT = 12;
+    public static final int SORT_ABSOLUTE_HEIGHT = 12;
     /**
-     * Sort the peaks using the relative height above the background
+     * Sort the peaks using the relative height above the background.
      */
-    public final static int SORT_RELATIVE_HEIGHT_ABOVE_BACKGROUND = 13;
+    public static final int SORT_RELATIVE_HEIGHT_ABOVE_BACKGROUND = 13;
     /**
-     * Sort the peaks using the peak Id
+     * Sort the peaks using the peak Id.
      */
-    public final static int SORT_PEAK_ID = 14;
+    public static final int SORT_PEAK_ID = 14;
     /**
-     * Sort the peaks using the XYZ coordinates (in order)
+     * Sort the peaks using the XYZ coordinates (in order).
      */
-    public final static int SORT_XYZ = 15;
+    public static final int SORT_XYZ = 15;
     /**
-     * Sort the peaks using the sum of pixel intensity (minus the minimum in the image)
+     * Sort the peaks using the sum of pixel intensity (minus the minimum in the image).
      */
-    public final static int SORT_INTENSITY_MINUS_MIN = 16;
+    public static final int SORT_INTENSITY_MINUS_MIN = 16;
     /**
-     * Sort the peaks using the average pixel value (minus the minimum in the image)
+     * Sort the peaks using the average pixel value (minus the minimum in the image).
      */
-    public final static int SORT_AVERAGE_INTENSITY_MINUS_MIN = 17;
+    public static final int SORT_AVERAGE_INTENSITY_MINUS_MIN = 17;
 
     /**
-     * Apply the minimum size criteria to the peak size above the highest saddle point
+     * Apply the minimum size criteria to the peak size above the highest saddle point.
      */
-    public final static int OPTION_MINIMUM_ABOVE_SADDLE = 1;
+    public static final int OPTION_MINIMUM_ABOVE_SADDLE = 1;
     /**
      * Calculate the statistics using the pixels outside the ROI/Mask (default is all pixels)
      */
-    public final static int OPTION_STATS_OUTSIDE = 2;
+    public static final int OPTION_STATS_OUTSIDE = 2;
     /**
      * Calculate the statistics using the pixels inside the ROI/Mask (default is all pixels)
      */
-    public final static int OPTION_STATS_INSIDE = 4;
+    public static final int OPTION_STATS_INSIDE = 4;
     /**
-     * Remove any maxima that touch the edge of the image
+     * Remove any maxima that touch the edge of the image.
      */
-    public final static int OPTION_REMOVE_EDGE_MAXIMA = 8;
+    public static final int OPTION_REMOVE_EDGE_MAXIMA = 8;
     /**
      * Identify all connected non-zero mask pixels with the same value as objects and label the maxima
      * as belonging to each object
      */
-    public final static int OPTION_OBJECT_ANALYSIS = 16;
+    public static final int OPTION_OBJECT_ANALYSIS = 16;
     /**
-     * Show the object mask calculated during the object analysis
+     * Show the object mask calculated during the object analysis.
      */
-    public final static int OPTION_SHOW_OBJECT_MASK = 32;
+    public static final int OPTION_SHOW_OBJECT_MASK = 32;
     /**
-     * Save the results to memory (allows other plugins to obtain the results)
+     * Save the results to memory (allows other plugins to obtain the results).
      */
-    public final static int OPTION_SAVE_TO_MEMORY = 64;
+    public static final int OPTION_SAVE_TO_MEMORY = 64;
     /**
      * The peak above the highest saddle point must be contiguous. The legacy algorithm used non-contiguous pixels above
      * the saddle.
      */
-    public final static int OPTION_CONTIGUOUS_ABOVE_SADDLE = 128;
+    public static final int OPTION_CONTIGUOUS_ABOVE_SADDLE = 128;
 
     /**
      * Define the peak centre using the highest pixel value of the search image (default). In the case of multiple
      * highest value pixels, the closest pixel to the geometric mean of their coordinates is used.
      */
-    public final static int CENTRE_MAX_VALUE_SEARCH = 0;
+    public static final int CENTRE_MAX_VALUE_SEARCH = 0;
     /**
      * Re-map peak centre using the highest pixel value of the original image.
      */
-    public final static int CENTRE_MAX_VALUE_ORIGINAL = 1;
+    public static final int CENTRE_MAX_VALUE_ORIGINAL = 1;
     /**
      * Re-map peak centre using the peak centre of mass (COM) around the search image. The COM is computed within a
      * given volume of the highest pixel value. Only pixels above the saddle height are used to compute the fit.
      * The volume is specified using 2xN+1 where N is the centre parameter.
      */
-    public final static int CENTRE_OF_MASS_SEARCH = 2;
+    public static final int CENTRE_OF_MASS_SEARCH = 2;
     /**
      * Re-map peak centre using the peak centre of mass (COM) around the original image.
      */
-    public final static int CENTRE_OF_MASS_ORIGINAL = 3;
+    public static final int CENTRE_OF_MASS_ORIGINAL = 3;
     /**
      * Re-map peak centre using a Gaussian fit on the search image. Only pixels above the saddle height are used to
      * compute the fit. The fit is performed in 2D using a projection along the z-axis. If the centre parameter is 1 a
      * maximum intensity projection is used; else an average intensity project is used. The z-coordinate is computed
      * using the centre of mass along the projection axis located at the xy centre.
      */
-    public final static int CENTRE_GAUSSIAN_SEARCH = 4;
+    public static final int CENTRE_GAUSSIAN_SEARCH = 4;
     /**
      * Re-map peak centre using a Gaussian fit on the original image.
      */
-    public final static int CENTRE_GAUSSIAN_ORIGINAL = 5;
+    public static final int CENTRE_GAUSSIAN_ORIGINAL = 5;
 
     /**
      * Here the processing is done: Find the maxima of an image.

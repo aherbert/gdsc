@@ -33,9 +33,9 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.AlignImagesFFT;
-import uk.ac.sussex.gdsc.core.ij.AlignImagesFFT.SubPixelMethod;
-import uk.ac.sussex.gdsc.core.ij.AlignImagesFFT.WindowMethod;
+import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
+import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
+import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
 
 /**
  * Aligns an image stack to a reference image using XY translation to maximise the correlation. Takes in:
@@ -86,12 +86,12 @@ public class Align_Images_FFT implements PlugIn
 
     static
     {
-        final WindowMethod[] m = AlignImagesFFT.WindowMethod.values();
+        final WindowMethod[] m = WindowMethod.values();
         windowFunctions = new String[m.length];
         for (int i = 0; i < m.length; i++)
             windowFunctions[i] = m[i].toString();
 
-        final SubPixelMethod[] m2 = AlignImagesFFT.SubPixelMethod.values();
+        final SubPixelMethod[] m2 = AlignImagesFft.SubPixelMethod.values();
         subPixelMethods = new String[m2.length];
         for (int i = 0; i < m2.length; i++)
             subPixelMethods[i] = m2[i].toString();
@@ -121,7 +121,7 @@ public class Align_Images_FFT implements PlugIn
         if (restrictTranslation)
             bounds = createBounds(myMinXShift, myMaxXShift, myMinYShift, myMaxYShift);
 
-        final AlignImagesFFT align = new AlignImagesFFT();
+        final AlignImagesFft align = new AlignImagesFft();
         final ImagePlus alignedImp = align.align(refImp, targetImp, WindowMethod.values()[myWindowFunction], bounds,
                 SubPixelMethod.values()[subPixelMethod], interpolationMethod, normalised, showCorrelationImage,
                 showNormalisedImage, clipOutput);
@@ -135,7 +135,7 @@ public class Align_Images_FFT implements PlugIn
         // Find the currently open images
         final ArrayList<String> newImageList = new ArrayList<>();
 
-        for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
+        for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
 

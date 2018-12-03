@@ -23,17 +23,21 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.util.ArrayList;
-import java.util.function.Function;
-import java.util.logging.Logger;
-
-import org.apache.commons.rng.UniformRandomProvider;
-import org.apache.commons.rng.sampling.distribution.GaussianSampler;
-import org.apache.commons.rng.sampling.distribution.PoissonSampler;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.opentest4j.AssertionFailedError;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.utils.rng.GaussianSamplerUtils;
+import uk.ac.sussex.gdsc.test.api.TestAssertions;
+import uk.ac.sussex.gdsc.test.api.TestHelper;
+import uk.ac.sussex.gdsc.test.api.function.DoubleDoubleBiPredicate;
+import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
+import uk.ac.sussex.gdsc.test.junit5.SeededTest;
+import uk.ac.sussex.gdsc.test.junit5.SpeedTag;
+import uk.ac.sussex.gdsc.test.rng.RngUtils;
+import uk.ac.sussex.gdsc.test.utils.TestComplexity;
+import uk.ac.sussex.gdsc.test.utils.TestLogUtils;
+import uk.ac.sussex.gdsc.test.utils.TestSettings;
+import uk.ac.sussex.gdsc.test.utils.TestUtils;
+import uk.ac.sussex.gdsc.test.utils.TimingResult;
+import uk.ac.sussex.gdsc.test.utils.functions.FunctionUtils;
 
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -41,32 +45,32 @@ import ij.plugin.filter.GaussianBlur;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.core.utils.rng.GaussianSamplerFactory;
-import uk.ac.sussex.gdsc.test.junit5.ExtraAssertions;
-import uk.ac.sussex.gdsc.test.junit5.ExtraAssumptions;
-import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
-import uk.ac.sussex.gdsc.test.junit5.SeededTest;
-import uk.ac.sussex.gdsc.test.junit5.SpeedTag;
-import uk.ac.sussex.gdsc.test.rng.RNGFactory;
-import uk.ac.sussex.gdsc.test.utils.DataCache;
-import uk.ac.sussex.gdsc.test.utils.TestComplexity;
-import uk.ac.sussex.gdsc.test.utils.TestLog;
-import uk.ac.sussex.gdsc.test.utils.TestUtils;
-import uk.ac.sussex.gdsc.test.utils.TimingResult;
-import uk.ac.sussex.gdsc.test.utils.functions.FunctionUtils;
+
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.sampling.distribution.GaussianSampler;
+import org.apache.commons.rng.sampling.distribution.PoissonSampler;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
+import org.opentest4j.AssertionFailedError;
+
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.logging.Logger;
 
 @SuppressWarnings({ "javadoc" })
 public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
 {
     private static Logger logger;
-    static DataCache<RandomSeed, ImagePlus[]> dataCache;
+    static ConcurrentHashMap<RandomSeed, ImagePlus[]> dataCache;
 
     @BeforeAll
     public static void beforeAll()
     {
         logger = Logger.getLogger(FindFociTest.class.getName());
-        dataCache = new DataCache<>();
+        dataCache = new ConcurrentHashMap<>();
     }
 
     @AfterAll
@@ -92,7 +96,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     final int[] backgroundMethod = new int[] { FindFociProcessor.BACKGROUND_ABSOLUTE,
             FindFociProcessor.BACKGROUND_AUTO_THRESHOLD };
     final double[] backgroundParameter = new double[] { bias, 0 };
-    final String[] autoThresholdMethod = new String[] { "", AutoThreshold.Method.OTSU.name };
+    final String[] autoThresholdMethod = new String[] { "", AutoThreshold.Method.OTSU.toString() };
     final int[] searchMethod = new int[] { FindFociProcessor.SEARCH_ABOVE_BACKGROUND,
             FindFociProcessor.SEARCH_ABOVE_BACKGROUND };
     final double[] searchParameter = new double[] { 0.3, 0.7 };
@@ -112,7 +116,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     public void isSameResultUsingIntProcessor(RandomSeed seed)
     {
         final boolean nonContiguous = true;
-        for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
+        for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this))
             for (int i = 0; i < backgroundMethod.length; i++)
             {
                 final FindFociResults r1 = runLegacy(imp, i);
@@ -124,7 +128,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isSameResultUsingOptimisedIntProcessor(RandomSeed seed)
     {
-        for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
+        for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this))
             for (final boolean nonContiguous : new boolean[] { true, false })
                 for (int i = 0; i < backgroundMethod.length; i++)
                 {
@@ -137,7 +141,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isSameResultUsingFloatProcessor(RandomSeed seed)
     {
-        for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
+        for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this))
             for (final boolean nonContiguous : new boolean[] { true, false })
                 for (int i = 0; i < backgroundMethod.length; i++)
                 {
@@ -150,7 +154,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isSameResultUsingOptimisedFloatProcessor(RandomSeed seed)
     {
-        for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
+        for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this))
             for (final boolean nonContiguous : new boolean[] { true, false })
                 for (int i = 0; i < backgroundMethod.length; i++)
                 {
@@ -163,7 +167,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isSameResultUsingFloatProcessorWithNegativeValues(RandomSeed seed)
     {
-        for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
+        for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this))
             for (final boolean nonContiguous : new boolean[] { true, false })
                 for (int i = 0; i < backgroundMethod.length; i++)
                 {
@@ -178,7 +182,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isSameResultUsingOptimisedFloatProcessorWithNegativeValues(RandomSeed seed)
     {
-        for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
+        for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this))
             for (final boolean nonContiguous : new boolean[] { true, false })
                 for (int i = 0; i < backgroundMethod.length; i++)
                 {
@@ -193,7 +197,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isSameResultUsingIntProcessorWithStagedMethods(RandomSeed seed)
     {
-        for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
+        for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this))
             for (final boolean nonContiguous : new boolean[] { true, false })
                 for (int i = 0; i < backgroundMethod.length; i++)
                 {
@@ -206,7 +210,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isSameResultUsingOptimisedIntProcessorWithStagedMethods(RandomSeed seed)
     {
-        for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
+        for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this))
             for (final boolean nonContiguous : new boolean[] { true, false })
                 for (int i = 0; i < backgroundMethod.length; i++)
                 {
@@ -219,7 +223,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isSameResultUsingFloatProcessorWithStagedMethods(RandomSeed seed)
     {
-        for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
+        for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this))
             for (final boolean nonContiguous : new boolean[] { true, false })
                 for (int i = 0; i < backgroundMethod.length; i++)
                 {
@@ -232,7 +236,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isSameResultUsingOptimisedFloatProcessorWithStagedMethods(RandomSeed seed)
     {
-        for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
+        for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this))
             for (final boolean nonContiguous : new boolean[] { true, false })
                 for (int i = 0; i < backgroundMethod.length; i++)
                 {
@@ -245,7 +249,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isSameResultUsingFloatProcessorWithStagedMethodsWithNegativeValues(RandomSeed seed)
     {
-        for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
+        for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this))
             for (final boolean nonContiguous : new boolean[] { true, false })
                 for (int i = 0; i < backgroundMethod.length; i++)
                 {
@@ -260,7 +264,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isSameResultUsingOptimisedFloatProcessorWithStagedMethodsWithNegativeValues(RandomSeed seed)
     {
-        for (final ImagePlus imp : dataCache.getOrComputeIfAbsent(seed, this))
+        for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this))
             for (final boolean nonContiguous : new boolean[] { true, false })
                 for (int i = 0; i < backgroundMethod.length; i++)
                 {
@@ -276,13 +280,13 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isFasterUsingOptimisedIntProcessor(RandomSeed seed)
     {
-        ExtraAssumptions.assume(TestComplexity.LOW);
+      Assumptions.assumeTrue(TestSettings.allow(TestComplexity.LOW));
 
         // Get settings to try for the speed test
         final int[] indices = new int[] { 1 };
 
         // Warm up
-        ImagePlus[] data = dataCache.getOrComputeIfAbsent(seed, this);
+        ImagePlus[] data = dataCache.computeIfAbsent(seed, this);
         //runInt(data[0], indices[0], false);
         //runInt(data[0], indices[0], true);
 
@@ -306,7 +310,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
                         runInt(imp, i, true, nonContiguous);
             time2 = stop(time2);
         }
-        logger.log(TestLog.getTimingRecord(new TimingResult("Int", time1), new TimingResult("Opt Int", time2)));
+        logger.log(TestLogUtils.getTimingRecord(new TimingResult("Int", time1), new TimingResult("Opt Int", time2)));
         Assertions.assertTrue(time2 < time1);
     }
 
@@ -314,13 +318,13 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     @SeededTest
     public void isFasterUsingOptimisedFloatProcessor(RandomSeed seed)
     {
-        ExtraAssumptions.assume(TestComplexity.MEDIUM);
+      Assumptions.assumeTrue(TestSettings.allow(TestComplexity.MEDIUM));
 
         // Get settings to try for the speed test
         final int[] indices = new int[] { 1 };
 
         // Warm up
-        ImagePlus[] data = dataCache.getOrComputeIfAbsent(seed, this);
+        ImagePlus[] data = dataCache.computeIfAbsent(seed, this);
         //runFloat(data[0], indices[0], false, false);
         //runFloat(data[0], indices[0], true, false);
 
@@ -351,20 +355,20 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
         // I am not worried the optimisation has worse performance.
 
         //Assertions.assertTrue(time2 < time1 * 1.4); // Allow discretion so test will pass
-        logger.log(TestLog.getTimingRecord(new TimingResult("Float", time1), new TimingResult("Opt Float", time2)));
+        logger.log(TestLogUtils.getTimingRecord(new TimingResult("Float", time1), new TimingResult("Opt Float", time2)));
     }
 
     @SpeedTag
     @SeededTest
     public void isNotSlowerthanLegacyUsingOptimisedIntProcessor(RandomSeed seed)
     {
-        ExtraAssumptions.assume(TestComplexity.MEDIUM);
+      Assumptions.assumeTrue(TestSettings.allow(TestComplexity.MEDIUM));
 
         // Get settings to try for the speed test
         final int[] indices = new int[] { 1 };
 
         // Warm up
-        ImagePlus[] data = dataCache.getOrComputeIfAbsent(seed, this);
+        ImagePlus[] data = dataCache.computeIfAbsent(seed, this);
         //runLegacy(data[0], indices[0]);
         //runInt(data[0], indices[0], true);
 
@@ -393,19 +397,19 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
         // I am not worried the new code has worse performance.
 
         //Assertions.assertTrue(time2 < time1 * 1.4); // Allow some discretion over the legacy method
-        logger.log(TestLog.getTimingRecord(new TimingResult("Legacy", time1), new TimingResult("Opt Int", time2)));
+        logger.log(TestLogUtils.getTimingRecord(new TimingResult("Legacy", time1), new TimingResult("Opt Int", time2)));
     }
 
     @SeededTest
     public void isFasterUsingOptimisedIntProcessorOverOptimisedFloatProcessor(RandomSeed seed)
     {
-        ExtraAssumptions.assume(TestComplexity.LOW);
+        Assumptions.assumeTrue(TestSettings.allow(TestComplexity.LOW));
 
         // Get settings to try for the speed test
         final int[] indices = new int[] { 1 };
 
         // Warm up
-        ImagePlus[] data = dataCache.getOrComputeIfAbsent(seed, this);
+        ImagePlus[] data = dataCache.computeIfAbsent(seed, this);
         //runFloat(data[0], indices[0], true, false);
         //runInt(data[0], indices[0], true);
 
@@ -433,7 +437,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
                         runInt(imp, i, true, nonContiguous);
             time2 = stop(time2);
         }
-        logger.log(TestLog.getTimingRecord(new TimingResult("Opt Float", time1), new TimingResult("Opt Int", time2)));
+        logger.log(TestLogUtils.getTimingRecord(new TimingResult("Opt Float", time1), new TimingResult("Opt Int", time2)));
         Assertions.assertTrue(time2 < time1);
     }
 
@@ -461,6 +465,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
         Assertions.assertEquals(results1.size(), results2.size(), setName + " Results Size");
         int counter = 0;
         final int offset = (negativeValues) ? this.offset : 0;
+        DoubleDoubleBiPredicate predictate = TestHelper.doublesAreClose(1e-9, 1e-16);
         try
         {
             for (int i = 0; i < results1.size(); i++)
@@ -492,8 +497,8 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     			else
     			{
         			// Averages cannot be cast and are compared as floating-point values
-        			ExtraAssertions.assertEqualsRelative( o1.averageIntensity, o2.averageIntensity + offset, 1e-9, "Av Intensity");
-        			ExtraAssertions.assertEqualsRelative(o1.averageIntensityAboveBackground, o2.averageIntensityAboveBackground, 1e-9, "Av Intensity >background");
+        			TestAssertions.assertTest(o1.averageIntensity, o2.averageIntensity + offset, predictate, "Av Intensity");
+        			TestAssertions.assertTest(o1.averageIntensityAboveBackground, o2.averageIntensityAboveBackground, predictate, "Av Intensity >background");
     			}
     			if (negativeValues)
     				continue;
@@ -644,7 +649,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
     private short[] combine(UniformRandomProvider rg, float[] data1, float[] data2, float[] data3)
     {
         // Combine images and add a bias and read noise
-        final GaussianSampler g = GaussianSamplerFactory.createGaussianSampler(rg, bias, 5);
+        final GaussianSampler g = GaussianSamplerUtils.createGaussianSampler(rg, bias, 5);
         final short[] data = new short[data1.length];
         for (int i = 0; i < data.length; i++)
         {
@@ -750,10 +755,12 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]>
         return Math.min(t, System.nanoTime() - time);
     }
 
+    // TODO fix this to use a function reference
+    
     @Override
     public ImagePlus[] apply(RandomSeed seed)
     {
-        UniformRandomProvider rg = RNGFactory.create(seed.getSeed());
+        UniformRandomProvider rg = RngUtils.create(seed.getSeed());
         ImagePlus[] images = new ImagePlus[numberOfTestImages + numberOfTestImages3D];
         int index = 0;
         for (int i = 0; i < numberOfTestImages; i++)

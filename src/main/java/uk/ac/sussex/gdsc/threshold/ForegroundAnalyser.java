@@ -37,8 +37,8 @@ import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.data.procedures.FValueProcedure;
 import uk.ac.sussex.gdsc.core.data.procedures.IValueProcedure;
 import uk.ac.sussex.gdsc.core.data.utils.Rounder;
-import uk.ac.sussex.gdsc.core.data.utils.RounderFactory;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.data.utils.RounderUtils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.ij.roi.RoiHelper;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
@@ -54,7 +54,7 @@ public class ForegroundAnalyser implements PlugInFilter
     private static String TITLE = "Foreground Analyser";
     private static TextWindow resultsWindow = null;
 
-    private static String method = AutoThreshold.Method.OTSU.name;
+    private static String method = AutoThreshold.Method.OTSU.toString();
     private static boolean showMask = false;
     private static boolean doStack = true;
     private static String[] BINS = { "256", "512", "1024", "2048", "4096", "8192", "16384" };
@@ -96,7 +96,7 @@ public class ForegroundAnalyser implements PlugInFilter
     }
 
     /**
-     * Show an ImageJ Dialog and get the parameters
+     * Show an ImageJ Dialog and get the parameters.
      *
      * @return False if the user cancelled
      */
@@ -267,7 +267,7 @@ public class ForegroundAnalyser implements PlugInFilter
             sb.append(bounds.width).append('x').append(bounds.height).append('\t');
         }
         sb.append(n).append('\t');
-        final Rounder r = RounderFactory.create(4);
+        final Rounder r = RounderUtils.create(4);
         sb.append(r.toString(t)).append('\t');
         final double sum = stats.getSum();
         final long lsum = (long) sum;
@@ -330,6 +330,6 @@ public class ForegroundAnalyser implements PlugInFilter
                 }
         }
 
-        Utils.display(TITLE, maskStack);
+        ImageJUtils.display(TITLE, maskStack);
     }
 }

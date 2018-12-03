@@ -34,7 +34,7 @@ import java.text.ParsePosition;
 public class LimitedNumberFormat extends DecimalFormat
 {
     /**
-     * Auto-generated
+     * Auto-generated.
      */
     private static final long serialVersionUID = -2564688480913124241L;
 

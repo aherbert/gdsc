@@ -81,7 +81,7 @@ import ij.gui.Roi;
 import ij.macro.MacroRunner;
 import ij.measure.Calibration;
 import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.foci.AssignedPoint;
 import uk.ac.sussex.gdsc.foci.FindFoci;
 import uk.ac.sussex.gdsc.foci.FindFociProcessor;
@@ -932,7 +932,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
     }
 
     /**
-     * Process the points in descending height order, assigning to the highest unassigned peak
+     * Process the points in descending height order, assigning to the highest unassigned peak.
      */
     private void assignToHighest(AssignedPoint[] points)
     {
@@ -1005,7 +1005,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
                     // Build a list of distances to unassigned peaks. Store distance and x,y coords.
                     // Multiply the distance to allow double precision to be approximately compared with integers.
                     potentialMappedPoints.add(new int[] { x, y, point.getZint(), point.getId(), gridPoint.getXint(),
-                            gridPoint.getYint(), (int) (gridPoint.distance2(x, y) * 100) });
+                            gridPoint.getYint(), (int) (gridPoint.distanceSquared(x, y) * 100) });
                 }
             }
 
@@ -1422,7 +1422,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
     }
 
     /**
-     * Allows the mapped points to be ranked in order of the distance to the mapped peak
+     * Allows the mapped points to be ranked in order of the distance to the mapped peak.
      */
     private class DistanceComparator implements Comparator<int[]>
     {
@@ -1441,7 +1441,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
     }
 
     /**
-     * Saves the current ROI points to a results table
+     * Saves the current ROI points to a results table.
      */
     private void saveResults()
     {
@@ -1499,8 +1499,8 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
     {
         final StringBuilder sb = new StringBuilder();
         sb.append(index).append('\t');
-        sb.append(Utils.rounded(x)).append('\t');
-        sb.append(Utils.rounded(y)).append('\t');
+        sb.append(MathUtils.rounded(x)).append('\t');
+        sb.append(MathUtils.rounded(y)).append('\t');
         sb.append(height).append('\t');
         sb.append(assigned).append('\t');
         resultsWindow.append(sb.toString());
@@ -1535,7 +1535,7 @@ public class FindFociHelperView extends JFrame implements WindowListener, MouseL
     }
 
     /**
-     * Hides the overlay and restores the ROI
+     * Hides the overlay and restores the ROI.
      */
     private void hideOverlay()
     {

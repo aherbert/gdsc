@@ -83,10 +83,10 @@ import ij.util.Tools;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.colocalisation.cda.engine.CDAEngine;
 import uk.ac.sussex.gdsc.colocalisation.cda.engine.CalculationResult;
-import uk.ac.sussex.gdsc.core.ij.Utils;
-import uk.ac.sussex.gdsc.core.ij.process.LUTHelper;
-import uk.ac.sussex.gdsc.core.ij.process.LUTHelper.LutColour;
-import uk.ac.sussex.gdsc.core.utils.Random;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
+import uk.ac.sussex.gdsc.core.ij.process.LutHelper.LutColour;
+import uk.ac.sussex.gdsc.core.utils.RandomUtils;
 import uk.ac.sussex.gdsc.core.utils.StoredData;
 
 /**
@@ -705,7 +705,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
         final List<CalculationResult> results = calculateResults(imageStack1, roiStack1, confinedStack, imageStack2,
                 roiStack2, denom1, denom2, shiftIndices);
 
-        if (Utils.isInterrupted())
+        if (ImageJUtils.isInterrupted())
             return;
 
         // Get unshifted result
@@ -801,7 +801,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
         // Randomise the permutations
         if (permutations < list.size() && permutations > 0)
         {
-            final int[] sample = Random.sample(permutations, list.size(), new Well19937c(30051977));
+            final int[] sample = RandomUtils.sample(permutations, list.size(), new Well19937c(30051977));
             final int[] indices = new int[permutations];
             for (int i = 0; i < permutations; i++)
                 indices[i] = list.getQuick(sample[i]);
@@ -881,7 +881,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
             engine.run(n, x, y);
 
-            if (Utils.isInterrupted())
+            if (ImageJUtils.isInterrupted())
             {
                 engine.end(true);
                 break;
@@ -1204,7 +1204,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
     }
 
     /**
-     * Build a stack that covers all z-slices in the image
+     * Build a stack that covers all z-slices in the image.
      */
     private static ImageStack defaultMask(ImagePlus imp)
     {
@@ -1426,7 +1426,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
 
         if (isSaveResults)
         {
-            final String directory = Utils.combinePath(resultsDirectory, id);
+            final String directory = ImageJUtils.combinePath(resultsDirectory, id);
             try
             {
                 // Save results to file
@@ -1494,7 +1494,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
             else
                 imp.setStack(title, stack);
             if (lutColor != null)
-                imp.setLut(LUTHelper.createLUT(lutColor, true));
+                imp.setLut(LutHelper.createLut(lutColor, true));
         }
         return imp;
     }
@@ -1810,7 +1810,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
     {
         final ArrayList<String> newImageList = new ArrayList<>();
 
-        for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
+        for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
 
@@ -2165,7 +2165,7 @@ public class CDA_Plugin extends PlugInFrame implements ActionListener, ItemListe
     }
 
     /**
-     * Run using an ImageJ generic dialog to allow recording in macros
+     * Run using an ImageJ generic dialog to allow recording in macros.
      */
     private void runAsPlugin()
     {

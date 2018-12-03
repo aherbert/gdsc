@@ -46,7 +46,7 @@ import ij.plugin.MacroInstaller;
 import ij.plugin.frame.PlugInFrame;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * Measures the distance between two consecutive points in XYZ.
@@ -63,7 +63,7 @@ public class Measure3D extends PlugInFrame
     private int lastID = 0, lastX, lastY, lastZ, lastC, lastT;
 
     /**
-     * Constructor
+     * Constructor.
      */
     public Measure3D()
     {
@@ -265,10 +265,10 @@ public class Measure3D extends PlugInFrame
         sb.append('\t').append(x);
         sb.append('\t').append(y);
         sb.append('\t').append(z);
-        sb.append('\t').append(Utils.rounded(d));
+        sb.append('\t').append(MathUtils.rounded(d));
         if (d != -1)
         {
-            sb.append('\t').append(Utils.rounded(d2));
+            sb.append('\t').append(MathUtils.rounded(d2));
             sb.append('\t').append(units);
         }
         else
@@ -277,7 +277,7 @@ public class Measure3D extends PlugInFrame
     }
 
     /**
-     * @return The current image (must have an image canvas)
+     * @return The current image (must have an image canvas).
      */
     private static ImagePlus getCurrentImage()
     {

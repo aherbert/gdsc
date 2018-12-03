@@ -41,7 +41,7 @@ import ij.plugin.frame.Recorder;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.NonBlockingExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.utils.Settings;
 
@@ -165,13 +165,13 @@ public class ColocatedMask implements PlugIn, ImageListener, DialogListener
 
     private boolean showDialog()
     {
-        final String[] list = Utils.getImageList(0, new String[] { TITLE });
+        final String[] list = ImageJUtils.getImageList(0, new String[] { TITLE });
 
         gd = new NonBlockingExtendedGenericDialog(TITLE);
         gd.addMessage("Create a mask from 2 images.\nImages must match XY dimensions.");
         final Choice c1 = gd.addAndGetChoice("Image_1", list, selectedImage1);
         final Choice c2 = gd.addAndGetChoice("Image_2", list, selectedImage2);
-        final boolean dynamic = Utils.isShowGenericDialog();
+        final boolean dynamic = ImageJUtils.isShowGenericDialog();
         Worker worker = null;
         Thread t = null;
         if (dynamic)

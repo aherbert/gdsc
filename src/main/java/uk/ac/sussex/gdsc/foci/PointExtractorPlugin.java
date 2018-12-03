@@ -38,7 +38,7 @@ import ij.plugin.filter.PlugInFilter;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
 /**
@@ -188,7 +188,7 @@ public class PointExtractorPlugin implements PlugInFilter
         // To improve the flexibility, do not restrict the mask to those suitable for the image. Allow any image for the mask.
         //ArrayList<String> newImageList = FindFoci.buildMaskList(imp);
         //String[] list = newImageList.toArray(new String[0]);
-        final String[] list = Utils.getImageList(Utils.NO_IMAGE, null);
+        final String[] list = ImageJUtils.getImageList(ImageJUtils.NO_IMAGE, null);
 
         final GenericDialog gd = new GenericDialog(TITLE);
 

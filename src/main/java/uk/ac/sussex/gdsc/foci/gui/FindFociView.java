@@ -1263,7 +1263,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     }
 
     /**
-     * @return the validImages
+     * @return the validImages.
      */
     public boolean isValidImages()
     {
@@ -1284,7 +1284,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     }
 
     /**
-     * @return the changed
+     * @return the changed.
      */
     public boolean isChanged()
     {
@@ -1309,7 +1309,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     }
 
     /**
-     * @return the background level
+     * @return the background level.
      */
     public double getBackgroundLevel()
     {
@@ -1330,7 +1330,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     }
 
     /**
-     * @return True if the sort index will be a problem
+     * @return True if the sort index will be a problem.
      */
     public boolean isSortIndexError()
     {
@@ -1359,7 +1359,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     }
 
     /**
-     * @return the runEnabled
+     * @return the runEnabled.
      */
     public boolean isRunEnabled()
     {
@@ -1367,7 +1367,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     }
 
     /**
-     * @return The image minimum value
+     * @return The image minimum value.
      */
     public int getImageMinimum()
     {
@@ -1375,7 +1375,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     }
 
     /**
-     * @return The image maximum value
+     * @return The image maximum value.
      */
     public int getImageMaximum()
     {

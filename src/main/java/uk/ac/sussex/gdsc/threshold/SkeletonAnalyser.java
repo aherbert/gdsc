@@ -44,7 +44,7 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * Skeletonise a mask image. Then produce a set of lines connecting node points on the skeleton.
@@ -85,28 +85,28 @@ public class SkeletonAnalyser implements PlugInFilter
     private ImagePlus imp;
 
     /** The constant for a line terminus (end). */
-    public final static byte TERMINUS = (byte) 1;
+    public static final byte TERMINUS = (byte) 1;
 
     /** The constant for a line edge (middle of the line). */
-    public final static byte EDGE = (byte) 2;
+    public static final byte EDGE = (byte) 2;
 
     /** The constant for a line junction (more than two lines join). */
-    public final static byte JUNCTION = (byte) 4;
+    public static final byte JUNCTION = (byte) 4;
 
     /** The constant for a line (end or middle). */
-    public final static byte LINE = TERMINUS | EDGE;
+    public static final byte LINE = TERMINUS | EDGE;
 
     /** The constant for a node point in a line (terminus or junction). */
-    public final static byte NODE = TERMINUS | JUNCTION;
+    public static final byte NODE = TERMINUS | JUNCTION;
 
     /** The constant for a line skeleton (edge or node). */
-    public final static byte SKELETON = EDGE | NODE;
+    public static final byte SKELETON = EDGE | NODE;
 
     /** The constant to show a pixel has been processed. */
-    public final static byte PROCESSED = (byte) 8;
+    public static final byte PROCESSED = (byte) 8;
 
     /** The constant for each of the 8-connected directions for processing pixels. */
-    public final static byte[] PROCESSED_DIRECTIONS = new byte[] { (byte) 1, (byte) 2, (byte) 4, (byte) 8, (byte) 16,
+    public static final byte[] PROCESSED_DIRECTIONS = new byte[] { (byte) 1, (byte) 2, (byte) 4, (byte) 8, (byte) 16,
             (byte) 32, (byte) 64, (byte) 128 };
 
     /** {@inheritDoc} */
@@ -183,7 +183,7 @@ public class SkeletonAnalyser implements PlugInFilter
         if (showNodeMap)
         {
             final ColorProcessor cp = createMapImage(map, width, height);
-            final ImagePlus mapImp = Utils.display(this.imp.getTitle() + " SkeletonNodeMap", cp);
+            final ImagePlus mapImp = ImageJUtils.display(this.imp.getTitle() + " SkeletonNodeMap", cp);
             if (showOverlay)
                 showOverlay(mapImp, lines);
         }

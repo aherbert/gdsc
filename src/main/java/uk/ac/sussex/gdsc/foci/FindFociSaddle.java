@@ -34,7 +34,7 @@ public class FindFociSaddle implements Cloneable, Comparable<FindFociSaddle>
     /** The saddle value. */
     public float value;
 
-    /** Used for sorting */
+    /** Used for sorting. */
     int order;
 
     /**

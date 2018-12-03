@@ -46,14 +46,16 @@ import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 import ij.util.Tools;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.plugin.WindowOrganiser;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * Analyses the ROI across a stack of exposures. Exposures must be set within the slice labels.
  */
 public class IntensityAnalysis implements ExtendedPlugInFilter
 {
-    private final static String TITLE = "Intensity Analysis";
+    private static final String TITLE = "Intensity Analysis";
     private final int flags = DOES_8G + DOES_16 + NO_CHANGES + DOES_STACKS + PARALLELIZE_STACKS + FINAL_PROCESSING;
     private static int window = 4;
     private static int bitDepth = 16;
@@ -318,7 +320,9 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
         plot.setLimits(a[0] - ra, a[1] + ra, b[0] - rb, b[1] + rb);
         plot.setColor(Color.blue);
         plot.addPoints(exposures, means, Plot.CIRCLE);
-        PlotWindow pw = Utils.display(title, plot);
+        // Used to determine if the window is new
+        final WindowOrganiser wo = new WindowOrganiser();
+        PlotWindow pw = ImageJUtils.display(title, plot, wo);
 
         // Report results to a table
         if (results == null || !results.isVisible())
@@ -326,7 +330,8 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
             results = new TextWindow(TITLE + " Summary",
                     "Image\tx\ty\tw\th\tN\tStart\tEnd\tE1\tE2\tSS\tIntercept\tGradient", "", 800, 300);
             results.setVisible(true);
-            if (Utils.isNewWindow())
+            // Locate result window under the plot window if the plot window was new
+            if (wo.isNotEmpty())
             {
                 final Point p = results.getLocation();
                 p.x = pw.getX();
@@ -412,15 +417,15 @@ public class IntensityAnalysis implements ExtendedPlugInFilter
                 final double x2 = exposures2[bestStart + window - 1];
                 final double y2 = fitted.value(x2);
                 plot.drawLine(x1, y1, x2, y2);
-                pw = Utils.display(title, plot);
+                pw = ImageJUtils.display(title, plot);
 
                 sb.append('\t').append(bestStart + 1);
                 sb.append('\t').append(bestStart + window);
-                sb.append('\t').append(Utils.rounded(x1));
-                sb.append('\t').append(Utils.rounded(x2));
-                sb.append('\t').append(Utils.rounded(bestSS));
-                sb.append('\t').append(Utils.rounded(bestFit[0]));
-                sb.append('\t').append(Utils.rounded(bestFit[1]));
+                sb.append('\t').append(MathUtils.rounded(x1));
+                sb.append('\t').append(MathUtils.rounded(x2));
+                sb.append('\t').append(MathUtils.rounded(bestSS));
+                sb.append('\t').append(MathUtils.rounded(bestFit[0]));
+                sb.append('\t').append(MathUtils.rounded(bestFit[1]));
             }
         }
 

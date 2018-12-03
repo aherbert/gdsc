@@ -79,7 +79,7 @@ public class HSB_Picker extends PlugInFrame
     private final SummaryStatistics[] stats;
 
     /**
-     * Constructor
+     * Constructor.
      */
     public HSB_Picker()
     {
@@ -177,7 +177,7 @@ public class HSB_Picker extends PlugInFrame
     }
 
     /**
-     * @return The current image (must be 24-bit and have an image canvas)
+     * @return The current image (must be 24-bit and have an image canvas).
      */
     private static ImagePlus getCurrentImage()
     {

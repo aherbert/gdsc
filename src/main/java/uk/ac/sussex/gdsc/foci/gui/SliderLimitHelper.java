@@ -247,7 +247,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
     }
 
     /**
-     * @return the minimum
+     * @return the minimum.
      */
     public double getMinimum()
     {
@@ -264,7 +264,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
     }
 
     /**
-     * @return the maximum
+     * @return the maximum.
      */
     public double getMaximum()
     {
@@ -348,7 +348,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
     }
 
     /**
-     * @return the true if the dialog was Oked
+     * @return the true if the dialog was Oked.
      */
     public boolean getOked()
     {
@@ -369,7 +369,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
     }
 
     /**
-     * @return the lowerBound
+     * @return the lowerBound.
      */
     public double getLowerBound()
     {
@@ -390,7 +390,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener
     }
 
     /**
-     * @return the upperBound
+     * @return the upperBound.
      */
     public double getUpperBound()
     {

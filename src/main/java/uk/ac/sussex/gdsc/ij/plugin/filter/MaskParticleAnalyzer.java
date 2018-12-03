@@ -51,7 +51,7 @@ import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * Extend the ImageJ Particle Analyser to allow the particles to be obtained from an input mask with objects
@@ -176,7 +176,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
 
             // The plugin will be run on a thresholded/mask image to define particles.
             // Choose the redirect image to sample the pixels from.
-            final int[] idList = Utils.getIDList();
+            final int[] idList = ImageJUtils.getIdList();
             String[] list = new String[idList.length + 1];
             list[0] = "[None]";
             int count = 1;
@@ -211,7 +211,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy
             saveHistogram = gd.getNextBoolean();
             if (saveHistogram)
             {
-                histogramFile = Utils.getFilename("Histogram_file", histogramFile);
+                histogramFile = ImageJUtils.getFilename("Histogram_file", histogramFile);
                 if (histogramFile != null)
                 {
                     final int i = histogramFile.lastIndexOf('.');

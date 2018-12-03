@@ -292,7 +292,7 @@ public class EdgeMask implements ExtendedPlugInFilter, DialogListener
         return limits;
     }
 
-    /** Listener to modifications of the input fields of the dialog */
+    /** Listener to modifications of the input fields of the dialog. */
     @Override
     public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
     {

@@ -54,8 +54,8 @@ import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.data.utils.Rounder;
-import uk.ac.sussex.gdsc.core.data.utils.RounderFactory;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.data.utils.RounderUtils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
@@ -71,15 +71,15 @@ import uk.ac.sussex.gdsc.core.utils.TurboList;
 public class MatchPlugin implements PlugIn
 {
     /**
-     * Visually impaired safe colour for matches (greenish)
+     * Visually impaired safe colour for matches (greenish).
      */
     public static Color MATCH = new Color(0, 158, 115);
     /**
-     * Visually impaired safe colour for no match 1 (yellowish)
+     * Visually impaired safe colour for no match 1 (yellowish).
      */
     public static Color UNMATCH1 = new Color(240, 228, 66);
     /**
-     * Visually impaired safe colour for no match 2 (blueish)
+     * Visually impaired safe colour for no match 2 (blueish).
      */
     public static Color UNMATCH2 = new Color(86, 180, 233);
 
@@ -377,7 +377,7 @@ public class MatchPlugin implements PlugIn
     }
 
     /**
-     * @return True if heights can be extracted from the image
+     * @return True if heights can be extracted from the image.
      */
     private boolean canExtractHeights(ImagePlus imp1, ImagePlus imp2)
     {
@@ -446,7 +446,7 @@ public class MatchPlugin implements PlugIn
     private TimeValuedPoint[] extractHeights(ImagePlus imp, Coordinate[] actualPoints, int channel, int frame)
     {
         // Use maximum intensity projection
-        final ImageProcessor ip = Utils.extractTile(imp, frame, channel, ZProjector.MAX_METHOD);
+        final ImageProcessor ip = ImageJUtils.extractTile(imp, frame, channel, ZProjector.MAX_METHOD);
         //new ImagePlus("height", ip).show();
 
         // Store ID as the time
@@ -612,7 +612,7 @@ public class MatchPlugin implements PlugIn
         if (imageMode)
         {
             final List<String> imageList = new LinkedList<>();
-            for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
+            for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
             {
                 final ImagePlus imp = WindowManager.getImage(id);
                 if (imp != null)
@@ -752,7 +752,7 @@ public class MatchPlugin implements PlugIn
             if (doQuartiles)
             {
                 header = createResultsHeader(qResults);
-                Utils.refreshHeadings(resultsWindow, header, true);
+                ImageJUtils.refreshHeadings(resultsWindow, header, true);
             }
 
             if (resultsWindow == null || !resultsWindow.isShowing())
@@ -811,7 +811,7 @@ public class MatchPlugin implements PlugIn
     }
 
     /**
-     * Extract all the heights from the two sets of valued points
+     * Extract all the heights from the two sets of valued points.
      */
     private static ArrayList<Float> extractHeights(TimeValuedPoint[] actualPoints, TimeValuedPoint[] predictedPoints)
     {
@@ -827,7 +827,7 @@ public class MatchPlugin implements PlugIn
     }
 
     /**
-     * Extract the points that are within the specified limits
+     * Extract the points that are within the specified limits.
      */
     private static TimeValuedPoint[] extractPoints(TimeValuedPoint[] points, float lower, float upper)
     {
@@ -839,7 +839,7 @@ public class MatchPlugin implements PlugIn
     }
 
     /**
-     * Count the points that are within the specified limits
+     * Count the points that are within the specified limits.
      */
     private static int countPoints(TimeValuedPoint[] points, float lower, float upper)
     {
@@ -1014,7 +1014,7 @@ public class MatchPlugin implements PlugIn
 
         // Find old plot
         ImagePlus oldPlot = null;
-        for (final int id : Utils.getIDList())
+        for (final int id : ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
             if (imp != null && imp.getTitle().equals(title))
@@ -1176,7 +1176,7 @@ public class MatchPlugin implements PlugIn
         if (matches.isEmpty() && falsePositives.isEmpty() && falseNegatives.isEmpty())
             return;
 
-        final String[] path = Utils.decodePath(filename);
+        final String[] path = ImageJUtils.decodePath(filename);
         final OpenDialog chooser = new OpenDialog("matches_file", path[0], path[1]);
         if (chooser.getFileName() == null)
             return;
@@ -1189,20 +1189,20 @@ public class MatchPlugin implements PlugIn
             final String newLine = System.getProperty("line.separator");
             sb.append("# Image 1   = ").append(t1).append(newLine);
             sb.append("# Image 2   = ").append(t2).append(newLine);
-            sb.append("# Distance  = ").append(Utils.rounded(d, 2)).append(newLine);
+            sb.append("# Distance  = ").append(MathUtils.rounded(d, 2)).append(newLine);
             sb.append("# Unit      = ").append(unit).append(newLine);
             sb.append("# N 1       = ").append(result.getNumberActual()).append(newLine);
             sb.append("# N 2       = ").append(result.getNumberPredicted()).append(newLine);
             sb.append("# Match     = ").append(result.getTruePositives()).append(newLine);
             sb.append("# Unmatch 1 = ").append(result.getFalseNegatives()).append(newLine);
             sb.append("# Unmatch 2 = ").append(result.getFalsePositives()).append(newLine);
-            sb.append("# Jaccard   = ").append(Utils.rounded(result.getJaccard(), 4)).append(newLine);
-            sb.append("# Recall 1  = ").append(Utils.rounded(result.getRecall(), 4)).append(newLine);
-            sb.append("# Recall 2  = ").append(Utils.rounded(result.getPrecision(), 4)).append(newLine);
-            sb.append("# F-score   = ").append(Utils.rounded(result.getFScore(1.0), 4)).append(newLine);
+            sb.append("# Jaccard   = ").append(MathUtils.rounded(result.getJaccard(), 4)).append(newLine);
+            sb.append("# Recall 1  = ").append(MathUtils.rounded(result.getRecall(), 4)).append(newLine);
+            sb.append("# Recall 2  = ").append(MathUtils.rounded(result.getPrecision(), 4)).append(newLine);
+            sb.append("# F-score   = ").append(MathUtils.rounded(result.getFScore(1.0), 4)).append(newLine);
             sb.append("# X1\tY1\tV1\tX2\tY2\tV2").append(newLine);
 
-            final Rounder r = RounderFactory.create(4);
+            final Rounder r = RounderUtils.create(4);
 
             out.write(sb.toString());
 
@@ -1276,7 +1276,7 @@ public class MatchPlugin implements PlugIn
             if (matchedWindow == null || !matchedWindow.isShowing())
                 matchedWindow = new TextWindow(TITLE + " Matched", header, "", 800, 300);
             else
-                Utils.refreshHeadings(matchedWindow, header, true);
+                ImageJUtils.refreshHeadings(matchedWindow, header, true);
         }
         else if (writeMatchedHeader)
         {
@@ -1304,7 +1304,7 @@ public class MatchPlugin implements PlugIn
                         : pair.getPoint2());
                 value = (int) point.value;
             }
-            addMatchedPair(pair.getPoint1(), pair.getPoint2(), pair.getXYZDistance(), value);
+            addMatchedPair(pair.getPoint1(), pair.getPoint2(), pair.getXyzDistance(), value);
         }
 
         final TimeValuedPoint[] actualPoints = extractValuedPoints(falseNegatives);
@@ -1346,7 +1346,7 @@ public class MatchPlugin implements PlugIn
         addPoint(sb, t1, point1);
         addPoint(sb, t2, point2);
         if ((xyzDistance > -1))
-            sb.append(Utils.rounded(xyzDistance));
+            sb.append(MathUtils.rounded(xyzDistance));
         else
             sb.append("-");
         if ((value > -1))
@@ -1362,7 +1362,7 @@ public class MatchPlugin implements PlugIn
         if (point != null)
         {
             final TimeValuedPoint p = (TimeValuedPoint) point;
-            final Rounder r = RounderFactory.create(4);
+            final Rounder r = RounderUtils.create(4);
             //@formatter:off
 			sb.append(title)
     			.append('\t').append(p.getTime())

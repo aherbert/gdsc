@@ -39,7 +39,7 @@ import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
 import uk.ac.sussex.gdsc.foci.ObjectAnalyzer;
@@ -81,7 +81,7 @@ public class MaskCreater implements PlugIn
 
     private static String selectedImage = "";
     private static int selectedOption = OPTION_THRESHOLD;
-    private static String selectedThresholdMethod = AutoThreshold.Method.OTSU.name;
+    private static String selectedThresholdMethod = AutoThreshold.Method.OTSU.toString();
     private static int selectedChannel = 0;
     private static int selectedSlice = 0;
     private static int selectedFrame = 0;
@@ -109,18 +109,18 @@ public class MaskCreater implements PlugIn
     {
         UsageTracker.recordPlugin(this.getClass(), arg);
 
-        if (!showDialog())
+        if (!showDialog(this))
             return;
-        final ImagePlus imp = createMask();
-        if (imp != null)
-            imp.show();
+        final ImagePlus mask = createMask();
+        if (mask != null)
+            mask.show();
     }
 
-    private boolean showDialog()
+    private static boolean showDialog(MaskCreater maskCreater)
     {
         final ArrayList<String> imageList = new ArrayList<>();
 
-        for (final int id : Utils.getIDList())
+        for (final int id : ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
             if (imp != null)
@@ -164,17 +164,17 @@ public class MaskCreater implements PlugIn
         selectedAssignObjects = gd.getNextBoolean();
         selectedEightConnected = gd.getNextBoolean();
 
-        setImp(WindowManager.getImage(selectedImage));
-        setOption(selectedOption);
-        setThresholdMethod(selectedThresholdMethod);
-        setChannel(selectedChannel);
-        setSlice(selectedSlice);
-        setFrame(selectedFrame);
-        setRemoveEdgeParticles(selectedRemoveEdgeParticles);
-        setMinParticleSize(selectedMinParticleSize);
-        setStackHistogram(selectedStackHistogram);
-        setAssignObjects(selectedAssignObjects);
-        setEightConnected(selectedEightConnected);
+        maskCreater.setImp(WindowManager.getImage(selectedImage));
+        maskCreater.setOption(selectedOption);
+        maskCreater.setThresholdMethod(selectedThresholdMethod);
+        maskCreater.setChannel(selectedChannel);
+        maskCreater.setSlice(selectedSlice);
+        maskCreater.setFrame(selectedFrame);
+        maskCreater.setRemoveEdgeParticles(selectedRemoveEdgeParticles);
+        maskCreater.setMinParticleSize(selectedMinParticleSize);
+        maskCreater.setStackHistogram(selectedStackHistogram);
+        maskCreater.setAssignObjects(selectedAssignObjects);
+        maskCreater.setEightConnected(selectedEightConnected);
 
         return true;
     }
@@ -862,7 +862,7 @@ public class MaskCreater implements PlugIn
             final int xlimit = maxx - 1;
             final int ylimit = ip.getHeight() - 1;
 
-            final int[] toZero = SimpleArrayUtils.newArray(oa.getMaxObject() + 1, 0, 1);
+            final int[] toZero = SimpleArrayUtils.natural(oa.getMaxObject() + 1);
 
             for (int x1 = 0, x2 = ylimit * maxx; x1 < maxx; x1++, x2++)
             {
@@ -940,7 +940,7 @@ public class MaskCreater implements PlugIn
             final int xlimit = maxx - 1;
             final int ylimit = stack.getHeight() - 1;
 
-            final int[] toZero = SimpleArrayUtils.newArray(oa.getMaxObject() + 1, 0, 1);
+            final int[] toZero = SimpleArrayUtils.natural(oa.getMaxObject() + 1);
 
             for (int z = 0, offset = 0; z < maxz; z++, offset += maxx_maxy)
             {

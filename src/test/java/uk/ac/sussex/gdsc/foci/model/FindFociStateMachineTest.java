@@ -23,19 +23,19 @@
  */
 package uk.ac.sussex.gdsc.foci.model;
 
-import java.beans.PropertyChangeEvent;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
+import uk.ac.sussex.gdsc.test.junit5.SeededTest;
+import uk.ac.sussex.gdsc.test.rng.RngUtils;
+import uk.ac.sussex.gdsc.test.utils.TestLogUtils;
 
 import org.apache.commons.rng.UniformRandomProvider;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 
-import uk.ac.sussex.gdsc.test.junit5.ExtraAssumptions;
-import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
-import uk.ac.sussex.gdsc.test.junit5.SeededTest;
-import uk.ac.sussex.gdsc.test.rng.RNGFactory;
-import uk.ac.sussex.gdsc.test.utils.TestLog;
+import java.beans.PropertyChangeEvent;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @SuppressWarnings({ "javadoc" })
 public class FindFociStateMachineTest
@@ -61,11 +61,11 @@ public class FindFociStateMachineTest
     public void timeStateTransitions(RandomSeed seed)
     {
         Level level = Level.INFO;
-        ExtraAssumptions.assume(logger, level);
+        Assumptions.assumeTrue(logger.isLoggable(level));
 
         final FindFociStateMachine sm = new FindFociStateMachine();
         final String[] propertyNames = sm.getObservedProperties().toArray(new String[0]);
-        UniformRandomProvider rand = RNGFactory.create(seed.getSeed());
+        UniformRandomProvider rand = RngUtils.create(seed.getSeed());
         final Integer oldValue = new Integer(0);
         final Integer newValue = new Integer(1);
 
@@ -87,6 +87,6 @@ public class FindFociStateMachineTest
                 sm.setState(FindFociState.COMPLETE);
             }
 
-        logger.log(TestLog.getRecord(level, "%d steps : %f ms", steps, (System.nanoTime() - start) / 1000000.0));
+        logger.log(TestLogUtils.getRecord(level, "%d steps : %f ms", steps, (System.nanoTime() - start) / 1000000.0));
     }
 }

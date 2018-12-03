@@ -33,21 +33,21 @@ import java.util.LinkedList;
  */
 public class ChainCode implements Comparable<ChainCode>
 {
-    private final static float ROOT2 = (float) Math.sqrt(2);
+    private static final float ROOT2 = (float) Math.sqrt(2);
 
     /**
-     * Describes the x-direction for the chain code
+     * Describes the x-direction for the chain code.
      */
-    public final static int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0, -1, -1, -1 };
+    public static final int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0, -1, -1, -1 };
     /**
-     * Describes the y-direction for the chain code
+     * Describes the y-direction for the chain code.
      */
-    public final static int[] DIR_Y_OFFSET = new int[] { -1, -1, 0, 1, 1, 1, 0, -1 };
+    public static final int[] DIR_Y_OFFSET = new int[] { -1, -1, 0, 1, 1, 1, 0, -1 };
 
     /**
-     * Describes the length for the chain code
+     * Describes the length for the chain code.
      */
-    public final static float[] DIR_LENGTH = new float[] { 1, ROOT2, 1, ROOT2, 1, ROOT2, 1, ROOT2 };
+    public static final float[] DIR_LENGTH = new float[] { 1, ROOT2, 1, ROOT2, 1, ROOT2, 1, ROOT2 };
 
     private int x = 0;
     private int y = 0;
@@ -90,7 +90,7 @@ public class ChainCode implements Comparable<ChainCode>
     }
 
     /**
-     * @return the x origin
+     * @return the x origin.
      */
     public int getX()
     {
@@ -98,7 +98,7 @@ public class ChainCode implements Comparable<ChainCode>
     }
 
     /**
-     * @return the y origin
+     * @return the y origin.
      */
     public int getY()
     {
@@ -106,7 +106,7 @@ public class ChainCode implements Comparable<ChainCode>
     }
 
     /**
-     * @return The chain code distance
+     * @return The chain code distance.
      */
     public float getDistance()
     {
@@ -120,7 +120,7 @@ public class ChainCode implements Comparable<ChainCode>
     }
 
     /**
-     * @return The number of points in the chain code (includes the x,y origin)
+     * @return The number of points in the chain code (includes the x,y origin).
      */
     public int getSize()
     {
@@ -128,7 +128,7 @@ public class ChainCode implements Comparable<ChainCode>
     }
 
     /**
-     * @return The chain code run
+     * @return The chain code run.
      */
     public int[] getRun()
     {
@@ -195,7 +195,7 @@ public class ChainCode implements Comparable<ChainCode>
     }
 
     /**
-     * Create a new chain code in the opposite direction
+     * Create a new chain code in the opposite direction.
      *
      * @return the chain code
      */

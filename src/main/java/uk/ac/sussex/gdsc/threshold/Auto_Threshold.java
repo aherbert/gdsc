@@ -68,7 +68,7 @@ public class Auto_Threshold implements PlugIn
     private static final String TITLE = "Auto Threshold";
 
     // Original method variable changed to static to allow repeatability of dialog
-    private static String myMethod = AutoThreshold.Method.OTSU.name;
+    private static String myMethod = AutoThreshold.Method.OTSU.toString();
     private static boolean noBlack = false;
     private static boolean noWhite = false;
     private static boolean doIwhite = true;
@@ -78,7 +78,7 @@ public class Auto_Threshold implements PlugIn
     private static boolean doIstackHistogram = false;
 
     /**
-     * The multiplier used within the MeanPlusSD calculation
+     * The multiplier used within the MeanPlusSD calculation.
      */
     private static double stdDevMultiplier = 3;
 

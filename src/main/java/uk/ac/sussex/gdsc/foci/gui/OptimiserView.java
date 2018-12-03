@@ -219,7 +219,7 @@ public class OptimiserView extends JFrame
     }
 
     /**
-     * @return the runEnabled
+     * @return the runEnabled.
      */
     public boolean isRunEnabled()
     {

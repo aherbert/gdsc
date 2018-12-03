@@ -29,55 +29,55 @@ package uk.ac.sussex.gdsc.foci;
 public class FindFociStatistics implements Cloneable
 {
     /**
-     * The minimum in the analysed region
+     * The minimum in the analysed region.
      */
     public float regionMinimum;
     /**
-     * The maximum in the analysed region
+     * The maximum in the analysed region.
      */
     public float regionMaximum;
     /**
-     * The mean in the analysed region
+     * The mean in the analysed region.
      */
     public double regionAverage;
     /**
-     * The standard deviation in the analysed region
+     * The standard deviation in the analysed region.
      */
     public double regionStdDev;
     /**
-     * The total image intensity in the analysed region
+     * The total image intensity in the analysed region.
      */
     public double regionTotal;
     /**
-     * The image background level
+     * The image background level.
      */
     public float background;
     /**
-     * The total image intensity above the background
+     * The total image intensity above the background.
      */
     public double totalAboveBackground;
     /**
-     * The minimum of the background region
+     * The minimum of the background region.
      */
     public float backgroundRegionMinimum;
     /**
-     * The maximum of the background region
+     * The maximum of the background region.
      */
     public float backgroundRegionMaximum;
     /**
-     * The mean of the background region
+     * The mean of the background region.
      */
     public double backgroundRegionAverage;
     /**
-     * The standard deviation of the background region
+     * The standard deviation of the background region.
      */
     public double backgroundRegionStdDev;
     /**
-     * The minimum image value
+     * The minimum image value.
      */
     public float imageMinimum;
     /**
-     * The total image intensity above the minimum image value
+     * The total image intensity above the minimum image value.
      */
     public double totalAboveImageMinimum;
 
@@ -89,7 +89,7 @@ public class FindFociStatistics implements Cloneable
     }
 
     /**
-     * Returns a copy of this statistics
+     * Returns a copy of this statistics.
      *
      * @return the find foci result
      */

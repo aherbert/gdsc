@@ -52,7 +52,7 @@ public class Stack_Threshold implements PlugInFilter
     private final int Z = 3;
     private final int T = 4;
 
-    private static String methodOption = AutoThreshold.Method.OTSU.name;
+    private static String methodOption = AutoThreshold.Method.OTSU.toString();
 
     // Options flags
     private static boolean logThresholds = false;
@@ -154,17 +154,17 @@ public class Stack_Threshold implements PlugInFilter
         gd.addMessage(TITLE);
 
         // Commented out the methods that take a long time on 16-bit images.
-        String[] methods = { "Try all", AutoThreshold.Method.DEFAULT.name,
+        String[] methods = { "Try all", AutoThreshold.Method.DEFAULT.toString(),
                 // "Huang",
                 // "Intermodes",
                 // "IsoData",
-                AutoThreshold.Method.LI.name, AutoThreshold.Method.MAX_ENTROPY.name, AutoThreshold.Method.MEAN.name,
-                AutoThreshold.Method.MIN_ERROR_I.name,
+                AutoThreshold.Method.LI.toString(), AutoThreshold.Method.MAX_ENTROPY.toString(), AutoThreshold.Method.MEAN.toString(),
+                AutoThreshold.Method.MIN_ERROR_I.toString(),
                 // "Minimum",
-                AutoThreshold.Method.MOMENTS.name, AutoThreshold.Method.OTSU.name, AutoThreshold.Method.PERCENTILE.name,
-                AutoThreshold.Method.RENYI_ENTROPY.name,
+                AutoThreshold.Method.MOMENTS.toString(), AutoThreshold.Method.OTSU.toString(), AutoThreshold.Method.PERCENTILE.toString(),
+                AutoThreshold.Method.RENYI_ENTROPY.toString(),
                 // "Shanbhag",
-                AutoThreshold.Method.TRIANGLE.name, AutoThreshold.Method.YEN.name };
+                AutoThreshold.Method.TRIANGLE.toString(), AutoThreshold.Method.YEN.toString() };
 
         gd.addChoice("Method", methods, methodOption);
         gd.addCheckbox("Log_thresholds", logThresholds);
@@ -234,7 +234,7 @@ public class Stack_Threshold implements PlugInFilter
     }
 
     /**
-     * Provides functionality to process a collection of slices from an Image
+     * Provides functionality to process a collection of slices from an Image.
      */
     private class SliceCollection
     {

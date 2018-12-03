@@ -23,10 +23,12 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
+import java.util.Arrays;
+
 /**
  * Stores a 2D/3D point with an assigned Id.
  */
-public class AssignedPoint extends BasePoint implements Comparable<AssignedPoint>
+public class AssignedPoint extends BasePoint
 {
     /** The id. */
     protected int id = 0;
@@ -110,16 +112,28 @@ public class AssignedPoint extends BasePoint implements Comparable<AssignedPoint
         return assignedId;
     }
 
-    /** {@inheritDoc} */
     @Override
-    public int compareTo(AssignedPoint that)
-    {
-        int d = this.x - that.x;
-        if (d != 0)
-            return d;
-        d = this.y - that.y;
-        if (d != 0)
-            return d;
-        return this.z - that.z;
+    public boolean equals(Object object) {
+      if (this == object) {
+        return true;
+      }
+      // Must be the same class, allowing subtypes their own implementation
+      if (object == null || getClass() != object.getClass()) {
+        return false;
+      }
+
+      // cast to native object is now safe
+      final AssignedPoint that = (AssignedPoint) object;
+
+      return x == that.x && y == that.y && z == that.z && id == that.id && assignedId == that.assignedId;
+    }
+
+    @Override
+    public int hashCode() {
+      // Note: floatToRawIntBits does not unify all possible NaN values
+      // However since the equals() will fail for NaN values we are not
+      // breaking the java contract.
+      return (41 * (41 * (41 * (41 * (41 + Float.floatToRawIntBits(x)) + Float.floatToRawIntBits(y))
+          + Float.floatToRawIntBits(z)) + id) + assignedId);
     }
 }

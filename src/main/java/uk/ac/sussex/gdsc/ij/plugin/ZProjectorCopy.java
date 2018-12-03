@@ -67,14 +67,14 @@ public class ZProjectorCopy implements PlugIn
     public static final String[] METHODS = { "Average Intensity", "Max Intensity", "Min Intensity", "Sum Slices",
             "Standard Deviation", "Median" };
     private static final String METHOD_KEY = "zproject.method";
-    /** The method */
+    /** The method. */
     protected int method = (int) Prefs.get(METHOD_KEY, AVG_METHOD);
 
-    /** Constant for byte images */
+    /** Constant for byte images. */
     protected static final int BYTE_TYPE = 0;
-    /** Constant for short images */
+    /** Constant for short images. */
     protected static final int SHORT_TYPE = 1;
-    /** Constant for float images */
+    /** Constant for float images. */
     protected static final int FLOAT_TYPE = 2;
 
     private static final String lutMessage = "Stacks with inverter LUTs may not project correctly.\n" +
@@ -106,7 +106,7 @@ public class ZProjectorCopy implements PlugIn
     protected int sliceCount;
 
     /**
-     * Construction of ZProjector
+     * Construction of ZProjector.
      */
     public ZProjectorCopy()
     {

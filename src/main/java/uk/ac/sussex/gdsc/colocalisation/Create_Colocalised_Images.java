@@ -36,7 +36,7 @@ import ij.process.ShortProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
- * Create some dummy images to test for colocalisation
+ * Create some dummy images to test for colocalisation.
  */
 public class Create_Colocalised_Images implements PlugIn
 {

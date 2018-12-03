@@ -105,7 +105,7 @@ public class FindFociSaddleList implements Cloneable
     }
 
     /**
-     * get the size of the list
+     * get the size of the list.
      *
      * @return The size
      */
@@ -115,7 +115,7 @@ public class FindFociSaddleList implements Cloneable
     }
 
     /**
-     * Get the saddle for the index
+     * Get the saddle for the index.
      *
      * @param i
      *            The index
@@ -138,7 +138,7 @@ public class FindFociSaddleList implements Cloneable
     }
 
     /**
-     * Clear the list but do not reduce the capacity
+     * Clear the list but do not reduce the capacity.
      */
     public void clear()
     {
@@ -146,7 +146,7 @@ public class FindFociSaddleList implements Cloneable
     }
 
     /**
-     * Free memory (Set size to zero and the list to null)
+     * Free memory (Set size to zero and the list to null).
      */
     void free()
     {
@@ -155,7 +155,7 @@ public class FindFociSaddleList implements Cloneable
     }
 
     /**
-     * Clear the list from the given position but do not reduce the capacity
+     * Clear the list from the given position but do not reduce the capacity.
      *
      * @param position
      *            The position
@@ -201,7 +201,7 @@ public class FindFociSaddleList implements Cloneable
     }
 
     /**
-     * Get the total capacity of the list
+     * Get the total capacity of the list.
      *
      * @return The total capacity
      */
@@ -236,7 +236,7 @@ public class FindFociSaddleList implements Cloneable
     }
 
     /**
-     * Sort the list
+     * Sort the list.
      */
     public void sort()
     {
@@ -259,7 +259,7 @@ public class FindFociSaddleList implements Cloneable
     }
 
     /**
-     * Remove duplicate Ids from the list and maintain the current order, or else do a default sort
+     * Remove duplicate Ids from the list and maintain the current order, or else do a default sort.
      *
      * @param maintain
      *            Maintain the current order, otherwise do default sort
@@ -303,7 +303,7 @@ public class FindFociSaddleList implements Cloneable
     }
 
     /**
-     * Sort the list by Id but otherwise maintain the current order
+     * Sort the list by Id but otherwise maintain the current order.
      */
     public void sortById()
     {

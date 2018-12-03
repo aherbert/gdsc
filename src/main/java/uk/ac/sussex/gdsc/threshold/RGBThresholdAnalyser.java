@@ -34,7 +34,7 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 
 /**
@@ -56,10 +56,10 @@ public class RGBThresholdAnalyser implements PlugIn
     {
         UsageTracker.recordPlugin(this.getClass(), arg);
 
-        dir1 = Utils.getDirectory("RGB_Directory", dir1);
+        dir1 = ImageJUtils.getDirectory("RGB_Directory", dir1);
         if (dir1 == null)
             return;
-        dir2 = Utils.getDirectory("Image_Directory", dir2);
+        dir2 = ImageJUtils.getDirectory("Image_Directory", dir2);
         if (dir2 == null)
             return;
 
@@ -130,7 +130,7 @@ public class RGBThresholdAnalyser implements PlugIn
             analyse(name, cp, 1, ip1, ip3);
             analyse(name, cp, 2, ip2, ip3);
 
-            if (Utils.isInterrupted())
+            if (ImageJUtils.isInterrupted())
                 return;
         }
 
@@ -192,7 +192,7 @@ public class RGBThresholdAnalyser implements PlugIn
     }
 
     /**
-     * Return the image statistics
+     * Return the image statistics.
      *
      * @param hist
      *            The image histogram

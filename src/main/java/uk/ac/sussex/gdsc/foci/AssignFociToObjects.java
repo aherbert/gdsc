@@ -42,7 +42,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.help.URL;
 
@@ -77,9 +77,10 @@ public class AssignFociToObjects implements PlugInFilter
     private static int size = 0;
     private static ArrayList<Search[]> search = null;
 
-    private class Search implements Comparable<Search>
+    private static class Search
     {
-        int x, y;
+        int x;
+        int y;
         double d2;
 
         public Search(int x, int y, double d2)
@@ -87,16 +88,6 @@ public class AssignFociToObjects implements PlugInFilter
             this.x = x;
             this.y = y;
             this.d2 = d2;
-        }
-
-        @Override
-        public int compareTo(Search that)
-        {
-            if (this.d2 < that.d2)
-                return -1;
-            if (this.d2 > that.d2)
-                return 1;
-            return 0;
         }
     }
 
@@ -217,8 +208,8 @@ public class AssignFociToObjects implements PlugInFilter
         {
             sb.append(imp.getTitle());
             sb.append('\t').append(i);
-            sb.append('\t').append(Utils.rounded(centres[i][0]));
-            sb.append('\t').append(Utils.rounded(centres[i][1]));
+            sb.append('\t').append(MathUtils.rounded(centres[i][0]));
+            sb.append('\t').append(MathUtils.rounded(centres[i][1]));
             sb.append('\t').append((int) (centres[i][2]));
             if (idMap[i] > 0)
             {
@@ -264,11 +255,11 @@ public class AssignFociToObjects implements PlugInFilter
             final Plot plot = new Plot(title, "Count", "Frequency", xValues, yValues);
             plot.setLimits(0, xValues[xValues.length - 1], 0, yMax);
             plot.addLabel(0, 0,
-                    String.format("N = %d, Mean = %s", (int) stats.getSum(), Utils.rounded(stats.getMean())));
+                    String.format("N = %d, Mean = %s", (int) stats.getSum(), MathUtils.rounded(stats.getMean())));
             plot.draw();
             plot.setColor(Color.RED);
             plot.drawLine(stats.getMean(), 0, stats.getMean(), yMax);
-            Utils.display(title, plot);
+            ImageJUtils.display(title, plot);
         }
 
         // Show the summary
@@ -282,9 +273,9 @@ public class AssignFociToObjects implements PlugInFilter
         sb.append('\t').append(results.size() - (int) (stats.getSum() + stats2.getSum()));
         sb.append('\t').append(stats.getMin());
         sb.append('\t').append(stats.getMax());
-        sb.append('\t').append(Utils.rounded(stats.getMean()));
-        sb.append('\t').append(Utils.rounded(stats.getPercentile(50)));
-        sb.append('\t').append(Utils.rounded(stats.getStandardDeviation()));
+        sb.append('\t').append(MathUtils.rounded(stats.getMean()));
+        sb.append('\t').append(MathUtils.rounded(stats.getPercentile(50)));
+        sb.append('\t').append(MathUtils.rounded(stats.getStandardDeviation()));
         summaryWindow.append(sb.toString());
 
         if (!showDistances)
@@ -312,7 +303,7 @@ public class AssignFociToObjects implements PlugInFilter
                     sb.append("\tTrue\t");
                 else
                     sb.append("\tFalse\t");
-                sb.append(Utils.rounded(Math.sqrt(d2[i])));
+                sb.append(MathUtils.rounded(Math.sqrt(d2[i])));
                 sb.append('\n');
             }
             else
@@ -427,26 +418,26 @@ public class AssignFociToObjects implements PlugInFilter
         }
         size = newSize;
         search = new ArrayList<>();
-        final AssignFociToObjects instance = new AssignFociToObjects();
         final Search[] s = new Search[size * size];
 
         final double[] tmp = new double[newSize];
         for (int y = -n, i = 0; y <= n; y++, i++)
-            tmp[i] = y * y;
+            tmp[i] = (double)y * y;
 
         for (int y = -n, i = 0, index = 0; y <= n; y++, i++)
         {
             final double y2 = tmp[i];
             for (int x = -n, ii = 0; x <= n; x++, ii++)
-                s[index++] = instance.new Search(x, y, y2 + tmp[ii]);
+                s[index++] = new Search(x, y, y2 + tmp[ii]);
         }
 
-        Arrays.sort(s);
+        Arrays.sort(s, (s1, s2) -> Double.compare(s1.d2, s2.d2));
 
         // Store each increasing search distance as a set
         // Ignore first record as it is d2==0
         double last = -1;
-        int begin = 0, end = -1;
+        int begin = 0;
+        int end = -1;
         for (int i = 1; i < s.length; i++)
         {
             if (last != s[i].d2)
@@ -520,7 +511,7 @@ public class AssignFociToObjects implements PlugInFilter
             ip.set(i, objectMask[i]);
 
         ip.setMinAndMax(0, oa.getMaxObject());
-        final ImagePlus imp = Utils.display(TITLE + " Objects", ip);
+        final ImagePlus imp = ImageJUtils.display(TITLE + " Objects", ip);
         if (showFoci && found.length > 0)
         {
             final int[] xin = new int[found.length];

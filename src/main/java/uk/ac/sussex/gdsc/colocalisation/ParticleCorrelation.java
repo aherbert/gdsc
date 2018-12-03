@@ -42,8 +42,8 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
-import uk.ac.sussex.gdsc.core.utils.Maths;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.foci.ObjectAnalyzer3D;
 
 /**
@@ -95,8 +95,8 @@ public class ParticleCorrelation implements PlugIn
         gd.addMessage("For each particle in a mask (defined by unique pixel value)\n" +
                 "sum the pixel intensity in two different images and correlate");
 
-        final String[] imageList = Utils.getImageList(Utils.GREY_SCALE, null);
-        final String[] maskList = Utils.getImageList(Utils.GREY_8_16, null);
+        final String[] imageList = ImageJUtils.getImageList(ImageJUtils.GREY_SCALE, null);
+        final String[] maskList = ImageJUtils.getImageList(ImageJUtils.GREY_8_16, null);
 
         gd.addChoice("Particle_mask", maskList, maskTitle1);
         gd.addChoice("Particle_image1", imageList, imageTitle1);
@@ -243,14 +243,14 @@ public class ParticleCorrelation implements PlugIn
         {
             final String plotTitle = TITLE + " Plot";
             final Plot plot = new Plot(plotTitle, getName(imageImp1, c1), getName(imageImp2, c2));
-            final double[] limitsx = Maths.limits(sum1);
-            final double[] limitsy = Maths.limits(sum2);
+            final double[] limitsx = MathUtils.limits(sum1);
+            final double[] limitsy = MathUtils.limits(sum2);
             final double dx = (limitsx[1] - limitsx[0]) * 0.05;
             final double dy = (limitsy[1] - limitsy[0]) * 0.05;
             plot.setLimits(limitsx[0] - dx, limitsx[1] + dx, limitsy[0] - dy, limitsy[1] + dy);
             plot.setColor(Color.red);
             plot.addPoints(sum1, sum2, Plot.CROSS);
-            Utils.display(plotTitle, plot);
+            ImageJUtils.display(plotTitle, plot);
         }
 
         if (showObjects)
@@ -269,7 +269,7 @@ public class ParticleCorrelation implements PlugIn
                     }
                 stack.setProcessor(ip, z + 1);
             }
-            final ImagePlus imp = Utils.display(TITLE + " Objects", stack);
+            final ImagePlus imp = ImageJUtils.display(TITLE + " Objects", stack);
             if (oa.getMaxObject() < 256)
             {
                 imp.setDisplayRange(0, oa.getMaxObject());
@@ -369,10 +369,10 @@ public class ParticleCorrelation implements PlugIn
 
         final StringBuilder sb = new StringBuilder(title);
         sb.append(sum1.length).append('\t');
-        sb.append(Utils.rounded(p1.getCorrelationMatrix().getEntry(0, 1))).append('\t');
-        sb.append(Utils.rounded(p1.getCorrelationPValues().getEntry(0, 1))).append('\t');
-        sb.append(Utils.rounded(p2.getCorrelationMatrix().getEntry(0, 1))).append('\t');
-        sb.append(Utils.rounded(p2.getCorrelationPValues().getEntry(0, 1)));
+        sb.append(MathUtils.rounded(p1.getCorrelationMatrix().getEntry(0, 1))).append('\t');
+        sb.append(MathUtils.rounded(p1.getCorrelationPValues().getEntry(0, 1))).append('\t');
+        sb.append(MathUtils.rounded(p2.getCorrelationMatrix().getEntry(0, 1))).append('\t');
+        sb.append(MathUtils.rounded(p2.getCorrelationPValues().getEntry(0, 1)));
         twSummary.append(sb.toString());
     }
 
@@ -382,9 +382,9 @@ public class ParticleCorrelation implements PlugIn
         final StringBuilder sb = new StringBuilder(title);
         sb.append(id).append('\t');
         sb.append(value).append('\t');
-        sb.append(Utils.rounded(x)).append('\t');
-        sb.append(Utils.rounded(y)).append('\t');
-        sb.append(Utils.rounded(z)).append('\t');
+        sb.append(MathUtils.rounded(x)).append('\t');
+        sb.append(MathUtils.rounded(y)).append('\t');
+        sb.append(MathUtils.rounded(z)).append('\t');
         sb.append(n).append('\t');
         sb.append(s1).append('\t');
         sb.append(s2);

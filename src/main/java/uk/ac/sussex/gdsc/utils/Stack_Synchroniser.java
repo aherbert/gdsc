@@ -95,7 +95,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
     private boolean updateChildren = true;
 
     /**
-     * Instance constructor
+     * Instance constructor.
      */
     public Stack_Synchroniser()
     {
@@ -152,7 +152,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
     }
 
     /**
-     * Populate the drop-down with the current valid images
+     * Populate the drop-down with the current valid images.
      */
     public void fillImagesList()
     {
@@ -160,7 +160,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
         final ArrayList<String> newImageList = new ArrayList<>();
 
         if (WindowManager.getImageCount() > 0)
-            for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
+            for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
             {
                 final ImagePlus imp = WindowManager.getImage(id);
 
@@ -380,7 +380,7 @@ public class Stack_Synchroniser extends PlugInFrame implements ItemListener, Ima
     }
 
     /**
-     * Updates the list of child images that will be synchronised to the parent image
+     * Updates the list of child images that will be synchronised to the parent image.
      */
     private void updateSynchronisation()
     {

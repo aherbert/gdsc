@@ -1330,7 +1330,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
     }
 
     /**
-     * Estimate the starting ellipse using the eccentricity around the central moments
+     * Estimate the starting ellipse using the eccentricity around the central moments.
      *
      * @param roi
      *            the roi
@@ -1438,7 +1438,7 @@ public class Cell_Outliner implements ExtendedPlugInFilter, DialogListener
     }
 
     /**
-     * Compute the central moment of an image
+     * Compute the central moment of an image.
      *
      * @param ip
      *            the image

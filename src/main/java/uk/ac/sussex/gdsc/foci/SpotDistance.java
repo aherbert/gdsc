@@ -46,7 +46,7 @@ import ij.process.ShortProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.PointPair;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
@@ -64,7 +64,7 @@ import uk.ac.sussex.gdsc.ij.plugin.filter.DifferenceOfGaussians;
 public class SpotDistance implements PlugIn
 {
     /**
-     * Used to store results and cache XYZ output formatting
+     * Used to store results and cache XYZ output formatting.
      */
     private class DistanceResult extends BasePoint implements Comparable<DistanceResult>
     {
@@ -89,8 +89,8 @@ public class SpotDistance implements PlugIn
         String getCalXYZ()
         {
             if (calXYZ == null)
-                calXYZ = String.format("%s\t%s\t%s", Utils.rounded(x * cal.pixelWidth),
-                        Utils.rounded(y * cal.pixelHeight), Utils.rounded(z * cal.pixelDepth));
+                calXYZ = String.format("%s\t%s\t%s", MathUtils.rounded(x * cal.pixelWidth),
+                        MathUtils.rounded(y * cal.pixelHeight), MathUtils.rounded(z * cal.pixelDepth));
             return calXYZ;
         }
 
@@ -363,13 +363,13 @@ public class SpotDistance implements PlugIn
                 }
             }
 
-            if (Utils.isInterrupted())
+            if (ImageJUtils.isInterrupted())
                 return;
 
             exec(frame, channel, s1, s1b, s2);
             IJ.showProgress(i + 1, frames.length);
 
-            if (Utils.isInterrupted())
+            if (ImageJUtils.isInterrupted())
                 return;
 
             // Recreate the mask if using multiple frames
@@ -465,7 +465,7 @@ public class SpotDistance implements PlugIn
         final ArrayList<String> newImageList = new ArrayList<>();
         newImageList.add("[None]");
 
-        for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
+        for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
         {
             final ImagePlus maskImp = WindowManager.getImage(id);
             // Mask image must:
@@ -528,7 +528,7 @@ public class SpotDistance implements PlugIn
     }
 
     /**
-     * Create the result window (if it is not available)
+     * Create the result window (if it is not available).
      */
     private void createResultsWindow()
     {
@@ -718,7 +718,7 @@ public class SpotDistance implements PlugIn
         final int backgroundMethod = (autoThreshold) ? FindFociProcessor.BACKGROUND_AUTO_THRESHOLD
                 : FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN;
         final double backgroundParameter = stdDevAboveBackground;
-        final String autoThresholdMethod = AutoThreshold.Method.OTSU.name;
+        final String autoThresholdMethod = AutoThreshold.Method.OTSU.toString();
         final int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
         final double searchParameter = 0;
         final int minSize = minPeakSize;
@@ -776,7 +776,7 @@ public class SpotDistance implements PlugIn
                     outputType, sortIndex, options, blur, centreMethod, centreParameter, 1);
             FindFociResults results2 = null;
 
-            if (Utils.isInterrupted())
+            if (ImageJUtils.isInterrupted())
                 return;
 
             final ArrayList<DistanceResult> resultsArray = analyseResults(prevResultsArray, ff, croppedImp, ffResult,
@@ -791,7 +791,7 @@ public class SpotDistance implements PlugIn
                 results2 = ff.findMaxima(croppedImp2, regionImp, backgroundMethod, backgroundParameter,
                         autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod,
                         peakParameter2, outputType, sortIndex, options, blur, centreMethod, centreParameter, 1);
-                if (Utils.isInterrupted())
+                if (ImageJUtils.isInterrupted())
                     return;
 
                 resultsArray2 = analyseResults(prevResultsArray2, ff, croppedImp2, results2, frame, c2, overlay2);
@@ -1413,7 +1413,7 @@ public class SpotDistance implements PlugIn
             sb.append(result.getPixelXYZ()).append('\t');
         if (calibratedDistances)
             sb.append(result.getCalXYZ()).append('\t');
-        sb.append(Utils.rounded(result.circularity));
+        sb.append(MathUtils.rounded(result.circularity));
         resultsWindow.append(sb.toString());
         allowUndo = true;
     }
@@ -1443,15 +1443,15 @@ public class SpotDistance implements PlugIn
         sb.append(region).append('\t').append(size);
         if (pixelDistances)
         {
-            sb.append('\t').append(Utils.rounded(minD));
-            sb.append('\t').append(Utils.rounded(maxD));
-            sb.append('\t').append(Utils.rounded(d));
+            sb.append('\t').append(MathUtils.rounded(minD));
+            sb.append('\t').append(MathUtils.rounded(maxD));
+            sb.append('\t').append(MathUtils.rounded(d));
         }
         if (calibratedDistances)
         {
-            sb.append('\t').append(Utils.rounded(minD2));
-            sb.append('\t').append(Utils.rounded(maxD2));
-            sb.append('\t').append(Utils.rounded(d2));
+            sb.append('\t').append(MathUtils.rounded(minD2));
+            sb.append('\t').append(MathUtils.rounded(maxD2));
+            sb.append('\t').append(MathUtils.rounded(d2));
         }
         summaryWindow.append(sb.toString());
         allowUndo = true;
@@ -1469,13 +1469,13 @@ public class SpotDistance implements PlugIn
         {
             sb.append('\t').append(r1.getPixelXYZ());
             sb.append('\t').append(r2.getPixelXYZ());
-            sb.append('\t').append(Utils.rounded(d));
+            sb.append('\t').append(MathUtils.rounded(d));
         }
         if (calibratedDistances)
         {
             sb.append('\t').append(r1.getCalXYZ());
             sb.append('\t').append(r2.getCalXYZ());
-            sb.append('\t').append(Utils.rounded(d2));
+            sb.append('\t').append(MathUtils.rounded(d2));
         }
         distancesWindow.append(sb.toString());
         allowUndo = true;

@@ -46,8 +46,8 @@ import ij.process.ImageProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
-import uk.ac.sussex.gdsc.core.utils.Maths;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
 /**
@@ -149,7 +149,7 @@ public class SpotPairDistance implements PlugIn
                 channel2 = (int) gd.getNextNumber();
                 searchRange = (int) gd.getNextNumber();
                 comRange = (int) gd.getNextNumber();
-                comRange = Maths.clip(0, searchRange, comRange);
+                comRange = MathUtils.clip(0, searchRange, comRange);
                 reverseOrientationLine = gd.getNextBoolean();
                 showDistances = gd.getNextBoolean();
                 showSearchRegion = gd.getNextBoolean();
@@ -175,7 +175,7 @@ public class SpotPairDistance implements PlugIn
 
         private static boolean hasMultiChannelImage()
         {
-            for (final int id : Utils.getIDList())
+            for (final int id : ImageJUtils.getIdList())
             {
                 final ImagePlus imp = WindowManager.getImage(id);
                 if (imp != null && imp.getNChannels() > 1)
@@ -541,7 +541,7 @@ public class SpotPairDistance implements PlugIn
         }
 
         /**
-         * Create the result window (if it is not available)
+         * Create the result window (if it is not available).
          */
         private void createResultsWindow()
         {
@@ -587,36 +587,36 @@ public class SpotPairDistance implements PlugIn
             sb.append(bounds.width).append('x');
             sb.append(bounds.height);
 
-            sb.append('\t').append(Utils.rounded(com1[0]));
-            sb.append('\t').append(Utils.rounded(com1[1]));
-            sb.append('\t').append(Utils.rounded(com2[0]));
-            sb.append('\t').append(Utils.rounded(com2[1]));
+            sb.append('\t').append(MathUtils.rounded(com1[0]));
+            sb.append('\t').append(MathUtils.rounded(com1[1]));
+            sb.append('\t').append(MathUtils.rounded(com2[0]));
+            sb.append('\t').append(MathUtils.rounded(com2[1]));
             double dx = com1[0] - com2[0];
             double dy = com1[1] - com2[1];
             double d = Math.sqrt(dx * dx + dy * dy);
-            sb.append('\t').append(Utils.rounded(d));
-            sb.append('\t').append(Utils.rounded(angle));
-            sb.append('\t').append(Utils.rounded(relX));
-            sb.append('\t').append(Utils.rounded(relY));
+            sb.append('\t').append(MathUtils.rounded(d));
+            sb.append('\t').append(MathUtils.rounded(angle));
+            sb.append('\t').append(MathUtils.rounded(relX));
+            sb.append('\t').append(MathUtils.rounded(relY));
 
             final Calibration cal = imp.getCalibration();
             final String unit = cal.getUnit();
             // Only if matching units and pixel scaling
             if (cal.getYUnit() == unit && (cal.pixelWidth != 1.0 || cal.pixelHeight != 1.0))
             {
-                sb.append('\t').append(Utils.rounded(com1[0] * cal.pixelWidth));
-                sb.append('\t').append(Utils.rounded(com1[1] * cal.pixelHeight));
-                sb.append('\t').append(Utils.rounded(com2[0] * cal.pixelWidth));
-                sb.append('\t').append(Utils.rounded(com2[1] * cal.pixelHeight));
+                sb.append('\t').append(MathUtils.rounded(com1[0] * cal.pixelWidth));
+                sb.append('\t').append(MathUtils.rounded(com1[1] * cal.pixelHeight));
+                sb.append('\t').append(MathUtils.rounded(com2[0] * cal.pixelWidth));
+                sb.append('\t').append(MathUtils.rounded(com2[1] * cal.pixelHeight));
                 dx *= cal.pixelWidth;
                 dy *= cal.pixelHeight;
                 d = Math.sqrt(dx * dx + dy * dy);
-                sb.append('\t').append(Utils.rounded(d));
+                sb.append('\t').append(MathUtils.rounded(d));
                 // Units must be the same for calibrated relative distance
                 if (cal.pixelWidth == cal.pixelHeight)
                 {
-                    sb.append('\t').append(Utils.rounded(relX * cal.pixelWidth));
-                    sb.append('\t').append(Utils.rounded(relY * cal.pixelWidth));
+                    sb.append('\t').append(MathUtils.rounded(relX * cal.pixelWidth));
+                    sb.append('\t').append(MathUtils.rounded(relY * cal.pixelWidth));
                 }
                 else
                     sb.append("'\t-\t-");

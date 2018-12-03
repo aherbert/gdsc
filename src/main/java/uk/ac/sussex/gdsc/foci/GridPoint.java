@@ -70,7 +70,7 @@ public class GridPoint extends ValuedPoint
     }
 
     /**
-     * @return the assigned
+     * @return the assigned.
      */
     public boolean isAssigned()
     {

@@ -174,7 +174,7 @@ public class CDAEngine
     }
 
     /**
-     * Signal that no more fitting work will be added to the queue
+     * Signal that no more fitting work will be added to the queue.
      *
      * @param now
      *            Stop the work immediately, otherwise finish all work in the queue

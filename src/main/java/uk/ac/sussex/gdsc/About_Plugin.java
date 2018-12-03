@@ -42,8 +42,8 @@ public class About_Plugin implements PlugIn
 {
     /** The title of the plugin. */
     private static final String TITLE = "GDSC ImageJ Plugins";
-    private static String HELP_URL = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/plugins";
-    private static String YEAR = "2016";
+    private static final String HELP_URL = "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/plugins";
+    private static final String YEAR = "2018";
 
     @Override
     public void run(String arg)
@@ -123,9 +123,9 @@ public class About_Plugin implements PlugIn
         msg = new StringBuilder(msg.toString().trim());
         addVersion(msg, "GDSC", Version.getVersion(), Version.getBuildDate(), Version.getBuildNumber());
         addVersion(msg, "GDSC-Core", 
-            uk.ac.sussex.gdsc.core.Version.getVersion(), 
-            uk.ac.sussex.gdsc.core.Version.getBuildDate(), 
-            uk.ac.sussex.gdsc.core.Version.getBuildNumber());
+            uk.ac.sussex.gdsc.core.VersionUtils.getVersion(), 
+            uk.ac.sussex.gdsc.core.VersionUtils.getBuildDate(), 
+            uk.ac.sussex.gdsc.core.VersionUtils.getBuildNumber());
 
         if (helpURL != null)
             msg.append("\n \n(Click help for more information)");

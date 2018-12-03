@@ -41,7 +41,7 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.utils.Sort;
+import uk.ac.sussex.gdsc.core.utils.SortUtils;
 import uk.ac.sussex.gdsc.help.URL;
 import uk.ac.sussex.gdsc.threshold.ThreadAnalyser;
 
@@ -52,10 +52,10 @@ import uk.ac.sussex.gdsc.threshold.ThreadAnalyser;
  */
 public class SpotSeparation implements PlugInFilter
 {
-    /** The plugin title */
+    /** The plugin title. */
     private static final String TITLE = "Spot Separation";
 
-    private final static String[] methods = { "MaxEntropy", "Yen" };
+    private static final String[] methods = { "MaxEntropy", "Yen" };
 
     private static String method = "";
     private static double radius = 10;
@@ -275,7 +275,7 @@ public class SpotSeparation implements PlugInFilter
     {
         if (xValues.length == 0)
             return 0;
-        Sort.sortArrays(yValues, xValues, true);
+        SortUtils.sortData(yValues, xValues, true, false);
         // Reset to start at zero
         final float offset = -xValues[0];
         for (int ii = 0; ii < xValues.length; ii++)
@@ -468,7 +468,7 @@ public class SpotSeparation implements PlugInFilter
         for (int i = 0; i < d.length; i++)
             for (int j = i + 1; j < d.length; j++)
             {
-                d[i][j] = (float) points[i].distance2(points[j].x, points[j].y);
+                d[i][j] = (float) points[i].distanceSquared(points[j].x, points[j].y);
                 d[j][i] = d[i][j];
             }
         return d;
@@ -521,7 +521,7 @@ public class SpotSeparation implements PlugInFilter
     }
 
     /**
-     * Create the result window (if it is not available)
+     * Create the result window (if it is not available).
      */
     private void createResultsWindow()
     {
@@ -850,7 +850,7 @@ public class SpotSeparation implements PlugInFilter
     }
 
     @SafeVarargs
-    private final static float[][] convertToFloat(List<float[]>... lists)
+    private static final float[][] convertToFloat(List<float[]>... lists)
     {
         int size = 0;
         for (final List<float[]> list : lists)

@@ -44,7 +44,7 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.text.TextWindow;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
 
 /**
@@ -358,9 +358,9 @@ public class PointAlignerPlugin implements PlugIn
                 {
                     if (logAlignments)
                         log("Point [%d] %s @ %s ~> %s @ %s (%s) below height threshold (< %s)", pointId + 1,
-                                Utils.rounded(pointHeight[pointId]), getCoords(is3d, x, y, z),
-                                Utils.rounded(result.maxValue), getCoords(is3d, newX, newY, newZ), IJ.d2s(d, 2),
-                                Utils.rounded(thresholdHeight));
+                                MathUtils.rounded(pointHeight[pointId]), getCoords(is3d, x, y, z),
+                                MathUtils.rounded(result.maxValue), getCoords(is3d, newX, newY, newZ), IJ.d2s(d, 2),
+                                MathUtils.rounded(thresholdHeight));
                     noAlign.add(point);
                     extractPoint(impStack, "below_threshold", pointId + 1, x, y, z, newX, newY, newZ);
                     newPoint = null; // remove unaligned points from the updated ROI
@@ -376,8 +376,8 @@ public class PointAlignerPlugin implements PlugIn
                         // This is the highest point assigned to the maxima.
                         // Check if it is being moved.
                         if (logAlignments)
-                            log("Point [%d] %s @ %s => %s @ %s (%s)", pointId + 1, Utils.rounded(pointHeight[pointId]),
-                                    getCoords(is3d, x, y, z), Utils.rounded(result.maxValue),
+                            log("Point [%d] %s @ %s => %s @ %s (%s)", pointId + 1, MathUtils.rounded(pointHeight[pointId]),
+                                    getCoords(is3d, x, y, z), MathUtils.rounded(result.maxValue),
                                     getCoords(is3d, newX, newY, newZ), IJ.d2s(d, 2));
                         newPoint = new AssignedPoint(newX, newY, newZ, point.getId());
                         if (showMoved && d > 0)
@@ -391,7 +391,7 @@ public class PointAlignerPlugin implements PlugIn
                         // This point is lower than another assigned to the maxima
                         if (logAlignments)
                             log("Point [%d] %s @ %s conflicts for assigned point [%d]", pointId + 1,
-                                    Utils.rounded(pointHeight[pointId]), getCoords(is3d, x, y, z),
+                                    MathUtils.rounded(pointHeight[pointId]), getCoords(is3d, x, y, z),
                                     assigned[maximaId] + 1);
                         conflict.add(point);
 
@@ -403,7 +403,7 @@ public class PointAlignerPlugin implements PlugIn
             else
             {
                 if (logAlignments)
-                    log("Point [%d] %s @ %s cannot be aligned", pointId + 1, Utils.rounded(pointHeight[pointId]),
+                    log("Point [%d] %s @ %s cannot be aligned", pointId + 1, MathUtils.rounded(pointHeight[pointId]),
                             getCoords(is3d, x, y, z));
                 noAlign.add(point);
                 extractPoint(impStack, "noalign", pointId + 1, x, y, z, x, y, z);
@@ -416,9 +416,9 @@ public class PointAlignerPlugin implements PlugIn
 
         if (logAlignments)
         {
-            log("Minimum picked value = " + Utils.rounded(minHeight));
-            log("Threshold = " + Utils.rounded(thresholdHeight));
-            log("Minimum assigned peak height = " + Utils.rounded(minAssignedHeight));
+            log("Minimum picked value = " + MathUtils.rounded(minHeight));
+            log("Threshold = " + MathUtils.rounded(thresholdHeight));
+            log("Minimum assigned peak height = " + MathUtils.rounded(minAssignedHeight));
         }
 
         if (averageMovedDistance > 0)
@@ -572,8 +572,8 @@ public class PointAlignerPlugin implements PlugIn
 
                 t = q1 - factor * (q2 - q1);
                 if (logAlignments)
-                    log("Limiting peaks %s: %s - %s * %s = %s", limitMethods[limitMethod], Utils.rounded(q1),
-                            Utils.rounded(factor), Utils.rounded(q2 - q1), Utils.rounded(t));
+                    log("Limiting peaks %s: %s - %s * %s = %s", limitMethods[limitMethod], MathUtils.rounded(q1),
+                            MathUtils.rounded(factor), MathUtils.rounded(q2 - q1), MathUtils.rounded(t));
 
                 break;
 
@@ -583,8 +583,8 @@ public class PointAlignerPlugin implements PlugIn
                 t = stats[0] - factor * stats[1];
 
                 if (logAlignments)
-                    log("Limiting peaks %s: %s - %s * %s = %s", limitMethods[limitMethod], Utils.rounded(stats[0]),
-                            Utils.rounded(factor), Utils.rounded(stats[1]), Utils.rounded(t));
+                    log("Limiting peaks %s: %s - %s * %s = %s", limitMethods[limitMethod], MathUtils.rounded(stats[0]),
+                            MathUtils.rounded(factor), MathUtils.rounded(stats[1]), MathUtils.rounded(t));
 
                 break;
 
@@ -592,8 +592,8 @@ public class PointAlignerPlugin implements PlugIn
                 // nth Percentile
                 t = getQuartileBoundary(heights, 0.01 * factor);
                 if (logAlignments)
-                    log("Limiting peaks %s: %sth = %s", limitMethods[limitMethod], Utils.rounded(factor),
-                            Utils.rounded(t));
+                    log("Limiting peaks %s: %sth = %s", limitMethods[limitMethod], MathUtils.rounded(factor),
+                            MathUtils.rounded(t));
 
                 break;
 
@@ -618,8 +618,8 @@ public class PointAlignerPlugin implements PlugIn
                     log("Warning: Maximum height threshold reached when attempting to limit the number of missed peaks");
 
                 if (logAlignments)
-                    log("Limiting peaks %s: %s %% = %s", limitMethods[limitMethod], Utils.rounded(factor),
-                            Utils.rounded(t));
+                    log("Limiting peaks %s: %s %% = %s", limitMethods[limitMethod], MathUtils.rounded(factor),
+                            MathUtils.rounded(t));
                 break;
 
             default:
@@ -873,9 +873,9 @@ public class PointAlignerPlugin implements PlugIn
         sb.append(imp.getTitle()).append('\t');
         sb.append(limitMethods[limitMethod]).append('\t');
         sb.append(factor).append('\t');
-        sb.append(Utils.rounded(minHeight)).append('\t');
-        sb.append(Utils.rounded(thresholdHeight)).append('\t');
-        sb.append(Utils.rounded(minAssignedHeight)).append('\t');
+        sb.append(MathUtils.rounded(minHeight)).append('\t');
+        sb.append(MathUtils.rounded(thresholdHeight)).append('\t');
+        sb.append(MathUtils.rounded(minAssignedHeight)).append('\t');
         sb.append(ok.size()).append('\t');
         sb.append(moved.size()).append('\t');
         sb.append(IJ.d2s(averageMovedDistance, 2)).append('\t');

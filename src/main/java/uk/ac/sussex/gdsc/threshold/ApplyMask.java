@@ -33,7 +33,7 @@ import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 
 /**
@@ -47,7 +47,7 @@ public class ApplyMask implements PlugInFilter
 
     private static String selectedImage = "";
     private static int selectedOption = MaskCreater.OPTION_MASK;
-    private static String selectedThresholdMethod = AutoThreshold.Method.OTSU.name;
+    private static String selectedThresholdMethod = AutoThreshold.Method.OTSU.toString();
     private static int selectedChannel = 0;
     private static int selectedSlice = 0;
     private static int selectedFrame = 0;
@@ -90,7 +90,7 @@ public class ApplyMask implements PlugInFilter
         final ArrayList<String> imageList = new ArrayList<>();
         imageList.add(sourceImage);
 
-        for (final int id : Utils.getIDList())
+        for (final int id : ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
             if (imp != null)
@@ -262,7 +262,7 @@ public class ApplyMask implements PlugInFilter
     }
 
     /**
-     * @return the target image for the masking
+     * @return the target image for the masking.
      */
     public ImagePlus getImp()
     {
@@ -279,7 +279,7 @@ public class ApplyMask implements PlugInFilter
     }
 
     /**
-     * @return the source image for the mask generation
+     * @return the source image for the mask generation.
      */
     public ImagePlus getMaskImp()
     {
@@ -296,7 +296,7 @@ public class ApplyMask implements PlugInFilter
     }
 
     /**
-     * @return the option for defining the mask
+     * @return the option for defining the mask.
      */
     public int getOption()
     {
@@ -313,7 +313,7 @@ public class ApplyMask implements PlugInFilter
     }
 
     /**
-     * @return the thresholdMethod
+     * @return the thresholdMethod.
      */
     public String getThresholdMethod()
     {
@@ -330,7 +330,7 @@ public class ApplyMask implements PlugInFilter
     }
 
     /**
-     * @return the channel
+     * @return the channel.
      */
     public int getChannel()
     {
@@ -347,7 +347,7 @@ public class ApplyMask implements PlugInFilter
     }
 
     /**
-     * @return the frame
+     * @return the frame.
      */
     public int getFrame()
     {
@@ -364,7 +364,7 @@ public class ApplyMask implements PlugInFilter
     }
 
     /**
-     * @return the slice
+     * @return the slice.
      */
     public int getSlice()
     {

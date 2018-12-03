@@ -39,7 +39,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
 {
     private int backgroundMethod = FindFociProcessor.BACKGROUND_AUTO_THRESHOLD;
     private double backgroundParameter = 3;
-    private String thresholdMethod = AutoThreshold.Method.OTSU.name;
+    private String thresholdMethod = AutoThreshold.Method.OTSU.toString();
     private String statisticsMode = "Both";
     private int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
     private double searchParameter = 0.3;
@@ -80,16 +80,16 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     private boolean changed = false;
 
     /**
-     * Used to swap between the background parameter for absolute values and others
+     * Used to swap between the background parameter for absolute values and others.
      */
     private double backgroundParameterMemory = 0;
     /**
-     * Used to swap between the peak parameter for absolute values and others
+     * Used to swap between the peak parameter for absolute values and others.
      */
     private double peakParameterMemory = 0;
 
     /**
-     * Default constructor
+     * Default constructor.
      */
     public FindFociModel()
     {
@@ -126,7 +126,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the backgroundMethod
+     * @return the backgroundMethod.
      */
     public int getBackgroundMethod()
     {
@@ -145,7 +145,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the backgroundParameter
+     * @return the backgroundParameter.
      */
     public double getBackgroundParameter()
     {
@@ -164,7 +164,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the thresholdMethod
+     * @return the thresholdMethod.
      */
     public String getThresholdMethod()
     {
@@ -183,7 +183,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the statisticsMode
+     * @return the statisticsMode.
      */
     public String getStatisticsMode()
     {
@@ -202,7 +202,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the searchMethod
+     * @return the searchMethod.
      */
     public int getSearchMethod()
     {
@@ -221,7 +221,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the searchParameter
+     * @return the searchParameter.
      */
     public double getSearchParameter()
     {
@@ -240,7 +240,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the minSize
+     * @return the minSize.
      */
     public int getMinSize()
     {
@@ -259,7 +259,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the minimumAboveSaddle
+     * @return the minimumAboveSaddle.
      */
     public boolean isMinimumAboveSaddle()
     {
@@ -278,7 +278,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the connectedAboveSaddle
+     * @return the connectedAboveSaddle.
      */
     public boolean isConnectedAboveSaddle()
     {
@@ -306,7 +306,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the peakMethod
+     * @return the peakMethod.
      */
     public int getPeakMethod()
     {
@@ -325,7 +325,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the peakParameter
+     * @return the peakParameter.
      */
     public double getPeakParameter()
     {
@@ -344,7 +344,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the sortMethod
+     * @return the sortMethod.
      */
     public int getSortMethod()
     {
@@ -363,7 +363,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the maxPeaks
+     * @return the maxPeaks.
      */
     public int getMaxPeaks()
     {
@@ -382,7 +382,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the showMask
+     * @return the showMask.
      */
     public int getShowMask()
     {
@@ -401,7 +401,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the overlayMask
+     * @return the overlayMask.
      */
     public boolean isOverlayMask()
     {
@@ -420,7 +420,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the showTable
+     * @return the showTable.
      */
     public boolean isShowTable()
     {
@@ -439,7 +439,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the clearTable
+     * @return the clearTable.
      */
     public boolean isClearTable()
     {
@@ -458,7 +458,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the markMaxima
+     * @return the markMaxima.
      */
     public boolean isMarkMaxima()
     {
@@ -477,7 +477,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the markROIMaxima
+     * @return the markROIMaxima.
      */
     public boolean isMarkROIMaxima()
     {
@@ -496,7 +496,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the markUsingOverlay
+     * @return the markUsingOverlay.
      */
     public boolean isMarkUsingOverlay()
     {
@@ -515,7 +515,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the hideLabels
+     * @return the hideLabels.
      */
     public boolean isHideLabels()
     {
@@ -523,7 +523,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the showMaskMaximaAsDots
+     * @return the showMaskMaximaAsDots.
      */
     public boolean isShowMaskMaximaAsDots()
     {
@@ -553,7 +553,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the showLogMessages
+     * @return the showLogMessages.
      */
     public boolean isShowLogMessages()
     {
@@ -572,7 +572,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the removeEdgeMaxima
+     * @return the removeEdgeMaxima.
      */
     public boolean isRemoveEdgeMaxima()
     {
@@ -591,7 +591,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the saveResults
+     * @return the saveResults.
      */
     public boolean isSaveResults()
     {
@@ -610,7 +610,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the resultsDirectory
+     * @return the resultsDirectory.
      */
     public String getResultsDirectory()
     {
@@ -629,7 +629,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the gaussianBlur
+     * @return the gaussianBlur.
      */
     public double getGaussianBlur()
     {
@@ -648,7 +648,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the centreMethod
+     * @return the centreMethod.
      */
     public int getCentreMethod()
     {
@@ -667,7 +667,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the centreParameter
+     * @return the centreParameter.
      */
     public double getCentreParameter()
     {
@@ -686,7 +686,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the fractionParameter
+     * @return the fractionParameter.
      */
     public double getFractionParameter()
     {
@@ -718,7 +718,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the imageList
+     * @return the imageList.
      */
     public List<String> getImageList()
     {
@@ -737,7 +737,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the selectedImage
+     * @return the selectedImage.
      */
     public String getSelectedImage()
     {
@@ -769,7 +769,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the imageList
+     * @return the imageList.
      */
     public List<String> getMaskImageList()
     {
@@ -788,7 +788,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the maskImage
+     * @return the maskImage.
      */
     public String getMaskImage()
     {
@@ -807,7 +807,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the objectAnalysis
+     * @return the objectAnalysis.
      */
     public boolean isObjectAnalysis()
     {
@@ -826,7 +826,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the showObjectMask
+     * @return the showObjectMask.
      */
     public boolean isShowObjectMask()
     {
@@ -845,7 +845,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the saveToMemory
+     * @return the saveToMemory.
      */
     public boolean isSaveToMemory()
     {
@@ -853,7 +853,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * Sets the current state of the FindFoci model to unchanged
+     * Sets the current state of the FindFoci model to unchanged.
      */
     public void setUnchanged()
     {
@@ -872,7 +872,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * @return the changed
+     * @return the changed.
      */
     public boolean isChanged()
     {
@@ -891,7 +891,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable
     }
 
     /**
-     * Performs a deep copy
+     * Performs a deep copy.
      *
      * @return A copy of this object
      */

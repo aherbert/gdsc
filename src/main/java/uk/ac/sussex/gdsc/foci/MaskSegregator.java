@@ -47,7 +47,7 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.Utils;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 
@@ -159,7 +159,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
     {
         final String[] names = new String[WindowManager.getImageCount()];
         int count = 0;
-        for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
+        for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
             if (imp == null)
@@ -384,7 +384,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
     }
 
     /**
-     * Do the final processing to create a new mask using the object segregation
+     * Do the final processing to create a new mask using the object segregation.
      */
     private void segregateMask()
     {
@@ -431,8 +431,8 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
                         includeIp.set(i, maskIp.get(i));
             }
 
-            Utils.display(maskTitle + " Include", includeIp);
-            Utils.display(maskTitle + " Exclude", excludeIp);
+            ImageJUtils.display(maskTitle + " Include", includeIp);
+            ImageJUtils.display(maskTitle + " Exclude", excludeIp);
         }
         else
         {
@@ -463,7 +463,7 @@ public class MaskSegregator implements ExtendedPlugInFilter, DialogListener
             }
             ip.setMinAndMax(0, exclude);
 
-            final ImagePlus segImp = Utils.display(maskTitle + " Segregated", ip);
+            final ImagePlus segImp = ImageJUtils.display(maskTitle + " Segregated", ip);
 
             if (overlayOutline)
                 addOutline(segImp);

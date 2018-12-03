@@ -325,7 +325,7 @@ public class PlotResults
     }
 
     /**
-     * @return the pValue
+     * @return the pValue.
      */
     public double getPValue()
     {

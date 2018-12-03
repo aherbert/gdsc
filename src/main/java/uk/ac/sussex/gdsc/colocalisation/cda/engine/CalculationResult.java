@@ -37,7 +37,7 @@ public class CalculationResult
     /** The second Mander's coefficient */
     public double m2;
 
-    /** The correlation */
+    /** The correlation. */
     public double r;
 
     /**

@@ -1167,7 +1167,7 @@ public class ColocalisationThreshold_Plugin extends PlugInFrame implements Actio
         // Find the currently open images
         final ArrayList<String> newImageList = new ArrayList<>();
 
-        for (final int id : uk.ac.sussex.gdsc.core.ij.Utils.getIDList())
+        for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
         {
             final ImagePlus imp = WindowManager.getImage(id);
 

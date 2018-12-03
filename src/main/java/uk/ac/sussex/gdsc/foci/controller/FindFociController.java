@@ -31,17 +31,17 @@ import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 public abstract class FindFociController implements Runnable
 {
     /**
-     * Used to pass messages about the processing state
+     * Used to pass messages about the processing state.
      */
     protected MessageListener listener = null;
 
     /**
-     * Contains the model defining the parameters for the FindFoci algorithm
+     * Contains the model defining the parameters for the FindFoci algorithm.
      */
     protected FindFociModel model;
 
     /**
-     * Constructor
+     * Constructor.
      *
      * @param model
      *            The model for the FindFoci algorithm
@@ -59,28 +59,28 @@ public abstract class FindFociController implements Runnable
     public abstract int getImageCount();
 
     /**
-     * Updates the list of images
+     * Updates the list of images.
      */
     public abstract void updateImageList();
 
     /**
-     * Run the FindFoci algorithm
+     * Run the FindFoci algorithm.
      */
     @Override
     public abstract void run();
 
     /**
-     * Preview the results of the FindFoci algorithm
+     * Preview the results of the FindFoci algorithm.
      */
     public abstract void preview();
 
     /**
-     * Ends preview the results of the FindFoci algorithm
+     * Ends preview the results of the FindFoci algorithm.
      */
     public abstract void endPreview();
 
     /**
-     * Returns the min and max of the current image
+     * Returns the min and max of the current image.
      *
      * @param limits
      *            Optional input array

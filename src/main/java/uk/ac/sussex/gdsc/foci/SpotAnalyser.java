@@ -79,7 +79,7 @@ public class SpotAnalyser implements ExtendedPlugInFilter, DialogListener
 
     private static int maskOption = 0;
     private static double blur = 3;
-    private static String thresholdMethod = AutoThreshold.Method.OTSU.name;
+    private static String thresholdMethod = AutoThreshold.Method.OTSU.toString();
     private static double minSize = 50;
     private static boolean showParticles = false;
     private static int maxPeaks = 1;
