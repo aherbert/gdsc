@@ -23,7 +23,8 @@
  */
 
 /**
- * Extend the functionality of the <a href="https://imagej.nih.gov/ij/">ImageJ</a> {@code ij.plugin} package.
+ * Extend the functionality of the <a href="https://imagej.nih.gov/ij/">ImageJ</a> {@code ij.plugin}
+ * package.
  *
  * @see <a href="https://imagej.nih.gov/ij/">ImageJ</a>
  * @since 1.3.0

@@ -37,87 +37,81 @@ import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 /**
  * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.
  */
-public class OptimiserController extends FindFociController implements Runnable
-{
-    private final FindFociOptimiser optimiser = new FindFociOptimiser();
+public class OptimiserController extends FindFociController implements Runnable {
+  private final FindFociOptimiser optimiser = new FindFociOptimiser();
 
-    /**
-     * Instantiates a new optimiser controller.
-     *
-     * @param model
-     *            the model
-     */
-    public OptimiserController(FindFociModel model)
-    {
-        super(model);
-    }
+  /**
+   * Instantiates a new optimiser controller.
+   *
+   * @param model the model
+   */
+  public OptimiserController(FindFociModel model) {
+    super(model);
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public int getImageCount()
-    {
-        return 0;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public int getImageCount() {
+    return 0;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void updateImageList()
-    {
-        final int noOfImages = WindowManager.getImageCount();
-        final List<String> imageList = new ArrayList<>(noOfImages);
-        for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
-        {
-            final ImagePlus imp = WindowManager.getImage(id);
+  /** {@inheritDoc} */
+  @Override
+  public void updateImageList() {
+    final int noOfImages = WindowManager.getImageCount();
+    final List<String> imageList = new ArrayList<>(noOfImages);
+    for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList()) {
+      final ImagePlus imp = WindowManager.getImage(id);
 
-            // Image must be 8-bit/16-bit/32-bit && only contains XYZ dimensions
-            if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16 ||
-                    imp.getType() == ImagePlus.GRAY32) && (imp.getNChannels() == 1 && imp.getNFrames() == 1))
-            {
-                final Roi roi = imp.getRoi();
-                if (roi == null || roi.getType() != Roi.POINT)
-                    continue;
-
-                // Check it is not one the result images
-                final String imageTitle = imp.getTitle();
-                if (!imageTitle.endsWith(FindFoci.TITLE) && !imageTitle.endsWith("clone") &&
-                        !imageTitle.endsWith(" TP") && !imageTitle.endsWith(" FP") && !imageTitle.endsWith(" FN"))
-                    imageList.add(imageTitle);
-            }
+      // Image must be 8-bit/16-bit/32-bit && only contains XYZ dimensions
+      if (imp != null
+          && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16
+              || imp.getType() == ImagePlus.GRAY32)
+          && (imp.getNChannels() == 1 && imp.getNFrames() == 1)) {
+        final Roi roi = imp.getRoi();
+        if (roi == null || roi.getType() != Roi.POINT) {
+          continue;
         }
 
-        model.setImageList(imageList);
+        // Check it is not one the result images
+        final String imageTitle = imp.getTitle();
+        if (!imageTitle.endsWith(FindFoci.TITLE) && !imageTitle.endsWith("clone")
+            && !imageTitle.endsWith(" TP") && !imageTitle.endsWith(" FP")
+            && !imageTitle.endsWith(" FN")) {
+          imageList.add(imageTitle);
+        }
+      }
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void run()
-    {
-        final ImagePlus imp = WindowManager.getImage(model.getSelectedImage());
+    model.setImageList(imageList);
+  }
 
-        // Ensure the optimiser is recorded by the Macro recorder
-        Recorder.setCommand("FindFoci Optimiser");
-        optimiser.run(imp);
-        Recorder.saveCommand();
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void run() {
+    final ImagePlus imp = WindowManager.getImage(model.getSelectedImage());
 
-    /** {@inheritDoc} */
-    @Override
-    public void preview()
-    {
-        // Ignore
-    }
+    // Ensure the optimiser is recorded by the Macro recorder
+    Recorder.setCommand("FindFoci Optimiser");
+    optimiser.run(imp);
+    Recorder.saveCommand();
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void endPreview()
-    {
-        // Ignore
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void preview() {
+    // Ignore
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public int[] getImageLimits(int[] limits)
-    {
-        return null;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void endPreview() {
+    // Ignore
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int[] getImageLimits(int[] limits) {
+    return null;
+  }
 }

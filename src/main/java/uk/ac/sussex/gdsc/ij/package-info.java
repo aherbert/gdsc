@@ -23,9 +23,8 @@
  */
 
 /**
- * Extend the functionality of the <a href="https://imagej.nih.gov/ij/">ImageJ</a> {@code ij} package.
- * <p>
- * The sub package tree matches that of the {@code ij} package.
+ * Extend the functionality of the <a href="https://imagej.nih.gov/ij/">ImageJ</a> {@code ij}
+ * package. <p> The sub package tree matches that of the {@code ij} package.
  *
  * @see <a href="https://imagej.nih.gov/ij/">ImageJ</a>
  * @since 1.3.0

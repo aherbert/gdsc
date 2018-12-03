@@ -27,11 +27,10 @@ import ij.plugin.PlugIn;
 import uk.ac.sussex.gdsc.About_Plugin;
 
 /**
- * Default ImageJ plugin (no Java package) to run the {@link About_Plugin} plugin.
- * <p>
- * This class allows the project to be run in debug mode from an IDE (e.g. Eclipse). The Maven output directory will be
- * target/classes. Create a symbolic link to that directory from the project root and name it plugins. Optionally create
- * a link to the macros directory to allow the toolset to be loaded:
+ * Default ImageJ plugin (no Java package) to run the {@link About_Plugin} plugin. <p> This class
+ * allows the project to be run in debug mode from an IDE (e.g. Eclipse). The Maven output directory
+ * will be target/classes. Create a symbolic link to that directory from the project root and name
+ * it plugins. Optionally create a link to the macros directory to allow the toolset to be loaded:
  *
  * <pre>
  * ${root}/plugins -&gt; ${root}/target/classes
@@ -46,13 +45,11 @@ import uk.ac.sussex.gdsc.About_Plugin;
  *
  * ImageJ will load this class from the plugins directory. This class can call all other plugins.
  */
-public class GDSC_Plugins implements PlugIn
-{
-    /** {@inheritDoc} */
-    @Override
-    public void run(String arg)
-    {
-        // Show the About plugin
-        About_Plugin.showAbout();
-    }
+public class GDSC_Plugins implements PlugIn {
+  /** {@inheritDoc} */
+  @Override
+  public void run(String arg) {
+    // Show the About plugin
+    About_Plugin.showAbout();
+  }
 }

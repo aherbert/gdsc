@@ -24,7 +24,7 @@
 
 /**
  * Provides converters for the GUI of the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.
- * 
+ *
  * @since 1.3.0
  * @see org.jdesktop.beansbinding.Converter
  */

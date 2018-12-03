@@ -30,17 +30,14 @@ import uk.ac.sussex.gdsc.foci.model.FindFociState;
 /**
  * Convert the FindFoci state to a flag indicating if it is not complete.
  */
-public class FindFociStateEnabledConverter extends Converter<FindFociState, Boolean>
-{
-    @Override
-    public Boolean convertForward(FindFociState paramT)
-    {
-        return paramT != FindFociState.COMPLETE;
-    }
+public class FindFociStateEnabledConverter extends Converter<FindFociState, Boolean> {
+  @Override
+  public Boolean convertForward(FindFociState paramT) {
+    return paramT != FindFociState.COMPLETE;
+  }
 
-    @Override
-    public FindFociState convertReverse(Boolean paramS)
-    {
-        return null;
-    }
+  @Override
+  public FindFociState convertReverse(Boolean paramS) {
+    return null;
+  }
 }

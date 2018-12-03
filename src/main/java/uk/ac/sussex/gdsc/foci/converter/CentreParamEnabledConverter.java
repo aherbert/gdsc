@@ -30,21 +30,19 @@ import uk.ac.sussex.gdsc.foci.FindFoci;
 /**
  * Convert the centre method to a flag indicating if the centre parameter is enabled.
  */
-public class CentreParamEnabledConverter extends Converter<Integer, Boolean>
-{
-    @Override
-    public Boolean convertForward(Integer paramS)
-    {
-        final int centreMethod = paramS.intValue();
-        return Boolean.valueOf(centreMethod == FindFoci.CENTRE_GAUSSIAN_SEARCH ||
-                centreMethod == FindFoci.CENTRE_GAUSSIAN_ORIGINAL || centreMethod == FindFoci.CENTRE_OF_MASS_SEARCH ||
-                centreMethod == FindFoci.CENTRE_OF_MASS_ORIGINAL);
-    }
+public class CentreParamEnabledConverter extends Converter<Integer, Boolean> {
+  @Override
+  public Boolean convertForward(Integer paramS) {
+    final int centreMethod = paramS.intValue();
+    return Boolean.valueOf(centreMethod == FindFoci.CENTRE_GAUSSIAN_SEARCH
+        || centreMethod == FindFoci.CENTRE_GAUSSIAN_ORIGINAL
+        || centreMethod == FindFoci.CENTRE_OF_MASS_SEARCH
+        || centreMethod == FindFoci.CENTRE_OF_MASS_ORIGINAL);
+  }
 
-    @Override
-    public Integer convertReverse(Boolean paramT)
-    {
-        // N/A
-        return null;
-    }
+  @Override
+  public Integer convertReverse(Boolean paramT) {
+    // N/A
+    return null;
+  }
 }

@@ -31,14 +31,12 @@ import uk.ac.sussex.gdsc.ij.plugin.ZProjector2;
  * Pass through class allowing the {@link uk.ac.sussex.gdsc.ij.plugin.filter.MaskParticleAnalyzer }
  * to be loaded by the ImageJ plugin class loader.
  */
-public class ZProjector2Runner implements PlugIn
-{
-    private final ZProjector2 filter = new ZProjector2();
+public class ZProjector2Runner implements PlugIn {
+  private final ZProjector2 filter = new ZProjector2();
 
-    @Override
-    public void run(String arg)
-    {
-        UsageTracker.recordPlugin(this.getClass(), arg);
-        filter.run(arg);
-    }
+  @Override
+  public void run(String arg) {
+    UsageTracker.recordPlugin(this.getClass(), arg);
+    filter.run(arg);
+  }
 }

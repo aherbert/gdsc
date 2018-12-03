@@ -23,9 +23,9 @@
  */
 
 /**
- * Provides <a href="https://imagej.nih.gov/ij/">ImageJ</a> plugins for thresholding images and analysis of binary
- * (mask) images.
- * 
+ * Provides <a href="https://imagej.nih.gov/ij/">ImageJ</a> plugins for thresholding images and
+ * analysis of binary (mask) images.
+ *
  * @since 1.3.0
  */
 package uk.ac.sussex.gdsc.threshold;

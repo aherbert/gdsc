@@ -23,11 +23,11 @@
  */
 
 /**
- * Provides code for the Confined Displacement Algorithm
- * (<a href="https://doi.org/10.1111/j.1365-2818.2010.03369.x">CDA</a>).
- * 
- * @see <a href="https://doi.org/10.1111/j.1365-2818.2010.03369.x">Confined displacement algorithm determines true and
- *      random colocalization in fluorescence microscopy</a>
+ * Provides code for the Confined Displacement Algorithm (<a
+ * href="https://doi.org/10.1111/j.1365-2818.2010.03369.x">CDA</a>).
+ *
+ * @see <a href="https://doi.org/10.1111/j.1365-2818.2010.03369.x">Confined displacement algorithm
+ *      determines true and random colocalization in fluorescence microscopy</a>
  * @since 1.3.0
  */
 package uk.ac.sussex.gdsc.colocalisation.cda;

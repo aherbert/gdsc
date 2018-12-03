@@ -29,56 +29,47 @@ import uk.ac.sussex.gdsc.core.threshold.Histogram;
 /**
  * Contains the results of the FindFoci algorithm after the initialisation stage.
  */
-public class FindFociInitResults
-{
-    /** The image pixel array. */
-    public Object image;
+public class FindFociInitResults {
+  /** The image pixel array. */
+  public Object image;
 
-    /** The types pixel array (marks saddles, maxima, etc). */
-    public byte[] types;
+  /** The types pixel array (marks saddles, maxima, etc). */
+  public byte[] types;
 
-    /** The maxima pixel array. */
-    public int[] maxima;
+  /** The maxima pixel array. */
+  public int[] maxima;
 
-    /** The histogram. */
-    public Histogram histogram;
+  /** The histogram. */
+  public Histogram histogram;
 
-    /** The statistics. */
-    public FindFociStatistics stats;
+  /** The statistics. */
+  public FindFociStatistics stats;
 
-    /** The original image pixel array. */
-    public Object originalImage;
+  /** The original image pixel array. */
+  public Object originalImage;
 
-    /** The original image plus. */
-    public ImagePlus originalImp;
+  /** The original image plus. */
+  public ImagePlus originalImp;
 
-    /**
-     * Instantiates a new find foci init results.
-     *
-     * @param image
-     *            the image
-     * @param types
-     *            the types
-     * @param maxima
-     *            the maxima
-     * @param histgram
-     *            the histgram
-     * @param stats
-     *            the stats
-     * @param originalImage
-     *            the original image
-     * @param originalImp
-     *            the original imp
-     */
-    public FindFociInitResults(Object image, byte[] types, int[] maxima, Histogram histgram, FindFociStatistics stats,
-            Object originalImage, ImagePlus originalImp)
-    {
-        this.image = image;
-        this.types = types;
-        this.maxima = maxima;
-        this.histogram = histgram;
-        this.stats = stats;
-        this.originalImage = originalImage;
-        this.originalImp = originalImp;
-    }
+  /**
+   * Instantiates a new find foci init results.
+   *
+   * @param image the image
+   * @param types the types
+   * @param maxima the maxima
+   * @param histgram the histgram
+   * @param stats the stats
+   * @param originalImage the original image
+   * @param originalImp the original imp
+   */
+  public FindFociInitResults(Object image, byte[] types, int[] maxima, Histogram histgram,
+      FindFociStatistics stats, Object originalImage, ImagePlus originalImp) {
+    this.image = image;
+    this.types = types;
+    this.maxima = maxima;
+    this.histogram = histgram;
+    this.stats = stats;
+    this.originalImage = originalImage;
+    this.originalImp = originalImp;
+  }
 }

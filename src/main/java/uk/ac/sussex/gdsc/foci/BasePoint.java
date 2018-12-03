@@ -26,173 +26,149 @@ package uk.ac.sussex.gdsc.foci;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
 
 /**
- * Stores a 2D/3D point.
- * <p>
- * Overrides equals and hashCode methods using x,y,z, coordinates for equivalence. Derived classes can optionally
- * override this.
+ * Stores a 2D/3D point. <p> Overrides equals and hashCode methods using x,y,z, coordinates for
+ * equivalence. Derived classes can optionally override this.
  *
  * @see java.lang.Object#equals(java.lang.Object)
  * @see java.lang.Object#hashCode()
  */
-public class BasePoint implements Coordinate
-{
-    /** The x. */
-    protected int x = 0;
+public class BasePoint implements Coordinate {
+  /** The x. */
+  protected int x = 0;
 
-    /** The y. */
-    protected int y = 0;
+  /** The y. */
+  protected int y = 0;
 
-    /** The z. */
-    protected int z = 0;
+  /** The z. */
+  protected int z = 0;
 
-    /**
-     * Instantiates a new base point.
-     *
-     * @param x
-     *            the x
-     * @param y
-     *            the y
-     * @param z
-     *            the z
-     */
-    public BasePoint(int x, int y, int z)
-    {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+  /**
+   * Instantiates a new base point.
+   *
+   * @param x the x
+   * @param y the y
+   * @param z the z
+   */
+  public BasePoint(int x, int y, int z) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+
+  /**
+   * Instantiates a new base point.
+   *
+   * @param x the x
+   * @param y the y
+   */
+  public BasePoint(int x, int y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(Object aThat) {
+    if (this == aThat) {
+      return true;
+    }
+    if (!(aThat instanceof BasePoint)) {
+      return false;
     }
 
-    /**
-     * Instantiates a new base point.
-     *
-     * @param x
-     *            the x
-     * @param y
-     *            the y
-     */
-    public BasePoint(int x, int y)
-    {
-        this.x = x;
-        this.y = y;
-    }
+    // cast to native object is now safe
+    final BasePoint that = (BasePoint) aThat;
 
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object aThat)
-    {
-        if (this == aThat)
-            return true;
-        if (!(aThat instanceof BasePoint))
-            return false;
+    return x == that.x && y == that.y && z == that.z;
+  }
 
-        //cast to native object is now safe
-        final BasePoint that = (BasePoint) aThat;
+  /** {@inheritDoc} */
+  @Override
+  public int hashCode() {
+    return (41 * (41 * (41 + x) + y) + z);
+  }
 
-        return x == that.x && y == that.y && z == that.z;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public float getX() {
+    return x;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public int hashCode()
-    {
-        return (41 * (41 * (41 + x) + y) + z);
-    }
+  /** {@inheritDoc} */
+  @Override
+  public float getY() {
+    return y;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public float getX()
-    {
-        return x;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public float getZ() {
+    return z;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public float getY()
-    {
-        return y;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public int getXint() {
+    return x;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public float getZ()
-    {
-        return z;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public int getYint() {
+    return y;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public int getXint()
-    {
-        return x;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public int getZint() {
+    return z;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public int getYint()
-    {
-        return y;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double distance(float x, float y, float z) {
+    return Math.sqrt(distanceSquared(x, y, z));
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public int getZint()
-    {
-        return z;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double distance(float x, float y) {
+    return Math.sqrt(distanceSquared(x, y));
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double distance(float x, float y, float z)
-    {
-        return Math.sqrt(distanceSquared(x, y, z));
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double distanceSquared(float x, float y, float z) {
+    return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y) + (this.z - z) * (this.z - z);
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double distance(float x, float y)
-    {
-        return Math.sqrt(distanceSquared(x, y));
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double distanceSquared(float x, float y) {
+    return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y);
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double distanceSquared(float x, float y, float z)
-    {
-        return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y) + (this.z - z) * (this.z - z);
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double distanceXy(Coordinate other) {
+    return distance(other.getX(), other.getY());
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double distanceSquared(float x, float y)
-    {
-        return (this.x - x) * (this.x - x) + (this.y - y) * (this.y - y);
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double distanceXySquared(Coordinate other) {
+    return distanceSquared(other.getX(), other.getY());
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double distanceXy(Coordinate other)
-    {
-        return distance(other.getX(), other.getY());
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double distanceXyz(Coordinate other) {
+    return distance(other.getX(), other.getY(), other.getZ());
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public double distanceXySquared(Coordinate other)
-    {
-        return distanceSquared(other.getX(), other.getY());
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public double distanceXyz(Coordinate other)
-    {
-        return distance(other.getX(), other.getY(), other.getZ());
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public double distanceXyzSquared(Coordinate other)
-    {
-        return distanceSquared(other.getX(), other.getY(), other.getZ());
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double distanceXyzSquared(Coordinate other) {
+    return distanceSquared(other.getX(), other.getY(), other.getZ());
+  }
 }

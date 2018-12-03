@@ -30,72 +30,71 @@ import ij.process.ImageProcessor;
 import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
- * Provides methods to filter the image in the z-axis for better 3-D projections.
- * Performs a local maxima filter in the z-axis resulting in a new image of the same
- * dimensions with a black background for non-maximal pixels.
+ * Provides methods to filter the image in the z-axis for better 3-D projections. Performs a local
+ * maxima filter in the z-axis resulting in a new image of the same dimensions with a black
+ * background for non-maximal pixels.
  */
-public class Projection implements PlugInFilter
-{
-    private ImagePlus imp;
+public class Projection implements PlugInFilter {
+  private ImagePlus imp;
 
-    /** {@inheritDoc} */
-    @Override
-    public int setup(String arg, ImagePlus imp)
-    {
-        UsageTracker.recordPlugin(this.getClass(), arg);
+  /** {@inheritDoc} */
+  @Override
+  public int setup(String arg, ImagePlus imp) {
+    UsageTracker.recordPlugin(this.getClass(), arg);
 
-        if (imp == null || imp.getNSlices() == 1)
-            return DONE;
-        this.imp = imp;
-        return DOES_ALL;
+    if (imp == null || imp.getNSlices() == 1) {
+      return DONE;
+    }
+    this.imp = imp;
+    return DOES_ALL;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run(ImageProcessor inputProcessor) {
+    final ImageStack stack = imp.getStack();
+
+    ImageProcessor ip1 = null;
+    ImageProcessor ip2 = null;
+    ImageProcessor ip3 = stack.getProcessor(1);
+
+    for (int n = 2; n <= imp.getNSlices(); n++) {
+      // Roll over processors
+      ip1 = ip2;
+      ip2 = ip3;
+      ip3 = stack.getProcessor(n);
+
+      process(n, ip1, ip2, ip3);
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void run(ImageProcessor inputProcessor)
-    {
-        final ImageStack stack = imp.getStack();
+    process(imp.getNSlices() + 1, ip2, ip3, null);
+  }
 
-        ImageProcessor ip1 = null;
-        ImageProcessor ip2 = null;
-        ImageProcessor ip3 = stack.getProcessor(1);
-
-        for (int n = 2; n <= imp.getNSlices(); n++)
-        {
-            // Roll over processors
-            ip1 = ip2;
-            ip2 = ip3;
-            ip3 = stack.getProcessor(n);
-
-            process(n, ip1, ip2, ip3);
-        }
-
-        process(imp.getNSlices() + 1, ip2, ip3, null);
+  private static void process(int n, ImageProcessor ip1, ImageProcessor ip2, ImageProcessor ip3) {
+    if (ip2 == null) {
+      return;
     }
 
-    private static void process(int n, ImageProcessor ip1, ImageProcessor ip2, ImageProcessor ip3)
-    {
-        if (ip2 == null)
-            return;
-
-        if (ip1 != null)
-        {
-            // Check for maxima going backward
-            System.out.printf("%d < %d : ", n - 2, n - 1);
-            for (int i = ip2.getPixelCount(); i-- > 0;)
-                if (ip1.get(i) > ip2.get(i))
-                    ip2.set(i, 0);
+    if (ip1 != null) {
+      // Check for maxima going backward
+      System.out.printf("%d < %d : ", n - 2, n - 1);
+      for (int i = ip2.getPixelCount(); i-- > 0;) {
+        if (ip1.get(i) > ip2.get(i)) {
+          ip2.set(i, 0);
         }
-
-        if (ip3 != null)
-        {
-            // Check for maxima going forward
-            System.out.printf("%d > %d", n - 1, n);
-            for (int i = ip2.getPixelCount(); i-- > 0;)
-                if (ip3.get(i) > ip2.get(i))
-                    ip2.set(i, 0);
-        }
-
-        System.out.printf("\n");
+      }
     }
+
+    if (ip3 != null) {
+      // Check for maxima going forward
+      System.out.printf("%d > %d", n - 1, n);
+      for (int i = ip2.getPixelCount(); i-- > 0;) {
+        if (ip3.get(i) > ip2.get(i)) {
+          ip2.set(i, 0);
+        }
+      }
+    }
+
+    System.out.printf("\n");
+  }
 }

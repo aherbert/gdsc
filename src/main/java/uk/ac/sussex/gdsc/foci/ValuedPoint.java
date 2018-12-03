@@ -26,74 +26,64 @@ package uk.ac.sussex.gdsc.foci;
 /**
  * Stores a 2D/3D point with a value.
  */
-public class ValuedPoint extends BasePoint
-{
-    private float value = 0;
+public class ValuedPoint extends BasePoint {
+  private float value = 0;
 
-    /**
-     * Instantiates a new valued point.
-     *
-     * @param x
-     *            the x
-     * @param y
-     *            the y
-     * @param z
-     *            the z
-     * @param value
-     *            the value
-     */
-    public ValuedPoint(int x, int y, int z, float value)
-    {
-        super(x, y, z);
-        this.value = value;
+  /**
+   * Instantiates a new valued point.
+   *
+   * @param x the x
+   * @param y the y
+   * @param z the z
+   * @param value the value
+   */
+  public ValuedPoint(int x, int y, int z, float value) {
+    super(x, y, z);
+    this.value = value;
+  }
+
+  /**
+   * Instantiates a new valued point.
+   *
+   * @param point the point
+   * @param value the value
+   */
+  public ValuedPoint(AssignedPoint point, float value) {
+    super(point.getXint(), point.getYint(), point.getZint());
+    this.value = value;
+  }
+
+  /**
+   * Gets the value.
+   *
+   * @return the value
+   */
+  public float getValue() {
+    return value;
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (this == object) {
+      return true;
+    }
+    // Must be the same class, allowing subtypes their own implementation
+    if (object == null || getClass() != object.getClass()) {
+      return false;
     }
 
-    /**
-     * Instantiates a new valued point.
-     *
-     * @param point
-     *            the point
-     * @param value
-     *            the value
-     */
-    public ValuedPoint(AssignedPoint point, float value)
-    {
-        super(point.getXint(), point.getYint(), point.getZint());
-        this.value = value;
-    }
+    // cast to native object is now safe
+    final ValuedPoint that = (ValuedPoint) object;
 
-    /**
-     * Gets the value.
-     *
-     * @return the value
-     */
-    public float getValue()
-    {
-        return value;
-    }
+    return x == that.x && y == that.y && z == that.z && value == that.value;
+  }
 
-    @Override
-    public boolean equals(Object object) {
-      if (this == object) {
-        return true;
-      }
-      // Must be the same class, allowing subtypes their own implementation
-      if (object == null || getClass() != object.getClass()) {
-        return false;
-      }
-
-      // cast to native object is now safe
-      final ValuedPoint that = (ValuedPoint) object;
-
-      return x == that.x && y == that.y && z == that.z && value == that.value;
-    }
-
-    @Override
-    public int hashCode() {
-      // Note: floatToRawIntBits does not unify all possible NaN values
-      // However since the equals() will fail for NaN values we are not
-      // breaking the java contract.
-      return (41 * (41 * (41 * (41 + Float.floatToRawIntBits(x)) + Float.floatToRawIntBits(y))
-          + Float.floatToRawIntBits(z)) + Float.floatToRawIntBits(value));
-    }
+  @Override
+  public int hashCode() {
+    // Note: floatToRawIntBits does not unify all possible NaN values
+    // However since the equals() will fail for NaN values we are not
+    // breaking the java contract.
+    return (41 * (41 * (41 * (41 + Float.floatToRawIntBits(x)) + Float.floatToRawIntBits(y))
+        + Float.floatToRawIntBits(z)) + Float.floatToRawIntBits(value));
+  }
 }

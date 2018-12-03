@@ -24,7 +24,7 @@
 
 /**
  * Provides the controller for execution of the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.
- * 
+ *
  * @since 1.3.0
  */
 package uk.ac.sussex.gdsc.foci.controller;

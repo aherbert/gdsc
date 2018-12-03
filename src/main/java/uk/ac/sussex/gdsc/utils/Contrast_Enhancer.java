@@ -33,31 +33,28 @@ import uk.ac.sussex.gdsc.UsageTracker;
 /**
  * Runs the contrast enhancer on all the open images.
  */
-public class Contrast_Enhancer implements PlugInFilter
-{
-    /** {@inheritDoc} */
-    @Override
-    public int setup(String arg, ImagePlus imp)
-    {
-        UsageTracker.recordPlugin(this.getClass(), arg);
+public class Contrast_Enhancer implements PlugInFilter {
+  /** {@inheritDoc} */
+  @Override
+  public int setup(String arg, ImagePlus imp) {
+    UsageTracker.recordPlugin(this.getClass(), arg);
 
-        if (imp == null)
-            return DONE;
-        return DOES_ALL | NO_CHANGES;
+    if (imp == null) {
+      return DONE;
     }
+    return DOES_ALL | NO_CHANGES;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void run(ImageProcessor inputProcessor)
-    {
-        final ContrastEnhancer ce = new ContrastEnhancer();
-        final double saturated = 0.35;
-        for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList())
-        {
-            final ImagePlus imp = WindowManager.getImage(id);
-            imp.resetDisplayRange();
-            ce.stretchHistogram(imp, saturated);
-            imp.updateAndDraw();
-        }
+  /** {@inheritDoc} */
+  @Override
+  public void run(ImageProcessor inputProcessor) {
+    final ContrastEnhancer ce = new ContrastEnhancer();
+    final double saturated = 0.35;
+    for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList()) {
+      final ImagePlus imp = WindowManager.getImage(id);
+      imp.resetDisplayRange();
+      ce.stretchHistogram(imp, saturated);
+      imp.updateAndDraw();
     }
+  }
 }

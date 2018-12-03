@@ -26,13 +26,11 @@ package uk.ac.sussex.gdsc.foci.controller;
 /**
  * Provides a mechanism for passing messages about the processing state.
  */
-public interface MessageListener
-{
-    /**
-     * Define the message type.
-     */
-    public enum MessageType
-    {
+public interface MessageListener {
+  /**
+   * Define the message type.
+   */
+  public enum MessageType {
     /** The background level message type. */
     BACKGROUND_LEVEL,
     /** The sort index ok message type. */
@@ -51,15 +49,13 @@ public interface MessageListener
     FAILED,
     /** The finished message type. */
     FINISHED
-    }
+  }
 
-    /**
-     * Notify.
-     *
-     * @param message
-     *            The type of the message
-     * @param params
-     *            The parameters of the message
-     */
-    public void notify(MessageType message, Object... params);
+  /**
+   * Notify.
+   *
+   * @param message The type of the message
+   * @param params The parameters of the message
+   */
+  public void notify(MessageType message, Object... params);
 }

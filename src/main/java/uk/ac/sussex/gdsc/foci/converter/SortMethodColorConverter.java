@@ -30,17 +30,14 @@ import org.jdesktop.beansbinding.Converter;
 /**
  * Convert the sort method to a colour.
  */
-public class SortMethodColorConverter extends Converter<Boolean, Color>
-{
-    @Override
-    public Color convertForward(Boolean paramT)
-    {
-        return (paramT.booleanValue()) ? Color.red : Color.black;
-    }
+public class SortMethodColorConverter extends Converter<Boolean, Color> {
+  @Override
+  public Color convertForward(Boolean paramT) {
+    return (paramT.booleanValue()) ? Color.red : Color.black;
+  }
 
-    @Override
-    public Boolean convertReverse(Color paramS)
-    {
-        return Color.red.equals(paramS);
-    }
+  @Override
+  public Boolean convertReverse(Color paramS) {
+    return Color.red.equals(paramS);
+  }
 }

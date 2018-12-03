@@ -26,31 +26,26 @@ package uk.ac.sussex.gdsc.colocalisation.cda.engine;
 /**
  * Used to store the results of comparing the intersection of two images.
  */
-public class IntersectResult
-{
-    /** The first sum. */
-    public long sum1;
+public class IntersectResult {
+  /** The first sum. */
+  public long sum1;
 
-    /** The second sum. */
-    public long sum2;
+  /** The second sum. */
+  public long sum2;
 
-    /** The correlation. */
-    public double r;
+  /** The correlation. */
+  public double r;
 
-    /**
-     * Instantiates a new intersect result.
-     *
-     * @param sum1
-     *            the first sum
-     * @param sum2
-     *            the second sum
-     * @param r
-     *            The correlation
-     */
-    public IntersectResult(long sum1, long sum2, double r)
-    {
-        this.sum1 = sum1;
-        this.sum2 = sum2;
-        this.r = r;
-    }
+  /**
+   * Instantiates a new intersect result.
+   *
+   * @param sum1 the first sum
+   * @param sum2 the second sum
+   * @param r The correlation
+   */
+  public IntersectResult(long sum1, long sum2, double r) {
+    this.sum1 = sum1;
+    this.sum2 = sum2;
+    this.r = r;
+  }
 }

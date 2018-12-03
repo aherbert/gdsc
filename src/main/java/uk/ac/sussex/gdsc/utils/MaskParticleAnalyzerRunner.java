@@ -33,20 +33,17 @@ import uk.ac.sussex.gdsc.ij.plugin.filter.MaskParticleAnalyzer;
  * Pass through class allowing the {@link uk.ac.sussex.gdsc.ij.plugin.filter.MaskParticleAnalyzer }
  * to be loaded by the ImageJ plugin class loader.
  */
-public class MaskParticleAnalyzerRunner implements PlugInFilter
-{
-    private final MaskParticleAnalyzer filter = new MaskParticleAnalyzer();
+public class MaskParticleAnalyzerRunner implements PlugInFilter {
+  private final MaskParticleAnalyzer filter = new MaskParticleAnalyzer();
 
-    @Override
-    public int setup(String arg, ImagePlus imp)
-    {
-        UsageTracker.recordPlugin(this.getClass(), arg);
-        return filter.setup(arg, imp);
-    }
+  @Override
+  public int setup(String arg, ImagePlus imp) {
+    UsageTracker.recordPlugin(this.getClass(), arg);
+    return filter.setup(arg, imp);
+  }
 
-    @Override
-    public void run(ImageProcessor ip)
-    {
-        filter.run(ip);
-    }
+  @Override
+  public void run(ImageProcessor ip) {
+    filter.run(ip);
+  }
 }

@@ -28,96 +28,82 @@ import uk.ac.sussex.gdsc.core.match.BasePoint;
 /**
  * Stores a 2D/3D point (real coordinates) with time and value.
  */
-public class TimeValuedPoint extends BasePoint
-{
+public class TimeValuedPoint extends BasePoint {
 
-    /** The time. */
-    protected int time;
+  /** The time. */
+  protected int time;
 
-    /** The value. */
-    protected float value;
+  /** The value. */
+  protected float value;
 
-    /**
-     * Instantiates a new time valued point.
-     *
-     * @param x
-     *            the x
-     * @param y
-     *            the y
-     * @param z
-     *            the z
-     * @param time
-     *            the time
-     * @param value
-     *            the value
-     */
-    public TimeValuedPoint(float x, float y, float z, int time, float value)
-    {
-        super(x, y, z);
-        this.time = time;
-        this.value = value;
+  /**
+   * Instantiates a new time valued point.
+   *
+   * @param x the x
+   * @param y the y
+   * @param z the z
+   * @param time the time
+   * @param value the value
+   */
+  public TimeValuedPoint(float x, float y, float z, int time, float value) {
+    super(x, y, z);
+    this.time = time;
+    this.value = value;
+  }
+
+  /**
+   * Instantiates a new time valued point.
+   *
+   * @param x the x
+   * @param y the y
+   * @param z the z
+   * @param value the value
+   */
+  public TimeValuedPoint(float x, float y, float z, float value) {
+    super(x, y, z);
+    this.value = value;
+  }
+
+  /**
+   * Gets the time.
+   *
+   * @return the time
+   */
+  public int getTime() {
+    return time;
+  }
+
+  /**
+   * Gets the value.
+   *
+   * @return the value
+   */
+  public float getValue() {
+    return value;
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (this == object) {
+      return true;
+    }
+    // Must be the same class, allowing subtypes their own implementation
+    if (object == null || getClass() != object.getClass()) {
+      return false;
     }
 
-    /**
-     * Instantiates a new time valued point.
-     *
-     * @param x
-     *            the x
-     * @param y
-     *            the y
-     * @param z
-     *            the z
-     * @param value
-     *            the value
-     */
-    public TimeValuedPoint(float x, float y, float z, float value)
-    {
-        super(x, y, z);
-        this.value = value;
-    }
+    // cast to native object is now safe
+    final TimeValuedPoint that = (TimeValuedPoint) object;
 
-    /**
-     * Gets the time.
-     *
-     * @return the time
-     */
-    public int getTime()
-    {
-        return time;
-    }
+    return x == that.x && y == that.y && z == that.z && time == that.time && value == that.value;
+  }
 
-    /**
-     * Gets the value.
-     *
-     * @return the value
-     */
-    public float getValue()
-    {
-        return value;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-      if (this == object) {
-        return true;
-      }
-      // Must be the same class, allowing subtypes their own implementation
-      if (object == null || getClass() != object.getClass()) {
-        return false;
-      }
-
-      // cast to native object is now safe
-      final TimeValuedPoint that = (TimeValuedPoint) object;
-
-      return x == that.x && y == that.y && z == that.z && time == that.time && value == that.value;
-    }
-
-    @Override
-    public int hashCode() {
-      // Note: floatToRawIntBits does not unify all possible NaN values
-      // However since the equals() will fail for NaN values we are not
-      // breaking the java contract.
-      return (41 * (41 * (41 * (41 * (41 + Float.floatToRawIntBits(x)) + Float.floatToRawIntBits(y))
-          + Float.floatToRawIntBits(z)) + time) + Float.floatToRawIntBits(value));
-    }
+  @Override
+  public int hashCode() {
+    // Note: floatToRawIntBits does not unify all possible NaN values
+    // However since the equals() will fail for NaN values we are not
+    // breaking the java contract.
+    return (41 * (41 * (41 * (41 * (41 + Float.floatToRawIntBits(x)) + Float.floatToRawIntBits(y))
+        + Float.floatToRawIntBits(z)) + time) + Float.floatToRawIntBits(value));
+  }
 }

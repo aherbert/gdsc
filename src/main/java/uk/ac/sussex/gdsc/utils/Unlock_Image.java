@@ -31,22 +31,20 @@ import uk.ac.sussex.gdsc.UsageTracker;
 /**
  * Unlocks the image.
  */
-public class Unlock_Image implements PlugInFilter
-{
-    /** {@inheritDoc} */
-    @Override
-    public int setup(String arg, ImagePlus imp)
-    {
-        UsageTracker.recordPlugin(this.getClass(), arg);
-        if (imp != null)
-            imp.unlock();
-        return DONE;
+public class Unlock_Image implements PlugInFilter {
+  /** {@inheritDoc} */
+  @Override
+  public int setup(String arg, ImagePlus imp) {
+    UsageTracker.recordPlugin(this.getClass(), arg);
+    if (imp != null) {
+      imp.unlock();
     }
+    return DONE;
+  }
 
-    /** {@inheritDoc} */
-    @Override
-    public void run(ImageProcessor inputProcessor)
-    {
-        // Ignore
-    }
+  /** {@inheritDoc} */
+  @Override
+  public void run(ImageProcessor inputProcessor) {
+    // Ignore
+  }
 }

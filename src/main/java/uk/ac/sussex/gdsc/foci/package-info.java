@@ -23,8 +23,9 @@
  */
 
 /**
- * Provides <a href="https://imagej.nih.gov/ij/">ImageJ</a> plugins for foci analysis including the Find Foci algorithm.
- * 
+ * Provides <a href="https://imagej.nih.gov/ij/">ImageJ</a> plugins for foci analysis including the
+ * Find Foci algorithm.
+ *
  * @since 1.3.0
  */
 package uk.ac.sussex.gdsc.foci;

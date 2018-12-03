@@ -26,54 +26,42 @@ package uk.ac.sussex.gdsc.foci;
 /**
  * Stores a 2D/3D point with a value and an assigned flag.
  */
-public class GridPoint extends ValuedPoint
-{
-    private boolean assigned = false;
+public class GridPoint extends ValuedPoint {
+  private boolean assigned = false;
 
-    /**
-     * Instantiates a new grid point.
-     *
-     * @param x
-     *            the x
-     * @param y
-     *            the y
-     * @param z
-     *            the z
-     * @param value
-     *            the value
-     */
-    public GridPoint(int x, int y, int z, float value)
-    {
-        super(x, y, z, value);
-    }
+  /**
+   * Instantiates a new grid point.
+   *
+   * @param x the x
+   * @param y the y
+   * @param z the z
+   * @param value the value
+   */
+  public GridPoint(int x, int y, int z, float value) {
+    super(x, y, z, value);
+  }
 
-    /**
-     * Instantiates a new grid point.
-     *
-     * @param point
-     *            the point
-     * @param value
-     *            the value
-     */
-    public GridPoint(AssignedPoint point, float value)
-    {
-        super(point, value);
-    }
+  /**
+   * Instantiates a new grid point.
+   *
+   * @param point the point
+   * @param value the value
+   */
+  public GridPoint(AssignedPoint point, float value) {
+    super(point, value);
+  }
 
-    /**
-     * @param assigned
-     *            the assigned to set
-     */
-    public void setAssigned(boolean assigned)
-    {
-        this.assigned = assigned;
-    }
+  /**
+   * @param assigned the assigned to set
+   */
+  public void setAssigned(boolean assigned) {
+    this.assigned = assigned;
+  }
 
-    /**
-     * @return the assigned.
-     */
-    public boolean isAssigned()
-    {
-        return assigned;
-    }
+  /**
+   * @return the assigned.
+   */
+  public boolean isAssigned() {
+    return assigned;
+  }
 }

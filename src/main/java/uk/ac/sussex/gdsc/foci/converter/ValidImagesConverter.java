@@ -30,18 +30,15 @@ import org.jdesktop.beansbinding.Converter;
 /**
  * Convert the image list to true if not empty.
  */
-public class ValidImagesConverter extends Converter<List<String>, Boolean>
-{
-    @Override
-    public Boolean convertForward(List<String> paramS)
-    {
-        return !paramS.isEmpty();
-    }
+public class ValidImagesConverter extends Converter<List<String>, Boolean> {
+  @Override
+  public Boolean convertForward(List<String> paramS) {
+    return !paramS.isEmpty();
+  }
 
-    @Override
-    public List<String> convertReverse(Boolean paramT)
-    {
-        // N/A
-        return null;
-    }
+  @Override
+  public List<String> convertReverse(Boolean paramT) {
+    // N/A
+    return null;
+  }
 }

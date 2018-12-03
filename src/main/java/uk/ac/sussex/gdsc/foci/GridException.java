@@ -26,31 +26,25 @@ package uk.ac.sussex.gdsc.foci;
 /**
  * Stores a 2D/3D point with a value and an assigned flag.
  */
-public class GridException extends Exception
-{
-    private static final long serialVersionUID = 5920992981718121344L;
+public class GridException extends Exception {
+  private static final long serialVersionUID = 5920992981718121344L;
 
-    /**
-     * Instantiates a new grid exception.
-     *
-     * @param message
-     *            the message
-     */
-    public GridException(String message)
-    {
-        super(message);
-    }
+  /**
+   * Instantiates a new grid exception.
+   *
+   * @param message the message
+   */
+  public GridException(String message) {
+    super(message);
+  }
 
-    /**
-     * Instantiates a new grid exception.
-     *
-     * @param message
-     *            the message
-     * @param cause
-     *            the cause
-     */
-    public GridException(String message, Throwable cause)
-    {
-        super(message, cause);
-    }
+  /**
+   * Instantiates a new grid exception.
+   *
+   * @param message the message
+   * @param cause the cause
+   */
+  public GridException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

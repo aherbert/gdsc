@@ -41,174 +41,167 @@ import uk.ac.sussex.gdsc.UsageTracker;
 /**
  * Scales all planes in an image to the given maximum.
  */
-public class Image_Scaler implements PlugInFilter
-{
-    private static final String TITLE = "Image Scaler";
-    private ImagePlus imp;
-    private static double maxValue = 255;
-    private static String listFile = "";
+public class Image_Scaler implements PlugInFilter {
+  private static final String TITLE = "Image Scaler";
+  private ImagePlus imp;
+  private static double maxValue = 255;
+  private static String listFile = "";
 
-    /** {@inheritDoc} */
-    @Override
-    public int setup(String arg, ImagePlus imp)
-    {
-        UsageTracker.recordPlugin(this.getClass(), arg);
+  /** {@inheritDoc} */
+  @Override
+  public int setup(String arg, ImagePlus imp) {
+    UsageTracker.recordPlugin(this.getClass(), arg);
 
-        if (!showDialog())
-            return DONE;
-        this.imp = imp;
-        return DOES_ALL | NO_IMAGE_REQUIRED;
+    if (!showDialog()) {
+      return DONE;
+    }
+    this.imp = imp;
+    return DOES_ALL | NO_IMAGE_REQUIRED;
+  }
+
+  private static boolean showDialog() {
+    final GenericDialog gd = new GenericDialog(TITLE);
+
+    gd.addMessage(
+        "Rescales the maxima of the image(s) to the given value.\nProcesses the image stack or a set of input images.");
+    gd.addNumericField("Max", maxValue, 2);
+    gd.addMessage("List file containing full image path, one image per line.");
+    gd.addStringField("List file", listFile);
+    gd.showDialog();
+    gd.addHelp(uk.ac.sussex.gdsc.help.URL.UTILITY);
+
+    if (gd.wasCanceled()) {
+      return false;
     }
 
-    private static boolean showDialog()
-    {
-        final GenericDialog gd = new GenericDialog(TITLE);
+    maxValue = gd.getNextNumber();
+    listFile = gd.getNextString();
 
-        gd.addMessage(
-                "Rescales the maxima of the image(s) to the given value.\nProcesses the image stack or a set of input images.");
-        gd.addNumericField("Max", maxValue, 2);
-        gd.addMessage("List file containing full image path, one image per line.");
-        gd.addStringField("List file", listFile);
-        gd.showDialog();
-        gd.addHelp(uk.ac.sussex.gdsc.help.URL.UTILITY);
+    return true;
+  }
 
-        if (gd.wasCanceled())
-            return false;
-
-        maxValue = gd.getNextNumber();
-        listFile = gd.getNextString();
-
-        return true;
+  /** {@inheritDoc} */
+  @Override
+  public void run(ImageProcessor inputProcessor) {
+    final boolean listExists = (listFile != null && !listFile.equals(""));
+    if (imp == null && !listExists) {
+      return;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void run(ImageProcessor inputProcessor)
-    {
-        final boolean listExists = (listFile != null && !listFile.equals(""));
-        if (imp == null && !listExists)
-            return;
+    if (listExists) {
+      run(listFile, maxValue);
+    } else {
+      run(new ImagePlus[] {imp}, maxValue);
+    }
+  }
 
-        if (listExists)
-            run(listFile, maxValue);
-        else
-            run(new ImagePlus[] { imp }, maxValue);
+  /**
+   * Scales all the images by the same factor so that one image has the specified maximum.
+   *
+   * @param listFile File listing all the images to scale
+   * @param maxValue the max value
+   */
+  public void run(String listFile, double maxValue) {
+    final boolean listExists = (listFile != null && !listFile.equals(""));
+    if (!listExists) {
+      return;
     }
 
-    /**
-     * Scales all the images by the same factor so that one image has the specified maximum.
-     *
-     * @param listFile
-     *            File listing all the images to scale
-     * @param maxValue
-     *            the max value
-     */
-    public void run(String listFile, double maxValue)
-    {
-        final boolean listExists = (listFile != null && !listFile.equals(""));
-        if (!listExists)
-            return;
+    if (!new File(listFile).exists()) {
+      return;
+    }
 
-        if (!new File(listFile).exists())
-            return;
+    final double[] limits = new double[] {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY};
 
-        final double[] limits = new double[] { Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
-
-        // Read all images sequentially and find the limits
-        try (final BufferedReader input = new BufferedReader(new FileReader(listFile)))
-        {
-            String line = null; //not declared within while loop
-            while ((line = input.readLine()) != null)
-            {
-                if (!new File(line).exists())
-                    continue;
-                ImagePlus imp = new ImagePlus(line);
-                updateMinAndMax(imp, limits);
-                imp.flush();
-                imp = null; // Free memory
-            }
+    // Read all images sequentially and find the limits
+    try (final BufferedReader input = new BufferedReader(new FileReader(listFile))) {
+      String line = null; // not declared within while loop
+      while ((line = input.readLine()) != null) {
+        if (!new File(line).exists()) {
+          continue;
         }
-        catch (final Exception e)
-        {
-            IJ.error("Failed to read images in input list file: " + listFile);
-            return;
-        }
-
-        if (limits[1] <= limits[0])
-            return;
-
-        final double scaleFactor = maxValue / limits[1];
-
-        // Rewrite images
-        try (final BufferedReader input = new BufferedReader(new FileReader(listFile)))
-        {
-            String line = null; //not declared within while loop
-            while ((line = input.readLine()) != null)
-            {
-                if (!new File(line).exists())
-                    continue;
-
-                ImagePlus imp = new ImagePlus(line);
-                multiply(imp, scaleFactor);
-                new FileSaver(imp).save();
-                imp.flush();
-                imp = null; // Free memory
-            }
-            input.close();
-        }
-        catch (final Exception e)
-        {
-            IJ.error("Failed to re-write images in input list file: " + listFile);
-        }
+        ImagePlus imp = new ImagePlus(line);
+        updateMinAndMax(imp, limits);
+        imp.flush();
+        imp = null; // Free memory
+      }
+    } catch (final Exception e) {
+      IJ.error("Failed to read images in input list file: " + listFile);
+      return;
     }
 
-    /**
-     * Scales all the images by the same factor so that one image has the specified maximum.
-     *
-     * @param images
-     *            the images
-     * @param maxValue
-     *            the max value
-     */
-    public void run(ImagePlus[] images, double maxValue)
-    {
-        final double[] limits = new double[] { Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
-
-        for (final ImagePlus imp : images)
-            updateMinAndMax(imp, limits);
-
-        if (limits[1] <= limits[0])
-            return;
-
-        final double scaleFactor = maxValue / limits[1];
-
-        for (final ImagePlus imp : images)
-            multiply(imp, scaleFactor);
+    if (limits[1] <= limits[0]) {
+      return;
     }
 
-    private static void updateMinAndMax(ImagePlus imp, double[] limits)
-    {
-        final ImageStack stack = imp.getImageStack();
-        for (int slice = 1; slice <= stack.getSize(); slice++)
-        {
-            final ImageStatistics stats = ImageStatistics.getStatistics(stack.getProcessor(slice), Measurements.MIN_MAX,
-                    null);
-            if (limits[0] > stats.min)
-                limits[0] = stats.min;
-            if (limits[1] < stats.max)
-                limits[1] = stats.max;
+    final double scaleFactor = maxValue / limits[1];
+
+    // Rewrite images
+    try (final BufferedReader input = new BufferedReader(new FileReader(listFile))) {
+      String line = null; // not declared within while loop
+      while ((line = input.readLine()) != null) {
+        if (!new File(line).exists()) {
+          continue;
         }
+
+        ImagePlus imp = new ImagePlus(line);
+        multiply(imp, scaleFactor);
+        new FileSaver(imp).save();
+        imp.flush();
+        imp = null; // Free memory
+      }
+      input.close();
+    } catch (final Exception e) {
+      IJ.error("Failed to re-write images in input list file: " + listFile);
+    }
+  }
+
+  /**
+   * Scales all the images by the same factor so that one image has the specified maximum.
+   *
+   * @param images the images
+   * @param maxValue the max value
+   */
+  public void run(ImagePlus[] images, double maxValue) {
+    final double[] limits = new double[] {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY};
+
+    for (final ImagePlus imp : images) {
+      updateMinAndMax(imp, limits);
     }
 
-    private static void multiply(ImagePlus imp, double scaleFactor)
-    {
-        final ImageStack stack = imp.getImageStack();
-        for (int slice = 1; slice <= stack.getSize(); slice++)
-            stack.getProcessor(slice).multiply(scaleFactor);
-        if (imp.isVisible())
-        {
-            imp.resetDisplayRange();
-            imp.updateAndDraw();
-        }
+    if (limits[1] <= limits[0]) {
+      return;
     }
+
+    final double scaleFactor = maxValue / limits[1];
+
+    for (final ImagePlus imp : images) {
+      multiply(imp, scaleFactor);
+    }
+  }
+
+  private static void updateMinAndMax(ImagePlus imp, double[] limits) {
+    final ImageStack stack = imp.getImageStack();
+    for (int slice = 1; slice <= stack.getSize(); slice++) {
+      final ImageStatistics stats =
+          ImageStatistics.getStatistics(stack.getProcessor(slice), Measurements.MIN_MAX, null);
+      if (limits[0] > stats.min) {
+        limits[0] = stats.min;
+      }
+      if (limits[1] < stats.max) {
+        limits[1] = stats.max;
+      }
+    }
+  }
+
+  private static void multiply(ImagePlus imp, double scaleFactor) {
+    final ImageStack stack = imp.getImageStack();
+    for (int slice = 1; slice <= stack.getSize(); slice++) {
+      stack.getProcessor(slice).multiply(scaleFactor);
+    }
+    if (imp.isVisible()) {
+      imp.resetDisplayRange();
+      imp.updateAndDraw();
+    }
+  }
 }

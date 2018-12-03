@@ -30,19 +30,17 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessor;
 /**
  * Convert the search method to a flag indicating if the search parameter is enabled.
  */
-public class SearchParamEnabledConverter extends Converter<Integer, Boolean>
-{
-    @Override
-    public Boolean convertForward(Integer paramS)
-    {
-        final int searchMethod = paramS.intValue();
-        return Boolean.valueOf(searchMethod == FindFociProcessor.SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND);
-    }
+public class SearchParamEnabledConverter extends Converter<Integer, Boolean> {
+  @Override
+  public Boolean convertForward(Integer paramS) {
+    final int searchMethod = paramS.intValue();
+    return Boolean
+        .valueOf(searchMethod == FindFociProcessor.SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND);
+  }
 
-    @Override
-    public Integer convertReverse(Boolean paramT)
-    {
-        // N/A
-        return null;
-    }
+  @Override
+  public Integer convertReverse(Boolean paramT) {
+    // N/A
+    return null;
+  }
 }

@@ -23,9 +23,9 @@
  */
 
 /**
- * Provides the parameter model of the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm used
- * to bind the GUI to the underlying algorithm engine.
- * 
+ * Provides the parameter model of the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm used to
+ * bind the GUI to the underlying algorithm engine.
+ *
  * @since 1.3.0
  */
 package uk.ac.sussex.gdsc.foci.model;

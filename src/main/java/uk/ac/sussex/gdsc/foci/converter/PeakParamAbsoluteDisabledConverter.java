@@ -30,19 +30,16 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessor;
 /**
  * Convert the peak search method to a flag indicating if absolute is disabled.
  */
-public class PeakParamAbsoluteDisabledConverter extends Converter<Integer, Boolean>
-{
-    @Override
-    public Boolean convertForward(Integer paramS)
-    {
-        final int searchMethod = paramS.intValue();
-        return Boolean.valueOf(searchMethod != FindFociProcessor.PEAK_ABSOLUTE);
-    }
+public class PeakParamAbsoluteDisabledConverter extends Converter<Integer, Boolean> {
+  @Override
+  public Boolean convertForward(Integer paramS) {
+    final int searchMethod = paramS.intValue();
+    return Boolean.valueOf(searchMethod != FindFociProcessor.PEAK_ABSOLUTE);
+  }
 
-    @Override
-    public Integer convertReverse(Boolean paramT)
-    {
-        // N/A
-        return null;
-    }
+  @Override
+  public Integer convertReverse(Boolean paramT) {
+    // N/A
+    return null;
+  }
 }

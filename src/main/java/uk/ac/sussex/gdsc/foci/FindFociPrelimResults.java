@@ -28,51 +28,42 @@ import ij.ImagePlus;
 /**
  * Contains the results of the FindFoci algorithm.
  */
-public class FindFociPrelimResults implements Cloneable
-{
+public class FindFociPrelimResults implements Cloneable {
 
-    /** The mask. */
-    public final ImagePlus mask;
+  /** The mask. */
+  public final ImagePlus mask;
 
-    /** The results. */
-    public final FindFociResult[] results;
+  /** The results. */
+  public final FindFociResult[] results;
 
-    /** The statistics. */
-    public final FindFociStatistics stats;
+  /** The statistics. */
+  public final FindFociStatistics stats;
 
-    /**
-     * Instantiates a new find foci result.
-     *
-     * @param mask
-     *            the mask
-     * @param results
-     *            the results
-     * @param stats
-     *            the stats
-     */
-    public FindFociPrelimResults(ImagePlus mask, FindFociResult[] results, FindFociStatistics stats)
-    {
-        this.mask = mask;
-        this.results = results;
-        this.stats = stats;
+  /**
+   * Instantiates a new find foci result.
+   *
+   * @param mask the mask
+   * @param results the results
+   * @param stats the stats
+   */
+  public FindFociPrelimResults(ImagePlus mask, FindFociResult[] results, FindFociStatistics stats) {
+    this.mask = mask;
+    this.results = results;
+    this.stats = stats;
+  }
+
+  /**
+   * Returns a shallow copy of this set of results.
+   *
+   * @return the find foci results
+   */
+  @Override
+  public FindFociPrelimResults clone() {
+    try {
+      final FindFociPrelimResults copy = (FindFociPrelimResults) super.clone();
+      return copy;
+    } catch (final CloneNotSupportedException e) {
+      return null;
     }
-
-    /**
-     * Returns a shallow copy of this set of results.
-     *
-     * @return the find foci results
-     */
-    @Override
-    public FindFociPrelimResults clone()
-    {
-        try
-        {
-            final FindFociPrelimResults copy = (FindFociPrelimResults) super.clone();
-            return copy;
-        }
-        catch (final CloneNotSupportedException e)
-        {
-            return null;
-        }
-    }
+  }
 }

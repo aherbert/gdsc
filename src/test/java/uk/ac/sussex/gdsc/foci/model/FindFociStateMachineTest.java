@@ -37,56 +37,54 @@ import java.beans.PropertyChangeEvent;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@SuppressWarnings({ "javadoc" })
-public class FindFociStateMachineTest
-{
-    private static Logger logger;
+@SuppressWarnings({"javadoc"})
+public class FindFociStateMachineTest {
+  private static Logger logger;
 
-    @BeforeAll
-    public static void beforeAll()
-    {
-        logger = Logger.getLogger(FindFociStateMachineTest.class.getName());
+  @BeforeAll
+  public static void beforeAll() {
+    logger = Logger.getLogger(FindFociStateMachineTest.class.getName());
+  }
+
+  @AfterAll
+  public static void afterAll() {
+    logger = null;
+  }
+
+  /**
+   * Performs multiple state changes and outputs the time.
+   */
+  @SeededTest
+  public void timeStateTransitions(RandomSeed seed) {
+    final Level level = Level.INFO;
+    Assumptions.assumeTrue(logger.isLoggable(level));
+
+    final FindFociStateMachine sm = new FindFociStateMachine();
+    final String[] propertyNames = sm.getObservedProperties().toArray(new String[0]);
+    final UniformRandomProvider rand = RngUtils.create(seed.getSeed());
+    final Integer oldValue = new Integer(0);
+    final Integer newValue = new Integer(1);
+
+    final String[] randomNames = new String[propertyNames.length * 10];
+    for (int j = 0, x = 0; j < 10; j++) {
+      for (int i = 0; i < propertyNames.length; i++) {
+        randomNames[x++] = propertyNames[rand.nextInt(propertyNames.length)];
+      }
     }
 
-    @AfterAll
-    public static void afterAll()
-    {
-        logger = null;
+    final long start = System.nanoTime();
+    long steps = 0;
+    while (steps < 1000000) {
+      for (int j = 0, x = 0; j < 10; j++) {
+        for (int i = 0; i < propertyNames.length; i++) {
+          steps++;
+          sm.propertyChange(new PropertyChangeEvent(this, randomNames[x++], oldValue, newValue));
+        }
+        sm.setState(FindFociState.COMPLETE);
+      }
     }
 
-    /**
-     * Performs multiple state changes and outputs the time.
-     */
-    @SeededTest
-    public void timeStateTransitions(RandomSeed seed)
-    {
-        Level level = Level.INFO;
-        Assumptions.assumeTrue(logger.isLoggable(level));
-
-        final FindFociStateMachine sm = new FindFociStateMachine();
-        final String[] propertyNames = sm.getObservedProperties().toArray(new String[0]);
-        UniformRandomProvider rand = RngUtils.create(seed.getSeed());
-        final Integer oldValue = new Integer(0);
-        final Integer newValue = new Integer(1);
-
-        final String[] randomNames = new String[propertyNames.length * 10];
-        for (int j = 0, x = 0; j < 10; j++)
-            for (int i = 0; i < propertyNames.length; i++)
-                randomNames[x++] = propertyNames[rand.nextInt(propertyNames.length)];
-
-        final long start = System.nanoTime();
-        long steps = 0;
-        while (steps < 1000000)
-            for (int j = 0, x = 0; j < 10; j++)
-            {
-                for (int i = 0; i < propertyNames.length; i++)
-                {
-                    steps++;
-                    sm.propertyChange(new PropertyChangeEvent(this, randomNames[x++], oldValue, newValue));
-                }
-                sm.setState(FindFociState.COMPLETE);
-            }
-
-        logger.log(TestLogUtils.getRecord(level, "%d steps : %f ms", steps, (System.nanoTime() - start) / 1000000.0));
-    }
+    logger.log(TestLogUtils.getRecord(level, "%d steps : %f ms", steps,
+        (System.nanoTime() - start) / 1000000.0));
+  }
 }

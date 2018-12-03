@@ -28,17 +28,14 @@ import org.jdesktop.beansbinding.Converter;
 /**
  * Convert the slider value to an integer.
  */
-public class SliderDoubleConverter extends Converter<Double, Integer>
-{
-    @Override
-    public Integer convertForward(Double paramS)
-    {
-        return paramS.intValue();
-    }
+public class SliderDoubleConverter extends Converter<Double, Integer> {
+  @Override
+  public Integer convertForward(Double paramS) {
+    return paramS.intValue();
+  }
 
-    @Override
-    public Double convertReverse(Integer paramT)
-    {
-        return paramT.doubleValue();
-    }
+  @Override
+  public Double convertReverse(Integer paramT) {
+    return paramT.doubleValue();
+  }
 }

@@ -30,20 +30,17 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessor;
 /**
  * Convert the statistics mode to a flag indicating if the statistics parameter is enabled.
  */
-public class StatisticsModeParamEnabledConverter extends Converter<Integer, Boolean>
-{
-    @Override
-    public Boolean convertForward(Integer paramS)
-    {
-        final int statisticsMode = paramS.intValue();
-        return Boolean.valueOf(statisticsMode != FindFociProcessor.BACKGROUND_ABSOLUTE &&
-                statisticsMode != FindFociProcessor.BACKGROUND_NONE);
-    }
+public class StatisticsModeParamEnabledConverter extends Converter<Integer, Boolean> {
+  @Override
+  public Boolean convertForward(Integer paramS) {
+    final int statisticsMode = paramS.intValue();
+    return Boolean.valueOf(statisticsMode != FindFociProcessor.BACKGROUND_ABSOLUTE
+        && statisticsMode != FindFociProcessor.BACKGROUND_NONE);
+  }
 
-    @Override
-    public Integer convertReverse(Boolean paramT)
-    {
-        // N/A
-        return null;
-    }
+  @Override
+  public Integer convertReverse(Boolean paramT) {
+    // N/A
+    return null;
+  }
 }

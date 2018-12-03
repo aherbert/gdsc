@@ -24,168 +24,152 @@
 package uk.ac.sussex.gdsc.foci;
 
 /**
- * Find the peak intensity regions of an image.
- * <P>
- * Extends the FindFociFloatProcessor to override the FindFociBaseProcessor methods with float specific processing.
+ * Find the peak intensity regions of an image. <P> Extends the FindFociFloatProcessor to override
+ * the FindFociBaseProcessor methods with float specific processing.
  */
-public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor
-{
-    // There may be nothing to optimise.
-    // We would just be replacing the call to getf(i) with image[i]. All the
-    // processing in FindFociBaseProcessor is float specific anyway.
-    // So optimisation should be done by the JVM.
+public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor {
+  // There may be nothing to optimise.
+  // We would just be replacing the call to getf(i) with image[i]. All the
+  // processing in FindFociBaseProcessor is float specific anyway.
+  // So optimisation should be done by the JVM.
 
-    // For now I have just included those simple methods that use getf() for all pixels in the image.
-    // This means changes to the main algorithm methods will be inherited.
+  // For now I have just included those simple methods that use getf() for all pixels in the image.
+  // This means changes to the main algorithm methods will be inherited.
 
-    /** {@inheritDoc} */
-    @Override
-    protected void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
-            FindFociStatistics stats, FindFociResult[] resultsArray, int[] maxima)
-    {
-        setPixels(pixels);
+  /** {@inheritDoc} */
+  @Override
+  protected void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
+      FindFociStatistics stats, FindFociResult[] resultsArray, int[] maxima) {
+    setPixels(pixels);
 
-        // Build an array containing the threshold for each peak.
-        // Note that maxima are numbered from 1
-        final int nMaxima = resultsArray.length;
-        final float[] peakThreshold = new float[nMaxima + 1];
-        for (int i = 1; i < peakThreshold.length; i++)
-            peakThreshold[i] = getTolerance(searchMethod, searchParameter, stats, resultsArray[i - 1].maxValue);
-
-        for (int i = maxima.length; i-- > 0;)
-        {
-            final int id = maxima[i];
-            if (id != 0)
-                if (image[i] < peakThreshold[id])
-                {
-                    // Unset this pixel as part of the peak
-                    maxima[i] = 0;
-                    types[i] &= ~MAX_AREA;
-                }
-        }
+    // Build an array containing the threshold for each peak.
+    // Note that maxima are numbered from 1
+    final int nMaxima = resultsArray.length;
+    final float[] peakThreshold = new float[nMaxima + 1];
+    for (int i = 1; i < peakThreshold.length; i++) {
+      peakThreshold[i] =
+          getTolerance(searchMethod, searchParameter, stats, resultsArray[i - 1].maxValue);
     }
 
-    /** {@inheritDoc} */
-    @Override
-    protected void calculateInitialResults(Object pixels, int[] maxima, FindFociResult[] resultsArray)
-    {
-        setPixels(pixels);
-        final int nMaxima = resultsArray.length;
+    for (int i = maxima.length; i-- > 0;) {
+      final int id = maxima[i];
+      if (id != 0) {
+        if (image[i] < peakThreshold[id]) {
+          // Unset this pixel as part of the peak
+          maxima[i] = 0;
+          types[i] &= ~MAX_AREA;
+        }
+      }
+    }
+  }
 
-        // Maxima are numbered from 1
-        final int[] count = new int[nMaxima + 1];
-        final double[] intensity = new double[nMaxima + 1];
+  /** {@inheritDoc} */
+  @Override
+  protected void calculateInitialResults(Object pixels, int[] maxima,
+      FindFociResult[] resultsArray) {
+    setPixels(pixels);
+    final int nMaxima = resultsArray.length;
 
-        for (int i = maxima.length; i-- > 0;)
-        {
-            final int id = maxima[i];
-            if (id != 0)
-            {
-                count[id]++;
-                intensity[id] += image[i];
+    // Maxima are numbered from 1
+    final int[] count = new int[nMaxima + 1];
+    final double[] intensity = new double[nMaxima + 1];
+
+    for (int i = maxima.length; i-- > 0;) {
+      final int id = maxima[i];
+      if (id != 0) {
+        count[id]++;
+        intensity[id] += image[i];
+      }
+    }
+
+    for (int i = 0; i < resultsArray.length; i++) {
+      final FindFociResult result = resultsArray[i];
+      result.count = count[result.id];
+      result.totalIntensity = intensity[result.id];
+      result.averageIntensity = result.totalIntensity / result.count;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void calculateNativeResults(Object pixels, int[] maxima, FindFociResult[] resultsArray,
+      int originalNumberOfPeaks) {
+    setPixels(pixels);
+
+    // Maxima are numbered from 1
+    final double[] intensity = new double[originalNumberOfPeaks + 1];
+    final float[] max = new float[originalNumberOfPeaks + 1];
+
+    for (int i = maxima.length; i-- > 0;) {
+      final int id = maxima[i];
+      if (id != 0) {
+        final float v = image[i];
+        intensity[id] += v;
+        if (max[id] < v) {
+          max[id] = v;
+        }
+      }
+    }
+
+    for (int i = 0; i < resultsArray.length; i++) {
+      final FindFociResult result = resultsArray[i];
+      final int id = result.id;
+      if (intensity[id] != 0) {
+        result.totalIntensity = intensity[id];
+        result.maxValue = max[id];
+      }
+    }
+  }
+
+  /**
+   * Compute the intensity of the peak above the saddle height.
+   *
+   * @param maxima the maxima
+   * @param peakIdMap the peak id map
+   * @param peakId the peak id
+   * @param result the result
+   * @param saddleHeight the saddle height
+   */
+  @Override
+  protected void computeIntensityAboveSaddle(final int[] maxima, final int[] peakIdMap,
+      final int peakId, final FindFociResult result, final float saddleHeight) {
+    int peakSize = 0;
+    double peakIntensity = 0;
+
+    // Search using the bounds
+    for (int z = result.minz; z < result.maxz; z++) {
+      for (int y = result.miny; y < result.maxy; y++) {
+        for (int x = result.minx, i = getIndex(result.minx, y, z); x < result.maxx; x++, i++) {
+          final int id = maxima[i];
+          if (id != 0 && peakIdMap[id] == peakId) {
+            final float v = image[i];
+            if (v > saddleHeight) {
+              peakIntensity += v;
+              peakSize++;
             }
+          }
         }
-
-        for (int i = 0; i < resultsArray.length; i++)
-        {
-            final FindFociResult result = resultsArray[i];
-            result.count = count[result.id];
-            result.totalIntensity = intensity[result.id];
-            result.averageIntensity = result.totalIntensity / result.count;
-        }
+      }
     }
 
-    /** {@inheritDoc} */
-    @Override
-    protected void calculateNativeResults(Object pixels, int[] maxima, FindFociResult[] resultsArray,
-            int originalNumberOfPeaks)
-    {
-        setPixels(pixels);
+    result.countAboveSaddle = peakSize;
+    result.intensityAboveSaddle = peakIntensity;
+  }
 
-        // Maxima are numbered from 1
-        final double[] intensity = new double[originalNumberOfPeaks + 1];
-        final float[] max = new float[originalNumberOfPeaks + 1];
+  /** {@inheritDoc} */
+  @Override
+  protected double getIntensityAboveFloor(Object pixels, byte[] types, final float floor) {
+    setPixels(pixels);
 
-        for (int i = maxima.length; i-- > 0;)
-        {
-            final int id = maxima[i];
-            if (id != 0)
-            {
-                final float v = image[i];
-                intensity[id] += v;
-                if (max[id] < v)
-                    max[id] = v;
-            }
+    double sum = 0;
+    for (int i = types.length; i-- > 0;) {
+      if ((types[i] & EXCLUDED) == 0) {
+        final float v = image[i];
+        if (v > floor) {
+          sum += (v - floor);
         }
-
-        for (int i = 0; i < resultsArray.length; i++)
-        {
-            final FindFociResult result = resultsArray[i];
-            final int id = result.id;
-            if (intensity[id] != 0)
-            {
-                result.totalIntensity = intensity[id];
-                result.maxValue = max[id];
-            }
-        }
+      }
     }
-
-    /**
-     * Compute the intensity of the peak above the saddle height.
-     *
-     * @param maxima
-     *            the maxima
-     * @param peakIdMap
-     *            the peak id map
-     * @param peakId
-     *            the peak id
-     * @param result
-     *            the result
-     * @param saddleHeight
-     *            the saddle height
-     */
-    @Override
-    protected void computeIntensityAboveSaddle(final int[] maxima, final int[] peakIdMap, final int peakId,
-            final FindFociResult result, final float saddleHeight)
-    {
-        int peakSize = 0;
-        double peakIntensity = 0;
-
-        // Search using the bounds
-        for (int z = result.minz; z < result.maxz; z++)
-            for (int y = result.miny; y < result.maxy; y++)
-                for (int x = result.minx, i = getIndex(result.minx, y, z); x < result.maxx; x++, i++)
-                {
-                    final int id = maxima[i];
-                    if (id != 0 && peakIdMap[id] == peakId)
-                    {
-                        final float v = image[i];
-                        if (v > saddleHeight)
-                        {
-                            peakIntensity += v;
-                            peakSize++;
-                        }
-                    }
-                }
-
-        result.countAboveSaddle = peakSize;
-        result.intensityAboveSaddle = peakIntensity;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    protected double getIntensityAboveFloor(Object pixels, byte[] types, final float floor)
-    {
-        setPixels(pixels);
-
-        double sum = 0;
-        for (int i = types.length; i-- > 0;)
-            if ((types[i] & EXCLUDED) == 0)
-            {
-                final float v = image[i];
-                if (v > floor)
-                    sum += (v - floor);
-            }
-        return sum;
-    }
+    return sum;
+  }
 }

@@ -30,19 +30,16 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessor;
 /**
  * Convert the background method to a flag indicating if absolute is disabled.
  */
-public class BackgroundParamAbsoluteDisabledConverter extends Converter<Integer, Boolean>
-{
-    @Override
-    public Boolean convertForward(Integer paramS)
-    {
-        final int backgroundMethod = paramS.intValue();
-        return Boolean.valueOf(backgroundMethod != FindFociProcessor.BACKGROUND_ABSOLUTE);
-    }
+public class BackgroundParamAbsoluteDisabledConverter extends Converter<Integer, Boolean> {
+  @Override
+  public Boolean convertForward(Integer paramS) {
+    final int backgroundMethod = paramS.intValue();
+    return Boolean.valueOf(backgroundMethod != FindFociProcessor.BACKGROUND_ABSOLUTE);
+  }
 
-    @Override
-    public Integer convertReverse(Boolean paramT)
-    {
-        // N/A
-        return null;
-    }
+  @Override
+  public Integer convertReverse(Boolean paramT) {
+    // N/A
+    return null;
+  }
 }

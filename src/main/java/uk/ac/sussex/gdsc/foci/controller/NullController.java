@@ -30,85 +30,78 @@ import java.util.Random;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 /**
- * Dummy controller that provides stub functionality to {@link uk.ac.sussex.gdsc.foci.gui.FindFociView}.
+ * Dummy controller that provides stub functionality to
+ * {@link uk.ac.sussex.gdsc.foci.gui.FindFociView}.
  */
-public class NullController extends FindFociController
-{
-    private int lowerLimit = 15;
-    private int upperLimit = 220;
+public class NullController extends FindFociController {
+  private int lowerLimit = 15;
+  private int upperLimit = 220;
 
-    /**
-     * Instantiates a new null controller.
-     *
-     * @param model
-     *            the model
-     */
-    public NullController(FindFociModel model)
-    {
-        super(model);
+  /**
+   * Instantiates a new null controller.
+   *
+   * @param model the model
+   */
+  public NullController(FindFociModel model) {
+    super(model);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getImageCount() {
+    return 3;
+  }
+
+  private final int updateCounter = 0;
+
+  /** {@inheritDoc} */
+  @Override
+  public void updateImageList() {
+    // System.out.println("updateImageList");
+
+    // Note: Increment the updateCounter to ensure the list is refreshed
+    // updateCounter++;
+
+    final List<String> imageList = new ArrayList<>();
+    imageList.add(updateCounter + " : One");
+    imageList.add(updateCounter + " : Two");
+    imageList.add(updateCounter + " : Three");
+    model.setImageList(imageList);
+
+    // Make up some random limits
+    final Random rand = new Random();
+    final int base = 25;
+    lowerLimit = rand.nextInt(base);
+    upperLimit = rand.nextInt(255 - base) + base;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run() {
+    model.setUnchanged();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void preview() {
+    System.out.println("FindFoci Preview");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void endPreview() {
+    System.out.println("FindFoci EndPreview");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int[] getImageLimits(int[] limits) {
+    // System.out.println("getImageLimits");
+    if (limits == null || limits.length < 2) {
+      limits = new int[2];
     }
-
-    /** {@inheritDoc} */
-    @Override
-    public int getImageCount()
-    {
-        return 3;
-    }
-
-    private final int updateCounter = 0;
-
-    /** {@inheritDoc} */
-    @Override
-    public void updateImageList()
-    {
-        //System.out.println("updateImageList");
-
-        // Note: Increment the updateCounter to ensure the list is refreshed
-        //updateCounter++;
-
-        final List<String> imageList = new ArrayList<>();
-        imageList.add(updateCounter + " : One");
-        imageList.add(updateCounter + " : Two");
-        imageList.add(updateCounter + " : Three");
-        model.setImageList(imageList);
-
-        // Make up some random limits
-        final Random rand = new Random();
-        final int base = 25;
-        lowerLimit = rand.nextInt(base);
-        upperLimit = rand.nextInt(255 - base) + base;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void run()
-    {
-        model.setUnchanged();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void preview()
-    {
-        System.out.println("FindFoci Preview");
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void endPreview()
-    {
-        System.out.println("FindFoci EndPreview");
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public int[] getImageLimits(int[] limits)
-    {
-        //System.out.println("getImageLimits");
-        if (limits == null || limits.length < 2)
-            limits = new int[2];
-        limits[0] = lowerLimit;
-        limits[1] = upperLimit;
-        return limits;
-    }
+    limits[0] = lowerLimit;
+    limits[1] = upperLimit;
+    return limits;
+  }
 }

@@ -30,19 +30,16 @@ import org.jdesktop.beansbinding.Converter;
 /**
  * Convert a double to a formatted string.
  */
-public class DoubleConverter extends Converter<Double, String>
-{
-    private static DecimalFormat dc = new DecimalFormat("#.##");
+public class DoubleConverter extends Converter<Double, String> {
+  private static DecimalFormat dc = new DecimalFormat("#.##");
 
-    @Override
-    public String convertForward(Double paramS)
-    {
-        return dc.format(paramS);
-    }
+  @Override
+  public String convertForward(Double paramS) {
+    return dc.format(paramS);
+  }
 
-    @Override
-    public Double convertReverse(String paramT)
-    {
-        return Double.valueOf(paramT);
-    }
+  @Override
+  public Double convertReverse(String paramT) {
+    return Double.valueOf(paramT);
+  }
 }

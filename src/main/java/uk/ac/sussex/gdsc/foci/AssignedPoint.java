@@ -23,117 +23,100 @@
  */
 package uk.ac.sussex.gdsc.foci;
 
-import java.util.Arrays;
-
 /**
  * Stores a 2D/3D point with an assigned Id.
  */
-public class AssignedPoint extends BasePoint
-{
-    /** The id. */
-    protected int id = 0;
+public class AssignedPoint extends BasePoint {
+  /** The id. */
+  protected int id = 0;
 
-    /** The assigned id. */
-    protected int assignedId = 0;
+  /** The assigned id. */
+  protected int assignedId = 0;
 
-    /**
-     * Instantiates a new assigned point.
-     *
-     * @param x
-     *            the x
-     * @param y
-     *            the y
-     * @param z
-     *            the z
-     * @param id
-     *            the id
-     */
-    public AssignedPoint(int x, int y, int z, int id)
-    {
-        super(x, y, z);
-        this.id = id;
+  /**
+   * Instantiates a new assigned point.
+   *
+   * @param x the x
+   * @param y the y
+   * @param z the z
+   * @param id the id
+   */
+  public AssignedPoint(int x, int y, int z, int id) {
+    super(x, y, z);
+    this.id = id;
+  }
+
+  /**
+   * Instantiates a new assigned point.
+   *
+   * @param x the x
+   * @param y the y
+   * @param id the id
+   */
+  public AssignedPoint(int x, int y, int id) {
+    super(x, y);
+    this.id = id;
+  }
+
+  /**
+   * Sets the point Id.
+   *
+   * @param id the new id
+   */
+  public void setId(int id) {
+    this.id = id;
+  }
+
+  /**
+   * Gets the id.
+   *
+   * @return the id
+   */
+  public int getId() {
+    return id;
+  }
+
+  /**
+   * Sets the assigned id.
+   *
+   * @param assignedId the assignedId to set
+   */
+  public void setAssignedId(int assignedId) {
+    this.assignedId = assignedId;
+  }
+
+  /**
+   * Gets the assigned id.
+   *
+   * @return the assignedId
+   */
+  public int getAssignedId() {
+    return assignedId;
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (this == object) {
+      return true;
+    }
+    // Must be the same class, allowing subtypes their own implementation
+    if (object == null || getClass() != object.getClass()) {
+      return false;
     }
 
-    /**
-     * Instantiates a new assigned point.
-     *
-     * @param x
-     *            the x
-     * @param y
-     *            the y
-     * @param id
-     *            the id
-     */
-    public AssignedPoint(int x, int y, int id)
-    {
-        super(x, y);
-        this.id = id;
-    }
+    // cast to native object is now safe
+    final AssignedPoint that = (AssignedPoint) object;
 
-    /**
-     * Sets the point Id.
-     *
-     * @param id
-     *            the new id
-     */
-    public void setId(int id)
-    {
-        this.id = id;
-    }
+    return x == that.x && y == that.y && z == that.z && id == that.id
+        && assignedId == that.assignedId;
+  }
 
-    /**
-     * Gets the id.
-     *
-     * @return the id
-     */
-    public int getId()
-    {
-        return id;
-    }
-
-    /**
-     * Sets the assigned id.
-     *
-     * @param assignedId
-     *            the assignedId to set
-     */
-    public void setAssignedId(int assignedId)
-    {
-        this.assignedId = assignedId;
-    }
-
-    /**
-     * Gets the assigned id.
-     *
-     * @return the assignedId
-     */
-    public int getAssignedId()
-    {
-        return assignedId;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-      if (this == object) {
-        return true;
-      }
-      // Must be the same class, allowing subtypes their own implementation
-      if (object == null || getClass() != object.getClass()) {
-        return false;
-      }
-
-      // cast to native object is now safe
-      final AssignedPoint that = (AssignedPoint) object;
-
-      return x == that.x && y == that.y && z == that.z && id == that.id && assignedId == that.assignedId;
-    }
-
-    @Override
-    public int hashCode() {
-      // Note: floatToRawIntBits does not unify all possible NaN values
-      // However since the equals() will fail for NaN values we are not
-      // breaking the java contract.
-      return (41 * (41 * (41 * (41 * (41 + Float.floatToRawIntBits(x)) + Float.floatToRawIntBits(y))
-          + Float.floatToRawIntBits(z)) + id) + assignedId);
-    }
+  @Override
+  public int hashCode() {
+    // Note: floatToRawIntBits does not unify all possible NaN values
+    // However since the equals() will fail for NaN values we are not
+    // breaking the java contract.
+    return (41 * (41 * (41 * (41 * (41 + Float.floatToRawIntBits(x)) + Float.floatToRawIntBits(y))
+        + Float.floatToRawIntBits(z)) + id) + assignedId);
+  }
 }

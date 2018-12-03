@@ -38,40 +38,34 @@ import uk.ac.sussex.gdsc.ij.plugin.filter.DifferenceOfGaussians;
  * Pass through class allowing the {@link uk.ac.sussex.gdsc.ij.plugin.filter.DifferenceOfGaussians }
  * to be loaded by the ImageJ plugin class loader
  */
-public class DifferenceOfGaussiansRunner implements ExtendedPlugInFilter, DialogListener
-{
-    private final DifferenceOfGaussians filter = new DifferenceOfGaussians();
+public class DifferenceOfGaussiansRunner implements ExtendedPlugInFilter, DialogListener {
+  private final DifferenceOfGaussians filter = new DifferenceOfGaussians();
 
-    @Override
-    public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
-    {
-        return filter.dialogItemChanged(gd, e);
-    }
+  @Override
+  public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+    return filter.dialogItemChanged(gd, e);
+  }
 
-    @Override
-    public int setup(String arg, ImagePlus imp)
-    {
-        if (!("final".equals(arg))) {
-            UsageTracker.recordPlugin(this.getClass(), arg);
-        }
-        return filter.setup(arg, imp);
+  @Override
+  public int setup(String arg, ImagePlus imp) {
+    if (!("final".equals(arg))) {
+      UsageTracker.recordPlugin(this.getClass(), arg);
     }
+    return filter.setup(arg, imp);
+  }
 
-    @Override
-    public void run(ImageProcessor ip)
-    {
-        filter.run(ip);
-    }
+  @Override
+  public void run(ImageProcessor ip) {
+    filter.run(ip);
+  }
 
-    @Override
-    public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr)
-    {
-        return filter.showDialog(imp, command, pfr);
-    }
+  @Override
+  public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
+    return filter.showDialog(imp, command, pfr);
+  }
 
-    @Override
-    public void setNPasses(int nPasses)
-    {
-        filter.setNPasses(nPasses);
-    }
+  @Override
+  public void setNPasses(int nPasses) {
+    filter.setNPasses(nPasses);
+  }
 }
