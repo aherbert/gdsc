@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc;
 
 import uk.ac.sussex.gdsc.core.ij.ImageJAnalyticsUtils;
@@ -51,6 +52,8 @@ public class UsageTracker implements PlugIn {
   /**
    * Initialise on demand the analytics code.
    *
+   *
+   *
    * <p>This is used to avoid synchronisation during initialisation.
    *
    * <a href="https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom">Initialisation on
@@ -79,6 +82,8 @@ public class UsageTracker implements PlugIn {
   /**
    * Initialise on demand the plugin map.
    *
+   *
+   *
    * <p>This is used to avoid synchronisation during initialisation.
    *
    * <a href="https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom">Initialisation on
@@ -86,6 +91,7 @@ public class UsageTracker implements PlugIn {
    */
   private static class LazyMapHolder {
     private static final HashMap<String, String[]> map;
+
     static {
       final HashMap<String, String[]> localMap = new HashMap<>();
       ImageJAnalyticsUtils.buildPluginMap(localMap, About_Plugin.getPluginsConfig(),

@@ -21,12 +21,13 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.utils.SortUtils;
-import uk.ac.sussex.gdsc.help.URL;
-import uk.ac.sussex.gdsc.threshold.ThreadAnalyser;
+import uk.ac.sussex.gdsc.help.UrlUtils;
+import uk.ac.sussex.gdsc.threshold.ThreadAnalyser_PlugIn;
 
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -117,7 +118,8 @@ public class SpotSeparation implements PlugInFilter {
     // Draw line profiles
     for (int i = 0; i < assigned.length; i++) {
 
-      float[] xValues, yValues;
+      float[] xValues;
+      float[] yValues;
       String profileTitle;
 
       if (assigned[i] < 0) {
@@ -282,7 +284,7 @@ public class SpotSeparation implements PlugInFilter {
 
   private static boolean showDialog() {
     final GenericDialog gd = new GenericDialog(TITLE);
-    gd.addHelp(URL.UTILITY);
+    gd.addHelp(UrlUtils.UTILITY);
 
     gd.addMessage("Analyse line profiles between spots within a separation distance");
 
@@ -384,7 +386,7 @@ public class SpotSeparation implements PlugInFilter {
 
     // TODO - Find the best method for this
 
-    final FindFoci ff = new FindFoci();
+    final FindFoci_PlugIn ff = new FindFoci_PlugIn();
     final String autoThresholdMethod = method;
     final int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
     final double searchParameter = 0;
@@ -397,7 +399,7 @@ public class SpotSeparation implements PlugInFilter {
     final int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
     final int options = FindFociProcessor.OPTION_STATS_INSIDE;
     final double blur = 1.5;
-    final int centreMethod = FindFoci.CENTRE_MAX_VALUE_SEARCH;
+    final int centreMethod = FindFoci_PlugIn.CENTRE_MAX_VALUE_SEARCH;
     final double centreParameter = 0;
     final double fractionParameter = 0;
 
@@ -473,7 +475,8 @@ public class SpotSeparation implements PlugInFilter {
     Arrays.fill(assigned, -1);
     while (true) {
       float minD = d2;
-      int ii = 0, jj = 0;
+      int ii = 0;
+      int jj = 0;
       for (int i = 0; i < d.length; i++) {
         if (assigned[i] >= 0) {
           continue;
@@ -543,11 +546,12 @@ public class SpotSeparation implements PlugInFilter {
     sb.append(id).append("\tSingle\t");
 
     final int[] maxima = new int[2];
-    final float[] d = ThreadAnalyser.countMaxima(xValues, yValues, maxima);
+    final float[] d = ThreadAnalyser_PlugIn.countMaxima(xValues, yValues, maxima);
     if (d.length > 1) {
       // Find the plot range
       final int[] maxIndices = new int[d.length];
-      float max = yValues[0], min = yValues[0];
+      float max = yValues[0];
+      float min = yValues[0];
       for (int i = 1; i < yValues.length; i++) {
         if (max < yValues[i]) {
           maxIndices[0] = i;
@@ -671,8 +675,10 @@ public class SpotSeparation implements PlugInFilter {
   }
 
   /**
-   * Estimate the angle using the central moments. <p> See Burger & Burge, Digital Image Processing,
-   * An Algorithmic Introduction using Java (1st Edition), pp231.
+   * Estimate the angle using the central moments.
+   *
+   * <p>See Burger & Burge, Digital Image Processing, An Algorithmic Introduction using Java (1st
+   * Edition), pp231.
    *
    * @param spotIp the spot ip
    * @param xpos the xpos
@@ -692,7 +698,8 @@ public class SpotSeparation implements PlugInFilter {
     int minv = maxv;
 
     double u00 = 0;
-    double xCtr = 0, yCtr = 0;
+    double xCtr = 0;
+    double yCtr = 0;
     for (int ii = 0; ii < spotIp.getPixelCount(); ii++) {
       if (spotIp.get(ii) == peakId) {
         final int u = ii % spotIp.getWidth();
@@ -747,8 +754,10 @@ public class SpotSeparation implements PlugInFilter {
 
   /**
    * Estimate the angle using the central moments. Moments are weighted using the original image
-   * values <p> See Burger & Burge, Digital Image Processing, An Algorithmic Introduction using Java
-   * (1st Edition), pp231.
+   * values
+   *
+   * <p>See Burger & Burge, Digital Image Processing, An Algorithmic Introduction using Java (1st
+   * Edition), pp231.
    *
    * @param ip the image
    * @param spotIp the spot ip
@@ -768,7 +777,8 @@ public class SpotSeparation implements PlugInFilter {
     int minv = maxv;
 
     double u00 = 0;
-    double xCtr = 0, yCtr = 0;
+    double xCtr = 0;
+    double yCtr = 0;
     for (int ii = 0; ii < spotIp.getPixelCount(); ii++) {
       if (spotIp.get(ii) == peakId) {
         final float value = ip.getf(ii);

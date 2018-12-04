@@ -21,10 +21,11 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.controller;
 
-import uk.ac.sussex.gdsc.foci.FindFoci;
-import uk.ac.sussex.gdsc.foci.FindFociOptimiser;
+import uk.ac.sussex.gdsc.foci.FindFociOptimiser_PlugIn;
+import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 import ij.ImagePlus;
@@ -36,10 +37,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.
+ * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn} algorithm.
  */
 public class OptimiserController extends FindFociController implements Runnable {
-  private final FindFociOptimiser optimiser = new FindFociOptimiser();
+  private final FindFociOptimiser_PlugIn optimiser = new FindFociOptimiser_PlugIn();
 
   /**
    * Instantiates a new optimiser controller.
@@ -76,7 +77,7 @@ public class OptimiserController extends FindFociController implements Runnable 
 
         // Check it is not one the result images
         final String imageTitle = imp.getTitle();
-        if (!imageTitle.endsWith(FindFoci.TITLE) && !imageTitle.endsWith("clone")
+        if (!imageTitle.endsWith(FindFoci_PlugIn.TITLE) && !imageTitle.endsWith("clone")
             && !imageTitle.endsWith(" TP") && !imageTitle.endsWith(" FP")
             && !imageTitle.endsWith(" FN")) {
           imageList.add(imageTitle);

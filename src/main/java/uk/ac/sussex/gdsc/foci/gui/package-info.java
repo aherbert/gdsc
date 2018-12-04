@@ -23,9 +23,10 @@
  */
 
 /**
- * Provides the Graphical Uses Interface (GUI) of the {@link uk.ac.sussex.gdsc.foci.FindFoci}
+ * Provides the Graphical Uses Interface (GUI) of the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn}
  * algorithm.
  *
  * @since 1.3.0
  */
+
 package uk.ac.sussex.gdsc.foci.gui;

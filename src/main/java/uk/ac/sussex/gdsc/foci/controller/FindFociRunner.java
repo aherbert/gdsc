@@ -21,9 +21,9 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.controller;
 
-import uk.ac.sussex.gdsc.foci.FindFoci;
 import uk.ac.sussex.gdsc.foci.FindFociBaseProcessor;
 import uk.ac.sussex.gdsc.foci.FindFociInitResults;
 import uk.ac.sussex.gdsc.foci.FindFociMergeResults;
@@ -33,6 +33,7 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessor;
 import uk.ac.sussex.gdsc.foci.FindFociResult;
 import uk.ac.sussex.gdsc.foci.FindFociResults;
 import uk.ac.sussex.gdsc.foci.FindFociSearchResults;
+import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.controller.MessageListener.MessageType;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 import uk.ac.sussex.gdsc.foci.model.FindFociState;
@@ -44,7 +45,7 @@ import ij.WindowManager;
 import java.util.ArrayList;
 
 /**
- * Runs the {@link uk.ac.sussex.gdsc.foci.FindFoci } algorithm using input from a synchronised
+ * Runs the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn } algorithm using input from a synchronised
  * queueing method.
  */
 public class FindFociRunner extends Thread {
@@ -56,7 +57,7 @@ public class FindFociRunner extends Thread {
   private boolean running = true;
 
   // Used for the staged FindFoci results
-  private FindFoci ff = new FindFoci();
+  private FindFoci_PlugIn ff = new FindFoci_PlugIn();
   private ImagePlus imp2;
   private FindFociInitResults initResults;
   private FindFociInitResults searchInitResults;
@@ -147,7 +148,7 @@ public class FindFociRunner extends Thread {
   }
 
   /**
-   * Invoke the Thread.wait() method
+   * Invoke the Thread.wait() method.
    *
    * @throws InterruptedException if any thread interrupted the current thread before or while the
    *         current thread was waiting for a notification. The interrupted status of the current
@@ -180,7 +181,7 @@ public class FindFociRunner extends Thread {
       return;
     }
 
-    if (!FindFoci.isSupported(imp.getBitDepth())) {
+    if (!FindFoci_PlugIn.isSupported(imp.getBitDepth())) {
       notify(MessageType.ERROR);
       return;
     }
@@ -221,7 +222,7 @@ public class FindFociRunner extends Thread {
     final double centreParameter = model.getCentreParameter();
     final double fractionParameter = model.getFractionParameter();
 
-    int outputType = FindFoci.getOutputMaskFlags(showMask);
+    int outputType = FindFoci_PlugIn.getOutputMaskFlags(showMask);
 
     if (overlayMask) {
       outputType += FindFociProcessor.OUTPUT_OVERLAY_MASK;
@@ -280,7 +281,7 @@ public class FindFociRunner extends Thread {
 
     final ImagePlus mask = WindowManager.getImage(maskImage);
 
-    IJ.showStatus(FindFoci.TITLE + " calculating ...");
+    IJ.showStatus(FindFoci_PlugIn.TITLE + " calculating ...");
     notify(MessageType.RUNNING);
 
     // Compare this model with the previously computed results and
@@ -293,7 +294,7 @@ public class FindFociRunner extends Thread {
     if (state.ordinal() <= FindFociState.INITIAL.ordinal()) {
       imp2 = ff.blur(imp, gaussianBlur);
       if (imp2 == null) {
-        IJ.showStatus(FindFoci.TITLE + " failed");
+        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
         notify(MessageType.FAILED);
         return;
       }
@@ -301,7 +302,7 @@ public class FindFociRunner extends Thread {
     if (state.ordinal() <= FindFociState.FIND_MAXIMA.ordinal()) {
       initResults = ff.findMaximaInit(imp, imp2, mask, backgroundMethod, thresholdMethod, options);
       if (initResults == null) {
-        IJ.showStatus(FindFoci.TITLE + " failed");
+        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
         notify(MessageType.FAILED);
         return;
       }
@@ -313,7 +314,7 @@ public class FindFociRunner extends Thread {
       searchArray = ff.findMaximaSearch(searchInitResults, backgroundMethod, backgroundParameter,
           searchMethod, searchParameter);
       if (searchArray == null) {
-        IJ.showStatus(FindFoci.TITLE + " failed");
+        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
         notify(MessageType.FAILED);
         return;
       }
@@ -325,7 +326,7 @@ public class FindFociRunner extends Thread {
       mergePeakResults =
           ff.findMaximaMergePeak(searchInitResults, searchArray, peakMethod, peakParameter);
       if (mergePeakResults == null) {
-        IJ.showStatus(FindFoci.TITLE + " failed");
+        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
         notify(MessageType.FAILED);
         return;
       }
@@ -334,7 +335,7 @@ public class FindFociRunner extends Thread {
       // No clone as the maxima and types are not changed
       mergeSizeResults = ff.findMaximaMergeSize(searchInitResults, mergePeakResults, minSize);
       if (mergeSizeResults == null) {
-        IJ.showStatus(FindFoci.TITLE + " failed");
+        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
         notify(MessageType.FAILED);
         return;
       }
@@ -344,7 +345,7 @@ public class FindFociRunner extends Thread {
       mergeResults = ff.findMaximaMergeFinal(mergeInitResults, mergeSizeResults, minSize, options,
           gaussianBlur);
       if (mergeResults == null) {
-        IJ.showStatus(FindFoci.TITLE + " failed");
+        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
         notify(MessageType.FAILED);
         return;
       }
@@ -361,7 +362,7 @@ public class FindFociRunner extends Thread {
       prelimResults = ff.findMaximaPrelimResults(resultsInitResults, mergeResults, maxPeaks,
           sortMethod, centreMethod, centreParameter);
       if (prelimResults == null) {
-        IJ.showStatus(FindFoci.TITLE + " failed");
+        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
         notify(MessageType.FAILED);
         return;
       }
@@ -371,7 +372,7 @@ public class FindFociRunner extends Thread {
       results = ff.findMaximaMaskResults(maskInitResults, mergeResults, prelimResults, outputType,
           thresholdMethod, imp.getTitle(), fractionParameter);
       if (results == null) {
-        IJ.showStatus(FindFoci.TITLE + " failed");
+        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
         notify(MessageType.FAILED);
         return;
       }
@@ -382,7 +383,7 @@ public class FindFociRunner extends Thread {
           options, results);
     }
 
-    IJ.showStatus(FindFoci.TITLE + " finished");
+    IJ.showStatus(FindFoci_PlugIn.TITLE + " finished");
     notify(MessageType.DONE);
 
     previousModel = model;

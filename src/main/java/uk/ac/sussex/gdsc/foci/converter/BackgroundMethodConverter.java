@@ -21,9 +21,10 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFoci;
+import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 
 import org.jdesktop.beansbinding.Converter;
 
@@ -33,13 +34,13 @@ import org.jdesktop.beansbinding.Converter;
 public class BackgroundMethodConverter extends Converter<Integer, Object> {
   @Override
   public String convertForward(Integer paramT) {
-    return FindFoci.backgroundMethods[paramT.intValue()];
+    return FindFoci_PlugIn.backgroundMethods[paramT.intValue()];
   }
 
   @Override
   public Integer convertReverse(Object paramS) {
-    for (int i = 0; i < FindFoci.backgroundMethods.length; i++) {
-      if (FindFoci.backgroundMethods[i].equals(paramS)) {
+    for (int i = 0; i < FindFoci_PlugIn.backgroundMethods.length; i++) {
+      if (FindFoci_PlugIn.backgroundMethods[i].equals(paramS)) {
         return Integer.valueOf(i);
       }
     }

@@ -21,13 +21,16 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.core.match.Coordinate;
 
 /**
- * Stores a 2D/3D point. <p> Overrides equals and hashCode methods using x,y,z, coordinates for
- * equivalence. Derived classes can optionally override this.
+ * Stores a 2D/3D point.
+ *
+ * <p>Overrides equals and hashCode methods using x,y,z, coordinates for equivalence. Derived
+ * classes can optionally override this.
  *
  * @see java.lang.Object#equals(java.lang.Object)
  * @see java.lang.Object#hashCode()

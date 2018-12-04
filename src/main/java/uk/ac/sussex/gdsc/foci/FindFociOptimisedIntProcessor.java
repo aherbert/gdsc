@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
@@ -35,8 +36,10 @@ import java.util.Arrays;
 import java.util.Collections;
 
 /**
- * Find the peak intensity regions of an image. <P> Extends the FindFociIntProcessor to override the
- * FindFociBaseProcessor methods with integer specific processing.
+ * Find the peak intensity regions of an image.
+ *
+ * <p>Extends the FindFociIntProcessor to override the FindFociBaseProcessor methods with integer
+ * specific processing.
  */
 public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
   /** {@inheritDoc} */
@@ -78,7 +81,8 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
          * check whether we have a local maximum.
          */
         final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
-        boolean isMax = true, equalNeighbour = false;
+        boolean isMax = true;
+        boolean equalNeighbour = false;
 
         // It is more likely that the z stack will be out-of-bounds.
         // Adopt the xy limit lookup and process z lookup separately
@@ -101,9 +105,9 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         if (isMax) {
           id++;
-          if (id >= FindFoci.searchCapacity) {
+          if (id >= FindFoci_PlugIn.searchCapacity) {
             IJ.log("The number of potential maxima exceeds the search capacity: "
-                + FindFoci.searchCapacity
+                + FindFoci_PlugIn.searchCapacity
                 + ". Try using a denoising/smoothing filter or increase the capacity.");
             return null;
           }
@@ -145,7 +149,8 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
          */
         final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
         final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
-        boolean isMax = true, equalNeighbour = false;
+        boolean isMax = true;
+        boolean equalNeighbour = false;
 
         // It is more likely that the z stack will be out-of-bounds.
         // Adopt the xy limit lookup and process z lookup separately
@@ -168,9 +173,9 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         if (isMax) {
           id++;
-          if (id >= FindFoci.searchCapacity) {
+          if (id >= FindFoci_PlugIn.searchCapacity) {
             IJ.log("The number of potential maxima exceeds the search capacity: "
-                + FindFoci.searchCapacity
+                + FindFoci_PlugIn.searchCapacity
                 + ". Try using a denoising/smoothing filter or increase the capacity.");
             return null;
           }

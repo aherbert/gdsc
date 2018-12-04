@@ -21,11 +21,12 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.model;
 
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.foci.FindFoci;
 import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -33,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Provides a bean property model for the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.
+ * Provides a bean property model for the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn} algorithm.
  */
 public class FindFociModel extends AbstractModelObject implements Cloneable {
   private int backgroundMethod = FindFociProcessor.BACKGROUND_AUTO_THRESHOLD;
@@ -63,7 +64,7 @@ public class FindFociModel extends AbstractModelObject implements Cloneable {
   private boolean saveResults = false;
   private String resultsDirectory = null;
   private double gaussianBlur = 0;
-  private int centreMethod = FindFoci.CENTRE_MAX_VALUE_SEARCH;
+  private int centreMethod = FindFoci_PlugIn.CENTRE_MAX_VALUE_SEARCH;
   private double centreParameter = 2;
   private double fractionParameter = 0.5;
   private boolean objectAnalysis = false;
@@ -781,14 +782,8 @@ public class FindFociModel extends AbstractModelObject implements Cloneable {
       newModel = (FindFociModel) super.clone();
 
       // Create duplicates of the objects
-      newModel.imageList = new ArrayList<>(this.imageList.size());
-      for (final String item : this.imageList) {
-        newModel.imageList.add(item);
-      }
-      newModel.maskImageList = new ArrayList<>(this.maskImageList.size());
-      for (final String item : this.maskImageList) {
-        newModel.maskImageList.add(item);
-      }
+      newModel.imageList = new ArrayList<>(this.imageList);
+      newModel.maskImageList = new ArrayList<>(this.maskImageList);
 
       return newModel;
     } catch (final CloneNotSupportedException ex) {

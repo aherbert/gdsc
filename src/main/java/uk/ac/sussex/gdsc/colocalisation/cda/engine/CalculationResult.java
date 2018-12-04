@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.colocalisation.cda.engine;
 
 /**
@@ -28,16 +29,16 @@ package uk.ac.sussex.gdsc.colocalisation.cda.engine;
  */
 public class CalculationResult {
   /** The shift distance. */
-  public double distance;
+  public final double distance;
 
-  /** The first Mander's coefficient */
-  public double m1;
+  /** The first Mander's coefficient. */
+  public final double m1;
 
-  /** The second Mander's coefficient */
-  public double m2;
+  /** The second Mander's coefficient. */
+  public final double m2;
 
   /** The correlation. */
-  public double r;
+  public final double correlation;
 
   /**
    * Instantiates a new calculation result.
@@ -45,12 +46,12 @@ public class CalculationResult {
    * @param distance the shift distance
    * @param m1 The first Mander's coefficient
    * @param m2 The second Mander's coefficient
-   * @param r the corrrelation
+   * @param correlation the corrrelation
    */
-  public CalculationResult(double distance, double m1, double m2, double r) {
+  public CalculationResult(double distance, double m1, double m2, double correlation) {
     this.distance = distance;
     this.m1 = m1;
     this.m2 = m2;
-    this.r = r;
+    this.correlation = correlation;
   }
 }

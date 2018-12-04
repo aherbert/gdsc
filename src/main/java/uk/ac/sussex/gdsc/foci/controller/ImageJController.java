@@ -21,11 +21,12 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.controller;
 
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.foci.FindFoci;
 import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 import ij.IJ;
@@ -38,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci } algorithm.
+ * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn } algorithm.
  */
 public class ImageJController extends FindFociController {
   private FindFociRunner runner = null;
@@ -71,7 +72,7 @@ public class ImageJController extends FindFociController {
           || imp.getType() == ImagePlus.GRAY32)) {
         // Check it is not one the result images
         final String imageTitle = imp.getTitle();
-        if (!imageTitle.endsWith(FindFoci.TITLE)) {
+        if (!imageTitle.endsWith(FindFoci_PlugIn.TITLE)) {
           imageList.add(imageTitle);
         }
       }
@@ -83,7 +84,7 @@ public class ImageJController extends FindFociController {
     final String title = model.getSelectedImage();
     final ImagePlus imp = WindowManager.getImage(title);
 
-    model.setMaskImageList(FindFoci.buildMaskList(imp));
+    model.setMaskImageList(FindFoci_PlugIn.buildMaskList(imp));
   }
 
   /** {@inheritDoc} */
@@ -96,7 +97,7 @@ public class ImageJController extends FindFociController {
       return;
     }
 
-    if (!FindFoci.isSupported(imp.getBitDepth())) {
+    if (!FindFoci_PlugIn.isSupported(imp.getBitDepth())) {
       return;
     }
 
@@ -136,7 +137,7 @@ public class ImageJController extends FindFociController {
     final double centreParameter = model.getCentreParameter();
     final double fractionParameter = model.getFractionParameter();
 
-    int outputType = FindFoci.getOutputMaskFlags(showMask);
+    int outputType = FindFoci_PlugIn.getOutputMaskFlags(showMask);
 
     if (overlayMask) {
       outputType += FindFociProcessor.OUTPUT_OVERLAY_MASK;
@@ -201,11 +202,11 @@ public class ImageJController extends FindFociController {
       // These options should match the parameter names assigned within the FindFoci GenericDialog.
       Recorder.setCommand("FindFoci");
       Recorder.recordOption("Mask", maskImage);
-      Recorder.recordOption("Background_method", FindFoci.backgroundMethods[backgroundMethod]);
+      Recorder.recordOption("Background_method", FindFoci_PlugIn.backgroundMethods[backgroundMethod]);
       Recorder.recordOption("Background_parameter", "" + backgroundParameter);
       Recorder.recordOption("Auto_threshold", thresholdMethod);
       Recorder.recordOption("Statistics_mode", statisticsMode);
-      Recorder.recordOption("Search_method", FindFoci.searchMethods[searchMethod]);
+      Recorder.recordOption("Search_method", FindFoci_PlugIn.searchMethods[searchMethod]);
       Recorder.recordOption("Search_parameter", "" + searchParameter);
       Recorder.recordOption("Minimum_size", "" + minSize);
       if (minimumAboveSaddle) {
@@ -214,11 +215,11 @@ public class ImageJController extends FindFociController {
       if (connectedAboveSaddle) {
         Recorder.recordOption("Connected_above_saddle");
       }
-      Recorder.recordOption("Minimum_peak_height", FindFoci.peakMethods[peakMethod]);
+      Recorder.recordOption("Minimum_peak_height", FindFoci_PlugIn.peakMethods[peakMethod]);
       Recorder.recordOption("Peak_parameter", "" + peakParameter);
-      Recorder.recordOption("Sort_method", FindFoci.sortIndexMethods[sortMethod]);
+      Recorder.recordOption("Sort_method", FindFoci_PlugIn.sortIndexMethods[sortMethod]);
       Recorder.recordOption("Maximum_peaks", "" + maxPeaks);
-      Recorder.recordOption("Show_mask", FindFoci.maskOptions[showMask]);
+      Recorder.recordOption("Show_mask", FindFoci_PlugIn.maskOptions[showMask]);
       if (overlayMask) {
         Recorder.recordOption("Overlay_mask");
       }
@@ -263,7 +264,7 @@ public class ImageJController extends FindFociController {
         Recorder.recordOption("Save_to_memory");
       }
       Recorder.recordOption("Gaussian_blur", "" + gaussianBlur);
-      Recorder.recordOption("Centre_method", FindFoci.getCentreMethods()[centreMethod]);
+      Recorder.recordOption("Centre_method", FindFoci_PlugIn.getCentreMethods()[centreMethod]);
       Recorder.recordOption("Centre_parameter", "" + centreParameter);
       Recorder.saveCommand();
     }
@@ -273,8 +274,8 @@ public class ImageJController extends FindFociController {
     final ImagePlus mask = WindowManager.getImage(maskImage);
 
     // Run the plugin
-    UsageTracker.recordPlugin(FindFoci.class, "");
-    final FindFoci ff = new FindFoci();
+    UsageTracker.recordPlugin(FindFoci_PlugIn.class, "");
+    final FindFoci_PlugIn ff = new FindFoci_PlugIn();
     if (saveResults) {
       ff.setResultsDirectory(resultsDirectory);
     }
@@ -293,7 +294,7 @@ public class ImageJController extends FindFociController {
       return;
     }
 
-    if (!FindFoci.isSupported(imp.getBitDepth())) {
+    if (!FindFoci_PlugIn.isSupported(imp.getBitDepth())) {
       return;
     }
 

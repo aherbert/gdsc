@@ -21,12 +21,15 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.controller;
 
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 /**
- * Controls the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.
+ * Controls the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn} algorithm.
+ *
+ * <p>The algorithm is executed in the {@link Runnable#run()} method.
  */
 public abstract class FindFociController implements Runnable {
   /**
@@ -59,12 +62,6 @@ public abstract class FindFociController implements Runnable {
    * Updates the list of images.
    */
   public abstract void updateImageList();
-
-  /**
-   * Run the FindFoci algorithm.
-   */
-  @Override
-  public abstract void run();
 
   /**
    * Preview the results of the FindFoci algorithm.

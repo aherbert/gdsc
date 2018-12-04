@@ -21,10 +21,11 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.model;
 
 /**
- * Defines the different processing states for the {@link uk.ac.sussex.gdsc.foci.FindFoci}
+ * Defines the different processing states for the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn}
  * algorithm.
  */
 public enum FindFociState {

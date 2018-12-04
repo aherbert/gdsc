@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.ij.plugin.filter;
 
 import ij.IJ;
@@ -139,7 +140,10 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
 
   static final String OPTIONS = "ap.options";
 
-  static final int BYTE = 0, SHORT = 1, FLOAT = 2, RGB = 3;
+  static final int BYTE = 0;
+  static final int SHORT = 1;
+  static final int FLOAT = 2;
+  static final int RGB = 3;
   static final double DEFAULT_MIN_SIZE = 0.0;
   static final double DEFAULT_MAX_SIZE = Double.POSITIVE_INFINITY;
 
@@ -149,7 +153,8 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
   private static int staticOptions = Prefs.getInt(OPTIONS, CLEAR_WORKSHEET);
   private static String[] showStrings = {"Nothing", "Outlines", "Bare Outlines", "Ellipses",
       "Masks", "Count Masks", "Overlay Outlines", "Overlay Masks"};
-  private static double staticMinCircularity = 0.0, staticMaxCircularity = 1.0;
+  private static double staticMinCircularity = 0.0;
+  private static double staticMaxCircularity = 1.0;
   private static String prevHdr;
 
   /** Show nothing. */
@@ -220,9 +225,12 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
   /** The show results window flag. */
   protected boolean showResultsWindow = true;
   private String summaryHdr = "Slice\tCount\tTotal Area\tAverage Size\t%Area";
-  private double level1, level2;
-  private double minSize, maxSize;
-  private double minCircularity, maxCircularity;
+  private double level1;
+  private double level2;
+  private double minSize;
+  private double maxSize;
+  private double minCircularity;
+  private double maxCircularity;
   private int showChoice;
   private int options;
   private int measurements;
@@ -231,7 +239,8 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
   private double fillColor;
   private boolean thresholdingLUT;
   private ImageProcessor drawIP;
-  private int width, height;
+  private int width;
+  private int height;
   private boolean canceled;
   private ImageStack outlines;
   private IndexColorModel customLut;
@@ -240,9 +249,13 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
   private int totalCount;
   private TextWindow tw;
   private Wand wand;
-  private int imageType, imageType2;
+  private int imageType;
+  private int imageType2;
   private boolean roiNeedsImage;
-  private int minX, maxX, minY, maxY;
+  private int minX;
+  private int maxX;
+  private int minY;
+  private int maxY;
   private ImagePlus redirectImp;
   private ImageProcessor redirectIP;
   private PolygonFiller pf;
@@ -1140,7 +1153,8 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
         final Rectangle bounds = roi.getBounds();
         int x1 = bounds.x + wand.xpoints[wand.npoints - 1];
         int y1 = bounds.y + wand.ypoints[wand.npoints - 1];
-        int x2, y2;
+        int x2;
+        int y2;
         for (int i = 0; i < wand.npoints; i++) {
           x2 = bounds.x + wand.xpoints[i];
           y2 = bounds.y + wand.ypoints[i];
@@ -1309,7 +1323,8 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
       final int nPoints = ((PolygonRoi) roi).getNCoordinates();
       final int[] xp = ((PolygonRoi) roi).getXCoordinates();
       final int[] yp = ((PolygonRoi) roi).getYCoordinates();
-      final int x = r.x, y = r.y;
+      final int x = r.x;
+      final int y = r.y;
       if (!inSituShow) {
         ip.setValue(0.0);
       }

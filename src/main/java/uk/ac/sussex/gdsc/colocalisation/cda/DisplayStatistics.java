@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.colocalisation.cda;
 
 import ij.gui.PlotWindow;
@@ -34,8 +35,9 @@ import java.text.NumberFormat;
 
 /**
  * Wraps the plot window of a PlotResults object. Adds a panel to the bottom containing the
- * probability statistics. <p> This class is based on the original CDA_Plugin developed by Maria
- * Osorio-Reich: <a href=
+ * probability statistics.
+ *
+ * <p>This class is based on the original CDA_Plugin developed by Maria Osorio-Reich: <a href=
  * "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:confined_displacement_algorithm_determines_true_and_random_colocalization_:start">Confined
  * Displacement Algorithm Determines True and Random Colocalization</a>
  */

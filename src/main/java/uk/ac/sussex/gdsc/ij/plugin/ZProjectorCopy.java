@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.ij.plugin;
 
 import ij.CompositeImage;
@@ -43,7 +44,9 @@ import java.util.Arrays;
 
 /**
  * This plugin performs a z-projection of the input stack. Type of output image is same as type of
- * input image. <p> Copied from {@link ij.plugin.ZProjector}.
+ * input image.
+ *
+ * <p>Copied from {@link ij.plugin.ZProjector}.
  *
  * @author Patrick Kelly &lt;phkelly@ucsd.edu&gt;
  */
@@ -88,7 +91,7 @@ public class ZProjectorCopy implements PlugIn {
   protected int startSlice = 1;
   /** Projection ends at this slice. */
   protected int stopSlice = 1;
-  /** Project all time points? */
+  /** Project all time points. */
   protected boolean allTimeFrames = true;
 
   private String color = "";
@@ -278,7 +281,9 @@ public class ZProjectorCopy implements PlugIn {
     color = "(blue)";
     doProjection();
     final ImagePlus blue2 = projImage;
-    final int w = red2.getWidth(), h = red2.getHeight(), d = red2.getStackSize();
+    final int w = red2.getWidth();
+    final int h = red2.getHeight();
+    final int d = red2.getStackSize();
     if (method == SD_METHOD) {
       final ImageProcessor r = red2.getProcessor();
       final ImageProcessor g = green2.getProcessor();
@@ -643,7 +648,8 @@ public class ZProjectorCopy implements PlugIn {
   /** Compute average intensity projection. */
   private class AverageIntensity extends RayFunction {
     private final float[] fpixels;
-    private final int num, len;
+    private final int num;
+    private final int len;
 
     /**
      * Constructor requires number of slices to be projected. This is used to determine average at
@@ -786,8 +792,10 @@ public class ZProjectorCopy implements PlugIn {
   /** Compute standard deviation projection. */
   private class StandardDeviation extends RayFunction {
     private final float[] result;
-    private final double[] sum, sum2;
-    private final int num, len;
+    private final double[] sum;
+    private final double[] sum2;
+    private final int num;
+    private final int len;
 
     public StandardDeviation(FloatProcessor fp, int num) {
       result = (float[]) fp.getPixels();
@@ -847,4 +855,4 @@ public class ZProjectorCopy implements PlugIn {
 
   } // end StandardDeviation
 
-} // end ZProjection
+} // end ZProjection.

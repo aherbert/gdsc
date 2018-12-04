@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.ij.plugin.filter;
 
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
@@ -57,14 +58,18 @@ import java.util.List;
 /**
  * Extend the ImageJ Particle Analyser to allow the particles to be obtained from an input mask with
  * objects assigned using contiguous pixels with a unique value. If blank pixels exist between two
- * objects with the same pixel value then they will be treated as separate objects. <p> Adds an
- * option to select the redirection image for particle analysis. This can be none. <p> If the input
- * image is a mask then the functionality is the same as the original ParticleAnalyzer class. <p>
- * Note: This class used to extend the default ImageJ ParticleAnalyzer. However the Java inheritance
- * method invocation system would not call the MaskParticleAnalyzer.analyseParticle(...) method.
- * This may be due to it being a default (package) scoped method. It works on the Linux JVM but not
- * on Windows. It would call the protected/public methods that had been overridden, just not the
- * default scope method. I have thus changed it to extend a copy of the ImageJ ParticleAnalyzer.
+ * objects with the same pixel value then they will be treated as separate objects.
+ *
+ * <p>Adds an option to select the redirection image for particle analysis. This can be none.
+ *
+ * <p>If the input image is a mask then the functionality is the same as the original
+ * ParticleAnalyzer class.
+ *
+ * <p>Note: This class used to extend the default ImageJ ParticleAnalyzer. However the Java
+ * inheritance method invocation system would not call the MaskParticleAnalyzer.analyseParticle(...)
+ * method. This may be due to it being a default (package) scoped method. It works on the Linux JVM
+ * but not on Windows. It would call the protected/public methods that had been overridden, just not
+ * the default scope method. I have thus changed it to extend a copy of the ImageJ ParticleAnalyzer.
  * This can be updated with new version from the ImageJ source code as appropriate and default
  * scoped methods set to protected.
  */
@@ -81,11 +86,14 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
   private float[] image;
   private float value;
   private boolean noThreshold = false;
-  private double dmin, dmax;
+  private double dmin;
+  private double dmax;
 
   // Methods to allow the Analyzer class package level fields to be set.
   // This is not possible on the Windows JVM but is OK on linux.
-  private static Field firstParticle, lastParticle;
+  private static Field firstParticle;
+  private static Field lastParticle;
+
   static {
     try {
       firstParticle = Analyzer.class.getDeclaredField("firstParticle");
@@ -185,7 +193,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
         gd.addMessage(
             "Warning: The image is not thresholded / 8-bit binary mask.\nContinuing will use the min/max values in the image which\nmay produce many objects.");
       }
-      gd.addHelp(uk.ac.sussex.gdsc.help.URL.FIND_FOCI);
+      gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI);
       gd.showDialog();
       if (gd.wasCanceled()) {
         return DONE;

@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci;
 
 import java.util.LinkedList;
@@ -31,7 +32,7 @@ import java.util.List;
  * a coordinate with any point within the sampling resolution to locate the highest unassigned grid
  * point.
  *
- * Currently only supports a 2D grid.
+ * <p>Currently only supports a 2D grid.
  */
 public class GridPointManager {
   private final List<GridPoint> allPoints;
@@ -42,7 +43,9 @@ public class GridPointManager {
   private int minY = Integer.MAX_VALUE;
   private int searchMode = 0;
 
-  /** Define the search modes for the {@link #findUnassignedPoint(int, int)} method. */
+  /**
+   * Define the search modes for the {@link #findUnassignedPoint(int, int)} method.
+   */
   public static final String[] SEARCH_MODES = new String[] {"Highest", "Closest"};
 
   /** Constant for finding the highest point. */
@@ -115,9 +118,9 @@ public class GridPointManager {
     return (y - minY) / resolution;
   }
 
-  private void addToGrid(GridPoint p) {
-    final int xBlock = getXBlock(p.getXint());
-    final int yBlock = getYBlock(p.getYint());
+  private void addToGrid(GridPoint point) {
+    final int xBlock = getXBlock(point.getXint());
+    final int yBlock = getYBlock(point.getYint());
     @SuppressWarnings("unchecked")
     LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[xBlock][yBlock];
     if (points == null) {
@@ -125,8 +128,8 @@ public class GridPointManager {
       grid[xBlock][yBlock] = points;
     }
 
-    p.setAssigned(false);
-    points.add(p);
+    point.setAssigned(false);
+    points.add(point);
   }
 
   /**

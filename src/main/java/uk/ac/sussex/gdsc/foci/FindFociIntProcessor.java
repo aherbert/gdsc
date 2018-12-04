@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.core.threshold.Histogram;
@@ -32,20 +33,28 @@ import ij.process.ImageProcessor;
 /**
  * Find the peak intensity regions of an image.
  *
- * <P> All local maxima above threshold are identified. For all other pixels the direction to the
+ *
+ *
+ * <p>All local maxima above threshold are identified. For all other pixels the direction to the
  * highest neighbour pixel is stored (steepest gradient). In order of highest local maxima, regions
  * are only grown down the steepest gradient to a lower pixel. Provides many configuration options
  * for regions growing thresholds.
  *
- * <P> This plugin was based on {@link ij.plugin.filter.MaximumFinder}. Options have been changed to
+ *
+ *
+ * <p>This plugin was based on {@link ij.plugin.filter.MaximumFinder}. Options have been changed to
  * only support greyscale 2D images and 3D stacks and to perform region growing using configurable
  * thresholds. Support for Watershed, Previewing, and Euclidian Distance Map (EDM) have been
  * removed.
  *
- * <P> Stopping criteria for region growing routines are partly based on the options in PRIISM
+ *
+ *
+ * <p>Stopping criteria for region growing routines are partly based on the options in PRIISM
  * (http://www.msg.ucsf.edu/IVE/index.html).
  *
- * <p> Supports 8- or 16-bit images
+ *
+ *
+ * <p>Supports 8- or 16-bit images
  */
 public class FindFociIntProcessor extends FindFociBaseProcessor {
   /** The image. */

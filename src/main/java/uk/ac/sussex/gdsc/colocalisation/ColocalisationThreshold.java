@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.colocalisation;
 
 import ij.IJ;
@@ -40,7 +41,7 @@ import java.util.Collections;
  * performed to iteratively reduce two image thresholds until all pixels below these thresholds
  * produce a negative correlation.
  *
- * Based on the Colocalisation_Threshold plugin at
+ * <p>Based on the Colocalisation_Threshold plugin at
  * http://www.uhnres.utoronto.ca/facilities/wcif/imagej/colour_analysis.htm#6.3 Colocalisation
  * Threshold
  */
@@ -345,7 +346,8 @@ public class ColocalisationThreshold {
     final int width = imp1.getWidth();
     final int height = imp1.getHeight();
 
-    int rwidth, rheight;
+    int rwidth;
+    int rheight;
 
     if (roiRect == null) {
       rwidth = width;
@@ -373,7 +375,10 @@ public class ColocalisationThreshold {
     final int width = imp1.getWidth();
     final int height = imp1.getHeight();
 
-    int xOffset, yOffset, rwidth, rheight;
+    int xOffset;
+    int yOffset;
+    int rwidth;
+    int rheight;
 
     if (roiRect == null) {
       xOffset = 0;
@@ -409,7 +414,8 @@ public class ColocalisationThreshold {
 
   private boolean findThreshold(int[] i1, int[] i2, int lowerThreshold, int upperThreshold,
       int currentThreshold) {
-    int ch1, ch2;
+    int ch1;
+    int ch2;
 
     // Create the results and add the global correlation - this will be the fallback result
     results = new ArrayList<>(maxIterations);
@@ -441,10 +447,14 @@ public class ColocalisationThreshold {
       // A = both channels above the threshold
       // B = either channel below the threshold
 
-      long ch1SumA = 0, ch2SumA = 0;
-      int nZeroA = 0, nA = 0;
-      long ch1SumB = 0, ch2SumB = 0;
-      int nZeroB = 0, nB = 0;
+      long ch1SumA = 0;
+      long ch2SumA = 0;
+      int nZeroA = 0;
+      int nA = 0;
+      long ch1SumB = 0;
+      long ch2SumB = 0;
+      int nZeroB = 0;
+      int nB = 0;
 
       // Get means
       for (int i = i1.length; i-- > 0;) {
@@ -550,7 +560,8 @@ public class ColocalisationThreshold {
 
   private boolean findThresholdExhaustive(int[] i1, int[] i2, int lowerThreshold,
       int upperThreshold, int currentThreshold) {
-    int ch1, ch2;
+    int ch1;
+    int ch2;
 
     // Create the results and add the global correlation - this will be the fallback result
     results = new ArrayList<>(maxIterations);
@@ -575,10 +586,14 @@ public class ColocalisationThreshold {
       // A = both channels above the threshold
       // B = either channel below the threshold
 
-      long ch1SumA = 0, ch2SumA = 0;
-      int nZeroA = 0, nA = 0;
-      long ch1SumB = 0, ch2SumB = 0;
-      int nZeroB = 0, nB = 0;
+      long ch1SumA = 0;
+      long ch2SumA = 0;
+      int nZeroA = 0;
+      int nA = 0;
+      long ch1SumB = 0;
+      long ch2SumB = 0;
+      int nZeroB = 0;
+      int nB = 0;
 
       // Get means
       for (int i = i1.length; i-- > 0;) {

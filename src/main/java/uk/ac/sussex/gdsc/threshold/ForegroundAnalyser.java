@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.threshold;
 
 import uk.ac.sussex.gdsc.UsageTracker;
@@ -115,7 +116,7 @@ public class ForegroundAnalyser implements PlugInFilter {
     if (is32bit) {
       gd.addChoice("Histogram_bins", BINS, histogramBins);
     }
-    gd.addHelp(uk.ac.sussex.gdsc.help.URL.UTILITY);
+    gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
 
     gd.showDialog();
 

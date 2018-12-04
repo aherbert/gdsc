@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci;
 
 import java.util.Arrays;
@@ -30,8 +31,13 @@ import java.util.Arrays;
  */
 public class ObjectAnalyzer3D {
   private final int[] maskImage;
-  private final int maxx, maxy, maxz, maxx_maxy;
-  private final int xlimit, ylimit, zlimit;
+  private final int maxx;
+  private final int maxy;
+  private final int maxz;
+  private final int maxx_maxy;
+  private final int xlimit;
+  private final int ylimit;
+  private final int zlimit;
   private boolean eightConnected;
   private int[] objectMask;
   private int maxObject;

@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.gui;
 
 import uk.ac.sussex.gdsc.foci.controller.OptimiserController;
@@ -58,7 +59,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 /**
- * Provides a permanent form front-end for the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.
+ * Provides a permanent form front-end for the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn} algorithm.
  */
 public class OptimiserView extends JFrame {
   private static final long serialVersionUID = -3283971398975124411L;
@@ -169,7 +170,7 @@ public class OptimiserView extends JFrame {
       @SuppressWarnings("unused")
       @Override
       public void mouseClicked(MouseEvent e) {
-        final String macro = "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.URL.FIND_FOCI + "');";
+        final String macro = "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI + "');";
         new MacroRunner(macro);
       }
     });

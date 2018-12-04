@@ -21,14 +21,15 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.FloatHistogram;
 import uk.ac.sussex.gdsc.core.threshold.Histogram;
-import uk.ac.sussex.gdsc.threshold.Multi_OtsuThreshold;
-import uk.ac.sussex.gdsc.utils.GaussianFit;
+import uk.ac.sussex.gdsc.threshold.MultiOtsuThreshold_PlugIn;
+import uk.ac.sussex.gdsc.utils.GaussianFit_PlugIn;
 
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
@@ -51,23 +52,30 @@ import java.util.logging.Logger;
 /**
  * Find the peak intensity regions of an image.
  *
- * <P> All local maxima above threshold are identified. For all other pixels the direction to the
+ *
+ *
+ * <p>All local maxima above threshold are identified. For all other pixels the direction to the
  * highest neighbour pixel is stored (steepest gradient). In order of highest local maxima, regions
  * are only grown down the steepest gradient to a lower pixel. Provides many configuration options
  * for regions growing thresholds.
  *
- * <P> This plugin was based on {@link ij.plugin.filter.MaximumFinder}. Options have been changed to
+ *
+ *
+ * <p>This plugin was based on {@link ij.plugin.filter.MaximumFinder}. Options have been changed to
  * only support greyscale 2D images and 3D stacks and to perform region growing using configurable
  * thresholds. Support for Watershed, Previewing, and Euclidian Distance Map (EDM) have been
  * removed.
  *
- * <P> Stopping criteria for region growing routines are partly based on the options in PRIISM
+ *
+ *
+ * <p>Stopping criteria for region growing routines are partly based on the options in PRIISM
  * (http://www.msg.ucsf.edu/IVE/index.html).
  */
 public abstract class FindFociBaseProcessor implements FindFociProcessor {
   /**
-   * The largest number that can be displayed in a 16-bit image. <p> Note searching for maxima uses
-   * 32-bit integers but ImageJ can only display 16-bit images.
+   * The largest number that can be displayed in a 16-bit image.
+   *
+   * <p>Note searching for maxima uses 32-bit integers but ImageJ can only display 16-bit images.
    */
   private static final int MAXIMA_CAPCITY = 65535;
 
@@ -83,9 +91,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
   protected int ylimit;
   /** The limit in the z dimension (max-1). */
   protected int zlimit;
-  /** {@link #maxx} * {@link #maxy} */
+  /** {@link #maxx} * {@link #maxy}. */
   protected int maxx_maxy;
-  /** {@link #maxx} * {@link #maxy} * {@link #maxz} */
+  /** {@link #maxx} * {@link #maxy} * {@link #maxz}. */
   protected int maxx_maxy_maxz;
   /**
    * The index offset table using for 26-connected search. Computed using the image dimensions for
@@ -166,7 +174,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     // options |= OPTION_CONTIGUOUS_ABOVE_SADDLE;
 
     if (isLogging) {
-      log("---" + FindFoci.newLine + FindFoci.TITLE + " : " + imp.getTitle());
+      log("---" + FindFoci_PlugIn.newLine + FindFoci_PlugIn.TITLE + " : " + imp.getTitle());
     }
 
     // Call first to set up the processing for isWithin;
@@ -191,7 +199,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     final Object image;
     if (blur > 0) {
       // Apply a Gaussian pre-processing step
-      image = extractImage(FindFoci.applyBlur(imp, blur));
+      image = extractImage(FindFoci_PlugIn.applyBlur(imp, blur));
     } else {
       // The images are the same so just copy the reference
       image = originalImage;
@@ -377,7 +385,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
           types, maxima, stats, resultsArray, nMaxima);
 
       if (outImp == null) {
-        IJ.error(FindFoci.TITLE, "Too many maxima to display in a 16-bit image: " + nMaxima);
+        IJ.error(FindFoci_PlugIn.TITLE, "Too many maxima to display in a 16-bit image: " + nMaxima);
       }
 
       if (isLogging) {
@@ -404,7 +412,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     final int[] statsHistogram = histogram.histogramCounts;
     final int t;
     if (autoThresholdMethod.endsWith("evel")) {
-      final Multi_OtsuThreshold multi = new Multi_OtsuThreshold();
+      final MultiOtsuThreshold_PlugIn multi = new MultiOtsuThreshold_PlugIn();
       multi.ignoreZero = false;
       final int level = autoThresholdMethod.contains("_3_") ? 3 : 4;
       final int[] threshold = multi.calculateThresholds(statsHistogram, level);
@@ -417,7 +425,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     return histogram.getValue(t);
   }
 
-  private long timestamp, timestamp2;
+  private long timestamp;
+  private long timestamp2;
 
   private void timingStart() {
     timestamp = timestamp2 = System.nanoTime();
@@ -457,8 +466,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
   /**
    * Apply a Gaussian blur to the image and returns a new image. Returns the original image if
-   * {@code blur <= 0}. <p> Only blurs the current channel and frame for use in the FindFoci
-   * algorithm.
+   * {@code blur <= 0}.
+   *
+   * <p>Only blurs the current channel and frame for use in the FindFoci algorithm.
    *
    * @param imp the image
    * @param blur The blur standard deviation
@@ -1006,7 +1016,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       }
     }
 
-    final ImagePlus result = new ImagePlus(imageTitle + " " + FindFoci.TITLE, stack);
+    final ImagePlus result = new ImagePlus(imageTitle + " " + FindFoci_PlugIn.TITLE, stack);
     result.setCalibration(imp.getCalibration());
     return result;
   }
@@ -1393,39 +1403,39 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     final boolean floatImage = isFloatProcessor();
 
     final StringBuilder sb = new StringBuilder();
-    sb.append("Image min = ").append(FindFoci.getFormat(stats.imageMinimum, floatImage));
+    sb.append("Image min = ").append(FindFoci_PlugIn.getFormat(stats.imageMinimum, floatImage));
     if (exclusion > 0) {
       sb.append("\nImage stats (inside mask/ROI) : Min = ");
     } else {
       sb.append("\nImage stats : Min = ");
     }
-    sb.append(FindFoci.getFormat(stats.regionMinimum, floatImage));
-    sb.append(", Max = ").append(FindFoci.getFormat(stats.regionMaximum, floatImage));
-    sb.append(", Mean = ").append(FindFoci.getFormat(stats.regionAverage));
-    sb.append(", StdDev = ").append(FindFoci.getFormat(stats.regionStdDev));
+    sb.append(FindFoci_PlugIn.getFormat(stats.regionMinimum, floatImage));
+    sb.append(", Max = ").append(FindFoci_PlugIn.getFormat(stats.regionMaximum, floatImage));
+    sb.append(", Mean = ").append(FindFoci_PlugIn.getFormat(stats.regionAverage));
+    sb.append(", StdDev = ").append(FindFoci_PlugIn.getFormat(stats.regionStdDev));
     log(sb.toString());
 
     sb.setLength(0);
     if (exclusion > 0) {
-      sb.append("Background stats (mode=").append(FindFoci.getStatisticsMode(options))
+      sb.append("Background stats (mode=").append(FindFoci_PlugIn.getStatisticsMode(options))
           .append(") : Min = ");
     } else {
       sb.append("Background stats : Min = ");
     }
-    sb.append(FindFoci.getFormat(stats.backgroundRegionMinimum, floatImage));
-    sb.append(", Max = ").append(FindFoci.getFormat(stats.backgroundRegionMaximum, floatImage));
-    sb.append(", Mean = ").append(FindFoci.getFormat(stats.backgroundRegionAverage));
-    sb.append(", StdDev = ").append(FindFoci.getFormat(stats.backgroundRegionStdDev));
+    sb.append(FindFoci_PlugIn.getFormat(stats.backgroundRegionMinimum, floatImage));
+    sb.append(", Max = ").append(FindFoci_PlugIn.getFormat(stats.backgroundRegionMaximum, floatImage));
+    sb.append(", Mean = ").append(FindFoci_PlugIn.getFormat(stats.backgroundRegionAverage));
+    sb.append(", StdDev = ").append(FindFoci_PlugIn.getFormat(stats.backgroundRegionStdDev));
     if (stats.imageMinimum < 0 && isSortIndexSensitiveToNegativeValues(sortIndex)) {
       sb.append(
           "\nWARNING: Image minimum is below zero and the chosen sort index is sensitive to negative values: "
-              + FindFoci.sortIndexMethods[sortIndex]);
+              + FindFoci_PlugIn.sortIndexMethods[sortIndex]);
     }
     log(sb.toString());
   }
 
   private String getFormat(double value) {
-    return FindFoci.getFormat(value, isFloatProcessor());
+    return FindFoci_PlugIn.getFormat(value, isFloatProcessor());
   }
 
   /**
@@ -1832,7 +1842,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
          * check whether we have a local maximum.
          */
         final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
-        boolean isMax = true, equalNeighbour = false;
+        boolean isMax = true;
+        boolean equalNeighbour = false;
 
         // It is more likely that the z stack will be out-of-bounds.
         // Adopt the xy limit lookup and process z lookup separately
@@ -1855,9 +1866,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
         if (isMax) {
           id++;
-          if (id >= FindFoci.searchCapacity) {
+          if (id >= FindFoci_PlugIn.searchCapacity) {
             log("The number of potential maxima exceeds the search capacity: "
-                + FindFoci.searchCapacity
+                + FindFoci_PlugIn.searchCapacity
                 + ". Try using a denoising/smoothing filter or increase the capacity.");
             return null;
           }
@@ -1899,7 +1910,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
          */
         final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
         final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
-        boolean isMax = true, equalNeighbour = false;
+        boolean isMax = true;
+        boolean equalNeighbour = false;
 
         // It is more likely that the z stack will be out-of-bounds.
         // Adopt the xy limit lookup and process z lookup separately
@@ -1922,9 +1934,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
         if (isMax) {
           id++;
-          if (id >= FindFoci.searchCapacity) {
+          if (id >= FindFoci_PlugIn.searchCapacity) {
             log("The number of potential maxima exceeds the search capacity: "
-                + FindFoci.searchCapacity
+                + FindFoci_PlugIn.searchCapacity
                 + ". Try using a denoising/smoothing filter or increase the capacity.");
             return null;
           }
@@ -3210,7 +3222,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
    * @return the centre of the image
    */
   private int[] findCentreGaussianFit(float[] subImage, int[] dimensions, int projectionMethod) {
-    if (FindFoci.isGaussianFitEnabled < 1) {
+    if (FindFoci_PlugIn.isGaussianFitEnabled < 1) {
       return null;
     }
 
@@ -3240,7 +3252,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       }
     }
 
-    final GaussianFit gf = new GaussianFit();
+    final GaussianFit_PlugIn gf = new GaussianFit_PlugIn();
     final double[] fitParams = gf.fit(projection, dimensions[0], dimensions[1]);
 
     int[] centre = null;
@@ -4541,7 +4553,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
   /**
    * Find the highest saddle. In the even of multiple saddles with the same value the one with the
-   * lowest Id is returned. <p> The Ids must be consolidated before calling this method.
+   * lowest Id is returned.
+   *
+   * <p>The Ids must be consolidated before calling this method.
    *
    * @param saddles the saddles
    * @return the find foci saddle
@@ -4929,7 +4943,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     }
 
     // Support the ROI bounds used to create the analysis region
-    final int lowerx, upperx, lowery, uppery;
+    final int lowerx;
+    final int upperx;
+    final int lowery;
+    final int uppery;
     if (bounds != null) {
       lowerx = bounds.x;
       lowery = bounds.y;
@@ -5748,7 +5765,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       // Create a new ImagePlus so that the stack and calibration can be set
       final ImagePlus imp = new ImagePlus("", stack);
       imp.setCalibration(maximaImp.getCalibration());
-      maskImp = FindFoci.showImage(imp, mask.getTitle() + " Objects", false);
+      maskImp = FindFoci_PlugIn.showImage(imp, mask.getTitle() + " Objects", false);
     }
 
     return maskImp;
@@ -5949,7 +5966,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
   }
 
   /**
-   * Set the logger. If this is null then logging will go to the ImageJ log window
+   * Set the logger. If this is null then logging will go to the ImageJ log window.
    *
    * @param logger the logger to set
    */

@@ -21,12 +21,13 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.threshold.Multi_OtsuThreshold;
-import uk.ac.sussex.gdsc.utils.GaussianFit;
+import uk.ac.sussex.gdsc.threshold.MultiOtsuThreshold_PlugIn;
+import uk.ac.sussex.gdsc.utils.GaussianFit_PlugIn;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -46,7 +47,9 @@ import java.util.LinkedList;
 /**
  * Find the peak intensity regions of an image.
  *
- * <P> This is an old version of the FindFoci algorithm before it was converted to allow 32-bit
+ *
+ *
+ * <p>This is an old version of the FindFoci algorithm before it was converted to allow 32-bit
  * images. It is used for unit testing to ensure the new version functions correctly.
  */
 @SuppressWarnings({"javadoc"})
@@ -57,8 +60,9 @@ public class FindFociLegacy {
   private static String newLine = System.getProperty("line.separator");
 
   /**
-   * The largest number that can be displayed in a 16-bit image. <p> Note searching for maxima uses
-   * 32-bit integers but ImageJ can only display 16-bit images.
+   * The largest number that can be displayed in a 16-bit image.
+   *
+   * <p>Note searching for maxima uses 32-bit integers but ImageJ can only display 16-bit images.
    */
   private static final int MAXIMA_CAPCITY = 65535;
 
@@ -449,13 +453,13 @@ public class FindFociLegacy {
       "Gaussian (original image)"};
 
   static {
-    isGaussianFitEnabled = (GaussianFit.isFittingEnabled()) ? 1 : -1;
+    isGaussianFitEnabled = (GaussianFit_PlugIn.isFittingEnabled()) ? 1 : -1;
     if (isGaussianFitEnabled < 1) {
       centreMethods = Arrays.copyOf(centreMethods, centreMethods.length - 2);
 
       // Debug the reason why fitting is disabled
       if (IJ.shiftKeyDown()) {
-        IJ.log("Gaussian fitting is not enabled:" + newLine + GaussianFit.getErrorMessage());
+        IJ.log("Gaussian fitting is not enabled:" + newLine + GaussianFit_PlugIn.getErrorMessage());
       }
     }
   }
@@ -564,13 +568,17 @@ public class FindFociLegacy {
   /**
    * Here the processing is done: Find the maxima of an image.
    *
-   * <P> Local maxima are processed in order, highest first. Regions are grown from local maxima
+   *
+   *
+   * <p>Local maxima are processed in order, highest first. Regions are grown from local maxima
    * until a saddle point is found or the stopping criteria are met (based on pixel intensity). If a
    * peak does not meet the peak criteria (min size) it is absorbed into the highest peak that
    * touches it (if a neighbour peak exists). Only a single iteration is performed and consequently
    * peak absorption could produce sub-optimal results due to greedy peak growth.
    *
-   * <P> Peak expansion stopping criteria are defined using the method parameter. See
+   *
+   *
+   * <p>Peak expansion stopping criteria are defined using the method parameter. See
    * {@link #SEARCH_ABOVE_BACKGROUND}; {@link #SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND};
    * {@link #SEARCH_HALF_PEAK_VALUE}.
    *
@@ -849,7 +857,7 @@ public class FindFociLegacy {
 
   private static int getThreshold(String autoThresholdMethod, int[] statsHistogram) {
     if (autoThresholdMethod.endsWith("evel")) {
-      final Multi_OtsuThreshold multi = new Multi_OtsuThreshold();
+      final MultiOtsuThreshold_PlugIn multi = new MultiOtsuThreshold_PlugIn();
       multi.ignoreZero = false;
       final int level = autoThresholdMethod.contains("_3_") ? 3 : 4;
       final int[] threshold = multi.calculateThresholds(statsHistogram, level);
@@ -890,7 +898,9 @@ public class FindFociLegacy {
 
   /**
    * Apply a Gaussian blur to the image and returns a new image. Returns the original image if blur
-   * <= 0. <p> Only blurs the current channel and frame for use in the FindFoci algorithm.
+   * <= 0.
+   *
+   * <p>Only blurs the current channel and frame for use in the FindFoci algorithm.
    *
    * @param imp the image
    * @param blur The blur standard deviation
@@ -2834,7 +2844,7 @@ public class FindFociLegacy {
       }
     }
 
-    final GaussianFit gf = new GaussianFit();
+    final GaussianFit_PlugIn gf = new GaussianFit_PlugIn();
     final double[] fitParams = gf.fit(projection, dimensions[0], dimensions[1]);
 
     int[] centre = null;

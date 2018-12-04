@@ -21,11 +21,14 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci;
 
 /**
- * Find the peak intensity regions of an image. <P> Extends the FindFociFloatProcessor to override
- * the FindFociBaseProcessor methods with float specific processing.
+ * Find the peak intensity regions of an image.
+ *
+ * <p>Extends the FindFociFloatProcessor to override the FindFociBaseProcessor methods with float
+ * specific processing.
  */
 public class FindFociOptimisedFloatProcessor extends FindFociFloatProcessor {
   // There may be nothing to optimise.

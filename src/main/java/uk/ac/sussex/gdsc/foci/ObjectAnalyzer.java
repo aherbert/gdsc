@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci;
 
 import ij.process.ByteProcessor;
@@ -182,8 +183,10 @@ public class ObjectAnalyzer {
     return listLen;
   }
 
-  private int maxx, maxy;
-  private int xlimit, ylimit;
+  private int maxx;
+  private int maxy;
+  private int xlimit;
+  private int ylimit;
   private int[] offset;
   private final int[] DIR_X_OFFSET = new int[] {0, 1, 0, -1, 1, 1, -1, -1};
   private final int[] DIR_Y_OFFSET = new int[] {-1, 0, 1, 0, -1, 1, 1, -1};

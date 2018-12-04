@@ -21,12 +21,13 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.controller;
 
-import uk.ac.sussex.gdsc.foci.FindFoci;
 import uk.ac.sussex.gdsc.foci.FindFociProcessor;
 import uk.ac.sussex.gdsc.foci.FindFociResult;
 import uk.ac.sussex.gdsc.foci.FindFociResults;
+import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 import ij.ImagePlus;
@@ -39,7 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci } algorithm and return the
+ * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn } algorithm and return the
  * results.
  */
 public class FindMaximaController extends ImageJController {
@@ -75,7 +76,7 @@ public class FindMaximaController extends ImageJController {
           || imp.getType() == ImagePlus.GRAY32)) {
         // Check it is not one the result images
         final String imageTitle = imp.getTitle();
-        if (!imageTitle.endsWith(FindFoci.TITLE)) {
+        if (!imageTitle.endsWith(FindFoci_PlugIn.TITLE)) {
           imageList.add(imageTitle);
         }
       }
@@ -87,7 +88,7 @@ public class FindMaximaController extends ImageJController {
     final String title = model.getSelectedImage();
     final ImagePlus imp = WindowManager.getImage(title);
 
-    model.setMaskImageList(FindFoci.buildMaskList(imp));
+    model.setMaskImageList(FindFoci_PlugIn.buildMaskList(imp));
   }
 
   /*
@@ -106,7 +107,7 @@ public class FindMaximaController extends ImageJController {
       return;
     }
 
-    if (!FindFoci.isSupported(imp.getBitDepth())) {
+    if (!FindFoci_PlugIn.isSupported(imp.getBitDepth())) {
       return;
     }
 
@@ -170,7 +171,7 @@ public class FindMaximaController extends ImageJController {
     final double centreParameter = model.getCentreParameter();
     final double fractionParameter = model.getFractionParameter();
 
-    int outputType = FindFoci.getOutputMaskFlags(showMask);
+    int outputType = FindFoci_PlugIn.getOutputMaskFlags(showMask);
 
     if (overlayMask) {
       outputType += FindFociProcessor.OUTPUT_OVERLAY_MASK;
@@ -218,7 +219,7 @@ public class FindMaximaController extends ImageJController {
 
     final ImagePlus mask = WindowManager.getImage(maskImage);
 
-    final FindFoci ff = new FindFoci();
+    final FindFoci_PlugIn ff = new FindFoci_PlugIn();
     final FindFociResults results =
         ff.findMaxima(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod,
             searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType,

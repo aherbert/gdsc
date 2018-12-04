@@ -21,13 +21,16 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci;
 
 import ij.ImagePlus;
 
 /**
  * Interface describing the methods for the FindFoci algorithm to find the peak intensity regions of
- * an image. <p> Note this interface serves as the public documentation of the FindFoci algorithm.
+ * an image.
+ *
+ * <p>Note this interface serves as the public documentation of the FindFoci algorithm.
  */
 public interface FindFociProcessor {
   /**
@@ -301,13 +304,17 @@ public interface FindFociProcessor {
   /**
    * Here the processing is done: Find the maxima of an image.
    *
-   * <P> Local maxima are processed in order, highest first. Regions are grown from local maxima
+   *
+   *
+   * <p>Local maxima are processed in order, highest first. Regions are grown from local maxima
    * until a saddle point is found or the stopping criteria are met (based on pixel intensity). If a
    * peak does not meet the peak criteria (min size) it is absorbed into the highest peak that
    * touches it (if a neighbour peak exists). Only a single iteration is performed and consequently
    * peak absorption could produce sub-optimal results due to greedy peak growth.
    *
-   * <P> Peak expansion stopping criteria are defined using the method parameter. See
+   *
+   *
+   * <p>Peak expansion stopping criteria are defined using the method parameter. See
    * {@link #SEARCH_ABOVE_BACKGROUND}; {@link #SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND};
    * {@link #SEARCH_HALF_PEAK_VALUE}.
    *
@@ -354,8 +361,9 @@ public interface FindFociProcessor {
 
   /**
    * Apply a Gaussian blur to the image and returns a new image. Returns the original image if
-   * {@code blur <= 0}. <p> Only blurs the current channel and frame for use in the FindFoci
-   * algorithm.
+   * {@code blur <= 0}.
+   *
+   * <p>Only blurs the current channel and frame for use in the FindFoci algorithm.
    *
    * @param imp the image
    * @param blur The blur standard deviation
@@ -368,8 +376,9 @@ public interface FindFociProcessor {
    * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
    * routine. It does not support logging, interruption or mask generation. The method initialises
    * the system up to the point of background generation. The result object can be cloned and passed
-   * multiple times to later methods for further processing. <p> This method is intended for
-   * benchmarking.
+   * multiple times to later methods for further processing.
+   *
+   * <p>This method is intended for benchmarking.
    *
    * @param originalImp the original image
    * @param imp the image after the blur has been applied ( see {@link #blur(ImagePlus, double)} ).
@@ -403,7 +412,9 @@ public interface FindFociProcessor {
    * This method is a stripped-down version of the
    * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
    * routine. It does not support logging, interruption or mask generation. Only the result array is
-   * generated. <p> This method is intended for benchmarking.
+   * generated.
+   *
+   * <p>This method is intended for benchmarking.
    *
    * @param initResults The output from
    *        {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}. Contents are
@@ -423,7 +434,9 @@ public interface FindFociProcessor {
    * This method is a stripped-down version of the
    * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
    * routine. It does not support logging, interruption or mask generation. Only the result array is
-   * generated. <p> This method is intended for benchmarking.
+   * generated.
+   *
+   * <p>This method is intended for benchmarking.
    *
    * @param initResults The output from
    *        {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
@@ -442,7 +455,9 @@ public interface FindFociProcessor {
    * This method is a stripped-down version of the
    * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
    * routine. It does not support logging, interruption or mask generation. Only the result array is
-   * generated. <p> This method is intended for benchmarking.
+   * generated.
+   *
+   * <p>This method is intended for benchmarking.
    *
    * @param initResults The output from
    *        {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}.
@@ -458,7 +473,9 @@ public interface FindFociProcessor {
    * This method is a stripped-down version of the
    * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
    * routine. It does not support logging, interruption or mask generation. Only the result array is
-   * generated. <p> This method is intended for benchmarking.
+   * generated.
+   *
+   * <p>This method is intended for benchmarking.
    *
    * @param initResults The output from
    *        {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}. Contents are
@@ -479,7 +496,9 @@ public interface FindFociProcessor {
    * This method is a stripped-down version of the
    * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
    * routine. It does not support logging, interruption or mask generation. Only the result array is
-   * generated. <p> This method is intended for benchmarking.
+   * generated.
+   *
+   * <p>This method is intended for benchmarking.
    *
    * @param initResults The output from
    *        {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}. Contents are
@@ -502,7 +521,9 @@ public interface FindFociProcessor {
    * This method is a stripped-down version of the
    * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
    * routine. It does not support logging, interruption or mask generation. Only the result array is
-   * generated. <p> This method is intended for staged processing.
+   * generated.
+   *
+   * <p>This method is intended for staged processing.
    *
    * @param initResults The output from
    *        {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}. Contents are
@@ -525,7 +546,9 @@ public interface FindFociProcessor {
    * This method is a stripped-down version of the
    * {@link #findMaxima(ImagePlus, ImagePlus, int, double, String, int, double, int, int, int, double, int, int, int, double, int, double, double) }
    * routine. It does not support logging, interruption or mask generation. Only the result array is
-   * generated. <p> This method is intended for staged processing.
+   * generated.
+   *
+   * <p>This method is intended for staged processing.
    *
    * @param initResults The output from
    *        {@link #findMaximaInit(ImagePlus, ImagePlus, ImagePlus, int, String, int)}. Contents are

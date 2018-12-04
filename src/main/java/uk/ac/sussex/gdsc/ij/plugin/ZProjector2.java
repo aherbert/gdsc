@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.ij.plugin;
 
 import ij.IJ;
@@ -38,10 +39,11 @@ import ij.process.ShortProcessor;
 import java.util.Arrays;
 
 /**
- * Extend the ZProjector to support mode intensity projection. <p> Note: This class extends a copy
- * of the default ImageJ ZProjector so that certain methods and properties can be changed to
- * protected from the private/default scope. Extending a copy allows easier update when the super
- * class changes.
+ * Extend the ZProjector to support mode intensity projection.
+ *
+ * <p>Note: This class extends a copy of the default ImageJ ZProjector so that certain methods and
+ * properties can be changed to protected from the private/default scope. Extending a copy allows
+ * easier update when the super class changes.
  */
 public class ZProjector2 extends ZProjectorCopy {
   /** Use Mode projection. */
@@ -86,7 +88,7 @@ public class ZProjector2 extends ZProjectorCopy {
     if (isHyperstack && imp.getNFrames() > 1 && imp.getNSlices() > 1) {
       gd.addCheckbox("All time frames", allTimeFrames);
     }
-    gd.addHelp(uk.ac.sussex.gdsc.help.URL.UTILITY);
+    gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
     return gd;
   }
 

@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.colocalisation.cda;
 
 import ij.ImagePlus;
@@ -34,9 +35,9 @@ public class TwinStackShifter {
   private ImageStack result2;
   private int xShift = 0;
   private int yShift = 0;
-  private int w;
-  private int h;
-  private int s;
+  private int width;
+  private int height;
+  private int size;
   private TwinImageShifter[] imageShifters;
 
   /**
@@ -45,6 +46,7 @@ public class TwinStackShifter {
    * @param image1 the first input image
    * @param image2 the second input image
    * @param mask the mask image
+   * @throws IllegalArgumentException If the dimensions do not match
    */
   public TwinStackShifter(ImagePlus image1, ImagePlus image2, ImagePlus mask) {
     initialise(image1.getImageStack(), image2.getImageStack(),
@@ -63,22 +65,21 @@ public class TwinStackShifter {
   }
 
   private void initialise(ImageStack s1, ImageStack s2, ImageStack s3) {
-    w = s1.getWidth();
-    h = s1.getHeight();
-    s = s1.getSize();
+    width = s1.getWidth();
+    height = s1.getHeight();
+    size = s1.getSize();
 
-    if (s2.getWidth() != w || s2.getHeight() != h || s2.getSize() != s) {
-      throw new RuntimeException("The first and second stack dimensions do not match");
+    if (s2.getWidth() != width || s2.getHeight() != height || s2.getSize() != size) {
+      throw new IllegalArgumentException("The first and second stack dimensions do not match");
     }
-    if (s3 != null) {
-      if (s3.getWidth() != w || s3.getHeight() != h || s3.getSize() != s) {
-        throw new RuntimeException("The first and third stack dimensions do not match");
-      }
+    if (s3 != null
+        && (s3.getWidth() != width || s3.getHeight() != height || s3.getSize() != size)) {
+      throw new IllegalArgumentException("The first and third stack dimensions do not match");
     }
 
-    imageShifters = new TwinImageShifter[s];
+    imageShifters = new TwinImageShifter[size];
 
-    for (int n = 1; n <= s; n++) {
+    for (int n = 1; n <= size; n++) {
       imageShifters[n - 1] = new TwinImageShifter(s1.getProcessor(n), s2.getProcessor(n),
           (s3 != null) ? s3.getProcessor(n) : null);
     }
@@ -99,10 +100,10 @@ public class TwinStackShifter {
    * Run.
    */
   public void run() {
-    result1 = new ImageStack(w, h, s);
-    result2 = new ImageStack(w, h, s);
+    result1 = new ImageStack(width, height, size);
+    result2 = new ImageStack(width, height, size);
 
-    for (int n = 1; n <= s; n++) {
+    for (int n = 1; n <= size; n++) {
       final TwinImageShifter shifter = imageShifters[n - 1];
       shifter.setShift(xShift, yShift);
       shifter.run();

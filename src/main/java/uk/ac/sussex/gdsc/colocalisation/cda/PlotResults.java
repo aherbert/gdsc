@@ -21,7 +21,10 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.colocalisation.cda;
+
+import uk.ac.sussex.gdsc.core.utils.ValidationUtils;
 
 import ij.gui.Plot;
 
@@ -30,8 +33,9 @@ import java.awt.Color;
 /**
  * Provides functionality to plot a histogram of sample data and then determine if a value is
  * significant using a specified p-value. I.e. it lies outside the upper/lower tails of the
- * histogram sample data. <p> This class is based on the original CDA_Plugin developed by Maria
- * Osorio-Reich: <a href=
+ * histogram sample data.
+ *
+ * <p>This class is based on the original CDA_Plugin developed by Maria Osorio-Reich: <a href=
  * "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:confined_displacement_algorithm_determines_true_and_random_colocalization_:start">Confined
  * Displacement Algorithm Determines True and Random Colocalization</a>
  */
@@ -48,7 +52,7 @@ public class PlotResults {
   private int[] histogramY;
   private Color color = Color.blue;
   private final double sampleValue;
-  private double pValue = 0.05;
+  private double pvalue = 0.05;
 
   /**
    * Instantiates a new plot results.
@@ -105,10 +109,10 @@ public class PlotResults {
   /**
    * Calculate the plot using the provided p-value.
    *
-   * @param pValue the value
+   * @param pvalue the value
    */
-  public void calculate(double pValue) {
-    setPValue(pValue);
+  public void calculate(double pvalue) {
+    setPValue(pvalue);
     calculate();
   }
 
@@ -116,7 +120,7 @@ public class PlotResults {
    * Calculate the plot.
    */
   public void calculate() {
-    probabilityLimits = getProbabilityLimits(sampleData);
+    probabilityLimits = computeProbabilityLimits(sampleData);
     significanceTest = testSignificance(probabilityLimits, sampleValue);
     normalisedHistogram = normaliseHistogram(histogramY);
     plot = null;
@@ -272,11 +276,11 @@ public class PlotResults {
     return normalised;
   }
 
-  private double[] getProbabilityLimits(double[] p) {
+  private double[] computeProbabilityLimits(double[] sample) {
     final double[] limits = new double[2];
-    final int pCut = (int) Math.ceil(p.length * pValue);
-    limits[0] = p[pCut];
-    limits[1] = p[(p.length - pCut - 1)];
+    final int pCut = (int) Math.ceil(sample.length * pvalue);
+    limits[0] = sample[pCut];
+    limits[1] = sample[(sample.length - pCut - 1)];
     return limits;
   }
 
@@ -293,20 +297,22 @@ public class PlotResults {
   }
 
   /**
-   * @param pValue the pValue to set
+   * Sets the p-value.
+   *
+   * @param pvalue the p-value to set
    */
-  public void setPValue(double pValue) {
-    if (pValue >= 0 && pValue <= 1) {
-      this.pValue = pValue;
-    } else {
-      throw new IllegalArgumentException("p-Value must be between 0 and 1: " + pValue);
-    }
+  public void setPValue(double pvalue) {
+    ValidationUtils.checkArgument(pvalue >= 0 && pvalue <= 1, "p-Value must be between 0 and 1: %s",
+        pvalue);
+    this.pvalue = pvalue;
   }
 
   /**
-   * @return the pValue.
+   * Gets the p value.
+   *
+   * @return the p-value.
    */
   public double getPValue() {
-    return pValue;
+    return pvalue;
   }
 }

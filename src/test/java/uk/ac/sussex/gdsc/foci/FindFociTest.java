@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
@@ -110,7 +111,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
   final int[] options = new int[] {FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE, 0};
   final double[] blur = new double[] {0, 0};
   final int[] centreMethod =
-      new int[] {FindFoci.CENTRE_MAX_VALUE_SEARCH, FindFoci.CENTRE_MAX_VALUE_ORIGINAL};
+      new int[] {FindFoci_PlugIn.CENTRE_MAX_VALUE_SEARCH, FindFoci_PlugIn.CENTRE_MAX_VALUE_ORIGINAL};
   final double[] centreParameter = new double[] {2, 2};
   final double[] fractionParameter = new double[] {0.5, 0};
 
@@ -529,7 +530,8 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
           //@formatter:on
       }
     } catch (final AssertionFailedError ex) {
-      TestUtils.wrapAssertionFailedError(ex, FunctionUtils.getSupplier("%s [%d]", setName, counter));
+      TestUtils.wrapAssertionFailedError(ex,
+          FunctionUtils.getSupplier("%s [%d]", setName, counter));
     }
   }
 
@@ -569,7 +571,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
   }
 
   private FindFociResults runInt(ImagePlus imp, int i, boolean optimised, boolean nonContiguous) {
-    final FindFoci ff = new FindFoci();
+    final FindFoci_PlugIn ff = new FindFoci_PlugIn();
     ff.setOptimisedProcessor(optimised);
     final int flags = (nonContiguous) ? options[i]
         : options[i] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
@@ -582,7 +584,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
   private FindFociResults runFloat(ImagePlus imp, int i, boolean optimised, boolean negative,
       boolean nonContiguous) {
     imp = toFloat(imp, negative);
-    final FindFoci ff = new FindFoci();
+    final FindFoci_PlugIn ff = new FindFoci_PlugIn();
     ff.setOptimisedProcessor(optimised);
     final int flags = (nonContiguous) ? options[i]
         : options[i] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
@@ -607,7 +609,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
 
   private FindFociResults runIntStaged(ImagePlus imp, int i, boolean optimised,
       boolean nonContiguous) {
-    final FindFoci ff = new FindFoci();
+    final FindFoci_PlugIn ff = new FindFoci_PlugIn();
     ff.setOptimisedProcessor(optimised);
     final int flags = (nonContiguous) ? options[i]
         : options[i] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
@@ -630,7 +632,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
   private FindFociResults runFloatStaged(ImagePlus imp, int i, boolean optimised, boolean negative,
       boolean nonContiguous) {
     imp = toFloat(imp, negative);
-    final FindFoci ff = new FindFoci();
+    final FindFoci_PlugIn ff = new FindFoci_PlugIn();
     final ImagePlus imp2 = ff.blur(imp, blur[i]);
     ff.setOptimisedProcessor(optimised);
     final int flags = (nonContiguous) ? options[i]

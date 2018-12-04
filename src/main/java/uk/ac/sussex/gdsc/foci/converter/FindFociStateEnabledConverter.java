@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.converter;
 
 import uk.ac.sussex.gdsc.foci.model.FindFociState;

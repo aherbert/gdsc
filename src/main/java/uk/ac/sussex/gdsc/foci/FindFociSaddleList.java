@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci;
 
 import gnu.trove.set.hash.TIntHashSet;
@@ -71,6 +72,7 @@ public class FindFociSaddleList implements Cloneable {
 
   private static IdSaddleComparator idSaddleComparator;
   private static OrderSaddleComparator orderSaddleComparator;
+
   static {
     idSaddleComparator = new IdSaddleComparator();
     orderSaddleComparator = new OrderSaddleComparator();
@@ -172,8 +174,10 @@ public class FindFociSaddleList implements Cloneable {
   }
 
   /**
-   * Ensure that n extra elements can be added to the list. <p> Note this is different from the
-   * ensureCapacity() method of ArrayList which checks total capacity.
+   * Ensure that n extra elements can be added to the list.
+   *
+   * <p>Note this is different from the ensureCapacity() method of ArrayList which checks total
+   * capacity.
    *
    * @param n The number of extra elements (this should not be negative)
    */

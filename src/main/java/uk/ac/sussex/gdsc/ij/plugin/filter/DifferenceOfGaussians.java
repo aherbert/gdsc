@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.ij.plugin.filter;
 
 import ij.IJ;
@@ -160,7 +161,7 @@ public class DifferenceOfGaussians extends GaussianBlur {
     sigma2field = (TextField) fields.elementAt(1);
     previewCheckbox = gd.getPreviewCheckbox();
     preview = previewCheckbox.getState();
-    gd.addHelp(uk.ac.sussex.gdsc.help.URL.UTILITY);
+    gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
     gd.showDialog(); // input by the user (or macro) happens here
     if (gd.wasCanceled()) {
       imp.setDisplayRange(min, max);

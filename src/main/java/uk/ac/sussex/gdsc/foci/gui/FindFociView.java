@@ -21,10 +21,11 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.gui;
 
-import uk.ac.sussex.gdsc.foci.FindFoci;
 import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.controller.FindFociController;
 import uk.ac.sussex.gdsc.foci.controller.MessageListener;
 import uk.ac.sussex.gdsc.foci.controller.NullController;
@@ -98,7 +99,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 /**
- * Provides a permanent form front-end for the {@link uk.ac.sussex.gdsc.foci.FindFoci} algorithm.
+ * Provides a permanent form front-end for the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn}
+ * algorithm.
  */
 public class FindFociView extends JFrame implements PropertyChangeListener, MessageListener {
   private static final long serialVersionUID = 4515468509409681730L;
@@ -131,8 +133,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   private JLabel lblSearchParam;
   private JSlider sliderSearchParam;
   private JSeparator separator;
-  private JSeparator separator_1;
-  private JSeparator separator_2;
+  private JSeparator separator1;
+  private JSeparator separator2;
   private JLabel lblMinimumSize;
   private JLabel lblPeakMethod;
   private JLabel lblPeakParam;
@@ -143,7 +145,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   private JCheckBox chckbxConnectedAboveSaddle;
   private JComboBox<String> comboPeakMethod;
   private JSlider sliderPeakParam;
-  private JSeparator separator_4;
+  private JSeparator separator4;
   private JLabel lblSortMethod;
   private JComboBox<String> comboSortMethod;
   private JLabel lblMaxPeaks;
@@ -153,7 +155,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   private JSlider sliderGaussianBlur;
   private JSlider sliderBackgroundParam;
   private JSlider sliderBackgroundParamAbsolute;
-  private JSeparator separator_3;
+  private JSeparator separator3;
   private JButton btnRun;
   private JFormattedTextField txtGaussianBlur;
   private JFormattedTextField txtBackgroundParam;
@@ -220,13 +222,13 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   private void init() {
     addWindowListener(new WindowAdapter() {
       @Override
-      public void windowActivated(WindowEvent e) {
+      public void windowActivated(WindowEvent event) {
         controller.updateImageList();
         updateImageLimits();
       }
 
       @Override
-      public void windowClosing(WindowEvent e) {
+      public void windowClosing(WindowEvent event) {
         if (options != null && options.isVisible()) {
           options.setVisible(false);
         }
@@ -265,13 +267,13 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     comboImageList.setToolTipText("Select the input image");
     comboImageList.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         comboImageList.firePropertyChange("selectedItem", 0, 1);
       }
     });
     comboImageList.addMouseListener(new MouseAdapter() {
       @Override
-      public void mousePressed(MouseEvent e) {
+      public void mousePressed(MouseEvent event) {
         // Quick check to see if images have been closed since
         // the windowActivated event does fire if the plugin window
         // was already active when an image was closed.
@@ -308,8 +310,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderGaussianBlur = new JSlider();
     sliderGaussianBlur.addMouseListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() > 1) {
+      public void mouseClicked(MouseEvent event) {
+        if (event.getClickCount() > 1) {
           SliderLimitHelper.updateRangeLimits(sliderGaussianBlur, "Gaussian blur",
               SliderConverter.SCALE_FACTOR, 0, Double.POSITIVE_INFINITY);
         }
@@ -318,7 +320,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderGaussianBlur.setToolTipText("Apply a pre-processing blur. Helps noisy images");
     sliderGaussianBlur.addChangeListener(new ChangeListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
+      public void stateChanged(ChangeEvent event) {
         sliderGaussianBlur.firePropertyChange("value", 0, 1);
       }
     });
@@ -344,7 +346,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     });
     txtGaussianBlur.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
+      public void keyReleased(KeyEvent event) {
         txtGaussianBlur.firePropertyChange("text", 0, 1);
       }
     });
@@ -371,13 +373,13 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     comboMaskImageList.setToolTipText("Select a mask defining the analysis area");
     comboMaskImageList.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         comboMaskImageList.firePropertyChange("selectedItem", 0, 1);
       }
     });
     comboMaskImageList.addMouseListener(new MouseAdapter() {
       @Override
-      public void mousePressed(MouseEvent e) {
+      public void mousePressed(MouseEvent event) {
         // Quick check to see if images have been closed since
         // the the windowActivated event does fire if the plugin window
         // was already active when an image was closed.
@@ -407,11 +409,11 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     comboBackgroundMethod.setToolTipText("Specify the background threshold method");
     comboBackgroundMethod.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         comboBackgroundMethod.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboBackgroundMethod.setModel(new DefaultComboBoxModel<>(FindFoci.backgroundMethods));
+    comboBackgroundMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.backgroundMethods));
     comboBackgroundMethod.setSelectedIndex(3);
     final GridBagConstraints gbc_comboBackgroundMethod = new GridBagConstraints();
     gbc_comboBackgroundMethod.fill = GridBagConstraints.HORIZONTAL;
@@ -432,8 +434,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderBackgroundParam = new JSlider();
     sliderBackgroundParam.addMouseListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() > 1) {
+      public void mouseClicked(MouseEvent event) {
+        if (event.getClickCount() > 1) {
           SliderLimitHelper.updateRangeLimits(sliderBackgroundParam, "Background parameter",
               SliderConverter.SCALE_FACTOR, 0, Double.POSITIVE_INFINITY);
         }
@@ -442,7 +444,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderBackgroundParam.setToolTipText("Controls the selected background method");
     sliderBackgroundParam.addChangeListener(new ChangeListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
+      public void stateChanged(ChangeEvent event) {
         if (model.getBackgroundMethod() != FindFociProcessor.BACKGROUND_ABSOLUTE) {
           sliderBackgroundParam.firePropertyChange("value", 0, 1);
         }
@@ -463,8 +465,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderBackgroundParamAbsolute = new JSlider();
     sliderBackgroundParamAbsolute.addMouseListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() > 1) {
+      public void mouseClicked(MouseEvent event) {
+        if (event.getClickCount() > 1) {
           final int[] limits = controller.getImageLimits(null);
           SliderLimitHelper.updateRangeLimits(sliderBackgroundParamAbsolute, "Background parameter",
               1, limits[0], limits[1]);
@@ -473,7 +475,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     });
     sliderBackgroundParamAbsolute.addChangeListener(new ChangeListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
+      public void stateChanged(ChangeEvent event) {
         if (model.getBackgroundMethod() == FindFociProcessor.BACKGROUND_ABSOLUTE) {
           sliderBackgroundParamAbsolute.firePropertyChange("value", 0, 1);
         }
@@ -501,7 +503,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     });
     txtBackgroundParam.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
+      public void keyReleased(KeyEvent event) {
         txtBackgroundParam.firePropertyChange("text", 0, 1);
       }
     });
@@ -526,11 +528,11 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     comboThresholdMethod.setToolTipText("Method used for auto-thresholding");
     comboThresholdMethod.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         comboThresholdMethod.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboThresholdMethod.setModel(new DefaultComboBoxModel<>(FindFoci.autoThresholdMethods));
+    comboThresholdMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.autoThresholdMethods));
     comboThresholdMethod.setSelectedIndex(10);
     final GridBagConstraints gbc_comboThresholdMethod = new GridBagConstraints();
     gbc_comboThresholdMethod.fill = GridBagConstraints.HORIZONTAL;
@@ -553,11 +555,11 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         .setToolTipText("Calculate background using area inside/outside the ROI/Masked region");
     comboStatisticsMode.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         comboStatisticsMode.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboStatisticsMode.setModel(new DefaultComboBoxModel<>(FindFoci.statisticsModes));
+    comboStatisticsMode.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.statisticsModes));
     final GridBagConstraints gbc_comboStatisticsMode = new GridBagConstraints();
     gbc_comboStatisticsMode.gridwidth = 2;
     gbc_comboStatisticsMode.insets = new Insets(0, 0, 5, 0);
@@ -582,12 +584,12 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     gbc_lblBackgroundLevelValue.gridy = 8;
     contentPane.add(lblBackgroundLevelValue, gbc_lblBackgroundLevelValue);
 
-    separator_1 = new JSeparator();
+    separator1 = new JSeparator();
     final GridBagConstraints gbc_separator_1 = new GridBagConstraints();
     gbc_separator_1.insets = new Insets(0, 0, 15, 5);
     gbc_separator_1.gridx = 1;
     gbc_separator_1.gridy = 9;
-    contentPane.add(separator_1, gbc_separator_1);
+    contentPane.add(separator1, gbc_separator_1);
 
     lblSearchMethod = new JLabel("Search method");
     final GridBagConstraints gbc_lblSearchMethod = new GridBagConstraints();
@@ -601,11 +603,11 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     comboSearchMethod.setToolTipText("Specify the method used to expand maxima into peaks");
     comboSearchMethod.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         comboSearchMethod.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboSearchMethod.setModel(new DefaultComboBoxModel<>(FindFoci.searchMethods));
+    comboSearchMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.searchMethods));
     comboSearchMethod.setSelectedIndex(0);
     final GridBagConstraints gbc_comboSearchMethod = new GridBagConstraints();
     gbc_comboSearchMethod.fill = GridBagConstraints.HORIZONTAL;
@@ -627,8 +629,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderSearchParam.setToolTipText("Controls the selected search method");
     sliderSearchParam.addMouseListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() > 1) {
+      public void mouseClicked(MouseEvent event) {
+        if (event.getClickCount() > 1) {
           SliderLimitHelper.updateRangeLimits(sliderSearchParam, "Search parameter",
               SliderConverter.SCALE_FACTOR, 0, 1);
         }
@@ -636,7 +638,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     });
     sliderSearchParam.addChangeListener(new ChangeListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
+      public void stateChanged(ChangeEvent event) {
         sliderSearchParam.firePropertyChange("value", 0, 1);
       }
     });
@@ -662,7 +664,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     });
     txtSearchParam.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
+      public void keyReleased(KeyEvent event) {
         txtSearchParam.firePropertyChange("text", 0, 1);
       }
     });
@@ -675,12 +677,12 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     gbc_txtSearchParam.gridy = 11;
     contentPane.add(txtSearchParam, gbc_txtSearchParam);
 
-    separator_2 = new JSeparator();
+    separator2 = new JSeparator();
     final GridBagConstraints gbc_separator_2 = new GridBagConstraints();
     gbc_separator_2.insets = new Insets(0, 0, 15, 5);
     gbc_separator_2.gridx = 1;
     gbc_separator_2.gridy = 12;
-    contentPane.add(separator_2, gbc_separator_2);
+    contentPane.add(separator2, gbc_separator_2);
 
     lblMinimumSize = new JLabel("Minimum size");
     final GridBagConstraints gbc_lblMinimumSize = new GridBagConstraints();
@@ -694,8 +696,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderMinimumSize.setMinimum(1);
     sliderMinimumSize.addMouseListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() > 1) {
+      public void mouseClicked(MouseEvent event) {
+        if (event.getClickCount() > 1) {
           SliderLimitHelper.updateRangeLimits(sliderMinimumSize, "Minimum size", 1, 0,
               Double.POSITIVE_INFINITY);
         }
@@ -704,7 +706,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderMinimumSize.setToolTipText("The minimum size required to define a peak");
     sliderMinimumSize.addChangeListener(new ChangeListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
+      public void stateChanged(ChangeEvent event) {
         sliderMinimumSize.firePropertyChange("value", 0, 1);
       }
     });
@@ -728,7 +730,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     });
     txtMinimumSize.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
+      public void keyReleased(KeyEvent event) {
         txtMinimumSize.firePropertyChange("text", 0, 1);
       }
     });
@@ -746,7 +748,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         .setToolTipText("Restrict minimum size to the peak volume above the highest saddle point");
     chckbxMinSizeAboveSaddle.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         chckbxMinSizeAboveSaddle.firePropertyChange("selected", 0, 1);
       }
     });
@@ -764,7 +766,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         .setToolTipText("The peak volume above the highest saddle point must be connected pixels");
     chckbxConnectedAboveSaddle.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         chckbxConnectedAboveSaddle.firePropertyChange("selected", 0, 1);
       }
     });
@@ -788,11 +790,11 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     comboPeakMethod.setToolTipText("Specify the required height for a peak");
     comboPeakMethod.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         comboPeakMethod.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboPeakMethod.setModel(new DefaultComboBoxModel<>(FindFoci.peakMethods));
+    comboPeakMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.peakMethods));
     comboPeakMethod.setSelectedIndex(2);
     final GridBagConstraints gbc_comboPeakMethod = new GridBagConstraints();
     gbc_comboPeakMethod.gridwidth = 2;
@@ -813,8 +815,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderPeakParam = new JSlider();
     sliderPeakParam.addMouseListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() > 1) {
+      public void mouseClicked(MouseEvent event) {
+        if (event.getClickCount() > 1) {
           SliderLimitHelper.updateRangeLimits(sliderPeakParam, "Peak parameter",
               SliderConverter.SCALE_FACTOR, 0, 1);
         }
@@ -823,7 +825,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderPeakParam.setToolTipText("Controls the selected peak method");
     sliderPeakParam.addChangeListener(new ChangeListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
+      public void stateChanged(ChangeEvent event) {
         if (model.getPeakMethod() != FindFociProcessor.PEAK_ABSOLUTE) {
           sliderPeakParam.firePropertyChange("value", 0, 1);
         }
@@ -843,8 +845,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderPeakParamAbsolute = new JSlider();
     sliderPeakParamAbsolute.addMouseListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() > 1) {
+      public void mouseClicked(MouseEvent event) {
+        if (event.getClickCount() > 1) {
           SliderLimitHelper.updateRangeLimits(sliderPeakParamAbsolute, "Peak parameter", 1, 0,
               Double.POSITIVE_INFINITY);
         }
@@ -852,7 +854,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     });
     sliderPeakParamAbsolute.addChangeListener(new ChangeListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
+      public void stateChanged(ChangeEvent event) {
         if (model.getPeakMethod() == FindFociProcessor.PEAK_ABSOLUTE) {
           sliderPeakParamAbsolute.firePropertyChange("value", 0, 1);
         }
@@ -880,7 +882,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     });
     txtPeakParam.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
+      public void keyReleased(KeyEvent event) {
         txtPeakParam.firePropertyChange("text", 0, 1);
       }
     });
@@ -893,12 +895,12 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     gbc_txtPeakParam.gridy = 14;
     contentPane.add(txtPeakParam, gbc_txtPeakParam);
 
-    separator_4 = new JSeparator();
+    separator4 = new JSeparator();
     final GridBagConstraints gbc_separator_4 = new GridBagConstraints();
     gbc_separator_4.insets = new Insets(0, 0, 15, 5);
     gbc_separator_4.gridx = 1;
     gbc_separator_4.gridy = 18;
-    contentPane.add(separator_4, gbc_separator_4);
+    contentPane.add(separator4, gbc_separator_4);
 
     lblSortMethod = new JLabel("Sort method");
     final GridBagConstraints gbc_lblSortMethod = new GridBagConstraints();
@@ -912,14 +914,14 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     comboSortMethod.setToolTipText("Metric used to sort the peaks");
     comboSortMethod.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         comboSortMethod.firePropertyChange("selectedItem", 0, 1);
       }
     });
     final GridBagConstraints gbc_comboSortMethod = new GridBagConstraints();
     gbc_comboSortMethod.gridwidth = 2;
     gbc_comboSortMethod.insets = new Insets(0, 0, 5, 0);
-    comboSortMethod.setModel(new DefaultComboBoxModel<>(FindFoci.sortIndexMethods));
+    comboSortMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.sortIndexMethods));
     comboSortMethod.setSelectedIndex(1);
     gbc_comboSortMethod.fill = GridBagConstraints.HORIZONTAL;
     gbc_comboSortMethod.gridx = 1;
@@ -937,8 +939,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderMaxPeaks = new JSlider();
     sliderMaxPeaks.addMouseListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() > 1) {
+      public void mouseClicked(MouseEvent event) {
+        if (event.getClickCount() > 1) {
           SliderLimitHelper.updateRangeLimits(sliderMaxPeaks, "Maximum peaks", 1, 1,
               Double.POSITIVE_INFINITY);
         }
@@ -947,7 +949,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderMaxPeaks.setToolTipText("Specify the maximum number of peaks");
     sliderMaxPeaks.addChangeListener(new ChangeListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
+      public void stateChanged(ChangeEvent event) {
         sliderMaxPeaks.firePropertyChange("value", 0, 1);
       }
     });
@@ -972,7 +974,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     });
     txtMaxPeaks.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
+      public void keyReleased(KeyEvent event) {
         txtMaxPeaks.firePropertyChange("text", 0, 1);
       }
     });
@@ -997,11 +999,11 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     comboShowMask.setToolTipText("Configure the output mask");
     comboShowMask.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         comboShowMask.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboShowMask.setModel(new DefaultComboBoxModel<>(FindFoci.maskOptions));
+    comboShowMask.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.maskOptions));
     comboShowMask.setSelectedIndex(3);
     final GridBagConstraints gbc_comboShowMask = new GridBagConstraints();
     gbc_comboShowMask.gridwidth = 2;
@@ -1022,7 +1024,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderFractionParam = new JSlider();
     sliderFractionParam.addChangeListener(new ChangeListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
+      public void stateChanged(ChangeEvent event) {
         sliderFractionParam.firePropertyChange("value", 0, 1);
       }
     });
@@ -1046,7 +1048,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     });
     txtFractionParam.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
+      public void keyReleased(KeyEvent event) {
         txtFractionParam.firePropertyChange("text", 0, 1);
       }
     });
@@ -1060,12 +1062,12 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     contentPane.add(txtFractionParam, gbc_txtFFractionParam);
     txtFractionParam.setColumns(10);
 
-    separator_3 = new JSeparator();
+    separator3 = new JSeparator();
     final GridBagConstraints gbc_separator_3 = new GridBagConstraints();
     gbc_separator_3.insets = new Insets(0, 0, 15, 5);
     gbc_separator_3.gridx = 1;
     gbc_separator_3.gridy = 23;
-    contentPane.add(separator_3, gbc_separator_3);
+    contentPane.add(separator3, gbc_separator_3);
 
     panel = new JPanel();
     final GridBagConstraints gbc_panel = new GridBagConstraints();
@@ -1080,7 +1082,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     btnAdvancedOptions.setToolTipText("Show additional options");
     btnAdvancedOptions.addMouseListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public void mouseClicked(MouseEvent event) {
         if (options == null || !options.isVisible()) {
           options = new FindFociAdvancedOptions(model);
           options.setTitle("FindFoci Options");
@@ -1095,8 +1097,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     btnHelp.addMouseListener(new MouseAdapter() {
       @SuppressWarnings("unused")
       @Override
-      public void mouseClicked(MouseEvent e) {
-        final String macro = "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.URL.FIND_FOCI + "');";
+      public void mouseClicked(MouseEvent event) {
+        final String macro = "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI + "');";
         new MacroRunner(macro);
       }
     });
@@ -1111,7 +1113,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     chckbxPreview.setToolTipText("Update results dynamically (requires more memory)");
     chckbxPreview.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(ActionEvent event) {
         if (chckbxPreview.isSelected()) {
           // System.out.println("preview button controller.startPreview()");
           startPreview();
@@ -1124,7 +1126,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     panel.add(chckbxPreview);
     btnRun.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(ActionEvent event) {
         // Run in a new thread to allow updates to the IJ progress bar
         final Thread thread = new Thread(controller);
         thread.start();
@@ -1135,10 +1137,10 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     // Fixes resizing on MacOS
     final Dimension separatorDim = new Dimension(0, 1);
     separator.setPreferredSize(separatorDim);
-    separator_1.setPreferredSize(separatorDim);
-    separator_2.setPreferredSize(separatorDim);
-    separator_3.setPreferredSize(separatorDim);
-    separator_4.setPreferredSize(separatorDim);
+    separator1.setPreferredSize(separatorDim);
+    separator2.setPreferredSize(separatorDim);
+    separator3.setPreferredSize(separatorDim);
+    separator4.setPreferredSize(separatorDim);
 
     this.pack();
   }
@@ -1156,6 +1158,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   }
 
   /**
+   * Sets the valid images.
+   *
    * @param validImages the validImages to set
    */
   public void setValidImages(boolean validImages) {
@@ -1166,6 +1170,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   }
 
   /**
+   * Checks if is valid images.
+   *
    * @return the validImages.
    */
   public boolean isValidImages() {
@@ -1173,6 +1179,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   }
 
   /**
+   * Sets the changed flag.
+   *
    * @param changed the changed to set
    */
   public void setChanged(boolean changed) {
@@ -1184,6 +1192,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   }
 
   /**
+   * Checks if is changed.
+   *
    * @return the changed.
    */
   public boolean isChanged() {
@@ -1191,6 +1201,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   }
 
   /**
+   * Sets the run enabled.
+   *
    * @param runEnabled the runEnabled to set
    */
   public void setRunEnabled(boolean runEnabled) {
@@ -1206,6 +1218,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   }
 
   /**
+   * Gets the background level.
+   *
    * @return the background level.
    */
   public double getBackgroundLevel() {
@@ -1224,6 +1238,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   }
 
   /**
+   * Checks if the sort index will be a problem. This is used when the selected sort index may lead
+   * to poor sorting due to the image data.
+   *
    * @return True if the sort index will be a problem.
    */
   public boolean isSortIndexError() {
@@ -1231,6 +1248,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   }
 
   /**
+   * Sets the sort index error.
+   *
    * @param sortIndexError True if the sort index will be a problem
    */
   public void setSortIndexError(boolean sortIndexError) {
@@ -1240,9 +1259,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
     if (sortIndexError) {
       if (oldSortIndex != model.getSortMethod()) {
-        IJ.log(
-            "WARNING: Image minimum is below zero and the chosen sort index is sensitive to negative values: "
-                + FindFoci.sortIndexMethods[model.getSortMethod()]);
+        IJ.log("WARNING: Image minimum is below zero and the chosen sort index is sensitive to "
+            + "negative values: " + FindFoci_PlugIn.sortIndexMethods[model.getSortMethod()]);
       }
       oldSortIndex = model.getSortMethod();
     } else {
@@ -1251,6 +1269,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   }
 
   /**
+   * Checks if is run enabled.
+   *
    * @return the runEnabled.
    */
   public boolean isRunEnabled() {
@@ -1258,6 +1278,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   }
 
   /**
+   * Gets the image minimum.
+   *
    * @return The image minimum value.
    */
   public int getImageMinimum() {
@@ -1265,6 +1287,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   }
 
   /**
+   * Gets the image maximum.
+   *
    * @return The image maximum value.
    */
   public int getImageMaximum() {
@@ -1279,11 +1303,10 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
       chckbxPreview.setSelected(false);
       controller.updateImageList();
       updateImageLimits();
-    } else if (!evt.getPropertyName().equals("changed")) {
-      // Just in case the preview has been disabled
-      if (chckbxPreview.isSelected()) {
-        controller.preview();
-      }
+    } else if (!evt.getPropertyName().equals("changed")
+        // Just in case the preview has been disabled
+        && chckbxPreview.isSelected()) {
+      controller.preview();
     }
   }
 
@@ -1319,12 +1342,13 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
       case ERROR:
         // This is done when the runner had an error that prevents any further calculations
         chckbxPreview.setSelected(false);
-        // Fall-through to reset the foreground
+        // Reset the foreground
+        chckbxPreview.setForeground(Color.BLACK);
+        break;
 
       case FINISHED:
         // This is done when the runner has been shutdown for further calculations
         // Fall-through to reset the foreground
-
       case READY:
         // This is done when the runner is OK to calculate
         chckbxPreview.setForeground(Color.BLACK);
@@ -1347,6 +1371,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
       default:
         // Do nothing
+        break;
     }
   }
 

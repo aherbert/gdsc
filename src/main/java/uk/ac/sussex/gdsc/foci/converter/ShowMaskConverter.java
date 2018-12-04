@@ -21,9 +21,10 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFoci;
+import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 
 import org.jdesktop.beansbinding.Converter;
 
@@ -33,13 +34,13 @@ import org.jdesktop.beansbinding.Converter;
 public class ShowMaskConverter extends Converter<Integer, Object> {
   @Override
   public String convertForward(Integer paramT) {
-    return FindFoci.maskOptions[paramT.intValue()];
+    return FindFoci_PlugIn.maskOptions[paramT.intValue()];
   }
 
   @Override
   public Integer convertReverse(Object paramS) {
-    for (int i = 0; i < FindFoci.maskOptions.length; i++) {
-      if (FindFoci.maskOptions[i].equals(paramS)) {
+    for (int i = 0; i < FindFoci_PlugIn.maskOptions.length; i++) {
+      if (FindFoci_PlugIn.maskOptions[i].equals(paramS)) {
         return Integer.valueOf(i);
       }
     }

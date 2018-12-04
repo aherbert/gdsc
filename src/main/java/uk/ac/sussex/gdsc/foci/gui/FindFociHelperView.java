@@ -21,18 +21,19 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.gui;
 
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.foci.AssignedPoint;
-import uk.ac.sussex.gdsc.foci.FindFoci;
 import uk.ac.sussex.gdsc.foci.FindFociProcessor;
 import uk.ac.sussex.gdsc.foci.FindFociResult;
+import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.GridException;
 import uk.ac.sussex.gdsc.foci.GridPoint;
 import uk.ac.sussex.gdsc.foci.GridPointManager;
-import uk.ac.sussex.gdsc.foci.MatchPlugin;
-import uk.ac.sussex.gdsc.foci.PointAlignerPlugin;
+import uk.ac.sussex.gdsc.foci.Match_Plugin;
+import uk.ac.sussex.gdsc.foci.PointAligner_Plugin;
 import uk.ac.sussex.gdsc.foci.PointManager;
 import uk.ac.sussex.gdsc.foci.controller.FindMaximaController;
 import uk.ac.sussex.gdsc.foci.converter.SearchModeConverter;
@@ -523,7 +524,7 @@ public class FindFociHelperView extends JFrame
       @SuppressWarnings("unused")
       @Override
       public void mouseClicked(MouseEvent e) {
-        final String macro = "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.URL.FIND_FOCI + "');";
+        final String macro = "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI + "');";
         new MacroRunner(macro);
       }
     });
@@ -558,7 +559,7 @@ public class FindFociHelperView extends JFrame
     model.setShowLogMessages(false);
     model.setSortMethod(FindFociProcessor.SORT_MAX_VALUE);
     model.setGaussianBlur(0);
-    model.setCentreMethod(FindFoci.CENTRE_MAX_VALUE_ORIGINAL);
+    model.setCentreMethod(FindFoci_PlugIn.CENTRE_MAX_VALUE_ORIGINAL);
     model.setCentreParameter(0);
   }
 
@@ -868,7 +869,7 @@ public class FindFociHelperView extends JFrame
    */
   private void assignToHighest(AssignedPoint[] points) {
     // If searchMode = 'highest' then the points should be processed in height order
-    final PointAlignerPlugin aligner = new PointAlignerPlugin();
+    final PointAligner_Plugin aligner = new PointAligner_Plugin();
     aligner.sortPoints(points, controller.getActiveImageStack());
 
     for (int i = 0; i < points.length; i++) {
@@ -1351,7 +1352,7 @@ public class FindFociHelperView extends JFrame
   }
 
   /**
-   * Get the list of ROI points. Any that are unmapped have the assigned id set to -1
+   * Get the list of ROI points. Any that are unmapped have the assigned id set to -1.
    *
    * @return the roi points
    */
@@ -1408,8 +1409,8 @@ public class FindFociHelperView extends JFrame
 
     // Add the overlay
     activeImp.setOverlay(null);
-    MatchPlugin.addOverlay(activeImp, mapped, Color.green);
-    MatchPlugin.addOverlay(activeImp, unmapped, Color.yellow);
+    Match_Plugin.addOverlay(activeImp, mapped, Color.green);
+    Match_Plugin.addOverlay(activeImp, unmapped, Color.yellow);
 
     // Save the ROI and remove it
     savedRoi = activeImp.getRoi();

@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.model;
 
 import java.beans.PropertyChangeEvent;
@@ -31,7 +32,7 @@ import java.util.Set;
 
 /**
  * Provides a state-machine for the processing steps required to recompute the
- * {@link uk.ac.sussex.gdsc.foci.FindFoci} result following a change to the model parameters.
+ * {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn} result following a change to the model parameters.
  */
 public class FindFociStateMachine extends AbstractModelObject implements PropertyChangeListener {
   private FindFociState state = FindFociState.INITIAL;

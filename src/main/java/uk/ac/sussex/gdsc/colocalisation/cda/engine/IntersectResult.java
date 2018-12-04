@@ -21,6 +21,7 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.colocalisation.cda.engine;
 
 /**
@@ -28,24 +29,24 @@ package uk.ac.sussex.gdsc.colocalisation.cda.engine;
  */
 public class IntersectResult {
   /** The first sum. */
-  public long sum1;
+  public final long sum1;
 
   /** The second sum. */
-  public long sum2;
+  public final long sum2;
 
   /** The correlation. */
-  public double r;
+  public final double correlation;
 
   /**
    * Instantiates a new intersect result.
    *
    * @param sum1 the first sum
    * @param sum2 the second sum
-   * @param r The correlation
+   * @param correlation The correlation
    */
-  public IntersectResult(long sum1, long sum2, double r) {
+  public IntersectResult(long sum1, long sum2, double correlation) {
     this.sum1 = sum1;
     this.sum2 = sum2;
-    this.r = r;
+    this.correlation = correlation;
   }
 }

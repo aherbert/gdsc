@@ -21,10 +21,11 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package uk.ac.sussex.gdsc.foci.gui;
 
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.foci.FindFoci;
+import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.converter.CentreMethodConverter;
 import uk.ac.sussex.gdsc.foci.converter.CentreParamEnabledConverter;
 import uk.ac.sussex.gdsc.foci.converter.DoubleConverter;
@@ -325,7 +326,7 @@ public class FindFociAdvancedOptions extends JDialog {
           comboBoxCentreMethod.firePropertyChange("selectedItem", 0, 1);
         }
       });
-      comboBoxCentreMethod.setModel(new DefaultComboBoxModel<>(FindFoci.getCentreMethods()));
+      comboBoxCentreMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getCentreMethods()));
       final GridBagConstraints gbc_comboBoxCentreMethod = new GridBagConstraints();
       gbc_comboBoxCentreMethod.gridwidth = 2;
       gbc_comboBoxCentreMethod.insets = new Insets(0, 0, 5, 0);
