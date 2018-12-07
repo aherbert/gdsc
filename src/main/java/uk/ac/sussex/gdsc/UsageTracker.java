@@ -52,8 +52,6 @@ public class UsageTracker implements PlugIn {
   /**
    * Initialise on demand the analytics code.
    *
-   *
-   *
    * <p>This is used to avoid synchronisation during initialisation.
    *
    * <a href="https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom">Initialisation on
@@ -82,8 +80,6 @@ public class UsageTracker implements PlugIn {
   /**
    * Initialise on demand the plugin map.
    *
-   *
-   *
    * <p>This is used to avoid synchronisation during initialisation.
    *
    * <a href="https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom">Initialisation on
@@ -94,7 +90,7 @@ public class UsageTracker implements PlugIn {
 
     static {
       final HashMap<String, String[]> localMap = new HashMap<>();
-      ImageJAnalyticsUtils.buildPluginMap(localMap, About_Plugin.getPluginsConfig(),
+      ImageJAnalyticsUtils.buildPluginMap(localMap, About_PlugIn.getPluginsConfig(),
           StandardCharsets.UTF_8);
       map = localMap;
     }

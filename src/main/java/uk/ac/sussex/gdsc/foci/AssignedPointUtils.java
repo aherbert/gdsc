@@ -41,12 +41,16 @@ import java.io.OutputStreamWriter;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Manages I/O of the {@link AssignedPoint} class.
  */
-public class PointManager {
-  private static final String newline = System.getProperty("line.separator");
+public final class AssignedPointUtils {
+  private static final String NEW_LINE = System.getProperty("line.separator");
+
+  /** No public constructor. */
+  private AssignedPointUtils() {}
 
   /**
    * Save the predicted points to the given file.
@@ -61,23 +65,21 @@ public class PointManager {
     }
 
     final File file = new File(filename);
-    if (!file.exists()) {
-      if (file.getParent() != null) {
-        new File(file.getParent()).mkdirs();
-      }
+    if (!file.exists() && file.getParent() != null) {
+      new File(file.getParent()).mkdirs();
     }
 
     try (final OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(filename))) {
       // Save results to file
       final StringBuilder sb = new StringBuilder();
 
-      out.write("X,Y,Z" + newline);
+      out.write("X,Y,Z" + NEW_LINE);
 
       // Output all results in ascending rank order
       for (final AssignedPoint point : points) {
         sb.append(point.getX()).append(',');
         sb.append(point.getY()).append(',');
-        sb.append(point.getZ()).append(newline);
+        sb.append(point.getZ()).append(NEW_LINE);
         out.write(sb.toString());
         sb.setLength(0);
       }
@@ -109,7 +111,9 @@ public class PointManager {
               final int z = Integer.parseInt(tokens[2]);
               points.add(new AssignedPoint(x, y, z, lineCount - 1));
             } catch (final NumberFormatException ex) {
-              System.err.println("Invalid numbers on line: " + lineCount);
+              final int lineNumber = lineCount;
+              Logger.getLogger(AssignedPointUtils.class.getName())
+                  .warning(() -> "Invalid numbers on line: " + lineNumber);
             }
           }
         }
@@ -134,14 +138,14 @@ public class PointManager {
       final Rectangle bounds = roi.getBounds();
       // The ROI has either a hyperstack position or a stack position, but not both.
       // Both will be zero if the ROI has no 3D information.
-      int z = roi.getZPosition();
-      if (z == 0) {
-        z = roi.getPosition();
+      int zpos = roi.getZPosition();
+      if (zpos == 0) {
+        zpos = roi.getPosition();
       }
 
       roiPoints = new AssignedPoint[n];
       for (int i = 0; i < n; i++) {
-        roiPoints[i] = new AssignedPoint(bounds.x + p.xpoints[i], bounds.y + p.ypoints[i], z, i);
+        roiPoints[i] = new AssignedPoint(bounds.x + p.xpoints[i], bounds.y + p.ypoints[i], zpos, i);
       }
     } else {
       roiPoints = new AssignedPoint[0];
@@ -156,15 +160,15 @@ public class PointManager {
    * @param array List of points
    * @return The PointRoi
    */
-  public static Roi createROI(List<? extends Coordinate> array) {
+  public static Roi createRoi(List<? extends Coordinate> array) {
     final int nMaxima = array.size();
     final float[] xpoints = new float[nMaxima];
     final float[] ypoints = new float[nMaxima];
-    int i = 0;
+    int index = 0;
     for (final Coordinate point : array) {
-      xpoints[i] = point.getX();
-      ypoints[i] = point.getY();
-      i++;
+      xpoints[index] = point.getX();
+      ypoints[index] = point.getY();
+      index++;
     }
     return new PointRoi(xpoints, ypoints, nMaxima);
   }
@@ -175,7 +179,7 @@ public class PointManager {
    * @param array List of points
    * @return The PointRoi
    */
-  public static Roi createROI(AssignedPoint[] array) {
+  public static Roi createRoi(AssignedPoint[] array) {
     final int nMaxima = array.length;
     final float[] xpoints = new float[nMaxima];
     final float[] ypoints = new float[nMaxima];

@@ -60,8 +60,6 @@ import java.util.List;
 /**
  * Find translocations using markers for colocalisation.
  *
- *
- *
  * <p>Run a pairwise analysis of 3 channels. Find triplets where the two markers from channel 2
  * &amp; 3 matching a foci in channel 1 are also a matching pair. Draw a bounding box round the
  * triplet and output the distances between the centres. Output a guess for a translocation where
@@ -169,15 +167,15 @@ public class TranslocationFinder_PlugIn implements PlugIn {
       return null;
     }
     final ArrayList<FindFociResult> results = memoryResults.results;
-    if (results.size() == 0) {
+    if (results.isEmpty()) {
       IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
       return null;
     }
     final AssignedPoint[] foci = new AssignedPoint[results.size()];
-    int i = 0;
+    int index = 0;
     for (final FindFociResult result : results) {
-      foci[i] = new AssignedPoint(result.x, result.y, result.z + 1, i);
-      i++;
+      foci[index] = new AssignedPoint(result.x, result.y, result.z + 1, index);
+      index++;
     }
     return foci;
   }
@@ -269,12 +267,12 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     return false;
   }
 
-  private static void add(Overlay ov, List<PointPair> matches, int n) {
+  private static void add(Overlay ov, List<PointPair> matches, int position) {
     for (final PointPair pair : matches) {
       final AssignedPoint p1 = (AssignedPoint) pair.getPoint1();
       final AssignedPoint p2 = (AssignedPoint) pair.getPoint2();
       final Line line = new Line(p1.x, p1.y, p2.x, p2.y);
-      line.setPosition(n);
+      line.setPosition(position);
       ov.add(line);
     }
   }
@@ -292,18 +290,19 @@ public class TranslocationFinder_PlugIn implements PlugIn {
 
     final int len =
         MathUtils.min(resultsName1.length(), resultsName2.length(), resultsName3.length());
-    int i = 0;
-    while (i < len) {
+    int index = 0;
+    while (index < len) {
       // Find common prefix
-      if (resultsName1.charAt(i) != resultsName2.charAt(i)
-          || resultsName1.charAt(i) != resultsName3.charAt(i) || resultsName1.charAt(i) == '(') {
+      if (resultsName1.charAt(index) != resultsName2.charAt(index)
+          || resultsName1.charAt(index) != resultsName3.charAt(index)
+          || resultsName1.charAt(index) == '(') {
         break;
       }
-      i++;
+      index++;
     }
     // Common prefix plus the FindFoci suffix
-    name = resultsName1 + "; " + resultsName2.substring(i).trim() + "; "
-        + resultsName3.substring(i).trim();
+    name = resultsName1 + "; " + resultsName2.substring(index).trim() + "; "
+        + resultsName3.substring(index).trim();
 
     if (resultsWindow == null || !resultsWindow.isShowing()) {
       resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 1000, 300);
@@ -311,17 +310,17 @@ public class TranslocationFinder_PlugIn implements PlugIn {
       // Allow the results to be manually changed
       resultsWindow.getTextPanel().addMouseListener(new MouseAdapter() {
         @Override
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() < 2) {
+        public void mouseClicked(MouseEvent event) {
+          if (event.getClickCount() < 2) {
             return;
           }
 
           TextPanel tp = null;
-          if (e.getSource() instanceof TextPanel) {
-            tp = (TextPanel) e.getSource();
-          } else if (e.getSource() instanceof Canvas
-              && ((Canvas) e.getSource()).getParent() instanceof TextPanel) {
-            tp = (TextPanel) ((Canvas) e.getSource()).getParent();
+          if (event.getSource() instanceof TextPanel) {
+            tp = (TextPanel) event.getSource();
+          } else if (event.getSource() instanceof Canvas
+              && ((Canvas) event.getSource()).getParent() instanceof TextPanel) {
+            tp = (TextPanel) ((Canvas) event.getSource()).getParent();
           }
 
           final String line = tp.getLine(tp.getSelectionStart());
@@ -516,15 +515,15 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     return classification;
   }
 
-  private static void addTriplet(StringBuilder sb, AssignedPoint p) {
-    sb.append('\t').append(p.x);
-    sb.append('\t').append(p.y);
-    sb.append('\t').append(p.z);
+  private static void addTriplet(StringBuilder sb, AssignedPoint point) {
+    sb.append('\t').append(point.x);
+    sb.append('\t').append(point.y);
+    sb.append('\t').append(point.z);
   }
 
   /**
    * Check if distance 12 is much smaller than distance 13 and 23. It must be a given factor smaller
-   * than the other two distances. i.e. foci 3 is separated from foci 1 and 2.
+   * than the other two distances. i.event. foci 3 is separated from foci 1 and 2.
    *
    * @param d12 the d12
    * @param d13 the d13
@@ -538,7 +537,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
   /**
    * Check if distance 12 is much smaller than distance 13 and 23. It must be a given factor smaller
    * than the other two distances. The other two distances must also be above the min distance
-   * threshold, i.e. foci 3 is separated from foci 1 and 2.
+   * threshold, i.event. foci 3 is separated from foci 1 and 2.
    *
    * @param d12 the d12
    * @param d13 the d13
@@ -554,23 +553,23 @@ public class TranslocationFinder_PlugIn implements PlugIn {
    * Overlay triplets on image.
    */
   private static void overlayTriplets() {
-    Overlay o = null;
+    Overlay overaly = null;
     if (imp != null) {
-      o = new Overlay();
+      overaly = new Overlay();
       int count = 0;
       for (final int[] triplet : triplets) {
         count++;
         final AssignedPoint p1 = foci1[triplet[0]];
         final AssignedPoint p2 = foci2[triplet[1]];
         final AssignedPoint p3 = foci3[triplet[2]];
-        addTriplet(count, o, p1, p2, p3, triplet[3]);
+        addTripletToOverlay(count, overaly, p1, p2, p3, triplet[3]);
       }
-      imp.setOverlay(o);
+      imp.setOverlay(overaly);
     }
     if (manualImp != null) {
       // New overlay if the two images are different
-      if (o == null || (imp != null && imp.getID() != manualImp.getID())) {
-        o = new Overlay();
+      if (overaly == null || (imp != null && imp.getID() != manualImp.getID())) {
+        overaly = new Overlay();
       }
       int count = 0;
       for (final AssignedPoint[] triplet : manualTriplets) {
@@ -579,14 +578,14 @@ public class TranslocationFinder_PlugIn implements PlugIn {
         final AssignedPoint p2 = triplet[1];
         final AssignedPoint p3 = triplet[2];
         // We store the classification in the id of the first point
-        addTriplet(count, o, p1, p2, p3, triplet[0].id);
+        addTripletToOverlay(count, overaly, p1, p2, p3, triplet[0].id);
       }
-      manualImp.setOverlay(o);
+      manualImp.setOverlay(overaly);
     }
   }
 
-  private static void addTriplet(int count, Overlay o, AssignedPoint p1, AssignedPoint p2,
-      AssignedPoint p3, int classification) {
+  private static void addTripletToOverlay(int count, Overlay overlay, AssignedPoint p1,
+      AssignedPoint p2, AssignedPoint p3, int classification) {
     final float[] x = new float[3];
     final float[] y = new float[3];
     x[0] = p1.x;
@@ -609,12 +608,12 @@ public class TranslocationFinder_PlugIn implements PlugIn {
         color = Color.YELLOW;
     }
     roi.setStrokeColor(color);
-    o.add(roi);
+    overlay.add(roi);
 
     final TextRoi text = new TextRoi(MathUtils.max(x) + 1, MathUtils.min(y),
         Integer.toString(count) + CLASSIFICATION[classification].charAt(0));
     text.setStrokeColor(color);
-    o.add(text);
+    overlay.add(text);
   }
 
   /**
@@ -663,7 +662,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     }
 
     @Override
-    public void mouseClicked(ImagePlus imp, MouseEvent e) {
+    public void mouseClicked(ImagePlus imp, MouseEvent event) {
       // Ensure rapid mouse click does not break things
       synchronized (this) {
         if (imageId != imp.getID()) {
@@ -672,8 +671,8 @@ public class TranslocationFinder_PlugIn implements PlugIn {
         imageId = imp.getID();
 
         final ImageCanvas ic = imp.getCanvas();
-        ox[points] = ic.offScreenX(e.getX());
-        oy[points] = ic.offScreenY(e.getY());
+        ox[points] = ic.offScreenX(event.getX());
+        oy[points] = ic.offScreenY(event.getY());
         oz[points] = imp.getSlice();
         // System.out.printf("click %d,%d\n", ox[points], oy[points]);
         points++;
@@ -724,7 +723,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
         }
       }
 
-      e.consume();
+      event.consume();
     }
   }
 

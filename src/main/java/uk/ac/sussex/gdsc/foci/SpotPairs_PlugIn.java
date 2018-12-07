@@ -52,32 +52,49 @@ import java.util.Comparator;
  * other.
  */
 public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
+
+  private static final String TITLE = "Spot Pairs";
+  private static TextWindow resultsWindow = null;
+
+  private static double radius = 10;
+  private static boolean addOverlay = true;
+  private static boolean killRoi = false;
+
+  // Cache the ROI when we remove it so it can be reused
+  private static ImagePlus lastImp = null;
+  private static Roi lastRoi = null;
+
+  private Calibration cal;
+  private AssignedPoint[] points;
+  private ArrayList<Cluster> candidates;
+  private boolean addedOverlay = false;
+
   /**
    * Used to store information about a cluster in the clustering analysis.
    */
-  private class Cluster {
+  private static class Cluster {
     double x;
     double y;
     double sumx;
     double sumy;
-    int n;
+    int size;
 
     // Used to construct a single linked list of clusters
-    Cluster next = null;
+    Cluster next;
 
     // Used to store potential clustering links
-    Cluster closest = null;
-    double d2;
+    Cluster closest;
+    double distance;
 
     // Used to construct a single linked list of cluster points
-    ClusterPoint head = null;
+    ClusterPoint head;
 
     Cluster(ClusterPoint point) {
       point.next = null;
       head = point;
       this.x = sumx = point.x;
       this.y = sumy = point.y;
-      n = 1;
+      size = 1;
     }
 
     double distance2(Cluster other) {
@@ -93,7 +110,7 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
       // Find the tail of the shortest list
       ClusterPoint big;
       ClusterPoint small;
-      if (n < other.n) {
+      if (size < other.size) {
         small = head;
         big = other.head;
       } else {
@@ -113,9 +130,9 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
       // Find the new centroid
       sumx += other.sumx;
       sumy += other.sumy;
-      n += other.n;
-      x = sumx / n;
-      y = sumy / n;
+      size += other.size;
+      x = sumx / size;
+      y = sumy / size;
 
       // Free the other cluster
       other.clear();
@@ -124,8 +141,8 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
     private void clear() {
       head = null;
       closest = null;
-      n = 0;
-      x = y = sumx = sumy = d2 = 0;
+      size = 0;
+      x = y = sumx = sumy = distance = 0;
     }
 
     /**
@@ -137,18 +154,20 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
      */
     void link(Cluster other, double d2) {
       // Check if the other cluster has a closer candidate
-      if (other.closest != null && other.d2 < d2) {
+      if (other.closest != null && other.distance < d2) {
         return;
       }
 
       other.closest = this;
-      other.d2 = d2;
+      other.distance = d2;
 
       this.closest = other;
-      this.d2 = d2;
+      this.distance = d2;
     }
 
     /**
+     * True if the closest cluster links back to this cluster.
+     *
      * @return True if the closest cluster links back to this cluster.
      */
     boolean validLink() {
@@ -164,7 +183,7 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
      * Sorts the points in ID order. This only works for the first two points in the list.
      */
     void sort() {
-      if (n < 2) {
+      if (size < 2) {
         return;
       }
       final ClusterPoint p1 = head;
@@ -180,13 +199,13 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /**
    * Used to store information about a point in the clustering analysis.
    */
-  private class ClusterPoint {
+  private static class ClusterPoint {
     double x;
     double y;
     int id;
 
     // Used to construct a single linked list of points
-    ClusterPoint next = null;
+    ClusterPoint next;
 
     ClusterPoint(int id, double x, double y) {
       this.id = id;
@@ -200,22 +219,6 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
       return Math.sqrt(dx * dx + dy * dy);
     }
   }
-
-  private static final String TITLE = "Spot Pairs";
-  private static TextWindow resultsWindow = null;
-
-  private static double radius = 10;
-  private static boolean addOverlay = true;
-  private static boolean killRoi = false;
-
-  // Cache the ROI when we remove it so it can be reused
-  private static ImagePlus lastImp = null;
-  private static Roi lastRoi = null;
-
-  private Calibration cal;
-  private AssignedPoint[] points;
-  private ArrayList<Cluster> candidates;
-  private boolean addedOverlay = false;
 
   /** {@inheritDoc} */
   @Override
@@ -234,7 +237,7 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
       imp.setRoi(roi);
     }
 
-    points = PointManager.extractRoiPoints(roi);
+    points = AssignedPointUtils.extractRoiPoints(roi);
     if (points.length < 2) {
       IJ.error(TITLE, "Please mark at least two ROI points on the image");
       return DONE;
@@ -254,10 +257,10 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
         @Override
         public int compare(Cluster o1, Cluster o2) {
           // Put the pairs first
-          if (o1.n > o2.n) {
+          if (o1.size > o2.size) {
             return -1;
           }
-          if (o1.n < o2.n) {
+          if (o1.size < o2.size) {
             return 1;
           }
 
@@ -310,9 +313,9 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
     return sb.toString();
   }
 
-  private void addResult(Cluster c) {
-    final ClusterPoint p1 = c.head;
-    if (c.n == 1) {
+  private void addResult(Cluster cluster) {
+    final ClusterPoint p1 = cluster.head;
+    if (cluster.size == 1) {
       resultsWindow.append(String.format("\t%d\t%.0f\t%.0f", p1.id, p1.x, p1.y));
     } else {
       final ClusterPoint p2 = p1.next;
@@ -330,12 +333,12 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
     if (addOverlay) {
       final Overlay overlay = new Overlay();
       // Add the original points
-      final Roi pointRoi = PointManager.createROI(points);
+      final Roi pointRoi = AssignedPointUtils.createRoi(points);
       pointRoi.setStrokeColor(Color.orange);
       pointRoi.setFillColor(Color.white);
       overlay.add(pointRoi);
       for (final Cluster c : candidates) {
-        if (c.n == 2) {
+        if (c.size == 2) {
           // Draw a line between pairs
           final ClusterPoint p1 = c.head;
           final ClusterPoint p2 = p1.next;
@@ -391,15 +394,15 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
     final int maxBins = 500;
     final double xBinWidth = Math.max(radius, (maxx - minx) / maxBins);
     final double yBinWidth = Math.max(radius, (maxy - miny) / maxBins);
-    final int nXBins = 1 + (int) ((maxx - minx) / xBinWidth);
-    final int nYBins = 1 + (int) ((maxy - miny) / yBinWidth);
-    final Cluster[][] grid = new Cluster[nXBins][nYBins];
+    final int nxbins = 1 + (int) ((maxx - minx) / xBinWidth);
+    final int nybins = 1 + (int) ((maxy - miny) / yBinWidth);
+    final Cluster[][] grid = new Cluster[nxbins][nybins];
     for (final Cluster c : candidates) {
-      final int xBin = (int) ((c.x - minx) / xBinWidth);
-      final int yBin = (int) ((c.y - miny) / yBinWidth);
+      final int xbin = (int) ((c.x - minx) / xBinWidth);
+      final int ybin = (int) ((c.y - miny) / yBinWidth);
       // Build a single linked list
-      c.next = grid[xBin][yBin];
-      grid[xBin][yBin] = c;
+      c.next = grid[xbin][ybin];
+      grid[xbin][ybin] = c;
     }
 
     final double r2 = radius * radius;
@@ -407,23 +410,8 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
     // Sweep the all-vs-all clusters and make potential links between clusters.
     // If a link can be made to a closer cluster then break the link and rejoin.
     // Then join all the links into clusters.
-    final int maximumPairingSteps = 1;
-    int i = 0;
-    while (findLinks(grid, nXBins, nYBins, r2)) {
-      joinLinks(grid, nXBins, nYBins, candidates);
-
-      if (++i >= maximumPairingSteps) {
-        break;
-      }
-
-      // Reassign the grid
-      for (final Cluster c : candidates) {
-        final int xBin = (int) ((c.x - minx) / xBinWidth);
-        final int yBin = (int) ((c.y - miny) / yBinWidth);
-        // Build a single linked list
-        c.next = grid[xBin][yBin];
-        grid[xBin][yBin] = c;
-      }
+    if (findLinks(grid, nxbins, nybins, r2)) {
+      joinLinks(grid, nxbins, nybins, candidates);
     }
     return candidates;
   }
@@ -433,43 +421,45 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
    * if the clusters have any neighbours within 2*r^2.
    *
    * @param grid the grid
-   * @param nXBins the number of X bins
-   * @param nYBins the number of Y bins
+   * @param nxbins the number of X bins
+   * @param nybins the number of Y bins
    * @param r2 The squared radius distance
    * @return True if any links were made
    */
-  private static boolean findLinks(Cluster[][] grid, final int nXBins, final int nYBins,
+  private static boolean findLinks(Cluster[][] grid, final int nxbins, final int nybins,
       final double r2) {
     final Cluster[] neighbours = new Cluster[5];
     boolean linked = false;
-    for (int yBin = 0; yBin < nYBins; yBin++) {
-      for (int xBin = 0; xBin < nXBins; xBin++) {
-        for (Cluster c1 = grid[xBin][yBin]; c1 != null; c1 = c1.next) {
+    for (int ybin = 0; ybin < nybins; ybin++) {
+      for (int xbin = 0; xbin < nxbins; xbin++) {
+        for (Cluster c1 = grid[xbin][ybin]; c1 != null; c1 = c1.next) {
           // Build a list of which cells to compare up to a maximum of 5
-          // | 0,0 | 1,0
+          // @formatter:off
+          //      | 0,0 | 1,0
           // ------------+-----
           // -1,1 | 0,1 | 1,1
+          // @formatter:on
 
           int count = 0;
           neighbours[count++] = c1.next;
 
-          if (yBin < nYBins - 1) {
-            neighbours[count++] = grid[xBin][yBin + 1];
-            if (xBin > 0) {
-              neighbours[count++] = grid[xBin - 1][yBin + 1];
+          if (ybin < nybins - 1) {
+            neighbours[count++] = grid[xbin][ybin + 1];
+            if (xbin > 0) {
+              neighbours[count++] = grid[xbin - 1][ybin + 1];
             }
           }
-          if (xBin < nXBins - 1) {
-            neighbours[count++] = grid[xBin + 1][yBin];
-            if (yBin < nYBins - 1) {
-              neighbours[count++] = grid[xBin + 1][yBin + 1];
+          if (xbin < nxbins - 1) {
+            neighbours[count++] = grid[xbin + 1][ybin];
+            if (ybin < nybins - 1) {
+              neighbours[count++] = grid[xbin + 1][ybin + 1];
             }
           }
 
           // Compare to neighbours and find the closest.
           // Use either the radius threshold or the current closest distance
           // which may have been set by an earlier comparison.
-          double min = (c1.closest == null) ? r2 : c1.d2;
+          double min = (c1.closest == null) ? r2 : c1.distance;
           Cluster other = null;
           while (count-- > 0) {
             for (Cluster c2 = neighbours[count]; c2 != null; c2 = c2.next) {
@@ -496,17 +486,17 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
    * Join valid links between clusters. Resets the link candidates.
    *
    * @param grid the grid
-   * @param nXBins the number of X bins
-   * @param nYBins the number of Y bins
+   * @param nxbins the number of X bins
+   * @param nybins the number of Y bins
    * @param candidates Re-populate will all the remaining clusters
    */
-  private static void joinLinks(Cluster[][] grid, int nXBins, int nYBins,
+  private static void joinLinks(Cluster[][] grid, int nxbins, int nybins,
       ArrayList<Cluster> candidates) {
     candidates.clear();
 
-    for (int yBin = 0; yBin < nYBins; yBin++) {
-      for (int xBin = 0; xBin < nXBins; xBin++) {
-        for (Cluster c1 = grid[xBin][yBin]; c1 != null; c1 = c1.next) {
+    for (int ybin = 0; ybin < nybins; ybin++) {
+      for (int xbin = 0; xbin < nxbins; xbin++) {
+        for (Cluster c1 = grid[xbin][ybin]; c1 != null; c1 = c1.next) {
           if (c1.validLink()) {
             c1.add(c1.closest);
           }
@@ -514,13 +504,13 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
           c1.closest = null;
 
           // Store all remaining clusters
-          if (c1.n != 0) {
+          if (c1.size != 0) {
             candidates.add(c1);
           }
         }
 
         // Reset the grid
-        grid[xBin][yBin] = null;
+        grid[xbin][ybin] = null;
       }
     }
   }
@@ -553,19 +543,16 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
   /** {@inheritDoc} */
   @Override
-  public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+  public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
     radius = gd.getNextNumber();
     addOverlay = gd.getNextBoolean();
     killRoi = gd.getNextBoolean();
-    if (gd.invalidNumber()) {
-      return false;
-    }
-    return true;
+    return !gd.invalidNumber();
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setNPasses(int nPasses) {
+  public void setNPasses(int passes) {
     // Do nothing
   }
 }

@@ -45,15 +45,24 @@ import java.util.Arrays;
  * properties can be changed to protected from the private/default scope. Extending a copy allows
  * easier update when the super class changes.
  */
-public class ZProjector2 extends ZProjectorCopy {
+public class ExtendedZProjector extends ZProjectorCopy {
   /** Use Mode projection. */
   public static final int MODE_METHOD = 6;
   /** Use Mode projection (ignoring zero from the image). */
   public static final int MODE_IGNORE_ZERO_METHOD = 7;
 
   /** The available projection methods. */
-  public static final String[] METHODS = {"Average Intensity", "Max Intensity", "Min Intensity",
+  private static final String[] METHODS = {"Average Intensity", "Max Intensity", "Min Intensity",
       "Sum Slices", "Standard Deviation", "Median", "Mode", "Mode (ignore zero)"};
+
+  /**
+   * Gets the methods.
+   *
+   * @return the methods
+   */
+  public static String[] getMethods() {
+    return METHODS.clone();
+  }
 
   @Override
   public void run(String arg) {
@@ -94,29 +103,30 @@ public class ZProjector2 extends ZProjectorCopy {
 
   @Override
   protected String makeTitle() {
-    String prefix = "AVG_";
+    String prefix = getPrefix(method);
+    return WindowManager.makeUniqueName(prefix + imp.getTitle());
+  }
+
+  private static String getPrefix(int method) {
     switch (method) {
+      case AVG_METHOD:
+        return "AVG_";
       case SUM_METHOD:
-        prefix = "SUM_";
-        break;
+        return "SUM_";
       case MAX_METHOD:
-        prefix = "MAX_";
-        break;
+        return "MAX_";
       case MIN_METHOD:
-        prefix = "MIN_";
-        break;
+        return "MIN_";
       case SD_METHOD:
-        prefix = "STD_";
-        break;
+        return "STD_";
       case MEDIAN_METHOD:
-        prefix = "MED_";
-        break;
+        return "MED_";
       case MODE_METHOD:
       case MODE_IGNORE_ZERO_METHOD:
-        prefix = "MOD_";
-        break;
+        return "MOD_";
+      default:
+        throw new IllegalStateException("Unknown method: " + method);
     }
-    return WindowManager.makeUniqueName(prefix + imp.getTitle());
   }
 
   @Override
@@ -144,7 +154,7 @@ public class ZProjector2 extends ZProjectorCopy {
     float value(float[] values);
   }
 
-  private ImagePlus doProjection(String name, Projector p) {
+  private ImagePlus doProjection(String name, Projector projector) {
     IJ.showStatus("Calculating " + name + "...");
     final ImageStack stack = imp.getStack();
     // Check not an RGB stack
@@ -176,11 +186,9 @@ public class ZProjector2 extends ZProjectorCopy {
       }
       for (int x = 0; x < width; x++, k++) {
         for (int i = 0; i < sliceCount; i++) {
-          // values[i] = slices[i].getPixelValue(x, y);
           values[i] = slices[i].getf(k);
         }
-        // ip2.putPixelValue(x, y, p.value(values));
-        ip2.setf(k, p.value(values));
+        ip2.setf(k, projector.value(values));
       }
     }
     final ImagePlus projImage = makeOutputImage(imp, (FloatProcessor) ip2, ptype);
@@ -192,12 +200,7 @@ public class ZProjector2 extends ZProjectorCopy {
   @Override
   protected ImagePlus doMedianProjection() {
     // Override to change the method for accessing pixel values to getf()
-    return doProjection("median", new Projector() {
-      @Override
-      public float value(float[] values) {
-        return median(values);
-      }
-    });
+    return doProjection("median", values -> median(values));
   }
 
   /**
@@ -207,83 +210,78 @@ public class ZProjector2 extends ZProjectorCopy {
    * @return the image plus
    */
   protected ImagePlus doModeProjection(final boolean ignoreZero) {
-    return doProjection("mode", new Projector() {
-      @Override
-      public float value(float[] values) {
-        return getMode(values, ignoreZero);
-      }
-    });
+    return doProjection("mode", values -> getMode(values, ignoreZero));
   }
 
   /**
    * Return the mode of the array. Return the mode with the highest value in the event of a tie.
    *
-   * NaN values are ignored. The mode may be NaN only if the array is zero length or contains only
-   * NaN.
+   * <p>Sorts the input array in natural order.
    *
-   * @param a Array
+   * <p>NaN values are ignored. The mode may be NaN only if the array is zero length or contains
+   * only NaN.
+   *
+   * @param array the array
    * @param ignoreBelowZero Ignore all values less than or equal to zero. If no values are above
    *        zero the return is zero (not NaN).
    * @return The mode
    */
-  public static float mode(float[] a, boolean ignoreBelowZero) {
-    if (a == null || a.length == 0) {
+  public static float mode(float[] array, boolean ignoreBelowZero) {
+    if (array == null || array.length == 0) {
       return Float.NaN;
     }
-    return getMode(a, ignoreBelowZero);
+    return getMode(array, ignoreBelowZero);
   }
 
   /**
    * Return the mode of the array. Return the mode with the highest value in the event of a tie.
    *
-   * NaN values are ignored. The mode may be NaN only if the array is zero length or contains only
-   * NaN.
+   * <p>Sorts the input array in natural order.
    *
-   * @param a Array
+   * <p>NaN values are ignored. The mode may be NaN only if the array is zero length or contains
+   * only NaN.
+   *
+   * @param array the array
    * @param ignoreBelowZero Ignore all values less than or equal to zero. If no values are above
    *        zero the return is zero (not NaN).
    * @return The mode
    */
-  private static float getMode(float[] a, boolean ignoreBelowZero) {
+  private static float getMode(float[] array, boolean ignoreBelowZero) {
     // Assume array is not null or empty
 
-    Arrays.sort(a);
+    Arrays.sort(array);
 
-    // NaN will be placed at the end
-    final int length;
-    if (Float.isNaN(a[a.length - 1])) {
-      // Ignore NaN values
-      int i = a.length;
-      while (i-- > 0) {
-        if (!Float.isNaN(a[i])) {
-          break;
-        }
-      }
-      length = i + 1;
-      if (length == 0) {
-        return Float.NaN;
-      }
-    } else {
-      length = a.length;
+    // Ignore NaN values.
+    // NaN will be placed at the end by the sort.
+    int index = array.length - 1;
+    while (index >= 0 && Float.isNaN(array[index])) {
+      index--;
     }
+
+    if (index < 0) {
+      return Float.NaN;
+    }
+
+    // At least 1 non NaN value.
+    final int length = index + 1;
 
     int modeCount = 0;
     float mode = 0;
 
-    int i = 0;
+    index = 0;
     if (ignoreBelowZero) {
-      while (i < length && a[i] <= 0) {
-        i++;
+      while (index < length && array[index] <= 0) {
+        index++;
       }
-      if (length == i) {
-        return 0; // Float.NaN;
+      if (length == index) {
+        return 0;
       }
     }
 
     int currentCount = 1;
-    float currentValue = a[i];
-    while (++i < length) {
-      if (a[i] != currentValue) {
+    float currentValue = array[index];
+    while (++index < length) {
+      if (array[index] != currentValue) {
         if (modeCount <= currentCount) {
           modeCount = currentCount;
           mode = currentValue;
@@ -292,11 +290,10 @@ public class ZProjector2 extends ZProjectorCopy {
       } else {
         currentCount++;
       }
-      currentValue = a[i];
+      currentValue = array[index];
     }
     // Do the final check
     if (modeCount <= currentCount) {
-      modeCount = currentCount;
       mode = currentValue;
     }
 

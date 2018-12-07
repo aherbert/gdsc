@@ -162,8 +162,6 @@ public class Version {
   /**
    * Load the jar manifest for the given class.
    *
-   *
-   *
    * <p>If not from a jar or an IO exception occurs return null.
    *
    * @param clazz the class

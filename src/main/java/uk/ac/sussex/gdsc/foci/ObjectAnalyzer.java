@@ -35,11 +35,21 @@ import java.util.Arrays;
  * Find objects defined by contiguous pixels of the same value.
  */
 public class ObjectAnalyzer {
+
+  private static final int[] DIR_X_OFFSET = {0, 1, 0, -1, 1, 1, -1, -1};
+  private static final int[] DIR_Y_OFFSET = {-1, 0, 1, 0, -1, 1, 1, -1};
+
   private final ImageProcessor ip;
   private boolean eightConnected;
   private int[] objectMask;
   private int maxObject;
-  private int minObjectSize = 0;
+  private int minObjectSize;
+
+  private int maxx;
+  private int maxy;
+  private int xlimit;
+  private int ylimit;
+  private int[] offset;
 
   /**
    * Instantiates a new object analyzer.
@@ -62,6 +72,8 @@ public class ObjectAnalyzer {
   }
 
   /**
+   * Gets the object mask.
+   *
    * @return A pixel array containing the object number for each pixel in the input image.
    */
   public int[] getObjectMask() {
@@ -70,6 +82,8 @@ public class ObjectAnalyzer {
   }
 
   /**
+   * Gets the max object.
+   *
    * @return The maximum object number.
    */
   public int getMaxObject() {
@@ -102,7 +116,7 @@ public class ObjectAnalyzer {
       // Look for non-zero values that are not already in an object
       if (maskImage[i] != 0 && objectMask[i] == 0) {
         maxObject++;
-        final int size = expandObjectXY(maskImage, objectMask, i, maxObject, ppList);
+        final int size = expandObjectXy(maskImage, objectMask, i, maxObject, ppList);
         if (sizes.length == maxObject) {
           sizes = Arrays.copyOf(sizes, (int) (maxObject * 1.5));
         }
@@ -132,7 +146,7 @@ public class ObjectAnalyzer {
    * Searches from the specified point to find all coordinates of the same value and assigns them to
    * given maximum ID.
    */
-  private int expandObjectXY(final int[] image, final int[] objectMask, final int index0,
+  private int expandObjectXy(final int[] image, final int[] objectMask, final int index0,
       final int id, int[][] ppList) {
     objectMask[index0] = id; // mark first point
     int listI = 0; // index of current search element in the list
@@ -140,20 +154,20 @@ public class ObjectAnalyzer {
     final int neighbours = (eightConnected) ? 8 : 4;
 
     // we create a list of connected points and start the list at the current point
-    int[] pList = ppList[0];
-    pList[listI] = index0;
+    int[] pointList = ppList[0];
+    pointList[listI] = index0;
 
     final int v0 = image[index0];
 
     do {
-      final int index1 = pList[listI];
+      final int index1 = pointList[listI];
       final int x1 = index1 % maxx;
       final int y1 = index1 / maxx;
 
-      final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+      final boolean isInnerXy = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
 
       for (int d = neighbours; d-- > 0;) {
-        if (isInnerXY || isWithinXY(x1, y1, d)) {
+        if (isInnerXy || isWithinXy(x1, y1, d)) {
           final int index2 = index1 + offset[d];
           if (objectMask[index2] != 0) {
             // This has been done already, ignore this point
@@ -164,10 +178,10 @@ public class ObjectAnalyzer {
 
           if (v2 == v0) {
             // Add this to the search
-            pList[listLen++] = index2;
+            pointList[listLen++] = index2;
             objectMask[index2] = id;
-            if (pList.length == listLen) {
-              pList = Arrays.copyOf(pList, (int) (listLen * 1.5));
+            if (pointList.length == listLen) {
+              pointList = Arrays.copyOf(pointList, (int) (listLen * 1.5));
             }
           }
         }
@@ -178,18 +192,10 @@ public class ObjectAnalyzer {
     }
     while (listI < listLen);
 
-    ppList[0] = pList;
+    ppList[0] = pointList;
 
     return listLen;
   }
-
-  private int maxx;
-  private int maxy;
-  private int xlimit;
-  private int ylimit;
-  private int[] offset;
-  private final int[] DIR_X_OFFSET = new int[] {0, 1, 0, -1, 1, 1, -1, -1};
-  private final int[] DIR_Y_OFFSET = new int[] {-1, 0, 1, 0, -1, 1, 1, -1};
 
   /**
    * Creates the direction offset tables.
@@ -218,7 +224,7 @@ public class ObjectAnalyzer {
    * @param direction the direction from the pixel towards the neighbour
    * @return true if the neighbour is within the image (provided that x, y is within)
    */
-  private boolean isWithinXY(int x, int y, int direction) {
+  private boolean isWithinXy(int x, int y, int direction) {
     switch (direction) {
       // 4-connected directions
       case 0:
@@ -244,6 +250,8 @@ public class ObjectAnalyzer {
   }
 
   /**
+   * Gets the width.
+   *
    * @return The image width.
    */
   public int getWidth() {
@@ -251,6 +259,8 @@ public class ObjectAnalyzer {
   }
 
   /**
+   * Gets the height.
+   *
    * @return The image height.
    */
   public int getHeight() {
@@ -289,6 +299,8 @@ public class ObjectAnalyzer {
   }
 
   /**
+   * Gets the minimum object size. Objects below this are removed.
+   *
    * @return The minimum object size. Objects below this are removed.
    */
   public int getMinObjectSize() {
@@ -296,24 +308,35 @@ public class ObjectAnalyzer {
   }
 
   /**
+   * Sets the minimum object size. Objects below this are removed.
+   *
    * @param minObjectSize The minimum object size. Objects below this are removed.
    */
   public void setMinObjectSize(int minObjectSize) {
+    if (minObjectSize != this.minObjectSize) {
+      this.objectMask = null;
+    }
     this.minObjectSize = minObjectSize;
   }
 
   /**
-   * @return True if objects should use 8-connected pixels. The default is 4-connected.
+   * Checks if objects should use 8-connected pixels. The default is 4-connected.
+   *
+   * @return True if objects should use 8-connected pixels.
    */
   public boolean isEightConnected() {
     return eightConnected;
   }
 
   /**
-   * @param eightConnected True if objects should use 8-connected pixels. The default is
-   *        4-connected.
+   * Sets if objects should use 8-connected pixels. The default is 4-connected.
+   *
+   * @param eightConnected True if objects should use 8-connected pixels.
    */
   public void setEightConnected(boolean eightConnected) {
+    if (eightConnected != this.eightConnected) {
+      this.objectMask = null;
+    }
     this.eightConnected = eightConnected;
   }
 
@@ -324,20 +347,30 @@ public class ObjectAnalyzer {
    */
   public ImageProcessor toProcessor() {
     final int max = getMaxObject();
-    final ImageProcessor ip = (max > 255)
-        ? (max > 65535) ? new FloatProcessor(getWidth(), getHeight())
-            : new ShortProcessor(getWidth(), getHeight())
-        : new ByteProcessor(getWidth(), getHeight());
     if (max > 65535) {
-      for (int i = objectMask.length; i-- > 0;) {
-        ip.setf(i, objectMask[i]);
-      }
-    } else {
-      for (int i = objectMask.length; i-- > 0;) {
-        ip.set(i, objectMask[i]);
-      }
+      return toFloatProcessor();
     }
-    ip.setMinAndMax(0, max);
-    return ip;
+    final ImageProcessor mask = (max > 255) ? new ShortProcessor(getWidth(), getHeight())
+        : new ByteProcessor(getWidth(), getHeight());
+    for (int i = objectMask.length; i-- > 0;) {
+      mask.set(i, objectMask[i]);
+    }
+    mask.setMinAndMax(0, max);
+    return mask;
+  }
+
+  /**
+   * Get an image processor containing the object mask.
+   *
+   * @return the image processor
+   */
+  public FloatProcessor toFloatProcessor() {
+    final int max = getMaxObject();
+    final FloatProcessor mask = new FloatProcessor(getWidth(), getHeight());
+    for (int i = objectMask.length; i-- > 0;) {
+      mask.setf(i, objectMask[i]);
+    }
+    mask.setMinAndMax(0, max);
+    return mask;
   }
 }

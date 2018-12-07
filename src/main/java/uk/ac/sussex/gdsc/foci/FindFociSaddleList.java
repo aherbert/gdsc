@@ -32,8 +32,10 @@ import java.util.Comparator;
 /**
  * Contains the foci saddle results of the FindFoci algorithm.
  */
-public class FindFociSaddleList implements Cloneable {
+public class FindFociSaddleList {
   private static class IdSaddleComparator implements Comparator<FindFociSaddle> {
+    static final IdSaddleComparator INSTANCE = new IdSaddleComparator();
+
     @Override
     public int compare(FindFociSaddle o1, FindFociSaddle o2) {
       if (o1.id < o2.id) {
@@ -49,14 +51,12 @@ public class FindFociSaddleList implements Cloneable {
         return 1;
       }
       return 0;
-      // final int result = o1.id - o2.id;
-      // if (result != 0)
-      // return result;
-      // return o1.order - o2.order;
     }
   }
 
   private static class OrderSaddleComparator implements Comparator<FindFociSaddle> {
+    static final OrderSaddleComparator INSTANCE = new OrderSaddleComparator();
+
     @Override
     public int compare(FindFociSaddle o1, FindFociSaddle o2) {
       if (o1.order < o2.order) {
@@ -66,16 +66,7 @@ public class FindFociSaddleList implements Cloneable {
         return 1;
       }
       return 0;
-      // return o1.order - o2.order;
     }
-  }
-
-  private static IdSaddleComparator idSaddleComparator;
-  private static OrderSaddleComparator orderSaddleComparator;
-
-  static {
-    idSaddleComparator = new IdSaddleComparator();
-    orderSaddleComparator = new OrderSaddleComparator();
   }
 
   /** The size. */
@@ -105,6 +96,23 @@ public class FindFociSaddleList implements Cloneable {
   }
 
   /**
+   * Copy constructor.
+   *
+   * @param source the source
+   */
+  private FindFociSaddleList(FindFociSaddleList source) {
+    size = source.size;
+    if (source.list != null) {
+      // Make same length so that add operations behave exactly the same
+      list = new FindFociSaddle[source.list.length];
+      // Only copy up to the correct size
+      for (int i = 0; i < size; i++) {
+        list[i] = source.list[i].clone();
+      }
+    }
+  }
+
+  /**
    * get the size of the list.
    *
    * @return The size
@@ -116,11 +124,11 @@ public class FindFociSaddleList implements Cloneable {
   /**
    * Get the saddle for the index.
    *
-   * @param i The index
+   * @param index The index
    * @return The saddle
    */
-  public FindFociSaddle get(final int i) {
-    return list[i];
+  public FindFociSaddle get(final int index) {
+    return list[index];
   }
 
   /**
@@ -141,14 +149,6 @@ public class FindFociSaddleList implements Cloneable {
   }
 
   /**
-   * Free memory (Set size to zero and the list to null).
-   */
-  void free() {
-    size = 0;
-    list = null;
-  }
-
-  /**
    * Clear the list from the given position but do not reduce the capacity.
    *
    * @param position The position
@@ -162,6 +162,14 @@ public class FindFociSaddleList implements Cloneable {
     while (position < oldSize) {
       list[position++] = null;
     }
+  }
+
+  /**
+   * Free memory (Set size to zero and the list to null).
+   */
+  void free() {
+    size = 0;
+    list = null;
   }
 
   /**
@@ -179,18 +187,14 @@ public class FindFociSaddleList implements Cloneable {
    * <p>Note this is different from the ensureCapacity() method of ArrayList which checks total
    * capacity.
    *
-   * @param n The number of extra elements (this should not be negative)
+   * @param elements The number of extra elements (this should not be negative)
    */
-  public void ensureExtraCapacity(int n) {
-    if (list.length - size >= n) {
+  public void ensureExtraCapacity(int elements) {
+    if (list.length - size >= elements) {
       return;
     }
     // Increase size
-    list = Arrays.copyOf(list, size + n);
-
-    // On the assumption that any list which needs extra capacity will be from a large peak
-    // This does not appear to affect speed so it is left commented out.
-    // list = Arrays.copyOf(list, Math.max(size + n, (int) (list.length * 3)));
+    list = Arrays.copyOf(list, size + elements);
   }
 
   /**
@@ -207,24 +211,8 @@ public class FindFociSaddleList implements Cloneable {
    *
    * @return the find foci saddle
    */
-  @Override
-  public FindFociSaddleList clone() {
-    // Make same length so that add operations behave exactly the same
-    if (size == 0) {
-      if (list == null) {
-        // This is a list that has had the free() method called
-        return new FindFociSaddleList(null);
-      }
-      // This list is just empty
-      return new FindFociSaddleList();
-    }
-    final FindFociSaddle[] list = new FindFociSaddle[this.list.length];
-    for (int i = 0; i < size; i++) {
-      list[i] = this.list[i].clone();
-    }
-    final FindFociSaddleList newList = new FindFociSaddleList(list);
-    newList.size = this.size;
-    return newList;
+  public FindFociSaddleList copy() {
+    return new FindFociSaddleList(this);
   }
 
   /**
@@ -261,7 +249,7 @@ public class FindFociSaddleList implements Cloneable {
     for (int i = 0; i < size; i++) {
       list[i].order = i;
     }
-    sort(idSaddleComparator);
+    sort(IdSaddleComparator.INSTANCE);
     int lastId = 0;
     int newSize = 0;
     for (int i = 0; i < size; i++) {
@@ -272,7 +260,7 @@ public class FindFociSaddleList implements Cloneable {
     }
     clear(newSize);
     if (maintain) {
-      sort(orderSaddleComparator);
+      sort(OrderSaddleComparator.INSTANCE);
     } else {
       sort();
     }
@@ -306,6 +294,6 @@ public class FindFociSaddleList implements Cloneable {
     for (int i = 0; i < size; i++) {
       list[i].order = i;
     }
-    sort(idSaddleComparator);
+    sort(IdSaddleComparator.INSTANCE);
   }
 }

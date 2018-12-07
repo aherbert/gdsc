@@ -23,7 +23,8 @@
  */
 
 /**
- * Provides the controller for execution of the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn} algorithm.
+ * Provides the controller for execution of the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn}
+ * algorithm.
  *
  * @since 1.3.0
  */

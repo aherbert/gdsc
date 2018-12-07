@@ -90,7 +90,8 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     // List the foci results
     final String[] names = FindFoci_PlugIn.getResultsNames();
     if (names == null || names.length == 0) {
-      IJ.error(TITLE, "Spots must be stored in memory using the " + FindFoci_PlugIn.TITLE + " plugin");
+      IJ.error(TITLE,
+          "Spots must be stored in memory using the " + FindFoci_PlugIn.TITLE + " plugin");
       return;
     }
 
@@ -109,8 +110,8 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
 
     final GenericDialog gd = new GenericDialog(TITLE);
 
-    gd.addMessage(
-        "Analyses spots within a mask region\nand computes radial intensity within the mask object region.");
+    gd.addMessage("Analyses spots within a mask region\n"
+        + "and computes radial intensity within the mask object region.");
 
     gd.addChoice("Results_name", names, resultsName);
     gd.addChoice("Mask", maskImageList, maskImage);
@@ -147,7 +148,8 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       return;
     }
 
-    if (distance != SpotRadialIntensity_PlugIn.distance || interval != SpotRadialIntensity_PlugIn.interval) {
+    if (distance != SpotRadialIntensity_PlugIn.distance
+        || interval != SpotRadialIntensity_PlugIn.interval) {
       resultsWindow = null; // Create a new window
     }
     SpotRadialIntensity_PlugIn.distance = distance;
@@ -184,22 +186,18 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
    */
   public String[] getImageList() {
     final ArrayList<String> newImageList = new ArrayList<>();
-    final int w = imp.getWidth();
-    final int h = imp.getHeight();
+    final int width = imp.getWidth();
+    final int height = imp.getHeight();
     for (final int id : ImageJUtils.getIdList()) {
-      final ImagePlus imp = WindowManager.getImage(id);
-      if (imp == null) {
+      final ImagePlus image = WindowManager.getImage(id);
+      if ((image == null)
+          // Same xy dimensions
+          || (image.getWidth() != width || image.getHeight() != height)
+          // 8/16-bit
+          || (image.getBitDepth() == 24 || image.getBitDepth() == 32)) {
         continue;
       }
-      // Same xy dimensions
-      if (imp.getWidth() != w || imp.getHeight() != h) {
-        continue;
-      }
-      // 8/16-bit
-      if (imp.getBitDepth() == 24 || imp.getBitDepth() == 32) {
-        continue;
-      }
-      newImageList.add(imp.getTitle());
+      newImageList.add(image.getTitle());
     }
     return newImageList.toArray(new String[0]);
   }
@@ -233,7 +231,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       return null;
     }
     final ArrayList<FindFociResult> results = memoryResults.results;
-    if (results.size() == 0) {
+    if (results.isEmpty()) {
       IJ.error(TITLE, "Zero foci in the results with the name " + resultsName);
       return null;
     }
@@ -247,7 +245,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
         foci.add(new Foci(id++, object, result.x, result.y));
       }
     }
-    if (foci.size() == 0) {
+    if (foci.isEmpty()) {
       IJ.error(TITLE, "Zero foci in the results within mask objects");
       return null;
     }
@@ -383,24 +381,24 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       }
 
       // Add to plot
-      if (showPlot) {
-        int xLimit = 0;
+      if (plot != null) {
+        int xlimit = 0;
         for (int i = 0; i < maxBin; i++) {
           if (count[i] != 0) {
-            xLimit = i + 1;
+            xlimit = i + 1;
           }
         }
 
         plot.setColor(LutHelper.getColour(lut, ii + 1, 0, foci.length));
-        if (xLimit < xAxis.length) {
-          plot.addPoints(Arrays.copyOf(xAxis, xLimit), Arrays.copyOf(yAxis, xLimit), Plot.LINE);
+        if (xlimit < xAxis.length) {
+          plot.addPoints(Arrays.copyOf(xAxis, xlimit), Arrays.copyOf(yAxis, xlimit), Plot.LINE);
         } else {
           plot.addPoints(xAxis, yAxis, Plot.LINE);
         }
       }
     }
 
-    if (showPlot) {
+    if (plot != null) {
       plot.setColor(Color.BLACK);
       ImageJUtils.display(TITLE, plot);
       plot.setLimitsToFit(true); // Seems to only work after drawing

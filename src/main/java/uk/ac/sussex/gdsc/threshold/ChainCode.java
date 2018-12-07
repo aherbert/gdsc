@@ -24,41 +24,44 @@
 
 package uk.ac.sussex.gdsc.threshold;
 
-import java.util.LinkedList;
+import gnu.trove.list.array.TIntArrayList;
 
 /**
- * Stores a chain code. Stores the origin and a set of offsets in a run. The offset can be used to
- * find the x,y coordinates for each point using the DIR_X_OFFSET and DIR_Y_OFFSET directions for
- * successive points from the origin.
+ * Stores a chain code. Stores the origin x,y and a set of directions in a chain of 8 neighbour
+ * connected 2D pixels.
  *
- * <p>The implementation is not very space efficient but is useful for debugging.
+ * <p>The directions can be used to find the x,y coordinates for each point using the directions for
+ * successive points from the origin.
  */
-public class ChainCode implements Comparable<ChainCode> {
-  private static final float ROOT2 = (float) Math.sqrt(2);
+public class ChainCode {
+  private static final double ROOT2 = Math.sqrt(2);
 
+  /** The number of directions for an 8 neighbour connected pixel. */
+  public static final int DIRECTION_SIZE = 8;
   /**
    * Describes the x-direction for the chain code.
    */
-  public static final int[] DIR_X_OFFSET = new int[] {0, 1, 1, 1, 0, -1, -1, -1};
+  private static final int[] DIR_X_OFFSET = {0, 1, 1, 1, 0, -1, -1, -1};
   /**
    * Describes the y-direction for the chain code.
    */
-  public static final int[] DIR_Y_OFFSET = new int[] {-1, -1, 0, 1, 1, 1, 0, -1};
+  private static final int[] DIR_Y_OFFSET = {-1, -1, 0, 1, 1, 1, 0, -1};
 
   /**
    * Describes the length for the chain code.
    */
-  public static final float[] DIR_LENGTH = new float[] {1, ROOT2, 1, ROOT2, 1, ROOT2, 1, ROOT2};
+  private static final float[] DIR_LENGTH =
+      {1, (float) ROOT2, 1, (float) ROOT2, 1, (float) ROOT2, 1, (float) ROOT2};
 
-  private int x = 0;
-  private int y = 0;
+  private int x;
+  private int y;
 
-  private final LinkedList<Integer> run = new LinkedList<>();
-  private float distance;
+  private final TIntArrayList run = new TIntArrayList();
+  private float length;
   private String toString;
 
   /**
-   * Default constructor.
+   * Create a chain code starting at the specified coordinates.
    *
    * @param x the x
    * @param y the y
@@ -66,11 +69,14 @@ public class ChainCode implements Comparable<ChainCode> {
   public ChainCode(int x, int y) {
     this.x = x;
     this.y = y;
-    dirty();
+    clearCachedState();
   }
 
-  private void dirty() {
-    distance = -1;
+  /**
+   * Remove the cached state as the chain code has been modified.
+   */
+  private void clearCachedState() {
+    length = -1;
     toString = null;
   }
 
@@ -81,53 +87,68 @@ public class ChainCode implements Comparable<ChainCode> {
    */
   public void add(int direction) {
     run.add(direction);
-    dirty();
+    clearCachedState();
   }
 
   /**
-   * @return the x origin.
+   * Get the x origin.
+   *
+   * @return the x origin
    */
   public int getX() {
     return x;
   }
 
   /**
-   * @return the y origin.
+   * Get the y origin.
+   *
+   * @return the y origin
    */
   public int getY() {
     return y;
   }
 
   /**
-   * @return The chain code distance.
+   * Get the chain code length from the origin to the end of the chain.
+   *
+   * @return the length
    */
-  public float getDistance() {
-    if (distance < 0) {
-      distance = 0;
-      for (final int code : run) {
-        distance += DIR_LENGTH[code];
+  public float getLength() {
+    float len = length;
+    if (len < 0) {
+      if (run.isEmpty()) {
+        len = length = 0;
+      } else {
+        final int[] count = new int[2];
+        run.forEach(code -> {
+          // Note:
+          // even number chain codes are 4n connected and have length 1
+          // odd number chain codes are diagonal and have length sqrt(2)
+          count[code % 2]++;
+          return true;
+        });
+        len = length = (float) (count[0] + count[1] * ROOT2);
       }
     }
-    return distance;
+    return len;
   }
 
   /**
-   * @return The number of points in the chain code (includes the x,y origin).
+   * Get the number of points in the chain code (includes the x,y origin).
+   *
+   * @return the size
    */
   public int getSize() {
     return run.size() + 1;
   }
 
   /**
-   * @return The chain code run.
+   * Get the chain code run.
+   *
+   * @return the run
    */
   public int[] getRun() {
-    final int[] codes = new int[run.size()];
-    int i = 0;
-    for (final int code : run) {
-      codes[i++] = code;
-    }
-    return codes;
+    return run.toArray();
   }
 
   /** {@inheritDoc} */
@@ -136,37 +157,41 @@ public class ChainCode implements Comparable<ChainCode> {
     if (toString == null) {
       final StringBuilder sb = new StringBuilder();
       sb.append(x).append(",").append(y);
-      for (final int code : run) {
+      run.forEach(code -> {
         sb.append(":").append(DIR_X_OFFSET[code]).append(",").append(DIR_Y_OFFSET[code]);
-      }
+        return true;
+      });
       toString = sb.toString();
     }
     return toString;
   }
 
-  @Override
-  public int compareTo(ChainCode o) {
-    if (o != null) {
-      if (getDistance() < o.getDistance()) {
-        return -1;
-      }
-      if (getDistance() > o.getDistance()) {
-        return 1;
-      }
-      if (x < o.getX()) {
-        return -1;
-      }
-      if (x > o.getX()) {
-        return 1;
-      }
-      if (y < o.getY()) {
-        return -1;
-      }
-      if (y > o.getY()) {
-        return 1;
-      }
+  /**
+   * Compares the two specified {@code ChainCode} values.
+   *
+   * <p>The comparison uses ascending order of the properties: {@link #getLength()};
+   * {@link #getX()}; and {@link #getY()}.
+   *
+   * @param o1 the first {@code ChainCode} to compare
+   * @param o2 the second {@code ChainCode} to compare
+   * @return the value {@code 0} if equal; a value less than {@code 0} if {@code o1} is less than
+   *         {@code o2}; and a value greater than {@code 0} if {@code o1} is greater than
+   *         {@code o2}.
+   */
+  public static int compare(ChainCode o1, ChainCode o2) {
+    if (o1.getLength() < o2.getLength()) {
+      return -1;
     }
-    return 0;
+    if (o1.getLength() > o2.getLength()) {
+      return 1;
+    }
+    if (o1.getX() < o2.getX()) {
+      return -1;
+    }
+    if (o1.getX() > o2.getX()) {
+      return 1;
+    }
+    return Integer.compare(o1.getY(), o2.getY());
   }
 
   /**
@@ -175,15 +200,16 @@ public class ChainCode implements Comparable<ChainCode> {
    * @return the end [endX, endY]
    */
   public int[] getEnd() {
-    int x = this.x;
-    int y = this.y;
+    int endx = this.x;
+    int endy = this.y;
 
-    for (final int code : run) {
-      x += DIR_X_OFFSET[code];
-      y += DIR_Y_OFFSET[code];
+    for (int i = 0; i < run.size(); i++) {
+      final int code = run.getQuick(i);
+      endx += DIR_X_OFFSET[code];
+      endy += DIR_Y_OFFSET[code];
     }
 
-    return new int[] {x, y};
+    return new int[] {endx, endy};
   }
 
   /**
@@ -192,22 +218,62 @@ public class ChainCode implements Comparable<ChainCode> {
    * @return the chain code
    */
   public ChainCode reverse() {
-    int x = this.x;
-    int y = this.y;
+    int endx = this.x;
+    int endy = this.y;
 
-    int i = 0;
-    final int[] run2 = new int[run.size()];
-    for (final int code : run) {
-      x += DIR_X_OFFSET[code];
-      y += DIR_Y_OFFSET[code];
-      run2[i++] = code;
+    // Do in descending order
+    final ChainCode reverse = new ChainCode(endx, endy);
+    for (int i = run.size() - 1; i >= 0; i--) {
+      final int code = run.getQuick(i);
+      endx += DIR_X_OFFSET[code];
+      endy += DIR_Y_OFFSET[code];
+      // Invert the chain code
+      reverse.add((code + 4) % 8);
     }
 
-    final ChainCode reverse = new ChainCode(x, y);
-    while (i-- > 0) {
-      reverse.add((run2[i] + 4) % 8);
-    }
+    // Update the origin
+    reverse.x = endx;
+    reverse.y = endy;
 
     return reverse;
+  }
+
+  /**
+   * Gets the x direction for the chain direction index.
+   *
+   * <p>The returned value is a direction for an 8 neighbour connected pixel and will have a value
+   * of -1, 0, or 1.
+   *
+   * @param index the index (range 0-7)
+   * @return the x direction
+   */
+  public static final int getXDirection(int index) {
+    return DIR_X_OFFSET[index];
+  }
+
+  /**
+   * Gets the y direction for the chain direction index.
+   *
+   * <p>The returned value is a direction for an 8 neighbour connected pixel and will have a value
+   * of -1, 0, or 1.
+   *
+   * @param index the index (range 0-7)
+   * @return the y direction
+   */
+  public static final int getYDirection(int index) {
+    return DIR_Y_OFFSET[index];
+  }
+
+  /**
+   * Gets the length for the combined (x,y) direction for the chain direction index.
+   *
+   * <p>The returned value is the length in the given (x,y) direction for an 8 neighbour connected
+   * pixel and will have a value of 1 or sqrt(2).
+   *
+   * @param index the index (range 0-7)
+   * @return the length
+   */
+  public static final float getDirectionLength(int index) {
+    return DIR_LENGTH[index];
   }
 }

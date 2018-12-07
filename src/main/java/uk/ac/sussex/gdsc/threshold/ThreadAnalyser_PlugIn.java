@@ -50,9 +50,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Analyses an image using a given mask.
@@ -102,15 +103,14 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
       IJ.error(TITLE, "Image and mask must have the same X,Y dimensions");
       return;
     }
-    if (objectIp != null) {
-      if (ip.getWidth() != objectIp.getWidth() || ip.getHeight() != objectIp.getHeight()) {
-        IJ.error(TITLE, "Image and object image must have the same X,Y dimensions");
-        return;
-      }
+    if (objectIp != null
+        && (ip.getWidth() != objectIp.getWidth() || ip.getHeight() != objectIp.getHeight())) {
+      IJ.error(TITLE, "Image and object image must have the same X,Y dimensions");
+      return;
     }
 
     // Create EDM
-    final FloatProcessor floatEdm = createEDM(maskIp);
+    final FloatProcessor floatEdm = createEdm(maskIp);
 
     // Create Skeleton
     final SkeletonAnalyser_PlugIn sa = new SkeletonAnalyser_PlugIn();
@@ -123,16 +123,16 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     final ColorProcessor cp = sa.createMapImage(map, maskIp.getWidth(), maskIp.getHeight());
 
     // Get the lines
-    final LinkedList<ChainCode> chainCodes = new LinkedList<>();
+    final ArrayList<ChainCode> chainCodes = new ArrayList<>();
     sa.extractLines(map, chainCodes);
 
-    lengthFilter(chainCodes);
+    lengthFilter(chainCodes, minLength);
 
     // Report statistics
     final ImageProcessor skeletonMap = createSkeletonMap(maskIp, chainCodes);
     reportResults(ip, floatEdm, chainCodes, skeletonMap, objectIp);
 
-    if (minLength > 0) {
+    if (skeletonMap != null) {
       // Skeleton Map is filtered for length. Use this to remove pixels from the other images
       for (int i = map.length; i-- > 0;) {
         if (skeletonMap.get(i) == 0) {
@@ -153,7 +153,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     if (showSkeleton) {
       showImage(cp, maskImage + " SkeletonNodeMap", roi);
     }
-    if (showSkeletonMap) {
+    if (skeletonMap != null) {
       skeletonMap.setMinAndMax(0, chainCodes.size());
       showImage(skeletonMap, maskImage + " SkeletonMap", roi);
     }
@@ -175,16 +175,16 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     // Check if already a mask. Find first non-zero value and check all other pixels are the same
     // value
     int value = 0;
-    int i = 0;
-    for (; i < ip.getPixelCount(); i++) {
-      if (ip.get(i) != 0) {
-        value = ip.get(i);
+    int index = 0;
+    for (; index < ip.getPixelCount(); index++) {
+      if (ip.get(index) != 0) {
+        value = ip.get(index);
         break;
       }
     }
     boolean isMask = true;
-    for (; i < ip.getPixelCount(); i++) {
-      if (ip.get(i) != 0 && value != ip.get(i)) {
+    for (; index < ip.getPixelCount(); index++) {
+      if (ip.get(index) != 0 && value != ip.get(index)) {
         isMask = false;
         break;
       }
@@ -309,15 +309,15 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     return 1;
   }
 
-  private static void addChoice(GenericDialog gd, String label, int nChannels, int index) {
-    if (nChannels == 1) {
+  private static void addChoice(GenericDialog gd, String label, int channels, int index) {
+    if (channels == 1) {
       return;
     }
-    final String[] items = new String[nChannels];
-    for (int c = 0; c < nChannels; c++) {
+    final String[] items = new String[channels];
+    for (int c = 0; c < channels; c++) {
       items[c] = Integer.toString(c + 1);
     }
-    if (index >= nChannels) {
+    if (index >= channels) {
       index = 0;
     }
     gd.addChoice(label, items, items[index]);
@@ -329,14 +329,13 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
    * @param bp the mask
    * @return the EDM float processor
    */
-  private static FloatProcessor createEDM(ByteProcessor bp) {
+  private static FloatProcessor createEdm(ByteProcessor bp) {
     final EDM edm = new EDM();
     byte backgroundValue = (byte) (Prefs.blackBackground ? 0 : 255);
     if (bp.isInvertedLut()) {
       backgroundValue = (byte) (255 - backgroundValue);
     }
-    final FloatProcessor floatEdm = edm.makeFloatEDM(bp, backgroundValue, false);
-    return floatEdm;
+    return edm.makeFloatEDM(bp, backgroundValue, false);
   }
 
   /**
@@ -344,16 +343,8 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
    *
    * @param chainCodes the chain codes
    */
-  private static void lengthFilter(LinkedList<ChainCode> chainCodes) {
-    Collections.sort(chainCodes);
-
-    while (!chainCodes.isEmpty()) {
-      if (chainCodes.getFirst().getDistance() < minLength) {
-        chainCodes.removeFirst();
-      } else {
-        break;
-      }
-    }
+  private static void lengthFilter(ArrayList<ChainCode> chainCodes, int minLength) {
+    chainCodes.removeIf(cc -> cc.getLength() < minLength);
   }
 
   /**
@@ -364,14 +355,12 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
    * @param chainCodes the chain codes
    * @return the image processor
    */
-  private static ImageProcessor createSkeletonMap(ByteProcessor bp,
-      LinkedList<ChainCode> chainCodes) {
+  private static ImageProcessor createSkeletonMap(ByteProcessor bp, List<ChainCode> chainCodes) {
     // Need a map if displaying it or using to filter for length
     if (showSkeletonMap || minLength > 0) {
       final int size = chainCodes.size();
-      final ImageProcessor ip = (size > 255) ? new ShortProcessor(bp.getWidth(), bp.getHeight())
+      return (size > 255) ? new ShortProcessor(bp.getWidth(), bp.getHeight())
           : new ByteProcessor(bp.getWidth(), bp.getHeight());
-      return ip;
     }
     return null;
   }
@@ -393,23 +382,24 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     return ip;
   }
 
-  private static Roi createLabels(LinkedList<ChainCode> chainCodes) {
-    int nPoints = 0;
-    final int[] xPoints = new int[chainCodes.size()];
-    final int[] yPoints = new int[xPoints.length];
+  private static Roi createLabels(List<ChainCode> chainCodes) {
+    int npoints = 0;
+    final int[] xpoints = new int[chainCodes.size()];
+    final int[] ypoints = new int[xpoints.length];
     for (final ChainCode code : chainCodes) {
-      int x = code.getX();
-      int y = code.getY();
+      int xpos = code.getX();
+      int ypos = code.getY();
       final int[] run = code.getRun();
+      // Run along half of the chain
       for (int i = 0; i < run.length / 2; i++) {
-        x += ChainCode.DIR_X_OFFSET[run[i]];
-        y += ChainCode.DIR_Y_OFFSET[run[i]];
+        xpos += ChainCode.getXDirection(i);
+        ypos += ChainCode.getYDirection(i);
       }
-      xPoints[nPoints] = x;
-      yPoints[nPoints] = y;
-      nPoints++;
+      xpoints[npoints] = xpos;
+      ypoints[npoints] = ypos;
+      npoints++;
     }
-    return new PointRoi(xPoints, yPoints, nPoints);
+    return new PointRoi(xpoints, ypoints, npoints);
   }
 
   private static void showImage(ImageProcessor ip, String title, Roi roi) {
@@ -481,7 +471,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
    */
   @SuppressWarnings("resource")
   private static void reportResults(ImageProcessor ip, FloatProcessor floatEdm,
-      LinkedList<ChainCode> chainCodes, ImageProcessor skeletonMap, ByteProcessor objectIp) {
+      List<ChainCode> chainCodes, ImageProcessor skeletonMap, ByteProcessor objectIp) {
     if (chainCodes.size() > 1000) {
       final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE,
           "Do you want to show all " + chainCodes.size() + " results?");
@@ -495,7 +485,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     final FloatProcessor floatObjectImage = (objectIp == null) ? null : objectIp.toFloat(1, null);
     float[] objectMaximaDistances = null;
 
-    Collections.sort(chainCodes);
+    Collections.sort(chainCodes, ChainCode::compare);
 
     OutputStreamWriter out = createResultsFile();
 
@@ -510,8 +500,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
       final float[] d = new float[code.getSize()];
       getPoints(code, x, y, d);
 
-      final float[] line =
-          new float[] {x[0], y[0], x[x.length - 1], y[x.length - 1], code.getDistance()};
+      final float[] line = {x[0], y[0], x[x.length - 1], y[x.length - 1], code.getLength()};
 
       out = saveResult(out, id, line);
       out = saveResult(out, "Distance", d);
@@ -576,10 +565,8 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
         + maskImage + ".threads.csv";
     try {
       final File file = new File(filename);
-      if (!file.exists()) {
-        if (file.getParent() != null) {
-          new File(file.getParent()).mkdirs();
-        }
+      if (!file.exists() && file.getParent() != null) {
+        new File(file.getParent()).mkdirs();
       }
 
       // Save results to file
@@ -633,16 +620,17 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     return out;
   }
 
-  private static OutputStreamWriter saveResult(OutputStreamWriter out, String string, float[] d) {
+  private static OutputStreamWriter saveResult(OutputStreamWriter out, String string,
+      float[] data) {
     if (out == null) {
       return null;
     }
 
     try {
       out.write(string);
-      for (int i = 0; i < d.length; i++) {
+      for (int i = 0; i < data.length; i++) {
         out.write(",");
-        out.write(IJ.d2s(d[i], 2));
+        out.write(IJ.d2s(data[i], 2));
       }
       out.write("\n");
     } catch (final IOException ex) {
@@ -658,74 +646,74 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     return out;
   }
 
-  private static void getPoints(ChainCode code, int[] x, int[] y, float[] d) {
-    int i = 0;
-    x[i] = code.getX();
-    y[i] = code.getY();
-    d[i] = 0;
+  private static void getPoints(ChainCode code, int[] x, int[] y, float[] length) {
+    int index = 0;
+    x[index] = code.getX();
+    y[index] = code.getY();
+    length[index] = 0;
     for (final int direction : code.getRun()) {
-      x[i + 1] = x[i] + ChainCode.DIR_X_OFFSET[direction];
-      y[i + 1] = y[i] + ChainCode.DIR_Y_OFFSET[direction];
-      d[i + 1] = d[i] + ChainCode.DIR_LENGTH[direction];
-      i++;
+      x[index + 1] = x[index] + ChainCode.getXDirection(direction);
+      y[index + 1] = y[index] + ChainCode.getYDirection(direction);
+      length[index + 1] = length[index] + ChainCode.getDirectionLength(direction);
+      index++;
     }
   }
 
   /**
-   * Process the 1-D line and count the number of maxima. Total count will be set into the first
-   * index, internal maxima are set in the second index.
+   * Process the 1-D line profile and count the number of maxima. Total count will be set into the
+   * first index, internal maxima are set in the second index.
    *
-   * @param x the x
-   * @param y the y
+   * @param xaxis the x-axis data
+   * @param yaxis the y-axis data
    * @param maxima the maxima
    * @return The distance from the start for each maxima
    */
-  public static float[] countMaxima(float[] x, float[] y, int[] maxima) {
+  public static float[] countMaxima(float[] xaxis, float[] yaxis, int[] maxima) {
     int total = 0;
     int internal = 0;
 
-    if (x.length == 1) {
-      maxima[0] = (y[0] != 0) ? 1 : 0;
+    if (xaxis.length == 1) {
+      maxima[0] = (yaxis[0] != 0) ? 1 : 0;
       maxima[1] = 0;
       return new float[] {0};
     }
-    if (x.length == 2) {
+    if (xaxis.length == 2) {
       maxima[1] = 0;
-      if (y[0] != 0 && y[1] != 0) {
+      if (yaxis[0] != 0 && yaxis[1] != 0) {
         maxima[0] = 1;
-        return new float[] {distance(x[0], x[1])};
+        return new float[] {average(xaxis[0], xaxis[1])};
       }
-      if (y[0] != 0) {
+      if (yaxis[0] != 0) {
         maxima[0] = 1;
         return new float[] {0};
       }
-      if (y[1] != 0) {
+      if (yaxis[1] != 0) {
         maxima[0] = 1;
-        return new float[] {x[1]};
+        return new float[] {xaxis[1]};
       }
       maxima[0] = 1;
       return new float[0];
     }
 
-    final float[] max = new float[x.length];
+    final float[] max = new float[xaxis.length];
 
     // Move along the line moving up to a maxima or down to a minima.
-    boolean upDirection = (y[0] <= y[1]);
+    boolean upDirection = (yaxis[0] <= yaxis[1]);
     int starti = 0; // last position known to be higher than the previous
     if (!upDirection) {
       // Maxima at first point
-      max[total++] = x[starti];
+      max[total++] = xaxis[starti];
     }
 
-    for (int i = 0; i < x.length; i++) {
+    for (int i = 0; i < xaxis.length; i++) {
       final int j = i + 1;
       if (upDirection) {
         // Search for next maxima
         boolean isMaxima = false;
-        if (j < x.length) {
-          if (y[i] > y[j]) {
+        if (j < xaxis.length) {
+          if (yaxis[i] > yaxis[j]) {
             isMaxima = true;
-          } else if (y[i] < y[j]) {
+          } else if (yaxis[i] < yaxis[j]) {
             starti = j;
           }
         } else {
@@ -734,11 +722,11 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
 
         if (isMaxima) {
           // Count the maxima (if non-zero)
-          if (y[i] > 0) {
+          if (yaxis[i] > 0) {
             // Record the centre of the maxima between starti and i
             final double centre = (i + starti) / 2.0;
-            max[total++] = distance(x[(int) Math.floor(centre)], x[(int) Math.ceil(centre)]);
-            if (starti != 0 && j < x.length) {
+            max[total++] = average(xaxis[(int) Math.floor(centre)], xaxis[(int) Math.ceil(centre)]);
+            if (starti != 0 && j < xaxis.length) {
               internal++;
             }
           }
@@ -747,8 +735,8 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
       } else {
         // Search for next minima
         boolean isMinima = false;
-        if (j < x.length) {
-          if (y[i] < y[j]) {
+        if (j < xaxis.length) {
+          if (yaxis[i] < yaxis[j]) {
             isMinima = true;
             starti = j;
           }
@@ -768,8 +756,8 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     return Arrays.copyOf(max, total);
   }
 
-  private static float distance(float f, float g) {
-    return (f + g) * 0.5f;
+  private static float average(float v1, float v2) {
+    return (v1 + v2) * 0.5f;
   }
 
   private static double[] extractStatistics(int[] x, int[] y, FloatProcessor floatImage,

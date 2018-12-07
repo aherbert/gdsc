@@ -122,7 +122,7 @@ public class GridPointManager {
     final int xBlock = getXBlock(point.getXint());
     final int yBlock = getYBlock(point.getYint());
     @SuppressWarnings("unchecked")
-    LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[xBlock][yBlock];
+    List<GridPoint> points = grid[xBlock][yBlock];
     if (points == null) {
       points = new LinkedList<>();
       grid[xBlock][yBlock] = points;
@@ -150,12 +150,10 @@ public class GridPointManager {
    * @return The GridPoint (or null)
    */
   public GridPoint findUnassignedPoint(int xCoord, int yCoord) {
-    switch (searchMode) {
-      case CLOSEST:
-        return findClosestUnassignedPoint(xCoord, yCoord);
-      default:
-        return findHighestUnassignedPoint(xCoord, yCoord);
+    if (searchMode == CLOSEST) {
+      return findClosestUnassignedPoint(xCoord, yCoord);
     }
+    return findHighestUnassignedPoint(xCoord, yCoord);
   }
 
   /**
@@ -202,7 +200,7 @@ public class GridPointManager {
     final int xBlock = getXBlock(xCoord);
     final int yBlock = getYBlock(yCoord);
 
-    double resolution2 = resolution * resolution;
+    double resolution2 = (double) resolution * resolution;
     if (!assigned) {
       // Use closest assigned peak to set the resolution for the unassigned search
       final GridPoint closestPoint = findClosestAssignedPoint(xCoord, yCoord);
@@ -217,18 +215,13 @@ public class GridPointManager {
       for (int y = Math.max(0, yBlock - 1); y <= Math.min(grid[0].length - 1, yBlock + 1); y++) {
         if (grid[x][y] != null) {
           @SuppressWarnings("unchecked")
-          final LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[x][y];
+          final List<GridPoint> points = grid[x][y];
 
           for (final GridPoint p : points) {
-            if (p.isAssigned() == assigned) {
-              if (p.distanceSquared(xCoord, yCoord) < resolution2) {
-                // IJ.log(String.format(" x%d,y%d (%d) = %g", p.getX(), p.getY(), p.getValue(),
-                // p.distance(xCoord, yCoord)));
-                if (maxValue < p.getValue()) {
-                  maxValue = p.getValue();
-                  point = p;
-                }
-              }
+            if ((p.isAssigned() == assigned) && (p.distanceSquared(xCoord, yCoord) < resolution2)
+                && (maxValue < p.getValue())) {
+              maxValue = p.getValue();
+              point = p;
             }
           }
         }
@@ -284,7 +277,7 @@ public class GridPointManager {
 
     if (grid[x][y] != null) {
       @SuppressWarnings("unchecked")
-      final LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[x][y];
+      final List<GridPoint> points = grid[x][y];
 
       for (final GridPoint p : points) {
         if (p.isAssigned() == assigned && p.getX() == xCoord && p.getY() == yCoord) {
@@ -340,12 +333,12 @@ public class GridPointManager {
     final int xBlock = getXBlock(xCoord);
     final int yBlock = getYBlock(yCoord);
 
-    double resolution2 = resolution * resolution;
+    double resolution2 = (double) resolution * resolution;
     for (int x = Math.max(0, xBlock - 1); x <= Math.min(grid.length - 1, xBlock + 1); x++) {
       for (int y = Math.max(0, yBlock - 1); y <= Math.min(grid[0].length - 1, yBlock + 1); y++) {
         if (grid[x][y] != null) {
           @SuppressWarnings("unchecked")
-          final LinkedList<GridPoint> points = (LinkedList<GridPoint>) grid[x][y];
+          final List<GridPoint> points = grid[x][y];
 
           for (final GridPoint p : points) {
             if (p.isAssigned() == assigned) {

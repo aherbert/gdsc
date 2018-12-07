@@ -50,6 +50,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -59,7 +61,8 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 /**
- * Provides a permanent form front-end for the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn} algorithm.
+ * Provides a permanent form front-end for the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn}
+ * algorithm.
  */
 public class OptimiserView extends JFrame {
   private static final long serialVersionUID = -3283971398975124411L;
@@ -84,15 +87,13 @@ public class OptimiserView extends JFrame {
    * @param args the arguments
    */
   public static void main(String[] args) {
-    EventQueue.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final OptimiserView frame = new OptimiserView();
-          frame.setVisible(true);
-        } catch (final Exception ex) {
-          ex.printStackTrace();
-        }
+    EventQueue.invokeLater(() -> {
+      try {
+        final OptimiserView frame = new OptimiserView();
+        frame.setVisible(true);
+      } catch (final Exception ex) {
+        Logger.getLogger(OptimiserView.class.getName()).log(Level.SEVERE, "Error showing the frame",
+            ex);
       }
     });
   }
@@ -110,7 +111,7 @@ public class OptimiserView extends JFrame {
 
     addWindowListener(new WindowAdapter() {
       @Override
-      public void windowActivated(WindowEvent e) {
+      public void windowActivated(WindowEvent event) {
         controller.updateImageList();
       }
     });
@@ -140,13 +141,13 @@ public class OptimiserView extends JFrame {
     comboImageList.setToolTipText("Select the input image");
     comboImageList.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         comboImageList.firePropertyChange("selectedItem", 0, 1);
       }
     });
     comboImageList.addMouseListener(new MouseAdapter() {
       @Override
-      public void mousePressed(MouseEvent e) {
+      public void mousePressed(MouseEvent event) {
         controller.updateImageList();
       }
     });
@@ -169,8 +170,9 @@ public class OptimiserView extends JFrame {
     btnHelp.addMouseListener(new MouseAdapter() {
       @SuppressWarnings("unused")
       @Override
-      public void mouseClicked(MouseEvent e) {
-        final String macro = "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI + "');";
+      public void mouseClicked(MouseEvent event) {
+        final String macro =
+            "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI + "');";
         new MacroRunner(macro);
       }
     });
@@ -180,7 +182,7 @@ public class OptimiserView extends JFrame {
     panel.add(btnRun);
     btnRun.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(ActionEvent event) {
         // Run in a new thread to allow updates to the IJ progress bar
         final Thread thread = new Thread(controller);
         thread.start();
@@ -190,7 +192,9 @@ public class OptimiserView extends JFrame {
   }
 
   /**
-   * @param runEnabled the runEnabled to set
+   * Sets if the Run button is enabled.
+   *
+   * @param runEnabled the new run enabled
    */
   public void setRunEnabled(boolean runEnabled) {
     final boolean oldValue = this.runEnabled;
@@ -199,7 +203,9 @@ public class OptimiserView extends JFrame {
   }
 
   /**
-   * @return the runEnabled.
+   * Checks if the Run button is enabled.
+   *
+   * @return true, if the Run button is enabled.
    */
   public boolean isRunEnabled() {
     return runEnabled;

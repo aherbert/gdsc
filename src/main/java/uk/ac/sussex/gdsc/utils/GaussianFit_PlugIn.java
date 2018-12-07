@@ -36,6 +36,8 @@ import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
 import java.lang.reflect.Method;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Fits a circular 2D Gaussian.
@@ -44,8 +46,6 @@ import java.lang.reflect.Method;
 public class GaussianFit_PlugIn implements PlugInFilter {
   /**
    * The name of the class implementing the Gaussian fit method.
-   *
-   *
    *
    * <p>This class requires another package on the runtime classpath and is created using
    * reflection.
@@ -64,7 +64,7 @@ public class GaussianFit_PlugIn implements PlugInFilter {
 
     try {
       // Get a class in this package to find the package class loader
-      final Gaussian_Plugin pluginClass = new Gaussian_Plugin();
+      final Gaussian_PlugIn pluginClass = new Gaussian_PlugIn();
       final Class c =
           Class.forName(GAUSSIAN_FIT_CLASS, true, pluginClass.getClass().getClassLoader());
 
@@ -126,6 +126,8 @@ public class GaussianFit_PlugIn implements PlugInFilter {
   /**
    * Fit the data using a 2D Gaussian.
    *
+   * <p>Returns null if fitting failed.
+   *
    * @param data the data
    * @param width the width
    * @param height the height
@@ -144,11 +146,15 @@ public class GaussianFit_PlugIn implements PlugInFilter {
           c.getDeclaredMethod("fit", new Class[] {float[].class, int.class, int.class});
       return (double[]) m.invoke(c.newInstance(), data, width, height);
     } catch (final Exception ex) {
+      Logger.getLogger(getClass().getName()).log(Level.WARNING,
+          () -> "Fitting failed: " + ex.getMessage());
       return null;
     }
   }
 
   /**
+   * Checks if is fitting enabled.
+   *
    * @return true if fitting is possible.
    */
   public static boolean isFittingEnabled() {
@@ -156,6 +162,8 @@ public class GaussianFit_PlugIn implements PlugInFilter {
   }
 
   /**
+   * Gets the error message if fitting is not possible.
+   *
    * @return the errorMessage if fitting is not possible.
    */
   public static String getErrorMessage() {
@@ -163,6 +171,8 @@ public class GaussianFit_PlugIn implements PlugInFilter {
   }
 
   /**
+   * Gets the exception if fitting is not possible.
+   *
    * @return the exception if fitting is not possible.
    */
   public static Throwable getException() {

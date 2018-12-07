@@ -51,16 +51,17 @@ import java.awt.Color;
  */
 public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
   private static final String TITLE = "Multi Otsu Threshold";
-  private ImagePlus imp;
 
   // Static to maintain state between plugin calls
-  private static int MLEVEL = 2;
-  private static boolean s_doStack = true;
-  private static boolean s_ignoreZero = true;
-  private static boolean s_showHistogram = true;
-  private static boolean s_ShowRegions = true;
-  private static boolean s_ShowMasks = false;
-  private static boolean s_LogMessages = true;
+  private static int levels = 2;
+  private static boolean doStack = true;
+  private static boolean settingIgnoreZero = true;
+  private static boolean settingShowHistogram = true;
+  private static boolean settingShowRegions = true;
+  private static boolean settingShowMasks = false;
+  private static boolean settingLogMessages = true;
+
+  private ImagePlus imp;
 
   /** Set to true to ignore zero. Allow use of plugin from other code. */
   public boolean ignoreZero = false;
@@ -96,36 +97,36 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addMessage("Multi-level Otsu thresholding on image stack");
     final String[] items = {"2", "3", "4", "5",};
-    gd.addChoice("Levels", items, items[MLEVEL - 2]);
+    gd.addChoice("Levels", items, items[levels - 2]);
     if (imp.getStackSize() > 1) {
-      gd.addCheckbox("Do_stack", s_doStack);
+      gd.addCheckbox("Do_stack", doStack);
     }
-    gd.addCheckbox("Ignore_zero", s_ignoreZero);
-    gd.addCheckbox("Show_histogram", s_showHistogram);
-    gd.addCheckbox("Show_regions", s_ShowRegions);
-    gd.addCheckbox("Show_masks", s_ShowMasks);
-    gd.addCheckbox("Log_thresholds", s_LogMessages);
+    gd.addCheckbox("Ignore_zero", settingIgnoreZero);
+    gd.addCheckbox("Show_histogram", settingShowHistogram);
+    gd.addCheckbox("Show_regions", settingShowRegions);
+    gd.addCheckbox("Show_masks", settingShowMasks);
+    gd.addCheckbox("Log_thresholds", settingLogMessages);
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
     gd.showDialog();
     if (gd.wasCanceled()) {
       return;
     }
 
-    MLEVEL = gd.getNextChoiceIndex() + 2;
+    levels = gd.getNextChoiceIndex() + 2;
     if (imp.getStackSize() > 1) {
-      s_doStack = gd.getNextBoolean();
+      doStack = gd.getNextBoolean();
     }
-    s_ignoreZero = gd.getNextBoolean();
-    s_showHistogram = gd.getNextBoolean();
-    s_ShowRegions = gd.getNextBoolean();
-    s_ShowMasks = gd.getNextBoolean();
-    s_LogMessages = gd.getNextBoolean();
+    settingIgnoreZero = gd.getNextBoolean();
+    settingShowHistogram = gd.getNextBoolean();
+    settingShowRegions = gd.getNextBoolean();
+    settingShowMasks = gd.getNextBoolean();
+    settingLogMessages = gd.getNextBoolean();
 
-    ignoreZero = s_ignoreZero;
-    showHistogram = s_showHistogram;
-    showRegions = s_ShowRegions;
-    showMasks = s_ShowMasks;
-    logMessages = s_LogMessages;
+    ignoreZero = settingIgnoreZero;
+    showHistogram = settingShowHistogram;
+    showRegions = settingShowRegions;
+    showMasks = settingShowMasks;
+    logMessages = settingLogMessages;
 
     if (!(showHistogram || showRegions || logMessages || showMasks)) {
       IJ.error(TITLE, "No output options");
@@ -133,14 +134,14 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     }
 
     // Run on whole stack
-    if (s_doStack) {
-      run(imp, MLEVEL);
+    if (doStack) {
+      run(imp, levels);
     } else {
       final ImagePlus newImp = imp.createImagePlus();
       newImp.setTitle(String.format("%s (c%d,z%d,t%d)", imp.getTitle(), imp.getChannel(),
           imp.getSlice(), imp.getFrame()));
       newImp.setProcessor(imp.getProcessor());
-      run(newImp, MLEVEL);
+      run(newImp, levels);
     }
   }
 
@@ -151,26 +152,26 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
    * variables.
    *
    * @param imp The image
-   * @param MLEVEL The number of levels
+   * @param levels The number of levels
    */
-  public void run(ImagePlus imp, int MLEVEL) {
+  public void run(ImagePlus imp, int levels) {
     final int[] offset = new int[1];
-    final float[] h = buildHistogram(imp, offset);
+    final float[] histogram = buildHistogram(imp, offset);
 
     final float[] maxSig = new float[1];
-    final int[] threshold = getThresholds(MLEVEL, maxSig, offset, h);
+    final int[] threshold = getThresholds(levels, maxSig, offset, histogram);
 
     if (logMessages) {
-      showThresholds(MLEVEL, maxSig, threshold);
+      showThresholds(levels, maxSig, threshold);
     }
     if (showHistogram) {
-      showHistogram(h, threshold, offset[0], imp.getTitle() + " Histogram");
+      showHistogram(histogram, threshold, offset[0], imp.getTitle() + " Histogram");
     }
     if (showRegions) {
-      showRegions(MLEVEL, threshold, imp);
+      showRegions(levels, threshold, imp);
     }
     if (showMasks) {
-      showMasks(MLEVEL, threshold, imp);
+      showMasks(levels, threshold, imp);
     }
   }
 
@@ -178,68 +179,68 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
    * Calculate Otsu thresholds on the given image.
    *
    * @param imp The image
-   * @param MLEVEL The number of levels
+   * @param levels The number of levels
    * @return The thresholds
    */
-  public int[] calculateThresholds(ImagePlus imp, int MLEVEL) {
-    return calculateThresholds(imp, MLEVEL, null);
+  public int[] calculateThresholds(ImagePlus imp, int levels) {
+    return calculateThresholds(imp, levels, null);
   }
 
   /**
    * Calculate Otsu thresholds on the given image.
    *
    * @param imp The image
-   * @param MLEVEL The number of levels
+   * @param levels The number of levels
    * @param maxSig The maximum between class significance
    * @return The thresholds
    */
-  public int[] calculateThresholds(ImagePlus imp, int MLEVEL, float[] maxSig) {
+  public int[] calculateThresholds(ImagePlus imp, int levels, float[] maxSig) {
     final int[] offset = new int[1];
-    final float[] h = buildHistogram(imp, offset);
+    final float[] histogram = buildHistogram(imp, offset);
 
-    return getThresholds(MLEVEL, maxSig, offset, h);
+    return getThresholds(levels, maxSig, offset, histogram);
   }
 
   /**
    * Calculate Otsu thresholds on the given image.
    *
    * @param data The histogram data
-   * @param MLEVEL The number of levels
+   * @param levels The number of levels
    * @return The thresholds
    */
-  public int[] calculateThresholds(int[] data, int MLEVEL) {
-    return calculateThresholds(data, MLEVEL, null);
+  public int[] calculateThresholds(int[] data, int levels) {
+    return calculateThresholds(data, levels, null);
   }
 
   /**
    * Calculate Otsu thresholds on the given image.
    *
    * @param data The histogram data
-   * @param MLEVEL The number of levels
+   * @param levels The number of levels
    * @param maxSig The maximum between class significance
    * @return The thresholds
    */
-  public int[] calculateThresholds(int[] data, int MLEVEL, float[] maxSig) {
+  public int[] calculateThresholds(int[] data, int levels, float[] maxSig) {
     final int[] offset = new int[1];
-    final float[] h = buildHistogram(data, offset);
+    final float[] histogram = buildHistogram(data, offset);
 
-    return getThresholds(MLEVEL, maxSig, offset, h);
+    return getThresholds(levels, maxSig, offset, histogram);
   }
 
-  private int[] getThresholds(int MLEVEL, float[] maxSig, int[] offset, float[] h) {
+  private int[] getThresholds(int levels, float[] maxSig, int[] offset, float[] histogram) {
     /////////////////////////////////////////////
-    // Build lookup tables from h
+    // Build lookup tables from histogram
     ////////////////////////////////////////////
-    final float[][] H = buildLookupTables(h);
+    final float[][] lookupTable = buildLookupTables(histogram);
 
     ////////////////////////////////////////////////////////
-    // now M level loop MLEVEL dependent term
+    // now M level loop levels dependent term
     ////////////////////////////////////////////////////////
     if (maxSig == null || maxSig.length < 1) {
       maxSig = new float[1];
     }
-    final int[] threshold = new int[MLEVEL];
-    maxSig[0] = findMaxSigma(MLEVEL, H, threshold);
+    final int[] threshold = new int[levels];
+    maxSig[0] = findMaxSigma(levels, lookupTable, threshold);
 
     applyOffset(threshold, offset);
 
@@ -310,226 +311,238 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
       data2[i - minbin] = data[i];
     }
 
-    // note the probability of grey i is h[i]/(pixel count)
+    // note the probability of grey i is histogram[i]/(pixel count)
     final double normalisation = 1.0 / total;
-    final int NGRAY = data2.length;
-    final float[] h = new float[NGRAY];
+    final int greyLevels = data2.length;
+    final float[] histogram = new float[greyLevels];
 
-    for (int i = 0; i < NGRAY; ++i) {
-      h[i] = (float) (data2[i] * normalisation);
+    for (int i = 0; i < greyLevels; ++i) {
+      histogram[i] = (float) (data2[i] * normalisation);
     }
 
     if (offset != null && offset.length > 0) {
       offset[0] = minbin;
     }
-    return h;
+    return histogram;
   }
 
   /**
    * Build the required lookup table for the {@link #findMaxSigma(int, float[][], int[])} method.
    *
-   * @param h Image histogram (length N)
+   * @param histogram Image histogram (length N)
    * @return The lookup table
    */
-  public float[][] buildLookupTables(float[] h) {
-    return buildLookupTables(h, null, null);
+  public float[][] buildLookupTables(float[] histogram) {
+    return buildLookupTables(histogram, null, null);
   }
 
   /**
    * Build the required lookup table for the {@link #findMaxSigma(int, float[][], int[])} method.
    *
+   * <p>Working space can be provided to save reallocating memory. If null or less than
+   * histogram.length they will be reallocated. The data within the working space are destroyed and
+   * the lookup table is returned. This reuses the working space if possible.
    *
-   * <p>P and S can be provided to save reallocating memory. If null or less than h.length they will
-   * be reallocated. P and S are destroyed and the lookup table is returned.
-   *
-   * @param h Image histogram (length N)
-   * @param P working space (NxN)
-   * @param S working space (NxN)
+   * @param histogram Image histogram (length N)
+   * @param w1 working space (NxN)
+   * @param w2 working space (NxN)
    * @return The lookup table
    */
-  public float[][] buildLookupTables(float[] h, float[][] P, float[][] S) {
-    final int NGRAY = h.length;
+  public float[][] buildLookupTables(float[] histogram, float[][] w1, float[][] w2) {
+    final int greyLevels = histogram.length;
     // Error if not enough memory
     try {
-      P = initialise(P, NGRAY);
-      S = initialise(S, NGRAY);
+      w1 = initialise(w1, greyLevels);
+      w2 = initialise(w2, greyLevels);
     } catch (final OutOfMemoryError ex) {
-      IJ.log(TITLE + ": Out-of-memory - Try again with a smaller histogram (ex.g. 8-bit image)");
+      IJ.log(TITLE + ": Out-of-memory - Try again with a smaller histogram (e.g. 8-bit image)");
       throw ex;
     }
 
+    // w1 = P in original
+    // w2 = S in original
+
+    // w1 = sum of histogram counts
+    // w2 = sum of histogram values (count * value)
+
     // diagonal
-    for (int i = 0; i < NGRAY; ++i) {
-      P[i][i] = h[i];
-      S[i][i] = (i) * h[i];
+    for (int i = 0; i < greyLevels; ++i) {
+      w1[i][i] = histogram[i];
+      w2[i][i] = i * histogram[i];
     }
     // calculate first row (row 0 is all zero)
-    for (int i = 1; i < NGRAY - 1; ++i) {
-      P[1][i + 1] = P[1][i] + h[i + 1];
-      S[1][i + 1] = S[1][i] + (i + 1) * h[i + 1];
+    for (int i = 1; i < greyLevels - 1; ++i) {
+      w1[1][i + 1] = w1[1][i] + histogram[i + 1];
+      w2[1][i + 1] = w2[1][i] + (i + 1) * histogram[i + 1];
     }
     // using row 1 to calculate others
-    for (int i = 2; i < NGRAY; i++) {
-      for (int j = i + 1; j < NGRAY; j++) {
-        P[i][j] = P[1][j] - P[1][i - 1];
-        S[i][j] = S[1][j] - S[1][i - 1];
+    for (int i = 2; i < greyLevels; i++) {
+      for (int j = i + 1; j < greyLevels; j++) {
+        w1[i][j] = w1[1][j] - w1[1][i - 1];
+        w2[i][j] = w2[1][j] - w2[1][i - 1];
       }
     }
-    // now calculate H[i][j]
-    for (int i = 1; i < NGRAY; ++i) {
-      for (int j = i + 1; j < NGRAY; j++) {
-        if (P[i][j] != 0) {
-          S[i][j] = (S[i][j] * S[i][j]) / P[i][j];
+    // now calculate H[i][j] reusing the space
+    final float[][] table = w2;
+    for (int i = 1; i < greyLevels; ++i) {
+      for (int j = i + 1; j < greyLevels; j++) {
+        if (w1[i][j] != 0) {
+          table[i][j] = (w2[i][j] * w2[i][j]) / w1[i][j];
         } else {
-          S[i][j] = 0.f;
+          table[i][j] = 0;
         }
       }
     }
 
-    return S;
+    return table;
   }
 
-  private static float[][] initialise(float[][] P, int NGRAY) {
-    if (P == null || P.length < NGRAY) {
-      P = new float[NGRAY][NGRAY];
+  private static float[][] initialise(float[][] data, int greyLevels) {
+    // This does not check the second dimension are all the correct length!
+    if (data == null || data.length < greyLevels) {
+      data = new float[greyLevels][greyLevels];
     } else {
-      // initialize to zero
-      for (int j = 0; j < NGRAY; j++) {
-        for (int i = 0; i < NGRAY; ++i) {
-          P[i][j] = 0.f;
+      // Initialise to zero
+      for (int j = 0; j < greyLevels; j++) {
+        for (int i = 0; i < greyLevels; ++i) {
+          data[i][j] = 0;
         }
       }
     }
-    return P;
+    return data;
   }
 
   /**
    * Find the threshold that maximises the between class variance.
    *
    * @param mlevel The number of thresholds
-   * @param H The lookup table produced from the image histogram
-   * @param t The thresholds (output)
+   * @param lookupTable The lookup table produced from the image histogram
+   * @param thresholds The thresholds (output)
    * @return The max between class significance
    */
-  public float findMaxSigma(int mlevel, float[][] H, int[] t) {
-    final int NGRAY = H[0].length;
-    return findMaxSigma(mlevel, H, t, NGRAY);
+  public float findMaxSigma(int mlevel, float[][] lookupTable, int[] thresholds) {
+    final int greyLevels = lookupTable[0].length;
+    return findMaxSigma(mlevel, lookupTable, thresholds, greyLevels);
   }
 
   /**
    * Find the threshold that maximises the between class variance.
    *
    * @param mlevel The number of thresholds
-   * @param H The lookup table produced from the image histogram
-   * @param t The thresholds (output)
-   * @param NGRAY The number of histogram levels
+   * @param lookupTable The lookup table produced from the image histogram
+   * @param thresholds The thresholds (output)
+   * @param greyLevels The number of histogram levels
    * @return The max between class significance
    */
-  public float findMaxSigma(int mlevel, float[][] H, int[] t, int NGRAY) {
-    for (int i = 0; i < t.length; i++) {
-      t[i] = 0;
+  public float findMaxSigma(int mlevel, float[][] lookupTable, int[] thresholds, int greyLevels) {
+    for (int i = 0; i < thresholds.length; i++) {
+      thresholds[i] = 0;
     }
     float maxSig = -1;
 
     // In case of equality use the average for the threshold
-    int n = 0;
+    int count = 0;
 
     switch (mlevel) {
       case 2:
-        for (int i = 1; i < NGRAY - mlevel; i++) // t1
-        {
-          final float Sq = H[1][i] + H[i + 1][NGRAY - 1];
+        for (int i = 1; i < greyLevels - mlevel; i++) {
+          // t1
+          final float Sq = lookupTable[1][i] + lookupTable[i + 1][greyLevels - 1];
           if (maxSig < Sq) {
-            t[1] = i;
+            thresholds[1] = i;
             maxSig = Sq;
-            n = 1;
+            count = 1;
           } else if (maxSig == Sq) {
-            t[1] += i;
-            n++;
+            thresholds[1] += i;
+            count++;
           }
         }
         break;
       case 3:
-        for (int i = 1; i < NGRAY - mlevel; i++) {
+        for (int i = 1; i < greyLevels - mlevel; i++) {
           // t1
-          for (int j = i + 1; j < NGRAY - mlevel + 1; j++) // t2
-          {
-            final float Sq = H[1][i] + H[i + 1][j] + H[j + 1][NGRAY - 1];
+          for (int j = i + 1; j < greyLevels - mlevel + 1; j++) {
+            // t2
+            final float Sq =
+                lookupTable[1][i] + lookupTable[i + 1][j] + lookupTable[j + 1][greyLevels - 1];
             if (maxSig < Sq) {
-              t[1] = i;
-              t[2] = j;
+              thresholds[1] = i;
+              thresholds[2] = j;
               maxSig = Sq;
-              n = 1;
+              count = 1;
             } else if (maxSig == Sq) {
-              t[1] += i;
-              t[2] += j;
-              n++;
+              thresholds[1] += i;
+              thresholds[2] += j;
+              count++;
             }
           }
         }
         break;
       case 4:
-        for (int i = 1; i < NGRAY - mlevel; i++) {
+        for (int i = 1; i < greyLevels - mlevel; i++) {
           // t1
-          for (int j = i + 1; j < NGRAY - mlevel + 1; j++) {
+          for (int j = i + 1; j < greyLevels - mlevel + 1; j++) {
             // t2
-            for (int k = j + 1; k < NGRAY - mlevel + 2; k++) // t3
-            {
-              final float Sq = H[1][i] + H[i + 1][j] + H[j + 1][k] + H[k + 1][NGRAY - 1];
+            for (int k = j + 1; k < greyLevels - mlevel + 2; k++) {
+              // t3
+              final float Sq = lookupTable[1][i] + lookupTable[i + 1][j] + lookupTable[j + 1][k]
+                  + lookupTable[k + 1][greyLevels - 1];
               if (maxSig < Sq) {
-                t[1] = i;
-                t[2] = j;
-                t[3] = k;
+                thresholds[1] = i;
+                thresholds[2] = j;
+                thresholds[3] = k;
                 maxSig = Sq;
-                n = 1;
+                count = 1;
               } else if (maxSig == Sq) {
-                t[1] += i;
-                t[2] += j;
-                t[3] += k;
-                n++;
+                thresholds[1] += i;
+                thresholds[2] += j;
+                thresholds[3] += k;
+                count++;
               }
             }
           }
         }
         break;
       case 5:
-        for (int i = 1; i < NGRAY - mlevel; i++) {
+        for (int i = 1; i < greyLevels - mlevel; i++) {
           // t1
-          for (int j = i + 1; j < NGRAY - mlevel + 1; j++) {
+          for (int j = i + 1; j < greyLevels - mlevel + 1; j++) {
             // t2
-            for (int k = j + 1; k < NGRAY - mlevel + 2; k++) {
+            for (int k = j + 1; k < greyLevels - mlevel + 2; k++) {
               // t3
-              for (int m = k + 1; m < NGRAY - mlevel + 3; m++) // t4
-              {
-                final float Sq =
-                    H[1][i] + H[i + 1][j] + H[j + 1][k] + H[k + 1][m] + H[m + 1][NGRAY - 1];
+              for (int m = k + 1; m < greyLevels - mlevel + 3; m++) {
+                // t4
+                final float Sq = lookupTable[1][i] + lookupTable[i + 1][j] + lookupTable[j + 1][k]
+                    + lookupTable[k + 1][m] + lookupTable[m + 1][greyLevels - 1];
                 if (maxSig < Sq) {
-                  t[1] = i;
-                  t[2] = j;
-                  t[3] = k;
-                  t[4] = m;
+                  thresholds[1] = i;
+                  thresholds[2] = j;
+                  thresholds[3] = k;
+                  thresholds[4] = m;
                   maxSig = Sq;
-                  n = 1;
+                  count = 1;
                 } else if (maxSig == Sq) {
-                  t[1] += i;
-                  t[2] += j;
-                  t[3] += k;
-                  t[4] += m;
-                  n++;
+                  thresholds[1] += i;
+                  thresholds[2] += j;
+                  thresholds[3] += k;
+                  thresholds[4] += m;
+                  count++;
                 }
               }
             }
           }
         }
         break;
+      default:
+        throw new IllegalArgumentException("Unsupported level: " + mlevel);
     }
 
-    if (n > 1) {
+    if (count > 1) {
       if (logMessages) {
         IJ.log("Multiple optimal thresholds");
       }
-      for (int i = 0; i < t.length; i++) {
-        t[i] /= n;
+      for (int i = 0; i < thresholds.length; i++) {
+        thresholds[i] /= count;
       }
     }
 
@@ -548,29 +561,29 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     }
   }
 
-  private static void showThresholds(int MLEVEL, float[] maxSig, int[] threshold) {
+  private static void showThresholds(int levels, float[] maxSig, int[] threshold) {
     final StringBuilder sb = new StringBuilder();
     sb.append("Otsu thresholds: ");
-    for (int i = 0; i < MLEVEL; ++i) {
+    for (int i = 0; i < levels; ++i) {
       sb.append(i).append("=").append(threshold[i]).append(", ");
     }
     sb.append(" maxSig = ").append(maxSig[0]);
     IJ.log(sb.toString());
   }
 
-  private static void showHistogram(float[] h, int[] thresholds, int minbin, String title) {
-    final int NGRAY = h.length;
+  private static void showHistogram(float[] histogram, int[] thresholds, int minbin, String title) {
+    final int greyLevels = histogram.length;
 
     // X-axis values
-    final float[] bin = new float[NGRAY];
+    final float[] bin = new float[greyLevels];
 
     // Calculate the maximum
-    float hmax = 0.f;
+    float hmax = 0;
     int mode = 0;
-    for (int i = 0; i < NGRAY; ++i) {
+    for (int i = 0; i < greyLevels; ++i) {
       bin[i] = i + minbin;
-      if (hmax < h[i]) {
-        hmax = h[i];
+      if (hmax < histogram[i]) {
+        hmax = histogram[i];
         mode = i;
       }
     }
@@ -578,9 +591,9 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     // Clip histogram to exclude the mode count as per the ij.gui.HistogramWindow.
     // For example this removes a large peak at zero in masked images.
     float hmax2 = 0; // Second highest point
-    for (int i = 0; i < h.length; i++) {
-      if (hmax2 < h[i] && i != mode) {
-        hmax2 = h[i];
+    for (int i = 0; i < histogram.length; i++) {
+      if (hmax2 < histogram[i] && i != mode) {
+        hmax2 = histogram[i];
       }
     }
     if ((hmax > (hmax2 * 2)) && (hmax2 != 0)) {
@@ -591,29 +604,29 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     if (title == null) {
       title = "Histogram";
     }
-    final Plot histogram = new Plot(title, "Intensity", "p(Intensity)", bin, h);
-    histogram.setLimits(minbin, minbin + NGRAY, 0.f, hmax);
-    histogram.draw();
+    final Plot histogramPlot = new Plot(title, "Intensity", "p(Intensity)", bin, histogram);
+    histogramPlot.setLimits(minbin, minbin + greyLevels, 0, hmax);
+    histogramPlot.draw();
 
     // Add lines for each threshold
-    histogram.setLineWidth(1);
-    histogram.setColor(Color.red);
+    histogramPlot.setLineWidth(1);
+    histogramPlot.setColor(Color.red);
     for (int i = 1; i < thresholds.length; i++) {
       final double x = thresholds[i];
-      histogram.drawLine(x, 0, x, hmax);
+      histogramPlot.drawLine(x, 0, x, hmax);
     }
 
-    histogram.show();
+    histogramPlot.show();
   }
 
   /**
    * Show new images using only pixels within the bounds of the given thresholds.
    *
    * @param mlevel The number of thresholds
-   * @param t The thresholds
+   * @param thresholds The thresholds
    * @param imp The image
    */
-  public void showRegions(int mlevel, int[] t, ImagePlus imp) {
+  public void showRegions(int mlevel, int[] thresholds, ImagePlus imp) {
     final int width = imp.getWidth();
     final int height = imp.getHeight();
     final int bitDepth = imp.getBitDepth();
@@ -633,9 +646,9 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     }
 
     final int[] newT = new int[mlevel + 1];
-    System.arraycopy(t, 0, newT, 0, mlevel);
+    System.arraycopy(thresholds, 0, newT, 0, mlevel);
     newT[mlevel] = Integer.MAX_VALUE;
-    t = newT;
+    thresholds = newT;
 
     for (int slice = 1; slice <= slices; slice++) {
       final ImageProcessor ip = stack.getProcessor(slice);
@@ -644,11 +657,11 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
       }
       for (int i = 0; i < ip.getPixelCount(); ++i) {
         final int val = ip.get(i);
-        int k = 0;
-        while (val > t[k + 1]) {
-          k++;
+        int index = 0;
+        while (val > thresholds[index + 1]) {
+          index++;
         }
-        rip[k].set(i, val);
+        rip[index].set(i, val);
       }
     }
     for (int i = 0; i < mlevel; i++) {
@@ -661,10 +674,10 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
    * Show new mask images using only pixels within the bounds of the given thresholds.
    *
    * @param mlevel The number of thresholds
-   * @param t The thresholds
+   * @param thresholds The thresholds
    * @param imp The image
    */
-  public void showMasks(int mlevel, int[] t, ImagePlus imp) {
+  public void showMasks(int mlevel, int[] thresholds, ImagePlus imp) {
     final int width = imp.getWidth();
     final int height = imp.getHeight();
 
@@ -679,9 +692,9 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
       rstack[i] = region[i].getImageStack();
     }
     final int[] newT = new int[mlevel + 1];
-    System.arraycopy(t, 0, newT, 0, mlevel);
+    System.arraycopy(thresholds, 0, newT, 0, mlevel);
     newT[mlevel] = Integer.MAX_VALUE;
-    t = newT;
+    thresholds = newT;
     for (int slice = 1; slice <= slices; slice++) {
       final ImageProcessor ip = stack.getProcessor(slice);
       for (int i = 0; i < mlevel; ++i) {
@@ -689,11 +702,11 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
       }
       for (int i = 0; i < ip.getPixelCount(); ++i) {
         final int val = ip.get(i);
-        int k = 0;
-        while (val > t[k + 1]) {
-          k++;
+        int index = 0;
+        while (val > thresholds[index + 1]) {
+          index++;
         }
-        rip[k].set(i, 255);
+        rip[index].set(i, 255);
       }
     }
     for (int i = 0; i < mlevel; i++) {

@@ -25,10 +25,8 @@
 package uk.ac.sussex.gdsc.ij.gui;
 
 import ij.ImagePlus;
-import ij.Prefs;
 import ij.gui.PointRoi;
 import ij.process.FloatPolygon;
-import ij.util.Java2;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -38,14 +36,16 @@ import java.util.Arrays;
 
 /**
  * Extend the {@link PointRoi} class to allow custom number labels for each point.
+ *
+ * <p>This has limited functionality for drawing ROI points. They are drawn using the default size
+ * and appearance no matter what shape has been specified.
  */
-public class PointRoi2 extends PointRoi {
-  private static final long serialVersionUID = -1054219408481333977L;
-  private static Font font;
-  private static int fontSize = 9;
-  private double saveMag;
-  private boolean hideLabels;
-  private int[] labels = null;
+public class LabelledPointRoi extends PointRoi {
+  private static final long serialVersionUID = 20181207;
+  private static final int FONT_SIZE = 9;
+  private static final Font font = new Font("SansSerif", Font.PLAIN, FONT_SIZE);
+
+  private int[] labels;
 
   /**
    * Instantiates a new point roi 2.
@@ -54,7 +54,7 @@ public class PointRoi2 extends PointRoi {
    * @param oy the oy
    * @param points the points
    */
-  public PointRoi2(int[] ox, int[] oy, int points) {
+  public LabelledPointRoi(int[] ox, int[] oy, int points) {
     super(ox, oy, points);
   }
 
@@ -65,7 +65,7 @@ public class PointRoi2 extends PointRoi {
    * @param oy the oy
    * @param points the points
    */
-  public PointRoi2(float[] ox, float[] oy, int points) {
+  public LabelledPointRoi(float[] ox, float[] oy, int points) {
     super(ox, oy, points);
   }
 
@@ -74,7 +74,7 @@ public class PointRoi2 extends PointRoi {
    *
    * @param poly the polygon
    */
-  public PointRoi2(FloatPolygon poly) {
+  public LabelledPointRoi(FloatPolygon poly) {
     super(poly);
   }
 
@@ -83,7 +83,7 @@ public class PointRoi2 extends PointRoi {
    *
    * @param poly the polygon
    */
-  public PointRoi2(Polygon poly) {
+  public LabelledPointRoi(Polygon poly) {
     super(poly);
   }
 
@@ -93,7 +93,7 @@ public class PointRoi2 extends PointRoi {
    * @param ox the ox
    * @param oy the oy
    */
-  public PointRoi2(int ox, int oy) {
+  public LabelledPointRoi(int ox, int oy) {
     super(ox, oy);
   }
 
@@ -103,7 +103,7 @@ public class PointRoi2 extends PointRoi {
    * @param ox the ox
    * @param oy the oy
    */
-  public PointRoi2(double ox, double oy) {
+  public LabelledPointRoi(double ox, double oy) {
     super(ox, oy);
   }
 
@@ -114,42 +114,26 @@ public class PointRoi2 extends PointRoi {
    * @param sy the sy
    * @param imp the image
    */
-  public PointRoi2(int sx, int sy, ImagePlus imp) {
+  public LabelledPointRoi(int sx, int sy, ImagePlus imp) {
     super(sx, sy, imp);
   }
 
   /**
    * Draws the points on the image.
    *
-   * @param g the g
+   * @param graphics the graphics
    */
   @Override
-  public void draw(Graphics g) {
+  public void draw(Graphics graphics) {
     updatePolygon();
-    if (ic != null) {
-      mag = ic.getMagnification();
-    }
     final int size2 = HANDLE_SIZE / 2;
-    if (!Prefs.noPointLabels && !hideLabels) {
-      fontSize = 9;
-      if (mag > 1.0) {
-        fontSize = (int) (((mag - 1.0) / 3.0 + 1.0) * 9.0);
-      }
-      if (fontSize > 18) {
-        fontSize = 18;
-      }
-      if (font == null || mag != saveMag) {
-        font = new Font("SansSerif", Font.PLAIN, fontSize);
-      }
-      g.setFont(font);
-      if (fontSize > 9) {
-        Java2.setAntialiasedText(g, true);
-      }
-      saveMag = mag;
+    final boolean showLabels = getShowLabels() && nPoints > 1;
+    if (showLabels) {
+      graphics.setFont(font);
     }
     for (int i = 0; i < nPoints; i++) {
-      final int n = (labels != null) ? labels[i] : i + 1;
-      drawPoint2(g, xp2[i] - size2, yp2[i] - size2, n);
+      final int label = (showLabels) ? getLabel(i) : 0;
+      drawSimplePoint(graphics, xp2[i] - size2, yp2[i] - size2, label);
     }
     if (updateFullWindow) {
       updateFullWindow = false;
@@ -157,31 +141,31 @@ public class PointRoi2 extends PointRoi {
     }
   }
 
-  /**
-   * Draw point.
-   *
-   * @param g the g
-   * @param x the x
-   * @param y the y
-   * @param n the n
-   */
-  private void drawPoint2(Graphics g, int x, int y, int n) {
-    g.setColor(fillColor != null ? fillColor : Color.white);
-    g.drawLine(x - 4, y + 2, x + 8, y + 2);
-    g.drawLine(x + 2, y - 4, x + 2, y + 8);
-    g.setColor(strokeColor != null ? strokeColor : ROIColor);
-    g.fillRect(x + 1, y + 1, 3, 3);
-    if (!Prefs.noPointLabels && !hideLabels && (nPoints > 1 || labels != null)) {
-      g.drawString("" + n, x + 6, y + fontSize + 4);
-    }
-    g.setColor(Color.black);
-    g.drawRect(x, y, 4, 4);
+  private int getLabel(int index) {
+    return (labels != null) ? labels[index] : index + 1;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public void setHideLabels(boolean hideLabels) {
-    this.hideLabels = hideLabels;
+  /**
+   * Draw the point.
+   *
+   * <p>The label is only drawn if non zero.
+   *
+   * @param graphics the graphics
+   * @param x the x
+   * @param y the y
+   * @param label the label
+   */
+  private void drawSimplePoint(Graphics graphics, int x, int y, int label) {
+    graphics.setColor(fillColor != null ? fillColor : Color.white);
+    graphics.drawLine(x - 4, y + 2, x + 8, y + 2);
+    graphics.drawLine(x + 2, y - 4, x + 2, y + 8);
+    graphics.setColor(strokeColor != null ? strokeColor : ROIColor);
+    graphics.fillRect(x + 1, y + 1, 3, 3);
+    if (label > 0) {
+      graphics.drawString("" + label, x + 6, y + FONT_SIZE + 4);
+    }
+    graphics.setColor(Color.black);
+    graphics.drawRect(x, y, 4, 4);
   }
 
   /**

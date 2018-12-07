@@ -46,8 +46,8 @@ import java.util.Arrays;
 /**
  * Extracts the ROI points from an image to file.
  */
-public class PointExtractor_Plugin implements PlugInFilter {
-  private static String TITLE = "Point Extracter";
+public class PointExtractor_PlugIn implements PlugInFilter {
+  private static final String TITLE = "Point Extracter";
 
   private static String mask = "";
   private static String filename = "";
@@ -97,14 +97,14 @@ public class PointExtractor_Plugin implements PlugInFilter {
   }
 
   private boolean isManagerAvailable() {
-    return nPointRois() != 0;
+    return numberOfPointRois() != 0;
   }
 
-  private int nPointRois() {
+  private int numberOfPointRois() {
     return (pointRois == null) ? 0 : pointRois.length;
   }
 
-  private int nPoints() {
+  private int numberOfPoints() {
     if (pointRois == null) {
       return 0;
     }
@@ -118,11 +118,11 @@ public class PointExtractor_Plugin implements PlugInFilter {
   /** {@inheritDoc} */
   @Override
   public void run(ImageProcessor ip) {
-    if (!showDialog()) {
+    if (!showDialog(this)) {
       return;
     }
 
-    AssignedPoint points[] = getPoints();
+    AssignedPoint[] points = getPoints();
 
     // Allow empty files to be generated to support macros
     if (points == null) {
@@ -131,7 +131,7 @@ public class PointExtractor_Plugin implements PlugInFilter {
 
     try {
       if (xyz || imp == null) {
-        PointManager.savePoints(points, filename);
+        AssignedPointUtils.savePoints(points, filename);
       } else {
         // Extract the values
         final TimeValuedPoint[] p = new TimeValuedPoint[points.length];
@@ -160,7 +160,7 @@ public class PointExtractor_Plugin implements PlugInFilter {
     if (isManagerAvailable() && useManager) {
       final ArrayList<AssignedPoint> points = new ArrayList<>();
       for (final PointRoi roi : pointRois) {
-        points.addAll(Arrays.asList(PointManager.extractRoiPoints(roi)));
+        points.addAll(Arrays.asList(AssignedPointUtils.extractRoiPoints(roi)));
       }
       roiPoints = points.toArray(new AssignedPoint[points.size()]);
 
@@ -171,18 +171,16 @@ public class PointExtractor_Plugin implements PlugInFilter {
         }
       }
     } else {
-      roiPoints = PointManager.extractRoiPoints(imp.getRoi());
+      roiPoints = AssignedPointUtils.extractRoiPoints(imp.getRoi());
     }
 
     final ImagePlus maskImp = WindowManager.getImage(mask);
     return FindFociOptimiser_PlugIn.restrictToMask(maskImp, roiPoints);
   }
 
-  private boolean showDialog() {
+  private static boolean showDialog(PointExtractor_PlugIn plugin) {
     // To improve the flexibility, do not restrict the mask to those suitable for the image. Allow
     // any image for the mask.
-    // ArrayList<String> newImageList = FindFoci.buildMaskList(imp);
-    // String[] list = newImageList.toArray(new String[0]);
     final String[] list = ImageJUtils.getImageList(ImageJUtils.NO_IMAGE, null);
 
     final GenericDialog gd = new GenericDialog(TITLE);
@@ -190,20 +188,21 @@ public class PointExtractor_Plugin implements PlugInFilter {
     gd.addMessage("Extracts the ROI points to file");
     gd.addChoice("Mask", list, mask);
     gd.addStringField("Filename", filename, 30);
-    if (imp != null) {
+    if (plugin.imp != null) {
       gd.addCheckbox("xyz_only", xyz);
     }
 
-    if (isManagerAvailable()) {
+    if (plugin.isManagerAvailable()) {
       gd.addMessage(String.format("%s (%s) present in the ROI manager",
-          TextUtils.pleural(nPointRois(), "ROI"), TextUtils.pleural(nPoints(), "point")));
+          TextUtils.pleural(plugin.numberOfPointRois(), "ROI"),
+          TextUtils.pleural(plugin.numberOfPoints(), "point")));
       gd.addCheckbox("Use_manager_ROIs", useManager);
       gd.addCheckbox("Reset_manager", reset);
     } else {
-      final Roi roi = imp.getRoi();
+      final Roi roi = plugin.imp.getRoi();
       if (roi == null || roi.getType() != Roi.POINT) {
-        gd.addMessage(
-            "Warning: The image does not contain Point ROI.\nAn empty result file will be produced");
+        gd.addMessage("Warning: The image does not contain Point ROI.\n"
+            + "An empty result file will be produced");
       }
     }
 
@@ -215,11 +214,11 @@ public class PointExtractor_Plugin implements PlugInFilter {
 
     mask = gd.getNextChoice();
     filename = gd.getNextString();
-    if (imp != null) {
+    if (plugin.imp != null) {
       xyz = gd.getNextBoolean();
     }
 
-    if (isManagerAvailable()) {
+    if (plugin.isManagerAvailable()) {
       useManager = gd.getNextBoolean();
       reset = gd.getNextBoolean();
     }

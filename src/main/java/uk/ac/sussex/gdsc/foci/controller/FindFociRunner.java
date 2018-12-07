@@ -42,11 +42,13 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import java.util.ArrayList;
 
 /**
- * Runs the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn } algorithm using input from a synchronised
- * queueing method.
+ * Runs the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn } algorithm using input from a
+ * synchronised queueing method.
  */
 public class FindFociRunner extends Thread {
   private FindFociModel model = null;
@@ -115,16 +117,19 @@ public class FindFociRunner extends Thread {
       if (running) {
         IJ.log("FindPeakRunner interupted: " + ex.getLocalizedMessage());
       }
-    } catch (final Throwable t) {
+      Thread.currentThread().interrupt();
+    } catch (final Throwable thrown) {
       // Log this to ImageJ. Do not bubble up exceptions
-      if (t.getMessage() != null) {
-        IJ.log("An error occurred during processing: " + t.getMessage());
+      if (thrown.getMessage() != null) {
+        IJ.log("An error occurred during processing: " + thrown.getMessage());
       } else {
         IJ.log("An error occurred during processing");
       }
-      t.printStackTrace();
+      if (IJ.debugMode) {
+        IJ.log(ExceptionUtils.getStackTrace(thrown));
+      }
 
-      notify(MessageType.ERROR, t);
+      notify(MessageType.ERROR, thrown);
     } finally {
       ff = null;
       imp2 = null;
@@ -206,14 +211,14 @@ public class FindFociRunner extends Thread {
     final boolean showTable = model.isShowTable();
     final boolean clearTable = model.isClearTable();
     final boolean markMaxima = model.isMarkMaxima();
-    final boolean markROIMaxima = model.isMarkROIMaxima();
+    final boolean markRoiMaxima = model.isMarkRoiMaxima();
     final boolean markUsingOverlay = model.isMarkUsingOverlay();
     final boolean hideLabels = model.isHideLabels();
     final boolean showMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
     // Ignore: model.isShowLogMessages()
     final boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
-    // Ignore: model.isSaveResults();
-    // Ignore: model.getResultsDirectory();
+    // Ignore: model.isSaveResults()
+    // Ignore: model.getResultsDirectory()
     final boolean objectAnalysis = model.isObjectAnalysis();
     final boolean showObjectMask = model.isShowObjectMask();
     final boolean saveToMemory = model.isSaveToMemory();
@@ -236,7 +241,7 @@ public class FindFociRunner extends Thread {
     if (markMaxima) {
       outputType += FindFociProcessor.OUTPUT_ROI_SELECTION;
     }
-    if (markROIMaxima) {
+    if (markRoiMaxima) {
       outputType += FindFociProcessor.OUTPUT_MASK_ROI_SELECTION;
     }
     if (markUsingOverlay) {
@@ -310,7 +315,7 @@ public class FindFociRunner extends Thread {
       notify(MessageType.BACKGROUND_LEVEL, initResults.stats.background);
     }
     if (state.ordinal() <= FindFociState.SEARCH.ordinal()) {
-      searchInitResults = ff.clone(initResults, searchInitResults);
+      searchInitResults = ff.copyForStagedProcessing(initResults, searchInitResults);
       searchArray = ff.findMaximaSearch(searchInitResults, backgroundMethod, backgroundParameter,
           searchMethod, searchParameter);
       if (searchArray == null) {
@@ -341,7 +346,7 @@ public class FindFociRunner extends Thread {
       }
     }
     if (state.ordinal() <= FindFociState.MERGE_SADDLE.ordinal()) {
-      mergeInitResults = ff.clone(searchInitResults, mergeInitResults);
+      mergeInitResults = ff.copyForStagedProcessing(searchInitResults, mergeInitResults);
       mergeResults = ff.findMaximaMergeFinal(mergeInitResults, mergeSizeResults, minSize, options,
           gaussianBlur);
       if (mergeResults == null) {
@@ -358,7 +363,7 @@ public class FindFociRunner extends Thread {
         notify(MessageType.SORT_INDEX_OK, initResults.stats.imageMinimum);
       }
 
-      resultsInitResults = ff.clone(mergeInitResults, resultsInitResults);
+      resultsInitResults = ff.copyForStagedProcessing(mergeInitResults, resultsInitResults);
       prelimResults = ff.findMaximaPrelimResults(resultsInitResults, mergeResults, maxPeaks,
           sortMethod, centreMethod, centreParameter);
       if (prelimResults == null) {
@@ -368,7 +373,7 @@ public class FindFociRunner extends Thread {
       }
     }
     if (state.ordinal() <= FindFociState.CALCULATE_OUTPUT_MASK.ordinal()) {
-      maskInitResults = ff.clone(resultsInitResults, maskInitResults);
+      maskInitResults = ff.copyForStagedProcessing(resultsInitResults, maskInitResults);
       results = ff.findMaximaMaskResults(maskInitResults, mergeResults, prelimResults, outputType,
           thresholdMethod, imp.getTitle(), fractionParameter);
       if (results == null) {
@@ -476,7 +481,7 @@ public class FindFociRunner extends Thread {
         || notEqual(model.isMarkMaxima(), previousModel.isMarkMaxima())
         || notEqual(model.isMarkUsingOverlay(), previousModel.isMarkUsingOverlay())
         || notEqual(model.isHideLabels(), previousModel.isHideLabels())
-        || notEqual(model.isMarkROIMaxima(), previousModel.isMarkROIMaxima())) {
+        || notEqual(model.isMarkRoiMaxima(), previousModel.isMarkRoiMaxima())) {
       return FindFociState.SHOW_RESULTS;
     }
 

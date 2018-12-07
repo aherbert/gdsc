@@ -69,27 +69,27 @@ import java.util.List;
 /**
  * Compares the ROI points on two images and computes the match statistics.
  *
- * Can output the matches for each quartile when the points are ranked using their height. Only
+ * <p>Can output the matches for each quartile when the points are ranked using their height. Only
  * supports 2D images (no Z-stacks) but does allow selection of channel/frame that is used for the
  * heights.
  */
-public class Match_Plugin implements PlugIn {
+public class Match_PlugIn implements PlugIn {
   /**
    * Visually impaired safe colour for matches (greenish).
    */
-  public static Color MATCH = new Color(0, 158, 115);
+  public static final Color MATCH = new Color(0, 158, 115);
   /**
    * Visually impaired safe colour for no match 1 (yellowish).
    */
-  public static Color UNMATCH1 = new Color(240, 228, 66);
+  public static final Color UNMATCH1 = new Color(240, 228, 66);
   /**
    * Visually impaired safe colour for no match 2 (blueish).
    */
-  public static Color UNMATCH2 = new Color(86, 180, 233);
+  public static final Color UNMATCH2 = new Color(86, 180, 233);
 
   /** The plugin title. */
-  private static String TITLE = "Match Calculator";
-  private static String[] dTypes = new String[] {"Relative", "Absolute"};
+  private static final String TITLE = "Match Calculator";
+  private static final String[] DISTANCE_TYPES = new String[] {"Relative", "Absolute"};
 
   private static String title1 = "";
   private static String title2 = "";
@@ -210,8 +210,8 @@ public class Match_Plugin implements PlugIn {
       }
     } else if (fileMode) {
       try {
-        actualPoints = PointManager.loadPoints(t1);
-        predictedPoints = PointManager.loadPoints(t2);
+        actualPoints = AssignedPointUtils.loadPoints(t1);
+        predictedPoints = AssignedPointUtils.loadPoints(t2);
       } catch (final IOException ex) {
         IJ.error("Failed to load the points: " + ex.getMessage());
         return;
@@ -237,8 +237,8 @@ public class Match_Plugin implements PlugIn {
         d = Math.ceil(dThreshold * Math.max(length1, length2));
       }
 
-      actualPoints = PointManager.extractRoiPoints(imp1.getRoi());
-      predictedPoints = PointManager.extractRoiPoints(imp2.getRoi());
+      actualPoints = AssignedPointUtils.extractRoiPoints(imp1.getRoi());
+      predictedPoints = AssignedPointUtils.extractRoiPoints(imp2.getRoi());
 
       final boolean canExtractHeights = canExtractHeights(imp1, imp2);
       doQuartiles = quartiles && canExtractHeights;
@@ -315,7 +315,7 @@ public class Match_Plugin implements PlugIn {
       throw new IllegalStateException("No foci with the name " + resultsName);
     }
     final ArrayList<FindFociResult> results = memoryResults.results;
-    if (results.size() == 0) {
+    if (results.isEmpty()) {
       throw new IllegalStateException("Zero foci in the results with the name " + resultsName);
     }
     return memoryResults;
@@ -631,7 +631,7 @@ public class Match_Plugin implements PlugIn {
       gd.addChoice("Input_2", items, t2);
       gd.addMessage(
           "Distance between matching points in pixels, or fraction of\n" + "image edge length");
-      gd.addChoice("Distance_type", dTypes, dTypes[dType]);
+      gd.addChoice("Distance_type", DISTANCE_TYPES, DISTANCE_TYPES[dType]);
     }
     gd.addNumericField("Distance", d, 2);
     if (imageMode || memoryMode) {
@@ -1060,9 +1060,9 @@ public class Match_Plugin implements PlugIn {
     }
 
     return new float[] {heights.get(0).floatValue(),
-        PointAligner_Plugin.getQuartileBoundary(heights, 0.25),
-        PointAligner_Plugin.getQuartileBoundary(heights, 0.5),
-        PointAligner_Plugin.getQuartileBoundary(heights, 0.75),
+        PointAligner_PlugIn.getQuartileBoundary(heights, 0.25),
+        PointAligner_PlugIn.getQuartileBoundary(heights, 0.5),
+        PointAligner_PlugIn.getQuartileBoundary(heights, 0.75),
         heights.get(heights.size() - 1).floatValue() + 1};
   }
 

@@ -121,7 +121,7 @@ public class ImageJController extends FindFociController {
     final boolean showTable = model.isShowTable();
     final boolean clearTable = model.isClearTable();
     final boolean markMaxima = model.isMarkMaxima();
-    final boolean markROIMaxima = model.isMarkROIMaxima();
+    final boolean markRoiMaxima = model.isMarkRoiMaxima();
     final boolean markUsingOverlay = model.isMarkUsingOverlay();
     final boolean hideLabels = model.isHideLabels();
     final boolean showMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
@@ -151,7 +151,7 @@ public class ImageJController extends FindFociController {
     if (markMaxima) {
       outputType += FindFociProcessor.OUTPUT_ROI_SELECTION;
     }
-    if (markROIMaxima) {
+    if (markRoiMaxima) {
       outputType += FindFociProcessor.OUTPUT_MASK_ROI_SELECTION;
     }
     if (markUsingOverlay) {
@@ -202,7 +202,8 @@ public class ImageJController extends FindFociController {
       // These options should match the parameter names assigned within the FindFoci GenericDialog.
       Recorder.setCommand("FindFoci");
       Recorder.recordOption("Mask", maskImage);
-      Recorder.recordOption("Background_method", FindFoci_PlugIn.backgroundMethods[backgroundMethod]);
+      Recorder.recordOption("Background_method",
+          FindFoci_PlugIn.backgroundMethods[backgroundMethod]);
       Recorder.recordOption("Background_parameter", "" + backgroundParameter);
       Recorder.recordOption("Auto_threshold", thresholdMethod);
       Recorder.recordOption("Statistics_mode", statisticsMode);
@@ -233,7 +234,7 @@ public class ImageJController extends FindFociController {
       if (markMaxima) {
         Recorder.recordOption("Mark_maxima");
       }
-      if (markROIMaxima) {
+      if (markRoiMaxima) {
         Recorder.recordOption("Mark_peak_maxima");
       }
       if (markUsingOverlay) {

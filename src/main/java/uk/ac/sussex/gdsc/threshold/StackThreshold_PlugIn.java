@@ -25,14 +25,15 @@
 package uk.ac.sussex.gdsc.threshold;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ThresholdUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.utils.SliceCollection;
 
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
-import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
 import java.util.ArrayList;
@@ -85,12 +86,12 @@ public class StackThreshold_PlugIn implements PlugInFilter {
 
       // Process each frame
       for (int t = 1; t <= dimensions[T]; t++) {
-        final ArrayList<SliceCollection> sliceCollections = new ArrayList<>();
+        final ArrayList<AnalysisSliceCollection> sliceCollections = new ArrayList<>();
 
         // Extract the channels
         for (int c = 1; c <= dimensions[C]; c++) {
           // Process all slices together
-          final SliceCollection sliceCollection = new SliceCollection(c);
+          final AnalysisSliceCollection sliceCollection = new AnalysisSliceCollection(c);
           for (int z = 1; z <= dimensions[Z]; z++) {
             sliceCollection.add(imp.getStackIndex(c, z, t));
           }
@@ -98,7 +99,7 @@ public class StackThreshold_PlugIn implements PlugInFilter {
         }
 
         // Create masks
-        for (final SliceCollection s : sliceCollections) {
+        for (final AnalysisSliceCollection s : sliceCollections) {
           createMask(method, maskStack, t, s);
         }
       }
@@ -127,17 +128,17 @@ public class StackThreshold_PlugIn implements PlugInFilter {
     imp.setSlice(currentSlice);
   }
 
-  private void createMask(String method, ImageStack maskStack, int t,
-      SliceCollection sliceCollection) {
+  private void createMask(String method, ImageStack maskStack, int frame,
+      AnalysisSliceCollection sliceCollection) {
     sliceCollection.createStack(imp);
     sliceCollection.createMask(method);
     if (logThresholds) {
-      IJ.log(
-          "t" + t + sliceCollection.getSliceName() + " threshold = " + sliceCollection.threshold);
+      IJ.log("t" + frame + sliceCollection.getSliceName() + " threshold = "
+          + sliceCollection.threshold);
     }
 
     for (int s = 1; s <= sliceCollection.maskStack.getSize(); s++) {
-      final int originalSliceNumber = sliceCollection.slices.get(s - 1);
+      final int originalSliceNumber = sliceCollection.get(s - 1);
       maskStack.setSliceLabel(method + ":" + imp.getStack().getSliceLabel(originalSliceNumber),
           originalSliceNumber);
       maskStack.setPixels(sliceCollection.maskStack.getPixels(s), originalSliceNumber);
@@ -233,50 +234,18 @@ public class StackThreshold_PlugIn implements PlugInFilter {
   /**
    * Provides functionality to process a collection of slices from an Image.
    */
-  private class SliceCollection {
-    int c;
-    int z;
-    ArrayList<Integer> slices;
-
-    private String sliceName = null;
-
+  private class AnalysisSliceCollection extends SliceCollection {
     ImageStack imageStack;
     ImageStack maskStack;
     int threshold;
 
     /**
-     * @param c The channel
-     */
-    SliceCollection(int c) {
-      this.c = c;
-      this.z = 0;
-      slices = new ArrayList<>();
-    }
-
-    /**
-     * Utility method.
+     * Instantiates a new analysis slice collection.
      *
-     * @param i the i
+     * @param indexC The channel index
      */
-    void add(Integer i) {
-      slices.add(i);
-    }
-
-    /**
-     * Gets the slice name.
-     *
-     * @return the slice name
-     */
-    String getSliceName() {
-      if (sliceName == null) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("c").append(c);
-        if (z != 0) {
-          sb.append("z").append(z);
-        }
-        sliceName = sb.toString();
-      }
-      return sliceName;
+    AnalysisSliceCollection(int indexC) {
+      super(indexC, 0, 0);
     }
 
     /**
@@ -285,11 +254,7 @@ public class StackThreshold_PlugIn implements PlugInFilter {
      * @param imp the image
      */
     void createStack(ImagePlus imp) {
-      imageStack = new ImageStack(imp.getWidth(), imp.getHeight());
-      for (final int slice : slices) {
-        imp.setSliceWithoutUpdate(slice);
-        imageStack.addSlice(Integer.toString(slice), imp.getProcessor().duplicate());
-      }
+      imageStack = createStack(imp.getImageStack());
     }
 
     /**
@@ -299,25 +264,19 @@ public class StackThreshold_PlugIn implements PlugInFilter {
      */
     private void createMask(String method) {
       // Create an aggregate histogram
-      final int[] data = imageStack.getProcessor(1).getHistogram();
-      int[] temp = new int[data.length];
-      for (int s = 2; s <= imageStack.getSize(); s++) {
-        temp = imageStack.getProcessor(s).getHistogram();
-        for (int i = 0; i < data.length; i++) {
-          data[i] += temp[i];
-        }
-      }
+      final int[] data = ThresholdUtils.getHistogram(imageStack);
 
       threshold = AutoThreshold.getThreshold(method, data);
 
       // Create a mask for each image in the stack
       maskStack = new ImageStack(imageStack.getWidth(), imageStack.getHeight());
+      final int size = imageStack.getWidth() * imageStack.getHeight();
       for (int s = 1; s <= imageStack.getSize(); s++) {
-        final ByteProcessor bp = new ByteProcessor(imageStack.getWidth(), imageStack.getHeight());
+        final byte[] bp = new byte[size];
         final ImageProcessor ip = imageStack.getProcessor(s);
-        for (int i = bp.getPixelCount(); i-- > 0;) {
+        for (int i = size; i-- > 0;) {
           if (ip.get(i) > threshold) {
-            bp.set(i, 255);
+            bp[i] = (byte) 255;
           }
         }
         maskStack.addSlice(null, bp);

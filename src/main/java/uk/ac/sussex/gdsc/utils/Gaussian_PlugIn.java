@@ -34,15 +34,15 @@ import ij.process.FloatProcessor;
 /**
  * Creates a Gaussian image.
  */
-public class Gaussian_Plugin implements PlugIn {
+public class Gaussian_PlugIn implements PlugIn {
   private static final String TITLE = "Gaussian";
   private static int width = 256;
   private static int height = 256;
   private static float amplitude = 255;
   private static float x = 100;
   private static float y = 130;
-  private static float x_sd = 20;
-  private static float y_sd = 10;
+  private static float sx = 20;
+  private static float sy = 10;
   private static float angle = 0f;
   private static float noise = 10f;
 
@@ -56,8 +56,8 @@ public class Gaussian_Plugin implements PlugIn {
     gd.addNumericField("Amplitude", amplitude, 0);
     gd.addNumericField("X", x, 1);
     gd.addNumericField("Y", y, 1);
-    gd.addNumericField("X_sd", x_sd, 1);
-    gd.addNumericField("Y_sd", y_sd, 1);
+    gd.addNumericField("X_sd", sx, 1);
+    gd.addNumericField("Y_sd", sy, 1);
     gd.addSlider("Angle", 0, 180, angle);
     gd.addNumericField("Noise", noise, 1);
 
@@ -71,13 +71,13 @@ public class Gaussian_Plugin implements PlugIn {
     amplitude = (float) gd.getNextNumber();
     x = (float) gd.getNextNumber();
     y = (float) gd.getNextNumber();
-    x_sd = (float) gd.getNextNumber();
-    y_sd = (float) gd.getNextNumber();
+    sx = (float) gd.getNextNumber();
+    sy = (float) gd.getNextNumber();
     angle = (float) gd.getNextNumber();
     noise = (float) gd.getNextNumber();
 
     final float[] img = createGaussian(width, height, new float[] {amplitude}, new float[] {x},
-        new float[] {y}, new float[] {x_sd}, new float[] {y_sd},
+        new float[] {y}, new float[] {sx}, new float[] {sy},
         new float[] {(float) (angle * Math.PI / 180.0)});
     final FloatProcessor fp = new FloatProcessor(width, height, img, null);
     if (noise > 0) {
@@ -115,10 +115,13 @@ public class Gaussian_Plugin implements PlugIn {
 
   /**
    * Generic form of the 2D Gaussian.
+   *
+   * @see <a href="https://en.wikipedia.org/wiki/Gaussian_function#Two-dimensional_Gaussian_function">2D Gaussian function</a>
    */
-  private static float gaussian(float x, float y, float A, float x0, float y0, float a, float b,
-      float c) {
-    return (float) (A * Math
+  // @CHECKSTYLE.OFF: ParameterName
+  private static float gaussian(float x, float y, float amplitude, float x0, float y0, float a,
+      float b, float c) {
+    return (float) (amplitude * Math
         .exp(-(a * (x - x0) * (x - x0) + 2 * b * (x - x0) * (y - y0) + c * (y - y0) * (y - y0))));
   }
 }

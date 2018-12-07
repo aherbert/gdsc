@@ -32,7 +32,7 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 
 /**
- * Pass through class allowing the {@link uk.ac.sussex.gdsc.ij.plugin.filter.MaskParticleAnalyzer }
+ * Pass through class allowing the {@link MaskParticleAnalyzer }
  * to be loaded by the ImageJ plugin class loader.
  */
 public class MaskParticleAnalyzer_PlugIn implements PlugInFilter {

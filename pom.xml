@@ -224,6 +224,7 @@ Software for microscopy image analysis
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
           <configuration>
+            <excludes>Gdsc_PlugIn*</excludes>
             <archive>
               <manifest>
                 <addClasspath>true</addClasspath>
@@ -278,6 +279,9 @@ Software for microscopy image analysis
     <plugins>
       <plugin>
         <artifactId>maven-source-plugin</artifactId>
+        <configuration>
+          <excludes>Gdsc_PlugIn*</excludes>
+        </configuration>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -384,14 +388,10 @@ Software for microscopy image analysis
         <version>${spotbugs.version}</version>
         <configuration>
           <failOnError>false</failOnError>
+          <threshold>Normal</threshold>
+          <effort>Default</effort>
+          <excludeFilterFile>${basedir}/src/main/resources/spotbugs/spotbugs-exclude-filter.xml</excludeFilterFile>
         </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <!-- use of mvn release:prepeare release perform should use the nexus release profile -->
       <plugin>

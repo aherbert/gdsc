@@ -45,22 +45,22 @@ import java.util.ArrayList;
  * match.
  */
 public class ApplyMask_PlugIn implements PlugInFilter {
+
   private static final String TITLE = "Apply Mask";
 
   private static String selectedImage = "";
   private static int selectedOption = MaskCreater_PlugIn.OPTION_MASK;
   private static String selectedThresholdMethod = AutoThreshold.Method.OTSU.toString();
-  private static int selectedChannel = 0;
-  private static int selectedSlice = 0;
-  private static int selectedFrame = 0;
-
+  private static int selectedChannel;
+  private static int selectedSlice;
+  private static int selectedFrame;
   private ImagePlus imp;
   private ImagePlus maskImp;
   private int option;
   private String thresholdMethod;
-  private int channel = 0;
-  private int slice = 0;
-  private int frame = 0;
+  private int channel;
+  private int slice;
+  private int frame;
 
   /** {@inheritDoc} */
   @Override
@@ -84,6 +84,11 @@ public class ApplyMask_PlugIn implements PlugInFilter {
     // All process already done
   }
 
+  /**
+   * Show dialog.
+   *
+   * @return true, if successful
+   */
   private boolean showDialog() {
     final String sourceImage = "(Use target)";
     final ArrayList<String> imageList = new ArrayList<>();
@@ -97,8 +102,8 @@ public class ApplyMask_PlugIn implements PlugInFilter {
     }
 
     final GenericDialog gd = new GenericDialog(TITLE);
-    gd.addMessage(
-        "Create a mask from a source image and apply it.\nPixels outside the mask will be set to zero.");
+    gd.addMessage("Create a mask from a source image and apply it.\n"
+        + "Pixels outside the mask will be set to zero.");
     gd.addChoice("Mask_Image", imageList.toArray(new String[0]), selectedImage);
     gd.addChoice("Option", MaskCreater_PlugIn.options, MaskCreater_PlugIn.options[selectedOption]);
     gd.addChoice("Threshold_Method", AutoThreshold.getMethods(), selectedThresholdMethod);
@@ -136,7 +141,7 @@ public class ApplyMask_PlugIn implements PlugInFilter {
    * Instantiates a new apply mask.
    */
   public ApplyMask_PlugIn() {
-    init(null, MaskCreater_PlugIn.OPTION_MASK);
+    initialise(null, MaskCreater_PlugIn.OPTION_MASK);
   }
 
   /**
@@ -145,7 +150,7 @@ public class ApplyMask_PlugIn implements PlugInFilter {
    * @param imp the image
    */
   public ApplyMask_PlugIn(ImagePlus imp) {
-    init(imp, MaskCreater_PlugIn.OPTION_MASK);
+    initialise(imp, MaskCreater_PlugIn.OPTION_MASK);
   }
 
   /**
@@ -155,10 +160,16 @@ public class ApplyMask_PlugIn implements PlugInFilter {
    * @param option the option
    */
   public ApplyMask_PlugIn(ImagePlus imp, int option) {
-    init(imp, option);
+    initialise(imp, option);
   }
 
-  private void init(ImagePlus imp, int option) {
+  /**
+   * Set the image and options for processing.
+   *
+   * @param imp the imp
+   * @param option the option
+   */
+  private void initialise(ImagePlus imp, int option) {
     this.imp = imp;
     this.option = option;
   }
@@ -244,6 +255,12 @@ public class ApplyMask_PlugIn implements PlugInFilter {
     imp.updateAndDraw();
   }
 
+  /**
+   * Creates the array.
+   *
+   * @param total the total
+   * @return the int[]
+   */
   private static int[] createArray(int total) {
     final int[] array = new int[total];
     for (int i = 0; i < array.length; i++) {
@@ -253,98 +270,126 @@ public class ApplyMask_PlugIn implements PlugInFilter {
   }
 
   /**
-   * @param imp the target image for the masking
+   * Set the target image for the masking.
+   *
+   * @param imp the new imp
    */
   public void setImp(ImagePlus imp) {
     this.imp = imp;
   }
 
   /**
-   * @return the target image for the masking.
+   * Get the target image for the masking.
+   *
+   * @return the imp
    */
   public ImagePlus getImp() {
     return imp;
   }
 
   /**
-   * @param imp the source image for the mask generation
+   * Set imp the source image for the mask generation.
+   *
+   * @param imp the new mask imp
    */
   public void setMaskImp(ImagePlus imp) {
     this.maskImp = imp;
   }
 
   /**
-   * @return the source image for the mask generation.
+   * Get the source image for the mask generation.
+   *
+   * @return the mask imp
    */
   public ImagePlus getMaskImp() {
     return maskImp;
   }
 
   /**
-   * @param option the option for defining the mask
+   * Set option the option for defining the mask.
+   *
+   * @param option the new option
    */
   public void setOption(int option) {
     this.option = option;
   }
 
   /**
-   * @return the option for defining the mask.
+   * Get the option for defining the mask.
+   *
+   * @return the option
    */
   public int getOption() {
     return option;
   }
 
   /**
-   * @param thresholdMethod the thresholdMethod to set
+   * Set thresholdMethod the thresholdMethod to set.
+   *
+   * @param thresholdMethod the new threshold method
    */
   public void setThresholdMethod(String thresholdMethod) {
     this.thresholdMethod = thresholdMethod;
   }
 
   /**
-   * @return the thresholdMethod.
+   * Get the thresholdMethod.
+   *
+   * @return the threshold method
    */
   public String getThresholdMethod() {
     return thresholdMethod;
   }
 
   /**
-   * @param channel the channel to set
+   * Set channel the channel to set.
+   *
+   * @param channel the new channel
    */
   public void setChannel(int channel) {
     this.channel = channel;
   }
 
   /**
-   * @return the channel.
+   * Get the channel.
+   *
+   * @return the channel
    */
   public int getChannel() {
     return channel;
   }
 
   /**
-   * @param frame the frame to set
+   * Set frame the frame to set.
+   *
+   * @param frame the new frame
    */
   public void setFrame(int frame) {
     this.frame = frame;
   }
 
   /**
-   * @return the frame.
+   * Get the frame.
+   *
+   * @return the frame
    */
   public int getFrame() {
     return frame;
   }
 
   /**
-   * @param slice the slice to set
+   * Set slice the slice to set.
+   *
+   * @param slice the new slice
    */
   public void setSlice(int slice) {
     this.slice = slice;
   }
 
   /**
-   * @return the slice.
+   * Get the slice.
+   *
+   * @return the slice
    */
   public int getSlice() {
     return slice;

@@ -53,14 +53,18 @@ public class GridPoint extends ValuedPoint {
   }
 
   /**
-   * @param assigned the assigned to set
+   * Sets the assigned.
+   *
+   * @param assigned the new assigned
    */
   public void setAssigned(boolean assigned) {
     this.assigned = assigned;
   }
 
   /**
-   * @return the assigned.
+   * Checks if is assigned.
+   *
+   * @return true, if is assigned
    */
   public boolean isAssigned() {
     return assigned;

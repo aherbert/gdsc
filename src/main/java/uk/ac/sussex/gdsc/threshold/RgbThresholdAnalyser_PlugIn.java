@@ -37,7 +37,6 @@ import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 
 import java.io.File;
-import java.io.FilenameFilter;
 
 /**
  * For all the RGB images in one directory, look for a matching image in a second directory that has
@@ -46,7 +45,7 @@ import java.io.FilenameFilter;
  * defined by channel 3 and output a table of results.
  */
 public class RgbThresholdAnalyser_PlugIn implements PlugIn {
-  private static String TITLE = "RGB Threshold Analyser";
+  private static final String TITLE = "RGB Threshold Analyser";
   private static TextWindow resultsWindow = null;
 
   private static String dir1 = "";
@@ -66,12 +65,9 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
       return;
     }
 
-    final File[] fileList = (new File(dir1)).listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        name = name.toLowerCase();
-        return name.endsWith(".tif") || name.endsWith(".tiff");
-      }
+    final File[] fileList = (new File(dir1)).listFiles((dir, name) -> {
+      name = name.toLowerCase();
+      return name.endsWith(".tif") || name.endsWith(".tiff");
     });
     if (fileList == null) {
       return;
@@ -137,10 +133,6 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
       ImageProcessor maskIp) {
     final byte[] mask = cp.getChannel(channel);
 
-    // Utils.display("RGB Channel " + channel, new ByteProcessor(ip.getWidth(), ip.getHeight(),
-    // mask));
-    // Utils.display("Channel " + channel, ip);
-
     // Get the histogram for the channel
     final int[] h = new int[(ip instanceof ByteProcessor) ? 256 : 65336];
 
@@ -150,30 +142,23 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
       if (maskIp.get(i) != 0) {
         h[ip.get(i)]++;
 
-        if (mask[i] != 0) {
-          if (manual > ip.get(i)) {
-            manual = ip.get(i);
-          }
+        if (mask[i] != 0 && manual > ip.get(i)) {
+          manual = ip.get(i);
         }
       }
     }
 
     // Check the threshold is valid
-    // ImageProcessor ep = ip.createProcessor(ip.getWidth(), ip.getHeight());
     int error = 0;
     long sum = 0;
     for (int i = 0; i < mask.length; i++) {
-      if (maskIp.get(i) != 0) {
-        if (mask[i] == 0 && ip.get(i) >= manual) {
-          error++;
-          sum += ip.get(i) - manual;
-          // ep.set(i, ip.get(i));
-        }
+      if (maskIp.get(i) != 0 && mask[i] == 0 && ip.get(i) >= manual) {
+        error++;
+        sum += ip.get(i) - manual;
       }
     }
     if (error != 0) {
-      System.out.printf("%s [%d] %d error pixels (sum = %d)\n", name, channel, error, sum);
-      // Utils.display("Error ch "+channel, ep);
+      ImageJUtils.log("%s [%d] %d error pixels (sum = %d)", name, channel, error, sum);
     }
 
     final double[] stats = getStatistics(h);
@@ -214,22 +199,22 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
     double value;
     double sum = 0.0;
     double sum2 = 0.0;
-    long n = 0;
+    long total = 0;
     for (int i = min; i <= max; i++) {
       if (hist[i] > 0) {
         count = hist[i];
-        n += count;
+        total += count;
         value = i;
         sum += value * count;
         sum2 += (value * value) * count;
       }
     }
-    final double av = sum / n;
+    final double av = sum / total;
 
     // Get the Std.Dev
     double stdDev;
-    if (n > 0) {
-      final double d = n;
+    if (total > 0) {
+      final double d = total;
       stdDev = (d * sum2 - sum * sum) / d;
       if (stdDev > 0.0) {
         stdDev = Math.sqrt(stdDev / (d - 1.0));
@@ -268,7 +253,7 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
   }
 
   private static void addResult(String name, int channel, double[] stats, int manual,
-      int[] thresholds, int[] h) {
+      int[] thresholds, int[] histogram) {
     // The threshold levels is expressed as:
     // Absolute
     // Fraction of area
@@ -286,8 +271,8 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
     for (int i = min; i < area.length; i++) {
       area[i] = count;
       intensity[i] = sum;
-      count += h[i];
-      sum += h[i] * i;
+      count += histogram[i];
+      sum += histogram[i] * i;
     }
     // Normalise so that the numbers represent the fraction at the threshold or above
     for (int i = min; i < area.length; i++) {
@@ -307,10 +292,11 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
     resultsWindow.append(sb.toString());
   }
 
-  private static void addResult(StringBuilder sb, int t, double[] area, double[] intensity) {
-    sb.append('\t').append(t);
-    sb.append('\t').append(IJ.d2s(area[t], 5));
-    sb.append('\t').append(IJ.d2s(intensity[t], 5));
+  private static void addResult(StringBuilder sb, int threshold, double[] area,
+      double[] intensity) {
+    sb.append('\t').append(threshold);
+    sb.append('\t').append(IJ.d2s(area[threshold], 5));
+    sb.append('\t').append(IJ.d2s(intensity[threshold], 5));
   }
 
 }

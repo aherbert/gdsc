@@ -165,7 +165,7 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
 
   /** {@inheritDoc} */
   @Override
-  public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+  public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
     if (containsRoiMask) {
       maskOption = gd.getNextChoiceIndex();
     }
@@ -203,7 +203,7 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
 
   /** {@inheritDoc} */
   @Override
-  public void setNPasses(int nPasses) {
+  public void setNPasses(int passes) {
     // Do nothing
   }
 
@@ -435,15 +435,15 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
   private static void createResultsWindow() {
     if (!java.awt.GraphicsEnvironment.isHeadless()) {
       if (results == null || !results.isShowing()) {
-        results = new TextWindow(TITLE + " Results",
-            "Image\tChannel\tParticle\tInside Sum\tAv\tSD\tR\tOutside Sum\tAv\tSD\tR\tIncrease\tp-value",
-            "", 800, 600);
+        results =
+            new TextWindow(TITLE + " Results", "Image\tChannel\tParticle\tInside Sum\tAv\tSD\tR\t"
+                + "Outside Sum\tAv\tSD\tR\tIncrease\tp-value", "", 800, 600);
         results.setVisible(true);
       }
     } else if (writeHeader) {
       writeHeader = false;
-      IJ.log(
-          "Image\tChannel\tParticle\tInside Sum\tAv\tSD\tR\tOutside Sum\tAv\tSD\tR\tIncrease\tp-value");
+      IJ.log("Image\tChannel\tParticle\tInside Sum\tAv\tSD\tR\t"
+          + "Outside Sum\tAv\tSD\tR\tIncrease\tp-value");
     }
   }
 
@@ -475,30 +475,32 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     final long n2 = stats[channel][OUTSIDE][particle].getN();
     final double av2 = sx2 / n2;
 
-    double p = 0;
+    double pvalue = 0;
     try {
-      p = TestUtils.tTest(stats[channel][INSIDE][particle], stats[channel][OUTSIDE][particle]);
+      pvalue = TestUtils.tTest(stats[channel][INSIDE][particle], stats[channel][OUTSIDE][particle]);
     } catch (final NumberIsTooSmallException ex) {
       // Ignore
     }
 
     // Correlate inside & outside spot with the principle channel
-    double r = 1;
-    double r2 = 1;
-    if (channel != spotChannel) // Principle channel => No test required
-    {
-      r = new PearsonsCorrelation().correlation(stats[channel][INSIDE][particle].getValues(),
-          stats[spotChannel][INSIDE][particle].getValues());
-      r2 = new PearsonsCorrelation().correlation(stats[channel][OUTSIDE][particle].getValues(),
-          stats[spotChannel][OUTSIDE][particle].getValues());
+    double correlation1 = 1;
+    double correlation2 = 1;
+    if (channel != spotChannel) {
+      // Principle channel => No test required
+      correlation1 =
+          new PearsonsCorrelation().correlation(stats[channel][INSIDE][particle].getValues(),
+              stats[spotChannel][INSIDE][particle].getValues());
+      correlation2 =
+          new PearsonsCorrelation().correlation(stats[channel][OUTSIDE][particle].getValues(),
+              stats[spotChannel][OUTSIDE][particle].getValues());
     }
 
     sb.append(IJ.d2s(sx, 0)).append('\t').append(IJ.d2s(av, 2)).append('\t').append(IJ.d2s(sd, 2))
-        .append('\t').append(IJ.d2s(r, 3)).append('\t');
+        .append('\t').append(IJ.d2s(correlation1, 3)).append('\t');
     sb.append(IJ.d2s(sx2, 0)).append('\t').append(IJ.d2s(av2, 2)).append('\t')
-        .append(IJ.d2s(sd2, 2)).append('\t').append(IJ.d2s(r2, 3)).append('\t');
+        .append(IJ.d2s(sd2, 2)).append('\t').append(IJ.d2s(correlation2, 3)).append('\t');
     sb.append(IJ.d2s(av / av2, 2)).append('\t');
-    sb.append(String.format("%.3g", p));
+    sb.append(String.format("%.3g", pvalue));
 
     if (java.awt.GraphicsEnvironment.isHeadless()) {
       IJ.log(sb.toString());

@@ -31,6 +31,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.LinkedList;
+import java.util.function.Predicate;
+import java.util.logging.Logger;
 
 /**
  * Manages I/O of the TimeValuePoint class.
@@ -43,15 +45,15 @@ public class TimeValuePointManager {
     /** The find foci. */
     FIND_FOCI,
     /** Comma-separated values using format [id,t,x,y,z,v]. */
-    CSV_IdTXYZV,
+    CSV_IDTXYZV,
     /** Comma-separated values using format [id,t,x,y]. */
-    CSV_IdTXY,
+    CSV_IDTXY,
     /** Tab delimited using format [id,t,x,y,z,v]. */
-    TAB_IdTXYZV,
+    TAB_IDTXYZV,
     /** Tab delimited using format [id,t,x,y]. */
-    TAB_IdTXY,
+    TAB_IDTXY,
     /** The Quick PALM format. */
-    QuickPALM,
+    QUICK_PALM,
     /** The STORMJ format. */
     STORMJ,
     /** Tab delimited using format [x,y,z]. */
@@ -59,11 +61,10 @@ public class TimeValuePointManager {
     /** Comma-separated values using format [x,y,z]. */
     CSV_XYZ,
     /** Unknown file-format. */
-    Unknown
-
+    UNKNOWN
   }
 
-  private static final String newline = System.getProperty("line.separator");
+  private static final String NEW_LINE = System.getProperty("line.separator");
 
   private final String filename;
   private FileType type = null;
@@ -97,18 +98,18 @@ public class TimeValuePointManager {
 
     try (final BufferedReader input = new BufferedReader(new FileReader(filename))) {
       // Load results from file
-      String line;
-      int lineCount = 1;
+      String currentLine;
+      int lines = 1;
       int nonHeaderLines = 0;
-      while ((line = input.readLine()) != null) {
-        type = guessFiletype(line, lineCount++);
+      while ((currentLine = input.readLine()) != null) {
+        type = guessFiletype(currentLine, lines++);
 
-        if (!line.startsWith("#")) {
+        if (!currentLine.startsWith("#")) {
           nonHeaderLines++;
         }
 
         // Stop after several non-header lines
-        if (type != FileType.Unknown || nonHeaderLines > 1) {
+        if (type != FileType.UNKNOWN || nonHeaderLines > 1) {
           break;
         }
       }
@@ -127,7 +128,7 @@ public class TimeValuePointManager {
 
     // Look for a unique text for the QuickPALM file on the first line
     if (lineCount == 1 && line.contains("Up-Height") && delimiterCount >= 14) {
-      return FileType.QuickPALM;
+      return FileType.QUICK_PALM;
     }
 
     // STORMJ file can have extra header lines so ignore line count
@@ -137,11 +138,11 @@ public class TimeValuePointManager {
 
     // Tab separated fields: ID,T,X,Y,Z,Value
     if (delimiterCount >= 5) {
-      return FileType.TAB_IdTXYZV;
+      return FileType.TAB_IDTXYZV;
     }
     // File is allowed to have Z and Value missing
     if (delimiterCount >= 3) {
-      return FileType.TAB_IdTXY;
+      return FileType.TAB_IDTXY;
     }
     if (delimiterCount == 2) {
       return FileType.TAB_XYZ;
@@ -150,17 +151,17 @@ public class TimeValuePointManager {
     // Comma separated fields: ID,T,X,Y,Z,Value
     delimiterCount = countDelimeters(line, ",");
     if (delimiterCount >= 5) {
-      return FileType.CSV_IdTXYZV;
+      return FileType.CSV_IDTXYZV;
     }
     // File is allowed to have Z and Value missing
     if (delimiterCount >= 3) {
-      return FileType.CSV_IdTXY;
+      return FileType.CSV_IDTXY;
     }
     if (delimiterCount == 2) {
       return FileType.CSV_XYZ;
     }
 
-    return FileType.Unknown;
+    return FileType.UNKNOWN;
   }
 
   private static int countDelimeters(String text, String delimiter) {
@@ -179,17 +180,15 @@ public class TimeValuePointManager {
     }
 
     final File file = new File(filename);
-    if (!file.exists()) {
-      if (file.getParent() != null) {
-        new File(file.getParent()).mkdirs();
-      }
+    if (!file.exists() && file.getParent() != null) {
+      new File(file.getParent()).mkdirs();
     }
 
     try (final OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(filename))) {
       // Save results to file
       final StringBuilder sb = new StringBuilder();
 
-      out.write("ID,T,X,Y,Z,Value" + newline);
+      out.write("ID,T,X,Y,Z,Value" + NEW_LINE);
 
       // Output all results in ascending rank order
       int id = 0;
@@ -199,11 +198,22 @@ public class TimeValuePointManager {
         sb.append(point.getX()).append(',');
         sb.append(point.getY()).append(',');
         sb.append(point.getZ()).append(',');
-        sb.append(point.getValue()).append(newline);
+        sb.append(point.getValue()).append(NEW_LINE);
         out.write(sb.toString());
         sb.setLength(0);
       }
     }
+  }
+
+  /**
+   * Save the points to the given file.
+   *
+   * @param points the points
+   * @param filename the filename
+   * @throws IOException Signals that an I/O exception has occurred.
+   */
+  public static void savePoints(TimeValuedPoint[] points, String filename) throws IOException {
+    new TimeValuePointManager(filename).savePoints(points);
   }
 
   /**
@@ -215,7 +225,7 @@ public class TimeValuePointManager {
   public TimeValuedPoint[] loadPoints() throws IOException {
     getFileType();
 
-    if (type == FileType.Unknown || !setupParser()) {
+    if (type == FileType.UNKNOWN || !setupParser()) {
       return new TimeValuedPoint[0];
     }
 
@@ -231,28 +241,29 @@ public class TimeValuePointManager {
         if (tokens.length > maxField) {
           try {
             // int id = Integer.parseInt(tokens[fields[0]]); // Not currently needed
-            float t = 1;
+            float time = 1;
             if (fields[1] >= 0) {
-              t = Float.parseFloat(tokens[fields[1]]); // QuickPALM uses a float for the time
+              time = Float.parseFloat(tokens[fields[1]]); // QuickPALM uses a float for the time
             }
-            final float x = Float.parseFloat(tokens[fields[2]]);
-            final float y = Float.parseFloat(tokens[fields[3]]);
-            float z = 0;
+            final float xpos = Float.parseFloat(tokens[fields[2]]);
+            final float ypos = Float.parseFloat(tokens[fields[3]]);
+            float zpos = 0;
             if (fields[4] >= 0) {
-              z = Float.parseFloat(tokens[fields[4]]);
-              if (type == FileType.QuickPALM) {
+              zpos = Float.parseFloat(tokens[fields[4]]);
+              if (type == FileType.QUICK_PALM) {
                 // z is in nm and so must be converted to approximate pixels
                 final float xNm = Float.parseFloat(tokens[4]);
-                z *= x / xNm;
+                zpos *= xpos / xNm;
               }
             }
             float value = 0;
             if (fields[5] >= 0) {
               value = Float.parseFloat(tokens[fields[5]]);
             }
-            points.add(new TimeValuedPoint(x, y, z, (int) t, value));
+            points.add(new TimeValuedPoint(xpos, ypos, zpos, (int) time, value));
           } catch (final NumberFormatException ex) {
-            System.err.println("Invalid numbers on line: " + lineCount);
+            Logger.getLogger(getClass().getName())
+                .warning(() -> "Invalid numbers on line: " + lineCount);
             if (++errors > 10) {
               break;
             }
@@ -263,6 +274,18 @@ public class TimeValuePointManager {
 
       return points.toArray(new TimeValuedPoint[0]);
     }
+  }
+
+
+  /**
+   * Loads the points from the file.
+   *
+   * @param filename the filename
+   * @return The points
+   * @throws IOException Signals that an I/O exception has occurred.
+   */
+  public static TimeValuedPoint[] loadPoints(String filename) throws IOException {
+    return new TimeValuePointManager(filename).loadPoints();
   }
 
   private boolean setupParser() {
@@ -277,7 +300,7 @@ public class TimeValuePointManager {
         fields = new int[] {0, 20, 2, 3, 4, 5};
         break;
 
-      case QuickPALM:
+      case QUICK_PALM:
         delimiter = "\t";
         fields = new int[] {0, 14, 2, 3, 6, 1};
         break;
@@ -288,13 +311,13 @@ public class TimeValuePointManager {
         fields = new int[] {-1, 0, 10, 11, -1, 6};
         break;
 
-      case TAB_IdTXYZV:
+      case TAB_IDTXYZV:
         delimiter = "\t";
         // ID,T,X,Y,Z,Value
         fields = new int[] {0, 1, 2, 3, 4, 5};
         break;
 
-      case TAB_IdTXY:
+      case TAB_IDTXY:
         delimiter = "\t";
         // ID,T,X,Y
         fields = new int[] {0, 1, 2, 3, -1, -1};
@@ -306,13 +329,13 @@ public class TimeValuePointManager {
         fields = new int[] {-1, -1, 0, 1, 2, -1};
         break;
 
-      case CSV_IdTXYZV:
+      case CSV_IDTXYZV:
         delimiter = ",";
         // ID,T,X,Y,Z,Value
         fields = new int[] {0, 1, 2, 3, 4, 5};
         break;
 
-      case CSV_IdTXY:
+      case CSV_IDTXY:
         delimiter = ",";
         // ID,T,X,Y
         fields = new int[] {0, 1, 2, 3, -1, -1};
@@ -345,58 +368,29 @@ public class TimeValuePointManager {
    * @throws IOException Signals that an I/O exception has occurred.
    */
   private void skipHeader(BufferedReader input) throws IOException {
-    switch (type) {
-      case FIND_FOCI:
-        do {
-          readLine(input);
-        }
-        while (line != null && (line.startsWith("#") || line.startsWith("Peak #")));
 
-        break;
-
-      case QuickPALM:
-        readLine(input); // First line is the header so read this
-
-        // Allow fall-through to read the next line
-
-        // Read until no comment character
-      default:
-        do {
-          readLine(input);
-        }
-        while (line != null && line.startsWith("#"));
-
-        break;
+    if (type == FileType.QUICK_PALM) {
+      // First line is the header so read this
+      readLine(input);
     }
+
+    Predicate<String> headerTest;
+
+    if (type == FileType.FIND_FOCI) {
+      headerTest = text -> text.startsWith("#") || text.startsWith("Peak #");
+    } else {
+      headerTest = text -> text.startsWith("#");
+    }
+
+    // Read until no comment character
+    do {
+      readLine(input);
+    }
+    while (line != null && headerTest.test(line));
   }
 
   private void readLine(BufferedReader input) throws IOException {
     line = input.readLine();
-    // if (line != null) // No need as the lineCount is only referenced when line is not null
     lineCount++;
-  }
-
-  /**
-   * Save the points to the given file.
-   *
-   * @param points the points
-   * @param filename the filename
-   * @throws IOException Signals that an I/O exception has occurred.
-   */
-  public static void savePoints(TimeValuedPoint[] points, String filename) throws IOException {
-    final TimeValuePointManager manager = new TimeValuePointManager(filename);
-    manager.savePoints(points);
-  }
-
-  /**
-   * Loads the points from the file.
-   *
-   * @param filename the filename
-   * @return The points
-   * @throws IOException Signals that an I/O exception has occurred.
-   */
-  public static TimeValuedPoint[] loadPoints(String filename) throws IOException {
-    final TimeValuePointManager manager = new TimeValuePointManager(filename);
-    return manager.loadPoints();
   }
 }

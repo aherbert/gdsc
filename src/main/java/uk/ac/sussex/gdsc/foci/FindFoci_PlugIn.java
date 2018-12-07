@@ -35,7 +35,7 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.core.utils.UnicodeReader;
 import uk.ac.sussex.gdsc.foci.FindFociBaseProcessor.ObjectAnalysisResult;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
-import uk.ac.sussex.gdsc.ij.gui.PointRoi2;
+import uk.ac.sussex.gdsc.ij.gui.LabelledPointRoi;
 import uk.ac.sussex.gdsc.utils.GaussianFit_PlugIn;
 
 import ij.IJ;
@@ -643,7 +643,7 @@ public class FindFoci_PlugIn implements PlugIn, MouseListener, FindFociProcessor
     myShowTable = model.isShowTable();
     myClearTable = model.isClearTable();
     myMarkMaxima = model.isMarkMaxima();
-    myMarkROIMaxima = model.isMarkROIMaxima();
+    myMarkROIMaxima = model.isMarkRoiMaxima();
     myHideLabels = model.isHideLabels();
     myShowMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
     myShowLogMessages = model.isShowLogMessages();
@@ -1213,7 +1213,7 @@ public class FindFoci_PlugIn implements PlugIn, MouseListener, FindFociProcessor
   private static PointRoi createPointRoi(int[] ids, int[] xpoints, int[] ypoints, int slice,
       int npoints, boolean hideLabels) {
     // Use a custom PointRoi so we can draw the labels
-    final PointRoi2 roi = new PointRoi2(xpoints, ypoints, npoints);
+    final LabelledPointRoi roi = new LabelledPointRoi(xpoints, ypoints, npoints);
     if (hideLabels) {
       roi.setHideLabels(hideLabels);
     } else {
@@ -1834,9 +1834,9 @@ public class FindFoci_PlugIn implements PlugIn, MouseListener, FindFociProcessor
 
   /** {@inheritDoc} */
   @Override
-  public FindFociInitResults clone(FindFociInitResults initResults,
+  public FindFociInitResults copyForStagedProcessing(FindFociInitResults initResults,
       FindFociInitResults clonedInitResults) {
-    return ffpStaged.clone(initResults, clonedInitResults);
+    return ffpStaged.copyForStagedProcessing(initResults, clonedInitResults);
   }
 
   /** {@inheritDoc} */
@@ -2711,7 +2711,8 @@ public class FindFoci_PlugIn implements PlugIn, MouseListener, FindFociProcessor
    * @param parameters the parameters
    * @param msg the msg
    */
-  public static void error(FindFoci_PlugIn ff, Logger logger, BatchParameters parameters, String msg) {
+  public static void error(FindFoci_PlugIn ff, Logger logger, BatchParameters parameters,
+      String msg) {
     ff.batchError.incrementAndGet();
     if (logger != null) {
       logger.severe(TITLE + " Batch: " + msg);
@@ -2940,10 +2941,10 @@ public class FindFoci_PlugIn implements PlugIn, MouseListener, FindFociProcessor
 
   /** {@inheritDoc} */
   @Override
-  public void mouseClicked(MouseEvent e) {
-    if (e.getClickCount() > 1 && e.getSource() instanceof TextField) // Double-click
+  public void mouseClicked(MouseEvent event) {
+    if (event.getClickCount() > 1 && event.getSource() instanceof TextField) // Double-click
     {
-      final TextField tf = (TextField) e.getSource();
+      final TextField tf = (TextField) event.getSource();
       String path = tf.getText();
       final boolean recording = Recorder.record;
       Recorder.record = false;

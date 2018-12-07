@@ -26,6 +26,7 @@ package uk.ac.sussex.gdsc.threshold;
 
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -49,7 +50,7 @@ import ij.process.StackConverter;
 // slice 1, fixed upper border of montage,
 // 1.3 2009/Apr/11 fixed Stack option with 'Try all' method
 // 1.4 2009/Apr/11 fixed 'ignore black' and 'ignore white' for stack histograms
-// 1.5 2009/Apr/12 Mean method, MinimumErrorIterative method , enahanced Triangle
+// 1.5 2009/Apr/12 Mean method, MinimumErrorIterative method, enhanced Triangle
 // 1.6 2009/Apr/14 Reverted IsoData to a copy of IJ's code as the other version does not always
 // return the same value as IJ
 // 1.7 2009/Apr/14 small fixes, restore histogram in Triangle if reversed
@@ -62,7 +63,7 @@ import ij.process.StackConverter;
 // without applying the mask, Yen and Isodata with 16 bits offset images, histogram bracketing to
 // speed up
 // 1.13 2011/Apr/13 Revised the way 16bit thresholds are shown
-// 1.14 2011/Apr/14 IsoData issues a warning if threhsold not found
+// 1.14 2011/Apr/14 IsoData issues a warning if threshold not found
 
 /**
  * AutoThreshold segmentation plugin.
@@ -74,18 +75,45 @@ public class AutoThreshold_PlugIn implements PlugIn {
 
   // Original method variable changed to static to allow repeatability of dialog
   private static String myMethod = AutoThreshold.Method.OTSU.toString();
-  private static boolean noBlack = false;
-  private static boolean noWhite = false;
+  private static boolean noBlack;
+  private static boolean noWhite;
   private static boolean doIwhite = true;
-  private static boolean doIset = false;
-  private static boolean doIlog = false;
-  private static boolean doIstack = false;
-  private static boolean doIstackHistogram = false;
+  private static boolean doIset;
+  private static boolean doIlog;
+  private static boolean doIstack;
+  private static boolean doIstackHistogram;
 
   /**
    * The multiplier used within the MeanPlusSD calculation.
    */
   private static double stdDevMultiplier = 3;
+
+  /**
+   * Provide lazy loading of the methods.
+   */
+  private static class MethodHolder {
+    /**
+     * The threshold method names. Includes an entry for try-all.
+     */
+    static final String[] METHOD_NAMES;
+    /**
+     * The threshold methods. Includes an entry for try-all.
+     */
+    static final Method[] METHODS;
+
+    static {
+      final String[] methodNames = AutoThreshold.getMethods(true);
+      METHOD_NAMES = new String[methodNames.length + 1];
+      METHOD_NAMES[0] = "Try all";
+      System.arraycopy(methodNames, 0, METHOD_NAMES, 1, methodNames.length);
+
+      // In case the order does not match the enum order
+      METHODS = new Method[METHOD_NAMES.length];
+      for (int i = 0; i < METHODS.length; i++) {
+        METHODS[i] = AutoThreshold.getMethod(METHOD_NAMES[i]);
+      }
+    }
+  }
 
   /** Ask for parameters and then execute. */
   @Override
@@ -101,7 +129,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
     }
 
     if (imp.getBitDepth() == 32) {
-      final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), "Auto Threshold",
+      final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE,
           "Convert 32-bit image to 16-bit for thresholding");
       d.setVisible(true);
       if (d.cancelPressed() || !d.yesPressed()) {
@@ -118,12 +146,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
 
     // 2 - Ask for parameters:
     final GenericDialog gd = new GenericDialog(TITLE);
-    gd.addMessage("Auto Threshold v1.14");
-    final String[] methods2 = AutoThreshold.getMethods(true);
-    final String[] methods = new String[methods2.length + 1];
-    methods[0] = "Try all";
-    System.arraycopy(methods2, 0, methods, 1, methods2.length);
-    gd.addChoice("Method", methods, myMethod);
+    gd.addChoice("Method", MethodHolder.METHOD_NAMES, myMethod);
     gd.addNumericField("StdDev_multiplier", stdDevMultiplier, 2);
     final String[] labels = new String[2];
     final boolean[] states = new boolean[2];
@@ -140,7 +163,9 @@ public class AutoThreshold_PlugIn implements PlugIn {
       gd.addCheckbox("Use_stack_histogram", doIstackHistogram);
     }
     gd.addMessage(
-        "The thresholded result of 8 & 16 bit images is shown\nin white [255] in 8 bits.\nFor 16 bit images, results of \'Try all\' and single slices\nof a stack are shown in white [65535] in 16 bits.\nUnsuccessfully thresholded images are left unchanged.");
+        "The thresholded result of 8 & 16 bit images is shown\nin white [255] in 8 bits.\n"
+        + "For 16 bit images, results of \'Try all\' and single slices\nof a stack are shown "
+        + "in white [65535] in 16 bits.\nUnsuccessfully thresholded images are left unchanged.");
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
 
     gd.showDialog();
@@ -169,12 +194,11 @@ public class AutoThreshold_PlugIn implements PlugIn {
     }
 
     // 4 - Execute!
-    // long start = System.currentTimeMillis();
     if (myMethod.equals("Try all")) {
       ImageProcessor ip = imp.getProcessor();
       final int xe = ip.getWidth();
       final int ye = ip.getHeight();
-      final int ml = methods.length;
+      final int ml = MethodHolder.METHOD_NAMES.length;
       ImagePlus imp2;
       ImagePlus imp3;
       ImageStack tstack = null;
@@ -182,9 +206,9 @@ public class AutoThreshold_PlugIn implements PlugIn {
       if (stackSize > 1 && doIstack) {
         boolean doItAnyway = true;
         if (stackSize > 25) {
-          final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), "Auto Threshold",
-              "You might run out of memory.\n \nDisplay " + stackSize
-                  + " slices?\n \n \'No\' will process without display and\noutput results to the log window.");
+          final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE,
+              "You might run out of memory.\n \nDisplay " + stackSize + " slices?\n \n "
+                  + "\'No\' will process without display and\noutput results to the log window.");
           if (!d.yesPressed()) {
             doIlog = true; // will show in the log window
             doItAnyway = false;
@@ -194,25 +218,21 @@ public class AutoThreshold_PlugIn implements PlugIn {
           }
         }
         if (doIstackHistogram) { // global histogram
-          int j;
-          int k;
-          for (k = 1; k < ml; k++) {
+          for (int k = 1; k < ml; k++) {
             tstack = new ImageStack(xe, ye);
-            for (j = 1; j <= stackSize; j++) {
+            for (int j = 1; j <= stackSize; j++) {
               imp.setSlice(j);
               ip = imp.getProcessor();
-              tstack.addSlice(methods[k], ip.duplicate());
+              tstack.addSlice(MethodHolder.METHOD_NAMES[k], ip.duplicate());
             }
-            imp2 = new ImagePlus("Auto Threshold", tstack);
+            imp2 = new ImagePlus(TITLE, tstack);
             imp2.updateAndDraw();
-            // imp2.show();
-            final Object[] result = exec(imp2, methods[k], noWhite, noBlack, doIwhite, doIset,
-                doIlog, doIstackHistogram);
-            for (j = 1; j <= stackSize; j++) {
+            final Object[] result = exec(imp2, MethodHolder.METHODS[k], noWhite, noBlack, doIwhite,
+                doIset, doIlog, doIstackHistogram);
+            for (int j = 1; j <= stackSize; j++) {
               tstack.setSliceLabel(tstack.getSliceLabel(j) + " = " + result[0], j);
             }
             if (doItAnyway) {
-              // CanvasResizer cr = new CanvasResizer();
               stackNew = /* cr. */expandStack(tstack, (xe + 2), (ye + 18), 1, 1);
               imp3 = new ImagePlus("Auto Threshold", stackNew);
               imp3.updateAndDraw();
@@ -232,7 +252,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
             ip = imp.getProcessor();
             tstack = new ImageStack(xe, ye);
             for (int k = 1; k < ml; k++) {
-              tstack.addSlice(methods[k], ip.duplicate());
+              tstack.addSlice(MethodHolder.METHOD_NAMES[k], ip.duplicate());
             }
             imp2 = new ImagePlus("Auto Threshold", tstack);
             imp2.updateAndDraw();
@@ -242,17 +262,15 @@ public class AutoThreshold_PlugIn implements PlugIn {
 
             for (int k = 1; k < ml; k++) {
               imp2.setSlice(k);
-              final Object[] result = exec(imp2, methods[k], noWhite, noBlack, doIwhite, doIset,
-                  doIlog, doIstackHistogram);
+              final Object[] result = exec(imp2, MethodHolder.METHODS[k], noWhite, noBlack,
+                  doIwhite, doIset, doIlog, doIstackHistogram);
               tstack.setSliceLabel(tstack.getSliceLabel(k) + " = " + result[0], k);
             }
             if (doItAnyway) {
-              // CanvasResizer cr = new CanvasResizer();
-              stackNew = /* cr. */expandStack(tstack, (xe + 2), (ye + 18), 1, 1);
+              stackNew = expandStack(tstack, (xe + 2), (ye + 18), 1, 1);
               imp3 = new ImagePlus("Auto Threshold", stackNew);
               imp3.updateAndDraw();
               final MontageMaker mm = new MontageMaker();
-              // mm.makeMontage(imp3, 4, 4, 1.0, 1, (ml - 1), 1, 0, true); // 4 columns and 4 rows
               mm.makeMontage(imp3, 6, 3, 1.0, 1, (ml - 1), 1, 0, true);
             }
           }
@@ -271,7 +289,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
       // single image try all
       tstack = new ImageStack(xe, ye);
       for (int k = 1; k < ml; k++) {
-        tstack.addSlice(methods[k], ip.duplicate());
+        tstack.addSlice(MethodHolder.METHOD_NAMES[k], ip.duplicate());
       }
       imp2 = new ImagePlus("Auto Threshold", tstack);
       imp2.updateAndDraw();
@@ -279,22 +297,18 @@ public class AutoThreshold_PlugIn implements PlugIn {
       IJ.log("Auto Threshold ...");
       for (int k = 1; k < ml; k++) {
         imp2.setSlice(k);
-        // IJ.log("Analyzing slice with "+methods[k]);
         final long start = System.currentTimeMillis();
-        final Object[] result =
-            exec(imp2, methods[k], noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram);
-        IJ.log("  " + methods[k] + " = " + result[0] + " ("
+        final Object[] result = exec(imp2, MethodHolder.METHODS[k], noWhite, noBlack, doIwhite,
+            doIset, doIlog, doIstackHistogram);
+        IJ.log("  " + MethodHolder.METHOD_NAMES[k] + " = " + result[0] + " ("
             + IJ.d2s((System.currentTimeMillis() - start) / 1000.0, 4) + "s)");
         tstack.setSliceLabel(tstack.getSliceLabel(k) + " = " + result[0], k);
       }
-      // imp2.setSlice(1);
-      // CanvasResizer cr = new CanvasResizer();
-      stackNew = /* cr. */expandStack(tstack, (xe + 2), (ye + 18), 1, 1);
+      stackNew = expandStack(tstack, (xe + 2), (ye + 18), 1, 1);
       imp3 = new ImagePlus("Auto Threshold", stackNew);
       imp3.updateAndDraw();
       final MontageMaker mm = new MontageMaker();
-      // mm.makeMontage(imp3, 4, 4, 1.0, 1, (ml - 1), 1, 0, true); // 4 columns and 4 rows
-      mm.makeMontage(imp3, 6, 3, 1.0, 1, (ml - 1), 1, 0, true); // 4 columns and 4 rows
+      mm.makeMontage(imp3, 6, 3, 1.0, 1, (ml - 1), 1, 0, true);
       final ImagePlus montageImp = WindowManager.getCurrentImage();
       if (montageImp.getID() != imp.getID()) {
         montageImp.setTitle(imp.getTitle() + " Thresholds");
@@ -302,12 +316,13 @@ public class AutoThreshold_PlugIn implements PlugIn {
       }
       return;
     }
+    AutoThreshold.Method method = AutoThreshold.getMethod(myMethod);
     // selected a method
     boolean success = false;
     if (stackSize > 1 && (doIstack || doIstackHistogram)) { // whole stack
-      if (doIstackHistogram) {// one global histogram
+      if (doIstackHistogram) { // one global histogram
         final Object[] result =
-            exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram);
+            exec(imp, method, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram);
         if (((Integer) result[0]) != -1 && imp.getBitDepth() == 16) {
           new StackConverter(imp).convertToGray8();
         }
@@ -316,7 +331,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
         for (int k = 1; k <= stackSize; k++) {
           imp.setSlice(k);
           final Object[] result =
-              exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram);
+              exec(imp, method, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram);
           if (((Integer) result[0]) == -1) {
             success = false;// the threshold existed
           }
@@ -328,7 +343,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
       imp.setSlice(1);
     } else { // just one slice, leave as it is
       final Object[] result =
-          exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram);
+          exec(imp, method, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram);
       if (((Integer) result[0]) != -1 && stackSize == 1 && imp.getBitDepth() == 16) {
         imp.setDisplayRange(0, 65535);
         imp.setProcessor(null, imp.getProcessor().convertToByte(true));
@@ -338,20 +353,20 @@ public class AutoThreshold_PlugIn implements PlugIn {
     // not needed here as the source image is binarised
   }
 
-  private static ImageStack expandStack(ImageStack stackOld, int wNew, int hNew, int xOff,
-      int yOff) {
+  private static ImageStack expandStack(ImageStack stackOld, int width, int height, int xoffset,
+      int yoffset) {
     final int nFrames = stackOld.getSize();
     final ImageProcessor ipOld = stackOld.getProcessor(1);
 
-    final ImageStack stackNew = new ImageStack(wNew, hNew, stackOld.getColorModel());
+    final ImageStack stackNew = new ImageStack(width, height, stackOld.getColorModel());
     ImageProcessor ipNew;
 
     for (int i = 1; i <= nFrames; i++) {
       IJ.showProgress((double) i / nFrames);
-      ipNew = ipOld.createProcessor(wNew, hNew);
-      ipNew.setValue(0.0);
-      ipNew.fill();
-      ipNew.insert(stackOld.getProcessor(i), xOff, yOff);
+      ipNew = ipOld.createProcessor(width, height);
+      // ipNew.setValue(0.0)
+      // ipNew.fill()
+      ipNew.insert(stackOld.getProcessor(i), xoffset, yoffset);
       stackNew.addSlice(stackOld.getSliceLabel(i), ipNew);
     }
     return stackNew;
@@ -361,7 +376,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
    * Execute the plugin functionality.
    *
    * @param imp the image
-   * @param myMethod the my method
+   * @param method the method
    * @param noWhite the no white
    * @param noBlack the no black
    * @param doIwhite flag to set the foreground as white
@@ -371,27 +386,23 @@ public class AutoThreshold_PlugIn implements PlugIn {
    * @return an Object[] array with the threshold and the ImagePlus. Does NOT show the new, image;
    *         just returns it.
    */
-  public Object[] exec(ImagePlus imp, String myMethod, boolean noWhite, boolean noBlack,
+  public Object[] exec(ImagePlus imp, AutoThreshold.Method method, boolean noWhite, boolean noBlack,
       boolean doIwhite, boolean doIset, boolean doIlog, boolean doIstackHistogram) {
     // 0 - Check validity of parameters
     if (null == imp) {
       return null;
     }
-    int threshold = -1;
     final int currentSlice = imp.getCurrentSlice();
     ImageProcessor ip = imp.getProcessor();
     final int xe = ip.getWidth();
     final int ye = ip.getHeight();
-    int x;
-    int y;
-    int c = 0;
-    int b = imp.getBitDepth() == 8 ? 255 : 65535;
+    int foreColour = 0;
+    int backColour = imp.getBitDepth() == 8 ? 255 : 65535;
     if (doIwhite) {
-      c = b;
-      b = 0;
+      foreColour = backColour;
+      backColour = 0;
     }
-    final int[] data = (ip.getHistogram());
-    int[] temp = new int[data.length];
+    final int[] data = ip.getHistogram();
 
     IJ.showStatus("Thresholding...");
 
@@ -401,7 +412,6 @@ public class AutoThreshold_PlugIn implements PlugIn {
       Undo.setup(Undo.FILTER, imp);
     } else if (doIstackHistogram) {
       // get the stack histogram into the data[] array
-      temp = data;
       for (int i = 1; i <= imp.getStackSize(); i++) {
         // Ignore the slice that has already been included
         if (i == currentSlice) {
@@ -409,10 +419,9 @@ public class AutoThreshold_PlugIn implements PlugIn {
         }
         imp.setSliceWithoutUpdate(i);
         ip = imp.getProcessor();
-        temp = ip.getHistogram();
+        int[] temp = ip.getHistogram();
         for (int j = 0; j < data.length; j++) {
           data[j] += temp[j];
-          // IJ.log(""+j+": "+ data[j]);
         }
       }
       imp.setSliceWithoutUpdate(currentSlice);
@@ -425,57 +434,54 @@ public class AutoThreshold_PlugIn implements PlugIn {
       data[data.length - 1] = 0;
     }
 
-    threshold = AutoThreshold.getThreshold(myMethod, data);
+    final int threshold = AutoThreshold.getThreshold(method, data);
 
-    // show treshold in log window if required
+    // show threshold in log window if required
     if (doIlog) {
-      IJ.log(myMethod + ": " + threshold);
+      IJ.log(method + ": " + threshold);
     }
     if (threshold > -1) {
       // threshold it
       if (doIset) {
         if (doIwhite) {
-          imp.getProcessor().setThreshold(threshold + 1, data.length - 1, ImageProcessor.RED_LUT);// IJ.setThreshold(threshold+1,
-                                                                                                  // data.length
-                                                                                                  // -
-                                                                                                  // 1);
+          imp.getProcessor().setThreshold(threshold + 1.0, data.length - 1.0,
+              ImageProcessor.RED_LUT);
         } else {
-          imp.getProcessor().setThreshold(0, threshold, ImageProcessor.RED_LUT);// IJ.setThreshold(0,threshold);
+          imp.getProcessor().setThreshold(0, threshold, ImageProcessor.RED_LUT);
         }
       } else {
-        imp.setDisplayRange(0, Math.max(b, c)); // otherwise we can never set the threshold
+        // Reset display range otherwise we can never set the threshold
+        imp.setDisplayRange(0, Math.max(backColour, foreColour));
         if (doIstackHistogram) {
           for (int j = 1; j <= imp.getStackSize(); j++) {
             imp.setSliceWithoutUpdate(j);
             ip = imp.getProcessor();
-            // IJ.log(""+j+": "+ data[j]);
-            for (y = 0; y < ye; y++) {
-              for (x = 0; x < xe; x++) {
+            for (int y = 0; y < ye; y++) {
+              for (int x = 0; x < xe; x++) {
                 if (ip.getPixel(x, y) > threshold) {
-                  ip.putPixel(x, y, c);
+                  ip.putPixel(x, y, foreColour);
                 } else {
-                  ip.putPixel(x, y, b);
+                  ip.putPixel(x, y, backColour);
                 }
               }
             }
           } // threshold all of them
           imp.setSliceWithoutUpdate(currentSlice);
         } else {
-          for (y = 0; y < ye; y++) {
-            for (x = 0; x < xe; x++) {
+          for (int y = 0; y < ye; y++) {
+            for (int x = 0; x < xe; x++) {
               if (ip.getPixel(x, y) > threshold) {
-                ip.putPixel(x, y, c);
+                ip.putPixel(x, y, foreColour);
               } else {
-                ip.putPixel(x, y, b);
+                ip.putPixel(x, y, backColour);
               }
             }
           }
         }
-        imp.getProcessor().setThreshold(data.length - 1, data.length - 1,
+        imp.getProcessor().setThreshold(data.length - 1.0, data.length - 1.0,
             ImageProcessor.NO_LUT_UPDATE);
       }
     }
-    // IJ.showProgress((double)(255-i)/255);
     imp.updateAndDraw();
     // 2 - Return the threshold and the image
     return new Object[] {threshold, imp};

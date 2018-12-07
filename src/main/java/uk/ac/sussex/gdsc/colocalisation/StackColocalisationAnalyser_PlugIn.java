@@ -27,9 +27,11 @@ package uk.ac.sussex.gdsc.colocalisation;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.colocalisation.cda.Cda_PlugIn;
 import uk.ac.sussex.gdsc.colocalisation.cda.TwinStackShifter;
+import uk.ac.sussex.gdsc.core.ij.ThresholdUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.Correlator;
+import uk.ac.sussex.gdsc.utils.SliceCollection;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -43,7 +45,6 @@ import ij.text.TextWindow;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 
 /**
  * Processes a stack image with multiple channels. Requires three channels. Each frame is processed
@@ -52,21 +53,16 @@ import java.util.Comparator;
  * defined by channel 3.
  */
 public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
-  // Store a reference to the current working image
-  private ImagePlus imp;
-
-  private static TextWindow tw;
-  private static String TITLE = "Stack Colocalisation Analyser";
-  private static String COMBINE = "Combine 1+2";
-  private static String NONE = "None";
-  private boolean firstResult;
+  private static final String TITLE = "Stack Colocalisation Analyser";
+  private static final String COMBINE = "Combine 1+2";
+  private static final String NONE = "None";
 
   // ImageJ indexes for the dimensions array
-  // private final int X = 0;
-  // private final int Y = 1;
-  private final int C = 2;
-  private final int Z = 3;
-  private final int T = 4;
+  private static final int C = 2;
+  private static final int Z = 3;
+  private static final int T = 4;
+
+  private static TextWindow tw;
 
   private static String methodOption = AutoThreshold.Method.OTSU.toString();
   private static int channel1 = 1;
@@ -84,7 +80,11 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
   private static int maximumRadius = 16;
   private static double pCut = 0.05;
 
-  private Correlator c;
+  // Store a reference to the current working image
+  private ImagePlus imp;
+
+  private boolean firstResult;
+  private Correlator correlator;
   private int[] ii1;
   private int[] ii2;
 
@@ -125,7 +125,7 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     final int nChannels = (channel3 != 1) ? 3 : 2;
 
     final int size = dimensions[0] * dimensions[1];
-    c = new Correlator(size);
+    correlator = new Correlator(size);
     ii1 = new int[size];
     ii2 = new int[size];
 
@@ -151,12 +151,12 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
       }
 
       for (int t = 1; t <= dimensions[T]; t++) {
-        final ArrayList<SliceCollection> sliceCollections = new ArrayList<>();
+        final ArrayList<AnalysisSliceCollection> sliceCollections = new ArrayList<>();
 
         // Extract the channels
         for (int c = 1; c <= dimensions[C]; c++) {
           // Process all slices together
-          final SliceCollection sliceCollection = new SliceCollection(c);
+          final AnalysisSliceCollection sliceCollection = new AnalysisSliceCollection(c);
           for (int z = 1; z <= dimensions[Z]; z++) {
             sliceCollection.add(imp.getStackIndex(c, z, t));
           }
@@ -164,20 +164,20 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
         }
 
         // Get the channels:
-        final SliceCollection s1 = sliceCollections.get(channel1 - 1);
-        final SliceCollection s2 = sliceCollections.get(channel2 - 1);
+        final AnalysisSliceCollection s1 = sliceCollections.get(channel1 - 1);
+        final AnalysisSliceCollection s2 = sliceCollections.get(channel2 - 1);
 
         // Create masks
         extractImageAndCreateOutputMask(method, maskImage, 1, t, s1);
         extractImageAndCreateOutputMask(method, maskImage, 2, t, s2);
 
         // Note that channel 3 is offset by 1 because it contains the [none] option
-        SliceCollection s3;
+        AnalysisSliceCollection s3;
         if (channel3 > 1) {
           s3 = sliceCollections.get(channel3 - 2);
           extractImageAndCreateOutputMask(method, maskImage, 3, t, s3);
         } else {
-          s3 = new SliceCollection(0);
+          s3 = new AnalysisSliceCollection(0);
           if (channel3 == 0) {
             // Combine the two masks
             combineMasksAndCreateOutputMask(method, maskImage, 3, t, s1, s2, s3);
@@ -198,20 +198,20 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     imp.setSlice(currentSlice);
   }
 
-  private void extractImageAndCreateOutputMask(String method, ImagePlus maskImage, int c, int t,
-      SliceCollection sliceCollection) {
+  private void extractImageAndCreateOutputMask(String method, ImagePlus maskImage, int channel,
+      int frame, AnalysisSliceCollection sliceCollection) {
     sliceCollection.createStack(imp);
     sliceCollection.createMask(method);
     if (logThresholds) {
-      IJ.log(
-          "t" + t + sliceCollection.getSliceName() + " threshold = " + sliceCollection.threshold);
+      IJ.log("t" + frame + sliceCollection.getSliceName() + " threshold = "
+          + sliceCollection.threshold);
     }
 
     if (showMask) {
       final ImageStack maskStack = maskImage.getImageStack();
       for (int s = 1; s <= sliceCollection.maskStack.getSize(); s++) {
-        final int originalSliceNumber = sliceCollection.slices.get(s - 1);
-        final int newSliceNumber = maskImage.getStackIndex(c, s, t);
+        final int originalSliceNumber = sliceCollection.get(s - 1);
+        final int newSliceNumber = maskImage.getStackIndex(channel, s, frame);
         maskStack.setSliceLabel(method + ":" + imp.getStack().getSliceLabel(originalSliceNumber),
             newSliceNumber);
         maskStack.setPixels(sliceCollection.maskStack.getPixels(s), newSliceNumber);
@@ -219,13 +219,14 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     }
   }
 
-  private static void combineMasksAndCreateOutputMask(String method, ImagePlus maskImage, int c,
-      int t, SliceCollection s1, SliceCollection s2, SliceCollection sliceCollection) {
+  private static void combineMasksAndCreateOutputMask(String method, ImagePlus maskImage,
+      int channel, int frame, AnalysisSliceCollection s1, AnalysisSliceCollection s2,
+      AnalysisSliceCollection sliceCollection) {
     sliceCollection.createMask(s1.maskStack, s2.maskStack);
     if (showMask) {
       final ImageStack maskStack = maskImage.getImageStack();
       for (int s = 1; s <= sliceCollection.maskStack.getSize(); s++) {
-        final int newSliceNumber = maskImage.getStackIndex(c, s, t);
+        final int newSliceNumber = maskImage.getStackIndex(channel, s, frame);
         maskStack.setSliceLabel(method + ":" + COMBINE, newSliceNumber);
         maskStack.setPixels(sliceCollection.maskStack.getPixels(s), newSliceNumber);
       }
@@ -396,10 +397,11 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
    * @return an array containing: M1, M2, R, the number of overlapping pixels; the % total area for
    *         the overlap;
    */
-  private double[] correlate(SliceCollection s1, SliceCollection s2, SliceCollection s3) {
+  private double[] correlate(AnalysisSliceCollection s1, AnalysisSliceCollection s2,
+      AnalysisSliceCollection s3) {
     double m1Significant = 0;
     double m2Significant = 0;
-    double rSignificant = 0;
+    double correlationSignificant = 0;
 
     // Debug - show all the input
     // Utils.display("Stack Analyser Stack1", s1.imageStack);
@@ -419,8 +421,8 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     // getTotalIntensity(s3.maskStack, s3.maskStack, null));
 
     // Get the standard result
-    final CalculationResult result = correlate(s1.imageStack, s1.maskStack, s2.imageStack,
-        s2.maskStack, s3.maskStack, 0, totalIntensity1, totalIntensity2);
+    final CalculationResult result = calculateCorrelation(s1.imageStack, s1.maskStack,
+        s2.imageStack, s2.maskStack, s3.maskStack, 0, totalIntensity1, totalIntensity2);
 
     if (permutations > 0) {
       // Circularly permute the s2 stack and compute the M1,M2,R stats.
@@ -445,9 +447,9 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
         stackShifter.setShift(x, y);
         stackShifter.run();
 
-        results.add(correlate(s1.imageStack, s1.maskStack, stackShifter.getResultImage().getStack(),
-            stackShifter.getResultImage2().getStack(), s3.maskStack, distance, totalIntensity1,
-            totalIntensity2));
+        results.add(calculateCorrelation(s1.imageStack, s1.maskStack,
+            stackShifter.getResultImage().getStack(), stackShifter.getResultImage2().getStack(),
+            s3.maskStack, distance, totalIntensity1, totalIntensity2));
       }
 
       // Output if significant at given confidence level. Avoid bounds errors.
@@ -455,20 +457,22 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
           (int) Math.min(results.size() - 1, Math.ceil(results.size() * (1 - pCut)));
       final int lowerIndex = (int) Math.floor(results.size() * pCut);
 
-      Collections.sort(results, new M1Comparator());
-      m1Significant = sig(results.get(lowerIndex).m1, result.m1, results.get(upperIndex).m1);
-      Collections.sort(results, new M2Comparator());
-      m2Significant = sig(results.get(lowerIndex).m2, result.m2, results.get(upperIndex).m2);
-      Collections.sort(results, new RComparator());
-      rSignificant = sig(results.get(lowerIndex).r, result.r, results.get(upperIndex).r);
+      Collections.sort(results, StackColocalisationAnalyser_PlugIn::compareM1);
+      m1Significant =
+          getSignificance(results.get(lowerIndex).m1, result.m1, results.get(upperIndex).m1);
+      Collections.sort(results, StackColocalisationAnalyser_PlugIn::compareM2);
+      m2Significant =
+          getSignificance(results.get(lowerIndex).m2, result.m2, results.get(upperIndex).m2);
+      Collections.sort(results, StackColocalisationAnalyser_PlugIn::compareR);
+      correlationSignificant = getSignificance(results.get(lowerIndex).correlation,
+          result.correlation, results.get(upperIndex).correlation);
     }
 
-    return new double[] {result.m1, result.m2, result.r, result.n, result.area, m1Significant,
-        m2Significant, rSignificant};
+    return new double[] {result.m1, result.m2, result.correlation, result.overlapCount, result.area,
+        m1Significant, m2Significant, correlationSignificant};
   }
 
-  private static double sig(double lower, double value, double upper) {
-    // System.out.printf("%g < %g < %g\n", lower, value, upper);
+  private static double getSignificance(double lower, double value, double upper) {
     if (value < lower) {
       return -1;
     }
@@ -510,14 +514,14 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
    * Calculate the Mander's coefficients and Pearson correlation coefficient (R) between the two
    * input channels within the intersect of their masks. Only use the pixels within the roi mask.
    */
-  private CalculationResult correlate(ImageStack image1, ImageStack mask1, ImageStack image2,
-      ImageStack mask2, ImageStack roi, double distance, double totalIntensity1,
+  private CalculationResult calculateCorrelation(ImageStack image1, ImageStack mask1,
+      ImageStack image2, ImageStack mask2, ImageStack roi, double distance, double totalIntensity1,
       double totalIntensity2) {
     final ImageStack overlapStack = combineBits(mask1, mask2, Blitter.AND);
 
-    int nTotal = 0;
+    int total = 0;
 
-    c.clear();
+    correlator.clear();
 
     for (int s = 1; s <= overlapStack.getSize(); s++) {
       final ImageProcessor ip1 = image1.getProcessor(s);
@@ -526,7 +530,7 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
       final ByteProcessor overlap = (ByteProcessor) overlapStack.getProcessor(s);
       final byte[] b = (byte[]) overlap.getPixels();
 
-      int n = 0;
+      int count = 0;
       if (roi != null) {
         // Calculate correlation within a specified region
         final ImageProcessor ip3 = roi.getProcessor(s);
@@ -534,11 +538,11 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
 
         for (int i = mask.length; i-- > 0;) {
           if (mask[i] != 0) {
-            nTotal++;
+            total++;
             if (b[i] != 0) {
-              ii1[n] = ip1.get(i);
-              ii2[n] = ip2.get(i);
-              n++;
+              ii1[count] = ip1.get(i);
+              ii2[count] = ip2.get(i);
+              count++;
             }
           }
         }
@@ -546,33 +550,34 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
         // Calculate correlation for entire image
         for (int i = ip1.getPixelCount(); i-- > 0;) {
           if (b[i] != 0) {
-            ii1[n] = ip1.get(i);
-            ii2[n] = ip2.get(i);
-            n++;
+            ii1[count] = ip1.get(i);
+            ii2[count] = ip2.get(i);
+            count++;
           }
         }
-        nTotal += ip1.getPixelCount();
+        total += ip1.getPixelCount();
       }
-      c.add(ii1, ii2, n);
+      correlator.add(ii1, ii2, count);
     }
 
-    final double m1 = c.getSumX() / totalIntensity1;
-    final double m2 = c.getSumY() / totalIntensity2;
-    final double r = c.getCorrelation();
+    final double m1 = correlator.getSumX() / totalIntensity1;
+    final double m2 = correlator.getSumY() / totalIntensity2;
+    final double r = correlator.getCorrelation();
 
-    return new CalculationResult(distance, m1, m2, r, c.getN(), (100.0 * c.getN() / nTotal));
+    return new CalculationResult(distance, m1, m2, r, correlator.getN(),
+        (100.0 * correlator.getN() / total));
   }
 
   /**
    * Reports the results for the correlation to the IJ log window.
    *
-   * @param t The timeframe
+   * @param frame The timeframe
    * @param c1 Channel 1 title
    * @param c2 Channel 2 title
    * @param c3 Channel 3 title
    * @param results The correlation results
    */
-  private void reportResult(String method, int t, String c1, String c2, String c3,
+  private void reportResult(String method, int frame, String c1, String c2, String c3,
       double[] results) {
     createResultsWindow();
 
@@ -591,7 +596,7 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     sb.append(imp.getTitle()).append(spacer);
     sb.append(IJ.d2s(pCut, 4)).append(spacer);
     sb.append(method).append(spacer);
-    sb.append(t).append(spacer);
+    sb.append(frame).append(spacer);
     sb.append(c1).append(spacer);
     sb.append(c2).append(spacer);
     sb.append(c3).append(spacer);
@@ -611,11 +616,11 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     }
   }
 
-  private static String getResult(double d) {
-    if (d < 0) {
+  private static String getResult(double significance) {
+    if (significance < 0) {
       return "Non-colocated";
     }
-    if (d > 0) {
+    if (significance > 0) {
       return "Colocated";
     }
     return "-";
@@ -637,54 +642,20 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
   /**
    * Provides functionality to process a collection of slices from an Image.
    */
-  private class SliceCollection {
-    int c;
-    int z;
-    ArrayList<Integer> slices;
+  private static class AnalysisSliceCollection extends SliceCollection {
 
-    private String sliceName = null;
-
-    ImageStack imageStack = null;
-    ImageStack maskStack = null;
-    int threshold = 0;
+    ImageStack imageStack;
+    ImageStack maskStack;
+    int threshold;
+    String overrideName;
 
     /**
-     * @param c The channel
-     */
-    SliceCollection(int c) {
-      this.c = c;
-      this.z = 0;
-      slices = new ArrayList<>();
-    }
-
-    /**
-     * Utility method.
+     * Instantiates a new analysis slice collection.
      *
-     * @param i the i
+     * @param indexC The channel index
      */
-    void add(Integer i) {
-      slices.add(i);
-    }
-
-    /**
-     * Gets the slice name.
-     *
-     * @return the slice name
-     */
-    String getSliceName() {
-      if (sliceName == null || sliceName == NONE) {
-        if (slices.isEmpty()) {
-          sliceName = NONE;
-        } else {
-          final StringBuilder sb = new StringBuilder();
-          sb.append("c").append(c);
-          if (z != 0) {
-            sb.append("z").append(z);
-          }
-          sliceName = sb.toString();
-        }
-      }
-      return sliceName;
+    AnalysisSliceCollection(int indexC) {
+      super(indexC, 0, 0);
     }
 
     /**
@@ -693,15 +664,7 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
      * @param imp the image
      */
     void createStack(ImagePlus imp) {
-      if (slices.isEmpty()) {
-        return;
-      }
-
-      imageStack = new ImageStack(imp.getWidth(), imp.getHeight());
-      for (final int slice : slices) {
-        imp.setSliceWithoutUpdate(slice);
-        imageStack.addSlice(Integer.toString(slice), imp.getProcessor().duplicate());
-      }
+      imageStack = createStack(imp.getImageStack());
     }
 
     /**
@@ -710,37 +673,23 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
      * @param method the method
      */
     private void createMask(String method) {
-      if (slices.isEmpty()) {
-        return;
-      }
+      // Create an aggregate histogram
+      final int[] data = ThresholdUtils.getHistogram(imageStack);
 
-      final boolean mySubtractThreshold;
-      if (method != NONE) {
-        // Create an aggregate histogram
-        final int[] data = imageStack.getProcessor(1).getHistogram();
-        int[] temp = new int[data.length];
-        for (int s = 2; s <= imageStack.getSize(); s++) {
-          temp = imageStack.getProcessor(s).getHistogram();
-          for (int i = 0; i < data.length; i++) {
-            data[i] += temp[i];
-          }
-        }
+      threshold = AutoThreshold.getThreshold(method, data);
 
-        threshold = AutoThreshold.getThreshold(method, data);
-        mySubtractThreshold = subtractThreshold && (threshold > 0);
-      } else {
-        mySubtractThreshold = false;
-      }
+      final boolean mySubtractThreshold = subtractThreshold && (threshold > 0);
 
       // Create a mask for each image in the stack
       maskStack = new ImageStack(imageStack.getWidth(), imageStack.getHeight());
+      final int size = imageStack.getWidth() * imageStack.getHeight();
       for (int s = 1; s <= imageStack.getSize(); s++) {
-        final ByteProcessor bp = new ByteProcessor(imageStack.getWidth(), imageStack.getHeight());
+        final byte[] bp = new byte[size];
         final ImageProcessor ip = imageStack.getProcessor(s);
-        for (int i = bp.getPixelCount(); i-- > 0;) {
+        for (int i = size; i-- > 0;) {
           final int value = ip.get(i);
           if (value > threshold) {
-            bp.set(i, 255);
+            bp[i] = (byte) 255;
           }
           if (mySubtractThreshold) {
             ip.set(i, value - threshold);
@@ -753,12 +702,23 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     /**
      * Creates a mask by combining the two masks.
      *
+     * <p>This method is used when there is no channel 3 and the region is defined by the
+     * combination of the channel 1 and channel 2 masks.
+     *
      * @param stack1 the stack 1
      * @param stack2 the stack 2
      */
     private void createMask(ImageStack stack1, ImageStack stack2) {
-      sliceName = COMBINE;
+      overrideName = COMBINE;
       maskStack = combineBits(stack1, stack2, Blitter.OR);
+    }
+
+    @Override
+    public String getSliceName() {
+      if (overrideName != null) {
+        return overrideName;
+      }
+      return super.getSliceName();
     }
   }
 
@@ -767,17 +727,17 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
    */
   public static class CalculationResult {
     /** Shift distance. */
-    public double distance;
+    public final double distance;
     /** Mander's 1. */
-    public double m1;
+    public final double m1;
     /** Mander's 2. */
-    public double m2;
+    public final double m2;
     /** Correlation. */
-    public double r;
-    /** the number of overlapping pixels. */
-    public int n;
-    /** the % total area for the overlap. */
-    public double area;
+    public final double correlation;
+    /** The number of overlapping pixels. */
+    public final int overlapCount;
+    /** The % total area for the overlap. */
+    public final double area;
 
     /**
      * Instantiates a new calculation result.
@@ -785,65 +745,56 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
      * @param distance the shift distance
      * @param m1 the Mander's 1
      * @param m2 the Mander's 2
-     * @param r the correlation
-     * @param n the number of overlapping pixels
+     * @param correlation the correlation
+     * @param overlapCount the number of overlapping pixels
      * @param area the % total area for the overlap
      */
-    public CalculationResult(double distance, double m1, double m2, double r, int n, double area) {
+    public CalculationResult(double distance, double m1, double m2, double correlation,
+        int overlapCount, double area) {
       this.distance = distance;
       this.m1 = m1;
       this.m2 = m2;
-      this.r = r;
-      this.n = n;
+      this.correlation = correlation;
+      this.overlapCount = overlapCount;
       this.area = area;
     }
   }
 
   /**
-   * Compare the results using the Mander's 1 coefficient
+   * Compare the results using the Mander's 1 coefficient.
    */
-  private class M1Comparator implements Comparator<CalculationResult> {
-    @Override
-    public int compare(CalculationResult o1, CalculationResult o2) {
-      if (o1.m1 < o2.m1) {
-        return -1;
-      }
-      if (o1.m1 > o2.m1) {
-        return 1;
-      }
-      return 0;
-    }
+  private static int compareM1(CalculationResult o1, CalculationResult o2) {
+    return fastDoubleCompare(o1.m1, o2.m1);
   }
 
   /**
-   * Compare the results using the Mander's 2 coefficient
+   * Compare the results using the Mander's 2 coefficient.
    */
-  private class M2Comparator implements Comparator<CalculationResult> {
-    @Override
-    public int compare(CalculationResult o1, CalculationResult o2) {
-      if (o1.m2 < o2.m2) {
-        return -1;
-      }
-      if (o1.m2 > o2.m2) {
-        return 1;
-      }
-      return 0;
-    }
+  private static int compareM2(CalculationResult o1, CalculationResult o2) {
+    return fastDoubleCompare(o1.m2, o2.m2);
   }
 
   /**
    * Compare the results using the correlation coefficient.
    */
-  private class RComparator implements Comparator<CalculationResult> {
-    @Override
-    public int compare(CalculationResult o1, CalculationResult o2) {
-      if (o1.r < o2.r) {
-        return -1;
-      }
-      if (o1.r > o2.r) {
-        return 1;
-      }
-      return 0;
+  private static int compareR(CalculationResult o1, CalculationResult o2) {
+    return fastDoubleCompare(o1.correlation, o2.correlation);
+  }
+
+  /**
+   * Compare doubles ignoring NaN.
+   *
+   * @param d1 the first value
+   * @param d2 the second value
+   * @return the comparison result
+   */
+  private static int fastDoubleCompare(double d1, double d2) {
+    if (d1 < d2) {
+      return -1;
     }
+    if (d1 > d2) {
+      return 1;
+    }
+    return 0;
   }
 }

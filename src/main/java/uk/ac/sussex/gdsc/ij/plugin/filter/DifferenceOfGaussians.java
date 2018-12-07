@@ -26,7 +26,6 @@ package uk.ac.sussex.gdsc.ij.plugin.filter;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.Macro;
 import ij.Prefs;
 import ij.gui.GenericDialog;
 import ij.plugin.ContrastEnhancer;
@@ -49,27 +48,31 @@ import java.util.Vector;
  * of the original. The result is an image containing only the information within the spatial
  * frequency between the two blurred images (i.e. a band-pass filter).
  *
- * The filter is implemented using two {@link GaussianBlur } passes. This takes advantage of the
+ * <p>The filter is implemented using two {@link GaussianBlur } passes. This takes advantage of the
  * downscaling/upscaling performed within the GaussianBlur class to increase speed for large radii.
  *
- * Preview is supported and the two Gaussian filtered images are cached to avoid recomputation if
+ * <p>Preview is supported and the two Gaussian filtered images are cached to avoid recomputation if
  * unchanged.
  */
 public class DifferenceOfGaussians extends GaussianBlur {
 
-  /** the standard deviation of the Gaussian. */
+  /** The standard deviation of the larger Gaussian. */
   private static double sigma1 = Prefs.get("DoG.sigma1", 6.0);
+  /** The standard deviation of the smaller Gaussian. */
   private static double sigma2 = Prefs.get("DoG.sigma2", 1.5);
   /** whether sigma is given in units corresponding to the pixel scale (not pixels). */
   private static boolean sigmaScaled = Prefs.getBoolean("DoG.sigmaScaled", false);
   private static boolean enhanceContrast = Prefs.getBoolean("DoG.enhanceContrast", false);
+
   private static boolean maintainRatio = Prefs.getBoolean("DoG.maintainRatio", false);
   /** The flags specifying the capabilities and needs. */
-  private int flags = DOES_ALL | SUPPORTS_MASKING | KEEP_PREVIEW | FINAL_PROCESSING;
-  private ImagePlus imp; // The ImagePlus of the setup call, needed to get the spatial calibration
-  private boolean hasScale = false; // whether the image has an x&y scale
-  private int nPasses = 1; // The number of passes (filter directions * color channels * stack
-                           // slices)
+  private static final int FLAGS = DOES_ALL | SUPPORTS_MASKING | KEEP_PREVIEW | FINAL_PROCESSING;
+  /** The ImagePlus of the setup call, needed to get the spatial calibration. */
+  private ImagePlus imp;
+  /** Whether the image has an x&y scale. */
+  private boolean hasScale = false;
+  /** The number of passes (filter directions * color channels * stack slices). */
+  private int passes = 1;
   private int pass; // Current pass
 
   private TextField sigma1field;
@@ -92,7 +95,7 @@ public class DifferenceOfGaussians extends GaussianBlur {
   /**
    * Set to true to suppress progress reporting to the ImageJ window.
    */
-  public boolean noProgress = false;
+  private boolean noProgress = false;
 
   /**
    * Method to return types supported.
@@ -104,6 +107,7 @@ public class DifferenceOfGaussians extends GaussianBlur {
   @Override
   public int setup(String arg, ImagePlus imp) {
     this.imp = imp;
+    int flags = FLAGS;
     if (imp != null) {
       if (imp.getRoi() != null) {
         final Rectangle roiRect = imp.getRoi().getBounds();
@@ -132,17 +136,10 @@ public class DifferenceOfGaussians extends GaussianBlur {
     final double min = imp.getDisplayRangeMin();
     final double max = imp.getDisplayRangeMax();
     this.pfr = pfr;
-    final String options = Macro.getOptions();
-    boolean oldMacro = false;
-    if (options != null) {
-      if (options.indexOf("radius=") >= 0) { // ensure compatibility with old macros
-        oldMacro = true; // specifying "radius=", not "sigma=
-        Macro.setOptions(options.replaceAll("radius=", "sigma="));
-      }
-    }
     final GenericDialog gd = new GenericDialog(command);
     gd.addMessage(
-        "Subtracts blurred image 2 from 1:\n- Sigma1 = local contrast\n- Sigma2 = local noise\nUse Sigma1 > Sigma2");
+        "Subtracts blurred image 2 from 1:\n- Sigma1 = local contrast\n"
+        + "- Sigma2 = local noise\nUse Sigma1 > Sigma2");
     gd.addNumericField("Sigma1 (Radius)", sigma1, 2);
     gd.addNumericField("Sigma2 (Radius)", sigma2, 2);
     gd.addCheckbox("Maintain Ratio", maintainRatio);
@@ -167,18 +164,12 @@ public class DifferenceOfGaussians extends GaussianBlur {
       imp.setDisplayRange(min, max);
       return DONE;
     }
-    if (oldMacro) {
-      sigma1 /= 2.5; // for old macros, "radius" was 2.5 sigma
-      sigma2 /= 2.5;
-    }
-    IJ.register(this.getClass()); // protect static class variables (parameters) from garbage
-                                  // collection
-    return IJ.setupDialog(imp, flags); // ask whether to process all slices of stack (if a stack)
+    return IJ.setupDialog(imp, FLAGS); // ask whether to process all slices of stack (if a stack)
   }
 
   /** Listener to modifications of the input fields of the dialog. */
   @Override
-  public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+  public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
     // Flag used to indicate the next call to run should be ignored.
     // This is set when the ratio between fields is maintained. Since the
     // text field will be set the dialogItemChanged event will be called
@@ -263,8 +254,8 @@ public class DifferenceOfGaussians extends GaussianBlur {
    * Set the number of passes of the run method.
    */
   @Override
-  public void setNPasses(int nPasses) {
-    this.nPasses = nPasses;
+  public void setNPasses(int passes) {
+    this.passes = passes;
     pass = 0;
   }
 
@@ -283,7 +274,7 @@ public class DifferenceOfGaussians extends GaussianBlur {
     ignoreChange = false;
 
     pass++;
-    if (pass > nPasses) {
+    if (pass > passes) {
       pass = 1;
     }
 
@@ -440,7 +431,7 @@ public class DifferenceOfGaussians extends GaussianBlur {
     }
 
     // Ignore the input percent and use the internal one
-    percent = (double) (pass - 1) / nPasses + this.percentInternal / nPasses;
+    percent = (double) (pass - 1) / passes + this.percentInternal / passes;
 
     final long time = System.currentTimeMillis();
     if (time - lastTime < 100) {
@@ -460,5 +451,23 @@ public class DifferenceOfGaussians extends GaussianBlur {
   private void showProgressInternal(double percent) {
     this.percentInternal = percent;
     showProgress(0);
+  }
+
+  /**
+   * Set to true if suppressing progress reporting to the ImageJ window.
+   *
+   * @return true, if is no progress
+   */
+  public boolean isNoProgress() {
+    return noProgress;
+  }
+
+  /**
+   * Set to true to suppress progress reporting to the ImageJ window.
+   *
+   * @param noProgress the new no progress
+   */
+  public void setNoProgress(boolean noProgress) {
+    this.noProgress = noProgress;
   }
 }

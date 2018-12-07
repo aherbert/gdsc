@@ -35,30 +35,31 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
-import java.util.Random;
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.simple.RandomSource;
 
 /**
  * Create some dummy images to test for colocalisation.
  */
-public class Create_Colocalised_Images implements PlugIn {
+public class CreateColocalisedImages_PlugIn implements PlugIn {
   private static final String TITLE = "Colocalisaed Images";
-  private ByteProcessor roi;
-  private final int background = 0;
-  private final int foreground = 255;
+  private static final int NUMBER_OF_POINTS = 20;
 
-  private static int seed = 30051977;
+  private static final int WIDTH = 256;
+  private static final int HEIGHT = 256;
+  private static final int PADDING = 40;
+  private static final int MIN_SIZE = 5;
+  private static final int MAX_EXPANSION_SIZE = 15;
+  private static final int BACKGROUND = 0;
+  private static final int FOREGROUND = 255;
+
   private static int sequenceNumber = 0;
   private static int bitDepth = 0;
   private static boolean createMasks = false;
-  private int CHANNEL_MAX;
-  private int CHANNEL_MIN;
-  private final int NUMBER_OF_POINTS = 20;
 
-  private final int width = 256;
-  private final int height = 256;
-  private final int padding = 40;
-  private final int minSize = 5;
-  private final int maxExpansionSize = 15;
+  private ByteProcessor roi;
+  private int channelMax;
+  private int channelMin;
 
   @Override
   public void run(String arg) {
@@ -84,34 +85,34 @@ public class Create_Colocalised_Images implements PlugIn {
   }
 
   private boolean getBitDepth() {
-    final GenericDialog param = new GenericDialog(TITLE, IJ.getInstance());
-    final String bitDepthChoice[] = {"8bit", "12bit", "16bit"};// bit depth of images
-    param.addChoice("Create ...", bitDepthChoice, bitDepthChoice[bitDepth]);
-    param.addCheckbox("Create masks", createMasks);
-    param.showDialog();
+    final GenericDialog gd = new GenericDialog(TITLE, IJ.getInstance());
+    final String[] bitDepthChoice = {"8bit", "12bit", "16bit"};// bit depth of images
+    gd.addChoice("Create ...", bitDepthChoice, bitDepthChoice[bitDepth]);
+    gd.addCheckbox("Create masks", createMasks);
+    gd.showDialog();
 
-    if (param.wasCanceled()) {
+    if (gd.wasCanceled()) {
       return false;
     }
 
-    bitDepth = param.getNextChoiceIndex();
+    bitDepth = gd.getNextChoiceIndex();
     switch (bitDepth) {
       case 2: // 16-bit
-        CHANNEL_MAX = Short.MAX_VALUE;
-        CHANNEL_MIN = 640;
+        channelMax = Short.MAX_VALUE;
+        channelMin = 640;
         break;
 
       case 1: // 12-bit
-        CHANNEL_MAX = 4095;
-        CHANNEL_MIN = 80;
+        channelMax = 4095;
+        channelMin = 80;
         break;
 
       default: // 8-bit
-        CHANNEL_MAX = 255;
-        CHANNEL_MIN = 10;
+        channelMax = 255;
+        channelMin = 10;
     }
 
-    createMasks = param.getNextBoolean();
+    createMasks = gd.getNextBoolean();
 
     return true;
   }
@@ -121,12 +122,12 @@ public class Create_Colocalised_Images implements PlugIn {
       return;
     }
 
-    roi = new ByteProcessor(width, height);
-    roi.add(background);
+    roi = new ByteProcessor(WIDTH, HEIGHT);
+    roi.add(BACKGROUND);
 
-    for (int x = padding; x < width - padding; x++) {
-      for (int y = 0; y < height; y++) {
-        roi.set(x, y, foreground);
+    for (int x = PADDING; x < WIDTH - PADDING; x++) {
+      for (int y = 0; y < HEIGHT; y++) {
+        roi.set(x, y, FOREGROUND);
       }
     }
   }
@@ -135,17 +136,17 @@ public class Create_Colocalised_Images implements PlugIn {
     final ImageProcessor cp = getImageProcessor();
     ByteProcessor bp = null;
 
-    final Random rng = new Random(seed++);
+    final UniformRandomProvider rng = RandomSource.create(RandomSource.SPLIT_MIX_64);
 
     for (int point = 0; point < NUMBER_OF_POINTS; point++) {
-      final int x = rng.nextInt(width - 2 * padding) + padding;
+      final int x = rng.nextInt(WIDTH - 2 * PADDING) + PADDING;
       final int y =
-          minSize + maxExpansionSize + rng.nextInt(height - 2 * (minSize + maxExpansionSize));
+          MIN_SIZE + MAX_EXPANSION_SIZE + rng.nextInt(HEIGHT - 2 * (MIN_SIZE + MAX_EXPANSION_SIZE));
 
-      final int xSize = minSize + rng.nextInt(maxExpansionSize);
-      final int ySize = minSize + rng.nextInt(maxExpansionSize);
+      final int xSize = MIN_SIZE + rng.nextInt(MAX_EXPANSION_SIZE);
+      final int ySize = MIN_SIZE + rng.nextInt(MAX_EXPANSION_SIZE);
 
-      final int value = rng.nextInt(CHANNEL_MAX - CHANNEL_MIN) + CHANNEL_MIN;
+      final int value = rng.nextInt(channelMax - channelMin) + channelMin;
       cp.set(x, y, value);
 
       for (int i = -xSize; i < xSize; i++) {
@@ -160,19 +161,19 @@ public class Create_Colocalised_Images implements PlugIn {
 
     // Get all values above zero as the ROI
     if (createMasks) {
-      bp = new ByteProcessor(width, height);
-      bp.add(background);
+      bp = new ByteProcessor(WIDTH, HEIGHT);
+      bp.add(BACKGROUND);
 
       for (int i = cp.getPixelCount(); i-- > 0;) {
-        if (cp.get(i) > CHANNEL_MIN) {
-          bp.set(i, foreground);
-          roi.set(i, foreground);
+        if (cp.get(i) > channelMin) {
+          bp.set(i, FOREGROUND);
+          roi.set(i, FOREGROUND);
         }
       }
     }
 
     // Add some noise to the image
-    cp.noise(CHANNEL_MAX / 16);
+    cp.noise(channelMax / 16.0);
 
     // Show the images
     final ImagePlus im = new ImagePlus(title, cp);
@@ -184,13 +185,12 @@ public class Create_Colocalised_Images implements PlugIn {
     }
   }
 
-  private ImageProcessor getImageProcessor() {
-    switch (bitDepth) {
-      case 0: // 8-bit
-        return new ByteProcessor(width, height);
-
-      default: // 12 or 16-bit
-        return new ShortProcessor(width, height);
+  private static ImageProcessor getImageProcessor() {
+    if (bitDepth == 0) {
+      // 8-bit
+      return new ByteProcessor(WIDTH, HEIGHT);
     }
+    // 12 or 16-bit
+    return new ShortProcessor(WIDTH, HEIGHT);
   }
 }

@@ -165,7 +165,7 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
     final Choice c2 = gd.addAndGetChoice("Image_2", list, selectedImage2);
     final boolean dynamic = ImageJUtils.isShowGenericDialog();
     Worker worker = null;
-    Thread t = null;
+    Thread thread = null;
     if (dynamic) {
       // Make sure the two images are different
       if (c1.getSelectedIndex() == c2.getSelectedIndex() && list.length > 1) {
@@ -183,9 +183,9 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
     if (dynamic) {
       // Set up a worker for the preview
       worker = new Worker(flag = new Flag());
-      t = new Thread(worker);
-      t.setDaemon(true);
-      t.start();
+      thread = new Thread(worker);
+      thread.setDaemon(true);
+      thread.start();
 
       preview = gd.addAndGetCheckbox("Preview", false);
       gd.addDialogListener(this);
@@ -205,7 +205,7 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
       // Stop the worker thread
       if (cancelled) {
         try {
-          t.interrupt();
+          thread.interrupt();
         } catch (final SecurityException ex) {
           // We should have permission to interrupt this thread.
           ex.printStackTrace();
@@ -216,7 +216,7 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
 
         // Leave to finish the work
         try {
-          t.join(0);
+          thread.join(0);
         } catch (final InterruptedException ex) {
           // Ignore
         }
@@ -441,9 +441,9 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
   }
 
   @Override
-  public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+  public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
     // It will be null when the NonBlockingDialog is first shown
-    if (e != null && preview.getState()) {
+    if (event != null && preview.getState()) {
       readDialog(gd, true);
     }
     return true;

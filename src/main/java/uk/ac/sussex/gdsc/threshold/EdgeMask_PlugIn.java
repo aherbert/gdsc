@@ -84,6 +84,15 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
   private static final String[] METHODS = new String[] {"Above background", "Laplacian edges",
       "Gradient edges", "Maximum gradient edges"};
+
+  private static final byte TYPE_NONE = 0x00;
+  private static final byte TYPE_EDGE = 0x01;
+  private static final byte TYPE_SINGLE = 0x02;
+  private static final byte TYPE_FILL = 0x04;
+
+  private static final int[] DIR_X_OFFSET = {0, 1, 1, 1, 0, -1, -1, -1};
+  private static final int[] DIR_Y_OFFSET = {-1, -1, 0, 1, 1, 1, 0, -1};
+
   private double minDisplayValue;
   private double maxDisplayValue;
   private static double background;
@@ -96,8 +105,15 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
   private static boolean replaceImage;
   private static double percent = Prefs.getDouble("gdsc.EdgeMaskPercent", 99);
 
-  private final int flags = DOES_8G | DOES_16 | DOES_32 | FINAL_PROCESSING;
+  private static final int FLAGS = DOES_8G | DOES_16 | DOES_32 | FINAL_PROCESSING;
   private int flags2 = 0;
+
+  // image dimensions
+  private int maxx = 0;
+  private int maxy = 0;
+  private int xlimit;
+  private int ylimit;
+  private int[] offset;
 
   /** {@inheritDoc} */
   @Override
@@ -198,7 +214,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       }
     }
 
-    return flags;
+    return FLAGS;
   }
 
   /** {@inheritDoc} */
@@ -250,9 +266,9 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       return DONE;
     }
 
-    flags2 = IJ.setupDialog(imp, flags);
+    flags2 = IJ.setupDialog(imp, FLAGS);
 
-    return flags;
+    return FLAGS;
   }
 
   private static double[] getLimits(ImageProcessor ip) {
@@ -274,23 +290,23 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
     // Get the upper limit using a fraction of the data
     final int limit = (int) (percent * ip.getPixelCount() / 100.0);
     int count = 0;
-    int i = 0;
-    while (i < data.length) {
-      count += data[i];
+    int index = 0;
+    while (index < data.length) {
+      count += data[index];
       if (count > limit) {
         break;
       }
-      i++;
+      index++;
     }
 
-    limits[1] = i;
+    limits[1] = index;
 
     return limits;
   }
 
   /** Listener to modifications of the input fields of the dialog. */
   @Override
-  public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+  public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
     method = gd.getNextChoiceIndex();
     background = gd.getNextNumber();
     if (gd.invalidNumber()) {
@@ -318,7 +334,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
   /** {@inheritDoc} */
   @Override
-  public void setNPasses(int nPasses) {
+  public void setNPasses(int passes) {
     // Ignore
   }
 
@@ -358,8 +374,8 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       // Keep all gradients above the configured percentile
       final boolean lowthres = lowerPercentile > 0;
       final boolean highthres = upperPercentile > 0;
-      final int thresmode = (lowthres ? 10 : 0) + (highthres ? 1 : 0);
-      if (thresmode > 0) {
+      final int thresholdMode = (lowthres ? 10 : 0) + (highthres ? 1 : 0);
+      if (thresholdMode > 0) {
         float[] data = (float[]) gradientIp.getPixels();
         data = Arrays.copyOf(data, data.length);
         Arrays.sort(data);
@@ -367,19 +383,16 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
         final double lowval = getLimit(data, lowerPercentile);
 
         final Thresholder thres = new Thresholder();
-        switch (thresmode) {
-          case 1: {
+        switch (thresholdMode) {
+          case 1:
             thres.hard(newimg, highval);
             break;
-          }
-          case 10: {
+          case 10:
             thres.hard(newimg, lowval);
             break;
-          }
-          case 11: {
+          default:
             thres.hysteresis(newimg, lowval, highval);
             break;
-          }
         }
 
         gradientIp = (FloatProcessor) newimg.imageplus().getProcessor();
@@ -462,14 +475,14 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
       final byte[] mask = ip.getMaskArray();
       if (mask != null) {
-        int j = 0;
+        int maskIndex = 0;
         for (int y = 0; y < roi.height; y++) {
-          int i = (roi.y + y) * maxx + roi.x;
-          for (int x = 0; x < roi.width; x++, i++) {
-            if (mask[j] == 0) {
-              ip.set(i, 0);
+          int index = (roi.y + y) * maxx + roi.x;
+          for (int x = 0; x < roi.width; x++, index++) {
+            if (mask[maskIndex] == 0) {
+              ip.set(index, 0);
             }
-            j++;
+            maskIndex++;
           }
         }
       }
@@ -486,11 +499,6 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
     return data[(int) (data.length * percentile / 100)];
   }
 
-  private final byte NONE = (byte) 0;
-  private final byte EDGE = (byte) 1;
-  private final byte SINGLE = (byte) 2;
-  private final byte FILL = (byte) 4;
-
   /**
    * Mark lines that do form closed loops. Adapted from {@link ij.plugin.filter.MaximumFinder}
    * Optionally prune these lines
@@ -503,17 +511,17 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
     // Mark edges
     for (int index = types.length; index-- > 0;) {
-      if (types[index] != NONE) {
-        types[index] = EDGE;
+      if (types[index] != TYPE_NONE) {
+        types[index] = TYPE_EDGE;
       }
     }
 
     // Mark single lines
     for (int index = types.length; index-- > 0;) {
-      if ((types[index] & EDGE) == EDGE && (types[index] & SINGLE) != SINGLE) {
-        final int nRadii = nRadii(types, index); // number of lines radiating
+      if ((types[index] & TYPE_EDGE) == TYPE_EDGE && (types[index] & TYPE_SINGLE) != TYPE_SINGLE) {
+        final int nRadii = countRadii(types, index); // number of lines radiating
         if (nRadii == 0) {
-          types[index] |= SINGLE;
+          types[index] |= TYPE_SINGLE;
         } else if (nRadii == 1) {
           removeLineFrom(types, index);
         }
@@ -523,7 +531,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
     // Prune single lines/points
     if (prune) {
       for (int index = types.length; index-- > 0;) {
-        if ((types[index] & SINGLE) == SINGLE) {
+        if ((types[index] & TYPE_SINGLE) == TYPE_SINGLE) {
           types[index] = 0;
         }
       }
@@ -537,25 +545,24 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
    * @param index the index
    */
   void removeLineFrom(byte[] types, int index) {
-    types[index] |= SINGLE;
+    types[index] |= TYPE_SINGLE;
     boolean continues;
     do {
       final int y = index / maxx;
       final int x = index % maxx;
 
       continues = false;
-      final boolean isInner = (y != 0 && y != ylimit) && (x != 0 && x != xlimit); // not necessary,
-                                                                                  // but faster
-      // than isWithin
+      final boolean isInner = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
       for (int d = 0; d < 8; d++) {
-        if (isInner || isWithinXY(x, y, d)) {
+        if (isInner || isWithinXy(x, y, d)) {
           final int index2 = index + offset[d];
-          if ((types[index2] & EDGE) == EDGE && (types[index2] & SINGLE) != SINGLE) {
-            final int nRadii = nRadii(types, index2);
-            if (nRadii <= 1) { // found a point or line end
+          if ((types[index2] & TYPE_EDGE) == TYPE_EDGE
+              && (types[index2] & TYPE_SINGLE) != TYPE_SINGLE) {
+            final int radii = countRadii(types, index2);
+            if (radii <= 1) { // found a point or line end
               index = index2;
-              types[index] |= SINGLE; // delete the point
-              continues = nRadii == 1; // continue along that line
+              types[index] |= TYPE_SINGLE; // delete the point
+              continues = radii == 1; // continue along that line
               break;
             }
           }
@@ -574,21 +581,19 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
    * @return Number of lines emanating from this point. Zero if the point is embedded in either
    *         foreground or background
    */
-  int nRadii(byte[] types, int index) {
+  int countRadii(byte[] types, int index) {
     int countTransitions = 0;
     boolean prevPixelSet = true;
     boolean firstPixelSet = true; // initialize to make the compiler happy
     final int y = index / maxx;
     final int x = index % maxx;
 
-    final boolean isInner = (y != 0 && y != ylimit) && (x != 0 && x != xlimit); // not necessary,
-                                                                                // but faster than
-    // isWithin
+    final boolean isInner = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
     for (int d = 0; d < 8; d++) { // walk around the point and note every no-line->line transition
-      boolean pixelSet = prevPixelSet;
-      if (isInner || isWithinXY(x, y, d)) {
-        pixelSet = ((types[index + offset[d]] & EDGE) == EDGE
-            && (types[index + offset[d]] & SINGLE) != SINGLE);
+      boolean pixelSet;
+      if (isInner || isWithinXy(x, y, d)) {
+        pixelSet = ((types[index + offset[d]] & TYPE_EDGE) == TYPE_EDGE
+            && (types[index + offset[d]] & TYPE_SINGLE) != TYPE_SINGLE);
       } else {
         // Outside of boundary - count as foreground so lines touching the egde are not pruned.
         pixelSet = true;
@@ -605,7 +610,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       countTransitions++;
     }
     return countTransitions;
-  } // int nRadii
+  }
 
   /**
    * Fill the image processor closed loops. Only fill background regions defined by the Laplacian
@@ -615,51 +620,30 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
    * @param laplacianIp The original image laplacian
    */
   void fill(ImageProcessor maskIp, ImageProcessor laplacianIp) {
-    // TODO - Check the fill option is working ...
 
     // Adapted from ij.plugin.binary.Binary.fill(...)
-    final int background = NONE;
+    final int tyepBackground = TYPE_NONE;
     final int width = maskIp.getWidth();
     final int height = maskIp.getHeight();
     final FloodFiller ff = new FloodFiller(maskIp);
-    maskIp.setColor(FILL);
+    maskIp.setColor(TYPE_FILL);
     for (int y = 0; y < height; y++) {
-      if (maskIp.get(0, y) == background && laplacianIp.get(0, y) < 0) {
+      if (maskIp.get(0, y) == tyepBackground && laplacianIp.get(0, y) < 0) {
         ff.fill(0, y);
       }
-      if (maskIp.get(width - 1, y) == background && laplacianIp.get(width - 1, y) < 0) {
+      if (maskIp.get(width - 1, y) == tyepBackground && laplacianIp.get(width - 1, y) < 0) {
         ff.fill(width - 1, y);
       }
     }
     for (int x = 0; x < width; x++) {
-      if (maskIp.get(x, 0) == background && laplacianIp.get(x, 0) < 0) {
+      if (maskIp.get(x, 0) == tyepBackground && laplacianIp.get(x, 0) < 0) {
         ff.fill(x, 0);
       }
-      if (maskIp.get(x, height - 1) == background && laplacianIp.get(x, height - 1) < 0) {
+      if (maskIp.get(x, height - 1) == tyepBackground && laplacianIp.get(x, height - 1) < 0) {
         ff.fill(x, height - 1);
       }
     }
-
-    // Why is the fill reversed?
-    // byte[] pixels = (byte[]) maskIp.getPixels();
-    // int n = width * height;
-    // for (int i = 0; i < n; i++)
-    // {
-    // if (pixels[i] == FILL)
-    // pixels[i] = NONE;
-    // else
-    // pixels[i] = FILL;
-    // }
   }
-
-  private int maxx = 0;
-  private int maxy = 0; // image dimensions
-  private int xlimit;
-  private int ylimit;
-  private int[] offset;
-
-  private final int[] DIR_X_OFFSET = new int[] {0, 1, 1, 1, 0, -1, -1, -1};
-  private final int[] DIR_Y_OFFSET = new int[] {-1, -1, 0, 1, 1, 1, 0, -1};
 
   /**
    * Initialises the global width and height variables. Creates the direction offset tables.
@@ -706,7 +690,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
    * @param direction the direction from the pixel towards the neighbour
    * @return true if the neighbour is within the image (provided that x, y is within)
    */
-  private boolean isWithinXY(int x, int y, int direction) {
+  private boolean isWithinXy(int x, int y, int direction) {
     switch (direction) {
       case 0:
         return (y > 0);
@@ -724,10 +708,9 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
         return (x > 0);
       case 7:
         return (y > 0 && x > 0);
-      case 8:
-        return true;
+      default:
+        return false;
     }
-    return false;
   }
 
   /**

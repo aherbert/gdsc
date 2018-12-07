@@ -52,8 +52,8 @@ import java.util.Arrays;
 /**
  * Analyses the foreground pixels in an image.
  */
-public class ForegroundAnalyser implements PlugInFilter {
-  private static String TITLE = "Foreground Analyser";
+public class ForegroundAnalyser_PlugIn implements PlugInFilter {
+  private static final String TITLE = "Foreground Analyser";
   private static TextWindow resultsWindow = null;
 
   private static String method = AutoThreshold.Method.OTSU.toString();
@@ -75,24 +75,21 @@ public class ForegroundAnalyser implements PlugInFilter {
 
   private ImagePlus imp;
   private boolean isMultiZ;
-  private boolean is32bit;
 
   /** {@inheritDoc} */
   @Override
   public int setup(String arg, ImagePlus imp) {
     UsageTracker.recordPlugin(this.getClass(), arg);
-    final int flags = DOES_8G | DOES_16 | DOES_32 | NO_UNDO | NO_CHANGES;
     this.imp = imp;
-    return flags;
+    return DOES_8G | DOES_16 | DOES_32 | NO_UNDO | NO_CHANGES;
   }
 
   /** {@inheritDoc} */
   @Override
   public void run(ImageProcessor ip) {
-    if (!showDialog()) {
+    if (!showDialog(this)) {
       return;
     }
-
     analyse(ip);
   }
 
@@ -101,16 +98,16 @@ public class ForegroundAnalyser implements PlugInFilter {
    *
    * @return False if the user cancelled
    */
-  private boolean showDialog() {
+  private static boolean showDialog(ForegroundAnalyser_PlugIn plugin) {
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
-    isMultiZ = imp.getNSlices() > 1;
-    is32bit = imp.getBitDepth() == 32;
+    plugin.isMultiZ = plugin.imp.getNSlices() > 1;
+    final boolean is32bit = plugin.imp.getBitDepth() == 32;
 
     gd.addMessage("Threshold pixels inside an ROI and analyse foreground pixels");
     gd.addChoice("Threshold_method", AutoThreshold.getMethods(true), method);
     gd.addCheckbox("Show_mask", showMask);
-    if (isMultiZ) {
+    if (plugin.isMultiZ) {
       gd.addCheckbox("Do_stack", doStack);
     }
     if (is32bit) {
@@ -126,7 +123,7 @@ public class ForegroundAnalyser implements PlugInFilter {
 
     method = gd.getNextChoice();
     showMask = gd.getNextBoolean();
-    if (isMultiZ) {
+    if (plugin.isMultiZ) {
       doStack = gd.getNextBoolean();
     }
     if (is32bit) {
@@ -144,8 +141,8 @@ public class ForegroundAnalyser implements PlugInFilter {
     final int frame = imp.getFrame();
     if (isMultiZ && doStack) {
       final ImageStack inputStack = imp.getImageStack();
-      slice = 0;
-      for (int n = 1, nSlices = imp.getNSlices(); n <= nSlices; n++) {
+      slice = 0; // no slice
+      for (int n = 1, slices = imp.getNSlices(); n <= slices; n++) {
         stack.addSlice(null, inputStack.getPixels(imp.getStackIndex(channel, n, frame)));
       }
     } else {
@@ -153,61 +150,51 @@ public class ForegroundAnalyser implements PlugInFilter {
     }
 
     final Statistics stats = new Statistics();
-    int n;
-    float t;
+    int numberOfValues;
+    float threshold;
 
     final Roi roi = imp.getRoi();
     if (imp.getBitDepth() == 32) {
       // Get the pixel values
       final TFloatArrayList data = new TFloatArrayList(ip.getPixelCount());
-      final FValueProcedure p = new FValueProcedure() {
-        @Override
-        public void execute(float value) {
-          data.add(value);
-        }
-      };
-      RoiHelper.forEach(roi, stack, p);
+      final FValueProcedure procedure = value -> data.add(value);
+      RoiHelper.forEach(roi, stack, procedure);
 
       // Count values
       final float[] values = data.toArray();
-      n = values.length;
+      numberOfValues = values.length;
 
       // Threshold
       Arrays.sort(values);
-      final FloatHistogram h = FloatHistogram.buildHistogram(values, false);
+      final FloatHistogram histogram = FloatHistogram.buildHistogram(values, false);
 
-      t = h.getThreshold(AutoThreshold.getMethod(method), getHistogramBins());
+      threshold = histogram.getThreshold(AutoThreshold.getMethod(method), getHistogramBins());
 
       // Analyse all pixels above the threshold
-      int i = Arrays.binarySearch(values, t);
-      if (i < 0) {
-        i = -(i + 1);
+      int index = Arrays.binarySearch(values, threshold);
+      if (index < 0) {
+        index = -(index + 1);
       }
-      stats.add(values, i, values.length);
+      stats.add(values, index, values.length);
     } else {
       // Integer histogram
       final int[] data = new int[(imp.getBitDepth() == 8) ? 256 : 65336];
-      final IValueProcedure p = new IValueProcedure() {
-        @Override
-        public void execute(int value) {
-          data[value]++;
-        }
-      };
-      RoiHelper.forEach(roi, stack, p);
+      final IValueProcedure procedure = value -> data[value]++;
+      RoiHelper.forEach(roi, stack, procedure);
 
       // Count values
-      n = 0;
+      numberOfValues = 0;
       for (int i = 0; i < data.length; i++) {
-        n += data[i];
+        numberOfValues += data[i];
       }
 
       // Threshold
-      final IntHistogram h = new IntHistogram(data, 0);
+      final IntHistogram histogram = new IntHistogram(data, 0);
 
-      t = h.getThreshold(AutoThreshold.getMethod(method));
+      threshold = histogram.getThreshold(AutoThreshold.getMethod(method));
 
       // Analyse all pixels above the threshold
-      for (int i = (int) t; i < data.length; i++) {
+      for (int i = (int) threshold; i < data.length; i++) {
         final int c = data[i];
         if (c != 0) {
           stats.add(c, i);
@@ -217,11 +204,11 @@ public class ForegroundAnalyser implements PlugInFilter {
 
     // Show results
     createResultsWindow();
-    addResult(channel, slice, frame, roi, n, t, stats);
+    addResult(channel, slice, frame, roi, numberOfValues, threshold, stats);
 
     // Show foreground mask...
     if (showMask) {
-      showMask(roi, stack, t);
+      showMask(roi, stack, threshold);
     }
   }
 
@@ -247,8 +234,8 @@ public class ForegroundAnalyser implements PlugInFilter {
     return sb.toString();
   }
 
-  private void addResult(int channel, int slice, int frame, Roi roi, int n, float t,
-      Statistics stats) {
+  private void addResult(int channel, int slice, int frame, Roi roi, int numberOfValues,
+      float threshold, Statistics stats) {
     final StringBuilder sb = new StringBuilder();
     sb.append(imp.getTitle()).append('\t');
     sb.append(channel).append('\t');
@@ -265,9 +252,9 @@ public class ForegroundAnalyser implements PlugInFilter {
       sb.append(bounds.x).append(',').append(bounds.y).append(' ');
       sb.append(bounds.width).append('x').append(bounds.height).append('\t');
     }
-    sb.append(n).append('\t');
+    sb.append(numberOfValues).append('\t');
     final Rounder r = RounderUtils.create(4);
-    sb.append(r.toString(t)).append('\t');
+    sb.append(r.toString(threshold)).append('\t');
     final double sum = stats.getSum();
     final long lsum = (long) sum;
     if (lsum == sum) {
@@ -281,17 +268,17 @@ public class ForegroundAnalyser implements PlugInFilter {
     resultsWindow.append(sb.toString());
   }
 
-  private static void showMask(Roi roi, ImageStack stack, float t) {
+  private static void showMask(Roi roi, ImageStack stack, float threshold) {
     final int maxx = stack.getWidth();
     final int maxy = stack.getHeight();
     final ImageStack maskStack = new ImageStack(maxx, maxy);
-    final int n = maxx * maxy;
+    final int numberOfPixels = maxx * maxy;
     if (roi == null) {
       for (int slice = 1; slice <= stack.getSize(); slice++) {
-        final byte[] pixels = new byte[n];
+        final byte[] pixels = new byte[numberOfPixels];
         final ImageProcessor ip = stack.getProcessor(slice);
-        for (int i = 0; i < n; i++) {
-          if (ip.getf(i) >= t) {
+        for (int i = 0; i < numberOfPixels; i++) {
+          if (ip.getf(i) > threshold) {
             pixels[i] = -1;
           }
         }
@@ -307,11 +294,11 @@ public class ForegroundAnalyser implements PlugInFilter {
       final ImageProcessor mask = roi.getMask();
       if (mask == null) {
         for (int slice = 1; slice <= stack.getSize(); slice++) {
-          final byte[] pixels = new byte[n];
+          final byte[] pixels = new byte[numberOfPixels];
           final ImageProcessor ip = stack.getProcessor(slice);
           for (int y = 0; y < rheight; y++) {
             for (int x = 0, i = (y + yOffset) * maxx + xOffset; x < rwidth; x++, i++) {
-              if (ip.getf(i) >= t) {
+              if (ip.getf(i) > threshold) {
                 pixels[i] = -1;
               }
             }
@@ -320,11 +307,11 @@ public class ForegroundAnalyser implements PlugInFilter {
         }
       } else {
         for (int slice = 1; slice <= stack.getSize(); slice++) {
-          final byte[] pixels = new byte[n];
+          final byte[] pixels = new byte[numberOfPixels];
           final ImageProcessor ip = stack.getProcessor(slice);
           for (int y = 0, j = 0; y < rheight; y++) {
             for (int x = 0, i = (y + yOffset) * maxx + xOffset; x < rwidth; x++, i++, j++) {
-              if (ip.getf(i) >= t && mask.get(j) != 0) {
+              if (ip.getf(i) > threshold && mask.get(j) != 0) {
                 pixels[i] = -1;
               }
             }

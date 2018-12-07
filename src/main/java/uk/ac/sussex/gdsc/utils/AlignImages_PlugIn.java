@@ -41,29 +41,41 @@ import ij.process.ImageStatistics;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 
+//@formatter:off
 /**
  * Aligns an image stack to a reference image using XY translation to maximise the normalised
  * correlation. Takes in:
  *
- * - The reference image - The reference image mask (states which pixels are important) - The
- * image/stack to align. - Max/Min values for the X and Y translation
+ * <ul>
+ * <li>The reference image</li>
+ * <li>The reference image mask (states which pixels are important)</li>
+ * <li>The image/stack to align</li>
+ * <li>Max/Min values for the X and Y translation</li>
+ * </ul>
  *
- * Reference image and mask must be the same width/height.
+ * <p>Reference image and mask must be the same width/height.
  *
- * For each translation: - Move the image to align - Calculate the correlation between images
- * (ignore pixels not in the reference mask) - Report alignment stats
+ * <p>For each translation:
  *
- * Output new stack with the best alignment with optional sub-pixel accuracy.
+ * <ul>
+ * <li>Move the image to align</li>
+ * <li>Calculate the correlation between images
+ * (ignore pixels not in the reference mask)</li>
+ * <li>Report alignment stats</li>
+ * </ul>
+ *
+ * <p>Output new stack with the best alignment with optional sub-pixel accuracy.
  */
+//@formatter:on
 public class AlignImages_PlugIn implements PlugIn {
   private static final String TITLE = "Align Images";
-  private static int myMinXShift = -10;
-  private static int myMaxXShift = 10;
-  private static int myMinYShift = -10;
-  private static int myMaxYShift = 10;
-  private final String[] subPixelMethods = new String[] {"None", "Cubic", "Gaussian"};
+  private static int myminXShift = -10;
+  private static int mymaxXShift = 10;
+  private static int myminYShift = -10;
+  private static int mymaxYShift = 10;
+  private static final String[] subPixelMethods = new String[] {"None", "Cubic", "Gaussian"};
   private static int subPixelMethod = 2;
-  private final String[] methods = ImageProcessor.getInterpolationMethods();
+  private static final String[] methods = ImageProcessor.getInterpolationMethods();
   private static int interpolationMethod = ImageProcessor.NONE;
 
   private static final String NONE = "[None]";
@@ -94,7 +106,7 @@ public class AlignImages_PlugIn implements PlugIn {
     final ImagePlus targetImp = WindowManager.getImage(target);
 
     final ImagePlus alignedImp =
-        exec(refImp, maskIp, targetImp, myMinXShift, myMaxXShift, myMinYShift, myMaxYShift,
+        exec(refImp, maskIp, targetImp, myminXShift, mymaxXShift, myminYShift, mymaxYShift,
             subPixelMethod, interpolationMethod, showCorrelationImage, clipOutput);
 
     if (alignedImp != null) {
@@ -129,7 +141,7 @@ public class AlignImages_PlugIn implements PlugIn {
     return newImageList.toArray(new String[0]);
   }
 
-  private boolean showDialog(String[] imageList) {
+  private static boolean showDialog(String[] imageList) {
     final GenericDialog gd = new GenericDialog(TITLE);
 
     if (!contains(imageList, reference)) {
@@ -147,16 +159,17 @@ public class AlignImages_PlugIn implements PlugIn {
       target = maskList[0];
     }
 
-    gd.addMessage(
-        "Align target image stack to a reference using\ncorrelation within a translation range. Ignore pixels\nin the reference using a mask.");
+    gd.addMessage("Align target image stack to a reference using\n"
+        + "correlation within a translation range. Ignore pixels\n"
+        + "in the reference using a mask.");
 
     gd.addChoice("Reference_image", imageList, reference);
     gd.addChoice("Reference_mask", maskList, referenceMask);
     gd.addChoice("Target_image", maskList, target);
-    gd.addNumericField("Min_X_translation", myMinXShift, 0);
-    gd.addNumericField("Max_X_translation", myMaxXShift, 0);
-    gd.addNumericField("Min_Y_translation", myMinYShift, 0);
-    gd.addNumericField("Max_Y_translation", myMaxYShift, 0);
+    gd.addNumericField("Min_X_translation", myminXShift, 0);
+    gd.addNumericField("Max_X_translation", mymaxXShift, 0);
+    gd.addNumericField("Min_Y_translation", myminYShift, 0);
+    gd.addNumericField("Max_Y_translation", mymaxYShift, 0);
     gd.addChoice("Sub-pixel_method", subPixelMethods, subPixelMethods[subPixelMethod]);
     gd.addChoice("Interpolation", methods, methods[interpolationMethod]);
     gd.addCheckbox("Show_correlation_image", showCorrelationImage);
@@ -172,10 +185,10 @@ public class AlignImages_PlugIn implements PlugIn {
     reference = gd.getNextChoice();
     referenceMask = gd.getNextChoice();
     target = gd.getNextChoice();
-    myMinXShift = (int) gd.getNextNumber();
-    myMaxXShift = (int) gd.getNextNumber();
-    myMinYShift = (int) gd.getNextNumber();
-    myMaxYShift = (int) gd.getNextNumber();
+    myminXShift = (int) gd.getNextNumber();
+    mymaxXShift = (int) gd.getNextNumber();
+    myminYShift = (int) gd.getNextNumber();
+    mymaxYShift = (int) gd.getNextNumber();
     subPixelMethod = gd.getNextChoiceIndex();
     interpolationMethod = gd.getNextChoiceIndex();
     showCorrelationImage = gd.getNextBoolean();
@@ -230,7 +243,6 @@ public class AlignImages_PlugIn implements PlugIn {
     // of the top half of the Pearson correlation equation will be the correlation produced by
     // the Align_Images_FFT without normalisation.
 
-    // refIp = centre(refIp);
     final ImageStack outStack = new ImageStack(targetImp.getWidth(), targetImp.getHeight());
     ImageStack correlationStack = null;
     final FloatProcessor fp =
@@ -242,10 +254,9 @@ public class AlignImages_PlugIn implements PlugIn {
     final ImageStack stack = targetImp.getStack();
     for (int slice = 1; slice <= stack.getSize(); slice++) {
       final ImageProcessor targetIp = stack.getProcessor(slice);
-      // targetIp = normalise(targetIp);
       outStack.addSlice(null, alignImages(refIp, maskIp, targetIp, slice, minXShift, maxXShift,
           minYShift, maxYShift, fp, subPixelMethod, interpolationMethod, clipOutput));
-      if (showCorrelationImage) {
+      if (correlationStack != null) {
         correlationStack.addSlice(null, fp.duplicate());
       }
     }
@@ -307,13 +318,9 @@ public class AlignImages_PlugIn implements PlugIn {
     if (refIp == null || targetImp == null) {
       return false;
     }
-    if (maskIp != null
-        && (refIp.getWidth() != maskIp.getWidth() || refIp.getHeight() != maskIp.getHeight())) {
-      return false;
-      // if (refIp.getWidth() != targetImp.getWidth() || refIp.getHeight() != targetImp.getHeight())
-      // return false;
+    if (maskIp != null) {
+      return refIp.getWidth() == maskIp.getWidth() && refIp.getHeight() == maskIp.getHeight();
     }
-
     return true;
   }
 
@@ -322,39 +329,38 @@ public class AlignImages_PlugIn implements PlugIn {
       int maxYShift, FloatProcessor fp, int subPixelMethod, int interpolationMethod,
       boolean clipOutput) {
     double scoreMax = 0;
-    int xShiftMax = 0;
-    int yShiftMax = 0;
-    for (int xShift = minXShift; xShift <= maxXShift; xShift++) {
-      for (int yShift = minYShift; yShift <= maxYShift; yShift++) {
-        final double score = calculateScore(refIp, maskIp, targetIp, xShift, yShift);
-        fp.setf(xShift - minXShift, yShift - minYShift, (float) score);
+    int xshiftMax = 0;
+    int yshiftMax = 0;
+    for (int xshift = minXShift; xshift <= maxXShift; xshift++) {
+      for (int yshift = minYShift; yshift <= maxYShift; yshift++) {
+        final double score = calculateScore(refIp, maskIp, targetIp, xshift, yshift);
+        fp.setf(xshift - minXShift, yshift - minYShift, (float) score);
 
-        // IJ.log("Slice " + slice + " x " + xShift + " y " + yShift + " = " + score);
         if (scoreMax < score) {
           scoreMax = score;
-          xShiftMax = xShift;
-          yShiftMax = yShift;
+          xshiftMax = xshift;
+          yshiftMax = yshift;
         }
       }
     }
 
-    double xOffset = xShiftMax;
-    double yOffset = yShiftMax;
+    double xoffset = xshiftMax;
+    double yoffset = yshiftMax;
 
     String estimatedScore = "";
     if (subPixelMethod > 0 && scoreMax != 1.00) {
       double[] centre;
-      final int i = xShiftMax - minXShift;
-      final int j = yShiftMax - minYShift;
+      final int i = xshiftMax - minXShift;
+      final int j = yshiftMax - minYShift;
       if (subPixelMethod == 1) {
         centre = performCubicFit(fp, i, j);
       } else {
-        centre = performGaussianFit(fp, i, j);
+        centre = performGaussianFit(fp);
       }
 
       if (centre != null) {
-        xOffset = centre[0] + minXShift;
-        yOffset = centre[1] + minYShift;
+        xoffset = centre[0] + minXShift;
+        yoffset = centre[1] + minYShift;
 
         double score = fp.getBicubicInterpolatedPixel(centre[0], centre[1], fp);
         if (score < -1) {
@@ -364,22 +370,18 @@ public class AlignImages_PlugIn implements PlugIn {
           score = 1;
         }
         estimatedScore = String.format(" (interpolated score %g)", score);
-
-        // IJ.log(String.format("Fitted slice %d x %d -> %g (%g) y %d -> %g (%g)", slice, xShiftMax,
-        // xOffset,
-        // centre[0], yShiftMax, yOffset, centre[1]));
       }
     }
 
     String warning = "";
-    if (xOffset == minXShift || xOffset == maxXShift || yOffset == minYShift
-        || yOffset == maxYShift) {
+    if (xoffset == minXShift || xoffset == maxXShift || yoffset == minYShift
+        || yoffset == maxYShift) {
       warning = "***";
     }
-    IJ.log(String.format("Best Slice%s %d  x %g  y %g = %g%s", warning, slice, xOffset, yOffset,
+    IJ.log(String.format("Best Slice%s %d  x %g  y %g = %g%s", warning, slice, xoffset, yoffset,
         scoreMax, estimatedScore));
 
-    return translate(interpolationMethod, targetIp, xOffset, yOffset, clipOutput);
+    return translate(interpolationMethod, targetIp, xoffset, yoffset, clipOutput);
   }
 
   /**
@@ -387,16 +389,16 @@ public class AlignImages_PlugIn implements PlugIn {
    *
    * @param interpolationMethod the interpolation method
    * @param ip the image
-   * @param xOffset the x offset
-   * @param yOffset the y offset
+   * @param xoffset the x offset
+   * @param yoffset the y offset
    * @param clipOutput Set to true to ensure the output image has the same max as the input. Applies
    *        to bicubic interpolation
    * @return New translated processor
    */
-  public static ImageProcessor translate(int interpolationMethod, ImageProcessor ip, double xOffset,
-      double yOffset, boolean clipOutput) {
+  public static ImageProcessor translate(int interpolationMethod, ImageProcessor ip, double xoffset,
+      double yoffset, boolean clipOutput) {
     final ImageProcessor newIp = ip.duplicate();
-    translateProcessor(interpolationMethod, newIp, xOffset, yOffset, clipOutput);
+    translateProcessor(interpolationMethod, newIp, xoffset, yoffset, clipOutput);
     return newIp;
   }
 
@@ -405,15 +407,15 @@ public class AlignImages_PlugIn implements PlugIn {
    *
    * @param interpolationMethod the interpolation method
    * @param ip the image
-   * @param xOffset the x offset
-   * @param yOffset the y offset
+   * @param xoffset the x offset
+   * @param yoffset the y offset
    * @param clipOutput Set to true to ensure the output image has the same max as the input. Applies
    *        to bicubic interpolation
    */
-  public static void translateProcessor(int interpolationMethod, ImageProcessor ip, double xOffset,
-      double yOffset, boolean clipOutput) {
+  public static void translateProcessor(int interpolationMethod, ImageProcessor ip, double xoffset,
+      double yoffset, boolean clipOutput) {
     // Check if interpolation is needed
-    if (xOffset == (int) xOffset && yOffset == (int) yOffset) {
+    if (xoffset == (int) xoffset && yoffset == (int) yoffset) {
       interpolationMethod = ImageProcessor.NONE;
     }
 
@@ -426,7 +428,7 @@ public class AlignImages_PlugIn implements PlugIn {
     }
 
     ip.setInterpolationMethod(interpolationMethod);
-    ip.translate(xOffset, yOffset);
+    ip.translate(xoffset, yoffset);
 
     if (interpolationMethod == ImageProcessor.BICUBIC && clipOutput
         && !(ip instanceof ColorProcessor)) {
@@ -443,15 +445,14 @@ public class AlignImages_PlugIn implements PlugIn {
    * Iteratively search the cubic spline surface around the given pixel to maximise the value.
    *
    * @param fp Float processor containing a peak surface
-   * @param i The peak x position
-   * @param j The peak y position
+   * @param xpos The peak x position
+   * @param ypos The peak y position
    * @return The peak location with sub-pixel accuracy
    */
-  public static double[] performCubicFit(FloatProcessor fp, int i, int j) {
-    double[] centre = new double[] {i, j};
+  public static double[] performCubicFit(FloatProcessor fp, int xpos, int ypos) {
+    double[] centre = new double[] {xpos, ypos};
     // This value will be progressively halved.
     // Start with a value that allows the number of iterations to fully cover the region +/- 1 pixel
-    // TODO - Test if 0.67 is better as this can cover +/- 1 pixel in 2 iterations
     double range = 0.5;
     for (int c = 10; c-- > 0;) {
       centre = performCubicFit(fp, centre[0], centre[1], range);
@@ -483,11 +484,9 @@ public class AlignImages_PlugIn implements PlugIn {
    * Jpiv: http://www.jpiv.vennemann-online.de/
    *
    * @param fp Float processor containing a peak surface
-   * @param i The peak x position
-   * @param j The peak y position
    * @return The peak location with sub-pixel accuracy
    */
-  public static double[] performGaussianFit(FloatProcessor fp, int i, int j) {
+  public static double[] performGaussianFit(FloatProcessor fp) {
     // Extract Pixel block
     final float[][] pixelBlock = new float[fp.getWidth()][fp.getHeight()];
     for (int x = pixelBlock.length; x-- > 0;) {
@@ -505,50 +504,18 @@ public class AlignImages_PlugIn implements PlugIn {
     final int y = 0;
     final int w = fp.getWidth();
     final int h = fp.getHeight();
-    int[] iCoord = new int[2];
-    double[] dCoord = new double[2];
-    // This will weight the function more towards the centre of the correlation pixels.
-    // I am not sure if this is necessary.
-    // pixelBlock = divideByWeightingFunction(pixelBlock, x, y, w, h);
-    iCoord = getPeak(pixelBlock);
-    dCoord = gaussianPeakFit(pixelBlock, iCoord[0], iCoord[1]);
+    int[] maxCoord = getPeak(pixelBlock);
+    double[] subpixelCoord = gaussianPeakFit(pixelBlock, maxCoord[0], maxCoord[1]);
     double[] ret = null;
     // more or less acceptable peak fit
-    if (Math.abs(dCoord[0] - iCoord[0]) < w / 2 && Math.abs(dCoord[1] - iCoord[1]) < h / 2) {
-      dCoord[0] += x;
-      dCoord[1] += y;
+    if (Math.abs(subpixelCoord[0] - maxCoord[0]) < w / 2
+        && Math.abs(subpixelCoord[1] - maxCoord[1]) < h / 2) {
+      subpixelCoord[0] += x;
+      subpixelCoord[1] += y;
       // Jpiv block is in [Y,X] format (not [X,Y])
-      ret = new double[] {dCoord[1], dCoord[0]};
-
-      // IJ.log(String.format("Fitted x %d -> %g y %d -> %g",
-      // i, ret[0],
-      // j, ret[1]));
+      ret = new double[] {subpixelCoord[1], subpixelCoord[0]};
     }
-    return (ret);
-  }
-
-  /**
-   * Divides the correlation matrix by a pyramid weighting function.
-   *
-   * @param subCorrMat The biased correlation function
-   * @param xOffset If this matrix is merely a search area within a larger correlation matrix, this
-   *        is the offset of the search area.
-   * @param yOffset If this matrix is merely a search area within a larger correlation matrix, this
-   *        is the offset of the search area.
-   * @param w Width of the original correlation matrix.
-   * @param h Height of the original correlation matrix.
-   * @return The corrected correlation function
-   */
-  @SuppressWarnings("unused")
-  private static float[][] divideByWeightingFunction(float[][] subCorrMat, int xOffset, int yOffset,
-      int w, int h) {
-    for (int i = 0; i < subCorrMat.length; i++) {
-      for (int j = 0; j < subCorrMat[0].length; j++) {
-        subCorrMat[i][j] = subCorrMat[i][j]
-            * (Math.abs(j + xOffset - w / 2) / w * 2 + Math.abs(i + yOffset - h / 2) / h * 2 + 1);
-      }
-    }
-    return subCorrMat;
+    return ret;
   }
 
   /**
@@ -569,7 +536,7 @@ public class AlignImages_PlugIn implements PlugIn {
         }
       }
     }
-    return (coord);
+    return coord;
   }
 
   /**
@@ -599,22 +566,19 @@ public class AlignImages_PlugIn implements PlugIn {
   }
 
   private static double calculateScore(ImageProcessor refIp, ImageProcessor maskIp,
-      ImageProcessor targetIp, int xShift, int yShift) {
+      ImageProcessor targetIp, int xshift, int yshift) {
     // Same dimensions at current
     double sumX = 0;
-    double sumXY = 0;
-    double sumXX = 0;
-    double sumYY = 0;
+    double sumXy = 0;
+    double sumXx = 0;
+    double sumYy = 0;
     double sumY = 0;
-    int n = 0;
+    int count = 0;
     float ch1;
     float ch2;
 
     final int refMax = getBitClippedMax(refIp);
     final int targetMax = getBitClippedMax(targetIp);
-
-    // int width = targetIp.getWidth();
-    // int height = targetIp.getHeight();
 
     // Set the bounds for the search in the reference image:
     // - x,y needs to be within reference
@@ -628,34 +592,24 @@ public class AlignImages_PlugIn implements PlugIn {
         Math.min(refIp.getHeight(), targetIp.getHeight()));
 
     // Shift the region
-    region.x += xShift;
-    region.y += yShift;
+    region.x += xshift;
+    region.y += yshift;
 
     // Constrain search to the reference coordinates that overlap the region
     final Rectangle intersect = bRef.intersection(region);
 
-    int xMin;
-    int xMax;
-    int yMin;
-    int yMax;
+    int xmin = intersect.x;
+    int xmax = intersect.x + intersect.width;
+    int ymin = intersect.y;
+    int ymax = intersect.y + intersect.height;
 
-    xMin = intersect.x;
-    xMax = intersect.x + intersect.width;
+    for (int y = ymax; y-- > ymin;) {
+      final int y2 = y - yshift;
 
-    yMin = intersect.y;
-    yMax = intersect.y + intersect.height;
-
-    for (int y = yMax; y-- > yMin;) {
-      final int y2 = y - yShift;
-      // if (y2 < 0 || y2 >= height)
-      // continue;
-
-      for (int x = xMax; x-- > xMin;) {
+      for (int x = xmax; x-- > xmin;) {
         // Check if this is within the mask
         if (maskIp == null || maskIp.get(x, y) > 0) {
-          final int x2 = x - xShift;
-          // if (x2 < 0 || x2 >= width)
-          // continue;
+          final int x2 = x - xshift;
 
           ch1 = refIp.getf(x, y);
           ch2 = targetIp.getf(x2, y2);
@@ -666,46 +620,41 @@ public class AlignImages_PlugIn implements PlugIn {
           }
 
           sumX += ch1;
-          sumXY += (ch1 * ch2);
-          sumXX += (ch1 * ch1);
-          sumYY += (ch2 * ch2);
+          sumXy += (ch1 * ch2);
+          sumXx += (ch1 * ch1);
+          sumYy += (ch2 * ch2);
           sumY += ch2;
 
-          n++;
+          count++;
         }
       }
     }
 
-    double r = Double.NaN;
+    double correlation = Double.NaN;
 
-    // IJ.log(String.format("%d %g %g %g %g %g", n, sumX, sumY, sumXY, sumXX, sumYY));
-
-    if (n > 0) {
-      final double pearsons1 = sumXY - (1.0 * sumX * sumY / n);
-      final double pearsons2 = sumXX - (1.0 * sumX * sumX / n);
-      final double pearsons3 = sumYY - (1.0 * sumY * sumY / n);
-
-      if (pearsons2 == 0 || pearsons3 == 0) {
-        // If there is data and all the variances are the same then correlation is perfect
-        if (sumXX == sumYY && sumXX == sumXY && sumXX > 0) {
-          r = 1;
-        } else {
-          r = 0;
-        }
-      } else {
-        r = pearsons1 / (Math.sqrt(pearsons2 * pearsons3));
-      }
-
+    if (count > 0) {
       // Note:
       // If the reference image is centred and the target image is normalised then the result
       // of the top half of the Pearson correlation equation will be the correlation produced by
       // the Align_Images_FFT without normalisation.
-      // r = pearsons1;
 
-      // IJ.log(String.format("%g %g %g %g", pearsons1, pearsons2, pearsons3, r));
+      final double pearsons1 = sumXy - (1.0 * sumX * sumY / count);
+      final double pearsons2 = sumXx - (1.0 * sumX * sumX / count);
+      final double pearsons3 = sumYy - (1.0 * sumY * sumY / count);
+
+      if (pearsons2 == 0 || pearsons3 == 0) {
+        // If there is data and all the variances are the same then correlation is perfect
+        if (sumXx == sumYy && sumXx == sumXy && sumXx > 0) {
+          correlation = 1;
+        } else {
+          correlation = 0;
+        }
+      } else {
+        correlation = pearsons1 / (Math.sqrt(pearsons2 * pearsons3));
+      }
     }
 
-    return r;
+    return correlation;
   }
 
   private static int getBitClippedMax(ImageProcessor ip) {

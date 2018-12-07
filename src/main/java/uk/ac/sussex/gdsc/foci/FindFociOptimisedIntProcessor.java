@@ -44,10 +44,10 @@ import java.util.Collections;
 public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
   /** {@inheritDoc} */
   @Override
-  protected Coordinate[] getSortedMaxPoints(Object pixels, int[] maxima, byte[] types,
+  protected Coordinate[] getSortedMaxpoints(Object pixels, int[] maxima, byte[] types,
       float fGlobalMin, float fThreshold) {
-    final ArrayList<Coordinate> maxPoints = new ArrayList<>(500);
-    final TIntArrayList pList = new TIntArrayList(); // working list for expanding local plateaus
+    final ArrayList<Coordinate> maxpoints = new ArrayList<>(500);
+    final TIntArrayList pointList = new TIntArrayList(); // working list for expanding local plateaus
 
     // Int processing
     final int globalMin = (int) fGlobalMin;
@@ -56,31 +56,25 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
     int id = 0;
     final int[] xyz = new int[3];
 
-    // int pCount = 0;
     setPixels(pixels);
 
     if (is2D()) {
-      for (int i = maxx_maxy_maxz; i-- > 0;) {
+      for (int i = maxxByMaxyByMaxz; i-- > 0;) {
         if ((types[i] & (EXCLUDED | MAX_AREA | PLATEAU | NOT_MAXIMUM)) != 0) {
           continue;
         }
         final int v = image[i];
-        if (v < threshold) {
-          continue;
-        }
-        if (v == globalMin) {
+        if (v < threshold || v == globalMin) {
           continue;
         }
 
-        getXY(i, xyz);
+        getXy(i, xyz);
 
         final int x = xyz[0];
         final int y = xyz[1];
 
-        /*
-         * check whether we have a local maximum.
-         */
-        final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+        // Check whether we have a local maximum.
+        final boolean isInnerXy = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
         boolean isMax = true;
         boolean equalNeighbour = false;
 
@@ -88,7 +82,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
         // Adopt the xy limit lookup and process z lookup separately
 
         for (int d = 8; d-- > 0;) {
-          if (isInnerXY || isWithinXY(x, y, d)) {
+          if (isInnerXy || isWithinXy(x, y, d)) {
             final int vNeighbor = image[i + offset[d]];
             if (vNeighbor > v) {
               isMax = false;
@@ -114,41 +108,36 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
           if (equalNeighbour) {
             // Search the local area marking all equal neighbour points as maximum
-            if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxPoints, pList)) {
+            if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxpoints, pointList)) {
               // Not a true maximum, ignore this
               id--;
             }
           } else {
             types[i] |= MAXIMUM | MAX_AREA;
             maxima[i] = id;
-            maxPoints.add(new Coordinate(x, y, 0, id, v));
+            maxpoints.add(new Coordinate(getIndex(x, y), id, v));
           }
         }
       }
     } else {
-      for (int i = maxx_maxy_maxz; i-- > 0;) {
+      for (int i = maxxByMaxyByMaxz; i-- > 0;) {
         if ((types[i] & (EXCLUDED | MAX_AREA | PLATEAU | NOT_MAXIMUM)) != 0) {
           continue;
         }
         final int v = image[i];
-        if (v < threshold) {
-          continue;
-        }
-        if (v == globalMin) {
+        if (v < threshold || v == globalMin) {
           continue;
         }
 
-        getXYZ(i, xyz);
+        getXyz(i, xyz);
 
         final int x = xyz[0];
         final int y = xyz[1];
         final int z = xyz[2];
 
-        /*
-         * check whether we have a local maximum.
-         */
-        final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
-        final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
+        // Check whether we have a local maximum.
+        final boolean isInnerXy = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+        final boolean isInnerXyz = (zlimit == 0) ? isInnerXy : isInnerXy && (z != 0 && z != zlimit);
         boolean isMax = true;
         boolean equalNeighbour = false;
 
@@ -156,7 +145,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
         // Adopt the xy limit lookup and process z lookup separately
 
         for (int d = 26; d-- > 0;) {
-          if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d)) {
+          if (isInnerXyz || (isInnerXy && isWithinZ(z, d)) || isWithinXyz(x, y, z, d)) {
             final int vNeighbor = image[i + offset[d]];
             if (vNeighbor > v) {
               isMax = false;
@@ -182,46 +171,43 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
           if (equalNeighbour) {
             // Search the local area marking all equal neighbour points as maximum
-            if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxPoints, pList)) {
+            if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxpoints, pointList)) {
               // Not a true maximum, ignore this
               id--;
             }
           } else {
             types[i] |= MAXIMUM | MAX_AREA;
             maxima[i] = id;
-            maxPoints.add(new Coordinate(x, y, z, id, v));
+            maxpoints.add(new Coordinate(getIndex(x, y, z), id, v));
           }
         }
       }
     }
 
-    // if (pCount > 0)
-    // System.out.printf("Plateau count = %d\n", pCount);
-
     if (ImageJUtils.isInterrupted()) {
       return null;
     }
 
-    for (int i = maxx_maxy_maxz; i-- > 0;) {
+    for (int i = maxxByMaxyByMaxz; i-- > 0;) {
       types[i] &= ~NOT_MAXIMUM; // reset attributes no longer needed
     }
 
-    Collections.sort(maxPoints);
+    Collections.sort(maxpoints);
 
     // Build a map between the original id and the new id following the sort
-    final int[] idMap = new int[maxPoints.size() + 1];
+    final int[] idMap = new int[maxpoints.size() + 1];
 
     // Label the points
-    for (int i = 0; i < maxPoints.size(); i++) {
+    for (int i = 0; i < maxpoints.size(); i++) {
       final int newId = (i + 1);
-      final int oldId = maxPoints.get(i).id;
+      final int oldId = maxpoints.get(i).getId();
       idMap[oldId] = newId;
-      maxPoints.get(i).id = newId;
+      maxpoints.get(i).setId(newId);
     }
 
     reassignMaxima(maxima, idMap);
 
-    return maxPoints.toArray(new Coordinate[maxPoints.size()]);
+    return maxpoints.toArray(new Coordinate[maxpoints.size()]);
   }
 
   /**
@@ -235,18 +221,18 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
    * @param index0 the index0
    * @param v0 the v0
    * @param id the id
-   * @param maxPoints the max points
-   * @param pList the list
+   * @param maxpoints the max points
+   * @param pointList the list
    * @return True if this is a true plateau, false if the plateau reaches a higher point
    */
   protected boolean expandMaximum(int[] maxima, byte[] types, int globalMin, int threshold,
-      int index0, int v0, int id, ArrayList<Coordinate> maxPoints, TIntArrayList pList) {
+      int index0, int v0, int id, ArrayList<Coordinate> maxpoints, TIntArrayList pointList) {
     types[index0] |= LISTED | PLATEAU; // mark first point as listed
     int listI = 0; // index of current search element in the list
 
     // we create a list of connected points and start the list at the current maximum
-    pList.resetQuick();
-    pList.add(index0);
+    pointList.resetQuick();
+    pointList.add(index0);
 
     // Calculate the center of plateau
     boolean isPlateau = true;
@@ -254,18 +240,18 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
     if (is2D()) {
       do {
-        final int index1 = pList.getQuick(listI);
-        getXY(index1, xyz);
+        final int index1 = pointList.getQuick(listI);
+        getXy(index1, xyz);
         final int x1 = xyz[0];
         final int y1 = xyz[1];
 
         // It is more likely that the z stack will be out-of-bounds.
         // Adopt the xy limit lookup and process z lookup separately
 
-        final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+        final boolean isInnerXy = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
 
         for (int d = 8; d-- > 0;) {
-          if (isInnerXY || isWithinXY(x1, y1, d)) {
+          if (isInnerXy || isWithinXy(x1, y1, d)) {
             final int index2 = index1 + offset[d];
             if ((types[index2] & IGNORE) != 0) {
               // This has been done already, ignore this point
@@ -278,7 +264,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
               isPlateau = false;
             } else if (v2 == v0) {
               // Add this to the search
-              pList.add(index2);
+              pointList.add(index2);
               types[index2] |= LISTED | PLATEAU;
             } else {
               types[index2] |= NOT_MAXIMUM;
@@ -289,11 +275,11 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
         listI++;
 
       }
-      while (listI < pList.size() && isPlateau);
+      while (listI < pointList.size() && isPlateau);
     } else {
       do {
-        final int index1 = pList.getQuick(listI);
-        getXYZ(index1, xyz);
+        final int index1 = pointList.getQuick(listI);
+        getXyz(index1, xyz);
         final int x1 = xyz[0];
         final int y1 = xyz[1];
         final int z1 = xyz[2];
@@ -301,12 +287,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
         // It is more likely that the z stack will be out-of-bounds.
         // Adopt the xy limit lookup and process z lookup separately
 
-        final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-        final boolean isInnerXYZ =
-            (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+        final boolean isInnerXy = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+        final boolean isInnerXyz =
+            (zlimit == 0) ? isInnerXy : isInnerXy && (z1 != 0 && z1 != zlimit);
 
         for (int d = 26; d-- > 0;) {
-          if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d)) {
+          if (isInnerXyz || (isInnerXy && isWithinZ(z1, d)) || isWithinXyz(x1, y1, z1, d)) {
             final int index2 = index1 + offset[d];
             if ((types[index2] & IGNORE) != 0) {
               // This has been done already, ignore this point
@@ -319,7 +305,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
               isPlateau = false;
             } else if (v2 == v0) {
               // Add this to the search
-              pList.add(index2);
+              pointList.add(index2);
               types[index2] |= LISTED | PLATEAU;
             } else {
               types[index2] |= NOT_MAXIMUM;
@@ -330,7 +316,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
         listI++;
 
       }
-      while (listI < pList.size() && isPlateau);
+      while (listI < pointList.size() && isPlateau);
     }
 
     // IJ.log("Potential plateau "+ x0 + ","+y0+","+z0+" : "+listLen);
@@ -341,8 +327,8 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
     double zEqual = 0;
     int nEqual = 0;
     if (isPlateau) {
-      for (int i = pList.size(); i-- > 0;) {
-        getXYZ(pList.getQuick(i), xyz);
+      for (int i = pointList.size(); i-- > 0;) {
+        getXyz(pointList.getQuick(i), xyz);
         xEqual += xyz[0];
         yEqual += xyz[1];
         zEqual += xyz[2];
@@ -357,12 +343,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
     int iMax = 0;
 
     // Calculate the maxima origin as the closest pixel to the centre-of-mass
-    for (int i = pList.size(); i-- > 0;) {
-      final int index = pList.getQuick(i);
+    for (int i = pointList.size(); i-- > 0;) {
+      final int index = pointList.getQuick(i);
       types[index] &= ~LISTED; // reset attributes no longer needed
 
       if (isPlateau) {
-        getXYZ(index, xyz);
+        getXyz(index, xyz);
 
         final int x = xyz[0];
         final int y = xyz[1];
@@ -383,9 +369,9 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
     // Assign the maximum
     if (isPlateau) {
-      final int index = pList.getQuick(iMax);
+      final int index = pointList.getQuick(iMax);
       types[index] |= MAXIMUM;
-      maxPoints.add(new Coordinate(index, id, v0));
+      maxpoints.add(new Coordinate(index, id, v0));
     }
 
     return isPlateau;
@@ -393,7 +379,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
   /** {@inheritDoc} */
   @Override
-  protected void assignPointsToMaxima(Object pixels, Histogram hist, byte[] types,
+  protected void assignpointsToMaxima(Object pixels, Histogram hist, byte[] types,
       FindFociStatistics stats, int[] maxima) {
     setPixels(pixels);
     // This is modified so clone it
@@ -505,7 +491,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
   @Override
   protected int processLevel(byte[] types, int[] maxima, int levelStart, int levelNPoints,
       int[] coordinates, int background) {
-    // int[] pList = new int[0]; // working list for expanding local plateaus
+    // int[] pointList = new int[0]; // working list for expanding local plateaus
     int nChanged = 0;
     int nUnchanged = 0;
     final int[] xyz = new int[3];
@@ -520,7 +506,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
           continue;
         }
 
-        getXY(index, xyz);
+        getXy(index, xyz);
 
         // Extract the point coordinate
         final int x = xyz[0];
@@ -530,14 +516,14 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         // It is more likely that the z stack will be out-of-bounds.
         // Adopt the xy limit lookup and process z lookup separately
-        final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+        final boolean isInnerXy = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
 
         // Check for the highest neighbour
 
         int dMax = -1;
         int vMax = v;
         for (int d = 8; d-- > 0;) {
-          if (isInnerXY || isWithinXY(x, y, d)) {
+          if (isInnerXy || isWithinXy(x, y, d)) {
             final int index2 = index + offset[d];
             final int vNeighbor = image[index2];
             if (vMax < vNeighbor) // Higher neighbour
@@ -590,7 +576,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
           continue;
         }
 
-        getXYZ(index, xyz);
+        getXyz(index, xyz);
 
         // Extract the point coordinate
         final int x = xyz[0];
@@ -601,15 +587,15 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         // It is more likely that the z stack will be out-of-bounds.
         // Adopt the xy limit lookup and process z lookup separately
-        final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
-        final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
+        final boolean isInnerXy = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+        final boolean isInnerXyz = (zlimit == 0) ? isInnerXy : isInnerXy && (z != 0 && z != zlimit);
 
         // Check for the highest neighbour
 
         int dMax = -1;
         int vMax = v;
         for (int d = 26; d-- > 0;) {
-          if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d)) {
+          if (isInnerXyz || (isInnerXy && isWithinZ(z, d)) || isWithinXyz(x, y, z, d)) {
             final int index2 = index + offset[d];
             final int vNeighbor = image[index2];
             if (vMax < vNeighbor) // Higher neighbour
@@ -791,10 +777,10 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
           if (maxima[index1] == id) {
             final int v1 = image[index1];
 
-            final boolean isInnerXY = isInnerY && (alwaysInnerX || (x != 0 && x != xlimit));
+            final boolean isInnerXy = isInnerY && (alwaysInnerX || (x != 0 && x != xlimit));
 
             for (int d = 8; d-- > 0;) {
-              if (isInnerXY || isWithinXY(x, y, d)) {
+              if (isInnerXy || isWithinXy(x, y, d)) {
                 // Get the coords
                 final int index2 = index1 + offset[d];
                 final int id2 = maxima[index2];
@@ -838,11 +824,11 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
             if (maxima[index1] == id) {
               final int v1 = image[index1];
 
-              final boolean isInnerXY = isInnerY && (alwaysInnerX || (x != 0 && x != xlimit));
-              final boolean isInnerXYZ = isInnerXY && isInnerZ;
+              final boolean isInnerXy = isInnerY && (alwaysInnerX || (x != 0 && x != xlimit));
+              final boolean isInnerXyz = isInnerXy && isInnerZ;
 
               for (int d = 26; d-- > 0;) {
-                if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d)) {
+                if (isInnerXyz || (isInnerXy && isWithinZ(z, d)) || isWithinXyz(x, y, z, d)) {
                   // Get the coords
                   final int index2 = index1 + offset[d];
                   final int id2 = maxima[index2];
@@ -953,18 +939,18 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
    * @param maxima the maxima
    * @param types the types
    * @param result the result
-   * @param pList the list
+   * @param pointList the list
    * @return True if this is a true plateau, false if the plateau reaches a higher point
    */
   @Override
   protected int[] analyseContiguousPeak(int[] maxima, byte[] types, FindFociResult result,
-      int[] pList) {
+      int[] pointList) {
     final int index0 = getIndex(result.x, result.y, result.z);
     final int peakId = result.id;
     final int v0 = (int) result.highestSaddleValue;
 
-    if (pList.length < result.count) {
-      pList = new int[result.count];
+    if (pointList.length < result.count) {
+      pointList = new int[result.count];
     }
 
     types[index0] |= LISTED; // mark first point as listed
@@ -972,7 +958,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
     int listLen = 1; // number of elements in the list
 
     // we create a list of connected points and start the list at the current maximum
-    pList[listI] = index0;
+    pointList[listI] = index0;
 
     final int[] xyz = new int[3];
 
@@ -980,18 +966,18 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
     if (is2D()) {
       do {
-        final int index1 = pList[listI];
-        getXY(index1, xyz);
+        final int index1 = pointList[listI];
+        getXy(index1, xyz);
         final int x1 = xyz[0];
         final int y1 = xyz[1];
 
         // It is more likely that the z stack will be out-of-bounds.
         // Adopt the xy limit lookup and process z lookup separately
 
-        final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+        final boolean isInnerXy = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
 
         for (int d = 8; d-- > 0;) {
-          if (isInnerXY || isWithinXY(x1, y1, d)) {
+          if (isInnerXy || isWithinXy(x1, y1, d)) {
             final int index2 = index1 + offset[d];
             if ((types[index2] & LISTED) != 0 || maxima[index2] != peakId) {
               // Different peak or already done
@@ -1000,7 +986,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
             final int v1 = image[index2];
             if (v1 > v0) {
-              pList[listLen++] = index2;
+              pointList[listLen++] = index2;
               types[index2] |= LISTED;
               sum += v1;
             }
@@ -1013,8 +999,8 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
       while (listI < listLen);
     } else {
       do {
-        final int index1 = pList[listI];
-        getXYZ(index1, xyz);
+        final int index1 = pointList[listI];
+        getXyz(index1, xyz);
         final int x1 = xyz[0];
         final int y1 = xyz[1];
         final int z1 = xyz[2];
@@ -1022,12 +1008,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
         // It is more likely that the z stack will be out-of-bounds.
         // Adopt the xy limit lookup and process z lookup separately
 
-        final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-        final boolean isInnerXYZ =
-            (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+        final boolean isInnerXy = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+        final boolean isInnerXyz =
+            (zlimit == 0) ? isInnerXy : isInnerXy && (z1 != 0 && z1 != zlimit);
 
         for (int d = 26; d-- > 0;) {
-          if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d)) {
+          if (isInnerXyz || (isInnerXy && isWithinZ(z1, d)) || isWithinXyz(x1, y1, z1, d)) {
             final int index2 = index1 + offset[d];
             if ((types[index2] & LISTED) != 0 || maxima[index2] != peakId) {
               // Different peak or already done
@@ -1036,7 +1022,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
             final int v1 = image[index2];
             if (v1 > v0) {
-              pList[listLen++] = index2;
+              pointList[listLen++] = index2;
               types[index2] |= LISTED;
               sum += v1;
             }
@@ -1052,7 +1038,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
     result.countAboveSaddle = listI;
     result.intensityAboveSaddle = sum;
 
-    return pList;
+    return pointList;
   }
 
   /**
@@ -1061,19 +1047,19 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
    * @param maxima the maxima
    * @param types the types
    * @param result the result
-   * @param pList the list
+   * @param pointList the list
    * @param peakIdMap the peak id map
    * @param peakId the peak id
    * @return True if this is a true plateau, false if the plateau reaches a higher point
    */
   @Override
   protected int[] analyseContiguousPeak(int[] maxima, byte[] types, FindFociResult result,
-      int[] pList, final int[] peakIdMap, final int peakId) {
+      int[] pointList, final int[] peakIdMap, final int peakId) {
     final int index0 = getIndex(result.x, result.y, result.z);
     final int v0 = (int) result.highestSaddleValue;
 
-    if (pList.length < result.count) {
-      pList = new int[result.count];
+    if (pointList.length < result.count) {
+      pointList = new int[result.count];
     }
 
     types[index0] |= LISTED; // mark first point as listed
@@ -1081,7 +1067,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
     int listLen = 1; // number of elements in the list
 
     // we create a list of connected points and start the list at the current maximum
-    pList[listI] = index0;
+    pointList[listI] = index0;
 
     final int[] xyz = new int[3];
 
@@ -1089,18 +1075,18 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
     if (is2D()) {
       do {
-        final int index1 = pList[listI];
-        getXY(index1, xyz);
+        final int index1 = pointList[listI];
+        getXy(index1, xyz);
         final int x1 = xyz[0];
         final int y1 = xyz[1];
 
         // It is more likely that the z stack will be out-of-bounds.
         // Adopt the xy limit lookup and process z lookup separately
 
-        final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+        final boolean isInnerXy = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
 
         for (int d = 8; d-- > 0;) {
-          if (isInnerXY || isWithinXY(x1, y1, d)) {
+          if (isInnerXy || isWithinXy(x1, y1, d)) {
             final int index2 = index1 + offset[d];
             if ((types[index2] & LISTED) != 0) {
               // Already done
@@ -1113,7 +1099,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
             final int v1 = image[index2];
             if (v1 > v0) {
-              pList[listLen++] = index2;
+              pointList[listLen++] = index2;
               types[index2] |= LISTED;
               sum += v1;
             }
@@ -1126,8 +1112,8 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
       while (listI < listLen);
     } else {
       do {
-        final int index1 = pList[listI];
-        getXYZ(index1, xyz);
+        final int index1 = pointList[listI];
+        getXyz(index1, xyz);
         final int x1 = xyz[0];
         final int y1 = xyz[1];
         final int z1 = xyz[2];
@@ -1135,12 +1121,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
         // It is more likely that the z stack will be out-of-bounds.
         // Adopt the xy limit lookup and process z lookup separately
 
-        final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-        final boolean isInnerXYZ =
-            (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+        final boolean isInnerXy = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+        final boolean isInnerXyz =
+            (zlimit == 0) ? isInnerXy : isInnerXy && (z1 != 0 && z1 != zlimit);
 
         for (int d = 26; d-- > 0;) {
-          if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d)) {
+          if (isInnerXyz || (isInnerXy && isWithinZ(z1, d)) || isWithinXyz(x1, y1, z1, d)) {
             final int index2 = index1 + offset[d];
             if ((types[index2] & LISTED) != 0) {
               // Already done
@@ -1153,7 +1139,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
             final int v1 = image[index2];
             if (v1 > v0) {
-              pList[listLen++] = index2;
+              pointList[listLen++] = index2;
               types[index2] |= LISTED;
               sum += v1;
             }
@@ -1167,13 +1153,13 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
     }
 
     for (int i = listLen; i-- > 0;) {
-      types[pList[i]] &= ~LISTED; // reset attributes no longer needed
+      types[pointList[i]] &= ~LISTED; // reset attributes no longer needed
     }
 
     result.countAboveSaddle = listI;
     result.intensityAboveSaddle = sum;
 
-    return pList;
+    return pointList;
   }
 
   @Override

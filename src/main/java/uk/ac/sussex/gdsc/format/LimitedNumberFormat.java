@@ -25,7 +25,6 @@
 package uk.ac.sussex.gdsc.format;
 
 import java.text.DecimalFormat;
-import java.text.FieldPosition;
 import java.text.ParsePosition;
 
 /**
@@ -36,10 +35,10 @@ public class LimitedNumberFormat extends DecimalFormat {
   /**
    * Auto-generated.
    */
-  private static final long serialVersionUID = -2564688480913124241L;
+  private static final long serialVersionUID = 20181207;
 
-  private double min = Double.MIN_VALUE;
-  private double max = Double.MAX_VALUE;
+  private final double min;
+  private final double max;
 
   /**
    * Instantiates a new limited number format.
@@ -59,40 +58,19 @@ public class LimitedNumberFormat extends DecimalFormat {
    * @param min the min
    */
   public LimitedNumberFormat(double min) {
-    super();
-    this.min = min;
-  }
-
-  @Override
-  public StringBuffer format(double number, StringBuffer toAppendTo, FieldPosition pos) {
-    final StringBuffer sb = super.format(number, toAppendTo, pos);
-    return sb;
-  }
-
-  @Override
-  public StringBuffer format(long number, StringBuffer toAppendTo, FieldPosition pos) {
-    final StringBuffer sb = super.format(number, toAppendTo, pos);
-    return sb;
+    this(min, Double.MAX_VALUE);
   }
 
   @Override
   public Number parse(String source, ParsePosition parsePosition) {
-    // int currentIndex = parsePosition.getIndex();
-    Number n = super.parse(source, parsePosition);
-    if (n != null) {
-      // if (n.doubleValue() < min || n.doubleValue() > max)
-      // {
-      // parsePosition.setErrorIndex(currentIndex);
-      // parsePosition.setIndex(currentIndex);
-      // n = null;
-      // }
-      if (n.doubleValue() < min) {
-        n = Double.valueOf(min);
-      } else if (n.doubleValue() > max) {
-        n = Double.valueOf(max);
+    Number number = super.parse(source, parsePosition);
+    if (number != null) {
+      if (number.doubleValue() < min) {
+        number = Double.valueOf(min);
+      } else if (number.doubleValue() > max) {
+        number = Double.valueOf(max);
       }
     }
-    return n;
+    return number;
   }
-
 }

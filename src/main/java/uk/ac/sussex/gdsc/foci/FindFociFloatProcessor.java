@@ -36,26 +36,18 @@ import java.util.Arrays;
 /**
  * Find the peak intensity regions of an image.
  *
- *
- *
  * <p>All local maxima above threshold are identified. For all other pixels the direction to the
  * highest neighbour pixel is stored (steepest gradient). In order of highest local maxima, regions
  * are only grown down the steepest gradient to a lower pixel. Provides many configuration options
  * for regions growing thresholds.
- *
- *
  *
  * <p>This plugin was based on {@link ij.plugin.filter.MaximumFinder}. Options have been changed to
  * only support greyscale 2D images and 3D stacks and to perform region growing using configurable
  * thresholds. Support for Watershed, Previewing, and Euclidian Distance Map (EDM) have been
  * removed.
  *
- *
- *
  * <p>Stopping criteria for region growing routines are partly based on the options in PRIISM
  * (http://www.msg.ucsf.edu/IVE/index.html).
- *
- *
  *
  * <p>Supports 8-, 16- or 32-bit images. Processing is performed using a float image values.
  */
@@ -67,35 +59,72 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
   protected int[] bin;
 
   /**
+   * Custom class for sorting indexes using a float value.
+   */
+  private static final class SortData {
+    /** The value. */
+    final float value;
+    /** The index. */
+    final int index;
+
+    /**
+     * Instantiates a new sort data.
+     *
+     * @param value the value
+     * @param index the index
+     */
+    SortData(float value, int index) {
+      this.value = value;
+      this.index = index;
+    }
+
+    /**
+     * Compare the two sort data objects.
+     *
+     * <p>This should not be called with NaN or infinite values.
+     *
+     * @param o1 object 1
+     * @param o2 object 2
+     * @return the comparison result (-1,0,1)
+     */
+    static int compare(SortData o1, SortData o2) {
+      // Smallest first
+      if (o1.value < o2.value) {
+        return -1;
+      }
+      if (o1.value > o2.value) {
+        return 1;
+      }
+      return 0;
+    }
+  }
+
+  /**
    * Extract the image into a linear array stacked in zyx order.
    */
   @Override
   protected Object extractImage(ImagePlus imp) {
     final ImageStack stack = imp.getStack();
-    final float[] image = new float[maxx_maxy_maxz];
-    final int c = imp.getChannel();
-    final int f = imp.getFrame();
+    final float[] localImage = new float[maxxByMaxyByMaxz];
+    final int ch = imp.getChannel();
+    final int fr = imp.getFrame();
     for (int slice = 1, i = 0; slice <= maxz; slice++) {
-      final int stackIndex = imp.getStackIndex(c, slice, f);
+      final int stackIndex = imp.getStackIndex(ch, slice, fr);
       final ImageProcessor ip = stack.getProcessor(stackIndex);
       for (int index = 0; index < ip.getPixelCount(); index++) {
-        image[i++] = ip.getf(index);
+        localImage[i++] = ip.getf(index);
       }
     }
-    return image;
+    return localImage;
   }
 
   @Override
   protected byte[] createTypesArray(Object pixels) {
-    final float[] image = (float[]) pixels;
-    final byte[] types = new byte[maxx_maxy_maxz];
+    final float[] localImage = (float[]) pixels;
+    final byte[] types = new byte[maxxByMaxyByMaxz];
     // Blank bad pixels
-    // TODO - See how the algorithm will cope with a Gaussian blur on NaN or infinite pixels.
-    // Maybe we must replace invalid pixels with something else, e.g. mean of the remaining valid
-    // pixels
-    // or mean of the surrounding pixels (if they are valid)
     for (int i = 0; i < types.length; i++) {
-      if (Float.isNaN(image[i]) || Float.isInfinite(image[i])) {
+      if (!Float.isFinite(localImage[i])) {
         types[i] = EXCLUDED;
       }
     }
@@ -104,13 +133,11 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
 
   @Override
   protected float getImageMin(Object pixels, byte[] types) {
-    final float[] image = (float[]) pixels;
+    final float[] localImage = (float[]) pixels;
     float min = Float.POSITIVE_INFINITY;
-    for (int i = image.length; i-- > 0;) {
-      if ((types[i] & EXCLUDED) == 0) {
-        if (min > image[i]) {
-          min = image[i];
-        }
+    for (int i = localImage.length; i-- > 0;) {
+      if ((types[i] & EXCLUDED) == 0 && min > localImage[i]) {
+        min = localImage[i];
       }
     }
     return min;
@@ -118,39 +145,37 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
 
   @Override
   protected Histogram buildHistogram(int bitDepth, Object pixels, byte[] types, int statsMode) {
-    float[] image = ((float[]) pixels).clone();
+    float[] localImage = ((float[]) pixels).clone();
     // Store the bin for each index we include
-    bin = new int[image.length];
-    int[] indices = new int[image.length];
-    int c = 0;
+    bin = new int[localImage.length];
+    int[] indices = new int[localImage.length];
+    int count = 0;
     if (statsMode == OPTION_STATS_INSIDE) {
-      for (int i = 0; i < image.length; i++) {
+      for (int i = 0; i < localImage.length; i++) {
         if ((types[i] & EXCLUDED) == 0) {
-          image[c] = image[i];
-          indices[c] = i;
-          c++;
+          localImage[count] = localImage[i];
+          indices[count] = i;
+          count++;
         }
       }
     } else {
-      for (int i = 0; i < image.length; i++) {
+      for (int i = 0; i < localImage.length; i++) {
         if ((types[i] & EXCLUDED) != 0) {
-          image[c] = image[i];
-          indices[c] = i;
-          c++;
+          localImage[count] = localImage[i];
+          indices[count] = i;
+          count++;
         }
       }
     }
-    if (c < image.length) {
-      image = Arrays.copyOf(image, c);
-      indices = Arrays.copyOf(indices, c);
+    if (count < localImage.length) {
+      localImage = Arrays.copyOf(localImage, count);
+      indices = Arrays.copyOf(indices, count);
     }
-    return buildHistogram(image, indices);
+    return buildHistogram(localImage, indices);
   }
 
   /**
    * Build a histogram using all pixels up to the specified length.
-   *
-   *
    *
    * <p>The input arrays are modified.
    *
@@ -168,7 +193,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
     int size = 0;
     // This can re-use the same array
     float[] value = data;
-    int[] h = indices;
+    int[] histogram = indices;
 
     for (int i = 0; i < data.length; i++) {
       final float currentValue = data[i];
@@ -179,7 +204,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
         }
         // Since the arrays are reused update after
         value[size] = lastValue;
-        h[size] = count;
+        histogram[size] = count;
         count = 0;
         size++;
       }
@@ -192,49 +217,37 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
       bin[indices[data.length - j]] = size;
     }
     value[size] = lastValue;
-    h[size] = count;
+    histogram[size] = count;
     size++;
 
     // Truncate
     if (size < value.length) {
-      h = Arrays.copyOf(h, size);
+      histogram = Arrays.copyOf(histogram, size);
       value = Arrays.copyOf(value, size);
     }
 
-    return new FloatHistogram(value, h);
+    return new FloatHistogram(value, histogram);
   }
 
-  /**
-   * Custom class for sorting indexes using a float value.
-   */
-  private static final class SortData implements Comparable<SortData> {
-    /** The value. */
-    final float value;
-    /** The index. */
-    final int index;
+  @Override
+  protected Histogram buildHistogram(int bitDepth, Object pixels) {
+    return FloatHistogram.buildHistogram(((float[]) pixels).clone(), true, true);
+  }
 
-    /**
-     * Instantiates a new sort data.
-     *
-     * @param value the value
-     * @param index the index
-     */
-    SortData(float value, int index) {
-      this.value = value;
-      this.index = index;
-    }
-
-    @Override
-    public int compareTo(SortData o) {
-      // Smallest first
-      if (value < o.value) {
-        return -1;
+  @Override
+  protected Histogram buildHistogram(Object pixels, int[] maxima, int peakValue, float maxValue) {
+    final float[] localImage = (float[]) pixels;
+    int size = 0;
+    float[] data = new float[100];
+    for (int i = localImage.length; i-- > 0;) {
+      if (maxima[i] == peakValue) {
+        data[size++] = localImage[i];
+        if (size == data.length) {
+          data = Arrays.copyOf(data, (int) (size * 1.5));
+        }
       }
-      if (value > o.value) {
-        return 1;
-      }
-      return 0;
     }
+    return FloatHistogram.buildHistogram(Arrays.copyOf(data, size), true, true);
   }
 
   /**
@@ -252,7 +265,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
       sortData[i] = new SortData(data[i], indices[i]);
     }
 
-    Arrays.sort(sortData);
+    Arrays.sort(sortData, SortData::compare);
 
     // Copy back
     for (int i = data.length; i-- > 0;) {
@@ -262,34 +275,11 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
   }
 
   @Override
-  protected Histogram buildHistogram(int bitDepth, Object pixels) {
-    return FloatHistogram.buildHistogram(((float[]) pixels).clone(), true, true);
-  }
-
-  @Override
-  protected Histogram buildHistogram(Object pixels, int[] maxima, int peakValue, float maxValue) {
-    final float[] image = (float[]) pixels;
-    int size = 0;
-    float[] data = new float[100];
-    for (int i = image.length; i-- > 0;) {
-      if (maxima[i] == peakValue) {
-        data[size++] = image[i];
-        if (size == data.length) {
-          data = Arrays.copyOf(data, (int) (size * 1.5));
-        }
-      }
-    }
-    return FloatHistogram.buildHistogram(Arrays.copyOf(data, size), true, true);
-  }
-
-  @Override
   protected float getSearchThreshold(int backgroundMethod, double backgroundParameter,
       FindFociStatistics stats) {
     switch (backgroundMethod) {
       case BACKGROUND_ABSOLUTE:
         // Ensure all points above the threshold parameter are found
-        // return (float) ((backgroundParameter > 0) ? backgroundParameter : 0);
-        // Allow negatives
         return (float) backgroundParameter;
 
       case BACKGROUND_AUTO_THRESHOLD:
@@ -319,8 +309,8 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
   }
 
   @Override
-  protected float getf(int i) {
-    return image[i];
+  protected float getf(int index) {
+    return image[index];
   }
 
   @Override
@@ -334,38 +324,28 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
   }
 
   @Override
-  protected int getBin(Histogram histogram, int i) {
-    // We store the bin for each input index when building the histogram
-    final int bin = this.bin[i];
-
-    //// Check
-    // int bin2 = findBin(histogram, i);
-    // if (bin != bin2)
-    // {
-    // throw new RuntimeException("Failed to compute float value histogram bin: " + bin + " != " +
-    //// bin2);
-    // }
-
-    return bin;
+  protected int getBin(Histogram histogram, int index) {
+    // We store the bin for each input index when building the histogram.
+    // Equivalent to findBin(histogram, i)
+    return this.bin[index];
   }
 
   /**
    * Find the histogram bin for the index.
    *
    * @param histogram the histogram
-   * @param i the index
+   * @param index the index
    * @return the bin
    */
-  protected int findBin(Histogram histogram, int i) {
+  protected int findBin(Histogram histogram, int index) {
     /* perform binary search - relies on having sorted data */
     final float[] values = ((FloatHistogram) histogram).value;
-    final float value = image[i];
+    final float value = image[index];
     int upper = values.length - 1;
     int lower = 0;
 
     while (upper - lower > 1) {
-      // final int mid = (upper + lower) / 2;
-      final int mid = upper + lower >>> 1;
+      final int mid = (upper + lower) / 2;
 
       if (value >= values[mid]) {
         lower = mid;
@@ -403,8 +383,10 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
 
       case SEARCH_HALF_PEAK_VALUE:
         return (float) (stats.background + 0.5 * (v0 - stats.background));
+
+      default:
+        return stats.regionMinimum;
     }
-    return (stats.regionMinimum);
   }
 
   @Override
@@ -421,6 +403,8 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
       case PEAK_RELATIVE_ABOVE_BACKGROUND:
         height = ((v0 - stats.background) * peakParameter);
         break;
+      default:
+        return height;
     }
     if (height <= 0) {
       // This is an edge case that will only happen if peakParameter is zero or below.

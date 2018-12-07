@@ -319,7 +319,8 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     final ArrayList<int[]> findFociResults = getFindFociResults();
     final ArrayList<int[]> roiResults = getRoiResults();
     if (findFociResults == null && roiResults == null) {
-      IJ.error(TITLE, "No " + FindFoci_PlugIn.TITLE + " results in memory or point ROI on the image");
+      IJ.error(TITLE,
+          "No " + FindFoci_PlugIn.TITLE + " results in memory or point ROI on the image");
       return false;
     }
 
@@ -392,7 +393,7 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
   }
 
   private ArrayList<int[]> getRoiResults() {
-    final AssignedPoint[] points = PointManager.extractRoiPoints(imp.getRoi());
+    final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(imp.getRoi());
     if (points.length == 0) {
       return null;
     }

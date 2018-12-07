@@ -49,12 +49,11 @@ import java.util.ArrayList;
 
 /**
  * Aligns open image stacks to a reference stack using XY translation to maximise the correlation.
- * Takes in:
  *
- * - The reference image - Z-stack projection (maximum/average) - Optional Max/Min values for the X
- * and Y translation - Optional sub-pixel accuracy
+ * <p>Takes in: The reference image; Z-stack projection (maximum/average); Optional Max/Min values
+ * for the X and Y translation; and Optional sub-pixel accuracy.
  *
- * Accepts multi-dimensional stacks. For each timepoint a maximum/average intensity projection is
+ * <p>Accepts multi-dimensional stacks. For each timepoint a maximum/average intensity projection is
  * performed per channel. The channels are tiled to a composite image. The composite is then aligned
  * using the maximum correlation between the images. The translation is applied to the entire stack
  * for that timepoint.
@@ -64,21 +63,20 @@ public class AlignStacks_PlugIn implements PlugIn {
   private static final String SELF_ALIGN = "selfAlign";
 
   private static String reference = "";
-  private static boolean selfAlign = false;
+  private static boolean selfAlign;
   private static int projectionMethod = ZProjector.MAX_METHOD;
   private static int myWindowFunction = 3; // Tukey
-  private static boolean restrictTranslation = false;
+  private static boolean restrictTranslation;
   private static int minXShift = -20;
   private static int maxXShift = 20;
   private static int minYShift = -20;
   private static int maxYShift = 20;
-  private final String[] subPixelMethods = AlignImagesFft_PlugIn.subPixelMethods;
+  private static final String[] subPixelMethods = AlignImagesFft_PlugIn.subPixelMethods;
   private static int subPixelMethod = 2;
-  private final String[] methods = AlignImagesFft_PlugIn.methods;
+  private static final String[] methods = AlignImagesFft_PlugIn.methods;
   private static int interpolationMethod = ImageProcessor.NONE;
-  private static boolean clipOutput = false;
+  private static boolean clipOutput;
 
-  /** Ask for parameters and then execute. */
   @Override
   public void run(String arg) {
     UsageTracker.recordPlugin(this.getClass(), arg);
@@ -137,7 +135,7 @@ public class AlignStacks_PlugIn implements PlugIn {
     return newImageList.toArray(new String[0]);
   }
 
-  private boolean showDialog(String[] imageList, boolean selfAlignMode) {
+  private static boolean showDialog(String[] imageList, boolean selfAlignMode) {
     final GenericDialog gd = new GenericDialog(TITLE);
 
     if (selfAlignMode) {
@@ -145,19 +143,14 @@ public class AlignStacks_PlugIn implements PlugIn {
         reference = WindowManager.getCurrentImage().getTitle();
       }
       selfAlign = true;
-      // projectionMethod = ZProjector.MAX_METHOD;
-      // myWindowFunction = 3; // Tukey
-      // restrictTranslation = true; // Translation is restricted to image half-max anyway
-      // minXShift = minYShift = -20;
-      // maxXShift = maxYShift = 20;
       interpolationMethod = ImageProcessor.NONE;
       clipOutput = false;
     }
 
     String msg = (selfAlignMode) ? "Align all frames to the current frame."
         : "Align all open stacks with the same XYC dimensions as the reference.";
-    msg +=
-        "\nZ stacks per time frame are projected and multiple channels\nare tiled to a single image used to define the offset for\nthe frame.\n";
+    msg += "\nZ stacks per time frame are projected and multiple channels\n"
+        + "are tiled to a single image used to define the offset for\nthe frame.\n";
     if (!selfAlignMode) {
       msg += "Optionally align a single stack to the currect frame";
     }
@@ -351,8 +344,7 @@ public class AlignStacks_PlugIn implements PlugIn {
   public static Rectangle createBounds(int minXShift, int maxXShift, int minYShift, int maxYShift) {
     final int w = maxXShift - minXShift;
     final int h = maxYShift - minYShift;
-    final Rectangle bounds = new Rectangle(minXShift, minYShift, w, h);
-    return bounds;
+    return new Rectangle(minXShift, minYShift, w, h);
   }
 
   private static boolean isValid(ImagePlus refImp, ImagePlus targetImp) {

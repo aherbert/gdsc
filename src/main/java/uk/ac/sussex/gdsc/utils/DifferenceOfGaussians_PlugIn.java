@@ -44,8 +44,8 @@ public class DifferenceOfGaussians_PlugIn implements ExtendedPlugInFilter, Dialo
   private final DifferenceOfGaussians filter = new DifferenceOfGaussians();
 
   @Override
-  public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
-    return filter.dialogItemChanged(gd, e);
+  public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
+    return filter.dialogItemChanged(gd, event);
   }
 
   @Override
@@ -67,7 +67,7 @@ public class DifferenceOfGaussians_PlugIn implements ExtendedPlugInFilter, Dialo
   }
 
   @Override
-  public void setNPasses(int nPasses) {
-    filter.setNPasses(nPasses);
+  public void setNPasses(int passes) {
+    filter.setNPasses(passes);
   }
 }

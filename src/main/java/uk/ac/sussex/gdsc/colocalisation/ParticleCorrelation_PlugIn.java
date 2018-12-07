@@ -53,7 +53,7 @@ import java.awt.Point;
  * different images and then perform a correlation analysis.
  */
 public class ParticleCorrelation_PlugIn implements PlugIn {
-  private static String TITLE = "Particle Correlation";
+  private static final String TITLE = "Particle Correlation";
 
   private static String maskTitle1 = "";
   private static String imageTitle1 = "";
@@ -187,7 +187,7 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
   }
 
   private void analyse() {
-    // Dimensions are the same. Extract a stack for each image;
+    // Dimensions are the same. Extract a stack for each image.
     final int[] mask = extractStack(maskImp, maskImp.getChannel());
     final float[] i1 = extractFloatStack(imageImp1, c1);
     final float[] i2 = extractFloatStack(imageImp2, c2);
@@ -374,14 +374,14 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
   }
 
   private static void addResult(String title, int id, int value, double x, double y, double z,
-      int n, double s1, double s2) {
+      int count, double s1, double s2) {
     final StringBuilder sb = new StringBuilder(title);
     sb.append(id).append('\t');
     sb.append(value).append('\t');
     sb.append(MathUtils.rounded(x)).append('\t');
     sb.append(MathUtils.rounded(y)).append('\t');
     sb.append(MathUtils.rounded(z)).append('\t');
-    sb.append(n).append('\t');
+    sb.append(count).append('\t');
     sb.append(s1).append('\t');
     sb.append(s2);
     twDataTable.append(sb.toString());

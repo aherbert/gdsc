@@ -68,10 +68,10 @@ import java.util.List;
  * <p>Note: This class used to extend the default ImageJ ParticleAnalyzer. However the Java
  * inheritance method invocation system would not call the MaskParticleAnalyzer.analyseParticle(...)
  * method. This may be due to it being a default (package) scoped method. It works on the Linux JVM
- * but not on Windows. It would call the protected/public methods that had been overridden, just not
- * the default scope method. I have thus changed it to extend a copy of the ImageJ ParticleAnalyzer.
- * This can be updated with new version from the ImageJ source code as appropriate and default
- * scoped methods set to protected.
+ * but not on Windows. It would only call the protected/public methods that had been overridden, but
+ * not the default scope method. I have thus changed it to extend a copy of the ImageJ
+ * ParticleAnalyzer. This can be updated with new version from the ImageJ source code as appropriate
+ * and default scoped methods set to protected.
  */
 public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
   private static String redirectTitle = "";
@@ -185,13 +185,15 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       list = Arrays.copyOf(list, count);
       final GenericDialog gd = new GenericDialog("Mask Particle Analyzer...");
       gd.addMessage(
-          "Analyses objects in an image.\n \nObjects are defined with contiguous pixels of the same value.\nIgnore pixels outside any configured thresholds.");
+          "Analyses objects in an image.\n \nObjects are defined with contiguous pixels of the "
+          + "same value.\nIgnore pixels outside any configured thresholds.");
       gd.addChoice("Redirect_image", list, redirectTitle);
       gd.addCheckbox("Particle_summary", particleSummary);
       gd.addCheckbox("Save_histogram", saveHistogram);
       if (noThreshold) {
         gd.addMessage(
-            "Warning: The image is not thresholded / 8-bit binary mask.\nContinuing will use the min/max values in the image which\nmay produce many objects.");
+            "Warning: The image is not thresholded / 8-bit binary mask.\nContinuing will use "
+            + "the min/max values in the image which\nmay produce many objects.");
       }
       gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI);
       gd.showDialog();

@@ -26,15 +26,15 @@ package uk.ac.sussex.gdsc.foci.gui;
 
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.foci.AssignedPoint;
+import uk.ac.sussex.gdsc.foci.AssignedPointUtils;
 import uk.ac.sussex.gdsc.foci.FindFociProcessor;
 import uk.ac.sussex.gdsc.foci.FindFociResult;
 import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.GridException;
 import uk.ac.sussex.gdsc.foci.GridPoint;
 import uk.ac.sussex.gdsc.foci.GridPointManager;
-import uk.ac.sussex.gdsc.foci.Match_Plugin;
-import uk.ac.sussex.gdsc.foci.PointAligner_Plugin;
-import uk.ac.sussex.gdsc.foci.PointManager;
+import uk.ac.sussex.gdsc.foci.Match_PlugIn;
+import uk.ac.sussex.gdsc.foci.PointAligner_PlugIn;
 import uk.ac.sussex.gdsc.foci.controller.FindMaximaController;
 import uk.ac.sussex.gdsc.foci.converter.SearchModeConverter;
 import uk.ac.sussex.gdsc.foci.converter.StringToBooleanConverter;
@@ -88,6 +88,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -181,7 +183,8 @@ public class FindFociHelperView extends JFrame
           final FindFociHelperView frame = new FindFociHelperView();
           frame.setVisible(true);
         } catch (final Exception ex) {
-          ex.printStackTrace();
+          Logger.getLogger(FindFociHelperView.class.getName()).log(Level.SEVERE,
+              "Error showing the frame", ex);
         }
       }
     });
@@ -200,7 +203,7 @@ public class FindFociHelperView extends JFrame
 
     addWindowListener(new WindowAdapter() {
       @Override
-      public void windowActivated(WindowEvent e) {
+      public void windowActivated(WindowEvent event) {
         controller.updateImageList();
       }
     });
@@ -231,13 +234,13 @@ public class FindFociHelperView extends JFrame
     comboImageList.setToolTipText("Select the input image");
     comboImageList.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         comboImageList.firePropertyChange("selectedItem", 0, 1);
       }
     });
     comboImageList.addMouseListener(new MouseAdapter() {
       @Override
-      public void mousePressed(MouseEvent e) {
+      public void mousePressed(MouseEvent event) {
         controller.updateImageList();
       }
     });
@@ -261,13 +264,13 @@ public class FindFociHelperView extends JFrame
     comboMaskImageList.setToolTipText("Select the input mask image");
     comboMaskImageList.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         comboMaskImageList.firePropertyChange("selectedItem", 0, 1);
       }
     });
     comboMaskImageList.addMouseListener(new MouseAdapter() {
       @Override
-      public void mousePressed(MouseEvent e) {
+      public void mousePressed(MouseEvent event) {
         controller.updateImageList();
       }
     });
@@ -299,7 +302,7 @@ public class FindFociHelperView extends JFrame
     });
     txtResolution.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
+      public void keyReleased(KeyEvent event) {
         txtResolution.firePropertyChange("text", 0, 1);
       }
     });
@@ -316,7 +319,7 @@ public class FindFociHelperView extends JFrame
     btnSaveResults = new JButton("Save Results");
     btnSaveResults.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(ActionEvent event) {
         if (isActive()) {
           saveResults();
         }
@@ -356,7 +359,7 @@ public class FindFociHelperView extends JFrame
     comboSearchMode = new JComboBox<>();
     comboSearchMode.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         // Force the BeansBinding framework to pick up the state change
         comboSearchMode.firePropertyChange("selectedItem", 0, 1);
       }
@@ -373,7 +376,7 @@ public class FindFociHelperView extends JFrame
     btnRun = new JButton("Start");
     btnRun.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(ActionEvent event) {
         initialisePicker();
       }
     });
@@ -387,7 +390,7 @@ public class FindFociHelperView extends JFrame
     btnStop = new JButton("Stop");
     btnStop.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(ActionEvent event) {
         killPicker();
       }
     });
@@ -506,7 +509,7 @@ public class FindFociHelperView extends JFrame
     tglbtnOverlay = new JToggleButton("Show Overlay");
     tglbtnOverlay.addItemListener(new ItemListener() {
       @Override
-      public void itemStateChanged(ItemEvent e) {
+      public void itemStateChanged(ItemEvent event) {
         // Force the BeansBinding framework to pick up the state change
         tglbtnOverlay.firePropertyChange("selected", tglbtnOverlay.isSelected(),
             !tglbtnOverlay.isSelected());
@@ -523,8 +526,9 @@ public class FindFociHelperView extends JFrame
     btnHelp.addMouseListener(new MouseAdapter() {
       @SuppressWarnings("unused")
       @Override
-      public void mouseClicked(MouseEvent e) {
-        final String macro = "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI + "');";
+      public void mouseClicked(MouseEvent event) {
+        final String macro =
+            "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI + "');";
         new MacroRunner(macro);
       }
     });
@@ -555,7 +559,7 @@ public class FindFociHelperView extends JFrame
     model.setShowMask(0);
     model.setShowTable(true); // We need to get the results table
     model.setMarkMaxima(false);
-    model.setMarkROIMaxima(false);
+    model.setMarkRoiMaxima(false);
     model.setShowLogMessages(false);
     model.setSortMethod(FindFociProcessor.SORT_MAX_VALUE);
     model.setGaussianBlur(0);
@@ -650,7 +654,9 @@ public class FindFociHelperView extends JFrame
   }
 
   /**
-   * @param potentialMaxima the potentialMaxima to set
+   * Sets the potential maxima.
+   *
+   * @param potentialMaxima the new potential maxima
    */
   private void setPotentialMaxima(int potentialMaxima) {
     final int oldValue = this.potentialMaxima;
@@ -771,7 +777,9 @@ public class FindFociHelperView extends JFrame
   }
 
   /**
-   * @param activeImage the activeImage to set
+   * Sets the active image.
+   *
+   * @param activeImage the new active image
    */
   private void setActiveImage(String activeImage) {
     final String oldValue = this.activeImage;
@@ -834,8 +842,8 @@ public class FindFociHelperView extends JFrame
       setMappedPoints(0);
       setUnmappedPoints(0);
 
-      AssignedPoint[] points = PointManager.extractRoiPoints(activeImp.getRoi());
-      points = PointManager.eliminateDuplicates(points);
+      AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp.getRoi());
+      points = AssignedPointUtils.eliminateDuplicates(points);
       if (points.length > 0) {
         logMessage("Assigning %d point%s to %s", points.length, (points.length != 1) ? "s" : "",
             activeImage);
@@ -845,7 +853,7 @@ public class FindFociHelperView extends JFrame
         } else {
           points = assignToClosest(points);
         }
-        activeImp.setRoi(PointManager.createROI(points));
+        activeImp.setRoi(AssignedPointUtils.createRoi(points));
       }
       currentRoiPoints = points.length;
 
@@ -869,7 +877,7 @@ public class FindFociHelperView extends JFrame
    */
   private void assignToHighest(AssignedPoint[] points) {
     // If searchMode = 'highest' then the points should be processed in height order
-    final PointAligner_Plugin aligner = new PointAligner_Plugin();
+    final PointAligner_PlugIn aligner = new PointAligner_PlugIn();
     aligner.sortPoints(points, controller.getActiveImageStack());
 
     for (int i = 0; i < points.length; i++) {
@@ -983,7 +991,7 @@ public class FindFociHelperView extends JFrame
       setMappedPoints(0);
       setUnmappedPoints(0);
 
-      final AssignedPoint[] points = PointManager.extractRoiPoints(activeImp.getRoi());
+      final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp.getRoi());
       if (points.length > 0) {
         logMessage("Re-assigning %d point%s to %s", points.length, (points.length != 1) ? "s" : "",
             activeImage);
@@ -1061,49 +1069,49 @@ public class FindFociHelperView extends JFrame
 
   /** {@inheritDoc} */
   @Override
-  public void windowOpened(WindowEvent e) {
+  public void windowOpened(WindowEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void windowClosing(WindowEvent e) {
+  public void windowClosing(WindowEvent event) {
     killPicker();
   }
 
   /** {@inheritDoc} */
   @Override
-  public void windowClosed(WindowEvent e) {
+  public void windowClosed(WindowEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void windowIconified(WindowEvent e) {
+  public void windowIconified(WindowEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void windowDeiconified(WindowEvent e) {
+  public void windowDeiconified(WindowEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void windowActivated(WindowEvent e) {
+  public void windowActivated(WindowEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void windowDeactivated(WindowEvent e) {
+  public void windowDeactivated(WindowEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void mouseClicked(MouseEvent e) {
+  public void mouseClicked(MouseEvent event) {
     setShowOverlay(false);
 
     final Roi roi = activeImp.getRoi();
@@ -1186,7 +1194,7 @@ public class FindFociHelperView extends JFrame
 
   /** {@inheritDoc} */
   @Override
-  public void mousePressed(MouseEvent e) {
+  public void mousePressed(MouseEvent event) {
     // Ignore
   }
 
@@ -1195,15 +1203,15 @@ public class FindFociHelperView extends JFrame
    * If the user has dragged an ROI point then it should be reassigned when it is dropped.
    */
   @Override
-  public void mouseReleased(MouseEvent e) {
+  public void mouseReleased(MouseEvent event) {
     if (dragging) {
       dragging = false;
       final Roi roi = activeImp.getRoi();
       if (roi != null && roi.getType() == Roi.POINT && roi.getState() == Roi.NORMAL) {
         // Find the image x,y coords
         final ImageCanvas ic = activeImp.getCanvas();
-        final int ox = ic.offScreenX(e.getX());
-        final int oy = ic.offScreenY(e.getY());
+        final int ox = ic.offScreenX(event.getX());
+        final int oy = ic.offScreenY(event.getY());
 
         // logMessage("Dropped coords " + ox + "," + oy);
 
@@ -1238,13 +1246,13 @@ public class FindFociHelperView extends JFrame
 
   /** {@inheritDoc} */
   @Override
-  public void mouseEntered(MouseEvent e) {
+  public void mouseEntered(MouseEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void mouseExited(MouseEvent e) {
+  public void mouseExited(MouseEvent event) {
     // Ignore
   }
 
@@ -1254,51 +1262,50 @@ public class FindFociHelperView extends JFrame
    * set it to unassigned. This is done once at the start of the drag.
    */
   @Override
-  public void mouseDragged(MouseEvent e) {
+  public void mouseDragged(MouseEvent event) {
     setShowOverlay(false);
 
     final Roi roi = activeImp.getRoi();
-    if (roi != null && roi.getType() == Roi.POINT && roi.getState() == Roi.MOVING_HANDLE) {
-      if (!dragging) {
-        dragging = true;
+    if (roi != null && roi.getType() == Roi.POINT && roi.getState() == Roi.MOVING_HANDLE
+        && !dragging) {
+      dragging = true;
 
-        // Find the image x,y coords
-        final ImageCanvas ic = activeImp.getCanvas();
-        final int ox = ic.offScreenX(e.getX());
-        final int oy = ic.offScreenY(e.getY());
+      // Find the image x,y coords
+      final ImageCanvas ic = activeImp.getCanvas();
+      final int ox = ic.offScreenX(event.getX());
+      final int oy = ic.offScreenY(event.getY());
 
-        // logMessage("Image coords " + ox + "," + oy);
+      // logMessage("Image coords " + ox + "," + oy);
 
-        // Check if an assigned point is being moved
-        final GridPoint movedPoint = manager.findClosestAssignedPoint(ox, oy);
+      // Check if an assigned point is being moved
+      final GridPoint movedPoint = manager.findClosestAssignedPoint(ox, oy);
 
-        final double mag = activeImp.getCanvas().getMagnification();
+      final double mag = activeImp.getCanvas().getMagnification();
 
-        // Distance for the ROI is dependent on magnification.
-        // Approximate distance for mouse to change from cross to finger in X/Y:
-        // 50% = 10px
-        // 100% = 5px
-        // 200% = 2px
-        // Given that the drag could move away from the current ROI centre a bit more
-        // tolerance could be added if this limit is too strict.
-        final int distanceLimit = (int) Math.ceil(5 / mag);
+      // Distance for the ROI is dependent on magnification.
+      // Approximate distance for mouse to change from cross to finger in X/Y:
+      // 50% = 10px
+      // 100% = 5px
+      // 200% = 2px
+      // Given that the drag could move away from the current ROI centre a bit more
+      // tolerance could be added if this limit is too strict.
+      final int distanceLimit = (int) Math.ceil(5 / mag);
 
-        // Check the point is within reasonable distance of the mouse
-        if (movedPoint != null && Math.abs(movedPoint.getX() - ox) <= distanceLimit
-            && Math.abs(movedPoint.getY() - oy) <= distanceLimit) {
-          // logMessage("Dragging point " + movedPoint.getX() + "," + movedPoint.getY());
-          movedPoint.setAssigned(false);
-          setMappedPoints(mappedPoints - 1);
-        } else {
-          setUnmappedPoints(unmappedPoints - 1);
-        }
+      // Check the point is within reasonable distance of the mouse
+      if (movedPoint != null && Math.abs(movedPoint.getX() - ox) <= distanceLimit
+          && Math.abs(movedPoint.getY() - oy) <= distanceLimit) {
+        // logMessage("Dragging point " + movedPoint.getX() + "," + movedPoint.getY());
+        movedPoint.setAssigned(false);
+        setMappedPoints(mappedPoints - 1);
+      } else {
+        setUnmappedPoints(unmappedPoints - 1);
       }
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public void mouseMoved(MouseEvent e) {
+  public void mouseMoved(MouseEvent event) {
     // Ignore
   }
 
@@ -1357,7 +1364,7 @@ public class FindFociHelperView extends JFrame
    * @return the roi points
    */
   private AssignedPoint[] getRoiPoints() {
-    final AssignedPoint[] points = PointManager.extractRoiPoints(activeImp.getRoi());
+    final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp.getRoi());
     for (final AssignedPoint p : points) {
       final int x = p.getXint();
       final int y = p.getYint();
@@ -1391,7 +1398,7 @@ public class FindFociHelperView extends JFrame
   }
 
   /**
-   * Adds the mapped/unmapped points to the image using an overlay
+   * Adds the mapped/unmapped points to the image using an overlay.
    */
   private void showOverlay() {
     // Build lists of the mapped and unmapped points
@@ -1409,8 +1416,8 @@ public class FindFociHelperView extends JFrame
 
     // Add the overlay
     activeImp.setOverlay(null);
-    Match_Plugin.addOverlay(activeImp, mapped, Color.green);
-    Match_Plugin.addOverlay(activeImp, unmapped, Color.yellow);
+    Match_PlugIn.addOverlay(activeImp, mapped, Color.green);
+    Match_PlugIn.addOverlay(activeImp, unmapped, Color.yellow);
 
     // Save the ROI and remove it
     savedRoi = activeImp.getRoi();
@@ -1433,7 +1440,7 @@ public class FindFociHelperView extends JFrame
       if (roi.getType() == Roi.POINT && savedRoi != null) {
         // Merge the current ROI and the saved one
         PointRoi pointRoi = (PointRoi) savedRoi;
-        final AssignedPoint[] newPoints = PointManager.extractRoiPoints(roi);
+        final AssignedPoint[] newPoints = AssignedPointUtils.extractRoiPoints(roi);
         for (final AssignedPoint p : newPoints) {
           // pointRoi = pointRoi.addPoint(p.getX() - pointRoi.getBounds().x, p.getY() -
           // pointRoi.getBounds().y);

@@ -43,7 +43,7 @@ import javax.swing.WindowConstants;
  * Create a window that allows the user to pick ROI points and have them mapped to the closest
  * maxima found by the FindFoci algorithm.
  */
-public class FindFociHelper_Plugin implements PlugIn, WindowListener {
+public class FindFociHelper_PlugIn implements PlugIn, WindowListener {
   private static FindFociHelperView instance;
 
   /** {@inheritDoc} */
@@ -108,37 +108,37 @@ public class FindFociHelper_Plugin implements PlugIn, WindowListener {
   }
 
   @Override
-  public void windowOpened(WindowEvent e) {
+  public void windowOpened(WindowEvent event) {
     // Ignore
   }
 
   @Override
-  public void windowClosing(WindowEvent e) {
+  public void windowClosing(WindowEvent event) {
     WindowManager.removeWindow(instance);
   }
 
   @Override
-  public void windowClosed(WindowEvent e) {
+  public void windowClosed(WindowEvent event) {
     // Ignore
   }
 
   @Override
-  public void windowIconified(WindowEvent e) {
+  public void windowIconified(WindowEvent event) {
     // Ignore
   }
 
   @Override
-  public void windowDeiconified(WindowEvent e) {
+  public void windowDeiconified(WindowEvent event) {
     // Ignore
   }
 
   @Override
-  public void windowActivated(WindowEvent e) {
+  public void windowActivated(WindowEvent event) {
     // Ignore
   }
 
   @Override
-  public void windowDeactivated(WindowEvent e) {
+  public void windowDeactivated(WindowEvent event) {
     // Ignore
   }
 }

@@ -23,12 +23,12 @@
  * #L%
  */
 
-import uk.ac.sussex.gdsc.About_Plugin;
+import uk.ac.sussex.gdsc.About_PlugIn;
 
 import ij.plugin.PlugIn;
 
 /**
- * Default ImageJ plugin (no Java package) to run the {@link About_Plugin} plugin.
+ * Default ImageJ plugin (no Java package) to run the {@link About_PlugIn} plugin.
  *
  * <p>This class allows the project to be run in debug mode from an IDE (e.g. Eclipse). The Maven
  * output directory will be target/classes. Create a symbolic link to that directory from the
@@ -42,7 +42,8 @@ import ij.plugin.PlugIn;
  * }
  * </pre>
  *
- * <p>Set the project to run ij.ImageJ as the main class and use the root directory as the ImageJ path:
+ * <p>Set the project to run ij.ImageJ as the main class and use the root directory as the ImageJ
+ * path:
  *
  * <pre>
  * ij.ImageJ -ijpath ${root}
@@ -55,6 +56,6 @@ public class Gdsc_PlugIn implements PlugIn {
   @Override
   public void run(String arg) {
     // Show the About plugin
-    About_Plugin.showAbout();
+    About_PlugIn.showAbout();
   }
 }

@@ -312,18 +312,18 @@ public class ColocalisationThreshold {
    * Calculate correlation.
    *
    * @param sumX the sum X
-   * @param sumXY the sum XY
-   * @param sumXX the sum XX
-   * @param sumYY the sum YY
+   * @param sumXy the sum XY
+   * @param sumXx the sum XX
+   * @param sumYy the sum YY
    * @param sumY the sum Y
    * @param n the n
    * @return the correlation
    */
-  public static double calculateCorrelation(long sumX, long sumXY, long sumXX, long sumYY,
+  public static double calculateCorrelation(long sumX, long sumXy, long sumXx, long sumYy,
       long sumY, long n) {
-    BigInteger nSumXY = BigInteger.valueOf(sumXY).multiply(BigInteger.valueOf(n));
-    BigInteger nSumXX = BigInteger.valueOf(sumXX).multiply(BigInteger.valueOf(n));
-    BigInteger nSumYY = BigInteger.valueOf(sumYY).multiply(BigInteger.valueOf(n));
+    BigInteger nSumXY = BigInteger.valueOf(sumXy).multiply(BigInteger.valueOf(n));
+    BigInteger nSumXX = BigInteger.valueOf(sumXx).multiply(BigInteger.valueOf(n));
+    BigInteger nSumYY = BigInteger.valueOf(sumYy).multiply(BigInteger.valueOf(n));
 
     nSumXY = nSumXY.subtract(BigInteger.valueOf(sumX).multiply(BigInteger.valueOf(sumY)));
     nSumXX = nSumXX.subtract(BigInteger.valueOf(sumX).multiply(BigInteger.valueOf(sumX)));
@@ -333,9 +333,9 @@ public class ColocalisationThreshold {
 
     return nSumXY.doubleValue() / Math.sqrt(product.doubleValue());
 
-    // double pearsons1 = n * sumXY - (sumX * sumY);
-    // double pearsons2 = n * sumXX - (sumX * sumX);
-    // double pearsons3 = n * sumYY - (sumY * sumY);
+    // double pearsons1 = n * sumXy - (sumX * sumY);
+    // double pearsons2 = n * sumXx - (sumX * sumX);
+    // double pearsons3 = n * sumYy - (sumY * sumY);
     // return pearsons1 / (Math.sqrt(pearsons2 * pearsons3));
   }
 

@@ -25,8 +25,10 @@
 package uk.ac.sussex.gdsc.colocalisation;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ThresholdUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.Correlator;
+import uk.ac.sussex.gdsc.utils.SliceCollection;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -49,14 +51,12 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
   // Store a reference to the current working image
   private ImagePlus imp;
 
-  private final String TITLE = "Stack Correlation Analyser";
+  private static final String TITLE = "Stack Correlation Analyser";
 
   // ImageJ indexes for the dimensions array
-  // private final int X = 0;
-  // private final int Y = 1;
-  private final int C = 2;
-  private final int Z = 3;
-  private final int T = 4;
+  private static final int C = 2;
+  private static final int Z = 3;
+  private static final int T = 4;
 
   // Options
   private static String methodOption = AutoThreshold.Method.OTSU.toString();
@@ -66,7 +66,7 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
   private static boolean showMask = false;
   private static boolean subtractThreshold = false;
 
-  private Correlator c;
+  private Correlator correlator;
 
   /** {@inheritDoc} */
   @Override
@@ -99,7 +99,7 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
   public void run(ImageProcessor inputProcessor) {
     final int[] dimensions = imp.getDimensions();
     final int currentSlice = imp.getCurrentSlice();
-    c = new Correlator(dimensions[0] * dimensions[1]);
+    correlator = new Correlator(dimensions[0] * dimensions[1]);
     for (final String method : getMethods()) {
       IJ.log("Stack correlation (" + method + ") : " + imp.getTitle());
       ImageStack maskStack = null;
@@ -108,13 +108,13 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
       }
 
       for (int t = 1; t <= dimensions[T]; t++) {
-        final ArrayList<SliceCollection> sliceCollections = new ArrayList<>();
+        final ArrayList<AnalysisSliceCollection> sliceCollections = new ArrayList<>();
 
         if (aggregateZstack) {
           // Extract the channels
           for (int c = 1; c <= dimensions[C]; c++) {
             // Process all slices together
-            final SliceCollection sliceCollection = new SliceCollection(c);
+            final AnalysisSliceCollection sliceCollection = new AnalysisSliceCollection(c);
             for (int z = 1; z <= dimensions[Z]; z++) {
               sliceCollection.add(imp.getStackIndex(c, z, t));
             }
@@ -125,7 +125,7 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
           for (int z = 1; z <= dimensions[Z]; z++) {
             // Extract the channels
             for (int c = 1; c <= dimensions[C]; c++) {
-              final SliceCollection sliceCollection = new SliceCollection(c, z);
+              final AnalysisSliceCollection sliceCollection = new AnalysisSliceCollection(c, z);
               sliceCollection.add(imp.getStackIndex(c, z, t));
               sliceCollections.add(sliceCollection);
             }
@@ -133,7 +133,7 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
         }
 
         // Create masks
-        for (final SliceCollection sliceCollection : sliceCollections) {
+        for (final AnalysisSliceCollection sliceCollection : sliceCollections) {
           sliceCollection.createStack(imp);
           sliceCollection.createMask(method);
           if (logThresholds) {
@@ -143,7 +143,7 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
 
           if (showMask) {
             for (int s = 1; s <= sliceCollection.maskStack.getSize(); s++) {
-              final int originalSliceNumber = sliceCollection.slices.get(s - 1);
+              final int originalSliceNumber = sliceCollection.get(s - 1);
               maskStack.setSliceLabel(
                   method + ":" + imp.getStack().getSliceLabel(originalSliceNumber),
                   originalSliceNumber);
@@ -154,10 +154,10 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
 
         // Process the collections:
         for (int i = 0; i < sliceCollections.size(); i++) {
-          final SliceCollection s1 = sliceCollections.get(i);
+          final AnalysisSliceCollection s1 = sliceCollections.get(i);
           for (int j = i + 1; j < sliceCollections.size(); j++) {
-            final SliceCollection s2 = sliceCollections.get(j);
-            if (s1.z != s2.z) {
+            final AnalysisSliceCollection s2 = sliceCollections.get(j);
+            if (s1.getZIndex() != s2.getZIndex()) {
               continue;
             }
 
@@ -180,7 +180,7 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
     imp.setSlice(currentSlice);
   }
 
-  private String[] getMethods() {
+  private static String[] getMethods() {
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addMessage(TITLE);
     // Commented out the methods that take a long time on 16-bit images.
@@ -274,22 +274,6 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Create the intersect of the two masks.
-   *
-   * @param maskStack the mask stack
-   * @param maskStack2 the mask stack 2
-   * @return the new mask
-   */
-  private static ImageStack intersectMask(ImageStack maskStack, ImageStack maskStack2) {
-    final ImageStack newStack = new ImageStack(maskStack.getWidth(), maskStack.getHeight());
-    for (int s = 1; s <= maskStack.getSize(); s++) {
-      newStack.addSlice(null, intersectMask((ByteProcessor) maskStack.getProcessor(s),
-          (ByteProcessor) maskStack2.getProcessor(s)));
-    }
-    return newStack;
-  }
-
-  /**
    * Create the union of the two masks.
    *
    * @param mask1 the mask 1
@@ -308,6 +292,22 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
       }
     }
     return bp;
+  }
+
+  /**
+   * Create the intersect of the two masks.
+   *
+   * @param maskStack the mask stack
+   * @param maskStack2 the mask stack 2
+   * @return the new mask
+   */
+  private static ImageStack intersectMask(ImageStack maskStack, ImageStack maskStack2) {
+    final ImageStack newStack = new ImageStack(maskStack.getWidth(), maskStack.getHeight());
+    for (int s = 1; s <= maskStack.getSize(); s++) {
+      newStack.addSlice(null, intersectMask((ByteProcessor) maskStack.getProcessor(s),
+          (ByteProcessor) maskStack2.getProcessor(s)));
+    }
+    return newStack;
   }
 
   /**
@@ -340,15 +340,15 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
    * @return an array containing: the number of overlapping pixels; the % total area for the
    *         overlap; R; M1; M2
    */
-  private double[] correlate(SliceCollection s1, SliceCollection s2) {
+  private double[] correlate(AnalysisSliceCollection s1, AnalysisSliceCollection s2) {
     final ImageStack overlapStack = (useIntersect) ? intersectMask(s1.maskStack, s2.maskStack)
         : unionMask(s1.maskStack, s2.maskStack);
 
     final byte on = (byte) 255;
 
-    int nTotal = 0;
+    int total = 0;
 
-    c.clear();
+    correlator.clear();
 
     for (int s = 1; s <= overlapStack.getSize(); s++) {
       final ImageProcessor ip1 = s1.imageStack.getProcessor(s);
@@ -356,10 +356,10 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
       final ByteProcessor overlap = (ByteProcessor) overlapStack.getProcessor(s);
 
       final byte[] b = (byte[]) overlap.getPixels();
-      nTotal += b.length;
+      total += b.length;
       for (int i = b.length; i-- > 0;) {
         if (b[i] == on) {
-          c.add(ip1.get(i), ip2.get(i));
+          correlator.add(ip1.get(i), ip2.get(i));
         }
       }
     }
@@ -368,15 +368,15 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
     double m1 = 0;
     double m2 = 0;
     if (useIntersect) {
-      long sum1 = c.getSumX();
-      long sum2 = c.getSumY();
+      long sum1 = correlator.getSumX();
+      long sum2 = correlator.getSumY();
       long sum1A = s1.sum;
       long sum2A = s2.sum;
 
       if (subtractThreshold) {
-        sum1 -= c.getN() * s1.threshold;
+        sum1 -= correlator.getN() * s1.threshold;
         sum1A -= s1.count * s1.threshold;
-        sum2 -= c.getN() * s2.threshold;
+        sum2 -= correlator.getN() * s2.threshold;
         sum2A -= s2.count * s2.threshold;
       }
 
@@ -384,23 +384,24 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
       m2 = (double) sum2 / sum2A;
     }
 
-    return new double[] {c.getN(), (100.0 * c.getN() / nTotal), c.getCorrelation(), m1, m2};
+    return new double[] {correlator.getN(), (100.0 * correlator.getN() / total),
+        correlator.getCorrelation(), m1, m2};
   }
 
   /**
    * Reports the results for the correlation to the IJ log window.
    *
-   * @param t The timeframe
+   * @param frame The timeframe
    * @param c1 Channel 1 title
    * @param c2 Channel 2 title
    * @param results The correlation results
    */
-  private static void reportResult(int t, String c1, String c2, double[] results) {
+  private static void reportResult(int frame, String c1, String c2, double[] results) {
     final int n = (int) results[0];
     final double area = results[1];
     final double r = results[2];
     final StringBuilder sb = new StringBuilder();
-    sb.append("t").append(t).append(",");
+    sb.append("t").append(frame).append(",");
     sb.append(c1).append(",");
     sb.append(c2).append(",");
     sb.append(n).append(",");
@@ -417,62 +418,31 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
   /**
    * Provides functionality to process a collection of slices from an Image.
    */
-  private class SliceCollection {
-    int c;
-    int z;
-    ArrayList<Integer> slices;
+  private static class AnalysisSliceCollection extends SliceCollection {
     long sum;
     int count;
-
-    private String sliceName = null;
 
     ImageStack imageStack;
     ImageStack maskStack;
     int threshold;
 
     /**
-     * @param c The channel
-     * @param z The z dimension
-     */
-    SliceCollection(int c, int z) {
-      this.c = c;
-      this.z = z;
-      slices = new ArrayList<>(1);
-    }
-
-    /**
-     * @param c The channel
-     */
-    SliceCollection(int c) {
-      this.c = c;
-      this.z = 0;
-      slices = new ArrayList<>();
-    }
-
-    /**
-     * Utility method.
+     * Instantiates a new analysis slice collection.
      *
-     * @param i the i
+     * @param indexC The channel index
+     * @param indexZ The z-slice index
      */
-    void add(Integer i) {
-      slices.add(i);
+    AnalysisSliceCollection(int indexC, int indexZ) {
+      super(indexC, indexZ, 0);
     }
 
     /**
-     * Gets the slice name.
+     * Instantiates a new analysis slice collection.
      *
-     * @return the slice name
+     * @param indexC The channel index
      */
-    String getSliceName() {
-      if (sliceName == null) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("c").append(c);
-        if (z != 0) {
-          sb.append("z").append(z);
-        }
-        sliceName = sb.toString();
-      }
-      return sliceName;
+    AnalysisSliceCollection(int indexC) {
+      super(indexC, 0, 0);
     }
 
     /**
@@ -481,11 +451,7 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
      * @param imp the image
      */
     void createStack(ImagePlus imp) {
-      imageStack = new ImageStack(imp.getWidth(), imp.getHeight());
-      for (final int slice : slices) {
-        imp.setSliceWithoutUpdate(slice);
-        imageStack.addSlice(Integer.toString(slice), imp.getProcessor().duplicate());
-      }
+      imageStack = createStack(imp.getImageStack());
     }
 
     /**
@@ -493,16 +459,9 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
      *
      * @param method the method
      */
-    private void createMask(String method) {
+    void createMask(String method) {
       // Create an aggregate histogram
-      final int[] data = imageStack.getProcessor(1).getHistogram();
-      int[] temp = new int[data.length];
-      for (int s = 2; s <= imageStack.getSize(); s++) {
-        temp = imageStack.getProcessor(s).getHistogram();
-        for (int i = 0; i < data.length; i++) {
-          data[i] += temp[i];
-        }
-      }
+      final int[] data = ThresholdUtils.getHistogram(imageStack);
 
       threshold = AutoThreshold.getThreshold(method, data);
 
@@ -510,15 +469,16 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
       sum = 0;
       count = 0;
       maskStack = new ImageStack(imageStack.getWidth(), imageStack.getHeight());
+      final int size = imageStack.getWidth() * imageStack.getHeight();
       for (int s = 1; s <= imageStack.getSize(); s++) {
-        final ByteProcessor bp = new ByteProcessor(imageStack.getWidth(), imageStack.getHeight());
+        final byte[] bp = new byte[size];
         final ImageProcessor ip = imageStack.getProcessor(s);
-        for (int i = bp.getPixelCount(); i-- > 0;) {
+        for (int i = size; i-- > 0;) {
           final int value = ip.get(i);
           if (value > threshold) {
             sum += value;
             count++;
-            bp.set(i, 255);
+            bp[i] = (byte) 255;
           }
         }
         maskStack.addSlice(null, bp);

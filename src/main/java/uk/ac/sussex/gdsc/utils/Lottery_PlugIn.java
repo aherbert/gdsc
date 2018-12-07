@@ -31,8 +31,8 @@ import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
-import org.apache.commons.math3.random.RandomGenerator;
-import org.apache.commons.math3.random.Well44497b;
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.simple.RandomSource;
 
 /**
  * Computes the odds of winning the lottery using random sampling.
@@ -78,7 +78,7 @@ public class Lottery_PlugIn implements PlugIn {
       return;
     }
 
-    final RandomGenerator rand = new Well44497b(System.currentTimeMillis());
+    final UniformRandomProvider rand = RandomSource.create(RandomSource.SPLIT_MIX_64);
     String msg = "Calculating ...";
     if (simulations == 0) {
       msg += " Escape to exit";
@@ -86,7 +86,7 @@ public class Lottery_PlugIn implements PlugIn {
     IJ.log(msg);
     long count = 0;
     long ok = 0;
-    int c = 0;
+    int samples = 0;
 
     final int[] data = new int[numbers];
     for (int i = 0; i < data.length; i++) {
@@ -104,21 +104,29 @@ public class Lottery_PlugIn implements PlugIn {
         data[j] = tmp;
       }
 
-      // Count the matches
-      int m = 0;
+      // Count the matches.
+      // Assumes the user has selected the first 'pick' numbers from the series (e.g. 0-5 for 6)
+      // and counts how may of their numbers are in the random set (e.g. how many in the random
+      // set are <6).
+      int found = 0;
       for (int i = 0; i < pick; i++) {
         if (data[i] < pick) {
-          m++;
+          found++;
         }
       }
-      if (m == match) {
+      // Check if this is the amount of numbers to match
+      if (found == match) {
         ok++;
       }
 
-      if (++c == 100000) {
-        final double f = (double) ok / count;
-        IJ.log(String.format("%d / %d = %f (1 in %f)", ok, count, f, 1.0 / f));
-        c = 0;
+      if (++samples == 100000) {
+        if (ok == 0) {
+          IJ.log(String.format("0 / %d = 0", count));
+        } else {
+          final double f = (double) ok / count;
+          IJ.log(String.format("%d / %d = %f (1 in %f)", ok, count, f, 1.0 / f));
+        }
+        samples = 0;
         if (ImageJUtils.isInterrupted()) {
           return;
         }

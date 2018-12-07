@@ -74,7 +74,7 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
   private float saturated;
   private Rectangle bounds;
   private boolean[] mask;
-  private int n;
+  private int pixelCount;
 
   /** {@inheritDoc} */
   @Override
@@ -136,8 +136,8 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
 
     // Get the user options
     final GenericDialog gd = new GenericDialog(TITLE);
-    gd.addMessage(
-        "Calculate the normalised intensity within an ROI.\nImages should have a linear response with respect to exposure.");
+    gd.addMessage("Calculate the normalised intensity within an ROI.\n"
+        + "Images should have a linear response with respect to exposure.");
     gd.addSlider("Window", 3, stack.getSize(), window);
     gd.addSlider("Bit_depth", 4, imp.getBitDepth(), bitDepth);
     gd.addCheckbox("Debug", debug);
@@ -172,29 +172,8 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
       }
       // Move along until no more characters that could be a float value are found
       int endIndex = startIndex + 1;
-      while (endIndex < label.length()) {
-        switch (label.charAt(endIndex)) {
-          case '0':
-          case '1':
-          case '2':
-          case '3':
-          case '4':
-          case '5':
-          case '6':
-          case '7':
-          case '8':
-          case '9':
-          case 'e':
-          case 'E':
-          case 'f':
-          case 'F':
-          case 'x':
-          case '+':
-          case '-':
-            endIndex++;
-            continue;
-        }
-        break;
+      while (endIndex < label.length() && isFloatCharacter(label.charAt(endIndex))) {
+        endIndex++;
       }
       try {
         exposures[i - 1] = Float.parseFloat(label.substring(startIndex, endIndex));
@@ -210,15 +189,15 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     final ImageProcessor ip = roi.getMask();
     if (ip != null) {
       mask = new boolean[ip.getPixelCount()];
-      n = 0;
+      pixelCount = 0;
       for (int i = 0; i < mask.length; i++) {
         if (ip.get(i) != 0) {
           mask[i] = true;
-          n++;
+          pixelCount++;
         }
       }
     } else {
-      n = bounds.width * bounds.height;
+      pixelCount = bounds.width * bounds.height;
     }
 
     if (debug) {
@@ -230,6 +209,23 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     saturated = (float) (Math.pow(2, bitDepth) - 1);
 
     return flags;
+  }
+
+  private static boolean isFloatCharacter(char ch) {
+    switch (ch) {
+      // Look for valid characters for a float, e.g. 1.0e-78, 1.0e+78, 1.0f
+      case 'e':
+      case 'E':
+      case 'f':
+      case 'F':
+      case 'x':
+      case '+':
+      case '-':
+      case '.':
+        return true;
+      default:
+        return Character.isDigit(ch);
+    }
   }
 
   /** {@inheritDoc} */
@@ -266,12 +262,12 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     }
 
     // Use negative for means with saturated pixels
-    means[slice] = ((sat) ? -1 : 1) * (float) (sum / n);
+    means[slice] = ((sat) ? -1 : 1) * (float) (sum / pixelCount);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setNPasses(int nPasses) {
+  public void setNPasses(int passes) {
     // Ignore
   }
 
@@ -332,7 +328,7 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     sb.append('\t').append(bounds.y);
     sb.append('\t').append(bounds.width);
     sb.append('\t').append(bounds.height);
-    sb.append('\t').append(n);
+    sb.append('\t').append(pixelCount);
 
     if (means2.length < window) {
       IJ.error(TITLE,
@@ -341,7 +337,7 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     } else {
 
       // Do a linear fit using a sliding window. Find the region with the best linear fit.
-      double bestSS = Double.POSITIVE_INFINITY;
+      double bestSumOfSquares = Double.POSITIVE_INFINITY;
       int bestStart = 0;
       double[] bestFit = null;
       for (int start = 0; start < means2.length; start++) {
@@ -374,8 +370,8 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
           }
           debug("%d - %d = %f : y = %f + %f x t\n", start, end, ss, fit[0], fit[1]);
           // Store best fit
-          if (ss < bestSS) {
-            bestSS = ss;
+          if (ss < bestSumOfSquares) {
+            bestSumOfSquares = ss;
             bestStart = start;
             bestFit = fit;
           }
@@ -399,7 +395,7 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
         sb.append('\t').append(bestStart + window);
         sb.append('\t').append(MathUtils.rounded(x1));
         sb.append('\t').append(MathUtils.rounded(x2));
-        sb.append('\t').append(MathUtils.rounded(bestSS));
+        sb.append('\t').append(MathUtils.rounded(bestSumOfSquares));
         sb.append('\t').append(MathUtils.rounded(bestFit[0]));
         sb.append('\t').append(MathUtils.rounded(bestFit[1]));
       }

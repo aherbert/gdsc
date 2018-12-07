@@ -30,18 +30,31 @@ import java.util.Arrays;
  * Find objects defined by contiguous pixels of the same value.
  */
 public class ObjectAnalyzer3D {
+  //@formatter:off
+                                              //4N                //8N
+  private static final int[] DIR_X_OFFSET2 = {  0, 1, 0,-1,        1, 1,-1,-1 };
+  private static final int[] DIR_Y_OFFSET2 = { -1, 0, 1, 0,       -1, 1, 1,-1 };
+                                              //4N                //8N
+  private static final int[] DIR_X_OFFSET3 = { 0, 1, 0,-1, 0, 0,   1, 1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1 };
+  private static final int[] DIR_Y_OFFSET3 = {-1, 0, 1, 0, 0, 0,  -1, 1, 1,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1 };
+  private static final int[] DIR_Z_OFFSET3 = { 0, 0, 0, 0,-1, 1,   0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1 };
+  //@formatter:on
+
   private final int[] maskImage;
   private final int maxx;
   private final int maxy;
   private final int maxz;
-  private final int maxx_maxy;
+  private final int maxxByMaxy;
   private final int xlimit;
   private final int ylimit;
   private final int zlimit;
+
   private boolean eightConnected;
   private int[] objectMask;
   private int maxObject;
   private int minObjectSize = 0;
+
+  private int[] offset;
 
   /**
    * Instantiates a new object analyzer 3D.
@@ -69,7 +82,7 @@ public class ObjectAnalyzer3D {
     this.maxx = maxx;
     this.maxy = maxy;
     this.maxz = maxz;
-    maxx_maxy = maxx * maxy;
+    maxxByMaxy = maxx * maxy;
     xlimit = maxx - 1;
     ylimit = maxy - 1;
     zlimit = maxz - 1;
@@ -77,6 +90,8 @@ public class ObjectAnalyzer3D {
   }
 
   /**
+   * Gets the object mask.
+   *
    * @return A pixel array containing the object number for each pixel in the input image.
    */
   public int[] getObjectMask() {
@@ -85,6 +100,8 @@ public class ObjectAnalyzer3D {
   }
 
   /**
+   * Gets the max object number.
+   *
    * @return The maximum object number.
    */
   public int getMaxObject() {
@@ -115,9 +132,9 @@ public class ObjectAnalyzer3D {
         maxObject++;
         int size;
         if (is2D) {
-          size = expandObjectXY(maskImage, objectMask, i, maxObject, ppList);
+          size = expandObjectXy(maskImage, objectMask, i, maxObject, ppList);
         } else {
-          size = expandObjectXYZ(maskImage, objectMask, i, maxObject, ppList);
+          size = expandObjectXyz(maskImage, objectMask, i, maxObject, ppList);
         }
         if (sizes.length == maxObject) {
           sizes = Arrays.copyOf(sizes, (int) (maxObject * 1.5));
@@ -148,7 +165,7 @@ public class ObjectAnalyzer3D {
    * Searches from the specified point to find all coordinates of the same value and assigns them to
    * given maximum ID.
    */
-  private int expandObjectXY(final int[] image, final int[] objectMask, final int index0,
+  private int expandObjectXy(final int[] image, final int[] objectMask, final int index0,
       final int id, int[][] ppList) {
     objectMask[index0] = id; // mark first point
     int listI = 0; // index of current search element in the list
@@ -156,20 +173,20 @@ public class ObjectAnalyzer3D {
     final int neighbours = (eightConnected) ? 8 : 4;
 
     // we create a list of connected points and start the list at the current point
-    int[] pList = ppList[0];
-    pList[listI] = index0;
+    int[] pointList = ppList[0];
+    pointList[listI] = index0;
 
     final int v0 = image[index0];
 
     do {
-      final int index1 = pList[listI];
+      final int index1 = pointList[listI];
       final int x1 = index1 % maxx;
       final int y1 = index1 / maxx;
 
-      final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+      final boolean isInnerXy = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
 
       for (int d = neighbours; d-- > 0;) {
-        if (isInnerXY || isWithinXY(x1, y1, d)) {
+        if (isInnerXy || isWithinXy(x1, y1, d)) {
           final int index2 = index1 + offset[d];
           if (objectMask[index2] != 0) {
             // This has been done already, ignore this point
@@ -180,10 +197,10 @@ public class ObjectAnalyzer3D {
 
           if (v2 == v0) {
             // Add this to the search
-            pList[listLen++] = index2;
+            pointList[listLen++] = index2;
             objectMask[index2] = id;
-            if (pList.length == listLen) {
-              pList = Arrays.copyOf(pList, (int) (listLen * 1.5));
+            if (pointList.length == listLen) {
+              pointList = Arrays.copyOf(pointList, (int) (listLen * 1.5));
             }
           }
         }
@@ -194,7 +211,7 @@ public class ObjectAnalyzer3D {
     }
     while (listI < listLen);
 
-    ppList[0] = pList;
+    ppList[0] = pointList;
 
     return listLen;
   }
@@ -203,7 +220,7 @@ public class ObjectAnalyzer3D {
    * Searches from the specified point to find all coordinates of the same value and assigns them to
    * given maximum ID.
    */
-  private int expandObjectXYZ(final int[] image, final int[] objectMask, final int index0,
+  private int expandObjectXyz(final int[] image, final int[] objectMask, final int index0,
       final int id, int[][] ppList) {
     objectMask[index0] = id; // mark first point
     int listI = 0; // index of current search element in the list
@@ -211,27 +228,27 @@ public class ObjectAnalyzer3D {
     final int neighbours = (eightConnected) ? 26 : 6;
 
     // we create a list of connected points and start the list at the current point
-    int[] pList = ppList[0];
-    pList[listI] = index0;
+    int[] pointList = ppList[0];
+    pointList[listI] = index0;
 
     final int v0 = image[index0];
 
     do {
-      final int index1 = pList[listI];
+      final int index1 = pointList[listI];
 
-      final int z1 = index1 / (maxx_maxy);
-      final int mod = index1 % (maxx_maxy);
+      final int z1 = index1 / (maxxByMaxy);
+      final int mod = index1 % (maxxByMaxy);
       final int y1 = mod / maxx;
       final int x1 = mod % maxx;
 
       // It is more likely that the z stack will be out-of-bounds.
       // Adopt the xy limit lookup and process z lookup separately
 
-      final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-      final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+      final boolean isInnerXy = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+      final boolean isInnerXyz = (zlimit == 0) ? isInnerXy : isInnerXy && (z1 != 0 && z1 != zlimit);
 
       for (int d = neighbours; d-- > 0;) {
-        if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d)) {
+        if (isInnerXyz || (isInnerXy && isWithinZ(z1, d)) || isWithinXyz(x1, y1, z1, d)) {
           final int index2 = index1 + offset[d];
           try {
             if (objectMask[index2] != 0) {
@@ -246,10 +263,10 @@ public class ObjectAnalyzer3D {
 
           if (v2 == v0) {
             // Add this to the search
-            pList[listLen++] = index2;
+            pointList[listLen++] = index2;
             objectMask[index2] = id;
-            if (pList.length == listLen) {
-              pList = Arrays.copyOf(pList, (int) (listLen * 1.5));
+            if (pointList.length == listLen) {
+              pointList = Arrays.copyOf(pointList, (int) (listLen * 1.5));
             }
           }
         }
@@ -260,22 +277,10 @@ public class ObjectAnalyzer3D {
     }
     while (listI < listLen);
 
-    ppList[0] = pList;
+    ppList[0] = pointList;
 
     return listLen;
   }
-
-  private int[] offset;
-  //@formatter:off
-                                                 //4N                //8N
-  private final int[] DIR_X_OFFSET2 = new int[] {  0, 1, 0,-1,        1, 1,-1,-1 };
-  private final int[] DIR_Y_OFFSET2 = new int[] { -1, 0, 1, 0,       -1, 1, 1,-1 };
-                                                   //4N                //8N
-  private final int[] DIR_X_OFFSET3 = new int[] { 0, 1, 0,-1, 0, 0,   1, 1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1 };
-  private final int[] DIR_Y_OFFSET3 = new int[] {-1, 0, 1, 0, 0, 0,  -1, 1, 1,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1 };
-  private final int[] DIR_Z_OFFSET3 = new int[] { 0, 0, 0, 0,-1, 1,   0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1 };
-
-  //@formatter:on
 
   /**
    * Creates the direction offset tables.
@@ -291,7 +296,7 @@ public class ObjectAnalyzer3D {
       // Create the 3D offset table
       offset = new int[DIR_X_OFFSET3.length];
       for (int d = offset.length; d-- > 0;) {
-        offset[d] = maxx_maxy * DIR_Z_OFFSET3[d] + maxx * DIR_Y_OFFSET3[d] + DIR_X_OFFSET3[d];
+        offset[d] = maxxByMaxy * DIR_Z_OFFSET3[d] + maxx * DIR_Y_OFFSET3[d] + DIR_X_OFFSET3[d];
       }
     }
   }
@@ -306,7 +311,7 @@ public class ObjectAnalyzer3D {
    * @param direction the direction from the pixel towards the neighbour
    * @return true if the neighbour is within the image (provided that x, y is within)
    */
-  private boolean isWithinXY(int x, int y, int direction) {
+  private boolean isWithinXy(int x, int y, int direction) {
     switch (direction) {
       // 4-connected directions
       case 0:
@@ -342,7 +347,7 @@ public class ObjectAnalyzer3D {
    * @param direction the direction from the pixel towards the neighbour
    * @return true if the neighbour is within the image (provided that x, y, z is within)
    */
-  private boolean isWithinXYZ(int x, int y, int z, int direction) {
+  private boolean isWithinXyz(int x, int y, int z, int direction) {
     switch (direction) {
       // 4-connected directions
       case 0:
@@ -399,8 +404,9 @@ public class ObjectAnalyzer3D {
         return (z < zlimit && x > 0);
       case 25:
         return (z < zlimit && y > 0 && x > 0);
+      default:
+        return false;
     }
-    return false;
   }
 
   /**
@@ -438,6 +444,8 @@ public class ObjectAnalyzer3D {
   }
 
   /**
+   * Gets the max X.
+   *
    * @return The image width (maxx).
    */
   public int getMaxX() {
@@ -445,6 +453,8 @@ public class ObjectAnalyzer3D {
   }
 
   /**
+   * Gets the max Y.
+   *
    * @return The image height (maxy).
    */
   public int getMaxY() {
@@ -452,6 +462,8 @@ public class ObjectAnalyzer3D {
   }
 
   /**
+   * Gets the max Z.
+   *
    * @return The image depth (maxz).
    */
   public int getMaxZ() {
@@ -493,6 +505,8 @@ public class ObjectAnalyzer3D {
   }
 
   /**
+   * Gets the minimum object size. Objects below this are removed.
+   *
    * @return The minimum object size. Objects below this are removed.
    */
   public int getMinObjectSize() {
@@ -500,6 +514,8 @@ public class ObjectAnalyzer3D {
   }
 
   /**
+   * Sets the minimum object size. Objects below this are removed.
+   *
    * @param minObjectSize The minimum object size. Objects below this are removed.
    */
   public void setMinObjectSize(int minObjectSize) {
@@ -510,15 +526,18 @@ public class ObjectAnalyzer3D {
   }
 
   /**
-   * @return True if objects should use 8-connected pixels. The default is 4-connected.
+   * Checks if objects should use 8-connected pixels. The default is 4-connected.
+   *
+   * @return True if objects should use 8-connected pixels.
    */
   public boolean isEightConnected() {
     return eightConnected;
   }
 
   /**
-   * @param eightConnected True if objects should use 8-connected pixels. The default is
-   *        4-connected.
+   * Sets if objects should use 8-connected pixels. The default is 4-connected.
+   *
+   * @param eightConnected True if objects should use 8-connected pixels.
    */
   public void setEightConnected(boolean eightConnected) {
     if (eightConnected != this.eightConnected) {

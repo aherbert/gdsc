@@ -107,8 +107,9 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
 
     final GenericDialog gd = new GenericDialog(TITLE);
 
-    gd.addMessage(
-        "Overlay a mask on the current image and segregate objects into two classes.\n \nObjects are defined with contiguous pixels of the same value.\nThe mean image value for each object is used for segregation.");
+    gd.addMessage("Overlay a mask on the current image and segregate objects into two classes.\n \n"
+        + "Objects are defined with contiguous pixels of the same value.\n"
+        + "The mean image value for each object is used for segregation.");
 
     final ImageStatistics stats =
         ImageStatistics.getStatistics(imp.getProcessor(), Measurements.MIN_MAX, null);
@@ -178,7 +179,7 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
 
   /** {@inheritDoc} */
   @Override
-  public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+  public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
     // Preview checkbox will be null if running headless
     final boolean isPreview =
         (gd.getPreviewCheckbox() != null && gd.getPreviewCheckbox().getState());
@@ -199,13 +200,12 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
 
     // Check if this is a change to the settings during a preview and update the
     // auto threshold property
-    if (isPreview && e.getSource() != null && e.getSource() != autoCheckbox
-        && e.getSource() != gd.getPreviewCheckbox()) {
-      if (defaultCutoff >= 0) // Check we have computed the threshold
-      {
-        autoCutoff = (cutoff == defaultCutoff);
-        autoCheckbox.setState(autoCutoff);
-      }
+    if (isPreview && event.getSource() != null && event.getSource() != autoCheckbox
+        && event.getSource() != gd.getPreviewCheckbox()
+        // Check we have computed the threshold
+        && defaultCutoff >= 0) {
+      autoCutoff = (cutoff == defaultCutoff);
+      autoCheckbox.setState(autoCutoff);
     }
 
     return true;
@@ -213,7 +213,7 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
 
   /** {@inheritDoc} */
   @Override
-  public void setNPasses(int nPasses) {
+  public void setNPasses(int passes) {
     // Do nothing
   }
 
@@ -225,25 +225,25 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
     label.setText(String.format("N = %d, Min = %.2f, Max = %.2f, Av = %.2f", objects.length,
         stats[0], stats[1], stats[2]));
 
-    final int cutoff = getCutoff();
+    final int localCutoff = getCutoff();
 
     // Segregate using the object means
     final int[] color = new int[maxObject + 1];
-    final int exclude = getRGB(255, 0, 0);
-    final int include = getRGB(0, 255, 0);
-    int nExclude = 0;
+    final int exclude = getRgb(255, 0, 0);
+    final int include = getRgb(0, 255, 0);
+    int excluded = 0;
     for (int i = 0; i < objects.length; i++) {
       final int maskValue = (int) objects[i][0];
       final double av = objects[i][2];
-      if (av < cutoff) {
+      if (av < localCutoff) {
         color[maskValue] = exclude;
-        nExclude++;
+        excluded++;
       } else {
         color[maskValue] = include;
       }
     }
-    final int nInclude = objects.length - nExclude;
-    label2.setText(String.format("Include = %d, Exclude = %d", nInclude, nExclude));
+    final int included = objects.length - excluded;
+    label2.setText(String.format("Include = %d, Exclude = %d", included, excluded));
 
     final ColorProcessor cp = new ColorProcessor(inputIp.getWidth(), inputIp.getHeight());
     for (int i = 0; i < objectMask.length; i++) {
@@ -262,8 +262,8 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
     imp.setOverlay(overlay);
   }
 
-  private static int getRGB(int r, int g, int b) {
-    return ((r << 16) + (g << 8) + b);
+  private static int getRgb(int red, int green, int blue) {
+    return ((red << 16) + (green << 8) + blue);
   }
 
   private String lastMaskTitle = null;

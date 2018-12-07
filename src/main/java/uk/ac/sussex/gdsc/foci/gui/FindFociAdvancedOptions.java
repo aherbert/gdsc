@@ -153,7 +153,7 @@ public class FindFociAdvancedOptions extends JDialog {
         chckbxOverlayMask.setToolTipText("Overlay the mask of the foci on the image");
         chckbxOverlayMask.addItemListener(new ItemListener() {
           @Override
-          public void itemStateChanged(ItemEvent e) {
+          public void itemStateChanged(ItemEvent event) {
             chckbxOverlayMask.firePropertyChange("selected", 0, 1);
           }
         });
@@ -170,7 +170,7 @@ public class FindFociAdvancedOptions extends JDialog {
         chckbxShowTable.setToolTipText("Display a table of results");
         chckbxShowTable.addItemListener(new ItemListener() {
           @Override
-          public void itemStateChanged(ItemEvent e) {
+          public void itemStateChanged(ItemEvent event) {
             chckbxShowTable.firePropertyChange("selected", 0, 1);
           }
         });
@@ -188,7 +188,7 @@ public class FindFociAdvancedOptions extends JDialog {
         chckbxClearTable.setToolTipText("Clear the current results from the results table");
         chckbxClearTable.addItemListener(new ItemListener() {
           @Override
-          public void itemStateChanged(ItemEvent e) {
+          public void itemStateChanged(ItemEvent event) {
             chckbxClearTable.firePropertyChange("selected", 0, 1);
           }
         });
@@ -206,7 +206,7 @@ public class FindFociAdvancedOptions extends JDialog {
         chckbxMarkMaxima.setToolTipText("Mark the peaks on the original image");
         chckbxMarkMaxima.addItemListener(new ItemListener() {
           @Override
-          public void itemStateChanged(ItemEvent e) {
+          public void itemStateChanged(ItemEvent event) {
             chckbxMarkMaxima.firePropertyChange("selected", 0, 1);
           }
         });
@@ -224,7 +224,7 @@ public class FindFociAdvancedOptions extends JDialog {
         chckbxMarkPeakMaxima.setToolTipText("Mark the peaks on the mask image");
         chckbxMarkPeakMaxima.addItemListener(new ItemListener() {
           @Override
-          public void itemStateChanged(ItemEvent e) {
+          public void itemStateChanged(ItemEvent event) {
             chckbxMarkPeakMaxima.firePropertyChange("selected", 0, 1);
           }
         });
@@ -243,7 +243,7 @@ public class FindFociAdvancedOptions extends JDialog {
             .setToolTipText("Mark peaks using an overlay (supports slice z-position)");
         chckbxMarkUsingOverlay.addItemListener(new ItemListener() {
           @Override
-          public void itemStateChanged(ItemEvent e) {
+          public void itemStateChanged(ItemEvent event) {
             chckbxMarkUsingOverlay.firePropertyChange("selected", 0, 1);
           }
         });
@@ -260,7 +260,7 @@ public class FindFociAdvancedOptions extends JDialog {
         chckbxHideLabels.setToolTipText("Hide the labels on the marked maxima");
         chckbxHideLabels.addItemListener(new ItemListener() {
           @Override
-          public void itemStateChanged(ItemEvent e) {
+          public void itemStateChanged(ItemEvent event) {
             chckbxHideLabels.firePropertyChange("selected", 0, 1);
           }
         });
@@ -277,7 +277,7 @@ public class FindFociAdvancedOptions extends JDialog {
             "Mark maxima locations in the mask using a value above all other mask values");
         chckbxShowMaskMaxima.addItemListener(new ItemListener() {
           @Override
-          public void itemStateChanged(ItemEvent e) {
+          public void itemStateChanged(ItemEvent event) {
             chckbxShowMaskMaxima.firePropertyChange("selected", 0, 1);
           }
         });
@@ -294,7 +294,7 @@ public class FindFociAdvancedOptions extends JDialog {
         chckbxShowLogMessages.setToolTipText("Show algorithm information in the log window");
         chckbxShowLogMessages.addItemListener(new ItemListener() {
           @Override
-          public void itemStateChanged(ItemEvent e) {
+          public void itemStateChanged(ItemEvent event) {
             chckbxShowLogMessages.firePropertyChange("selected", 0, 1);
           }
         });
@@ -322,7 +322,7 @@ public class FindFociAdvancedOptions extends JDialog {
       comboBoxCentreMethod.setToolTipText("The method used to mark the origin of each peak");
       comboBoxCentreMethod.addItemListener(new ItemListener() {
         @Override
-        public void itemStateChanged(ItemEvent e) {
+        public void itemStateChanged(ItemEvent event) {
           comboBoxCentreMethod.firePropertyChange("selectedItem", 0, 1);
         }
       });
@@ -348,8 +348,8 @@ public class FindFociAdvancedOptions extends JDialog {
       sliderCentreParam = new JSlider();
       sliderCentreParam.addMouseListener(new MouseAdapter() {
         @Override
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() > 1) {
+        public void mouseClicked(MouseEvent event) {
+          if (event.getClickCount() > 1) {
             SliderLimitHelper.updateRangeLimits(sliderCentreParam, "Centre parameter", 1, 0,
                 Double.POSITIVE_INFINITY);
           }
@@ -358,7 +358,7 @@ public class FindFociAdvancedOptions extends JDialog {
       sliderCentreParam.setToolTipText("Controls the selected centre method");
       sliderCentreParam.addChangeListener(new ChangeListener() {
         @Override
-        public void stateChanged(ChangeEvent e) {
+        public void stateChanged(ChangeEvent event) {
           sliderCentreParam.firePropertyChange("value", 0, 1);
         }
       });
@@ -382,7 +382,7 @@ public class FindFociAdvancedOptions extends JDialog {
       });
       txtCentreParam.addKeyListener(new KeyAdapter() {
         @Override
-        public void keyReleased(KeyEvent e) {
+        public void keyReleased(KeyEvent event) {
           txtCentreParam.firePropertyChange("text", 0, 1);
         }
       });
@@ -401,7 +401,7 @@ public class FindFociAdvancedOptions extends JDialog {
           .setToolTipText("Remove maxima touching the edge of the analysis region");
       chckbxRemoveEdgeMaxima.addItemListener(new ItemListener() {
         @Override
-        public void itemStateChanged(ItemEvent e) {
+        public void itemStateChanged(ItemEvent event) {
           chckbxRemoveEdgeMaxima.firePropertyChange("selected", 0, 1);
         }
       });
@@ -418,7 +418,7 @@ public class FindFociAdvancedOptions extends JDialog {
       chckbxSaveResults.setToolTipText("Save the results to a directory");
       chckbxSaveResults.addItemListener(new ItemListener() {
         @Override
-        public void itemStateChanged(ItemEvent e) {
+        public void itemStateChanged(ItemEvent event) {
           chckbxSaveResults.firePropertyChange("selected", 0, 1);
         }
       });
@@ -444,7 +444,7 @@ public class FindFociAdvancedOptions extends JDialog {
       txtResultsDirectory.setToolTipText("Sepcify the results directory");
       txtResultsDirectory.addKeyListener(new KeyAdapter() {
         @Override
-        public void keyReleased(KeyEvent e) {
+        public void keyReleased(KeyEvent event) {
           txtResultsDirectory.firePropertyChange("text", 0, 1);
         }
       });
@@ -462,7 +462,7 @@ public class FindFociAdvancedOptions extends JDialog {
       btnDirectoryPicker.setToolTipText("Open a directory picker");
       btnDirectoryPicker.addMouseListener(new MouseAdapter() {
         @Override
-        public void mouseClicked(MouseEvent e) {
+        public void mouseClicked(MouseEvent event) {
           final String dir = ImageJUtils.getDirectory(getTitle(), model.getResultsDirectory());
           if (dir != null) {
             model.setResultsDirectory(dir);
@@ -483,7 +483,7 @@ public class FindFociAdvancedOptions extends JDialog {
           .setToolTipText("Compute objects within the mask and label maxima within each object");
       chckbxObjectAnalysis.addItemListener(new ItemListener() {
         @Override
-        public void itemStateChanged(ItemEvent e) {
+        public void itemStateChanged(ItemEvent event) {
           chckbxObjectAnalysis.firePropertyChange("selected", 0, 1);
         }
       });
@@ -500,7 +500,7 @@ public class FindFociAdvancedOptions extends JDialog {
       chckbxShowObjectMask.setToolTipText("Show the mask of the computed objects");
       chckbxShowObjectMask.addItemListener(new ItemListener() {
         @Override
-        public void itemStateChanged(ItemEvent e) {
+        public void itemStateChanged(ItemEvent event) {
           chckbxShowObjectMask.firePropertyChange("selected", 0, 1);
         }
       });
@@ -517,7 +517,7 @@ public class FindFociAdvancedOptions extends JDialog {
           .setToolTipText("Save the result to memory (allows other plugins to access the results)");
       chckbxSaveToMemory.addItemListener(new ItemListener() {
         @Override
-        public void itemStateChanged(ItemEvent e) {
+        public void itemStateChanged(ItemEvent event) {
           chckbxSaveToMemory.firePropertyChange("selected", 0, 1);
         }
       });
@@ -538,7 +538,7 @@ public class FindFociAdvancedOptions extends JDialog {
         okButton.setToolTipText("Close this window");
         okButton.addMouseListener(new MouseAdapter() {
           @Override
-          public void mouseClicked(MouseEvent e) {
+          public void mouseClicked(MouseEvent event) {
             setVisible(false);
           }
         });

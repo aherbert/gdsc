@@ -33,26 +33,18 @@ import ij.process.ImageProcessor;
 /**
  * Find the peak intensity regions of an image.
  *
- *
- *
  * <p>All local maxima above threshold are identified. For all other pixels the direction to the
  * highest neighbour pixel is stored (steepest gradient). In order of highest local maxima, regions
  * are only grown down the steepest gradient to a lower pixel. Provides many configuration options
  * for regions growing thresholds.
- *
- *
  *
  * <p>This plugin was based on {@link ij.plugin.filter.MaximumFinder}. Options have been changed to
  * only support greyscale 2D images and 3D stacks and to perform region growing using configurable
  * thresholds. Support for Watershed, Previewing, and Euclidian Distance Map (EDM) have been
  * removed.
  *
- *
- *
  * <p>Stopping criteria for region growing routines are partly based on the options in PRIISM
  * (http://www.msg.ucsf.edu/IVE/index.html).
- *
- *
  *
  * <p>Supports 8- or 16-bit images
  */
@@ -63,37 +55,35 @@ public class FindFociIntProcessor extends FindFociBaseProcessor {
   @Override
   protected Object extractImage(ImagePlus imp) {
     if (imp.getBitDepth() != 8 && imp.getBitDepth() != 16) {
-      throw new RuntimeException("Bit-depth not supported: " + imp.getBitDepth());
+      throw new IllegalArgumentException("Bit-depth not supported: " + imp.getBitDepth());
     }
 
     final ImageStack stack = imp.getStack();
-    final int[] image = new int[maxx_maxy_maxz];
+    final int[] localImage = new int[maxxByMaxyByMaxz];
     final int c = imp.getChannel();
     final int f = imp.getFrame();
     for (int slice = 1, i = 0; slice <= maxz; slice++) {
       final int stackIndex = imp.getStackIndex(c, slice, f);
       final ImageProcessor ip = stack.getProcessor(stackIndex);
       for (int index = 0; index < ip.getPixelCount(); index++) {
-        image[i++] = ip.get(index);
+        localImage[i++] = ip.get(index);
       }
     }
-    return image;
+    return localImage;
   }
 
   @Override
   protected byte[] createTypesArray(Object pixels) {
-    return new byte[maxx_maxy_maxz];
+    return new byte[maxxByMaxyByMaxz];
   }
 
   @Override
   protected float getImageMin(Object pixels, byte[] types) {
-    final int[] image = (int[]) pixels;
+    final int[] localImage = (int[]) pixels;
     int min = Integer.MAX_VALUE;
-    for (int i = image.length; i-- > 0;) {
-      if ((types[i] & EXCLUDED) == 0) {
-        if (min > image[i]) {
-          min = image[i];
-        }
+    for (int i = localImage.length; i-- > 0;) {
+      if ((types[i] & EXCLUDED) == 0 && min > localImage[i]) {
+        min = localImage[i];
       }
     }
     return min;
@@ -101,22 +91,22 @@ public class FindFociIntProcessor extends FindFociBaseProcessor {
 
   @Override
   protected Histogram buildHistogram(int bitDepth, Object pixels, byte[] types, int statsMode) {
-    final int[] image = (int[]) pixels;
+    final int[] localImage = (int[]) pixels;
 
     final int size = (int) Math.pow(2, bitDepth);
 
     final int[] data = new int[size];
 
     if (statsMode == OPTION_STATS_INSIDE) {
-      for (int i = image.length; i-- > 0;) {
+      for (int i = localImage.length; i-- > 0;) {
         if ((types[i] & EXCLUDED) == 0) {
-          data[image[i]]++;
+          data[localImage[i]]++;
         }
       }
     } else {
-      for (int i = image.length; i-- > 0;) {
+      for (int i = localImage.length; i-- > 0;) {
         if ((types[i] & EXCLUDED) != 0) {
-          data[image[i]]++;
+          data[localImage[i]]++;
         }
       }
     }
@@ -126,14 +116,14 @@ public class FindFociIntProcessor extends FindFociBaseProcessor {
 
   @Override
   protected Histogram buildHistogram(int bitDepth, Object pixels) {
-    final int[] image = ((int[]) pixels);
+    final int[] localImage = ((int[]) pixels);
 
     final int size = (int) Math.pow(2, bitDepth);
 
     final int[] data = new int[size];
 
-    for (int i = image.length; i-- > 0;) {
-      data[image[i]]++;
+    for (int i = localImage.length; i-- > 0;) {
+      data[localImage[i]]++;
     }
 
     return new Histogram(data);
@@ -141,12 +131,12 @@ public class FindFociIntProcessor extends FindFociBaseProcessor {
 
   @Override
   protected Histogram buildHistogram(Object pixels, int[] maxima, int peakValue, float maxValue) {
-    final int[] image = (int[]) pixels;
+    final int[] localImage = (int[]) pixels;
     final int[] histogram = new int[(int) maxValue + 1];
 
-    for (int i = image.length; i-- > 0;) {
+    for (int i = localImage.length; i-- > 0;) {
       if (maxima[i] == peakValue) {
-        histogram[image[i]]++;
+        histogram[localImage[i]]++;
       }
     }
     return new Histogram(histogram);
@@ -187,8 +177,8 @@ public class FindFociIntProcessor extends FindFociBaseProcessor {
   }
 
   @Override
-  protected float getf(int i) {
-    return image[i];
+  protected float getf(int index) {
+    return image[index];
   }
 
   @Override
@@ -197,8 +187,8 @@ public class FindFociIntProcessor extends FindFociBaseProcessor {
   }
 
   @Override
-  protected int getBin(Histogram histogram, int i) {
-    return image[i];
+  protected int getBin(Histogram histogram, int index) {
+    return image[index];
   }
 
   @Override
@@ -209,39 +199,36 @@ public class FindFociIntProcessor extends FindFociBaseProcessor {
         return round(stats.background);
 
       case SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND:
-        if (searchParameter < 0) {
-          searchParameter = 0;
-        }
-        return round(stats.background + searchParameter * (v0 - stats.background));
+        return round(stats.background + Math.max(0, searchParameter) * (v0 - stats.background));
 
       case SEARCH_HALF_PEAK_VALUE:
         return round(stats.background + 0.5 * (v0 - stats.background));
+
+      default:
+        return 0;
     }
-    return 0;
   }
 
   @Override
   protected double getPeakHeight(int peakMethod, double peakParameter, FindFociStatistics stats,
       float v0) {
     int height = 1;
-    if (peakParameter < 0) {
-      peakParameter = 0;
-    }
+    final double localPeakParameter = Math.max(0, peakParameter);
     switch (peakMethod) {
       case PEAK_ABSOLUTE:
-        height = round(peakParameter);
+        height = round(localPeakParameter);
         break;
       case PEAK_RELATIVE:
-        height = round(v0 * peakParameter);
+        height = round(v0 * localPeakParameter);
         break;
       case PEAK_RELATIVE_ABOVE_BACKGROUND:
-        height = round((v0 - stats.background) * peakParameter);
+        height = round((v0 - stats.background) * localPeakParameter);
         break;
+      default:
+        return height;
     }
-    if (height < 1) {
-      height = 1; // It should be a peak
-    }
-    return height;
+    // It should be a peak so ensure it is above zero
+    return Math.max(1, height);
   }
 
   @Override

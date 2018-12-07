@@ -68,37 +68,37 @@ public class FindFociGui_PlugIn implements PlugIn {
     }
 
     @Override
-    public void windowOpened(WindowEvent e) {
+    public void windowOpened(WindowEvent event) {
       // Ignore
     }
 
     @Override
-    public void windowClosing(WindowEvent e) {
+    public void windowClosing(WindowEvent event) {
       WindowManager.removeWindow(instance);
     }
 
     @Override
-    public void windowClosed(WindowEvent e) {
+    public void windowClosed(WindowEvent event) {
       // Ignore
     }
 
     @Override
-    public void windowIconified(WindowEvent e) {
+    public void windowIconified(WindowEvent event) {
       // Ignore
     }
 
     @Override
-    public void windowDeiconified(WindowEvent e) {
+    public void windowDeiconified(WindowEvent event) {
       // Ignore
     }
 
     @Override
-    public void windowActivated(WindowEvent e) {
+    public void windowActivated(WindowEvent event) {
       // Ignore
     }
 
     @Override
-    public void windowDeactivated(WindowEvent e) {
+    public void windowDeactivated(WindowEvent event) {
       // Ignore
     }
 
@@ -164,8 +164,8 @@ public class FindFociGui_PlugIn implements PlugIn {
         // Ask if the user would like a second instance
         final GenericDialog gd = new GenericDialog(FindFoci_PlugIn.TITLE);
         gd.enableYesNoCancel();
-        gd.addMessage(
-            FindFoci_PlugIn.TITLE + " is already open.\n \nDo you want to create another instance?");
+        gd.addMessage(FindFoci_PlugIn.TITLE
+            + " is already open.\n \nDo you want to create another instance?");
         gd.showDialog();
         if (gd.wasCanceled()) {
           return;

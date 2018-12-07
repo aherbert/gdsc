@@ -169,7 +169,9 @@ public class AlignImagesFft_PlugIn implements PlugIn {
     }
 
     gd.addMessage(
-        "Align target image stack to a reference using\ncorrelation in the frequency domain. Edge artifacts\ncan be reduced using a window function or by\nrestricting the translation.");
+        "Align target image stack to a reference using\ncorrelation in the frequency domain. "
+            + "Edge artifacts\n"
+            + "can be reduced using a window function or by\nrestricting the translation.");
 
     gd.addChoice("Reference_image", imageList, reference);
     gd.addChoice("Target_image", targetList, target);

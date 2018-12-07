@@ -25,20 +25,18 @@
 package uk.ac.sussex.gdsc.utils;
 
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.ij.plugin.ZProjector2;
+import uk.ac.sussex.gdsc.ij.plugin.ExtendedZProjector;
 
 import ij.plugin.PlugIn;
 
 /**
- * Pass through class allowing the {@link uk.ac.sussex.gdsc.ij.plugin.filter.MaskParticleAnalyzer }
- * to be loaded by the ImageJ plugin class loader.
+ * Pass through class allowing the {@link ExtendedZProjector } to be loaded by the ImageJ plugin class
+ * loader.
  */
-public class ZProjector2_PlugIn implements PlugIn {
-  private final ZProjector2 filter = new ZProjector2();
-
+public class ExtendedZProjector_PlugIn implements PlugIn {
   @Override
   public void run(String arg) {
     UsageTracker.recordPlugin(this.getClass(), arg);
-    filter.run(arg);
+    new ExtendedZProjector().run(arg);
   }
 }

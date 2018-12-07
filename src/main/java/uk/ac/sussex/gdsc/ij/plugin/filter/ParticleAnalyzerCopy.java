@@ -72,7 +72,8 @@ import java.util.Properties;
 
 /**
  * A copy of ImageJ's Analyze Particles command. Copied from
- * {@link ij.plugin.filter.ParticleAnalyzer}.
+ * {@link ij.plugin.filter.ParticleAnalyzer} to allow the class to be extended. Visibility of
+ * members may have been changed.
  *
  * <pre>
  *   for each line do
@@ -85,6 +86,7 @@ import java.util.Properties;
  *         continue the scan
  * </pre>
  */
+// CHECKSTYLE.OFF
 @SuppressWarnings({"unused", "javadoc"})
 public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
   /** Display results in the ImageJ console. */
@@ -1320,7 +1322,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
       overlay.add(roi2);
     } else {
       final Rectangle r = roi.getBounds();
-      final int nPoints = ((PolygonRoi) roi).getNCoordinates();
+      final int npoints = ((PolygonRoi) roi).getNCoordinates();
       final int[] xp = ((PolygonRoi) roi).getXCoordinates();
       final int[] yp = ((PolygonRoi) roi).getYCoordinates();
       final int x = r.x;
@@ -1329,7 +1331,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
         ip.setValue(0.0);
       }
       ip.moveTo(x + xp[0], y + yp[0]);
-      for (int i = 1; i < nPoints; i++) {
+      for (int i = 1; i < npoints; i++) {
         ip.lineTo(x + xp[i], y + yp[i]);
       }
       ip.lineTo(x + xp[0], y + yp[0]);

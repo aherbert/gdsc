@@ -38,16 +38,16 @@ import java.awt.AWTEvent;
 import java.awt.Color;
 
 /**
- * Alows an RGB image to be filtered using HSB limits.
+ * Allows an RGB image to be filtered using HSB limits.
  */
 public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
-  private final int flags = DOES_RGB | SNAPSHOT;
+  private static final int FLAGS = DOES_RGB | SNAPSHOT;
 
-  private static final String TITLE = "HSB Filter";
+  static final String TITLE = "HSB Filter";
 
-  private float[] h = null;
-  private float[] s = null;
-  private float[] b = null;
+  private float[] hues = null;
+  private float[] saturations = null;
+  private float[] brightnesses = null;
 
   // Allow to be set by others in the package
 
@@ -77,7 +77,7 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
     if (imp == null) {
       return DONE;
     }
-    return flags;
+    return FLAGS;
   }
 
   /** {@inheritDoc} */
@@ -87,7 +87,7 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
     // Set-up the HSB images
     final ColorProcessor cp = (ColorProcessor) imp.getProcessor().duplicate();
-    getHSB((int[]) cp.getPixels());
+    getHsb((int[]) cp.getPixels());
 
     gd.addSlider("Hue", 0.01, 1, hue);
     gd.addSlider("Hue_width", 0.01, 1, hueWidth);
@@ -106,33 +106,32 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
       return DONE;
     }
 
-    return flags;
+    return FLAGS;
   }
 
-  private void getHSB(int[] pixels) {
-    int c;
+  private void getHsb(int[] pixels) {
     int rr;
     int gg;
     int bb;
     float[] hsb = new float[3];
-    h = new float[pixels.length];
-    s = new float[pixels.length];
-    b = new float[pixels.length];
+    hues = new float[pixels.length];
+    saturations = new float[pixels.length];
+    brightnesses = new float[pixels.length];
     for (int i = 0; i < pixels.length; i++) {
-      c = pixels[i];
-      rr = (c & 0xff0000) >> 16;
-      gg = (c & 0xff00) >> 8;
-      bb = c & 0xff;
+      int value = pixels[i];
+      rr = (value & 0xff0000) >> 16;
+      gg = (value & 0xff00) >> 8;
+      bb = value & 0xff;
       hsb = Color.RGBtoHSB(rr, gg, bb, hsb);
-      h[i] = hsb[0];
-      s[i] = hsb[1];
-      b[i] = hsb[2];
+      hues[i] = hsb[0];
+      saturations[i] = hsb[1];
+      brightnesses[i] = hsb[2];
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+  public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
     hue = (float) gd.getNextNumber();
     hueWidth = (float) gd.getNextNumber();
     saturation = (float) gd.getNextNumber();
@@ -144,7 +143,7 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
   /** {@inheritDoc} */
   @Override
-  public void setNPasses(int nPasses) {
+  public void setNPasses(int passes) {
     // Do nothing
   }
 
@@ -157,25 +156,18 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
     final float maxS = saturation + saturationWidth;
     final float minB = brightness - brightnessWidth;
     final float maxB = brightness + brightnessWidth;
-    for (int i = 0; i < s.length; i++) {
-      float hh = h[i];
-      final float ss = s[i];
-      final float bb = b[i];
+    for (int i = 0; i < saturations.length; i++) {
+      float hh = hues[i];
+      final float ss = saturations[i];
+      final float bb = brightnesses[i];
 
+      // Hue wraps around from 0 to 1 so if below the limit check it is above the limit
+      // after wrapping
       if (hh < minH) {
         hh += 1;
       }
-      if (hh > maxH) {
+      if ((hh > maxH) || (ss < minS || ss > maxS) || (bb < minB || bb > maxB)) {
         inputProcessor.set(i, 0);
-        continue;
-      }
-      if (ss < minS || ss > maxS) {
-        inputProcessor.set(i, 0);
-        continue;
-      }
-      if (bb < minB || bb > maxB) {
-        inputProcessor.set(i, 0);
-        continue;
       }
     }
   }

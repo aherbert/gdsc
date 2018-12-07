@@ -47,8 +47,6 @@ import java.util.LinkedList;
 /**
  * Find the peak intensity regions of an image.
  *
- *
- *
  * <p>This is an old version of the FindFoci algorithm before it was converted to allow 32-bit
  * images. It is used for unit testing to ensure the new version functions correctly.
  */
@@ -568,15 +566,11 @@ public class FindFociLegacy {
   /**
    * Here the processing is done: Find the maxima of an image.
    *
-   *
-   *
    * <p>Local maxima are processed in order, highest first. Regions are grown from local maxima
    * until a saddle point is found or the stopping criteria are met (based on pixel intensity). If a
    * peak does not meet the peak criteria (min size) it is absorbed into the highest peak that
    * touches it (if a neighbour peak exists). Only a single iteration is performed and consequently
    * peak absorption could produce sub-optimal results due to greedy peak growth.
-   *
-   *
    *
    * <p>Peak expansion stopping criteria are defined using the method parameter. See
    * {@link #SEARCH_ABOVE_BACKGROUND}; {@link #SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND};
@@ -669,7 +663,7 @@ public class FindFociLegacy {
     int exclusion = excludeOutsideROI(originalImp, types, isLogging);
     exclusion += excludeOutsideMask(mask, types, isLogging);
 
-    // The histogram is used to process the levels in the assignPointsToMaxima() routine.
+    // The histogram is used to process the levels in the assignpointsToMaxima() routine.
     // So only use those that have not been excluded.
     IJ.showStatus("Building histogram...");
 
@@ -716,26 +710,26 @@ public class FindFociLegacy {
     if (isLogging) {
       IJ.log("Background level = " + IJ.d2s(stats[STATS_BACKGROUND], 2));
     }
-    Coordinate[] maxPoints = getSortedMaxPoints(image, maxima, types, round(stats[STATS_MIN]),
+    Coordinate[] maxpoints = getSortedMaxpoints(image, maxima, types, round(stats[STATS_MIN]),
         round(stats[STATS_BACKGROUND]));
 
-    if (ImageJUtils.isInterrupted() || maxPoints == null) {
+    if (ImageJUtils.isInterrupted() || maxpoints == null) {
       return null;
     }
 
     if (isLogging) {
-      IJ.log("Number of potential maxima = " + maxPoints.length);
+      IJ.log("Number of potential maxima = " + maxpoints.length);
     }
     IJ.showStatus("Analyzing maxima...");
 
-    final ArrayList<int[]> resultsArray = new ArrayList<>(maxPoints.length);
+    final ArrayList<int[]> resultsArray = new ArrayList<>(maxpoints.length);
 
-    assignMaxima(maxima, maxPoints, resultsArray);
+    assignMaxima(maxima, maxpoints, resultsArray);
 
     // Free memory
-    maxPoints = null;
+    maxpoints = null;
 
-    assignPointsToMaxima(image, histogram, types, stats, maxima);
+    assignpointsToMaxima(image, histogram, types, stats, maxima);
 
     if (ImageJUtils.isInterrupted()) {
       return null;
@@ -1164,14 +1158,14 @@ public class FindFociLegacy {
         // reset unneeded flags
         types[index] &= BELOW_SADDLE;
 
-        getXY(index, xyz);
+        getXy(index, xyz);
         final int x = xyz[0];
         final int y = xyz[1];
-        final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+        final boolean isInnerXy = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
 
         // Process the neighbours
         for (int d = 8; d-- > 0;) {
-          if (isInnerXY || isWithinXY(x, y, d)) {
+          if (isInnerXy || isWithinXy(x, y, d)) {
             final int index2 = index + offset[d];
 
             // Check if neighbour is a different peak
@@ -1206,7 +1200,7 @@ public class FindFociLegacy {
 
     for (int i = maxx_maxy, index = maxx_maxy * z; i-- > 0; index++) {
       if ((types[index] & SADDLE_POINT) != 0) {
-        getXY(index, xyz);
+        getXy(index, xyz);
         final int x = xyz[0];
         final int y = xyz[1];
 
@@ -1215,7 +1209,7 @@ public class FindFociLegacy {
         final boolean[] edgesSet = new boolean[8];
         for (int d = 8; d-- > 0;) {
           // analyze 4 flat-edge neighbours
-          if (isInner || isWithinXY(x, y, d)) {
+          if (isInner || isWithinXy(x, y, d)) {
             edgesSet[d] = ((types[index + offset[d]] & SADDLE_POINT) != 0);
           }
         }
@@ -1259,7 +1253,7 @@ public class FindFociLegacy {
     final int[] xyz = new int[3];
     boolean continues;
     do {
-      getXY(index, xyz);
+      getXy(index, xyz);
       final int x = xyz[0];
       final int y = xyz[1];
 
@@ -1269,7 +1263,7 @@ public class FindFociLegacy {
                                                                                       // but faster
       // than isWithin
       for (int d = 0; d < 8; d += 2) {
-        if (isInner || isWithinXY(x, y, d)) {
+        if (isInner || isWithinXy(x, y, d)) {
           final int index2 = index + offset[d];
           final byte v = types[index2];
           if ((v & SADDLE_WITHIN) != SADDLE_WITHIN && (v & SADDLE_POINT) == SADDLE_POINT) {
@@ -1302,7 +1296,7 @@ public class FindFociLegacy {
     boolean prevPixelSet = true;
     boolean firstPixelSet = true; // initialize to make the compiler happy
     final int[] xyz = new int[3];
-    getXY(index, xyz);
+    getXy(index, xyz);
     final int x = xyz[0];
     final int y = xyz[1];
 
@@ -1313,7 +1307,7 @@ public class FindFociLegacy {
     // isWithin
     for (int d = 0; d < 8; d++) { // walk around the point and note every no-line->line transition
       boolean pixelSet = prevPixelSet;
-      if (isInner || isWithinXY(x, y, d)) {
+      if (isInner || isWithinXy(x, y, d)) {
         final boolean isSet = ((types[index + offset[d]] & SADDLE_WITHIN) == SADDLE_WITHIN);
         if ((d & 1) == 0) {
           pixelSet = isSet; // non-diagonal directions: always regarded
@@ -1834,10 +1828,10 @@ public class FindFociLegacy {
    * @param threshold The threshold below which no pixels are processed.
    * @return Maxima sorted by value.
    */
-  private Coordinate[] getSortedMaxPoints(int[] image, int[] maxima, byte[] types, int globalMin,
+  private Coordinate[] getSortedMaxpoints(int[] image, int[] maxima, byte[] types, int globalMin,
       int threshold) {
-    final ArrayList<Coordinate> maxPoints = new ArrayList<>(500);
-    int[] pList = null; // working list for expanding local plateaus
+    final ArrayList<Coordinate> maxpoints = new ArrayList<>(500);
+    int[] pointList = null; // working list for expanding local plateaus
 
     int id = 0;
     final int[] xyz = new int[3];
@@ -1856,7 +1850,7 @@ public class FindFociLegacy {
         continue;
       }
 
-      getXYZ(i, xyz);
+      getXyz(i, xyz);
 
       final int x = xyz[0];
       final int y = xyz[1];
@@ -1865,15 +1859,15 @@ public class FindFociLegacy {
       /*
        * check whether we have a local maximum.
        */
-      final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
-      final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
+      final boolean isInnerXy = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+      final boolean isInnerXyz = (zlimit == 0) ? isInnerXy : isInnerXy && (z != 0 && z != zlimit);
       boolean isMax = true, equalNeighbour = false;
 
       // It is more likely that the z stack will be out-of-bounds.
       // Adopt the xy limit lookup and process z lookup separately
 
       for (int d = dStart; d-- > 0;) {
-        if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d)) {
+        if (isInnerXyz || (isInnerXy && isWithinZ(z, d)) || isWithinXyz(x, y, z, d)) {
           final int vNeighbor = image[i + offset[d]];
           if (vNeighbor > v) {
             isMax = false;
@@ -1896,22 +1890,22 @@ public class FindFociLegacy {
 
         if (equalNeighbour) {
           // Initialise the working list
-          if (pList == null) {
+          if (pointList == null) {
             // Create an array to hold the rest of the points (worst case scenario for the maxima
             // expansion)
-            pList = new int[i + 1];
+            pointList = new int[i + 1];
           }
 
           // Search the local area marking all equal neighbour points as maximum
-          if (!expandMaximum(image, maxima, types, globalMin, threshold, i, v, id, maxPoints,
-              pList)) {
+          if (!expandMaximum(image, maxima, types, globalMin, threshold, i, v, id, maxpoints,
+              pointList)) {
             // Not a true maximum, ignore this
             id--;
           }
         } else {
           types[i] |= MAXIMUM | MAX_AREA;
           maxima[i] = id;
-          maxPoints.add(new Coordinate(x, y, z, id, v));
+          maxpoints.add(new Coordinate(x, y, z, id, v));
         }
       }
     }
@@ -1923,27 +1917,27 @@ public class FindFociLegacy {
       return null;
     }
 
-    Collections.sort(maxPoints);
+    Collections.sort(maxpoints);
 
     // Build a map between the original id and the new id following the sort
-    final int[] idMap = new int[maxPoints.size() + 1];
+    final int[] idMap = new int[maxpoints.size() + 1];
 
     // Label the points
-    for (int i = 0; i < maxPoints.size(); i++) {
+    for (int i = 0; i < maxpoints.size(); i++) {
       final int newId = (i + 1);
-      final int oldId = maxPoints.get(i).id;
+      final int oldId = maxpoints.get(i).id;
       idMap[oldId] = newId;
-      maxPoints.get(i).id = newId;
+      maxpoints.get(i).id = newId;
     }
 
     reassignMaxima(maxima, idMap);
 
-    final Coordinate[] results = maxPoints.toArray(new Coordinate[maxPoints.size()]);
+    final Coordinate[] results = maxpoints.toArray(new Coordinate[maxpoints.size()]);
     // XXX - Debug
     // for (Coordinate r : results)
     // logger.fine(FunctionUtils.getSupplier("[%d] %d = %d\n", r.id, r.index, r.value));
     return results;
-  } // getSortedMaxPoints
+  } // getSortedMaxpoints
 
   /**
    * Searches from the specified point to find all coordinates of the same value and determines the
@@ -1957,26 +1951,26 @@ public class FindFociLegacy {
    * @param index0 the index 0
    * @param v0 the v 0
    * @param id the id
-   * @param maxPoints the max points
-   * @param pList the list
+   * @param maxpoints the max points
+   * @param pointList the list
    * @return True if this is a true plateau, false if the plateau reaches a higher point
    */
   private boolean expandMaximum(int[] image, int[] maxima, byte[] types, int globalMin,
-      int threshold, int index0, int v0, int id, ArrayList<Coordinate> maxPoints, int[] pList) {
+      int threshold, int index0, int v0, int id, ArrayList<Coordinate> maxpoints, int[] pointList) {
     types[index0] |= LISTED | PLATEAU; // mark first point as listed
     int listI = 0; // index of current search element in the list
     int listLen = 1; // number of elements in the list
 
     // we create a list of connected points and start the list at the current maximum
-    pList[listI] = index0;
+    pointList[listI] = index0;
 
     // Calculate the center of plateau
     boolean isPlateau = true;
     final int[] xyz = new int[3];
 
     do {
-      final int index1 = pList[listI];
-      getXYZ(index1, xyz);
+      final int index1 = pointList[listI];
+      getXyz(index1, xyz);
       final int x1 = xyz[0];
       final int y1 = xyz[1];
       final int z1 = xyz[2];
@@ -1984,11 +1978,11 @@ public class FindFociLegacy {
       // It is more likely that the z stack will be out-of-bounds.
       // Adopt the xy limit lookup and process z lookup separately
 
-      final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-      final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+      final boolean isInnerXy = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+      final boolean isInnerXyz = (zlimit == 0) ? isInnerXy : isInnerXy && (z1 != 0 && z1 != zlimit);
 
       for (int d = dStart; d-- > 0;) {
-        if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d)) {
+        if (isInnerXyz || (isInnerXy && isWithinZ(z1, d)) || isWithinXyz(x1, y1, z1, d)) {
           final int index2 = index1 + offset[d];
           if ((types[index2] & IGNORE) != 0) {
             // This has been done already, ignore this point
@@ -2001,7 +1995,7 @@ public class FindFociLegacy {
             isPlateau = false;
           } else if (v2 == v0) {
             // Add this to the search
-            pList[listLen++] = index2;
+            pointList[listLen++] = index2;
             types[index2] |= LISTED | PLATEAU;
           }
         }
@@ -2021,7 +2015,7 @@ public class FindFociLegacy {
     int nEqual = 0;
     if (isPlateau) {
       for (int i = listLen; i-- > 0;) {
-        getXYZ(pList[i], xyz);
+        getXyz(pointList[i], xyz);
         xEqual += xyz[0];
         yEqual += xyz[1];
         zEqual += xyz[2];
@@ -2037,11 +2031,11 @@ public class FindFociLegacy {
 
     // Calculate the maxima origin as the closest pixel to the centre-of-mass
     for (int i = listLen; i-- > 0;) {
-      final int index = pList[i];
+      final int index = pointList[i];
       types[index] &= ~LISTED; // reset attributes no longer needed
 
       if (isPlateau) {
-        getXYZ(index, xyz);
+        getXyz(index, xyz);
 
         final int x = xyz[0];
         final int y = xyz[1];
@@ -2062,9 +2056,9 @@ public class FindFociLegacy {
 
     // Assign the maximum
     if (isPlateau) {
-      final int index = pList[iMax];
+      final int index = pointList[iMax];
       types[index] |= MAXIMUM;
-      maxPoints.add(new Coordinate(index, id, v0));
+      maxpoints.add(new Coordinate(index, id, v0));
     }
 
     return isPlateau;
@@ -2074,14 +2068,14 @@ public class FindFociLegacy {
    * Initialises the maxima image using the maxima Id for each point.
    *
    * @param maxima the maxima
-   * @param maxPoints the max points
+   * @param maxpoints the max points
    * @param resultsArray the results array
    */
-  private void assignMaxima(int[] maxima, Coordinate[] maxPoints, ArrayList<int[]> resultsArray) {
+  private void assignMaxima(int[] maxima, Coordinate[] maxpoints, ArrayList<int[]> resultsArray) {
     final int[] xyz = new int[3];
 
-    for (final Coordinate maximum : maxPoints) {
-      getXYZ(maximum.index, xyz);
+    for (final Coordinate maximum : maxpoints) {
+      getXyz(maximum.index, xyz);
 
       maxima[maximum.index] = maximum.id;
 
@@ -2102,7 +2096,7 @@ public class FindFociLegacy {
    * Assigns points to their maxima using the steepest uphill gradient. Processes points in order of
    * height, progressively building peaks in a top-down fashion.
    */
-  private void assignPointsToMaxima(int[] image, int[] histogram, byte[] types, double[] stats,
+  private void assignpointsToMaxima(int[] image, int[] histogram, byte[] types, double[] stats,
       int[] maxima) {
     final int background = round(stats[STATS_BACKGROUND]);
     final int maxValue = round(stats[STATS_MAX]);
@@ -2220,7 +2214,7 @@ public class FindFociLegacy {
    */
   private int processLevel(int[] image, byte[] types, int[] maxima, int levelStart,
       int levelNPoints, int[] coordinates, int background) {
-    // int[] pList = new int[0]; // working list for expanding local plateaus
+    // int[] pointList = new int[0]; // working list for expanding local plateaus
     int nChanged = 0;
     int nUnchanged = 0;
     final int[] xyz = new int[3];
@@ -2234,7 +2228,7 @@ public class FindFociLegacy {
         continue;
       }
 
-      getXYZ(index, xyz);
+      getXyz(index, xyz);
 
       // Extract the point coordinate
       final int x = xyz[0];
@@ -2245,8 +2239,8 @@ public class FindFociLegacy {
 
       // It is more likely that the z stack will be out-of-bounds.
       // Adopt the xy limit lookup and process z lookup separately
-      final boolean isInnerXY = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
-      final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z != 0 && z != zlimit);
+      final boolean isInnerXy = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+      final boolean isInnerXyz = (zlimit == 0) ? isInnerXy : isInnerXy && (z != 0 && z != zlimit);
 
       // Check for the highest neighbour
 
@@ -2256,7 +2250,7 @@ public class FindFociLegacy {
       int dMax = -1;
       int vMax = v;
       for (int d = dStart; d-- > 0;) {
-        if (isInnerXYZ || (isInnerXY && isWithinZ(z, d)) || isWithinXYZ(x, y, z, d)) {
+        if (isInnerXyz || (isInnerXy && isWithinZ(z, d)) || isWithinXyz(x, y, z, d)) {
           final int index2 = index + offset[d];
           final int vNeighbor = image[index2];
           if (vMax < vNeighbor) // Higher neighbour
@@ -2323,12 +2317,12 @@ public class FindFociLegacy {
       // image[index2]));
       //
       // // Initialise the list to allow all points on this level to be processed.
-      // if (pList.length < levelNPoints)
+      // if (pointList.length < levelNPoints)
       // {
-      // pList = new int[levelNPoints];
+      // pointList = new int[levelNPoints];
       // }
       //
-      // expandPlateau(image, maxima, types, index, v, maxima[index2], pList);
+      // expandPlateau(image, maxima, types, index, v, maxima[index2], pointList);
       // }
       // else
       {
@@ -2466,20 +2460,20 @@ public class FindFociLegacy {
     }
 
     // Working list of peak coordinates
-    int[] pList = new int[0];
+    int[] pointList = new int[0];
 
     // For each peak, compute the centre
     for (final int[] result : resultsArray) {
       // Ensure list is large enough
-      if (pList.length < result[RESULT_COUNT]) {
-        pList = new int[result[RESULT_COUNT]];
+      if (pointList.length < result[RESULT_COUNT]) {
+        pointList = new int[result[RESULT_COUNT]];
       }
 
       // Find the peak coords above the saddle
       final int maximaId = result[RESULT_PEAK_ID];
       final int index = getIndex(result[RESULT_X], result[RESULT_Y], result[RESULT_Z]);
       final int listLen = findMaximaCoords(image, maxima, types, index, maximaId,
-          result[RESULT_HIGHEST_SADDLE_VALUE], pList);
+          result[RESULT_HIGHEST_SADDLE_VALUE], pointList);
       // IJ.log("maxima size > saddle = " + listLen);
 
       // Find the boundaries of the coordinates
@@ -2487,8 +2481,8 @@ public class FindFociLegacy {
       final int[] max_xyz = new int[] {0, 0, 0};
       final int[] xyz = new int[3];
       for (int listI = listLen; listI-- > 0;) {
-        final int index1 = pList[listI];
-        getXYZ(index1, xyz);
+        final int index1 = pointList[listI];
+        getXyz(index1, xyz);
         for (int i = 3; i-- > 0;) {
           if (min_xyz[i] > xyz[i]) {
             min_xyz[i] = xyz[i];
@@ -2561,28 +2555,28 @@ public class FindFociLegacy {
    * @return The number of points
    */
   private int findMaximaCoords(int[] image, int[] maxima, byte[] types, int index0, int maximaId,
-      int saddleValue, int[] pList) {
+      int saddleValue, int[] pointList) {
     types[index0] |= LISTED; // mark first point as listed
     int listI = 0; // index of current search element in the list
     int listLen = 1; // number of elements in the list
 
     // we create a list of connected points and start the list at the current maximum
-    pList[listI] = index0;
+    pointList[listI] = index0;
 
     final int[] xyz = new int[3];
 
     do {
-      final int index1 = pList[listI];
-      getXYZ(index1, xyz);
+      final int index1 = pointList[listI];
+      getXyz(index1, xyz);
       final int x1 = xyz[0];
       final int y1 = xyz[1];
       final int z1 = xyz[2];
 
-      final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-      final boolean isInnerXYZ = (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+      final boolean isInnerXy = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+      final boolean isInnerXyz = (zlimit == 0) ? isInnerXy : isInnerXy && (z1 != 0 && z1 != zlimit);
 
       for (int d = dStart; d-- > 0;) {
-        if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d)) {
+        if (isInnerXyz || (isInnerXy && isWithinZ(z1, d)) || isWithinXyz(x1, y1, z1, d)) {
           final int index2 = index1 + offset[d];
           if ((types[index2] & IGNORE) != 0 || maxima[index2] != maximaId) {
             // This has been done already, ignore this point
@@ -2593,7 +2587,7 @@ public class FindFociLegacy {
 
           if (v2 >= saddleValue) {
             // Add this to the search
-            pList[listLen++] = index2;
+            pointList[listLen++] = index2;
             types[index2] |= LISTED;
           }
         }
@@ -2605,7 +2599,7 @@ public class FindFociLegacy {
     while (listI < listLen);
 
     for (int i = listLen; i-- > 0;) {
-      final int index = pList[i];
+      final int index = pointList[i];
       types[index] &= ~LISTED; // reset attributes no longer needed
     }
 
@@ -2921,7 +2915,7 @@ public class FindFociLegacy {
     }
 
     final int maxPeakSize = getMaxPeakSize(resultsArray);
-    final int[][] pList = new int[maxPeakSize][2]; // here we enter points starting from a maximum
+    final int[][] pointList = new int[maxPeakSize][2]; // here we enter points starting from a maximum
                                                    // (index,value)
     final int[] xyz = new int[3];
 
@@ -2943,14 +2937,14 @@ public class FindFociLegacy {
       int listLen = 1; // number of elements in the list
 
       // we create a list of connected points and start the list at the current maximum
-      pList[0][0] = index0;
-      pList[0][1] = v0;
+      pointList[0][0] = index0;
+      pointList[0][1] = v0;
 
       do {
-        final int index1 = pList[listI][0];
-        final int v1 = pList[listI][1];
+        final int index1 = pointList[listI][0];
+        final int v1 = pointList[listI][1];
 
-        getXYZ(index1, xyz);
+        getXyz(index1, xyz);
         final int x1 = xyz[0];
         final int y1 = xyz[1];
         final int z1 = xyz[2];
@@ -2958,13 +2952,13 @@ public class FindFociLegacy {
         // It is more likely that the z stack will be out-of-bounds.
         // Adopt the xy limit lookup and process z lookup separately
 
-        final boolean isInnerXY = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-        final boolean isInnerXYZ =
-            (zlimit == 0) ? isInnerXY : isInnerXY && (z1 != 0 && z1 != zlimit);
+        final boolean isInnerXy = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
+        final boolean isInnerXyz =
+            (zlimit == 0) ? isInnerXy : isInnerXy && (z1 != 0 && z1 != zlimit);
 
         // Check for the highest neighbour
         for (int d = dStart; d-- > 0;) {
-          if (isInnerXYZ || (isInnerXY && isWithinZ(z1, d)) || isWithinXYZ(x1, y1, z1, d)) {
+          if (isInnerXyz || (isInnerXy && isWithinZ(z1, d)) || isWithinXyz(x1, y1, z1, d)) {
             // Get the coords
             final int index2 = index1 + offset[d];
 
@@ -2977,8 +2971,8 @@ public class FindFociLegacy {
 
             if (id2 == id) {
               // Add this to the search
-              pList[listLen][0] = index2;
-              pList[listLen][1] = image[index2];
+              pointList[listLen][0] = index2;
+              pointList[listLen][1] = image[index2];
               listLen++;
               types[index2] |= LISTED;
             } else if (id2 != 0) {
@@ -3008,7 +3002,7 @@ public class FindFociLegacy {
       while (listI < listLen);
 
       for (int i = listLen; i-- > 0;) {
-        final int index = pList[i][0];
+        final int index = pointList[i][0];
         types[index] &= ~LISTED; // reset attributes no longer needed
       }
 
@@ -3790,7 +3784,7 @@ public class FindFociLegacy {
    * @param xyz the xyz
    * @return The xyz array
    */
-  private int[] getXYZ(int index, int[] xyz) {
+  private int[] getXyz(int index, int[] xyz) {
     xyz[2] = index / (maxx_maxy);
     final int mod = index % (maxx_maxy);
     xyz[1] = mod / maxx;
@@ -3805,7 +3799,7 @@ public class FindFociLegacy {
    * @param xyz the xyz
    * @return The xyz array
    */
-  private int[] getXY(int index, int[] xyz) {
+  private int[] getXy(int index, int[] xyz) {
     final int mod = index % (maxx_maxy);
     xyz[1] = mod / maxx;
     xyz[0] = mod % maxx;
@@ -3822,7 +3816,7 @@ public class FindFociLegacy {
    * @param direction the direction from the pixel towards the neighbour
    * @return true if the neighbour is within the image (provided that x, y is within)
    */
-  private boolean isWithinXY(int x, int y, int direction) {
+  private boolean isWithinXy(int x, int y, int direction) {
     switch (direction) {
       case 0:
         return (y > 0);
@@ -3857,7 +3851,7 @@ public class FindFociLegacy {
    * @param direction the direction from the pixel towards the neighbour
    * @return true if the neighbour is within the image (provided that x, y, z is within)
    */
-  private boolean isWithinXYZ(int x, int y, int z, int direction) {
+  private boolean isWithinXyz(int x, int y, int z, int direction) {
     switch (direction) {
       case 0:
         return (y > 0);

@@ -39,7 +39,7 @@ import java.util.ArrayList;
 /**
  * Contains help dialogs for the GDSC ImageJ plugins.
  */
-public class About_Plugin implements PlugIn {
+public class About_PlugIn implements PlugIn {
   /** The title of the plugin. */
   private static final String TITLE = "GDSC ImageJ Plugins";
   private static final String HELP_URL =
@@ -89,19 +89,19 @@ public class About_Plugin implements PlugIn {
     }
 
     // Locate the README.txt file and load that into the dialog. Include SVN revision
-    final Class<About_Plugin> resourceClass = About_Plugin.class;
+    final Class<About_PlugIn> resourceClass = About_PlugIn.class;
     final InputStream readmeStream =
         resourceClass.getResourceAsStream("/uk/ac/sussex/gdsc/README.txt");
 
     StringBuilder msg = new StringBuilder();
-    String helpURL = HELP_URL;
+    String helpUrl = HELP_URL;
 
     // Read the contents of the README file
     try (final BufferedReader input = new BufferedReader(new InputStreamReader(readmeStream))) {
       String line;
       while ((line = input.readLine()) != null) {
         if (line.contains("http:")) {
-          helpURL = line;
+          helpUrl = line;
         } else {
           if (line.equals("")) {
             line = " "; // Required to insert a line in the GenericDialog
@@ -125,13 +125,13 @@ public class About_Plugin implements PlugIn {
         uk.ac.sussex.gdsc.core.VersionUtils.getBuildDate(),
         uk.ac.sussex.gdsc.core.VersionUtils.getBuildNumber());
 
-    if (helpURL != null) {
+    if (helpUrl != null) {
       msg.append("\n \n(Click help for more information)");
     }
 
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addMessage(msg.toString());
-    gd.addHelp(helpURL);
+    gd.addHelp(helpUrl);
     gd.hideCancelButton();
     gd.showDialog();
   }
@@ -228,7 +228,7 @@ public class About_Plugin implements PlugIn {
    */
   public static InputStream getPluginsConfig() {
     // Get the embedded config in the jar file
-    final Class<About_Plugin> resourceClass = About_Plugin.class;
+    final Class<About_PlugIn> resourceClass = About_PlugIn.class;
     final InputStream readmeStream =
         resourceClass.getResourceAsStream("/uk/ac/sussex/gdsc/plugins.config");
     return readmeStream;

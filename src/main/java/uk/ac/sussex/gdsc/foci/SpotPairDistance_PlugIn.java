@@ -123,7 +123,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
     public void showOptionsDialog() {
       final GenericDialog gd = new GenericDialog(TITLE + " Tool Options");
       gd.addMessage(
-      //@formatter:off
+        //@formatter:off
         TextUtils.wrap(
         "Click on a multi-channel image and the distance between the " +
         "center-of-mass of spots in two channels will be measured. " +
@@ -208,8 +208,8 @@ public class SpotPairDistance_PlugIn implements PlugIn {
     // --------------
 
     @Override
-    public void mousePressed(ImagePlus imp, MouseEvent e) {
-      if (isRemoveEvent(e)) {
+    public void mousePressed(ImagePlus imp, MouseEvent event) {
+      if (isRemoveEvent(event)) {
         return;
       }
 
@@ -219,7 +219,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       }
 
       // Mark this event as handled
-      e.consume();
+      event.consume();
 
       // Ensure rapid mouse click / new options does not break things
       synchronized (this) {
@@ -229,8 +229,8 @@ public class SpotPairDistance_PlugIn implements PlugIn {
         }
 
         final ImageCanvas ic = imp.getCanvas();
-        final int x = ic.offScreenX(e.getX());
-        final int y = ic.offScreenY(e.getY());
+        final int x = ic.offScreenX(event.getX());
+        final int y = ic.offScreenY(event.getY());
 
         // Get the region bounds to search for maxima
         bounds = new Rectangle(x - searchRange, y - searchRange, 2 * searchRange + 1,
@@ -270,30 +270,30 @@ public class SpotPairDistance_PlugIn implements PlugIn {
 
         // Store the actual pixel position so it is clear when the mouse has
         // been dragged to a new position.
-        origX = e.getX();
-        origY = e.getY();
+        origX = event.getX();
+        origY = event.getY();
 
         // Add the overlay visuals
         if (showSearchRegion || showComRegion || showLine) {
-          Overlay o = null;
+          Overlay overlay = null;
           if (addToOverlay) {
-            o = imp.getOverlay();
+            overlay = imp.getOverlay();
           }
-          if (o == null) {
-            o = new Overlay();
+          if (overlay == null) {
+            overlay = new Overlay();
           }
 
           if (showSearchRegion) {
-            o.add(createRoi(bounds, Color.magenta));
+            overlay.add(createRoi(bounds, Color.magenta));
           }
           if (showComRegion) {
-            o.add(createRoi(r1, Color.red));
-            o.add(createRoi(r2, Color.blue));
+            overlay.add(createRoi(r1, Color.red));
+            overlay.add(createRoi(r2, Color.blue));
           }
           if (showLine) {
-            o.add(createLine(com1[0], com1[1], com2[0], com2[1], Color.magenta));
+            overlay.add(createLine(com1[0], com1[1], com2[0], com2[1], Color.magenta));
           }
-          imp.setOverlay(o);
+          imp.setOverlay(overlay);
         }
 
         // Initiate dragging
@@ -301,13 +301,13 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       }
     }
 
-    private static boolean isRemoveEvent(MouseEvent e) {
-      return e.isAltDown() || e.isShiftDown() || e.isControlDown();
+    private static boolean isRemoveEvent(MouseEvent event) {
+      return event.isAltDown() || event.isShiftDown() || event.isControlDown();
     }
 
-    private double[] com(ImageProcessor ip, int m, Rectangle r) {
-      final int x = m % ip.getWidth();
-      final int y = m / ip.getWidth();
+    private double[] com(ImageProcessor ip, int index, Rectangle rectangle) {
+      final int x = index % ip.getWidth();
+      final int y = index / ip.getWidth();
 
       // Make range +/- equal
       int rx = comRange;
@@ -327,10 +327,10 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       final int my = y - ry;
       ry = 2 * ry + 1;
 
-      r.x = mx;
-      r.width = rx;
-      r.y = my;
-      r.height = ry;
+      rectangle.x = mx;
+      rectangle.width = rx;
+      rectangle.y = my;
+      rectangle.height = ry;
 
       double cx = 0;
       double cy = 0;
@@ -345,6 +345,11 @@ public class SpotPairDistance_PlugIn implements PlugIn {
         sum += sumX;
         cy += sumX * ys;
       }
+
+      if (sum == 0) {
+        return new double[] {x + 0.5, y + 0.5};
+      }
+
       // Find centre with 0.5 as the centre of the pixel
       cx = 0.5 + cx / sum;
       cy = 0.5 + cy / sum;
@@ -364,17 +369,17 @@ public class SpotPairDistance_PlugIn implements PlugIn {
     }
 
     @Override
-    public void mouseDragged(ImagePlus imp, MouseEvent e) {
+    public void mouseDragged(ImagePlus imp, MouseEvent event) {
       if (dragging == 0) {
         return;
       }
-      e.consume();
+      event.consume();
 
       // Only a drag if the mouse has moved position
-      if (origX != e.getX() || origY != e.getY()) {
+      if (origX != event.getX() || origY != event.getY()) {
         final ImageCanvas ic = imp.getCanvas();
-        final double x = ic.offScreenXD(e.getX());
-        final double y = ic.offScreenYD(e.getY());
+        final double x = ic.offScreenXD(event.getX());
+        final double y = ic.offScreenYD(event.getY());
 
         // - Draw a line ROI from the start location (it may be reversed)
         final double[] line = createOrientationLine(com1[0], com1[1], x, y);
@@ -384,12 +389,12 @@ public class SpotPairDistance_PlugIn implements PlugIn {
     }
 
     @Override
-    public void mouseReleased(ImagePlus imp, MouseEvent e) {
+    public void mouseReleased(ImagePlus imp, MouseEvent event) {
       if (dragging == 0) {
         return;
       }
 
-      e.consume();
+      event.consume();
 
       // Note: ImageJ bug
       // ImageCanvas.activateOverlayRoi() may set the image ROI (if currently null)
@@ -408,20 +413,20 @@ public class SpotPairDistance_PlugIn implements PlugIn {
           imp.killRoi();
 
           final ImageCanvas ic = imp.getCanvas();
-          final double x = ic.offScreenXD(e.getX());
-          final double y = ic.offScreenYD(e.getY());
+          final double x = ic.offScreenXD(event.getX());
+          final double y = ic.offScreenYD(event.getY());
           line = createOrientationLine(com1[0], com1[1], x, y);
 
           if (showOrientationLine) {
-            Overlay o = null;
+            Overlay overlay = null;
             if (addToOverlay) {
-              o = imp.getOverlay();
+              overlay = imp.getOverlay();
             }
-            if (o == null) {
-              o = new Overlay();
+            if (overlay == null) {
+              overlay = new Overlay();
             }
-            o.add(createLine(line[0], line[1], line[2], line[3], Color.yellow));
-            imp.setOverlay(o);
+            overlay.add(createLine(line[0], line[1], line[2], line[3], Color.yellow));
+            imp.setOverlay(overlay);
           }
         }
 
@@ -578,8 +583,8 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       sb.append('\t').append(MathUtils.rounded(com2[1]));
       double dx = com1[0] - com2[0];
       double dy = com1[1] - com2[1];
-      double d = Math.sqrt(dx * dx + dy * dy);
-      sb.append('\t').append(MathUtils.rounded(d));
+      double distance = Math.sqrt(dx * dx + dy * dy);
+      sb.append('\t').append(MathUtils.rounded(distance));
       sb.append('\t').append(MathUtils.rounded(angle));
       sb.append('\t').append(MathUtils.rounded(relX));
       sb.append('\t').append(MathUtils.rounded(relY));
@@ -594,8 +599,8 @@ public class SpotPairDistance_PlugIn implements PlugIn {
         sb.append('\t').append(MathUtils.rounded(com2[1] * cal.pixelHeight));
         dx *= cal.pixelWidth;
         dy *= cal.pixelHeight;
-        d = Math.sqrt(dx * dx + dy * dy);
-        sb.append('\t').append(MathUtils.rounded(d));
+        distance = Math.sqrt(dx * dx + dy * dy);
+        sb.append('\t').append(MathUtils.rounded(distance));
         // Units must be the same for calibrated relative distance
         if (cal.pixelWidth == cal.pixelHeight) {
           sb.append('\t').append(MathUtils.rounded(relX * cal.pixelWidth));
@@ -609,25 +614,25 @@ public class SpotPairDistance_PlugIn implements PlugIn {
     }
 
     @Override
-    public void mouseClicked(ImagePlus imp, MouseEvent e) {
+    public void mouseClicked(ImagePlus imp, MouseEvent event) {
       final int c = imp.getNChannels();
       if (!active || c == 1) {
         return;
       }
 
-      if (!isRemoveEvent(e)) {
+      if (!isRemoveEvent(event)) {
         return;
       }
 
       // Mark this event as handled
-      e.consume();
+      event.consume();
 
       // Ensure rapid mouse click / new options does not break things
       synchronized (this) {
         // Option to remove the result
         final ImageCanvas ic = imp.getCanvas();
-        final int x = ic.offScreenX(e.getX());
-        final int y = ic.offScreenY(e.getY());
+        final int x = ic.offScreenX(event.getX());
+        final int y = ic.offScreenY(event.getY());
 
         // Get the region bounds to search for maxima
         final Rectangle bounds =
@@ -638,10 +643,10 @@ public class SpotPairDistance_PlugIn implements PlugIn {
         }
 
         // Remove all the overlay components
-        Overlay o = imp.getOverlay();
-        if (o != null) {
-          final Roi[] rois = o.toArray();
-          o = new Overlay();
+        Overlay overlay = imp.getOverlay();
+        if (overlay != null) {
+          final Roi[] rois = overlay.toArray();
+          overlay = new Overlay();
           for (int i = 0; i < rois.length; i++) {
             final Roi roi = rois[i];
             if (roi.isArea()) {
@@ -655,12 +660,12 @@ public class SpotPairDistance_PlugIn implements PlugIn {
                 continue;
               }
             }
-            o.add(roi);
+            overlay.add(roi);
           }
-          if (o.size() == 0) {
+          if (overlay.size() == 0) {
             imp.setOverlay(null);
           } else {
-            imp.setOverlay(o);
+            imp.setOverlay(overlay);
           }
 
           // Note:

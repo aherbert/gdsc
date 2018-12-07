@@ -94,10 +94,9 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
     if ("state".equals(propertyName)) {
       // Ignore this
     } else {
-      final FindFociState state = stateMap.get(propertyName);
-      if (state != null) {
-        // System.out.println("Changed : "+ propertyName);
-        reduceState(state);
+      final FindFociState localState = stateMap.get(propertyName);
+      if (localState != null) {
+        reduceState(localState);
       } else {
         // Default: Reset
         setState(FindFociState.INITIAL);
@@ -112,7 +111,6 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
    */
   private void reduceState(FindFociState state) {
     if (state.ordinal() < this.state.ordinal()) {
-      // System.out.printf("%s [%d] => %s [%d]\n", this.state, currentLevel, state, newLevel);
       setState(state);
     }
   }
@@ -125,22 +123,24 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
   @SuppressWarnings("unused")
   private void increaseState(FindFociState state) {
     if (state.ordinal() > this.state.ordinal()) {
-      // System.out.printf("%s [%d] => %s [%d]\n", this.state, currentLevel, state, newLevel);
       setState(state);
     }
   }
 
   /**
+   * Sets the state.
+   *
    * @param state the state to set
    */
   public void setState(FindFociState state) {
     final FindFociState oldValue = this.state;
-    // System.out.println(state);
     this.state = state;
     firePropertyChange("state", oldValue, state);
   }
 
   /**
+   * Gets the state.
+   *
    * @return the state.
    */
   public FindFociState getState() {
@@ -148,6 +148,8 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
   }
 
   /**
+   * Gets the set of properties for the FindFoci algorithm that the state machine observes.
+   *
    * @return The set of properties for the FindFoci algorithm that the state machine observes
    */
   public Set<String> getObservedProperties() {

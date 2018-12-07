@@ -49,10 +49,6 @@ import java.awt.GridBagLayout;
 import java.awt.Label;
 import java.awt.Point;
 import java.awt.Scrollbar;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 
 import javax.swing.JPanel;
 
@@ -62,23 +58,19 @@ import javax.swing.JPanel;
 public class HsbPicker_PlugIn extends PlugInFrame {
   private static final long serialVersionUID = 5755638798388461612L;
 
-  private static final String TITLE = "HSB Picker";
+  private static final String PLUGIN_TITLE = "HSB Picker";
   private static final String OPT_LOCATION = "HSB_Picker.location";
   private static final double SCALE = 100;
 
-  private static HsbPicker_PlugIn instance = null;
+  private static HsbPicker_PlugIn instance;
   private Scrollbar sampleSlider;
-  @SuppressWarnings("unused")
-  private Label sampleLabel;
-  private Label nLabel;
+  private Label pixelCountLabel;
   private final Label[] statsLabel;
   private Scrollbar scaleSlider;
-  @SuppressWarnings("unused")
-  private Label scaleLabel;
-  private Button clearButton;
-  private Button filterButton;
-  private Button okButton;
-  private Button helpButton;
+
+  private GridBagLayout mainGrid;
+  private GridBagConstraints constraints;
+  private int row;
 
   private final SummaryStatistics[] stats;
 
@@ -86,7 +78,7 @@ public class HsbPicker_PlugIn extends PlugInFrame {
    * Constructor.
    */
   public HsbPicker_PlugIn() {
-    super(TITLE);
+    super(PLUGIN_TITLE);
     stats = new SummaryStatistics[3];
     statsLabel = new Label[3];
     for (int i = 0; i < stats.length; i++) {
@@ -138,15 +130,6 @@ public class HsbPicker_PlugIn extends PlugInFrame {
     installTool();
   }
 
-  private void installTool() {
-    final StringBuilder sb = new StringBuilder();
-    sb.append("macro 'HSB Picker Tool - C00fT0610HC0f0T5910SCf00Tac10L' {\n");
-    sb.append("   call('").append(this.getClass().getName()).append(".run');\n");
-    sb.append("};\n");
-    new MacroInstaller().install(sb.toString());
-    Toolbar.getInstance().setTool(Toolbar.SPARE1);
-  }
-
   /**
    * Run the HSB Picker using the cursor position on the current image.
    */
@@ -164,6 +147,15 @@ public class HsbPicker_PlugIn extends PlugInFrame {
     }
   }
 
+  private void installTool() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("macro 'HSB Picker Tool - C00fT0610HC0f0T5910SCf00Tac10L' {\n");
+    sb.append("   call('").append(this.getClass().getName()).append(".run');\n");
+    sb.append("};\n");
+    new MacroInstaller().install(sb.toString());
+    Toolbar.getInstance().setTool(Toolbar.SPARE1);
+  }
+
   private void imageClicked() {
     final ImagePlus imp = getCurrentImage();
     if (imp == null) {
@@ -178,12 +170,14 @@ public class HsbPicker_PlugIn extends PlugInFrame {
   }
 
   /**
+   * Gets the current image.
+   *
    * @return The current image (must be 24-bit and have an image canvas).
    */
   private static ImagePlus getCurrentImage() {
     // NOTE: BUG
-    // The ImageCanvas.mousePressed(MouseEvent e) eventually calls
-    // Toolbar.getInstance().runMacroTool(toolID);
+    // The ImageCanvas.mousePressed(MouseEvent event) eventually calls
+    // Toolbar.getInstance().runMacroTool(toolID)
     // This runs the HSB_Picker if the tool is selected.
     //
     // This happens before WindowManager.setCurrentImage(...) is called
@@ -193,7 +187,7 @@ public class HsbPicker_PlugIn extends PlugInFrame {
     // of WindowManager.getCurrentImage().
     //
     // This can be fixed by setting:
-    // WindowManager.setCurrentWindow(win);
+    // WindowManager.setCurrentWindow(win)
     // in the ImageCanvas.mousePressed(...) method.
 
     final ImagePlus imp = WindowManager.getCurrentImage();
@@ -203,7 +197,7 @@ public class HsbPicker_PlugIn extends PlugInFrame {
     return imp;
   }
 
-  private void addValue(ImageProcessor ip, Point p) {
+  private void addValue(ImageProcessor ip, Point point) {
     final int[] iArray = new int[3];
     final float[] hsbvals = new float[3];
 
@@ -215,7 +209,7 @@ public class HsbPicker_PlugIn extends PlugInFrame {
           continue;
         }
 
-        ip.getPixel(x + p.x, y + p.y, iArray);
+        ip.getPixel(x + point.x, y + point.y, iArray);
         Color.RGBtoHSB(iArray[0], iArray[1], iArray[2], hsbvals);
         for (int i = 0; i < 3; i++) {
           stats[i].addValue(hsbvals[i]);
@@ -249,15 +243,15 @@ public class HsbPicker_PlugIn extends PlugInFrame {
     HsbFilter_PlugIn.saturationWidth = clip(sWidth);
     HsbFilter_PlugIn.brightness = clip(stats[2].getMean());
     HsbFilter_PlugIn.brightnessWidth = clip(bWidth);
-    IJ.doCommand("HSB Filter");
+    IJ.doCommand(HsbFilter_PlugIn.TITLE);
   }
 
-  private static float clip(double d) {
-    return (float) (Math.max(0, Math.min(d, 1)));
+  private static float clip(double value) {
+    return (float) (Math.max(0, Math.min(value, 1)));
   }
 
   private void updateDisplayedStatistics() {
-    nLabel.setText(Long.toString(stats[0].getN()));
+    pixelCountLabel.setText(Long.toString(stats[0].getN()));
     for (int i = 0; i < 3; i++) {
       statsLabel[i].setText(summary(stats[i]));
     }
@@ -275,60 +269,43 @@ public class HsbPicker_PlugIn extends PlugInFrame {
     super.close();
   }
 
-  private final GridBagLayout mainGrid = new GridBagLayout();
-  private final GridBagConstraints c = new GridBagConstraints();
-  private int row = 0;
-
+  @SuppressWarnings("unused")
   private void createFrame() {
+    mainGrid = new GridBagLayout();
+    constraints = new GridBagConstraints();
+
     setLayout(mainGrid);
 
-    createSliderPanel(sampleSlider = new Scrollbar(Scrollbar.HORIZONTAL, 2, 1, 0, 15),
-        "Sample radius", sampleLabel = new Label("0"), 1);
+    createSliderPanel(new Scrollbar(Scrollbar.HORIZONTAL, 2, 1, 0, 15), "Sample radius",
+        new Label("0"), 1);
 
-    createLabelPanel(nLabel = new Label(), "Pixels", "0");
-    createLabelPanel(statsLabel[0] = new Label(), "Hue", "0");
-    createLabelPanel(statsLabel[1] = new Label(), "Saturation", "0");
-    createLabelPanel(statsLabel[2] = new Label(), "Brightness", "0");
+    pixelCountLabel = new Label();
+    for (int i = 0; i < 3; i++) {
+      statsLabel[i] = new Label();
+    }
+    createLabelPanel(pixelCountLabel, "Pixels", "0");
+    createLabelPanel(statsLabel[0], "Hue", "0");
+    createLabelPanel(statsLabel[1], "Saturation", "0");
+    createLabelPanel(statsLabel[2], "Brightness", "0");
 
     // Add the buttons
-    clearButton = new Button("Reset");
-    clearButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        clear();
-      }
-    });
+    Button clearButton = new Button("Reset");
+    clearButton.addActionListener(event -> clear());
     add(clearButton, 0, 3);
     row++;
 
-    createSliderPanel(
-        scaleSlider =
-            new Scrollbar(Scrollbar.HORIZONTAL, (int) (2 * SCALE), 1, 1, (int) (4 * SCALE)),
-        "Filter scale", scaleLabel = new Label("0"), SCALE);
+    scaleSlider = new Scrollbar(Scrollbar.HORIZONTAL, (int) (2 * SCALE), 1, 1, (int) (4 * SCALE));
+    createSliderPanel(scaleSlider, "Filter scale", new Label("0"), SCALE);
 
     // Add the buttons
-    filterButton = new Button("HSB Filter");
-    filterButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        runFilter();
-      }
-    });
-    okButton = new Button("Close");
-    okButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        close();
-      }
-    });
-    helpButton = new Button("Help");
-    helpButton.addActionListener(new ActionListener() {
-      @SuppressWarnings("unused")
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final String macro = "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.UrlUtils.UTILITY + "');";
-        new MacroRunner(macro);
-      }
+    Button filterButton = new Button("HSB Filter");
+    filterButton.addActionListener(event -> runFilter());
+    Button okButton = new Button("Close");
+    okButton.addActionListener(event -> close());
+    Button helpButton = new Button("Help");
+    helpButton.addActionListener(event -> {
+      final String macro = "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.UrlUtils.UTILITY + "');";
+      new MacroRunner(macro);
     });
 
     final JPanel buttonPanel = new JPanel();
@@ -346,12 +323,12 @@ public class HsbPicker_PlugIn extends PlugInFrame {
   }
 
   private void add(Component comp, int x, int width) {
-    c.gridx = x;
-    c.gridy = row;
-    c.gridwidth = width;
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.anchor = GridBagConstraints.WEST;
-    mainGrid.setConstraints(comp, c);
+    constraints.gridx = x;
+    constraints.gridy = row;
+    constraints.gridwidth = width;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    constraints.anchor = GridBagConstraints.WEST;
+    mainGrid.setConstraints(comp, constraints);
     add(comp);
   }
 
@@ -360,16 +337,10 @@ public class HsbPicker_PlugIn extends PlugInFrame {
     final Label listLabel = new Label(label, 0);
     add(listLabel, 0, 1);
     sliderField.setSize(100, 10);
-    c.ipadx = 75;
+    constraints.ipadx = 75;
     add(sliderField, 1, 1);
-    c.ipadx = 0;
-    sliderField.addAdjustmentListener(new AdjustmentListener() {
-
-      @Override
-      public void adjustmentValueChanged(AdjustmentEvent e) {
-        setSliderLabel(sliderField, sliderLabel, scale);
-      }
-    });
+    constraints.ipadx = 0;
+    sliderField.addAdjustmentListener(event -> setSliderLabel(sliderField, sliderLabel, scale));
     add(sliderLabel, 2, 1);
     setSliderLabel(sliderField, sliderLabel, scale);
     row++;
@@ -385,7 +356,6 @@ public class HsbPicker_PlugIn extends PlugInFrame {
     final Label listLabel = new Label(label, 0);
     add(listLabel, 0, 1);
     if (labelField != null) {
-      // labelField.setSize(fontWidth * 3, fontWidth);
       labelField.setText(value);
       add(labelField, 1, 2);
     }

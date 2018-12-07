@@ -71,16 +71,16 @@ public class BasePoint implements Coordinate {
 
   /** {@inheritDoc} */
   @Override
-  public boolean equals(Object aThat) {
-    if (this == aThat) {
+  public boolean equals(Object object) {
+    if (this == object) {
       return true;
     }
-    if (!(aThat instanceof BasePoint)) {
+    if (!(object instanceof BasePoint)) {
       return false;
     }
 
     // cast to native object is now safe
-    final BasePoint that = (BasePoint) aThat;
+    final BasePoint that = (BasePoint) object;
 
     return x == that.x && y == that.y && z == that.z;
   }

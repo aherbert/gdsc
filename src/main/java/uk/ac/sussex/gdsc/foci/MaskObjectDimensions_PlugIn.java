@@ -43,7 +43,6 @@ import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.commons.math3.linear.RealVector;
 
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * For each unique pixel value in the mask (defining an object), analyse the pixels values and
@@ -54,13 +53,12 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
   /** The plugin title. */
   private static final String TITLE = "Mask Object Dimensions";
 
-  private final int flags = DOES_16 + DOES_8G;
-  private ImagePlus imp;
+  private static final int FLAGS = DOES_16 + DOES_8G;
 
-  private static String[] sortMethods = new String[] {"Value", "Area", "CoM"};
-  private static int SORT_VALUE = 0;
-  private static int SORT_AREA = 1;
-  private static int SORT_COM = 2;
+  private static final String[] sortMethods = new String[] {"Value", "Area", "CoM"};
+  private static final int SORT_VALUE = 0;
+  private static final int SORT_AREA = 1;
+  private static final int SORT_COM = 2;
 
   private static double mergeDistance = 0;
   private static boolean showOverlay = true;
@@ -70,40 +68,42 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
 
   private static TextWindow resultsWindow = null;
 
-  private class MaskObject {
+  private ImagePlus imp;
+
+  private static class MaskObject {
     double cx;
     double cy;
     double cz;
-    int n;
+    int size;
     int[] values;
     int[] lower;
     int[] upper;
 
-    public MaskObject(double cx, double cy, double cz, int n, int value) {
+    MaskObject(double cx, double cy, double cz, int size, int value) {
       this.cx = cx;
       this.cy = cy;
       this.cz = cz;
-      this.n = n;
+      this.size = size;
       values = new int[] {value};
     }
 
-    public int getValue() {
+    int getValue() {
       return values[0];
     }
 
-    public double distance2(MaskObject that) {
+    double distance2(MaskObject that) {
       final double dx = this.cx - that.cx;
       final double dy = this.cy - that.cy;
       final double dz = this.cz - that.cz;
       return dx * dx + dy * dy + dz * dz;
     }
 
-    public void merge(MaskObject that) {
-      final int n2 = this.n + that.n;
-      this.cx = (this.cx * this.n + that.cx * that.n) / n2;
-      this.cy = (this.cy * this.n + that.cy * that.n) / n2;
-      this.cz = (this.cz * this.n + that.cz * that.n) / n2;
-      this.n = n2;
+    void merge(MaskObject that) {
+      final int n2 = this.size + that.size;
+      this.cx = (this.cx * this.size + that.cx * that.size) / n2;
+      this.cy = (this.cy * this.size + that.cy * that.size) / n2;
+      this.cz = (this.cz * this.size + that.cz * that.size) / n2;
+      this.size = n2;
 
       // Merge the values
       final int[] newValues = new int[this.values.length + that.values.length];
@@ -111,15 +111,16 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
       System.arraycopy(that.values, 0, newValues, this.values.length, that.values.length);
       this.values = newValues;
 
-      that.n = 0;
+      // Remove values from the other object
+      that.size = 0;
     }
 
-    public void initialiseBounds() {
+    void initialiseBounds() {
       lower = new int[] {(int) cx, (int) cy, (int) cz};
       upper = lower.clone();
     }
 
-    public void updateBounds(int x, int y, int z) {
+    void updateBounds(int x, int y, int z) {
       if (lower[0] > x) {
         lower[0] = x;
       }
@@ -154,14 +155,15 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     if (!showDialog()) {
       return DONE;
     }
-    return flags;
+    return FLAGS;
   }
 
   private static boolean showDialog() {
     final GenericDialog gd = new GenericDialog(TITLE);
 
     gd.addMessage(
-        "For each object defined with a unique pixel value,\ncompute the dimensions along the axes of the inertia tensor");
+        "For each object defined with a unique pixel value,\ncompute the dimensions along the "
+            + "axes of the inertia tensor");
 
     gd.addSlider("Merge_distance", 0, 15, mergeDistance);
     gd.addCheckbox("Show_overlay", showOverlay);
@@ -237,7 +239,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
       double cx = 0;
       double cy = 0;
       double cz = 0;
-      int n = 0;
+      int count = 0;
       for (int z = 0, i = 0; z < maxz; z++) {
         for (int y = 0; y < maxy; y++) {
           for (int x = 0; x < maxx; x++, i++) {
@@ -245,17 +247,16 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
               cx += x;
               cy += y;
               cz += z;
-              n++;
+              count++;
             }
           }
         }
       }
       // Set 0.5 as the centre of the voxel mass
-      cx = cx / n + 0.5;
-      cy = cy / n + 0.5;
-      cz = cz / n + 0.5;
-      // System.out.printf("Object %d centre = %.2f,%.2f,%.2f\n", object, cx, cy, cz);
-      objects[object - min] = new MaskObject(cx, cy, cz, n, object);
+      cx = cx / count + 0.5;
+      cy = cy / count + 0.5;
+      cz = cz / count + 0.5;
+      objects[object - min] = new MaskObject(cx, cy, cz, count, object);
     }
 
     // Iteratively join closest objects
@@ -264,34 +265,34 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
         // Find closest pairs
         int ii = -1;
         int jj = -1;
-        double d = Double.POSITIVE_INFINITY;
+        double minDistance = Double.POSITIVE_INFINITY;
         for (int i = 1; i < objects.length; i++) {
           // Skip empty objects
-          if (objects[i].n == 0) {
+          if (objects[i].size == 0) {
             continue;
           }
           for (int j = 0; j < i; j++) {
             // Skip empty objects
-            if (objects[j].n == 0) {
+            if (objects[j].size == 0) {
               continue;
             }
-            final double d2 = objects[i].distance2(objects[j]);
-            if (d > d2) {
-              d = d2;
+            final double distance = objects[i].distance2(objects[j]);
+            if (minDistance > distance) {
+              minDistance = distance;
               ii = i;
               jj = j;
             }
           }
         }
 
-        if (ii < 0 || Math.sqrt(d) > mergeDistance) {
+        if (ii < 0 || Math.sqrt(minDistance) > mergeDistance) {
           break;
         }
 
         // Merge
         MaskObject big;
         MaskObject small;
-        if (objects[jj].n < objects[ii].n) {
+        if (objects[jj].size < objects[ii].size) {
           big = objects[ii];
           small = objects[jj];
         } else {
@@ -299,7 +300,6 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
           small = objects[ii];
         }
 
-        // System.out.printf("Merge %d + %d\n", big+min, small+min);
         big.merge(small);
 
         // If we merge an object then its image pixels must be updated with the new object value
@@ -317,7 +317,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     final int[] objectMap = new int[max + 1];
     int newLength = 0;
     for (int i = 0; i < objects.length; i++) {
-      if (objects[i].n == 0) {
+      if (objects[i].size == 0) {
         continue;
       }
       objects[newLength] = objects[i];
@@ -344,54 +344,39 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     }
 
     // Sort the objects
-    Comparator<MaskObject> c = null;
     if (sortMethod == SORT_COM) {
-      c = new Comparator<MaskObjectDimensions_PlugIn.MaskObject>() {
-        @Override
-        public int compare(MaskObject o1, MaskObject o2) {
-          if (o1.cx < o2.cx) {
-            return -1;
-          }
-          if (o1.cx > o2.cx) {
-            return 1;
-          }
-          if (o1.cy < o2.cy) {
-            return -1;
-          }
-          if (o1.cy > o2.cy) {
-            return 1;
-          }
-          if (o1.cz < o2.cz) {
-            return -1;
-          }
-          if (o1.cz > o2.cz) {
-            return 1;
-          }
-          return 0;
+      Arrays.sort(objects, (o1, o2) -> {
+        if (o1.cx < o2.cx) {
+          return -1;
         }
-      };
+        if (o1.cx > o2.cx) {
+          return 1;
+        }
+        if (o1.cy < o2.cy) {
+          return -1;
+        }
+        if (o1.cy > o2.cy) {
+          return 1;
+        }
+        if (o1.cz < o2.cz) {
+          return -1;
+        }
+        if (o1.cz > o2.cz) {
+          return 1;
+        }
+        return 0;
+      });
     } else if (sortMethod == SORT_AREA) {
-      c = new Comparator<MaskObjectDimensions_PlugIn.MaskObject>() {
-        @Override
-        public int compare(MaskObject o1, MaskObject o2) {
-          if (o1.n < o2.n) {
-            return -1;
-          }
-          if (o1.n > o2.n) {
-            return 1;
-          }
-          return 0;
+      Arrays.sort(objects, (o1, o2) -> {
+        if (o1.size < o2.size) {
+          return -1;
         }
-      };
-    } else
-    // if (sortMethod == SORT_VALUE)
-    {
-      // Do nothing since this is the default
+        if (o1.size > o2.size) {
+          return 1;
+        }
+        return 0;
+      });
     }
-    if (c != null) {
-      Arrays.sort(objects, c);
-    }
-
     // Get the calibrated units
     final Calibration cal = imp.getCalibration();
     String units = cal.getUnits();
@@ -472,7 +457,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
       }
 
       // Sort
-      eigen_sort3(eigenValues, eigenVectors);
+      eigenSort3x3(eigenValues, eigenVectors);
 
       // Compute the distance along each axis that is within the object.
       // Do this by constructing a line across the entire image in pixel increments,
@@ -486,18 +471,12 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
 
       final double[] com = new double[] {cx + 0.5, cy + 0.5, cz + 0.5};
 
-      // System.out.printf("Object %2d CoM : %8.3f %8.3f %8.3f\n", object, com[0], com[1], com[2]);
-      // for (int i = 0; i < 3; i++)
-      // System.out.printf("Object %2d Axis %d : %8.3f %8.3f %8.3f == %12g\n", object, i + 1,
-      // axes[i][0],
-      // axes[i][1], axes[i][2], values[i]);
-
       final StringBuilder sb = new StringBuilder();
       sb.append(imp.getTitle());
       sb.append('\t').append(units);
       Arrays.sort(object.values);
       sb.append('\t').append(Arrays.toString(object.values));
-      sb.append('\t').append(object.n);
+      sb.append('\t').append(object.size);
       for (int i = 0; i < 3; i++) {
         sb.append('\t').append(MathUtils.rounded(com[i]));
       }
@@ -507,7 +486,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
       for (int axis = 3; axis-- > 0;) {
         final double epsilon = 1e-6;
         final double[] direction = eigenVectors[axis];
-        double s = 0;
+        double sum = 0;
         double longest = 0; // Used to normalise the longest dimension to 1
         for (int i = 0; i < 3; i++) {
           final double v = Math.abs(direction[i]);
@@ -517,11 +496,11 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
           if (longest < v) {
             longest = v;
           }
-          s += direction[i];
+          sum += direction[i];
         }
         final double[] direction1 = com.clone();
         final double[] direction2 = com.clone();
-        if (s != 0) {
+        if (sum != 0) {
           // Assuming unit vector then moving in increments of 1 should never skip pixels
           // in any dimension. Normalise to 1 in the longest dimension should still be OK.
           for (int i = 0; i < 3; i++) {
@@ -549,9 +528,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
               if (image[index] != objectValue) {
                 continue;
               }
-              for (int i = 0; i < 3; i++) {
-                tmp[i] = pos[i];
-              }
+              System.arraycopy(pos, 0, tmp, 0, 3);
             }
           }
         }
@@ -575,21 +552,18 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
         double dx = direction2[0] - direction1[0];
         double dy = direction2[1] - direction1[1];
         double dz = direction2[2] - direction1[2];
-        double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        // System.out.printf("Object %2d Axis %d : %8.3f %8.3f %8.3f - %8.3f %8.3f %8.3f == %12g\n",
-        // object,
-        // axis + 1, lower[0], lower[1], lower[2], upper[0], upper[1], upper[2], d);
-        sb.append('\t').append(MathUtils.rounded(d));
+        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        sb.append('\t').append(MathUtils.rounded(distance));
 
         // Calibrated length
         dx *= calx;
         dy *= caly;
         dz *= calz;
-        d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        sb.append('\t').append(MathUtils.rounded(d));
+        distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        sb.append('\t').append(MathUtils.rounded(distance));
 
         // Draw lines on the image
-        if (showOverlay) {
+        if (overlay != null) {
           final Line roi = new Line(direction1[0], direction1[1], direction2[0], direction2[1]);
           overlay.add(roi);
         }
@@ -640,29 +614,26 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
   /**
    * Vector sorting routine for 3x3 set of vectors.
    *
-   * @param w Vector weights
-   * @param v Vectors
+   * @param weights Vector weights
+   * @param vectors Vectors
    */
-  private static void eigen_sort3(double[] w, double[][] v) {
-    int k;
-    int j;
-    int i;
-    double p;
-
-    for (i = 3; i-- > 0;) {
-      p = w[k = i];
-      for (j = i; j-- > 0;) {
-        if (w[j] <= p) {
-          p = w[k = j];
+  private static void eigenSort3x3(double[] weights, double[][] vectors) {
+    for (int i = 3; i-- > 0;) {
+      int minIndex = i;
+      double minWeight = weights[minIndex];
+      for (int j = i; j-- > 0;) {
+        if (weights[j] <= minWeight) {
+          minIndex = j;
+          minWeight = weights[minIndex];
         }
       }
-      if (k != i) {
-        w[k] = w[i];
-        w[i] = p;
-        for (j = 3; j-- > 0;) {
-          p = v[j][i];
-          v[j][i] = v[j][k];
-          v[j][k] = p;
+      if (minIndex != i) {
+        weights[minIndex] = weights[i];
+        weights[i] = minWeight;
+        for (int j = 3; j-- > 0;) {
+          minWeight = vectors[j][i];
+          vectors[j][i] = vectors[j][minIndex];
+          vectors[j][minIndex] = minWeight;
         }
       }
     }

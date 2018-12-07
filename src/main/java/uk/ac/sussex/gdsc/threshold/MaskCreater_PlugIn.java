@@ -286,9 +286,8 @@ public class MaskCreater_PlugIn implements PlugIn {
                     ip.set(i, 255);
                   }
                 }
-              } else
-              // if (option == OPTION_THRESHOLD)
-              {
+              } else {
+                // if (option == OPTION_THRESHOLD)
                 min = thresholds[stackIndex - 1];
                 for (int i = roiIp.getPixelCount(); i-- > 0;) {
                   // When thresholding it is typical to only

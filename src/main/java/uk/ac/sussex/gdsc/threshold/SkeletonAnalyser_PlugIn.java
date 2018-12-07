@@ -248,7 +248,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     for (int index = map.length; index-- > 0;) {
       if (skeleton[index] == foreground) {
         // Process the neighbours
-        final int count = nRadii(skeleton, index);
+        final int count = countRadii(skeleton, index);
 
         switch (count) {
           case 0:
@@ -282,7 +282,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     for (int index = map.length; index-- > 0;) {
       if (skeleton[index] == foreground) {
         // Process the neighbours
-        final int count = nRadii(skeleton, index);
+        final int count = countRadii(skeleton, index);
 
         switch (count) {
           case 0:
@@ -324,7 +324,9 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     }
   }
 
-  private class LineComparator implements Comparator<Line> {
+  private static class LineComparator implements Comparator<Line> {
+    static final LineComparator INSTANCE = new LineComparator();
+
     @Override
     public int compare(Line o1, Line o2) {
       if (o1.internal ^ o2.internal) {
@@ -360,22 +362,21 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     final int[] startIndex = new int[lines.size()];
     final int[] endIndex = new int[startIndex.length];
     final float[] lengths = new float[startIndex.length];
-    int i = 0;
+    int count = 0;
     for (final float[] line : lines) {
-      startIndex[i] = getIndex((int) line[0], (int) line[1]);
-      endIndex[i] = getIndex((int) line[2], (int) line[3]);
-      lengths[i] = line[4];
-      i++;
+      startIndex[count] = getIndex((int) line[0], (int) line[1]);
+      endIndex[count] = getIndex((int) line[2], (int) line[3]);
+      lengths[count] = line[4];
+      count++;
     }
 
     final Iterator<ChainCode> it = chainCodes.iterator();
 
     final ArrayList<Line> junctionLines = new ArrayList<>(lines.size());
-    final LineComparator lineComparator = new LineComparator();
 
     // Find all lines that start at a terminus and end at a junction
     // Find all the lines that start and end at a junction
-    for (i = 0; i < startIndex.length; i++) {
+    for (int i = 0; i < startIndex.length; i++) {
       final ChainCode code = it.next();
 
       // Ends at a junction
@@ -398,7 +399,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     Collections.sort(junctionLines);
 
     // Each junction should have 3/4 lines if clean up or corner pixels was OK, worst case is 8.
-    int n = 0;
+    int lineCount = 0;
     final Line[] currentLines = new Line[8];
     int current = 0;
 
@@ -407,22 +408,22 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     // Process the set of lines for each junction
     for (final Line line : junctionLines) {
       if (current != line.start) {
-        if (n != 0) {
-          markForDeletion(lineComparator, n, currentLines, toDelete);
+        if (lineCount != 0) {
+          markForDeletion(LineComparator.INSTANCE, lineCount, currentLines, toDelete);
         }
-        n = 0;
+        lineCount = 0;
         current = line.start;
       }
-      currentLines[n++] = line;
+      currentLines[lineCount++] = line;
     }
 
-    if (n != 0) {
-      markForDeletion(lineComparator, n, currentLines, toDelete);
+    if (lineCount != 0) {
+      markForDeletion(LineComparator.INSTANCE, lineCount, currentLines, toDelete);
     }
 
     if (toDelete.isEmpty()) {
-      for (i = 0; i < map.length; i++) {
-        map[i] |= PROCESSED;
+      for (count = 0; count < map.length; count++) {
+        map[count] |= PROCESSED;
       }
       return false;
     }
@@ -447,11 +448,11 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
 
     // Remove the line for deletion
     final ChainCode code = toDelete.get(0).code;
-    int x = code.getX();
-    int y = code.getY();
+    int xpos = code.getX();
+    int ypos = code.getY();
     // System.out.printf("Pruning %d,%d: %f\n", x, y, code.getDistance());
     final int[] run = code.getRun();
-    int index = getIndex(x, y);
+    int index = getIndex(xpos, ypos);
     // System.out.printf("Pruning %d,%d, T=%b, E=%b, J=%b\n", x, y, (map[index] & TERMINUS) != 0,
     // (map[index] & EDGE) != 0, (map[index] & JUNCTION) != 0);
 
@@ -460,9 +461,9 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
       map[index] = 0;
     }
     for (final int d : run) {
-      x += ChainCode.DIR_X_OFFSET[d];
-      y += ChainCode.DIR_Y_OFFSET[d];
-      index = getIndex(x, y);
+      xpos += ChainCode.getXDirection(d);
+      ypos += ChainCode.getYDirection(d);
+      index = getIndex(xpos, ypos);
       // System.out.printf("Pruning %d,%d, T=%b, E=%b, J=%b\n", x, y, (map[index] & TERMINUS) != 0,
       // (map[index] & EDGE) != 0, (map[index] & JUNCTION) != 0);
       if ((map[index] & LINE) != 0) {
@@ -472,39 +473,39 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     }
 
     // Create a new map
-    final byte foreground = (byte) this.foreground;
-    final byte background = (byte) (this.foreground + 1);
-    for (i = 0; i < map.length; i++) {
-      map[i] = (map[i] != 0) ? foreground : background;
+    final byte byteForeground = (byte) this.foreground;
+    final byte byteBackground = (byte) (this.foreground + 1);
+    for (index = 0; index < map.length; index++) {
+      map[index] = (map[index] == 0) ? byteBackground : byteForeground;
     }
     final byte[] map2 = findNodes(map);
     System.arraycopy(map2, 0, map, 0, map.length);
     return true;
   }
 
-  private void markForDeletion(final LineComparator lineComparator, int n, Line[] currentLines,
-      ArrayList<Line> toDelete) {
-    if (n < 3) {
+  private void markForDeletion(final LineComparator lineComparator, int lineCount,
+      Line[] currentLines, ArrayList<Line> toDelete) {
+    if (lineCount < 3) {
       System.err.printf("Junction %d,%d has less than 3 lines", currentLines[0].start % maxx,
           currentLines[0].start / maxx);
     }
 
     // Sort
-    Arrays.sort(currentLines, 0, n, lineComparator);
+    Arrays.sort(currentLines, 0, lineCount, lineComparator);
 
     // Keep all edges that go to another junction
     int keep = 0;
-    while (keep < n && currentLines[keep].internal) {
+    while (keep < lineCount && currentLines[keep].internal) {
       keep++;
     }
 
     // Keep remaining edges in length order (descending) until there are only 2 edges.
-    while (keep < n && keep < 2) {
+    while (keep < lineCount && keep < 2) {
       keep++;
     }
 
     // Mark others for deletion
-    while (keep < n) {
+    while (keep < lineCount) {
       toDelete.add(currentLines[keep++]);
     }
   }
@@ -524,7 +525,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
 
     for (int index = map.length; index-- > 0;) {
       if ((map[index] & SKELETON) != 0) {
-        getXY(index, xy);
+        getXy(index, xy);
         final int x = xy[0];
         final int y = xy[1];
 
@@ -552,25 +553,22 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
    * @return Number of lines emanating from this point. Zero if the point is embedded in either
    *         foreground or background
    */
-  int nRadii(byte[] types, int index) {
+  int countRadii(byte[] types, int index) {
     int countTransitions = 0;
-    final byte foreground = (byte) this.foreground;
+    final byte byteForeground = (byte) this.foreground;
     boolean prevPixelSet = true;
     boolean firstPixelSet = true; // initialise to make the compiler happy
     final int[] xyz = new int[3];
-    getXY(index, xyz);
+    getXy(index, xyz);
     final int x = xyz[0];
     final int y = xyz[1];
 
-    final boolean isInner = (y != 0 && y != maxy - 1) && (x != 0 && x != maxx - 1); // not
-                                                                                    // necessary,
-                                                                                    // but faster
-                                                                                    // than
-    // isWithin
-    for (int d = 0; d < 8; d++) { // walk around the point and note every no-line->line transition
+    final boolean isInner = (y != 0 && y != maxy - 1) && (x != 0 && x != maxx - 1);
+    for (int d = 0; d < 8; d++) {
+      // walk around the point and note every no-line->line transition
       boolean pixelSet = prevPixelSet;
-      if (isInner || isWithinXY(x, y, d)) {
-        pixelSet = types[index + offset[d]] == foreground;
+      if (isInner || isWithinXy(x, y, d)) {
+        pixelSet = types[index + offset[d]] == byteForeground;
       } else {
         // Outside boundary so there is no point
         pixelSet = false;
@@ -626,7 +624,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     // Process TERMINALs
     for (int index = 0; index < map.length; index++) {
       if ((map[index] & TERMINUS) != 0 && (map[index] & PROCESSED) != PROCESSED) {
-        getXY(index, xy);
+        getXy(index, xy);
         final int x = xy[0];
         final int y = xy[1];
         // System.out.printf("Process %d,%d\n", x, y);
@@ -647,7 +645,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     // Process JUNCTIONS
     for (int index = 0; index < map.length; index++) {
       if ((map[index] & JUNCTION) != 0 && (map[index] & PROCESSED) != PROCESSED) {
-        getXY(index, xy);
+        getXy(index, xy);
         final int x = xy[0];
         final int y = xy[1];
         // System.out.printf("Process %d,%d\n", x, y);
@@ -680,7 +678,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     // Process EDGEs - These should be the closed loops with no junctions/terminals
     for (int index = 0; index < map.length; index++) {
       if ((map[index] & EDGE) == EDGE && (map[index] & PROCESSED) != PROCESSED) {
-        getXY(index, xy);
+        getXy(index, xy);
         final int x = xy[0];
         final int y = xy[1];
         // System.out.printf("Process %d,%d\n", x, y);
@@ -701,19 +699,19 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
       results.add(new Result(line, null));
     }
     if (myChainCodes != null) {
-      int i = 0;
+      int index = 0;
       for (final ChainCode c : myChainCodes) {
-        results.get(i++).code = c;
+        results.get(index++).code = c;
       }
     }
 
-    Collections.sort(results);
+    Collections.sort(results, Result::compare);
 
     final ArrayList<float[]> sortedLines = new ArrayList<>(lines.size());
     for (final Result result : results) {
       sortedLines.add(result.line);
     }
-    if (myChainCodes != null) {
+    if (chainCodes != null) {
       chainCodes.clear();
       for (final Result result : results) {
         chainCodes.add(result.code);
@@ -757,7 +755,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
 
     while (nextDirection >= 0) {
       currentIndex += offset[nextDirection];
-      length += ChainCode.DIR_LENGTH[nextDirection];
+      length += ChainCode.getDirectionLength(nextDirection);
 
       if (code != null) {
         code.add(nextDirection);
@@ -778,15 +776,15 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
 
     final int[] xyStart = new int[2];
     final int[] xyEnd = new int[2];
-    getXY(startIndex, xyStart);
-    getXY(currentIndex, xyEnd);
+    getXy(startIndex, xyStart);
+    getXy(currentIndex, xyEnd);
 
     return new float[] {xyStart[0], xyStart[1], xyEnd[0], xyEnd[1], length};
   }
 
   private int findStartDirection(byte[] map, int index, byte[] processedDirections) {
     final int[] xyz = new int[3];
-    getXY(index, xyz);
+    getXy(index, xyz);
     final int x = xyz[0];
     final int y = xyz[1];
 
@@ -796,7 +794,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     int dir = 8;
     while (dir > 0) {
       dir--;
-      if (isInner || isWithinXY(x, y, dir)) {
+      if (isInner || isWithinXy(x, y, dir)) {
         if (map[index + offset[dir]] == 0) {
           break;
         }
@@ -807,7 +805,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     // This sweep direction must match that used in findNext(...)
     for (int i = 1; i <= 8; i++) {
       final int d = (dir + i) % 8;
-      if (isInner || isWithinXY(x, y, d)) {
+      if (isInner || isWithinXy(x, y, d)) {
         if ((map[index + offset[d]] & SKELETON) != 0
             && (map[index + offset[d]] & PROCESSED) != PROCESSED
             && (processedDirections[0] & PROCESSED_DIRECTIONS[d]) == 0) {
@@ -833,7 +831,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
 
   private int findNext(byte[] map, int index, int nextDirection) {
     final int[] xyz = new int[3];
-    getXY(index, xyz);
+    getXy(index, xyz);
     final int x = xyz[0];
     final int y = xyz[1];
 
@@ -859,7 +857,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     for (int i = 0; i < 6; i++) {
       // int d = (searchDirection + SEARCH[i]) % 8;
       final int d = (searchDirection + i) % 8;
-      if (isInner || isWithinXY(x, y, d)) {
+      if (isInner || isWithinXy(x, y, d)) {
         if ((map[index + offset[d]] & NODE) != 0) {
           return d;
         }
@@ -871,7 +869,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     for (int i = 0; i < 6; i++) {
       // int d = (searchDirection + SEARCH[i]) % 8;
       final int d = (searchDirection + i) % 8;
-      if (isInner || isWithinXY(x, y, d)) {
+      if (isInner || isWithinXy(x, y, d)) {
         if ((map[index + offset[d]] & EDGE) == EDGE
             && (map[index + offset[d]] & PROCESSED) != PROCESSED) {
           return d;
@@ -1097,7 +1095,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
 
     for (int index = skeleton.length; index-- > 0;) {
       if (skeleton[index] == foreground) {
-        getXY(index, xyz);
+        getXy(index, xyz);
         final int x = xyz[0];
         final int y = xyz[1];
 
@@ -1106,7 +1104,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
         final boolean[] edgesSet = new boolean[8];
         for (int d = 8; d-- > 0;) {
           // analyze 4 flat-edge neighbours
-          if (isInner || isWithinXY(x, y, d)) {
+          if (isInner || isWithinXy(x, y, d)) {
             edgesSet[d] = (skeleton[index + offset[d]] == foreground);
           }
         }
@@ -1144,9 +1142,9 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     ylimit = maxy - 1;
 
     // Create the offset table (for single array 3D neighbour comparisons)
-    offset = new int[ChainCode.DIR_X_OFFSET.length];
+    offset = new int[ChainCode.DIRECTION_SIZE];
     for (int d = offset.length; d-- > 0;) {
-      offset[d] = getIndex(ChainCode.DIR_X_OFFSET[d], ChainCode.DIR_Y_OFFSET[d]);
+      offset[d] = getIndex(ChainCode.getXDirection(d), ChainCode.getYDirection(d));
     }
   }
 
@@ -1168,7 +1166,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
    * @param xy the xy
    * @return The xy array
    */
-  private int[] getXY(int index, int[] xy) {
+  private int[] getXy(int index, int[] xy) {
     xy[1] = index / maxx;
     xy[0] = index % maxx;
     return xy;
@@ -1184,7 +1182,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
    * @param direction the direction from the pixel towards the neighbour
    * @return true if the neighbour is within the image (provided that x, y is within)
    */
-  private boolean isWithinXY(int x, int y, int direction) {
+  private boolean isWithinXy(int x, int y, int direction) {
     switch (direction) {
       case 0:
         return (y > 0);
@@ -1202,13 +1200,12 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
         return (x > 0);
       case 7:
         return (y > 0 && x > 0);
-      case 8:
-        return true;
+      default:
+        return false;
     }
-    return false;
   }
 
-  private class Result implements Comparable<Result> {
+  private static class Result {
     float[] line;
     ChainCode code;
 
@@ -1217,18 +1214,27 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
       this.code = code;
     }
 
-    @Override
-    public int compareTo(Result that) {
+    /**
+     * Compare the two objects.
+     *
+     * <p>Uses greatest distance then the coordinates.
+     *
+     * @param o1 the first object
+     * @param o2 the second object
+     * @return a negative integer, zero, or a positive integer if object 1 is less than, equal to,
+     *         or greater than object 2.
+     */
+    static int compare(Result o1, Result o2) {
       final int[] result = new int[1];
 
       // Distance first
-      if (compare(this.line[4], that.line[4], result) != 0) {
+      if (compare(o1.line[4], o2.line[4], result) != 0) {
         return -result[0];
       }
 
       // Then coordinates
       for (int i = 0; i < 4; i++) {
-        if (compare(this.line[i], that.line[i], result) != 0) {
+        if (compare(o1.line[i], o2.line[i], result) != 0) {
           return result[0];
         }
       }
@@ -1236,7 +1242,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
       return 0;
     }
 
-    private int compare(float value1, float value2, int[] result) {
+    private static int compare(float value1, float value2, int[] result) {
       if (value1 < value2) {
         result[0] = -1;
       } else if (value1 > value2) {

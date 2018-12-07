@@ -25,8 +25,8 @@
 package uk.ac.sussex.gdsc.colocalisation.cda;
 
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.colocalisation.cda.engine.CdaEngine;
 import uk.ac.sussex.gdsc.colocalisation.cda.engine.CalculationResult;
+import uk.ac.sussex.gdsc.colocalisation.cda.engine.CdaEngine;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper.LutColour;
@@ -751,8 +751,6 @@ public class Cda_PlugIn extends PlugInFrame
    * </code>
    * </pre>
    *
-   *
-   *
    * <p>This supports shifts up to +/-256 pixels.
    *
    * @param minimumRadius the minimum radius (range 0-256)
@@ -1278,8 +1276,8 @@ public class Cda_PlugIn extends PlugInFrame
           plotM2YLabel, spacedX, ceroValuesX, ceroValuesY, spacedY);
     }
     if (showRPlotWindow) {
-      plotR = createPlot(distances, correlationValues, Color.blue, Color.green, plotRTitle, plotXLabel,
-          plotRYLabel, spacedX, ceroValuesX, ceroValuesY, spacedY);
+      plotR = createPlot(distances, correlationValues, Color.blue, Color.green, plotRTitle,
+          plotXLabel, plotRYLabel, spacedX, ceroValuesX, ceroValuesY, spacedY);
     }
 
     // Prepare output images

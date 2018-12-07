@@ -273,8 +273,8 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
 
   @SuppressWarnings("unused")
   @Override
-  public synchronized void actionPerformed(ActionEvent e) {
-    final Object actioner = e.getSource();
+  public synchronized void actionPerformed(ActionEvent event) {
+    final Object actioner = event.getSource();
 
     if (actioner == null) {
       return;
@@ -294,7 +294,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
   }
 
   @Override
-  public void itemStateChanged(ItemEvent e) {
+  public void itemStateChanged(ItemEvent event) {
     if (setResultsOptionsCheckbox.getState()) {
       setResultsOptionsCheckbox.setState(false);
 
@@ -343,7 +343,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
   }
 
   @Override
-  public void windowClosing(WindowEvent e) {
+  public void windowClosing(WindowEvent event) {
     Prefs.saveLocation(OPT_LOCATION, getLocation());
     close();
   }
@@ -374,10 +374,10 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
   }
 
   @Override
-  public void windowActivated(WindowEvent e) {
+  public void windowActivated(WindowEvent event) {
     fillImagesList();
 
-    super.windowActivated(e);
+    super.windowActivated(event);
     WindowManager.setWindow(this);
   }
 

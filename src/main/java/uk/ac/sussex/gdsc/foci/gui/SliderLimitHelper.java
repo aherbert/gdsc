@@ -39,6 +39,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -59,7 +61,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
   private JLabel lblParametername;
   private JFormattedTextField txtMinimum;
   private JFormattedTextField txtMaximum;
-  private boolean oked = false;
+  private boolean oked;
   private double lowerBound = Double.NEGATIVE_INFINITY;
   private double upperBound = Double.POSITIVE_INFINITY;
 
@@ -74,7 +76,8 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
       dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       dialog.setVisible(true);
     } catch (final Exception ex) {
-      ex.printStackTrace();
+      Logger.getLogger(SliderLimitHelper.class.getName()).log(Level.SEVERE,
+          "Error showing the dialog", ex);
     }
   }
 
@@ -94,7 +97,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
   public SliderLimitHelper() {
     addWindowListener(new WindowAdapter() {
       @Override
-      public void windowActivated(WindowEvent e) {
+      public void windowActivated(WindowEvent event) {
         validMin();
         validMax();
       }
@@ -102,6 +105,9 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
     init();
   }
 
+  /**
+   * Inits the.
+   */
   private void init() {
     setModalityType(ModalityType.DOCUMENT_MODAL);
     setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -147,7 +153,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
       });
       txtMinimum.addKeyListener(new KeyAdapter() {
         @Override
-        public void keyReleased(KeyEvent e) {
+        public void keyReleased(KeyEvent evt) {
           validMin();
         }
       });
@@ -180,7 +186,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
       });
       txtMaximum.addKeyListener(new KeyAdapter() {
         @Override
-        public void keyReleased(KeyEvent e) {
+        public void keyReleased(KeyEvent evt) {
           validMax();
         }
       });
@@ -212,6 +218,8 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
   }
 
   /**
+   * Sets the parameter name.
+   *
    * @param name The parameter name
    */
   public void setParameterName(String name) {
@@ -219,6 +227,8 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
   }
 
   /**
+   * Sets the minimum.
+   *
    * @param minimum the minimum to set
    */
   public void setMinimum(double minimum) {
@@ -226,6 +236,8 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
   }
 
   /**
+   * Gets the minimum.
+   *
    * @return the minimum.
    */
   public double getMinimum() {
@@ -233,6 +245,8 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
   }
 
   /**
+   * Sets the maximum.
+   *
    * @param maximum the maximum to set
    */
   public void setMaximum(double maximum) {
@@ -240,6 +254,8 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
   }
 
   /**
+   * Gets the maximum.
+   *
    * @return the maximum.
    */
   public double getMaximum() {
@@ -248,19 +264,24 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
 
   /** {@inheritDoc} */
   @Override
-  public void actionPerformed(ActionEvent e) {
-    if (e.getActionCommand() == "OK") {
-      System.out.println("Validate input");
+  public void actionPerformed(ActionEvent event) {
+    if ("OK".equals(event.getActionCommand())) {
       if (valid()) {
         oked = true;
         dispose();
       }
+      return;
     }
-    if (e.getActionCommand() == "Cancel") {
+    if ("Cancel".equals(event.getActionCommand())) {
       dispose();
     }
   }
 
+  /**
+   * Check if the min and max fields are valid.
+   *
+   * @return true, if successful
+   */
   private boolean valid() {
     if (!validMin()) {
       return false;
@@ -278,15 +299,31 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
     return true;
   }
 
+  /**
+   * Check if the min field is valid.
+   *
+   * @return true, if successful
+   */
   private boolean validMin() {
-    return valid(txtMinimum);
+    return validField(txtMinimum);
   }
 
+  /**
+   * Check if the max field is valid.
+   *
+   * @return true, if successful
+   */
   private boolean validMax() {
-    return valid(txtMaximum);
+    return validField(txtMaximum);
   }
 
-  private boolean valid(JFormattedTextField txtField) {
+  /**
+   * Check if the field is valid.
+   *
+   * @param txtField the txt field
+   * @return true, if successful
+   */
+  private boolean validField(JFormattedTextField txtField) {
     if (isEmpty(txtField)) {
       return true;
     }
@@ -304,6 +341,12 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
     return false;
   }
 
+  /**
+   * Checks if is empty.
+   *
+   * @param txtField the txt field
+   * @return true, if is empty
+   */
   private static boolean isEmpty(JFormattedTextField txtField) {
     if (txtField.getText() == null || txtField.getText().equals("")) {
       txtField.setForeground(Color.BLACK);
@@ -313,14 +356,18 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
   }
 
   /**
-   * @return the true if the dialog was Oked.
+   * Gets if the dialog was Oked..
+   *
+   * @return true if the dialog was Oked.
    */
   public boolean getOked() {
     return oked;
   }
 
   /**
-   * @param lowerBound the lowerBound to set
+   * Sets the lower bound.
+   *
+   * @param lowerBound the new lower bound
    */
   public void setLowerBound(double lowerBound) {
     this.lowerBound = lowerBound;
@@ -332,14 +379,18 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
   }
 
   /**
-   * @return the lowerBound.
+   * Gets the lower bound.
+   *
+   * @return the lower bound
    */
   public double getLowerBound() {
     return lowerBound;
   }
 
   /**
-   * @param upperBound the upperBound to set
+   * Sets the upper bound.
+   *
+   * @param upperBound the new upper bound
    */
   public void setUpperBound(double upperBound) {
     this.upperBound = upperBound;
@@ -351,7 +402,9 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
   }
 
   /**
-   * @return the upperBound.
+   * Gets the upper bound.
+   *
+   * @return the upper bound
    */
   public double getUpperBound() {
     return upperBound;
@@ -379,7 +432,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
    *
    * @param slider the slider
    * @param title The title of the dialog
-   * @param scaleFactor The scalefactor applied to the input text to set the slider limits
+   * @param scaleFactor The scale factor applied to the input text to set the slider limits
    * @param lowerBound Lower bound for the range
    * @param upperBound Upper bound for the range
    * @return true if the limits were updated

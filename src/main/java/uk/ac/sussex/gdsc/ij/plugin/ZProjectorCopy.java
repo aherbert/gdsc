@@ -46,10 +46,12 @@ import java.util.Arrays;
  * This plugin performs a z-projection of the input stack. Type of output image is same as type of
  * input image.
  *
- * <p>Copied from {@link ij.plugin.ZProjector}.
+ * <p>Copied from {@link ij.plugin.ZProjector} to allow the class to be extended. Visibility of
+ * members may have been changed.
  *
  * @author Patrick Kelly &lt;phkelly@ucsd.edu&gt;
  */
+//CHECKSTYLE.OFF
 public class ZProjectorCopy implements PlugIn {
   /** Use Average projection. */
   public static final int AVG_METHOD = 0;

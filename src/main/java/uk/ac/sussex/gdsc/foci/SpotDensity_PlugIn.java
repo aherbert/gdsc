@@ -68,13 +68,15 @@ public class SpotDensity_PlugIn implements PlugIn {
   private static double distance = 15;
   private static double interval = 1.5;
 
-  private class PC {
+  private static ArrayList<PairCorrelation> results = new ArrayList<>();
+
+  private static class PairCorrelation {
     final int n;
     final int area;
     final double[] r;
     final double[] pcf;
 
-    public PC(int n, int area, double[] r, double[] pcf) {
+    PairCorrelation(int n, int area, double[] r, double[] pcf) {
       this.n = n;
       this.area = area;
       this.r = r;
@@ -82,22 +84,18 @@ public class SpotDensity_PlugIn implements PlugIn {
     }
   }
 
-  private static ArrayList<PC> results = new ArrayList<>();
-
-  private ImagePlus imp;
-
-  private class Foci {
+  private static class Foci {
     final int id;
     final int x;
     final int y;
 
-    public Foci(int id, int x, int y) {
+    Foci(int id, int x, int y) {
       this.id = id;
       this.x = x;
       this.y = y;
     }
 
-    public double distance2(Foci that) {
+    double distance2(Foci that) {
       final double dx = this.x - that.x;
       final double dy = this.y - that.y;
       return dx * dx + dy * dy;
@@ -111,11 +109,12 @@ public class SpotDensity_PlugIn implements PlugIn {
     // List the foci results
     final String[] names = FindFoci_PlugIn.getResultsNames();
     if (names == null || names.length == 0) {
-      IJ.error(TITLE, "Spots must be stored in memory using the " + FindFoci_PlugIn.TITLE + " plugin");
+      IJ.error(TITLE,
+          "Spots must be stored in memory using the " + FindFoci_PlugIn.TITLE + " plugin");
       return;
     }
 
-    imp = WindowManager.getCurrentImage();
+    final ImagePlus imp = WindowManager.getCurrentImage();
     Roi roi = null;
     if (imp != null) {
       roi = imp.getRoi();
@@ -220,14 +219,14 @@ public class SpotDensity_PlugIn implements PlugIn {
     return map;
   }
 
-  private Foci[] getFoci(String resultsName) {
+  private static Foci[] getFoci(String resultsName) {
     final FindFociMemoryResults memoryResults = FindFoci_PlugIn.getResults(resultsName);
     if (memoryResults == null) {
       IJ.showMessage("Error", "No foci with the name " + resultsName);
       return null;
     }
     final ArrayList<FindFociResult> results = memoryResults.results;
-    if (results.size() == 0) {
+    if (results.isEmpty()) {
       IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
       return null;
     }
@@ -241,7 +240,7 @@ public class SpotDensity_PlugIn implements PlugIn {
 
   /**
    * For all foci in set 1, compare to set 2 and output a histogram of the average density around
-   * each foci (pair correlation) and the minimum distance to another foci.
+   * each foci is concentric rings (pair correlation) and the minimum distance to another foci.
    *
    * @param foci1 the foci 1
    * @param foci2 the foci 2
@@ -311,8 +310,7 @@ public class SpotDensity_PlugIn implements PlugIn {
       final double N_pi = N * Math.PI;
       for (int i = 0; i < nBins; i++) {
         // Pair-correlation is the count at the given distance divided by N (the number of items
-        // analysed)
-        // and the area at distance ri:
+        // analysed) and the area at distance ri:
         // H[i] / (N x (pi x (r_i+1)^2 - pi x r_i^2))
         pcf[i] = H[i] / (N_pi * (r[i + 1] * r[i + 1] - r[i] * r[i]));
         // Convert to double for plotting
@@ -356,7 +354,7 @@ public class SpotDensity_PlugIn implements PlugIn {
     }
 
     // Store the result
-    final PC pc = new PC(N2, area, r, pcf);
+    final PairCorrelation pc = new PairCorrelation(N2, area, r, pcf);
     results.add(pc);
 
     // Display
@@ -390,7 +388,7 @@ public class SpotDensity_PlugIn implements PlugIn {
     resultsWindow.append(sb.toString());
   }
 
-  private static PlotWindow showPairCorrelation(PC pc) {
+  private static PlotWindow showPairCorrelation(PairCorrelation pc) {
     final double avDensity = (double) pc.n / pc.area;
     final String title = "Pair Correlation";
     final Plot plot2 = new Plot(TITLE + " " + title, "r (px)", "g(r)", pc.r, pc.pcf);
@@ -401,20 +399,20 @@ public class SpotDensity_PlugIn implements PlugIn {
     return ImageJUtils.display(TITLE + " " + title, plot2);
   }
 
-  private void createResultsWindow() {
+  private static void createResultsWindow() {
     if (resultsWindow == null || !resultsWindow.isShowing()) {
       resultsWindow = new TextWindow(TITLE + " Summary", createResultsHeader(), "", 700, 300);
 
       // Allow clicking multiple results in the window to show a combined curve
       resultsWindow.getTextPanel().addMouseListener(new MouseAdapter() {
         @Override
-        public void mouseClicked(MouseEvent e) {
+        public void mouseClicked(MouseEvent event) {
           TextPanel tp = null;
-          if (e.getSource() instanceof TextPanel) {
-            tp = (TextPanel) e.getSource();
-          } else if (e.getSource() instanceof Canvas
-              && ((Canvas) e.getSource()).getParent() instanceof TextPanel) {
-            tp = (TextPanel) ((Canvas) e.getSource()).getParent();
+          if (event.getSource() instanceof TextPanel) {
+            tp = (TextPanel) event.getSource();
+          } else if (event.getSource() instanceof Canvas
+              && ((Canvas) event.getSource()).getParent() instanceof TextPanel) {
+            tp = (TextPanel) ((Canvas) event.getSource()).getParent();
           }
 
           final int[] ids = new int[results.size()];
@@ -484,7 +482,7 @@ public class SpotDensity_PlugIn implements PlugIn {
           }
 
           // Check all curves are the same size and build an average
-          PC pc = results.get(ids[0] - 1);
+          PairCorrelation pc = results.get(ids[0] - 1);
           final int length = pc.r.length;
           int n = pc.n;
           int area = pc.area;
@@ -509,7 +507,7 @@ public class SpotDensity_PlugIn implements PlugIn {
             pcf[j] /= count;
           }
 
-          showPairCorrelation(new PC(n, area, r, pcf));
+          showPairCorrelation(new PairCorrelation(n, area, r, pcf));
         }
       });
     }

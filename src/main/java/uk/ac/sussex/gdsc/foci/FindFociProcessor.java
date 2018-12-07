@@ -26,6 +26,7 @@ package uk.ac.sussex.gdsc.foci;
 
 import ij.ImagePlus;
 
+// TODO: Auto-generated Javadoc
 /**
  * Interface describing the methods for the FindFoci algorithm to find the peak intensity regions of
  * an image.
@@ -116,7 +117,7 @@ public interface FindFociProcessor {
    */
   public static final int OUTPUT_MASK_THRESHOLD = 32;
   /**
-   * Create an output mask showing only pixels above the peak's highest saddle value
+   * Create an output mask showing only pixels above the peak's highest saddle value.
    */
   public static final int OUTPUT_MASK_ABOVE_SADDLE = 64;
   /**
@@ -126,11 +127,11 @@ public interface FindFociProcessor {
   public static final int OUTPUT_MASK_NO_PEAK_DOTS = 128;
   /**
    * Create an output mask showing only the pixels contributing to a cumulative fraction of the
-   * peak's total intensity
+   * peak's total intensity.
    */
   public static final int OUTPUT_MASK_FRACTION_OF_INTENSITY = 256;
   /**
-   * Create an output mask showing only pixels above a fraction of the peak's highest value
+   * Create an output mask showing only pixels above a fraction of the peak's highest value.
    */
   public static final int OUTPUT_MASK_FRACTION_OF_HEIGHT = 512;
   /**
@@ -237,11 +238,11 @@ public interface FindFociProcessor {
    */
   public static final int OPTION_MINIMUM_ABOVE_SADDLE = 1;
   /**
-   * Calculate the statistics using the pixels outside the ROI/Mask (default is all pixels)
+   * Calculate the statistics using the pixels outside the ROI/Mask (default is all pixels).
    */
   public static final int OPTION_STATS_OUTSIDE = 2;
   /**
-   * Calculate the statistics using the pixels inside the ROI/Mask (default is all pixels)
+   * Calculate the statistics using the pixels inside the ROI/Mask (default is all pixels).
    */
   public static final int OPTION_STATS_INSIDE = 4;
   /**
@@ -250,7 +251,7 @@ public interface FindFociProcessor {
   public static final int OPTION_REMOVE_EDGE_MAXIMA = 8;
   /**
    * Identify all connected non-zero mask pixels with the same value as objects and label the maxima
-   * as belonging to each object
+   * as belonging to each object.
    */
   public static final int OPTION_OBJECT_ANALYSIS = 16;
   /**
@@ -304,15 +305,11 @@ public interface FindFociProcessor {
   /**
    * Here the processing is done: Find the maxima of an image.
    *
-   *
-   *
    * <p>Local maxima are processed in order, highest first. Regions are grown from local maxima
    * until a saddle point is found or the stopping criteria are met (based on pixel intensity). If a
    * peak does not meet the peak criteria (min size) it is absorbed into the highest peak that
    * touches it (if a neighbour peak exists). Only a single iteration is performed and consequently
    * peak absorption could produce sub-optimal results due to greedy peak growth.
-   *
-   *
    *
    * <p>Peak expansion stopping criteria are defined using the method parameter. See
    * {@link #SEARCH_ABOVE_BACKGROUND}; {@link #SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND};
@@ -396,7 +393,7 @@ public interface FindFociProcessor {
       int backgroundMethod, String autoThresholdMethod, int options);
 
   /**
-   * Clones the init array for use in findMaxima staged methods. Only the elements that are
+   * Copies the initial results for use in findMaxima staged methods. Only the elements that are
    * destructively modified by the findMaxima staged methods are duplicated. The rest are shallow
    * copied.
    *
@@ -405,7 +402,7 @@ public interface FindFociProcessor {
    *        Can be null.
    * @return the find foci init results
    */
-  public FindFociInitResults clone(FindFociInitResults initResults,
+  public FindFociInitResults copyForStagedProcessing(FindFociInitResults initResults,
       FindFociInitResults clonedInitResults);
 
   /**

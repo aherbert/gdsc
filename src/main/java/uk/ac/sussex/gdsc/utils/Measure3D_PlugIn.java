@@ -55,24 +55,30 @@ import java.awt.event.WindowEvent;
  */
 public class Measure3D_PlugIn extends PlugInFrame {
   private static final long serialVersionUID = 286478476052530844L;
-  private static final String TITLE = "Measure 3D";
+  private static final String PLUGIN_TITLE = "Measure 3D";
   private static final String OPT_LOCATION = "Measure3D.location";
   private static final String OPT_LOCATION_RESULTS = "Measure3D.location2";
-  private static Measure3D_PlugIn instance = null;
-  private static TextWindow results = null;
+  private static Measure3D_PlugIn instance;
+  private static TextWindow results;
 
-  private int lastID = 0;
+  private int lastId;
   private int lastX;
   private int lastY;
   private int lastZ;
   private int lastC;
   private int lastT;
 
+  private GridBagLayout mainGrid;
+  private GridBagConstraints constraints;
+  private int row = 0;
+  private Label[] labels;
+  private Checkbox overlayCheckbox;
+
   /**
    * Constructor.
    */
   public Measure3D_PlugIn() {
-    super(TITLE);
+    super(PLUGIN_TITLE);
   }
 
   /** {@inheritDoc} */
@@ -120,18 +126,6 @@ public class Measure3D_PlugIn extends PlugInFrame {
     setVisible(true);
   }
 
-  private void installTool() {
-    final String name = "Measure 3D Tool";
-    if (Toolbar.getInstance().getToolId(name) == -1) {
-      final StringBuilder sb = new StringBuilder();
-      sb.append("macro 'Measure 3D Tool - L0ef7F0d22Fe722C00fT06103T5610D' {\n");
-      sb.append("   call('").append(this.getClass().getName()).append(".run');\n");
-      sb.append("};\n");
-      new MacroInstaller().install(sb.toString());
-    }
-    Toolbar.getInstance().setTool(name);
-  }
-
   /**
    * Run the Measure3D plugin using the cursor position on the current image.
    */
@@ -149,6 +143,18 @@ public class Measure3D_PlugIn extends PlugInFrame {
     }
   }
 
+  private void installTool() {
+    final String name = PLUGIN_TITLE + " Tool";
+    if (Toolbar.getInstance().getToolId(name) == -1) {
+      final StringBuilder sb = new StringBuilder();
+      sb.append("macro 'Measure 3D Tool - L0ef7F0d22Fe722C00fT06103T5610D' {\n");
+      sb.append("   call('").append(this.getClass().getName()).append(".run');\n");
+      sb.append("};\n");
+      new MacroInstaller().install(sb.toString());
+    }
+    Toolbar.getInstance().setTool(name);
+  }
+
   private void imageClicked() {
     final ImagePlus imp = getCurrentImage();
     if (imp == null) {
@@ -164,11 +170,11 @@ public class Measure3D_PlugIn extends PlugInFrame {
     final int z = imp.getZ();
     final int t = imp.getT();
 
-    if (lastID == imp.getID() && lastC == c && lastT == t) {
+    if (lastId == imp.getID() && lastC == c && lastT == t) {
       // This is the second point clicked on the same image and [C,T]
 
       // Reset the clicked point
-      lastID = 0;
+      lastId = 0;
       for (int i = 1; i < labels.length; i++) {
         labels[i].setText("");
       }
@@ -182,18 +188,19 @@ public class Measure3D_PlugIn extends PlugInFrame {
       // Compute calibrated distance
       final Calibration cal = imp.getCalibration();
       double d2 = -1;
-      if (cal != null) {
-        // Assume X and Y units are the same. Check the z-unit.
-        if (cal.getXUnit().equals(cal.getZUnit())) {
-          dx *= cal.pixelWidth;
-          dy *= cal.pixelHeight;
-          dz *= cal.pixelDepth;
-          d2 = Math.sqrt(dx * dx + dy * dy + dz + dz);
-        }
+      String units = "";
+      if (cal != null
+          // Assume X and Y units are the same. Check the z-unit.
+          && cal.getXUnit().equals(cal.getZUnit())) {
+        dx *= cal.pixelWidth;
+        dy *= cal.pixelHeight;
+        dz *= cal.pixelDepth;
+        d2 = Math.sqrt(dx * dx + dy * dy + dz + dz);
+        units = cal.getXUnit();
       }
 
       // Record to a table
-      record(imp, x, y, z, d, d2, cal.getXUnit());
+      record(imp, x, y, z, d, d2, units);
 
       // Overlay the line on the image
       if (overlayCheckbox.getState()) {
@@ -214,7 +221,7 @@ public class Measure3D_PlugIn extends PlugInFrame {
       pack();
 
       // Store the point that was clicked
-      lastID = imp.getID();
+      lastId = imp.getID();
       lastX = x;
       lastY = y;
       lastZ = z;
@@ -232,8 +239,8 @@ public class Measure3D_PlugIn extends PlugInFrame {
 
   private static void createResultsTable() {
     if (results == null || !results.isVisible()) {
-      results = new TextWindow(TITLE, "Image\tc\tt\tx1\ty1\tz1\tx2\ty2\tz2\tD (px)\tD\tUnits", "",
-          800, 400);
+      results = new TextWindow(PLUGIN_TITLE,
+          "Image\tc\tt\tx1\ty1\tz1\tx2\ty2\tz2\tD (px)\tD\tUnits", "", 800, 400);
       final Point loc = Prefs.getLocation(OPT_LOCATION_RESULTS);
       if (loc != null) {
         results.setLocation(loc);
@@ -241,14 +248,15 @@ public class Measure3D_PlugIn extends PlugInFrame {
 
       results.addWindowListener(new WindowAdapter() {
         @Override
-        public void windowClosing(WindowEvent e) {
+        public void windowClosing(WindowEvent event) {
           Prefs.saveLocation(OPT_LOCATION_RESULTS, results.getLocation());
         }
       });
     }
   }
 
-  private void record(ImagePlus imp, int x, int y, int z, double d, double d2, String units) {
+  private void record(ImagePlus imp, int x, int y, int z, double distance,
+      double calibratedDistance, String units) {
     createResultsTable();
     final StringBuilder sb = new StringBuilder(imp.getTitle());
     sb.append('\t').append(lastC);
@@ -259,9 +267,9 @@ public class Measure3D_PlugIn extends PlugInFrame {
     sb.append('\t').append(x);
     sb.append('\t').append(y);
     sb.append('\t').append(z);
-    sb.append('\t').append(MathUtils.rounded(d));
-    if (d != -1) {
-      sb.append('\t').append(MathUtils.rounded(d2));
+    sb.append('\t').append(MathUtils.rounded(distance));
+    if (calibratedDistance != -1) {
+      sb.append('\t').append(MathUtils.rounded(calibratedDistance));
       sb.append('\t').append(units);
     } else {
       sb.append("\t\t");
@@ -270,12 +278,14 @@ public class Measure3D_PlugIn extends PlugInFrame {
   }
 
   /**
+   * Gets the current image.
+   *
    * @return The current image (must have an image canvas).
    */
   private static ImagePlus getCurrentImage() {
     // NOTE: BUG
-    // The ImageCanvas.mousePressed(MouseEvent e) eventually calls
-    // Toolbar.getInstance().runMacroTool(toolID);
+    // The ImageCanvas.mousePressed(MouseEvent event) eventually calls
+    // Toolbar.getInstance().runMacroTool(toolID)
     // This runs the HSB_Picker if the tool is selected.
     //
     // This happens before WindowManager.setCurrentImage(...) is called
@@ -285,7 +295,7 @@ public class Measure3D_PlugIn extends PlugInFrame {
     // of WindowManager.getCurrentImage().
     //
     // This can be fixed by setting:
-    // WindowManager.setCurrentWindow(win);
+    // WindowManager.setCurrentWindow(win)
     // in the ImageCanvas.mousePressed(...) method.
 
     final ImagePlus imp = WindowManager.getCurrentImage();
@@ -303,25 +313,25 @@ public class Measure3D_PlugIn extends PlugInFrame {
     super.close();
   }
 
-  private final GridBagLayout mainGrid = new GridBagLayout();
-  private final GridBagConstraints c = new GridBagConstraints();
-  private int row = 0;
-  private Label[] labels;
-  private Checkbox overlayCheckbox;
-
   private void createFrame() {
+    mainGrid = new GridBagLayout();
+    constraints = new GridBagConstraints();
+
     setLayout(mainGrid);
 
     // Build a grid that shows the last pressed position.
     labels = new Label[6];
+    for (int i = 0; i < labels.length; i++) {
+      labels[i] = new Label();
+    }
     final ImagePlus imp = getCurrentImage();
     final String title = (imp == null) ? "" : imp.getTitle();
-    createLabelPanel(labels[0] = new Label(), "Image", title);
-    createLabelPanel(labels[1] = new Label(), "X", "");
-    createLabelPanel(labels[2] = new Label(), "Y", "");
-    createLabelPanel(labels[3] = new Label(), "Z", "");
-    createLabelPanel(labels[4] = new Label(), "C", "");
-    createLabelPanel(labels[5] = new Label(), "T", "");
+    createLabelPanel(labels[0], "Image", title);
+    createLabelPanel(labels[1], "X", "");
+    createLabelPanel(labels[2], "Y", "");
+    createLabelPanel(labels[3], "Z", "");
+    createLabelPanel(labels[4], "C", "");
+    createLabelPanel(labels[5], "T", "");
 
     overlayCheckbox = new Checkbox("Overlay", true);
     add(overlayCheckbox, 0, 1);
@@ -331,20 +341,19 @@ public class Measure3D_PlugIn extends PlugInFrame {
     final Label listLabel = new Label(label, 0);
     add(listLabel, 0, 1);
     if (labelField != null) {
-      // labelField.setSize(fontWidth * 3, fontWidth);
       labelField.setText(value);
       add(labelField, 1, 1);
     }
     row++;
   }
 
-  private void add(Component comp, int x, int width) {
-    c.gridx = x;
-    c.gridy = row;
-    c.gridwidth = width;
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.anchor = GridBagConstraints.WEST;
-    mainGrid.setConstraints(comp, c);
+  private void add(Component comp, int gridx, int width) {
+    constraints.gridx = gridx;
+    constraints.gridy = row;
+    constraints.gridwidth = width;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    constraints.anchor = GridBagConstraints.WEST;
+    mainGrid.setConstraints(comp, constraints);
     add(comp);
   }
 }

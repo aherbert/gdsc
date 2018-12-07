@@ -32,6 +32,7 @@ import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.SoftLock;
 import uk.ac.sussex.gdsc.core.utils.StoredData;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.core.utils.UnicodeReader;
@@ -104,12 +105,37 @@ import javax.swing.WindowConstants;
  */
 public class FindFociOptimiser_PlugIn
     implements PlugIn, MouseListener, WindowListener, DialogListener, TextListener, ItemListener {
-  private static OptimiserView instance;
 
-  private static String TITLE = "FindFoci Optimiser";
-  private static TextWindow resultsWindow = null;
-  private static int STEP_LIMIT = 10000;
+  private static final String TITLE = "FindFoci Optimiser";
   private static final int RESULT_PRECISION = 4;
+
+  private static final String INPUT_DIRECTORY = "findfoci.optimiser.inputDirectory";
+  private static final String MASK_DIRECTORY = "findfoci.optimiser.maskDirectory";
+  private static final String OUTPUT_DIRECTORY = "findfoci.optimiser.outputDirectory";
+  private static final String SCORING_MODE = "findfoci.optimiser.scoringMode";
+  private static final String REUSE_RESULTS = "findfoci.optimiser.reuseResults";
+
+  private static final String RESULTS_SUFFIX = ".results.xls";
+
+  /** The list of recognised methods for sorting the results. */
+  private static final String[] sortMethods =
+      {"None", "Precision", "Recall", "F0.5", "F1", "F2", "F-beta", "Jaccard", "RMSD"};
+
+  /** Do not sort the results. */
+  private static final int SORT_NONE = 0;
+  /** Sort the results using the Jaccard. */
+  private static final int SORT_JACCARD = 7;
+  /**
+   * Sort the results using the RMSD. Note that the RMSD is only computed using the TP so is
+   * therefore only of use when the TP values are the same (i.e. for a tie breaker)
+   */
+  private static final int SORT_RMSD = 8;
+
+  /** The search methods used for matching. */
+  private static final String[] matchSearchMethods = {"Relative", "Absolute"};
+
+  private static TextWindow resultsWindow = null;
+  private static int stepLimit = 10000;
 
   private static String myMaskImage = "";
   private static boolean myBackgroundStdDevAboveMean = true;
@@ -132,42 +158,19 @@ public class FindFociOptimiser_PlugIn
   private static String myCentreMethod = "" + FindFoci_PlugIn.CENTRE_MAX_VALUE_SEARCH;
   private static String myCentreParameter = "2";
 
-  /** The list of recognised methods for sorting the results. */
-  public static final String[] sortMethods =
-      {"None", "Precision", "Recall", "F0.5", "F1", "F2", "F-beta", "Jaccard", "RMSD"};
+  private static final String[] SCORING_MODES =
+      new String[] {"Raw score metric", "Relative (% drop from top)", "Z-score", "Rank"};
+  private static final int SCORE_RAW = 0;
+  private static final int SCORE_RELATIVE = 1;
+  private static final int SCORE_Z = 2;
+  private static final int SCORE_RANK = 3;
 
-  /** Do not sort the results. */
-  public static final int SORT_NONE = 0;
+  private static String inputDirectory = Prefs.get(INPUT_DIRECTORY, "");
+  private static String maskDirectory = Prefs.get(MASK_DIRECTORY, "");
+  private static String outputDirectory = Prefs.get(OUTPUT_DIRECTORY, "");
+  private static int scoringMode = Prefs.getInt(SCORING_MODE, SCORE_RAW);
+  private static boolean reuseResults = Prefs.getBoolean(REUSE_RESULTS, true);
 
-  /** Sort the results using the Precision. */
-  public static final int SORT_PRECISION = 1;
-
-  /** Sort the results using the Recall. */
-  public static final int SORT_RECALL = 2;
-  /**
-   * Sort the results using the F0.5 score (weights precision over recall)
-   */
-  public static final int SORT_F05 = 3;
-
-  /** Sort the results using the F1 score (precision and recall equally weighted). */
-  public static final int SORT_F1 = 4;
-
-  /** Sort the results using the F2 score (weights recall over precision). */
-  public static final int SORT_F2 = 5;
-
-  /** Sort the results using the F-beta score. */
-  public static final int SORT_FBETA = 6;
-
-  /** Sort the results using the Jaccard. */
-  public static final int SORT_JACCARD = 7;
-  /**
-   * Sort the results using the RMSD. Note that the RMSD is only computed using the TP so is
-   * therefore only of use when the TP values are the same (i.e. for a tie breaker)
-   */
-  public static final int SORT_RMSD = 8;
-
-  /** The search methods used for matching. */
-  public static final String[] matchSearchMethods = {"Relative", "Absolute"};
   private static int myMatchSearchMethod = 0;
   private static double myMatchSearchDistance = 0.05;
   private static int myResultsSortMethod = SORT_JACCARD;
@@ -175,6 +178,14 @@ public class FindFociOptimiser_PlugIn
   private static int myMaxResults = 100;
   private static boolean myShowScoreImages = false;
   private static String myResultFile = "";
+
+  // Stored to allow the display of any of the latest results from the result table
+  private static ImagePlus lastImp;
+  private static ImagePlus lastMask;
+  private static ArrayList<Result> lastResults;
+  private static String optimiserCommandOptions;
+
+  private static OptimiserView instance;
 
   private int[] optionsArray = {};
   private String[] thresholdMethods = null;
@@ -207,36 +218,17 @@ public class FindFociOptimiser_PlugIn
 
   // For the multi-image mode
   private boolean multiMode = false;
-  private static String INPUT_DIRECTORY = "findfoci.optimiser.inputDirectory";
-  private static String MASK_DIRECTORY = "findfoci.optimiser.maskDirectory";
-  private static String OUTPUT_DIRECTORY = "findfoci.optimiser.outputDirectory";
-  private static String SCORING_MODE = "findfoci.optimiser.scoringMode";
-  private static String REUSE_RESULTS = "findfoci.optimiser.reuseResults";
-  private static String inputDirectory = Prefs.get(INPUT_DIRECTORY, "");
-  private static String maskDirectory = Prefs.get(MASK_DIRECTORY, "");
-  private static String outputDirectory = Prefs.get(OUTPUT_DIRECTORY, "");
-  private static String[] SCORING_MODES =
-      new String[] {"Raw score metric", "Relative (% drop from top)", "Z-score", "Rank"};
-  private static final int SCORE_RAW = 0;
-  private static final int SCORE_RELATIVE = 1;
-  private static final int SCORE_Z = 2;
-  private static final int SCORE_RANK = 3;
-  private static int scoringMode = Prefs.getInt(SCORING_MODE, SCORE_RAW);
-  private static boolean reuseResults = Prefs.getBoolean(REUSE_RESULTS, true);
 
   @SuppressWarnings("rawtypes")
   private Vector checkbox;
+  @SuppressWarnings("rawtypes")
   private Vector choice;
   private GenericDialog listenerGd;
 
-  // Stored to allow the display of any of the latest results from the result table
-  private static ImagePlus lastImp;
-  private static ImagePlus lastMask;
-  private static ArrayList<Result> lastResults;
-  private static String optimiserCommandOptions;
-
   // The number of combinations
   private int combinations;
+
+  private final SoftLock lock = new SoftLock();
 
   /** {@inheritDoc} */
   @Override
@@ -279,8 +271,8 @@ public class FindFociOptimiser_PlugIn
       }
 
       if (reuseResults && resultsExist(imageList)) {
-        IJ.log(
-            "Output directory contains existing results that will be re-used if they have the correct number of combinations");
+        IJ.log("Output directory contains existing results that will be re-used if they have the "
+            + "correct number of combinations");
       }
 
       IJ.showStatus("Running optimiser ...");
@@ -414,12 +406,8 @@ public class FindFociOptimiser_PlugIn
    */
   private static boolean resultsExist(String[] imageList) {
     // List the results in the output directory
-    final String[] results = new File(outputDirectory).list(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return name.endsWith(".results.xls");
-      }
-    });
+    final String[] results =
+        new File(outputDirectory).list((dir, name) -> name.endsWith(RESULTS_SUFFIX));
 
     if (results == null || results.length == 0) {
       return false;
@@ -662,7 +650,7 @@ public class FindFociOptimiser_PlugIn
     return top;
   }
 
-  private class StopWatch {
+  private static class StopWatch {
     long base;
     long time;
 
@@ -783,7 +771,7 @@ public class FindFociOptimiser_PlugIn
                 final double thisSearchParameter =
                     (searchMethodHasParameter(searchMethodArray[s])) ? searchParameter : 0;
 
-                searchInitArray = ff.clone(initResults, searchInitArray);
+                searchInitArray = ff.copyForStagedProcessing(initResults, searchInitArray);
                 final StopWatch sw2 = sw1.create();
                 final FindFociSearchResults searchArray =
                     ff.findMaximaSearch(searchInitArray, backgroundMethodArray[b],
@@ -828,7 +816,7 @@ public class FindFociOptimiser_PlugIn
                     // System.out.printf("4");
 
                     for (int options : optionsArray) {
-                      mergeInitArray = ff.clone(searchInitArray, mergeInitArray);
+                      mergeInitArray = ff.copyForStagedProcessing(searchInitArray, mergeInitArray);
                       final StopWatch sw5 = sw4.create();
                       final FindFociMergeResults mergeArray = ff.findMaximaMergeFinal(
                           mergeInitArray, mergeSizeResults, minSize, options, blur);
@@ -990,7 +978,7 @@ public class FindFociOptimiser_PlugIn
 
       // Save the identified points
       if (predictedPoints != null) {
-        PointManager.savePoints(predictedPoints, resultFile + ".points.csv");
+        AssignedPointUtils.savePoints(predictedPoints, resultFile + ".points.csv");
       }
     } catch (final IOException ex) {
       IJ.log(
@@ -1259,7 +1247,7 @@ public class FindFociOptimiser_PlugIn
         + "Gaussian blur accepts comma-delimited values for the blur.");
 
     createSettings();
-    gd.addChoice("Settings", SETTINGS, SETTINGS[0]);
+    gd.addChoice("Settings", settingsNames, settingsNames[0]);
 
     if (!multiMode) {
       gd.addChoice("Mask", newImageList.toArray(new String[0]), myMaskImage);
@@ -1299,7 +1287,7 @@ public class FindFociOptimiser_PlugIn
     gd.addChoice("Result_sort_method", sortMethods, sortMethods[myResultsSortMethod]);
     gd.addNumericField("F-beta", myBeta, 2);
     gd.addNumericField("Maximum_results", myMaxResults, 0);
-    gd.addNumericField("Step_limit", STEP_LIMIT, 0);
+    gd.addNumericField("Step_limit", stepLimit, 0);
     if (!multiMode) {
       gd.addCheckbox("Show_score_images", myShowScoreImages);
       gd.addFilenameField("Result_file", myResultFile, 35);
@@ -1358,7 +1346,7 @@ public class FindFociOptimiser_PlugIn
     myResultsSortMethod = gd.getNextChoiceIndex();
     myBeta = gd.getNextNumber();
     myMaxResults = (int) gd.getNextNumber();
-    STEP_LIMIT = (int) gd.getNextNumber();
+    stepLimit = (int) gd.getNextNumber();
     if (!multiMode) {
       myShowScoreImages = gd.getNextBoolean();
       myResultFile = gd.getNextString();
@@ -1370,8 +1358,8 @@ public class FindFociOptimiser_PlugIn
 
     // Validate the chosen parameters
     if (myBackgroundStdDevAboveMean && myBackgroundAbsolute) {
-      IJ.error(
-          "Cannot optimise background methods 'SD above mean' and 'Absolute' using the same parameters");
+      IJ.error("Cannot optimise background methods 'SD above mean' and 'Absolute' "
+          + "using the same parameters");
       return false;
     }
     if (!(myBackgroundStdDevAboveMean | myBackgroundAbsolute | myBackgroundAuto)) {
@@ -1454,9 +1442,9 @@ public class FindFociOptimiser_PlugIn
 
     // Count the number of options
     combinations = countSteps();
-    if (combinations >= STEP_LIMIT) {
+    if (combinations >= stepLimit) {
       IJ.error(
-          "Maximum number of optimisation steps exceeded: " + combinations + " >> " + STEP_LIMIT);
+          "Maximum number of optimisation steps exceeded: " + combinations + " >> " + stepLimit);
       return false;
     }
 
@@ -1472,13 +1460,16 @@ public class FindFociOptimiser_PlugIn
   private boolean showMultiDialog() {
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addMessage("Run " + TITLE
-        + " on a set of images.\n \nAll images in a directory will be processed.\n \nOptional mask images in the input directory should be named:\n[image_name].mask.[ext]\nor placed in the mask directory with the same name as the parent image.");
+        + " on a set of images.\n \nAll images in a directory will be processed.\n \n"
+        + "Optional mask images in the input directory should be named:\n"
+        + "[image_name].mask.[ext]\n"
+        + "or placed in the mask directory with the same name as the parent image.");
     gd.addStringField("Input_directory", inputDirectory);
     gd.addStringField("Mask_directory", maskDirectory);
     gd.addStringField("Output_directory", outputDirectory);
     gd.addMessage("[Note: Double-click a text field to open a selection dialog]");
-    gd.addMessage(
-        "The score metric for each parameter combination is computed per image.\nThe scores are converted then averaged across all images.");
+    gd.addMessage("The score metric for each parameter combination is computed per image.\n"
+        + "The scores are converted then averaged across all images.");
     gd.addChoice("Score_conversion", SCORING_MODES, SCORING_MODES[scoringMode]);
     gd.addCheckbox("Re-use_results", reuseResults);
     final Vector<TextField> texts = gd.getStringFields();
@@ -1927,7 +1918,7 @@ public class FindFociOptimiser_PlugIn
   // Do not get warnings about unused variables
   @SuppressWarnings("unused")
   private int countSteps() {
-    final int stepLimit = STEP_LIMIT;
+    final int maxSteps = stepLimit;
     int steps = 0;
     for (final double blur : blurArray) {
       for (int b = 0; b < backgroundMethodArray.length; b++) {
@@ -1955,7 +1946,7 @@ public class FindFociOptimiser_PlugIn
                                   myCentreParameterIntervalArray[c]) {
                             // Simple check to ensure the user has not configured something
                             // incorrectly
-                            if (steps++ >= stepLimit) {
+                            if (steps++ >= maxSteps) {
                               return steps;
                             }
                           }
@@ -1991,7 +1982,7 @@ public class FindFociOptimiser_PlugIn
       ImagePlus mask, String resultFile) {
     OutputStreamWriter out = null;
     try {
-      final String filename = resultFile + ".results.xls";
+      final String filename = resultFile + RESULTS_SUFFIX;
 
       final File file = new File(filename);
       if (!file.exists()) {
@@ -2169,7 +2160,7 @@ public class FindFociOptimiser_PlugIn
    * @return the options
    */
   private Options createOptions(String parameters) {
-    final String[] fields = p.split(parameters);
+    final String[] fields = TAB_PATTERN.split(parameters);
     try {
       final double blur = Double.parseDouble(fields[0]);
       int backgroundMethod = -1;
@@ -2312,7 +2303,7 @@ public class FindFociOptimiser_PlugIn
     roiPoints = loadPointsFromFile(imp);
 
     if (roiPoints == null) {
-      roiPoints = PointManager.extractRoiPoints(roi);
+      roiPoints = AssignedPointUtils.extractRoiPoints(roi);
     }
 
     if (!is3D) {
@@ -2790,7 +2781,6 @@ public class FindFociOptimiser_PlugIn
         return 1;
       }
 
-      System.out.println("Sort error");
       return 0;
     }
 
@@ -2985,7 +2975,7 @@ public class FindFociOptimiser_PlugIn
       final String[] maskPath = FindFoci_PlugIn.getMaskImage(inputDirectory, maskDirectory, image);
       final ImagePlus mask = FindFoci_PlugIn.openImage(maskPath[0], maskPath[1]);
       final String resultFile = outputDirectory + imp.getShortTitle();
-      final String fullResultFile = resultFile + ".results.xls";
+      final String fullResultFile = resultFile + RESULTS_SUFFIX;
       boolean newResults = false;
       if (reuseResults && new File(fullResultFile).exists()) {
         final ArrayList<Result> results = loadResults(fullResultFile);
@@ -3014,7 +3004,7 @@ public class FindFociOptimiser_PlugIn
     }
   }
 
-  private static Pattern p = Pattern.compile("\t");
+  private static final Pattern TAB_PATTERN = Pattern.compile("\t");
 
   /**
    * Load the results from the specified file. We assign an arbitrary ID to each result using the
@@ -3024,7 +3014,6 @@ public class FindFociOptimiser_PlugIn
    * @return The results
    */
   private ArrayList<Result> loadResults(String filename) {
-    final ArrayList<Result> results = new ArrayList<>();
 
     if (countLines(filename) != combinations) {
       return null;
@@ -3032,8 +3021,9 @@ public class FindFociOptimiser_PlugIn
 
     try (BufferedReader input =
         new BufferedReader(new InputStreamReader(new FileInputStream(filename)))) {
+      final ArrayList<Result> results = new ArrayList<>();
       String line;
-      boolean isRMSD = false;
+      boolean isRmsd = false;
       while ((line = input.readLine()) != null) {
         if (line.length() == 0) {
           continue;
@@ -3041,7 +3031,7 @@ public class FindFociOptimiser_PlugIn
         if (line.charAt(0) == '#') {
           // Look for the RMSD field which was added later. This supports older results files
           if (line.contains("RMSD")) {
-            isRMSD = true;
+            isRmsd = true;
           }
           continue;
         }
@@ -3052,7 +3042,7 @@ public class FindFociOptimiser_PlugIn
         final int endIndex = getIndex(line, 8) + 1; // include the final tab
         final String parameters = line.substring(line.indexOf('\t') + 1, endIndex);
         final String metrics = line.substring(endIndex);
-        final String[] fields = p.split(metrics);
+        final String[] fields = TAB_PATTERN.split(metrics);
 
         // Items we require
         final int id = getId(parameters);
@@ -3062,7 +3052,7 @@ public class FindFociOptimiser_PlugIn
         final int fp = Integer.parseInt(fields[2]);
         final int fn = Integer.parseInt(fields[3]);
         double rmsd = 0;
-        if (isRMSD) {
+        if (isRmsd) {
           rmsd = Double.parseDouble(fields[fields.length - 2]);
         }
         final long time = Long.parseLong(fields[fields.length - 1]);
@@ -3076,14 +3066,10 @@ public class FindFociOptimiser_PlugIn
 
       // If the results were loaded then we must sort them to get a rank
       sortResults(results, myResultsSortMethod);
-    } catch (final ArrayIndexOutOfBoundsException ex) {
-      return null;
-    } catch (final IOException ex) {
-      return null;
-    } catch (final NumberFormatException ex) {
+      return results;
+    } catch (final ArrayIndexOutOfBoundsException | IOException | NumberFormatException ex) {
       return null;
     }
-    return results;
   }
 
   /**
@@ -3122,10 +3108,8 @@ public class FindFociOptimiser_PlugIn
   private static int getIndex(String line, int n) {
     final char[] value = line.toCharArray();
     for (int i = 0; i < value.length; i++) {
-      if (value[i] == '\t') {
-        if (n-- <= 0) {
-          return i;
-        }
+      if (value[i] == '\t' && n-- <= 0) {
+        return i;
       }
     }
     return -1;
@@ -3169,12 +3153,12 @@ public class FindFociOptimiser_PlugIn
 
   /** {@inheritDoc} */
   @Override
-  public void mouseClicked(MouseEvent e) {
+  public void mouseClicked(MouseEvent event) {
     // Show the result that was double clicked in the result table
-    if (e.getClickCount() > 1) {
+    if (event.getClickCount() > 1) {
       // Double-click on the multi-mode dialog text fields
-      if (e.getSource() instanceof TextField) {
-        final TextField tf = (TextField) e.getSource();
+      if (event.getSource() instanceof TextField) {
+        final TextField tf = (TextField) event.getSource();
         String path = tf.getText();
         final boolean recording = Recorder.record;
         Recorder.record = false;
@@ -3200,25 +3184,25 @@ public class FindFociOptimiser_PlugIn
 
   /** {@inheritDoc} */
   @Override
-  public void mousePressed(MouseEvent e) {
+  public void mousePressed(MouseEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void mouseReleased(MouseEvent e) {
+  public void mouseReleased(MouseEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void mouseEntered(MouseEvent e) {
+  public void mouseEntered(MouseEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void mouseExited(MouseEvent e) {
+  public void mouseExited(MouseEvent event) {
     // Ignore
   }
 
@@ -3278,43 +3262,43 @@ public class FindFociOptimiser_PlugIn
 
   /** {@inheritDoc} */
   @Override
-  public void windowOpened(WindowEvent e) {
+  public void windowOpened(WindowEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void windowClosing(WindowEvent e) {
+  public void windowClosing(WindowEvent event) {
     WindowManager.removeWindow(instance);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void windowClosed(WindowEvent e) {
+  public void windowClosed(WindowEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void windowIconified(WindowEvent e) {
+  public void windowIconified(WindowEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void windowDeiconified(WindowEvent e) {
+  public void windowDeiconified(WindowEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void windowActivated(WindowEvent e) {
+  public void windowActivated(WindowEvent event) {
     // Ignore
   }
 
   /** {@inheritDoc} */
   @Override
-  public void windowDeactivated(WindowEvent e) {
+  public void windowDeactivated(WindowEvent event) {
     // Ignore
   }
 
@@ -3322,7 +3306,7 @@ public class FindFociOptimiser_PlugIn
   // Start preset values.
   // The following code is for setting the dialog fields with preset values
   // ---------------------------------------------------------------------------
-  private class DialogSettings {
+  private static class DialogSettings {
     String name;
     ArrayList<String> text = new ArrayList<>();
     ArrayList<Boolean> option = new ArrayList<>();
@@ -3332,7 +3316,7 @@ public class FindFociOptimiser_PlugIn
     }
   }
 
-  private String[] SETTINGS;
+  private String[] settingsNames;
   private ArrayList<DialogSettings> settings;
 
   private boolean updating = false;
@@ -3418,10 +3402,10 @@ public class FindFociOptimiser_PlugIn
   } };
   // Store the preset values for the Checkboxes.
   // Use int so that the flags can be checked if they are for single mode only.
-  private final int FLAG_FALSE = 0;
-  private final int FLAG_TRUE = 1;
-  private final int FLAG_SINGLE = 2;
-  private final int[][] optionPreset = new int[][] { { FLAG_FALSE, // Background_SD_above_mean
+  private static final int FLAG_FALSE = 0;
+  private static final int FLAG_TRUE = 1;
+  private static final int FLAG_SINGLE = 2;
+  private static final int[][] optionPreset = new int[][] { { FLAG_FALSE, // Background_SD_above_mean
       FLAG_FALSE, // Background_Absolute
       FLAG_TRUE, // Background_Auto_Threshold
       FLAG_TRUE, // Search_above_background
@@ -3470,9 +3454,9 @@ public class FindFociOptimiser_PlugIn
       settings.add(s);
     }
 
-    SETTINGS = new String[settings.size()];
+    settingsNames = new String[settings.size()];
     for (int i = 0; i < settings.size(); i++) {
-      SETTINGS[i] = settings.get(i).name;
+      settingsNames[i] = settings.get(i).name;
     }
   }
 
@@ -3553,35 +3537,33 @@ public class FindFociOptimiser_PlugIn
   /**
    * Action performed.
    *
-   * @param e the e
+   * @param event the event
    */
-  public void actionPerformed(ActionEvent e) {
-    dialogItemChanged(listenerGd, e);
+  public void actionPerformed(ActionEvent event) {
+    dialogItemChanged(listenerGd, event);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void textValueChanged(TextEvent e) {
-    dialogItemChanged(listenerGd, e);
+  public void textValueChanged(TextEvent event) {
+    dialogItemChanged(listenerGd, event);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void itemStateChanged(ItemEvent e) {
-    dialogItemChanged(listenerGd, e);
+  public void itemStateChanged(ItemEvent event) {
+    dialogItemChanged(listenerGd, event);
   }
 
   /** {@inheritDoc} */
   @Override
-  public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
-    if (e == null || e.getSource() == null || !aquireLock()) {
+  public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
+    if (event == null || event.getSource() == null || !lock.acquire()) {
       return true;
     }
 
-    // System.out.println("changed " + ex.getSource());
-
     // Check if this is the settings checkbox
-    if (e.getSource() == choice.get(0)) {
+    if (event.getSource() == choice.get(0)) {
       final Choice thisChoice = (Choice) choice.get(0);
 
       // If the choice is currently custom save the current values so they can be restored
@@ -3595,13 +3577,15 @@ public class FindFociOptimiser_PlugIn
         custom = false;
       }
       applySettings(gd, settings.get(index));
-    } else // This is a change to another field. Note that the dialogItemChanged method is called
-    // for each field modified in applySettings. This appears to happen after the applySettings
-    // method has ended (as if the dialogItemChanged events are in a queue or are delayed until
-    // the previous call to dialogItemChanged has ended).
-    // To prevent processing these events ignore anything that happens within x milliseconds
-    // of the call to applySettings
-    if (System.currentTimeMillis() - lastTime > 300) {
+    } else if (System.currentTimeMillis() - lastTime > 300) {
+      // This is a change to another field. Note that the dialogItemChanged method is called
+      // for each field modified in applySettings. This appears to happen after the applySettings
+      // method has ended (as if the dialogItemChanged events are in a queue or are delayed until
+      // the previous call to dialogItemChanged has ended).
+      // To prevent processing these events ignore anything that happens within x milliseconds
+      // of the call to applySettings
+
+
       // A change to any other field makes this a custom setting
       // => Set the settings drop-down to custom
       final Choice thisChoice = (Choice) choice.get(0);
@@ -3610,9 +3594,9 @@ public class FindFociOptimiser_PlugIn
         thisChoice.select(0);
       }
 
-      // Esnure that checkboxes 1 & 2 are complementary
-      if (e.getSource() instanceof Checkbox) {
-        final Checkbox cb = (Checkbox) e.getSource();
+      // Ensure that checkboxes 1 & 2 are complementary
+      if (event.getSource() instanceof Checkbox) {
+        final Checkbox cb = (Checkbox) event.getSource();
         // If just checked then we must uncheck the complementing checkbox
         if (cb.getState()) {
           // Only checkbox 1 & 2 are complementary
@@ -3625,15 +3609,7 @@ public class FindFociOptimiser_PlugIn
       }
     }
 
-    updating = false;
-    return true;
-  }
-
-  private synchronized boolean aquireLock() {
-    if (updating) {
-      return false;
-    }
-    updating = true;
+    lock.release();
     return true;
   }
   // ---------------------------------------------------------------------------

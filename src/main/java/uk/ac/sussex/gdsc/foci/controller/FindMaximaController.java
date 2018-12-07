@@ -162,7 +162,7 @@ public class FindMaximaController extends ImageJController {
     final boolean showTable = model.isShowTable();
     final boolean clearTable = model.isClearTable();
     final boolean markMaxima = model.isMarkMaxima();
-    final boolean markROIMaxima = model.isMarkROIMaxima();
+    final boolean markRoiMaxima = model.isMarkRoiMaxima();
     final boolean markUsingOverlay = model.isMarkUsingOverlay();
     final boolean hideLabels = model.isHideLabels();
     final boolean showLogMessages = model.isShowLogMessages();
@@ -185,7 +185,7 @@ public class FindMaximaController extends ImageJController {
     if (markMaxima) {
       outputType += FindFociProcessor.OUTPUT_ROI_SELECTION;
     }
-    if (markROIMaxima) {
+    if (markRoiMaxima) {
       outputType += FindFociProcessor.OUTPUT_MASK_ROI_SELECTION;
     }
     if (markUsingOverlay) {
@@ -278,7 +278,9 @@ public class FindMaximaController extends ImageJController {
   }
 
   /**
-   * @return the resultsArray.
+   * Gets the results array.
+   *
+   * @return the results array
    */
   public ArrayList<FindFociResult> getResultsArray() {
     return resultsArray;
@@ -295,14 +297,18 @@ public class FindMaximaController extends ImageJController {
   }
 
   /**
-   * @return the activeChannel.
+   * Gets the active channel.
+   *
+   * @return the active channel
    */
   public int getActiveChannel() {
     return activeChannel;
   }
 
   /**
-   * @return the activeFrame.
+   * Gets the active frame.
+   *
+   * @return the active frame
    */
   public int getActiveFrame() {
     return activeFrame;
