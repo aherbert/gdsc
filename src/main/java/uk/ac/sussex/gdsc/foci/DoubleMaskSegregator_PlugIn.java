@@ -43,7 +43,7 @@ import java.util.ArrayList;
  * mask with pixels of AA' AB' BA' BB'.
  */
 public class DoubleMaskSegregator_PlugIn implements PlugIn {
-  private static String TITLE = "Double Mask Segregator";
+  private static final String TITLE = "Double Mask Segregator";
 
   private static String title1 = "";
   private static String title2 = "";
@@ -58,14 +58,14 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
   public void run(String arg) {
     UsageTracker.recordPlugin(this.getClass(), arg);
 
-    if (!showDialog()) {
+    if (!showDialog(this)) {
       return;
     }
 
-    run();
+    analyse();
   }
 
-  private boolean showDialog() {
+  private static boolean showDialog(DoubleMaskSegregator_PlugIn plugin) {
     final String[] items = ImageJUtils.getImageList(ImageJUtils.GREY_8_16, null);
 
     if (items.length < 2) {
@@ -80,7 +80,8 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
     }
 
     gd.addMessage(
-        "Find the classes in each mask using continuous mask values\nand create an all-vs-all output combination mask");
+        "Find the classes in each mask using continuous mask values\nand create an all-vs-all "
+            + "output combination mask");
     gd.addChoice("Input_1", items, title1);
     gd.addChoice("Input_2", items, title2);
     gd.addCheckbox("Apply_LUT", applyLUT);
@@ -98,15 +99,16 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
     applyLUT = gd.getNextBoolean();
     overlayOutline = gd.getNextBoolean();
 
-    imp1 = WindowManager.getImage(title1);
-    if (imp1 == null) {
+    plugin.imp1 = WindowManager.getImage(title1);
+    if (plugin.imp1 == null) {
       return false;
     }
-    imp2 = WindowManager.getImage(title2);
-    if (imp2 == null) {
+    plugin.imp2 = WindowManager.getImage(title2);
+    if (plugin.imp2 == null) {
       return false;
     }
-    if (imp1.getWidth() != imp2.getWidth() || imp1.getHeight() != imp2.getHeight()) {
+    if (plugin.imp1.getWidth() != plugin.imp2.getWidth()
+        || plugin.imp1.getHeight() != plugin.imp2.getHeight()) {
       IJ.error(TITLE, "Input masks must be the same size");
       return false;
     }
@@ -114,7 +116,7 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
     return true;
   }
 
-  private void run() {
+  private void analyse() {
     // Convert to pixel arrays
     final int[] i1 = getPixels(imp1.getProcessor());
     final int[] i2 = getPixels(imp2.getProcessor());
@@ -142,14 +144,12 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
     // Find the block size required to separate blocks
     int max = 0;
     for (final int[] b : b1) {
-      // System.out.printf("B1 : %d - %d\n", b[0], b[1]);
       final int range = b[1] - b[0];
       if (max < range) {
         max = range;
       }
     }
     for (final int[] b : b2) {
-      // System.out.printf("B2 : %d - %d\n", b[0], b[1]);
       final int range = b[1] - b[0];
       if (max < range) {
         max = range;
@@ -204,7 +204,7 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
       sp.set(i, h[out[i]]);
     }
     if (applyLUT) {
-      sp.setLut(createLUT());
+      sp.setLut(createLut());
     }
     final ImagePlus imp = ImageJUtils.display(TITLE, sp);
 
@@ -284,7 +284,7 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
    *
    * @return the lut
    */
-  private static LUT createLUT() {
+  private static LUT createLut() {
     final byte[] reds = new byte[256];
     final byte[] greens = new byte[256];
     final byte[] blues = new byte[256];
@@ -324,16 +324,17 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
    * @param reds the reds
    * @param greens the greens
    * @param blues the blues
-   * @param nColors the number of colors
+   * @param numberOfColors the number of colors
    */
-  private static void interpolateWithZero(byte[] reds, byte[] greens, byte[] blues, int nColors) {
-    final byte[] r = new byte[nColors];
-    final byte[] g = new byte[nColors];
-    final byte[] b = new byte[nColors];
-    System.arraycopy(reds, 0, r, 0, nColors);
-    System.arraycopy(greens, 0, g, 0, nColors);
-    System.arraycopy(blues, 0, b, 0, nColors);
-    final double scale = nColors / 255.0;
+  private static void interpolateWithZero(byte[] reds, byte[] greens, byte[] blues,
+      int numberOfColors) {
+    final byte[] r = new byte[numberOfColors];
+    final byte[] g = new byte[numberOfColors];
+    final byte[] b = new byte[numberOfColors];
+    System.arraycopy(reds, 0, r, 0, numberOfColors);
+    System.arraycopy(greens, 0, g, 0, numberOfColors);
+    System.arraycopy(blues, 0, b, 0, numberOfColors);
+    final double scale = numberOfColors / 255.0;
     int i1;
     int i2;
     double fraction;
@@ -341,8 +342,8 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
     for (int i = 0; i < 255; i++) {
       i1 = (int) (i * scale);
       i2 = i1 + 1;
-      if (i2 == nColors) {
-        i2 = nColors - 1;
+      if (i2 == numberOfColors) {
+        i2 = numberOfColors - 1;
       }
       fraction = i * scale - i1;
       reds[i + 1] = (byte) ((1.0 - fraction) * (r[i1] & 255) + fraction * (r[i2] & 255));

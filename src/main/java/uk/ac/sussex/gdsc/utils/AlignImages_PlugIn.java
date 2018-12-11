@@ -504,8 +504,8 @@ public class AlignImages_PlugIn implements PlugIn {
     final int y = 0;
     final int w = fp.getWidth();
     final int h = fp.getHeight();
-    int[] maxCoord = getPeak(pixelBlock);
-    double[] subpixelCoord = gaussianPeakFit(pixelBlock, maxCoord[0], maxCoord[1]);
+    final int[] maxCoord = getPeak(pixelBlock);
+    final double[] subpixelCoord = gaussianPeakFit(pixelBlock, maxCoord[0], maxCoord[1]);
     double[] ret = null;
     // more or less acceptable peak fit
     if (Math.abs(subpixelCoord[0] - maxCoord[0]) < w / 2
@@ -598,10 +598,10 @@ public class AlignImages_PlugIn implements PlugIn {
     // Constrain search to the reference coordinates that overlap the region
     final Rectangle intersect = bRef.intersection(region);
 
-    int xmin = intersect.x;
-    int xmax = intersect.x + intersect.width;
-    int ymin = intersect.y;
-    int ymax = intersect.y + intersect.height;
+    final int xmin = intersect.x;
+    final int xmax = intersect.x + intersect.width;
+    final int ymin = intersect.y;
+    final int ymax = intersect.y + intersect.height;
 
     for (int y = ymax; y-- > ymin;) {
       final int y2 = y - yshift;

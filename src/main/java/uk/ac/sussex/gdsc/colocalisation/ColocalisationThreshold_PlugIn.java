@@ -25,9 +25,9 @@
 package uk.ac.sussex.gdsc.colocalisation;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 
 import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Prefs;
@@ -35,7 +35,6 @@ import ij.WindowManager;
 import ij.gui.GUI;
 import ij.gui.GenericDialog;
 import ij.gui.Plot;
-import ij.gui.PlotWindow;
 import ij.gui.Roi;
 import ij.macro.MacroRunner;
 import ij.plugin.frame.PlugInFrame;
@@ -115,36 +114,36 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
   private static final double DEFAULT_R_LIMIT = 0;
   private static final double DEFAULT_SEARCH_TOLERANCE = 0.05;
   private static final int FONT_WIDTH = 12;
-  private final Font MONO_FONT = new Font("Monospaced", 0, FONT_WIDTH);
+  private static final Font MONO_FONT = new Font("Monospaced", 0, FONT_WIDTH);
 
   // Image titles
-  private static final String channel1Title = "CT Channel 1";
-  private static final String channel2Title = "CT Channel 2";
-  private static final String threshold1Title = "CT Pixels 1";
-  private static final String threshold2Title = "CT Pixels 2";
-  private static final String colocalisedPixelsTitle = "CT Colocalised Pixels";
-  private static final String correlationPlotTitle = "CT correlation: ";
-  private static final String correlationValuesTitle = "R-values";
-  private static final String[] resultsTitles = new String[] {channel1Title, channel2Title,
-      threshold1Title, threshold2Title, correlationPlotTitle, correlationValuesTitle};
+  private static final String CHANNEL1_TITLE = "CT Channel 1";
+  private static final String CHANNEL2_TITLE = "CT Channel 2";
+  private static final String THRESHOLD1_TITLE = "CT Pixels 1";
+  private static final String THRESHOLD2_TITLE = "CT Pixels 2";
+  private static final String COLOCALISED_PIXELS_TITLE = "CT Colocalised Pixels";
+  private static final String CORRELATION_PLOT_TITLE = "CT correlation: ";
+  private static final String CORRELATION_VALUES_TITLE = "R-values";
+  private static final String[] resultsTitles = new String[] {CHANNEL1_TITLE, CHANNEL2_TITLE,
+      THRESHOLD1_TITLE, THRESHOLD2_TITLE, CORRELATION_PLOT_TITLE, CORRELATION_VALUES_TITLE};
 
   // Options titles
-  private static final String choiceNoROI = "[None]";
-  private static final String choiceChannel1 = "Channel 1";
-  private static final String choiceChannel2 = "Channel 2";
-  private static final String choiceUseRoi = "Use ROI";
-  private static final String choiceRThreshold = "Correlation limit";
-  private static final String choiceSearchTolerance = "Search tolerance";
-  private static final String choiceShowColocalised = "Show colocalised pixels";
-  private static final String choiceUseConstantIntensity =
+  private static final String CHOICE_NO_ROI = "[None]";
+  private static final String CHOICE_CHANNEL1 = "Channel 1";
+  private static final String CHOICE_CHANNEL2 = "Channel 2";
+  private static final String CHOICE_USE_ROI = "Use ROI";
+  private static final String CHOICE_CORRELATION_THRESHOLD = "Correlation limit";
+  private static final String CHOICE_SEARCG_TOLERANCE = "Search tolerance";
+  private static final String CHOICE_SHOW_COLOCALISED = "Show colocalised pixels";
+  private static final String CHOICE_USE_CONSTANCE_INTENSITY =
       "Use constant intensity for colocalised pixels";
-  private static final String choiceShowScatterPlot = "Show Scatter plot";
-  private static final String choiceIncludeZeroZeroPixels =
+  private static final String CHOICE_SHOW_SCATTER_PLOT = "Show Scatter plot";
+  private static final String CHOICE_INCLUDE_ZERO_ZERO_PIXELS =
       "Include zero-zero pixels in threshold calculation";
-  private static final String choiceCloseWindowsOnExit = "Close windows on exit";
-  private static final String choiceSetOptions = "Set results options";
-  private static final String okButtonLabel = "Apply";
-  private static final String helpButtonLabel = "Help";
+  private static final String CHOICE_CLOSE_WINDOWS_ON_EXIT = "Close windows on exit";
+  private static final String CHOICE_SET_RESULTS_OPTIONS = "Set results options";
+  private static final String OK_BUTTON_LABEL = "Apply";
+  private static final String HELP_BUTTON_LABEL = "Help";
 
   private static Frame instance;
 
@@ -154,7 +153,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
   private Choice channel1List;
   private Choice channel2List;
   private Choice roiList;
-  private TextField rThresholdTextField;
+  private TextField correlationThresholdTextField;
   private TextField searchToleranceTextField;
   private Checkbox showColocalisedCheckbox;
   private Checkbox useConstantIntensityCheckbox;
@@ -168,7 +167,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
   private int channel1SelectedIndex = (int) Prefs.get(OPT_CHANNEL1_INDEX, 0);
   private int channel2SelectedIndex = (int) Prefs.get(OPT_CHANNEL2_INDEX, 0);
   private int roiIndex = (int) Prefs.get(OPT_ROI_INDEX, 0);
-  private double rThreshold = Prefs.get(OPT_R_THRESHOLD, DEFAULT_R_LIMIT);
+  private double correlationThreshold = Prefs.get(OPT_R_THRESHOLD, DEFAULT_R_LIMIT);
   private double searchTolerance = Prefs.get(OPT_SEARCH_TOLERANCE, DEFAULT_SEARCH_TOLERANCE);
   private boolean showColocalised = Prefs.get(OPT_SHOW_COLOCALISED, false);
   private boolean useConstantIntensity = Prefs.get(OPT_USE_CONSTANT_INTENSITY, false);
@@ -196,22 +195,18 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
 
   // Windows that are opened by the plug-in.
   // These should be closed on exit.
-  private final ImagePlus scatterPlot = new ImagePlus();
-  private final ImagePlus channel1RGB = new ImagePlus();
-  private final ImagePlus channel2RGB = new ImagePlus();
-  private final ImagePlus segmented1RGB = new ImagePlus();
-  private final ImagePlus segmented2RGB = new ImagePlus();
-  private final ImagePlus mixChannel = new ImagePlus();
-
-  private PlotWindow rPlot;
-
-  private ImageJ ij;
+  private int scatterPlot;
+  private int channel1Rgb;
+  private int channel2Rgb;
+  private int segmented1Rgb;
+  private int segmented2Rgb;
+  private int mixChannel;
 
   // Store the channels and frames to use from image stacks
   private final int[] sliceOptions = new int[4];
 
   // Stores the list of images last used in the selection options
-  private ArrayList<String> imageList = new ArrayList<>();
+  private ArrayList<String> imageList;
 
   /**
    * Instantiates a new colocalisation threshold plugin.
@@ -244,12 +239,10 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     IJ.register(ColocalisationThreshold_PlugIn.class);
     WindowManager.addWindow(this);
 
-    ij = IJ.getInstance();
-
     createFrame();
     setup();
 
-    addKeyListener(ij);
+    addKeyListener(IJ.getInstance());
     pack();
     final Point loc = Prefs.getLocation(OPT_LOCATION);
     if (loc != null) {
@@ -261,6 +254,16 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
       setResizable(false);
     }
     setVisible(true);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run() {
+    findThreshold();
+
+    synchronized (this) {
+      super.notifyAll();
+    }
   }
 
   private void setup() {
@@ -290,7 +293,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
       new MacroRunner(macro);
     }
 
-    super.notify();
+    super.notifyAll();
   }
 
   @Override
@@ -351,10 +354,10 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
   @Override
   public void close() {
     if (closeWindowsOnExit) {
-      closeImagePlus(channel1RGB);
-      closeImagePlus(channel2RGB);
-      closeImagePlus(segmented1RGB);
-      closeImagePlus(segmented2RGB);
+      closeImagePlus(channel1Rgb);
+      closeImagePlus(channel2Rgb);
+      closeImagePlus(segmented1Rgb);
+      closeImagePlus(segmented2Rgb);
       closeImagePlus(mixChannel);
       closeImagePlus(scatterPlot);
 
@@ -367,9 +370,10 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     super.close();
   }
 
-  private static void closeImagePlus(ImagePlus w) {
-    if (w != null) {
-      w.close();
+  private static void closeImagePlus(int id) {
+    final ImagePlus imp = WindowManager.getImage(id);
+    if (imp != null) {
+      imp.close();
     }
   }
 
@@ -381,16 +385,6 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     WindowManager.setWindow(this);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public void run() {
-    findThreshold();
-
-    synchronized (this) {
-      super.notify();
-    }
-  }
-
   private void findThreshold() {
     if (!parametersReady()) {
       return;
@@ -400,7 +394,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     channel1SelectedIndex = channel1List.getSelectedIndex();
     channel2SelectedIndex = channel2List.getSelectedIndex();
     roiIndex = roiList.getSelectedIndex();
-    rThreshold = getDouble(rThresholdTextField.getText(), DEFAULT_R_LIMIT);
+    correlationThreshold = getDouble(correlationThresholdTextField.getText(), DEFAULT_R_LIMIT);
     searchTolerance = getDouble(searchToleranceTextField.getText(), DEFAULT_SEARCH_TOLERANCE);
     showColocalised = showColocalisedCheckbox.getState();
     useConstantIntensity = useConstantIntensityCheckbox.getState();
@@ -591,7 +585,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
       ct.setIncludeNullPixels(includeZeroZeroPixels);
       ct.setMaxIterations(maxIterations);
       ct.setExhaustiveSearch(exhaustiveSearch);
-      ct.setRThreshold(rThreshold);
+      ct.setCorrelationThreshold(correlationThreshold);
       ct.setSearchTolerance(searchTolerance);
       if (!ct.correlate()) {
         IJ.showMessage(PLUGIN_TITLE, "No correlation found above tolerance. Ending");
@@ -599,7 +593,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
         return;
       }
     } catch (final Exception ex) {
-      IJ.error(PLUGIN_TITLE, "Error: " + ex.getMessage());
+      IJ.error(PLUGIN_TITLE, ex.getMessage());
       IJ.showStatus("Done");
       return;
     }
@@ -632,50 +626,47 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     final int nslices = imp1.getStackSize();
     final int width = imp1.getWidth();
     final int height = imp1.getHeight();
-    int xOffset;
-    int yOffset;
+    int xoffset;
+    int yoffset;
     int rwidth;
     int rheight;
 
     if (roiRect == null) {
-      xOffset = 0;
-      yOffset = 0;
+      xoffset = 0;
+      yoffset = 0;
       rwidth = width;
       rheight = height;
     } else {
-      xOffset = roiRect.x;
-      yOffset = roiRect.y;
+      xoffset = roiRect.x;
+      yoffset = roiRect.y;
       rwidth = roiRect.width;
       rheight = roiRect.height;
     }
 
-    int mask = 0;
-
-    final ImageProcessor plot16 = new ShortProcessor(256, 256);
+    final ImageProcessor scatterPlotData = new ShortProcessor(256, 256);
     int scaledC1ThresholdValue = 0;
     int scaledC2ThresholdValue = 0;
     imp1.getCurrentSlice();
 
     final int ch1threshmax = ct.getThreshold1();
     final int ch2threshmax = ct.getThreshold2();
-    int colocInt = 255;
 
-    long n = 0;
-    long nCh1gtT = 0;
-    long nCh2gtT = 0;
-    long nZero = 0;
-    long nColoc = 0;
+    long numberOfPixels = 0;
+    long nch1gtT = 0;
+    long nch2gtT = 0;
+    long nzero = 0;
+    long ncolocalised = 0;
 
     long sumCh1 = 0;
     long sumCh2 = 0;
-    long sumCh1_ch2gt0 = 0;
-    long sumCh2_ch1gt0 = 0;
-    long sumCh1_ch2gtT = 0;
-    long sumCh2_ch1gtT = 0;
+    long sumCh1WhereCh2gt0 = 0;
+    long sumCh2WhereCh1gt0 = 0;
+    long sumCh1WhereCh2gtT = 0;
+    long sumCh2WhereCh1gtT = 0;
     long sumCh1gtT = 0;
     long sumCh2gtT = 0;
-    long sumCh1_coloc = 0;
-    long sumCh2_coloc = 0;
+    long sumCh1Coloc = 0;
+    long sumCh2Coloc = 0;
 
     final int ch1Max = ct.getCh1Max();
     final int ch2Max = ct.getCh2Max();
@@ -703,7 +694,6 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
       outputStack2 = new ImageStack(rwidth, rheight);
     }
 
-    final int[] color = new int[3];
     for (int s = 1; s <= nslices; s++) {
       final ImageProcessor ip1 = img1.getProcessor(s);
       final ImageProcessor ip2 = img2.getProcessor(s);
@@ -722,152 +712,153 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
 
       for (int y = 0; y < rheight; y++) {
         for (int x = 0; x < rwidth; x++) {
-          mask = (ipMask != null) ? ipMask.get(x, y) : 1;
+          if (ipMask == null || ipMask.get(x, y) != 0) {
+            int index = (y + yoffset) * ip1.getWidth() + x + xoffset;
+            final int ch1 = ip1.get(index);
+            final int ch2 = ip2.get(index);
 
-          if (mask != 0) {
-            final int ch1 = ip1.getPixel(x + xOffset, y + yOffset);
-            final int ch2 = ip2.getPixel(x + xOffset, y + yOffset);
-
+            final int outIndex = y * rwidth + x;
             if (out1 != null) {
-              out1.set(x, y, ch1);
-              out2.set(x, y, ch2);
+              out1.set(outIndex, ch1);
+              out2.set(outIndex, ch2);
             }
 
             final int scaledCh1 = (int) (ch1 * ch1Scaling);
             final int scaledCh2 = (int) (ch2 * ch2Scaling);
 
-            color[0] = scaledCh1;
-            color[1] = scaledCh2;
-            color[2] = 0;
+            // Pack a RGB
+            int color = (scaledCh1 << 16) + (scaledCh2 << 8);
 
-            ipColoc.putPixel(x, y, color);
+            ipColoc.set(outIndex, color);
 
             sumCh1 += ch1;
             sumCh2 += ch2;
-            n++;
+            numberOfPixels++;
 
             scaledC1ThresholdValue = scaledCh1;
             scaledC2ThresholdValue = 255 - scaledCh2;
-            int count = plot16.getPixel(scaledC1ThresholdValue, scaledC2ThresholdValue);
+            index = scaledC2ThresholdValue * scatterPlotData.getWidth() + scaledC1ThresholdValue;
+            int count = scatterPlotData.get(index);
             count++;
-            plot16.putPixel(scaledC1ThresholdValue, scaledC2ThresholdValue, count);
+            scatterPlotData.set(index, count);
 
             if (ch1 + ch2 == 0) {
-              nZero++;
+              nzero++;
             }
 
             if (ch1 > 0) {
-              sumCh2_ch1gt0 += ch2;
+              sumCh2WhereCh1gt0 += ch2;
             }
             if (ch2 > 0) {
-              sumCh1_ch2gt0 += ch1;
+              sumCh1WhereCh2gt0 += ch1;
             }
 
             if (ch1 >= ch1threshmax) {
-              nCh1gtT++;
+              nch1gtT++;
               sumCh1gtT += ch1;
-              sumCh2_ch1gtT += ch2;
-              mask1.set(x, y, 255);
+              sumCh2WhereCh1gtT += ch2;
+              mask1.set(outIndex, 255);
             }
             if (ch2 >= ch2threshmax) {
-              nCh2gtT++;
+              nch2gtT++;
               sumCh2gtT += ch2;
-              sumCh1_ch2gtT += ch1;
-              mask2.set(x, y, 255);
+              sumCh1WhereCh2gtT += ch1;
+              mask2.set(outIndex, 255);
 
               if (ch1 >= ch1threshmax) {
-                sumCh1_coloc += ch1;
-                sumCh2_coloc += ch2;
-                nColoc++;
+                sumCh1Coloc += ch1;
+                sumCh2Coloc += ch2;
+                ncolocalised++;
 
-                if (!useConstantIntensity) {
-                  colocInt = (int) Math.sqrt(scaledCh1 * scaledCh2);
+                // This is the blue component
+                if (useConstantIntensity) {
+                  color += 255;
+                } else {
+                  color += (int) Math.sqrt(scaledCh1 * scaledCh2);
                 }
-                color[2] = colocInt;
-
-                ipColoc.putPixel(x, y, color);
+                ipColoc.set(outIndex, color);
               }
             }
           }
         }
       }
 
-      stackColoc.addSlice(colocalisedPixelsTitle + "." + s, ipColoc);
+      stackColoc.addSlice(COLOCALISED_PIXELS_TITLE + "." + s, ipColoc);
 
       if (outputStack1 != null) {
-        outputStack1.addSlice(channel1Title + "." + s, out1);
-        outputStack2.addSlice(channel2Title + "." + s, out2);
+        outputStack1.addSlice(CHANNEL1_TITLE + "." + s, out1);
+        outputStack2.addSlice(CHANNEL2_TITLE + "." + s, out2);
       }
-      outputMask1.addSlice(threshold1Title + "." + s, mask1);
-      outputMask2.addSlice(threshold2Title + "." + s, mask2);
+      outputMask1.addSlice(THRESHOLD1_TITLE + "." + s, mask1);
+      outputMask2.addSlice(THRESHOLD2_TITLE + "." + s, mask2);
     }
 
-    final long totalPixels = n;
+    final long totalPixels = numberOfPixels;
     if (!includeZeroZeroPixels) {
-      n -= nZero;
+      numberOfPixels -= nzero;
     }
 
     // Pearsons for colocalised volume -
     // Should get this directly from the Colocalisation object
-    final double rColoc = ct.getRAboveThreshold();
+    final double rColoc = ct.getCorrelationAboveThreshold();
 
     // Mander's original
     // [i.e. E(ch1 if ch2>0) / E(ch1total)]
     // (How much of channel 1 intensity occurs where channel 2 has signal)
 
-    final double m1 = (double) sumCh1_ch2gt0 / sumCh1;
-    final double m2 = (double) sumCh2_ch1gt0 / sumCh2;
+    final double m1 = (double) sumCh1WhereCh2gt0 / sumCh1;
+    final double m2 = (double) sumCh2WhereCh1gt0 / sumCh2;
 
     // Manders using threshold
     // [i.e. E(ch1 if ch2>ch2threshold) / E(ch1total)]
     // This matches other plug-ins, i.e. how much of channel 1 intensity occurs where channel 2 is
     // correlated
-    final double m1threshold = (double) sumCh1_ch2gtT / sumCh1;
-    final double m2threshold = (double) sumCh2_ch1gtT / sumCh2;
+    final double m1threshold = (double) sumCh1WhereCh2gtT / sumCh1;
+    final double m2threshold = (double) sumCh2WhereCh1gtT / sumCh2;
 
     // as in Coste's paper
     // [i.e. E(ch1 > ch1threshold) / E(ch1total)]
     // This appears to be wrong when compared to other plug-ins
-    // m1threshold = (double) sumCh1gtT / sumCh1;
-    // m2threshold = (double) sumCh2gtT / sumCh2;
+    // m1threshold = (double) sumCh1gtT / sumCh1
+    // m2threshold = (double) sumCh2gtT / sumCh2
 
     // Imaris percentage volume
-    final double percVolCh1 = (double) nColoc / (double) nCh1gtT;
-    final double percVolCh2 = (double) nColoc / (double) nCh2gtT;
+    final double percVolCh1 = (double) ncolocalised / (double) nch1gtT;
+    final double percVolCh2 = (double) ncolocalised / (double) nch2gtT;
 
-    final double percTotCh1 = (double) sumCh1_coloc / (double) sumCh1;
-    final double percTotCh2 = (double) sumCh2_coloc / (double) sumCh2;
+    final double percTotCh1 = (double) sumCh1Coloc / (double) sumCh1;
+    final double percTotCh2 = (double) sumCh2Coloc / (double) sumCh2;
 
     // Imaris percentage material
-    final double percGtTCh1 = (double) sumCh1_coloc / (double) sumCh1gtT;
-    final double percGtTCh2 = (double) sumCh2_coloc / (double) sumCh2gtT;
+    final double percGtTCh1 = (double) sumCh1Coloc / (double) sumCh1gtT;
+    final double percGtTCh2 = (double) sumCh2Coloc / (double) sumCh2gtT;
 
     // Create results window
     final String resultsTitle = PLUGIN_TITLE + " Results";
     openResultsWindow(resultsTitle);
     final String imageTitle = createImageTitle(imp1, imp2);
 
-    showResults(imageTitle, ch1threshmax, ch2threshmax, n, nZero, nCh1gtT, nCh2gtT, ct, nColoc,
-        rColoc, m1, m2, m1threshold, m2threshold, percVolCh1, percVolCh2, percTotCh1, percTotCh2,
-        percGtTCh1, percGtTCh2, totalPixels);
+    showResults(imageTitle, ch1threshmax, ch2threshmax, numberOfPixels, nzero, nch1gtT, nch2gtT, ct,
+        ncolocalised, rColoc, m1, m2, m1threshold, m2threshold, percVolCh1, percVolCh2, percTotCh1,
+        percTotCh2, percGtTCh1, percGtTCh2, totalPixels);
 
     if (showColocalised) {
-      refreshImage(mixChannel, colocalisedPixelsTitle, stackColoc);
+      mixChannel = ImageJUtils.display(COLOCALISED_PIXELS_TITLE, stackColoc).getID();
     }
 
     if (showRoisAndMasks) {
       if (outputStack1 != null) {
-        refreshImage(channel1RGB, channel1Title, outputStack1);
-        refreshImage(channel2RGB, channel2Title, outputStack2);
+        channel1Rgb = ImageJUtils.display(CHANNEL1_TITLE, outputStack1).getID();
+        channel2Rgb = ImageJUtils.display(CHANNEL2_TITLE, outputStack2).getID();
       }
 
-      refreshImage(segmented1RGB, threshold1Title, outputMask1);
-      refreshImage(segmented2RGB, threshold2Title, outputMask2);
+      segmented1Rgb = ImageJUtils.display(THRESHOLD1_TITLE, outputMask1).getID();
+      segmented2Rgb = ImageJUtils.display(THRESHOLD2_TITLE, outputMask2).getID();
     }
 
     if (showScatterPlot) {
-      showScatterPlot(ct, ch1threshmax, ch2threshmax, plot16, ch1Max, ch1Scaling, ch2Scaling,
-          imageTitle);
+      showScatterPlot(ct, ch1threshmax, ch2threshmax, scatterPlotData, ch1Max, ch1Scaling,
+          ch2Scaling, imageTitle);
     }
 
     if (plotRValues) {
@@ -882,12 +873,6 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     return imp1.getTitle() + " & " + imp2.getTitle();
   }
 
-  private static void refreshImage(ImagePlus imp, String title, ImageStack img) {
-    imp.setStack(title, img);
-    imp.show();
-    imp.updateAndDraw();
-  }
-
   private static ImageProcessor createProcessor(ImagePlus imp, int rwidth, int rheight) {
     if (imp.getType() == ImagePlus.GRAY8) {
       return new ByteProcessor(rwidth, rheight);
@@ -896,12 +881,13 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
   }
 
   private void showScatterPlot(ColocalisationThreshold ct, int ch1threshmax, int ch2threshmax,
-      ImageProcessor plot16, int ch1Max, double ch1Scaling, double ch2Scaling, String fileName) {
+      ImageProcessor scatterPlotData, int ch1Max, double ch1Scaling, double ch2Scaling,
+      String fileName) {
     int scaledC1ThresholdValue;
     int scaledC2ThresholdValue;
     double plotY = 0;
-    plot16.resetMinAndMax();
-    final int plotmax2 = (int) (plot16.getMax());
+    scatterPlotData.resetMinAndMax();
+    final int plotmax2 = (int) (scatterPlotData.getMax());
     final int plotmax = plotmax2 / 2;
 
     scaledC1ThresholdValue = (int) (ch1threshmax * ch1Scaling);
@@ -917,37 +903,37 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
       final int scaledXValue = (int) (c * ch1Scaling);
       final int scaledYValue = 255 - (int) (plotY * ch2Scaling);
 
-      plot16.putPixel(scaledXValue, scaledYValue, plotmax);
+      scatterPlotData.putPixel(scaledXValue, scaledYValue, plotmax);
 
       // Draw threshold lines
-      plot16.putPixel(scaledXValue, scaledC2ThresholdValue, plotmax);
-      plot16.putPixel(scaledC1ThresholdValue, scaledXValue, plotmax);
+      scatterPlotData.putPixel(scaledXValue, scaledC2ThresholdValue, plotmax);
+      scatterPlotData.putPixel(scaledC1ThresholdValue, scaledXValue, plotmax);
     }
 
-    scatterPlot.setProcessor(correlationPlotTitle + fileName, plot16);
-    scatterPlot.updateAndDraw();
-    scatterPlot.show();
-    IJ.selectWindow(scatterPlot.getTitle());
+    final ImagePlus scatterPlotImp =
+        ImageJUtils.display(CORRELATION_PLOT_TITLE + fileName, scatterPlotData);
+    scatterPlot = scatterPlotImp.getID();
+    IJ.selectWindow(scatterPlotImp.getTitle());
     IJ.run("Enhance Contrast", "saturated=50 equalize");
     IJ.run("Fire");
   }
 
-  private void showResults(String fileName, int ch1threshmax, int ch2threshmax, long n, long nZero,
-      long nCh1gtT, long nCh2gtT, ColocalisationThreshold ct, long nColoc, double rColoc, double m1,
-      double m2, double m1threshold, double m2threshold, double percVolCh1, double percVolCh2,
-      double percTotCh1, double percTotCh2, double percGtTCh1, double percGtTCh2,
-      double totalPixels) {
+  private void showResults(String fileName, int ch1threshmax, int ch2threshmax, long numberOfPixels,
+      long nzero, long nch1gtT, long nch2gtT, ColocalisationThreshold ct, long numberColocalised,
+      double correlationColocalised, double m1, double m2, double m1threshold, double m2threshold,
+      double percVolCh1, double percVolCh2, double percTotCh1, double percTotCh2, double percGtTCh1,
+      double percGtTCh2, double totalPixels) {
     final StringBuilder str = new StringBuilder();
     str.append(fileName).append('\t');
     switch (roiIndex) {
       case 0:
-        str.append(choiceNoROI);
+        str.append(CHOICE_NO_ROI);
         break;
       case 1:
-        str.append(choiceChannel1);
+        str.append(CHOICE_CHANNEL1);
         break;
       default:
-        str.append(choiceChannel2);
+        str.append(CHOICE_CHANNEL2);
         break;
     }
 
@@ -973,10 +959,10 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
       appendFormat(str, ch2threshmax, df0);
     }
     if (showRForGtT) {
-      appendFormat(str, rColoc, df4);
+      appendFormat(str, correlationColocalised, df4);
     }
     if (showRForLtT) {
-      appendFormat(str, ct.getRBelowThreshold(), df3);
+      appendFormat(str, ct.getCorrelationBelowThreshold(), df3);
     }
     if (showManders) {
       appendFormat(str, m1, df4);
@@ -987,14 +973,14 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
       appendFormat(str, m2threshold, df4);
     }
     if (showNColoc) {
-      appendFormat(str, n, df0);
-      appendFormat(str, nZero, df0);
-      appendFormat(str, nCh1gtT, df0);
-      appendFormat(str, nCh2gtT, df0);
-      appendFormat(str, nColoc, df0);
+      appendFormat(str, numberOfPixels, df0);
+      appendFormat(str, nzero, df0);
+      appendFormat(str, nch1gtT, df0);
+      appendFormat(str, nch2gtT, df0);
+      appendFormat(str, numberColocalised, df0);
     }
     if (showVolumeColoc) {
-      appendFormat(str, (nColoc * 100.0) / totalPixels, df2, "%");
+      appendFormat(str, (numberColocalised * 100.0) / totalPixels, df2, "%");
     }
     if (showVolumeGtTColoc) {
       appendFormat(str, percVolCh1 * 100.0, df2, "%");
@@ -1088,7 +1074,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     Prefs.set(OPT_CHANNEL1_INDEX, channel1SelectedIndex);
     Prefs.set(OPT_CHANNEL2_INDEX, channel2SelectedIndex);
     Prefs.set(OPT_ROI_INDEX, roiIndex);
-    Prefs.set(OPT_R_THRESHOLD, rThreshold);
+    Prefs.set(OPT_R_THRESHOLD, correlationThreshold);
     Prefs.set(OPT_SEARCH_TOLERANCE, searchTolerance);
     Prefs.set(OPT_SHOW_COLOCALISED, showColocalised);
     Prefs.set(OPT_USE_CONSTANT_INTENSITY, useConstantIntensity);
@@ -1147,13 +1133,13 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     }
 
     // Check if the image list has changed
-    if (imageList.equals(newImageList)) {
+    if (newImageList.equals(imageList)) {
       return;
     }
 
     imageList = newImageList;
 
-    // Re-populate the image lists
+    // Re-populate the displayed image lists
     channel1List.removeAll();
     channel2List.removeAll();
 
@@ -1194,51 +1180,53 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     add(mainPanel);
 
     channel1List = new Choice();
-    mainPanel.add(createChoicePanel(channel1List, choiceChannel1));
+    mainPanel.add(createChoicePanel(channel1List, CHOICE_CHANNEL1));
 
     channel2List = new Choice();
-    mainPanel.add(createChoicePanel(channel2List, choiceChannel2));
+    mainPanel.add(createChoicePanel(channel2List, CHOICE_CHANNEL2));
 
     roiList = new Choice();
-    mainPanel.add(createChoicePanel(roiList, choiceUseRoi));
-    roiList.add(choiceNoROI);
-    roiList.add(choiceChannel1);
-    roiList.add(choiceChannel2);
+    mainPanel.add(createChoicePanel(roiList, CHOICE_USE_ROI));
+    roiList.add(CHOICE_NO_ROI);
+    roiList.add(CHOICE_CHANNEL1);
+    roiList.add(CHOICE_CHANNEL2);
 
     searchToleranceTextField = new TextField();
-    mainPanel.add(
-        createTextPanel(searchToleranceTextField, choiceSearchTolerance, "" + searchTolerance));
+    mainPanel.add(createTextPanel(searchToleranceTextField, CHOICE_SEARCG_TOLERANCE,
+        String.valueOf(searchTolerance)));
 
-    rThresholdTextField = new TextField();
-    mainPanel.add(createTextPanel(rThresholdTextField, choiceRThreshold, "" + rThreshold));
+    correlationThresholdTextField = new TextField();
+    mainPanel.add(createTextPanel(correlationThresholdTextField, CHOICE_CORRELATION_THRESHOLD,
+        String.valueOf(correlationThreshold)));
 
     showColocalisedCheckbox = new Checkbox();
-    mainPanel
-        .add(createCheckboxPanel(showColocalisedCheckbox, choiceShowColocalised, showColocalised));
+    mainPanel.add(
+        createCheckboxPanel(showColocalisedCheckbox, CHOICE_SHOW_COLOCALISED, showColocalised));
 
     useConstantIntensityCheckbox = new Checkbox();
-    mainPanel.add(createCheckboxPanel(useConstantIntensityCheckbox, choiceUseConstantIntensity,
+    mainPanel.add(createCheckboxPanel(useConstantIntensityCheckbox, CHOICE_USE_CONSTANCE_INTENSITY,
         useConstantIntensity));
 
     showScatterPlotCheckbox = new Checkbox();
-    mainPanel
-        .add(createCheckboxPanel(showScatterPlotCheckbox, choiceShowScatterPlot, showScatterPlot));
+    mainPanel.add(
+        createCheckboxPanel(showScatterPlotCheckbox, CHOICE_SHOW_SCATTER_PLOT, showScatterPlot));
 
     includeZeroZeroPixelsCheckbox = new Checkbox();
-    mainPanel.add(createCheckboxPanel(includeZeroZeroPixelsCheckbox, choiceIncludeZeroZeroPixels,
-        includeZeroZeroPixels));
+    mainPanel.add(createCheckboxPanel(includeZeroZeroPixelsCheckbox,
+        CHOICE_INCLUDE_ZERO_ZERO_PIXELS, includeZeroZeroPixels));
 
     closeWindowsOnExitCheckbox = new Checkbox();
-    mainPanel.add(createCheckboxPanel(closeWindowsOnExitCheckbox, choiceCloseWindowsOnExit,
+    mainPanel.add(createCheckboxPanel(closeWindowsOnExitCheckbox, CHOICE_CLOSE_WINDOWS_ON_EXIT,
         closeWindowsOnExit));
 
     setResultsOptionsCheckbox = new Checkbox();
-    mainPanel.add(createCheckboxPanel(setResultsOptionsCheckbox, choiceSetOptions, false));
+    mainPanel
+        .add(createCheckboxPanel(setResultsOptionsCheckbox, CHOICE_SET_RESULTS_OPTIONS, false));
     setResultsOptionsCheckbox.addItemListener(this);
 
-    okButton = new Button(okButtonLabel);
+    okButton = new Button(OK_BUTTON_LABEL);
     okButton.addActionListener(this);
-    helpButton = new Button(helpButtonLabel);
+    helpButton = new Button(HELP_BUTTON_LABEL);
     helpButton.addActionListener(this);
 
     final JPanel buttonPanel = new JPanel();
@@ -1251,7 +1239,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     mainPanel.add(buttonPanel);
   }
 
-  private Panel createChoicePanel(Choice list, String label) {
+  private static Panel createChoicePanel(Choice list, String label) {
     final Panel panel = new Panel();
     panel.setLayout(new BorderLayout());
     final Label listLabel = new Label(label, 0);
@@ -1262,7 +1250,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     return panel;
   }
 
-  private Panel createTextPanel(TextField textField, String label, String value) {
+  private static Panel createTextPanel(TextField textField, String label, String value) {
     final Panel panel = new Panel();
     panel.setLayout(new BorderLayout());
     final Label listLabel = new Label(label, 0);
@@ -1274,7 +1262,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     return panel;
   }
 
-  private Panel createCheckboxPanel(Checkbox checkbox, String label, boolean state) {
+  private static Panel createCheckboxPanel(Checkbox checkbox, String label, boolean state) {
     final Panel panel = new Panel();
     panel.setLayout(new BorderLayout());
     final Label listLabel = new Label(label, 0);
@@ -1285,17 +1273,18 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     return panel;
   }
 
-  private void plotResults(ArrayList<ColocalisationThreshold.ThresholdResult> results) {
+  private static void plotResults(ArrayList<ColocalisationThreshold.ThresholdResult> results) {
     if (results == null) {
       return;
     }
 
     final double[] threshold = new double[results.size()];
-    final double[] R = new double[results.size()];
-    final double[] R2 = new double[results.size()];
+    final double[] r1 = new double[results.size()];
+    final double[] r2 = new double[results.size()];
 
-    double yMin = 1;
-    double yMax = -1;
+    // Initialise to the max range of a correlation
+    double ymin = 1;
+    double ymax = -1;
 
     // Plot the zero threshold result at the minimum threshold value
     int minThreshold = Integer.MAX_VALUE;
@@ -1303,40 +1292,36 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
 
     for (int i = 0, j = results.size() - 1; i < results.size(); i++, j--) {
       final ColocalisationThreshold.ThresholdResult result = results.get(i);
-      threshold[j] = result.threshold1;
-      R[j] = result.r1;
-      R2[j] = result.r2;
-      if (yMin > R[j]) {
-        yMin = R[j];
+      threshold[j] = result.getThreshold1();
+      r1[j] = result.getCorrelation1();
+      r2[j] = result.getCorrelation2();
+      if (ymin > r1[j]) {
+        ymin = r1[j];
       }
-      if (yMin > R2[j]) {
-        yMin = R2[j];
+      if (ymin > r2[j]) {
+        ymin = r2[j];
       }
-      if (yMax < R[j]) {
-        yMax = R[j];
+      if (ymax < r1[j]) {
+        ymax = r1[j];
       }
-      if (yMax < R2[j]) {
-        yMax = R2[j];
+      if (ymax < r2[j]) {
+        ymax = r2[j];
       }
-      if (result.threshold1 == 0) {
+      if (result.getThreshold1() == 0) {
         zeroThresholdIndex = j;
-      } else if (minThreshold > result.threshold1) {
-        minThreshold = result.threshold1;
+      } else if (minThreshold > result.getThreshold1()) {
+        minThreshold = result.getThreshold1();
       }
     }
     threshold[zeroThresholdIndex] = (minThreshold > 0) ? minThreshold - 1 : 0;
 
-    if (rPlot != null && rPlot.isVisible()) {
-      rPlot.close();
-    }
-    final Plot plot = new Plot(correlationValuesTitle, "Threshold", "R", threshold, R);
-    plot.setLimits(threshold[0], threshold[threshold.length - 1], yMin, yMax);
+    final Plot plot = new Plot(CORRELATION_VALUES_TITLE, "Threshold", "R", threshold, r1);
+    plot.setLimits(threshold[0], threshold[threshold.length - 1], ymin, ymax);
     plot.setColor(Color.BLUE);
     plot.draw();
     plot.setColor(Color.RED);
-    plot.addPoints(threshold, R2, Plot.CROSS);
+    plot.addPoints(threshold, r2, Plot.CROSS);
     plot.setColor(Color.BLACK);
     plot.addLabel(0, 0, "Blue=C1+C2 above threshold; Red=Ch1/Ch2 below threshold");
-    rPlot = plot.show();
   }
 }

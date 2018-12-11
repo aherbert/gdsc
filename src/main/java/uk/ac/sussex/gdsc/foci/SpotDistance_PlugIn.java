@@ -888,7 +888,7 @@ public class SpotDistance_PlugIn implements PlugIn {
       } else {
         // Dual channel analysis.
         // Analyse the second channel
-        FindFociResults results2 = ff.findMaxima(croppedImp2, regionImp, backgroundMethod,
+        final FindFociResults results2 = ff.findMaxima(croppedImp2, regionImp, backgroundMethod,
             backgroundParameter, autoThresholdMethod, searchMethod, searchParameter, maxPeaks,
             minSize, peakMethod, peakParameter2, outputType, sortIndex, options, blur, centreMethod,
             centreParameter, 1);
@@ -897,7 +897,7 @@ public class SpotDistance_PlugIn implements PlugIn {
           return;
         }
 
-        ArrayList<DistanceResult> resultsArray2 =
+        final ArrayList<DistanceResult> resultsArray2 =
             analyseResults(prevResultsArray2, ff, croppedImp2, results2, frame, c2, overlay2);
         for (final DistanceResult result : resultsArray2) {
           addResult(frame, c2, region, result);
@@ -1302,7 +1302,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     }
 
     final ImagePlus peaksImp = ffResult.mask;
-    final ArrayList<FindFociResult> resultsArray = ffResult.results;
+    final List<FindFociResult> resultsArray = ffResult.results;
 
     final ArrayList<DistanceResult> newResultsArray = new ArrayList<>(resultsArray.size());
 

@@ -164,8 +164,9 @@ public class AutoThreshold_PlugIn implements PlugIn {
     }
     gd.addMessage(
         "The thresholded result of 8 & 16 bit images is shown\nin white [255] in 8 bits.\n"
-        + "For 16 bit images, results of \'Try all\' and single slices\nof a stack are shown "
-        + "in white [65535] in 16 bits.\nUnsuccessfully thresholded images are left unchanged.");
+            + "For 16 bit images, results of \'Try all\' and single slices\nof a stack are shown "
+            + "in white [65535] in 16 bits.\n"
+            + "Unsuccessfully thresholded images are left unchanged.");
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
 
     gd.showDialog();
@@ -316,7 +317,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
       }
       return;
     }
-    AutoThreshold.Method method = AutoThreshold.getMethod(myMethod);
+    final AutoThreshold.Method method = AutoThreshold.getMethod(myMethod);
     // selected a method
     boolean success = false;
     if (stackSize > 1 && (doIstack || doIstackHistogram)) { // whole stack
@@ -419,7 +420,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
         }
         imp.setSliceWithoutUpdate(i);
         ip = imp.getProcessor();
-        int[] temp = ip.getHistogram();
+        final int[] temp = ip.getHistogram();
         for (int j = 0; j < data.length; j++) {
           data[j] += temp[j];
         }

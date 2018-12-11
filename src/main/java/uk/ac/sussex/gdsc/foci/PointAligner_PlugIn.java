@@ -27,6 +27,9 @@ package uk.ac.sussex.gdsc.foci;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
+
+import gnu.trove.list.array.TFloatArrayList;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -232,7 +235,7 @@ public class PointAligner_PlugIn implements PlugIn {
 
     // Get the results
     final ImagePlus maximaImp = results.mask;
-    final ArrayList<FindFociResult> resultsArray = results.results;
+    final List<FindFociResult> resultsArray = results.results;
 
     // We would like the order of the results to correspond to the maxima image pixel values.
     Collections.reverse(resultsArray);
@@ -459,7 +462,7 @@ public class PointAligner_PlugIn implements PlugIn {
     }
   }
 
-  private static LinkedList<AssignedPoint> findMissedPoints(ArrayList<FindFociResult> resultsArray,
+  private static LinkedList<AssignedPoint> findMissedPoints(List<FindFociResult> resultsArray,
       int[] assigned, float minAssignedHeight) {
     // List maxima above the minimum height that have not been picked
     final ImageStack maskStack = getMaskStack();
@@ -485,7 +488,7 @@ public class PointAligner_PlugIn implements PlugIn {
     return missed;
   }
 
-  private static LinkedList<Float> findMissedHeights(ArrayList<FindFociResult> resultsArray,
+  private static LinkedList<Float> findMissedHeights(List<FindFociResult> resultsArray,
       int[] assigned, double heightThreshold) {
     // List maxima above the minimum height that have not been picked
     final ImageStack maskStack = getMaskStack();
@@ -520,16 +523,18 @@ public class PointAligner_PlugIn implements PlugIn {
    * @return The height below which any point is considered an error
    */
   private static float getThresholdHeight(AssignedPoint[] points, int[] assigned,
-      ArrayList<FindFociResult> resultsArray) {
-    final ArrayList<Float> heights = new ArrayList<>(points.length);
+      List<FindFociResult> resultsArray) {
+    final TFloatArrayList heightList = new TFloatArrayList(points.length);
     for (int maximaId = 0; maximaId < assigned.length; maximaId++) {
       if (assigned[maximaId] >= 0) {
         final FindFociResult result = resultsArray.get(maximaId);
-        heights.add(result.maxValue);
+        heightList.add(result.maxValue);
       }
     }
 
-    Collections.sort(heights);
+    if (heightList.isEmpty()) {
+      return 0;
+    }
 
     // Box plot type analysis:
     // The bottom and top of the box are always the 25th and 75th percentile (the lower and upper
@@ -542,11 +547,10 @@ public class PointAligner_PlugIn implements PlugIn {
     // - one standard deviation above and below the mean of the data
     // - 2nd/9th percentile etc.
 
-    if (heights.isEmpty()) {
-      return 0;
-    }
+    heightList.sort();
 
-    double heightThreshold = heights.get(0);
+    final float[] heights = heightList.toArray();
+    double heightThreshold = heights[0];
 
     switch (limitMethod) {
       case 1:
@@ -592,11 +596,12 @@ public class PointAligner_PlugIn implements PlugIn {
         final List<Float> missedHeights =
             findMissedHeights(resultsArray, assigned, heightThreshold);
         final double fraction = factor / 100;
-        for (int pointId = 0; pointId < heights.size(); pointId++) {
-          heightThreshold = heights.get(pointId);
+        final int size = heights.length;
+        for (int pointId = 0; pointId < size; pointId++) {
+          heightThreshold = heights[pointId];
           // Count points
           final int missedCount = countPoints(missedHeights, heightThreshold);
-          final int assignedCount = heights.size() - pointId;
+          final int assignedCount = size - pointId;
           final int totalCount = missedCount + assignedCount;
 
           if ((missedCount / (double) totalCount) < fraction) {
@@ -604,7 +609,7 @@ public class PointAligner_PlugIn implements PlugIn {
           }
         }
 
-        if (heightThreshold == heights.get(heights.size() - 1)) {
+        if (heightThreshold == heights[size - 1]) {
           log("Warning: Maximum height threshold reached when attempting to limit the "
               + "number of missed peaks");
         }
@@ -619,20 +624,11 @@ public class PointAligner_PlugIn implements PlugIn {
     }
 
     // Round for integer data
-    if (integerData(heights)) {
+    if (SimpleArrayUtils.isInteger(heights)) {
       heightThreshold = round(heightThreshold);
     }
 
     return (float) heightThreshold;
-  }
-
-  private static boolean integerData(ArrayList<Float> heights) {
-    for (final double d : heights) {
-      if ((int) d != d) {
-        return false;
-      }
-    }
-    return true;
   }
 
   /**
@@ -665,28 +661,29 @@ public class PointAligner_PlugIn implements PlugIn {
    * @param fraction the fraction
    * @return The boundary
    */
-  public static float getQuartileBoundary(ArrayList<Float> heights, double fraction) {
-    if (heights.isEmpty()) {
+  public static float getQuartileBoundary(float[] heights, double fraction) {
+    if (heights.length == 0) {
       return 0;
     }
-    if (heights.size() == 1) {
-      return heights.get(0).floatValue();
+    if (heights.length == 1) {
+      return heights[0];
     }
 
-    int upper = (int) Math.ceil(heights.size() * fraction);
-    int lower = (int) Math.floor(heights.size() * fraction);
+    final int size = heights.length;
+    int upper = (int) Math.ceil(size * fraction);
+    int lower = (int) Math.floor(size * fraction);
 
-    upper = Math.min(Math.max(upper, 0), heights.size() - 1);
-    lower = Math.min(Math.max(lower, 0), heights.size() - 1);
+    upper = MathUtils.clip(0, size - 1, upper);
+    lower = MathUtils.clip(0, size - 1, lower);
 
-    return (float) ((heights.get(upper) + heights.get(lower)) / 2.0);
+    return (heights[upper] + heights[lower]) / 2f;
   }
 
-  private static double[] getStatistics(ArrayList<Float> heights) {
+  private static double[] getStatistics(float[] heights) {
     double sum = 0.0;
     double sum2 = 0.0;
-    final int n = heights.size();
-    for (final double h : heights) {
+    final int n = heights.length;
+    for (final float h : heights) {
       sum += h;
       sum2 += (h * h);
     }

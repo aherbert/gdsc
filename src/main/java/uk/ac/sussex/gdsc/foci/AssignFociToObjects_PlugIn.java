@@ -233,28 +233,28 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     // Histogram the count
     if (showHistogram) {
       final int max = (int) stats.getMax();
-      final double[] xValues = new double[max + 1];
-      final double[] yValues = new double[xValues.length];
+      final double[] xvalues = new double[max + 1];
+      final double[] yvalues = new double[xvalues.length];
       for (int i = 1; i < count.length; i++) {
         if (idMap[i] > 0) {
-          yValues[count[i]]++;
+          yvalues[count[i]]++;
         }
       }
-      double yMax = 0;
+      double ymax = 0;
       for (int i = 0; i <= max; i++) {
-        xValues[i] = i;
-        if (yMax < yValues[i]) {
-          yMax = yValues[i];
+        xvalues[i] = i;
+        if (ymax < yvalues[i]) {
+          ymax = yvalues[i];
         }
       }
       final String title = TITLE + " Histogram";
-      final Plot plot = new Plot(title, "Count", "Frequency", xValues, yValues);
-      plot.setLimits(0, xValues[xValues.length - 1], 0, yMax);
+      final Plot plot = new Plot(title, "Count", "Frequency", xvalues, yvalues);
+      plot.setLimits(0, xvalues[xvalues.length - 1], 0, ymax);
       plot.addLabel(0, 0, String.format("N = %d, Mean = %s", (int) stats.getSum(),
           MathUtils.rounded(stats.getMean())));
       plot.draw();
       plot.setColor(Color.RED);
-      plot.drawLine(stats.getMean(), 0, stats.getMean(), yMax);
+      plot.drawLine(stats.getMean(), 0, stats.getMean(), ymax);
       ImageJUtils.display(title, plot);
     }
 
@@ -330,19 +330,20 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     String[] options = new String[2];
     int count = 0;
 
-    String msg =
-        "Assign foci to the nearest object\n(Objects will be found in the current image)\nAvailable foci:";
+    final StringBuilder msg = new StringBuilder(
+        "Assign foci to the nearest object\n(Objects will be found in the current image)\n"
+            + "Available foci:");
     if (findFociResults != null) {
-      msg += "\nFind Foci = " + TextUtils.pleural(findFociResults.size(), "result");
+      msg.append("\nFind Foci = ").append(TextUtils.pleural(findFociResults.size(), "result"));
       options[count++] = "Find Foci";
     }
     if (roiResults != null) {
-      msg += "\nROI = " + TextUtils.pleural(roiResults.size(), "point");
+      msg.append("\nROI = ").append(TextUtils.pleural(roiResults.size(), "point"));
       options[count++] = "ROI";
     }
     options = Arrays.copyOf(options, count);
 
-    gd.addMessage(msg);
+    gd.addMessage(msg.toString());
 
     gd.addChoice("Foci", options, input);
     gd.addSlider("Radius", 5, 50, radius);
@@ -382,11 +383,11 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
   }
 
   private static ArrayList<int[]> getFindFociResults() {
-    if (FindFoci_PlugIn.getResults() == null) {
+    if (FindFoci_PlugIn.getLastResults() == null) {
       return null;
     }
-    final ArrayList<int[]> results = new ArrayList<>(FindFoci_PlugIn.getResults().size());
-    for (final FindFociResult result : FindFoci_PlugIn.getResults()) {
+    final ArrayList<int[]> results = new ArrayList<>(FindFoci_PlugIn.getLastResults().size());
+    for (final FindFociResult result : FindFoci_PlugIn.getLastResults()) {
       results.add(new int[] {result.x, result.y});
     }
     return results;
@@ -536,11 +537,11 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     }
   }
 
-  private static void addRoi(int[] x, int[] y, int n, Overlay o, Color color) {
-    final PointRoi roi = new PointRoi(x, y, n);
+  private static void addRoi(int[] x, int[] y, int points, Overlay ooverlay, Color color) {
+    final PointRoi roi = new PointRoi(x, y, points);
     roi.setShowLabels(false);
     roi.setFillColor(color);
     roi.setStrokeColor(color);
-    o.add(roi);
+    ooverlay.add(roi);
   }
 }

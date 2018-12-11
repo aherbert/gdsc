@@ -103,7 +103,7 @@ public class ExtendedZProjector extends ZProjectorCopy {
 
   @Override
   protected String makeTitle() {
-    String prefix = getPrefix(method);
+    final String prefix = getPrefix(method);
     return WindowManager.makeUniqueName(prefix + imp.getTitle());
   }
 

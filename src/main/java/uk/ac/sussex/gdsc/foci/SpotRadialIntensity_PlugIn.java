@@ -45,6 +45,7 @@ import ij.text.TextWindow;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Output the radial intensity around spots within a mask region. Spots are defined using FindFoci
@@ -230,7 +231,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       IJ.error(TITLE, "No foci with the name " + resultsName);
       return null;
     }
-    final ArrayList<FindFociResult> results = memoryResults.results;
+    final List<FindFociResult> results = memoryResults.results;
     if (results.isEmpty()) {
       IJ.error(TITLE, "Zero foci in the results with the name " + resultsName);
       return null;

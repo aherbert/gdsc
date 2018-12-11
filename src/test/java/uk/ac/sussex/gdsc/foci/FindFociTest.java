@@ -57,6 +57,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -481,8 +482,8 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
       // (imp1.getProcessor().convertToFloat().getPixels()),
       // (float[]) (imp2.getProcessor().convertToFloat().getPixels()), 0);
     }
-    final ArrayList<FindFociResult> results1 = r1.results;
-    final ArrayList<FindFociResult> results2 = r2.results;
+    final List<FindFociResult> results1 = r1.results;
+    final List<FindFociResult> results2 = r2.results;
     // logger.info(FunctionUtils.getSupplier("N1=%d, N2=%d", results1.size(), results2.size());
     Assertions.assertEquals(results1.size(), results2.size(), setName + " Results Size");
     int counter = 0;

@@ -831,10 +831,10 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
 
   private TIntObjectHashMap<FloatProcessor> convolveImage(ImageProcessor ip,
       TIntObjectHashMap<float[]> kernels) {
-    TIntObjectHashMap<FloatProcessor> newConvolved = new TIntObjectHashMap<>();
+    final TIntObjectHashMap<FloatProcessor> newConvolved = new TIntObjectHashMap<>();
 
     // Convolve image with each
-    boolean ok = rotationAngles.forEach(rotation -> {
+    final boolean ok = rotationAngles.forEach(rotation -> {
       if (!this.buildMaskOutput) {
         IJ.showStatus("Convolving " + rotation);
       }

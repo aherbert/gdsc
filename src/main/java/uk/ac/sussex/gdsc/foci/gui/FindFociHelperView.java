@@ -1034,7 +1034,7 @@ public class FindFociHelperView extends JFrame
     return activeImp != null;
   }
 
-  private static List<GridPoint> extractGridPoints(ArrayList<FindFociResult> resultsArray) {
+  private static List<GridPoint> extractGridPoints(List<FindFociResult> resultsArray) {
     final List<GridPoint> points = new ArrayList<>(resultsArray.size());
     for (final FindFociResult result : resultsArray) {
       points.add(new GridPoint(result.x, result.y, result.z, result.maxValue));

@@ -49,6 +49,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Output the density around spots within a mask region. Spots are defined using FindFoci results
@@ -71,16 +72,20 @@ public class SpotDensity_PlugIn implements PlugIn {
   private static ArrayList<PairCorrelation> results = new ArrayList<>();
 
   private static class PairCorrelation {
-    final int n;
+    /** The number of points. */
+    final int numberOfPoints;
+    /** The area. */
     final int area;
-    final double[] r;
-    final double[] pcf;
+    /** The radii for the concentric rings around the point. */
+    final double[] radii;
+    /** The pair correlation at each radius. */
+    final double[] pc;
 
-    PairCorrelation(int n, int area, double[] r, double[] pcf) {
-      this.n = n;
+    PairCorrelation(int numberOfPoints, int area, double[] radii, double[] pc) {
+      this.numberOfPoints = numberOfPoints;
       this.area = area;
-      this.r = r;
-      this.pcf = pcf;
+      this.radii = radii;
+      this.pc = pc;
     }
   }
 
@@ -128,28 +133,9 @@ public class SpotDensity_PlugIn implements PlugIn {
       return;
     }
 
-    final GenericDialog gd = new GenericDialog(TITLE);
-
-    gd.addMessage(
-        "Analyses spots within a mask/ROI region\nand computes density and closest distances.");
-
-    gd.addChoice("Results_name_1", names, resultsName1);
-    gd.addChoice("Results_name_2", names, resultsName2);
-    gd.addChoice("Mask", maskImageList, maskImage);
-    gd.addNumericField("Distance", distance, 2, 6, "pixels");
-    gd.addNumericField("Interval", interval, 2, 6, "pixels");
-    gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI);
-
-    gd.showDialog();
-    if (!gd.wasOKed()) {
+    if (!showDialog(names, maskImageList)) {
       return;
     }
-
-    resultsName1 = gd.getNextChoice();
-    resultsName2 = gd.getNextChoice();
-    maskImage = gd.getNextChoice();
-    distance = gd.getNextNumber();
-    interval = gd.getNextNumber();
 
     final FloatProcessor fp = createDistanceMap(imp, maskImage);
     if (fp == null) {
@@ -165,6 +151,32 @@ public class SpotDensity_PlugIn implements PlugIn {
     }
 
     analyse(foci1, foci2, resultsName1.equals(resultsName2), fp);
+  }
+
+  private static boolean showDialog(String[] names, String[] maskImageList) {
+    final GenericDialog gd = new GenericDialog(TITLE);
+
+    gd.addMessage(
+        "Analyses spots within a mask/ROI region\nand computes density and closest distances.");
+
+    gd.addChoice("Results_name_1", names, resultsName1);
+    gd.addChoice("Results_name_2", names, resultsName2);
+    gd.addChoice("Mask", maskImageList, maskImage);
+    gd.addNumericField("Distance", distance, 2, 6, "pixels");
+    gd.addNumericField("Interval", interval, 2, 6, "pixels");
+    gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI);
+
+    gd.showDialog();
+    if (!gd.wasOKed()) {
+      return false;
+    }
+
+    resultsName1 = gd.getNextChoice();
+    resultsName2 = gd.getNextChoice();
+    maskImage = gd.getNextChoice();
+    distance = gd.getNextNumber();
+    interval = gd.getNextNumber();
+    return true;
   }
 
   private static String[] buildMaskList(Roi roi) {
@@ -184,7 +196,7 @@ public class SpotDensity_PlugIn implements PlugIn {
       // Build a mask image using the input image ROI
       final Roi roi = (imp == null) ? null : imp.getRoi();
       if (roi == null || !roi.isArea()) {
-        IJ.showMessage("Error", "No region defined (use an area ROI or an input mask)");
+        IJ.error("No region defined (use an area ROI or an input mask)");
         return null;
       }
       bp = new ByteProcessor(imp.getWidth(), imp.getHeight());
@@ -201,22 +213,9 @@ public class SpotDensity_PlugIn implements PlugIn {
       }
     }
 
-    // Utils.display("Mask", bp);
-
     // Create a distance map from the mask
     final EDM edm = new EDM();
-    final FloatProcessor map = edm.makeFloatEDM(bp, 0, true);
-
-    // Utils.display("Map", map);
-    //
-    // float[] fmap = (float[])map.getPixels();
-    // byte[] mask = new byte[fmap.length];
-    // for (int i = 0; i < mask.length; i++)
-    // if (fmap[i] >= distance)
-    // mask[i] = -1;
-    // Utils.display("Mask2", new ByteProcessor(bp.getWidth(), bp.getHeight(), mask));
-
-    return map;
+    return edm.makeFloatEDM(bp, 0, true);
   }
 
   private static Foci[] getFoci(String resultsName) {
@@ -225,15 +224,16 @@ public class SpotDensity_PlugIn implements PlugIn {
       IJ.showMessage("Error", "No foci with the name " + resultsName);
       return null;
     }
-    final ArrayList<FindFociResult> results = memoryResults.results;
+    final List<FindFociResult> results = memoryResults.results;
     if (results.isEmpty()) {
       IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
       return null;
     }
     final Foci[] foci = new Foci[results.size()];
-    int i = 0;
+    int id = 0;
     for (final FindFociResult result : results) {
-      foci[i++] = new Foci(i, result.x, result.y);
+      foci[id] = new Foci(id, result.x, result.y);
+      id++;
     }
     return foci;
   }
@@ -242,40 +242,42 @@ public class SpotDensity_PlugIn implements PlugIn {
    * For all foci in set 1, compare to set 2 and output a histogram of the average density around
    * each foci is concentric rings (pair correlation) and the minimum distance to another foci.
    *
+   * <p>Foci too close to the edge of the analysis region are ignored from set 1.
+   *
    * @param foci1 the foci 1
    * @param foci2 the foci 2
    * @param identical True if the two sets are the same foci (self comparisons will be ignored)
-   * @param map the map
+   * @param map the map containing the distance to the edge of the mask (analysis) region
    */
-  private void analyse(Foci[] foci1, Foci[] foci2, boolean identical, FloatProcessor map) {
-    final int nBins = (int) (distance / interval) + 1;
+  private static void analyse(Foci[] foci1, Foci[] foci2, boolean identical, FloatProcessor map) {
+    final int nbins = (int) (distance / interval) + 1;
     final double maxDistance2 = distance * distance;
-    final int[] H = new int[nBins];
-    final int[] H2 = new int[nBins];
+    final int[] h1 = new int[nbins];
+    final int[] h2 = new int[nbins];
 
     final double[] distances = new double[foci1.length];
     int count = 0;
 
-    // Update the second set to foci inside the mask
-    int N2 = 0;
-    for (int j = foci2.length; j-- > 0;) {
+    // Update the second set to foci inside the mask (analysis region)
+    int n2 = 0;
+    for (int j = 0; j < foci2.length; j++) {
       final Foci m2 = foci2[j];
       if (map.getPixelValue(m2.x, m2.y) != 0) {
-        foci2[N2++] = m2;
+        foci2[n2++] = m2;
       }
     }
 
-    int N = 0;
+    int n1 = 0;
     for (int i = foci1.length; i-- > 0;) {
       final Foci m = foci1[i];
-      // Ignore molecules that are near the edge of the boundary
+      // Ignore molecules that are near the edge of the analysis region
       if (map.getPixelValue(m.x, m.y) < distance) {
         continue;
       }
-      N++;
+      n1++;
 
       double min = Double.POSITIVE_INFINITY;
-      for (int j = N2; j-- > 0;) {
+      for (int j = n2; j-- > 0;) {
         final Foci m2 = foci2[j];
 
         if (identical && m.id == m2.id) {
@@ -284,7 +286,7 @@ public class SpotDensity_PlugIn implements PlugIn {
 
         final double d2 = m.distance2(m2);
         if (d2 < maxDistance2) {
-          H[(int) (Math.sqrt(d2) / interval)]++;
+          h1[(int) (Math.sqrt(d2) / interval)]++;
         }
         if (d2 < min) {
           min = d2;
@@ -294,71 +296,71 @@ public class SpotDensity_PlugIn implements PlugIn {
       if (min != Double.POSITIVE_INFINITY) {
         min = Math.sqrt(min);
         if (min < distance) {
-          H2[(int) (min / interval)]++;
+          h2[(int) (min / interval)]++;
         }
         distances[count++] = min;
       }
     }
 
-    double[] r = new double[nBins + 1];
-    for (int i = 0; i <= nBins; i++) {
-      r[i] = i * interval;
+    double[] radii = new double[nbins + 1];
+    for (int i = 0; i <= nbins; i++) {
+      radii[i] = i * interval;
     }
-    double[] pcf = new double[nBins];
-    final double[] dMin = new double[nBins];
-    if (N > 0) {
-      final double N_pi = N * Math.PI;
-      for (int i = 0; i < nBins; i++) {
+    double[] pc = new double[nbins];
+    final double[] dMin = new double[nbins];
+    if (n1 > 0) {
+      final double n1pi = n1 * Math.PI;
+      for (int i = 0; i < nbins; i++) {
         // Pair-correlation is the count at the given distance divided by N (the number of items
         // analysed) and the area at distance ri:
         // H[i] / (N x (pi x (r_i+1)^2 - pi x r_i^2))
-        pcf[i] = H[i] / (N_pi * (r[i + 1] * r[i + 1] - r[i] * r[i]));
+        pc[i] = h1[i] / (n1pi * (radii[i + 1] * radii[i + 1] - radii[i] * radii[i]));
         // Convert to double for plotting
-        dMin[i] = H2[i];
+        dMin[i] = h2[i];
       }
     }
 
     // Truncate the unused r for the plot
-    r = Arrays.copyOf(r, nBins);
-    final Plot plot1 = new Plot(TITLE + " Min Distance", "Distance (px)", "Frequency", r, dMin);
+    radii = Arrays.copyOf(radii, nbins);
+    final Plot plot1 = new Plot(TITLE + " Min Distance", "Distance (px)", "Frequency", radii, dMin);
     final PlotWindow pw1 = ImageJUtils.display(TITLE + " Min Distance", plot1);
 
     // The final bin may be empty if the correlation interval was a factor of the correlation
     // distance
-    if (pcf[pcf.length - 1] == 0) {
-      r = Arrays.copyOf(r, nBins - 1);
-      pcf = Arrays.copyOf(pcf, nBins - 1);
+    if (pc[pc.length - 1] == 0) {
+      radii = Arrays.copyOf(radii, nbins - 1);
+      pc = Arrays.copyOf(pc, nbins - 1);
     }
 
     // Get the pixels in the entire mask
     int area = 0;
-    final float[] dMap = (float[]) map.getPixels();
-    for (int i = dMap.length; i-- > 0;) {
-      if (dMap[i] != 0) {
+    final float[] distanceMap = (float[]) map.getPixels();
+    for (int i = distanceMap.length; i-- > 0;) {
+      if (distanceMap[i] != 0) {
         area++;
       }
     }
 
-    final double avDensity = (double) N2 / area;
+    final double avDensity = (double) n2 / area;
 
     // Normalisation of the density chart to produce the pair correlation.
     // Get the maximum response for the summary.
     double max = 0;
     double maxr = 0;
-    for (int i = 0; i < pcf.length; i++) {
-      pcf[i] /= avDensity;
-      if (max < pcf[i]) {
-        max = pcf[i];
-        maxr = r[i];
+    for (int i = 0; i < pc.length; i++) {
+      pc[i] /= avDensity;
+      if (max < pc[i]) {
+        max = pc[i];
+        maxr = radii[i];
       }
     }
 
     // Store the result
-    final PairCorrelation pc = new PairCorrelation(N2, area, r, pcf);
-    results.add(pc);
+    final PairCorrelation pairCorrelation = new PairCorrelation(n2, area, radii, pc);
+    results.add(pairCorrelation);
 
     // Display
-    final PlotWindow pw2 = showPairCorrelation(pc);
+    final PlotWindow pw2 = showPairCorrelation(pairCorrelation);
 
     final Point p = pw1.getLocation();
     p.y += pw1.getHeight();
@@ -369,9 +371,9 @@ public class SpotDensity_PlugIn implements PlugIn {
     final StringBuilder sb = new StringBuilder();
     sb.append(results.size());
     sb.append('\t').append(foci1.length);
-    sb.append('\t').append(N);
+    sb.append('\t').append(n1);
     sb.append('\t').append(foci2.length);
-    sb.append('\t').append(N2);
+    sb.append('\t').append(n2);
     sb.append('\t').append(IJ.d2s(distance));
     sb.append('\t').append(IJ.d2s(interval));
     sb.append('\t').append(area);
@@ -389,11 +391,11 @@ public class SpotDensity_PlugIn implements PlugIn {
   }
 
   private static PlotWindow showPairCorrelation(PairCorrelation pc) {
-    final double avDensity = (double) pc.n / pc.area;
+    final double avDensity = (double) pc.numberOfPoints / pc.area;
     final String title = "Pair Correlation";
-    final Plot plot2 = new Plot(TITLE + " " + title, "r (px)", "g(r)", pc.r, pc.pcf);
+    final Plot plot2 = new Plot(TITLE + " " + title, "r (px)", "g(r)", pc.radii, pc.pc);
     plot2.setColor(Color.red);
-    plot2.drawLine(pc.r[0], 1, pc.r[pc.r.length - 1], 1);
+    plot2.drawLine(pc.radii[0], 1, pc.radii[pc.radii.length - 1], 1);
     plot2.addLabel(0, 0, "Av.Density = " + IJ.d2s(avDensity, -3) + " px^-2");
     plot2.setColor(Color.blue);
     return ImageJUtils.display(TITLE + " " + title, plot2);
@@ -413,6 +415,8 @@ public class SpotDensity_PlugIn implements PlugIn {
           } else if (event.getSource() instanceof Canvas
               && ((Canvas) event.getSource()).getParent() instanceof TextPanel) {
             tp = (TextPanel) ((Canvas) event.getSource()).getParent();
+          } else {
+            return;
           }
 
           final int[] ids = new int[results.size()];
@@ -482,32 +486,32 @@ public class SpotDensity_PlugIn implements PlugIn {
           }
 
           // Check all curves are the same size and build an average
-          PairCorrelation pc = results.get(ids[0] - 1);
-          final int length = pc.r.length;
-          int n = pc.n;
-          int area = pc.area;
-          final double[] r = pc.r;
-          final double[] pcf = pc.pcf.clone();
+          PairCorrelation pairCorrelation = results.get(ids[0] - 1);
+          final int length = pairCorrelation.radii.length;
+          int size = pairCorrelation.numberOfPoints;
+          int area = pairCorrelation.area;
+          final double[] radii = pairCorrelation.radii;
+          final double[] pcf = pairCorrelation.pc.clone();
           for (int i = 1; i < count; i++) {
-            pc = results.get(ids[i] - 1);
-            if (length != pc.r.length) {
+            pairCorrelation = results.get(ids[i] - 1);
+            if (length != pairCorrelation.radii.length) {
               return;
             }
-            n += pc.n;
-            area += pc.area;
+            size += pairCorrelation.numberOfPoints;
+            area += pairCorrelation.area;
             for (int j = 0; j < length; j++) {
               // Distance scale must be the same!
-              if (r[j] != pc.r[j]) {
+              if (radii[j] != pairCorrelation.radii[j]) {
                 return;
               }
-              pcf[j] += pc.pcf[j];
+              pcf[j] += pairCorrelation.pc[j];
             }
           }
           for (int j = 0; j < length; j++) {
             pcf[j] /= count;
           }
 
-          showPairCorrelation(new PairCorrelation(n, area, r, pcf));
+          showPairCorrelation(new PairCorrelation(size, area, radii, pcf));
         }
       });
     }

@@ -32,15 +32,17 @@ import org.jdesktop.beansbinding.Converter;
  * Convert the sort method.
  */
 public class SortMethodConverter extends Converter<Integer, Object> {
+  private static final String[] sortIndexMethods = FindFoci_PlugIn.getSortIndexMethods();
+
   @Override
   public String convertForward(Integer paramT) {
-    return FindFoci_PlugIn.sortIndexMethods[paramT.intValue()];
+    return sortIndexMethods[paramT.intValue()];
   }
 
   @Override
   public Integer convertReverse(Object paramS) {
-    for (int i = 0; i < FindFoci_PlugIn.sortIndexMethods.length; i++) {
-      if (FindFoci_PlugIn.sortIndexMethods[i].equals(paramS)) {
+    for (int i = 0; i < sortIndexMethods.length; i++) {
+      if (sortIndexMethods[i].equals(paramS)) {
         return Integer.valueOf(i);
       }
     }

@@ -26,6 +26,9 @@ package uk.ac.sussex.gdsc.ij.plugin.filter;
 
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.map.hash.TDoubleObjectHashMap;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Macro;
@@ -47,13 +50,13 @@ import ij.text.TextWindow;
 
 import java.awt.Frame;
 import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Extend the ImageJ Particle Analyser to allow the particles to be obtained from an input mask with
@@ -186,14 +189,14 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       final GenericDialog gd = new GenericDialog("Mask Particle Analyzer...");
       gd.addMessage(
           "Analyses objects in an image.\n \nObjects are defined with contiguous pixels of the "
-          + "same value.\nIgnore pixels outside any configured thresholds.");
+              + "same value.\nIgnore pixels outside any configured thresholds.");
       gd.addChoice("Redirect_image", list, redirectTitle);
       gd.addCheckbox("Particle_summary", particleSummary);
       gd.addCheckbox("Save_histogram", saveHistogram);
       if (noThreshold) {
         gd.addMessage(
             "Warning: The image is not thresholded / 8-bit binary mask.\nContinuing will use "
-            + "the min/max values in the image which\nmay produce many objects.");
+                + "the min/max values in the image which\nmay produce many objects.");
       }
       gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI);
       gd.showDialog();
@@ -222,7 +225,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       }
       if (Analyzer.isRedirectImage()) {
         // Get the current redirect image using reflection since we just want to restore it
-        // and do not want errors from image size mismatch in Analyzer.getRedirectImage(imp);
+        // and do not want errors from image size mismatch in Analyzer.getRedirectImage(imp)
         try {
           final Field field = Analyzer.class.getDeclaredField("redirectTarget");
           field.setAccessible(true);
@@ -266,8 +269,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
 
   private static BufferedWriter createOutput(String filename) {
     try {
-      final FileOutputStream fos = new FileOutputStream(filename);
-      final BufferedWriter out = new BufferedWriter(new OutputStreamWriter(fos, "UTF-8"));
+      final BufferedWriter out = Files.newBufferedWriter(new File(filename).toPath());
       out.write("Histogram\tParticle Value\tPixel Value\tCount");
       out.newLine();
       return out;
@@ -280,9 +282,8 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
   private static BufferedWriter writeHistogram(BufferedWriter out, int id, double particleValue,
       int[] histogram) {
     if (out == null || histogram == null) {
-      return null;
+      return out;
     }
-
     final String prefix = String.format("%d\t%s\t", id, Double.toString(particleValue));
     for (int i = 0; i < histogram.length; i++) {
       if (histogram[i] == 0) {
@@ -294,12 +295,13 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
         out.write('\t');
         out.write(Integer.toString(histogram[i]));
         out.newLine();
-      } catch (final Exception ex) {
+      } catch (final IOException ex) {
+        Logger.getLogger(MaskParticleAnalyzer.class.getName())
+            .warning(() -> "Failed to write histogram data: " + ex.getMessage());
         close(out);
         return null;
       }
     }
-
     return out;
   }
 
@@ -363,7 +365,6 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     // method.
     final ImageProcessor originalIp = ip.duplicate();
     value = (useGetPixelValue) ? ip.getPixelValue(x, y) : ip.getf(x, y);
-    // IJ.log(String.format("Analysing x=%d,y=%d value=%f", x, y, value));
     for (int i = 0; i < image.length; i++) {
       if (image[i] != value) {
         ip.set(i, 0);
@@ -371,15 +372,12 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     }
 
     final ImageProcessor particleIp = ip.duplicate();
-    // System.out.printf("Particle = %f\n", value);
-    // Utils.display("Particle", particleIp);
     super.analyzeParticle(x, y, imp, ip);
 
     // At the end of processing the analyser fills the image processor to prevent
     // re-processing this object's pixels.
     // We must copy back the filled pixel values.
     final int newValue = ip.get(x, y);
-    // System.out.printf("Particle changed to = %d\n", newValue);
     for (int i = 0; i < image.length; i++) {
       // Check if different from the input particle
       if (ip.get(i) != particleIp.get(i)) {
@@ -403,9 +401,6 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       rt.addValue("YStart", stats.ystart);
     }
 
-    // IJ.log(String.format("Saving x=%d,y=%d count=%d, value=%f", roi.getBounds().x,
-    // roi.getBounds().y,
-    // stats.pixelCount, value));
     rt.addValue("Particle Value", value);
     rt.addValue("Pixels", stats.pixelCount);
 
@@ -500,8 +495,8 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     }
 
     // Map all particles to a single result
-    final HashMap<Double, double[]> map = new HashMap<>();
-    final LinkedList<Double> order = new LinkedList<>();
+    final TDoubleObjectHashMap<double[]> map = new TDoubleObjectHashMap<>();
+    final TDoubleArrayList order = new TDoubleArrayList();
 
     // Now summarise
     for (int r = 0; r < nRows; r++) {
@@ -579,7 +574,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     if (summary.getColumnHeading(ResultsTable.LAST_HEADING) == null) {
       summary.setDefaultHeadings();
     }
-    for (final Double particle : order) {
+    order.forEach((particle) -> {
       summary.incrementCounter();
       if (label != null) {
         summary.addLabel(label);
@@ -620,31 +615,29 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
         summary.addValue(ResultsTable.RAW_INTEGRATED_DENSITY, data[7]);
       }
 
-      summary.addValue("Particle Value", particle.doubleValue());
+      summary.addValue("Particle Value", particle);
       summary.addValue("Pixels", data[8]);
       summary.addValue("Particles", data[9]);
-    }
+
+      return true;
+    });
 
     final String windowTitle = "Particle Summary";
 
     // This method does not work on my JRE as closing a results window throws an exception
     // leaving the frame still in memory but not visible
-    // summary.show(windowTitle);
+    // summary.show(windowTitle)
 
     TextWindow win = null;
     final String tableHeadings = summary.getColumnHeadings();
     boolean newWindow = false;
 
-    // This method does not check the frame is visible
-    // Frame frame = WindowManager.getFrame(windowTitle);
-
     // Find the results table if visible
     for (final Frame frame : WindowManager.getNonImageWindows()) {
-      if (frame != null && frame instanceof TextWindow && frame.isVisible()) {
-        if (windowTitle.equals(frame.getTitle())) {
-          win = (TextWindow) frame;
-          break;
-        }
+      if (frame instanceof TextWindow && frame.isVisible()
+          && windowTitle.equals(frame.getTitle())) {
+        win = (TextWindow) frame;
+        break;
       }
     }
     if (win == null) {
@@ -682,17 +675,18 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
   }
 
   @SuppressWarnings("resource")
-  private void saveSummaryHistogram(List<Double> order) {
+  private void saveSummaryHistogram(TDoubleArrayList order) {
     if (summaryHistogram.isEmpty()) {
       return;
     }
     final String summaryFilename = createSummaryFilename(histogramFile);
-    BufferedWriter out = createOutput(summaryFilename);
+    BufferedWriter histogramWriter = createOutput(summaryFilename);
     int id = 1;
-    for (final Double value : order) {
-      out = writeHistogram(out, id++, value, summaryHistogram.get(value));
+    for (int i = 0; i < order.size(); i++) {
+      final double value = order.getQuick(i);
+      histogramWriter = writeHistogram(histogramWriter, id++, value, summaryHistogram.get(value));
     }
-    close(out);
+    close(histogramWriter);
   }
 
   private static String createSummaryFilename(String filename) {

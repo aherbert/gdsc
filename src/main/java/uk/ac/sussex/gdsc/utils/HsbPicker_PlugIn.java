@@ -289,7 +289,7 @@ public class HsbPicker_PlugIn extends PlugInFrame {
     createLabelPanel(statsLabel[2], "Brightness", "0");
 
     // Add the buttons
-    Button clearButton = new Button("Reset");
+    final Button clearButton = new Button("Reset");
     clearButton.addActionListener(event -> clear());
     add(clearButton, 0, 3);
     row++;
@@ -298,11 +298,11 @@ public class HsbPicker_PlugIn extends PlugInFrame {
     createSliderPanel(scaleSlider, "Filter scale", new Label("0"), SCALE);
 
     // Add the buttons
-    Button filterButton = new Button("HSB Filter");
+    final Button filterButton = new Button("HSB Filter");
     filterButton.addActionListener(event -> runFilter());
-    Button okButton = new Button("Close");
+    final Button okButton = new Button("Close");
     okButton.addActionListener(event -> close());
-    Button helpButton = new Button("Help");
+    final Button helpButton = new Button("Help");
     helpButton.addActionListener(event -> {
       final String macro = "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.UrlUtils.UTILITY + "');";
       new MacroRunner(macro);

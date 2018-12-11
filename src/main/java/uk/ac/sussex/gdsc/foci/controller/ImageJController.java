@@ -203,11 +203,11 @@ public class ImageJController extends FindFociController {
       Recorder.setCommand("FindFoci");
       Recorder.recordOption("Mask", maskImage);
       Recorder.recordOption("Background_method",
-          FindFoci_PlugIn.backgroundMethods[backgroundMethod]);
+          FindFoci_PlugIn.getBackgroundMethod(backgroundMethod));
       Recorder.recordOption("Background_parameter", "" + backgroundParameter);
       Recorder.recordOption("Auto_threshold", thresholdMethod);
       Recorder.recordOption("Statistics_mode", statisticsMode);
-      Recorder.recordOption("Search_method", FindFoci_PlugIn.searchMethods[searchMethod]);
+      Recorder.recordOption("Search_method", FindFoci_PlugIn.getSearchMethod(searchMethod));
       Recorder.recordOption("Search_parameter", "" + searchParameter);
       Recorder.recordOption("Minimum_size", "" + minSize);
       if (minimumAboveSaddle) {
@@ -216,11 +216,11 @@ public class ImageJController extends FindFociController {
       if (connectedAboveSaddle) {
         Recorder.recordOption("Connected_above_saddle");
       }
-      Recorder.recordOption("Minimum_peak_height", FindFoci_PlugIn.peakMethods[peakMethod]);
+      Recorder.recordOption("Minimum_peak_height", FindFoci_PlugIn.getPeakMethod(peakMethod));
       Recorder.recordOption("Peak_parameter", "" + peakParameter);
-      Recorder.recordOption("Sort_method", FindFoci_PlugIn.sortIndexMethods[sortMethod]);
+      Recorder.recordOption("Sort_method", FindFoci_PlugIn.getSortIndexMethod(sortMethod));
       Recorder.recordOption("Maximum_peaks", "" + maxPeaks);
-      Recorder.recordOption("Show_mask", FindFoci_PlugIn.maskOptions[showMask]);
+      Recorder.recordOption("Show_mask", FindFoci_PlugIn.getMaskOption(showMask));
       if (overlayMask) {
         Recorder.recordOption("Overlay_mask");
       }

@@ -32,15 +32,17 @@ import org.jdesktop.beansbinding.Converter;
  * Convert the peak method.
  */
 public class PeakMethodConverter extends Converter<Integer, Object> {
+  private static final String[] peakMethods = FindFoci_PlugIn.getPeakMethods();
+
   @Override
   public String convertForward(Integer paramT) {
-    return FindFoci_PlugIn.peakMethods[paramT.intValue()];
+    return peakMethods[paramT.intValue()];
   }
 
   @Override
   public Integer convertReverse(Object paramS) {
-    for (int i = 0; i < FindFoci_PlugIn.peakMethods.length; i++) {
-      if (FindFoci_PlugIn.peakMethods[i].equals(paramS)) {
+    for (int i = 0; i < peakMethods.length; i++) {
+      if (peakMethods[i].equals(paramS)) {
         return Integer.valueOf(i);
       }
     }

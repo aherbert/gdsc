@@ -44,7 +44,7 @@ import java.util.List;
  * results.
  */
 public class FindMaximaController extends ImageJController {
-  private ArrayList<FindFociResult> resultsArray = new ArrayList<>();
+  private List<FindFociResult> resultsArray = new ArrayList<>();
   private ImageStack activeImageStack = null;
   private int activeChannel = 1;
   private int activeFrame = 1;
@@ -226,7 +226,7 @@ public class FindMaximaController extends ImageJController {
             sortMethod, options, gaussianBlur, centreMethod, centreParameter, fractionParameter);
 
     if (results != null) {
-      final ArrayList<FindFociResult> newResultsArray = results.results;
+      final List<FindFociResult> newResultsArray = results.results;
       if (newResultsArray != null) {
         resultsArray = newResultsArray;
       }
@@ -282,7 +282,7 @@ public class FindMaximaController extends ImageJController {
    *
    * @return the results array
    */
-  public ArrayList<FindFociResult> getResultsArray() {
+  public List<FindFociResult> getResultsArray() {
     return resultsArray;
   }
 

@@ -35,10 +35,11 @@ import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.SoftLock;
 import uk.ac.sussex.gdsc.core.utils.StoredData;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
-import uk.ac.sussex.gdsc.core.utils.UnicodeReader;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 import uk.ac.sussex.gdsc.foci.gui.OptimiserView;
 
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
 import gnu.trove.set.hash.TIntHashSet;
 
@@ -77,17 +78,16 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
@@ -133,6 +133,21 @@ public class FindFociOptimiser_PlugIn
 
   /** The search methods used for matching. */
   private static final String[] matchSearchMethods = {"Relative", "Absolute"};
+
+  // Copy for convenience
+  private static final String[] backgroundMethods = FindFoci_PlugIn.getBackgroundMethods();
+  private static final String[] searchMethods = FindFoci_PlugIn.getSearchMethods();
+  private static final String[] peakMethods = FindFoci_PlugIn.getPeakMethods();
+  private static final String[] maskOptions = FindFoci_PlugIn.getMaskOptions();
+  private static final String[] sortIndexMethods = FindFoci_PlugIn.getSortIndexMethods();
+  private static final String[] centreMethods = FindFoci_PlugIn.getCentreMethods();
+  private static final String[] autoThresholdMethods = FindFoci_PlugIn.getAutoThresholdMethods();
+  private static final String[] statisticsModes = FindFoci_PlugIn.getStatisticsModes();
+
+  private static final Pattern TAB_PATTERN = Pattern.compile("\t");
+  private static final Pattern pointsPattern = Pattern.compile("[, \t]+");
+  /** The maximum errors when reading a file. */
+  private static final int MAX_ERROR = 5;
 
   private static TextWindow resultsWindow = null;
   private static int stepLimit = 10000;
@@ -189,7 +204,7 @@ public class FindFociOptimiser_PlugIn
 
   private int[] optionsArray = {};
   private String[] thresholdMethods = null;
-  private String[] statisticsModes = null;
+  private String[] statsModes = null;
   private int[] backgroundMethodArray = {};
   private double myBackgroundParameterMin;
   private double myBackgroundParameterMax;
@@ -227,6 +242,9 @@ public class FindFociOptimiser_PlugIn
 
   // The number of combinations
   private int combinations;
+
+  private final TObjectIntHashMap<String> idMap = new TObjectIntHashMap<>();
+  private final TIntObjectHashMap<Options> optionsMap = new TIntObjectHashMap<>();
 
   private final SoftLock lock = new SoftLock();
 
@@ -501,7 +519,7 @@ public class FindFociOptimiser_PlugIn
         append(sb, "- Gaussian blur @ upper limit (%g)\n", bestOptions.blur);
       }
 
-      if (bestOptions.maxPeaks == result.results.get(0).n) {
+      if (bestOptions.maxPeaks == result.results.get(0).count) {
         append(sb, "- Total peaks == Maximum Peaks (%d)\n", bestOptions.maxPeaks);
       }
 
@@ -740,7 +758,7 @@ public class FindFociOptimiser_PlugIn
                 : "";
 
         final String[] myStatsModes =
-            backgroundMethodHasStatisticsMode(backgroundMethodArray[b]) ? statisticsModes
+            backgroundMethodHasStatisticsMode(backgroundMethodArray[b]) ? statsModes
                 : new String[] {"Both"};
         for (final String statsMode : myStatsModes) {
           final int statisticsMode = convertStatisticsMode(statsMode);
@@ -755,18 +773,18 @@ public class FindFociOptimiser_PlugIn
           // Object[] clonedInitArray = null;
           FindFociInitResults searchInitArray = null;
 
-          for (double backgroundParameter =
-              myBackgroundParameterMinArray[b]; backgroundParameter <= myBackgroundParameterMax; backgroundParameter +=
-                  myBackgroundParameterInterval) {
+          for (double backgroundParameter = myBackgroundParameterMinArray[b];
+              backgroundParameter <= myBackgroundParameterMax;
+              backgroundParameter += myBackgroundParameterInterval) {
             boolean logBackground = (blurCount == 0) && !multiMode; // Log on first blur iteration
             // Use zero when there is no parameter
             final double thisBackgroundParameter =
                 (backgroundMethodHasParameter(backgroundMethodArray[b])) ? backgroundParameter : 0;
 
             for (int s = 0; s < searchMethodArray.length; s++) {
-              for (double searchParameter =
-                  mySearchParameterMinArray[s]; searchParameter <= mySearchParameterMax; searchParameter +=
-                      mySearchParameterInterval) {
+              for (double searchParameter = mySearchParameterMinArray[s];
+                  searchParameter <= mySearchParameterMax;
+                  searchParameter += mySearchParameterInterval) {
                 // Use zero when there is no parameter
                 final double thisSearchParameter =
                     (searchMethodHasParameter(searchMethodArray[s])) ? searchParameter : 0;
@@ -787,7 +805,7 @@ public class FindFociOptimiser_PlugIn
                   final float backgroundLevel = searchInitArray.stats.background;
                   logBackground = false;
                   IJ.log(String.format("Background level - %s %s: %s = %g",
-                      FindFoci_PlugIn.backgroundMethods[backgroundMethodArray[b]],
+                      backgroundMethods[backgroundMethodArray[b]],
                       backgroundMethodHasStatisticsMode(backgroundMethodArray[b])
                           ? "(" + statsMode + ") "
                           : "",
@@ -797,17 +815,16 @@ public class FindFociOptimiser_PlugIn
                       backgroundLevel));
                 }
 
-                for (double peakParameter =
-                    myPeakParameterMin; peakParameter <= myPeakParameterMax; peakParameter +=
-                        myPeakParameterInterval) {
+                for (double peakParameter = myPeakParameterMin; peakParameter <= myPeakParameterMax;
+                    peakParameter += myPeakParameterInterval) {
                   final StopWatch sw3 = sw2.create();
                   final FindFociMergeTempResults mergePeakResults = ff.findMaximaMergePeak(
                       searchInitArray, searchArray, myPeakMethod, peakParameter);
                   sw3.stop();
                   // System.out.printf("3");
 
-                  for (int minSize = myMinSizeMin; minSize <= myMinSizeMax; minSize +=
-                      myMinSizeInterval) {
+                  for (int minSize = myMinSizeMin; minSize <= myMinSizeMax;
+                      minSize += myMinSizeInterval) {
                     final StopWatch sw4 = sw3.create();
                     // System.out.printf(".");
                     final FindFociMergeTempResults mergeSizeResults =
@@ -829,9 +846,9 @@ public class FindFociOptimiser_PlugIn
                       options += statisticsMode;
                       for (final int sortMethod : sortMethodArray) {
                         for (int c = 0; c < centreMethodArray.length; c++) {
-                          for (double centreParameter =
-                              myCentreParameterMinArray[c]; centreParameter <= myCentreParameterMaxArray[c]; centreParameter +=
-                                  myCentreParameterIntervalArray[c]) {
+                          for (double centreParameter = myCentreParameterMinArray[c];
+                              centreParameter <= myCentreParameterMaxArray[c];
+                              centreParameter += myCentreParameterIntervalArray[c]) {
                             final StopWatch sw6 = sw5.create();
                             final FindFociResults peakResults =
                                 ff.findMaximaResults(mergeInitArray, mergeArray, myMaxPeaks,
@@ -895,7 +912,7 @@ public class FindFociOptimiser_PlugIn
       final StringBuilder sb = new StringBuilder();
       sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append('\t');
       sb.append(result.getParameters());
-      sb.append(result.n).append('\t');
+      sb.append(result.count).append('\t');
       sb.append(result.tp).append('\t');
       sb.append(result.fp).append('\t');
       sb.append(result.fn).append('\t');
@@ -959,7 +976,7 @@ public class FindFociOptimiser_PlugIn
         final StringBuilder sb = new StringBuilder();
         sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append('\t');
         sb.append(result.getParameters());
-        sb.append(result.n).append('\t');
+        sb.append(result.count).append('\t');
         sb.append(result.tp).append('\t');
         sb.append(result.fp).append('\t');
         sb.append(result.fn).append('\t');
@@ -999,15 +1016,14 @@ public class FindFociOptimiser_PlugIn
     // Use the recorder to build the options for the FindFoci plugin
     Recorder.setCommand("FindFoci");
     Recorder.recordOption("mask", maskTitle);
-    Recorder.recordOption("background_method",
-        FindFoci_PlugIn.backgroundMethods[bestOptions.backgroundMethod]);
+    Recorder.recordOption("background_method", backgroundMethods[bestOptions.backgroundMethod]);
     Recorder.recordOption("Background_parameter", "" + bestOptions.backgroundParameter);
     Recorder.recordOption("Auto_threshold", bestOptions.autoThresholdMethod);
     if (backgroundMethodHasStatisticsMode(bestOptions.backgroundMethod)) {
       Recorder.recordOption("Statistics_mode",
           FindFoci_PlugIn.getStatisticsMode(bestOptions.options));
     }
-    Recorder.recordOption("Search_method", FindFoci_PlugIn.searchMethods[bestOptions.searchMethod]);
+    Recorder.recordOption("Search_method", searchMethods[bestOptions.searchMethod]);
     Recorder.recordOption("Search_parameter", "" + bestOptions.searchParameter);
     Recorder.recordOption("Minimum_size", "" + bestOptions.minSize);
     if ((bestOptions.options & FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE) != 0) {
@@ -1016,12 +1032,11 @@ public class FindFociOptimiser_PlugIn
     if ((bestOptions.options & FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE) != 0) {
       Recorder.recordOption("Connected_above_saddle");
     }
-    Recorder.recordOption("Minimum_peak_height",
-        FindFoci_PlugIn.peakMethods[bestOptions.peakMethod]);
+    Recorder.recordOption("Minimum_peak_height", peakMethods[bestOptions.peakMethod]);
     Recorder.recordOption("Peak_parameter", "" + bestOptions.peakParameter);
-    Recorder.recordOption("Sort_method", FindFoci_PlugIn.sortIndexMethods[bestOptions.sortIndex]);
+    Recorder.recordOption("Sort_method", sortIndexMethods[bestOptions.sortIndex]);
     Recorder.recordOption("Maximum_peaks", "" + bestOptions.maxPeaks);
-    Recorder.recordOption("Show_mask", FindFoci_PlugIn.maskOptions[3]);
+    Recorder.recordOption("Show_mask", maskOptions[3]);
     Recorder.recordOption("Show_table");
     Recorder.recordOption("Mark_maxima");
     Recorder.recordOption("Mark_peak_maxima");
@@ -1029,8 +1044,7 @@ public class FindFociOptimiser_PlugIn
     if (bestOptions.blur > 0) {
       Recorder.recordOption("Gaussian_blur", "" + bestOptions.blur);
     }
-    Recorder.recordOption("Centre_method",
-        FindFoci_PlugIn.getCentreMethods()[bestOptions.centreMethod]);
+    Recorder.recordOption("Centre_method", centreMethods[bestOptions.centreMethod]);
     if (bestOptions.centreMethod == FindFoci_PlugIn.CENTRE_OF_MASS_SEARCH) {
       Recorder.recordOption("Centre_parameter", "" + bestOptions.centreParameter);
     }
@@ -1074,8 +1088,7 @@ public class FindFociOptimiser_PlugIn
 
     // Add 3D support here by getting the results from the results table not the clone image which
     // only supports 2D
-    final ArrayList<FindFociResult> results = FindFoci_PlugIn.getResults();
-    // AssignedPoint[] predictedPoints = PointManager.extractRoiPoints(clone.getRoi());
+    final List<FindFociResult> results = FindFoci_PlugIn.getLastResults();
     final AssignedPoint[] predictedPoints = new AssignedPoint[results.size()];
     for (int i = 0; i < predictedPoints.length; i++) {
       final FindFociResult result = results.get(i);
@@ -1086,32 +1099,32 @@ public class FindFociOptimiser_PlugIn
     if (myShowScoreImages) {
       final AssignedPoint[] actualPoints = extractRoiPoints(imp.getRoi(), imp, mask);
 
-      final List<Coordinate> TP = new LinkedList<>();
-      final List<Coordinate> FP = new LinkedList<>();
-      final List<Coordinate> FN = new LinkedList<>();
+      final List<Coordinate> truePositives = new LinkedList<>();
+      final List<Coordinate> falsePositives = new LinkedList<>();
+      final List<Coordinate> falseNegatives = new LinkedList<>();
       final boolean is3D = is3D(actualPoints);
       if (is3D) {
         MatchCalculator.analyseResults3D(actualPoints, predictedPoints, getDistanceThreshold(imp),
-            TP, FP, FN);
+            truePositives, falsePositives, falseNegatives);
       } else {
         MatchCalculator.analyseResults2D(actualPoints, predictedPoints, getDistanceThreshold(imp),
-            TP, FP, FN);
+            truePositives, falsePositives, falseNegatives);
       }
 
       // Show image with TP, FP and FN. Use an overlay to support 3D images
       final ImagePlus tpImp = cloneImage(imp, mask, imp.getTitle() + " TP");
       // tpImp.setRoi(createRoi(TP));
-      tpImp.setOverlay(createOverlay(TP, imp));
+      tpImp.setOverlay(createOverlay(truePositives, imp));
       tpImp.show();
 
       final ImagePlus fpImp = cloneImage(imp, mask, imp.getTitle() + " FP");
       // fpImp.setRoi(createRoi(FP));
-      fpImp.setOverlay(createOverlay(FP, imp));
+      fpImp.setOverlay(createOverlay(falsePositives, imp));
       fpImp.show();
 
       final ImagePlus fnImp = cloneImage(imp, mask, imp.getTitle() + " FN");
       // fnImp.setRoi(createRoi(FN));
-      fnImp.setOverlay(createOverlay(FN, imp));
+      fnImp.setOverlay(createOverlay(falseNegatives, imp));
       fnImp.show();
     } else {
       // Leaving old results would be confusing so close them
@@ -1250,7 +1263,7 @@ public class FindFociOptimiser_PlugIn
     gd.addChoice("Settings", settingsNames, settingsNames[0]);
 
     if (!multiMode) {
-      gd.addChoice("Mask", newImageList.toArray(new String[0]), myMaskImage);
+      gd.addChoice("Mask", newImageList.toArray(new String[newImageList.size()]), myMaskImage);
     }
 
     // Do not allow background above mean and background absolute to both be enabled.
@@ -1265,8 +1278,7 @@ public class FindFociOptimiser_PlugIn
     gd.addCheckbox("Search_above_background", mySearchAboveBackground);
     gd.addCheckbox("Search_fraction_of_peak", mySearchFractionOfPeak);
     gd.addStringField("Search_parameter", mySearchParameter, 12);
-    gd.addChoice("Minimum_peak_height", FindFoci_PlugIn.peakMethods,
-        FindFoci_PlugIn.peakMethods[myPeakMethod]);
+    gd.addChoice("Minimum_peak_height", peakMethods, peakMethods[myPeakMethod]);
     gd.addStringField("Peak_parameter", myPeakParameter, 12);
     gd.addStringField("Minimum_size", myMinSizeParameter, 12);
     gd.addChoice("Minimum_above_saddle", saddleOptions, saddleOptions[myMinimumAboveSaddle]);
@@ -1431,7 +1443,7 @@ public class FindFociOptimiser_PlugIn
     if (!multiMode) {
       final ImagePlus mask = WindowManager.getImage(myMaskImage);
       if (!validMask(imp, mask)) {
-        statisticsModes = new String[] {"Both"};
+        statsModes = new String[] {"Both"};
       }
     }
 
@@ -1532,7 +1544,7 @@ public class FindFociOptimiser_PlugIn
   }
 
   private static StringBuilder addSortOption(StringBuilder sb, int method) {
-    sb.append("[").append(method).append("] ").append(FindFoci_PlugIn.sortIndexMethods[method]);
+    sb.append("[").append(method).append("] ").append(sortIndexMethods[method]);
     return sb;
   }
 
@@ -1549,7 +1561,7 @@ public class FindFociOptimiser_PlugIn
   }
 
   private static StringBuilder addCentreOption(StringBuilder sb, int method) {
-    sb.append("[").append(method).append("] ").append(FindFoci_PlugIn.getCentreMethods()[method]);
+    sb.append("[").append(method).append("] ").append(centreMethods[method]);
     return sb;
   }
 
@@ -1563,7 +1575,7 @@ public class FindFociOptimiser_PlugIn
   }
 
   private static void validThresholdMethod(String method, LinkedList<String> methods) {
-    for (final String m : FindFoci_PlugIn.autoThresholdMethods) {
+    for (final String m : autoThresholdMethods) {
       if (m.equalsIgnoreCase(method)) {
         methods.add(m);
         return;
@@ -1580,11 +1592,11 @@ public class FindFociOptimiser_PlugIn
     if (modes.isEmpty()) {
       modes.add("both");
     }
-    statisticsModes = modes.toArray(new String[0]);
+    statsModes = modes.toArray(new String[0]);
   }
 
   private static void validStatisticsMode(String mode, LinkedList<String> modes) {
-    for (final String m : FindFoci_PlugIn.statisticsModes) {
+    for (final String m : statisticsModes) {
       if (m.equalsIgnoreCase(mode)) {
         modes.add(m);
         return;
@@ -1604,37 +1616,36 @@ public class FindFociOptimiser_PlugIn
 
   private int[] createBackgroundArray() {
     final int[] array = new int[countBackgroundFlags()];
-    int i = 0;
+    int index = 0;
     if (myBackgroundAbsolute) {
-      array[i] = FindFociProcessor.BACKGROUND_ABSOLUTE;
-      i++;
+      array[index] = FindFociProcessor.BACKGROUND_ABSOLUTE;
+      index++;
     }
     if (myBackgroundAuto) {
-      for (@SuppressWarnings("unused")
-      final String method : thresholdMethods) {
-        array[i] = FindFociProcessor.BACKGROUND_AUTO_THRESHOLD;
-        i++;
+      for (int i = 0; i < thresholdMethods.length; i++) {
+        array[index] = FindFociProcessor.BACKGROUND_AUTO_THRESHOLD;
+        index++;
       }
     }
     if (myBackgroundStdDevAboveMean) {
-      array[i] = FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN;
-      i++;
+      array[index] = FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN;
+      index++;
     }
     return array;
   }
 
   private int countBackgroundFlags() {
-    int i = 0;
+    int count = 0;
     if (myBackgroundAbsolute) {
-      i++;
+      count++;
     }
     if (myBackgroundAuto) {
-      i += thresholdMethods.length;
+      count += thresholdMethods.length;
     }
     if (myBackgroundStdDevAboveMean) {
-      i++;
+      count++;
     }
-    return i;
+    return count;
   }
 
   private void parseBackgroundLimits() {
@@ -1652,19 +1663,16 @@ public class FindFociOptimiser_PlugIn
           TITLE, name, MathUtils.rounded(defaultMin));
       return new double[] {defaultMin, defaultMin, defaultInterval};
     }
-    double min;
-    double max;
-    double interval;
 
-    min = values[0];
+    double min = values[0];
     if (min < defaultMin) {
       ImageJUtils.log("%s Warning : %s : Minimum below default (%f < %s), setting to default",
           TITLE, name, min, MathUtils.rounded(defaultMin));
       min = defaultMin;
     }
 
-    max = min;
-    interval = defaultInterval;
+    double max = min;
+    double interval = defaultInterval;
     if (values.length > 1) {
       max = values[1];
       if (max < min) {
@@ -1727,27 +1735,27 @@ public class FindFociOptimiser_PlugIn
 
   private static int[] createSearchArray() {
     final int[] array = new int[countSearchFlags()];
-    int i = 0;
+    int count = 0;
     if (mySearchAboveBackground) {
-      array[i] = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
-      i++;
+      array[count] = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
+      count++;
     }
     if (mySearchFractionOfPeak) {
-      array[i] = FindFociProcessor.SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND;
-      i++;
+      array[count] = FindFociProcessor.SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND;
+      count++;
     }
     return array;
   }
 
   private static int countSearchFlags() {
-    int i = 0;
+    int count = 0;
     if (mySearchAboveBackground) {
-      i++;
+      count++;
     }
     if (mySearchFractionOfPeak) {
-      i++;
+      count++;
     }
-    return i;
+    return count;
   }
 
   private void parseSearchLimits() {
@@ -1923,27 +1931,27 @@ public class FindFociOptimiser_PlugIn
     for (final double blur : blurArray) {
       for (int b = 0; b < backgroundMethodArray.length; b++) {
         final String[] myStatsModes =
-            backgroundMethodHasStatisticsMode(backgroundMethodArray[b]) ? statisticsModes
+            backgroundMethodHasStatisticsMode(backgroundMethodArray[b]) ? statsModes
                 : new String[] {"Both"};
         for (final String statsMode : myStatsModes) {
-          for (double backgroundParameter =
-              myBackgroundParameterMinArray[b]; backgroundParameter <= myBackgroundParameterMax; backgroundParameter +=
-                  myBackgroundParameterInterval) {
-            for (int minSize = myMinSizeMin; minSize <= myMinSizeMax; minSize +=
-                myMinSizeInterval) {
+          for (double backgroundParameter = myBackgroundParameterMinArray[b];
+              backgroundParameter <= myBackgroundParameterMax;
+              backgroundParameter += myBackgroundParameterInterval) {
+            for (int minSize = myMinSizeMin; minSize <= myMinSizeMax;
+                minSize += myMinSizeInterval) {
               for (int s = 0; s < searchMethodArray.length; s++) {
-                for (double searchParameter =
-                    mySearchParameterMinArray[s]; searchParameter <= mySearchParameterMax; searchParameter +=
-                        mySearchParameterInterval) {
-                  for (double peakParameter =
-                      myPeakParameterMin; peakParameter <= myPeakParameterMax; peakParameter +=
-                          myPeakParameterInterval) {
+                for (double searchParameter = mySearchParameterMinArray[s];
+                    searchParameter <= mySearchParameterMax;
+                    searchParameter += mySearchParameterInterval) {
+                  for (double peakParameter = myPeakParameterMin;
+                      peakParameter <= myPeakParameterMax;
+                      peakParameter += myPeakParameterInterval) {
                     for (final int options : optionsArray) {
                       for (final int sortMethod : sortMethodArray) {
                         for (int c = 0; c < centreMethodArray.length; c++) {
-                          for (double centreParameter =
-                              myCentreParameterMinArray[c]; centreParameter <= myCentreParameterMaxArray[c]; centreParameter +=
-                                  myCentreParameterIntervalArray[c]) {
+                          for (double centreParameter = myCentreParameterMinArray[c];
+                              centreParameter <= myCentreParameterMaxArray[c];
+                              centreParameter += myCentreParameterIntervalArray[c]) {
                             // Simple check to ensure the user has not configured something
                             // incorrectly
                             if (steps++ >= maxSteps) {
@@ -2068,16 +2076,16 @@ public class FindFociOptimiser_PlugIn
   }
 
   private Result analyseResults(int id, AssignedPoint[] roiPoints,
-      ArrayList<FindFociResult> resultsArray, double dThreshold, Options options, long time,
+      List<FindFociResult> resultsArray, double distanceThreshold, Options options, long time,
       double beta, boolean is3D) {
     // Extract results for analysis
     final AssignedPoint[] predictedPoints = extractedPredictedPoints(resultsArray);
 
     MatchResult matchResult;
     if (is3D) {
-      matchResult = MatchCalculator.analyseResults3D(roiPoints, predictedPoints, dThreshold);
+      matchResult = MatchCalculator.analyseResults3D(roiPoints, predictedPoints, distanceThreshold);
     } else {
-      matchResult = MatchCalculator.analyseResults2D(roiPoints, predictedPoints, dThreshold);
+      matchResult = MatchCalculator.analyseResults2D(roiPoints, predictedPoints, distanceThreshold);
     }
 
     return new Result(id, options, matchResult.getNumberPredicted(), matchResult.getTruePositives(),
@@ -2085,7 +2093,7 @@ public class FindFociOptimiser_PlugIn
         matchResult.getRmsd());
   }
 
-  private static AssignedPoint[] extractedPredictedPoints(ArrayList<FindFociResult> resultsArray) {
+  private static AssignedPoint[] extractedPredictedPoints(List<FindFociResult> resultsArray) {
     final AssignedPoint[] predictedPoints = new AssignedPoint[resultsArray.size()];
     for (int i = 0; i < resultsArray.size(); i++) {
       final FindFociResult result = resultsArray.get(i);
@@ -2121,7 +2129,7 @@ public class FindFociOptimiser_PlugIn
     final String spacer = " : ";
     final StringBuilder sb = new StringBuilder();
     sb.append(blur).append('\t');
-    sb.append(FindFoci_PlugIn.backgroundMethods[backgroundMethod]);
+    sb.append(backgroundMethods[backgroundMethod]);
     if (backgroundMethodHasStatisticsMode(backgroundMethod)) {
       sb.append(" (").append(FindFoci_PlugIn.getStatisticsMode(options)).append(") ");
     }
@@ -2137,15 +2145,15 @@ public class FindFociOptimiser_PlugIn
       }
     }
     sb.append('\t');
-    sb.append(FindFoci_PlugIn.searchMethods[searchMethod]);
+    sb.append(searchMethods[searchMethod]);
     if (searchMethodHasParameter(searchMethod)) {
       sb.append(spacer).append(IJ.d2s(searchParameter, 2));
     }
     sb.append('\t');
-    sb.append(FindFoci_PlugIn.peakMethods[peakMethod]).append(spacer);
+    sb.append(peakMethods[peakMethod]).append(spacer);
     sb.append(IJ.d2s(peakParameter, 2)).append('\t');
-    sb.append(FindFoci_PlugIn.sortIndexMethods[sortMethod]).append('\t');
-    sb.append(FindFoci_PlugIn.getCentreMethods()[centreMethod]);
+    sb.append(sortIndexMethods[sortMethod]).append('\t');
+    sb.append(centreMethods[centreMethod]);
     if (centreMethodHasParameter(centreMethod)) {
       sb.append(spacer).append(IJ.d2s(centreParameter, 2));
     }
@@ -2164,14 +2172,14 @@ public class FindFociOptimiser_PlugIn
     try {
       final double blur = Double.parseDouble(fields[0]);
       int backgroundMethod = -1;
-      for (int i = 0; i < FindFoci_PlugIn.backgroundMethods.length; i++) {
-        if (fields[1].startsWith(FindFoci_PlugIn.backgroundMethods[i])) {
+      for (int i = 0; i < backgroundMethods.length; i++) {
+        if (fields[1].startsWith(backgroundMethods[i])) {
           backgroundMethod = i;
           break;
         }
       }
       if (backgroundMethod < 0) {
-        throw new Exception("No background method");
+        throw new IllegalArgumentException("No background method");
       }
       int options = 0;
       if (backgroundMethodHasStatisticsMode(backgroundMethod)) {
@@ -2195,7 +2203,7 @@ public class FindFociOptimiser_PlugIn
       }
       final int maxPeaks = Integer.parseInt(fields[2]);
       // XXX
-      index = fields[3].indexOf(" ");
+      index = fields[3].indexOf(' ');
       if (index > 0) {
         options |= FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE;
         if (fields[3].contains("conn")) {
@@ -2205,14 +2213,14 @@ public class FindFociOptimiser_PlugIn
       }
       final int minSize = Integer.parseInt(fields[3]);
       int searchMethod = -1;
-      for (int i = 0; i < FindFoci_PlugIn.searchMethods.length; i++) {
-        if (fields[4].startsWith(FindFoci_PlugIn.searchMethods[i])) {
+      for (int i = 0; i < searchMethods.length; i++) {
+        if (fields[4].startsWith(searchMethods[i])) {
           searchMethod = i;
           break;
         }
       }
       if (searchMethod < 0) {
-        throw new Exception("No search method");
+        throw new IllegalArgumentException("No search method");
       }
       double searchParameter = 0;
       if (searchMethodHasParameter(searchMethod)) {
@@ -2220,36 +2228,36 @@ public class FindFociOptimiser_PlugIn
         searchParameter = Double.parseDouble(fields[4].substring(index));
       }
       int peakMethod = -1;
-      for (int i = 0; i < FindFoci_PlugIn.peakMethods.length; i++) {
-        if (fields[5].startsWith(FindFoci_PlugIn.peakMethods[i])) {
+      for (int i = 0; i < peakMethods.length; i++) {
+        if (fields[5].startsWith(peakMethods[i])) {
           peakMethod = i;
           break;
         }
       }
       if (peakMethod < 0) {
-        throw new Exception("No peak method");
+        throw new IllegalArgumentException("No peak method");
       }
       index = fields[5].indexOf(" : ") + 3;
       final double peakParameter = Double.parseDouble(fields[5].substring(index));
       int sortMethod = -1;
-      for (int i = 0; i < FindFoci_PlugIn.sortIndexMethods.length; i++) {
-        if (fields[6].startsWith(FindFoci_PlugIn.sortIndexMethods[i])) {
+      for (int i = 0; i < sortIndexMethods.length; i++) {
+        if (fields[6].startsWith(sortIndexMethods[i])) {
           sortMethod = i;
           break;
         }
       }
       if (sortMethod < 0) {
-        throw new Exception("No sort method");
+        throw new IllegalArgumentException("No sort method");
       }
       int centreMethod = -1;
-      for (int i = 0; i < FindFoci_PlugIn.getCentreMethods().length; i++) {
-        if (fields[7].startsWith(FindFoci_PlugIn.getCentreMethods()[i])) {
+      for (int i = 0; i < centreMethods.length; i++) {
+        if (fields[7].startsWith(centreMethods[i])) {
           centreMethod = i;
           break;
         }
       }
       if (centreMethod < 0) {
-        throw new Exception("No centre method");
+        throw new IllegalArgumentException("No centre method");
       }
       double centreParameter = 0;
       if (centreMethodHasParameter(centreMethod)) {
@@ -2257,18 +2265,18 @@ public class FindFociOptimiser_PlugIn
         centreParameter = Double.parseDouble(fields[7].substring(index));
       }
 
-      Options o = new Options(blur, backgroundMethod, backgroundParameter, thresholdMethod,
+      Options ffOptions = new Options(blur, backgroundMethod, backgroundParameter, thresholdMethod,
           searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, sortMethod,
           options, centreMethod, centreParameter);
 
       // Debugging
-      if (!o.createParameters().equals(parameters)) {
+      if (!ffOptions.createParameters().equals(parameters)) {
         System.out.printf("Error converting parameters to FindFoci options:\n%s\n%s\n", parameters,
-            o.createParameters());
-        o = null;
+            ffOptions.createParameters());
+        ffOptions = null;
       }
 
-      return o;
+      return ffOptions;
     } catch (final Exception ex) {
       System.out.println("Error converting parameters to FindFoci options: " + parameters + "\n"
           + ex.getMessage());
@@ -2404,8 +2412,6 @@ public class FindFociOptimiser_PlugIn
     return null;
   }
 
-  private static Pattern pointsPattern = Pattern.compile("[, \t]+");
-
   private static AssignedPoint[] loadPointsFromFile(String filename) {
     if (filename == null) {
       return null;
@@ -2415,18 +2421,13 @@ public class FindFociOptimiser_PlugIn
       return null;
     }
 
-    final int MAX_ERROR = 5;
-    try (BufferedReader input =
-        new BufferedReader(new UnicodeReader(new FileInputStream(filename), null))) {
+    try (BufferedReader input = Files.newBufferedReader(new File(filename).toPath())) {
       String line;
       int id = 0;
       int errors = 0;
       final ArrayList<AssignedPoint> points = new ArrayList<>();
       while ((line = input.readLine()) != null) {
-        if (line.length() == 0) {
-          continue;
-        }
-        if (line.charAt(0) == '#') {
+        if (line.length() == 0 || line.charAt(0) == '#') {
           continue;
         }
         final String[] fields = pointsPattern.split(line);
@@ -2434,11 +2435,11 @@ public class FindFociOptimiser_PlugIn
           try {
             final int x = (int) Double.parseDouble(fields[0]);
             final int y = (int) Double.parseDouble(fields[1]);
-            int z = 0;
+            int zposition = 0;
             if (fields.length > 2) {
-              z = (int) Double.parseDouble(fields[2]);
+              zposition = (int) Double.parseDouble(fields[2]);
             }
-            points.add(new AssignedPoint(x, y, z, ++id));
+            points.add(new AssignedPoint(x, y, zposition, ++id));
           } catch (final NumberFormatException ex) {
             // Abort if too many errors
             if (++errors == MAX_ERROR) {
@@ -2448,8 +2449,6 @@ public class FindFociOptimiser_PlugIn
         }
       }
       return (errors == MAX_ERROR) ? null : points.toArray(new AssignedPoint[points.size()]);
-    } catch (final NumberFormatException ex) {
-      // ignore
     } catch (final IOException ex) {
       // ignore
     }
@@ -2461,30 +2460,30 @@ public class FindFociOptimiser_PlugIn
     final int[] ox = new int[points.size()];
     final int[] oy = new int[points.size()];
 
-    int i = 0;
+    int index = 0;
     for (final Coordinate point : points) {
-      ox[i] = point.getXint();
-      oy[i] = point.getYint();
-      i++;
+      ox[index] = point.getXint();
+      oy[index] = point.getYint();
+      index++;
     }
     return new PointRoi(ox, oy, ox.length);
   }
 
   private static Overlay createOverlay(List<Coordinate> points, ImagePlus imp) {
-    final int c = imp.getChannel();
-    final int f = imp.getFrame();
+    final int channel = imp.getChannel();
+    final int frame = imp.getFrame();
     final boolean isHyperStack = imp.isDisplayedHyperStack();
 
     final int[] ox = new int[points.size()];
     final int[] oy = new int[points.size()];
     final int[] oz = new int[points.size()];
 
-    int i = 0;
+    int index = 0;
     for (final Coordinate point : points) {
-      ox[i] = point.getXint();
-      oy[i] = point.getYint();
-      oz[i] = point.getZint();
-      i++;
+      ox[index] = point.getXint();
+      oy[index] = point.getYint();
+      oz[index] = point.getZint();
+      index++;
     }
 
     final Overlay overlay = new Overlay();
@@ -2494,8 +2493,8 @@ public class FindFociOptimiser_PlugIn
       if (oz[ii] != -1) {
         final int slice = oz[ii];
         // Extract all the points from this slice
-        int[] x = new int[remaining];
-        int[] y = new int[remaining];
+        final int[] x = new int[remaining];
+        final int[] y = new int[remaining];
         int count = 0;
         for (int j = ii; j < ox.length; j++) {
           if (oz[j] == slice) {
@@ -2505,11 +2504,9 @@ public class FindFociOptimiser_PlugIn
             oz[j] = -1; // Mark processed
           }
         }
-        x = Arrays.copyOf(x, count);
-        y = Arrays.copyOf(y, count);
-        final PointRoi roi = new PointRoi(x, y, count);
+        final PointRoi roi = new PointRoi(Arrays.copyOf(x, count), Arrays.copyOf(y, count), count);
         if (isHyperStack) {
-          roi.setPosition(c, slice, f);
+          roi.setPosition(channel, slice, frame);
         } else {
           roi.setPosition(slice);
         }
@@ -2544,9 +2541,8 @@ public class FindFociOptimiser_PlugIn
     }
 
     // Process special cases
-    switch (sortMethod) {
-      case SORT_RMSD:
-        return Result.RMSD;
+    if (sortMethod == SORT_RMSD) {
+      return Result.RMSD;
     }
 
     // This is an error
@@ -2564,10 +2560,10 @@ public class FindFociOptimiser_PlugIn
    *
    * @param results the results
    * @param sortIndex the sort index
-   * @param c the c
+   * @param cmp the comparator
    */
-  public void sortAndAssignRank(ArrayList<Result> results, int sortIndex, ResultComparator c) {
-    Collections.sort(results, c);
+  public void sortAndAssignRank(ArrayList<Result> results, int sortIndex, ResultComparator cmp) {
+    Collections.sort(results, cmp);
 
     // Cannot assign a rank if we have not sorted
     int rank = 1;
@@ -2589,35 +2585,35 @@ public class FindFociOptimiser_PlugIn
   }
 
   private class Result implements Comparable<Result> {
-    public static final int PRECISION = 0;
-    public static final int RECALL = 1;
-    public static final int F05 = 2;
-    public static final int F1 = 3;
-    public static final int F2 = 4;
-    public static final int Fb = 5;
-    public static final int JACCARD = 6;
-    public static final int RANK = 7;
-    public static final int SCORE = 8;
-    public static final int RMSD = 9;
+    static final int PRECISION = 0;
+    static final int RECALL = 1;
+    static final int F05 = 2;
+    static final int F1 = 3;
+    static final int F2 = 4;
+    static final int Fb = 5;
+    static final int JACCARD = 6;
+    static final int RANK = 7;
+    static final int SCORE = 8;
+    static final int RMSD = 9;
 
-    public int id;
-    public Options options;
-    public String parameters;
-    public int n;
-    public int tp;
-    public int fp;
-    public int fn;
-    public long time;
-    public double[] metrics = new double[10];
+    int id;
+    Options options;
+    String parameters;
+    int count;
+    int tp;
+    int fp;
+    int fn;
+    long time;
+    double[] metrics = new double[10];
 
-    public Result(int id, Options options, int n, int tp, int fp, int fn, long time, double beta,
+    Result(int id, Options options, int count, int tp, int fp, int fn, long time, double beta,
         double rmsd) {
       this.id = id;
       this.options = options;
       if (options != null) {
         this.parameters = options.createParameters();
       }
-      this.n = n;
+      this.count = count;
       this.tp = tp;
       this.fp = fp;
       this.fn = fn;
@@ -2644,7 +2640,7 @@ public class FindFociOptimiser_PlugIn
      *
      * @param result the result
      */
-    public void add(Result result) {
+    void add(Result result) {
       // Create a new RMSD
       // rmsd = Math.sqrt(sd / tp);
       final double sd1 = metrics[RMSD] * metrics[RMSD] * tp;
@@ -2652,7 +2648,7 @@ public class FindFociOptimiser_PlugIn
       metrics[RMSD] = Math.sqrt((sd1 + sd2) / (tp + result.tp));
 
       // Combine all other metrics
-      n += result.n;
+      count += result.count;
       tp += result.tp;
       fp += result.fp;
       fn += result.fn;
@@ -2662,7 +2658,7 @@ public class FindFociOptimiser_PlugIn
       }
     }
 
-    public String getParameters() {
+    String getParameters() {
       return parameters;
     }
 
@@ -2710,9 +2706,10 @@ public class FindFociOptimiser_PlugIn
         case Result.RMSD:
           // Highest last
           return 1;
+        default:
+          // Highest first
+          return -1;
       }
-      // Highest first
-      return -1;
     }
 
     /** {@inheritDoc} */
@@ -2800,8 +2797,8 @@ public class FindFociOptimiser_PlugIn
     }
   }
 
-  private class Options {
-    private String parameters = null;
+  private static class Options {
+    private String parameters;
     public double blur;
     public int backgroundMethod;
     public double backgroundParameter;
@@ -2817,7 +2814,7 @@ public class FindFociOptimiser_PlugIn
     public int centreMethod;
     public double centreParameter;
 
-    public Options(double blur, int backgroundMethod, double backgroundParameter,
+    Options(double blur, int backgroundMethod, double backgroundParameter,
         String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks,
         int minSize, int peakMethod, double peakParameter, int sortIndex, int options,
         int centreMethod, double centreParameter) {
@@ -2838,9 +2835,11 @@ public class FindFociOptimiser_PlugIn
     }
 
     /**
-     * @return the string representation of the parameters (the value is computed once and cached).
+     * Creates the string representation of the parameters (the value is computed once and cached).
+     *
+     * @return the string representation of the parameters.
      */
-    public String createParameters() {
+    String createParameters() {
       if (parameters == null) {
         parameters =
             FindFociOptimiser_PlugIn.createParameters(blur, backgroundMethod, autoThresholdMethod,
@@ -3004,8 +3003,6 @@ public class FindFociOptimiser_PlugIn
     }
   }
 
-  private static final Pattern TAB_PATTERN = Pattern.compile("\t");
-
   /**
    * Load the results from the specified file. We assign an arbitrary ID to each result using the
    * unique combination of parameters.
@@ -3102,22 +3099,18 @@ public class FindFociOptimiser_PlugIn
    * Get the index of the nth occurrence of the tab character.
    *
    * @param line the line
-   * @param n the n
+   * @param nth the n'th occurrence
    * @return the index
    */
-  private static int getIndex(String line, int n) {
+  private static int getIndex(String line, int nth) {
     final char[] value = line.toCharArray();
     for (int i = 0; i < value.length; i++) {
-      if (value[i] == '\t' && n-- <= 0) {
+      if (value[i] == '\t' && nth-- <= 0) {
         return i;
       }
     }
     return -1;
   }
-
-  private final HashMap<String, Integer> idMap = new HashMap<>();
-  private final HashMap<Integer, Options> optionsMap = new HashMap<>();
-  private int nextId = 1;
 
   /**
    * Get a unique ID for the parameters string.
@@ -3126,11 +3119,11 @@ public class FindFociOptimiser_PlugIn
    * @return the ID
    */
   private int getId(String parameters) {
-    Integer i = idMap.get(parameters);
-    if (i == null) {
-      i = createId(parameters);
+    int id = idMap.get(parameters);
+    if (id == 0) {
+      id = createId(parameters);
     }
-    return i;
+    return id;
   }
 
   /**
@@ -3141,14 +3134,14 @@ public class FindFociOptimiser_PlugIn
    */
   private synchronized Integer createId(String parameters) {
     // Check again in case another thread just created it
-    Integer i = idMap.get(parameters);
-    if (i == null) {
-      i = new Integer(nextId++);
+    int id = idMap.get(parameters);
+    if (id == 0) {
+      id = idMap.size() + 1;
       // Ensure we have options for every ID
-      optionsMap.put(i, createOptions(parameters));
-      idMap.put(parameters, i);
+      optionsMap.put(id, createOptions(parameters));
+      idMap.put(parameters, id);
     }
-    return i;
+    return id;
   }
 
   /** {@inheritDoc} */
@@ -3156,8 +3149,8 @@ public class FindFociOptimiser_PlugIn
   public void mouseClicked(MouseEvent event) {
     // Show the result that was double clicked in the result table
     if (event.getClickCount() > 1) {
-      // Double-click on the multi-mode dialog text fields
       if (event.getSource() instanceof TextField) {
+        // Double-click on the multi-mode dialog text fields
         final TextField tf = (TextField) event.getSource();
         String path = tf.getText();
         final boolean recording = Recorder.record;
@@ -3167,9 +3160,8 @@ public class FindFociOptimiser_PlugIn
         if (path != null) {
           tf.setText(path);
         }
-      }
-      // Double-click on the result table
-      else if (lastImp != null && lastImp.isVisible()) {
+      } else if (lastImp != null && lastImp.isVisible()) {
+        // Double-click on the result table.
         // An extra line is added at the end of the results so remove this
         final int rank = resultsWindow.getTextPanel().getLineCount()
             - resultsWindow.getTextPanel().getSelectionStart() - 1;
@@ -3319,7 +3311,6 @@ public class FindFociOptimiser_PlugIn
   private String[] settingsNames;
   private ArrayList<DialogSettings> settings;
 
-  private boolean updating = false;
   private long lastTime = 0;
   private boolean custom = true;
 
@@ -3508,7 +3499,7 @@ public class FindFociOptimiser_PlugIn
     }
   }
 
-  private void applySettings(GenericDialog gd, DialogSettings s) {
+  private void applySettings(GenericDialog gd, DialogSettings settings) {
     // System.out.println("Applying " + s.name + " " + updating);
     lastTime = System.currentTimeMillis();
     int index = 0;
@@ -3517,19 +3508,19 @@ public class FindFociOptimiser_PlugIn
     // Optionally Ignore final text field (it is the result file field)
     final int stringFields = fields.size() - ((multiMode) ? 0 : 1);
     for (int i = 0; i < stringFields; i++) {
-      fields.get(i).setText(s.text.get(index++));
+      fields.get(i).setText(settings.text.get(index++));
     }
     // The first choice is the settings name
     final Vector<Choice> cfields = gd.getChoices();
-    cfields.get(0).select(s.name);
+    cfields.get(0).select(settings.name);
     for (int i = 1; i < cfields.size(); i++) {
-      cfields.get(i).select(s.text.get(index++));
+      cfields.get(i).select(settings.text.get(index++));
     }
     for (final TextField field : (Vector<TextField>) gd.getNumericFields()) {
-      field.setText(s.text.get(index++));
+      field.setText(settings.text.get(index++));
     }
     for (final Checkbox field : (Vector<Checkbox>) gd.getCheckboxes()) {
-      field.setState(s.option.get(index2++));
+      field.setState(settings.option.get(index2++));
       // System.out.println("Done Applying " + s.name + " " + updating);
     }
   }

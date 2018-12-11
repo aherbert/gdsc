@@ -413,7 +413,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         comboBackgroundMethod.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboBackgroundMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.backgroundMethods));
+    comboBackgroundMethod
+        .setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getBackgroundMethods()));
     comboBackgroundMethod.setSelectedIndex(3);
     final GridBagConstraints gbc_comboBackgroundMethod = new GridBagConstraints();
     gbc_comboBackgroundMethod.fill = GridBagConstraints.HORIZONTAL;
@@ -532,7 +533,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         comboThresholdMethod.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboThresholdMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.autoThresholdMethods));
+    comboThresholdMethod
+        .setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getAutoThresholdMethods()));
     comboThresholdMethod.setSelectedIndex(10);
     final GridBagConstraints gbc_comboThresholdMethod = new GridBagConstraints();
     gbc_comboThresholdMethod.fill = GridBagConstraints.HORIZONTAL;
@@ -559,7 +561,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         comboStatisticsMode.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboStatisticsMode.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.statisticsModes));
+    comboStatisticsMode.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getStatisticsModes()));
     final GridBagConstraints gbc_comboStatisticsMode = new GridBagConstraints();
     gbc_comboStatisticsMode.gridwidth = 2;
     gbc_comboStatisticsMode.insets = new Insets(0, 0, 5, 0);
@@ -607,7 +609,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         comboSearchMethod.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboSearchMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.searchMethods));
+    comboSearchMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getSearchMethods()));
     comboSearchMethod.setSelectedIndex(0);
     final GridBagConstraints gbc_comboSearchMethod = new GridBagConstraints();
     gbc_comboSearchMethod.fill = GridBagConstraints.HORIZONTAL;
@@ -794,7 +796,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         comboPeakMethod.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboPeakMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.peakMethods));
+    comboPeakMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getPeakMethods()));
     comboPeakMethod.setSelectedIndex(2);
     final GridBagConstraints gbc_comboPeakMethod = new GridBagConstraints();
     gbc_comboPeakMethod.gridwidth = 2;
@@ -921,7 +923,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     final GridBagConstraints gbc_comboSortMethod = new GridBagConstraints();
     gbc_comboSortMethod.gridwidth = 2;
     gbc_comboSortMethod.insets = new Insets(0, 0, 5, 0);
-    comboSortMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.sortIndexMethods));
+    comboSortMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getSortIndexMethods()));
     comboSortMethod.setSelectedIndex(1);
     gbc_comboSortMethod.fill = GridBagConstraints.HORIZONTAL;
     gbc_comboSortMethod.gridx = 1;
@@ -1003,7 +1005,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         comboShowMask.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboShowMask.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.maskOptions));
+    comboShowMask.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getMaskOptions()));
     comboShowMask.setSelectedIndex(3);
     final GridBagConstraints gbc_comboShowMask = new GridBagConstraints();
     gbc_comboShowMask.gridwidth = 2;
@@ -1258,7 +1260,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     if (sortIndexError) {
       if (oldSortIndex != model.getSortMethod()) {
         IJ.log("WARNING: Image minimum is below zero and the chosen sort index is sensitive to "
-            + "negative values: " + FindFoci_PlugIn.sortIndexMethods[model.getSortMethod()]);
+            + "negative values: " + FindFoci_PlugIn.getSortIndexMethod(model.getSortMethod()));
       }
       oldSortIndex = model.getSortMethod();
     } else {

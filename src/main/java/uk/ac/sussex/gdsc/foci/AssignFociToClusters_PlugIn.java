@@ -126,7 +126,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
   private ImagePlus imp;
   private boolean[] edge = null;
   private AssignedPoint[] roiPoints;
-  private ArrayList<FindFociResult> results;
+  private List<FindFociResult> results;
   private List<Cluster> clusters;
   private List<Cluster> minSizeClusters;
   private List<Cluster> edgeClusters;
@@ -144,7 +144,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     }
     UsageTracker.recordPlugin(this.getClass(), arg);
 
-    results = FindFoci_PlugIn.getResults();
+    results = FindFoci_PlugIn.getLastResults();
     if (results == null || results.isEmpty()) {
       IJ.error(TITLE, "Require " + FindFoci_PlugIn.TITLE + " results in memory");
       return DONE;
@@ -672,10 +672,10 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
   }
 
   private ArrayList<ClusterPoint> getPoints() {
-    if (FindFoci_PlugIn.getResults() == null) {
+    if (FindFoci_PlugIn.getLastResults() == null) {
       return null;
     }
-    final ArrayList<ClusterPoint> points = new ArrayList<>(FindFoci_PlugIn.getResults().size());
+    final ArrayList<ClusterPoint> points = new ArrayList<>(FindFoci_PlugIn.getLastResults().size());
     // Image values correspond to the reverse order of the results.
     for (int i = 0, id = results.size(); i < results.size(); i++, id--) {
       final FindFociResult result = results.get(i);

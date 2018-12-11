@@ -32,8 +32,8 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 
 /**
- * Pass through class allowing the {@link MaskParticleAnalyzer }
- * to be loaded by the ImageJ plugin class loader.
+ * Pass through class allowing the {@link MaskParticleAnalyzer } to be loaded by the ImageJ plugin
+ * class loader.
  */
 public class MaskParticleAnalyzer_PlugIn implements PlugInFilter {
   private final MaskParticleAnalyzer filter = new MaskParticleAnalyzer();

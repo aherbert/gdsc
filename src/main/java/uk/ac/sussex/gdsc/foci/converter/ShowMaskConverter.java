@@ -32,15 +32,17 @@ import org.jdesktop.beansbinding.Converter;
  * Convert the mask options.
  */
 public class ShowMaskConverter extends Converter<Integer, Object> {
+  private static final String[] maskOptions = FindFoci_PlugIn.getMaskOptions();
+
   @Override
   public String convertForward(Integer paramT) {
-    return FindFoci_PlugIn.maskOptions[paramT.intValue()];
+    return maskOptions[paramT.intValue()];
   }
 
   @Override
   public Integer convertReverse(Object paramS) {
-    for (int i = 0; i < FindFoci_PlugIn.maskOptions.length; i++) {
-      if (FindFoci_PlugIn.maskOptions[i].equals(paramS)) {
+    for (int i = 0; i < maskOptions.length; i++) {
+      if (maskOptions[i].equals(paramS)) {
         return Integer.valueOf(i);
       }
     }

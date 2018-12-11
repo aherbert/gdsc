@@ -41,7 +41,7 @@ public class SliceCollection {
   private final int indexC;
   private final int indexZ;
   private final int indexT;
-  private TIntArrayList slices = new TIntArrayList();
+  private final TIntArrayList slices = new TIntArrayList();
 
   private String sliceName;
 
@@ -122,7 +122,7 @@ public class SliceCollection {
    * @return the image stack
    */
   public ImageStack createStack(ImageStack stack) {
-    ImageStack imageStack = new ImageStack(stack.getWidth(), stack.getHeight());
+    final ImageStack imageStack = new ImageStack(stack.getWidth(), stack.getHeight());
     slices.forEach(slice -> {
       imageStack.addSlice(Integer.toString(slice), PixelUtils.copyPixels(stack.getPixels(slice)));
       return true;

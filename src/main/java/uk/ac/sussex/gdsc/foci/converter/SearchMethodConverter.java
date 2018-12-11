@@ -32,15 +32,17 @@ import org.jdesktop.beansbinding.Converter;
  * Convert the search method.
  */
 public class SearchMethodConverter extends Converter<Integer, Object> {
+  private static final String[] searchMethods = FindFoci_PlugIn.getSearchMethods();
+
   @Override
   public String convertForward(Integer paramT) {
-    return FindFoci_PlugIn.searchMethods[paramT.intValue()];
+    return searchMethods[paramT.intValue()];
   }
 
   @Override
   public Integer convertReverse(Object paramS) {
-    for (int i = 0; i < FindFoci_PlugIn.searchMethods.length; i++) {
-      if (FindFoci_PlugIn.searchMethods[i].equals(paramS)) {
+    for (int i = 0; i < searchMethods.length; i++) {
+      if (searchMethods[i].equals(paramS)) {
         return Integer.valueOf(i);
       }
     }

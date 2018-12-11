@@ -166,7 +166,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
       IJ.showMessage("Error", "No foci with the name " + resultsName);
       return null;
     }
-    final ArrayList<FindFociResult> results = memoryResults.results;
+    final List<FindFociResult> results = memoryResults.results;
     if (results.isEmpty()) {
       IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
       return null;

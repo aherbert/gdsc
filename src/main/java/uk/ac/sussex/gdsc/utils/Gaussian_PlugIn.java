@@ -76,9 +76,9 @@ public class Gaussian_PlugIn implements PlugIn {
     angle = (float) gd.getNextNumber();
     noise = (float) gd.getNextNumber();
 
-    final float[] img = createGaussian(width, height, new float[] {amplitude}, new float[] {x},
-        new float[] {y}, new float[] {sx}, new float[] {sy},
-        new float[] {(float) (angle * Math.PI / 180.0)});
+    final float[] img =
+        createGaussian(width, height, new float[] {amplitude}, new float[] {x}, new float[] {y},
+            new float[] {sx}, new float[] {sy}, new float[] {(float) (angle * Math.PI / 180.0)});
     final FloatProcessor fp = new FloatProcessor(width, height, img, null);
     if (noise > 0) {
       fp.noise(noise);
@@ -116,7 +116,9 @@ public class Gaussian_PlugIn implements PlugIn {
   /**
    * Generic form of the 2D Gaussian.
    *
-   * @see <a href="https://en.wikipedia.org/wiki/Gaussian_function#Two-dimensional_Gaussian_function">2D Gaussian function</a>
+   * @see <a
+   *      href="https://en.wikipedia.org/wiki/Gaussian_function#Two-dimensional_Gaussian_function">2D
+   *      Gaussian function</a>
    */
   // @CHECKSTYLE.OFF: ParameterName
   private static float gaussian(float x, float y, float amplitude, float x0, float y0, float a,

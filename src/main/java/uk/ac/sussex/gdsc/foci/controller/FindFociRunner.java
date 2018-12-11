@@ -44,7 +44,7 @@ import ij.WindowManager;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Runs the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn } algorithm using input from a
@@ -452,7 +452,7 @@ public class FindFociRunner extends Thread {
 
     // Special case where the change is only relevant if previous model was at the limit
     if (notEqual(model.getMaxPeaks(), previousModel.getMaxPeaks())) {
-      final ArrayList<FindFociResult> resultsArrayList = results.results;
+      final List<FindFociResult> resultsArrayList = results.results;
       final int change = model.getMaxPeaks() - previousModel.getMaxPeaks();
       if ((change > 0 && resultsArrayList.size() >= previousModel.getMaxPeaks())
           || (change < 0 && resultsArrayList.size() > model.getMaxPeaks())) {

@@ -29,11 +29,12 @@ import ij.measure.Calibration;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Contains the results of the FindFoci algorithm saved to memory.
  */
-public class FindFociMemoryResults implements Cloneable {
+public class FindFociMemoryResults {
   /** The image Id. */
   public final int imageId;
 
@@ -41,7 +42,7 @@ public class FindFociMemoryResults implements Cloneable {
   public final Calibration calibration;
 
   /** The results. */
-  public final ArrayList<FindFociResult> results;
+  public final List<FindFociResult> results;
 
   /**
    * Instantiates a new find foci result.
@@ -49,7 +50,7 @@ public class FindFociMemoryResults implements Cloneable {
    * @param imp the image
    * @param results the results
    */
-  public FindFociMemoryResults(ImagePlus imp, ArrayList<FindFociResult> results) {
+  public FindFociMemoryResults(ImagePlus imp, List<FindFociResult> results) {
     this.imageId = imp.getID();
     this.calibration = imp.getCalibration();
     this.results = results;
@@ -62,8 +63,18 @@ public class FindFociMemoryResults implements Cloneable {
    * @param results the results
    */
   public FindFociMemoryResults(ImagePlus imp, FindFociResult[] results) {
-    this(imp, (results == null) ? new ArrayList<FindFociResult>(0)
-        : new ArrayList<>(Arrays.asList(results)));
+    this(imp, (results == null) ? new ArrayList<FindFociResult>(0) : Arrays.asList(results));
+  }
+
+  /**
+   * Copy constructor.
+   *
+   * @param source the source
+   */
+  private FindFociMemoryResults(FindFociMemoryResults source) {
+    this.imageId = source.imageId;
+    this.calibration = source.calibration;
+    this.results = source.results;
   }
 
   /**
@@ -71,13 +82,7 @@ public class FindFociMemoryResults implements Cloneable {
    *
    * @return the find foci results
    */
-  @Override
-  public FindFociMemoryResults clone() {
-    try {
-      final FindFociMemoryResults copy = (FindFociMemoryResults) super.clone();
-      return copy;
-    } catch (final CloneNotSupportedException ex) {
-      return null;
-    }
+  public FindFociMemoryResults copy() {
+    return new FindFociMemoryResults(this);
   }
 }

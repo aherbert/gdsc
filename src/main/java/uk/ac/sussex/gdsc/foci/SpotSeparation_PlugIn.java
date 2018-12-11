@@ -103,7 +103,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
 
     final ImagePlus maximaImp = results.mask;
     final ImageProcessor spotIp = maximaImp.getProcessor();
-    final ArrayList<FindFociResult> resultsArray = results.results;
+    final List<FindFociResult> resultsArray = results.results;
 
     showSpotImage(maximaImp, resultsArray);
 
@@ -310,7 +310,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
 
     final ImagePlus maximaImp = results.mask;
     final ImageProcessor spotIp = maximaImp.getProcessor();
-    final ArrayList<FindFociResult> resultsArray = results.results;
+    final List<FindFociResult> resultsArray = results.results;
 
     // Find all maxima that are within the ROI bounds
     final byte[] mask = (roi.getMask() == null) ? null : (byte[]) roi.getMask().getPixels();
@@ -341,7 +341,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
     }
 
     // Renumber the remaining valid spots
-    final ArrayList<FindFociResult> newResultsArray = new ArrayList<>(newCount);
+    final List<FindFociResult> newResultsArray = new ArrayList<>(newCount);
     final int[] maskIdMap = new int[resultsArray.size() + 1];
     for (int i = 0; i < resultsArray.size(); i++) {
       final FindFociResult result = resultsArray.get(i);
@@ -405,7 +405,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
         fractionParameter);
   }
 
-  private static void showSpotImage(ImagePlus maximaImp, ArrayList<FindFociResult> resultsArray) {
+  private static void showSpotImage(ImagePlus maximaImp, List<FindFociResult> resultsArray) {
     if (showSpotImage) {
       final ImageProcessor spotIp = maximaImp.getProcessor();
       spotIp.setMinAndMax(0, resultsArray.size());
@@ -427,7 +427,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
    * @param resultsArray the results array
    * @return the assigned points
    */
-  private static AssignedPoint[] extractSpotCoordinates(ArrayList<FindFociResult> resultsArray) {
+  private static AssignedPoint[] extractSpotCoordinates(List<FindFociResult> resultsArray) {
     final AssignedPoint[] points = new AssignedPoint[resultsArray.size()];
     int index = 0;
     final int maxId = resultsArray.size() + 1;

@@ -118,7 +118,7 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
     saturations = new float[pixels.length];
     brightnesses = new float[pixels.length];
     for (int i = 0; i < pixels.length; i++) {
-      int value = pixels[i];
+      final int value = pixels[i];
       rr = (value & 0xff0000) >> 16;
       gg = (value & 0xff00) >> 8;
       bb = value & 0xff;

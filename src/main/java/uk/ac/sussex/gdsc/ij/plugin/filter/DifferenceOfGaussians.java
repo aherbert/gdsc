@@ -137,8 +137,7 @@ public class DifferenceOfGaussians extends GaussianBlur {
     final double max = imp.getDisplayRangeMax();
     this.pfr = pfr;
     final GenericDialog gd = new GenericDialog(command);
-    gd.addMessage(
-        "Subtracts blurred image 2 from 1:\n- Sigma1 = local contrast\n"
+    gd.addMessage("Subtracts blurred image 2 from 1:\n- Sigma1 = local contrast\n"
         + "- Sigma2 = local noise\nUse Sigma1 > Sigma2");
     gd.addNumericField("Sigma1 (Radius)", sigma1, 2);
     gd.addNumericField("Sigma2 (Radius)", sigma2, 2);

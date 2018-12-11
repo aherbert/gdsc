@@ -51,7 +51,7 @@ import java.util.Arrays;
  *
  * @author Patrick Kelly &lt;phkelly@ucsd.edu&gt;
  */
-//CHECKSTYLE.OFF
+// CHECKSTYLE.OFF
 public class ZProjectorCopy implements PlugIn {
   /** Use Average projection. */
   public static final int AVG_METHOD = 0;

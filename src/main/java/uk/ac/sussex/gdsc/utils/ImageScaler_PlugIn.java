@@ -64,8 +64,7 @@ public class ImageScaler_PlugIn implements PlugInFilter {
   private static boolean showDialog() {
     final GenericDialog gd = new GenericDialog(TITLE);
 
-    gd.addMessage(
-        "Rescales the maxima of the image(s) to the given value.\n"
+    gd.addMessage("Rescales the maxima of the image(s) to the given value.\n"
         + "Processes the image stack or a set of input images.");
     gd.addNumericField("Max", maxValue, 2);
     gd.addMessage("List file containing full image path, one image per line.");

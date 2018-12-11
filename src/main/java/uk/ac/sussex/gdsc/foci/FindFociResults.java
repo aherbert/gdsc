@@ -28,6 +28,7 @@ import ij.ImagePlus;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Contains the results of the FindFoci algorithm.
@@ -37,7 +38,7 @@ public class FindFociResults implements Cloneable {
   public final ImagePlus mask;
 
   /** The results. */
-  public final ArrayList<FindFociResult> results;
+  public final List<FindFociResult> results;
 
   /** The statistics. */
   public final FindFociStatistics stats;
@@ -47,10 +48,9 @@ public class FindFociResults implements Cloneable {
    *
    * @param mask the mask
    * @param results the results
-   * @param stats the stats
+   * @param stats the statistics
    */
-  public FindFociResults(ImagePlus mask, ArrayList<FindFociResult> results,
-      FindFociStatistics stats) {
+  public FindFociResults(ImagePlus mask, List<FindFociResult> results, FindFociStatistics stats) {
     this.mask = mask;
     this.results = results;
     this.stats = stats;
@@ -61,11 +61,11 @@ public class FindFociResults implements Cloneable {
    *
    * @param mask the mask
    * @param results the results
-   * @param stats the stats
+   * @param stats the statistics
    */
   public FindFociResults(ImagePlus mask, FindFociResult[] results, FindFociStatistics stats) {
     this.mask = mask;
-    this.results = (results == null) ? new ArrayList<>(0) : new ArrayList<>(Arrays.asList(results));
+    this.results = (results == null) ? new ArrayList<>(0) : Arrays.asList(results);
     this.stats = stats;
   }
 

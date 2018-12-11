@@ -30,8 +30,8 @@ import uk.ac.sussex.gdsc.ij.plugin.ExtendedZProjector;
 import ij.plugin.PlugIn;
 
 /**
- * Pass through class allowing the {@link ExtendedZProjector } to be loaded by the ImageJ plugin class
- * loader.
+ * Pass through class allowing the {@link ExtendedZProjector } to be loaded by the ImageJ plugin
+ * class loader.
  */
 public class ExtendedZProjector_PlugIn implements PlugIn {
   @Override

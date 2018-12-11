@@ -32,15 +32,17 @@ import org.jdesktop.beansbinding.Converter;
  * Convert the background method parameter.
  */
 public class BackgroundMethodConverter extends Converter<Integer, Object> {
+  private static final String[] backgroundMethods = FindFoci_PlugIn.getBackgroundMethods();
+
   @Override
   public String convertForward(Integer paramT) {
-    return FindFoci_PlugIn.backgroundMethods[paramT.intValue()];
+    return backgroundMethods[paramT.intValue()];
   }
 
   @Override
   public Integer convertReverse(Object paramS) {
-    for (int i = 0; i < FindFoci_PlugIn.backgroundMethods.length; i++) {
-      if (FindFoci_PlugIn.backgroundMethods[i].equals(paramS)) {
+    for (int i = 0; i < backgroundMethods.length; i++) {
+      if (backgroundMethods[i].equals(paramS)) {
         return Integer.valueOf(i);
       }
     }

@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -74,8 +75,57 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
    */
   private static final int MAXIMA_CAPCITY = 65535;
 
+  /** The new line string from System.getProperty("line.separator"). */
+  private static final String NEW_LINE = System.getProperty("line.separator");
+
+  // The following arrays are built for a 3D search through the following z-order: (0,-1,1)
+  // Each 2D plane is built for a search round a pixel in an anti-clockwise direction.
+  // Note the x==y==z==0 element is not present. Thus there are blocks of 8,9,9 for each plane.
+  // This preserves the isWithin() functionality of ij.plugin.filter.MaximumFinder.
+
+  //@formatter:off
+  /** The direction offsets for the x-coordinate for a 3D 26-connected search. */
+  protected static final int[] DIR_X_OFFSET = { 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
+  /** The direction offsets for the y-coordinate for a 3D 26-connected search. */
+  protected static final int[] DIR_Y_OFFSET = {-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1, 0,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
+  /** The direction offsets for the z-coordinate for a 3D 26-connected search. */
+  protected static final int[] DIR_Z_OFFSET = { 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+  // Half-neighbours
+  /** The direction offsets for the x-coordinate for half the neighbours of a 3D 26-connected search. */
+  protected static final int[] DIR_X_OFFSET2 = { 0, 1, 1, 1, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
+  /** The direction offsets for the y-coordinate for half the neighbours of a 3D 26-connected search. */
+  protected static final int[] DIR_Y_OFFSET2 = {-1,-1, 0, 1,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
+  /** The direction offsets for the z-coordinate for half the neighbours of a 3D 26-connected search. */
+  protected static final int[] DIR_Z_OFFSET2 = { 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
+  //@formatter:on
+
+  // The following constants are used to set bits corresponding to pixel types
+
+  /** marks points outside the ROI. */
+  protected static final byte EXCLUDED = (byte) 1;
+  /** marks local maxima (irrespective of noise tolerance). */
+  protected static final byte MAXIMUM = (byte) 2;
+  /** marks points currently in the list. */
+  protected static final byte LISTED = (byte) 4;
+  /** marks areas near a maximum, within the tolerance. */
+  protected static final byte MAX_AREA = (byte) 8;
+  /** marks a potential saddle between maxima. */
+  protected static final byte SADDLE = (byte) 16;
+  /** marks a saddle between maxima. */
+  protected static final byte SADDLE_POINT = (byte) 32;
+  /** marks a point within a maxima next to a saddle. */
+  protected static final byte SADDLE_WITHIN = (byte) 64;
+  /** marks a point as a plateau region. */
+  protected static final byte PLATEAU = (byte) 128;
+  /** marks a point as not a maximum. */
+  protected static final byte NOT_MAXIMUM = (byte) 32;
+  /** marks a point to use in the saddle search. */
+  protected static final byte SADDLE_SEARCH = (byte) 32;
+  /** marks a point as falling below the highest saddle point. */
+  protected static final byte BELOW_SADDLE = (byte) 128;
   /** The max in the x dimension. */
   protected int maxx;
+
   /** The max in the y dimension. */
   protected int maxy;
   /** The max in the z dimension. */
@@ -112,51 +162,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
   private boolean showStatus = true;
   private Logger logger = null;
 
-  // The following arrays are built for a 3D search through the following z-order: (0,-1,1)
-  // Each 2D plane is built for a search round a pixel in an anti-clockwise direction.
-  // Note the x==y==z==0 element is not present. Thus there are blocks of 8,9,9 for each plane.
-  // This preserves the isWithin() functionality of ij.plugin.filter.MaximumFinder.
-
-  //@formatter:off
-  /** The direction offsets for the x-coordinate for a 3D 26-connected search. */
-  protected static final int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
-  /** The direction offsets for the y-coordinate for a 3D 26-connected search. */
-  protected static final int[] DIR_Y_OFFSET = new int[] {-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1, 0,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
-  /** The direction offsets for the z-coordinate for a 3D 26-connected search. */
-  protected static final int[] DIR_Z_OFFSET = new int[] { 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-  // Half-neighbours
-  /** The direction offsets for the x-coordinate for half the neighbours of a 3D 26-connected search. */
-  protected static final int[] DIR_X_OFFSET2 = new int[] { 0, 1, 1, 1, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
-  /** The direction offsets for the y-coordinate for half the neighbours of a 3D 26-connected search. */
-  protected static final int[] DIR_Y_OFFSET2 = new int[] {-1,-1, 0, 1,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
-  /** The direction offsets for the z-coordinate for half the neighbours of a 3D 26-connected search. */
-  protected static final int[] DIR_Z_OFFSET2 = new int[] { 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
-  //@formatter:on
-
-  /* the following constants are used to set bits corresponding to pixel types */
-  /** marks points outside the ROI. */
-  protected static final byte EXCLUDED = (byte) 1;
-  /** marks local maxima (irrespective of noise tolerance). */
-  protected static final byte MAXIMUM = (byte) 2;
-  /** marks points currently in the list. */
-  protected static final byte LISTED = (byte) 4;
-  /** marks areas near a maximum, within the tolerance. */
-  protected static final byte MAX_AREA = (byte) 8;
-  /** marks a potential saddle between maxima. */
-  protected static final byte SADDLE = (byte) 16;
-  /** marks a saddle between maxima. */
-  protected static final byte SADDLE_POINT = (byte) 32;
-  /** marks a point within a maxima next to a saddle. */
-  protected static final byte SADDLE_WITHIN = (byte) 64;
-  /** marks a point as a plateau region. */
-  protected static final byte PLATEAU = (byte) 128;
-  /** marks a point as not a maximum. */
-  protected static final byte NOT_MAXIMUM = (byte) 32;
-  /** marks a point to use in the saddle search. */
-  protected static final byte SADDLE_SEARCH = (byte) 32;
-  /** marks a point as falling below the highest saddle point. */
-  protected static final byte BELOW_SADDLE = (byte) 128;
-
   /** marks point to be ignored in stage 1. */
   protected static final byte IGNORE = EXCLUDED | LISTED;
   /**
@@ -169,6 +174,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
   /** The timestamp for the start of the algorithm. */
   private long startTimestamp;
 
+  private float[] highestSaddleValues;
+
   /** {@inheritDoc} */
   @Override
   public FindFociResults findMaxima(ImagePlus imp, ImagePlus mask, int backgroundMethod,
@@ -179,7 +186,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     final boolean isLogging = isLogging(outputType);
 
     if (isLogging) {
-      log("---" + FindFoci_PlugIn.newLine + FindFoci_PlugIn.TITLE + " : " + imp.getTitle());
+      log("---" + NEW_LINE + FindFoci_PlugIn.TITLE + " : " + imp.getTitle());
     }
 
     // Call first to set up the processing for isWithin
@@ -1416,7 +1423,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     sb.append(", StdDev = ").append(FindFoci_PlugIn.getFormat(stats.backgroundRegionStdDev));
     if (stats.imageMinimum < 0 && isSortIndexSensitiveToNegativeValues(sortIndex)) {
       sb.append("\nWARNING: Image minimum is below zero and the chosen sort index is sensitive to "
-          + "negative values: " + FindFoci_PlugIn.sortIndexMethods[sortIndex]);
+          + "negative values: " + FindFoci_PlugIn.getSortIndexMethod(sortIndex));
     }
     log(sb.toString());
   }
@@ -1557,9 +1564,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
           if (mask) {
             // Set each z-slice as excluded
-            for (int index =
-                getIndex(x + xOffset, y + yOffset, 0); index < maxxByMaxyByMaxz; index +=
-                    maxxByMaxy) {
+            for (int index = getIndex(x + xOffset, y + yOffset, 0); index < maxxByMaxyByMaxz;
+                index += maxxByMaxy) {
               types[index] &= ~EXCLUDED;
             }
           }
@@ -1810,7 +1816,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
   protected Coordinate[] getSortedMaxpoints(Object pixels, int[] maxima, byte[] types,
       float globalMin, float threshold) {
     final ArrayList<Coordinate> maxpoints = new ArrayList<>(500);
-    final TIntArrayList list = new TIntArrayList(); // working list for expanding local plateaus
+    // working list for expanding local plateaus
+    final TIntArrayList pointList = new TIntArrayList();
 
     int id = 0;
     final int[] xyz = new int[3];
@@ -1866,7 +1873,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
           if (equalNeighbour) {
             // Search the local area marking all equal neighbour points as maximum
-            if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxpoints, list)) {
+            if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxpoints,
+                pointList)) {
               // Not a true maximum, ignore this
               id--;
             }
@@ -1929,7 +1937,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
           if (equalNeighbour) {
             // Search the local area marking all equal neighbour points as maximum
-            if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxpoints, list)) {
+            if (!expandMaximum(maxima, types, globalMin, threshold, i, v, id, maxpoints,
+                pointList)) {
               // Not a true maximum, ignore this
               id--;
             }
@@ -1996,17 +2005,17 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
    * @param v0 the v0
    * @param id the id
    * @param maxpoints the max points
-   * @param list the list
+   * @param pointList the list
    * @return True if this is a true plateau, false if the plateau reaches a higher point
    */
   protected boolean expandMaximum(int[] maxima, byte[] types, float globalMin, float threshold,
-      int index0, float v0, int id, ArrayList<Coordinate> maxpoints, TIntArrayList list) {
+      int index0, float v0, int id, ArrayList<Coordinate> maxpoints, TIntArrayList pointList) {
     types[index0] |= LISTED | PLATEAU; // mark first point as listed
     int listI = 0; // index of current search element in the list
 
     // we create a list of connected points and start the list at the current maximum
-    list.resetQuick();
-    list.add(index0);
+    pointList.resetQuick();
+    pointList.add(index0);
 
     // Calculate the center of plateau
     boolean isPlateau = true;
@@ -2014,7 +2023,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
     if (is2D()) {
       do {
-        final int index1 = list.getQuick(listI);
+        final int index1 = pointList.getQuick(listI);
         getXy(index1, xyz);
         final int x1 = xyz[0];
         final int y1 = xyz[1];
@@ -2038,7 +2047,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
               isPlateau = false;
             } else if (v2 == v0) {
               // Add this to the search
-              list.add(index2);
+              pointList.add(index2);
               types[index2] |= LISTED | PLATEAU;
             } else {
               types[index2] |= NOT_MAXIMUM;
@@ -2049,10 +2058,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
         listI++;
 
       }
-      while (listI < list.size() && isPlateau);
+      while (listI < pointList.size() && isPlateau);
     } else {
       do {
-        final int index1 = list.getQuick(listI);
+        final int index1 = pointList.getQuick(listI);
         getXyz(index1, xyz);
         final int x1 = xyz[0];
         final int y1 = xyz[1];
@@ -2079,7 +2088,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
               isPlateau = false;
             } else if (v2 == v0) {
               // Add this to the search
-              list.add(index2);
+              pointList.add(index2);
               types[index2] |= LISTED | PLATEAU;
             } else {
               types[index2] |= NOT_MAXIMUM;
@@ -2090,12 +2099,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
         listI++;
 
       }
-      while (listI < list.size() && isPlateau);
+      while (listI < pointList.size() && isPlateau);
     }
 
     // reset attributes no longer needed
-    for (int i = list.size(); i-- > 0;) {
-      final int index = list.getQuick(i);
+    for (int i = pointList.size(); i-- > 0;) {
+      final int index = pointList.getQuick(i);
       types[index] &= ~LISTED;
     }
 
@@ -2108,22 +2117,22 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     double cx = 0;
     double cy = 0;
     double cz = 0;
-    for (int i = list.size(); i-- > 0;) {
-      getXyz(list.getQuick(i), xyz);
+    for (int i = pointList.size(); i-- > 0;) {
+      getXyz(pointList.getQuick(i), xyz);
       cx += xyz[0];
       cy += xyz[1];
       cz += xyz[2];
     }
-    cx /= list.size();
-    cy /= list.size();
-    cz /= list.size();
+    cx /= pointList.size();
+    cy /= pointList.size();
+    cz /= pointList.size();
 
     double maxDistance = Double.MAX_VALUE;
     int maxIndex = 0;
 
     // Calculate the maxima origin as the closest pixel to the centre-of-mass
-    for (int i = list.size(); i-- > 0;) {
-      final int index = list.getQuick(i);
+    for (int i = pointList.size(); i-- > 0;) {
+      final int index = pointList.getQuick(i);
 
       getXyz(index, xyz);
       final int x = xyz[0];
@@ -2142,7 +2151,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     }
 
     // Assign the maximum
-    final int index = list.getQuick(maxIndex);
+    final int index = pointList.getQuick(maxIndex);
     types[index] |= MAXIMUM;
     maxpoints.add(new Coordinate(index, id, v0));
 
@@ -2722,7 +2731,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       }
     }
 
-    for (FindFociResult result : resultsArray) {
+    for (final FindFociResult result : resultsArray) {
       result.count = count[result.id];
       result.totalIntensity = intensity[result.id];
       result.averageIntensity = result.totalIntensity / result.count;
@@ -3508,8 +3517,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     return saddlePoints;
   }
 
-  private float[] highestSaddleValues = null;
-
   /**
    * Set up processing for
    * {@link #findHighestSaddleValues(FindFociResult, int[], byte[], FindFociSaddleList[])}.
@@ -3543,8 +3550,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     if (is2D()) {
       for (int y = result.miny; y < result.maxy; y++) {
         final boolean isInnerY = alwaysInnerY || (y != 0 && y != ylimit);
-        for (int x = result.minx, index1 =
-            getIndex(result.minx, y); x < result.maxx; x++, index1++) {
+        for (int x = result.minx, index1 = getIndex(result.minx, y); x < result.maxx;
+            x++, index1++) {
           if ((types[index1] & SADDLE_SEARCH) == 0) {
             continue;
           }
@@ -3590,8 +3597,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
         final boolean isInnerZ = (zlimit == 0) ? true : (z != 0 && z != zlimit);
         for (int y = result.miny; y < result.maxy; y++) {
           final boolean isInnerY = alwaysInnerY || (y != 0 && y != ylimit);
-          for (int x = result.minx, index1 =
-              getIndex(result.minx, y, z); x < result.maxx; x++, index1++) {
+          for (int x = result.minx, index1 = getIndex(result.minx, y, z); x < result.maxx;
+              x++, index1++) {
             if ((types[index1] & SADDLE_SEARCH) == 0) {
               continue;
             }
@@ -4875,14 +4882,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     // Set the look-up to zero if the peak contains edge pixels
     for (int z = maxz; z-- > 0;) {
       // Look at top and bottom column
-      for (int y = uppery, i = getIndex(lowerx, lowery, z), ii =
-          getIndex(upperx - 1, lowery, z); y-- > lowery; i += maxx, ii += maxx) {
+      for (int y = uppery, i = getIndex(lowerx, lowery, z), ii = getIndex(upperx - 1, lowery, z);
+          y-- > lowery; i += maxx, ii += maxx) {
         peakIdMap[maxima[i]] = 0;
         peakIdMap[maxima[ii]] = 0;
       }
       // Look at top and bottom row
-      for (int x = upperx, i = getIndex(lowerx, lowery, z), ii =
-          getIndex(lowerx, uppery - 1, z); x-- > lowerx; i++, ii++) {
+      for (int x = upperx, i = getIndex(lowerx, lowery, z), ii = getIndex(lowerx, uppery - 1, z);
+          x-- > lowerx; i++, ii++) {
         peakIdMap[maxima[i]] = 0;
         peakIdMap[maxima[ii]] = 0;
       }
@@ -4906,9 +4913,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     return resultsArray;
   }
 
-  private final ResultDescComparator descComparator = new ResultDescComparator();
-  private final ResultAscComparator ascComparator = new ResultAscComparator();
-
   /**
    * Sort the results using the specified index in descending order.
    *
@@ -4918,7 +4922,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
    */
   void sortDescResults(FindFociResult[] resultsArray, int sortIndex, FindFociStatistics stats) {
     customSort(resultsArray, sortIndex, stats);
-    Arrays.sort(resultsArray, descComparator);
+    Arrays.sort(resultsArray, ResultDescComparator.INSTANCE);
   }
 
   /**
@@ -4930,7 +4934,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
    */
   void sortAscResults(FindFociResult[] resultsArray, int sortIndex, FindFociStatistics stats) {
     customSort(resultsArray, sortIndex, stats);
-    Arrays.sort(resultsArray, ascComparator);
+    Arrays.sort(resultsArray, ResultAscComparator.INSTANCE);
   }
 
   /**
@@ -4940,10 +4944,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
    * @param sortIndex the sort index
    * @param stats the stats
    */
-  void sortAscResults(ArrayList<FindFociResult> resultsArray, int sortIndex,
-      FindFociStatistics stats) {
+  void sortAscResults(List<FindFociResult> resultsArray, int sortIndex, FindFociStatistics stats) {
     customSort(resultsArray, sortIndex, stats);
-    Collections.sort(resultsArray, ascComparator);
+    Collections.sort(resultsArray, ResultAscComparator.INSTANCE);
   }
 
   private void customSort(FindFociResult[] resultsArray, int sortIndex, FindFociStatistics stats) {
@@ -4976,11 +4979,11 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
         return;
 
       default:
-        throw new RuntimeException("Unknown sort index method " + sortIndex);
+        throw new IllegalArgumentException("Unknown sort index method " + sortIndex);
     }
   }
 
-  private void customSort(ArrayList<FindFociResult> resultsArray, int sortIndex,
+  private void customSort(List<FindFociResult> resultsArray, int sortIndex,
       FindFociStatistics stats) {
     switch (sortIndex) {
       case SORT_XYZ:
@@ -5011,7 +5014,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
         return;
 
       default:
-        throw new RuntimeException("Unknown sort index method " + sortIndex);
+        throw new IllegalArgumentException("Unknown sort index method " + sortIndex);
     }
   }
 
@@ -5053,7 +5056,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       case SORT_AVERAGE_INTENSITY_MINUS_MIN:
         return result.averageIntensityAboveImageMinimum;
       default:
-        throw new RuntimeException("Unknown sort index method " + sortIndex);
+        throw new IllegalArgumentException("Unknown sort index method " + sortIndex);
     }
   }
 
@@ -5069,7 +5072,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     }
   }
 
-  private void customSortXyz(ArrayList<FindFociResult> resultsArray) {
+  private void customSortXyz(List<FindFociResult> resultsArray) {
     final int a = maxy * maxz;
     final int b = maxz;
     for (int i = 0; i < resultsArray.size(); i++) {
@@ -5524,7 +5527,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
   /**
    * Provides the ability to sort the results arrays in descending order.
    */
-  private class ResultComparator implements Comparator<FindFociResult> {
+  private static class ResultComparator implements Comparator<FindFociResult> {
     /** {@inheritDoc} */
     @Override
     public int compare(FindFociResult o1, FindFociResult o2) {
@@ -5559,14 +5562,16 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
         return -1;
       }
       // This should not happen as two maxima will be in the same position
-      throw new RuntimeException("Unable to sort the results");
+      throw new IllegalArgumentException("Unable to sort the results");
     }
   }
 
   /**
    * Provides the ability to sort the results arrays in descending order.
    */
-  private class ResultDescComparator extends ResultComparator {
+  private static class ResultDescComparator extends ResultComparator {
+    static final ResultDescComparator INSTANCE = new ResultDescComparator();
+
     /** {@inheritDoc} */
     @Override
     public int compare(FindFociResult o1, FindFociResult o2) {
@@ -5586,7 +5591,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
   /**
    * Provides the ability to sort the results arrays in ascending order.
    */
-  private class ResultAscComparator extends ResultComparator {
+  private static class ResultAscComparator extends ResultComparator {
+    static final ResultAscComparator INSTANCE = new ResultAscComparator();
+
     /** {@inheritDoc} */
     @Override
     public int compare(FindFociResult o1, FindFociResult o2) {
@@ -5599,7 +5606,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       }
 
       // Avoid bad draws. This is an ascending sort so reverse the order.
-      return super.compare(o2, o1);
+      return -super.compare(o1, o2);
     }
   }
 
@@ -5629,15 +5636,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
    * @param objectAnalysisResult the object analysis result
    * @return The mask image if created
    */
-  ImagePlus doObjectAnalysis(ImagePlus mask, ImagePlus maximaImp,
-      ArrayList<FindFociResult> resultsArray, boolean createObjectMask,
-      ObjectAnalysisResult objectAnalysisResult) {
-    if (resultsArray == null || resultsArray.isEmpty()) {
-      // Allow the analysis to continue if we are creating the object mask or storing the analysis
-      // results
-      if (!createObjectMask && objectAnalysisResult == null) {
-        return null;
-      }
+  ImagePlus doObjectAnalysis(ImagePlus mask, ImagePlus maximaImp, List<FindFociResult> resultsArray,
+      boolean createObjectMask, ObjectAnalysisResult objectAnalysisResult) {
+    if ((resultsArray == null || resultsArray.isEmpty())
+        // Allow the analysis to continue if we are creating the object mask or
+        // storing the analysis results
+        && (!createObjectMask && objectAnalysisResult == null)) {
+      return null;
     }
 
     final int[] maskImage = extractMask(mask);
