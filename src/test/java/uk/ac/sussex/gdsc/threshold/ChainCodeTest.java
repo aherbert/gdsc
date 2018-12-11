@@ -31,9 +31,9 @@ import org.junit.jupiter.api.Test;
 public class ChainCodeTest {
   @Test
   public void canConstructWithNoRun() {
-    int x = 56;
-    int y = 72;
-    ChainCode code = new ChainCode(x, y);
+    final int x = 56;
+    final int y = 72;
+    final ChainCode code = new ChainCode(x, y);
     Assertions.assertEquals(x, code.getX(), "X origin");
     Assertions.assertEquals(y, code.getY(), "Y origin");
     Assertions.assertEquals(0, code.getLength(), "Length");
@@ -41,13 +41,13 @@ public class ChainCodeTest {
     Assertions.assertEquals(1, code.getSize(), "Size");
     Assertions.assertArrayEquals(new int[] {x, y}, code.getEnd(), "End");
     Assertions.assertArrayEquals(new int[0], code.getRun(), "Run");
-    String text = code.toString();
+    final String text = code.toString();
     Assertions.assertTrue(text.contains(String.valueOf(x)));
     Assertions.assertTrue(text.contains(String.valueOf(y)));
     Assertions.assertEquals(text, code.toString());
 
     // Check reverse
-    ChainCode reversed = code.reverse();
+    final ChainCode reversed = code.reverse();
 
     Assertions.assertEquals(x, reversed.getX(), "Reverse X origin");
     Assertions.assertEquals(y, reversed.getY(), "Reverse Y origin");
@@ -60,9 +60,9 @@ public class ChainCodeTest {
 
   @Test
   public void addDirectionThrowsWithBdDirection() {
-    int x = 56;
-    int y = 72;
-    ChainCode code = new ChainCode(x, y);
+    final int x = 56;
+    final int y = 72;
+    final ChainCode code = new ChainCode(x, y);
     Assertions.assertThrows(IllegalArgumentException.class, () -> code.add(-1),
         "Negative direction");
     Assertions.assertThrows(IllegalArgumentException.class, () -> code.add(8), "Direction above 7");
@@ -70,9 +70,9 @@ public class ChainCodeTest {
 
   @Test
   public void canTraverseCircle() {
-    int x = 56;
-    int y = 72;
-    ChainCode code = new ChainCode(x, y);
+    final int x = 56;
+    final int y = 72;
+    final ChainCode code = new ChainCode(x, y);
 
     for (int i = 0; i < 8; i++) {
       code.add(i);
@@ -80,7 +80,7 @@ public class ChainCodeTest {
 
     Assertions.assertEquals(x, code.getX(), "X origin");
     Assertions.assertEquals(y, code.getY(), "Y origin");
-    double length = 4 + 4 * Math.sqrt(2);
+    final double length = 4 + 4 * Math.sqrt(2);
     Assertions.assertEquals(length, code.getLength(), 1e-3, "Length");
     Assertions.assertEquals(length, code.getLength(), 1e-3, "Length");
     Assertions.assertEquals(9, code.getSize(), "Size");
@@ -89,7 +89,7 @@ public class ChainCodeTest {
     Assertions.assertArrayEquals(new int[] {0, 1, 2, 3, 4, 5, 6, 7}, code.getRun(), "Run");
 
     // Check reverse
-    ChainCode reversed = code.reverse();
+    final ChainCode reversed = code.reverse();
 
     Assertions.assertEquals(x, reversed.getX(), "Reverse X origin");
     Assertions.assertEquals(y, reversed.getY(), "Reverse Y origin");
@@ -105,25 +105,26 @@ public class ChainCodeTest {
   @Test
   public void canAddSingleDirection() {
     for (int i = 0; i < 8; i++) {
-      int x = 56;
-      int y = 72;
-      ChainCode code = new ChainCode(x, y);
+      final int x = 56;
+      final int y = 72;
+      final ChainCode code = new ChainCode(x, y);
       code.add(i);
-      double length = ChainCode.getDirectionLength(i);
+      final double length = ChainCode.getDirectionLength(i);
       Assertions.assertEquals(length, code.getLength(), 1e-3, "Length");
       Assertions.assertEquals(2, code.getSize(), "Size");
-      int endx = x + ChainCode.getXDirection(i);
-      int endy = y + ChainCode.getYDirection(i);
+      final int endx = x + ChainCode.getXDirection(i);
+      final int endy = y + ChainCode.getYDirection(i);
       Assertions.assertArrayEquals(new int[] {endx, endy}, code.getEnd(), "End");
 
       Assertions.assertArrayEquals(new int[] {i}, code.getRun(), "Run");
 
-      String text = code.toString();
-      String directionText = ":" + ChainCode.getXDirection(i) + "," + ChainCode.getYDirection(i);
+      final String text = code.toString();
+      final String directionText =
+          ":" + ChainCode.getXDirection(i) + "," + ChainCode.getYDirection(i);
       Assertions.assertTrue(text.contains(directionText));
 
       // Check reverse
-      ChainCode reversed = code.reverse();
+      final ChainCode reversed = code.reverse();
 
       Assertions.assertEquals(endx, reversed.getX(), "Reverse X origin");
       Assertions.assertEquals(endy, reversed.getY(), "Reverse Y origin");
@@ -138,7 +139,7 @@ public class ChainCodeTest {
 
   @Test
   public void canCompare() {
-    ChainCode[] codes = new ChainCode[3];
+    final ChainCode[] codes = new ChainCode[3];
     codes[0] = new ChainCode(0, 0);
     codes[0].add(0);
     codes[1] = new ChainCode(1, 2);
@@ -147,8 +148,8 @@ public class ChainCodeTest {
     for (int i = 0; i < 3; i++) {
       Assertions.assertEquals(0, ChainCode.compare(codes[i], codes[i]), "Self compare");
       for (int j = i + 1; j < 3; j++) {
-        int result1 = ChainCode.compare(codes[i], codes[j]);
-        int result2 = ChainCode.compare(codes[j], codes[i]);
+        final int result1 = ChainCode.compare(codes[i], codes[j]);
+        final int result2 = ChainCode.compare(codes[j], codes[i]);
         Assertions.assertFalse(0 == result1, "Should be different");
         Assertions.assertEquals(result1, -result2, "Swapped arguments should be opposite");
       }
