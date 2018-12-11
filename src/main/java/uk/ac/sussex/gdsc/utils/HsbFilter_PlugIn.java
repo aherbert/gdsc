@@ -43,6 +43,7 @@ import java.awt.Color;
 public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
   private static final int FLAGS = DOES_RGB | SNAPSHOT;
 
+  /** The plugin title. */
   static final String TITLE = "HSB Filter";
 
   private float[] hues = null;
