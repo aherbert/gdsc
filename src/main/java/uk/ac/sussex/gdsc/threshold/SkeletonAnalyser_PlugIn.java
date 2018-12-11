@@ -794,10 +794,8 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     int dir = 8;
     while (dir > 0) {
       dir--;
-      if (isInner || isWithinXy(x, y, dir)) {
-        if (map[index + offset[dir]] == 0) {
-          break;
-        }
+      if ((isInner || isWithinXy(x, y, dir)) && (map[index + offset[dir]] == 0)) {
+        break;
       }
     }
 
@@ -805,12 +803,10 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     // This sweep direction must match that used in findNext(...)
     for (int i = 1; i <= 8; i++) {
       final int d = (dir + i) % 8;
-      if (isInner || isWithinXy(x, y, d)) {
-        if ((map[index + offset[d]] & SKELETON) != 0
-            && (map[index + offset[d]] & PROCESSED) != PROCESSED
-            && (processedDirections[0] & PROCESSED_DIRECTIONS[d]) == 0) {
-          return addDirection(d, processedDirections);
-        }
+      if ((isInner || isWithinXy(x, y, d)) && ((map[index + offset[d]] & SKELETON) != 0
+          && (map[index + offset[d]] & PROCESSED) != PROCESSED
+          && (processedDirections[0] & PROCESSED_DIRECTIONS[d]) == 0)) {
+        return addDirection(d, processedDirections);
       }
     }
 

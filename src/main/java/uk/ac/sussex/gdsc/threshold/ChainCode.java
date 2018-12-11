@@ -24,6 +24,8 @@
 
 package uk.ac.sussex.gdsc.threshold;
 
+import uk.ac.sussex.gdsc.core.utils.ValidationUtils;
+
 import gnu.trove.list.array.TIntArrayList;
 
 /**
@@ -84,8 +86,11 @@ public class ChainCode {
    * Extend the chain code in the given direction.
    *
    * @param direction the direction
+   * @throws IllegalArgumentException If the direction is not in the range [0-7]
    */
   public void add(int direction) {
+    ValidationUtils.checkArgument(direction >= 0 && direction < DIRECTION_SIZE,
+        "Invalid direction: %d", direction);
     run.add(direction);
     clearCachedState();
   }
@@ -228,7 +233,7 @@ public class ChainCode {
       endx += DIR_X_OFFSET[code];
       endy += DIR_Y_OFFSET[code];
       // Invert the chain code
-      reverse.add((code + 4) % 8);
+      reverse.add((code + 4) % DIRECTION_SIZE);
     }
 
     // Update the origin
