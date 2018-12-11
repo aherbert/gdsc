@@ -83,6 +83,8 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -1418,15 +1420,16 @@ public class Cda_PlugIn extends PlugInFrame
     tw.append(resultsEntry.toString());
 
     if (isSaveResults) {
-      final String directory = ImageJUtils.combinePath(resultsDirectory, id);
+      final Path directoryPath = Paths.get(resultsDirectory, id);
       try {
         // Save results to file
-        if (!new File(directory).mkdirs()) {
+        if (!directoryPath.toFile().mkdirs()) {
           return;
         }
       } catch (final Exception ex) {
         return;
       }
+      final String directory = directoryPath.toString();
       IJ.save(mergedSegmentedRgb, directory + File.separatorChar + "MergedROI.tif");
       IJ.save(mergedChannelRgb, directory + File.separatorChar + "MergedChannel.tif");
 

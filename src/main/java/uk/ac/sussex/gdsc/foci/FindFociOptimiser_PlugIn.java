@@ -31,6 +31,7 @@ import uk.ac.sussex.gdsc.core.match.Coordinate;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.utils.FileUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.SoftLock;
 import uk.ac.sussex.gdsc.core.utils.StoredData;
@@ -84,6 +85,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1513,9 +1515,9 @@ public class FindFociOptimiser_PlugIn
       return false;
     }
 
-    inputDirectory = ImageJUtils.addFileSeparator(inputDirectory);
-    maskDirectory = ImageJUtils.addFileSeparator(maskDirectory);
-    outputDirectory = ImageJUtils.addFileSeparator(outputDirectory);
+    inputDirectory = FileUtils.addFileSeparator(inputDirectory);
+    maskDirectory = FileUtils.addFileSeparator(maskDirectory);
+    outputDirectory = FileUtils.addFileSeparator(outputDirectory);
 
     scoringMode = gd.getNextChoiceIndex();
     reuseResults = gd.getNextBoolean();
@@ -2036,7 +2038,7 @@ public class FindFociOptimiser_PlugIn
   private static String getFilename(ImagePlus imp) {
     final FileInfo info = imp.getOriginalFileInfo();
     if (info != null) {
-      return ImageJUtils.combinePath(info.directory, info.fileName);
+      return Paths.get(info.directory, info.fileName).toString();
     }
     return imp.getTitle();
   }
@@ -2167,7 +2169,7 @@ public class FindFociOptimiser_PlugIn
    * @param parameters the parameters
    * @return the options
    */
-  private Options createOptions(String parameters) {
+  private static Options createOptions(String parameters) {
     final String[] fields = TAB_PATTERN.split(parameters);
     try {
       final double blur = Double.parseDouble(fields[0]);
