@@ -28,5 +28,4 @@
  * @since 1.3.0
  * @see org.jdesktop.beansbinding.Converter
  */
-
 package uk.ac.sussex.gdsc.foci.converter;
