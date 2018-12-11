@@ -255,17 +255,11 @@ public class FindFociOptimiser_PlugIn
   public void run(String arg) {
     UsageTracker.recordPlugin(this.getClass(), arg);
 
-    try {
-      if (arg.equals("frame")) {
-        showOptimiserWindow();
-      } else {
-        final ImagePlus imp = (arg.equals("multi")) ? null : WindowManager.getCurrentImage();
-        run(imp);
-      }
-    } catch (final NoClassDefFoundError ex) {
-      // Because we have no underscore '_' in the class name ImageJ will not print
-      // the error so handle it here
-      IJ.handleException(ex);
+    if (arg.equals("frame")) {
+      showOptimiserWindow();
+    } else {
+      final ImagePlus imp = (arg.equals("multi")) ? null : WindowManager.getCurrentImage();
+      run(imp);
     }
   }
 
