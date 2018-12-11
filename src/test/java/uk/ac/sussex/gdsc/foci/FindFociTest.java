@@ -59,20 +59,25 @@ import org.opentest4j.AssertionFailedError;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.logging.Logger;
 
 @SuppressWarnings({"javadoc"})
-public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
+public class FindFociTest {
   private static Logger logger;
   static ConcurrentHashMap<RandomSeed, ImagePlus[]> dataCache;
 
+  /**
+   * Create the logger and data cache.
+   */
   @BeforeAll
   public static void beforeAll() {
     logger = Logger.getLogger(FindFociTest.class.getName());
     dataCache = new ConcurrentHashMap<>();
   }
 
+  /**
+   * Clear the data cache when finished.
+   */
   @AfterAll
   public static void afterAll() {
     dataCache.clear();
@@ -80,22 +85,24 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
     logger = null;
   }
 
-  final int bias = 500;
-  // Offset to create negative values.
-  // Power of 2 should not effect the mantissa precision
-  final int offset = 1024;
-  final int numberOfTestImages = 2;
-  final int numberOfTestImages3D = 2;
-  final int LOOPS = 20;
+  private static final int BIAS = 500;
+  /**
+   * Offset to create negative values. Using a power of 2 should not effect the mantissa precision.
+   */
+  private static final int OFFSET = 1024;
+  private static final int NUMBER_OF_TEST_IMAGES_2D = 2;
+  private static final int NUMBER_OF_TEST_IMAGES_3D = 2;
+
+  /** Number of loops for speed testing. */
+  private static final int LOOPS = 20;
 
   // Allow testing different settings.
   // Note that the float processor must use absolute values as the relative ones are converted to
-  // floats
-  // and this may result in different output.
+  // floats and this may result in different output.
   // The second method will be used with negative values so use Auto-threshold
   final int[] backgroundMethod = new int[] {FindFociProcessor.BACKGROUND_ABSOLUTE,
       FindFociProcessor.BACKGROUND_AUTO_THRESHOLD};
-  final double[] backgroundParameter = new double[] {bias, 0};
+  final double[] backgroundParameter = new double[] {BIAS, 0};
   final String[] autoThresholdMethod = new String[] {"", AutoThreshold.Method.OTSU.toString()};
   final int[] searchMethod = new int[] {FindFociProcessor.SEARCH_ABOVE_BACKGROUND,
       FindFociProcessor.SEARCH_ABOVE_BACKGROUND};
@@ -111,15 +118,18 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
       new int[] {FindFociProcessor.SORT_INTENSITY, FindFociProcessor.SORT_MAX_VALUE};
   final int[] options = new int[] {FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE, 0};
   final double[] blur = new double[] {0, 0};
-  final int[] centreMethod =
-      new int[] {FindFoci_PlugIn.CENTRE_MAX_VALUE_SEARCH, FindFoci_PlugIn.CENTRE_MAX_VALUE_ORIGINAL};
+  final int[] centreMethod = new int[] {FindFoci_PlugIn.CENTRE_MAX_VALUE_SEARCH,
+      FindFoci_PlugIn.CENTRE_MAX_VALUE_ORIGINAL};
   final double[] centreParameter = new double[] {2, 2};
   final double[] fractionParameter = new double[] {0.5, 0};
+
+  /** The start time of the timing split. */
+  private long startTime;
 
   @SeededTest
   public void isSameResultUsingIntProcessor(RandomSeed seed) {
     final boolean nonContiguous = true;
-    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this)) {
+    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (int i = 0; i < backgroundMethod.length; i++) {
         final FindFociResults r1 = runLegacy(imp, i);
         final FindFociResults r2 = runInt(imp, i, false, nonContiguous);
@@ -130,7 +140,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
 
   @SeededTest
   public void isSameResultUsingOptimisedIntProcessor(RandomSeed seed) {
-    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this)) {
+    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
           final FindFociResults r1 = runInt(imp, i, false, nonContiguous);
@@ -143,7 +153,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
 
   @SeededTest
   public void isSameResultUsingFloatProcessor(RandomSeed seed) {
-    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this)) {
+    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
           final FindFociResults r1 = runInt(imp, i, false, nonContiguous);
@@ -156,7 +166,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
 
   @SeededTest
   public void isSameResultUsingOptimisedFloatProcessor(RandomSeed seed) {
-    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this)) {
+    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
           final FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
@@ -169,7 +179,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
 
   @SeededTest
   public void isSameResultUsingFloatProcessorWithNegativeValues(RandomSeed seed) {
-    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this)) {
+    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
           if (FindFociBaseProcessor.isSortIndexSensitiveToNegativeValues(sortIndex[i])) {
@@ -185,7 +195,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
 
   @SeededTest
   public void isSameResultUsingOptimisedFloatProcessorWithNegativeValues(RandomSeed seed) {
-    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this)) {
+    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
           if (FindFociBaseProcessor.isSortIndexSensitiveToNegativeValues(sortIndex[i])) {
@@ -201,7 +211,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
 
   @SeededTest
   public void isSameResultUsingIntProcessorWithStagedMethods(RandomSeed seed) {
-    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this)) {
+    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
           final FindFociResults r1 = runInt(imp, i, false, nonContiguous);
@@ -214,7 +224,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
 
   @SeededTest
   public void isSameResultUsingOptimisedIntProcessorWithStagedMethods(RandomSeed seed) {
-    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this)) {
+    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
           final FindFociResults r1 = runInt(imp, i, true, nonContiguous);
@@ -227,7 +237,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
 
   @SeededTest
   public void isSameResultUsingFloatProcessorWithStagedMethods(RandomSeed seed) {
-    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this)) {
+    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
           final FindFociResults r1 = runFloat(imp, i, false, false, nonContiguous);
@@ -240,7 +250,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
 
   @SeededTest
   public void isSameResultUsingOptimisedFloatProcessorWithStagedMethods(RandomSeed seed) {
-    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this)) {
+    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
           final FindFociResults r1 = runFloat(imp, i, true, false, nonContiguous);
@@ -253,7 +263,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
 
   @SeededTest
   public void isSameResultUsingFloatProcessorWithStagedMethodsWithNegativeValues(RandomSeed seed) {
-    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this)) {
+    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
           if (FindFociBaseProcessor.isSortIndexSensitiveToNegativeValues(sortIndex[i])) {
@@ -270,7 +280,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
   @SeededTest
   public void isSameResultUsingOptimisedFloatProcessorWithStagedMethodsWithNegativeValues(
       RandomSeed seed) {
-    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this)) {
+    for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
           if (FindFociBaseProcessor.isSortIndexSensitiveToNegativeValues(sortIndex[i])) {
@@ -293,7 +303,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
     final int[] indices = new int[] {1};
 
     // Warm up
-    final ImagePlus[] data = dataCache.computeIfAbsent(seed, this);
+    final ImagePlus[] data = dataCache.computeIfAbsent(seed, this::createData);
     // runInt(data[0], indices[0], false);
     // runInt(data[0], indices[0], true);
 
@@ -335,7 +345,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
     final int[] indices = new int[] {1};
 
     // Warm up
-    final ImagePlus[] data = dataCache.computeIfAbsent(seed, this);
+    final ImagePlus[] data = dataCache.computeIfAbsent(seed, this::createData);
     // runFloat(data[0], indices[0], false, false);
     // runFloat(data[0], indices[0], true, false);
 
@@ -384,7 +394,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
     final int[] indices = new int[] {1};
 
     // Warm up
-    final ImagePlus[] data = dataCache.computeIfAbsent(seed, this);
+    final ImagePlus[] data = dataCache.computeIfAbsent(seed, this::createData);
     // runLegacy(data[0], indices[0]);
     // runInt(data[0], indices[0], true);
 
@@ -427,7 +437,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
     final int[] indices = new int[] {1};
 
     // Warm up
-    final ImagePlus[] data = dataCache.computeIfAbsent(seed, this);
+    final ImagePlus[] data = dataCache.computeIfAbsent(seed, this::createData);
     // runFloat(data[0], indices[0], true, false);
     // runInt(data[0], indices[0], true);
 
@@ -465,12 +475,12 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
     Assertions.assertTrue(time2 < time1);
   }
 
-  private void isEqual(boolean legacy, FindFociResults r1, FindFociResults r2, int set,
+  private static void isEqual(boolean legacy, FindFociResults r1, FindFociResults r2, int set,
       boolean nonContiguous) {
     isEqual(legacy, r1, r2, set, false, nonContiguous);
   }
 
-  private void isEqual(boolean legacy, FindFociResults r1, FindFociResults r2, int set,
+  private static void isEqual(boolean legacy, FindFociResults r1, FindFociResults r2, int set,
       boolean negativeValues, boolean nonContiguous) {
     final String setName = String.format("Set %d (%b)", set, nonContiguous);
 
@@ -487,48 +497,48 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
     // logger.info(FunctionUtils.getSupplier("N1=%d, N2=%d", results1.size(), results2.size());
     Assertions.assertEquals(results1.size(), results2.size(), setName + " Results Size");
     int counter = 0;
-    final int offset = (negativeValues) ? this.offset : 0;
+    final int offset = (negativeValues) ? OFFSET : 0;
     final DoubleDoubleBiPredicate predictate = TestHelper.doublesAreClose(1e-9, 1e-16);
     try {
       for (int i = 0; i < results1.size(); i++) {
         counter = i;
         //@formatter:off
-          final FindFociResult o1 = results1.get(i);
-          final FindFociResult o2 = results2.get(i);
-          //logger.info(FunctionUtils.getSupplier("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d", i,
-          //    o1.x, o1.y, o1.maxValue, o1.count, o1.saddleNeighbourId,
-          //    o2.x, o2.y, o2.maxValue, o2.count, o2.saddleNeighbourId);
-          Assertions.assertEquals(o1.x, o2.x, "X");
-          Assertions.assertEquals(o1.y, o2.y, "Y");
-          Assertions.assertEquals(o1.z, o2.z, "Z");
-          Assertions.assertEquals(o1.id, o2.id,"ID");
-          Assertions.assertEquals(o1.count, o2.count, "Count");
-          Assertions.assertEquals(o1.saddleNeighbourId, o2.saddleNeighbourId, "Saddle ID");
-          Assertions.assertEquals(o1.countAboveSaddle, o2.countAboveSaddle, "Count >Saddle");
-          // Single/Summed values can be cast to long as they should be 16-bit integers
-          Assertions.assertEquals((long)o1.maxValue, (long)o2.maxValue + offset, "Max");
-          if (o2.highestSaddleValue != Float.NEGATIVE_INFINITY && o2.highestSaddleValue != 0) {
-            Assertions.assertEquals((long)o1.highestSaddleValue, (long)o2.highestSaddleValue + offset, "Saddle value");
-          }
-          if (legacy)
-          {
-              // Cast to integer as this is the result format of the legacy FindFoci code
-              Assertions.assertEquals((long)o1.averageIntensity, (long)o2.averageIntensity + offset, "Av Intensity");
-              Assertions.assertEquals((long)o1.averageIntensityAboveBackground, (long)o2.averageIntensityAboveBackground, "Av Intensity >background");
-          }
-          else
-          {
-              // Averages cannot be cast and are compared as floating-point values
-              TestAssertions.assertTest(o1.averageIntensity, o2.averageIntensity + offset, predictate, "Av Intensity");
-              TestAssertions.assertTest(o1.averageIntensityAboveBackground, o2.averageIntensityAboveBackground, predictate, "Av Intensity >background");
-          }
-          if (negativeValues) {
-            continue;
-          }
-          Assertions.assertEquals((long)o1.totalIntensity, (long)o2.totalIntensity, "Intensity");
-          Assertions.assertEquals((long)o1.totalIntensityAboveBackground, (long)o2.totalIntensityAboveBackground, "Intensity >background");
-          Assertions.assertEquals((long)o1.intensityAboveSaddle, (long)o2.intensityAboveSaddle, "Intensity > Saddle");
-          //@formatter:on
+        final FindFociResult o1 = results1.get(i);
+        final FindFociResult o2 = results2.get(i);
+        //logger.info(FunctionUtils.getSupplier("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d", i,
+        //    o1.x, o1.y, o1.maxValue, o1.count, o1.saddleNeighbourId,
+        //    o2.x, o2.y, o2.maxValue, o2.count, o2.saddleNeighbourId);
+        Assertions.assertEquals(o1.x, o2.x, "X");
+        Assertions.assertEquals(o1.y, o2.y, "Y");
+        Assertions.assertEquals(o1.z, o2.z, "Z");
+        Assertions.assertEquals(o1.id, o2.id,"ID");
+        Assertions.assertEquals(o1.count, o2.count, "Count");
+        Assertions.assertEquals(o1.saddleNeighbourId, o2.saddleNeighbourId, "Saddle ID");
+        Assertions.assertEquals(o1.countAboveSaddle, o2.countAboveSaddle, "Count >Saddle");
+        // Single/Summed values can be cast to long as they should be 16-bit integers
+        Assertions.assertEquals((long)o1.maxValue, (long)o2.maxValue + offset, "Max");
+        if (o2.highestSaddleValue != Float.NEGATIVE_INFINITY && o2.highestSaddleValue != 0) {
+          Assertions.assertEquals((long)o1.highestSaddleValue, (long)o2.highestSaddleValue + offset, "Saddle value");
+        }
+        if (legacy)
+        {
+            // Cast to integer as this is the result format of the legacy FindFoci code
+            Assertions.assertEquals((long)o1.averageIntensity, (long)o2.averageIntensity + offset, "Av Intensity");
+            Assertions.assertEquals((long)o1.averageIntensityAboveBackground, (long)o2.averageIntensityAboveBackground, "Av Intensity >background");
+        }
+        else
+        {
+            // Averages cannot be cast and are compared as floating-point values
+            TestAssertions.assertTest(o1.averageIntensity, o2.averageIntensity + offset, predictate, "Av Intensity");
+            TestAssertions.assertTest(o1.averageIntensityAboveBackground, o2.averageIntensityAboveBackground, predictate, "Av Intensity >background");
+        }
+        if (negativeValues) {
+          continue;
+        }
+        Assertions.assertEquals((long)o1.totalIntensity, (long)o2.totalIntensity, "Intensity");
+        Assertions.assertEquals((long)o1.totalIntensityAboveBackground, (long)o2.totalIntensityAboveBackground, "Intensity >background");
+        Assertions.assertEquals((long)o1.intensityAboveSaddle, (long)o2.intensityAboveSaddle, "Intensity > Saddle");
+        //@formatter:on
       }
     } catch (final AssertionFailedError ex) {
       TestUtils.wrapAssertionFailedError(ex,
@@ -536,12 +546,15 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
     }
   }
 
-  private FindFociResults runLegacy(ImagePlus imp, int i) {
+  private FindFociResults runLegacy(ImagePlus imp, int settingsIndex) {
     final FindFociLegacy ff = new FindFociLegacy();
-    final Object[] result = ff.findMaxima(imp, null, backgroundMethod[i], backgroundParameter[i],
-        autoThresholdMethod[i], searchMethod[i], searchParameter[i], maxPeaks[i], minSize[i],
-        peakMethod[i], peakParameter[i], outputType[i], sortIndex[i], options[i], blur[i],
-        centreMethod[i], centreParameter[i], fractionParameter[i]);
+    final Object[] result = ff.findMaxima(imp, null, backgroundMethod[settingsIndex],
+        backgroundParameter[settingsIndex], autoThresholdMethod[settingsIndex],
+        searchMethod[settingsIndex], searchParameter[settingsIndex], maxPeaks[settingsIndex],
+        minSize[settingsIndex], peakMethod[settingsIndex], peakParameter[settingsIndex],
+        outputType[settingsIndex], sortIndex[settingsIndex], options[settingsIndex],
+        blur[settingsIndex], centreMethod[settingsIndex], centreParameter[settingsIndex],
+        fractionParameter[settingsIndex]);
     @SuppressWarnings("unchecked")
     final ArrayList<int[]> resultsArray = (ArrayList<int[]>) result[1];
     ArrayList<FindFociResult> results = null;
@@ -571,89 +584,104 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
     return new FindFociResults((ImagePlus) result[0], results, null);
   }
 
-  private FindFociResults runInt(ImagePlus imp, int i, boolean optimised, boolean nonContiguous) {
+  private FindFociResults runInt(ImagePlus imp, int settingsIndex, boolean optimised,
+      boolean nonContiguous) {
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
     ff.setOptimisedProcessor(optimised);
-    final int flags = (nonContiguous) ? options[i]
-        : options[i] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
-    return ff.findMaxima(imp, null, backgroundMethod[i], backgroundParameter[i],
-        autoThresholdMethod[i], searchMethod[i], searchParameter[i], maxPeaks[i], minSize[i],
-        peakMethod[i], peakParameter[i], outputType[i], sortIndex[i], flags, blur[i],
-        centreMethod[i], centreParameter[i], fractionParameter[i]);
+    final int flags = (nonContiguous) ? options[settingsIndex]
+        : options[settingsIndex] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+    return ff.findMaxima(imp, null, backgroundMethod[settingsIndex],
+        backgroundParameter[settingsIndex], autoThresholdMethod[settingsIndex],
+        searchMethod[settingsIndex], searchParameter[settingsIndex], maxPeaks[settingsIndex],
+        minSize[settingsIndex], peakMethod[settingsIndex], peakParameter[settingsIndex],
+        outputType[settingsIndex], sortIndex[settingsIndex], flags, blur[settingsIndex],
+        centreMethod[settingsIndex], centreParameter[settingsIndex],
+        fractionParameter[settingsIndex]);
   }
 
-  private FindFociResults runFloat(ImagePlus imp, int i, boolean optimised, boolean negative,
-      boolean nonContiguous) {
+  private FindFociResults runFloat(ImagePlus imp, int settingsIndex, boolean optimised,
+      boolean negative, boolean nonContiguous) {
     imp = toFloat(imp, negative);
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
     ff.setOptimisedProcessor(optimised);
-    final int flags = (nonContiguous) ? options[i]
-        : options[i] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
-    return ff.findMaxima(imp, null, backgroundMethod[i], backgroundParameter[i],
-        autoThresholdMethod[i], searchMethod[i], searchParameter[i], maxPeaks[i], minSize[i],
-        peakMethod[i], peakParameter[i], outputType[i], sortIndex[i], flags, blur[i],
-        centreMethod[i], centreParameter[i], fractionParameter[i]);
+    final int flags = (nonContiguous) ? options[settingsIndex]
+        : options[settingsIndex] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+    return ff.findMaxima(imp, null, backgroundMethod[settingsIndex],
+        backgroundParameter[settingsIndex], autoThresholdMethod[settingsIndex],
+        searchMethod[settingsIndex], searchParameter[settingsIndex], maxPeaks[settingsIndex],
+        minSize[settingsIndex], peakMethod[settingsIndex], peakParameter[settingsIndex],
+        outputType[settingsIndex], sortIndex[settingsIndex], flags, blur[settingsIndex],
+        centreMethod[settingsIndex], centreParameter[settingsIndex],
+        fractionParameter[settingsIndex]);
   }
 
-  private ImagePlus toFloat(ImagePlus imp, boolean negative) {
+  private static ImagePlus toFloat(ImagePlus imp, boolean negative) {
     final ImageStack stack = imp.getImageStack();
     final ImageStack newStack = new ImageStack(stack.getWidth(), stack.getHeight());
     for (int n = 1; n <= stack.getSize(); n++) {
       final FloatProcessor fp = (FloatProcessor) stack.getProcessor(n).convertToFloat();
       if (negative) {
-        fp.subtract(offset);
+        fp.subtract(OFFSET);
       }
       newStack.addSlice(fp);
     }
     return new ImagePlus(null, newStack);
   }
 
-  private FindFociResults runIntStaged(ImagePlus imp, int i, boolean optimised,
+  private FindFociResults runIntStaged(ImagePlus imp, int settingsIndex, boolean optimised,
       boolean nonContiguous) {
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
     ff.setOptimisedProcessor(optimised);
-    final int flags = (nonContiguous) ? options[i]
-        : options[i] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
-    final ImagePlus imp2 = ff.blur(imp, blur[i]);
-    final FindFociInitResults initResults =
-        ff.findMaximaInit(imp, imp2, null, backgroundMethod[i], autoThresholdMethod[i], flags);
+    final int flags = (nonContiguous) ? options[settingsIndex]
+        : options[settingsIndex] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+    final ImagePlus imp2 = ff.blur(imp, blur[settingsIndex]);
+    final FindFociInitResults initResults = ff.findMaximaInit(imp, imp2, null,
+        backgroundMethod[settingsIndex], autoThresholdMethod[settingsIndex], flags);
     final FindFociSearchResults searchResults = ff.findMaximaSearch(initResults,
-        backgroundMethod[i], backgroundParameter[i], searchMethod[i], searchParameter[i]);
-    FindFociMergeTempResults mergePeakResults =
-        ff.findMaximaMergePeak(initResults, searchResults, peakMethod[i], peakParameter[i]);
-    mergePeakResults = ff.findMaximaMergeSize(initResults, mergePeakResults, minSize[i]);
-    final FindFociMergeResults mergeResults =
-        ff.findMaximaMergeFinal(initResults, mergePeakResults, minSize[i], flags, blur[i]);
-    final FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults,
-        mergeResults, maxPeaks[i], sortIndex[i], centreMethod[i], centreParameter[i]);
-    return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i],
-        autoThresholdMethod[i], "FindFociTest", fractionParameter[i]);
+        backgroundMethod[settingsIndex], backgroundParameter[settingsIndex],
+        searchMethod[settingsIndex], searchParameter[settingsIndex]);
+    FindFociMergeTempResults mergePeakResults = ff.findMaximaMergePeak(initResults, searchResults,
+        peakMethod[settingsIndex], peakParameter[settingsIndex]);
+    mergePeakResults =
+        ff.findMaximaMergeSize(initResults, mergePeakResults, minSize[settingsIndex]);
+    final FindFociMergeResults mergeResults = ff.findMaximaMergeFinal(initResults, mergePeakResults,
+        minSize[settingsIndex], flags, blur[settingsIndex]);
+    final FindFociPrelimResults prelimResults =
+        ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[settingsIndex],
+            sortIndex[settingsIndex], centreMethod[settingsIndex], centreParameter[settingsIndex]);
+    return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults,
+        outputType[settingsIndex], autoThresholdMethod[settingsIndex], "FindFociTest",
+        fractionParameter[settingsIndex]);
   }
 
-  private FindFociResults runFloatStaged(ImagePlus imp, int i, boolean optimised, boolean negative,
-      boolean nonContiguous) {
+  private FindFociResults runFloatStaged(ImagePlus imp, int settingsIndex, boolean optimised,
+      boolean negative, boolean nonContiguous) {
     imp = toFloat(imp, negative);
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
-    final ImagePlus imp2 = ff.blur(imp, blur[i]);
+    final ImagePlus imp2 = ff.blur(imp, blur[settingsIndex]);
     ff.setOptimisedProcessor(optimised);
-    final int flags = (nonContiguous) ? options[i]
-        : options[i] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
-    final FindFociInitResults initResults =
-        ff.findMaximaInit(imp, imp2, null, backgroundMethod[i], autoThresholdMethod[i], flags);
+    final int flags = (nonContiguous) ? options[settingsIndex]
+        : options[settingsIndex] | FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
+    final FindFociInitResults initResults = ff.findMaximaInit(imp, imp2, null,
+        backgroundMethod[settingsIndex], autoThresholdMethod[settingsIndex], flags);
     final FindFociSearchResults searchResults = ff.findMaximaSearch(initResults,
-        backgroundMethod[i], backgroundParameter[i], searchMethod[i], searchParameter[i]);
-    FindFociMergeTempResults mergePeakResults =
-        ff.findMaximaMergePeak(initResults, searchResults, peakMethod[i], peakParameter[i]);
-    mergePeakResults = ff.findMaximaMergeSize(initResults, mergePeakResults, minSize[i]);
-    final FindFociMergeResults mergeResults =
-        ff.findMaximaMergeFinal(initResults, mergePeakResults, minSize[i], flags, blur[i]);
-    final FindFociPrelimResults prelimResults = ff.findMaximaPrelimResults(initResults,
-        mergeResults, maxPeaks[i], sortIndex[i], centreMethod[i], centreParameter[i]);
-    return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults, outputType[i],
-        autoThresholdMethod[i], "FindFociTest", fractionParameter[i]);
+        backgroundMethod[settingsIndex], backgroundParameter[settingsIndex],
+        searchMethod[settingsIndex], searchParameter[settingsIndex]);
+    FindFociMergeTempResults mergePeakResults = ff.findMaximaMergePeak(initResults, searchResults,
+        peakMethod[settingsIndex], peakParameter[settingsIndex]);
+    mergePeakResults =
+        ff.findMaximaMergeSize(initResults, mergePeakResults, minSize[settingsIndex]);
+    final FindFociMergeResults mergeResults = ff.findMaximaMergeFinal(initResults, mergePeakResults,
+        minSize[settingsIndex], flags, blur[settingsIndex]);
+    final FindFociPrelimResults prelimResults =
+        ff.findMaximaPrelimResults(initResults, mergeResults, maxPeaks[settingsIndex],
+            sortIndex[settingsIndex], centreMethod[settingsIndex], centreParameter[settingsIndex]);
+    return ff.findMaximaMaskResults(initResults, mergeResults, prelimResults,
+        outputType[settingsIndex], autoThresholdMethod[settingsIndex], "FindFociTest",
+        fractionParameter[settingsIndex]);
   }
 
-  private ImagePlus createImageData(UniformRandomProvider rg) {
+  private static ImagePlus createImageData(UniformRandomProvider rg) {
     // Create an image with peaks
     final int size = 256;
     final int n = 80;
@@ -668,32 +696,33 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
     return new ImagePlus(title, ip);
   }
 
-  private short[] combine(UniformRandomProvider rg, float[] data1, float[] data2, float[] data3) {
+  private static short[] combine(UniformRandomProvider rg, float[] data1, float[] data2,
+      float[] data3) {
     // Combine images and add a bias and read noise
-    final GaussianSampler g = GaussianSamplerUtils.createGaussianSampler(rg, bias, 5);
+    final GaussianSampler g = GaussianSamplerUtils.createGaussianSampler(rg, BIAS, 5);
     final short[] data = new short[data1.length];
     for (int i = 0; i < data.length; i++) {
       final double mu = data1[i] + data2[i] + data3[i];
-      double v = g.sample();
+      double value = g.sample();
       if (mu != 0) {
-        v += new PoissonSampler(rg, mu).sample();
+        value += new PoissonSampler(rg, mu).sample();
       }
-      if (v < 0) {
-        v = 0;
-      } else if (v > 65535) {
-        v = 65535;
+      if (value < 0) {
+        value = 0;
+      } else if (value > 65535) {
+        value = 65535;
       }
-      data[i] = (short) v;
+      data[i] = (short) value;
     }
     return data;
   }
 
-  private static float[] createSpots(UniformRandomProvider rg, int size, int n, int min, int max,
-      double sigmaX, double sigmaY) {
+  private static float[] createSpots(UniformRandomProvider rg, int size, int numberOfSpots, int min,
+      int max, double sigmaX, double sigmaY) {
     final float[] data = new float[size * size];
     // Randomly put on spots
     final int range = max - min;
-    while (n-- > 0) {
+    while (numberOfSpots-- > 0) {
       data[rg.nextInt(data.length)] = min + rg.nextInt(range);
     }
 
@@ -705,7 +734,7 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
     return (float[]) fp.getPixels();
   }
 
-  private ImagePlus createImageData3D(UniformRandomProvider rg) {
+  private static ImagePlus createImageData3D(UniformRandomProvider rg) {
     // Create an image with peaks
     final int size = 64;
     final int z = 5;
@@ -724,12 +753,12 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
     return new ImagePlus(title, stack);
   }
 
-  private static float[][] createSpots3D(UniformRandomProvider rg, int size, int z, int n, int min,
-      int max, double sigmaX, double sigmaY) {
+  private static float[][] createSpots3D(UniformRandomProvider rg, int size, int z,
+      int numberOfSpots, int min, int max, double sigmaX, double sigmaY) {
     final float[] data = new float[size * size];
     // Randomly put on spots
     final int range = max - min;
-    while (n-- > 0) {
+    while (numberOfSpots-- > 0) {
       data[rg.nextInt(data.length)] = min + rg.nextInt(range);
     }
 
@@ -758,28 +787,22 @@ public class FindFociTest implements Function<RandomSeed, ImagePlus[]> {
     return 1.0 + z * z * 0.5;
   }
 
-  private long time;
-
   private void start() {
-    time = System.nanoTime();
-
+    startTime = System.nanoTime();
   }
 
-  private long stop(long t) {
-    return Math.min(t, System.nanoTime() - time);
+  private long stop(long minTime) {
+    return Math.min(minTime, System.nanoTime() - startTime);
   }
 
-  // TODO fix this to use a function reference
-
-  @Override
-  public ImagePlus[] apply(RandomSeed seed) {
+  private ImagePlus[] createData(RandomSeed seed) {
     final UniformRandomProvider rg = RngUtils.create(seed.getSeed());
-    final ImagePlus[] images = new ImagePlus[numberOfTestImages + numberOfTestImages3D];
+    final ImagePlus[] images = new ImagePlus[NUMBER_OF_TEST_IMAGES_2D + NUMBER_OF_TEST_IMAGES_3D];
     int index = 0;
-    for (int i = 0; i < numberOfTestImages; i++) {
+    for (int i = 0; i < NUMBER_OF_TEST_IMAGES_2D; i++) {
       images[index++] = createImageData(rg);
     }
-    for (int i = 0; i < numberOfTestImages3D; i++) {
+    for (int i = 0; i < NUMBER_OF_TEST_IMAGES_3D; i++) {
       images[index++] = createImageData3D(rg);
     }
     return images;
