@@ -82,8 +82,8 @@ public class AlignImages_PlugIn implements PlugIn {
   private static String reference = "";
   private static String referenceMask = NONE;
   private static String target = "";
-  private static boolean showCorrelationImage = false;
-  private static boolean clipOutput = false;
+  private static boolean showCorrelationImage;
+  private static boolean clipOutput;
 
   /** Ask for parameters and then execute. */
   @Override

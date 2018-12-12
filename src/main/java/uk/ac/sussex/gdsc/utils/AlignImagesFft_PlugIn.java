@@ -64,7 +64,7 @@ public class AlignImagesFft_PlugIn implements PlugIn {
   /** The available window function. */
   public static final String[] windowFunctions;
   private static int myWindowFunction = 3;
-  private static boolean restrictTranslation = false;
+  private static boolean restrictTranslation;
   private static int myMinXShift = -20;
   private static int myMaxXShift = 20;
   private static int myMinYShift = -20;
@@ -80,9 +80,9 @@ public class AlignImagesFft_PlugIn implements PlugIn {
   private static String reference = "";
   private static String target = "";
   private static boolean normalised = true;
-  private static boolean showCorrelationImage = false;
-  private static boolean showNormalisedImage = false;
-  private static boolean clipOutput = false;
+  private static boolean showCorrelationImage;
+  private static boolean showNormalisedImage;
+  private static boolean clipOutput;
 
   static {
     final WindowMethod[] m = WindowMethod.values();

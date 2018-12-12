@@ -47,7 +47,7 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
 
   private static String title1 = "";
   private static String title2 = "";
-  private static boolean applyLUT = false;
+  private static boolean applyLUT;
   private static boolean overlayOutline = true;
 
   private ImagePlus imp1;

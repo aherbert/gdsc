@@ -62,9 +62,9 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
   private static String methodOption = AutoThreshold.Method.OTSU.toString();
   private static boolean useIntersect = true;
   private static boolean aggregateZstack = true;
-  private static boolean logThresholds = false;
-  private static boolean showMask = false;
-  private static boolean subtractThreshold = false;
+  private static boolean logThresholds;
+  private static boolean showMask;
+  private static boolean subtractThreshold;
 
   private Correlator correlator;
 

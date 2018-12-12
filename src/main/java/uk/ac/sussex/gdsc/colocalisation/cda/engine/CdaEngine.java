@@ -39,7 +39,7 @@ import java.util.concurrent.BlockingQueue;
  * sequentially by worker threads.
  */
 public class CdaEngine {
-  private BlockingQueue<CdaJob> jobs = null;
+  private BlockingQueue<CdaJob> jobs;
   private final List<CdaWorker> workers = new LinkedList<>();
   private final List<Thread> threads = new LinkedList<>();
 

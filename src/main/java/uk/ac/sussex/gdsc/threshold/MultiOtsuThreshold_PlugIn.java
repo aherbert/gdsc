@@ -58,25 +58,25 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
   private static boolean settingIgnoreZero = true;
   private static boolean settingShowHistogram = true;
   private static boolean settingShowRegions = true;
-  private static boolean settingShowMasks = false;
+  private static boolean settingShowMasks;
   private static boolean settingLogMessages = true;
 
   private ImagePlus imp;
 
   /** Set to true to ignore zero. Allow use of plugin from other code. */
-  public boolean ignoreZero = false;
+  public boolean ignoreZero;
 
   /** Set to true to show histogram. Allow use of plugin from other code. */
-  public boolean showHistogram = false;
+  public boolean showHistogram;
 
   /** Set to true to show regions. Allow use of plugin from other code. */
-  public boolean showRegions = false;
+  public boolean showRegions;
 
   /** Set to true to show masks. Allow use of plugin from other code. */
-  public boolean showMasks = false;
+  public boolean showMasks;
 
   /** Set to true to log messages. Allow use of plugin from other code. */
-  public boolean logMessages = false;
+  public boolean logMessages;
 
   /** {@inheritDoc} */
   @Override

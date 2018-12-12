@@ -37,18 +37,18 @@ public class TwinImageShifter {
   private final ImageProcessor mask;
   private ImageProcessor resultIp1;
   private ImageProcessor resultIp2;
-  private int shiftX = 0;
-  private int shiftY = 0;
+  private int shiftX;
+  private int shiftY;
   private int width;
   private int height;
   private int[][] horizontalRoi;
   private int[][] verticalRoi;
 
   // Used as working space
-  private int[] t1 = null;
-  private int[] t2 = null;
-  private int[] t3 = null;
-  private int[] t4 = null;
+  private int[] t1;
+  private int[] t2;
+  private int[] t3;
+  private int[] t4;
 
   /**
    * Instantiates a new twin image shifter.

@@ -33,8 +33,8 @@ import ij.ImageStack;
 public class TwinStackShifter {
   private ImageStack result1;
   private ImageStack result2;
-  private int xShift = 0;
-  private int yShift = 0;
+  private int xShift;
+  private int yShift;
   private int width;
   private int height;
   private int size;

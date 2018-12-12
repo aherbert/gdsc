@@ -84,10 +84,10 @@ public class ZProjectorCopy implements PlugIn {
       + "and invert the LUT (Image/Lookup Tables/Invert LUT).";
 
   /** Image to hold z-projection. */
-  protected ImagePlus projImage = null;
+  protected ImagePlus projImage;
 
   /** Image stack to project. */
-  protected ImagePlus imp = null;
+  protected ImagePlus imp;
 
   /** Projection starts from this slice. */
   protected int startSlice = 1;

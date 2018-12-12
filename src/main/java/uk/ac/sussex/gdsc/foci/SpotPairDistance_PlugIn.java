@@ -78,7 +78,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
    * an image.
    */
   private static class SpotPairDistancePluginTool extends PlugInTool {
-    private static TextWindow distancesWindow = null;
+    private static TextWindow distancesWindow;
 
     private int channel1 = (int) Prefs.get(PREFS_CHANNEL_1, 1);
     private int channel2 = (int) Prefs.get(PREFS_CHANNEL_2, 2);
@@ -95,7 +95,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
     boolean active = true;
 
     // Flag set in mouse pressed and released in mouse released
-    int dragging = 0;
+    int dragging;
 
     // Created in the MousePressed event
     int origX;
@@ -738,7 +738,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
     }
   }
 
-  private static SpotPairDistancePluginTool toolInstance = null;
+  private static SpotPairDistancePluginTool toolInstance;
 
   /**
    * Initialise the spot pair distance tool. This is to allow support for calling within macro

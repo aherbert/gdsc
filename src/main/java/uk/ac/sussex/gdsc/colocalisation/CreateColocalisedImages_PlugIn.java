@@ -53,9 +53,9 @@ public class CreateColocalisedImages_PlugIn implements PlugIn {
   private static final int BACKGROUND = 0;
   private static final int FOREGROUND = 255;
 
-  private static int sequenceNumber = 0;
-  private static int bitDepth = 0;
-  private static boolean createMasks = false;
+  private static int sequenceNumber;
+  private static int bitDepth;
+  private static boolean createMasks;
 
   private ByteProcessor roi;
   private int channelMax;

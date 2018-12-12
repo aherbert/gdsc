@@ -46,14 +46,14 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /** The plugin title. */
   static final String TITLE = "HSB Filter";
 
-  private float[] hues = null;
-  private float[] saturations = null;
-  private float[] brightnesses = null;
+  private float[] hues;
+  private float[] saturations;
+  private float[] brightnesses;
 
   // Allow to be set by others in the package
 
   /** The hue. */
-  static float hue = 0;
+  static float hue;
 
   /** The hue width. */
   static float hueWidth = 1f / 6f;

@@ -56,8 +56,8 @@ public class StackThreshold_PlugIn implements PlugInFilter {
   private static String methodOption = AutoThreshold.Method.OTSU.toString();
 
   // Options flags
-  private static boolean logThresholds = false;
-  private static boolean compositeColour = false;
+  private static boolean logThresholds;
+  private static boolean compositeColour;
   private static boolean newImage = true;
 
   /** {@inheritDoc} */

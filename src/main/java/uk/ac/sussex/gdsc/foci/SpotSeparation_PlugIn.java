@@ -66,9 +66,9 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
   private static boolean showLineProfiles = true;
 
   private final LinkedList<String> plotProfiles = new LinkedList<>();
-  private static TextWindow resultsWindow = null;
+  private static TextWindow resultsWindow;
   private ImagePlus imp;
-  private String resultEntry = null;
+  private String resultEntry;
   private Calibration cal;
 
   /** {@inheritDoc} */

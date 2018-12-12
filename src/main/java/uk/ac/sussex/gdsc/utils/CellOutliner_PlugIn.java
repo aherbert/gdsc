@@ -1372,7 +1372,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     int[] ypoints;
 
     // Debugging variables
-    int iter = 0;
+    int iter;
 
     /**
      * Instantiates a new differentiable elliptical fit function.

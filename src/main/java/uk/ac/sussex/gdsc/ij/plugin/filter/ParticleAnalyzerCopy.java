@@ -149,13 +149,13 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
   static final double DEFAULT_MIN_SIZE = 0.0;
   static final double DEFAULT_MAX_SIZE = Double.POSITIVE_INFINITY;
 
-  private static double staticMinSize = 0.0;
+  private static double staticMinSize;
   private static double staticMaxSize = DEFAULT_MAX_SIZE;
   private static boolean pixelUnits;
   private static int staticOptions = Prefs.getInt(OPTIONS, CLEAR_WORKSHEET);
   private static String[] showStrings = {"Nothing", "Outlines", "Bare Outlines", "Ellipses",
       "Masks", "Count Masks", "Overlay Outlines", "Overlay Masks"};
-  private static double staticMinCircularity = 0.0;
+  private static double staticMinCircularity;
   private static double staticMaxCircularity = 1.0;
   private static String prevHdr;
 
@@ -247,7 +247,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
   private ImageStack outlines;
   private IndexColorModel customLut;
   private int particleCount;
-  private int maxParticleCount = 0;
+  private int maxParticleCount;
   private int totalCount;
   private TextWindow tw;
   private Wand wand;
@@ -1100,7 +1100,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
     return true;
   }
 
-  int counter = 0;
+  int counter;
 
   /**
    * Analyze particle.

@@ -58,27 +58,27 @@ import java.util.List;
  */
 public class SkeletonAnalyser_PlugIn implements PlugInFilter {
   private static String TITLE = "Skeleton Analyser";
-  private static TextWindow resultsWindow = null;
+  private static TextWindow resultsWindow;
   private static boolean writeHeader = true;
 
-  private static boolean s_pruneJunctions = false;
-  private static int s_minLength = 0;
+  private static boolean s_pruneJunctions;
+  private static int s_minLength;
   private static boolean s_showNodeMap = true;
-  private static boolean s_showOverlay = false;
+  private static boolean s_showOverlay;
   private static boolean s_showTable = true;
 
   /** The prune junctions. */
   // Public to allow control of the algorithm in the run(ImageProcessor) method
-  boolean pruneJunctions = false;
+  boolean pruneJunctions;
 
   /** The min length. */
-  int minLength = 0;
+  int minLength;
 
   /** The show node map. */
   boolean showNodeMap = true;
 
   /** The show overlay. */
-  boolean showOverlay = false;
+  boolean showOverlay;
 
   /** The show table. */
   boolean showTable = true;
@@ -1118,8 +1118,8 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     return removed;
   }
 
-  private int maxx = 0;
-  private int maxy = 0; // image dimensions
+  private int maxx;
+  private int maxy; // image dimensions
   private int xlimit;
   private int ylimit;
   private int[] offset;

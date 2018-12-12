@@ -77,30 +77,30 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
   private static double dThreshold = 1;
   private static String mask = "";
   private static double beta = 4;
-  private static boolean showPairs = false;
-  private static boolean savePairs = false;
-  private static boolean savePairsSingleFile = false;
+  private static boolean showPairs;
+  private static boolean savePairs;
+  private static boolean savePairsSingleFile;
   private static String filename = "";
   private static String filenameSingle = "";
   private static String image1 = "";
   private static String image2 = "";
-  private static boolean showComposite = false;
-  private static boolean ignoreFrames = false;
-  private static boolean useSlicePosition = false;
+  private static boolean showComposite;
+  private static boolean ignoreFrames;
+  private static boolean useSlicePosition;
 
   private String myMask;
   private String myImage1;
   private String myImage2;
 
   private static boolean writeHeader = true;
-  private static TextWindow resultsWindow = null;
-  private static TextWindow pairsWindow = null;
+  private static TextWindow resultsWindow;
+  private static TextWindow pairsWindow;
 
   private TextField text1;
   private TextField text2;
 
   // flag indicating the pairs have values that should be output
-  private boolean valued = false;
+  private boolean valued;
 
   private static class IdTimeValuedPoint extends TimeValuedPoint {
     final int id;

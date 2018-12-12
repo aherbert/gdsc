@@ -68,9 +68,9 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
 
   private static String maskTitle = "";
   private static boolean autoCutoff = true;
-  private static boolean eightConnected = false;
-  private static double cutoff = 0;
-  private static boolean splitMask = false;
+  private static boolean eightConnected;
+  private static double cutoff;
+  private static boolean splitMask;
   private static boolean overlayOutline = true;
 
   private Checkbox autoCheckbox;
@@ -266,10 +266,10 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
     return ((red << 16) + (green << 8) + blue);
   }
 
-  private String lastMaskTitle = null;
-  private boolean lastEightConnected = false;
-  private double[][] objects = null;
-  private double[] stats = null;
+  private String lastMaskTitle;
+  private boolean lastEightConnected;
+  private double[][] objects;
+  private double[] stats;
   private int defaultCutoff = -1;
   private int maxObject;
 

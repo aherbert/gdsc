@@ -48,13 +48,13 @@ import java.util.Collections;
 public class ColocalisationThreshold {
   private ImagePlus imp1;
   private ImagePlus imp2;
-  private int roiIndex = 0;
+  private int roiIndex;
   private int maxIterations = 30;
-  private boolean includeNullPixels = false;
-  private boolean includeSaturatedPixels = false;
-  private boolean exhaustiveSearch = false;
+  private boolean includeNullPixels;
+  private boolean includeSaturatedPixels;
+  private boolean exhaustiveSearch;
   private ArrayList<ThresholdResult> results;
-  private boolean correlated = false;
+  private boolean correlated;
   private int threshold1;
   private int threshold2;
   private double gradient;
@@ -62,11 +62,11 @@ public class ColocalisationThreshold {
   private double correlationTotal;
   private double correlationBelowThreshold;
   private double correlationAboveThreshold;
-  private double correlationThreshold = 0;
+  private double correlationThreshold;
   private double convergenceTolerance = 0.001;
   private double searchTolerance = 0.05;
-  private int ch1Max = 0;
-  private int ch2Max = 0;
+  private int ch1Max;
+  private int ch2Max;
   private int ch1Min = Integer.MAX_VALUE;
   private int ch2Min = Integer.MAX_VALUE;
 

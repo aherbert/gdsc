@@ -42,7 +42,7 @@ import java.util.List;
  * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn } algorithm.
  */
 public class ImageJController extends FindFociController {
-  private FindFociRunner runner = null;
+  private FindFociRunner runner;
 
   /**
    * Instantiates a new image J controller.

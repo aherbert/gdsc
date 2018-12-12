@@ -28,7 +28,7 @@ package uk.ac.sussex.gdsc.foci;
  * Stores a 2D/3D point with a value and an assigned flag.
  */
 public class GridPoint extends ValuedPoint {
-  private boolean assigned = false;
+  private boolean assigned;
 
   /**
    * Instantiates a new grid point.

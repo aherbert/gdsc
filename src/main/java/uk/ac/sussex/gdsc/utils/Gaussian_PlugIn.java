@@ -43,7 +43,7 @@ public class Gaussian_PlugIn implements PlugIn {
   private static float y = 130;
   private static float sx = 20;
   private static float sy = 10;
-  private static float angle = 0f;
+  private static float angle;
   private static float noise = 10f;
 
   /** {@inheritDoc} */

@@ -52,7 +52,7 @@ public class ObjectAnalyzer3D {
   private boolean eightConnected;
   private int[] objectMask;
   private int maxObject;
-  private int minObjectSize = 0;
+  private int minObjectSize;
 
   private int[] offset;
 

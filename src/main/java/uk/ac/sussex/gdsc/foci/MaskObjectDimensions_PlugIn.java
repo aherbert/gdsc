@@ -60,13 +60,13 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
   private static final int SORT_AREA = 1;
   private static final int SORT_COM = 2;
 
-  private static double mergeDistance = 0;
+  private static double mergeDistance;
   private static boolean showOverlay = true;
   private static boolean clearTable = true;
-  private static boolean showVectors = false;
+  private static boolean showVectors;
   private static int sortMethod = SORT_VALUE;
 
-  private static TextWindow resultsWindow = null;
+  private static TextWindow resultsWindow;
 
   private ImagePlus imp;
 

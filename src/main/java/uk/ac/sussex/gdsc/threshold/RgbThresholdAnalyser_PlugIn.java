@@ -46,7 +46,7 @@ import java.io.File;
  */
 public class RgbThresholdAnalyser_PlugIn implements PlugIn {
   private static final String TITLE = "RGB Threshold Analyser";
-  private static TextWindow resultsWindow = null;
+  private static TextWindow resultsWindow;
 
   private static String dir1 = "";
   private static String dir2 = "";

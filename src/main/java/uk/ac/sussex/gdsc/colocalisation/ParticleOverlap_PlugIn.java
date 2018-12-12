@@ -56,16 +56,16 @@ public class ParticleOverlap_PlugIn implements PlugIn {
   private static String maskTitle1 = "";
   private static String imageTitle = "";
   private static String maskTitle2 = "";
-  private static boolean showTotal = false;
+  private static boolean showTotal;
   private static boolean showTable = true;
   private static String filename = "";
 
-  private static TextWindow tw = null;
+  private static TextWindow tw;
 
   private ImagePlus mask1Imp;
   private ImagePlus imageImp;
   private ImagePlus mask2Imp;
-  private OutputStreamWriter out = null;
+  private OutputStreamWriter out;
 
   @Override
   public void run(String arg) {

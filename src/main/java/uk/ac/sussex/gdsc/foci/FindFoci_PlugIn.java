@@ -114,20 +114,20 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   /** Get the title of the ImageJ plugin. */
   public static final String TITLE = "FindFoci";
 
-  private static TextWindow resultsWindow = null;
+  private static TextWindow resultsWindow;
 
   // Used to buffer the results to the TextWindow
   private final StringBuilder resultsBuffer = new StringBuilder();
-  private int resultsCount = 0;
-  private int flushCount = 0;
+  private int resultsCount;
+  private int flushCount;
 
-  private static List<FindFociResult> lastResultsArray = null;
+  private static List<FindFociResult> lastResultsArray;
 
   /**
    * Set to true if the Gaussian fit option is enabled. This requires the GDSC SMLM library to be
    * available.
    */
-  static int isGaussianFitEnabled = 0;
+  static int isGaussianFitEnabled;
 
   /** The new line string from System.getProperty("line.separator"). */
   private static final String NEW_LINE = System.getProperty("line.separator");
@@ -372,11 +372,11 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   private static LinkedHashMap<String, FindFociMemoryResults> memory = new LinkedHashMap<>();
 
   // The following are class variables for having shorter argument lists
-  private String resultsDirectory = null;
+  private String resultsDirectory;
 
   // Used to record all the results into a single file during batch analysis
-  private OutputStreamWriter allOut = null;
-  private String emptyEntry = null;
+  private OutputStreamWriter allOut;
+  private String emptyEntry;
   private FindFociBaseProcessor ffpStaged;
   private boolean optimisedProcessor = true;
   private AtomicInteger batchImages;

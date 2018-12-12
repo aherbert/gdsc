@@ -78,17 +78,17 @@ import java.util.logging.Logger;
  */
 public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
   private static String redirectTitle = "";
-  private static boolean particleSummary = false;
-  private static boolean saveHistogram = false;
+  private static boolean particleSummary;
+  private static boolean saveHistogram;
   private static String histogramFile = "";
   private ImagePlus restoreRedirectImp;
-  private BufferedWriter out = null;
-  private HashMap<Double, int[]> summaryHistogram = null;
+  private BufferedWriter out;
+  private HashMap<Double, int[]> summaryHistogram;
 
   private boolean useGetPixelValue;
   private float[] image;
   private float value;
-  private boolean noThreshold = false;
+  private boolean noThreshold;
   private double dmin;
   private double dmax;
 

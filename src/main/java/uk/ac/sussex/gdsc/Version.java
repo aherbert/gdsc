@@ -38,9 +38,9 @@ import java.util.regex.Pattern;
 public class Version {
   /** Constant for the string "unknown". */
   public static final String UNKNOWN = "";
-  private static String versionNumber = null;
-  private static String buildDate = null;
-  private static String buildNumber = null;
+  private static String versionNumber;
+  private static String buildDate;
+  private static String buildNumber;
 
   static {
     final Manifest manifest = loadManifest(Version.class);

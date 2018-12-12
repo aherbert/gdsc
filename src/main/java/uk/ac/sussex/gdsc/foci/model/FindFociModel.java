@@ -257,16 +257,16 @@ public class FindFociModel extends AbstractModelObject {
   private String selectedImage = "";
   private List<String> maskImageList = new ArrayList<>();
   private String maskImage = "";
-  private boolean changed = false;
+  private boolean changed;
 
   /**
    * Used to swap between the background parameter for absolute values and others.
    */
-  private double backgroundParameterMemory = 0;
+  private double backgroundParameterMemory;
   /**
    * Used to swap between the peak parameter for absolute values and others.
    */
-  private double peakParameterMemory = 0;
+  private double peakParameterMemory;
 
   /**
    * Default constructor.

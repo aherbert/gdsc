@@ -60,24 +60,24 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
   private static final int flags = DOES_16 + DOES_8G + NO_CHANGES + NO_UNDO;
   private static String input = "";
   private static double radius = 30;
-  private static int minSize = 0;
-  private static int maxSize = 0;
-  private static boolean eightConnected = false;
+  private static int minSize;
+  private static int maxSize;
+  private static boolean eightConnected;
   private static boolean removeSmallObjects = true;
-  private static boolean showObjects = false;
-  private static boolean showFoci = false;
-  private static boolean showDistances = false;
-  private static boolean showHistogram = false;
+  private static boolean showObjects;
+  private static boolean showFoci;
+  private static boolean showDistances;
+  private static boolean showHistogram;
 
-  private static TextWindow resultsWindow = null;
-  private static TextWindow summaryWindow = null;
-  private static TextWindow distancesWindow = null;
+  private static TextWindow resultsWindow;
+  private static TextWindow summaryWindow;
+  private static TextWindow distancesWindow;
 
   private ImagePlus imp;
   private ArrayList<int[]> results;
 
-  private static int size = 0;
-  private static ArrayList<Search[]> search = null;
+  private static int size;
+  private static ArrayList<Search[]> search;
 
   private static class Search {
     int x;

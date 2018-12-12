@@ -69,24 +69,24 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
   private ImagePlus imp;
   private ImageProcessor maskIp;
   private Label label;
-  private double min = 0;
-  private double max = 0;
-  private int spotChannel = 0;
-  private int thresholdChannel = 0;
-  private int noOfParticles = 0;
-  private boolean containsRoiMask = false;
+  private double min;
+  private double max;
+  private int spotChannel;
+  private int thresholdChannel;
+  private int noOfParticles;
+  private boolean containsRoiMask;
 
-  private static TextWindow results = null;
+  private static TextWindow results;
   private static boolean writeHeader = true;
 
-  private static int maskOption = 0;
+  private static int maskOption;
   private static double blur = 3;
   private static String thresholdMethod = AutoThreshold.Method.OTSU.toString();
   private static double minSize = 50;
-  private static boolean showParticles = false;
+  private static boolean showParticles;
   private static int maxPeaks = 1;
   private static double fraction = 0.9;
-  private static boolean showSpots = false;
+  private static boolean showSpots;
 
   /** {@inheritDoc} */
   @Override

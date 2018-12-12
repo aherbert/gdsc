@@ -109,22 +109,22 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
   };
   //@formatter:on
   private static int weight = 2;
-  private static int minSize = 0;
+  private static int minSize;
   private static boolean showMask = true;
-  private static boolean eliminateEdgeClusters = false;
+  private static boolean eliminateEdgeClusters;
   private static int border = 10;
-  private static boolean labelClusters = false;
-  private static boolean filterUsingPointROI = false;
+  private static boolean labelClusters;
+  private static boolean filterUsingPointROI;
   private static double filterRadius = 50;
-  private boolean myShowMask = false;
+  private boolean myShowMask;
 
-  private static TextWindow resultsWindow = null;
-  private static TextWindow summaryWindow = null;
-  private static TextWindow matchWindow = null;
+  private static TextWindow resultsWindow;
+  private static TextWindow summaryWindow;
+  private static TextWindow matchWindow;
   private static int resultId = 1;
 
   private ImagePlus imp;
-  private boolean[] edge = null;
+  private boolean[] edge;
   private AssignedPoint[] roiPoints;
   private List<FindFociResult> results;
   private List<Cluster> clusters;
@@ -133,7 +133,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
   private List<Cluster> filteredClusters;
   private MatchResult matchResult;
   private ColorModel cm;
-  private Label label = null;
+  private Label label;
 
   @Override
   public int setup(String arg, ImagePlus imp) {

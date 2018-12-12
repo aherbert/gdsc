@@ -115,16 +115,16 @@ public class FindFociHelperView extends JFrame
 
   // Flags used to control the enabled status of the run button.
   // The button should be enabled when there are images in the list.
-  private boolean runEnabled = false;
-  private int potentialMaxima = 0;
+  private boolean runEnabled;
+  private int potentialMaxima;
   private int resolution = 10;
   private boolean logging = true;
-  private int searchMode = 0;
+  private int searchMode;
   private boolean assignDragged = true;
   private String activeImage = "";
-  private int mappedPoints = 0;
-  private int unmappedPoints = 0;
-  private boolean showOverlay = false;
+  private int mappedPoints;
+  private int unmappedPoints;
+  private boolean showOverlay;
 
   private boolean counterEvents = true;
 
@@ -133,12 +133,12 @@ public class FindFociHelperView extends JFrame
   private FindFociModel model;
   private FindMaximaController controller;
 
-  private ImagePlus activeImp = null;
-  private GridPointManager manager = null;
-  private int currentRoiPoints = 0;
-  private boolean dragging = false;
-  private static TextWindow resultsWindow = null;
-  private Roi savedRoi = null;
+  private ImagePlus activeImp;
+  private GridPointManager manager;
+  private int currentRoiPoints;
+  private boolean dragging;
+  private static TextWindow resultsWindow;
+  private Roi savedRoi;
 
   private JPanel contentPane;
   private JLabel lblImage;

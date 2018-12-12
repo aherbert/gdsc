@@ -51,8 +51,8 @@ import java.util.List;
  * synchronised queueing method.
  */
 public class FindFociRunner extends Thread {
-  private FindFociModel model = null;
-  private FindFociModel previousModel = null;
+  private FindFociModel model;
+  private FindFociModel previousModel;
   private final Object lock = new Object();
   private final MessageListener listener;
 

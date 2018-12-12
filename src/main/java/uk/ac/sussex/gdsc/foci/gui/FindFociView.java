@@ -111,11 +111,11 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
   // Flags used to control the enabled status of the run button.
   // The button should be enabled when there are images in the list and the model has been changed.
-  private boolean validImages = false;
-  private boolean changed = false;
-  private boolean runEnabled = false;
-  private double backgroundLevel = 0;
-  private boolean sortIndexError = false;
+  private boolean validImages;
+  private boolean changed;
+  private boolean runEnabled;
+  private double backgroundLevel;
+  private boolean sortIndexError;
   private int oldSortIndex = -1;
   private final FindFociView instance = this;
 

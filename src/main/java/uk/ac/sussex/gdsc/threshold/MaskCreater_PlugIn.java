@@ -58,7 +58,7 @@ public class MaskCreater_PlugIn implements PlugIn {
       new String[] {"Use as mask", "Min Display Value", "Use ROI", "Threshold"};
 
   /** The option for using a mask. */
-  public static int OPTION_MASK = 0;
+  public static int OPTION_MASK;
 
   /** The option for using the min display value. */
   public static int OPTION_MIN_VALUE = 1;
@@ -84,26 +84,26 @@ public class MaskCreater_PlugIn implements PlugIn {
   private static String selectedImage = "";
   private static int selectedOption = OPTION_THRESHOLD;
   private static String selectedThresholdMethod = AutoThreshold.Method.OTSU.toString();
-  private static int selectedChannel = 0;
-  private static int selectedSlice = 0;
-  private static int selectedFrame = 0;
-  private static boolean selectedRemoveEdgeParticles = false;
-  private static int selectedMinParticleSize = 0;
+  private static int selectedChannel;
+  private static int selectedSlice;
+  private static int selectedFrame;
+  private static boolean selectedRemoveEdgeParticles;
+  private static int selectedMinParticleSize;
   private static boolean selectedStackHistogram = true;
-  private static boolean selectedAssignObjects = false;
-  private static boolean selectedEightConnected = false;
+  private static boolean selectedAssignObjects;
+  private static boolean selectedEightConnected;
 
   private ImagePlus imp;
   private int option;
   private String thresholdMethod;
-  private int channel = 0;
-  private int slice = 0;
-  private int frame = 0;
-  private boolean removeEdgeParticles = false;
-  private int minParticleSize = 0;
+  private int channel;
+  private int slice;
+  private int frame;
+  private boolean removeEdgeParticles;
+  private int minParticleSize;
   private boolean stackHistogram = true;
-  private boolean assignObjects = false;
-  private boolean eightConnected = false;
+  private boolean assignObjects;
+  private boolean eightConnected;
 
   /** {@inheritDoc} */
   @Override

@@ -157,10 +157,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
   /** Array storing a flag for each offset if the total shift is 1, e.g. 1,0,0 or 0,1,0. */
   protected boolean[] flatEdge;
-  private Rectangle bounds = null;
+  private Rectangle bounds;
 
   private boolean showStatus = true;
-  private Logger logger = null;
+  private Logger logger;
 
   /** marks point to be ignored in stage 1. */
   protected static final byte IGNORE = EXCLUDED | LISTED;

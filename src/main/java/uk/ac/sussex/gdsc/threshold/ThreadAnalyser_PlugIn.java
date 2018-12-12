@@ -64,27 +64,27 @@ import java.util.List;
  */
 public class ThreadAnalyser_PlugIn implements PlugIn {
   private static String TITLE = "Thread Analyser";
-  private static TextWindow resultsWindow = null;
+  private static TextWindow resultsWindow;
   private static boolean writeHeader = true;
 
   private static String[] ignoreSuffix =
       new String[] {"EDM", "SkeletonNodeMap", "SkeletonMap", "Threads", "Objects"};
 
   private static String image = "";
-  private static int imageChannel = 0;
+  private static int imageChannel;
   private static String maskImage = "";
-  private static int maskChannel = 0;
+  private static int maskChannel;
   private static String objectImage = "";
-  private static int objectChannel = 0;
+  private static int objectChannel;
   private static String method = AutoThreshold.Method.OTSU.toString();
   private static String resultDirectory = "";
-  private static int minLength = 0;
-  private static boolean showSkeleton = false;
+  private static int minLength;
+  private static boolean showSkeleton;
   private static boolean showSkeletonMap = true;
-  private static boolean showSkeletonImage = false;
-  private static boolean showSkeletonEDM = false;
-  private static boolean showObjectImage = false;
-  private static boolean labelThreads = false;
+  private static boolean showSkeletonImage;
+  private static boolean showSkeletonEDM;
+  private static boolean showObjectImage;
+  private static boolean labelThreads;
 
   /** {@inheritDoc} */
   @Override

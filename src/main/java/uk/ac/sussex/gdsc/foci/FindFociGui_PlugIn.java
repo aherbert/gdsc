@@ -50,13 +50,13 @@ import javax.swing.WindowConstants;
  * Provides a permanent form front-end for the FindFoci plugin filter.
  */
 public class FindFociGui_PlugIn implements PlugIn {
-  private static FindFociView instance = null;
+  private static FindFociView instance;
 
   private class FindFociListener implements WindowListener, ImageListener, PropertyChangeListener {
     FindFociModel model;
     FindFociView instance;
-    int currentChannel = 0;
-    int currentFrame = 0;
+    int currentChannel;
+    int currentFrame;
 
     FindFociListener(FindFociModel model) {
       this.model = model;

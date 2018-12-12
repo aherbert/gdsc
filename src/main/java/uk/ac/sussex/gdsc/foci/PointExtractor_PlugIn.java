@@ -53,10 +53,10 @@ public class PointExtractor_PlugIn implements PlugInFilter {
   private static String filename = "";
   private static boolean xyz = true;
 
-  private PointRoi[] pointRois = null;
+  private PointRoi[] pointRois;
 
   private static boolean useManager = true;
-  private static boolean reset = false;
+  private static boolean reset;
 
   private ImagePlus imp;
 

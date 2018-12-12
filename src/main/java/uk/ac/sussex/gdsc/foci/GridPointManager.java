@@ -41,7 +41,7 @@ public class GridPointManager {
   private final int resolution;
   private int minX = Integer.MAX_VALUE;
   private int minY = Integer.MAX_VALUE;
-  private int searchMode = 0;
+  private int searchMode;
 
   /**
    * Define the search modes for the {@link #findUnassignedPoint(int, int)} method.

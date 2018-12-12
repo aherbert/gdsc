@@ -111,7 +111,7 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
   private Flag flag;
 
   private class Worker implements Runnable {
-    boolean stop = false;
+    boolean stop;
     final Flag flag;
 
     Worker(Flag flag) {

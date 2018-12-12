@@ -52,7 +52,7 @@ public class CdaWorker implements Runnable {
   private final int[] ii1;
   private final int[] ii2;
 
-  private volatile boolean finished = false;
+  private volatile boolean finished;
 
   /**
    * Instantiates a new CDA worker.

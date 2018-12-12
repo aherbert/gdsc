@@ -69,7 +69,7 @@ public class OptimiserView extends JFrame {
 
   // Flags used to control the enabled status of the run button.
   // The button should be enabled when there are images in the list.
-  private boolean runEnabled = false;
+  private boolean runEnabled;
 
   private FindFociModel model;
   private OptimiserController controller;

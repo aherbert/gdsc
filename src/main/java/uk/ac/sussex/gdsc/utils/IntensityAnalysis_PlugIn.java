@@ -61,7 +61,7 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
       DOES_8G + DOES_16 + NO_CHANGES + DOES_STACKS + PARALLELIZE_STACKS + FINAL_PROCESSING;
   private static int window = 4;
   private static int bitDepth = 16;
-  private static boolean debug = false;
+  private static boolean debug;
 
   private static TextWindow results;
 

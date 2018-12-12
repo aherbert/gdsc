@@ -54,10 +54,10 @@ import java.util.Arrays;
  */
 public class ForegroundAnalyser_PlugIn implements PlugInFilter {
   private static final String TITLE = "Foreground Analyser";
-  private static TextWindow resultsWindow = null;
+  private static TextWindow resultsWindow;
 
   private static String method = AutoThreshold.Method.OTSU.toString();
-  private static boolean showMask = false;
+  private static boolean showMask;
   private static boolean doStack = true;
   private static String[] BINS = {"256", "512", "1024", "2048", "4096", "8192", "16384"};
   private static int histogramBins = 4;

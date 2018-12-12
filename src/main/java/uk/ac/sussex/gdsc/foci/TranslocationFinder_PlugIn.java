@@ -67,7 +67,7 @@ import java.util.List;
  */
 public class TranslocationFinder_PlugIn implements PlugIn {
   private static String TITLE = "Translocation Finder";
-  private static TextWindow resultsWindow = null;
+  private static TextWindow resultsWindow;
   private static final int UNKNOWN = 0;
   private static final int NO_TRANSLOCATION = 1;
   private static final int TRANSLOCATION = 2;
@@ -80,7 +80,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
   private static double distance = 50;
   private static double minDistance = 8;
   private static double factor = 2;
-  private static boolean showMatches = false;
+  private static boolean showMatches;
 
   // Static fields hold information to draw the overlay and update the results table
 
@@ -622,11 +622,11 @@ public class TranslocationFinder_PlugIn implements PlugIn {
    */
   public class TranslocationFinderPluginTool extends PlugInTool {
     private final String[] items = Arrays.copyOf(CLASSIFICATION, CLASSIFICATION.length + 1);
-    private int imageId = 0;
+    private int imageId;
     private final int[] ox = new int[3];
     private final int[] oy = new int[3];
     private final int[] oz = new int[3];
-    private int points = 0;
+    private int points;
     private boolean prompt = true;
 
     /**
@@ -727,8 +727,8 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     }
   }
 
-  private static TranslocationFinder_PlugIn instance = null;
-  private static TranslocationFinderPluginTool toolInstance = null;
+  private static TranslocationFinder_PlugIn instance;
+  private static TranslocationFinderPluginTool toolInstance;
 
   /**
    * Initialise the manual translocation finder tool. This is to allow support for calling within

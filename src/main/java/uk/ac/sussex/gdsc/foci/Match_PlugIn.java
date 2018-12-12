@@ -95,25 +95,25 @@ public class Match_PlugIn implements PlugIn {
 
   private static String title1 = "";
   private static String title2 = "";
-  private static int dType = 0;
+  private static int dType;
   private static double distanceThreshold = 0.05;
 
   // For memory mode
   private static String name1 = "";
   private static String name2 = "";
   private static String[] unitTypes = new String[] {"Pixel", "Calibrated"};
-  private static int unitType = 0;
+  private static int unitType;
   private static double memoryThreshold = 5;
 
   private static String[] overlayTypes = new String[] {"None", "Colour", "Colour safe"};
   private static int overlay = 1;
-  private static boolean quartiles = false;
+  private static boolean quartiles;
   private static boolean scatter = true;
   private static boolean unmatchedDistribution = true;
-  private static boolean matchTable = false;
-  private static boolean saveMatches = false;
+  private static boolean matchTable;
+  private static boolean saveMatches;
   private static String filename = "";
-  private static int findFociImageIndex = 0;
+  private static int findFociImageIndex;
   //@formatter:off
   private static String[] findFociResult = new String[] {
       "Intensity",
@@ -124,26 +124,26 @@ public class Match_PlugIn implements PlugIn {
       "Max value",
       "Highest saddle value", };
   //@formatter:on
-  private static int findFociResultChoiceIndex = 0;
+  private static int findFociResultChoiceIndex;
 
   private static boolean writeHeader = true;
   private static boolean writeUnmatchedHeader = true;
   private static boolean writeMatchedHeader = true;
 
-  private static TextWindow resultsWindow = null;
-  private static TextWindow unmatchedWindow = null;
-  private static TextWindow matchedWindow = null;
-  private boolean memoryMode = false;
-  private boolean fileMode = false;
-  private boolean imageMode = false;
+  private static TextWindow resultsWindow;
+  private static TextWindow unmatchedWindow;
+  private static TextWindow matchedWindow;
+  private boolean memoryMode;
+  private boolean fileMode;
+  private boolean imageMode;
   private static int channel1 = 1;
   private static int frame1 = 1;
   private static int channel2 = 1;
   private static int frame2 = 1;
   private String t1 = "";
   private String t2 = "";
-  private Coordinate[] actualPoints = null;
-  private Coordinate[] predictedPoints = null;
+  private Coordinate[] actualPoints;
+  private Coordinate[] predictedPoints;
 
   // For memory mode
   private String unit;

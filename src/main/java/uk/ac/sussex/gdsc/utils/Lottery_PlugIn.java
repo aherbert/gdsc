@@ -42,7 +42,7 @@ public class Lottery_PlugIn implements PlugIn {
   private static int numbers = 59;
   private static int pick = 6;
   private static int match = 3;
-  private static long simulations = 0;
+  private static long simulations;
 
   /** {@inheritDoc} */
   @Override

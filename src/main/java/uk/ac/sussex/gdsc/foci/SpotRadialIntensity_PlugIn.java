@@ -55,14 +55,14 @@ import java.util.List;
  */
 public class SpotRadialIntensity_PlugIn implements PlugIn {
   private static final String TITLE = "Spot Radial Intensity";
-  private static TextWindow resultsWindow = null;
+  private static TextWindow resultsWindow;
 
   private static String resultsName = "";
   private static String maskImage = "";
   private static int distance = 10;
   private static double interval = 1;
-  private static boolean showFoci = false;
-  private static boolean showObjects = false;
+  private static boolean showFoci;
+  private static boolean showObjects;
   private static boolean showTable = true;
   private static boolean showPlot = true;
 

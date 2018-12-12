@@ -45,7 +45,7 @@ import java.util.List;
  */
 public class FindMaximaController extends ImageJController {
   private List<FindFociResult> resultsArray = new ArrayList<>();
-  private ImageStack activeImageStack = null;
+  private ImageStack activeImageStack;
   private int activeChannel = 1;
   private int activeFrame = 1;
 

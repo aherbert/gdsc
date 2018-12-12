@@ -70,7 +70,7 @@ public class DifferenceOfGaussians extends GaussianBlur {
   /** The ImagePlus of the setup call, needed to get the spatial calibration. */
   private ImagePlus imp;
   /** Whether the image has an x&y scale. */
-  private boolean hasScale = false;
+  private boolean hasScale;
   /** The number of passes (filter directions * color channels * stack slices). */
   private int passes = 1;
   private int pass; // Current pass
@@ -80,22 +80,22 @@ public class DifferenceOfGaussians extends GaussianBlur {
   private Checkbox previewCheckbox;
   // Flag used by the preview to indicate that further changes to the parameters will occur.
   // Setting this to true will cause the next invocation of run() to do nothing.
-  private boolean ignoreChange = false;
-  private boolean preview = false;
+  private boolean ignoreChange;
+  private boolean preview;
 
   private boolean computeSigma1 = true;
   private boolean computeSigma2 = true;
-  private ImageProcessor ip1 = null;
-  private ImageProcessor ip2 = null;
-  private PlugInFilterRunner pfr = null;
+  private ImageProcessor ip1;
+  private ImageProcessor ip2;
+  private PlugInFilterRunner pfr;
   private int currentSliceNumber = -1;
-  private double percentInternal = 0;
-  private long lastTime = 0;
+  private double percentInternal;
+  private long lastTime;
 
   /**
    * Set to true to suppress progress reporting to the ImageJ window.
    */
-  private boolean noProgress = false;
+  private boolean noProgress;
 
   /**
    * Method to return types supported.

@@ -61,7 +61,7 @@ import java.util.List;
  */
 public class SpotDensity_PlugIn implements PlugIn {
   private static final String TITLE = "Spot Density";
-  private static TextWindow resultsWindow = null;
+  private static TextWindow resultsWindow;
 
   private static String resultsName1 = "";
   private static String resultsName2 = "";

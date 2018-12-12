@@ -35,7 +35,7 @@ public abstract class FindFociController implements Runnable {
   /**
    * Used to pass messages about the processing state.
    */
-  protected MessageListener listener = null;
+  protected MessageListener listener;
 
   /**
    * Contains the model defining the parameters for the FindFoci algorithm.

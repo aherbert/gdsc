@@ -60,14 +60,14 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
   private static String imageTitle2 = "";
   private static int cImage1 = 1;
   private static int cImage2 = 2;
-  private static boolean eightConnected = false;
-  private static int minSize = 0;
+  private static boolean eightConnected;
+  private static int minSize;
   private static boolean showDataTable = true;
-  private static boolean showPlot = false;
-  private static boolean showObjects = false;
+  private static boolean showPlot;
+  private static boolean showObjects;
 
-  private static TextWindow twSummary = null;
-  private static TextWindow twDataTable = null;
+  private static TextWindow twSummary;
+  private static TextWindow twDataTable;
 
   private ImagePlus maskImp;
   private ImagePlus imageImp1;

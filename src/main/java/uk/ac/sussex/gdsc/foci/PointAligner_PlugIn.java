@@ -59,7 +59,7 @@ import java.util.List;
  */
 public class PointAligner_PlugIn implements PlugIn {
   private static String TITLE = "Point Aligner";
-  private static TextWindow resultsWindow = null;
+  private static TextWindow resultsWindow;
 
   private static String resultTitle = "-";
   private static String maskImage = "";
@@ -68,11 +68,11 @@ public class PointAligner_PlugIn implements PlugIn {
   private static int limitMethod = 4;
   private static double factor = 15;
   private static boolean logAlignments = true;
-  private static boolean showMoved = false;
-  private static boolean updateRoi = false;
+  private static boolean showMoved;
+  private static boolean updateRoi;
   private static boolean showOverlay = true;
   private static boolean updateOverlay = true;
-  private static boolean showUnaligned = false;
+  private static boolean showUnaligned;
   private static int unalignedBorder = 10;
   private static String resultsDirectory = "";
 

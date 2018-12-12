@@ -44,7 +44,7 @@ public class PlotResults {
   private String plotTitle = "";
   private String plotYTitle = "";
   private String plotXTitle = "";
-  private double[] probabilityLimits = null;
+  private double[] probabilityLimits;
   private String significanceTest = "";
   private double[] normalisedHistogram;
   private double[] sampleData;

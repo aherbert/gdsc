@@ -151,13 +151,13 @@ public class FindFociOptimiser_PlugIn
   /** The maximum errors when reading a file. */
   private static final int MAX_ERROR = 5;
 
-  private static TextWindow resultsWindow = null;
+  private static TextWindow resultsWindow;
   private static int stepLimit = 10000;
 
   private static String myMaskImage = "";
   private static boolean myBackgroundStdDevAboveMean = true;
   private static boolean myBackgroundAuto = true;
-  private static boolean myBackgroundAbsolute = false;
+  private static boolean myBackgroundAbsolute;
   private static String myBackgroundParameter = "2.5, 3.5, 0.5";
   private static String myThresholdMethod = AutoThreshold.Method.OTSU.toString();
   private static String myStatisticsMode = "Both";
@@ -166,7 +166,7 @@ public class FindFociOptimiser_PlugIn
   private static String mySearchParameter = "0, 0.6, 0.2";
   private static String myMinSizeParameter = "1, 9, 2";
   private static String[] saddleOptions = {"Yes", "Yes - Connected", "No", "All"};
-  private static int myMinimumAboveSaddle = 0;
+  private static int myMinimumAboveSaddle;
   private static int myPeakMethod = FindFociProcessor.PEAK_RELATIVE_ABOVE_BACKGROUND;
   private static String myPeakParameter = "0, 0.6, 0.2";
   private static String mySortMethod = "" + FindFociProcessor.SORT_INTENSITY;
@@ -188,12 +188,12 @@ public class FindFociOptimiser_PlugIn
   private static int scoringMode = Prefs.getInt(SCORING_MODE, SCORE_RAW);
   private static boolean reuseResults = Prefs.getBoolean(REUSE_RESULTS, true);
 
-  private static int myMatchSearchMethod = 0;
+  private static int myMatchSearchMethod;
   private static double myMatchSearchDistance = 0.05;
   private static int myResultsSortMethod = SORT_JACCARD;
   private static double myBeta = 4.0;
   private static int myMaxResults = 100;
-  private static boolean myShowScoreImages = false;
+  private static boolean myShowScoreImages;
   private static String myResultFile = "";
 
   // Stored to allow the display of any of the latest results from the result table
@@ -205,8 +205,8 @@ public class FindFociOptimiser_PlugIn
   private static OptimiserView instance;
 
   private int[] optionsArray = {};
-  private String[] thresholdMethods = null;
-  private String[] statsModes = null;
+  private String[] thresholdMethods;
+  private String[] statsModes;
   private int[] backgroundMethodArray = {};
   private double myBackgroundParameterMin;
   private double myBackgroundParameterMax;
@@ -234,7 +234,7 @@ public class FindFociOptimiser_PlugIn
   private int[] myCentreParameterIntervalArray;
 
   // For the multi-image mode
-  private boolean multiMode = false;
+  private boolean multiMode;
 
   @SuppressWarnings("rawtypes")
   private Vector checkbox;
@@ -2849,7 +2849,7 @@ public class FindFociOptimiser_PlugIn
   private abstract class Counter {
     final int total;
     final int progressSize;
-    int next = 0;
+    int next;
 
     public Counter(int total) {
       this.total = total;
@@ -2882,7 +2882,7 @@ public class FindFociOptimiser_PlugIn
   }
 
   private class StandardCounter extends Counter {
-    int step = 0;
+    int step;
 
     public StandardCounter(int total) {
       super(total);
@@ -2939,7 +2939,7 @@ public class FindFociOptimiser_PlugIn
     Counter counter;
 
     /** The result. */
-    OptimiserResult result = null;
+    OptimiserResult result;
 
     /**
      * Instantiates a new optimisation worker.
@@ -3307,7 +3307,7 @@ public class FindFociOptimiser_PlugIn
   private String[] settingsNames;
   private ArrayList<DialogSettings> settings;
 
-  private long lastTime = 0;
+  private long lastTime;
   private boolean custom = true;
 
   // Store the preset values for the Text fields, Choices, Numeric field.

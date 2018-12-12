@@ -54,20 +54,20 @@ import java.util.Comparator;
 public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
   private static final String TITLE = "Spot Pairs";
-  private static TextWindow resultsWindow = null;
+  private static TextWindow resultsWindow;
 
   private static double radius = 10;
   private static boolean addOverlay = true;
-  private static boolean killRoi = false;
+  private static boolean killRoi;
 
   // Cache the ROI when we remove it so it can be reused
-  private static ImagePlus lastImp = null;
-  private static Roi lastRoi = null;
+  private static ImagePlus lastImp;
+  private static Roi lastRoi;
 
   private Calibration cal;
   private AssignedPoint[] points;
   private ArrayList<Cluster> candidates;
-  private boolean addedOverlay = false;
+  private boolean addedOverlay;
 
   /**
    * Used to store information about a cluster in the clustering analysis.

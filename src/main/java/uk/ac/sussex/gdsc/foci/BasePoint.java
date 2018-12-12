@@ -37,13 +37,13 @@ import uk.ac.sussex.gdsc.core.match.Coordinate;
  */
 public class BasePoint implements Coordinate {
   /** The x. */
-  protected int x = 0;
+  protected int x;
 
   /** The y. */
-  protected int y = 0;
+  protected int y;
 
   /** The z. */
-  protected int z = 0;
+  protected int z;
 
   /**
    * Instantiates a new base point.

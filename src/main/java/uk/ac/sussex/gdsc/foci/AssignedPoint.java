@@ -29,10 +29,10 @@ package uk.ac.sussex.gdsc.foci;
  */
 public class AssignedPoint extends BasePoint {
   /** The id. */
-  protected int id = 0;
+  protected int id;
 
   /** The assigned id. */
-  protected int assignedId = 0;
+  protected int assignedId;
 
   /**
    * Instantiates a new assigned point.

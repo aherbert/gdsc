@@ -67,7 +67,7 @@ public class TimeValuePointManager {
   private static final String NEW_LINE = System.getProperty("line.separator");
 
   private final String filename;
-  private FileType type = null;
+  private FileType type;
 
   // Used to parse the input file
   private int[] fields;

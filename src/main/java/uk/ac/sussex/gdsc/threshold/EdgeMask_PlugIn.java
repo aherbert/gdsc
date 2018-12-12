@@ -97,7 +97,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
   private double maxDisplayValue;
   private static double background;
   private static double smooth = 1;
-  private static int method = 0;
+  private static int method;
   private static double lowerPercentile = 99.0;
   private static double upperPercentile = 99.7;
   private static boolean prune;
@@ -106,11 +106,11 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
   private static double percent = Prefs.getDouble("gdsc.EdgeMaskPercent", 99);
 
   private static final int FLAGS = DOES_8G | DOES_16 | DOES_32 | FINAL_PROCESSING;
-  private int flags2 = 0;
+  private int flags2;
 
   // image dimensions
-  private int maxx = 0;
-  private int maxy = 0;
+  private int maxx;
+  private int maxy;
   private int xlimit;
   private int ylimit;
   private int[] offset;

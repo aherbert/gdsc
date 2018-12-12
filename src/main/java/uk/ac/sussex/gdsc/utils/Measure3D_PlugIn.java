@@ -70,7 +70,7 @@ public class Measure3D_PlugIn extends PlugInFrame {
 
   private GridBagLayout mainGrid;
   private GridBagConstraints constraints;
-  private int row = 0;
+  private int row;
   private Label[] labels;
   private Checkbox overlayCheckbox;
 

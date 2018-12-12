@@ -155,8 +155,8 @@ public class About_PlugIn implements PlugIn {
     }
   }
 
-  private static boolean addSpacer = false;
-  private static boolean installed = false;
+  private static boolean addSpacer;
+  private static boolean installed;
 
   private static boolean installPlugins() {
     if (installed) {

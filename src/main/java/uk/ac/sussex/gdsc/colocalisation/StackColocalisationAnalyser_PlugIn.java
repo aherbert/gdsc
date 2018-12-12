@@ -67,13 +67,13 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
   private static String methodOption = AutoThreshold.Method.OTSU.toString();
   private static int channel1 = 1;
   private static int channel2 = 2;
-  private static int channel3 = 0;
+  private static int channel3;
 
   // Options flags
-  private static boolean logThresholds = false;
-  private static boolean logResults = false;
-  private static boolean showMask = false;
-  private static boolean subtractThreshold = false;
+  private static boolean logThresholds;
+  private static boolean logResults;
+  private static boolean showMask;
+  private static boolean subtractThreshold;
 
   private static int permutations = 100;
   private static int minimumRadius = 9;
