@@ -335,7 +335,6 @@ public class MaskCreater_PlugIn implements PlugIn {
             final int index = (f) * nChannels * nSlices + (slice - 1) * nChannels + c + 1;
             result.setPixels(ip.getPixels(), index);
           }
-
         } // End channel
       } // End frame
 

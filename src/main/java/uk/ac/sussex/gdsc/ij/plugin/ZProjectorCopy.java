@@ -644,7 +644,6 @@ public class ZProjectorCopy implements PlugIn {
     void postProcess() {
       // Do nothing
     }
-
   } // end RayFunction
 
   /** Compute average intensity projection. */
@@ -694,7 +693,6 @@ public class ZProjectorCopy implements PlugIn {
         fpixels[i] /= fnum;
       }
     }
-
   } // end AverageIntensity
 
   /** Compute max intensity projection. */
@@ -741,7 +739,6 @@ public class ZProjectorCopy implements PlugIn {
         }
       }
     }
-
   } // end MaxIntensity
 
   /** Compute min intensity projection. */
@@ -788,7 +785,6 @@ public class ZProjectorCopy implements PlugIn {
         }
       }
     }
-
   } // end MaxIntensity
 
   /** Compute standard deviation projection. */
@@ -854,7 +850,6 @@ public class ZProjectorCopy implements PlugIn {
         }
       }
     }
-
   } // end StandardDeviation
 
 } // end ZProjection.

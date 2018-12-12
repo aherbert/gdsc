@@ -298,5 +298,4 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
     sb.append('\t').append(IJ.d2s(area[threshold], 5));
     sb.append('\t').append(IJ.d2s(intensity[threshold], 5));
   }
-
 }

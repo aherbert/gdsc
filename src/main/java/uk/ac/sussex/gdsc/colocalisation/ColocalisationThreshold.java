@@ -405,7 +405,6 @@ public class ColocalisationThreshold {
         }
       }
     }
-
   }
 
   private boolean findThreshold(int[] i1, int[] i2, int lowerThreshold, int upperThreshold,
