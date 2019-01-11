@@ -113,7 +113,8 @@ public class GaussianFit_PlugIn implements PlugInFilter {
     }
 
     if (!fittingEnabled) {
-      ImageJPluginLoggerHelper.getLogger(GaussianFit_PlugIn.class.getName()).warning(errorMessage);
+      ImageJPluginLoggerHelper.getLogger(GaussianFit_PlugIn.class.getName()).log(Level.WARNING,
+          () -> ERROR_MESSAGE + ". The GDSC 2D Gaussian fit functionality will be disabled.");
     }
   }
 
