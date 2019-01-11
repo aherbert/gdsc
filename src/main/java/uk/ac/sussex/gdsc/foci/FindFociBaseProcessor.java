@@ -679,8 +679,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
         peakParameter, initResults.stats, saddlePoints);
   }
 
-  private static FindFociSaddleList[] copyFindFociSaddleLists(
-      final FindFociSaddleList[] originalSaddlePoints) {
+  private static FindFociSaddleList[]
+      copyFindFociSaddleLists(final FindFociSaddleList[] originalSaddlePoints) {
     final FindFociSaddleList[] saddlePoints = new FindFociSaddleList[originalSaddlePoints.length];
     // Ignore first position
     for (int i = 1; i < originalSaddlePoints.length; i++) {
@@ -1411,8 +1411,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
     sb.setLength(0);
     if (exclusion > 0) {
-      sb.append("Background stats (mode=").append(FindFoci_PlugIn.getStatisticsMode(options))
-          .append(") : Min = ");
+      sb.append("Background stats (mode=")
+          .append(FindFoci_PlugIn.getStatisticsModeFromOptions(options)).append(") : Min = ");
     } else {
       sb.append("Background stats : Min = ");
     }
@@ -5094,7 +5094,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
     // Used to look-up x,y,z from a single index
     maxxByMaxy = maxx * maxy;
-    maxxByMaxyByMaxz = maxx * maxy * maxz;
+    maxxByMaxyByMaxz = maxxByMaxy * maxz;
 
     xlimit = maxx - 1;
     ylimit = maxy - 1;

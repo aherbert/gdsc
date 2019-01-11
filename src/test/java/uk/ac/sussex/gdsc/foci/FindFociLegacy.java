@@ -50,6 +50,7 @@ import java.util.LinkedList;
  * <p>This is an old version of the FindFoci algorithm before it was converted to allow 32-bit
  * images. It is used for unit testing to ensure the new version functions correctly.
  */
+// @CHECKSTYLE.OFF
 @SuppressWarnings({"javadoc"})
 public class FindFociLegacy {
   private static final String TITLE = "FindFoci Legacy";
@@ -171,7 +172,7 @@ public class FindFociLegacy {
    */
   public static final int OUTPUT_MASK_THRESHOLD = 32;
   /**
-   * Create an output mask showing only pixels above the peak's highest saddle value
+   * Create an output mask showing only pixels above the peak's highest saddle value.
    */
   public static final int OUTPUT_MASK_ABOVE_SADDLE = 64;
   /**
@@ -181,11 +182,11 @@ public class FindFociLegacy {
   public static final int OUTPUT_MASK_NO_PEAK_DOTS = 128;
   /**
    * Create an output mask showing only the pixels contributing to a cumulative fraction of the
-   * peak's total intensity
+   * peak's total intensity.
    */
   public static final int OUTPUT_MASK_FRACTION_OF_INTENSITY = 256;
   /**
-   * Create an output mask showing only pixels above a fraction of the peak's highest value
+   * Create an output mask showing only pixels above a fraction of the peak's highest value.
    */
   public static final int OUTPUT_MASK_FRACTION_OF_HEIGHT = 512;
   /**
@@ -236,7 +237,7 @@ public class FindFociLegacy {
   public static final int STATS_SUM = 4;
   /**
    * The index of the image background level in the results statistics array (see
-   * {@link #BACKGROUND_AUTO_THRESHOLD})
+   * {@link #BACKGROUND_AUTO_THRESHOLD}).
    */
   public static final int STATS_BACKGROUND = 5;
   /**
@@ -262,77 +263,77 @@ public class FindFociLegacy {
 
   /**
    * The index of the peak X coordinate within the result int[] array of the results
-   * ArrayList<int[]> object
+   * object.
    */
   public static final int RESULT_X = 0;
   /**
    * The index of the peak Y coordinate within the result int[] array of the results
-   * ArrayList<int[]> object
+   * object.
    */
   public static final int RESULT_Y = 1;
   /**
    * The index of the peak Z coordinate within the result int[] array of the results
-   * ArrayList<int[]> object
+   * object.
    */
   public static final int RESULT_Z = 2;
   /**
    * The index of the internal ID used during the FindFoci routine within the result int[] array of
-   * the results ArrayList<int[]> object. This can be ignored.
+   * the results object. This can be ignored.
    */
   public static final int RESULT_PEAK_ID = 3;
   /**
    * The index of the number of pixels in the peak within the result int[] array of the results
-   * ArrayList<int[]> object
+   * object.
    */
   public static final int RESULT_COUNT = 4;
   /**
    * The index of the sum of the peak intensity within the result int[] array of the results
-   * ArrayList<int[]> object
+   * object.
    */
   public static final int RESULT_INTENSITY = 5;
   /**
    * The index of the peak maximum value within the result int[] array of the results
-   * ArrayList<int[]> object
+   * object.
    */
   public static final int RESULT_MAX_VALUE = 6;
   /**
    * The index of the peak highest saddle point within the result int[] array of the results
-   * ArrayList<int[]> object
+   * object.
    */
   public static final int RESULT_HIGHEST_SADDLE_VALUE = 7;
   /**
    * The index of the peak highest saddle point within the result int[] array of the results
-   * ArrayList<int[]> object
+   * object.
    */
   public static final int RESULT_SADDLE_NEIGHBOUR_ID = 8;
   /**
    * The index of the average of the peak intensity within the result int[] array of the results
-   * ArrayList<int[]> object
+   * object.
    */
   public static final int RESULT_AVERAGE_INTENSITY = 9;
   /**
    * The index of the sum of the peak intensity above the background within the result int[] array
-   * of the results ArrayList<int[]> object
+   * of the results object.
    */
   public static final int RESULT_INTENSITY_MINUS_BACKGROUND = 10;
   /**
    * The index of the sum of the peak intensity within the result int[] array of the results
-   * ArrayList<int[]> object
+   * object.
    */
   public static final int RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND = 11;
   /**
    * The index of the number of pixels in the peak above the highest saddle within the result int[]
-   * array of the results ArrayList<int[]> object
+   * array of the results object.
    */
   public static final int RESULT_COUNT_ABOVE_SADDLE = 12;
   /**
    * The index of the sum of the peak intensity above the highest saddle within the result int[]
-   * array of the results ArrayList<int[]> object
+   * array of the results object.
    */
   public static final int RESULT_INTENSITY_ABOVE_SADDLE = 13;
   /**
    * The index of the custom sort value within the result int[] array of the results
-   * ArrayList<int[]> object. This is used internally to sort the results using values not stored in
+   * object. This is used internally to sort the results using values not stored in
    * the result array.
    */
   private static final int RESULT_CUSTOM_SORT_VALUE = 14;
@@ -421,11 +422,11 @@ public class FindFociLegacy {
    */
   public static final int OPTION_MINIMUM_ABOVE_SADDLE = 1;
   /**
-   * Calculate the statistics using the pixels outside the ROI/Mask (default is all pixels)
+   * Calculate the statistics using the pixels outside the ROI/Mask (default is all pixels).
    */
   public static final int OPTION_STATS_OUTSIDE = 2;
   /**
-   * Calculate the statistics using the pixels inside the ROI/Mask (default is all pixels)
+   * Calculate the statistics using the pixels inside the ROI/Mask (default is all pixels).
    */
   public static final int OPTION_STATS_INSIDE = 4;
   /**
@@ -434,7 +435,7 @@ public class FindFociLegacy {
   public static final int OPTION_REMOVE_EDGE_MAXIMA = 8;
   /**
    * Identify all connected non-zero mask pixels with the same value as objects and label the maxima
-   * as belonging to each object
+   * as belonging to each object.
    */
   public static final int OPTION_OBJECT_ANALYSIS = 16;
   /**

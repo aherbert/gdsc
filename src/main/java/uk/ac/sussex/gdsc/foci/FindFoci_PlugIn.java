@@ -33,6 +33,7 @@ import uk.ac.sussex.gdsc.core.logging.LoggerUtils;
 import uk.ac.sussex.gdsc.core.logging.Ticker;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.MemoryUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.core.utils.TurboList;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
@@ -75,6 +76,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -130,7 +132,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   static int isGaussianFitEnabled;
 
   /** The new line string from System.getProperty("line.separator"). */
-  private static final String NEW_LINE = System.getProperty("line.separator");
+  private static final String NEW_LINE = System.lineSeparator();
 
   private static final String BATCH_INPUT_DIRECTORY = "findfoci.batchInputDirectory";
   private static final String BATCH_MASK_DIRECTORY = "findfoci.batchMaskDirectory";
@@ -375,7 +377,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   private String resultsDirectory;
 
   // Used to record all the results into a single file during batch analysis
-  private OutputStreamWriter allOut;
+  private BufferedWriter allOut;
   private String emptyEntry;
   private FindFociBaseProcessor ffpStaged;
   private boolean optimisedProcessor = true;
@@ -415,7 +417,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
     int[] mask = new int[3];
     boolean originalTitle;
 
-    public BatchParameters(String filename) throws IOException, NumberFormatException {
+    public BatchParameters(String filename) throws IOException {
       readParameters(filename);
 
       // Read all the parameters
@@ -812,6 +814,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
    *
    * @param index the index
    * @return the statistics mode
+   * @see #getStatisticsModeFromOptions(int)
    */
   public static String getStatisticsMode(int index) {
     return statisticsModes[index];
@@ -845,11 +848,11 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
     }
 
     // Build a list of the open images
-    final ArrayList<String> newImageList = buildMaskList(imp);
+    final List<String> newImageList = buildMaskList(imp);
 
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
-    gd.addChoice("Mask", newImageList.toArray(new String[0]), myMaskImage);
+    gd.addChoice("Mask", newImageList.toArray(new String[newImageList.size()]), myMaskImage);
     gd.addMessage("Background options ...");
     gd.addChoice("Background_method", backgroundMethods, backgroundMethods[myBackgroundMethod]);
     gd.addNumericField("Background_parameter", myBackgroundParameter, 0);
@@ -1037,7 +1040,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
    * @param imp the image
    * @return the array list
    */
-  public static ArrayList<String> buildMaskList(ImagePlus imp) {
+  public static List<String> buildMaskList(ImagePlus imp) {
     final ArrayList<String> newImageList = new ArrayList<>();
     newImageList.add("(None)");
 
@@ -1447,13 +1450,13 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
     return maxImp;
   }
 
-  private String openBatchResultsFile() {
-    final String filename = resultsDirectory + File.separatorChar + "all.xls";
+  private Path openBatchResultsFile() {
+    final Path path = Paths.get(resultsDirectory, "all.xls");
     try {
-      final FileOutputStream fos = new FileOutputStream(filename);
-      allOut = new OutputStreamWriter(fos, "UTF-8");
-      allOut.write("Image ID\tImage\t" + createResultsHeader(NEW_LINE));
-      return filename;
+      allOut = Files.newBufferedWriter(path);
+      allOut.write("Image ID\tImage\t");
+      allOut.write(createResultsHeader(NEW_LINE));
+      return path;
     } catch (final Exception ex) {
       logError(ex.getMessage());
       closeBatchResultsFile();
@@ -1474,7 +1477,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
     }
   }
 
-  private class BatchResult implements Comparable<BatchResult> {
+  private static class BatchResult {
     final String entry;
     final int id;
     final int batchId;
@@ -1487,16 +1490,13 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
       batchId = Integer.parseInt(entry.substring(0, index));
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public int compareTo(BatchResult that) {
-      final int result = this.batchId - that.batchId;
-      return (result == 0) ? this.id - that.id : result;
+    static int compare(BatchResult r1, BatchResult r2) {
+      final int result = Integer.compare(r1.batchId, r2.batchId);
+      return (result == 0) ? 0 : Integer.compare(r1.id, r2.id);
     }
   }
 
-  private void sortBatchResultsFile(String filename) {
-    final Path path = new File(filename).toPath();
+  private static void sortBatchResultsFile(Path path) {
     ArrayList<BatchResult> results = new ArrayList<>();
     String header = null;
     try (final BufferedReader input = Files.newBufferedReader(path)) {
@@ -1511,9 +1511,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
       results.clear();
       results = null;
       // Try and free the memory
-      final Runtime runtime = Runtime.getRuntime();
-      runtime.runFinalization();
-      runtime.gc();
+      MemoryUtils.runGarbageCollectorOnce();
       logError(ex.getMessage());
       return;
     } catch (final Exception ex) {
@@ -1521,9 +1519,9 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
       return;
     }
 
-    Collections.sort(results);
+    Collections.sort(results, BatchResult::compare);
 
-    try (final BufferedWriter out = Files.newBufferedWriter(new File(filename).toPath())) {
+    try (final BufferedWriter out = Files.newBufferedWriter(path)) {
       // Add new lines because Buffered reader strips them
       out.write(header);
       out.write(NEW_LINE);
@@ -1589,7 +1587,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
       FindFociStatistics stats, String resultsDirectory, ObjectAnalysisResult objectAnalysisResult,
       String batchPrefix) {
     try (final BufferedWriter out =
-        Files.newBufferedWriter(new File(resultsDirectory, expId + ".xls").toPath())) {
+        Files.newBufferedWriter(Paths.get(resultsDirectory, expId + ".xls"))) {
       // Save results to file
       if (imageDimension == null) {
         imageDimension = new int[] {imp.getC(), 0, imp.getT()};
@@ -1713,7 +1711,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
         autoThresholdMethod = "(None)";
       }
       writeParam(out, "Auto_threshold", autoThresholdMethod);
-      writeParam(out, "Statistics_mode", getStatisticsMode(options));
+      writeParam(out, "Statistics_mode", getStatisticsModeFromOptions(options));
       writeParam(out, "Search_method", searchMethods[searchMethod]);
       writeParam(out, "Search_parameter", Double.toString(searchParameter));
       writeParam(out, "Minimum_size", Integer.toString(minSize));
@@ -1748,12 +1746,11 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
           ((options & OPTION_OBJECT_ANALYSIS) != 0) ? "true" : "false");
       writeParam(out, "Show_object_mask",
           ((options & OPTION_SHOW_OBJECT_MASK) != 0) ? "true" : "false");
-      writeParam(out, "Save_to_memory ",
+      writeParam(out, "Save_to_memory",
           ((options & OPTION_SAVE_TO_MEMORY) != 0) ? "true" : "false");
       writeParam(out, "Gaussian_blur", "" + blur);
       writeParam(out, "Centre_method", centreMethods[centreMethod]);
       writeParam(out, "Centre_parameter", "" + centreParameter);
-      out.close();
       return true;
     } catch (final Exception ex) {
       logError(ex.getMessage());
@@ -1762,10 +1759,11 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   }
 
   /**
-   * Gets the statistics mode.
+   * Gets the statistics mode from the options flags.
    *
    * @param options the options
    * @return the statistics mode
+   * @see #getStatisticsMode(int)
    */
   public static String getStatisticsModeFromOptions(int options) {
     if ((options & (FindFociProcessor.OPTION_STATS_INSIDE
@@ -2517,7 +2515,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
     }
 
     setResultsDirectory(batchOutputDirectory);
-    final String batchFilename = openBatchResultsFile();
+    final Path batchFilename = openBatchResultsFile();
 
     if ((parameters.outputType & OUTPUT_LOG_MESSAGES) != 0) {
       IJ.log("---");
