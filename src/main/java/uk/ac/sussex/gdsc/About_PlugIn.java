@@ -45,6 +45,10 @@ public class About_PlugIn implements PlugIn {
   private static final String HELP_URL =
       "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/plugins";
   private static final String YEAR = "2018";
+  private static final String PLUGINS = "Plugins";
+
+  private static boolean addSpacer;
+  private static boolean installed;
 
   @Override
   public void run(String arg) {
@@ -62,9 +66,6 @@ public class About_PlugIn implements PlugIn {
       showUninstallDialog();
       return;
     }
-
-    // if (arg.equals("options1"))
-    // Do something ...
 
     showAbout();
   }
@@ -125,9 +126,7 @@ public class About_PlugIn implements PlugIn {
         uk.ac.sussex.gdsc.core.VersionUtils.getBuildDate(),
         uk.ac.sussex.gdsc.core.VersionUtils.getBuildNumber());
 
-    if (helpUrl != null) {
-      msg.append("\n \n(Click help for more information)");
-    }
+    msg.append("\n \n(Click help for more information)");
 
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addMessage(msg.toString());
@@ -155,9 +154,6 @@ public class About_PlugIn implements PlugIn {
     }
   }
 
-  private static boolean addSpacer;
-  private static boolean installed;
-
   private static boolean installPlugins() {
     if (installed) {
       return false;
@@ -165,49 +161,13 @@ public class About_PlugIn implements PlugIn {
     installed = true;
 
     // Locate all the GDSC plugins using the plugins.config:
-    final InputStream pluginsStream = getPluginsConfig();
-
-    ij.Menus.installPlugin("", ij.Menus.PLUGINS_MENU, "-", "", IJ.getInstance());
-
-    // Read into memory
-    final ArrayList<String[]> plugins = new ArrayList<>();
-    int gaps = 0;
-    try (BufferedReader input = new BufferedReader(new InputStreamReader(pluginsStream))) {
-      String line;
-      while ((line = input.readLine()) != null) {
-        if (line.startsWith("#")) {
-          continue;
-        }
-        final String[] tokens = line.split(",");
-        if (tokens.length == 3) {
-          // Only copy the entries from the Plugins menu
-          if (tokens[0].startsWith("Plugins")) {
-            if (!plugins.isEmpty()) {
-              // Multiple gaps indicates a new column
-              if (gaps > 1) {
-                // plugins.add(new String[] { "next", "" });
-              }
-            }
-            gaps = 0;
-            plugins.add(new String[] {tokens[1].trim(), tokens[2].trim()});
-          }
-        } else {
-          gaps++;
-        }
-
-        // Put a spacer between plugins if specified
-        if ((tokens.length == 2 && tokens[0].startsWith("Plugins")
-            && tokens[1].trim().equals("\"-\"")) || line.length() == 0) {
-          plugins.add(new String[] {"spacer", ""});
-        }
-      }
-    } catch (final IOException ex) {
-      // Ignore
-    }
+    final ArrayList<String[]> plugins = readPluginsConfig();
 
     if (plugins.isEmpty()) {
       return false;
     }
+
+    ij.Menus.installPlugin("", ij.Menus.PLUGINS_MENU, "-", "", IJ.getInstance());
 
     addSpacer = false;
     for (final String[] plugin : plugins) {
@@ -221,6 +181,35 @@ public class About_PlugIn implements PlugIn {
     return true;
   }
 
+  private static ArrayList<String[]> readPluginsConfig() {
+    final ArrayList<String[]> plugins = new ArrayList<>();
+
+    final InputStream pluginsStream = getPluginsConfig();
+    try (BufferedReader input = new BufferedReader(new InputStreamReader(pluginsStream))) {
+      String line;
+      while ((line = input.readLine()) != null) {
+        if (line.length() > 0 && line.charAt(0) == '#') {
+          continue;
+        }
+        final String[] tokens = line.split(",");
+        if (tokens.length == 3) {
+          // Only copy the entries from the Plugins menu
+          if (tokens[0].startsWith(PLUGINS)) {
+            plugins.add(new String[] {tokens[1].trim(), tokens[2].trim()});
+          }
+
+          // Put a spacer between plugins if specified
+        } else if ((tokens.length == 2 && tokens[0].startsWith(PLUGINS)
+            && tokens[1].trim().equals("\"-\"")) || line.length() == 0) {
+          plugins.add(new String[] {"spacer", ""});
+        }
+      }
+    } catch (final IOException ex) {
+      // Ignore
+    }
+    return plugins;
+  }
+
   /**
    * Gets the plugins.config from the jar resources.
    *
@@ -229,9 +218,7 @@ public class About_PlugIn implements PlugIn {
   public static InputStream getPluginsConfig() {
     // Get the embedded config in the jar file
     final Class<About_PlugIn> resourceClass = About_PlugIn.class;
-    final InputStream readmeStream =
-        resourceClass.getResourceAsStream("/uk/ac/sussex/gdsc/plugins.config");
-    return readmeStream;
+    return resourceClass.getResourceAsStream("/uk/ac/sussex/gdsc/plugins.config");
   }
 
   private static void addPlugin(String commandName, final String command) {
@@ -244,7 +231,7 @@ public class About_PlugIn implements PlugIn {
     if (!ij.Menus.commandInUse(commandName)) {
       if (addSpacer) {
         try {
-          ij.Menus.getImageJMenu("Plugins").addSeparator();
+          ij.Menus.getImageJMenu(PLUGINS).addSeparator();
         } catch (final NoSuchMethodError ex) {
           // Ignore. This ImageJ method is from IJ 1.48+
         }
