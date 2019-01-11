@@ -33,10 +33,9 @@ import ij.gui.Roi;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashSet;
@@ -48,7 +47,7 @@ import java.util.logging.Logger;
  * Manages I/O of the {@link AssignedPoint} class.
  */
 public final class AssignedPointUtils {
-  private static final String NEW_LINE = System.getProperty("line.separator");
+  private static final String NEW_LINE = System.lineSeparator();
 
   /** No public constructor. */
   private AssignedPointUtils() {}
@@ -70,11 +69,12 @@ public final class AssignedPointUtils {
       new File(file.getParent()).mkdirs();
     }
 
-    try (final OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(filename))) {
+    try (final BufferedWriter out = Files.newBufferedWriter(Paths.get(filename))) {
       // Save results to file
       final StringBuilder sb = new StringBuilder();
 
-      out.write("X,Y,Z" + NEW_LINE);
+      out.write("X,Y,Z");
+      out.newLine();
 
       // Output all results in ascending rank order
       for (final AssignedPoint point : points) {
