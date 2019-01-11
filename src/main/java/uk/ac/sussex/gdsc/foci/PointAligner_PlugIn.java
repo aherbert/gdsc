@@ -149,7 +149,7 @@ public class PointAligner_PlugIn implements PlugIn {
   }
 
   private boolean showDialog() {
-    final ArrayList<String> maskList = FindFoci_PlugIn.buildMaskList(imp);
+    final List<String> maskList = FindFoci_PlugIn.buildMaskList(imp);
 
     final GenericDialog gd = new GenericDialog(TITLE);
 
