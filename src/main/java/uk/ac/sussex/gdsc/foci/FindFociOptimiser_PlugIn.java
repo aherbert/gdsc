@@ -2922,8 +2922,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       return null;
     }
 
-    try (BufferedReader input =
-        new BufferedReader(new InputStreamReader(new FileInputStream(filename)))) {
+    try (BufferedReader input = Files.newBufferedReader(Paths.get(filename))) {
       final ArrayList<Result> results = new ArrayList<>();
       String line;
       boolean isRmsd = false;
@@ -2982,8 +2981,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
    * @return The number of lines
    */
   private static int countLines(String filename) {
-    try (BufferedReader input =
-        new BufferedReader(new InputStreamReader(new FileInputStream(filename)))) {
+    try (BufferedReader input = Files.newBufferedReader(Paths.get(filename))) {
       int count = 0;
       String line;
       while ((line = input.readLine()) != null) {

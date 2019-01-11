@@ -81,11 +81,11 @@ public class About_PlugIn implements PlugIn {
    * Show about dialog.
    */
   public static void showAbout() {
-    if (IJ.altKeyDown() || IJ.shiftKeyDown()
-        || Boolean.parseBoolean(System.getProperty("about-install", "false"))) {
-      if (installPlugins()) {
-        return;
-      }
+    if ((IJ.altKeyDown() || IJ.shiftKeyDown()
+        || Boolean.parseBoolean(System.getProperty("about-install", "false")))
+        // Try and install the plugins
+        && installPlugins()) {
+      return;
     }
 
     // Locate the README.txt file and load that into the dialog. Include SVN revision

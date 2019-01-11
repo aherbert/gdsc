@@ -30,6 +30,8 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
@@ -96,7 +98,7 @@ public class TimeValuePointManager {
       return type;
     }
 
-    try (final BufferedReader input = new BufferedReader(new FileReader(filename))) {
+    try (final BufferedReader input = Files.newBufferedReader(Paths.get(filename))) {
       // Load results from file
       String currentLine;
       int lines = 1;
@@ -230,7 +232,7 @@ public class TimeValuePointManager {
     }
 
     final LinkedList<TimeValuedPoint> points = new LinkedList<>();
-    try (final BufferedReader input = new BufferedReader(new FileReader(filename))) {
+    try (final BufferedReader input = Files.newBufferedReader(Paths.get(filename))) {
       // Load results from file
 
       skipHeader(input);

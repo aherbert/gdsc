@@ -69,10 +69,8 @@ import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -507,8 +505,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
 
     private void readParameters(String filename) throws IOException {
       final ArrayList<String> parameters = new ArrayList<>();
-      try (final BufferedReader input =
-          new BufferedReader(new InputStreamReader(new FileInputStream(filename)))) {
+      try (final BufferedReader input = Files.newBufferedReader(Paths.get(filename))) {
         String line;
         while ((line = input.readLine()) != null) {
           // Only use lines that have key-value pairs

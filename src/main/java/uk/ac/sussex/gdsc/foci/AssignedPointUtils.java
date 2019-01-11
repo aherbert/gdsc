@@ -35,9 +35,10 @@ import java.awt.Rectangle;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -96,7 +97,7 @@ public final class AssignedPointUtils {
   public static AssignedPoint[] loadPoints(String filename) throws IOException {
     final LinkedList<AssignedPoint> points = new LinkedList<>();
     // Load results from file
-    try (BufferedReader input = new BufferedReader(new FileReader(filename))) {
+    try (BufferedReader input = Files.newBufferedReader(Paths.get(filename))) {
       String line = input.readLine();
 
       if (line != null) {

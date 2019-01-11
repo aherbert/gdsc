@@ -38,7 +38,8 @@ import ij.process.ImageStatistics;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * Scales all planes in an image to the given maximum.
@@ -116,16 +117,16 @@ public class ImageScaler_PlugIn implements PlugInFilter {
     final double[] limits = new double[] {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY};
 
     // Read all images sequentially and find the limits
-    try (final BufferedReader input = new BufferedReader(new FileReader(listFile))) {
+    try (final BufferedReader input = Files.newBufferedReader(Paths.get(listFile))) {
       String line = null; // not declared within while loop
       while ((line = input.readLine()) != null) {
         if (!new File(line).exists()) {
           continue;
         }
-        ImagePlus imp = new ImagePlus(line);
-        updateMinAndMax(imp, limits);
-        imp.flush();
-        imp = null; // Free memory
+        ImagePlus tmpImp = new ImagePlus(line);
+        updateMinAndMax(tmpImp, limits);
+        tmpImp.flush();
+        tmpImp = null; // Free memory
       }
     } catch (final Exception ex) {
       IJ.error("Failed to read images in input list file: " + listFile);
@@ -139,20 +140,19 @@ public class ImageScaler_PlugIn implements PlugInFilter {
     final double scaleFactor = maxValue / limits[1];
 
     // Rewrite images
-    try (final BufferedReader input = new BufferedReader(new FileReader(listFile))) {
+    try (final BufferedReader input = Files.newBufferedReader(Paths.get(listFile))) {
       String line = null; // not declared within while loop
       while ((line = input.readLine()) != null) {
         if (!new File(line).exists()) {
           continue;
         }
 
-        ImagePlus imp = new ImagePlus(line);
-        multiply(imp, scaleFactor);
-        new FileSaver(imp).save();
-        imp.flush();
-        imp = null; // Free memory
+        ImagePlus tmpImp = new ImagePlus(line);
+        multiply(tmpImp, scaleFactor);
+        new FileSaver(tmpImp).save();
+        tmpImp.flush();
+        tmpImp = null; // Free memory
       }
-      input.close();
     } catch (final Exception ex) {
       IJ.error("Failed to re-write images in input list file: " + listFile);
     }
