@@ -4,7 +4,7 @@
  *
  * Software for microscopy image analysis
  * %%
- * Copyright (C) 2011 - 2018 Alex Herbert
+ * Copyright (C) 2011 - 2019 Alex Herbert
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -80,10 +80,10 @@ import java.util.concurrent.Future;
  */
 public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
   private static final String TITLE = "Edge Mask Creator";
-  private static final String MINISVERSION = "3.0.0";
+  private static final String MIN_IS_VERSION = "3.0.0";
 
-  private static final String[] METHODS = new String[] {"Above background", "Laplacian edges",
-      "Gradient edges", "Maximum gradient edges"};
+  private static final String[] METHODS =
+      {"Above background", "Laplacian edges", "Gradient edges", "Maximum gradient edges"};
 
   private static final byte TYPE_NONE = 0x00;
   private static final byte TYPE_EDGE = 0x01;
@@ -126,11 +126,11 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
     }
     try {
       // Entire block in try-catch as the library may not be present
-      if (VersionChecker.compare(ImageScience.version(), MINISVERSION) < 0) {
+      if (VersionChecker.compare(ImageScience.version(), MIN_IS_VERSION) < 0) {
         throw new IllegalStateException();
       }
     } catch (final Throwable ex) {
-      IJ.error("This plugin requires ImageScience version " + MINISVERSION + " or higher");
+      IJ.error("This plugin requires ImageScience version " + MIN_IS_VERSION + " or higher");
       return DONE;
     }
 

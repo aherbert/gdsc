@@ -4,7 +4,7 @@
  *
  * Software for microscopy image analysis
  * %%
- * Copyright (C) 2011 - 2018 Alex Herbert
+ * Copyright (C) 2011 - 2019 Alex Herbert
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -44,7 +44,7 @@ public class About_PlugIn implements PlugIn {
   private static final String TITLE = "GDSC ImageJ Plugins";
   private static final String HELP_URL =
       "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/plugins";
-  private static final String YEAR = "2018";
+  private static final String YEAR = "2019";
   private static final String PLUGINS = "Plugins";
 
   private static boolean addSpacer;

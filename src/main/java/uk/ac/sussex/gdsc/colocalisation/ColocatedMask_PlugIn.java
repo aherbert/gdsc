@@ -4,7 +4,7 @@
  *
  * Software for microscopy image analysis
  * %%
- * Copyright (C) 2011 - 2018 Alex Herbert
+ * Copyright (C) 2011 - 2019 Alex Herbert
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as

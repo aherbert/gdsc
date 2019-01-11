@@ -4,7 +4,7 @@
  *
  * Software for microscopy image analysis
  * %%
- * Copyright (C) 2011 - 2018 Alex Herbert
+ * Copyright (C) 2011 - 2019 Alex Herbert
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -430,8 +430,7 @@ public class AlignImages_PlugIn implements PlugIn {
     ip.setInterpolationMethod(interpolationMethod);
     ip.translate(xoffset, yoffset);
 
-    if (interpolationMethod == ImageProcessor.BICUBIC && clipOutput
-        && !(ip instanceof ColorProcessor)) {
+    if (stats != null) {
       final float max = (float) stats.max;
       for (int i = ip.getPixelCount(); i-- > 0;) {
         if (ip.getf(i) > max) {
