@@ -1497,6 +1497,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     myMatchSearchDistance = gd.getNextNumber();
     myResultsSortMethod = gd.getNextChoiceIndex();
 
+    myBeta = gd.getNextNumber();
     myMaxResults = (int) gd.getNextNumber();
     stepLimit = (int) gd.getNextNumber();
     if (!multiMode) {
