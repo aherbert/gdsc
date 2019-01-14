@@ -25,7 +25,9 @@
 package uk.ac.sussex.gdsc.utils;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
+import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -64,33 +66,30 @@ public class GaussianFit_PlugIn implements PlugInFilter {
 
     try {
       // Get a class in this package to find the package class loader
-      final Gaussian_PlugIn pluginClass = new Gaussian_PlugIn();
-      final Class c =
-          Class.forName(GAUSSIAN_FIT_CLASS, true, pluginClass.getClass().getClassLoader());
+      final Class clazz =
+          Class.forName(GAUSSIAN_FIT_CLASS, true, Gaussian_PlugIn.class.getClassLoader());
 
       // ... it exists on the classpath
 
-      final int size = 99;
-      final float mu = size / 2;
-      final float s0 = 3;
-      final float N = 10;
+      final int size = 16;
+      final int mu = size / 2;
+      final float s0 = 2;
+      final float amplitude = 10;
 
       // Create a 2D Gaussian curve
       final float[] data = new float[size * size];
       for (int y = 0; y < size; y++) {
         for (int x = 0; x < size; x++) {
-          data[y * size + x] = (float) (N
-              * (Math.exp(-0.5 * ((mu - x) * (mu - x) + 0.5 * (mu - y) * (mu - y)) / (s0 * s0))));
+          data[y * size + x] = (float) (amplitude
+              * (Math.exp(-0.5 * ((mu - x) * (mu - x) + (mu - y) * (mu - y)) / (s0 * s0))));
         }
       }
 
       // Try a fit.
-      double[] fit = null;
-
       // Use reflection to allow building without the SMLM plugins on the classpath
       final Method m =
-          c.getDeclaredMethod("fit", new Class[] {float[].class, int.class, int.class});
-      fit = (double[]) m.invoke(c.newInstance(), data, size, size);
+          clazz.getDeclaredMethod("fit", float[].class, int.class, int.class);
+      double[] fit = (double[]) m.invoke(clazz.newInstance(), data, size, size);
       if (fit != null) {
         fittingEnabled = true;
       }
@@ -112,15 +111,9 @@ public class GaussianFit_PlugIn implements PlugInFilter {
       EXCEPTION = exception;
     }
 
-    if (!fittingEnabled) {
+    if (!fittingEnabled && IJ.debugMode) {
       ImageJPluginLoggerHelper.getLogger(GaussianFit_PlugIn.class.getName()).log(Level.WARNING,
           () -> ERROR_MESSAGE + ". The GDSC 2D Gaussian fit functionality will be disabled.");
-    }
-  }
-
-  private static void init(float[] data, int width, int height) {
-    if (data == null || data.length != width * height || width < 1 || height < 1) {
-      throw new IllegalArgumentException("Data must be same length as width * height");
     }
   }
 
@@ -134,17 +127,14 @@ public class GaussianFit_PlugIn implements PlugInFilter {
    * @param height the height
    * @return The fitted Gaussian parameters (Background, Amplitude, x0, x1, s)
    */
-  public double[] fit(float[] data, int width, int height) {
-    init(data, width, height);
-    // uk.ac.sussex.gdsc.smlm.ij.plugins.GaussianFit gf = new
-    // uk.ac.sussex.gdsc.smlm.ij.plugins.GaussianFit();
-    // return gf.fit(data, width, height);
+  public @Nullable double[] fit(float[] data, int width, int height) {
+    SimpleArrayUtils.hasData2D(width, height, data);
 
     try {
       // Use reflection to allow building without the SMLM plugins on the classpath
       final Class c = Class.forName(GAUSSIAN_FIT_CLASS, true, this.getClass().getClassLoader());
       final Method m =
-          c.getDeclaredMethod("fit", new Class[] {float[].class, int.class, int.class});
+          c.getDeclaredMethod("fit", float[].class, int.class, int.class);
       return (double[]) m.invoke(c.newInstance(), data, width, height);
     } catch (final Exception ex) {
       Logger.getLogger(getClass().getName()).log(Level.WARNING,
@@ -185,7 +175,7 @@ public class GaussianFit_PlugIn implements PlugInFilter {
   public int setup(String arg, ImagePlus imp) {
     UsageTracker.recordPlugin(this.getClass(), arg);
     if (!isFittingEnabled()) {
-      IJ.error("Fitting is not enabled");
+      IJ.error("Fitting is not enabled.\n \n" + ERROR_MESSAGE);
       return DONE;
     }
     final Roi roi = imp.getRoi();
@@ -200,7 +190,7 @@ public class GaussianFit_PlugIn implements PlugInFilter {
   @Override
   public void run(ImageProcessor ip) {
     if (!isFittingEnabled()) {
-      IJ.error("Fitting is not enabled");
+      IJ.error("Fitting is not enabled.\n \n" + ERROR_MESSAGE);
       return;
     }
     FloatProcessor fp = ip.toFloat(0, null);
