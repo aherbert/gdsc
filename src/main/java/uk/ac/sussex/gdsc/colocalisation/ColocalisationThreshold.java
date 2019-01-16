@@ -24,6 +24,8 @@
 
 package uk.ac.sussex.gdsc.colocalisation;
 
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -228,7 +230,7 @@ public class ColocalisationThreshold {
 
     IJ.log("R = " + IJ.d2s(correlationTotal, 4));
 
-    if (correlationTotal < searchTolerance || correlationTotal < correlationThreshold) {
+    if (correlationTotal < Math.max(searchTolerance, correlationThreshold)) {
       // No correlation at all
       return correlationResult(false, "No correlation found.");
     }
@@ -294,7 +296,7 @@ public class ColocalisationThreshold {
       boolean result;
 
       if (exhaustiveSearch) {
-        result = findThresholdExhaustive(i1, i2, lowerThreshold, upperThreshold, currentThreshold);
+        result = findThresholdExhaustive(i1, i2, lowerThreshold, upperThreshold);
       } else {
         result = findThreshold(i1, i2, lowerThreshold, upperThreshold, currentThreshold);
       }
@@ -304,9 +306,8 @@ public class ColocalisationThreshold {
       }
     }
 
-    final double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
-
-    return correlationResult(true, "Threshold calculation time = " + seconds);
+    return correlationResult(true, "Threshold calculation time = "
+        + TextUtils.millisToString(System.currentTimeMillis() - startTime));
   }
 
   /**
@@ -398,8 +399,9 @@ public class ColocalisationThreshold {
       for (int y = rheight; y-- > 0;) {
         for (int x = rwidth; x-- > 0;) {
           if (ipMask == null || ipMask.get(x, y) != 0) {
-            i1[count] = ip1.getPixel(x + xoffset, y + yoffset);
-            i2[count] = ip2.getPixel(x + xoffset, y + yoffset);
+            int index = (y + yoffset) * width + x + xoffset;
+            i1[count] = ip1.get(index);
+            i2[count] = ip2.get(index);
             count++;
           }
         }
@@ -409,9 +411,6 @@ public class ColocalisationThreshold {
 
   private boolean findThreshold(int[] i1, int[] i2, int lowerThreshold, int upperThreshold,
       int currentThreshold) {
-    int ch1;
-    int ch2;
-
     // Create the results and add the global correlation - this will be the fallback result
     results = new ArrayList<>(maxIterations);
     results.add(new ThresholdResult(0, 0, correlationTotal, Double.NaN));
@@ -453,8 +452,8 @@ public class ColocalisationThreshold {
 
       // Get means
       for (int i = i1.length; i-- > 0;) {
-        ch1 = i1[i];
-        ch2 = i2[i];
+        int ch1 = i1[i];
+        int ch2 = i2[i];
 
         if ((ch1 < (threshold1)) || (ch2 < (threshold2))) {
           if (ch1 == 0 && ch2 == 0) {
@@ -494,8 +493,8 @@ public class ColocalisationThreshold {
       double ch1mch2MeanSqSumB = 0;
 
       for (int i = i1.length; i-- > 0;) {
-        ch1 = i1[i];
-        ch2 = i2[i];
+        int ch1 = i1[i];
+        int ch2 = i2[i];
         if ((ch1 < (threshold1)) || (ch2 < (threshold2))) {
           ch1mch1MeanSqSumB += (ch1 - ch1MeanB) * (ch1 - ch1MeanB);
           ch2mch2MeanSqSumB += (ch2 - ch2MeanB) * (ch2 - ch2MeanB);
@@ -522,7 +521,7 @@ public class ColocalisationThreshold {
       IJ.log(iteration + ", c1(threshold)=" + threshold1 + ", c2(threshold)=" + threshold2 + " : r="
           + IJ.d2s(rA, 4) + ", r2=" + ((divByZero) ? "NaN" : IJ.d2s(rB, 4)));
 
-      // Change threshold max
+      // Change threshold.
       // Ensure that the correlation above the thresholds is positive and below is negative.
       // If there are no pixels below the threshold then a divide by zero error occurs.
       if (divByZero || rB < correlationThreshold) {
@@ -553,7 +552,7 @@ public class ColocalisationThreshold {
   }
 
   private boolean findThresholdExhaustive(int[] i1, int[] i2, int lowerThreshold,
-      int upperThreshold, int currentThreshold) {
+      int upperThreshold) {
     int ch1;
     int ch2;
 
@@ -566,8 +565,8 @@ public class ColocalisationThreshold {
     final int interval = (int) Math.ceil((1.0 * (upperThreshold - lowerThreshold)) / maxIterations);
     int iteration = 1;
 
-    for (currentThreshold = lowerThreshold; currentThreshold <= upperThreshold; currentThreshold +=
-        interval) {
+    for (int currentThreshold = lowerThreshold; currentThreshold <= upperThreshold;
+        currentThreshold += interval) {
       if (IJ.escapePressed()) {
         IJ.beep();
         return correlationResult(false, "IJ plugin cancelled");
