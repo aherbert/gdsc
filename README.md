@@ -130,22 +130,11 @@ See [LICENSE](LICENSE.txt)
 
 # About #
 
-###### Repository name ######
-GDSC ImageJ Plugins
-
 ###### Owner(s) ######
 Alex Herbert
 
 ###### Institution ######
-Genome Damage and Stability Centre, University of Sussex
+[Genome Damage and Stability Centre, University of Sussex](http://www.sussex.ac.uk/gdsc/)
 
 ###### URL ######
-http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/gdsc_plugins
-
-###### Email ######
-a.herbert@sussex.ac.uk
-
-###### Description ######
-The Genome Damage and Stability Centre (GDSC) plugins are a collection of
-analysis programs for microscopy images including colocalisation analysis and
-peak finding.
+[GDSC ImageJ plugins](http://www.sussex.ac.uk/gdsc/intranet/microscopy/UserSupport/AnalysisProtocol/imagej/gdsc_plugins/)
