@@ -40,6 +40,7 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -57,34 +58,9 @@ import java.util.List;
  * eliminates redundant pixels.
  */
 public class SkeletonAnalyser_PlugIn implements PlugInFilter {
-  private static String TITLE = "Skeleton Analyser";
+  private static final String TITLE = "Skeleton Analyser";
   private static TextWindow resultsWindow;
   private static boolean writeHeader = true;
-
-  private static boolean s_pruneJunctions;
-  private static int s_minLength;
-  private static boolean s_showNodeMap = true;
-  private static boolean s_showOverlay;
-  private static boolean s_showTable = true;
-
-  /** The prune junctions. */
-  // Public to allow control of the algorithm in the run(ImageProcessor) method
-  boolean pruneJunctions;
-
-  /** The min length. */
-  int minLength;
-
-  /** The show node map. */
-  boolean showNodeMap = true;
-
-  /** The show overlay. */
-  boolean showOverlay;
-
-  /** The show table. */
-  boolean showTable = true;
-
-  private int foreground;
-  private ImagePlus imp;
 
   /** The constant for a line terminus (end). */
   public static final byte TERMINUS = (byte) 1;
@@ -108,8 +84,112 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
   public static final byte PROCESSED = (byte) 8;
 
   /** The constant for each of the 8-connected directions for processing pixels. */
-  public static final byte[] PROCESSED_DIRECTIONS = new byte[] {(byte) 1, (byte) 2, (byte) 4,
+  private static final byte[] PROCESSED_DIRECTIONS = new byte[] {(byte) 1, (byte) 2, (byte) 4,
       (byte) 8, (byte) 16, (byte) 32, (byte) 64, (byte) 128};
+
+  private static boolean pruneJunctionsSetting;
+  private static int minLengthSetting;
+  private static boolean showNodeMapSetting = true;
+  private static boolean showOverlaySetting;
+  private static boolean showTableSetting = true;
+
+  private boolean pruneJunctions;
+  private int minLength;
+  private boolean showNodeMap = true;
+  private boolean showOverlay;
+  private boolean showTable = true;
+
+  private int foreground;
+  private ImagePlus imp;
+
+  private static class Line {
+    final int start;
+    final float length;
+    final boolean internal;
+    final ChainCode code;
+
+    Line(int start, float length, boolean internal, ChainCode code) {
+      this.start = start;
+      this.length = length;
+      this.internal = internal;
+      this.code = code;
+    }
+
+    /**
+     * Compare the lines by start point (ascending).
+     *
+     * @param o1 the first line
+     * @param o2 the second ine
+     * @return the result [-1, 0, 1]
+     */
+    static int compare(Line o1, Line o2) {
+      return Integer.compare(o1.start, o2.start);
+    }
+  }
+
+  private static class LineComparator implements Comparator<Line>, Serializable {
+    private static final long serialVersionUID = 1L;
+    static final LineComparator INSTANCE = new LineComparator();
+
+    @Override
+    public int compare(Line o1, Line o2) {
+      if (o1.internal ^ o2.internal) {
+        // If one is internal and the other is not
+        return (o1.internal) ? -1 : 1;
+      }
+      // Rank by length (descending)
+      return Float.compare(o2.length, o1.length);
+    }
+  }
+
+  private static class Result {
+    float[] line;
+    ChainCode code;
+
+    Result(float[] line, ChainCode code) {
+      this.line = line;
+      this.code = code;
+    }
+
+    /**
+     * Compare the two objects.
+     *
+     * <p>Uses greatest distance then the coordinates.
+     *
+     * @param o1 the first object
+     * @param o2 the second object
+     * @return a negative integer, zero, or a positive integer if object 1 is less than, equal to,
+     *         or greater than object 2.
+     */
+    static int compare(Result o1, Result o2) {
+      final int[] result = new int[1];
+
+      // Distance first
+      if (compare(o1.line[4], o2.line[4], result) != 0) {
+        return -result[0];
+      }
+
+      // Then coordinates
+      for (int i = 0; i < 4; i++) {
+        if (compare(o1.line[i], o2.line[i], result) != 0) {
+          return result[0];
+        }
+      }
+
+      return 0;
+    }
+
+    private static int compare(float value1, float value2, int[] result) {
+      if (value1 < value2) {
+        result[0] = -1;
+      } else if (value1 > value2) {
+        result[0] = 1;
+      } else {
+        result[0] = 0;
+      }
+      return result[0];
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -127,7 +207,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
       return DONE;
     }
 
-    if (!showDialog()) {
+    if (!showDialog(this)) {
       return DONE;
     }
 
@@ -135,25 +215,25 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     return IJ.setupDialog(imp, DOES_8G | SNAPSHOT);
   }
 
-  private boolean showDialog() {
+  private static boolean showDialog(SkeletonAnalyser_PlugIn plugin) {
     final GenericDialog gd = new GenericDialog(TITLE);
 
-    gd.addCheckbox("Prune_junctions", s_pruneJunctions);
-    gd.addNumericField("Min_length", s_minLength, 0);
-    gd.addCheckbox("Show_node_map", s_showNodeMap);
-    gd.addCheckbox("Show_overlay", s_showOverlay);
-    gd.addCheckbox("Show_table", s_showTable);
+    gd.addCheckbox("Prune_junctions", pruneJunctionsSetting);
+    gd.addNumericField("Min_length", minLengthSetting, 0);
+    gd.addCheckbox("Show_node_map", showNodeMapSetting);
+    gd.addCheckbox("Show_overlay", showOverlaySetting);
+    gd.addCheckbox("Show_table", showTableSetting);
 
     gd.showDialog();
     if (gd.wasCanceled()) {
       return false;
     }
 
-    pruneJunctions = s_pruneJunctions = gd.getNextBoolean();
-    minLength = s_minLength = (int) gd.getNextNumber();
-    showNodeMap = s_showNodeMap = gd.getNextBoolean();
-    showOverlay = s_showOverlay = gd.getNextBoolean();
-    showTable = s_showTable = gd.getNextBoolean();
+    plugin.pruneJunctions = pruneJunctionsSetting = gd.getNextBoolean();
+    plugin.minLength = minLengthSetting = (int) gd.getNextNumber();
+    plugin.showNodeMap = showNodeMapSetting = gd.getNextBoolean();
+    plugin.showOverlay = showOverlaySetting = gd.getNextBoolean();
+    plugin.showTable = showTableSetting = gd.getNextBoolean();
 
     return true;
   }
@@ -208,17 +288,18 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
       initialise(ip.getWidth(), ip.getHeight());
     }
 
-    int myForeground = Prefs.blackBackground ? 255 : 0;
-    if (ip.isInvertedLut()) {
-      myForeground = 255 - myForeground;
-    }
-    this.foreground = myForeground;
+    this.foreground = getForeground(ip);
 
     ip.resetRoi();
     skeletonize(ip, trim);
     ip.setBinaryThreshold();
 
     return true;
+  }
+
+  private static int getForeground(ByteProcessor ip) {
+    final int foreground = Prefs.blackBackground ? 255 : 0;
+    return ip.isInvertedLut() ? 255 - foreground : foreground;
   }
 
   /**
@@ -233,10 +314,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
       return null;
     }
 
-    byte foreground = (byte) (Prefs.blackBackground ? 255 : 0);
-    if (ip.isInvertedLut()) {
-      foreground = (byte) (255 - foreground);
-    }
+    final byte foregroundValue = (byte) getForeground(ip);
 
     if (maxx == 0) {
       initialise(ip.getWidth(), ip.getHeight());
@@ -246,7 +324,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     final byte[] map = new byte[ip.getPixelCount()];
 
     for (int index = map.length; index-- > 0;) {
-      if (skeleton[index] == foreground) {
+      if (skeleton[index] == foregroundValue) {
         // Process the neighbours
         final int count = countRadii(skeleton, index);
 
@@ -302,48 +380,6 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     return map;
   }
 
-  private class Line implements Comparable<Line> {
-    int start;
-    @SuppressWarnings("unused")
-    int end;
-    float length;
-    boolean internal;
-    ChainCode code;
-
-    Line(int start, int end, float length, boolean internal, ChainCode code) {
-      this.start = start;
-      this.end = end;
-      this.length = length;
-      this.internal = internal;
-      this.code = code;
-    }
-
-    @Override
-    public int compareTo(Line that) {
-      return this.start - that.start;
-    }
-  }
-
-  private static class LineComparator implements Comparator<Line> {
-    static final LineComparator INSTANCE = new LineComparator();
-
-    @Override
-    public int compare(Line o1, Line o2) {
-      if (o1.internal ^ o2.internal) {
-        // If one is internal and the other is not
-        return (o1.internal) ? -1 : 1;
-      }
-      // Rank by length
-      if (o1.length > o2.length) {
-        return -1;
-      }
-      if (o1.length < o2.length) {
-        return 1;
-      }
-      return 0;
-    }
-  }
-
   /**
    * Prune the shortest line from junctions that end in a terminus, until all junctions are
    * eliminated.
@@ -385,18 +421,17 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
         final boolean internal = (map[startIndex[i]] & JUNCTION) != 0;
 
         // Store the line under the index of the junction, reverse the chain code
-        junctionLines
-            .add(new Line(endIndex[i], startIndex[i], lengths[i], internal, code.reverse()));
+        junctionLines.add(new Line(endIndex[i], lengths[i], internal, code.reverse()));
 
         if (internal) {
           // Starts at a junction so store under this junction as well
-          junctionLines.add(new Line(startIndex[i], endIndex[i], lengths[i], true, code));
+          junctionLines.add(new Line(startIndex[i], lengths[i], true, code));
         }
       }
     }
 
     // Sort by the junction start
-    Collections.sort(junctionLines);
+    Collections.sort(junctionLines, Line::compare);
 
     // Each junction should have 3/4 lines if clean up or corner pixels was OK, worst case is 8.
     int lineCount = 0;
@@ -429,19 +464,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     }
 
     // If any marked for deletion, remove the shortest line
-    Collections.sort(toDelete, new Comparator<Line>() {
-      @Override
-      public int compare(Line o1, Line o2) {
-        // Rank by length
-        if (o1.length < o2.length) {
-          return -1;
-        }
-        if (o1.length > o2.length) {
-          return 1;
-        }
-        return 0;
-      }
-    });
+    Collections.sort(toDelete, (o1, o2) -> Float.compare(o1.length, o2.length));
 
     // ColorProcessor cp = createMapImage(map, width, height);
     // Utils.display(this.imp.getTitle() + " SkeletonNodeMap", cp);
@@ -483,12 +506,8 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     return true;
   }
 
-  private void markForDeletion(final LineComparator lineComparator, int lineCount,
+  private static void markForDeletion(final LineComparator lineComparator, int lineCount,
       Line[] currentLines, ArrayList<Line> toDelete) {
-    if (lineCount < 3) {
-      System.err.printf("Junction %d,%d has less than 3 lines", currentLines[0].start % maxx,
-          currentLines[0].start / maxx);
-    }
 
     // Sort
     Arrays.sort(currentLines, 0, lineCount, lineComparator);
@@ -1198,55 +1217,6 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
         return (y > 0 && x > 0);
       default:
         return false;
-    }
-  }
-
-  private static class Result {
-    float[] line;
-    ChainCode code;
-
-    Result(float[] line, ChainCode code) {
-      this.line = line;
-      this.code = code;
-    }
-
-    /**
-     * Compare the two objects.
-     *
-     * <p>Uses greatest distance then the coordinates.
-     *
-     * @param o1 the first object
-     * @param o2 the second object
-     * @return a negative integer, zero, or a positive integer if object 1 is less than, equal to,
-     *         or greater than object 2.
-     */
-    static int compare(Result o1, Result o2) {
-      final int[] result = new int[1];
-
-      // Distance first
-      if (compare(o1.line[4], o2.line[4], result) != 0) {
-        return -result[0];
-      }
-
-      // Then coordinates
-      for (int i = 0; i < 4; i++) {
-        if (compare(o1.line[i], o2.line[i], result) != 0) {
-          return result[0];
-        }
-      }
-
-      return 0;
-    }
-
-    private static int compare(float value1, float value2, int[] result) {
-      if (value1 < value2) {
-        result[0] = -1;
-      } else if (value1 > value2) {
-        result[0] = 1;
-      } else {
-        result[0] = 0;
-      }
-      return result[0];
     }
   }
 }

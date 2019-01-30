@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.utils;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -89,8 +90,8 @@ import java.util.Arrays;
 public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener {
   private static final int FLAGS = DOES_8G + DOES_16 + DOES_32 + NO_CHANGES;
 
-  private static final int[] DIR_X_OFFSET = new int[] {0, 1, 1, 1, 0, -1, -1, -1};
-  private static final int[] DIR_Y_OFFSET = new int[] {-1, -1, 0, 1, 1, 1, 0, -1};
+  private static final int[] DIR_X_OFFSET = {0, 1, 1, 1, 0, -1, -1, -1};
+  private static final int[] DIR_Y_OFFSET = {-1, -1, 0, 1, 1, 1, 0, -1};
 
   private static final String TITLE = "Cell Outliner";
   private static int cellRadius = 25;
@@ -210,7 +211,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     // Switch from the image overlay to mask output
     buildMaskOutput = true;
 
-    return FLAGS; // IJ.setupDialog(imp, flags);
+    return FLAGS;
   }
 
   /** {@inheritDoc} */
@@ -369,7 +370,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
 
   private PolygonRoi[] findCells(ImageProcessor inputProcessor) {
     // Limit processing to where it is needed
-    final Rectangle bounds = createBounds(inputProcessor);
+    final Rectangle bounds = createBounds(inputProcessor, xpoints, ypoints);
     ImageProcessor ip = inputProcessor.duplicate();
     ip.setRoi(bounds);
     ip = ip.crop();
@@ -383,7 +384,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       // showConvolvedImages(convolved)
     }
 
-    if (Thread.currentThread().isInterrupted()) {
+    if (ImageJUtils.isInterrupted()) {
       return null;
     }
 
@@ -424,7 +425,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       final FloatProcessor angle = createAngleProcessor(ip, cx, cy, pointBounds);
       // if (debug) displayImage(angle, "Angle");
 
-      if (Thread.currentThread().isInterrupted()) {
+      if (ImageJUtils.isInterrupted()) {
         return null;
       }
       final FloatProcessor edgeProjection = computeEdgeProjection(convolved, pointBounds, angle);
@@ -439,7 +440,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       for (int iter = 0; iter < iterations; iter++) {
         // Use the current elliptical edge to define the weights for the edge projection
         final FloatProcessor weights = createWeightMap(pointBounds, params, range);
-        if (Thread.currentThread().isInterrupted()) {
+        if (ImageJUtils.isInterrupted()) {
           return null;
         }
 
@@ -460,7 +461,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
             weightedEdgeProjection, angle);
 
         final FloatProcessor weightMap = weightedEdgeProjection; // weights
-        final double[] newParams = fitPolygonalCell(cell, params, weightMap, angle);
+        final double[] newParams = fitPolygonalCell(cell, params, weightMap);
 
         if (newParams == null) {
           returnEllipticalFit = false;
@@ -472,6 +473,8 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
         // Update the range to become smaller for a tighter fit
         // range = Math.max(3, range * 0.9);
       }
+
+      assert cell != null : "No cell";
 
       // Return either the fitted elliptical cell or the last polygon outline
       if (returnEllipticalFit) {
@@ -621,7 +624,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
    * @param ip the ip
    * @return the rectangle
    */
-  private Rectangle createBounds(ImageProcessor ip) {
+  private static Rectangle createBounds(ImageProcessor ip, int[] xpoints, int[] ypoints) {
     // Get the range of clicked points
     int minx = Integer.MAX_VALUE;
     int maxx = 0;
@@ -674,7 +677,6 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     // Build a set convolution kernels at 6 degree intervals
     final int cx = halfWidth;
     final int cy = halfWidth;
-    final double degreesToRadians = Math.PI / 180.0;
     for (int rotation = 0; rotation < 180; rotation += 12) {
       rotationAngles.add(rotation);
       final FloatProcessor fp = new FloatProcessor(kernelWidth, kernelWidth);
@@ -682,8 +684,9 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       // createAliasedLines(halfWidth, cx, cy, degreesToRadians, rotation, fp);
 
       // Build curves using the cell size.
-      final double centreX = cx - Math.cos(rotation * degreesToRadians) * cellRadius;
-      final double centreY = cy - Math.sin(rotation * degreesToRadians) * cellRadius;
+      final double radians = Math.toRadians(rotation);
+      final double centreX = cx - Math.cos(radians) * cellRadius;
+      final double centreY = cy - Math.sin(radians) * cellRadius;
 
       createDoGKernel(fp, centreX, centreY, cellRadius, 1.0);
 
@@ -843,7 +846,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
           (ip instanceof FloatProcessor) ? (FloatProcessor) ip.duplicate() : ip.toFloat(0, null);
       fp.convolve(kernel, kernelWidth, kernelWidth);
       newConvolved.put(rotation, fp);
-      return !Thread.currentThread().isInterrupted();
+      return !ImageJUtils.isInterrupted();
     });
     if (!this.buildMaskOutput) {
       IJ.showProgress(1); // Convolver modifies the progress tracker
@@ -871,8 +874,8 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
 
     // Output different projections of the results
     final ZProjector projector = new ZProjector(imp);
-    for (int projectionMethod =
-        0; projectionMethod < ZProjector.METHODS.length; projectionMethod++) {
+    for (int projectionMethod = 0; projectionMethod < ZProjector.METHODS.length;
+        projectionMethod++) {
       IJ.showStatus("Projecting " + ZProjector.METHODS[projectionMethod]);
       projector.setMethod(projectionMethod);
       projector.doProjection();
@@ -903,7 +906,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       for (int x = minx; x < maxx; x++, index++) {
         final int dx = cx - x;
         final int dy = cy - y;
-        final float a = (float) (Math.atan2(dy, dx) * 180.0 / Math.PI);
+        final float a = (float) Math.toDegrees(Math.atan2(dy, dx));
         angle.setf(index, a + 180f); // Convert to 0-360 domain
       }
     }
@@ -1226,14 +1229,12 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
    * @param roi the roi
    * @param params the params
    * @param weightMap the weight map
-   * @param angle the angle
    * @return the ellipse parameters
    */
-  private double[] fitPolygonalCell(PolygonRoi roi, double[] params, FloatProcessor weightMap,
-      FloatProcessor angle) {
+  private double[] fitPolygonalCell(PolygonRoi roi, double[] params, FloatProcessor weightMap) {
     // Get an estimate of the starting parameters using the current polygon
-    double[] startPoint = params;
-    startPoint = estimateStartPoint(roi, weightMap.getWidth(), weightMap.getHeight());
+    final double[] startPoint =
+        estimateStartPoint(roi, weightMap.getWidth(), weightMap.getHeight());
 
     final int maxEval = 2000;
     final DifferentiableEllipticalFitFunction func =
@@ -1261,7 +1262,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
           .start(startPoint)
           .target(func.calculateTarget())
           .weight(new DiagonalMatrix(func.calculateWeights()))
-          .model(func, point -> func.jacobian(point))
+          .model(func, func::jacobian)
           .checkerPair(checker)
           .build();
       //@formatter:on
@@ -1274,8 +1275,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       }
       return solution.getPoint().toArray();
     } catch (final Exception ex) {
-      IJ.log("Failed to find an elliptical solution, defaulting to polygon");
-      ex.printStackTrace();
+      IJ.log("Failed to find an elliptical solution, defaulting to polygon: " + ex.getMessage());
     }
 
     return null;
@@ -1412,8 +1412,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
 
       // We want to minimise the distance to the polygon points.
       // Our values will be the distances so the target can be zeros.
-      final double[] target = new double[npoints];
-      return target;
+      return new double[npoints];
     }
 
     /**
@@ -1426,7 +1425,6 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       for (int i = 0; i < weights.length; i++) {
         weights[i] = weightMap.getPixelValue(ypoints[i], ypoints[i]);
       }
-      // weights[i] = 1;
       return weights;
     }
 
@@ -1434,8 +1432,8 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     @Override
     public double[] value(double[] point) {
       if (debug) {
-        System.out.printf("%f,%f %f,%f,%f %f\n", point[0], point[1], point[2], point[3], point[4],
-            point[5] * 180.0 / Math.PI);
+        ImageJUtils.log("%f,%f %f,%f,%f %f", point[0], point[1], point[2], point[3], point[4],
+            Math.toDegrees(point[5]));
       }
       return getValue(point);
     }
@@ -1638,7 +1636,6 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
 
   private void addPoint(ArrayList<Point> coords, int index) {
     final Point p = new Point(index % maxx, index / maxx);
-    // System.out.printf("%d, %d\n", p.x, p.y);
     coords.add(p);
   }
 

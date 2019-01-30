@@ -66,7 +66,7 @@ public class ZProjectorCopy implements PlugIn {
   /** Use Median projection. */
   public static final int MEDIAN_METHOD = 5;
   /** The available projection methods. */
-  public static final String[] METHODS = {"Average Intensity", "Max Intensity", "Min Intensity",
+  private static final String[] METHODS = {"Average Intensity", "Max Intensity", "Min Intensity",
       "Sum Slices", "Standard Deviation", "Median"};
   private static final String METHOD_KEY = "zproject.method";
   /** The method. */
@@ -178,23 +178,22 @@ public class ZProjectorCopy implements PlugIn {
   @Override
   public void run(String arg) {
     imp = IJ.getImage();
-    final int stackSize = imp.getStackSize();
     if (imp == null) {
       IJ.noImage();
       return;
     }
 
     // Make sure input image is a stack.
+    final int stackSize = imp.getStackSize();
     if (stackSize == 1) {
       IJ.error("Z Project", "Stack required");
       return;
     }
 
     // Check for inverting LUT.
-    if (imp.getProcessor().isInvertedLut()) {
-      if (!IJ.showMessageWithCancel("ZProjection", lutMessage)) {
-        return;
-      }
+    if (imp.getProcessor().isInvertedLut()
+        && !IJ.showMessageWithCancel("ZProjection", lutMessage)) {
+      return;
     }
 
     // Set default bounds.
@@ -486,7 +485,7 @@ public class ZProjectorCopy implements PlugIn {
    *
    * @param imp the image
    * @param fp the image
-   * @param ptype the ptype
+   * @param ptype the pixels type
    * @return the image plus
    */
   protected ImagePlus makeOutputImage(ImagePlus imp, FloatProcessor fp, int ptype) {
@@ -515,6 +514,8 @@ public class ZProjectorCopy implements PlugIn {
       case FLOAT_TYPE:
         oip = new FloatProcessor(width, height, pixels, null);
         break;
+      default:
+        throw new IllegalStateException();
     }
 
     // Adjust for display.

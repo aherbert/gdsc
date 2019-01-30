@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.core.match.Coordinate;
+import uk.ac.sussex.gdsc.core.utils.FileUtils;
 
 import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
@@ -34,9 +35,9 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -64,12 +65,10 @@ public final class AssignedPointUtils {
       return;
     }
 
-    final File file = new File(filename);
-    if (!file.exists() && file.getParent() != null) {
-      new File(file.getParent()).mkdirs();
-    }
+    final Path path = Paths.get(filename);
+    FileUtils.createParent(path);
 
-    try (final BufferedWriter out = Files.newBufferedWriter(Paths.get(filename))) {
+    try (final BufferedWriter out = Files.newBufferedWriter(path)) {
       // Save results to file
       final StringBuilder sb = new StringBuilder();
 

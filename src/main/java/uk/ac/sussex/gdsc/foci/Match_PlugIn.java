@@ -64,6 +64,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Compares the ROI points on two images and computes the match statistics.
@@ -269,6 +270,7 @@ public class Match_PlugIn implements PlugIn {
 
     if (overlay > 0 && (imageMode || memoryMode)) {
       // Imp2 is the predicted, show the overlay on this
+      Objects.requireNonNull(imp2, "Image2 is null");
       imp2.setOverlay(null);
       imp2.saveRoi();
       imp2.killRoi();
@@ -956,8 +958,7 @@ public class Match_PlugIn implements PlugIn {
     // Create a new plot
     final String title = TITLE + " : " + imp1.getTitle() + " vs " + imp2.getTitle();
 
-    final Plot plot =
-        new Plot(title, imp1.getTitle(), imp2.getTitle(), (float[]) null, (float[]) null);
+    final Plot plot = new Plot(title, imp1.getTitle(), imp2.getTitle());
     // Ensure the plot is square
     float range = maximum - minimum;
     if (range == 0) {

@@ -64,7 +64,6 @@ import java.awt.Point;
 import java.awt.image.ColorModel;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -216,12 +215,11 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       try {
         final int value = stack.getProcessor(z + 1).get(x, y);
         if (value != id) {
-          System.out.printf("x%d,y%d,z%d %d != %d\n", x, y, z + 1, value, id);
+          // The result does not match the image
           return null;
         }
       } catch (final IllegalArgumentException ex) {
         // The stack is not the correct size
-        System.out.println(ex.getMessage());
         return null;
       }
     }
@@ -262,8 +260,8 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       // Create a map to convert original foci pixels to clusters.
       final int[] map = new int[results.size() + 1];
       for (int i = 0; i < filteredClusters.size(); i++) {
-        for (ClusterPoint p = filteredClusters.get(i).getHeadClusterPoint(); p != null; p =
-            p.getNext()) {
+        for (ClusterPoint p = filteredClusters.get(i).getHeadClusterPoint(); p != null;
+            p = p.getNext()) {
           map[p.getId()] = i + 1;
         }
       }
@@ -382,7 +380,6 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
 
     if (clusters == null || lastRadius != radius || lastAlgorithm != algorithm
         || lastWeight != weight) {
-      // System.out.println("clustering 1");
       lastRadius = radius;
       lastAlgorithm = algorithm;
       lastWeight = weight;
@@ -393,18 +390,8 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
           new ImageJTrackProgress());
       final ArrayList<ClusterPoint> points = getPoints();
       clusters = e.findClusters(points, radius);
-      Collections.sort(clusters, new Comparator<Cluster>() {
-        @Override
-        public int compare(Cluster o1, Cluster o2) {
-          if (o1.getSumOfWeights() > o2.getSumOfWeights()) {
-            return -1;
-          }
-          if (o1.getSumOfWeights() < o2.getSumOfWeights()) {
-            return 1;
-          }
-          return 0;
-        }
-      });
+      Collections.sort(clusters,
+          (o1, o2) -> Double.compare(o2.getSumOfWeights(), o1.getSumOfWeights()));
     }
 
     if (minSizeClusters == null || lastMinSize != minSize) {
@@ -413,7 +400,6 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       edgeClusters = null;
 
       if (minSize > 0) {
-        // System.out.println("clustering 2");
         minSizeClusters = new ArrayList<>(clusters.size());
         for (final Cluster c : clusters) {
           if (c.getSize() >= minSize) {
@@ -432,7 +418,6 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       filteredClusters = null;
 
       if (imp != null && eliminateEdgeClusters && border > 0) {
-        // System.out.println("clustering 3");
         // Cache the edge particles
         if (edge == null || lastBorder != border) {
           final ImageStack stack = imp.getImageStack();
@@ -464,7 +449,6 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
         if (filteredClusters == null || lastFilterRadius != filterRadius) {
           lastFilterRadius = filterRadius;
 
-          // System.out.println("clustering 4");
           final Coordinate[] actualPoints = roiPoints;
           final Coordinate[] predictedPoints = toCoordinates(edgeClusters);
           final List<Coordinate> truePositives = null;
@@ -515,8 +499,8 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       // Create a map to convert original foci pixels to clusters.
       final int[] map = new int[results.size() + 1];
       for (int i = 0; i < filteredClusters.size(); i++) {
-        for (ClusterPoint p = filteredClusters.get(i).getHeadClusterPoint(); p != null; p =
-            p.getNext()) {
+        for (ClusterPoint p = filteredClusters.get(i).getHeadClusterPoint(); p != null;
+            p = p.getNext()) {
           map[p.getId()] = i + 1;
         }
       }
@@ -641,8 +625,8 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       if (top < i) {
         return;
       }
-      for (int y = border, i1 = border * width + i, i2 = border * width + top; y < width
-          - border; y++, i1 += width, i2 += width) {
+      for (int y = border, i1 = border * width + i, i2 = border * width + top; y < width - border;
+          y++, i1 += width, i2 += width) {
         if (ip.get(i1) != 0) {
           edge[ip.get(i1)] = true;
         }
@@ -672,10 +656,10 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
   }
 
   private ArrayList<ClusterPoint> getPoints() {
-    if (FindFoci_PlugIn.getLastResults() == null) {
+    if (results == null) {
       return null;
     }
-    final ArrayList<ClusterPoint> points = new ArrayList<>(FindFoci_PlugIn.getLastResults().size());
+    final ArrayList<ClusterPoint> points = new ArrayList<>(results.size());
     // Image values correspond to the reverse order of the results.
     for (int i = 0, id = results.size(); i < results.size(); i++, id--) {
       final FindFociResult result = results.get(i);

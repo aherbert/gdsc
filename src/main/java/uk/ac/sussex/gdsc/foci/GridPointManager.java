@@ -46,13 +46,22 @@ public class GridPointManager {
   /**
    * Define the search modes for the {@link #findUnassignedPoint(int, int)} method.
    */
-  public static final String[] SEARCH_MODES = new String[] {"Highest", "Closest"};
+  private static final String[] searchModes = new String[] {"Highest", "Closest"};
 
   /** Constant for finding the highest point. */
   public static final int HIGHEST = 0;
 
   /** Constant for finding the closest point. */
   public static final int CLOSEST = 1;
+
+  /**
+   * Gets the search modes.
+   *
+   * @return the search modes
+   */
+  public static String[] getSearchModes() {
+    return searchModes.clone();
+  }
 
   /**
    * Instantiates a new grid point manager.
@@ -368,7 +377,7 @@ public class GridPointManager {
   /**
    * Sets the search mode.
    *
-   * @param searchMode the searchMode to set (see {@link #SEARCH_MODES} )
+   * @param searchMode the searchMode to set (see {@link #getSearchModes()}).
    */
   public void setSearchMode(int searchMode) {
     this.searchMode = searchMode;

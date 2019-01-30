@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.SortUtils;
 import uk.ac.sussex.gdsc.help.UrlUtils;
 import uk.ac.sussex.gdsc.threshold.ThreadAnalyser_PlugIn;
@@ -141,7 +142,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
         final float dy = (float) (Math.sin(angle) * step);
 
         // System.out.printf("%s : Angle = %f, dx=%f, dy=%f. d(x,y)=%.2f,%.2f\n", profileTitle,
-        // angle * 180.0 / Math.PI, dx, dy, points[i].x - com[0], points[i].y - com[1])
+        // Math.toDegrees(angle), dx, dy, points[i].x - com[0], points[i].y - com[1])
 
         // Draw line profile through the centre calculated from the moments. This will fail if
         // the object has a hollow centre (e.g. a horseshoe) so check if it is in the mask.
@@ -607,7 +608,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
         }
         minD[maxCount - 1] = xValues[xValues.length - 1];
 
-        System.out.printf("Multiple peak in a single spot: Peak Id %d = %d peaks\n", id, maxCount);
+        ImageJUtils.log("Multiple peak in a single spot: Peak Id %d = %d peaks", id, maxCount);
 
         // TODO - Perform a better table output if there are more than 2 peaks.
         sb.append(String.format("%.2f\t", minD[0] * cal.pixelWidth));
@@ -890,7 +891,8 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
   private void showLineProfile(float[] xValues, float[] yValues, String profileTitle) {
     if (showLineProfiles) {
       final Frame f = WindowManager.getFrame(profileTitle);
-      final Plot plot = new Plot(profileTitle, "Distance", "Value", xValues, yValues);
+      final Plot plot = new Plot(profileTitle, "Distance", "Value");
+      plot.addPoints(xValues, yValues, Plot.LINE);
       if (f instanceof PlotWindow) {
         final PlotWindow p = ((PlotWindow) f);
         p.drawPlot(plot);

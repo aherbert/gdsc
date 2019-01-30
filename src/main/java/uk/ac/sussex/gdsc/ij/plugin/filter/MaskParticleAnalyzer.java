@@ -116,11 +116,10 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
    * @param value the new analyzer first particle
    */
   static void setAnalyzerFirstParticle(int value) {
-    // Analyzer.firstParticle = value;
+    // Equivalent to: Analyzer.firstParticle = value
     if (firstParticle != null) {
       try {
         firstParticle.set(Analyzer.class, value);
-        // IJ.log("Set firstParticle to "+value);
       } catch (final Throwable ex) {
         // Reflection has failed
         firstParticle = null;
@@ -134,11 +133,10 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
    * @param value the new analyzer last particle
    */
   static void setAnalyzerLastParticle(int value) {
-    // Analyzer.lastParticle = value;
+    // Equivalent to: Analyzer.firstParticle = value
     if (lastParticle != null) {
       try {
         lastParticle.set(Analyzer.class, value);
-        // IJ.log("Set lastParticle to "+value);
       } catch (final Throwable ex) {
         // Reflection has failed
         lastParticle = null;
@@ -176,11 +174,8 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       int count = 1;
       for (final int id : idList) {
         final ImagePlus imp2 = WindowManager.getImage(id);
-        if (imp2 == null || imp2.getWidth() != imp.getWidth()
-            || imp2.getHeight() != imp.getHeight()) {
-          continue;
-        }
-        if (imp2.getID() == imp.getID()) {
+        if (imp2 == null || imp2.getWidth() != imp.getWidth() || imp2.getHeight() != imp.getHeight()
+            || imp2.getID() == imp.getID()) {
           continue;
         }
         list[count++] = imp2.getTitle();
@@ -231,8 +226,6 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
           field.setAccessible(true);
           final int redirectTarget = (Integer) field.get(Analyzer.class);
           restoreRedirectImp = WindowManager.getImage(redirectTarget);
-          // if (restoreRedirectImp != null)
-          // System.out.println("Redirect image = " + restoreRedirectImp.getTitle());
         } catch (final Throwable ex) {
           // Reflection has failed
         }

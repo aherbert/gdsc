@@ -24,13 +24,13 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import uk.ac.sussex.gdsc.core.utils.FileUtils;
+
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.function.Predicate;
@@ -40,6 +40,16 @@ import java.util.logging.Logger;
  * Manages I/O of the TimeValuePoint class.
  */
 public class TimeValuePointManager {
+  private final String filename;
+  private FileType type;
+
+  // Used to parse the input file
+  private int[] fields;
+  private int maxField;
+  private String delimiter;
+  private String line;
+  private int lineCount;
+
   /**
    * The file type.
    */
@@ -65,18 +75,6 @@ public class TimeValuePointManager {
     /** Unknown file-format. */
     UNKNOWN
   }
-
-  private static final String NEW_LINE = System.getProperty("line.separator");
-
-  private final String filename;
-  private FileType type;
-
-  // Used to parse the input file
-  private int[] fields;
-  private int maxField;
-  private String delimiter;
-  private String line;
-  private int lineCount;
 
   /**
    * Instantiates a new time value point manager.
@@ -181,16 +179,15 @@ public class TimeValuePointManager {
       return;
     }
 
-    final File file = new File(filename);
-    if (!file.exists() && file.getParent() != null) {
-      new File(file.getParent()).mkdirs();
-    }
+    final Path path = Paths.get(filename);
+    FileUtils.createParent(path);
 
-    try (final OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(filename))) {
+    try (final BufferedWriter out = Files.newBufferedWriter(path)) {
       // Save results to file
       final StringBuilder sb = new StringBuilder();
 
-      out.write("ID,T,X,Y,Z,Value" + NEW_LINE);
+      out.write("ID,T,X,Y,Z,Value");
+      out.newLine();
 
       // Output all results in ascending rank order
       int id = 0;
@@ -200,8 +197,9 @@ public class TimeValuePointManager {
         sb.append(point.getX()).append(',');
         sb.append(point.getY()).append(',');
         sb.append(point.getZ()).append(',');
-        sb.append(point.getValue()).append(NEW_LINE);
-        out.write(sb.toString());
+        sb.append(point.getValue());
+        out.append(sb);
+        out.newLine();
         sb.setLength(0);
       }
     }

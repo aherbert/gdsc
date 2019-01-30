@@ -376,6 +376,10 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
 
   // Used to record all the results into a single file during batch analysis
   private BufferedWriter allOut;
+  /**
+   * The empty entry. Used to record no results in the batch results file. This is only modified in
+   * synchronized methods.
+   */
   private String emptyEntry;
   private FindFociBaseProcessor ffpStaged;
   private boolean optimisedProcessor = true;
@@ -2431,7 +2435,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   }
 
   /**
-   * Builds the empty result entry. This can be used to build.
+   * Builds the empty result entry. This uses the empty field setting.
    *
    * @return the string
    */
@@ -2445,6 +2449,10 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
       emptyEntry = sb.toString();
     }
     return emptyEntry;
+  }
+
+  private synchronized void resetEmptyResultEntry() {
+    emptyEntry = null;
   }
 
   private static String generateId(ImagePlus imp) {
@@ -3079,7 +3087,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
     }
 
     // Reset this so it will be initialised again
-    emptyEntry = null;
+    resetEmptyResultEntry();
 
     Prefs.set(SEARCH_CAPACITY, searchCapacity);
     Prefs.set(EMPTY_FIELD, emptyField);

@@ -30,6 +30,8 @@ import uk.ac.sussex.gdsc.colocalisation.cda.engine.CdaEngine;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper.LutColour;
+import uk.ac.sussex.gdsc.core.utils.BitFlagUtils;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.RandomUtils;
 import uk.ac.sussex.gdsc.core.utils.StoredData;
 
@@ -57,6 +59,7 @@ import ij.process.ShortProcessor;
 import ij.text.TextWindow;
 import ij.util.Tools;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.random.Well19937c;
 
 import java.awt.BorderLayout;
@@ -91,6 +94,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import javax.swing.JPanel;
 
@@ -227,6 +231,9 @@ public class Cda_PlugIn extends PlugInFrame
   private static final int DEFAULT_MAXIMUM_RADIUS = 12;
   private static final int DEFAULT_RANDOM_RADIUS = 7;
   private static final int DEFAULT_HISTOGRAM_BINS = 16;
+
+  private static final int X_SIGN_MASK = 0x00010000;
+  private static final int Y_SIGN_MASK = 0x00020000;
 
   private static Frame instance;
 
@@ -407,7 +414,7 @@ public class Cda_PlugIn extends PlugInFrame
       new MacroRunner(macro);
     }
 
-    super.notify();
+    super.notifyAll();
   }
 
   @Override
@@ -641,12 +648,6 @@ public class Cda_PlugIn extends PlugInFrame
       return;
     }
 
-    // Check inputs
-    if (roiStack1 == null || roiStack2 == null || confinedStack == null) {
-      IJ.showMessage(PLUGIN_TITLE, "ROIs must be at the same width and height of the input images");
-      return;
-    }
-
     if (isZero(roiStack1) || isZero(roiStack2) || isZero(confinedStack)) {
       IJ.showMessage(PLUGIN_TITLE, "Empty ROI(s)");
       return;
@@ -670,22 +671,11 @@ public class Cda_PlugIn extends PlugInFrame
     intersectMask(imageStack1, confinedStack);
     intersectMask(imageStack2, confinedStack);
 
-    // Debug - show all the input
-    // Utils.display("CDA Stack1", imageStack1);
-    // Utils.display("CDA Stack2", imageStack2);
-    // Utils.display("CDA ROI1", roiStack1);
-    // Utils.display("CDA ROI2", roiStack2);
-    // Utils.display("CDA Confined", confinedStack);
-
     IJ.showStatus(calculatingFirstMandersStatus);
 
     // Pre-calculate constants
     final double denom1 = intersectSum(imageStack1, roiStack1);
     final double denom2 = intersectSum(imageStack2, roiStack2);
-
-    // System.out.printf("CDA total = %s (%d) %s (%d) : %d)\n", denom1, intersectSum(roiStack1,
-    // roiStack1), denom2,
-    // intersectSum(roiStack2, roiStack2), intersectSum(confinedStack, confinedStack));
 
     IJ.showStatus(mandersCalculationStatus);
 
@@ -707,6 +697,8 @@ public class Cda_PlugIn extends PlugInFrame
         break;
       }
     }
+
+    Objects.requireNonNull(unshifted, "The unshifted result is missing");
 
     // Display an image of the largest shift
     ImageStack lastChannelShiftedRawStack = null;
@@ -730,9 +722,9 @@ public class Cda_PlugIn extends PlugInFrame
   private int[] buildShiftIndices(boolean subRandomSamples, int randomRadius, int maximumRadius) {
     final int[] shiftIndices1 = getRandomShiftIndices(randomRadius, maximumRadius, permutations);
     final int[] shiftIndices2 =
-        (subRandomSamples) ? getRandomShiftIndices(0, randomRadius, permutations) : new int[0];
-    final int[] shiftIndices = merge(shiftIndices1, shiftIndices2);
-    return shiftIndices;
+        (subRandomSamples) ? getRandomShiftIndices(0, randomRadius, permutations)
+            : ArrayUtils.EMPTY_INT_ARRAY;
+    return combineAndIncludeZeroShift(shiftIndices1, shiftIndices2);
   }
 
   /**
@@ -783,10 +775,10 @@ public class Cda_PlugIn extends PlugInFrame
         // Pack the magnitude of the shift into the first 2 bytes and then pack the signs.
         int index = (Math.abs(i) & 0xff) << 8 | Math.abs(j) & 0xff;
         if (i < 0) {
-          index |= 0x00010000;
+          index |= X_SIGN_MASK;
         }
         if (j < 0) {
-          index |= 0x00020000;
+          index |= Y_SIGN_MASK;
         }
         list.add(index);
       }
@@ -813,9 +805,9 @@ public class Cda_PlugIn extends PlugInFrame
    * @return the x shift
    */
   public static int getXShift(int index) {
-    int xshift = (index & 0xff00) >> 8;
-    if ((index & 0x00010000) == 0x00010000) {
-      xshift = -xshift;
+    final int xshift = (index >>> 8) & 0xff;
+    if (BitFlagUtils.areSet(index, X_SIGN_MASK)) {
+      return -xshift;
     }
     return xshift;
   }
@@ -827,23 +819,18 @@ public class Cda_PlugIn extends PlugInFrame
    * @return the y shift
    */
   public static int getYShift(int index) {
-    int yshift = index & 0xff;
-    if ((index & 0x00020000) == 0x00020000) {
-      yshift = -yshift;
+    final int yshift = index & 0xff;
+    if (BitFlagUtils.areSet(index, Y_SIGN_MASK)) {
+      return -yshift;
     }
     return yshift;
   }
 
-  private static int[] merge(int[] shiftIndices1, int[] shiftIndices2) {
-    // Include an extra entry for zero shift
+  private static int[] combineAndIncludeZeroShift(int[] shiftIndices1, int[] shiftIndices2) {
+    // Include an extra entry for zero shift (at the end)
     final int[] indices = new int[shiftIndices1.length + shiftIndices2.length + 1];
-    int count = 0;
-    for (final int index : shiftIndices1) {
-      indices[count++] = index;
-    }
-    for (final int index : shiftIndices2) {
-      indices[count++] = index;
-    }
+    System.arraycopy(shiftIndices1, 0, indices, 0, shiftIndices1.length);
+    System.arraycopy(shiftIndices2, 0, indices, shiftIndices1.length, shiftIndices2.length);
     return indices;
   }
 
@@ -859,8 +846,7 @@ public class Cda_PlugIn extends PlugInFrame
     final int threads = Prefs.getThreads();
     final CdaEngine engine = new CdaEngine(imageStack1, roiStack1, confinedStack, imageStack2,
         roiStack2, denom1, denom2, results, totalSteps, threads);
-    // Wait for initialisation
-    engine.isInitialised();
+    engine.start();
 
     IJ.showProgress(0);
     IJ.showStatus("Computing shifts ...");
@@ -879,10 +865,9 @@ public class Cda_PlugIn extends PlugInFrame
     }
 
     engine.end(false);
-    // IJ.log("# of results = " + results.size() + " / " + totalSteps);
 
     IJ.showProgress(1.0);
-    IJ.showStatus("Computing shifts ...");
+    IJ.showStatus("");
 
     return results;
   }
@@ -1123,36 +1108,9 @@ public class Cda_PlugIn extends PlugInFrame
         bp.fill(roi);
         final byte[] pixels = (byte[]) bp.getPixels();
         for (int slice = 1; slice <= slices; slice++) {
-          result.addSlice(null, pixels.clone());
+          result.addSlice(null, pixels); // No need to clone() a read-only ROI stack of pixels
         }
         return result;
-
-        //// Use a mask for an irregular ROI
-        // ImageProcessor ipMask = roiImp.getMask();
-        //
-        //// Create a mask from the ROI rectangle
-        // Rectangle bounds = roi.getBounds();
-        // int xOffset = bounds.x;
-        // int yOffset = bounds.y;
-        // int rwidth = bounds.width;
-        // int rheight = bounds.height;
-        //
-        // for (int slice = 1; slice <= slices; slice++)
-        // {
-        // bp = new ByteProcessor(roiImp.getWidth(), roiImp.getHeight());
-        // for (int y = 0; y < rheight; y++)
-        // {
-        // for (int x = 0; x < rwidth; x++)
-        // {
-        // if (ipMask == null || ipMask.get(x, y) != 0)
-        // {
-        // bp.set(x + xOffset, y + yOffset, 255);
-        // }
-        // }
-        // }
-        // result.addSlice(null, bp);
-        // }
-        // return result;
       }
     }
 
@@ -1192,7 +1150,7 @@ public class Cda_PlugIn extends PlugInFrame
     bp.add(255);
     final byte[] pixels = (byte[]) bp.getPixels();
     for (int s = imp.getNSlices(); s-- > 0;) {
-      result.addSlice(null, pixels.clone());
+      result.addSlice(null, pixels); // No need to clone() a read-only ROI stack of pixels
     }
     return result;
   }
@@ -1585,16 +1543,10 @@ public class Cda_PlugIn extends PlugInFrame
   private Plot createPlot(double[] distances, double[] values, Color color, Color avColor,
       String title, String xLabel, String yLabel, double[] spacedX, double[] ceroValuesX,
       double[] ceroValuesY, double[] spacedY) {
-    final float[] dummy = null;
-    final Plot plot = new Plot(title, xLabel.concat(pixelsUnitString), yLabel, dummy, dummy,
+    final Plot plot = new Plot(title, xLabel.concat(pixelsUnitString), yLabel,
         Plot.X_NUMBERS + Plot.Y_NUMBERS + Plot.X_TICKS + Plot.Y_TICKS);
 
-    double min = 0;
-    for (final double d : values) {
-      if (min > d) {
-        min = d;
-      }
-    }
+    final double min = MathUtils.min(values);
 
     plot.setLimits(0.0D, maximumRadius, min, 1.0D);
     plot.setColor(color);
@@ -1607,12 +1559,7 @@ public class Cda_PlugIn extends PlugInFrame
   }
 
   private void addAverage(Plot plot, double[] distances, double[] values, Color color) {
-    double maxDistance = 0;
-    for (final double d : distances) {
-      if (maxDistance < d) {
-        maxDistance = d;
-      }
-    }
+    final double maxDistance = MathUtils.max(distances);
 
     final int n = (int) (maxDistance + 0.5) + 1;
     final double[] sum = new double[n];
@@ -1702,7 +1649,6 @@ public class Cda_PlugIn extends PlugInFrame
 
   private boolean parametersReady() {
     if (WindowManager.getImageCount() == 0) {
-      // IJ.showMessage(TITLE, "No images opened.");
       return false;
     }
 
@@ -1743,7 +1689,7 @@ public class Cda_PlugIn extends PlugInFrame
 
     imageList = newImageList;
 
-    // Repopulate the image lists
+    // Re-populate the image lists
     channel1List.removeAll();
     channel2List.removeAll();
     segmented1List.removeAll();
@@ -1937,7 +1883,6 @@ public class Cda_PlugIn extends PlugInFrame
     panel.setLayout(new BorderLayout());
     final Label listLabel = new Label(label, 0);
     listLabel.setFont(MONO_FONT);
-    // imageList.setSize(fontWidth * 3, fontWidth);
     panel.add(listLabel, BorderLayout.WEST);
     panel.add(optionList, BorderLayout.CENTER);
     panel.add(imageList, BorderLayout.EAST);

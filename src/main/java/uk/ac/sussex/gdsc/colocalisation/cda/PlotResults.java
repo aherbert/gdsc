@@ -24,9 +24,12 @@
 
 package uk.ac.sussex.gdsc.colocalisation.cda;
 
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.ValidationUtils;
 
 import ij.gui.Plot;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.awt.Color;
 
@@ -131,16 +134,11 @@ public class PlotResults {
     final double[] yValues = createHistogramValues(normalisedHistogram);
 
     // Set the upper limit for the plot
-    double maxHistogram = 0;
-    for (final double d : normalisedHistogram) {
-      if (maxHistogram < d) {
-        maxHistogram = d;
-      }
-    }
-    maxHistogram *= 1.05;
+    final double maxHistogram = MathUtils.max(normalisedHistogram) * 1.05;
 
-    plot = new Plot(plotTitle, plotXTitle, plotYTitle, xValues, yValues,
+    plot = new Plot(plotTitle, plotXTitle, plotYTitle,
         Plot.X_NUMBERS + Plot.Y_NUMBERS + Plot.X_TICKS + Plot.Y_TICKS);
+    plot.addPoints(xValues, yValues, Plot.LINE);
 
     // Ensure the horizontal scale goes from 0 to 1 but add at least 0.05 to the limits.
     final double xMin = Math.min(xValues[0] - 0.05, Math.min(sampleValue - 0.05, 0));
@@ -218,7 +216,7 @@ public class PlotResults {
    * @return the probability limits
    */
   public double[] getProbabilityLimits() {
-    return probabilityLimits;
+    return ArrayUtils.clone(probabilityLimits);
   }
 
   /**
@@ -239,7 +237,7 @@ public class PlotResults {
     }
     final double dx = (histogramX[1] - histogramX[0]);
     axis[index++] = histogramX[histogramX.length - 1] + dx;
-    axis[index++] = histogramX[histogramX.length - 1] + dx;
+    axis[index] = histogramX[histogramX.length - 1] + dx;
     return axis;
   }
 
@@ -252,7 +250,7 @@ public class PlotResults {
       axis[index++] = histogramY[i];
       axis[index++] = histogramY[i];
     }
-    axis[index++] = 0;
+    axis[index] = 0;
     return axis;
   }
 
@@ -269,8 +267,10 @@ public class PlotResults {
 
     final double[] normalised = new double[histogram.length];
 
-    for (int j = 0; j < histogram.length; ++j) {
-      normalised[j] = ((double) histogram[j] / total);
+    if (total != 0) {
+      for (int j = 0; j < histogram.length; ++j) {
+        normalised[j] = ((double) histogram[j] / total);
+      }
     }
 
     return normalised;

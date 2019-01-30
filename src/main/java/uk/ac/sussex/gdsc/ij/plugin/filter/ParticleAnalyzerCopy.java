@@ -177,7 +177,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
   protected static final int OVERLAY_MASKS = 7;
 
   /** The static show choice option. */
-  protected static int staticShowChoice;
+  private static int staticShowChoice;
 
   /** The image. */
   protected ImagePlus imp;
@@ -1365,7 +1365,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
         && count > 0) {
       imp.setOverlay(overlay);
     } else if (outlines != null && lastSlice) {
-      final String title = imp != null ? imp.getTitle() : "Outlines";
+      final String title = imp.getTitle();
       String prefix;
       if (showChoice == MASKS) {
         prefix = "Mask of ";
@@ -1393,13 +1393,10 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
           rt.show("Results");
         }
       }
-      // XXX Set these using reflection
-      // Analyzer.firstParticle = beginningCount;
-      // Analyzer.lastParticle = Analyzer.getCounter()-1;
+      // Set these using reflection
       MaskParticleAnalyzer.setAnalyzerFirstParticle(beginningCount);
       MaskParticleAnalyzer.setAnalyzerLastParticle(Analyzer.getCounter() - 1);
     } else {
-      // Analyzer.firstParticle = Analyzer.lastParticle = 0;
       MaskParticleAnalyzer.setAnalyzerFirstParticle(0);
       MaskParticleAnalyzer.setAnalyzerLastParticle(0);
     }

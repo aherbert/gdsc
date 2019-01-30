@@ -49,6 +49,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.Serializable;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,16 +64,20 @@ import javax.swing.border.EmptyBorder;
 /**
  * Provides a permanent form front-end for the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn}
  * algorithm.
+ *
+ * <p>Although this class extends {@link java.awt.Component} it is not {@link Serializable}.
  */
 public class OptimiserView extends JFrame {
+
+  // There are custom objects that are not Serializable so serialisation would not work.
   private static final long serialVersionUID = -3283971398975124411L;
 
   // Flags used to control the enabled status of the run button.
   // The button should be enabled when there are images in the list.
   private boolean runEnabled;
 
-  private FindFociModel model;
-  private OptimiserController controller;
+  private transient FindFociModel model;
+  private transient OptimiserController controller;
 
   private JPanel contentPane;
   private JLabel lblImage;

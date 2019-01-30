@@ -34,6 +34,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 /**
@@ -98,7 +99,8 @@ public class About_PlugIn implements PlugIn {
     String helpUrl = HELP_URL;
 
     // Read the contents of the README file
-    try (final BufferedReader input = new BufferedReader(new InputStreamReader(readmeStream))) {
+    try (final BufferedReader input =
+        new BufferedReader(new InputStreamReader(readmeStream, StandardCharsets.UTF_8))) {
       String line;
       while ((line = input.readLine()) != null) {
         if (line.contains("http:")) {
@@ -185,7 +187,8 @@ public class About_PlugIn implements PlugIn {
     final ArrayList<String[]> plugins = new ArrayList<>();
 
     final InputStream pluginsStream = getPluginsConfig();
-    try (BufferedReader input = new BufferedReader(new InputStreamReader(pluginsStream))) {
+    try (BufferedReader input =
+        new BufferedReader(new InputStreamReader(pluginsStream, StandardCharsets.UTF_8))) {
       String line;
       while ((line = input.readLine()) != null) {
         if (line.length() > 0 && line.charAt(0) == '#') {

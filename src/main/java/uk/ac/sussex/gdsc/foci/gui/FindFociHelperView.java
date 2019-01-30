@@ -83,6 +83,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -106,12 +107,16 @@ import javax.swing.border.EmptyBorder;
 /**
  * Provides a permanent form front-end that allows the user to pick ROI points and have them mapped
  * to the closest maxima found by the FindFoci algorithm.
+ *
+ * <p>Although this class extends {@link java.awt.Component} it is not {@link Serializable}.
  */
 public class FindFociHelperView extends JFrame
     implements WindowListener, MouseListener, MouseMotionListener {
+
+  // There are custom objects that are not Serializable so serialisation would not work.
   private static final long serialVersionUID = -3550748049045647859L;
 
-  private final Object updatingPointsLock = new Object();
+  private final transient Object updatingPointsLock = new Object();
 
   // Flags used to control the enabled status of the run button.
   // The button should be enabled when there are images in the list.
@@ -128,13 +133,17 @@ public class FindFociHelperView extends JFrame
 
   private boolean counterEvents = true;
 
+  /**
+   * The instance. This is required for the auto-binding properties used by the BeansBinding
+   * framework.
+   */
   private final FindFociHelperView instance = this;
 
-  private FindFociModel model;
-  private FindMaximaController controller;
+  private transient FindFociModel model;
+  private transient FindMaximaController controller;
 
-  private ImagePlus activeImp;
-  private GridPointManager manager;
+  private transient ImagePlus activeImp;
+  private transient GridPointManager manager;
   private int currentRoiPoints;
   private boolean dragging;
   private static TextWindow resultsWindow;
@@ -370,7 +379,7 @@ public class FindFociHelperView extends JFrame
     gbc_comboSearchMode.fill = GridBagConstraints.HORIZONTAL;
     gbc_comboSearchMode.gridx = 1;
     gbc_comboSearchMode.gridy = 5;
-    comboSearchMode.setModel(new DefaultComboBoxModel<>(GridPointManager.SEARCH_MODES));
+    comboSearchMode.setModel(new DefaultComboBoxModel<>(GridPointManager.getSearchModes()));
     contentPane.add(comboSearchMode, gbc_comboSearchMode);
 
     btnRun = new JButton("Start");
@@ -1318,7 +1327,9 @@ public class FindFociHelperView extends JFrame
   /**
    * Allows the mapped points to be ranked in order of the distance to the mapped peak.
    */
-  private class DistanceComparator implements Comparator<int[]> {
+  private static class DistanceComparator implements Comparator<int[]>, Serializable {
+    private static final long serialVersionUID = 1L;
+
     @Override
     public int compare(int[] o1, int[] o2) {
       final int diff = o1[6] - o2[6];

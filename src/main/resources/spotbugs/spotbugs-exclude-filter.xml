@@ -33,6 +33,41 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="https://github.com/spotbugs/filter/3.1.0 https://raw.githubusercontent.com/spotbugs/spotbugs/3.1.0/spotbugs/etc/findbugsfilter.xsd">
 
-  <Class name="~.*\.jmh\.generated\..*" />
+  <Match>
+    <Class name="uk.ac.sussex.gdsc.colocalisation.cda.Cda_PlugIn" />
+    <!-- NP: Unshifted result cannot be null. -->
+    <Method name="runCda" />
+    <Bug code="NP" />
+  </Match>
+
+  <Match>
+    <Or>
+      <Class name="uk.ac.sussex.gdsc.foci.FindFociBaseProcessor$ResultComparator" />
+      <Class name="uk.ac.sussex.gdsc.foci.FindFociBaseProcessor$ResultAscComparator" />
+      <Class name="uk.ac.sussex.gdsc.foci.FindFociBaseProcessor$ResultDescComparator" />
+      <Class name="uk.ac.sussex.gdsc.foci.FindFociOptimiser_PlugIn$ResultComparator" />
+      <Class name="uk.ac.sussex.gdsc.foci.FindFociSaddle" />
+    </Or>
+    <!-- Allow incorrect float comparison. This will allow -0,0 to be sorted incorrectly if present. NaNs are still detected. -->
+    <Method name="compare" />
+    <Bug pattern="CO_COMPARETO_INCORRECT_FLOATING" />
+  </Match>
+
+  <Match>
+    <Or>
+      <Class name="uk.ac.sussex.gdsc.foci.ObjectAnalyzer" />
+      <Class name="uk.ac.sussex.gdsc.foci.ObjectAnalyzer3D" />
+    </Or>
+    <!-- This is documented as returning a reference -->
+    <Method name="getObjectMask" />
+    <Bug pattern="EI_EXPOSE_REP" />
+  </Match>
+
+  <Match>
+    <Class name="uk.ac.sussex.gdsc.foci.ObjectAnalyzer3D" />
+    <!-- The constructor deliberately wraps the array. -->
+    <Method name="&lt;init&gt;" />
+    <Bug pattern="EI_EXPOSE_REP2" />
+  </Match>
 
 </FindBugsFilter>

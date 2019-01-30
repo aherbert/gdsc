@@ -32,15 +32,17 @@ import org.jdesktop.beansbinding.Converter;
  * Convert the search mode.
  */
 public class SearchModeConverter extends Converter<Integer, Object> {
+  private static final String[] searchModes = GridPointManager.getSearchModes();
+
   @Override
   public String convertForward(Integer paramT) {
-    return GridPointManager.SEARCH_MODES[paramT.intValue()];
+    return searchModes[paramT.intValue()];
   }
 
   @Override
   public Integer convertReverse(Object paramS) {
-    for (int i = 0; i < GridPointManager.SEARCH_MODES.length; i++) {
-      if (GridPointManager.SEARCH_MODES[i].equals(paramS)) {
+    for (int i = 0; i < searchModes.length; i++) {
+      if (searchModes[i].equals(paramS)) {
         return i;
       }
     }

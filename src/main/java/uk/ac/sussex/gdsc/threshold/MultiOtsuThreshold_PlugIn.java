@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.threshold;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.data.ComputationException;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -297,14 +298,17 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
       maxbin--;
     }
     if (maxbin < minbin) {
-      minbin = maxbin;
+      throw new ComputationException("Data contains no values");
     }
 
     // ROI masking changes the histogram so total up the number of used pixels
     long total = 0;
-    for (final int d : data) {
-      total += d;
+    for (int i = minbin; i <= maxbin; i++) {
+      total += data[i];
     }
+
+    // This should not be possible due to histogram bracketing
+    assert total != 0 : "Total is zero";
 
     final int[] data2 = new int[(maxbin - minbin) + 1];
     for (int i = minbin; i <= maxbin; i++) {
@@ -604,8 +608,9 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     if (title == null) {
       title = "Histogram";
     }
-    final Plot histogramPlot = new Plot(title, "Intensity", "p(Intensity)", bin, histogram);
-    histogramPlot.setLimits(minbin, minbin + greyLevels, 0, hmax);
+    final Plot histogramPlot = new Plot(title, "Intensity", "p(Intensity)");
+    histogramPlot.setLimits(minbin, (double) minbin + greyLevels, 0, hmax);
+    histogramPlot.addPoints(bin, histogram, Plot.LINE);
     histogramPlot.draw();
 
     // Add lines for each threshold

@@ -26,16 +26,17 @@ package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
 
+import java.awt.Choice;
 import java.util.ArrayList;
 
 /**
@@ -73,21 +74,27 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
       return false;
     }
 
-    final GenericDialog gd = new GenericDialog(TITLE);
-
-    if (title1.equalsIgnoreCase(title2)) {
-      title2 = (title1.equalsIgnoreCase(items[0]) || title1 == "") ? items[1] : items[0];
-    }
+    final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
     gd.addMessage(
         "Find the classes in each mask using continuous mask values\nand create an all-vs-all "
             + "output combination mask");
     gd.addChoice("Input_1", items, title1);
+    final Choice c1 = gd.getLastChoice();
     gd.addChoice("Input_2", items, title2);
+    final Choice c2 = gd.getLastChoice();
     gd.addCheckbox("Apply_LUT", applyLUT);
     gd.addCheckbox("Overlay_outline", overlayOutline);
 
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI);
+
+    // If the current selection is the same then try and
+    // make the dialog choose two different images.
+    if (ImageJUtils.isShowGenericDialog() && c1.getSelectedIndex() == c2.getSelectedIndex()) {
+      // Select the first, or second item if the first is selected.
+      c2.select(c1.getSelectedIndex() == 0 ? 1 : 0);
+    }
+
     gd.showDialog();
 
     if (gd.wasCanceled()) {
@@ -324,7 +331,7 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
    * @param reds the reds
    * @param greens the greens
    * @param blues the blues
-   * @param numberOfColors the number of colors
+   * @param numberOfColors the number of colours
    */
   private static void interpolateWithZero(byte[] reds, byte[] greens, byte[] blues,
       int numberOfColors) {

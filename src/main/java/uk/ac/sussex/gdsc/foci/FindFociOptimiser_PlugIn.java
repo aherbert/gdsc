@@ -81,8 +81,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -244,7 +246,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   private int combinations;
 
   private final TObjectIntHashMap<String> idMap = new TObjectIntHashMap<>();
-  private final TIntObjectHashMap<Options> optionsMap = new TIntObjectHashMap<>();
+  private final TIntObjectHashMap<Parameters> optionsMap = new TIntObjectHashMap<>();
 
   private final SoftLock lock = new SoftLock();
 
@@ -401,7 +403,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
         IJ.log(
             "Top result = " + IJ.d2s(results.get(0).metrics[getSortIndex(myResultsSortMethod)], 4));
 
-        final Options bestOptions = results.get(0).options;
+        final Parameters bestOptions = results.get(0).options;
 
         final AssignedPoint[] predictedPoints = showResult(imp, mask, bestOptions);
 
@@ -462,7 +464,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
    * @param imp the imp
    */
   private void checkOptimisationSpace(OptimiserResult result, ImagePlus imp) {
-    final Options bestOptions = result.results.get(0).options;
+    final Parameters bestOptions = result.results.get(0).options;
     if (bestOptions == null) {
       return;
     }
@@ -853,11 +855,11 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
                             if (peakResults != null) {
                               // Get the results
-                              final Options runOptions = new Options(blur, backgroundMethodArray[b],
-                                  thisBackgroundParameter, thresholdMethod, searchMethodArray[s],
-                                  thisSearchParameter, myMaxPeaks, minSize, myPeakMethod,
-                                  peakParameter, sortMethod, options, centreMethodArray[c],
-                                  centreParameter);
+                              final Parameters runOptions = new Parameters(blur,
+                                  backgroundMethodArray[b], thisBackgroundParameter,
+                                  thresholdMethod, searchMethodArray[s], thisSearchParameter,
+                                  myMaxPeaks, minSize, myPeakMethod, peakParameter, sortMethod,
+                                  options, centreMethodArray[c], centreParameter);
                               final Result result =
                                   analyseResults(id, roiPoints, peakResults.results,
                                       distanceThreshold, runOptions, time, myBeta, is3D);
@@ -938,7 +940,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       return;
     }
 
-    final Options bestOptions = results.get(0).options;
+    final Parameters bestOptions = results.get(0).options;
 
     final double fractionParameter = 0;
     final int outputType =
@@ -1000,7 +1002,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     }
   }
 
-  private static synchronized void addFindFociCommand(BufferedWriter out, Options bestOptions,
+  private static synchronized void addFindFociCommand(BufferedWriter out, Parameters bestOptions,
       String maskTitle) throws IOException {
     if (bestOptions == null) {
       return;
@@ -1064,7 +1066,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     sb.append(String.format(format, args));
   }
 
-  private static AssignedPoint[] showResult(ImagePlus imp, ImagePlus mask, Options options) {
+  private static AssignedPoint[] showResult(ImagePlus imp, ImagePlus mask, Parameters options) {
     if (imp == null) {
       return null;
     }
@@ -1987,19 +1989,17 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     }
   }
 
-  private static BufferedWriter createResultsFile(Options bestOptions, ImagePlus imp,
+  private static BufferedWriter createResultsFile(Parameters bestOptions, ImagePlus imp,
       ImagePlus mask, String resultFile) {
     BufferedWriter out = null;
     try {
       final String filename = resultFile + RESULTS_SUFFIX;
 
-      final File file = new File(filename);
-      if (!file.exists() && file.getParent() != null) {
-        new File(file.getParent()).mkdirs();
-      }
+      final Path path = Paths.get(filename);
+      FileUtils.createParent(path);
 
       // Save results to file
-      out = Files.newBufferedWriter(Paths.get(filename));
+      out = Files.newBufferedWriter(path);
 
       String maskTitle = "";
       if (imp != null) {
@@ -2078,7 +2078,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   }
 
   private static Result analyseResults(int id, AssignedPoint[] roiPoints,
-      List<FindFociResult> resultsArray, double distanceThreshold, Options options, long time,
+      List<FindFociResult> resultsArray, double distanceThreshold, Parameters options, long time,
       double beta, boolean is3D) {
     // Extract results for analysis
     final AssignedPoint[] predictedPoints = extractedPredictedPoints(resultsArray);
@@ -2169,7 +2169,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
    * @param parameters the parameters
    * @return the options
    */
-  private static Options createOptions(String parameters) {
+  private static Parameters createOptions(String parameters) {
     final String[] fields = TAB_PATTERN.split(parameters);
     try {
       final double blur = Double.parseDouble(fields[0]);
@@ -2267,7 +2267,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
         centreParameter = Double.parseDouble(fields[7].substring(index));
       }
 
-      final Options ffOptions = new Options(blur, backgroundMethod, backgroundParameter,
+      final Parameters ffOptions = new Parameters(blur, backgroundMethod, backgroundParameter,
           thresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod,
           peakParameter, sortMethod, options, centreMethod, centreParameter);
 
@@ -2590,7 +2590,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     static final int RMSD = 9;
 
     int id;
-    Options options;
+    Parameters options;
     String parameters;
     int count;
     int tp;
@@ -2599,7 +2599,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     long time;
     double[] metrics = new double[10];
 
-    Result(int id, Options options, int count, int tp, int fp, int fn, long time, double beta,
+    Result(int id, Parameters options, int count, int tp, int fp, int fn, long time, double beta,
         double rmsd) {
       this.id = id;
       this.options = options;
@@ -2664,7 +2664,9 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   /**
    * Provides the ability to sort the results arrays in ascending order.
    */
-  private static class ResultComparator implements Comparator<Result> {
+  private static class ResultComparator implements Comparator<Result>, Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final int sortIndex;
     private final int tieIndex;
     private final int sortRank;
@@ -2783,24 +2785,24 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     }
   }
 
-  private static class Options {
+  private static class Parameters {
+    final double blur;
+    final int backgroundMethod;
+    final double backgroundParameter;
+    final String autoThresholdMethod;
+    final int searchMethod;
+    final double searchParameter;
+    final int maxPeaks;
+    final int minSize;
+    final int peakMethod;
+    final double peakParameter;
+    final int sortIndex;
+    final int options;
+    final int centreMethod;
+    final double centreParameter;
     private String parameters;
-    public double blur;
-    public int backgroundMethod;
-    public double backgroundParameter;
-    public String autoThresholdMethod;
-    public int searchMethod;
-    public double searchParameter;
-    public int maxPeaks;
-    public int minSize;
-    public int peakMethod;
-    public double peakParameter;
-    public int sortIndex;
-    public int options;
-    public int centreMethod;
-    public double centreParameter;
 
-    Options(double blur, int backgroundMethod, double backgroundParameter,
+    Parameters(double blur, int backgroundMethod, double backgroundParameter,
         String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks,
         int minSize, int peakMethod, double peakParameter, int sortIndex, int options,
         int centreMethod, double centreParameter) {

@@ -44,6 +44,7 @@ import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
 import java.awt.geom.RoundRectangle2D;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -85,18 +86,18 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
   //@formatter:off
   /** The direction offsets for the x-coordinate for a 3D 26-connected search. */
-  protected static final int[] DIR_X_OFFSET = { 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
+  private static final int[] DIR_X_OFFSET = { 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
   /** The direction offsets for the y-coordinate for a 3D 26-connected search. */
-  protected static final int[] DIR_Y_OFFSET = {-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1, 0,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
+  private static final int[] DIR_Y_OFFSET = {-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1, 0,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
   /** The direction offsets for the z-coordinate for a 3D 26-connected search. */
-  protected static final int[] DIR_Z_OFFSET = { 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+  private static final int[] DIR_Z_OFFSET = { 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
   // Half-neighbours
   /** The direction offsets for the x-coordinate for half the neighbours of a 3D 26-connected search. */
-  protected static final int[] DIR_X_OFFSET2 = { 0, 1, 1, 1, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
+  private static final int[] DIR_X_OFFSET2 = { 0, 1, 1, 1, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
   /** The direction offsets for the y-coordinate for half the neighbours of a 3D 26-connected search. */
-  protected static final int[] DIR_Y_OFFSET2 = {-1,-1, 0, 1,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
+  private static final int[] DIR_Y_OFFSET2 = {-1,-1, 0, 1,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
   /** The direction offsets for the z-coordinate for half the neighbours of a 3D 26-connected search. */
-  protected static final int[] DIR_Z_OFFSET2 = { 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
+  private static final int[] DIR_Z_OFFSET2 = { 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
   //@formatter:on
 
   // The following constants are used to set bits corresponding to pixel types
@@ -1959,7 +1960,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       types[i] &= ~NOT_MAXIMUM; // reset attributes no longer needed
     }
 
-    Collections.sort(maxpoints);
+    Collections.sort(maxpoints, Coordinate::compare);
 
     // Build a map between the original id and the new id following the sort
     final int[] idMap = new int[maxpoints.size() + 1];
@@ -3493,18 +3494,16 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
             }
           }
         }
+        final FindFociSaddleList list = new FindFociSaddleList(count);
         if (count != 0) {
-          final FindFociSaddle[] saddles = new FindFociSaddle[count];
-          for (int id2 = 1, c = 0; id2 <= nMaxima; id2++) {
+          for (int id2 = 1; id2 <= nMaxima; id2++) {
             if (highestSaddleValues[id2] != noSaddleValue) {
-              saddles[c++] = new FindFociSaddle(id2, highestSaddleValues[id2]);
+              list.add(new FindFociSaddle(id2, highestSaddleValues[id2]));
             }
           }
-          Arrays.sort(saddles);
-          saddlePoints[i + 1] = new FindFociSaddleList(saddles);
-        } else {
-          saddlePoints[i + 1] = new FindFociSaddleList();
+          list.sort(FindFociSaddle::compare);
         }
+        saddlePoints[i + 1] = list;
 
         // Set the saddle point
         if (highestNeighbourPeakId != 0) {
@@ -3657,18 +3656,16 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
         }
       }
     }
+    final FindFociSaddleList list = new FindFociSaddleList(count);
     if (count != 0) {
-      final FindFociSaddle[] saddles = new FindFociSaddle[count];
-      for (int id2 = 1, c = 0; id2 < highestSaddleValues.length; id2++) {
+      for (int id2 = 1; id2 < highestSaddleValues.length; id2++) {
         if (highestSaddleValues[id2] != noSaddleValue) {
-          saddles[c++] = new FindFociSaddle(id2, highestSaddleValues[id2]);
+          list.add(new FindFociSaddle(id2, highestSaddleValues[id2]));
         }
       }
-      Arrays.sort(saddles);
-      saddlePoints[id] = new FindFociSaddleList(saddles);
-    } else {
-      saddlePoints[id] = new FindFociSaddleList();
+      list.sort(FindFociSaddle::compare);
     }
+    saddlePoints[id] = list;
 
     // Set the saddle point
     if (highestNeighbourPeakId != 0) {
@@ -4256,7 +4253,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
             // Equivalent to findHighestSaddle(saddles)
             : saddles.list[0];
 
-        final float peakBase = (highestSaddle == null) ? stats.background : highestSaddle.value;
+        final float peakBase =
+            (highestSaddle == null) ? stats.background : highestSaddle.getValue();
 
         final double threshold = getPeakHeight(peakMethod, peakParameter, stats, result.maxValue);
 
@@ -4266,7 +4264,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
             removePeak(maxima, peakIdMap, result, saddles, peakId);
           } else {
             // Find the neighbour peak (use the map because the neighbour may have been merged)
-            final int neighbourPeakId = highestSaddle.id;
+            final int neighbourPeakId = highestSaddle.getId();
             // Equivalent to findResult(resultsArray, neighbourPeakId)
             final FindFociResult neighbourResult = resultList[neighbourPeakId];
 
@@ -4313,7 +4311,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
           final FindFociSaddle highestSaddle = saddles.list[0];
 
           // Find the neighbour peak (use the map because the neighbour may have been merged)
-          final int neighbourPeakId = highestSaddle.id;
+          final int neighbourPeakId = highestSaddle.getId();
           // Equivalent to findResult(resultsArray, neighbourPeakId)
           final FindFociResult neighbourResult = resultList[neighbourPeakId];
 
@@ -4375,7 +4373,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
           final FindFociSaddle highestSaddle = saddles.list[0];
 
           // Find the neighbour peak (use the map because the neighbour may have been merged)
-          final int neighbourPeakId = highestSaddle.id;
+          final int neighbourPeakId = highestSaddle.getId();
           // Equivalent to findResult(resultsArray, neighbourPeakId)
           final FindFociResult neighbourResult = resultList[neighbourPeakId];
 
@@ -4472,7 +4470,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
   private static FindFociSaddle findHighestSaddle(FindFociSaddleList saddles, int peakId) {
     for (int i = 0; i < saddles.size; i++) {
       final FindFociSaddle saddle = saddles.list[i];
-      if (saddle.id == peakId) {
+      if (saddle.getId() == peakId) {
         // This works if the saddles are sorted by value
         return saddle;
       }
@@ -4492,8 +4490,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
   @SuppressWarnings("unused")
   private static FindFociSaddle findHighestSaddle(FindFociSaddleList saddles) {
     FindFociSaddle highestSaddle = saddles.list[0];
-    for (int i = 1; i < saddles.size && saddles.list[i].value == highestSaddle.value; i++) {
-      if (highestSaddle.id > saddles.list[i].id) {
+    for (int i = 1; i < saddles.size && saddles.list[i].getValue() == highestSaddle.getValue();
+        i++) {
+      if (highestSaddle.getId() > saddles.list[i].getId()) {
         highestSaddle = saddles.list[i];
       }
     }
@@ -4515,12 +4514,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     for (int i = 0; i < saddles.size; i++) {
       final FindFociSaddle saddle = list[i];
       // Consolidate the id
-      final int newId = peakIdMap[saddle.id];
+      final int newId = peakIdMap[saddle.getId()];
       if (newId == 0 || newId == peakId) {
         // Ignore saddle that is now invalid
         continue;
       }
-      saddle.id = newId;
+      saddle.setId(newId);
       list[size++] = saddle;
     }
     saddles.clear(size);
@@ -4601,12 +4600,12 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       for (int i = 0; i < neighbourSaddles.size; i++) {
         final FindFociSaddle saddle = newNeighbourSaddles[i];
         // Consolidate the id
-        final int newId = peakIdMap[saddle.id];
+        final int newId = peakIdMap[saddle.getId()];
         if (newId == 0 || newId == peakId || newId == neighbourPeakId) {
           // Ignore saddle with peak that is being merged or has been removed
           continue;
         }
-        saddle.id = newId;
+        saddle.setId(newId);
         newNeighbourSaddles[size++] = saddle;
       }
       neighbourSaddles.clear(size);
@@ -4617,7 +4616,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       final FindFociSaddle[] newPeakSaddles = peakSaddles.list;
       for (int i = 0; i < peakSaddles.size; i++) {
         final FindFociSaddle saddle = newPeakSaddles[i];
-        if (saddle.id == neighbourPeakId) {
+        if (saddle.getId() == neighbourPeakId) {
           // Ignore saddle with peak that is being merged
           continue;
         }
@@ -4632,12 +4631,13 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       if (setMerge) {
         final TIntHashSet set = new TIntHashSet(size);
         for (int i = 0; i < size; i++) {
-          if (!set.add(newPeakSaddles[i].id)) {
+          if (!set.add(newPeakSaddles[i].getId())) {
             continue;
           }
 
           final FindFociSaddle peakSaddle = newPeakSaddles[i];
-          final FindFociSaddle neighbourSaddle = findHighestSaddle(neighbourSaddles, peakSaddle.id);
+          final FindFociSaddle neighbourSaddle =
+              findHighestSaddle(neighbourSaddles, peakSaddle.getId());
           if (neighbourSaddle == null) {
             // The neighbour peak does not touch this peak, add to the list
             if (capacityCheck) {
@@ -4647,8 +4647,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
             neighbourSaddles.add(peakSaddle);
 
             // Check if the saddle is higher
-          } else if (neighbourSaddle.value < peakSaddle.value) {
-            neighbourSaddle.value = peakSaddle.value;
+          } else if (neighbourSaddle.getValue() < peakSaddle.getValue()) {
+            neighbourSaddle.setValue(peakSaddle.getValue());
           }
         }
       } else {
@@ -4656,10 +4656,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
         int lastId = 0;
         for (int i = 0; i < size; i++) {
-          if (lastId == newPeakSaddles[i].id) {
+          if (lastId == newPeakSaddles[i].getId()) {
             continue;
           }
-          lastId = newPeakSaddles[i].id;
+          lastId = newPeakSaddles[i].getId();
 
           final FindFociSaddle peakSaddle = newPeakSaddles[i];
           final FindFociSaddle neighbourSaddle = findHighestSaddle(neighbourSaddles, lastId);
@@ -4672,8 +4672,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
             neighbourSaddles.add(peakSaddle);
 
             // Check if the saddle is higher
-          } else if (neighbourSaddle.value < peakSaddle.value) {
-            neighbourSaddle.value = peakSaddle.value;
+          } else if (neighbourSaddle.getValue() < peakSaddle.getValue()) {
+            neighbourSaddle.setValue(peakSaddle.getValue());
           }
         }
       }
@@ -4707,13 +4707,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
         final FindFociSaddle newHighestSaddle = neighbourSaddles.list[0];
 
         // We only need to update if the highest saddle value has been changed
-        if (updatePeakAboveSaddle && newHighestSaddle.value == neighbourResult.highestSaddleValue) {
+        if (updatePeakAboveSaddle
+            && newHighestSaddle.getValue() == neighbourResult.highestSaddleValue) {
           // The highest saddle for the neighbour is the same.
           // We do not require a full analysis.
           updatePeakAboveSaddle = false;
 
           // Check if the saddle we just merged was the same height
-          if (highestSaddle.value == newHighestSaddle.value) {
+          if (highestSaddle.getValue() == newHighestSaddle.getValue()) {
             neighbourResult.countAboveSaddle += result.countAboveSaddle;
             neighbourResult.intensityAboveSaddle += result.intensityAboveSaddle;
 
@@ -4724,7 +4725,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
             // saddle height for the old peak pixels.
             // This requires a copy of the peakIdMap before it was updated.
             computeIntensityAboveSaddle(maxima, peakIdMapClone, peakId, result,
-                newHighestSaddle.value);
+                newHighestSaddle.getValue());
 
             neighbourResult.countAboveSaddle += result.countAboveSaddle;
             neighbourResult.intensityAboveSaddle += result.intensityAboveSaddle;
@@ -4758,14 +4759,14 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       boolean nonContiguous, byte[] types, int[] pointList) {
     if (updatePeakAboveSaddle) {
       if (nonContiguous) {
-        computeIntensityAboveSaddle(maxima, peakIdMap, peakId, result, saddle.value);
+        computeIntensityAboveSaddle(maxima, peakIdMap, peakId, result, saddle.getValue());
       } else {
         pointList = analyseContiguousPeak(maxima, types, result, pointList, peakIdMap, peakId);
       }
     }
 
-    result.saddleNeighbourId = peakIdMap[saddle.id];
-    result.highestSaddleValue = saddle.value;
+    result.saddleNeighbourId = peakIdMap[saddle.getId()];
+    result.highestSaddleValue = saddle.getValue();
 
     return pointList;
   }
@@ -5434,7 +5435,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
   /**
    * Stores the details of a pixel position.
    */
-  protected class Coordinate implements Comparable<Coordinate> {
+  protected static class Coordinate {
     /** The index. */
     private final int index;
 
@@ -5456,36 +5457,19 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       this.setId(id);
       this.value = value;
     }
-    //
-    // /**
-    // * Instantiates a new coordinate.
-    // *
-    // * @param x the x
-    // * @param y the y
-    // * @param z the z
-    // * @param id the id
-    // * @param value the value
-    // */
-    // public Coordinate(int x, int y, int z, int id, float value) {
-    // this.index = getIndex(x, y, z);
-    // this.setId(id);
-    // this.value = value;
-    // }
 
-    /** {@inheritDoc} */
-    @Override
-    public int compareTo(Coordinate other) {
+    /**
+     * Compare the two coordinates by value, highest first.
+     *
+     * @param c1 the first coordinate
+     * @param c2 the second coordinate
+     * @return [-1, 0, 1]
+     */
+    static int compare(Coordinate c1, Coordinate c2) {
       // Require the sort to rank the highest peak as first.
       // Since sort works in ascending order return a negative for a higher value.
-      if (getValue() > other.getValue()) {
-        return -1;
-      }
-      if (getValue() < other.getValue()) {
-        return 1;
-      }
-      return 0;
+      return Float.compare(c2.value, c1.value);
     }
-
 
     /**
      * Gets the index.
@@ -5527,7 +5511,9 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
   /**
    * Provides the ability to sort the results arrays in descending order.
    */
-  private static class ResultComparator implements Comparator<FindFociResult> {
+  private static class ResultComparator implements Comparator<FindFociResult>, Serializable {
+    private static final long serialVersionUID = 1L;
+
     /** {@inheritDoc} */
     @Override
     public int compare(FindFociResult o1, FindFociResult o2) {
@@ -5570,6 +5556,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
    * Provides the ability to sort the results arrays in descending order.
    */
   private static class ResultDescComparator extends ResultComparator {
+    private static final long serialVersionUID = 1L;
     static final ResultDescComparator INSTANCE = new ResultDescComparator();
 
     /** {@inheritDoc} */
@@ -5582,7 +5569,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       if (o1.sortValue < o2.sortValue) {
         return 1;
       }
-
       // Avoid bad draws
       return super.compare(o1, o2);
     }
@@ -5592,6 +5578,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
    * Provides the ability to sort the results arrays in ascending order.
    */
   private static class ResultAscComparator extends ResultComparator {
+    private static final long serialVersionUID = 1L;
     static final ResultAscComparator INSTANCE = new ResultAscComparator();
 
     /** {@inheritDoc} */
@@ -5604,9 +5591,8 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       if (o1.sortValue < o2.sortValue) {
         return -1;
       }
-
       // Avoid bad draws. This is an ascending sort so reverse the order.
-      return -super.compare(o1, o2);
+      return super.compare(o2, o1);
     }
   }
 

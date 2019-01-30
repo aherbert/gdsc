@@ -26,8 +26,10 @@ package uk.ac.sussex.gdsc.colocalisation.cda.engine;
 
 import ij.ImageStack;
 
+import org.apache.commons.lang3.concurrent.ConcurrentRuntimeException;
+
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -39,12 +41,15 @@ import java.util.concurrent.BlockingQueue;
  * sequentially by worker threads.
  */
 public class CdaEngine {
+  private static final String INTERRUPTED_MSG = "Unexpected interruption";
+
   private BlockingQueue<CdaJob> jobs;
-  private final List<CdaWorker> workers = new LinkedList<>();
-  private final List<Thread> threads = new LinkedList<>();
+  private final List<CdaWorker> workers;
+  private List<Thread> threads;
 
   /**
-   * Constructor.
+   * Instantiates a new CDA engine. This creates workers but these must be started using
+   * {@link #start()}.
    *
    * @param imageStack1 the image stack 1
    * @param roiStack1 the roi stack 1
@@ -64,71 +69,35 @@ public class CdaEngine {
       threads = 1;
     }
 
-    createQueue(threads);
+    this.jobs = new ArrayBlockingQueue<>(threads * 2);
+
     results = Collections.synchronizedList(results);
+
+    workers = new ArrayList<>(threads);
 
     // Create the workers
     for (int i = 0; i < threads; i++) {
       final CdaWorker worker = new CdaWorker(imageStack1, roiStack1, imageStack2, roiStack2,
           confinedStack, denom1, denom2, results, jobs, totalSteps);
-      final Thread t = new Thread(worker);
-
       workers.add(worker);
-      this.threads.add(t);
-
-      t.start();
     }
   }
 
   /**
-   * This method checks if all the worker threads are ready to accept jobs, waiting a short period
-   * if necessary. Note that jobs can still be queued if this method returns false.
+   * Start the engine. This must be called before {@link #run(int, int, int)}.
    *
-   * @return True if ready to accept jobs, false if the workers are still initialising.
+   * <p>An engine that has been stopped using {@link #end(boolean)} cannot be restarted.
    */
-  public boolean isInitialised() {
-    boolean ok = checkWorkers();
-    if (ok) {
-      return true;
+  public void start() {
+    if (threads != null) {
+      return;
     }
-
-    ok = true;
-    for (final CdaWorker worker : workers) {
-      if (!checkWorkerWithDelay(worker)) {
-        ok = false;
-      }
+    threads = new ArrayList<>(workers.size());
+    for (CdaWorker worker : workers) {
+      final Thread t = new Thread(worker);
+      this.threads.add(t);
+      t.start();
     }
-
-    if (ok) {
-      return true;
-    }
-
-    // Re-check as they may have now initialised
-    return checkWorkers();
-  }
-
-  private static boolean checkWorkerWithDelay(CdaWorker worker) {
-    for (int i = 0; !worker.isInitialised() && i < 5; i++) {
-      try {
-        Thread.sleep(20);
-      } catch (final InterruptedException ex) {
-        // Ignore
-      }
-    }
-    return worker.isInitialised();
-  }
-
-  private boolean checkWorkers() {
-    for (final CdaWorker worker : workers) {
-      if (!worker.isInitialised()) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private void createQueue(int threads) {
-    this.jobs = new ArrayBlockingQueue<>(threads * 2);
   }
 
   /**
@@ -150,8 +119,8 @@ public class CdaEngine {
     try {
       jobs.put(new CdaJob(jobNumber, x, y));
     } catch (final InterruptedException ex) {
-      // TODO - Handle thread errors
-      throw new RuntimeException("Unexpected interruption", ex);
+      Thread.currentThread().interrupt();
+      throw new ConcurrentRuntimeException(INTERRUPTED_MSG, ex);
     }
   }
 
@@ -174,8 +143,13 @@ public class CdaEngine {
       // Workers may be waiting for a job.
       // Add null jobs if the queue is not at capacity so they can be collected by alive workers.
       // If there are already jobs then the worker will stop due to the finish() signal.
+      final CdaJob signal = new CdaJob(-1, 0, 0);
       for (int i = 0; i < threads.size(); i++) {
-        jobs.offer(new CdaJob(-1, 0, 0)); // non-blocking add to queue
+        // Non-blocking add to queue.
+        // If the queue is full then no need to persist.
+        if (!jobs.offer(signal)) {
+          break;
+        }
       }
     } else {
       // Finish all the worker threads by passing in a null job
@@ -189,8 +163,8 @@ public class CdaEngine {
       try {
         threads.get(i).join();
       } catch (final InterruptedException ex) {
-        // TODO - Handle thread errors
-        ex.printStackTrace();
+        Thread.currentThread().interrupt();
+        throw new ConcurrentRuntimeException(INTERRUPTED_MSG, ex);
       }
     }
 

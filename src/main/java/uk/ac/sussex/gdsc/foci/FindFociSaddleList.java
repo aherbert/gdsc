@@ -26,46 +26,39 @@ package uk.ac.sussex.gdsc.foci;
 
 import gnu.trove.set.hash.TIntHashSet;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 
 /**
  * Contains the foci saddle results of the FindFoci algorithm.
+ *
+ * <p>This list capacity must be explicitly resized.
  */
 public class FindFociSaddleList {
-  private static class IdSaddleComparator implements Comparator<FindFociSaddle> {
+  private static class IdSaddleComparator implements Comparator<FindFociSaddle>, Serializable {
+    private static final long serialVersionUID = 1L;
     static final IdSaddleComparator INSTANCE = new IdSaddleComparator();
 
     @Override
     public int compare(FindFociSaddle o1, FindFociSaddle o2) {
-      if (o1.id < o2.id) {
+      if (o1.getId() < o2.getId()) {
         return -1;
       }
-      if (o1.id > o2.id) {
+      if (o1.getId() > o2.getId()) {
         return 1;
       }
-      if (o1.order < o2.order) {
-        return -1;
-      }
-      if (o1.order > o2.order) {
-        return 1;
-      }
-      return 0;
+      return Integer.compare(o1.order, o2.order);
     }
   }
 
-  private static class OrderSaddleComparator implements Comparator<FindFociSaddle> {
+  private static class OrderSaddleComparator implements Comparator<FindFociSaddle>, Serializable {
+    private static final long serialVersionUID = 1L;
     static final OrderSaddleComparator INSTANCE = new OrderSaddleComparator();
 
     @Override
     public int compare(FindFociSaddle o1, FindFociSaddle o2) {
-      if (o1.order < o2.order) {
-        return -1;
-      }
-      if (o1.order > o2.order) {
-        return 1;
-      }
-      return 0;
+      return Integer.compare(o1.order, o2.order);
     }
   }
 
@@ -76,23 +69,19 @@ public class FindFociSaddleList {
   FindFociSaddle[] list;
 
   /**
-   * Instantiates a new find foci saddle.
+   * Instantiates a new find foci saddle list.
    */
   public FindFociSaddleList() {
-    this.list = new FindFociSaddle[0];
-    this.size = 0;
+    this(0);
   }
 
   /**
-   * Instantiates a new find foci saddle.
+   * Instantiates a new find foci saddle list.
    *
-   * @param list the list
+   * @param capacity the capacity
    */
-  public FindFociSaddleList(FindFociSaddle[] list) {
-    this.list = list;
-    if (list != null) {
-      this.size = list.length;
-    }
+  public FindFociSaddleList(int capacity) {
+    this.list = new FindFociSaddle[capacity];
   }
 
   /**
@@ -107,7 +96,7 @@ public class FindFociSaddleList {
       list = new FindFociSaddle[source.list.length];
       // Only copy up to the correct size
       for (int i = 0; i < size; i++) {
-        list[i] = source.list[i].clone();
+        list[i] = source.list[i].copy();
       }
     }
   }
@@ -207,22 +196,12 @@ public class FindFociSaddleList {
   }
 
   /**
-   * Returns a hard copy of this saddle.
+   * Returns a copy of this saddle list.
    *
-   * @return the find foci saddle
+   * @return the copy
    */
   public FindFociSaddleList copy() {
     return new FindFociSaddleList(this);
-  }
-
-  /**
-   * Sort the list.
-   */
-  public void sort() {
-    if (size < 2) {
-      return;
-    }
-    Arrays.sort(list, 0, size);
   }
 
   /**
@@ -238,7 +217,8 @@ public class FindFociSaddleList {
   }
 
   /**
-   * Remove duplicate Ids from the list and maintain the current order, or else do a default sort.
+   * Remove duplicate Ids from the list and maintain the current order, or else do a default sort
+   * using {@link FindFociSaddle#compare(FindFociSaddle, FindFociSaddle)}.
    *
    * @param maintain Maintain the current order, otherwise do default sort
    */
@@ -246,28 +226,32 @@ public class FindFociSaddleList {
     if (size < 2) {
       return;
     }
+    // Store the current order
     for (int i = 0; i < size; i++) {
       list[i].order = i;
     }
+    // Sort by ID and remove duplicates
     sort(IdSaddleComparator.INSTANCE);
     int lastId = 0;
     int newSize = 0;
     for (int i = 0; i < size; i++) {
-      if (lastId != list[i].id) {
+      if (lastId != list[i].getId()) {
         list[newSize++] = list[i];
-        lastId = list[i].id;
+        lastId = list[i].getId();
       }
     }
     clear(newSize);
+    // Rstore the desired order
     if (maintain) {
       sort(OrderSaddleComparator.INSTANCE);
     } else {
-      sort();
+      sort(FindFociSaddle::compare);
     }
   }
 
   /**
-   * Remove duplicate Ids from the list and do a default sort.
+   * Remove duplicate Ids from the list and do a default sort using
+   * {@link FindFociSaddle#compare(FindFociSaddle, FindFociSaddle)}.
    */
   public void removeDuplicates() {
     if (size < 2) {
@@ -276,12 +260,12 @@ public class FindFociSaddleList {
     final TIntHashSet set = new TIntHashSet(size);
     int newSize = 0;
     for (int i = 0; i < size; i++) {
-      if (set.add(list[i].id)) {
+      if (set.add(list[i].getId())) {
         list[newSize++] = list[i];
       }
     }
     clear(newSize);
-    sort();
+    sort(FindFociSaddle::compare);
   }
 
   /**

@@ -262,18 +262,15 @@ public class FindFociLegacy {
   public static final int STATS_SD_BACKGROUND = 10;
 
   /**
-   * The index of the peak X coordinate within the result int[] array of the results
-   * object.
+   * The index of the peak X coordinate within the result int[] array of the results object.
    */
   public static final int RESULT_X = 0;
   /**
-   * The index of the peak Y coordinate within the result int[] array of the results
-   * object.
+   * The index of the peak Y coordinate within the result int[] array of the results object.
    */
   public static final int RESULT_Y = 1;
   /**
-   * The index of the peak Z coordinate within the result int[] array of the results
-   * object.
+   * The index of the peak Z coordinate within the result int[] array of the results object.
    */
   public static final int RESULT_Z = 2;
   /**
@@ -287,23 +284,19 @@ public class FindFociLegacy {
    */
   public static final int RESULT_COUNT = 4;
   /**
-   * The index of the sum of the peak intensity within the result int[] array of the results
-   * object.
+   * The index of the sum of the peak intensity within the result int[] array of the results object.
    */
   public static final int RESULT_INTENSITY = 5;
   /**
-   * The index of the peak maximum value within the result int[] array of the results
-   * object.
+   * The index of the peak maximum value within the result int[] array of the results object.
    */
   public static final int RESULT_MAX_VALUE = 6;
   /**
-   * The index of the peak highest saddle point within the result int[] array of the results
-   * object.
+   * The index of the peak highest saddle point within the result int[] array of the results object.
    */
   public static final int RESULT_HIGHEST_SADDLE_VALUE = 7;
   /**
-   * The index of the peak highest saddle point within the result int[] array of the results
-   * object.
+   * The index of the peak highest saddle point within the result int[] array of the results object.
    */
   public static final int RESULT_SADDLE_NEIGHBOUR_ID = 8;
   /**
@@ -317,8 +310,7 @@ public class FindFociLegacy {
    */
   public static final int RESULT_INTENSITY_MINUS_BACKGROUND = 10;
   /**
-   * The index of the sum of the peak intensity within the result int[] array of the results
-   * object.
+   * The index of the sum of the peak intensity within the result int[] array of the results object.
    */
   public static final int RESULT_AVERAGE_INTENSITY_MINUS_BACKGROUND = 11;
   /**
@@ -332,9 +324,8 @@ public class FindFociLegacy {
    */
   public static final int RESULT_INTENSITY_ABOVE_SADDLE = 13;
   /**
-   * The index of the custom sort value within the result int[] array of the results
-   * object. This is used internally to sort the results using values not stored in
-   * the result array.
+   * The index of the custom sort value within the result int[] array of the results object. This is
+   * used internally to sort the results using values not stored in the result array.
    */
   private static final int RESULT_CUSTOM_SORT_VALUE = 14;
   // The length of the result array
@@ -1520,8 +1511,8 @@ public class FindFociLegacy {
 
           if (mask) {
             // Set each z-slice as excluded
-            for (int index = getIndex(x + xOffset, y + yOffset, 0); index < maxx_maxy_maxz; index +=
-                maxx_maxy) {
+            for (int index = getIndex(x + xOffset, y + yOffset, 0); index < maxx_maxy_maxz;
+                index += maxx_maxy) {
               types[index] &= ~EXCLUDED;
             }
           }
@@ -2916,8 +2907,9 @@ public class FindFociLegacy {
     }
 
     final int maxPeakSize = getMaxPeakSize(resultsArray);
-    final int[][] pointList = new int[maxPeakSize][2]; // here we enter points starting from a maximum
-                                                   // (index,value)
+    final int[][] pointList = new int[maxPeakSize][2]; // here we enter points starting from a
+                                                       // maximum
+    // (index,value)
     final int[] xyz = new int[3];
 
     /* Process all the maxima */
@@ -3234,7 +3226,8 @@ public class FindFociLegacy {
     updateSaddleDetails(resultsArray, peakIdMap);
   }
 
-  private void removePeak(int[] image, int[] maxima, int[] peakIdMap, int[] result, int peakId) {
+  private static void removePeak(int[] image, int[] maxima, int[] peakIdMap, int[] result,
+      int peakId) {
     // No neighbour so just remove
     mergePeak(image, maxima, peakIdMap, peakId, result, 0, null, null, null, null, false);
   }
@@ -3338,39 +3331,35 @@ public class FindFociLegacy {
     return null;
   }
 
-  private class SaddleComparator implements Comparator<int[]> {
+  private static class SaddleComparator implements Comparator<int[]> {
+    static final SaddleComparator INSTANCE = new SaddleComparator();
+
     @Override
     public int compare(int[] o1, int[] o2) {
-      final int result = o1[SADDLE_PEAK_ID] - o2[SADDLE_PEAK_ID];
-      if (result != 0) {
-        return result;
+      if (o1[SADDLE_PEAK_ID] < o2[SADDLE_PEAK_ID]) {
+        return -1;
       }
+      if (o1[SADDLE_PEAK_ID] > o2[SADDLE_PEAK_ID]) {
+        return 1;
+      }
+      return Integer.compare(o2[SADDLE_VALUE], o1[SADDLE_VALUE]);
+    }
+  }
+
+  private static class DefaultSaddleComparator implements Comparator<int[]> {
+    static final DefaultSaddleComparator INSTANCE = new DefaultSaddleComparator();
+
+    @Override
+    public int compare(int[] o1, int[] o2) {
       if (o1[SADDLE_VALUE] > o2[SADDLE_VALUE]) {
         return -1;
       }
       if (o1[SADDLE_VALUE] < o2[SADDLE_VALUE]) {
         return 1;
       }
-      return 0;
+      return Integer.compare(o1[SADDLE_PEAK_ID], o2[SADDLE_PEAK_ID]);
     }
   }
-
-  private final SaddleComparator saddleComparator = new SaddleComparator();
-
-  private class DefaultSaddleComparator implements Comparator<int[]> {
-    @Override
-    public int compare(int[] o1, int[] o2) {
-      if (o1[SADDLE_VALUE] > o2[SADDLE_VALUE]) {
-        return -1;
-      }
-      if (o1[SADDLE_VALUE] < o2[SADDLE_VALUE]) {
-        return 1;
-      }
-      return o1[SADDLE_PEAK_ID] - o2[SADDLE_PEAK_ID];
-    }
-  }
-
-  private final DefaultSaddleComparator defaultSaddleComparator = new DefaultSaddleComparator();
 
   /**
    * Assigns the peak to the neighbour. Flags the peak as merged by setting the intensity to zero.
@@ -3388,8 +3377,8 @@ public class FindFociLegacy {
    * @param highestSaddle the highest saddle
    * @param updatePeakAboveSaddle the update peak above saddle
    */
-  private void mergePeak(int[] image, int[] maxima, int[] peakIdMap, int peakId, int[] result,
-      int neighbourPeakId, int[] neighbourResult, LinkedList<int[]> peakSaddles,
+  private static void mergePeak(int[] image, int[] maxima, int[] peakIdMap, int peakId,
+      int[] result, int neighbourPeakId, int[] neighbourResult, LinkedList<int[]> peakSaddles,
       LinkedList<int[]> neighbourSaddles, int[] highestSaddle, boolean updatePeakAboveSaddle) {
     if (neighbourResult != null) {
       // IJ.log("Merging " + peakId + " (" + result[RESULT_COUNT] + ") -> " + neighbourPeakId + " ("
@@ -3427,7 +3416,7 @@ public class FindFociLegacy {
         newNeighbourSaddles[size++] = saddle;
       }
       newNeighbourSaddles = Arrays.copyOf(newNeighbourSaddles, size);
-      Arrays.sort(newNeighbourSaddles, saddleComparator);
+      Arrays.sort(newNeighbourSaddles, SaddleComparator.INSTANCE);
 
       // 2. Remove all but the highest saddle with other peaks.
       int lastId = 0;
@@ -3439,7 +3428,7 @@ public class FindFociLegacy {
         lastId = newNeighbourSaddles[i][SADDLE_PEAK_ID];
       }
       newNeighbourSaddles = Arrays.copyOf(newNeighbourSaddles, size);
-      Arrays.sort(newNeighbourSaddles, defaultSaddleComparator);
+      Arrays.sort(newNeighbourSaddles, DefaultSaddleComparator.INSTANCE);
 
       neighbourSaddles.clear();
       neighbourSaddles.addAll(Arrays.asList(newNeighbourSaddles));
@@ -3458,7 +3447,7 @@ public class FindFociLegacy {
         newSaddles[size2++] = saddle;
       }
       newSaddles = Arrays.copyOf(newSaddles, size2);
-      Arrays.sort(newSaddles, saddleComparator);
+      Arrays.sort(newSaddles, SaddleComparator.INSTANCE);
 
       // Merge the saddles
       lastId = 0;
@@ -3484,7 +3473,7 @@ public class FindFociLegacy {
       }
 
       if (doSort) {
-        Collections.sort(neighbourSaddles, defaultSaddleComparator);
+        Collections.sort(neighbourSaddles, DefaultSaddleComparator.INSTANCE);
       }
 
       // Free memory
@@ -3611,14 +3600,14 @@ public class FindFociLegacy {
     // Set the look-up to zero if the peak contains edge pixels
     for (int z = maxz; z-- > 0;) {
       // Look at top and bottom column
-      for (int y = uppery, i = getIndex(lowerx, lowery, z), ii =
-          getIndex(upperx - 1, lowery, z); y-- > lowery; i += maxx, ii += maxx) {
+      for (int y = uppery, i = getIndex(lowerx, lowery, z), ii = getIndex(upperx - 1, lowery, z);
+          y-- > lowery; i += maxx, ii += maxx) {
         peakIdMap[maxima[i]] = 0;
         peakIdMap[maxima[ii]] = 0;
       }
       // Look at top and bottom row
-      for (int x = upperx, i = getIndex(lowerx, lowery, z), ii =
-          getIndex(lowerx, uppery - 1, z); x-- > lowerx; i++, ii++) {
+      for (int x = upperx, i = getIndex(lowerx, lowery, z), ii = getIndex(lowerx, uppery - 1, z);
+          x-- > lowerx; i++, ii++) {
         peakIdMap[maxima[i]] = 0;
         peakIdMap[maxima[ii]] = 0;
       }

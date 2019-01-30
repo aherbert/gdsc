@@ -27,6 +27,7 @@ package uk.ac.sussex.gdsc.foci;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.Histogram;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.foci.FindFociBaseProcessor.Coordinate;
 
 import gnu.trove.list.array.TIntArrayList;
 
@@ -198,7 +199,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
       types[i] &= ~NOT_MAXIMUM; // reset attributes no longer needed
     }
 
-    Collections.sort(maxpoints);
+    Collections.sort(maxpoints, Coordinate::compare);
 
     // Build a map between the original id and the new id following the sort
     final int[] idMap = new int[maxpoints.size() + 1];
@@ -865,18 +866,16 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
         }
       }
     }
+    final FindFociSaddleList list = new FindFociSaddleList(count);
     if (count != 0) {
-      final FindFociSaddle[] saddles = new FindFociSaddle[count];
-      for (int id2 = 1, c = 0; id2 < highestSaddleValues.length; id2++) {
+      for (int id2 = 1; id2 < highestSaddleValues.length; id2++) {
         if (highestSaddleValues[id2] != 0) {
-          saddles[c++] = new FindFociSaddle(id2, highestSaddleValues[id2]);
+          list.add(new FindFociSaddle(id2, highestSaddleValues[id2]));
         }
       }
-      Arrays.sort(saddles);
-      saddlePoints[id] = new FindFociSaddleList(saddles);
-    } else {
-      saddlePoints[id] = new FindFociSaddleList();
+      list.sort(FindFociSaddle::compare);
     }
+    saddlePoints[id] = list;
 
     // Set the saddle point
     if (highestNeighbourPeakId != 0) {

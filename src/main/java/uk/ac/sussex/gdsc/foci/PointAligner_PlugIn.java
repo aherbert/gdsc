@@ -28,6 +28,7 @@ import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -45,6 +46,9 @@ import ij.text.TextWindow;
 
 import java.awt.Color;
 import java.io.File;
+import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,7 +62,7 @@ import java.util.List;
  * as problem points.
  */
 public class PointAligner_PlugIn implements PlugIn {
-  private static String TITLE = "Point Aligner";
+  private static final String TITLE = "Point Aligner";
   private static TextWindow resultsWindow;
 
   private static String resultTitle = "-";
@@ -89,27 +93,27 @@ public class PointAligner_PlugIn implements PlugIn {
     imp = WindowManager.getCurrentImage();
 
     if (null == imp) {
-      IJ.showMessage("There must be at least one image open");
+      IJ.error(TITLE, "There must be at least one image open");
       return;
     }
 
     if (!FindFoci_PlugIn.isSupported(imp.getBitDepth())) {
-      IJ.showMessage("Error", "Only " + FindFoci_PlugIn.getSupported() + " images are supported");
+      IJ.error(TITLE, "Only " + FindFoci_PlugIn.getSupported() + " images are supported");
       return;
     }
 
     if (imp.getNChannels() != 1 || imp.getNFrames() != 1) {
-      IJ.showMessage("Error", "Only single channel, single frame images are supported");
+      IJ.error(TITLE, "Only single channel, single frame images are supported");
       return;
     }
 
     final Roi roi = imp.getRoi();
     if (roi == null || roi.getType() != Roi.POINT) {
-      IJ.showMessage("Error", "The image does not contain Point ROI");
+      IJ.error(TITLE, "The image does not contain Point ROI");
       return;
     }
 
-    if (!showDialog()) {
+    if (!showDialog(this)) {
       return;
     }
 
@@ -117,7 +121,6 @@ public class PointAligner_PlugIn implements PlugIn {
 
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
 
-    // ImagePlus mask = WindowManager.getImage(maskImage);
     final ImagePlus mask = null;
     final int backgroundMethod = FindFociProcessor.BACKGROUND_ABSOLUTE;
     final double backgroundParameter = getBackgroundLevel(points);
@@ -141,15 +144,15 @@ public class PointAligner_PlugIn implements PlugIn {
         peakParameter, outputType, sortIndex, options, blur, centreMethod, centreParameter, 1);
 
     if (results == null) {
-      IJ.showMessage("Error", "FindFoci failed");
+      IJ.error(TITLE, "FindFoci failed");
       return;
     }
 
-    alignpoints(points, results);
+    alignPoints(points, results);
   }
 
-  private boolean showDialog() {
-    final List<String> maskList = FindFoci_PlugIn.buildMaskList(imp);
+  private static boolean showDialog(PointAligner_PlugIn plugin) {
+    final List<String> maskList = FindFoci_PlugIn.buildMaskList(plugin.imp);
 
     final GenericDialog gd = new GenericDialog(TITLE);
 
@@ -187,18 +190,15 @@ public class PointAligner_PlugIn implements PlugIn {
     unalignedBorder = (int) gd.getNextNumber();
     resultsDirectory = gd.getNextString();
 
-    if (!resultsDirectory.equals("")) {
-      final File dir = new File(resultsDirectory);
-      if (!dir.isDirectory()) {
-        try {
-          dir.mkdirs();
-        } catch (final SecurityException ex) {
-          IJ.log("Failed to create directory: " + resultsDirectory + ". " + ex.getMessage());
-        }
+    if (TextUtils.isNotEmpty(resultsDirectory)) {
+      try {
+        Files.createDirectories(Paths.get(resultsDirectory));
+        plugin.saveResults = true;
+      } catch (final Exception ex) {
+        IJ.log("Failed to create directory: " + resultsDirectory + ". " + ex.getMessage());
       }
-      saveResults = new File(resultsDirectory).isDirectory();
     } else {
-      saveResults = false;
+      plugin.saveResults = false;
     }
 
     return true;
@@ -228,7 +228,7 @@ public class PointAligner_PlugIn implements PlugIn {
     return background;
   }
 
-  private void alignpoints(AssignedPoint[] points, FindFociResults results) {
+  private void alignPoints(AssignedPoint[] points, FindFociResults results) {
     if (showOverlay || logAlignments) {
       IJ.log(String.format("%s : %s", TITLE, imp.getTitle()));
     }
@@ -256,14 +256,14 @@ public class PointAligner_PlugIn implements PlugIn {
 
     sortPoints(points, impStack);
 
-    // TODO - Why is there no maximum move distance?
+    // Q - Why is there no maximum move distance?
 
     for (final AssignedPoint point : points) {
       final int pointId = point.getId();
       point.setAssignedId(-1);
       final int x = point.getXint();
       final int y = point.getYint();
-      final int z = point.getZint(); // TODO - Deal with 3D images
+      final int z = point.getZint();
 
       pointHeight[pointId] = impStack.getProcessor(z + 1).getf(x, y);
       if (minHeight > pointHeight[pointId]) {
@@ -272,13 +272,15 @@ public class PointAligner_PlugIn implements PlugIn {
 
       final ImageProcessor ip = maximaStack.getProcessor(z + 1);
 
+      // TODO - Deal with 3D images with different z unit calibration
+
       int maximaId = ip.get(x, y) - 1;
       if (maximaId >= 0) {
         if (assigned[maximaId] >= 0) {
           // Already assigned - The previous point is higher so it wins.
           // See if any unassigned maxima are closer. This could be an ROI marking error.
           FindFociResult result = resultsArray.get(maximaId);
-          final double d = distance2(x, y, z, result.x, result.y, result.z);
+          final double dist = distance2(x, y, z, result.x, result.y, result.z);
           float maxHeight = Float.NEGATIVE_INFINITY;
 
           for (int id = 0; id < assigned.length; id++) {
@@ -286,11 +288,11 @@ public class PointAligner_PlugIn implements PlugIn {
             if (assigned[id] < 0) {
               result = resultsArray.get(id);
 
-              final double newD = distance2(x, y, z, result.x, result.y, result.z);
-              if (newD < d) {
+              final double newDist = distance2(x, y, z, result.x, result.y, result.z);
+              if (newDist < dist) {
                 // Pick the closest
-                // maximaId = id;
-                // d = newD;
+                // maximaId = id
+                // d = newD
 
                 // Pick the highest
                 final float v = result.maxValue;
@@ -433,7 +435,7 @@ public class PointAligner_PlugIn implements PlugIn {
     final int dx = x - x2;
     final int dy = y - y2;
     final int dz = z - z2;
-    return dx * dx + dy * dy + dz * dz;
+    return (double) (dx * dx) + (dy * dy) + (dz * dz);
   }
 
   /**
@@ -476,10 +478,8 @@ public class PointAligner_PlugIn implements PlugIn {
         final int z = result.z;
 
         // Check if the point is within the mask
-        if (maskStack != null) {
-          if (maskStack.getProcessor(z + 1).get(x, y) == 0) {
-            continue;
-          }
+        if (maskStack != null && maskStack.getProcessor(z + 1).get(x, y) == 0) {
+          continue;
         }
 
         missed.add(new AssignedPoint(x, y, z, maximaId));
@@ -501,10 +501,8 @@ public class PointAligner_PlugIn implements PlugIn {
         final int z = result.z;
 
         // Check if the point is within the mask
-        if (maskStack != null) {
-          if (maskStack.getProcessor(z + 1).get(x, y) == 0) {
-            continue;
-          }
+        if (maskStack != null && maskStack.getProcessor(z + 1).get(x, y) == 0) {
+          continue;
         }
 
         missed.add(result.maxValue);
@@ -887,7 +885,8 @@ public class PointAligner_PlugIn implements PlugIn {
     }
   }
 
-  private class PointHeightComparator implements Comparator<AssignedPoint> {
+  private static class PointHeightComparator implements Comparator<AssignedPoint>, Serializable {
+    private static final long serialVersionUID = 1L;
     /** The point height. */
     private final int[] pointHeight;
 
@@ -902,14 +901,8 @@ public class PointAligner_PlugIn implements PlugIn {
 
     @Override
     public int compare(AssignedPoint o1, AssignedPoint o2) {
-      final int diff = pointHeight[o1.getId()] - pointHeight[o2.getId()];
-      if (diff > 0) {
-        return -1;
-      }
-      if (diff < 0) {
-        return 1;
-      }
-      return 0;
+      // Highest first
+      return Integer.compare(pointHeight[o2.getId()], pointHeight[o1.getId()]);
     }
   }
 }

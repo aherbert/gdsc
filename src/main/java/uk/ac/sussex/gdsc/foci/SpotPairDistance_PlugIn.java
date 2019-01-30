@@ -51,6 +51,7 @@ import ij.text.TextWindow;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Output the distances between the pair of spots from two channels at a user selected position.
@@ -78,6 +79,8 @@ public class SpotPairDistance_PlugIn implements PlugIn {
    * an image.
    */
   private static class SpotPairDistancePluginTool extends PlugInTool {
+    private static final SpotPairDistancePluginTool toolInstance = new SpotPairDistancePluginTool();
+
     private static TextWindow distancesWindow;
 
     private int channel1 = (int) Prefs.get(PREFS_CHANNEL_1, 1);
@@ -94,8 +97,8 @@ public class SpotPairDistance_PlugIn implements PlugIn {
 
     boolean active = true;
 
-    // Flag set in mouse pressed and released in mouse released
-    int dragging;
+    /** Flag set in mouse pressed and released in mouse released. */
+    AtomicInteger dragging = new AtomicInteger();
 
     // Created in the MousePressed event
     int origX;
@@ -120,16 +123,17 @@ public class SpotPairDistance_PlugIn implements PlugIn {
     }
 
     @Override
-    public void showOptionsDialog() {
+    public synchronized void showOptionsDialog() {
       final GenericDialog gd = new GenericDialog(TITLE + " Tool Options");
+      //@formatter:off
       gd.addMessage(
-        //@formatter:off
-        TextUtils.wrap(
-        "Click on a multi-channel image and the distance between the " +
-        "center-of-mass of spots in two channels will be measured. " +
-        "Drag from the clicked point to create an orientation for " +
-        "relative XY distance.", 80));
-        //@formatter:on
+          TextUtils.wrap(
+          "Click on a multi-channel image and the distance between the " +
+          "center-of-mass of spots in two channels will be measured. " +
+          "Drag from the clicked point to create an orientation for " +
+          "relative XY distance.", 80));
+      //@formatter:on
+
       if (!hasMultiChannelImage()) {
         gd.addMessage("Warning: Currently no multi-channel images are open.");
       }
@@ -148,33 +152,31 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       if (gd.wasCanceled()) {
         return;
       }
-      synchronized (this) {
-        channel1 = (int) gd.getNextNumber();
-        channel2 = (int) gd.getNextNumber();
-        searchRange = (int) gd.getNextNumber();
-        comRange = (int) gd.getNextNumber();
-        comRange = MathUtils.clip(0, searchRange, comRange);
-        reverseOrientationLine = gd.getNextBoolean();
-        showDistances = gd.getNextBoolean();
-        showSearchRegion = gd.getNextBoolean();
-        showComRegion = gd.getNextBoolean();
-        showLine = gd.getNextBoolean();
-        showOrientationLine = gd.getNextBoolean();
-        addToOverlay = gd.getNextBoolean();
-        active = (channel1 != channel2 && searchRange > 0
-            && (showDistances || showSearchRegion || showComRegion || showLine));
-        Prefs.set(PREFS_CHANNEL_1, channel1);
-        Prefs.set(PREFS_CHANNEL_2, channel2);
-        Prefs.set(PREFS_SEARCH_RANGE, searchRange);
-        Prefs.set(PREFS_COM_RANGE, comRange);
-        Prefs.set(PREFS_REVERSE_ORIENTATION_LINE, reverseOrientationLine);
-        Prefs.set(PREFS_SHOW_DISTANCES, showDistances);
-        Prefs.set(PREFS_SHOW_SEARCH_REGION, showSearchRegion);
-        Prefs.set(PREFS_SHOW_COM_REGION, showComRegion);
-        Prefs.set(PREFS_SHOW_LINE, showLine);
-        Prefs.set(PREFS_SHOW_ORIENTATION_LINE, showOrientationLine);
-        Prefs.set(PREFS_ADD_TO_OVERLAY, addToOverlay);
-      }
+      channel1 = (int) gd.getNextNumber();
+      channel2 = (int) gd.getNextNumber();
+      searchRange = (int) gd.getNextNumber();
+      comRange = (int) gd.getNextNumber();
+      comRange = MathUtils.clip(0, searchRange, comRange);
+      reverseOrientationLine = gd.getNextBoolean();
+      showDistances = gd.getNextBoolean();
+      showSearchRegion = gd.getNextBoolean();
+      showComRegion = gd.getNextBoolean();
+      showLine = gd.getNextBoolean();
+      showOrientationLine = gd.getNextBoolean();
+      addToOverlay = gd.getNextBoolean();
+      active = (channel1 != channel2 && searchRange > 0
+          && (showDistances || showSearchRegion || showComRegion || showLine));
+      Prefs.set(PREFS_CHANNEL_1, channel1);
+      Prefs.set(PREFS_CHANNEL_2, channel2);
+      Prefs.set(PREFS_SEARCH_RANGE, searchRange);
+      Prefs.set(PREFS_COM_RANGE, comRange);
+      Prefs.set(PREFS_REVERSE_ORIENTATION_LINE, reverseOrientationLine);
+      Prefs.set(PREFS_SHOW_DISTANCES, showDistances);
+      Prefs.set(PREFS_SHOW_SEARCH_REGION, showSearchRegion);
+      Prefs.set(PREFS_SHOW_COM_REGION, showComRegion);
+      Prefs.set(PREFS_SHOW_LINE, showLine);
+      Prefs.set(PREFS_SHOW_ORIENTATION_LINE, showOrientationLine);
+      Prefs.set(PREFS_ADD_TO_OVERLAY, addToOverlay);
     }
 
     private static boolean hasMultiChannelImage() {
@@ -297,7 +299,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
         }
 
         // Initiate dragging
-        dragging = 1;
+        dragging.set(1);
       }
     }
 
@@ -370,27 +372,30 @@ public class SpotPairDistance_PlugIn implements PlugIn {
 
     @Override
     public void mouseDragged(ImagePlus imp, MouseEvent event) {
-      if (dragging == 0) {
+      if (dragging.get() == 0) {
         return;
       }
       event.consume();
 
-      // Only a drag if the mouse has moved position
-      if (origX != event.getX() || origY != event.getY()) {
-        final ImageCanvas ic = imp.getCanvas();
-        final double x = ic.offScreenXD(event.getX());
-        final double y = ic.offScreenYD(event.getY());
+      // Ensure fields written in a synchronized block are read in a synchronized block
+      synchronized (this) {
+        // Only a drag if the mouse has moved position
+        if (origX != event.getX() || origY != event.getY()) {
+          final ImageCanvas ic = imp.getCanvas();
+          final double x = ic.offScreenXD(event.getX());
+          final double y = ic.offScreenYD(event.getY());
 
-        // - Draw a line ROI from the start location (it may be reversed)
-        final double[] line = createOrientationLine(com1[0], com1[1], x, y);
-        imp.setRoi(createLine(line[0], line[1], line[2], line[3], Color.yellow));
-        dragging++;
+          // - Draw a line ROI from the start location (it may be reversed)
+          final double[] line = createOrientationLine(com1[0], com1[1], x, y);
+          imp.setRoi(createLine(line[0], line[1], line[2], line[3], Color.yellow));
+          dragging.incrementAndGet();
+        }
       }
     }
 
     @Override
     public void mouseReleased(ImagePlus imp, MouseEvent event) {
-      if (dragging == 0) {
+      if (dragging.get() == 0) {
         return;
       }
 
@@ -403,9 +408,9 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       // stop this since it ignores the consumed flag.
 
       synchronized (this) {
-        // Halt dragging but check if a drag did occur
-        final boolean hasDragged = dragging > 1;
-        dragging = 0;
+        // Halt dragging (set to zero) but check if a drag did occur
+        // (incremented in the mouseDragged method).
+        final boolean hasDragged = dragging.getAndSet(0) > 1;
 
         double[] line = null;
         if (hasDragged) {
@@ -436,7 +441,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
           double angle = 0;
           double relX = 0;
           double relY = 0;
-          if (hasDragged) {
+          if (line != null) {
             // - Compute relative orientation
             // Both vectors are are centred on com1. The drag end point
             // specifies the vector direction origin not the end.
@@ -448,7 +453,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
             final double l2 = normalise(v2);
             if (l1 != 0 && l2 != 0) {
               final double dot = v1[0] * v2[0] + v1[1] * v2[1];
-              angle = Math.acos(dot) * 180.0 / Math.PI;
+              angle = Math.toDegrees(Math.acos(dot));
               // Scalar projection of v2 in direction of v1.
               // This is the relative X component
               relX = dot * l2;
@@ -485,8 +490,8 @@ public class SpotPairDistance_PlugIn implements PlugIn {
      */
     private double[] createOrientationLine(double x1, double y1, double x2, double y2) {
       if (reverseOrientationLine) {
-        x2 = 2 * x1 - x2; // x1 -(x2-x1);
-        y2 = 2 * y1 - y2; // y1 -(y2-y1);
+        x2 = 2 * x1 - x2; // == x1 -(x2-x1)
+        y2 = 2 * y1 - y2; // == y1 -(y2-y1)
         return new double[] {x1, y1, x2, y2};
       }
       return new double[] {x1, y1, x2, y2};
@@ -502,33 +507,6 @@ public class SpotPairDistance_PlugIn implements PlugIn {
         vector[1] /= length;
       }
       return length;
-    }
-
-    @SuppressWarnings("unused")
-    private static double[] crossProduct(double[] vector1, double[] vector2) {
-      // The cross product is only relevant in 3D!
-      final double u1 = vector1[0];
-      final double u2 = vector1[1];
-      final double u3 = 0;
-      final double v1 = vector2[0];
-      final double v2 = vector2[1];
-      final double v3 = 0;
-      final double s1 = u2 * v3 - u3 * v2;
-      final double s2 = u3 * v1 - u1 * v3;
-      final double s3 = u1 * v2 - u2 * v1;
-      return new double[] {s1, s2, s3};
-
-      // Simplifies to:
-      // return new double[] { 0, 0, u1 * v2 - u2 * v1 };
-    }
-
-    @SuppressWarnings("unused")
-    private static double dotSign(double[] vector1, double[] vector2) {
-      final double u1 = vector1[0];
-      final double u2 = vector1[1];
-      final double v1 = vector2[0];
-      final double v2 = vector2[1];
-      return u1 * v2 - u2 * v1;
     }
 
     /**
@@ -562,8 +540,8 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       return sb.toString();
     }
 
-    private void addDistanceResult(ImagePlus imp, int slice, int frame, Rectangle bounds,
-        double[] com1, double[] com2, double angle, double relX, double relY) {
+    private synchronized void addDistanceResult(ImagePlus imp, int slice, int frame,
+        Rectangle bounds, double[] com1, double[] com2, double angle, double relX, double relY) {
       createResultsWindow();
 
       final StringBuilder sb = new StringBuilder();
@@ -592,7 +570,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       final Calibration cal = imp.getCalibration();
       final String unit = cal.getUnit();
       // Only if matching units and pixel scaling
-      if (cal.getYUnit() == unit && (cal.pixelWidth != 1.0 || cal.pixelHeight != 1.0)) {
+      if (cal.getYUnit().equals(unit) && (cal.pixelWidth != 1.0 || cal.pixelHeight != 1.0)) {
         sb.append('\t').append(MathUtils.rounded(com1[0] * cal.pixelWidth));
         sb.append('\t').append(MathUtils.rounded(com1[1] * cal.pixelHeight));
         sb.append('\t').append(MathUtils.rounded(com2[0] * cal.pixelWidth));
@@ -685,10 +663,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
             final String line = tp.getLine(i);
             // Check the image name
             int startIndex = line.indexOf('\t');
-            if (startIndex == -1) {
-              continue;
-            }
-            if (!title.equals(line.substring(0, startIndex))) {
+            if (startIndex == -1 || !title.equals(line.substring(0, startIndex))) {
               continue;
             }
 
@@ -722,7 +697,6 @@ public class SpotPairDistance_PlugIn implements PlugIn {
               final int h = Integer.parseInt(text.substring(xIndex + 1));
               final Rectangle r = new Rectangle(xx, yy, w, h);
               if (r.intersects(bounds)) {
-                // tp.setLine(i, "");
                 tp.setSelection(i, i);
                 tp.clearSelection();
                 // Since i will be incremented for the next line,
@@ -738,19 +712,13 @@ public class SpotPairDistance_PlugIn implements PlugIn {
     }
   }
 
-  private static SpotPairDistancePluginTool toolInstance;
-
   /**
    * Initialise the spot pair distance tool. This is to allow support for calling within macro
    * toolsets.
    */
   public static void addPluginTool() {
-    if (toolInstance == null) {
-      toolInstance = new SpotPairDistancePluginTool();
-    }
-
     // Add the tool
-    Toolbar.addPlugInTool(toolInstance);
+    Toolbar.addPlugInTool(SpotPairDistancePluginTool.toolInstance);
     IJ.showStatus("Added " + TITLE + " Tool");
   }
 
@@ -767,6 +735,6 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       return;
     }
 
-    toolInstance.showOptionsDialog();
+    SpotPairDistancePluginTool.toolInstance.showOptionsDialog();
   }
 }

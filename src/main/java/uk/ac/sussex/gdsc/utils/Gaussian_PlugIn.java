@@ -78,7 +78,7 @@ public class Gaussian_PlugIn implements PlugIn {
 
     final float[] img =
         createGaussian(width, height, new float[] {amplitude}, new float[] {x}, new float[] {y},
-            new float[] {sx}, new float[] {sy}, new float[] {(float) (angle * Math.PI / 180.0)});
+            new float[] {sx}, new float[] {sy}, new float[] {(float) Math.toRadians(angle)});
     final FloatProcessor fp = new FloatProcessor(width, height, img, null);
     if (noise > 0) {
       fp.noise(noise);

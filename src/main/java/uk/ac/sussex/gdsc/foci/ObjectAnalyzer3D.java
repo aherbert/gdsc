@@ -90,7 +90,7 @@ public class ObjectAnalyzer3D {
   }
 
   /**
-   * Gets the object mask.
+   * Gets a reference to the object mask.
    *
    * @return A pixel array containing the object number for each pixel in the input image.
    */

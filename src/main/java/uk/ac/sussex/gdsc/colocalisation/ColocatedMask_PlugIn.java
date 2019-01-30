@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.colocalisation;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageAdapter;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.NonBlockingExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.utils.Settings;
@@ -37,23 +38,23 @@ import ij.ImageListener;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
-import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.Recorder;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 
-import java.awt.AWTEvent;
 import java.awt.Checkbox;
 import java.awt.Choice;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Create a colocated mask from two source images using the threshold or minimum display value from
  * each image to define their image mask. The two image masks are combined using an AND or OR
  * operator.
  */
-public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListener {
+public class ColocatedMask_PlugIn implements PlugIn {
   private static final String TITLE = "Colocated Mask";
 
   private static final String[] MASK_MODE = {"Threshold", "Minimum display value"};
@@ -64,31 +65,33 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
   private static int maskMode;
   private static int colocatedMode;
 
-  private NonBlockingExtendedGenericDialog gd;
   private Checkbox preview;
   private int id1;
   private int id2;
+
+  /** The last settings. */
+  private Settings lastSettings;
 
   /**
    * Simple class to maintain a synchronized state of clean/dirty.
    */
   private class Flag {
-    boolean dirty;
+    boolean isDirty;
 
     /**
      * Dirty the flag.
      */
     synchronized void dirty() {
-      dirty = true;
-      notify();
+      isDirty = true;
+      notifyAll();
     }
 
     /**
      * Clean the flag.
      */
     synchronized void clean() {
-      dirty = false;
-      // notify(); Nothing listens for a clean state
+      isDirty = false;
+      // notifyAll(); Nothing listens for a clean state
     }
 
     /**
@@ -96,22 +99,15 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
      *
      * @return true, if is clean
      */
-    boolean isClean() {
-      return !dirty;
-    }
-
-    /**
-     * Wave the flag to notify a listener.
-     */
-    synchronized void wave() {
-      this.notify();
+    synchronized boolean isClean() {
+      return !isDirty;
     }
   }
 
   private Flag flag;
 
   private class Worker implements Runnable {
-    boolean stop;
+    volatile boolean stop;
     final Flag flag;
 
     Worker(Flag flag) {
@@ -120,25 +116,24 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
 
     @Override
     public void run() {
-      while (true) {
+      while (!stop) {
         try {
           synchronized (flag) {
             if (flag.isClean()) {
+              // Check for shutdown signal
               if (stop) {
-                // System.out.println("Stopping");
                 break;
               }
               // Wait for changes
-              // System.out.println("Waiting");
               flag.wait();
             }
             // Clean the flag since we are about to do the work
             flag.clean();
           }
 
-          // System.out.println("Running");
           createMask(true);
         } catch (final InterruptedException ex) {
+          Thread.currentThread().interrupt();
           break;
         }
       }
@@ -159,7 +154,7 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
   private boolean showDialog() {
     final String[] list = ImageJUtils.getImageList(0, new String[] {TITLE});
 
-    gd = new NonBlockingExtendedGenericDialog(TITLE);
+    final NonBlockingExtendedGenericDialog gd = new NonBlockingExtendedGenericDialog(TITLE);
     gd.addMessage("Create a mask from 2 images.\nImages must match XY dimensions.");
     final Choice c1 = gd.addAndGetChoice("Image_1", list, selectedImage1);
     final Choice c2 = gd.addAndGetChoice("Image_2", list, selectedImage2);
@@ -180,16 +175,34 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
     gd.addChoice("Mask_mode", MASK_MODE, MASK_MODE[maskMode]);
     gd.addChoice("Colocated_mode", COLOCATED_MODE, COLOCATED_MODE[colocatedMode]);
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
+
+    ImageListener imageListener = null;
     if (dynamic) {
       // Set up a worker for the preview
-      worker = new Worker(flag = new Flag());
+      flag = new Flag();
+      worker = new Worker(flag);
       thread = new Thread(worker);
       thread.setDaemon(true);
       thread.start();
 
       preview = gd.addAndGetCheckbox("Preview", false);
-      gd.addDialogListener(this);
-      ImagePlus.addImageListener(this);
+      gd.addDialogListener((dialog, event) -> {
+        // The event will be null when the NonBlockingDialog is first shown
+        if (event != null && preview.getState()) {
+          readDialog(dialog, true);
+        }
+        return true;
+      });
+      imageListener = new ImageAdapter() {
+        @Override
+        public void imageUpdated(ImagePlus imp) {
+          if ((imp.getID() == id1 || imp.getID() == id2) && preview.getState()) {
+            // We are monitoring these images so action this
+            createMaskWork(true);
+          }
+        }
+      };
+      ImagePlus.addImageListener(imageListener);
     }
     gd.showDialog();
 
@@ -197,7 +210,7 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
     if (dynamic) {
       upToDate = preview.getState();
       preview = null;
-      ImagePlus.removeImageListener(this);
+      ImagePlus.removeImageListener(imageListener);
     }
 
     final boolean cancelled = gd.wasCanceled();
@@ -208,17 +221,18 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
           thread.interrupt();
         } catch (final SecurityException ex) {
           // We should have permission to interrupt this thread.
-          ex.printStackTrace();
+          Logger.getLogger(getClass().getName()).log(Level.WARNING, "Thread shutdown failed", ex);
         }
       } else {
         worker.stop = true;
-        flag.wave();
+        flag.dirty();
 
         // Leave to finish the work
         try {
           thread.join(0);
         } catch (final InterruptedException ex) {
-          // Ignore
+          Logger.getLogger(getClass().getName()).log(Level.WARNING, "Unexpected interruption", ex);
+          Thread.currentThread().interrupt();
         }
       }
     }
@@ -262,8 +276,6 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
       createMask(false);
     }
   }
-
-  private Settings lastSettings;
 
   private void createMask(boolean preview) {
     final ImagePlus imp1 = WindowManager.getImage(selectedImage1);
@@ -344,7 +356,6 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
     final Settings settings = new Settings(id1, id2, width, height, dimensions1[2], dimensions1[3],
         dimensions1[4], dimensions2[2], dimensions2[3], dimensions2[4], colocatedMode, list);
     if (settings.equals(lastSettings)) {
-      // System.out.println("Ignoring");
       return;
     }
     lastSettings = settings;
@@ -358,7 +369,6 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
     for (int channel = 1, next = 0; channel <= index[0]; channel++) {
       final double min1 = list.getQuick(next++);
       final double min2 = list.getQuick(next++);
-      // System.out.printf("Min1 = %f, Min2 = %f\n", min1, min2);
 
       for (int slice = 1; slice <= index[1]; slice++) {
         for (int frame = 1; frame <= index[2]; frame++) {
@@ -418,34 +428,5 @@ public class ColocatedMask_PlugIn implements PlugIn, ImageListener, DialogListen
     }
 
     return imp.getDisplayRangeMin();
-  }
-
-  @Override
-  public void imageOpened(ImagePlus imp) {
-    // Ignore
-  }
-
-  @Override
-  public void imageClosed(ImagePlus imp) {
-    // Ignore
-  }
-
-  @Override
-  public void imageUpdated(ImagePlus imp) {
-    if (imp.getID() == id1 || imp.getID() == id2) {
-      // We are monitoring these images so action this
-      if (preview.getState()) {
-        createMaskWork(true);
-      }
-    }
-  }
-
-  @Override
-  public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
-    // It will be null when the NonBlockingDialog is first shown
-    if (event != null && preview.getState()) {
-      readDialog(gd, true);
-    }
-    return true;
   }
 }

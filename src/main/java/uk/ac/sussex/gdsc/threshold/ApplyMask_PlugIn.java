@@ -54,6 +54,7 @@ public class ApplyMask_PlugIn implements PlugInFilter {
   private static int selectedChannel;
   private static int selectedSlice;
   private static int selectedFrame;
+
   private ImagePlus imp;
   private ImagePlus maskImp;
   private int option;
@@ -72,7 +73,7 @@ public class ApplyMask_PlugIn implements PlugInFilter {
       return DONE;
     }
     this.imp = imp;
-    if (showDialog()) {
+    if (showDialog(this)) {
       applyMask();
     }
     return DONE;
@@ -89,7 +90,7 @@ public class ApplyMask_PlugIn implements PlugInFilter {
    *
    * @return true, if successful
    */
-  private boolean showDialog() {
+  private static boolean showDialog(ApplyMask_PlugIn plugin) {
     final String sourceImage = "(Use target)";
     final ArrayList<String> imageList = new ArrayList<>();
     imageList.add(sourceImage);
@@ -105,7 +106,8 @@ public class ApplyMask_PlugIn implements PlugInFilter {
     gd.addMessage("Create a mask from a source image and apply it.\n"
         + "Pixels outside the mask will be set to zero.");
     gd.addChoice("Mask_Image", imageList.toArray(new String[0]), selectedImage);
-    gd.addChoice("Option", MaskCreater_PlugIn.options, MaskCreater_PlugIn.options[selectedOption]);
+    final String[] options = MaskCreater_PlugIn.getOptions();
+    gd.addChoice("Option", options, options[selectedOption]);
     gd.addChoice("Threshold_Method", AutoThreshold.getMethods(), selectedThresholdMethod);
     gd.addNumericField("Channel", selectedChannel, 0);
     gd.addNumericField("Slice", selectedSlice, 0);
@@ -124,15 +126,16 @@ public class ApplyMask_PlugIn implements PlugInFilter {
     selectedSlice = (int) gd.getNextNumber();
     selectedFrame = (int) gd.getNextNumber();
 
-    setMaskImp(getImp());
     if (!selectedImage.equals(sourceImage)) {
-      setMaskImp(WindowManager.getImage(selectedImage));
+      plugin.setMaskImp(WindowManager.getImage(selectedImage));
+    } else {
+      plugin.setMaskImp(plugin.getImp());
     }
-    setOption(selectedOption);
-    setThresholdMethod(selectedThresholdMethod);
-    setChannel(selectedChannel);
-    setSlice(selectedSlice);
-    setFrame(selectedFrame);
+    plugin.setOption(selectedOption);
+    plugin.setThresholdMethod(selectedThresholdMethod);
+    plugin.setChannel(selectedChannel);
+    plugin.setSlice(selectedSlice);
+    plugin.setFrame(selectedFrame);
 
     return true;
   }
@@ -233,15 +236,15 @@ public class ApplyMask_PlugIn implements PlugInFilter {
     final ImageStack imageStack = imp.getStack();
     final ImageStack maskStack = maskImp.getStack();
 
-    for (final int frame : frames) {
-      for (final int slice : slices) {
-        for (final int channel : channels) {
+    for (final int t : frames) {
+      for (final int z : slices) {
+        for (final int c : channels) {
           final ImageProcessor ip =
-              imageStack.getProcessor(imp.getStackIndex(channel, slice, frame));
+              imageStack.getProcessor(imp.getStackIndex(c, z, t));
 
           // getStackIndex will clip to the mask dimensions
           final ImageProcessor maskIp =
-              maskStack.getProcessor(maskImp.getStackIndex(channel, slice, frame));
+              maskStack.getProcessor(maskImp.getStackIndex(c, z, t));
 
           for (int i = maskIp.getPixelCount(); i-- > 0;) {
             if (maskIp.get(i) == 0) {

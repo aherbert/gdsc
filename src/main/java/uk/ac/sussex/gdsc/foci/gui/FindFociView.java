@@ -80,6 +80,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.Serializable;
 import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
@@ -101,13 +102,17 @@ import javax.swing.event.ChangeListener;
 /**
  * Provides a permanent form front-end for the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn}
  * algorithm.
+ *
+ * <p>Although this class extends {@link java.awt.Component} it is not {@link Serializable}.
  */
 public class FindFociView extends JFrame implements PropertyChangeListener, MessageListener {
+
+  // There are custom objects that are not Serializable so serialisation would not work.
   private static final long serialVersionUID = 4515468509409681730L;
 
-  private final FindFociModel model;
-  private final FindFociController controller;
-  private FindFociAdvancedOptions options;
+  private final transient FindFociModel model;
+  private final transient FindFociController controller;
+  private transient FindFociAdvancedOptions options;
 
   // Flags used to control the enabled status of the run button.
   // The button should be enabled when there are images in the list and the model has been changed.
@@ -117,6 +122,11 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
   private double backgroundLevel;
   private boolean sortIndexError;
   private int oldSortIndex = -1;
+
+  /**
+   * The instance. This is required for the auto-binding properties used by the BeansBinding
+   * framework.
+   */
   private final FindFociView instance = this;
 
   // Used to set the limits for the absolute threshold slider

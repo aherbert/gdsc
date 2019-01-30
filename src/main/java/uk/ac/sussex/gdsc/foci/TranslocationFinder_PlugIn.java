@@ -66,7 +66,7 @@ import java.util.List;
  * channel 13 distance &lt;&lt; 12|23, no transolcation where 12 &lt;&lt; 13|23.
  */
 public class TranslocationFinder_PlugIn implements PlugIn {
-  private static String TITLE = "Translocation Finder";
+  private static final String TITLE = "Translocation Finder";
   private static TextWindow resultsWindow;
   private static final int UNKNOWN = 0;
   private static final int NO_TRANSLOCATION = 1;
@@ -246,7 +246,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     }
 
     // Table of results
-    createResultsWindow();
+    createResultsWindowAndName();
 
     int count = 0;
     for (final int[] triplet : triplets) {
@@ -277,9 +277,10 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     }
   }
 
-  private String name = "";
+  /** The results name to use in the results window. */
+  private String resultsName = "";
 
-  private void createResultsWindow() {
+  private void createResultsWindowAndName() {
     // Get the name.
     // We are expecting FindFoci to be run on 3 channels of the same image:
     // 1=ImageTitle (c1,t1)
@@ -301,14 +302,19 @@ public class TranslocationFinder_PlugIn implements PlugIn {
       index++;
     }
     // Common prefix plus the FindFoci suffix
-    name = resultsName1 + "; " + resultsName2.substring(index).trim() + "; "
+    resultsName = resultsName1 + "; " + resultsName2.substring(index).trim() + "; "
         + resultsName3.substring(index).trim();
 
+    createResultsWindow();
+  }
+
+  private static void createResultsWindow() {
     if (resultsWindow == null || !resultsWindow.isShowing()) {
-      resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 1000, 300);
+      final TextWindow newResultsWindow =
+          new TextWindow(TITLE + " Results", createResultsHeader(), "", 1000, 300);
 
       // Allow the results to be manually changed
-      resultsWindow.getTextPanel().addMouseListener(new MouseAdapter() {
+      newResultsWindow.getTextPanel().addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent event) {
           if (event.getClickCount() < 2) {
@@ -321,6 +327,8 @@ public class TranslocationFinder_PlugIn implements PlugIn {
           } else if (event.getSource() instanceof Canvas
               && ((Canvas) event.getSource()).getParent() instanceof TextPanel) {
             tp = (TextPanel) ((Canvas) event.getSource()).getParent();
+          } else {
+            return;
           }
 
           final String line = tp.getLine(tp.getSelectionStart());
@@ -426,6 +434,8 @@ public class TranslocationFinder_PlugIn implements PlugIn {
           overlayTriplets();
         }
       });
+
+      resultsWindow = newResultsWindow;
     }
   }
 
@@ -454,7 +464,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     final AssignedPoint p1 = foci1[triplet[0]];
     final AssignedPoint p2 = foci2[triplet[1]];
     final AssignedPoint p3 = foci3[triplet[2]];
-    triplet[3] = addResult(count, name, p1, p2, p3);
+    triplet[3] = addResult(count, resultsName, p1, p2, p3);
   }
 
   /**
@@ -620,8 +630,11 @@ public class TranslocationFinder_PlugIn implements PlugIn {
    * Provide a tool on the ImageJ toolbar that responds to a user clicking on the same image to
    * identify foci for potential translocations.
    */
-  public class TranslocationFinderPluginTool extends PlugInTool {
-    private final String[] items = Arrays.copyOf(CLASSIFICATION, CLASSIFICATION.length + 1);
+  public static class TranslocationFinderPluginTool extends PlugInTool {
+    private static final TranslocationFinderPluginTool toolInstance =
+        new TranslocationFinderPluginTool();
+
+    private final String[] items;
     private int imageId;
     private final int[] ox = new int[3];
     private final int[] oy = new int[3];
@@ -633,6 +646,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
      * Instantiates a new translocation finder plugin tool.
      */
     TranslocationFinderPluginTool() {
+      items = Arrays.copyOf(CLASSIFICATION, CLASSIFICATION.length + 1);
       items[items.length - 1] = "Auto";
     }
 
@@ -674,7 +688,6 @@ public class TranslocationFinder_PlugIn implements PlugIn {
         ox[points] = ic.offScreenX(event.getX());
         oy[points] = ic.offScreenY(event.getY());
         oz[points] = imp.getSlice();
-        // System.out.printf("click %d,%d\n", ox[points], oy[points]);
         points++;
 
         // Draw points as an ROI.
@@ -727,21 +740,13 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     }
   }
 
-  private static TranslocationFinder_PlugIn instance;
-  private static TranslocationFinderPluginTool toolInstance;
-
   /**
    * Initialise the manual translocation finder tool. This is to allow support for calling within
    * macro toolsets.
    */
   public static void addPluginTool() {
-    if (instance == null) {
-      instance = new TranslocationFinder_PlugIn();
-      toolInstance = instance.new TranslocationFinderPluginTool();
-    }
-
     // Add the tool
-    Toolbar.addPlugInTool(toolInstance);
+    Toolbar.addPlugInTool(TranslocationFinderPluginTool.toolInstance);
     IJ.showStatus("Added " + TITLE + " Tool");
   }
 }

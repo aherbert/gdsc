@@ -27,6 +27,7 @@ package uk.ac.sussex.gdsc.threshold;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.utils.FileUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -46,10 +47,11 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,7 +65,7 @@ import java.util.List;
  * Distance Map (EDM) of the mask.
  */
 public class ThreadAnalyser_PlugIn implements PlugIn {
-  private static String TITLE = "Thread Analyser";
+  private static final String TITLE = "Thread Analyser";
   private static TextWindow resultsWindow;
   private static boolean writeHeader = true;
 
@@ -487,7 +489,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
 
     Collections.sort(chainCodes, ChainCode::compare);
 
-    OutputStreamWriter out = createResultsFile();
+    BufferedWriter out = createResultsFile();
 
     createResultsWindow();
     int id = 1;
@@ -555,29 +557,26 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     }
   }
 
-  private static OutputStreamWriter createResultsFile() {
+  private static BufferedWriter createResultsFile() {
     if (resultDirectory == null || resultDirectory.equals("")) {
       return null;
     }
 
-    OutputStreamWriter out = null;
+    BufferedWriter out = null;
     final String filename = resultDirectory + System.getProperty("file.separator") + image + "_"
         + maskImage + ".threads.csv";
     try {
-      final File file = new File(filename);
-      if (!file.exists() && file.getParent() != null) {
-        new File(file.getParent()).mkdirs();
-      }
+      final Path path = Paths.get(filename);
+      FileUtils.createParent(path);
 
       // Save results to file
-      final FileOutputStream fos = new FileOutputStream(filename);
-      out = new OutputStreamWriter(fos, "UTF-8");
+      out = Files.newBufferedWriter(path);
 
-      out.write("# Intensity profiles of threads:\n");
-      out.write("#ID,startX,startY,endX,endY,Distance\n");
-      out.write("#Distance, ...\n");
-      out.write("#Image Intensity, ...\n");
-      out.write("#EDM Intensity, ...\n");
+      writeLine(out, "# Intensity profiles of threads:");
+      writeLine(out, "#ID,startX,startY,endX,endY,Distance");
+      writeLine(out, "#Distance, ...");
+      writeLine(out, "#Image Intensity, ...");
+      writeLine(out, "#EDM Intensity, ...");
 
       return out;
     } catch (final Exception ex) {
@@ -593,7 +592,12 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     return null;
   }
 
-  private static OutputStreamWriter saveResult(OutputStreamWriter out, int id, float[] line) {
+  private static void writeLine(BufferedWriter out, String line) throws IOException {
+    out.write(line);
+    out.newLine();
+  }
+
+  private static BufferedWriter saveResult(BufferedWriter out, int id, float[] line) {
     if (out == null) {
       return null;
     }
@@ -604,7 +608,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
       for (int i = 0; i < 4; i++) {
         sb.append((int) line[i]).append(",");
       }
-      sb.append(IJ.d2s(line[4], 2)).append("\n");
+      sb.append(IJ.d2s(line[4], 2)).append(System.lineSeparator());
 
       out.write(sb.toString());
     } catch (final IOException ex) {
@@ -620,8 +624,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     return out;
   }
 
-  private static OutputStreamWriter saveResult(OutputStreamWriter out, String string,
-      float[] data) {
+  private static BufferedWriter saveResult(BufferedWriter out, String string, float[] data) {
     if (out == null) {
       return null;
     }
@@ -632,7 +635,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
         out.write(",");
         out.write(IJ.d2s(data[i], 2));
       }
-      out.write("\n");
+      out.newLine();
     } catch (final IOException ex) {
       IJ.log("Failed to write to the output file : " + ex.getMessage());
       try {

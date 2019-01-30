@@ -71,11 +71,13 @@ public class AlignStacks_PlugIn implements PlugIn {
   private static int maxXShift = 20;
   private static int minYShift = -20;
   private static int maxYShift = 20;
-  private static final String[] subPixelMethods = AlignImagesFft_PlugIn.subPixelMethods;
+  private static final String[] subPixelMethods = AlignImagesFft_PlugIn.getSubPixelMethods();
   private static int subPixelMethod = 2;
-  private static final String[] methods = AlignImagesFft_PlugIn.methods;
+  private static final String[] interpolationMethods =
+      AlignImagesFft_PlugIn.getInterpolationMethods();
   private static int interpolationMethod = ImageProcessor.NONE;
   private static boolean clipOutput;
+  private static final String[] windowFunctions = AlignImagesFft_PlugIn.getWindowFunctions();
 
   @Override
   public void run(String arg) {
@@ -161,15 +163,14 @@ public class AlignStacks_PlugIn implements PlugIn {
       gd.addCheckbox("Self-align", selfAlign);
     }
     gd.addChoice("Projection", ZProjector.METHODS, ZProjector.METHODS[projectionMethod]);
-    gd.addChoice("Window_function", AlignImagesFft_PlugIn.windowFunctions,
-        AlignImagesFft_PlugIn.windowFunctions[myWindowFunction]);
+    gd.addChoice("Window_function", windowFunctions, windowFunctions[myWindowFunction]);
     gd.addCheckbox("Restrict_translation", restrictTranslation);
     gd.addNumericField("Min_X_translation", minXShift, 0);
     gd.addNumericField("Max_X_translation", maxXShift, 0);
     gd.addNumericField("Min_Y_translation", minYShift, 0);
     gd.addNumericField("Max_Y_translation", maxYShift, 0);
     gd.addChoice("Sub-pixel_method", subPixelMethods, subPixelMethods[subPixelMethod]);
-    gd.addChoice("Interpolation", methods, methods[interpolationMethod]);
+    gd.addChoice("Interpolation", interpolationMethods, interpolationMethods[interpolationMethod]);
     gd.addCheckbox("Clip_output", clipOutput);
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
 

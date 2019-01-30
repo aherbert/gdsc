@@ -320,7 +320,7 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
     } else {
       final ClusterPoint p2 = p1.next;
       final double d = p1.distance(p2);
-      resultsWindow.append(String.format("\t%d\t%.0f\t%.0f\t%d\t%.0f\t%.0f\t%s\t%s\n", p1.id, p1.x,
+      resultsWindow.append(String.format("\t%d\t%.0f\t%.0f\t%d\t%.0f\t%.0f\t%s\t%s", p1.id, p1.x,
           p1.y, p2.id, p2.x, p2.y, MathUtils.rounded(d), MathUtils.rounded(d * cal.pixelWidth)));
     }
   }

@@ -29,13 +29,13 @@ package uk.ac.sussex.gdsc.colocalisation.cda.engine;
  */
 public class CdaJob {
   /** The job number. */
-  public int jobNumber;
+  private final int jobNumber;
 
   /** The x shift. */
-  public int x;
+  private final int x;
 
   /** The y shift. */
-  public int y;
+  private final int y;
 
   /**
    * Instantiates a new CDA job.
@@ -48,5 +48,32 @@ public class CdaJob {
     this.jobNumber = jobNumber;
     this.x = x;
     this.y = y;
+  }
+
+  /**
+   * Gets the job number.
+   *
+   * @return the job number
+   */
+  public int getJobNumber() {
+    return jobNumber;
+  }
+
+  /**
+   * Gets the x shift.
+   *
+   * @return the x shift
+   */
+  public int getX() {
+    return x;
+  }
+
+  /**
+   * Gets the y shift.
+   *
+   * @return the y shift
+   */
+  public int getY() {
+    return y;
   }
 }

@@ -62,7 +62,7 @@ public class AlignImagesFft_PlugIn implements PlugIn {
   private static final String TITLE = "Align Images FFT";
 
   /** The available window function. */
-  public static final String[] windowFunctions;
+  private static final String[] windowFunctions;
   private static int myWindowFunction = 3;
   private static boolean restrictTranslation;
   private static int myMinXShift = -20;
@@ -70,10 +70,10 @@ public class AlignImagesFft_PlugIn implements PlugIn {
   private static int myMinYShift = -20;
   private static int myMaxYShift = 20;
   /** The available sub-pixel registration methods. */
-  public static final String[] subPixelMethods;
+  private static final String[] subPixelMethods;
   private static int subPixelMethod = 2;
   /** The available interpolation methods. */
-  public static final String[] methods = ImageProcessor.getInterpolationMethods();
+  private static final String[] interpolationMethods = ImageProcessor.getInterpolationMethods();
   private static int interpolationMethod = ImageProcessor.NONE;
 
   private static final String NONE = "[Reference stack]";
@@ -96,6 +96,33 @@ public class AlignImagesFft_PlugIn implements PlugIn {
     for (int i = 0; i < m2.length; i++) {
       subPixelMethods[i] = m2[i].toString();
     }
+  }
+
+  /**
+   * Gets the available window functions.
+   *
+   * @return the window functions
+   */
+  public static String[] getWindowFunctions() {
+    return windowFunctions.clone();
+  }
+
+  /**
+   * Gets available interpolation methods.
+   *
+   * @return the interpolation methods
+   */
+  public static String[] getInterpolationMethods() {
+    return interpolationMethods.clone();
+  }
+
+  /**
+   * Gets the available sub-pixel registration methods.
+   *
+   * @return the sub pixel methods
+   */
+  public static String[] getSubPixelMethods() {
+    return subPixelMethods.clone();
   }
 
   /** Ask for parameters and then execute. */
@@ -182,7 +209,7 @@ public class AlignImagesFft_PlugIn implements PlugIn {
     gd.addNumericField("Min_Y_translation", myMinYShift, 0);
     gd.addNumericField("Max_Y_translation", myMaxYShift, 0);
     gd.addChoice("Sub-pixel_method", subPixelMethods, subPixelMethods[subPixelMethod]);
-    gd.addChoice("Interpolation", methods, methods[interpolationMethod]);
+    gd.addChoice("Interpolation", interpolationMethods, interpolationMethods[interpolationMethod]);
     gd.addCheckbox("Normalised", normalised);
     gd.addCheckbox("Show_correlation_image", showCorrelationImage);
     gd.addCheckbox("Show_normalised_image", showNormalisedImage);

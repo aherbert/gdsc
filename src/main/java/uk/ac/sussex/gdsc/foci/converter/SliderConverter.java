@@ -31,7 +31,7 @@ import org.jdesktop.beansbinding.Converter;
  */
 public class SliderConverter extends Converter<Double, Integer> {
   /** The scale factor applied to a double before converting to an integer. */
-  public static double SCALE_FACTOR = 1000;
+  public static final double SCALE_FACTOR = 1000;
 
   @Override
   public Integer convertForward(Double paramS) {
