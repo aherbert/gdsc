@@ -132,7 +132,7 @@ public final class AssignedPointUtils {
   public static AssignedPoint[] extractRoiPoints(Roi roi) {
     AssignedPoint[] roiPoints = null;
 
-    if (roi != null && roi.getType() == Roi.POINT) {
+    if (roi instanceof PolygonRoi && roi.getType() == Roi.POINT) {
       final Polygon p = ((PolygonRoi) roi).getNonSplineCoordinates();
       final int n = p.npoints;
       final Rectangle bounds = roi.getBounds();

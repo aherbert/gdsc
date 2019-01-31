@@ -65,7 +65,7 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
   private static final int INSIDE = 0;
   private static final int OUTSIDE = 1;
 
-  private final int flags = DOES_16 + DOES_8G + SNAPSHOT + FINAL_PROCESSING;
+  private static final int FLAGS = DOES_16 + DOES_8G + SNAPSHOT + FINAL_PROCESSING;
   private ImagePlus imp;
   private ImageProcessor maskIp;
   private Label label;
@@ -105,7 +105,7 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     }
     min = ip.getMin();
     max = ip.getMax();
-    return flags;
+    return FLAGS;
   }
 
   private void resetImage() {
@@ -160,7 +160,7 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
       return DONE;
     }
 
-    return flags;
+    return FLAGS;
   }
 
   /** {@inheritDoc} */

@@ -217,6 +217,9 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
       "Total intensity minus min",
       "Average intensity minus min" };
 
+  /**
+   * The list of recognised methods finding the centre of a maxima.
+   */
   private static String[] centreMethods = {
       "Max value (search image)",
       "Max value (original image)",
@@ -387,7 +390,11 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   private AtomicInteger batchOk;
   private AtomicInteger batchError;
 
-  private class BatchParameters {
+  private static class BatchParameters {
+    static final int C = 0;
+    static final int Z = 1;
+    static final int T = 2;
+
     String parameterOptions;
     HashMap<String, String> map;
 
@@ -412,9 +419,6 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
     int outputType;
     int options;
 
-    static final int C = 0;
-    static final int Z = 1;
-    static final int T = 2;
     int[] image = new int[3];
     int[] mask = new int[3];
     boolean originalTitle;
@@ -1525,10 +1529,10 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
     try (final BufferedWriter out = Files.newBufferedWriter(path)) {
       // Add new lines because Buffered reader strips them
       out.write(header);
-      out.write(NEW_LINE);
+      out.newLine();
       for (final BatchResult r : results) {
         out.write(r.entry);
-        out.write(NEW_LINE);
+        out.newLine();
       }
     } catch (final Exception ex) {
       logError(ex.getMessage());
@@ -2208,7 +2212,6 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
     }
 
     // Set the overlay (if null this will remove the old one)
-    // if (overlay != null)
     imp.setOverlay(overlay);
   }
 
@@ -2905,7 +2908,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
 
     ObjectAnalysisResult objectAnalysisResult = null;
     if ((options & OPTION_OBJECT_ANALYSIS) != 0) {
-      objectAnalysisResult = ffp.new ObjectAnalysisResult();
+      objectAnalysisResult = new ObjectAnalysisResult();
       final ImagePlus objectImp = ffp.doObjectAnalysis(mask, maximaImp, resultsArray,
           (options & OPTION_SHOW_OBJECT_MASK) != 0, objectAnalysisResult);
       if (objectImp != null) {

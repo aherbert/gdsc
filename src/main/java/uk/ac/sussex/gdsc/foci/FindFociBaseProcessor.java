@@ -3285,232 +3285,98 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     // Initialise the saddle points
     final int nMaxima = resultsArray.length;
 
-    final int maxPeakSize = getMaxPeakSize(resultsArray);
-    // Here we enter points starting from a maximum (index,value)
-    final int[] pointListI = new int[maxPeakSize];
-    final float[] pointListV = new float[maxPeakSize];
     final int[] xyz = new int[3];
 
-    // Can we speed this up?
-    // Attempts to use a bounding region do not change the speed. The limit must be the
-    // search of N-connected neighbours.
-
-    final boolean useBoundingRegion = true;
-    if (useBoundingRegion) {
-      // Do an initial sweep of half-neighbours to mark pixels for a saddle search
-      if (is2D()) {
-        for (int i = maxxByMaxyByMaxz; i-- > 0;) {
-          final int id = maxima[i];
-          if (id == 0) {
-            continue;
-          }
-
-          getXy(i, xyz);
-
-          final int x = xyz[0];
-          final int y = xyz[1];
-
-          final boolean isInnerXy = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
-
-          boolean saddle = false;
-          for (int d = 4; d-- > 0;) {
-            if (isInnerXy || isWithinXy2(x, y, d)) {
-              final int index = i + offset2[d];
-              final int id2 = maxima[index];
-              if (id2 != 0 && id2 != id) {
-                // This is saddle search point between two touching maxima
-                saddle = true;
-                types[index] |= SADDLE_SEARCH;
-              }
-            }
-          }
-          if (saddle) {
-            types[i] |= SADDLE_SEARCH;
-          }
-        }
-      } else {
-        for (int i = maxxByMaxyByMaxz; i-- > 0;) {
-          final int id = maxima[i];
-          if (id == 0) {
-            continue;
-          }
-
-          getXyz(i, xyz);
-
-          final int x = xyz[0];
-          final int y = xyz[1];
-          final int z = xyz[2];
-
-          final boolean isInnerXy = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
-          final boolean isInnerXyz =
-              (zlimit == 0) ? isInnerXy : isInnerXy && (z != 0 && z != zlimit);
-
-          // It is more likely that the z stack will be out-of-bounds.
-          // Adopt the xy limit lookup and process z lookup separately
-
-          boolean saddle = false;
-          for (int d = 13; d-- > 0;) {
-            if (isInnerXyz || (isInnerXy && isWithinZ2(z, d)) || isWithinXyz2(x, y, z, d)) {
-              final int index = i + offset2[d];
-              final int id2 = maxima[index];
-              if (id2 != 0 && id2 != id) {
-                // This is saddle search point between two touching maxima
-                saddle = true;
-                types[index] |= SADDLE_SEARCH;
-              }
-            }
-          }
-          if (saddle) {
-            types[i] |= SADDLE_SEARCH;
-          }
-        }
-      }
-
-      // Find the bounding dimensions for each peak which are saddle search points
-      // and search within that
-      findBounds(resultsArray, maxima, types);
-
-      setupFindHighestSaddleValues(nMaxima);
-
-      for (int i = 0; i < resultsArray.length; i++) {
-        final FindFociResult result = resultsArray[i];
-        // Skip if no saddles
-        if (result.maxx < 0) {
-          saddlePoints[i + 1] = new FindFociSaddleList();
+    // Do an initial sweep of half-neighbours to mark pixels for a saddle search
+    if (is2D()) {
+      for (int i = maxxByMaxyByMaxz; i-- > 0;) {
+        final int id = maxima[i];
+        if (id == 0) {
           continue;
         }
 
-        findHighestSaddleValues(result, maxima, types, saddlePoints);
-      }
+        getXy(i, xyz);
 
-      finaliseFindHighestSaddleValues();
+        final int x = xyz[0];
+        final int y = xyz[1];
 
-      // Reset attributes no longer needed
-      for (int i = maxxByMaxyByMaxz; i-- > 0;) {
-        types[i] &= ~SADDLE_SEARCH;
+        final boolean isInnerXy = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+
+        boolean saddle = false;
+        for (int d = 4; d-- > 0;) {
+          if (isInnerXy || isWithinXy2(x, y, d)) {
+            final int index = i + offset2[d];
+            final int id2 = maxima[index];
+            if (id2 != 0 && id2 != id) {
+              // This is saddle search point between two touching maxima
+              saddle = true;
+              types[index] |= SADDLE_SEARCH;
+            }
+          }
+        }
+        if (saddle) {
+          types[i] |= SADDLE_SEARCH;
+        }
       }
     } else {
-      final float[] highestSaddleValues = new float[nMaxima + 1];
-
-      final int dStart = (is2D()) ? 8 : 26;
-
-      /* Process all the maxima */
-      for (int i = 0; i < resultsArray.length; i++) {
-        final FindFociResult result = resultsArray[i];
-        final int x0 = result.x;
-        final int y0 = result.y;
-        final int z0 = result.z;
-        final int id = result.id;
-        final int index0 = getIndex(x0, y0, z0);
-
-        // List of saddle highest values with every other peak
-        Arrays.fill(highestSaddleValues, noSaddleValue);
-
-        types[index0] |= LISTED; // mark first point as listed
-        int listI = 0; // index of current search element in the list
-        int listLen = 1; // number of elements in the list
-
-        // we create a list of connected points and start the list at the current maximum
-        pointListI[0] = index0;
-        pointListV[0] = getf(index0);
-
-        do {
-          final int index1 = pointListI[listI];
-          final float v1 = pointListV[listI];
-
-          getXyz(index1, xyz);
-          final int x1 = xyz[0];
-          final int y1 = xyz[1];
-          final int z1 = xyz[2];
-
-          // It is more likely that the z stack will be out-of-bounds.
-          // Adopt the xy limit lookup and process z lookup separately
-
-          final boolean isInnerXy = (y1 != 0 && y1 != ylimit) && (x1 != 0 && x1 != xlimit);
-          final boolean isInnerXyz =
-              (zlimit == 0) ? isInnerXy : isInnerXy && (z1 != 0 && z1 != zlimit);
-
-          // Check for the highest neighbour
-          for (int d = dStart; d-- > 0;) {
-            if (isInnerXyz || (isInnerXy && isWithinZ(z1, d)) || isWithinXyz(x1, y1, z1, d)) {
-              // Get the coords
-              final int index2 = index1 + offset[d];
-
-              if ((types[index2] & IGNORE) != 0) {
-                // This has been done already, ignore this point
-                continue;
-              }
-
-              final int id2 = maxima[index2];
-
-              if (id2 == id) {
-                // Add this to the search
-                pointListI[listLen] = index2;
-                pointListV[listLen] = getf(index2);
-                listLen++;
-                types[index2] |= LISTED;
-              } else if (id2 != 0) {
-                // This is another peak, see if it a saddle highpoint
-                final float v2 = getf(index2);
-
-                // Take the lower of the two points as the saddle
-                final float minV;
-                if (v1 < v2) {
-                  types[index1] |= SADDLE;
-                  minV = v1;
-                } else {
-                  types[index2] |= SADDLE;
-                  minV = v2;
-                }
-
-                if (highestSaddleValues[id2] < minV) {
-                  highestSaddleValues[id2] = minV;
-                }
-              }
-            }
-          }
-
-          listI++;
-
-        }
-        while (listI < listLen);
-
-        for (int ii = listLen; ii-- > 0;) {
-          final int index = pointListI[ii];
-          types[index] &= ~LISTED; // reset attributes no longer needed
+      for (int i = maxxByMaxyByMaxz; i-- > 0;) {
+        final int id = maxima[i];
+        if (id == 0) {
+          continue;
         }
 
-        // Find the highest saddle
-        int highestNeighbourPeakId = 0;
-        float highestNeighbourValue = noSaddleValue;
-        int count = 0;
-        for (int id2 = 1; id2 <= nMaxima; id2++) {
-          if (highestSaddleValues[id2] != noSaddleValue) {
-            count++;
-            // log("Peak saddle " + id + " -> " + id2 + " @ " + highestSaddleValue[id2]);
-            if (highestNeighbourValue < highestSaddleValues[id2]) {
-              highestNeighbourValue = highestSaddleValues[id2];
-              highestNeighbourPeakId = id2;
+        getXyz(i, xyz);
+
+        final int x = xyz[0];
+        final int y = xyz[1];
+        final int z = xyz[2];
+
+        final boolean isInnerXy = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
+        final boolean isInnerXyz = (zlimit == 0) ? isInnerXy : isInnerXy && (z != 0 && z != zlimit);
+
+        // It is more likely that the z stack will be out-of-bounds.
+        // Adopt the xy limit lookup and process z lookup separately
+
+        boolean saddle = false;
+        for (int d = 13; d-- > 0;) {
+          if (isInnerXyz || (isInnerXy && isWithinZ2(z, d)) || isWithinXyz2(x, y, z, d)) {
+            final int index = i + offset2[d];
+            final int id2 = maxima[index];
+            if (id2 != 0 && id2 != id) {
+              // This is saddle search point between two touching maxima
+              saddle = true;
+              types[index] |= SADDLE_SEARCH;
             }
           }
         }
-        final FindFociSaddleList list = new FindFociSaddleList(count);
-        if (count != 0) {
-          for (int id2 = 1; id2 <= nMaxima; id2++) {
-            if (highestSaddleValues[id2] != noSaddleValue) {
-              list.add(new FindFociSaddle(id2, highestSaddleValues[id2]));
-            }
-          }
-          list.sort(FindFociSaddle::compare);
+        if (saddle) {
+          types[i] |= SADDLE_SEARCH;
         }
-        saddlePoints[i + 1] = list;
+      }
+    }
 
-        // Set the saddle point
-        if (highestNeighbourPeakId != 0) {
-          result.saddleNeighbourId = highestNeighbourPeakId;
-          result.highestSaddleValue = highestNeighbourValue;
-        }
-      } // for all maxima
+    // Find the bounding dimensions for each peak which are saddle search points
+    // and search within that
+    findBounds(resultsArray, maxima, types);
+
+    setupFindHighestSaddleValues(nMaxima);
+
+    for (int i = 0; i < resultsArray.length; i++) {
+      final FindFociResult result = resultsArray[i];
+      // Skip if no saddles
+      if (result.maxx < 0) {
+        saddlePoints[i + 1] = new FindFociSaddleList();
+        continue;
+      }
+
+      findHighestSaddleValues(result, maxima, types, saddlePoints);
+    }
+
+    finaliseFindHighestSaddleValues();
+
+    // Reset attributes no longer needed
+    for (int i = maxxByMaxyByMaxz; i-- > 0;) {
+      types[i] &= ~SADDLE_SEARCH;
     }
 
     return saddlePoints;
@@ -5599,7 +5465,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
   /**
    * Used to store the number of objects and their original mask value (state).
    */
-  class ObjectAnalysisResult {
+  static class ObjectAnalysisResult {
     /** The number of objects. */
     int numberOfObjects;
 

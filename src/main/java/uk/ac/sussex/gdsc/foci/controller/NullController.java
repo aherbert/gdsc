@@ -26,17 +26,27 @@ package uk.ac.sussex.gdsc.foci.controller;
 
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.simple.RandomSource;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import java.util.logging.Logger;
 
 /**
  * Dummy controller that provides stub functionality to
  * {@link uk.ac.sussex.gdsc.foci.gui.FindFociView}.
  */
 public class NullController extends FindFociController {
+  private static Logger logger = Logger.getLogger(NullController.class.getName());
+
   private int lowerLimit = 15;
   private int upperLimit = 220;
+  private int updateCounter = 0;
+
+  private static class LazyRng {
+    static final UniformRandomProvider rng = RandomSource.create(RandomSource.SPLIT_MIX_64);
+  }
 
   /**
    * Instantiates a new null controller.
@@ -53,15 +63,11 @@ public class NullController extends FindFociController {
     return 3;
   }
 
-  private final int updateCounter = 0;
-
   /** {@inheritDoc} */
   @Override
   public void updateImageList() {
-    // System.out.println("updateImageList");
-
     // Note: Increment the updateCounter to ensure the list is refreshed
-    // updateCounter++;
+    updateCounter++;
 
     final List<String> imageList = new ArrayList<>();
     imageList.add(updateCounter + " : One");
@@ -70,10 +76,9 @@ public class NullController extends FindFociController {
     model.setImageList(imageList);
 
     // Make up some random limits
-    final Random rand = new Random();
     final int base = 25;
-    lowerLimit = rand.nextInt(base);
-    upperLimit = rand.nextInt(255 - base) + base;
+    lowerLimit = LazyRng.rng.nextInt(base);
+    upperLimit = LazyRng.rng.nextInt(255 - base) + base;
   }
 
   /** {@inheritDoc} */
@@ -85,19 +90,19 @@ public class NullController extends FindFociController {
   /** {@inheritDoc} */
   @Override
   public void preview() {
-    System.out.println("FindFoci Preview");
+    logger.info("FindFoci Preview");
   }
 
   /** {@inheritDoc} */
   @Override
   public void endPreview() {
-    System.out.println("FindFoci EndPreview");
+    logger.info("FindFoci EndPreview");
   }
 
   /** {@inheritDoc} */
   @Override
   public int[] getImageLimits(int[] limits) {
-    // System.out.println("getImageLimits");
+    logger.info("getImageLimits");
     if (limits == null || limits.length < 2) {
       limits = new int[2];
     }

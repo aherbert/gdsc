@@ -414,7 +414,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       final int cy = ypoints[n] - bounds.y;
 
       // Restrict bounds using the cell radius and tolerance
-      final int extra = (int) Math.ceil(cellRadius + cellRadius * tolerance + kernelWidth / 2);
+      final int extra = getCellRange();
       final int minx = Math.max(0, cx - extra);
       final int miny = Math.max(0, cy - extra);
       final int maxx = Math.min(ip.getWidth() - 1, cx + extra);
@@ -519,6 +519,16 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     }
 
     return cells;
+  }
+
+  /**
+   * Gets the cell range around the centre using the cell radius, the tolerance and half the kernel
+   * width.
+   *
+   * @return the cell range
+   */
+  private static int getCellRange() {
+    return (int) Math.ceil(cellRadius + cellRadius * tolerance + kernelWidth / 2);
   }
 
   private static void applyColorModel(ImagePlus imp) {
@@ -648,7 +658,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     }
 
     // Add the cell width, tolerance and kernel size to get the total required limits
-    final int extra = (int) Math.ceil(cellRadius + cellRadius * tolerance + kernelWidth / 2);
+    final int extra = getCellRange();
     minx -= extra;
     miny -= extra;
     maxx += extra;

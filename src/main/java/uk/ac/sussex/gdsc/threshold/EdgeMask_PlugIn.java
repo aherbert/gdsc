@@ -733,13 +733,13 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /**
    * Use a runnable for the image generation to allow multi-threaded operation.
    */
-  private class MaskCreator implements Runnable {
+  private static class MaskCreator implements Runnable {
     ImageProcessor ip;
     ImageStack outputStack;
     int slice;
     EdgeMask_PlugIn mask;
 
-    public MaskCreator(ImageProcessor ip, ImageStack outputStack, int slice, EdgeMask_PlugIn mask) {
+    MaskCreator(ImageProcessor ip, ImageStack outputStack, int slice, EdgeMask_PlugIn mask) {
       this.ip = ip;
       this.outputStack = outputStack;
       this.slice = slice;

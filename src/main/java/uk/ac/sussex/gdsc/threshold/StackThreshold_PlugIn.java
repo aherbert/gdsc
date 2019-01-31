@@ -234,7 +234,7 @@ public class StackThreshold_PlugIn implements PlugInFilter {
   /**
    * Provides functionality to process a collection of slices from an Image.
    */
-  private class AnalysisSliceCollection extends SliceCollection {
+  private static class AnalysisSliceCollection extends SliceCollection {
     ImageStack imageStack;
     ImageStack maskStack;
     int threshold;

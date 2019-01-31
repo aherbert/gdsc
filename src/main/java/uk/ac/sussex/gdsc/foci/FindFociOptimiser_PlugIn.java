@@ -695,7 +695,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     }
   }
 
-  private class OptimiserResult {
+  private static class OptimiserResult {
     ArrayList<Result> results;
     long time;
     long total;
@@ -704,11 +704,10 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       this.results = results;
       this.time = time;
       total = 0;
-      if (results == null) {
-        return;
-      }
-      for (int i = 0; i < results.size(); i++) {
-        total += results.get(i).time;
+      if (results != null) {
+        for (final Result result : results) {
+          total += result.time;
+        }
       }
     }
   }

@@ -507,8 +507,8 @@ public class AlignImages_PlugIn implements PlugIn {
     final double[] subpixelCoord = gaussianPeakFit(pixelBlock, maxCoord[0], maxCoord[1]);
     double[] ret = null;
     // more or less acceptable peak fit
-    if (Math.abs(subpixelCoord[0] - maxCoord[0]) < w / 2
-        && Math.abs(subpixelCoord[1] - maxCoord[1]) < h / 2) {
+    if (Math.abs(subpixelCoord[0] - maxCoord[0]) < w / 2.0
+        && Math.abs(subpixelCoord[1] - maxCoord[1]) < h / 2.0) {
       subpixelCoord[0] += x;
       subpixelCoord[1] += y;
       // Jpiv block is in [Y,X] format (not [X,Y])

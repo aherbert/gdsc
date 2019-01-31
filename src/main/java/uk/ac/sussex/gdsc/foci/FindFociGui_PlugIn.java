@@ -52,7 +52,8 @@ import javax.swing.WindowConstants;
 public class FindFociGui_PlugIn implements PlugIn {
   private static FindFociView instance;
 
-  private class FindFociListener implements WindowListener, ImageListener, PropertyChangeListener {
+  private static class FindFociListener
+      implements WindowListener, ImageListener, PropertyChangeListener {
     FindFociModel model;
     FindFociView instance;
     int currentChannel;

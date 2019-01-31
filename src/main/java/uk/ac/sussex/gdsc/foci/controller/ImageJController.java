@@ -1,4 +1,5 @@
 /*-
+
  * #%L
  * Genome Damage and Stability Centre ImageJ Plugins
  *
@@ -319,7 +320,6 @@ public class ImageJController extends FindFociController {
       runner.interrupt();
       runner = null;
     }
-    System.gc();
   }
 
   /** {@inheritDoc} */

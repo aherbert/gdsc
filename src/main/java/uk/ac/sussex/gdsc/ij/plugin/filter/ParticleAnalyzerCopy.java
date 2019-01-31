@@ -332,7 +332,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
     }
     if ((options & FOUR_CONNECTED) != 0) {
       wandMode = Wand.FOUR_CONNECTED;
-      options |= INCLUDE_HOLES;
+      this.options |= INCLUDE_HOLES;
     }
     nextFontSize = defaultFontSize;
     nextFontColor = defaultFontColor;

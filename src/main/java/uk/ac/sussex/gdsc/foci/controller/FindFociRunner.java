@@ -51,8 +51,11 @@ import java.util.List;
  * synchronised queueing method.
  */
 public class FindFociRunner extends Thread {
-  private FindFociModel model;
+  /** The next model to be processed. */
+  private FindFociModel nextModel;
+  /** The model that was previously processed. */
   private FindFociModel previousModel;
+  /** The lock used when updating the next model. */
   private final Object lock = new Object();
   private final MessageListener listener;
 
@@ -91,9 +94,10 @@ public class FindFociRunner extends Thread {
         // Check if there is a model to run. Synchronized to avoid conflict with the queue() method.
         FindFociModel modelToRun = null;
         synchronized (lock) {
-          if (model != null) {
-            modelToRun = model.deepCopy();
-            model = null;
+          if (nextModel != null) {
+            modelToRun = nextModel.deepCopy();
+            // Mark this as processed
+            nextModel = null;
           }
         }
 
@@ -105,12 +109,14 @@ public class FindFociRunner extends Thread {
           // Ideally we would run the calculation on a different thread. We can then do the model
           // comparison here. If the next model to run resets to an earlier state than the
           // current model then we should cancel the current calculation and start again, part way
-          // through...
+          // through.
           // Basically this needs better interrupt handling for long running jobs.
           runFindFoci(modelToRun);
         } else {
           // Wait for a new model to be queued
-          pause();
+          synchronized (this) {
+            wait();
+          }
         }
       }
     } catch (final InterruptedException ex) {
@@ -118,7 +124,7 @@ public class FindFociRunner extends Thread {
         IJ.log("FindPeakRunner interupted: " + ex.getLocalizedMessage());
       }
       Thread.currentThread().interrupt();
-    } catch (final Throwable thrown) {
+    } catch (final Exception thrown) {
       // Log this to ImageJ. Do not bubble up exceptions
       if (thrown.getMessage() != null) {
         IJ.log("An error occurred during processing: " + thrown.getMessage());
@@ -146,21 +152,16 @@ public class FindFociRunner extends Thread {
     }
   }
 
+  /**
+   * Notify the listener with a message.
+   *
+   * @param messageType the message type
+   * @param params the message parameters
+   */
   private void notify(MessageType messageType, Object... params) {
     if (listener != null) {
       listener.notify(messageType, params);
     }
-  }
-
-  /**
-   * Invoke the Thread.wait() method.
-   *
-   * @throws InterruptedException if any thread interrupted the current thread before or while the
-   *         current thread was waiting for a notification. The interrupted status of the current
-   *         thread is cleared when this exception is thrown.
-   */
-  private synchronized void pause() throws InterruptedException {
-    wait();
   }
 
   /**
@@ -171,7 +172,7 @@ public class FindFociRunner extends Thread {
   public synchronized void queue(FindFociModel newModel) {
     if (newModel != null) {
       synchronized (lock) {
-        model = newModel;
+        nextModel = newModel;
       }
       notifyAll();
     }

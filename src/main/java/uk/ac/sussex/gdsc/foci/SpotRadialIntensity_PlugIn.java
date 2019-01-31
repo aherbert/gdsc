@@ -69,13 +69,13 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
   private ImagePlus imp;
   private String prefix;
 
-  private class Foci {
+  private static class Foci {
     final int id;
     final int object;
     final int x;
     final int y;
 
-    public Foci(int id, int object, int x, int y) {
+    Foci(int id, int object, int x, int y) {
       this.id = id;
       this.object = object;
       this.x = x;

@@ -75,7 +75,7 @@ public class ColocatedMask_PlugIn implements PlugIn {
   /**
    * Simple class to maintain a synchronized state of clean/dirty.
    */
-  private class Flag {
+  private static class Flag {
     boolean isDirty;
 
     /**

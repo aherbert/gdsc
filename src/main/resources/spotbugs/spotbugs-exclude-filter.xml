@@ -70,4 +70,11 @@
     <Bug pattern="EI_EXPOSE_REP2" />
   </Match>
 
+  <Match>
+    <Class name="uk.ac.sussex.gdsc.utils.CellOutliner_PlugIn" />
+    <!-- It is intended to divide the kernel width by 2 using integer division -->
+    <Method name="getCellRange" />
+    <Bug pattern="ICAST_IDIV_CAST_TO_DOUBLE" />
+  </Match>
+
 </FindBugsFilter>

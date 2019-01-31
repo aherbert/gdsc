@@ -61,7 +61,7 @@ import java.util.Arrays;
 public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListener {
   private static final String TITLE = "Mask Segregator";
 
-  private final int flags = DOES_16 + DOES_8G + FINAL_PROCESSING;
+  private static final int FLAGS = DOES_16 + DOES_8G + FINAL_PROCESSING;
   private ImagePlus imp;
   private ImageProcessor maskIp;
   private int[] objectMask;
@@ -93,7 +93,7 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
       segregateMask();
       return DONE;
     }
-    return flags;
+    return FLAGS;
   }
 
   /** {@inheritDoc} */
@@ -145,7 +145,7 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
       return DONE;
     }
 
-    return flags;
+    return FLAGS;
   }
 
   /**

@@ -57,7 +57,7 @@ import java.util.Arrays;
  */
 public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
   private static final String TITLE = "Intensity Analysis";
-  private final int flags =
+  private static final int FLAGS =
       DOES_8G + DOES_16 + NO_CHANGES + DOES_STACKS + PARALLELIZE_STACKS + FINAL_PROCESSING;
   private static int window = 4;
   private static int bitDepth = 16;
@@ -123,7 +123,7 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     }
     commonIndex = index;
 
-    return flags;
+    return FLAGS;
   }
 
   /** {@inheritDoc} */
@@ -208,7 +208,7 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     means = new float[exposures.length];
     saturated = (float) (Math.pow(2, bitDepth) - 1);
 
-    return flags;
+    return FLAGS;
   }
 
   private static boolean isFloatCharacter(char ch) {
@@ -389,7 +389,7 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
         final double x2 = exposures2[bestStart + window - 1];
         final double y2 = fitted.value(x2);
         plot.drawLine(x1, y1, x2, y2);
-        pw = ImageJUtils.display(title, plot);
+        ImageJUtils.display(title, plot);
 
         sb.append('\t').append(bestStart + 1);
         sb.append('\t').append(bestStart + window);
