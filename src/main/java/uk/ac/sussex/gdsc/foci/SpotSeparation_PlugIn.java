@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.SortUtils;
 import uk.ac.sussex.gdsc.help.UrlUtils;
@@ -687,12 +688,12 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Estimate the angle using the central moments.
+   * Estimate the angle of the spot using the central moments.
    *
    * <p>See Burger & Burge, Digital Image Processing, An Algorithmic Introduction using Java (1st
    * Edition), pp231.
    *
-   * @param spotIp the spot ip
+   * @param spotIp the spot image
    * @param xpos the xpos
    * @param ypos the ypos
    * @param peakId the peak id
@@ -700,9 +701,9 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
    * @return The orientation in range -pi/2 to pi/2 from the x-axis, incrementing clockwise if the
    *         Y-axis points downwards
    */
-  @SuppressWarnings("unused")
-  private static double calculateOrientation(ImageProcessor spotIp, float xpos, float ypos,
-      int peakId, float[] com) {
+  @VisibleForTesting
+  static double calculateOrientation(ImageProcessor spotIp, float xpos, float ypos, int peakId,
+      float[] com) {
     // Find the limits of the spot and calculate the centre of mass
     int maxu = (int) xpos;
     int minu = maxu;
@@ -764,14 +765,14 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Estimate the angle using the central moments. Moments are weighted using the original image
-   * values
+   * Estimate the angle of the spot using the central moments. Moments are weighted using the
+   * original image values
    *
    * <p>See Burger & Burge, Digital Image Processing, An Algorithmic Introduction using Java (1st
    * Edition), pp231.
    *
    * @param ip the image
-   * @param spotIp the spot ip
+   * @param spotIp the spot image
    * @param xpos the xpos
    * @param ypos the ypos
    * @param peakId the peak id
@@ -779,7 +780,8 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
    * @return The orientation in range -pi/2 to pi/2 from the x-axis, incrementing clockwise if the
    *         Y-axis points downwards
    */
-  private static double calculateOrientation(ImageProcessor ip, ImageProcessor spotIp, float xpos,
+  @VisibleForTesting
+  static double calculateOrientation(ImageProcessor ip, ImageProcessor spotIp, float xpos,
       float ypos, int peakId, float[] com) {
     // Find the limits of the spot and calculate the centre of mass
     int maxu = (int) xpos;
