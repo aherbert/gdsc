@@ -809,7 +809,8 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
         } else {
           cx[countC] = (p1[j].getX() + p2[j].getX()) * 0.5f;
           cy[countC] = (p1[j].getY() + p2[j].getY()) * 0.5f;
-          cz[countC] = (p1[j].getZint() + p2[j].getZint()) / 2;
+          // Unsigned right shift to ensure a positive result
+          cz[countC] = (p1[j].getZint() + p2[j].getZint()) >>> 1;
           countC++;
         }
       }

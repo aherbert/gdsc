@@ -345,7 +345,8 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
     int lower = 0;
 
     while (upper - lower > 1) {
-      final int mid = (upper + lower) / 2;
+      // Unsigned right shift to ensure a positive result
+      final int mid = (upper + lower) >>> 1;
 
       if (value >= values[mid]) {
         lower = mid;
