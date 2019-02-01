@@ -689,15 +689,12 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
       return;
     }
     if (myImage1 == null || myImage2 == null) {
+      IJ.error(TITLE, "No images specified for composite");
       return;
     }
     final ImagePlus imp1 = WindowManager.getImage(myImage1);
     ImagePlus imp2 = WindowManager.getImage(myImage2);
     final ImagePlus impM = WindowManager.getImage(myMask);
-    if (myImage1 == null || myImage2 == null) {
-      IJ.error(TITLE, "No images specified for composite");
-      return;
-    }
     // Images must be the same XYZ dimensions
     final int w = imp1.getWidth();
     final int h = imp1.getHeight();
