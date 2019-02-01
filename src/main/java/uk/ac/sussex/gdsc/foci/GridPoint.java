@@ -69,4 +69,16 @@ public class GridPoint extends ValuedPoint {
   public boolean isAssigned() {
     return assigned;
   }
+
+  @Override
+  public boolean equals(Object object) {
+    // Ignore the assigned flag in the equals comparison
+    return super.equals(object);
+  }
+
+  @Override
+  public int hashCode() {
+    // Ignore the assigned flag in the hash code
+    return super.hashCode();
+  }
 }

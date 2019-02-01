@@ -164,6 +164,18 @@ public class SpotDistance_PlugIn implements PlugIn {
       }
       return calXyz;
     }
+
+    @Override
+    public boolean equals(Object object) {
+      // Ignore the additional fields in the equals comparison
+      return super.equals(object);
+    }
+
+    @Override
+    public int hashCode() {
+      // Ignore the additional fields in the hash code
+      return super.hashCode();
+    }
   }
 
   @Override
