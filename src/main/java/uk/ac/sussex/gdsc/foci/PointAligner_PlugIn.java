@@ -618,7 +618,10 @@ public class PointAligner_PlugIn implements PlugIn {
         }
         break;
 
+      case 0:
       default:
+        // None
+        break;
     }
 
     // Round for integer data

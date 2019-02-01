@@ -1294,6 +1294,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
         drawRoiFilledParticle(drawIP, roi, mask, rt.getCounter());
         break;
       default:
+        break;
     }
   }
 

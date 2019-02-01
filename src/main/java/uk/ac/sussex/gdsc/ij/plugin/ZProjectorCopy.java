@@ -542,7 +542,8 @@ public class ZProjectorCopy implements PlugIn {
       case SHORT_TYPE:
         rayFunc.projectSlice((short[]) pixelArray);
         break;
-      case FLOAT_TYPE:
+      default:
+        // ptype == FLOAT_TYPE
         rayFunc.projectSlice((float[]) pixelArray);
         break;
     }
@@ -554,7 +555,7 @@ public class ZProjectorCopy implements PlugIn {
    * @return the string
    */
   protected String makeTitle() {
-    String prefix = "AVG_";
+    String prefix;
     switch (method) {
       case SUM_METHOD:
         prefix = "SUM_";
@@ -570,6 +571,9 @@ public class ZProjectorCopy implements PlugIn {
         break;
       case MEDIAN_METHOD:
         prefix = "MED_";
+        break;
+      default:
+        prefix = "AVG_";
         break;
     }
     return WindowManager.makeUniqueName(prefix + imp.getTitle());
