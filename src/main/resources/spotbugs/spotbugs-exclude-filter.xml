@@ -77,4 +77,11 @@
     <Bug pattern="ICAST_IDIV_CAST_TO_DOUBLE" />
   </Match>
 
+  <Match>
+    <Class name="uk.ac.sussex.gdsc.foci.FindFociBaseProcessor" />
+    <!-- Unused method left for debugging -->
+    <Method name="findHighestSaddle" />
+    <Bug pattern="UPM_UNCALLED_PRIVATE_METHOD" />
+  </Match>
+
 </FindBugsFilter>
