@@ -154,7 +154,7 @@ public class ImageScaler_PlugIn implements PlugInFilter {
         tmpImp.flush();
         tmpImp = null; // Free memory
       }
-    } catch (final Exception ex) {
+    } catch (final IOException ex) {
       IJ.error("Failed to re-write images in input list file: " + listFile);
     }
   }
