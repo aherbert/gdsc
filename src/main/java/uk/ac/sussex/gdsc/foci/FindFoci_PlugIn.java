@@ -69,9 +69,7 @@ import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -1685,8 +1683,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
       int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex, int options,
       double blur, int centreMethod, double centreParameter, double fractionParameter,
       String resultsDirectory) {
-    try (final OutputStreamWriter out =
-        new OutputStreamWriter(new FileOutputStream(filename), "UTF-8")) {
+    try (final BufferedWriter out = Files.newBufferedWriter(Paths.get(filename))) {
       // Save parameters to file
       if (imp != null) {
         writeParam(out, "Image", imp.getTitle());
@@ -1759,7 +1756,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
       writeParam(out, "Centre_method", centreMethods[centreMethod]);
       writeParam(out, "Centre_parameter", "" + centreParameter);
       return true;
-    } catch (final Exception ex) {
+    } catch (final IOException ex) {
       logError(ex.getMessage());
     }
     return false;
@@ -1867,8 +1864,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
     return (flag & mask) == mask;
   }
 
-  private static void writeParam(OutputStreamWriter out, String key, String value)
-      throws IOException {
+  private static void writeParam(BufferedWriter out, String key, String value) throws IOException {
     out.write(key);
     out.write(" = ");
     out.write(value);

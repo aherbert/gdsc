@@ -83,9 +83,10 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -1378,29 +1379,27 @@ public class Cda_PlugIn extends PlugInFrame
     tw.append(resultsEntry.toString());
 
     if (isSaveResults) {
+      // Save results to file
       final Path directoryPath = Paths.get(resultsDirectory, id);
       try {
-        // Save results to file
-        if (!directoryPath.toFile().mkdirs()) {
-          return;
-        }
-      } catch (final Exception ex) {
+        Files.createDirectories(directoryPath);
+      } catch (final IOException ex) {
+        IJ.log(PLUGIN_TITLE + " Error: Failed to create results directory: " + ex.getMessage());
         return;
       }
       final String directory = directoryPath.toString();
       IJ.save(mergedSegmentedRgb, directory + File.separatorChar + "MergedROI.tif");
       IJ.save(mergedChannelRgb, directory + File.separatorChar + "MergedChannel.tif");
 
-      try (final OutputStreamWriter out = new OutputStreamWriter(
-          new FileOutputStream(directory + File.separatorChar + "results.txt"), "UTF-8")) {
-        final String newLine = System.getProperty("line.separator");
+      try (
+          final BufferedWriter out = Files.newBufferedWriter(Paths.get(directory, "results.txt"))) {
         heading = createHeading(heading);
         out.write(heading.toString());
-        out.write(newLine);
+        out.newLine();
         out.write(resultsEntry.toString());
-        out.write(newLine);
-      } catch (final Exception ex) {
-        return;
+        out.newLine();
+      } catch (final IOException ex) {
+        IJ.log(PLUGIN_TITLE + " Error: Failed to write results: " + ex.getMessage());
       }
     }
   }

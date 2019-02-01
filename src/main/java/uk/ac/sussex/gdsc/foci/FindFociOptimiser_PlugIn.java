@@ -2280,7 +2280,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       }
 
       return ffOptions;
-    } catch (final Exception ex) {
+    } catch (final IllegalArgumentException ex) {
       logger.log(Level.SEVERE, ex,
           () -> "Error converting parameters to FindFoci options: " + parameters);
       return null;

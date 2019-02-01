@@ -55,9 +55,10 @@ import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 
 import java.awt.Color;
-import java.io.FileOutputStream;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -1128,8 +1129,7 @@ public class Match_PlugIn implements PlugIn {
 
     filename = chooser.getDirectory() + chooser.getFileName();
 
-    try (final OutputStreamWriter out =
-        new OutputStreamWriter(new FileOutputStream(filename), "UTF-8")) {
+    try (final BufferedWriter out = Files.newBufferedWriter(Paths.get(filename))) {
       final StringBuilder sb = new StringBuilder();
       final String newLine = System.getProperty("line.separator");
       sb.append("# Image 1   = ").append(t1).append(newLine);
@@ -1187,7 +1187,7 @@ public class Match_PlugIn implements PlugIn {
         out.write(String.format("0\t0\t0\t%s\t%s\t%.0f%s", r.round(c.getX()), r.round(c.getY()),
             r.round(v1), newLine));
       }
-    } catch (final Exception ex) {
+    } catch (final IOException ex) {
       IJ.log("Unable to save the matches to file: " + ex.getMessage());
     }
   }

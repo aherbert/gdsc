@@ -38,6 +38,7 @@ import ij.process.ImageStatistics;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -128,7 +129,7 @@ public class ImageScaler_PlugIn implements PlugInFilter {
         tmpImp.flush();
         tmpImp = null; // Free memory
       }
-    } catch (final Exception ex) {
+    } catch (final IOException ex) {
       IJ.error("Failed to read images in input list file: " + listFile);
       return;
     }
