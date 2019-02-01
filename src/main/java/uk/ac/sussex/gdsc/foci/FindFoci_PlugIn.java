@@ -1527,9 +1527,11 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
     Collections.sort(results, BatchResult::compare);
 
     try (final BufferedWriter out = Files.newBufferedWriter(path)) {
-      // Add new lines because Buffered reader strips them
-      out.write(header);
-      out.newLine();
+      // Note: Add new lines because BufferedReader strips them
+      if (header != null) {
+        out.write(header);
+        out.newLine();
+      }
       for (final BatchResult r : results) {
         out.write(r.entry);
         out.newLine();
