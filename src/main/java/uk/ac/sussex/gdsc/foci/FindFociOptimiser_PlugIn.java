@@ -564,8 +564,9 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     // Extract the score from the results
     final int scoreIndex = getScoreIndex(scoringMode);
 
-    // Only Raw/Rank are valid for RMSD
-    if (scoreIndex == Result.RMSD && (scoringMode != SCORE_RAW || scoringMode != SCORE_RANK)) {
+    // Only Raw is valid for RMSD (i.e. not Z or relative)
+    // as it is not linear or Normally distributed.
+    if (scoreIndex == Result.RMSD && scoringMode != SCORE_RAW) {
       scoringMode = SCORE_RAW;
     }
 
