@@ -84,4 +84,32 @@
     <Bug pattern="UPM_UNCALLED_PRIVATE_METHOD" />
   </Match>
 
+  <!-- These all intend to compare floating point numbers using == -->
+  <Match>
+    <Class name="uk.ac.sussex.gdsc.colocalisation.ColocalisationThreshold" />
+    <Method name="correlate" />
+    <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
+  </Match>
+  <Match>
+    <Class name="uk.ac.sussex.gdsc.ij.plugin.filter.ParticleAnalyzerCopy" />
+    <Or>
+      <Method name="showDialog" />
+      <Method name="eraseOutsideRoi" />
+    </Or>
+    <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
+  </Match>
+  <Match>
+    <Class name="uk.ac.sussex.gdsc.threshold.MultiOtsuThreshold_PlugIn" />
+    <Method name="findMaxSigma" />
+    <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
+  </Match>
+  <Match>
+    <Class name="uk.ac.sussex.gdsc.utils.AlignImages_PlugIn" />
+    <Or>
+      <Method name="alignImages" />
+      <Method name="calculateScore" />
+    </Or>
+    <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
+  </Match>
+
 </FindBugsFilter>
