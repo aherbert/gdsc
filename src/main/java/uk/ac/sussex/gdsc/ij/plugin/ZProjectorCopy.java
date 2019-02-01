@@ -356,7 +356,11 @@ public class ZProjectorCopy implements PlugIn {
     final FloatProcessor fp = new FloatProcessor(imp.getWidth(), imp.getHeight());
     final ImageStack stack = imp.getStack();
     final RayFunction rayFunc = getRayFunction(method, fp);
-    if (IJ.debugMode == true) {
+    if (rayFunc == null) {
+      IJ.error("Z Project", "Unknown method.");
+      return;
+    }
+    if (IJ.debugMode) {
       IJ.log("\nProjecting stack from: " + startSlice + " to: " + stopSlice);
     }
 
@@ -395,10 +399,6 @@ public class ZProjectorCopy implements PlugIn {
     } else {
       rayFunc.postProcess();
       projImage = makeOutputImage(imp, fp, ptype);
-    }
-
-    if (projImage == null) {
-      IJ.error("Z Project", "Error computing projection.");
     }
   }
 
@@ -475,7 +475,6 @@ public class ZProjectorCopy implements PlugIn {
       case SD_METHOD:
         return new StandardDeviation(fp, sliceCount);
       default:
-        IJ.error("Z Project", "Unknown method.");
         return null;
     }
   }
