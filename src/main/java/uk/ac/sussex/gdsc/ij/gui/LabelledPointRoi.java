@@ -26,6 +26,7 @@ package uk.ac.sussex.gdsc.ij.gui;
 
 import ij.ImagePlus;
 import ij.gui.PointRoi;
+import ij.gui.Roi;
 import ij.process.FloatPolygon;
 
 import java.awt.Color;
@@ -33,6 +34,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Polygon;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Extend the {@link PointRoi} class to allow custom number labels for each point.
@@ -177,5 +179,34 @@ public class LabelledPointRoi extends PointRoi {
     if (labels != null && labels.length >= nPoints) {
       this.labels = Arrays.copyOf(labels, nPoints);
     }
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    // At present only ij.gui.Roi implements the equals() method.
+    // It's logic is repeated here for clarity.
+    // It tests the type, bounds and length.
+    if (object == this) {
+      return true;
+    }
+    if (!(object instanceof Roi)) {
+      return false;
+    }
+
+    final Roi roi2 = (Roi) object;
+    if (getType() != roi2.getType()) {
+      return false;
+    }
+    if (!getBounds().equals(roi2.getBounds())) {
+      return false;
+    }
+    return getLength() == roi2.getLength();
+  }
+
+  @Override
+  public int hashCode() {
+    // Added to comply with the java contract.
+    // Note: ij.gui.Roi does not implement hashCode().
+    return Objects.hash(getType(), getBounds(), getLength());
   }
 }

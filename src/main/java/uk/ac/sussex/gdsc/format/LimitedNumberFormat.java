@@ -26,15 +26,13 @@ package uk.ac.sussex.gdsc.format;
 
 import java.text.DecimalFormat;
 import java.text.ParsePosition;
+import java.util.Arrays;
 
 /**
  * Provide an extension to the {@link DecimalFormat} with a minimum and maximum limit. If the parsed
  * source is outside the bounds it will be set the corresponding limit.
  */
 public class LimitedNumberFormat extends DecimalFormat {
-  /**
-   * Auto-generated.
-   */
   private static final long serialVersionUID = 20181207;
 
   private final double min;
@@ -72,5 +70,23 @@ public class LimitedNumberFormat extends DecimalFormat {
       }
     }
     return number;
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (object == null) {
+      return false;
+    }
+    if (!super.equals(object)) {
+      return false; // super does class check
+    }
+    final LimitedNumberFormat other = (LimitedNumberFormat) object;
+    return min == other.min && max == other.max;
+  }
+
+  @Override
+  public int hashCode() {
+    return Arrays
+        .hashCode(new int[] {super.hashCode(), Double.hashCode(min), Double.hashCode(max)});
   }
 }
