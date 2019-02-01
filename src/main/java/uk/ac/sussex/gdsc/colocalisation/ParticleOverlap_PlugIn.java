@@ -26,7 +26,9 @@ package uk.ac.sussex.gdsc.colocalisation;
 
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.FileUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -37,11 +39,12 @@ import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * For all particles in a mask (defined by their unique pixel value), count the overlap with a
@@ -49,9 +52,8 @@ import java.io.UnsupportedEncodingException;
  * particle.
  */
 public class ParticleOverlap_PlugIn implements PlugIn {
-  private static String TITLE = "Particle Overlap";
-  private static String newLine = System.getProperty("line.separator");
-  private static String header = "Mask1\tImage1\tMask2\tID\tN\tNo\t%\tI\tIo\tManders";
+  private static final String TITLE = "Particle Overlap";
+  private static final String header = "Mask1\tImage1\tMask2\tID\tN\tNo\t%\tI\tIo\tManders";
 
   private static String maskTitle1 = "";
   private static String imageTitle = "";
@@ -65,7 +67,7 @@ public class ParticleOverlap_PlugIn implements PlugIn {
   private ImagePlus mask1Imp;
   private ImagePlus imageImp;
   private ImagePlus mask2Imp;
-  private OutputStreamWriter out;
+  private BufferedWriter out;
 
   @Override
   public void run(String arg) {
@@ -136,7 +138,7 @@ public class ParticleOverlap_PlugIn implements PlugIn {
   }
 
   private static boolean emptyFilename() {
-    return (filename == null || filename.length() == 0);
+    return TextUtils.isNullOrEmpty(filename);
   }
 
   private static boolean checkDimensions(ImagePlus imp1, ImagePlus imp2) {
@@ -244,21 +246,17 @@ public class ParticleOverlap_PlugIn implements PlugIn {
     }
 
     try {
-      if (filename.lastIndexOf('.') < 0) {
-        filename += ".xls";
-      }
-      final FileOutputStream fos = new FileOutputStream(filename);
-      out = new OutputStreamWriter(fos, "UTF-8");
-      try {
-        out.write(header);
-        out.write(newLine);
-      } catch (final IOException ex) {
-        closeResultsFile();
-      }
-    } catch (final FileNotFoundException ex) {
-      // Ignore
-    } catch (final UnsupportedEncodingException ex) {
-      // Ignore
+      out = Files.newBufferedWriter(Paths.get(FileUtils.addExtensionIfAbsent(filename, ".xls")));
+    } catch (final IOException ex) {
+      logErrorAndCloseResultsFile(ex);
+      return;
+    }
+
+    try {
+      out.write(header);
+      out.newLine();
+    } catch (final IOException ex) {
+      logErrorAndCloseResultsFile(ex);
     }
   }
 
@@ -306,18 +304,26 @@ public class ParticleOverlap_PlugIn implements PlugIn {
     if (out != null) {
       try {
         out.write(string);
-        out.write(newLine);
+        out.newLine();
       } catch (final IOException ex) {
-        closeResultsFile();
+        logErrorAndCloseResultsFile(ex);
       }
     }
+  }
+
+  private void logErrorAndCloseResultsFile(Exception ex) {
+    if (ex != null) {
+      Logger.getLogger(getClass().getName()).log(Level.WARNING, "Error writing to the result file",
+          ex);
+    }
+    closeResultsFile();
   }
 
   private void closeResultsFile() {
     if (out != null) {
       try {
         out.close();
-      } catch (final IOException ex) {
+      } catch (final IOException innerEx) {
         // Ignore
       } finally {
         out = null;
