@@ -30,6 +30,7 @@ import uk.ac.sussex.gdsc.core.match.Coordinate;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
 import uk.ac.sussex.gdsc.core.match.PointPair;
+import uk.ac.sussex.gdsc.core.utils.FileUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 import gnu.trove.list.array.TIntArrayList;
@@ -665,7 +666,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     if (chooser.getFileName() == null) {
       return null;
     }
-    return ImageJUtils.replaceExtension(chooser.getDirectory() + chooser.getFileName(), ".xls");
+    return FileUtils.replaceExtension(chooser.getDirectory() + chooser.getFileName(), ".xls");
   }
 
   private static String[] decodePath(String path) {
