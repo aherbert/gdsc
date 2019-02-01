@@ -51,15 +51,21 @@ import java.util.List;
  * synchronised queueing method.
  */
 public class FindFociRunner extends Thread {
-  /** The next model to be processed. */
+  /** The next model to be processed. Only updated when holding the lock. */
   private FindFociModel nextModel;
-  /** The model that was previously processed. */
+  /** The model that was previously processed. Set at the end of processing a model. */
   private FindFociModel previousModel;
   /** The lock used when updating the next model. */
   private final Object lock = new Object();
+  /** The listener for messages. */
   private final MessageListener listener;
 
-  private boolean running = true;
+  /**
+   * Flag to indicate the thread is allowed to run.
+   *
+   * <p>Volatile to allow concurrent access.
+   */
+  private volatile boolean running = true;
 
   // Used for the staged FindFoci results
   private FindFoci_PlugIn ff = new FindFoci_PlugIn();
@@ -83,7 +89,7 @@ public class FindFociRunner extends Thread {
    */
   public FindFociRunner(MessageListener listener) {
     this.listener = listener;
-    notify(MessageType.READY);
+    notifyListener(MessageType.READY);
   }
 
   /** {@inheritDoc} */
@@ -98,11 +104,16 @@ public class FindFociRunner extends Thread {
             modelToRun = nextModel.deepCopy();
             // Mark this as processed
             nextModel = null;
+          } else {
+            // Wait for a new model to be queued
+            lock.wait();
           }
         }
 
+        // Check for a model
         if (modelToRun != null) {
-          // TODO - This system currently has to wait for the last calculation to finish before
+          // Note:
+          // This system currently has to wait for the last calculation to finish before
           // looking for the next model to run. This means for long running calculations the
           // user may have to wait a long time for the last one to finish, then wait again for
           // the next.
@@ -112,11 +123,6 @@ public class FindFociRunner extends Thread {
           // through.
           // Basically this needs better interrupt handling for long running jobs.
           runFindFoci(modelToRun);
-        } else {
-          // Wait for a new model to be queued
-          synchronized (this) {
-            wait();
-          }
         }
       }
     } catch (final InterruptedException ex) {
@@ -135,8 +141,9 @@ public class FindFociRunner extends Thread {
         IJ.log(ExceptionUtils.getStackTrace(thrown));
       }
 
-      notify(MessageType.ERROR, thrown);
+      notifyListener(MessageType.ERROR, thrown);
     } finally {
+      running = false;
       ff = null;
       imp2 = null;
       initResults = null;
@@ -148,7 +155,9 @@ public class FindFociRunner extends Thread {
       mergeResults = null;
       prelimResults = null;
       results = null;
-      finish();
+      notifyListener(MessageType.BACKGROUND_LEVEL, 0.0f);
+      notifyListener(MessageType.SORT_INDEX_OK, 0.0f);
+      notifyListener(MessageType.FINISHED);
     }
   }
 
@@ -158,7 +167,7 @@ public class FindFociRunner extends Thread {
    * @param messageType the message type
    * @param params the message parameters
    */
-  private void notify(MessageType messageType, Object... params) {
+  private void notifyListener(MessageType messageType, Object... params) {
     if (listener != null) {
       listener.notify(messageType, params);
     }
@@ -169,12 +178,12 @@ public class FindFociRunner extends Thread {
    *
    * @param newModel the new model
    */
-  public synchronized void queue(FindFociModel newModel) {
+  public void queue(FindFociModel newModel) {
     if (newModel != null) {
       synchronized (lock) {
         nextModel = newModel;
+        lock.notifyAll();
       }
-      notifyAll();
     }
   }
 
@@ -183,12 +192,12 @@ public class FindFociRunner extends Thread {
     final String title = model.getSelectedImage();
     final ImagePlus imp = WindowManager.getImage(title);
     if (null == imp) {
-      notify(MessageType.ERROR);
+      notifyListener(MessageType.ERROR);
       return;
     }
 
     if (!FindFoci_PlugIn.isSupported(imp.getBitDepth())) {
-      notify(MessageType.ERROR);
+      notifyListener(MessageType.ERROR);
       return;
     }
 
@@ -281,27 +290,25 @@ public class FindFociRunner extends Thread {
     }
 
     if (outputType == 0) {
-      notify(MessageType.ERROR);
+      notifyListener(MessageType.ERROR);
       return;
     }
 
     final ImagePlus mask = WindowManager.getImage(maskImage);
 
     IJ.showStatus(FindFoci_PlugIn.TITLE + " calculating ...");
-    notify(MessageType.RUNNING);
+    notifyListener(MessageType.RUNNING);
 
     // Compare this model with the previously computed results and
     // only update the parts that are necessary.
     final FindFociState state = compareModels(model, previousModel);
     previousModel = null;
 
-    // System.out.println("Updating from " + state);
-
     if (state.ordinal() <= FindFociState.INITIAL.ordinal()) {
       imp2 = ff.blur(imp, gaussianBlur);
       if (imp2 == null) {
         IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notify(MessageType.FAILED);
+        notifyListener(MessageType.FAILED);
         return;
       }
     }
@@ -309,11 +316,11 @@ public class FindFociRunner extends Thread {
       initResults = ff.findMaximaInit(imp, imp2, mask, backgroundMethod, thresholdMethod, options);
       if (initResults == null) {
         IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notify(MessageType.FAILED);
+        notifyListener(MessageType.FAILED);
         return;
       }
 
-      notify(MessageType.BACKGROUND_LEVEL, initResults.stats.background);
+      notifyListener(MessageType.BACKGROUND_LEVEL, initResults.stats.background);
     }
     if (state.ordinal() <= FindFociState.SEARCH.ordinal()) {
       searchInitResults = ff.copyForStagedProcessing(initResults, searchInitResults);
@@ -321,11 +328,11 @@ public class FindFociRunner extends Thread {
           searchMethod, searchParameter);
       if (searchArray == null) {
         IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notify(MessageType.FAILED);
+        notifyListener(MessageType.FAILED);
         return;
       }
 
-      notify(MessageType.BACKGROUND_LEVEL, searchInitResults.stats.background);
+      notifyListener(MessageType.BACKGROUND_LEVEL, searchInitResults.stats.background);
     }
     if (state.ordinal() <= FindFociState.MERGE_HEIGHT.ordinal()) {
       // No clone as the maxima and types are not changed
@@ -333,7 +340,7 @@ public class FindFociRunner extends Thread {
           ff.findMaximaMergePeak(searchInitResults, searchArray, peakMethod, peakParameter);
       if (mergePeakResults == null) {
         IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notify(MessageType.FAILED);
+        notifyListener(MessageType.FAILED);
         return;
       }
     }
@@ -342,7 +349,7 @@ public class FindFociRunner extends Thread {
       mergeSizeResults = ff.findMaximaMergeSize(searchInitResults, mergePeakResults, minSize);
       if (mergeSizeResults == null) {
         IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notify(MessageType.FAILED);
+        notifyListener(MessageType.FAILED);
         return;
       }
     }
@@ -352,16 +359,17 @@ public class FindFociRunner extends Thread {
           gaussianBlur);
       if (mergeResults == null) {
         IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notify(MessageType.FAILED);
+        notifyListener(MessageType.FAILED);
         return;
       }
     }
     if (state.ordinal() <= FindFociState.CALCULATE_RESULTS.ordinal()) {
       if (initResults.stats.imageMinimum < 0
           && FindFociBaseProcessor.isSortIndexSensitiveToNegativeValues(sortMethod)) {
-        notify(MessageType.SORT_INDEX_SENSITIVE_TO_NEGATIVE_VALUES, initResults.stats.imageMinimum);
+        notifyListener(MessageType.SORT_INDEX_SENSITIVE_TO_NEGATIVE_VALUES,
+            initResults.stats.imageMinimum);
       } else {
-        notify(MessageType.SORT_INDEX_OK, initResults.stats.imageMinimum);
+        notifyListener(MessageType.SORT_INDEX_OK, initResults.stats.imageMinimum);
       }
 
       resultsInitResults = ff.copyForStagedProcessing(mergeInitResults, resultsInitResults);
@@ -369,7 +377,7 @@ public class FindFociRunner extends Thread {
           sortMethod, centreMethod, centreParameter);
       if (prelimResults == null) {
         IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notify(MessageType.FAILED);
+        notifyListener(MessageType.FAILED);
         return;
       }
     }
@@ -379,7 +387,7 @@ public class FindFociRunner extends Thread {
           thresholdMethod, imp.getTitle(), fractionParameter);
       if (results == null) {
         IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notify(MessageType.FAILED);
+        notifyListener(MessageType.FAILED);
         return;
       }
     }
@@ -390,7 +398,7 @@ public class FindFociRunner extends Thread {
     }
 
     IJ.showStatus(FindFoci_PlugIn.TITLE + " finished");
-    notify(MessageType.DONE);
+    notifyListener(MessageType.DONE);
 
     previousModel = model;
   }
@@ -457,13 +465,9 @@ public class FindFociRunner extends Thread {
       final int change = model.getMaxPeaks() - previousModel.getMaxPeaks();
       if ((change > 0 && resultsArrayList.size() >= previousModel.getMaxPeaks())
           || (change < 0 && resultsArrayList.size() > model.getMaxPeaks())) {
-        // System.out.println("Updating change to maxpeaks: " + previousModel.getMaxPeaks() + " => "
-        // + model.getMaxPeaks());
         return FindFociState.CALCULATE_RESULTS;
       }
       ignoreChange = true;
-      // System.out.println("Ignoring change to maxpeaks: " + previousModel.getMaxPeaks() + " => " +
-      // model.getMaxPeaks());
     }
 
     if (notEqual(model.getShowMask(), previousModel.getShowMask())
@@ -549,9 +553,12 @@ public class FindFociRunner extends Thread {
    * @see java.lang.Thread#run()
    */
   public void finish() {
-    notify(MessageType.BACKGROUND_LEVEL, 0.0f);
-    notify(MessageType.SORT_INDEX_OK, 0.0f);
-    notify(MessageType.FINISHED);
-    running = false;
+    if (running) {
+      running = false;
+      // Notify if waiting
+      synchronized (lock) {
+        lock.notifyAll();
+      }
+    }
   }
 }
