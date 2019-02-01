@@ -109,6 +109,18 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
       super(point.getX(), point.getY(), point.getZ(), point.time, point.value);
       this.id = id;
     }
+
+    @Override
+    public boolean equals(Object object) {
+      // Ignore the Id in the equals comparison
+      return super.equals(object);
+    }
+
+    @Override
+    public int hashCode() {
+      // Ignore the Id in the hash code
+      return super.hashCode();
+    }
   }
 
   /** {@inheritDoc} */
