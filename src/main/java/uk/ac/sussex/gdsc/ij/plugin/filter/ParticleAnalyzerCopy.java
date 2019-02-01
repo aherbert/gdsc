@@ -1033,7 +1033,6 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
     final double t1 = ip.getMinThreshold();
     final double t2 = ip.getMaxThreshold();
     final boolean invertedLut = imp.isInvertedLut();
-    final boolean byteImage = ip instanceof ByteProcessor;
     if (ip instanceof ShortProcessor) {
       imageType = SHORT;
     } else if (ip instanceof FloatProcessor) {
