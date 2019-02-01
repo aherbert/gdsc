@@ -886,7 +886,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
       sum += areas[i];
     }
     final int places = Analyzer.getPrecision();
-    final Calibration cal = imp.getCalibration();
+    imp.getCalibration(); // Ensure calibrated
     final String total = "\t" + ResultsTable.d2s(sum, places);
     final String average = "\t" + ResultsTable.d2s(sum / particleCount, places);
     final String fraction = "\t" + ResultsTable.d2s(sum * 100.0 / totalArea, places);
@@ -894,12 +894,12 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
     aLine = addMeans(aLine, areas.length > 0 ? start : -1);
     if (slices == 1) {
       final Frame frame = WindowManager.getFrame("Summary");
-      if (frame != null && (frame instanceof TextWindow) && summaryHdr.equals(prevHdr)) {
+      if (frame instanceof TextWindow && summaryHdr.equals(prevHdr)) {
         tw = (TextWindow) frame;
       }
     } else {
       final Frame frame = WindowManager.getFrame("Summary of " + imp.getTitle());
-      if (frame != null && (frame instanceof TextWindow) && summaryHdr.equals(prevHdr)) {
+      if (frame instanceof TextWindow && summaryHdr.equals(prevHdr)) {
         tw = (TextWindow) frame;
       }
     }
