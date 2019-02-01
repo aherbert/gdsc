@@ -26,6 +26,7 @@ package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.core.threshold.FloatHistogram;
 import uk.ac.sussex.gdsc.core.threshold.Histogram;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -346,7 +347,7 @@ public class FindFociFloatProcessor extends FindFociBaseProcessor {
 
     while (upper - lower > 1) {
       // Unsigned right shift to ensure a positive result
-      final int mid = (upper + lower) >>> 1;
+      final int mid = MathUtils.averageIndex(lower, upper);
 
       if (value >= values[mid]) {
         lower = mid;

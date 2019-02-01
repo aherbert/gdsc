@@ -30,6 +30,7 @@ import uk.ac.sussex.gdsc.core.match.Coordinate;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
 import uk.ac.sussex.gdsc.core.match.PointPair;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
@@ -809,8 +810,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
         } else {
           cx[countC] = (p1[j].getX() + p2[j].getX()) * 0.5f;
           cy[countC] = (p1[j].getY() + p2[j].getY()) * 0.5f;
-          // Unsigned right shift to ensure a positive result
-          cz[countC] = (p1[j].getZint() + p2[j].getZint()) >>> 1;
+          cz[countC] = MathUtils.averageIndex(p1[j].getZint(), p2[j].getZint());
           countC++;
         }
       }
