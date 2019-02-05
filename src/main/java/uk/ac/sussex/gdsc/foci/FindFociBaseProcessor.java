@@ -3171,7 +3171,7 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
    * @return the centre of the image
    */
   private int[] findCentreGaussianFit(float[] subImage, int[] dimensions, int projectionMethod) {
-    if (FindFoci_PlugIn.isGaussianFitEnabled < 1) {
+    if (FindFoci_PlugIn.IS_GAUSSIAN_FIT_ENABLED < 1) {
       return null;
     }
 

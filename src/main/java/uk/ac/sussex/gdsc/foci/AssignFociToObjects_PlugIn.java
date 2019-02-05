@@ -48,6 +48,7 @@ import java.awt.Color;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Finds objects in an image using contiguous pixels of the same value. Locates the closest object
@@ -383,11 +384,12 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
   }
 
   private static ArrayList<int[]> getFindFociResults() {
-    if (FindFoci_PlugIn.getLastResults() == null) {
+    final List<FindFociResult> lastResults = FindFoci_PlugIn.getLastResults();
+    if (lastResults == null) {
       return null;
     }
-    final ArrayList<int[]> results = new ArrayList<>(FindFoci_PlugIn.getLastResults().size());
-    for (final FindFociResult result : FindFoci_PlugIn.getLastResults()) {
+    final ArrayList<int[]> results = new ArrayList<>(lastResults.size());
+    for (final FindFociResult result : lastResults) {
       results.add(new int[] {result.x, result.y});
     }
     return results;

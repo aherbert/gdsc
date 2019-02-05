@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
 import uk.ac.sussex.gdsc.core.ij.ImageJLogHandler;
 import uk.ac.sussex.gdsc.core.ij.ImageJTrackProgress;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
@@ -87,6 +88,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.MemoryHandler;
@@ -114,18 +116,18 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
 
   private static TextWindow resultsWindow;
 
-  // Used to buffer the results to the TextWindow
-  private final StringBuilder resultsBuffer = new StringBuilder();
-  private int resultsCount;
-  private int flushCount;
+  /** Used to buffer the results to the TextWindow. */
+  private BufferedTextWindow bufferedTextWindow;
 
-  private static List<FindFociResult> lastResultsArray;
+  /** A reference to the results of the last computation. */
+  private static final AtomicReference<List<FindFociResult>> lastResultsArray =
+      new AtomicReference<>();
 
   /**
    * Set to true if the Gaussian fit option is enabled. This requires the GDSC SMLM library to be
    * available.
    */
-  static int isGaussianFitEnabled;
+  static final int IS_GAUSSIAN_FIT_ENABLED;
 
   /** The new line string from System.getProperty("line.separator"). */
   private static final String NEW_LINE = System.lineSeparator();
@@ -228,10 +230,9 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   //@formatter:on
 
   static {
-    isGaussianFitEnabled = (GaussianFit_PlugIn.isFittingEnabled()) ? 1 : -1;
-    if (isGaussianFitEnabled < 1) {
+    IS_GAUSSIAN_FIT_ENABLED = (GaussianFit_PlugIn.isFittingEnabled()) ? 1 : -1;
+    if (IS_GAUSSIAN_FIT_ENABLED < 1) {
       centreMethods = Arrays.copyOf(centreMethods, centreMethods.length - 2);
-
       // Debug the reason why fitting is disabled
       if (IJ.shiftKeyDown()) {
         IJ.log(
@@ -421,7 +422,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
     int[] mask = new int[3];
     boolean originalTitle;
 
-    public BatchParameters(String filename) throws IOException {
+    BatchParameters(String filename) throws IOException {
       readParameters(filename);
 
       // Read all the parameters
@@ -1103,21 +1104,21 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
       String autoThresholdMethod, int searchMethod, double searchParameter, int maxPeaks,
       int minSize, int peakMethod, double peakParameter, int outputType, int sortIndex, int options,
       double blur, int centreMethod, double centreParameter, double fractionParameter) {
-    lastResultsArray = null;
+    lastResultsArray.set(null);
 
     if (!isSupported(imp.getBitDepth())) {
       IJ.error(TITLE, "Only " + getSupported() + " images are supported");
       return;
     }
     if ((centreMethod == CENTRE_GAUSSIAN_ORIGINAL || centreMethod == CENTRE_GAUSSIAN_SEARCH)
-        && isGaussianFitEnabled < 1) {
+        && IS_GAUSSIAN_FIT_ENABLED < 1) {
       IJ.error(TITLE, "Gaussian fit is not currently enabled");
       return;
     }
 
     // Ensure the ROI is reset if it is a point selection
     if ((outputType & OUTPUT_ROI_SELECTION) != 0) {
-      Roi roi = imp.getRoi();
+      final Roi roi = imp.getRoi();
       imp.saveRoi(); // save previous selection so user can restore it
       if (roi != null) {
         if (roi.isArea()) {
@@ -1135,7 +1136,6 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
         } else {
           // Remove any non-area ROI to reset the bounding rectangle
           imp.killRoi();
-          roi = null;
         }
       }
 
@@ -1154,7 +1154,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
       IJ.showStatus("Cancelled.");
       return;
     }
-    lastResultsArray = ffResult.results;
+    lastResultsArray.set(ffResult.results);
 
     // Get the results
     final ImagePlus maximaImp = ffResult.mask;
@@ -1180,21 +1180,17 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
       clearResultsWindow();
     }
     if (resultsArray != null && (outputType & OUTPUT_RESULTS_TABLE) != 0) {
-      // if (isLogging(outputType))
-      // IJ.log("Background (noise) level = " + IJ.d2s(stats.STATS_BACKGROUND, 2));
-
       // There is some strange problem when using ImageJ's default results table when it asks the
-      // user
-      // to save a previous list and then aborts the plugin if the user says Yes, No or Cancel
-      // leaving
-      // the image locked.
+      // user to save a previous list and then aborts the plugin if the user says Yes, No or Cancel
+      // leaving the image locked.
       // So use a custom results table instead (or just Analyzer.setUnsavedMeasurements(false)).
 
       // Use a custom result table to avoid IJ bug
       createResultsWindow();
+      final StringBuilder sb = new StringBuilder();
       for (int i = 0; i < resultsArray.size(); i++) {
         final FindFociResult result = resultsArray.get(i);
-        addToResultTable(ffp, i + 1, resultsArray.size() - i, result, stats);
+        addToResultTable(sb, ffp, i + 1, resultsArray.size() - i, result, stats);
       }
       flushResults();
     }
@@ -1878,7 +1874,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
       double searchParameter, int maxPeaks, int minSize, int peakMethod, double peakParameter,
       int outputType, int sortIndex, int options, double blur, int centreMethod,
       double centreParameter, double fractionParameter) {
-    lastResultsArray = null;
+    lastResultsArray.set(null);
 
     if (imp == null) {
       return null;
@@ -1894,7 +1890,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
         maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex, options, blur,
         centreMethod, centreParameter, fractionParameter);
     if (result != null) {
-      lastResultsArray = result.results;
+      lastResultsArray.set(result.results);
     }
     return result;
   }
@@ -1947,7 +1943,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   @Override
   public FindFociInitResults findMaximaInit(ImagePlus originalImp, ImagePlus imp, ImagePlus mask,
       int backgroundMethod, String autoThresholdMethod, int options) {
-    lastResultsArray = null;
+    lastResultsArray.set(null);
 
     if (imp == null) {
       return null;
@@ -1975,7 +1971,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   @Override
   public FindFociSearchResults findMaximaSearch(FindFociInitResults initResults,
       int backgroundMethod, double backgroundParameter, int searchMethod, double searchParameter) {
-    lastResultsArray = null;
+    lastResultsArray.set(null);
     return ffpStaged.findMaximaSearch(initResults, backgroundMethod, backgroundParameter,
         searchMethod, searchParameter);
   }
@@ -1984,7 +1980,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   @Override
   public FindFociMergeTempResults findMaximaMergePeak(FindFociInitResults initResults,
       FindFociSearchResults searchResults, int peakMethod, double peakParameter) {
-    lastResultsArray = null;
+    lastResultsArray.set(null);
     return ffpStaged.findMaximaMergePeak(initResults, searchResults, peakMethod, peakParameter);
   }
 
@@ -1992,7 +1988,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   @Override
   public FindFociMergeTempResults findMaximaMergeSize(FindFociInitResults initResults,
       FindFociMergeTempResults mergeResults, int minSize) {
-    lastResultsArray = null;
+    lastResultsArray.set(null);
     return ffpStaged.findMaximaMergeSize(initResults, mergeResults, minSize);
   }
 
@@ -2000,7 +1996,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   @Override
   public FindFociMergeResults findMaximaMergeFinal(FindFociInitResults initResults,
       FindFociMergeTempResults mergeResults, int minSize, int options, double blur) {
-    lastResultsArray = null;
+    lastResultsArray.set(null);
     return ffpStaged.findMaximaMergeFinal(initResults, mergeResults, minSize, options, blur);
   }
 
@@ -2009,11 +2005,11 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   public FindFociResults findMaximaResults(FindFociInitResults initResults,
       FindFociMergeResults mergeResults, int maxPeaks, int sortIndex, int centreMethod,
       double centreParameter) {
-    lastResultsArray = null;
+    lastResultsArray.set(null);
     final FindFociResults result = ffpStaged.findMaximaResults(initResults, mergeResults, maxPeaks,
         sortIndex, centreMethod, centreParameter);
     if (result != null) {
-      lastResultsArray = result.results;
+      lastResultsArray.set(result.results);
     }
     return result;
 
@@ -2024,15 +2020,17 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   public FindFociPrelimResults findMaximaPrelimResults(FindFociInitResults initResults,
       FindFociMergeResults mergeResults, int maxPeaks, int sortIndex, int centreMethod,
       double centreParameter) {
-    lastResultsArray = null;
+    lastResultsArray.set(null);
     final FindFociPrelimResults result = ffpStaged.findMaximaPrelimResults(initResults,
         mergeResults, maxPeaks, sortIndex, centreMethod, centreParameter);
     if (result != null) {
-      lastResultsArray =
-          (result.results == null) ? null : new ArrayList<>(Arrays.asList(result.results));
+      if (result.results == null) {
+        lastResultsArray.set(null);
+      } else {
+        lastResultsArray.set(Arrays.asList(result.results));
+      }
     }
     return result;
-
   }
 
   /** {@inheritDoc} */
@@ -2040,11 +2038,11 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   public FindFociResults findMaximaMaskResults(FindFociInitResults initResults,
       FindFociMergeResults mergeResults, FindFociPrelimResults prelimResults, int outputType,
       String autoThresholdMethod, String imageTitle, double fractionParameter) {
-    lastResultsArray = null;
+    lastResultsArray.set(null);
     final FindFociResults result = ffpStaged.findMaximaMaskResults(initResults, mergeResults,
         prelimResults, outputType, autoThresholdMethod, imageTitle, fractionParameter);
     if (result != null) {
-      lastResultsArray = result.results;
+      lastResultsArray.set(result.results);
     }
     return result;
   }
@@ -2114,13 +2112,12 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
 
       // Use a custom result table to avoid IJ bug
       createResultsWindow();
+      final StringBuilder sb = new StringBuilder();
       for (int i = 0; i < resultsArray.size(); i++) {
         final FindFociResult result = resultsArray.get(i);
-        addToResultTable(ffpStaged, i + 1, resultsArray.size() - i, result, stats);
+        addToResultTable(sb, ffpStaged, i + 1, resultsArray.size() - i, result, stats);
       }
       flushResults();
-      // if (!resultsArray.isEmpty())
-      // resultsWindow.append("");
     }
 
     // Update the mask image
@@ -2224,9 +2221,9 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   }
 
   private void resetResultsCount() {
-    resultsCount = 0;
-    // Set this at a level where the ij.text.TextWindow will auto-layout the columns
-    flushCount = 8;
+    bufferedTextWindow = new BufferedTextWindow(resultsWindow);
+    // Only flush once
+    bufferedTextWindow.setIncrement(0);
   }
 
   private void clearResultsWindow() {
@@ -2318,30 +2315,26 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
   /**
    * Add a result to the result table.
    *
+   * @param sb the re-useable string builder
    * @param ffp the processor used to create the results
    * @param peakNumber Peak number
    * @param id the id
    * @param result The peak result
    * @param stats the stats
    */
-  private void addToResultTable(FindFociBaseProcessor ffp, int peakNumber, int id,
+  private void addToResultTable(StringBuilder sb, FindFociBaseProcessor ffp, int peakNumber, int id,
       FindFociResult result, FindFociStatistics stats) {
-    // Buffer the output so that the table is displayed faster
-    buildResultEntry(ffp, resultsBuffer, peakNumber, id, result, stats, "\n");
-    if (resultsCount > flushCount) {
-      flushResults();
-    }
+    buildResultEntry(ffp, sb, peakNumber, id, result, stats, "\n");
+    bufferedTextWindow.append(sb.toString());
+    sb.setLength(0);
   }
 
   private void flushResults() {
-    resultsWindow.append(resultsBuffer.toString());
-    resultsBuffer.setLength(0);
-    // One we have allowed auto-layout of the columns do the rest at the same time
-    flushCount = Integer.MAX_VALUE;
+    bufferedTextWindow.flush();
   }
 
-  private void buildResultEntry(FindFociBaseProcessor ffp, StringBuilder sb, int peakNumber, int id,
-      FindFociResult result, FindFociStatistics stats, String newLine) {
+  private static void buildResultEntry(FindFociBaseProcessor ffp, StringBuilder sb, int peakNumber,
+      int id, FindFociResult result, FindFociStatistics stats, String newLine) {
     final double sum = stats.regionTotal;
     final double noise = stats.background;
 
@@ -2381,8 +2374,6 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
     sb.append(result.object).append('\t');
     sb.append(result.state);
     sb.append(newLine);
-
-    resultsCount++;
   }
 
   private static void addValue(StringBuilder sb, double value, boolean floatImage) {
@@ -2491,7 +2482,8 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
    * @return The results from the last call of FindFoci.
    */
   public static List<FindFociResult> getLastResults() {
-    return lastResultsArray;
+    final List<FindFociResult> results = lastResultsArray.get();
+    return (results != null) ? new ArrayList<>(results) : null;
   }
 
   /**
@@ -2515,7 +2507,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
       return;
     }
     if ((parameters.centreMethod == CENTRE_GAUSSIAN_ORIGINAL
-        || parameters.centreMethod == CENTRE_GAUSSIAN_SEARCH) && isGaussianFitEnabled < 1) {
+        || parameters.centreMethod == CENTRE_GAUSSIAN_SEARCH) && IS_GAUSSIAN_FIT_ENABLED < 1) {
       IJ.error(TITLE, "Gaussian fit is not currently enabled");
       return;
     }

@@ -147,6 +147,9 @@ public class Match_PlugIn implements PlugIn {
   private Coordinate[] actualPoints;
   private Coordinate[] predictedPoints;
 
+  /** The results array from the last call to FindFoci. */
+  private List<FindFociResult> resultsArray;
+
   // For memory mode
   private String unit;
 
@@ -645,7 +648,6 @@ public class Match_PlugIn implements PlugIn {
       gd.addCheckbox("Match_table", matchTable);
     }
     gd.addCheckbox("Save_matches", saveMatches);
-    List<FindFociResult> resultsArray = null;
     if (!memoryMode) {
       resultsArray = FindFoci_PlugIn.getLastResults();
       if (resultsArray != null) {
@@ -1309,7 +1311,6 @@ public class Match_PlugIn implements PlugIn {
     if (findFociImageIndex == 0) {
       return;
     }
-    final List<FindFociResult> resultsArray = FindFoci_PlugIn.getLastResults();
 
     // Check the arrays are the correct size
     if (resultsArray
