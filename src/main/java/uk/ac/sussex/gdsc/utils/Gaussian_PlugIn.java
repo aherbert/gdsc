@@ -31,57 +31,124 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import ij.process.FloatProcessor;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Creates a Gaussian image.
  */
 public class Gaussian_PlugIn implements PlugIn {
   private static final String TITLE = "Gaussian";
-  private static int width = 256;
-  private static int height = 256;
-  private static float amplitude = 255;
-  private static float x = 100;
-  private static float y = 130;
-  private static float sx = 20;
-  private static float sy = 10;
-  private static float angle;
-  private static float noise = 10f;
+
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    int width = 256;
+    int height = 256;
+    float amplitude = 255;
+    float x = 100;
+    float y = 130;
+    float sx = 20;
+    float sy = 10;
+    float angle;
+    float noise = 10f;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      width = source.width;
+      height = source.height;
+      amplitude = source.amplitude;
+      x = source.x;
+      y = source.y;
+      sx = source.sx;
+      sy = source.sy;
+      angle = source.angle;
+      noise = source.noise;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
   public void run(String arg) {
     UsageTracker.recordPlugin(this.getClass(), arg);
+    settings = Settings.load();
     final GenericDialog gd = new GenericDialog(TITLE);
-    gd.addNumericField("Width", width, 0);
-    gd.addNumericField("Height", height, 0);
-    gd.addNumericField("Amplitude", amplitude, 0);
-    gd.addNumericField("X", x, 1);
-    gd.addNumericField("Y", y, 1);
-    gd.addNumericField("X_sd", sx, 1);
-    gd.addNumericField("Y_sd", sy, 1);
-    gd.addSlider("Angle", 0, 180, angle);
-    gd.addNumericField("Noise", noise, 1);
+    gd.addNumericField("Width", settings.width, 0);
+    gd.addNumericField("Height", settings.height, 0);
+    gd.addNumericField("Amplitude", settings.amplitude, 0);
+    gd.addNumericField("X", settings.x, 1);
+    gd.addNumericField("Y", settings.y, 1);
+    gd.addNumericField("X_sd", settings.sx, 1);
+    gd.addNumericField("Y_sd", settings.sy, 1);
+    gd.addSlider("Angle", 0, 180, settings.angle);
+    gd.addNumericField("Noise", settings.noise, 1);
 
     gd.showDialog();
     if (gd.wasCanceled()) {
       return;
     }
 
-    width = (int) gd.getNextNumber();
-    height = (int) gd.getNextNumber();
-    amplitude = (float) gd.getNextNumber();
-    x = (float) gd.getNextNumber();
-    y = (float) gd.getNextNumber();
-    sx = (float) gd.getNextNumber();
-    sy = (float) gd.getNextNumber();
-    angle = (float) gd.getNextNumber();
-    noise = (float) gd.getNextNumber();
+    settings.width = (int) gd.getNextNumber();
+    settings.height = (int) gd.getNextNumber();
+    settings.amplitude = (float) gd.getNextNumber();
+    settings.x = (float) gd.getNextNumber();
+    settings.y = (float) gd.getNextNumber();
+    settings.sx = (float) gd.getNextNumber();
+    settings.sy = (float) gd.getNextNumber();
+    settings.angle = (float) gd.getNextNumber();
+    settings.noise = (float) gd.getNextNumber();
+    settings.save();
 
     final float[] img =
-        createGaussian(width, height, new float[] {amplitude}, new float[] {x}, new float[] {y},
-            new float[] {sx}, new float[] {sy}, new float[] {(float) Math.toRadians(angle)});
-    final FloatProcessor fp = new FloatProcessor(width, height, img, null);
-    if (noise > 0) {
-      fp.noise(noise);
+        createGaussian(settings.width, settings.height, new float[] {settings.amplitude},
+            new float[] {settings.x}, new float[] {settings.y}, new float[] {settings.sx},
+            new float[] {settings.sy}, new float[] {(float) Math.toRadians(settings.angle)});
+    final FloatProcessor fp = new FloatProcessor(settings.width, settings.height, img, null);
+    if (settings.noise > 0) {
+      fp.noise(settings.noise);
     }
     new ImagePlus("Gaussian", fp).show();
   }

@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.utils;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -49,6 +50,7 @@ import java.awt.GridBagLayout;
 import java.awt.Label;
 import java.awt.Point;
 import java.awt.Scrollbar;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.JPanel;
 
@@ -62,7 +64,7 @@ public class HsbPicker_PlugIn extends PlugInFrame {
   private static final String OPT_LOCATION = "HSB_Picker.location";
   private static final double SCALE = 100;
 
-  private static HsbPicker_PlugIn instance;
+  private static final AtomicReference<HsbPicker_PlugIn> instance = new AtomicReference<>();
   private Scrollbar sampleSlider;
   private Label pixelCountLabel;
   private final Label[] statsLabel;
@@ -96,18 +98,14 @@ public class HsbPicker_PlugIn extends PlugInFrame {
       return;
     }
 
-    if (instance != null) {
-      if (!(instance.getTitle().equals(getTitle()))) {
-        final HsbPicker_PlugIn oldInstance = instance;
-        Prefs.saveLocation(OPT_LOCATION, oldInstance.getLocation());
-        oldInstance.close();
-      } else {
-        instance.toFront();
-        return;
-      }
+    final HsbPicker_PlugIn plugin = instance.get();
+
+    if (plugin != null) {
+      plugin.toFront();
+      return;
     }
 
-    instance = this;
+    instance.set(this);
     IJ.register(HsbPicker_PlugIn.class);
     WindowManager.addWindow(this);
 
@@ -134,16 +132,14 @@ public class HsbPicker_PlugIn extends PlugInFrame {
    * Run the HSB Picker using the cursor position on the current image.
    */
   public static void run() {
-    if (instance != null) {
-      instance.imageClicked();
+    final HsbPicker_PlugIn plugin = instance.get();
+    if (plugin != null) {
+      plugin.imageClicked();
     } else {
-      final ImagePlus imp = getCurrentImage();
-      if (imp == null) {
-        return;
+      // Create a new instance if there are images
+      if (getCurrentImage() != null) {
+        new HsbPicker_PlugIn().run("");
       }
-      // Create a new instance
-      final HsbPicker_PlugIn p = new HsbPicker_PlugIn();
-      p.run("");
     }
   }
 
@@ -237,17 +233,19 @@ public class HsbPicker_PlugIn extends PlugInFrame {
     final float hWidth = (float) (stats[0].getStandardDeviation() * scale);
     final float sWidth = (float) (stats[1].getStandardDeviation() * scale);
     final float bWidth = (float) (stats[2].getStandardDeviation() * scale);
-    HsbFilter_PlugIn.hue = clip(stats[0].getMean());
-    HsbFilter_PlugIn.hueWidth = clip(hWidth);
-    HsbFilter_PlugIn.saturation = clip(stats[1].getMean());
-    HsbFilter_PlugIn.saturationWidth = clip(sWidth);
-    HsbFilter_PlugIn.brightness = clip(stats[2].getMean());
-    HsbFilter_PlugIn.brightnessWidth = clip(bWidth);
+    final float hue = clip(stats[0].getMean());
+    final float hueWidth = clip(hWidth);
+    final float saturation = clip(stats[1].getMean());
+    final float saturationWidth = clip(sWidth);
+    final float brightness = clip(stats[2].getMean());
+    final float brightnessWidth = clip(bWidth);
+    HsbFilter_PlugIn.saveSettings(hue, hueWidth, saturation, saturationWidth, brightness,
+        brightnessWidth);
     IJ.doCommand(HsbFilter_PlugIn.TITLE);
   }
 
   private static float clip(double value) {
-    return (float) (Math.max(0, Math.min(value, 1)));
+    return (float) MathUtils.clip(0, 1, value);
   }
 
   private void updateDisplayedStatistics() {
@@ -265,7 +263,7 @@ public class HsbPicker_PlugIn extends PlugInFrame {
   @Override
   public void close() {
     Prefs.saveLocation(OPT_LOCATION, getLocation());
-    instance = null;
+    instance.set(null);
     super.close();
   }
 

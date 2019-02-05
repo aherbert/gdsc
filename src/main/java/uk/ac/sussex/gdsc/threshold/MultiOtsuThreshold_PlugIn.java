@@ -37,6 +37,8 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 
 import java.awt.Color;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Calculate multiple Otsu thresholds on the given image.
@@ -53,31 +55,93 @@ import java.awt.Color;
 public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
   private static final String TITLE = "Multi Otsu Threshold";
 
-  // Static to maintain state between plugin calls
-  private static int levels = 2;
-  private static boolean doStack = true;
-  private static boolean settingIgnoreZero = true;
-  private static boolean settingShowHistogram = true;
-  private static boolean settingShowRegions = true;
-  private static boolean settingShowMasks;
-  private static boolean settingLogMessages = true;
-
   private ImagePlus imp;
 
-  /** Set to true to ignore zero. Allow use of plugin from other code. */
-  public boolean ignoreZero;
+  /** The current settings for the plugin instance. */
+  private Settings settings;
 
-  /** Set to true to show histogram. Allow use of plugin from other code. */
-  public boolean showHistogram;
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
 
-  /** Set to true to show regions. Allow use of plugin from other code. */
-  public boolean showRegions;
+    /** The number of levels. */
+    int levels = 2;
+    /**
+     * Set to true to use the stack histogram for the channel and frame. False processes the current
+     * slice.
+     */
+    boolean doStack = true;
+    /** Set to true to ignore zero. */
+    boolean ignoreZero = true;
+    /** Set to true to show histogram. */
+    boolean showHistogram = true;
+    /** Set to true to show regions. */
+    boolean showRegions = true;
+    /** Set to true to show masks. */
+    boolean showMasks;
+    /** Set to true to log messages. */
+    boolean logMessages = true;
 
-  /** Set to true to show masks. Allow use of plugin from other code. */
-  public boolean showMasks;
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
 
-  /** Set to true to log messages. Allow use of plugin from other code. */
-  public boolean logMessages;
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      levels = source.levels;
+      doStack = source.doStack;
+      ignoreZero = source.ignoreZero;
+      showHistogram = source.showHistogram;
+      showRegions = source.showRegions;
+      showMasks = source.showMasks;
+      logMessages = source.logMessages;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
+
+  /**
+   * Sets the settings. This allows use from other package level plugins.
+   *
+   * @param settings the new settings
+   */
+  void setSettings(Settings settings) {
+    this.settings = Objects.requireNonNull(settings);
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -95,54 +159,53 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
   /** {@inheritDoc} */
   @Override
   public void run(ImageProcessor ip) {
+    settings = Settings.load();
+
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addMessage("Multi-level Otsu thresholding on image stack");
     final String[] items = {"2", "3", "4", "5",};
-    gd.addChoice("Levels", items, items[levels - 2]);
+    gd.addChoice("Levels", items, items[settings.levels - 2]);
     if (imp.getStackSize() > 1) {
-      gd.addCheckbox("Do_stack", doStack);
+      gd.addCheckbox("Do_stack", settings.doStack);
     }
-    gd.addCheckbox("Ignore_zero", settingIgnoreZero);
-    gd.addCheckbox("Show_histogram", settingShowHistogram);
-    gd.addCheckbox("Show_regions", settingShowRegions);
-    gd.addCheckbox("Show_masks", settingShowMasks);
-    gd.addCheckbox("Log_thresholds", settingLogMessages);
+    gd.addCheckbox("Ignore_zero", settings.ignoreZero);
+    gd.addCheckbox("Show_histogram", settings.showHistogram);
+    gd.addCheckbox("Show_regions", settings.showRegions);
+    gd.addCheckbox("Show_masks", settings.showMasks);
+    gd.addCheckbox("Log_thresholds", settings.logMessages);
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
     gd.showDialog();
     if (gd.wasCanceled()) {
       return;
     }
 
-    levels = gd.getNextChoiceIndex() + 2;
+    settings.levels = gd.getNextChoiceIndex() + 2;
     if (imp.getStackSize() > 1) {
-      doStack = gd.getNextBoolean();
+      settings.doStack = gd.getNextBoolean();
     }
-    settingIgnoreZero = gd.getNextBoolean();
-    settingShowHistogram = gd.getNextBoolean();
-    settingShowRegions = gd.getNextBoolean();
-    settingShowMasks = gd.getNextBoolean();
-    settingLogMessages = gd.getNextBoolean();
+    settings.ignoreZero = gd.getNextBoolean();
+    settings.showHistogram = gd.getNextBoolean();
+    settings.showRegions = gd.getNextBoolean();
+    settings.showMasks = gd.getNextBoolean();
+    settings.logMessages = gd.getNextBoolean();
 
-    ignoreZero = settingIgnoreZero;
-    showHistogram = settingShowHistogram;
-    showRegions = settingShowRegions;
-    showMasks = settingShowMasks;
-    logMessages = settingLogMessages;
+    settings.save();
 
-    if (!(showHistogram || showRegions || logMessages || showMasks)) {
+    if (!(settings.showHistogram || settings.showRegions || settings.logMessages
+        || settings.showMasks)) {
       IJ.error(TITLE, "No output options");
       return;
     }
 
     // Run on whole stack
-    if (doStack) {
-      run(imp, levels);
+    if (settings.doStack) {
+      run(imp, settings.levels);
     } else {
       final ImagePlus newImp = imp.createImagePlus();
       newImp.setTitle(String.format("%s (c%d,z%d,t%d)", imp.getTitle(), imp.getChannel(),
           imp.getSlice(), imp.getFrame()));
       newImp.setProcessor(imp.getProcessor());
-      run(newImp, levels);
+      run(newImp, settings.levels);
     }
   }
 
@@ -162,16 +225,16 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     final float[] maxSig = new float[1];
     final int[] threshold = getThresholds(levels, maxSig, offset, histogram);
 
-    if (logMessages) {
+    if (settings.logMessages) {
       showThresholds(levels, maxSig, threshold);
     }
-    if (showHistogram) {
+    if (settings.showHistogram) {
       showHistogram(histogram, threshold, offset[0], imp.getTitle() + " Histogram");
     }
-    if (showRegions) {
+    if (settings.showRegions) {
       showRegions(levels, threshold, imp);
     }
-    if (showMasks) {
+    if (settings.showMasks) {
       showMasks(levels, threshold, imp);
     }
   }
@@ -284,7 +347,7 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
    * @return The normalised image histogram
    */
   private float[] buildHistogram(int[] data, int[] offset) {
-    if (ignoreZero) {
+    if (settings.ignoreZero) {
       data[0] = 0;
     }
 
@@ -542,7 +605,7 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     }
 
     if (count > 1) {
-      if (logMessages) {
+      if (settings.logMessages) {
         IJ.log("Multiple optimal thresholds");
       }
       for (int i = 0; i < thresholds.length; i++) {

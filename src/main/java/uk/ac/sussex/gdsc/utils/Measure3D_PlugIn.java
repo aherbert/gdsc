@@ -49,6 +49,7 @@ import java.awt.Label;
 import java.awt.Point;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Measures the distance between two consecutive points in XYZ.
@@ -58,7 +59,7 @@ public class Measure3D_PlugIn extends PlugInFrame {
   private static final String PLUGIN_TITLE = "Measure 3D";
   private static final String OPT_LOCATION = "Measure3D.location";
   private static final String OPT_LOCATION_RESULTS = "Measure3D.location2";
-  private static Measure3D_PlugIn instance;
+  private static final AtomicReference<Measure3D_PlugIn> instance = new AtomicReference<>();
   private static TextWindow results;
 
   private int lastId;
@@ -95,18 +96,14 @@ public class Measure3D_PlugIn extends PlugInFrame {
     // Do this each time since the toolbar could change.
     installTool();
 
-    if (instance != null) {
-      if (!(instance.getTitle().equals(getTitle()))) {
-        final Measure3D_PlugIn oldInstance = instance;
-        Prefs.saveLocation(OPT_LOCATION, oldInstance.getLocation());
-        oldInstance.close();
-      } else {
-        instance.toFront();
-        return;
-      }
+    final Measure3D_PlugIn plugin = instance.get();
+
+    if (plugin != null) {
+      plugin.toFront();
+      return;
     }
 
-    instance = this;
+    instance.set(this);
     IJ.register(Measure3D_PlugIn.class);
     WindowManager.addWindow(this);
 
@@ -130,16 +127,14 @@ public class Measure3D_PlugIn extends PlugInFrame {
    * Run the Measure3D plugin using the cursor position on the current image.
    */
   public static void run() {
-    if (instance != null) {
-      instance.imageClicked();
+    final Measure3D_PlugIn plugin = instance.get();
+    if (plugin != null) {
+      plugin.imageClicked();
     } else {
-      final ImagePlus imp = getCurrentImage();
-      if (imp == null) {
-        return;
+      // Create a new instance if there are images
+      if (getCurrentImage() != null) {
+        new Measure3D_PlugIn().run("");
       }
-      // Create a new instance
-      final Measure3D_PlugIn p = new Measure3D_PlugIn();
-      p.run("");
     }
   }
 
@@ -180,14 +175,14 @@ public class Measure3D_PlugIn extends PlugInFrame {
       }
 
       // Compute the distance
-      double dx = x - lastX;
-      double dy = y - lastY;
-      double dz = z - lastZ;
-      final double d = Math.sqrt(dx * dx + dy * dy + dz + dz);
+      double dx = (double) x - lastX;
+      double dy = (double) y - lastY;
+      double dz = (double) z - lastZ;
+      final double distance = Math.sqrt(dx * dx + dy * dy + dz + dz);
 
       // Compute calibrated distance
       final Calibration cal = imp.getCalibration();
-      double d2 = -1;
+      double calibratedDistance = -1;
       String units = "";
       if (cal != null
           // Assume X and Y units are the same. Check the z-unit.
@@ -195,12 +190,12 @@ public class Measure3D_PlugIn extends PlugInFrame {
         dx *= cal.pixelWidth;
         dy *= cal.pixelHeight;
         dz *= cal.pixelDepth;
-        d2 = Math.sqrt(dx * dx + dy * dy + dz + dz);
+        calibratedDistance = Math.sqrt(dx * dx + dy * dy + dz + dz);
         units = cal.getXUnit();
       }
 
       // Record to a table
-      record(imp, x, y, z, d, d2, units);
+      record(imp, x, y, z, distance, calibratedDistance, units);
 
       // Overlay the line on the image
       if (overlayCheckbox.getState()) {
@@ -286,12 +281,12 @@ public class Measure3D_PlugIn extends PlugInFrame {
     // NOTE: BUG
     // The ImageCanvas.mousePressed(MouseEvent event) eventually calls
     // Toolbar.getInstance().runMacroTool(toolID)
-    // This runs the HSB_Picker if the tool is selected.
+    // This runs the current plugin if the tool is selected.
     //
     // This happens before WindowManager.setCurrentImage(...) is called
     // by the containing window that has been activated or brought to the front.
     // This means it is possible to click in a different image, raising the ImageCanvas event,
-    // but have the HSL values sampled from the previous current image due to the use
+    // but have the coordinates sampled from the previous current image due to the use
     // of WindowManager.getCurrentImage().
     //
     // This can be fixed by setting:
@@ -309,7 +304,7 @@ public class Measure3D_PlugIn extends PlugInFrame {
   @Override
   public void close() {
     Prefs.saveLocation(OPT_LOCATION, getLocation());
-    instance = null;
+    instance.set(null);
     super.close();
   }
 

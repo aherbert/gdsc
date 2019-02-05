@@ -112,4 +112,10 @@
     <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
   </Match>
 
+  <!-- A copy of an ImageJ class that has not been fixed for thread safety. -->
+  <Match>
+    <Class name="uk.ac.sussex.gdsc.ij.plugin.filter.ParticleAnalyzerCopy" />
+    <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD" />
+  </Match>
+
 </FindBugsFilter>

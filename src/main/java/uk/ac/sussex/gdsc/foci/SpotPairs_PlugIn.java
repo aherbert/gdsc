@@ -45,7 +45,7 @@ import java.awt.AWTEvent;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Analyses marked ROI points in an image. Find the closest pairs within a set distance of each
@@ -56,18 +56,76 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
   private static final String TITLE = "Spot Pairs";
   private static TextWindow resultsWindow;
 
-  private static double radius = 10;
-  private static boolean addOverlay = true;
-  private static boolean killRoi;
-
-  // Cache the ROI when we remove it so it can be reused
-  private static ImagePlus lastImp;
-  private static Roi lastRoi;
+  private ImagePlus imp;
 
   private Calibration cal;
   private AssignedPoint[] points;
   private ArrayList<Cluster> candidates;
   private boolean addedOverlay;
+
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    double radius = 10;
+    boolean addOverlay = true;
+    boolean killRoi;
+    ImagePlus lastImp;
+    /** Cache the ROI when we remove it so it can be reused. */
+    Roi lastRoi;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      radius = source.radius;
+      addOverlay = source.addOverlay;
+      killRoi = source.killRoi;
+      lastImp = source.lastImp;
+      lastRoi = source.lastRoi;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /**
    * Used to store information about a cluster in the clustering analysis.
@@ -223,17 +281,24 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /** {@inheritDoc} */
   @Override
   public int setup(String arg, ImagePlus imp) {
+    if ("final".equals(arg)) {
+      finalProcessing(imp);
+      return DONE;
+    }
+
     UsageTracker.recordPlugin(this.getClass(), arg);
 
     if (imp == null) {
       return DONE;
     }
+    this.imp = imp;
     Roi roi = imp.getRoi();
 
     // If there is no ROI it may be because we removed it last time
-    if (roi == null && lastImp == imp) {
+    settings = Settings.load();
+    if (roi == null && settings.lastImp == imp) {
       // Re-use the saved ROI from last time
-      roi = lastRoi;
+      roi = settings.lastRoi;
       imp.setRoi(roi);
     }
 
@@ -243,63 +308,55 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
       return DONE;
     }
 
-    lastRoi = roi;
-    lastImp = imp;
+    settings.lastImp = imp;
+    settings.lastRoi = roi;
 
     cal = imp.getCalibration();
-
-    if (arg.equals("final")) {
-      for (final Cluster c : candidates) {
-        c.sort();
-      }
-
-      Collections.sort(candidates, new Comparator<Cluster>() {
-        @Override
-        public int compare(Cluster o1, Cluster o2) {
-          // Put the pairs first
-          if (o1.size > o2.size) {
-            return -1;
-          }
-          if (o1.size < o2.size) {
-            return 1;
-          }
-
-          // Sort by the first point ID
-          if (o1.head.id < o2.head.id) {
-            return -1;
-          }
-          if (o1.head.id > o2.head.id) {
-            return 1;
-          }
-          return 0;
-        }
-      });
-
-      // Show the results in a table
-      createResultsWindow();
-
-      // Report the results
-      resultsWindow.append(imp.getTitle());
-      for (final Cluster c : candidates) {
-        addResult(c);
-      }
-
-      // The final processing mode of ImageJ restores the image ROI so kill it again
-      if (killRoi) {
-        lastImp.killRoi();
-      }
-    }
 
     return DOES_ALL | FINAL_PROCESSING;
   }
 
-  private void createResultsWindow() {
-    if (resultsWindow == null || !resultsWindow.isShowing()) {
-      resultsWindow = new TextWindow(TITLE, createResultsHeader(), "", 600, 500);
+  private void finalProcessing(ImagePlus imp) {
+    // All state is already created.
+    for (final Cluster c : candidates) {
+      c.sort();
+    }
+
+    Collections.sort(candidates, (o1, o2) -> {
+      // Put the pairs first
+      if (o1.size > o2.size) {
+        return -1;
+      }
+      if (o1.size < o2.size) {
+        return 1;
+      }
+
+      // Sort by the first point ID
+      return Integer.compare(o1.head.id, o2.head.id);
+    });
+
+    // Show the results in a table
+    createResultsWindow(cal);
+
+    // Report the results
+    resultsWindow.append(imp.getTitle());
+    for (final Cluster c : candidates) {
+      addResult(c);
+    }
+
+    // The final processing mode of ImageJ restores the image ROI so kill it again
+    if (settings.killRoi) {
+      imp.killRoi();
     }
   }
 
-  private String createResultsHeader() {
+  private static void createResultsWindow(Calibration cal) {
+    if (resultsWindow == null || !resultsWindow.isShowing()) {
+      resultsWindow = new TextWindow(TITLE, createResultsHeader(cal), "", 600, 500);
+    }
+  }
+
+  private static String createResultsHeader(Calibration cal) {
     final StringBuilder sb = new StringBuilder();
     sb.append("Image\t");
     sb.append("Id1\t");
@@ -330,7 +387,7 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
   public void run(ImageProcessor ip) {
     candidates = findPairs();
 
-    if (addOverlay) {
+    if (settings.addOverlay) {
       final Overlay overlay = new Overlay();
       // Add the original points
       final Roi pointRoi = AssignedPointUtils.createRoi(points);
@@ -348,16 +405,16 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
           overlay.add(line);
         }
       }
-      lastImp.setOverlay(overlay);
-      lastImp.updateAndDraw();
+      imp.setOverlay(overlay);
+      imp.updateAndDraw();
       addedOverlay = true;
 
       // Remove the point ROI to allow the overlay to be seen
-      if (killRoi) {
-        lastImp.killRoi(); // Saves the ROI so it can be restored
+      if (settings.killRoi) {
+        imp.killRoi(); // Saves the ROI so it can be restored
       }
     } else {
-      lastImp.setOverlay(null);
+      imp.setOverlay(null);
     }
   }
 
@@ -366,18 +423,18 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
     // This code has been adapted from the GDSC SMLM plugins from the PCPALMClusters class.
     // This was the fastest way of implementing this.
 
-    final ArrayList<Cluster> candidates = new ArrayList<>(points.length);
+    final ArrayList<Cluster> newCandidates = new ArrayList<>(points.length);
     for (final AssignedPoint p : points) {
       final Cluster c = new Cluster(new ClusterPoint(p.id + 1, p.x, p.y));
-      candidates.add(c);
+      newCandidates.add(c);
     }
 
     // Find the bounds of the candidates
-    double minx = candidates.get(0).x;
-    double miny = candidates.get(0).y;
+    double minx = newCandidates.get(0).x;
+    double miny = newCandidates.get(0).y;
     double maxx = minx;
     double maxy = miny;
-    for (final Cluster c : candidates) {
+    for (final Cluster c : newCandidates) {
       if (minx > c.x) {
         minx = c.x;
       } else if (maxx < c.x) {
@@ -392,12 +449,12 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
     // Assign to a grid
     final int maxBins = 500;
-    final double xBinWidth = Math.max(radius, (maxx - minx) / maxBins);
-    final double yBinWidth = Math.max(radius, (maxy - miny) / maxBins);
+    final double xBinWidth = Math.max(settings.radius, (maxx - minx) / maxBins);
+    final double yBinWidth = Math.max(settings.radius, (maxy - miny) / maxBins);
     final int nxbins = 1 + (int) ((maxx - minx) / xBinWidth);
     final int nybins = 1 + (int) ((maxy - miny) / yBinWidth);
     final Cluster[][] grid = new Cluster[nxbins][nybins];
-    for (final Cluster c : candidates) {
+    for (final Cluster c : newCandidates) {
       final int xbin = (int) ((c.x - minx) / xBinWidth);
       final int ybin = (int) ((c.y - miny) / yBinWidth);
       // Build a single linked list
@@ -405,15 +462,15 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
       grid[xbin][ybin] = c;
     }
 
-    final double r2 = radius * radius;
+    final double r2 = settings.radius * settings.radius;
 
     // Sweep the all-vs-all clusters and make potential links between clusters.
     // If a link can be made to a closer cluster then break the link and rejoin.
     // Then join all the links into clusters.
     if (findLinks(grid, nxbins, nybins, r2)) {
-      joinLinks(grid, nxbins, nybins, candidates);
+      joinLinks(grid, nxbins, nybins, newCandidates);
     }
-    return candidates;
+    return newCandidates;
   }
 
   /**
@@ -523,14 +580,18 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
     gd.addMessage("Find the closest pairs of marked ROI points");
 
-    gd.addSlider("Radius", 5, 50, radius);
-    gd.addCheckbox("Add_overlay", addOverlay);
-    gd.addCheckbox("Kill_ROI", killRoi);
+    gd.addSlider("Radius", 5, 50, settings.radius);
+    gd.addCheckbox("Add_overlay", settings.addOverlay);
+    gd.addCheckbox("Kill_ROI", settings.killRoi);
 
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);
     gd.showDialog();
-    if (gd.wasCanceled() || !dialogItemChanged(gd, null)) {
+    final boolean cancelled = gd.wasCanceled() || !dialogItemChanged(gd, null);
+
+    settings.save();
+
+    if (cancelled) {
       // Remove any overlay we added
       if (addedOverlay) {
         imp.setOverlay(null);
@@ -544,9 +605,9 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /** {@inheritDoc} */
   @Override
   public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
-    radius = gd.getNextNumber();
-    addOverlay = gd.getNextBoolean();
-    killRoi = gd.getNextBoolean();
+    settings.radius = gd.getNextNumber();
+    settings.addOverlay = gd.getNextBoolean();
+    settings.killRoi = gd.getNextBoolean();
     return !gd.invalidNumber();
   }
 

@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.threshold;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 
 import ij.IJ;
@@ -40,6 +41,8 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,6 +51,9 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Skeletonise a mask image. Then produce a set of lines connecting node points on the skeleton.
@@ -59,8 +65,9 @@ import java.util.List;
  */
 public class SkeletonAnalyser_PlugIn implements PlugInFilter {
   private static final String TITLE = "Skeleton Analyser";
-  private static TextWindow resultsWindow;
-  private static boolean writeHeader = true;
+  private static AtomicReference<TextWindow> resultsWindow = new AtomicReference<>();
+  /** The write header falg. This is used in headless mode to write the header once. */
+  private static AtomicBoolean writeHeader = new AtomicBoolean(true);
 
   /** The constant for a line terminus (end). */
   public static final byte TERMINUS = (byte) 1;
@@ -87,20 +94,84 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
   private static final byte[] PROCESSED_DIRECTIONS = new byte[] {(byte) 1, (byte) 2, (byte) 4,
       (byte) 8, (byte) 16, (byte) 32, (byte) 64, (byte) 128};
 
-  private static boolean pruneJunctionsSetting;
-  private static int minLengthSetting;
-  private static boolean showNodeMapSetting = true;
-  private static boolean showOverlaySetting;
-  private static boolean showTableSetting = true;
-
-  private boolean pruneJunctions;
-  private int minLength;
-  private boolean showNodeMap = true;
-  private boolean showOverlay;
-  private boolean showTable = true;
-
+  /** The foreground value. Set using the ImageJ system preferences. */
   private int foreground;
   private ImagePlus imp;
+
+  /** The result output. This may be a TextWindow or the ImageJ log window in headless mode. */
+  private Consumer<String> resultOutput;
+
+  private int maxx;
+  private int maxy;
+  private int xlimit;
+  private int ylimit;
+  private int[] offset;
+
+  private String unit = "px";
+  private double unitConversion = 1;
+
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    boolean pruneJunctions;
+    int minLength;
+    boolean showNodeMap = true;
+    boolean showOverlay;
+    boolean showTable = true;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      pruneJunctions = source.pruneJunctions;
+      minLength = source.minLength;
+      showNodeMap = source.showNodeMap;
+      showOverlay = source.showOverlay;
+      showTable = source.showTable;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   private static class Line {
     final int start;
@@ -207,7 +278,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
       return DONE;
     }
 
-    if (!showDialog(this)) {
+    if (!showDialog()) {
       return DONE;
     }
 
@@ -215,25 +286,29 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     return IJ.setupDialog(imp, DOES_8G | SNAPSHOT);
   }
 
-  private static boolean showDialog(SkeletonAnalyser_PlugIn plugin) {
+  private boolean showDialog() {
+    settings = Settings.load();
+
     final GenericDialog gd = new GenericDialog(TITLE);
 
-    gd.addCheckbox("Prune_junctions", pruneJunctionsSetting);
-    gd.addNumericField("Min_length", minLengthSetting, 0);
-    gd.addCheckbox("Show_node_map", showNodeMapSetting);
-    gd.addCheckbox("Show_overlay", showOverlaySetting);
-    gd.addCheckbox("Show_table", showTableSetting);
+    gd.addCheckbox("Prune_junctions", settings.pruneJunctions);
+    gd.addNumericField("Min_length", settings.minLength, 0);
+    gd.addCheckbox("Show_node_map", settings.showNodeMap);
+    gd.addCheckbox("Show_overlay", settings.showOverlay);
+    gd.addCheckbox("Show_table", settings.showTable);
 
     gd.showDialog();
     if (gd.wasCanceled()) {
       return false;
     }
 
-    plugin.pruneJunctions = pruneJunctionsSetting = gd.getNextBoolean();
-    plugin.minLength = minLengthSetting = (int) gd.getNextNumber();
-    plugin.showNodeMap = showNodeMapSetting = gd.getNextBoolean();
-    plugin.showOverlay = showOverlaySetting = gd.getNextBoolean();
-    plugin.showTable = showTableSetting = gd.getNextBoolean();
+    settings.pruneJunctions = gd.getNextBoolean();
+    settings.minLength = (int) gd.getNextNumber();
+    settings.showNodeMap = gd.getNextBoolean();
+    settings.showOverlay = gd.getNextBoolean();
+    settings.showTable = gd.getNextBoolean();
+
+    settings.save();
 
     return true;
   }
@@ -247,27 +322,26 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     final int height = bp.getHeight();
 
     skeletonise(bp, true);
-    // skeltonise(bp, false);
 
     final byte[] map = findNodes(bp);
-    if (pruneJunctions) {
-      boolean pruned = prune(map, width, height);
+    if (settings.pruneJunctions) {
+      boolean pruned = prune(map);
       while (pruned) {
-        pruned = prune(map, width, height);
+        pruned = prune(map);
       }
     }
 
     final List<float[]> lines = extractLines(map);
 
-    if (showNodeMap) {
+    if (settings.showNodeMap) {
       final ColorProcessor cp = createMapImage(map, width, height);
       final ImagePlus mapImp = ImageJUtils.display(this.imp.getTitle() + " SkeletonNodeMap", cp);
-      if (showOverlay) {
+      if (settings.showOverlay) {
         showOverlay(mapImp, lines);
       }
     }
 
-    if (showTable) {
+    if (settings.showTable) {
       showResults(lines);
     }
   }
@@ -309,6 +383,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
    * @param ip Skeletonized image
    * @return The skeleton node map (or null if not a binary processor)
    */
+  @Nullable
   public byte[] findNodes(ByteProcessor ip) {
     if (!ip.isBinary()) {
       return null;
@@ -354,11 +429,11 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
    * @return The skeleton node map (or null if not a binary processor)
    */
   private byte[] findNodes(byte[] skeleton) {
-    final byte foreground = (byte) this.foreground;
+    final byte localForeground = (byte) this.foreground;
     final byte[] map = new byte[skeleton.length];
 
     for (int index = map.length; index-- > 0;) {
-      if (skeleton[index] == foreground) {
+      if (skeleton[index] == localForeground) {
         // Process the neighbours
         final int count = countRadii(skeleton, index);
 
@@ -385,11 +460,9 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
    * eliminated.
    *
    * @param map the map
-   * @param width the width
-   * @param height the height
    * @return true, if successful
    */
-  private boolean prune(byte[] map, int width, int height) {
+  private boolean prune(byte[] map) {
     // Each entry is: startX, startY, endX, endY, length
     final List<ChainCode> chainCodes = new LinkedList<>();
     final List<float[]> lines = extractLines(map, chainCodes);
@@ -466,31 +539,21 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     // If any marked for deletion, remove the shortest line
     Collections.sort(toDelete, (o1, o2) -> Float.compare(o1.length, o2.length));
 
-    // ColorProcessor cp = createMapImage(map, width, height);
-    // Utils.display(this.imp.getTitle() + " SkeletonNodeMap", cp);
-
     // Remove the line for deletion
     final ChainCode code = toDelete.get(0).code;
     int xpos = code.getX();
     int ypos = code.getY();
-    // System.out.printf("Pruning %d,%d: %f\n", x, y, code.getDistance());
     final int[] run = code.getRun();
     int index = getIndex(xpos, ypos);
-    // System.out.printf("Pruning %d,%d, T=%b, E=%b, J=%b\n", x, y, (map[index] & TERMINUS) != 0,
-    // (map[index] & EDGE) != 0, (map[index] & JUNCTION) != 0);
 
     if ((map[index] & LINE) != 0) {
-      // System.out.printf("Pruning %d,%d\n", x, y);
       map[index] = 0;
     }
     for (final int d : run) {
       xpos += ChainCode.getXDirection(d);
       ypos += ChainCode.getYDirection(d);
       index = getIndex(xpos, ypos);
-      // System.out.printf("Pruning %d,%d, T=%b, E=%b, J=%b\n", x, y, (map[index] & TERMINUS) != 0,
-      // (map[index] & EDGE) != 0, (map[index] & JUNCTION) != 0);
       if ((map[index] & LINE) != 0) {
-        // System.out.printf("Pruning %d,%d\n", x, y);
         map[index] = 0;
       }
     }
@@ -585,7 +648,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     final boolean isInner = (y != 0 && y != maxy - 1) && (x != 0 && x != maxx - 1);
     for (int d = 0; d < 8; d++) {
       // walk around the point and note every no-line->line transition
-      boolean pixelSet = prevPixelSet;
+      boolean pixelSet;
       if (isInner || isWithinXy(x, y, d)) {
         pixelSet = types[index + offset[d]] == byteForeground;
       } else {
@@ -646,7 +709,6 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
         getXy(index, xy);
         final int x = xy[0];
         final int y = xy[1];
-        // System.out.printf("Process %d,%d\n", x, y);
 
         if (myChainCodes != null) {
           code = new ChainCode(x, y);
@@ -659,15 +721,12 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
       }
     }
 
-    // showMap(map, maxx, maxy, "LineMapTerminals");
-
     // Process JUNCTIONS
     for (int index = 0; index < map.length; index++) {
       if ((map[index] & JUNCTION) != 0 && (map[index] & PROCESSED) != PROCESSED) {
         getXy(index, xy);
         final int x = xy[0];
         final int y = xy[1];
-        // System.out.printf("Process %d,%d\n", x, y);
 
         if (myChainCodes != null) {
           code = new ChainCode(x, y);
@@ -692,15 +751,12 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
       }
     }
 
-    // showMap(map, maxx, maxy, "LineMapJunctions");
-
     // Process EDGEs - These should be the closed loops with no junctions/terminals
     for (int index = 0; index < map.length; index++) {
       if ((map[index] & EDGE) == EDGE && (map[index] & PROCESSED) != PROCESSED) {
         getXy(index, xy);
         final int x = xy[0];
         final int y = xy[1];
-        // System.out.printf("Process %d,%d\n", x, y);
 
         if (myChainCodes != null) {
           code = new ChainCode(x, y);
@@ -709,8 +765,6 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
         lines.add(extend(map, index, code));
       }
     }
-
-    // showMap(map, maxx, maxy, "LineMapEdges");
 
     // Sort by length
     final ArrayList<Result> results = new ArrayList<>(lines.size());
@@ -870,25 +924,19 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     // Do a sweep for NODEs first
     searchDirection = (nextDirection + 6) % 8;
     for (int i = 0; i < 6; i++) {
-      // int d = (searchDirection + SEARCH[i]) % 8;
       final int d = (searchDirection + i) % 8;
-      if (isInner || isWithinXy(x, y, d)) {
-        if ((map[index + offset[d]] & NODE) != 0) {
-          return d;
-        }
+      if ((isInner || isWithinXy(x, y, d)) && (map[index + offset[d]] & NODE) != 0) {
+        return d;
       }
     }
 
     // Now do a sweep for EDGEs
     searchDirection = (nextDirection + 6) % 8;
     for (int i = 0; i < 6; i++) {
-      // int d = (searchDirection + SEARCH[i]) % 8;
       final int d = (searchDirection + i) % 8;
-      if (isInner || isWithinXy(x, y, d)) {
-        if ((map[index + offset[d]] & EDGE) == EDGE
-            && (map[index + offset[d]] & PROCESSED) != PROCESSED) {
-          return d;
-        }
+      if ((isInner || isWithinXy(x, y, d)) && (map[index + offset[d]] & EDGE) == EDGE
+          && (map[index + offset[d]] & PROCESSED) != PROCESSED) {
+        return d;
       }
     }
 
@@ -909,7 +957,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
 
     int id = 0;
     for (final float[] line : lines) {
-      if (line[4] < minLength) {
+      if (line[4] < settings.minLength) {
         break;
       }
       addResult(++id, line);
@@ -922,7 +970,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
 
     int id = 0;
     for (final float[] line : lines) {
-      if (line[4] < minLength) {
+      if (line[4] < settings.minLength) {
         break;
       }
       x[id] = (int) line[0];
@@ -938,21 +986,34 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     mapImp.setOverlay(overlay);
   }
 
-  private String unit = "px";
-  private double unitConversion = 1;
-
   private void createResultsWindow() {
     if (this.imp.getCalibration() != null) {
       unit = imp.getCalibration().getUnit();
       unitConversion = imp.getCalibration().pixelWidth;
     }
     if (java.awt.GraphicsEnvironment.isHeadless()) {
-      if (writeHeader) {
-        writeHeader = false;
+      resultOutput = IJ::log;
+      if (writeHeader.get()) {
+        writeHeader.set(false);
         IJ.log(createResultsHeader());
       }
-    } else if (resultsWindow == null || !resultsWindow.isShowing()) {
-      resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 400, 500);
+    } else {
+      // Atomically create a results window if needed.
+      TextWindow tw = resultsWindow.get();
+      if (tw == null || !tw.isShowing()) {
+        tw = new TextWindow(TITLE + " Results", createResultsHeader(), "", 400, 500);
+        // When it closes remove the reference to this window
+        final TextWindow closedWindow = tw;
+        tw.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowClosed(WindowEvent event) {
+            resultsWindow.compareAndSet(closedWindow, null);
+            super.windowClosed(event);
+          }
+        });
+        resultsWindow.set(tw);
+      }
+      resultOutput = tw::append;
     }
   }
 
@@ -979,11 +1040,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     sb.append(IJ.d2s(line[4] * unitConversion, 2)).append('\t');
     sb.append(unit);
 
-    if (java.awt.GraphicsEnvironment.isHeadless()) {
-      IJ.log(sb.toString());
-    } else {
-      resultsWindow.append(sb.toString());
-    }
+    resultOutput.accept(sb.toString());
   }
 
   // ------------------------------------
@@ -1060,7 +1117,6 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
         ip2.fill();
       }
       ip2.insert(ip, 1, 1);
-      // new ImagePlus("ip2", ip2).show();
       return ip2;
     }
     return ip;
@@ -1096,11 +1152,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     int removed = 0;
     final int[] xyz = new int[3];
 
-    byte foreground = (byte) (Prefs.blackBackground ? 255 : 0);
-    if (ip.isInvertedLut()) {
-      foreground = (byte) (255 - foreground);
-    }
-    final byte background = (byte) ((byte) 255 - foreground);
+    final byte background = (byte) (255 - foreground);
 
     if (maxx == 0) {
       initialise(ip.getWidth(), ip.getHeight());
@@ -1116,19 +1168,21 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
 
         final boolean isInner = (y != 0 && y != ylimit) && (x != 0 && x != xlimit);
 
+        // Check which neighbours are set
         final boolean[] edgesSet = new boolean[8];
         for (int d = 8; d-- > 0;) {
-          // analyze 4 flat-edge neighbours
           if (isInner || isWithinXy(x, y, d)) {
             edgesSet[d] = (skeleton[index + offset[d]] == foreground);
           }
         }
 
+        // analyze 4 flat-edge neighbours
         for (int d = 0; d < 8; d += 2) {
           if ((edgesSet[d] && edgesSet[(d + 2) % 8])
               && !(edgesSet[(d + 5) % 8] || (edgesSet[(d + 4) % 8] && edgesSet[(d + 6) % 8]))) {
             removed++;
             skeleton[index] = background;
+            break;
           }
         }
       }
@@ -1136,12 +1190,6 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
 
     return removed;
   }
-
-  private int maxx;
-  private int maxy; // image dimensions
-  private int xlimit;
-  private int ylimit;
-  private int[] offset;
 
   /**
    * Initialises the global width and height variables. Creates the direction offset tables.

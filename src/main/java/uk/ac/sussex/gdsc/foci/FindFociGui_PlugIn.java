@@ -43,6 +43,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.WindowConstants;
 
@@ -50,12 +51,12 @@ import javax.swing.WindowConstants;
  * Provides a permanent form front-end for the FindFoci plugin filter.
  */
 public class FindFociGui_PlugIn implements PlugIn {
-  private static FindFociView instance;
+  private static final AtomicReference<FindFociView> instance = new AtomicReference<>();
 
   private static class FindFociListener
       implements WindowListener, ImageListener, PropertyChangeListener {
     FindFociModel model;
-    FindFociView instance;
+    FindFociView view;
     int currentChannel;
     int currentFrame;
 
@@ -63,9 +64,9 @@ public class FindFociGui_PlugIn implements PlugIn {
       this.model = model;
     }
 
-    public void addWindowListener(FindFociView instance) {
-      this.instance = instance;
-      instance.addWindowListener(this);
+    public void addWindowListener(FindFociView view) {
+      this.view = view;
+      view.addWindowListener(this);
     }
 
     @Override
@@ -75,7 +76,7 @@ public class FindFociGui_PlugIn implements PlugIn {
 
     @Override
     public void windowClosing(WindowEvent event) {
-      WindowManager.removeWindow(instance);
+      WindowManager.removeWindow(view);
     }
 
     @Override
@@ -160,8 +161,10 @@ public class FindFociGui_PlugIn implements PlugIn {
       return;
     }
 
-    if (instance != null) {
-      if (instance.isVisible()) {
+    FindFociView view = instance.get();
+
+    if (view != null) {
+      if (view.isVisible()) {
         // Ask if the user would like a second instance
         final GenericDialog gd = new GenericDialog(FindFoci_PlugIn.TITLE);
         gd.enableYesNoCancel();
@@ -176,7 +179,7 @@ public class FindFociGui_PlugIn implements PlugIn {
           return;
         }
       }
-      showInstance(instance);
+      showInstance(view);
       return;
     }
 
@@ -198,13 +201,14 @@ public class FindFociGui_PlugIn implements PlugIn {
       Class.forName("org.jdesktop.beansbinding.Property", false, this.getClass().getClassLoader());
 
       // it exists on the classpath
-      instance = new FindFociView(model, controller);
-      listener.addWindowListener(instance);
-      instance.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+      view = new FindFociView(model, controller);
+      listener.addWindowListener(view);
+      view.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+      instance.set(view);
 
       IJ.register(FindFociView.class);
 
-      showInstance(instance);
+      showInstance(view);
       IJ.showStatus("FindFoci ready");
     } catch (final ExceptionInInitializerError ex) {
       exception = ex;
@@ -231,7 +235,7 @@ public class FindFociGui_PlugIn implements PlugIn {
     }
   }
 
-  private void showNewInstance() {
+  private static void showNewInstance() {
     final FindFociModel model = new FindFociModel();
     model.setResultsDirectory(System.getProperty("java.io.tmpdir"));
     final FindFociController controller = new ImageJController(model);
@@ -248,9 +252,9 @@ public class FindFociGui_PlugIn implements PlugIn {
     showInstance(view);
   }
 
-  private static void showInstance(FindFociView instance) {
-    WindowManager.addWindow(instance);
-    instance.setVisible(true);
-    instance.toFront();
+  private static void showInstance(FindFociView view) {
+    WindowManager.addWindow(view);
+    view.setVisible(true);
+    view.toFront();
   }
 }

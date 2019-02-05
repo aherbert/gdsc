@@ -32,10 +32,11 @@ import ij.IJ;
 import ij.WindowManager;
 import ij.plugin.PlugIn;
 
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.WindowConstants;
 
@@ -43,8 +44,8 @@ import javax.swing.WindowConstants;
  * Create a window that allows the user to pick ROI points and have them mapped to the closest
  * maxima found by the FindFoci algorithm.
  */
-public class FindFociHelper_PlugIn implements PlugIn, WindowListener {
-  private static FindFociHelperView instance;
+public class FindFociHelper_PlugIn implements PlugIn {
+  private static final AtomicReference<FindFociHelperView> instance = new AtomicReference<>();
 
   /** {@inheritDoc} */
   @Override
@@ -54,8 +55,7 @@ public class FindFociHelper_PlugIn implements PlugIn, WindowListener {
   }
 
   private void showFindFociPickerWindow() {
-    if (instance != null) {
-      showInstance();
+    if (showInstance()) {
       return;
     }
 
@@ -68,9 +68,15 @@ public class FindFociHelper_PlugIn implements PlugIn, WindowListener {
       Class.forName("org.jdesktop.beansbinding.Property", false, this.getClass().getClassLoader());
 
       // it exists on the classpath
-      instance = new FindFociHelperView();
-      instance.addWindowListener(this);
-      instance.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+      final FindFociHelperView view = new FindFociHelperView();
+      view.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosing(WindowEvent event) {
+          WindowManager.removeWindow(view);
+        }
+      });
+      view.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+      instance.set(view);
 
       IJ.register(OptimiserView.class);
 
@@ -101,44 +107,14 @@ public class FindFociHelper_PlugIn implements PlugIn, WindowListener {
     }
   }
 
-  private static void showInstance() {
-    WindowManager.addWindow(instance);
-    instance.setVisible(true);
-    instance.toFront();
-  }
-
-  @Override
-  public void windowOpened(WindowEvent event) {
-    // Ignore
-  }
-
-  @Override
-  public void windowClosing(WindowEvent event) {
-    WindowManager.removeWindow(instance);
-  }
-
-  @Override
-  public void windowClosed(WindowEvent event) {
-    // Ignore
-  }
-
-  @Override
-  public void windowIconified(WindowEvent event) {
-    // Ignore
-  }
-
-  @Override
-  public void windowDeiconified(WindowEvent event) {
-    // Ignore
-  }
-
-  @Override
-  public void windowActivated(WindowEvent event) {
-    // Ignore
-  }
-
-  @Override
-  public void windowDeactivated(WindowEvent event) {
-    // Ignore
+  private static boolean showInstance() {
+    final FindFociHelperView view = instance.get();
+    if (view != null) {
+      WindowManager.addWindow(view);
+      view.setVisible(true);
+      view.toFront();
+      return true;
+    }
+    return false;
   }
 }

@@ -51,9 +51,13 @@ import ij.text.TextWindow;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Output the distances between spots within a mask region.
@@ -73,41 +77,24 @@ public class SpotDistance_PlugIn implements PlugIn {
   private static final int[] DIR_Y_OFFSET = {-1, -1, 0, 1, 1, 1, 0, -1};
   private static final String[] OVERLAY = {"None", "Slice position", "Entire stack"};
 
-  private static TextWindow resultsWindow;
-  private static TextWindow summaryWindow;
-  private static TextWindow distancesWindow;
+  private static final AtomicReference<TextWindow> resultsWindowRef = new AtomicReference<>();
+  private static final AtomicReference<TextWindow> summaryWindowRef = new AtomicReference<>();
+  private static final AtomicReference<TextWindow> distancesWindowRef = new AtomicReference<>();
 
+  private TextWindow resultsWindow;
+  private TextWindow summaryWindow;
+  private TextWindow distancesWindow;
+
+  // Only updated when holding the lock
+  private static final Object lock = new Object();
   private static int lastResultLineCount;
   private static int lastSummaryLineCount;
   private static int lastDistancesLineCount;
-  private static boolean allowUndo;
 
-  private static String maskImage = "";
-  private static double smoothingSize = 1.5;
-  private static double featureSize = 4.5;
+  // Atomically update the undo flag
+  private static AtomicBoolean allowUndo = new AtomicBoolean();
 
-  private static boolean autoThreshold = true;
-  private static double stdDevAboveBackground = 3;
-  private static int minPeakSize = 15;
-  private static double minPeakHeight = 5;
-  private static int maxPeaks = 50;
-
-  private static double circularityLimit = 0.7;
-  private static int showOverlay = 2;
-  private static double maxDistance;
-  private static boolean processFrames;
-  private static boolean showProjection;
-  private static boolean showDistances;
-  private static boolean pixelDistances = true;
-  private static boolean calibratedDistances = true;
-  private static boolean trackObjects;
-  private static int regionCounter = 1;
-  private static boolean debug;
-
-  private static boolean dualChannel;
-  private static int c1 = 1;
-  private static int c2 = 2;
-
+  // Debugging images only modified with a synchronized block
   private static ImagePlus debugSpotImp;
   private static ImagePlus debugSpotImp2;
   private static ImagePlus debugMaskImp;
@@ -118,7 +105,6 @@ public class SpotDistance_PlugIn implements PlugIn {
   private String resultEntry;
   private Calibration cal;
   private double maxDistance2;
-  private boolean doDualChannel;
 
   // Used to cache the mask region
   private int[] regions;
@@ -135,6 +121,109 @@ public class SpotDistance_PlugIn implements PlugIn {
   private int xlimit;
   private int ylimit;
   private int[] offset;
+
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String maskImage = "";
+    double smoothingSize = 1.5;
+    double featureSize = 4.5;
+
+    boolean autoThreshold = true;
+    double stdDevAboveBackground = 3;
+    int minPeakSize = 15;
+    double minPeakHeight = 5;
+    int maxPeaks = 50;
+
+    double circularityLimit = 0.7;
+    int showOverlay = 2;
+    double maxDistance;
+    boolean processFrames;
+    boolean showProjection;
+    boolean showDistances;
+    boolean pixelDistances = true;
+    boolean calibratedDistances = true;
+    boolean trackObjects;
+    int regionCounter = 1;
+    boolean debug;
+
+    boolean dualChannel;
+    int c1 = 1;
+    int c2 = 2;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      maskImage = source.maskImage;
+      smoothingSize = source.smoothingSize;
+      featureSize = source.featureSize;
+
+      autoThreshold = source.autoThreshold;
+      stdDevAboveBackground = source.stdDevAboveBackground;
+      minPeakSize = source.minPeakSize;
+      minPeakHeight = source.minPeakHeight;
+      maxPeaks = source.maxPeaks;
+
+      circularityLimit = source.circularityLimit;
+      showOverlay = source.showOverlay;
+      maxDistance = source.maxDistance;
+      processFrames = source.processFrames;
+      showProjection = source.showProjection;
+      showDistances = source.showDistances;
+      pixelDistances = source.pixelDistances;
+      calibratedDistances = source.calibratedDistances;
+      trackObjects = source.trackObjects;
+      regionCounter = source.regionCounter;
+      debug = source.debug;
+
+      dualChannel = source.dualChannel;
+      c1 = source.c1;
+      c2 = source.c2;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /**
    * Used to store results and cache XYZ output formatting.
@@ -184,12 +273,12 @@ public class SpotDistance_PlugIn implements PlugIn {
 
     boolean extraOptions = IJ.shiftKeyDown();
 
-    if (arg != null && arg.equals("undo")) {
+    if ("undo".equals(arg)) {
       undoLastResult();
       return;
     }
 
-    if (arg != null && arg.equals("extra")) {
+    if ("extra".equals(arg)) {
       extraOptions = true;
     }
 
@@ -201,7 +290,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     }
 
     if (!FindFoci_PlugIn.isSupported(imp.getBitDepth())) {
-      IJ.showMessage("Error", "Only " + FindFoci_PlugIn.getSupported() + " images are supported");
+      IJ.error(TITLE, "Only " + FindFoci_PlugIn.getSupported() + " images are supported");
       return;
     }
 
@@ -210,45 +299,49 @@ public class SpotDistance_PlugIn implements PlugIn {
 
     final Roi roi = imp.getRoi();
     if (maskImageList.length == 1 && (roi == null || !roi.isArea())) {
-      IJ.showMessage("Error", "No mask images and no area ROI");
+      IJ.error(TITLE, "No mask images and no area ROI");
       return;
     }
 
-    // Allow repeat with same parameters
-    if (arg == null || !arg.equals("redo")) {
+    settings = Settings.load();
+
+    boolean selectDualChannel = false;
+
+    // Allow repeat with same parameters. "redo" will skip this dialog.
+    if (!"redo".equals(arg)) {
       final GenericDialog gd = new GenericDialog(TITLE);
 
       gd.addMessage("Detects spots within a mask/ROI region\nand computes all-vs-all distances.\n"
           + "(Hold shift for extra options)");
 
-      gd.addChoice("Mask", maskImageList, maskImage);
-      gd.addNumericField("Smoothing", smoothingSize, 2, 6, "pixels");
-      gd.addNumericField("Feature_Size", featureSize, 2, 6, "pixels");
+      gd.addChoice("Mask", maskImageList, settings.maskImage);
+      gd.addNumericField("Smoothing", settings.smoothingSize, 2, 6, "pixels");
+      gd.addNumericField("Feature_Size", settings.featureSize, 2, 6, "pixels");
       if (extraOptions) {
-        gd.addCheckbox("Auto_threshold", autoThreshold);
-        gd.addNumericField("Background (SD > Av)", stdDevAboveBackground, 1);
-        gd.addNumericField("Min_peak_size", minPeakSize, 0);
-        gd.addNumericField("Min_peak_height", minPeakHeight, 2);
-        gd.addNumericField("Max_peaks", maxPeaks, 2);
+        gd.addCheckbox("Auto_threshold", settings.autoThreshold);
+        gd.addNumericField("Background (SD > Av)", settings.stdDevAboveBackground, 1);
+        gd.addNumericField("Min_peak_size", settings.minPeakSize, 0);
+        gd.addNumericField("Min_peak_height", settings.minPeakHeight, 2);
+        gd.addNumericField("Max_peaks", settings.maxPeaks, 2);
       }
-      gd.addNumericField("Ciruclarity_limit", circularityLimit, 2);
-      gd.addNumericField("Max_distance", maxDistance, 2, 6, "pixels");
+      gd.addNumericField("Ciruclarity_limit", settings.circularityLimit, 2);
+      gd.addNumericField("Max_distance", settings.maxDistance, 2, 6, "pixels");
       if (imp.getNFrames() != 1) {
-        gd.addCheckbox("Process_frames", processFrames);
+        gd.addCheckbox("Processettings.frames", settings.processFrames);
       }
       if (imp.getNChannels() != 1) {
-        gd.addCheckbox("Dual_channel", dualChannel);
+        gd.addCheckbox("Dual_channel", settings.dualChannel);
       }
-      gd.addCheckbox("Show_projection", showProjection);
-      gd.addCheckbox("Show_distances", showDistances);
-      gd.addChoice("Show_overlay", OVERLAY, OVERLAY[showOverlay]);
-      gd.addNumericField("Region_counter", regionCounter, 0);
+      gd.addCheckbox("Show_projection", settings.showProjection);
+      gd.addCheckbox("Show_distances", settings.showDistances);
+      gd.addChoice("Show_overlay", OVERLAY, OVERLAY[settings.showOverlay]);
+      gd.addNumericField("Region_counter", settings.regionCounter, 0);
       if (extraOptions) {
-        gd.addCheckbox("Show_spot_image (debugging)", debug);
+        gd.addCheckbox("Show_spot_image (debugging)", settings.debug);
       }
-      gd.addCheckbox("Pixel_distances", pixelDistances);
-      gd.addCheckbox("Calibrated_distances", calibratedDistances);
-      gd.addCheckbox("Track_objects", trackObjects);
+      gd.addCheckbox("Pixel_distances", settings.pixelDistances);
+      gd.addCheckbox("Calibrated_distances", settings.calibratedDistances);
+      gd.addCheckbox("Track_objects", settings.trackObjects);
       gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI);
 
       gd.showDialog();
@@ -256,49 +349,54 @@ public class SpotDistance_PlugIn implements PlugIn {
         return;
       }
 
-      maskImage = gd.getNextChoice();
-      smoothingSize = gd.getNextNumber();
-      featureSize = gd.getNextNumber();
+      settings.maskImage = gd.getNextChoice();
+      settings.smoothingSize = gd.getNextNumber();
+      settings.featureSize = gd.getNextNumber();
       if (extraOptions) {
-        autoThreshold = gd.getNextBoolean();
-        stdDevAboveBackground = gd.getNextNumber();
-        minPeakSize = (int) gd.getNextNumber();
-        minPeakHeight = (int) gd.getNextNumber();
-        maxPeaks = (int) gd.getNextNumber();
+        settings.autoThreshold = gd.getNextBoolean();
+        settings.stdDevAboveBackground = gd.getNextNumber();
+        settings.minPeakSize = (int) gd.getNextNumber();
+        settings.minPeakHeight = (int) gd.getNextNumber();
+        settings.maxPeaks = (int) gd.getNextNumber();
       }
-      circularityLimit = gd.getNextNumber();
-      maxDistance = gd.getNextNumber();
+      settings.circularityLimit = gd.getNextNumber();
+      settings.maxDistance = gd.getNextNumber();
       if (imp.getNFrames() != 1) {
-        processFrames = gd.getNextBoolean();
+        settings.processFrames = gd.getNextBoolean();
       }
-      doDualChannel = false;
       if (imp.getNChannels() != 1) {
-        doDualChannel = dualChannel = gd.getNextBoolean();
+        selectDualChannel = settings.dualChannel = gd.getNextBoolean();
       }
-      showProjection = gd.getNextBoolean();
-      showDistances = gd.getNextBoolean();
-      showOverlay = gd.getNextChoiceIndex();
-      regionCounter = (int) gd.getNextNumber();
+      settings.showProjection = gd.getNextBoolean();
+      settings.showDistances = gd.getNextBoolean();
+      settings.showOverlay = gd.getNextChoiceIndex();
+      settings.regionCounter = (int) gd.getNextNumber();
       if (extraOptions) {
-        debug = gd.getNextBoolean();
+        settings.debug = gd.getNextBoolean();
       } else {
-        debug = false;
+        settings.debug = false;
       }
-      pixelDistances = gd.getNextBoolean();
-      calibratedDistances = gd.getNextBoolean();
-      trackObjects = gd.getNextBoolean();
-      if (!(pixelDistances || calibratedDistances)) {
-        calibratedDistances = true;
+      settings.pixelDistances = gd.getNextBoolean();
+      settings.calibratedDistances = gd.getNextBoolean();
+      settings.trackObjects = gd.getNextBoolean();
+      if (!(settings.pixelDistances || settings.calibratedDistances)) {
+        settings.calibratedDistances = true;
       }
+
+      settings.save();
     }
 
-    maskImp = checkMask(imp, maskImage);
+    maskImp = checkMask(imp, settings.maskImage);
 
     if (maskImp == null) {
       return;
     }
 
-    if (doDualChannel) {
+    boolean doDualChannel;
+    if (selectDualChannel) {
+      // Select dual channel is only true if the first settings dialog was shown
+      // (not for "redo" analysis)
+
       final GenericDialog gd = new GenericDialog(TITLE);
       gd.addMessage("Select the channels for dual channel analysis");
 
@@ -306,8 +404,8 @@ public class SpotDistance_PlugIn implements PlugIn {
       for (int i = 0; i < list.length; i++) {
         list[i] = "Channel " + (i + 1);
       }
-      final int myC1 = (c1 > list.length) ? 0 : c1 - 1;
-      int myC2 = (c2 > list.length) ? 0 : c2 - 1;
+      final int myC1 = (settings.c1 > list.length) ? 0 : settings.c1 - 1;
+      int myC2 = (settings.c2 > list.length) ? 0 : settings.c2 - 1;
       if (myC1 == myC2) {
         myC2 = (myC1 + 1) % list.length;
       }
@@ -318,17 +416,17 @@ public class SpotDistance_PlugIn implements PlugIn {
         return;
       }
 
-      c1 = gd.getNextChoiceIndex() + 1;
-      c2 = gd.getNextChoiceIndex() + 1;
+      settings.c1 = gd.getNextChoiceIndex() + 1;
+      settings.c2 = gd.getNextChoiceIndex() + 1;
 
-      if (c1 == c2) {
-        doDualChannel = false;
-      }
+      doDualChannel = settings.c1 != settings.c2;
+    } else {
+      doDualChannel = settings.dualChannel;
     }
 
     initialise();
 
-    final int channel = (doDualChannel) ? c1 : imp.getChannel();
+    final int channel = (doDualChannel) ? settings.c1 : imp.getChannel();
     final ImageStack imageStack = imp.getImageStack();
     final ImageStack maskStack = maskImp.getImageStack();
 
@@ -353,7 +451,7 @@ public class SpotDistance_PlugIn implements PlugIn {
         ImageProcessor ip = imageStack.getProcessor(stackIndex);
         s1.setPixels(ip.getPixels(), slice);
         if (doDualChannel) {
-          stackIndex = imp.getStackIndex(c2, slice, frame);
+          stackIndex = imp.getStackIndex(settings.c2, slice, frame);
           ip = imageStack.getProcessor(stackIndex);
           s1b.setPixels(ip.getPixels(), slice);
         }
@@ -393,7 +491,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     }
     resultsWindow.append("");
 
-    if (showProjection) {
+    if (settings.showProjection) {
       projectionImp.setSlice(1);
     }
   }
@@ -429,21 +527,32 @@ public class SpotDistance_PlugIn implements PlugIn {
   }
 
   private static void undoLastResult() {
-    if (allowUndo) {
-      allowUndo = false;
-      removeAfterLine(resultsWindow, lastResultLineCount);
-      removeAfterLine(summaryWindow, lastSummaryLineCount);
-      removeAfterLine(distancesWindow, lastDistancesLineCount);
+    if (allowUndo.compareAndSet(true, false)) {
+      // Do this atomically
+      int resultLineCount;
+      int summaryLineCount;
+      int distancesLineCount;
+      synchronized (lock) {
+        resultLineCount = lastResultLineCount;
+        summaryLineCount = lastSummaryLineCount;
+        distancesLineCount = lastDistancesLineCount;
+      }
+      removeAfterLine(resultsWindowRef, resultLineCount);
+      removeAfterLine(summaryWindowRef, summaryLineCount);
+      removeAfterLine(distancesWindowRef, distancesLineCount);
     }
   }
 
-  private static void removeAfterLine(TextWindow window, int line) {
-    if (window != null && line > 0) {
-      final TextPanel tp = window.getTextPanel();
-      final int nLines = tp.getLineCount();
-      if (line < nLines) {
-        tp.setSelection(line, nLines);
-        tp.clearSelection();
+  private static void removeAfterLine(AtomicReference<TextWindow> windowRef, int line) {
+    if (line > 0) {
+      final TextWindow window = windowRef.get();
+      if (window != null) {
+        final TextPanel tp = window.getTextPanel();
+        final int nLines = tp.getLineCount();
+        if (line < nLines) {
+          tp.setSelection(line, nLines);
+          tp.clearSelection();
+        }
       }
     }
   }
@@ -452,9 +561,9 @@ public class SpotDistance_PlugIn implements PlugIn {
     regions = null;
     regionImp = null;
     bounds = new Rectangle();
-    allowUndo = false;
-    maxDistance2 = maxDistance * maxDistance;
-    if (showOverlay > 0) {
+    allowUndo.set(false);
+    maxDistance2 = settings.maxDistance * settings.maxDistance;
+    if (settings.showOverlay > 0) {
       imp.setOverlay(null);
     }
     createResultsWindow();
@@ -462,7 +571,7 @@ public class SpotDistance_PlugIn implements PlugIn {
 
   private int[] buildFrameList() {
     int[] frames;
-    if (processFrames) {
+    if (settings.processFrames) {
       frames = new int[imp.getNFrames()];
       for (int i = 0; i < frames.length; i++) {
         frames[i] = i + 1;
@@ -474,7 +583,7 @@ public class SpotDistance_PlugIn implements PlugIn {
   }
 
   private void createProjection(int[] frames, boolean dualChannel) {
-    if (!showProjection) {
+    if (!settings.showProjection) {
       return;
     }
 
@@ -527,13 +636,13 @@ public class SpotDistance_PlugIn implements PlugIn {
   }
 
   private ImagePlus checkMask(ImagePlus imp, String maskImage) {
-    ImagePlus maskImp = WindowManager.getImage(maskImage);
+    ImagePlus mask = WindowManager.getImage(maskImage);
 
-    if (maskImp == null) {
+    if (mask == null) {
       // Build a mask image using the input image ROI
       final Roi roi = imp.getRoi();
       if (roi == null || !roi.isArea()) {
-        IJ.showMessage("Error", "No region defined (use an area ROI or an input mask)");
+        IJ.error(TITLE, "No region defined (use an area ROI or an input mask)");
         return null;
       }
       final ShortProcessor ip = new ShortProcessor(imp.getWidth(), imp.getHeight());
@@ -544,62 +653,49 @@ public class SpotDistance_PlugIn implements PlugIn {
       // Label each separate region with a different number
       labelRegions(ip);
 
-      maskImp = new ImagePlus("Mask", ip);
+      mask = new ImagePlus("Mask", ip);
     }
 
-    if (imp.getNSlices() > 1 && maskImp.getNSlices() != 1
-        && maskImp.getNSlices() != imp.getNSlices()) {
-      IJ.showMessage("Error", "Mask region has incorrect slice dimension");
+    if (imp.getNSlices() > 1 && mask.getNSlices() != 1 && mask.getNSlices() != imp.getNSlices()) {
+      IJ.error(TITLE, "Mask region has incorrect slice dimension");
       return null;
     }
-    if (imp.getNChannels() > 1 && maskImp.getNChannels() != 1
-        && maskImp.getNChannels() != imp.getNChannels()) {
-      IJ.showMessage("Error", "Mask region has incorrect channel dimension");
+    if (imp.getNChannels() > 1 && mask.getNChannels() != 1
+        && mask.getNChannels() != imp.getNChannels()) {
+      IJ.error(TITLE, "Mask region has incorrect channel dimension");
       return null;
     }
-    if (imp.getNFrames() > 1 && processFrames && maskImp.getNFrames() != 1
-        && maskImp.getNFrames() != imp.getNFrames()) {
-      IJ.showMessage("Error", "Mask region has incorrect frame dimension");
+    if (imp.getNFrames() > 1 && settings.processFrames && mask.getNFrames() != 1
+        && mask.getNFrames() != imp.getNFrames()) {
+      IJ.error(TITLE, "Mask region has incorrect frame dimension");
       return null;
     }
 
-    return maskImp;
+    return mask;
   }
 
   /**
    * Create the result window (if it is not available).
    */
   private void createResultsWindow() {
-    final String resultsHeader = createResultsHeader();
-    if (resultsWindow == null || !resultsWindow.isShowing()
-        || !sameHeader(resultsWindow, resultsHeader)) {
-      resultsWindow = new TextWindow(TITLE + " Positions", createResultsHeader(), "", 700, 300);
-    }
-    final String summaryHeader = createSummaryHeader();
-    if (summaryWindow == null || !summaryWindow.isShowing()
-        || !sameHeader(summaryWindow, summaryHeader)) {
-      summaryWindow = new TextWindow(TITLE + " Summary", createSummaryHeader(), "", 700, 300);
-      final Point p = resultsWindow.getLocation();
-      p.y += resultsWindow.getHeight();
-      summaryWindow.setLocation(p);
-    }
-    final String distancesHeader = createDistancesHeader();
-    if (showDistances && (distancesWindow == null || !distancesWindow.isShowing()
-        || !sameHeader(distancesWindow, distancesHeader))) {
-      distancesWindow = new TextWindow(TITLE + " Distances", createDistancesHeader(), "", 700, 300);
-      final Point p = summaryWindow.getLocation();
-      p.y += summaryWindow.getHeight();
-      distancesWindow.setLocation(p);
+    // Create stacked output text windows
+    resultsWindow = createTextWindow(createResultsHeader(), resultsWindowRef, " Positions", null);
+    summaryWindow =
+        createTextWindow(createSummaryHeader(), summaryWindowRef, " Summary", resultsWindow);
+    if (settings.showDistances) {
+      distancesWindow = createTextWindow(createDistancesHeader(), distancesWindowRef, " Distances",
+          summaryWindow);
     }
 
-    lastResultLineCount = resultsWindow.getTextPanel().getLineCount();
-    lastSummaryLineCount = summaryWindow.getTextPanel().getLineCount();
-    lastDistancesLineCount = (showDistances) ? distancesWindow.getTextPanel().getLineCount() : 0;
+    // Store the line number for each text window
+    setLastLineCount(resultsWindow.getTextPanel().getLineCount(),
+        summaryWindow.getTextPanel().getLineCount(),
+        (distancesWindow != null) ? distancesWindow.getTextPanel().getLineCount() : 0);
 
     // Create the image result prefix
     final StringBuilder sb = new StringBuilder();
     sb.append(imp.getTitle()).append('\t');
-    if (calibratedDistances) {
+    if (settings.calibratedDistances) {
       cal = imp.getCalibration();
       sb.append(cal.getXUnit());
       if (!(cal.getYUnit().equalsIgnoreCase(cal.getXUnit())
@@ -613,23 +709,56 @@ public class SpotDistance_PlugIn implements PlugIn {
     resultEntry = sb.toString();
   }
 
+  private static TextWindow createTextWindow(String header,
+      AtomicReference<TextWindow> windowReference, String titleSuffix, TextWindow parent) {
+    TextWindow window = windowReference.get();
+    if (window == null || !window.isShowing() || !sameHeader(window, header)) {
+      window = new TextWindow(TITLE + titleSuffix, header, "", 700, 300);
+      if (parent != null) {
+        final Point p = parent.getLocation();
+        p.y += parent.getHeight();
+        window.setLocation(p);
+      }
+      // When it closes remove the reference to this window
+      final TextWindow closedWindow = window;
+      window.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosed(WindowEvent event) {
+          windowReference.compareAndSet(closedWindow, null);
+          super.windowClosed(event);
+        }
+      });
+      windowReference.set(window);
+    }
+    return window;
+  }
+
+  private static void setLastLineCount(int resultLineCount, int summaryLineCount,
+      int distancesLineCount) {
+    synchronized (lock) {
+      lastResultLineCount = resultLineCount;
+      lastSummaryLineCount = summaryLineCount;
+      lastDistancesLineCount = distancesLineCount;
+    }
+  }
+
   private static boolean sameHeader(TextWindow results, String header) {
     return results.getTextPanel().getColumnHeadings().equals(header);
   }
 
-  private static String createResultsHeader() {
+  private String createResultsHeader() {
     final StringBuilder sb = new StringBuilder();
     sb.append("Image\t");
     sb.append("Units\t");
     sb.append("Frame\t");
     sb.append("Channel\t");
     sb.append("Region\t");
-    if (pixelDistances) {
+    if (settings.pixelDistances) {
       sb.append("x (px)\t");
       sb.append("y (px)\t");
       sb.append("z (px)\t");
     }
-    if (calibratedDistances) {
+    if (settings.calibratedDistances) {
       sb.append("X\t");
       sb.append("Y\t");
       sb.append("Z\t");
@@ -638,7 +767,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     return sb.toString();
   }
 
-  private static String createSummaryHeader() {
+  private String createSummaryHeader() {
     final StringBuilder sb = new StringBuilder();
     sb.append("Image\t");
     sb.append("Units\t");
@@ -646,13 +775,13 @@ public class SpotDistance_PlugIn implements PlugIn {
     sb.append("Channel\t");
     sb.append("Region\t");
     sb.append("Spots");
-    if (pixelDistances) {
+    if (settings.pixelDistances) {
       sb.append('\t');
       sb.append("Min (px)\t");
       sb.append("Max (px)\t");
       sb.append("Av (px)");
     }
-    if (calibratedDistances) {
+    if (settings.calibratedDistances) {
       sb.append('\t');
       sb.append("Min\t");
       sb.append("Max\t");
@@ -661,20 +790,20 @@ public class SpotDistance_PlugIn implements PlugIn {
     return sb.toString();
   }
 
-  private static String createDistancesHeader() {
+  private String createDistancesHeader() {
     final StringBuilder sb = new StringBuilder();
     sb.append("Image\t");
     sb.append("Units\t");
     sb.append("Frame\t");
     sb.append("Channel\t");
     sb.append("Region");
-    if (pixelDistances) {
+    if (settings.pixelDistances) {
       sb.append('\t');
       sb.append("X1 (px)\tY1 (px)\tZ1 (px)\t");
       sb.append("X2 (px)\tY2 (px)\tZ2 (px)\t");
       sb.append("Distance (px)");
     }
-    if (calibratedDistances) {
+    if (settings.calibratedDistances) {
       sb.append('\t');
       sb.append("X1\tY1\tZ1\t");
       sb.append("X2\tY2\tZ2\t");
@@ -684,9 +813,6 @@ public class SpotDistance_PlugIn implements PlugIn {
   }
 
   private void exec(int frame, int channel, ImageStack s1, ImageStack s1b, ImageStack s2) {
-    // new ImagePlus("image " + frame, s1).show();
-    // new ImagePlus("mask " + frame, s2).show();
-
     // Check the mask we are using.
     // We can use a ROI bounds for the Gaussian blur to increase speed.
     Rectangle blurBounds = cachedBlurBounds;
@@ -710,7 +836,7 @@ public class SpotDistance_PlugIn implements PlugIn {
 
     cachedBlurBounds = blurBounds;
 
-    if (showProjection) {
+    if (settings.showProjection) {
       // Do Z-projection into the current image processor of the stack
       runZProjection(frame, 1, s1);
       if (s1b != null) {
@@ -719,12 +845,12 @@ public class SpotDistance_PlugIn implements PlugIn {
     }
 
     // Perform Difference of Gaussians to enhance the spot features if two radii are provided
-    if (featureSize > 0) {
+    if (settings.featureSize > 0) {
       s1 = runDifferenceOfGaussians(s1, blurBounds);
       if (s1b != null) {
         s1b = runDifferenceOfGaussians(s1b, blurBounds);
       }
-    } else if (smoothingSize > 0) {
+    } else if (settings.smoothingSize > 0) {
       // Just perform image smoothing
       s1 = runGaussianBlur(s1, blurBounds);
       if (s1b != null) {
@@ -743,13 +869,14 @@ public class SpotDistance_PlugIn implements PlugIn {
     // - Bigger feature size for DoG?
 
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
-    final int backgroundMethod = (autoThreshold) ? FindFociProcessor.BACKGROUND_AUTO_THRESHOLD
-        : FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN;
-    final double backgroundParameter = stdDevAboveBackground;
+    final int backgroundMethod =
+        (settings.autoThreshold) ? FindFociProcessor.BACKGROUND_AUTO_THRESHOLD
+            : FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN;
+    final double backgroundParameter = settings.stdDevAboveBackground;
     final String autoThresholdMethod = AutoThreshold.Method.OTSU.toString();
     final int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
     final double searchParameter = 0;
-    final int minSize = minPeakSize;
+    final int minSize = settings.minPeakSize;
     final int peakMethod = FindFociProcessor.PEAK_ABSOLUTE;
     final int outputType = FindFociProcessor.OUTPUT_RESULTS_TABLE
         | FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_ABOVE_SADDLE
@@ -762,7 +889,7 @@ public class SpotDistance_PlugIn implements PlugIn {
 
     Overlay overlay = null;
     Overlay overlay2 = null;
-    if (showOverlay > 0) {
+    if (settings.showOverlay > 0) {
       overlay = new Overlay();
       if (s1b != null) {
         overlay2 = new Overlay();
@@ -785,7 +912,7 @@ public class SpotDistance_PlugIn implements PlugIn {
       final ImageStack stack = croppedImp.getImageStack();
       final float scale = scaleImage(stack);
       croppedImp.setStack(stack); // Updates the image bit depth
-      final double peakParameter = Math.round(minPeakHeight * scale);
+      final double peakParameter = Math.round(settings.minPeakHeight * scale);
       double peakParameter2 = 0;
 
       if (s1b != null) {
@@ -793,34 +920,34 @@ public class SpotDistance_PlugIn implements PlugIn {
         final ImageStack stack2 = croppedImp2.getImageStack();
         final float scale2 = scaleImage(stack2);
         croppedImp2.setStack(stack2); // Updates the image bit depth
-        peakParameter2 = Math.round(minPeakHeight * scale2);
+        peakParameter2 = Math.round(settings.minPeakHeight * scale2);
       }
 
-      if (debug) {
-        showSpotImage(croppedImp, croppedImp2);
+      if (settings.debug) {
+        showSpotImage(croppedImp, croppedImp2, regionImp, cal);
       }
 
       final FindFociResults ffResult = ff.findMaxima(croppedImp, regionImp, backgroundMethod,
-          backgroundParameter, autoThresholdMethod, searchMethod, searchParameter, maxPeaks,
-          minSize, peakMethod, peakParameter, outputType, sortIndex, options, blur, centreMethod,
-          centreParameter, 1);
+          backgroundParameter, autoThresholdMethod, searchMethod, searchParameter,
+          settings.maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex, options,
+          blur, centreMethod, centreParameter, 1);
 
       if (ImageJUtils.isInterrupted()) {
         return;
       }
 
       final ArrayList<DistanceResult> resultsArray =
-          analyseResults(prevResultsArray, ff, croppedImp, ffResult, frame, channel, overlay);
+          analyseResults(prevResultsArray, croppedImp, ffResult, frame, channel, overlay);
       for (final DistanceResult result : resultsArray) {
         addResult(frame, channel, region, result);
       }
 
-      if (trackObjects) {
+      if (settings.trackObjects) {
         prevResultsArray = resultsArray;
       }
 
       if (s1b == null) {
-        if (trackObjects) {
+        if (settings.trackObjects) {
           prevResultsArray2 = null;
         }
 
@@ -859,7 +986,7 @@ public class SpotDistance_PlugIn implements PlugIn {
 
             double distance = 0;
             double calibratedDistance = 0;
-            if (pixelDistances) {
+            if (settings.pixelDistances) {
               if (diff2 == -1) {
                 diff2 = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
               }
@@ -873,7 +1000,7 @@ public class SpotDistance_PlugIn implements PlugIn {
               sumD += distance;
             }
 
-            if (calibratedDistances) {
+            if (settings.calibratedDistances) {
               diff[0] *= cal.pixelWidth;
               diff[1] *= cal.pixelHeight;
               diff[2] *= cal.pixelDepth;
@@ -889,7 +1016,7 @@ public class SpotDistance_PlugIn implements PlugIn {
               sumD2 += calibratedDistance;
             }
 
-            if (showDistances) {
+            if (settings.showDistances) {
               addDistanceResult(frame, ch, region, r1, r2, distance, calibratedDistance);
             }
           }
@@ -901,25 +1028,25 @@ public class SpotDistance_PlugIn implements PlugIn {
         // Dual channel analysis.
         // Analyse the second channel
         final FindFociResults results2 = ff.findMaxima(croppedImp2, regionImp, backgroundMethod,
-            backgroundParameter, autoThresholdMethod, searchMethod, searchParameter, maxPeaks,
-            minSize, peakMethod, peakParameter2, outputType, sortIndex, options, blur, centreMethod,
-            centreParameter, 1);
+            backgroundParameter, autoThresholdMethod, searchMethod, searchParameter,
+            settings.maxPeaks, minSize, peakMethod, peakParameter2, outputType, sortIndex, options,
+            blur, centreMethod, centreParameter, 1);
 
         if (ImageJUtils.isInterrupted()) {
           return;
         }
 
         final ArrayList<DistanceResult> resultsArray2 =
-            analyseResults(prevResultsArray2, ff, croppedImp2, results2, frame, c2, overlay2);
+            analyseResults(prevResultsArray2, croppedImp2, results2, frame, settings.c2, overlay2);
         for (final DistanceResult result : resultsArray2) {
-          addResult(frame, c2, region, result);
+          addResult(frame, settings.c2, region, result);
         }
 
-        if (trackObjects) {
+        if (settings.trackObjects) {
           prevResultsArray2 = resultsArray2;
         }
 
-        final String ch = channel + " + " + c2;
+        final String ch = channel + " + " + settings.c2;
 
         if (resultsArray.isEmpty() || resultsArray2.isEmpty()) {
           // No comparisons possible
@@ -951,7 +1078,7 @@ public class SpotDistance_PlugIn implements PlugIn {
 
             double distance = 0;
             double calibratedDistance = 0;
-            if (pixelDistances) {
+            if (settings.pixelDistances) {
               if (diff2 == -1) {
                 diff2 = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
               }
@@ -965,7 +1092,7 @@ public class SpotDistance_PlugIn implements PlugIn {
               sumD += distance;
             }
 
-            if (calibratedDistances) {
+            if (settings.calibratedDistances) {
               diff[0] *= cal.pixelWidth;
               diff[1] *= cal.pixelHeight;
               diff[2] *= cal.pixelDepth;
@@ -981,7 +1108,7 @@ public class SpotDistance_PlugIn implements PlugIn {
               sumD2 += calibratedDistance;
             }
 
-            if (showDistances) {
+            if (settings.showDistances) {
               addDistanceResult(frame, ch, region, r1, r2, distance, calibratedDistance);
             }
           }
@@ -993,7 +1120,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     }
 
     // Append to image overlay
-    if (showOverlay > 0) {
+    if (settings.showOverlay > 0) {
       Overlay impOverlay = imp.getOverlay();
       if (impOverlay == null) {
         impOverlay = new Overlay();
@@ -1006,7 +1133,7 @@ public class SpotDistance_PlugIn implements PlugIn {
       imp.updateAndDraw();
     }
 
-    if (showProjection) {
+    if (settings.showProjection) {
       // Add all the ROIs of the overlay to the slice
       Overlay projOverlay = projectionImp.getOverlay();
       if (projOverlay == null) {
@@ -1047,21 +1174,21 @@ public class SpotDistance_PlugIn implements PlugIn {
     }
   }
 
-  private static ImageStack runDifferenceOfGaussians(ImageStack s1, Rectangle blurBounds) {
+  private ImageStack runDifferenceOfGaussians(ImageStack s1, Rectangle blurBounds) {
     final ImageStack newS1 = new ImageStack(s1.getWidth(), s1.getHeight(), s1.getSize());
     for (int slice = 1; slice <= s1.getSize(); slice++) {
       final ImageProcessor ip = s1.getProcessor(slice).toFloat(0, null);
       if (blurBounds != null) {
         ip.setRoi(blurBounds);
       }
-      DifferenceOfGaussians.run(ip, featureSize, smoothingSize);
+      DifferenceOfGaussians.run(ip, settings.featureSize, settings.smoothingSize);
       newS1.setPixels(ip.getPixels(), slice);
     }
     s1 = newS1;
     return s1;
   }
 
-  private static ImageStack runGaussianBlur(ImageStack s1, Rectangle blurBounds) {
+  private ImageStack runGaussianBlur(ImageStack s1, Rectangle blurBounds) {
     final DifferenceOfGaussians filter = new DifferenceOfGaussians();
     filter.setNoProgress(true);
     final ImageStack newS1 = new ImageStack(s1.getWidth(), s1.getHeight(), s1.getSize());
@@ -1071,7 +1198,7 @@ public class SpotDistance_PlugIn implements PlugIn {
         ip.setRoi(blurBounds);
         ip.snapshot(); // Needed to reset region outside ROI
       }
-      filter.blurGaussian(ip, smoothingSize);
+      filter.blurGaussian(ip, settings.smoothingSize);
       newS1.setPixels(ip.getPixels(), slice);
     }
     s1 = newS1;
@@ -1094,7 +1221,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     overlay = overlay.duplicate();
     final Roi[] rois = overlay.toArray();
     for (final Roi roi : rois) {
-      if (dualChannel) {
+      if (settings.dualChannel) {
         roi.setPosition(channel, 1, frame);
       } else {
         roi.setPosition(frame);
@@ -1113,7 +1240,7 @@ public class SpotDistance_PlugIn implements PlugIn {
    * @param s1 The image
    * @return The scale
    */
-  private static float scaleImage(ImageStack s1) {
+  private float scaleImage(ImageStack s1) {
     if (!(s1.getPixels(1) instanceof float[])) {
       return 1;
     }
@@ -1136,7 +1263,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     // Convert pixels to short[]
     final float range = max - min;
     final float scale = (range > 0) ? 65334 / range : 1;
-    if (debug) {
+    if (settings.debug) {
       IJ.log(String.format("Scaling transformed image by %f (range: %f - %f)", scale, min, max));
     }
     for (int n = 1; n <= s1.getSize(); n++) {
@@ -1150,27 +1277,30 @@ public class SpotDistance_PlugIn implements PlugIn {
     return scale;
   }
 
-  private void showSpotImage(ImagePlus croppedImp, ImagePlus croppedImp2) {
-    debugSpotImp = createImage(croppedImp, debugSpotImp, TITLE + " Pixels", 0);
+  private static synchronized void showSpotImage(ImagePlus croppedImp, ImagePlus croppedImp2,
+      ImagePlus regionImp, Calibration cal) {
+    debugSpotImp = createImage(croppedImp, debugSpotImp, TITLE + " Pixels", 0, cal);
     if (croppedImp2 != null) {
-      debugSpotImp2 = createImage(croppedImp2, debugSpotImp2, TITLE + " Pixels B", 0);
+      debugSpotImp2 = createImage(croppedImp2, debugSpotImp2, TITLE + " Pixels B", 0, cal);
     }
-    debugMaskImp = createImage(regionImp, debugMaskImp, TITLE + " Region", 1);
+    debugMaskImp = createImage(regionImp, debugMaskImp, TITLE + " Region", 1, cal);
   }
 
-  private ImagePlus createImage(ImagePlus sourceImp, ImagePlus debugImp, String title, int region) {
+  private static ImagePlus createImage(ImagePlus sourceImp, ImagePlus debugImp, String title,
+      int region, Calibration cal) {
     if (debugImp == null || !debugImp.isVisible()) {
       debugImp = new ImagePlus();
       debugImp.setTitle(title);
     }
-    updateImage(debugImp, sourceImp, region);
+    updateImage(debugImp, sourceImp, region, cal);
     return debugImp;
   }
 
-  private void updateImage(ImagePlus debugImp, ImagePlus sourceImp, int region) {
+  private static void updateImage(ImagePlus debugImp, ImagePlus sourceImp, int region,
+      Calibration cal) {
     debugImp.setStack(sourceImp.getImageStack(), 1, sourceImp.getStackSize(), 1);
     if (region > 0) {
-      debugImp.setDisplayRange(region - 1, region);
+      debugImp.setDisplayRange(region - 1.0, region);
     } else {
       debugImp.resetDisplayRange();
     }
@@ -1196,14 +1326,14 @@ public class SpotDistance_PlugIn implements PlugIn {
       }
     }
 
-    final int[] regions = new int[count];
+    final int[] newRegions = new int[count];
     count = 0;
     for (int i = 1; i < histogram.length; i++) {
       if (histogram[i] != 0) {
-        regions[count++] = i;
+        newRegions[count++] = i;
       }
     }
-    return regions;
+    return newRegions;
   }
 
   private static ImagePlus extractRegion(ImageStack inputStack, int region, Rectangle bounds) {
@@ -1298,7 +1428,6 @@ public class SpotDistance_PlugIn implements PlugIn {
    * Check the peak circularity. Add an overlay of the spots if requested.
    *
    * @param prev the prev
-   * @param ff the ff
    * @param croppedImp the cropped imp
    * @param ffResult the ff result
    * @param frame the frame
@@ -1307,8 +1436,7 @@ public class SpotDistance_PlugIn implements PlugIn {
    * @return the results
    */
   private ArrayList<DistanceResult> analyseResults(ArrayList<DistanceResult> prev,
-      FindFoci_PlugIn ff, ImagePlus croppedImp, FindFociResults ffResult, int frame, int channel,
-      Overlay overlay) {
+      ImagePlus croppedImp, FindFociResults ffResult, int frame, int channel, Overlay overlay) {
     if (ffResult == null) {
       return new ArrayList<>(0);
     }
@@ -1339,9 +1467,6 @@ public class SpotDistance_PlugIn implements PlugIn {
 
       final ImageProcessor maskIp = maskStack.getProcessor(z + 1);
 
-      // new ImagePlus("peak", fp.duplicate()).show();
-      // new ImagePlus("mask", maskIp).show();
-
       final int peakId = result.id;
       final int maskId = resultsArray.size() - peakId + 1;
       final Roi roi = extractSelection(maskIp, maskId, channel, z + 1, frame);
@@ -1351,15 +1476,13 @@ public class SpotDistance_PlugIn implements PlugIn {
       final double circularity =
           perimeter == 0.0 ? 0.0 : 4.0 * Math.PI * (area / (perimeter * perimeter));
 
-      if (circularity < circularityLimit) {
+      if (circularity < settings.circularityLimit) {
         IJ.log(String.format("Excluded non-circular peak @ x%d,y%d,z%d : %g (4pi * %g / %g^2)", x,
             y, z, circularity, area, perimeter));
         continue;
       }
 
       if (overlay != null) {
-        // System.out.printf("%d, %d, %d\n", roi.getCPosition(), roi.getZPosition(),
-        // roi.getTPosition());
         overlay.add(roi);
       }
 
@@ -1369,7 +1492,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     if (prev != null && !prev.isEmpty() && !newResultsArray.isEmpty()) {
       // If we have results from a previous frame then try and assign an ID to each
       // result using closest distance tracking.
-      final double d = Math.sqrt(croppedImp.getWidth() * croppedImp.getWidth()
+      final double d = Math.sqrt((double) croppedImp.getWidth() * croppedImp.getWidth()
           + croppedImp.getHeight() * croppedImp.getHeight()
           + croppedImp.getNSlices() * croppedImp.getNSlices());
       final List<PointPair> matches = new ArrayList<>();
@@ -1409,7 +1532,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     if (imp.getStackSize() == 1) {
       roi.setPosition(0);
     } else if (imp.isDisplayedHyperStack()) {
-      if (showOverlay != 1) {
+      if (settings.showOverlay != 1) {
         slice = 0; // Display across entire slice stack
       }
       roi.setPosition(channel, slice, frame);
@@ -1433,8 +1556,7 @@ public class SpotDistance_PlugIn implements PlugIn {
       roi.setLocation(bounds.x, bounds.y);
       overlay.add(roi);
     }
-    final double perimeter = roi.getLength();
-    return perimeter;
+    return roi.getLength();
   }
 
   private static double getArea(ImageProcessor maskIp, int maskId) {
@@ -1453,15 +1575,15 @@ public class SpotDistance_PlugIn implements PlugIn {
     sb.append(frame).append('\t');
     sb.append(channel).append('\t');
     sb.append(region).append('\t');
-    if (pixelDistances) {
+    if (settings.pixelDistances) {
       sb.append(result.getPixelXyz()).append('\t');
     }
-    if (calibratedDistances) {
+    if (settings.calibratedDistances) {
       sb.append(result.getCalXyz()).append('\t');
     }
     sb.append(MathUtils.rounded(result.circularity));
     resultsWindow.append(sb.toString());
-    allowUndo = true;
+    allowUndo.set(true);
   }
 
   private void addSummaryResult(int frame, String channel, int region, int size) {
@@ -1470,14 +1592,14 @@ public class SpotDistance_PlugIn implements PlugIn {
     sb.append(frame).append('\t');
     sb.append(channel).append('\t');
     sb.append(region).append('\t').append(size);
-    if (pixelDistances) {
+    if (settings.pixelDistances) {
       sb.append("\t0\t0\t0");
     }
-    if (calibratedDistances) {
+    if (settings.calibratedDistances) {
       sb.append("\t0\t0\t0");
     }
     summaryWindow.append(sb.toString());
-    allowUndo = true;
+    allowUndo.set(true);
   }
 
   private void addSummaryResult(int frame, String channel, int region, int size, double minD,
@@ -1487,18 +1609,18 @@ public class SpotDistance_PlugIn implements PlugIn {
     sb.append(frame).append('\t');
     sb.append(channel).append('\t');
     sb.append(region).append('\t').append(size);
-    if (pixelDistances) {
+    if (settings.pixelDistances) {
       sb.append('\t').append(MathUtils.rounded(minD));
       sb.append('\t').append(MathUtils.rounded(maxD));
       sb.append('\t').append(MathUtils.rounded(averageD));
     }
-    if (calibratedDistances) {
+    if (settings.calibratedDistances) {
       sb.append('\t').append(MathUtils.rounded(minD2));
       sb.append('\t').append(MathUtils.rounded(maxD2));
       sb.append('\t').append(MathUtils.rounded(averageD2));
     }
     summaryWindow.append(sb.toString());
-    allowUndo = true;
+    allowUndo.set(true);
   }
 
   private void addDistanceResult(int frame, String channel, int region, DistanceResult r1,
@@ -1508,18 +1630,18 @@ public class SpotDistance_PlugIn implements PlugIn {
     sb.append(frame).append('\t');
     sb.append(channel).append('\t');
     sb.append(region);
-    if (pixelDistances) {
+    if (settings.pixelDistances) {
       sb.append('\t').append(r1.getPixelXyz());
       sb.append('\t').append(r2.getPixelXyz());
       sb.append('\t').append(MathUtils.rounded(distance));
     }
-    if (calibratedDistances) {
+    if (settings.calibratedDistances) {
       sb.append('\t').append(r1.getCalXyz());
       sb.append('\t').append(r2.getCalXyz());
       sb.append('\t').append(MathUtils.rounded(calibratedDistance));
     }
     distancesWindow.append(sb.toString());
-    allowUndo = true;
+    allowUndo.set(true);
   }
 
   /**
@@ -1563,8 +1685,8 @@ public class SpotDistance_PlugIn implements PlugIn {
     // Find particles
     for (int i = 0; i < binaryMask.length; i++) {
       if (binaryMask[i]) {
-        expandParticle(binaryMask, mask, pointList, i, (short) regionCounter);
-        regionCounter++;
+        expandParticle(binaryMask, mask, pointList, i, (short) settings.regionCounter);
+        settings.regionCounter++;
       }
     }
 

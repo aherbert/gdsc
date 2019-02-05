@@ -38,6 +38,9 @@ import ij.process.ShortProcessor;
 import org.apache.commons.rng.UniformRandomProvider;
 import org.apache.commons.rng.simple.RandomSource;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Create some dummy images to test for colocalisation.
  */
@@ -53,50 +56,107 @@ public class CreateColocalisedImages_PlugIn implements PlugIn {
   private static final int BACKGROUND = 0;
   private static final int FOREGROUND = 255;
 
-  private static int sequenceNumber;
-  private static int bitDepth;
-  private static boolean createMasks;
+  private static final AtomicInteger sequenceNumber = new AtomicInteger();
 
   private ByteProcessor roi;
   private int channelMax;
   private int channelMin;
 
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    int bitDepth;
+    boolean createMasks;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      bitDepth = source.bitDepth;
+      createMasks = source.createMasks;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
+
   @Override
   public void run(String arg) {
     UsageTracker.recordPlugin(this.getClass(), arg);
 
-    if (!getBitDepth()) {
+    if (!showDialog()) {
       return;
     }
 
-    sequenceNumber++;
+    final int number = sequenceNumber.incrementAndGet();
 
     createRoi();
 
-    createColorChannel("A" + sequenceNumber);
-    createColorChannel("B" + sequenceNumber);
+    createColorChannel("A" + number);
+    createColorChannel("B" + number);
 
-    if (createMasks) {
-      final ImagePlus imRoi = new ImagePlus("roi" + sequenceNumber, roi);
+    if (settings.createMasks) {
+      final ImagePlus imRoi = new ImagePlus("roi" + number, roi);
       imRoi.updateAndDraw();
       imRoi.show();
     }
     IJ.showProgress(1);
   }
 
-  private boolean getBitDepth() {
+  private boolean showDialog() {
+    settings = Settings.load();
+
     final GenericDialog gd = new GenericDialog(TITLE, IJ.getInstance());
     final String[] bitDepthChoice = {"8bit", "12bit", "16bit"};// bit depth of images
-    gd.addChoice("Create ...", bitDepthChoice, bitDepthChoice[bitDepth]);
-    gd.addCheckbox("Create masks", createMasks);
+    gd.addChoice("Create ...", bitDepthChoice, bitDepthChoice[settings.bitDepth]);
+    gd.addCheckbox("Create masks", settings.createMasks);
     gd.showDialog();
 
     if (gd.wasCanceled()) {
       return false;
     }
 
-    bitDepth = gd.getNextChoiceIndex();
-    switch (bitDepth) {
+    settings.bitDepth = gd.getNextChoiceIndex();
+    switch (settings.bitDepth) {
       case 2: // 16-bit
         channelMax = Short.MAX_VALUE;
         channelMin = 640;
@@ -112,13 +172,15 @@ public class CreateColocalisedImages_PlugIn implements PlugIn {
         channelMin = 10;
     }
 
-    createMasks = gd.getNextBoolean();
+    settings.createMasks = gd.getNextBoolean();
+
+    settings.save();
 
     return true;
   }
 
   private void createRoi() {
-    if (!createMasks) {
+    if (!settings.createMasks) {
       return;
     }
 
@@ -160,7 +222,7 @@ public class CreateColocalisedImages_PlugIn implements PlugIn {
     gb.blurGaussian(cp, 20, 20, 0.02);
 
     // Get all values above zero as the ROI
-    if (createMasks) {
+    if (settings.createMasks) {
       bp = new ByteProcessor(WIDTH, HEIGHT);
       bp.add(BACKGROUND);
 
@@ -185,8 +247,8 @@ public class CreateColocalisedImages_PlugIn implements PlugIn {
     }
   }
 
-  private static ImageProcessor getImageProcessor() {
-    if (bitDepth == 0) {
+  private ImageProcessor getImageProcessor() {
+    if (settings.bitDepth == 0) {
       // 8-bit
       return new ByteProcessor(WIDTH, HEIGHT);
     }

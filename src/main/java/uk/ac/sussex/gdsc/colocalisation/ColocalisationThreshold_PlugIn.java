@@ -59,12 +59,11 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.WindowEvent;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.JPanel;
 
@@ -75,9 +74,8 @@ import javax.swing.JPanel;
  * <p>Supports stacks. Only a specific channel and time frame can be used and all input images must
  * have the same number of z-sections for the chosen channel/time frame.
  */
-public class ColocalisationThreshold_PlugIn extends PlugInFrame
-    implements ActionListener, ItemListener, Runnable {
-  private static final long serialVersionUID = 1L;
+public class ColocalisationThreshold_PlugIn extends PlugInFrame {
+  private static final long serialVersionUID = 20190105L;
 
   private static final String PLUGIN_TITLE = "CT Plugin";
 
@@ -145,7 +143,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
   private static final String OK_BUTTON_LABEL = "Apply";
   private static final String HELP_BUTTON_LABEL = "Help";
 
-  private static Frame instance;
+  private static final AtomicReference<Frame> instance = new AtomicReference<>();
 
   // Used to show the results
   private static TextWindow tw;
@@ -224,18 +222,14 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
       return;
     }
 
-    if (instance != null) {
-      if (!(instance.getTitle().equals(getTitle()))) {
-        final ColocalisationThreshold_PlugIn cda = (ColocalisationThreshold_PlugIn) instance;
-        Prefs.saveLocation(OPT_LOCATION, cda.getLocation());
-        cda.close();
-      } else {
-        instance.toFront();
-        return;
-      }
+    final Frame frame = instance.get();
+
+    if (frame != null) {
+      frame.toFront();
+      return;
     }
 
-    instance = this;
+    instance.set(this);
     IJ.register(ColocalisationThreshold_PlugIn.class);
     WindowManager.addWindow(this);
 
@@ -256,16 +250,6 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     setVisible(true);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public void run() {
-    findThreshold();
-
-    synchronized (this) {
-      super.notifyAll();
-    }
-  }
-
   private void setup() {
     final ImagePlus imp = WindowManager.getCurrentImage();
     if (imp == null) {
@@ -275,8 +259,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
   }
 
   @SuppressWarnings("unused")
-  @Override
-  public synchronized void actionPerformed(ActionEvent event) {
+  private synchronized void actionPerformed(ActionEvent event) {
     final Object actioner = event.getSource();
 
     if (actioner == null) {
@@ -284,7 +267,12 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     }
 
     if (((Button) actioner == okButton) && (parametersReady())) {
-      final Thread thread = new Thread(this, "ColicalisationThreshold_Plugin");
+      final Thread thread = new Thread(() -> {
+        findThreshold();
+        synchronized (ColocalisationThreshold_PlugIn.this) {
+          super.notifyAll();
+        }
+      }, "ColicalisationThreshold_Plugin");
       thread.start();
     }
     if ((Button) actioner == helpButton) {
@@ -296,8 +284,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     super.notifyAll();
   }
 
-  @Override
-  public void itemStateChanged(ItemEvent event) {
+  private void itemStateChanged(@SuppressWarnings("unused") ItemEvent event) {
     if (setResultsOptionsCheckbox.getState()) {
       setResultsOptionsCheckbox.setState(false);
 
@@ -348,7 +335,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
   @Override
   public void windowClosing(WindowEvent event) {
     Prefs.saveLocation(OPT_LOCATION, getLocation());
-    close();
+    super.windowClosing(event);
   }
 
   @Override
@@ -366,7 +353,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
       }
     }
 
-    instance = null;
+    instance.set(null);
     super.close();
   }
 
@@ -448,7 +435,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
   }
 
   private boolean getStackOptions(ImagePlus imp1, ImagePlus imp2) {
-    if (isStack(imp1) || isStack(imp1)) {
+    if (isStack(imp1) || isStack(imp2)) {
       final GenericDialog gd = new GenericDialog("Slice options");
       gd.addMessage("Stacks detected. Please select the slices.");
 
@@ -774,7 +761,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
                 if (useConstantIntensity) {
                   color += 255;
                 } else {
-                  color += (int) Math.sqrt(scaledCh1 * scaledCh2);
+                  color += (int) Math.sqrt((double) scaledCh1 * scaledCh2);
                 }
                 ipColoc.set(outIndex, color);
               }
@@ -835,7 +822,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
 
     // Create results window
     final String resultsTitle = PLUGIN_TITLE + " Results";
-    openResultsWindow(resultsTitle);
+    openResultsWindow1(resultsTitle, this);
     final String imageTitle = createImageTitle(imp1, imp2);
 
     showResults(imageTitle, ch1threshmax, ch2threshmax, numberOfPixels, nzero, nch1gtT, nch2gtT, ct,
@@ -998,57 +985,64 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     tw.append(str.toString());
   }
 
-  private void openResultsWindow(String resultsTitle) {
-    if (tw == null || !tw.isShowing()) {
-      final StringBuilder heading = new StringBuilder("Images\tROI\tZeroZero\t");
-
-      if (showRTotal) {
-        heading.append("Rtotal\t");
-      }
-      if (showLinearRegression) {
-        heading.append("m\tb\t");
-      }
-      if (showThresholds) {
-        heading.append("Ch1 thresh\tCh2 thresh\t");
-      }
-      if (showRForGtT) {
-        heading.append("Rcoloc\t");
-      }
-      if (showRForLtT) {
-        heading.append("R<threshold\t");
-      }
-      if (showManders) {
-        heading.append("M1\tM2\t");
-      }
-      if (showMandersGtT) {
-        heading.append("tM1\ttM2\t");
-      }
-      if (showNColoc) {
-        heading.append("N\t");
-        heading.append("nZero\t");
-        heading.append("nCh1gtT\t");
-        heading.append("nCh2gtT\t");
-        heading.append("nColoc\t");
-      }
-      if (showVolumeColoc) {
-        heading.append("%Vol Coloc\t");
-      }
-      if (showVolumeGtTColoc) {
-        heading.append("%Ch1gtT Vol Coloc\t");
-        heading.append("%Ch2gtT Vol Coloc\t");
-      }
-      if (showIntensityColoc) {
-        heading.append("%Ch1 Int Coloc\t");
-        heading.append("%Ch2 Int Coloc\t");
-      }
-      if (showIntensityGtTColoc) {
-        heading.append("%Ch1gtT Int Coloc\t");
-        heading.append("%Ch2gtT Int Coloc\t");
-      }
-      heading.append("\n");
-
-      tw = new TextWindow(resultsTitle, heading.toString(), "", 1000, 300);
+  private static void openResultsWindow1(String resultsTitle,
+      ColocalisationThreshold_PlugIn plugin) {
+    final TextWindow textWindow = ColocalisationThreshold_PlugIn.tw;
+    final StringBuilder sb = new StringBuilder();
+    if (textWindow == null || !textWindow.isShowing()
+        || textWindow.getTextPanel().getColumnHeadings().contentEquals(plugin.createHeading(sb))) {
+      tw = new TextWindow(resultsTitle, sb.toString(), "", 1000, 300);
     }
+  }
+
+  private StringBuilder createHeading(StringBuilder heading) {
+    heading.append("Images\tROI\tZeroZero\t");
+
+    if (showRTotal) {
+      heading.append("Rtotal\t");
+    }
+    if (showLinearRegression) {
+      heading.append("m\tb\t");
+    }
+    if (showThresholds) {
+      heading.append("Ch1 thresh\tCh2 thresh\t");
+    }
+    if (showRForGtT) {
+      heading.append("Rcoloc\t");
+    }
+    if (showRForLtT) {
+      heading.append("R<threshold\t");
+    }
+    if (showManders) {
+      heading.append("M1\tM2\t");
+    }
+    if (showMandersGtT) {
+      heading.append("tM1\ttM2\t");
+    }
+    if (showNColoc) {
+      heading.append("N\t");
+      heading.append("nZero\t");
+      heading.append("nCh1gtT\t");
+      heading.append("nCh2gtT\t");
+      heading.append("nColoc\t");
+    }
+    if (showVolumeColoc) {
+      heading.append("%Vol Coloc\t");
+    }
+    if (showVolumeGtTColoc) {
+      heading.append("%Ch1gtT Vol Coloc\t");
+      heading.append("%Ch2gtT Vol Coloc\t");
+    }
+    if (showIntensityColoc) {
+      heading.append("%Ch1 Int Coloc\t");
+      heading.append("%Ch2 Int Coloc\t");
+    }
+    if (showIntensityGtTColoc) {
+      heading.append("%Ch1gtT Int Coloc\t");
+      heading.append("%Ch2gtT Int Coloc\t");
+    }
+    heading.append("\n");
+    return heading;
   }
 
   private static void appendFormat(StringBuilder str, double value, DecimalFormat format) {
@@ -1222,12 +1216,12 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     setResultsOptionsCheckbox = new Checkbox();
     mainPanel
         .add(createCheckboxPanel(setResultsOptionsCheckbox, CHOICE_SET_RESULTS_OPTIONS, false));
-    setResultsOptionsCheckbox.addItemListener(this);
+    setResultsOptionsCheckbox.addItemListener(this::itemStateChanged);
 
     okButton = new Button(OK_BUTTON_LABEL);
-    okButton.addActionListener(this);
+    okButton.addActionListener(this::actionPerformed);
     helpButton = new Button(HELP_BUTTON_LABEL);
-    helpButton.addActionListener(this);
+    helpButton.addActionListener(this::actionPerformed);
 
     final JPanel buttonPanel = new JPanel();
     final FlowLayout l = new FlowLayout();
@@ -1315,8 +1309,9 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame
     }
     threshold[zeroThresholdIndex] = (minThreshold > 0) ? minThreshold - 1 : 0;
 
-    final Plot plot = new Plot(CORRELATION_VALUES_TITLE, "Threshold", "R", threshold, r1);
+    final Plot plot = new Plot(CORRELATION_VALUES_TITLE, "Threshold", "R");
     plot.setLimits(threshold[0], threshold[threshold.length - 1], ymin, ymax);
+    plot.addPoints(threshold, r1, Plot.LINE);
     plot.setColor(Color.BLUE);
     plot.draw();
     plot.setColor(Color.RED);

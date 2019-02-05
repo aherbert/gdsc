@@ -51,6 +51,7 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Analyses the ROI across a stack of exposures. Exposures must be set within the slice labels.
@@ -59,9 +60,6 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
   private static final String TITLE = "Intensity Analysis";
   private static final int FLAGS =
       DOES_8G + DOES_16 + NO_CHANGES + DOES_STACKS + PARALLELIZE_STACKS + FINAL_PROCESSING;
-  private static int window = 4;
-  private static int bitDepth = 16;
-  private static boolean debug;
 
   private static TextWindow results;
 
@@ -75,6 +73,65 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
   private Rectangle bounds;
   private boolean[] mask;
   private int pixelCount;
+
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    int window = 4;
+    int bitDepth = 16;
+    boolean debug;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      window = source.window;
+      bitDepth = source.bitDepth;
+      debug = source.debug;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -132,25 +189,29 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     this.imp = imp;
     this.pfr = pfr;
 
-    bitDepth = Math.min(bitDepth, imp.getBitDepth());
+    settings = Settings.load();
+
+    settings.bitDepth = Math.min(settings.bitDepth, imp.getBitDepth());
 
     // Get the user options
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addMessage("Calculate the normalised intensity within an ROI.\n"
         + "Images should have a linear response with respect to exposure.");
-    gd.addSlider("Window", 3, stack.getSize(), window);
-    gd.addSlider("Bit_depth", 4, imp.getBitDepth(), bitDepth);
-    gd.addCheckbox("Debug", debug);
+    gd.addSlider("Window", 3, stack.getSize(), settings.window);
+    gd.addSlider("Bit_depth", 4, imp.getBitDepth(), settings.bitDepth);
+    gd.addCheckbox("Debug", settings.debug);
     gd.showDialog();
     if (gd.wasCanceled()) {
       return DONE;
     }
 
-    window = Math.abs((int) gd.getNextNumber());
-    bitDepth = Math.abs((int) gd.getNextNumber());
-    debug = gd.getNextBoolean();
+    settings.window = Math.abs((int) gd.getNextNumber());
+    settings.bitDepth = Math.abs((int) gd.getNextNumber());
+    settings.debug = gd.getNextBoolean();
 
-    if (debug) {
+    settings.save();
+
+    if (settings.debug) {
       debug("Prefix = %s\n", stack.getSliceLabel(1).substring(0, commonIndex));
     }
 
@@ -200,13 +261,13 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
       pixelCount = bounds.width * bounds.height;
     }
 
-    if (debug) {
+    if (settings.debug) {
       debug("Exposures = %s ...\n",
           Arrays.toString(Arrays.copyOf(exposures, Math.min(10, exposures.length))));
     }
 
     means = new float[exposures.length];
-    saturated = (float) (Math.pow(2, bitDepth) - 1);
+    saturated = (float) (Math.pow(2, settings.bitDepth) - 1);
 
     return FLAGS;
   }
@@ -330,9 +391,9 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     sb.append('\t').append(bounds.height);
     sb.append('\t').append(pixelCount);
 
-    if (means2.length < window) {
-      IJ.error(TITLE,
-          "Not enough unsaturated samples for the fit window: " + means2.length + " < " + window);
+    if (means2.length < settings.window) {
+      IJ.error(TITLE, "Not enough unsaturated samples for the fit window: " + means2.length + " < "
+          + settings.window);
       addNullFitResult(sb);
     } else {
 
@@ -341,7 +402,7 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
       int bestStart = 0;
       double[] bestFit = null;
       for (int start = 0; start < means2.length; start++) {
-        final int end = start + window;
+        final int end = start + settings.window;
         if (end > means2.length) {
           break;
         }
@@ -386,13 +447,13 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
         final PolynomialFunction fitted = new PolynomialFunction(bestFit);
         final double x1 = exposures2[bestStart];
         final double y1 = fitted.value(x1);
-        final double x2 = exposures2[bestStart + window - 1];
+        final double x2 = exposures2[bestStart + settings.window - 1];
         final double y2 = fitted.value(x2);
         plot.drawLine(x1, y1, x2, y2);
         ImageJUtils.display(title, plot);
 
         sb.append('\t').append(bestStart + 1);
-        sb.append('\t').append(bestStart + window);
+        sb.append('\t').append(bestStart + settings.window);
         sb.append('\t').append(MathUtils.rounded(x1));
         sb.append('\t').append(MathUtils.rounded(x2));
         sb.append('\t').append(MathUtils.rounded(bestSumOfSquares));
@@ -410,8 +471,8 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     }
   }
 
-  private static void debug(String format, Object... args) {
-    if (debug) {
+  private void debug(String format, Object... args) {
+    if (settings.debug) {
       IJ.log(String.format(format, args));
     }
   }

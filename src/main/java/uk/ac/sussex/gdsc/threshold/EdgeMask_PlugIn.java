@@ -64,6 +64,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Create an edge mask from an image.
@@ -95,15 +96,6 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
   private double minDisplayValue;
   private double maxDisplayValue;
-  private static double background;
-  private static double smooth = 1;
-  private static int method;
-  private static double lowerPercentile = 99.0;
-  private static double upperPercentile = 99.7;
-  private static boolean prune;
-  private static boolean fill;
-  private static boolean replaceImage;
-  private static double percent = Prefs.getDouble("gdsc.EdgeMaskPercent", 99);
 
   private static final int FLAGS = DOES_8G | DOES_16 | DOES_32 | FINAL_PROCESSING;
   private int flags2;
@@ -115,15 +107,92 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
   private int ylimit;
   private int[] offset;
 
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    double background;
+    double smooth = 1;
+    int method;
+    double lowerPercentile = 99.0;
+    double upperPercentile = 99.7;
+    boolean prune;
+    boolean fill;
+    boolean replaceImage;
+    double percent = Prefs.getDouble("gdsc.EdgeMaskPercent", 99);
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      background = source.background;
+      smooth = source.smooth;
+      method = source.method;
+      lowerPercentile = source.lowerPercentile;
+      upperPercentile = source.upperPercentile;
+      prune = source.prune;
+      fill = source.fill;
+      replaceImage = source.replaceImage;
+      percent = source.percent;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public int setup(String arg, ImagePlus imp) {
+    if ("final".equals(arg)) {
+      finalProcessing(imp);
+      return DONE;
+    }
+
     UsageTracker.recordPlugin(this.getClass(), arg);
 
     if (imp == null) {
       IJ.noImage();
       return DONE;
     }
+
     try {
       // Entire block in try-catch as the library may not be present
       if (VersionChecker.compare(ImageScience.version(), MIN_IS_VERSION) < 0) {
@@ -134,87 +203,87 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       return DONE;
     }
 
-    if (arg.equals("final")) {
-      final boolean doesStacks = ((flags2 & DOES_STACKS) != 0);
+    return FLAGS;
+  }
 
-      ImageProcessor maskIp = (doesStacks) ? null : imp.getProcessor();
-      if (!replaceImage) {
-        // Copy the mask (before it is reset) if we are not processing the entire stack
-        if (!doesStacks) {
-          maskIp = maskIp.duplicate();
-        }
+  private void finalProcessing(ImagePlus imp) {
+    final boolean doesStacks = ((flags2 & DOES_STACKS) != 0);
 
-        // Reset the main image
-        final ImageProcessor ip = imp.getProcessor();
-        ip.reset();
-        ip.setMinAndMax(minDisplayValue, maxDisplayValue);
-        imp.updateAndDraw();
+    ImageProcessor maskIp = (doesStacks) ? null : imp.getProcessor();
+    if (!settings.replaceImage) {
+      // Copy the mask (before it is reset) if we are not processing the entire stack
+      if (!doesStacks) {
+        maskIp = maskIp.duplicate();
       }
 
-      if (doesStacks) {
-        // Process all slices of the stack
-
-        // Disable the progress bar for the blur.
-        // This does not effect IJ.showProgress(int, int), only IJ.showProgress(double)
-        // Allows the progress to be correctly reported.
-        final ImageJ ij = IJ.getInstance();
-        if (ij != null) {
-          ij.getProgressBar().setBatchMode(true);
-        }
-
-        final Roi roi = imp.getRoi();
-        // Multi-thread for speed
-        final ExecutorService threadPool = Executors.newCachedThreadPool();
-        final List<Future<?>> futures = new LinkedList<>();
-        final ImageStack stack = imp.getImageStack();
-        final ImageStack newStack =
-            new ImageStack(stack.getWidth(), stack.getHeight(), stack.getSize());
-        IJ.showStatus("Processing stack ...");
-        for (int slice = 1; slice <= stack.getSize(); slice++) {
-          IJ.showProgress(slice - 1, stack.getSize());
-          final ImageProcessor ip = stack.getProcessor(slice).duplicate();
-          ip.setRoi(roi);
-          futures.add(threadPool.submit(new MaskCreator(ip, newStack, slice, this)));
-        }
-        waitForCompletion(futures);
-        IJ.showStatus("");
-        IJ.showProgress(stack.getSize(), stack.getSize());
-
-        // Check the final stack for errors
-        final Object[] images = newStack.getImageArray();
-        if (images == null) {
-          IJ.log(TITLE + " Error: The output stack is empty");
-        } else {
-          boolean error = false;
-          for (int i = 0; i < images.length; i++) {
-            if (images[i] == null) {
-              IJ.log(TITLE + " Error: Output stack is empty at slice " + (i + 1));
-              error = true;
-            }
-          }
-          if (error) {
-            return DONE;
-          }
-        }
-
-        if (replaceImage) {
-          imp.setStack(newStack);
-          imp.updateAndDraw();
-        } else {
-          new ImagePlus(imp.getTitle() + " Edge Mask", newStack).show();
-        }
-      } else if (replaceImage) {
-        // If it is a single frame then we can convert to a byte processor
-        if (imp.getStackSize() == 1) {
-          imp.setProcessor(maskIp.convertToByte(false));
-          // Otherwise we have a strange mask image in the middle of a stack
-        }
-      } else {
-        new ImagePlus(imp.getTitle() + " Edge Mask", maskIp.convertToByte(false)).show();
-      }
+      // Reset the main image
+      final ImageProcessor ip = imp.getProcessor();
+      ip.reset();
+      ip.setMinAndMax(minDisplayValue, maxDisplayValue);
+      imp.updateAndDraw();
     }
 
-    return FLAGS;
+    if (doesStacks) {
+      // Process all slices of the stack
+
+      // Disable the progress bar for the blur.
+      // This does not effect IJ.showProgress(int, int), only IJ.showProgress(double)
+      // Allows the progress to be correctly reported.
+      final ImageJ ij = IJ.getInstance();
+      if (ij != null) {
+        ij.getProgressBar().setBatchMode(true);
+      }
+
+      final Roi roi = imp.getRoi();
+      // Multi-thread for speed
+      final ExecutorService threadPool = Executors.newCachedThreadPool();
+      final List<Future<?>> futures = new LinkedList<>();
+      final ImageStack stack = imp.getImageStack();
+      final ImageStack newStack =
+          new ImageStack(stack.getWidth(), stack.getHeight(), stack.getSize());
+      IJ.showStatus("Processing stack ...");
+      for (int slice = 1; slice <= stack.getSize(); slice++) {
+        IJ.showProgress(slice - 1, stack.getSize());
+        final ImageProcessor ip = stack.getProcessor(slice).duplicate();
+        ip.setRoi(roi);
+        futures.add(threadPool.submit(new MaskCreator(ip, newStack, slice, this)));
+      }
+      waitForCompletion(futures);
+      IJ.showStatus("");
+      IJ.showProgress(stack.getSize(), stack.getSize());
+
+      // Check the final stack for errors
+      final Object[] images = newStack.getImageArray();
+      if (images == null) {
+        IJ.log(TITLE + " Error: The output stack is empty");
+      } else {
+        boolean error = false;
+        for (int i = 0; i < images.length; i++) {
+          if (images[i] == null) {
+            IJ.log(TITLE + " Error: Output stack is empty at slice " + (i + 1));
+            error = true;
+          }
+        }
+        if (error) {
+          return;
+        }
+      }
+
+      if (settings.replaceImage) {
+        imp.setStack(newStack);
+        imp.updateAndDraw();
+      } else {
+        new ImagePlus(imp.getTitle() + " Edge Mask", newStack).show();
+      }
+    } else if (settings.replaceImage) {
+      // If it is a single frame then we can convert to a byte processor
+      if (imp.getStackSize() == 1) {
+        imp.setProcessor(maskIp.convertToByte(false));
+        // Otherwise we have a strange mask image in the middle of a stack
+      }
+    } else {
+      new ImagePlus(imp.getTitle() + " Edge Mask", maskIp.convertToByte(false)).show();
+    }
   }
 
   /** {@inheritDoc} */
@@ -230,12 +299,14 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
     ip.snapshot();
     minDisplayValue = ip.getMin();
     maxDisplayValue = ip.getMax();
-    final double[] limits = getLimits(ip);
+    final double[] limits = getLimits(ip, settings.percent);
     final double minValue = limits[0];
     final double maxValue = limits[1];
 
-    if (background > maxValue) {
-      background = 0;
+    settings = Settings.load();
+
+    if (settings.background > maxValue) {
+      settings.background = 0;
     }
 
     // Show the Otsu threshold for the image
@@ -244,17 +315,17 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addMessage("Create a new mask image" + threshold);
 
-    gd.addChoice("Method", METHODS, METHODS[method]);
-    gd.addSlider("Background", minValue, maxValue, background);
+    gd.addChoice("Method", METHODS, METHODS[settings.method]);
+    gd.addSlider("Background", minValue, maxValue, settings.background);
     gd.addMessage("Image smoothing");
-    gd.addSlider("Smooth", 0.0, 4.5, smooth);
+    gd.addSlider("Smooth", 0.0, 4.5, settings.smooth);
     gd.addMessage("Limit for gradient edges");
-    gd.addNumericField("Lower_percentile", lowerPercentile, 2);
-    gd.addNumericField("Upper_percentile", upperPercentile, 2);
+    gd.addNumericField("Lower_percentile", settings.lowerPercentile, 2);
+    gd.addNumericField("Upper_percentile", settings.upperPercentile, 2);
     gd.addMessage("Edge options");
-    gd.addCheckbox("Prune", prune);
-    gd.addCheckbox("Fill", fill);
-    gd.addCheckbox("Replace_image", replaceImage);
+    gd.addCheckbox("Prune", settings.prune);
+    gd.addCheckbox("Fill", settings.fill);
+    gd.addCheckbox("Replace_image", settings.replaceImage);
     // gd.addNumericField("Background_Percent", percent, 1);
 
     gd.addPreviewCheckbox(pfr);
@@ -262,7 +333,9 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
     gd.showDialog();
 
-    if (gd.wasCanceled() || !dialogItemChanged(gd, null)) {
+    final boolean cancelled = gd.wasCanceled() || !dialogItemChanged(gd, null);
+    settings.save();
+    if (cancelled) {
       return DONE;
     }
 
@@ -271,7 +344,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
     return FLAGS;
   }
 
-  private static double[] getLimits(ImageProcessor ip) {
+  private static double[] getLimits(ImageProcessor ip, double percent) {
     final ImageStatistics stats = ImageStatistics.getStatistics(ip, Measurements.MIN_MAX, null);
     final double[] limits = new double[] {stats.min, stats.max, 0};
 
@@ -307,28 +380,26 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /** Listener to modifications of the input fields of the dialog. */
   @Override
   public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
-    method = gd.getNextChoiceIndex();
-    background = gd.getNextNumber();
+    settings.method = gd.getNextChoiceIndex();
+    settings.background = gd.getNextNumber();
     if (gd.invalidNumber()) {
       return false;
     }
-    smooth = gd.getNextNumber();
+    settings.smooth = gd.getNextNumber();
     if (gd.invalidNumber()) {
       return false;
     }
-    lowerPercentile = gd.getNextNumber();
+    settings.lowerPercentile = gd.getNextNumber();
     if (gd.invalidNumber()) {
       return false;
     }
-    upperPercentile = gd.getNextNumber();
+    settings.upperPercentile = gd.getNextNumber();
     if (gd.invalidNumber()) {
       return false;
     }
-    prune = gd.getNextBoolean();
-    fill = gd.getNextBoolean();
-    replaceImage = gd.getNextBoolean();
-    // percent = gd.getNextNumber();
-    // Prefs.set("gdsc.EdgeMaskPercent", percent);
+    settings.prune = gd.getNextBoolean();
+    settings.fill = gd.getNextBoolean();
+    settings.replaceImage = gd.getNextBoolean();
     return true;
   }
 
@@ -351,13 +422,13 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
     // Add image smoothing before thresholding
     ImageProcessor smoothIp = ip;
-    if (smooth > 0) {
+    if (settings.smooth > 0) {
       final GaussianBlur gb = new GaussianBlur();
       smoothIp = ip.duplicate();
-      gb.blurGaussian(smoothIp, smooth, smooth, 0.0002);
+      gb.blurGaussian(smoothIp, settings.smooth, settings.smooth, 0.0002);
     }
 
-    if (method == 2 || method == 3) {
+    if (settings.method == 2 || settings.method == 3) {
       // Compute the gradient image using the ImageScience library
       final Image img = Image.wrap(new ImagePlus(null, ip.duplicate()));
       Image newimg = new FloatImage(img);
@@ -365,22 +436,22 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       // Compute the Gradient image
       final Aspects aspects = newimg.aspects();
       final Edges edges = new Edges();
-      final boolean nonmaxsup = method == 3;
-      newimg = edges.run(newimg, (smooth > 0) ? smooth : 1, nonmaxsup);
+      final boolean nonmaxsup = settings.method == 3;
+      newimg = edges.run(newimg, (settings.smooth > 0) ? settings.smooth : 1, nonmaxsup);
       newimg.aspects(aspects);
 
       FloatProcessor gradientIp = (FloatProcessor) newimg.imageplus().getProcessor();
 
       // Keep all gradients above the configured percentile
-      final boolean lowthres = lowerPercentile > 0;
-      final boolean highthres = upperPercentile > 0;
+      final boolean lowthres = settings.lowerPercentile > 0;
+      final boolean highthres = settings.upperPercentile > 0;
       final int thresholdMode = (lowthres ? 10 : 0) + (highthres ? 1 : 0);
       if (thresholdMode > 0) {
         float[] data = (float[]) gradientIp.getPixels();
         data = Arrays.copyOf(data, data.length);
         Arrays.sort(data);
-        final double highval = getLimit(data, upperPercentile);
-        final double lowval = getLimit(data, lowerPercentile);
+        final double highval = getLimit(data, settings.upperPercentile);
+        final double lowval = getLimit(data, settings.lowerPercentile);
 
         final Thresholder thres = new Thresholder();
         switch (thresholdMode) {
@@ -402,19 +473,19 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       final ImageProcessor maskIp = gradientIp.convertToByte(false);
 
       // Keep objects above a threshold value
-      final int threshold = (int) background;
+      final int threshold = (int) settings.background;
       for (int i = ip.getPixelCount(); i-- > 0;) {
         if (smoothIp.get(i) < threshold) {
           maskIp.set(i, 0);
         }
       }
 
-      markExtraLines(maskIp, prune);
+      markExtraLines(maskIp, settings.prune);
 
       for (int i = ip.getPixelCount(); i-- > 0;) {
         ip.set(i, (maskIp.get(i) > 0) ? 255 : 0);
       }
-    } else if (method == 1) {
+    } else if (settings.method == 1) {
       // Compute the Laplacian zero-crossing image using the ImageScience library
       final Image img = Image.wrap(new ImagePlus(null, ip.duplicate()));
       Image newimg = new FloatImage(img);
@@ -422,12 +493,12 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       // Compute the Laplacian image
       final Aspects aspects = newimg.aspects();
       final Laplacian laplace = new Laplacian();
-      newimg = laplace.run(newimg, (smooth > 0) ? smooth : 1);
+      newimg = laplace.run(newimg, (settings.smooth > 0) ? settings.smooth : 1);
       newimg.aspects(aspects);
 
       ImageProcessor laplacianIp = null;
       // new ImagePlus("laplace", newimg.imageplus().getProcessor().duplicate()).show();
-      if (fill) {
+      if (settings.fill) {
         laplacianIp = newimg.imageplus().getProcessor().duplicate();
       }
 
@@ -439,17 +510,17 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       final ImageProcessor maskIp = newimg.imageplus().getProcessor().convertToByte(false);
 
       // Keep objects above a threshold value
-      final int threshold = (int) background;
+      final int threshold = (int) settings.background;
       for (int i = ip.getPixelCount(); i-- > 0;) {
         if (smoothIp.get(i) < threshold) {
           maskIp.set(i, 0);
         }
       }
 
-      markExtraLines(maskIp, prune);
+      markExtraLines(maskIp, settings.prune);
 
       // Fill image on negative Laplacian side of zero boundary pixels
-      if (fill) {
+      if (settings.fill) {
         fill(maskIp, laplacianIp);
       }
 
@@ -458,7 +529,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       }
     } else {
       // Simple mask using the background level
-      final int threshold = (int) background;
+      final int threshold = (int) settings.background;
 
       // Keep objects above a threshold value
       for (int i = ip.getPixelCount(); i-- > 0;) {

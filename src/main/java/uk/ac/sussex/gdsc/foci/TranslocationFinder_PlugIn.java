@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.PointPair;
@@ -53,9 +54,12 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Find translocations using markers for colocalisation.
@@ -67,36 +71,102 @@ import java.util.List;
  */
 public class TranslocationFinder_PlugIn implements PlugIn {
   private static final String TITLE = "Translocation Finder";
-  private static TextWindow resultsWindow;
+  private static final AtomicReference<TextWindow> resultsWindow = new AtomicReference<>();
   private static final int UNKNOWN = 0;
   private static final int NO_TRANSLOCATION = 1;
   private static final int TRANSLOCATION = 2;
   private static final String[] CLASSIFICATION = {"Unknown", "No translocation", "Translocation"};
 
-  private static String resultsName1 = "";
-  private static String resultsName2 = "";
-  private static String resultsName3 = "";
-  private static String image = "";
-  private static double distance = 50;
-  private static double minDistance = 8;
-  private static double factor = 2;
-  private static boolean showMatches;
+  /** The current settings for the plugin instance. */
+  private Settings settings;
 
-  // Static fields hold information to draw the overlay and update the results table
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
 
-  // The foci
-  private static AssignedPoint[] foci1;
-  private static AssignedPoint[] foci2;
-  private static AssignedPoint[] foci3;
-  // Image to draw overlay
-  private static ImagePlus imp;
-  // Current set of triplets
-  private static ArrayList<int[]> triplets = new ArrayList<>();
+    String resultsName1 = "";
+    String resultsName2 = "";
+    String resultsName3 = "";
+    String image = "";
+    double distance = 50;
+    double minDistance = 8;
+    double factor = 2;
+    boolean showMatches;
 
-  // Image to draw overlay for the manual triplets
-  private static ImagePlus manualImp;
-  // Current set of manual triplets
-  private static ArrayList<AssignedPoint[]> manualTriplets = new ArrayList<>();
+    // To following are not state shown in the dialog but state set when the plugin is run
+    // that can be used by the plugin tool.
+
+    AssignedPoint[] foci1;
+    AssignedPoint[] foci2;
+    AssignedPoint[] foci3;
+    /** Image to draw overlay. */
+    ImagePlus imp;
+    /** Current set of triplets. */
+    ArrayList<int[]> triplets;
+    /** Image to draw overlay for the manual triplets. */
+    ImagePlus manualImp;
+    /** Current set of manual triplets. */
+    ArrayList<AssignedPoint[]> manualTriplets;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      resultsName1 = source.resultsName1;
+      resultsName2 = source.resultsName2;
+      resultsName3 = source.resultsName3;
+      image = source.image;
+      distance = source.distance;
+      minDistance = source.minDistance;
+      factor = source.factor;
+      showMatches = source.showMatches;
+      foci1 = source.foci1;
+      foci2 = source.foci2;
+      foci3 = source.foci3;
+      imp = source.imp;
+      triplets = source.triplets;
+      manualImp = source.manualImp;
+      manualTriplets = source.manualTriplets;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   @Override
   public void run(String arg) {
@@ -119,19 +189,20 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     final String[] imageList =
         ImageJUtils.getImageList(ImageJUtils.GREY_8_16 | ImageJUtils.NO_IMAGE, null);
 
+    settings = Settings.load();
     final GenericDialog gd = new GenericDialog(TITLE);
 
     gd.addMessage(
         "Analyses spots within a mask/ROI region\nand computes density and closest distances.");
 
-    gd.addChoice("Results_name_1", names, resultsName1);
-    gd.addChoice("Results_name_2", names, resultsName2);
-    gd.addChoice("Results_name_3", names, resultsName3);
-    gd.addChoice("Overlay_on_image", imageList, image);
-    gd.addNumericField("Distance", distance, 2, 6, "pixels");
-    gd.addNumericField("Min_distance", minDistance, 2, 6, "pixels");
-    gd.addNumericField("Factor", factor, 2);
-    gd.addCheckbox("Show_matches", showMatches);
+    gd.addChoice("Resultsettings.name_1", names, settings.resultsName1);
+    gd.addChoice("Resultsettings.name_2", names, settings.resultsName2);
+    gd.addChoice("Resultsettings.name_3", names, settings.resultsName3);
+    gd.addChoice("Overlay_on_image", imageList, settings.image);
+    gd.addNumericField("Distance", settings.distance, 2, 6, "pixels");
+    gd.addNumericField("Min_distance", settings.minDistance, 2, 6, "pixels");
+    gd.addNumericField("Factor", settings.factor, 2);
+    gd.addCheckbox("Show_matches", settings.showMatches);
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI);
 
     gd.showDialog();
@@ -139,36 +210,39 @@ public class TranslocationFinder_PlugIn implements PlugIn {
       return;
     }
 
-    resultsName1 = gd.getNextChoice();
-    resultsName2 = gd.getNextChoice();
-    resultsName3 = gd.getNextChoice();
-    image = gd.getNextChoice();
-    distance = gd.getNextNumber();
-    minDistance = gd.getNextNumber();
-    factor = gd.getNextNumber();
-    showMatches = gd.getNextBoolean();
+    settings.resultsName1 = gd.getNextChoice();
+    settings.resultsName2 = gd.getNextChoice();
+    settings.resultsName3 = gd.getNextChoice();
+    settings.image = gd.getNextChoice();
+    settings.distance = gd.getNextNumber();
+    settings.minDistance = gd.getNextNumber();
+    settings.factor = gd.getNextNumber();
+    settings.showMatches = gd.getNextBoolean();
 
     // Get the foci
-    foci1 = getFoci(resultsName1);
-    foci2 = getFoci(resultsName2);
-    foci3 = getFoci(resultsName3);
+    settings.foci1 = getFoci(settings.resultsName1);
+    settings.foci2 = getFoci(settings.resultsName2);
+    settings.foci3 = getFoci(settings.resultsName3);
 
-    if (foci1 == null || foci2 == null || foci3 == null) {
+    if (anyNull(settings.foci1, settings.foci2, settings.foci3)) {
       return;
     }
 
     analyse();
+
+    settings.save();
   }
 
+  @Nullable
   private static AssignedPoint[] getFoci(String resultsName) {
     final FindFociMemoryResults memoryResults = FindFoci_PlugIn.getResults(resultsName);
     if (memoryResults == null) {
-      IJ.showMessage("Error", "No foci with the name " + resultsName);
+      IJ.error(TITLE, "No foci with the name " + resultsName);
       return null;
     }
     final List<FindFociResult> results = memoryResults.results;
     if (results.isEmpty()) {
-      IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
+      IJ.error(TITLE, "Zero foci in the results with the name " + resultsName);
       return null;
     }
     final AssignedPoint[] foci = new AssignedPoint[results.size()];
@@ -181,34 +255,61 @@ public class TranslocationFinder_PlugIn implements PlugIn {
   }
 
   /**
+   * Check if any of the results are null.
+   *
+   * @param foci1 the foci in set 1
+   * @param foci2 the foci in set 2
+   * @param foci3 the foci in set 3
+   * @return true if at least one result is null
+   */
+  private static boolean anyNull(AssignedPoint[] foci1, AssignedPoint[] foci2,
+      AssignedPoint[] foci3) {
+    return foci1 == null || foci2 == null || foci3 == null;
+  }
+
+  /**
    * For all foci in set 1, compare to set 2 and output a histogram of the average density around
    * each foci (pair correlation) and the minimum distance to another foci.
+   *
+   * @param foci1 the foci in set 1
+   * @param foci2 the foci in set 2
+   * @param foci3 the foci in set 3
    */
   private void analyse() {
+
     // Compute pairwise matches
-    final boolean is3D = is3D(foci1) || is3D(foci2) || is3D(foci3);
-    final List<PointPair> matches12 = new ArrayList<>(Math.min(foci1.length, foci2.length));
-    final List<PointPair> matches13 = new ArrayList<>(Math.min(foci1.length, foci3.length));
-    final List<PointPair> matches23 = new ArrayList<>(Math.min(foci2.length, foci3.length));
+    final boolean is3D = is3D(settings.foci1) || is3D(settings.foci2) || is3D(settings.foci3);
+    final List<PointPair> matches12 =
+        new ArrayList<>(Math.min(settings.foci1.length, settings.foci2.length));
+    final List<PointPair> matches13 =
+        new ArrayList<>(Math.min(settings.foci1.length, settings.foci3.length));
+    final List<PointPair> matches23 =
+        new ArrayList<>(Math.min(settings.foci2.length, settings.foci3.length));
     if (is3D) {
-      MatchCalculator.analyseResults3D(foci1, foci2, distance, null, null, null, matches12);
-      MatchCalculator.analyseResults3D(foci1, foci3, distance, null, null, null, matches13);
-      MatchCalculator.analyseResults3D(foci2, foci3, distance, null, null, null, matches23);
+      MatchCalculator.analyseResults3D(settings.foci1, settings.foci2, settings.distance, null,
+          null, null, matches12);
+      MatchCalculator.analyseResults3D(settings.foci1, settings.foci3, settings.distance, null,
+          null, null, matches13);
+      MatchCalculator.analyseResults3D(settings.foci2, settings.foci3, settings.distance, null,
+          null, null, matches23);
     } else {
-      MatchCalculator.analyseResults2D(foci1, foci2, distance, null, null, null, matches12);
-      MatchCalculator.analyseResults2D(foci1, foci3, distance, null, null, null, matches13);
-      MatchCalculator.analyseResults2D(foci2, foci3, distance, null, null, null, matches23);
+      MatchCalculator.analyseResults2D(settings.foci1, settings.foci2, settings.distance, null,
+          null, null, matches12);
+      MatchCalculator.analyseResults2D(settings.foci1, settings.foci3, settings.distance, null,
+          null, null, matches13);
+      MatchCalculator.analyseResults2D(settings.foci2, settings.foci3, settings.distance, null,
+          null, null, matches23);
     }
 
-    // Use for debugging
-    imp = WindowManager.getImage(image);
+    // Use for an overlay
+    settings.imp = WindowManager.getImage(settings.image);
 
-    if (imp != null && showMatches) {
+    if (settings.imp != null && settings.showMatches) {
       // DEBUG : Show the matches
-      final ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
-      stack.addSlice("12", new ByteProcessor(imp.getWidth(), imp.getHeight()));
-      stack.addSlice("13", new ByteProcessor(imp.getWidth(), imp.getHeight()));
-      stack.addSlice("23", new ByteProcessor(imp.getWidth(), imp.getHeight()));
+      final ImageStack stack = new ImageStack(settings.imp.getWidth(), settings.imp.getHeight());
+      stack.addSlice("12", new ByteProcessor(settings.imp.getWidth(), settings.imp.getHeight()));
+      stack.addSlice("13", new ByteProcessor(settings.imp.getWidth(), settings.imp.getHeight()));
+      stack.addSlice("23", new ByteProcessor(settings.imp.getWidth(), settings.imp.getHeight()));
       final Overlay ov = new Overlay();
       add(ov, matches12, 1);
       add(ov, matches13, 2);
@@ -217,7 +318,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     }
 
     // Find triplets with mutual closest neighbours
-    triplets.clear();
+    settings.triplets = new ArrayList<>();
     for (final PointPair pair12 : matches12) {
       final int id1 = ((AssignedPoint) pair12.getPoint1()).id;
       final int id2 = ((AssignedPoint) pair12.getPoint2()).id;
@@ -237,7 +338,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
           if (id2 == ((AssignedPoint) pair23.getPoint1()).id) {
             if (id3 == ((AssignedPoint) pair23.getPoint2()).id) {
               // Add an extra int to store the classification
-              triplets.add(new int[] {id1, id2, id3, UNKNOWN});
+              settings.triplets.add(new int[] {id1, id2, id3, UNKNOWN});
             }
             break;
           }
@@ -246,15 +347,15 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     }
 
     // Table of results
-    createResultsWindowAndName();
+    final TextWindow tw = createResultsWindowAndName();
 
     int count = 0;
-    for (final int[] triplet : triplets) {
+    for (final int[] triplet : settings.triplets) {
       count++;
-      addResult(count, triplet);
+      addResult(tw, count, triplet);
     }
 
-    overlayTriplets();
+    overlayTriplets(settings);
   }
 
   private static boolean is3D(AssignedPoint[] foci) {
@@ -280,7 +381,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
   /** The results name to use in the results window. */
   private String resultsName = "";
 
-  private void createResultsWindowAndName() {
+  private TextWindow createResultsWindowAndName() {
     // Get the name.
     // We are expecting FindFoci to be run on 3 channels of the same image:
     // 1=ImageTitle (c1,t1)
@@ -289,32 +390,42 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     // Look for this and then output:
     // ImageTitle (c1,t1); (c2,t1); (c3,t1)
 
-    final int len =
-        MathUtils.min(resultsName1.length(), resultsName2.length(), resultsName3.length());
+    final int len = MathUtils.min(settings.resultsName1.length(), settings.resultsName2.length(),
+        settings.resultsName3.length());
     int index = 0;
     while (index < len) {
       // Find common prefix
-      if (resultsName1.charAt(index) != resultsName2.charAt(index)
-          || resultsName1.charAt(index) != resultsName3.charAt(index)
-          || resultsName1.charAt(index) == '(') {
+      if (settings.resultsName1.charAt(index) != settings.resultsName2.charAt(index)
+          || settings.resultsName1.charAt(index) != settings.resultsName3.charAt(index)
+          || settings.resultsName1.charAt(index) == '(') {
         break;
       }
       index++;
     }
     // Common prefix plus the FindFoci suffix
-    resultsName = resultsName1 + "; " + resultsName2.substring(index).trim() + "; "
-        + resultsName3.substring(index).trim();
+    resultsName = settings.resultsName1 + "; " + settings.resultsName2.substring(index).trim()
+        + "; " + settings.resultsName3.substring(index).trim();
 
-    createResultsWindow();
+    return createResultsWindow();
   }
 
-  private static void createResultsWindow() {
-    if (resultsWindow == null || !resultsWindow.isShowing()) {
-      final TextWindow newResultsWindow =
-          new TextWindow(TITLE + " Results", createResultsHeader(), "", 1000, 300);
+  private static TextWindow createResultsWindow() {
+    TextWindow window = resultsWindow.get();
+    if (window == null || !window.isShowing()) {
+      window = new TextWindow(TITLE + " Results", createResultsHeader(), "", 1000, 300);
+
+      // When it closes remove the reference to this window
+      final TextWindow closedWindow = window;
+      window.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosed(WindowEvent event) {
+          resultsWindow.compareAndSet(closedWindow, null);
+          super.windowClosed(event);
+        }
+      });
 
       // Allow the results to be manually changed
-      newResultsWindow.getTextPanel().addMouseListener(new MouseAdapter() {
+      window.getTextPanel().addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent event) {
           if (event.getClickCount() < 2) {
@@ -372,10 +483,13 @@ public class TranslocationFinder_PlugIn implements PlugIn {
           if (noChange) {
             return;
           }
-          if (imp == null && manualImp == null) {
+          // Get the latest settings (results may have changed since the text
+          // window was constructed)
+          Settings latestSettings = Settings.load();
+          if (latestSettings.imp == null && latestSettings.manualImp == null) {
             return;
           }
-          if (triplets.isEmpty() && manualTriplets.isEmpty()) {
+          if (latestSettings.triplets.isEmpty() && latestSettings.manualTriplets.isEmpty()) {
             return;
           }
 
@@ -392,15 +506,15 @@ public class TranslocationFinder_PlugIn implements PlugIn {
 
           if (count > 0) {
             // Triplet added by the plugin
-            if (triplets.size() < count) {
+            if (latestSettings.triplets.size() < count) {
               return;
             }
 
             // Find if the selection is from the current set of triplets
-            final int[] triplet = triplets.get(count - 1);
-            final AssignedPoint p1 = foci1[triplet[0]];
-            final AssignedPoint p2 = foci2[triplet[1]];
-            final AssignedPoint p3 = foci3[triplet[2]];
+            final int[] triplet = latestSettings.triplets.get(count - 1);
+            final AssignedPoint p1 = latestSettings.foci1[triplet[0]];
+            final AssignedPoint p2 = latestSettings.foci2[triplet[1]];
+            final AssignedPoint p3 = latestSettings.foci3[triplet[2]];
             if (p1.x != Integer.parseInt(fields[1]) || p1.y != Integer.parseInt(fields[2])
                 || p1.z != Integer.parseInt(fields[3]) || p2.x != Integer.parseInt(fields[4])
                 || p2.y != Integer.parseInt(fields[5]) || p2.z != Integer.parseInt(fields[6])
@@ -412,12 +526,12 @@ public class TranslocationFinder_PlugIn implements PlugIn {
           } else {
             // Manual triplet
             count = -count;
-            if (manualTriplets.size() < count) {
+            if (latestSettings.manualTriplets.size() < count) {
               return;
             }
 
             // Find if the selection is from the current set of manual triplets
-            final AssignedPoint[] triplet = manualTriplets.get(count - 1);
+            final AssignedPoint[] triplet = latestSettings.manualTriplets.get(count - 1);
             final AssignedPoint p1 = triplet[0];
             final AssignedPoint p2 = triplet[1];
             final AssignedPoint p3 = triplet[2];
@@ -431,12 +545,14 @@ public class TranslocationFinder_PlugIn implements PlugIn {
             triplet[0].id = index;
           }
 
-          overlayTriplets();
+          overlayTriplets(latestSettings);
         }
       });
 
-      resultsWindow = newResultsWindow;
+      resultsWindow.set(window);
     }
+
+    return window;
   }
 
   private static String createResultsHeader() {
@@ -457,14 +573,16 @@ public class TranslocationFinder_PlugIn implements PlugIn {
   /**
    * Adds the result.
    *
+   * @param resultsWindow the results window
    * @param count the count
    * @param triplet the triplet
    */
-  private void addResult(int count, int[] triplet) {
-    final AssignedPoint p1 = foci1[triplet[0]];
-    final AssignedPoint p2 = foci2[triplet[1]];
-    final AssignedPoint p3 = foci3[triplet[2]];
-    triplet[3] = addResult(count, resultsName, p1, p2, p3);
+  private void addResult(TextWindow resultsWindow, int count, int[] triplet) {
+    final AssignedPoint p1 = settings.foci1[triplet[0]];
+    final AssignedPoint p2 = settings.foci2[triplet[1]];
+    final AssignedPoint p3 = settings.foci3[triplet[2]];
+    triplet[3] = addResult(resultsWindow, count, resultsName, p1, p2, p3, settings.minDistance,
+        settings.factor);
   }
 
   /**
@@ -472,29 +590,34 @@ public class TranslocationFinder_PlugIn implements PlugIn {
    *
    * @param count the count
    * @param name the name
-   * @param p1 the p 1
-   * @param p2 the p 2
-   * @param p3 the p 3
+   * @param p1 the first point
+   * @param p2 the second point
+   * @param p3 the third point
+   * @param minDistance the min distance
+   * @param factor the factor
    * @return the classification
    */
-  private static int addResult(int count, String name, AssignedPoint p1, AssignedPoint p2,
-      AssignedPoint p3) {
-    return addResult(count, name, p1, p2, p3, -1);
+  private static int addResult(TextWindow resultsWindow, int count, String name, AssignedPoint p1,
+      AssignedPoint p2, AssignedPoint p3, double minDistance, double factor) {
+    return addResult(resultsWindow, count, name, p1, p2, p3, -1, minDistance, factor);
   }
 
   /**
    * Adds the result.
    *
+   * @param resultsWindow the results window
    * @param count the count
    * @param name the name
-   * @param p1 the p1
-   * @param p2 the p2
-   * @param p3 the p3
+   * @param p1 the first point
+   * @param p2 the second point
+   * @param p3 the third point
    * @param classification the classification (set to -1 to auto compute)
+   * @param minDistance the min distance
+   * @param factor the factor
    * @return the classification
    */
-  private static int addResult(int count, String name, AssignedPoint p1, AssignedPoint p2,
-      AssignedPoint p3, int classification) {
+  private static int addResult(TextWindow resultsWindow, int count, String name, AssignedPoint p1,
+      AssignedPoint p2, AssignedPoint p3, int classification, double minDistance, double factor) {
     final StringBuilder sb = new StringBuilder();
     sb.append(name);
     addTriplet(sb, p1);
@@ -510,9 +633,13 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     // Compute classification
     if (classification >= CLASSIFICATION.length || classification < 0) {
       classification = 0;
-      if (isSeparated(d12, d13, d23)) {
+      // Is foci 3 separated from foci 1 & 2?
+      if (isSeparated(d12, d13, d23, factor)) {
         classification = NO_TRANSLOCATION;
-      } else if (isSeparated(d13, d12, d23, minDistance)) {
+
+        // Is foci 2 separated from foci 1 & 3?
+        // Note here the parameter order is deliberately changed to check for a translocation.
+      } else if (isSeparated(d13, d12, d23, minDistance, factor)) {
         classification = TRANSLOCATION;
       }
       sb.append("\tAuto");
@@ -535,54 +662,57 @@ public class TranslocationFinder_PlugIn implements PlugIn {
    * Check if distance 12 is much smaller than distance 13 and 23. It must be a given factor smaller
    * than the other two distances. i.event. foci 3 is separated from foci 1 and 2.
    *
-   * @param d12 the d12
-   * @param d13 the d13
-   * @param d23 the d23
+   * @param d12 the distance 12
+   * @param d13 the distance 13
+   * @param d23 the distance 23
+   * @param factor the factor
    * @return true, if successful
    */
-  private static boolean isSeparated(double d12, double d13, double d23) {
+  private static boolean isSeparated(double d12, double d13, double d23, double factor) {
     return d13 / d12 > factor && d23 / d12 > factor;
   }
 
   /**
    * Check if distance 12 is much smaller than distance 13 and 23. It must be a given factor smaller
    * than the other two distances. The other two distances must also be above the min distance
-   * threshold, i.event. foci 3 is separated from foci 1 and 2.
+   * threshold, i.e. foci 3 is separated from foci 1 and 2.
    *
-   * @param d12 the d12
-   * @param d13 the d13
-   * @param d23 the d23
+   * @param d12 the distance 12
+   * @param d13 the distance 13
+   * @param d23 the distance 23
    * @param minDistance the min distance
+   * @param factor the factor
    * @return true, if successful
    */
-  private static boolean isSeparated(double d12, double d13, double d23, double minDistance) {
+  private static boolean isSeparated(double d12, double d13, double d23, double minDistance,
+      double factor) {
     return d13 > minDistance && d23 > minDistance && d13 / d12 > factor && d23 / d12 > factor;
   }
 
   /**
    * Overlay triplets on image.
    */
-  private static void overlayTriplets() {
+  private static void overlayTriplets(Settings settings) {
     Overlay overaly = null;
-    if (imp != null) {
+    if (settings.imp != null) {
       overaly = new Overlay();
       int count = 0;
-      for (final int[] triplet : triplets) {
+      for (final int[] triplet : settings.triplets) {
         count++;
-        final AssignedPoint p1 = foci1[triplet[0]];
-        final AssignedPoint p2 = foci2[triplet[1]];
-        final AssignedPoint p3 = foci3[triplet[2]];
+        final AssignedPoint p1 = settings.foci1[triplet[0]];
+        final AssignedPoint p2 = settings.foci2[triplet[1]];
+        final AssignedPoint p3 = settings.foci3[triplet[2]];
         addTripletToOverlay(count, overaly, p1, p2, p3, triplet[3]);
       }
-      imp.setOverlay(overaly);
+      settings.imp.setOverlay(overaly);
     }
-    if (manualImp != null) {
+    if (settings.manualImp != null) {
       // New overlay if the two images are different
-      if (overaly == null || (imp != null && imp.getID() != manualImp.getID())) {
+      if (overaly == null || (settings.imp.getID() != settings.manualImp.getID())) {
         overaly = new Overlay();
       }
       int count = 0;
-      for (final AssignedPoint[] triplet : manualTriplets) {
+      for (final AssignedPoint[] triplet : settings.manualTriplets) {
         count--;
         final AssignedPoint p1 = triplet[0];
         final AssignedPoint p2 = triplet[1];
@@ -590,7 +720,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
         // We store the classification in the id of the first point
         addTripletToOverlay(count, overaly, p1, p2, p3, triplet[0].id);
       }
-      manualImp.setOverlay(overaly);
+      settings.manualImp.setOverlay(overaly);
     }
   }
 
@@ -662,16 +792,18 @@ public class TranslocationFinder_PlugIn implements PlugIn {
 
     @Override
     public void showOptionsDialog() {
+      Settings settings = Settings.load();
       final GenericDialog gd = new GenericDialog(TITLE + " Tool Options");
-      gd.addNumericField("Min_distance", minDistance, 2, 6, "pixels");
-      gd.addNumericField("Factor", factor, 2);
+      gd.addNumericField("Min_distance", settings.minDistance, 2, 6, "pixels");
+      gd.addNumericField("Factor", settings.factor, 2);
       gd.addCheckbox("Show_record_dialog", prompt);
       gd.showDialog();
       if (gd.wasCanceled()) {
         return;
       }
-      minDistance = gd.getNextNumber();
-      factor = gd.getNextNumber();
+      settings.minDistance = gd.getNextNumber();
+      settings.factor = gd.getNextNumber();
+      settings.save();
       prompt = gd.getNextBoolean();
     }
 
@@ -699,40 +831,43 @@ public class TranslocationFinder_PlugIn implements PlugIn {
           imp.setRoi((Roi) null);
           points = 0;
 
-          int classification = CLASSIFICATION.length; // Auto
+          // Default to Auto
+          int classification = CLASSIFICATION.length;
 
           // Q. Ask user if they want to add the point?
+          final Settings settings = Settings.load();
           if (prompt) {
             final GenericDialog gd = new GenericDialog(TITLE + " Tool");
             gd.addMessage("Record manual translocation");
             gd.addChoice("Class", items, items[classification]);
-            gd.addNumericField("Min_distance", minDistance, 2, 6, "pixels");
-            gd.addNumericField("Factor", factor, 2);
+            gd.addNumericField("Min_distance", settings.minDistance, 2, 6, "pixels");
+            gd.addNumericField("Factor", settings.factor, 2);
             gd.showDialog();
             if (gd.wasCanceled()) {
               return;
             }
             classification = gd.getNextChoiceIndex();
-            minDistance = gd.getNextNumber();
-            factor = gd.getNextNumber();
+            settings.minDistance = gd.getNextNumber();
+            settings.factor = gd.getNextNumber();
           }
 
           // If a new image for a triplet then reset the manual triplets for the overlay
-          if (manualImp != null && manualImp.getID() != imp.getID()) {
-            manualTriplets.clear();
+          if (settings.manualImp == null || settings.manualImp.getID() != imp.getID()) {
+            settings.manualTriplets = new ArrayList<>();
           }
-          manualImp = imp;
+          settings.manualImp = imp;
+          settings.save();
 
-          createResultsWindow();
+          final TextWindow tw = createResultsWindow();
           final AssignedPoint p1 = new AssignedPoint(ox[0], oy[0], oz[0], 1);
           final AssignedPoint p2 = new AssignedPoint(ox[1], oy[1], oz[1], 2);
           final AssignedPoint p3 = new AssignedPoint(ox[2], oy[2], oz[2], 3);
-          manualTriplets.add(new AssignedPoint[] {p1, p2, p3});
-          final int count = -manualTriplets.size();
-          classification =
-              addResult(count, imp.getTitle() + " (Manual)", p1, p2, p3, classification);
+          settings.manualTriplets.add(new AssignedPoint[] {p1, p2, p3});
+          final int count = -settings.manualTriplets.size();
+          classification = addResult(tw, count, imp.getTitle() + " (Manual)", p1, p2, p3,
+              classification, settings.minDistance, settings.factor);
           p1.id = classification;
-          overlayTriplets();
+          overlayTriplets(settings);
         }
       }
 

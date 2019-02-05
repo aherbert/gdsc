@@ -52,6 +52,7 @@ import java.awt.Scrollbar;
 import java.awt.TextField;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Overlay a mask on the channel. For each unique pixel value in the mask (defining an object),
@@ -66,22 +67,92 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
   private ImageProcessor maskIp;
   private int[] objectMask;
 
-  private static String maskTitle = "";
-  private static boolean autoCutoff = true;
-  private static boolean eightConnected;
-  private static double cutoff;
-  private static boolean splitMask;
-  private static boolean overlayOutline = true;
-
   private Checkbox autoCheckbox;
   private Scrollbar cutoffSlider;
   private TextField cutoffText;
   private Label label;
   private Label label2;
 
+  private String lastMaskTitle;
+  private boolean lastEightConnected;
+  private double[][] objects;
+  private double[] stats;
+  private int defaultCutoff = -1;
+  private int maxObject;
+
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String maskTitle = "";
+    boolean autoCutoff = true;
+    boolean eightConnected;
+    double cutoff;
+    boolean splitMask;
+    boolean overlayOutline = true;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      maskTitle = source.maskTitle;
+      autoCutoff = source.autoCutoff;
+      eightConnected = source.eightConnected;
+      cutoff = source.cutoff;
+      splitMask = source.splitMask;
+      overlayOutline = source.overlayOutline;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public int setup(String arg, ImagePlus imp) {
+    if ("final".equals(arg)) {
+      segregateMask();
+      return DONE;
+    }
+
     UsageTracker.recordPlugin(this.getClass(), arg);
 
     if (imp == null) {
@@ -89,10 +160,6 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
       return DONE;
     }
     this.imp = imp;
-    if (arg.equals("final")) {
-      segregateMask();
-      return DONE;
-    }
     return FLAGS;
   }
 
@@ -105,31 +172,33 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
       return DONE;
     }
 
+    settings = Settings.load();
+
     final GenericDialog gd = new GenericDialog(TITLE);
 
     gd.addMessage("Overlay a mask on the current image and segregate objects into two classes.\n \n"
         + "Objects are defined with contiguous pixels of the same value.\n"
         + "The mean image value for each object is used for segregation.");
 
-    final ImageStatistics stats =
+    final ImageStatistics statistics =
         ImageStatistics.getStatistics(imp.getProcessor(), Measurements.MIN_MAX, null);
-    if (cutoff < stats.min) {
-      cutoff = stats.min;
+    if (settings.cutoff < statistics.min) {
+      settings.cutoff = statistics.min;
     }
-    if (cutoff > stats.max) {
-      cutoff = stats.max;
+    if (settings.cutoff > statistics.max) {
+      settings.cutoff = statistics.max;
     }
 
-    gd.addChoice("Mask", names, maskTitle);
+    gd.addChoice("Mask", names, settings.maskTitle);
     gd.addMessage("");
     label = (Label) gd.getMessage();
     gd.addMessage("");
     label2 = (Label) gd.getMessage();
-    gd.addCheckbox("Auto_cutoff", autoCutoff);
-    gd.addCheckbox("8-connected", eightConnected);
-    gd.addSlider("Cut-off", stats.min, stats.max, cutoff);
-    gd.addCheckbox("Split_mask", splitMask);
-    gd.addCheckbox("Overlay_outline", overlayOutline);
+    gd.addCheckbox("Auto_cutoff", settings.autoCutoff);
+    gd.addCheckbox("8-connected", settings.eightConnected);
+    gd.addSlider("Cut-off", statistics.min, statistics.max, settings.cutoff);
+    gd.addCheckbox("Split_mask", settings.splitMask);
+    gd.addCheckbox("Overlay_outline", settings.overlayOutline);
 
     autoCheckbox = (Checkbox) gd.getCheckboxes().get(0);
     cutoffSlider = (Scrollbar) gd.getSliders().get(0);
@@ -140,7 +209,9 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
     gd.addDialogListener(this);
     gd.showDialog();
 
-    if (gd.wasCanceled() || !dialogItemChanged(gd, null)) {
+    final boolean cancelled = gd.wasCanceled() || !dialogItemChanged(gd, null);
+    settings.save();
+    if (cancelled) {
       imp.setOverlay(null);
       return DONE;
     }
@@ -157,7 +228,7 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
   private static String[] getMasks(ImagePlus inputImp) {
     final String[] names = new String[WindowManager.getImageCount()];
     int count = 0;
-    for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList()) {
+    for (final int id : ImageJUtils.getIdList()) {
       final ImagePlus imp = WindowManager.getImage(id);
       if (imp == null) {
         continue;
@@ -191,12 +262,12 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
       label2.setText("");
     }
 
-    maskTitle = gd.getNextChoice();
-    autoCutoff = gd.getNextBoolean();
-    eightConnected = gd.getNextBoolean();
-    cutoff = gd.getNextNumber();
-    splitMask = gd.getNextBoolean();
-    overlayOutline = gd.getNextBoolean();
+    settings.maskTitle = gd.getNextChoice();
+    settings.autoCutoff = gd.getNextBoolean();
+    settings.eightConnected = gd.getNextBoolean();
+    settings.cutoff = gd.getNextNumber();
+    settings.splitMask = gd.getNextBoolean();
+    settings.overlayOutline = gd.getNextBoolean();
 
     // Check if this is a change to the settings during a preview and update the
     // auto threshold property
@@ -204,8 +275,8 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
         && event.getSource() != gd.getPreviewCheckbox()
         // Check we have computed the threshold
         && defaultCutoff >= 0) {
-      autoCutoff = (cutoff == defaultCutoff);
-      autoCheckbox.setState(autoCutoff);
+      settings.autoCutoff = (settings.cutoff == defaultCutoff);
+      autoCheckbox.setState(settings.autoCutoff);
     }
 
     return true;
@@ -266,24 +337,17 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
     return ((red << 16) + (green << 8) + blue);
   }
 
-  private String lastMaskTitle;
-  private boolean lastEightConnected;
-  private double[][] objects;
-  private double[] stats;
-  private int defaultCutoff = -1;
-  private int maxObject;
-
   private void analyseObjects() {
     // Check if we already have the objects
-    if (lastMaskTitle != null && lastMaskTitle.equals(maskTitle)
-        && lastEightConnected == eightConnected) {
+    if (lastMaskTitle != null && lastMaskTitle.equals(settings.maskTitle)
+        && lastEightConnected == settings.eightConnected) {
       return;
     }
 
     defaultCutoff = -1;
 
     // Get the mask
-    final ImagePlus maskImp = WindowManager.getImage(maskTitle);
+    final ImagePlus maskImp = WindowManager.getImage(settings.maskTitle);
     if (maskImp == null) {
       return;
     }
@@ -295,7 +359,7 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
     }
 
     // Perform a search for objects.
-    final ObjectAnalyzer oa = new ObjectAnalyzer(maskIp, eightConnected);
+    final ObjectAnalyzer oa = new ObjectAnalyzer(maskIp, settings.eightConnected);
     objectMask = oa.getObjectMask();
     maxObject = oa.getMaxObject();
 
@@ -346,12 +410,12 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
 
     cutoffSlider.setValues(value, 1, minimum, maximum);
 
-    lastMaskTitle = maskTitle;
-    lastEightConnected = eightConnected;
+    lastMaskTitle = settings.maskTitle;
+    lastEightConnected = settings.eightConnected;
   }
 
   private int getCutoff() {
-    return (autoCutoff) ? getAutoCutoff() : (int) MaskSegregator_PlugIn.cutoff;
+    return (settings.autoCutoff) ? getAutoCutoff() : (int) settings.cutoff;
   }
 
   private int getAutoCutoff() {
@@ -371,7 +435,6 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
     if (cutoffSlider != null) {
       final String newValue = "" + defaultCutoff;
       if (!cutoffText.getText().equals(newValue)) {
-        // cutoffSlider.setValue(cutoff);
         cutoffText.setText(newValue);
       }
     }
@@ -402,7 +465,7 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
     final int maxx = maskIp.getWidth();
     final int maxy = maskIp.getHeight();
 
-    if (splitMask) {
+    if (settings.splitMask) {
       // Create a look-up table of objects to include or exclude
       final boolean[] exclude = new boolean[maxObject + 1];
       for (int i = 0; i < objects.length; i++) {
@@ -426,8 +489,8 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
         }
       }
 
-      ImageJUtils.display(maskTitle + " Include", includeIp);
-      ImageJUtils.display(maskTitle + " Exclude", excludeIp);
+      ImageJUtils.display(settings.maskTitle + " Include", includeIp);
+      ImageJUtils.display(settings.maskTitle + " Exclude", excludeIp);
     } else {
       // Create a lookup table for the new mask objects.
       // Q. Should we maintain the old mask value? This version uses new numbering.
@@ -457,9 +520,9 @@ public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListen
       }
       ip.setMinAndMax(0, exclude);
 
-      final ImagePlus segImp = ImageJUtils.display(maskTitle + " Segregated", ip);
+      final ImagePlus segImp = ImageJUtils.display(settings.maskTitle + " Segregated", ip);
 
-      if (overlayOutline) {
+      if (settings.overlayOutline) {
         addOutline(segImp);
       }
     }

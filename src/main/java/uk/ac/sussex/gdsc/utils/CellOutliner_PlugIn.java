@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.utils;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 
 import gnu.trove.list.array.TIntArrayList;
@@ -71,6 +72,7 @@ import java.awt.Rectangle;
 import java.awt.image.IndexColorModel;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Outlines a circular cell using the optimal path through a membrane scoring map.
@@ -94,16 +96,6 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
   private static final int[] DIR_Y_OFFSET = {-1, -1, 0, 1, 1, 1, 0, -1};
 
   private static final String TITLE = "Cell Outliner";
-  private static int cellRadius = 25;
-  private static double tolerance = 0.8;
-  private static boolean darkEdge = true;
-  private static int kernelWidth = 13;
-  private static double kernelSmoothing = 1;
-  private static int polygonSmoothing = 1;
-  private static double weightingGamma = 3;
-  private static int iterations = 3;
-  private static boolean ellipticalFit;
-  private static int dilate;
 
   private boolean moreOptions;
   private boolean buildMaskOutput;
@@ -127,6 +119,79 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
   private int xlimit;
   private int ylimit;
   private int[] offset;
+
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    int cellRadius = 25;
+    double tolerance = 0.8;
+    boolean darkEdge = true;
+    int kernelWidth = 13;
+    double kernelSmoothing = 1;
+    int polygonSmoothing = 1;
+    double weightingGamma = 3;
+    int iterations = 3;
+    boolean ellipticalFit;
+    int dilate;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      cellRadius = source.cellRadius;
+      tolerance = source.tolerance;
+      darkEdge = source.darkEdge;
+      kernelWidth = source.kernelWidth;
+      kernelSmoothing = source.kernelSmoothing;
+      polygonSmoothing = source.polygonSmoothing;
+      weightingGamma = source.weightingGamma;
+      iterations = source.iterations;
+      ellipticalFit = source.ellipticalFit;
+      dilate = source.dilate;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -152,19 +217,20 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
   /** {@inheritDoc} */
   @Override
   public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
-    GenericDialog gd = new GenericDialog(TITLE);
+    final GenericDialog gd = new GenericDialog(TITLE);
     moreOptions = IJ.shiftKeyDown();
 
-    gd.addSlider("Cell_radius", 10, 30, cellRadius);
-    gd.addSlider("Tolerance", 0.5, 1.5, tolerance);
-    gd.addSlider("Kernel_width", 7, 19, kernelWidth);
-    gd.addCheckbox("Dark_edge", darkEdge);
-    gd.addSlider("Kernel_smoothing", 1.0, 5.5, kernelSmoothing);
-    gd.addSlider("Polygon_smoothing", 0, 5, polygonSmoothing);
-    gd.addSlider("Weighting_gamma", 0.05, 5, weightingGamma);
-    gd.addSlider("Iterations", 1, 10, iterations);
-    gd.addCheckbox("Show_elliptical_fit", ellipticalFit);
-    gd.addSlider("Dilate", 0, 5, dilate);
+    settings = Settings.load();
+    gd.addSlider("Cell_radius", 10, 30, settings.cellRadius);
+    gd.addSlider("Tolerance", 0.5, 1.5, settings.tolerance);
+    gd.addSlider("Kernel_width", 7, 19, settings.kernelWidth);
+    gd.addCheckbox("Dark_edge", settings.darkEdge);
+    gd.addSlider("Kernel_smoothing", 1.0, 5.5, settings.kernelSmoothing);
+    gd.addSlider("Polygon_smoothing", 0, 5, settings.polygonSmoothing);
+    gd.addSlider("Weighting_gamma", 0.05, 5, settings.weightingGamma);
+    gd.addSlider("Iterations", 1, 10, settings.iterations);
+    gd.addCheckbox("Show_elliptical_fit", settings.ellipticalFit);
+    gd.addSlider("Dilate", 0, 5, settings.dilate);
 
     if (moreOptions) {
       gd.addCheckbox("Debug", debug);
@@ -181,31 +247,15 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     // Final run: stop debug mode
     debug = false;
 
-    if (gd.wasCanceled() || !dialogItemChanged(gd, null)) {
+    final boolean cancelled = gd.wasCanceled() || !dialogItemChanged(gd, null);
+    settings.save();
+    if (cancelled) {
       imp.setOverlay(null); // Clear preview overlay
       return DONE;
     }
 
-    if (imp.getNFrames() > 1 || imp.getNSlices() > 1) {
-      gd = new GenericDialog("Process Stack?");
-      gd.addMessage("Process multiple slices (" + (imp.getNFrames() * imp.getNSlices()) + ")");
-      if (imp.getNFrames() > 1) {
-        gd.addCheckbox("All_frames (" + imp.getNFrames() + ")", false);
-      }
-      if (imp.getNSlices() > 1) {
-        gd.addCheckbox("All_slices (" + imp.getNSlices() + ")", false);
-      }
-      gd.enableYesNoCancel("Yes", "No");
-      gd.showDialog();
-      if (gd.wasCanceled()) {
-        return DONE;
-      }
-      if (imp.getNFrames() > 1) {
-        processAllFrames = gd.getNextBoolean();
-      }
-      if (imp.getNSlices() > 1) {
-        processAllSlices = gd.getNextBoolean();
-      }
+    if (!getStackOptions(imp)) {
+      return DONE;
     }
 
     // Switch from the image overlay to mask output
@@ -217,46 +267,72 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
   /** {@inheritDoc} */
   @Override
   public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
-    final int oldCellRadius = cellRadius;
-    final double oldTolerance = tolerance;
-    final boolean oldDarkEdge = darkEdge;
-    final double oldKernelSmoothing = kernelSmoothing;
-    final int oldKernelWidth = kernelWidth;
+    final int oldCellRadius = settings.cellRadius;
+    final double oldTolerance = settings.tolerance;
+    final boolean oldDarkEdge = settings.darkEdge;
+    final double oldKernelSmoothing = settings.kernelSmoothing;
+    final int oldKernelWidth = settings.kernelWidth;
 
-    cellRadius = (int) gd.getNextNumber();
-    tolerance = gd.getNextNumber();
-    kernelWidth = (int) gd.getNextNumber();
-    darkEdge = gd.getNextBoolean();
-    kernelSmoothing = gd.getNextNumber();
-    polygonSmoothing = (int) gd.getNextNumber();
-    weightingGamma = gd.getNextNumber();
-    iterations = (int) gd.getNextNumber();
-    ellipticalFit = gd.getNextBoolean();
-    dilate = (int) gd.getNextNumber();
+    settings.cellRadius = (int) gd.getNextNumber();
+    settings.tolerance = gd.getNextNumber();
+    settings.kernelWidth = (int) gd.getNextNumber();
+    settings.darkEdge = gd.getNextBoolean();
+    settings.kernelSmoothing = gd.getNextNumber();
+    settings.polygonSmoothing = (int) gd.getNextNumber();
+    settings.weightingGamma = gd.getNextNumber();
+    settings.iterations = (int) gd.getNextNumber();
+    settings.ellipticalFit = gd.getNextBoolean();
+    settings.dilate = (int) gd.getNextNumber();
     if (moreOptions) {
       debug = gd.getNextBoolean();
     }
 
     // Round down to nearest odd number and check minimum size
-    if (kernelWidth % 2 == 0) {
-      kernelWidth--;
+    if (settings.kernelWidth % 2 == 0) {
+      settings.kernelWidth--;
     }
-    if (kernelWidth < 3) {
-      kernelWidth = 3;
+    if (settings.kernelWidth < 3) {
+      settings.kernelWidth = 3;
     }
-    if (cellRadius < 1) {
-      cellRadius = 1;
+    if (settings.cellRadius < 1) {
+      settings.cellRadius = 1;
     }
-    if (iterations < 1) {
-      iterations = 1;
+    if (settings.iterations < 1) {
+      settings.iterations = 1;
     }
 
     // Check if the convolutions need recalculating
-    if (oldCellRadius != cellRadius || oldTolerance != tolerance || oldKernelWidth != kernelWidth
-        || oldDarkEdge != darkEdge || oldKernelSmoothing != kernelSmoothing) {
+    if (oldCellRadius != settings.cellRadius || oldTolerance != settings.tolerance
+        || oldKernelWidth != settings.kernelWidth || oldDarkEdge != settings.darkEdge
+        || oldKernelSmoothing != settings.kernelSmoothing) {
       kernels = null;
     }
 
+    return true;
+  }
+
+  private boolean getStackOptions(ImagePlus imp) {
+    if (imp.getNFrames() > 1 || imp.getNSlices() > 1) {
+      final GenericDialog gd = new GenericDialog("Process Stack?");
+      gd.addMessage("Process multiple slices (" + (imp.getNFrames() * imp.getNSlices()) + ")");
+      if (imp.getNFrames() > 1) {
+        gd.addCheckbox("All_frames (" + imp.getNFrames() + ")", false);
+      }
+      if (imp.getNSlices() > 1) {
+        gd.addCheckbox("All_slices (" + imp.getNSlices() + ")", false);
+      }
+      gd.enableYesNoCancel("Yes", "No");
+      gd.showDialog();
+      if (gd.wasCanceled()) {
+        return false;
+      }
+      if (imp.getNFrames() > 1) {
+        processAllFrames = gd.getNextBoolean();
+      }
+      if (imp.getNSlices() > 1) {
+        processAllSlices = gd.getNextBoolean();
+      }
+    }
     return true;
   }
 
@@ -309,6 +385,9 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
             convolved = null;
           }
           final PolygonRoi[] cells = findCells(ip);
+          if (cells == null) {
+            return;
+          }
 
           for (int i = 0; i < cells.length; i++) {
             final PolygonRoi cell = cells[i];
@@ -368,6 +447,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     return s;
   }
 
+  @Nullable
   private PolygonRoi[] findCells(ImageProcessor inputProcessor) {
     // Limit processing to where it is needed
     final Rectangle bounds = createBounds(inputProcessor, xpoints, ypoints);
@@ -423,7 +503,6 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
 
       // Calculate the angle
       final FloatProcessor angle = createAngleProcessor(ip, cx, cy, pointBounds);
-      // if (debug) displayImage(angle, "Angle");
 
       if (ImageJUtils.isInterrupted()) {
         return null;
@@ -432,12 +511,13 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
 
       // Initialise the edge as a circle.
       PolygonRoi cell = null;
-      double[] params = {cx - minx, cy - miny, cellRadius, cellRadius, cellRadius, 0};
-      final double range = cellRadius * 0.9;
+      double[] params =
+          {cx - minx, cy - miny, settings.cellRadius, settings.cellRadius, settings.cellRadius, 0};
+      final double range = settings.cellRadius * 0.9;
 
       // Iterate to find the best cell outline
-      boolean returnEllipticalFit = ellipticalFit;
-      for (int iter = 0; iter < iterations; iter++) {
+      boolean returnEllipticalFit = settings.ellipticalFit;
+      for (int iter = 0; iter < settings.iterations; iter++) {
         // Use the current elliptical edge to define the weights for the edge projection
         final FloatProcessor weights = createWeightMap(pointBounds, params, range);
         if (ImageJUtils.isInterrupted()) {
@@ -484,12 +564,12 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       }
 
       PolygonRoi finalCell = cell;
-      if (dilate > 0) {
+      if (settings.dilate > 0) {
         // Dilate the cell and then trace the new outline
         final ByteProcessor bp = new ByteProcessor(pointBounds.width, pointBounds.height);
         bp.setColor(CELL & 0xff);
         bp.draw(cell);
-        for (int i = 0; i < dilate; i++) {
+        for (int i = 0; i < settings.dilate; i++) {
           dilate(bp);
         }
         cell = traceOutline(bp);
@@ -527,8 +607,9 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
    *
    * @return the cell range
    */
-  private static int getCellRange() {
-    return (int) Math.ceil(cellRadius + cellRadius * tolerance + kernelWidth / 2);
+  private int getCellRange() {
+    return (int) Math.ceil(
+        settings.cellRadius + settings.cellRadius * settings.tolerance + settings.kernelWidth / 2);
   }
 
   private static void applyColorModel(ImagePlus imp) {
@@ -586,7 +667,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     }
 
     // Apply a gamma function for a smoother roll-off
-    double gamma = weightingGamma;
+    double gamma = settings.weightingGamma;
     if (gamma > 0) {
       gamma = 1.0 / gamma;
       for (int i = 0; i < data.length; i++) {
@@ -634,7 +715,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
    * @param ip the ip
    * @return the rectangle
    */
-  private static Rectangle createBounds(ImageProcessor ip, int[] xpoints, int[] ypoints) {
+  private Rectangle createBounds(ImageProcessor ip, int[] xpoints, int[] ypoints) {
     // Get the range of clicked points
     int minx = Integer.MAX_VALUE;
     int maxx = 0;
@@ -681,7 +762,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     rotationAngles.clear();
 
     // Used to weight the kernel from the distance to the centre
-    halfWidth = kernelWidth / 2;
+    halfWidth = settings.kernelWidth / 2;
     maxDistance2 = halfWidth * halfWidth * 2.0;
 
     // Build a set convolution kernels at 6 degree intervals
@@ -689,16 +770,16 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     final int cy = halfWidth;
     for (int rotation = 0; rotation < 180; rotation += 12) {
       rotationAngles.add(rotation);
-      final FloatProcessor fp = new FloatProcessor(kernelWidth, kernelWidth);
+      final FloatProcessor fp = new FloatProcessor(settings.kernelWidth, settings.kernelWidth);
 
       // createAliasedLines(halfWidth, cx, cy, degreesToRadians, rotation, fp);
 
       // Build curves using the cell size.
       final double radians = Math.toRadians(rotation);
-      final double centreX = cx - Math.cos(radians) * cellRadius;
-      final double centreY = cy - Math.sin(radians) * cellRadius;
+      final double centreX = cx - Math.cos(radians) * settings.cellRadius;
+      final double centreY = cy - Math.sin(radians) * settings.cellRadius;
 
-      createDoGKernel(fp, centreX, centreY, cellRadius, 1.0);
+      createDoGKernel(fp, centreX, centreY, settings.cellRadius, 1.0);
 
       // Draw circles to use as a directional edge filter
       // drawCircle(fp, centreX, centreY, cellRadius + 1, -1 * value);
@@ -711,8 +792,8 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     // Copy the kernels for the second half of the circle
     for (final int rotation : rotationAngles.toArray()) {
       rotationAngles.add(rotation + 180);
-      FloatProcessor fp =
-          new FloatProcessor(kernelWidth, kernelWidth, newKernels.get(rotation), null);
+      FloatProcessor fp = new FloatProcessor(settings.kernelWidth, settings.kernelWidth,
+          newKernels.get(rotation), null);
       fp = (FloatProcessor) fp.duplicate();
       fp.flipHorizontal();
       fp.flipVertical();
@@ -746,9 +827,9 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     double sigma1 = 1.6 * width;
     double sigma2 = width;
 
-    if (kernelSmoothing > 0) {
-      sigma1 *= kernelSmoothing;
-      sigma2 *= kernelSmoothing;
+    if (settings.kernelSmoothing > 0) {
+      sigma1 *= settings.kernelSmoothing;
+      sigma2 *= settings.kernelSmoothing;
     }
 
     final float[] data = (float[]) fp.getPixels();
@@ -760,7 +841,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
 
         float value = (float) (gaussian(x0, sigma1) - gaussian(x0, sigma2));
 
-        if (!darkEdge) {
+        if (!settings.darkEdge) {
           value = -value;
         }
 
@@ -854,7 +935,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       final float[] kernel = kernels.get(rotation);
       final FloatProcessor fp =
           (ip instanceof FloatProcessor) ? (FloatProcessor) ip.duplicate() : ip.toFloat(0, null);
-      fp.convolve(kernel, kernelWidth, kernelWidth);
+      fp.convolve(kernel, settings.kernelWidth, settings.kernelWidth);
       newConvolved.put(rotation, fp);
       return !ImageJUtils.isInterrupted();
     });
@@ -934,7 +1015,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       FloatProcessor fp = (FloatProcessor) convolved.get(rotation).duplicate();
       fp.setRoi(pointBounds);
       fp = (FloatProcessor) fp.crop();
-      if (darkEdge) {
+      if (settings.darkEdge) {
         fp.invert();
       }
       final float[] p = (float[]) fp.getPixels();
@@ -1136,9 +1217,6 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       fpImp.updateAndDraw();
     }
 
-    // ImagePlus mapImp = displayImage(cropAngles, "Current angles");
-    // mapImp.updateAndDraw();
-
     // Divide the region around the centre into segments and
     // find the maxima in each segment
     final float[] a = (float[]) cropAngles.getPixels();
@@ -1179,7 +1257,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     }
 
     // Perform coordinate smoothing
-    int window = polygonSmoothing;
+    int window = settings.polygonSmoothing;
     if (window > 0) {
       final float[] newXPoints = new float[npoints];
       final float[] newYPoints = new float[npoints];
@@ -1189,7 +1267,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
         double sumy = 0;
         double count = 0;
         for (int j = -window; j <= window; j++) {
-          final double w = 1; // (window - Math.abs(j) + 1.0) / (window + 1);
+          final double w = 1; // Alternative = (window - Math.abs(j) + 1.0) / (window + 1)
           final int ii = (i + j + npoints) % npoints;
           sumx += xpoints[ii] * w;
           sumy += ypoints[ii] * w;
@@ -1241,6 +1319,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
    * @param weightMap the weight map
    * @return the ellipse parameters
    */
+  @Nullable
   private double[] fitPolygonalCell(PolygonRoi roi, double[] params, FloatProcessor weightMap) {
     // Get an estimate of the starting parameters using the current polygon
     final double[] startPoint =

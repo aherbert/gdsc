@@ -36,6 +36,7 @@ import ij.process.ImageProcessor;
 
 import java.awt.AWTEvent;
 import java.awt.Color;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Allows an RGB image to be filtered using HSB limits.
@@ -50,25 +51,81 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
   private float[] saturations;
   private float[] brightnesses;
 
-  // Allow to be set by others in the package
+  /** The current settings for the plugin instance. */
+  private Settings settings;
 
-  /** The hue. */
-  static float hue;
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
 
-  /** The hue width. */
-  static float hueWidth = 1f / 6f;
+    /** The hue. */
+    float hue = 0;
 
-  /** The saturation. */
-  static float saturation = 0.5f;
+    /** The hue width. */
+    float hueWidth = 1f / 6f;
 
-  /** The saturation width. */
-  static float saturationWidth = 0.5f;
+    /** The saturation. */
+    float saturation = 0.5f;
 
-  /** The brightness. */
-  static float brightness = 0.5f;
+    /** The saturation width. */
+    float saturationWidth = 0.5f;
 
-  /** The brightness width. */
-  static float brightnessWidth = 0.5f;
+    /** The brightness. */
+    float brightness = 0.5f;
+
+    /** The brightness width. */
+    float brightnessWidth = 0.5f;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      hue = source.hue;
+      hueWidth = source.hueWidth;
+      saturation = source.saturation;
+      saturationWidth = source.saturationWidth;
+      brightness = source.brightness;
+      brightnessWidth = source.brightnessWidth;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -84,18 +141,19 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /** {@inheritDoc} */
   @Override
   public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
+    settings = Settings.load();
     final GenericDialog gd = new GenericDialog(TITLE);
 
     // Set-up the HSB images
     final ColorProcessor cp = (ColorProcessor) imp.getProcessor().duplicate();
     getHsb((int[]) cp.getPixels());
 
-    gd.addSlider("Hue", 0.01, 1, hue);
-    gd.addSlider("Hue_width", 0.01, 1, hueWidth);
-    gd.addSlider("Saturation", 0.01, 1, saturation);
-    gd.addSlider("Saturation_width", 0.01, 1, saturationWidth);
-    gd.addSlider("Brightness", 0.01, 1, brightness);
-    gd.addSlider("Brightness_width", 0.01, 1, brightnessWidth);
+    gd.addSlider("Hue", 0.01, 1, settings.hue);
+    gd.addSlider("Hue_width", 0.01, 1, settings.hueWidth);
+    gd.addSlider("Saturation", 0.01, 1, settings.saturation);
+    gd.addSlider("Saturation_width", 0.01, 1, settings.saturationWidth);
+    gd.addSlider("Brightness", 0.01, 1, settings.brightness);
+    gd.addSlider("Brightness_width", 0.01, 1, settings.brightnessWidth);
 
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
 
@@ -103,11 +161,9 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
     gd.addDialogListener(this);
     gd.showDialog();
 
-    if (gd.wasCanceled() || !dialogItemChanged(gd, null)) {
-      return DONE;
-    }
-
-    return FLAGS;
+    final boolean cancelled = gd.wasCanceled() || !dialogItemChanged(gd, null);
+    settings.save();
+    return (cancelled) ? DONE : FLAGS;
   }
 
   private void getHsb(int[] pixels) {
@@ -133,12 +189,12 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /** {@inheritDoc} */
   @Override
   public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
-    hue = (float) gd.getNextNumber();
-    hueWidth = (float) gd.getNextNumber();
-    saturation = (float) gd.getNextNumber();
-    saturationWidth = (float) gd.getNextNumber();
-    brightness = (float) gd.getNextNumber();
-    brightnessWidth = (float) gd.getNextNumber();
+    settings.hue = (float) gd.getNextNumber();
+    settings.hueWidth = (float) gd.getNextNumber();
+    settings.saturation = (float) gd.getNextNumber();
+    settings.saturationWidth = (float) gd.getNextNumber();
+    settings.brightness = (float) gd.getNextNumber();
+    settings.brightnessWidth = (float) gd.getNextNumber();
     return !gd.invalidNumber();
   }
 
@@ -151,12 +207,12 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /** {@inheritDoc} */
   @Override
   public void run(ImageProcessor inputProcessor) {
-    final float minH = hue - hueWidth;
-    final float maxH = hue + hueWidth;
-    final float minS = saturation - saturationWidth;
-    final float maxS = saturation + saturationWidth;
-    final float minB = brightness - brightnessWidth;
-    final float maxB = brightness + brightnessWidth;
+    final float minH = settings.hue - settings.hueWidth;
+    final float maxH = settings.hue + settings.hueWidth;
+    final float minS = settings.saturation - settings.saturationWidth;
+    final float maxS = settings.saturation + settings.saturationWidth;
+    final float minB = settings.brightness - settings.brightnessWidth;
+    final float maxB = settings.brightness + settings.brightnessWidth;
     for (int i = 0; i < saturations.length; i++) {
       float hh = hues[i];
       final float ss = saturations[i];
@@ -171,5 +227,27 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
         inputProcessor.set(i, 0);
       }
     }
+  }
+
+  /**
+   * Save the settings.
+   *
+   * @param hue the hue
+   * @param hueWidth the hue width
+   * @param saturation the saturation
+   * @param saturationWidth the saturation width
+   * @param brightness the brightness
+   * @param brightnessWidth the brightness width
+   */
+  static void saveSettings(float hue, float hueWidth, float saturation, float saturationWidth,
+      float brightness, float brightnessWidth) {
+    final Settings newSettings = new Settings();
+    newSettings.hue = hue;
+    newSettings.hueWidth = hueWidth;
+    newSettings.saturation = saturation;
+    newSettings.saturationWidth = saturationWidth;
+    newSettings.brightness = brightness;
+    newSettings.brightnessWidth = brightnessWidth;
+    newSettings.save();
   }
 }

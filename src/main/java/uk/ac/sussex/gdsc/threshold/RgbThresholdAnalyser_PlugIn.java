@@ -37,6 +37,7 @@ import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * For all the RGB images in one directory, look for a matching image in a second directory that has
@@ -48,24 +49,80 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
   private static final String TITLE = "RGB Threshold Analyser";
   private static TextWindow resultsWindow;
 
-  private static String dir1 = "";
-  private static String dir2 = "";
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String dir1 = "";
+    String dir2 = "";
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      dir1 = source.dir1;
+      dir2 = source.dir2;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
   public void run(String arg) {
     UsageTracker.recordPlugin(this.getClass(), arg);
 
-    dir1 = ImageJUtils.getDirectory("RGB_Directory", dir1);
-    if (dir1 == null) {
+    settings = Settings.load();
+    settings.dir1 = ImageJUtils.getDirectory("RGB_Directory", settings.dir1);
+    if (settings.dir1 == null) {
       return;
     }
-    dir2 = ImageJUtils.getDirectory("Image_Directory", dir2);
-    if (dir2 == null) {
+    settings.dir2 = ImageJUtils.getDirectory("Image_Directory", settings.dir2);
+    if (settings.dir2 == null) {
       return;
     }
+    settings.save();
 
-    final File[] fileList = (new File(dir1)).listFiles((dir, name) -> {
+    final File[] fileList = (new File(settings.dir1)).listFiles((dir, name) -> {
       name = name.toLowerCase();
       return name.endsWith(".tif") || name.endsWith(".tiff");
     });
@@ -89,7 +146,7 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
 
       // Find the matching image
       final String name = file.getName();
-      final String path = dir2 + name;
+      final String path = settings.dir2 + name;
       final ImagePlus imp2 = IJ.openImage(path);
       if (imp2 == null) {
         IJ.log("Cannot open " + path);

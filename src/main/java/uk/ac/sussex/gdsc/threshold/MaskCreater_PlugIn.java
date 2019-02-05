@@ -560,8 +560,12 @@ public class MaskCreater_PlugIn implements PlugIn {
   private static int getThreshold(String autoThresholdMethod, int[] statsHistogram) {
     if (autoThresholdMethod.endsWith("evel")) {
       final MultiOtsuThreshold_PlugIn multi = new MultiOtsuThreshold_PlugIn();
-      multi.ignoreZero = false;
+      // Configure the algorithm
+      MultiOtsuThreshold_PlugIn.Settings settings = new MultiOtsuThreshold_PlugIn.Settings();
+      settings.ignoreZero = false;
+      multi.setSettings(settings);
       final int level = autoThresholdMethod.contains("_3_") ? 3 : 4;
+      // Run the algorithm
       final int[] threshold = multi.calculateThresholds(statsHistogram, level);
       return threshold[1];
     }

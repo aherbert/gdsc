@@ -26,6 +26,7 @@ package uk.ac.sussex.gdsc.utils;
 
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.RandomUtils;
 
 import ij.IJ;
 import ij.gui.GenericDialog;
@@ -34,53 +35,119 @@ import ij.plugin.PlugIn;
 import org.apache.commons.rng.UniformRandomProvider;
 import org.apache.commons.rng.simple.RandomSource;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Computes the odds of winning the lottery using random sampling.
  */
 public class Lottery_PlugIn implements PlugIn {
   private static final String TITLE = "Lottery";
-  private static int numbers = 59;
-  private static int pick = 6;
-  private static int match = 3;
-  private static long simulations;
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    int numbers = 59;
+    int pick = 6;
+    int match = 3;
+    long simulations;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      numbers = source.numbers;
+      pick = source.pick;
+      match = source.match;
+      simulations = source.simulations;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
   public void run(String arg) {
     UsageTracker.recordPlugin(this.getClass(), arg);
 
+    settings = Settings.load();
+
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addMessage("Calculate the lottory odds");
-    gd.addSlider("Numbers", 1, numbers, numbers);
-    gd.addSlider("Pick", 1, pick, pick);
-    gd.addSlider("Match", 1, pick, match);
-    gd.addNumericField("Simulations", simulations, 0);
+    gd.addSlider("Numbers", 1, settings.numbers, settings.numbers);
+    gd.addSlider("Pick", 1, settings.pick, settings.pick);
+    gd.addSlider("Match", 1, settings.pick, settings.match);
+    gd.addNumericField("Simulations", settings.simulations, 0);
     gd.showDialog();
     if (gd.wasCanceled()) {
       return;
     }
 
-    numbers = Math.abs((int) gd.getNextNumber());
-    pick = Math.abs((int) gd.getNextNumber());
-    match = Math.abs((int) gd.getNextNumber());
-    simulations = Math.abs((long) gd.getNextNumber());
+    settings.numbers = Math.abs((int) gd.getNextNumber());
+    settings.pick = Math.abs((int) gd.getNextNumber());
+    settings.match = Math.abs((int) gd.getNextNumber());
+    settings.simulations = Math.abs((long) gd.getNextNumber());
 
-    if (numbers < 1) {
+    settings.save();
+
+    if (settings.numbers < 1) {
       IJ.error("Numbers must be >= 1");
       return;
     }
-    if (pick > numbers) {
+    if (settings.pick > settings.numbers) {
       IJ.error("Pick must be <= Numbers");
       return;
     }
-    if (match > pick) {
+    if (settings.match > settings.pick) {
       IJ.error("Match must be <= Pick");
       return;
     }
 
-    final UniformRandomProvider rand = RandomSource.create(RandomSource.SPLIT_MIX_64);
+    runSimulation();
+  }
+
+  private void runSimulation() {
+    final UniformRandomProvider rng = RandomSource.create(RandomSource.SPLIT_MIX_64);
     String msg = "Calculating ...";
-    if (simulations == 0) {
+    if (settings.simulations == 0) {
       msg += " Escape to exit";
     }
     IJ.log(msg);
@@ -88,25 +155,24 @@ public class Lottery_PlugIn implements PlugIn {
     long ok = 0;
     int samples = 0;
 
-    final int[] data = new int[numbers];
+    final int[] data = new int[settings.numbers];
     for (int i = 0; i < data.length; i++) {
       data[i] = i;
     }
 
+    // local copy for inside the loop
+    final int pick = settings.pick;
+    final int match = settings.match;
+    final long simulations = settings.simulations;
+
     while (true) {
       count++;
 
-      // Shuffle
-      for (int i = data.length; i-- > 1;) {
-        final int j = rand.nextInt(i + 1);
-        final int tmp = data[i];
-        data[i] = data[j];
-        data[j] = tmp;
-      }
+      RandomUtils.shuffle(data, rng);
 
       // Count the matches.
       // Assumes the user has selected the first 'pick' numbers from the series (e.g. 0-5 for 6)
-      // and counts how may of their numbers are in the random set (e.g. how many in the random
+      // and counts how many of their numbers are in the random set (e.g. how many in the random
       // set are <6).
       int found = 0;
       for (int i = 0; i < pick; i++) {
@@ -121,10 +187,10 @@ public class Lottery_PlugIn implements PlugIn {
 
       if (++samples == 100000) {
         if (ok == 0) {
-          IJ.log(String.format("0 / %d = 0", count));
+          ImageJUtils.log("0 / %d = 0", count);
         } else {
           final double f = (double) ok / count;
-          IJ.log(String.format("%d / %d = %f (1 in %f)", ok, count, f, 1.0 / f));
+          ImageJUtils.log("%d / %d = %f (1 in %f)", ok, count, f, 1.0 / f);
         }
         samples = 0;
         if (ImageJUtils.isInterrupted()) {

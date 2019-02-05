@@ -24,6 +24,8 @@
 
 package uk.ac.sussex.gdsc.ij.plugin.filter;
 
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Prefs;
@@ -41,6 +43,7 @@ import java.awt.Checkbox;
 import java.awt.Rectangle;
 import java.awt.TextField;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This plug-in filter implements the Difference of Gaussians method for image enhancement. The
@@ -56,15 +59,6 @@ import java.util.Vector;
  */
 public class DifferenceOfGaussians extends GaussianBlur {
 
-  /** The standard deviation of the larger Gaussian. */
-  private static double sigma1 = Prefs.get("DoG.sigma1", 6.0);
-  /** The standard deviation of the smaller Gaussian. */
-  private static double sigma2 = Prefs.get("DoG.sigma2", 1.5);
-  /** whether sigma is given in units corresponding to the pixel scale (not pixels). */
-  private static boolean sigmaScaled = Prefs.getBoolean("DoG.sigmaScaled", false);
-  private static boolean enhanceContrast = Prefs.getBoolean("DoG.enhanceContrast", false);
-
-  private static boolean maintainRatio = Prefs.getBoolean("DoG.maintainRatio", false);
   /** The flags specifying the capabilities and needs. */
   private static final int FLAGS = DOES_ALL | SUPPORTS_MASKING | KEEP_PREVIEW | FINAL_PROCESSING;
   /** The ImagePlus of the setup call, needed to get the spatial calibration. */
@@ -89,13 +83,83 @@ public class DifferenceOfGaussians extends GaussianBlur {
   private ImageProcessor ip2;
   private PlugInFilterRunner pfr;
   private int currentSliceNumber = -1;
-  private double percentInternal;
-  private long lastTime;
 
   /**
    * Set to true to suppress progress reporting to the ImageJ window.
    */
   private boolean noProgress;
+
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    /** The standard deviation of the larger Gaussian. */
+    double sigma1 = Prefs.get("DoG.sigma1", 6.0);
+    /** The standard deviation of the smaller Gaussian. */
+    double sigma2 = Prefs.get("DoG.sigma2", 1.5);
+    /** whether sigma is given in units corresponding to the pixel scale (not pixels). */
+    boolean sigmaScaled = Prefs.getBoolean("DoG.sigmaScaled", false);
+    boolean enhanceContrast = Prefs.getBoolean("DoG.enhanceContrast", false);
+    boolean maintainRatio = Prefs.getBoolean("DoG.maintainRatio", false);
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      sigma1 = source.sigma1;
+      sigma2 = source.sigma2;
+      sigmaScaled = source.sigmaScaled;
+      enhanceContrast = source.enhanceContrast;
+      maintainRatio = source.maintainRatio;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+      // Save settings to preferences for state between ImageJ sessions
+      Prefs.set("DoG.sigma1", sigma1);
+      Prefs.set("DoG.sigma2", sigma2);
+      Prefs.set("DoG.maintainRatio", maintainRatio);
+      Prefs.set("DoG.sigmaScaled", sigmaScaled);
+      Prefs.set("DoG.enhanceContrast", enhanceContrast);
+    }
+  }
 
   /**
    * Method to return types supported.
@@ -106,22 +170,22 @@ public class DifferenceOfGaussians extends GaussianBlur {
    */
   @Override
   public int setup(String arg, ImagePlus imp) {
+    if ("final".equals(arg)) {
+      imp.resetDisplayRange();
+      if (settings.enhanceContrast) {
+        final ContrastEnhancer ce = new ContrastEnhancer();
+        ce.stretchHistogram(imp, 0.35);
+      }
+      imp.updateAndDraw();
+      return DONE;
+    }
+
     this.imp = imp;
     int flags = FLAGS;
-    if (imp != null) {
-      if (imp.getRoi() != null) {
-        final Rectangle roiRect = imp.getRoi().getBounds();
-        if (roiRect.y > 0 || roiRect.y + roiRect.height < imp.getDimensions()[1]) {
-          flags |= SNAPSHOT; // snapshot for pixels above and/or below roi rectangle
-        }
-      }
-      if (arg.equals("final")) {
-        imp.resetDisplayRange();
-        if (enhanceContrast) {
-          final ContrastEnhancer ce = new ContrastEnhancer();
-          ce.stretchHistogram(imp, 0.35);
-        }
-        imp.updateAndDraw();
+    if (imp != null && imp.getRoi() != null) {
+      final Rectangle roiRect = imp.getRoi().getBounds();
+      if (roiRect.y > 0 || roiRect.y + roiRect.height < imp.getDimensions()[1]) {
+        flags |= SNAPSHOT; // snapshot for pixels above and/or below roi rectangle
       }
     }
 
@@ -133,22 +197,24 @@ public class DifferenceOfGaussians extends GaussianBlur {
    */
   @Override
   public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
+    settings = Settings.load();
     final double min = imp.getDisplayRangeMin();
     final double max = imp.getDisplayRangeMax();
     this.pfr = pfr;
     final GenericDialog gd = new GenericDialog(command);
     gd.addMessage("Subtracts blurred image 2 from 1:\n- Sigma1 = local contrast\n"
         + "- Sigma2 = local noise\nUse Sigma1 > Sigma2");
-    gd.addNumericField("Sigma1 (Radius)", sigma1, 2);
-    gd.addNumericField("Sigma2 (Radius)", sigma2, 2);
-    gd.addCheckbox("Maintain Ratio", maintainRatio);
+    gd.addNumericField("Sigma1 (Radius)", settings.sigma1, 2);
+    gd.addNumericField("Sigma2 (Radius)", settings.sigma2, 2);
+    gd.addCheckbox("Maintain Ratio", settings.maintainRatio);
     if (imp.getCalibration() != null && !imp.getCalibration().getUnits().equals("pixels")) {
       hasScale = true;
-      gd.addCheckbox("Scaled Units (" + imp.getCalibration().getUnits() + ")", sigmaScaled);
+      gd.addCheckbox("Scaled Units (" + imp.getCalibration().getUnits() + ")",
+          settings.sigmaScaled);
     } else {
-      sigmaScaled = false;
+      settings.sigmaScaled = false;
     }
-    gd.addCheckbox("Enhance Contrast", enhanceContrast);
+    gd.addCheckbox("Enhance Contrast", settings.enhanceContrast);
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);
     @SuppressWarnings("rawtypes")
@@ -159,7 +225,9 @@ public class DifferenceOfGaussians extends GaussianBlur {
     preview = previewCheckbox.getState();
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
     gd.showDialog(); // input by the user (or macro) happens here
-    if (gd.wasCanceled()) {
+    boolean cancelled = gd.wasCanceled();
+    settings.save();
+    if (cancelled) {
       imp.setDisplayRange(min, max);
       return DONE;
     }
@@ -175,70 +243,60 @@ public class DifferenceOfGaussians extends GaussianBlur {
     // again. This means the calculation is not needed a second time.
     boolean disableRun = false;
 
-    maintainRatio = gd.getNextBoolean();
+    settings.maintainRatio = gd.getNextBoolean();
 
     double newSigma = gd.getNextNumber();
     if (newSigma <= 0 || gd.invalidNumber()) {
       return false;
     }
-    if (sigma1 != newSigma) {
+    if (settings.sigma1 != newSigma) {
       computeSigma1 = true;
-      if (maintainRatio) {
+      if (settings.maintainRatio) {
         computeSigma2 = true;
-        final double ratio = sigma1 / sigma2;
-        sigma2 = Double.parseDouble(IJ.d2s(newSigma / ratio, 3));
-        // System.out.printf("New Sigma2 = %g\n", sigma2);
+        final double ratio = settings.sigma1 / settings.sigma2;
+        settings.sigma2 = Double.parseDouble(IJ.d2s(newSigma / ratio, 3));
         disableRun = true;
-        sigma2field.setText("" + sigma2);
+        sigma2field.setText("" + settings.sigma2);
       }
     }
-    sigma1 = newSigma;
+    settings.sigma1 = newSigma;
 
     newSigma = gd.getNextNumber();
     if (newSigma < 0 || gd.invalidNumber()) {
       return false;
     }
-    if (sigma2 != newSigma) {
+    if (settings.sigma2 != newSigma) {
       computeSigma2 = true;
-      if (maintainRatio) {
+      if (settings.maintainRatio) {
         computeSigma1 = true;
-        final double ratio = sigma1 / sigma2;
-        sigma1 = Double.parseDouble(IJ.d2s(newSigma * ratio, 3));
-        // System.out.printf("New Sigma1 = %s\n", sigma1);
+        final double ratio = settings.sigma1 / settings.sigma2;
+        settings.sigma1 = Double.parseDouble(IJ.d2s(newSigma * ratio, 3));
         disableRun = true;
-        sigma1field.setText("" + sigma1);
+        sigma1field.setText("" + settings.sigma1);
       }
     }
-    sigma2 = newSigma;
+    settings.sigma2 = newSigma;
 
-    if (sigma1 <= sigma2) {
+    if (settings.sigma1 <= settings.sigma2) {
       return false;
     }
 
     if (hasScale) {
       final boolean newSigmaScaled = gd.getNextBoolean();
-      if (sigmaScaled != newSigmaScaled) {
+      if (settings.sigmaScaled != newSigmaScaled) {
         computeSigma1 = true;
         computeSigma2 = true;
       }
-      sigmaScaled = newSigmaScaled;
+      settings.sigmaScaled = newSigmaScaled;
     }
 
-    enhanceContrast = gd.getNextBoolean();
-
-    // Save settings to preferences
-    Prefs.set("DoG.sigma1", sigma1);
-    Prefs.set("DoG.sigma2", sigma2);
-    Prefs.set("DoG.maintainRatio", maintainRatio);
-    Prefs.set("DoG.sigmaScaled", sigmaScaled);
-    Prefs.set("DoG.enhanceContrast", enhanceContrast);
+    settings.enhanceContrast = gd.getNextBoolean();
 
     final boolean newPreview = previewCheckbox.getState();
-    if (preview != newPreview) {
-      // Check if the preview has been turned off then reset the display range
-      if (!newPreview && imp != null) {
-        imp.resetDisplayRange();
-      }
+    if (preview != newPreview
+        // Check if the preview has been turned off then reset the display range
+        && !newPreview && imp != null) {
+      imp.resetDisplayRange();
     }
     preview = newPreview;
 
@@ -284,10 +342,14 @@ public class DifferenceOfGaussians extends GaussianBlur {
     }
     currentSliceNumber = pfr.getSliceNumber();
 
-    final double sigmaX = sigmaScaled ? sigma1 / imp.getCalibration().pixelWidth : sigma1;
-    final double sigmaY = sigmaScaled ? sigma1 / imp.getCalibration().pixelHeight : sigma1;
-    final double sigma2X = sigmaScaled ? sigma2 / imp.getCalibration().pixelWidth : sigma2;
-    final double sigma2Y = sigmaScaled ? sigma2 / imp.getCalibration().pixelHeight : sigma2;
+    final double sigmaX =
+        settings.sigmaScaled ? settings.sigma1 / imp.getCalibration().pixelWidth : settings.sigma1;
+    final double sigmaY =
+        settings.sigmaScaled ? settings.sigma1 / imp.getCalibration().pixelHeight : settings.sigma1;
+    final double sigma2X =
+        settings.sigmaScaled ? settings.sigma2 / imp.getCalibration().pixelWidth : settings.sigma2;
+    final double sigma2Y =
+        settings.sigmaScaled ? settings.sigma2 / imp.getCalibration().pixelHeight : settings.sigma2;
     final double accuracy =
         (ip instanceof ByteProcessor || ip instanceof ColorProcessor) ? 0.002 : 0.0002;
 
@@ -314,13 +376,12 @@ public class DifferenceOfGaussians extends GaussianBlur {
     differenceOfGaussians(ip, ip1, ip2);
 
     // Need to refresh on screen display
-    // ip.resetMinAndMax();
     if (imp != null) {
       // This is necessary when processing stacks after preview
       imp.getStack().setPixels(ip.getPixels(), currentSliceNumber);
 
       imp.resetDisplayRange();
-      if (enhanceContrast) {
+      if (settings.enhanceContrast) {
         final ContrastEnhancer ce = new ContrastEnhancer();
         ce.stretchHistogram(imp, 0.35);
       }
@@ -357,12 +418,13 @@ public class DifferenceOfGaussians extends GaussianBlur {
    */
   private static void differenceOfGaussians(ImageProcessor resultIp, ImageProcessor ip1,
       ImageProcessor ip2) {
+    // Reuse the processor space
     FloatProcessor fp1 = null;
     FloatProcessor fp2 = null;
+    FloatProcessor fp3 = null;
 
     final Rectangle roi = resultIp.getRoi();
     final int yTo = roi.y + roi.height;
-    FloatProcessor fp3 = null;
 
     for (int i = 0; i < resultIp.getNChannels(); i++) {
       fp1 = ip1.toFloat(i, fp1);
@@ -424,32 +486,18 @@ public class DifferenceOfGaussians extends GaussianBlur {
    *
    * @param percent the percent
    */
-  private void showProgress(double percent) {
+  private void showProgressInternal(double percent) {
     if (noProgress) {
       return;
     }
 
     // Ignore the input percent and use the internal one
-    percent = (double) (pass - 1) / passes + this.percentInternal / passes;
+    final double progress = (double) (pass - 1) / passes + percent / passes;
 
-    final long time = System.currentTimeMillis();
-    if (time - lastTime < 100) {
-      return;
+    if (ImageJUtils
+        .showStatus(() -> String.format("Difference of Gaussians: %.3g%%", progress * 100))) {
+      IJ.showProgress(progress);
     }
-    lastTime = time;
-
-    IJ.showProgress(percent);
-    IJ.showStatus(String.format("Difference of Gaussians: %.3g%%", percent * 100));
-  }
-
-  /**
-   * Show the progress on the ImageJ progress bar.
-   *
-   * @param percent the percent
-   */
-  private void showProgressInternal(double percent) {
-    this.percentInternal = percent;
-    showProgress(0);
   }
 
   /**

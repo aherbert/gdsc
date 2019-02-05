@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
@@ -43,9 +44,12 @@ import ij.process.LUT;
 import ij.text.TextWindow;
 
 import java.awt.Color;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Output the radial intensity around spots within a mask region. Spots are defined using FindFoci
@@ -55,19 +59,79 @@ import java.util.List;
  */
 public class SpotRadialIntensity_PlugIn implements PlugIn {
   private static final String TITLE = "Spot Radial Intensity";
-  private static TextWindow resultsWindow;
-
-  private static String resultsName = "";
-  private static String maskImage = "";
-  private static int distance = 10;
-  private static double interval = 1;
-  private static boolean showFoci;
-  private static boolean showObjects;
-  private static boolean showTable = true;
-  private static boolean showPlot = true;
+  private static final AtomicReference<TextWindow> resultsWindow = new AtomicReference<>();
 
   private ImagePlus imp;
   private String prefix;
+
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String resultsName = "";
+    String maskImage = "";
+    int distance = 10;
+    double interval = 1;
+    boolean showFoci;
+    boolean showObjects;
+    boolean showTable = true;
+    boolean showPlot = true;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      resultsName = source.resultsName;
+      maskImage = source.maskImage;
+      distance = source.distance;
+      interval = source.interval;
+      showFoci = source.showFoci;
+      showObjects = source.showObjects;
+      showTable = source.showTable;
+      showPlot = source.showPlot;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   private static class Foci {
     final int id;
@@ -109,19 +173,21 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       return;
     }
 
+    settings = Settings.load();
+
     final GenericDialog gd = new GenericDialog(TITLE);
 
     gd.addMessage("Analyses spots within a mask region\n"
         + "and computes radial intensity within the mask object region.");
 
-    gd.addChoice("Results_name", names, resultsName);
-    gd.addChoice("Mask", maskImageList, maskImage);
-    gd.addNumericField("Distance", distance, 0, 6, "pixels");
-    gd.addNumericField("Interval", interval, 2, 6, "pixels");
-    gd.addCheckbox("Show_foci", showFoci);
-    gd.addCheckbox("Show_objects", showObjects);
-    gd.addCheckbox("Show_table", showTable);
-    gd.addCheckbox("Show_plot", showPlot);
+    gd.addChoice("Resultsettings.name", names, settings.resultsName);
+    gd.addChoice("Mask", maskImageList, settings.maskImage);
+    gd.addNumericField("Distance", settings.distance, 0, 6, "pixels");
+    gd.addNumericField("Interval", settings.interval, 2, 6, "pixels");
+    gd.addCheckbox("Show_foci", settings.showFoci);
+    gd.addCheckbox("Show_objects", settings.showObjects);
+    gd.addCheckbox("Show_table", settings.showTable);
+    gd.addCheckbox("Show_plot", settings.showPlot);
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI);
 
     gd.showDialog();
@@ -129,14 +195,20 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       return;
     }
 
-    resultsName = gd.getNextChoice();
-    maskImage = gd.getNextChoice();
-    final int distance = (int) gd.getNextNumber();
-    final double interval = gd.getNextNumber();
-    showFoci = gd.getNextBoolean();
-    showObjects = gd.getNextBoolean();
-    showTable = gd.getNextBoolean();
-    showPlot = gd.getNextBoolean();
+    // Check if these change
+    final int distance = settings.distance;
+    final double interval = settings.interval;
+
+    settings.resultsName = gd.getNextChoice();
+    settings.maskImage = gd.getNextChoice();
+    settings.distance = (int) gd.getNextNumber();
+    settings.interval = gd.getNextNumber();
+    settings.showFoci = gd.getNextBoolean();
+    settings.showObjects = gd.getNextBoolean();
+    settings.showTable = gd.getNextBoolean();
+    settings.showPlot = gd.getNextBoolean();
+
+    settings.save();
 
     // Validate options
     if (!Double.isFinite(distance) || !Double.isFinite(interval) || distance <= 0 || interval <= 0
@@ -144,36 +216,33 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       IJ.error(TITLE, "No valid distances using the given interval");
       return;
     }
-    if (!(showTable || showPlot)) {
+    if (!(settings.showTable || settings.showPlot)) {
       IJ.error(TITLE, "No output option");
       return;
     }
 
-    if (distance != SpotRadialIntensity_PlugIn.distance
-        || interval != SpotRadialIntensity_PlugIn.interval) {
-      resultsWindow = null; // Create a new window
+    if (distance != settings.distance || interval != settings.interval) {
+      resultsWindow.set(null); // Create a new window
     }
-    SpotRadialIntensity_PlugIn.distance = distance;
-    SpotRadialIntensity_PlugIn.interval = interval;
 
     // Get the objects
-    final ObjectAnalyzer objects = createObjectAnalyzer(maskImage);
+    final ObjectAnalyzer objects = createObjectAnalyzer(settings.maskImage);
     if (objects == null) {
       return;
     }
 
     // Get the foci
-    final Foci[] foci = getFoci(resultsName, objects);
+    final Foci[] foci = getFoci(settings.resultsName, objects);
     if (foci == null) {
       return;
     }
 
-    final PointRoi roi = (showFoci || showObjects) ? createPointRoi(foci) : null;
+    final PointRoi roi = (settings.showFoci || settings.showObjects) ? createPointRoi(foci) : null;
 
-    if (showFoci) {
+    if (settings.showFoci) {
       imp.setRoi(roi);
     }
-    if (showObjects) {
+    if (settings.showObjects) {
       ImageJUtils.display(TITLE + " Objects", objects.toProcessor()).setRoi(roi);
     }
 
@@ -225,6 +294,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
    * @param objects the objects
    * @return the foci
    */
+  @Nullable
   private Foci[] getFoci(String resultsName, ObjectAnalyzer objects) {
     final FindFociMemoryResults memoryResults = FindFoci_PlugIn.getResults(resultsName);
     if (memoryResults == null) {
@@ -279,9 +349,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
    * @param objects the objects
    */
   private void analyse(Foci[] foci, ObjectAnalyzer objects) {
-    if (showTable) {
-      createResultsWindow();
-    }
+    final TextWindow tw = (settings.showTable) ? createResultsWindow() : null;
     final StringBuilder sb = new StringBuilder();
 
     final int[] mask = objects.getObjectMask();
@@ -289,22 +357,23 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
 
     // For radial intensity
     final float[] pixels = (float[]) imp.getProcessor().toFloat(0, null).getPixels();
+    final int distance = settings.distance;
     final int limit = distance * distance;
-    final int maxBin = (int) (distance / interval);
+    final int maxBin = (int) (distance / settings.interval);
     final int[] count = new int[maxBin];
     final double[] sum = new double[maxBin];
     // The lower limit of the squared distance for each bin
     final double[] distances = new double[maxBin];
     for (int i = 0; i < distances.length; i++) {
-      distances[i] = MathUtils.pow2(i * interval);
+      distances[i] = MathUtils.pow2(i * settings.interval);
     }
 
     // Table of dx^2
     final int[] dx2 = new int[2 * distance + 1];
 
     // Plot of each radial intensity
-    final Plot plot = (showPlot) ? new Plot(TITLE, "Distance", "Average") : null;
-    final double[] xAxis = SimpleArrayUtils.newArray(maxBin, 0, interval);
+    final Plot plot = (settings.showPlot) ? new Plot(TITLE, "Distance", "Average") : null;
+    final double[] xAxis = SimpleArrayUtils.newArray(maxBin, 0, settings.interval);
     final double[] yAxis = new double[xAxis.length];
     final LUT lut = LutHelper.createLut(LutHelper.LutColour.FIRE_GLOW);
 
@@ -359,7 +428,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
         }
       }
 
-      if (showTable) {
+      if (tw != null) {
         // Table of results
         sb.setLength(0);
         sb.append(prefix);
@@ -378,7 +447,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
           sb.append('\t').append(count[i]);
         }
 
-        resultsWindow.append(sb.toString());
+        tw.append(sb.toString());
       }
 
       // Add to plot
@@ -431,15 +500,27 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     return background;
   }
 
-  private void createResultsWindow() {
-    if (resultsWindow == null || !resultsWindow.isShowing()) {
-      resultsWindow = new TextWindow(TITLE + " Summary", createResultsHeader(), "", 700, 300);
+  private TextWindow createResultsWindow() {
+    TextWindow window = resultsWindow.get();
+    if (window == null || !window.isShowing()) {
+      window = new TextWindow(TITLE + " Summary", createResultsHeader(), "", 700, 300);
+      // When it closes remove the reference to this window
+      final TextWindow closedWindow = window;
+      window.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosed(WindowEvent event) {
+          resultsWindow.compareAndSet(closedWindow, null);
+          super.windowClosed(event);
+        }
+      });
+      resultsWindow.set(window);
     }
     prefix = String.format("%s (C=%d,Z=%d,T=%d)", imp.getTitle(), imp.getChannel(), imp.getSlice(),
         imp.getFrame());
+    return window;
   }
 
-  private static String createResultsHeader() {
+  private String createResultsHeader() {
     final StringBuilder sb = new StringBuilder();
     sb.append("Image");
     sb.append("\tID");
@@ -447,16 +528,16 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     sb.append("\tBackground");
     sb.append("\tx");
     sb.append("\ty");
-    final int maxBin = (int) (distance / interval);
+    final int maxBin = (int) (settings.distance / settings.interval);
     for (int i = 0; i < maxBin; i++) {
-      final double low = interval * i;
-      final double high = interval * (i + 1);
+      final double low = settings.interval * i;
+      final double high = settings.interval * (i + 1);
       sb.append("\tAv ").append(MathUtils.rounded(low));
       sb.append("-").append(MathUtils.rounded(high));
     }
     for (int i = 0; i < maxBin; i++) {
-      final double low = interval * i;
-      final double high = interval * (i + 1);
+      final double low = settings.interval * i;
+      final double high = settings.interval * (i + 1);
       sb.append("\tN ").append(MathUtils.rounded(low));
       sb.append("-").append(MathUtils.rounded(high));
     }

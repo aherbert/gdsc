@@ -1689,8 +1689,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     for (final String token : tokens) {
       try {
         list.add(Double.parseDouble(token));
-      } catch (final Exception ex) {
-        // Ignore
+      } catch (final NumberFormatException ex) {
+        // Ignore - not a double
       }
     }
 

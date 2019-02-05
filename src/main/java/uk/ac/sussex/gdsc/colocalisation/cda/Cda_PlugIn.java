@@ -76,12 +76,10 @@ import java.awt.Panel;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.TextField;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -96,6 +94,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.JPanel;
 
@@ -118,9 +117,8 @@ import javax.swing.JPanel;
  * @see <a href="https://doi.org/10.1111/j.1365-2818.2010.03369.x">Confined displacement algorithm
  *      determines true and random colocalization in fluorescence microscopy</a>
  */
-public class Cda_PlugIn extends PlugInFrame
-    implements ActionListener, ItemListener, KeyListener, Runnable {
-  private static final long serialVersionUID = 1L;
+public class Cda_PlugIn extends PlugInFrame {
+  private static final long serialVersionUID = 20190105L;
   private static final String PLUGIN_TITLE = "CDA Plugin";
   private static final String OPTION_NONE = "(None)";
   private static final String OPTION_MASK = "Use as mask";
@@ -177,54 +175,55 @@ public class Cda_PlugIn extends PlugInFrame
   private static final String OPT_PERMUTATIONS = "CDA.permutations";
 
   // Image titles
-  private static final String channel1RgbTitle = "CDA Channel 1";
-  private static final String channel2RgbTitle = "CDA Channel 2";
-  private static final String segmented1RgbTitle = "CDA ROI 1";
-  private static final String segmented2RgbTitle = "CDA ROI 2";
-  private static final String mergedChannelTitle = "CDA Merged channel";
-  private static final String mergedSegmentedTitle = "CDA Merged ROI";
-  private static final String lastShiftedChannelTitle = "CDA Merged channel maximum displacement";
-  private static final String lastShiftedSegmentedTitle = "CDA Merged ROI maximum displacement";
+  private static final String CHANNEL1_RGB_TITLE = "CDA Channel 1";
+  private static final String CHANNEL2_RGB_TITLE = "CDA Channel 2";
+  private static final String SEGMENTED1_RGB_TITLE = "CDA ROI 1";
+  private static final String SEGMENTED2_RGB_TITLE = "CDA ROI 2";
+  private static final String MERGED_CHANNEL_TITLE = "CDA Merged channel";
+  private static final String MERGED_SEGMENTED_TITLE = "CDA Merged ROI";
+  private static final String LAST_SHIFTED_CHANNEL_TITLE =
+      "CDA Merged channel maximum displacement";
+  private static final String LAST_SHIFTED_SEGMENTED_TITLE = "CDA Merged ROI maximum displacement";
 
-  private static final String m1HistogramTitle = "CDA M1 PDF";
-  private static final String m2HistogramTitle = "CDA M2 PDF";
-  private static final String rHistogramTitle = "CDA R PDF";
-  private static final String plotM1Title = "CDA M1 samples";
-  private static final String plotM2Title = "CDA M2 samples";
-  private static final String plotRTitle = "CDA R samples";
+  private static final String M1_HISTOGRAM_TITLE = "CDA M1 PDF";
+  private static final String M2_HISTOGRAM_TITLE = "CDA M2 PDF";
+  private static final String R_HISTOGRAM_TITLE = "CDA R PDF";
+  private static final String PLOT_M1_TITLE = "CDA M1 samples";
+  private static final String PLOT_M2_TITLE = "CDA M2 samples";
+  private static final String PLOT_R_TITLE = "CDA R samples";
 
   // Configuration options
-  private static final String choiceChannel1 = "Channel 1";
-  private static final String choiceChannel2 = "Channel 2";
-  private static final String choiceSegmentedChannel1 = "ROI for channel 1";
-  private static final String choiceSegmentedChannel2 = "ROI for channel 2";
-  private static final String choiceConfined = "Confined compartment";
-  private static final String choiceExpandConfined = "  Include ROIs";
-  private static final String choiceMaximumRadius = "Maximum radial displacement";
-  private static final String choiceRandomRadius = "Random radial displacement";
-  private static final String choiceSubRandomSamples = "Compute sub-random samples";
-  private static final String numberOfSamplesLabel = "  Approx. number of samples: ";
-  private static final String choiceBinsNumber = "Bins for histogram";
-  private static final String choiceCloseWindowsOnExit = "Close windows on exit";
-  private static final String choiceSetOptions = "Set results options";
-  private static final String okButtonLabel = "Apply";
-  private static final String helpButtonLabel = "Help";
+  private static final String CHOICE_CHANNEL1 = "Channel 1";
+  private static final String CHOICE_CHANNEL2 = "Channel 2";
+  private static final String CHOICE_SEGMENTED_CHANNEL1 = "ROI for channel 1";
+  private static final String CHOICE_SEGMENTED_CHANNEL2 = "ROI for channel 2";
+  private static final String CHOICE_CONFINED = "Confined compartment";
+  private static final String CHOICE_EXPAND_CONFINED = "  Include ROIs";
+  private static final String CHOICE_MAXIMUM_RADIUS = "Maximum radial displacement";
+  private static final String CHOICE_RANDOM_RADIUS = "Random radial displacement";
+  private static final String CHOICE_SUB_RANDOM_SAMPLES = "Compute sub-random samples";
+  private static final String NUMBER_OF_SAMPLES_LABEL = "  Approx. number of samples: ";
+  private static final String CHOICE_BINS_NUMBER = "Bins for histogram";
+  private static final String CHOICE_CLOSE_WINDOWS_ON_EXIT = "Close windows on exit";
+  private static final String CHOICE_SET_OPTIONS = "Set results options";
+  private static final String OK_BUTTON_LABEL = "Apply";
+  private static final String HELP_BUTTON_LABEL = "Help";
 
   // PDFs
-  private static final String plotXLabel = "Radial displacement d";
-  private static final String plotM1YLabel = "M1";
-  private static final String plotM2YLabel = "M2";
-  private static final String plotRYLabel = "R";
-  private static final String plotPDFYLabel = "PDF";
-  private static final String pixelsUnitString = "[pixels]";
+  private static final String PLOT_X_LABEL = "Radial displacement d";
+  private static final String PLOT_M1_Y_LABEL = "M1";
+  private static final String PLOT_M2_Y_LABEL = "M2";
+  private static final String PLOT_R_Y_LABEL = "R";
+  private static final String PLOT_PDF_Y_LABEL = "PDF";
+  private static final String PIXELS_UNIT_STRING = "[pixels]";
 
   // Status messages
-  private static final String mandersCalculationStatus = "Calculating manders coefficients...";
-  private static final String gettingConfigStatus = "Processing parameters...";
-  private static final String doneStatus = "Done.";
-  private static final String calculatingFirstMandersStatus = "Calculating M1 and M2";
-  private static final String preparingPlotsStatus = "Creating plots and images...";
-  private static final String processingMandersStatus = "Processing manders coefficients...";
+  private static final String MANDERS_CALCULATION_STATUS = "Calculating manders coefficients...";
+  private static final String GETTING_CONFIG_STATUS = "Processing parameters...";
+  private static final String DONE_STATUS = "Done.";
+  private static final String CALCULATING_FIRST_MANDERS_STATUS = "Calculating M1 and M2";
+  private static final String PREPARING_PLOT_STATUS = "Creating plots and images...";
+  private static final String PROCESSING_MANDERS_STATUS = "Processing manders coefficients...";
 
   private static final int FONT_WIDTH = 12;
   private static final Font MONO_FONT = new Font("Monospaced", 0, FONT_WIDTH);
@@ -236,7 +235,7 @@ public class Cda_PlugIn extends PlugInFrame
   private static final int X_SIGN_MASK = 0x00010000;
   private static final int Y_SIGN_MASK = 0x00020000;
 
-  private static Frame instance;
+  private static final AtomicReference<Frame> instance = new AtomicReference<>();
 
   private Label pixelsLabel;
   private Choice channel1List;
@@ -346,18 +345,14 @@ public class Cda_PlugIn extends PlugInFrame
       return;
     }
 
-    if (instance != null) {
-      if (!(instance.getTitle().equals(getTitle()))) {
-        final Cda_PlugIn cda = (Cda_PlugIn) instance;
-        Prefs.saveLocation(OPT_LOCATION, cda.getLocation());
-        cda.close();
-      } else {
-        instance.toFront();
-        return;
-      }
+    final Frame frame = instance.get();
+
+    if (frame != null) {
+      frame.toFront();
+      return;
     }
 
-    instance = this;
+    instance.set(this);
     IJ.register(Cda_PlugIn.class);
     WindowManager.addWindow(this);
 
@@ -378,64 +373,12 @@ public class Cda_PlugIn extends PlugInFrame
     setVisible(true);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public void run() {
-    doCda();
-
-    synchronized (this) {
-      super.notify();
-    }
-  }
-
   private void setup() {
     final ImagePlus imp = WindowManager.getCurrentImage();
     if (imp == null) {
       return;
     }
     fillImagesList();
-  }
-
-  @SuppressWarnings("unused")
-  @Override
-  public synchronized void actionPerformed(ActionEvent event) {
-    final Object actioner = event.getSource();
-
-    if (actioner == null) {
-      return;
-    }
-
-    if (((Button) actioner == okButton) && (parametersReady())) {
-      final Thread thread = new Thread(this, "CDA_Plugin");
-      thread.start();
-    }
-    if ((Button) actioner == helpButton) {
-      final String macro =
-          "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.UrlUtils.COLOCALISATION + "');";
-      new MacroRunner(macro);
-    }
-
-    super.notifyAll();
-  }
-
-  @Override
-  public void itemStateChanged(ItemEvent event) {
-    final Object actioner = event.getSource();
-
-    if (actioner == null) {
-      return;
-    }
-
-    if ((Checkbox) actioner == subRandomSamplesCheckbox) {
-      updateNumberOfSamples();
-      return;
-    }
-
-    if (setResultsOptionsCheckbox.getState()) {
-      setResultsOptionsCheckbox.setState(false);
-      setResultsOptions();
-      updateNumberOfSamples();
-    }
   }
 
   private void setResultsOptions() {
@@ -500,35 +443,13 @@ public class Cda_PlugIn extends PlugInFrame
   }
 
   @Override
-  public void keyTyped(KeyEvent event) {
-    // Do nothing
-  }
-
-  @Override
-  public void keyPressed(KeyEvent event) {
-    // Do nothing
-  }
-
-  @Override
-  public void keyReleased(KeyEvent event) {
-    final Object actioner = event.getSource();
-
-    if (actioner == null) {
-      return;
-    }
-
-    // Update the number of combinations
-    updateNumberOfSamples();
-  }
-
-  @Override
   public void windowClosing(WindowEvent event) {
     closeWindowsOnExit = closeWindowsOnExitCheckbox.getState();
     Prefs.set(OPT_CLOSE_WINDOWS_ON_EXIT, closeWindowsOnExit);
 
     Prefs.saveLocation(OPT_LOCATION, getLocation());
 
-    close();
+    super.windowClosing(event);
   }
 
   @Override
@@ -557,7 +478,7 @@ public class Cda_PlugIn extends PlugInFrame
       }
     }
 
-    instance = null;
+    instance.set(null);
     super.close();
   }
 
@@ -594,7 +515,7 @@ public class Cda_PlugIn extends PlugInFrame
       return;
     }
 
-    IJ.showStatus(gettingConfigStatus);
+    IJ.showStatus(GETTING_CONFIG_STATUS);
 
     // Stores these so that they can be reset later
     channel1Index = channel1List.getSelectedIndex();
@@ -672,13 +593,13 @@ public class Cda_PlugIn extends PlugInFrame
     intersectMask(imageStack1, confinedStack);
     intersectMask(imageStack2, confinedStack);
 
-    IJ.showStatus(calculatingFirstMandersStatus);
+    IJ.showStatus(CALCULATING_FIRST_MANDERS_STATUS);
 
     // Pre-calculate constants
     final double denom1 = intersectSum(imageStack1, roiStack1);
     final double denom2 = intersectSum(imageStack2, roiStack2);
 
-    IJ.showStatus(mandersCalculationStatus);
+    IJ.showStatus(MANDERS_CALCULATION_STATUS);
 
     // Build list of shifts above and below the random radius
     final int[] shiftIndices = buildShiftIndices(subRandomSamples, randomRadius, maximumRadius);
@@ -717,7 +638,7 @@ public class Cda_PlugIn extends PlugInFrame
         unshifted.correlation, results);
 
     IJ.showStatus(
-        doneStatus + " Time taken = " + (System.currentTimeMillis() - startTime) / 1000.0);
+        DONE_STATUS + " Time taken = " + (System.currentTimeMillis() - startTime) / 1000.0);
   }
 
   private int[] buildShiftIndices(boolean subRandomSamples, int randomRadius, int maximumRadius) {
@@ -921,7 +842,7 @@ public class Cda_PlugIn extends PlugInFrame
 
   private static boolean getStackOptions(ImagePlus imp1, ImagePlus imp2, ImagePlus roi1,
       ImagePlus roi2, ImagePlus roi) {
-    if (isStack(imp1) || isStack(imp1) || isStack(roi1) || isStack(roi2) || isStack(roi)) {
+    if (isStack(imp1) || isStack(imp2) || isStack(roi1) || isStack(roi2) || isStack(roi)) {
       final GenericDialog gd = new GenericDialog("Slice options");
       gd.addMessage("Stacks detected. Please select the slices.");
 
@@ -962,7 +883,6 @@ public class Cda_PlugIn extends PlugInFrame
 
       if (channels.length > 1 || frames.length > 1) {
         added = true;
-        // gd.addMessage(title);
       }
 
       setOption(gd, channels, title + "_Channel", offset);
@@ -1160,7 +1080,7 @@ public class Cda_PlugIn extends PlugInFrame
       ImageStack imageStack2, ImageStack roiStack1, ImageStack roiStack2, ImageStack confinedStack,
       ImageStack lastChannelShiftedRawStack, ImageStack lastSegmentedShiftedRawStack, double m1,
       double m2, double correlation, List<CalculationResult> results) {
-    IJ.showStatus(processingMandersStatus);
+    IJ.showStatus(PROCESSING_MANDERS_STATUS);
 
     // Extract the results into individual arrays
     final double[] distances = new double[results.size()];
@@ -1223,22 +1143,22 @@ public class Cda_PlugIn extends PlugInFrame
     // TODO - Only compute the images that will be displayed or saved as results
     final boolean isSaveResults = (saveResults && checkResultsDirectory());
 
-    IJ.showStatus(preparingPlotsStatus);
+    IJ.showStatus(PREPARING_PLOT_STATUS);
     Plot plotM1 = null;
     Plot plotM2 = null;
     Plot plotR = null;
 
     if (showM1PlotWindow) {
-      plotM1 = createPlot(distances, m1Values, Color.red, Color.blue, plotM1Title, plotXLabel,
-          plotM1YLabel, spacedX, ceroValuesX, ceroValuesY, spacedY);
+      plotM1 = createPlot(distances, m1Values, Color.red, Color.blue, PLOT_M1_TITLE, PLOT_X_LABEL,
+          PLOT_M1_Y_LABEL, spacedX, ceroValuesX, ceroValuesY, spacedY);
     }
     if (showM2PlotWindow) {
-      plotM2 = createPlot(distances, m2Values, Color.green, Color.blue, plotM2Title, plotXLabel,
-          plotM2YLabel, spacedX, ceroValuesX, ceroValuesY, spacedY);
+      plotM2 = createPlot(distances, m2Values, Color.green, Color.blue, PLOT_M2_TITLE, PLOT_X_LABEL,
+          PLOT_M2_Y_LABEL, spacedX, ceroValuesX, ceroValuesY, spacedY);
     }
     if (showRPlotWindow) {
-      plotR = createPlot(distances, correlationValues, Color.blue, Color.green, plotRTitle,
-          plotXLabel, plotRYLabel, spacedX, ceroValuesX, ceroValuesY, spacedY);
+      plotR = createPlot(distances, correlationValues, Color.blue, Color.green, PLOT_R_TITLE,
+          PLOT_X_LABEL, PLOT_R_Y_LABEL, spacedX, ceroValuesX, ceroValuesY, spacedY);
     }
 
     // Prepare output images
@@ -1302,22 +1222,22 @@ public class Cda_PlugIn extends PlugInFrame
 
     // Update the images
     channel1Rgb =
-        updateImage(channel1Rgb, channel1RgbTitle, imageStack1, showChannel1Rgb, LutColour.RED);
+        updateImage(channel1Rgb, CHANNEL1_RGB_TITLE, imageStack1, showChannel1Rgb, LutColour.RED);
     channel2Rgb =
-        updateImage(channel2Rgb, channel2RgbTitle, imageStack2, showChannel2Rgb, LutColour.GREEN);
-    segmented1Rgb =
-        updateImage(segmented1Rgb, segmented1RgbTitle, roiStack1, showSegmented1Rgb, LutColour.RED);
-    segmented2Rgb = updateImage(segmented2Rgb, segmented2RgbTitle, roiStack2, showSegmented2Rgb,
+        updateImage(channel2Rgb, CHANNEL2_RGB_TITLE, imageStack2, showChannel2Rgb, LutColour.GREEN);
+    segmented1Rgb = updateImage(segmented1Rgb, SEGMENTED1_RGB_TITLE, roiStack1, showSegmented1Rgb,
+        LutColour.RED);
+    segmented2Rgb = updateImage(segmented2Rgb, SEGMENTED2_RGB_TITLE, roiStack2, showSegmented2Rgb,
         LutColour.GREEN);
-    mergedChannelRgb = updateImage(mergedChannelRgb, mergedChannelTitle, mergedChannelIp,
+    mergedChannelRgb = updateImage(mergedChannelRgb, MERGED_CHANNEL_TITLE, mergedChannelIp,
         showMergedChannelRgb, null);
-    mergedSegmentedRgb = updateImage(mergedSegmentedRgb, mergedSegmentedTitle, mergedSegmentedRgbIp,
-        showMergedSegmentedRgb, null);
+    mergedSegmentedRgb = updateImage(mergedSegmentedRgb, MERGED_SEGMENTED_TITLE,
+        mergedSegmentedRgbIp, showMergedSegmentedRgb, null);
     mergedChannelDisplacementRgb =
-        updateImage(mergedChannelDisplacementRgb, lastShiftedChannelTitle,
+        updateImage(mergedChannelDisplacementRgb, LAST_SHIFTED_CHANNEL_TITLE,
             mergedChannelDisplacementIp, showMergedChannelDisplacementRgb, null);
     mergedSegmentedDisplacementRgb =
-        updateImage(mergedSegmentedDisplacementRgb, lastShiftedSegmentedTitle,
+        updateImage(mergedSegmentedDisplacementRgb, LAST_SHIFTED_SEGMENTED_TITLE,
             mergedSegmentedDisplacementIp, showMergedSegmentedDisplacementRgb, null);
 
     // Create plots of the results
@@ -1335,12 +1255,12 @@ public class Cda_PlugIn extends PlugInFrame
         new FloatProcessor(rValuesForRandom.length, 1, rValuesForRandom, null);
 
     m1Statistics = refreshDisplayStatistics(m1Statistics, showM1Statistics, m1ValuesFp,
-        m1ValuesForRandom, m1HistogramTitle, Color.red, "M1 ", m1, OPT_LOCATION_STATS_M1);
+        m1ValuesForRandom, M1_HISTOGRAM_TITLE, Color.red, "M1 ", m1, OPT_LOCATION_STATS_M1);
     m2Statistics = refreshDisplayStatistics(m2Statistics, showM2Statistics, m2ValuesFp,
-        m2ValuesForRandom, m2HistogramTitle, Color.green, "M2 ", m2, OPT_LOCATION_STATS_M2);
-    correlationStatistics =
-        refreshDisplayStatistics(correlationStatistics, showRStatistics, rValuesFp,
-            rValuesForRandom, rHistogramTitle, Color.blue, "R ", correlation, OPT_LOCATION_STATS_R);
+        m2ValuesForRandom, M2_HISTOGRAM_TITLE, Color.green, "M2 ", m2, OPT_LOCATION_STATS_M2);
+    correlationStatistics = refreshDisplayStatistics(correlationStatistics, showRStatistics,
+        rValuesFp, rValuesForRandom, R_HISTOGRAM_TITLE, Color.blue, "R ", correlation,
+        OPT_LOCATION_STATS_R);
 
     final String id = generateId();
 
@@ -1447,12 +1367,12 @@ public class Cda_PlugIn extends PlugInFrame
       heading = new StringBuilder();
 
       addField(heading, "Exp. Id");
-      addField(heading, choiceChannel1);
-      addField(heading, choiceChannel2);
+      addField(heading, CHOICE_CHANNEL1);
+      addField(heading, CHOICE_CHANNEL2);
       addField(heading, "ROI 1");
       addField(heading, "ROI 2");
       addField(heading, "Confined");
-      addField(heading, choiceExpandConfined.trim());
+      addField(heading, CHOICE_EXPAND_CONFINED.trim());
       addField(heading, "D-max");
       addField(heading, "D-random");
       addField(heading, "Samples");
@@ -1504,7 +1424,7 @@ public class Cda_PlugIn extends PlugInFrame
         new PlotResults(value, histogramBins, Tools.toDouble(valuesForRandom), colour);
 
     statsPlot.setXTitle(xTitle);
-    statsPlot.setYTitle(plotPDFYLabel);
+    statsPlot.setYTitle(PLOT_PDF_Y_LABEL);
     statsPlot.setTitle("CDA " + xTitle + " PDF");
 
     // This is needed to calculate the probability limits for the results table
@@ -1542,7 +1462,7 @@ public class Cda_PlugIn extends PlugInFrame
   private Plot createPlot(double[] distances, double[] values, Color color, Color avColor,
       String title, String xLabel, String yLabel, double[] spacedX, double[] ceroValuesX,
       double[] ceroValuesY, double[] spacedY) {
-    final Plot plot = new Plot(title, xLabel.concat(pixelsUnitString), yLabel,
+    final Plot plot = new Plot(title, xLabel.concat(PIXELS_UNIT_STRING), yLabel,
         Plot.X_NUMBERS + Plot.Y_NUMBERS + Plot.X_TICKS + Plot.Y_TICKS);
 
     final double min = MathUtils.min(values);
@@ -1666,7 +1586,7 @@ public class Cda_PlugIn extends PlugInFrame
 
     if (randomRadius >= maximumRadius) {
       IJ.showMessage(PLUGIN_TITLE,
-          "Require '" + choiceRandomRadius + "' < '" + choiceMaximumRadius + "'");
+          "Require '" + CHOICE_RANDOM_RADIUS + "' < '" + CHOICE_MAXIMUM_RADIUS + "'");
       return false;
     }
 
@@ -1737,13 +1657,14 @@ public class Cda_PlugIn extends PlugInFrame
       if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16)) {
         // Check it is not one the result images
         final String imageTitle = imp.getTitle();
-        if ((imageTitle.equals(channel1RgbTitle)) || (imageTitle.equals(channel2RgbTitle))
-            || (imageTitle.equals(segmented1RgbTitle)) || (imageTitle.equals(segmented2RgbTitle))
-            || (imageTitle.equals(plotM1Title)) || (imageTitle.equals(plotM2Title))
-            || (imageTitle.equals(m1HistogramTitle)) || (imageTitle.equals(m2HistogramTitle))
-            || (imageTitle.equals(mergedChannelTitle)) || (imageTitle.equals(mergedSegmentedTitle))
-            || (imageTitle.equals(lastShiftedSegmentedTitle))
-            || (imageTitle.equals(lastShiftedChannelTitle))) {
+        if ((imageTitle.equals(CHANNEL1_RGB_TITLE)) || (imageTitle.equals(CHANNEL2_RGB_TITLE))
+            || (imageTitle.equals(SEGMENTED1_RGB_TITLE))
+            || (imageTitle.equals(SEGMENTED2_RGB_TITLE)) || (imageTitle.equals(PLOT_M1_TITLE))
+            || (imageTitle.equals(PLOT_M2_TITLE)) || (imageTitle.equals(M1_HISTOGRAM_TITLE))
+            || (imageTitle.equals(M2_HISTOGRAM_TITLE)) || (imageTitle.equals(MERGED_CHANNEL_TITLE))
+            || (imageTitle.equals(MERGED_SEGMENTED_TITLE))
+            || (imageTitle.equals(LAST_SHIFTED_SEGMENTED_TITLE))
+            || (imageTitle.equals(LAST_SHIFTED_CHANNEL_TITLE))) {
           continue;
         }
 
@@ -1761,69 +1682,122 @@ public class Cda_PlugIn extends PlugInFrame
     mainPanel.setLayout(mainGrid);
     add(mainPanel);
 
-    pixelsLabel = new Label(pixelsUnitString, 0);
+    pixelsLabel = new Label(PIXELS_UNIT_STRING, 0);
     pixelsLabel.setFont(MONO_FONT);
 
     mainPanel
         .add(createLabelPanel(null, "Channel/frame options for stacks pop-up at run-time", null));
 
     channel1List = new Choice();
-    mainPanel.add(createChoicePanel(channel1List, choiceChannel1));
+    mainPanel.add(createChoicePanel(channel1List, CHOICE_CHANNEL1));
 
     channel2List = new Choice();
-    mainPanel.add(createChoicePanel(channel2List, choiceChannel2));
+    mainPanel.add(createChoicePanel(channel2List, CHOICE_CHANNEL2));
 
     segmented1List = new Choice();
     segmented1Option = new Choice();
-    mainPanel.add(createRoiChoicePanel(segmented1List, segmented1Option, choiceSegmentedChannel1,
+    mainPanel.add(createRoiChoicePanel(segmented1List, segmented1Option, CHOICE_SEGMENTED_CHANNEL1,
         segmented1OptionIndex));
 
     segmented2List = new Choice();
     segmented2Option = new Choice();
-    mainPanel.add(createRoiChoicePanel(segmented2List, segmented2Option, choiceSegmentedChannel2,
+    mainPanel.add(createRoiChoicePanel(segmented2List, segmented2Option, CHOICE_SEGMENTED_CHANNEL2,
         segmented2OptionIndex));
 
     confinedList = new Choice();
     confinedOption = new Choice();
     mainPanel.add(
-        createRoiChoicePanel(confinedList, confinedOption, choiceConfined, confinedOptionIndex));
+        createRoiChoicePanel(confinedList, confinedOption, CHOICE_CONFINED, confinedOptionIndex));
 
     expandConfinedCheckbox = new Checkbox();
-    mainPanel.add(createCheckboxPanel(expandConfinedCheckbox, choiceExpandConfined,
+    mainPanel.add(createCheckboxPanel(expandConfinedCheckbox, CHOICE_EXPAND_CONFINED,
         expandConfinedCompartment));
 
     maximumRadiusText = new TextField();
-    mainPanel.add(createTextPanel(maximumRadiusText, choiceMaximumRadius, "" + maximumRadius));
-    maximumRadiusText.addKeyListener(this);
+    mainPanel.add(createTextPanel(maximumRadiusText, CHOICE_MAXIMUM_RADIUS, "" + maximumRadius));
+    final KeyAdapter keyAdpator = new KeyAdapter() {
+      @Override
+      public void keyReleased(KeyEvent event) {
+        final Object actioner = event.getSource();
+
+        if (actioner == null) {
+          return;
+        }
+
+        // Update the number of combinations
+        updateNumberOfSamples();
+      }
+    };
+    maximumRadiusText.addKeyListener(keyAdpator);
 
     randomRadiusText = new TextField();
-    mainPanel.add(createTextPanel(randomRadiusText, choiceRandomRadius, "" + randomRadius));
-    randomRadiusText.addKeyListener(this);
+    mainPanel.add(createTextPanel(randomRadiusText, CHOICE_RANDOM_RADIUS, "" + randomRadius));
+    randomRadiusText.addKeyListener(keyAdpator);
 
     subRandomSamplesCheckbox = new Checkbox();
     mainPanel.add(
-        createCheckboxPanel(subRandomSamplesCheckbox, choiceSubRandomSamples, subRandomSamples));
-    subRandomSamplesCheckbox.addItemListener(this);
+        createCheckboxPanel(subRandomSamplesCheckbox, CHOICE_SUB_RANDOM_SAMPLES, subRandomSamples));
+    ItemListener itemListener = (event) -> {
+      final Object actioner = event.getSource();
+
+      if (actioner == null) {
+        return;
+      }
+
+      if ((Checkbox) actioner == subRandomSamplesCheckbox) {
+        updateNumberOfSamples();
+        return;
+      }
+
+      if (setResultsOptionsCheckbox.getState()) {
+        setResultsOptionsCheckbox.setState(false);
+        setResultsOptions();
+        updateNumberOfSamples();
+      }
+    };
+    subRandomSamplesCheckbox.addItemListener(itemListener);
 
     numberOfSamplesField = new Label();
-    mainPanel.add(createLabelPanel(numberOfSamplesField, numberOfSamplesLabel, ""));
+    mainPanel.add(createLabelPanel(numberOfSamplesField, NUMBER_OF_SAMPLES_LABEL, ""));
     updateNumberOfSamples();
 
     binsText = new TextField();
-    mainPanel.add(createTextPanel(binsText, choiceBinsNumber, "" + histogramBins));
+    mainPanel.add(createTextPanel(binsText, CHOICE_BINS_NUMBER, "" + histogramBins));
 
     closeWindowsOnExitCheckbox = new Checkbox();
-    mainPanel.add(createCheckboxPanel(closeWindowsOnExitCheckbox, choiceCloseWindowsOnExit,
+    mainPanel.add(createCheckboxPanel(closeWindowsOnExitCheckbox, CHOICE_CLOSE_WINDOWS_ON_EXIT,
         closeWindowsOnExit));
 
     setResultsOptionsCheckbox = new Checkbox();
-    mainPanel.add(createCheckboxPanel(setResultsOptionsCheckbox, choiceSetOptions, false));
-    setResultsOptionsCheckbox.addItemListener(this);
+    mainPanel.add(createCheckboxPanel(setResultsOptionsCheckbox, CHOICE_SET_OPTIONS, false));
+    setResultsOptionsCheckbox.addItemListener(itemListener);
 
-    okButton = new Button(okButtonLabel);
-    okButton.addActionListener(this);
-    helpButton = new Button(helpButtonLabel);
-    helpButton.addActionListener(this);
+    @SuppressWarnings("unused")
+    ActionListener actionListener = event -> {
+      final Object actioner = event.getSource();
+
+      if (actioner == null) {
+        return;
+      }
+
+      if (((Button) actioner == okButton)) {
+        if (parametersReady()) {
+          // This will allow the Gui to remain responsive. No checks are made that the user
+          // does not press the button repeatedly.
+          final Thread thread = new Thread(this::doCda, "CDA_Plugin");
+          thread.start();
+        }
+      } else if ((Button) actioner == helpButton) {
+        final String macro =
+            "run('URL...', 'url=" + uk.ac.sussex.gdsc.help.UrlUtils.COLOCALISATION + "');";
+        new MacroRunner(macro);
+      }
+    };
+
+    okButton = new Button(OK_BUTTON_LABEL);
+    okButton.addActionListener(actionListener);
+    helpButton = new Button(HELP_BUTTON_LABEL);
+    helpButton.addActionListener(actionListener);
 
     final JPanel buttonPanel = new JPanel();
     final FlowLayout l = new FlowLayout();
@@ -2096,21 +2070,21 @@ public class Cda_PlugIn extends PlugInFrame
 
     final GenericDialog gd = new GenericDialog(PLUGIN_TITLE);
 
-    gd.addChoice(choiceChannel1.replace(" ", "_"), images, getTitle(images, channel1Index));
-    gd.addChoice(choiceChannel2.replace(" ", "_"), images, getTitle(images, channel2Index));
+    gd.addChoice(CHOICE_CHANNEL1.replace(" ", "_"), images, getTitle(images, channel1Index));
+    gd.addChoice(CHOICE_CHANNEL2.replace(" ", "_"), images, getTitle(images, channel2Index));
     // ROIs require two choice boxes
-    addRoiChoice(gd, choiceSegmentedChannel1, ROI_OPTIONS, images2, segmented1OptionIndex,
+    addRoiChoice(gd, CHOICE_SEGMENTED_CHANNEL1, ROI_OPTIONS, images2, segmented1OptionIndex,
         segmented1Index);
-    addRoiChoice(gd, choiceSegmentedChannel2, ROI_OPTIONS, images2, segmented2OptionIndex,
+    addRoiChoice(gd, CHOICE_SEGMENTED_CHANNEL2, ROI_OPTIONS, images2, segmented2OptionIndex,
         segmented2Index);
-    addRoiChoice(gd, choiceConfined, ROI_OPTIONS, images, confinedOptionIndex, confinedIndex);
+    addRoiChoice(gd, CHOICE_CONFINED, ROI_OPTIONS, images, confinedOptionIndex, confinedIndex);
 
-    gd.addCheckbox(choiceExpandConfined.trim().replace(" ", "_"), expandConfinedCompartment);
-    gd.addNumericField(choiceMaximumRadius, maximumRadius, 0);
-    gd.addNumericField(choiceRandomRadius, randomRadius, 0);
-    gd.addCheckbox(choiceSubRandomSamples.trim().replace(" ", "_"), subRandomSamples);
-    gd.addNumericField(choiceBinsNumber, histogramBins, 0);
-    gd.addCheckbox(choiceSetOptions.replace(" ", "_"), setOptions);
+    gd.addCheckbox(CHOICE_EXPAND_CONFINED.trim().replace(" ", "_"), expandConfinedCompartment);
+    gd.addNumericField(CHOICE_MAXIMUM_RADIUS, maximumRadius, 0);
+    gd.addNumericField(CHOICE_RANDOM_RADIUS, randomRadius, 0);
+    gd.addCheckbox(CHOICE_SUB_RANDOM_SAMPLES.trim().replace(" ", "_"), subRandomSamples);
+    gd.addNumericField(CHOICE_BINS_NUMBER, histogramBins, 0);
+    gd.addCheckbox(CHOICE_SET_OPTIONS.replace(" ", "_"), setOptions);
 
     gd.showDialog();
 

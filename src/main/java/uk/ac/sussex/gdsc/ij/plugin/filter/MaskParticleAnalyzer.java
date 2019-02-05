@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.ij.plugin.filter;
 
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.FileUtils;
 
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
@@ -50,12 +51,13 @@ import ij.text.TextWindow;
 
 import java.awt.Frame;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 /**
@@ -77,10 +79,6 @@ import java.util.logging.Logger;
  * and default scoped methods set to protected.
  */
 public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
-  private static String redirectTitle = "";
-  private static boolean particleSummary;
-  private static boolean saveHistogram;
-  private static String histogramFile = "";
   private ImagePlus restoreRedirectImp;
   private BufferedWriter out;
   private HashMap<Double, int[]> summaryHistogram;
@@ -107,6 +105,67 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     } catch (final Throwable ex) {
       // Reflection has failed
       firstParticle = lastParticle = null;
+    }
+  }
+
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String redirectTitle = "";
+    boolean particleSummary;
+    boolean saveHistogram;
+    String histogramFile = "";
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      redirectTitle = source.redirectTitle;
+      particleSummary = source.particleSummary;
+      saveHistogram = source.saveHistogram;
+      histogramFile = source.histogramFile;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
     }
   }
 
@@ -156,7 +215,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
         }
         Analyzer.setRedirectImage(restoreRedirectImp);
         close(out);
-        if (particleSummary) {
+        if (settings.particleSummary) {
           createSummary();
         }
         return DONE;
@@ -181,13 +240,14 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
         list[count++] = imp2.getTitle();
       }
       list = Arrays.copyOf(list, count);
+      settings = Settings.load();
       final GenericDialog gd = new GenericDialog("Mask Particle Analyzer...");
       gd.addMessage(
           "Analyses objects in an image.\n \nObjects are defined with contiguous pixels of the "
               + "same value.\nIgnore pixels outside any configured thresholds.");
-      gd.addChoice("Redirect_image", list, redirectTitle);
-      gd.addCheckbox("Particle_summary", particleSummary);
-      gd.addCheckbox("Save_histogram", saveHistogram);
+      gd.addChoice("Redirect_image", list, settings.redirectTitle);
+      gd.addCheckbox("Particle_summary", settings.particleSummary);
+      gd.addCheckbox("Save_histogram", settings.saveHistogram);
       if (noThreshold) {
         gd.addMessage(
             "Warning: The image is not thresholded / 8-bit binary mask.\nContinuing will use "
@@ -199,23 +259,23 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
         return DONE;
       }
       final int index = gd.getNextChoiceIndex();
-      redirectTitle = list[index];
-      particleSummary = gd.getNextBoolean();
-      if (particleSummary) {
+      settings.redirectTitle = list[index];
+      settings.particleSummary = gd.getNextBoolean();
+      if (settings.particleSummary) {
         summaryHistogram = new HashMap<>();
       }
-      saveHistogram = gd.getNextBoolean();
-      if (saveHistogram) {
-        histogramFile = ImageJUtils.getFilename("Histogram_file", histogramFile);
-        if (histogramFile != null) {
-          final int i = histogramFile.lastIndexOf('.');
-          if (i == -1) {
-            histogramFile += ".txt";
-          }
-          out = createOutput(histogramFile);
-          if (out == null) {
-            return DONE;
-          }
+      settings.saveHistogram = gd.getNextBoolean();
+      if (settings.saveHistogram) {
+        settings.histogramFile = ImageJUtils.getFilename("Histogram_file", settings.histogramFile);
+        if (settings.histogramFile != null) {
+          settings.histogramFile = FileUtils.addExtensionIfAbsent(settings.histogramFile, ".txt");
+        }
+      }
+      settings.save();
+      if (settings.histogramFile != null) {
+        out = createOutput(settings.histogramFile);
+        if (out == null) {
+          return DONE;
         }
       }
       if (Analyzer.isRedirectImage()) {
@@ -230,7 +290,8 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
           // Reflection has failed
         }
       }
-      final ImagePlus redirectImp = (index > 0) ? WindowManager.getImage(redirectTitle) : null;
+      final ImagePlus redirectImp =
+          (index > 0) ? WindowManager.getImage(settings.redirectTitle) : null;
       Analyzer.setRedirectImage(redirectImp);
 
       useGetPixelValue = imp.getProcessor() instanceof ColorProcessor;
@@ -262,7 +323,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
 
   private static BufferedWriter createOutput(String filename) {
     try {
-      final BufferedWriter out = Files.newBufferedWriter(new File(filename).toPath());
+      final BufferedWriter out = Files.newBufferedWriter(Paths.get(filename));
       out.write("Histogram\tParticle Value\tPixel Value\tCount");
       out.newLine();
       return out;
@@ -402,7 +463,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     if (hist != null) {
       final double particleValue = value;
       out = writeHistogram(out, rt.getCounter(), particleValue, hist);
-      if (particleSummary) {
+      if (settings.particleSummary) {
         // Create and store a cumulative histogram if we are summarising the particles
         if (summaryHistogram.containsKey(particleValue)) {
           int[] hist2 = summaryHistogram.get(particleValue);
@@ -662,7 +723,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     tp.scrollToTop();
 
     // Optionally save summary histogram to file
-    if (saveHistogram) {
+    if (settings.saveHistogram) {
       saveSummaryHistogram(order);
     }
   }
@@ -672,7 +733,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     if (summaryHistogram.isEmpty()) {
       return;
     }
-    final String summaryFilename = createSummaryFilename(histogramFile);
+    final String summaryFilename = createSummaryFilename(settings.histogramFile);
     BufferedWriter histogramWriter = createOutput(summaryFilename);
     int id = 1;
     for (int i = 0; i < order.size(); i++) {

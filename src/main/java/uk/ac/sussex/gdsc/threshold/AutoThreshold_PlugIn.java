@@ -41,6 +41,8 @@ import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.StackConverter;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 // Autothreshold segmentation
 // Following the guidelines at http://pacific.mpi-cbg.de/wiki/index.php/PlugIn_Design_Guidelines
 // ImageJ plugin by G. Landini at bham. ac. uk
@@ -73,20 +75,76 @@ import ij.process.StackConverter;
 public class AutoThreshold_PlugIn implements PlugIn {
   private static final String TITLE = "Auto Threshold";
 
-  // Original method variable changed to static to allow repeatability of dialog
-  private static String myMethod = AutoThreshold.Method.OTSU.toString();
-  private static boolean noBlack;
-  private static boolean noWhite;
-  private static boolean doIwhite = true;
-  private static boolean doIset;
-  private static boolean doIlog;
-  private static boolean doIstack;
-  private static boolean doIstackHistogram;
-
   /**
-   * The multiplier used within the MeanPlusSD calculation.
+   * Contains the settings that are the re-usable state of the plugin.
    */
-  private static double stdDevMultiplier = 3;
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String method = AutoThreshold.Method.OTSU.toString();
+    boolean noBlack;
+    boolean noWhite;
+    boolean doIwhite = true;
+    boolean doIset;
+    boolean doIlog;
+    boolean doIstack;
+    boolean doIstackHistogram;
+
+    /**
+     * The multiplier used within the MeanPlusSD calculation.
+     */
+    double stdDevMultiplier = 3;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      method = source.method;
+      noBlack = source.noBlack;
+      noWhite = source.noWhite;
+      doIwhite = source.doIwhite;
+      doIset = source.doIset;
+      doIlog = source.doIlog;
+      doIstack = source.doIstack;
+      doIstackHistogram = source.doIstackHistogram;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /**
    * Provide lazy loading of the methods.
@@ -145,22 +203,23 @@ public class AutoThreshold_PlugIn implements PlugIn {
     }
 
     // 2 - Ask for parameters:
+    final Settings settings = Settings.load();
     final GenericDialog gd = new GenericDialog(TITLE);
-    gd.addChoice("Method", MethodHolder.METHOD_NAMES, myMethod);
-    gd.addNumericField("StdDev_multiplier", stdDevMultiplier, 2);
+    gd.addChoice("Method", MethodHolder.METHOD_NAMES, settings.method);
+    gd.addNumericField("StdDev_multiplier", settings.stdDevMultiplier, 2);
     final String[] labels = new String[2];
     final boolean[] states = new boolean[2];
     labels[0] = "Ignore_black";
-    states[0] = noBlack;
+    states[0] = settings.noBlack;
     labels[1] = "Ignore_white";
-    states[1] = noWhite;
+    states[1] = settings.noWhite;
     gd.addCheckboxGroup(1, 2, labels, states);
-    gd.addCheckbox("White objects on black background", doIwhite);
-    gd.addCheckbox("SetThreshold instead of Threshold (single images)", doIset);
-    gd.addCheckbox("Show threshold values in log window", doIlog);
+    gd.addCheckbox("White objects on black background", settings.doIwhite);
+    gd.addCheckbox("SetThreshold instead of Threshold (single images)", settings.doIset);
+    gd.addCheckbox("Show threshold values in log window", settings.doIlog);
     if (imp.getStackSize() > 1) {
-      gd.addCheckbox("Stack", doIstack);
-      gd.addCheckbox("Use_stack_histogram", doIstackHistogram);
+      gd.addCheckbox("Stack", settings.doIstack);
+      gd.addCheckbox("Use_stack_histogram", settings.doIstackHistogram);
     }
     gd.addMessage(
         "The thresholded result of 8 & 16 bit images is shown\nin white [255] in 8 bits.\n"
@@ -175,27 +234,29 @@ public class AutoThreshold_PlugIn implements PlugIn {
     }
 
     // 3 - Retrieve parameters from the dialog
-    myMethod = gd.getNextChoice();
-    stdDevMultiplier = gd.getNextNumber();
-    noBlack = gd.getNextBoolean();
-    noWhite = gd.getNextBoolean();
-    doIwhite = gd.getNextBoolean();
-    doIset = gd.getNextBoolean();
-    doIlog = gd.getNextBoolean();
-    doIstack = false;
-    doIstackHistogram = false;
+    settings.method = gd.getNextChoice();
+    settings.stdDevMultiplier = gd.getNextNumber();
+    settings.noBlack = gd.getNextBoolean();
+    settings.noWhite = gd.getNextBoolean();
+    settings.doIwhite = gd.getNextBoolean();
+    settings.doIset = gd.getNextBoolean();
+    settings.doIlog = gd.getNextBoolean();
+    settings.doIstack = false;
+    settings.doIstackHistogram = false;
 
     final int stackSize = imp.getStackSize();
     if (stackSize > 1) {
-      doIstack = gd.getNextBoolean();
-      doIstackHistogram = gd.getNextBoolean();
-      if (doIstackHistogram) {
-        doIstack = true;
+      settings.doIstack = gd.getNextBoolean();
+      settings.doIstackHistogram = gd.getNextBoolean();
+      if (settings.doIstackHistogram) {
+        settings.doIstack = true;
       }
     }
 
+    settings.save();
+
     // 4 - Execute!
-    if (myMethod.equals("Try all")) {
+    if (settings.method.equals("Try all")) {
       ImageProcessor ip = imp.getProcessor();
       final int xe = ip.getWidth();
       final int ye = ip.getHeight();
@@ -204,21 +265,21 @@ public class AutoThreshold_PlugIn implements PlugIn {
       ImagePlus imp3;
       ImageStack tstack = null;
       ImageStack stackNew;
-      if (stackSize > 1 && doIstack) {
+      if (stackSize > 1 && settings.doIstack) {
         boolean doItAnyway = true;
         if (stackSize > 25) {
           final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE,
               "You might run out of memory.\n \nDisplay " + stackSize + " slices?\n \n "
                   + "\'No\' will process without display and\noutput results to the log window.");
           if (!d.yesPressed()) {
-            doIlog = true; // will show in the log window
+            settings.doIlog = true; // will show in the log window
             doItAnyway = false;
           }
           if (d.cancelPressed()) {
             return;
           }
         }
-        if (doIstackHistogram) { // global histogram
+        if (settings.doIstackHistogram) { // global histogram
           for (int k = 1; k < ml; k++) {
             tstack = new ImageStack(xe, ye);
             for (int j = 1; j <= stackSize; j++) {
@@ -228,14 +289,15 @@ public class AutoThreshold_PlugIn implements PlugIn {
             }
             imp2 = new ImagePlus(TITLE, tstack);
             imp2.updateAndDraw();
-            final Object[] result = exec(imp2, MethodHolder.METHODS[k], noWhite, noBlack, doIwhite,
-                doIset, doIlog, doIstackHistogram);
+            final Object[] result = exec(imp2, MethodHolder.METHODS[k], settings.noWhite,
+                settings.noBlack, settings.doIwhite, settings.doIset, settings.doIlog,
+                settings.doIstackHistogram);
             for (int j = 1; j <= stackSize; j++) {
               tstack.setSliceLabel(tstack.getSliceLabel(j) + " = " + result[0], j);
             }
             if (doItAnyway) {
               stackNew = /* cr. */expandStack(tstack, (xe + 2), (ye + 18), 1, 1);
-              imp3 = new ImagePlus("Auto Threshold", stackNew);
+              imp3 = new ImagePlus(TITLE, stackNew);
               imp3.updateAndDraw();
               final int sqrj = 1 + (int) Math.floor(Math.sqrt(stackSize));
               int sqrjp1 = sqrj - 1;
@@ -255,21 +317,22 @@ public class AutoThreshold_PlugIn implements PlugIn {
             for (int k = 1; k < ml; k++) {
               tstack.addSlice(MethodHolder.METHOD_NAMES[k], ip.duplicate());
             }
-            imp2 = new ImagePlus("Auto Threshold", tstack);
+            imp2 = new ImagePlus(TITLE, tstack);
             imp2.updateAndDraw();
-            if (doIlog) {
+            if (settings.doIlog) {
               IJ.log("Slice " + j);
             }
 
             for (int k = 1; k < ml; k++) {
               imp2.setSlice(k);
-              final Object[] result = exec(imp2, MethodHolder.METHODS[k], noWhite, noBlack,
-                  doIwhite, doIset, doIlog, doIstackHistogram);
+              final Object[] result = exec(imp2, MethodHolder.METHODS[k], settings.noWhite,
+                  settings.noBlack, settings.doIwhite, settings.doIset, settings.doIlog,
+                  settings.doIstackHistogram);
               tstack.setSliceLabel(tstack.getSliceLabel(k) + " = " + result[0], k);
             }
             if (doItAnyway) {
               stackNew = expandStack(tstack, (xe + 2), (ye + 18), 1, 1);
-              imp3 = new ImagePlus("Auto Threshold", stackNew);
+              imp3 = new ImagePlus(TITLE, stackNew);
               imp3.updateAndDraw();
               final MontageMaker mm = new MontageMaker();
               mm.makeMontage(imp3, 6, 3, 1.0, 1, (ml - 1), 1, 0, true);
@@ -292,21 +355,22 @@ public class AutoThreshold_PlugIn implements PlugIn {
       for (int k = 1; k < ml; k++) {
         tstack.addSlice(MethodHolder.METHOD_NAMES[k], ip.duplicate());
       }
-      imp2 = new ImagePlus("Auto Threshold", tstack);
+      imp2 = new ImagePlus(TITLE, tstack);
       imp2.updateAndDraw();
 
       IJ.log("Auto Threshold ...");
       for (int k = 1; k < ml; k++) {
         imp2.setSlice(k);
         final long start = System.currentTimeMillis();
-        final Object[] result = exec(imp2, MethodHolder.METHODS[k], noWhite, noBlack, doIwhite,
-            doIset, doIlog, doIstackHistogram);
+        final Object[] result =
+            exec(imp2, MethodHolder.METHODS[k], settings.noWhite, settings.noBlack,
+                settings.doIwhite, settings.doIset, settings.doIlog, settings.doIstackHistogram);
         IJ.log("  " + MethodHolder.METHOD_NAMES[k] + " = " + result[0] + " ("
             + IJ.d2s((System.currentTimeMillis() - start) / 1000.0, 4) + "s)");
         tstack.setSliceLabel(tstack.getSliceLabel(k) + " = " + result[0], k);
       }
       stackNew = expandStack(tstack, (xe + 2), (ye + 18), 1, 1);
-      imp3 = new ImagePlus("Auto Threshold", stackNew);
+      imp3 = new ImagePlus(TITLE, stackNew);
       imp3.updateAndDraw();
       final MontageMaker mm = new MontageMaker();
       mm.makeMontage(imp3, 6, 3, 1.0, 1, (ml - 1), 1, 0, true);
@@ -317,13 +381,13 @@ public class AutoThreshold_PlugIn implements PlugIn {
       }
       return;
     }
-    final AutoThreshold.Method method = AutoThreshold.getMethod(myMethod);
+    final AutoThreshold.Method method = AutoThreshold.getMethod(settings.method);
     // selected a method
     boolean success = false;
-    if (stackSize > 1 && (doIstack || doIstackHistogram)) { // whole stack
-      if (doIstackHistogram) { // one global histogram
-        final Object[] result =
-            exec(imp, method, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram);
+    if (stackSize > 1 && (settings.doIstack || settings.doIstackHistogram)) { // whole stack
+      if (settings.doIstackHistogram) { // one global histogram
+        final Object[] result = exec(imp, method, settings.noWhite, settings.noBlack,
+            settings.doIwhite, settings.doIset, settings.doIlog, settings.doIstackHistogram);
         if (((Integer) result[0]) != -1 && imp.getBitDepth() == 16) {
           new StackConverter(imp).convertToGray8();
         }
@@ -331,8 +395,8 @@ public class AutoThreshold_PlugIn implements PlugIn {
         success = true;
         for (int k = 1; k <= stackSize; k++) {
           imp.setSlice(k);
-          final Object[] result =
-              exec(imp, method, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram);
+          final Object[] result = exec(imp, method, settings.noWhite, settings.noBlack,
+              settings.doIwhite, settings.doIset, settings.doIlog, settings.doIstackHistogram);
           if (((Integer) result[0]) == -1) {
             success = false;// the threshold existed
           }
@@ -343,8 +407,8 @@ public class AutoThreshold_PlugIn implements PlugIn {
       }
       imp.setSlice(1);
     } else { // just one slice, leave as it is
-      final Object[] result =
-          exec(imp, method, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram);
+      final Object[] result = exec(imp, method, settings.noWhite, settings.noBlack,
+          settings.doIwhite, settings.doIset, settings.doIlog, settings.doIstackHistogram);
       if (((Integer) result[0]) != -1 && stackSize == 1 && imp.getBitDepth() == 16) {
         imp.setDisplayRange(0, 65535);
         imp.setProcessor(null, imp.getProcessor().convertToByte(true));

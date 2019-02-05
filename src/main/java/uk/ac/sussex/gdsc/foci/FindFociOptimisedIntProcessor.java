@@ -27,7 +27,6 @@ package uk.ac.sussex.gdsc.foci;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.Histogram;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.foci.FindFociBaseProcessor.Coordinate;
 
 import gnu.trove.list.array.TIntArrayList;
 

@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.clustering.Cluster;
 import uk.ac.sussex.gdsc.core.clustering.ClusterPoint;
 import uk.ac.sussex.gdsc.core.clustering.ClusteringAlgorithm;
@@ -61,10 +62,14 @@ import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Label;
 import java.awt.Point;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.ColorModel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Performs clustering on the latest Find Foci result held in memory. Optionally can draw the
@@ -77,7 +82,6 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
   private static int imageFlags = DOES_8G + DOES_16 + SNAPSHOT;
   private static int noImageFlags = NO_IMAGE_REQUIRED + FINAL_PROCESSING;
 
-  private static double radius = 100;
   //@formatter:off
   private static ClusteringAlgorithm[] algorithms = new ClusteringAlgorithm[] {
       ClusteringAlgorithm.PARTICLE_SINGLE_LINKAGE,
@@ -86,6 +90,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       ClusteringAlgorithm.PAIRWISE,
       ClusteringAlgorithm.PAIRWISE_WITHOUT_NEIGHBOURS
   };
+
   private static String[] names;
   static
   {
@@ -94,7 +99,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       names[i] = algorithms[i].toString();
     }
   }
-  private static int algorithm = 1;
+
   private static String[] weights = new String[] {
     "None",
     "Pixel count",
@@ -107,20 +112,17 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     "Intensity above saddle"
   };
   //@formatter:on
-  private static int weight = 2;
-  private static int minSize;
-  private static boolean showMask = true;
-  private static boolean eliminateEdgeClusters;
-  private static int border = 10;
-  private static boolean labelClusters;
-  private static boolean filterUsingPointROI;
-  private static double filterRadius = 50;
+
   private boolean myShowMask;
 
-  private static TextWindow resultsWindow;
-  private static TextWindow summaryWindow;
-  private static TextWindow matchWindow;
-  private static int resultId = 1;
+  private static final AtomicReference<TextWindow> resultsWindow = new AtomicReference<>();
+  private static final AtomicReference<TextWindow> summaryWindow = new AtomicReference<>();
+  private static final AtomicReference<TextWindow> matchWindow = new AtomicReference<>();
+  private static final AtomicInteger resultId = new AtomicInteger();
+
+  private TextWindow resultsOutput;
+  private TextWindow summaryOutput;
+  private TextWindow matchOutput;
 
   private ImagePlus imp;
   private boolean[] edge;
@@ -134,13 +136,97 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
   private ColorModel cm;
   private Label label;
 
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+  /** The settings most recently processed for clustering. */
+  private Settings processedSettings = new Settings(true);
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings(false));
+
+    double radius;
+    int algorithm;
+    int weight;
+    int minSize;
+    boolean showMask;
+    boolean eliminateEdgeClusters;
+    int border;
+    boolean labelClusters;
+    boolean filterUsingPointRoi;
+    double filterRadius;
+
+    Settings(boolean empty) {
+      if (empty) {
+        // No settings for clustering
+        filterRadius = -1;
+      } else {
+        // Set default clustering settings
+        radius = 100;
+        algorithm = 1;
+        weight = 2;
+        showMask = true;
+        border = 10;
+        filterRadius = 50;
+      }
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      radius = source.radius;
+      algorithm = source.algorithm;
+      weight = source.weight;
+      minSize = source.minSize;
+      showMask = source.showMask;
+      eliminateEdgeClusters = source.eliminateEdgeClusters;
+      border = source.border;
+      labelClusters = source.labelClusters;
+      filterUsingPointRoi = source.filterUsingPointRoi;
+      filterRadius = source.filterRadius;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
+
   @Override
   public int setup(String arg, ImagePlus imp) {
-    if (arg.equals("final")) {
+    if ("final".equals(arg)) {
       doClustering();
       displayResults();
       return DONE;
     }
+
     UsageTracker.recordPlugin(this.getClass(), arg);
 
     results = FindFoci_PlugIn.getLastResults();
@@ -290,23 +376,25 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
 
   @Override
   public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
+    settings = Settings.load();
+
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addHelp(UrlUtils.FIND_FOCI);
     gd.addMessage(TextUtils.pleural(results.size(), "result"));
 
-    gd.addSlider("Radius", 5, 500, radius);
-    gd.addChoice("Algorithm", names, names[algorithm]);
-    gd.addChoice("Weight", weights, weights[weight]);
-    gd.addSlider("Min_size", 1, 20, minSize);
+    gd.addSlider("Radius", 5, 500, settings.radius);
+    gd.addChoice("Algorithm", names, names[settings.algorithm]);
+    gd.addChoice("Weight", weights, weights[settings.weight]);
+    gd.addSlider("Min_size", 1, 20, settings.minSize);
     if (this.imp != null) {
-      gd.addCheckbox("Show_mask", showMask);
-      gd.addCheckbox("Eliminate_edge_clusters", eliminateEdgeClusters);
-      gd.addSlider("Border", 1, 20, border);
-      gd.addCheckbox("Label_clusters", labelClusters);
+      gd.addCheckbox("Show_mask", settings.showMask);
+      gd.addCheckbox("Eliminate_edge_clusters", settings.eliminateEdgeClusters);
+      gd.addSlider("Border", 1, 20, settings.border);
+      gd.addCheckbox("Label_clusters", settings.labelClusters);
 
       if (roiPoints != null) {
-        gd.addCheckbox("Filter_using_Point_ROI", filterUsingPointROI);
-        gd.addSlider("Filter_radius", 5, 500, filterRadius);
+        gd.addCheckbox("Filter_using_Point_ROI", settings.filterUsingPointRoi);
+        gd.addSlider("Filter_radius", 5, 500, settings.filterRadius);
       }
     }
 
@@ -322,7 +410,9 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     resetPreview();
     label = null;
 
-    if (gd.wasCanceled() || !dialogItemChanged(gd, null)) {
+    final boolean cancelled = gd.wasCanceled() || !dialogItemChanged(gd, null);
+    settings.save();
+    if (cancelled) {
       return DONE;
     }
 
@@ -331,22 +421,22 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
 
   @Override
   public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
-    radius = Math.abs(gd.getNextNumber());
-    algorithm = gd.getNextChoiceIndex();
-    weight = gd.getNextChoiceIndex();
-    minSize = (int) Math.abs(gd.getNextNumber());
+    settings.radius = Math.abs(gd.getNextNumber());
+    settings.algorithm = gd.getNextChoiceIndex();
+    settings.weight = gd.getNextChoiceIndex();
+    settings.minSize = (int) Math.abs(gd.getNextNumber());
     if (this.imp != null) {
-      myShowMask = showMask = gd.getNextBoolean();
-      eliminateEdgeClusters = gd.getNextBoolean();
-      border = (int) Math.abs(gd.getNextNumber());
-      if (border < 1) {
-        border = 1;
+      myShowMask = settings.showMask = gd.getNextBoolean();
+      settings.eliminateEdgeClusters = gd.getNextBoolean();
+      settings.border = (int) Math.abs(gd.getNextNumber());
+      if (settings.border < 1) {
+        settings.border = 1;
       }
-      labelClusters = gd.getNextBoolean();
+      settings.labelClusters = gd.getNextBoolean();
 
       if (roiPoints != null) {
-        filterUsingPointROI = gd.getNextBoolean();
-        filterRadius = Math.abs(gd.getNextNumber());
+        settings.filterUsingPointRoi = gd.getNextBoolean();
+        settings.filterRadius = Math.abs(gd.getNextNumber());
       }
     }
 
@@ -365,65 +455,58 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     label.setText(TextUtils.pleural(filteredClusters.size(), "Cluster"));
   }
 
-  private double lastRadius;
-  private int lastAlgorithm;
-  private int lastWeight;
-  private int lastMinSize;
-  private boolean lastEliminateEdgeClusters;
-  private int lastBorder;
-  private boolean lastfilterUsingPointRoi;
-  private double lastFilterRadius = -1;
-
   private void doClustering() {
     final long start = System.currentTimeMillis();
     IJ.showStatus("Clustering ...");
 
-    if (clusters == null || lastRadius != radius || lastAlgorithm != algorithm
-        || lastWeight != weight) {
-      lastRadius = radius;
-      lastAlgorithm = algorithm;
-      lastWeight = weight;
+    if (clusters == null || processedSettings.radius != settings.radius
+        || processedSettings.algorithm != settings.algorithm
+        || processedSettings.weight != settings.weight) {
+      processedSettings.radius = settings.radius;
+      processedSettings.algorithm = settings.algorithm;
+      processedSettings.weight = settings.weight;
 
       minSizeClusters = null;
 
-      final ClusteringEngine e = new ClusteringEngine(Prefs.getThreads(), algorithms[algorithm],
-          new ImageJTrackProgress());
+      final ClusteringEngine e = new ClusteringEngine(Prefs.getThreads(),
+          algorithms[settings.algorithm], new ImageJTrackProgress());
       final ArrayList<ClusterPoint> points = getPoints();
-      clusters = e.findClusters(points, radius);
+      clusters = e.findClusters(points, settings.radius);
       Collections.sort(clusters,
           (o1, o2) -> Double.compare(o2.getSumOfWeights(), o1.getSumOfWeights()));
     }
 
-    if (minSizeClusters == null || lastMinSize != minSize) {
+    if (minSizeClusters == null || processedSettings.minSize != settings.minSize) {
       minSizeClusters = clusters;
 
       edgeClusters = null;
 
-      if (minSize > 0) {
+      if (settings.minSize > 0) {
         minSizeClusters = new ArrayList<>(clusters.size());
         for (final Cluster c : clusters) {
-          if (c.getSize() >= minSize) {
+          if (c.getSize() >= settings.minSize) {
             minSizeClusters.add(c);
           }
         }
       }
 
-      lastMinSize = minSize;
+      processedSettings.minSize = settings.minSize;
     }
 
-    if (edgeClusters == null || lastEliminateEdgeClusters != eliminateEdgeClusters
-        || lastBorder != border) {
+    if (edgeClusters == null
+        || processedSettings.eliminateEdgeClusters != settings.eliminateEdgeClusters
+        || processedSettings.border != settings.border) {
       edgeClusters = minSizeClusters;
 
       filteredClusters = null;
 
-      if (imp != null && eliminateEdgeClusters && border > 0) {
+      if (imp != null && settings.eliminateEdgeClusters && settings.border > 0) {
         // Cache the edge particles
-        if (edge == null || lastBorder != border) {
+        if (edge == null || processedSettings.border != settings.border) {
           final ImageStack stack = imp.getImageStack();
           edge = new boolean[results.size() + 1];
           for (int s = 1; s <= stack.getSize(); s++) {
-            findEdgeObjects(stack.getProcessor(s), edge);
+            findEdgeObjects(stack.getProcessor(s), edge, settings.border);
           }
         }
 
@@ -439,15 +522,16 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
         }
       }
 
-      lastEliminateEdgeClusters = eliminateEdgeClusters;
-      lastBorder = border;
+      processedSettings.eliminateEdgeClusters = settings.eliminateEdgeClusters;
+      processedSettings.border = settings.border;
     }
 
     if (filteredClusters == null || (roiPoints != null
-        && (lastfilterUsingPointRoi != filterUsingPointROI || lastFilterRadius != filterRadius))) {
-      if (roiPoints != null && filterUsingPointROI) {
-        if (filteredClusters == null || lastFilterRadius != filterRadius) {
-          lastFilterRadius = filterRadius;
+        && (processedSettings.filterUsingPointRoi != settings.filterUsingPointRoi
+            || processedSettings.filterRadius != settings.filterRadius))) {
+      if (roiPoints != null && settings.filterUsingPointRoi) {
+        if (filteredClusters == null || processedSettings.filterRadius != settings.filterRadius) {
+          processedSettings.filterRadius = settings.filterRadius;
 
           final Coordinate[] actualPoints = roiPoints;
           final Coordinate[] predictedPoints = toCoordinates(edgeClusters);
@@ -456,7 +540,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
           final List<Coordinate> falseNegatives = null;
           final List<PointPair> matches = new ArrayList<>(edgeClusters.size());
           matchResult = MatchCalculator.analyseResults2D(actualPoints, predictedPoints,
-              filterRadius, truePositives, falsePositives, falseNegatives, matches);
+              settings.filterRadius, truePositives, falsePositives, falseNegatives, matches);
           filteredClusters = new ArrayList<>(matches.size());
           for (final PointPair pair : matches) {
             filteredClusters.add(edgeClusters.get(((TimeValuedPoint) pair.getPoint2()).time));
@@ -465,10 +549,10 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       } else {
         // No filtering
         filteredClusters = edgeClusters;
-        lastFilterRadius = -1;
+        processedSettings.filterRadius = -1;
       }
 
-      lastfilterUsingPointRoi = filterUsingPointROI;
+      processedSettings.filterUsingPointRoi = settings.filterUsingPointRoi;
     }
 
     final double seconds = (System.currentTimeMillis() - start) / 1000.0;
@@ -533,7 +617,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     createResultsTables();
 
     // Show the results
-    final String title = (imp != null) ? imp.getTitle() : "Result " + (resultId++);
+    final String title = (imp != null) ? imp.getTitle() : "Result " + resultId.incrementAndGet();
     final StringBuilder sb = new StringBuilder();
     final DescriptiveStatistics stats = new DescriptiveStatistics();
     final DescriptiveStatistics stats2 = new DescriptiveStatistics();
@@ -551,16 +635,16 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
 
       // Auto-width adjustment is only performed when number of rows is less than 10
       // so do this before it won't work
-      if (i == 9 && resultsWindow.getTextPanel().getLineCount() < 10) {
-        resultsWindow.append(sb.toString());
+      if (i == 9 && resultsOutput.getTextPanel().getLineCount() < 10) {
+        resultsOutput.append(sb.toString());
         sb.setLength(0);
       }
     }
-    resultsWindow.append(sb.toString());
+    resultsOutput.append(sb.toString());
 
     sb.setLength(0);
     sb.append(title).append('\t');
-    sb.append(MathUtils.rounded(radius)).append('\t');
+    sb.append(MathUtils.rounded(settings.radius)).append('\t');
     sb.append(results.size()).append('\t');
     sb.append(filteredClusters.size()).append('\t');
     sb.append((int) stats.getMin()).append('\t');
@@ -569,12 +653,12 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     sb.append(MathUtils.rounded(stats2.getMin())).append('\t');
     sb.append(MathUtils.rounded(stats2.getMax())).append('\t');
     sb.append(MathUtils.rounded(stats2.getMean())).append('\t');
-    summaryWindow.append(sb.toString());
+    summaryOutput.append(sb.toString());
 
     if (matchResult != null) {
       sb.setLength(0);
       sb.append(title).append('\t');
-      sb.append(MathUtils.rounded(filterRadius)).append('\t');
+      sb.append(MathUtils.rounded(settings.filterRadius)).append('\t');
       sb.append(matchResult.getNumberActual()).append('\t');
       sb.append(matchResult.getNumberPredicted()).append('\t');
       sb.append(matchResult.getTruePositives()).append('\t');
@@ -584,7 +668,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       sb.append(MathUtils.rounded(matchResult.getRecall())).append('\t');
       sb.append(MathUtils.rounded(matchResult.getPrecision())).append('\t');
       sb.append(MathUtils.rounded(matchResult.getFScore(1))).append('\t');
-      matchWindow.append(sb.toString());
+      matchOutput.append(sb.toString());
     }
 
     IJ.showStatus("");
@@ -592,7 +676,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
 
   private void labelClusters(ImagePlus clusterImp) {
     Overlay overlay = null;
-    if (labelClusters) {
+    if (settings.labelClusters) {
       final Roi roi = getClusterRoi(filteredClusters);
       if (roi != null) {
         overlay = new Overlay(roi);
@@ -602,7 +686,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     clusterImp.setOverlay(overlay);
   }
 
-  private static void findEdgeObjects(ImageProcessor ip, boolean[] edge) {
+  private static void findEdgeObjects(ImageProcessor ip, boolean[] edge, int border) {
     final int width = ip.getWidth();
     final int height = ip.getHeight();
 
@@ -655,6 +739,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     return roi;
   }
 
+  @Nullable
   private ArrayList<ClusterPoint> getPoints() {
     if (results == null) {
       return null;
@@ -668,8 +753,8 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     return points;
   }
 
-  private static double getWeight(FindFociResult result) {
-    switch (weight) {
+  private double getWeight(FindFociResult result) {
+    switch (settings.weight) {
       //@formatter:off
       case 0: return 1.0;
       case 1: return result.count;
@@ -686,35 +771,46 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
   }
 
   private void createResultsTables() {
-    resultsWindow = createWindow(resultsWindow, "Results", "Title\tCluster\tcx\tcy\tSize\tW", 300);
-    summaryWindow = createWindow(summaryWindow, "Summary",
+    resultsOutput = createWindow(resultsWindow, "Results", "Title\tCluster\tcx\tcy\tSize\tW", 300);
+    summaryOutput = createWindow(summaryWindow, "Summary",
         "Title\tRadius\tFoci\tClusters\tMin\tMax\tAv\tMin W\tMax W\tAv W", 300);
-    final Point p1 = resultsWindow.getLocation();
-    final Point p2 = summaryWindow.getLocation();
+    final Point p1 = resultsOutput.getLocation();
+    final Point p2 = summaryOutput.getLocation();
     if (p1.x == p2.x && p1.y == p2.y) {
-      p2.y += resultsWindow.getHeight();
-      summaryWindow.setLocation(p2);
+      p2.y += resultsOutput.getHeight();
+      summaryOutput.setLocation(p2);
     }
     if (matchResult == null) {
       return;
     }
-    matchWindow = createWindow(matchWindow, "Filter Result",
+    matchOutput = createWindow(matchWindow, "Filter Result",
         "Title\tRadius\tPoints\tClusters\tTP\tFN\tFP\tJaccard\tRecall\tPrecision\tF1", 300);
-    final Point p3 = matchWindow.getLocation();
+    final Point p3 = matchOutput.getLocation();
     if (p1.x == p3.x && p1.y == p3.y) {
-      p3.y += resultsWindow.getHeight();
-      matchWindow.setLocation(p3);
+      p3.y += resultsOutput.getHeight();
+      matchOutput.setLocation(p3);
     }
     if (p2.x == p3.x && p2.y == p3.y) {
-      p3.y += summaryWindow.getHeight();
-      matchWindow.setLocation(p3);
+      p3.y += summaryOutput.getHeight();
+      matchOutput.setLocation(p3);
     }
   }
 
-  private static TextWindow createWindow(TextWindow window, String title, String header,
-      int height) {
+  private static TextWindow createWindow(AtomicReference<TextWindow> windowReference, String title,
+      String header, int height) {
+    TextWindow window = windowReference.get();
     if (window == null || !window.isVisible()) {
       window = new TextWindow(TITLE + " " + title, header, "", 800, height);
+      // When it closes remove the reference to this window
+      final TextWindow closedWindow = window;
+      window.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosed(WindowEvent event) {
+          windowReference.compareAndSet(closedWindow, null);
+          super.windowClosed(event);
+        }
+      });
+      windowReference.set(window);
     }
     return window;
   }

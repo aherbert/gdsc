@@ -51,6 +51,7 @@ import org.apache.commons.math3.stat.inference.TestUtils;
 
 import java.awt.AWTEvent;
 import java.awt.Label;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Analyses the intensity of each channel within the brightest spot of the selected channel.
@@ -79,18 +80,83 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
   private static TextWindow results;
   private static boolean writeHeader = true;
 
-  private static int maskOption;
-  private static double blur = 3;
-  private static String thresholdMethod = AutoThreshold.Method.OTSU.toString();
-  private static double minSize = 50;
-  private static boolean showParticles;
-  private static int maxPeaks = 1;
-  private static double fraction = 0.9;
-  private static boolean showSpots;
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    int maskOption;
+    double blur = 3;
+    String thresholdMethod = AutoThreshold.Method.OTSU.toString();
+    double minSize = 50;
+    boolean showParticles;
+    int maxPeaks = 1;
+    double fraction = 0.9;
+    boolean showSpots;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      maskOption = source.maskOption;
+      blur = source.blur;
+      thresholdMethod = source.thresholdMethod;
+      minSize = source.minSize;
+      showParticles = source.showParticles;
+      maxPeaks = source.maxPeaks;
+      fraction = source.fraction;
+      showSpots = source.showSpots;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
   public int setup(String arg, ImagePlus imp) {
+    if ("final".equals(arg)) {
+      analyseImage();
+      return DONE;
+    }
+
     UsageTracker.recordPlugin(this.getClass(), arg);
 
     if (imp == null) {
@@ -99,10 +165,6 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     }
     this.imp = imp;
     final ImageProcessor ip = imp.getProcessor();
-    if (arg.equals("final")) {
-      analyseImage();
-      return DONE;
-    }
     min = ip.getMin();
     max = ip.getMax();
     return FLAGS;
@@ -118,6 +180,8 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
   /** {@inheritDoc} */
   @Override
   public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
+    settings = Settings.load();
+
     final GenericDialog gd = new GenericDialog(TITLE);
 
     spotChannel = imp.getChannel();
@@ -125,7 +189,7 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     final Roi roi = imp.getRoi();
     if (roi != null && roi.isArea()) {
       containsRoiMask = true;
-      gd.addChoice("Threshold_Channel", maskOptions, maskOptions[maskOption]);
+      gd.addChoice("Threshold_Channel", maskOptions, maskOptions[settings.maskOption]);
 
       // Set up the mask using the ROI
       maskIp = new ByteProcessor(imp.getWidth(), imp.getHeight());
@@ -140,14 +204,14 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     }
 
     gd.addChoice("Threshold_Channel", channels, channels[thresholdChannel - 1]);
-    gd.addSlider("Blur", 0.01, 5, blur);
-    gd.addChoice("Threshold_method", AutoThreshold.getMethods(), thresholdMethod);
+    gd.addSlider("Blur", 0.01, 5, settings.blur);
+    gd.addChoice("Threshold_method", AutoThreshold.getMethods(), settings.thresholdMethod);
     gd.addChoice("Spot_Channel", channels, channels[spotChannel - 1]);
-    gd.addSlider("Min_size", 50, 10000, minSize);
-    gd.addCheckbox("Show_particles", showParticles);
-    gd.addSlider("Max_peaks", 1, 10, maxPeaks);
-    gd.addSlider("Fraction", 0.01, 1, fraction);
-    gd.addCheckbox("Show_spots", showSpots);
+    gd.addSlider("Min_size", 50, 10000, settings.minSize);
+    gd.addCheckbox("Show_particles", settings.showParticles);
+    gd.addSlider("Max_peaks", 1, 10, settings.maxPeaks);
+    gd.addSlider("Fraction", 0.01, 1, settings.fraction);
+    gd.addCheckbox("Show_spots", settings.showSpots);
     gd.addMessage("");
     label = (Label) gd.getMessage();
 
@@ -156,7 +220,9 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     gd.addDialogListener(this);
     gd.showDialog();
 
-    if (gd.wasCanceled() || !dialogItemChanged(gd, null)) {
+    final boolean cancelled = gd.wasCanceled() || !dialogItemChanged(gd, null);
+    settings.save();
+    if (cancelled) {
       return DONE;
     }
 
@@ -167,29 +233,29 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
   @Override
   public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
     if (containsRoiMask) {
-      maskOption = gd.getNextChoiceIndex();
+      settings.maskOption = gd.getNextChoiceIndex();
     }
     thresholdChannel = gd.getNextChoiceIndex() + 1;
-    blur = gd.getNextNumber();
+    settings.blur = gd.getNextNumber();
     if (gd.invalidNumber()) {
       return false;
     }
-    thresholdMethod = gd.getNextChoice();
+    settings.thresholdMethod = gd.getNextChoice();
     spotChannel = gd.getNextChoiceIndex() + 1;
-    minSize = gd.getNextNumber();
+    settings.minSize = gd.getNextNumber();
     if (gd.invalidNumber()) {
-      minSize = 50;
+      settings.minSize = 50;
     }
-    showParticles = gd.getNextBoolean();
-    maxPeaks = (int) gd.getNextNumber();
-    if (gd.invalidNumber() || maxPeaks < 1) {
-      maxPeaks = 1;
+    settings.showParticles = gd.getNextBoolean();
+    settings.maxPeaks = (int) gd.getNextNumber();
+    if (gd.invalidNumber() || settings.maxPeaks < 1) {
+      settings.maxPeaks = 1;
     }
-    fraction = gd.getNextNumber();
+    settings.fraction = gd.getNextNumber();
     if (gd.invalidNumber()) {
-      fraction = 0.9;
+      settings.fraction = 0.9;
     }
-    showSpots = gd.getNextBoolean();
+    settings.showSpots = gd.getNextBoolean();
 
     // Preview checkbox will be null if running headless
     if (gd.getPreviewCheckbox() != null && !gd.getPreviewCheckbox().getState()) {
@@ -223,18 +289,18 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
       return;
     }
 
-    if (containsRoiMask && maskOption == 1) {
+    if (containsRoiMask && settings.maskOption == 1) {
       ip = maskIp.duplicate();
       ip.setThreshold(254, 255, ImageProcessor.NO_LUT_UPDATE);
     } else {
       // Blur the image
-      if (blur > 0) {
+      if (settings.blur > 0) {
         final GaussianBlur gb = new GaussianBlur();
-        gb.blurGaussian(ip, blur, blur, 0.002);
+        gb.blurGaussian(ip, settings.blur, settings.blur, 0.002);
       }
 
       // Threshold
-      final int t = AutoThreshold.getThreshold(thresholdMethod, ip.getHistogram());
+      final int t = AutoThreshold.getThreshold(settings.thresholdMethod, ip.getHistogram());
       ip.setThreshold(t, 65536, ImageProcessor.NO_LUT_UPDATE);
     }
 
@@ -247,7 +313,7 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
 
     final double maxSize = Double.POSITIVE_INFINITY;
     final ParticleAnalyzer pa =
-        new ParticleAnalyzer(analyserOptions, measurements, rt, minSize, maxSize);
+        new ParticleAnalyzer(analyserOptions, measurements, rt, settings.minSize, maxSize);
     pa.analyze(particlesImp, ip);
 
     final ImageProcessor particlesIp = particlesImp.getProcessor();
@@ -293,7 +359,7 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
       tmpImp = new ImagePlus("Dummy", ip);
     }
 
-    if (showParticles) {
+    if (settings.showParticles) {
       final ImageProcessor tmpIp = particlesIp.duplicate();
       tmpIp.setMinAndMax(0, noOfParticles);
       showImage(this.imp.getTitle() + " Particles", tmpIp);
@@ -322,12 +388,12 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
       final int options = FindFociProcessor.OPTION_STATS_INSIDE;
       final int centreMethod = FindFoci_PlugIn.CENTRE_MAX_VALUE_ORIGINAL;
       final double centreParameter = 0;
-      final double fractionParameter = fraction;
+      final double fractionParameter = settings.fraction;
 
       final FindFociResults result = ff.findMaxima(tmpImp, mask, backgroundMethod,
-          backgroundParameter, autoThresholdMethod, searchMethod, searchParameter, maxPeaks,
-          minSize, peakMethod, peakParameter, outputType, sortIndex, options, blur, centreMethod,
-          centreParameter, fractionParameter);
+          backgroundParameter, autoThresholdMethod, searchMethod, searchParameter,
+          settings.maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex, options,
+          settings.blur, centreMethod, centreParameter, fractionParameter);
       if (result == null) {
         continue;
       }
@@ -344,7 +410,7 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
       spotsIp.copyBits(spotIp, 0, 0, Blitter.ADD);
     }
 
-    if (showSpots) {
+    if (settings.showSpots) {
       spotsIp.setMinAndMax(0, noOfParticles);
       showImage(this.imp.getTitle() + " Spots", spotsIp);
     }
