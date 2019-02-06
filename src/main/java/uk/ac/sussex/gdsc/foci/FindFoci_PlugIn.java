@@ -2621,14 +2621,12 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
           // Double-click
           final TextField tf = (TextField) event.getSource();
           String path = tf.getText();
-          final boolean recording = Recorder.record;
-          Recorder.record = false;
+          Recorder.disablePathRecording();
           if (tf == textParamFile) {
             path = ImageJUtils.getFilename("Choose_a_parameter_file", path);
           } else {
             path = ImageJUtils.getDirectory("Choose_a_directory", path);
           }
-          Recorder.record = recording;
           if (path != null) {
             tf.setText(path);
           }
