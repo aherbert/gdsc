@@ -53,17 +53,17 @@ public class About_PlugIn implements PlugIn {
 
   @Override
   public void run(String arg) {
-    if (arg == null || arg.length() == 0) {
+    if (TextUtils.isNullOrEmpty(arg)) {
       arg = "about";
     }
 
     UsageTracker.recordPlugin(this.getClass(), arg);
-    if (arg.equals("about")) {
+    if ("about".equals(arg)) {
       showAbout();
       return;
     }
 
-    if (arg.equals("uninstall")) {
+    if ("uninstall".equals(arg)) {
       showUninstallDialog();
       return;
     }
