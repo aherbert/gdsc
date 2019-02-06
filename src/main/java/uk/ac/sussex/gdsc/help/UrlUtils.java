@@ -28,14 +28,14 @@ package uk.ac.sussex.gdsc.help;
  * Provides URLs.
  */
 public final class UrlUtils {
-  private static final String BASE_URL =
+  /** The URL for the GDSC ImageJ plugins web page. */
+  public static final String BASE_URL =
       "http://www.sussex.ac.uk/gdsc/intranet/microscopy/UserSupport/AnalysisProtocol/imagej/";
-
-  /** The URL for the colocalisation web page. */
+  /** The URL for the GDSC ImageJ colocalisation plugins web page. */
   public static final String COLOCALISATION = BASE_URL + "colocalisation";
-  /** The URL for the utility plugins web page. */
+  /** The URL for the GDSC ImageJ utility plugins web page. */
   public static final String UTILITY = BASE_URL + "utility";
-  /** The URL for the FindFoci web page. */
+  /** The URL for the GDSC FindFoci web page. */
   public static final String FIND_FOCI = BASE_URL + "findfoci";
 
   /** No public construction. */

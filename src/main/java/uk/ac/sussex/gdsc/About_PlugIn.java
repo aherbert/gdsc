@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc;
 
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
+import uk.ac.sussex.gdsc.help.UrlUtils;
 
 import ij.IJ;
 import ij.gui.GenericDialog;
@@ -43,8 +44,7 @@ import java.util.ArrayList;
 public class About_PlugIn implements PlugIn {
   /** The title of the plugin. */
   private static final String TITLE = "GDSC ImageJ Plugins";
-  private static final String HELP_URL =
-      "http://www.sussex.ac.uk/gdsc/intranet/microscopy/imagej/plugins";
+  private static final String HELP_URL = UrlUtils.BASE_URL;
   private static final String YEAR = "2019";
   private static final String PLUGINS = "Plugins";
 
