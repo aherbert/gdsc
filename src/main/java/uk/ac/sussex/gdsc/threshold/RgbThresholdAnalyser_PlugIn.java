@@ -37,6 +37,7 @@ import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 
 import java.io.File;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -123,7 +124,7 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
     settings.save();
 
     final File[] fileList = (new File(settings.dir1)).listFiles((dir, name) -> {
-      name = name.toLowerCase();
+      name = name.toLowerCase(Locale.US);
       return name.endsWith(".tif") || name.endsWith(".tiff");
     });
     if (fileList == null) {

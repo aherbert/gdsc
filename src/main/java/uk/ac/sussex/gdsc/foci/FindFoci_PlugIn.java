@@ -83,6 +83,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -532,7 +533,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
         map = new HashMap<>(parameters.size());
         for (final String line : parameters) {
           final int index = line.indexOf('=');
-          final String key = line.substring(0, index).trim().toLowerCase();
+          final String key = line.substring(0, index).trim().toLowerCase(Locale.US);
           final String value = line.substring(index + 1).trim();
           map.put(key, value);
         }
@@ -541,7 +542,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
 
     private String findString(String key) {
       String value;
-      key = key.toLowerCase();
+      key = key.toLowerCase(Locale.US);
       if (parameterOptions != null) {
         value = Macro.getValue(parameterOptions, key, "");
       } else {
@@ -555,7 +556,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
 
     private String findString(String key, String defaultValue) {
       String value;
-      key = key.toLowerCase();
+      key = key.toLowerCase(Locale.US);
       if (parameterOptions != null) {
         value = Macro.getValue(parameterOptions, key, "");
       } else {
@@ -586,7 +587,7 @@ public class FindFoci_PlugIn implements PlugIn, FindFociProcessor {
 
     private boolean findBoolean(String key) {
       if (parameterOptions != null) {
-        return isMatch(parameterOptions, key.toLowerCase() + " ");
+        return isMatch(parameterOptions, key.toLowerCase(Locale.US) + " ");
       }
       try {
         return Boolean.parseBoolean(findString(key));
