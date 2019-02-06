@@ -28,7 +28,7 @@ import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageAdapter;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.NonBlockingExtendedGenericDialog;
-import uk.ac.sussex.gdsc.core.utils.Settings;
+import uk.ac.sussex.gdsc.core.utils.SettingsList;
 
 import gnu.trove.list.array.TDoubleArrayList;
 
@@ -46,6 +46,7 @@ import ij.process.LUT;
 
 import java.awt.Checkbox;
 import java.awt.Choice;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -60,17 +61,76 @@ public class ColocatedMask_PlugIn implements PlugIn {
   private static final String[] MASK_MODE = {"Threshold", "Minimum display value"};
   private static final String[] COLOCATED_MODE = {"And", "Or"};
 
-  private static String selectedImage1 = "";
-  private static String selectedImage2 = "";
-  private static int maskMode;
-  private static int colocatedMode;
-
   private Checkbox preview;
   private int id1;
   private int id2;
 
-  /** The last settings. */
-  private Settings lastSettings;
+  /**
+   * A list of all the settings used for the last analysis. This is used in the analysis preview to
+   * determine if any work should be done.
+   */
+  private SettingsList lastSettingsList;
+
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String selectedImage1 = "";
+    String selectedImage2 = "";
+    int maskMode;
+    int colocatedMode;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      selectedImage1 = source.selectedImage1;
+      selectedImage2 = source.selectedImage2;
+      maskMode = source.maskMode;
+      colocatedMode = source.colocatedMode;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /**
    * Simple class to maintain a synchronized state of clean/dirty.
@@ -152,12 +212,13 @@ public class ColocatedMask_PlugIn implements PlugIn {
   }
 
   private boolean showDialog() {
+    settings = Settings.load();
     final String[] list = ImageJUtils.getImageList(0, new String[] {TITLE});
 
     final NonBlockingExtendedGenericDialog gd = new NonBlockingExtendedGenericDialog(TITLE);
     gd.addMessage("Create a mask from 2 images.\nImages must match XY dimensions.");
-    final Choice c1 = gd.addAndGetChoice("Image_1", list, selectedImage1);
-    final Choice c2 = gd.addAndGetChoice("Image_2", list, selectedImage2);
+    final Choice c1 = gd.addAndGetChoice("Image_1", list, settings.selectedImage1);
+    final Choice c2 = gd.addAndGetChoice("Image_2", list, settings.selectedImage2);
     final boolean dynamic = ImageJUtils.isShowGenericDialog();
     Worker worker = null;
     Thread thread = null;
@@ -167,13 +228,13 @@ public class ColocatedMask_PlugIn implements PlugIn {
         c2.select((c1.getSelectedIndex() + 1) % list.length);
       }
 
-      selectedImage1 = c1.getSelectedItem();
-      selectedImage2 = c2.getSelectedItem();
-      id1 = getId(selectedImage1);
-      id2 = getId(selectedImage2);
+      settings.selectedImage1 = c1.getSelectedItem();
+      settings.selectedImage2 = c2.getSelectedItem();
+      id1 = getId(settings.selectedImage1);
+      id2 = getId(settings.selectedImage2);
     }
-    gd.addChoice("Mask_mode", MASK_MODE, MASK_MODE[maskMode]);
-    gd.addChoice("Colocated_mode", COLOCATED_MODE, COLOCATED_MODE[colocatedMode]);
+    gd.addChoice("Mask_mode", MASK_MODE, MASK_MODE[settings.maskMode]);
+    gd.addChoice("Colocated_mode", COLOCATED_MODE, COLOCATED_MODE[settings.colocatedMode]);
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
 
     ImageListener imageListener = null;
@@ -237,6 +298,7 @@ public class ColocatedMask_PlugIn implements PlugIn {
       }
     }
     if (cancelled) {
+      settings.save();
       return false;
     }
 
@@ -244,12 +306,13 @@ public class ColocatedMask_PlugIn implements PlugIn {
     if (!upToDate) {
       readDialog(gd, false);
     }
+    settings.save();
 
     // Record options
-    Recorder.recordOption("Image_1", selectedImage1);
-    Recorder.recordOption("Image_2", selectedImage2);
-    Recorder.recordOption("Mask_mode", MASK_MODE[maskMode]);
-    Recorder.recordOption("Colocated_mode", COLOCATED_MODE[colocatedMode]);
+    Recorder.recordOption("Image_1", settings.selectedImage1);
+    Recorder.recordOption("Image_2", settings.selectedImage2);
+    Recorder.recordOption("Mask_mode", MASK_MODE[settings.maskMode]);
+    Recorder.recordOption("Colocated_mode", COLOCATED_MODE[settings.colocatedMode]);
 
     return true;
   }
@@ -260,10 +323,10 @@ public class ColocatedMask_PlugIn implements PlugIn {
   }
 
   private void readDialog(GenericDialog gd, boolean preview) {
-    selectedImage1 = gd.getNextChoice();
-    selectedImage2 = gd.getNextChoice();
-    maskMode = gd.getNextChoiceIndex();
-    colocatedMode = gd.getNextChoiceIndex();
+    settings.selectedImage1 = gd.getNextChoice();
+    settings.selectedImage2 = gd.getNextChoice();
+    settings.maskMode = gd.getNextChoiceIndex();
+    settings.colocatedMode = gd.getNextChoiceIndex();
 
     createMaskWork(preview);
   }
@@ -278,16 +341,16 @@ public class ColocatedMask_PlugIn implements PlugIn {
   }
 
   private void createMask(boolean preview) {
-    final ImagePlus imp1 = WindowManager.getImage(selectedImage1);
-    final ImagePlus imp2 = WindowManager.getImage(selectedImage2);
+    final ImagePlus imp1 = WindowManager.getImage(settings.selectedImage1);
+    final ImagePlus imp2 = WindowManager.getImage(settings.selectedImage2);
 
     if (imp1 == null) {
-      IJ.error(TITLE, "Image " + selectedImage1
+      IJ.error(TITLE, "Image " + settings.selectedImage1
           + " has been closed.\nPlease restart the plugin to refresh the image list.");
       return;
     }
     if (imp2 == null) {
-      IJ.error(TITLE, "Image " + selectedImage2
+      IJ.error(TITLE, "Image " + settings.selectedImage2
           + " has been closed.\nPlease restart the plugin to refresh the image list.");
       return;
     }
@@ -353,12 +416,13 @@ public class ColocatedMask_PlugIn implements PlugIn {
     }
 
     // Check if it is worth doing any work.
-    final Settings settings = new Settings(id1, id2, width, height, dimensions1[2], dimensions1[3],
-        dimensions1[4], dimensions2[2], dimensions2[3], dimensions2[4], colocatedMode, list);
-    if (settings.equals(lastSettings)) {
+    final SettingsList settingsList =
+        new SettingsList(id1, id2, width, height, dimensions1[2], dimensions1[3], dimensions1[4],
+            dimensions2[2], dimensions2[3], dimensions2[4], settings.colocatedMode, list);
+    if (settingsList.equals(lastSettingsList)) {
       return;
     }
-    lastSettings = settings;
+    lastSettingsList = settingsList;
 
     final ImageStack imageStack1 = imp1.getStack();
     final ImageStack imageStack2 = imp2.getStack();
@@ -378,7 +442,7 @@ public class ColocatedMask_PlugIn implements PlugIn {
               imageStack2.getProcessor(imp2.getStackIndex(frame, slice, frame));
           final byte[] b = (byte[]) outputStack.getPixels(imp1.getStackIndex(frame, slice, frame));
 
-          if (colocatedMode == 0) {
+          if (settings.colocatedMode == 0) {
             // AND
             for (int i = ip2.getPixelCount(); i-- > 0;) {
               if (ip1.getf(i) >= min1 && ip2.getf(i) >= min2) {
@@ -405,10 +469,10 @@ public class ColocatedMask_PlugIn implements PlugIn {
     }
   }
 
-  private static double getMin(ImagePlus imp, int channel) {
+  private double getMin(ImagePlus imp, int channel) {
     // Clip channel
     channel = Math.min(channel, imp.getNChannels());
-    return (maskMode == 0) ? getThreshold(imp, channel) : getDisplayRangeMin(imp, channel);
+    return (settings.maskMode == 0) ? getThreshold(imp, channel) : getDisplayRangeMin(imp, channel);
   }
 
   private static double getThreshold(ImagePlus imp, int channel) {
