@@ -61,7 +61,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -1194,6 +1193,16 @@ public class Match_PlugIn implements PlugIn {
     }
   }
 
+  private static int comparePairsByTime(PointPair o1, PointPair o2) {
+    final TimeValuedPoint p1 = (TimeValuedPoint) o1.getPoint1();
+    final TimeValuedPoint p2 = (TimeValuedPoint) o2.getPoint1();
+    return compareByTime(p1, p2);
+  }
+
+  private static int compareByTime(TimeValuedPoint p1, TimeValuedPoint p2) {
+    return Integer.compare(p1.getTime(), p2.getTime());
+  }
+
   /**
    * Build a table showing the matched pairs and unmatched points.
    *
@@ -1223,14 +1232,7 @@ public class Match_PlugIn implements PlugIn {
       IJ.log(header);
     }
 
-    Collections.sort(matches, new Comparator<PointPair>() {
-      @Override
-      public int compare(PointPair o1, PointPair o2) {
-        final TimeValuedPoint p1 = (TimeValuedPoint) o1.getPoint1();
-        final TimeValuedPoint p2 = (TimeValuedPoint) o2.getPoint1();
-        return (p1.getTime() < p2.getTime()) ? -1 : 1;
-      }
-    });
+    Collections.sort(matches, Match_PlugIn::comparePairsByTime);
 
     for (final PointPair pair : matches) {
       int value = -1;
@@ -1245,18 +1247,8 @@ public class Match_PlugIn implements PlugIn {
     final TimeValuedPoint[] actualPoints = extractValuedPoints(falseNegatives);
     final TimeValuedPoint[] predictedPoints = extractValuedPoints(falsePositives);
 
-    Arrays.sort(actualPoints, new Comparator<TimeValuedPoint>() {
-      @Override
-      public int compare(TimeValuedPoint p1, TimeValuedPoint p2) {
-        return (p1.getTime() < p2.getTime()) ? -1 : 1;
-      }
-    });
-    Arrays.sort(predictedPoints, new Comparator<TimeValuedPoint>() {
-      @Override
-      public int compare(TimeValuedPoint p1, TimeValuedPoint p2) {
-        return (p1.getTime() < p2.getTime()) ? -1 : 1;
-      }
-    });
+    Arrays.sort(actualPoints, Match_PlugIn::compareByTime);
+    Arrays.sort(predictedPoints, Match_PlugIn::compareByTime);
 
     for (final TimeValuedPoint point : actualPoints) {
       final int value = (findFociImageIndex == 1) ? (int) point.value : -1;
