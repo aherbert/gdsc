@@ -289,9 +289,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
 
     final FindFociResult[] initialResultsArray = assignMaxima(maxima, maxpoints, stats);
 
-    // Free memory
-    maxpoints = null;
-
     assignpointsToMaxima(image, histogram, types, stats, maxima);
 
     if (ImageJUtils.isInterrupted()) {
@@ -648,9 +645,6 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
       return null;
     }
     final FindFociResult[] resultsArray = assignMaxima(maxima, maxpoints, stats);
-
-    // Free memory
-    maxpoints = null;
 
     assignpointsToMaxima(image, histogram, types, stats, maxima);
 
