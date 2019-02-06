@@ -157,7 +157,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
           validMin();
         }
       });
-      txtMinimum.setValue(new Double(0));
+      txtMinimum.setValue(Double.valueOf(0));
       final GridBagConstraints gbc_txtMinimum = new GridBagConstraints();
       gbc_txtMinimum.insets = new Insets(0, 0, 5, 0);
       gbc_txtMinimum.fill = GridBagConstraints.HORIZONTAL;
