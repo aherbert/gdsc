@@ -844,7 +844,8 @@ public class FindFociLegacy {
   private static int getThreshold(String autoThresholdMethod, int[] statsHistogram) {
     if (autoThresholdMethod.endsWith("evel")) {
       final MultiOtsuThreshold_PlugIn multi = new MultiOtsuThreshold_PlugIn();
-      multi.ignoreZero = false;
+      // Configure the algorithm
+      statsHistogram[0] = 0; // Ignore zero
       final int level = autoThresholdMethod.contains("_3_") ? 3 : 4;
       final int[] threshold = multi.calculateThresholds(statsHistogram, level);
       return threshold[1];

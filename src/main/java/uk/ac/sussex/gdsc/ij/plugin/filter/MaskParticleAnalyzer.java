@@ -97,12 +97,14 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
 
   static {
     try {
+      // Do not run this in an AccessController.doPrivileged block.
+      // If not allowed then no attempt will be made to use reflection again.
       firstParticle = Analyzer.class.getDeclaredField("firstParticle");
       firstParticle.setAccessible(true);
 
       lastParticle = Analyzer.class.getDeclaredField("lastParticle");
       lastParticle.setAccessible(true);
-    } catch (final Throwable ex) {
+    } catch (final Exception ex) {
       // Reflection has failed
       firstParticle = lastParticle = null;
     }
@@ -179,7 +181,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     if (firstParticle != null) {
       try {
         firstParticle.set(Analyzer.class, value);
-      } catch (final Throwable ex) {
+      } catch (final ExceptionInInitializerError | Exception ex) {
         // Reflection has failed
         firstParticle = null;
       }
@@ -196,7 +198,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     if (lastParticle != null) {
       try {
         lastParticle.set(Analyzer.class, value);
-      } catch (final Throwable ex) {
+      } catch (final ExceptionInInitializerError | Exception ex) {
         // Reflection has failed
         lastParticle = null;
       }
@@ -286,7 +288,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
           field.setAccessible(true);
           final int redirectTarget = (Integer) field.get(Analyzer.class);
           restoreRedirectImp = WindowManager.getImage(redirectTarget);
-        } catch (final Throwable ex) {
+        } catch (final ExceptionInInitializerError | Exception ex) {
           // Reflection has failed
         }
       }

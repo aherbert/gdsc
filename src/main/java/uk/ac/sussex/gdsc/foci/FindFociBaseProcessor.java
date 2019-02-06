@@ -428,8 +428,10 @@ public abstract class FindFociBaseProcessor implements FindFociProcessor {
     final int t;
     if (autoThresholdMethod.endsWith("evel")) {
       final MultiOtsuThreshold_PlugIn multi = new MultiOtsuThreshold_PlugIn();
-      multi.ignoreZero = false;
+      // Configure the algorithm
+      statsHistogram[0] = 0; // Ignore zero
       final int level = autoThresholdMethod.contains("_3_") ? 3 : 4;
+      // Run the algorithm
       final int[] threshold = multi.calculateThresholds(statsHistogram, level);
       t = threshold[1];
     } else {

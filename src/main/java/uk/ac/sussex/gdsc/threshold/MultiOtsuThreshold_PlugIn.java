@@ -37,7 +37,6 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 
 import java.awt.Color;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -63,7 +62,7 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
   /**
    * Contains the settings that are the re-usable state of the plugin.
    */
-  static class Settings {
+  private static class Settings {
     /** The last settings used by the plugin. This should be updated after plugin execution. */
     private static final AtomicReference<Settings> lastSettings =
         new AtomicReference<>(new Settings());
@@ -132,15 +131,6 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     void save() {
       lastSettings.set(this);
     }
-  }
-
-  /**
-   * Sets the settings. This allows use from other package level plugins.
-   *
-   * @param settings the new settings
-   */
-  void setSettings(Settings settings) {
-    this.settings = Objects.requireNonNull(settings);
   }
 
   /** {@inheritDoc} */
