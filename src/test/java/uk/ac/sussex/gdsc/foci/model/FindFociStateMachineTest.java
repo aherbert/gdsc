@@ -24,6 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci.model;
 
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
 import uk.ac.sussex.gdsc.test.rng.RngUtils;
@@ -41,6 +42,22 @@ import java.util.logging.Logger;
 @SuppressWarnings({"javadoc"})
 public class FindFociStateMachineTest {
   private static Logger logger;
+
+  private static class UpdateablePropertyChangeEvent extends PropertyChangeEvent {
+    private static final long serialVersionUID = 1L;
+
+    String name;
+
+    public UpdateablePropertyChangeEvent(Object source, String propertyName, Object oldValue,
+        Object newValue) {
+      super(source, propertyName, oldValue, newValue);
+    }
+
+    @Override
+    public String getPropertyName() {
+      return name;
+    }
+  }
 
   @BeforeAll
   public static void beforeAll() {
@@ -73,19 +90,24 @@ public class FindFociStateMachineTest {
       }
     }
 
+    final UpdateablePropertyChangeEvent event =
+        new UpdateablePropertyChangeEvent(this, "", oldValue, newValue);
+
     final long start = System.nanoTime();
     long steps = 0;
     while (steps < 1000000) {
       for (int j = 0, x = 0; j < 10; j++) {
         for (int i = 0; i < propertyNames.length; i++) {
           steps++;
-          sm.propertyChange(new PropertyChangeEvent(this, randomNames[x++], oldValue, newValue));
+          event.name = randomNames[x++];
+          sm.propertyChange(event);
+          // sm.propertyChange(new PropertyChangeEvent(this, randomNames[x++], oldValue, newValue));
         }
         sm.setState(FindFociState.COMPLETE);
       }
     }
 
-    logger.log(TestLogUtils.getRecord(level, "%d steps : %f ms", steps,
-        (System.nanoTime() - start) / 1000000.0));
+    logger.log(TestLogUtils.getRecord(level, "%d steps : %s", steps,
+        TextUtils.nanosToString(System.nanoTime() - start)));
   }
 }
