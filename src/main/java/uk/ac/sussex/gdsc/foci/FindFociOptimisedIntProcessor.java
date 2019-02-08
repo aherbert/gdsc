@@ -27,6 +27,7 @@ package uk.ac.sussex.gdsc.foci;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.Histogram;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
 
 import gnu.trove.list.array.TIntArrayList;
 
@@ -44,6 +45,23 @@ import java.util.Collections;
  */
 public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
   private int[] highestSaddleValues;
+
+  /**
+   * Instantiates a new find foci optimised int processor.
+   */
+  public FindFociOptimisedIntProcessor() {
+    super();
+  }
+
+  /**
+   * Instantiates a new find foci optimised int processor.
+   *
+   * @param searchCapacity The search capacity. This is the maximum number of potential maxima to
+   *        support (i.e. the upper limit on the ID for a candidate maxima).
+   */
+  public FindFociOptimisedIntProcessor(int searchCapacity) {
+    super(searchCapacity);
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -103,9 +121,8 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         if (isMax) {
           id++;
-          if (id >= FindFoci_PlugIn.searchCapacity) {
-            IJ.log("The number of potential maxima exceeds the search capacity: "
-                + FindFoci_PlugIn.searchCapacity
+          if (id >= searchCapacity) {
+            IJ.log("The number of potential maxima exceeds the search capacity: " + searchCapacity
                 + ". Try using a denoising/smoothing filter or increase the capacity.");
             return null;
           }
@@ -167,9 +184,8 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         if (isMax) {
           id++;
-          if (id >= FindFoci_PlugIn.searchCapacity) {
-            IJ.log("The number of potential maxima exceeds the search capacity: "
-                + FindFoci_PlugIn.searchCapacity
+          if (id >= searchCapacity) {
+            IJ.log("The number of potential maxima exceeds the search capacity: " + searchCapacity
                 + ". Try using a denoising/smoothing filter or increase the capacity.");
             return null;
           }
@@ -642,8 +658,9 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
   /** {@inheritDoc} */
   @Override
-  protected void pruneMaxima(Object pixels, byte[] types, int searchMethod, double searchParameter,
-      FindFociStatistics stats, FindFociResult[] resultsArray, int[] maxima) {
+  protected void pruneMaxima(Object pixels, byte[] types, SearchMethod searchMethod,
+      double searchParameter, FindFociStatistics stats, FindFociResult[] resultsArray,
+      int[] maxima) {
     setPixels(pixels);
 
     // Build an array containing the threshold for each peak.
@@ -657,12 +674,10 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
     for (int i = maxima.length; i-- > 0;) {
       final int id = maxima[i];
-      if (id != 0) {
-        if (image[i] < peakThreshold[id]) {
-          // Unset this pixel as part of the peak
-          maxima[i] = 0;
-          types[i] &= ~MAX_AREA;
-        }
+      if (id != 0 && image[i] < peakThreshold[id]) {
+        // Unset this pixel as part of the peak
+        maxima[i] = 0;
+        types[i] &= ~MAX_AREA;
       }
     }
   }

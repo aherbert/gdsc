@@ -27,7 +27,7 @@ package uk.ac.sussex.gdsc.foci;
 /**
  * Contains the statistics results of the FindFoci algorithm.
  */
-public class FindFociStatistics implements Cloneable {
+public class FindFociStatistics {
   /**
    * The minimum in the analysed region.
    */
@@ -87,16 +87,32 @@ public class FindFociStatistics implements Cloneable {
   public FindFociStatistics() {}
 
   /**
+   * Copy constructor.
+   *
+   * @param source the source
+   */
+  protected FindFociStatistics(FindFociStatistics source) {
+    regionMinimum = source.regionMinimum;
+    regionMaximum = source.regionMaximum;
+    regionAverage = source.regionAverage;
+    regionStdDev = source.regionStdDev;
+    regionTotal = source.regionTotal;
+    background = source.background;
+    totalAboveBackground = source.totalAboveBackground;
+    backgroundRegionMinimum = source.backgroundRegionMinimum;
+    backgroundRegionMaximum = source.backgroundRegionMaximum;
+    backgroundRegionAverage = source.backgroundRegionAverage;
+    backgroundRegionStdDev = source.backgroundRegionStdDev;
+    imageMinimum = source.imageMinimum;
+    totalAboveImageMinimum = source.totalAboveImageMinimum;
+  }
+
+  /**
    * Returns a copy of this statistics.
    *
-   * @return the find foci result
+   * @return the copy
    */
-  @Override
-  public FindFociStatistics clone() {
-    try {
-      return (FindFociStatistics) super.clone();
-    } catch (final CloneNotSupportedException ex) {
-      return null;
-    }
+  public FindFociStatistics copy() {
+    return new FindFociStatistics(this);
   }
 }

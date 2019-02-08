@@ -485,7 +485,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
           }
           // Get the latest settings (results may have changed since the text
           // window was constructed)
-          Settings latestSettings = Settings.load();
+          final Settings latestSettings = Settings.load();
           if (latestSettings.imp == null && latestSettings.manualImp == null) {
             return;
           }
@@ -792,7 +792,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
 
     @Override
     public void showOptionsDialog() {
-      Settings settings = Settings.load();
+      final Settings settings = Settings.load();
       final GenericDialog gd = new GenericDialog(TITLE + " Tool Options");
       gd.addNumericField("Min_distance", settings.minDistance, 2, 6, "pixels");
       gd.addNumericField("Factor", settings.factor, 2);

@@ -24,19 +24,19 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
 
 import org.jdesktop.beansbinding.Converter;
 
 /**
- * Convert the statistics mode to a flag indicating if the statistics parameter is enabled.
+ * Convert the background method to a flag indicating if the statistics parameter is enabled.
  */
 public class StatisticsModeParamEnabledConverter extends Converter<Integer, Boolean> {
   @Override
   public Boolean convertForward(Integer paramS) {
     final int statisticsMode = paramS.intValue();
-    return Boolean.valueOf(statisticsMode != FindFociProcessor.BACKGROUND_ABSOLUTE
-        && statisticsMode != FindFociProcessor.BACKGROUND_NONE);
+    return Boolean.valueOf(statisticsMode != BackgroundMethod.ABSOLUTE.ordinal()
+        && statisticsMode != BackgroundMethod.NONE.ordinal());
   }
 
   @Override

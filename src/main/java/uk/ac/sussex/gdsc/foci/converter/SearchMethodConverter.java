@@ -24,7 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
 
 import org.jdesktop.beansbinding.Converter;
 
@@ -32,7 +32,7 @@ import org.jdesktop.beansbinding.Converter;
  * Convert the search method.
  */
 public class SearchMethodConverter extends Converter<Integer, Object> {
-  private static final String[] searchMethods = FindFoci_PlugIn.getSearchMethods();
+  private static final String[] searchMethods = SearchMethod.getDescriptions();
 
   @Override
   public String convertForward(Integer paramT) {

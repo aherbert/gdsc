@@ -24,7 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci.controller;
 
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions;
 import uk.ac.sussex.gdsc.foci.FindFociResult;
 import uk.ac.sussex.gdsc.foci.FindFociResults;
 import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
@@ -144,86 +144,15 @@ public class FindMaximaController extends ImageJController {
 
     // Set-up the FindFoci variables
     final String maskImage = model.getMaskImage();
-    final int backgroundMethod = model.getBackgroundMethod();
-    final double backgroundParameter = model.getBackgroundParameter();
-    final String thresholdMethod = model.getThresholdMethod();
-    final String statisticsMode = model.getStatisticsMode();
-    final int searchMethod = model.getSearchMethod();
-    final double searchParameter = model.getSearchParameter();
-    final int minSize = model.getMinSize();
-    final boolean minimumAboveSaddle = model.isMinimumAboveSaddle();
-    final boolean connectedAboveSaddle = model.isConnectedAboveSaddle();
-    final int peakMethod = model.getPeakMethod();
-    final double peakParameter = model.getPeakParameter();
-    final int sortMethod = model.getSortMethod();
-    final int maxPeaks = model.getMaxPeaks();
-    final int showMask = model.getShowMask();
-    final boolean overlayMask = model.isOverlayMask();
-    final boolean showTable = model.isShowTable();
-    final boolean clearTable = model.isClearTable();
-    final boolean markMaxima = model.isMarkMaxima();
-    final boolean markRoiMaxima = model.isMarkRoiMaxima();
-    final boolean markUsingOverlay = model.isMarkUsingOverlay();
-    final boolean hideLabels = model.isHideLabels();
-    final boolean showLogMessages = model.isShowLogMessages();
-    final double gaussianBlur = model.getGaussianBlur();
-    final int centreMethod = model.getCentreMethod();
-    final double centreParameter = model.getCentreParameter();
-    final double fractionParameter = model.getFractionParameter();
-
-    int outputType = FindFoci_PlugIn.getOutputMaskFlags(showMask);
-
-    if (overlayMask) {
-      outputType += FindFociProcessor.OUTPUT_OVERLAY_MASK;
-    }
-    if (showTable) {
-      outputType += FindFociProcessor.OUTPUT_RESULTS_TABLE;
-    }
-    if (clearTable) {
-      outputType += FindFociProcessor.OUTPUT_CLEAR_RESULTS_TABLE;
-    }
-    if (markMaxima) {
-      outputType += FindFociProcessor.OUTPUT_ROI_SELECTION;
-    }
-    if (markRoiMaxima) {
-      outputType += FindFociProcessor.OUTPUT_MASK_ROI_SELECTION;
-    }
-    if (markUsingOverlay) {
-      outputType += FindFociProcessor.OUTPUT_ROI_USING_OVERLAY;
-    }
-    if (hideLabels) {
-      outputType += FindFociProcessor.OUTPUT_HIDE_LABELS;
-    }
-    if (showLogMessages) {
-      outputType += FindFociProcessor.OUTPUT_LOG_MESSAGES;
-    }
-
-    int options = 0;
-    if (minimumAboveSaddle) {
-      options |= FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE;
-    }
-    if (connectedAboveSaddle) {
-      options |= FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
-    }
-    if (statisticsMode.equalsIgnoreCase("inside")) {
-      options |= FindFociProcessor.OPTION_STATS_INSIDE;
-    } else if (statisticsMode.equalsIgnoreCase("outside")) {
-      options |= FindFociProcessor.OPTION_STATS_OUTSIDE;
-    }
-
-    if (outputType == 0) {
-      return;
-    }
+    final FindFociProcessorOptions processorOptions = model.getProcessorOptions();
 
     model.setUnchanged();
 
     final ImagePlus mask = WindowManager.getImage(maskImage);
 
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
-    final FindFociResults results =
-        ff.findMaxima(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod,
-            searchMethod, searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType,
-            sortMethod, options, gaussianBlur, centreMethod, centreParameter, fractionParameter);
+    final FindFociResults results = ff.createFindFociProcessor(imp).findMaxima(imp, mask,
+        processorOptions);
 
     if (results != null) {
       final List<FindFociResult> newResultsArray = results.results;

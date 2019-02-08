@@ -28,6 +28,14 @@ import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.SortUtils;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
 import uk.ac.sussex.gdsc.help.UrlUtils;
 import uk.ac.sussex.gdsc.threshold.ThreadAnalyser_PlugIn;
 
@@ -48,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Finds spots in an image. Locates the closest neighbour spot within a radius and produces a line
@@ -58,20 +67,77 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
   /** The plugin title. */
   private static final String TITLE = "Spot Separation";
 
-  private static final String[] methods = {"MaxEntropy", "Yen"};
+  private static final String[] methods =
+      {ThresholdMethod.MAX_ENTROPY.getDescription(), ThresholdMethod.YEN.getDescription()};
 
   private static final int FLAGS = DOES_16 + DOES_8G;
-
-  private static String method = "";
-  private static double radius = 10;
-  private static boolean showSpotImage = true;
-  private static boolean showLineProfiles = true;
 
   private final LinkedList<String> plotProfiles = new LinkedList<>();
   private static TextWindow resultsWindow;
   private ImagePlus imp;
   private String resultEntry;
   private Calibration cal;
+
+  /** The current settings for the plugin instance. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String method = "";
+    double radius = 10;
+    boolean showSpotImage = true;
+    boolean showLineProfiles = true;
+
+    /**
+     * Default constructor.
+     */
+    Settings() {
+      // Do nothing
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source
+     */
+    private Settings(Settings source) {
+      method = source.method;
+      radius = source.radius;
+      showSpotImage = source.showSpotImage;
+      showLineProfiles = source.showLineProfiles;
+    }
+
+    /**
+     * Copy the settings.
+     *
+     * @return the settings
+     */
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -280,26 +346,28 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
     return offset;
   }
 
-  private static boolean showDialog() {
+  private boolean showDialog() {
+    settings = Settings.load();
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addHelp(UrlUtils.UTILITY);
 
     gd.addMessage("Analyse line profiles between spots within a separation distance");
 
-    gd.addChoice("Threshold_method", methods, method);
-    gd.addSlider("Radius", 5, 50, radius);
-    gd.addCheckbox("Show_spot_image", showSpotImage);
-    gd.addCheckbox("Show_line_profiles", showLineProfiles);
+    gd.addChoice("Threshold_method", methods, settings.method);
+    gd.addSlider("Radius", 5, 50, settings.radius);
+    gd.addCheckbox("Show_spot_image", settings.showSpotImage);
+    gd.addCheckbox("Show_line_profiles", settings.showLineProfiles);
 
     gd.showDialog();
     if (gd.wasCanceled()) {
       return false;
     }
 
-    method = gd.getNextChoice();
-    radius = gd.getNextNumber();
-    showSpotImage = gd.getNextBoolean();
-    showLineProfiles = gd.getNextBoolean();
+    settings.method = gd.getNextChoice();
+    settings.radius = gd.getNextNumber();
+    settings.showSpotImage = gd.getNextBoolean();
+    settings.showLineProfiles = gd.getNextBoolean();
+    settings.save();
 
     return true;
   }
@@ -369,46 +437,41 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
     return new FindFociResults(maximaImp, newResultsArray, null);
   }
 
-  private static FindFociResults runFindFoci(ImageProcessor ip) {
+  private FindFociResults runFindFoci(ImageProcessor ip) {
     // Run FindFoci to get the spots
     // Get each spot as a different number with the centre using the search
     // centre
 
     // Allow image thresholding
-    int backgroundMethod = FindFociProcessor.BACKGROUND_AUTO_THRESHOLD;
-    double backgroundParameter = 0;
+    final FindFociProcessorOptions processorOptions = new FindFociProcessorOptions();
+    processorOptions.setBackgroundMethod(BackgroundMethod.AUTO_THRESHOLD);
+    processorOptions.setBackgroundParameter(0);
     if (ip.getMinThreshold() != ImageProcessor.NO_THRESHOLD) {
-      backgroundMethod = FindFociProcessor.BACKGROUND_ABSOLUTE;
-      backgroundParameter = ip.getMinThreshold();
+      processorOptions.setBackgroundMethod(BackgroundMethod.ABSOLUTE);
+      processorOptions.setBackgroundParameter(ip.getMinThreshold());
     }
 
     // TODO - Find the best method for this
+    processorOptions.setThresholdMethod(ThresholdMethod.fromDescription(settings.method));
+    processorOptions.setSearchMethod(SearchMethod.ABOVE_BACKGROUND);
+    processorOptions.setMaxPeaks(100);
+    processorOptions.setMinSize(3);
+    processorOptions.setPeakMethod(PeakMethod.ABSOLUTE);
+    processorOptions.setPeakParameter(5);
+    processorOptions.getOptions().clear();
+    processorOptions.setStatisticsMethod(StatisticsMethod.INSIDE);
+    processorOptions.setMaskMethod(MaskMethod.PEAKS);
+    processorOptions.setSortMethod(SortMethod.MAX_VALUE);
+    processorOptions.setGaussianBlur(1.5);
+    processorOptions.setCentreMethod(CentreMethod.MAX_VALUE_SEARCH);
 
+    final ImagePlus tmpImp = new ImagePlus("tmp", ip);
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
-    final String autoThresholdMethod = method;
-    final int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
-    final double searchParameter = 0;
-    final int maxPeaks = 100;
-    final int minSize = 3;
-    final int peakMethod = FindFociProcessor.PEAK_ABSOLUTE;
-    final double peakParameter = 5;
-    final int outputType =
-        FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
-    final int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
-    final int options = FindFociProcessor.OPTION_STATS_INSIDE;
-    final double blur = 1.5;
-    final int centreMethod = FindFoci_PlugIn.CENTRE_MAX_VALUE_SEARCH;
-    final double centreParameter = 0;
-    final double fractionParameter = 0;
-
-    return ff.findMaxima(new ImagePlus("tmp", ip), null, backgroundMethod, backgroundParameter,
-        autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod,
-        peakParameter, outputType, sortIndex, options, blur, centreMethod, centreParameter,
-        fractionParameter);
+    return ff.createFindFociProcessor(tmpImp).findMaxima(tmpImp, null, processorOptions);
   }
 
-  private static void showSpotImage(ImagePlus maximaImp, List<FindFociResult> resultsArray) {
-    if (showSpotImage) {
+  private void showSpotImage(ImagePlus maximaImp, List<FindFociResult> resultsArray) {
+    if (settings.showSpotImage) {
       final ImageProcessor spotIp = maximaImp.getProcessor();
       spotIp.setMinAndMax(0, resultsArray.size());
       final String title = TITLE + " Spots";
@@ -466,8 +529,8 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
    * @return Array of indices that each point is assigned to. Unassigned points will have an index
    *         of -1.
    */
-  private static int[] assignClosestPairs(float[][] matrix) {
-    final float d2 = (float) (radius * radius);
+  private int[] assignClosestPairs(float[][] matrix) {
+    final float d2 = (float) (settings.radius * settings.radius);
     final int[] assigned = new int[matrix.length];
     Arrays.fill(assigned, -1);
     while (true) {
@@ -864,7 +927,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
   }
 
   private void closeOtherLineProfiles() {
-    if (!showLineProfiles) {
+    if (!settings.showLineProfiles) {
       return;
     }
     final Frame[] frames = WindowManager.getNonImageWindows();
@@ -891,7 +954,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
    * @param profileTitle the profile title
    */
   private void showLineProfile(float[] xValues, float[] yValues, String profileTitle) {
-    if (showLineProfiles) {
+    if (settings.showLineProfiles) {
       final Frame f = WindowManager.getFrame(profileTitle);
       final Plot plot = new Plot(profileTitle, "Distance", "Value");
       plot.addPoints(xValues, yValues, Plot.LINE);

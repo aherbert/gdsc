@@ -24,7 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
 
 import org.jdesktop.beansbinding.Converter;
 
@@ -35,7 +35,7 @@ public class BackgroundThresholdMethodEnabledConverter extends Converter<Integer
   @Override
   public Boolean convertForward(Integer paramS) {
     final int backgroundMethod = paramS.intValue();
-    return Boolean.valueOf(backgroundMethod == FindFociProcessor.BACKGROUND_AUTO_THRESHOLD);
+    return Boolean.valueOf(backgroundMethod == BackgroundMethod.AUTO_THRESHOLD.ordinal());
   }
 
   @Override

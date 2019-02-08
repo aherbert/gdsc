@@ -24,8 +24,13 @@
 
 package uk.ac.sussex.gdsc.foci.gui;
 
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
-import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
 import uk.ac.sussex.gdsc.foci.controller.FindFociController;
 import uk.ac.sussex.gdsc.foci.controller.MessageListener;
 import uk.ac.sussex.gdsc.foci.controller.NullController;
@@ -51,7 +56,6 @@ import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
 
 import ij.IJ;
-import ij.macro.MacroRunner;
 
 import org.jdesktop.beansbinding.AutoBinding;
 import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
@@ -194,15 +198,12 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
    * @param args the arguments
    */
   public static void main(String[] args) {
-    EventQueue.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final FindFociView frame = new FindFociView();
-          frame.setVisible(true);
-        } catch (final Exception ex) {
-          ex.printStackTrace();
-        }
+    EventQueue.invokeLater(() -> {
+      try {
+        final FindFociView frame = new FindFociView();
+        frame.setVisible(true);
+      } catch (final Exception ex) {
+        ex.printStackTrace();
       }
     });
   }
@@ -423,8 +424,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         comboBackgroundMethod.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboBackgroundMethod
-        .setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getBackgroundMethods()));
+    comboBackgroundMethod.setModel(new DefaultComboBoxModel<>(BackgroundMethod.getDescriptions()));
     comboBackgroundMethod.setSelectedIndex(3);
     final GridBagConstraints gbc_comboBackgroundMethod = new GridBagConstraints();
     gbc_comboBackgroundMethod.fill = GridBagConstraints.HORIZONTAL;
@@ -456,7 +456,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderBackgroundParam.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent event) {
-        if (model.getBackgroundMethod() != FindFociProcessor.BACKGROUND_ABSOLUTE) {
+        if (model.getBackgroundMethod() != BackgroundMethod.ABSOLUTE.ordinal()) {
           sliderBackgroundParam.firePropertyChange("value", 0, 1);
         }
       }
@@ -487,7 +487,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderBackgroundParamAbsolute.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent event) {
-        if (model.getBackgroundMethod() == FindFociProcessor.BACKGROUND_ABSOLUTE) {
+        if (model.getBackgroundMethod() == BackgroundMethod.ABSOLUTE.ordinal()) {
           sliderBackgroundParamAbsolute.firePropertyChange("value", 0, 1);
         }
       }
@@ -543,8 +543,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         comboThresholdMethod.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboThresholdMethod
-        .setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getAutoThresholdMethods()));
+    comboThresholdMethod.setModel(new DefaultComboBoxModel<>(ThresholdMethod.getDescriptions()));
     comboThresholdMethod.setSelectedIndex(10);
     final GridBagConstraints gbc_comboThresholdMethod = new GridBagConstraints();
     gbc_comboThresholdMethod.fill = GridBagConstraints.HORIZONTAL;
@@ -571,7 +570,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         comboStatisticsMode.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboStatisticsMode.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getStatisticsModes()));
+    comboStatisticsMode.setModel(new DefaultComboBoxModel<>(StatisticsMethod.getDescriptions()));
     final GridBagConstraints gbc_comboStatisticsMode = new GridBagConstraints();
     gbc_comboStatisticsMode.gridwidth = 2;
     gbc_comboStatisticsMode.insets = new Insets(0, 0, 5, 0);
@@ -619,7 +618,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         comboSearchMethod.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboSearchMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getSearchMethods()));
+    comboSearchMethod.setModel(new DefaultComboBoxModel<>(SearchMethod.getDescriptions()));
     comboSearchMethod.setSelectedIndex(0);
     final GridBagConstraints gbc_comboSearchMethod = new GridBagConstraints();
     gbc_comboSearchMethod.fill = GridBagConstraints.HORIZONTAL;
@@ -806,7 +805,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         comboPeakMethod.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboPeakMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getPeakMethods()));
+    comboPeakMethod.setModel(new DefaultComboBoxModel<>(PeakMethod.getDescriptions()));
     comboPeakMethod.setSelectedIndex(2);
     final GridBagConstraints gbc_comboPeakMethod = new GridBagConstraints();
     gbc_comboPeakMethod.gridwidth = 2;
@@ -838,7 +837,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderPeakParam.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent event) {
-        if (model.getPeakMethod() != FindFociProcessor.PEAK_ABSOLUTE) {
+        if (model.getPeakMethod() != PeakMethod.ABSOLUTE.ordinal()) {
           sliderPeakParam.firePropertyChange("value", 0, 1);
         }
       }
@@ -867,7 +866,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     sliderPeakParamAbsolute.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent event) {
-        if (model.getPeakMethod() == FindFociProcessor.PEAK_ABSOLUTE) {
+        if (model.getPeakMethod() == PeakMethod.ABSOLUTE.ordinal()) {
           sliderPeakParamAbsolute.firePropertyChange("value", 0, 1);
         }
       }
@@ -933,7 +932,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     final GridBagConstraints gbc_comboSortMethod = new GridBagConstraints();
     gbc_comboSortMethod.gridwidth = 2;
     gbc_comboSortMethod.insets = new Insets(0, 0, 5, 0);
-    comboSortMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getSortIndexMethods()));
+    comboSortMethod.setModel(new DefaultComboBoxModel<>(SortMethod.getDescriptions()));
     comboSortMethod.setSelectedIndex(1);
     gbc_comboSortMethod.fill = GridBagConstraints.HORIZONTAL;
     gbc_comboSortMethod.gridx = 1;
@@ -1015,7 +1014,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         comboShowMask.firePropertyChange("selectedItem", 0, 1);
       }
     });
-    comboShowMask.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getMaskOptions()));
+    comboShowMask.setModel(new DefaultComboBoxModel<>(MaskMethod.getDescriptions()));
     comboShowMask.setSelectedIndex(3);
     final GridBagConstraints gbc_comboShowMask = new GridBagConstraints();
     gbc_comboShowMask.gridwidth = 2;
@@ -1262,7 +1261,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     if (sortIndexError) {
       if (oldSortIndex != model.getSortMethod()) {
         IJ.log("WARNING: Image minimum is below zero and the chosen sort index is sensitive to "
-            + "negative values: " + FindFoci_PlugIn.getSortIndexMethod(model.getSortMethod()));
+            + "negative values: " + SortMethod.fromOrdinal(model.getSortMethod()));
       }
       oldSortIndex = model.getSortMethod();
     } else {

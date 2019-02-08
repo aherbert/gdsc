@@ -572,7 +572,7 @@ public class FindFociAdvancedOptions extends JDialog {
     autoBinding_1.bind();
     //
     final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty_2 =
-        BeanProperty.create("markROIMaxima");
+        BeanProperty.create("markRoiMaxima");
     final AutoBinding<FindFociModel, Boolean, JCheckBox, Boolean> autoBinding_2 =
         Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_2,
             chckbxMarkPeakMaxima, jCheckBoxBeanProperty);

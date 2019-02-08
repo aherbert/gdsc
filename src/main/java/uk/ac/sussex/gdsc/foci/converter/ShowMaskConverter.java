@@ -24,7 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
 
 import org.jdesktop.beansbinding.Converter;
 
@@ -32,17 +32,17 @@ import org.jdesktop.beansbinding.Converter;
  * Convert the mask options.
  */
 public class ShowMaskConverter extends Converter<Integer, Object> {
-  private static final String[] maskOptions = FindFoci_PlugIn.getMaskOptions();
+  private static final String[] maskMethods = MaskMethod.getDescriptions();
 
   @Override
   public String convertForward(Integer paramT) {
-    return maskOptions[paramT.intValue()];
+    return maskMethods[paramT.intValue()];
   }
 
   @Override
   public Integer convertReverse(Object paramS) {
-    for (int i = 0; i < maskOptions.length; i++) {
-      if (maskOptions[i].equals(paramS)) {
+    for (int i = 0; i < maskMethods.length; i++) {
+      if (maskMethods[i].equals(paramS)) {
         return Integer.valueOf(i);
       }
     }

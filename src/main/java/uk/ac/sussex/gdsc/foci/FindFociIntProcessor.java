@@ -25,6 +25,10 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.core.threshold.Histogram;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
 
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -51,6 +55,23 @@ import ij.process.ImageProcessor;
 public class FindFociIntProcessor extends FindFociBaseProcessor {
   /** The image. */
   protected int[] image;
+
+  /**
+   * Instantiates a new find foci int processor.
+   */
+  public FindFociIntProcessor() {
+    super();
+  }
+
+  /**
+   * Instantiates a new find foci int processor.
+   *
+   * @param searchCapacity The search capacity. This is the maximum number of potential maxima to
+   *        support (i.e. the upper limit on the ID for a candidate maxima).
+   */
+  public FindFociIntProcessor(int searchCapacity) {
+    super(searchCapacity);
+  }
 
   @Override
   protected Object extractImage(ImagePlus imp) {
@@ -90,24 +111,20 @@ public class FindFociIntProcessor extends FindFociBaseProcessor {
   }
 
   @Override
-  protected Histogram buildHistogram(int bitDepth, Object pixels, byte[] types, int statsMode) {
+  protected Histogram buildHistogram(int bitDepth, Object pixels, byte[] types,
+      StatisticsMethod statisticsMethod) {
     final int[] localImage = (int[]) pixels;
 
-    final int size = (int) Math.pow(2, bitDepth);
+    // Fast power of 2 computation
+    final int size = 1 << bitDepth;
 
     final int[] data = new int[size];
 
-    if (statsMode == OPTION_STATS_INSIDE) {
-      for (int i = localImage.length; i-- > 0;) {
-        if ((types[i] & EXCLUDED) == 0) {
-          data[localImage[i]]++;
-        }
-      }
-    } else {
-      for (int i = localImage.length; i-- > 0;) {
-        if ((types[i] & EXCLUDED) != 0) {
-          data[localImage[i]]++;
-        }
+    // Assume the method is either either inside or outside
+    final int flag = statisticsMethod == StatisticsMethod.INSIDE ? 0 : EXCLUDED;
+    for (int i = 0; i < localImage.length; i++) {
+      if ((types[i] & EXCLUDED) == flag) {
+        data[localImage[i]]++;
       }
     }
 
@@ -143,28 +160,28 @@ public class FindFociIntProcessor extends FindFociBaseProcessor {
   }
 
   @Override
-  protected float getSearchThreshold(int backgroundMethod, double backgroundParameter,
+  protected float getSearchThreshold(BackgroundMethod backgroundMethod, double backgroundParameter,
       FindFociStatistics stats) {
     switch (backgroundMethod) {
-      case BACKGROUND_ABSOLUTE:
+      case ABSOLUTE:
         // Ensure all points above the threshold parameter are found
         return round((backgroundParameter >= 0) ? backgroundParameter : 0);
 
-      case BACKGROUND_AUTO_THRESHOLD:
+      case AUTO_THRESHOLD:
         return round(stats.background);
 
-      case BACKGROUND_MEAN:
+      case MEAN:
         return round(stats.backgroundRegionAverage);
 
-      case BACKGROUND_STD_DEV_ABOVE_MEAN:
+      case STD_DEV_ABOVE_MEAN:
         return round(stats.backgroundRegionAverage
             + ((backgroundParameter >= 0) ? backgroundParameter * stats.backgroundRegionStdDev
                 : 0));
 
-      case BACKGROUND_MIN_ROI:
+      case MIN_MASK_OR_ROI:
         return round(stats.regionMinimum);
 
-      case BACKGROUND_NONE:
+      case NONE:
       default:
         // Ensure all the maxima are found
         return 0;
@@ -192,16 +209,16 @@ public class FindFociIntProcessor extends FindFociBaseProcessor {
   }
 
   @Override
-  protected float getTolerance(int searchMethod, double searchParameter, FindFociStatistics stats,
-      float v0) {
+  protected float getTolerance(SearchMethod searchMethod, double searchParameter,
+      FindFociStatistics stats, float v0) {
     switch (searchMethod) {
-      case SEARCH_ABOVE_BACKGROUND:
+      case ABOVE_BACKGROUND:
         return round(stats.background);
 
-      case SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND:
+      case FRACTION_OF_PEAK_MINUS_BACKGROUND:
         return round(stats.background + Math.max(0, searchParameter) * (v0 - stats.background));
 
-      case SEARCH_HALF_PEAK_VALUE:
+      case HALF_PEAK_VALUE:
         return round(stats.background + 0.5 * (v0 - stats.background));
 
       default:
@@ -210,18 +227,18 @@ public class FindFociIntProcessor extends FindFociBaseProcessor {
   }
 
   @Override
-  protected double getPeakHeight(int peakMethod, double peakParameter, FindFociStatistics stats,
-      float v0) {
+  protected double getPeakHeight(PeakMethod peakMethod, double peakParameter,
+      FindFociStatistics stats, float v0) {
     int height = 1;
     final double localPeakParameter = Math.max(0, peakParameter);
     switch (peakMethod) {
-      case PEAK_ABSOLUTE:
+      case ABSOLUTE:
         height = round(localPeakParameter);
         break;
-      case PEAK_RELATIVE:
+      case RELATIVE:
         height = round(v0 * localPeakParameter);
         break;
-      case PEAK_RELATIVE_ABOVE_BACKGROUND:
+      case RELATIVE_ABOVE_BACKGROUND:
         height = round((v0 - stats.background) * localPeakParameter);
         break;
       default:

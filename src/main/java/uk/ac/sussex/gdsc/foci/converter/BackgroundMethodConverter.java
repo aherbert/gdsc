@@ -24,7 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
 
 import org.jdesktop.beansbinding.Converter;
 
@@ -32,7 +32,7 @@ import org.jdesktop.beansbinding.Converter;
  * Convert the background method parameter.
  */
 public class BackgroundMethodConverter extends Converter<Integer, Object> {
-  private static final String[] backgroundMethods = FindFoci_PlugIn.getBackgroundMethods();
+  private static final String[] backgroundMethods = BackgroundMethod.getDescriptions();
 
   @Override
   public String convertForward(Integer paramT) {

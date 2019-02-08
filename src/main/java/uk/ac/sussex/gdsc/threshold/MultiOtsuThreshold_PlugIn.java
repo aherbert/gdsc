@@ -67,6 +67,19 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     private static final AtomicReference<Settings> lastSettings =
         new AtomicReference<>(new Settings());
 
+    /** The default settings to use when the plugin is used through the API. */
+    static final Settings defaultSettings;
+
+    static {
+      defaultSettings = new Settings();
+      defaultSettings.doStack = true;
+      defaultSettings.ignoreZero = true;
+      defaultSettings.showHistogram = false;
+      defaultSettings.showRegions = false;
+      defaultSettings.showMasks = false;
+      defaultSettings.logMessages = false;
+    }
+
     /** The number of levels. */
     int levels = 2;
     /**
@@ -281,7 +294,19 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     return getThresholds(levels, maxSig, offset, histogram);
   }
 
+  /**
+   * Creates the settings if absent. This is because the settings object is null upon class
+   * construction. This should be used before any method that requires settings is executed. Public
+   * API methods should ensure this is called.
+   */
+  private void createSettingsIfAbsent() {
+    if (settings == null) {
+      settings = Settings.defaultSettings;
+    }
+  }
+
   private int[] getThresholds(int levels, float[] maxSig, int[] offset, float[] histogram) {
+
     /////////////////////////////////////////////
     // Build lookup tables from histogram
     ////////////////////////////////////////////
@@ -337,6 +362,7 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
    * @return The normalised image histogram
    */
   private float[] buildHistogram(int[] data, int[] offset) {
+    createSettingsIfAbsent();
     if (settings.ignoreZero) {
       data[0] = 0;
     }
@@ -492,6 +518,8 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
    * @return The max between class significance
    */
   public float findMaxSigma(int mlevel, float[][] lookupTable, int[] thresholds, int greyLevels) {
+    createSettingsIfAbsent();
+
     for (int i = 0; i < thresholds.length; i++) {
       thresholds[i] = 0;
     }

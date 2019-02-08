@@ -28,8 +28,6 @@ import uk.ac.sussex.gdsc.foci.controller.OptimiserController;
 import uk.ac.sussex.gdsc.foci.converter.ValidImagesConverter;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
-import ij.macro.MacroRunner;
-
 import org.jdesktop.beansbinding.AutoBinding;
 import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.jdesktop.beansbinding.BeanProperty;

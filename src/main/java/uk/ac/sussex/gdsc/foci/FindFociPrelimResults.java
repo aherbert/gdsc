@@ -29,7 +29,7 @@ import ij.ImagePlus;
 /**
  * Contains the results of the FindFoci algorithm.
  */
-public class FindFociPrelimResults implements Cloneable {
+public class FindFociPrelimResults {
 
   /** The mask. */
   public final ImagePlus mask;
@@ -54,17 +54,22 @@ public class FindFociPrelimResults implements Cloneable {
   }
 
   /**
+   * Copy constructor.
+   *
+   * @param source the source
+   */
+  private FindFociPrelimResults(FindFociPrelimResults source) {
+    mask = source.mask;
+    results = source.results;
+    stats = source.stats;
+  }
+
+  /**
    * Returns a shallow copy of this set of results.
    *
    * @return the find foci results
    */
-  @Override
-  public FindFociPrelimResults clone() {
-    try {
-      final FindFociPrelimResults copy = (FindFociPrelimResults) super.clone();
-      return copy;
-    } catch (final CloneNotSupportedException ex) {
-      return null;
-    }
+  public FindFociPrelimResults copy() {
+    return new FindFociPrelimResults(this);
   }
 }

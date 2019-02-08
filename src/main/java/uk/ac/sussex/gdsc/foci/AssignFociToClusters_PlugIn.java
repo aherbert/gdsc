@@ -139,7 +139,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
   /** The current settings for the plugin instance. */
   private Settings settings;
   /** The settings most recently processed for clustering. */
-  private Settings processedSettings = new Settings(true);
+  private final Settings processedSettings = new Settings(true);
 
   /**
    * Contains the settings that are the re-usable state of the plugin.

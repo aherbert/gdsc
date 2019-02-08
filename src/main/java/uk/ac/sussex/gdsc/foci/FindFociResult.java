@@ -27,7 +27,7 @@ package uk.ac.sussex.gdsc.foci;
 /**
  * Contains the foci result of the FindFoci algorithm.
  */
-public class FindFociResult implements Cloneable {
+public class FindFociResult {
   /**
    * The X coordinate.
    */
@@ -142,17 +142,45 @@ public class FindFociResult implements Cloneable {
   public FindFociResult() {}
 
   /**
+   * Copy constructor.
+   *
+   * @param source the source
+   */
+  protected FindFociResult(FindFociResult source) {
+    x = source.x;
+    y = source.y;
+    z = source.z;
+    id = source.id;
+    count = source.count;
+    totalIntensity = source.totalIntensity;
+    maxValue = source.maxValue;
+    highestSaddleValue = source.highestSaddleValue;
+    saddleNeighbourId = source.saddleNeighbourId;
+    averageIntensity = source.averageIntensity;
+    totalIntensityAboveBackground = source.totalIntensityAboveBackground;
+    averageIntensityAboveBackground = source.averageIntensityAboveBackground;
+    countAboveSaddle = source.countAboveSaddle;
+    intensityAboveSaddle = source.intensityAboveSaddle;
+    totalIntensityAboveImageMinimum = source.totalIntensityAboveImageMinimum;
+    averageIntensityAboveImageMinimum = source.averageIntensityAboveImageMinimum;
+    sortValue = source.sortValue;
+    state = source.state;
+    object = source.object;
+    minx = source.minx;
+    miny = source.miny;
+    minz = source.minz;
+    maxx = source.maxx;
+    maxy = source.maxy;
+    maxz = source.maxz;
+  }
+
+  /**
    * Returns a copy of this result.
    *
-   * @return the find foci result
+   * @return the copy
    */
-  @Override
-  public FindFociResult clone() {
-    try {
-      return (FindFociResult) super.clone();
-    } catch (final CloneNotSupportedException ex) {
-      return null;
-    }
+  public FindFociResult copy() {
+    return new FindFociResult(this);
   }
 
   /**

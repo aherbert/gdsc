@@ -26,7 +26,10 @@
 package uk.ac.sussex.gdsc.foci.controller;
 
 import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.FindFociOptions;
+import uk.ac.sussex.gdsc.foci.FindFociOptions.OutputOption;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
 import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
@@ -103,171 +106,89 @@ public class ImageJController extends FindFociController {
     }
 
     // Set-up the FindFoci variables
-    final String maskImage = model.getMaskImage();
-    final int backgroundMethod = model.getBackgroundMethod();
-    final double backgroundParameter = model.getBackgroundParameter();
-    final String thresholdMethod = model.getThresholdMethod();
-    final String statisticsMode = model.getStatisticsMode();
-    final int searchMethod = model.getSearchMethod();
-    final double searchParameter = model.getSearchParameter();
-    final int minSize = model.getMinSize();
-    final boolean minimumAboveSaddle = model.isMinimumAboveSaddle();
-    final boolean connectedAboveSaddle = model.isConnectedAboveSaddle();
-    final int peakMethod = model.getPeakMethod();
-    final double peakParameter = model.getPeakParameter();
-    final int sortMethod = model.getSortMethod();
-    final int maxPeaks = model.getMaxPeaks();
-    final int showMask = model.getShowMask();
-    final boolean overlayMask = model.isOverlayMask();
-    final boolean showTable = model.isShowTable();
-    final boolean clearTable = model.isClearTable();
-    final boolean markMaxima = model.isMarkMaxima();
-    final boolean markRoiMaxima = model.isMarkRoiMaxima();
-    final boolean markUsingOverlay = model.isMarkUsingOverlay();
-    final boolean hideLabels = model.isHideLabels();
-    final boolean showMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
-    final boolean showLogMessages = model.isShowLogMessages();
-    final boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
-    final boolean saveResults = model.isSaveResults();
-    final String resultsDirectory = model.getResultsDirectory();
-    final boolean objectAnalysis = model.isObjectAnalysis();
-    final boolean saveToMemory = model.isSaveToMemory();
-    final boolean showObjectMask = model.isShowObjectMask();
-    final double gaussianBlur = model.getGaussianBlur();
-    final int centreMethod = model.getCentreMethod();
-    final double centreParameter = model.getCentreParameter();
-    final double fractionParameter = model.getFractionParameter();
-
-    int outputType = FindFoci_PlugIn.getOutputMaskFlags(showMask);
-
-    if (overlayMask) {
-      outputType += FindFociProcessor.OUTPUT_OVERLAY_MASK;
-    }
-    if (showTable) {
-      outputType += FindFociProcessor.OUTPUT_RESULTS_TABLE;
-    }
-    if (clearTable) {
-      outputType += FindFociProcessor.OUTPUT_CLEAR_RESULTS_TABLE;
-    }
-    if (markMaxima) {
-      outputType += FindFociProcessor.OUTPUT_ROI_SELECTION;
-    }
-    if (markRoiMaxima) {
-      outputType += FindFociProcessor.OUTPUT_MASK_ROI_SELECTION;
-    }
-    if (markUsingOverlay) {
-      outputType += FindFociProcessor.OUTPUT_ROI_USING_OVERLAY;
-    }
-    if (hideLabels) {
-      outputType += FindFociProcessor.OUTPUT_HIDE_LABELS;
-    }
-    if (!showMaskMaximaAsDots) {
-      outputType += FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
-    }
-    if (showLogMessages) {
-      outputType += FindFociProcessor.OUTPUT_LOG_MESSAGES;
-    }
-
-    int options = 0;
-    if (minimumAboveSaddle) {
-      options |= FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE;
-    }
-    if (connectedAboveSaddle) {
-      options |= FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
-    }
-    if (statisticsMode.equalsIgnoreCase("inside")) {
-      options |= FindFociProcessor.OPTION_STATS_INSIDE;
-    } else if (statisticsMode.equalsIgnoreCase("outside")) {
-      options |= FindFociProcessor.OPTION_STATS_OUTSIDE;
-    }
-    if (removeEdgeMaxima) {
-      options |= FindFociProcessor.OPTION_REMOVE_EDGE_MAXIMA;
-    }
-    if (objectAnalysis) {
-      options |= FindFociProcessor.OPTION_OBJECT_ANALYSIS;
-      if (showObjectMask) {
-        options |= FindFociProcessor.OPTION_SHOW_OBJECT_MASK;
-      }
-    }
-    if (saveToMemory) {
-      options |= FindFociProcessor.OPTION_SAVE_TO_MEMORY;
-    }
-
-    if (outputType == 0) {
-      IJ.showMessage("Error", "No results options chosen");
+    FindFociOptions options = model.getOptions();
+    if (options.getOptions().isEmpty()) {
+      IJ.error("Error", "No results options chosen");
       return;
+    }
+
+    final String maskImage = model.getMaskImage();
+    final FindFociProcessorOptions processorOptions = model.getProcessorOptions();
+    final boolean showLogMessages = model.isShowLogMessages();
+    if (!model.isSaveResults()) {
+      options.setResultsDirectory(null);
     }
 
     // Record the macro command
     if (Recorder.record) {
       // These options should match the parameter names assigned within the FindFoci GenericDialog.
-      Recorder.setCommand("FindFoci");
-      Recorder.recordOption("Mask", maskImage);
-      Recorder.recordOption("Background_method",
-          FindFoci_PlugIn.getBackgroundMethod(backgroundMethod));
-      Recorder.recordOption("Background_parameter", "" + backgroundParameter);
-      Recorder.recordOption("Auto_threshold", thresholdMethod);
-      Recorder.recordOption("Statistics_mode", statisticsMode);
-      Recorder.recordOption("Search_method", FindFoci_PlugIn.getSearchMethod(searchMethod));
-      Recorder.recordOption("Search_parameter", "" + searchParameter);
-      Recorder.recordOption("Minimum_size", "" + minSize);
-      if (minimumAboveSaddle) {
-        Recorder.recordOption("Minimum_above_saddle");
+      Recorder.setCommand(FindFoci_PlugIn.TITLE);
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_MASK, maskImage);
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_BACKGROUND_METHOD,
+          processorOptions.getBackgroundMethod().getDescription());
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_BACKGROUND_PARAMETER,
+          Double.toString(processorOptions.getBackgroundParameter()));
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_AUTO_THRESHOLD,
+          processorOptions.getThresholdMethod().getDescription());
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_STASTISTICS_MODE,
+          processorOptions.getStatisticsMethod().getDescription());
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_SEARCH_METHOD,
+          processorOptions.getSearchMethod().getDescription());
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_SEARCH_PARAMETER,
+          Double.toString(processorOptions.getSearchParameter()));
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_MINIMUM_SIZE,
+          Integer.toString(processorOptions.getMinSize()));
+      recordOption(FindFoci_PlugIn.OPTION_MINIMUM_SIZE_ABOVE_SADDLE,
+          processorOptions.isOption(AlgorithmOption.MINIMUM_ABOVE_SADDLE));
+      recordOption(FindFoci_PlugIn.OPTION_CONNECTED_ABOVE_SADDLE,
+          processorOptions.isOption(AlgorithmOption.CONTIGUOUS_ABOVE_SADDLE));
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_MINIMUM_PEAK_HEIGHT,
+          processorOptions.getPeakMethod().getDescription());
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_PEAK_PARAMETER,
+          Double.toString(processorOptions.getPeakParameter()));
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_SORT_METHOD,
+          processorOptions.getSortMethod().getDescription());
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_MAXIMUM_PEAKS,
+          Integer.toString(processorOptions.getMaxPeaks()));
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_SHOW_MASK,
+          processorOptions.getMaskMethod().getDescription());
+      recordOption(FindFoci_PlugIn.OPTION_OVERLAY_MASK,
+          options.isOption(OutputOption.OVERLAY_MASK));
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_FRACTION_PARAMETER,
+          Double.toString(processorOptions.getFractionParameter()));
+      recordOption(FindFoci_PlugIn.OPTION_SHOW_TABLE, options.isOption(OutputOption.RESULTS_TABLE));
+      recordOption(FindFoci_PlugIn.OPTION_CLEAR_TABLE,
+          options.isOption(OutputOption.CLEAR_RESULTS_TABLE));
+      recordOption(FindFoci_PlugIn.OPTION_MARK_MAXIMA,
+          options.isOption(OutputOption.ROI_SELECTION));
+      recordOption(FindFoci_PlugIn.OPTION_MARK_PEAK_MAXIMA,
+          options.isOption(OutputOption.MASK_ROI_SELECTION));
+      recordOption(FindFoci_PlugIn.OPTION_MARK_USING_OVERLAY,
+          options.isOption(OutputOption.ROI_USING_OVERLAY));
+      recordOption(FindFoci_PlugIn.OPTION_HIDE_LABELS, options.isOption(OutputOption.HIDE_LABELS));
+      recordOption(FindFoci_PlugIn.OPTION_SHOW_PEAK_MAXIMA_AS_DOTS,
+          processorOptions.isOption(AlgorithmOption.OUTPUT_MASK_PEAK_DOTS));
+      recordOption(FindFoci_PlugIn.OPTION_SHOW_LOG_MESSAGES, showLogMessages);
+      recordOption(FindFoci_PlugIn.OPTION_REMOVE_EDGE_MAXIMA,
+          processorOptions.isOption(AlgorithmOption.REMOVE_EDGE_MAXIMA));
+      if (options.getResultsDirectory() != null) {
+        Recorder.recordOption(FindFoci_PlugIn.OPTION_RESULTS_DIRECTORY,
+            options.getResultsDirectory());
       }
-      if (connectedAboveSaddle) {
-        Recorder.recordOption("Connected_above_saddle");
+      if (options.isOption(OutputOption.OBJECT_ANALYSIS)) {
+        Recorder.recordOption(FindFoci_PlugIn.OPTION_OBJECT_ANALYSIS);
+        recordOption(FindFoci_PlugIn.OPTION_SHOW_OBJECT_MASK,
+            options.isOption(OutputOption.SHOW_OBJECT_MASK));
       }
-      Recorder.recordOption("Minimum_peak_height", FindFoci_PlugIn.getPeakMethod(peakMethod));
-      Recorder.recordOption("Peak_parameter", "" + peakParameter);
-      Recorder.recordOption("Sort_method", FindFoci_PlugIn.getSortIndexMethod(sortMethod));
-      Recorder.recordOption("Maximum_peaks", "" + maxPeaks);
-      Recorder.recordOption("Show_mask", FindFoci_PlugIn.getMaskOption(showMask));
-      if (overlayMask) {
-        Recorder.recordOption("Overlay_mask");
-      }
-      Recorder.recordOption("Fraction_parameter", "" + fractionParameter);
-      if (showTable) {
-        Recorder.recordOption("Show_table");
-      }
-      if (clearTable) {
-        Recorder.recordOption("Clear_table");
-      }
-      if (markMaxima) {
-        Recorder.recordOption("Mark_maxima");
-      }
-      if (markRoiMaxima) {
-        Recorder.recordOption("Mark_peak_maxima");
-      }
-      if (markUsingOverlay) {
-        Recorder.recordOption("Mark_using_overlay");
-      }
-      if (hideLabels) {
-        Recorder.recordOption("Hide_labels");
-      }
-      if (showMaskMaximaAsDots) {
-        Recorder.recordOption("Show_peak_maxima_as_dots");
-      }
-      if (showLogMessages) {
-        Recorder.recordOption("Show_log_messages");
-      }
-      if (removeEdgeMaxima) {
-        Recorder.recordOption("Remove_edge_maxima");
-      }
-      if (saveResults) {
-        Recorder.recordOption("Results_directory", resultsDirectory);
-      }
-      if (objectAnalysis) {
-        Recorder.recordOption("Object_analysis");
-        if (showObjectMask) {
-          Recorder.recordOption("Show_object_mask");
-        }
-      }
-      if (saveToMemory) {
-        Recorder.recordOption("Save_to_memory");
-      }
-      Recorder.recordOption("Gaussian_blur", "" + gaussianBlur);
-      Recorder.recordOption("Centre_method", FindFoci_PlugIn.getCentreMethods()[centreMethod]);
-      Recorder.recordOption("Centre_parameter", "" + centreParameter);
+      recordOption(FindFoci_PlugIn.OPTION_SAVE_TO_MEMORY,
+          options.isOption(OutputOption.SAVE_TO_MEMORY));
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_GAUSSIAN_BLUR,
+          Double.toString(processorOptions.getGaussianBlur()));
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_CENTRE_METHOD,
+          processorOptions.getCentreMethod().getDescription());
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_CENTRE_PARAMETER,
+          Double.toString(processorOptions.getCentreParameter()));
+
       Recorder.saveCommand();
     }
 
@@ -278,12 +199,13 @@ public class ImageJController extends FindFociController {
     // Run the plugin
     UsageTracker.recordPlugin(FindFoci_PlugIn.class, "");
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
-    if (saveResults) {
-      ff.setResultsDirectory(resultsDirectory);
+    ff.exec(imp, mask, processorOptions, options, showLogMessages);
+  }
+
+  private static void recordOption(String key, boolean option) {
+    if (option) {
+      Recorder.recordOption(key);
     }
-    ff.exec(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod, searchMethod,
-        searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortMethod,
-        options, gaussianBlur, centreMethod, centreParameter, fractionParameter);
   }
 
   /** {@inheritDoc} */

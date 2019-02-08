@@ -28,7 +28,7 @@ package uk.ac.sussex.gdsc.foci;
  * Stores a 2D/3D point with a value.
  */
 public class ValuedPoint extends BasePoint {
-  private float value;
+  private final float value;
 
   /**
    * Instantiates a new valued point.

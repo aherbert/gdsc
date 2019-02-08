@@ -24,7 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
 
 import org.jdesktop.beansbinding.Converter;
 
@@ -35,7 +35,7 @@ public class PeakParamAbsoluteDisabledConverter extends Converter<Integer, Boole
   @Override
   public Boolean convertForward(Integer paramS) {
     final int searchMethod = paramS.intValue();
-    return Boolean.valueOf(searchMethod != FindFociProcessor.PEAK_ABSOLUTE);
+    return Boolean.valueOf(searchMethod != PeakMethod.ABSOLUTE.ordinal());
   }
 
   @Override

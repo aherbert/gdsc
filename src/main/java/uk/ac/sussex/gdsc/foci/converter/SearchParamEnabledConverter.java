@@ -24,7 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
 
 import org.jdesktop.beansbinding.Converter;
 
@@ -36,7 +36,7 @@ public class SearchParamEnabledConverter extends Converter<Integer, Boolean> {
   public Boolean convertForward(Integer paramS) {
     final int searchMethod = paramS.intValue();
     return Boolean
-        .valueOf(searchMethod == FindFociProcessor.SEARCH_FRACTION_OF_PEAK_MINUS_BACKGROUND);
+        .valueOf(searchMethod == SearchMethod.FRACTION_OF_PEAK_MINUS_BACKGROUND.ordinal());
   }
 
   @Override

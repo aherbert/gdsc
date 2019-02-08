@@ -24,7 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
 
 import org.jdesktop.beansbinding.Converter;
 
@@ -32,7 +32,7 @@ import org.jdesktop.beansbinding.Converter;
  * Convert the peak method.
  */
 public class PeakMethodConverter extends Converter<Integer, Object> {
-  private static final String[] peakMethods = FindFoci_PlugIn.getPeakMethods();
+  private static final String[] peakMethods = PeakMethod.getDescriptions();
 
   @Override
   public String convertForward(Integer paramT) {

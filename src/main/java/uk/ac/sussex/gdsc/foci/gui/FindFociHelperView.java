@@ -27,9 +27,12 @@ package uk.ac.sussex.gdsc.foci.gui;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.foci.AssignedPoint;
 import uk.ac.sussex.gdsc.foci.AssignedPointUtils;
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
 import uk.ac.sussex.gdsc.foci.FindFociResult;
-import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.GridException;
 import uk.ac.sussex.gdsc.foci.GridPoint;
 import uk.ac.sussex.gdsc.foci.GridPointManager;
@@ -50,7 +53,6 @@ import ij.gui.ImageCanvas;
 import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
-import ij.macro.MacroRunner;
 import ij.measure.Calibration;
 import ij.text.TextWindow;
 
@@ -185,16 +187,13 @@ public class FindFociHelperView extends JFrame
    * @param args the arguments
    */
   public static void main(String[] args) {
-    EventQueue.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final FindFociHelperView frame = new FindFociHelperView();
-          frame.setVisible(true);
-        } catch (final Exception ex) {
-          Logger.getLogger(FindFociHelperView.class.getName()).log(Level.SEVERE,
-              "Error showing the frame", ex);
-        }
+    EventQueue.invokeLater(() -> {
+      try {
+        final FindFociHelperView frame = new FindFociHelperView();
+        frame.setVisible(true);
+      } catch (final Exception ex) {
+        Logger.getLogger(FindFociHelperView.class.getName()).log(Level.SEVERE,
+            "Error showing the frame", ex);
       }
     });
   }
@@ -547,24 +546,24 @@ public class FindFociHelperView extends JFrame
 
     model.setMaskImage(null);
     // Find points above the mean. This is a good start for finding maxima.
-    model.setBackgroundMethod(FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN);
+    model.setBackgroundMethod(BackgroundMethod.STD_DEV_ABOVE_MEAN.ordinal());
     model.setBackgroundParameter(0);
     model.setThresholdMethod("");
-    model.setSearchMethod(FindFociProcessor.SEARCH_ABOVE_BACKGROUND);
+    model.setSearchMethod(SearchMethod.ABOVE_BACKGROUND.ordinal());
     model.setSearchParameter(0);
     model.setMaxPeaks(33000);
     model.setMinSize(1);
     model.setMinimumAboveSaddle(false);
-    model.setPeakMethod(FindFociProcessor.PEAK_RELATIVE);
+    model.setPeakMethod(PeakMethod.RELATIVE.ordinal());
     model.setPeakParameter(0);
     model.setShowMask(0);
     model.setShowTable(true); // We need to get the results table
     model.setMarkMaxima(false);
     model.setMarkRoiMaxima(false);
     model.setShowLogMessages(false);
-    model.setSortMethod(FindFociProcessor.SORT_MAX_VALUE);
+    model.setSortMethod(SortMethod.MAX_VALUE.ordinal());
     model.setGaussianBlur(0);
-    model.setCentreMethod(FindFoci_PlugIn.CENTRE_MAX_VALUE_ORIGINAL);
+    model.setCentreMethod(CentreMethod.MAX_VALUE_ORIGINAL.ordinal());
     model.setCentreParameter(0);
   }
 

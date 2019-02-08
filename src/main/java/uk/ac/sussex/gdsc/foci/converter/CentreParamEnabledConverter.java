@@ -24,7 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
 
 import org.jdesktop.beansbinding.Converter;
 
@@ -35,10 +35,10 @@ public class CentreParamEnabledConverter extends Converter<Integer, Boolean> {
   @Override
   public Boolean convertForward(Integer paramS) {
     final int centreMethod = paramS.intValue();
-    return Boolean.valueOf(centreMethod == FindFoci_PlugIn.CENTRE_GAUSSIAN_SEARCH
-        || centreMethod == FindFoci_PlugIn.CENTRE_GAUSSIAN_ORIGINAL
-        || centreMethod == FindFoci_PlugIn.CENTRE_OF_MASS_SEARCH
-        || centreMethod == FindFoci_PlugIn.CENTRE_OF_MASS_ORIGINAL);
+    return Boolean.valueOf(centreMethod == CentreMethod.GAUSSIAN_SEARCH.ordinal()
+        || centreMethod == CentreMethod.GAUSSIAN_ORIGINAL.ordinal()
+        || centreMethod == CentreMethod.CENTRE_OF_MASS_SEARCH.ordinal()
+        || centreMethod == CentreMethod.CENTRE_OF_MASS_ORIGINAL.ordinal());
   }
 
   @Override

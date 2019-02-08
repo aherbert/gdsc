@@ -26,6 +26,13 @@ package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -369,31 +376,28 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
         particlesIp.createProcessor(particlesIp.getWidth(), particlesIp.getHeight());
 
     // For each particle:
-    for (int particle = 1; particle <= noOfParticles; particle++) {
-      // Run FindFoci to find the single highest spot
-      final FindFoci_PlugIn ff = new FindFoci_PlugIn();
-      final ImagePlus mask = createMask(particlesIp, particle);
-      final int backgroundMethod = FindFociProcessor.BACKGROUND_MEAN;
-      final double backgroundParameter = 0;
-      final String autoThresholdMethod = "";
-      final int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
-      final double searchParameter = 0;
-      final int minSize = 5;
-      final int peakMethod = FindFociProcessor.PEAK_RELATIVE_ABOVE_BACKGROUND;
-      final double peakParameter = 0.5;
-      final int outputType =
-          FindFociProcessor.OUTPUT_MASK | FindFociProcessor.OUTPUT_MASK_FRACTION_OF_HEIGHT
-              | FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
-      final int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
-      final int options = FindFociProcessor.OPTION_STATS_INSIDE;
-      final int centreMethod = FindFoci_PlugIn.CENTRE_MAX_VALUE_ORIGINAL;
-      final double centreParameter = 0;
-      final double fractionParameter = settings.fraction;
+    // Run FindFoci to find the single highest spot
+    final FindFoci_PlugIn ff = new FindFoci_PlugIn();
+    final FindFociProcessorOptions processorOptions = new FindFociProcessorOptions();
+    processorOptions.setBackgroundMethod(BackgroundMethod.MEAN);
+    processorOptions.setBackgroundParameter(0);
+    processorOptions.setSearchMethod(SearchMethod.ABOVE_BACKGROUND);
+    processorOptions.setMaxPeaks(33000);
+    processorOptions.setMinSize(5);
+    processorOptions.setPeakMethod(PeakMethod.RELATIVE_ABOVE_BACKGROUND);
+    processorOptions.setPeakParameter(0.5);
+    processorOptions.getOptions().clear();
+    processorOptions.setMaskMethod(MaskMethod.FRACTION_OF_HEIGHT);
+    processorOptions.setSortMethod(SortMethod.MAX_VALUE);
+    processorOptions.setStatisticsMethod(StatisticsMethod.INSIDE);
+    processorOptions.setGaussianBlur(0);
+    processorOptions.setCentreMethod(CentreMethod.MAX_VALUE_ORIGINAL);
+    processorOptions.setFractionParameter(settings.fraction);
 
-      final FindFociResults result = ff.findMaxima(tmpImp, mask, backgroundMethod,
-          backgroundParameter, autoThresholdMethod, searchMethod, searchParameter,
-          settings.maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex, options,
-          settings.blur, centreMethod, centreParameter, fractionParameter);
+    for (int particle = 1; particle <= noOfParticles; particle++) {
+      final ImagePlus mask = createMask(particlesIp, particle);
+      final FindFociResults result =
+          ff.createFindFociProcessor(tmpImp).findMaxima(tmpImp, mask, processorOptions);
       if (result == null) {
         continue;
       }

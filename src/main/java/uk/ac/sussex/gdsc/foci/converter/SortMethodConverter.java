@@ -24,7 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
 
 import org.jdesktop.beansbinding.Converter;
 
@@ -32,17 +32,17 @@ import org.jdesktop.beansbinding.Converter;
  * Convert the sort method.
  */
 public class SortMethodConverter extends Converter<Integer, Object> {
-  private static final String[] sortIndexMethods = FindFoci_PlugIn.getSortIndexMethods();
+  private static final String[] sortMethods = SortMethod.getDescriptions();
 
   @Override
   public String convertForward(Integer paramT) {
-    return sortIndexMethods[paramT.intValue()];
+    return sortMethods[paramT.intValue()];
   }
 
   @Override
   public Integer convertReverse(Object paramS) {
-    for (int i = 0; i < sortIndexMethods.length; i++) {
-      if (sortIndexMethods[i].equals(paramS)) {
+    for (int i = 0; i < sortMethods.length; i++) {
+      if (sortMethods[i].equals(paramS)) {
         return Integer.valueOf(i);
       }
     }

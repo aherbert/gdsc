@@ -64,7 +64,7 @@ public class FindFociGui_PlugIn implements PlugIn {
       this.model = model;
     }
 
-    public void addWindowListener(FindFociView view) {
+    void listenToWindow(FindFociView view) {
       this.view = view;
       view.addWindowListener(this);
     }
@@ -202,7 +202,7 @@ public class FindFociGui_PlugIn implements PlugIn {
 
       // it exists on the classpath
       view = new FindFociView(model, controller);
-      listener.addWindowListener(view);
+      listener.listenToWindow(view);
       view.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
       instance.set(view);
 
@@ -246,7 +246,7 @@ public class FindFociGui_PlugIn implements PlugIn {
     model.addPropertyChangeListener("selectedImage", listener);
 
     final FindFociView view = new FindFociView(model, controller);
-    listener.addWindowListener(view);
+    listener.listenToWindow(view);
     view.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
     showInstance(view);

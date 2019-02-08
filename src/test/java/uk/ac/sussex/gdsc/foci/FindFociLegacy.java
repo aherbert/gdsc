@@ -540,16 +540,15 @@ public class FindFociLegacy {
 
   private static final byte IGNORE = EXCLUDED | LISTED; // marks point to be ignored in stage 1
 
-  public static String getStatisticsMode(int options) {
-    if ((options & (FindFociProcessor.OPTION_STATS_INSIDE
-        | FindFociProcessor.OPTION_STATS_OUTSIDE)) == (FindFociProcessor.OPTION_STATS_INSIDE
-            | FindFociProcessor.OPTION_STATS_OUTSIDE)) {
+  private static String getStatisticsMode(int options) {
+    if ((options & (OPTION_STATS_INSIDE | OPTION_STATS_OUTSIDE)) == (OPTION_STATS_INSIDE
+        | OPTION_STATS_OUTSIDE)) {
       return "Both";
     }
-    if ((options & FindFociProcessor.OPTION_STATS_INSIDE) != 0) {
+    if ((options & OPTION_STATS_INSIDE) != 0) {
       return "Inside";
     }
-    if ((options & FindFociProcessor.OPTION_STATS_OUTSIDE) != 0) {
+    if ((options & OPTION_STATS_OUTSIDE) != 0) {
       return "Outside";
     }
     return "Both";
@@ -926,15 +925,6 @@ public class FindFociLegacy {
   private ImagePlus generateOutputMask(int outputType, String autoThresholdMethod, ImagePlus imp,
       double fractionParameter, int[] image, byte[] types, int[] maxima, double[] stats,
       ArrayList<int[]> resultsArray, int nMaxima) {
-    // TODO - Add an option for a coloured map of peaks using 4 colours. No touching peaks should be
-    // the same colour.
-    // - Assign all neighbours for each cell
-    // - Start @ cell with most neighbours -> label with a colour
-    // - Find unlabelled cell next to labelled cell -> label with an unused colour not used by its
-    // neighbours
-    // - Repeat
-    // - Finish all cells with no neighbours using random colour asignment
-
     final String imageTitle = imp.getTitle();
     // Rebuild the mask: all maxima have value 1, the remaining peak area are numbered sequentially
     // starting
@@ -1124,7 +1114,7 @@ public class FindFociLegacy {
    * @param types the types
    */
   private void findBorders(int[] maxima, byte[] types) {
-    // TODO - This is not perfect. There is a problem with regions marked as saddles
+    // Note: This is not perfect. There is a problem with regions marked as saddles
     // between 3 or more peaks. This can results in large blocks of saddle regions that
     // are eroded from the outside in. In this case they should be eroded from the inside out.
     // .......Peaks..Correct..Wrong
@@ -1926,11 +1916,8 @@ public class FindFociLegacy {
     reassignMaxima(maxima, idMap);
 
     final Coordinate[] results = maxpoints.toArray(new Coordinate[maxpoints.size()]);
-    // XXX - Debug
-    // for (Coordinate r : results)
-    // logger.fine(FunctionUtils.getSupplier("[%d] %d = %d\n", r.id, r.index, r.value));
     return results;
-  } // getSortedMaxpoints
+  }
 
   /**
    * Searches from the specified point to find all coordinates of the same value and determines the
@@ -2237,9 +2224,6 @@ public class FindFociLegacy {
 
       // Check for the highest neighbour
 
-      // TODO - Try out using a Sobel operator to assign the gradient direction. Follow the steepest
-      // gradient.
-
       int dMax = -1;
       int vMax = v;
       for (int d = dStart; d-- > 0;) {
@@ -2281,48 +2265,9 @@ public class FindFociLegacy {
       }
 
       final int index2 = index + offset[dMax];
-
-      // TODO.
-      // The code below can be uncommented to flood fill a plateau with the first maxima that
-      // touches it.
-      // However this can lead to striping artifacts where diagonals are at the same level but
-      // adjacent cells are not, e.g:
-      // 1122
-      // 1212
-      // 2122
-      // 1222
-      // Consequently the code has been commented out and the default behaviour fills plateaus from
-      // the
-      // edges inwards with a bias in the direction of the sweep across the pixels.
-      // A better method may be to assign pixels to the nearest maxima using a distance measure
-      // (Euclidian, City-Block, etc). This would involve:
-      // - Mark all plateau edges that touch a maxima
-      // - for each maxima edge:
-      // -- Measure distance for each plateau point to the nearest touching edge
-      // - Compare distance maps for each maxima and assign points to nearest maxima
-
-      // Flood fill
-      // // A higher point has been found. Check if this position is a plateau
-      // if ((types[index] & PLATEAU) == PLATEAU)
-      // {
-      // IJ.log(String.format("Plateau merge to higher level: %d @ [%d,%d] : %d", image[index], x,
-      // y,
-      // image[index2]));
-      //
-      // // Initialise the list to allow all points on this level to be processed.
-      // if (pointList.length < levelNPoints)
-      // {
-      // pointList = new int[levelNPoints];
-      // }
-      //
-      // expandPlateau(image, maxima, types, index, v, maxima[index2], pointList);
-      // }
-      // else
-      {
-        types[index] |= MAX_AREA;
-        maxima[index] = maxima[index2];
-        nChanged++;
-      }
+      types[index] |= MAX_AREA;
+      maxima[index] = maxima[index2];
+      nChanged++;
     } // for pixel i
 
     // if (nUnchanged > 0)
@@ -3207,12 +3152,6 @@ public class FindFociLegacy {
       if (isLogging) {
         IJ.log("Size above saddle filter : Number of peaks = " + countPeaks(peakIdMap));
       }
-
-      // TODO - Add an intensity above saddle filter.
-      // All code is in place so this should be a copy of the code above.
-      // However what should the intensity above the saddle be relative to?
-      // - It could be an absolute value. This is image specific.
-      // - It could be relative to the total peak intensity.
     }
 
     // Remove merged peaks from the results

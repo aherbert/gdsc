@@ -28,8 +28,9 @@ import uk.ac.sussex.gdsc.foci.FindFociBaseProcessor;
 import uk.ac.sussex.gdsc.foci.FindFociInitResults;
 import uk.ac.sussex.gdsc.foci.FindFociMergeResults;
 import uk.ac.sussex.gdsc.foci.FindFociMergeTempResults;
+import uk.ac.sussex.gdsc.foci.FindFociOptions;
 import uk.ac.sussex.gdsc.foci.FindFociPrelimResults;
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions;
 import uk.ac.sussex.gdsc.foci.FindFociResult;
 import uk.ac.sussex.gdsc.foci.FindFociResults;
 import uk.ac.sussex.gdsc.foci.FindFociSearchResults;
@@ -45,6 +46,7 @@ import ij.WindowManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Runs the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn } algorithm using input from a
@@ -202,97 +204,19 @@ public class FindFociRunner extends Thread {
     }
 
     // Set-up the FindFoci variables
-    final String maskImage = model.getMaskImage();
-    final int backgroundMethod = model.getBackgroundMethod();
-    final double backgroundParameter = model.getBackgroundParameter();
-    final String thresholdMethod = model.getThresholdMethod();
-    final String statisticsMode = model.getStatisticsMode();
-    final int searchMethod = model.getSearchMethod();
-    final double searchParameter = model.getSearchParameter();
-    final int minSize = model.getMinSize();
-    final boolean minimumAboveSaddle = model.isMinimumAboveSaddle();
-    final boolean connectedAboveSaddle = model.isConnectedAboveSaddle();
-    final int peakMethod = model.getPeakMethod();
-    final double peakParameter = model.getPeakParameter();
-    final int sortMethod = model.getSortMethod();
-    final int maxPeaks = model.getMaxPeaks();
-    final int showMask = model.getShowMask();
-    final boolean overlayMask = model.isOverlayMask();
-    final boolean showTable = model.isShowTable();
-    final boolean clearTable = model.isClearTable();
-    final boolean markMaxima = model.isMarkMaxima();
-    final boolean markRoiMaxima = model.isMarkRoiMaxima();
-    final boolean markUsingOverlay = model.isMarkUsingOverlay();
-    final boolean hideLabels = model.isHideLabels();
-    final boolean showMaskMaximaAsDots = model.isShowMaskMaximaAsDots();
-    // Ignore: model.isShowLogMessages()
-    final boolean removeEdgeMaxima = model.isRemoveEdgeMaxima();
-    // Ignore: model.isSaveResults()
-    // Ignore: model.getResultsDirectory()
-    final boolean objectAnalysis = model.isObjectAnalysis();
-    final boolean showObjectMask = model.isShowObjectMask();
-    final boolean saveToMemory = model.isSaveToMemory();
-    final double gaussianBlur = model.getGaussianBlur();
-    final int centreMethod = model.getCentreMethod();
-    final double centreParameter = model.getCentreParameter();
-    final double fractionParameter = model.getFractionParameter();
-
-    int outputType = FindFoci_PlugIn.getOutputMaskFlags(showMask);
-
-    if (overlayMask) {
-      outputType += FindFociProcessor.OUTPUT_OVERLAY_MASK;
-    }
-    if (showTable) {
-      outputType += FindFociProcessor.OUTPUT_RESULTS_TABLE;
-    }
-    if (clearTable) {
-      outputType += FindFociProcessor.OUTPUT_CLEAR_RESULTS_TABLE;
-    }
-    if (markMaxima) {
-      outputType += FindFociProcessor.OUTPUT_ROI_SELECTION;
-    }
-    if (markRoiMaxima) {
-      outputType += FindFociProcessor.OUTPUT_MASK_ROI_SELECTION;
-    }
-    if (markUsingOverlay) {
-      outputType += FindFociProcessor.OUTPUT_ROI_USING_OVERLAY;
-    }
-    if (hideLabels) {
-      outputType += FindFociProcessor.OUTPUT_HIDE_LABELS;
-    }
-    if (!showMaskMaximaAsDots) {
-      outputType += FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
-    }
-
-    int options = 0;
-    if (minimumAboveSaddle) {
-      options |= FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE;
-    }
-    if (connectedAboveSaddle) {
-      options |= FindFociProcessor.OPTION_CONTIGUOUS_ABOVE_SADDLE;
-    }
-    if (statisticsMode.equalsIgnoreCase("inside")) {
-      options |= FindFociProcessor.OPTION_STATS_INSIDE;
-    } else if (statisticsMode.equalsIgnoreCase("outside")) {
-      options |= FindFociProcessor.OPTION_STATS_OUTSIDE;
-    }
-    if (removeEdgeMaxima) {
-      options |= FindFociProcessor.OPTION_REMOVE_EDGE_MAXIMA;
-    }
-    if (objectAnalysis) {
-      options |= FindFociProcessor.OPTION_OBJECT_ANALYSIS;
-      if (showObjectMask) {
-        options |= FindFociProcessor.OPTION_SHOW_OBJECT_MASK;
-      }
-    }
-    if (saveToMemory) {
-      options |= FindFociProcessor.OPTION_SAVE_TO_MEMORY;
-    }
-
-    if (outputType == 0) {
+    final FindFociOptions options = model.getOptions();
+    if (options.getOptions().isEmpty()) {
       notifyListener(MessageType.ERROR);
       return;
     }
+
+    final String maskImage = model.getMaskImage();
+    final FindFociProcessorOptions processorOptions = model.getProcessorOptions();
+    // Ignore these settings
+    // Ignore: model.isShowLogMessages()
+    // Ignore: model.isSaveResults()
+    // Ignore: model.getResultsDirectory()
+    options.setResultsDirectory(null);
 
     final ImagePlus mask = WindowManager.getImage(maskImage);
 
@@ -304,31 +228,29 @@ public class FindFociRunner extends Thread {
     final FindFociState state = compareModels(model, previousModel);
     previousModel = null;
 
+    final FindFociBaseProcessor processor = ff.createFindFociProcessor(imp);
+
     if (state.ordinal() <= FindFociState.INITIAL.ordinal()) {
-      imp2 = ff.blur(imp, gaussianBlur);
+      imp2 = processor.blur(imp, processorOptions.getGaussianBlur());
       if (imp2 == null) {
-        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notifyListener(MessageType.FAILED);
+        notifyFailed();
         return;
       }
     }
     if (state.ordinal() <= FindFociState.FIND_MAXIMA.ordinal()) {
-      initResults = ff.findMaximaInit(imp, imp2, mask, backgroundMethod, thresholdMethod, options);
+      initResults = processor.findMaximaInit(imp, imp2, mask, processorOptions);
       if (initResults == null) {
-        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notifyListener(MessageType.FAILED);
+        notifyFailed();
         return;
       }
 
       notifyListener(MessageType.BACKGROUND_LEVEL, initResults.stats.background);
     }
     if (state.ordinal() <= FindFociState.SEARCH.ordinal()) {
-      searchInitResults = ff.copyForStagedProcessing(initResults, searchInitResults);
-      searchArray = ff.findMaximaSearch(searchInitResults, backgroundMethod, backgroundParameter,
-          searchMethod, searchParameter);
+      searchInitResults = processor.copyForStagedProcessing(initResults, searchInitResults);
+      searchArray = processor.findMaximaSearch(searchInitResults, processorOptions);
       if (searchArray == null) {
-        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notifyListener(MessageType.FAILED);
+        notifyFailed();
         return;
       }
 
@@ -337,64 +259,58 @@ public class FindFociRunner extends Thread {
     if (state.ordinal() <= FindFociState.MERGE_HEIGHT.ordinal()) {
       // No clone as the maxima and types are not changed
       mergePeakResults =
-          ff.findMaximaMergePeak(searchInitResults, searchArray, peakMethod, peakParameter);
+          processor.findMaximaMergePeak(searchInitResults, searchArray, processorOptions);
       if (mergePeakResults == null) {
-        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notifyListener(MessageType.FAILED);
+        notifyFailed();
         return;
       }
     }
     if (state.ordinal() <= FindFociState.MERGE_SIZE.ordinal()) {
       // No clone as the maxima and types are not changed
-      mergeSizeResults = ff.findMaximaMergeSize(searchInitResults, mergePeakResults, minSize);
+      mergeSizeResults =
+          processor.findMaximaMergeSize(searchInitResults, mergePeakResults, processorOptions);
       if (mergeSizeResults == null) {
-        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notifyListener(MessageType.FAILED);
+        notifyFailed();
         return;
       }
     }
     if (state.ordinal() <= FindFociState.MERGE_SADDLE.ordinal()) {
-      mergeInitResults = ff.copyForStagedProcessing(searchInitResults, mergeInitResults);
-      mergeResults = ff.findMaximaMergeFinal(mergeInitResults, mergeSizeResults, minSize, options,
-          gaussianBlur);
+      mergeInitResults = processor.copyForStagedProcessing(searchInitResults, mergeInitResults);
+      mergeResults =
+          processor.findMaximaMergeFinal(mergeInitResults, mergeSizeResults, processorOptions);
       if (mergeResults == null) {
-        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notifyListener(MessageType.FAILED);
+        notifyFailed();
         return;
       }
     }
     if (state.ordinal() <= FindFociState.CALCULATE_RESULTS.ordinal()) {
-      if (initResults.stats.imageMinimum < 0
-          && FindFociBaseProcessor.isSortIndexSensitiveToNegativeValues(sortMethod)) {
+      if (initResults.stats.imageMinimum < 0 && FindFociBaseProcessor
+          .isSortMethodSensitiveToNegativeValues(processorOptions.getSortMethod())) {
         notifyListener(MessageType.SORT_INDEX_SENSITIVE_TO_NEGATIVE_VALUES,
             initResults.stats.imageMinimum);
       } else {
         notifyListener(MessageType.SORT_INDEX_OK, initResults.stats.imageMinimum);
       }
 
-      resultsInitResults = ff.copyForStagedProcessing(mergeInitResults, resultsInitResults);
-      prelimResults = ff.findMaximaPrelimResults(resultsInitResults, mergeResults, maxPeaks,
-          sortMethod, centreMethod, centreParameter);
+      resultsInitResults = processor.copyForStagedProcessing(mergeInitResults, resultsInitResults);
+      prelimResults =
+          processor.findMaximaPrelimResults(resultsInitResults, mergeResults, processorOptions);
       if (prelimResults == null) {
-        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notifyListener(MessageType.FAILED);
+        notifyFailed();
         return;
       }
     }
     if (state.ordinal() <= FindFociState.CALCULATE_OUTPUT_MASK.ordinal()) {
-      maskInitResults = ff.copyForStagedProcessing(resultsInitResults, maskInitResults);
-      results = ff.findMaximaMaskResults(maskInitResults, mergeResults, prelimResults, outputType,
-          thresholdMethod, imp.getTitle(), fractionParameter);
+      maskInitResults = processor.copyForStagedProcessing(resultsInitResults, maskInitResults);
+      results = processor.findMaximaMaskResults(maskInitResults, mergeResults, prelimResults,
+          processorOptions);
       if (results == null) {
-        IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
-        notifyListener(MessageType.FAILED);
+        notifyFailed();
         return;
       }
     }
     if (state.ordinal() <= FindFociState.SHOW_RESULTS.ordinal()) {
-      ff.showResults(imp, mask, backgroundMethod, backgroundParameter, thresholdMethod,
-          searchParameter, maxPeaks, minSize, peakMethod, peakParameter, outputType, sortMethod,
-          options, results);
+      FindFoci_PlugIn.showResults(imp, mask, processorOptions, options, processor, results, true);
     }
 
     IJ.showStatus(FindFoci_PlugIn.TITLE + " finished");
@@ -516,7 +432,7 @@ public class FindFociRunner extends Thread {
       ignoreChange = true;
     }
 
-    // Options to ignore
+    // Options to ignore. They will still trigger a model comparison.
     if (notEqual(model.isShowLogMessages(), previousModel.isShowLogMessages())
         || notEqual(model.getResultsDirectory(), previousModel.getResultsDirectory())
         || notEqual(model.isSaveResults(), previousModel.isSaveResults())) {
@@ -527,7 +443,8 @@ public class FindFociRunner extends Thread {
       return FindFociState.COMPLETE;
     }
 
-    // Default to do the entire calculation
+    // Unknown model change.
+    // Default to do the entire calculation.
     return FindFociState.INITIAL;
   }
 
@@ -544,7 +461,12 @@ public class FindFociRunner extends Thread {
   }
 
   private static boolean notEqual(String newValue, String oldValue) {
-    return !(oldValue != null && newValue != null && oldValue.equals(newValue));
+    return !Objects.equals(oldValue, newValue);
+  }
+
+  private void notifyFailed() {
+    IJ.showStatus(FindFoci_PlugIn.TITLE + " failed");
+    notifyListener(MessageType.FAILED);
   }
 
   /**

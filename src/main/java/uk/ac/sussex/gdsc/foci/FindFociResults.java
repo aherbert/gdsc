@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * Contains the results of the FindFoci algorithm.
  */
-public class FindFociResults implements Cloneable {
+public class FindFociResults {
   /** The mask. */
   public final ImagePlus mask;
 
@@ -70,17 +70,22 @@ public class FindFociResults implements Cloneable {
   }
 
   /**
+   * Copy constructor.
+   *
+   * @param source the source
+   */
+  protected FindFociResults(FindFociResults source) {
+    mask = source.mask;
+    results = source.results;
+    stats = source.stats;
+  }
+
+  /**
    * Returns a shallow copy of this set of results.
    *
-   * @return the find foci results
+   * @return the copy
    */
-  @Override
-  public FindFociResults clone() {
-    try {
-      final FindFociResults copy = (FindFociResults) super.clone();
-      return copy;
-    } catch (final CloneNotSupportedException ex) {
-      return null;
-    }
+  public FindFociResults copy() {
+    return new FindFociResults(this);
   }
 }

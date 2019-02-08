@@ -29,6 +29,12 @@ import uk.ac.sussex.gdsc.core.match.MatchResult;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
 
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -98,7 +104,7 @@ public class PointAligner_PlugIn implements PlugIn {
     }
 
     if (!FindFoci_PlugIn.isSupported(imp.getBitDepth())) {
-      IJ.error(TITLE, "Only " + FindFoci_PlugIn.getSupported() + " images are supported");
+      IJ.error(TITLE, "Only " + FindFoci_PlugIn.SUPPORTED_BIT_DEPTH + " images are supported");
       return;
     }
 
@@ -120,28 +126,23 @@ public class PointAligner_PlugIn implements PlugIn {
     final AssignedPoint[] points = FindFociOptimiser_PlugIn.extractRoiPoints(roi, imp, null);
 
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
-
     final ImagePlus mask = null;
-    final int backgroundMethod = FindFociProcessor.BACKGROUND_ABSOLUTE;
-    final double backgroundParameter = getBackgroundLevel(points);
-    final String autoThresholdMethod = "";
-    final int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
-    final double searchParameter = 0;
-    final int maxPeaks = 33000;
-    final int minSize = 1;
-    final int peakMethod = FindFociProcessor.PEAK_RELATIVE;
-    final double peakParameter = 0;
-    final int outputType =
-        FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
-    final int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
-    final int options = 0;
-    final double blur = 0;
-    final int centreMethod = FindFoci_PlugIn.CENTRE_MAX_VALUE_ORIGINAL;
-    final double centreParameter = 0;
+    final FindFociProcessorOptions processorOptions = new FindFociProcessorOptions();
+    processorOptions.setBackgroundMethod(BackgroundMethod.ABSOLUTE);
+    processorOptions.setBackgroundParameter(getBackgroundLevel(points));
+    processorOptions.setSearchMethod(SearchMethod.ABOVE_BACKGROUND);
+    processorOptions.setMaxPeaks(33000);
+    processorOptions.setMinSize(1);
+    processorOptions.setPeakMethod(PeakMethod.RELATIVE);
+    processorOptions.setPeakParameter(0);
+    processorOptions.getOptions().clear();
+    processorOptions.setMaskMethod(MaskMethod.PEAKS);
+    processorOptions.setSortMethod(SortMethod.MAX_VALUE);
+    processorOptions.setGaussianBlur(0);
+    processorOptions.setCentreMethod(CentreMethod.MAX_VALUE_ORIGINAL);
 
-    final FindFociResults results = ff.findMaxima(imp, mask, backgroundMethod, backgroundParameter,
-        autoThresholdMethod, searchMethod, searchParameter, maxPeaks, minSize, peakMethod,
-        peakParameter, outputType, sortIndex, options, blur, centreMethod, centreParameter, 1);
+    final FindFociResults results =
+        ff.createFindFociProcessor(imp).findMaxima(imp, mask, processorOptions);
 
     if (results == null) {
       IJ.error(TITLE, "FindFoci failed");

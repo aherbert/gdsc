@@ -24,9 +24,18 @@
 
 package uk.ac.sussex.gdsc.foci.model;
 
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.foci.FindFociProcessor;
-import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
+import uk.ac.sussex.gdsc.foci.FindFociOptions;
+import uk.ac.sussex.gdsc.foci.FindFociOptions.OutputOption;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
 
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
@@ -34,6 +43,9 @@ import java.util.List;
 
 /**
  * Provides a bean property model for the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn} algorithm.
+ *
+ * <p>Wraps the {@link FindFociProcessorOptions} and {@link FindFociOptions} and allows Enum
+ * properties to be set using indices.
  */
 public class FindFociModel extends AbstractModelObject {
   /**
@@ -220,43 +232,14 @@ public class FindFociModel extends AbstractModelObject {
    */
   public static final String PROPERTY_VALID = "valid";
 
-  private int backgroundMethod = FindFociProcessor.BACKGROUND_AUTO_THRESHOLD;
-  private double backgroundParameter = 3;
-  private String thresholdMethod = AutoThreshold.Method.OTSU.toString();
-  private String statisticsMode = "Both";
-  private int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
-  private double searchParameter = 0.3;
-  private int minSize = 5;
-  private boolean minimumAboveSaddle = true;
-  private boolean connectedAboveSaddle;
-  private int peakMethod = FindFociProcessor.PEAK_RELATIVE_ABOVE_BACKGROUND;
-  private double peakParameter = 0.5;
-  private int sortMethod = FindFociProcessor.SORT_INTENSITY;
-  private int maxPeaks = 50;
-  private int showMask = 3;
-  private boolean overlayMask = true;
-  private boolean showTable = true;
-  private boolean clearTable = true;
-  private boolean markMaxima = true;
-  private boolean markRoiMaxima;
-  private boolean markUsingOverlay;
-  private boolean hideLabels;
-  private boolean showMaskMaximaAsDots;
-  private boolean showLogMessages = true;
-  private boolean removeEdgeMaxima;
+  private final FindFociProcessorOptions processorOptions;
+  private final FindFociOptions options;
   private boolean saveResults;
-  private String resultsDirectory;
-  private double gaussianBlur;
-  private int centreMethod = FindFoci_PlugIn.CENTRE_MAX_VALUE_SEARCH;
-  private double centreParameter = 2;
-  private double fractionParameter = 0.5;
-  private boolean objectAnalysis;
-  private boolean showObjectMask;
-  private boolean saveToMemory;
-  private List<String> imageList = new ArrayList<>();
-  private String selectedImage = "";
-  private List<String> maskImageList = new ArrayList<>();
-  private String maskImage = "";
+  private boolean showLogMessages;
+  private List<String> imageList;
+  private String selectedImage;
+  private List<String> maskImageList;
+  private String maskImage;
   private boolean changed;
 
   /**
@@ -272,6 +255,15 @@ public class FindFociModel extends AbstractModelObject {
    * Default constructor.
    */
   public FindFociModel() {
+    // Set defaults
+    processorOptions = new FindFociProcessorOptions();
+    options = new FindFociOptions();
+    showLogMessages = true;
+    imageList = new ArrayList<>();
+    selectedImage = "";
+    maskImageList = new ArrayList<>();
+    maskImage = "";
+
     // Notify if any properties change
     this.addPropertyChangeListener(evt -> {
       if (!changed && !(PROPERTY_CHANGED.equals(evt.getPropertyName()))) {
@@ -287,48 +279,26 @@ public class FindFociModel extends AbstractModelObject {
    */
   public FindFociModel(FindFociModel source) {
     // Copy properties
-    backgroundMethod = source.backgroundMethod;
-    backgroundParameter = source.backgroundParameter;
-    thresholdMethod = source.thresholdMethod;
-    statisticsMode = source.statisticsMode;
-    searchMethod = source.searchMethod;
-    searchParameter = source.searchParameter;
-    minSize = source.minSize;
-    minimumAboveSaddle = source.minimumAboveSaddle;
-    connectedAboveSaddle = source.connectedAboveSaddle;
-    peakMethod = source.peakMethod;
-    peakParameter = source.peakParameter;
-    sortMethod = source.sortMethod;
-    maxPeaks = source.maxPeaks;
-    showMask = source.showMask;
-    overlayMask = source.overlayMask;
-    showTable = source.showTable;
-    clearTable = source.clearTable;
-    markMaxima = source.markMaxima;
-    markRoiMaxima = source.markRoiMaxima;
-    markUsingOverlay = source.markUsingOverlay;
-    hideLabels = source.hideLabels;
-    showMaskMaximaAsDots = source.showMaskMaximaAsDots;
-    showLogMessages = source.showLogMessages;
-    removeEdgeMaxima = source.removeEdgeMaxima;
+    processorOptions = source.processorOptions.copy();
+    options = source.options.copy();
     saveResults = source.saveResults;
-    resultsDirectory = source.resultsDirectory;
-    gaussianBlur = source.gaussianBlur;
-    centreMethod = source.centreMethod;
-    centreParameter = source.centreParameter;
-    fractionParameter = source.fractionParameter;
-    objectAnalysis = source.objectAnalysis;
-    showObjectMask = source.showObjectMask;
-    saveToMemory = source.saveToMemory;
+    showLogMessages = source.showLogMessages;
+    imageList = new ArrayList<>(source.imageList);
     selectedImage = source.selectedImage;
+    maskImageList = new ArrayList<>(source.maskImageList);
     maskImage = source.maskImage;
     changed = source.changed;
     backgroundParameterMemory = source.backgroundParameterMemory;
     peakParameterMemory = source.peakParameterMemory;
+  }
 
-    // Copy lists
-    imageList = new ArrayList<>(source.imageList);
-    maskImageList = new ArrayList<>(source.maskImageList);
+  /**
+   * Performs a deep copy.
+   *
+   * @return A copy of this object
+   */
+  public FindFociModel deepCopy() {
+    return new FindFociModel(this);
   }
 
   /**
@@ -337,14 +307,14 @@ public class FindFociModel extends AbstractModelObject {
    * @param backgroundMethod the new background method
    */
   public void setBackgroundMethod(int backgroundMethod) {
-    final int oldValue = this.backgroundMethod;
-    this.backgroundMethod = backgroundMethod;
-    firePropertyChange(PROPERTY_BACKGROUND_METHOD, oldValue, this.backgroundMethod);
+    final int oldValue = getBackgroundMethod();
+    processorOptions.setBackgroundMethod(BackgroundMethod.fromOrdinal(backgroundMethod));
+    firePropertyChange(PROPERTY_BACKGROUND_METHOD, oldValue, getBackgroundMethod());
 
     // Check if this is a switch to/from absolute background
-    if (oldValue != backgroundMethod && (oldValue == FindFociProcessor.BACKGROUND_ABSOLUTE
-        || backgroundMethod == FindFociProcessor.BACKGROUND_ABSOLUTE)) {
-      final double current = backgroundParameter;
+    if (oldValue != backgroundMethod && (oldValue == BackgroundMethod.ABSOLUTE.ordinal()
+        || backgroundMethod == BackgroundMethod.ABSOLUTE.ordinal())) {
+      final double current = getBackgroundParameter();
       setBackgroundParameter(backgroundParameterMemory);
       backgroundParameterMemory = current;
     }
@@ -356,7 +326,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the backgroundMethod.
    */
   public int getBackgroundMethod() {
-    return backgroundMethod;
+    return processorOptions.getBackgroundMethod().ordinal();
   }
 
   /**
@@ -365,9 +335,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param backgroundParameter the new background parameter
    */
   public void setBackgroundParameter(double backgroundParameter) {
-    final double oldValue = this.backgroundParameter;
-    this.backgroundParameter = backgroundParameter;
-    firePropertyChange(PROPERTY_BACKGROUND_PARAMETER, oldValue, this.backgroundParameter);
+    final double oldValue = getBackgroundParameter();
+    processorOptions.setBackgroundParameter(backgroundParameter);
+    firePropertyChange(PROPERTY_BACKGROUND_PARAMETER, oldValue, backgroundParameter);
   }
 
   /**
@@ -376,8 +346,10 @@ public class FindFociModel extends AbstractModelObject {
    * @return the backgroundParameter.
    */
   public double getBackgroundParameter() {
-    return backgroundParameter;
+    return processorOptions.getBackgroundParameter();
   }
+
+  // TODO change property to an int
 
   /**
    * Sets the threshold method.
@@ -385,9 +357,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param thresholdMethod the new threshold method
    */
   public void setThresholdMethod(String thresholdMethod) {
-    final String oldValue = this.thresholdMethod;
-    this.thresholdMethod = thresholdMethod;
-    firePropertyChange(PROPERTY_THRESHOLD_METHOD, oldValue, this.thresholdMethod);
+    final String oldValue = getThresholdMethod();
+    processorOptions.setThresholdMethod(ThresholdMethod.fromDescription(thresholdMethod));
+    firePropertyChange(PROPERTY_THRESHOLD_METHOD, oldValue, thresholdMethod);
   }
 
   /**
@@ -396,8 +368,10 @@ public class FindFociModel extends AbstractModelObject {
    * @return the thresholdMethod.
    */
   public String getThresholdMethod() {
-    return thresholdMethod;
+    return processorOptions.getThresholdMethod().getDescription();
   }
+
+  // TODO change property to an int
 
   /**
    * Sets the statistics mode.
@@ -405,9 +379,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param statisticsMode the new statistics mode
    */
   public void setStatisticsMode(String statisticsMode) {
-    final String oldValue = this.statisticsMode;
-    this.statisticsMode = statisticsMode;
-    firePropertyChange(PROPERTY_STATISTICS_MODE, oldValue, this.statisticsMode);
+    final String oldValue = getStatisticsMode();
+    processorOptions.setStatisticsMethod(StatisticsMethod.fromDescription(statisticsMode));
+    firePropertyChange(PROPERTY_STATISTICS_MODE, oldValue, statisticsMode);
   }
 
   /**
@@ -416,7 +390,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the statisticsMode.
    */
   public String getStatisticsMode() {
-    return statisticsMode;
+    return processorOptions.getStatisticsMethod().getDescription();
   }
 
   /**
@@ -425,9 +399,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param searchMethod the new search method
    */
   public void setSearchMethod(int searchMethod) {
-    final int oldValue = this.searchMethod;
-    this.searchMethod = searchMethod;
-    firePropertyChange(PROPERTY_SEARCH_METHOD, oldValue, this.searchMethod);
+    final int oldValue = getSearchMethod();
+    processorOptions.setSearchMethod(SearchMethod.fromOrdinal(searchMethod));
+    firePropertyChange(PROPERTY_SEARCH_METHOD, oldValue, searchMethod);
   }
 
   /**
@@ -436,7 +410,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the searchMethod.
    */
   public int getSearchMethod() {
-    return searchMethod;
+    return processorOptions.getSearchMethod().ordinal();
   }
 
   /**
@@ -445,9 +419,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param searchParameter the new search parameter
    */
   public void setSearchParameter(double searchParameter) {
-    final double oldValue = this.searchParameter;
-    this.searchParameter = searchParameter;
-    firePropertyChange(PROPERTY_SEARCH_PARAMETER, oldValue, this.searchParameter);
+    final double oldValue = getSearchParameter();
+    processorOptions.setSearchParameter(searchParameter);
+    firePropertyChange(PROPERTY_SEARCH_PARAMETER, oldValue, searchParameter);
   }
 
   /**
@@ -456,7 +430,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the searchParameter.
    */
   public double getSearchParameter() {
-    return searchParameter;
+    return processorOptions.getSearchParameter();
   }
 
   /**
@@ -465,9 +439,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param minSize the new min size
    */
   public void setMinSize(int minSize) {
-    final int oldValue = this.minSize;
-    this.minSize = minSize;
-    firePropertyChange(PROPERTY_MIN_SIZE, oldValue, this.minSize);
+    final int oldValue = getMinSize();
+    processorOptions.setMinSize(minSize);
+    firePropertyChange(PROPERTY_MIN_SIZE, oldValue, minSize);
   }
 
   /**
@@ -476,7 +450,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the minSize.
    */
   public int getMinSize() {
-    return minSize;
+    return processorOptions.getMinSize();
   }
 
   /**
@@ -485,9 +459,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param minimumAboveSaddle the new minimum above saddle
    */
   public void setMinimumAboveSaddle(boolean minimumAboveSaddle) {
-    final boolean oldValue = this.minimumAboveSaddle;
-    this.minimumAboveSaddle = minimumAboveSaddle;
-    firePropertyChange(PROPERTY_MINIMUM_ABOVE_SADDLE, oldValue, this.minimumAboveSaddle);
+    if (setOption(AlgorithmOption.MINIMUM_ABOVE_SADDLE, minimumAboveSaddle)) {
+      firePropertyChange(PROPERTY_MINIMUM_ABOVE_SADDLE, !minimumAboveSaddle, minimumAboveSaddle);
+    }
   }
 
   /**
@@ -496,7 +470,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return true, if is minimum above saddle
    */
   public boolean isMinimumAboveSaddle() {
-    return minimumAboveSaddle;
+    return isOption(AlgorithmOption.MINIMUM_ABOVE_SADDLE);
   }
 
   /**
@@ -505,9 +479,10 @@ public class FindFociModel extends AbstractModelObject {
    * @param connectedAboveSaddle the new connected above saddle
    */
   public void setConnectedAboveSaddle(boolean connectedAboveSaddle) {
-    final boolean oldValue = this.connectedAboveSaddle;
-    this.connectedAboveSaddle = connectedAboveSaddle;
-    firePropertyChange(PROPERTY_CONNECTED_ABOVE_SADDLE, oldValue, this.connectedAboveSaddle);
+    if (setOption(AlgorithmOption.CONTIGUOUS_ABOVE_SADDLE, connectedAboveSaddle)) {
+      firePropertyChange(PROPERTY_CONNECTED_ABOVE_SADDLE, !connectedAboveSaddle,
+          connectedAboveSaddle);
+    }
   }
 
   /**
@@ -516,7 +491,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return true, if is connected above saddle
    */
   public boolean isConnectedAboveSaddle() {
-    return connectedAboveSaddle;
+    return isOption(AlgorithmOption.CONTIGUOUS_ABOVE_SADDLE);
   }
 
   /**
@@ -525,14 +500,14 @@ public class FindFociModel extends AbstractModelObject {
    * @param peakMethod the new peak method
    */
   public void setPeakMethod(int peakMethod) {
-    final int oldValue = this.peakMethod;
-    this.peakMethod = peakMethod;
-    firePropertyChange(PROPERTY_PEAK_METHOD, oldValue, this.peakMethod);
+    final int oldValue = getPeakMethod();
+    processorOptions.setPeakMethod(PeakMethod.fromOrdinal(peakMethod));
+    firePropertyChange(PROPERTY_PEAK_METHOD, oldValue, peakMethod);
 
     // Check if this is a switch to/from absolute background
-    if (oldValue != peakMethod && (oldValue == FindFociProcessor.PEAK_ABSOLUTE
-        || peakMethod == FindFociProcessor.PEAK_ABSOLUTE)) {
-      final double current = peakParameter;
+    if (oldValue != peakMethod && (oldValue == PeakMethod.ABSOLUTE.ordinal()
+        || peakMethod == PeakMethod.ABSOLUTE.ordinal())) {
+      final double current = getPeakParameter();
       setPeakParameter(peakParameterMemory);
       peakParameterMemory = current;
     }
@@ -544,7 +519,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the peakMethod.
    */
   public int getPeakMethod() {
-    return peakMethod;
+    return processorOptions.getPeakMethod().ordinal();
   }
 
   /**
@@ -553,9 +528,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param peakParameter the new peak parameter
    */
   public void setPeakParameter(double peakParameter) {
-    final double oldValue = this.peakParameter;
-    this.peakParameter = peakParameter;
-    firePropertyChange(PROPERTY_PEAK_PARAMETER, oldValue, this.peakParameter);
+    final double oldValue = getPeakParameter();
+    processorOptions.setPeakParameter(peakParameter);
+    firePropertyChange(PROPERTY_PEAK_PARAMETER, oldValue, peakParameter);
   }
 
   /**
@@ -564,7 +539,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the peakParameter.
    */
   public double getPeakParameter() {
-    return peakParameter;
+    return processorOptions.getPeakParameter();
   }
 
   /**
@@ -573,9 +548,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param sortMethod the new sort method
    */
   public void setSortMethod(int sortMethod) {
-    final double oldValue = this.sortMethod;
-    this.sortMethod = sortMethod;
-    firePropertyChange(PROPERTY_SORT_METHOD, oldValue, this.sortMethod);
+    final double oldValue = getSortMethod();
+    processorOptions.setSortMethod(SortMethod.fromOrdinal(sortMethod));
+    firePropertyChange(PROPERTY_SORT_METHOD, oldValue, sortMethod);
   }
 
   /**
@@ -584,7 +559,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the sortMethod.
    */
   public int getSortMethod() {
-    return sortMethod;
+    return processorOptions.getSortMethod().ordinal();
   }
 
   /**
@@ -593,9 +568,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param maxPeaks the new max peaks
    */
   public void setMaxPeaks(int maxPeaks) {
-    final double oldValue = this.maxPeaks;
-    this.maxPeaks = maxPeaks;
-    firePropertyChange(PROPERTY_MAX_PEAKS, oldValue, this.maxPeaks);
+    final double oldValue = getMaxPeaks();
+    processorOptions.setMaxPeaks(maxPeaks);
+    firePropertyChange(PROPERTY_MAX_PEAKS, oldValue, maxPeaks);
   }
 
   /**
@@ -604,7 +579,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the maxPeaks.
    */
   public int getMaxPeaks() {
-    return maxPeaks;
+    return processorOptions.getMaxPeaks();
   }
 
   /**
@@ -613,9 +588,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param showMask the new show mask
    */
   public void setShowMask(int showMask) {
-    final int oldValue = this.showMask;
-    this.showMask = showMask;
-    firePropertyChange(PROPERTY_SHOW_MASK, oldValue, this.showMask);
+    final int oldValue = getShowMask();
+    processorOptions.setMaskMethod(MaskMethod.fromOrdinal(showMask));
+    firePropertyChange(PROPERTY_SHOW_MASK, oldValue, showMask);
   }
 
   /**
@@ -624,7 +599,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the showMask.
    */
   public int getShowMask() {
-    return showMask;
+    return processorOptions.getMaskMethod().ordinal();
   }
 
   /**
@@ -633,9 +608,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param overlayMask the new overlay mask
    */
   public void setOverlayMask(boolean overlayMask) {
-    final boolean oldValue = this.overlayMask;
-    this.overlayMask = overlayMask;
-    firePropertyChange(PROPERTY_OVERLAY_MASK, oldValue, this.overlayMask);
+    if (setOption(OutputOption.OVERLAY_MASK, overlayMask)) {
+      firePropertyChange(PROPERTY_OVERLAY_MASK, !overlayMask, overlayMask);
+    }
   }
 
   /**
@@ -644,7 +619,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return true, if is overlay mask
    */
   public boolean isOverlayMask() {
-    return overlayMask;
+    return isOption(OutputOption.OVERLAY_MASK);
   }
 
   /**
@@ -653,9 +628,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param showTable the new show table
    */
   public void setShowTable(boolean showTable) {
-    final boolean oldValue = this.showTable;
-    this.showTable = showTable;
-    firePropertyChange(PROPERTY_SHOW_TABLE, oldValue, this.showTable);
+    if (setOption(OutputOption.RESULTS_TABLE, showTable)) {
+      firePropertyChange(PROPERTY_SHOW_TABLE, !showTable, showTable);
+    }
   }
 
   /**
@@ -664,7 +639,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return true, if is show table
    */
   public boolean isShowTable() {
-    return showTable;
+    return isOption(OutputOption.RESULTS_TABLE);
   }
 
   /**
@@ -673,9 +648,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param clearTable the new clear table
    */
   public void setClearTable(boolean clearTable) {
-    final boolean oldValue = this.clearTable;
-    this.clearTable = clearTable;
-    firePropertyChange(PROPERTY_CLEAR_TABLE, oldValue, this.clearTable);
+    if (setOption(OutputOption.CLEAR_RESULTS_TABLE, clearTable)) {
+      firePropertyChange(PROPERTY_CLEAR_TABLE, !clearTable, clearTable);
+    }
   }
 
   /**
@@ -684,7 +659,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return true, if is clear table
    */
   public boolean isClearTable() {
-    return clearTable;
+    return isOption(OutputOption.CLEAR_RESULTS_TABLE);
   }
 
   /**
@@ -693,9 +668,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param markMaxima the new mark maxima
    */
   public void setMarkMaxima(boolean markMaxima) {
-    final boolean oldValue = this.markMaxima;
-    this.markMaxima = markMaxima;
-    firePropertyChange(PROPERTY_MARK_MAXIMA, oldValue, this.markMaxima);
+    if (setOption(OutputOption.ROI_SELECTION, markMaxima)) {
+      firePropertyChange(PROPERTY_MARK_MAXIMA, !markMaxima, markMaxima);
+    }
   }
 
   /**
@@ -704,7 +679,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return true, if is mark maxima
    */
   public boolean isMarkMaxima() {
-    return markMaxima;
+    return isOption(OutputOption.ROI_SELECTION);
   }
 
   /**
@@ -713,9 +688,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param markRoiMaxima the new mark roi maxima
    */
   public void setMarkRoiMaxima(boolean markRoiMaxima) {
-    final boolean oldValue = this.markRoiMaxima;
-    this.markRoiMaxima = markRoiMaxima;
-    firePropertyChange(PROPERTY_MARK_ROI_MAXIMA, oldValue, this.markRoiMaxima);
+    if (setOption(OutputOption.MASK_ROI_SELECTION, markRoiMaxima)) {
+      firePropertyChange(PROPERTY_MARK_ROI_MAXIMA, !markRoiMaxima, markRoiMaxima);
+    }
   }
 
   /**
@@ -724,7 +699,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return true, if is mark roi maxima
    */
   public boolean isMarkRoiMaxima() {
-    return markRoiMaxima;
+    return isOption(OutputOption.MASK_ROI_SELECTION);
   }
 
   /**
@@ -733,9 +708,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param markUsingOverlay the new mark using overlay
    */
   public void setMarkUsingOverlay(boolean markUsingOverlay) {
-    final boolean oldValue = this.markUsingOverlay;
-    this.markUsingOverlay = markUsingOverlay;
-    firePropertyChange(PROPERTY_MARK_USING_OVERLAY, oldValue, this.markUsingOverlay);
+    if (setOption(OutputOption.ROI_USING_OVERLAY, markUsingOverlay)) {
+      firePropertyChange(PROPERTY_MARK_USING_OVERLAY, !markUsingOverlay, markUsingOverlay);
+    }
   }
 
   /**
@@ -744,7 +719,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the markUsingOverlay.
    */
   public boolean isMarkUsingOverlay() {
-    return markUsingOverlay;
+    return isOption(OutputOption.ROI_USING_OVERLAY);
   }
 
   /**
@@ -753,9 +728,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param hideLabels the new hide labels
    */
   public void setHideLabels(boolean hideLabels) {
-    final boolean oldValue = this.hideLabels;
-    this.hideLabels = hideLabels;
-    firePropertyChange(PROPERTY_HIDE_LABELS, oldValue, this.hideLabels);
+    if (setOption(OutputOption.HIDE_LABELS, hideLabels)) {
+      firePropertyChange(PROPERTY_HIDE_LABELS, !hideLabels, hideLabels);
+    }
   }
 
   /**
@@ -764,16 +739,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the hideLabels.
    */
   public boolean isHideLabels() {
-    return hideLabels;
-  }
-
-  /**
-   * Checks if is show mask maxima as dots.
-   *
-   * @return the showMaskMaximaAsDots.
-   */
-  public boolean isShowMaskMaximaAsDots() {
-    return showMaskMaximaAsDots;
+    return isOption(OutputOption.HIDE_LABELS);
   }
 
   /**
@@ -782,9 +748,19 @@ public class FindFociModel extends AbstractModelObject {
    * @param showMaskMaximaAsDots the new show mask maxima as dots
    */
   public void setShowMaskMaximaAsDots(boolean showMaskMaximaAsDots) {
-    final boolean oldValue = this.showMaskMaximaAsDots;
-    this.showMaskMaximaAsDots = showMaskMaximaAsDots;
-    firePropertyChange(PROPERTY_SHOW_MASK_MAXIMA_AS_DOTS, oldValue, this.showMaskMaximaAsDots);
+    if (setOption(AlgorithmOption.OUTPUT_MASK_PEAK_DOTS, showMaskMaximaAsDots)) {
+      firePropertyChange(PROPERTY_SHOW_MASK_MAXIMA_AS_DOTS, !showMaskMaximaAsDots,
+          showMaskMaximaAsDots);
+    }
+  }
+
+  /**
+   * Checks if is show mask maxima as dots.
+   *
+   * @return the showMaskMaximaAsDots.
+   */
+  public boolean isShowMaskMaximaAsDots() {
+    return isOption(AlgorithmOption.OUTPUT_MASK_PEAK_DOTS);
   }
 
   /**
@@ -795,7 +771,7 @@ public class FindFociModel extends AbstractModelObject {
   public void setShowLogMessages(boolean showLogMessages) {
     final boolean oldValue = this.showLogMessages;
     this.showLogMessages = showLogMessages;
-    firePropertyChange(PROPERTY_SHOW_LOG_MESSAGES, oldValue, this.showLogMessages);
+    firePropertyChange(PROPERTY_SHOW_LOG_MESSAGES, oldValue, showLogMessages);
   }
 
   /**
@@ -813,9 +789,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param removeEdgeMaxima the new removes the edge maxima
    */
   public void setRemoveEdgeMaxima(boolean removeEdgeMaxima) {
-    final boolean oldValue = this.removeEdgeMaxima;
-    this.removeEdgeMaxima = removeEdgeMaxima;
-    firePropertyChange(PROPERTY_REMOVE_EDGE_MAXIMA, oldValue, this.removeEdgeMaxima);
+    if (setOption(AlgorithmOption.REMOVE_EDGE_MAXIMA, removeEdgeMaxima)) {
+      firePropertyChange(PROPERTY_REMOVE_EDGE_MAXIMA, !removeEdgeMaxima, removeEdgeMaxima);
+    }
   }
 
   /**
@@ -824,7 +800,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the removeEdgeMaxima.
    */
   public boolean isRemoveEdgeMaxima() {
-    return removeEdgeMaxima;
+    return isOption(AlgorithmOption.REMOVE_EDGE_MAXIMA);
   }
 
   /**
@@ -835,7 +811,7 @@ public class FindFociModel extends AbstractModelObject {
   public void setSaveResults(boolean saveResults) {
     final boolean oldValue = this.saveResults;
     this.saveResults = saveResults;
-    firePropertyChange(PROPERTY_SAVE_RESULTS, oldValue, this.saveResults);
+    firePropertyChange(PROPERTY_SAVE_RESULTS, oldValue, saveResults);
   }
 
   /**
@@ -853,9 +829,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param resultsDirectory the new results directory
    */
   public void setResultsDirectory(String resultsDirectory) {
-    final String oldValue = this.resultsDirectory;
-    this.resultsDirectory = resultsDirectory;
-    firePropertyChange(PROPERTY_RESULTS_DIRECTORY, oldValue, this.resultsDirectory);
+    final String oldValue = getResultsDirectory();
+    options.setResultsDirectory(resultsDirectory);
+    firePropertyChange(PROPERTY_RESULTS_DIRECTORY, oldValue, resultsDirectory);
   }
 
   /**
@@ -864,7 +840,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the resultsDirectory.
    */
   public String getResultsDirectory() {
-    return resultsDirectory;
+    return options.getResultsDirectory();
   }
 
   /**
@@ -873,9 +849,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param gaussianBlur the new gaussian blur
    */
   public void setGaussianBlur(double gaussianBlur) {
-    final double oldValue = this.gaussianBlur;
-    this.gaussianBlur = gaussianBlur;
-    firePropertyChange(PROPERTY_GAUSSIAN_BLUR, oldValue, this.gaussianBlur);
+    final double oldValue = getGaussianBlur();
+    processorOptions.setGaussianBlur(gaussianBlur);
+    firePropertyChange(PROPERTY_GAUSSIAN_BLUR, oldValue, gaussianBlur);
   }
 
   /**
@@ -884,7 +860,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the gaussianBlur.
    */
   public double getGaussianBlur() {
-    return gaussianBlur;
+    return processorOptions.getGaussianBlur();
   }
 
   /**
@@ -893,9 +869,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param centreMethod the new centre method
    */
   public void setCentreMethod(int centreMethod) {
-    final double oldValue = this.centreMethod;
-    this.centreMethod = centreMethod;
-    firePropertyChange(PROPERTY_CENTRE_METHOD, oldValue, this.centreMethod);
+    final double oldValue = getCentreMethod();
+    processorOptions.setCentreMethod(CentreMethod.fromOrdinal(centreMethod));
+    firePropertyChange(PROPERTY_CENTRE_METHOD, oldValue, centreMethod);
   }
 
   /**
@@ -904,7 +880,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the centreMethod.
    */
   public int getCentreMethod() {
-    return centreMethod;
+    return processorOptions.getCentreMethod().ordinal();
   }
 
   /**
@@ -913,9 +889,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param centreParameter the new centre parameter
    */
   public void setCentreParameter(double centreParameter) {
-    final double oldValue = this.centreParameter;
-    this.centreParameter = centreParameter;
-    firePropertyChange(PROPERTY_CENTRE_PARAMETER, oldValue, this.centreParameter);
+    final double oldValue = getCentreParameter();
+    processorOptions.setCentreParameter(centreParameter);
+    firePropertyChange(PROPERTY_CENTRE_PARAMETER, oldValue, centreParameter);
   }
 
   /**
@@ -924,7 +900,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the centreParameter.
    */
   public double getCentreParameter() {
-    return centreParameter;
+    return processorOptions.getCentreParameter();
   }
 
   /**
@@ -933,9 +909,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param fractionParameter the new fraction parameter
    */
   public void setFractionParameter(double fractionParameter) {
-    final double oldValue = this.fractionParameter;
-    this.fractionParameter = fractionParameter;
-    firePropertyChange(PROPERTY_FRACTION_PARAMETER, oldValue, this.fractionParameter);
+    final double oldValue = getFractionParameter();
+    processorOptions.setFractionParameter(fractionParameter);
+    firePropertyChange(PROPERTY_FRACTION_PARAMETER, oldValue, fractionParameter);
   }
 
   /**
@@ -944,7 +920,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return the fractionParameter.
    */
   public double getFractionParameter() {
-    return fractionParameter;
+    return processorOptions.getFractionParameter();
   }
 
   /**
@@ -988,7 +964,7 @@ public class FindFociModel extends AbstractModelObject {
   public void setSelectedImage(String selectedImage) {
     final String oldValue = this.selectedImage;
     this.selectedImage = selectedImage;
-    firePropertyChange(PROPERTY_SELECTED_IMAGE, oldValue, this.selectedImage);
+    firePropertyChange(PROPERTY_SELECTED_IMAGE, oldValue, selectedImage);
   }
 
   /**
@@ -1041,7 +1017,7 @@ public class FindFociModel extends AbstractModelObject {
   public void setMaskImage(String maskImage) {
     final String oldValue = this.maskImage;
     this.maskImage = maskImage;
-    firePropertyChange(PROPERTY_MASK_IMAGE, oldValue, this.maskImage);
+    firePropertyChange(PROPERTY_MASK_IMAGE, oldValue, maskImage);
   }
 
   /**
@@ -1059,9 +1035,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param objectAnalysis the new object analysis
    */
   public void setObjectAnalysis(boolean objectAnalysis) {
-    final boolean oldValue = this.objectAnalysis;
-    this.objectAnalysis = objectAnalysis;
-    firePropertyChange(PROPERTY_OBJECT_ANALYSIS, oldValue, this.objectAnalysis);
+    if (setOption(OutputOption.OBJECT_ANALYSIS, objectAnalysis)) {
+      firePropertyChange(PROPERTY_OBJECT_ANALYSIS, !objectAnalysis, objectAnalysis);
+    }
   }
 
   /**
@@ -1070,7 +1046,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return true, if is object analysis
    */
   public boolean isObjectAnalysis() {
-    return objectAnalysis;
+    return isOption(OutputOption.OBJECT_ANALYSIS);
   }
 
   /**
@@ -1079,9 +1055,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param showObjectMask the new show object mask
    */
   public void setShowObjectMask(boolean showObjectMask) {
-    final boolean oldValue = this.showObjectMask;
-    this.showObjectMask = showObjectMask;
-    firePropertyChange(PROPERTY_SHOW_OBJECT_MASK, oldValue, this.showObjectMask);
+    if (setOption(OutputOption.SHOW_OBJECT_MASK, showObjectMask)) {
+      firePropertyChange(PROPERTY_SHOW_OBJECT_MASK, !showObjectMask, showObjectMask);
+    }
   }
 
   /**
@@ -1090,7 +1066,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return true, if is show object mask
    */
   public boolean isShowObjectMask() {
-    return showObjectMask;
+    return isOption(OutputOption.SHOW_OBJECT_MASK);
   }
 
   /**
@@ -1099,9 +1075,9 @@ public class FindFociModel extends AbstractModelObject {
    * @param saveToMemory the new save to memory
    */
   public void setSaveToMemory(boolean saveToMemory) {
-    final boolean oldValue = this.saveToMemory;
-    this.saveToMemory = saveToMemory;
-    firePropertyChange(PROPERTY_SAVE_TO_MEMORY, oldValue, this.saveToMemory);
+    if (setOption(OutputOption.SAVE_TO_MEMORY, saveToMemory)) {
+      firePropertyChange(PROPERTY_SAVE_TO_MEMORY, !saveToMemory, saveToMemory);
+    }
   }
 
   /**
@@ -1110,7 +1086,7 @@ public class FindFociModel extends AbstractModelObject {
    * @return true, if is save to memory
    */
   public boolean isSaveToMemory() {
-    return saveToMemory;
+    return isOption(OutputOption.SAVE_TO_MEMORY);
   }
 
   /**
@@ -1151,11 +1127,62 @@ public class FindFociModel extends AbstractModelObject {
   }
 
   /**
-   * Performs a deep copy.
+   * Set the algorithm option.
    *
-   * @return A copy of this object
+   * @param option the option
+   * @param enabled True if enabled
+   * @return true, if the option was changed
    */
-  public FindFociModel deepCopy() {
-    return new FindFociModel(this);
+  private boolean setOption(AlgorithmOption option, boolean enabled) {
+    return processorOptions.setOption(option, enabled);
+  }
+
+  /**
+   * Set the output option.
+   *
+   * @param option the option
+   * @param enabled True if enabled
+   * @return true, if the option was changed
+   */
+  private boolean setOption(OutputOption option, boolean enabled) {
+    return options.setOption(option, enabled);
+  }
+
+  /**
+   * Checks if the algorithm option is enabled.
+   *
+   * @param option the option
+   * @return True if enabled
+   */
+  private boolean isOption(AlgorithmOption option) {
+    return processorOptions.isOption(option);
+  }
+
+  /**
+   * Checks if the output option is enabled.
+   *
+   * @param option the option
+   * @return True if enabled
+   */
+  private boolean isOption(OutputOption option) {
+    return options.isOption(option);
+  }
+
+  /**
+   * Gets a copy of the processor options.
+   *
+   * @return the processor options
+   */
+  public FindFociProcessorOptions getProcessorOptions() {
+    return processorOptions.copy();
+  }
+
+  /**
+   * Gets a copy of the options.
+   *
+   * @return the options
+   */
+  public FindFociOptions getOptions() {
+    return options.copy();
   }
 }

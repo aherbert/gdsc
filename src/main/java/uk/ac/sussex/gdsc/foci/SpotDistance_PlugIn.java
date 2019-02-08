@@ -28,8 +28,16 @@ import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.PointPair;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.foci.FindFociOptions.OutputOption;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
 import uk.ac.sussex.gdsc.ij.plugin.filter.DifferenceOfGaussians;
 
 import ij.IJ;
@@ -290,7 +298,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     }
 
     if (!FindFoci_PlugIn.isSupported(imp.getBitDepth())) {
-      IJ.error(TITLE, "Only " + FindFoci_PlugIn.getSupported() + " images are supported");
+      IJ.error(TITLE, "Only " + FindFoci_PlugIn.SUPPORTED_BIT_DEPTH + " images are supported");
       return;
     }
 
@@ -869,23 +877,26 @@ public class SpotDistance_PlugIn implements PlugIn {
     // - Bigger feature size for DoG?
 
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
-    final int backgroundMethod =
-        (settings.autoThreshold) ? FindFociProcessor.BACKGROUND_AUTO_THRESHOLD
-            : FindFociProcessor.BACKGROUND_STD_DEV_ABOVE_MEAN;
-    final double backgroundParameter = settings.stdDevAboveBackground;
-    final String autoThresholdMethod = AutoThreshold.Method.OTSU.toString();
-    final int searchMethod = FindFociProcessor.SEARCH_ABOVE_BACKGROUND;
-    final double searchParameter = 0;
-    final int minSize = settings.minPeakSize;
-    final int peakMethod = FindFociProcessor.PEAK_ABSOLUTE;
-    final int outputType = FindFociProcessor.OUTPUT_RESULTS_TABLE
-        | FindFociProcessor.OUTPUT_MASK_PEAKS | FindFociProcessor.OUTPUT_MASK_ABOVE_SADDLE
-        | FindFociProcessor.OUTPUT_MASK_NO_PEAK_DOTS;
-    final int sortIndex = FindFociProcessor.SORT_MAX_VALUE;
-    final int options = FindFociProcessor.OPTION_MINIMUM_ABOVE_SADDLE;
-    final double blur = 0;
-    final int centreMethod = FindFoci_PlugIn.CENTRE_OF_MASS_ORIGINAL;
-    final double centreParameter = 2;
+    final FindFociProcessorOptions processorOptions = new FindFociProcessorOptions();
+    processorOptions.setBackgroundMethod(settings.autoThreshold ? BackgroundMethod.AUTO_THRESHOLD
+        : BackgroundMethod.STD_DEV_ABOVE_MEAN);
+    processorOptions.setBackgroundParameter(settings.stdDevAboveBackground);
+    processorOptions.setThresholdMethod(ThresholdMethod.OTSU);
+    processorOptions.setSearchMethod(SearchMethod.ABOVE_BACKGROUND);
+    processorOptions.setMaxPeaks(33000);
+    processorOptions.setMinSize(settings.minPeakSize);
+    processorOptions.setPeakMethod(PeakMethod.ABSOLUTE);
+    processorOptions.setPeakParameter(0);
+    processorOptions.setOption(AlgorithmOption.MINIMUM_ABOVE_SADDLE, true);
+    processorOptions.setMaskMethod(MaskMethod.PEAKS_ABOVE_SADDLE);
+    processorOptions.setSortMethod(SortMethod.MAX_VALUE);
+    processorOptions.setGaussianBlur(0);
+    processorOptions.setCentreMethod(CentreMethod.CENTRE_OF_MASS_ORIGINAL);
+    processorOptions.setCentreParameter(2);
+
+    final FindFociOptions options = new FindFociOptions();
+    options.getOptions().clear();
+    options.setOption(OutputOption.RESULTS_TABLE, true);
 
     Overlay overlay = null;
     Overlay overlay2 = null;
@@ -912,7 +923,7 @@ public class SpotDistance_PlugIn implements PlugIn {
       final ImageStack stack = croppedImp.getImageStack();
       final float scale = scaleImage(stack);
       croppedImp.setStack(stack); // Updates the image bit depth
-      final double peakParameter = Math.round(settings.minPeakHeight * scale);
+      processorOptions.setPeakParameter(Math.round(settings.minPeakHeight * scale));
       double peakParameter2 = 0;
 
       if (s1b != null) {
@@ -927,17 +938,15 @@ public class SpotDistance_PlugIn implements PlugIn {
         showSpotImage(croppedImp, croppedImp2, regionImp, cal);
       }
 
-      final FindFociResults ffResult = ff.findMaxima(croppedImp, regionImp, backgroundMethod,
-          backgroundParameter, autoThresholdMethod, searchMethod, searchParameter,
-          settings.maxPeaks, minSize, peakMethod, peakParameter, outputType, sortIndex, options,
-          blur, centreMethod, centreParameter, 1);
+      FindFociBaseProcessor ffp = ff.createFindFociProcessor(croppedImp);
+      final FindFociResults ffResult = ffp.findMaxima(croppedImp, regionImp, processorOptions);
 
       if (ImageJUtils.isInterrupted()) {
         return;
       }
 
       final ArrayList<DistanceResult> resultsArray =
-          analyseResults(prevResultsArray, croppedImp, ffResult, frame, channel, overlay);
+          analyseResults(prevResultsArray, croppedImp, ffp, ffResult, frame, channel, overlay);
       for (final DistanceResult result : resultsArray) {
         addResult(frame, channel, region, result);
       }
@@ -1027,17 +1036,16 @@ public class SpotDistance_PlugIn implements PlugIn {
       } else {
         // Dual channel analysis.
         // Analyse the second channel
-        final FindFociResults results2 = ff.findMaxima(croppedImp2, regionImp, backgroundMethod,
-            backgroundParameter, autoThresholdMethod, searchMethod, searchParameter,
-            settings.maxPeaks, minSize, peakMethod, peakParameter2, outputType, sortIndex, options,
-            blur, centreMethod, centreParameter, 1);
+        processorOptions.setPeakParameter(peakParameter2);
+        ffp = ff.createFindFociProcessor(croppedImp2);
+        final FindFociResults results2 = ffp.findMaxima(croppedImp2, regionImp, processorOptions);
 
         if (ImageJUtils.isInterrupted()) {
           return;
         }
 
-        final ArrayList<DistanceResult> resultsArray2 =
-            analyseResults(prevResultsArray2, croppedImp2, results2, frame, settings.c2, overlay2);
+        final ArrayList<DistanceResult> resultsArray2 = analyseResults(prevResultsArray2,
+            croppedImp2, ffp, results2, frame, settings.c2, overlay2);
         for (final DistanceResult result : resultsArray2) {
           addResult(frame, settings.c2, region, result);
         }
@@ -1429,6 +1437,7 @@ public class SpotDistance_PlugIn implements PlugIn {
    *
    * @param prev the prev
    * @param croppedImp the cropped imp
+   * @param ffp the FindFociProcessor that generated the results
    * @param ffResult the ff result
    * @param frame the frame
    * @param channel the channel
@@ -1436,7 +1445,8 @@ public class SpotDistance_PlugIn implements PlugIn {
    * @return the results
    */
   private ArrayList<DistanceResult> analyseResults(ArrayList<DistanceResult> prev,
-      ImagePlus croppedImp, FindFociResults ffResult, int frame, int channel, Overlay overlay) {
+      ImagePlus croppedImp, FindFociBaseProcessor ffp, FindFociResults ffResult, int frame,
+      int channel, Overlay overlay) {
     if (ffResult == null) {
       return new ArrayList<>(0);
     }
@@ -1447,8 +1457,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     final ArrayList<DistanceResult> newResultsArray = new ArrayList<>(resultsArray.size());
 
     // Process in XYZ order
-    final FindFociBaseProcessor ffp = new FindFociIntProcessor();
-    ffp.sortAscResults(resultsArray, FindFociProcessor.SORT_XYZ, null);
+    ffp.sortAscResults(resultsArray, SortMethod.XYZ, null);
 
     final ImageStack maskStack = peaksImp.getImageStack();
 
