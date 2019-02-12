@@ -78,7 +78,7 @@ import java.util.logging.Logger;
  * <p>Stopping criteria for region growing routines are partly based on the options in PRIISM
  * (http://www.msg.ucsf.edu/IVE/index.html).
  */
-public abstract class FindFociBaseProcessor implements FindFociProcessor {
+public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
   /**
    * The largest number that can be displayed in a 16-bit image.
    *
