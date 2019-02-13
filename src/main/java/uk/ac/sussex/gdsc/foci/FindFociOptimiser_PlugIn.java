@@ -1565,6 +1565,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     // The parameter values for absolute height and relative height are on a different scale
     // and using both methods is not yet supported.
     processorOptions.setPeakMethod(settings.myPeakMethod);
+    processorOptions.setMaxPeaks(settings.myMaxPeaks);
 
     int id = 0;
     for (int blurCount = 0; blurCount < blurArray.length; blurCount++) {
