@@ -52,7 +52,7 @@ import java.util.Objects;
  * Runs the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn } algorithm using input from a
  * synchronised queueing method.
  */
-public class FindFociRunner extends Thread {
+public class FindFociRunner implements Runnable {
   /** The next model to be processed. Only updated when holding the lock. */
   private FindFociModel nextModel;
   /** The model that was previously processed. Set at the end of processing a model. */
@@ -69,8 +69,14 @@ public class FindFociRunner extends Thread {
    */
   private volatile boolean running = true;
 
-  // Used for the staged FindFoci results
-  private FindFoci_PlugIn ff = new FindFoci_PlugIn();
+  /** The FindFoci instance used to create the processor. */
+  private final FindFoci_PlugIn ff = new FindFoci_PlugIn();
+  /**
+   * The processor must be initialised for each new image so the dimensions and lookup tables are
+   * computed.
+   */
+  private FindFociBaseProcessor processor;
+  // Staged processing results
   private ImagePlus imp2;
   private FindFociInitResults initResults;
   private FindFociInitResults searchInitResults;
@@ -145,18 +151,6 @@ public class FindFociRunner extends Thread {
 
       notifyListener(MessageType.ERROR, thrown);
     } finally {
-      running = false;
-      ff = null;
-      imp2 = null;
-      initResults = null;
-      searchInitResults = null;
-      searchArray = null;
-      mergeInitResults = null;
-      resultsInitResults = null;
-      maskInitResults = null;
-      mergeResults = null;
-      prelimResults = null;
-      results = null;
       notifyListener(MessageType.BACKGROUND_LEVEL, 0.0f);
       notifyListener(MessageType.SORT_INDEX_OK, 0.0f);
       notifyListener(MessageType.FINISHED);
@@ -228,9 +222,8 @@ public class FindFociRunner extends Thread {
     final FindFociState state = compareModels(model, previousModel);
     previousModel = null;
 
-    final FindFociBaseProcessor processor = ff.createFindFociProcessor(imp);
-
     if (state.ordinal() <= FindFociState.INITIAL.ordinal()) {
+      processor = ff.createFindFociProcessor(imp);
       imp2 = processor.blur(imp, processorOptions.getGaussianBlur());
       if (imp2 == null) {
         notifyFailed();

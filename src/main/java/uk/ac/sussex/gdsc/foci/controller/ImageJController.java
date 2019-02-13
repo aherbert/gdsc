@@ -33,6 +33,8 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
 import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
+import com.google.common.util.concurrent.Futures;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -41,12 +43,23 @@ import ij.process.ImageStatistics;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn } algorithm.
  */
 public class ImageJController extends FindFociController {
+  /** The executor service for the preview. */
+  private ExecutorService executor = Executors.newFixedThreadPool(1);
+  /** The runner for the preview. Modifications to this should be synchronized. */
   private FindFociRunner runner;
+  /**
+   * The future containing the runner. This should never be null and should be done when the preview
+   * is not running. Modifications to this should be synchronized.
+   */
+  private Future<?> future = Futures.immediateFuture(null);
 
   /**
    * Instantiates a new image J controller.
@@ -228,19 +241,22 @@ public class ImageJController extends FindFociController {
   }
 
   private void startRunner() {
-    if (runner == null || !runner.isAlive()) {
-      runner = new FindFociRunner(this.listener);
-      runner.start();
+    synchronized (executor) {
+      if (future.isDone()) {
+        runner = new FindFociRunner(this.listener);
+        future = executor.submit(runner);
+      }
     }
   }
 
   /** {@inheritDoc} */
   @Override
   public void endPreview() {
-    if (runner != null) {
-      runner.finish();
-      runner.interrupt();
-      runner = null;
+    synchronized (executor) {
+      if (runner != null) {
+        runner.finish();
+        future.cancel(true);
+      }
     }
   }
 
