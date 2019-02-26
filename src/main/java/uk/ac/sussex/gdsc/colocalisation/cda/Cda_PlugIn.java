@@ -60,7 +60,7 @@ import ij.text.TextWindow;
 import ij.util.Tools;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.math3.random.Well19937c;
+import org.apache.commons.rng.simple.RandomSource;
 
 import java.awt.BorderLayout;
 import java.awt.Button;
@@ -584,7 +584,8 @@ public class Cda_PlugIn extends PlugInFrame {
       intersectMask(roiStack1, confinedStack);
       intersectMask(roiStack2, confinedStack);
 
-      // This could be changed to check for a certain pixel count (e.g. (overlap / 255) < [count])
+      // This could be changed to check for a certain pixel count (e.g. (overlap / 255) <
+      // [count])
       if (isZero(roiStack1) || isZero(roiStack2)) {
         IJ.showMessage(PLUGIN_TITLE, "Empty ROI(s)");
         return;
@@ -708,7 +709,8 @@ public class Cda_PlugIn extends PlugInFrame {
 
     // Randomise the permutations
     if (permutations < list.size() && permutations > 0) {
-      final int[] sample = RandomUtils.sample(permutations, list.size(), new Well19937c(30051977));
+      final int[] sample = RandomUtils.sample(permutations, list.size(),
+          RandomSource.create(RandomSource.SPLIT_MIX_64));
       final int[] indices = new int[permutations];
       for (int i = 0; i < permutations; i++) {
         indices[i] = list.getQuick(sample[i]);
@@ -1029,7 +1031,8 @@ public class Cda_PlugIn extends PlugInFrame {
         bp.fill(roi);
         final byte[] pixels = (byte[]) bp.getPixels();
         for (int slice = 1; slice <= slices; slice++) {
-          result.addSlice(null, pixels); // No need to clone() a read-only ROI stack of pixels
+          // No need to clone() a read-only ROI stack of pixels
+          result.addSlice(null, pixels);
         }
         return result;
       }
@@ -1782,7 +1785,8 @@ public class Cda_PlugIn extends PlugInFrame {
 
       if (((Button) actioner == okButton)) {
         if (parametersReady()) {
-          // This will allow the Gui to remain responsive. No checks are made that the user
+          // This will allow the Gui to remain responsive. No checks are made that the
+          // user
           // does not press the button repeatedly.
           final Thread thread = new Thread(this::doCda, "CDA_Plugin");
           thread.start();
