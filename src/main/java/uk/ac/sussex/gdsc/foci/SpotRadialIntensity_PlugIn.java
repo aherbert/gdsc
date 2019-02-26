@@ -414,7 +414,8 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
               // Q. Faster than sqrt?
               int bin = Arrays.binarySearch(distances, d2);
               if (bin < 0) {
-                bin = -bin - 2; // The bin is the (insertion point)-1 => -(bin+1) - 1
+                // The bin is the (insertion point)-1 => -(bin+1) - 1
+                bin = -(bin + 1) - 1;
               }
               // if (bin != (int) (Math.sqrt(d2) / interval))
               // System.out.println("bin error");
