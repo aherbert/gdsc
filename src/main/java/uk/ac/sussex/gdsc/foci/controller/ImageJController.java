@@ -60,6 +60,8 @@ public class ImageJController extends FindFociController {
    * is not running. Modifications to this should be synchronized.
    */
   private Future<?> future = Futures.immediateFuture(null);
+  /** The lock used for synchronisation. */
+  private final Object lock = new Object();
 
   /**
    * Instantiates a new image J controller.
@@ -241,7 +243,7 @@ public class ImageJController extends FindFociController {
   }
 
   private void startRunner() {
-    synchronized (executor) {
+    synchronized (lock) {
       if (future.isDone()) {
         runner = new FindFociRunner(this.listener);
         future = executor.submit(runner);
@@ -252,7 +254,7 @@ public class ImageJController extends FindFociController {
   /** {@inheritDoc} */
   @Override
   public void endPreview() {
-    synchronized (executor) {
+    synchronized (lock) {
       if (runner != null) {
         runner.finish();
         future.cancel(true);
