@@ -1460,9 +1460,6 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     int[] xpoints;
     int[] ypoints;
 
-    // Debugging variables
-    int iter;
-
     /**
      * Instantiates a new differentiable elliptical fit function.
      *
@@ -1598,7 +1595,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
 
       if (debug) {
         bp.setMinAndMax(1, npoints);
-        displayImage(bp, "Ellipse points " + iter);
+        displayImage(bp, "Ellipse points");
       }
 
       return values;
