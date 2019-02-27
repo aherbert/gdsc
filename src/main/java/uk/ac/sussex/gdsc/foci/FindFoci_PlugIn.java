@@ -458,7 +458,7 @@ public class FindFoci_PlugIn implements PlugIn {
       Macro.abort();
     }
 
-    boolean openBatchResultsFile() {
+    synchronized boolean openBatchResultsFile() {
       final Path path = Paths.get(batchOutputDirectory, "all.xls");
       try {
         allOut = Files.newBufferedWriter(path);
