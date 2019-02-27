@@ -58,6 +58,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -104,9 +105,13 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
 
       lastParticle = Analyzer.class.getDeclaredField("lastParticle");
       lastParticle.setAccessible(true);
-    } catch (final Exception ex) {
+    } catch (final ExceptionInInitializerError | Exception ex) {
       // Reflection has failed
       firstParticle = lastParticle = null;
+      if (IJ.debugMode) {
+        Logger.getLogger(MaskParticleAnalyzer.class.getName()).log(Level.WARNING,
+            "Reflection failed", ex);
+      }
     }
   }
 
@@ -289,7 +294,9 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
           final int redirectTarget = (Integer) field.get(Analyzer.class);
           restoreRedirectImp = WindowManager.getImage(redirectTarget);
         } catch (final ExceptionInInitializerError | Exception ex) {
-          // Reflection has failed
+          if (IJ.debugMode) {
+            Logger.getLogger(getClass().getName()).log(Level.WARNING, "Reflection failed", ex);
+          }
         }
       }
       final ImagePlus redirectImp =
