@@ -118,4 +118,15 @@
     <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD" />
   </Match>
 
+  <Match>
+    <Class name="uk.ac.sussex.gdsc.foci.FindFociOptimiser_PlugIn" />
+    <Method name="runOptimiser" />
+    <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE" />
+  </Match>
+  <Match>
+    <Class name="uk.ac.sussex.gdsc.foci.controller.FindFociRunner" />
+    <Method name="runFindFoci" />
+    <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE" />
+  </Match>
+
 </FindBugsFilter>
