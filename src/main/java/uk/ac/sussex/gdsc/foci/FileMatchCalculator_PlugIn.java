@@ -53,10 +53,12 @@ import java.awt.Point;
 import java.awt.TextField;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -605,27 +607,24 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
       return;
     }
 
-    OutputStreamWriter out = null;
-    OutputStreamWriter outSingle = null;
+    BufferedWriter out = null;
+    BufferedWriter outSingle = null;
     try {
-      final String newLine = System.getProperty("line.separator");
-
       // Always create the header as it sets up the pairs prefix for each pair result
       final String header = createPairsHeader(title1, title2);
       if (fileSelected) {
-        final FileOutputStream fos = new FileOutputStream(filename);
-        out = new OutputStreamWriter(fos, "UTF-8");
+        out = Files.newBufferedWriter(Paths.get(filename));
         out.write(header);
-        out.write(newLine);
+        out.newLine();
       }
       if (fileSingleSelected) {
         final File file = new File(filenameSingle);
-        final boolean append = (file.length() != 0);
-        final FileOutputStream fos = new FileOutputStream(file, append);
-        outSingle = new OutputStreamWriter(fos, "UTF-8");
-        if (!append) {
+        if (file.length() != 0) {
+          outSingle = Files.newBufferedWriter(file.toPath(), StandardOpenOption.APPEND);
+        } else {
+          outSingle = Files.newBufferedWriter(file.toPath());
           outSingle.write(header);
-          outSingle.write(newLine);
+          outSingle.newLine();
         }
       }
 
@@ -633,14 +632,14 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
         final String result = createPairResult(pair, is3D);
         if (out != null) {
           out.write(result);
-          out.write(newLine);
+          out.newLine();
         }
         if (outSingle != null) {
           outSingle.write(result);
-          outSingle.write(newLine);
+          outSingle.newLine();
         }
       }
-    } catch (final Exception ex) {
+    } catch (IOException ex) {
       IJ.log("Unable to save the matches to file: " + ex.getMessage());
     } finally {
       if (out != null) {
