@@ -375,7 +375,7 @@ public class FindFociAdvancedOptions extends JDialog {
       txtCentreParam.addPropertyChangeListener(new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-          if (evt.getPropertyName() == "value") {
+          if ("value".equals(evt.getPropertyName())) {
             txtCentreParam.firePropertyChange("text", 0, 1);
           }
         }
