@@ -322,7 +322,8 @@ public class SpotDensity_PlugIn implements PlugIn {
 
     // Truncate the unused r for the plot
     radii = Arrays.copyOf(radii, nbins);
-    final Plot plot1 = new Plot(TITLE + " Min Distance", "Distance (px)", "Frequency", radii, dMin);
+    final Plot plot1 = new Plot(TITLE + " Min Distance", "Distance (px)", "Frequency");
+    plot1.addPoints(radii, dMin, Plot.LINE);
     final PlotWindow pw1 = ImageJUtils.display(TITLE + " Min Distance", plot1);
 
     // The final bin may be empty if the correlation interval was a factor of the correlation
@@ -393,7 +394,8 @@ public class SpotDensity_PlugIn implements PlugIn {
   private static PlotWindow showPairCorrelation(PairCorrelation pc) {
     final double avDensity = (double) pc.numberOfPoints / pc.area;
     final String title = "Pair Correlation";
-    final Plot plot2 = new Plot(TITLE + " " + title, "r (px)", "g(r)", pc.radii, pc.pc);
+    final Plot plot2 = new Plot(TITLE + " " + title, "r (px)", "g(r)");
+    plot2.addPoints(pc.radii, pc.pc, Plot.LINE);
     plot2.setColor(Color.red);
     plot2.drawLine(pc.radii[0], 1, pc.radii[pc.radii.length - 1], 1);
     plot2.addLabel(0, 0, "Av.Density = " + IJ.d2s(avDensity, -3) + " px^-2");
