@@ -429,7 +429,7 @@ public class SpotDensity_PlugIn implements PlugIn {
               if (id > 0 && id <= results.size()) {
                 ids[count++] = id;
               }
-            } catch (final Exception ex) {
+            } catch (final IndexOutOfBoundsException | NumberFormatException ex) {
               // Ignore for now
             }
           }

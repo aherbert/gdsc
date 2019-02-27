@@ -1053,7 +1053,7 @@ public class FindFociHelperView extends JFrame
         activeImp.getWindow().removeWindowListener(this);
         activeImp.getCanvas().removeMouseListener(this);
         activeImp.getCanvas().removeMouseMotionListener(this);
-      } catch (final Exception ex) {
+      } catch (final RuntimeException ex) {
         logMessage("Failed to unregister from image %s", activeImp.getTitle());
       }
     }

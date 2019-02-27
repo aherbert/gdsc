@@ -520,7 +520,7 @@ public class FindFoci_PlugIn implements PlugIn {
           out.write(r.entry);
           out.newLine();
         }
-      } catch (final Exception ex) {
+      } catch (final IOException ex) {
         logError(ex.getMessage());
       }
     }
@@ -1382,7 +1382,7 @@ public class FindFoci_PlugIn implements PlugIn {
           mask, maskDimension, processorOptions, options);
 
       return expId;
-    } catch (final Exception ex) {
+    } catch (IOException ex) {
       logError(ex.getMessage());
     }
     return "";

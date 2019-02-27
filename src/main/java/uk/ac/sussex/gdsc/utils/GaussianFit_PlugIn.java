@@ -37,6 +37,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -87,8 +88,7 @@ public class GaussianFit_PlugIn implements PlugInFilter {
 
       // Try a fit.
       // Use reflection to allow building without the SMLM plugins on the classpath
-      final Method m =
-          clazz.getDeclaredMethod("fit", float[].class, int.class, int.class);
+      final Method m = clazz.getDeclaredMethod("fit", float[].class, int.class, int.class);
       double[] fit = (double[]) m.invoke(clazz.newInstance(), data, size, size);
       if (fit != null) {
         fittingEnabled = true;
@@ -133,10 +133,11 @@ public class GaussianFit_PlugIn implements PlugInFilter {
     try {
       // Use reflection to allow building without the SMLM plugins on the classpath
       final Class c = Class.forName(GAUSSIAN_FIT_CLASS, true, this.getClass().getClassLoader());
-      final Method m =
-          c.getDeclaredMethod("fit", float[].class, int.class, int.class);
+      final Method m = c.getDeclaredMethod("fit", float[].class, int.class, int.class);
       return (double[]) m.invoke(c.newInstance(), data, width, height);
-    } catch (final Exception ex) {
+    } catch (final ExceptionInInitializerError | RuntimeException | ClassNotFoundException
+        | NoSuchMethodException | IllegalAccessException | InvocationTargetException
+        | InstantiationException ex) {
       Logger.getLogger(getClass().getName()).log(Level.WARNING,
           () -> "Fitting failed: " + ex.getMessage());
       return null;
