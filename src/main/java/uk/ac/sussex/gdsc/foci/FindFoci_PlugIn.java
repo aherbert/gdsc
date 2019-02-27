@@ -499,7 +499,6 @@ public class FindFoci_PlugIn implements PlugIn {
       } catch (final OutOfMemoryError ex) {
         // In case the file is too big to read in for a sort
         results.clear();
-        results = null;
         // Try and free the memory
         MemoryUtils.runGarbageCollectorOnce();
         logError(ex.getMessage());
