@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn} algorithm.
  */
-public class OptimiserController extends FindFociController implements Runnable {
+public class OptimiserController extends FindFociController {
   private final FindFociOptimiser_PlugIn optimiser = new FindFociOptimiser_PlugIn();
 
   /**
