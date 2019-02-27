@@ -329,11 +329,11 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     private static final AtomicReference<BatchSettings> lastSettings =
         new AtomicReference<>(new BatchSettings());
 
-    private static final String INPUT_DIRECTORY = "findfoci.optimiser.inputDirectory";
-    private static final String MASK_DIRECTORY = "findfoci.optimiser.maskDirectory";
-    private static final String OUTPUT_DIRECTORY = "findfoci.optimiser.outputDirectory";
-    private static final String SCORING_MODE = "findfoci.optimiser.scoringMode";
-    private static final String REUSE_RESULTS = "findfoci.optimiser.reuseResults";
+    private static final String KEY_INPUT_DIRECTORY = "findfoci.optimiser.inputDirectory";
+    private static final String KEY_MASK_DIRECTORY = "findfoci.optimiser.maskDirectory";
+    private static final String KEY_OUTPUT_DIRECTORY = "findfoci.optimiser.outputDirectory";
+    private static final String KEY_SCORING_MODE = "findfoci.optimiser.scoringMode";
+    private static final String KEY_REUSE_RESULTS = "findfoci.optimiser.reuseResults";
     String inputDirectory;
     String maskDirectory;
     String outputDirectory;
@@ -344,11 +344,11 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
      * Default constructor.
      */
     BatchSettings() {
-      inputDirectory = Prefs.get(INPUT_DIRECTORY, "");
-      maskDirectory = Prefs.get(MASK_DIRECTORY, "");
-      outputDirectory = Prefs.get(OUTPUT_DIRECTORY, "");
-      scoringMode = Prefs.getInt(SCORING_MODE, SCORE_RAW);
-      reuseResults = Prefs.getBoolean(REUSE_RESULTS, true);
+      inputDirectory = Prefs.get(KEY_INPUT_DIRECTORY, "");
+      maskDirectory = Prefs.get(KEY_MASK_DIRECTORY, "");
+      outputDirectory = Prefs.get(KEY_OUTPUT_DIRECTORY, "");
+      scoringMode = Prefs.getInt(KEY_SCORING_MODE, SCORE_RAW);
+      reuseResults = Prefs.getBoolean(KEY_REUSE_RESULTS, true);
     }
 
     /**
@@ -388,11 +388,11 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     void save() {
       lastSettings.set(this);
       // Save to ImageJ preferences
-      Prefs.set(INPUT_DIRECTORY, inputDirectory);
-      Prefs.set(MASK_DIRECTORY, maskDirectory);
-      Prefs.set(OUTPUT_DIRECTORY, outputDirectory);
-      Prefs.set(SCORING_MODE, scoringMode);
-      Prefs.set(REUSE_RESULTS, reuseResults);
+      Prefs.set(KEY_INPUT_DIRECTORY, inputDirectory);
+      Prefs.set(KEY_MASK_DIRECTORY, maskDirectory);
+      Prefs.set(KEY_OUTPUT_DIRECTORY, outputDirectory);
+      Prefs.set(KEY_SCORING_MODE, scoringMode);
+      Prefs.set(KEY_REUSE_RESULTS, reuseResults);
     }
   }
 

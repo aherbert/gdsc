@@ -310,8 +310,8 @@ public class FindFoci_PlugIn implements PlugIn {
    * <p>There is a single instance controlling atomic access to the settings.
    */
   private static class GlobalSettings {
-    private static final String SEARCH_CAPACITY = "findfoci.searchCapacity";
-    private static final String EMPTY_FIELD = "findfoci.emptyField";
+    private static final String KEY_SEARCH_CAPACITY = "findfoci.searchCapacity";
+    private static final String KEY_EMPTY_FIELD = "findfoci.emptyField";
 
     private static final GlobalSettings INSTANCE = new GlobalSettings();
 
@@ -320,10 +320,10 @@ public class FindFoci_PlugIn implements PlugIn {
      * default value for legacy reasons is {@value Short#MAX_VALUE}.
      */
     AtomicInteger searchCapacity =
-        new AtomicInteger((int) Prefs.get(SEARCH_CAPACITY, Short.MAX_VALUE));
+        new AtomicInteger((int) Prefs.get(KEY_SEARCH_CAPACITY, Short.MAX_VALUE));
 
     /** The empty field to use in results files. */
-    AtomicReference<String> emptyField = new AtomicReference<>(Prefs.get(EMPTY_FIELD, ""));
+    AtomicReference<String> emptyField = new AtomicReference<>(Prefs.get(KEY_EMPTY_FIELD, ""));
 
     /**
      * Default constructor.
@@ -336,8 +336,8 @@ public class FindFoci_PlugIn implements PlugIn {
      * Save the settings.
      */
     void save() {
-      Prefs.set(SEARCH_CAPACITY, searchCapacity.get());
-      Prefs.set(EMPTY_FIELD, emptyField.get());
+      Prefs.set(KEY_SEARCH_CAPACITY, searchCapacity.get());
+      Prefs.set(KEY_EMPTY_FIELD, emptyField.get());
     }
   }
 
@@ -349,12 +349,12 @@ public class FindFoci_PlugIn implements PlugIn {
     private static final AtomicReference<BatchSettings> lastSettings =
         new AtomicReference<>(new BatchSettings());
 
-    private static final String BATCH_INPUT_DIRECTORY = "findfoci.batchInputDirectory";
-    private static final String BATCH_MASK_DIRECTORY = "findfoci.batchMaskDirectory";
-    private static final String BATCH_PARAMETER_FILE = "findfoci.batchParameterFile";
-    private static final String BATCH_OUTPUT_DIRECTORY = "findfoci.batchOutputDirectory";
-    private static final String BATCH_MULTI_THREAD = "findfoci.batchMultiThread";
-    private static final String BATCH_SHOW_LOG_MESSAGES = "findfoci.batchShowLogMessages";
+    private static final String KEY_BATCH_INPUT_DIRECTORY = "findfoci.batchInputDirectory";
+    private static final String KEY_BATCH_MASK_DIRECTORY = "findfoci.batchMaskDirectory";
+    private static final String KEY_BATCH_PARAMETER_FILE = "findfoci.batchParameterFile";
+    private static final String KEY_BATCH_OUTPUT_DIRECTORY = "findfoci.batchOutputDirectory";
+    private static final String KEY_BATCH_MULTI_THREAD = "findfoci.batchMultiThread";
+    private static final String KEY_BATCH_SHOW_LOG_MESSAGES = "findfoci.batchShowLogMessages";
 
     String inputDirectory;
     String maskDirectory;
@@ -368,12 +368,12 @@ public class FindFoci_PlugIn implements PlugIn {
      */
     BatchSettings() {
       // Set defaults
-      inputDirectory = Prefs.get(BATCH_INPUT_DIRECTORY, "");
-      maskDirectory = Prefs.get(BATCH_MASK_DIRECTORY, "");
-      parameterFile = Prefs.get(BATCH_PARAMETER_FILE, "");
-      outputDirectory = Prefs.get(BATCH_OUTPUT_DIRECTORY, "");
-      multiThread = Prefs.get(BATCH_MULTI_THREAD, true);
-      showLogMessages = Prefs.get(BATCH_SHOW_LOG_MESSAGES, true);
+      inputDirectory = Prefs.get(KEY_BATCH_INPUT_DIRECTORY, "");
+      maskDirectory = Prefs.get(KEY_BATCH_MASK_DIRECTORY, "");
+      parameterFile = Prefs.get(KEY_BATCH_PARAMETER_FILE, "");
+      outputDirectory = Prefs.get(KEY_BATCH_OUTPUT_DIRECTORY, "");
+      multiThread = Prefs.get(KEY_BATCH_MULTI_THREAD, true);
+      showLogMessages = Prefs.get(KEY_BATCH_SHOW_LOG_MESSAGES, true);
     }
 
     /**
@@ -414,12 +414,12 @@ public class FindFoci_PlugIn implements PlugIn {
     void save() {
       lastSettings.set(this);
       // Store in preferences for next time
-      Prefs.set(BATCH_INPUT_DIRECTORY, inputDirectory);
-      Prefs.set(BATCH_MASK_DIRECTORY, maskDirectory);
-      Prefs.set(BATCH_PARAMETER_FILE, parameterFile);
-      Prefs.set(BATCH_OUTPUT_DIRECTORY, outputDirectory);
-      Prefs.set(BATCH_MULTI_THREAD, multiThread);
-      Prefs.set(BATCH_SHOW_LOG_MESSAGES, showLogMessages);
+      Prefs.set(KEY_BATCH_INPUT_DIRECTORY, inputDirectory);
+      Prefs.set(KEY_BATCH_MASK_DIRECTORY, maskDirectory);
+      Prefs.set(KEY_BATCH_PARAMETER_FILE, parameterFile);
+      Prefs.set(KEY_BATCH_OUTPUT_DIRECTORY, outputDirectory);
+      Prefs.set(KEY_BATCH_MULTI_THREAD, multiThread);
+      Prefs.set(KEY_BATCH_SHOW_LOG_MESSAGES, showLogMessages);
     }
   }
 

@@ -59,20 +59,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SpotPairDistance_PlugIn implements PlugIn {
   private static final String TITLE = "Spot Pair Distance";
 
-  private static final String PREFS_CHANNEL_1 = "gdsc.foci.spotpairdistance.channel_1";
-  private static final String PREFS_CHANNEL_2 = "gdsc.foci.spotpairdistance.channel_2";
-  private static final String PREFS_SEARCH_RANGE = "gdsc.foci.spotpairdistance.search_range";
-  private static final String PREFS_COM_RANGE = "gdsc.foci.spotpairdistance.com_range";
-  private static final String PREFS_REVERSE_ORIENTATION_LINE =
+  private static final String KEY_CHANNEL_1 = "gdsc.foci.spotpairdistance.channel_1";
+  private static final String KEY_CHANNEL_2 = "gdsc.foci.spotpairdistance.channel_2";
+  private static final String KEY_SEARCH_RANGE = "gdsc.foci.spotpairdistance.search_range";
+  private static final String KEY_COM_RANGE = "gdsc.foci.spotpairdistance.com_range";
+  private static final String KEY_REVERSE_ORIENTATION_LINE =
       "gdsc.foci.spotpairdistance.reverse_orientation_line";
-  private static final String PREFS_SHOW_DISTANCES = "gdsc.foci.spotpairdistance.show_distances";
-  private static final String PREFS_SHOW_SEARCH_REGION =
+  private static final String KEY_SHOW_DISTANCES = "gdsc.foci.spotpairdistance.show_distances";
+  private static final String KEY_SHOW_SEARCH_REGION =
       "gdsc.foci.spotpairdistance.show_search_region";
-  private static final String PREFS_SHOW_COM_REGION = "gdsc.foci.spotpairdistance.show_com_region";
-  private static final String PREFS_SHOW_LINE = "gdsc.foci.spotpairdistance.show_line";
-  private static final String PREFS_SHOW_ORIENTATION_LINE =
+  private static final String KEY_SHOW_COM_REGION = "gdsc.foci.spotpairdistance.show_com_region";
+  private static final String KEY_SHOW_LINE = "gdsc.foci.spotpairdistance.show_line";
+  private static final String KEY_SHOW_ORIENTATION_LINE =
       "gdsc.foci.spotpairdistance.show_orientation_line";
-  private static final String PREFS_ADD_TO_OVERLAY = "gdsc.foci.spotpairdistance.add_to_overlay";
+  private static final String KEY_ADD_TO_OVERLAY = "gdsc.foci.spotpairdistance.add_to_overlay";
 
   /**
    * All the work for this plugin is done with the plugin tool. It handles mouse click events from
@@ -83,17 +83,17 @@ public class SpotPairDistance_PlugIn implements PlugIn {
 
     private static TextWindow distancesWindow;
 
-    private int channel1 = (int) Prefs.get(PREFS_CHANNEL_1, 1);
-    private int channel2 = (int) Prefs.get(PREFS_CHANNEL_2, 2);
-    private int searchRange = (int) Prefs.get(PREFS_SEARCH_RANGE, 5);
-    private int comRange = (int) Prefs.get(PREFS_COM_RANGE, 2);
-    private boolean reverseOrientationLine = Prefs.get(PREFS_REVERSE_ORIENTATION_LINE, false);
-    private boolean showDistances = Prefs.get(PREFS_SHOW_DISTANCES, true);
-    private boolean showSearchRegion = Prefs.get(PREFS_SHOW_SEARCH_REGION, true);
-    private boolean showComRegion = Prefs.get(PREFS_SHOW_COM_REGION, true);
-    private boolean showLine = Prefs.get(PREFS_SHOW_LINE, true);
-    private boolean showOrientationLine = Prefs.get(PREFS_SHOW_ORIENTATION_LINE, true);
-    private boolean addToOverlay = Prefs.get(PREFS_ADD_TO_OVERLAY, true);
+    private int channel1 = (int) Prefs.get(KEY_CHANNEL_1, 1);
+    private int channel2 = (int) Prefs.get(KEY_CHANNEL_2, 2);
+    private int searchRange = (int) Prefs.get(KEY_SEARCH_RANGE, 5);
+    private int comRange = (int) Prefs.get(KEY_COM_RANGE, 2);
+    private boolean reverseOrientationLine = Prefs.get(KEY_REVERSE_ORIENTATION_LINE, false);
+    private boolean showDistances = Prefs.get(KEY_SHOW_DISTANCES, true);
+    private boolean showSearchRegion = Prefs.get(KEY_SHOW_SEARCH_REGION, true);
+    private boolean showComRegion = Prefs.get(KEY_SHOW_COM_REGION, true);
+    private boolean showLine = Prefs.get(KEY_SHOW_LINE, true);
+    private boolean showOrientationLine = Prefs.get(KEY_SHOW_ORIENTATION_LINE, true);
+    private boolean addToOverlay = Prefs.get(KEY_ADD_TO_OVERLAY, true);
 
     boolean active = true;
 
@@ -166,17 +166,17 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       addToOverlay = gd.getNextBoolean();
       active = (channel1 != channel2 && searchRange > 0
           && (showDistances || showSearchRegion || showComRegion || showLine));
-      Prefs.set(PREFS_CHANNEL_1, channel1);
-      Prefs.set(PREFS_CHANNEL_2, channel2);
-      Prefs.set(PREFS_SEARCH_RANGE, searchRange);
-      Prefs.set(PREFS_COM_RANGE, comRange);
-      Prefs.set(PREFS_REVERSE_ORIENTATION_LINE, reverseOrientationLine);
-      Prefs.set(PREFS_SHOW_DISTANCES, showDistances);
-      Prefs.set(PREFS_SHOW_SEARCH_REGION, showSearchRegion);
-      Prefs.set(PREFS_SHOW_COM_REGION, showComRegion);
-      Prefs.set(PREFS_SHOW_LINE, showLine);
-      Prefs.set(PREFS_SHOW_ORIENTATION_LINE, showOrientationLine);
-      Prefs.set(PREFS_ADD_TO_OVERLAY, addToOverlay);
+      Prefs.set(KEY_CHANNEL_1, channel1);
+      Prefs.set(KEY_CHANNEL_2, channel2);
+      Prefs.set(KEY_SEARCH_RANGE, searchRange);
+      Prefs.set(KEY_COM_RANGE, comRange);
+      Prefs.set(KEY_REVERSE_ORIENTATION_LINE, reverseOrientationLine);
+      Prefs.set(KEY_SHOW_DISTANCES, showDistances);
+      Prefs.set(KEY_SHOW_SEARCH_REGION, showSearchRegion);
+      Prefs.set(KEY_SHOW_COM_REGION, showComRegion);
+      Prefs.set(KEY_SHOW_LINE, showLine);
+      Prefs.set(KEY_SHOW_ORIENTATION_LINE, showOrientationLine);
+      Prefs.set(KEY_ADD_TO_OVERLAY, addToOverlay);
     }
 
     private static boolean hasMultiChannelImage() {

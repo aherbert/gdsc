@@ -79,35 +79,35 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
 
   private static final String PLUGIN_TITLE = "CT Plugin";
 
-  private static final String OPT_LOCATION = "CT.location";
+  private static final String KEY_LOCATION = "CT.location";
 
-  private static final String OPT_CHANNEL1_INDEX = "CT.channel1SelectedIndex";
-  private static final String OPT_CHANNEL2_INDEX = "CT.channel2SelectedIndex";
-  private static final String OPT_ROI_INDEX = "CT.roiIndex";
-  private static final String OPT_R_THRESHOLD = "CT.rThreshold";
-  private static final String OPT_SEARCH_TOLERANCE = "CT.searchTolerance";
-  private static final String OPT_SHOW_COLOCALISED = "CT.showColocalised";
-  private static final String OPT_USE_CONSTANT_INTENSITY = "CT.useConstantIntensity";
-  private static final String OPT_SHOW_SCATTER_PLOT = "CT.showScatterPlot";
-  private static final String OPT_INCLUDE_ZERO_ZERO_PIXELS = "CT.includeZeroZeroPixels";
-  private static final String OPT_CLOSE_WINDOWS_ON_EXIT = "CT.closeWindowsOnExit";
+  private static final String KEY_CHANNEL1_INDEX = "CT.channel1SelectedIndex";
+  private static final String KEY_CHANNEL2_INDEX = "CT.channel2SelectedIndex";
+  private static final String KEY_ROI_INDEX = "CT.roiIndex";
+  private static final String KEY_R_THRESHOLD = "CT.rThreshold";
+  private static final String KEY_SEARCH_TOLERANCE = "CT.searchTolerance";
+  private static final String KEY_SHOW_COLOCALISED = "CT.showColocalised";
+  private static final String KEY_USE_CONSTANT_INTENSITY = "CT.useConstantIntensity";
+  private static final String KEY_SHOW_SCATTER_PLOT = "CT.showScatterPlot";
+  private static final String KEY_INCLUDE_ZERO_ZERO_PIXELS = "CT.includeZeroZeroPixels";
+  private static final String KEY_CLOSE_WINDOWS_ON_EXIT = "CT.closeWindowsOnExit";
 
-  private static final String OPT_SHOW_THRESHOLDS = "CT.showThresholds";
-  private static final String OPT_SHOW_LINEAR_REGRESSION = "CT.showLinearRegression";
-  private static final String OPT_SHOW_R_TOTAL = "CT.showRTotal";
-  private static final String OPT_SHOW_R_GT_T = "CT.showRForGtT";
-  private static final String OPT_SHOW_R_LT_T = "CT.showRForLtT";
-  private static final String OPT_SHOW_MANDERS = "CT.showManders";
-  private static final String OPT_SHOW_MANDERS_GT_T = "CT.showMandersGtT";
-  private static final String OPT_SHOW_N_COLOC = "CT.showNColoc";
-  private static final String OPT_SHOW_VOLUME_COLOC = "CT.showVolumeColoc";
-  private static final String OPT_SHOW_VOLUME_GT_T_COLOC = "CT.showVolumeGtTColoc";
-  private static final String OPT_SHOW_INTENSITY_COLOC = "CT.showIntensityColoc";
-  private static final String OPT_SHOW_INTENSITY_GT_T_COLOC = "CT.showIntensityGtTColoc";
-  private static final String OPT_SHOW_ROIS_AND_MASKS = "CT.showRoisAndMasks";
-  private static final String OPT_EXHAUSTIVE_SEARCH = "CT.exhaustiveSearch";
-  private static final String OPT_PLOT_R_VALUES = "CT.plotRValues";
-  private static final String OPT_MAX_ITERATIONS = "CT.maxIterations";
+  private static final String KEY_SHOW_THRESHOLDS = "CT.showThresholds";
+  private static final String KEY_SHOW_LINEAR_REGRESSION = "CT.showLinearRegression";
+  private static final String KEY_SHOW_R_TOTAL = "CT.showRTotal";
+  private static final String KEY_SHOW_R_GT_T = "CT.showRForGtT";
+  private static final String KEY_SHOW_R_LT_T = "CT.showRForLtT";
+  private static final String KEY_SHOW_MANDERS = "CT.showManders";
+  private static final String KEY_SHOW_MANDERS_GT_T = "CT.showMandersGtT";
+  private static final String KEY_SHOW_N_COLOC = "CT.showNColoc";
+  private static final String KEY_SHOW_VOLUME_COLOC = "CT.showVolumeColoc";
+  private static final String KEY_SHOW_VOLUME_GT_T_COLOC = "CT.showVolumeGtTColoc";
+  private static final String KEY_SHOW_INTENSITY_COLOC = "CT.showIntensityColoc";
+  private static final String KEY_SHOW_INTENSITY_GT_T_COLOC = "CT.showIntensityGtTColoc";
+  private static final String KEY_SHOW_ROIS_AND_MASKS = "CT.showRoisAndMasks";
+  private static final String KEY_EXHAUSTIVE_SEARCH = "CT.exhaustiveSearch";
+  private static final String KEY_PLOT_R_VALUES = "CT.plotRValues";
+  private static final String KEY_MAX_ITERATIONS = "CT.maxIterations";
 
   private static final double DEFAULT_R_LIMIT = 0;
   private static final double DEFAULT_SEARCH_TOLERANCE = 0.05;
@@ -162,34 +162,34 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
   private Button okButton;
   private Button helpButton;
 
-  private int channel1SelectedIndex = (int) Prefs.get(OPT_CHANNEL1_INDEX, 0);
-  private int channel2SelectedIndex = (int) Prefs.get(OPT_CHANNEL2_INDEX, 0);
-  private int roiIndex = (int) Prefs.get(OPT_ROI_INDEX, 0);
-  private double correlationThreshold = Prefs.get(OPT_R_THRESHOLD, DEFAULT_R_LIMIT);
-  private double searchTolerance = Prefs.get(OPT_SEARCH_TOLERANCE, DEFAULT_SEARCH_TOLERANCE);
-  private boolean showColocalised = Prefs.get(OPT_SHOW_COLOCALISED, false);
-  private boolean useConstantIntensity = Prefs.get(OPT_USE_CONSTANT_INTENSITY, false);
-  private boolean showScatterPlot = Prefs.get(OPT_SHOW_SCATTER_PLOT, false);
-  private boolean includeZeroZeroPixels = Prefs.get(OPT_INCLUDE_ZERO_ZERO_PIXELS, true);
-  private boolean closeWindowsOnExit = Prefs.get(OPT_CLOSE_WINDOWS_ON_EXIT, true);
+  private int channel1SelectedIndex = (int) Prefs.get(KEY_CHANNEL1_INDEX, 0);
+  private int channel2SelectedIndex = (int) Prefs.get(KEY_CHANNEL2_INDEX, 0);
+  private int roiIndex = (int) Prefs.get(KEY_ROI_INDEX, 0);
+  private double correlationThreshold = Prefs.get(KEY_R_THRESHOLD, DEFAULT_R_LIMIT);
+  private double searchTolerance = Prefs.get(KEY_SEARCH_TOLERANCE, DEFAULT_SEARCH_TOLERANCE);
+  private boolean showColocalised = Prefs.get(KEY_SHOW_COLOCALISED, false);
+  private boolean useConstantIntensity = Prefs.get(KEY_USE_CONSTANT_INTENSITY, false);
+  private boolean showScatterPlot = Prefs.get(KEY_SHOW_SCATTER_PLOT, false);
+  private boolean includeZeroZeroPixels = Prefs.get(KEY_INCLUDE_ZERO_ZERO_PIXELS, true);
+  private boolean closeWindowsOnExit = Prefs.get(KEY_CLOSE_WINDOWS_ON_EXIT, true);
 
   // Results options
-  private boolean showThresholds = Prefs.get(OPT_SHOW_THRESHOLDS, true);
-  private boolean showLinearRegression = Prefs.get(OPT_SHOW_LINEAR_REGRESSION, true);
-  private boolean showRTotal = Prefs.get(OPT_SHOW_R_TOTAL, true);
-  private boolean showRForGtT = Prefs.get(OPT_SHOW_R_GT_T, true);
-  private boolean showRForLtT = Prefs.get(OPT_SHOW_R_LT_T, true);
-  private boolean showManders = Prefs.get(OPT_SHOW_MANDERS, true);
-  private boolean showMandersGtT = Prefs.get(OPT_SHOW_MANDERS_GT_T, true);
-  private boolean showNColoc = Prefs.get(OPT_SHOW_N_COLOC, true);
-  private boolean showVolumeColoc = Prefs.get(OPT_SHOW_VOLUME_COLOC, true);
-  private boolean showVolumeGtTColoc = Prefs.get(OPT_SHOW_VOLUME_GT_T_COLOC, true);
-  private boolean showIntensityColoc = Prefs.get(OPT_SHOW_INTENSITY_COLOC, true);
-  private boolean showIntensityGtTColoc = Prefs.get(OPT_SHOW_INTENSITY_GT_T_COLOC, true);
-  private boolean showRoisAndMasks = Prefs.get(OPT_SHOW_ROIS_AND_MASKS, true);
-  private boolean exhaustiveSearch = Prefs.get(OPT_EXHAUSTIVE_SEARCH, false);
-  private boolean plotRValues = Prefs.get(OPT_PLOT_R_VALUES, true);
-  private int maxIterations = (int) Prefs.get(OPT_MAX_ITERATIONS, 50);
+  private boolean showThresholds = Prefs.get(KEY_SHOW_THRESHOLDS, true);
+  private boolean showLinearRegression = Prefs.get(KEY_SHOW_LINEAR_REGRESSION, true);
+  private boolean showRTotal = Prefs.get(KEY_SHOW_R_TOTAL, true);
+  private boolean showRForGtT = Prefs.get(KEY_SHOW_R_GT_T, true);
+  private boolean showRForLtT = Prefs.get(KEY_SHOW_R_LT_T, true);
+  private boolean showManders = Prefs.get(KEY_SHOW_MANDERS, true);
+  private boolean showMandersGtT = Prefs.get(KEY_SHOW_MANDERS_GT_T, true);
+  private boolean showNColoc = Prefs.get(KEY_SHOW_N_COLOC, true);
+  private boolean showVolumeColoc = Prefs.get(KEY_SHOW_VOLUME_COLOC, true);
+  private boolean showVolumeGtTColoc = Prefs.get(KEY_SHOW_VOLUME_GT_T_COLOC, true);
+  private boolean showIntensityColoc = Prefs.get(KEY_SHOW_INTENSITY_COLOC, true);
+  private boolean showIntensityGtTColoc = Prefs.get(KEY_SHOW_INTENSITY_GT_T_COLOC, true);
+  private boolean showRoisAndMasks = Prefs.get(KEY_SHOW_ROIS_AND_MASKS, true);
+  private boolean exhaustiveSearch = Prefs.get(KEY_EXHAUSTIVE_SEARCH, false);
+  private boolean plotRValues = Prefs.get(KEY_PLOT_R_VALUES, true);
+  private int maxIterations = (int) Prefs.get(KEY_MAX_ITERATIONS, 50);
 
   // Windows that are opened by the plug-in.
   // These should be closed on exit.
@@ -238,7 +238,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
 
     addKeyListener(IJ.getInstance());
     pack();
-    final Point loc = Prefs.getLocation(OPT_LOCATION);
+    final Point loc = Prefs.getLocation(KEY_LOCATION);
     if (loc != null) {
       setLocation(loc);
     } else {
@@ -334,7 +334,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
 
   @Override
   public void windowClosing(WindowEvent event) {
-    Prefs.saveLocation(OPT_LOCATION, getLocation());
+    Prefs.saveLocation(KEY_LOCATION, getLocation());
     super.windowClosing(event);
   }
 
@@ -1065,33 +1065,33 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
   }
 
   private void saveOptions() {
-    Prefs.set(OPT_CHANNEL1_INDEX, channel1SelectedIndex);
-    Prefs.set(OPT_CHANNEL2_INDEX, channel2SelectedIndex);
-    Prefs.set(OPT_ROI_INDEX, roiIndex);
-    Prefs.set(OPT_R_THRESHOLD, correlationThreshold);
-    Prefs.set(OPT_SEARCH_TOLERANCE, searchTolerance);
-    Prefs.set(OPT_SHOW_COLOCALISED, showColocalised);
-    Prefs.set(OPT_USE_CONSTANT_INTENSITY, useConstantIntensity);
-    Prefs.set(OPT_SHOW_SCATTER_PLOT, showScatterPlot);
-    Prefs.set(OPT_INCLUDE_ZERO_ZERO_PIXELS, includeZeroZeroPixels);
-    Prefs.set(OPT_CLOSE_WINDOWS_ON_EXIT, closeWindowsOnExit);
+    Prefs.set(KEY_CHANNEL1_INDEX, channel1SelectedIndex);
+    Prefs.set(KEY_CHANNEL2_INDEX, channel2SelectedIndex);
+    Prefs.set(KEY_ROI_INDEX, roiIndex);
+    Prefs.set(KEY_R_THRESHOLD, correlationThreshold);
+    Prefs.set(KEY_SEARCH_TOLERANCE, searchTolerance);
+    Prefs.set(KEY_SHOW_COLOCALISED, showColocalised);
+    Prefs.set(KEY_USE_CONSTANT_INTENSITY, useConstantIntensity);
+    Prefs.set(KEY_SHOW_SCATTER_PLOT, showScatterPlot);
+    Prefs.set(KEY_INCLUDE_ZERO_ZERO_PIXELS, includeZeroZeroPixels);
+    Prefs.set(KEY_CLOSE_WINDOWS_ON_EXIT, closeWindowsOnExit);
 
-    Prefs.set(OPT_SHOW_THRESHOLDS, showThresholds);
-    Prefs.set(OPT_SHOW_LINEAR_REGRESSION, showLinearRegression);
-    Prefs.set(OPT_SHOW_R_TOTAL, showRTotal);
-    Prefs.set(OPT_SHOW_R_GT_T, showRForGtT);
-    Prefs.set(OPT_SHOW_R_LT_T, showRForLtT);
-    Prefs.set(OPT_SHOW_MANDERS, showManders);
-    Prefs.set(OPT_SHOW_MANDERS_GT_T, showMandersGtT);
-    Prefs.set(OPT_SHOW_N_COLOC, showNColoc);
-    Prefs.set(OPT_SHOW_VOLUME_COLOC, showVolumeColoc);
-    Prefs.set(OPT_SHOW_VOLUME_GT_T_COLOC, showVolumeGtTColoc);
-    Prefs.set(OPT_SHOW_INTENSITY_COLOC, showIntensityColoc);
-    Prefs.set(OPT_SHOW_INTENSITY_GT_T_COLOC, showIntensityGtTColoc);
-    Prefs.set(OPT_SHOW_ROIS_AND_MASKS, showRoisAndMasks);
-    Prefs.set(OPT_EXHAUSTIVE_SEARCH, exhaustiveSearch);
-    Prefs.set(OPT_PLOT_R_VALUES, plotRValues);
-    Prefs.set(OPT_MAX_ITERATIONS, maxIterations);
+    Prefs.set(KEY_SHOW_THRESHOLDS, showThresholds);
+    Prefs.set(KEY_SHOW_LINEAR_REGRESSION, showLinearRegression);
+    Prefs.set(KEY_SHOW_R_TOTAL, showRTotal);
+    Prefs.set(KEY_SHOW_R_GT_T, showRForGtT);
+    Prefs.set(KEY_SHOW_R_LT_T, showRForLtT);
+    Prefs.set(KEY_SHOW_MANDERS, showManders);
+    Prefs.set(KEY_SHOW_MANDERS_GT_T, showMandersGtT);
+    Prefs.set(KEY_SHOW_N_COLOC, showNColoc);
+    Prefs.set(KEY_SHOW_VOLUME_COLOC, showVolumeColoc);
+    Prefs.set(KEY_SHOW_VOLUME_GT_T_COLOC, showVolumeGtTColoc);
+    Prefs.set(KEY_SHOW_INTENSITY_COLOC, showIntensityColoc);
+    Prefs.set(KEY_SHOW_INTENSITY_GT_T_COLOC, showIntensityGtTColoc);
+    Prefs.set(KEY_SHOW_ROIS_AND_MASKS, showRoisAndMasks);
+    Prefs.set(KEY_EXHAUSTIVE_SEARCH, exhaustiveSearch);
+    Prefs.set(KEY_PLOT_R_VALUES, plotRValues);
+    Prefs.set(KEY_MAX_ITERATIONS, maxIterations);
   }
 
   private boolean parametersReady() {

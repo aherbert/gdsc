@@ -129,50 +129,50 @@ public class Cda_PlugIn extends PlugInFrame {
   private static final String CHANNEL_IMAGE = "(Channel image)";
 
   // Options
-  private static final String OPT_LOCATION = "CDA.location";
-  private static final String OPT_LOCATION_PLOT_M1 = "CDA.locationPlotM1";
-  private static final String OPT_LOCATION_PLOT_M2 = "CDA.locationPlotM2";
-  private static final String OPT_LOCATION_PLOT_R = "CDA.locationPlotR";
-  private static final String OPT_LOCATION_STATS_M1 = "CDA.locationStatisticsM1";
-  private static final String OPT_LOCATION_STATS_M2 = "CDA.locationStatisticsM2";
-  private static final String OPT_LOCATION_STATS_R = "CDA.locationStatisticsR";
+  private static final String KEY_LOCATION = "CDA.location";
+  private static final String KEY_LOCATION_PLOT_M1 = "CDA.locationPlotM1";
+  private static final String KEY_LOCATION_PLOT_M2 = "CDA.locationPlotM2";
+  private static final String KEY_LOCATION_PLOT_R = "CDA.locationPlotR";
+  private static final String KEY_LOCATION_STATS_M1 = "CDA.locationStatisticsM1";
+  private static final String KEY_LOCATION_STATS_M2 = "CDA.locationStatisticsM2";
+  private static final String KEY_LOCATION_STATS_R = "CDA.locationStatisticsR";
 
-  private static final String OPT_CHANNEL1_INDEX = "CDA.channel1Index";
-  private static final String OPT_CHANNEL2_INDEX = "CDA.channel2Index";
-  private static final String OPT_SEGMENTED1_INDEX = "CDA.segmented1Index";
-  private static final String OPT_SEGMENTED2_INDEX = "CDA.segmented2Index";
-  private static final String OPT_CONFINED_INDEX = "CDA.confinedIndex";
-  private static final String OPT_SEGMENTED1_OPTION_INDEX = "CDA.segmented1OptionIndex";
-  private static final String OPT_SEGMENTED2_OPTION_INDEX = "CDA.segmented2OptionIndex";
-  private static final String OPT_CONFINED_OPTION_INDEX = "CDA.confinedOptionIndex";
-  private static final String OPT_EXPAND_CONFINED = "CDA.expandConfined";
-  private static final String OPT_MAXIMUM_RADIUS = "CDA.maximumRadius";
-  private static final String OPT_RANDOM_RADIUS = "CDA.randomRadius";
-  private static final String OPT_SUB_RANDOM_SAMPLES = "CDA.subRandomSamples";
-  private static final String OPT_HISTOGRAM_BINS = "CDA.histogramBins";
-  private static final String OPT_CLOSE_WINDOWS_ON_EXIT = "CDA.closeWindowsOnExit";
-  private static final String OPT_SET_OPTIONS = "CDA.setOptions";
+  private static final String KEY_CHANNEL1_INDEX = "CDA.channel1Index";
+  private static final String KEY_CHANNEL2_INDEX = "CDA.channel2Index";
+  private static final String KEY_SEGMENTED1_INDEX = "CDA.segmented1Index";
+  private static final String KEY_SEGMENTED2_INDEX = "CDA.segmented2Index";
+  private static final String KEY_CONFINED_INDEX = "CDA.confinedIndex";
+  private static final String KEY_SEGMENTED1_OPTION_INDEX = "CDA.segmented1OptionIndex";
+  private static final String KEY_SEGMENTED2_OPTION_INDEX = "CDA.segmented2OptionIndex";
+  private static final String KEY_CONFINED_OPTION_INDEX = "CDA.confinedOptionIndex";
+  private static final String KEY_EXPAND_CONFINED = "CDA.expandConfined";
+  private static final String KEY_MAXIMUM_RADIUS = "CDA.maximumRadius";
+  private static final String KEY_RANDOM_RADIUS = "CDA.randomRadius";
+  private static final String KEY_SUB_RANDOM_SAMPLES = "CDA.subRandomSamples";
+  private static final String KEY_HISTOGRAM_BINS = "CDA.histogramBins";
+  private static final String KEY_CLOSE_WINDOWS_ON_EXIT = "CDA.closeWindowsOnExit";
+  private static final String KEY_SET_OPTIONS = "CDA.setOptions";
 
-  private static final String OPT_SHOW_CHANNEL1_RGB = "CDA.showChannel1";
-  private static final String OPT_SHOW_CHANNEL2_RGB = "CDA.showChannel2";
-  private static final String OPT_SHOW_SEGMENTED1_RGB = "CDA.showSegmented1";
-  private static final String OPT_SHOW_SEGMENTED2_RGB = "CDA.showSegmented2";
-  private static final String OPT_SHOW_MERGED_CHANNEL_RGB = "CDA.showMergedChannel";
-  private static final String OPT_SHOW_MERGED_SEGMENTED_RGB = "CDA.showMergedSegmented";
-  private static final String OPT_SHOW_MERGED_CHANNEL_DISPLACEMENT_RGB =
+  private static final String KEY_SHOW_CHANNEL1_RGB = "CDA.showChannel1";
+  private static final String KEY_SHOW_CHANNEL2_RGB = "CDA.showChannel2";
+  private static final String KEY_SHOW_SEGMENTED1_RGB = "CDA.showSegmented1";
+  private static final String KEY_SHOW_SEGMENTED2_RGB = "CDA.showSegmented2";
+  private static final String KEY_SHOW_MERGED_CHANNEL_RGB = "CDA.showMergedChannel";
+  private static final String KEY_SHOW_MERGED_SEGMENTED_RGB = "CDA.showMergedSegmented";
+  private static final String KEY_SHOW_MERGED_CHANNEL_DISPLACEMENT_RGB =
       "CDA.showMergedChannelDisplacement";
-  private static final String OPT_SHOW_MERGED_SEGMENTED_DISPLACEMENT_RGB =
+  private static final String KEY_SHOW_MERGED_SEGMENTED_DISPLACEMENT_RGB =
       "CDA.showMergedSegmentedDisplacement";
-  private static final String OPT_SHOW_M1_PLOT_WINDOW = "CDA.showM1PlotWindow";
-  private static final String OPT_SHOW_M2_PLOT_WINDOW = "CDA.showM2PlotWindow";
-  private static final String OPT_SHOW_R_PLOT_WINDOW = "CDA.showRPlotWindow";
-  private static final String OPT_SHOW_M1_STATISTICS = "CDA.showM1Statistics";
-  private static final String OPT_SHOW_M2_STATISTICS = "CDA.showM2Statistics";
-  private static final String OPT_SHOW_R_STATISTICS = "CDA.showRStatistics";
-  private static final String OPT_SAVE_RESULTS = "CDA.saveResults";
-  private static final String OPT_RESULTS_DIRECTORY = "CDA.resultsDirectory";
-  private static final String OPT_P_VALUE = "CDA.pValue";
-  private static final String OPT_PERMUTATIONS = "CDA.permutations";
+  private static final String KEY_SHOW_M1_PLOT_WINDOW = "CDA.showM1PlotWindow";
+  private static final String KEY_SHOW_M2_PLOT_WINDOW = "CDA.showM2PlotWindow";
+  private static final String KEY_SHOW_R_PLOT_WINDOW = "CDA.showRPlotWindow";
+  private static final String KEY_SHOW_M1_STATISTICS = "CDA.showM1Statistics";
+  private static final String KEY_SHOW_M2_STATISTICS = "CDA.showM2Statistics";
+  private static final String KEY_SHOW_R_STATISTICS = "CDA.showRStatistics";
+  private static final String KEY_SAVE_RESULTS = "CDA.saveResults";
+  private static final String KEY_RESULTS_DIRECTORY = "CDA.resultsDirectory";
+  private static final String KEY_P_VALUE = "CDA.pValue";
+  private static final String KEY_PERMUTATIONS = "CDA.permutations";
 
   // Image titles
   private static final String CHANNEL1_RGB_TITLE = "CDA Channel 1";
@@ -277,43 +277,43 @@ public class Cda_PlugIn extends PlugInFrame {
   private DisplayStatistics m2Statistics;
   private DisplayStatistics correlationStatistics;
 
-  private int channel1Index = (int) Prefs.get(OPT_CHANNEL1_INDEX, 0);
-  private int channel2Index = (int) Prefs.get(OPT_CHANNEL2_INDEX, 0);
-  private int segmented1Index = (int) Prefs.get(OPT_SEGMENTED1_INDEX, 0);
-  private int segmented2Index = (int) Prefs.get(OPT_SEGMENTED2_INDEX, 0);
-  private int confinedIndex = (int) Prefs.get(OPT_CONFINED_INDEX, 0);
-  private int segmented1OptionIndex = (int) Prefs.get(OPT_SEGMENTED1_OPTION_INDEX, 0);
-  private int segmented2OptionIndex = (int) Prefs.get(OPT_SEGMENTED2_OPTION_INDEX, 0);
-  private int confinedOptionIndex = (int) Prefs.get(OPT_CONFINED_OPTION_INDEX, 0);
-  private boolean expandConfinedCompartment = Prefs.get(OPT_EXPAND_CONFINED, false);
-  private int maximumRadius = (int) Prefs.get(OPT_MAXIMUM_RADIUS, DEFAULT_MAXIMUM_RADIUS);
-  private int randomRadius = (int) Prefs.get(OPT_RANDOM_RADIUS, DEFAULT_RANDOM_RADIUS);
-  private boolean subRandomSamples = Prefs.get(OPT_SUB_RANDOM_SAMPLES, true);
-  private int histogramBins = (int) Prefs.get(OPT_HISTOGRAM_BINS, DEFAULT_HISTOGRAM_BINS);
-  private boolean closeWindowsOnExit = Prefs.get(OPT_CLOSE_WINDOWS_ON_EXIT, false);
-  private boolean setOptions = Prefs.get(OPT_SET_OPTIONS, false);
+  private int channel1Index = (int) Prefs.get(KEY_CHANNEL1_INDEX, 0);
+  private int channel2Index = (int) Prefs.get(KEY_CHANNEL2_INDEX, 0);
+  private int segmented1Index = (int) Prefs.get(KEY_SEGMENTED1_INDEX, 0);
+  private int segmented2Index = (int) Prefs.get(KEY_SEGMENTED2_INDEX, 0);
+  private int confinedIndex = (int) Prefs.get(KEY_CONFINED_INDEX, 0);
+  private int segmented1OptionIndex = (int) Prefs.get(KEY_SEGMENTED1_OPTION_INDEX, 0);
+  private int segmented2OptionIndex = (int) Prefs.get(KEY_SEGMENTED2_OPTION_INDEX, 0);
+  private int confinedOptionIndex = (int) Prefs.get(KEY_CONFINED_OPTION_INDEX, 0);
+  private boolean expandConfinedCompartment = Prefs.get(KEY_EXPAND_CONFINED, false);
+  private int maximumRadius = (int) Prefs.get(KEY_MAXIMUM_RADIUS, DEFAULT_MAXIMUM_RADIUS);
+  private int randomRadius = (int) Prefs.get(KEY_RANDOM_RADIUS, DEFAULT_RANDOM_RADIUS);
+  private boolean subRandomSamples = Prefs.get(KEY_SUB_RANDOM_SAMPLES, true);
+  private int histogramBins = (int) Prefs.get(KEY_HISTOGRAM_BINS, DEFAULT_HISTOGRAM_BINS);
+  private boolean closeWindowsOnExit = Prefs.get(KEY_CLOSE_WINDOWS_ON_EXIT, false);
+  private boolean setOptions = Prefs.get(KEY_SET_OPTIONS, false);
 
-  private boolean showChannel1Rgb = Prefs.get(OPT_SHOW_CHANNEL1_RGB, false);
-  private boolean showChannel2Rgb = Prefs.get(OPT_SHOW_CHANNEL2_RGB, false);
-  private boolean showSegmented1Rgb = Prefs.get(OPT_SHOW_SEGMENTED1_RGB, false);
-  private boolean showSegmented2Rgb = Prefs.get(OPT_SHOW_SEGMENTED2_RGB, false);
-  private boolean showMergedChannelRgb = Prefs.get(OPT_SHOW_MERGED_CHANNEL_RGB, true);
-  private boolean showMergedSegmentedRgb = Prefs.get(OPT_SHOW_MERGED_SEGMENTED_RGB, true);
+  private boolean showChannel1Rgb = Prefs.get(KEY_SHOW_CHANNEL1_RGB, false);
+  private boolean showChannel2Rgb = Prefs.get(KEY_SHOW_CHANNEL2_RGB, false);
+  private boolean showSegmented1Rgb = Prefs.get(KEY_SHOW_SEGMENTED1_RGB, false);
+  private boolean showSegmented2Rgb = Prefs.get(KEY_SHOW_SEGMENTED2_RGB, false);
+  private boolean showMergedChannelRgb = Prefs.get(KEY_SHOW_MERGED_CHANNEL_RGB, true);
+  private boolean showMergedSegmentedRgb = Prefs.get(KEY_SHOW_MERGED_SEGMENTED_RGB, true);
   private boolean showMergedChannelDisplacementRgb =
-      Prefs.get(OPT_SHOW_MERGED_CHANNEL_DISPLACEMENT_RGB, false);
+      Prefs.get(KEY_SHOW_MERGED_CHANNEL_DISPLACEMENT_RGB, false);
   private boolean showMergedSegmentedDisplacementRgb =
-      Prefs.get(OPT_SHOW_MERGED_SEGMENTED_DISPLACEMENT_RGB, false);
-  private boolean showM1PlotWindow = Prefs.get(OPT_SHOW_M1_PLOT_WINDOW, true);
-  private boolean showM2PlotWindow = Prefs.get(OPT_SHOW_M2_PLOT_WINDOW, true);
-  private boolean showRPlotWindow = Prefs.get(OPT_SHOW_R_PLOT_WINDOW, true);
-  private boolean showM1Statistics = Prefs.get(OPT_SHOW_M1_STATISTICS, true);
-  private boolean showM2Statistics = Prefs.get(OPT_SHOW_M2_STATISTICS, true);
-  private boolean showRStatistics = Prefs.get(OPT_SHOW_R_STATISTICS, true);
-  private boolean saveResults = Prefs.get(OPT_SAVE_RESULTS, false);
+      Prefs.get(KEY_SHOW_MERGED_SEGMENTED_DISPLACEMENT_RGB, false);
+  private boolean showM1PlotWindow = Prefs.get(KEY_SHOW_M1_PLOT_WINDOW, true);
+  private boolean showM2PlotWindow = Prefs.get(KEY_SHOW_M2_PLOT_WINDOW, true);
+  private boolean showRPlotWindow = Prefs.get(KEY_SHOW_R_PLOT_WINDOW, true);
+  private boolean showM1Statistics = Prefs.get(KEY_SHOW_M1_STATISTICS, true);
+  private boolean showM2Statistics = Prefs.get(KEY_SHOW_M2_STATISTICS, true);
+  private boolean showRStatistics = Prefs.get(KEY_SHOW_R_STATISTICS, true);
+  private boolean saveResults = Prefs.get(KEY_SAVE_RESULTS, false);
   private String resultsDirectory =
-      Prefs.get(OPT_RESULTS_DIRECTORY, System.getProperty("java.io.tmpdir"));
-  private double pvalue = Prefs.get(OPT_P_VALUE, 0.05);
-  private int permutations = (int) Prefs.get(OPT_PERMUTATIONS, 200);
+      Prefs.get(KEY_RESULTS_DIRECTORY, System.getProperty("java.io.tmpdir"));
+  private double pvalue = Prefs.get(KEY_P_VALUE, 0.05);
+  private int permutations = (int) Prefs.get(KEY_PERMUTATIONS, 200);
 
   // Store the channels and frames to use from image stacks
   private static int[] sliceOptions = new int[10];
@@ -361,7 +361,7 @@ public class Cda_PlugIn extends PlugInFrame {
 
     addKeyListener(IJ.getInstance());
     pack();
-    final Point loc = Prefs.getLocation(OPT_LOCATION);
+    final Point loc = Prefs.getLocation(KEY_LOCATION);
     if (loc != null) {
       setLocation(loc);
     } else {
@@ -445,9 +445,9 @@ public class Cda_PlugIn extends PlugInFrame {
   @Override
   public void windowClosing(WindowEvent event) {
     closeWindowsOnExit = closeWindowsOnExitCheckbox.getState();
-    Prefs.set(OPT_CLOSE_WINDOWS_ON_EXIT, closeWindowsOnExit);
+    Prefs.set(KEY_CLOSE_WINDOWS_ON_EXIT, closeWindowsOnExit);
 
-    Prefs.saveLocation(OPT_LOCATION, getLocation());
+    Prefs.saveLocation(KEY_LOCATION, getLocation());
 
     super.windowClosing(event);
   }
@@ -465,13 +465,13 @@ public class Cda_PlugIn extends PlugInFrame {
       closeImagePlus(mergedSegmentedDisplacementRgb);
       closeImagePlus(mergedChannelDisplacementRgb);
 
-      closePlotWindow(m1PlotWindow, OPT_LOCATION_PLOT_M1);
-      closePlotWindow(m2PlotWindow, OPT_LOCATION_PLOT_M2);
-      closePlotWindow(correlationPlotWindow, OPT_LOCATION_PLOT_R);
+      closePlotWindow(m1PlotWindow, KEY_LOCATION_PLOT_M1);
+      closePlotWindow(m2PlotWindow, KEY_LOCATION_PLOT_M2);
+      closePlotWindow(correlationPlotWindow, KEY_LOCATION_PLOT_R);
 
-      closeDisplayStatistics(m1Statistics, OPT_LOCATION_STATS_M1);
-      closeDisplayStatistics(m2Statistics, OPT_LOCATION_STATS_M2);
-      closeDisplayStatistics(correlationStatistics, OPT_LOCATION_STATS_R);
+      closeDisplayStatistics(m1Statistics, KEY_LOCATION_STATS_M1);
+      closeDisplayStatistics(m2Statistics, KEY_LOCATION_STATS_M2);
+      closeDisplayStatistics(correlationStatistics, KEY_LOCATION_STATS_R);
 
       if (tw != null && tw.isShowing()) {
         tw.close();
@@ -1244,10 +1244,10 @@ public class Cda_PlugIn extends PlugInFrame {
             mergedSegmentedDisplacementIp, showMergedSegmentedDisplacementRgb, null);
 
     // Create plots of the results
-    m1PlotWindow = refreshPlotWindow(m1PlotWindow, showM1PlotWindow, plotM1, OPT_LOCATION_PLOT_M1);
-    m2PlotWindow = refreshPlotWindow(m2PlotWindow, showM2PlotWindow, plotM2, OPT_LOCATION_PLOT_M2);
+    m1PlotWindow = refreshPlotWindow(m1PlotWindow, showM1PlotWindow, plotM1, KEY_LOCATION_PLOT_M1);
+    m2PlotWindow = refreshPlotWindow(m2PlotWindow, showM2PlotWindow, plotM2, KEY_LOCATION_PLOT_M2);
     correlationPlotWindow =
-        refreshPlotWindow(correlationPlotWindow, showRPlotWindow, plotR, OPT_LOCATION_PLOT_R);
+        refreshPlotWindow(correlationPlotWindow, showRPlotWindow, plotR, KEY_LOCATION_PLOT_R);
 
     // Create display statistics for the Mander's and correlation values
     final FloatProcessor m1ValuesFp =
@@ -1258,12 +1258,12 @@ public class Cda_PlugIn extends PlugInFrame {
         new FloatProcessor(rValuesForRandom.length, 1, rValuesForRandom, null);
 
     m1Statistics = refreshDisplayStatistics(m1Statistics, showM1Statistics, m1ValuesFp,
-        m1ValuesForRandom, M1_HISTOGRAM_TITLE, Color.red, "M1 ", m1, OPT_LOCATION_STATS_M1);
+        m1ValuesForRandom, M1_HISTOGRAM_TITLE, Color.red, "M1 ", m1, KEY_LOCATION_STATS_M1);
     m2Statistics = refreshDisplayStatistics(m2Statistics, showM2Statistics, m2ValuesFp,
-        m2ValuesForRandom, M2_HISTOGRAM_TITLE, Color.green, "M2 ", m2, OPT_LOCATION_STATS_M2);
+        m2ValuesForRandom, M2_HISTOGRAM_TITLE, Color.green, "M2 ", m2, KEY_LOCATION_STATS_M2);
     correlationStatistics = refreshDisplayStatistics(correlationStatistics, showRStatistics,
         rValuesFp, rValuesForRandom, R_HISTOGRAM_TITLE, Color.blue, "R ", correlation,
-        OPT_LOCATION_STATS_R);
+        KEY_LOCATION_STATS_R);
 
     final String id = generateId();
 
@@ -2016,39 +2016,39 @@ public class Cda_PlugIn extends PlugInFrame {
   }
 
   private void saveOptions() {
-    Prefs.set(OPT_CHANNEL1_INDEX, channel1Index);
-    Prefs.set(OPT_CHANNEL2_INDEX, channel2Index);
-    Prefs.set(OPT_SEGMENTED1_INDEX, segmented1Index);
-    Prefs.set(OPT_SEGMENTED2_INDEX, segmented2Index);
-    Prefs.set(OPT_CONFINED_INDEX, confinedIndex);
-    Prefs.set(OPT_SEGMENTED1_OPTION_INDEX, segmented1OptionIndex);
-    Prefs.set(OPT_SEGMENTED2_OPTION_INDEX, segmented2OptionIndex);
-    Prefs.set(OPT_CONFINED_OPTION_INDEX, confinedOptionIndex);
-    Prefs.set(OPT_EXPAND_CONFINED, expandConfinedCompartment);
-    Prefs.set(OPT_MAXIMUM_RADIUS, maximumRadius);
-    Prefs.set(OPT_RANDOM_RADIUS, randomRadius);
-    Prefs.set(OPT_SUB_RANDOM_SAMPLES, subRandomSamples);
-    Prefs.set(OPT_HISTOGRAM_BINS, histogramBins);
-    Prefs.set(OPT_CLOSE_WINDOWS_ON_EXIT, closeWindowsOnExit);
-    Prefs.set(OPT_SET_OPTIONS, setOptions);
+    Prefs.set(KEY_CHANNEL1_INDEX, channel1Index);
+    Prefs.set(KEY_CHANNEL2_INDEX, channel2Index);
+    Prefs.set(KEY_SEGMENTED1_INDEX, segmented1Index);
+    Prefs.set(KEY_SEGMENTED2_INDEX, segmented2Index);
+    Prefs.set(KEY_CONFINED_INDEX, confinedIndex);
+    Prefs.set(KEY_SEGMENTED1_OPTION_INDEX, segmented1OptionIndex);
+    Prefs.set(KEY_SEGMENTED2_OPTION_INDEX, segmented2OptionIndex);
+    Prefs.set(KEY_CONFINED_OPTION_INDEX, confinedOptionIndex);
+    Prefs.set(KEY_EXPAND_CONFINED, expandConfinedCompartment);
+    Prefs.set(KEY_MAXIMUM_RADIUS, maximumRadius);
+    Prefs.set(KEY_RANDOM_RADIUS, randomRadius);
+    Prefs.set(KEY_SUB_RANDOM_SAMPLES, subRandomSamples);
+    Prefs.set(KEY_HISTOGRAM_BINS, histogramBins);
+    Prefs.set(KEY_CLOSE_WINDOWS_ON_EXIT, closeWindowsOnExit);
+    Prefs.set(KEY_SET_OPTIONS, setOptions);
 
-    Prefs.set(OPT_SHOW_CHANNEL1_RGB, showChannel1Rgb);
-    Prefs.set(OPT_SHOW_CHANNEL2_RGB, showChannel2Rgb);
-    Prefs.set(OPT_SHOW_SEGMENTED1_RGB, showSegmented1Rgb);
-    Prefs.set(OPT_SHOW_SEGMENTED2_RGB, showSegmented2Rgb);
-    Prefs.set(OPT_SHOW_MERGED_CHANNEL_RGB, showMergedChannelRgb);
-    Prefs.set(OPT_SHOW_MERGED_SEGMENTED_RGB, showMergedSegmentedRgb);
-    Prefs.set(OPT_SHOW_MERGED_CHANNEL_DISPLACEMENT_RGB, showMergedChannelDisplacementRgb);
-    Prefs.set(OPT_SHOW_MERGED_SEGMENTED_DISPLACEMENT_RGB, showMergedSegmentedDisplacementRgb);
-    Prefs.set(OPT_SHOW_M1_PLOT_WINDOW, showM1PlotWindow);
-    Prefs.set(OPT_SHOW_M2_PLOT_WINDOW, showM2PlotWindow);
-    Prefs.set(OPT_SHOW_M1_STATISTICS, showM1Statistics);
-    Prefs.set(OPT_SHOW_M2_STATISTICS, showM2Statistics);
-    Prefs.set(OPT_SHOW_R_STATISTICS, showRStatistics);
-    Prefs.set(OPT_SAVE_RESULTS, saveResults);
-    Prefs.set(OPT_RESULTS_DIRECTORY, resultsDirectory);
-    Prefs.set(OPT_P_VALUE, pvalue);
-    Prefs.set(OPT_PERMUTATIONS, permutations);
+    Prefs.set(KEY_SHOW_CHANNEL1_RGB, showChannel1Rgb);
+    Prefs.set(KEY_SHOW_CHANNEL2_RGB, showChannel2Rgb);
+    Prefs.set(KEY_SHOW_SEGMENTED1_RGB, showSegmented1Rgb);
+    Prefs.set(KEY_SHOW_SEGMENTED2_RGB, showSegmented2Rgb);
+    Prefs.set(KEY_SHOW_MERGED_CHANNEL_RGB, showMergedChannelRgb);
+    Prefs.set(KEY_SHOW_MERGED_SEGMENTED_RGB, showMergedSegmentedRgb);
+    Prefs.set(KEY_SHOW_MERGED_CHANNEL_DISPLACEMENT_RGB, showMergedChannelDisplacementRgb);
+    Prefs.set(KEY_SHOW_MERGED_SEGMENTED_DISPLACEMENT_RGB, showMergedSegmentedDisplacementRgb);
+    Prefs.set(KEY_SHOW_M1_PLOT_WINDOW, showM1PlotWindow);
+    Prefs.set(KEY_SHOW_M2_PLOT_WINDOW, showM2PlotWindow);
+    Prefs.set(KEY_SHOW_M1_STATISTICS, showM1Statistics);
+    Prefs.set(KEY_SHOW_M2_STATISTICS, showM2Statistics);
+    Prefs.set(KEY_SHOW_R_STATISTICS, showRStatistics);
+    Prefs.set(KEY_SAVE_RESULTS, saveResults);
+    Prefs.set(KEY_RESULTS_DIRECTORY, resultsDirectory);
+    Prefs.set(KEY_P_VALUE, pvalue);
+    Prefs.set(KEY_PERMUTATIONS, permutations);
   }
 
   /**
