@@ -190,7 +190,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
           validMax();
         }
       });
-      txtMaximum.setValue(new Double(10));
+      txtMaximum.setValue(Double.valueOf(10));
       final GridBagConstraints gbc_txtMaximum = new GridBagConstraints();
       gbc_txtMaximum.fill = GridBagConstraints.HORIZONTAL;
       gbc_txtMaximum.gridx = 1;
