@@ -1330,6 +1330,11 @@ public class FindFoci_PlugIn implements PlugIn {
       FindFociProcessorOptions processorOptions, FindFociOptions options,
       List<FindFociResult> resultsArray, FindFociStatistics stats,
       ObjectAnalysisResult objectAnalysisResult, int batchId, BatchConfiguration batchConfig) {
+
+    // The results may be null but can be written out if empty
+    final List<FindFociResult> localResultsArray =
+        (resultsArray != null) ? resultsArray : new ArrayList<>();
+
     final String resultsDirectory = options.getResultsDirectory();
     try (final BufferedWriter out =
         Files.newBufferedWriter(Paths.get(resultsDirectory, expId + ".xls"))) {
@@ -1338,19 +1343,19 @@ public class FindFoci_PlugIn implements PlugIn {
         imageDimension = new int[] {imp.getC(), 0, imp.getT()};
       }
       out.write(createResultsHeader(imp, imageDimension, stats, NEW_LINE));
-      final int[] xpoints = new int[resultsArray.size()];
-      final int[] ypoints = new int[resultsArray.size()];
+      final int[] xpoints = new int[localResultsArray.size()];
+      final int[] ypoints = new int[localResultsArray.size()];
       final StringBuilder sb = new StringBuilder();
       final ArrayList<String> batchResults =
-          (batchConfig != null) ? new ArrayList<>(resultsArray.size()) : null;
+          (batchConfig != null) ? new ArrayList<>(localResultsArray.size()) : null;
 
-      for (int i = 0; i < resultsArray.size(); i++) {
-        final FindFociResult result = resultsArray.get(i);
+      for (int i = 0; i < localResultsArray.size(); i++) {
+        final FindFociResult result = localResultsArray.get(i);
         xpoints[i] = result.x;
         ypoints[i] = result.y;
 
         final String resultEntry =
-            buildResultEntry(ffp, sb, i + 1, resultsArray.size() - i, result, stats, NEW_LINE);
+            buildResultEntry(ffp, sb, i + 1, localResultsArray.size() - i, result, stats, NEW_LINE);
         out.write(resultEntry);
         if (batchResults != null) {
           batchResults.add(resultEntry);
@@ -1361,7 +1366,7 @@ public class FindFoci_PlugIn implements PlugIn {
       if (batchConfig != null) {
         if (objectAnalysisResult != null) {
           batchConfig.addEmptyObjectsToBatchResults(batchResults, objectAnalysisResult);
-        } else if (resultsArray.isEmpty()) {
+        } else if (localResultsArray.isEmpty()) {
           batchConfig.addEmptyBatchResults(batchResults);
         }
 
@@ -1372,7 +1377,7 @@ public class FindFoci_PlugIn implements PlugIn {
       // Save roi to file
       final RoiEncoder roiEncoder =
           new RoiEncoder(resultsDirectory + File.separatorChar + expId + ".roi");
-      roiEncoder.write(new PointRoi(xpoints, ypoints, resultsArray.size()));
+      roiEncoder.write(new PointRoi(xpoints, ypoints, localResultsArray.size()));
 
       // Save parameters to file
       if (mask != null && maskDimension == null) {
@@ -1616,14 +1621,14 @@ public class FindFoci_PlugIn implements PlugIn {
       clearResultsWindow();
     }
     if (resultsArray != null && options.isOption(OutputOption.RESULTS_TABLE)) {
-      final BufferedTextWindow window = createResultsWindow();
-      final StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < resultsArray.size(); i++) {
-        final FindFociResult result = resultsArray.get(i);
-        window
-            .append(buildResultEntry(ffp, sb, i + 1, resultsArray.size() - i, result, stats, "\n"));
+      try (final BufferedTextWindow window = createResultsWindow()) {
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < resultsArray.size(); i++) {
+          final FindFociResult result = resultsArray.get(i);
+          window.append(
+              buildResultEntry(ffp, sb, i + 1, resultsArray.size() - i, result, stats, "\n"));
+        }
       }
-      window.flush();
     }
 
     // Record all the results to file

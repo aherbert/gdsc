@@ -1726,38 +1726,37 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
   private void showResults(ImagePlus imp, ImagePlus mask, ArrayList<Result> results,
       int maxResults) {
-    final BufferedTextWindow bw = createResultsWindow(imp, mask, results);
+    try (final BufferedTextWindow bw = createResultsWindow(imp, mask, results)) {
+      // Limit the number of results
+      int noOfResults = results.size();
+      if (maxResults > 0 && noOfResults > maxResults) {
+        noOfResults = maxResults;
+      }
 
-    // Limit the number of results
-    int noOfResults = results.size();
-    if (maxResults > 0 && noOfResults > maxResults) {
-      noOfResults = maxResults;
+      final StringBuilder sb = new StringBuilder();
+      for (int i = noOfResults; i-- > 0;) {
+        final Result result = results.get(i);
+        sb.setLength(0);
+        sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append('\t');
+        sb.append(result.getParameters());
+        sb.append(result.count).append('\t');
+        sb.append(result.tp).append('\t');
+        sb.append(result.fp).append('\t');
+        sb.append(result.fn).append('\t');
+        sb.append(IJ.d2s(result.metrics[Result.JACCARD], RESULT_PRECISION)).append('\t');
+        sb.append(IJ.d2s(result.metrics[Result.PRECISION], RESULT_PRECISION)).append('\t');
+        sb.append(IJ.d2s(result.metrics[Result.RECALL], RESULT_PRECISION)).append('\t');
+        sb.append(IJ.d2s(result.metrics[Result.F05], RESULT_PRECISION)).append('\t');
+        sb.append(IJ.d2s(result.metrics[Result.F1], RESULT_PRECISION)).append('\t');
+        sb.append(IJ.d2s(result.metrics[Result.F2], RESULT_PRECISION)).append('\t');
+        sb.append(IJ.d2s(result.metrics[Result.FB], RESULT_PRECISION)).append('\t');
+        sb.append(IJ.d2s(result.metrics[Result.SCORE], RESULT_PRECISION)).append('\t');
+        sb.append(IJ.d2s(result.metrics[Result.RMSD], RESULT_PRECISION)).append('\t');
+        sb.append(IJ.d2s(result.time / 1000000.0, RESULT_PRECISION));
+        bw.append(sb.toString());
+      }
+      bw.append("\n"); // Empty line separator
     }
-
-    final StringBuilder sb = new StringBuilder();
-    for (int i = noOfResults; i-- > 0;) {
-      final Result result = results.get(i);
-      sb.setLength(0);
-      sb.append(IJ.d2s(result.metrics[Result.RANK], 0)).append('\t');
-      sb.append(result.getParameters());
-      sb.append(result.count).append('\t');
-      sb.append(result.tp).append('\t');
-      sb.append(result.fp).append('\t');
-      sb.append(result.fn).append('\t');
-      sb.append(IJ.d2s(result.metrics[Result.JACCARD], RESULT_PRECISION)).append('\t');
-      sb.append(IJ.d2s(result.metrics[Result.PRECISION], RESULT_PRECISION)).append('\t');
-      sb.append(IJ.d2s(result.metrics[Result.RECALL], RESULT_PRECISION)).append('\t');
-      sb.append(IJ.d2s(result.metrics[Result.F05], RESULT_PRECISION)).append('\t');
-      sb.append(IJ.d2s(result.metrics[Result.F1], RESULT_PRECISION)).append('\t');
-      sb.append(IJ.d2s(result.metrics[Result.F2], RESULT_PRECISION)).append('\t');
-      sb.append(IJ.d2s(result.metrics[Result.FB], RESULT_PRECISION)).append('\t');
-      sb.append(IJ.d2s(result.metrics[Result.SCORE], RESULT_PRECISION)).append('\t');
-      sb.append(IJ.d2s(result.metrics[Result.RMSD], RESULT_PRECISION)).append('\t');
-      sb.append(IJ.d2s(result.time / 1000000.0, RESULT_PRECISION));
-      bw.append(sb.toString());
-    }
-    bw.append("\n"); // Empty line separator
-    bw.flush();
   }
 
   /**
