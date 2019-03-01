@@ -71,9 +71,10 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
       {ThresholdMethod.MAX_ENTROPY.getDescription(), ThresholdMethod.YEN.getDescription()};
 
   private static final int FLAGS = DOES_16 + DOES_8G;
+  private static AtomicReference<TextWindow> resultsWindowRef = new AtomicReference<>();
 
   private final LinkedList<String> plotProfiles = new LinkedList<>();
-  private static TextWindow resultsWindow;
+
   private ImagePlus imp;
   private String resultEntry;
   private Calibration cal;
@@ -181,7 +182,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
 
     final int[] assigned = assignClosestPairs(d);
 
-    createResultsWindow();
+    final TextWindow resultsWindow = createResultsWindow();
 
     // Draw line profiles
     for (int i = 0; i < assigned.length; i++) {
@@ -252,7 +253,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
         yvalues = profileValues[1];
 
         sortValues(xvalues, yvalues);
-        addSingleResult(peakId, xvalues, yvalues);
+        addSingleResult(resultsWindow, peakId, xvalues, yvalues);
       } else {
         // Skip the second of a pair already processed
         if (assigned[i] < i) {
@@ -320,7 +321,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
         yvalues = profileValues[1];
 
         final float offset = sortValues(xvalues, yvalues);
-        addPairResult(peakId, xvalues, yvalues, distance, offset);
+        addPairResult(resultsWindow, peakId, xvalues, yvalues, distance, offset);
       }
 
       showLineProfile(xvalues, yvalues, profileTitle);
@@ -564,11 +565,12 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
 
   /**
    * Create the result window (if it is not available).
+   *
+   * @return the text window
    */
-  private void createResultsWindow() {
-    if (resultsWindow == null || !resultsWindow.isShowing()) {
-      resultsWindow = new TextWindow(TITLE + " Positions", createResultsHeader(), "", 700, 300);
-    }
+  private TextWindow createResultsWindow() {
+    final TextWindow resultsWindow = ImageJUtils.refresh(resultsWindowRef,
+        () -> new TextWindow(TITLE + " Positions", createResultsHeader(), "", 700, 300));
 
     // Create the image result prefix
     final StringBuilder sb = new StringBuilder();
@@ -586,6 +588,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
     }
     sb.append('\t');
     resultEntry = sb.toString();
+    return resultsWindow;
   }
 
   private static String createResultsHeader() {
@@ -600,7 +603,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
     return sb.toString();
   }
 
-  private void addSingleResult(int id, float[] xValues, float[] yValues) {
+  private void addSingleResult(TextWindow resultsWindow, int id, float[] xValues, float[] yValues) {
     final StringBuilder sb = new StringBuilder();
     sb.append(resultEntry);
     sb.append(id).append("\tSingle\t");
@@ -723,8 +726,8 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
     throw new IllegalStateException("Unable to find peak index for the specified maxima");
   }
 
-  private void addPairResult(int id, float[] xValues, float[] yValues, float distance,
-      float peak1Start) {
+  private void addPairResult(TextWindow resultsWindow, int id, float[] xValues, float[] yValues,
+      float distance, float peak1Start) {
     final StringBuilder sb = new StringBuilder();
     sb.append(resultEntry);
     sb.append(id).append("\tPair\t");

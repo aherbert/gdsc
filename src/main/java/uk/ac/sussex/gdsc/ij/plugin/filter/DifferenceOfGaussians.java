@@ -225,7 +225,7 @@ public class DifferenceOfGaussians extends GaussianBlur {
     preview = previewCheckbox.getState();
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
     gd.showDialog(); // input by the user (or macro) happens here
-    boolean cancelled = gd.wasCanceled();
+    final boolean cancelled = gd.wasCanceled();
     settings.save();
     if (cancelled) {
       imp.setDisplayRange(min, max);

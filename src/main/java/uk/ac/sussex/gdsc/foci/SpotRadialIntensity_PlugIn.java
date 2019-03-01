@@ -44,8 +44,6 @@ import ij.process.LUT;
 import ij.text.TextWindow;
 
 import java.awt.Color;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -410,18 +408,13 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
             final int d2 = dy2 + dx2[j];
             if (d2 < limit) {
               // Put in radial stats
-              // int bin = (int) (Math.sqrt(d2) / interval);
+              // int bin = (int) (Math.sqrt(d2) / interval)
               // Q. Faster than sqrt?
               int bin = Arrays.binarySearch(distances, d2);
               if (bin < 0) {
                 // The bin is the (insertion point)-1 => -(bin+1) - 1
                 bin = -(bin + 1) - 1;
               }
-              // if (bin != (int) (Math.sqrt(d2) / interval))
-              // System.out.println("bin error");
-              // if (bin == maxBin)
-              // System.out.printf("[%d] %d %d,%d - %d,%d = %f\n", f.id, f.object, f.x, f.y, x, y,
-              // Math.sqrt(d2));
               count[bin]++;
               sum[bin] += pixels[i];
             }
@@ -502,23 +495,11 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
   }
 
   private TextWindow createResultsWindow() {
-    TextWindow window = resultsWindow.get();
-    if (window == null || !window.isShowing()) {
-      window = new TextWindow(TITLE + " Summary", createResultsHeader(), "", 700, 300);
-      // When it closes remove the reference to this window
-      final TextWindow closedWindow = window;
-      window.addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowClosed(WindowEvent event) {
-          resultsWindow.compareAndSet(closedWindow, null);
-          super.windowClosed(event);
-        }
-      });
-      resultsWindow.set(window);
-    }
+    final TextWindow textWindow = ImageJUtils.refresh(resultsWindow,
+        () -> new TextWindow(TITLE + " Summary", createResultsHeader(), "", 700, 300));
     prefix = String.format("%s (C=%d,Z=%d,T=%d)", imp.getTitle(), imp.getChannel(), imp.getSlice(),
         imp.getFrame());
-    return window;
+    return textWindow;
   }
 
   private String createResultsHeader() {

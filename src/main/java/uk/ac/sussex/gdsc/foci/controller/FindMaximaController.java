@@ -151,8 +151,8 @@ public class FindMaximaController extends ImageJController {
     final ImagePlus mask = WindowManager.getImage(maskImage);
 
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
-    final FindFociResults results = ff.createFindFociProcessor(imp).findMaxima(imp, mask,
-        processorOptions);
+    final FindFociResults results =
+        ff.createFindFociProcessor(imp).findMaxima(imp, mask, processorOptions);
 
     if (results != null) {
       final List<FindFociResult> newResultsArray = results.results;

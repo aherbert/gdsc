@@ -168,8 +168,8 @@ public class ImageScaler_PlugIn implements PlugInFilter {
   public void run(ImagePlus[] images, double maxValue) {
     final double[] limits = new double[] {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY};
 
-    for (final ImagePlus imp : images) {
-      updateMinAndMax(imp, limits);
+    for (final ImagePlus im : images) {
+      updateMinAndMax(im, limits);
     }
 
     if (limits[1] <= limits[0]) {
@@ -178,8 +178,8 @@ public class ImageScaler_PlugIn implements PlugInFilter {
 
     final double scaleFactor = maxValue / limits[1];
 
-    for (final ImagePlus imp : images) {
-      multiply(imp, scaleFactor);
+    for (final ImagePlus im : images) {
+      multiply(im, scaleFactor);
     }
   }
 

@@ -54,8 +54,6 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -410,19 +408,9 @@ public class TranslocationFinder_PlugIn implements PlugIn {
   }
 
   private static TextWindow createResultsWindow() {
-    TextWindow window = resultsWindow.get();
-    if (window == null || !window.isShowing()) {
-      window = new TextWindow(TITLE + " Results", createResultsHeader(), "", 1000, 300);
-
-      // When it closes remove the reference to this window
-      final TextWindow closedWindow = window;
-      window.addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowClosed(WindowEvent event) {
-          resultsWindow.compareAndSet(closedWindow, null);
-          super.windowClosed(event);
-        }
-      });
+    return ImageJUtils.refresh(resultsWindow, () -> {
+      final TextWindow window =
+          new TextWindow(TITLE + " Results", createResultsHeader(), "", 1000, 300);
 
       // Allow the results to be manually changed
       window.getTextPanel().addMouseListener(new MouseAdapter() {
@@ -549,10 +537,8 @@ public class TranslocationFinder_PlugIn implements PlugIn {
         }
       });
 
-      resultsWindow.set(window);
-    }
-
-    return window;
+      return window;
+    });
   }
 
   private static String createResultsHeader() {

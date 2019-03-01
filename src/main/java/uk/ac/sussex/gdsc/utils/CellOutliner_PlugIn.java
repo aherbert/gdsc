@@ -27,6 +27,7 @@ package uk.ac.sussex.gdsc.utils;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -502,7 +503,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       final Rectangle pointBounds = new Rectangle(minx, miny, maxx - minx + 1, maxy - miny + 1);
 
       // Calculate the angle
-      final FloatProcessor angle = createAngleProcessor(ip, cx, cy, pointBounds);
+      final FloatProcessor angle = createAngleProcessor(cx, cy, pointBounds);
 
       if (ImageJUtils.isInterrupted()) {
         return null;
@@ -550,8 +551,6 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
 
         // Set the parameters for the weight map
         params = newParams;
-        // Update the range to become smaller for a tighter fit
-        // range = Math.max(3, range * 0.9);
       }
 
       assert cell != null : "No cell";
@@ -581,7 +580,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       final Rectangle pos = finalCell.getBounds();
 
       // Does not work in IJ 1.46+
-      // finalCell.setLocation(pos.x + bounds.x + pointBounds.x, pos.y + bounds.y + pointBounds.y);
+      // finalCell.setLocation(pos.x + bounds.x + pointBounds.x, pos.y + bounds.y + pointBounds.y)
 
       // Create a new Polygon with the correct coordinates. This is required since IJ 1.46
       // since setting the location is not passed through when drawing an overlay
@@ -705,7 +704,6 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     } else {
       maskImp.setProcessor(maskIp);
     }
-    // maskImp.updateAndDraw();
     return maskImp;
   }
 
@@ -772,7 +770,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       rotationAngles.add(rotation);
       final FloatProcessor fp = new FloatProcessor(settings.kernelWidth, settings.kernelWidth);
 
-      // createAliasedLines(halfWidth, cx, cy, degreesToRadians, rotation, fp);
+      // createAliasedLines(halfWidth, cx, cy, degreesToRadians, rotation, fp)
 
       // Build curves using the cell size.
       final double radians = Math.toRadians(rotation);
@@ -780,11 +778,6 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       final double centreY = cy - Math.sin(radians) * settings.cellRadius;
 
       createDoGKernel(fp, centreX, centreY, settings.cellRadius, 1.0);
-
-      // Draw circles to use as a directional edge filter
-      // drawCircle(fp, centreX, centreY, cellRadius + 1, -1 * value);
-      // drawCircle(fp, centreX, centreY, cellRadius, 2 * value);
-      // drawCircle(fp, centreX, centreY, cellRadius - 1, -1 * value);
 
       newKernels.put(rotation, (float[]) fp.getPixels());
     }
@@ -799,14 +792,6 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       fp.flipVertical();
       newKernels.put(rotation + 180, (float[]) fp.getPixels());
     }
-
-    // Show for debugging
-    // for (int rotation : rotationAngles)
-    // {
-    // FloatProcessor fp = new FloatProcessor(kernelWidth, kernelWidth, kernels.get(rotation),
-    // null);
-    // new ImagePlus("Rotation " + rotation, fp).show();
-    // }
 
     return newKernels;
   }
@@ -960,11 +945,11 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       return true;
     });
 
-    final ImagePlus imp = new ImagePlus("Membrane filter", stack);
-    imp.show();
+    final ImagePlus filterImp = new ImagePlus("Membrane filter", stack);
+    filterImp.show();
 
     // Output different projections of the results
-    final ZProjector projector = new ZProjector(imp);
+    final ZProjector projector = new ZProjector(filterImp);
     for (int projectionMethod = 0; projectionMethod < ZProjector.METHODS.length;
         projectionMethod++) {
       IJ.showStatus("Projecting " + ZProjector.METHODS[projectionMethod]);
@@ -978,14 +963,12 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
   /**
    * For the given point, compute the angle between pixels and the centre.
    *
-   * @param ip the image
    * @param cx the cx
    * @param cy the cy
    * @param pointBounds the point bounds
    * @return the float processor
    */
-  private static FloatProcessor createAngleProcessor(ImageProcessor ip, int cx, int cy,
-      Rectangle pointBounds) {
+  private static FloatProcessor createAngleProcessor(int cx, int cy, Rectangle pointBounds) {
     // Find the bounds to process
     final int minx = pointBounds.x;
     final int miny = pointBounds.y;
@@ -1154,8 +1137,8 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
         final double axis2, final double minor, final double phi) {
       final int npoints = 90;
       final double arcAngle = 2 * Math.PI / npoints;
-      final float[] xpoints = new float[npoints];
-      final float[] ypoints = new float[npoints];
+      final float[] xp = new float[npoints];
+      final float[] yp = new float[npoints];
 
       int count = 0;
 
@@ -1169,31 +1152,29 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       final double b2 = minor * Math.cos(phi);
 
       // Create points around the start of the first half
-      for (double angle = -Math.PI; angle < -angleLimit; angle += arcAngle) {
-        xpoints[count] = (float) (centreX + a1 * Math.cos(angle) - b1 * Math.sin(angle));
-        ypoints[count] = (float) (centreY + a2 * Math.cos(angle) + b2 * Math.sin(angle));
-        count++;
+      for (double angle = -Math.PI; angle < -angleLimit; angle += arcAngle, count++) {
+        xp[count] = (float) (centreX + a1 * Math.cos(angle) - b1 * Math.sin(angle));
+        yp[count] = (float) (centreY + a2 * Math.cos(angle) + b2 * Math.sin(angle));
       }
 
       // Create points around the second half
       a1 = major2 * Math.cos(phi);
       a2 = major2 * Math.sin(phi);
-      for (double angle = -angleLimit; angle < angleLimit; angle += arcAngle) {
-        xpoints[count] = (float) (centreX + a1 * Math.cos(angle) - b1 * Math.sin(angle));
-        ypoints[count] = (float) (centreY + a2 * Math.cos(angle) + b2 * Math.sin(angle));
-        count++;
+      for (double angle = -angleLimit; angle < angleLimit; angle += arcAngle, count++) {
+        xp[count] = (float) (centreX + a1 * Math.cos(angle) - b1 * Math.sin(angle));
+        yp[count] = (float) (centreY + a2 * Math.cos(angle) + b2 * Math.sin(angle));
       }
 
       // Create points around the rest of the first half
       a1 = major1 * Math.cos(phi);
       a2 = major1 * Math.sin(phi);
-      for (double angle = angleLimit; angle < Math.PI && count < npoints; angle += arcAngle) {
-        xpoints[count] = (float) (centreX + a1 * Math.cos(angle) - b1 * Math.sin(angle));
-        ypoints[count] = (float) (centreY + a2 * Math.cos(angle) + b2 * Math.sin(angle));
-        count++;
+      for (double angle = angleLimit; angle < Math.PI && count < npoints;
+          angle += arcAngle, count++) {
+        xp[count] = (float) (centreX + a1 * Math.cos(angle) - b1 * Math.sin(angle));
+        yp[count] = (float) (centreY + a2 * Math.cos(angle) + b2 * Math.sin(angle));
       }
 
-      return new FloatPolygon(xpoints, ypoints, npoints);
+      return new FloatPolygon(xp, yp, npoints);
     }
   }
 
@@ -1244,14 +1225,14 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     }
 
     // Return the polygon
-    float[] xpoints = new float[npoints];
-    float[] ypoints = new float[npoints];
+    float[] xp = new float[npoints];
+    float[] yp = new float[npoints];
 
     npoints = 0;
     for (int i = 0; i < 360 / segmentArcWidth; i += 2) {
       if (max[i] > 0) {
-        xpoints[npoints] = index[i] % cropBounds.width + cropBounds.x;
-        ypoints[npoints] = index[i] / cropBounds.width + cropBounds.y;
+        xp[npoints] = index[i] % cropBounds.width + cropBounds.x;
+        yp[npoints] = index[i] / cropBounds.width + cropBounds.y;
         npoints++;
       }
     }
@@ -1269,18 +1250,18 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
         for (int j = -window; j <= window; j++) {
           final double w = 1; // Alternative = (window - Math.abs(j) + 1.0) / (window + 1)
           final int ii = (i + j + npoints) % npoints;
-          sumx += xpoints[ii] * w;
-          sumy += ypoints[ii] * w;
+          sumx += xp[ii] * w;
+          sumy += yp[ii] * w;
           count += w;
         }
-        newXPoints[i] = (float) (sumx / count);
-        newYPoints[i] = (float) (sumy / count);
+        newXPoints[i] = (float) MathUtils.div0(sumx, count);
+        newYPoints[i] = (float) MathUtils.div0(sumy, count);
       }
-      xpoints = newXPoints;
-      ypoints = newYPoints;
+      xp = newXPoints;
+      yp = newYPoints;
     }
 
-    return new PolygonRoi(xpoints, ypoints, npoints, Roi.POLYGON);
+    return new PolygonRoi(xp, yp, npoints, Roi.POLYGON);
   }
 
   /**
@@ -1709,15 +1690,15 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
 
     // Return the outline
     int npoints = 0;
-    final int[] xpoints = new int[coords.size()];
-    final int[] ypoints = new int[coords.size()];
+    final int[] xp = new int[coords.size()];
+    final int[] yp = new int[coords.size()];
     for (final Point p : coords) {
-      xpoints[npoints] = p.x;
-      ypoints[npoints] = p.y;
+      xp[npoints] = p.x;
+      yp[npoints] = p.y;
       npoints++;
     }
 
-    return new PolygonRoi(xpoints, ypoints, npoints, Roi.POLYGON);
+    return new PolygonRoi(xp, yp, npoints, Roi.POLYGON);
   }
 
   private void addPoint(ArrayList<Point> coords, int index) {

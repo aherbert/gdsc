@@ -24,6 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
+
 import org.jdesktop.beansbinding.Converter;
 
 import java.util.List;
@@ -37,6 +39,7 @@ public class ValidImagesConverter extends Converter<List<String>, Boolean> {
     return !paramS.isEmpty();
   }
 
+  @Nullable
   @Override
   public List<String> convertReverse(Boolean paramT) {
     // N/A

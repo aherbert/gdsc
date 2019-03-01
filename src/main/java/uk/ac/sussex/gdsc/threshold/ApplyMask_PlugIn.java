@@ -239,12 +239,10 @@ public class ApplyMask_PlugIn implements PlugInFilter {
     for (final int t : frames) {
       for (final int z : slices) {
         for (final int c : channels) {
-          final ImageProcessor ip =
-              imageStack.getProcessor(imp.getStackIndex(c, z, t));
+          final ImageProcessor ip = imageStack.getProcessor(imp.getStackIndex(c, z, t));
 
           // getStackIndex will clip to the mask dimensions
-          final ImageProcessor maskIp =
-              maskStack.getProcessor(maskImp.getStackIndex(c, z, t));
+          final ImageProcessor maskIp = maskStack.getProcessor(maskImp.getStackIndex(c, z, t));
 
           for (int i = maskIp.getPixelCount(); i-- > 0;) {
             if (maskIp.get(i) == 0) {

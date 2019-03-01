@@ -63,6 +63,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Compares the coordinates in two files and computes the match statistics.
@@ -76,35 +78,100 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
 
   private static final String TITLE = "Match Calculator";
 
-  private static String title1 = "";
-  private static String title2 = "";
-  private static double dThreshold = 1;
-  private static String mask = "";
-  private static double beta = 4;
-  private static boolean showPairs;
-  private static boolean savePairs;
-  private static boolean savePairsSingleFile;
-  private static String filename = "";
-  private static String filenameSingle = "";
-  private static String image1 = "";
-  private static String image2 = "";
-  private static boolean showComposite;
-  private static boolean ignoreFrames;
-  private static boolean useSlicePosition;
-
   private String myMask;
   private String myImage1;
   private String myImage2;
 
-  private static boolean writeHeader = true;
-  private static TextWindow resultsWindow;
-  private static TextWindow pairsWindow;
+  private static AtomicBoolean writeHeader = new AtomicBoolean(true);
+  private static AtomicReference<TextWindow> resultsWindowRef = new AtomicReference<>();
+  private static AtomicReference<TextWindow> pairsWindowRef = new AtomicReference<>();
+
+  private TextWindow resultsWindow;
+  private TextWindow pairsWindow;
 
   private TextField text1;
   private TextField text2;
 
   // flag indicating the pairs have values that should be output
   private boolean valued;
+
+  /** The plugin settings. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String title1;
+    String title2;
+    double distanceThreshold;
+    String mask;
+    double beta;
+    boolean showPairs;
+    boolean savePairs;
+    boolean savePairsSingleFile;
+    String filename;
+    String filenameSingle;
+    String image1;
+    String image2;
+    boolean showComposite;
+    boolean ignoreFrames;
+    boolean useSlicePosition;
+
+    Settings() {
+      title1 = "";
+      title2 = "";
+      distanceThreshold = 1;
+      mask = "";
+      beta = 4;
+      filename = "";
+      filenameSingle = "";
+      image1 = "";
+      image2 = "";
+    }
+
+    Settings(Settings source) {
+      title1 = source.title1;
+      title2 = source.title2;
+      distanceThreshold = source.distanceThreshold;
+      mask = source.mask;
+      beta = source.beta;
+      showPairs = source.showPairs;
+      savePairs = source.savePairs;
+      savePairsSingleFile = source.savePairsSingleFile;
+      filename = source.filename;
+      filenameSingle = source.filenameSingle;
+      image1 = source.image1;
+      image2 = source.image2;
+      showComposite = source.showComposite;
+      ignoreFrames = source.ignoreFrames;
+      useSlicePosition = source.useSlicePosition;
+    }
+
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   private static class IdTimeValuedPoint extends TimeValuedPoint {
     final int id;
@@ -140,8 +207,8 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     TimeValuedPoint[] predictedPoints = null;
 
     try {
-      actualPoints = TimeValuePointManager.loadPoints(title1);
-      predictedPoints = TimeValuePointManager.loadPoints(title2);
+      actualPoints = TimeValuePointManager.loadPoints(settings.title1);
+      predictedPoints = TimeValuePointManager.loadPoints(settings.title2);
     } catch (final IOException ex) {
       IJ.error("Failed to load the points: " + ex.getMessage());
       return;
@@ -156,7 +223,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
       }
     }
 
-    compareCoordinates(actualPoints, predictedPoints, dThreshold);
+    compareCoordinates(actualPoints, predictedPoints, settings.distanceThreshold);
   }
 
   private static TimeValuedPoint[] filter(TimeValuedPoint[] points, ImageProcessor processor) {
@@ -204,29 +271,30 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
 
     final GenericDialog gd = new GenericDialog(TITLE);
 
+    settings = Settings.load();
     gd.addMessage("Compare the points in two files\nand compute the match statistics\n"
         + "(Double click input fields to use a file chooser)");
-    gd.addStringField("Input_1", title1, 30);
-    gd.addStringField("Input_2", title2, 30);
+    gd.addStringField("Input_1", settings.title1, 30);
+    gd.addStringField("Input_2", settings.title2, 30);
     if (haveImages) {
       final ArrayList<String> maskImageList = new ArrayList<>(newImageList.size() + 1);
       maskImageList.add("[None]");
       maskImageList.addAll(newImageList);
-      gd.addChoice("mask", maskImageList.toArray(new String[0]), mask);
+      gd.addChoice("mask", maskImageList.toArray(new String[0]), settings.mask);
     }
-    gd.addNumericField("Distance", dThreshold, 2);
-    gd.addNumericField("Beta", beta, 2);
-    gd.addCheckbox("Show_pairs", showPairs);
-    gd.addCheckbox("Save_pairs", savePairs);
+    gd.addNumericField("Distance", settings.distanceThreshold, 2);
+    gd.addNumericField("Beta", settings.beta, 2);
+    gd.addCheckbox("Show_pairs", settings.showPairs);
+    gd.addCheckbox("Save_pairs", settings.savePairs);
     gd.addMessage("Use this option to save the pairs to a single file,\nappending if it exists");
-    gd.addCheckbox("Save_pairs_single_file", savePairsSingleFile);
+    gd.addCheckbox("Save_pairs_single_file", settings.savePairsSingleFile);
     if (!newImageList.isEmpty()) {
-      gd.addCheckbox("Show_composite_image", showComposite);
-      gd.addCheckbox("Ignore_file_frames", ignoreFrames);
+      gd.addCheckbox("Show_composite_image", settings.showComposite);
+      gd.addCheckbox("Ignore_file_frames", settings.ignoreFrames);
       final String[] items = newImageList.toArray(new String[newImageList.size()]);
-      gd.addChoice("Image_1", items, image1);
-      gd.addChoice("Image_2", items, image2);
-      gd.addCheckbox("Use_slice_position", useSlicePosition);
+      gd.addChoice("Image_1", items, settings.image1);
+      gd.addChoice("Image_2", items, settings.image2);
+      gd.addCheckbox("Use_slice_position", settings.useSlicePosition);
     }
 
     // Dialog to allow double click to select files using a file chooser
@@ -265,23 +333,24 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
       return false;
     }
 
-    title1 = gd.getNextString();
-    title2 = gd.getNextString();
+    settings.title1 = gd.getNextString();
+    settings.title2 = gd.getNextString();
     if (haveImages) {
-      myMask = mask = gd.getNextChoice();
+      myMask = settings.mask = gd.getNextChoice();
     }
-    dThreshold = gd.getNextNumber();
-    beta = gd.getNextNumber();
-    showPairs = gd.getNextBoolean();
-    savePairs = gd.getNextBoolean();
-    savePairsSingleFile = gd.getNextBoolean();
+    settings.distanceThreshold = gd.getNextNumber();
+    settings.beta = gd.getNextNumber();
+    settings.showPairs = gd.getNextBoolean();
+    settings.savePairs = gd.getNextBoolean();
+    settings.savePairsSingleFile = gd.getNextBoolean();
     if (haveImages) {
-      showComposite = gd.getNextBoolean();
-      ignoreFrames = gd.getNextBoolean();
-      myImage1 = image1 = gd.getNextChoice();
-      myImage2 = image2 = gd.getNextChoice();
-      useSlicePosition = gd.getNextBoolean();
+      settings.showComposite = gd.getNextBoolean();
+      settings.ignoreFrames = gd.getNextBoolean();
+      myImage1 = settings.image1 = gd.getNextChoice();
+      myImage2 = settings.image2 = gd.getNextChoice();
+      settings.useSlicePosition = gd.getNextBoolean();
     }
+    settings.save();
 
     return true;
   }
@@ -309,8 +378,9 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     double rmsd = 0;
 
     final boolean is3D = is3D(actualPoints) && is3D(predictedPoints);
-    final boolean computePairs = showPairs || savePairs || savePairsSingleFile
-        || (showComposite && myImage1 != null && myImage2 != null);
+    final boolean computePairs =
+        settings.showPairs || settings.savePairs || settings.savePairsSingleFile
+            || (settings.showComposite && myImage1 != null && myImage2 != null);
 
     final List<PointPair> pairs = (computePairs) ? new LinkedList<>() : null;
 
@@ -353,38 +423,38 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
       }
     }
 
-    if (showPairs || savePairs || savePairsSingleFile) {
+    if (settings.showPairs || settings.savePairs || settings.savePairsSingleFile) {
       // Check if these are valued points
       valued = isValued(actualPoints) && isValued(predictedPoints);
     }
 
     if (!java.awt.GraphicsEnvironment.isHeadless()) {
-      if (resultsWindow == null || !resultsWindow.isShowing()) {
-        resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300);
-      }
-      if (showPairs) {
-        final String header = createPairsHeader(title1, title2);
-        if (pairsWindow == null || !pairsWindow.isShowing()) {
-          pairsWindow = new TextWindow(TITLE + " Pairs", header, "", 900, 300);
+      resultsWindow = ImageJUtils.refresh(resultsWindowRef,
+          () -> new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300));
+      if (settings.showPairs) {
+        final String header = createPairsHeader(settings.title1, settings.title2);
+        pairsWindow = ImageJUtils.refresh(pairsWindowRef, () -> {
+          final TextWindow window = new TextWindow(TITLE + " Pairs", header, "", 900, 300);
+          // Position relative to results window
           final Point p = resultsWindow.getLocation();
           p.y += resultsWindow.getHeight();
-          pairsWindow.setLocation(p);
-        }
+          window.setLocation(p);
+          return window;
+        });
         for (final PointPair pair : pairs) {
           addPairResult(pair, is3D);
         }
       }
-    } else if (writeHeader) {
-      writeHeader = false;
+    } else if (writeHeader.compareAndSet(true, false)) {
       IJ.log(createResultsHeader());
     }
     if (tp > 0) {
       rmsd = Math.sqrt(rmsd / tp);
     }
     final MatchResult result = new MatchResult(tp, fp, fn, rmsd);
-    addResult(title1, title2, distanceThreshold, result);
+    addResult(settings.title1, settings.title2, distanceThreshold, result);
 
-    if (savePairs || savePairsSingleFile) {
+    if (settings.savePairs || settings.savePairsSingleFile) {
       savePairs(pairs, is3D);
     }
 
@@ -434,7 +504,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     return false;
   }
 
-  private static int[] getTimepoints(TimeValuedPoint[] points, TimeValuedPoint[] points2) {
+  private int[] getTimepoints(TimeValuedPoint[] points, TimeValuedPoint[] points2) {
     final TIntHashSet set = new TIntHashSet();
     for (final TimeValuedPoint p : points) {
       set.add(p.getTime());
@@ -443,7 +513,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
       set.add(p.getTime());
     }
     final int[] data = set.toArray();
-    if (showPairs) {
+    if (settings.showPairs) {
       // Sort so the table order is nice
       Arrays.sort(data);
     }
@@ -481,8 +551,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     return sb.toString();
   }
 
-  private static void addResult(String i1, String i2, double distanceThrehsold,
-      MatchResult result) {
+  private void addResult(String i1, String i2, double distanceThrehsold, MatchResult result) {
     final StringBuilder sb = new StringBuilder();
     sb.append(i1).append('\t');
     sb.append(i2).append('\t');
@@ -498,7 +567,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     sb.append(IJ.d2s(result.getFScore(0.5), 4)).append('\t');
     sb.append(IJ.d2s(result.getFScore(1.0), 4)).append('\t');
     sb.append(IJ.d2s(result.getFScore(2.0), 4)).append('\t');
-    sb.append(IJ.d2s(result.getFScore(beta), 4));
+    sb.append(IJ.d2s(result.getFScore(settings.beta), 4));
 
     if (java.awt.GraphicsEnvironment.isHeadless()) {
       IJ.log(sb.toString());
@@ -594,14 +663,14 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
   @SuppressWarnings("resource")
   private void savePairs(List<PointPair> pairs, boolean is3D) {
     boolean fileSelected = false;
-    if (savePairs) {
-      filename = getFilename("Pairs_filename", filename);
-      fileSelected = filename != null;
+    if (settings.savePairs) {
+      settings.filename = getFilename("Pairs_filename", settings.filename);
+      fileSelected = settings.filename != null;
     }
     boolean fileSingleSelected = false;
-    if (savePairsSingleFile) {
-      filenameSingle = getFilename("Pairs_filename_single", filenameSingle);
-      fileSingleSelected = filenameSingle != null;
+    if (settings.savePairsSingleFile) {
+      settings.filenameSingle = getFilename("Pairs_filename_single", settings.filenameSingle);
+      fileSingleSelected = settings.filenameSingle != null;
     }
     if (!(fileSelected || fileSingleSelected)) {
       return;
@@ -611,14 +680,14 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     BufferedWriter outSingle = null;
     try {
       // Always create the header as it sets up the pairs prefix for each pair result
-      final String header = createPairsHeader(title1, title2);
+      final String header = createPairsHeader(settings.title1, settings.title2);
       if (fileSelected) {
-        out = Files.newBufferedWriter(Paths.get(filename));
+        out = Files.newBufferedWriter(Paths.get(settings.filename));
         out.write(header);
         out.newLine();
       }
       if (fileSingleSelected) {
-        final File file = new File(filenameSingle);
+        final File file = new File(settings.filenameSingle);
         if (file.length() != 0) {
           outSingle = Files.newBufferedWriter(file.toPath(), StandardOpenOption.APPEND);
         } else {
@@ -639,7 +708,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
           outSingle.newLine();
         }
       }
-    } catch (IOException ex) {
+    } catch (final IOException ex) {
       IJ.log("Unable to save the matches to file: " + ex.getMessage());
     } finally {
       if (out != null) {
@@ -685,7 +754,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
   }
 
   private void produceComposite(List<PointPair> pairs) {
-    if (!showComposite) {
+    if (!settings.showComposite) {
       return;
     }
     if (myImage1 == null || myImage2 == null) {
@@ -748,7 +817,8 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
 
     // Check if the input image has only one time frame but the points have multiple time points
     boolean singleFrame = false;
-    if (upper.size() > 1 && imp1.getNFrames() == 1 && imp2.getNFrames() == 1 && ignoreFrames) {
+    if (upper.size() > 1 && imp1.getNFrames() == 1 && imp2.getNFrames() == 1
+        && settings.ignoreFrames) {
       singleFrame = true;
       upper.clear();
       upper.add(pairs.size());
@@ -851,12 +921,12 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     return processor.convertToFloat();
   }
 
-  private static void add(Overlay overlay, float[] x, float[] y, int[] z, int size, Color color,
+  private void add(Overlay overlay, float[] x, float[] y, int[] z, int size, Color color,
       int frame) {
     if (size != 0) {
       // Option to position the ROI points on the z-slice.
       // This requires an ROI for each slice that contains a point.
-      if (useSlicePosition) {
+      if (settings.useSlicePosition) {
         // Sort points by slice position
         final float[][] data = new float[size][3];
         for (int i = size; i-- > 0;) {

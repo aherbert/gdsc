@@ -36,6 +36,7 @@ import java.awt.Rectangle;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Class that allow the threshold for colocalisation analysis to be calculated for two images. A
@@ -55,7 +56,7 @@ public class ColocalisationThreshold {
   private boolean includeNullPixels;
   private boolean includeSaturatedPixels;
   private boolean exhaustiveSearch;
-  private ArrayList<ThresholdResult> results;
+  private List<ThresholdResult> results;
   private boolean correlated;
   private int threshold1;
   private int threshold2;
@@ -201,9 +202,16 @@ public class ColocalisationThreshold {
 
     final int n = (includeNullPixels) ? size : size - nzero;
 
-    final double ch1Mean = ch1Sum / (double) n;
-    final double ch2Mean = ch2Sum / (double) n;
-    final double ch3Mean = ch3Sum / (double) n;
+    double ch1Mean;
+    double ch2Mean;
+    double ch3Mean;
+    if (n != 0) {
+      ch1Mean = ch1Sum / (double) n;
+      ch2Mean = ch2Sum / (double) n;
+      ch3Mean = ch3Sum / (double) n;
+    } else {
+      ch1Mean = ch2Mean = ch3Mean = 0;
+    }
 
     // TODO - Add a check to ensure that the sum will not lose precision as the total aggregates.
     // This could be done by keeping a BigDecimal to store the overall sum. When the rolling total
@@ -231,20 +239,23 @@ public class ColocalisationThreshold {
     IJ.log("R = " + IJ.d2s(correlationTotal, 4));
 
     if (correlationTotal < Math.max(searchTolerance, correlationThreshold)) {
-      // No correlation at all
-      return correlationResult(false, "No correlation found.");
+      return noCorrelationResult();
     }
 
     // http://mathworld.wolfram.com/Covariance.html
     // ?2 = X2?(X)2
     // = E[X2]?(E[X])2
-    // var (x+y) = var(x)+var(y)+2(covar(x,y));
-    // 2(covar(x,y)) = var(x+y) - var(x)-var(y);
+    // var (x+y) = var(x)+var(y)+2(covar(x,y))
+    // 2(covar(x,y)) = var(x+y) - var(x)-var(y)
 
     final double ch1Var = ch1mch1MeanSqSum / (n - 1);
     final double ch2Var = ch2mch2MeanSqSum / (n - 1);
     final double ch3Var = ch3mch3MeanSqSum / (n - 1);
     final double ch1ch2covar = 0.5 * (ch3Var - (ch1Var + ch2Var));
+
+    if (ch1ch2covar <= 0) {
+      return noCorrelationResult();
+    }
 
     // do regression
     // See:Dissanaike and Wang
@@ -255,6 +266,9 @@ public class ColocalisationThreshold {
         + Math.sqrt((ch2Var - ch1Var) * (ch2Var - ch1Var) + (4 * ch1ch2covar * ch1ch2covar));
 
     gradient = num / denom;
+    if (gradient <= 0) {
+      return noCorrelationResult();
+    }
     intercept = ch2Mean - gradient * ch1Mean;
 
     IJ.log("Channel 2 = Channel 1 * " + IJ.d2s(gradient, 4) + ((intercept < 0) ? " " : " +")
@@ -308,6 +322,11 @@ public class ColocalisationThreshold {
 
     return correlationResult(true, "Threshold calculation time = "
         + TextUtils.millisToString(System.currentTimeMillis() - startTime));
+  }
+
+  private boolean noCorrelationResult() {
+    // No correlation at all
+    return correlationResult(false, "No correlation found.");
   }
 
   /**
@@ -399,7 +418,7 @@ public class ColocalisationThreshold {
       for (int y = rheight; y-- > 0;) {
         for (int x = rwidth; x-- > 0;) {
           if (ipMask == null || ipMask.get(x, y) != 0) {
-            int index = (y + yoffset) * width + x + xoffset;
+            final int index = (y + yoffset) * width + x + xoffset;
             i1[count] = ip1.get(index);
             i2[count] = ip2.get(index);
             count++;
@@ -452,8 +471,8 @@ public class ColocalisationThreshold {
 
       // Get means
       for (int i = i1.length; i-- > 0;) {
-        int ch1 = i1[i];
-        int ch2 = i2[i];
+        final int ch1 = i1[i];
+        final int ch2 = i2[i];
 
         if ((ch1 < (threshold1)) || (ch2 < (threshold2))) {
           if (ch1 == 0 && ch2 == 0) {
@@ -479,10 +498,10 @@ public class ColocalisationThreshold {
         nb -= nzeroB;
       }
 
-      final double ch1MeanA = ch1SumA / (double) na;
-      final double ch2MeanA = ch2SumA / (double) na;
-      final double ch1MeanB = ch1SumB / (double) nb;
-      final double ch2MeanB = ch2SumB / (double) nb;
+      final double ch1MeanA = (na == 0) ? 0 : ch1SumA / (double) na;
+      final double ch2MeanA = (na == 0) ? 0 : ch2SumA / (double) na;
+      final double ch1MeanB = (nb == 0) ? 0 : ch1SumB / (double) nb;
+      final double ch2MeanB = (nb == 0) ? 0 : ch2SumB / (double) nb;
 
       // Calculate correlation
       double ch1mch1MeanSqSumA = 0;
@@ -493,8 +512,8 @@ public class ColocalisationThreshold {
       double ch1mch2MeanSqSumB = 0;
 
       for (int i = i1.length; i-- > 0;) {
-        int ch1 = i1[i];
-        int ch2 = i2[i];
+        final int ch1 = i1[i];
+        final int ch2 = i2[i];
         if ((ch1 < (threshold1)) || (ch2 < (threshold2))) {
           ch1mch1MeanSqSumB += (ch1 - ch1MeanB) * (ch1 - ch1MeanB);
           ch2mch2MeanSqSumB += (ch2 - ch2MeanB) * (ch2 - ch2MeanB);
@@ -617,10 +636,10 @@ public class ColocalisationThreshold {
         nb -= nzeroB;
       }
 
-      final double ch1MeanA = ch1SumA / (double) na;
-      final double ch2MeanA = ch2SumA / (double) na;
-      final double ch1MeanB = ch1SumB / (double) nb;
-      final double ch2MeanB = ch2SumB / (double) nb;
+      final double ch1MeanA = (na == 0) ? 0 : ch1SumA / (double) na;
+      final double ch2MeanA = (na == 0) ? 0 : ch2SumA / (double) na;
+      final double ch1MeanB = (nb == 0) ? 0 : ch1SumB / (double) nb;
+      final double ch2MeanB = (nb == 0) ? 0 : ch2SumB / (double) nb;
 
       // Calculate correlation
       double ch1mch1MeanSqSumA = 0;
@@ -701,7 +720,7 @@ public class ColocalisationThreshold {
     }
   }
 
-  private static boolean isRepeatThreshold(ArrayList<ThresholdResult> results, int newThreshold) {
+  private static boolean isRepeatThreshold(List<ThresholdResult> results, int newThreshold) {
     for (final ThresholdResult result : results) {
       if (result.getThreshold1() == newThreshold) {
         return true;
@@ -802,7 +821,7 @@ public class ColocalisationThreshold {
    *
    * @param results the new results
    */
-  public void setResults(ArrayList<ThresholdResult> results) {
+  public void setResults(List<ThresholdResult> results) {
     this.results = results;
   }
 
@@ -811,7 +830,7 @@ public class ColocalisationThreshold {
    *
    * @return the results
    */
-  public ArrayList<ThresholdResult> getResults() {
+  public List<ThresholdResult> getResults() {
     return results;
   }
 

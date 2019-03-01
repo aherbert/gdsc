@@ -43,6 +43,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,21 +54,70 @@ import java.util.logging.Logger;
  */
 public class ParticleOverlap_PlugIn implements PlugIn {
   private static final String TITLE = "Particle Overlap";
-  private static final String header = "Mask1\tImage1\tMask2\tID\tN\tNo\t%\tI\tIo\tManders";
+  private static final String HEADER = "Mask1\tImage1\tMask2\tID\tN\tNo\t%\tI\tIo\tManders";
 
-  private static String maskTitle1 = "";
-  private static String imageTitle = "";
-  private static String maskTitle2 = "";
-  private static boolean showTotal;
-  private static boolean showTable = true;
-  private static String filename = "";
-
-  private static TextWindow tw;
+  private static AtomicReference<TextWindow> textWindowRef = new AtomicReference<>();
 
   private ImagePlus mask1Imp;
   private ImagePlus imageImp;
   private ImagePlus mask2Imp;
   private BufferedWriter out;
+
+  /** The plugin settings. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String maskTitle1;
+    String imageTitle;
+    String maskTitle2;
+    boolean showTotal;
+    boolean showTable;
+    String filename;
+
+    Settings() {
+      maskTitle1 = "";
+      imageTitle = "";
+      maskTitle2 = "";
+      showTable = true;
+      filename = "";
+    }
+
+    Settings(Settings source) {
+      maskTitle1 = source.maskTitle1;
+      imageTitle = source.imageTitle;
+      maskTitle2 = source.maskTitle2;
+      showTotal = source.showTotal;
+      showTable = source.showTable;
+      filename = source.filename;
+    }
+
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   @Override
   public void run(String arg) {
@@ -94,28 +144,30 @@ public class ParticleOverlap_PlugIn implements PlugIn {
     final String[] imageList = ImageJUtils.getImageList(ImageJUtils.GREY_SCALE, null);
     final String[] maskList = ImageJUtils.getImageList(ImageJUtils.GREY_8_16, null);
 
-    gd.addChoice("Particle_mask", maskList, maskTitle1);
-    gd.addChoice("Particle_image", imageList, imageTitle);
-    gd.addChoice("Overlap_mask", maskList, maskTitle2);
-    gd.addCheckbox("Show_total", showTotal);
-    gd.addCheckbox("Show_table", showTable);
-    gd.addStringField("File", filename, 30);
+    settings = Settings.load();
+    gd.addChoice("Particle_mask", maskList, settings.maskTitle1);
+    gd.addChoice("Particle_image", imageList, settings.imageTitle);
+    gd.addChoice("Overlap_mask", maskList, settings.maskTitle2);
+    gd.addCheckbox("Show_total", settings.showTotal);
+    gd.addCheckbox("Show_table", settings.showTable);
+    gd.addStringField("File", settings.filename, 30);
     gd.showDialog();
 
     if (gd.wasCanceled()) {
       return false;
     }
 
-    maskTitle1 = gd.getNextChoice();
-    imageTitle = gd.getNextChoice();
-    maskTitle2 = gd.getNextChoice();
-    showTotal = gd.getNextBoolean();
-    showTable = gd.getNextBoolean();
-    filename = gd.getNextString();
+    settings.maskTitle1 = gd.getNextChoice();
+    settings.imageTitle = gd.getNextChoice();
+    settings.maskTitle2 = gd.getNextChoice();
+    settings.showTotal = gd.getNextBoolean();
+    settings.showTable = gd.getNextBoolean();
+    settings.filename = gd.getNextString();
+    settings.save();
 
-    mask1Imp = WindowManager.getImage(maskTitle1);
-    imageImp = WindowManager.getImage(imageTitle);
-    mask2Imp = WindowManager.getImage(maskTitle2);
+    mask1Imp = WindowManager.getImage(settings.maskTitle1);
+    imageImp = WindowManager.getImage(settings.imageTitle);
+    mask2Imp = WindowManager.getImage(settings.maskTitle2);
 
     if (mask1Imp == null) {
       IJ.error(TITLE, "No particle mask specified");
@@ -129,7 +181,7 @@ public class ParticleOverlap_PlugIn implements PlugIn {
       IJ.error(TITLE, "Overlap mask must match the dimensions of the particle mask");
       return false;
     }
-    if (!showTable && emptyFilename()) {
+    if (!settings.showTable && emptyFilename()) {
       IJ.error(TITLE, "No output specified");
       return false;
     }
@@ -137,8 +189,8 @@ public class ParticleOverlap_PlugIn implements PlugIn {
     return true;
   }
 
-  private static boolean emptyFilename() {
-    return TextUtils.isNullOrEmpty(filename);
+  private boolean emptyFilename() {
+    return TextUtils.isNullOrEmpty(settings.filename);
   }
 
   private static boolean checkDimensions(ImagePlus imp1, ImagePlus imp2) {
@@ -157,7 +209,7 @@ public class ParticleOverlap_PlugIn implements PlugIn {
   }
 
   private void analyse() {
-    // Dimensions are the same. Extract a stack for each image;
+    // Dimensions are the same. Extract a stack for each image.
     final ImageStack m1 = extractStack(mask1Imp);
     final ImageStack m2 = extractStack(mask2Imp);
     final ImageStack i1 = extractStack(imageImp);
@@ -193,7 +245,7 @@ public class ParticleOverlap_PlugIn implements PlugIn {
     }
 
     // Summarise results
-    createResultsTable();
+    final TextWindow textWindow = createResultsTable();
     createResultsFile();
 
     final String title = createTitle();
@@ -209,10 +261,10 @@ public class ParticleOverlap_PlugIn implements PlugIn {
       sno1 += no1[id];
       ss1 += s1[id];
       sso1 += so1[id];
-      addResult(title, id, n1[id], no1[id], s1[id], so1[id]);
+      addResult(textWindow, title, id, n1[id], no1[id], s1[id], so1[id]);
     }
-    if (showTotal) {
-      addResult(title, 0, sn1, sno1, ss1, sso1);
+    if (settings.showTotal) {
+      addResult(textWindow, title, 0, sn1, sno1, ss1, sso1);
     }
 
     closeResultsFile();
@@ -231,13 +283,12 @@ public class ParticleOverlap_PlugIn implements PlugIn {
     return stack;
   }
 
-  private static void createResultsTable() {
-    if (!showTable) {
-      return;
+  private TextWindow createResultsTable() {
+    if (!settings.showTable) {
+      return null;
     }
-    if (tw == null || !tw.isShowing()) {
-      tw = new TextWindow(TITLE + " Results", header, "", 800, 500);
-    }
+    return ImageJUtils.refresh(textWindowRef,
+        () -> new TextWindow(TITLE + " Results", HEADER, "", 800, 500));
   }
 
   private void createResultsFile() {
@@ -246,14 +297,15 @@ public class ParticleOverlap_PlugIn implements PlugIn {
     }
 
     try {
-      out = Files.newBufferedWriter(Paths.get(FileUtils.addExtensionIfAbsent(filename, ".xls")));
+      out = Files
+          .newBufferedWriter(Paths.get(FileUtils.addExtensionIfAbsent(settings.filename, ".xls")));
     } catch (final IOException ex) {
       logErrorAndCloseResultsFile(ex);
       return;
     }
 
     try {
-      out.write(header);
+      out.write(HEADER);
       out.newLine();
     } catch (final IOException ex) {
       logErrorAndCloseResultsFile(ex);
@@ -284,22 +336,23 @@ public class ParticleOverlap_PlugIn implements PlugIn {
     return name;
   }
 
-  private void addResult(String title, int id, long n1, long no1, double s1, double so1) {
+  private void addResult(TextWindow textWindow, String title, int id, long n1, long no1, double s1,
+      double so1) {
     final StringBuilder sb = new StringBuilder(title);
     sb.append(id).append('\t');
     sb.append(n1).append('\t');
     sb.append(no1).append('\t');
-    sb.append(MathUtils.rounded((100.0 * no1) / n1)).append('\t');
+    sb.append(MathUtils.rounded(MathUtils.div0(100.0 * no1, n1))).append('\t');
     sb.append(s1).append('\t');
     sb.append(so1).append('\t');
-    sb.append(MathUtils.rounded(so1 / s1, 5)).append('\t');
+    sb.append(MathUtils.rounded(MathUtils.div0(so1, s1), 5)).append('\t');
 
-    recordResult(sb.toString());
+    recordResult(textWindow, sb.toString());
   }
 
-  private void recordResult(String string) {
-    if (showTable) {
-      tw.append(string);
+  private void recordResult(TextWindow textWindow, String string) {
+    if (textWindow != null) {
+      textWindow.append(string);
     }
     if (out != null) {
       try {

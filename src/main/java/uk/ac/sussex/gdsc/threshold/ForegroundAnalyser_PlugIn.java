@@ -48,29 +48,30 @@ import ij.text.TextWindow;
 
 import java.awt.Rectangle;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Analyses the foreground pixels in an image.
  */
 public class ForegroundAnalyser_PlugIn implements PlugInFilter {
   private static final String TITLE = "Foreground Analyser";
-  private static TextWindow resultsWindow;
+  private static AtomicReference<TextWindow> resultsWindowRef = new AtomicReference<>();
 
   private static String method = AutoThreshold.Method.OTSU.toString();
   private static boolean showMask;
   private static boolean doStack = true;
-  private static String[] BINS = {"256", "512", "1024", "2048", "4096", "8192", "16384"};
+  private static final String[] bins = {"256", "512", "1024", "2048", "4096", "8192", "16384"};
   private static int histogramBins = 4;
 
   private static int getHistogramBins() {
     // Check range
     if (histogramBins < 0) {
       histogramBins = 0;
-    } else if (histogramBins >= BINS.length) {
-      histogramBins = BINS.length - 1;
+    } else if (histogramBins >= bins.length) {
+      histogramBins = bins.length - 1;
     }
     // Just parse to an int
-    return Integer.parseInt(BINS[histogramBins]);
+    return Integer.parseInt(bins[histogramBins]);
   }
 
   private ImagePlus imp;
@@ -111,7 +112,7 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
       gd.addCheckbox("Do_stack", doStack);
     }
     if (is32bit) {
-      gd.addChoice("Histogram_bins", BINS, histogramBins);
+      gd.addChoice("Histogram_bins", bins, histogramBins);
     }
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
 
@@ -157,7 +158,7 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
     if (imp.getBitDepth() == 32) {
       // Get the pixel values
       final TFloatArrayList data = new TFloatArrayList(ip.getPixelCount());
-      final FValueProcedure procedure = value -> data.add(value);
+      final FValueProcedure procedure = data::add;
       RoiHelper.forEach(roi, stack, procedure);
 
       // Count values
@@ -203,8 +204,8 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
     }
 
     // Show results
-    createResultsWindow();
-    addResult(channel, slice, frame, roi, numberOfValues, threshold, stats);
+    final TextWindow resultsWindow = createResultsWindow();
+    addResult(resultsWindow, channel, slice, frame, roi, numberOfValues, threshold, stats);
 
     // Show foreground mask...
     if (showMask) {
@@ -212,10 +213,9 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
     }
   }
 
-  private static void createResultsWindow() {
-    if (resultsWindow == null || !resultsWindow.isShowing()) {
-      resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300);
-    }
+  private static TextWindow createResultsWindow() {
+    return ImageJUtils.refresh(resultsWindowRef,
+        () -> new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300));
   }
 
   private static String createResultsHeader() {
@@ -234,8 +234,8 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
     return sb.toString();
   }
 
-  private void addResult(int channel, int slice, int frame, Roi roi, int numberOfValues,
-      float threshold, Statistics stats) {
+  private void addResult(TextWindow resultsWindow, int channel, int slice, int frame, Roi roi,
+      int numberOfValues, float threshold, Statistics stats) {
     final StringBuilder sb = new StringBuilder();
     sb.append(imp.getTitle()).append('\t');
     sb.append(channel).append('\t');

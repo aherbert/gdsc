@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
@@ -49,6 +50,7 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Finds objects in an image using contiguous pixels of the same value. Locates the closest object
@@ -58,27 +60,85 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
   /** The title of the plugin. */
   private static final String TITLE = "Assign Foci";
 
-  private static final int flags = DOES_16 + DOES_8G + NO_CHANGES + NO_UNDO;
-  private static String input = "";
-  private static double radius = 30;
-  private static int minSize;
-  private static int maxSize;
-  private static boolean eightConnected;
-  private static boolean removeSmallObjects = true;
-  private static boolean showObjects;
-  private static boolean showFoci;
-  private static boolean showDistances;
-  private static boolean showHistogram;
+  private static final int FLAGS = DOES_16 + DOES_8G + NO_CHANGES + NO_UNDO;
 
-  private static TextWindow resultsWindow;
-  private static TextWindow summaryWindow;
-  private static TextWindow distancesWindow;
+  private static AtomicReference<TextWindow> resultsWindowRef = new AtomicReference<>();
+  private static AtomicReference<TextWindow> summaryWindowRef = new AtomicReference<>();
+  private static AtomicReference<TextWindow> distancesWindowRef = new AtomicReference<>();
+
+  private TextWindow resultsWindow;
+  private TextWindow summaryWindow;
+  private TextWindow distancesWindow;
 
   private ImagePlus imp;
   private ArrayList<int[]> results;
 
+  // The distance grid is only modified in a synchronized block
+  private static Object lock = new Object();
   private static int size;
-  private static ArrayList<Search[]> search;
+  private static ArrayList<Search[]> distanceGrid;
+
+  /** The plugin settings. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String input;
+    double radius;
+    int minSize;
+    int maxSize;
+    boolean eightConnected;
+    boolean removeSmallObjects;
+    boolean showObjects;
+    boolean showFoci;
+    boolean showDistances;
+    boolean showHistogram;
+
+    Settings() {
+      input = "";
+      radius = 30;
+      removeSmallObjects = true;
+    }
+
+    Settings(Settings source) {
+      input = source.input;
+      radius = source.radius;
+      minSize = source.minSize;
+      maxSize = source.maxSize;
+      eightConnected = source.eightConnected;
+      removeSmallObjects = source.removeSmallObjects;
+      showObjects = source.showObjects;
+      showFoci = source.showFoci;
+      showDistances = source.showDistances;
+      showHistogram = source.showHistogram;
+    }
+
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   private static class Search {
     int x;
@@ -101,7 +161,7 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
       return DONE;
     }
     this.imp = imp;
-    return flags;
+    return FLAGS;
   }
 
   /** {@inheritDoc} */
@@ -111,21 +171,21 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
       return;
     }
 
-    createDistanceGrid(radius);
+    final ArrayList<Search[]> searchGrid = createDistanceGrid(settings.radius);
 
     createResultsTables();
 
     final ObjectAnalyzer oa = new ObjectAnalyzer(ip);
-    if (removeSmallObjects) {
-      oa.setMinObjectSize(minSize);
+    if (settings.removeSmallObjects) {
+      oa.setMinObjectSize(settings.minSize);
     }
-    oa.setEightConnected(eightConnected);
+    oa.setEightConnected(settings.eightConnected);
     final int[] objectMask = oa.getObjectMask();
 
     final int maxx = ip.getWidth();
     final int maxy = ip.getHeight();
 
-    final double maxD2 = radius * radius;
+    final double maxD2 = settings.radius * settings.radius;
 
     // Assign each foci to the nearest object
     final int[] count = new int[oa.getMaxObject() + 1];
@@ -153,7 +213,7 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
       final int[] closestCount = new int[count.length];
 
       // Scan wider and wider from 0,0 until we find an object.
-      for (final Search[] next : search) {
+      for (final Search[] next : searchGrid) {
         if (next[0].d2 > maxD2) {
           break;
         }
@@ -193,7 +253,8 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     final int[] idMap = new int[count.length];
     for (int i = 1; i < count.length; i++) {
       idMap[i] = i;
-      if (centres[i][2] < minSize || (maxSize != 0 && centres[i][2] > maxSize)) {
+      if (centres[i][2] < settings.minSize
+          || (settings.maxSize != 0 && centres[i][2] > settings.maxSize)) {
         idMap[i] = -i;
       }
     }
@@ -232,7 +293,7 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     resultsWindow.append(sb.toString());
 
     // Histogram the count
-    if (showHistogram) {
+    if (settings.showHistogram) {
       final int max = (int) stats.getMax();
       final double[] xvalues = new double[max + 1];
       final double[] yvalues = new double[xvalues.length];
@@ -249,7 +310,8 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
         }
       }
       final String title = TITLE + " Histogram";
-      final Plot plot = new Plot(title, "Count", "Frequency", xvalues, yvalues);
+      final Plot plot = new Plot(title, "Count", "Frequency");
+      plot.addPoints(xvalues, yvalues, Plot.LINE);
       plot.setLimits(0, xvalues[xvalues.length - 1], 0, ymax);
       plot.addLabel(0, 0, String.format("N = %d, Mean = %s", (int) stats.getSum(),
           MathUtils.rounded(stats.getMean())));
@@ -275,7 +337,7 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     sb.append('\t').append(MathUtils.rounded(stats.getStandardDeviation()));
     summaryWindow.append(sb.toString());
 
-    if (!showDistances) {
+    if (!settings.showDistances) {
       return;
     }
 
@@ -346,35 +408,37 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
 
     gd.addMessage(msg.toString());
 
-    gd.addChoice("Foci", options, input);
-    gd.addSlider("Radius", 5, 50, radius);
-    gd.addNumericField("Min_size", minSize, 0);
-    gd.addNumericField("Max_size", maxSize, 0);
-    gd.addCheckbox("Eight_connected", eightConnected);
-    gd.addCheckbox("Remove_small_objects", removeSmallObjects);
-    gd.addCheckbox("Show_objects", showObjects);
-    gd.addCheckbox("Show_foci", showFoci);
-    gd.addCheckbox("Show_distances", showDistances);
-    gd.addCheckbox("Show_histogram", showHistogram);
+    settings = Settings.load();
+    gd.addChoice("Foci", options, settings.input);
+    gd.addSlider("Radius", 5, 50, settings.radius);
+    gd.addNumericField("Min_size", settings.minSize, 0);
+    gd.addNumericField("Max_size", settings.maxSize, 0);
+    gd.addCheckbox("Eight_connected", settings.eightConnected);
+    gd.addCheckbox("Remove_small_objects", settings.removeSmallObjects);
+    gd.addCheckbox("Show_objects", settings.showObjects);
+    gd.addCheckbox("Show_foci", settings.showFoci);
+    gd.addCheckbox("Show_distances", settings.showDistances);
+    gd.addCheckbox("Show_histogram", settings.showHistogram);
 
     gd.showDialog();
     if (gd.wasCanceled()) {
       return false;
     }
 
-    input = gd.getNextChoice();
-    radius = Math.abs(gd.getNextNumber());
-    minSize = Math.abs((int) gd.getNextNumber());
-    maxSize = Math.abs((int) gd.getNextNumber());
-    eightConnected = gd.getNextBoolean();
-    removeSmallObjects = gd.getNextBoolean();
-    showObjects = gd.getNextBoolean();
-    showFoci = gd.getNextBoolean();
-    showDistances = gd.getNextBoolean();
-    showHistogram = gd.getNextBoolean();
+    settings.input = gd.getNextChoice();
+    settings.radius = Math.abs(gd.getNextNumber());
+    settings.minSize = Math.abs((int) gd.getNextNumber());
+    settings.maxSize = Math.abs((int) gd.getNextNumber());
+    settings.eightConnected = gd.getNextBoolean();
+    settings.removeSmallObjects = gd.getNextBoolean();
+    settings.showObjects = gd.getNextBoolean();
+    settings.showFoci = gd.getNextBoolean();
+    settings.showDistances = gd.getNextBoolean();
+    settings.showHistogram = gd.getNextBoolean();
+    settings.save();
 
     // Load objects
-    results = (input.equalsIgnoreCase("ROI")) ? roiResults : findFociResults;
+    results = (settings.input.equalsIgnoreCase("ROI")) ? roiResults : findFociResults;
     if (results == null) {
       IJ.error(TITLE, "No foci could be loaded");
       return false;
@@ -383,85 +447,94 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     return true;
   }
 
+  @Nullable
   private static ArrayList<int[]> getFindFociResults() {
     final List<FindFociResult> lastResults = FindFoci_PlugIn.getLastResults();
     if (lastResults == null) {
       return null;
     }
-    final ArrayList<int[]> results = new ArrayList<>(lastResults.size());
+    final ArrayList<int[]> list = new ArrayList<>(lastResults.size());
     for (final FindFociResult result : lastResults) {
-      results.add(new int[] {result.x, result.y});
+      list.add(new int[] {result.x, result.y});
     }
-    return results;
+    return list;
   }
 
+  @Nullable
   private ArrayList<int[]> getRoiResults() {
     final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(imp.getRoi());
     if (points.length == 0) {
       return null;
     }
-    final ArrayList<int[]> results = new ArrayList<>(points.length);
+    final ArrayList<int[]> list = new ArrayList<>(points.length);
     for (final AssignedPoint point : points) {
-      results.add(new int[] {point.x, point.y});
+      list.add(new int[] {point.x, point.y});
     }
-    return results;
+    return list;
   }
 
-  private static void createDistanceGrid(double radius) {
+  private static ArrayList<Search[]> createDistanceGrid(double radius) {
     final int n = (int) Math.ceil(radius);
     final int newSize = 2 * n + 1;
-    if (size >= newSize) {
-      // return;
-    }
-    size = newSize;
-    search = new ArrayList<>();
-    final Search[] s = new Search[size * size];
 
-    final double[] tmp = new double[newSize];
-    for (int y = -n, i = 0; y <= n; y++, i++) {
-      tmp[i] = (double) y * y;
-    }
-
-    for (int y = -n, i = 0, index = 0; y <= n; y++, i++) {
-      final double y2 = tmp[i];
-      for (int x = -n, ii = 0; x <= n; x++, ii++) {
-        s[index++] = new Search(x, y, y2 + tmp[ii]);
+    // Ensure thread-safe state
+    synchronized (lock) {
+      if (size >= newSize) {
+        return distanceGrid;
       }
-    }
 
-    Arrays.sort(s, (s1, s2) -> Double.compare(s1.d2, s2.d2));
+      // Create a new grid
+      size = newSize;
+      distanceGrid = new ArrayList<>();
+      final Search[] s = new Search[size * size];
 
-    // Store each increasing search distance as a set
-    // Ignore first record as it is d2==0
-    double last = -1;
-    int begin = 0;
-    int end = -1;
-    for (int i = 1; i < s.length; i++) {
-      if (last != s[i].d2) {
-        if (end != -1) {
-          final int length = end - begin + 1;
-          final Search[] next = new Search[length];
-          System.arraycopy(s, begin, next, 0, length);
-          search.add(next);
+      final double[] tmp = new double[newSize];
+      for (int y = -n, i = 0; y <= n; y++, i++) {
+        tmp[i] = (double) y * y;
+      }
+
+      for (int y = -n, i = 0, index = 0; y <= n; y++, i++) {
+        final double y2 = tmp[i];
+        for (int x = -n, ii = 0; x <= n; x++, ii++) {
+          s[index++] = new Search(x, y, y2 + tmp[ii]);
         }
-        begin = i;
       }
-      end = i;
-      last = s[i].d2;
-    }
 
-    if (end != -1) {
-      final int length = end - begin + 1;
-      final Search[] next = new Search[length];
-      System.arraycopy(s, begin, next, 0, length);
-      search.add(next);
+      Arrays.sort(s, (s1, s2) -> Double.compare(s1.d2, s2.d2));
+
+      // Store each increasing search distance as a set
+      // Ignore first record as it is d2==0
+      double last = -1;
+      int begin = 0;
+      int end = -1;
+      for (int i = 1; i < s.length; i++) {
+        if (last != s[i].d2) {
+          if (end != -1) {
+            final int length = end - begin + 1;
+            final Search[] next = new Search[length];
+            System.arraycopy(s, begin, next, 0, length);
+            distanceGrid.add(next);
+          }
+          begin = i;
+        }
+        end = i;
+        last = s[i].d2;
+      }
+
+      if (end != -1) {
+        final int length = end - begin + 1;
+        final Search[] next = new Search[length];
+        System.arraycopy(s, begin, next, 0, length);
+        distanceGrid.add(next);
+      }
+      return distanceGrid;
     }
   }
 
-  private static void createResultsTables() {
+  private void createResultsTables() {
     resultsWindow =
-        createWindow(resultsWindow, "Results", "Image\tObject\tcx\tcy\tSize\tValid\tCount");
-    summaryWindow = createWindow(summaryWindow, "Summary",
+        createWindow(resultsWindowRef, "Results", "Image\tObject\tcx\tcy\tSize\tValid\tCount");
+    summaryWindow = createWindow(summaryWindowRef, "Summary",
         "Image\tnObjects\tValid\tnFoci\tIn\tIgnored\tOut\tMin\tMax\tAv\tMed\tSD");
     final Point p1 = resultsWindow.getLocation();
     final Point p2 = summaryWindow.getLocation();
@@ -469,9 +542,9 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
       p2.y += resultsWindow.getHeight();
       summaryWindow.setLocation(p2);
     }
-    if (showDistances) {
-      distancesWindow =
-          createWindow(distancesWindow, "Distances", "Image\tFoci\tx\ty\tObject\tValid\tDistance");
+    if (settings.showDistances) {
+      distancesWindow = createWindow(distancesWindowRef, "Distances",
+          "Image\tFoci\tx\ty\tObject\tValid\tDistance");
       final Point p3 = distancesWindow.getLocation();
       if (p1.x == p3.x && p1.y == p3.y) {
         p3.x += 50;
@@ -481,15 +554,18 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     }
   }
 
-  private static TextWindow createWindow(TextWindow window, String title, String header) {
+  private static TextWindow createWindow(AtomicReference<TextWindow> windowRef, String title,
+      String header) {
+    TextWindow window = windowRef.get();
     if (window == null || !window.isVisible()) {
       window = new TextWindow(TITLE + " " + title, header, "", 800, 400);
+      windowRef.set(window);
     }
     return window;
   }
 
   private void showMask(ObjectAnalyzer oa, int[] found, int[] idMap) {
-    if (!showObjects) {
+    if (!settings.showObjects) {
       return;
     }
 
@@ -505,8 +581,8 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     }
 
     ip.setMinAndMax(0, oa.getMaxObject());
-    final ImagePlus imp = ImageJUtils.display(TITLE + " Objects", ip);
-    if (showFoci && found.length > 0) {
+    final ImagePlus objectImp = ImageJUtils.display(TITLE + " Objects", ip);
+    if (settings.showFoci && found.length > 0) {
       final int[] xin = new int[found.length];
       final int[] yin = new int[found.length];
       final int[] xremove = new int[found.length];
@@ -535,7 +611,7 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
       addRoi(xin, yin, in, o, Color.GREEN);
       addRoi(xremove, yremove, remove, o, Color.YELLOW);
       addRoi(xout, yout, out, o, Color.RED);
-      imp.setOverlay(o);
+      objectImp.setOverlay(o);
     }
   }
 

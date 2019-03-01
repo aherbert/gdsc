@@ -24,6 +24,8 @@
 
 package uk.ac.sussex.gdsc.ij.plugin;
 
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
+
 import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
@@ -79,7 +81,7 @@ public class ZProjectorCopy implements PlugIn {
   /** Constant for float images. */
   protected static final int FLOAT_TYPE = 2;
 
-  private static final String lutMessage = "Stacks with inverter LUTs may not project correctly.\n"
+  private static final String LUT_MESSAGE = "Stacks with inverter LUTs may not project correctly.\n"
       + "To create a standard LUT, invert the stack (Edit/Invert)\n"
       + "and invert the LUT (Image/Lookup Tables/Invert LUT).";
 
@@ -192,7 +194,7 @@ public class ZProjectorCopy implements PlugIn {
 
     // Check for inverting LUT.
     if (imp.getProcessor().isInvertedLut()
-        && !IJ.showMessageWithCancel("ZProjection", lutMessage)) {
+        && !IJ.showMessageWithCancel("ZProjection", LUT_MESSAGE)) {
       return;
     }
 
@@ -289,23 +291,14 @@ public class ZProjectorCopy implements PlugIn {
       final ImageProcessor r = red2.getProcessor();
       final ImageProcessor g = green2.getProcessor();
       final ImageProcessor b = blue2.getProcessor();
-      double max = 0;
-      final double rmax = r.getStatistics().max;
-      if (rmax > max) {
-        max = rmax;
+      final double max =
+          MathUtils.max(0, r.getStatistics().max, g.getStatistics().max, b.getStatistics().max);
+      if (max != 0) {
+        final double scale = 255 / max;
+        r.multiply(scale);
+        g.multiply(scale);
+        b.multiply(scale);
       }
-      final double gmax = g.getStatistics().max;
-      if (gmax > max) {
-        max = gmax;
-      }
-      final double bmax = b.getStatistics().max;
-      if (bmax > max) {
-        max = bmax;
-      }
-      final double scale = 255 / max;
-      r.multiply(scale);
-      g.multiply(scale);
-      b.multiply(scale);
       red2.setProcessor(r.convertToByte(false));
       green2.setProcessor(g.convertToByte(false));
       blue2.setProcessor(b.convertToByte(false));

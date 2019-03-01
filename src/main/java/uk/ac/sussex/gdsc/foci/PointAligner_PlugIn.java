@@ -25,6 +25,8 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
@@ -42,7 +44,6 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.gui.Roi;
 import ij.plugin.PlugIn;
 import ij.plugin.ZProjector;
@@ -61,6 +62,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Analyses the image using the FindFoci algorithm to identify and assign pixels to maxima. Realigns
@@ -69,27 +73,87 @@ import java.util.List;
  */
 public class PointAligner_PlugIn implements PlugIn {
   private static final String TITLE = "Point Aligner";
-  private static TextWindow resultsWindow;
+  private static AtomicReference<TextWindow> resultsWindowRef = new AtomicReference<>();
 
-  private static String resultTitle = "-";
-  private static String maskImage = "";
-  private static String[] limitMethods =
-      new String[] {"None", "Q1 - f * IQR", "Mean - f * SD", "nth Percentile", "% Missed < f"};
-  private static int limitMethod = 4;
-  private static double factor = 15;
-  private static boolean logAlignments = true;
-  private static boolean showMoved;
-  private static boolean updateRoi;
-  private static boolean showOverlay = true;
-  private static boolean updateOverlay = true;
-  private static boolean showUnaligned;
-  private static int unalignedBorder = 10;
-  private static String resultsDirectory = "";
-
-  private static boolean writeHeader = true;
+  private static AtomicBoolean writeHeader = new AtomicBoolean(true);
 
   private ImagePlus imp;
   private boolean saveResults;
+
+  /** The plugin settings. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    static final String[] limitMethods =
+        new String[] {"None", "Q1 - f * IQR", "Mean - f * SD", "nth Percentile", "% Missed < f"};
+
+    String resultTitle = "-";
+    String maskImage = "";
+    int limitMethod = 4;
+    double factor = 15;
+    boolean logAlignments = true;
+    boolean showMoved;
+    boolean updateRoi;
+    boolean showOverlay = true;
+    boolean updateOverlay = true;
+    boolean showUnaligned;
+    int unalignedBorder = 10;
+    String resultsDirectory = "";
+
+    Settings() {
+      resultTitle = "-";
+      maskImage = "";
+      limitMethod = 4;
+      factor = 15;
+      logAlignments = true;
+      showOverlay = true;
+      updateOverlay = true;
+      unalignedBorder = 10;
+      resultsDirectory = "";
+    }
+
+    Settings(Settings source) {
+      resultTitle = source.resultTitle;
+      maskImage = source.maskImage;
+      limitMethod = source.limitMethod;
+      factor = source.factor;
+      logAlignments = source.logAlignments;
+      showMoved = source.showMoved;
+      updateRoi = source.updateRoi;
+      showOverlay = source.showOverlay;
+      updateOverlay = source.updateOverlay;
+      showUnaligned = source.showUnaligned;
+      unalignedBorder = source.unalignedBorder;
+      resultsDirectory = source.resultsDirectory;
+    }
+
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -152,24 +216,25 @@ public class PointAligner_PlugIn implements PlugIn {
     alignPoints(points, results);
   }
 
-  private static boolean showDialog(PointAligner_PlugIn plugin) {
+  private boolean showDialog(PointAligner_PlugIn plugin) {
     final List<String> maskList = FindFoci_PlugIn.buildMaskList(plugin.imp);
 
-    final GenericDialog gd = new GenericDialog(TITLE);
+    final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
+    settings = Settings.load();
     gd.addMessage("Realigns the marked PointROI with the appropriate peak");
-    gd.addStringField("Title", resultTitle);
-    gd.addChoice("Mask", maskList.toArray(new String[0]), maskImage);
-    gd.addChoice("Limit_method", limitMethods, limitMethods[limitMethod]);
-    gd.addNumericField("Factor", factor, 2);
-    gd.addCheckbox("Log_alignments", logAlignments);
-    gd.addCheckbox("Update_ROI", updateRoi);
-    gd.addCheckbox("Show_moved", showMoved);
-    gd.addCheckbox("Show_overlay", showOverlay);
-    gd.addCheckbox("Update_overlay", updateOverlay);
-    gd.addCheckbox("Show_unaligned", showUnaligned);
-    gd.addNumericField("Unaligned_border", unalignedBorder, 0);
-    gd.addStringField("Results_directory", resultsDirectory, 30);
+    gd.addStringField("Title", settings.resultTitle);
+    gd.addChoice("Mask", maskList.toArray(new String[0]), settings.maskImage);
+    gd.addChoice("Limit_method", Settings.limitMethods, settings.limitMethod);
+    gd.addNumericField("Factor", settings.factor, 2);
+    gd.addCheckbox("Log_alignments", settings.logAlignments);
+    gd.addCheckbox("Update_ROI", settings.updateRoi);
+    gd.addCheckbox("Show_moved", settings.showMoved);
+    gd.addCheckbox("Show_overlay", settings.showOverlay);
+    gd.addCheckbox("Update_overlay", settings.updateOverlay);
+    gd.addCheckbox("Show_unaligned", settings.showUnaligned);
+    gd.addNumericField("Unaligned_border", settings.unalignedBorder, 0);
+    gd.addStringField("Results_directory", settings.resultsDirectory, 30);
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI);
 
     gd.showDialog();
@@ -178,25 +243,26 @@ public class PointAligner_PlugIn implements PlugIn {
       return false;
     }
 
-    resultTitle = gd.getNextString();
-    maskImage = gd.getNextChoice();
-    limitMethod = gd.getNextChoiceIndex();
-    factor = gd.getNextNumber();
-    logAlignments = gd.getNextBoolean();
-    updateRoi = gd.getNextBoolean();
-    showMoved = gd.getNextBoolean();
-    showOverlay = gd.getNextBoolean();
-    updateOverlay = gd.getNextBoolean();
-    showUnaligned = gd.getNextBoolean();
-    unalignedBorder = (int) gd.getNextNumber();
-    resultsDirectory = gd.getNextString();
+    settings.resultTitle = gd.getNextString();
+    settings.maskImage = gd.getNextChoice();
+    settings.limitMethod = gd.getNextChoiceIndex();
+    settings.factor = gd.getNextNumber();
+    settings.logAlignments = gd.getNextBoolean();
+    settings.updateRoi = gd.getNextBoolean();
+    settings.showMoved = gd.getNextBoolean();
+    settings.showOverlay = gd.getNextBoolean();
+    settings.updateOverlay = gd.getNextBoolean();
+    settings.showUnaligned = gd.getNextBoolean();
+    settings.unalignedBorder = (int) gd.getNextNumber();
+    settings.resultsDirectory = gd.getNextString();
+    settings.save();
 
-    if (TextUtils.isNotEmpty(resultsDirectory)) {
+    if (TextUtils.isNotEmpty(settings.resultsDirectory)) {
       try {
-        Files.createDirectories(Paths.get(resultsDirectory));
+        Files.createDirectories(Paths.get(settings.resultsDirectory));
         plugin.saveResults = true;
       } catch (final Exception ex) {
-        IJ.log("Failed to create directory: " + resultsDirectory + ". " + ex.getMessage());
+        IJ.log("Failed to create directory: " + settings.resultsDirectory + ". " + ex.getMessage());
       }
     } else {
       plugin.saveResults = false;
@@ -230,7 +296,7 @@ public class PointAligner_PlugIn implements PlugIn {
   }
 
   private void alignPoints(AssignedPoint[] points, FindFociResults results) {
-    if (showOverlay || logAlignments) {
+    if (settings.showOverlay || settings.logAlignments) {
       IJ.log(String.format("%s : %s", TITLE, imp.getTitle()));
     }
 
@@ -351,7 +417,7 @@ public class PointAligner_PlugIn implements PlugIn {
         }
 
         if (result.maxValue < thresholdHeight) {
-          if (logAlignments) {
+          if (settings.logAlignments) {
             log("Point [%d] %s @ %s ~> %s @ %s (%s) below height threshold (< %s)", pointId + 1,
                 MathUtils.rounded(pointHeight[pointId]), getCoords(is3d, x, y, z),
                 MathUtils.rounded(result.maxValue), getCoords(is3d, newX, newY, newZ),
@@ -369,22 +435,22 @@ public class PointAligner_PlugIn implements PlugIn {
           if (assigned[maximaId] == pointId) {
             // This is the highest point assigned to the maxima.
             // Check if it is being moved.
-            if (logAlignments) {
+            if (settings.logAlignments) {
               log("Point [%d] %s @ %s => %s @ %s (%s)", pointId + 1,
                   MathUtils.rounded(pointHeight[pointId]), getCoords(is3d, x, y, z),
                   MathUtils.rounded(result.maxValue), getCoords(is3d, newX, newY, newZ),
                   IJ.d2s(distance, 2));
             }
             newPoint = new AssignedPoint(newX, newY, newZ, point.getId());
-            if (showMoved && distance > 0) {
-              moved.add((updateOverlay) ? newPoint : point);
+            if (settings.showMoved && distance > 0) {
+              moved.add((settings.updateOverlay) ? newPoint : point);
             } else {
-              ok.add((updateOverlay) ? newPoint : point);
+              ok.add((settings.updateOverlay) ? newPoint : point);
             }
             averageMovedDistance += distance;
           } else {
             // This point is lower than another assigned to the maxima
-            if (logAlignments) {
+            if (settings.logAlignments) {
               log("Point [%d] %s @ %s conflicts for assigned point [%d]", pointId + 1,
                   MathUtils.rounded(pointHeight[pointId]), getCoords(is3d, x, y, z),
                   assigned[maximaId] + 1);
@@ -396,7 +462,7 @@ public class PointAligner_PlugIn implements PlugIn {
           }
         }
       } else {
-        if (logAlignments) {
+        if (settings.logAlignments) {
           log("Point [%d] %s @ %s cannot be aligned", pointId + 1,
               MathUtils.rounded(pointHeight[pointId]), getCoords(is3d, x, y, z));
         }
@@ -410,7 +476,7 @@ public class PointAligner_PlugIn implements PlugIn {
       }
     }
 
-    if (logAlignments) {
+    if (settings.logAlignments) {
       log("Minimum picked value = " + MathUtils.rounded(minHeight));
       log("Threshold = " + MathUtils.rounded(thresholdHeight));
       log("Minimum assigned peak height = " + MathUtils.rounded(minAssignedHeight));
@@ -427,9 +493,8 @@ public class PointAligner_PlugIn implements PlugIn {
 
     showOverlay(ok, moved, conflict, noAlign, missed);
 
-    createResultsWindow();
-    addResult(minHeight, thresholdHeight, minAssignedHeight, ok, moved, averageMovedDistance,
-        conflict, noAlign, missed);
+    addResult(createResultsWindow(), minHeight, thresholdHeight, minAssignedHeight, ok, moved,
+        averageMovedDistance, conflict, noAlign, missed);
   }
 
   private static double distance2(int x, int y, int z, int x2, int y2, int z2) {
@@ -465,7 +530,7 @@ public class PointAligner_PlugIn implements PlugIn {
     }
   }
 
-  private static LinkedList<AssignedPoint> findMissedPoints(List<FindFociResult> resultsArray,
+  private LinkedList<AssignedPoint> findMissedPoints(List<FindFociResult> resultsArray,
       int[] assigned, float minAssignedHeight) {
     // List maxima above the minimum height that have not been picked
     final ImageStack maskStack = getMaskStack();
@@ -489,8 +554,8 @@ public class PointAligner_PlugIn implements PlugIn {
     return missed;
   }
 
-  private static LinkedList<Float> findMissedHeights(List<FindFociResult> resultsArray,
-      int[] assigned, double heightThreshold) {
+  private LinkedList<Float> findMissedHeights(List<FindFociResult> resultsArray, int[] assigned,
+      double heightThreshold) {
     // List maxima above the minimum height that have not been picked
     final ImageStack maskStack = getMaskStack();
     final LinkedList<Float> missed = new LinkedList<>();
@@ -521,7 +586,7 @@ public class PointAligner_PlugIn implements PlugIn {
    * @param resultsArray the results array
    * @return The height below which any point is considered an error
    */
-  private static float getThresholdHeight(AssignedPoint[] points, int[] assigned,
+  private float getThresholdHeight(AssignedPoint[] points, int[] assigned,
       List<FindFociResult> resultsArray) {
     final TFloatArrayList heightList = new TFloatArrayList(points.length);
     for (int maximaId = 0; maximaId < assigned.length; maximaId++) {
@@ -551,16 +616,16 @@ public class PointAligner_PlugIn implements PlugIn {
     final float[] heights = heightList.toArray();
     double heightThreshold = heights[0];
 
-    switch (limitMethod) {
+    switch (settings.limitMethod) {
       case 1:
         // Factor of inter-quartile range
         final float q1 = getQuartileBoundary(heights, 0.25);
         final float q2 = getQuartileBoundary(heights, 0.5);
 
-        heightThreshold = q1 - factor * (q2 - q1);
-        if (logAlignments) {
-          log("Limiting peaks %s: %s - %s * %s = %s", limitMethods[limitMethod],
-              MathUtils.rounded(q1), MathUtils.rounded(factor), MathUtils.rounded(q2 - q1),
+        heightThreshold = q1 - settings.factor * (q2 - q1);
+        if (settings.logAlignments) {
+          log("Limiting peaks %s: %s - %s * %s = %s", Settings.limitMethods[settings.limitMethod],
+              MathUtils.rounded(q1), MathUtils.rounded(settings.factor), MathUtils.rounded(q2 - q1),
               MathUtils.rounded(heightThreshold));
         }
 
@@ -569,22 +634,22 @@ public class PointAligner_PlugIn implements PlugIn {
       case 2:
         // n * Std.Dev. below the mean
         final double[] stats = getStatistics(heights);
-        heightThreshold = stats[0] - factor * stats[1];
+        heightThreshold = stats[0] - settings.factor * stats[1];
 
-        if (logAlignments) {
-          log("Limiting peaks %s: %s - %s * %s = %s", limitMethods[limitMethod],
-              MathUtils.rounded(stats[0]), MathUtils.rounded(factor), MathUtils.rounded(stats[1]),
-              MathUtils.rounded(heightThreshold));
+        if (settings.logAlignments) {
+          log("Limiting peaks %s: %s - %s * %s = %s", Settings.limitMethods[settings.limitMethod],
+              MathUtils.rounded(stats[0]), MathUtils.rounded(settings.factor),
+              MathUtils.rounded(stats[1]), MathUtils.rounded(heightThreshold));
         }
 
         break;
 
       case 3:
         // nth Percentile
-        heightThreshold = getQuartileBoundary(heights, 0.01 * factor);
-        if (logAlignments) {
-          log("Limiting peaks %s: %sth = %s", limitMethods[limitMethod], MathUtils.rounded(factor),
-              MathUtils.rounded(heightThreshold));
+        heightThreshold = getQuartileBoundary(heights, 0.01 * settings.factor);
+        if (settings.logAlignments) {
+          log("Limiting peaks %s: %sth = %s", Settings.limitMethods[settings.limitMethod],
+              MathUtils.rounded(settings.factor), MathUtils.rounded(heightThreshold));
         }
 
         break;
@@ -594,7 +659,7 @@ public class PointAligner_PlugIn implements PlugIn {
         // i.e. the number of potential maxima is a fraction of the number of assigned maxima.
         final List<Float> missedHeights =
             findMissedHeights(resultsArray, assigned, heightThreshold);
-        final double fraction = factor / 100;
+        final double fraction = settings.factor / 100;
         final int size = heights.length;
         for (int pointId = 0; pointId < size; pointId++) {
           heightThreshold = heights[pointId];
@@ -613,9 +678,9 @@ public class PointAligner_PlugIn implements PlugIn {
               + "number of missed peaks");
         }
 
-        if (logAlignments) {
-          log("Limiting peaks %s: %s %% = %s", limitMethods[limitMethod], MathUtils.rounded(factor),
-              MathUtils.rounded(heightThreshold));
+        if (settings.logAlignments) {
+          log("Limiting peaks %s: %s %% = %s", Settings.limitMethods[settings.limitMethod],
+              MathUtils.rounded(settings.factor), MathUtils.rounded(heightThreshold));
         }
         break;
 
@@ -708,8 +773,8 @@ public class PointAligner_PlugIn implements PlugIn {
     return new double[] {av, stdDev};
   }
 
-  private static ImageStack getMaskStack() {
-    final ImagePlus mask = WindowManager.getImage(maskImage);
+  private ImageStack getMaskStack() {
+    final ImagePlus mask = WindowManager.getImage(settings.maskImage);
     if (mask != null) {
       return mask.getStack();
     }
@@ -723,25 +788,25 @@ public class PointAligner_PlugIn implements PlugIn {
     return String.format("%d,%d", x, y);
   }
 
-  private static void log(String format, Object... args) {
-    if (logAlignments) {
+  private void log(String format, Object... args) {
+    if (settings.logAlignments) {
       IJ.log(String.format(format, args));
     }
   }
 
   private void extractPoint(ImageStack impStack, String type, int id, int x, int y, int z, int newX,
       int newY, int newZ) {
-    if (unalignedBorder <= 0) {
+    if (settings.unalignedBorder <= 0) {
       return;
     }
-    if (showUnaligned || saveResults) {
+    if (settings.showUnaligned || saveResults) {
       final int xx = impStack.getWidth() - 1;
       final int yy = impStack.getHeight() - 1;
 
-      final int minX = Math.min(xx, Math.max(0, Math.min(x, newX) - unalignedBorder));
-      final int minY = Math.min(yy, Math.max(0, Math.min(y, newY) - unalignedBorder));
-      final int maxX = Math.min(xx, Math.max(0, Math.max(x, newX) + unalignedBorder));
-      final int maxY = Math.min(yy, Math.max(0, Math.max(y, newY) + unalignedBorder));
+      final int minX = Math.min(xx, Math.max(0, Math.min(x, newX) - settings.unalignedBorder));
+      final int minY = Math.min(yy, Math.max(0, Math.min(y, newY) - settings.unalignedBorder));
+      final int maxX = Math.min(xx, Math.max(0, Math.max(x, newX) + settings.unalignedBorder));
+      final int maxY = Math.min(yy, Math.max(0, Math.max(y, newY) + settings.unalignedBorder));
       final int w = maxX - minX + 1;
       final int h = maxY - minY + 1;
       final ImageStack newStack = new ImageStack(w, h);
@@ -771,17 +836,17 @@ public class PointAligner_PlugIn implements PlugIn {
       pointImp.updateAndDraw();
 
       if (saveResults) {
-        IJ.save(pointImp, resultsDirectory + File.separatorChar + title + ".tif");
+        IJ.save(pointImp, settings.resultsDirectory + File.separatorChar + title + ".tif");
       }
 
-      if (showUnaligned) {
+      if (settings.showUnaligned) {
         pointImp.show();
       }
     }
   }
 
   private void updateRoi(ArrayList<? extends BasePoint> newRoiPoints) {
-    if (updateRoi) {
+    if (settings.updateRoi) {
       imp.setRoi(AssignedPointUtils.createRoi(newRoiPoints));
     }
   }
@@ -790,10 +855,10 @@ public class PointAligner_PlugIn implements PlugIn {
       LinkedList<AssignedPoint> conflict, LinkedList<AssignedPoint> noAlign,
       LinkedList<AssignedPoint> missed) {
     // Add overlap
-    if (showOverlay) {
+    if (settings.showOverlay) {
       IJ.log("Overlay key:");
       IJ.log("  OK = Green");
-      if (showMoved) {
+      if (settings.showMoved) {
         IJ.log("  Moved = Yellow");
       }
       IJ.log("  Conflict = Red");
@@ -812,15 +877,15 @@ public class PointAligner_PlugIn implements PlugIn {
     }
   }
 
-  private static void createResultsWindow() {
+  private static Consumer<String> createResultsWindow() {
     if (java.awt.GraphicsEnvironment.isHeadless()) {
-      if (writeHeader) {
-        writeHeader = false;
+      if (writeHeader.compareAndSet(true, false)) {
         IJ.log(createResultsHeader());
       }
-    } else if (resultsWindow == null || !resultsWindow.isShowing()) {
-      resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300);
+      return IJ::log;
     }
+    return ImageJUtils.refresh(resultsWindowRef,
+        () -> new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300))::append;
   }
 
   private static String createResultsHeader() {
@@ -849,15 +914,15 @@ public class PointAligner_PlugIn implements PlugIn {
     return sb.toString();
   }
 
-  private void addResult(float minHeight, float thresholdHeight, float minAssignedHeight,
-      LinkedList<AssignedPoint> ok, LinkedList<AssignedPoint> moved, double averageMovedDistance,
-      LinkedList<AssignedPoint> conflict, LinkedList<AssignedPoint> noAlign,
-      LinkedList<AssignedPoint> missed) {
+  private void addResult(Consumer<String> output, float minHeight, float thresholdHeight,
+      float minAssignedHeight, LinkedList<AssignedPoint> ok, LinkedList<AssignedPoint> moved,
+      double averageMovedDistance, LinkedList<AssignedPoint> conflict,
+      LinkedList<AssignedPoint> noAlign, LinkedList<AssignedPoint> missed) {
     final StringBuilder sb = new StringBuilder();
-    sb.append(resultTitle).append('\t');
+    sb.append(settings.resultTitle).append('\t');
     sb.append(imp.getTitle()).append('\t');
-    sb.append(limitMethods[limitMethod]).append('\t');
-    sb.append(factor).append('\t');
+    sb.append(Settings.limitMethods[settings.limitMethod]).append('\t');
+    sb.append(settings.factor).append('\t');
     sb.append(MathUtils.rounded(minHeight)).append('\t');
     sb.append(MathUtils.rounded(thresholdHeight)).append('\t');
     sb.append(MathUtils.rounded(minAssignedHeight)).append('\t');
@@ -882,11 +947,7 @@ public class PointAligner_PlugIn implements PlugIn {
     sb.append(IJ.d2s(match.getJaccard(), 4)).append('\t');
     sb.append(IJ.d2s(match.getFScore(1), 4));
 
-    if (java.awt.GraphicsEnvironment.isHeadless()) {
-      IJ.log(sb.toString());
-    } else {
-      resultsWindow.append(sb.toString());
-    }
+    output.accept(sb.toString());
   }
 
   private static class PointHeightComparator implements Comparator<AssignedPoint>, Serializable {

@@ -61,7 +61,7 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
   private static final int FLAGS =
       DOES_8G + DOES_16 + NO_CHANGES + DOES_STACKS + PARALLELIZE_STACKS + FINAL_PROCESSING;
 
-  private static TextWindow results;
+  private static AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
 
   private int commonIndex;
   private ImagePlus imp;
@@ -165,12 +165,10 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     final String master = stack.getSliceLabel(1);
     // Find the first index where the labels are different
     int index = 0;
-    OUTER: while (index < master.length()) {
-      final char c = master.charAt(index);
-      for (int i = 2; i <= stack.getSize(); i++) {
-        if (c != stack.getSliceLabel(i).charAt(index)) {
-          break OUTER;
-        }
+    while (index < master.length()) {
+      final char ch = master.charAt(index);
+      if (!commonSliceLabelCharacter(stack, index, ch)) {
+        break;
       }
       index++;
     }
@@ -181,6 +179,15 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     commonIndex = index;
 
     return FLAGS;
+  }
+
+  private static boolean commonSliceLabelCharacter(ImageStack stack, int index, char ch) {
+    for (int i = 2; i <= stack.getSize(); i++) {
+      if (ch != stack.getSliceLabel(i).charAt(index)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /** {@inheritDoc} */
@@ -366,21 +373,10 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     plot.addPoints(exposures, means, Plot.CIRCLE);
     // Used to determine if the window is new
     final WindowOrganiser wo = new WindowOrganiser();
-    PlotWindow pw = ImageJUtils.display(title, plot, wo);
+    final PlotWindow pw = ImageJUtils.display(title, plot, wo);
 
     // Report results to a table
-    if (results == null || !results.isVisible()) {
-      results = new TextWindow(TITLE + " Summary",
-          "Image\tx\ty\tw\th\tN\tStart\tEnd\tE1\tE2\tSS\tIntercept\tGradient", "", 800, 300);
-      results.setVisible(true);
-      // Locate result window under the plot window if the plot window was new
-      if (wo.isNotEmpty()) {
-        final Point p = results.getLocation();
-        p.x = pw.getX();
-        p.y = pw.getY() + pw.getHeight();
-        results.setLocation(p);
-      }
-    }
+    final TextWindow results = createResultsWindow(wo, pw);
 
     // Initialise result output
     final StringBuilder sb = new StringBuilder();
@@ -463,6 +459,24 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     }
 
     results.append(sb.toString());
+  }
+
+  private static TextWindow createResultsWindow(final WindowOrganiser wo, PlotWindow pw) {
+    TextWindow results = resultsRef.get();
+    if (results == null || !results.isVisible()) {
+      results = new TextWindow(TITLE + " Summary",
+          "Image\tx\ty\tw\th\tN\tStart\tEnd\tE1\tE2\tSS\tIntercept\tGradient", "", 800, 300);
+      results.setVisible(true);
+      // Locate result window under the plot window if the plot window was new
+      if (wo.isNotEmpty()) {
+        final Point p = results.getLocation();
+        p.x = pw.getX();
+        p.y = pw.getY() + pw.getHeight();
+        results.setLocation(p);
+      }
+      resultsRef.set(results);
+    }
+    return results;
   }
 
   private static void addNullFitResult(StringBuilder sb) {

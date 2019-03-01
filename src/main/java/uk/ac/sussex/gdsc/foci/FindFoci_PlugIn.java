@@ -127,6 +127,9 @@ public class FindFoci_PlugIn implements PlugIn {
   /** The supported ImageJ images as a text output. */
   public static final String SUPPORTED_BIT_DEPTH = "8-bit, 16-bit and 32-bit";
 
+  private static final String MSG_NOT_SUPPORTED =
+      "Only " + SUPPORTED_BIT_DEPTH + " images are supported";
+
   /** The option name for the mask. */
   public static final String OPTION_MASK = "Mask";
   /** The option name for the background method. */
@@ -207,7 +210,7 @@ public class FindFoci_PlugIn implements PlugIn {
    */
   static final int IS_GAUSSIAN_FIT_ENABLED;
 
-  /** The new line string from System.getProperty("line.separator"). */
+  /** The new line string from System.lineSeparator(). */
   private static final String NEW_LINE = System.lineSeparator();
 
   /**
@@ -487,7 +490,7 @@ public class FindFoci_PlugIn implements PlugIn {
 
     void sortBatchResultsFile() {
       final Path path = Paths.get(batchOutputDirectory, "all.xls");
-      ArrayList<BatchResult> results = new ArrayList<>();
+      final ArrayList<BatchResult> results = new ArrayList<>();
       String header = null;
       try (final BufferedReader input = Files.newBufferedReader(path)) {
         header = input.readLine();
@@ -904,7 +907,7 @@ public class FindFoci_PlugIn implements PlugIn {
     }
 
     if (!isSupported(imp.getBitDepth())) {
-      IJ.error(TITLE, "Only " + SUPPORTED_BIT_DEPTH + " images are supported");
+      IJ.error(TITLE, MSG_NOT_SUPPORTED);
       return;
     }
 
@@ -1097,7 +1100,7 @@ public class FindFoci_PlugIn implements PlugIn {
     lastResultsArray.set(null);
 
     if (!isSupported(imp.getBitDepth())) {
-      IJ.error(TITLE, "Only " + SUPPORTED_BIT_DEPTH + " images are supported");
+      IJ.error(TITLE, MSG_NOT_SUPPORTED);
       return;
     }
     if (EnumSet.of(CentreMethod.GAUSSIAN_ORIGINAL, CentreMethod.GAUSSIAN_SEARCH)
@@ -1387,7 +1390,7 @@ public class FindFoci_PlugIn implements PlugIn {
           mask, maskDimension, processorOptions, options);
 
       return expId;
-    } catch (IOException ex) {
+    } catch (final IOException ex) {
       logError(ex.getMessage());
     }
     return "";
@@ -1551,8 +1554,7 @@ public class FindFoci_PlugIn implements PlugIn {
    * @throws IllegalArgumentException If the image bit-depth is not supported
    */
   public FindFociBaseProcessor createFindFociProcessor(ImagePlus imp) {
-    ValidationUtils.checkArgument(isSupported(imp.getBitDepth()),
-        "Only " + SUPPORTED_BIT_DEPTH + " images are supported");
+    ValidationUtils.checkArgument(isSupported(imp.getBitDepth()), MSG_NOT_SUPPORTED);
     return createFindFociProcessor(imp, GlobalSettings.INSTANCE.searchCapacity.get());
   }
 
@@ -1719,11 +1721,8 @@ public class FindFoci_PlugIn implements PlugIn {
    * @return the buffered text window
    */
   private static BufferedTextWindow createResultsWindow() {
-    TextWindow window = resultsWindow.get();
-    if (window == null || !window.isShowing()) {
-      window = new TextWindow(TITLE + " Results", createResultsHeader(""), "", 900, 300);
-      resultsWindow.set(window);
-    }
+    final TextWindow window = ImageJUtils.refresh(resultsWindow,
+        () -> new TextWindow(TITLE + " Results", createResultsHeader(""), "", 900, 300));
     final BufferedTextWindow bufferedTextWindow = new BufferedTextWindow(window);
     // Only flush once
     bufferedTextWindow.setIncrement(0);
@@ -2113,7 +2112,8 @@ public class FindFoci_PlugIn implements PlugIn {
    * @param directory the directory
    * @return the batch images
    */
-  public static @Nullable String[] getBatchImages(String directory) {
+  @Nullable
+  public static String[] getBatchImages(String directory) {
     if (directory == null) {
       return null;
     }
@@ -2278,7 +2278,7 @@ public class FindFoci_PlugIn implements PlugIn {
       ImagePlus mask, BatchParameters params, int[] imageDimension, int[] maskDimension,
       Logger logger) {
     if (!isSupported(imp.getBitDepth())) {
-      config.error(logger, params, "Only " + SUPPORTED_BIT_DEPTH + " images are supported");
+      config.error(logger, params, MSG_NOT_SUPPORTED);
       return false;
     }
 
@@ -2342,8 +2342,9 @@ public class FindFoci_PlugIn implements PlugIn {
         final String outname = imp.getTitle() + " " + TITLE;
         maxImp = new ImagePlus(outname, stack);
         // Adjust the contrast to show all the maxima
-        final int maxValue = EnumSet.of(MaskMethod.THRESHOLD, MaskMethod.THRESHOLD_ABOVE_SADDLE)
-            .contains(processorOptions.getMaskMethod()) ? 4 : resultsArray.size() + 1;
+        final int maxValue =
+            EnumSet.of(MaskMethod.THRESHOLD, MaskMethod.THRESHOLD_ABOVE_SADDLE).contains(
+                processorOptions.getMaskMethod()) ? 4 : CollectionUtils.getSize(resultsArray) + 1;
         maxImp.setDisplayRange(0, maxValue);
       }
       if (options.isOption(OutputOption.OVERLAY_MASK)) {

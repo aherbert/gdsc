@@ -43,14 +43,12 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -65,8 +63,6 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * Provides additional options for the {@link FindFociView}.
@@ -110,7 +106,8 @@ public class FindFociAdvancedOptions extends JDialog {
       dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       dialog.setVisible(true);
     } catch (final Exception ex) {
-      ex.printStackTrace();
+      Logger.getLogger(FindFociAdvancedOptions.class.getName()).log(Level.SEVERE,
+          "Failed to show the frame", ex);
     }
   }
 
@@ -151,12 +148,8 @@ public class FindFociAdvancedOptions extends JDialog {
       {
         chckbxOverlayMask = new JCheckBox("Overlay mask");
         chckbxOverlayMask.setToolTipText("Overlay the mask of the foci on the image");
-        chckbxOverlayMask.addItemListener(new ItemListener() {
-          @Override
-          public void itemStateChanged(ItemEvent event) {
-            chckbxOverlayMask.firePropertyChange("selected", 0, 1);
-          }
-        });
+        chckbxOverlayMask
+            .addItemListener(event -> chckbxOverlayMask.firePropertyChange("selected", 0, 1));
         final GridBagConstraints gbc_chckbxOverlayMask = new GridBagConstraints();
         gbc_chckbxOverlayMask.gridwidth = 2;
         gbc_chckbxOverlayMask.anchor = GridBagConstraints.WEST;
@@ -168,12 +161,8 @@ public class FindFociAdvancedOptions extends JDialog {
       {
         chckbxShowTable = new JCheckBox("Show table");
         chckbxShowTable.setToolTipText("Display a table of results");
-        chckbxShowTable.addItemListener(new ItemListener() {
-          @Override
-          public void itemStateChanged(ItemEvent event) {
-            chckbxShowTable.firePropertyChange("selected", 0, 1);
-          }
-        });
+        chckbxShowTable
+            .addItemListener(event -> chckbxShowTable.firePropertyChange("selected", 0, 1));
         chckbxShowTable.setMargin(new Insets(2, 2, 2, 0));
         final GridBagConstraints gbc_chckbxShowTable = new GridBagConstraints();
         gbc_chckbxShowTable.gridwidth = 2;
@@ -186,12 +175,8 @@ public class FindFociAdvancedOptions extends JDialog {
       {
         chckbxClearTable = new JCheckBox("Clear table");
         chckbxClearTable.setToolTipText("Clear the current results from the results table");
-        chckbxClearTable.addItemListener(new ItemListener() {
-          @Override
-          public void itemStateChanged(ItemEvent event) {
-            chckbxClearTable.firePropertyChange("selected", 0, 1);
-          }
-        });
+        chckbxClearTable
+            .addItemListener(event -> chckbxClearTable.firePropertyChange("selected", 0, 1));
         chckbxClearTable.setMargin(new Insets(2, 2, 2, 0));
         final GridBagConstraints gbc_chckbxClearTable = new GridBagConstraints();
         gbc_chckbxClearTable.gridwidth = 2;
@@ -204,12 +189,8 @@ public class FindFociAdvancedOptions extends JDialog {
       {
         chckbxMarkMaxima = new JCheckBox("Mark maxima");
         chckbxMarkMaxima.setToolTipText("Mark the peaks on the original image");
-        chckbxMarkMaxima.addItemListener(new ItemListener() {
-          @Override
-          public void itemStateChanged(ItemEvent event) {
-            chckbxMarkMaxima.firePropertyChange("selected", 0, 1);
-          }
-        });
+        chckbxMarkMaxima
+            .addItemListener(event -> chckbxMarkMaxima.firePropertyChange("selected", 0, 1));
         chckbxMarkMaxima.setMargin(new Insets(2, 2, 2, 0));
         final GridBagConstraints gbc_chckbxMarkMaxima = new GridBagConstraints();
         gbc_chckbxMarkMaxima.gridwidth = 2;
@@ -222,12 +203,8 @@ public class FindFociAdvancedOptions extends JDialog {
       {
         chckbxMarkPeakMaxima = new JCheckBox("Mark peak maxima");
         chckbxMarkPeakMaxima.setToolTipText("Mark the peaks on the mask image");
-        chckbxMarkPeakMaxima.addItemListener(new ItemListener() {
-          @Override
-          public void itemStateChanged(ItemEvent event) {
-            chckbxMarkPeakMaxima.firePropertyChange("selected", 0, 1);
-          }
-        });
+        chckbxMarkPeakMaxima
+            .addItemListener(event -> chckbxMarkPeakMaxima.firePropertyChange("selected", 0, 1));
         chckbxMarkPeakMaxima.setMargin(new Insets(2, 2, 2, 0));
         final GridBagConstraints gbc_chckbxMarkPeakMaxima = new GridBagConstraints();
         gbc_chckbxMarkPeakMaxima.gridwidth = 2;
@@ -241,12 +218,8 @@ public class FindFociAdvancedOptions extends JDialog {
         chckbxMarkUsingOverlay = new JCheckBox("Mark using overlay");
         chckbxMarkUsingOverlay
             .setToolTipText("Mark peaks using an overlay (supports slice z-position)");
-        chckbxMarkUsingOverlay.addItemListener(new ItemListener() {
-          @Override
-          public void itemStateChanged(ItemEvent event) {
-            chckbxMarkUsingOverlay.firePropertyChange("selected", 0, 1);
-          }
-        });
+        chckbxMarkUsingOverlay
+            .addItemListener(event -> chckbxMarkUsingOverlay.firePropertyChange("selected", 0, 1));
         final GridBagConstraints gbc_chckbxMarkUsingOverlay = new GridBagConstraints();
         gbc_chckbxMarkUsingOverlay.anchor = GridBagConstraints.WEST;
         gbc_chckbxMarkUsingOverlay.gridwidth = 2;
@@ -258,12 +231,8 @@ public class FindFociAdvancedOptions extends JDialog {
       {
         chckbxHideLabels = new JCheckBox("Hide labels");
         chckbxHideLabels.setToolTipText("Hide the labels on the marked maxima");
-        chckbxHideLabels.addItemListener(new ItemListener() {
-          @Override
-          public void itemStateChanged(ItemEvent event) {
-            chckbxHideLabels.firePropertyChange("selected", 0, 1);
-          }
-        });
+        chckbxHideLabels
+            .addItemListener(event -> chckbxHideLabels.firePropertyChange("selected", 0, 1));
         final GridBagConstraints gbc_chckbxHideLabels = new GridBagConstraints();
         gbc_chckbxHideLabels.anchor = GridBagConstraints.WEST;
         gbc_chckbxHideLabels.insets = new Insets(0, 0, 5, 5);
@@ -275,12 +244,8 @@ public class FindFociAdvancedOptions extends JDialog {
         chckbxShowMaskMaxima = new JCheckBox("Show mask maxima as dots");
         chckbxShowMaskMaxima.setToolTipText(
             "Mark maxima locations in the mask using a value above all other mask values");
-        chckbxShowMaskMaxima.addItemListener(new ItemListener() {
-          @Override
-          public void itemStateChanged(ItemEvent event) {
-            chckbxShowMaskMaxima.firePropertyChange("selected", 0, 1);
-          }
-        });
+        chckbxShowMaskMaxima
+            .addItemListener(event -> chckbxShowMaskMaxima.firePropertyChange("selected", 0, 1));
         final GridBagConstraints gbc_chckbxShowMaskMaxima = new GridBagConstraints();
         gbc_chckbxShowMaskMaxima.anchor = GridBagConstraints.WEST;
         gbc_chckbxShowMaskMaxima.gridwidth = 2;
@@ -292,12 +257,8 @@ public class FindFociAdvancedOptions extends JDialog {
       {
         chckbxShowLogMessages = new JCheckBox("Show log messages");
         chckbxShowLogMessages.setToolTipText("Show algorithm information in the log window");
-        chckbxShowLogMessages.addItemListener(new ItemListener() {
-          @Override
-          public void itemStateChanged(ItemEvent event) {
-            chckbxShowLogMessages.firePropertyChange("selected", 0, 1);
-          }
-        });
+        chckbxShowLogMessages
+            .addItemListener(event -> chckbxShowLogMessages.firePropertyChange("selected", 0, 1));
         chckbxShowLogMessages.setMargin(new Insets(2, 2, 2, 0));
         final GridBagConstraints gbc_chckbxShowLogMessages = new GridBagConstraints();
         gbc_chckbxShowLogMessages.gridwidth = 2;
@@ -320,12 +281,8 @@ public class FindFociAdvancedOptions extends JDialog {
     {
       comboBoxCentreMethod = new JComboBox<>();
       comboBoxCentreMethod.setToolTipText("The method used to mark the origin of each peak");
-      comboBoxCentreMethod.addItemListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent event) {
-          comboBoxCentreMethod.firePropertyChange("selectedItem", 0, 1);
-        }
-      });
+      comboBoxCentreMethod
+          .addItemListener(event -> comboBoxCentreMethod.firePropertyChange("selectedItem", 0, 1));
       comboBoxCentreMethod.setModel(new DefaultComboBoxModel<>(FindFoci_PlugIn.getCentreMethods()));
       final GridBagConstraints gbc_comboBoxCentreMethod = new GridBagConstraints();
       gbc_comboBoxCentreMethod.gridwidth = 2;
@@ -356,12 +313,8 @@ public class FindFociAdvancedOptions extends JDialog {
         }
       });
       sliderCentreParam.setToolTipText("Controls the selected centre method");
-      sliderCentreParam.addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent event) {
-          sliderCentreParam.firePropertyChange("value", 0, 1);
-        }
-      });
+      sliderCentreParam
+          .addChangeListener(event -> sliderCentreParam.firePropertyChange("value", 0, 1));
       sliderCentreParam.setMaximum(10);
       final GridBagConstraints gbc_sliderCentreParam = new GridBagConstraints();
       gbc_sliderCentreParam.fill = GridBagConstraints.HORIZONTAL;
@@ -372,12 +325,9 @@ public class FindFociAdvancedOptions extends JDialog {
     }
     {
       txtCentreParam = new JFormattedTextField(new LimitedNumberFormat(0));
-      txtCentreParam.addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if ("value".equals(evt.getPropertyName())) {
-            txtCentreParam.firePropertyChange("text", 0, 1);
-          }
+      txtCentreParam.addPropertyChangeListener(evt -> {
+        if ("value".equals(evt.getPropertyName())) {
+          txtCentreParam.firePropertyChange("text", 0, 1);
         }
       });
       txtCentreParam.addKeyListener(new KeyAdapter() {
@@ -399,12 +349,8 @@ public class FindFociAdvancedOptions extends JDialog {
       chckbxRemoveEdgeMaxima = new JCheckBox("Remove edge maxima");
       chckbxRemoveEdgeMaxima
           .setToolTipText("Remove maxima touching the edge of the analysis region");
-      chckbxRemoveEdgeMaxima.addItemListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent event) {
-          chckbxRemoveEdgeMaxima.firePropertyChange("selected", 0, 1);
-        }
-      });
+      chckbxRemoveEdgeMaxima
+          .addItemListener(event -> chckbxRemoveEdgeMaxima.firePropertyChange("selected", 0, 1));
       final GridBagConstraints gbc_chckbxRemoveEdgeMaxima = new GridBagConstraints();
       gbc_chckbxRemoveEdgeMaxima.anchor = GridBagConstraints.WEST;
       gbc_chckbxRemoveEdgeMaxima.gridwidth = 2;
@@ -416,12 +362,8 @@ public class FindFociAdvancedOptions extends JDialog {
     {
       chckbxSaveResults = new JCheckBox("Save results");
       chckbxSaveResults.setToolTipText("Save the results to a directory");
-      chckbxSaveResults.addItemListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent event) {
-          chckbxSaveResults.firePropertyChange("selected", 0, 1);
-        }
-      });
+      chckbxSaveResults
+          .addItemListener(event -> chckbxSaveResults.firePropertyChange("selected", 0, 1));
       chckbxSaveResults.setMargin(new Insets(2, 2, 2, 0));
       final GridBagConstraints gbc_chckbxSaveResults = new GridBagConstraints();
       gbc_chckbxSaveResults.insets = new Insets(0, 0, 5, 5);
@@ -481,12 +423,8 @@ public class FindFociAdvancedOptions extends JDialog {
       chckbxObjectAnalysis = new JCheckBox("Object analysis");
       chckbxObjectAnalysis
           .setToolTipText("Compute objects within the mask and label maxima within each object");
-      chckbxObjectAnalysis.addItemListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent event) {
-          chckbxObjectAnalysis.firePropertyChange("selected", 0, 1);
-        }
-      });
+      chckbxObjectAnalysis
+          .addItemListener(event -> chckbxObjectAnalysis.firePropertyChange("selected", 0, 1));
       chckbxObjectAnalysis.setMargin(new Insets(2, 2, 2, 0));
       final GridBagConstraints gbc_chckbxObjectAnalysis = new GridBagConstraints();
       gbc_chckbxObjectAnalysis.anchor = GridBagConstraints.WEST;
@@ -498,12 +436,8 @@ public class FindFociAdvancedOptions extends JDialog {
     {
       chckbxShowObjectMask = new JCheckBox("Show object mask");
       chckbxShowObjectMask.setToolTipText("Show the mask of the computed objects");
-      chckbxShowObjectMask.addItemListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent event) {
-          chckbxShowObjectMask.firePropertyChange("selected", 0, 1);
-        }
-      });
+      chckbxShowObjectMask
+          .addItemListener(event -> chckbxShowObjectMask.firePropertyChange("selected", 0, 1));
       chckbxShowObjectMask.setMargin(new Insets(2, 2, 2, 0));
       final GridBagConstraints gbc_chckbxShowObjectMask = new GridBagConstraints();
       gbc_chckbxShowObjectMask.insets = new Insets(0, 0, 5, 5);
@@ -515,12 +449,8 @@ public class FindFociAdvancedOptions extends JDialog {
       chckbxSaveToMemory = new JCheckBox("Save to memory");
       chckbxSaveToMemory
           .setToolTipText("Save the result to memory (allows other plugins to access the results)");
-      chckbxSaveToMemory.addItemListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent event) {
-          chckbxSaveToMemory.firePropertyChange("selected", 0, 1);
-        }
-      });
+      chckbxSaveToMemory
+          .addItemListener(event -> chckbxSaveToMemory.firePropertyChange("selected", 0, 1));
       chckbxSaveToMemory.setMargin(new Insets(2, 2, 2, 0));
       final GridBagConstraints gbc_chckbxSaveToMemory = new GridBagConstraints();
       gbc_chckbxSaveToMemory.anchor = GridBagConstraints.WEST;

@@ -42,7 +42,7 @@ public class CdaWorker implements Runnable {
   private final double denom1;
   private final double denom2;
   private final List<CalculationResult> results;
-  private TwinStackShifter twinImageShifter;
+  private final TwinStackShifter twinImageShifter;
   private final BlockingQueue<CdaJob> jobs;
   private final int totalSteps;
   private final Correlator correlator = new Correlator();

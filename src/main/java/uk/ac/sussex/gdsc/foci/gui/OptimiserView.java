@@ -39,10 +39,6 @@ import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -142,12 +138,8 @@ public class OptimiserView extends JFrame {
 
     comboImageList = new JComboBox<>();
     comboImageList.setToolTipText("Select the input image");
-    comboImageList.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        comboImageList.firePropertyChange("selectedItem", 0, 1);
-      }
-    });
+    comboImageList
+        .addItemListener(event -> comboImageList.firePropertyChange("selectedItem", 0, 1));
     comboImageList.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent event) {
@@ -175,13 +167,10 @@ public class OptimiserView extends JFrame {
 
     btnRun = new JButton("Run");
     panel.add(btnRun);
-    btnRun.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        // Run in a new thread to allow updates to the IJ progress bar
-        final Thread thread = new Thread(controller);
-        thread.start();
-      }
+    btnRun.addActionListener(event -> {
+      // Run in a new thread to allow updates to the IJ progress bar
+      final Thread thread = new Thread(controller);
+      thread.start();
     });
     initDataBindings();
   }

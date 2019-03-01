@@ -459,19 +459,19 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
       places = 2;
     }
     String minStr = ResultsTable.d2s(cmin, places);
-    if (minStr.indexOf("-") != -1) {
+    if (minStr.indexOf('-') != -1) {
       for (int i = places; i <= 6; i++) {
         minStr = ResultsTable.d2s(cmin, i);
-        if (minStr.indexOf("-") == -1) {
+        if (minStr.indexOf('-') == -1) {
           break;
         }
       }
     }
     String maxStr = ResultsTable.d2s(cmax, places);
-    if (maxStr.indexOf("-") != -1) {
+    if (maxStr.indexOf('-') != -1) {
       for (int i = places; i <= 6; i++) {
         maxStr = ResultsTable.d2s(cmax, i);
-        if (maxStr.indexOf("-") == -1) {
+        if (maxStr.indexOf('-') == -1) {
           break;
         }
       }
@@ -616,23 +616,23 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
   }
 
   boolean updateMacroOptions() {
-    String options = Macro.getOptions();
-    int index = options.indexOf("maximum=");
+    String localOptions = Macro.getOptions();
+    int index = localOptions.indexOf("maximum=");
     if (index == -1) {
       return false;
     }
     index += 8;
-    final int len = options.length();
-    while (index < len - 1 && options.charAt(index) != ' ') {
+    final int len = localOptions.length();
+    while (index < len - 1 && localOptions.charAt(index) != ' ') {
       index++;
     }
     if (index == len - 1) {
       return false;
     }
-    final int min = (int) Tools.parseDouble(Macro.getValue(options, "minimum", "1"));
-    final int max = (int) Tools.parseDouble(Macro.getValue(options, "maximum", "999999"));
-    options = "size=" + min + "-" + max + options.substring(index, len);
-    Macro.setOptions(options);
+    final int min = (int) Tools.parseDouble(Macro.getValue(localOptions, "minimum", "1"));
+    final int max = (int) Tools.parseDouble(Macro.getValue(localOptions, "maximum", "999999"));
+    localOptions = "size=" + min + "-" + max + localOptions.substring(index, len);
+    Macro.setOptions(localOptions);
     return true;
   }
 
@@ -755,10 +755,8 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
       }
       analyzer = new Analyzer(imp, measurements, rt);
     }
-    if (resetCounter && slice == 1) {
-      if (!Analyzer.resetCounter()) {
-        return false;
-      }
+    if (resetCounter && slice == 1 && !Analyzer.resetCounter()) {
+      return false;
     }
     beginningCount = Analyzer.getCounter();
 
@@ -781,10 +779,8 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
     maxX = r.x + r.width;
     minY = r.y;
     maxY = r.y + r.height;
-    if (r.width < width || r.height < height || mask != null) {
-      if (!eraseOutsideRoi(ip, r, mask)) {
-        return false;
-      }
+    if ((r.width < width || r.height < height || mask != null) && !eraseOutsideRoi(ip, r, mask)) {
+      return false;
     }
     int offset;
     double value;
@@ -984,8 +980,6 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
   }
 
   boolean eraseOutsideRoi(ImageProcessor ip, Rectangle r, ImageProcessor mask) {
-    final int width = ip.getWidth();
-    final int height = ip.getHeight();
     ip.setRoi(r);
     if (excludeEdgeParticles && polygon != null) {
       final ImageStatistics stats = ImageStatistics.getStatistics(ip, MIN_MAX, null);
@@ -1015,17 +1009,17 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
       mask.invert();
       ip.fill(mask);
     }
-    ip.setRoi(0, 0, r.x, height);
+    final int maxx = ip.getWidth();
+    final int maxy = ip.getHeight();
+    ip.setRoi(0, 0, r.x, maxy);
     ip.fill();
     ip.setRoi(r.x, 0, r.width, r.y);
     ip.fill();
-    ip.setRoi(r.x, r.y + r.height, r.width, height - (r.y + r.height));
+    ip.setRoi(r.x, r.y + r.height, r.width, maxy - (r.y + r.height));
     ip.fill();
-    ip.setRoi(r.x + r.width, 0, width - (r.x + r.width), height);
+    ip.setRoi(r.x + r.width, 0, maxx - (r.x + r.width), maxy);
     ip.fill();
     ip.resetRoi();
-    // IJ.log("erase: "+fillColor+" "+level1+" "+level2+" "+excludeEdgeParticles);
-    // (new ImagePlus("ip2", ip.duplicate())).show();
     return true;
   }
 
@@ -1110,7 +1104,6 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
    * @param ip the image
    */
   protected void analyzeParticle(int x, int y, ImagePlus imp, ImageProcessor ip) {
-    // Wand wand = new Wand(ip);
     final ImageProcessor ip2 = redirectIP != null ? redirectIP : ip;
     wand.autoOutline(x, y, level1, level2, wandMode);
     if (wand.npoints == 0) {
@@ -1118,11 +1111,11 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
       return;
     }
     final Roi roi = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, roiType);
-    final Rectangle r = roi.getBounds();
-    if (r.width > 1 && r.height > 1) {
+    final Rectangle rect = roi.getBounds();
+    if (rect.width > 1 && rect.height > 1) {
       final PolygonRoi proi = (PolygonRoi) roi;
       pf.setPolygon(proi.getXCoordinates(), proi.getYCoordinates(), proi.getNCoordinates());
-      ip2.setMask(pf.getMask(r.width, r.height));
+      ip2.setMask(pf.getMask(rect.width, rect.height));
       if (floodFill) {
         // For the MaskParticleAnalyzer flood filling does not work using the original image.
         // This is because it is filling between level1 & level2. If two objects touch so that
@@ -1130,24 +1123,19 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
         // This can be fixed by duplicating the IP again so only the current object is present
         // or flood filling at the current IP value (faster)
 
-        // Duplicate so only the current object is present
-        // ImageProcessor ipf = ip.duplicate();
-        // ipf.setValue(fillColor);
-        // ff = new FloodFiller(ipf);
-        // ff.particleAnalyzerFill(x, y, level1, level2, ip2.getMask(), r);
-
         // Flood filling can use only the current pixel value
         final double value =
             (ip instanceof FloatProcessor) ? ip.getPixelValue(x, y) : ip.getPixel(x, y);
-        ff.particleAnalyzerFill(x, y, value, value, ip2.getMask(), r);
+        ff.particleAnalyzerFill(x, y, value, value, ip2.getMask(), rect);
       }
     }
-    ip2.setRoi(r);
+    ip2.setRoi(rect);
     ip.setValue(fillColor);
     final ImageStatistics stats = getStatistics(ip2, measurements, calibration);
     boolean include = true;
     if (excludeEdgeParticles) {
-      if (r.x == minX || r.y == minY || r.x + r.width == maxX || r.y + r.height == maxY) {
+      if (rect.x == minX || rect.y == minY || rect.x + rect.width == maxX
+          || rect.y + rect.height == maxY) {
         include = false;
       }
       if (polygon != null) {
@@ -1181,7 +1169,6 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
       if (circularity > 1.0) {
         circularity = 1.0;
       }
-      // IJ.log(circularity+" "+perimeter+" "+stats.area);
       if (circularity < minCircularity || circularity > maxCircularity) {
         include = false;
       }
@@ -1199,7 +1186,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
       }
     }
     if (redirectIP != null) {
-      ip.setRoi(r);
+      ip.setRoi(rect);
     }
     ip.fill(mask);
   }
@@ -1299,7 +1286,6 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
   }
 
   void drawFilledParticle(ImageProcessor ip, Roi roi, ImageProcessor mask) {
-    // IJ.write(roi.getBounds()+" "+mask.length);
     ip.setRoi(roi.getBounds());
     ip.fill(mask);
   }
@@ -1321,12 +1307,12 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
       }
       overlay.add(roi2);
     } else {
-      final Rectangle r = roi.getBounds();
+      final Rectangle rect = roi.getBounds();
       final int npoints = ((PolygonRoi) roi).getNCoordinates();
       final int[] xp = ((PolygonRoi) roi).getXCoordinates();
       final int[] yp = ((PolygonRoi) roi).getYCoordinates();
-      final int x = r.x;
-      final int y = r.y;
+      final int x = rect.x;
+      final int y = rect.y;
       if (!inSituShow) {
         ip.setValue(0.0);
       }
@@ -1337,7 +1323,8 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
       ip.lineTo(x + xp[0], y + yp[0]);
       if (showChoice != BARE_OUTLINES) {
         final String s = ResultsTable.d2s(count, 0);
-        ip.moveTo(r.x + r.width / 2 - ip.getStringWidth(s) / 2, r.y + r.height / 2 + fontSize / 2);
+        ip.moveTo(rect.x + rect.width / 2 - ip.getStringWidth(s) / 2,
+            rect.y + rect.height / 2 + fontSize / 2);
         if (!inSituShow) {
           ip.setValue(1.0);
         }
@@ -1359,7 +1346,6 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
 
   void showResults() {
     final int count = rt.getCounter();
-    // if (count==0) return;
     final boolean lastSlice = !processStack || slice == imp.getStackSize();
     if ((showChoice == OVERLAY_OUTLINES || showChoice == OVERLAY_MASKS) && slice == 1
         && count > 0) {

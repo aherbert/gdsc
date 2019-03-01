@@ -29,6 +29,7 @@ import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.PointPair;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 import uk.ac.sussex.gdsc.foci.FindFociOptions.OutputOption;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
@@ -59,8 +60,6 @@ import ij.text.TextWindow;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -719,26 +718,20 @@ public class SpotDistance_PlugIn implements PlugIn {
 
   private static TextWindow createTextWindow(String header,
       AtomicReference<TextWindow> windowReference, String titleSuffix, TextWindow parent) {
-    TextWindow window = windowReference.get();
-    if (window == null || !window.isShowing() || !sameHeader(window, header)) {
-      window = new TextWindow(TITLE + titleSuffix, header, "", 700, 300);
-      if (parent != null) {
-        final Point p = parent.getLocation();
-        p.y += parent.getHeight();
-        window.setLocation(p);
-      }
-      // When it closes remove the reference to this window
-      final TextWindow closedWindow = window;
-      window.addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowClosed(WindowEvent event) {
-          windowReference.compareAndSet(closedWindow, null);
-          super.windowClosed(event);
-        }
-      });
-      windowReference.set(window);
-    }
-    return window;
+    return ConcurrencyUtils.refresh(windowReference,
+        // Window must have the same header
+        window -> sameHeader(window, header),
+        // Create a new window
+        () -> {
+          final TextWindow window = new TextWindow(TITLE + titleSuffix, header, "", 700, 300);
+          // Position relative to parent
+          if (parent != null) {
+            final Point p = parent.getLocation();
+            p.y += parent.getHeight();
+            window.setLocation(p);
+          }
+          return window;
+        });
   }
 
   private static void setLastLineCount(int resultLineCount, int summaryLineCount,
@@ -1123,7 +1116,7 @@ public class SpotDistance_PlugIn implements PlugIn {
         }
 
         addSummaryResult(frame, ch, region, resultsArray.size() + resultsArray2.size(), minD, maxD,
-            sumD / count, minD2, maxD2, sumD2 / count);
+            MathUtils.div0(sumD, count), minD2, maxD2, MathUtils.div0(sumD2, count));
       }
     }
 

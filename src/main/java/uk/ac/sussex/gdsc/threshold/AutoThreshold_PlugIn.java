@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.threshold;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 
@@ -451,6 +452,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
    * @return an Object[] array with the threshold and the ImagePlus. Does NOT show the new, image;
    *         just returns it.
    */
+  @Nullable
   public Object[] exec(ImagePlus imp, AutoThreshold.Method method, boolean noWhite, boolean noBlack,
       boolean doIwhite, boolean doIset, boolean doIlog, boolean doIstackHistogram) {
     // 0 - Check validity of parameters

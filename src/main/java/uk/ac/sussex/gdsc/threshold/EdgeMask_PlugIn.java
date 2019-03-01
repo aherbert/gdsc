@@ -27,6 +27,7 @@ package uk.ac.sussex.gdsc.threshold;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
+import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 
 import ij.IJ;
 import ij.ImageJ;
@@ -60,7 +61,6 @@ import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -248,7 +248,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
         ip.setRoi(roi);
         futures.add(threadPool.submit(new MaskCreator(ip, newStack, slice, this)));
       }
-      waitForCompletion(futures);
+      ConcurrencyUtils.waitForCompletionUnchecked(futures);
       IJ.showStatus("");
       IJ.showProgress(stack.getSize(), stack.getSize());
 
@@ -326,7 +326,6 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
     gd.addCheckbox("Prune", settings.prune);
     gd.addCheckbox("Fill", settings.fill);
     gd.addCheckbox("Replace_image", settings.replaceImage);
-    // gd.addNumericField("Background_Percent", percent, 1);
 
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);
@@ -497,7 +496,6 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       newimg.aspects(aspects);
 
       ImageProcessor laplacianIp = null;
-      // new ImagePlus("laplace", newimg.imageplus().getProcessor().duplicate()).show();
       if (settings.fill) {
         laplacianIp = newimg.imageplus().getProcessor().duplicate();
       }
@@ -781,23 +779,6 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
         return (y > 0 && x > 0);
       default:
         return false;
-    }
-  }
-
-  /**
-   * Waits for all threads to complete computation.
-   *
-   * @param futures the futures
-   */
-  public static void waitForCompletion(List<Future<?>> futures) {
-    try {
-      for (final Future<?> f : futures) {
-        f.get();
-      }
-    } catch (final ExecutionException ex) {
-      ex.printStackTrace();
-    } catch (final InterruptedException ex) {
-      ex.printStackTrace();
     }
   }
 

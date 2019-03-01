@@ -27,10 +27,12 @@ package uk.ac.sussex.gdsc.colocalisation;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.colocalisation.cda.Cda_PlugIn;
 import uk.ac.sussex.gdsc.colocalisation.cda.TwinStackShifter;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.ThresholdUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.Correlator;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.utils.SliceCollection;
 
 import ij.IJ;
@@ -45,6 +47,8 @@ import ij.text.TextWindow;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Processes a stack image with multiple channels. Requires three channels. Each frame is processed
@@ -62,31 +66,87 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
   private static final int Z = 3;
   private static final int T = 4;
 
-  private static TextWindow tw;
-
-  private static String methodOption = AutoThreshold.Method.OTSU.toString();
-  private static int channel1 = 1;
-  private static int channel2 = 2;
-  private static int channel3;
-
-  // Options flags
-  private static boolean logThresholds;
-  private static boolean logResults;
-  private static boolean showMask;
-  private static boolean subtractThreshold;
-
-  private static int permutations = 100;
-  private static int minimumRadius = 9;
-  private static int maximumRadius = 16;
-  private static double pCut = 0.05;
+  private static AtomicReference<TextWindow> textWindowRef = new AtomicReference<>();
 
   // Store a reference to the current working image
   private ImagePlus imp;
 
-  private boolean firstResult;
   private Correlator correlator;
   private int[] ii1;
   private int[] ii2;
+
+  /** The plugin settings. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String methodOption;
+    int channel1;
+    int channel2;
+    int channel3;
+
+    // Options flags
+    boolean logThresholds;
+    boolean logResults;
+    boolean showMask;
+    boolean subtractThreshold;
+
+    int permutations;
+    int minimumRadius;
+    int maximumRadius;
+    double significance;
+
+    Settings() {
+      methodOption = AutoThreshold.Method.OTSU.toString();
+      channel1 = 1;
+      channel2 = 2;
+      permutations = 100;
+      minimumRadius = 9;
+      maximumRadius = 16;
+      significance = 0.05;
+    }
+
+    Settings(Settings source) {
+      methodOption = source.methodOption;
+      channel1 = source.channel1;
+      channel2 = source.channel2;
+      channel3 = source.channel3;
+      logThresholds = source.logThresholds;
+      logResults = source.logResults;
+      showMask = source.showMask;
+      subtractThreshold = source.subtractThreshold;
+      permutations = source.permutations;
+      minimumRadius = source.minimumRadius;
+      maximumRadius = source.maximumRadius;
+      significance = source.significance;
+    }
+
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -122,21 +182,23 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
 
     final String[] methods = getMethods();
     // channel3 is set within getMethods()
-    final int nChannels = (channel3 != 1) ? 3 : 2;
+    final int nChannels = (settings.channel3 != 1) ? 3 : 2;
 
     final int size = dimensions[0] * dimensions[1];
     correlator = new Correlator(size);
     ii1 = new int[size];
     ii2 = new int[size];
 
+    final Consumer<String> output = createResultsWindow();
+
     for (final String method : methods) {
-      if (logThresholds || logResults) {
+      if (settings.logThresholds || settings.logResults) {
         IJ.log("Stack colocalisation (" + method + ") : " + imp.getTitle());
       }
 
       ImageStack maskStack = null;
       ImagePlus maskImage = null;
-      if (showMask) {
+      if (settings.showMask) {
         // The stack will only have 3 channels
         maskStack = new ImageStack(imp.getWidth(), imp.getHeight(),
             nChannels * dimensions[Z] * dimensions[T]);
@@ -156,7 +218,8 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
         // Extract the channels
         for (int c = 1; c <= dimensions[C]; c++) {
           // Process all slices together
-          final AnalysisSliceCollection sliceCollection = new AnalysisSliceCollection(c);
+          final AnalysisSliceCollection sliceCollection =
+              new AnalysisSliceCollection(c, settings.subtractThreshold);
           for (int z = 1; z <= dimensions[Z]; z++) {
             sliceCollection.add(imp.getStackIndex(c, z, t));
           }
@@ -164,8 +227,8 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
         }
 
         // Get the channels:
-        final AnalysisSliceCollection s1 = sliceCollections.get(channel1 - 1);
-        final AnalysisSliceCollection s2 = sliceCollections.get(channel2 - 1);
+        final AnalysisSliceCollection s1 = sliceCollections.get(settings.channel1 - 1);
+        final AnalysisSliceCollection s2 = sliceCollections.get(settings.channel2 - 1);
 
         // Create masks
         extractImageAndCreateOutputMask(method, maskImage, 1, t, s1);
@@ -173,12 +236,12 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
 
         // Note that channel 3 is offset by 1 because it contains the [none] option
         AnalysisSliceCollection s3;
-        if (channel3 > 1) {
-          s3 = sliceCollections.get(channel3 - 2);
+        if (settings.channel3 > 1) {
+          s3 = sliceCollections.get(settings.channel3 - 2);
           extractImageAndCreateOutputMask(method, maskImage, 3, t, s3);
         } else {
-          s3 = new AnalysisSliceCollection(0);
-          if (channel3 == 0) {
+          s3 = new AnalysisSliceCollection(0, settings.subtractThreshold);
+          if (settings.channel3 == 0) {
             // Combine the two masks
             combineMasksAndCreateOutputMask(method, maskImage, 3, t, s1, s2, s3);
           }
@@ -186,10 +249,11 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
 
         final double[] results = correlate(s1, s2, s3);
 
-        reportResult(method, t, s1.getSliceName(), s2.getSliceName(), s3.getSliceName(), results);
+        reportResult(output, method, t, s1.getSliceName(), s2.getSliceName(), s3.getSliceName(),
+            results);
       }
 
-      if (showMask) {
+      if (maskImage != null) {
         maskImage.show();
         IJ.run("Stack to Hyperstack...", "order=xyczt(default) channels=" + nChannels + " slices="
             + dimensions[Z] + " frames=" + dimensions[T] + " display=Color");
@@ -202,12 +266,12 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
       int frame, AnalysisSliceCollection sliceCollection) {
     sliceCollection.createStack(imp);
     sliceCollection.createMask(method);
-    if (logThresholds) {
+    if (settings.logThresholds) {
       IJ.log("t" + frame + sliceCollection.getSliceName() + " threshold = "
           + sliceCollection.threshold);
     }
 
-    if (showMask) {
+    if (settings.showMask) {
       final ImageStack maskStack = maskImage.getImageStack();
       for (int s = 1; s <= sliceCollection.maskStack.getSize(); s++) {
         final int originalSliceNumber = sliceCollection.get(s - 1);
@@ -219,11 +283,11 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     }
   }
 
-  private static void combineMasksAndCreateOutputMask(String method, ImagePlus maskImage,
-      int channel, int frame, AnalysisSliceCollection s1, AnalysisSliceCollection s2,
+  private void combineMasksAndCreateOutputMask(String method, ImagePlus maskImage, int channel,
+      int frame, AnalysisSliceCollection s1, AnalysisSliceCollection s2,
       AnalysisSliceCollection sliceCollection) {
     sliceCollection.createMask(s1.maskStack, s2.maskStack);
-    if (showMask) {
+    if (settings.showMask) {
       final ImageStack maskStack = maskImage.getImageStack();
       for (int s = 1; s <= sliceCollection.maskStack.getSize(); s++) {
         final int newSliceNumber = maskImage.getStackIndex(channel, s, frame);
@@ -236,17 +300,17 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
   private String[] getMethods() {
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
     gd.addMessage(TITLE);
-    firstResult = true;
 
     String[] indices = new String[imp.getNChannels()];
     for (int i = 1; i <= indices.length; i++) {
       indices[i - 1] = "" + i;
     }
 
-    gd.addChoice("Channel_1", indices, channel1 - 1);
-    gd.addChoice("Channel_2", indices, channel2 - 1);
+    settings = Settings.load();
+    gd.addChoice("Channel_1", indices, settings.channel1 - 1);
+    gd.addChoice("Channel_2", indices, settings.channel2 - 1);
     indices = addNoneOption(indices);
-    gd.addChoice("Channel_3", indices, channel3);
+    gd.addChoice("Channel_3", indices, settings.channel3);
 
     // Commented out the methods that take a long time on 16-bit images.
     String[] methods = {"Try all", AutoThreshold.Method.DEFAULT.toString(),
@@ -262,15 +326,15 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
         AutoThreshold.Method.TRIANGLE.toString(), AutoThreshold.Method.YEN.toString(),
         AutoThreshold.Method.NONE.toString()};
 
-    gd.addChoice("Method", methods, methodOption);
-    gd.addCheckbox("Log_thresholds", logThresholds);
-    gd.addCheckbox("Log_results", logResults);
-    gd.addCheckbox("Show_mask", showMask);
-    gd.addCheckbox("Subtract threshold", subtractThreshold);
-    gd.addNumericField("Permutations", permutations, 0);
-    gd.addNumericField("Minimum_shift", minimumRadius, 0);
-    gd.addNumericField("Maximum_shift", maximumRadius, 0);
-    gd.addNumericField("Significance", pCut, 3);
+    gd.addChoice("Method", methods, settings.methodOption);
+    gd.addCheckbox("Log_thresholds", settings.logThresholds);
+    gd.addCheckbox("Log_results", settings.logResults);
+    gd.addCheckbox("Show_mask", settings.showMask);
+    gd.addCheckbox("Subtract threshold", settings.subtractThreshold);
+    gd.addNumericField("Permutations", settings.permutations, 0);
+    gd.addNumericField("Minimum_shift", settings.minimumRadius, 0);
+    gd.addNumericField("Maximum_shift", settings.maximumRadius, 0);
+    gd.addNumericField("Significance", settings.significance, 3);
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.COLOCALISATION);
 
     gd.showDialog();
@@ -278,33 +342,34 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
       return new String[0];
     }
 
-    channel1 = gd.getNextChoiceIndex() + 1;
-    channel2 = gd.getNextChoiceIndex() + 1;
-    channel3 = gd.getNextChoiceIndex();
-    methodOption = gd.getNextChoice();
-    logThresholds = gd.getNextBoolean();
-    logResults = gd.getNextBoolean();
-    showMask = gd.getNextBoolean();
-    subtractThreshold = gd.getNextBoolean();
-    permutations = (int) gd.getNextNumber();
-    minimumRadius = (int) gd.getNextNumber();
-    maximumRadius = (int) gd.getNextNumber();
-    pCut = gd.getNextNumber();
+    settings.channel1 = gd.getNextChoiceIndex() + 1;
+    settings.channel2 = gd.getNextChoiceIndex() + 1;
+    settings.channel3 = gd.getNextChoiceIndex();
+    settings.methodOption = gd.getNextChoice();
+    settings.logThresholds = gd.getNextBoolean();
+    settings.logResults = gd.getNextBoolean();
+    settings.showMask = gd.getNextBoolean();
+    settings.subtractThreshold = gd.getNextBoolean();
+    settings.permutations = (int) gd.getNextNumber();
+    settings.minimumRadius = (int) gd.getNextNumber();
+    settings.maximumRadius = (int) gd.getNextNumber();
+    settings.significance = gd.getNextNumber();
+    settings.save();
 
     // Check parameters
-    if (minimumRadius > maximumRadius) {
+    if (settings.minimumRadius > settings.maximumRadius) {
       return failed("Minimum radius cannot be above maximum radius");
     }
-    if (maximumRadius > 255) {
+    if (settings.maximumRadius > 255) {
       return failed("Maximum radius cannot be above 255");
     }
-    if (pCut < 0 || pCut > 1) {
+    if (settings.significance < 0 || settings.significance > 1) {
       return failed("Significance must be between 0-1");
     }
 
-    if (!methodOption.equals("Try all")) {
+    if (!settings.methodOption.equals("Try all")) {
       // Ensure that the string contains known methods (to avoid passing bad macro arguments)
-      methods = extractMethods(methodOption.split(" "), methods);
+      methods = extractMethods(settings.methodOption.split(" "), methods);
     } else {
       // Shift the array to remove the try all option
       final String[] newMethods = new String[methods.length - 1];
@@ -403,33 +468,21 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     double m2Significant = 0;
     double correlationSignificant = 0;
 
-    // Debug - show all the input
-    // Utils.display("Stack Analyser Stack1", s1.imageStack);
-    // Utils.display("Stack Analyser Stack2", s2.imageStack);
-    // Utils.display("Stack Analyser ROI1", s1.maskStack);
-    // Utils.display("Stack Analyser ROI2", s2.maskStack);
-    // Utils.display("Stack Analyser Confined", s3.maskStack);
-
     // Calculate the total intensity within the channels, only counting regions in the channel mask
     // and the ROI
     final double totalIntensity1 = getTotalIntensity(s1.imageStack, s1.maskStack, s3.maskStack);
     final double totalIntensity2 = getTotalIntensity(s2.imageStack, s2.maskStack, s3.maskStack);
 
-    // System.out.printf("Stack Analyser total = %s (%s) %s (%s) : %s)\n",
-    // totalIntensity1, getTotalIntensity(s1.maskStack, s1.maskStack, null),
-    // totalIntensity2, getTotalIntensity(s2.maskStack, s2.maskStack, null),
-    // getTotalIntensity(s3.maskStack, s3.maskStack, null));
-
     // Get the standard result
     final CalculationResult result = calculateCorrelation(s1.imageStack, s1.maskStack,
         s2.imageStack, s2.maskStack, s3.maskStack, 0, totalIntensity1, totalIntensity2);
 
-    if (permutations > 0) {
+    if (settings.permutations > 0) {
       // Circularly permute the s2 stack and compute the M1,M2,R stats.
       // Perform permutations within given distance limits, random n trials from all combinations.
 
-      final int[] indices =
-          Cda_PlugIn.getRandomShiftIndices(minimumRadius, maximumRadius, permutations);
+      final int[] indices = Cda_PlugIn.getRandomShiftIndices(settings.minimumRadius,
+          settings.maximumRadius, settings.permutations);
 
       final TwinStackShifter stackShifter =
           new TwinStackShifter(s2.imageStack, s2.maskStack, s3.maskStack);
@@ -453,9 +506,9 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
       }
 
       // Output if significant at given confidence level. Avoid bounds errors.
-      final int upperIndex =
-          (int) Math.min(results.size() - 1, Math.ceil(results.size() * (1 - pCut)));
-      final int lowerIndex = (int) Math.floor(results.size() * pCut);
+      final int upperIndex = (int) Math.min(results.size() - 1,
+          Math.ceil(results.size() * (1 - settings.significance)));
+      final int lowerIndex = (int) Math.floor(results.size() * settings.significance);
 
       Collections.sort(results, StackColocalisationAnalyser_PlugIn::compareM1);
       m1Significant =
@@ -565,22 +618,22 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     final double r = correlator.getCorrelation();
 
     return new CalculationResult(distance, m1, m2, r, correlator.getN(),
-        (100.0 * correlator.getN() / total));
+        MathUtils.div0(100.0 * correlator.getN(), total));
   }
 
   /**
    * Reports the results for the correlation to the IJ log window.
    *
+   * @param output the output
+   * @param method the method
    * @param frame The timeframe
    * @param c1 Channel 1 title
    * @param c2 Channel 2 title
    * @param c3 Channel 3 title
    * @param results The correlation results
    */
-  private void reportResult(String method, int frame, String c1, String c2, String c3,
-      double[] results) {
-    createResultsWindow();
-
+  private void reportResult(Consumer<String> output, String method, int frame, String c1, String c2,
+      String c3, double[] results) {
     final double m1 = results[0];
     final double m2 = results[1];
     final double r = results[2];
@@ -590,11 +643,11 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     final String m2Significant = getResult(results[6]);
     final String rSignificant = getResult(results[7]);
 
-    final char spacer = (logResults) ? ',' : '\t';
+    final char spacer = (settings.logResults) ? ',' : '\t';
 
     final StringBuilder sb = new StringBuilder();
     sb.append(imp.getTitle()).append(spacer);
-    sb.append(IJ.d2s(pCut, 4)).append(spacer);
+    sb.append(IJ.d2s(settings.significance, 4)).append(spacer);
     sb.append(method).append(spacer);
     sb.append(frame).append(spacer);
     sb.append(c1).append(spacer);
@@ -609,11 +662,7 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     sb.append(IJ.d2s(r, 4)).append(spacer);
     sb.append(rSignificant);
 
-    if (logResults) {
-      IJ.log(sb.toString());
-    } else {
-      tw.append(sb.toString());
-    }
+    output.accept(sb.toString());
   }
 
   private static String getResult(double significance) {
@@ -626,17 +675,16 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     return "-";
   }
 
-  private void createResultsWindow() {
-    if (logResults) {
-      if (firstResult) {
-        firstResult = false;
-        IJ.log("Image,p,Method,Frame,Ch1,Ch2,Ch3,n,Area,M1,Sig,M2,Sig,R,Sig");
-      }
-    } else if (tw == null || !tw.isShowing()) {
-      tw = new TextWindow(TITLE + " Results",
-          "Image\tp\tMethod\tFrame\tCh1\tCh2\tCh3\tn\tArea\tM1\tSig\tM2\tSig\tR\tSig", "", 700,
-          300);
+  private Consumer<String> createResultsWindow() {
+    if (settings.logResults) {
+      IJ.log("Image,p,Method,Frame,Ch1,Ch2,Ch3,n,Area,M1,Sig,M2,Sig,R,Sig");
+      return IJ::log;
     }
+    final TextWindow window = ImageJUtils.refresh(textWindowRef,
+        () -> new TextWindow(TITLE + " Results",
+            "Image\tp\tMethod\tFrame\tCh1\tCh2\tCh3\tn\tArea\tM1\tSig\tM2\tSig\tR\tSig", "", 700,
+            300));
+    return window::append;
   }
 
   /**
@@ -644,6 +692,7 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
    */
   private static class AnalysisSliceCollection extends SliceCollection {
 
+    final boolean subtractThreshold;
     ImageStack imageStack;
     ImageStack maskStack;
     int threshold;
@@ -653,9 +702,11 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
      * Instantiates a new analysis slice collection.
      *
      * @param indexC The channel index
+     * @param subtractThreshold the subtract threshold flag
      */
-    AnalysisSliceCollection(int indexC) {
+    AnalysisSliceCollection(int indexC, boolean subtractThreshold) {
       super(indexC, 0, 0);
+      this.subtractThreshold = subtractThreshold;
     }
 
     /**

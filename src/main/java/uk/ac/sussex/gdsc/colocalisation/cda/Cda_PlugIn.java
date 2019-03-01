@@ -261,15 +261,15 @@ public class Cda_PlugIn extends PlugInFrame {
 
   // Windows that are opened by the CDA Plug-in.
   // These should be closed on exit.
-  private static TextWindow tw;
-  private ImagePlus channel1Rgb;
-  private ImagePlus channel2Rgb;
-  private ImagePlus segmented1Rgb;
-  private ImagePlus segmented2Rgb;
-  private ImagePlus mergedChannelRgb;
-  private ImagePlus mergedSegmentedRgb;
-  private ImagePlus mergedChannelDisplacementRgb;
-  private ImagePlus mergedSegmentedDisplacementRgb;
+  private static AtomicReference<TextWindow> textWindowRef = new AtomicReference<>();
+  private int channel1Rgb;
+  private int channel2Rgb;
+  private int segmented1Rgb;
+  private int segmented2Rgb;
+  private int mergedChannelRgb;
+  private int mergedSegmentedRgb;
+  private int mergedChannelDisplacementRgb;
+  private int mergedSegmentedDisplacementRgb;
   private PlotWindow m1PlotWindow;
   private PlotWindow m2PlotWindow;
   private PlotWindow correlationPlotWindow;
@@ -473,8 +473,9 @@ public class Cda_PlugIn extends PlugInFrame {
       closeDisplayStatistics(m2Statistics, KEY_LOCATION_STATS_M2);
       closeDisplayStatistics(correlationStatistics, KEY_LOCATION_STATS_R);
 
-      if (tw != null && tw.isShowing()) {
-        tw.close();
+      final TextWindow window = textWindowRef.get();
+      if (window != null && window.isShowing()) {
+        window.close();
       }
     }
 
@@ -482,7 +483,8 @@ public class Cda_PlugIn extends PlugInFrame {
     super.close();
   }
 
-  private static void closeImagePlus(ImagePlus imp) {
+  private static void closeImagePlus(int imageId) {
+    final ImagePlus imp = WindowManager.getImage(imageId);
     if (imp != null && imp.isVisible()) {
       imp.close();
     }
@@ -811,10 +813,7 @@ public class Cda_PlugIn extends PlugInFrame {
     if (!checkDimensions(w, h, s, roiStack2)) {
       return false;
     }
-    if (!checkDimensions(w, h, s, confinedStack)) {
-      return false;
-    }
-    return true;
+    return checkDimensions(w, h, s, confinedStack);
   }
 
   private static boolean checkDimensions(int width, int height, int size, ImageStack stack) {
@@ -1267,14 +1266,6 @@ public class Cda_PlugIn extends PlugInFrame {
 
     final String id = generateId();
 
-    StringBuilder heading = null;
-
-    // Output the results to a text window
-    if (tw == null || !tw.isShowing()) {
-      heading = createHeading(heading);
-      tw = new TextWindow(PLUGIN_TITLE + " Results", heading.toString(), "", 1000, 300);
-    }
-
     final StringBuilder resultsEntry = new StringBuilder();
     addField(resultsEntry, id);
     addField(resultsEntry, getImageTitle(imp1, 0));
@@ -1299,7 +1290,12 @@ public class Cda_PlugIn extends PlugInFrame {
     addResults(resultsEntry, m2Statistics);
     addResults(resultsEntry, correlationStatistics);
 
-    tw.append(resultsEntry.toString());
+    // Output the results to a text window
+    final StringBuilder heading = new StringBuilder();
+    ImageJUtils.refresh(textWindowRef, () -> {
+      createHeading(heading);
+      return new TextWindow(PLUGIN_TITLE + " Results", heading.toString(), "", 1000, 300);
+    }).append(resultsEntry.toString());
 
     if (isSaveResults) {
       // Save results to file
@@ -1311,12 +1307,14 @@ public class Cda_PlugIn extends PlugInFrame {
         return;
       }
       final String directory = directoryPath.toString();
-      IJ.save(mergedSegmentedRgb, directory + File.separatorChar + "MergedROI.tif");
-      IJ.save(mergedChannelRgb, directory + File.separatorChar + "MergedChannel.tif");
+      IJ.save(WindowManager.getImage(mergedSegmentedRgb),
+          directory + File.separatorChar + "MergedROI.tif");
+      IJ.save(WindowManager.getImage(mergedChannelRgb),
+          directory + File.separatorChar + "MergedChannel.tif");
 
       try (
           final BufferedWriter out = Files.newBufferedWriter(Paths.get(directory, "results.txt"))) {
-        heading = createHeading(heading);
+        createHeading(heading);
         out.write(heading.toString());
         out.newLine();
         out.write(resultsEntry.toString());
@@ -1344,13 +1342,14 @@ public class Cda_PlugIn extends PlugInFrame {
     return "cda" + df.format(new Date());
   }
 
-  private static ImagePlus updateImage(ImagePlus imp, String title, ImageStack stack, boolean show,
+  private static int updateImage(int imageId, String title, ImageStack stack, boolean show,
       LutColour lutColor) {
+    ImagePlus imp = WindowManager.getImage(imageId);
     if (!show) {
       if (imp != null) {
         imp.hide();
       }
-      return null;
+      return 0;
     } else if (stack != null) {
       if (imp == null || !imp.isVisible()) {
         imp = new ImagePlus(title, stack);
@@ -1362,13 +1361,11 @@ public class Cda_PlugIn extends PlugInFrame {
         imp.setLut(LutHelper.createLut(lutColor, true));
       }
     }
-    return imp;
+    return imp.getID();
   }
 
-  private static StringBuilder createHeading(StringBuilder heading) {
-    if (heading == null) {
-      heading = new StringBuilder();
-
+  private static void createHeading(StringBuilder heading) {
+    if (heading.length() == 0) {
       addField(heading, "Exp. Id");
       addField(heading, CHOICE_CHANNEL1);
       addField(heading, CHOICE_CHANNEL2);
@@ -1398,7 +1395,6 @@ public class Cda_PlugIn extends PlugInFrame {
       addField(heading, "R limits");
       addField(heading, "R result");
     }
-    return heading;
   }
 
   private static PlotWindow refreshPlotWindow(PlotWindow plotWindow, boolean showPlotWindow,
@@ -1532,15 +1528,13 @@ public class Cda_PlugIn extends PlugInFrame {
           buffer.append(displayMin[minIndex]);
           buffer.append(")");
         }
-      } else if (roiOption.equals(OPTION_USE_ROI)) {
-        if (roiIp != null) {
-          final Rectangle r = roiIp.getRoi();
-          if (r != null) {
-            buffer.append(" (");
-            buffer.append(r.x).append(",").append(r.y).append(":").append(r.x + r.width).append(",")
-                .append(r.y + r.height);
-            buffer.append(")");
-          }
+      } else if (roiOption.equals(OPTION_USE_ROI) && roiIp != null) {
+        final Rectangle r = roiIp.getRoi();
+        if (r != null) {
+          buffer.append(" (");
+          buffer.append(r.x).append(",").append(r.y).append(":").append(r.x + r.width).append(",")
+              .append(r.y + r.height);
+          buffer.append(")");
         }
       }
     }
@@ -1740,7 +1734,7 @@ public class Cda_PlugIn extends PlugInFrame {
     subRandomSamplesCheckbox = new Checkbox();
     mainPanel.add(
         createCheckboxPanel(subRandomSamplesCheckbox, CHOICE_SUB_RANDOM_SAMPLES, subRandomSamples));
-    ItemListener itemListener = (event) -> {
+    final ItemListener itemListener = (event) -> {
       final Object actioner = event.getSource();
 
       if (actioner == null) {
@@ -1776,7 +1770,7 @@ public class Cda_PlugIn extends PlugInFrame {
     setResultsOptionsCheckbox.addItemListener(itemListener);
 
     @SuppressWarnings("unused")
-    ActionListener actionListener = event -> {
+    final ActionListener actionListener = event -> {
       final Object actioner = event.getSource();
 
       if (actioner == null) {

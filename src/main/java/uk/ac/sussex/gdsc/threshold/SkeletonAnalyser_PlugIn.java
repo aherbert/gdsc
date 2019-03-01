@@ -41,8 +41,6 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -993,26 +991,13 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     }
     if (java.awt.GraphicsEnvironment.isHeadless()) {
       resultOutput = IJ::log;
-      if (writeHeader.get()) {
-        writeHeader.set(false);
+      if (writeHeader.compareAndSet(true, false)) {
         IJ.log(createResultsHeader());
       }
     } else {
       // Atomically create a results window if needed.
-      TextWindow tw = resultsWindow.get();
-      if (tw == null || !tw.isShowing()) {
-        tw = new TextWindow(TITLE + " Results", createResultsHeader(), "", 400, 500);
-        // When it closes remove the reference to this window
-        final TextWindow closedWindow = tw;
-        tw.addWindowListener(new WindowAdapter() {
-          @Override
-          public void windowClosed(WindowEvent event) {
-            resultsWindow.compareAndSet(closedWindow, null);
-            super.windowClosed(event);
-          }
-        });
-        resultsWindow.set(tw);
-      }
+      final TextWindow tw = ImageJUtils.refresh(resultsWindow,
+          () -> new TextWindow(TITLE + " Results", createResultsHeader(), "", 400, 500));
       resultOutput = tw::append;
     }
   }

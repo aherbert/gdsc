@@ -37,6 +37,7 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Processes an image stack and applies thresholding to create a mask for each channel+frame
@@ -53,12 +54,58 @@ public class StackThreshold_PlugIn implements PlugInFilter {
   private static final int Z = 3;
   private static final int T = 4;
 
-  private static String methodOption = AutoThreshold.Method.OTSU.toString();
+  /** The plugin settings. */
+  private Settings settings;
 
-  // Options flags
-  private static boolean logThresholds;
-  private static boolean compositeColour;
-  private static boolean newImage = true;
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String methodOption;
+
+    // Options flags
+    boolean logThresholds;
+    boolean compositeColour;
+    boolean newImage;
+
+    Settings() {
+      methodOption = AutoThreshold.Method.OTSU.toString();
+      newImage = true;
+    }
+
+    Settings(Settings source) {
+      methodOption = source.methodOption;
+
+      // flags=source.flags;
+      logThresholds = source.logThresholds;
+      compositeColour = source.compositeColour;
+      newImage = source.newImage;
+    }
+
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -104,14 +151,14 @@ public class StackThreshold_PlugIn implements PlugInFilter {
         }
       }
 
-      if (newImage) {
+      if (settings.newImage) {
         final ImagePlus newImg = new ImagePlus(imp.getTitle() + ":" + method, maskStack);
         newImg.setDimensions(dimensions[C], dimensions[Z], dimensions[T]);
         if (imp.getNDimensions() > 3) {
           newImg.setOpenAsHyperStack(true);
         }
         newImg.show();
-        if (compositeColour) {
+        if (settings.compositeColour) {
           IJ.run("Make Composite", "display=Color");
         }
       } else {
@@ -132,7 +179,7 @@ public class StackThreshold_PlugIn implements PlugInFilter {
       AnalysisSliceCollection sliceCollection) {
     sliceCollection.createStack(imp);
     sliceCollection.createMask(method);
-    if (logThresholds) {
+    if (settings.logThresholds) {
       IJ.log("t" + frame + sliceCollection.getSliceName() + " threshold = "
           + sliceCollection.threshold);
     }
@@ -162,12 +209,13 @@ public class StackThreshold_PlugIn implements PlugInFilter {
         // "Shanbhag",
         AutoThreshold.Method.TRIANGLE.toString(), AutoThreshold.Method.YEN.toString()};
 
-    gd.addChoice("Method", methods, methodOption);
-    gd.addCheckbox("Log_thresholds", logThresholds);
+    settings = Settings.load();
+    gd.addChoice("Method", methods, settings.methodOption);
+    gd.addCheckbox("Log_thresholds", settings.logThresholds);
     if (imp.getDimensions()[C] > 1) {
-      gd.addCheckbox("Composite_colour", compositeColour);
+      gd.addCheckbox("Composite_colour", settings.compositeColour);
     }
-    gd.addCheckbox("New_image", newImage);
+    gd.addCheckbox("New_image", settings.newImage);
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI);
 
     gd.showDialog();
@@ -175,16 +223,17 @@ public class StackThreshold_PlugIn implements PlugInFilter {
       return new String[0];
     }
 
-    methodOption = gd.getNextChoice();
-    logThresholds = gd.getNextBoolean();
+    settings.methodOption = gd.getNextChoice();
+    settings.logThresholds = gd.getNextBoolean();
     if (imp.getDimensions()[C] > 1) {
-      compositeColour = gd.getNextBoolean();
+      settings.compositeColour = gd.getNextBoolean();
     }
-    newImage = gd.getNextBoolean();
+    settings.newImage = gd.getNextBoolean();
+    settings.save();
 
-    if (!methodOption.equals("Try all")) {
+    if (!settings.methodOption.equals("Try all")) {
       // Ensure that the string contains known methods (to avoid passing bad macro arguments)
-      methods = extractMethods(methodOption.split(" "), methods);
+      methods = extractMethods(settings.methodOption.split(" "), methods);
     } else {
       // Shift the array to remove the try all option
       final String[] newMethods = new String[methods.length - 1];
@@ -200,7 +249,7 @@ public class StackThreshold_PlugIn implements PlugInFilter {
 
     // Cannot update original with more than one method
     if (methods.length > 1) {
-      newImage = true;
+      settings.newImage = true;
     }
 
     return methods;

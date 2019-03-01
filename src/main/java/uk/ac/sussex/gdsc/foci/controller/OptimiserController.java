@@ -24,6 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci.controller;
 
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.foci.FindFociOptimiser_PlugIn;
 import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
@@ -112,6 +113,7 @@ public class OptimiserController extends FindFociController {
   }
 
   /** {@inheritDoc} */
+  @Nullable
   @Override
   public int[] getImageLimits(int[] limits) {
     return null;

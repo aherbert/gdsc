@@ -651,7 +651,8 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       }
       // MEAN => multiply by nPixels and sum, divide at end by nPixels
       if (values[1] != null) {
-        summary.addValue(ResultsTable.MEAN, data[1] /= n);
+        data[1] /= n;
+        summary.addValue(ResultsTable.MEAN, data[1]);
       }
       // MIN => Find min
       if (values[2] != null) {
@@ -746,8 +747,9 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     BufferedWriter histogramWriter = createOutput(summaryFilename);
     int id = 1;
     for (int i = 0; i < order.size(); i++) {
-      final double value = order.getQuick(i);
-      histogramWriter = writeHistogram(histogramWriter, id++, value, summaryHistogram.get(value));
+      final double particleValue = order.getQuick(i);
+      histogramWriter =
+          writeHistogram(histogramWriter, id++, particleValue, summaryHistogram.get(particleValue));
     }
     close(histogramWriter);
   }

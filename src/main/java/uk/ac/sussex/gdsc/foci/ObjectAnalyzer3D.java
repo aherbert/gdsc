@@ -467,7 +467,7 @@ public class ObjectAnalyzer3D {
    * @return The image depth (maxz).
    */
   public int getMaxZ() {
-    return maxy;
+    return maxz;
   }
 
   /**

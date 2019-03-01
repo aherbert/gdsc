@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.help.UrlUtils;
 
@@ -54,7 +55,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
   private static final String TITLE = "Spot Pairs";
-  private static TextWindow resultsWindow;
+  private static AtomicReference<TextWindow> resultsWindowRef = new AtomicReference<>();
 
   private ImagePlus imp;
 
@@ -336,12 +337,12 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
     });
 
     // Show the results in a table
-    createResultsWindow(cal);
+    final TextWindow resultsWindow = createResultsWindow(cal);
 
     // Report the results
     resultsWindow.append(imp.getTitle());
     for (final Cluster c : candidates) {
-      addResult(c);
+      addResult(resultsWindow, c);
     }
 
     // The final processing mode of ImageJ restores the image ROI so kill it again
@@ -350,10 +351,9 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
     }
   }
 
-  private static void createResultsWindow(Calibration cal) {
-    if (resultsWindow == null || !resultsWindow.isShowing()) {
-      resultsWindow = new TextWindow(TITLE, createResultsHeader(cal), "", 600, 500);
-    }
+  private static TextWindow createResultsWindow(Calibration cal) {
+    return ImageJUtils.refresh(resultsWindowRef,
+        () -> new TextWindow(TITLE, createResultsHeader(cal), "", 600, 500));
   }
 
   private static String createResultsHeader(Calibration cal) {
@@ -370,7 +370,7 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
     return sb.toString();
   }
 
-  private void addResult(Cluster cluster) {
+  private void addResult(TextWindow resultsWindow, Cluster cluster) {
     final ClusterPoint p1 = cluster.head;
     if (cluster.size == 1) {
       resultsWindow.append(String.format("\t%d\t%.0f\t%.0f", p1.id, p1.x, p1.y));

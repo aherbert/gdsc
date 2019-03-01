@@ -56,6 +56,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Analyses an image using a given mask.
@@ -66,8 +69,8 @@ import java.util.List;
  */
 public class ThreadAnalyser_PlugIn implements PlugIn {
   private static final String TITLE = "Thread Analyser";
-  private static TextWindow resultsWindow;
-  private static boolean writeHeader = true;
+  private static AtomicReference<TextWindow> resultsWindowRef = new AtomicReference<>();
+  private static AtomicBoolean writeHeader = new AtomicBoolean(true);
 
   private static String[] ignoreSuffix =
       new String[] {"EDM", "SkeletonNodeMap", "SkeletonMap", "Threads", "Objects"};
@@ -491,7 +494,9 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
 
     BufferedWriter out = createResultsFile();
 
-    createResultsWindow();
+    final Consumer<String> output = createResultsWindow();
+    final StringBuilder sb = new StringBuilder();
+
     int id = 1;
     final int[] maxima = new int[2];
     final int[] objectMaxima = new int[2];
@@ -543,7 +548,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
         out = saveResult(out, "Object Maxima", objectMaximaDistances);
       }
 
-      addResult(id, line, maxima, objectMaxima, imageStats, edmStats);
+      addResult(output, sb, id, line, maxima, objectMaxima, imageStats, edmStats);
 
       id++;
     }
@@ -782,15 +787,15 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     }
   }
 
-  private static void createResultsWindow() {
+  private static Consumer<String> createResultsWindow() {
     if (java.awt.GraphicsEnvironment.isHeadless()) {
-      if (writeHeader) {
-        writeHeader = false;
+      if (writeHeader.compareAndSet(true, false)) {
         IJ.log(createResultsHeader());
       }
-    } else if (resultsWindow == null || !resultsWindow.isShowing()) {
-      resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 400, 500);
+      return IJ::log;
     }
+    return ImageJUtils.refresh(resultsWindowRef,
+        () -> new TextWindow(TITLE + " Results", createResultsHeader(), "", 400, 500))::append;
   }
 
   private static String createResultsHeader() {
@@ -816,9 +821,9 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     return sb.toString();
   }
 
-  private static void addResult(int id, float[] line, int[] maxima, int[] objectMaxima,
-      double[] imageStats, double[] edmStats) {
-    final StringBuilder sb = new StringBuilder();
+  private static void addResult(Consumer<String> output, StringBuilder sb, int id, float[] line,
+      int[] maxima, int[] objectMaxima, double[] imageStats, double[] edmStats) {
+    sb.setLength(0);
     sb.append(id).append('\t');
     for (int i = 0; i < 4; i++) {
       sb.append((int) line[i]).append('\t');
@@ -836,11 +841,6 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     for (int i = 0; i < 4; i++) {
       sb.append(IJ.d2s(edmStats[i], 2)).append('\t');
     }
-
-    if (java.awt.GraphicsEnvironment.isHeadless()) {
-      IJ.log(sb.toString());
-    } else {
-      resultsWindow.append(sb.toString());
-    }
+    output.accept(sb.toString());
   }
 }

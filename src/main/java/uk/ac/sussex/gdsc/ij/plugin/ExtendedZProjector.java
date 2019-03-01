@@ -200,7 +200,7 @@ public class ExtendedZProjector extends ZProjectorCopy {
   @Override
   protected ImagePlus doMedianProjection() {
     // Override to change the method for accessing pixel values to getf()
-    return doProjection("median", values -> median(values));
+    return doProjection("median", this::median);
   }
 
   /**

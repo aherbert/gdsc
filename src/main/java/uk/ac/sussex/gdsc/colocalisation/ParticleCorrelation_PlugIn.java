@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.colocalisation;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.foci.ObjectAnalyzer3D;
@@ -47,6 +48,8 @@ import org.apache.commons.math3.stat.correlation.SpearmansCorrelation;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * For all particles in a mask (defined by their unique pixel value), sum the pixel intensity in two
@@ -55,25 +58,81 @@ import java.awt.Point;
 public class ParticleCorrelation_PlugIn implements PlugIn {
   private static final String TITLE = "Particle Correlation";
 
-  private static String maskTitle1 = "";
-  private static String imageTitle1 = "";
-  private static String imageTitle2 = "";
-  private static int cImage1 = 1;
-  private static int cImage2 = 2;
-  private static boolean eightConnected;
-  private static int minSize;
-  private static boolean showDataTable = true;
-  private static boolean showPlot;
-  private static boolean showObjects;
+  private static AtomicReference<TextWindow> twSummaryRef = new AtomicReference<>();
+  private static AtomicReference<TextWindow> twDataTableRef = new AtomicReference<>();
 
-  private static TextWindow twSummary;
-  private static TextWindow twDataTable;
+  private TextWindow twSummary;
+  private TextWindow twDataTable;
 
   private ImagePlus maskImp;
   private ImagePlus imageImp1;
   private ImagePlus imageImp2;
   private int c1;
   private int c2;
+  /** The plugin settings. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String maskTitle1 = "";
+    String imageTitle1 = "";
+    String imageTitle2 = "";
+    int imageC1 = 1;
+    int imageC2 = 2;
+    boolean eightConnected;
+    int minSize;
+    boolean showDataTable = true;
+    boolean showPlot;
+    boolean showObjects;
+
+    Settings() {
+      maskTitle1 = "";
+      imageTitle1 = "";
+      imageTitle2 = "";
+      imageC1 = 1;
+      imageC2 = 2;
+      showDataTable = true;
+    }
+
+    Settings(Settings source) {
+      maskTitle1 = source.maskTitle1;
+      imageTitle1 = source.imageTitle1;
+      imageTitle2 = source.imageTitle2;
+      imageC1 = source.imageC1;
+      imageC2 = source.imageC2;
+      eightConnected = source.eightConnected;
+      minSize = source.minSize;
+      showDataTable = source.showDataTable;
+      showPlot = source.showPlot;
+      showObjects = source.showObjects;
+    }
+
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   @Override
   public void run(String arg) {
@@ -100,32 +159,34 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
     final String[] imageList = ImageJUtils.getImageList(ImageJUtils.GREY_SCALE, null);
     final String[] maskList = ImageJUtils.getImageList(ImageJUtils.GREY_8_16, null);
 
-    gd.addChoice("Particle_mask", maskList, maskTitle1);
-    gd.addChoice("Particle_image1", imageList, imageTitle1);
-    gd.addChoice("Particle_image2", imageList, imageTitle2);
-    gd.addCheckbox("Eight_connected", eightConnected);
-    gd.addNumericField("Min_object_size", minSize, 0);
-    gd.addCheckbox("Show_data_table", showDataTable);
-    gd.addCheckbox("Show_plot", showPlot);
-    gd.addCheckbox("Show_objects", showObjects);
+    settings = Settings.load();
+    gd.addChoice("Particle_mask", maskList, settings.maskTitle1);
+    gd.addChoice("Particle_image1", imageList, settings.imageTitle1);
+    gd.addChoice("Particle_image2", imageList, settings.imageTitle2);
+    gd.addCheckbox("Eight_connected", settings.eightConnected);
+    gd.addNumericField("Min_object_size", settings.minSize, 0);
+    gd.addCheckbox("Show_data_table", settings.showDataTable);
+    gd.addCheckbox("Show_plot", settings.showPlot);
+    gd.addCheckbox("Show_objects", settings.showObjects);
     gd.showDialog();
 
     if (gd.wasCanceled()) {
       return false;
     }
 
-    maskTitle1 = gd.getNextChoice();
-    imageTitle1 = gd.getNextChoice();
-    imageTitle2 = gd.getNextChoice();
-    eightConnected = gd.getNextBoolean();
-    minSize = (int) gd.getNextNumber();
-    showDataTable = gd.getNextBoolean();
-    showPlot = gd.getNextBoolean();
-    showObjects = gd.getNextBoolean();
+    settings.maskTitle1 = gd.getNextChoice();
+    settings.imageTitle1 = gd.getNextChoice();
+    settings.imageTitle2 = gd.getNextChoice();
+    settings.eightConnected = gd.getNextBoolean();
+    settings.minSize = (int) gd.getNextNumber();
+    settings.showDataTable = gd.getNextBoolean();
+    settings.showPlot = gd.getNextBoolean();
+    settings.showObjects = gd.getNextBoolean();
+    settings.save();
 
-    maskImp = WindowManager.getImage(maskTitle1);
-    imageImp1 = WindowManager.getImage(imageTitle1);
-    imageImp2 = WindowManager.getImage(imageTitle2);
+    maskImp = WindowManager.getImage(settings.maskTitle1);
+    imageImp1 = WindowManager.getImage(settings.imageTitle1);
+    imageImp2 = WindowManager.getImage(settings.imageTitle2);
 
     if (maskImp == null) {
       IJ.error(TITLE, "No particle mask specified");
@@ -141,7 +202,7 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
     }
 
     // We will use the current channel unless the two input images are the same image.
-    if (imageTitle1.equals(imageTitle2)) {
+    if (settings.imageTitle1.equals(settings.imageTitle2)) {
       gd = new GenericDialog(TITLE);
 
       gd.addMessage("Same image detected for the two input\nSelect the channels for analysis");
@@ -151,8 +212,8 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
         list[i] = Integer.toString(i + 1);
       }
 
-      c1 = Math.min(n, cImage1);
-      c2 = Math.min(n, cImage2);
+      c1 = Math.min(n, settings.imageC1);
+      c2 = Math.min(n, settings.imageC2);
       gd.addChoice("Channel_1", list, list[c1 - 1]);
       gd.addChoice("Channel_2", list, list[c2 - 1]);
       gd.showDialog();
@@ -161,8 +222,8 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
         return false;
       }
 
-      c1 = cImage1 = gd.getNextChoiceIndex() + 1;
-      c2 = cImage2 = gd.getNextChoiceIndex() + 1;
+      c1 = settings.imageC1 = gd.getNextChoiceIndex() + 1;
+      c2 = settings.imageC2 = gd.getNextChoiceIndex() + 1;
     } else {
       c1 = imageImp1.getChannel();
       c2 = imageImp2.getChannel();
@@ -195,8 +256,9 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
     final int maxx = maskImp.getWidth();
     final int maxy = maskImp.getHeight();
     final int maxz = maskImp.getNSlices();
-    final ObjectAnalyzer3D oa = new ObjectAnalyzer3D(mask, maxx, maxy, maxz, eightConnected);
-    oa.setMinObjectSize(minSize);
+    final ObjectAnalyzer3D oa =
+        new ObjectAnalyzer3D(mask, maxx, maxy, maxz, settings.eightConnected);
+    oa.setMinObjectSize(settings.minSize);
     final int[] objectMask = oa.getObjectMask();
 
     final int[] count = new int[oa.getMaxObject()];
@@ -229,18 +291,21 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
 
     addSummary(title, sum1, sum2);
 
-    if (showDataTable) {
-      for (int i = 0; i < count.length; i++) {
-        final double x = sumx[i] / count[i];
-        final double y = sumy[i] / count[i];
-        // Centre on the slice
-        final double z = 1 + sumz[i] / count[i];
-        addResult(title, i + 1, getValue(mask, objectMask, i + 1), x, y, z, count[i], sum1[i],
-            sum2[i]);
+    if (settings.showDataTable) {
+      try (final BufferedTextWindow output = new BufferedTextWindow(twDataTable)) {
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < count.length; i++) {
+          final double x = sumx[i] / count[i];
+          final double y = sumy[i] / count[i];
+          // Centre on the slice
+          final double z = 1 + sumz[i] / count[i];
+          addResult(output::append, sb, title, i + 1, getValue(mask, objectMask, i + 1), x, y, z,
+              count[i], sum1[i], sum2[i]);
+        }
       }
     }
 
-    if (showPlot) {
+    if (settings.showPlot) {
       final String plotTitle = TITLE + " Plot";
       final Plot plot = new Plot(plotTitle, getName(imageImp1, c1), getName(imageImp2, c2));
       final double[] limitsx = MathUtils.limits(sum1);
@@ -253,7 +318,7 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
       ImageJUtils.display(plotTitle, plot);
     }
 
-    if (showObjects) {
+    if (settings.showObjects) {
       final ImageStack stack = new ImageStack(maxx, maxy, maxz);
       for (int z = 0, i = 0; z < maxz; z++) {
         final ImageProcessor ip = (oa.getMaxObject() < 256) ? new ByteProcessor(maxx, maxy)
@@ -306,20 +371,20 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
     return image;
   }
 
-  private static void createResultsTable() {
-    if (twSummary == null || !twSummary.isShowing()) {
-      twSummary = new TextWindow(TITLE + " Summary",
-          "Mask\tImage1\tImage2\tnParticles\tSpearman\tpSpearman\tR\tpR", "", 700, 250);
-    }
-    if (!showDataTable) {
+  private void createResultsTable() {
+    twSummary = ImageJUtils.refresh(twSummaryRef, () -> new TextWindow(TITLE + " Summary",
+        "Mask\tImage1\tImage2\tnParticles\tSpearman\tpSpearman\tR\tpR", "", 700, 250));
+    if (!settings.showDataTable) {
       return;
     }
-    if (twDataTable == null || !twDataTable.isShowing()) {
-      twDataTable = new TextWindow(TITLE + " Results",
+    twDataTable = ImageJUtils.refresh(twDataTableRef, () -> {
+      final TextWindow window = new TextWindow(TITLE + " Results",
           "Mask\tImage1\tImage2\tID\tValue\tx\ty\tz\tN\tSum1\tSum2", "", 700, 500);
+      // Position relative to summary
       final Point p = twSummary.getLocation();
-      twDataTable.setLocation(p.x, p.y + twSummary.getHeight());
-    }
+      window.setLocation(p.x, p.y + twSummary.getHeight());
+      return window;
+    });
   }
 
   private String createTitle() {
@@ -355,7 +420,7 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
     return 0;
   }
 
-  private static void addSummary(String title, double[] sum1, double[] sum2) {
+  private void addSummary(String title, double[] sum1, double[] sum2) {
     final BlockRealMatrix rm = new BlockRealMatrix(sum1.length, 2);
     rm.setColumn(0, sum1);
     rm.setColumn(1, sum2);
@@ -373,9 +438,10 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
     twSummary.append(sb.toString());
   }
 
-  private static void addResult(String title, int id, int value, double x, double y, double z,
-      int count, double s1, double s2) {
-    final StringBuilder sb = new StringBuilder(title);
+  private static void addResult(Consumer<String> output, StringBuilder sb, String title, int id,
+      int value, double x, double y, double z, int count, double s1, double s2) {
+    sb.setLength(0);
+    sb.append(title);
     sb.append(id).append('\t');
     sb.append(value).append('\t');
     sb.append(MathUtils.rounded(x)).append('\t');
@@ -384,6 +450,6 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
     sb.append(count).append('\t');
     sb.append(s1).append('\t');
     sb.append(s2);
-    twDataTable.append(sb.toString());
+    output.accept(sb.toString());
   }
 }

@@ -25,12 +25,13 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.gui.GenericDialog;
 import ij.gui.Line;
 import ij.gui.Overlay;
 import ij.measure.Calibration;
@@ -43,6 +44,7 @@ import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.commons.math3.linear.RealVector;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * For each unique pixel value in the mask (defining an object), analyse the pixels values and
@@ -55,20 +57,66 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
 
   private static final int FLAGS = DOES_16 + DOES_8G;
 
-  private static final String[] sortMethods = new String[] {"Value", "Area", "CoM"};
-  private static final int SORT_VALUE = 0;
-  private static final int SORT_AREA = 1;
-  private static final int SORT_COM = 2;
-
-  private static double mergeDistance;
-  private static boolean showOverlay = true;
-  private static boolean clearTable = true;
-  private static boolean showVectors;
-  private static int sortMethod = SORT_VALUE;
-
-  private static TextWindow resultsWindow;
+  private static AtomicReference<TextWindow> resultsWindowRef = new AtomicReference<>();
 
   private ImagePlus imp;
+
+  /** The plugin settings. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    static final String[] sortMethods = new String[] {"Value", "Area", "CoM"};
+    static final int SORT_VALUE = 0;
+    static final int SORT_AREA = 1;
+    static final int SORT_COM = 2;
+
+    double mergeDistance;
+    boolean showOverlay;
+    boolean clearTable;
+    boolean showVectors;
+    int sortMethod;
+
+    Settings() {
+      showOverlay = true;
+      clearTable = true;
+      sortMethod = SORT_VALUE;
+    }
+
+    Settings(Settings source) {
+      mergeDistance = source.mergeDistance;
+      showOverlay = source.showOverlay;
+      clearTable = source.clearTable;
+      showVectors = source.showVectors;
+      sortMethod = source.sortMethod;
+    }
+
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   private static class MaskObject {
     double cx;
@@ -158,19 +206,19 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     return FLAGS;
   }
 
-  private static boolean showDialog() {
-    final GenericDialog gd = new GenericDialog(TITLE);
+  private boolean showDialog() {
+    final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
     gd.addMessage(
         "For each object defined with a unique pixel value,\ncompute the dimensions along the "
             + "axes of the inertia tensor");
 
-    gd.addSlider("Merge_distance", 0, 15, mergeDistance);
-    gd.addCheckbox("Show_overlay", showOverlay);
-    gd.addCheckbox("Clear_table", clearTable);
-    gd.addCheckbox("Show_vectors", showVectors);
-    gd.addChoice("Sort_method", sortMethods,
-        sortMethods[Math.max(0, Math.min(sortMethod, sortMethods.length - 1))]);
+    settings = Settings.load();
+    gd.addSlider("Merge_distance", 0, 15, settings.mergeDistance);
+    gd.addCheckbox("Show_overlay", settings.showOverlay);
+    gd.addCheckbox("Clear_table", settings.clearTable);
+    gd.addCheckbox("Show_vectors", settings.showVectors);
+    gd.addChoice("Sort_method", Settings.sortMethods, settings.sortMethod);
 
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI);
     gd.showDialog();
@@ -179,11 +227,12 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
       return false;
     }
 
-    mergeDistance = Math.abs(gd.getNextNumber());
-    showOverlay = gd.getNextBoolean();
-    clearTable = gd.getNextBoolean();
-    showVectors = gd.getNextBoolean();
-    sortMethod = gd.getNextChoiceIndex();
+    settings.mergeDistance = Math.abs(gd.getNextNumber());
+    settings.showOverlay = gd.getNextBoolean();
+    settings.clearTable = gd.getNextBoolean();
+    settings.showVectors = gd.getNextBoolean();
+    settings.sortMethod = gd.getNextChoiceIndex();
+    settings.save();
 
     return true;
   }
@@ -226,12 +275,6 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
       max--;
     }
 
-    createResultsWindow();
-
-    if (clearTable) {
-      clearResultsWindow();
-    }
-
     // For each object
     MaskObject[] objects = new MaskObject[max - min + 1];
     for (int object = min; object <= max; object++) {
@@ -260,7 +303,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     }
 
     // Iteratively join closest objects
-    if (mergeDistance > 0) {
+    if (settings.mergeDistance > 0) {
       while (true) {
         // Find closest pairs
         int ii = -1;
@@ -285,7 +328,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
           }
         }
 
-        if (ii < 0 || Math.sqrt(minDistance) > mergeDistance) {
+        if (ii < 0 || Math.sqrt(minDistance) > settings.mergeDistance) {
           break;
         }
 
@@ -327,7 +370,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     objects = Arrays.copyOf(objects, newLength);
 
     // Output lines
-    final Overlay overlay = (showOverlay) ? new Overlay() : null;
+    final Overlay overlay = (settings.showOverlay) ? new Overlay() : null;
 
     // Compute the bounding box for each object. This increases the speed of processing later
     for (final MaskObject o : objects) {
@@ -344,7 +387,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     }
 
     // Sort the objects
-    if (sortMethod == SORT_COM) {
+    if (settings.sortMethod == Settings.SORT_COM) {
       Arrays.sort(objects, (o1, o2) -> {
         if (o1.cx < o2.cx) {
           return -1;
@@ -366,7 +409,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
         }
         return 0;
       });
-    } else if (sortMethod == SORT_AREA) {
+    } else if (settings.sortMethod == Settings.SORT_AREA) {
       Arrays.sort(objects, (o1, o2) -> {
         if (o1.size < o2.size) {
           return -1;
@@ -390,6 +433,11 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     } else {
       calx = caly = calz = 1;
       units = "px";
+    }
+
+    final TextWindow resultsWindow = createResultsWindow();
+    if (settings.clearTable) {
+      resultsWindow.getTextPanel().clear();
     }
 
     // For each object
@@ -539,7 +587,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
           direction1[i] = (int) direction1[i] + 0.5;
         }
 
-        if (showVectors) {
+        if (settings.showVectors) {
           for (int i = 0; i < 3; i++) {
             sb.append('\t').append(MathUtils.rounded(direction1[i]));
           }
@@ -572,24 +620,17 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
       resultsWindow.append(sb.toString());
     }
 
-    if (showOverlay) {
+    if (settings.showOverlay) {
       imp.setOverlay(overlay);
     }
   }
 
-  private static void createResultsWindow() {
-    if (resultsWindow == null || !resultsWindow.isShowing()) {
-      resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300);
-    }
+  private TextWindow createResultsWindow() {
+    return ImageJUtils.refresh(resultsWindowRef,
+        () -> new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300));
   }
 
-  private static void clearResultsWindow() {
-    if (resultsWindow != null && resultsWindow.isShowing()) {
-      resultsWindow.getTextPanel().clear();
-    }
-  }
-
-  private static String createResultsHeader() {
+  private String createResultsHeader() {
     final StringBuilder sb = new StringBuilder();
     sb.append("Image");
     sb.append("\tUnits");
@@ -597,7 +638,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     sb.append("\tArea");
     sb.append("\tcx\tcy\tcz");
     for (int i = 1; i <= 3; i++) {
-      if (showVectors) {
+      if (settings.showVectors) {
         sb.append("\tv").append(i).append(" lx");
         sb.append("\tv").append(i).append(" ly");
         sb.append("\tv").append(i).append(" lz");

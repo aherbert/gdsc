@@ -28,6 +28,7 @@ import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ThresholdUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.Correlator;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.utils.SliceCollection;
 
 import ij.IJ;
@@ -384,7 +385,7 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
       m2 = (double) sum2 / sum2A;
     }
 
-    return new double[] {correlator.getN(), (100.0 * correlator.getN() / total),
+    return new double[] {correlator.getN(), MathUtils.div0(100.0 * correlator.getN(), total),
         correlator.getCorrelation(), m1, m2};
   }
 

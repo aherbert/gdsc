@@ -43,7 +43,7 @@ import java.util.concurrent.BlockingQueue;
 public class CdaEngine {
   private static final String INTERRUPTED_MSG = "Unexpected interruption";
 
-  private BlockingQueue<CdaJob> jobs;
+  private final BlockingQueue<CdaJob> jobs;
   private final List<CdaWorker> workers;
   private List<Thread> threads;
 
@@ -93,7 +93,7 @@ public class CdaEngine {
       return;
     }
     threads = new ArrayList<>(workers.size());
-    for (CdaWorker worker : workers) {
+    for (final CdaWorker worker : workers) {
       final Thread t = new Thread(worker);
       this.threads.add(t);
       t.start();

@@ -97,11 +97,9 @@ public class StackAverage_PlugIn implements PlugInFilter {
 
     for (int i = 0; i < wList.length; i++) {
       final ImagePlus imp2 = WindowManager.getImage(wList[i]);
-      if (imp2 != null) {
-        if (!imp2.getTitle().startsWith("Stack Average")
-            && sameDimensions(dimensions, imp2.getDimensions()) && bitDepth == imp2.getBitDepth()) {
-          images.add(imp2);
-        }
+      if (imp2 != null && (!imp2.getTitle().startsWith("Stack Average")
+          && sameDimensions(dimensions, imp2.getDimensions()) && bitDepth == imp2.getBitDepth())) {
+        images.add(imp2);
       }
     }
 

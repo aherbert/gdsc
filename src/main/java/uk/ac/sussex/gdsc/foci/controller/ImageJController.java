@@ -52,7 +52,7 @@ import java.util.concurrent.Future;
  */
 public class ImageJController extends FindFociController {
   /** The executor service for the preview. */
-  private ExecutorService executor = Executors.newFixedThreadPool(1);
+  private final ExecutorService executor = Executors.newFixedThreadPool(1);
   /** The runner for the preview. Modifications to this should be synchronized. */
   private FindFociRunner runner;
   /**
@@ -121,7 +121,7 @@ public class ImageJController extends FindFociController {
     }
 
     // Set-up the FindFoci variables
-    FindFociOptions options = model.getOptions();
+    final FindFociOptions options = model.getOptions();
     if (options.getOptions().isEmpty()) {
       IJ.error("Error", "No results options chosen");
       return;

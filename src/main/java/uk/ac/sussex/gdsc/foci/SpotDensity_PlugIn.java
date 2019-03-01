@@ -25,7 +25,9 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -50,6 +52,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Output the density around spots within a mask region. Spots are defined using FindFoci results
@@ -61,15 +64,64 @@ import java.util.List;
  */
 public class SpotDensity_PlugIn implements PlugIn {
   private static final String TITLE = "Spot Density";
-  private static TextWindow resultsWindow;
+  private static AtomicReference<TextWindow> resultsWindowRef = new AtomicReference<>();
 
-  private static String resultsName1 = "";
-  private static String resultsName2 = "";
-  private static String maskImage = "";
-  private static double distance = 15;
-  private static double interval = 1.5;
+  /** The results of analysis. This can be updated by running the plugin. */
+  private static final ArrayList<PairCorrelation> results1 = new ArrayList<>();
 
-  private static ArrayList<PairCorrelation> results = new ArrayList<>();
+  /** The plugin settings. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    String resultsName1;
+    String resultsName2;
+    String maskImage;
+    double distance;
+    double interval;
+
+    Settings() {
+      resultsName1 = "";
+      resultsName2 = "";
+      maskImage = "";
+      distance = 15;
+      interval = 1.5;
+    }
+
+    Settings(Settings source) {
+      resultsName1 = source.resultsName1;
+      resultsName2 = source.resultsName2;
+      maskImage = source.maskImage;
+      distance = source.distance;
+      interval = source.interval;
+    }
+
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   private static class PairCorrelation {
     /** The number of points. */
@@ -137,33 +189,34 @@ public class SpotDensity_PlugIn implements PlugIn {
       return;
     }
 
-    final FloatProcessor fp = createDistanceMap(imp, maskImage);
+    final FloatProcessor fp = createDistanceMap(imp, settings.maskImage);
     if (fp == null) {
       return;
     }
 
     // Get the foci
-    final Foci[] foci1 = getFoci(resultsName1);
-    final Foci[] foci2 = getFoci(resultsName2);
+    final Foci[] foci1 = getFoci(settings.resultsName1);
+    final Foci[] foci2 = getFoci(settings.resultsName2);
 
     if (foci1 == null || foci2 == null) {
       return;
     }
 
-    analyse(foci1, foci2, resultsName1.equals(resultsName2), fp);
+    analyse(foci1, foci2, settings.resultsName1.equals(settings.resultsName2), fp);
   }
 
-  private static boolean showDialog(String[] names, String[] maskImageList) {
+  private boolean showDialog(String[] names, String[] maskImageList) {
     final GenericDialog gd = new GenericDialog(TITLE);
 
     gd.addMessage(
         "Analyses spots within a mask/ROI region\nand computes density and closest distances.");
 
-    gd.addChoice("Results_name_1", names, resultsName1);
-    gd.addChoice("Results_name_2", names, resultsName2);
-    gd.addChoice("Mask", maskImageList, maskImage);
-    gd.addNumericField("Distance", distance, 2, 6, "pixels");
-    gd.addNumericField("Interval", interval, 2, 6, "pixels");
+    settings = Settings.load();
+    gd.addChoice("Results_name_1", names, settings.resultsName1);
+    gd.addChoice("Results_name_2", names, settings.resultsName2);
+    gd.addChoice("Mask", maskImageList, settings.maskImage);
+    gd.addNumericField("Distance", settings.distance, 2, 6, "pixels");
+    gd.addNumericField("Interval", settings.interval, 2, 6, "pixels");
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.FIND_FOCI);
 
     gd.showDialog();
@@ -171,11 +224,13 @@ public class SpotDensity_PlugIn implements PlugIn {
       return false;
     }
 
-    resultsName1 = gd.getNextChoice();
-    resultsName2 = gd.getNextChoice();
-    maskImage = gd.getNextChoice();
-    distance = gd.getNextNumber();
-    interval = gd.getNextNumber();
+    settings.resultsName1 = gd.getNextChoice();
+    settings.resultsName2 = gd.getNextChoice();
+    settings.maskImage = gd.getNextChoice();
+    settings.distance = gd.getNextNumber();
+    settings.interval = gd.getNextNumber();
+    settings.save();
+
     return true;
   }
 
@@ -218,6 +273,7 @@ public class SpotDensity_PlugIn implements PlugIn {
     return edm.makeFloatEDM(bp, 0, true);
   }
 
+  @Nullable
   private static Foci[] getFoci(String resultsName) {
     final FindFociMemoryResults memoryResults = FindFoci_PlugIn.getResults(resultsName);
     if (memoryResults == null) {
@@ -249,9 +305,9 @@ public class SpotDensity_PlugIn implements PlugIn {
    * @param identical True if the two sets are the same foci (self comparisons will be ignored)
    * @param map the map containing the distance to the edge of the mask (analysis) region
    */
-  private static void analyse(Foci[] foci1, Foci[] foci2, boolean identical, FloatProcessor map) {
-    final int nbins = (int) (distance / interval) + 1;
-    final double maxDistance2 = distance * distance;
+  private void analyse(Foci[] foci1, Foci[] foci2, boolean identical, FloatProcessor map) {
+    final int nbins = (int) (settings.distance / settings.interval) + 1;
+    final double maxDistance2 = settings.distance * settings.distance;
     final int[] h1 = new int[nbins];
     final int[] h2 = new int[nbins];
 
@@ -271,7 +327,7 @@ public class SpotDensity_PlugIn implements PlugIn {
     for (int i = foci1.length; i-- > 0;) {
       final Foci m = foci1[i];
       // Ignore molecules that are near the edge of the analysis region
-      if (map.getPixelValue(m.x, m.y) < distance) {
+      if (map.getPixelValue(m.x, m.y) < settings.distance) {
         continue;
       }
       n1++;
@@ -286,7 +342,7 @@ public class SpotDensity_PlugIn implements PlugIn {
 
         final double d2 = m.distance2(m2);
         if (d2 < maxDistance2) {
-          h1[(int) (Math.sqrt(d2) / interval)]++;
+          h1[(int) (Math.sqrt(d2) / settings.interval)]++;
         }
         if (d2 < min) {
           min = d2;
@@ -295,8 +351,8 @@ public class SpotDensity_PlugIn implements PlugIn {
 
       if (min != Double.POSITIVE_INFINITY) {
         min = Math.sqrt(min);
-        if (min < distance) {
-          h2[(int) (min / interval)]++;
+        if (min < settings.distance) {
+          h2[(int) (min / settings.interval)]++;
         }
         distances[count++] = min;
       }
@@ -304,7 +360,7 @@ public class SpotDensity_PlugIn implements PlugIn {
 
     double[] radii = new double[nbins + 1];
     for (int i = 0; i <= nbins; i++) {
-      radii[i] = i * interval;
+      radii[i] = i * settings.interval;
     }
     double[] pc = new double[nbins];
     final double[] dMin = new double[nbins];
@@ -342,7 +398,7 @@ public class SpotDensity_PlugIn implements PlugIn {
       }
     }
 
-    final double avDensity = (double) n2 / area;
+    final double avDensity = MathUtils.div0(n2, area);
 
     // Normalisation of the density chart to produce the pair correlation.
     // Get the maximum response for the summary.
@@ -356,9 +412,13 @@ public class SpotDensity_PlugIn implements PlugIn {
       }
     }
 
-    // Store the result
+    // Store the result atomically
     final PairCorrelation pairCorrelation = new PairCorrelation(n2, area, radii, pc);
-    results.add(pairCorrelation);
+    int id;
+    synchronized (results1) {
+      results1.add(pairCorrelation);
+      id = results1.size();
+    }
 
     // Display
     final PlotWindow pw2 = showPairCorrelation(pairCorrelation);
@@ -368,15 +428,14 @@ public class SpotDensity_PlugIn implements PlugIn {
     pw2.setLocation(p);
 
     // Table of results
-    createResultsWindow();
     final StringBuilder sb = new StringBuilder();
-    sb.append(results.size());
+    sb.append(id);
     sb.append('\t').append(foci1.length);
     sb.append('\t').append(n1);
     sb.append('\t').append(foci2.length);
     sb.append('\t').append(n2);
-    sb.append('\t').append(IJ.d2s(distance));
-    sb.append('\t').append(IJ.d2s(interval));
+    sb.append('\t').append(IJ.d2s(settings.distance));
+    sb.append('\t').append(IJ.d2s(settings.interval));
     sb.append('\t').append(area);
     sb.append('\t').append(IJ.d2s(avDensity, -3));
     sb.append('\t').append(IJ.d2s(max, 3));
@@ -386,9 +445,9 @@ public class SpotDensity_PlugIn implements PlugIn {
     for (int i = 0; i < count; i++) {
       sum += distances[i];
     }
-    sb.append('\t').append(IJ.d2s(sum / count, 2));
+    sb.append('\t').append(IJ.d2s(MathUtils.div0(sum, count), 2));
 
-    resultsWindow.append(sb.toString());
+    createResultsWindow().append(sb.toString());
   }
 
   private static PlotWindow showPairCorrelation(PairCorrelation pc) {
@@ -403,9 +462,10 @@ public class SpotDensity_PlugIn implements PlugIn {
     return ImageJUtils.display(TITLE + " " + title, plot2);
   }
 
-  private static void createResultsWindow() {
-    if (resultsWindow == null || !resultsWindow.isShowing()) {
-      resultsWindow = new TextWindow(TITLE + " Summary", createResultsHeader(), "", 700, 300);
+  private static TextWindow createResultsWindow() {
+    return ImageJUtils.refresh(resultsWindowRef, () -> {
+      final TextWindow resultsWindow =
+          new TextWindow(TITLE + " Summary", createResultsHeader(), "", 700, 300);
 
       // Allow clicking multiple results in the window to show a combined curve
       resultsWindow.getTextPanel().addMouseListener(new MouseAdapter() {
@@ -421,14 +481,20 @@ public class SpotDensity_PlugIn implements PlugIn {
             return;
           }
 
-          final int[] ids = new int[results.size()];
+          // Atomically get the current size of the results
+          int resultsSize;
+          synchronized (results1) {
+            resultsSize = results1.size();
+          }
+
+          final int[] ids = new int[resultsSize];
           int count = 0;
           for (int i = tp.getSelectionStart(); i <= tp.getSelectionEnd(); i++) {
             final String line = tp.getLine(i);
             try {
               final String sid = line.substring(0, line.indexOf('\t'));
               final int id = Integer.parseInt(sid);
-              if (id > 0 && id <= results.size()) {
+              if (id > 0 && id <= resultsSize) {
                 ids[count++] = id;
               }
             } catch (final IndexOutOfBoundsException | NumberFormatException ex) {
@@ -472,7 +538,7 @@ public class SpotDensity_PlugIn implements PlugIn {
               for (final String token : gd.getNextText().split("[ \t\n\r]+")) {
                 try {
                   final int id = Integer.parseInt(token);
-                  if (id > 0 && id <= results.size()) {
+                  if (id > 0 && id <= resultsSize) {
                     ids[count2++] = id;
                   }
                 } catch (final Exception ex) {
@@ -488,14 +554,14 @@ public class SpotDensity_PlugIn implements PlugIn {
           }
 
           // Check all curves are the same size and build an average
-          PairCorrelation pairCorrelation = results.get(ids[0] - 1);
+          PairCorrelation pairCorrelation = getPairCorrelation(ids[0]);
           final int length = pairCorrelation.radii.length;
           int size = pairCorrelation.numberOfPoints;
           int area = pairCorrelation.area;
           final double[] radii = pairCorrelation.radii;
           final double[] pcf = pairCorrelation.pc.clone();
           for (int i = 1; i < count; i++) {
-            pairCorrelation = results.get(ids[i] - 1);
+            pairCorrelation = getPairCorrelation(ids[i]);
             if (length != pairCorrelation.radii.length) {
               return;
             }
@@ -516,6 +582,24 @@ public class SpotDensity_PlugIn implements PlugIn {
           showPairCorrelation(new PairCorrelation(size, area, radii, pcf));
         }
       });
+
+      return resultsWindow;
+    });
+  }
+
+  /**
+   * Gets the pair correlation.
+   *
+   * <p>Note: the get method on the results should not fail because the list is never cleared. The
+   * size will only grow. This is a potential memory leak! However we do not worry about
+   * index-out-of-bounds exceptions.
+   *
+   * @param id the id
+   * @return the pair correlation
+   */
+  private static PairCorrelation getPairCorrelation(int id) {
+    synchronized (results1) {
+      return results1.get(id - 1);
     }
   }
 

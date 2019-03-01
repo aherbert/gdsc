@@ -56,7 +56,7 @@ public class FindFociLegacy {
   private static final String TITLE = "FindFoci Legacy";
 
   private static int isGaussianFitEnabled = 0;
-  private static String newLine = System.getProperty("line.separator");
+  private static String newLine = System.lineSeparator();
 
   /**
    * The largest number that can be displayed in a 16-bit image.

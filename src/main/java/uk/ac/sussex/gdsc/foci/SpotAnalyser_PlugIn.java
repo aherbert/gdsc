@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
@@ -58,7 +59,9 @@ import org.apache.commons.math3.stat.inference.TestUtils;
 
 import java.awt.AWTEvent;
 import java.awt.Label;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Analyses the intensity of each channel within the brightest spot of the selected channel.
@@ -84,8 +87,8 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
   private int noOfParticles;
   private boolean containsRoiMask;
 
-  private static TextWindow results;
-  private static boolean writeHeader = true;
+  private static AtomicReference<TextWindow> results = new AtomicReference<>();
+  private static AtomicBoolean writeHeader = new AtomicBoolean(true);
 
   /** The current settings for the plugin instance. */
   private Settings settings;
@@ -359,12 +362,9 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     resetImage(); // Restore the original image
 
     // Get the channel for spot analysis
-    ImagePlus tmpImp;
-    {
-      final int index = imp.getStackIndex(spotChannel, imp.getSlice(), imp.getFrame());
-      final ImageProcessor ip = imp.getImageStack().getProcessor(index);
-      tmpImp = new ImagePlus("Dummy", ip);
-    }
+    final int stackIndex = imp.getStackIndex(spotChannel, imp.getSlice(), imp.getFrame());
+    final ImageProcessor ip = imp.getImageStack().getProcessor(stackIndex);
+    final ImagePlus tmpImp = new ImagePlus("Dummy", ip);
 
     if (settings.showParticles) {
       final ImageProcessor tmpIp = particlesIp.duplicate();
@@ -434,8 +434,6 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     // Subtract the spots from the particles
     particlesIp.copyBits(spotsIp, 0, 0, Blitter.SUBTRACT);
 
-    createResultsWindow();
-
     // Create a statistical summary for [channel][inside/outside][particle]
     final DescriptiveStatistics[][][] stats =
         new DescriptiveStatistics[imp.getNChannels() + 1][2][noOfParticles + 1];
@@ -459,16 +457,19 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
       }
     }
 
+    final Consumer<String> output = createResultsWindow();
+
     // Add the counts inside and outside
     for (int particle = 1; particle <= noOfParticles; particle++) {
       // Just choose the first channel (all are the same)
-      addResult(particle, stats[1][INSIDE][particle].getN(), stats[1][OUTSIDE][particle].getN());
+      addResult(output, particle, stats[1][INSIDE][particle].getN(),
+          stats[1][OUTSIDE][particle].getN());
     }
 
     // Add the statistics inside and outside for each channel
     for (int channel = 1; channel <= imp.getNChannels(); channel++) {
       for (int particle = 1; particle <= noOfParticles; particle++) {
-        addResult(channel, particle, stats);
+        addResult(output, channel, particle, stats);
       }
     }
   }
@@ -502,35 +503,31 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     return new ImagePlus("Mask", ip);
   }
 
-  private static void createResultsWindow() {
-    if (!java.awt.GraphicsEnvironment.isHeadless()) {
-      if (results == null || !results.isShowing()) {
-        results =
-            new TextWindow(TITLE + " Results", "Image\tChannel\tParticle\tInside Sum\tAv\tSD\tR\t"
-                + "Outside Sum\tAv\tSD\tR\tIncrease\tp-value", "", 800, 600);
-        results.setVisible(true);
+  private static Consumer<String> createResultsWindow() {
+    if (java.awt.GraphicsEnvironment.isHeadless()) {
+      if (writeHeader.compareAndSet(true, false)) {
+        IJ.log("Image\tChannel\tParticle\tInside Sum\tAv\tSD\tR\t"
+            + "Outside Sum\tAv\tSD\tR\tIncrease\tp-value");
       }
-    } else if (writeHeader) {
-      writeHeader = false;
-      IJ.log("Image\tChannel\tParticle\tInside Sum\tAv\tSD\tR\t"
-          + "Outside Sum\tAv\tSD\tR\tIncrease\tp-value");
+      return IJ::log;
     }
+    return ImageJUtils.refresh(results,
+        () -> new TextWindow(TITLE + " Results", "Image\tChannel\tParticle\tInside Sum\tAv\tSD\tR\t"
+            + "Outside Sum\tAv\tSD\tR\tIncrease\tp-value", "", 800, 600))::append;
   }
 
-  private void addResult(int particle, long countInside, long countOutside) {
+  private void addResult(Consumer<String> output, int particle, long countInside,
+      long countOutside) {
     final StringBuilder sb = new StringBuilder();
     sb.append(imp.getTitle()).append("\t\t");
     sb.append(particle).append('\t');
     sb.append(countInside).append("\t\t\t\t");
     sb.append(countOutside).append("\t\t\t\t");
-    if (java.awt.GraphicsEnvironment.isHeadless()) {
-      IJ.log(sb.toString());
-    } else {
-      results.append(sb.toString());
-    }
+    output.accept(sb.toString());
   }
 
-  private void addResult(int channel, int particle, DescriptiveStatistics[][][] stats) {
+  private void addResult(Consumer<String> output, int channel, int particle,
+      DescriptiveStatistics[][][] stats) {
     final StringBuilder sb = new StringBuilder();
     sb.append(imp.getTitle()).append('\t');
     sb.append(channel).append('\t');
@@ -572,10 +569,6 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     sb.append(IJ.d2s(av / av2, 2)).append('\t');
     sb.append(String.format("%.3g", pvalue));
 
-    if (java.awt.GraphicsEnvironment.isHeadless()) {
-      IJ.log(sb.toString());
-    } else {
-      results.append(sb.toString());
-    }
+    output.accept(sb.toString());
   }
 }

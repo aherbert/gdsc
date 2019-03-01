@@ -150,7 +150,7 @@ public class Gaussian_PlugIn implements PlugIn {
     if (settings.noise > 0) {
       fp.noise(settings.noise);
     }
-    new ImagePlus("Gaussian", fp).show();
+    new ImagePlus(TITLE, fp).show();
   }
 
   private static float[] createGaussian(int width, int height, float[] amplitude, float[] xpos,

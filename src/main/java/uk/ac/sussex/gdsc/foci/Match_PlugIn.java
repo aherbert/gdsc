@@ -25,9 +25,11 @@
 package uk.ac.sussex.gdsc.foci;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.data.utils.Rounder;
 import uk.ac.sussex.gdsc.core.data.utils.RounderUtils;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
@@ -42,7 +44,6 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.gui.Overlay;
 import ij.gui.Plot;
 import ij.gui.PointRoi;
@@ -65,6 +66,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Compares the ROI points on two images and computes the match statistics.
@@ -89,58 +93,20 @@ public class Match_PlugIn implements PlugIn {
 
   /** The plugin title. */
   private static final String TITLE = "Match Calculator";
-  private static final String[] DISTANCE_TYPES = new String[] {"Relative", "Absolute"};
 
   private static final String INPUT1 = "Input_1";
   private static final String INPUT2 = "Input_2";
 
-  private static String title1 = "";
-  private static String title2 = "";
-  private static int dType;
-  private static double distanceThreshold = 0.05;
+  private static AtomicBoolean writeHeader = new AtomicBoolean(true);
+  private static AtomicBoolean writeUnmatchedHeader = new AtomicBoolean(true);
+  private static AtomicBoolean writeMatchedHeader = new AtomicBoolean(true);
 
-  // For memory mode
-  private static String name1 = "";
-  private static String name2 = "";
-  private static String[] unitTypes = new String[] {"Pixel", "Calibrated"};
-  private static int unitType;
-  private static double memoryThreshold = 5;
-
-  private static String[] overlayTypes = new String[] {"None", "Colour", "Colour safe"};
-  private static int overlay = 1;
-  private static boolean quartiles;
-  private static boolean scatter = true;
-  private static boolean unmatchedDistribution = true;
-  private static boolean matchTable;
-  private static boolean saveMatches;
-  private static String filename = "";
-  private static int findFociImageIndex;
-  //@formatter:off
-  private static String[] findFociResult = new String[] {
-      "Intensity",
-      "Intensity above saddle",
-      "Intensity above background",
-      "Count",
-      "Count above saddle",
-      "Max value",
-      "Highest saddle value", };
-  //@formatter:on
-  private static int findFociResultChoiceIndex;
-
-  private static boolean writeHeader = true;
-  private static boolean writeUnmatchedHeader = true;
-  private static boolean writeMatchedHeader = true;
-
-  private static TextWindow resultsWindow;
-  private static TextWindow unmatchedWindow;
-  private static TextWindow matchedWindow;
+  private static AtomicReference<TextWindow> resultsWindowRef = new AtomicReference<>();
+  private static AtomicReference<TextWindow> unmatchedWindowRef = new AtomicReference<>();
+  private static AtomicReference<TextWindow> matchedWindowRef = new AtomicReference<>();
   private boolean memoryMode;
   private boolean fileMode;
   private boolean imageMode;
-  private static int channel1 = 1;
-  private static int frame1 = 1;
-  private static int channel2 = 1;
-  private static int frame2 = 1;
   private String t1 = "";
   private String t2 = "";
   private Coordinate[] actualPoints;
@@ -155,6 +121,119 @@ public class Match_PlugIn implements PlugIn {
   private double scaleX = 1;
   private double scaleY = 1;
   private double scaleZ = 1;
+
+  /** The plugin settings. */
+  private Settings settings;
+
+  /**
+   * Contains the settings that are the re-usable state of the plugin.
+   */
+  private static class Settings {
+    /** The last settings used by the plugin. This should be updated after plugin execution. */
+    private static final AtomicReference<Settings> lastSettings =
+        new AtomicReference<>(new Settings());
+
+    static final String[] distanceTypes = new String[] {"Relative", "Absolute"};
+    static final String[] unitTypes = new String[] {"Pixel", "Calibrated"};
+    static final String[] overlayTypes = new String[] {"None", "Colour", "Colour safe"};
+    //@formatter:off
+    static final String[] findFociResult = new String[] {
+       "Intensity",
+       "Intensity above saddle",
+       "Intensity above background",
+       "Count",
+       "Count above saddle",
+       "Max value",
+       "Highest saddle value", };
+    //@formatter:on
+
+    String title1 = "";
+    String title2 = "";
+    int distanceType;
+    double distanceThreshold = 0.05;
+
+    // For memory mode
+    String name1 = "";
+    String name2 = "";
+    int unitType;
+    double memoryThreshold = 5;
+
+    int overlay = 1;
+    boolean quartiles;
+    boolean scatter = true;
+    boolean unmatchedDistribution = true;
+    boolean matchTable;
+    boolean saveMatches;
+    String filename = "";
+    int findFociImageIndex;
+    int findFociResultChoiceIndex;
+
+    int channel1 = 1;
+    int frame1 = 1;
+    int channel2 = 1;
+    int frame2 = 1;
+
+    Settings() {
+      title1 = "";
+      title2 = "";
+      distanceThreshold = 0.05;
+      name1 = "";
+      name2 = "";
+      memoryThreshold = 5;
+      overlay = 1;
+      scatter = true;
+      unmatchedDistribution = true;
+      filename = "";
+      channel1 = 1;
+      frame1 = 1;
+      channel2 = 1;
+      frame2 = 1;
+    }
+
+    Settings(Settings source) {
+      title1 = source.title1;
+      title2 = source.title2;
+      distanceType = source.distanceType;
+      distanceThreshold = source.distanceThreshold;
+      name1 = source.name1;
+      name2 = source.name2;
+      unitType = source.unitType;
+      memoryThreshold = source.memoryThreshold;
+      overlay = source.overlay;
+      quartiles = source.quartiles;
+      scatter = source.scatter;
+      unmatchedDistribution = source.unmatchedDistribution;
+      matchTable = source.matchTable;
+      saveMatches = source.saveMatches;
+      filename = source.filename;
+      findFociImageIndex = source.findFociImageIndex;
+      findFociResultChoiceIndex = source.findFociResultChoiceIndex;
+      channel1 = source.channel1;
+      frame1 = source.frame1;
+      channel2 = source.channel2;
+      frame2 = source.frame2;
+    }
+
+    Settings copy() {
+      return new Settings(this);
+    }
+
+    /**
+     * Load a copy of the settings.
+     *
+     * @return the settings
+     */
+    static Settings load() {
+      return lastSettings.get().copy();
+    }
+
+    /**
+     * Save the settings.
+     */
+    void save() {
+      lastSettings.set(this);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -179,12 +258,12 @@ public class Match_PlugIn implements PlugIn {
     ImagePlus imp1 = null;
     ImagePlus imp2 = null;
 
-    t1 = title1;
-    t2 = title2;
+    t1 = settings.title1;
+    t2 = settings.title2;
 
     if (memoryMode) {
-      t1 = name1;
-      t2 = name2;
+      t1 = settings.name1;
+      t2 = settings.name2;
 
       FindFociMemoryResults m1;
       FindFociMemoryResults m2;
@@ -198,21 +277,21 @@ public class Match_PlugIn implements PlugIn {
         IJ.error("Failed to load the points: " + ex.getMessage());
         return;
       }
-      localDistanceThreshold = memoryThreshold;
+      localDistanceThreshold = settings.memoryThreshold;
 
       // Support image analysis if the images are open
       imp1 = WindowManager.getImage(m1.imageId);
       imp2 = WindowManager.getImage(m2.imageId);
 
       final boolean canExtractHeights = canExtractHeights(imp1, imp2);
-      doQuartiles = quartiles && canExtractHeights;
-      doScatter = scatter && canExtractHeights;
-      doUnmatched = unmatchedDistribution && canExtractHeights;
+      doQuartiles = settings.quartiles && canExtractHeights;
+      doScatter = settings.scatter && canExtractHeights;
+      doUnmatched = settings.unmatchedDistribution && canExtractHeights;
 
-      if (doQuartiles || doScatter || doUnmatched || matchTable) {
+      if (doQuartiles || doScatter || doUnmatched || settings.matchTable) {
         // Extract the heights for each point
-        actualPoints = extractPoints(imp1, actualPoints, channel1, frame1);
-        predictedPoints = extractPoints(imp2, predictedPoints, channel2, frame2);
+        actualPoints = extractPoints(imp1, actualPoints, settings.channel1, settings.frame1);
+        predictedPoints = extractPoints(imp2, predictedPoints, settings.channel2, settings.frame2);
       }
     } else if (fileMode) {
       try {
@@ -222,7 +301,7 @@ public class Match_PlugIn implements PlugIn {
         IJ.error("Failed to load the points: " + ex.getMessage());
         return;
       }
-      localDistanceThreshold = distanceThreshold;
+      localDistanceThreshold = settings.distanceThreshold;
     } else {
       imp1 = WindowManager.getImage(t1);
       if (imp1 == null) {
@@ -235,26 +314,26 @@ public class Match_PlugIn implements PlugIn {
         return;
       }
 
-      if (dType == 1) {
-        localDistanceThreshold = distanceThreshold;
+      if (settings.distanceType == 1) {
+        localDistanceThreshold = settings.distanceThreshold;
       } else {
         final int length1 = Math.min(imp1.getWidth(), imp1.getHeight());
         final int length2 = Math.min(imp2.getWidth(), imp2.getHeight());
-        localDistanceThreshold = Math.ceil(distanceThreshold * Math.max(length1, length2));
+        localDistanceThreshold = Math.ceil(settings.distanceThreshold * Math.max(length1, length2));
       }
 
       actualPoints = AssignedPointUtils.extractRoiPoints(imp1.getRoi());
       predictedPoints = AssignedPointUtils.extractRoiPoints(imp2.getRoi());
 
       final boolean canExtractHeights = canExtractHeights(imp1, imp2);
-      doQuartiles = quartiles && canExtractHeights;
-      doScatter = scatter && canExtractHeights;
-      doUnmatched = unmatchedDistribution && canExtractHeights;
+      doQuartiles = settings.quartiles && canExtractHeights;
+      doScatter = settings.scatter && canExtractHeights;
+      doUnmatched = settings.unmatchedDistribution && canExtractHeights;
 
-      if (doQuartiles || doScatter || doUnmatched || matchTable) {
+      if (doQuartiles || doScatter || doUnmatched || settings.matchTable) {
         // Extract the heights for each point
-        actualPoints = extractPoints(imp1, actualPoints, channel1, frame1);
-        predictedPoints = extractPoints(imp2, predictedPoints, channel2, frame2);
+        actualPoints = extractPoints(imp1, actualPoints, settings.channel1, settings.frame1);
+        predictedPoints = extractPoints(imp2, predictedPoints, settings.channel2, settings.frame2);
       }
     }
 
@@ -271,7 +350,7 @@ public class Match_PlugIn implements PlugIn {
     final List<PointPair> matches = (List<PointPair>) points[3];
     final MatchResult result = (MatchResult) points[4];
 
-    if (overlay > 0 && (imageMode || memoryMode)) {
+    if (settings.overlay > 0 && (imageMode || memoryMode)) {
       // Imp2 is the predicted, show the overlay on this
       Objects.requireNonNull(imp2, "Image2 is null");
       imp2.setOverlay(null);
@@ -280,7 +359,7 @@ public class Match_PlugIn implements PlugIn {
       Color match;
       Color unmatch1;
       Color unmatch2;
-      if (overlay == 2) {
+      if (settings.overlay == 2) {
         // Use colour blind friendly colours
         match = MATCH;
         unmatch1 = UNMATCH1;
@@ -306,11 +385,11 @@ public class Match_PlugIn implements PlugIn {
       unmatchedAnalysis(t1, t2, matches, falsePositives, falseNegatives);
     }
 
-    if (saveMatches) {
+    if (settings.saveMatches) {
       saveMatches(localDistanceThreshold, matches, falsePositives, falseNegatives, result);
     }
 
-    if (matchTable) {
+    if (settings.matchTable) {
       addIntensityFromFindFoci(matches, falsePositives, falseNegatives);
       showMatches(matches, falsePositives, falseNegatives);
     }
@@ -332,7 +411,7 @@ public class Match_PlugIn implements PlugIn {
     final List<FindFociResult> results = memoryResults.results;
 
     // If using calibration then we must convert the coordinates
-    if (unitType == 1) {
+    if (settings.unitType == 1) {
       // Get the calibration
       final Calibration calibration = memoryResults.calibration;
       if (calibration == null) {
@@ -340,14 +419,14 @@ public class Match_PlugIn implements PlugIn {
             "No calibration for the results with the name " + resultsName);
       }
 
-      final String unit = calibration.getUnit();
-      if (this.unit != null && !this.unit.equals(unit)) {
+      final String localUnit = calibration.getUnit();
+      if (this.unit != null && !this.unit.equals(localUnit)) {
         throw new IllegalStateException("Calibration units for the results are different");
       }
-      this.unit = unit;
+      this.unit = localUnit;
 
       // The units must be the same
-      if (!unit.equals(calibration.getYUnit()) || !unit.equals(calibration.getZUnit())) {
+      if (!localUnit.equals(calibration.getYUnit()) || !localUnit.equals(calibration.getZUnit())) {
         throw new IllegalStateException(
             "Calibration units are different in different dimensions for the results with the name "
                 + resultsName);
@@ -395,7 +474,7 @@ public class Match_PlugIn implements PlugIn {
 
     if ((dim1[2] != 1 || dim1[4] != 1) || (dim2[2] != 1 || dim2[4] != 1)) {
       // Select channel/frame
-      final GenericDialog gd = new GenericDialog("Select Channel/Frame");
+      final ExtendedGenericDialog gd = new ExtendedGenericDialog("Select Channel/Frame");
       gd.addMessage("Stacks detected.\nPlease select the channel/frame.");
       final String[] channels1 = getChannels(imp1);
       final String[] frames1 = getFrames(imp1);
@@ -403,18 +482,16 @@ public class Match_PlugIn implements PlugIn {
       final String[] frames2 = getFrames(imp2);
 
       if (channels1.length > 1) {
-        gd.addChoice("Image1_Channel", channels1,
-            channels1[channels1.length >= channel1 ? channel1 - 1 : 0]);
+        gd.addChoice("Image1_Channel", channels1, settings.channel1 - 1);
       }
       if (frames1.length > 1) {
-        gd.addChoice("Image1_Frame", frames1, frames1[frames1.length >= frame1 ? frame1 - 1 : 0]);
+        gd.addChoice("Image1_Frame", frames1, settings.frame1 - 1);
       }
       if (channels2.length > 1) {
-        gd.addChoice("Image2_Channel", channels2,
-            channels2[channels2.length >= channel2 ? channel2 - 1 : 0]);
+        gd.addChoice("Image2_Channel", channels2, settings.channel2 - 1);
       }
       if (frames2.length > 1) {
-        gd.addChoice("Image2_Frame", frames2, frames2[frames2.length >= frame2 ? frame2 - 1 : 0]);
+        gd.addChoice("Image2_Frame", frames2, settings.frame2 - 1);
       }
 
       gd.showDialog();
@@ -424,13 +501,13 @@ public class Match_PlugIn implements PlugIn {
       }
 
       // Extract the channel/frame
-      channel1 = (channels1.length > 1) ? gd.getNextChoiceIndex() + 1 : 1;
-      frame1 = (frames1.length > 1) ? gd.getNextChoiceIndex() + 1 : 1;
-      channel2 = (channels2.length > 1) ? gd.getNextChoiceIndex() + 1 : 1;
-      frame2 = (frames2.length > 1) ? gd.getNextChoiceIndex() + 1 : 1;
+      settings.channel1 = (channels1.length > 1) ? gd.getNextChoiceIndex() + 1 : 1;
+      settings.frame1 = (frames1.length > 1) ? gd.getNextChoiceIndex() + 1 : 1;
+      settings.channel2 = (channels2.length > 1) ? gd.getNextChoiceIndex() + 1 : 1;
+      settings.frame2 = (frames2.length > 1) ? gd.getNextChoiceIndex() + 1 : 1;
 
-      t1 += " c" + channel1 + " t" + frame1;
-      t2 += " c" + channel2 + " t" + frame2;
+      t1 += " c" + settings.channel1 + " t" + settings.frame1;
+      t2 += " c" + settings.channel2 + " t" + settings.frame2;
     }
 
     return true;
@@ -574,10 +651,12 @@ public class Match_PlugIn implements PlugIn {
   }
 
   private boolean showDialog() {
+    settings = Settings.load();
+
     String[] items = null;
-    String initialTitle1 = title1;
-    String initialTitle2 = title2;
-    double initialDistanceThreshold = distanceThreshold;
+    String initialTitle1 = settings.title1;
+    String initialTitle2 = settings.title2;
+    double initialDistanceThreshold = settings.distanceThreshold;
 
     if (memoryMode) {
       items = FindFoci_PlugIn.getResultsNames();
@@ -588,9 +667,10 @@ public class Match_PlugIn implements PlugIn {
 
       final List<String> imageList = Arrays.asList(items);
       int index = 0;
-      initialTitle1 = (imageList.contains(name1) ? name1 : imageList.get(index++));
-      initialTitle2 = (imageList.contains(name2) ? name2 : imageList.get(index));
-      initialDistanceThreshold = memoryThreshold;
+      initialTitle1 =
+          (imageList.contains(settings.name1) ? settings.name1 : imageList.get(index++));
+      initialTitle2 = (imageList.contains(settings.name2) ? settings.name2 : imageList.get(index));
+      initialDistanceThreshold = settings.memoryThreshold;
     }
     if (imageMode) {
       final List<String> imageList = new LinkedList<>();
@@ -612,11 +692,13 @@ public class Match_PlugIn implements PlugIn {
 
       items = imageList.toArray(new String[imageList.size()]);
       int index = 0;
-      initialTitle1 = (imageList.contains(title1) ? title1 : imageList.get(index++));
-      initialTitle2 = (imageList.contains(title2) ? title2 : imageList.get(index));
+      initialTitle1 =
+          (imageList.contains(settings.title1) ? settings.title1 : imageList.get(index++));
+      initialTitle2 =
+          (imageList.contains(settings.title2) ? settings.title2 : imageList.get(index));
     }
 
-    final GenericDialog gd = new GenericDialog(TITLE);
+    final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
     if (memoryMode) {
       gd.addMessage(
@@ -624,7 +706,7 @@ public class Match_PlugIn implements PlugIn {
       gd.addChoice(INPUT1, items, initialTitle1);
       gd.addChoice(INPUT2, items, initialTitle2);
       gd.addMessage("Distance between matching points in:");
-      gd.addChoice("Unit", unitTypes, unitTypes[unitType]);
+      gd.addChoice("Unit", Settings.unitTypes, settings.unitType);
     } else if (fileMode) {
       gd.addMessage("Compare the points in two files\nand compute the match statistics");
       gd.addStringField(INPUT1, initialTitle1, 30);
@@ -636,23 +718,24 @@ public class Match_PlugIn implements PlugIn {
       gd.addChoice(INPUT2, items, initialTitle2);
       gd.addMessage(
           "Distance between matching points in pixels, or fraction of\n" + "image edge length");
-      gd.addChoice("Distance_type", DISTANCE_TYPES, DISTANCE_TYPES[dType]);
+      gd.addChoice("Distance_type", Settings.distanceTypes, settings.distanceType);
     }
     gd.addNumericField("Distance", initialDistanceThreshold, 2);
     if (imageMode || memoryMode) {
-      gd.addChoice("Overlay", overlayTypes, overlayTypes[overlay]);
-      gd.addCheckbox("Quartiles", quartiles);
-      gd.addCheckbox("Scatter_plot", scatter);
-      gd.addCheckbox("Unmatched_distribution", unmatchedDistribution);
-      gd.addCheckbox("Match_table", matchTable);
+      gd.addChoice("Overlay", Settings.overlayTypes, settings.overlay);
+      gd.addCheckbox("Quartiles", settings.quartiles);
+      gd.addCheckbox("Scatter_plot", settings.scatter);
+      gd.addCheckbox("Unmatched_distribution", settings.unmatchedDistribution);
+      gd.addCheckbox("Match_table", settings.matchTable);
     }
-    gd.addCheckbox("Save_matches", saveMatches);
+    gd.addCheckbox("Save_matches", settings.saveMatches);
     if (!memoryMode) {
       resultsArray = FindFoci_PlugIn.getLastResults();
       if (resultsArray != null) {
         final String[] imageItems = new String[] {"[None]", "Image1", "Image2"};
-        gd.addChoice("FindFoci_image", imageItems, imageItems[findFociImageIndex]);
-        gd.addChoice("FindFoci_result", findFociResult, findFociResult[findFociResultChoiceIndex]);
+        gd.addChoice("FindFoci_image", imageItems, settings.findFociImageIndex);
+        gd.addChoice("FindFoci_result", Settings.findFociResult,
+            settings.findFociResultChoiceIndex);
       }
     }
 
@@ -664,36 +747,37 @@ public class Match_PlugIn implements PlugIn {
     }
 
     if (memoryMode) {
-      name1 = gd.getNextChoice();
-      name2 = gd.getNextChoice();
-      unitType = gd.getNextChoiceIndex();
+      settings.name1 = gd.getNextChoice();
+      settings.name2 = gd.getNextChoice();
+      settings.unitType = gd.getNextChoiceIndex();
     } else if (fileMode) {
-      title1 = gd.getNextString();
-      title2 = gd.getNextString();
+      settings.title1 = gd.getNextString();
+      settings.title2 = gd.getNextString();
     } else {
-      title1 = gd.getNextChoice();
-      title2 = gd.getNextChoice();
-      dType = gd.getNextChoiceIndex();
+      settings.title1 = gd.getNextChoice();
+      settings.title2 = gd.getNextChoice();
+      settings.distanceType = gd.getNextChoiceIndex();
     }
     initialDistanceThreshold = gd.getNextNumber();
     if (memoryMode) {
-      memoryThreshold = initialDistanceThreshold;
+      settings.memoryThreshold = initialDistanceThreshold;
     } else {
-      distanceThreshold = initialDistanceThreshold;
+      settings.distanceThreshold = initialDistanceThreshold;
     }
     if (imageMode || memoryMode) {
-      overlay = gd.getNextChoiceIndex();
-      quartiles = gd.getNextBoolean();
-      scatter = gd.getNextBoolean();
-      unmatchedDistribution = gd.getNextBoolean();
-      matchTable = gd.getNextBoolean();
+      settings.overlay = gd.getNextChoiceIndex();
+      settings.quartiles = gd.getNextBoolean();
+      settings.scatter = gd.getNextBoolean();
+      settings.unmatchedDistribution = gd.getNextBoolean();
+      settings.matchTable = gd.getNextBoolean();
     }
-    saveMatches = gd.getNextBoolean();
-    findFociImageIndex = 0;
+    settings.saveMatches = gd.getNextBoolean();
+    settings.findFociImageIndex = 0;
     if (resultsArray != null) {
-      findFociImageIndex = gd.getNextChoiceIndex();
-      findFociResultChoiceIndex = gd.getNextChoiceIndex();
+      settings.findFociImageIndex = gd.getNextChoiceIndex();
+      settings.findFociResultChoiceIndex = gd.getNextChoiceIndex();
     }
+    settings.save();
 
     return true;
   }
@@ -714,24 +798,31 @@ public class Match_PlugIn implements PlugIn {
 
     String header = null;
 
+    Consumer<String> output;
     if (!java.awt.GraphicsEnvironment.isHeadless()) {
+      TextWindow window = resultsWindowRef.get();
       if (doQuartiles) {
         header = createResultsHeader(quartileResults);
-        ImageJUtils.refreshHeadings(resultsWindow, header, true);
+        // This will ignore a null window
+        ImageJUtils.refreshHeadings(window, header, true);
       }
 
-      if (resultsWindow == null || !resultsWindow.isShowing()) {
+      if (!ImageJUtils.isShowing(window)) {
         if (header == null) {
           header = createResultsHeader(quartileResults);
         }
-        resultsWindow = new TextWindow(TITLE + " Results", header, "", 900, 300);
+        window = new TextWindow(TITLE + " Results", header, "", 900, 300);
+        resultsWindowRef.set(window);
       }
-    } else if (writeHeader) {
-      header = createResultsHeader(quartileResults);
-      writeHeader = false;
-      IJ.log(header);
+      output = window::append;
+    } else {
+      if (writeHeader.compareAndSet(true, false)) {
+        header = createResultsHeader(quartileResults);
+        IJ.log(header);
+      }
+      output = IJ::log;
     }
-    addResult(t1, t2, distanceThreshold, result, quartileResults);
+    addResult(output, t1, t2, distanceThreshold, result, quartileResults);
 
     return new Object[] {truePositives, falsePositives, falseNegatives, matches, result};
   }
@@ -744,6 +835,7 @@ public class Match_PlugIn implements PlugIn {
    * @param distanceThreshold the d threshold
    * @return An array of 4 quartile results (or null if there are no points)
    */
+  @Nullable
   private static MatchResult[] compareQuartiles(Coordinate[] actualPoints,
       Coordinate[] predictedPoints, double distanceThreshold) {
     final TimeValuedPoint[] actualValuedPoints = (TimeValuedPoint[]) actualPoints;
@@ -851,8 +943,8 @@ public class Match_PlugIn implements PlugIn {
     sb.append(quartile).append(" ").append("F1");
   }
 
-  private void addResult(String i1, String i2, double distanceThrehsold, MatchResult result,
-      MatchResult[] quartileResults) {
+  private void addResult(Consumer<String> output, String i1, String i2, double distanceThrehsold,
+      MatchResult result, MatchResult[] quartileResults) {
     final StringBuilder sb = new StringBuilder();
     sb.append(i1).append('\t');
     sb.append(i2).append('\t');
@@ -874,11 +966,7 @@ public class Match_PlugIn implements PlugIn {
       }
     }
 
-    if (java.awt.GraphicsEnvironment.isHeadless()) {
-      IJ.log(sb.toString());
-    } else {
-      resultsWindow.append(sb.toString());
-    }
+    output.accept(sb.toString());
   }
 
   private static void addQuartileResult(StringBuilder sb, MatchResult result) {
@@ -1045,15 +1133,18 @@ public class Match_PlugIn implements PlugIn {
     // Show a result table
     final String header = "Image 1\tN\t% <Q1\t% Q1\t% Q2\t% Q3\t% Q4\t% >Q4\tImage2\tN\t% <Q1\t"
         + "% Q1\t% Q2\t% Q3\t% Q4\t% >Q4";
+    Consumer<String> output;
     if (!java.awt.GraphicsEnvironment.isHeadless()) {
-      if (unmatchedWindow == null || !unmatchedWindow.isShowing()) {
-        unmatchedWindow = new TextWindow(TITLE + " Unmatched", header, "", 900, 300);
+      final TextWindow window = ImageJUtils.refresh(unmatchedWindowRef,
+          () -> new TextWindow(TITLE + " Unmatched", header, "", 900, 300));
+      output = window::append;
+    } else {
+      if (writeUnmatchedHeader.compareAndSet(true, false)) {
+        IJ.log(header);
       }
-    } else if (writeUnmatchedHeader) {
-      writeUnmatchedHeader = false;
-      IJ.log(header);
+      output = IJ::log;
     }
-    addUnmatchedResult(title1, title2, actualCount, predictedCount);
+    addUnmatchedResult(output, title1, title2, actualCount, predictedCount);
   }
 
   private static float[] getQuartiles(float[] heights) {
@@ -1071,18 +1162,14 @@ public class Match_PlugIn implements PlugIn {
     return points;
   }
 
-  private static void addUnmatchedResult(String title1, String title2, int[] actualCount,
-      int[] predictedCount) {
+  private static void addUnmatchedResult(Consumer<String> output, String title1, String title2,
+      int[] actualCount, int[] predictedCount) {
     final StringBuilder sb = new StringBuilder();
     addQuartiles(sb, title1, actualCount);
     sb.append('\t');
     addQuartiles(sb, title2, predictedCount);
 
-    if (java.awt.GraphicsEnvironment.isHeadless()) {
-      IJ.log(sb.toString());
-    } else {
-      unmatchedWindow.append(sb.toString());
-    }
+    output.accept(sb.toString());
   }
 
   private static void addQuartiles(StringBuilder sb, String imageTitle, int[] counts) {
@@ -1122,17 +1209,17 @@ public class Match_PlugIn implements PlugIn {
       return;
     }
 
-    final String[] path = ImageJUtils.decodePath(filename);
+    final String[] path = ImageJUtils.decodePath(settings.filename);
     final OpenDialog chooser = new OpenDialog("matches_file", path[0], path[1]);
     if (chooser.getFileName() == null) {
       return;
     }
 
-    filename = chooser.getDirectory() + chooser.getFileName();
+    settings.filename = chooser.getDirectory() + chooser.getFileName();
 
-    try (final BufferedWriter out = Files.newBufferedWriter(Paths.get(filename))) {
+    try (final BufferedWriter out = Files.newBufferedWriter(Paths.get(settings.filename))) {
       final StringBuilder sb = new StringBuilder();
-      final String newLine = System.getProperty("line.separator");
+      final String newLine = System.lineSeparator();
       sb.append("# Image 1   = ").append(t1).append(newLine);
       sb.append("# Image 2   = ").append(t2).append(newLine);
       sb.append("# Distance  = ").append(MathUtils.rounded(distance, 2)).append(newLine);
@@ -1218,51 +1305,61 @@ public class Match_PlugIn implements PlugIn {
 
     // Show a result table
     String header = "Image 1\tId\tX\tY\tSlice\tImage 2\tId\tX\tY\tSlice\tDistance";
-    if (findFociImageIndex > 0) {
-      header += "\tImage " + findFociImageIndex + ": " + findFociResult[findFociResultChoiceIndex];
+    if (settings.findFociImageIndex > 0) {
+      header += "\tImage " + settings.findFociImageIndex + ": "
+          + Settings.findFociResult[settings.findFociResultChoiceIndex];
     }
+    Consumer<String> output;
     if (!java.awt.GraphicsEnvironment.isHeadless()) {
-      if (matchedWindow == null || !matchedWindow.isShowing()) {
-        matchedWindow = new TextWindow(TITLE + " Matched", header, "", 800, 300);
+      TextWindow window = matchedWindowRef.get();
+      if (!ImageJUtils.isShowing(window)) {
+        window = new TextWindow(TITLE + " Matched", header, "", 800, 300);
+        matchedWindowRef.set(window);
       } else {
-        ImageJUtils.refreshHeadings(matchedWindow, header, true);
+        ImageJUtils.refreshHeadings(window, header, true);
       }
-    } else if (writeMatchedHeader) {
-      writeMatchedHeader = false;
-      IJ.log(header);
+      output = window::append;
+    } else {
+      if (writeMatchedHeader.compareAndSet(true, false)) {
+        IJ.log(header);
+      }
+      output = IJ::log;
     }
 
     Collections.sort(matches, Match_PlugIn::comparePairsByTime);
 
+    final StringBuilder sb = new StringBuilder();
     for (final PointPair pair : matches) {
       int value = -1;
-      if (findFociImageIndex > 0) {
+      if (settings.findFociImageIndex > 0) {
         final TimeValuedPoint point =
-            (TimeValuedPoint) ((findFociImageIndex == 1) ? pair.getPoint1() : pair.getPoint2());
+            (TimeValuedPoint) ((settings.findFociImageIndex == 1) ? pair.getPoint1()
+                : pair.getPoint2());
         value = (int) point.value;
       }
-      addMatchedPair(pair.getPoint1(), pair.getPoint2(), pair.getXyzDistance(), value);
+      addMatchedPair(output, sb, pair.getPoint1(), pair.getPoint2(), pair.getXyzDistance(), value);
     }
 
-    final TimeValuedPoint[] actualPoints = extractValuedPoints(falseNegatives);
-    final TimeValuedPoint[] predictedPoints = extractValuedPoints(falsePositives);
+    final TimeValuedPoint[] localActualPoints = extractValuedPoints(falseNegatives);
+    final TimeValuedPoint[] localPredictedPoints = extractValuedPoints(falsePositives);
 
-    Arrays.sort(actualPoints, Match_PlugIn::compareByTime);
-    Arrays.sort(predictedPoints, Match_PlugIn::compareByTime);
+    Arrays.sort(localActualPoints, Match_PlugIn::compareByTime);
+    Arrays.sort(localPredictedPoints, Match_PlugIn::compareByTime);
 
-    for (final TimeValuedPoint point : actualPoints) {
-      final int value = (findFociImageIndex == 1) ? (int) point.value : -1;
-      addMatchedPair(point, null, -1, value);
+    for (final TimeValuedPoint point : localActualPoints) {
+      final int value = (settings.findFociImageIndex == 1) ? (int) point.value : -1;
+      addMatchedPair(output, sb, point, null, -1, value);
     }
 
-    for (final TimeValuedPoint point : predictedPoints) {
-      final int value = (findFociImageIndex == 2) ? (int) point.value : -1;
-      addMatchedPair(null, point, -1, value);
+    for (final TimeValuedPoint point : localPredictedPoints) {
+      final int value = (settings.findFociImageIndex == 2) ? (int) point.value : -1;
+      addMatchedPair(output, sb, null, point, -1, value);
     }
   }
 
-  private void addMatchedPair(Coordinate point1, Coordinate point2, double xyzDistance, int value) {
-    final StringBuilder sb = new StringBuilder();
+  private void addMatchedPair(Consumer<String> output, StringBuilder sb, Coordinate point1,
+      Coordinate point2, double xyzDistance, int value) {
+    sb.setLength(0);
     addPoint(sb, t1, point1);
     addPoint(sb, t2, point2);
     if ((xyzDistance > -1)) {
@@ -1273,11 +1370,7 @@ public class Match_PlugIn implements PlugIn {
     if ((value > -1)) {
       sb.append('\t').append(value);
     }
-    if (!java.awt.GraphicsEnvironment.isHeadless()) {
-      matchedWindow.append(sb.toString());
-    } else {
-      IJ.log(sb.toString());
-    }
+    output.accept(sb.toString());
   }
 
   private void addPoint(StringBuilder sb, String title, Coordinate point) {
@@ -1300,31 +1393,32 @@ public class Match_PlugIn implements PlugIn {
 
   private void addIntensityFromFindFoci(List<PointPair> matches, List<Coordinate> falsePositives,
       List<Coordinate> falseNegatives) {
-    if (findFociImageIndex == 0) {
+    if (settings.findFociImageIndex == 0) {
       return;
     }
 
     // Check the arrays are the correct size
-    if (resultsArray
-        .size() != ((findFociImageIndex == 1) ? actualPoints.length : predictedPoints.length)) {
-      findFociImageIndex = 0;
+    if (resultsArray.size() != ((settings.findFociImageIndex == 1) ? actualPoints.length
+        : predictedPoints.length)) {
+      settings.findFociImageIndex = 0;
       return;
     }
 
     for (final PointPair pair : matches) {
       final TimeValuedPoint point =
-          (TimeValuedPoint) ((findFociImageIndex == 1) ? pair.getPoint1() : pair.getPoint2());
+          (TimeValuedPoint) ((settings.findFociImageIndex == 1) ? pair.getPoint1()
+              : pair.getPoint2());
       point.value = getValue(resultsArray.get(point.time - 1));
     }
     final TimeValuedPoint[] points =
-        extractValuedPoints((findFociImageIndex == 1) ? falseNegatives : falsePositives);
+        extractValuedPoints((settings.findFociImageIndex == 1) ? falseNegatives : falsePositives);
     for (final TimeValuedPoint point : points) {
       point.value = getValue(resultsArray.get(point.time - 1));
     }
   }
 
-  private static float getValue(FindFociResult result) {
-    switch (findFociResultChoiceIndex) {
+  private float getValue(FindFociResult result) {
+    switch (settings.findFociResultChoiceIndex) {
       //@formatter:off
       case 0: return  (float) result.totalIntensity;
       case 1: return  (float) result.intensityAboveSaddle;

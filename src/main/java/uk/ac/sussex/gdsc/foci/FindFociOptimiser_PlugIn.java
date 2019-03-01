@@ -1914,9 +1914,9 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     sb.append(String.format(format, args));
   }
 
-  private static @Nullable AssignedPoint[] showResult(ImagePlus imp, ImagePlus mask,
-      Parameters parameters, boolean showScoreImages, int matchSearchMethod,
-      double matchSearchDistance) {
+  @Nullable
+  private static AssignedPoint[] showResult(ImagePlus imp, ImagePlus mask, Parameters parameters,
+      boolean showScoreImages, int matchSearchMethod, double matchSearchDistance) {
     if (imp == null) {
       return null;
     }
@@ -2809,39 +2809,36 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       ArrayList<Result> results) {
     new LastImageSettings(imp, mask, results, settings.showScoreImages, settings.matchSearchMethod,
         settings.matchSearchDistance).save();
-    TextWindow window = resultsWindow.get();
-    if (window == null || !window.isShowing()) {
+    final TextWindow textWindow = ImageJUtils.refresh(resultsWindow, () -> {
       final String heading = createResultsHeader(true, true);
-      window = new TextWindow(TITLE + " Results", heading, "", 1000, 300);
+      final TextWindow window = new TextWindow(TITLE + " Results", heading, "", 1000, 300);
       final TextPanel textPanel = window.getTextPanel();
-      if (textPanel != null) {
-        textPanel.addMouseListener(new MouseAdapter() {
-          @Override
-          public void mouseClicked(MouseEvent event) {
-            if (event.getClickCount() < 2) {
-              return;
-            }
-            final LastImageSettings lastImageSettings = LastImageSettings.load();
+      textPanel.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent event) {
+          if (event.getClickCount() < 2) {
+            return;
+          }
+          final LastImageSettings lastImageSettings = LastImageSettings.load();
 
-            // Show the result that was double clicked in the result table
-            if (lastImageSettings.imp != null && lastImageSettings.imp.isVisible()) {
-              // An extra line is added at the end of the results so remove this
-              final int rank = textPanel.getLineCount() - textPanel.getSelectionStart() - 1;
+          // Show the result that was double clicked in the result table
+          if (lastImageSettings.imp != null && lastImageSettings.imp.isVisible()) {
+            // An extra line is added at the end of the results so remove this
+            final int rank = textPanel.getLineCount() - textPanel.getSelectionStart() - 1;
 
-              // Show the result that was double clicked. Results are stored in reverse order.
-              if (rank > 0 && rank <= lastImageSettings.results.size()) {
-                showResult(lastImageSettings.imp, lastImageSettings.mask,
-                    lastImageSettings.results.get(rank - 1).options,
-                    lastImageSettings.showScoreImages, lastImageSettings.matchSearchMethod,
-                    lastImageSettings.matchSearchDistance);
-              }
+            // Show the result that was double clicked. Results are stored in reverse order.
+            if (rank > 0 && rank <= lastImageSettings.results.size()) {
+              showResult(lastImageSettings.imp, lastImageSettings.mask,
+                  lastImageSettings.results.get(rank - 1).options,
+                  lastImageSettings.showScoreImages, lastImageSettings.matchSearchMethod,
+                  lastImageSettings.matchSearchDistance);
             }
           }
-        });
-      }
-      resultsWindow.set(window);
-    }
-    final BufferedTextWindow bw = new BufferedTextWindow(window);
+        }
+      });
+      return window;
+    });
+    final BufferedTextWindow bw = new BufferedTextWindow(textWindow);
     bw.setIncrement(0);
     return bw;
   }
@@ -3064,7 +3061,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     return true;
   }
 
-  private static @Nullable AssignedPoint[] loadPointsFromFile(ImagePlus imp) {
+  @Nullable
+  private static AssignedPoint[] loadPointsFromFile(ImagePlus imp) {
     final FileInfo fileInfo = imp.getOriginalFileInfo();
     if (fileInfo != null && fileInfo.directory != null) {
       String title = imp.getTitle();
@@ -3083,7 +3081,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     return null;
   }
 
-  private static @Nullable AssignedPoint[] loadPointsFromFile(String filename) {
+  @Nullable
+  private static AssignedPoint[] loadPointsFromFile(String filename) {
     final File file = new File(filename);
     if (!file.exists()) {
       return null;

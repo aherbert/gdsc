@@ -37,8 +37,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -143,12 +141,9 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
     }
     {
       txtMinimum = new JFormattedTextField();
-      txtMinimum.addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (evt.getPropertyName().equals("textFormatter")) {
-            validMin();
-          }
+      txtMinimum.addPropertyChangeListener(evt -> {
+        if (evt.getPropertyName().equals("textFormatter")) {
+          validMin();
         }
       });
       txtMinimum.addKeyListener(new KeyAdapter() {
@@ -176,12 +171,9 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
     }
     {
       txtMaximum = new JFormattedTextField();
-      txtMaximum.addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (evt.getPropertyName().equals("textFormatter")) {
-            validMax();
-          }
+      txtMaximum.addPropertyChangeListener(evt -> {
+        if (evt.getPropertyName().equals("textFormatter")) {
+          validMax();
         }
       });
       txtMaximum.addKeyListener(new KeyAdapter() {

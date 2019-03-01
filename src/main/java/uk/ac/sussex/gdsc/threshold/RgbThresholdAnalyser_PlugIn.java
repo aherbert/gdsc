@@ -27,6 +27,7 @@ package uk.ac.sussex.gdsc.threshold;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -48,7 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class RgbThresholdAnalyser_PlugIn implements PlugIn {
   private static final String TITLE = "RGB Threshold Analyser";
-  private static TextWindow resultsWindow;
+  private static AtomicReference<TextWindow> resultsWindowRef = new AtomicReference<>();
 
   /** The current settings for the plugin instance. */
   private Settings settings;
@@ -168,7 +169,7 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
 
       IJ.showStatus(String.format("Processing %d / %d", count, fileList.length));
 
-      createResultsWindow();
+      final TextWindow resultsWindow = createResultsWindow();
 
       // Extract the 3 channels
       final ColorProcessor cp = (ColorProcessor) imp.getProcessor();
@@ -176,8 +177,8 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
       final ImageProcessor ip2 = getProcessor(imp2, 2);
       final ImageProcessor ip3 = getProcessor(imp2, 3);
 
-      analyse(name, cp, 1, ip1, ip3);
-      analyse(name, cp, 2, ip2, ip3);
+      analyse(resultsWindow, name, cp, 1, ip1, ip3);
+      analyse(resultsWindow, name, cp, 2, ip2, ip3);
 
       if (ImageJUtils.isInterrupted()) {
         return;
@@ -187,8 +188,8 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
     IJ.showStatus(TITLE + " Finished");
   }
 
-  private static void analyse(String name, ColorProcessor cp, int channel, ImageProcessor ip,
-      ImageProcessor maskIp) {
+  private static void analyse(TextWindow resultsWindow, String name, ColorProcessor cp, int channel,
+      ImageProcessor ip, ImageProcessor maskIp) {
     final byte[] mask = cp.getChannel(channel);
 
     // Get the histogram for the channel
@@ -227,7 +228,7 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
       thresholds[i] = AutoThreshold.getThreshold(methods[i], h);
     }
 
-    addResult(name, channel, stats, manual, thresholds, h);
+    addResult(resultsWindow, name, channel, stats, manual, thresholds, h);
   }
 
   private static ImageProcessor getProcessor(ImagePlus imp, int channel) {
@@ -267,7 +268,7 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
         sum2 += (value * value) * count;
       }
     }
-    final double av = sum / total;
+    final double av = MathUtils.div0(sum, total);
 
     // Get the Std.Dev
     double stdDev;
@@ -286,10 +287,9 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
     return new double[] {min, max, av, stdDev};
   }
 
-  private static void createResultsWindow() {
-    if (resultsWindow == null || !resultsWindow.isShowing()) {
-      resultsWindow = new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 500);
-    }
+  private static TextWindow createResultsWindow() {
+    return ImageJUtils.refresh(resultsWindowRef,
+        () -> new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 500));
   }
 
   private static String createResultsHeader() {
@@ -310,8 +310,8 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
     sb.append('\t').append(method).append("\tCount\tSum");
   }
 
-  private static void addResult(String name, int channel, double[] stats, int manual,
-      int[] thresholds, int[] histogram) {
+  private static void addResult(TextWindow resultsWindow, String name, int channel, double[] stats,
+      int manual, int[] thresholds, int[] histogram) {
     // The threshold levels is expressed as:
     // Absolute
     // Fraction of area
@@ -333,9 +333,11 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
       sum += histogram[i] * i;
     }
     // Normalise so that the numbers represent the fraction at the threshold or above
-    for (int i = min; i < area.length; i++) {
-      area[i] = (count - area[i]) / count;
-      intensity[i] = (sum - intensity[i]) / sum;
+    if (count != 0) {
+      for (int i = min; i < area.length; i++) {
+        area[i] = (count - area[i]) / count;
+        intensity[i] = (sum - intensity[i]) / sum;
+      }
     }
 
     final StringBuilder sb = new StringBuilder();

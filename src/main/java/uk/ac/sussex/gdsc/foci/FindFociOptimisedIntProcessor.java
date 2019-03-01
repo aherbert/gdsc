@@ -24,6 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.Histogram;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
@@ -64,6 +65,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
   }
 
   /** {@inheritDoc} */
+  @Nullable
   @Override
   protected Coordinate[] getSortedMaxpoints(Object pixels, int[] maxima, byte[] types,
       float globalMin, float threshold) {
@@ -448,7 +450,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
     // Process down through the levels
     int processedLevel = 0; // Counter incremented when work is done
-    // int levels = 0;
     for (int level = highestBin; level >= minBin; level--) {
       int remaining = histogram[level];
 
@@ -478,7 +479,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
         // any pixels that we have not reached?
         // It could happen if there is a large area of flat pixels => no local maxima.
         // Add to the next level.
-        // IJ.log("Unprocessed " + remaining + " @level = " + level);
 
         int nextLevel = level; // find the next level to process
         do {
@@ -499,20 +499,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
         }
       }
     }
-
-    // int nP = 0;
-    // for (byte b : types)
-    // if ((b & PLATEAU) == PLATEAU)
-    // nP++;
-    // System.out.printf("Processed %d levels [%d steps], %d plateau points\n", levels,
-    // processedLevel, nP);
   }
 
   /** {@inheritDoc} */
   @Override
   protected int processLevel(byte[] types, int[] maxima, int levelStart, int levelNPoints,
       int[] coordinates, int background) {
-    // int[] pointList = new int[0]; // working list for expanding local plateaus
     int numberChanged = 0;
     int numberUnchanged = 0;
     final int[] xyz = new int[3];
@@ -873,7 +865,6 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
     for (int id2 = 1; id2 < highestSaddleValues.length; id2++) {
       if (highestSaddleValues[id2] != 0) {
         count++;
-        // log("Peak saddle " + id + " -> " + id2 + " @ " + highestSaddleValue[id2]);
         if (highestNeighbourValue < highestSaddleValues[id2]) {
           highestNeighbourValue = highestSaddleValues[id2];
           highestNeighbourPeakId = id2;
@@ -1178,21 +1169,19 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
     for (int i = 0; i < resultsArray.length; i++) {
       final FindFociResult result = resultsArray[i];
       saddleHeight[result.id] = (int) result.highestSaddleValue;
-      // System.out.printf("ID=%d saddle=%f (%f)\n", result.RESULT_PEAK_ID,
-      // result.RESULT_HIGHEST_SADDLE_VALUE, result.RESULT_COUNT_ABOVE_SADDLE);
     }
 
     // Store the xyz limits for each peak.
     // This speeds up re-computation of the height above the min saddle.
-    final int[] minx = new int[peakIntensity.length];
-    final int[] miny = new int[peakIntensity.length];
-    final int[] minz = new int[peakIntensity.length];
-    Arrays.fill(minx, this.maxx);
-    Arrays.fill(miny, this.maxy);
-    Arrays.fill(minz, this.maxz);
-    final int[] maxx = new int[peakIntensity.length];
-    final int[] maxy = new int[peakIntensity.length];
-    final int[] maxz = new int[peakIntensity.length];
+    final int[] lx = new int[peakIntensity.length];
+    final int[] ly = new int[peakIntensity.length];
+    final int[] lz = new int[peakIntensity.length];
+    Arrays.fill(lx, this.maxx);
+    Arrays.fill(ly, this.maxy);
+    Arrays.fill(lz, this.maxz);
+    final int[] ux = new int[peakIntensity.length];
+    final int[] uy = new int[peakIntensity.length];
+    final int[] uz = new int[peakIntensity.length];
 
     for (int z = 0, i = 0; z < this.maxz; z++) {
       for (int y = 0; y < this.maxy; y++) {
@@ -1206,12 +1195,14 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
             }
 
             // Get bounds
-            minx[id] = Math.min(minx[id], x);
-            miny[id] = Math.min(miny[id], y);
-            minz[id] = Math.min(minz[id], z);
-            maxx[id] = Math.max(maxx[id], x);
-            maxy[id] = Math.max(maxy[id], y);
-            maxz[id] = Math.max(maxz[id], z);
+            //@formatter:off
+            if ( lx[id] < x) { lx[id] = x; }
+            if ( ly[id] < y) { ly[id] = y; }
+            if ( lz[id] < z) { lz[id] = z; }
+            if ( ux[id] > x) { ux[id] = x; }
+            if ( uy[id] > y) { uy[id] = y; }
+            if ( uz[id] > z) { uz[id] = z; }
+            //@formatter:on
           }
         }
       }
@@ -1221,13 +1212,13 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
       final FindFociResult result = resultsArray[i];
       result.countAboveSaddle = peakSize[result.id];
       result.intensityAboveSaddle = peakIntensity[result.id];
-      result.minx = minx[result.id];
-      result.miny = miny[result.id];
-      result.minz = minz[result.id];
+      result.minx = lx[result.id];
+      result.miny = ly[result.id];
+      result.minz = lz[result.id];
       // Allow iterating i=min; i<max; i++
-      result.maxx = maxx[result.id] + 1;
-      result.maxy = maxy[result.id] + 1;
-      result.maxz = maxz[result.id] + 1;
+      result.maxx = ux[result.id] + 1;
+      result.maxy = uy[result.id] + 1;
+      result.maxz = uz[result.id] + 1;
     }
   }
 

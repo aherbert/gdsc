@@ -42,11 +42,10 @@ import java.text.NumberFormat;
  * Displacement Algorithm Determines True and Random Colocalization</a>
  */
 public class DisplayStatistics {
-  private static final String meanTitle = "Mean: ";
-  private static final String stdDevTitle = "Std Dev: ";
-  private static final String d0Title = "(d=0):";
+  private static final String MEAN_TITLE = "Mean: ";
+  private static final String STD_DEV_TITLE = "Std Dev: ";
+  private static final String D0_TITLE = "(d=0):";
 
-  private Panel statisticsPanel;
   private final String title;
   private final String prefix;
   private Label meanLabel;
@@ -163,7 +162,7 @@ public class DisplayStatistics {
     // Build a panel containing statistics about the plot
     formatter = new DecimalFormat("#0.0000");
 
-    statisticsPanel = new Panel();
+    final Panel statisticsPanel = new Panel();
     statisticsPanel.setLayout(new GridLayout(4, 2));
 
     meanLabel = new Label();
@@ -192,12 +191,12 @@ public class DisplayStatistics {
   }
 
   private void setValues() {
-    meanLabel.setText(meanTitle.concat(String.valueOf(formatter.format(statistics.mean))));
-    stdDevLabel.setText(stdDevTitle.concat(String.valueOf(formatter.format(statistics.stdDev))));
+    meanLabel.setText(MEAN_TITLE.concat(String.valueOf(formatter.format(statistics.mean))));
+    stdDevLabel.setText(STD_DEV_TITLE.concat(String.valueOf(formatter.format(statistics.stdDev))));
     limitsLabel.setText(prefix.concat("(p<" + plotResults.getPValue() + "):")
         .concat(String.valueOf(formatter.format(plotResults.getProbabilityLimits()[0])).concat("|")
             .concat(String.valueOf(formatter.format(plotResults.getProbabilityLimits()[1])))));
-    d0ValueLabel.setText(prefix.concat(d0Title).concat(String.valueOf(formatter.format(d0Value))));
+    d0ValueLabel.setText(prefix.concat(D0_TITLE).concat(String.valueOf(formatter.format(d0Value))));
     significanceLabel.setText(prefix.concat(plotResults.getSignificanceTest()));
   }
 

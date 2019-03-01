@@ -52,6 +52,7 @@ import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Output the distances between the pair of spots from two channels at a user selected position.
@@ -81,7 +82,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
   private static class SpotPairDistancePluginTool extends PlugInTool {
     private static final SpotPairDistancePluginTool toolInstance = new SpotPairDistancePluginTool();
 
-    private static TextWindow distancesWindow;
+    private static AtomicReference<TextWindow> distancesWindow = new AtomicReference<>();
 
     private int channel1 = (int) Prefs.get(KEY_CHANNEL_1, 1);
     private int channel2 = (int) Prefs.get(KEY_CHANNEL_2, 2);
@@ -509,16 +510,6 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       return length;
     }
 
-    /**
-     * Create the result window (if it is not available).
-     */
-    private void createResultsWindow() {
-      if (showDistances && (distancesWindow == null || !distancesWindow.isShowing())) {
-        distancesWindow =
-            new TextWindow(TITLE + " Distances", createDistancesHeader(), "", 700, 300);
-      }
-    }
-
     private static String createDistancesHeader() {
       final StringBuilder sb = new StringBuilder();
       sb.append("Image\t");
@@ -542,7 +533,9 @@ public class SpotPairDistance_PlugIn implements PlugIn {
 
     private synchronized void addDistanceResult(ImagePlus imp, int slice, int frame,
         Rectangle bounds, double[] com1, double[] com2, double angle, double relX, double relY) {
-      createResultsWindow();
+      // Create the result window (if it is not available).
+      final TextWindow window = ImageJUtils.refresh(distancesWindow,
+          () -> new TextWindow(TITLE + " Distances", createDistancesHeader(), "", 700, 300));
 
       final StringBuilder sb = new StringBuilder();
       sb.append(imp.getTitle()).append('\t');
@@ -588,7 +581,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
         }
         sb.append('\t').append(unit);
       }
-      distancesWindow.append(sb.toString());
+      window.append(sb.toString());
     }
 
     @Override
@@ -656,8 +649,9 @@ public class SpotPairDistance_PlugIn implements PlugIn {
         }
 
         // Remove any distances from this image
-        if (distancesWindow != null && distancesWindow.isShowing()) {
-          final TextPanel tp = distancesWindow.getTextPanel();
+        final TextWindow window = distancesWindow.get();
+        if (window != null && window.isShowing()) {
+          final TextPanel tp = window.getTextPanel();
           final String title = imp.getTitle();
           for (int i = 0; i < tp.getLineCount(); i++) {
             final String line = tp.getLine(i);

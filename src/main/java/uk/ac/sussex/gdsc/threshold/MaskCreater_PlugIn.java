@@ -575,7 +575,7 @@ public class MaskCreater_PlugIn implements PlugIn {
     final short[] pixels16 = new short[pixels32.length];
     final float scale = getScale(min, max);
     for (int i = 0; i < pixels16.length; i++) {
-      double value = (pixels32[i] - min) * scale;
+      final double value = (pixels32[i] - min) * scale;
       if (value < 0.0) {
         // pixels16[i] is already zero
         continue;

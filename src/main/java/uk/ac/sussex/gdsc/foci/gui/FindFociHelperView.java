@@ -24,6 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci.gui;
 
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.foci.AssignedPoint;
 import uk.ac.sussex.gdsc.foci.AssignedPointUtils;
@@ -70,10 +71,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Polygon;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -83,14 +80,13 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -148,7 +144,7 @@ public class FindFociHelperView extends JFrame
   private transient GridPointManager manager;
   private int currentRoiPoints;
   private boolean dragging;
-  private static TextWindow resultsWindow;
+  private static AtomicReference<TextWindow> resultsWindow = new AtomicReference<>();
   private Roi savedRoi;
 
   private JPanel contentPane;
@@ -240,12 +236,8 @@ public class FindFociHelperView extends JFrame
 
     comboImageList = new JComboBox<>();
     comboImageList.setToolTipText("Select the input image");
-    comboImageList.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        comboImageList.firePropertyChange("selectedItem", 0, 1);
-      }
-    });
+    comboImageList
+        .addItemListener(event -> comboImageList.firePropertyChange("selectedItem", 0, 1));
     comboImageList.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent event) {
@@ -270,12 +262,8 @@ public class FindFociHelperView extends JFrame
 
     comboMaskImageList = new JComboBox<>();
     comboMaskImageList.setToolTipText("Select the input mask image");
-    comboMaskImageList.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        comboMaskImageList.firePropertyChange("selectedItem", 0, 1);
-      }
-    });
+    comboMaskImageList
+        .addItemListener(event -> comboMaskImageList.firePropertyChange("selectedItem", 0, 1));
     comboMaskImageList.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent event) {
@@ -300,12 +288,9 @@ public class FindFociHelperView extends JFrame
 
     txtResolution = new JFormattedTextField();
     txtResolution = new JFormattedTextField(new LimitedNumberFormat(0));
-    txtResolution.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName() == "value") {
-          txtResolution.firePropertyChange("text", 0, 1);
-        }
+    txtResolution.addPropertyChangeListener(event -> {
+      if (event.getPropertyName() == "value") {
+        txtResolution.firePropertyChange("text", 0, 1);
       }
     });
     txtResolution.addKeyListener(new KeyAdapter() {
@@ -325,12 +310,9 @@ public class FindFociHelperView extends JFrame
     contentPane.add(txtResolution, gbc_txtResolution);
 
     btnSaveResults = new JButton("Save Results");
-    btnSaveResults.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        if (isActive()) {
-          saveResults();
-        }
+    btnSaveResults.addActionListener(event -> {
+      if (isActive()) {
+        saveResults();
       }
     });
     final GridBagConstraints gbc_btnSaveResults = new GridBagConstraints();
@@ -365,13 +347,9 @@ public class FindFociHelperView extends JFrame
     contentPane.add(lblSearchMode, gbc_lblSearchMode);
 
     comboSearchMode = new JComboBox<>();
-    comboSearchMode.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        // Force the BeansBinding framework to pick up the state change
-        comboSearchMode.firePropertyChange("selectedItem", 0, 1);
-      }
-    });
+    // Force the BeansBinding framework to pick up the state change
+    comboSearchMode
+        .addItemListener(event -> comboSearchMode.firePropertyChange("selectedItem", 0, 1));
     final GridBagConstraints gbc_comboSearchMode = new GridBagConstraints();
     gbc_comboSearchMode.gridwidth = 3;
     gbc_comboSearchMode.insets = new Insets(0, 0, 5, 0);
@@ -382,12 +360,7 @@ public class FindFociHelperView extends JFrame
     contentPane.add(comboSearchMode, gbc_comboSearchMode);
 
     btnRun = new JButton("Start");
-    btnRun.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        initialisePicker();
-      }
-    });
+    btnRun.addActionListener(event -> initialisePicker());
     final GridBagConstraints gbc_btnRun = new GridBagConstraints();
     gbc_btnRun.insets = new Insets(0, 0, 5, 5);
     gbc_btnRun.anchor = GridBagConstraints.NORTH;
@@ -396,12 +369,7 @@ public class FindFociHelperView extends JFrame
     contentPane.add(btnRun, gbc_btnRun);
 
     btnStop = new JButton("Stop");
-    btnStop.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        killPicker();
-      }
-    });
+    btnStop.addActionListener(event -> killPicker());
     final GridBagConstraints gbc_btnStop = new GridBagConstraints();
     gbc_btnStop.insets = new Insets(0, 0, 5, 5);
     gbc_btnStop.gridx = 2;
@@ -515,14 +483,9 @@ public class FindFociHelperView extends JFrame
     contentPane.add(txtTotal, gbc_txtTotal);
 
     tglbtnOverlay = new JToggleButton("Show Overlay");
-    tglbtnOverlay.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        // Force the BeansBinding framework to pick up the state change
-        tglbtnOverlay.firePropertyChange("selected", tglbtnOverlay.isSelected(),
-            !tglbtnOverlay.isSelected());
-      }
-    });
+    // Force the BeansBinding framework to pick up the state change
+    tglbtnOverlay.addItemListener(event -> tglbtnOverlay.firePropertyChange("selected",
+        tglbtnOverlay.isSelected(), !tglbtnOverlay.isSelected()));
     final GridBagConstraints gbc_tglbtnOverlay = new GridBagConstraints();
     gbc_tglbtnOverlay.gridwidth = 2;
     gbc_tglbtnOverlay.insets = new Insets(0, 0, 0, 5);
@@ -1213,8 +1176,6 @@ public class FindFociHelperView extends JFrame
         final int ox = ic.offScreenX(event.getX());
         final int oy = ic.offScreenY(event.getY());
 
-        // logMessage("Dropped coords " + ox + "," + oy);
-
         final int index = findRoiPointIndex((PointRoi) roi, ox, oy);
 
         if (index >= 0) {
@@ -1275,8 +1236,6 @@ public class FindFociHelperView extends JFrame
       final int ox = ic.offScreenX(event.getX());
       final int oy = ic.offScreenY(event.getY());
 
-      // logMessage("Image coords " + ox + "," + oy);
-
       // Check if an assigned point is being moved
       final GridPoint movedPoint = manager.findClosestAssignedPoint(ox, oy);
 
@@ -1294,7 +1253,6 @@ public class FindFociHelperView extends JFrame
       // Check the point is within reasonable distance of the mouse
       if (movedPoint != null && Math.abs(movedPoint.getX() - ox) <= distanceLimit
           && Math.abs(movedPoint.getY() - oy) <= distanceLimit) {
-        // logMessage("Dragging point " + movedPoint.getX() + "," + movedPoint.getY());
         movedPoint.setAssigned(false);
         setMappedPoints(mappedPoints - 1);
       } else {
@@ -1342,22 +1300,22 @@ public class FindFociHelperView extends JFrame
   private void saveResults() {
     final Calibration cal = activeImp.getCalibration();
 
-    if (resultsWindow == null || !resultsWindow.isShowing()) {
-      resultsWindow =
-          new TextWindow("FindFoci Helper Results", createResultsHeader(), "", 300, 500);
-    }
+    final TextWindow window = ImageJUtils.refresh(resultsWindow,
+        () -> new TextWindow("FindFoci Helper Results", createResultsHeader(), "", 300, 500));
 
     final ImageStack impStack = controller.getActiveImageStack();
     final AssignedPoint[] points = getRoiPoints();
+    final StringBuilder sb = new StringBuilder();
     for (final AssignedPoint p : points) {
       final int x = p.getXint();
       final int y = p.getYint();
       final int z = p.getZint();
       final int height = impStack.getProcessor(z + 1).get(x, y);
       final boolean assigned = (p.getAssignedId() != -1);
-      addResult(p.getId() + 1, x * cal.pixelWidth, y * cal.pixelHeight, height, assigned);
+      createResult(sb, p.getId() + 1, x * cal.pixelWidth, y * cal.pixelHeight, height, assigned);
+      window.append(sb.toString());
     }
-    resultsWindow.append("");
+    window.append("");
   }
 
   /**
@@ -1389,14 +1347,14 @@ public class FindFociHelperView extends JFrame
     return sb.toString();
   }
 
-  private static void addResult(int index, double x, double y, int height, boolean assigned) {
-    final StringBuilder sb = new StringBuilder();
+  private static void createResult(final StringBuilder sb, int index, double x, double y,
+      int height, boolean assigned) {
+    sb.setLength(0);
     sb.append(index).append('\t');
     sb.append(MathUtils.rounded(x)).append('\t');
     sb.append(MathUtils.rounded(y)).append('\t');
     sb.append(height).append('\t');
     sb.append(assigned).append('\t');
-    resultsWindow.append(sb.toString());
   }
 
   /**
@@ -1444,8 +1402,6 @@ public class FindFociHelperView extends JFrame
         PointRoi pointRoi = (PointRoi) savedRoi;
         final AssignedPoint[] newPoints = AssignedPointUtils.extractRoiPoints(roi);
         for (final AssignedPoint p : newPoints) {
-          // pointRoi = pointRoi.addPoint(p.getX() - pointRoi.getBounds().x, p.getY() -
-          // pointRoi.getBounds().y);
           pointRoi = pointRoi.addPoint(p.getX(), p.getY());
         }
         activeImp.setRoi(pointRoi, true);

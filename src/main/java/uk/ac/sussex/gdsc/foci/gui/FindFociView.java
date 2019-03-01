@@ -72,10 +72,6 @@ import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -86,6 +82,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -100,8 +98,6 @@ import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * Provides a permanent form front-end for the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn}
@@ -203,7 +199,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         final FindFociView frame = new FindFociView();
         frame.setVisible(true);
       } catch (final Exception ex) {
-        ex.printStackTrace();
+        Logger.getLogger(FindFociView.class.getName()).log(Level.SEVERE, "Failed to show the frame",
+            ex);
       }
     });
   }
@@ -276,12 +273,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
     comboImageList = new JComboBox<>();
     comboImageList.setToolTipText("Select the input image");
-    comboImageList.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        comboImageList.firePropertyChange("selectedItem", 0, 1);
-      }
-    });
+    comboImageList
+        .addItemListener(event -> comboImageList.firePropertyChange("selectedItem", 0, 1));
     comboImageList.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent event) {
@@ -329,12 +322,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
       }
     });
     sliderGaussianBlur.setToolTipText("Apply a pre-processing blur. Helps noisy images");
-    sliderGaussianBlur.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent event) {
-        sliderGaussianBlur.firePropertyChange("value", 0, 1);
-      }
-    });
+    sliderGaussianBlur
+        .addChangeListener(event -> sliderGaussianBlur.firePropertyChange("value", 0, 1));
     sliderGaussianBlur.setMinorTickSpacing(250);
     sliderGaussianBlur.setMajorTickSpacing(250);
     sliderGaussianBlur.setValue(5);
@@ -347,12 +336,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     contentPane.add(sliderGaussianBlur, gbc_sliderGaussianBlur);
 
     txtGaussianBlur = new JFormattedTextField(new LimitedNumberFormat(0));
-    txtGaussianBlur.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName() == "value") {
-          txtGaussianBlur.firePropertyChange("text", 0, 1);
-        }
+    txtGaussianBlur.addPropertyChangeListener(event -> {
+      if (event.getPropertyName() == "value") {
+        txtGaussianBlur.firePropertyChange("text", 0, 1);
       }
     });
     txtGaussianBlur.addKeyListener(new KeyAdapter() {
@@ -382,12 +368,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     // TODO - Add the bindings necessary to update the list
     comboMaskImageList = new JComboBox<>();
     comboMaskImageList.setToolTipText("Select a mask defining the analysis area");
-    comboMaskImageList.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        comboMaskImageList.firePropertyChange("selectedItem", 0, 1);
-      }
-    });
+    comboMaskImageList
+        .addItemListener(event -> comboMaskImageList.firePropertyChange("selectedItem", 0, 1));
     comboMaskImageList.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent event) {
@@ -418,12 +400,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
     comboBackgroundMethod = new JComboBox<>();
     comboBackgroundMethod.setToolTipText("Specify the background threshold method");
-    comboBackgroundMethod.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        comboBackgroundMethod.firePropertyChange("selectedItem", 0, 1);
-      }
-    });
+    comboBackgroundMethod
+        .addItemListener(event -> comboBackgroundMethod.firePropertyChange("selectedItem", 0, 1));
     comboBackgroundMethod.setModel(new DefaultComboBoxModel<>(BackgroundMethod.getDescriptions()));
     comboBackgroundMethod.setSelectedIndex(3);
     final GridBagConstraints gbc_comboBackgroundMethod = new GridBagConstraints();
@@ -453,12 +431,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
       }
     });
     sliderBackgroundParam.setToolTipText("Controls the selected background method");
-    sliderBackgroundParam.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent event) {
-        if (model.getBackgroundMethod() != BackgroundMethod.ABSOLUTE.ordinal()) {
-          sliderBackgroundParam.firePropertyChange("value", 0, 1);
-        }
+    sliderBackgroundParam.addChangeListener(event -> {
+      if (model.getBackgroundMethod() != BackgroundMethod.ABSOLUTE.ordinal()) {
+        sliderBackgroundParam.firePropertyChange("value", 0, 1);
       }
     });
     sliderBackgroundParam.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -484,12 +459,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         }
       }
     });
-    sliderBackgroundParamAbsolute.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent event) {
-        if (model.getBackgroundMethod() == BackgroundMethod.ABSOLUTE.ordinal()) {
-          sliderBackgroundParamAbsolute.firePropertyChange("value", 0, 1);
-        }
+    sliderBackgroundParamAbsolute.addChangeListener(event -> {
+      if (model.getBackgroundMethod() == BackgroundMethod.ABSOLUTE.ordinal()) {
+        sliderBackgroundParamAbsolute.firePropertyChange("value", 0, 1);
       }
     });
     sliderBackgroundParamAbsolute.setValue(5);
@@ -504,12 +476,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     contentPane.add(sliderBackgroundParamAbsolute, gbc_sliderBackgroundParamAbsolute);
 
     txtBackgroundParam = new JFormattedTextField(new LimitedNumberFormat(0));
-    txtBackgroundParam.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName() == "value") {
-          txtBackgroundParam.firePropertyChange("text", 0, 1);
-        }
+    txtBackgroundParam.addPropertyChangeListener(event -> {
+      if (event.getPropertyName() == "value") {
+        txtBackgroundParam.firePropertyChange("text", 0, 1);
       }
     });
     txtBackgroundParam.addKeyListener(new KeyAdapter() {
@@ -537,12 +506,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
     comboThresholdMethod = new JComboBox<>();
     comboThresholdMethod.setToolTipText("Method used for auto-thresholding");
-    comboThresholdMethod.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        comboThresholdMethod.firePropertyChange("selectedItem", 0, 1);
-      }
-    });
+    comboThresholdMethod
+        .addItemListener(event -> comboThresholdMethod.firePropertyChange("selectedItem", 0, 1));
     comboThresholdMethod.setModel(new DefaultComboBoxModel<>(ThresholdMethod.getDescriptions()));
     comboThresholdMethod.setSelectedIndex(10);
     final GridBagConstraints gbc_comboThresholdMethod = new GridBagConstraints();
@@ -564,12 +529,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     comboStatisticsMode = new JComboBox<>();
     comboStatisticsMode
         .setToolTipText("Calculate background using area inside/outside the ROI/Masked region");
-    comboStatisticsMode.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        comboStatisticsMode.firePropertyChange("selectedItem", 0, 1);
-      }
-    });
+    comboStatisticsMode
+        .addItemListener(event -> comboStatisticsMode.firePropertyChange("selectedItem", 0, 1));
     comboStatisticsMode.setModel(new DefaultComboBoxModel<>(StatisticsMethod.getDescriptions()));
     final GridBagConstraints gbc_comboStatisticsMode = new GridBagConstraints();
     gbc_comboStatisticsMode.gridwidth = 2;
@@ -612,12 +573,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
     comboSearchMethod = new JComboBox<>();
     comboSearchMethod.setToolTipText("Specify the method used to expand maxima into peaks");
-    comboSearchMethod.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        comboSearchMethod.firePropertyChange("selectedItem", 0, 1);
-      }
-    });
+    comboSearchMethod
+        .addItemListener(event -> comboSearchMethod.firePropertyChange("selectedItem", 0, 1));
     comboSearchMethod.setModel(new DefaultComboBoxModel<>(SearchMethod.getDescriptions()));
     comboSearchMethod.setSelectedIndex(0);
     final GridBagConstraints gbc_comboSearchMethod = new GridBagConstraints();
@@ -647,12 +604,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         }
       }
     });
-    sliderSearchParam.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent event) {
-        sliderSearchParam.firePropertyChange("value", 0, 1);
-      }
-    });
+    sliderSearchParam
+        .addChangeListener(event -> sliderSearchParam.firePropertyChange("value", 0, 1));
     sliderSearchParam.setMaximum(1000);
     sliderSearchParam.setValue((int) (0.3 * sliderSearchParam.getMaximum()));
     sliderSearchParam.setMinorTickSpacing(50);
@@ -665,12 +618,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     contentPane.add(sliderSearchParam, gbc_sliderSearchParam);
 
     txtSearchParam = new JFormattedTextField(new LimitedNumberFormat(0, 1));
-    txtSearchParam.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName() == "value") {
-          txtSearchParam.firePropertyChange("text", 0, 1);
-        }
+    txtSearchParam.addPropertyChangeListener(event -> {
+      if (event.getPropertyName() == "value") {
+        txtSearchParam.firePropertyChange("text", 0, 1);
       }
     });
     txtSearchParam.addKeyListener(new KeyAdapter() {
@@ -715,12 +665,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
       }
     });
     sliderMinimumSize.setToolTipText("The minimum size required to define a peak");
-    sliderMinimumSize.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent event) {
-        sliderMinimumSize.firePropertyChange("value", 0, 1);
-      }
-    });
+    sliderMinimumSize
+        .addChangeListener(event -> sliderMinimumSize.firePropertyChange("value", 0, 1));
     sliderMinimumSize.setValue(5);
     sliderMinimumSize.setMaximum(100);
     final GridBagConstraints gbc_sliderMinimumSize = new GridBagConstraints();
@@ -731,12 +677,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     contentPane.add(sliderMinimumSize, gbc_sliderMinimumSize);
 
     txtMinimumSize = new JFormattedTextField(new LimitedNumberFormat(0));
-    txtMinimumSize.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName() == "value") {
-          txtMinimumSize.firePropertyChange("text", 0, 1);
-        }
+    txtMinimumSize.addPropertyChangeListener(event -> {
+      if (event.getPropertyName() == "value") {
+        txtMinimumSize.firePropertyChange("text", 0, 1);
       }
     });
     txtMinimumSize.addKeyListener(new KeyAdapter() {
@@ -757,12 +700,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     chckbxMinSizeAboveSaddle = new JCheckBox("Minimum size above saddle");
     chckbxMinSizeAboveSaddle
         .setToolTipText("Restrict minimum size to the peak volume above the highest saddle point");
-    chckbxMinSizeAboveSaddle.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        chckbxMinSizeAboveSaddle.firePropertyChange("selected", 0, 1);
-      }
-    });
+    chckbxMinSizeAboveSaddle
+        .addItemListener(event -> chckbxMinSizeAboveSaddle.firePropertyChange("selected", 0, 1));
     chckbxMinSizeAboveSaddle.setSelected(true);
     final GridBagConstraints gbc_chckbxMinSizeAboveSaddle = new GridBagConstraints();
     gbc_chckbxMinSizeAboveSaddle.gridwidth = 2;
@@ -775,12 +714,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     chckbxConnectedAboveSaddle = new JCheckBox("Connected above saddle");
     chckbxConnectedAboveSaddle
         .setToolTipText("The peak volume above the highest saddle point must be connected pixels");
-    chckbxConnectedAboveSaddle.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        chckbxConnectedAboveSaddle.firePropertyChange("selected", 0, 1);
-      }
-    });
+    chckbxConnectedAboveSaddle
+        .addItemListener(event -> chckbxConnectedAboveSaddle.firePropertyChange("selected", 0, 1));
     final GridBagConstraints gbc_chckbxConnectedAboveSaddle = new GridBagConstraints();
     gbc_chckbxConnectedAboveSaddle.gridwidth = 2;
     gbc_chckbxConnectedAboveSaddle.anchor = GridBagConstraints.WEST;
@@ -799,12 +734,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
     comboPeakMethod = new JComboBox<>();
     comboPeakMethod.setToolTipText("Specify the required height for a peak");
-    comboPeakMethod.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        comboPeakMethod.firePropertyChange("selectedItem", 0, 1);
-      }
-    });
+    comboPeakMethod
+        .addItemListener(event -> comboPeakMethod.firePropertyChange("selectedItem", 0, 1));
     comboPeakMethod.setModel(new DefaultComboBoxModel<>(PeakMethod.getDescriptions()));
     comboPeakMethod.setSelectedIndex(2);
     final GridBagConstraints gbc_comboPeakMethod = new GridBagConstraints();
@@ -825,6 +756,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
     sliderPeakParam = new JSlider();
     sliderPeakParam.addMouseListener(new MouseAdapter() {
+
       @Override
       public void mouseClicked(MouseEvent event) {
         if (event.getClickCount() > 1) {
@@ -834,12 +766,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
       }
     });
     sliderPeakParam.setToolTipText("Controls the selected peak method");
-    sliderPeakParam.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent event) {
-        if (model.getPeakMethod() != PeakMethod.ABSOLUTE.ordinal()) {
-          sliderPeakParam.firePropertyChange("value", 0, 1);
-        }
+    sliderPeakParam.addChangeListener(event -> {
+      if (model.getPeakMethod() != PeakMethod.ABSOLUTE.ordinal()) {
+        sliderPeakParam.firePropertyChange("value", 0, 1);
       }
     });
     sliderPeakParam.setMinorTickSpacing(50);
@@ -863,12 +792,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         }
       }
     });
-    sliderPeakParamAbsolute.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent event) {
-        if (model.getPeakMethod() == PeakMethod.ABSOLUTE.ordinal()) {
-          sliderPeakParamAbsolute.firePropertyChange("value", 0, 1);
-        }
+    sliderPeakParamAbsolute.addChangeListener(event -> {
+      if (model.getPeakMethod() == PeakMethod.ABSOLUTE.ordinal()) {
+        sliderPeakParamAbsolute.firePropertyChange("value", 0, 1);
       }
     });
     sliderPeakParamAbsolute.setMinorTickSpacing(50);
@@ -883,12 +809,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     contentPane.add(sliderPeakParamAbsolute, gbc_sliderPeakParamAbsolute);
 
     txtPeakParam = new JFormattedTextField(new LimitedNumberFormat(0));
-    txtPeakParam.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName() == "value") {
-          txtPeakParam.firePropertyChange("text", 0, 1);
-        }
+    txtPeakParam.addPropertyChangeListener(event -> {
+      if (event.getPropertyName() == "value") {
+        txtPeakParam.firePropertyChange("text", 0, 1);
       }
     });
     txtPeakParam.addKeyListener(new KeyAdapter() {
@@ -923,12 +846,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
     comboSortMethod = new JComboBox<>();
     comboSortMethod.setToolTipText("Metric used to sort the peaks");
-    comboSortMethod.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        comboSortMethod.firePropertyChange("selectedItem", 0, 1);
-      }
-    });
+    comboSortMethod
+        .addItemListener(event -> comboSortMethod.firePropertyChange("selectedItem", 0, 1));
     final GridBagConstraints gbc_comboSortMethod = new GridBagConstraints();
     gbc_comboSortMethod.gridwidth = 2;
     gbc_comboSortMethod.insets = new Insets(0, 0, 5, 0);
@@ -958,12 +877,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
       }
     });
     sliderMaxPeaks.setToolTipText("Specify the maximum number of peaks");
-    sliderMaxPeaks.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent event) {
-        sliderMaxPeaks.firePropertyChange("value", 0, 1);
-      }
-    });
+    sliderMaxPeaks.addChangeListener(event -> sliderMaxPeaks.firePropertyChange("value", 0, 1));
     sliderMaxPeaks.setMinimum(1);
     sliderMaxPeaks.setMaximum(1000);
     sliderMaxPeaks.setValue(50);
@@ -975,12 +889,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     contentPane.add(sliderMaxPeaks, gbc_sliderMaxPeaks);
 
     txtMaxPeaks = new JFormattedTextField(new LimitedNumberFormat(1));
-    txtMaxPeaks.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName() == "value") {
-          txtMaxPeaks.firePropertyChange("text", 0, 1);
-        }
+    txtMaxPeaks.addPropertyChangeListener(event -> {
+      if (event.getPropertyName() == "value") {
+        txtMaxPeaks.firePropertyChange("text", 0, 1);
       }
     });
     txtMaxPeaks.addKeyListener(new KeyAdapter() {
@@ -1008,12 +919,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
     comboShowMask = new JComboBox<>();
     comboShowMask.setToolTipText("Configure the output mask");
-    comboShowMask.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent event) {
-        comboShowMask.firePropertyChange("selectedItem", 0, 1);
-      }
-    });
+    comboShowMask.addItemListener(event -> comboShowMask.firePropertyChange("selectedItem", 0, 1));
     comboShowMask.setModel(new DefaultComboBoxModel<>(MaskMethod.getDescriptions()));
     comboShowMask.setSelectedIndex(3);
     final GridBagConstraints gbc_comboShowMask = new GridBagConstraints();
@@ -1033,12 +939,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     contentPane.add(lblFractionParam, gbc_lblFractionParam);
 
     sliderFractionParam = new JSlider();
-    sliderFractionParam.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent event) {
-        sliderFractionParam.firePropertyChange("value", 0, 1);
-      }
-    });
+    sliderFractionParam
+        .addChangeListener(event -> sliderFractionParam.firePropertyChange("value", 0, 1));
     sliderFractionParam.setMinimum(1);
     sliderFractionParam.setMaximum(1000);
     final GridBagConstraints gbc_sliderFractionParam = new GridBagConstraints();
@@ -1049,12 +951,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     contentPane.add(sliderFractionParam, gbc_sliderFractionParam);
 
     txtFractionParam = new JTextField();
-    txtFractionParam.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName() == "value") {
-          txtMaxPeaks.firePropertyChange("text", 0, 1);
-        }
+    txtFractionParam.addPropertyChangeListener(event -> {
+      if (event.getPropertyName() == "value") {
+        txtMaxPeaks.firePropertyChange("text", 0, 1);
       }
     });
     txtFractionParam.addKeyListener(new KeyAdapter() {
@@ -1115,26 +1014,18 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
     chckbxPreview = new JCheckBox("Preview");
     chckbxPreview.setToolTipText("Update results dynamically (requires more memory)");
-    chckbxPreview.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        if (chckbxPreview.isSelected()) {
-          // System.out.println("preview button controller.startPreview()");
-          startPreview();
-        } else {
-          // System.out.println("preview button controller.endPreview()");
-          endPreview();
-        }
+    chckbxPreview.addActionListener(event -> {
+      if (chckbxPreview.isSelected()) {
+        startPreview();
+      } else {
+        endPreview();
       }
     });
     panel.add(chckbxPreview);
-    btnRun.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        // Run in a new thread to allow updates to the IJ progress bar
-        final Thread thread = new Thread(controller);
-        thread.start();
-      }
+    btnRun.addActionListener(event -> {
+      // Run in a new thread to allow updates to the IJ progress bar
+      final Thread thread = new Thread(controller);
+      thread.start();
     });
     initDataBindings();
 
@@ -1210,12 +1101,6 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     final boolean oldValue = this.runEnabled;
     this.runEnabled = runEnabled;
     this.firePropertyChange("runEnabled", oldValue, runEnabled);
-
-    // if (runEnabled && chckbxPreview.isSelected())
-    // {
-    // System.out.println("setRunEnabled controller.preview()");
-    // controller.preview();
-    // }
   }
 
   /**
@@ -1298,13 +1183,14 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
 
   /** {@inheritDoc} */
   @Override
-  public void propertyChange(PropertyChangeEvent evt) {
-    if (evt.getPropertyName().equals("selectedImage") || evt.getPropertyName().equals("valid")) {
+  public void propertyChange(PropertyChangeEvent event) {
+    if (event.getPropertyName().equals("selectedImage")
+        || event.getPropertyName().equals("valid")) {
       endPreview();
       chckbxPreview.setSelected(false);
       controller.updateImageList();
       updateImageLimits();
-    } else if (!evt.getPropertyName().equals("changed")
+    } else if (!event.getPropertyName().equals("changed")
         // Just in case the preview has been disabled
         && chckbxPreview.isSelected()) {
       controller.preview();

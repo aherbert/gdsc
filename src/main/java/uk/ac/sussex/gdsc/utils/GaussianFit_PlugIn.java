@@ -89,7 +89,7 @@ public class GaussianFit_PlugIn implements PlugInFilter {
       // Try a fit.
       // Use reflection to allow building without the SMLM plugins on the classpath
       final Method m = clazz.getDeclaredMethod("fit", float[].class, int.class, int.class);
-      double[] fit = (double[]) m.invoke(clazz.newInstance(), data, size, size);
+      final double[] fit = (double[]) m.invoke(clazz.newInstance(), data, size, size);
       if (fit != null) {
         fittingEnabled = true;
       }
@@ -127,7 +127,8 @@ public class GaussianFit_PlugIn implements PlugInFilter {
    * @param height the height
    * @return The fitted Gaussian parameters (Background, Amplitude, x0, x1, s)
    */
-  public @Nullable double[] fit(float[] data, int width, int height) {
+  @Nullable
+  public double[] fit(float[] data, int width, int height) {
     SimpleArrayUtils.hasData2D(width, height, data);
 
     try {

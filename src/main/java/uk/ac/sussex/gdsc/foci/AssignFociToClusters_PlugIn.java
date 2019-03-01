@@ -62,8 +62,6 @@ import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Label;
 import java.awt.Point;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.image.ColorModel;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -130,7 +128,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
   private List<FindFociResult> results;
   private List<Cluster> clusters;
   private List<Cluster> minSizeClusters;
-  private List<Cluster> edgeClusters;
+  private List<Cluster> nonEdgeClusters;
   private List<Cluster> filteredClusters;
   private MatchResult matchResult;
   private ColorModel cm;
@@ -479,7 +477,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     if (minSizeClusters == null || processedSettings.minSize != settings.minSize) {
       minSizeClusters = clusters;
 
-      edgeClusters = null;
+      nonEdgeClusters = null;
 
       if (settings.minSize > 0) {
         minSizeClusters = new ArrayList<>(clusters.size());
@@ -493,10 +491,10 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       processedSettings.minSize = settings.minSize;
     }
 
-    if (edgeClusters == null
+    if (nonEdgeClusters == null
         || processedSettings.eliminateEdgeClusters != settings.eliminateEdgeClusters
         || processedSettings.border != settings.border) {
-      edgeClusters = minSizeClusters;
+      nonEdgeClusters = minSizeClusters;
 
       filteredClusters = null;
 
@@ -511,14 +509,11 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
         }
 
         // Check which clusters contain edge particles
-        edgeClusters = new ArrayList<>(minSizeClusters.size());
-        NextCluster: for (final Cluster c : minSizeClusters) {
-          for (ClusterPoint p = c.getHeadClusterPoint(); p != null; p = p.getNext()) {
-            if (edge[p.getId()]) {
-              continue NextCluster;
-            }
+        nonEdgeClusters = new ArrayList<>(minSizeClusters.size());
+        for (final Cluster c : minSizeClusters) {
+          if (!isEdgeCluster(c, edge)) {
+            nonEdgeClusters.add(c);
           }
-          edgeClusters.add(c);
         }
       }
 
@@ -534,21 +529,21 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
           processedSettings.filterRadius = settings.filterRadius;
 
           final Coordinate[] actualPoints = roiPoints;
-          final Coordinate[] predictedPoints = toCoordinates(edgeClusters);
+          final Coordinate[] predictedPoints = toCoordinates(nonEdgeClusters);
           final List<Coordinate> truePositives = null;
           final List<Coordinate> falsePositives = null;
           final List<Coordinate> falseNegatives = null;
-          final List<PointPair> matches = new ArrayList<>(edgeClusters.size());
+          final List<PointPair> matches = new ArrayList<>(nonEdgeClusters.size());
           matchResult = MatchCalculator.analyseResults2D(actualPoints, predictedPoints,
               settings.filterRadius, truePositives, falsePositives, falseNegatives, matches);
           filteredClusters = new ArrayList<>(matches.size());
           for (final PointPair pair : matches) {
-            filteredClusters.add(edgeClusters.get(((TimeValuedPoint) pair.getPoint2()).time));
+            filteredClusters.add(nonEdgeClusters.get(((TimeValuedPoint) pair.getPoint2()).time));
           }
         }
       } else {
         // No filtering
-        filteredClusters = edgeClusters;
+        filteredClusters = nonEdgeClusters;
         processedSettings.filterRadius = -1;
       }
 
@@ -558,6 +553,22 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     final double seconds = (System.currentTimeMillis() - start) / 1000.0;
     IJ.showStatus(TextUtils.pleural(filteredClusters.size(), "cluster") + " in "
         + MathUtils.rounded(seconds) + " seconds");
+  }
+
+  /**
+   * Checks if any point had an id that is on the edges.
+   *
+   * @param cluster the cluster
+   * @param edge the edge flag for each Id
+   * @return true, if is edge cluster
+   */
+  private static boolean isEdgeCluster(Cluster cluster, boolean[] edge) {
+    for (ClusterPoint p = cluster.getHeadClusterPoint(); p != null; p = p.getNext()) {
+      if (edge[p.getId()]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static Coordinate[] toCoordinates(List<Cluster> clusters) {
@@ -798,20 +809,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
 
   private static TextWindow createWindow(AtomicReference<TextWindow> windowReference, String title,
       String header, int height) {
-    TextWindow window = windowReference.get();
-    if (window == null || !window.isVisible()) {
-      window = new TextWindow(TITLE + " " + title, header, "", 800, height);
-      // When it closes remove the reference to this window
-      final TextWindow closedWindow = window;
-      window.addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowClosed(WindowEvent event) {
-          windowReference.compareAndSet(closedWindow, null);
-          super.windowClosed(event);
-        }
-      });
-      windowReference.set(window);
-    }
-    return window;
+    return ImageJUtils.refresh(windowReference,
+        () -> new TextWindow(TITLE + " " + title, header, "", 800, height));
   }
 }

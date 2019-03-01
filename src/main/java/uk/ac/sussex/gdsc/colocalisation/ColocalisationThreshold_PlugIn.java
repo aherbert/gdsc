@@ -26,6 +26,7 @@ package uk.ac.sussex.gdsc.colocalisation;
 
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -63,6 +64,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.JPanel;
@@ -146,7 +148,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
   private static final AtomicReference<Frame> instance = new AtomicReference<>();
 
   // Used to show the results
-  private static TextWindow tw;
+  private static AtomicReference<TextWindow> textWindowRef = new AtomicReference<>();
 
   private Choice channel1List;
   private Choice channel2List;
@@ -348,8 +350,9 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
       closeImagePlus(mixChannel);
       closeImagePlus(scatterPlot);
 
-      if (tw != null && tw.isShowing()) {
-        tw.close();
+      final TextWindow window = textWindowRef.get();
+      if (ImageJUtils.isShowing(window)) {
+        window.close();
       }
     }
 
@@ -822,12 +825,12 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
 
     // Create results window
     final String resultsTitle = PLUGIN_TITLE + " Results";
-    openResultsWindow1(resultsTitle, this);
+    final TextWindow textWindow = openResultsWindow1(resultsTitle);
     final String imageTitle = createImageTitle(imp1, imp2);
 
-    showResults(imageTitle, ch1threshmax, ch2threshmax, numberOfPixels, nzero, nch1gtT, nch2gtT, ct,
-        ncolocalised, rColoc, m1, m2, m1threshold, m2threshold, percVolCh1, percVolCh2, percTotCh1,
-        percTotCh2, percGtTCh1, percGtTCh2, totalPixels);
+    showResults(textWindow, imageTitle, ch1threshmax, ch2threshmax, numberOfPixels, nzero, nch1gtT,
+        nch2gtT, ct, ncolocalised, rColoc, m1, m2, m1threshold, m2threshold, percVolCh1, percVolCh2,
+        percTotCh1, percTotCh2, percGtTCh1, percGtTCh2, totalPixels);
 
     if (showColocalised) {
       mixChannel = ImageJUtils.display(COLOCALISED_PIXELS_TITLE, stackColoc).getID();
@@ -905,11 +908,12 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
     IJ.run("Fire");
   }
 
-  private void showResults(String fileName, int ch1threshmax, int ch2threshmax, long numberOfPixels,
-      long nzero, long nch1gtT, long nch2gtT, ColocalisationThreshold ct, long numberColocalised,
-      double correlationColocalised, double m1, double m2, double m1threshold, double m2threshold,
-      double percVolCh1, double percVolCh2, double percTotCh1, double percTotCh2, double percGtTCh1,
-      double percGtTCh2, double totalPixels) {
+  private void showResults(TextWindow window, String fileName, int ch1threshmax, int ch2threshmax,
+      long numberOfPixels, long nzero, long nch1gtT, long nch2gtT, ColocalisationThreshold ct,
+      long numberColocalised, double correlationColocalised, double m1, double m2,
+      double m1threshold, double m2threshold, double percVolCh1, double percVolCh2,
+      double percTotCh1, double percTotCh2, double percGtTCh1, double percGtTCh2,
+      double totalPixels) {
     final StringBuilder str = new StringBuilder();
     str.append(fileName).append('\t');
     switch (roiIndex) {
@@ -982,21 +986,20 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
       appendFormat(str, percGtTCh2 * 100.0, df2, "%");
     }
 
-    tw.append(str.toString());
+    window.append(str.toString());
   }
 
-  private static void openResultsWindow1(String resultsTitle,
-      ColocalisationThreshold_PlugIn plugin) {
-    final TextWindow textWindow = ColocalisationThreshold_PlugIn.tw;
-    final StringBuilder sb = new StringBuilder();
-    if (textWindow == null || !textWindow.isShowing()
-        || textWindow.getTextPanel().getColumnHeadings().contentEquals(plugin.createHeading(sb))) {
-      tw = new TextWindow(resultsTitle, sb.toString(), "", 1000, 300);
-    }
+  private TextWindow openResultsWindow1(String resultsTitle) {
+    final StringBuilder heading = createHeading();
+    return ConcurrencyUtils.refresh(textWindowRef,
+        // Test the window is showing with the same headings
+        (w) -> ImageJUtils.isShowing(w)
+            && w.getTextPanel().getColumnHeadings().contentEquals(heading),
+        () -> new TextWindow(resultsTitle, heading.toString(), "", 1000, 300));
   }
 
-  private StringBuilder createHeading(StringBuilder heading) {
-    heading.append("Images\tROI\tZeroZero\t");
+  private StringBuilder createHeading() {
+    final StringBuilder heading = new StringBuilder("Images\tROI\tZeroZero\t");
 
     if (showRTotal) {
       heading.append("Rtotal\t");
@@ -1267,7 +1270,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
     return panel;
   }
 
-  private static void plotResults(ArrayList<ColocalisationThreshold.ThresholdResult> results) {
+  private static void plotResults(List<ColocalisationThreshold.ThresholdResult> results) {
     if (results == null) {
       return;
     }
