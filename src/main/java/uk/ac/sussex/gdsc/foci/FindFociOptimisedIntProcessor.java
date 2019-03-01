@@ -1196,12 +1196,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
             // Get bounds
             //@formatter:off
-            if ( lx[id] < x) { lx[id] = x; }
-            if ( ly[id] < y) { ly[id] = y; }
-            if ( lz[id] < z) { lz[id] = z; }
-            if ( ux[id] > x) { ux[id] = x; }
-            if ( uy[id] > y) { uy[id] = y; }
-            if ( uz[id] > z) { uz[id] = z; }
+            if (lx[id] > x) { lx[id] = x; }
+            if (ly[id] > y) { ly[id] = y; }
+            if (lz[id] > z) { lz[id] = z; }
+            if (ux[id] < x) { ux[id] = x; }
+            if (uy[id] < y) { uy[id] = y; }
+            if (uz[id] < z) { uz[id] = z; }
             //@formatter:on
           }
         }
