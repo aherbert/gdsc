@@ -2631,7 +2631,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       }
     }
     if (set.isEmpty()) {
-      ImageJUtils.log("%s Warning : Sort method : No values, setting to default %d", TITLE,
+      ImageJUtils.log("%s Warning : Sort method : No values, setting to default %s", TITLE,
           SortMethod.INTENSITY);
       return new SortMethod[] {SortMethod.INTENSITY}; // Default
     }
@@ -2672,7 +2672,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       }
     }
     if (set.isEmpty()) {
-      ImageJUtils.log("%s Warning : Centre method : No values, setting to default %d", TITLE,
+      ImageJUtils.log("%s Warning : Centre method : No values, setting to default %s", TITLE,
           CentreMethod.MAX_VALUE_SEARCH);
       return new CentreMethod[] {CentreMethod.MAX_VALUE_SEARCH}; // Default
     }
