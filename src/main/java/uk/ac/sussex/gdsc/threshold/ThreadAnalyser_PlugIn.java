@@ -523,8 +523,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
       final double[] imageStats = extractStatistics(x, y, floatImage, data);
       out = saveResult(out, "Image Intensity", data);
 
-      // Count maxima along the line
-      // TODO - Add smoothing to the data?
+      // Count maxima along the line.
       // Note that the spacing between points is not equal.
       // Use a weighted sum for each point using the distance to neighbour
       // points within a distance window.
