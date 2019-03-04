@@ -39,9 +39,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Gaussian_PlugIn implements PlugIn {
   private static final String TITLE = "Gaussian";
 
-  /** The current settings for the plugin instance. */
-  private Settings settings;
-
   /**
    * Contains the settings that are the re-usable state of the plugin.
    */
@@ -114,7 +111,7 @@ public class Gaussian_PlugIn implements PlugIn {
   @Override
   public void run(String arg) {
     UsageTracker.recordPlugin(this.getClass(), arg);
-    settings = Settings.load();
+    final Settings settings = Settings.load();
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addNumericField("Width", settings.width, 0);
     gd.addNumericField("Height", settings.height, 0);

@@ -46,7 +46,6 @@ public class ObjectAnalyzer {
   private int minObjectSize;
 
   private int maxx;
-  private int maxy;
   private int xlimit;
   private int ylimit;
   private int[] offset;
@@ -202,7 +201,7 @@ public class ObjectAnalyzer {
    */
   private void initialise(ImageProcessor ip) {
     maxx = ip.getWidth();
-    maxy = ip.getHeight();
+    final int maxy = ip.getHeight();
 
     xlimit = maxx - 1;
     ylimit = maxy - 1;
@@ -277,10 +276,10 @@ public class ObjectAnalyzer {
     final int[] count = new int[maxObject + 1];
     final double[] sumx = new double[count.length];
     final double[] sumy = new double[count.length];
-    final int maxy = getHeight();
-    final int maxx = getWidth();
-    for (int y = 0, i = 0; y < maxy; y++) {
-      for (int x = 0; x < maxx; x++, i++) {
+    final int height = getHeight();
+    final int width = getWidth();
+    for (int y = 0, i = 0; y < height; y++) {
+      for (int x = 0; x < width; x++, i++) {
         final int value = objectMask[i];
         if (value != 0) {
           sumx[value] += x;

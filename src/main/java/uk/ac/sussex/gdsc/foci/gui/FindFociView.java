@@ -453,9 +453,9 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
       @Override
       public void mouseClicked(MouseEvent event) {
         if (event.getClickCount() > 1) {
-          final int[] limits = controller.getImageLimits(null);
+          final int[] imageLimits = controller.getImageLimits(null);
           SliderLimitHelper.updateRangeLimits(sliderBackgroundParamAbsolute, "Background parameter",
-              1, limits[0], limits[1]);
+              1, imageLimits[0], imageLimits[1]);
         }
       }
     });

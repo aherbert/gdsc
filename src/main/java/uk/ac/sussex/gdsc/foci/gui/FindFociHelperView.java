@@ -52,7 +52,6 @@ import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.PointRoi;
-import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.text.TextWindow;
@@ -1107,7 +1106,7 @@ public class FindFociHelperView extends JFrame
    */
   private void mapRoiPoint(PointRoi roi, int roiIndex) {
     synchronized (updatingPointsLock) {
-      final Polygon p = ((PolygonRoi) roi).getNonSplineCoordinates();
+      final Polygon p = roi.getNonSplineCoordinates();
       final Rectangle bounds = roi.getBounds();
       final int x = bounds.x + p.xpoints[roiIndex];
       final int y = bounds.y + p.ypoints[roiIndex];
@@ -1145,7 +1144,7 @@ public class FindFociHelperView extends JFrame
    */
   private void addRoiPoint(PointRoi roi, int roiIndex) {
     synchronized (updatingPointsLock) {
-      final Polygon p = ((PolygonRoi) roi).getNonSplineCoordinates();
+      final Polygon p = roi.getNonSplineCoordinates();
       final Rectangle bounds = roi.getBounds();
       final int x = bounds.x + p.xpoints[roiIndex];
       final int y = bounds.y + p.ypoints[roiIndex];
@@ -1190,7 +1189,7 @@ public class FindFociHelperView extends JFrame
   }
 
   private static int findRoiPointIndex(PointRoi roi, int ox, int oy) {
-    final Polygon p = ((PolygonRoi) roi).getNonSplineCoordinates();
+    final Polygon p = roi.getNonSplineCoordinates();
     final int n = p.npoints;
     final Rectangle bounds = roi.getBounds();
 

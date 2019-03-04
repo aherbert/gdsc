@@ -24,6 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
+
 import org.jdesktop.beansbinding.Converter;
 
 /**
@@ -32,7 +34,7 @@ import org.jdesktop.beansbinding.Converter;
 public class StringToBooleanConverter extends Converter<String, Boolean> {
   @Override
   public Boolean convertForward(String paramS) {
-    return (paramS != null && !paramS.equalsIgnoreCase("")) ? true : false;
+    return TextUtils.isNotEmpty(paramS);
   }
 
   @Override

@@ -502,7 +502,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
             IJ.run("ROI Manager...");
           }
           frame = WindowManager.getFrame("ROI Manager");
-          if (frame == null || !(frame instanceof RoiManager)) {
+          if (!(frame instanceof RoiManager)) {
             addToManager = false;
             return;
           }
@@ -637,7 +637,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     if (summary.getColumnHeading(ResultsTable.LAST_HEADING) == null) {
       summary.setDefaultHeadings();
     }
-    order.forEach((particle) -> {
+    order.forEach(particle -> {
       summary.incrementCounter();
       if (label != null) {
         summary.addLabel(label);

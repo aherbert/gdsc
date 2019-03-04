@@ -261,7 +261,6 @@ public class AlignImagesFft_PlugIn implements PlugIn {
   public static Rectangle createBounds(int minXShift, int maxXShift, int minYShift, int maxYShift) {
     final int w = maxXShift - minXShift;
     final int h = maxYShift - minYShift;
-    final Rectangle bounds = new Rectangle(minXShift, minYShift, w, h);
-    return bounds;
+    return new Rectangle(minXShift, minYShift, w, h);
   }
 }

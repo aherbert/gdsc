@@ -606,10 +606,10 @@ public class SpotPairDistance_PlugIn implements PlugIn {
         final int y = ic.offScreenY(event.getY());
 
         // Get the region bounds to search for maxima
-        final Rectangle bounds =
+        final Rectangle searchBounds =
             new Rectangle(x - searchRange, y - searchRange, 2 * searchRange + 1,
                 2 * searchRange + 1).intersection(new Rectangle(imp.getWidth(), imp.getHeight()));
-        if (bounds.width == 0 || bounds.height == 0) {
+        if (searchBounds.width == 0 || searchBounds.height == 0) {
           return;
         }
 
@@ -622,12 +622,13 @@ public class SpotPairDistance_PlugIn implements PlugIn {
             final Roi roi = rois[i];
             if (roi.isArea()) {
               final Rectangle r = roi.getBounds();
-              if (r.intersects(bounds)) {
+              if (r.intersects(searchBounds)) {
                 continue;
               }
             } else if (roi instanceof Line) {
               final Line line = (Line) roi;
-              if (bounds.contains(line.x1d, line.y1d) || bounds.contains(line.x2d, line.y2d)) {
+              if (searchBounds.contains(line.x1d, line.y1d)
+                  || searchBounds.contains(line.x2d, line.y2d)) {
                 continue;
               }
             }
@@ -643,7 +644,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
           // ImageCanvas.activateOverlayRoi() may set the image ROI using the first ROI
           // that contains a mousePressed/mouseReleased event. Check if it should be removed.
           final Roi impRoi = imp.getRoi();
-          if (impRoi != null && bounds.intersects(impRoi.getBounds())) {
+          if (impRoi != null && searchBounds.intersects(impRoi.getBounds())) {
             imp.setRoi((Roi) null);
           }
         }
@@ -690,7 +691,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
               final int w = Integer.parseInt(text.substring(spaceIndex + 1, xIndex));
               final int h = Integer.parseInt(text.substring(xIndex + 1));
               final Rectangle r = new Rectangle(xx, yy, w, h);
-              if (r.intersects(bounds)) {
+              if (r.intersects(searchBounds)) {
                 tp.setSelection(i, i);
                 tp.clearSelection();
                 // Since i will be incremented for the next line,

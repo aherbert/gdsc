@@ -902,15 +902,6 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
   private ImagePlus generateOutputMask(FindFociProcessorOptions processorOptions, ImagePlus imp,
       Object pixels, byte[] types, int[] maxima, FindFociStatistics stats,
       FindFociResult[] resultsArray, int numberOfMaxima) {
-    // TODO - Add an option for a coloured map of peaks using 4 colours. No touching peaks should be
-    // the same colour.
-    // - Assign all neighbours for each cell
-    // - Start @ cell with most neighbours -> label with a colour
-    // - Find unlabelled cell next to labelled cell -> label with an unused colour not used by its
-    // neighbours
-    // - Repeat
-    // - Finish all cells with no neighbours using random colour asignment
-
     final String imageTitle = imp.getTitle();
     // Rebuild the mask: all maxima have value 1, the remaining peak area are numbered sequentially
     // starting with value 2.
@@ -3472,7 +3463,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
       }
     } else {
       for (int z = result.minz; z < result.maxz; z++) {
-        final boolean isInnerZ = (zlimit == 0) ? true : (z != 0 && z != zlimit);
+        final boolean isInnerZ = (zlimit == 0) || (z != 0 && z != zlimit);
         for (int y = result.miny; y < result.maxy; y++) {
           final boolean isInnerY = alwaysInnerY || (y != 0 && y != ylimit);
           for (int x = result.minx, index1 = getIndex(result.minx, y, z); x < result.maxx;
@@ -4935,7 +4926,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
       final int x = result.x;
       final int y = result.y;
       final int z = result.z;
-      result.sortValue = x * a + y * b + z;
+      result.sortValue = (double) x * a + y * b + z;
     }
   }
 
@@ -4947,7 +4938,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
       final int x = result.x;
       final int y = result.y;
       final int z = result.z;
-      result.sortValue = x * a + y * b + z;
+      result.sortValue = (double) x * a + y * b + z;
     }
   }
 

@@ -51,9 +51,6 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
   private static final String TITLE = "RGB Threshold Analyser";
   private static AtomicReference<TextWindow> resultsWindowRef = new AtomicReference<>();
 
-  /** The current settings for the plugin instance. */
-  private Settings settings;
-
   /**
    * Contains the settings that are the re-usable state of the plugin.
    */
@@ -62,14 +59,15 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
     private static final AtomicReference<Settings> lastSettings =
         new AtomicReference<>(new Settings());
 
-    String dir1 = "";
-    String dir2 = "";
+    String dir1;
+    String dir2;
 
     /**
      * Default constructor.
      */
     Settings() {
-      // Do nothing
+      dir1 = "";
+      dir2 = "";
     }
 
     /**
@@ -113,7 +111,7 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
   public void run(String arg) {
     UsageTracker.recordPlugin(this.getClass(), arg);
 
-    settings = Settings.load();
+    final Settings settings = Settings.load();
     settings.dir1 = ImageJUtils.getDirectory("RGB_Directory", settings.dir1);
     if (settings.dir1 == null) {
       return;

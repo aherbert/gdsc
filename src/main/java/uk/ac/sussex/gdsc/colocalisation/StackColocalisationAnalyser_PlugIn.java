@@ -495,6 +495,7 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
         final int x = Cda_PlugIn.getXShift(index);
         final int y = Cda_PlugIn.getYShift(index);
 
+        // This will not over-flow as x and y are max 255.
         final double distance = Math.sqrt(x * x + y * y);
 
         stackShifter.setShift(x, y);

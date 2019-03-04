@@ -237,7 +237,6 @@ public class Cda_PlugIn extends PlugInFrame {
 
   private static final AtomicReference<Frame> instance = new AtomicReference<>();
 
-  private Label pixelsLabel;
   private Choice channel1List;
   private Choice channel2List;
   private Choice segmented1List;
@@ -1142,7 +1141,6 @@ public class Cda_PlugIn extends PlugInFrame {
       ceroValuesY[i] = 0.0D;
     }
 
-    // TODO - Only compute the images that will be displayed or saved as results
     final boolean isSaveResults = (saveResults && checkResultsDirectory());
 
     IJ.showStatus(PREPARING_PLOT_STATUS);
@@ -1679,7 +1677,7 @@ public class Cda_PlugIn extends PlugInFrame {
     mainPanel.setLayout(mainGrid);
     add(mainPanel);
 
-    pixelsLabel = new Label(PIXELS_UNIT_STRING, 0);
+    final Label pixelsLabel = new Label(PIXELS_UNIT_STRING, 0);
     pixelsLabel.setFont(MONO_FONT);
 
     mainPanel
@@ -1734,7 +1732,7 @@ public class Cda_PlugIn extends PlugInFrame {
     subRandomSamplesCheckbox = new Checkbox();
     mainPanel.add(
         createCheckboxPanel(subRandomSamplesCheckbox, CHOICE_SUB_RANDOM_SAMPLES, subRandomSamples));
-    final ItemListener itemListener = (event) -> {
+    final ItemListener itemListener = event -> {
       final Object actioner = event.getSource();
 
       if (actioner == null) {

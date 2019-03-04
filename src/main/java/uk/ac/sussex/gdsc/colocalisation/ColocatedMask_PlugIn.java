@@ -194,7 +194,7 @@ public class ColocatedMask_PlugIn implements PlugIn {
           createMask(true);
         } catch (final InterruptedException ex) {
           Thread.currentThread().interrupt();
-          break;
+          stop = true;
         }
       }
     }

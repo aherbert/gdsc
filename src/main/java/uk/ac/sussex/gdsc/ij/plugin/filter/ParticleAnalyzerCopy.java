@@ -608,7 +608,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
 
   private static boolean isThresholdedRGB(ImagePlus imp) {
     final Object obj = imp.getProperty("Mask");
-    if (obj == null || !(obj instanceof ImageProcessor)) {
+    if (!(obj instanceof ImageProcessor)) {
       return false;
     }
     final ImageProcessor mask = (ImageProcessor) obj;
@@ -785,7 +785,6 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
     int offset;
     double value;
     final int inc = Math.max(r.height / 25, 1);
-    final int mi = 0;
     final ImageWindow win = imp.getWindow();
     if (win != null) {
       win.running = true;
@@ -1230,7 +1229,7 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
             IJ.run("ROI Manager...");
           }
           frame = WindowManager.getFrame("ROI Manager");
-          if (frame == null || !(frame instanceof RoiManager)) {
+          if (!(frame instanceof RoiManager)) {
             addToManager = false;
             return;
           }

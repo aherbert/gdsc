@@ -845,6 +845,11 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
             "Error converting parameters to FindFoci options: " + text, ex);
       }
     }
+
+    private static boolean centreMethodHasParameter(CentreMethod centreMethod) {
+      return (centreMethod == CentreMethod.CENTRE_OF_MASS_SEARCH
+          || centreMethod == CentreMethod.GAUSSIAN_SEARCH);
+    }
   }
 
   /**
@@ -2747,11 +2752,6 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     return centreParameterInterval;
   }
 
-  private static boolean centreMethodHasParameter(CentreMethod centreMethod) {
-    return (centreMethod == CentreMethod.CENTRE_OF_MASS_SEARCH
-        || centreMethod == CentreMethod.GAUSSIAN_SEARCH);
-  }
-
   /**
    * Count the number of steps up to the maximum allowed steps.
    *
@@ -3099,19 +3099,11 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
         }
         final String[] fields = POINTS_PATTERN.split(line);
         if (fields.length > 1) {
-          try {
-            final int x = (int) Double.parseDouble(fields[0]);
-            final int y = (int) Double.parseDouble(fields[1]);
-            int zposition = 0;
-            if (fields.length > 2) {
-              zposition = (int) Double.parseDouble(fields[2]);
-            }
-            points.add(new AssignedPoint(x, y, zposition, ++id));
-          } catch (final NumberFormatException ex) {
+          if (addPoint(points, fields, id)) {
+            id++;
+          } else if (++errors == MAX_ERROR) {
             // Abort if too many errors
-            if (++errors == MAX_ERROR) {
-              return null;
-            }
+            return null;
           }
         }
       }
@@ -3120,6 +3112,21 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       // ignore
     }
     return null;
+  }
+
+  private static boolean addPoint(ArrayList<AssignedPoint> points, String[] fields, int id) {
+    try {
+      final int x = (int) Double.parseDouble(fields[0]);
+      final int y = (int) Double.parseDouble(fields[1]);
+      int zposition = 0;
+      if (fields.length > 2) {
+        zposition = (int) Double.parseDouble(fields[2]);
+      }
+      points.add(new AssignedPoint(x, y, zposition, id));
+      return true;
+    } catch (final NumberFormatException ex) {
+      return false;
+    }
   }
 
   @SuppressWarnings("unused")

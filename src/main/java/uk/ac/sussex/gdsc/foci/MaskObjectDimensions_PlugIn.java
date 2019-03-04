@@ -563,20 +563,16 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
           // Move one way, then the other
           for (final int dir : new int[] {-1, 1}) {
             final double[] tmp = (dir == 1) ? direction1 : direction2;
-            moveDirection: for (int n = dir;; n += dir) {
-              for (int i = 0; i < 3; i++) {
-                pos[i] = com[i] + n * direction[i];
-                // Check bounds
-                if (pos[i] < mind[i] || pos[i] >= maxd[i]) {
-                  break moveDirection;
-                }
+            for (int n = dir;; n += dir) {
+              if (updatePosition(com, n, direction, mind, maxd, pos)) {
+                break;
               }
               final int index = ((int) pos[2]) * size + ((int) pos[1]) * maxx + ((int) pos[0]);
               // Check if we are inside the object
               if (image[index] != objectValue) {
                 continue;
               }
-              System.arraycopy(pos, 0, tmp, 0, 3);
+              System.arraycopy(pos, 0, tmp, 0, pos.length);
             }
           }
         }
@@ -623,6 +619,31 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     if (settings.showOverlay) {
       imp.setOverlay(overlay);
     }
+  }
+
+  /**
+   * Update the position by moving from the centre-of-mass n steps in the given direction.
+   *
+   * <p>Check if the move results in exceeding the bounds.
+   *
+   * @param com the centre-of-mass
+   * @param n the number of steps
+   * @param direction the direction
+   * @param mind the minimum for the dimension
+   * @param maxd the maximum for the dimension
+   * @param pos the position
+   * @return true if out-of-bounds
+   */
+  private static boolean updatePosition(double[] com, int n, double[] direction, int[] mind,
+      int[] maxd, double[] pos) {
+    for (int i = 0; i < 3; i++) {
+      pos[i] = com[i] + n * direction[i];
+      // Check bounds
+      if (pos[i] < mind[i] || pos[i] >= maxd[i]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private TextWindow createResultsWindow() {

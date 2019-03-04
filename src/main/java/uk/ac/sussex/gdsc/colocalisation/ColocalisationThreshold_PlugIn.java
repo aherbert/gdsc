@@ -825,7 +825,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
 
     // Create results window
     final String resultsTitle = PLUGIN_TITLE + " Results";
-    final TextWindow textWindow = openResultsWindow1(resultsTitle);
+    final TextWindow textWindow = openResultsWindow(resultsTitle);
     final String imageTitle = createImageTitle(imp1, imp2);
 
     showResults(textWindow, imageTitle, ch1threshmax, ch2threshmax, numberOfPixels, nzero, nch1gtT,
@@ -989,12 +989,12 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
     window.append(str.toString());
   }
 
-  private TextWindow openResultsWindow1(String resultsTitle) {
+  private TextWindow openResultsWindow(String resultsTitle) {
     final StringBuilder heading = createHeading();
     return ConcurrencyUtils.refresh(textWindowRef,
         // Test the window is showing with the same headings
-        (w) -> ImageJUtils.isShowing(w)
-            && w.getTextPanel().getColumnHeadings().contentEquals(heading),
+        window -> ImageJUtils.isShowing(window)
+            && window.getTextPanel().getColumnHeadings().contentEquals(heading),
         () -> new TextWindow(resultsTitle, heading.toString(), "", 1000, 300));
   }
 

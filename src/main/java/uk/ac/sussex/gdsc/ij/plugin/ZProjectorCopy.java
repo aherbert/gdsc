@@ -236,7 +236,7 @@ public class ZProjectorCopy implements PlugIn {
     method = gd.getNextChoiceIndex();
     Prefs.set(METHOD_KEY, method);
     if (isHyperstack) {
-      allTimeFrames = imp.getNFrames() > 1 && imp.getNSlices() > 1 ? gd.getNextBoolean() : false;
+      allTimeFrames = imp.getNFrames() > 1 && imp.getNSlices() > 1 && gd.getNextBoolean();
       doHyperStackProjection(allTimeFrames);
     } else if (imp.getType() == ImagePlus.COLOR_RGB) {
       doRGBProjection();
@@ -255,7 +255,6 @@ public class ZProjectorCopy implements PlugIn {
 
     imp.unlock();
     IJ.register(ZProjector.class);
-    return;
   }
 
   /**

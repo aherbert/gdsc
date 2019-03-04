@@ -809,7 +809,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
       }
     } else {
       for (int z = result.minz; z < result.maxz; z++) {
-        final boolean isInnerZ = (zlimit == 0) ? true : (z != 0 && z != zlimit);
+        final boolean isInnerZ = (zlimit == 0) || (z != 0 && z != zlimit);
         for (int y = result.miny; y < result.maxy; y++) {
           final boolean isInnerY = alwaysInnerY || (y != 0 && y != ylimit);
           for (int x = result.minx, index1 = getIndex(result.minx, y, z); x < result.maxx;

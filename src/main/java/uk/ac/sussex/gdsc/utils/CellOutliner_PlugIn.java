@@ -116,7 +116,6 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
   private double maxDistance2;
 
   private int maxx;
-  private int maxy;
   private int xlimit;
   private int ylimit;
   private int[] offset;
@@ -451,7 +450,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
   @Nullable
   private PolygonRoi[] findCells(ImageProcessor inputProcessor) {
     // Limit processing to where it is needed
-    final Rectangle bounds = createBounds(inputProcessor, xpoints, ypoints);
+    final Rectangle bounds = createBounds(inputProcessor, xpoints, ypoints, getCellRange());
     ImageProcessor ip = inputProcessor.duplicate();
     ip.setRoi(bounds);
     ip = ip.crop();
@@ -495,12 +494,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       final int cy = ypoints[n] - bounds.y;
 
       // Restrict bounds using the cell radius and tolerance
-      final int extra = getCellRange();
-      final int minx = Math.max(0, cx - extra);
-      final int miny = Math.max(0, cy - extra);
-      final int maxx = Math.min(ip.getWidth() - 1, cx + extra);
-      final int maxy = Math.min(ip.getHeight() - 1, cy + extra);
-      final Rectangle pointBounds = new Rectangle(minx, miny, maxx - minx + 1, maxy - miny + 1);
+      final Rectangle pointBounds = createBounds(ip, cx, cy, cx, cy, getCellRange());
 
       // Calculate the angle
       final FloatProcessor angle = createAngleProcessor(cx, cy, pointBounds);
@@ -512,8 +506,8 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
 
       // Initialise the edge as a circle.
       PolygonRoi cell = null;
-      double[] params =
-          {cx - minx, cy - miny, settings.cellRadius, settings.cellRadius, settings.cellRadius, 0};
+      double[] params = {cx - pointBounds.x, cy - pointBounds.y, settings.cellRadius,
+          settings.cellRadius, settings.cellRadius, 0};
       final double range = settings.cellRadius * 0.9;
 
       // Iterate to find the best cell outline
@@ -711,9 +705,13 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
    * Find the bounding rectangle that contains all the pixels that will be required for processing.
    *
    * @param ip the ip
+   * @param xpoints the xpoints
+   * @param ypoints the ypoints
+   * @param extra the extra tolerance around the cell
    * @return the rectangle
    */
-  private Rectangle createBounds(ImageProcessor ip, int[] xpoints, int[] ypoints) {
+  private static Rectangle createBounds(ImageProcessor ip, int[] xpoints, int[] ypoints,
+      int extra) {
     // Get the range of clicked points
     int minx = Integer.MAX_VALUE;
     int maxx = 0;
@@ -737,16 +735,15 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     }
 
     // Add the cell width, tolerance and kernel size to get the total required limits
-    final int extra = getCellRange();
-    minx -= extra;
-    miny -= extra;
-    maxx += extra;
-    maxy += extra;
-    minx = Math.max(0, minx);
-    miny = Math.max(0, miny);
-    maxx = Math.min(ip.getWidth() - 1, maxx);
-    maxy = Math.min(ip.getHeight() - 1, maxy);
+    return createBounds(ip, minx, miny, maxx, maxy, extra);
+  }
 
+  private static Rectangle createBounds(ImageProcessor ip, int minx, int miny, int maxx, int maxy,
+      int extra) {
+    minx = Math.max(0, minx - extra);
+    miny = Math.max(0, miny - extra);
+    maxx = Math.min(ip.getWidth() - 1, maxx + extra);
+    maxy = Math.min(ip.getHeight() - 1, maxy + extra);
     return new Rectangle(minx, miny, maxx - minx + 1, maxy - miny + 1);
   }
 
@@ -1732,7 +1729,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
    */
   private void initialise(ImageProcessor ip) {
     maxx = ip.getWidth();
-    maxy = ip.getHeight();
+    final int maxy = ip.getHeight();
 
     xlimit = maxx - 1;
     ylimit = maxy - 1;
