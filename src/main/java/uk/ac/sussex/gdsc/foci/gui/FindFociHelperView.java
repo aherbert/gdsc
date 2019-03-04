@@ -33,6 +33,8 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
 import uk.ac.sussex.gdsc.foci.FindFociResult;
 import uk.ac.sussex.gdsc.foci.GridException;
 import uk.ac.sussex.gdsc.foci.GridPoint;
@@ -510,7 +512,8 @@ public class FindFociHelperView extends JFrame
     // Find points above the mean. This is a good start for finding maxima.
     model.setBackgroundMethod(BackgroundMethod.STD_DEV_ABOVE_MEAN.ordinal());
     model.setBackgroundParameter(0);
-    model.setThresholdMethod("");
+    model.setThresholdMethod(ThresholdMethod.NONE.ordinal());
+    model.setStatisticsMode(StatisticsMethod.ALL.ordinal());
     model.setSearchMethod(SearchMethod.ABOVE_BACKGROUND.ordinal());
     model.setSearchParameter(0);
     model.setMaxPeaks(33000);

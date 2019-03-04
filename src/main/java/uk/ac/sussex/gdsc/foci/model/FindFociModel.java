@@ -60,12 +60,12 @@ public class FindFociModel extends AbstractModelObject {
   public static final String PROPERTY_BACKGROUND_PARAMETER = "backgroundParameter";
   /**
    * The property name for the {@link PropertyChangeEvent} raised in
-   * {@link #setThresholdMethod(String)}.
+   * {@link #setThresholdMethod(int)}.
    */
   public static final String PROPERTY_THRESHOLD_METHOD = "thresholdMethod";
   /**
    * The property name for the {@link PropertyChangeEvent} raised in
-   * {@link #setStatisticsMode(String)}.
+   * {@link #setStatisticsMode(int)}.
    */
   public static final String PROPERTY_STATISTICS_MODE = "statisticsMode";
   /**
@@ -349,16 +349,14 @@ public class FindFociModel extends AbstractModelObject {
     return processorOptions.getBackgroundParameter();
   }
 
-  // TODO change property to an int
-
   /**
    * Sets the threshold method.
    *
    * @param thresholdMethod the new threshold method
    */
-  public void setThresholdMethod(String thresholdMethod) {
-    final String oldValue = getThresholdMethod();
-    processorOptions.setThresholdMethod(ThresholdMethod.fromDescription(thresholdMethod));
+  public void setThresholdMethod(int thresholdMethod) {
+    final int oldValue = getThresholdMethod();
+    processorOptions.setThresholdMethod(ThresholdMethod.fromOrdinal(thresholdMethod));
     firePropertyChange(PROPERTY_THRESHOLD_METHOD, oldValue, thresholdMethod);
   }
 
@@ -367,20 +365,18 @@ public class FindFociModel extends AbstractModelObject {
    *
    * @return the thresholdMethod.
    */
-  public String getThresholdMethod() {
-    return processorOptions.getThresholdMethod().getDescription();
+  public int getThresholdMethod() {
+    return processorOptions.getThresholdMethod().ordinal();
   }
-
-  // TODO change property to an int
 
   /**
    * Sets the statistics mode.
    *
    * @param statisticsMode the new statistics mode
    */
-  public void setStatisticsMode(String statisticsMode) {
-    final String oldValue = getStatisticsMode();
-    processorOptions.setStatisticsMethod(StatisticsMethod.fromDescription(statisticsMode));
+  public void setStatisticsMode(int statisticsMode) {
+    final int oldValue = getStatisticsMode();
+    processorOptions.setStatisticsMethod(StatisticsMethod.fromOrdinal(statisticsMode));
     firePropertyChange(PROPERTY_STATISTICS_MODE, oldValue, statisticsMode);
   }
 
@@ -389,8 +385,8 @@ public class FindFociModel extends AbstractModelObject {
    *
    * @return the statisticsMode.
    */
-  public String getStatisticsMode() {
-    return processorOptions.getStatisticsMethod().getDescription();
+  public int getStatisticsMode() {
+    return processorOptions.getStatisticsMethod().ordinal();
   }
 
   /**
