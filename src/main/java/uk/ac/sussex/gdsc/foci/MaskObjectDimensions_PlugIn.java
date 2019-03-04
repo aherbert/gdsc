@@ -627,17 +627,17 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
    * <p>Check if the move results in exceeding the bounds.
    *
    * @param com the centre-of-mass
-   * @param n the number of steps
+   * @param numberOfSteps the number of steps
    * @param direction the direction
    * @param mind the minimum for the dimension
    * @param maxd the maximum for the dimension
    * @param pos the position
    * @return true if out-of-bounds
    */
-  private static boolean updatePosition(double[] com, int n, double[] direction, int[] mind,
-      int[] maxd, double[] pos) {
+  private static boolean updatePosition(double[] com, int numberOfSteps, double[] direction,
+      int[] mind, int[] maxd, double[] pos) {
     for (int i = 0; i < 3; i++) {
-      pos[i] = com[i] + n * direction[i];
+      pos[i] = com[i] + numberOfSteps * direction[i];
       // Check bounds
       if (pos[i] < mind[i] || pos[i] >= maxd[i]) {
         return true;
