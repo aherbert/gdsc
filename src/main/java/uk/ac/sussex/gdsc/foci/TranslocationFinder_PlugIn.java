@@ -238,7 +238,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
       IJ.error(TITLE, "No foci with the name " + resultsName);
       return null;
     }
-    final List<FindFociResult> results = memoryResults.results;
+    final List<FindFociResult> results = memoryResults.getResults();
     if (results.isEmpty()) {
       IJ.error(TITLE, "Zero foci in the results with the name " + resultsName);
       return null;

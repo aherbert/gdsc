@@ -32,20 +32,20 @@ import ij.ImagePlus;
 public class FindFociPrelimResults {
 
   /** The mask. */
-  public final ImagePlus mask;
+  final ImagePlus mask;
 
   /** The results. */
-  public final FindFociResult[] results;
+  final FindFociResult[] results;
 
   /** The statistics. */
-  public final FindFociStatistics stats;
+  final FindFociStatistics stats;
 
   /**
    * Instantiates a new find foci result.
    *
    * @param mask the mask
    * @param results the results
-   * @param stats the stats
+   * @param stats the statistics
    */
   public FindFociPrelimResults(ImagePlus mask, FindFociResult[] results, FindFociStatistics stats) {
     this.mask = mask;
@@ -71,5 +71,32 @@ public class FindFociPrelimResults {
    */
   public FindFociPrelimResults copy() {
     return new FindFociPrelimResults(this);
+  }
+
+  /**
+   * Gets the mask.
+   *
+   * @return the mask
+   */
+  public ImagePlus getMask() {
+    return mask;
+  }
+
+  /**
+   * Gets the results.
+   *
+   * @return the results
+   */
+  public FindFociResult[] getResults() {
+    return results;
+  }
+
+  /**
+   * Gets the statistics.
+   *
+   * @return the statistics
+   */
+  public FindFociStatistics getStats() {
+    return stats;
   }
 }

@@ -237,7 +237,7 @@ public class FindFociRunner implements Runnable {
         return;
       }
 
-      notifyListener(MessageType.BACKGROUND_LEVEL, initResults.stats.background);
+      notifyListener(MessageType.BACKGROUND_LEVEL, initResults.stats.getBackground());
     }
     if (state.ordinal() <= FindFociState.SEARCH.ordinal()) {
       searchInitResults = processor.copyForStagedProcessing(initResults, searchInitResults);
@@ -247,7 +247,7 @@ public class FindFociRunner implements Runnable {
         return;
       }
 
-      notifyListener(MessageType.BACKGROUND_LEVEL, searchInitResults.stats.background);
+      notifyListener(MessageType.BACKGROUND_LEVEL, searchInitResults.stats.getBackground());
     }
     if (state.ordinal() <= FindFociState.MERGE_HEIGHT.ordinal()) {
       // No clone as the maxima and types are not changed
@@ -277,12 +277,12 @@ public class FindFociRunner implements Runnable {
       }
     }
     if (state.ordinal() <= FindFociState.CALCULATE_RESULTS.ordinal()) {
-      if (initResults.stats.imageMinimum < 0 && FindFociBaseProcessor
+      if (initResults.stats.getImageMinimum() < 0 && FindFociBaseProcessor
           .isSortMethodSensitiveToNegativeValues(processorOptions.getSortMethod())) {
         notifyListener(MessageType.SORT_INDEX_SENSITIVE_TO_NEGATIVE_VALUES,
-            initResults.stats.imageMinimum);
+            initResults.stats.getImageMinimum());
       } else {
-        notifyListener(MessageType.SORT_INDEX_OK, initResults.stats.imageMinimum);
+        notifyListener(MessageType.SORT_INDEX_OK, initResults.stats.getImageMinimum());
       }
 
       resultsInitResults = processor.copyForStagedProcessing(mergeInitResults, resultsInitResults);
@@ -370,7 +370,7 @@ public class FindFociRunner implements Runnable {
 
     // Special case where the change is only relevant if previous model was at the limit
     if (notEqual(model.getMaxPeaks(), previousModel.getMaxPeaks())) {
-      final List<FindFociResult> resultsArrayList = results.results;
+      final List<FindFociResult> resultsArrayList = results.getResults();
       final int change = model.getMaxPeaks() - previousModel.getMaxPeaks();
       if ((change > 0 && resultsArrayList.size() >= previousModel.getMaxPeaks())
           || (change < 0 && resultsArrayList.size() > model.getMaxPeaks())) {

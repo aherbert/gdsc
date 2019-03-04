@@ -155,7 +155,7 @@ public class FindMaximaController extends ImageJController {
         ff.createFindFociProcessor(imp).findMaxima(imp, mask, processorOptions);
 
     if (results != null) {
-      final List<FindFociResult> newResultsArray = results.results;
+      final List<FindFociResult> newResultsArray = results.getResults();
       if (newResultsArray != null) {
         resultsArray = newResultsArray;
       }

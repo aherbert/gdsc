@@ -59,17 +59,17 @@ public class FindFociInitResults {
    * @param image the image
    * @param types the types
    * @param maxima the maxima
-   * @param histgram the histgram
-   * @param stats the stats
+   * @param histogram the histogram
+   * @param stats the statistics
    * @param originalImage the original image
-   * @param originalImp the original imp
+   * @param originalImp the original image plus
    */
-  public FindFociInitResults(Object image, byte[] types, int[] maxima, Histogram histgram,
+  public FindFociInitResults(Object image, byte[] types, int[] maxima, Histogram histogram,
       FindFociStatistics stats, Object originalImage, ImagePlus originalImp) {
     this.image = image;
     this.types = types;
     this.maxima = maxima;
-    this.histogram = histgram;
+    this.histogram = histogram;
     this.stats = stats;
     this.originalImage = originalImage;
     this.originalImp = originalImp;

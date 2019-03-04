@@ -280,7 +280,7 @@ public class SpotDensity_PlugIn implements PlugIn {
       IJ.showMessage("Error", "No foci with the name " + resultsName);
       return null;
     }
-    final List<FindFociResult> results = memoryResults.results;
+    final List<FindFociResult> results = memoryResults.getResults();
     if (results.isEmpty()) {
       IJ.showMessage("Error", "Zero foci in the results with the name " + resultsName);
       return null;

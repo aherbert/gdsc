@@ -31,67 +31,67 @@ public class FindFociResult {
   /**
    * The X coordinate.
    */
-  public int x;
+  int x;
   /**
    * The Y coordinate.
    */
-  public int y;
+  int y;
   /**
    * The Z coordinate (this is zero-indexed, not one-indexed as per ImageJ stack slices).
    */
-  public int z;
+  int z;
   /**
    * The internal ID used during the FindFoci routine. This can be ignored.
    */
-  public int id;
+  int id;
   /**
    * The number of pixels in the peak.
    */
-  public int count;
+  int count;
   /**
    * The sum of the peak intensity.
    */
-  public double totalIntensity;
+  double totalIntensity;
   /**
    * The peak maximum value.
    */
-  public float maxValue;
+  float maxValue;
   /**
    * The peak highest saddle point.
    */
-  public float highestSaddleValue;
+  float highestSaddleValue;
   /**
    * The peak ID of the touching peak with the highest saddle point.
    */
-  public int saddleNeighbourId;
+  int saddleNeighbourId;
   /**
    * The average of the peak intensity.
    */
-  public double averageIntensity;
+  double averageIntensity;
   /**
    * The sum of the peak intensity above the background.
    */
-  public double totalIntensityAboveBackground;
+  double totalIntensityAboveBackground;
   /**
    * The average of the peak intensity above the background.
    */
-  public double averageIntensityAboveBackground;
+  double averageIntensityAboveBackground;
   /**
    * The number of pixels in the peak above the highest saddle.
    */
-  public int countAboveSaddle;
+  int countAboveSaddle;
   /**
    * The sum of the peak intensity above the highest saddle.
    */
-  public double intensityAboveSaddle;
+  double intensityAboveSaddle;
   /**
    * The sum of the peak intensity above the minimum value of the analysed image.
    */
-  public double totalIntensityAboveImageMinimum;
+  double totalIntensityAboveImageMinimum;
   /**
    * The average of the peak intensity above the minimum value of the analysed image.
    */
-  public double averageIntensityAboveImageMinimum;
+  double averageIntensityAboveImageMinimum;
   /**
    * The custom sort value. This is used internally to sort the results using values not stored in
    * the result array.
@@ -100,11 +100,11 @@ public class FindFociResult {
   /**
    * The state (i.e. pixel value) from the mask image
    */
-  public int state;
+  int state;
   /**
    * The allocated object from the mask image.
    */
-  public int object;
+  int object;
   /**
    * The minimum x range covered by the peak. This is used when merging peaks above the minimum
    * saddle value.
@@ -204,5 +204,213 @@ public class FindFociResult {
     maxx = Math.max(maxx, result.maxx);
     maxy = Math.max(maxy, result.maxy);
     maxz = Math.max(maxz, result.maxz);
+  }
+
+  /**
+   * The X coordinate.
+   *
+   * @return the x
+   */
+  public int getX() {
+    return x;
+  }
+
+  /**
+   * The Y coordinate.
+   *
+   * @return the y
+   */
+  public int getY() {
+    return y;
+  }
+
+  /**
+   * The Z coordinate.
+   *
+   * @return the z
+   */
+  public int getZ() {
+    return z;
+  }
+
+  /**
+   * The number of pixels in the peak.
+   *
+   * @return the count
+   */
+  public int getCount() {
+    return count;
+  }
+
+  /**
+   * The sum of the peak intensity.
+   *
+   * @return the total intensity
+   */
+  public double getTotalIntensity() {
+    return totalIntensity;
+  }
+
+  /**
+   * The peak maximum value.
+   *
+   * @return the max value
+   */
+  public float getMaxValue() {
+    return maxValue;
+  }
+
+  /**
+   * The peak highest saddle point.
+   *
+   * @return the highest saddle value
+   */
+  public float getHighestSaddleValue() {
+    return highestSaddleValue;
+  }
+
+  /**
+   * The peak ID of the touching peak with the highest saddle point.
+   *
+   * @return the saddle neighbour id
+   */
+  public int getSaddleNeighbourId() {
+    return saddleNeighbourId;
+  }
+
+  /**
+   * The average of the peak intensity.
+   *
+   * @return the average intensity
+   */
+  public double getAverageIntensity() {
+    return averageIntensity;
+  }
+
+  /**
+   * The sum of the peak intensity above the background.
+   *
+   * @return the total intensity above background
+   */
+  public double getTotalIntensityAboveBackground() {
+    return totalIntensityAboveBackground;
+  }
+
+  /**
+   * The average of the peak intensity above the background.
+   *
+   * @return the average intensity above background
+   */
+  public double getAverageIntensityAboveBackground() {
+    return averageIntensityAboveBackground;
+  }
+
+  /**
+   * The number of pixels in the peak above the highest saddle.
+   *
+   * @return the count above saddle
+   */
+  public int getCountAboveSaddle() {
+    return countAboveSaddle;
+  }
+
+  /**
+   * The sum of the peak intensity above the highest saddle.
+   *
+   * @return the intensity above saddle
+   */
+  public double getIntensityAboveSaddle() {
+    return intensityAboveSaddle;
+  }
+
+  /**
+   * The sum of the peak intensity above the minimum value of the analysed image.
+   *
+   * @return the total intensity above image minimum
+   */
+  public double getTotalIntensityAboveImageMinimum() {
+    return totalIntensityAboveImageMinimum;
+  }
+
+  /**
+   * The average of the peak intensity above the minimum value of the analysed image.
+   *
+   * @return the average intensity above image minimum
+   */
+  public double getAverageIntensityAboveImageMinimum() {
+    return averageIntensityAboveImageMinimum;
+  }
+
+  /**
+   * The state (i.e. pixel value) from the mask image
+   *
+   * @return the state
+   */
+  public int getState() {
+    return state;
+  }
+
+  /**
+   * The allocated object from the mask image.
+   *
+   * @return the object
+   */
+  public int getObject() {
+    return object;
+  }
+
+  /**
+   * The minimum x range covered by the peak.
+   *
+   * @return the minx
+   */
+  public int getMinx() {
+    return minx;
+  }
+
+  /**
+   * The minimum y range covered by the peak.
+   *
+   * @return the miny
+   */
+  public int getMiny() {
+    return miny;
+  }
+
+  /**
+   * The minimum z range covered by the peak.
+   *
+   * @return the minz
+   */
+
+  public int getMinz() {
+    return minz;
+  }
+
+  /**
+   * The maximum x range covered by the peak.
+   *
+   * @return the maxx
+   */
+  public int getMaxx() {
+    return maxx;
+  }
+
+  /**
+   * The maximum y range covered by the peak.
+   *
+   * @return the maxy
+   */
+  public int getMaxy() {
+    return maxy;
+  }
+
+  /**
+   * The maximum z range covered by the peak.
+   *
+   * @return the maxz
+   */
+  public int getMaxz() {
+    return maxz;
   }
 }

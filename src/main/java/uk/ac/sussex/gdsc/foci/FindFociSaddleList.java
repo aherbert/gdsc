@@ -42,10 +42,10 @@ public class FindFociSaddleList {
 
     @Override
     public int compare(FindFociSaddle o1, FindFociSaddle o2) {
-      if (o1.getId() < o2.getId()) {
+      if (o1.id < o2.id) {
         return -1;
       }
-      if (o1.getId() > o2.getId()) {
+      if (o1.id > o2.id) {
         return 1;
       }
       return Integer.compare(o1.order, o2.order);
@@ -235,9 +235,9 @@ public class FindFociSaddleList {
     int lastId = 0;
     int newSize = 0;
     for (int i = 0; i < size; i++) {
-      if (lastId != list[i].getId()) {
+      if (lastId != list[i].id) {
         list[newSize++] = list[i];
-        lastId = list[i].getId();
+        lastId = list[i].id;
       }
     }
     clear(newSize);
@@ -260,7 +260,7 @@ public class FindFociSaddleList {
     final TIntHashSet set = new TIntHashSet(size);
     int newSize = 0;
     for (int i = 0; i < size; i++) {
-      if (set.add(list[i].getId())) {
+      if (set.add(list[i].id)) {
         list[newSize++] = list[i];
       }
     }

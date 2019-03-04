@@ -35,13 +35,13 @@ import java.util.List;
  */
 public class FindFociResults {
   /** The mask. */
-  public final ImagePlus mask;
+  final ImagePlus mask;
 
   /** The results. */
-  public final List<FindFociResult> results;
+  final List<FindFociResult> results;
 
   /** The statistics. */
-  public final FindFociStatistics stats;
+  final FindFociStatistics stats;
 
   /**
    * Instantiates a new find foci result.
@@ -87,5 +87,32 @@ public class FindFociResults {
    */
   public FindFociResults copy() {
     return new FindFociResults(this);
+  }
+
+  /**
+   * Gets the mask.
+   *
+   * @return the mask
+   */
+  public ImagePlus getMask() {
+    return mask;
+  }
+
+  /**
+   * Gets the results.
+   *
+   * @return the results
+   */
+  public List<FindFociResult> getResults() {
+    return results;
+  }
+
+  /**
+   * Gets the statistics.
+   *
+   * @return the statistics
+   */
+  public FindFociStatistics getStats() {
+    return stats;
   }
 }

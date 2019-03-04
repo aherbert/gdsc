@@ -29,10 +29,10 @@ package uk.ac.sussex.gdsc.foci;
  */
 public class FindFociSearchResults {
   /** The results array. */
-  public FindFociResult[] resultsArray;
+  final FindFociResult[] resultsArray;
 
   /** The saddle points. */
-  public FindFociSaddleList[] saddlePoints;
+  final FindFociSaddleList[] saddlePoints;
 
   /**
    * Instantiates a new find foci merge results.
@@ -43,5 +43,23 @@ public class FindFociSearchResults {
   public FindFociSearchResults(FindFociResult[] resultsArray, FindFociSaddleList[] saddlePoints) {
     this.resultsArray = resultsArray;
     this.saddlePoints = saddlePoints;
+  }
+
+  /**
+   * Gets the results array.
+   *
+   * @return the results array
+   */
+  public FindFociResult[] getResultsArray() {
+    return resultsArray;
+  }
+
+  /**
+   * Gets the saddle points.
+   *
+   * @return the saddle points
+   */
+  public FindFociSaddleList[] getSaddlePoints() {
+    return saddlePoints;
   }
 }

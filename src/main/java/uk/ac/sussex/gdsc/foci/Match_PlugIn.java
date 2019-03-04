@@ -280,8 +280,8 @@ public class Match_PlugIn implements PlugIn {
       localDistanceThreshold = settings.memoryThreshold;
 
       // Support image analysis if the images are open
-      imp1 = WindowManager.getImage(m1.imageId);
-      imp2 = WindowManager.getImage(m2.imageId);
+      imp1 = WindowManager.getImage(m1.getImageId());
+      imp2 = WindowManager.getImage(m2.getImageId());
 
       final boolean canExtractHeights = canExtractHeights(imp1, imp2);
       doQuartiles = settings.quartiles && canExtractHeights;
@@ -400,7 +400,7 @@ public class Match_PlugIn implements PlugIn {
     if (memoryResults == null) {
       throw new IllegalStateException("No foci with the name " + resultsName);
     }
-    final List<FindFociResult> results = memoryResults.results;
+    final List<FindFociResult> results = memoryResults.getResults();
     if (results.isEmpty()) {
       throw new IllegalStateException("Zero foci in the results with the name " + resultsName);
     }
@@ -408,12 +408,12 @@ public class Match_PlugIn implements PlugIn {
   }
 
   private Coordinate[] getFindFociPoints(FindFociMemoryResults memoryResults, String resultsName) {
-    final List<FindFociResult> results = memoryResults.results;
+    final List<FindFociResult> results = memoryResults.getResults();
 
     // If using calibration then we must convert the coordinates
     if (settings.unitType == 1) {
       // Get the calibration
-      final Calibration calibration = memoryResults.calibration;
+      final Calibration calibration = memoryResults.getCalibration();
       if (calibration == null) {
         throw new IllegalStateException(
             "No calibration for the results with the name " + resultsName);

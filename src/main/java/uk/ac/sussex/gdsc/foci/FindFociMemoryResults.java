@@ -36,13 +36,13 @@ import java.util.List;
  */
 public class FindFociMemoryResults {
   /** The image Id. */
-  public final int imageId;
+  private final int imageId;
 
   /** The image calibration. */
-  public final Calibration calibration;
+  private final Calibration calibration;
 
   /** The results. */
-  public final List<FindFociResult> results;
+  private final List<FindFociResult> results;
 
   /**
    * Instantiates a new find foci result.
@@ -84,5 +84,32 @@ public class FindFociMemoryResults {
    */
   public FindFociMemoryResults copy() {
     return new FindFociMemoryResults(this);
+  }
+
+  /**
+   * Gets the image id.
+   *
+   * @return the image id
+   */
+  public int getImageId() {
+    return imageId;
+  }
+
+  /**
+   * Gets the calibration.
+   *
+   * @return the calibration
+   */
+  public Calibration getCalibration() {
+    return calibration;
+  }
+
+  /**
+   * Gets the results.
+   *
+   * @return the results
+   */
+  public List<FindFociResult> getResults() {
+    return results;
   }
 }

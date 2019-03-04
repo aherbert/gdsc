@@ -29,10 +29,10 @@ package uk.ac.sussex.gdsc.foci;
  */
 public class FindFociSaddle {
   /** The saddle peak id. */
-  private int id;
+  int id;
 
   /** The saddle value. */
-  private float value;
+  float value;
 
   /** Used for sorting. */
   int order;
@@ -44,8 +44,8 @@ public class FindFociSaddle {
    * @param value the value
    */
   public FindFociSaddle(int id, float value) {
-    this.setId(id);
-    this.setValue(value);
+    this.id = id;
+    this.value = value;
   }
 
   /**
@@ -54,8 +54,8 @@ public class FindFociSaddle {
    * @param source the source
    */
   public FindFociSaddle(FindFociSaddle source) {
-    this.setId(source.getId());
-    this.setValue(source.getValue());
+    this.id = source.id;
+    this.value = source.value;
   }
 
   /**
@@ -75,15 +75,15 @@ public class FindFociSaddle {
    * @return the result [-1, 0, 1]
    */
   public static int compare(FindFociSaddle r1, FindFociSaddle r2) {
-    if (r1.getValue() > r2.getValue()) {
+    if (r1.value > r2.value) {
       return -1;
     }
-    if (r1.getValue() < r2.getValue()) {
+    if (r1.value < r2.value) {
       return 1;
     }
     // For compatibility with the legacy code the saddles must be sorted by Id if they are the same
     // value
-    return Integer.compare(r1.getId(), r2.getId());
+    return Integer.compare(r1.id, r2.id);
   }
 
   /**
@@ -96,29 +96,11 @@ public class FindFociSaddle {
   }
 
   /**
-   * Sets the id.
-   *
-   * @param id the new id
-   */
-  public void setId(int id) {
-    this.id = id;
-  }
-
-  /**
    * Gets the value.
    *
    * @return the value
    */
   public float getValue() {
     return value;
-  }
-
-  /**
-   * Sets the value.
-   *
-   * @param value the new value
-   */
-  public void setValue(float value) {
-    this.value = value;
   }
 }
