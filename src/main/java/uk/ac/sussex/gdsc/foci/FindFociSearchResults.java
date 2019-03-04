@@ -24,6 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 /**
  * Contains the results of the FindFoci algorithm after the search stage.
  */
@@ -51,7 +53,7 @@ public class FindFociSearchResults {
    * @return the results array
    */
   public FindFociResult[] getResultsArray() {
-    return resultsArray;
+    return ArrayUtils.clone(resultsArray);
   }
 
   /**
@@ -60,6 +62,6 @@ public class FindFociSearchResults {
    * @return the saddle points
    */
   public FindFociSaddleList[] getSaddlePoints() {
-    return saddlePoints;
+    return ArrayUtils.clone(saddlePoints);
   }
 }

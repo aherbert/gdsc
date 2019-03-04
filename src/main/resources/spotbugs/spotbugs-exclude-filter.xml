@@ -1,37 +1,17 @@
 <?xml version="1.0"?>
-<!--
-  #%L
-  Genome Damage and Stability Centre ImageJ Plugins
+<!-- #%L Genome Damage and Stability Centre ImageJ Plugins Software for microscopy image analysis %% Copyright (C) 2011 - 
+  2019 Alex Herbert %% This program is free software: you can redistribute it and/or modify it under the terms of the GNU General 
+  Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later 
+  version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied 
+  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You 
+  should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>. 
+  #L% -->
 
-  Software for microscopy image analysis
-  %%
-  Copyright (C) 2011 - 2019 Alex Herbert
-  %%
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as
-  published by the Free Software Foundation, either version 3 of the
-  License, or (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public
-  License along with this program.  If not, see
-  <http://www.gnu.org/licenses/gpl-3.0.html>.
-  #L%
-  -->
-
-<!--
-  This file contains some false positive bugs detected by spotbugs. Their
-  false positive nature has been analyzed individually and they have been
-  put here to instruct spotbugs it must ignore them.
--->
-<FindBugsFilter
-    xmlns="https://github.com/spotbugs/filter/3.1.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="https://github.com/spotbugs/filter/3.1.0 https://raw.githubusercontent.com/spotbugs/spotbugs/3.1.0/spotbugs/etc/findbugsfilter.xsd">
+<!-- This file contains some false positive bugs detected by spotbugs. Their false positive nature has been analyzed individually 
+  and they have been put here to instruct spotbugs it must ignore them. -->
+<FindBugsFilter xmlns="https://github.com/spotbugs/filter/3.1.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="https://github.com/spotbugs/filter/3.1.0 https://raw.githubusercontent.com/spotbugs/spotbugs/3.1.0/spotbugs/etc/findbugsfilter.xsd">
 
   <Match>
     <Class name="uk.ac.sussex.gdsc.colocalisation.cda.Cda_PlugIn" />
@@ -127,6 +107,12 @@
     <Class name="uk.ac.sussex.gdsc.foci.controller.FindFociRunner" />
     <Method name="runFindFoci" />
     <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE" />
+  </Match>
+
+  <Match>
+    <Class name="~uk.ac.sussex.gdsc.foci.FindFoci.*Results" />
+    <!-- Allow direct storage of mutable results. -->
+    <Bug pattern="EI_EXPOSE_REP2" />
   </Match>
 
 </FindBugsFilter>

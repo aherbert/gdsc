@@ -26,6 +26,8 @@ package uk.ac.sussex.gdsc.foci;
 
 import ij.ImagePlus;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 /**
  * Contains the results of the FindFoci algorithm.
  */
@@ -88,7 +90,7 @@ public class FindFociPrelimResults {
    * @return the results
    */
   public FindFociResult[] getResults() {
-    return results;
+    return ArrayUtils.clone(results);
   }
 
   /**

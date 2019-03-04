@@ -24,6 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 /**
  * Contains the results of the FindFoci algorithm during the merge stage.
  */
@@ -63,7 +65,7 @@ public class FindFociMergeTempResults {
    * @return the results array
    */
   public FindFociResult[] getResultsArray() {
-    return resultsArray;
+    return ArrayUtils.clone(resultsArray);
   }
 
   /**
@@ -72,7 +74,7 @@ public class FindFociMergeTempResults {
    * @return the saddle points
    */
   public FindFociSaddleList[] getSaddlePoints() {
-    return saddlePoints;
+    return ArrayUtils.clone(saddlePoints);
   }
 
   /**
@@ -81,7 +83,7 @@ public class FindFociMergeTempResults {
    * @return the peak id map
    */
   public int[] getPeakIdMap() {
-    return peakIdMap;
+    return ArrayUtils.clone(peakIdMap);
   }
 
   /**
@@ -90,6 +92,6 @@ public class FindFociMergeTempResults {
    * @return the result list
    */
   public FindFociResult[] getResultList() {
-    return resultList;
+    return ArrayUtils.clone(resultList);
   }
 }
