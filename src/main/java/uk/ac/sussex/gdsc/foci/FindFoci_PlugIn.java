@@ -74,6 +74,8 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -1917,7 +1919,7 @@ public class FindFoci_PlugIn implements PlugIn {
    */
   private static String checkResultsDirectory(String directory) {
     if (TextUtils.isNotEmpty(directory)) {
-      if (new File(directory).isDirectory()) {
+      if (!new File(directory).isDirectory()) {
         logError("The results directory does not exist. Results will not be saved.");
       } else {
         return directory;
@@ -1950,7 +1952,7 @@ public class FindFoci_PlugIn implements PlugIn {
       return;
     }
     final String[] imageList = getBatchImages(batchSettings.inputDirectory);
-    if (imageList == null || imageList.length == 0) {
+    if (ArrayUtils.isEmpty(imageList) ) {
       IJ.error(TITLE, "No input images in folder: " + batchSettings.inputDirectory);
       return;
     }
@@ -2084,20 +2086,20 @@ public class FindFoci_PlugIn implements PlugIn {
     batchSettings.save();
 
     // Validation
-    if (new File(batchSettings.inputDirectory).isDirectory()) {
+    if (!new File(batchSettings.inputDirectory).isDirectory()) {
       IJ.error(TITLE, "Input directory is not a valid directory: " + batchSettings.inputDirectory);
       return false;
     }
     if (TextUtils.isNotEmpty(batchSettings.maskDirectory)
-        && new File(batchSettings.maskDirectory).isDirectory()) {
+        && !new File(batchSettings.maskDirectory).isDirectory()) {
       IJ.error(TITLE, "Mask directory is not a valid directory: " + batchSettings.maskDirectory);
       return false;
     }
-    if (new File(batchSettings.parameterFile).isFile()) {
+    if (!new File(batchSettings.parameterFile).isFile()) {
       IJ.error(TITLE, "Parameter file is not a valid file: " + batchSettings.parameterFile);
       return false;
     }
-    if (new File(batchSettings.outputDirectory).isDirectory()) {
+    if (!new File(batchSettings.outputDirectory).isDirectory()) {
       IJ.error(TITLE,
           "Output directory is not a valid directory: " + batchSettings.outputDirectory);
       return false;
