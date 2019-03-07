@@ -780,7 +780,9 @@ public class FindFoci_PlugIn implements PlugIn {
 
     private <T> T findEnum(String key, Function<String, T> convertor) {
       final String value = findString(key);
-      final T result = convertor.apply(value);
+      // Old versions used "(None)" instead of "None"
+      final String toConvert = value.replace("(None)", "None");
+      final T result = convertor.apply(toConvert);
       if (result == null) {
         throw new IllegalArgumentException("Missing index for option: " + key + "=" + value);
       }
