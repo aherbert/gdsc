@@ -75,6 +75,7 @@ import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -1544,7 +1545,7 @@ public class FindFoci_PlugIn implements PlugIn {
   private static void writeParam(BufferedWriter out, String key, String value) throws IOException {
     out.write(key);
     out.write(" = ");
-    out.write(value);
+    out.write(StringUtils.defaultString(value));
     out.write(NEW_LINE);
   }
 
