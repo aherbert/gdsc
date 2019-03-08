@@ -1955,7 +1955,7 @@ public class FindFoci_PlugIn implements PlugIn {
       return;
     }
     final String[] imageList = getBatchImages(batchSettings.inputDirectory);
-    if (ArrayUtils.isEmpty(imageList) ) {
+    if (ArrayUtils.isEmpty(imageList)) {
       IJ.error(TITLE, "No input images in folder: " + batchSettings.inputDirectory);
       return;
     }
