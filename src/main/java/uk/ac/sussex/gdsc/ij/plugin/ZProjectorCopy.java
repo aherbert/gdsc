@@ -50,8 +50,6 @@ import java.util.Arrays;
  *
  * <p>Copied from {@link ij.plugin.ZProjector} to allow the class to be extended. Visibility of
  * members may have been changed.
- *
- * @author Patrick Kelly &lt;phkelly@ucsd.edu&gt;
  */
 // CHECKSTYLE.OFF
 public class ZProjectorCopy implements PlugIn {
