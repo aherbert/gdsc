@@ -29,6 +29,7 @@ import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.FloatHistogram;
 import uk.ac.sussex.gdsc.core.threshold.Histogram;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
@@ -436,7 +437,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
       }
 
       if (isLogging) {
-        timingSplit("Calulated output mask");
+        timingSplit("Calculated output mask");
       }
     }
 
@@ -467,9 +468,9 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
   private void timingSplit(String sectionName) {
     final long newTimestamp = System.nanoTime();
-    log(() -> String.format("%s = %.2f ms : %.2f ms", sectionName,
-        ((newTimestamp - sectionTimestamp) / 1000000.0),
-        ((newTimestamp - startTimestamp) / 1000000.0)));
+    log(() -> String.format("%s : %s : %s", sectionName,
+        TextUtils.nanosToString(newTimestamp - sectionTimestamp),
+        TextUtils.nanosToString(newTimestamp - startTimestamp)));
     sectionTimestamp = newTimestamp;
   }
 
@@ -4126,8 +4127,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
             // Equivalent to findHighestSaddle(saddles)
             : saddles.list[0];
 
-        final float peakBase =
-            (highestSaddle == null) ? stats.background : highestSaddle.value;
+        final float peakBase = (highestSaddle == null) ? stats.background : highestSaddle.value;
 
         final double threshold = getPeakHeight(peakMethod, peakParameter, stats, result.maxValue);
 
@@ -4363,8 +4363,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
   @SuppressWarnings("unused")
   private static FindFociSaddle findHighestSaddle(FindFociSaddleList saddles) {
     FindFociSaddle highestSaddle = saddles.list[0];
-    for (int i = 1; i < saddles.size && saddles.list[i].value == highestSaddle.value;
-        i++) {
+    for (int i = 1; i < saddles.size && saddles.list[i].value == highestSaddle.value; i++) {
       if (highestSaddle.id > saddles.list[i].id) {
         highestSaddle = saddles.list[i];
       }
@@ -4509,8 +4508,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
           }
 
           final FindFociSaddle peakSaddle = newPeakSaddles[i];
-          final FindFociSaddle neighbourSaddle =
-              findHighestSaddle(neighbourSaddles, peakSaddle.id);
+          final FindFociSaddle neighbourSaddle = findHighestSaddle(neighbourSaddles, peakSaddle.id);
           if (neighbourSaddle == null) {
             // The neighbour peak does not touch this peak, add to the list
             if (capacityCheck) {
@@ -4580,8 +4578,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
         final FindFociSaddle newHighestSaddle = neighbourSaddles.list[0];
 
         // We only need to update if the highest saddle value has been changed
-        if (updatePeakAboveSaddle
-            && newHighestSaddle.value == neighbourResult.highestSaddleValue) {
+        if (updatePeakAboveSaddle && newHighestSaddle.value == neighbourResult.highestSaddleValue) {
           // The highest saddle for the neighbour is the same.
           // We do not require a full analysis.
           updatePeakAboveSaddle = false;

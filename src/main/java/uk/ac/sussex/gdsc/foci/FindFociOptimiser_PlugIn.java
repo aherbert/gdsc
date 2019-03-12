@@ -225,39 +225,97 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     /** The search methods used for matching. */
     static final String[] matchSearchMethods = {"Relative", "Absolute"};
 
-    String maskImage = "";
-    boolean backgroundStdDevAboveMean = true;
-    boolean backgroundAuto = true;
+    // @formatter:off
+    private static final String KEY_MASK_IMAGE = "findfoci.optimiser.maskImage";
+    private static final String KEY_BACKGROUND_STD_DEV_ABOVE_MEAN = "findfoci.optimiser.backgroundStdDevAboveMean";
+    private static final String KEY_BACKGROUND_AUTO = "findfoci.optimiser.backgroundAuto";
+    private static final String KEY_BACKGROUND_ABSOLUTE = "findfoci.optimiser.backgroundAbsolute";
+    private static final String KEY_BACKGROUND_PARAMETER = "findfoci.optimiser.backgroundParameter";
+    private static final String KEY_THRESHOLD_METHOD = "findfoci.optimiser.thresholdMethod";
+    private static final String KEY_STATICTICS_MODE = "findfoci.optimiser.statisticsMode";
+    private static final String KEY_SEARCH_ABOVE_BACKGROUND = "findfoci.optimiser.searchAboveBackground";
+    private static final String KEY_SEARCH_FRACTION_OF_BACKGROUND = "findfoci.optimiser.searchFractionOfPeak";
+    private static final String KEY_SEARCH_PARAMETER = "findfoci.optimiser.searchParameter";
+    private static final String KEY_MIN_SIZE_PARAMETER = "findfoci.optimiser.minSizeParameter";
+    private static final String KEY_MINIMUM_ABOVE_SADDLE = "findfoci.optimiser.minimumAboveSaddle";
+    private static final String KEY_PEAK_METHOD = "findfoci.optimiser.peakMethod";
+    private static final String KEY_PEAK_PARAMETER = "findfoci.optimiser.peakParameter";
+    private static final String KEY_SORT_METHOD = "findfoci.optimiser.sortMethod";
+    private static final String KEY_MAX_PEAKS = "findfoci.optimiser.maxPeaks";
+    private static final String KEY_GAUSSIAN_BLUR = "findfoci.optimiser.gaussianBlur";
+    private static final String KEY_CENTRE_METHOD = "findfoci.optimiser.centreMethod";
+    private static final String KEY_CENTRE_PARAMETER = "findfoci.optimiser.centreParameter";
+    private static final String KEY_STEP_LIMIT = "findfoci.optimiser.stepLimit";
+    private static final String KEY_MATCH_SEARCH_METHOD = "findfoci.optimiser.matchSearchMethod";
+    private static final String KEY_MATCH_SEARCH_DISTANCE = "findfoci.optimiser.matchSearchDistance";
+    private static final String KEY_RESULTS_SORT_METHOD = "findfoci.optimiser.resultsSortMethod";
+    private static final String KEY_BETA = "findfoci.optimiser.beta";
+    private static final String KEY_MAX_RESULTS = "findfoci.optimiser.maxResults";
+    private static final String KEY_SHOW_SCORE_IMAGES = "findfoci.optimiser.showScoreImages";
+    private static final String KEY_RESULT_FILE = "findfoci.optimiser.resultFile";
+    // @formatter:on
+
+    String maskImage;
+    boolean backgroundStdDevAboveMean;
+    boolean backgroundAuto;
     boolean backgroundAbsolute;
-    String backgroundParameter = "2.5, 3.5, 0.5";
-    String thresholdMethod = ThresholdMethod.OTSU.getDescription();
-    String statisticsMode = "Both";
-    boolean searchAboveBackground = true;
-    boolean searchFractionOfPeak = true;
-    String searchParameter = "0, 0.6, 0.2";
-    String minSizeParameter = "1, 9, 2";
+    String backgroundParameter;
+    String thresholdMethod;
+    String statisticsMode;
+    boolean searchAboveBackground;
+    boolean searchFractionOfPeak;
+    String searchParameter;
+    String minSizeParameter;
     int minimumAboveSaddle;
-    PeakMethod peakMethod = PeakMethod.RELATIVE_ABOVE_BACKGROUND;
-    String peakParameter = "0, 0.6, 0.2";
-    String sortMethod = SortMethod.INTENSITY.getDescription();
-    int maxPeaks = 500;
-    String gaussianBlur = "0, 0.5, 1";
-    String centreMethod = CentreMethod.MAX_VALUE_SEARCH.getDescription();
-    String centreParameter = "2";
-    int stepLimit = 10000;
+    PeakMethod peakMethod;
+    String peakParameter;
+    String sortMethod;
+    int maxPeaks;
+    String gaussianBlur;
+    String centreMethod;
+    String centreParameter;
+    int stepLimit;
     int matchSearchMethod;
-    double matchSearchDistance = 0.05;
-    int resultsSortMethod = SORT_JACCARD;
-    double beta = 4.0;
-    int maxResults = 100;
+    double matchSearchDistance;
+    int resultsSortMethod;
+    double beta;
+    int maxResults;
     boolean showScoreImages;
-    String resultFile = "";
+    String resultFile;
 
     /**
      * Default constructor.
      */
     Settings() {
-      // Do nothing
+      // @formatter:off
+      maskImage = Prefs.get(KEY_MASK_IMAGE, "");
+      backgroundStdDevAboveMean = Prefs.get(KEY_BACKGROUND_STD_DEV_ABOVE_MEAN, true);
+      backgroundAuto = Prefs.get(KEY_BACKGROUND_AUTO, true);
+      backgroundAbsolute = Prefs.get(KEY_BACKGROUND_ABSOLUTE, false);
+      backgroundParameter = Prefs.get(KEY_BACKGROUND_PARAMETER, "2.5, 3.5, 0.5");
+      thresholdMethod = Prefs.get(KEY_THRESHOLD_METHOD, ThresholdMethod.OTSU.getDescription());
+      statisticsMode = Prefs.get(KEY_STATICTICS_MODE, "Both");
+      searchAboveBackground = Prefs.get(KEY_SEARCH_ABOVE_BACKGROUND, true);
+      searchFractionOfPeak = Prefs.get(KEY_SEARCH_FRACTION_OF_BACKGROUND, true);
+      searchParameter = Prefs.get(KEY_SEARCH_PARAMETER, "0, 0.6, 0.2");
+      minSizeParameter = Prefs.get(KEY_MIN_SIZE_PARAMETER, "1, 9, 2");
+      minimumAboveSaddle = Prefs.getInt(KEY_MINIMUM_ABOVE_SADDLE, 0);
+      peakMethod = PeakMethod.fromOrdinal(Prefs.getInt(KEY_PEAK_METHOD, PeakMethod.RELATIVE_ABOVE_BACKGROUND.ordinal()), PeakMethod.RELATIVE_ABOVE_BACKGROUND);
+      peakParameter = Prefs.get(KEY_PEAK_PARAMETER, "0, 0.6, 0.2");
+      sortMethod = Prefs.get(KEY_SORT_METHOD, SortMethod.INTENSITY.getDescription());
+      maxPeaks = Prefs.getInt(KEY_MAX_PEAKS, 500);
+      gaussianBlur = Prefs.get(KEY_GAUSSIAN_BLUR, "0, 0.5, 1");
+      centreMethod = Prefs.get(KEY_CENTRE_METHOD, CentreMethod.MAX_VALUE_SEARCH.getDescription());
+      centreParameter = Prefs.get(KEY_CENTRE_PARAMETER, "2");
+      stepLimit = Prefs.getInt(KEY_STEP_LIMIT, 10000);
+      matchSearchMethod = Prefs.getInt(KEY_MATCH_SEARCH_METHOD, 0);
+      matchSearchDistance = Prefs.get(KEY_MATCH_SEARCH_DISTANCE, 0.05);
+      resultsSortMethod = Prefs.getInt(KEY_RESULTS_SORT_METHOD, SORT_JACCARD);
+      beta = Prefs.get(KEY_BETA, 4.0);
+      maxResults = Prefs.getInt(KEY_MAX_RESULTS, 100);
+      showScoreImages = Prefs.get(KEY_SHOW_SCORE_IMAGES, false);
+      resultFile = Prefs.get(KEY_RESULT_FILE, "");
+      // @formatter:on
     }
 
     /**
@@ -318,6 +376,34 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
      */
     void save() {
       lastSettings.set(this);
+      Prefs.set(KEY_MASK_IMAGE, maskImage);
+      Prefs.set(KEY_MASK_IMAGE, maskImage);
+      Prefs.set(KEY_BACKGROUND_STD_DEV_ABOVE_MEAN, backgroundStdDevAboveMean);
+      Prefs.set(KEY_BACKGROUND_AUTO, backgroundAuto);
+      Prefs.set(KEY_BACKGROUND_ABSOLUTE, backgroundAbsolute);
+      Prefs.set(KEY_BACKGROUND_PARAMETER, backgroundParameter);
+      Prefs.set(KEY_THRESHOLD_METHOD, thresholdMethod);
+      Prefs.set(KEY_STATICTICS_MODE, statisticsMode);
+      Prefs.set(KEY_SEARCH_ABOVE_BACKGROUND, searchAboveBackground);
+      Prefs.set(KEY_SEARCH_FRACTION_OF_BACKGROUND, searchFractionOfPeak);
+      Prefs.set(KEY_SEARCH_PARAMETER, searchParameter);
+      Prefs.set(KEY_MIN_SIZE_PARAMETER, minSizeParameter);
+      Prefs.set(KEY_MINIMUM_ABOVE_SADDLE, minimumAboveSaddle);
+      Prefs.set(KEY_PEAK_METHOD, peakMethod.ordinal());
+      Prefs.set(KEY_PEAK_PARAMETER, peakParameter);
+      Prefs.set(KEY_SORT_METHOD, sortMethod);
+      Prefs.set(KEY_MAX_PEAKS, maxPeaks);
+      Prefs.set(KEY_GAUSSIAN_BLUR, gaussianBlur);
+      Prefs.set(KEY_CENTRE_METHOD, centreMethod);
+      Prefs.set(KEY_CENTRE_PARAMETER, centreParameter);
+      Prefs.set(KEY_STEP_LIMIT, stepLimit);
+      Prefs.set(KEY_MATCH_SEARCH_METHOD, matchSearchMethod);
+      Prefs.set(KEY_MATCH_SEARCH_DISTANCE, matchSearchDistance);
+      Prefs.set(KEY_RESULTS_SORT_METHOD, resultsSortMethod);
+      Prefs.set(KEY_BETA, beta);
+      Prefs.set(KEY_MAX_RESULTS, maxResults);
+      Prefs.set(KEY_SHOW_SCORE_IMAGES, showScoreImages);
+      Prefs.set(KEY_RESULT_FILE, resultFile);
     }
   }
 
@@ -477,7 +563,6 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
     int id;
     Parameters options;
-    String parameters;
     int count;
     int tp;
     int fp;
@@ -489,9 +574,6 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
         double rmsd) {
       this.id = id;
       this.options = options;
-      if (options != null) {
-        this.parameters = options.toString();
-      }
       this.count = count;
       this.tp = tp;
       this.fp = fp;
@@ -543,7 +625,10 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     }
 
     String getParameters() {
-      return parameters;
+      if (options != null) {
+        return options.toString();
+      }
+      return "";
     }
   }
 
@@ -697,7 +782,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
      * @param processorOptions the processor options
      */
     Parameters(FindFociProcessorOptions processorOptions) {
-      this.processorOptions = processorOptions;
+      this.processorOptions = processorOptions.copy();
     }
 
     /**
@@ -904,7 +989,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
           IJ.log("Re-using results: " + fullResultFile);
           // We can skip forward in the progress
           ticker.tick(combinations);
-          result = new OptimiserResult(results, 0);
+          result = new OptimiserResult(results, 0, 0);
         }
       }
       if (result == null) {
@@ -977,7 +1062,6 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
           final Result r = new Result(id, null, n, tp, fp, fn, time, settings.beta, rmsd);
           // Do not count on the Options being parsed from the parameters.
-          r.parameters = parameters;
           r.options = optionsMap.get(id);
           results.add(r);
         }
@@ -1092,13 +1176,15 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   }
 
   private static class OptimiserResult {
-    ArrayList<Result> results;
-    long time;
+    final ArrayList<Result> results;
+    final long time;
+    final long analysisTime;
     long total;
 
-    OptimiserResult(ArrayList<Result> results, long time) {
+    OptimiserResult(ArrayList<Result> results, long time, long analysisTime) {
       this.results = results;
       this.time = time;
+      this.analysisTime = analysisTime;
       total = 0;
       if (results != null) {
         for (final Result result : results) {
@@ -1338,11 +1424,10 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     }
 
     if (result.time != 0) {
-      final double seconds = result.time / 1e9;
-      IJ.log(
-          String.format("%s Optimisation time = %.3f sec (%.3f ms / combination). Speed up = %.3fx",
-              imp.getTitle(), seconds, result.time / 1e6 / combinations,
-              result.total / (double) result.time));
+      IJ.log(String.format("%s Optimisation time = %s (%s / combination). Speed up = %.3fx",
+          imp.getTitle(), TextUtils.nanosToString(result.time),
+          TextUtils.nanosToString(result.time / combinations),
+          result.total / (double) (result.time - result.analysisTime)));
     }
 
     // Check if a sub-optimal best result was obtained at the limit of the optimisation range
@@ -1561,7 +1646,10 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     final double distanceThreshold =
         getDistanceThreshold(imp, settings.matchSearchMethod, settings.matchSearchDistance);
 
+    // The stopwatch for the total run-time
     final StopWatch sw = new StopWatch();
+    // The total time for analysis
+    long analysisTime = 0;
 
     final FindFociBaseProcessor ff = new FindFoci_PlugIn().createFindFociProcessor(imp);
     final FindFociProcessorOptions processorOptions = new FindFociProcessorOptions(true);
@@ -1697,11 +1785,14 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
                             if (peakResults != null) {
                               // Get the results
+                              // The analysis time is not included in the speed-up factor
+                              final long start = System.nanoTime();
                               final Parameters runOptions = new Parameters(processorOptions);
                               final Result result =
                                   analyseResults(id, roiPoints, peakResults.results,
                                       distanceThreshold, runOptions, time, settings.beta, is3D);
                               results.add(result);
+                              analysisTime += System.nanoTime() - start;
                             }
 
                             id++;
@@ -1726,7 +1817,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     // All possible results sort methods are highest first
     sortResults(results, settings.resultsSortMethod);
 
-    return new OptimiserResult(results, sw.getTime());
+    return new OptimiserResult(results, sw.getTime(), analysisTime);
   }
 
   private void showResults(ImagePlus imp, ImagePlus mask, ArrayList<Result> results,
