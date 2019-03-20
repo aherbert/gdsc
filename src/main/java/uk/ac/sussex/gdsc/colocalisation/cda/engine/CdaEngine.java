@@ -24,6 +24,8 @@
 
 package uk.ac.sussex.gdsc.colocalisation.cda.engine;
 
+import uk.ac.sussex.gdsc.core.logging.Ticker;
+
 import ij.ImageStack;
 
 import org.apache.commons.lang3.concurrent.ConcurrentRuntimeException;
@@ -59,12 +61,12 @@ public class CdaEngine {
    * @param denom1 the denominator 1 (sum of image stack 1)
    * @param denom2 the denominator 2 (sum of image stack 2)
    * @param results the results
-   * @param totalSteps the total steps
+   * @param ticker the ticker
    * @param threads The number of threads to use
    */
   public CdaEngine(ImageStack imageStack1, ImageStack roiStack1, ImageStack confinedStack,
       ImageStack imageStack2, ImageStack roiStack2, double denom1, double denom2,
-      List<CalculationResult> results, int totalSteps, int threads) {
+      List<CalculationResult> results, Ticker ticker, int threads) {
     if (threads < 1) {
       threads = 1;
     }
@@ -78,7 +80,7 @@ public class CdaEngine {
     // Create the workers
     for (int i = 0; i < threads; i++) {
       final CdaWorker worker = new CdaWorker(imageStack1, roiStack1, imageStack2, roiStack2,
-          confinedStack, denom1, denom2, results, jobs, totalSteps);
+          confinedStack, denom1, denom2, results, jobs, ticker);
       workers.add(worker);
     }
   }

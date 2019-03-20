@@ -28,8 +28,10 @@ import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.colocalisation.cda.engine.CalculationResult;
 import uk.ac.sussex.gdsc.colocalisation.cda.engine.CdaEngine;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.SimpleImageJTrackProgress;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper.LutColour;
+import uk.ac.sussex.gdsc.core.logging.Ticker;
 import uk.ac.sussex.gdsc.core.utils.BitFlagUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.RandomUtils;
@@ -769,12 +771,16 @@ public class Cda_PlugIn extends PlugInFrame {
     final List<CalculationResult> results = new ArrayList<>(totalSteps);
 
     final int threads = Prefs.getThreads();
+    // Do not show the progress bar until the engine is started
+    final Ticker ticker =
+        Ticker.create(SimpleImageJTrackProgress.getInstance(), totalSteps, threads > 1);
     final CdaEngine engine = new CdaEngine(imageStack1, roiStack1, confinedStack, imageStack2,
-        roiStack2, denom1, denom2, results, totalSteps, threads);
+        roiStack2, denom1, denom2, results, ticker, threads);
     engine.start();
 
-    IJ.showProgress(0);
     IJ.showStatus("Computing shifts ...");
+    // This will show the progress bar
+    ticker.start();
 
     for (int n = 0; n < shiftIndices.length; n++) {
       final int index = shiftIndices[n];
@@ -791,8 +797,7 @@ public class Cda_PlugIn extends PlugInFrame {
 
     engine.end(false);
 
-    IJ.showProgress(1.0);
-    IJ.showStatus("");
+    ImageJUtils.finished();
 
     return results;
   }

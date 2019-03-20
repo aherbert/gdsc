@@ -29,8 +29,8 @@ import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
 import uk.ac.sussex.gdsc.core.ij.ImageJLogHandler;
 import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
-import uk.ac.sussex.gdsc.core.ij.ImageJTrackProgress;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.SimpleImageJTrackProgress;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.logging.LoggerUtils;
 import uk.ac.sussex.gdsc.core.logging.Ticker;
@@ -1996,7 +1996,8 @@ public class FindFoci_PlugIn implements PlugIn {
     final Function<ImagePlus, FindFociBaseProcessor> imageConverter =
         image -> createFindFociProcessor(image, searchCapacity);
     if (batchSettings.multiThread && threadCount > 1) {
-      final Ticker ticker = Ticker.createStarted(new ImageJTrackProgress(), totalProgress, true);
+      final Ticker ticker =
+          Ticker.createStarted(SimpleImageJTrackProgress.getInstance(), totalProgress, true);
       final ExecutorService executor = Executors.newFixedThreadPool(threadCount);
       final TurboList<Future<?>> futures = new TurboList<>(totalProgress);
 
@@ -2027,7 +2028,8 @@ public class FindFoci_PlugIn implements PlugIn {
         config.closeBatchResultsFile();
       }
     } else {
-      final Ticker ticker = Ticker.createStarted(new ImageJTrackProgress(), totalProgress, false);
+      final Ticker ticker =
+          Ticker.createStarted(SimpleImageJTrackProgress.getInstance(), totalProgress, false);
       for (int i = 0; i < imageList.length; i++) {
         if (ImageJUtils.isInterrupted()) {
           break;
@@ -2043,8 +2045,7 @@ public class FindFoci_PlugIn implements PlugIn {
     }
 
     final long runTime = System.nanoTime() - startTime;
-    IJ.showProgress(1);
-    IJ.showStatus("");
+    ImageJUtils.finished();
 
     if (logger != null) {
       logger.info("---");

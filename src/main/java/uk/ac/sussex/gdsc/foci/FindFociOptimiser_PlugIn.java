@@ -27,8 +27,8 @@ package uk.ac.sussex.gdsc.foci;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
-import uk.ac.sussex.gdsc.core.ij.ImageJTrackProgress;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.SimpleImageJTrackProgress;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.logging.Ticker;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
@@ -1251,8 +1251,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     final ArrayList<OptimisationWorker> workers = new ArrayList<>(size);
 
     // Allow progress to be tracked across all threads
-    final Ticker ticker =
-        Ticker.createStarted(new ImageJTrackProgress(), (long) combinations * size, true);
+    final Ticker ticker = Ticker.createStarted(SimpleImageJTrackProgress.getInstance(),
+        (long) combinations * size, true);
     for (final String image : imageList) {
       final OptimisationWorker w = new OptimisationWorker(image, ticker);
       workers.add(w);
@@ -1261,8 +1261,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
     // Collect all the results
     ConcurrencyUtils.waitForCompletionUnchecked(futures);
-    IJ.showProgress(1);
-    IJ.showStatus("");
+    ImageJUtils.finished();
 
     if (ImageJUtils.isInterrupted()) {
       return;
@@ -1335,8 +1334,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     final ImagePlus mask = WindowManager.getImage(settings.maskImage);
 
     final OptimiserResult result = runOptimiser(imp, mask,
-        Ticker.createStarted(new ImageJTrackProgress(), combinations, false));
-    IJ.showProgress(1);
+        Ticker.createStarted(SimpleImageJTrackProgress.getInstance(), combinations, false));
+    ImageJUtils.finished();
 
     if (ImageJUtils.isInterrupted()) {
       return;

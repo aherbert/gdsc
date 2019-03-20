@@ -27,6 +27,7 @@ package uk.ac.sussex.gdsc.utils;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.SimpleImageJTrackProgress;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 import gnu.trove.list.array.TIntArrayList;
@@ -425,8 +426,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       overlay.setFillColor(null);
 
       final PolygonRoi[] cells = findCells(inputProcessor);
-      IJ.showStatus("");
-      IJ.showProgress(1);
+      ImageJUtils.finished();
 
       if (cells == null) {
         return;
@@ -922,8 +922,8 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       return !ImageJUtils.isInterrupted();
     });
     if (!this.buildMaskOutput) {
-      IJ.showProgress(1); // Convolver modifies the progress tracker
-      IJ.showStatus("");
+      // Convolver modifies the progress tracker
+      ImageJUtils.finished();
     }
     return (ok) ? newConvolved : null;
   }

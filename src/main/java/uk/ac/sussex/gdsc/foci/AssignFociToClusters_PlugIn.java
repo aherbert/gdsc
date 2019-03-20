@@ -30,8 +30,8 @@ import uk.ac.sussex.gdsc.core.clustering.Cluster;
 import uk.ac.sussex.gdsc.core.clustering.ClusterPoint;
 import uk.ac.sussex.gdsc.core.clustering.ClusteringAlgorithm;
 import uk.ac.sussex.gdsc.core.clustering.ClusteringEngine;
-import uk.ac.sussex.gdsc.core.ij.ImageJTrackProgress;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.SimpleImageJTrackProgress;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
@@ -467,7 +467,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       minSizeClusters = null;
 
       final ClusteringEngine e = new ClusteringEngine(Prefs.getThreads(),
-          algorithms[settings.algorithm], new ImageJTrackProgress());
+          algorithms[settings.algorithm], SimpleImageJTrackProgress.getInstance());
       final ArrayList<ClusterPoint> points = getPoints();
       clusters = e.findClusters(points, settings.radius);
       Collections.sort(clusters,

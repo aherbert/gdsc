@@ -25,9 +25,9 @@
 package uk.ac.sussex.gdsc.colocalisation.cda.engine;
 
 import uk.ac.sussex.gdsc.colocalisation.cda.TwinStackShifter;
+import uk.ac.sussex.gdsc.core.logging.Ticker;
 import uk.ac.sussex.gdsc.core.utils.Correlator;
 
-import ij.IJ;
 import ij.ImageStack;
 
 import java.util.List;
@@ -44,7 +44,7 @@ public class CdaWorker implements Runnable {
   private final List<CalculationResult> results;
   private final TwinStackShifter twinImageShifter;
   private final BlockingQueue<CdaJob> jobs;
-  private final int totalSteps;
+  private final Ticker ticker;
   private final Correlator correlator = new Correlator();
   private final int[] ii1;
   private final int[] ii2;
@@ -63,18 +63,18 @@ public class CdaWorker implements Runnable {
    * @param denom2 the denominator 2 (sum of image stack 2)
    * @param results the results
    * @param jobs the jobs
-   * @param totalSteps the total steps
+   * @param ticker the ticker
    */
   public CdaWorker(ImageStack imageStack1, ImageStack roiStack1, ImageStack imageStack2,
       ImageStack roiStack2, ImageStack confinedStack, double denom1, double denom2,
-      List<CalculationResult> results, BlockingQueue<CdaJob> jobs, int totalSteps) {
+      List<CalculationResult> results, BlockingQueue<CdaJob> jobs, Ticker ticker) {
     this.imageStack2 = imageStack2;
     this.roiStack2 = roiStack2;
     this.denom1 = denom1;
     this.denom2 = denom2;
     this.results = results;
     this.jobs = jobs;
-    this.totalSteps = totalSteps;
+    this.ticker = ticker;
     ii1 = new int[imageStack1.getWidth() * imageStack1.getHeight()];
     ii2 = new int[ii1.length];
     twinImageShifter = new TwinStackShifter(imageStack1, roiStack1, confinedStack);
@@ -90,10 +90,6 @@ public class CdaWorker implements Runnable {
   public void runJob(int jobNumber, int x, int y) {
     final double distance = Math.sqrt((double) x * x + y * y);
 
-    if (jobNumber % 2 == 0) {
-      IJ.showProgress(jobNumber, totalSteps);
-    }
-
     twinImageShifter.run(x, y);
 
     final IntersectResult intersectResult = calculateResults(twinImageShifter.getResultStack(),
@@ -103,6 +99,8 @@ public class CdaWorker implements Runnable {
     final double m2 = intersectResult.sum2 / denom2;
 
     results.add(new CalculationResult(distance, m1, m2, intersectResult.correlation));
+
+    ticker.tick();
   }
 
   private IntersectResult calculateResults(ImageStack stack1, ImageStack roi1, ImageStack stack2,
