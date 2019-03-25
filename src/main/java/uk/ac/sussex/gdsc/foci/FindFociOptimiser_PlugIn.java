@@ -105,6 +105,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.Formatter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
@@ -1432,48 +1433,55 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     // Check if a sub-optimal best result was obtained at the limit of the optimisation range
     if (result.results.get(0).metrics[Result.F1] < 1.0) {
       final StringBuilder sb = new StringBuilder();
+      @SuppressWarnings("resource")
+      final Formatter formatter = new Formatter(sb);
+
       final FindFociProcessorOptions processorOptions = bestOptions.processorOptions;
       if (backgroundMethodHasParameter(processorOptions.getBackgroundMethod())) {
         if (processorOptions.getBackgroundParameter() == backgroundParameterMin) {
-          append(sb, "- Background parameter @ lower limit (%g)\n",
+          append(formatter, "- Background parameter @ lower limit (%g)\n",
               processorOptions.getBackgroundParameter());
         } else if (processorOptions.getBackgroundParameter()
             + backgroundParameterInterval > backgroundParameterMax) {
-          append(sb, "- Background parameter @ upper limit (%g)\n",
+          append(formatter, "- Background parameter @ upper limit (%g)\n",
               processorOptions.getBackgroundParameter());
         }
       }
       if (searchMethodHasParameter(processorOptions.getSearchMethod())) {
         if (processorOptions.getSearchParameter() == searchParameterMin && searchParameterMin > 0) {
-          append(sb, "- Search parameter @ lower limit (%g)\n",
+          append(formatter, "- Search parameter @ lower limit (%g)\n",
               processorOptions.getSearchParameter());
         } else if (processorOptions.getSearchParameter()
             + searchParameterInterval > searchParameterMax && searchParameterMax < 1) {
-          append(sb, "- Search parameter @ upper limit (%g)\n",
+          append(formatter, "- Search parameter @ upper limit (%g)\n",
               processorOptions.getSearchParameter());
         }
       }
       if (processorOptions.getMinSize() == minSizeMin && minSizeMin > 1) {
-        append(sb, "- Min Size @ lower limit (%d)\n", processorOptions.getMinSize());
+        append(formatter, "- Min Size @ lower limit (%d)\n", processorOptions.getMinSize());
       } else if (processorOptions.getMinSize() + minSizeInterval > minSizeMax) {
-        append(sb, "- Min Size @ upper limit (%d)\n", processorOptions.getMinSize());
+        append(formatter, "- Min Size @ upper limit (%d)\n", processorOptions.getMinSize());
       }
 
       if (processorOptions.getPeakParameter() == peakParameterMin && peakParameterMin > 0) {
-        append(sb, "- Peak parameter @ lower limit (%g)\n", processorOptions.getPeakParameter());
+        append(formatter, "- Peak parameter @ lower limit (%g)\n",
+            processorOptions.getPeakParameter());
       } else if (processorOptions.getPeakParameter() + peakParameterInterval > peakParameterMax
           && peakParameterMax < 1) {
-        append(sb, "- Peak parameter @ upper limit (%g)\n", processorOptions.getPeakParameter());
+        append(formatter, "- Peak parameter @ upper limit (%g)\n",
+            processorOptions.getPeakParameter());
       }
 
       if (processorOptions.getGaussianBlur() == blurArray[0] && blurArray[0] > 0) {
-        append(sb, "- Gaussian blur @ lower limit (%g)\n", processorOptions.getGaussianBlur());
+        append(formatter, "- Gaussian blur @ lower limit (%g)\n",
+            processorOptions.getGaussianBlur());
       } else if (processorOptions.getGaussianBlur() == blurArray[blurArray.length - 1]) {
-        append(sb, "- Gaussian blur @ upper limit (%g)\n", processorOptions.getGaussianBlur());
+        append(formatter, "- Gaussian blur @ upper limit (%g)\n",
+            processorOptions.getGaussianBlur());
       }
 
       if (processorOptions.getMaxPeaks() == result.results.get(0).count) {
-        append(sb, "- Total peaks == Maximum Peaks (%d)\n", processorOptions.getMaxPeaks());
+        append(formatter, "- Total peaks == Maximum Peaks (%d)\n", processorOptions.getMaxPeaks());
       }
 
       if (sb.length() > 0) {
@@ -1483,18 +1491,22 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
                 + ") for " + imp.getShortTitle() + " obtained at the following limits:\n");
         sb.append("You may want to increase the optimisation space.");
 
-        showIncreaseSpaceMessage(sb);
+        showIncreaseSpaceMessage(sb.toString());
       }
     }
   }
 
-  private synchronized void showIncreaseSpaceMessage(StringBuilder sb) {
+  private static void append(Formatter formatter, String format, Object... args) {
+    formatter.format(format, args);
+  }
+
+  private synchronized void showIncreaseSpaceMessage(String msg) {
     IJ.log("---");
-    IJ.log(sb.toString());
+    IJ.log(msg);
 
     // Do not show messages when running in batch
     if (!(java.awt.GraphicsEnvironment.isHeadless() || multiMode)) {
-      IJ.showMessage(sb.toString());
+      IJ.showMessage(msg);
     }
   }
 
@@ -2003,10 +2015,6 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     }
     final int length = (imp.getWidth() < imp.getHeight()) ? imp.getWidth() : imp.getHeight();
     return Math.ceil(matchSearchDistance * length);
-  }
-
-  private static void append(StringBuilder sb, String format, Object... args) {
-    sb.append(String.format(format, args));
   }
 
   @Nullable

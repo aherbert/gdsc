@@ -28,6 +28,7 @@ import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.SortUtils;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
@@ -54,6 +55,7 @@ import java.awt.Frame;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Formatter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -678,17 +680,19 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
         ImageJUtils.log("Multiple peak in a single spot: Peak Id %d = %d peaks", id, maxCount);
 
         // TODO - Perform a better table output if there are more than 2 peaks.
-        sb.append(String.format("%.2f\t", minD[0] * cal.pixelWidth));
-        sb.append(String.format("%.2f\t", (minD[1] - minD[0]) * cal.pixelWidth));
-        sb.append(String.format("%.2f",
-            (xValues[maxIndices[1]] - xValues[maxIndices[0]]) * cal.pixelWidth));
+        try (Formatter formatter = new Formatter(sb)) {
+          formatter.format("%.2f\t", minD[0] * cal.pixelWidth);
+          formatter.format("%.2f\t", (minD[1] - minD[0]) * cal.pixelWidth);
+          formatter.format("%.2f",
+              (xValues[maxIndices[1]] - xValues[maxIndices[0]]) * cal.pixelWidth);
+        }
         resultsWindow.append(sb.toString());
         return;
       }
     }
 
     final double width = xValues[xValues.length - 1];
-    sb.append(String.format("%.2f", width * cal.pixelWidth));
+    TextUtils.formatTo(sb, "%.2f", width * cal.pixelWidth);
     resultsWindow.append(sb.toString());
   }
 
@@ -748,8 +752,8 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
 
     final double width1 = middle;
     final double width2 = xValues[xValues.length - 1] - width1;
-    sb.append(String.format("%.2f\t%.2f\t%.2f", width1 * cal.pixelWidth, width2 * cal.pixelWidth,
-        distance * cal.pixelWidth));
+    TextUtils.formatTo(sb, "%.2f\t%.2f\t%.2f", width1 * cal.pixelWidth, width2 * cal.pixelWidth,
+        distance * cal.pixelWidth);
     resultsWindow.append(sb.toString());
   }
 

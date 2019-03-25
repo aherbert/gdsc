@@ -46,6 +46,7 @@ import java.awt.AWTEvent;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Formatter;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -341,8 +342,12 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
     // Report the results
     resultsWindow.append(imp.getTitle());
-    for (final Cluster c : candidates) {
-      addResult(resultsWindow, c);
+    final StringBuilder sb = new StringBuilder();
+    try (Formatter formatter = new Formatter(sb)) {
+      for (final Cluster c : candidates) {
+        sb.setLength(0);
+        addResult(formatter, resultsWindow, c);
+      }
     }
 
     // The final processing mode of ImageJ restores the image ROI so kill it again
@@ -370,16 +375,17 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
     return sb.toString();
   }
 
-  private void addResult(TextWindow resultsWindow, Cluster cluster) {
+  private void addResult(Formatter formatter, TextWindow resultsWindow, Cluster cluster) {
     final ClusterPoint p1 = cluster.head;
     if (cluster.size == 1) {
-      resultsWindow.append(String.format("\t%d\t%.0f\t%.0f", p1.id, p1.x, p1.y));
+      formatter.format("\t%d\t%.0f\t%.0f", p1.id, p1.x, p1.y);
     } else {
       final ClusterPoint p2 = p1.next;
       final double d = p1.distance(p2);
-      resultsWindow.append(String.format("\t%d\t%.0f\t%.0f\t%d\t%.0f\t%.0f\t%s\t%s", p1.id, p1.x,
-          p1.y, p2.id, p2.x, p2.y, MathUtils.rounded(d), MathUtils.rounded(d * cal.pixelWidth)));
+      formatter.format("\t%d\t%.0f\t%.0f\t%d\t%.0f\t%.0f\t%s\t%s", p1.id, p1.x, p1.y, p2.id, p2.x,
+          p2.y, MathUtils.rounded(d), MathUtils.rounded(d * cal.pixelWidth));
     }
+    resultsWindow.append(formatter.toString());
   }
 
   /** {@inheritDoc} */

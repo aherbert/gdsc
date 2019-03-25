@@ -56,7 +56,6 @@ import org.apache.commons.math3.exception.NumberIsTooSmallException;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.inference.TestUtils;
-
 import java.awt.AWTEvent;
 import java.awt.Label;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -567,7 +566,7 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     sb.append(IJ.d2s(sx2, 0)).append('\t').append(IJ.d2s(av2, 2)).append('\t')
         .append(IJ.d2s(sd2, 2)).append('\t').append(IJ.d2s(correlation2, 3)).append('\t');
     sb.append(IJ.d2s(av / av2, 2)).append('\t');
-    sb.append(String.format("%.3g", pvalue));
+    sb.append(uk.ac.sussex.gdsc.core.utils.MathUtils.rounded(pvalue, 3));
 
     output.accept(sb.toString());
   }
