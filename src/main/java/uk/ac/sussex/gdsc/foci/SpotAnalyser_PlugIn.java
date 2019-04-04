@@ -56,6 +56,7 @@ import org.apache.commons.math3.exception.NumberIsTooSmallException;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.inference.TestUtils;
+
 import java.awt.AWTEvent;
 import java.awt.Label;
 import java.util.concurrent.atomic.AtomicBoolean;
