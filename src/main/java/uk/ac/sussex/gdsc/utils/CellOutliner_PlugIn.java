@@ -515,7 +515,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       for (int iter = 0; iter < settings.iterations; iter++) {
         // Use the current elliptical edge to define the weights for the edge projection
         final FloatProcessor weights = createWeightMap(pointBounds, params, range);
-        if (ImageJUtils.isInterrupted()) {
+        if (ImageJUtils.isInterrupted() || weights == null) {
           return null;
         }
 
