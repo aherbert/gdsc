@@ -50,6 +50,52 @@ public class ObjectAnalyzer {
   private int ylimit;
   private int[] offset;
 
+  public static class ObjectCentre {
+    private final double cx;
+    private final double cy;
+    private final int size;
+
+    /**
+     * Instantiates a new object centre.
+     *
+     * @param cx the x-centre
+     * @param cy the y-cntre
+     * @param size the size
+     */
+    public ObjectCentre(double cx, double cy, int size) {
+      this.cx = cx;
+      this.cy = cy;
+      this.size = size;
+    }
+
+    /**
+     * Gets the centre X.
+     *
+     * @return the centre X
+     */
+    public double getCentreX() {
+      return cx;
+    }
+
+    /**
+     * Gets the centre Y.
+     *
+     * @return the centre Y
+     */
+    public double getCentreY() {
+      return cy;
+    }
+
+    /**
+     * Gets the size.
+     *
+     * @return the size
+     */
+    public int getSize() {
+      return size;
+    }
+  }
+
   /**
    * Instantiates a new object analyzer.
    *
@@ -270,9 +316,9 @@ public class ObjectAnalyzer {
    * Get the centre-of-mass and pixel count of each object. Data is stored indexed by the object
    * value so processing of results should start from 1.
    *
-   * @return The centre-of-mass of each object (plus the pixel count) [object][cx,cy,n]
+   * @return The centre-of-mass of each object (plus the pixel count)
    */
-  public double[][] getObjectCentres() {
+  public ObjectCentre[] getObjectCentres() {
     final int[] count = new int[maxObject + 1];
     final double[] sumx = new double[count.length];
     final double[] sumy = new double[count.length];
@@ -288,11 +334,9 @@ public class ObjectAnalyzer {
         }
       }
     }
-    final double[][] data = new double[count.length][3];
+    final ObjectCentre[] data = new ObjectCentre[count.length];
     for (int i = 1; i < count.length; i++) {
-      data[i][0] = sumx[i] / count[i];
-      data[i][1] = sumy[i] / count[i];
-      data[i][2] = count[i];
+      data[i] = new ObjectCentre(sumx[i] / count[i], sumy[i] / count[i], count[i]);
     }
     return data;
   }

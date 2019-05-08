@@ -29,6 +29,7 @@ import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
+import uk.ac.sussex.gdsc.foci.ObjectAnalyzer.ObjectCentre;
 import uk.ac.sussex.gdsc.help.UrlUtils;
 
 import ij.IJ;
@@ -247,14 +248,14 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
       }
     }
 
-    final double[][] centres = oa.getObjectCentres();
+    final ObjectCentre[] centres = oa.getObjectCentres();
 
     // We must ignore those that are too small/big
     final int[] idMap = new int[count.length];
     for (int i = 1; i < count.length; i++) {
       idMap[i] = i;
-      if (centres[i][2] < settings.minSize
-          || (settings.maxSize != 0 && centres[i][2] > settings.maxSize)) {
+      if (centres[i].getSize() < settings.minSize
+          || (settings.maxSize != 0 && centres[i].getSize() > settings.maxSize)) {
         idMap[i] = -i;
       }
     }
@@ -269,9 +270,9 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     for (int i = 1, j = 0; i < count.length; i++) {
       sb.append(imp.getTitle());
       sb.append('\t').append(i);
-      sb.append('\t').append(MathUtils.rounded(centres[i][0]));
-      sb.append('\t').append(MathUtils.rounded(centres[i][1]));
-      sb.append('\t').append((int) (centres[i][2]));
+      sb.append('\t').append(MathUtils.rounded(centres[i].getCentreX()));
+      sb.append('\t').append(MathUtils.rounded(centres[i].getCentreY()));
+      sb.append('\t').append(centres[i].getSize());
       if (idMap[i] > 0) {
         // Include this object
         sb.append("\tTrue");
