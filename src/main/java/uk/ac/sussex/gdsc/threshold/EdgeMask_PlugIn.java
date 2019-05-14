@@ -203,6 +203,9 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       return DONE;
     }
 
+    settings = Settings.load();
+    settings.save();
+
     return FLAGS;
   }
 
@@ -303,8 +306,6 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
     final double minValue = limits[0];
     final double maxValue = limits[1];
 
-    settings = Settings.load();
-
     if (settings.background > maxValue) {
       settings.background = 0;
     }
@@ -333,7 +334,6 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
     gd.showDialog();
 
     final boolean cancelled = gd.wasCanceled() || !dialogItemChanged(gd, null);
-    settings.save();
     if (cancelled) {
       return DONE;
     }
