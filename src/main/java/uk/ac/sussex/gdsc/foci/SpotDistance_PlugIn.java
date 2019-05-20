@@ -1459,9 +1459,10 @@ public class SpotDistance_PlugIn implements PlugIn {
       final int y = bounds.y + result.y;
       final int z = result.z;
 
-      // Filter peaks on circularity (spots should be circles)
+      // Filter peaks on circularity (spots should be circles).
       // C = 4*pi*A / P^2
       // where A = Area, P = Perimeter
+      // See: https://en.wikipedia.org/wiki/Polsby-Popper_Test
       // Q. Not sure if this will be valid for small spots.
 
       // Extract the peak.
