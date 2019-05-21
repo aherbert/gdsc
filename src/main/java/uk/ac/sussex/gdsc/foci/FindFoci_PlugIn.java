@@ -805,7 +805,7 @@ public class FindFoci_PlugIn implements PlugIn {
 
     static int compare(BatchResult r1, BatchResult r2) {
       final int result = Integer.compare(r1.batchId, r2.batchId);
-      return (result == 0) ? 0 : Integer.compare(r1.id, r2.id);
+      return (result != 0) ? result : Integer.compare(r1.id, r2.id);
     }
   }
 
