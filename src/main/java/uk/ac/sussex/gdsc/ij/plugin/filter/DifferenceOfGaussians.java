@@ -72,9 +72,6 @@ public class DifferenceOfGaussians extends GaussianBlur {
   private TextField sigma1field;
   private TextField sigma2field;
   private Checkbox previewCheckbox;
-  // Flag used by the preview to indicate that further changes to the parameters will occur.
-  // Setting this to true will cause the next invocation of run() to do nothing.
-  private boolean ignoreChange;
   private boolean preview;
 
   private boolean computeSigma1 = true;
@@ -237,12 +234,6 @@ public class DifferenceOfGaussians extends GaussianBlur {
   /** Listener to modifications of the input fields of the dialog. */
   @Override
   public boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
-    // Flag used to indicate the next call to run should be ignored.
-    // This is set when the ratio between fields is maintained. Since the
-    // text field will be set the dialogItemChanged event will be called
-    // again. This means the calculation is not needed a second time.
-    boolean disableRun = false;
-
     settings.maintainRatio = gd.getNextBoolean();
 
     double newSigma = gd.getNextNumber();
@@ -251,15 +242,15 @@ public class DifferenceOfGaussians extends GaussianBlur {
     }
     if (settings.sigma1 != newSigma) {
       computeSigma1 = true;
+      double ratio = (settings.maintainRatio) ? settings.sigma1 / settings.sigma2 : 1;
+      // Update sigma before setting the other text field
+      settings.sigma1 = newSigma;
       if (settings.maintainRatio) {
         computeSigma2 = true;
-        final double ratio = settings.sigma1 / settings.sigma2;
         settings.sigma2 = Double.parseDouble(IJ.d2s(newSigma / ratio, 3));
-        disableRun = true;
         sigma2field.setText("" + settings.sigma2);
       }
     }
-    settings.sigma1 = newSigma;
 
     newSigma = gd.getNextNumber();
     if (newSigma < 0 || gd.invalidNumber()) {
@@ -267,15 +258,15 @@ public class DifferenceOfGaussians extends GaussianBlur {
     }
     if (settings.sigma2 != newSigma) {
       computeSigma2 = true;
+      double ratio = (settings.maintainRatio) ? settings.sigma1 / settings.sigma2 : 1;
+      // Update sigma before setting the other text field
+      settings.sigma2 = newSigma;
       if (settings.maintainRatio) {
         computeSigma1 = true;
-        final double ratio = settings.sigma1 / settings.sigma2;
         settings.sigma1 = Double.parseDouble(IJ.d2s(newSigma * ratio, 3));
-        disableRun = true;
         sigma1field.setText("" + settings.sigma1);
       }
     }
-    settings.sigma2 = newSigma;
 
     if (settings.sigma1 <= settings.sigma2) {
       return false;
@@ -300,10 +291,6 @@ public class DifferenceOfGaussians extends GaussianBlur {
     }
     preview = newPreview;
 
-    if (disableRun) {
-      ignoreChange = true;
-    }
-
     return true;
   }
 
@@ -324,12 +311,6 @@ public class DifferenceOfGaussians extends GaussianBlur {
    */
   @Override
   public void run(ImageProcessor ip) {
-    if (ignoreChange) {
-      ignoreChange = false;
-      return;
-    }
-    ignoreChange = false;
-
     pass++;
     if (pass > passes) {
       pass = 1;
