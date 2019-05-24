@@ -89,6 +89,9 @@ Software for microscopy image analysis
     <license.licenseName>gpl_v3</license.licenseName>
     <license.copyrightOwners>Alex Herbert</license.copyrightOwners>
 
+    <!-- Workaround to avoid duplicating config files. -->
+    <gdsc.parent.dir>${basedir}</gdsc.parent.dir>
+
     <!-- Dependency versions -->
     <gdsc.core.version>2.0-SNAPSHOT</gdsc.core.version>
     <beansbinding.version>1.2.1</beansbinding.version>
