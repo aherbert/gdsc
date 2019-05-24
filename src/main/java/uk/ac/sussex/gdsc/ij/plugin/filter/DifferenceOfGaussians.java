@@ -287,7 +287,7 @@ public class DifferenceOfGaussians extends GaussianBlur {
     if (preview != newPreview
         // Check if the preview has been turned off then reset the display range
         && !newPreview && imp != null) {
-      imp.resetDisplayRange();
+      imp.getProcessor().resetMinAndMax();
     }
     preview = newPreview;
 
@@ -361,7 +361,7 @@ public class DifferenceOfGaussians extends GaussianBlur {
       // This is necessary when processing stacks after preview
       imp.getStack().setPixels(ip.getPixels(), currentSliceNumber);
 
-      imp.resetDisplayRange();
+      ip.resetMinAndMax();
       if (settings.enhanceContrast) {
         final ContrastEnhancer ce = new ContrastEnhancer();
         ce.stretchHistogram(imp, 0.35);
