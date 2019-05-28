@@ -189,7 +189,8 @@ public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
     final double min = imp.getDisplayRangeMin();
     final double max = imp.getDisplayRangeMax();
     final GenericDialog gd = new GenericDialog(command);
-    gd.addMessage("Computes the " + TITLE);
+    gd.addMessage(
+        "Computes the " + TITLE + ".\nStrong responses for blobs of radius 1.41 * sigma.");
     gd.addSlider("Sigma (Radius)", 0.5, 20, settings.sigma);
     if (imp.getCalibration() != null && !imp.getCalibration().getUnits().equals("pixels")) {
       hasScale = true;
@@ -337,8 +338,7 @@ public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
     // Ignore the input percent and use the internal one
     final double progress = (double) (pass - 1) / passes + percent / passes;
 
-    if (ImageJUtils
-        .showStatus(() -> String.format("LoG : %.3g%%", progress * 100))) {
+    if (ImageJUtils.showStatus(() -> String.format("LoG : %.3g%%", progress * 100))) {
       IJ.showProgress(progress);
     }
   }
