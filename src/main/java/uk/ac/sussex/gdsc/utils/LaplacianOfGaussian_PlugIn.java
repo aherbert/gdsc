@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.utils;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -33,7 +34,6 @@ import ij.gui.GenericDialog;
 import ij.plugin.ContrastEnhancer;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
-import ij.process.Blitter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
@@ -63,7 +63,8 @@ public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
   private static final String MIN_IS_VERSION = "3.0.0";
 
   /** The flags specifying the capabilities and needs. */
-  private static final int FLAGS = DOES_32 | KEEP_PREVIEW | FINAL_PROCESSING | PARALLELIZE_STACKS;
+  private static final int FLAGS =
+      DOES_8G | DOES_16 | DOES_32 | KEEP_PREVIEW | FINAL_PROCESSING | PARALLELIZE_STACKS;
   /** The ImagePlus of the setup call, needed to get the spatial calibration. */
   private ImagePlus imp;
   /** Whether the image has an x&y scale. */
@@ -76,6 +77,11 @@ public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
   // if the sigma is not different.
   private Checkbox previewCheckbox;
   private boolean preview;
+
+  /**
+   * Set to true to suppress progress reporting to the ImageJ window.
+   */
+  private boolean noProgress;
 
   /** The current settings for the plugin instance. */
   private Settings settings;
@@ -140,7 +146,7 @@ public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
     void save() {
       lastSettings.set(this);
       // Save settings to preferences for state between ImageJ sessions
-      Prefs.set("LoG.sigma1", sigma);
+      Prefs.set("LoG.sigma", sigma);
       Prefs.set("LoG.sigmaScaled", sigmaScaled);
       Prefs.set("LoG.scaledNormalised", scaledNormalised);
       Prefs.set("LoG.negate", negate);
@@ -151,7 +157,7 @@ public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
   @Override
   public int setup(String arg, ImagePlus imp) {
     if ("final".equals(arg)) {
-      imp.resetDisplayRange();
+      imp.getProcessor().resetMinAndMax();
       if (settings.enhanceContrast) {
         final ContrastEnhancer ce = new ContrastEnhancer();
         ce.stretchHistogram(imp, 0.35);
@@ -279,11 +285,13 @@ public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
       // possible new preview?
       return;
     }
+    showProgressInternal(0.45);
     final Image Iyy = differentiator.run(img, sigmaY, 0, 2, 0);
     if (Thread.currentThread().isInterrupted()) {
       // possible new preview?
       return;
     }
+    showProgressInternal(0.95);
     Iyy.add(Ixx);
     fp = (FloatProcessor) Iyy.imageplus().getProcessor();
 
@@ -299,16 +307,57 @@ public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
       }
     }
 
-    ip.copyBits(fp, 0, 0, Blitter.COPY);
+    // Using copyBits will do scaling for ByteProcessor but not for ShortProcessor.
+    // This is inconsistent. setPixels will do clipped rounding for both.
+    ip.setPixels(0, fp);
 
     // Need to refresh on screen display during preview
     if (imp != null) {
-      imp.resetDisplayRange();
+      ip.resetMinAndMax();
       if (settings.enhanceContrast) {
         final ContrastEnhancer ce = new ContrastEnhancer();
         ce.stretchHistogram(imp, 0.35);
       }
       imp.updateAndDraw();
     }
+
+    showProgressInternal(1.0);
+  }
+
+  /**
+   * Show the progress on the ImageJ progress bar.
+   *
+   * @param percent the percent
+   */
+  private void showProgressInternal(double percent) {
+    if (noProgress) {
+      return;
+    }
+
+    // Ignore the input percent and use the internal one
+    final double progress = (double) (pass - 1) / passes + percent / passes;
+
+    if (ImageJUtils
+        .showStatus(() -> String.format("LoG : %.3g%%", progress * 100))) {
+      IJ.showProgress(progress);
+    }
+  }
+
+  /**
+   * Set to true if suppressing progress reporting to the ImageJ window.
+   *
+   * @return true, if is no progress
+   */
+  public boolean isNoProgress() {
+    return noProgress;
+  }
+
+  /**
+   * Set to true to suppress progress reporting to the ImageJ window.
+   *
+   * @param noProgress the new no progress
+   */
+  public void setNoProgress(boolean noProgress) {
+    this.noProgress = noProgress;
   }
 }
