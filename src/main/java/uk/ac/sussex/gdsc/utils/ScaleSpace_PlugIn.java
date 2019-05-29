@@ -27,6 +27,7 @@ package uk.ac.sussex.gdsc.utils;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
+import uk.ac.sussex.gdsc.core.logging.Ticker;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.TurboList;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
@@ -95,6 +96,7 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
     double minScale;
     double maxScale;
     int outputOption;
+    int subIntervals;
 
     /**
      * Default constructor.
@@ -112,6 +114,7 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
       minScale = source.minScale;
       maxScale = source.maxScale;
       outputOption = source.outputOption;
+      subIntervals = source.subIntervals;
     }
 
     /**
@@ -156,6 +159,7 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
     gd.addNumericField("Min_scale", settings.minScale, 2);
     gd.addNumericField("Max_scale", settings.maxScale, 2);
     gd.addChoice("Output", Settings.OUTPUT_OPTIONS, settings.outputOption);
+    gd.addNumericField("Sub_interval_steps", settings.subIntervals, 0);
     gd.addHelp(uk.ac.sussex.gdsc.help.UrlUtils.UTILITY);
     gd.showDialog();
     settings.save();
@@ -165,6 +169,7 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
     settings.minScale = gd.getNextNumber();
     settings.maxScale = gd.getNextNumber();
     settings.outputOption = gd.getNextChoiceIndex();
+    settings.subIntervals = Math.max(0, (int) gd.getNextNumber());
 
     if (gd.invalidNumber()) {
       IJ.error(TITLE, "Bad input number");
@@ -190,28 +195,35 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
     // For a more reasonable upper limit use 1/4 of the dimension size to avoid very large
     // Gaussian kernels.
     final double limitT = MathUtils.pow2(Math.min(width, height) / 4);
-    double minT = MathUtils.clip(0.25, limitT, settings.minScale);
+    final double minT = MathUtils.clip(0.25, limitT, settings.minScale);
     // If max is 0 use the computed max for auto-range
-    double maxT =
+    final double maxT =
         MathUtils.clip(minT, limitT, (settings.maxScale > 0 ? settings.maxScale : limitT));
 
     // Multi-thread
-    ExecutorService executor = Executors.newFixedThreadPool(Prefs.getThreads());
-    List<Future<Pair<Double, ImageProcessor>>> futures = new TurboList<>();
+    final ExecutorService executor = Executors.newFixedThreadPool(Prefs.getThreads());
+    final List<Future<Pair<Double, ImageProcessor>>> futures = new TurboList<>();
 
-    BiFunction<ImageProcessor, Double, ImageProcessor> fun = createFunction();
+    final BiFunction<ImageProcessor, Double, ImageProcessor> fun = createFunction();
+    final Ticker ticker = ImageJUtils.createTicker(countSteps(minT, maxT), 2, "Computing ...");
 
     for (double scaleT = minT; scaleT <= maxT; scaleT *= 2) {
-      final Double t = scaleT;
-      futures.add(executor.submit(() -> {
-        // Since it is 2D use sqrt(t) for each dimension
-        final Double sigma = Math.sqrt(t);
-        final ImageProcessor scaledIp = fun.apply(ip, sigma);
-        return Pair.of(t, scaledIp);
-      }));
+      final double step = scaleT / (settings.subIntervals + 1);
+      for (int i = 0; i <= settings.subIntervals; i++) {
+        final Double t = scaleT + i * step;
+        futures.add(executor.submit(() -> {
+          // Since it is 2D use sqrt(t) for each dimension
+          final Double sigma = Math.sqrt(t);
+          final ImageProcessor scaledIp = fun.apply(ip, sigma);
+          ticker.tick();
+          return Pair.of(t, scaledIp);
+        }));
+      }
     }
 
     ConcurrencyUtils.waitForCompletionUncheckedT(futures);
+
+    ImageJUtils.finished();
 
     // Sort by scale and add to the stack.
     // Note the futures are all complete so get the result unchecked.
@@ -248,6 +260,21 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
   }
 
   /**
+   * Count the number of steps between min and max T accounting for sub intervals.
+   *
+   * @param minT the min T
+   * @param maxT the max T
+   * @return the steps
+   */
+  private long countSteps(double minT, double maxT) {
+    long steps = 0;
+    for (double scaleT = minT; scaleT <= maxT; scaleT *= 2) {
+      steps++;
+    }
+    return steps * (settings.subIntervals + 1);
+  }
+
+  /**
    * Creates the function to processor the input image processor.
    *
    * @return the function
@@ -268,7 +295,7 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
         // Post-processing for scale normalisation and negation.
         // This makes the appearance match the Difference of Gaussians (but the scale
         // make be different).
-        double norm = -sigma * sigma;
+        final double norm = -sigma * sigma;
         final float[] data = (float[]) fp.getPixels();
         for (int i = 0; i < data.length; i++) {
           data[i] *= norm;
