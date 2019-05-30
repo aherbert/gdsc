@@ -28,6 +28,7 @@ import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
+import uk.ac.sussex.gdsc.utils.ImageScienceUtils;
 
 import ij.IJ;
 import ij.ImageJ;
@@ -46,7 +47,6 @@ import ij.process.FloodFiller;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 
-import imagescience.ImageScience;
 import imagescience.feature.Edges;
 import imagescience.feature.Laplacian;
 import imagescience.image.Aspects;
@@ -54,7 +54,6 @@ import imagescience.image.FloatImage;
 import imagescience.image.Image;
 import imagescience.segment.Thresholder;
 import imagescience.segment.ZeroCrosser;
-import imagescience.utility.VersionChecker;
 
 import java.awt.AWTEvent;
 import java.awt.Rectangle;
@@ -81,7 +80,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
   private static final String TITLE = "Edge Mask Creator";
-  private static final String MIN_IS_VERSION = "3.0.0";
 
   private static final String[] METHODS =
       {"Above background", "Laplacian edges", "Gradient edges", "Maximum gradient edges"};
@@ -193,13 +191,8 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       return DONE;
     }
 
-    try {
-      // Entire block in try-catch as the library may not be present
-      if (VersionChecker.compare(ImageScience.version(), MIN_IS_VERSION) < 0) {
-        throw new IllegalStateException();
-      }
-    } catch (final Throwable ex) {
-      IJ.error("This plugin requires ImageScience version " + MIN_IS_VERSION + " or higher");
+    if (!ImageScienceUtils.hasImageScience()) {
+      ImageScienceUtils.showError();
       return DONE;
     }
 

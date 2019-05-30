@@ -176,6 +176,12 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
       return DONE;
     }
 
+    if (settings.outputOption == Settings.OPT_LOG && !ImageScienceUtils.hasImageScience()) {
+      IJ.error("The Laplacian requires ImageScience version " + ImageScienceUtils.MIN_IS_VERSION
+          + " or higher");
+      return DONE;
+    }
+
     return (settings.outputOption == Settings.OPT_GAUSS) ? FLAGS : DOG_FLAGS;
   }
 

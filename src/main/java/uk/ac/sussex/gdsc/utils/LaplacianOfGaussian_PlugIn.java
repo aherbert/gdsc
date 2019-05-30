@@ -60,7 +60,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
   private static final String TITLE = "Laplacian Of Gaussian";
-  private static final String MIN_IS_VERSION = "3.0.0";
 
   /** The flags specifying the capabilities and needs. */
   private static final int FLAGS =
@@ -166,13 +165,8 @@ public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
       return DONE;
     }
 
-    try {
-      // Entire block in try-catch as the library may not be present
-      if (VersionChecker.compare(ImageScience.version(), MIN_IS_VERSION) < 0) {
-        throw new IllegalStateException();
-      }
-    } catch (final Throwable ex) {
-      IJ.error("This plugin requires ImageScience version " + MIN_IS_VERSION + " or higher");
+    if (!ImageScienceUtils.hasImageScience()) {
+      ImageScienceUtils.showError();
       return DONE;
     }
 
