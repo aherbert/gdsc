@@ -24,7 +24,9 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import ij.gui.Roi;
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -36,7 +38,9 @@ import java.util.Arrays;
  */
 public class ObjectAnalyzer {
 
+  /** The x-direction offsets for search, arranged as 4-connected then 8-connected. */
   private static final int[] DIR_X_OFFSET = {0, 1, 0, -1, 1, 1, -1, -1};
+  /** The y-direction offsets for search, arranged as 4-connected then 8-connected. */
   private static final int[] DIR_Y_OFFSET = {-1, 0, 1, 0, -1, 1, 1, -1};
 
   private final ImageProcessor ip;
@@ -48,8 +52,13 @@ public class ObjectAnalyzer {
   private int maxx;
   private int xlimit;
   private int ylimit;
+
+  /** The offset table using 4-connected then the remaining 8-connected directions. */
   private int[] offset;
 
+  /**
+   * Define the object centre.
+   */
   public static class ObjectCentre {
     private final double cx;
     private final double cy;
@@ -136,6 +145,9 @@ public class ObjectAnalyzer {
     return maxObject;
   }
 
+  /**
+   * Analyse objects.
+   */
   private void analyseObjects() {
     if (objectMask != null) {
       return;
@@ -153,7 +165,7 @@ public class ObjectAnalyzer {
 
     final int[][] ppList = new int[1][];
     ppList[0] = new int[100];
-    initialise(ip);
+    initialise();
 
     int[] sizes = new int[100];
 
@@ -234,8 +246,7 @@ public class ObjectAnalyzer {
 
       listI++;
 
-    }
-    while (listI < listLen);
+    } while (listI < listLen);
 
     ppList[0] = pointList;
 
@@ -245,14 +256,14 @@ public class ObjectAnalyzer {
   /**
    * Creates the direction offset tables.
    */
-  private void initialise(ImageProcessor ip) {
+  private void initialise() {
     maxx = ip.getWidth();
     final int maxy = ip.getHeight();
 
     xlimit = maxx - 1;
     ylimit = maxy - 1;
 
-    // Create the offset table (for single array 3D neighbour comparisons)
+    // Create the offset table (for single array 2D neighbour comparisons)
     offset = new int[DIR_X_OFFSET.length];
     for (int d = offset.length; d-- > 0;) {
       offset[d] = maxx * DIR_Y_OFFSET[d] + DIR_X_OFFSET[d];
@@ -260,9 +271,11 @@ public class ObjectAnalyzer {
   }
 
   /**
-   * returns whether the neighbour in a given direction is within the image. NOTE: it is assumed
-   * that the pixel x,y itself is within the image! Uses class variables xlimit, ylimit: (dimensions
-   * of the image)-1
+   * Returns whether the neighbour in a given direction is within the image. This assumes the
+   * direction is from the 4-connected then 8-connected offset table.
+   *
+   * <p>NOTE: it is assumed that the pixel x,y itself is within the image! Uses class variables
+   * xlimit, ylimit: (dimensions of the image)-1
    *
    * @param x x-coordinate of the pixel that has a neighbour in the given direction
    * @param y y-coordinate of the pixel that has a neighbour in the given direction
@@ -295,6 +308,41 @@ public class ObjectAnalyzer {
   }
 
   /**
+   * Returns whether the neighbour in a given direction is within the image. This assumes the
+   * direction is from the 8-connected offset table.
+   *
+   * <p>NOTE: it is assumed that the pixel x,y itself is within the image! Uses class variables
+   * xlimit, ylimit: (dimensions of the image)-1
+   *
+   * @param x x-coordinate of the pixel that has a neighbour in the given direction
+   * @param y y-coordinate of the pixel that has a neighbour in the given direction
+   * @param direction the direction from the pixel towards the neighbour
+   * @return true if the neighbour is within the image (provided that x, y is within)
+   */
+  private boolean isWithinXy8(int x, int y, int direction) {
+    switch (direction) {
+      case 0:
+        return (x > 0);
+      case 1:
+        return (y < ylimit && x > 0);
+      case 2:
+        return (y < ylimit);
+      case 3:
+        return (y < ylimit && x < xlimit);
+      case 4:
+        return (x < xlimit);
+      case 5:
+        return (y > 0 && x < xlimit);
+      case 6:
+        return (y > 0);
+      case 7:
+        return (y > 0 && x > 0);
+      default:
+        return false;
+    }
+  }
+
+  /**
    * Gets the width.
    *
    * @return The image width.
@@ -319,7 +367,7 @@ public class ObjectAnalyzer {
    * @return The centre-of-mass of each object (plus the pixel count)
    */
   public ObjectCentre[] getObjectCentres() {
-    final int[] count = new int[maxObject + 1];
+    final int[] count = new int[getMaxObject() + 1];
     final double[] sumx = new double[count.length];
     final double[] sumy = new double[count.length];
     final int height = getHeight();
@@ -415,5 +463,41 @@ public class ObjectAnalyzer {
     }
     mask.setMinAndMax(0, max);
     return mask;
+  }
+
+  /**
+   * Get the outline of each object.
+   *
+   * @return The outline of each object
+   */
+  public Roi[] getObjectOutlines() {
+    final Roi[] outlines = new Roi[getMaxObject() + 1];
+
+    // Use a colour processor to use the int[] mask
+    final Outliner outliner =
+        new Outliner(new ColorProcessor(getWidth(), getHeight(), getObjectMask()));
+    outliner.setEightConnected(isEightConnected());
+
+    int index = 0;
+    while (index < objectMask.length) {
+      // Scan for next object
+      while (index < objectMask.length && objectMask[index] == 0) {
+        index++;
+      }
+      if (index == objectMask.length) {
+        break;
+      }
+      final int value = objectMask[index];
+      if (outlines[index] == null) {
+        outlines[index] = outliner.traceOutline(index);
+      }
+      // Skip this processed object
+      index++;
+      while (index < objectMask.length && objectMask[index] == value) {
+        index++;
+      }
+    }
+
+    return outlines;
   }
 }
