@@ -488,8 +488,8 @@ public class ObjectAnalyzer {
         break;
       }
       final int value = objectMask[index];
-      if (outlines[index] == null) {
-        outlines[index] = outliner.traceOutline(index);
+      if (outlines[value] == null) {
+        outlines[value] = outliner.traceOutline(index);
       }
       // Skip this processed object
       index++;
