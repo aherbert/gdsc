@@ -37,7 +37,7 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 
 @SuppressWarnings({"javadoc"})
-public class OutlinerTest {
+public class ObjectOutlinerTest {
   // Directions must match the outliner
   private static final int[] DIR_X_OFFSET = {-1, -1, 0, 1, 1, 1, 0, -1};
   private static final int[] DIR_Y_OFFSET = {0, -1, -1, -1, 0, 1, 1, 1};
