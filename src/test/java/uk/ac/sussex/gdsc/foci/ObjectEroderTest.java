@@ -185,6 +185,27 @@ public class ObjectEroderTest {
     );
   }
 
+
+  @Test
+  public void check5x5ExtendedTwoIterations() {
+    assertErosion(
+        5, 6,
+        new byte[] {1, 1, 1, 1, 1,
+                    1, 1, 1, 1, 1,
+                    1, 1, 1, 1, 1,
+                    0, 3, 3, 3, 3,
+                    0, 3, 3, 3, 3,
+                    0, 3, 3, 3, 3},
+        new byte[] {1, 1, 1, 1, 1,
+                    0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0,
+                    0, 0, 0, 3, 3},
+        true, 2
+    );
+  }
+
   //@formatter:on
 
   /**
@@ -196,10 +217,25 @@ public class ObjectEroderTest {
    * @param expectedOutput the expected output
    * @param extendOutside Flag indicating edge pixels are extended outside the image
    */
-  private void assertErosion(int width, int height, byte[] input, byte[] expectedOutput,
+  private static void assertErosion(int width, int height, byte[] input, byte[] expectedOutput,
       boolean extendOutside) {
+    assertErosion(width, height, input, expectedOutput, extendOutside, 1);
+  }
+
+  /**
+   * Create a byte image, perform the erosion and check the output.
+   *
+   * @param width the width
+   * @param height the height
+   * @param input the input
+   * @param expectedOutput the expected output
+   * @param extendOutside Flag indicating edge pixels are extended outside the image
+   * @param iterations the iterations
+   */
+  private static void assertErosion(int width, int height, byte[] input, byte[] expectedOutput,
+      boolean extendOutside, int iterations) {
     final ByteProcessor in = new ByteProcessor(width, height, input);
-    new ObjectEroder(in, extendOutside).erode();
+    new ObjectEroder(in, extendOutside).erode(iterations);
     Assertions.assertArrayEquals(expectedOutput, input);
   }
 }

@@ -52,6 +52,18 @@ public class ObjectEroder {
   }
 
   /**
+   * Perform several iterations of an object erosion. Any non-zero pixel touching a pixel of a
+   * different value will be set to zero.
+   *
+   * @param iterations the iterations
+   */
+  public void erode(int iterations) {
+    for (int i = 0; i < iterations; i++) {
+      erode();
+    }
+  }
+
+  /**
    * Perform an object erosion. Any non-zero pixel touching a pixel of a different value will be set
    * to zero.
    */
