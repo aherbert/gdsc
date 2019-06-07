@@ -293,7 +293,7 @@ public class ObjectOutliner {
   }
 
   /**
-   * Instantiates a new Outliner using 4-connected pixels.
+   * Create a new instance using 4-connected pixels.
    *
    * @param ip the image
    */
@@ -302,7 +302,7 @@ public class ObjectOutliner {
   }
 
   /**
-   * Instantiates a new Outliner.
+   * Create a new instance.
    *
    * @param ip the image
    * @param eightConnected the eight connected flag
