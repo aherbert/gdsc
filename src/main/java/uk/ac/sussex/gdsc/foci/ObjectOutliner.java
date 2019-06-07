@@ -34,10 +34,10 @@ import java.util.BitSet;
 /**
  * Outline objects defined by contiguous pixels of the same value.
  */
-public class Outliner {
+public class ObjectOutliner {
   /**
    * The x-direction offsets for tracing outlines, arranged as 8-connected winding round clockwise
-   * where left is -1 and right is +1 in y.
+   * where left is -1 and right is +1 in x.
    */
   private static final int[] DIR_X_OFFSET = {-1, -1, 0, 1, 1, 1, 0, -1};
   /**
@@ -47,7 +47,7 @@ public class Outliner {
   private static final int[] DIR_Y_OFFSET = {0, -1, -1, -1, 0, 1, 1, 1};
 
   /** The mask to make an odd number even. Masks out the lowest bit. */
-  static final int EVEN_MASK = 0xf - 1;
+  static final int EVEN_MASK = ~0x1;
   /** The left direction in the 8-connected directions. */
   static final int DIR_LEFT = 0;
   /** The up direction in the 8-connected directions. */
@@ -297,7 +297,7 @@ public class Outliner {
    *
    * @param ip the image
    */
-  public Outliner(ImageProcessor ip) {
+  public ObjectOutliner(ImageProcessor ip) {
     this(ip, false);
   }
 
@@ -307,7 +307,7 @@ public class Outliner {
    * @param ip the image
    * @param eightConnected the eight connected flag
    */
-  public Outliner(ImageProcessor ip, boolean eightConnected) {
+  public ObjectOutliner(ImageProcessor ip, boolean eightConnected) {
     this.ip = ip;
     this.eightConnected = eightConnected;
 

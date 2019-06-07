@@ -42,17 +42,17 @@ public class OutlinerTest {
   private static final int[] DIR_X_OFFSET = {-1, -1, 0, 1, 1, 1, 0, -1};
   private static final int[] DIR_Y_OFFSET = {0, -1, -1, -1, 0, 1, 1, 1};
 
-  private static final int LEFT = Outliner.DIR_LEFT;
-  private static final int UP = Outliner.DIR_UP;
-  private static final int RIGHT = Outliner.DIR_RIGHT;
-  private static final int DOWN = Outliner.DIR_DOWN;
+  private static final int LEFT = ObjectOutliner.DIR_LEFT;
+  private static final int UP = ObjectOutliner.DIR_UP;
+  private static final int RIGHT = ObjectOutliner.DIR_RIGHT;
+  private static final int DOWN = ObjectOutliner.DIR_DOWN;
 
   @Test
   public void check8ConnectedProperty() {
     final ByteProcessor bp = new ByteProcessor(1, 1);
-    Outliner outliner = new Outliner(bp);
+    ObjectOutliner outliner = new ObjectOutliner(bp);
     Assertions.assertFalse(outliner.isEightConnected());
-    outliner = new Outliner(bp, true);
+    outliner = new ObjectOutliner(bp, true);
     Assertions.assertTrue(outliner.isEightConnected());
     outliner.setEightConnected(false);
     Assertions.assertFalse(outliner.isEightConnected());
@@ -351,7 +351,7 @@ public class OutlinerTest {
     final Roi roi = new Roi(x, y, 1, 1);
     bp.fill(roi);
 
-    final Outliner outliner = new Outliner(bp);
+    final ObjectOutliner outliner = new ObjectOutliner(bp);
     final Roi outline = outliner.outline(x, y);
 
     Assertions.assertNotNull(outline);
@@ -386,7 +386,7 @@ public class OutlinerTest {
     bp.setValue(255.0);
     bp.fill(roi);
 
-    final Outliner outliner = new Outliner(bp);
+    final ObjectOutliner outliner = new ObjectOutliner(bp);
     final Roi outline = outliner.outline(ox, oy);
 
     Assertions.assertNotNull(outline);
@@ -419,7 +419,7 @@ public class OutlinerTest {
     bp.setValue(255.0);
     bp.fill(new PolygonRoi(poly, Roi.FREEROI));
 
-    final Outliner outliner = new Outliner(bp, eightConnected);
+    final ObjectOutliner outliner = new ObjectOutliner(bp, eightConnected);
     final Roi outline = outliner.outline(poly.xpoints[0], poly.ypoints[0]);
 
     Assertions.assertTrue(outline instanceof PolygonRoi, "Not a polygon ROI");
@@ -446,7 +446,7 @@ public class OutlinerTest {
     bp.setValue(255.0);
     bp.fill(new PolygonRoi(poly, Roi.FREEROI));
 
-    final Outliner outliner = new Outliner(bp, eightConnected);
+    final ObjectOutliner outliner = new ObjectOutliner(bp, eightConnected);
     final Roi outline = outliner.outline(poly.xpoints[0], poly.ypoints[0]);
 
     Assertions.assertNotNull(outline);

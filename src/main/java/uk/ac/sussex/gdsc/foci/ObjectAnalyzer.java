@@ -474,8 +474,8 @@ public class ObjectAnalyzer {
     final Roi[] outlines = new Roi[getMaxObject() + 1];
 
     // Use a colour processor to use the int[] mask
-    final Outliner outliner =
-        new Outliner(new ColorProcessor(getWidth(), getHeight(), getObjectMask()));
+    final ObjectOutliner outliner =
+        new ObjectOutliner(new ColorProcessor(getWidth(), getHeight(), getObjectMask()));
     outliner.setEightConnected(isEightConnected());
 
     int index = 0;
