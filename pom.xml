@@ -129,6 +129,10 @@ Software for microscopy image analysis
       <groupId>net.sf.trove4j</groupId>
       <artifactId>trove4j</artifactId>
     </dependency>
+    <dependency>
+      <groupId>sc.fiji</groupId>
+      <artifactId>TrackMate_</artifactId>
+    </dependency>
 
     <!-- TESTING -->
     <dependency>

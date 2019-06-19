@@ -54,7 +54,6 @@ import ij.gui.GenericDialog;
 import ij.gui.ImageRoi;
 import ij.gui.Overlay;
 import ij.gui.Roi;
-import ij.gui.ShapeRoi;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.Binary;
@@ -75,8 +74,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.awt.AWTEvent;
 import java.awt.Color;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -88,11 +85,15 @@ import java.util.stream.Collectors;
  *
  * <ul>
  *
- * <li>Filter the image (Gaussian blur)
+ * <li>Filter the image (Gaussian blur).
  *
- * <li>Mask all the nuclei.
+ * <li>Mask all the nuclei using thresholding.
  *
- * <li>Divide them based on size using watershed.
+ * <li>Fill holes and filter outliers.
+ *
+ * <li>Remove small nuclei based on size.
+ *
+ * <li>Divide large nuclei based on size using watershed.
  *
  * <li>Provides save options: Overlay ROI; Save to memory; and Results Table
  *
@@ -114,16 +115,9 @@ public class NucleiOutline_PlugIn implements PlugIn {
   private Settings settings;
 
   /**
-   * The results saved from previous analysis.
-   *
-   * <p>TODO: Decide if this should be saved for all images or just the last analysed image
-   */
-  private Map<Integer, List<Pair<Integer, Nucleus[]>>> results = new ConcurrentHashMap<>();
-
-  /**
    * Contains the settings that are the re-usable state of the plugin.
    */
-  private static class Settings {
+  public static class Settings {
     private static final String SETTING_BLUR1 = "gdsc.nucleioutline.blur1";
     private static final String SETTING_BLUR2 = "gdsc.nucleioutline.blur2";
     private static final String SETTING_METHOD = "gdsc.nucleioutline.method";
@@ -131,39 +125,42 @@ public class NucleiOutline_PlugIn implements PlugIn {
     private static final String SETTING_OUTLIER_THRESHOLD = "gdsc.nucleioutline.outlierThreshold";
     private static final String SETTING_MAX_NUCLEUS_SIZE = "gdsc.nucleioutline.maxNucleusSize";
     private static final String SETTING_MIN_NUCLEUS_SIZE = "gdsc.nucleioutline.minNucleusSize";
-    private static final String SETTING_MAX_LINK_DISTANCE = "gdsc.nucleioutline.maxLinkDistance";
     private static final String SETTING_EROSION = "gdsc.nucleioutline.erosion";
     private static final String SETTING_EXPANSION_INNER = "gdsc.nucleioutline.expansionInner";
     private static final String SETTING_EXPANSION = "gdsc.nucleioutline.expansion";
     private static final String SETTING_PREVIEW_IN_OUT = "gdsc.nucleioutline.previewInOut";
     private static final String SETTING_RESULTS_OVERLAY = "gdsc.nucleioutline.resultsOverlay";
-    private static final String SETTING_RESULTS_SAVE = "gdsc.nucleioutline.resultsSave";
     private static final String SETTING_RESULTS_TABLE = "gdsc.nucleioutline.resultsTable";
 
     /** The last settings used by the plugin. This should be updated after plugin execution. */
     private static final AtomicReference<Settings> lastSettings =
         new AtomicReference<>(new Settings());
 
-    double blur1;
-    double blur2;
-    AutoThreshold.Method method;
-    double outlierRadius;
-    double outlierThreshold;
-    double maxNucleusSize;
-    double minNucleusSize;
-    double maxLinkDistance;
-    int erosion;
-    int expansionInner;
-    int expansion;
+    private double blur1;
+    private double blur2;
+    private AutoThreshold.Method method;
+    private double outlierRadius;
+    private double outlierThreshold;
+    private double maxNucleusSize;
+    private double minNucleusSize;
+
+    /** Pixels to erode for the inside region of a nucleus. */
+    private int erosion;
+    /** Number of expansions to set as the inner ring of the region outside of a nucleus. */
+    private int expansionInner;
+    /** Number of expansions for the outside of a nucleus. */
+    private int expansion;
+    /** Set to true to show a preview of the inside and outside regions. */
     boolean previewInOut;
+    /** Set to true to create an overlay with the results. */
     boolean resultsOverlay;
-    boolean resultsSave;
+    /** Set to true to show a table with the results. */
     boolean resultsTable;
 
     /**
      * Default constructor.
      */
-    Settings() {
+    public Settings() {
       // Set defaults
       blur1 = Prefs.get(SETTING_BLUR1, 0);
       blur2 = Prefs.get(SETTING_BLUR2, 0);
@@ -172,13 +169,11 @@ public class NucleiOutline_PlugIn implements PlugIn {
       outlierThreshold = Prefs.get(SETTING_OUTLIER_THRESHOLD, 50.0); // 8-bit greyscale value
       maxNucleusSize = Prefs.get(SETTING_MAX_NUCLEUS_SIZE, 50); // um^2
       minNucleusSize = Prefs.get(SETTING_MIN_NUCLEUS_SIZE, 0); // um^2
-      maxLinkDistance = Prefs.get(SETTING_MAX_LINK_DISTANCE, -1); // any
       erosion = (int) Prefs.get(SETTING_EROSION, 3);
       expansionInner = (int) Prefs.get(SETTING_EXPANSION_INNER, 3);
       expansion = (int) Prefs.get(SETTING_EXPANSION, 3);
       previewInOut = Prefs.get(SETTING_PREVIEW_IN_OUT, false);
       resultsOverlay = Prefs.get(SETTING_RESULTS_OVERLAY, true);
-      resultsSave = Prefs.get(SETTING_RESULTS_SAVE, false);
       resultsTable = Prefs.get(SETTING_RESULTS_TABLE, false);
     }
 
@@ -195,13 +190,11 @@ public class NucleiOutline_PlugIn implements PlugIn {
       outlierThreshold = source.outlierThreshold;
       maxNucleusSize = source.maxNucleusSize;
       minNucleusSize = source.minNucleusSize;
-      maxLinkDistance = source.maxLinkDistance;
       erosion = source.erosion;
       expansionInner = source.expansionInner;
       expansion = source.expansion;
       previewInOut = source.previewInOut;
       resultsOverlay = source.resultsOverlay;
-      resultsSave = source.resultsSave;
       resultsTable = source.resultsTable;
     }
 
@@ -210,7 +203,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
      *
      * @return the settings
      */
-    Settings copy() {
+    public Settings copy() {
       return new Settings(this);
     }
 
@@ -219,14 +212,14 @@ public class NucleiOutline_PlugIn implements PlugIn {
      *
      * @return the settings
      */
-    static Settings load() {
+    public static Settings load() {
       return lastSettings.get().copy();
     }
 
     /**
      * Save the settings.
      */
-    void save() {
+    public void save() {
       lastSettings.set(this);
       Prefs.set(SETTING_BLUR1, blur1);
       Prefs.set(SETTING_BLUR2, blur2);
@@ -235,14 +228,204 @@ public class NucleiOutline_PlugIn implements PlugIn {
       Prefs.set(SETTING_OUTLIER_THRESHOLD, outlierThreshold);
       Prefs.set(SETTING_MAX_NUCLEUS_SIZE, maxNucleusSize);
       Prefs.set(SETTING_MIN_NUCLEUS_SIZE, minNucleusSize);
-      Prefs.set(SETTING_MAX_LINK_DISTANCE, maxLinkDistance);
       Prefs.set(SETTING_EROSION, erosion);
       Prefs.set(SETTING_EXPANSION_INNER, expansionInner);
       Prefs.set(SETTING_EXPANSION, expansion);
       Prefs.set(SETTING_PREVIEW_IN_OUT, previewInOut);
       Prefs.set(SETTING_RESULTS_OVERLAY, resultsOverlay);
-      Prefs.set(SETTING_RESULTS_SAVE, resultsSave);
       Prefs.set(SETTING_RESULTS_TABLE, resultsTable);
+    }
+
+    /**
+     * Gets the first blur parameter. This is used for a Gaussian filter on the input image. Units
+     * in pixels.
+     *
+     * @return the blur
+     */
+    public double getBlur1() {
+      return blur1;
+    }
+
+    /**
+     * Sets the first blur parameter. This is used for a Gaussian filter on the input image. Units
+     * in pixels.
+     *
+     * @param blur1 the new blur
+     */
+    public void setBlur1(double blur1) {
+      this.blur1 = blur1;
+    }
+
+    /**
+     * Gets the second blur parameter. If larger than the first then a difference of Gaussians
+     * filter is performed. Units in pixels.
+     *
+     * @return the blur 2
+     */
+    public double getBlur2() {
+      return blur2;
+    }
+
+    /**
+     * Sets the second blur parameter. If larger than the first then a difference of Gaussians
+     * filter is performed. Units in pixels.
+     *
+     * @param blur2 the new blur
+     */
+    public void setBlur2(double blur2) {
+      this.blur2 = blur2;
+    }
+
+    /**
+     * Gets the method for thresholding the filtered image.
+     *
+     * @return the method
+     */
+    public AutoThreshold.Method getMethod() {
+      return method;
+    }
+
+    /**
+     * Sets the method for thresholding the filtered image.
+     *
+     * @param method the new method
+     */
+    public void setMethod(AutoThreshold.Method method) {
+      this.method = method;
+    }
+
+    /**
+     * Gets the outlier radius used for the {@link RankFilters} operation using
+     * {@link RankFilters#OUTLIERS}. Units in pixels.
+     *
+     * @return the outlier radius
+     */
+    public double getOutlierRadius() {
+      return outlierRadius;
+    }
+
+    /**
+     * Sets the outlier radius used for the {@link RankFilters} operation using
+     * {@link RankFilters#OUTLIERS}. Units in pixels.
+     *
+     * @param outlierRadius the new outlier radius
+     */
+    public void setOutlierRadius(double outlierRadius) {
+      this.outlierRadius = outlierRadius;
+    }
+
+    /**
+     * Gets the outlier threshold used for the {@link RankFilters} operation using
+     * {@link RankFilters#OUTLIERS}.
+     *
+     * @return the outlier threshold
+     */
+    public double getOutlierThreshold() {
+      return outlierThreshold;
+    }
+
+    /**
+     * Sets the outlier threshold used for the {@link RankFilters} operation using
+     * {@link RankFilters#OUTLIERS}.
+     *
+     * @param outlierThreshold the new outlier threshold
+     */
+    public void setOutlierThreshold(double outlierThreshold) {
+      this.outlierThreshold = outlierThreshold;
+    }
+
+    /**
+     * Gets the maximum nucleus size. Any nucleus above this size is split using a watershed
+     * operation. Units must match those of the image calibration.
+     *
+     * @return the maximum nucleus size
+     */
+    public double getMaxNucleusSize() {
+      return maxNucleusSize;
+    }
+
+    /**
+     * Sets the maximum nucleus size. Any nucleus above this size is split using a watershed
+     * operation. Units must match those of the image calibration.
+     *
+     * @param maxNucleusSize the new maximum nucleus size
+     */
+    public void setMaxNucleusSize(double maxNucleusSize) {
+      this.maxNucleusSize = maxNucleusSize;
+    }
+
+    /**
+     * Gets the minimum nucleus size. Any nucleus below this size is removed. Units must match those
+     * of the image calibration.
+     *
+     * @return the minimum nucleus size
+     */
+    public double getMinNucleusSize() {
+      return minNucleusSize;
+    }
+
+    /**
+     * Gets the minimum nucleus size. Any nucleus below this size is removed. Units must match those
+     * of the image calibration.
+     *
+     * @param minNucleusSize the new minimum nucleus size
+     */
+    public void setMinNucleusSize(double minNucleusSize) {
+      this.minNucleusSize = minNucleusSize;
+    }
+
+    /**
+     * Gets the pixels to erode for the inside region of a nucleus.
+     *
+     * @return the erosion
+     */
+    public int getErosion() {
+      return erosion;
+    }
+
+    /**
+     * Sets the pixels to erode for the inside region of a nucleus.
+     *
+     * @param erosion the new erosion
+     */
+    public void setErosion(int erosion) {
+      this.erosion = erosion;
+    }
+
+    /**
+     * Gets the number of expansions to set as the inner ring of the region outside of a nucleus.
+     *
+     * @return the expansion inner
+     */
+    public int getExpansionInner() {
+      return expansionInner;
+    }
+
+    /**
+     * Sets the number of expansions to set as the inner ring of the region outside of a nucleus.
+     *
+     * @param expansionInner the new expansion inner
+     */
+    public void setExpansionInner(int expansionInner) {
+      this.expansionInner = expansionInner;
+    }
+
+    /**
+     * Gets the number of expansions for the outside of a nucleus.
+     *
+     * @return the expansion
+     */
+    public int getExpansion() {
+      return expansion;
+    }
+
+    /**
+     * Sets the number of expansions for the outside of a nucleus.
+     *
+     * @param expansion the new expansion
+     */
+    public void setExpansion(int expansion) {
+      this.expansion = expansion;
     }
   }
 
@@ -309,10 +492,10 @@ public class NucleiOutline_PlugIn implements PlugIn {
         Pair<ObjectAnalyzer, ByteProcessor> result) {
       final ObjectAnalyzer oa = result.getLeft();
       Overlay overlay = new Overlay();
-      if (previewSettings.settings.erosion > 0) {
+      if (previewSettings.settings.getErosion() > 0) {
         final int[] mask = oa.getObjectMask().clone();
         final ColorProcessor cp = new ColorProcessor(oa.getWidth(), oa.getHeight(), mask);
-        new ObjectEroder(cp, true).erode(previewSettings.settings.erosion);
+        new ObjectEroder(cp, true).erode(previewSettings.settings.getErosion());
         // Convert non-zero pixels to a byte mask
         final ByteProcessor bp = new ByteProcessor(oa.getWidth(), oa.getHeight());
         for (int i = 0; i < mask.length; i++) {
@@ -325,13 +508,13 @@ public class NucleiOutline_PlugIn implements PlugIn {
         roi.setZeroTransparent(true);
         overlay.add(roi);
       }
-      if (previewSettings.settings.expansion > 0) {
+      if (previewSettings.settings.getExpansion() > 0) {
         final int[] mask = oa.getObjectMask().clone();
         final ColorProcessor cp = new ColorProcessor(oa.getWidth(), oa.getHeight(), mask);
         final ObjectExpander expander = new ObjectExpander(cp);
-        expander.expand(previewSettings.settings.expansionInner);
+        expander.expand(previewSettings.settings.getExpansionInner());
         final int[] innerMask = mask.clone();
-        expander.expand(previewSettings.settings.expansion);
+        expander.expand(previewSettings.settings.getExpansion());
         // Convert non-zero pixels to a byte mask
         final ByteProcessor bp = new ByteProcessor(oa.getWidth(), oa.getHeight());
         bp.setColorModel(LUT.createLutFromColor(Color.YELLOW).getColorModel());
@@ -354,16 +537,16 @@ public class NucleiOutline_PlugIn implements PlugIn {
   }
 
   /**
-   * Encapsulate information about a nucleus.
+   * Encapsulate information about a nucleus. Coordinates are stored in pixels.
    */
-  static class Nucleus {
+  public static class Nucleus {
     /** The information from the object analysis. */
-    final ObjectCentre objectCentre;
-    /** The roi outline of the nucleus. */
-    final Roi roi;
+    private final ObjectCentre objectCentre;
+    /** The ROI outline of the nucleus. */
+    private final Roi roi;
 
     /**
-     * Instantiates a new nucleus.
+     * Create a new instance.
      *
      * @param objectCentre the object centre
      * @param roi the roi
@@ -374,11 +557,29 @@ public class NucleiOutline_PlugIn implements PlugIn {
     }
 
     /**
+     * Gets the nucleus centre.
+     *
+     * @return the centre
+     */
+    public ObjectCentre getObjectCentre() {
+      return objectCentre;
+    }
+
+    /**
+     * Gets the ROI outline of the nucleus.
+     *
+     * @return the roi
+     */
+    public Roi getRoi() {
+      return roi;
+    }
+
+    /**
      * Gets the estimated radius. This is computed assuming the area is a perfect circle.
      *
      * @return the estimate radius
      */
-    double getEstimatedRadius() {
+    public double getEstimatedRadius() {
       return Math.sqrt(objectCentre.getSize() / Math.PI);
     }
   }
@@ -450,18 +651,21 @@ public class NucleiOutline_PlugIn implements PlugIn {
     // Get the user options
     NonBlockingExtendedGenericDialog gd = new NonBlockingExtendedGenericDialog(TITLE);
     gd.addMessage("Track nuclei across frames");
-    gd.addSlider("Blur", 0, 4.5, settings.blur1);
-    gd.addSlider("Blur2", 0, 20, settings.blur2);
-    gd.addChoice("Threshold_method", AutoThreshold.getMethods(true), settings.method.toString());
-    gd.addNumericField("Outlier_radius", settings.outlierRadius, 2, 6, "px");
-    gd.addNumericField("Outlier_threshold", settings.outlierThreshold, 0);
-    gd.addNumericField("Max_nucleus_size", settings.maxNucleusSize, 2, 6, cal.getUnit() + "^2");
-    gd.addNumericField("Min_nucleus_size", settings.minNucleusSize, 2, 6, cal.getUnit() + "^2");
+    gd.addSlider("Blur", 0, 4.5, settings.getBlur1());
+    gd.addSlider("Blur2", 0, 20, settings.getBlur2());
+    gd.addChoice("Threshold_method", AutoThreshold.getMethods(true),
+        settings.getMethod().toString());
+    gd.addNumericField("Outlier_radius", settings.getOutlierRadius(), 2, 6, "px");
+    gd.addNumericField("Outlier_threshold", settings.getOutlierThreshold(), 0);
+    gd.addNumericField("Max_nucleus_size", settings.getMaxNucleusSize(), 2, 6,
+        cal.getUnit() + "^2");
+    gd.addNumericField("Min_nucleus_size", settings.getMinNucleusSize(), 2, 6,
+        cal.getUnit() + "^2");
     gd.addCheckbox("Preview", false);
     gd.addCheckbox("Preview_In_Out", settings.previewInOut);
-    gd.addNumericField("Erosion", settings.erosion, 0);
-    gd.addNumericField("Expansion_inner", settings.expansionInner, 0);
-    gd.addNumericField("Expansion", settings.expansion, 0);
+    gd.addNumericField("Erosion", settings.getErosion(), 0);
+    gd.addNumericField("Expansion_inner", settings.getExpansionInner(), 0);
+    gd.addNumericField("Expansion", settings.getExpansion(), 0);
     gd.addDialogListener(this::dialogItemChanged);
     gd.showDialog();
     settings.save();
@@ -481,7 +685,6 @@ public class NucleiOutline_PlugIn implements PlugIn {
     gd = new NonBlockingExtendedGenericDialog(TITLE);
     gd.addMessage("Analysing all frames...");
     gd.addCheckbox("Results_overlay", settings.resultsOverlay);
-    gd.addCheckbox("Results_save", settings.resultsSave);
     gd.addCheckbox("Results_table", settings.resultsTable);
     gd.showDialog();
 
@@ -490,25 +693,24 @@ public class NucleiOutline_PlugIn implements PlugIn {
     }
 
     settings.resultsOverlay = gd.getNextBoolean();
-    settings.resultsSave = gd.getNextBoolean();
     settings.resultsTable = gd.getNextBoolean();
 
-    return settings.resultsOverlay || settings.resultsSave || settings.resultsTable;
+    return settings.resultsOverlay || settings.resultsTable;
   }
 
   private boolean dialogItemChanged(GenericDialog gd, @SuppressWarnings("unused") AWTEvent event) {
-    settings.blur1 = gd.getNextNumber();
-    settings.blur2 = gd.getNextNumber();
-    settings.method = AutoThreshold.getMethod(gd.getNextChoice());
-    settings.outlierRadius = gd.getNextNumber();
-    settings.outlierThreshold = gd.getNextNumber();
-    settings.maxNucleusSize = gd.getNextNumber();
-    settings.minNucleusSize = gd.getNextNumber();
+    settings.setBlur1(gd.getNextNumber());
+    settings.setBlur2(gd.getNextNumber());
+    settings.setMethod(AutoThreshold.getMethod(gd.getNextChoice()));
+    settings.setOutlierRadius(gd.getNextNumber());
+    settings.setOutlierThreshold(gd.getNextNumber());
+    settings.setMaxNucleusSize(gd.getNextNumber());
+    settings.setMinNucleusSize(gd.getNextNumber());
     inPreview = gd.getNextBoolean();
     settings.previewInOut = gd.getNextBoolean();
-    settings.erosion = (int) gd.getNextNumber();
-    settings.expansionInner = (int) gd.getNextNumber();
-    settings.expansion = (int) gd.getNextNumber();
+    settings.setErosion((int) gd.getNextNumber());
+    settings.setExpansionInner((int) gd.getNextNumber());
+    settings.setExpansion((int) gd.getNextNumber());
 
     if (inPreview) {
       addPreviewOverlay(imp.getCurrentSlice());
@@ -546,8 +748,39 @@ public class NucleiOutline_PlugIn implements PlugIn {
   /**
    * Analyse the image to identify the objects.
    *
-   * <p>Objects will optionally be outlined using a ROI. This will be a {@link ShapeRoi} for
-   * multiple objects.
+   * <p>The pixel area is required for filtering objects using physical units. It must match the
+   * units used in the settings.
+   *
+   * @param settings the settings
+   * @param pixelArea the pixel area
+   * @param ip the image
+   * @return the nuclei
+   */
+  public static ObjectAnalyzer identifyObjects(Settings settings, double pixelArea,
+      ImageProcessor ip) {
+    return analyseImage(settings, pixelArea, ip, false).getLeft();
+  }
+
+  /**
+   * Analyse the image to identify the objects.
+   *
+   * <p>The pixel area is required for filtering objects using physical units. It must match the
+   * units used in the settings.
+   *
+   * @param settings the settings
+   * @param pixelArea the pixel area
+   * @param ip the image
+   * @return the nuclei
+   */
+  public static Nucleus[] analyseImage(Settings settings, double pixelArea, ImageProcessor ip) {
+    final ObjectAnalyzer objectAnalyser = analyseImage(settings, pixelArea, ip, false).getLeft();
+    return toNuclei(objectAnalyser);
+  }
+
+  /**
+   * Analyse the image to identify the objects.
+   *
+   * <p>The objects as a ByteProcessor can optionally be returned.
    *
    * @param settings the settings
    * @param pixelArea the pixel area
@@ -562,9 +795,9 @@ public class NucleiOutline_PlugIn implements PlugIn {
     // - Mask all the nuclei
     // - Divide them based on size using watershed
 
-    applyBlur(ip, settings.blur1, settings.blur2);
+    applyBlur(ip, settings.getBlur1(), settings.getBlur2());
 
-    final ByteProcessor bp = applyThreshold(ip, settings.method);
+    final ByteProcessor bp = applyThreshold(ip, settings.getMethod());
 
     fillHoles(bp);
 
@@ -578,12 +811,12 @@ public class NucleiOutline_PlugIn implements PlugIn {
     // for analysis inside.
 
     // Find objects
-    final int minPixelCount = (int) Math.round(settings.minNucleusSize / pixelArea);
+    final int minPixelCount = (int) Math.round(settings.getMinNucleusSize() / pixelArea);
     ObjectAnalyzer oa = createObjectAnalyzer(bp, minPixelCount);
 
     removeSmallObjects(bp, oa);
 
-    final int maxPixelCount = (int) Math.round(settings.maxNucleusSize / pixelArea);
+    final int maxPixelCount = (int) Math.round(settings.getMaxNucleusSize() / pixelArea);
     ByteProcessor bp2 = divideLargeObjects(bp, oa, maxPixelCount);
 
     // Create a new analyser if needed
@@ -660,10 +893,10 @@ public class NucleiOutline_PlugIn implements PlugIn {
    * @param bp the mask
    */
   private static void removeOutliers(Settings settings, ByteProcessor bp) {
-    if (settings.outlierRadius > 0) {
+    if (settings.getOutlierRadius() > 0) {
       final RankFilters filter = new RankFilters();
-      filter.rank(bp, settings.outlierRadius, RankFilters.OUTLIERS, RankFilters.BRIGHT_OUTLIERS,
-          (float) settings.outlierThreshold);
+      filter.rank(bp, settings.getOutlierRadius(), RankFilters.OUTLIERS,
+          RankFilters.BRIGHT_OUTLIERS, (float) settings.getOutlierThreshold());
     }
   }
 
@@ -759,7 +992,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
    * @param objectAnalyser the object analyser
    * @return the nuclei
    */
-  private static Nucleus[] toNuclei(ObjectAnalyzer objectAnalyser) {
+  public static Nucleus[] toNuclei(ObjectAnalyzer objectAnalyser) {
     final Nucleus[] all = new Nucleus[objectAnalyser.getMaxObject()];
     final ObjectCentre[] centres = objectAnalyser.getObjectCentres();
     final Roi[] rois = objectAnalyser.getObjectOutlines();
@@ -784,10 +1017,8 @@ public class NucleiOutline_PlugIn implements PlugIn {
 
     slices.forEach(slice -> {
       futures.add(executor.submit(() -> {
-        final Pair<ObjectAnalyzer, ByteProcessor> result =
-            analyseImage(settings, pixelArea, stack.getProcessor(slice).duplicate(), false);
-        final ObjectAnalyzer objectAnalyser = result.getLeft();
-        final Nucleus[] nuclei = toNuclei(objectAnalyser);
+        final Nucleus[] nuclei =
+            analyseImage(settings, pixelArea, stack.getProcessor(slice).duplicate());
 
         ticker.tick();
         return Pair.of(slice, nuclei);
@@ -807,7 +1038,6 @@ public class NucleiOutline_PlugIn implements PlugIn {
 
     // Output options ...
     addResultsOverlay(list);
-    saveResults(list);
     showResultsTable(list);
   }
 
@@ -823,23 +1053,12 @@ public class NucleiOutline_PlugIn implements PlugIn {
         if (pair.getRight() != null) {
           final int slice = pair.getLeft();
           for (final Nucleus nucleus : pair.getRight()) {
-            nucleus.roi.setPosition(slice);
-            overlay.add(nucleus.roi);
+            nucleus.getRoi().setPosition(slice);
+            overlay.add(nucleus.getRoi());
           }
         }
       });
       imp.setOverlay(overlay);
-    }
-  }
-
-  /**
-   * Save centres for tracking analysis.
-   *
-   * @param list the list
-   */
-  private void saveResults(List<Pair<Integer, Nucleus[]>> list) {
-    if (settings.resultsSave) {
-      results.put(imp.getID(), list);
     }
   }
 
@@ -863,9 +1082,9 @@ public class NucleiOutline_PlugIn implements PlugIn {
           final int prefixLength = sb.length();
           for (final Nucleus nucleus : pair.getRight()) {
             sb.setLength(prefixLength);
-            sb.append(MathUtils.rounded(nucleus.objectCentre.getCentreX())).append('\t');
-            sb.append(MathUtils.rounded(nucleus.objectCentre.getCentreY())).append('\t');
-            sb.append(MathUtils.rounded(nucleus.objectCentre.getSize())).append('\t');
+            sb.append(MathUtils.rounded(nucleus.getObjectCentre().getCentreX())).append('\t');
+            sb.append(MathUtils.rounded(nucleus.getObjectCentre().getCentreY())).append('\t');
+            sb.append(MathUtils.rounded(nucleus.getObjectCentre().getSize())).append('\t');
             sb.append(MathUtils.rounded(nucleus.getEstimatedRadius()));
             tw.append(sb.toString());
           }
