@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.utils;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 import ij.IJ;
@@ -60,7 +61,7 @@ public class Measure3D_PlugIn extends PlugInFrame {
   private static final String OPT_LOCATION = "Measure3D.location";
   private static final String OPT_LOCATION_RESULTS = "Measure3D.location2";
   private static final AtomicReference<Measure3D_PlugIn> instance = new AtomicReference<>();
-  private static TextWindow results;
+  private static AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
 
   private int lastId;
   private int lastX;
@@ -232,9 +233,9 @@ public class Measure3D_PlugIn extends PlugInFrame {
     }
   }
 
-  private static void createResultsTable() {
-    if (results == null || !results.isVisible()) {
-      results = new TextWindow(PLUGIN_TITLE,
+  private static TextWindow createResultsTable() {
+    return ImageJUtils.refresh(resultsRef, () -> {
+      final TextWindow results = new TextWindow(PLUGIN_TITLE,
           "Image\tc\tt\tx1\ty1\tz1\tx2\ty2\tz2\tD (px)\tD\tUnits", "", 800, 400);
       final Point loc = Prefs.getLocation(OPT_LOCATION_RESULTS);
       if (loc != null) {
@@ -247,12 +248,13 @@ public class Measure3D_PlugIn extends PlugInFrame {
           Prefs.saveLocation(OPT_LOCATION_RESULTS, results.getLocation());
         }
       });
-    }
+
+      return results;
+    });
   }
 
   private void record(ImagePlus imp, int x, int y, int z, double distance,
       double calibratedDistance, String units) {
-    createResultsTable();
     final StringBuilder sb = new StringBuilder(imp.getTitle());
     sb.append('\t').append(lastC);
     sb.append('\t').append(lastT);
@@ -269,7 +271,7 @@ public class Measure3D_PlugIn extends PlugInFrame {
     } else {
       sb.append("\t\t");
     }
-    results.append(sb.toString());
+    createResultsTable().append(sb.toString());
   }
 
   /**
