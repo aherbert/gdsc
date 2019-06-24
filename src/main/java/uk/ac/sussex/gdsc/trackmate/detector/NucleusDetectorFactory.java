@@ -302,7 +302,7 @@ public class NucleusDetectorFactory<T extends RealType<T> & NativeType<T>>
     IOUtils.readIntegerAttribute(element, settings, DetectorKeys.KEY_TARGET_CHANNEL, errorHolder);
     IOUtils.readIntegerAttribute(element, settings, SETTING_ANALYSIS_CHANNEL, errorHolder);
     IOUtils.readDoubleAttribute(element, settings, SETTING_BLUR1, errorHolder);
-    IOUtils.readDoubleAttribute(element, settings, SETTING_BLUR1, errorHolder);
+    IOUtils.readDoubleAttribute(element, settings, SETTING_BLUR2, errorHolder);
     readMethodAttribute(element, settings, SETTING_METHOD, errorHolder);
     IOUtils.readDoubleAttribute(element, settings, SETTING_OUTLIER_RADIUS, errorHolder);
     IOUtils.readDoubleAttribute(element, settings, SETTING_OUTLIER_THRESHOLD, errorHolder);
