@@ -190,7 +190,7 @@ Software for microscopy image analysis
       <plugin>
         <artifactId>maven-source-plugin</artifactId>
         <configuration>
-          <excludes>Gdsc_PlugIn*</excludes>
+          <excludes>Gdsc_PlugIn*,TrackMate_PlugIn*</excludes>
         </configuration>
         <executions>
           <execution>
