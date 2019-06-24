@@ -39,7 +39,10 @@ import javax.swing.ImageIcon;
 public class ExportTrackSelectionActionFactory implements TrackMateActionFactory {
   /** Description of the action. */
   private static final String INFO_TEXT =
-      "<html>This action will export the selected tracks to an ImageJ table.</html>";
+      "<html><p>This action will export the <b>selected</b> (sub-)tracks to an ImageJ table.</p>"
+          + "<p>Tracks are split into contiguous sections of spots with no merge/join events "
+          + "(a branch). If the selection is not contiguous then a branch is split into "
+          + "sub-sequences.</p></html>";
 
   /** Key used for the action. */
   private static final String KEY = "EXPORT_TRACK_SELECTION";
@@ -69,6 +72,7 @@ public class ExportTrackSelectionActionFactory implements TrackMateActionFactory
 
   @Override
   public TrackMateAction create(final TrackMateGUIController controller) {
-    return new ExportTrackSelectionAction(controller.getPlugin().getModel(), controller.getSelectionModel());
+    return new ExportTrackSelectionAction(controller.getPlugin().getModel(),
+        controller.getSelectionModel());
   }
 }

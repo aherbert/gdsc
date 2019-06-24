@@ -24,6 +24,8 @@
 
 package uk.ac.sussex.gdsc.trackmate.action;
 
+import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
 import fiji.plugin.trackmate.Logger;
@@ -39,6 +41,8 @@ import fiji.plugin.trackmate.graph.TimeDirectedNeighborIndex;
 
 import gnu.trove.set.hash.TIntHashSet;
 
+import ij.text.TextWindow;
+
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
@@ -48,12 +52,16 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Displays track data in a table.
  */
 public class ExportTrackSelectionAction implements TrackMateAction {
+  private static final AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
+  private static final AtomicInteger EXECUTION_ID = new AtomicInteger();
+
   /** The model. */
   private final Model model;
   /** The selection model. */
@@ -82,6 +90,11 @@ public class ExportTrackSelectionAction implements TrackMateAction {
     int getStartFrame() {
       return startFrame;
     }
+
+    static int compare(Track t1, Track t2) {
+      final int result = Integer.compare(t1.trackId, t2.trackId);
+      return (result == 0) ? Integer.compare(t1.getStartFrame(), t2.getStartFrame()) : result;
+    }
   }
 
   /**
@@ -97,17 +110,15 @@ public class ExportTrackSelectionAction implements TrackMateAction {
 
   @Override
   public void execute(final TrackMate trackmate) {
-    Set<Spot> spotSelection = selectionModel.getSpotSelection();
-    Set<DefaultWeightedEdge> edgeSelection = selectionModel.getEdgeSelection();
-    logger.log("Processing " + TextUtils.pleural(spotSelection.size(), "spot") + ", "
-        + TextUtils.pleural(edgeSelection.size(), "edge") + "\n");
+    // Q. Support selecting only spots or also use edges?
+    final Set<Spot> spotSelection = selectionModel.getSpotSelection();
+    //final Set<DefaultWeightedEdge> edgeSelection = selectionModel.getEdgeSelection();
+    logger.log("Exporting " + TextUtils.pleural(spotSelection.size(), "spot"));
 
     // Get track Ids of the selection
-    TrackModel trackModel = model.getTrackModel();
-    TIntHashSet trackIds = new TIntHashSet();
-    for (Spot spot : spotSelection) {
-      trackIds.add(trackModel.trackIDOf(spot));
-    }
+    final TrackModel trackModel = model.getTrackModel();
+    final TIntHashSet trackIds = getTrackIds(spotSelection, trackModel);
+    logger.log(". " + TextUtils.pleural(trackIds.size(), "track id"));
 
     // For each track traverse the track and output spot data for only the selected region.
     // This is done using TrackMate's convex branch decomposition which creates tracks of
@@ -116,6 +127,7 @@ public class ExportTrackSelectionAction implements TrackMateAction {
     final TimeDirectedNeighborIndex neighborIndex =
         model.getTrackModel().getDirectedNeighborIndex();
 
+    final List<Track> tracks = new ArrayList<>();
     trackIds.forEach(trackId -> {
       final TrackBranchDecomposition branchDecomposition =
           ConvexBranchesDecomposition.processTrack(trackId, trackModel, neighborIndex, true, false);
@@ -124,49 +136,169 @@ public class ExportTrackSelectionAction implements TrackMateAction {
 
       // Out sub-sections of the track in time order.
       // Only output those selected spots
-      List<Track> tracks = new ArrayList<>();
-      for (final List<Spot> branch : branchGraph.vertexSet()) {
-        // Find predecessor of first spot
-        ArrayList<Spot> predecessor = new ArrayList<>();
-        Spot first = branch.get(0);
-        Spot second = branch.size() > 1 ? branch.get(1) : null;
-        for (DefaultWeightedEdge edge : trackModel.edgesOf(first)) {
-          // Find the spot that is not the start
-          Spot other = trackModel.getEdgeSource(edge);
-          if (other == first) {
-            other = trackModel.getEdgeTarget(edge);
-          }
-          // Any spot not the start or the next must be a predecessor
-          if (other != second) {
-            predecessor.add(other);
-          }
-        }
-
-        ArrayList<Spot> spots = new ArrayList<>();
-        final Iterator<Spot> it = branch.iterator();
-        while (it.hasNext()) {
-          final Spot spot = it.next();
-          spots.add(spot);
-        }
-
-        tracks.add(new Track(trackId, predecessor, spots));
-      }
-
-      Collections.sort(tracks, (r1, r2) -> Integer.compare(r1.getStartFrame(), r2.getStartFrame()));
-
-      System.out.printf("Track Id %d%n", trackId);
-      for (final Track track : tracks) {
-        System.out.println("Parent: " + track.predecessor.stream()
-            .map(spot -> Integer.toString(spot.ID())).collect(Collectors.joining(", ", "[", "]")));
-
-        for (Spot spot : track.spots) {
-          System.out.printf("Spot Id %d%n", spot.ID());
-        }
-      }
-      System.out.printf("%n");
-
+      branchGraph.vertexSet()
+          .forEach(branch -> convertToTracks(spotSelection, trackId, trackModel, branch, tracks));
       return true;
     });
+
+    logger.log(". " + TextUtils.pleural(tracks.size(), "sub-track"));
+
+    Collections.sort(tracks, Track::compare);
+
+    displayTracks(tracks);
+    logger.log(". Done.\n");
+  }
+
+  private static TIntHashSet getTrackIds(Set<Spot> spotSelection, TrackModel trackModel) {
+    final TIntHashSet trackIds = new TIntHashSet();
+    for (final Spot spot : spotSelection) {
+      final Integer trackId = trackModel.trackIDOf(spot);
+      if (trackId != null) {
+        trackIds.add(trackId.intValue());
+      }
+    }
+    return trackIds;
+  }
+
+  /**
+   * Convert the branch of contiguous spots to tracks. Only those that are selected will be output
+   * as a track. If there is a break in the selection of the branch this results in a new track.
+   *
+   * @param spotSelection the spot selection
+   * @param trackId the track id
+   * @param trackModel the track model
+   * @param branch the branch
+   * @param tracks the tracks
+   */
+  private static void convertToTracks(Set<Spot> spotSelection, int trackId, TrackModel trackModel,
+      List<Spot> branch, List<Track> tracks) {
+    splitBranch(spotSelection, trackId, trackModel, branch)
+        .forEach(track -> tracks.add(convertToTrack(trackId, trackModel, track)));
+  }
+
+  /**
+   * Split the branch to contiguous tracks of selected spots.
+   *
+   * @param spotSelection the spot selection
+   * @param trackId the track id
+   * @param trackModel the track model
+   * @param branch the branch
+   * @return the list of tracks
+   */
+  private static List<List<Spot>> splitBranch(Set<Spot> spotSelection, int trackId,
+      TrackModel trackModel, List<Spot> branch) {
+    final ArrayList<List<Spot>> tracks = new ArrayList<>();
+    ArrayList<Spot> spots = null;
+
+    final Iterator<Spot> it = branch.iterator();
+    while (it.hasNext()) {
+      final Spot spot = it.next();
+      if (spotSelection.contains(spot)) {
+        // This is a selected part of the branch
+        if (spots == null) {
+          // First spot in the contiguous track
+          spots = new ArrayList<>();
+          tracks.add(spots);
+        }
+        spots.add(spot);
+      } else {
+        // End of track
+        spots = null;
+      }
+    }
+
+    return tracks;
+  }
+
+  /**
+   * Convert to a list of spot to a track.
+   *
+   * @param trackId the track id
+   * @param trackModel the track model
+   * @param track the track
+   * @return the track
+   */
+  private static Track convertToTrack(int trackId, TrackModel trackModel, List<Spot> track) {
+    final ArrayList<Spot> predecessor = getPredecessors(trackModel, track);
+    final ArrayList<Spot> spots = new ArrayList<>();
+    final Iterator<Spot> it = track.iterator();
+    while (it.hasNext()) {
+      final Spot spot = it.next();
+      spots.add(spot);
+    }
+    return new Track(trackId, predecessor, spots);
+  }
+
+  /**
+   * Gets the predecessors of first spot.
+   *
+   * @param trackModel the track model
+   * @param track the track
+   * @return the predecessors
+   */
+  private static ArrayList<Spot> getPredecessors(TrackModel trackModel, List<Spot> track) {
+    final ArrayList<Spot> predecessor = new ArrayList<>();
+    final Spot first = track.get(0);
+    final int startFrame = first.getFeature(Spot.FRAME).intValue();
+    for (final DefaultWeightedEdge edge : trackModel.edgesOf(first)) {
+      // Find the spot that is not the start
+      Spot other = trackModel.getEdgeSource(edge);
+      if (other == first) {
+        other = trackModel.getEdgeTarget(edge);
+      }
+      // Any spot before the start must be a predecessor
+      if (other.getFeature(Spot.FRAME).intValue() < startFrame) {
+        predecessor.add(other);
+      }
+    }
+    return predecessor;
+  }
+
+  private static void displayTracks(List<Track> tracks) {
+    final StringBuilder sb = new StringBuilder();
+    try (BufferedTextWindow table = new BufferedTextWindow(createResultsTable())) {
+      int id = 0;
+      for (final Track track : tracks) {
+        sb.setLength(0);
+        sb.append(track.trackId).append('\t');
+        sb.append(++id).append('\t');
+        final String prefix = sb.toString();
+
+        // First spot predeccesor may be multiple so this is outside a loop
+        for (int i = 0; i < track.predecessor.size(); i++) {
+          if (i != 0) {
+            sb.append(", ");
+          }
+          sb.append(track.predecessor.get(i));
+        }
+        addSpot(sb, track.spots.get(0));
+        table.append(sb.toString());
+
+        // Loop over the remaining spots
+        Spot previous = track.spots.get(0);
+        for (int i = 1; i < track.spots.size(); i++) {
+          final Spot spot = track.spots.get(i);
+          sb.setLength(0);
+          sb.append(prefix).append(previous);
+          addSpot(sb, spot);
+          previous = spot;
+          table.append(sb.toString());
+        }
+      }
+    }
+  }
+
+  private static TextWindow createResultsTable() {
+    return ImageJUtils.refresh(resultsRef, () -> new TextWindow("Track Selection",
+        "Track Id\tSub-track\tParent\tSpot Id\t\tx\ty\tz", "", 800, 400));
+  }
+
+  private static void addSpot(StringBuilder sb, Spot spot) {
+    sb.append('\t').append(spot);
+    // TODO - configure features in a separate TrackMate Action
+    sb.append('\t').append(spot.getFeature(Spot.POSITION_X));
+    sb.append('\t').append(spot.getFeature(Spot.POSITION_Y));
+    sb.append('\t').append(spot.getFeature(Spot.POSITION_Z));
   }
 
   @Override
