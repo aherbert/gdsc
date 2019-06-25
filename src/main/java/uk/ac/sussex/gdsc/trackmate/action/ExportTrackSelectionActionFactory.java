@@ -28,7 +28,6 @@ import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.action.TrackMateActionFactory;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 
-import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
 import javax.swing.ImageIcon;
@@ -39,7 +38,7 @@ import javax.swing.ImageIcon;
  * <p>This has priority below {@link ExportTrackSelectionOptionsActionFactory} to control
  * position in the menu.</p>
  */
-@Plugin(type = TrackMateActionFactory.class, priority = Priority.LOW)
+@Plugin(type = TrackMateActionFactory.class, priority = 1.0)
 public class ExportTrackSelectionActionFactory implements TrackMateActionFactory {
   /** Description of the action. */
   private static final String INFO_TEXT =
