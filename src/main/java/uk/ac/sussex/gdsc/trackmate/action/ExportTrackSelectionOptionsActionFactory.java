@@ -28,31 +28,24 @@ import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.action.TrackMateActionFactory;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 
-import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
 import javax.swing.ImageIcon;
 
 /**
- * A factory for creating {@link ExportTrackSelectionAction} objects.
- *
- * <p>This has priority below {@link ExportTrackSelectionOptionsActionFactory} to control
- * position in the menu.</p>
+ * A factory for creating {@link ExportTrackSelectionOptionsAction} objects.
  */
-@Plugin(type = TrackMateActionFactory.class, priority = Priority.LOW)
-public class ExportTrackSelectionActionFactory implements TrackMateActionFactory {
+@Plugin(type = TrackMateActionFactory.class)
+public class ExportTrackSelectionOptionsActionFactory implements TrackMateActionFactory {
   /** Description of the action. */
   private static final String INFO_TEXT =
-      "<html><p>This action will export the <b>selected</b> (sub-)tracks to an ImageJ table.</p>"
-          + "<p>Tracks are split into contiguous sections of spots with no merge/join events "
-          + "(a branch). If the selection is not contiguous then a branch is split into "
-          + "sub-sequences.</p></html>";
+      "<html><p>This action allows configuration of the export track selection action.</p></html>";
 
   /** Key used for the action. */
-  private static final String KEY = "EXPORT_TRACK_SELECTION";
+  private static final String KEY = "EXPORT_TRACK_SELECTION_OPTIONS";
 
   /** Display name. */
-  private static final String NAME = "Export the track selection";
+  private static final String NAME = "Configure the export track selection action";
 
   @Override
   public String getInfoText() {
@@ -76,7 +69,6 @@ public class ExportTrackSelectionActionFactory implements TrackMateActionFactory
 
   @Override
   public TrackMateAction create(final TrackMateGUIController controller) {
-    return new ExportTrackSelectionAction(controller.getPlugin().getModel(),
-        controller.getSelectionModel());
+    return new ExportTrackSelectionOptionsAction(controller.getPlugin().getModel());
   }
 }

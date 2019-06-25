@@ -43,6 +43,7 @@ import gnu.trove.set.hash.TIntHashSet;
 
 import ij.text.TextWindow;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
@@ -51,8 +52,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -60,7 +62,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ExportTrackSelectionAction implements TrackMateAction {
   private static final AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
-  private static final AtomicInteger EXECUTION_ID = new AtomicInteger();
+  private static final AtomicReference<List<String>> featuresRef =
+      new AtomicReference<>(Collections.emptyList());
 
   /** The model. */
   private final Model model;
@@ -112,7 +115,7 @@ public class ExportTrackSelectionAction implements TrackMateAction {
   public void execute(final TrackMate trackmate) {
     // Q. Support selecting only spots or also use edges?
     final Set<Spot> spotSelection = selectionModel.getSpotSelection();
-    //final Set<DefaultWeightedEdge> edgeSelection = selectionModel.getEdgeSelection();
+    // final Set<DefaultWeightedEdge> edgeSelection = selectionModel.getEdgeSelection();
     logger.log("Exporting " + TextUtils.pleural(spotSelection.size(), "spot"));
 
     // Get track Ids of the selection
@@ -254,9 +257,10 @@ public class ExportTrackSelectionAction implements TrackMateAction {
     return predecessor;
   }
 
-  private static void displayTracks(List<Track> tracks) {
+  private void displayTracks(List<Track> tracks) {
+    final List<Pair<String, Boolean>> features = createFeaturesList();
     final StringBuilder sb = new StringBuilder();
-    try (BufferedTextWindow table = new BufferedTextWindow(createResultsTable())) {
+    try (BufferedTextWindow table = new BufferedTextWindow(createResultsTable(features))) {
       int id = 0;
       for (final Track track : tracks) {
         sb.setLength(0);
@@ -271,7 +275,7 @@ public class ExportTrackSelectionAction implements TrackMateAction {
           }
           sb.append(track.predecessor.get(i));
         }
-        addSpot(sb, track.spots.get(0));
+        addSpot(features, sb, track.spots.get(0));
         table.append(sb.toString());
 
         // Loop over the remaining spots
@@ -280,7 +284,7 @@ public class ExportTrackSelectionAction implements TrackMateAction {
           final Spot spot = track.spots.get(i);
           sb.setLength(0);
           sb.append(prefix).append(previous);
-          addSpot(sb, spot);
+          addSpot(features, sb, spot);
           previous = spot;
           table.append(sb.toString());
         }
@@ -288,21 +292,66 @@ public class ExportTrackSelectionAction implements TrackMateAction {
     }
   }
 
-  private static TextWindow createResultsTable() {
-    return ImageJUtils.refresh(resultsRef, () -> new TextWindow("Track Selection",
-        "Track Id\tSub-track\tParent\tSpot Id\t\tx\ty\tz", "", 800, 400));
+  private List<Pair<String, Boolean>> createFeaturesList() {
+    final List<Pair<String, Boolean>> list = new ArrayList<>();
+    final Map<String, Boolean> isInt = model.getFeatureModel().getSpotFeatureIsInt();
+    for (final String feature : featuresRef.get()) {
+      list.add(Pair.of(feature, isInt.get(feature)));
+    }
+    return list;
   }
 
-  private static void addSpot(StringBuilder sb, Spot spot) {
+  private TextWindow createResultsTable(List<Pair<String, Boolean>> features) {
+    return ImageJUtils.refresh(resultsRef, () -> {
+      final StringBuilder sb = new StringBuilder("Track Id\tSub-track\tParent\tSpot Id\t");
+      final Map<String, String> map = model.getFeatureModel().getSpotFeatureNames();
+      for (final Pair<String, Boolean> feature : features) {
+        sb.append('\t').append(map.get(feature.getKey()));
+      }
+      return new TextWindow("Track Selection", sb.toString(), "", 800, 400);
+    });
+  }
+
+  private static void addSpot(List<Pair<String, Boolean>> features, StringBuilder sb, Spot spot) {
     sb.append('\t').append(spot);
-    // TODO - configure features in a separate TrackMate Action
-    sb.append('\t').append(spot.getFeature(Spot.POSITION_X));
-    sb.append('\t').append(spot.getFeature(Spot.POSITION_Y));
-    sb.append('\t').append(spot.getFeature(Spot.POSITION_Z));
+    for (final Pair<String, Boolean> feature : features) {
+      sb.append('\t');
+      final Double value = spot.getFeature(feature.getLeft());
+      if (value == null) {
+        continue;
+      }
+      if (feature.getRight()) {
+        // Integer value feature
+        sb.append(value.intValue());
+      } else {
+        sb.append(value);
+      }
+    }
   }
 
   @Override
   public void setLogger(final Logger logger) {
     this.logger = logger;
+  }
+
+  /**
+   * Sets the features to display in the TextWindow.
+   *
+   * @param features the new features
+   */
+  static void setFeatures(List<String> features) {
+    Objects.requireNonNull(features, "Features must not be null");
+    // Ensure the text window is recreated
+    resultsRef.set(null);
+    featuresRef.set(features);
+  }
+
+  /**
+   * Gets the features to display in the TextWindow.
+   *
+   * @return the features
+   */
+  static List<String> getFeatures() {
+    return Collections.unmodifiableList(featuresRef.get());
   }
 }
