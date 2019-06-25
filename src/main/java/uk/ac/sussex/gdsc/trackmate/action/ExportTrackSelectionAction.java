@@ -262,7 +262,12 @@ public class ExportTrackSelectionAction implements TrackMateAction {
     final StringBuilder sb = new StringBuilder();
     try (BufferedTextWindow table = new BufferedTextWindow(createResultsTable(features))) {
       int id = 0;
+      int lastTrackId = 0;
       for (final Track track : tracks) {
+        if (lastTrackId != track.trackId) {
+          id = 0;
+          lastTrackId = track.trackId;
+        }
         sb.setLength(0);
         sb.append(track.trackId).append('\t');
         sb.append(++id).append('\t');
