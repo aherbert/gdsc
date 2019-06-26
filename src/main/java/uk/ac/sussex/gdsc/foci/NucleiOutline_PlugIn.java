@@ -799,9 +799,23 @@ public class NucleiOutline_PlugIn implements PlugIn {
 
     final ByteProcessor bp = applyThreshold(ip, settings.getMethod());
 
+    // Binary processing routines assume background=0; image may be otherwise
+    boolean invertedLut = ip.isInvertedLut();
+    boolean invert =
+        (invertedLut && Prefs.blackBackground) || (!invertedLut && !Prefs.blackBackground);
+
+    if (invert) {
+      bp.invert();
+    }
+
     fillHoles(bp);
 
     removeOutliers(settings, bp);
+
+    // Reset for the ObjectAnalyzer which requires background=0
+    if (invert) {
+      bp.invert();
+    }
 
     // Note:
     // Step here to create a distance map, optionally blur, then threshold again.
@@ -937,9 +951,6 @@ public class NucleiOutline_PlugIn implements PlugIn {
     }
 
     if (!toDivide.isEmpty()) {
-      // Assume black background for now
-      final byte foreground = (byte) (255);
-
       final int[] mask = oa.getObjectMask();
       final byte[] original = (byte[]) bp.getPixels();
       final byte[] tmp = new byte[mask.length];
@@ -949,7 +960,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
         for (int i = 0; i < mask.length; i++) {
           if (mask[i] == object) {
             original[i] = 0;
-            tmp[i] = foreground;
+            tmp[i] = (byte) 255;
           }
         }
         return true;
@@ -958,6 +969,8 @@ public class NucleiOutline_PlugIn implements PlugIn {
       // Watershed the new temp image
       final EDM edm = new EDM();
       final ByteProcessor tmpIp = new ByteProcessor(bp.getWidth(), bp.getHeight(), tmp);
+      // The watershed respects the ImageJ setting for Binary processor inversion based on
+      // the input ImagePlus. Here it is null and so no need to invert.
       edm.setup("watershed", null);
       edm.run(tmpIp);
       IJ.showStatus("");
