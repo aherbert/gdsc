@@ -444,17 +444,11 @@ public class Cda_PlugIn extends PlugInFrame {
   }
 
   @Override
-  public void windowClosing(WindowEvent event) {
+  public void close() {
     closeWindowsOnExit = closeWindowsOnExitCheckbox.getState();
     Prefs.set(KEY_CLOSE_WINDOWS_ON_EXIT, closeWindowsOnExit);
-
     Prefs.saveLocation(KEY_LOCATION, getLocation());
 
-    super.windowClosing(event);
-  }
-
-  @Override
-  public void close() {
     if (closeWindowsOnExit) {
       closeImagePlus(channel1Rgb);
       closeImagePlus(channel2Rgb);
@@ -480,7 +474,7 @@ public class Cda_PlugIn extends PlugInFrame {
       }
     }
 
-    instance.set(null);
+    instance.compareAndSet(this, null);
     super.close();
   }
 

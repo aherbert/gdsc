@@ -335,13 +335,9 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
   }
 
   @Override
-  public void windowClosing(WindowEvent event) {
-    Prefs.saveLocation(KEY_LOCATION, getLocation());
-    super.windowClosing(event);
-  }
-
-  @Override
   public void close() {
+    Prefs.saveLocation(KEY_LOCATION, getLocation());
+
     if (closeWindowsOnExit) {
       closeImagePlus(channel1Rgb);
       closeImagePlus(channel2Rgb);
@@ -356,7 +352,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
       }
     }
 
-    instance.set(null);
+    instance.compareAndSet(this, null);
     super.close();
   }
 
