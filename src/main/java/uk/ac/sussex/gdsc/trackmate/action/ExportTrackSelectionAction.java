@@ -41,6 +41,7 @@ import fiji.plugin.trackmate.graph.TimeDirectedNeighborIndex;
 
 import gnu.trove.set.hash.TIntHashSet;
 
+import ij.Prefs;
 import ij.text.TextWindow;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -54,16 +55,31 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * Displays track data in a table.
  */
 public class ExportTrackSelectionAction implements TrackMateAction {
+  private static final String EXPORT_FEATURES_KEY = "gdsc.tm.exportTrackSelectionFeatures";
   private static final AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
   private static final AtomicReference<List<String>> featuresRef =
-      new AtomicReference<>(Collections.emptyList());
+      new AtomicReference<>();
+
+  static {
+    // Load ImageJ preferences
+    ArrayList<String> list = new ArrayList<>();
+    try (Scanner scanner = new Scanner(Prefs.get(EXPORT_FEATURES_KEY, ""))) {
+      scanner.useDelimiter(",");
+      while (scanner.hasNext()) {
+        list.add(scanner.next());
+      }
+    }
+    featuresRef.set(list);
+  }
 
   /** The model. */
   private final Model model;
@@ -349,6 +365,9 @@ public class ExportTrackSelectionAction implements TrackMateAction {
     // Ensure the text window is recreated
     resultsRef.set(null);
     featuresRef.set(features);
+
+    // Save in ImageJ preferences
+    Prefs.set(EXPORT_FEATURES_KEY, features.stream().collect(Collectors.joining(",")));
   }
 
   /**

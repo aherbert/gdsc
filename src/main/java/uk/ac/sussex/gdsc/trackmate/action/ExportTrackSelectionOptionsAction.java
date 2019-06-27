@@ -35,6 +35,7 @@ import fiji.plugin.trackmate.action.TrackMateAction;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -80,9 +81,10 @@ public class ExportTrackSelectionOptionsAction implements TrackMateAction {
       return;
     }
 
-    ExportTrackSelectionAction.setFeatures(md.getSelectedResults());
+    final List<String> selected = md.getSelectedResults();
+    ExportTrackSelectionAction.setFeatures(selected);
 
-    logger.log(". Done.\n");
+    logger.log(". Selected " + TextUtils.pleural(selected.size(), "feature") + ".\n");
   }
 
   @Override

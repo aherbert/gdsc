@@ -39,7 +39,8 @@ import javax.swing.ImageIcon;
 public class ExportTrackSelectionOptionsActionFactory implements TrackMateActionFactory {
   /** Description of the action. */
   private static final String INFO_TEXT =
-      "<html><p>This action configures the data exported by the export track selection action.</p></html>";
+      "<html><p>This action configures the data exported by the export track selection "
+          + "action.</p></html>";
 
   /** Key used for the action. */
   private static final String KEY = "EXPORT_TRACK_SELECTION_OPTIONS";
