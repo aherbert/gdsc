@@ -42,8 +42,7 @@ import uk.ac.sussex.gdsc.foci.ObjectAnalyzer.ObjectCentre;
 import com.google.common.util.concurrent.Futures;
 
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.map.hash.TIntIntHashMap;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -105,8 +104,10 @@ public class NucleiOutline_PlugIn implements PlugIn {
   private static AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
 
   private ImagePlus imp;
-  private TIntSet slices;
+  private TIntIntHashMap slices;
   private boolean inPreview;
+  private int ch;
+  private int slice;
 
   /** The queue of work for the preview. */
   private ConcurrentMonoStack<PreviewSettings> queue;
@@ -608,11 +609,11 @@ public class NucleiOutline_PlugIn implements PlugIn {
 
     // Get the stack slices to process
     final int frames = imp.getNFrames();
-    slices = new TIntHashSet(frames);
-    final int ch = imp.getChannel();
-    final int slice = imp.getZ();
+    slices = new TIntIntHashMap(frames);
+    ch = imp.getChannel();
+    slice = imp.getZ();
     for (int frame = 1; frame <= frames; frame++) {
-      slices.add(imp.getStackIndex(ch, slice, frame));
+      slices.put(imp.getStackIndex(ch, slice, frame), frame);
     }
 
     return true;
@@ -1028,13 +1029,13 @@ public class NucleiOutline_PlugIn implements PlugIn {
     final ImageStack stack = imp.getImageStack();
     final double pixelArea = getPixelArea(imp);
 
-    slices.forEach(slice -> {
+    slices.forEachEntry((index, frame) -> {
       futures.add(executor.submit(() -> {
         final Nucleus[] nuclei =
-            analyseImage(settings, pixelArea, stack.getProcessor(slice).duplicate());
+            analyseImage(settings, pixelArea, stack.getProcessor(index).duplicate());
 
         ticker.tick();
-        return Pair.of(slice, nuclei);
+        return Pair.of(frame, nuclei);
       }));
       return true;
     });
@@ -1060,13 +1061,18 @@ public class NucleiOutline_PlugIn implements PlugIn {
    * @param list the list
    */
   private void addResultsOverlay(final List<Pair<Integer, Nucleus[]>> list) {
+    final boolean hyperstack = imp.isDisplayedHyperStack();
     if (settings.resultsOverlay) {
       final Overlay overlay = new Overlay();
       list.stream().forEach(pair -> {
         if (pair.getRight() != null) {
-          final int slice = pair.getLeft();
+          final int frame = pair.getLeft();
           for (final Nucleus nucleus : pair.getRight()) {
-            nucleus.getRoi().setPosition(slice);
+            if (hyperstack) {
+              nucleus.getRoi().setPosition(ch, 0, frame);
+            } else {
+              nucleus.getRoi().setPosition(frame);
+            }
             overlay.add(nucleus.getRoi());
           }
         }
@@ -1084,14 +1090,14 @@ public class NucleiOutline_PlugIn implements PlugIn {
     if (settings.resultsTable) {
       final TextWindow textWindow =
           ImageJUtils.refresh(resultsRef, () -> new TextWindow(TITLE + " Summary",
-              "Image\tFrame\tCentre X\tCentre Y\tSize\tRadius", "", 700, 250));
+              "Image\tChannel\tFrame\tCentre X\tCentre Y\tSize\tRadius", "", 700, 250));
       try (BufferedTextWindow tw = new BufferedTextWindow(textWindow)) {
         tw.setIncrement(0);
         final StringBuilder sb = new StringBuilder();
         list.stream().forEach(pair -> {
-          final int slice = pair.getLeft();
+          final int frame = pair.getLeft();
           sb.setLength(0);
-          sb.append(imp.getTitle()).append('\t').append(slice).append('\t');
+          sb.append(imp.getTitle()).append('\t').append(ch).append('\t').append(frame).append('\t');
           final int prefixLength = sb.length();
           for (final Nucleus nucleus : pair.getRight()) {
             sb.setLength(prefixLength);
