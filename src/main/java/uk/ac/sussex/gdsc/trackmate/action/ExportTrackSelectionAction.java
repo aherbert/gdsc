@@ -321,11 +321,11 @@ public class ExportTrackSelectionAction implements TrackMateAction {
     sb.append('\t').append(spot);
     for (final Pair<String, Boolean> feature : features) {
       sb.append('\t');
-      final Double value = spot.getFeature(feature.getLeft());
+      final Double value = spot.getFeature(feature.getKey());
       if (value == null) {
         continue;
       }
-      if (feature.getRight()) {
+      if (feature.getValue()) {
         // Integer value feature
         sb.append(value.intValue());
       } else {

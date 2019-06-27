@@ -278,9 +278,10 @@ public class NucleusDetector<T extends RealType<T> & NativeType<T>> implements S
   private static double[] computeMean(ImageProcessor ip, int maxObject, int[] mask) {
     final double[] mean = new double[maxObject + 1];
     final int[] count = new int[maxObject + 1];
-    for (final int i : mask) {
-      count[i]++;
-      mean[i] += ip.getf(i);
+    for (int i = 1; i < mask.length; i++) {
+      final int object = mask[i];
+      count[object]++;
+      mean[object] += ip.getf(i);
     }
     for (int i = 1; i < mean.length; i++) {
       mean[i] = MathUtils.div0(mean[i], count[i]);
