@@ -128,7 +128,8 @@ public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
     // TODO - As per the TrackMate norm all units should be in image units.
     // Currently this uses both pixels (for blur and outliers) and image units (for size).
     comboChannel.setSelectedItem(settings.get(DetectorKeys.KEY_TARGET_CHANNEL));
-    comboChannel.setSelectedItem(settings.get(NucleusDetectorFactory.SETTING_ANALYSIS_CHANNEL));
+    comboAnalysisChannel
+        .setSelectedItem(settings.get(NucleusDetectorFactory.SETTING_ANALYSIS_CHANNEL));
     textFieldBlur1.setText(String.valueOf(settings.get(NucleusDetectorFactory.SETTING_BLUR1)));
     textFieldBlur2.setText(String.valueOf(settings.get(NucleusDetectorFactory.SETTING_BLUR2)));
     comboMethod.setSelectedItem(settings.get(NucleusDetectorFactory.SETTING_METHOD));
@@ -233,16 +234,9 @@ public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
       model.getSpots().put(frame, spotsToCopy);
 
       // Make them visible
-      // Overlay overlay = imp.getOverlay();
-      // if (null == overlay) {
-      // overlay = new Overlay();
-      // }
       roiList = new ArrayList<>(spotsToCopy.size());
       for (final Spot spot : spotsToCopy) {
         spot.putFeature(SpotCollection.VISIBLITY, SpotCollection.ONE);
-        // NucleusSpot nspot = (NucleusSpot) spot;
-        // overlay.add(nspot.getRoi());
-        // roiList.add(nspot.getRoi());
       }
 
       // Generate event for listener to reflect changes.
