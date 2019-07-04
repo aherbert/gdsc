@@ -85,38 +85,6 @@ public class NucleusDetector<T extends RealType<T> & NativeType<T>> implements S
   private long processingTime;
 
   /**
-   * Specialisation of the Spot class to store the Nucleus ROI.
-   */
-  public static class NucleusSpot extends Spot {
-    /** The roi. */
-    private final Roi roi;
-
-    /**
-     * Create a new instance.
-     *
-     * @param x the x
-     * @param y the y
-     * @param z the z
-     * @param radius the radius
-     * @param quality the quality
-     * @param roi the roi
-     */
-    public NucleusSpot(double x, double y, double z, double radius, double quality, Roi roi) {
-      super(x, y, z, radius, quality);
-      this.roi = roi;
-    }
-
-    /**
-     * Gets the roi.
-     *
-     * @return the roi
-     */
-    public Roi getRoi() {
-      return roi;
-    }
-  }
-
-  /**
    * Create a new instance.
    *
    * @param detectorSettings the detector settings
@@ -131,7 +99,7 @@ public class NucleusDetector<T extends RealType<T> & NativeType<T>> implements S
     this.img = img;
     this.analysisImg = analysisImg;
     this.interval = interval;
-    this.calibration = calibration;
+    this.calibration = calibration.clone();
   }
 
   @Override
