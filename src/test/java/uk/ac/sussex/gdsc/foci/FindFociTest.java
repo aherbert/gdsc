@@ -24,7 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.core.utils.rng.GaussianSamplerUtils;
+import uk.ac.sussex.gdsc.core.utils.rng.SamplerUtils;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
@@ -602,7 +602,7 @@ public class FindFociTest {
   private static short[] combine(UniformRandomProvider rg, float[] data1, float[] data2,
       float[] data3) {
     // Combine images and add a bias and read noise
-    final GaussianSampler g = GaussianSamplerUtils.createGaussianSampler(rg, BIAS, 5);
+    final GaussianSampler g = SamplerUtils.createGaussianSampler(rg, BIAS, 5);
     final short[] data = new short[data1.length];
     for (int i = 0; i < data.length; i++) {
       final double mu = data1[i] + data2[i] + data3[i];
