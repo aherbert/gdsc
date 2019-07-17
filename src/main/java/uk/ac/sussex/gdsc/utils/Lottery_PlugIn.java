@@ -26,7 +26,7 @@ package uk.ac.sussex.gdsc.utils;
 
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.utils.RandomUtils;
+import uk.ac.sussex.gdsc.core.utils.rng.RandomUtils;
 
 import ij.IJ;
 import ij.gui.GenericDialog;
