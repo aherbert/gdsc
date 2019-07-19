@@ -536,7 +536,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
     final float d2 = (float) (settings.radius * settings.radius);
     final int[] assigned = new int[matrix.length];
     Arrays.fill(assigned, -1);
-    while (true) {
+    for (;;) {
       float minD = d2;
       int ii = 0;
       int jj = 0;

@@ -165,7 +165,7 @@ public class Lottery_PlugIn implements PlugIn {
     final int match = settings.match;
     final long simulations = settings.simulations;
 
-    while (true) {
+    for (;;) {
       count++;
 
       RandomUtils.shuffle(data, rng);

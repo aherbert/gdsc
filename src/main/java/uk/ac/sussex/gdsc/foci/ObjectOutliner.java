@@ -593,7 +593,7 @@ public class ObjectOutliner {
     final int object = ip.get(index0);
     int index = index0;
     int direction = dir;
-    while (true) {
+    for (;;) {
       outline.add(direction);
       index += offset[direction];
       // End if back to the start point

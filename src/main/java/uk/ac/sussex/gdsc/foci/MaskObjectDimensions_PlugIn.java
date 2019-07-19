@@ -304,7 +304,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
 
     // Iteratively join closest objects
     if (settings.mergeDistance > 0) {
-      while (true) {
+      for (;;) {
         // Find closest pairs
         int ii = -1;
         int jj = -1;
