@@ -55,8 +55,8 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 import org.apache.commons.rng.UniformRandomProvider;
-import org.apache.commons.rng.sampling.distribution.GaussianSampler;
 import org.apache.commons.rng.sampling.distribution.PoissonSampler;
+import org.apache.commons.rng.sampling.distribution.SharedStateContinuousSampler;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
@@ -602,7 +602,7 @@ public class FindFociTest {
   private static short[] combine(UniformRandomProvider rg, float[] data1, float[] data2,
       float[] data3) {
     // Combine images and add a bias and read noise
-    final GaussianSampler g = SamplerUtils.createGaussianSampler(rg, BIAS, 5);
+    final SharedStateContinuousSampler g = SamplerUtils.createGaussianSampler(rg, BIAS, 5);
     final short[] data = new short[data1.length];
     for (int i = 0; i < data.length; i++) {
       final double mu = data1[i] + data2[i] + data3[i];
