@@ -601,8 +601,8 @@ public class NucleiOutline_PlugIn implements PlugIn {
 
   private boolean setup() {
     imp = WindowManager.getCurrentImage();
-    if (imp == null || imp.getStackSize() == 1) {
-      IJ.error(TITLE, "Require an input stack");
+    if (imp == null) {
+      IJ.error(TITLE, "Require an input image");
       return false;
     }
 
