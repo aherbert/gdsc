@@ -107,7 +107,6 @@ public class NucleiOutline_PlugIn implements PlugIn {
   private TIntIntHashMap slices;
   private boolean inPreview;
   private int ch;
-  private int slice;
 
   /** The queue of work for the preview. */
   private ConcurrentMonoStack<PreviewSettings> queue;
@@ -611,7 +610,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
     final int frames = imp.getNFrames();
     slices = new TIntIntHashMap(frames);
     ch = imp.getChannel();
-    slice = imp.getZ();
+    final int slice = imp.getZ();
     for (int frame = 1; frame <= frames; frame++) {
       slices.put(imp.getStackIndex(ch, slice, frame), frame);
     }
@@ -840,7 +839,9 @@ public class NucleiOutline_PlugIn implements PlugIn {
       removeSmallObjects(bp2, oa);
     }
 
-    // Note that the second byte processor is a reference to the first. It is
+    // Note that the second byte processor is a reference to the first. It is only non-null
+    // if the input processor was updated thus revert to the input processor if it is
+    // a required result.
     bp2 = (requireByteProcessor) ? bp : null;
 
     return Pair.of(oa, bp2);
