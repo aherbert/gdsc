@@ -36,6 +36,7 @@ import uk.ac.sussex.gdsc.core.utils.BitFlagUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.StoredData;
 import uk.ac.sussex.gdsc.core.utils.rng.RandomUtils;
+import uk.ac.sussex.gdsc.core.utils.rng.UniformRandomProviders;
 
 import gnu.trove.list.array.TIntArrayList;
 
@@ -62,7 +63,6 @@ import ij.text.TextWindow;
 import ij.util.Tools;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.rng.simple.RandomSource;
 
 import java.awt.BorderLayout;
 import java.awt.Button;
@@ -706,8 +706,8 @@ public class Cda_PlugIn extends PlugInFrame {
 
     // Randomise the permutations
     if (permutations < list.size() && permutations > 0) {
-      final int[] sample = RandomUtils.sample(permutations, list.size(),
-          RandomSource.create(RandomSource.SPLIT_MIX_64));
+      final int[] sample =
+          RandomUtils.sample(permutations, list.size(), UniformRandomProviders.create());
       final int[] indices = new int[permutations];
       for (int i = 0; i < permutations; i++) {
         indices[i] = list.getQuick(sample[i]);

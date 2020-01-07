@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.colocalisation;
 
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.utils.rng.UniformRandomProviders;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -36,7 +37,6 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 import org.apache.commons.rng.UniformRandomProvider;
-import org.apache.commons.rng.simple.RandomSource;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -198,7 +198,7 @@ public class CreateColocalisedImages_PlugIn implements PlugIn {
     final ImageProcessor cp = getImageProcessor();
     ByteProcessor bp = null;
 
-    final UniformRandomProvider rng = RandomSource.create(RandomSource.SPLIT_MIX_64);
+    final UniformRandomProvider rng = UniformRandomProviders.create();
 
     for (int point = 0; point < NUMBER_OF_POINTS; point++) {
       final int x = rng.nextInt(WIDTH - 2 * PADDING) + PADDING;

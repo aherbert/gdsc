@@ -24,10 +24,10 @@
 
 package uk.ac.sussex.gdsc.foci.controller;
 
+import uk.ac.sussex.gdsc.core.utils.rng.UniformRandomProviders;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 import org.apache.commons.rng.UniformRandomProvider;
-import org.apache.commons.rng.simple.RandomSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +45,7 @@ public class NullController extends FindFociController {
   private int updateCounter = 0;
 
   private static class LazyRng {
-    static final UniformRandomProvider rng = RandomSource.create(RandomSource.SPLIT_MIX_64);
+    static final UniformRandomProvider rng = UniformRandomProviders.create();
   }
 
   /**

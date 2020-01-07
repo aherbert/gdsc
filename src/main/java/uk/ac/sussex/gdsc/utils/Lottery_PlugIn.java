@@ -27,13 +27,13 @@ package uk.ac.sussex.gdsc.utils;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.rng.RandomUtils;
+import uk.ac.sussex.gdsc.core.utils.rng.UniformRandomProviders;
 
 import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 
 import org.apache.commons.rng.UniformRandomProvider;
-import org.apache.commons.rng.simple.RandomSource;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -145,7 +145,7 @@ public class Lottery_PlugIn implements PlugIn {
   }
 
   private void runSimulation() {
-    final UniformRandomProvider rng = RandomSource.create(RandomSource.SPLIT_MIX_64);
+    final UniformRandomProvider rng = UniformRandomProviders.create();
     String msg = "Calculating ...";
     if (settings.simulations == 0) {
       msg += " Escape to exit";
