@@ -48,7 +48,6 @@ import uk.ac.sussex.gdsc.utils.GaussianFit_PlugIn;
  * <p>This is an old version of the FindFoci algorithm before it was converted to allow 32-bit
  * images. It is used for unit testing to ensure the new version functions correctly.
  */
-// @CHECKSTYLE.OFF
 @SuppressWarnings({"javadoc"})
 public class FindFociLegacy {
   private static final String TITLE = "FindFoci Legacy";

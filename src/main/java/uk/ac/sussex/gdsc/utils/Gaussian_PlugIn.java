@@ -182,7 +182,7 @@ public class Gaussian_PlugIn implements PlugIn {
    *      href="https://en.wikipedia.org/wiki/Gaussian_function#Two-dimensional_Gaussian_function">2D
    *      Gaussian function</a>
    */
-  // @CHECKSTYLE.OFF: ParameterName
+  // CHECKSTYLE.OFF: ParameterName
   private static float gaussian(float x, float y, float amplitude, float x0, float y0, float a,
       float b, float c) {
     return (float) (amplitude * Math
