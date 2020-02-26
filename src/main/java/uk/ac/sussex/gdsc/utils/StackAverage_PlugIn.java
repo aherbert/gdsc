@@ -24,16 +24,14 @@
 
 package uk.ac.sussex.gdsc.utils;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
-
 import java.util.ArrayList;
+import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
  * Create an average of all the open stacks with the same dimensions and bit-depth as the active

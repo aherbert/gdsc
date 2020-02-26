@@ -24,8 +24,6 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.core.utils.FileUtils;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -35,6 +33,7 @@ import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
+import uk.ac.sussex.gdsc.core.utils.FileUtils;
 
 /**
  * Manages I/O of the TimeValuePoint class.
@@ -385,8 +384,7 @@ public class TimeValuePointManager {
     // Read until no comment character
     do {
       readLine(input);
-    }
-    while (line != null && headerTest.test(line));
+    } while (line != null && headerTest.test(line));
   }
 
   private void readLine(BufferedReader input) throws IOException {

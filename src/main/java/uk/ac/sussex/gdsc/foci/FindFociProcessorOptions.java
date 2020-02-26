@@ -24,14 +24,13 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import java.util.EnumSet;
+import java.util.Set;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
 import uk.ac.sussex.gdsc.core.utils.ValidationUtils;
 import uk.ac.sussex.gdsc.threshold.MultiOtsuThreshold_PlugIn;
-
-import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * Provides the options for the {@link FindFociProcessor}.

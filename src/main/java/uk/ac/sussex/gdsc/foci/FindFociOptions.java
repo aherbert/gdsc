@@ -24,12 +24,11 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import java.util.EnumSet;
+import java.util.Set;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
 import uk.ac.sussex.gdsc.core.utils.ValidationUtils;
-
-import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * Provides the options for the {@link FindFoci_PlugIn}.

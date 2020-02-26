@@ -24,9 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
-
 import org.jdesktop.beansbinding.Converter;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
 
 /**
  * Convert the centre method to a flag indicating if the centre parameter is enabled.

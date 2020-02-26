@@ -24,9 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
-
 import org.jdesktop.beansbinding.Converter;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
 
 /**
  * Convert the search method to a flag indicating if the search parameter is enabled.

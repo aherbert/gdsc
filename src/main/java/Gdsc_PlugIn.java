@@ -23,9 +23,8 @@
  * #L%
  */
 
-import uk.ac.sussex.gdsc.About_PlugIn;
-
 import ij.plugin.PlugIn;
+import uk.ac.sussex.gdsc.About_PlugIn;
 
 /**
  * Default ImageJ plugin (no Java package) to run the {@link About_PlugIn} plugin.

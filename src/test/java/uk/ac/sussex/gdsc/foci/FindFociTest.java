@@ -24,6 +24,26 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.plugin.filter.GaussianBlur;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.sampling.distribution.PoissonSampler;
+import org.apache.commons.rng.sampling.distribution.SharedStateContinuousSampler;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
+import org.opentest4j.AssertionFailedError;
 import uk.ac.sussex.gdsc.core.utils.rng.SamplerUtils;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
@@ -46,29 +66,6 @@ import uk.ac.sussex.gdsc.test.utils.TestSettings;
 import uk.ac.sussex.gdsc.test.utils.TestUtils;
 import uk.ac.sussex.gdsc.test.utils.TimingResult;
 import uk.ac.sussex.gdsc.test.utils.functions.FunctionUtils;
-
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.plugin.filter.GaussianBlur;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
-
-import org.apache.commons.rng.UniformRandomProvider;
-import org.apache.commons.rng.sampling.distribution.PoissonSampler;
-import org.apache.commons.rng.sampling.distribution.SharedStateContinuousSampler;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.BeforeAll;
-import org.opentest4j.AssertionFailedError;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 @SuppressWarnings({"javadoc"})
 public class FindFociTest {
@@ -409,43 +406,45 @@ public class FindFociTest {
     try {
       for (int i = 0; i < results1.size(); i++) {
         counter = i;
-        //@formatter:off
         final FindFociResult o1 = results1.get(i);
         final FindFociResult o2 = results2.get(i);
-        //logger.info(FunctionUtils.getSupplier("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d", i,
-        //    o1.x, o1.y, o1.maxValue, o1.count, o1.saddleNeighbourId,
-        //    o2.x, o2.y, o2.maxValue, o2.count, o2.saddleNeighbourId);
+        // logger.info(FunctionUtils.getSupplier("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d", i,
+        // o1.x, o1.y, o1.maxValue, o1.count, o1.saddleNeighbourId,
+        // o2.x, o2.y, o2.maxValue, o2.count, o2.saddleNeighbourId);
         Assertions.assertEquals(o1.x, o2.x, "X");
         Assertions.assertEquals(o1.y, o2.y, "Y");
         Assertions.assertEquals(o1.z, o2.z, "Z");
-        Assertions.assertEquals(o1.id, o2.id,"ID");
+        Assertions.assertEquals(o1.id, o2.id, "ID");
         Assertions.assertEquals(o1.count, o2.count, "Count");
         Assertions.assertEquals(o1.saddleNeighbourId, o2.saddleNeighbourId, "Saddle ID");
         Assertions.assertEquals(o1.countAboveSaddle, o2.countAboveSaddle, "Count >Saddle");
         // Single/Summed values can be cast to long as they should be 16-bit integers
-        Assertions.assertEquals((long)o1.maxValue, (long)o2.maxValue + offset, "Max");
+        Assertions.assertEquals((long) o1.maxValue, (long) o2.maxValue + offset, "Max");
         if (o2.highestSaddleValue != Float.NEGATIVE_INFINITY && o2.highestSaddleValue != 0) {
-          Assertions.assertEquals((long)o1.highestSaddleValue, (long)o2.highestSaddleValue + offset, "Saddle value");
+          Assertions.assertEquals((long) o1.highestSaddleValue,
+              (long) o2.highestSaddleValue + offset, "Saddle value");
         }
-        if (legacy)
-        {
-            // Cast to integer as this is the result format of the legacy FindFoci code
-            Assertions.assertEquals((long)o1.averageIntensity, (long)o2.averageIntensity + offset, "Av Intensity");
-            Assertions.assertEquals((long)o1.averageIntensityAboveBackground, (long)o2.averageIntensityAboveBackground, "Av Intensity >background");
-        }
-        else
-        {
-            // Averages cannot be cast and are compared as floating-point values
-            TestAssertions.assertTest(o1.averageIntensity, o2.averageIntensity + offset, predictate, "Av Intensity");
-            TestAssertions.assertTest(o1.averageIntensityAboveBackground, o2.averageIntensityAboveBackground, predictate, "Av Intensity >background");
+        if (legacy) {
+          // Cast to integer as this is the result format of the legacy FindFoci code
+          Assertions.assertEquals((long) o1.averageIntensity, (long) o2.averageIntensity + offset,
+              "Av Intensity");
+          Assertions.assertEquals((long) o1.averageIntensityAboveBackground,
+              (long) o2.averageIntensityAboveBackground, "Av Intensity >background");
+        } else {
+          // Averages cannot be cast and are compared as floating-point values
+          TestAssertions.assertTest(o1.averageIntensity, o2.averageIntensity + offset, predictate,
+              "Av Intensity");
+          TestAssertions.assertTest(o1.averageIntensityAboveBackground,
+              o2.averageIntensityAboveBackground, predictate, "Av Intensity >background");
         }
         if (negativeValues) {
           continue;
         }
-        Assertions.assertEquals((long)o1.totalIntensity, (long)o2.totalIntensity, "Intensity");
-        Assertions.assertEquals((long)o1.totalIntensityAboveBackground, (long)o2.totalIntensityAboveBackground, "Intensity >background");
-        Assertions.assertEquals((long)o1.intensityAboveSaddle, (long)o2.intensityAboveSaddle, "Intensity > Saddle");
-        //@formatter:on
+        Assertions.assertEquals((long) o1.totalIntensity, (long) o2.totalIntensity, "Intensity");
+        Assertions.assertEquals((long) o1.totalIntensityAboveBackground,
+            (long) o2.totalIntensityAboveBackground, "Intensity >background");
+        Assertions.assertEquals((long) o1.intensityAboveSaddle, (long) o2.intensityAboveSaddle,
+            "Intensity > Saddle");
       }
     } catch (final AssertionFailedError ex) {
       TestUtils.wrapAssertionFailedError(ex,

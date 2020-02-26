@@ -24,12 +24,10 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.foci.ObjectExpander.FrequencySelecter;
-
 import ij.process.ByteProcessor;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import uk.ac.sussex.gdsc.foci.ObjectExpander.FrequencySelecter;
 
 @SuppressWarnings({"javadoc"})
 public class ObjectExpanderTest {

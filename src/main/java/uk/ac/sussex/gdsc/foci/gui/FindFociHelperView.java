@@ -24,30 +24,6 @@
 
 package uk.ac.sussex.gdsc.foci.gui;
 
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.foci.AssignedPoint;
-import uk.ac.sussex.gdsc.foci.AssignedPointUtils;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
-import uk.ac.sussex.gdsc.foci.FindFociResult;
-import uk.ac.sussex.gdsc.foci.GridException;
-import uk.ac.sussex.gdsc.foci.GridPoint;
-import uk.ac.sussex.gdsc.foci.GridPointManager;
-import uk.ac.sussex.gdsc.foci.Match_PlugIn;
-import uk.ac.sussex.gdsc.foci.PointAligner_PlugIn;
-import uk.ac.sussex.gdsc.foci.controller.FindMaximaController;
-import uk.ac.sussex.gdsc.foci.converter.SearchModeConverter;
-import uk.ac.sussex.gdsc.foci.converter.StringToBooleanConverter;
-import uk.ac.sussex.gdsc.foci.converter.ValidImagesConverter;
-import uk.ac.sussex.gdsc.foci.model.FindFociModel;
-import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -57,14 +33,6 @@ import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.text.TextWindow;
-
-import org.jdesktop.beansbinding.AutoBinding;
-import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
-import org.jdesktop.beansbinding.BeanProperty;
-import org.jdesktop.beansbinding.Bindings;
-import org.jdesktop.swingbinding.JComboBoxBinding;
-import org.jdesktop.swingbinding.SwingBindings;
-
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
@@ -90,7 +58,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -102,6 +69,35 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
+import org.jdesktop.beansbinding.AutoBinding;
+import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
+import org.jdesktop.beansbinding.BeanProperty;
+import org.jdesktop.beansbinding.Bindings;
+import org.jdesktop.swingbinding.JComboBoxBinding;
+import org.jdesktop.swingbinding.SwingBindings;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.foci.AssignedPoint;
+import uk.ac.sussex.gdsc.foci.AssignedPointUtils;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
+import uk.ac.sussex.gdsc.foci.FindFociResult;
+import uk.ac.sussex.gdsc.foci.GridException;
+import uk.ac.sussex.gdsc.foci.GridPoint;
+import uk.ac.sussex.gdsc.foci.GridPointManager;
+import uk.ac.sussex.gdsc.foci.Match_PlugIn;
+import uk.ac.sussex.gdsc.foci.PointAligner_PlugIn;
+import uk.ac.sussex.gdsc.foci.controller.FindMaximaController;
+import uk.ac.sussex.gdsc.foci.converter.SearchModeConverter;
+import uk.ac.sussex.gdsc.foci.converter.StringToBooleanConverter;
+import uk.ac.sussex.gdsc.foci.converter.ValidImagesConverter;
+import uk.ac.sussex.gdsc.foci.model.FindFociModel;
+import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
 
 /**
  * Provides a permanent form front-end that allows the user to pick ROI points and have them mapped

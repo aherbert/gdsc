@@ -24,12 +24,6 @@
 
 package uk.ac.sussex.gdsc.threshold;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
-import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
-import uk.ac.sussex.gdsc.utils.ImageScienceUtils;
-
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -46,7 +40,6 @@ import ij.process.FloatProcessor;
 import ij.process.FloodFiller;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-
 import imagescience.feature.Edges;
 import imagescience.feature.Laplacian;
 import imagescience.image.Aspects;
@@ -54,7 +47,6 @@ import imagescience.image.FloatImage;
 import imagescience.image.Image;
 import imagescience.segment.Thresholder;
 import imagescience.segment.ZeroCrosser;
-
 import java.awt.AWTEvent;
 import java.awt.Rectangle;
 import java.util.Arrays;
@@ -64,6 +56,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
+import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
+import uk.ac.sussex.gdsc.utils.ImageScienceUtils;
 
 /**
  * Create an edge mask from an image.
@@ -630,8 +627,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
           }
         }
       }
-    }
-    while (continues);
+    } while (continues);
   }
 
   /**

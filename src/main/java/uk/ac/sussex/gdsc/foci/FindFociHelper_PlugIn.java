@@ -24,21 +24,18 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.foci.gui.FindFociHelperView;
-import uk.ac.sussex.gdsc.foci.gui.OptimiserView;
-
 import ij.IJ;
 import ij.WindowManager;
 import ij.plugin.PlugIn;
-
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.atomic.AtomicReference;
-
 import javax.swing.WindowConstants;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.foci.gui.FindFociHelperView;
+import uk.ac.sussex.gdsc.foci.gui.OptimiserView;
 
 /**
  * Create a window that allows the user to pick ROI points and have them mapped to the closest

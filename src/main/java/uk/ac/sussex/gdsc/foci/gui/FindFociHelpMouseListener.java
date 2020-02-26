@@ -24,13 +24,11 @@
 
 package uk.ac.sussex.gdsc.foci.gui;
 
-import uk.ac.sussex.gdsc.help.UrlUtils;
-
 import ij.macro.MacroRunner;
-
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import uk.ac.sussex.gdsc.help.UrlUtils;
 
 /**
  * Simple {@link MouseListener} that can be used to show the FindFoci help page for the

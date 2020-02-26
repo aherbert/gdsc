@@ -24,9 +24,6 @@
 
 package uk.ac.sussex.gdsc.colocalisation;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.utils.rng.UniformRandomProviders;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
@@ -35,11 +32,11 @@ import ij.plugin.filter.GaussianBlur;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-
-import org.apache.commons.rng.UniformRandomProvider;
-
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.commons.rng.UniformRandomProvider;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.utils.rng.UniformRandomProviders;
 
 /**
  * Create some dummy images to test for colocalisation.

@@ -24,14 +24,12 @@
 
 package uk.ac.sussex.gdsc.foci.controller;
 
-import uk.ac.sussex.gdsc.core.utils.rng.UniformRandomProviders;
-import uk.ac.sussex.gdsc.foci.model.FindFociModel;
-
-import org.apache.commons.rng.UniformRandomProvider;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+import org.apache.commons.rng.UniformRandomProvider;
+import uk.ac.sussex.gdsc.core.utils.rng.UniformRandomProviders;
+import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 /**
  * Dummy controller that provides stub functionality to

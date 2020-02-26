@@ -24,6 +24,25 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.set.hash.TIntHashSet;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.gui.Roi;
+import ij.plugin.filter.GaussianBlur;
+import ij.process.ImageProcessor;
+import java.awt.Rectangle;
+import java.awt.geom.RoundRectangle2D;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.function.Supplier;
+import java.util.logging.Logger;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.FloatHistogram;
@@ -40,28 +59,6 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
 import uk.ac.sussex.gdsc.utils.GaussianFit_PlugIn;
-
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.set.hash.TIntHashSet;
-
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.gui.Roi;
-import ij.plugin.filter.GaussianBlur;
-import ij.process.ImageProcessor;
-
-import java.awt.Rectangle;
-import java.awt.geom.RoundRectangle2D;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.function.Supplier;
-import java.util.logging.Logger;
 
 /**
  * Find the peak intensity regions of an image.
@@ -102,18 +99,21 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
   // This preserves the isWithin() functionality of ij.plugin.filter.MaximumFinder.
 
   //@formatter:off
-  /** The direction offsets for the x-coordinate for a 3D 26-connected search. */
-  private static final int[] DIR_X_OFFSET = { 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
-  /** The direction offsets for the y-coordinate for a 3D 26-connected search. */
-  private static final int[] DIR_Y_OFFSET = {-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1, 0,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
-  /** The direction offsets for the z-coordinate for a 3D 26-connected search. */
-  private static final int[] DIR_Z_OFFSET = { 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+  /** The x-coordinate direction offsets for a 3D 26-connected search. */
+  private static final int[] DIR_X_OFFSET = {
+       0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
+  /** The y-coordinate direction offsets for a 3D 26-connected search. */
+  private static final int[] DIR_Y_OFFSET = {
+      -1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1, 0,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
+  /** The z-coordinate direction offsets for a 3D 26-connected search. */
+  private static final int[] DIR_Z_OFFSET = {
+       0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
   // Half-neighbours
-  /** The direction offsets for the x-coordinate for half the neighbours of a 3D 26-connected search. */
+  /** The x-coordinate direction offsets for half the neighbours of a 3D 26-connected search. */
   private static final int[] DIR_X_OFFSET2 = { 0, 1, 1, 1, 0, 1, 1, 1, 0,-1,-1,-1, 0 };
-  /** The direction offsets for the y-coordinate for half the neighbours of a 3D 26-connected search. */
+  /** The y-coordinate direction offsets for half the neighbours of a 3D 26-connected search. */
   private static final int[] DIR_Y_OFFSET2 = {-1,-1, 0, 1,-1,-1, 0, 1, 1, 1, 0,-1, 0 };
-  /** The direction offsets for the z-coordinate for half the neighbours of a 3D 26-connected search. */
+  /** The z-coordinate direction offsets for half the neighbours of a 3D 26-connected search. */
   private static final int[] DIR_Z_OFFSET2 = { 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
   //@formatter:on
 
@@ -1289,8 +1289,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
           }
         }
       }
-    }
-    while (continues);
+    } while (continues);
   }
 
   /**
@@ -2069,8 +2068,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
         listI++;
 
-      }
-      while (listI < pointList.size() && isPlateau);
+      } while (listI < pointList.size() && isPlateau);
     } else {
       do {
         final int index1 = pointList.getQuick(listI);
@@ -2110,8 +2108,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
         listI++;
 
-      }
-      while (listI < pointList.size() && isPlateau);
+      } while (listI < pointList.size() && isPlateau);
     }
 
     // reset attributes no longer needed
@@ -2307,8 +2304,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
         int nextLevel = level; // find the next level to process
         do {
           nextLevel--;
-        }
-        while (nextLevel > 1 && histogram[nextLevel] == 0);
+        } while (nextLevel > 1 && histogram[nextLevel] == 0);
 
         // Add all unprocessed pixels of this level to the tasklist of the next level.
         // This could make it slow for some images, however.
@@ -2597,8 +2593,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
         listI++;
 
-      }
-      while (listI < listLen);
+      } while (listI < listLen);
     } else {
       do {
         final int index1 = pointList[listI];
@@ -2634,8 +2629,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
         listI++;
 
-      }
-      while (listI < listLen);
+      } while (listI < listLen);
     }
 
     for (int i = listLen; i-- > 0;) {
@@ -2943,8 +2937,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
         listI++;
 
-      }
-      while (listI < listLen);
+      } while (listI < listLen);
     } else {
       do {
         final int index1 = pointList[listI];
@@ -2977,8 +2970,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
         listI++;
 
-      }
-      while (listI < listLen);
+      } while (listI < listLen);
     }
 
     for (int i = listLen; i-- > 0;) {
@@ -3111,8 +3103,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
           + Math.pow(newCom[2] - com[2], 2);
       com = newCom;
       iter++;
-    }
-    while (distance > 1 && iter < 10);
+    } while (distance > 1 && iter < 10);
 
     return convertCentre(com);
   }
@@ -3716,8 +3707,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
         listI++;
 
-      }
-      while (listI < listLen);
+      } while (listI < listLen);
     } else {
       do {
         final int index1 = pointList[listI];
@@ -3752,8 +3742,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
         listI++;
 
-      }
-      while (listI < listLen);
+      } while (listI < listLen);
     }
 
     result.countAboveSaddle = listI;
@@ -3824,8 +3813,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
         listI++;
 
-      }
-      while (listI < listLen);
+      } while (listI < listLen);
     } else {
       do {
         final int index1 = pointList[listI];
@@ -3860,8 +3848,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
         listI++;
 
-      }
-      while (listI < listLen);
+      } while (listI < listLen);
     }
 
     for (int i = listLen; i-- > 0;) {
@@ -5661,8 +5648,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
       listI++;
 
-    }
-    while (listI < listLen);
+    } while (listI < listLen);
 
     return pointList;
   }
@@ -5714,8 +5700,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
       listI++;
 
-    }
-    while (listI < listLen);
+    } while (listI < listLen);
 
     return pointList;
   }

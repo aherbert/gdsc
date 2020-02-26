@@ -25,7 +25,6 @@
 package uk.ac.sussex.gdsc.foci;
 
 import gnu.trove.set.hash.TIntHashSet;
-
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;

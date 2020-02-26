@@ -24,11 +24,10 @@
 
 package uk.ac.sussex.gdsc.utils;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-
 import ij.ImagePlus;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
+import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
  * Unlocks the image.

@@ -24,6 +24,12 @@
 
 package uk.ac.sussex.gdsc.foci.controller;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+import java.util.List;
+import java.util.Objects;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import uk.ac.sussex.gdsc.foci.FindFociBaseProcessor;
 import uk.ac.sussex.gdsc.foci.FindFociInitResults;
 import uk.ac.sussex.gdsc.foci.FindFociMergeResults;
@@ -38,15 +44,6 @@ import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.controller.MessageListener.MessageType;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 import uk.ac.sussex.gdsc.foci.model.FindFociState;
-
-import ij.IJ;
-import ij.ImagePlus;
-import ij.WindowManager;
-
-import org.apache.commons.lang3.exception.ExceptionUtils;
-
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Runs the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn } algorithm using input from a

@@ -24,9 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.core.threshold.Histogram;
-
 import ij.ImagePlus;
+import uk.ac.sussex.gdsc.core.threshold.Histogram;
 
 /**
  * Contains the results of the FindFoci algorithm after the initialisation stage.

@@ -25,6 +25,17 @@
 
 package uk.ac.sussex.gdsc.foci.controller;
 
+import com.google.common.util.concurrent.Futures;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.plugin.frame.Recorder;
+import ij.process.ImageStatistics;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.foci.FindFociOptions;
 import uk.ac.sussex.gdsc.foci.FindFociOptions.OutputOption;
@@ -32,20 +43,6 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
 import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.foci.model.FindFociModel;
-
-import com.google.common.util.concurrent.Futures;
-
-import ij.IJ;
-import ij.ImagePlus;
-import ij.WindowManager;
-import ij.plugin.frame.Recorder;
-import ij.process.ImageStatistics;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn } algorithm.

@@ -24,9 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.core.utils.TextUtils;
-
 import org.jdesktop.beansbinding.Converter;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
 /**
  * Converts to true if a string is not null or empty, else false.

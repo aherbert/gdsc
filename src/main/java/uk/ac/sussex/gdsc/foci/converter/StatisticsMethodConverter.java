@@ -24,9 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
-
 import org.jdesktop.beansbinding.Converter;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
 
 /**
  * Convert the statistics method parameter.

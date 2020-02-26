@@ -24,14 +24,12 @@
 
 package uk.ac.sussex.gdsc.trackmate.spotanalyzer;
 
-import uk.ac.sussex.gdsc.trackmate.detector.NucleusDetector;
-
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzer;
-
 import java.util.Iterator;
+import uk.ac.sussex.gdsc.trackmate.detector.NucleusDetector;
 
 /**
  * This is a simple class that declares the features that are computed by the

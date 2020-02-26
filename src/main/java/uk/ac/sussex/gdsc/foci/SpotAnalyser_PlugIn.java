@@ -24,17 +24,6 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -51,17 +40,25 @@ import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-
-import org.apache.commons.math3.exception.NumberIsTooSmallException;
-import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.apache.commons.math3.stat.inference.TestUtils;
-
 import java.awt.AWTEvent;
 import java.awt.Label;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import org.apache.commons.math3.exception.NumberIsTooSmallException;
+import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.inference.TestUtils;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
 
 /**
  * Analyses the intensity of each channel within the brightest spot of the selected channel.

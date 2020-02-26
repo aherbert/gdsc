@@ -24,6 +24,9 @@
 
 package uk.ac.sussex.gdsc.foci.model;
 
+import java.beans.PropertyChangeEvent;
+import java.util.ArrayList;
+import java.util.List;
 import uk.ac.sussex.gdsc.foci.FindFociOptions;
 import uk.ac.sussex.gdsc.foci.FindFociOptions.OutputOption;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions;
@@ -36,10 +39,6 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
-
-import java.beans.PropertyChangeEvent;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Provides a bean property model for the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn} algorithm.

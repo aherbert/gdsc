@@ -25,7 +25,6 @@
 
 import fiji.plugin.trackmate.LoadTrackMatePlugIn_;
 import fiji.plugin.trackmate.TrackMatePlugIn_;
-
 import ij.IJ;
 import ij.plugin.PlugIn;
 

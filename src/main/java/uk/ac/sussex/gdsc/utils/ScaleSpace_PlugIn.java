@@ -24,16 +24,7 @@
 
 package uk.ac.sussex.gdsc.utils;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
-import uk.ac.sussex.gdsc.core.logging.Ticker;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.core.utils.TurboList;
-import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
-
 import com.google.common.util.concurrent.Futures;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -42,13 +33,9 @@ import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-
 import imagescience.feature.Differentiator;
 import imagescience.image.FloatImage;
 import imagescience.image.Image;
-
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,6 +43,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
+import org.apache.commons.lang3.tuple.Pair;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
+import uk.ac.sussex.gdsc.core.logging.Ticker;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.TurboList;
+import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 
 /**
  * Create a scale-space representation of an image using a 2D Gaussian filter at different scales.

@@ -24,17 +24,14 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.awt.Polygon;
 import java.awt.Rectangle;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 @SuppressWarnings({"javadoc"})
 public class ObjectOutlinerTest {

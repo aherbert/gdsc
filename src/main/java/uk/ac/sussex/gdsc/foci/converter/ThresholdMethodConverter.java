@@ -24,9 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
-
 import org.jdesktop.beansbinding.Converter;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
 
 /**
  * Convert the threshold method parameter.

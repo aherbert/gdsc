@@ -24,6 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import uk.ac.sussex.gdsc.foci.FindFociOptimiser_PlugIn.Parameters;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
@@ -33,9 +35,6 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
 @SuppressWarnings({"javadoc"})
 public class FindFociOptimiserPlugInTest {

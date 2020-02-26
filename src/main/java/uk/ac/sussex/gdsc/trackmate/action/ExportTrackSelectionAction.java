@@ -24,10 +24,6 @@
 
 package uk.ac.sussex.gdsc.trackmate.action;
 
-import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.utils.TextUtils;
-
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.SelectionModel;
@@ -38,17 +34,9 @@ import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.graph.ConvexBranchesDecomposition;
 import fiji.plugin.trackmate.graph.ConvexBranchesDecomposition.TrackBranchDecomposition;
 import fiji.plugin.trackmate.graph.TimeDirectedNeighborIndex;
-
 import gnu.trove.set.hash.TIntHashSet;
-
 import ij.Prefs;
 import ij.text.TextWindow;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleDirectedGraph;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -59,6 +47,13 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.SimpleDirectedGraph;
+import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
 /**
  * Displays track data in a table.

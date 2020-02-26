@@ -24,11 +24,6 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -38,13 +33,15 @@ import ij.measure.Calibration;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.commons.math3.linear.RealVector;
-
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * For each unique pixel value in the mask (defining an object), analyse the pixels values and

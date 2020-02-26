@@ -25,7 +25,6 @@
 package uk.ac.sussex.gdsc.trackmate.detector;
 
 import fiji.plugin.trackmate.Spot;
-
 import ij.gui.Roi;
 
 /**

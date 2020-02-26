@@ -24,11 +24,6 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -44,7 +39,6 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
-
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
 import java.awt.Label;
@@ -53,6 +47,10 @@ import java.awt.TextField;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 
 /**
  * Overlay a mask on the channel. For each unique pixel value in the mask (defining an object),

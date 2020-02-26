@@ -24,22 +24,7 @@
 
 package uk.ac.sussex.gdsc.colocalisation.cda;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.colocalisation.cda.engine.CalculationResult;
-import uk.ac.sussex.gdsc.colocalisation.cda.engine.CdaEngine;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.ij.SimpleImageJTrackProgress;
-import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
-import uk.ac.sussex.gdsc.core.ij.process.LutHelper.LutColour;
-import uk.ac.sussex.gdsc.core.logging.Ticker;
-import uk.ac.sussex.gdsc.core.utils.BitFlagUtils;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.core.utils.StoredData;
-import uk.ac.sussex.gdsc.core.utils.rng.RandomUtils;
-import uk.ac.sussex.gdsc.core.utils.rng.UniformRandomProviders;
-
 import gnu.trove.list.array.TIntArrayList;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -61,9 +46,6 @@ import ij.process.LUT;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
 import ij.util.Tools;
-
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Checkbox;
@@ -97,8 +79,21 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-
 import javax.swing.JPanel;
+import org.apache.commons.lang3.ArrayUtils;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.colocalisation.cda.engine.CalculationResult;
+import uk.ac.sussex.gdsc.colocalisation.cda.engine.CdaEngine;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.SimpleImageJTrackProgress;
+import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
+import uk.ac.sussex.gdsc.core.ij.process.LutHelper.LutColour;
+import uk.ac.sussex.gdsc.core.logging.Ticker;
+import uk.ac.sussex.gdsc.core.utils.BitFlagUtils;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.StoredData;
+import uk.ac.sussex.gdsc.core.utils.rng.RandomUtils;
+import uk.ac.sussex.gdsc.core.utils.rng.UniformRandomProviders;
 
 /**
  * Test for significant colocalisation within images using the Confined Displacement Algorithm

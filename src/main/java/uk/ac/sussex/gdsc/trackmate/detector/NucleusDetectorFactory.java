@@ -24,8 +24,6 @@
 
 package uk.ac.sussex.gdsc.trackmate.detector;
 
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.detection.DetectorKeys;
@@ -34,23 +32,20 @@ import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.gui.ConfigurationPanel;
 import fiji.plugin.trackmate.io.IOUtils;
 import fiji.plugin.trackmate.util.TMUtils;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.swing.ImageIcon;
 import net.imagej.ImgPlus;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
-
 import org.jdom2.Element;
 import org.scijava.plugin.Plugin;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.swing.ImageIcon;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 
 /**
  * A factory for creating NucleusDetector objects.

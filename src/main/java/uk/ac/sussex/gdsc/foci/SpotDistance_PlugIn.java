@@ -24,6 +24,29 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.Overlay;
+import ij.gui.Roi;
+import ij.measure.Calibration;
+import ij.plugin.MacroInstaller;
+import ij.plugin.PlugIn;
+import ij.plugin.filter.ThresholdToSelection;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
+import ij.text.TextPanel;
+import ij.text.TextWindow;
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
@@ -40,31 +63,6 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
 import uk.ac.sussex.gdsc.ij.plugin.filter.DifferenceOfGaussians;
-
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
-import ij.gui.Overlay;
-import ij.gui.Roi;
-import ij.measure.Calibration;
-import ij.plugin.MacroInstaller;
-import ij.plugin.PlugIn;
-import ij.plugin.filter.ThresholdToSelection;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
-import ij.text.TextPanel;
-import ij.text.TextWindow;
-
-import java.awt.Color;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Output the distances between spots within a mask region.
@@ -1745,8 +1743,7 @@ public class SpotDistance_PlugIn implements PlugIn {
 
       listI++;
 
-    }
-    while (listI < listLen);
+    } while (listI < listLen);
   }
 
   /**

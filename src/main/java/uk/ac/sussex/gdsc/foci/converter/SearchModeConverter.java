@@ -24,9 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import uk.ac.sussex.gdsc.foci.GridPointManager;
-
 import org.jdesktop.beansbinding.Converter;
+import uk.ac.sussex.gdsc.foci.GridPointManager;
 
 /**
  * Convert the search mode.

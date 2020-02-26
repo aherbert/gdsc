@@ -24,6 +24,19 @@
 
 package uk.ac.sussex.gdsc.colocalisation;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.plugin.filter.PlugInFilter;
+import ij.process.Blitter;
+import ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
+import ij.text.TextWindow;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.colocalisation.cda.Cda_PlugIn;
 import uk.ac.sussex.gdsc.colocalisation.cda.TwinStackShifter;
@@ -34,21 +47,6 @@ import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.Correlator;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.utils.SliceCollection;
-
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.plugin.filter.PlugInFilter;
-import ij.process.Blitter;
-import ij.process.ByteProcessor;
-import ij.process.ImageProcessor;
-import ij.text.TextWindow;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 /**
  * Processes a stack image with multiple channels. Requires three channels. Each frame is processed

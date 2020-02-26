@@ -24,9 +24,6 @@
 
 package uk.ac.sussex.gdsc.utils;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Prefs;
@@ -36,16 +33,14 @@ import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-
-import imagescience.ImageScience;
 import imagescience.feature.Differentiator;
 import imagescience.image.FloatImage;
 import imagescience.image.Image;
-import imagescience.utility.VersionChecker;
-
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
 import java.util.concurrent.atomic.AtomicReference;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 
 /**
  * Run a 2D Laplacian of Gaussian filter.

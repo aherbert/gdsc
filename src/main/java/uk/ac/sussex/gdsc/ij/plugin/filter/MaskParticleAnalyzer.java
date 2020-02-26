@@ -24,12 +24,8 @@
 
 package uk.ac.sussex.gdsc.ij.plugin.filter;
 
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.utils.FileUtils;
-
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Macro;
@@ -48,7 +44,6 @@ import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
-
 import java.awt.Frame;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -60,6 +55,8 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.FileUtils;
 
 /**
  * Extend the ImageJ Particle Analyser to allow the particles to be obtained from an input mask with

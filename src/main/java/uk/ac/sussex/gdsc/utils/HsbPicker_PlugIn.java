@@ -24,9 +24,6 @@
 
 package uk.ac.sussex.gdsc.utils;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Prefs;
@@ -37,9 +34,6 @@ import ij.macro.MacroRunner;
 import ij.plugin.MacroInstaller;
 import ij.plugin.frame.PlugInFrame;
 import ij.process.ImageProcessor;
-
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Color;
@@ -51,8 +45,10 @@ import java.awt.Label;
 import java.awt.Point;
 import java.awt.Scrollbar;
 import java.util.concurrent.atomic.AtomicReference;
-
 import javax.swing.JPanel;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * Alows an RGB image to be filtered using HSB limits.

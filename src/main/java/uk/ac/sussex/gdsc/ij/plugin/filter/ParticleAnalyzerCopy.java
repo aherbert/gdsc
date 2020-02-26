@@ -61,7 +61,6 @@ import ij.process.ShortStatistics;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
 import ij.util.Tools;
-
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Frame;

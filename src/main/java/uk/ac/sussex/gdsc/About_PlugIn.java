@@ -24,19 +24,17 @@
 
 package uk.ac.sussex.gdsc;
 
-import uk.ac.sussex.gdsc.core.utils.TextUtils;
-import uk.ac.sussex.gdsc.help.UrlUtils;
-
 import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
+import uk.ac.sussex.gdsc.help.UrlUtils;
 
 /**
  * Contains help dialogs for the GDSC ImageJ plugins.

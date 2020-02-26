@@ -24,20 +24,6 @@
 
 package uk.ac.sussex.gdsc.foci.gui;
 
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
-import uk.ac.sussex.gdsc.foci.converter.CentreMethodConverter;
-import uk.ac.sussex.gdsc.foci.converter.CentreParamEnabledConverter;
-import uk.ac.sussex.gdsc.foci.converter.DoubleConverter;
-import uk.ac.sussex.gdsc.foci.converter.SliderDoubleConverter;
-import uk.ac.sussex.gdsc.foci.model.FindFociModel;
-import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
-
-import org.jdesktop.beansbinding.AutoBinding;
-import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
-import org.jdesktop.beansbinding.BeanProperty;
-import org.jdesktop.beansbinding.Bindings;
-
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -49,7 +35,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -63,6 +48,18 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
+import org.jdesktop.beansbinding.AutoBinding;
+import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
+import org.jdesktop.beansbinding.BeanProperty;
+import org.jdesktop.beansbinding.Bindings;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
+import uk.ac.sussex.gdsc.foci.converter.CentreMethodConverter;
+import uk.ac.sussex.gdsc.foci.converter.CentreParamEnabledConverter;
+import uk.ac.sussex.gdsc.foci.converter.DoubleConverter;
+import uk.ac.sussex.gdsc.foci.converter.SliderDoubleConverter;
+import uk.ac.sussex.gdsc.foci.model.FindFociModel;
+import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
 
 /**
  * Provides additional options for the {@link FindFociView}.

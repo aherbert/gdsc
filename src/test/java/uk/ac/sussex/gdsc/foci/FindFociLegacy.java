@@ -24,18 +24,12 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.threshold.MultiOtsuThreshold_PlugIn;
-import uk.ac.sussex.gdsc.utils.GaussianFit_PlugIn;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
 import ij.plugin.filter.GaussianBlur;
 import ij.process.ImageProcessor;
-
 import java.awt.Rectangle;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
@@ -43,6 +37,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.threshold.MultiOtsuThreshold_PlugIn;
+import uk.ac.sussex.gdsc.utils.GaussianFit_PlugIn;
 
 /**
  * Find the peak intensity regions of an image.

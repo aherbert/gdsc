@@ -24,17 +24,6 @@
 
 package uk.ac.sussex.gdsc.foci.gui;
 
-import uk.ac.sussex.gdsc.foci.controller.OptimiserController;
-import uk.ac.sussex.gdsc.foci.converter.ValidImagesConverter;
-import uk.ac.sussex.gdsc.foci.model.FindFociModel;
-
-import org.jdesktop.beansbinding.AutoBinding;
-import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
-import org.jdesktop.beansbinding.BeanProperty;
-import org.jdesktop.beansbinding.Bindings;
-import org.jdesktop.swingbinding.JComboBoxBinding;
-import org.jdesktop.swingbinding.SwingBindings;
-
 import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -47,13 +36,21 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+import org.jdesktop.beansbinding.AutoBinding;
+import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
+import org.jdesktop.beansbinding.BeanProperty;
+import org.jdesktop.beansbinding.Bindings;
+import org.jdesktop.swingbinding.JComboBoxBinding;
+import org.jdesktop.swingbinding.SwingBindings;
+import uk.ac.sussex.gdsc.foci.controller.OptimiserController;
+import uk.ac.sussex.gdsc.foci.converter.ValidImagesConverter;
+import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 /**
  * Provides a permanent form front-end for the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn}

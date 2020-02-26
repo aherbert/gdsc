@@ -24,6 +24,24 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.Plot;
+import ij.gui.PlotWindow;
+import ij.gui.Roi;
+import ij.measure.Calibration;
+import ij.plugin.filter.PlugInFilter;
+import ij.process.ImageProcessor;
+import ij.text.TextWindow;
+import java.awt.Frame;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Formatter;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
@@ -39,26 +57,6 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
 import uk.ac.sussex.gdsc.help.UrlUtils;
 import uk.ac.sussex.gdsc.threshold.ThreadAnalyser_PlugIn;
-
-import ij.ImagePlus;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
-import ij.gui.Plot;
-import ij.gui.PlotWindow;
-import ij.gui.Roi;
-import ij.measure.Calibration;
-import ij.plugin.filter.PlugInFilter;
-import ij.process.ImageProcessor;
-import ij.text.TextWindow;
-
-import java.awt.Frame;
-import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Formatter;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Finds spots in an image. Locates the closest neighbour spot within a radius and produces a line

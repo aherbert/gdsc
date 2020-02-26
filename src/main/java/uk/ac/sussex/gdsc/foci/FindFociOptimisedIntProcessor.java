@@ -24,19 +24,16 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import gnu.trove.list.array.TIntArrayList;
+import ij.IJ;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.Histogram;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
-
-import gnu.trove.list.array.TIntArrayList;
-
-import ij.IJ;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 
 /**
  * Find the peak intensity regions of an image.
@@ -298,8 +295,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         listI++;
 
-      }
-      while (listI < pointList.size() && isPlateau);
+      } while (listI < pointList.size() && isPlateau);
     } else {
       do {
         final int index1 = pointList.getQuick(listI);
@@ -339,8 +335,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         listI++;
 
-      }
-      while (listI < pointList.size() && isPlateau);
+      } while (listI < pointList.size() && isPlateau);
     }
 
     // reset attributes no longer needed
@@ -483,8 +478,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
         int nextLevel = level; // find the next level to process
         do {
           nextLevel--;
-        }
-        while (nextLevel > 1 && histogram[nextLevel] == 0);
+        } while (nextLevel > 1 && histogram[nextLevel] == 0);
 
         // Add all unprocessed pixels of this level to the tasklist of the next level.
         // This could make it slow for some images, however.
@@ -988,8 +982,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         listI++;
 
-      }
-      while (listI < listLen);
+      } while (listI < listLen);
     } else {
       do {
         final int index1 = pointList[listI];
@@ -1024,8 +1017,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         listI++;
 
-      }
-      while (listI < listLen);
+      } while (listI < listLen);
     }
 
     result.countAboveSaddle = listI;
@@ -1101,8 +1093,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         listI++;
 
-      }
-      while (listI < listLen);
+      } while (listI < listLen);
     } else {
       do {
         final int index1 = pointList[listI];
@@ -1141,8 +1132,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         listI++;
 
-      }
-      while (listI < listLen);
+      } while (listI < listLen);
     }
 
     for (int i = listLen; i-- > 0;) {

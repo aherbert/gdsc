@@ -24,8 +24,6 @@
 
 package uk.ac.sussex.gdsc.utils;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -37,9 +35,9 @@ import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import uk.ac.sussex.gdsc.UsageTracker;
 
 //@formatter:off
 /**

@@ -24,22 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
-import uk.ac.sussex.gdsc.core.match.MatchResult;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
-import uk.ac.sussex.gdsc.core.utils.TextUtils;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
-
 import gnu.trove.list.array.TFloatArrayList;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -50,7 +35,6 @@ import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.text.TextWindow;
-
 import java.awt.Color;
 import java.io.File;
 import java.io.Serializable;
@@ -65,6 +49,19 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
+import uk.ac.sussex.gdsc.core.match.MatchResult;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
 
 /**
  * Analyses the image using the FindFoci algorithm to identify and assign pixels to maxima. Realigns

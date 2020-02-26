@@ -24,10 +24,9 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import ij.ImagePlus;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
-
-import ij.ImagePlus;
 
 /**
  * Interface describing separate stages for the FindFoci algorithm to find the peak intensity

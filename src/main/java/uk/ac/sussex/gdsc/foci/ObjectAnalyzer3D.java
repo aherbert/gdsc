@@ -34,10 +34,14 @@ public class ObjectAnalyzer3D {
                                               //4N                //8N
   private static final int[] DIR_X_OFFSET2 = {  0, 1, 0,-1,        1, 1,-1,-1 };
   private static final int[] DIR_Y_OFFSET2 = { -1, 0, 1, 0,       -1, 1, 1,-1 };
-                                              //4N                //8N
-  private static final int[] DIR_X_OFFSET3 = { 0, 1, 0,-1, 0, 0,   1, 1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1 };
-  private static final int[] DIR_Y_OFFSET3 = {-1, 0, 1, 0, 0, 0,  -1, 1, 1,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1 };
-  private static final int[] DIR_Z_OFFSET3 = { 0, 0, 0, 0,-1, 1,   0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1 };
+                                              //4N
+                                              //8N
+  private static final int[] DIR_X_OFFSET3 = { 0, 1, 0,-1, 0, 0,
+       1, 1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1 };
+  private static final int[] DIR_Y_OFFSET3 = {-1, 0, 1, 0, 0, 0,
+      -1, 1, 1,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1 };
+  private static final int[] DIR_Z_OFFSET3 = { 0, 0, 0, 0,-1, 1,
+       0, 0, 0, 0,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1 };
   //@formatter:on
 
   private final int[] maskImage;
@@ -208,8 +212,7 @@ public class ObjectAnalyzer3D {
 
       listI++;
 
-    }
-    while (listI < listLen);
+    } while (listI < listLen);
 
     ppList[0] = pointList;
 
@@ -274,8 +277,7 @@ public class ObjectAnalyzer3D {
 
       listI++;
 
-    }
-    while (listI < listLen);
+    } while (listI < listLen);
 
     ppList[0] = pointList;
 

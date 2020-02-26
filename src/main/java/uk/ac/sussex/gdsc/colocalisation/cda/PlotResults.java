@@ -24,14 +24,11 @@
 
 package uk.ac.sussex.gdsc.colocalisation.cda;
 
+import ij.gui.Plot;
+import java.awt.Color;
+import org.apache.commons.lang3.ArrayUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.ValidationUtils;
-
-import ij.gui.Plot;
-
-import org.apache.commons.lang3.ArrayUtils;
-
-import java.awt.Color;
 
 /**
  * Provides functionality to plot a histogram of sample data and then determine if a value is

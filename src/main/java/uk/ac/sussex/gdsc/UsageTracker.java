@@ -24,14 +24,12 @@
 
 package uk.ac.sussex.gdsc;
 
-import uk.ac.sussex.gdsc.core.ij.ImageJAnalyticsUtils;
-import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
-
 import ij.plugin.PlugIn;
-
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import uk.ac.sussex.gdsc.core.ij.ImageJAnalyticsUtils;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 
 /**
  * Provide methods to track code usage within ImageJ.

@@ -27,7 +27,6 @@ package uk.ac.sussex.gdsc.foci;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
-
 import java.util.Arrays;
 import java.util.BitSet;
 

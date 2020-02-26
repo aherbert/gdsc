@@ -24,12 +24,10 @@
 
 package uk.ac.sussex.gdsc.utils;
 
-import uk.ac.sussex.gdsc.core.ij.PixelUtils;
-
 import gnu.trove.list.array.TIntArrayList;
-
 import ij.ImagePlus;
 import ij.ImageStack;
+import uk.ac.sussex.gdsc.core.ij.PixelUtils;
 
 /**
  * Provides functionality to process a collection of slices from an image stack into a sub-stack.

@@ -24,19 +24,17 @@
 
 package uk.ac.sussex.gdsc.colocalisation;
 
-import uk.ac.sussex.gdsc.core.utils.TextUtils;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
-
 import java.awt.Rectangle;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
 /**
  * Class that allow the threshold for colocalisation analysis to be calculated for two images. A

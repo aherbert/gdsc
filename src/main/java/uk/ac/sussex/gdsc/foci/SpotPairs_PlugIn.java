@@ -24,11 +24,6 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.help.UrlUtils;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.DialogListener;
@@ -41,13 +36,16 @@ import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-
 import java.awt.AWTEvent;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.concurrent.atomic.AtomicReference;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.help.UrlUtils;
 
 /**
  * Analyses marked ROI points in an image. Find the closest pairs within a set distance of each

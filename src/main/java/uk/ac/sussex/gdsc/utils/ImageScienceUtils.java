@@ -25,7 +25,6 @@
 package uk.ac.sussex.gdsc.utils;
 
 import ij.IJ;
-
 import imagescience.ImageScience;
 import imagescience.utility.VersionChecker;
 

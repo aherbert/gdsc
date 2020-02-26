@@ -24,26 +24,21 @@
 
 package uk.ac.sussex.gdsc.trackmate.spotanalyzer;
 
-import uk.ac.sussex.gdsc.trackmate.detector.NucleusDetector;
-
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
-
-import net.imagej.ImgPlus;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
-import org.scijava.plugin.Plugin;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.swing.ImageIcon;
+import net.imagej.ImgPlus;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+import org.scijava.plugin.Plugin;
+import uk.ac.sussex.gdsc.trackmate.detector.NucleusDetector;
 
 /**
  * A factory for creating NucleusSpotAnalyzer objects.

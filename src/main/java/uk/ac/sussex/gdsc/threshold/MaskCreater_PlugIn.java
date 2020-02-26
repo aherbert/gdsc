@@ -24,13 +24,6 @@
 
 package uk.ac.sussex.gdsc.threshold;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
-import uk.ac.sussex.gdsc.foci.ObjectAnalyzer;
-import uk.ac.sussex.gdsc.foci.ObjectAnalyzer3D;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -42,10 +35,15 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
-
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Arrays;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
+import uk.ac.sussex.gdsc.foci.ObjectAnalyzer;
+import uk.ac.sussex.gdsc.foci.ObjectAnalyzer3D;
 
 /**
  * Create a mask from an image.

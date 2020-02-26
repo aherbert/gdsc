@@ -24,8 +24,6 @@
 
 package uk.ac.sussex.gdsc.ij.plugin;
 
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-
 import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
@@ -41,8 +39,8 @@ import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-
 import java.util.Arrays;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * This plugin performs a z-projection of the input stack. Type of output image is same as type of

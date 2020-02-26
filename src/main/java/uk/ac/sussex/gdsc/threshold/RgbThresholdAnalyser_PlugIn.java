@@ -24,11 +24,6 @@
 
 package uk.ac.sussex.gdsc.threshold;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.PlugIn;
@@ -36,10 +31,13 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
-
 import java.io.File;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * For all the RGB images in one directory, look for a matching image in a second directory that has

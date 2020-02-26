@@ -24,9 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
-import org.jdesktop.beansbinding.Converter;
-
 import java.text.DecimalFormat;
+import org.jdesktop.beansbinding.Converter;
 
 /**
  * Convert a double to a formatted string.

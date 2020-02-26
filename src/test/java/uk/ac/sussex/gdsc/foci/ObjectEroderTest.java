@@ -25,7 +25,6 @@
 package uk.ac.sussex.gdsc.foci;
 
 import ij.process.ByteProcessor;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

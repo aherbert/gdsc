@@ -24,19 +24,17 @@
 
 package uk.ac.sussex.gdsc.trackmate.action;
 
-import uk.ac.sussex.gdsc.core.ij.gui.MultiDialog;
-import uk.ac.sussex.gdsc.core.utils.TextUtils;
-
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.action.TrackMateAction;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import uk.ac.sussex.gdsc.core.ij.gui.MultiDialog;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
 /**
  * Displays track data in a table.

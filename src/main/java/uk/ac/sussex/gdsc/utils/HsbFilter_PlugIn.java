@@ -24,8 +24,6 @@
 
 package uk.ac.sussex.gdsc.utils;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-
 import ij.ImagePlus;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
@@ -33,10 +31,10 @@ import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
-
 import java.awt.AWTEvent;
 import java.awt.Color;
 import java.util.concurrent.atomic.AtomicReference;
+import uk.ac.sussex.gdsc.UsageTracker;
 
 /**
  * Allows an RGB image to be filtered using HSB limits.

@@ -24,13 +24,10 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
-
 import ij.process.ImageProcessor;
-
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.util.Arrays;
+import org.apache.commons.lang3.ArrayUtils;
+import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
 
 /**
  * Expand objects defined by non-zero pixels.

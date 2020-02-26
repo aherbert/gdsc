@@ -26,7 +26,6 @@ package uk.ac.sussex.gdsc.colocalisation.cda;
 
 import ij.gui.PlotWindow;
 import ij.process.ImageStatistics;
-
 import java.awt.GridLayout;
 import java.awt.Label;
 import java.awt.Panel;

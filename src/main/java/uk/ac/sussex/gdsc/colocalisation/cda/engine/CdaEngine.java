@@ -24,17 +24,14 @@
 
 package uk.ac.sussex.gdsc.colocalisation.cda.engine;
 
-import uk.ac.sussex.gdsc.core.logging.Ticker;
-
 import ij.ImageStack;
-
-import org.apache.commons.lang3.concurrent.ConcurrentRuntimeException;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import org.apache.commons.lang3.concurrent.ConcurrentRuntimeException;
+import uk.ac.sussex.gdsc.core.logging.Ticker;
 
 /**
  * Performs the Confined Displacement Algorithm (CDA).

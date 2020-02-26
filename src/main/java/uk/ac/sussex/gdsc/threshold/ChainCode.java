@@ -24,9 +24,8 @@
 
 package uk.ac.sussex.gdsc.threshold;
 
-import uk.ac.sussex.gdsc.core.utils.ValidationUtils;
-
 import gnu.trove.list.array.TIntArrayList;
+import uk.ac.sussex.gdsc.core.utils.ValidationUtils;
 
 /**
  * Stores a chain code. Stores the origin x,y and a set of directions in a chain of 8 neighbour

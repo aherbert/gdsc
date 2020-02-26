@@ -27,10 +27,8 @@ package uk.ac.sussex.gdsc.trackmate.action;
 import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.action.TrackMateActionFactory;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
-
-import org.scijava.plugin.Plugin;
-
 import javax.swing.ImageIcon;
+import org.scijava.plugin.Plugin;
 
 /**
  * A factory for creating {@link ExportTrackSelectionOptionsAction} objects.

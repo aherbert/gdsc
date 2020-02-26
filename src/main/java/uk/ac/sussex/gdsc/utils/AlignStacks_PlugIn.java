@@ -24,14 +24,6 @@
 
 package uk.ac.sussex.gdsc.utils;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
-import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
-import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -43,9 +35,15 @@ import ij.plugin.ZProjector;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
+import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
+import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
 
 /**
  * Aligns open image stacks to a reference stack using XY translation to maximise the correlation.
@@ -389,8 +387,7 @@ public class AlignStacks_PlugIn implements PlugIn {
         verticalTiles++;
         h2 += h;
       }
-    }
-    while (horizontalTiles * verticalTiles < imp.getNChannels());
+    } while (horizontalTiles * verticalTiles < imp.getNChannels());
 
     // Create output composite
     final FloatProcessor ip = new FloatProcessor(w2, h2);

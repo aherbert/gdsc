@@ -24,9 +24,8 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
-
 import ij.process.ImageProcessor;
+import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
 
 /**
  * Erode objects defined by non-zero pixels.

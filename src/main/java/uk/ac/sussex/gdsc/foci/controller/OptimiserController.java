@@ -24,18 +24,16 @@
 
 package uk.ac.sussex.gdsc.foci.controller;
 
-import uk.ac.sussex.gdsc.core.annotation.Nullable;
-import uk.ac.sussex.gdsc.foci.FindFociOptimiser_PlugIn;
-import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
-import uk.ac.sussex.gdsc.foci.model.FindFociModel;
-
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Roi;
 import ij.plugin.frame.Recorder;
-
 import java.util.ArrayList;
 import java.util.List;
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
+import uk.ac.sussex.gdsc.foci.FindFociOptimiser_PlugIn;
+import uk.ac.sussex.gdsc.foci.FindFoci_PlugIn;
+import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 /**
  * Allows ImageJ to run the {@link uk.ac.sussex.gdsc.foci.FindFoci_PlugIn} algorithm.

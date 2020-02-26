@@ -25,7 +25,6 @@
 package uk.ac.sussex.gdsc.foci;
 
 import ij.ImagePlus;
-
 import org.apache.commons.lang3.ArrayUtils;
 
 /**

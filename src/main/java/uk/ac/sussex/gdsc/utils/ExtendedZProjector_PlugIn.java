@@ -24,10 +24,9 @@
 
 package uk.ac.sussex.gdsc.utils;
 
+import ij.plugin.PlugIn;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.ij.plugin.ExtendedZProjector;
-
-import ij.plugin.PlugIn;
 
 /**
  * Pass through class allowing the {@link ExtendedZProjector } to be loaded by the ImageJ plugin

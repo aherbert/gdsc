@@ -24,19 +24,12 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.foci.controller.FindFociController;
-import uk.ac.sussex.gdsc.foci.controller.ImageJController;
-import uk.ac.sussex.gdsc.foci.gui.FindFociView;
-import uk.ac.sussex.gdsc.foci.model.FindFociModel;
-
 import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
-
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.beans.PropertyChangeEvent;
@@ -44,8 +37,12 @@ import java.beans.PropertyChangeListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.atomic.AtomicReference;
-
 import javax.swing.WindowConstants;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.foci.controller.FindFociController;
+import uk.ac.sussex.gdsc.foci.controller.ImageJController;
+import uk.ac.sussex.gdsc.foci.gui.FindFociView;
+import uk.ac.sussex.gdsc.foci.model.FindFociModel;
 
 /**
  * Provides a permanent form front-end for the FindFoci plugin filter.

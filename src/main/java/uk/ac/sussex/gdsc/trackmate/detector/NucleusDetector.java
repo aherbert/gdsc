@@ -24,6 +24,22 @@
 
 package uk.ac.sussex.gdsc.trackmate.detector;
 
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.detection.SpotDetector;
+import ij.ImagePlus;
+import ij.gui.Roi;
+import ij.process.ColorProcessor;
+import ij.process.ImageProcessor;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.List;
+import net.imglib2.Interval;
+import net.imglib2.RandomAccessible;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.IntervalView;
+import net.imglib2.view.Views;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.foci.NucleiOutline_PlugIn;
 import uk.ac.sussex.gdsc.foci.NucleiOutline_PlugIn.Nucleus;
@@ -32,26 +48,6 @@ import uk.ac.sussex.gdsc.foci.ObjectAnalyzer;
 import uk.ac.sussex.gdsc.foci.ObjectAnalyzer.ObjectCentre;
 import uk.ac.sussex.gdsc.foci.ObjectEroder;
 import uk.ac.sussex.gdsc.foci.ObjectExpander;
-
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.detection.SpotDetector;
-
-import ij.ImagePlus;
-import ij.gui.Roi;
-import ij.process.ColorProcessor;
-import ij.process.ImageProcessor;
-
-import net.imglib2.Interval;
-import net.imglib2.RandomAccessible;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.view.IntervalView;
-import net.imglib2.view.Views;
-
-import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Detector that delegates work to the {@link NucleiOutline_PlugIn}.

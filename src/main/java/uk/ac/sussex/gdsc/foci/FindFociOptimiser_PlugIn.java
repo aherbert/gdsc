@@ -24,42 +24,11 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import uk.ac.sussex.gdsc.UsageTracker;
-import uk.ac.sussex.gdsc.core.annotation.Nullable;
-import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
-import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.core.ij.SimpleImageJTrackProgress;
-import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
-import uk.ac.sussex.gdsc.core.logging.Ticker;
-import uk.ac.sussex.gdsc.core.match.Coordinate;
-import uk.ac.sussex.gdsc.core.match.MatchCalculator;
-import uk.ac.sussex.gdsc.core.match.MatchResult;
-import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
-import uk.ac.sussex.gdsc.core.utils.FileUtils;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.core.utils.SoftLock;
-import uk.ac.sussex.gdsc.core.utils.StoredData;
-import uk.ac.sussex.gdsc.core.utils.TextUtils;
-import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
-import uk.ac.sussex.gdsc.foci.FindFociOptions.OutputOption;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
-import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
-import uk.ac.sussex.gdsc.foci.gui.OptimiserView;
-
 import com.google.common.annotations.VisibleForTesting;
-
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
 import gnu.trove.set.hash.TIntHashSet;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -76,9 +45,6 @@ import ij.plugin.frame.Recorder;
 import ij.process.ImageProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
-
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
 import java.awt.Choice;
@@ -114,8 +80,36 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
-
 import javax.swing.WindowConstants;
+import org.apache.commons.lang3.ArrayUtils;
+import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.annotation.Nullable;
+import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.SimpleImageJTrackProgress;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
+import uk.ac.sussex.gdsc.core.logging.Ticker;
+import uk.ac.sussex.gdsc.core.match.Coordinate;
+import uk.ac.sussex.gdsc.core.match.MatchCalculator;
+import uk.ac.sussex.gdsc.core.match.MatchResult;
+import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.utils.FileUtils;
+import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.SoftLock;
+import uk.ac.sussex.gdsc.core.utils.StoredData;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
+import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
+import uk.ac.sussex.gdsc.foci.FindFociOptions.OutputOption;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.CentreMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.MaskMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.PeakMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SearchMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
+import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
+import uk.ac.sussex.gdsc.foci.gui.OptimiserView;
 
 /**
  * Runs the FindFoci plugin with various settings and compares the results to the reference image
@@ -226,16 +220,18 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     /** The search methods used for matching. */
     static final String[] matchSearchMethods = {"Relative", "Absolute"};
 
-    // @formatter:off
     private static final String KEY_MASK_IMAGE = "findfoci.optimiser.maskImage";
-    private static final String KEY_BACKGROUND_STD_DEV_ABOVE_MEAN = "findfoci.optimiser.backgroundStdDevAboveMean";
+    private static final String KEY_BACKGROUND_STD_DEV_ABOVE_MEAN =
+        "findfoci.optimiser.backgroundStdDevAboveMean";
     private static final String KEY_BACKGROUND_AUTO = "findfoci.optimiser.backgroundAuto";
     private static final String KEY_BACKGROUND_ABSOLUTE = "findfoci.optimiser.backgroundAbsolute";
     private static final String KEY_BACKGROUND_PARAMETER = "findfoci.optimiser.backgroundParameter";
     private static final String KEY_THRESHOLD_METHOD = "findfoci.optimiser.thresholdMethod";
     private static final String KEY_STATICTICS_MODE = "findfoci.optimiser.statisticsMode";
-    private static final String KEY_SEARCH_ABOVE_BACKGROUND = "findfoci.optimiser.searchAboveBackground";
-    private static final String KEY_SEARCH_FRACTION_OF_BACKGROUND = "findfoci.optimiser.searchFractionOfPeak";
+    private static final String KEY_SEARCH_ABOVE_BACKGROUND =
+        "findfoci.optimiser.searchAboveBackground";
+    private static final String KEY_SEARCH_FRACTION_OF_BACKGROUND =
+        "findfoci.optimiser.searchFractionOfPeak";
     private static final String KEY_SEARCH_PARAMETER = "findfoci.optimiser.searchParameter";
     private static final String KEY_MIN_SIZE_PARAMETER = "findfoci.optimiser.minSizeParameter";
     private static final String KEY_MINIMUM_ABOVE_SADDLE = "findfoci.optimiser.minimumAboveSaddle";
@@ -248,13 +244,13 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     private static final String KEY_CENTRE_PARAMETER = "findfoci.optimiser.centreParameter";
     private static final String KEY_STEP_LIMIT = "findfoci.optimiser.stepLimit";
     private static final String KEY_MATCH_SEARCH_METHOD = "findfoci.optimiser.matchSearchMethod";
-    private static final String KEY_MATCH_SEARCH_DISTANCE = "findfoci.optimiser.matchSearchDistance";
+    private static final String KEY_MATCH_SEARCH_DISTANCE =
+        "findfoci.optimiser.matchSearchDistance";
     private static final String KEY_RESULTS_SORT_METHOD = "findfoci.optimiser.resultsSortMethod";
     private static final String KEY_BETA = "findfoci.optimiser.beta";
     private static final String KEY_MAX_RESULTS = "findfoci.optimiser.maxResults";
     private static final String KEY_SHOW_SCORE_IMAGES = "findfoci.optimiser.showScoreImages";
     private static final String KEY_RESULT_FILE = "findfoci.optimiser.resultFile";
-    // @formatter:on
 
     String maskImage;
     boolean backgroundStdDevAboveMean;
@@ -288,7 +284,6 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
      * Default constructor.
      */
     Settings() {
-      // @formatter:off
       maskImage = Prefs.get(KEY_MASK_IMAGE, "");
       backgroundStdDevAboveMean = Prefs.get(KEY_BACKGROUND_STD_DEV_ABOVE_MEAN, true);
       backgroundAuto = Prefs.get(KEY_BACKGROUND_AUTO, true);
@@ -301,7 +296,9 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       searchParameter = Prefs.get(KEY_SEARCH_PARAMETER, "0, 0.6, 0.2");
       minSizeParameter = Prefs.get(KEY_MIN_SIZE_PARAMETER, "1, 9, 2");
       minimumAboveSaddle = Prefs.getInt(KEY_MINIMUM_ABOVE_SADDLE, 0);
-      peakMethod = PeakMethod.fromOrdinal(Prefs.getInt(KEY_PEAK_METHOD, PeakMethod.RELATIVE_ABOVE_BACKGROUND.ordinal()), PeakMethod.RELATIVE_ABOVE_BACKGROUND);
+      peakMethod = PeakMethod.fromOrdinal(
+          Prefs.getInt(KEY_PEAK_METHOD, PeakMethod.RELATIVE_ABOVE_BACKGROUND.ordinal()),
+          PeakMethod.RELATIVE_ABOVE_BACKGROUND);
       peakParameter = Prefs.get(KEY_PEAK_PARAMETER, "0, 0.6, 0.2");
       sortMethod = Prefs.get(KEY_SORT_METHOD, SortMethod.INTENSITY.getDescription());
       maxPeaks = Prefs.getInt(KEY_MAX_PEAKS, 500);
@@ -316,7 +313,6 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       maxResults = Prefs.getInt(KEY_MAX_RESULTS, 100);
       showScoreImages = Prefs.get(KEY_SHOW_SCORE_IMAGES, false);
       resultFile = Prefs.get(KEY_RESULT_FILE, "");
-      // @formatter:on
     }
 
     /**
@@ -3517,7 +3513,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   private static final int FLAG_FALSE = 0;
   private static final int FLAG_TRUE = 1;
   private static final int FLAG_SINGLE = 2;
-  private static final int[][] optionPreset = new int[][] { { FLAG_FALSE, // Background_SD_above_mean
+  private static final int[][] optionPreset = new int[][] { {
+      FLAG_FALSE, // Background_SD_above_mean
       FLAG_FALSE, // Background_Absolute
       FLAG_TRUE, // Background_Auto_Threshold
       FLAG_TRUE, // Search_above_background

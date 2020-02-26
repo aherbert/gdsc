@@ -24,18 +24,15 @@
 
 package uk.ac.sussex.gdsc.utils;
 
+import ij.IJ;
+import ij.gui.GenericDialog;
+import ij.plugin.PlugIn;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.commons.rng.UniformRandomProvider;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.rng.RandomUtils;
 import uk.ac.sussex.gdsc.core.utils.rng.UniformRandomProviders;
-
-import ij.IJ;
-import ij.gui.GenericDialog;
-import ij.plugin.PlugIn;
-
-import org.apache.commons.rng.UniformRandomProvider;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Computes the odds of winning the lottery using random sampling.

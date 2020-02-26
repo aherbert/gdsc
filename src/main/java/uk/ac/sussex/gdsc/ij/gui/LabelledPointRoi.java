@@ -28,7 +28,6 @@ import ij.ImagePlus;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.process.FloatPolygon;
-
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;

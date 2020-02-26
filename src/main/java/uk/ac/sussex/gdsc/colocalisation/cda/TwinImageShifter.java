@@ -25,7 +25,6 @@
 package uk.ac.sussex.gdsc.colocalisation.cda;
 
 import ij.process.ImageProcessor;
-
 import java.util.Arrays;
 
 /**
