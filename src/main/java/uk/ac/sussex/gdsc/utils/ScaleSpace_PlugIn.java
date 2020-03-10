@@ -48,8 +48,8 @@ import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.logging.Ticker;
+import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.core.utils.TurboList;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 
 /**
@@ -203,7 +203,7 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
 
     // Multi-thread
     final ExecutorService executor = Executors.newFixedThreadPool(Prefs.getThreads());
-    final List<Future<Pair<Double, ImageProcessor>>> futures = new TurboList<>();
+    final List<Future<Pair<Double, ImageProcessor>>> futures = new LocalList<>();
 
     final BiFunction<ImageProcessor, Double, ImageProcessor> fun = createFunction();
     final Ticker ticker = ImageJUtils.createTicker(countSteps(minT, maxT), 2, "Computing ...");

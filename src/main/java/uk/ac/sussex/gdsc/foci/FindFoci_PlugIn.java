@@ -84,10 +84,10 @@ import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.logging.LoggerUtils;
 import uk.ac.sussex.gdsc.core.logging.Ticker;
 import uk.ac.sussex.gdsc.core.utils.CollectionUtils;
+import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.MemoryUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
-import uk.ac.sussex.gdsc.core.utils.TurboList;
 import uk.ac.sussex.gdsc.core.utils.ValidationUtils;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 import uk.ac.sussex.gdsc.foci.FindFociBaseProcessor.ObjectAnalysisResult;
@@ -1996,7 +1996,7 @@ public class FindFoci_PlugIn implements PlugIn {
       final Ticker ticker =
           Ticker.createStarted(SimpleImageJTrackProgress.getInstance(), totalProgress, true);
       final ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-      final TurboList<Future<?>> futures = new TurboList<>(totalProgress);
+      final LocalList<Future<?>> futures = new LocalList<>(totalProgress);
 
       for (int i = 0; i < imageList.length; i++) {
         if (ImageJUtils.isInterrupted()) {

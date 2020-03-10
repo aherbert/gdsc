@@ -68,8 +68,8 @@ import uk.ac.sussex.gdsc.core.ij.gui.NonBlockingExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.logging.Ticker;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
+import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.core.utils.TurboList;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrentMonoStack;
 import uk.ac.sussex.gdsc.foci.ObjectAnalyzer.ObjectCentre;
@@ -1021,7 +1021,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
     final Ticker ticker =
         Ticker.createStarted(new ImageJTrackProgress(true), slices.size(), threadCount > 1);
 
-    final TurboList<Future<Pair<Integer, Nucleus[]>>> futures = new TurboList<>();
+    final LocalList<Future<Pair<Integer, Nucleus[]>>> futures = new LocalList<>();
     final ImageStack stack = imp.getImageStack();
     final double pixelArea = getPixelArea(imp);
 
