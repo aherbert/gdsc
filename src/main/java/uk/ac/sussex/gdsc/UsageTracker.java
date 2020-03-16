@@ -154,6 +154,6 @@ public class UsageTracker implements PlugIn {
    */
   static void showDialog(boolean autoMessage) {
     dialogShown.set(true);
-    ImageJAnalyticsUtils.showDialog(TITLE, autoMessage);
+    ImageJAnalyticsUtils.showDialog(TITLE, autoMessage, null);
   }
 }
