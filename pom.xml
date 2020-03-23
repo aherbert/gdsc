@@ -233,6 +233,15 @@ Software for microscopy image analysis
         </executions>
       </plugin>
       <plugin>
+        <groupId>net.revelc.code.formatter</groupId>
+        <artifactId>formatter-maven-plugin</artifactId>
+        <configuration>
+          <!-- Resource on the classpath. -->
+          <configFile>eclipse/eclipse-code-format.xml</configFile>
+          <overrideConfigCompilerVersion>true</overrideConfigCompilerVersion>
+        </configuration>
+      </plugin>
+      <plugin>
         <artifactId>maven-pmd-plugin</artifactId>
         <configuration>
           <!-- Ignore lower levels for now -->
