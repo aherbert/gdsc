@@ -1258,8 +1258,7 @@ public class FindFociLegacy {
           }
         }
       }
-    }
-    while (continues);
+    } while (continues);
   }
 
   /**
@@ -1980,8 +1979,7 @@ public class FindFociLegacy {
 
       listI++;
 
-    }
-    while (listI < listLen && isPlateau);
+    } while (listI < listLen && isPlateau);
 
     // IJ.log("Potential plateau "+ x0 + ","+y0+","+z0+" : "+listLen);
 
@@ -2151,8 +2149,7 @@ public class FindFociLegacy {
         int nextLevel = level; // find the next level to process
         do {
           nextLevel--;
-        }
-        while (nextLevel > 1 && histogram[nextLevel] == 0);
+        } while (nextLevel > 1 && histogram[nextLevel] == 0);
 
         // Add all unprocessed pixels of this level to the tasklist of the next level.
         // This could make it slow for some images, however.
@@ -2530,8 +2527,7 @@ public class FindFociLegacy {
 
       listI++;
 
-    }
-    while (listI < listLen);
+    } while (listI < listLen);
 
     for (int i = listLen; i-- > 0;) {
       final int index = pointList[i];
@@ -2671,8 +2667,7 @@ public class FindFociLegacy {
           + Math.pow(newCom[2] - com[2], 2);
       com = newCom;
       iter++;
-    }
-    while (distance > 1 && iter < 10);
+    } while (distance > 1 && iter < 10);
 
     return convertCentre(com);
   }
@@ -2934,8 +2929,7 @@ public class FindFociLegacy {
 
         listI++;
 
-      }
-      while (listI < listLen);
+      } while (listI < listLen);
 
       for (int i = listLen; i-- > 0;) {
         final int index = pointList[i][0];

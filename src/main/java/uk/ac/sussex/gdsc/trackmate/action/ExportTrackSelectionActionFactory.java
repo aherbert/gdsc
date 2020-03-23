@@ -33,8 +33,8 @@ import org.scijava.plugin.Plugin;
 /**
  * A factory for creating {@link ExportTrackSelectionAction} objects.
  *
- * <p>This has priority below {@link ExportTrackSelectionOptionsActionFactory} to control
- * position in the menu.</p>
+ * <p>This has priority below {@link ExportTrackSelectionOptionsActionFactory} to control position
+ * in the menu.</p>
  */
 @Plugin(type = TrackMateActionFactory.class, priority = 1.0)
 public class ExportTrackSelectionActionFactory implements TrackMateActionFactory {

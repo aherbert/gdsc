@@ -61,8 +61,7 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
 public class ExportTrackSelectionAction implements TrackMateAction {
   private static final String EXPORT_FEATURES_KEY = "gdsc.tm.exportTrackSelectionFeatures";
   private static final AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
-  private static final AtomicReference<List<String>> featuresRef =
-      new AtomicReference<>();
+  private static final AtomicReference<List<String>> featuresRef = new AtomicReference<>();
 
   static {
     // Load ImageJ preferences

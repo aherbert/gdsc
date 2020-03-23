@@ -562,6 +562,7 @@ public class ObjectOutliner {
   }
 
   private boolean isAllowed(boolean isInner, int object, int index, int x, int y, int direction) {
+    // @formatter:off
     return
         // Pixel must be within image
         ((isInner || isWithinXy(x, y, direction))
@@ -571,11 +572,12 @@ public class ObjectOutliner {
         // 4-connected is supported by checking an 8-connected move is directly
         // followed by an allowed 4-connected direction.
         && (eightConnected
-          // Even directions are 4-connected move
-          || (direction & 1) == 0
-          // An eight-connected move. Check the next move.
-          // It can be assumed to be within the bounds.
-          || object == ip.get(index + offset[(direction + 1) % 8])));
+            // Even directions are 4-connected move
+            || (direction & 1) == 0
+            // An eight-connected move. Check the next move.
+            // It can be assumed to be within the bounds.
+            || object == ip.get(index + offset[(direction + 1) % 8])));
+    // @formatter:on
   }
 
   /**
