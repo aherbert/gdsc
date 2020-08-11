@@ -93,8 +93,8 @@ Software for microscopy image analysis
     <gdsc.parent.dir>${basedir}</gdsc.parent.dir>
 
     <!-- Dependency versions -->
-    <gdsc.core.version>2.0-SNAPSHOT</gdsc.core.version>
     <beansbinding.version>1.2.1</beansbinding.version>
+    <gdsc.core.version>2.0-SNAPSHOT</gdsc.core.version>
     <imagescience.version>3.0.0</imagescience.version>
 
   </properties>
