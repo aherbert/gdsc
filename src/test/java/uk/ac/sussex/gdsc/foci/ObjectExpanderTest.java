@@ -30,9 +30,9 @@ import org.junit.jupiter.api.Test;
 import uk.ac.sussex.gdsc.foci.ObjectExpander.FrequencySelecter;
 
 @SuppressWarnings({"javadoc"})
-public class ObjectExpanderTest {
+class ObjectExpanderTest {
   @Test
-  public void checkFrequencySelecter() {
+  void checkFrequencySelecter() {
     final FrequencySelecter selecter = new FrequencySelecter();
     final int p5 = 0;
     Assertions.assertEquals(0, selecter.select(0, 0, 0, 0, p5, 0, 0, 0, 0));
@@ -47,7 +47,7 @@ public class ObjectExpanderTest {
   //@formatter:off
 
   @Test
-  public void checkNoImage() {
+  void checkNoImage() {
     assertExpansion(
         0, 0,
         new byte[0],
@@ -56,7 +56,7 @@ public class ObjectExpanderTest {
   }
 
   @Test
-  public void checkSingleZeroPixel() {
+  void checkSingleZeroPixel() {
     assertExpansion(
         1, 1,
         new byte[] {0},
@@ -65,7 +65,7 @@ public class ObjectExpanderTest {
   }
 
   @Test
-  public void checkSingleNonZeroPixel() {
+  void checkSingleNonZeroPixel() {
     assertExpansion(
         1, 1,
         new byte[] {1},
@@ -74,7 +74,7 @@ public class ObjectExpanderTest {
   }
 
   @Test
-  public void checkSingleLine3x1End() {
+  void checkSingleLine3x1End() {
     assertExpansion(
         3, 1,
         new byte[] {0, 0, 1},
@@ -83,7 +83,7 @@ public class ObjectExpanderTest {
   }
 
   @Test
-  public void checkSingleLine3x1Start() {
+  void checkSingleLine3x1Start() {
     assertExpansion(
         3, 1,
         new byte[] {1, 0, 0},
@@ -92,7 +92,7 @@ public class ObjectExpanderTest {
   }
 
   @Test
-  public void checkSingleLine1x3() {
+  void checkSingleLine1x3() {
     assertExpansion(
         1, 3,
         new byte[] {1, 1, 0},
@@ -101,7 +101,7 @@ public class ObjectExpanderTest {
   }
 
   @Test
-  public void check4x3() {
+  void check4x3() {
     assertExpansion(
         4, 3,
         new byte[] {0, 0, 0, 0,
@@ -114,7 +114,7 @@ public class ObjectExpanderTest {
   }
 
   @Test
-  public void check5x5() {
+  void check5x5() {
     assertExpansion(
         5, 6,
         new byte[] {1, 1, 2, 2, 2,
@@ -133,7 +133,7 @@ public class ObjectExpanderTest {
   }
 
   @Test
-  public void check5x5WithNegatives() {
+  void check5x5WithNegatives() {
     assertExpansion(
         5, 6,
         new byte[] {1, 1, 2, 2, 2,
@@ -152,7 +152,7 @@ public class ObjectExpanderTest {
   }
 
   @Test
-  public void check5x5TwoIterations() {
+  void check5x5TwoIterations() {
     assertExpansion(
         5, 6,
         new byte[] {1, 1, 1, 1, 1,

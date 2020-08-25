@@ -35,10 +35,10 @@ import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
 
 @SuppressWarnings({"javadoc"})
-public class SpotSeparationPlugInTest {
+class SpotSeparationPlugInTest {
 
   @SeededTest
-  public void checkTheAngleIsTheSameWhenTheImageWeightIsOne(RandomSeed seed) {
+  void checkTheAngleIsTheSameWhenTheImageWeightIsOne(RandomSeed seed) {
     final int size = 100;
     final ByteProcessor spotIp = new ByteProcessor(size, size);
     // The rectangle should be centred

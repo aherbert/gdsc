@@ -29,9 +29,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings({"javadoc"})
-public class ObjectEroderTest {
+class ObjectEroderTest {
   @Test
-  public void checkIsDifferent() {
+  void checkIsDifferent() {
     Assertions.assertFalse(ObjectEroder.isDifferent(1, 1, 1, 1, 1, 1, 1, 1, 1));
     Assertions.assertTrue(ObjectEroder.isDifferent(0, 1, 1, 1, 1, 1, 1, 1, 1));
     Assertions.assertTrue(ObjectEroder.isDifferent(1, 0, 1, 1, 1, 1, 1, 1, 1));
@@ -47,7 +47,7 @@ public class ObjectEroderTest {
   //@formatter:off
 
   @Test
-  public void checkNoImage() {
+  void checkNoImage() {
     assertErosion(
         0, 0,
         new byte[0],
@@ -57,7 +57,7 @@ public class ObjectEroderTest {
   }
 
   @Test
-  public void checkSinglePixel() {
+  void checkSinglePixel() {
     assertErosion(
         1, 1,
         new byte[] {1},
@@ -67,7 +67,7 @@ public class ObjectEroderTest {
   }
 
   @Test
-  public void checkSinglePixelExtended() {
+  void checkSinglePixelExtended() {
     assertErosion(
         1, 1,
         new byte[] {1},
@@ -77,7 +77,7 @@ public class ObjectEroderTest {
   }
 
   @Test
-  public void checkSingleLine3x1() {
+  void checkSingleLine3x1() {
     assertErosion(
         3, 1,
         new byte[] {1, 1, 1},
@@ -87,7 +87,7 @@ public class ObjectEroderTest {
   }
 
   @Test
-  public void checkSingleLine3x1Extended() {
+  void checkSingleLine3x1Extended() {
     assertErosion(
         3, 1,
         new byte[] {1, 1, 1},
@@ -97,7 +97,7 @@ public class ObjectEroderTest {
   }
 
   @Test
-  public void checkSingleLine3x1ExtendedEnd() {
+  void checkSingleLine3x1ExtendedEnd() {
     assertErosion(
         3, 1,
         new byte[] {0, 1, 1},
@@ -107,7 +107,7 @@ public class ObjectEroderTest {
   }
 
   @Test
-  public void checkSingleLine3x1ExtendedStart() {
+  void checkSingleLine3x1ExtendedStart() {
     assertErosion(
         3, 1,
         new byte[] {1, 1, 0},
@@ -117,7 +117,7 @@ public class ObjectEroderTest {
   }
 
   @Test
-  public void checkSingleLine1x3() {
+  void checkSingleLine1x3() {
     assertErosion(
         1, 3,
         new byte[] {1, 1, 1},
@@ -127,7 +127,7 @@ public class ObjectEroderTest {
   }
 
   @Test
-  public void checkSingleLine1x3Extended() {
+  void checkSingleLine1x3Extended() {
     assertErosion(
         1, 3,
         new byte[] {1, 1, 1},
@@ -137,7 +137,7 @@ public class ObjectEroderTest {
   }
 
   @Test
-  public void check4x3() {
+  void check4x3() {
     assertErosion(
         4, 3,
         new byte[] {1, 1, 1, 1,
@@ -151,7 +151,7 @@ public class ObjectEroderTest {
   }
 
   @Test
-  public void check4x3Extended() {
+  void check4x3Extended() {
     assertErosion(
         4, 3,
         new byte[] {1, 1, 1, 1,
@@ -165,7 +165,7 @@ public class ObjectEroderTest {
   }
 
   @Test
-  public void check5x5Extended() {
+  void check5x5Extended() {
     assertErosion(
         5, 6,
         new byte[] {1, 1, 2, 2, 2,
@@ -186,7 +186,7 @@ public class ObjectEroderTest {
 
 
   @Test
-  public void check5x5ExtendedTwoIterations() {
+  void check5x5ExtendedTwoIterations() {
     assertErosion(
         5, 6,
         new byte[] {1, 1, 1, 1, 1,

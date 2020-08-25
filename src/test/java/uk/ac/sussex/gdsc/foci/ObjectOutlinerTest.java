@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Test;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 @SuppressWarnings({"javadoc"})
-public class ObjectOutlinerTest {
+class ObjectOutlinerTest {
   // Directions must match the outliner
   private static final int[] DIR_X_OFFSET = {-1, -1, 0, 1, 1, 1, 0, -1};
   private static final int[] DIR_Y_OFFSET = {0, -1, -1, -1, 0, 1, 1, 1};
@@ -45,7 +45,7 @@ public class ObjectOutlinerTest {
   private static final int DOWN = ObjectOutliner.DIR_DOWN;
 
   @Test
-  public void check8ConnectedProperty() {
+  void check8ConnectedProperty() {
     final ByteProcessor bp = new ByteProcessor(1, 1);
     ObjectOutliner outliner = new ObjectOutliner(bp);
     Assertions.assertFalse(outliner.isEightConnected());
@@ -56,12 +56,12 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkSinglePixelOutline() {
+  void checkSinglePixelOutline() {
     assertOutline(new Roi(3, 4, 1, 1));
   }
 
   @Test
-  public void checkSinglePixelOutlineAtEdge() {
+  void checkSinglePixelOutlineAtEdge() {
     assertSinglePixelOutline(3, 3, 0, 0);
     assertSinglePixelOutline(3, 3, 0, 1);
     assertSinglePixelOutline(3, 3, 0, 2);
@@ -73,44 +73,44 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkSinglePixelInside() {
+  void checkSinglePixelInside() {
     assertSinglePixelOutline(3, 3, 1, 1);
   }
 
   @Test
-  public void checkSquareOutline() {
+  void checkSquareOutline() {
     assertOutline(new Roi(3, 4, 2, 2));
   }
 
   @Test
-  public void checkSquareOutlineFromDifferentStartOrigins() {
+  void checkSquareOutlineFromDifferentStartOrigins() {
     assertOutline(new Roi(3, 4, 2, 2), 4, 4);
     assertOutline(new Roi(3, 4, 2, 2), 4, 5);
     assertOutline(new Roi(3, 4, 2, 2), 3, 5);
   }
 
   @Test
-  public void checkSquareOutlineEntireImage() {
+  void checkSquareOutlineEntireImage() {
     assertOutline(new Roi(0, 0, 2, 2));
   }
 
   @Test
-  public void checkRectangleOutline() {
+  void checkRectangleOutline() {
     assertOutline(new Roi(3, 4, 5, 8));
   }
 
   @Test
-  public void checkHorizontalLineOutline() {
+  void checkHorizontalLineOutline() {
     assertOutline(new Roi(3, 4, 5, 1));
   }
 
   @Test
-  public void checkVerticalLineOutline() {
+  void checkVerticalLineOutline() {
     assertOutline(new Roi(3, 4, 1, 5));
   }
 
   @Test
-  public void checkDiagonalLine1Outline() {
+  void checkDiagonalLine1Outline() {
     // @formatter:off
     // +---+
     // | X |
@@ -122,7 +122,7 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkDiagonalLine2Outline() {
+  void checkDiagonalLine2Outline() {
     // @formatter:off
     //     +---+
     //     | X |
@@ -134,7 +134,7 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkDiagonalLine3Outline() {
+  void checkDiagonalLine3Outline() {
     // @formatter:off
     //     +---+
     //     |   |
@@ -146,7 +146,7 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkDiagonalLine4Outline() {
+  void checkDiagonalLine4Outline() {
     // @formatter:off
     // +---+
     // | X |
@@ -158,7 +158,7 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkDiagonalLine5Outline() {
+  void checkDiagonalLine5Outline() {
     // @formatter:off
     //     +---+
     //     | X |
@@ -170,7 +170,7 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkShape1Outline() {
+  void checkShape1Outline() {
     // @formatter:off
     //     +---+---+
     //     |   |   |
@@ -182,7 +182,7 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkShape1Outline4Connected() {
+  void checkShape1Outline4Connected() {
     // @formatter:off
     //     +---+---+
     //     |   |   |
@@ -195,7 +195,7 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkShape2Outline() {
+  void checkShape2Outline() {
     // @formatter:off
     //     +---+---+
     //     | X |   |
@@ -207,7 +207,7 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkShape2Outline4Connected() {
+  void checkShape2Outline4Connected() {
     // @formatter:off
     //     +---+---+
     //     | X |   |
@@ -220,7 +220,7 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkShape3Outline() {
+  void checkShape3Outline() {
     // @formatter:off
     //     +---+---+
     //     | X |   |
@@ -233,7 +233,7 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkShape3Outline4Connected() {
+  void checkShape3Outline4Connected() {
     // @formatter:off
     //     +---+---+
     //     | X |   |
@@ -247,7 +247,7 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkShape4Outline() {
+  void checkShape4Outline() {
     // This has a hole in it that will be jumped around with 8-connected.
     // @formatter:off
     // +---+---+---+
@@ -265,7 +265,7 @@ public class ObjectOutlinerTest {
   }
 
   @Test
-  public void checkShape4Outline4Connected() {
+  void checkShape4Outline4Connected() {
     // This has a hole in it that will force internal outlining with 4-connected.
     // @formatter:off
     // +---+---+---+
@@ -282,7 +282,7 @@ public class ObjectOutlinerTest {
 
 
   @Test
-  public void checkShape5Outline() {
+  void checkShape5Outline() {
     // Have lots of edges
     // @formatter:off
     // +---+

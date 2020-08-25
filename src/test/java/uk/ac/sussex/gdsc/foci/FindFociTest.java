@@ -68,7 +68,7 @@ import uk.ac.sussex.gdsc.test.utils.TimingResult;
 import uk.ac.sussex.gdsc.test.utils.functions.FunctionUtils;
 
 @SuppressWarnings({"javadoc"})
-public class FindFociTest {
+class FindFociTest {
   private static Logger logger;
   static ConcurrentHashMap<RandomSeed, ImagePlus[]> dataCache;
 
@@ -139,7 +139,7 @@ public class FindFociTest {
   private static final boolean NEGATIVE = true;
 
   @SeededTest
-  public void isSameResultUsingIntProcessor(RandomSeed seed) {
+  void isSameResultUsingIntProcessor(RandomSeed seed) {
     final boolean nonContiguous = true;
     for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (int i = 0; i < backgroundMethod.length; i++) {
@@ -151,7 +151,7 @@ public class FindFociTest {
   }
 
   @SeededTest
-  public void isSameResultUsingOptimisedIntProcessor(RandomSeed seed) {
+  void isSameResultUsingOptimisedIntProcessor(RandomSeed seed) {
     for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
@@ -164,7 +164,7 @@ public class FindFociTest {
   }
 
   @SeededTest
-  public void isSameResultUsingFloatProcessor(RandomSeed seed) {
+  void isSameResultUsingFloatProcessor(RandomSeed seed) {
     for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
@@ -177,7 +177,7 @@ public class FindFociTest {
   }
 
   @SeededTest
-  public void isSameResultUsingFloatProcessorWithNegativeValues(RandomSeed seed) {
+  void isSameResultUsingFloatProcessorWithNegativeValues(RandomSeed seed) {
     for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
@@ -193,7 +193,7 @@ public class FindFociTest {
   }
 
   @SeededTest
-  public void isSameResultUsingIntProcessorWithStagedMethods(RandomSeed seed) {
+  void isSameResultUsingIntProcessorWithStagedMethods(RandomSeed seed) {
     for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
@@ -206,7 +206,7 @@ public class FindFociTest {
   }
 
   @SeededTest
-  public void isSameResultUsingOptimisedIntProcessorWithStagedMethods(RandomSeed seed) {
+  void isSameResultUsingOptimisedIntProcessorWithStagedMethods(RandomSeed seed) {
     for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
@@ -219,7 +219,7 @@ public class FindFociTest {
   }
 
   @SeededTest
-  public void isSameResultUsingFloatProcessorWithStagedMethods(RandomSeed seed) {
+  void isSameResultUsingFloatProcessorWithStagedMethods(RandomSeed seed) {
     for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
@@ -232,7 +232,7 @@ public class FindFociTest {
   }
 
   @SeededTest
-  public void isSameResultUsingFloatProcessorWithStagedMethodsWithNegativeValues(RandomSeed seed) {
+  void isSameResultUsingFloatProcessorWithStagedMethodsWithNegativeValues(RandomSeed seed) {
     for (final ImagePlus imp : dataCache.computeIfAbsent(seed, this::createData)) {
       for (final boolean nonContiguous : new boolean[] {true, false}) {
         for (int i = 0; i < backgroundMethod.length; i++) {
@@ -249,7 +249,7 @@ public class FindFociTest {
 
   @SpeedTag
   @SeededTest
-  public void isFasterUsingOptimisedIntProcessor(RandomSeed seed) {
+  void isFasterUsingOptimisedIntProcessor(RandomSeed seed) {
     Assumptions.assumeTrue(TestSettings.allow(TestComplexity.LOW));
 
     // Get settings to try for the speed test
@@ -291,7 +291,7 @@ public class FindFociTest {
 
   @SpeedTag
   @SeededTest
-  public void isNotSlowerthanLegacyUsingOptimisedIntProcessor(RandomSeed seed) {
+  void isNotSlowerthanLegacyUsingOptimisedIntProcessor(RandomSeed seed) {
     Assumptions.assumeTrue(TestSettings.allow(TestComplexity.MEDIUM));
 
     // Get settings to try for the speed test
@@ -334,7 +334,7 @@ public class FindFociTest {
   }
 
   @SeededTest
-  public void isFasterUsingOptimisedIntProcessorOverFloatProcessor(RandomSeed seed) {
+  void isFasterUsingOptimisedIntProcessorOverFloatProcessor(RandomSeed seed) {
     Assumptions.assumeTrue(TestSettings.allow(TestComplexity.LOW));
 
     // Get settings to try for the speed test

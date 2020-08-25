@@ -28,9 +28,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings({"javadoc"})
-public class ChainCodeTest {
+class ChainCodeTest {
   @Test
-  public void canConstructWithNoRun() {
+  void canConstructWithNoRun() {
     final int x = 56;
     final int y = 72;
     final ChainCode code = new ChainCode(x, y);
@@ -59,7 +59,7 @@ public class ChainCodeTest {
   }
 
   @Test
-  public void addDirectionThrowsWithBdDirection() {
+  void addDirectionThrowsWithBdDirection() {
     final int x = 56;
     final int y = 72;
     final ChainCode code = new ChainCode(x, y);
@@ -69,7 +69,7 @@ public class ChainCodeTest {
   }
 
   @Test
-  public void canTraverseCircle() {
+  void canTraverseCircle() {
     final int x = 56;
     final int y = 72;
     final ChainCode code = new ChainCode(x, y);
@@ -103,7 +103,7 @@ public class ChainCodeTest {
   }
 
   @Test
-  public void canAddSingleDirection() {
+  void canAddSingleDirection() {
     for (int i = 0; i < 8; i++) {
       final int x = 56;
       final int y = 72;
@@ -138,7 +138,7 @@ public class ChainCodeTest {
   }
 
   @Test
-  public void canCompare() {
+  void canCompare() {
     final ChainCode[] codes = new ChainCode[3];
     codes[0] = new ChainCode(0, 0);
     codes[0].add(0);

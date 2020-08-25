@@ -37,10 +37,10 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
 
 @SuppressWarnings({"javadoc"})
-public class FindFociOptimiserPlugInTest {
+class FindFociOptimiserPlugInTest {
 
   @Test
-  public void checkTheParameterToFromString() {
+  void checkTheParameterToFromString() {
 
     Assertions.assertThrows(IllegalArgumentException.class,
         () -> Parameters.fromString("89\t8989\t"), "Bad string should not be parsed");

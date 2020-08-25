@@ -38,7 +38,7 @@ import uk.ac.sussex.gdsc.test.rng.RngUtils;
 import uk.ac.sussex.gdsc.test.utils.TestLogUtils;
 
 @SuppressWarnings({"javadoc"})
-public class FindFociStateMachineTest {
+class FindFociStateMachineTest {
   private static Logger logger;
 
   private static class UpdateablePropertyChangeEvent extends PropertyChangeEvent {
@@ -71,7 +71,7 @@ public class FindFociStateMachineTest {
    * Performs multiple state changes and outputs the time.
    */
   @SeededTest
-  public void timeStateTransitions(RandomSeed seed) {
+  void timeStateTransitions(RandomSeed seed) {
     final Level level = Level.INFO;
     Assumptions.assumeTrue(logger.isLoggable(level));
 
