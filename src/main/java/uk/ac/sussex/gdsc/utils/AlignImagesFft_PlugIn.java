@@ -27,7 +27,6 @@ package uk.ac.sussex.gdsc.utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import java.awt.Rectangle;
@@ -35,6 +34,7 @@ import java.util.ArrayList;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
 
 /**
@@ -61,7 +61,7 @@ public class AlignImagesFft_PlugIn implements PlugIn {
 
   /** The available window function. */
   private static final String[] windowFunctions;
-  private static int myWindowFunction = 3;
+  private static int myWindowFunction = WindowMethod.TUKEY.ordinal();
   private static boolean restrictTranslation;
   private static int myMinXShift = -20;
   private static int myMaxXShift = 20;
@@ -69,7 +69,7 @@ public class AlignImagesFft_PlugIn implements PlugIn {
   private static int myMaxYShift = 20;
   /** The available sub-pixel registration methods. */
   private static final String[] subPixelMethods;
-  private static int subPixelMethod = 2;
+  private static int subPixelMethod = SubPixelMethod.CUBIC.ordinal();
   /** The available interpolation methods. */
   private static final String[] interpolationMethods = ImageProcessor.getInterpolationMethods();
   private static int interpolationMethod = ImageProcessor.NONE;
@@ -177,7 +177,7 @@ public class AlignImagesFft_PlugIn implements PlugIn {
   }
 
   private static boolean showDialog(String[] imageList) {
-    final GenericDialog gd = new GenericDialog(TITLE);
+    final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
     if (!contains(imageList, reference)) {
       reference = imageList[0];
@@ -200,14 +200,14 @@ public class AlignImagesFft_PlugIn implements PlugIn {
 
     gd.addChoice("Reference_image", imageList, reference);
     gd.addChoice("Target_image", targetList, target);
-    gd.addChoice("Window_function", windowFunctions, windowFunctions[myWindowFunction]);
+    gd.addChoice("Window_function", windowFunctions, myWindowFunction);
     gd.addCheckbox("Restrict_translation", restrictTranslation);
     gd.addNumericField("Min_X_translation", myMinXShift, 0);
     gd.addNumericField("Max_X_translation", myMaxXShift, 0);
     gd.addNumericField("Min_Y_translation", myMinYShift, 0);
     gd.addNumericField("Max_Y_translation", myMaxYShift, 0);
-    gd.addChoice("Sub-pixel_method", subPixelMethods, subPixelMethods[subPixelMethod]);
-    gd.addChoice("Interpolation", interpolationMethods, interpolationMethods[interpolationMethod]);
+    gd.addChoice("Sub-pixel_method", subPixelMethods, subPixelMethod);
+    gd.addChoice("Interpolation", interpolationMethods, interpolationMethod);
     gd.addCheckbox("Normalised", normalised);
     gd.addCheckbox("Show_correlation_image", showCorrelationImage);
     gd.addCheckbox("Show_normalised_image", showNormalisedImage);
