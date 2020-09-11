@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
+import uk.ac.sussex.gdsc.core.ij.ImageJTrackProgress;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
 
@@ -148,6 +149,7 @@ public class AlignImagesFft_PlugIn implements PlugIn {
     }
 
     final AlignImagesFft align = new AlignImagesFft();
+    align.setProgress(new ImageJTrackProgress());
     final ImagePlus alignedImp = align.align(refImp, targetImp,
         WindowMethod.values()[myWindowFunction], bounds, SubPixelMethod.values()[subPixelMethod],
         interpolationMethod, normalised, showCorrelationImage, showNormalisedImage, clipOutput);
