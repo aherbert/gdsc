@@ -266,52 +266,6 @@ public class AlignImages_PlugIn implements PlugIn {
     return new ImagePlus(targetImp.getTitle() + " Aligned", outStack);
   }
 
-  /**
-   * Subtract mean from the image and return a float processor.
-   *
-   * @param ip the image
-   * @return the float processor
-   */
-  public static FloatProcessor centre(ImageProcessor ip) {
-    final float[] pixels = new float[ip.getPixelCount()];
-
-    // Subtract mean and normalise to unit length
-    double sum = 0;
-    for (int i = 0; i < ip.getPixelCount(); i++) {
-      sum += ip.getf(i);
-    }
-    final float av = (float) (sum / pixels.length);
-    for (int i = 0; i < pixels.length; i++) {
-      pixels[i] = ip.getf(i) - av;
-    }
-
-    return new FloatProcessor(ip.getWidth(), ip.getHeight(), pixels, null);
-  }
-
-  /**
-   * Convert to unit length, return a float processor.
-   *
-   * @param ip the image
-   * @return the float processor
-   */
-  public static FloatProcessor normalise(ImageProcessor ip) {
-    final float[] pixels = new float[ip.getPixelCount()];
-
-    // Normalise to unit length and subtract mean
-    double sum = 0;
-    for (int i = 0; i < pixels.length; i++) {
-      sum += ip.getf(i) * ip.getf(i);
-    }
-    if (sum > 0) {
-      final double factor = 1.0 / Math.sqrt(sum);
-      for (int i = 0; i < pixels.length; i++) {
-        pixels[i] = (float) (ip.getf(i) * factor);
-      }
-    }
-
-    return new FloatProcessor(ip.getWidth(), ip.getHeight(), pixels, null);
-  }
-
   private static boolean isValid(ImageProcessor refIp, ImageProcessor maskIp, ImagePlus targetImp) {
     if (refIp == null || targetImp == null) {
       return false;
