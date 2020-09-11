@@ -31,10 +31,12 @@ import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.function.Consumer;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
 import uk.ac.sussex.gdsc.core.ij.ImageJTrackProgress;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
 
@@ -148,14 +150,19 @@ public class AlignImagesFft_PlugIn implements PlugIn {
       bounds = createBounds(myMinXShift, myMaxXShift, myMinYShift, myMaxYShift);
     }
 
+    Consumer<ImagePlus> correlationImageAction = createAction(showCorrelationImage);
+    Consumer<ImagePlus> normalisedImageAction = createAction(showNormalisedImage);
+
     final AlignImagesFft align = new AlignImagesFft();
     align.setProgress(new ImageJTrackProgress());
-    final ImagePlus alignedImp = align.align(refImp, targetImp,
-        WindowMethod.values()[myWindowFunction], bounds, SubPixelMethod.values()[subPixelMethod],
-        interpolationMethod, normalised, showCorrelationImage, showNormalisedImage, clipOutput);
+    final ImagePlus alignedImp =
+        align.align(refImp, targetImp, WindowMethod.values()[myWindowFunction], bounds,
+            SubPixelMethod.values()[subPixelMethod], interpolationMethod, normalised,
+            correlationImageAction, normalisedImageAction, normalisedImageAction, clipOutput);
 
     if (alignedImp != null) {
-      alignedImp.show();
+      // Do the same action
+      createAction(true).accept(alignedImp);
     }
   }
 
@@ -176,6 +183,16 @@ public class AlignImagesFft_PlugIn implements PlugIn {
     }
 
     return newImageList.toArray(new String[0]);
+  }
+
+  private static Consumer<ImagePlus> createAction(boolean showImage) {
+    if (showImage) {
+      // This will create a new image
+      // return ImagePlus::show;
+      // This will reuse the same image window
+      return imp -> ImageJUtils.display(imp.getTitle(), imp.getImageStack());
+    }
+    return null;
   }
 
   private static boolean showDialog(String[] imageList) {

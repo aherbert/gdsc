@@ -38,6 +38,7 @@ import ij.process.ImageStatistics;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 
 //@formatter:off
 /**
@@ -108,7 +109,7 @@ public class AlignImages_PlugIn implements PlugIn {
             subPixelMethod, interpolationMethod, showCorrelationImage, clipOutput);
 
     if (alignedImp != null) {
-      alignedImp.show();
+      ImageJUtils.display(alignedImp.getTitle() + " Correlation", alignedImp.getImageStack());
     }
   }
 
@@ -260,7 +261,7 @@ public class AlignImages_PlugIn implements PlugIn {
     }
 
     if (showCorrelationImage) {
-      new ImagePlus(targetImp.getTitle() + " Correlation", correlationStack).show();
+      ImageJUtils.display(targetImp.getTitle() + " Correlation", correlationStack);
     }
 
     return new ImagePlus(targetImp.getTitle() + " Aligned", outStack);
