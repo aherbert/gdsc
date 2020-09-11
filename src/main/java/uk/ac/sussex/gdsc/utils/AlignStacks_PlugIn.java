@@ -306,7 +306,7 @@ public class AlignStacks_PlugIn implements PlugIn {
         final ImagePlus imp2 = new ImagePlus("ip2", ip2);
         final AlignImagesFft align = new AlignImagesFft();
         align.align(imp1, imp2, WindowMethod.NONE, bounds, subPixelMethod, interpolationMethod,
-            true, false, false, clipOutput);
+            true, null, null, null, clipOutput);
 
         // Transform original stack
         final ImageStack stack = targetImp.getImageStack();
