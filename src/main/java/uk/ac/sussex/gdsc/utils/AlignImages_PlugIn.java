@@ -630,10 +630,13 @@ public class AlignImages_PlugIn implements PlugIn {
     double correlation = Double.NaN;
 
     if (count > 0) {
+      // Compute:
+      // ( Σ xiyi - nx̄ӯ ) / ( (Σ xi^2 - nx̄^2) (Σ yi^2 - nӯ^2) )^0.5
       // Note:
-      // If the reference image is centred and the target image is normalised then the result
-      // of the top half of the Pearson correlation equation will be the correlation produced by
-      // the Align_Images_FFT without normalisation.
+      // If the reference image (x) is centred (mean=0) and the target image (y) is centred
+      // then the result of the top half of the Pearson correlation equation will be the
+      // correlation produced by the AlignImagesFft_Plugin without normalisation,
+      // i.e. Σ xiyi
 
       final double pearsons1 = sumXy - (1.0 * sumX * sumY / count);
       final double pearsons2 = sumXx - (1.0 * sumX * sumX / count);
