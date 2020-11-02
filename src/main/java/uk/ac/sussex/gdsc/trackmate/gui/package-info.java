@@ -26,6 +26,6 @@
  * Provides objects for use in the <a href="https://imagej.net/TrackMate">TrackMate</a> GUI.
  *
  * @see <a href="https://imagej.net/TrackMate">TrackMate</a>
- * @since 2.0.0
+ * @since 1.4.0
  */
 package uk.ac.sussex.gdsc.trackmate.gui;
