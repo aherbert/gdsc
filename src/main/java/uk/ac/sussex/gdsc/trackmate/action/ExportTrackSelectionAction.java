@@ -318,7 +318,7 @@ public class ExportTrackSelectionAction implements TrackMateAction {
 
   private TextWindow createResultsTable(List<Pair<String, Boolean>> features) {
     return ImageJUtils.refresh(resultsRef, () -> {
-      final StringBuilder sb = new StringBuilder("Track Id\tSub-track\tParent\tSpot Id\t");
+      final StringBuilder sb = new StringBuilder("Track Id\tSub-track\tParent\tSpot Id");
       final Map<String, String> map = model.getFeatureModel().getSpotFeatureNames();
       for (final Pair<String, Boolean> feature : features) {
         sb.append('\t').append(map.get(feature.getKey()));
