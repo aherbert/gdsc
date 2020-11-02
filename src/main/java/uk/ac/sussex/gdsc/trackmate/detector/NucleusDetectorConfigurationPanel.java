@@ -40,7 +40,6 @@ import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.gui.ConfigurationPanel;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
-import fiji.plugin.trackmate.util.JLabelLogger;
 import fiji.util.NumberParser;
 import ij.ImagePlus;
 import ij.gui.Overlay;
@@ -73,6 +72,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
+import uk.ac.sussex.gdsc.trackmate.gui.HtmlJLabelLogger;
 
 /**
  * Collect the options for the the {@link NucleusDetector}.
@@ -306,7 +306,7 @@ public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
       btnPreview.setFont(SMALL_FONT);
       btnPreview.addActionListener(e -> preview());
       contentPanel.add(btnPreview, createConstraints(1, 1, row++));
-      final JLabelLogger labelLogger = new JLabelLogger();
+      final HtmlJLabelLogger labelLogger = new HtmlJLabelLogger();
       contentPanel.add(labelLogger, createConstraints(2, 0, row));
       localLogger = labelLogger.getLogger();
     } catch (final Exception ex) {

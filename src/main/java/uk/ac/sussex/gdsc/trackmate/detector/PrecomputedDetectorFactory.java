@@ -317,9 +317,15 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
 
           data.computeIfAbsent(frame, t -> new LocalList<>()).add(new RawSpot(x, y, z, radius));
         } catch (final NumberFormatException | IndexOutOfBoundsException ex) {
-          errorHolder.append("Error on record number ").append(count).append(": '").append(line)
-              .append("' . ").append(ex.getClass().getSimpleName()).append(": ")
+          errorHolder.append("Error on record number ").append(count).append(":\n");
+          if (line.length() < 40) {
+            errorHolder.append(line);
+          } else {
+            errorHolder.append(line, 0, 37).append("...");
+          }
+          errorHolder.append("\n\n").append(ex.getClass().getSimpleName()).append(": ")
               .append(ex.getMessage()).append('\n');
+          break;
         }
       }
     } catch (final IOException ex) {
