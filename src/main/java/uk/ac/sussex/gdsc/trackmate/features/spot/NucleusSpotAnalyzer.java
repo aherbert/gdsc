@@ -22,7 +22,7 @@
  * #L%
  */
 
-package uk.ac.sussex.gdsc.trackmate.spotanalyzer;
+package uk.ac.sussex.gdsc.trackmate.features.spot;
 
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Spot;

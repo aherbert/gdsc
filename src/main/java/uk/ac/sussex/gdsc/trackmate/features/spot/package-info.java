@@ -23,9 +23,9 @@
  */
 
 /**
- * Provides analyzers for <a href="https://imagej.net/TrackMate">TrackMate</a>.
+ * Provides spot analyzers for <a href="https://imagej.net/TrackMate">TrackMate</a>.
  *
  * @see <a href="https://imagej.net/TrackMate">TrackMate</a>
  * @since 1.4.0
  */
-package uk.ac.sussex.gdsc.trackmate.spotanalyzer;
+package uk.ac.sussex.gdsc.trackmate.features.spot;
