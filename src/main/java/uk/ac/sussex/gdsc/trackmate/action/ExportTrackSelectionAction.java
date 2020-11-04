@@ -30,9 +30,12 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackModel;
 import fiji.plugin.trackmate.action.AbstractTMAction;
+import fiji.plugin.trackmate.action.TrackMateAction;
+import fiji.plugin.trackmate.action.TrackMateActionFactory;
 import fiji.plugin.trackmate.graph.ConvexBranchesDecomposition;
 import fiji.plugin.trackmate.graph.ConvexBranchesDecomposition.TrackBranchDecomposition;
 import fiji.plugin.trackmate.graph.TimeDirectedNeighborIndex;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import gnu.trove.set.hash.TIntHashSet;
 import ij.Prefs;
 import ij.text.TextWindow;
@@ -46,10 +49,12 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import javax.swing.ImageIcon;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
+import org.scijava.plugin.Plugin;
 import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
@@ -57,7 +62,7 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
 /**
  * Displays track data in a table.
  */
-public class ExportTrackSelectionAction  extends AbstractTMAction {
+public class ExportTrackSelectionAction extends AbstractTMAction {
   private static final String EXPORT_FEATURES_KEY = "gdsc.tm.exportTrackSelectionFeatures";
   private static final AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
   private static final AtomicReference<List<String>> featuresRef = new AtomicReference<>();
@@ -78,6 +83,54 @@ public class ExportTrackSelectionAction  extends AbstractTMAction {
   private final Model model;
   /** The selection model. */
   private final SelectionModel selectionModel;
+
+  /**
+   * A factory for creating {@link ExportTrackSelectionAction} objects.
+   *
+   * <p>This has priority below {@link ExportTrackSelectionOptionsAction.Factory} to control
+   * position in the menu.</p>
+   */
+  @Plugin(type = TrackMateActionFactory.class, priority = 1.0)
+  public static class Factory implements TrackMateActionFactory {
+    /** Description of the action. */
+    private static final String INFO_TEXT =
+        "<html><p>This action will export the <b>selected</b> (sub-)tracks to an ImageJ table.</p>"
+            + "<p>Tracks are split into contiguous sections of spots with no merge/join events "
+            + "(a branch). If the selection is not contiguous then a branch is split into "
+            + "sub-sequences.</p></html>";
+
+    /** Key used for the action. */
+    private static final String KEY = "EXPORT_TRACK_SELECTION";
+
+    /** Display name. */
+    private static final String NAME = "Export the track selection";
+
+    @Override
+    public String getInfoText() {
+      return INFO_TEXT;
+    }
+
+    @Override
+    public ImageIcon getIcon() {
+      return null; // No icon for this one.
+    }
+
+    @Override
+    public String getKey() {
+      return KEY;
+    }
+
+    @Override
+    public String getName() {
+      return NAME;
+    }
+
+    @Override
+    public TrackMateAction create(final TrackMateGUIController controller) {
+      return new ExportTrackSelectionAction(controller.getPlugin().getModel(),
+          controller.getSelectionModel());
+    }
+  }
 
   /**
    * Container for a track of consecutive spots. The track is made of spots with a single

@@ -27,10 +27,15 @@ package uk.ac.sussex.gdsc.trackmate.action;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.action.AbstractTMAction;
+import fiji.plugin.trackmate.action.TrackMateAction;
+import fiji.plugin.trackmate.action.TrackMateActionFactory;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.swing.ImageIcon;
+import org.scijava.plugin.Plugin;
 import uk.ac.sussex.gdsc.core.ij.gui.MultiDialog;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
@@ -38,6 +43,48 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
  * Displays track data in a table.
  */
 public class ExportTrackSelectionOptionsAction extends AbstractTMAction {
+  /**
+   * A factory for creating {@link ExportTrackSelectionOptionsAction} objects.
+   */
+  @Plugin(type = TrackMateActionFactory.class)
+  public static class Factory implements TrackMateActionFactory {
+    /** Description of the action. */
+    private static final String INFO_TEXT =
+        "<html><p>This action configures the data exported by the export track selection "
+            + "action.</p></html>";
+
+    /** Key used for the action. */
+    private static final String KEY = "EXPORT_TRACK_SELECTION_OPTIONS";
+
+    /** Display name. */
+    private static final String NAME = "Configure the export track selection action";
+
+    @Override
+    public String getInfoText() {
+      return INFO_TEXT;
+    }
+
+    @Override
+    public ImageIcon getIcon() {
+      return null; // No icon for this one.
+    }
+
+    @Override
+    public String getKey() {
+      return KEY;
+    }
+
+    @Override
+    public String getName() {
+      return NAME;
+    }
+
+    @Override
+    public TrackMateAction create(final TrackMateGUIController controller) {
+      return new ExportTrackSelectionOptionsAction();
+    }
+  }
+
   @Override
   public void execute(final TrackMate trackmate) {
     final FeatureModel featureModel = trackmate.getModel().getFeatureModel();
