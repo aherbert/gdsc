@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import javax.swing.ImageIcon;
 import net.imagej.ImgPlus;
@@ -72,6 +73,7 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     + "<li>Define an input file.</li>"
     + "<li>Define file header.</li>"
     + "<li>Define delimiter.</li>"
+    + "<li>Define ID column.</li>"
     + "<li>Define Frame column.</li>"
     + "<li>Define XYZ columns.</li>"
     + "<li>Define Radius column.</li>"
@@ -92,6 +94,8 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
   static final String SETTING_COMMENT_CHAR = "COMMENT_CHAR";
   /** Setting key for the column delimiter. */
   static final String SETTING_DELIMITER = "DELIMITER";
+  /** Setting key for the spot id column. */
+  static final String SETTING_COLUMN_ID = "COLUMN_ID";
   /** Setting key for the spot frame column. */
   static final String SETTING_COLUMN_FRAME = "COLUMN_FRAME";
   /** Setting key for the spot x position column. */
@@ -107,6 +111,7 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
   private static final String KEY_HEADER_LINES = "gdsc.tm.header_lines";
   private static final String KEY_COMMENT_CHAR = "gdsc.tm.comment_char";
   private static final String KEY_DELIMITER = "gdsc.tm.delimiter";
+  private static final String KEY_COLUMN_ID = "gdsc.tm.column_id";
   private static final String KEY_COLUMN_FRAME = "gdsc.tm.column_frame";
   private static final String KEY_COLUMN_X = "gdsc.tm.column_x";
   private static final String KEY_COLUMN_Y = "gdsc.tm.column_y";
@@ -211,6 +216,7 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     map.put(SETTING_HEADER_LINES, (int) Prefs.get(KEY_HEADER_LINES, 1));
     map.put(SETTING_COMMENT_CHAR, Prefs.get(KEY_COMMENT_CHAR, "#"));
     map.put(SETTING_DELIMITER, Prefs.get(KEY_DELIMITER, ","));
+    map.put(SETTING_COLUMN_ID, (int) Prefs.get(KEY_COLUMN_ID, -1));
     map.put(SETTING_COLUMN_FRAME, (int) Prefs.get(KEY_COLUMN_FRAME, 0));
     map.put(SETTING_COLUMN_X, (int) Prefs.get(KEY_COLUMN_X, 1));
     map.put(SETTING_COLUMN_Y, (int) Prefs.get(KEY_COLUMN_Y, 2));
@@ -229,6 +235,7 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     Prefs.set(KEY_HEADER_LINES, (int) map.get(SETTING_HEADER_LINES));
     Prefs.set(KEY_COMMENT_CHAR, (String) map.get(SETTING_COMMENT_CHAR));
     Prefs.set(KEY_DELIMITER, (String) map.get(SETTING_DELIMITER));
+    Prefs.set(KEY_COLUMN_ID, (int) map.get(SETTING_COLUMN_ID));
     Prefs.set(KEY_COLUMN_FRAME, (int) map.get(SETTING_COLUMN_FRAME));
     Prefs.set(KEY_COLUMN_X, (int) map.get(SETTING_COLUMN_X));
     Prefs.set(KEY_COLUMN_Y, (int) map.get(SETTING_COLUMN_Y));
@@ -243,6 +250,7 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     TMUtils.checkParameter(settings, SETTING_HEADER_LINES, Integer.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_COMMENT_CHAR, String.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_DELIMITER, String.class, errorHolder);
+    TMUtils.checkParameter(settings, SETTING_COLUMN_ID, Integer.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_COLUMN_FRAME, Integer.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_COLUMN_X, Integer.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_COLUMN_Y, Integer.class, errorHolder);
@@ -250,8 +258,8 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     TMUtils.checkParameter(settings, SETTING_COLUMN_RADIUS, Integer.class, errorHolder);
     // This checks for extra keys that should not be present
     final List<String> mandatoryKeys = Arrays.asList(SETTING_INPUT_FILE, SETTING_HEADER_LINES,
-        SETTING_COMMENT_CHAR, SETTING_DELIMITER, SETTING_COLUMN_FRAME, SETTING_COLUMN_X,
-        SETTING_COLUMN_Y, SETTING_COLUMN_Z, SETTING_COLUMN_RADIUS);
+        SETTING_COMMENT_CHAR, SETTING_DELIMITER, SETTING_COLUMN_ID, SETTING_COLUMN_FRAME,
+        SETTING_COLUMN_X, SETTING_COLUMN_Y, SETTING_COLUMN_Z, SETTING_COLUMN_RADIUS);
     TMUtils.checkMapKeys(settings, mandatoryKeys, null, errorHolder);
     if (errorHolder.length() != 0) {
       errorMessage = errorHolder.toString();
@@ -278,11 +286,21 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     int headerLines = (int) settings.get(SETTING_HEADER_LINES);
     final String commentChar = (String) settings.get(SETTING_COMMENT_CHAR);
     final String delimiter = (String) settings.get(SETTING_DELIMITER);
+    final int columnId = (int) settings.get(SETTING_COLUMN_ID);
     final int columnFrame = (int) settings.get(SETTING_COLUMN_FRAME);
     final int columnX = (int) settings.get(SETTING_COLUMN_X);
     final int columnY = (int) settings.get(SETTING_COLUMN_Y);
     final int columnZ = (int) settings.get(SETTING_COLUMN_Z);
     final int columnRadius = (int) settings.get(SETTING_COLUMN_RADIUS);
+
+    // ID field is optional
+    Function<String[], String> idFunction;
+    if (columnId < 0) {
+      final int[] count = {0};
+      idFunction = fields -> Integer.toString(++count[0]);
+    } else {
+      idFunction = fields -> fields[columnId];
+    }
 
     try (BufferedReader input =
         new BufferedReader(new UnicodeReader(new FileInputStream(inputFile), null))) {
@@ -309,13 +327,14 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
         count++;
 
         try {
+          final String id = idFunction.apply(fields);
           final int frame = Integer.parseInt(fields[columnFrame]);
           final double x = Double.parseDouble(fields[columnX]);
           final double y = Double.parseDouble(fields[columnY]);
           final double z = ignoreZ ? 0 : Double.parseDouble(fields[columnZ]);
           final double radius = Double.parseDouble(fields[columnRadius]);
 
-          data.computeIfAbsent(frame, t -> new LocalList<>()).add(new RawSpot(x, y, z, radius));
+          data.computeIfAbsent(frame, t -> new LocalList<>()).add(new RawSpot(id, x, y, z, radius));
         } catch (final NumberFormatException | IndexOutOfBoundsException ex) {
           errorHolder.append("Error on record number ").append(count).append(":\n");
           if (line.length() < 40) {
@@ -360,6 +379,7 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     IOUtils.writeAttribute(settings, element, SETTING_HEADER_LINES, Integer.class, errorHolder);
     IOUtils.writeAttribute(settings, element, SETTING_COMMENT_CHAR, String.class, errorHolder);
     IOUtils.writeAttribute(settings, element, SETTING_DELIMITER, String.class, errorHolder);
+    IOUtils.writeAttribute(settings, element, SETTING_COLUMN_ID, Integer.class, errorHolder);
     IOUtils.writeAttribute(settings, element, SETTING_COLUMN_FRAME, Integer.class, errorHolder);
     IOUtils.writeAttribute(settings, element, SETTING_COLUMN_X, Integer.class, errorHolder);
     IOUtils.writeAttribute(settings, element, SETTING_COLUMN_Y, Integer.class, errorHolder);
@@ -380,6 +400,7 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     IOUtils.readIntegerAttribute(element, settings, SETTING_HEADER_LINES, errorHolder);
     readStringAttribute(element, settings, SETTING_COMMENT_CHAR, errorHolder);
     readStringAttribute(element, settings, SETTING_DELIMITER, errorHolder);
+    IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_ID, errorHolder);
     IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_FRAME, errorHolder);
     IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_X, errorHolder);
     IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_Y, errorHolder);

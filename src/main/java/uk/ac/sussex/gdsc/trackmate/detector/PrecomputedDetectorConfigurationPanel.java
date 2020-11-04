@@ -83,6 +83,7 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
   private JTextField textFieldHeaderLines;
   private JTextField textFieldCommentChar;
   private JTextField textFieldDelimiter;
+  private JTextField textFieldColumnId;
   private JTextField textFieldColumnFrame;
   private JTextField textFieldColumnX;
   private JTextField textFieldColumnY;
@@ -119,6 +120,8 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
         .setText(String.valueOf(settings.get(PrecomputedDetectorFactory.SETTING_COMMENT_CHAR)));
     textFieldDelimiter
         .setText(String.valueOf(settings.get(PrecomputedDetectorFactory.SETTING_DELIMITER)));
+    textFieldColumnId
+        .setText(String.valueOf(settings.get(PrecomputedDetectorFactory.SETTING_COLUMN_ID)));
     textFieldColumnFrame
         .setText(String.valueOf(settings.get(PrecomputedDetectorFactory.SETTING_COLUMN_FRAME)));
     textFieldColumnX
@@ -138,6 +141,7 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
     final int headerLines = NumberParser.parseInteger(textFieldHeaderLines.getText());
     final String commentChar = textFieldCommentChar.getText();
     final String delimiter = textFieldDelimiter.getText();
+    final int columnId = NumberParser.parseInteger(textFieldColumnId.getText());
     final int columnFrame = NumberParser.parseInteger(textFieldColumnFrame.getText());
     final int columnX = NumberParser.parseInteger(textFieldColumnX.getText());
     final int columnY = NumberParser.parseInteger(textFieldColumnY.getText());
@@ -147,6 +151,7 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
     map.put(PrecomputedDetectorFactory.SETTING_HEADER_LINES, headerLines);
     map.put(PrecomputedDetectorFactory.SETTING_COMMENT_CHAR, commentChar);
     map.put(PrecomputedDetectorFactory.SETTING_DELIMITER, delimiter);
+    map.put(PrecomputedDetectorFactory.SETTING_COLUMN_ID, columnId);
     map.put(PrecomputedDetectorFactory.SETTING_COLUMN_FRAME, columnFrame);
     map.put(PrecomputedDetectorFactory.SETTING_COLUMN_X, columnX);
     map.put(PrecomputedDetectorFactory.SETTING_COLUMN_Y, columnY);
@@ -253,7 +258,7 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
       // layout.getConstraints(textFieldInputFile).fill = GridBagConstraints.HORIZONTAL;
 
       // Add button to select the file
-      JButton btnSelect = new JButton("File open");
+      final JButton btnSelect = new JButton("File open");
       btnSelect.setToolTipText("Select the input file.");
       btnSelect.setFont(SMALL_FONT);
       btnSelect.addActionListener(e -> {
@@ -271,6 +276,8 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
       addFields(contentPanel, "Comment chars", textFieldCommentChar, row++);
       textFieldDelimiter = createTextField(5);
       addFields(contentPanel, "Delimiter", textFieldDelimiter, row++);
+      textFieldColumnId = createIntegerTextField();
+      addFields(contentPanel, "Column ID", textFieldColumnId, row++);
       textFieldColumnFrame = createIntegerTextField();
       addFields(contentPanel, "Column Frame", textFieldColumnFrame, row++);
       textFieldColumnX = createIntegerTextField();

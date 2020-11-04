@@ -28,6 +28,8 @@ package uk.ac.sussex.gdsc.trackmate.detector;
  * Raw data for the Spot class.
  */
 class RawSpot {
+  /** The id. */
+  final String id;
   /** The x. */
   final double x;
   /** The y. */
@@ -40,12 +42,14 @@ class RawSpot {
   /**
    * Create a new instance.
    *
+   * @param id the id
    * @param x the x
    * @param y the y
    * @param z the z
    * @param radius the radius
    */
-  RawSpot(double x, double y, double z, double radius) {
+  RawSpot(String id, double x, double y, double z, double radius) {
+    this.id = id;
     this.x = x;
     this.y = y;
     this.z = z;

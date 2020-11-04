@@ -346,7 +346,7 @@ public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
     fieldPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
     comp.setFont(FONT);
     fieldPanel.add(comp);
-    JLabel labelUnits = new JLabel(" " + units);
+    final JLabel labelUnits = new JLabel(" " + units);
     labelUnits.setFont(FONT);
     fieldPanel.add(labelUnits);
     addFields(panel, jlabel, fieldPanel, row);

@@ -103,7 +103,7 @@ public class PrecomputedDetector<T extends RealType<T> & NativeType<T>> implemen
     // Q. Add a metric that can be used for spot quality?
     final double quality = 1;
 
-    spots = stream.map(r -> new Spot(r.x * sx, r.y * sy, r.z * sz, r.radius * sx, quality))
+    spots = stream.map(r -> new Spot(r.x * sx, r.y * sy, r.z * sz, r.radius * sx, quality, r.id))
         .collect(Collectors.toList());
 
     this.processingTime = System.currentTimeMillis() - start;
