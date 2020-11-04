@@ -68,6 +68,6 @@ public class ExportTrackSelectionOptionsActionFactory implements TrackMateAction
 
   @Override
   public TrackMateAction create(final TrackMateGUIController controller) {
-    return new ExportTrackSelectionOptionsAction(controller.getPlugin().getModel());
+    return new ExportTrackSelectionOptionsAction();
   }
 }

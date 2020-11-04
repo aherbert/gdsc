@@ -25,7 +25,6 @@
 package uk.ac.sussex.gdsc.trackmate.action;
 
 import fiji.plugin.trackmate.FeatureModel;
-import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.action.AbstractTMAction;
 import java.util.ArrayList;
@@ -39,21 +38,9 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
  * Displays track data in a table.
  */
 public class ExportTrackSelectionOptionsAction extends AbstractTMAction {
-  /** The model. */
-  private final Model model;
-
-  /**
-   * Instantiates a new track data action.
-   *
-   * @param model the model
-   */
-  public ExportTrackSelectionOptionsAction(final Model model) {
-    this.model = model;
-  }
-
   @Override
   public void execute(final TrackMate trackmate) {
-    final FeatureModel featureModel = model.getFeatureModel();
+    final FeatureModel featureModel = trackmate.getModel().getFeatureModel();
     Collection<String> features = featureModel.getSpotFeatures();
     logger.log("Configuring from " + TextUtils.pleural(features.size(), "feature"));
 
