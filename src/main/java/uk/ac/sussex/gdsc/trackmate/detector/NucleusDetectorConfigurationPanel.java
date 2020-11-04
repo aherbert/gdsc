@@ -42,8 +42,6 @@ import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
 import fiji.util.NumberParser;
 import ij.ImagePlus;
-import ij.gui.Overlay;
-import ij.gui.Roi;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
@@ -51,10 +49,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Panel;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,9 +95,6 @@ public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
   private final transient Model model;
   private final transient ImagePlus imp;
   private transient Logger localLogger;
-
-  /** The ROIs currently added to the image overlay for the preview. */
-  private Collection<Roi> roiList = Collections.emptyList();
 
   /**
    * Create a new instance.
@@ -175,18 +166,7 @@ public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
 
   @Override
   public void clean() {
-    final Overlay overlay = imp.getOverlay();
-    if (null != overlay && !roiList.isEmpty()) {
-      // More efficient to do the remove using an ArrayList rather that call
-      // overlay.remove(...) which delegates to Vector.remove(Object)
-      final List<Roi> list = new ArrayList<>(Arrays.asList(overlay.toArray()));
-      list.removeAll(roiList);
-      overlay.clear();
-      for (final Roi roi : list) {
-        overlay.add(roi);
-      }
-      roiList.clear();
-    }
+    // Do nothing
   }
 
   /**
@@ -195,8 +175,6 @@ public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
   private void preview() {
     btnPreview.setEnabled(false);
     CompletableFuture.runAsync(() -> {
-      clean();
-
       final Settings lSettings = new Settings();
       lSettings.setFrom(imp);
       final int frame = imp.getFrame() - 1;
@@ -229,7 +207,6 @@ public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
       model.getSpots().put(frame, spotsToCopy);
 
       // Make them visible
-      roiList = new ArrayList<>(spotsToCopy.size());
       for (final Spot spot : spotsToCopy) {
         spot.putFeature(SpotCollection.VISIBLITY, SpotCollection.ONE);
       }
