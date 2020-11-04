@@ -24,13 +24,12 @@
 
 package uk.ac.sussex.gdsc.trackmate.action;
 
-import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackModel;
-import fiji.plugin.trackmate.action.TrackMateAction;
+import fiji.plugin.trackmate.action.AbstractTMAction;
 import fiji.plugin.trackmate.graph.ConvexBranchesDecomposition;
 import fiji.plugin.trackmate.graph.ConvexBranchesDecomposition.TrackBranchDecomposition;
 import fiji.plugin.trackmate.graph.TimeDirectedNeighborIndex;
@@ -58,7 +57,7 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
 /**
  * Displays track data in a table.
  */
-public class ExportTrackSelectionAction implements TrackMateAction {
+public class ExportTrackSelectionAction  extends AbstractTMAction {
   private static final String EXPORT_FEATURES_KEY = "gdsc.tm.exportTrackSelectionFeatures";
   private static final AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
   private static final AtomicReference<List<String>> featuresRef = new AtomicReference<>();
@@ -79,8 +78,6 @@ public class ExportTrackSelectionAction implements TrackMateAction {
   private final Model model;
   /** The selection model. */
   private final SelectionModel selectionModel;
-  /** The logger. */
-  private Logger logger;
 
   /**
    * Container for a track of consecutive spots. The track is made of spots with a single
@@ -342,11 +339,6 @@ public class ExportTrackSelectionAction implements TrackMateAction {
         sb.append(value);
       }
     }
-  }
-
-  @Override
-  public void setLogger(final Logger logger) {
-    this.logger = logger;
   }
 
   /**

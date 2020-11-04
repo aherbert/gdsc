@@ -25,10 +25,9 @@
 package uk.ac.sussex.gdsc.trackmate.action;
 
 import fiji.plugin.trackmate.FeatureModel;
-import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.action.TrackMateAction;
+import fiji.plugin.trackmate.action.AbstractTMAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -39,11 +38,9 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
 /**
  * Displays track data in a table.
  */
-public class ExportTrackSelectionOptionsAction implements TrackMateAction {
+public class ExportTrackSelectionOptionsAction extends AbstractTMAction {
   /** The model. */
   private final Model model;
-  /** The logger. */
-  private Logger logger;
 
   /**
    * Instantiates a new track data action.
@@ -83,10 +80,5 @@ public class ExportTrackSelectionOptionsAction implements TrackMateAction {
     ExportTrackSelectionAction.setFeatures(selected);
 
     logger.log(". Selected " + TextUtils.pleural(selected.size(), "feature") + ".\n");
-  }
-
-  @Override
-  public void setLogger(final Logger logger) {
-    this.logger = logger;
   }
 }
