@@ -99,6 +99,34 @@ public class TrackSplitsAction extends AbstractTMAction {
     // Visible tracks only
     final Set<Integer> trackIds = trackModel.unsortedTrackIDs(true);
     logger.log("Analysing " + TextUtils.pleural(trackIds.size(), "track id"));
+    final TIntIntHashMap counts = countSplitsPerFrame(trackModel, trackIds);
+
+    // Plot the splits across the entire time series used in the analysis.
+    final Settings settings = trackmate.getSettings();
+    final float[][] data = convertSplits(counts, settings.tstart, settings.tend, settings.dt);
+    final float[] time = data[0];
+    final float[] frequency = data[1];
+
+    // X label
+    final String title = "Track Splits";
+    final String xLabel = "Time ("
+        + TMUtils.getUnitsFor(Dimension.TIME, model.getSpaceUnits(), model.getTimeUnits()) + ")";
+    final Plot plot = new Plot(title, xLabel, "Frequency");
+    plot.addPoints(time, frequency, Plot.SEPARATED_BAR);
+    ImageJUtils.display(title, plot);
+
+    logger.log(". Done.\n");
+  }
+
+  /**
+   * Count the tracks splits per frame.
+   *
+   * @param trackModel the track model
+   * @param trackIds the track ids
+   * @return map of splits per frame
+   */
+  public static TIntIntHashMap countSplitsPerFrame(final TrackModel trackModel,
+      final Set<Integer> trackIds) {
     final TIntIntHashMap counts = new TIntIntHashMap(trackIds.size() * 2);
     trackIds.forEach(trackId -> {
       final Set<Spot> spots = trackModel.trackSpots(trackId);
@@ -134,28 +162,29 @@ public class TrackSplitsAction extends AbstractTMAction {
         }
       });
     });
+    return counts;
+  }
 
-    // Plot the splits across the entire time series used in the analysis.
-    final Settings settings = trackmate.getSettings();
-    final int tstart = settings.tstart;
-    final int tend = settings.tend;
-    final int[] frames = SimpleArrayUtils.newArray(tend - tstart + 1, tstart, 1);
-    final float[] time = SimpleArrayUtils.toFloat(frames);
-    SimpleArrayUtils.multiply(time, settings.dt);
-    final float[] frequency = new float[frames.length];
+  /**
+   * Convert the splits per frame to arrays representing the time between the given start frame and
+   * end frame (inclusive) using the time scale factor to convert the frame to time units.
+   *
+   * @param counts the counts
+   * @param tstart the start frame
+   * @param tend the end frame
+   * @param dt the time scaling factor
+   * @return {time, frequency}
+   */
+  public static float[][] convertSplits(TIntIntHashMap counts, int tstart, int tend, double dt) {
+    final float[] time = SimpleArrayUtils.newArray(tend - tstart + 1, tstart, 1f);
+    SimpleArrayUtils.multiply(time, dt);
+    final float[] frequency = new float[time.length];
     counts.forEachEntry((t, c) -> {
-      frequency[t - tstart] = c;
+      if (t >= tstart && t <= tend) {
+        frequency[t - tstart] = c;
+      }
       return true;
     });
-
-    // X label
-    final String title = "Track Splits";
-    final String xLabel = "Time ("
-        + TMUtils.getUnitsFor(Dimension.TIME, model.getSpaceUnits(), model.getTimeUnits()) + ")";
-    final Plot plot = new Plot(title, xLabel, "Frequency");
-    plot.addPoints(time, frequency, Plot.SEPARATED_BAR);
-    ImageJUtils.display(title, plot);
-
-    logger.log(". Done.\n");
+    return new float[][] {time, frequency};
   }
 }
