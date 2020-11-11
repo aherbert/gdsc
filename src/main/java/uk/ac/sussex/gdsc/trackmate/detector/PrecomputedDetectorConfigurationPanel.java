@@ -83,6 +83,8 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
   private JTextField textFieldColumnY;
   private JTextField textFieldColumnZ;
   private JTextField textFieldRadius;
+  private JTextField textFieldCategory;
+  private JTextField textFieldCategoryFile;
 
   private final transient Model model;
   private final transient ImagePlus imp;
@@ -123,6 +125,10 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
         .setText(String.valueOf(settings.get(PrecomputedDetectorFactory.SETTING_COLUMN_Z)));
     textFieldRadius
         .setText(String.valueOf(settings.get(PrecomputedDetectorFactory.SETTING_COLUMN_RADIUS)));
+    textFieldCategory
+        .setText(String.valueOf(settings.get(PrecomputedDetectorFactory.SETTING_COLUMN_CATEGORY)));
+    textFieldCategoryFile
+        .setText(String.valueOf(settings.get(PrecomputedDetectorFactory.SETTING_CATEGORY_FILE)));
   }
 
   @Override
@@ -138,6 +144,8 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
     final int columnY = NumberParser.parseInteger(textFieldColumnY.getText());
     final int columnZ = NumberParser.parseInteger(textFieldColumnZ.getText());
     final int columnRadius = NumberParser.parseInteger(textFieldRadius.getText());
+    final int columnCategory = NumberParser.parseInteger(textFieldCategory.getText());
+    final String categoryFile = textFieldCategoryFile.getText();
     map.put(PrecomputedDetectorFactory.SETTING_INPUT_FILE, inputFile);
     map.put(PrecomputedDetectorFactory.SETTING_HEADER_LINES, headerLines);
     map.put(PrecomputedDetectorFactory.SETTING_COMMENT_CHAR, commentChar);
@@ -148,6 +156,8 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
     map.put(PrecomputedDetectorFactory.SETTING_COLUMN_Y, columnY);
     map.put(PrecomputedDetectorFactory.SETTING_COLUMN_Z, columnZ);
     map.put(PrecomputedDetectorFactory.SETTING_COLUMN_RADIUS, columnRadius);
+    map.put(PrecomputedDetectorFactory.SETTING_COLUMN_CATEGORY, columnCategory);
+    map.put(PrecomputedDetectorFactory.SETTING_CATEGORY_FILE, categoryFile);
     return map;
   }
 
@@ -235,17 +245,17 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
       // layout.getConstraints(textFieldInputFile).fill = GridBagConstraints.HORIZONTAL;
 
       // Add button to select the file
-      final JButton btnSelect = new JButton("File open");
-      btnSelect.setToolTipText("Select the input file.");
-      btnSelect.setFont(SMALL_FONT);
-      btnSelect.addActionListener(e -> {
+      final JButton btnInputSelect = new JButton("File open");
+      btnInputSelect.setToolTipText("Select the input file.");
+      btnInputSelect.setFont(SMALL_FONT);
+      btnInputSelect.addActionListener(e -> {
         final String newName =
             ImageJUtils.getFilename("Select input file", textFieldInputFile.getText());
         if (newName != null) {
           textFieldInputFile.setText(newName);
         }
       });
-      contentPanel.add(btnSelect, createConstraints(1, 1, row++));
+      contentPanel.add(btnInputSelect, createConstraints(1, 1, row++));
 
       textFieldHeaderLines = createIntegerTextField();
       addFields(contentPanel, "Header lines", textFieldHeaderLines, row++);
@@ -268,6 +278,26 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
       }
       textFieldRadius = createIntegerTextField();
       addFields(contentPanel, "Column radius", textFieldRadius, row++);
+      textFieldCategory = createIntegerTextField();
+      addFields(contentPanel, "Column category", textFieldCategory, row++);
+
+      textFieldInputFile = createTextField(15);
+      addFields(contentPanel, "Input file", textFieldInputFile, row++);
+      // layout.getConstraints(textFieldInputFile).fill = GridBagConstraints.HORIZONTAL;
+
+      // Add button to select the file
+      final JButton btnCategorySelect = new JButton("File open");
+      btnCategorySelect.setToolTipText("Select the category file.");
+      btnCategorySelect.setFont(SMALL_FONT);
+      btnCategorySelect.addActionListener(e -> {
+        final String newName =
+            ImageJUtils.getFilename("Select category file", textFieldCategoryFile.getText());
+        if (newName != null) {
+          textFieldCategoryFile.setText(newName);
+        }
+      });
+      contentPanel.add(btnCategorySelect, createConstraints(1, 1, row++));
+
       btnPreview = new JButton("Preview", ICON_PREVIEW);
       btnPreview.setToolTipText("Preview the current settings on the current frame.");
       btnPreview.setFont(SMALL_FONT);

@@ -33,17 +33,16 @@ import java.util.stream.Stream;
 import net.imglib2.Interval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import uk.ac.sussex.gdsc.foci.NucleiOutline_PlugIn;
 
 /**
- * Detector that delegates work to the {@link NucleiOutline_PlugIn}.
- *
- * <p>Detection is performed using: a Gaussian smoothing filter, threshold mask, watershed division
- * of large objects and filtering of small objects.
+ * Detector that creates spots from pre-computed spot data.
  *
  * @param <T> the pixels type
  */
 public class PrecomputedDetector<T extends RealType<T> & NativeType<T>> implements SpotDetector<T> {
+  /** The feature key for the spot category. */
+  public static final String SPOT_CATEGORY = "CATEGORY";
+
   /** The spots. */
   private final List<RawSpot> rawSpots;
   /** The interval. */
@@ -103,8 +102,11 @@ public class PrecomputedDetector<T extends RealType<T> & NativeType<T>> implemen
     // Q. Add a metric that can be used for spot quality?
     final double quality = 1;
 
-    spots = stream.map(r -> new Spot(r.x * sx, r.y * sy, r.z * sz, r.radius * sx, quality, r.id))
-        .collect(Collectors.toList());
+    spots = stream.map(r -> {
+      final Spot s = new Spot(r.x * sx, r.y * sy, r.z * sz, r.radius * sx, quality, r.id);
+      s.putFeature(SPOT_CATEGORY, Double.valueOf(r.category));
+      return s;
+    }).collect(Collectors.toList());
 
     this.processingTime = System.currentTimeMillis() - start;
     return true;

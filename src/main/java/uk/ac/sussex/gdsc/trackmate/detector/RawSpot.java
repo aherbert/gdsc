@@ -38,6 +38,8 @@ class RawSpot {
   final double z;
   /** The radius. */
   final double radius;
+  /** The category. */
+  final int category;
 
   /**
    * Create a new instance.
@@ -47,12 +49,14 @@ class RawSpot {
    * @param y the y
    * @param z the z
    * @param radius the radius
+   * @param category the category
    */
-  RawSpot(String id, double x, double y, double z, double radius) {
+  RawSpot(String id, double x, double y, double z, double radius, int category) {
     this.id = id;
     this.x = x;
     this.y = y;
     this.z = z;
     this.radius = radius;
+    this.category = category;
   }
 }

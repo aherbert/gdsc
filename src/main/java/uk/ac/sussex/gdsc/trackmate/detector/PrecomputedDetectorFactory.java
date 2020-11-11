@@ -40,9 +40,12 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 import java.util.regex.Pattern;
 import javax.swing.ImageIcon;
 import net.imagej.ImgPlus;
@@ -57,7 +60,7 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.core.utils.UnicodeReader;
 
 /**
- * A factory for creating PrecomputedDetector objects.
+ * A factory for creating {@link PrecomputedDetector} objects.
  *
  * @param <T> the pixels type
  */
@@ -86,6 +89,9 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
   /** A string key identifying this factory. */
   private static final String KEY = "PRECOMPUTED_DETECTOR";
 
+  /** Zero as an Integer. */
+  private static final Integer ZERO = 0;
+
   /** Setting key for the input file. */
   static final String SETTING_INPUT_FILE = "INPUT_FILE";
   /** Setting key for the number of header lines. */
@@ -106,6 +112,10 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
   static final String SETTING_COLUMN_Z = "COLUMN_Z";
   /** Setting key for the spot radius column. */
   static final String SETTING_COLUMN_RADIUS = "COLUMN_RADIUS";
+  /** Setting key for the spot category column. */
+  static final String SETTING_COLUMN_CATEGORY = "COLUMN_CATEGORY";
+  /** Setting key for the category file. */
+  static final String SETTING_CATEGORY_FILE = "CATEGORY_FILE";
 
   private static final String KEY_INPUT_FILE = "gdsc.tm.input_file";
   private static final String KEY_HEADER_LINES = "gdsc.tm.header_lines";
@@ -117,6 +127,8 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
   private static final String KEY_COLUMN_Y = "gdsc.tm.column_y";
   private static final String KEY_COLUMN_Z = "gdsc.tm.column_z";
   private static final String KEY_COLUMN_RADIUS = "gdsc.tm.column_radius";
+  private static final String KEY_COLUMN_CATEGORY = "gdsc.tm.column_category";
+  private static final String KEY_CATEGORY_FILE = "gdsc.tm.category_file";
 
   /** The pixel sizes in the 3 dimensions. */
   private double[] calibration;
@@ -222,6 +234,8 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     map.put(SETTING_COLUMN_Y, (int) Prefs.get(KEY_COLUMN_Y, 2));
     map.put(SETTING_COLUMN_Z, (int) Prefs.get(KEY_COLUMN_Z, 3));
     map.put(SETTING_COLUMN_RADIUS, (int) Prefs.get(KEY_COLUMN_RADIUS, 4));
+    map.put(SETTING_COLUMN_CATEGORY, (int) Prefs.get(KEY_COLUMN_CATEGORY, -1));
+    map.put(SETTING_CATEGORY_FILE, Prefs.get(KEY_CATEGORY_FILE, ""));
     return map;
   }
 
@@ -241,6 +255,8 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     Prefs.set(KEY_COLUMN_Y, (int) map.get(SETTING_COLUMN_Y));
     Prefs.set(KEY_COLUMN_Z, (int) map.get(SETTING_COLUMN_Z));
     Prefs.set(KEY_COLUMN_RADIUS, (int) map.get(SETTING_COLUMN_RADIUS));
+    Prefs.set(KEY_COLUMN_CATEGORY, (int) map.get(SETTING_COLUMN_CATEGORY));
+    Prefs.set(KEY_CATEGORY_FILE, (String) map.get(SETTING_CATEGORY_FILE));
   }
 
   @Override
@@ -256,10 +272,13 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     TMUtils.checkParameter(settings, SETTING_COLUMN_Y, Integer.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_COLUMN_Z, Integer.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_COLUMN_RADIUS, Integer.class, errorHolder);
+    TMUtils.checkParameter(settings, SETTING_COLUMN_CATEGORY, Integer.class, errorHolder);
+    TMUtils.checkParameter(settings, SETTING_CATEGORY_FILE, String.class, errorHolder);
     // This checks for extra keys that should not be present
     final List<String> mandatoryKeys = Arrays.asList(SETTING_INPUT_FILE, SETTING_HEADER_LINES,
         SETTING_COMMENT_CHAR, SETTING_DELIMITER, SETTING_COLUMN_ID, SETTING_COLUMN_FRAME,
-        SETTING_COLUMN_X, SETTING_COLUMN_Y, SETTING_COLUMN_Z, SETTING_COLUMN_RADIUS);
+        SETTING_COLUMN_X, SETTING_COLUMN_Y, SETTING_COLUMN_Z, SETTING_COLUMN_RADIUS,
+        SETTING_COLUMN_CATEGORY, SETTING_CATEGORY_FILE);
     TMUtils.checkMapKeys(settings, mandatoryKeys, null, errorHolder);
     if (errorHolder.length() != 0) {
       errorMessage = errorHolder.toString();
@@ -292,6 +311,8 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     final int columnY = (int) settings.get(SETTING_COLUMN_Y);
     final int columnZ = (int) settings.get(SETTING_COLUMN_Z);
     final int columnRadius = (int) settings.get(SETTING_COLUMN_RADIUS);
+    final int columnCategory = (int) settings.get(SETTING_COLUMN_CATEGORY);
+    final String categoryFile = (String) settings.get(SETTING_CATEGORY_FILE);
 
     // ID field is optional
     Function<String[], String> idFunction;
@@ -302,8 +323,42 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
       idFunction = fields -> fields[columnId];
     }
 
+    // Category field is optional
+    ToIntFunction<String[]> catgeoryFunction;
+    if (columnCategory < 0) {
+      catgeoryFunction = fields -> 0;
+    } else {
+      // Read the category map
+      final Map<String, Integer> map = new HashMap<>();
+      map.put("", ZERO);
+      try (BufferedReader input =
+          new BufferedReader(new UnicodeReader(new FileInputStream(categoryFile), "UTF-8"))) {
+        String line;
+        while ((line = input.readLine()) != null) {
+          // First occurrences are added using the next category ID
+          map.computeIfAbsent(line.trim(), key -> map.size() + 1);
+        }
+      } catch (final IOException ex) {
+        errorHolder.append("IO error in category map: ").append(ex.getMessage()).append('\n');
+        return;
+      }
+      final Set<String> unknown = new HashSet<>();
+      catgeoryFunction = fields -> {
+        final String key = fields[columnCategory];
+        final Integer value = map.get(key);
+        if (value == null) {
+          // Log the error only once
+          if (unknown.add(key)) {
+            errorHolder.append("Unknown category: ").append(key).append('\n');
+          }
+          return 0;
+        }
+        return value.intValue();
+      };
+    }
+
     try (BufferedReader input =
-        new BufferedReader(new UnicodeReader(new FileInputStream(inputFile), null))) {
+        new BufferedReader(new UnicodeReader(new FileInputStream(inputFile), "UTF-8"))) {
       final Pattern p = Pattern.compile(delimiter);
       final boolean hasComment = !TextUtils.isNullOrEmpty(commentChar);
 
@@ -333,8 +388,10 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
           final double y = Double.parseDouble(fields[columnY]);
           final double z = ignoreZ ? 0 : Double.parseDouble(fields[columnZ]);
           final double radius = Double.parseDouble(fields[columnRadius]);
+          final int category = catgeoryFunction.applyAsInt(fields);
 
-          data.computeIfAbsent(frame, t -> new LocalList<>()).add(new RawSpot(id, x, y, z, radius));
+          data.computeIfAbsent(frame, t -> new LocalList<>())
+              .add(new RawSpot(id, x, y, z, radius, category));
         } catch (final NumberFormatException | IndexOutOfBoundsException ex) {
           errorHolder.append("Error on record number ").append(count).append(":\n");
           if (line.length() < 40) {
@@ -385,6 +442,8 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     IOUtils.writeAttribute(settings, element, SETTING_COLUMN_Y, Integer.class, errorHolder);
     IOUtils.writeAttribute(settings, element, SETTING_COLUMN_Z, Integer.class, errorHolder);
     IOUtils.writeAttribute(settings, element, SETTING_COLUMN_RADIUS, Integer.class, errorHolder);
+    IOUtils.writeAttribute(settings, element, SETTING_COLUMN_CATEGORY, Integer.class, errorHolder);
+    IOUtils.writeAttribute(settings, element, SETTING_CATEGORY_FILE, String.class, errorHolder);
     if (errorHolder.length() != 0) {
       errorMessage = errorHolder.toString();
       return false;
@@ -406,6 +465,8 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_Y, errorHolder);
     IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_Z, errorHolder);
     IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_RADIUS, errorHolder);
+    IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_CATEGORY, errorHolder);
+    readStringAttribute(element, settings, SETTING_CATEGORY_FILE, errorHolder);
     if (errorHolder.length() != 0) {
       errorMessage = errorHolder.toString();
       return false;
