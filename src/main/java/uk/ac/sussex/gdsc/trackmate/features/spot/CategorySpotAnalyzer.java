@@ -30,9 +30,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -41,15 +39,15 @@ import net.imagej.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.scijava.plugin.Plugin;
-import uk.ac.sussex.gdsc.trackmate.detector.NucleusDetector;
+import uk.ac.sussex.gdsc.trackmate.detector.PrecomputedDetector;
 
 /**
  * This is a simple class that declares the features that are computed by the
- * {@link NucleusDetector}. If the spot does not contain the feature then it is set to zero.
+ * {@link PrecomputedDetector}. If the spot does not contain the feature then it is set to zero.
  *
  * @param <T> the pixels type
  */
-public class NucleusSpotAnalyzer<T> implements SpotAnalyzer<T> {
+public class CategorySpotAnalyzer<T> implements SpotAnalyzer<T> {
   /** The model. */
   private final Model model;
   /** The frame. */
@@ -63,7 +61,7 @@ public class NucleusSpotAnalyzer<T> implements SpotAnalyzer<T> {
    * @param model the model
    * @param frame the frame
    */
-  public NucleusSpotAnalyzer(final Model model, final int frame) {
+  public CategorySpotAnalyzer(final Model model, final int frame) {
     this.model = model;
     this.frame = frame;
   }
@@ -81,8 +79,7 @@ public class NucleusSpotAnalyzer<T> implements SpotAnalyzer<T> {
 
     while (spotIt.hasNext()) {
       final Spot spot = spotIt.next();
-      SpotAnalyzers.setFeatureIfMissing(spot, NucleusDetector.NUCLEUS_MEAN_INSIDE);
-      SpotAnalyzers.setFeatureIfMissing(spot, NucleusDetector.NUCLEUS_MEAN_OUTSIDE);
+      SpotAnalyzers.setFeatureIfMissing(spot, PrecomputedDetector.SPOT_CATEGORY);
     }
 
     processingTime = System.currentTimeMillis() - start;
@@ -107,12 +104,11 @@ public class NucleusSpotAnalyzer<T> implements SpotAnalyzer<T> {
   @Plugin(type = SpotAnalyzerFactory.class, priority = 1d)
   public static class Factory<T extends RealType<T> & NativeType<T>>
       implements SpotAnalyzerFactory<T> {
-    private static final String KEY = "NUCLEUS_ANALYZER";
-    private static final String NAME = "Nucleus analyzer";
+    private static final String KEY = "CATEGORY_ANALYZER";
+    private static final String NAME = "Category analyzer";
     private static final String INFO_TEXT =
-        "Exposes the mean inside and outside the nucleus computed "
-            + "by the nucleus detector during spot detection. This analysis cannot be performed "
-            + "separately to the nucleus detector; in that case features will be set to zero.";
+        "Exposes the category loaded by the pre-computed detector during spot detection. "
+            + "If not present then the feature will be set to zero.";
 
     private static final List<String> FEATURES;
     private static final Map<String, Boolean> IS_INT;
@@ -121,27 +117,12 @@ public class NucleusSpotAnalyzer<T> implements SpotAnalyzer<T> {
     private static final Map<String, Dimension> FEATURE_DIMENSIONS;
 
     static {
-      final Map<String, Boolean> isInt = new HashMap<>(2);
-      final Map<String, String> featureNames = new HashMap<>(2);
-      final Map<String, String> featureShortNames = new HashMap<>(2);
-      final Map<String, Dimension> featureDimensions = new HashMap<>(2);
-
-      isInt.put(NucleusDetector.NUCLEUS_MEAN_INSIDE, false);
-      featureNames.put(NucleusDetector.NUCLEUS_MEAN_INSIDE, "Mean inside nucleus");
-      featureShortNames.put(NucleusDetector.NUCLEUS_MEAN_INSIDE, "Mean inside");
-      featureDimensions.put(NucleusDetector.NUCLEUS_MEAN_INSIDE, Dimension.INTENSITY);
-
-      isInt.put(NucleusDetector.NUCLEUS_MEAN_OUTSIDE, false);
-      featureNames.put(NucleusDetector.NUCLEUS_MEAN_OUTSIDE, "Mean outside nucleus");
-      featureShortNames.put(NucleusDetector.NUCLEUS_MEAN_OUTSIDE, "Mean outside");
-      featureDimensions.put(NucleusDetector.NUCLEUS_MEAN_OUTSIDE, Dimension.INTENSITY);
-
-      FEATURES = Collections.unmodifiableList(
-          Arrays.asList(NucleusDetector.NUCLEUS_MEAN_INSIDE, NucleusDetector.NUCLEUS_MEAN_OUTSIDE));
-      IS_INT = Collections.unmodifiableMap(isInt);
-      FEATURE_NAMES = Collections.unmodifiableMap(featureNames);
-      FEATURE_SHORT_NAMES = Collections.unmodifiableMap(featureShortNames);
-      FEATURE_DIMENSIONS = Collections.unmodifiableMap(featureDimensions);
+      FEATURES = Collections.singletonList(PrecomputedDetector.SPOT_CATEGORY);
+      IS_INT = Collections.singletonMap(PrecomputedDetector.SPOT_CATEGORY, Boolean.TRUE);
+      FEATURE_NAMES = Collections.singletonMap(PrecomputedDetector.SPOT_CATEGORY, "Category");
+      FEATURE_SHORT_NAMES = Collections.singletonMap(PrecomputedDetector.SPOT_CATEGORY, "Cat");
+      FEATURE_DIMENSIONS =
+          Collections.singletonMap(PrecomputedDetector.SPOT_CATEGORY, Dimension.NONE);
     }
 
     @Override
@@ -197,7 +178,7 @@ public class NucleusSpotAnalyzer<T> implements SpotAnalyzer<T> {
     @Override
     public SpotAnalyzer<T> getAnalyzer(final Model model, final ImgPlus<T> img, final int frame,
         final int channel) {
-      return new NucleusSpotAnalyzer<>(model, frame);
+      return new CategorySpotAnalyzer<>(model, frame);
     }
   }
 }
