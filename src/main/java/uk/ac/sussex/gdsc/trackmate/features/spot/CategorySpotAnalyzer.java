@@ -120,7 +120,7 @@ public class CategorySpotAnalyzer<T> implements SpotAnalyzer<T> {
       FEATURES = Collections.singletonList(PrecomputedDetector.SPOT_CATEGORY);
       IS_INT = Collections.singletonMap(PrecomputedDetector.SPOT_CATEGORY, Boolean.TRUE);
       FEATURE_NAMES = Collections.singletonMap(PrecomputedDetector.SPOT_CATEGORY, "Category");
-      FEATURE_SHORT_NAMES = Collections.singletonMap(PrecomputedDetector.SPOT_CATEGORY, "Cat");
+      FEATURE_SHORT_NAMES = Collections.singletonMap(PrecomputedDetector.SPOT_CATEGORY, "Category");
       FEATURE_DIMENSIONS =
           Collections.singletonMap(PrecomputedDetector.SPOT_CATEGORY, Dimension.NONE);
     }
