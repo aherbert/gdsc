@@ -76,11 +76,13 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     + "<li>Define an input file.</li>"
     + "<li>Define file header.</li>"
     + "<li>Define delimiter.</li>"
-    + "<li>Define ID column.</li>"
+    + "<li>Define optional ID column.</li>"
     + "<li>Define Frame column.</li>"
     + "<li>Define XYZ columns.</li>"
     + "<li>Define Radius column.</li>"
-    + "</ul></html>";
+    + "<li>Define optional Categroy column.</li>"
+    + "</ul><p>The category file has one category per line. Numbers are assigned to each unique "
+    + "category in encountered order.</p></html>";
   // @formatter:on
 
   /** The pretty name of the target detector. */

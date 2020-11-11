@@ -281,8 +281,8 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
       textFieldCategory = createIntegerTextField();
       addFields(contentPanel, "Column category", textFieldCategory, row++);
 
-      textFieldInputFile = createTextField(15);
-      addFields(contentPanel, "Input file", textFieldInputFile, row++);
+      textFieldCategoryFile = createTextField(15);
+      addFields(contentPanel, "Category file", textFieldCategoryFile, row++);
       // layout.getConstraints(textFieldInputFile).fill = GridBagConstraints.HORIZONTAL;
 
       // Add button to select the file
