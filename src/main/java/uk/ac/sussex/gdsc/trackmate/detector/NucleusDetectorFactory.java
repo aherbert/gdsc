@@ -48,7 +48,7 @@ import org.scijava.plugin.Plugin;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 
 /**
- * A factory for creating NucleusDetector objects.
+ * A factory for creating {@link NucleusDetector} objects.
  *
  * @param <T> the pixels type
  */
