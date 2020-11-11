@@ -338,7 +338,7 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
         String line;
         while ((line = input.readLine()) != null) {
           // First occurrences are added using the next category ID
-          map.computeIfAbsent(line.trim(), key -> map.size() + 1);
+          map.computeIfAbsent(line.trim(), key -> map.size());
         }
       } catch (final IOException ex) {
         errorHolder.append("IO error in category map: ").append(ex.getMessage()).append('\n');
