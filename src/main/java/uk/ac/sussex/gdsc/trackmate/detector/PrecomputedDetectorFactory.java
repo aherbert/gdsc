@@ -119,18 +119,18 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
   /** Setting key for the category file. */
   static final String SETTING_CATEGORY_FILE = "CATEGORY_FILE";
 
-  private static final String KEY_INPUT_FILE = "gdsc.tm.input_file";
-  private static final String KEY_HEADER_LINES = "gdsc.tm.header_lines";
-  private static final String KEY_COMMENT_CHAR = "gdsc.tm.comment_char";
-  private static final String KEY_DELIMITER = "gdsc.tm.delimiter";
-  private static final String KEY_COLUMN_ID = "gdsc.tm.column_id";
-  private static final String KEY_COLUMN_FRAME = "gdsc.tm.column_frame";
-  private static final String KEY_COLUMN_X = "gdsc.tm.column_x";
-  private static final String KEY_COLUMN_Y = "gdsc.tm.column_y";
-  private static final String KEY_COLUMN_Z = "gdsc.tm.column_z";
-  private static final String KEY_COLUMN_RADIUS = "gdsc.tm.column_radius";
-  private static final String KEY_COLUMN_CATEGORY = "gdsc.tm.column_category";
-  private static final String KEY_CATEGORY_FILE = "gdsc.tm.category_file";
+  private static final String KEY_INPUT_FILE = "gdsc.tm.detector.precomputed.input_file";
+  private static final String KEY_HEADER_LINES = "gdsc.tm.detector.precomputed.header_lines";
+  private static final String KEY_COMMENT_CHAR = "gdsc.tm.detector.precomputed.comment_char";
+  private static final String KEY_DELIMITER = "gdsc.tm.detector.precomputed.delimiter";
+  private static final String KEY_COLUMN_ID = "gdsc.tm.detector.precomputed.column_id";
+  private static final String KEY_COLUMN_FRAME = "gdsc.tm.detector.precomputed.column_frame";
+  private static final String KEY_COLUMN_X = "gdsc.tm.detector.precomputed.column_x";
+  private static final String KEY_COLUMN_Y = "gdsc.tm.detector.precomputed.column_y";
+  private static final String KEY_COLUMN_Z = "gdsc.tm.detector.precomputed.column_z";
+  private static final String KEY_COLUMN_RADIUS = "gdsc.tm.detector.precomputed.column_radius";
+  private static final String KEY_COLUMN_CATEGORY = "gdsc.tm.detector.precomputed.column_category";
+  private static final String KEY_CATEGORY_FILE = "gdsc.tm.detector.precomputed.category_file";
 
   /** The pixel sizes in the 3 dimensions. */
   private double[] calibration;

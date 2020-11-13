@@ -63,14 +63,15 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
  * Displays track data in a table.
  */
 public class ExportTrackSelectionAction extends AbstractTMAction {
-  private static final String EXPORT_FEATURES_KEY = "gdsc.tm.exportTrackSelectionFeatures";
+  private static final String KEY_EXPORT_FEATURES =
+      "gdsc.tm.action.export_track_selection.features";
   private static final AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
   private static final AtomicReference<List<String>> featuresRef = new AtomicReference<>();
 
   static {
     // Load ImageJ preferences
     ArrayList<String> list = new ArrayList<>();
-    try (Scanner scanner = new Scanner(Prefs.get(EXPORT_FEATURES_KEY, ""))) {
+    try (Scanner scanner = new Scanner(Prefs.get(KEY_EXPORT_FEATURES, ""))) {
       scanner.useDelimiter(",");
       while (scanner.hasNext()) {
         list.add(scanner.next());
@@ -406,7 +407,7 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
     featuresRef.set(features);
 
     // Save in ImageJ preferences
-    Prefs.set(EXPORT_FEATURES_KEY, features.stream().collect(Collectors.joining(",")));
+    Prefs.set(KEY_EXPORT_FEATURES, features.stream().collect(Collectors.joining(",")));
   }
 
   /**
