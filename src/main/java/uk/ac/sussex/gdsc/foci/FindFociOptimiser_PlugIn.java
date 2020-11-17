@@ -2196,7 +2196,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     gd.addChoice("Settings", presetSettingsNames, presetSettingsNames[0]);
 
     if (newImageList != null) {
-      gd.addChoice("Mask", newImageList.toArray(new String[newImageList.size()]),
+      gd.addChoice("Mask", newImageList.toArray(new String[0]),
           settings.maskImage);
     }
 
@@ -2535,7 +2535,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     if (modes.isEmpty()) {
       modes.add(StatisticsMethod.ALL);
     }
-    statisticsMethodArray = modes.toArray(new StatisticsMethod[modes.size()]);
+    statisticsMethodArray = modes.toArray(new StatisticsMethod[0]);
   }
 
   private BackgroundMethod[] createBackgroundArray() {
@@ -3201,7 +3201,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
           }
         }
       }
-      return points.toArray(new AssignedPoint[points.size()]);
+      return points.toArray(new AssignedPoint[0]);
     } catch (final IOException ex) {
       // ignore
     }

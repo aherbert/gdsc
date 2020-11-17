@@ -1497,9 +1497,8 @@ public class SpotDistance_PlugIn implements PlugIn {
           + croppedImp.getHeight() * croppedImp.getHeight()
           + croppedImp.getNSlices() * croppedImp.getNSlices());
       final List<PointPair> matches = new ArrayList<>();
-      MatchCalculator.analyseResults3D(prev.toArray(new DistanceResult[prev.size()]),
-          newResultsArray.toArray(new DistanceResult[newResultsArray.size()]), d, null, null, null,
-          matches);
+      MatchCalculator.analyseResults3D(prev.toArray(new DistanceResult[0]),
+          newResultsArray.toArray(new DistanceResult[0]), d, null, null, null, matches);
 
       for (final PointPair match : matches) {
         ((DistanceResult) match.getPoint2()).id = ((DistanceResult) match.getPoint1()).id;

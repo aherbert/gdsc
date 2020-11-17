@@ -922,7 +922,7 @@ public class FindFoci_PlugIn implements PlugIn {
     final FindFociProcessorOptions processorOptions = settings.processorOptions;
     final FindFociOptions options = settings.options;
 
-    gd.addChoice(OPTION_MASK, newImageList.toArray(new String[newImageList.size()]),
+    gd.addChoice(OPTION_MASK, newImageList.toArray(new String[0]),
         settings.maskImage);
     gd.addMessage("Background options ...");
     gd.addChoice(OPTION_BACKGROUND_METHOD, BackgroundMethod.getDescriptions(),

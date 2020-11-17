@@ -228,7 +228,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
     reassignMaxima(maxima, idMap);
 
-    return maxpoints.toArray(new Coordinate[maxpoints.size()]);
+    return maxpoints.toArray(new Coordinate[0]);
   }
 
   /**

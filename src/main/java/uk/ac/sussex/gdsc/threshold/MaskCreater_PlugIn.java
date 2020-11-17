@@ -76,7 +76,7 @@ public class MaskCreater_PlugIn implements PlugIn {
     list.addAll(Arrays.asList(AutoThreshold.getMethods(true)));
     list.add("Otsu_3_level");
     list.add("Otsu_4_level");
-    methods = list.toArray(new String[list.size()]);
+    methods = list.toArray(new String[0]);
   }
 
   private static String selectedImage = "";

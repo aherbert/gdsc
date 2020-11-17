@@ -288,7 +288,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     if (!newImageList.isEmpty()) {
       gd.addCheckbox("Show_composite_image", settings.showComposite);
       gd.addCheckbox("Ignore_file_frames", settings.ignoreFrames);
-      final String[] items = newImageList.toArray(new String[newImageList.size()]);
+      final String[] items = newImageList.toArray(new String[0]);
       gd.addChoice("Image_1", items, settings.image1);
       gd.addChoice("Image_2", items, settings.image2);
       gd.addCheckbox("Use_slice_position", settings.useSlicePosition);
@@ -525,7 +525,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
         coords.add(new IdTimeValuedPoint(id++, p));
       }
     }
-    return coords.toArray(new Coordinate[coords.size()]);
+    return coords.toArray(new Coordinate[0]);
   }
 
   private static String createResultsHeader() {

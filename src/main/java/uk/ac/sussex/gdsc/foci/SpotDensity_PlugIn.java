@@ -238,7 +238,7 @@ public class SpotDensity_PlugIn implements PlugIn {
       newImageList.add("[ROI]");
     }
     newImageList.addAll(Arrays.asList(ImageJUtils.getImageList(ImageJUtils.GREY_8_16, null)));
-    return newImageList.toArray(new String[newImageList.size()]);
+    return newImageList.toArray(new String[0]);
   }
 
   private static FloatProcessor createDistanceMap(ImagePlus imp, String maskImage) {

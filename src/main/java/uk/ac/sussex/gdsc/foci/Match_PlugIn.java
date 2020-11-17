@@ -644,7 +644,7 @@ public class Match_PlugIn implements PlugIn {
       return true;
     });
 
-    return rois.toArray(new PointRoi[rois.size()]);
+    return rois.toArray(new PointRoi[0]);
   }
 
   private boolean showDialog() {
@@ -687,7 +687,7 @@ public class Match_PlugIn implements PlugIn {
         return false;
       }
 
-      items = imageList.toArray(new String[imageList.size()]);
+      items = imageList.toArray(new String[0]);
       int index = 0;
       initialTitle1 =
           (imageList.contains(settings.title1) ? settings.title1 : imageList.get(index++));
@@ -888,7 +888,7 @@ public class Match_PlugIn implements PlugIn {
         list.add(p);
       }
     }
-    return list.toArray(new TimeValuedPoint[list.size()]);
+    return list.toArray(new TimeValuedPoint[0]);
   }
 
   /**

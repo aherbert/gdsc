@@ -160,7 +160,7 @@ public class PointExtractor_PlugIn implements PlugInFilter {
       for (final PointRoi roi : pointRois) {
         points.addAll(Arrays.asList(AssignedPointUtils.extractRoiPoints(roi)));
       }
-      roiPoints = points.toArray(new AssignedPoint[points.size()]);
+      roiPoints = points.toArray(new AssignedPoint[0]);
 
       if (reset) {
         final RoiManager manager = RoiManager.getInstance2();
