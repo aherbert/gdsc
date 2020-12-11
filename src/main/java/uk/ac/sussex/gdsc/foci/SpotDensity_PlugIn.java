@@ -294,7 +294,7 @@ public class SpotDensity_PlugIn implements PlugIn {
 
   /**
    * For all foci in set 1, compare to set 2 and output a histogram of the average density around
-   * each foci is concentric rings (pair correlation) and the minimum distance to another foci.
+   * each foci in concentric rings (pair correlation) and the minimum distance to another foci.
    *
    * <p>Foci too close to the edge of the analysis region are ignored from set 1.
    *
