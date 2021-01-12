@@ -57,6 +57,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.FileUtils;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
 /**
  * Extend the ImageJ Particle Analyser to allow the particles to be obtained from an input mask with
@@ -276,7 +277,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
         }
       }
       settings.save();
-      if (settings.histogramFile != null) {
+      if (settings.saveHistogram && TextUtils.isNotEmpty(settings.histogramFile)) {
         out = createOutput(settings.histogramFile);
         if (out == null) {
           return DONE;
