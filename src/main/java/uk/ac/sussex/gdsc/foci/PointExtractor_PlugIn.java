@@ -28,7 +28,6 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.plugin.filter.PlugInFilter;
@@ -39,6 +38,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
 /**
@@ -240,11 +240,11 @@ public class PointExtractor_PlugIn implements PlugInFilter {
     // any image for the mask.
     final String[] list = ImageJUtils.getImageList(ImageJUtils.NO_IMAGE, null);
 
-    final GenericDialog gd = new GenericDialog(TITLE);
+    final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
     gd.addMessage("Extracts the ROI points to file");
     gd.addChoice("Mask", list, mask);
-    gd.addStringField("Filename", filename, 30);
+    gd.addFilenameField("Filename", filename, 30);
     if (plugin.imp != null) {
       gd.addCheckbox("xyz_only", xyz);
     }
