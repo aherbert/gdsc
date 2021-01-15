@@ -35,8 +35,8 @@ import ij.plugin.filter.PlugInFilter;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
@@ -57,6 +57,64 @@ public class PointExtractor_PlugIn implements PlugInFilter {
   private static boolean reset;
 
   private ImagePlus imp;
+
+  /**
+   * Class used to filter points to a unique set by providing a hash code on the XYZ values.
+   */
+  private static class Xyz {
+    private final int hash;
+    private final AssignedPoint point;
+
+    /**
+     * Create an instance.
+     *
+     * @param point the point
+     */
+    Xyz(AssignedPoint point) {
+      // Do not use the AssignedPoint hash code as we do not match the frame and ID
+      hash = (41 * (41 * (41 + point.x) + point.y) + point.z);
+      this.point = point;
+    }
+
+    @Override
+    public int hashCode() {
+      return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+      if (this == object) {
+        return true;
+      }
+      if (!(object instanceof Xyz)) {
+        return false;
+      }
+
+      // Compare XYZ coordinates
+      final AssignedPoint that = ((Xyz) object).point;
+
+      return point.x == that.x && point.y == that.y && point.z == that.z;
+    }
+
+    /**
+     * Compare using the XYZ of the two points.
+     *
+     * @param o1 the first object
+     * @param o2 the second object
+     * @return -1, 0, or 1
+     */
+    static int compare(Xyz o1, Xyz o2) {
+      int result = Integer.compare(o1.point.z, o2.point.z);
+      if (result != 0) {
+        return result;
+      }
+      result = Integer.compare(o1.point.x, o2.point.x);
+      if (result != 0) {
+        return result;
+      }
+      return Integer.compare(o1.point.y, o2.point.y);
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -156,11 +214,12 @@ public class PointExtractor_PlugIn implements PlugInFilter {
     AssignedPoint[] roiPoints;
 
     if (isManagerAvailable() && useManager) {
-      final ArrayList<AssignedPoint> points = new ArrayList<>();
+      final HashSet<Xyz> points = new HashSet<>();
       for (final PointRoi roi : pointRois) {
-        points.addAll(Arrays.asList(AssignedPointUtils.extractRoiPoints(roi)));
+        Arrays.stream(AssignedPointUtils.extractRoiPoints(roi)).map(Xyz::new).forEach(points::add);
       }
-      roiPoints = points.toArray(new AssignedPoint[0]);
+      roiPoints =
+          points.stream().sorted(Xyz::compare).map(x -> x.point).toArray(AssignedPoint[]::new);
 
       if (reset) {
         final RoiManager manager = RoiManager.getInstance2();
