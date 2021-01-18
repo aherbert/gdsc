@@ -24,6 +24,7 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import ij.ImagePlus;
 import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
@@ -35,9 +36,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TreeSet;
+import java.util.function.IntUnaryOperator;
 import java.util.logging.Logger;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
 import uk.ac.sussex.gdsc.core.utils.FileUtils;
@@ -122,38 +125,92 @@ public final class AssignedPointUtils {
   }
 
   /**
-   * Extracts the points from the given Point ROI.
+   * Extracts the points from the given Point ROI. Uses the ROI Z-position (if it has a hyperstack
+   * position) or the the stack position. If neither are set the z position will be zero.
    *
    * @param roi the roi
    * @return The list of points (can be zero length)
+   * @see Roi#hasHyperStackPosition()
+   * @see Roi#getZPosition()
+   * @see Roi#getPosition()
    */
   public static AssignedPoint[] extractRoiPoints(Roi roi) {
-    AssignedPoint[] roiPoints = null;
-
     if (roi instanceof PolygonRoi && roi.getType() == Roi.POINT) {
-      final Polygon p = ((PolygonRoi) roi).getNonSplineCoordinates();
-      final int n = p.npoints;
-      final Rectangle bounds = roi.getBounds();
       // The ROI has either a hyperstack position or a stack position, but not both.
       // Both will be zero if the ROI has no 3D information.
-      int zpos = roi.getZPosition();
-      if (zpos == 0) {
-        zpos = roi.getPosition();
-      }
-
-      roiPoints = new AssignedPoint[n];
-      for (int i = 0; i < n; i++) {
-        roiPoints[i] = new AssignedPoint(bounds.x + p.xpoints[i], bounds.y + p.ypoints[i], zpos, i);
-      }
-    } else {
-      roiPoints = new AssignedPoint[0];
+      final int zpos = roi.hasHyperStackPosition() ? roi.getZPosition() : roi.getPosition();
+      return extractRoiPoints((PolygonRoi) roi, i -> zpos);
     }
+    return new AssignedPoint[0];
+  }
 
+  /**
+   * Extracts the points from the ROI of the given image. Z coordinates will be extracted if the
+   * image stack size if above 1. Uses the point position from a PointRoi if available for a
+   * per-point z coordinate. Otherwise defaults to the ROI Z-position (if it has a hyperstack
+   * position) or the the stack position. If neither are set the z position will be zero.
+   *
+   * @param imp the image
+   * @return The list of points (can be zero length)
+   * @see Roi#hasHyperStackPosition()
+   * @see Roi#getZPosition()
+   * @see Roi#getPosition()
+   * @see PointRoi#getPointPosition(int)
+   * @since 1.4
+   */
+  public static AssignedPoint[] extractRoiPoints(ImagePlus imp) {
+    if (imp != null) {
+      final Roi roi = imp.getRoi();
+      if (roi instanceof PolygonRoi && roi.getType() == Roi.POINT) {
+        IntUnaryOperator z;
+        if (imp.getStackSize() > 1) {
+          // Find z position (see method above)
+          final int zpos = roi.hasHyperStackPosition() ? roi.getZPosition() : roi.getPosition();
+
+          // PointRoi have a point position for the stack index.
+          // This can be converted to CZT if a hyperstack.
+          if (roi instanceof PointRoi) {
+            final PointRoi pointRoi = (PointRoi) roi;
+            z = i -> {
+              final int pos = pointRoi.getPointPosition(i);
+              if (pos != 0) {
+                return imp.convertIndexToPosition(pos)[1];
+              }
+              return zpos;
+            };
+          } else {
+            z = i -> zpos;
+          }
+        } else {
+          z = i -> 0;
+        }
+        return extractRoiPoints((PolygonRoi) roi, z);
+      }
+    }
+    return new AssignedPoint[0];
+  }
+
+  /**
+   * Extracts the points from the given Point ROI.
+   *
+   * @param roi the roi
+   * @param z the function to generate the z position
+   * @return The list of points (can be zero length)
+   */
+  private static AssignedPoint[] extractRoiPoints(PolygonRoi roi, IntUnaryOperator z) {
+    final Polygon p = roi.getNonSplineCoordinates();
+    final int n = p.npoints;
+    final Rectangle bounds = roi.getBounds();
+    final AssignedPoint[] roiPoints = new AssignedPoint[n];
+    for (int i = 0; i < n; i++) {
+      roiPoints[i] =
+          new AssignedPoint(bounds.x + p.xpoints[i], bounds.y + p.ypoints[i], z.applyAsInt(i), i);
+    }
     return roiPoints;
   }
 
   /**
-   * Creates an ImageJ PointRoi from the list of points.
+   * Creates an ImageJ PointRoi from the list of points. Uses the float XY coordinates.
    *
    * @param array List of points
    * @return The PointRoi
@@ -172,7 +229,7 @@ public final class AssignedPointUtils {
   }
 
   /**
-   * Creates an ImageJ PointRoi from the list of points.
+   * Creates an ImageJ PointRoi from the list of points. Uses the float XY coordinates.
    *
    * @param array List of points
    * @return The PointRoi
@@ -189,20 +246,93 @@ public final class AssignedPointUtils {
   }
 
   /**
+   * Creates an ImageJ PointRoi from the list of points. Uses the float XY coordinates.
+   *
+   * <p>If the image is a stack then the integer Z coordinates are converted to a stack position
+   * using the provided image and the current channel and frame.
+   *
+   * @param imp the image
+   * @param array List of points
+   * @return The PointRoi
+   * @see ImagePlus#getChannel()
+   * @see ImagePlus#getFrame()
+   * @see ImagePlus#getStackIndex(int, int, int)
+   * @see PointRoi#getPointPosition(int)
+   * @since 1.4
+   */
+  public static Roi createRoi(ImagePlus imp, List<? extends Coordinate> array) {
+    final Roi roi = createRoi(array);
+    if (imp.getStackSize() > 1) {
+      final int channel = imp.getChannel();
+      final int frame = imp.getFrame();
+      addPositions((PointRoi) roi, i -> imp.getStackIndex(channel, array.get(i).getZint(), frame));
+    }
+    return roi;
+  }
+
+  /**
+   * Creates an ImageJ PointRoi from the list of points. Uses the float XY coordinates.
+   *
+   * <p>If the image is a stack then the integer Z coordinates are converted to a stack position
+   * using the provided image and the current channel and frame.
+   *
+   * @param imp the image
+   * @param array List of points
+   * @return The PointRoi
+   * @see ImagePlus#getChannel()
+   * @see ImagePlus#getFrame()
+   * @see ImagePlus#getStackIndex(int, int, int)
+   * @see PointRoi#getPointPosition(int)
+   * @since 1.4
+   */
+  public static Roi createRoi(ImagePlus imp, AssignedPoint[] array) {
+    final Roi roi = createRoi(array);
+    if (imp.getStackSize() > 1) {
+      final int channel = imp.getChannel();
+      final int frame = imp.getFrame();
+      addPositions((PointRoi) roi, i -> imp.getStackIndex(channel, array[i].getZint(), frame));
+    }
+    return roi;
+  }
+
+  /**
+   * Adds the per-point positions to the PointRoi using the function to generate the position index.
+   *
+   * @param roi the roi
+   * @param pos the position function
+   */
+  private static void addPositions(PointRoi roi, IntUnaryOperator pos) {
+    final int n = roi.size();
+    final int[] counters = new int[n];
+    for (int i = 0; i < n; i++) {
+      counters[i] = pos.applyAsInt(i) << 8;
+    }
+    roi.setCounters(counters);
+  }
+
+  /**
    * Eliminates duplicate coordinates. Destructively alters the IDs in the input array since the
-   * objects are recycled
+   * objects are recycled.
    *
    * @param points the points
    * @return new list of points with Ids from zero
    */
   public static AssignedPoint[] eliminateDuplicates(AssignedPoint[] points) {
-    final HashSet<AssignedPoint> newPoints = new HashSet<>();
-    int id = 0;
-    for (final AssignedPoint p : points) {
-      if (newPoints.add(p)) {
-        p.setId(id++);
+    // Compare using only XYZ (ignore the ID and assigned ID)
+    final TreeSet<AssignedPoint> newPoints = new TreeSet<>((o1, o2) -> {
+      int result = Integer.compare(o1.z, o2.z);
+      if (result != 0) {
+        return result;
       }
-    }
+      result = Integer.compare(o1.x, o2.x);
+      if (result != 0) {
+        return result;
+      }
+      return Integer.compare(o1.y, o2.y);
+    });
+    newPoints.addAll(Arrays.asList(points));
+    final int[] id = {0};
+    newPoints.forEach(p -> p.setId(id[0]++));
     return newPoints.toArray(new AssignedPoint[0]);
   }
 }
