@@ -1638,7 +1638,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     if (invalidImage(imp)) {
       return null;
     }
-    final AssignedPoint[] roiPoints = extractRoiPoints(imp.getRoi(), imp, mask);
+    final AssignedPoint[] roiPoints = extractRoiPoints(imp, mask);
 
     if (roiPoints.length == 0) {
       IJ.showMessage("Error", "Image must have a point ROI or corresponding ROI file");
@@ -2043,7 +2043,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     maskImage(clone, mask);
 
     if (showScoreImages) {
-      final AssignedPoint[] actualPoints = extractRoiPoints(imp.getRoi(), imp, mask);
+      final AssignedPoint[] actualPoints = extractRoiPoints(imp, mask);
 
       final List<Coordinate> truePositives = new LinkedList<>();
       final List<Coordinate> falsePositives = new LinkedList<>();
@@ -3060,12 +3060,11 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
    * <p>The points are then filtered to include only those within the mask region (if the mask
    * dimensions match those of the image).
    *
-   * @param roi the roi
    * @param imp the image
    * @param mask the mask
    * @return the assigned points
    */
-  public static AssignedPoint[] extractRoiPoints(Roi roi, ImagePlus imp, ImagePlus mask) {
+  public static AssignedPoint[] extractRoiPoints(ImagePlus imp, ImagePlus mask) {
     AssignedPoint[] roiPoints = null;
 
     final boolean is3D = imp.getNSlices() > 1;
@@ -3073,7 +3072,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     roiPoints = loadPointsFromFile(imp);
 
     if (roiPoints == null) {
-      roiPoints = AssignedPointUtils.extractRoiPoints(roi);
+      // Extract points using the ROI associated with the image to get z information
+      roiPoints = AssignedPointUtils.extractRoiPoints(imp);
     }
 
     if (!is3D) {
@@ -3159,12 +3159,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   private static AssignedPoint[] loadPointsFromFile(ImagePlus imp) {
     final FileInfo fileInfo = imp.getOriginalFileInfo();
     if (fileInfo != null && fileInfo.directory != null) {
-      String title = imp.getTitle();
-      final int index = title.lastIndexOf('.');
-      if (index != -1) {
-        title = title.substring(0, index);
-      }
-
+      final String title = FileUtils.removeExtension(imp.getTitle());
       for (final String suffix : new String[] {".csv", ".xyz", ".txt"}) {
         final AssignedPoint[] roiPoints = loadPointsFromFile(fileInfo.directory + title + suffix);
         if (roiPoints != null) {

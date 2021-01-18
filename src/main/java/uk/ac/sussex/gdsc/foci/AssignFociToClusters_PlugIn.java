@@ -309,7 +309,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     cm = imp.getProcessor().getColorModel();
 
     // Check for a multi-point ROI
-    roiPoints = AssignedPointUtils.extractRoiPoints(imp.getRoi());
+    roiPoints = AssignedPointUtils.extractRoiPoints(imp);
     if (roiPoints.length == 0) {
       roiPoints = null;
     }

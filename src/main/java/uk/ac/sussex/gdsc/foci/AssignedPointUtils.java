@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeSet;
 import java.util.function.IntUnaryOperator;
 import java.util.logging.Logger;
@@ -146,7 +147,7 @@ public final class AssignedPointUtils {
 
   /**
    * Extracts the points from the ROI of the given image. Z coordinates will be extracted if the
-   * image stack size if above 1. Uses the point position from a PointRoi if available for a
+   * image stack size is above 1. Uses the point position from a PointRoi if available for a
    * per-point z coordinate. Otherwise defaults to the ROI Z-position (if it has a hyperstack
    * position) or the the stack position. If neither are set the z position will be zero.
    *
@@ -160,32 +161,54 @@ public final class AssignedPointUtils {
    */
   public static AssignedPoint[] extractRoiPoints(ImagePlus imp) {
     if (imp != null) {
-      final Roi roi = imp.getRoi();
-      if (roi instanceof PolygonRoi && roi.getType() == Roi.POINT) {
-        IntUnaryOperator z;
-        if (imp.getStackSize() > 1) {
-          // Find z position (see method above)
-          final int zpos = roi.hasHyperStackPosition() ? roi.getZPosition() : roi.getPosition();
+      return extractRoiPoints(imp, imp.getRoi());
+    }
+    return new AssignedPoint[0];
+  }
 
-          // PointRoi have a point position for the stack index.
-          // This can be converted to CZT if a hyperstack.
-          if (roi instanceof PointRoi) {
-            final PointRoi pointRoi = (PointRoi) roi;
-            z = i -> {
-              final int pos = pointRoi.getPointPosition(i);
-              if (pos != 0) {
-                return imp.convertIndexToPosition(pos)[1];
-              }
-              return zpos;
-            };
-          } else {
-            z = i -> zpos;
-          }
+  /**
+   * Extracts the points from the ROI assuming it is associated with the given image. Z coordinates
+   * will be extracted if the image stack size is above 1. Uses the point position from a PointRoi
+   * if available for a per-point z coordinate. Otherwise defaults to the ROI Z-position (if it has
+   * a hyperstack position) or the the stack position. If neither are set the z position will be
+   * zero.
+   *
+   * @param imp the image
+   * @param roi the roi
+   * @return The list of points (can be zero length)
+   * @throws NullPointerException if the image is null
+   * @see Roi#hasHyperStackPosition()
+   * @see Roi#getZPosition()
+   * @see Roi#getPosition()
+   * @see PointRoi#getPointPosition(int)
+   * @since 1.4
+   */
+  public static AssignedPoint[] extractRoiPoints(ImagePlus imp, Roi roi) {
+    Objects.requireNonNull(imp, "imp");
+    if (roi instanceof PolygonRoi && roi.getType() == Roi.POINT) {
+      IntUnaryOperator z;
+      if (imp.getStackSize() > 1) {
+        // Find z position (see method above)
+        final int zpos = roi.hasHyperStackPosition() ? roi.getZPosition() : roi.getPosition();
+
+        // PointRoi have a point position for the stack index.
+        // This can be converted to CZT if a hyperstack.
+        if (roi instanceof PointRoi) {
+          final PointRoi pointRoi = (PointRoi) roi;
+          z = i -> {
+            final int pos = pointRoi.getPointPosition(i);
+            if (pos != 0) {
+              return imp.convertIndexToPosition(pos)[1];
+            }
+            return zpos;
+          };
         } else {
-          z = i -> 0;
+          z = i -> zpos;
         }
-        return extractRoiPoints((PolygonRoi) roi, z);
+      } else {
+        z = i -> 0;
       }
+      return extractRoiPoints((PolygonRoi) roi, z);
     }
     return new AssignedPoint[0];
   }
@@ -215,6 +238,7 @@ public final class AssignedPointUtils {
    * @param array List of points
    * @return The PointRoi
    */
+  // TODO - check all use of this method
   public static Roi createRoi(List<? extends Coordinate> array) {
     final int nMaxima = array.size();
     final float[] xpoints = new float[nMaxima];
@@ -234,6 +258,7 @@ public final class AssignedPointUtils {
    * @param array List of points
    * @return The PointRoi
    */
+  // TODO - check all use of this method
   public static Roi createRoi(AssignedPoint[] array) {
     final int nMaxima = array.length;
     final float[] xpoints = new float[nMaxima];

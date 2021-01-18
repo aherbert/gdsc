@@ -319,8 +319,8 @@ public class Match_PlugIn implements PlugIn {
         localDistanceThreshold = Math.ceil(settings.distanceThreshold * Math.max(length1, length2));
       }
 
-      actualPoints = AssignedPointUtils.extractRoiPoints(imp1.getRoi());
-      predictedPoints = AssignedPointUtils.extractRoiPoints(imp2.getRoi());
+      actualPoints = AssignedPointUtils.extractRoiPoints(imp1);
+      predictedPoints = AssignedPointUtils.extractRoiPoints(imp2);
 
       final boolean canExtractHeights = canExtractHeights(imp1, imp2);
       doQuartiles = settings.quartiles && canExtractHeights;

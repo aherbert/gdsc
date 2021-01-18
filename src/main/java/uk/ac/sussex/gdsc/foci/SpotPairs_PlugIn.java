@@ -302,7 +302,7 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
       imp.setRoi(roi);
     }
 
-    points = AssignedPointUtils.extractRoiPoints(roi);
+    points = AssignedPointUtils.extractRoiPoints(imp);
     if (points.length < 2) {
       IJ.error(TITLE, "Please mark at least two ROI points on the image");
       return DONE;

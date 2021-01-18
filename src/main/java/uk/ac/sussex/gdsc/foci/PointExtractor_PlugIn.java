@@ -54,6 +54,7 @@ public class PointExtractor_PlugIn implements PlugInFilter {
   private PointRoi[] pointRois;
 
   private static boolean useManager = true;
+  private static boolean useCurrentImage = true;
   private static boolean reset;
 
   private ImagePlus imp;
@@ -139,11 +140,12 @@ public class PointExtractor_PlugIn implements PlugInFilter {
       return;
     }
 
-    pointRois = new PointRoi[manager.getCount()];
+    final Roi[] rois = manager.getRoisAsArray();
+    pointRois = new PointRoi[rois.length];
 
     // Store the point ROIs
     int count = 0;
-    for (final Roi roi : manager.getRoisAsArray()) {
+    for (final Roi roi : rois) {
       if (roi instanceof PointRoi) {
         pointRois[count++] = (PointRoi) roi;
       }
@@ -216,7 +218,19 @@ public class PointExtractor_PlugIn implements PlugInFilter {
     if (isManagerAvailable() && useManager) {
       final HashSet<Xyz> points = new HashSet<>();
       for (final PointRoi roi : pointRois) {
-        Arrays.stream(AssignedPointUtils.extractRoiPoints(roi)).map(Xyz::new).forEach(points::add);
+        // Note:
+        // ROIs from the ROI manager may use an image which can be used to extract z positions.
+        // When ROIs are added to the ROI manager it uses a clone which clears the image
+        // associated with the ROI. The position array is not cleared.
+        // Thus to extract the correct positions requires the current image.
+        final ImagePlus imp = useCurrentImage ? this.imp : null;
+        AssignedPoint[] assignedPoints;
+        if (imp != null) {
+          assignedPoints = AssignedPointUtils.extractRoiPoints(imp, roi);
+        } else {
+          assignedPoints = AssignedPointUtils.extractRoiPoints(roi);
+        }
+        Arrays.stream(assignedPoints).map(Xyz::new).forEach(points::add);
       }
       roiPoints =
           points.stream().sorted(Xyz::compare).map(x -> x.point).toArray(AssignedPoint[]::new);
@@ -228,7 +242,7 @@ public class PointExtractor_PlugIn implements PlugInFilter {
         }
       }
     } else {
-      roiPoints = AssignedPointUtils.extractRoiPoints(imp.getRoi());
+      roiPoints = AssignedPointUtils.extractRoiPoints(imp);
     }
 
     final ImagePlus maskImp = WindowManager.getImage(mask);
@@ -254,6 +268,7 @@ public class PointExtractor_PlugIn implements PlugInFilter {
           TextUtils.pleural(plugin.numberOfPointRois(), "ROI"),
           TextUtils.pleural(plugin.numberOfPoints(), "point")));
       gd.addCheckbox("Use_manager_ROIs", useManager);
+      gd.addCheckbox("Use_current_image_for_z", useCurrentImage);
       gd.addCheckbox("Reset_manager", reset);
     } else {
       final Roi roi = plugin.imp.getRoi();
@@ -277,6 +292,7 @@ public class PointExtractor_PlugIn implements PlugInFilter {
 
     if (plugin.isManagerAvailable()) {
       useManager = gd.getNextBoolean();
+      useCurrentImage = gd.getNextBoolean();
       reset = gd.getNextBoolean();
     }
 

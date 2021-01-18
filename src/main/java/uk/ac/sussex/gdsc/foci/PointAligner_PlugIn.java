@@ -184,7 +184,7 @@ public class PointAligner_PlugIn implements PlugIn {
       return;
     }
 
-    final AssignedPoint[] points = FindFociOptimiser_PlugIn.extractRoiPoints(roi, imp, null);
+    final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(imp);
 
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
     final ImagePlus mask = null;

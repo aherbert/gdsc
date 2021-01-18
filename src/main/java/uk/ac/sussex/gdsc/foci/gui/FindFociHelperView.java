@@ -803,7 +803,7 @@ public class FindFociHelperView extends JFrame
       setMappedPoints(0);
       setUnmappedPoints(0);
 
-      AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp.getRoi());
+      AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp);
       points = AssignedPointUtils.eliminateDuplicates(points);
       if (points.length > 0) {
         logMessage("Assigning %d point%s to %s", points.length, (points.length != 1) ? "s" : "",
@@ -814,7 +814,7 @@ public class FindFociHelperView extends JFrame
         } else {
           points = assignToClosest(points);
         }
-        activeImp.setRoi(AssignedPointUtils.createRoi(points));
+        activeImp.setRoi(AssignedPointUtils.createRoi(activeImp, points));
       }
       currentRoiPoints = points.length;
 
@@ -952,7 +952,7 @@ public class FindFociHelperView extends JFrame
       setMappedPoints(0);
       setUnmappedPoints(0);
 
-      final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp.getRoi());
+      final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp);
       if (points.length > 0) {
         logMessage("Re-assigning %d point%s to %s", points.length, (points.length != 1) ? "s" : "",
             activeImage);
@@ -1322,7 +1322,7 @@ public class FindFociHelperView extends JFrame
    * @return the roi points
    */
   private AssignedPoint[] getRoiPoints() {
-    final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp.getRoi());
+    final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp);
     for (final AssignedPoint p : points) {
       final int x = p.getXint();
       final int y = p.getYint();
@@ -1398,9 +1398,9 @@ public class FindFociHelperView extends JFrame
       if (roi.getType() == Roi.POINT && savedRoi != null) {
         // Merge the current ROI and the saved one
         PointRoi pointRoi = (PointRoi) savedRoi;
-        final AssignedPoint[] newPoints = AssignedPointUtils.extractRoiPoints(roi);
+        final AssignedPoint[] newPoints = AssignedPointUtils.extractRoiPoints(activeImp);
         for (final AssignedPoint p : newPoints) {
-          pointRoi = pointRoi.addPoint(p.getX(), p.getY());
+          pointRoi.addPoint(activeImp, p.getX(), p.getY());
         }
         activeImp.setRoi(pointRoi, true);
       }

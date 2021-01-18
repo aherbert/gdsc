@@ -460,7 +460,7 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
 
   @Nullable
   private ArrayList<int[]> getRoiResults() {
-    final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(imp.getRoi());
+    final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(imp);
     if (points.length == 0) {
       return null;
     }
