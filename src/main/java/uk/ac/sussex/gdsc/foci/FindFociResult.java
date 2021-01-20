@@ -225,7 +225,7 @@ public class FindFociResult {
   }
 
   /**
-   * The Z coordinate.
+   * The Z coordinate (this is zero-indexed, not one-indexed as per ImageJ stack slices).
    *
    * @return the z
    */
