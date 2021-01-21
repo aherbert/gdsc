@@ -243,6 +243,17 @@ public class PointExtractor_PlugIn implements PlugInFilter {
       }
     } else {
       roiPoints = AssignedPointUtils.extractRoiPoints(imp);
+      Arrays.sort(roiPoints, (o1, o2) -> {
+        int result = Integer.compare(o1.z, o2.z);
+        if (result != 0) {
+          return result;
+        }
+        result = Integer.compare(o1.x, o2.x);
+        if (result != 0) {
+          return result;
+        }
+        return Integer.compare(o1.y, o2.y);
+      });
     }
 
     final ImagePlus maskImp = WindowManager.getImage(mask);
