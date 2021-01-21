@@ -94,7 +94,6 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
 import uk.ac.sussex.gdsc.foci.FindFociResult;
 import uk.ac.sussex.gdsc.foci.FindFociResults;
 import uk.ac.sussex.gdsc.foci.Match_PlugIn;
-import uk.ac.sussex.gdsc.foci.PointAligner_PlugIn;
 import uk.ac.sussex.gdsc.foci.controller.FindMaximaController;
 import uk.ac.sussex.gdsc.foci.converter.SearchModeConverter;
 import uk.ac.sussex.gdsc.foci.converter.StringToBooleanConverter;
@@ -874,8 +873,7 @@ public class FindFociHelperView extends JFrame
    */
   private void assignToHighest(AssignedPoint[] points) {
     // If searchMode = 'highest' then the points should be processed in height order
-    final PointAligner_PlugIn aligner = new PointAligner_PlugIn();
-    aligner.sortPoints(points, controller.getActiveImageStack());
+    sortPoints(points, controller.getActiveImageStack());
 
     for (int i = 0; i < points.length; i++) {
       final int x = points[i].getXint();
@@ -894,6 +892,25 @@ public class FindFociHelperView extends JFrame
         addUnmappedPoint(x, y, i + 1);
       }
     }
+  }
+
+  /**
+   * Sort the points using the value from the image stack for each xyz point position.
+   *
+   * @param points the points
+   * @param impStack the image stack
+   */
+  private static void sortPoints(AssignedPoint[] points, ImageStack impStack) {
+    final float[] values = new float[points.length];
+
+    // Do this in descending height order
+    for (final AssignedPoint point : points) {
+      final int x = point.getXint();
+      final int y = point.getYint();
+      final int z = point.getZint();
+      values[point.getId()] = impStack.getProcessor(z).getf(x, y);
+    }
+    Arrays.sort(points, (o1, o2) -> Float.compare(values[o2.getId()], values[o1.getId()]));
   }
 
   /**
@@ -950,7 +967,7 @@ public class FindFociHelperView extends JFrame
           final int y = mapping.point.getYint();
           final int z = mapping.point.getZint();
           final int id = mapping.point.getId();
-          FindFociResult result = mapping.assignedResult.getResult();
+          final FindFociResult result = mapping.assignedResult.getResult();
           addMappedPoint(x, y, z, result, roiPoints.size() + 1);
           points[id] = new AssignedPoint(result.getX(), result.getY(), result.getZ(), id);
           addNewRoiPoint(roiPoints, points[id]);
@@ -1167,7 +1184,7 @@ public class FindFociHelperView extends JFrame
 
         // Update the ROI if the peak was re-mapped.
         // We extract all the points to preserve the z information.
-        AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp, roi);
+        final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp, roi);
         // Add the new position
         points[roiIndex] =
             new AssignedPoint(assignedResult.getResult().getX(), assignedResult.getResult().getY(),
@@ -1438,14 +1455,14 @@ public class FindFociHelperView extends JFrame
     activeImp.setOverlay(null);
 
     // Check if new ROI points have been added while the overlay is displayed
-    AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp);
+    final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp);
 
     if (points.length != 0) {
       // If this is a new point then merge it into the saved Point ROI
       final AssignedPoint[] oldPoints = AssignedPointUtils.extractRoiPoints(activeImp, savedRoi);
       if (oldPoints.length != 0) {
         // Merge the current ROI and the saved one
-        LocalList<AssignedPoint> all = new LocalList<>(points.length + oldPoints.length);
+        final LocalList<AssignedPoint> all = new LocalList<>(points.length + oldPoints.length);
         all.addAll(Arrays.asList(oldPoints));
         all.addAll(Arrays.asList(points));
         activeImp.setRoi(AssignedPointUtils.createRoi(activeImp, controller.getActiveChannel(),
