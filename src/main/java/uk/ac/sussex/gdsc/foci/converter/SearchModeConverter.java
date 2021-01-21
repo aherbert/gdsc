@@ -24,14 +24,16 @@
 
 package uk.ac.sussex.gdsc.foci.converter;
 
+import java.util.Arrays;
 import org.jdesktop.beansbinding.Converter;
-import uk.ac.sussex.gdsc.foci.GridPointManager;
+import uk.ac.sussex.gdsc.foci.AssignedFindFociResultSearchIndex.SearchMode;
 
 /**
  * Convert the search mode.
  */
 public class SearchModeConverter extends Converter<Integer, Object> {
-  private static final String[] searchModes = GridPointManager.getSearchModes();
+  private static final String[] searchModes =
+      Arrays.stream(SearchMode.values()).map(SearchMode::toString).toArray(String[]::new);
 
   @Override
   public String convertForward(Integer paramT) {
@@ -46,5 +48,14 @@ public class SearchModeConverter extends Converter<Integer, Object> {
       }
     }
     return null;
+  }
+
+  /**
+   * Gets the search modes as a String array.
+   *
+   * @return the search modes
+   */
+  public static String[] getSearchModes() {
+    return searchModes.clone();
   }
 }

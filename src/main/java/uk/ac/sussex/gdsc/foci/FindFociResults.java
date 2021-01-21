@@ -114,4 +114,16 @@ public class FindFociResults {
   public FindFociStatistics getStats() {
     return stats;
   }
+
+  /**
+   * Increment the z position of the results.
+   *
+   * <p>By default the FindFociResult z position uses 0-based indexing. Incrementing to 1-based
+   * indexing matches the indexing used by ImageJ ImageStacks.
+   *
+   * @param results the results
+   */
+  public static void incrementZ(List<FindFociResult> results) {
+    results.forEach(r -> r.z++);
+  }
 }

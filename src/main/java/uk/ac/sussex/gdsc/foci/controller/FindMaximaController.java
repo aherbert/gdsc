@@ -27,10 +27,10 @@ package uk.ac.sussex.gdsc.foci.controller;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.process.ImageProcessor;
 import java.util.ArrayList;
 import java.util.List;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions;
 import uk.ac.sussex.gdsc.foci.FindFociResult;
 import uk.ac.sussex.gdsc.foci.FindFociResults;
@@ -42,6 +42,8 @@ import uk.ac.sussex.gdsc.foci.model.FindFociModel;
  * results.
  */
 public class FindMaximaController extends ImageJController {
+  private static final String[] SINGLE_SERIES = new String[] {"1"};
+
   private List<FindFociResult> resultsArray = new ArrayList<>();
   private ImageStack activeImageStack;
   private int activeChannel = 1;
@@ -111,17 +113,18 @@ public class FindMaximaController extends ImageJController {
 
     // Allow N-dimensional images. Prompt for the channel and frame.
     if (imp.getNChannels() != 1 || imp.getNFrames() != 1) {
-      final GenericDialog gd = new GenericDialog("Select Channel/Frame");
+      final ExtendedGenericDialog gd = new ExtendedGenericDialog("Select Channel/Frame");
       gd.addMessage("Stack detected.\nPlease select the channel/frame.");
+      activeChannel = imp.getChannel();
+      activeFrame = imp.getFrame();
       final String[] channels = getChannels(imp);
       final String[] frames = getFrames(imp);
 
       if (channels.length > 1) {
-        gd.addChoice("Channel", channels,
-            channels[channels.length >= activeChannel ? activeChannel - 1 : 0]);
+        gd.addChoice("Channel", channels, activeChannel - 1);
       }
       if (frames.length > 1) {
-        gd.addChoice("Frame", frames, frames[frames.length >= activeFrame ? activeFrame - 1 : 0]);
+        gd.addChoice("Frame", frames, activeFrame - 1);
       }
 
       gd.showDialog();
@@ -137,6 +140,8 @@ public class FindMaximaController extends ImageJController {
       activeImageStack = extractImage(imp, activeChannel, activeFrame);
       imp = new ImagePlus("", activeImageStack);
     } else {
+      activeChannel = 1;
+      activeFrame = 1;
       activeImageStack = imp.getStack();
     }
 
@@ -161,18 +166,19 @@ public class FindMaximaController extends ImageJController {
   }
 
   private static String[] getChannels(ImagePlus imp) {
-    final int c = imp.getNChannels();
-    final String[] result = new String[c];
-    for (int i = 0; i < c; i++) {
-      result[i] = Integer.toString(i + 1);
-    }
-    return result;
+    return getSeries(imp.getNChannels());
   }
 
   private static String[] getFrames(ImagePlus imp) {
-    final int c = imp.getNFrames();
-    final String[] result = new String[c];
-    for (int i = 0; i < c; i++) {
+    return getSeries(imp.getNFrames());
+  }
+
+  private static String[] getSeries(int size) {
+    if (size == 1) {
+      return SINGLE_SERIES;
+    }
+    final String[] result = new String[size];
+    for (int i = 0; i < size; i++) {
       result[i] = Integer.toString(i + 1);
     }
     return result;

@@ -51,8 +51,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -75,8 +74,14 @@ import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
 import org.jdesktop.swingbinding.JComboBoxBinding;
 import org.jdesktop.swingbinding.SwingBindings;
+import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.TextUtils;
+import uk.ac.sussex.gdsc.foci.AssignedFindFociResult;
+import uk.ac.sussex.gdsc.foci.AssignedFindFociResultSearchIndex;
+import uk.ac.sussex.gdsc.foci.AssignedFindFociResultSearchIndex.SearchMode;
 import uk.ac.sussex.gdsc.foci.AssignedPoint;
 import uk.ac.sussex.gdsc.foci.AssignedPointUtils;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
@@ -87,9 +92,7 @@ import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.SortMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.StatisticsMethod;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.ThresholdMethod;
 import uk.ac.sussex.gdsc.foci.FindFociResult;
-import uk.ac.sussex.gdsc.foci.GridException;
-import uk.ac.sussex.gdsc.foci.GridPoint;
-import uk.ac.sussex.gdsc.foci.GridPointManager;
+import uk.ac.sussex.gdsc.foci.FindFociResults;
 import uk.ac.sussex.gdsc.foci.Match_PlugIn;
 import uk.ac.sussex.gdsc.foci.PointAligner_PlugIn;
 import uk.ac.sussex.gdsc.foci.controller.FindMaximaController;
@@ -138,7 +141,7 @@ public class FindFociHelperView extends JFrame
   private transient FindMaximaController controller;
 
   private transient ImagePlus activeImp;
-  private transient GridPointManager manager;
+  private transient AssignedFindFociResultSearchIndex index;
   private int currentRoiPoints;
   private boolean dragging;
   private static AtomicReference<TextWindow> resultsWindow = new AtomicReference<>();
@@ -173,6 +176,28 @@ public class FindFociHelperView extends JFrame
   private JButton btnHelp;
   private JLabel lblMaskImage;
   private JComboBox<String> comboMaskImageList;
+
+  /**
+   * A mapping between a point and a result.
+   */
+  private static class Mapping {
+    final AssignedPoint point;
+    final AssignedFindFociResult assignedResult;
+    final double distance;
+
+    /**
+     * Instantiates a new mapping.
+     *
+     * @param point the point
+     * @param assignedResult the assigned result
+     * @param distance the distance
+     */
+    Mapping(AssignedPoint point, AssignedFindFociResult assignedResult, double distance) {
+      this.point = point;
+      this.assignedResult = assignedResult;
+      this.distance = distance;
+    }
+  }
 
   /**
    * Launch the application.
@@ -353,7 +378,7 @@ public class FindFociHelperView extends JFrame
     gbc_comboSearchMode.fill = GridBagConstraints.HORIZONTAL;
     gbc_comboSearchMode.gridx = 1;
     gbc_comboSearchMode.gridy = 5;
-    comboSearchMode.setModel(new DefaultComboBoxModel<>(GridPointManager.getSearchModes()));
+    comboSearchMode.setModel(new DefaultComboBoxModel<>(SearchModeConverter.getSearchModes()));
     contentPane.add(comboSearchMode, gbc_comboSearchMode);
 
     btnRun = new JButton("Start");
@@ -580,8 +605,8 @@ public class FindFociHelperView extends JFrame
     final int oldValue = this.searchMode;
     this.searchMode = searchMode;
     this.firePropertyChange("searchMode", oldValue, searchMode);
-    if (manager != null) {
-      manager.setSearchMode(searchMode);
+    if (index != null) {
+      index.setSearchMode(SearchMode.forOrdinal(searchMode));
     }
   }
 
@@ -643,6 +668,9 @@ public class FindFociHelperView extends JFrame
     final int oldValue = this.resolution;
     this.resolution = resolution;
     this.firePropertyChange("resolution", oldValue, resolution);
+    if (index != null) {
+      index.setSearchDistance(Math.max(0, resolution));
+    }
   }
 
   /**
@@ -769,32 +797,39 @@ public class FindFociHelperView extends JFrame
       setActiveImage(activeImp.getTitle());
       logMessage("Analysing image %s (mask = %s)", activeImage, model.getMaskImage());
 
-      // Find foci and create the grid of maxima
+      // Find foci
       controller.run();
-      setPotentialMaxima(controller.getResultsArray().size());
+      final List<FindFociResult> results = controller.getResultsArray();
+      setPotentialMaxima(results.size());
 
-      // Create the grid of maxima
+      // Update the z position to be 1-based, not 0-based as per FindFoci. This simplifies
+      // comparisons between stack positions for ROIs and the results.
+      FindFociResults.incrementZ(results);
+
+      // Create the search index of maxima
       try {
-        final List<GridPoint> points = extractGridPoints(controller.getResultsArray());
-        manager = new GridPointManager(points, this.resolution);
-        logMessage("Identified %d potential maxima", points.size());
-        manager.setSearchMode(searchMode);
+        final Calibration cal = activeImp.getCalibration();
+        index = new AssignedFindFociResultSearchIndex(results, cal.pixelWidth, cal.pixelHeight,
+            cal.pixelDepth);
+
+        logMessage("Identified %d potential maxima", results.size());
+        index.setSearchMode(SearchMode.forOrdinal(searchMode));
         assignRoiPoints();
 
         // Register mouse events from the image canvas
         activeImp.getWindow().addWindowListener(this);
         activeImp.getCanvas().addMouseListener(this);
         activeImp.getCanvas().addMouseMotionListener(this);
-      } catch (final GridException ex) {
-        logMessage("Failed to create the grid of potential maxima: %s", ex.getMessage());
+      } catch (final Exception ex) {
+        logMessage("Failed to create the search index of potential maxima: %s", ex.getMessage());
         killPicker();
       }
     }
   }
 
   /**
-   * Processes all the ROI points and assigns the grid points using the current search method.
-   * Should be called to initialise the system.
+   * Processes all the ROI points and assigns the results using the current search method. Should be
+   * called to initialise the system.
    */
   private void assignRoiPoints() {
     synchronized (updatingPointsLock) {
@@ -809,12 +844,13 @@ public class FindFociHelperView extends JFrame
         logMessage("Assigning %d point%s to %s", points.length, (points.length != 1) ? "s" : "",
             activeImage);
 
-        if (searchMode == GridPointManager.HIGHEST) {
+        if (searchMode == SearchMode.HIGHEST.ordinal()) {
           assignToHighest(points);
         } else {
           points = assignToClosest(points);
         }
-        activeImp.setRoi(AssignedPointUtils.createRoi(activeImp, points));
+        activeImp.setRoi(AssignedPointUtils.createRoi(activeImp, controller.getActiveChannel(),
+            controller.getActiveFrame(), points));
       }
       currentRoiPoints = points.length;
 
@@ -842,15 +878,18 @@ public class FindFociHelperView extends JFrame
     aligner.sortPoints(points, controller.getActiveImageStack());
 
     for (int i = 0; i < points.length; i++) {
-      final int x = (int) points[i].getX();
-      final int y = (int) points[i].getY();
-      final GridPoint gridPoint = manager.findUnassignedPoint(x, y);
-      if (gridPoint != null) {
-        addMappedPoint(x, y, gridPoint, i + 1);
+      final int x = points[i].getXint();
+      final int y = points[i].getYint();
+      final int z = points[i].getZint();
+      final AssignedFindFociResult assignedResult = index.findHighest(x, y, z, false);
+      if (assignedResult != null) {
+        assignedResult.setAssigned(true);
+        final FindFociResult result = assignedResult.getResult();
+        addMappedPoint(x, y, z, result, i + 1);
 
         // Update points
-        points[i] = new AssignedPoint(gridPoint.getXint(), gridPoint.getYint(), points[i].getZint(),
-            points[i].getId());
+        points[i] =
+            new AssignedPoint(result.getX(), result.getY(), result.getZ(), points[i].getId());
       } else {
         addUnmappedPoint(x, y, i + 1);
       }
@@ -875,7 +914,7 @@ public class FindFociHelperView extends JFrame
       int unmapped = 0;
 
       // Used to store the potential mappings
-      final LinkedList<int[]> potentialMappedPoints = new LinkedList<>();
+      final LocalList<Mapping> potentialMappedPoints = new LocalList<>(points.length);
 
       for (final AssignedPoint point : points) {
         // Skip if assigned
@@ -886,42 +925,34 @@ public class FindFociHelperView extends JFrame
         // Find peak to assign
         final int x = point.getXint();
         final int y = point.getYint();
-        final GridPoint gridPoint = manager.findUnassignedPoint(x, y);
-        if (gridPoint == null) {
+        final int z = point.getZint();
+        final AssignedFindFociResult assignedResult = index.findClosest(x, y, z, false);
+        if (assignedResult == null) {
           // No available peak so just add this point as unmapped
           addUnmappedPoint(x, y, roiPoints.size() + 1);
           addNewRoiPoint(roiPoints, point);
           unmapped++;
         } else {
-          // Do not assign yet
-          gridPoint.setAssigned(false);
-
-          // Build a list of distances to unassigned peaks. Store distance and x,y coords.
-          // Multiply the distance to allow double precision to be approximately compared with
-          // integers.
-          potentialMappedPoints
-              .add(new int[] {x, y, point.getZint(), point.getId(), gridPoint.getXint(),
-                  gridPoint.getYint(), (int) (gridPoint.distanceSquared(x, y) * 100)});
+          // Build a list of distances to unassigned peaks.
+          potentialMappedPoints.add(
+              new Mapping(point, assignedResult, distance(x, y, z, assignedResult.getResult())));
         }
       }
 
       // Sort by distance
-      Collections.sort(potentialMappedPoints, new DistanceComparator());
+      potentialMappedPoints.sort((o1, o2) -> Double.compare(o1.distance, o2.distance));
 
       // Process points assigning to the peak if it is unassigned and matches the stored coords
-      for (final int[] mapping : potentialMappedPoints) {
-        final int x = mapping[0];
-        final int y = mapping[1];
-        final int z = mapping[2];
-        final int id = mapping[3];
-        final int newx = mapping[4];
-        final int newy = mapping[5];
-
-        final GridPoint gridPoint = manager.findExactUnassignedPoint(newx, newy);
-
-        if (gridPoint != null) {
-          addMappedPoint(x, y, gridPoint, roiPoints.size() + 1);
-          points[id] = new AssignedPoint(newx, newy, z, id);
+      for (final Mapping mapping : potentialMappedPoints) {
+        if (!mapping.assignedResult.isAssigned()) {
+          mapping.assignedResult.setAssigned(true);
+          final int x = mapping.point.getXint();
+          final int y = mapping.point.getYint();
+          final int z = mapping.point.getZint();
+          final int id = mapping.point.getId();
+          FindFociResult result = mapping.assignedResult.getResult();
+          addMappedPoint(x, y, z, result, roiPoints.size() + 1);
+          points[id] = new AssignedPoint(result.getX(), result.getY(), result.getZ(), id);
           addNewRoiPoint(roiPoints, points[id]);
           mapped++;
         }
@@ -930,8 +961,7 @@ public class FindFociHelperView extends JFrame
       logMessage("Processed %d / %d. +%d mapped, +%d unmapped", roiPoints.size(), points.length,
           mapped, unmapped);
     }
-    points = roiPoints.toArray(new AssignedPoint[0]);
-    return points;
+    return roiPoints.toArray(new AssignedPoint[0]);
   }
 
   private void addNewRoiPoint(ArrayList<AssignedPoint> roiPoints, AssignedPoint point) {
@@ -940,29 +970,30 @@ public class FindFociHelperView extends JFrame
   }
 
   /**
-   * Processes all the ROI points and assigns the grid points that are an exact match. This should
-   * be called when an ROI point has been removed. All other points should align exactly to a grid
-   * point or are unmapped.
+   * Processes all the ROI points and assigns the results that are an exact match. This should be
+   * called when an ROI point has been removed. All other points should align exactly to a result or
+   * are unmapped.
    */
   private void reassignRoiPoints() {
     synchronized (updatingPointsLock) {
       disableCounterEvents();
 
-      manager.resetAssigned();
+      index.setAssigned(false);
       setMappedPoints(0);
       setUnmappedPoints(0);
 
       final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp);
       if (points.length > 0) {
-        logMessage("Re-assigning %d point%s to %s", points.length, (points.length != 1) ? "s" : "",
-            activeImage);
+        logMessage("Re-assigning %s to %s", TextUtils.pleural(points.length, "point"), activeImage);
 
         for (int i = 0; i < points.length; i++) {
           final int x = points[i].getXint();
           final int y = points[i].getYint();
-          final GridPoint gridPoint = manager.findExactUnassignedPoint(x, y);
-          if (gridPoint != null) {
-            addMappedPoint(x, y, gridPoint, i + 1);
+          final int z = points[i].getZint();
+          final AssignedFindFociResult assignedResult = index.findExact(x, y, z, false);
+          if (assignedResult != null) {
+            assignedResult.setAssigned(true);
+            addMappedPoint(x, y, z, assignedResult.getResult(), i + 1);
           } else {
             addUnmappedPoint(x, y, i + 1);
           }
@@ -974,16 +1005,30 @@ public class FindFociHelperView extends JFrame
     }
   }
 
-  private void addMappedPoint(int x, int y, GridPoint gridPoint, int index) {
+  private void addMappedPoint(int x, int y, int z, FindFociResult point, int index) {
     if (logging) {
-      if (x == gridPoint.getX() && y == gridPoint.getY()) {
-        logMessage("%d: Mapped (%d,%d)", index, x, y);
+      if (x == point.getX() && y == point.getY() && z == point.getZ()) {
+        logMessage("%d: Mapped (%d,%d,%d)", index, x, y, z);
       } else {
-        logMessage("%d: Mapped (%d,%d) => (%d,%d) (%spx)", index, x, y, (int) gridPoint.getX(),
-            (int) gridPoint.getY(), IJ.d2s(gridPoint.distance(x, y), 1));
+        logMessage("%d: Mapped (%d,%d,%d) => (%d,%d,%d) (%spx)", index, x, y, z, point.getX(),
+            point.getY(), point.getZ(), MathUtils.rounded(Math.sqrt(distance(x, y, z, point))));
       }
     }
     setMappedPoints(this.mappedPoints + 1);
+  }
+
+  /**
+   * Compute the distance used by the index. This will be a squared Euclidean distance.
+   *
+   * @param x the x
+   * @param y the y
+   * @param z the z
+   * @param point the point
+   * @return the distance
+   */
+  private double distance(int x, int y, int z, FindFociResult point) {
+    return index.getDistanceFunction().distance(new double[] {x, y, z},
+        new double[] {point.getX(), point.getY(), point.getZ()});
   }
 
   private void addUnmappedPoint(int x, int y, int index) {
@@ -993,14 +1038,6 @@ public class FindFociHelperView extends JFrame
 
   private boolean isPickerActive() {
     return activeImp != null;
-  }
-
-  private static List<GridPoint> extractGridPoints(List<FindFociResult> resultsArray) {
-    final List<GridPoint> points = new ArrayList<>(resultsArray.size());
-    for (final FindFociResult result : resultsArray) {
-      points.add(new GridPoint(result.getX(), result.getY(), result.getZ(), result.getMaxValue()));
-    }
-    return points;
   }
 
   /**
@@ -1024,7 +1061,7 @@ public class FindFociHelperView extends JFrame
     setMappedPoints(0);
     setUnmappedPoints(0);
     currentRoiPoints = 0;
-    manager = null;
+    index = null;
     dragging = false;
   }
 
@@ -1085,7 +1122,7 @@ public class FindFociHelperView extends JFrame
 
         if (p.npoints == 1) {
           // Picking has restarted so allow update
-          manager.resetAssigned();
+          index.setAssigned(false);
           assignRoiPoints();
         } else {
           // This is a removal of a point, all other points should already be located at maxima
@@ -1098,7 +1135,7 @@ public class FindFociHelperView extends JFrame
   }
 
   /**
-   * Maps the given roi point to the highest unassigned grid point using the GridPointManager.
+   * Maps the given roi point to the best unassigned result using the search index.
    *
    * @param roi the roi
    * @param roiIndex the roi index
@@ -1109,25 +1146,24 @@ public class FindFociHelperView extends JFrame
       final Rectangle bounds = roi.getBounds();
       final int x = bounds.x + p.xpoints[roiIndex];
       final int y = bounds.y + p.ypoints[roiIndex];
+      final int z = activeImp.getZ();
 
-      final GridPoint gridPoint = manager.findUnassignedPoint(x, y);
+      final AssignedFindFociResult assignedResult = index.find(x, y, z, false);
 
-      if (gridPoint != null) {
-        addMappedPoint(x, y, gridPoint, roiIndex + 1);
+      if (assignedResult != null) {
+        assignedResult.setAssigned(true);
+        addMappedPoint(x, y, z, assignedResult.getResult(), roiIndex + 1);
 
-        // Update the ROI if the peak was re-mapped
-        // First update the existing points using the current bounds
-        for (int i = 0; i < p.npoints; i++) {
-          if (i != roiIndex) {
-            p.xpoints[i] += bounds.x;
-            p.ypoints[i] += bounds.y;
-          }
-        }
+        // Update the ROI if the peak was re-mapped.
+        // We extract all the points to preserve the z information.
+        AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp, roi);
         // Add the new position
-        p.xpoints[roiIndex] = gridPoint.getXint();
-        p.ypoints[roiIndex] = gridPoint.getYint();
+        points[roiIndex] =
+            new AssignedPoint(assignedResult.getResult().getX(), assignedResult.getResult().getY(),
+                assignedResult.getResult().getZ(), points[roiIndex].getId());
 
-        activeImp.setRoi(new PointRoi(p.xpoints, p.ypoints, p.npoints));
+        activeImp.setRoi(AssignedPointUtils.createRoi(activeImp, controller.getActiveChannel(),
+            controller.getActiveFrame(), points));
       } else {
         addUnmappedPoint(x, y, roiIndex + 1);
       }
@@ -1233,9 +1269,10 @@ public class FindFociHelperView extends JFrame
       final ImageCanvas ic = activeImp.getCanvas();
       final int ox = ic.offScreenX(event.getX());
       final int oy = ic.offScreenY(event.getY());
+      final int oz = activeImp.getZ();
 
       // Check if an assigned point is being moved
-      final GridPoint movedPoint = manager.findClosestAssignedPoint(ox, oy);
+      final AssignedFindFociResult assignedResult = index.findClosest(ox, oy, oz, true);
 
       final double mag = activeImp.getCanvas().getMagnification();
 
@@ -1249,9 +1286,10 @@ public class FindFociHelperView extends JFrame
       final int distanceLimit = (int) Math.ceil(5 / mag);
 
       // Check the point is within reasonable distance of the mouse
-      if (movedPoint != null && Math.abs(movedPoint.getX() - ox) <= distanceLimit
-          && Math.abs(movedPoint.getY() - oy) <= distanceLimit) {
-        movedPoint.setAssigned(false);
+      if (assignedResult != null
+          && Math.abs(assignedResult.getResult().getX() - ox) <= distanceLimit
+          && Math.abs(assignedResult.getResult().getY() - oy) <= distanceLimit) {
+        assignedResult.setAssigned(false);
         setMappedPoints(mappedPoints - 1);
       } else {
         setUnmappedPoints(unmappedPoints - 1);
@@ -1272,48 +1310,35 @@ public class FindFociHelperView extends JFrame
   }
 
   /**
-   * Allows the mapped points to be ranked in order of the distance to the mapped peak.
-   */
-  private static class DistanceComparator implements Comparator<int[]>, Serializable {
-    private static final long serialVersionUID = 1L;
-
-    @Override
-    public int compare(int[] o1, int[] o2) {
-      final int diff = o1[6] - o2[6];
-      if (diff > 0) {
-        return 1;
-      }
-      if (diff < 0) {
-        return -1;
-      }
-      // A second comparison could be added using for example the peak height or
-      // the distance to the next unassigned peak.
-      return 0;
-    }
-  }
-
-  /**
    * Saves the current ROI points to a results table.
    */
   private void saveResults() {
     final Calibration cal = activeImp.getCalibration();
 
+    final String labels = createResultsHeader();
     final TextWindow window = ImageJUtils.refresh(resultsWindow,
         () -> new TextWindow("FindFoci Helper Results", createResultsHeader(), "", 300, 500));
+    window.getTextPanel().updateColumnHeadings(labels);
 
     final ImageStack impStack = controller.getActiveImageStack();
     final AssignedPoint[] points = getRoiPoints();
     final StringBuilder sb = new StringBuilder();
-    for (final AssignedPoint p : points) {
-      final int x = p.getXint();
-      final int y = p.getYint();
-      final int z = p.getZint();
-      final int height = impStack.getProcessor(z + 1).get(x, y);
-      final boolean assigned = (p.getAssignedId() != -1);
-      createResult(sb, p.getId() + 1, x * cal.pixelWidth, y * cal.pixelHeight, height, assigned);
-      window.append(sb.toString());
+    try (final BufferedTextWindow tw = new BufferedTextWindow(window)) {
+      for (final AssignedPoint p : points) {
+        final int x = p.getXint();
+        final int y = p.getYint();
+        final int z = p.getZint();
+        final int height = impStack.getProcessor(z).get(x, y);
+        final boolean assigned = (p.getAssignedId() != -1);
+        // Note: ImageJ reports the current z-slice in the status bar
+        // using 0-based indexing so we do the same here to make mouse over
+        // look-up of pixel values match.
+        createResult(sb, p.getId() + 1, x, y, z - 1, x * cal.pixelWidth, y * cal.pixelHeight,
+            (z - 1) * cal.pixelDepth, height, assigned);
+        tw.append(sb.toString());
+      }
+      tw.append("");
     }
-    window.append("");
   }
 
   /**
@@ -1326,8 +1351,9 @@ public class FindFociHelperView extends JFrame
     for (final AssignedPoint p : points) {
       final int x = p.getXint();
       final int y = p.getYint();
-      final GridPoint gridPoint = manager.findExactAssignedPoint(x, y);
-      if (gridPoint == null) {
+      final int z = p.getZint();
+      final AssignedFindFociResult assignedResult = index.findExact(x, y, z, true);
+      if (assignedResult == null) {
         p.setAssignedId(-1);
       }
     }
@@ -1337,22 +1363,27 @@ public class FindFociHelperView extends JFrame
   private String createResultsHeader() {
     final Calibration cal = activeImp.getCalibration();
     final StringBuilder sb = new StringBuilder();
-    sb.append("Id\t");
+    sb.append("Id\tX\tY\tZ\t");
     sb.append("X (").append(cal.getXUnit()).append(")\t");
     sb.append("Y (").append(cal.getYUnit()).append(")\t");
+    sb.append("Z (").append(cal.getZUnit()).append(")\t");
     sb.append("Height\t");
-    sb.append("Assigned\t");
+    sb.append("Assigned");
     return sb.toString();
   }
 
-  private static void createResult(final StringBuilder sb, int index, double x, double y,
-      int height, boolean assigned) {
+  private static void createResult(final StringBuilder sb, int index, int x, int y, int z,
+      double xx, double yy, double zz, int height, boolean assigned) {
     sb.setLength(0);
     sb.append(index).append('\t');
-    sb.append(MathUtils.rounded(x)).append('\t');
-    sb.append(MathUtils.rounded(y)).append('\t');
+    sb.append(x).append('\t');
+    sb.append(y).append('\t');
+    sb.append(z).append('\t');
+    sb.append(MathUtils.rounded(xx)).append('\t');
+    sb.append(MathUtils.rounded(yy)).append('\t');
+    sb.append(MathUtils.rounded(zz)).append('\t');
     sb.append(height).append('\t');
-    sb.append(assigned).append('\t');
+    sb.append(assigned);
   }
 
   /**
@@ -1381,6 +1412,9 @@ public class FindFociHelperView extends JFrame
     savedRoi = activeImp.getRoi();
     if (savedRoi != null && savedRoi.getType() != Roi.POINT) {
       savedRoi = null;
+    } else {
+      // Clone this so killRoi does not delete the position counters
+      savedRoi = (Roi) savedRoi.clone();
     }
     activeImp.killRoi();
   }
@@ -1392,17 +1426,19 @@ public class FindFociHelperView extends JFrame
     // Kill the overlay
     activeImp.setOverlay(null);
 
-    final Roi roi = activeImp.getRoi();
-    if (roi != null) {
+    // Check if new ROI points have been added while the overlay is displayed
+    AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp);
+
+    if (points.length != 0) {
       // If this is a new point then merge it into the saved Point ROI
-      if (roi.getType() == Roi.POINT && savedRoi != null) {
+      final AssignedPoint[] oldPoints = AssignedPointUtils.extractRoiPoints(activeImp, savedRoi);
+      if (oldPoints.length != 0) {
         // Merge the current ROI and the saved one
-        PointRoi pointRoi = (PointRoi) savedRoi;
-        final AssignedPoint[] newPoints = AssignedPointUtils.extractRoiPoints(activeImp);
-        for (final AssignedPoint p : newPoints) {
-          pointRoi.addPoint(activeImp, p.getX(), p.getY());
-        }
-        activeImp.setRoi(pointRoi, true);
+        LocalList<AssignedPoint> all = new LocalList<>(points.length + oldPoints.length);
+        all.addAll(Arrays.asList(oldPoints));
+        all.addAll(Arrays.asList(points));
+        activeImp.setRoi(AssignedPointUtils.createRoi(activeImp, controller.getActiveChannel(),
+            controller.getActiveFrame(), all), true);
       }
     } else {
       // No new ROI so just restore from the old one

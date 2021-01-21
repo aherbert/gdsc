@@ -43,6 +43,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 import uk.ac.sussex.gdsc.core.utils.rng.SamplerUtils;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
@@ -137,6 +138,15 @@ class FindFociTest {
   private static final boolean OPTIMISED = true;
   private static final boolean NOT_NEGATIVE = false;
   private static final boolean NEGATIVE = true;
+
+  @Test
+  void testIncrementZ() {
+    final List<FindFociResult> list = Arrays.asList(new FindFociResult(), new FindFociResult());
+    list.get(0).z = 3;
+    FindFociResults.incrementZ(list);
+    Assertions.assertEquals(list.get(0), 4);
+    Assertions.assertEquals(list.get(1), 1);
+  }
 
   @SeededTest
   void isSameResultUsingIntProcessor(RandomSeed seed) {

@@ -238,7 +238,6 @@ public final class AssignedPointUtils {
    * @param array List of points
    * @return The PointRoi
    */
-  // TODO - check all use of this method
   public static Roi createRoi(List<? extends Coordinate> array) {
     final int nMaxima = array.size();
     final float[] xpoints = new float[nMaxima];
@@ -258,7 +257,6 @@ public final class AssignedPointUtils {
    * @param array List of points
    * @return The PointRoi
    */
-  // TODO - check all use of this method
   public static Roi createRoi(AssignedPoint[] array) {
     final int nMaxima = array.length;
     final float[] xpoints = new float[nMaxima];
@@ -286,10 +284,30 @@ public final class AssignedPointUtils {
    * @since 1.4
    */
   public static Roi createRoi(ImagePlus imp, List<? extends Coordinate> array) {
+    return createRoi(imp, imp.getChannel(), imp.getFrame(), array);
+  }
+
+  /**
+   * Creates an ImageJ PointRoi from the list of points. Uses the float XY coordinates.
+   * 
+   * <p>If the image is a stack then the integer Z coordinates are converted to a stack position
+   * using the provided image and the specified channel and frame.
+   *
+   * @param imp the image
+   * @param channel the channel
+   * @param frame the frame
+   * @param array List of points
+   * @return The PointRoi
+   * @see ImagePlus#getChannel()
+   * @see ImagePlus#getFrame()
+   * @see ImagePlus#getStackIndex(int, int, int)
+   * @see PointRoi#getPointPosition(int)
+   * @since 1.4
+   */
+  public static Roi createRoi(ImagePlus imp, int channel, int frame,
+      List<? extends Coordinate> array) {
     final Roi roi = createRoi(array);
     if (imp.getStackSize() > 1) {
-      final int channel = imp.getChannel();
-      final int frame = imp.getFrame();
       addPositions((PointRoi) roi, i -> imp.getStackIndex(channel, array.get(i).getZint(), frame));
     }
     return roi;
@@ -311,10 +329,29 @@ public final class AssignedPointUtils {
    * @since 1.4
    */
   public static Roi createRoi(ImagePlus imp, AssignedPoint[] array) {
+    return createRoi(imp, imp.getChannel(), imp.getFrame(), array);
+  }
+
+  /**
+   * Creates an ImageJ PointRoi from the list of points. Uses the float XY coordinates.
+   * 
+   * <p>If the image is a stack then the integer Z coordinates are converted to a stack position
+   * using the provided image and the specified channel and frame.
+   *
+   * @param imp the image
+   * @param channel the channel
+   * @param frame the frame
+   * @param array List of points
+   * @return The PointRoi
+   * @see ImagePlus#getChannel()
+   * @see ImagePlus#getFrame()
+   * @see ImagePlus#getStackIndex(int, int, int)
+   * @see PointRoi#getPointPosition(int)
+   * @since 1.4
+   */
+  public static Roi createRoi(ImagePlus imp, int channel, int frame, AssignedPoint[] array) {
     final Roi roi = createRoi(array);
     if (imp.getStackSize() > 1) {
-      final int channel = imp.getChannel();
-      final int frame = imp.getFrame();
       addPositions((PointRoi) roi, i -> imp.getStackIndex(channel, array[i].getZint(), frame));
     }
     return roi;

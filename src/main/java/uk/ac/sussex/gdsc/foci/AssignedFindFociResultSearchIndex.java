@@ -249,9 +249,10 @@ public final class AssignedFindFociResultSearchIndex {
    *
    * @param pixels the new search distance
    * @return a reference to this object
+   * @throws IllegalArgumentException if the distance is not positive
    */
   public AssignedFindFociResultSearchIndex setSearchDistance(int pixels) {
-    ValidationUtils.checkStrictlyPositive(pixels);
+    ValidationUtils.checkPositive(pixels);
     // This will not matter if the dimensions are 2 or 3
     searchDistance = distanceFunction.distance(new double[] {pixels, 0, 0}, new double[3]);
     return this;

@@ -64,14 +64,6 @@ class AssignedFindFociResultSearchIndexTest {
         new AssignedFindFociResultSearchIndex(results, 1, 1, 0);
     Assertions.assertEquals(1, index.size());
 
-    // Test setting properties
-    for (final SearchMode sm : SearchMode.values()) {
-      Assertions.assertSame(index, index.setSearchMode(sm));
-      Assertions.assertEquals(sm, index.getSearchMode());
-    }
-    Assertions.assertThrows(IllegalArgumentException.class, () -> index.setSearchDistance(0));
-    Assertions.assertSame(index, index.setSearchDistance(20));
-
     // Still 2d
     results.add(createResult(11, 12, 8, 7));
     Assertions.assertEquals(2, new AssignedFindFociResultSearchIndex(results, 1, 1, 0).size());
@@ -87,7 +79,7 @@ class AssignedFindFociResultSearchIndexTest {
     final AssignedFindFociResultSearchIndex index =
         new AssignedFindFociResultSearchIndex(results, 1, 1, 1);
     for (final SearchMode sm : SearchMode.values()) {
-      index.setSearchMode(sm);
+      Assertions.assertSame(index, index.setSearchMode(sm));
       Assertions.assertSame(sm, index.getSearchMode());
     }
   }
@@ -97,8 +89,9 @@ class AssignedFindFociResultSearchIndexTest {
     final ArrayList<FindFociResult> results = new ArrayList<>();
     final AssignedFindFociResultSearchIndex index =
         new AssignedFindFociResultSearchIndex(results, 1, 1, 1);
-    for (final int pixels : new int[] {1, 5, 15}) {
-      index.setSearchDistance(pixels);
+    Assertions.assertThrows(IllegalArgumentException.class, () -> index.setSearchDistance(-1));
+    for (final int pixels : new int[] {0, 1, 5, 15}) {
+      Assertions.assertSame(index, index.setSearchDistance(pixels));
       Assertions.assertEquals(pixels, index.getSearchDistance());
     }
   }
