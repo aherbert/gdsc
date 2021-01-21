@@ -289,7 +289,7 @@ public final class AssignedPointUtils {
 
   /**
    * Creates an ImageJ PointRoi from the list of points. Uses the float XY coordinates.
-   * 
+   *
    * <p>If the image is a stack then the integer Z coordinates are converted to a stack position
    * using the provided image and the specified channel and frame.
    *
@@ -334,7 +334,7 @@ public final class AssignedPointUtils {
 
   /**
    * Creates an ImageJ PointRoi from the list of points. Uses the float XY coordinates.
-   * 
+   *
    * <p>If the image is a stack then the integer Z coordinates are converted to a stack position
    * using the provided image and the specified channel and frame.
    *
