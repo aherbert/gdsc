@@ -27,6 +27,7 @@ package uk.ac.sussex.gdsc.foci;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
@@ -46,9 +47,10 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
  */
 public class PointExtractor_PlugIn implements PlugInFilter {
   private static final String TITLE = "Point Extracter";
+  private static final String SETTING_FILENAME = "gdsc.foci.pointextractor.filename";
 
   private static String mask = "";
-  private static String filename = "";
+  private static String filename = Prefs.getString(SETTING_FILENAME, "");
   private static boolean xyz = true;
 
   private PointRoi[] pointRois;
@@ -306,6 +308,8 @@ public class PointExtractor_PlugIn implements PlugInFilter {
       useCurrentImage = gd.getNextBoolean();
       reset = gd.getNextBoolean();
     }
+
+    Prefs.set(SETTING_FILENAME, filename);
 
     return true;
   }
