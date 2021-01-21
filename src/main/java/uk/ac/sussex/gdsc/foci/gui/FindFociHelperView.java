@@ -1148,6 +1148,17 @@ public class FindFociHelperView extends JFrame
       final int y = bounds.y + p.ypoints[roiIndex];
       final int z = activeImp.getZ();
 
+      // Extracted from an old version of the user manual:
+      // "Note that if the Search mode is set to highest then a check is made for the highest
+      // peak within the search radius. If present then the search resolution is updated to
+      // the distance to the highest assigned peak. This means that the plugin requires the
+      // user to click closer to a second unassigned peak than to an existing assigned high
+      // peak in close proximity. This prevents the plugin moving the clicked point past an
+      // already assigned peak to reach an unassigned peak."
+      //
+      // This functionality is not present and the manual text is out-of-date.
+      // The idea could be reinstated in the future.
+
       final AssignedFindFociResult assignedResult = index.find(x, y, z, false);
 
       if (assignedResult != null) {
