@@ -311,4 +311,13 @@ class AssignedPointUtilsTest {
         new AssignedPoint(1, 2, 3, 4), new AssignedPoint(2, 2, 3, 5),};
     Assertions.assertArrayEquals(expected, actual);
   }
+
+  @Test
+  void canIncrementZ() {
+    final AssignedPoint[] points =
+        new AssignedPoint[] {new AssignedPoint(0, 0, 0, 0), new AssignedPoint(0, 0, 4, 0)};
+    AssignedPointUtils.incrementZ(points);
+    Assertions.assertEquals(1, points[0].getZ());
+    Assertions.assertEquals(5, points[1].getZ());
+  }
 }

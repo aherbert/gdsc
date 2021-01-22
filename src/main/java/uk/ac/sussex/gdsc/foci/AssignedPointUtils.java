@@ -397,4 +397,18 @@ public final class AssignedPointUtils {
     newPoints.forEach(p -> p.setId(id[0]++));
     return newPoints.toArray(new AssignedPoint[0]);
   }
+
+  /**
+   * Increment the z position of the points.
+   *
+   * <p>By default the points extracted from a 2D image ROI have a z position of zero.
+   * Incrementing to 1-based indexing matches the indexing used by ImageJ ImageStacks.
+   *
+   * @param points the points
+   */
+  public static void incrementZ(AssignedPoint[] points) {
+    for (final AssignedPoint point : points) {
+      point.z++;
+    }
+  }
 }
