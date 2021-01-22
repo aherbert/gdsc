@@ -813,6 +813,7 @@ public class FindFociHelperView extends JFrame
 
         logMessage("Identified %d potential maxima", results.size());
         index.setSearchMode(SearchMode.forOrdinal(searchMode));
+        index.setSearchDistance(resolution);
         assignRoiPoints();
 
         // Register mouse events from the image canvas
@@ -837,7 +838,7 @@ public class FindFociHelperView extends JFrame
       setMappedPoints(0);
       setUnmappedPoints(0);
 
-      AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp);
+      AssignedPoint[] points = extractRoiPoints(activeImp);
       points = AssignedPointUtils.eliminateDuplicates(points);
       if (points.length > 0) {
         logMessage("Assigning %d point%s to %s", points.length, (points.length != 1) ? "s" : "",
@@ -889,7 +890,7 @@ public class FindFociHelperView extends JFrame
         points[i] =
             new AssignedPoint(result.getX(), result.getY(), result.getZ(), points[i].getId());
       } else {
-        addUnmappedPoint(x, y, i + 1);
+        addUnmappedPoint(x, y, z, i + 1);
       }
     }
   }
@@ -946,7 +947,7 @@ public class FindFociHelperView extends JFrame
         final AssignedFindFociResult assignedResult = index.findClosest(x, y, z, false);
         if (assignedResult == null) {
           // No available peak so just add this point as unmapped
-          addUnmappedPoint(x, y, roiPoints.size() + 1);
+          addUnmappedPoint(x, y, z, roiPoints.size() + 1);
           addNewRoiPoint(roiPoints, point);
           unmapped++;
         } else {
@@ -999,7 +1000,7 @@ public class FindFociHelperView extends JFrame
       setMappedPoints(0);
       setUnmappedPoints(0);
 
-      final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp);
+      final AssignedPoint[] points = extractRoiPoints(activeImp);
       if (points.length > 0) {
         logMessage("Re-assigning %s to %s", TextUtils.pleural(points.length, "point"), activeImage);
 
@@ -1012,7 +1013,7 @@ public class FindFociHelperView extends JFrame
             assignedResult.setAssigned(true);
             addMappedPoint(x, y, z, assignedResult.getResult(), i + 1);
           } else {
-            addUnmappedPoint(x, y, i + 1);
+            addUnmappedPoint(x, y, z, i + 1);
           }
         }
       }
@@ -1048,8 +1049,8 @@ public class FindFociHelperView extends JFrame
         new double[] {point.getX(), point.getY(), point.getZ()});
   }
 
-  private void addUnmappedPoint(int x, int y, int index) {
-    logMessage("%d: Unmapped (%d,%d)", index, x, y);
+  private void addUnmappedPoint(int x, int y, int z, int index) {
+    logMessage("%d: Unmapped (%d,%d,%d)", index, x, y, z);
     setUnmappedPoints(this.unmappedPoints + 1);
   }
 
@@ -1184,16 +1185,16 @@ public class FindFociHelperView extends JFrame
 
         // Update the ROI if the peak was re-mapped.
         // We extract all the points to preserve the z information.
-        final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp, roi);
+        final AssignedPoint[] points = extractRoiPoints(activeImp, roi);
         // Add the new position
         points[roiIndex] =
             new AssignedPoint(assignedResult.getResult().getX(), assignedResult.getResult().getY(),
                 assignedResult.getResult().getZ(), points[roiIndex].getId());
 
         activeImp.setRoi(AssignedPointUtils.createRoi(activeImp, controller.getActiveChannel(),
-            controller.getActiveFrame(), points));
+            controller.getActiveFrame(), points), true);
       } else {
-        addUnmappedPoint(x, y, roiIndex + 1);
+        addUnmappedPoint(x, y, z, roiIndex + 1);
       }
       currentRoiPoints = p.npoints;
     }
@@ -1211,8 +1212,9 @@ public class FindFociHelperView extends JFrame
       final Rectangle bounds = roi.getBounds();
       final int x = bounds.x + p.xpoints[roiIndex];
       final int y = bounds.y + p.ypoints[roiIndex];
+      final int z = activeImp.getZ();
 
-      addUnmappedPoint(x, y, roiIndex + 1);
+      addUnmappedPoint(x, y, z, roiIndex + 1);
       currentRoiPoints = p.npoints;
     }
   }
@@ -1375,7 +1377,7 @@ public class FindFociHelperView extends JFrame
    * @return the roi points
    */
   private AssignedPoint[] getRoiPoints() {
-    final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp);
+    final AssignedPoint[] points = extractRoiPoints(activeImp);
     for (final AssignedPoint p : points) {
       final int x = p.getXint();
       final int y = p.getYint();
@@ -1455,11 +1457,11 @@ public class FindFociHelperView extends JFrame
     activeImp.setOverlay(null);
 
     // Check if new ROI points have been added while the overlay is displayed
-    final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(activeImp);
+    final AssignedPoint[] points = extractRoiPoints(activeImp);
 
     if (points.length != 0) {
       // If this is a new point then merge it into the saved Point ROI
-      final AssignedPoint[] oldPoints = AssignedPointUtils.extractRoiPoints(activeImp, savedRoi);
+      final AssignedPoint[] oldPoints = extractRoiPoints(activeImp, savedRoi);
       if (oldPoints.length != 0) {
         // Merge the current ROI and the saved one
         final LocalList<AssignedPoint> all = new LocalList<>(points.length + oldPoints.length);
@@ -1474,6 +1476,35 @@ public class FindFociHelperView extends JFrame
     }
 
     savedRoi = null;
+  }
+
+  /**
+   * Extract the ROI points. 2D images will have the z coordinate set to 1.
+   *
+   * @param imp the image
+   * @return the assigned points
+   */
+  private static AssignedPoint[] extractRoiPoints(ImagePlus imp) {
+    final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(imp);
+    if (imp.getNSlices() == 1) {
+      AssignedPointUtils.incrementZ(points);
+    }
+    return points;
+  }
+
+  /**
+   * Extract the ROI points. 2D images will have the z coordinate set to 1.
+   *
+   * @param imp the image
+   * @param roi the roi
+   * @return the assigned points
+   */
+  private static AssignedPoint[] extractRoiPoints(ImagePlus imp, Roi roi) {
+    final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(imp, roi);
+    if (imp.getNSlices() == 1) {
+      AssignedPointUtils.incrementZ(points);
+    }
+    return points;
   }
 
   /**
