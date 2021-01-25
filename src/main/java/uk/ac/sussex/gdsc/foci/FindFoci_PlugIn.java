@@ -84,6 +84,7 @@ import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.logging.LoggerUtils;
 import uk.ac.sussex.gdsc.core.logging.Ticker;
 import uk.ac.sussex.gdsc.core.utils.CollectionUtils;
+import uk.ac.sussex.gdsc.core.utils.LocalCollectors;
 import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.MemoryUtils;
@@ -922,8 +923,7 @@ public class FindFoci_PlugIn implements PlugIn {
     final FindFociProcessorOptions processorOptions = settings.processorOptions;
     final FindFociOptions options = settings.options;
 
-    gd.addChoice(OPTION_MASK, newImageList.toArray(new String[0]),
-        settings.maskImage);
+    gd.addChoice(OPTION_MASK, newImageList.toArray(new String[0]), settings.maskImage);
     gd.addMessage("Background options ...");
     gd.addChoice(OPTION_BACKGROUND_METHOD, BackgroundMethod.getDescriptions(),
         processorOptions.getBackgroundMethod().ordinal());
@@ -1240,22 +1240,22 @@ public class FindFoci_PlugIn implements PlugIn {
     configureOverlayRoi(roi);
 
     // This is only applicable to single z stack images.
-    // We should call setPosition(int,int,int) for hyperstacks
+    // We should call setPosition(int,int,int) for hyperstacks.
+    // Here we set the z slice position. The conversion for hyperstacks is done later
+    // when the ROI is added to the image overlay. The same ROI can then be used for
+    // both hyperstacks (with cloning and resetting the position) and the output mask image.
     roi.setPosition(slice);
 
     return roi;
   }
 
-  private static PointRoi createRoi(List<FindFociResult> resultsArray, boolean hideLabels) {
-    final int nMaxima = resultsArray.size();
-    final int[] xpoints = new int[nMaxima];
-    final int[] ypoints = new int[nMaxima];
-    for (int i = 0; i < nMaxima; i++) {
-      final FindFociResult xy = resultsArray.get(i);
-      xpoints[i] = xy.x;
-      ypoints[i] = xy.y;
-    }
-    final PointRoi roi = new PointRoi(xpoints, ypoints, nMaxima);
+  private static PointRoi createRoi(ImagePlus imp, List<FindFociResult> resultsArray,
+      boolean hideLabels) {
+    // Convert to coordinates. Increment z to a slice position.
+    final List<BasePoint> list = resultsArray.stream().map(r -> new BasePoint(r.x, r.y, r.z + 1))
+        .collect(LocalCollectors.toLocalList());
+    // Create the ROI
+    final PointRoi roi = (PointRoi) AssignedPointUtils.createRoi(imp, list);
     roi.setShowLabels(!hideLabels);
     return roi;
   }
@@ -1690,16 +1690,16 @@ public class FindFoci_PlugIn implements PlugIn {
             addRoiToOverlay(maxImp, rois);
           }
         } else {
-          final PointRoi roi = createRoi(resultsArray, options.isOption(OutputOption.HIDE_LABELS));
+          final boolean hideLabels = options.isOption(OutputOption.HIDE_LABELS);
 
           if (options.isOption(OutputOption.ROI_SELECTION)) {
             killOverlayPointRoi(imp);
-            imp.setRoi(roi);
+            imp.setRoi(createRoi(imp, resultsArray, hideLabels));
           }
 
           if (maxImp != null && options.isOption(OutputOption.MASK_ROI_SELECTION)) {
             killOverlayPointRoi(maxImp);
-            maxImp.setRoi(roi);
+            maxImp.setRoi(createRoi(maxImp, resultsArray, hideLabels));
           }
         }
       } else {
@@ -2371,15 +2371,15 @@ public class FindFoci_PlugIn implements PlugIn {
           addRoiToOverlay(maxImp, rois);
         }
       } else {
-        final PointRoi roi = createRoi(resultsArray, options.isOption(OutputOption.HIDE_LABELS));
+        final boolean hideLabels = options.isOption(OutputOption.HIDE_LABELS);
 
         if (options.isOption(OutputOption.ROI_SELECTION)) {
-          imp.setRoi(roi);
+          imp.setRoi(createRoi(imp, resultsArray, hideLabels));
           saveImp = true;
         }
 
         if (maxImp != null && options.isOption(OutputOption.MASK_ROI_SELECTION)) {
-          maxImp.setRoi(roi);
+          maxImp.setRoi(createRoi(maxImp, resultsArray, hideLabels));
         }
       }
     }
