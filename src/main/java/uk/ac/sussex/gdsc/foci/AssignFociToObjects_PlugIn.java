@@ -53,6 +53,8 @@ import uk.ac.sussex.gdsc.help.UrlUtils;
 /**
  * Finds objects in an image using contiguous pixels of the same value. Locates the closest object
  * to each Find Foci result held in memory and summarises the counts.
+ *
+ * <p>Analysis uses 2D XY coordinates.
  */
 public class AssignFociToObjects_PlugIn implements PlugInFilter {
   /** The title of the plugin. */

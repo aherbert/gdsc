@@ -50,6 +50,8 @@ import uk.ac.sussex.gdsc.help.UrlUtils;
 /**
  * Analyses marked ROI points in an image. Find the closest pairs within a set distance of each
  * other.
+ *
+ * <p>Analysis uses 2D XY coordinates.
  */
 public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
 

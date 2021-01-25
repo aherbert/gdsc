@@ -121,6 +121,10 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
 
   private ImagePlus imp;
   private boolean[] edge;
+  /**
+   * The ROI points used to filter the clusters to those located within a specified radius of a
+   * point. Only the 2D XY coords are used for the filter.
+   */
   private AssignedPoint[] roiPoints;
   private List<FindFociResult> results;
   private List<Cluster> clusters;
