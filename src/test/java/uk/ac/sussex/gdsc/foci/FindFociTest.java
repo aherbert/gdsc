@@ -144,8 +144,8 @@ class FindFociTest {
     final List<FindFociResult> list = Arrays.asList(new FindFociResult(), new FindFociResult());
     list.get(0).z = 3;
     FindFociResults.incrementZ(list);
-    Assertions.assertEquals(list.get(0), 4);
-    Assertions.assertEquals(list.get(1), 1);
+    Assertions.assertEquals(4, list.get(0).z);
+    Assertions.assertEquals(1, list.get(1).z);
   }
 
   @SeededTest
