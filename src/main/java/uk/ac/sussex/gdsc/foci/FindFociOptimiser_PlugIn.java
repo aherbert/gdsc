@@ -2092,11 +2092,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
     // Add 3D support here by getting the results from the results table
     final List<FindFociResult> results = FindFoci_PlugIn.getLastResults();
-    final AssignedPoint[] predictedPoints = new AssignedPoint[results.size()];
-    for (int i = 0; i < predictedPoints.length; i++) {
-      final FindFociResult result = results.get(i);
-      predictedPoints[i] = new AssignedPoint(result.x, result.y, result.z + 1, i);
-    }
+    final AssignedPoint[] predictedPoints = extractedPredictedPoints(results);
     maskImage(clone, mask);
 
     if (showScoreImages) {
@@ -2148,6 +2144,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       clone.setTitle(cloneTitle);
     } else {
       clone.setStack(imp.getImageStack().duplicate());
+      clone.setDimensions(imp.getNChannels(), imp.getNSlices(), imp.getNFrames());
     }
     clone.setOverlay(null);
     return clone;
@@ -2156,12 +2153,14 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   private static ImagePlus cloneImage(ImagePlus imp, ImagePlus mask, String cloneTitle) {
     ImagePlus clone = WindowManager.getImage(cloneTitle);
     final Integer maskId = (mask != null) ? Integer.valueOf(mask.getID()) : 0;
-    if (clone == null || !clone.getProperty("MASK").equals(maskId)) {
+    if (clone == null || !clone.getProperty("IMAGE").equals(imp.getID())
+        || !clone.getProperty("MASK").equals(maskId)) {
       if (clone != null) {
         clone.close();
       }
       clone = imp.duplicate();
       clone.setTitle(cloneTitle);
+      clone.setProperty("IMAGE", imp.getID());
       clone.setProperty("MASK", maskId);
       clone.setOverlay(null);
 
@@ -2175,10 +2174,14 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     if (validMask(clone, mask)) {
       final ImageStack cloneStack = clone.getImageStack();
       final ImageStack maskStack = mask.getImageStack();
-      final boolean reloadMask = cloneStack.getSize() == maskStack.getSize();
+      final int ch1 = clone.getChannel();
+      final int fr1 = clone.getFrame();
+      final int ch2 = mask.getChannel();
+      final int fr2 = mask.getFrame();
       for (int slice = 1; slice <= cloneStack.getSize(); slice++) {
-        final ImageProcessor ipClone = cloneStack.getProcessor(slice);
-        final ImageProcessor ipMask = maskStack.getProcessor(reloadMask ? slice : 1);
+        final ImageProcessor ipClone =
+            cloneStack.getProcessor(clone.getStackIndex(ch1, slice, fr1));
+        final ImageProcessor ipMask = maskStack.getProcessor(mask.getStackIndex(ch2, slice, fr2));
 
         for (int i = ipClone.getPixelCount(); i-- > 0;) {
           if (ipMask.get(i) == 0) {
@@ -3091,11 +3094,20 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
         matchResult.getRmsd());
   }
 
-  private static Coordinate[] extractedPredictedPoints(List<FindFociResult> resultsArray) {
-    final Coordinate[] predictedPoints = new Coordinate[resultsArray.size()];
+  /**
+   * Extracted the predicted points.
+   *
+   * <p>Note: Uses AssignedPoint for convenience so that the points can be saved to file using
+   * AssignedPointUtils.
+   *
+   * @param resultsArray the results array
+   * @return the points
+   */
+  private static AssignedPoint[] extractedPredictedPoints(List<FindFociResult> resultsArray) {
+    final AssignedPoint[] predictedPoints = new AssignedPoint[resultsArray.size()];
     for (int i = 0; i < resultsArray.size(); i++) {
       final FindFociResult result = resultsArray.get(i);
-      predictedPoints[i] = new BasePoint(result.x, result.y, result.z + 1);
+      predictedPoints[i] = new AssignedPoint(result.x, result.y, result.z + 1, i);
     }
     return predictedPoints;
   }
