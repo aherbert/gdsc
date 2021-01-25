@@ -2009,7 +2009,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     if (matchSearchMethod == 1) {
       return matchSearchDistance;
     }
-    final int length = (imp.getWidth() < imp.getHeight()) ? imp.getWidth() : imp.getHeight();
+    final int length = Math.min(imp.getWidth(), imp.getHeight());
     return Math.ceil(matchSearchDistance * length);
   }
 
@@ -2032,8 +2032,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     final FindFoci_PlugIn ff = new FindFoci_PlugIn();
     ff.exec(clone, mask, processorOptions, options, true);
 
-    // Add 3D support here by getting the results from the results table not the clone image which
-    // only supports 2D
+    // Add 3D support here by getting the results from the results table
     final List<FindFociResult> results = FindFoci_PlugIn.getLastResults();
     final AssignedPoint[] predictedPoints = new AssignedPoint[results.size()];
     for (int i = 0; i < predictedPoints.length; i++) {
