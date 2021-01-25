@@ -24,7 +24,6 @@
 
 package uk.ac.sussex.gdsc.foci;
 
-import com.google.common.annotations.VisibleForTesting;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.set.hash.TDoubleHashSet;
@@ -40,6 +39,7 @@ import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.gui.YesNoCancelDialog;
 import ij.io.FileInfo;
+import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.Recorder;
 import ij.process.ImageProcessor;
@@ -79,11 +79,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.ToDoubleBiFunction;
 import java.util.regex.Pattern;
 import javax.swing.WindowConstants;
 import org.apache.commons.lang3.ArrayUtils;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
+import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
 import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.SimpleImageJTrackProgress;
@@ -1645,13 +1647,13 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       return null;
     }
 
-    final boolean is3D = is3D(roiPoints);
-
     final ArrayList<Result> results = new ArrayList<>(combinations);
 
     // Set the threshold for assigning points matches as a fraction of the image size
     final double distanceThreshold =
         getDistanceThreshold(imp, settings.matchSearchMethod, settings.matchSearchDistance);
+    final ToDoubleBiFunction<Coordinate, Coordinate> distanceFunction =
+        getDistanceFunction(imp, is3D(roiPoints));
 
     // The stopwatch for the total run-time
     final StopWatch sw = new StopWatch();
@@ -1795,9 +1797,9 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
                               // The analysis time is not included in the speed-up factor
                               final long start = System.nanoTime();
                               final Parameters runOptions = new Parameters(processorOptions);
-                              final Result result =
-                                  analyseResults(id, roiPoints, peakResults.results,
-                                      distanceThreshold, runOptions, time, settings.beta, is3D);
+                              final Result result = analyseResults(id, roiPoints,
+                                  peakResults.results, distanceThreshold, runOptions, time,
+                                  settings.beta, distanceFunction);
                               results.add(result);
                               analysisTime += System.nanoTime() - start;
                             }
@@ -2004,13 +2006,69 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     Recorder.setCommand(null);
   }
 
+  /**
+   * Gets the distance threshold. This is suitable for a squared Euclidean distance function.
+   *
+   * @param imp the imp
+   * @param matchSearchMethod the match search method
+   * @param matchSearchDistance the match search distance
+   * @return the distance threshold
+   */
   private static double getDistanceThreshold(ImagePlus imp, int matchSearchMethod,
       double matchSearchDistance) {
     if (matchSearchMethod == 1) {
-      return matchSearchDistance;
+      return matchSearchDistance * matchSearchDistance;
     }
     final int length = Math.min(imp.getWidth(), imp.getHeight());
-    return Math.ceil(matchSearchDistance * length);
+    return MathUtils.pow2(Math.ceil(matchSearchDistance * length));
+  }
+
+  /**
+   * Gets the distance function. Returns a squared Euclidean distance function. If the image is
+   * calibrated then the distance in Z is scaled to equivalent pixels units for the XY dimensions.
+   *
+   * @param imp the image
+   * @param is3d true if the target results are 3D
+   * @return the distance function
+   */
+  @VisibleForTesting
+  static ToDoubleBiFunction<Coordinate, Coordinate> getDistanceFunction(ImagePlus imp,
+      boolean is3d) {
+    Calibration cal = imp.getCalibration();
+    if (is3d) {
+      if (cal.pixelWidth == cal.pixelHeight) {
+        // No XY scaling
+        final double sz = cal.pixelDepth / cal.pixelWidth;
+        return (c1, c2) -> {
+          final double dx = c1.getX() - c2.getX();
+          final double dy = c1.getY() - c2.getY();
+          final double dz = (c1.getZ() - c2.getZ()) * sz;
+          return dx * dx + dy * dy + dz * dz;
+        };
+      }
+      final double sy = cal.pixelHeight / cal.pixelWidth;
+      final double sz = cal.pixelDepth / cal.pixelWidth;
+      return (c1, c2) -> {
+        final double dx = c1.getX() - c2.getX();
+        final double dy = (c1.getY() - c2.getY()) * sy;
+        final double dz = (c1.getZ() - c2.getZ()) * sz;
+        return dx * dx + dy * dy + dz * dz;
+      };
+    }
+    if (cal.pixelWidth == cal.pixelHeight) {
+      // No scaling
+      return (c1, c2) -> {
+        final double dx = c1.getX() - c2.getX();
+        final double dy = c1.getY() - c2.getY();
+        return dx * dx + dy * dy;
+      };
+    }
+    final double sy = cal.pixelHeight / cal.pixelWidth;
+    return (c1, c2) -> {
+      final double dx = c1.getX() - c2.getX();
+      final double dy = (c1.getY() - c2.getY()) * sy;
+      return dx * dx + dy * dy;
+    };
   }
 
   @Nullable
@@ -2047,16 +2105,12 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       final List<Coordinate> truePositives = new LinkedList<>();
       final List<Coordinate> falsePositives = new LinkedList<>();
       final List<Coordinate> falseNegatives = new LinkedList<>();
-      final boolean is3D = is3D(actualPoints);
-      if (is3D) {
-        MatchCalculator.analyseResults3D(actualPoints, predictedPoints,
-            getDistanceThreshold(imp, matchSearchMethod, matchSearchDistance), truePositives,
-            falsePositives, falseNegatives);
-      } else {
-        MatchCalculator.analyseResults2D(actualPoints, predictedPoints,
-            getDistanceThreshold(imp, matchSearchMethod, matchSearchDistance), truePositives,
-            falsePositives, falseNegatives);
-      }
+      final double distanceThreshold =
+          getDistanceThreshold(imp, matchSearchMethod, matchSearchDistance);
+      final ToDoubleBiFunction<Coordinate, Coordinate> distanceFunction =
+          getDistanceFunction(imp, is3D(actualPoints));
+      MatchCalculator.analyseResultsCoordinates(actualPoints, predictedPoints, distanceThreshold,
+          truePositives, falsePositives, falseNegatives, null, distanceFunction);
 
       // Show image with TP, FP and FN. Use an overlay to support 3D images
       final ImagePlus tpImp = cloneImage(imp, mask, imp.getTitle() + " TP");
@@ -2195,8 +2249,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     gd.addChoice("Settings", presetSettingsNames, presetSettingsNames[0]);
 
     if (newImageList != null) {
-      gd.addChoice("Mask", newImageList.toArray(new String[0]),
-          settings.maskImage);
+      gd.addChoice("Mask", newImageList.toArray(new String[0]), settings.maskImage);
     }
 
     // Do not allow background above mean and background absolute to both be enabled.
@@ -3026,27 +3079,23 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
   private static Result analyseResults(int id, AssignedPoint[] roiPoints,
       List<FindFociResult> resultsArray, double distanceThreshold, Parameters options, long time,
-      double beta, boolean is3D) {
+      double beta, ToDoubleBiFunction<Coordinate, Coordinate> edges) {
     // Extract results for analysis
-    final AssignedPoint[] predictedPoints = extractedPredictedPoints(resultsArray);
+    final Coordinate[] predictedPoints = extractedPredictedPoints(resultsArray);
 
-    MatchResult matchResult;
-    if (is3D) {
-      matchResult = MatchCalculator.analyseResults3D(roiPoints, predictedPoints, distanceThreshold);
-    } else {
-      matchResult = MatchCalculator.analyseResults2D(roiPoints, predictedPoints, distanceThreshold);
-    }
+    final MatchResult matchResult = MatchCalculator.analyseResultsCoordinates(roiPoints,
+        predictedPoints, distanceThreshold, null, null, null, null, edges);
 
     return new Result(id, options, matchResult.getNumberPredicted(), matchResult.getTruePositives(),
         matchResult.getFalsePositives(), matchResult.getFalseNegatives(), time, beta,
         matchResult.getRmsd());
   }
 
-  private static AssignedPoint[] extractedPredictedPoints(List<FindFociResult> resultsArray) {
-    final AssignedPoint[] predictedPoints = new AssignedPoint[resultsArray.size()];
+  private static Coordinate[] extractedPredictedPoints(List<FindFociResult> resultsArray) {
+    final Coordinate[] predictedPoints = new Coordinate[resultsArray.size()];
     for (int i = 0; i < resultsArray.size(); i++) {
       final FindFociResult result = resultsArray.get(i);
-      predictedPoints[i] = new AssignedPoint(result.x, result.y, result.z, i);
+      predictedPoints[i] = new BasePoint(result.x, result.y, result.z + 1);
     }
     return predictedPoints;
   }
