@@ -40,6 +40,7 @@ import ij.gui.Roi;
 import ij.gui.YesNoCancelDialog;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
+import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.Recorder;
 import ij.process.ImageProcessor;
@@ -2140,7 +2141,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   private static ImagePlus cloneImage(ImagePlus imp, String cloneTitle) {
     ImagePlus clone = WindowManager.getImage(cloneTitle);
     if (clone == null) {
-      clone = imp.duplicate();
+      clone = duplicate(imp);
       clone.setTitle(cloneTitle);
     } else {
       clone.setStack(imp.getImageStack().duplicate());
@@ -2158,7 +2159,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       if (clone != null) {
         clone.close();
       }
-      clone = imp.duplicate();
+      clone = duplicate(imp);
       clone.setTitle(cloneTitle);
       clone.setProperty("IMAGE", imp.getID());
       clone.setProperty("MASK", maskId);
@@ -2168,6 +2169,23 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       maskImage(clone, mask);
     }
     return clone;
+  }
+
+  /**
+   * Duplicate the image. This avoids a bug in {@link ImagePlus#duplicate()} where the ROI is killed
+   * and the position information of a PointRoi is lost.
+   *
+   * @param imp the imp
+   * @return the image plus
+   */
+  private static ImagePlus duplicate(ImagePlus imp) {
+    // ImagePlus duplicate() does not clone the ROI and the delete removes the position
+    // information for PointRois
+    final Roi roi = (Roi) imp.getRoi().clone();
+    imp.deleteRoi();
+    final ImagePlus imp2 = (new Duplicator()).run(imp);
+    imp.setRoi(roi);
+    return imp2;
   }
 
   private static void maskImage(ImagePlus clone, ImagePlus mask) {
