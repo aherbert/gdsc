@@ -810,8 +810,9 @@ public class FindFociHelperView extends JFrame
         final Calibration cal = activeImp.getCalibration();
         index = new AssignedFindFociResultSearchIndex(results, cal.pixelWidth, cal.pixelHeight,
             cal.pixelDepth);
-        logMessage("Distance scaling: 1.0 x %s x %s", cal.pixelHeight / cal.pixelWidth,
-            cal.pixelDepth / cal.pixelWidth);
+        logMessage("Distance scaling: 1.0 x %s x %s",
+            MathUtils.round(cal.pixelHeight / cal.pixelWidth),
+            MathUtils.rounded(cal.pixelDepth / cal.pixelWidth));
         logMessage("Identified %d potential maxima", results.size());
         index.setSearchMode(SearchMode.forOrdinal(searchMode));
         index.setSearchDistance(resolution);
