@@ -374,7 +374,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     int fn = 0;
     double rmsd = 0;
 
-    final boolean is3D = is3D(actualPoints) && is3D(predictedPoints);
+    final boolean is3D = CoordinateUtils.is3d(actualPoints, predictedPoints);
     final boolean computePairs =
         settings.showPairs || settings.savePairs || settings.savePairsSingleFile
             || (settings.showComposite && myImage1 != null && myImage2 != null);
@@ -462,25 +462,6 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     // If input images and a mask have been selected then we can produce an output
     // that draws the points on a composite image.
     produceComposite(pairs);
-  }
-
-  /**
-   * Checks if there is more than one z-value in the coordinates.
-   *
-   * @param points the points
-   * @return true, if is 3d
-   */
-  private static boolean is3D(TimeValuedPoint[] points) {
-    if (points.length == 0) {
-      return false;
-    }
-    final float z = points[0].getZ();
-    for (final TimeValuedPoint p : points) {
-      if (p.getZ() != z) {
-        return true;
-      }
-    }
-    return false;
   }
 
   /**

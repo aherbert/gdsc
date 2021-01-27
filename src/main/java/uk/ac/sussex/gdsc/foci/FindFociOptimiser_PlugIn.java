@@ -39,7 +39,6 @@ import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.gui.YesNoCancelDialog;
 import ij.io.FileInfo;
-import ij.measure.Calibration;
 import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.Recorder;
@@ -1654,7 +1653,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     final double distanceThreshold =
         getDistanceThreshold(imp, settings.matchSearchMethod, settings.matchSearchDistance);
     final ToDoubleBiFunction<Coordinate, Coordinate> distanceFunction =
-        getDistanceFunction(imp, is3D(roiPoints));
+        CoordinateUtils.getSquaredDistanceFunction(imp.getCalibration(), is3D(roiPoints));
 
     // The stopwatch for the total run-time
     final StopWatch sw = new StopWatch();
@@ -1902,7 +1901,6 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       out.newLine();
       out.write("# Results");
       out.newLine();
-      out.write("# ");
       out.write(createResultsHeader(true, false)); // Include newline
 
       // Output all results in ascending rank order
@@ -2024,54 +2022,6 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     return MathUtils.pow2(Math.ceil(matchSearchDistance * length));
   }
 
-  /**
-   * Gets the distance function. Returns a squared Euclidean distance function. If the image is
-   * calibrated then the distance in Z is scaled to equivalent pixels units for the XY dimensions.
-   *
-   * @param imp the image
-   * @param is3d true if the target results are 3D
-   * @return the distance function
-   */
-  @VisibleForTesting
-  static ToDoubleBiFunction<Coordinate, Coordinate> getDistanceFunction(ImagePlus imp,
-      boolean is3d) {
-    Calibration cal = imp.getCalibration();
-    if (is3d) {
-      if (cal.pixelWidth == cal.pixelHeight) {
-        // No XY scaling
-        final double sz = cal.pixelDepth / cal.pixelWidth;
-        return (c1, c2) -> {
-          final double dx = c1.getX() - c2.getX();
-          final double dy = c1.getY() - c2.getY();
-          final double dz = (c1.getZ() - c2.getZ()) * sz;
-          return dx * dx + dy * dy + dz * dz;
-        };
-      }
-      final double sy = cal.pixelHeight / cal.pixelWidth;
-      final double sz = cal.pixelDepth / cal.pixelWidth;
-      return (c1, c2) -> {
-        final double dx = c1.getX() - c2.getX();
-        final double dy = (c1.getY() - c2.getY()) * sy;
-        final double dz = (c1.getZ() - c2.getZ()) * sz;
-        return dx * dx + dy * dy + dz * dz;
-      };
-    }
-    if (cal.pixelWidth == cal.pixelHeight) {
-      // No scaling
-      return (c1, c2) -> {
-        final double dx = c1.getX() - c2.getX();
-        final double dy = c1.getY() - c2.getY();
-        return dx * dx + dy * dy;
-      };
-    }
-    final double sy = cal.pixelHeight / cal.pixelWidth;
-    return (c1, c2) -> {
-      final double dx = c1.getX() - c2.getX();
-      final double dy = (c1.getY() - c2.getY()) * sy;
-      return dx * dx + dy * dy;
-    };
-  }
-
   @Nullable
   private static AssignedPoint[] showResult(ImagePlus imp, ImagePlus mask, Parameters parameters,
       boolean showScoreImages, int matchSearchMethod, double matchSearchDistance) {
@@ -2105,7 +2055,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       final double distanceThreshold =
           getDistanceThreshold(imp, matchSearchMethod, matchSearchDistance);
       final ToDoubleBiFunction<Coordinate, Coordinate> distanceFunction =
-          getDistanceFunction(imp, is3D(actualPoints));
+          CoordinateUtils.getSquaredDistanceFunction(imp.getCalibration(), is3D(actualPoints));
       MatchCalculator.analyseResultsCoordinates(actualPoints, predictedPoints, distanceThreshold,
           truePositives, falsePositives, falseNegatives, null, distanceFunction);
 

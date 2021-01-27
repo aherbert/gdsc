@@ -54,6 +54,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.ToDoubleBiFunction;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.data.utils.Rounder;
@@ -785,13 +786,29 @@ public class Match_PlugIn implements PlugIn {
     final List<Coordinate> falsePositives = new LinkedList<>();
     final List<Coordinate> falseNegatives = new LinkedList<>();
     final List<PointPair> matches = new LinkedList<>();
-    final MatchResult result = (memoryMode)
-        ? MatchCalculator.analyseResults3D(actualPoints, predictedPoints, distanceThreshold,
-            truePositives, falsePositives, falseNegatives, matches)
-        : MatchCalculator.analyseResults2D(actualPoints, predictedPoints, distanceThreshold,
-            truePositives, falsePositives, falseNegatives, matches);
-    final MatchResult[] quartileResults =
-        (doQuartiles) ? compareQuartiles(actualPoints, predictedPoints, distanceThreshold) : null;
+    // Compute in 3D if both sets of results are 3D.
+    final boolean is3d = CoordinateUtils.is3d(actualPoints, predictedPoints);
+    // Used a scaled distance function if possible from the calibrated input images.
+    Calibration cal = null;
+    if (imageMode) {
+      final Calibration cal1 = WindowManager.getImage(t1).getCalibration();
+      final Calibration cal2 = WindowManager.getImage(t2).getCalibration();
+      if (cal1.pixelWidth == cal2.pixelWidth && cal1.pixelHeight == cal2.pixelHeight
+          && cal1.pixelDepth == cal2.pixelDepth) {
+        cal = cal1;
+      }
+    }
+    if (cal == null) {
+      cal = new Calibration();
+    }
+    final ToDoubleBiFunction<Coordinate, Coordinate> distanceFunction =
+        CoordinateUtils.getSquaredDistanceFunction(cal, is3d);
+    final MatchResult result = MatchCalculator.analyseResultsCoordinates(actualPoints,
+        predictedPoints, distanceThreshold * distanceThreshold, truePositives, falsePositives,
+        falseNegatives, matches, distanceFunction);
+    final MatchResult[] quartileResults = (doQuartiles)
+        ? compareQuartiles(actualPoints, predictedPoints, distanceThreshold, distanceFunction)
+        : null;
 
     String header = null;
 
@@ -829,12 +846,14 @@ public class Match_PlugIn implements PlugIn {
    *
    * @param actualPoints the actual points
    * @param predictedPoints the predicted points
-   * @param distanceThreshold the d threshold
+   * @param distanceThreshold the distance threshold
+   * @param distanceFunction the distance function
    * @return An array of 4 quartile results (or null if there are no points)
    */
   @Nullable
   private static MatchResult[] compareQuartiles(Coordinate[] actualPoints,
-      Coordinate[] predictedPoints, double distanceThreshold) {
+      Coordinate[] predictedPoints, double distanceThreshold,
+      ToDoubleBiFunction<Coordinate, Coordinate> distanceFunction) {
     final TimeValuedPoint[] actualValuedPoints = (TimeValuedPoint[]) actualPoints;
     final TimeValuedPoint[] predictedValuedPoints = (TimeValuedPoint[]) predictedPoints;
 
@@ -849,12 +868,14 @@ public class Match_PlugIn implements PlugIn {
 
     // Process each quartile
     final MatchResult[] quartileResults = new MatchResult[4];
+    final double d2 = distanceThreshold * distanceThreshold;
     for (int q = 0; q < 4; q++) {
       final TimeValuedPoint[] actual =
           extractPointsWithinRange(actualValuedPoints, quartiles[q], quartiles[q + 1]);
       final TimeValuedPoint[] predicted =
           extractPointsWithinRange(predictedValuedPoints, quartiles[q], quartiles[q + 1]);
-      quartileResults[q] = MatchCalculator.analyseResults2D(actual, predicted, distanceThreshold);
+      quartileResults[q] = MatchCalculator.analyseResultsCoordinates(actual, predicted, d2, null,
+          null, null, null, distanceFunction);
     }
 
     return quartileResults;
