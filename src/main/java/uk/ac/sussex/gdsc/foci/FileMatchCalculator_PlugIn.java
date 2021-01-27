@@ -50,7 +50,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,6 +60,7 @@ import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
 import uk.ac.sussex.gdsc.core.match.PointPair;
 import uk.ac.sussex.gdsc.core.utils.FileUtils;
+import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
@@ -379,7 +379,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
         settings.showPairs || settings.savePairs || settings.savePairsSingleFile
             || (settings.showComposite && myImage1 != null && myImage2 != null);
 
-    final List<PointPair> pairs = (computePairs) ? new LinkedList<>() : null;
+    final List<PointPair> pairs = (computePairs) ? new LocalList<>() : null;
 
     // Process each timepoint
     for (final Integer t : getTimepoints(actualPoints, predictedPoints)) {
@@ -391,10 +391,10 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
       List<Coordinate> falseNegatives = null;
       List<PointPair> matches = null;
       if (computePairs) {
-        truePositives = new LinkedList<>();
-        falsePositives = new LinkedList<>();
-        falseNegatives = new LinkedList<>();
-        matches = new LinkedList<>();
+        truePositives = new LocalList<>(actualPoints.length);
+        falsePositives = new LocalList<>(predictedPoints.length);
+        falseNegatives = new LocalList<>(actualPoints.length);
+        matches = new LocalList<>(actualPoints.length);
       }
 
       final MatchResult result = (is3D)
@@ -499,7 +499,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
   }
 
   private static Coordinate[] getCoordinates(TimeValuedPoint[] points, int time) {
-    final LinkedList<Coordinate> coords = new LinkedList<>();
+    final List<Coordinate> coords = new LocalList<>();
     int id = 1;
     for (final TimeValuedPoint p : points) {
       if (p.getTime() == time) {

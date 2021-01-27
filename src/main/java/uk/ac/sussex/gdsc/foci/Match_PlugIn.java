@@ -48,7 +48,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -671,8 +670,9 @@ public class Match_PlugIn implements PlugIn {
       initialDistanceThreshold = settings.memoryThreshold;
     }
     if (imageMode) {
-      final List<String> imageList = new LinkedList<>();
-      for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList()) {
+      final int[] ids = uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList();
+      final List<String> imageList = new LocalList<>(ids.length);
+      for (final int id : ids) {
         final ImagePlus imp = WindowManager.getImage(id);
         if (imp != null) {
           final Roi roi = imp.getRoi();
@@ -782,10 +782,10 @@ public class Match_PlugIn implements PlugIn {
 
   private Object[] compareRoi(Coordinate[] actualPoints, Coordinate[] predictedPoints,
       double distanceThreshold, boolean doQuartiles) {
-    final List<Coordinate> truePositives = new LinkedList<>();
-    final List<Coordinate> falsePositives = new LinkedList<>();
-    final List<Coordinate> falseNegatives = new LinkedList<>();
-    final List<PointPair> matches = new LinkedList<>();
+    final List<Coordinate> truePositives = new LocalList<>(actualPoints.length);
+    final List<Coordinate> falsePositives = new LocalList<>(predictedPoints.length);
+    final List<Coordinate> falseNegatives = new LocalList<>(actualPoints.length);
+    final List<PointPair> matches = new LocalList<>(actualPoints.length);
     // Compute in 3D if both sets of results are 3D.
     final boolean is3d = CoordinateUtils.is3d(actualPoints, predictedPoints);
     // Used a scaled distance function if possible from the calibrated input images.
@@ -903,7 +903,7 @@ public class Match_PlugIn implements PlugIn {
    */
   private static TimeValuedPoint[] extractPointsWithinRange(TimeValuedPoint[] points, float lower,
       float upper) {
-    final LinkedList<TimeValuedPoint> list = new LinkedList<>();
+    final List<TimeValuedPoint> list = new LocalList<>();
     for (final TimeValuedPoint p : points) {
       if (p.getValue() >= lower && p.getValue() < upper) {
         list.add(p);
