@@ -264,34 +264,9 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       return null;
     }
 
-    // Find all the mask objects using a stack histogram.
-    final ImageStack stack = imp.getImageStack();
-    final int[] h = stack.getProcessor(1).getHistogram();
-    for (int s = 2; s <= stack.getSize(); s++) {
-      final int[] h2 = stack.getProcessor(1).getHistogram();
-      for (int i = 0; i < h.length; i++) {
-        h[i] += h2[i];
-      }
-    }
-
-    // Correct mask objects should be numbered sequentially from 1.
-    // Find first number that is zero.
-    int size = 1;
-    while (size < h.length) {
-      if (h[size] == 0) {
-        break;
-      }
-      size++;
-    }
-    size--; // Decrement to find the last non-zero number
-
-    // Check the FindFoci results have the same number of objects
-    if (size != results.size()) {
-      return null;
-    }
-
     // Check each result matches the image.
     // Image values correspond to the reverse order of the results.
+    final ImageStack stack = imp.getImageStack();
     for (int i = 0, id = results.size(); i < results.size(); i++, id--) {
       final FindFociResult result = results.get(i);
       final int x = result.x;
