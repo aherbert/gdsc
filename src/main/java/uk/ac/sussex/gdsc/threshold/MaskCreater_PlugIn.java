@@ -427,6 +427,7 @@ public class MaskCreater_PlugIn implements PlugIn {
       maskImp.setDimensions(nChannels, nSlices, nFrames);
       maskImp.setOpenAsHyperStack(true);
     }
+    maskImp.setCalibration(imp.getCalibration());
 
     // Add a bounding rectangle
     if (minx < w && miny < h) {
