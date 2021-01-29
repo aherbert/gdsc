@@ -307,41 +307,6 @@ public class ObjectAnalyzer {
   }
 
   /**
-   * Returns whether the neighbour in a given direction is within the image. This assumes the
-   * direction is from the 8-connected offset table.
-   *
-   * <p>NOTE: it is assumed that the pixel x,y itself is within the image! Uses class variables
-   * xlimit, ylimit: (dimensions of the image)-1
-   *
-   * @param x x-coordinate of the pixel that has a neighbour in the given direction
-   * @param y y-coordinate of the pixel that has a neighbour in the given direction
-   * @param direction the direction from the pixel towards the neighbour
-   * @return true if the neighbour is within the image (provided that x, y is within)
-   */
-  private boolean isWithinXy8(int x, int y, int direction) {
-    switch (direction) {
-      case 0:
-        return (x > 0);
-      case 1:
-        return (y < ylimit && x > 0);
-      case 2:
-        return (y < ylimit);
-      case 3:
-        return (y < ylimit && x < xlimit);
-      case 4:
-        return (x < xlimit);
-      case 5:
-        return (y > 0 && x < xlimit);
-      case 6:
-        return (y > 0);
-      case 7:
-        return (y > 0 && x > 0);
-      default:
-        return false;
-    }
-  }
-
-  /**
    * Gets the width.
    *
    * @return The image width.
