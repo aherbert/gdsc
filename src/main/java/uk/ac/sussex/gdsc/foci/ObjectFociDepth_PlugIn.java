@@ -29,6 +29,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.GenericDialog;
+import ij.gui.Line;
 import ij.gui.Overlay;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
@@ -91,6 +92,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     boolean eightConnected;
     boolean showObjects;
     boolean useHull;
+    boolean showLines;
 
     Settings() {
       input = "";
@@ -103,6 +105,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       eightConnected = source.eightConnected;
       showObjects = source.showObjects;
       useHull = source.useHull;
+      showLines = source.showLines;
     }
 
     Settings copy() {
@@ -203,6 +206,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     final int maxy = ip.getHeight();
     final Calibration cal = imp.getCalibration();
 
+    ImagePlus mask;
     final List<Distance> distances = new LocalList<>(results.size());
 
     if (is3d) {
@@ -225,31 +229,6 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
           new ObjectAnalyzer3D(image, maxx, maxy, maxz, settings.eightConnected);
       final int[] objectMask = oa.getObjectMask();
 
-      // if hull
-      // Create convex hull.
-      // Optionally show polygons of the hull z-slices on the mask
-      // Measure distance of point to all planes of the hull and pick smallest.
-
-      // Same for 2D
-
-      Distance3D df;
-      if (cal.pixelWidth == cal.pixelHeight) {
-        // No XY scaling
-        if (cal.pixelDepth == cal.pixelWidth) {
-          // No scaling
-          df = (dx, dy, dz) -> (double) dx * dx + (double) dy * dy + (double) dz * dz;
-        } else {
-          // Z scaling
-          final double sz = MathUtils.pow2(cal.pixelDepth / cal.pixelWidth);
-          df = (dx, dy, dz) -> (double) dx * dx + (double) dy * dy + (double) dz * dz * sz;
-        }
-      } else {
-        // YZ scaling
-        final double sy = MathUtils.pow2(cal.pixelHeight / cal.pixelWidth);
-        final double sz = MathUtils.pow2(cal.pixelDepth / cal.pixelWidth);
-        df = (dx, dy, dz) -> (double) dx * dx + (double) dy * dy * sy + (double) dz * dz * sz;
-      }
-
       if (settings.useHull) {
         // Function to convert the index to XYZ coordinates
         final double sy = cal.pixelHeight / cal.pixelWidth;
@@ -262,13 +241,33 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
           return new double[] {x, y * sy, z * sz};
         };
         final Hull3d[] hulls = createHulls(oa, toCoords);
+        mask = showMask(oa, hulls, sy, sz);
+
         final double[][][] planes = new double[hulls.length][][];
-        showMask(oa, hulls, sy, sz);
         results.stream()
             .map(r -> search3d(r, objectMask, maxx, maxy, maxz, toCoords, hulls, planes))
             .filter(d -> d != null).sequential().forEach(distances::add);
       } else {
-        showMask(oa, null, 0, 0);
+        mask = showMask(oa, null, 0, 0);
+
+        Distance3D df;
+        if (cal.pixelWidth == cal.pixelHeight) {
+          // No XY scaling
+          if (cal.pixelDepth == cal.pixelWidth) {
+            // No scaling
+            df = (dx, dy, dz) -> (double) dx * dx + (double) dy * dy + (double) dz * dz;
+          } else {
+            // Z scaling
+            final double sz = MathUtils.pow2(cal.pixelDepth / cal.pixelWidth);
+            df = (dx, dy, dz) -> (double) dx * dx + (double) dy * dy + (double) dz * dz * sz;
+          }
+        } else {
+          // YZ scaling
+          final double sy = MathUtils.pow2(cal.pixelHeight / cal.pixelWidth);
+          final double sz = MathUtils.pow2(cal.pixelDepth / cal.pixelWidth);
+          df = (dx, dy, dz) -> (double) dx * dx + (double) dy * dy * sy + (double) dz * dz * sz;
+        }
+
         results.stream().map(r -> search3d(r, objectMask, maxx, maxy, maxz, df))
             .filter(d -> d != null).sequential().forEach(distances::add);
       }
@@ -276,16 +275,6 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       // 2D analysis with the current image processor
       final ObjectAnalyzer oa = new ObjectAnalyzer(ip, settings.eightConnected);
       final int[] objectMask = oa.getObjectMask();
-
-      Distance2D df;
-      if (cal.pixelWidth == cal.pixelHeight) {
-        // No scaling
-        df = (dx, dy) -> (double) dx * dx + (double) dy * dy;
-      } else {
-        // Y scaling
-        final double sy = MathUtils.pow2(cal.pixelHeight / cal.pixelWidth);
-        df = (dx, dy) -> (double) dx * dx + (double) dy * dy * sy;
-      }
 
       if (settings.useHull) {
         // Function to convert the index to XYZ coordinates
@@ -296,12 +285,24 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
           return new double[] {x, y * sy};
         };
         final Hull2d[] hulls = createHulls(oa, toCoords);
-        showMask(oa, hulls, sy);
+        mask = showMask(oa, hulls, sy);
+
         final double[][][] planes = new double[hulls.length][][];
         results.stream().map(r -> search2d(r, objectMask, maxx, maxy, toCoords, hulls, planes))
             .filter(d -> d != null).sequential().forEach(distances::add);
       } else {
-        showMask(oa, null, 0);
+        mask = showMask(oa, null, 0);
+
+        Distance2D df;
+        if (cal.pixelWidth == cal.pixelHeight) {
+          // No scaling
+          df = (dx, dy) -> (double) dx * dx + (double) dy * dy;
+        } else {
+          // Y scaling
+          final double sy = MathUtils.pow2(cal.pixelHeight / cal.pixelWidth);
+          df = (dx, dy) -> (double) dx * dx + (double) dy * dy * sy;
+        }
+
         results.stream().map(r -> search2d(r, objectMask, maxx, maxy, df)).filter(d -> d != null)
             .sequential().forEach(distances::add);
       }
@@ -335,6 +336,13 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         sb.append('\t').append(MathUtils.round(dist * cal.pixelWidth));
         sb.append('\t').append(cal.getUnit());
         tw.append(sb.toString());
+      }
+    }
+
+    if (mask != null && settings.showLines) {
+      final Overlay overlay = mask.getOverlay();
+      for (final Distance d : distances) {
+        overlay.add(toRoi(d, is3d));
       }
     }
   }
@@ -923,6 +931,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     gd.addCheckbox("Use_convex_hull", settings.useHull);
     gd.addCheckbox("Eight_connected", settings.eightConnected);
     gd.addCheckbox("Show_objects", settings.showObjects);
+    gd.addCheckbox("Show_lines", settings.showLines);
 
     gd.showDialog();
     if (gd.wasCanceled()) {
@@ -936,6 +945,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     settings.useHull = gd.getNextBoolean();
     settings.eightConnected = gd.getNextBoolean();
     settings.showObjects = gd.getNextBoolean();
+    settings.showLines = gd.getNextBoolean();
     settings.save();
 
     // Load objects
@@ -1008,9 +1018,9 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     return window;
   }
 
-  private void showMask(ObjectAnalyzer oa, Hull2d[] hulls, double sy) {
+  private ImagePlus showMask(ObjectAnalyzer oa, Hull2d[] hulls, double sy) {
     if (!settings.showObjects) {
-      return;
+      return null;
     }
 
     final int[] objectMask = oa.getObjectMask();
@@ -1034,11 +1044,12 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     imp.setDisplayRange(0, oa.getMaxObject());
     imp.setCalibration(this.imp.getCalibration());
     imp.setOverlay(overlay);
+    return imp;
   }
 
-  private void showMask(ObjectAnalyzer3D oa, Hull3d[] hulls, double sy, double sz) {
+  private ImagePlus showMask(ObjectAnalyzer3D oa, Hull3d[] hulls, double sy, double sz) {
     if (!settings.showObjects) {
-      return;
+      return null;
     }
 
     final int[] objectMask = oa.getObjectMask();
@@ -1077,6 +1088,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     imp.setDisplayRange(0, oa.getMaxObject());
     imp.setCalibration(this.imp.getCalibration());
     imp.setOverlay(overlay);
+    return imp;
   }
 
   /**
@@ -1109,5 +1121,23 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     };
     roi.setPosition(position);
     return roi;
+  }
+
+  /**
+   * Convert the distance to the object edge to a line roi.
+   *
+   * @param distance the distance
+   * @param is3d true if 3D
+   * @return the roi
+   */
+  private static Roi toRoi(Distance distance, boolean is3d) {
+    final Coordinate point = distance.point;
+    final double x = point.getXint();
+    final double y = point.getYint();
+    final Line line = new Line(x, y, x + distance.dx, y + distance.dy);
+    if (is3d) {
+      line.setPosition(point.getZint());
+    }
+    return line;
   }
 }
