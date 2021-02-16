@@ -28,6 +28,7 @@ import gnu.trove.list.array.TIntArrayList;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.Line;
 import ij.gui.Overlay;
@@ -93,6 +94,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     boolean showObjects;
     boolean useHull;
     boolean showLines;
+    String sourceImage;
 
     Settings() {
       input = "";
@@ -889,17 +891,17 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
   private boolean showDialog() {
     final List<Coordinate> findFociResults = getFindFociResults();
     final List<Coordinate> roiResults = getRoiResults();
-    if (findFociResults == null && roiResults == null) {
+    final List<String> roiImages = getRoiImages();
+    if (findFociResults == null && roiResults == null && roiImages.isEmpty()) {
       IJ.error(TITLE,
-          "No " + FindFoci_PlugIn.TITLE + " results in memory or point ROI on the image");
+          "No " + FindFoci_PlugIn.TITLE + " results in memory or point ROI on the images");
       return false;
     }
 
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addHelp(UrlUtils.FIND_FOCI);
 
-    String[] options = new String[2];
-    int count = 0;
+    LocalList<String> options = new LocalList<>(3);
 
     final StringBuilder msg =
         new StringBuilder("Measure the foci distance to the nearest object edge\n"
@@ -907,20 +909,26 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
             + "nearest pixel in the same object that is touching the edge.\nAvailable foci:");
     if (findFociResults != null) {
       msg.append("\nFind Foci = ").append(TextUtils.pleural(findFociResults.size(), "result"));
-      options[count++] = "Find Foci";
+      options.push("Find Foci");
     }
     if (roiResults != null) {
       msg.append("\nROI = ").append(TextUtils.pleural(roiResults.size(), "point"));
-      options[count++] = "ROI";
+      options.push("ROI");
     }
-    options = Arrays.copyOf(options, count);
+    if (!roiImages.isEmpty()) {
+      msg.append("\nROI images = ").append(roiImages.size());
+      options.push("ROI Image");
+    }
 
     gd.addMessage(msg.toString());
 
     final boolean is3d = imp.getNSlices() > 1;
 
     settings = Settings.load();
-    gd.addChoice("Foci", options, settings.input);
+    gd.addChoice("Foci", options.toArray(new String[0]), settings.input);
+    if (!roiImages.isEmpty()) {
+      gd.addChoice("ROI_image", roiImages.toArray(new String[0]), settings.sourceImage);
+    }
     if (is3d) {
       gd.addMessage(TextUtils.wrap(
           "Z-stack input image allows 3D processing. This may produce shorter distances than 2D "
@@ -939,6 +947,9 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     }
 
     settings.input = gd.getNextChoice();
+    if (!roiImages.isEmpty()) {
+      settings.sourceImage = gd.getNextChoice();
+    }
     if (is3d) {
       settings.is3d = gd.getNextBoolean();
     }
@@ -949,7 +960,14 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     settings.save();
 
     // Load objects
-    results = (settings.input.equalsIgnoreCase("ROI")) ? roiResults : findFociResults;
+    if (settings.input.equalsIgnoreCase("ROI")) {
+      results = roiResults;
+    } else if (settings.input.equalsIgnoreCase("ROI Image")) {
+      results = getRoiResults(WindowManager.getImage(settings.sourceImage));
+    } else {
+      results = findFociResults;
+    }
+
     if (results == null) {
       IJ.error(TITLE, "No foci could be loaded");
       return false;
@@ -980,6 +998,11 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
 
   @Nullable
   private List<Coordinate> getRoiResults() {
+    return getRoiResults(imp);
+  }
+
+  @Nullable
+  private static List<Coordinate> getRoiResults(ImagePlus imp) {
     final AssignedPoint[] points = AssignedPointUtils.extractRoiPoints(imp);
     if (points.length == 0) {
       return null;
@@ -988,6 +1011,17 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     for (final AssignedPoint point : points) {
       // z is one-indexed
       list.add(new BasePoint(point.x, point.y, point.z));
+    }
+    return list;
+  }
+
+  private static List<String> getRoiImages() {
+    LocalList<String> list = new LocalList<>();
+    for (int id : ImageJUtils.getIdList()) {
+      ImagePlus imp = WindowManager.getImage(id);
+      if (imp != null && imp.getRoi() != null && imp.getRoi().getType() == Roi.POINT) {
+        list.add(imp.getTitle());
+      }
     }
     return list;
   }
