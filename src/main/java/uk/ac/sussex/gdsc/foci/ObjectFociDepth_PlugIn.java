@@ -24,11 +24,17 @@
 
 package uk.ac.sussex.gdsc.foci;
 
+import customnode.CustomIndexedTriangleMesh;
+import customnode.CustomLineMesh;
+import customnode.CustomMesh;
+import customnode.CustomMeshNode;
+import customnode.CustomPointMesh;
 import gnu.trove.list.array.TIntArrayList;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
+import ij.gui.GUI;
 import ij.gui.GenericDialog;
 import ij.gui.Line;
 import ij.gui.Overlay;
@@ -40,11 +46,24 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
+import ij3d.ContentInstant;
+import ij3d.DefaultUniverse;
+import ij3d.Image3DUniverse;
+import ij3d.ImageWindow3D;
+import java.awt.Color;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import org.scijava.java3d.Appearance;
+import org.scijava.java3d.ColoringAttributes;
+import org.scijava.java3d.LineAttributes;
+import org.scijava.java3d.PolygonAttributes;
+import org.scijava.java3d.View;
+import org.scijava.vecmath.Color3f;
+import org.scijava.vecmath.Point3f;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
@@ -54,11 +73,14 @@ import uk.ac.sussex.gdsc.core.math.hull.ConvexHull2d;
 import uk.ac.sussex.gdsc.core.math.hull.ConvexHull3d;
 import uk.ac.sussex.gdsc.core.math.hull.Hull2d;
 import uk.ac.sussex.gdsc.core.math.hull.Hull3d;
+import uk.ac.sussex.gdsc.core.utils.LocalCollectors;
 import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.help.UrlUtils;
+import uk.ac.sussex.gdsc.ij.ij3d.CustomContent;
+import uk.ac.sussex.gdsc.ij.ij3d.ImageJ3DViewerUtils;
 
 /**
  * Finds objects in an image using contiguous pixels of the same value. Computes the distance of
@@ -95,6 +117,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     boolean useHull;
     boolean showLines;
     String sourceImage;
+    boolean showHull3d;
 
     Settings() {
       input = "";
@@ -108,6 +131,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       showObjects = source.showObjects;
       useHull = source.useHull;
       showLines = source.showLines;
+      showHull3d = source.showHull3d;
     }
 
     Settings copy() {
@@ -249,6 +273,11 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         results.stream()
             .map(r -> search3d(r, objectMask, maxx, maxy, maxz, toCoords, hulls, planes))
             .filter(d -> d != null).sequential().forEach(distances::add);
+
+        // Make this optional
+        if (settings.showHull3d) {
+          showHulls3d(hulls, results, distances);
+        }
       } else {
         mask = showMask(oa, null, 0, 0);
 
@@ -375,7 +404,8 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       if (l == null || l.size() < 4) {
         return null;
       }
-      final ConvexHull3d.Builder builder = ConvexHull3d.newBuilder();
+      // Triangulate for simple display as a triangle mesh
+      final ConvexHull3d.Builder builder = ConvexHull3d.newBuilder().setTriangulate(true);
       l.forEach(index -> {
         builder.add(toCoords.apply(index));
         return true;
@@ -901,7 +931,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addHelp(UrlUtils.FIND_FOCI);
 
-    LocalList<String> options = new LocalList<>(3);
+    final LocalList<String> options = new LocalList<>(3);
 
     final StringBuilder msg =
         new StringBuilder("Measure the foci distance to the nearest object edge\n"
@@ -940,6 +970,8 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     gd.addCheckbox("Eight_connected", settings.eightConnected);
     gd.addCheckbox("Show_objects", settings.showObjects);
     gd.addCheckbox("Show_lines", settings.showLines);
+    gd.addMessage("Requires ImageJ 3D Viewer:");
+    gd.addCheckbox("Show_hull_3d", settings.showHull3d);
 
     gd.showDialog();
     if (gd.wasCanceled()) {
@@ -957,6 +989,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     settings.eightConnected = gd.getNextBoolean();
     settings.showObjects = gd.getNextBoolean();
     settings.showLines = gd.getNextBoolean();
+    settings.showHull3d = gd.getNextBoolean();
     settings.save();
 
     // Load objects
@@ -1016,9 +1049,9 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
   }
 
   private static List<String> getRoiImages() {
-    LocalList<String> list = new LocalList<>();
-    for (int id : ImageJUtils.getIdList()) {
-      ImagePlus imp = WindowManager.getImage(id);
+    final LocalList<String> list = new LocalList<>();
+    for (final int id : ImageJUtils.getIdList()) {
+      final ImagePlus imp = WindowManager.getImage(id);
       if (imp != null && imp.getRoi() != null && imp.getRoi().getType() == Roi.POINT) {
         list.add(imp.getTitle());
       }
@@ -1173,5 +1206,114 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       line.setPosition(point.getZint());
     }
     return line;
+  }
+
+  /**
+   * Show the hulls in a 3D viewer.
+   *
+   * @param hulls the hulls
+   * @param results the results
+   * @param distances the distances
+   */
+  private void showHulls3d(Hull3d[] hulls, List<Coordinate> results, List<Distance> distances) {
+    // Show in 3D viewer
+    if (ImageJ3DViewerUtils.JAVA_3D_VERSION == null) {
+      IJ.error(TITLE, "Java 3D is not available");
+      return;
+    }
+
+    // Create universe
+    final Image3DUniverse univ = new Image3DUniverse();
+    univ.setShowBoundingBoxUponSelection(false);
+    univ.showAttribute(DefaultUniverse.ATTRIBUTE_SCALEBAR, false);
+    univ.show();
+    final ImageWindow3D w = univ.getWindow();
+    GUI.center(w);
+
+    final View view = univ.getViewer().getView();
+    view.setTransparencySortingPolicy(View.TRANSPARENCY_SORT_GEOMETRY);
+
+    // Load the hulls as meshes
+    for (int i = 1; i < hulls.length; i++) {
+      if (hulls[i] != null) {
+        final CustomMesh mesh = toMesh(hulls[i]);
+        final String name = "Hull" + i;
+        // final Content c = univ.addCustomMesh(mesh, name);
+
+        // To get transparency to work requires a custom content that avoids an ordered group.
+        final CustomContent c = new CustomContent(name, false);
+        final ContentInstant content = c.getInstant(0);
+        content.setColor(mesh.getColor());
+        content.setTransparency(mesh.getTransparency());
+        content.setShaded(mesh.isShaded());
+        content.showCoordinateSystem(false);
+        content.display(new CustomMeshNode(mesh));
+        c.setLocked(true);
+        univ.addContentLater(c);
+      }
+    }
+
+    // Draw the foci as points
+    final Calibration cal = imp.getCalibration();
+    final double sy = cal.pixelHeight / cal.pixelWidth;
+    final double sz = cal.pixelDepth / cal.pixelWidth;
+    final List<Point3f> pointMesh = results.stream().map(r -> {
+      final float x = r.getXint();
+      final float y = (float) (r.getYint() * sy);
+      final float z = (float) ((r.getZint() - 1) * sz);
+      return new Point3f(x, y, z);
+    }).collect(LocalCollectors.toLocalList());
+    final CustomPointMesh pmesh = new CustomPointMesh(pointMesh, new Color3f(Color.GREEN), 0);
+    pmesh.setPointSize(2.0f);
+    pmesh.getAppearance().getPointAttributes().setPointAntialiasingEnable(true);
+    univ.addCustomMesh(pmesh, "Foci").setLocked(true);
+
+    // Draw lines from foci to hull face
+    final List<Point3f> lineMesh = distances.stream().flatMap(d -> {
+      final Coordinate r = d.point;
+      final double x = r.getXint();
+      final double y = r.getYint() * sy;
+      final double z = (r.getZint() - 1) * sz;
+      final Point3f p1 = new Point3f((float) x, (float) y, (float) z);
+      final Point3f p2 = new Point3f((float) (x + d.dx), (float) (y + d.dy), (float) (z + d.dz));
+      return Stream.of(p1, p2);
+    }).collect(LocalCollectors.toLocalList());
+    final CustomLineMesh lmesh =
+        new CustomLineMesh(lineMesh, CustomLineMesh.PAIRWISE, new Color3f(Color.YELLOW), 0.3f);
+    final LineAttributes la = lmesh.getAppearance().getLineAttributes();
+    la.setLinePattern(LineAttributes.PATTERN_USER_DEFINED);
+    // (2-on, 2-off) x 4
+    la.setPatternMask(0x3333);
+    la.setPatternScaleFactor(1);
+    univ.addCustomMesh(lmesh, "Distances").setLocked(true);
+  }
+
+  /**
+   * Convert the hull to a mesh.
+   *
+   * @param hull the hull
+   * @return the mesh
+   */
+  private static CustomMesh toMesh(Hull3d hull) {
+    final Point3f[] vertices = Arrays.stream(hull.getVertices())
+        .map(v -> new Point3f((float) v[0], (float) v[1], (float) v[2])).toArray(Point3f[]::new);
+    final int[] faces = Arrays.stream(hull.getFaces()).flatMapToInt(Arrays::stream).toArray();
+    final CustomIndexedTriangleMesh mesh =
+        new CustomIndexedTriangleMesh(vertices, faces, new Color3f(Color.RED), 0.65f);
+
+    // Already set
+    // mesh.setShaded(true);
+
+    // IJ3D uses no backface culling by default.
+    final Appearance appearance = mesh.getAppearance();
+    final PolygonAttributes pa = appearance.getPolygonAttributes();
+    pa.setCullFace(PolygonAttributes.CULL_BACK);
+    pa.setBackFaceNormalFlip(false);
+    final ColoringAttributes ca = appearance.getColoringAttributes();
+    ca.setShadeModel(ColoringAttributes.SHADE_GOURAUD);
+    // The default light source makes this look bad
+    // ca.setShadeModel(ColoringAttributes.SHADE_FLAT);
+
+    return mesh;
   }
 }
