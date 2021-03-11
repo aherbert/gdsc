@@ -223,6 +223,7 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
     }
 
     ConcurrencyUtils.waitForCompletionUncheckedT(futures);
+    executor.shutdown();
 
     ImageJUtils.finished();
 

@@ -1260,6 +1260,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
     // Collect all the results
     ConcurrencyUtils.waitForCompletionUnchecked(futures);
+    threadPool.shutdown();
     ImageJUtils.finished();
 
     if (ImageJUtils.isInterrupted()) {

@@ -242,6 +242,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
         futures.add(threadPool.submit(new MaskCreator(ip, newStack, slice, this)));
       }
       ConcurrencyUtils.waitForCompletionUnchecked(futures);
+      threadPool.shutdown();
       IJ.showStatus("");
       IJ.showProgress(stack.getSize(), stack.getSize());
 
