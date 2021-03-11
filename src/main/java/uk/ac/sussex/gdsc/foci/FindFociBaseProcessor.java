@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
@@ -48,6 +49,7 @@ import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.FloatHistogram;
 import uk.ac.sussex.gdsc.core.threshold.Histogram;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.AlgorithmOption;
 import uk.ac.sussex.gdsc.foci.FindFociProcessorOptions.BackgroundMethod;
@@ -374,8 +376,8 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
       return null;
     }
 
-    if (processorOptions.isOption(AlgorithmOption.REMOVE_EDGE_MAXIMA)) {
-      resultsArray = removeEdgeMaxima(resultsArray, maxima);
+    if (isFilterMaxima(processorOptions)) {
+      resultsArray = filterMaxima(resultsArray, maxima, processorOptions);
     }
 
     final int totalPeaks = resultsArray.length;
@@ -778,8 +780,8 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
     resultsArray = mergeFinal(resultsArray, peakIdMap, maxima);
 
-    if (processorOptions.isOption(AlgorithmOption.REMOVE_EDGE_MAXIMA)) {
-      resultsArray = removeEdgeMaxima(resultsArray, maxima);
+    if (isFilterMaxima(processorOptions)) {
+      resultsArray = filterMaxima(resultsArray, maxima, processorOptions);
     }
 
     if (processorOptions.getGaussianBlur() > 0) {
@@ -4678,13 +4680,31 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
   }
 
   /**
-   * Removes any maxima that have pixels that touch the edge.
+   * Checks if the processor options specify a filter on the final maxima.
+   *
+   * @param processorOptions the processor options
+   * @return true if filtering of the maxima is enabled
+   */
+  private static boolean isFilterMaxima(FindFociProcessorOptions processorOptions) {
+    return processorOptions.isOption(AlgorithmOption.REMOVE_EDGE_MAXIMA);
+  }
+
+  /**
+   * Performs filtering on the final maxima. This may include:
+   *
+   * <ul>
+   *
+   * <li>Removes any maxima that have pixels that touch the edge.
+   *
+   * </ul>
    *
    * @param resultsArray the results array
    * @param maxima the maxima
+   * @param processorOptions the processor options
    * @return the results array
    */
-  private FindFociResult[] removeEdgeMaxima(FindFociResult[] resultsArray, int[] maxima) {
+  private FindFociResult[] filterMaxima(FindFociResult[] resultsArray, int[] maxima,
+      FindFociProcessorOptions processorOptions) {
     // Build a look-up table for all the peak IDs
     int maxId = 0;
     for (int i = 0; i < resultsArray.length; i++) {
@@ -4694,11 +4714,43 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
       }
     }
 
-    final int[] peakIdMap = new int[maxId + 1];
-    for (int i = 0; i < peakIdMap.length; i++) {
-      peakIdMap[i] = i;
+    final int[] peakIdMap = SimpleArrayUtils.natural(maxId + 1);
+
+    if (processorOptions.isOption(AlgorithmOption.REMOVE_EDGE_MAXIMA)) {
+      markEdgeMaxima(resultsArray, peakIdMap, maxima);
     }
 
+    // Filter maxima
+    final Predicate<FindFociResult> filter = createFilter(processorOptions);
+    if (filter != null) {
+      for (int i = 0; i < resultsArray.length; i++) {
+        final FindFociResult result = resultsArray[i];
+        if (filter.test(result)) {
+          peakIdMap[result.id] = 0;
+        }
+      }
+    }
+
+    // Mark maxima to be removed
+    for (int i = 0; i < resultsArray.length; i++) {
+      final FindFociResult result = resultsArray[i];
+      if (peakIdMap[result.id] == 0) {
+        result.totalIntensity = Double.NEGATIVE_INFINITY;
+      }
+    }
+
+    // Remove marked maxima and update saddle details
+    return mergeFinal(resultsArray, peakIdMap, maxima);
+  }
+
+  /**
+   * Marks any maxima that have pixels that touch the edge by mapping the peak ID to zero.
+   *
+   * @param resultsArray the results array
+   * @param maxima the maxima
+   * @param peakIdMap the peak id map (valid peak IDs maps to the same ID)
+   */
+  private void markEdgeMaxima(FindFociResult[] resultsArray, int[] peakIdMap, int[] maxima) {
     // Support the ROI bounds used to create the analysis region
     final int lowerx;
     final int upperx;
@@ -4731,23 +4783,16 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
         peakIdMap[maxima[ii]] = 0;
       }
     }
+  }
 
-    // Mark maxima to be removed
-    for (int i = 0; i < resultsArray.length; i++) {
-      final FindFociResult result = resultsArray[i];
-      final int peakId = result.id;
-      if (peakIdMap[peakId] == 0) {
-        result.totalIntensity = Double.NEGATIVE_INFINITY;
-      }
-    }
-
-    resultsArray = removeFlaggedResults(resultsArray);
-
-    reassignMaxima(maxima, peakIdMap);
-
-    updateSaddleDetails(resultsArray, peakIdMap);
-
-    return resultsArray;
+  /**
+   * Creates the filter for the final results using the processor options.
+   *
+   * @param processorOptions the processor options
+   * @return the predicate (or null)
+   */
+  private static Predicate<FindFociResult> createFilter(FindFociProcessorOptions processorOptions) {
+    return null;
   }
 
   /**
