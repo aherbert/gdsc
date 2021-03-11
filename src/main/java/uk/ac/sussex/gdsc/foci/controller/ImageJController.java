@@ -49,7 +49,7 @@ import uk.ac.sussex.gdsc.foci.model.FindFociModel;
  */
 public class ImageJController extends FindFociController {
   /** The executor service for the preview. */
-  private final ExecutorService executor = Executors.newFixedThreadPool(1);
+  private final ExecutorService executor = Executors.newSingleThreadExecutor();
   /** The runner for the preview. Modifications to this should be synchronized. */
   private FindFociRunner runner;
   /**
