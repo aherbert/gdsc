@@ -104,6 +104,14 @@ import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
  * <p>Although this class extends {@link java.awt.Component} it is not {@link Serializable}.
  */
 public class FindFociView extends JFrame implements PropertyChangeListener, MessageListener {
+  // -----------------
+  // Note:
+  // This class has been created using the Eclipse WindowBuilder.
+  // The init() and initDataBindings() methods are generated code.
+  // Additional events have been manually added to some components to trigger
+  // changes for the model data bindings.
+  // See: https://www.eclipse.org/windowbuilder/
+  // -----------------
 
   // There are custom objects that are not Serializable so serialisation would not work.
   private static final long serialVersionUID = 4515468509409681730L;

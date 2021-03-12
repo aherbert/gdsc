@@ -59,6 +59,14 @@ import uk.ac.sussex.gdsc.foci.model.FindFociModel;
  * <p>Although this class extends {@link java.awt.Component} it is not {@link Serializable}.
  */
 public class OptimiserView extends JFrame {
+  // -----------------
+  // Note:
+  // This class has been created using the Eclipse WindowBuilder.
+  // The init() and initDataBindings() methods are generated code.
+  // Additional events have been manually added to some components to trigger
+  // changes for the model data bindings.
+  // See: https://www.eclipse.org/windowbuilder/
+  // -----------------
 
   // There are custom objects that are not Serializable so serialisation would not work.
   private static final long serialVersionUID = -3283971398975124411L;

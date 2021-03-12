@@ -109,6 +109,14 @@ import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
  */
 public class FindFociHelperView extends JFrame
     implements WindowListener, MouseListener, MouseMotionListener {
+  // -----------------
+  // Note:
+  // This class has been created using the Eclipse WindowBuilder.
+  // The init() and initDataBindings() methods are generated code.
+  // Additional events have been manually added to some components to trigger
+  // changes for the model data bindings.
+  // See: https://www.eclipse.org/windowbuilder/
+  // -----------------
 
   // There are custom objects that are not Serializable so serialisation would not work.
   private static final long serialVersionUID = -3550748049045647859L;
