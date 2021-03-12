@@ -369,53 +369,61 @@ public class FindFociAdvancedOptions extends JDialog {
       contentPanel.add(chckbxRemoveEdgeMaxima, gbc_chckbxRemoveEdgeMaxima);
     }
     {
+      lblMaxSize = new JLabel("Max size");
+      final GridBagConstraints gbc_lblMaxSize = new GridBagConstraints();
+      gbc_lblMaxSize.anchor = GridBagConstraints.WEST;
+      gbc_lblMaxSize.insets = new Insets(0, 0, 5, 5);
+      gbc_lblMaxSize.gridx = 0;
+      gbc_lblMaxSize.gridy = 12;
+      contentPanel.add(lblMaxSize, gbc_lblMaxSize);
+    }
+    {
+      sliderMaxSize = new JSlider();
+      sliderMaxSize.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent event) {
+          if (event.getClickCount() > 1) {
+            SliderLimitHelper.updateRangeLimits(sliderMaxSize, "Maximum size", 1, 0,
+                Double.POSITIVE_INFINITY);
+          }
+        }
+      });
+      sliderMaxSize.setToolTipText("Remove foci above the maximum size from the final results");
+      sliderMaxSize.addChangeListener(event -> sliderMaxSize.firePropertyChange("value", 0, 1));
+      sliderMaxSize.setValue(0);
+      sliderMaxSize.setMaximum(1000);
+      final GridBagConstraints gbc_sliderMaxSize = new GridBagConstraints();
+      gbc_sliderMaxSize.insets = new Insets(0, 0, 5, 5);
+      gbc_sliderMaxSize.gridx = 1;
+      gbc_sliderMaxSize.gridy = 12;
+      contentPanel.add(sliderMaxSize, gbc_sliderMaxSize);
+    }
+    {
+      txtMaxSize = new JFormattedTextField();
+      txtMaxSize.addPropertyChangeListener(evt -> {
+        if ("value".equals(evt.getPropertyName())) {
+          txtMaxSize.firePropertyChange("text", 0, 1);
+        }
+      });
+      txtMaxSize.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyReleased(KeyEvent event) {
+          txtMaxSize.firePropertyChange("text", 0, 1);
+        }
+      });
+      txtMaxSize.setHorizontalAlignment(SwingConstants.TRAILING);
+      txtMaxSize.setText("0");
+      final GridBagConstraints gbc_txtMaxSize = new GridBagConstraints();
+      gbc_txtMaxSize.insets = new Insets(0, 0, 5, 0);
+      gbc_txtMaxSize.fill = GridBagConstraints.HORIZONTAL;
+      gbc_txtMaxSize.gridx = 2;
+      gbc_txtMaxSize.gridy = 12;
+      contentPanel.add(txtMaxSize, gbc_txtMaxSize);
+    }    {
       chckbxSaveResults = new JCheckBox("Save results");
       chckbxSaveResults.setToolTipText("Save the results to a directory");
       chckbxSaveResults
           .addItemListener(event -> chckbxSaveResults.firePropertyChange("selected", 0, 1));
-      {
-        lblMaxSize = new JLabel("Max size");
-        final GridBagConstraints gbc_lblMaxSize = new GridBagConstraints();
-        gbc_lblMaxSize.anchor = GridBagConstraints.WEST;
-        gbc_lblMaxSize.insets = new Insets(0, 0, 5, 5);
-        gbc_lblMaxSize.gridx = 0;
-        gbc_lblMaxSize.gridy = 12;
-        contentPanel.add(lblMaxSize, gbc_lblMaxSize);
-      }
-      {
-        sliderMaxSize = new JSlider();
-        sliderMaxSize.setToolTipText("Remove foci above the maximum size from the final results");
-        sliderMaxSize.addChangeListener(event -> sliderMaxSize.firePropertyChange("value", 0, 1));
-        sliderMaxSize.setValue(0);
-        sliderMaxSize.setMaximum(1000);
-        final GridBagConstraints gbc_sliderMaxSize = new GridBagConstraints();
-        gbc_sliderMaxSize.insets = new Insets(0, 0, 5, 5);
-        gbc_sliderMaxSize.gridx = 1;
-        gbc_sliderMaxSize.gridy = 12;
-        contentPanel.add(sliderMaxSize, gbc_sliderMaxSize);
-      }
-      {
-        txtMaxSize = new JFormattedTextField();
-        txtMaxSize.addPropertyChangeListener(evt -> {
-          if ("value".equals(evt.getPropertyName())) {
-            txtMaxSize.firePropertyChange("text", 0, 1);
-          }
-        });
-        txtMaxSize.addKeyListener(new KeyAdapter() {
-          @Override
-          public void keyReleased(KeyEvent event) {
-            txtMaxSize.firePropertyChange("text", 0, 1);
-          }
-        });
-        txtMaxSize.setHorizontalAlignment(SwingConstants.TRAILING);
-        txtMaxSize.setText("0");
-        final GridBagConstraints gbc_txtMaxSize = new GridBagConstraints();
-        gbc_txtMaxSize.insets = new Insets(0, 0, 5, 0);
-        gbc_txtMaxSize.fill = GridBagConstraints.HORIZONTAL;
-        gbc_txtMaxSize.gridx = 2;
-        gbc_txtMaxSize.gridy = 12;
-        contentPanel.add(txtMaxSize, gbc_txtMaxSize);
-      }
       chckbxSaveResults.setMargin(new Insets(2, 2, 2, 0));
       final GridBagConstraints gbc_chckbxSaveResults = new GridBagConstraints();
       gbc_chckbxSaveResults.insets = new Insets(0, 0, 5, 5);
