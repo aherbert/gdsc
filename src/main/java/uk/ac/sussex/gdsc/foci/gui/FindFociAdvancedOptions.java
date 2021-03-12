@@ -65,6 +65,15 @@ import uk.ac.sussex.gdsc.format.LimitedNumberFormat;
  * Provides additional options for the {@link FindFociView}.
  */
 public class FindFociAdvancedOptions extends JDialog {
+  // -----------------
+  // Note:
+  // This class has been created using the Eclipse WindowBuilder.
+  // The init() and initDataBindings() methods are generated code.
+  // Additional events have been manually added to some components to trigger
+  // changes for the model data bindings.
+  // See: https://www.eclipse.org/windowbuilder/
+  // -----------------
+
   private static final long serialVersionUID = -217510642094281899L;
   private final FindFociModel model;
 
@@ -91,6 +100,9 @@ public class FindFociAdvancedOptions extends JDialog {
   private JCheckBox chckbxHideLabels;
   private JCheckBox chckbxOverlayMask;
   private JCheckBox chckbxMarkUsingOverlay;
+  private JLabel lblMaxSize;
+  private JSlider sliderMaxSize;
+  private JFormattedTextField txtMaxSize;
 
   /**
    * Launch the application.
@@ -135,10 +147,10 @@ public class FindFociAdvancedOptions extends JDialog {
     final GridBagLayout gbl_contentPanel = new GridBagLayout();
     gbl_contentPanel.columnWidths = new int[] {0, 182, 50, 0};
     gbl_contentPanel.rowHeights =
-        new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    gbl_contentPanel.columnWeights = new double[] {0.0, 1.0, 0.0, Double.MIN_VALUE};
+        new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    gbl_contentPanel.columnWeights = new double[] {0.0, 1.0, 1.0, Double.MIN_VALUE};
     gbl_contentPanel.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
     contentPanel.setLayout(gbl_contentPanel);
     {
 
@@ -361,12 +373,55 @@ public class FindFociAdvancedOptions extends JDialog {
       chckbxSaveResults.setToolTipText("Save the results to a directory");
       chckbxSaveResults
           .addItemListener(event -> chckbxSaveResults.firePropertyChange("selected", 0, 1));
+      {
+        lblMaxSize = new JLabel("Max size");
+        final GridBagConstraints gbc_lblMaxSize = new GridBagConstraints();
+        gbc_lblMaxSize.anchor = GridBagConstraints.WEST;
+        gbc_lblMaxSize.insets = new Insets(0, 0, 5, 5);
+        gbc_lblMaxSize.gridx = 0;
+        gbc_lblMaxSize.gridy = 12;
+        contentPanel.add(lblMaxSize, gbc_lblMaxSize);
+      }
+      {
+        sliderMaxSize = new JSlider();
+        sliderMaxSize.setToolTipText("Remove foci above the maximum size from the final results");
+        sliderMaxSize.addChangeListener(event -> sliderMaxSize.firePropertyChange("value", 0, 1));
+        sliderMaxSize.setValue(0);
+        sliderMaxSize.setMaximum(1000);
+        final GridBagConstraints gbc_sliderMaxSize = new GridBagConstraints();
+        gbc_sliderMaxSize.insets = new Insets(0, 0, 5, 5);
+        gbc_sliderMaxSize.gridx = 1;
+        gbc_sliderMaxSize.gridy = 12;
+        contentPanel.add(sliderMaxSize, gbc_sliderMaxSize);
+      }
+      {
+        txtMaxSize = new JFormattedTextField();
+        txtMaxSize.addPropertyChangeListener(evt -> {
+          if ("value".equals(evt.getPropertyName())) {
+            txtMaxSize.firePropertyChange("text", 0, 1);
+          }
+        });
+        txtMaxSize.addKeyListener(new KeyAdapter() {
+          @Override
+          public void keyReleased(KeyEvent event) {
+            txtMaxSize.firePropertyChange("text", 0, 1);
+          }
+        });
+        txtMaxSize.setHorizontalAlignment(SwingConstants.TRAILING);
+        txtMaxSize.setText("0");
+        final GridBagConstraints gbc_txtMaxSize = new GridBagConstraints();
+        gbc_txtMaxSize.insets = new Insets(0, 0, 5, 0);
+        gbc_txtMaxSize.fill = GridBagConstraints.HORIZONTAL;
+        gbc_txtMaxSize.gridx = 2;
+        gbc_txtMaxSize.gridy = 12;
+        contentPanel.add(txtMaxSize, gbc_txtMaxSize);
+      }
       chckbxSaveResults.setMargin(new Insets(2, 2, 2, 0));
       final GridBagConstraints gbc_chckbxSaveResults = new GridBagConstraints();
       gbc_chckbxSaveResults.insets = new Insets(0, 0, 5, 5);
       gbc_chckbxSaveResults.anchor = GridBagConstraints.WEST;
       gbc_chckbxSaveResults.gridx = 0;
-      gbc_chckbxSaveResults.gridy = 12;
+      gbc_chckbxSaveResults.gridy = 13;
       contentPanel.add(chckbxSaveResults, gbc_chckbxSaveResults);
     }
     {
@@ -375,12 +430,12 @@ public class FindFociAdvancedOptions extends JDialog {
       gbc_lblResultsDirectory.insets = new Insets(0, 0, 5, 5);
       gbc_lblResultsDirectory.anchor = GridBagConstraints.WEST;
       gbc_lblResultsDirectory.gridx = 0;
-      gbc_lblResultsDirectory.gridy = 13;
+      gbc_lblResultsDirectory.gridy = 14;
       contentPanel.add(lblResultsDirectory, gbc_lblResultsDirectory);
     }
     {
       txtResultsDirectory = new JTextField();
-      txtResultsDirectory.setToolTipText("Sepcify the results directory");
+      txtResultsDirectory.setToolTipText("Specify the results directory");
       txtResultsDirectory.addKeyListener(new KeyAdapter() {
         @Override
         public void keyReleased(KeyEvent event) {
@@ -392,7 +447,7 @@ public class FindFociAdvancedOptions extends JDialog {
       gbc_txtResultsDirectory.gridwidth = 2;
       gbc_txtResultsDirectory.fill = GridBagConstraints.HORIZONTAL;
       gbc_txtResultsDirectory.gridx = 0;
-      gbc_txtResultsDirectory.gridy = 14;
+      gbc_txtResultsDirectory.gridy = 15;
       contentPanel.add(txtResultsDirectory, gbc_txtResultsDirectory);
       txtResultsDirectory.setColumns(10);
     }
@@ -413,7 +468,7 @@ public class FindFociAdvancedOptions extends JDialog {
       gbc_btnDirectoryPicker.fill = GridBagConstraints.HORIZONTAL;
       gbc_btnDirectoryPicker.insets = new Insets(0, 0, 5, 0);
       gbc_btnDirectoryPicker.gridx = 2;
-      gbc_btnDirectoryPicker.gridy = 14;
+      gbc_btnDirectoryPicker.gridy = 15;
       contentPanel.add(btnDirectoryPicker, gbc_btnDirectoryPicker);
     }
     {
@@ -427,7 +482,7 @@ public class FindFociAdvancedOptions extends JDialog {
       gbc_chckbxObjectAnalysis.anchor = GridBagConstraints.WEST;
       gbc_chckbxObjectAnalysis.insets = new Insets(0, 0, 5, 5);
       gbc_chckbxObjectAnalysis.gridx = 0;
-      gbc_chckbxObjectAnalysis.gridy = 15;
+      gbc_chckbxObjectAnalysis.gridy = 16;
       contentPanel.add(chckbxObjectAnalysis, gbc_chckbxObjectAnalysis);
     }
     {
@@ -439,7 +494,7 @@ public class FindFociAdvancedOptions extends JDialog {
       final GridBagConstraints gbc_chckbxShowObjectMask = new GridBagConstraints();
       gbc_chckbxShowObjectMask.insets = new Insets(0, 0, 5, 5);
       gbc_chckbxShowObjectMask.gridx = 0;
-      gbc_chckbxShowObjectMask.gridy = 16;
+      gbc_chckbxShowObjectMask.gridy = 17;
       contentPanel.add(chckbxShowObjectMask, gbc_chckbxShowObjectMask);
     }
     {
@@ -453,7 +508,7 @@ public class FindFociAdvancedOptions extends JDialog {
       gbc_chckbxSaveToMemory.anchor = GridBagConstraints.WEST;
       gbc_chckbxSaveToMemory.insets = new Insets(0, 0, 0, 5);
       gbc_chckbxSaveToMemory.gridx = 0;
-      gbc_chckbxSaveToMemory.gridy = 17;
+      gbc_chckbxSaveToMemory.gridy = 18;
       contentPanel.add(chckbxSaveToMemory, gbc_chckbxSaveToMemory);
     }
     {
@@ -479,9 +534,6 @@ public class FindFociAdvancedOptions extends JDialog {
     this.pack();
   }
 
-  /**
-   * Inits the data bindings.
-   */
   protected void initDataBindings() {
     final BeanProperty<FindFociModel, Boolean> findFociModelBeanProperty =
         BeanProperty.create("showTable");
@@ -631,5 +683,20 @@ public class FindFociAdvancedOptions extends JDialog {
         Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_16,
             chckbxMarkUsingOverlay, jCheckBoxBeanProperty);
     autoBinding_19.bind();
+    //
+    final BeanProperty<FindFociModel, Integer> findFociModelBeanProperty_17 =
+        BeanProperty.create("maxSize");
+    final BeanProperty<JSlider, Integer> jSliderBeanProperty_2 = BeanProperty.create("value");
+    final AutoBinding<FindFociModel, Integer, JSlider, Integer> autoBinding_20 =
+        Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_17,
+            sliderMaxSize, jSliderBeanProperty_2);
+    autoBinding_20.bind();
+    //
+    final BeanProperty<JFormattedTextField, Object> jFormattedTextFieldBeanProperty =
+        BeanProperty.create("text");
+    final AutoBinding<FindFociModel, Integer, JFormattedTextField, Object> autoBinding_21 =
+        Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, model, findFociModelBeanProperty_17,
+            txtMaxSize, jFormattedTextFieldBeanProperty);
+    autoBinding_21.bind();
   }
 }

@@ -4686,7 +4686,10 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
    * @return true if filtering of the maxima is enabled
    */
   private static boolean isFilterMaxima(FindFociProcessorOptions processorOptions) {
-    return processorOptions.isOption(AlgorithmOption.REMOVE_EDGE_MAXIMA);
+    return processorOptions.isOption(AlgorithmOption.REMOVE_EDGE_MAXIMA)
+        // max size must be > 0 and >= min size
+        // || processorOptions.getMaxSize() >= Math.max(1, processorOptions.getMinSize())
+        || processorOptions.getMaxSize() > 0;
   }
 
   /**
@@ -4792,6 +4795,10 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
    * @return the predicate (or null)
    */
   private static Predicate<FindFociResult> createFilter(FindFociProcessorOptions processorOptions) {
+    // if (processorOptions.getMaxSize() >= Math.max(1, processorOptions.getMinSize())) {
+    if (processorOptions.getMaxSize() > 0) {
+      return result -> result.count > processorOptions.getMaxSize();
+    }
     return null;
   }
 

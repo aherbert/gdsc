@@ -81,6 +81,10 @@ public class FindFociModel extends AbstractModelObject {
    */
   public static final String PROPERTY_MIN_SIZE = "minSize";
   /**
+   * The property name for the {@link PropertyChangeEvent} raised in {@link #setMaxSize(int)}.
+   */
+  public static final String PROPERTY_MAX_SIZE = "maxSize";
+  /**
    * The property name for the {@link PropertyChangeEvent} raised in
    * {@link #setMinimumAboveSaddle(boolean)}.
    */
@@ -446,6 +450,26 @@ public class FindFociModel extends AbstractModelObject {
    */
   public int getMinSize() {
     return processorOptions.getMinSize();
+  }
+
+  /**
+   * Sets the max size.
+   *
+   * @param maxSize the new max size
+   */
+  public void setMaxSize(int maxSize) {
+    final int oldValue = getMaxSize();
+    processorOptions.setMaxSize(maxSize);
+    firePropertyChange(PROPERTY_MAX_SIZE, oldValue, maxSize);
+  }
+
+  /**
+   * Gets the max size.
+   *
+   * @return the maxSize.
+   */
+  public int getMaxSize() {
+    return processorOptions.getMaxSize();
   }
 
   /**

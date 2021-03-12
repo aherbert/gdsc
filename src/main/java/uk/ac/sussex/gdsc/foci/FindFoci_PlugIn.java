@@ -183,6 +183,8 @@ public class FindFoci_PlugIn implements PlugIn {
   public static final String OPTION_SHOW_LOG_MESSAGES = "Show_log_messages";
   /** The option name for the remove edge maxima. */
   public static final String OPTION_REMOVE_EDGE_MAXIMA = "Remove_edge_maxima";
+  /** The option name for the maximum size. */
+  public static final String OPTION_MAXIMUM_SIZE = "Maximum_size";
   /** The option name for the results directory. */
   public static final String OPTION_RESULTS_DIRECTORY = "Results_directory";
   /** The option name for the Gaussian blur. */
@@ -630,6 +632,7 @@ public class FindFoci_PlugIn implements PlugIn {
           findBoolean(OPTION_SHOW_PEAK_MAXIMA_AS_DOTS));
       processorOptions.setOption(AlgorithmOption.REMOVE_EDGE_MAXIMA,
           findBoolean(OPTION_REMOVE_EDGE_MAXIMA));
+      processorOptions.setMaxSize(findInteger(OPTION_MAXIMUM_SIZE));
       processorOptions.setGaussianBlur(findDouble(OPTION_GAUSSIAN_BLUR));
       processorOptions
           .setCentreMethod(findEnum(OPTION_CENTRE_METHOD, CentreMethod::fromDescription));
@@ -964,6 +967,7 @@ public class FindFoci_PlugIn implements PlugIn {
     gd.addCheckbox(OPTION_SHOW_LOG_MESSAGES, settings.showLogMessages);
     gd.addCheckbox(OPTION_REMOVE_EDGE_MAXIMA,
         processorOptions.isOption(AlgorithmOption.REMOVE_EDGE_MAXIMA));
+    gd.addNumericField(OPTION_MAXIMUM_SIZE, processorOptions.getMaxSize(), 0);
     gd.addDirectoryField(OPTION_RESULTS_DIRECTORY, options.getResultsDirectory(), 30);
     gd.addCheckbox(OPTION_OBJECT_ANALYSIS, options.isOption(OutputOption.OBJECT_ANALYSIS));
     gd.addCheckbox(OPTION_SHOW_OBJECT_MASK, options.isOption(OutputOption.SHOW_OBJECT_MASK));
@@ -1005,6 +1009,7 @@ public class FindFoci_PlugIn implements PlugIn {
     processorOptions.setOption(AlgorithmOption.OUTPUT_MASK_PEAK_DOTS, gd.getNextBoolean());
     settings.showLogMessages = gd.getNextBoolean();
     processorOptions.setOption(AlgorithmOption.REMOVE_EDGE_MAXIMA, gd.getNextBoolean());
+    processorOptions.setMaxSize((int) gd.getNextNumber());
     options.setResultsDirectory(checkResultsDirectory(gd.getNextString()));
     options.setOption(OutputOption.OBJECT_ANALYSIS, gd.getNextBoolean());
     options.setOption(OutputOption.SHOW_OBJECT_MASK, gd.getNextBoolean());
@@ -1474,6 +1479,7 @@ public class FindFoci_PlugIn implements PlugIn {
           processorOptions.isOption(AlgorithmOption.OUTPUT_MASK_PEAK_DOTS));
       writeParam(out, OPTION_REMOVE_EDGE_MAXIMA,
           processorOptions.isOption(AlgorithmOption.REMOVE_EDGE_MAXIMA));
+      writeParam(out, OPTION_MAXIMUM_SIZE, Integer.toString(processorOptions.getMaxSize()));
       writeParam(out, OPTION_RESULTS_DIRECTORY, options.getResultsDirectory());
       writeParam(out, OPTION_OBJECT_ANALYSIS, options.isOption(OutputOption.OBJECT_ANALYSIS));
       writeParam(out, OPTION_SHOW_OBJECT_MASK, options.isOption(OutputOption.SHOW_OBJECT_MASK));

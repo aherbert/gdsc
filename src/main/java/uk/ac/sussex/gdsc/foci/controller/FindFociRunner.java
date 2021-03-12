@@ -358,6 +358,16 @@ public class FindFociRunner implements Runnable {
       }
       ignoreChange = true;
     }
+    if (notEqual(model.getMaxSize(), previousModel.getMaxSize())) {
+      // Use the largest value to catch changes where the max size swaps to being
+      // under/over the limit set by the minimum size.
+      //if (Math.max(model.getMaxSize(), previousModel.getMaxSize()) >=
+      //Math.max(1, model.getMinSize())) {
+      if (model.getMaxSize() > 0) {
+        return FindFociState.MERGE_SADDLE;
+      }
+      ignoreChange = true;
+    }
 
     if (notEqual(model.getSortMethod(), previousModel.getSortMethod())
         || notEqual(model.getCentreMethod(), previousModel.getCentreMethod())

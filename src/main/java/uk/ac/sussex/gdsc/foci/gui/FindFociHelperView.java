@@ -546,6 +546,7 @@ public class FindFociHelperView extends JFrame
     model.setSearchParameter(0);
     model.setMaxPeaks(33000);
     model.setMinSize(1);
+    model.setMaxSize(0);
     model.setMinimumAboveSaddle(false);
     model.setPeakMethod(PeakMethod.RELATIVE.ordinal());
     model.setPeakParameter(0);

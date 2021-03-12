@@ -61,6 +61,9 @@ public class FindFociProcessorOptions {
   /** The min size. */
   private int minSize;
 
+  /** The max size. */
+  private int maxSize;
+
   /** The peak method. */
   private PeakMethod peakMethod;
 
@@ -1302,6 +1305,7 @@ public class FindFociProcessorOptions {
     searchMethod = source.searchMethod;
     searchParameter = source.searchParameter;
     minSize = source.minSize;
+    maxSize = source.maxSize;
     peakMethod = source.peakMethod;
     peakParameter = source.peakParameter;
     sortMethod = source.sortMethod;
@@ -1451,6 +1455,31 @@ public class FindFociProcessorOptions {
    */
   public int getMinSize() {
     return minSize;
+  }
+
+  /**
+   * Sets the max size.
+   *
+   * <p>This is used as a filter on the final results after peak merging. Thus it does not prevent
+   * merging of two peaks to create one peak if they are above the maximum size. Instead the peaks
+   * will be merged as normal and any peak will be removed from the final results if they are above
+   * the maximum size.
+   *
+   * <p>Set to zero to ignore.
+   *
+   * @param maxSize the new max size
+   */
+  public void setMaxSize(int maxSize) {
+    this.maxSize = maxSize;
+  }
+
+  /**
+   * Gets the max size.
+   *
+   * @return the max size
+   */
+  public int getMaxSize() {
+    return maxSize;
   }
 
   /**

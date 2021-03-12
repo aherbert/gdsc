@@ -70,6 +70,7 @@ public class FindFociStateMachine extends AbstractModelObject implements Propert
     stateMap.put("minSize", FindFociState.MERGE_SIZE);
     stateMap.put("minimumAboveSaddle", FindFociState.MERGE_SADDLE);
     stateMap.put("removeEdgeMaxima", FindFociState.MERGE_SADDLE);
+    stateMap.put("maxSize", FindFociState.MERGE_SADDLE);
     stateMap.put("sortMethod", FindFociState.CALCULATE_RESULTS);
     stateMap.put("maxPeaks", FindFociState.CALCULATE_RESULTS);
     stateMap.put("centreMethod", FindFociState.CALCULATE_RESULTS);

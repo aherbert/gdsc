@@ -183,6 +183,8 @@ public class ImageJController extends FindFociController {
       recordOption(FindFoci_PlugIn.OPTION_SHOW_LOG_MESSAGES, showLogMessages);
       recordOption(FindFoci_PlugIn.OPTION_REMOVE_EDGE_MAXIMA,
           processorOptions.isOption(AlgorithmOption.REMOVE_EDGE_MAXIMA));
+      Recorder.recordOption(FindFoci_PlugIn.OPTION_MAXIMUM_SIZE,
+          Integer.toString(processorOptions.getMaxSize()));
       if (options.getResultsDirectory() != null) {
         Recorder.recordOption(FindFoci_PlugIn.OPTION_RESULTS_DIRECTORY,
             options.getResultsDirectory());

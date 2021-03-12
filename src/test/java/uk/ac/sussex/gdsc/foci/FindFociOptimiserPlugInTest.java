@@ -56,6 +56,7 @@ class FindFociOptimiserPlugInTest {
     processorOptions.setOption(AlgorithmOption.MINIMUM_ABOVE_SADDLE, true);
     processorOptions.setSearchMethod(SearchMethod.FRACTION_OF_PEAK_MINUS_BACKGROUND);
     processorOptions.setSearchParameter(0.67);
+    processorOptions.setMinSize(13);
     processorOptions.setPeakMethod(PeakMethod.ABSOLUTE);
     processorOptions.setPeakParameter(98);
     processorOptions.setSortMethod(SortMethod.AVERAGE_INTENSITY);
@@ -79,7 +80,7 @@ class FindFociOptimiserPlugInTest {
     final Parameters parameters = new Parameters(processorOptions);
 
     final String text = parameters.toString();
-    // Choudl be cached
+    // Should be cached
     Assertions.assertSame(text, parameters.toString(), "toString is not cached");
 
     // Convert from and then back again
