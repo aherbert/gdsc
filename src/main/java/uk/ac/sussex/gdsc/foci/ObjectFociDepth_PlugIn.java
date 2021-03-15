@@ -1299,7 +1299,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         .map(v -> new Point3f((float) v[0], (float) v[1], (float) v[2])).toArray(Point3f[]::new);
     final int[] faces = Arrays.stream(hull.getFaces()).flatMapToInt(Arrays::stream).toArray();
     final CustomIndexedTriangleMesh mesh =
-        new CustomIndexedTriangleMesh(vertices, faces, new Color3f(Color.RED), 0.65f);
+        new CustomIndexedTriangleMesh(vertices, faces, new Color3f(Color.RED), 0.5f);
 
     // Already set
     // mesh.setShaded(true);
