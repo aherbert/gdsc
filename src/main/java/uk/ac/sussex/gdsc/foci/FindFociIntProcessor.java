@@ -173,9 +173,9 @@ public class FindFociIntProcessor extends FindFociBaseProcessor {
         return round(stats.backgroundRegionAverage);
 
       case STD_DEV_ABOVE_MEAN:
-        return round(stats.backgroundRegionAverage
-            + ((backgroundParameter >= 0) ? backgroundParameter * stats.backgroundRegionStdDev
-                : 0));
+        // Allow a negative background parameter
+        return round(
+            stats.backgroundRegionAverage + backgroundParameter * stats.backgroundRegionStdDev);
 
       case MIN_MASK_OR_ROI:
         return round(stats.regionMinimum);

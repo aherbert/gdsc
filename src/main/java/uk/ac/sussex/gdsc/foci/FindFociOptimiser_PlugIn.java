@@ -2597,7 +2597,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
   private void parseBackgroundLimits() {
     double[] values = splitValues(settings.backgroundParameter);
-    values = checkValuesTriplet("Background parameter", values, 0, 1);
+    values = checkValuesTriplet("Background parameter", values, 0, 1, false);
     backgroundParameterMin = values[0];
     backgroundParameterMax = values[1];
     backgroundParameterInterval = values[2];
@@ -2605,6 +2605,11 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
   private static double[] checkValuesTriplet(String name, double[] values, double defaultMin,
       double defaultInterval) {
+    return checkValuesTriplet(name, values, defaultMin, defaultInterval, true);
+  }
+
+  private static double[] checkValuesTriplet(String name, double[] values, double defaultMin,
+      double defaultInterval, boolean checkMin) {
     if (values.length == 0) {
       ImageJUtils.log("%s Warning : %s : No min:max:increment, setting to default minimum %s",
           TITLE, name, MathUtils.rounded(defaultMin));
@@ -2612,7 +2617,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     }
 
     double min = values[0];
-    if (min < defaultMin) {
+    if (checkMin && min < defaultMin) {
       ImageJUtils.log("%s Warning : %s : Minimum below default (%f < %s), setting to default",
           TITLE, name, min, MathUtils.rounded(defaultMin));
       min = defaultMin;
