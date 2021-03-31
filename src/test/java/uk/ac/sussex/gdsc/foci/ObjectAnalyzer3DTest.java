@@ -340,7 +340,7 @@ class ObjectAnalyzer3DTest {
     // ...
     int object = 0;
     final int[] m1 = new int[image.length];
-    int xy = maxx * maxy;
+    final int xy = maxx * maxy;
     for (int z = 0; z < maxz; z++) {
       int i = z * xy + z % 2;
       for (int j = z % 2; j < xy; i += 2, j += 2) {
