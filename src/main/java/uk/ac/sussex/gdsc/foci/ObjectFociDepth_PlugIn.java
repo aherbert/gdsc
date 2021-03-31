@@ -55,6 +55,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.scijava.java3d.Appearance;
@@ -235,6 +236,10 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     ImagePlus mask;
     final List<Distance> distances = new LocalList<>(results.size());
 
+    // Compute volume/area for 3d or area/perimeter for 2d
+    double[] size0 = null;
+    double[] size1 = null;
+
     if (is3d) {
       // 3D analysis with the current z-stack
       final int ch = imp.getChannel();
@@ -269,6 +274,14 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         final Hull3d[] hulls = createHulls(oa, toCoords);
         mask = showMask(oa, hulls, sy, sz);
 
+        // Note: Hulls are scaled to the pixel width.
+        // Volume
+        final double scale1 = cal.pixelWidth * cal.pixelWidth * cal.pixelWidth;
+        size1 = toDouble(hulls, h -> h.getVolume() * scale1);
+        // Surface area
+        final double scale0 = cal.pixelWidth * cal.pixelWidth;
+        size0 = toDouble(hulls, h -> h.getArea() * scale0);
+
         final double[][][] planes = new double[hulls.length][][];
         results.stream()
             .map(r -> search3d(r, objectMask, maxx, maxy, maxz, toCoords, hulls, planes))
@@ -280,6 +293,12 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         }
       } else {
         mask = showMask(oa, null, 0, 0);
+
+        // Volume
+        final double scale = cal.pixelWidth * cal.pixelHeight * cal.pixelDepth;
+        size1 = toDouble(oa.getObjectCentres(), c -> c[3] * scale);
+        // Q. How to do surface area?
+        size0 = new double[size1.length];
 
         Distance3D df;
         if (cal.pixelWidth == cal.pixelHeight) {
@@ -318,11 +337,24 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         final Hull2d[] hulls = createHulls(oa, toCoords);
         mask = showMask(oa, hulls, sy);
 
+        // Note: Hulls are scaled to the pixel width.
+        // Area
+        final double scale = cal.pixelWidth * cal.pixelWidth;
+        size1 = toDouble(hulls, h -> h.getArea() * scale);
+        // Perimeter
+        size0 = toDouble(hulls, h -> h.getLength() * cal.pixelWidth);
+
         final double[][][] planes = new double[hulls.length][][];
         results.stream().map(r -> search2d(r, objectMask, maxx, maxy, toCoords, hulls, planes))
             .filter(d -> d != null).sequential().forEach(distances::add);
       } else {
         mask = showMask(oa, null, 0);
+
+        // Area
+        final double scale = cal.pixelWidth * cal.pixelHeight;
+        size1 = toDouble(oa.getObjectCentres(), c -> c.getSize() * scale);
+        // Perimeter
+        size0 = toDouble(oa.getObjectOutlines(), c -> c.getLength() * cal.pixelWidth);
 
         Distance2D df;
         if (cal.pixelWidth == cal.pixelHeight) {
@@ -339,8 +371,13 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       }
     }
 
+
     try (BufferedTextWindow tw = new BufferedTextWindow(createWindow(distancesWindowRef,
-        "Distances", "Image\tObject\tx\ty\tz\tdx\tdy\tdz\tDistance (px)\tDistance\tUnits"))) {
+        "Distances", "Image\tObject\tS0\tUnits\tS1\tUnits\tx\ty\tz\tdx\tdy\tdz\tDistance (px)\t"
+            + "Distance\tUnits"))) {
+      final String s0unit = (is3d ? cal.getUnit() + "^2" : cal.getUnit());
+      final String s1unit = cal.getUnit() + (is3d ? "^3" : "^2");
+
       final StringBuilder sb = new StringBuilder();
       final String title = imp.getTitle();
       for (final Distance d : distances) {
@@ -348,6 +385,10 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         final Coordinate point = d.point;
         sb.append(title);
         sb.append('\t').append(d.id);
+        sb.append('\t').append(MathUtils.round(size0[d.id]));
+        sb.append('\t').append(s0unit);
+        sb.append('\t').append(MathUtils.round(size1[d.id]));
+        sb.append('\t').append(s1unit);
         sb.append('\t').append(point.getXint());
         sb.append('\t').append(point.getYint());
         if (is3d) {
@@ -479,6 +520,26 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     if (object != 0 && (indices.isEmpty() || indices.getQuick(indices.size() - 1) != index)) {
       indices.add(index);
     }
+  }
+
+  /**
+   * Convert the array to a double array using the converter. Index zero and any null entry are
+   * ignored.
+   *
+   * @param <T> the generic type
+   * @param data the data
+   * @param converter the converter
+   * @return the double array
+   */
+  private static <T> double[] toDouble(T[] data, ToDoubleFunction<T> converter) {
+    final double[] d = new double[data.length];
+    for (int i = 1; i < d.length; i++) {
+      final T t = data[i];
+      if (t != null) {
+        d[i] = converter.applyAsDouble(t);
+      }
+    }
+    return d;
   }
 
   /**
