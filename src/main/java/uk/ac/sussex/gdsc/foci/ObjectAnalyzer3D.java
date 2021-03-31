@@ -34,7 +34,7 @@ public class ObjectAnalyzer3D {
                                               //4N                //8N
   private static final int[] DIR_X_OFFSET2 = {  0, 1, 0,-1,        1, 1,-1,-1 };
   private static final int[] DIR_Y_OFFSET2 = { -1, 0, 1, 0,       -1, 1, 1,-1 };
-                                              //4N
+                                              //6N
                                               //8N
   private static final int[] DIR_X_OFFSET3 = { 0, 1, 0,-1, 0, 0,
        1, 1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1, 0, 1, 1, 1, 0,-1,-1,-1 };
@@ -253,12 +253,8 @@ public class ObjectAnalyzer3D {
       for (int d = neighbours; d-- > 0;) {
         if (isInnerXyz || (isInnerXy && isWithinZ(z1, d)) || isWithinXyz(x1, y1, z1, d)) {
           final int index2 = index1 + offset[d];
-          try {
-            if (objectMask[index2] != 0) {
-              // This has been done already, ignore this point
-              continue;
-            }
-          } catch (final ArrayIndexOutOfBoundsException ex) {
+          if (objectMask[index2] != 0) {
+            // This has been done already, ignore this point
             continue;
           }
 
@@ -504,6 +500,80 @@ public class ObjectAnalyzer3D {
       data[i][3] = count[i];
     }
     return data;
+  }
+
+  /**
+   * Get the count of the number of exposed surfaces of each object. Data is stored indexed by the
+   * object value so processing of results should start from 1. Faces are exposed if they touch a
+   * voxel of a different object or the background using a 6n connected search (3D) or 4n connected
+   * search (2D).
+   *
+   * <p>Note: For objects with a z-depth of 1 the xy count will be equal to twice the count of the
+   * number of voxels in the object corresponding the top and bottom exposed surfaces when viewed
+   * along the z-axis. For objects that are convex the face count will be equal to twice the area of
+   * the object projected to the plane containing the face, i.e. along the z, y and x axis for xy,
+   * xz and yz respectively.
+   *
+   * @return The surface count of each object [object][xy,xz,yz]
+   */
+  public int[][] getSurfaceCount() {
+    final int[][] count = new int[maxObject + 1][3];
+    final int[] face = {1, 2, 1, 2, 0, 0};
+
+    if (maxz == 1) {
+      // 2D - 4n connected search
+      for (int y = 0, i = 0; y < maxy; y++) {
+        final boolean innerY = (y != 0 && y != ylimit);
+        for (int x = 0; x < maxx; x++, i++) {
+          final int value = objectMask[i];
+          if (value != 0) {
+            final boolean isInnerXy = (x != 0 && x != xlimit) && innerY;
+            // Increment exposed face count for top+bottom
+            count[value][0] += 2;
+
+            for (int d = 4; d-- > 0;) {
+              // If inside the image then check the neighbour. Otherwise it must be exposed.
+              if (isInnerXy || isWithinXy(x, y, d)) {
+                if (value == objectMask[i + offset[d]]) {
+                  // Neighbour is the same object
+                  continue;
+                }
+              }
+              // Increment exposed face count
+              count[value][face[d]]++;
+            }
+          }
+        }
+      }
+    } else {
+      // 3D - 6n connected search
+      for (int z = 0, i = 0; z < maxz; z++) {
+        final boolean innerZ = (z != 0 && z != zlimit);
+        for (int y = 0; y < maxy; y++) {
+          final boolean innerY = (y != 0 && y != ylimit);
+          for (int x = 0; x < maxx; x++, i++) {
+            final int value = objectMask[i];
+            if (value != 0) {
+              final boolean isInnerXy = (x != 0 && x != xlimit) && innerY;
+              final boolean isInnerXyz = isInnerXy && innerZ;
+
+              for (int d = 6; d-- > 0;) {
+                // If inside the image then check the neighbour. Otherwise it must be exposed.
+                if (isInnerXyz || (isInnerXy && isWithinZ(z, d)) || isWithinXyz(x, y, z, d)) {
+                  if (value == objectMask[i + offset[d]]) {
+                    // Neighbour is the same object
+                    continue;
+                  }
+                }
+                // Increment exposed face count
+                count[value][face[d]]++;
+              }
+            }
+          }
+        }
+      }
+    }
+    return count;
   }
 
   /**
