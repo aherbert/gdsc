@@ -298,7 +298,10 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         final double scale = cal.pixelWidth * cal.pixelHeight * cal.pixelDepth;
         size1 = toDouble(oa.getObjectCentres(), c -> c[3] * scale);
         // Q. How to do surface area?
-        size0 = new double[size1.length];
+        final double sxy = cal.pixelWidth * cal.pixelHeight;
+        final double sxz = cal.pixelWidth * cal.pixelDepth;
+        final double syz = cal.pixelHeight * cal.pixelDepth;
+        size0 = toDouble(oa.getSurfaceCount(), c -> c[0] * sxy + c[1] * sxz + c[2] * syz);
 
         Distance3D df;
         if (cal.pixelWidth == cal.pixelHeight) {
