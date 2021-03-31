@@ -25,6 +25,7 @@
 package uk.ac.sussex.gdsc.foci;
 
 import java.util.Arrays;
+import uk.ac.sussex.gdsc.core.utils.MemoryUtils;
 
 /**
  * Find objects defined by contiguous pixels of the same value.
@@ -141,7 +142,7 @@ public class ObjectAnalyzer3D {
           size = expandObjectXyz(maskImage, objectMask, i, maxObject, ppList);
         }
         if (sizes.length == maxObject) {
-          sizes = Arrays.copyOf(sizes, (int) (maxObject * 1.5));
+          sizes = Arrays.copyOf(sizes, MemoryUtils.createNewCapacity(maxObject + 1, maxObject));
         }
         sizes[maxObject] = size;
       }
@@ -204,7 +205,8 @@ public class ObjectAnalyzer3D {
             pointList[listLen++] = index2;
             objectMask[index2] = id;
             if (pointList.length == listLen) {
-              pointList = Arrays.copyOf(pointList, (int) (listLen * 1.5));
+              pointList =
+                  Arrays.copyOf(pointList, MemoryUtils.createNewCapacity(listLen + 1, listLen));
             }
           }
         }
@@ -265,7 +267,8 @@ public class ObjectAnalyzer3D {
             pointList[listLen++] = index2;
             objectMask[index2] = id;
             if (pointList.length == listLen) {
-              pointList = Arrays.copyOf(pointList, (int) (listLen * 1.5));
+              pointList =
+                  Arrays.copyOf(pointList, MemoryUtils.createNewCapacity(listLen + 1, listLen));
             }
           }
         }

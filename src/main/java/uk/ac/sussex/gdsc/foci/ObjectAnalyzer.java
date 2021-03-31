@@ -31,6 +31,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.util.Arrays;
+import uk.ac.sussex.gdsc.core.utils.MemoryUtils;
 
 /**
  * Find objects defined by contiguous pixels of the same value.
@@ -174,7 +175,7 @@ public class ObjectAnalyzer {
         maxObject++;
         final int size = expandObjectXy(maskImage, objectMask, i, maxObject, ppList);
         if (sizes.length == maxObject) {
-          sizes = Arrays.copyOf(sizes, (int) (maxObject * 1.5));
+          sizes = Arrays.copyOf(sizes, MemoryUtils.createNewCapacity(maxObject + 1, maxObject));
         }
         sizes[maxObject] = size;
       }
@@ -237,7 +238,8 @@ public class ObjectAnalyzer {
             pointList[listLen++] = index2;
             objectMask[index2] = id;
             if (pointList.length == listLen) {
-              pointList = Arrays.copyOf(pointList, (int) (listLen * 1.5));
+              pointList =
+                  Arrays.copyOf(pointList, MemoryUtils.createNewCapacity(listLen + 1, listLen));
             }
           }
         }
