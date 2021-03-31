@@ -496,7 +496,7 @@ public class ObjectAnalyzer3D {
         }
       }
     }
-    final double[][] data = new double[count.length][3];
+    final double[][] data = new double[count.length][4];
     for (int i = 1; i < count.length; i++) {
       data[i][0] = sumx[i] / count[i];
       data[i][1] = sumy[i] / count[i];
