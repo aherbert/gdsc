@@ -138,7 +138,6 @@ class ObjectAnalyzer3DTest {
     };
     //@formatter:on
     final ObjectAnalyzer3D oa = new ObjectAnalyzer3D(image, maxx, maxy, 1);
-    oa.getMaxObject();
     final double[][] centres = {
     //@formatter:off
         {0, 0, 0, 0},
@@ -163,7 +162,6 @@ class ObjectAnalyzer3DTest {
     };
     //@formatter:on
     final ObjectAnalyzer3D oa = new ObjectAnalyzer3D(image, maxx, maxy, 1);
-    oa.getMaxObject();
     final int[][] counts = {
     //@formatter:off
         {0, 0, 0},
@@ -260,7 +258,6 @@ class ObjectAnalyzer3DTest {
     };
     //@formatter:on
     final ObjectAnalyzer3D oa = new ObjectAnalyzer3D(image, maxx, maxy, maxz);
-    oa.getMaxObject();
     final double[][] centres = {
     //@formatter:off
         {0, 0, 0, 0},
@@ -295,7 +292,6 @@ class ObjectAnalyzer3DTest {
     };
     //@formatter:on
     final ObjectAnalyzer3D oa = new ObjectAnalyzer3D(image, maxx, maxy, maxz);
-    oa.getMaxObject();
     final int[][] counts = {
     //@formatter:off
         {0, 0, 0},

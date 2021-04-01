@@ -478,7 +478,7 @@ public class ObjectAnalyzer3D {
    * @return The centre-of-mass of each object (plus the pixel count) [object][cx,cy,cz,n]
    */
   public double[][] getObjectCentres() {
-    final int[] count = new int[maxObject + 1];
+    final int[] count = new int[getMaxObject() + 1];
     final double[] sumx = new double[count.length];
     final double[] sumy = new double[count.length];
     final double[] sumz = new double[count.length];
@@ -520,7 +520,7 @@ public class ObjectAnalyzer3D {
    * @return The surface count of each object [object][xy,xz,yz]
    */
   public int[][] getSurfaceCount() {
-    final int[][] count = new int[maxObject + 1][3];
+    final int[][] count = new int[getMaxObject() + 1][3];
     final int[] face = {1, 2, 1, 2, 0, 0};
 
     if (maxz == 1) {
