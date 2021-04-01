@@ -327,6 +327,9 @@ public final class AssignedFindFociResultSearchIndex {
   /**
    * Find the point that matches the given coordinates with the specified assigned status.
    *
+   * <p>Note: Duplicate xyz values in the results that match the specified search coordinates will
+   * return an arbitrary result.
+   *
    * @param x the x coord
    * @param y the y coord
    * @param z the z coord
