@@ -103,6 +103,20 @@ public class ObjectAnalyzer {
     public int getSize() {
       return size;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof ObjectCentre) {
+        final ObjectCentre that = (ObjectCentre) obj;
+        return cx == that.cx && cy == that.cy && size == that.size;
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return Arrays.hashCode(new double[] {cx, cy, size});
+    }
   }
 
   /**
@@ -301,10 +315,9 @@ public class ObjectAnalyzer {
         return (y < ylimit && x < xlimit);
       case 6:
         return (y < ylimit && x > 0);
-      case 7:
-        return (y > 0 && x > 0);
+      // case 7:
       default:
-        return false;
+        return (y > 0 && x > 0);
     }
   }
 
