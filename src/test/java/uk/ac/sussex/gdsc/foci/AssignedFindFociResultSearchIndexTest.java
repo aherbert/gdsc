@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.function.IntSupplier;
 import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.sampling.CombinationSampler;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.ac.sussex.gdsc.core.trees.DoubleDistanceFunction;
@@ -175,28 +176,33 @@ class AssignedFindFociResultSearchIndexTest {
 
   @SeededTest
   void canFindPoints2d(RandomSeed seed) {
-    canFindPoints(seed, 32, 32, 0, 1, 1, 1);
+    canFindPoints(seed, 32, 32, 1, 1, 1, 1);
   }
 
   @SeededTest
   void canFindPoints2dWithScaledDimensions(RandomSeed seed) {
-    canFindPoints(seed, 32, 32, 0, 1.5, 2.0, 0);
+    canFindPoints(seed, 32, 32, 1, 1.5, 2.0, 1);
   }
 
   @SeededTest
   void canFindPoints2dWithUniformScaledDimensions(RandomSeed seed) {
-    canFindPoints(seed, 32, 32, 0, 1.5, 1.5, 0);
+    canFindPoints(seed, 32, 32, 1, 1.5, 1.5, 1);
   }
 
   private static void canFindPoints(RandomSeed seed, int width, int height, int depth, double sx,
       double sy, double sz) {
     final UniformRandomProvider rng = RngUtils.create(seed.getSeed());
-    final IntSupplier z = depth == 0 ? () -> 0 : () -> rng.nextInt(depth);
     final int range = 10;
     final ArrayList<FindFociResult> results = new ArrayList<>();
-    for (int i = 0; i < 50; i++) {
-      results.add(
-          createResult(rng.nextInt(width), rng.nextInt(height), z.getAsInt(), rng.nextInt(range)));
+    // Results should be unique for xyz so use a random set of the possible XYZ indices
+    final int xy = width * height;
+    final int xyz = xy * depth;
+    for (int index : new CombinationSampler(rng, xyz, 50).sample()) {
+      final int z = index / xy;
+      final int mod = index % xy;
+      final int y = mod / width;
+      final int x = mod % width;
+      results.add(createResult(x, y, z, 1 + rng.nextInt(range)));
     }
     final AssignedFindFociResultSearchIndex index =
         new AssignedFindFociResultSearchIndex(results, sx, sy, sz);
@@ -236,7 +242,7 @@ class AssignedFindFociResultSearchIndexTest {
         // It may not match the coordinates but the distance should match
         final double d1 = distance2(r, closest, sx, sy, sz);
         final double d2 = distance2(r, r3.getResult(), sx, sy, sz);
-        Assertions.assertEquals(d1, d2);
+        Assertions.assertEquals(d1, d2, 1e-8);
       } else {
         Assertions.assertNull(r3);
       }
