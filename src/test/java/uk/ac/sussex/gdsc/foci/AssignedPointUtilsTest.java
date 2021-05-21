@@ -31,6 +31,10 @@ import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.FloatPolygon;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.rng.UniformRandomProvider;
@@ -43,6 +47,50 @@ import uk.ac.sussex.gdsc.test.rng.RngUtils;
 
 @SuppressWarnings({"javadoc"})
 class AssignedPointUtilsTest {
+
+  @SeededTest
+  void canSaveAndLoadXyz(RandomSeed seed) throws IOException {
+    final Path filename = Files.createTempFile("AssignedPointUtilsTest", ".dat");
+    AssignedPoint[] in = AssignedPointUtils.loadPoints(filename.toString());
+    Assertions.assertArrayEquals(new AssignedPoint[0], in);
+
+    // Handle null
+    AssignedPointUtils.savePoints(null, filename.toString());
+
+    final UniformRandomProvider rng = RngUtils.create(seed.getSeed());
+    final int width = 256;
+    final int height = 128;
+    final int depth = 5;
+    final AssignedPoint[] out = new AssignedPoint[] {
+        // Input IDs are a natural order from 1
+        new AssignedPoint(rng.nextInt(width), rng.nextInt(height), rng.nextInt(depth) + 1, 1),
+        new AssignedPoint(rng.nextInt(width), rng.nextInt(height), rng.nextInt(depth) + 1, 2),
+        new AssignedPoint(rng.nextInt(width), rng.nextInt(height), rng.nextInt(depth) + 1, 3),
+        new AssignedPoint(rng.nextInt(width), rng.nextInt(height), rng.nextInt(depth) + 1, 4),
+        new AssignedPoint(rng.nextInt(width), rng.nextInt(height), rng.nextInt(depth) + 1, 5)};
+
+    AssignedPointUtils.savePoints(out, filename.toString());
+    in = AssignedPointUtils.loadPoints(filename.toString());
+    Assertions.assertArrayEquals(out, in);
+
+    // Exercise the error logger
+    try (final BufferedWriter tmp = Files.newBufferedWriter(filename)) {
+      tmp.write("X,Y,Z");
+      tmp.newLine();
+      // Not enough tokens
+      tmp.write("1,2");
+      tmp.newLine();
+      // Invalid numbers
+      tmp.write("1,2,a");
+      tmp.newLine();
+    }
+
+    // Should not throw. It will log an exception
+    in = AssignedPointUtils.loadPoints(filename.toString());
+    Assertions.assertArrayEquals(new AssignedPoint[0], in);
+
+    Files.delete(filename);
+  }
 
   @SeededTest
   void canExtractRoiPoints(RandomSeed seed) {
@@ -68,14 +116,18 @@ class AssignedPointUtilsTest {
       Assertions.assertEquals(y[i], points[i].y);
       Assertions.assertEquals(0, points[i].z);
     }
+    final int c = 3;
     final int z = 4;
-    roi.setPosition(3, z, 2);
+    final int t = 2;
+    roi.setPosition(c, z, t);
     points = AssignedPointUtils.extractRoiPoints(roi);
     Assertions.assertEquals(x.length, points.length);
     for (int i = 0; i < x.length; i++) {
       Assertions.assertEquals(x[i], points[i].x);
       Assertions.assertEquals(y[i], points[i].y);
       Assertions.assertEquals(z, points[i].z);
+      Assertions.assertEquals(c, points[i].getChannel());
+      Assertions.assertEquals(t, points[i].getFrame());
     }
     final int pos = 43;
     roi.setPosition(pos);
@@ -85,6 +137,8 @@ class AssignedPointUtilsTest {
       Assertions.assertEquals(x[i], points[i].x);
       Assertions.assertEquals(y[i], points[i].y);
       Assertions.assertEquals(pos, points[i].z);
+      Assertions.assertEquals(0, points[i].getChannel());
+      Assertions.assertEquals(0, points[i].getFrame());
     }
   }
 
@@ -114,11 +168,15 @@ class AssignedPointUtilsTest {
       Assertions.assertEquals(x[i], points[i].x);
       Assertions.assertEquals(y[i], points[i].y);
       Assertions.assertEquals(0, points[i].z);
+      Assertions.assertEquals(0, points[i].getChannel());
+      Assertions.assertEquals(0, points[i].getFrame());
     }
 
     imp = IJ.createImage(null, "8-bit", 10, 15, 4, 3, 2);
+    final int c = 3;
     final int z = 2;
-    roi.setPosition(3, z, 1);
+    final int t = 1;
+    roi.setPosition(c, z, t);
     imp.setRoi(roi);
     points = AssignedPointUtils.extractRoiPoints(imp);
     Assertions.assertEquals(x.length, points.length);
@@ -126,16 +184,22 @@ class AssignedPointUtilsTest {
       Assertions.assertEquals(x[i], points[i].x);
       Assertions.assertEquals(y[i], points[i].y);
       Assertions.assertEquals(z, points[i].z);
+      Assertions.assertEquals(c, points[i].getChannel());
+      Assertions.assertEquals(t, points[i].getFrame());
     }
 
     // Set into the ROI in bulk
-    int[] positions = new int[imp.getStackSize()];
-    int[] counters = new int[positions.length];
-    for (int i = 0; i < positions.length; i++) {
+    int[] cpositions = new int[imp.getStackSize()];
+    int[] zpositions = new int[imp.getStackSize()];
+    int[] tpositions = new int[imp.getStackSize()];
+    int[] counters = new int[zpositions.length];
+    for (int i = 0; i < zpositions.length; i++) {
       final int channel = 1 + rng.nextInt(imp.getNChannels());
       final int slice = 1 + rng.nextInt(imp.getNSlices());
       final int frame = 1 + rng.nextInt(imp.getNFrames());
-      positions[i] = slice;
+      cpositions[i] = channel;
+      zpositions[i] = slice;
+      tpositions[i] = frame;
       counters[i] = imp.getStackIndex(channel, slice, frame) << 8;
     }
     PointRoi roi2 = new PointRoi(x, y, x.length);
@@ -146,7 +210,9 @@ class AssignedPointUtilsTest {
     for (int i = 0; i < x.length; i++) {
       Assertions.assertEquals(x[i], points[i].x);
       Assertions.assertEquals(y[i], points[i].y);
-      Assertions.assertEquals(positions[i], points[i].z);
+      Assertions.assertEquals(zpositions[i], points[i].z);
+      Assertions.assertEquals(cpositions[i], points[i].getChannel());
+      Assertions.assertEquals(tpositions[i], points[i].getFrame());
     }
 
     imp = IJ.createImage(null, "8-bit", 10, 15, 21);
@@ -160,16 +226,18 @@ class AssignedPointUtilsTest {
       Assertions.assertEquals(x[i], points[i].x);
       Assertions.assertEquals(y[i], points[i].y);
       Assertions.assertEquals(pos, points[i].z);
+      Assertions.assertEquals(0, points[i].getChannel());
+      Assertions.assertEquals(0, points[i].getFrame());
     }
 
     // Set into the ROI in bulk
-    positions = new int[imp.getStackSize()];
-    for (int i = 0; i < positions.length; i++) {
-      positions[i] = 1 + rng.nextInt(positions.length);
+    zpositions = new int[imp.getStackSize()];
+    for (int i = 0; i < zpositions.length; i++) {
+      zpositions[i] = 1 + rng.nextInt(zpositions.length);
     }
-    counters = new int[positions.length];
-    for (int i = 0; i < positions.length; i++) {
-      counters[i] = positions[i] << 8;
+    counters = new int[zpositions.length];
+    for (int i = 0; i < zpositions.length; i++) {
+      counters[i] = zpositions[i] << 8;
     }
     roi2.setCounters(counters);
     imp.setRoi(roi2);
@@ -178,7 +246,10 @@ class AssignedPointUtilsTest {
     for (int i = 0; i < x.length; i++) {
       Assertions.assertEquals(x[i], points[i].x);
       Assertions.assertEquals(y[i], points[i].y);
-      Assertions.assertEquals(positions[i], points[i].z);
+      Assertions.assertEquals(zpositions[i], points[i].z);
+      // PointRoi positions are converted to 1-indexed channel and frame for a z-stack
+      Assertions.assertEquals(1, points[i].getChannel());
+      Assertions.assertEquals(1, points[i].getFrame());
     }
   }
 
@@ -246,6 +317,8 @@ class AssignedPointUtilsTest {
     final int width = 256;
     final int height = 128;
     final int depth = 5;
+    final int channels = 4;
+    final int frames = 3;
     final AssignedPoint[] array = new AssignedPoint[] {
         new AssignedPoint(rng.nextInt(width), rng.nextInt(height), rng.nextInt(depth) + 1, 0),
         new AssignedPoint(rng.nextInt(width), rng.nextInt(height), rng.nextInt(depth) + 1, 1),
@@ -278,13 +351,17 @@ class AssignedPointUtilsTest {
     }
 
     // With hyperstack
-    final int channels = 4;
-    final int frames = 3;
     final int channel = 1 + rng.nextInt(channels);
     final int frame = 1 + rng.nextInt(frames);
     imp = IJ.createImage(null, "8-bit", width, height, channels, depth, frames);
     imp.setDimensions(channels, depth, frames);
+    // This position should be ignored
     imp.setPosition(channel, 1, frame);
+    // Positions will be taken from the assigned point
+    for (final AssignedPoint p : array) {
+      p.setChannel(rng.nextInt(channels) + 1);
+      p.setFrame(rng.nextInt(frames) + 1);
+    }
     roi = (PointRoi) AssignedPointUtils.createRoi(imp, array);
     poly = roi.getNonSplineFloatPolygon();
     Assertions.assertEquals(list.size(), poly.npoints);
@@ -292,7 +369,7 @@ class AssignedPointUtilsTest {
       final AssignedPoint p = list.get(i);
       Assertions.assertEquals(p.getX(), poly.xpoints[i]);
       Assertions.assertEquals(p.getY(), poly.ypoints[i]);
-      Assertions.assertEquals(imp.getStackIndex(channel, p.getZint(), frame),
+      Assertions.assertEquals(imp.getStackIndex(p.getChannel(), p.getZint(), p.getFrame()),
           roi.getPointPosition(i));
     }
   }

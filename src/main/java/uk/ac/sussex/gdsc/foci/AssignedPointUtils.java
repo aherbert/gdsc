@@ -56,7 +56,7 @@ public final class AssignedPointUtils {
   private AssignedPointUtils() {}
 
   /**
-   * Save the predicted points to the given file.
+   * Save the predicted points to the given file. Only saves XYZ positions.
    *
    * @param points the points
    * @param filename the filename
@@ -79,9 +79,9 @@ public final class AssignedPointUtils {
 
       // Output all results in ascending rank order
       for (final AssignedPoint point : points) {
-        sb.append(point.getX()).append(',');
-        sb.append(point.getY()).append(',');
-        sb.append(point.getZ()).append(NEW_LINE);
+        sb.append(point.getXint()).append(',');
+        sb.append(point.getYint()).append(',');
+        sb.append(point.getZint()).append(NEW_LINE);
         out.write(sb.toString());
         sb.setLength(0);
       }
@@ -89,7 +89,7 @@ public final class AssignedPointUtils {
   }
 
   /**
-   * Loads the points from the file.
+   * Loads the points from the file. Only loads XYZ positions.
    *
    * @param filename the filename
    * @return the assigned points
@@ -140,16 +140,19 @@ public final class AssignedPointUtils {
       // The ROI has either a hyperstack position or a stack position, but not both.
       // Both will be zero if the ROI has no 3D information.
       final int zpos = roi.hasHyperStackPosition() ? roi.getZPosition() : roi.getPosition();
-      return extractRoiPoints((PolygonRoi) roi, i -> zpos);
+      final int cpos = roi.hasHyperStackPosition() ? roi.getCPosition() : 0;
+      final int tpos = roi.hasHyperStackPosition() ? roi.getTPosition() : 0;
+      return extractRoiPoints((PolygonRoi) roi, i -> zpos, i -> cpos, i -> tpos);
     }
     return new AssignedPoint[0];
   }
 
   /**
-   * Extracts the points from the ROI of the given image. Z coordinates will be extracted if the
+   * Extracts the points from the ROI of the given image. ZCT coordinates will be extracted if the
    * image stack size is above 1. Uses the point position from a PointRoi if available for a
-   * per-point z coordinate. Otherwise defaults to the ROI Z-position (if it has a hyperstack
-   * position) or the the stack position. If neither are set the z position will be zero.
+   * per-point ZCT coordinate decoded using the image. Otherwise defaults to the ROI Z,C,T-position
+   * (if it has a hyperstack position) or else uses the ROI stack position for the Z-position (C,T
+   * will be zero). If neither are set the z, c, t positions will be zero.
    *
    * @param imp the image
    * @return The list of points (can be zero length)
@@ -157,6 +160,7 @@ public final class AssignedPointUtils {
    * @see Roi#getZPosition()
    * @see Roi#getPosition()
    * @see PointRoi#getPointPosition(int)
+   * @see ImagePlus#convertIndexToPosition(int)
    * @since 1.4
    */
   public static AssignedPoint[] extractRoiPoints(ImagePlus imp) {
@@ -167,11 +171,12 @@ public final class AssignedPointUtils {
   }
 
   /**
-   * Extracts the points from the ROI assuming it is associated with the given image. Z coordinates
-   * will be extracted if the image stack size is above 1. Uses the point position from a PointRoi
-   * if available for a per-point z coordinate. Otherwise defaults to the ROI Z-position (if it has
-   * a hyperstack position) or the the stack position. If neither are set the z position will be
-   * zero.
+   * Extracts the points from the ROI assuming it is associated with the given image. ZCT
+   * coordinates will be extracted if the image stack size is above 1. Uses the point position from
+   * a PointRoi if available for a per-point ZCT coordinate decoded using the image. Otherwise
+   * defaults to the ROI Z,C,T-position (if it has a hyperstack position) or else uses the ROI stack
+   * position for the Z-position (C,T will be zero). If neither are set the z, c, t positions will
+   * be zero.
    *
    * @param imp the image
    * @param roi the roi
@@ -181,15 +186,20 @@ public final class AssignedPointUtils {
    * @see Roi#getZPosition()
    * @see Roi#getPosition()
    * @see PointRoi#getPointPosition(int)
+   * @see ImagePlus#convertIndexToPosition(int)
    * @since 1.4
    */
   public static AssignedPoint[] extractRoiPoints(ImagePlus imp, Roi roi) {
     Objects.requireNonNull(imp, "imp");
     if (roi instanceof PolygonRoi && roi.getType() == Roi.POINT) {
       IntUnaryOperator z;
+      IntUnaryOperator c;
+      IntUnaryOperator t;
       if (imp.getStackSize() > 1) {
         // Find z position (see method above)
         final int zpos = roi.hasHyperStackPosition() ? roi.getZPosition() : roi.getPosition();
+        final int cpos = roi.hasHyperStackPosition() ? roi.getCPosition() : 0;
+        final int tpos = roi.hasHyperStackPosition() ? roi.getTPosition() : 0;
 
         // PointRoi have a point position for the stack index.
         // This can be converted to CZT if a hyperstack.
@@ -202,13 +212,29 @@ public final class AssignedPointUtils {
             }
             return zpos;
           };
+          c = i -> {
+            final int pos = pointRoi.getPointPosition(i);
+            if (pos != 0) {
+              return imp.convertIndexToPosition(pos)[0];
+            }
+            return cpos;
+          };
+          t = i -> {
+            final int pos = pointRoi.getPointPosition(i);
+            if (pos != 0) {
+              return imp.convertIndexToPosition(pos)[2];
+            }
+            return tpos;
+          };
         } else {
           z = i -> zpos;
+          c = i -> cpos;
+          t = i -> tpos;
         }
       } else {
-        z = i -> 0;
+        z = c = t = i -> 0;
       }
-      return extractRoiPoints((PolygonRoi) roi, z);
+      return extractRoiPoints((PolygonRoi) roi, z, c, t);
     }
     return new AssignedPoint[0];
   }
@@ -218,16 +244,19 @@ public final class AssignedPointUtils {
    *
    * @param roi the roi
    * @param z the function to generate the z position
+   * @param cc the function to generate the c position
+   * @param tt the function to generate the t position
    * @return The list of points (can be zero length)
    */
-  private static AssignedPoint[] extractRoiPoints(PolygonRoi roi, IntUnaryOperator z) {
+  private static AssignedPoint[] extractRoiPoints(PolygonRoi roi, IntUnaryOperator z,
+      IntUnaryOperator cc, IntUnaryOperator tt) {
     final Polygon p = roi.getNonSplineCoordinates();
     final int n = p.npoints;
     final Rectangle bounds = roi.getBounds();
     final AssignedPoint[] roiPoints = new AssignedPoint[n];
     for (int i = 0; i < n; i++) {
-      roiPoints[i] =
-          new AssignedPoint(bounds.x + p.xpoints[i], bounds.y + p.ypoints[i], z.applyAsInt(i), i);
+      roiPoints[i] = new AssignedPoint(bounds.x + p.xpoints[i], bounds.y + p.ypoints[i],
+          z.applyAsInt(i), cc.applyAsInt(i), tt.applyAsInt(i), i);
     }
     return roiPoints;
   }
@@ -317,7 +346,10 @@ public final class AssignedPointUtils {
    * Creates an ImageJ PointRoi from the list of points. Uses the float XY coordinates.
    *
    * <p>If the image is a stack then the integer Z coordinates are converted to a stack position
-   * using the provided image and the current channel and frame.
+   * using the provided image and the assigned point channel and frame.
+   *
+   * <p>To use the channel and frame from the image
+   * {@link #createRoi(ImagePlus, int, int, AssignedPoint[])}.
    *
    * @param imp the image
    * @param array List of points
@@ -329,14 +361,23 @@ public final class AssignedPointUtils {
    * @since 1.4
    */
   public static Roi createRoi(ImagePlus imp, AssignedPoint[] array) {
-    return createRoi(imp, imp.getChannel(), imp.getFrame(), array);
+    final Roi roi = createRoi(array);
+    if (imp.getStackSize() > 1) {
+      addPositions((PointRoi) roi, i -> {
+        final AssignedPoint p = array[i];
+        // This is safe if CZT are out of the bounds of the image
+        return imp.getStackIndex(p.getChannel(), p.getZint(), p.getFrame());
+      });
+    }
+    return roi;
   }
 
   /**
    * Creates an ImageJ PointRoi from the list of points. Uses the float XY coordinates.
    *
    * <p>If the image is a stack then the integer Z coordinates are converted to a stack position
-   * using the provided image and the specified channel and frame.
+   * using the provided image and the specified channel and frame. The channel and frame from the
+   * assigned points are ignored.
    *
    * @param imp the image
    * @param channel the channel
@@ -373,7 +414,7 @@ public final class AssignedPointUtils {
   }
 
   /**
-   * Eliminates duplicate coordinates. Destructively alters the IDs in the input array since the
+   * Eliminates duplicate XYZ coordinates. Destructively alters the IDs in the input array since the
    * objects are recycled.
    *
    * @param points the points
@@ -401,8 +442,8 @@ public final class AssignedPointUtils {
   /**
    * Increment the z position of the points.
    *
-   * <p>By default the points extracted from a 2D image ROI have a z position of zero.
-   * Incrementing to 1-based indexing matches the indexing used by ImageJ ImageStacks.
+   * <p>By default the points extracted from a 2D image ROI have a z position of zero. Incrementing
+   * to 1-based indexing matches the indexing used by ImageJ ImageStacks.
    *
    * @param points the points
    */
