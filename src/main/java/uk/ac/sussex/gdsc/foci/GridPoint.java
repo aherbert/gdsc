@@ -48,7 +48,7 @@ public class GridPoint extends ValuedPoint {
    * @param point the point
    * @param value the value
    */
-  public GridPoint(AssignedPoint point, float value) {
+  public GridPoint(BasePoint point, float value) {
     super(point, value);
   }
 

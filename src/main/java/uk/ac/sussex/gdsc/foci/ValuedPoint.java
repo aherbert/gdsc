@@ -49,7 +49,7 @@ public class ValuedPoint extends BasePoint {
    * @param point the point
    * @param value the value
    */
-  public ValuedPoint(AssignedPoint point, float value) {
+  public ValuedPoint(BasePoint point, float value) {
     super(point.getXint(), point.getYint(), point.getZint());
     this.value = value;
   }
