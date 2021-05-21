@@ -382,10 +382,10 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     }
 
 
-    try (
-        BufferedTextWindow tw = new BufferedTextWindow(createWindow(distancesWindowRef, "Distances",
-            "Image\tObject\tFoci\tS0\tUnits\tS1\tUnits\tx\ty\tz\tdx\tdy\tdz\tDistance (px)\t"
-                + "Distance\tUnits"))) {
+    final TextWindow window = createWindow(distancesWindowRef, "Distances",
+        "Image\tObject\tFoci\tS0\tUnits\tS1\tUnits\tx\ty\tz\tdx\tdy\tdz\tDistance (px)\t"
+            + "Distance\tUnits");
+    try (BufferedTextWindow tw = new BufferedTextWindow(window)) {
       final String s0unit = (is3d ? cal.getUnit() + "^2" : cal.getUnit());
       final String s1unit = cal.getUnit() + (is3d ? "^3" : "^2");
 
@@ -422,6 +422,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         tw.append(sb.toString());
       }
     }
+    window.toFront();
 
     if (mask != null && settings.showLines) {
       final Overlay overlay = mask.getOverlay();
