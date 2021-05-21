@@ -204,8 +204,7 @@ public class FindFoci_PlugIn implements PlugIn {
   private static final AtomicReference<TextWindow> resultsWindow = new AtomicReference<>();
 
   /** A reference to the results of the last computation. */
-  private static final AtomicReference<List<FindFociResult>> lastResultsArray =
-      new AtomicReference<>();
+  private static final AtomicReference<FindFociPluginResult> lastResults = new AtomicReference<>();
 
   /**
    * Set to true if the Gaussian fit option is enabled. This requires the GDSC SMLM library to be
@@ -882,6 +881,35 @@ public class FindFoci_PlugIn implements PlugIn {
   }
 
   /**
+   * The last result from executing the plugin.
+   */
+  static class FindFociPluginResult {
+    /** The name. */
+    String name;
+    /** The channel. */
+    int channel;
+    /** The frame. */
+    int frame;
+    /** The results. */
+    List<FindFociResult> results;
+
+    /**
+     * Create an instance.
+     *
+     * @param name the name
+     * @param channel the channel
+     * @param frame the frame
+     * @param results the results
+     */
+    FindFociPluginResult(String name, int channel, int frame, List<FindFociResult> results) {
+      this.name = name;
+      this.channel = channel;
+      this.frame = frame;
+      this.results = results;
+    }
+  }
+
+  /**
    * List of methods for defining the centre of each peak.
    *
    * @return the centre methods
@@ -1104,7 +1132,7 @@ public class FindFoci_PlugIn implements PlugIn {
    */
   public void exec(ImagePlus imp, ImagePlus mask, FindFociProcessorOptions processorOptions,
       FindFociOptions options, Logger logger) {
-    lastResultsArray.set(null);
+    lastResults.set(null);
 
     if (!isSupported(imp.getBitDepth())) {
       IJ.error(TITLE, MSG_NOT_SUPPORTED);
@@ -1146,13 +1174,16 @@ public class FindFoci_PlugIn implements PlugIn {
 
     final FindFociBaseProcessor ffp = createFindFociProcessor(imp);
     ffp.setLogger(logger);
+    final String name = imp.getTitle();
+    final int c = imp.getChannel();
+    final int f = imp.getFrame();
     final FindFociResults ffResult = ffp.findMaxima(imp, mask, processorOptions);
 
     if (ffResult == null) {
       IJ.showStatus("Cancelled.");
       return;
     }
-    lastResultsArray.set(ffResult.results);
+    lastResults.set(new FindFociPluginResult(name, c, f, ffResult.results));
 
     // Note: Do not skip saving the results.
     // This option is for preview using the staged processor.
@@ -1941,11 +1972,20 @@ public class FindFoci_PlugIn implements PlugIn {
   /**
    * Gets the results from the last call of FindFoci.
    *
-   * @return The results from the last call of FindFoci.
+   * @return The results from the last call of FindFoci (or null).
    */
   public static List<FindFociResult> getLastResults() {
-    final List<FindFociResult> results = lastResultsArray.get();
-    return (results != null) ? new ArrayList<>(results) : null;
+    final FindFociPluginResult lastResult = lastResults.get();
+    return (lastResult != null) ? new ArrayList<>(lastResult.results) : null;
+  }
+
+  /**
+   * Gets the result from the last call of FindFoci.
+   *
+   * @return The result from the last call of FindFoci (or null).
+   */
+  static FindFociPluginResult getLastResult() {
+    return lastResults.get();
   }
 
   /**
