@@ -161,6 +161,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
    */
   private static class Distance {
     final Coordinate point;
+    final int pointId;
     final int id;
     final double dx;
     final double dy;
@@ -168,8 +169,9 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     /** The squared distance. */
     final double d2;
 
-    Distance(Coordinate point, int id, double dx, double dy, double dz, double d2) {
+    Distance(Coordinate point, int pointId, int id, double dx, double dy, double dz, double d2) {
       this.point = point;
+      this.pointId = pointId;
       this.id = id;
       this.dx = dx;
       this.dy = dy;
@@ -283,8 +285,9 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         size0 = toDouble(hulls, h -> h.getArea() * scale0);
 
         final double[][][] planes = new double[hulls.length][][];
+        final int[] id = {1};
         results.stream()
-            .map(r -> search3d(r, objectMask, maxx, maxy, maxz, toCoords, hulls, planes))
+            .map(r -> search3d(r, id[0]++, objectMask, maxx, maxy, maxz, toCoords, hulls, planes))
             .filter(d -> d != null).sequential().forEach(distances::add);
 
         // Make this optional
@@ -321,7 +324,8 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
           df = (dx, dy, dz) -> (double) dx * dx + (double) dy * dy * sy + (double) dz * dz * sz;
         }
 
-        results.stream().map(r -> search3d(r, objectMask, maxx, maxy, maxz, df))
+        final int[] id = {1};
+        results.stream().map(r -> search3d(r, id[0]++, objectMask, maxx, maxy, maxz, df))
             .filter(d -> d != null).sequential().forEach(distances::add);
       }
     } else {
@@ -348,7 +352,9 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         size0 = toDouble(hulls, h -> h.getLength() * cal.pixelWidth);
 
         final double[][][] planes = new double[hulls.length][][];
-        results.stream().map(r -> search2d(r, objectMask, maxx, maxy, toCoords, hulls, planes))
+        final int[] id = {1};
+        results.stream()
+            .map(r -> search2d(r, id[0]++, objectMask, maxx, maxy, toCoords, hulls, planes))
             .filter(d -> d != null).sequential().forEach(distances::add);
       } else {
         mask = showMask(oa, null, 0);
@@ -369,15 +375,17 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
           df = (dx, dy) -> (double) dx * dx + (double) dy * dy * sy;
         }
 
-        results.stream().map(r -> search2d(r, objectMask, maxx, maxy, df)).filter(d -> d != null)
-            .sequential().forEach(distances::add);
+        final int[] id = {1};
+        results.stream().map(r -> search2d(r, id[0]++, objectMask, maxx, maxy, df))
+            .filter(d -> d != null).sequential().forEach(distances::add);
       }
     }
 
 
-    try (BufferedTextWindow tw = new BufferedTextWindow(createWindow(distancesWindowRef,
-        "Distances", "Image\tObject\tS0\tUnits\tS1\tUnits\tx\ty\tz\tdx\tdy\tdz\tDistance (px)\t"
-            + "Distance\tUnits"))) {
+    try (
+        BufferedTextWindow tw = new BufferedTextWindow(createWindow(distancesWindowRef, "Distances",
+            "Image\tObject\tFoci\tS0\tUnits\tS1\tUnits\tx\ty\tz\tdx\tdy\tdz\tDistance (px)\t"
+                + "Distance\tUnits"))) {
       final String s0unit = (is3d ? cal.getUnit() + "^2" : cal.getUnit());
       final String s1unit = cal.getUnit() + (is3d ? "^3" : "^2");
 
@@ -388,6 +396,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         final Coordinate point = d.point;
         sb.append(title);
         sb.append('\t').append(d.id);
+        sb.append('\t').append(d.pointId);
         sb.append('\t').append(MathUtils.round(size0[d.id]));
         sb.append('\t').append(s0unit);
         sb.append('\t').append(MathUtils.round(size1[d.id]));
@@ -548,14 +557,15 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
   /**
    * Search from the result to the edge of the containing object in 2D.
    *
-   * @param result the result
+   * @param point the point
+   * @param id the point id
    * @param objectMask the object mask
    * @param maxx the max x dimension of the mask
    * @param maxy the max y dimension of the mask
    * @param df the distance function
    * @return the distance (or null)
    */
-  private static Distance search2d(Coordinate point, int[] objectMask, int maxx, int maxy,
+  private static Distance search2d(Coordinate point, int id, int[] objectMask, int maxx, int maxy,
       Distance2D df) {
     final int x = point.getXint();
     final int y = point.getYint();
@@ -610,10 +620,10 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     if (imin == -1) {
       // @formatter:off
       switch (SimpleArrayUtils.findMinIndex(distances)) {
-        case 0:  return new Distance(point, objectId, -sx1,  0, 0, dmin);
-        case 1:  return new Distance(point, objectId,  sx2,  0, 0, dmin);
-        case 2:  return new Distance(point, objectId,  0, -sy1, 0, dmin);
-        default: return new Distance(point, objectId,  0,  sy2, 0, dmin);
+        case 0:  return new Distance(point, id, objectId, -sx1,  0, 0, dmin);
+        case 1:  return new Distance(point, id, objectId,  sx2,  0, 0, dmin);
+        case 2:  return new Distance(point, id, objectId,  0, -sy1, 0, dmin);
+        default: return new Distance(point, id, objectId,  0,  sy2, 0, dmin);
       }
       // @formatter:on
     }
@@ -641,13 +651,14 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       }
     }
 
-    return new Distance(point, objectId, ix, iy, 0, dmin);
+    return new Distance(point, id, objectId, ix, iy, 0, dmin);
   }
 
   /**
    * Search from the result to the edge of the containing object in 2D.
    *
    * @param point the point
+   * @param id the point id
    * @param objectMask the object mask
    * @param maxx the max x dimension of the mask
    * @param maxy the max y dimension of the mask
@@ -656,7 +667,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
    * @param hullPlanes the hull planes
    * @return the distance (or null)
    */
-  private static Distance search2d(Coordinate point, int[] objectMask, int maxx, int maxy,
+  private static Distance search2d(Coordinate point, int id, int[] objectMask, int maxx, int maxy,
       IntFunction<double[]> toCoords, Hull2d[] hulls, double[][][] hullPlanes) {
     final int x = point.getXint();
     final int y = point.getYint();
@@ -694,7 +705,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     if (minPlane == null) {
       // Invalid lines for the entire hull.
       // Assume a single point for the hull and a distance of zero.
-      return new Distance(point, objectId, 0, 0, 0, 0);
+      return new Distance(point, id, objectId, 0, 0, 0, 0);
     }
 
     // Compute the XY offset
@@ -706,13 +717,14 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
 
     // The offset is the distance multiplied by the plane normal.
     // The distance is squared.
-    return new Distance(point, objectId, -sd * a, -sd * b, 0, sd * sd);
+    return new Distance(point, id, objectId, -sd * a, -sd * b, 0, sd * sd);
   }
 
   /**
    * Search from the result to the edge of the containing object in 3D.
    *
    * @param point the point
+   * @param id the point id
    * @param objectMask the object mask
    * @param maxx the max x dimension of the mask
    * @param maxy the max y dimension of the mask
@@ -720,8 +732,8 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
    * @param df the distance function
    * @return the distance (or null)
    */
-  private static Distance search3d(Coordinate point, int[] objectMask, int maxx, int maxy, int maxz,
-      Distance3D df) {
+  private static Distance search3d(Coordinate point, int id, int[] objectMask, int maxx, int maxy,
+      int maxz, Distance3D df) {
     final int x = point.getXint();
     final int y = point.getYint();
     // Check within the image
@@ -785,12 +797,12 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     if (imin == -1) {
       // @formatter:off
       switch (SimpleArrayUtils.findMinIndex(distances)) {
-        case 0:  return new Distance(point, objectId, -sx1,  0, 0, dmin);
-        case 1:  return new Distance(point, objectId,  sx2,  0, 0, dmin);
-        case 2:  return new Distance(point, objectId,  0, -sy1, 0, dmin);
-        case 3:  return new Distance(point, objectId,  0,  sy2, 0, dmin);
-        case 4:  return new Distance(point, objectId,  0, 0, -sz1, dmin);
-        default: return new Distance(point, objectId,  0, 0,  sz2, dmin);
+        case 0:  return new Distance(point, id, objectId, -sx1,  0, 0, dmin);
+        case 1:  return new Distance(point, id, objectId,  sx2,  0, 0, dmin);
+        case 2:  return new Distance(point, id, objectId,  0, -sy1, 0, dmin);
+        case 3:  return new Distance(point, id, objectId,  0,  sy2, 0, dmin);
+        case 4:  return new Distance(point, id, objectId,  0, 0, -sz1, dmin);
+        default: return new Distance(point, id, objectId,  0, 0,  sz2, dmin);
       }
       // @formatter:on
     }
@@ -825,13 +837,14 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       }
     }
 
-    return new Distance(point, objectId, ix, iy, iz, dmin);
+    return new Distance(point, id, objectId, ix, iy, iz, dmin);
   }
 
   /**
    * Search from the result to the edge of the containing object in 3D.
    *
    * @param point the point
+   * @param id the point id
    * @param objectMask the object mask
    * @param maxx the max x dimension of the mask
    * @param maxy the max y dimension of the mask
@@ -841,8 +854,8 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
    * @param hullPlanes the hull planes
    * @return the distance (or null)
    */
-  private static Distance search3d(Coordinate point, int[] objectMask, int maxx, int maxy, int maxz,
-      IntFunction<double[]> toCoords, Hull3d[] hulls, double[][][] hullPlanes) {
+  private static Distance search3d(Coordinate point, int id, int[] objectMask, int maxx, int maxy,
+      int maxz, IntFunction<double[]> toCoords, Hull3d[] hulls, double[][][] hullPlanes) {
     final int x = point.getXint();
     final int y = point.getYint();
     // Check within the image
@@ -863,7 +876,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     if (hulls[objectId] == null) {
       // Invalid hull.
       // Assume the object is too small to create a hull and return zero distance.
-      return new Distance(point, objectId, 0, 0, 0, 0);
+      return new Distance(point, id, objectId, 0, 0, 0, 0);
     }
 
     // Get the planes for the hull faces
@@ -902,7 +915,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
 
     // The offset is the distance multiplied by the plane normal.
     // The distance is squared.
-    return new Distance(point, objectId, -sd * a, -sd * b, -sd * c, sd * sd);
+    return new Distance(point, id, objectId, -sd * a, -sd * b, -sd * c, sd * sd);
   }
 
   /**
