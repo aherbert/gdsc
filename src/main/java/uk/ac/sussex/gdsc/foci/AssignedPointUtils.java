@@ -111,7 +111,7 @@ public final class AssignedPointUtils {
               final int x = Integer.parseInt(tokens[0]);
               final int y = Integer.parseInt(tokens[1]);
               final int z = Integer.parseInt(tokens[2]);
-              points.add(new AssignedPoint(x, y, z, lineCount - 1));
+              points.add(new AssignedPoint(x, y, z, points.size() + 1));
             } catch (final NumberFormatException ex) {
               final int lineNumber = lineCount;
               Logger.getLogger(AssignedPointUtils.class.getName())
@@ -256,7 +256,7 @@ public final class AssignedPointUtils {
     final AssignedPoint[] roiPoints = new AssignedPoint[n];
     for (int i = 0; i < n; i++) {
       roiPoints[i] = new AssignedPoint(bounds.x + p.xpoints[i], bounds.y + p.ypoints[i],
-          z.applyAsInt(i), cc.applyAsInt(i), tt.applyAsInt(i), i);
+          z.applyAsInt(i), cc.applyAsInt(i), tt.applyAsInt(i), i + 1);
     }
     return roiPoints;
   }
