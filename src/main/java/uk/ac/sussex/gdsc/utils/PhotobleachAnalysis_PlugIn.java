@@ -40,7 +40,24 @@ import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
+import org.apache.commons.math3.exception.ConvergenceException;
+import org.apache.commons.math3.exception.TooManyIterationsException;
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresFactory;
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer.Optimum;
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresProblem;
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresProblem.Evaluation;
+import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
+import org.apache.commons.math3.fitting.leastsquares.MultivariateJacobianFunction;
+import org.apache.commons.math3.fitting.leastsquares.ParameterValidator;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.DiagonalMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.optim.ConvergenceChecker;
+import org.apache.commons.math3.util.Pair;
 import uk.ac.sussex.gdsc.UsageTracker;
+import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
 import uk.ac.sussex.gdsc.core.ij.ImageJTrackProgress;
@@ -51,6 +68,7 @@ import uk.ac.sussex.gdsc.core.ij.process.LutHelper.LutColour;
 import uk.ac.sussex.gdsc.core.logging.Ticker;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
+import uk.ac.sussex.gdsc.core.utils.DoubleEquality;
 import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
 import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
@@ -61,12 +79,17 @@ import uk.ac.sussex.gdsc.foci.ObjectAnalyzer.ObjectCentre;
 
 /**
  * Analyses an image stack to detect pixel regions that have been photobleached. A plot of the
- * intensity of the region is created over time.
- *
- * @see <a href="https://en.wikipedia.org/wiki/Scale_space">Scale space</a>
+ * intensity of the region is created over time and fit using equations for Fluorescence Recovery
+ * After Photobleaching (FRAP) to determine diffusion kinetics.
+ * 
+ * @see <a
+ *      href="https://en.wikipedia.org/wiki/Fluorescence_recovery_after_photobleaching">Fluorescence
+ *      recovery after photobleaching</a>
  */
 public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
   private static final String TITLE = "Photobleach Analysis";
+  private static final int MAX_BORDER = 5;
+  private static final double LN2 = Math.log(2);
 
   /** The flags specifying the capabilities and needs. */
   private static final int FLAGS = DOES_8G | DOES_16 | DOES_32 | NO_CHANGES | STACK_REQUIRED;
@@ -85,22 +108,26 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     private static final AtomicReference<Settings> lastSettings =
         new AtomicReference<>(new Settings());
 
+    int alignmentSlice;
     int maxShift;
+    boolean showAlignmentOffsets;
     boolean showAlignedImage;
     int emaWindowSize;
     double significance;
     int minRegionSize;
     boolean showBleachingEvents;
+    int bleachedBorder;
     boolean showBleachedRegions;
 
     /**
      * Default constructor.
      */
     Settings() {
-      maxShift = 20;
+      maxShift = 40;
       emaWindowSize = 10;
       significance = 10;
-      minRegionSize = 25;
+      minRegionSize = 100;
+      bleachedBorder = 1;
     }
 
     /**
@@ -109,12 +136,15 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
      * @param source the source
      */
     private Settings(Settings source) {
+      alignmentSlice = source.alignmentSlice;
       maxShift = source.maxShift;
+      showAlignmentOffsets = source.showAlignmentOffsets;
       showAlignedImage = source.showAlignedImage;
       emaWindowSize = source.emaWindowSize;
       significance = source.significance;
       minRegionSize = source.minRegionSize;
       showBleachingEvents = source.showBleachingEvents;
+      bleachedBorder = source.bleachedBorder;
       showBleachedRegions = source.showBleachedRegions;
     }
 
@@ -164,24 +194,30 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
         + "A sliding window moving average is used to detect significant jumps in intensity\n"
         + "using a jump of n * StdDev (i.e. bleaching events).\n"
         + "A plot of the intensity of each bleached region is created over time.");
+    gd.addSlider("Alignment_slice", 0, imp.getStackSize(), settings.alignmentSlice);
     gd.addNumericField("Max_shift", settings.maxShift, 0);
+    gd.addCheckbox("Show_alignment_offsets", settings.showAlignmentOffsets);
     gd.addCheckbox("Show_aligned", settings.showAlignedImage);
     gd.addSlider("Window_size", 3, 20, settings.significance);
     gd.addSlider("Significance", 5, 15, settings.emaWindowSize);
     gd.addNumericField("Min_region_size", settings.minRegionSize, 0);
     gd.addCheckbox("Show_bleaching_events", settings.showBleachingEvents);
+    gd.addSlider("Bleach_border", 0, MAX_BORDER, settings.bleachedBorder);
     gd.addCheckbox("Show_bleached_regions", settings.showBleachedRegions);
     gd.showDialog();
     settings.save();
     if (gd.wasCanceled()) {
       return DONE;
     }
+    settings.alignmentSlice = (int) gd.getNextNumber();
     settings.maxShift = (int) gd.getNextNumber();
+    settings.showAlignmentOffsets = gd.getNextBoolean();
     settings.showAlignedImage = gd.getNextBoolean();
     settings.emaWindowSize = (int) gd.getNextNumber();
     settings.significance = gd.getNextNumber();
     settings.minRegionSize = (int) gd.getNextNumber();
     settings.showBleachingEvents = gd.getNextBoolean();
+    settings.bleachedBorder = (int) gd.getNextNumber();
     settings.showBleachedRegions = gd.getNextBoolean();
 
     if (gd.invalidNumber()) {
@@ -227,9 +263,15 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     // Count pixels in each region [1, n] (n == foreground)
     final int[] count = regions.getHistogram();
 
+    final int n = rois.size() + 1;
+    if (count[n] == 0) {
+      IJ.error(TITLE, "No foreground (entire image is bleached regions)");
+      return;
+    }
+    ImageJUtils.log("Foregound = %s pixels", count[n]);
+
     // Process the image stack.
     // For each frame get the mean of the region.
-    final int n = rois.size() + 1;
     final double[] sum = new double[n + 1];
     final float[][] data = new float[n][aligned.size()];
     final int size2 = aligned.getWidth() * aligned.getHeight();
@@ -248,14 +290,32 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       }
     }
 
+    // Fit foreground to estimate the bleaching kinetics
+    double[] ffit = fitBleaching(data[n - 1]);
+    if (ffit == null) {
+      return;
+    }
+    ImageJUtils.log("Foregound decay: f(t) = %s + %s * exp(-%s t); Half-life = %s",
+        MathUtils.rounded(ffit[0]), MathUtils.rounded(ffit[1]), MathUtils.rounded(ffit[2]),
+        MathUtils.rounded(LN2 / ffit[2]));
+
     // Plot the mean over time.
     final float[] x = SimpleArrayUtils.newArray(aligned.size(), 1f, 1f);
     final Plot plot = new Plot(TITLE, "Frame", "Mean Intensity");
     plot.addPoints(x, data[n - 1], null, Plot.LINE, "Foreground");
+
+    // Add fitted curve
+    plot.setColor(Color.GRAY);
+    plot.addPoints(x, SimpleArrayUtils.toFloat(
+        new DecayFunction(x.length).value(new ArrayRealVector(ffit, false)).getFirst().toArray()),
+        null, Plot.DOT, null);
+
     final LUT lut = LutHelper.createLut(LutColour.RED_BLUE);
     for (int j = 1; j < n; j++) {
       plot.setColor(LutHelper.getColour(lut, j - 1, 0, n - 1));
       plot.addPoints(x, data[j - 1], null, Plot.LINE, "Region" + j);
+      // Fit each region FRAP curve
+
     }
     plot.setColor(Color.BLACK);
     // Options must be empty string for auto-position
@@ -282,13 +342,22 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
 
     IJ.showStatus("!Creating projection...");
 
-    // Align to the average intensity projection
-    final ZProjector projector = new ZProjector(imp2);
-    projector.setMethod(ZProjector.AVG_METHOD);
-    projector.doProjection();
-    align.initialiseReference(projector.getProjection().getProcessor(), WindowMethod.TUKEY, true);
+    // TODO:
+    // Alignment can be iterated. Align to centre.
+    // Create stack.
+    // Align to avg. project of the aligned stack.
+    // Repeat.
 
-    align.initialiseReference(imp2.getProcessor(), WindowMethod.TUKEY, true);
+//      // Average intensity
+//      final ZProjector projector = new ZProjector(imp2);
+//      projector.setMethod(ZProjector.AVG_METHOD);
+//      projector.doProjection();
+//      align.initialiseReference(projector.getProjection().getProcessor(), WindowMethod.TUKEY, true);
+
+    // Center if the slice is not set.
+    // Note that indices are 1-based so add 1 to the stack size for the middle.
+    final int middle = settings.alignmentSlice == 0 ? (imp2.getStackSize() + 1) / 2 : settings.alignmentSlice;
+    align.initialiseReference(imp2.getImageStack().getProcessor(middle), WindowMethod.TUKEY, true);
 
     IJ.showStatus("!Aligning image");
 
@@ -306,7 +375,10 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       final int x = (int) offset[0];
       final int y = (int) offset[1];
       ip.setInterpolationMethod(ImageProcessor.NONE);
-      // ip.translate(x, y);
+      ip.translate(x, y);
+      if (settings.showAlignmentOffsets) {
+        ImageJUtils.log("  [%d] %d,%d", slice, x, y);
+      }
       aligned.addSlice(ip);
       // Save translation limit
       if (minx > x) {
@@ -320,6 +392,10 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
         maxy = y;
       }
       ticker.tick();
+    }
+
+    if (settings.maxShift == MathUtils.max(maxx, maxy, -miny, -minx)) {
+      ImageJUtils.log("Maximum shift limit reached: %d,%d to %d,%d", minx, miny, maxx, maxy);
     }
 
     // Create an ROI for the intersect of all shifted frames (i.e. exclude black border).
@@ -548,7 +624,28 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     // Fill the regions processor with each ROI
     for (int i = 0; i < rois.size(); i++) {
       regions.setValue(i + 1);
-      regions.fill(rois.unsafeGet(0));
+      regions.fill(rois.unsafeGet(i));
+    }
+
+    // Dilate the regions to erode the foreground
+    if (settings.bleachedBorder > 0) {
+      final ByteProcessor bp = new ByteProcessor(mask.getWidth(), mask.getHeight());
+      for (int i = mask.getPixelCount(); i-- > 0;) {
+        final int v = regions.get(i);
+        if (v != 0 && v != n) {
+          bp.set(i, 255);
+        }
+      }
+      // Not too much
+      for (int i = Math.min(MAX_BORDER, settings.bleachedBorder); i-- > 0;) {
+        bp.filter(ImageProcessor.MAX);
+      }
+      // Remove foreground
+      for (int i = mask.getPixelCount(); i-- > 0;) {
+        if (regions.get(i) == n && bp.get(i) != 0) {
+          regions.set(i, 0);
+        }
+      }
     }
 
     if (settings.showBleachedRegions) {
@@ -569,4 +666,102 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       alignedImp.setOverlay(o);
     }
   }
+
+  /**
+   * Fit the bleaching curve {@code f(t) = y0 + B exp(-tau * t)}.
+   *
+   * @param y the data
+   * @return {y0, B, tau}
+   */
+  private static double[] fitBleaching(float[] y) {
+    // Initial estimates
+    float[] limits = MathUtils.limits(y);
+    double y0 = limits[0];
+    // Find point where the decay is half
+    float half = limits[0] + (limits[1] - limits[0]) / 2;
+    int t = 1;
+    while (t < y.length && y[t] > half) {
+      t++;
+    }
+    // half-life (median of an exponential) = ln(2) / tau
+    // tau = ln(2) / half-life
+    double tau = LN2 / t;
+    // Solve for B
+    double b = (half - y0) / Math.exp(-tau * t);
+
+    final LevenbergMarquardtOptimizer optimizer = new LevenbergMarquardtOptimizer();
+    final RealVector observed = new ArrayRealVector(SimpleArrayUtils.toDouble(y), false);
+    ConvergenceChecker<Evaluation> checker = (iteration, previous,
+        current) -> DoubleEquality.relativeError(previous.getCost(), current.getCost()) < 1e-6;
+
+    MultivariateJacobianFunction model1 = new DecayFunction(y.length);
+    RealVector start1 = new ArrayRealVector(new double[] {y0, b, tau}, false);
+    ParameterValidator paramValidator1 = point -> {
+      // Do not use MIN_VALUE here to avoid sub-normal numbers
+      for (int i = 0; i < 3; i++) {
+        if (point.getEntry(i) < Double.MIN_NORMAL) {
+          point.setEntry(i, Double.MIN_NORMAL);
+        }
+      }
+      return point;
+    };
+    final RealMatrix weightMatrix =
+        new DiagonalMatrix(SimpleArrayUtils.newDoubleArray(y.length, 1.0), false);
+    final int maxEvaluations = Integer.MAX_VALUE;
+    final int maxIterations = 3000;
+    final boolean lazyEvaluation = false;
+
+    final LeastSquaresProblem problem1 = LeastSquaresFactory.create(model1, observed, start1,
+        weightMatrix, checker, maxEvaluations, maxIterations, lazyEvaluation, paramValidator1);
+    try {
+      Optimum lvmSolution1 = optimizer.optimize(problem1);
+      final RealVector fit1 = lvmSolution1.getPoint();
+      return fit1.toArray();
+    } catch (TooManyIterationsException | ConvergenceException ex) {
+      ImageJUtils.log("Failed to fit bleaching curve: ", ex.getMessage());
+      return null;
+    }
+  }
+
+  /**
+   * Exponential decay function {@code f(t) = y0 + B exp(-tau * t)}.
+   */
+  @VisibleForTesting
+  static final class DecayFunction implements MultivariateJacobianFunction {
+    private final int size;
+
+    /**
+     * @param size the size
+     */
+    DecayFunction(int size) {
+      this.size = size;
+    }
+
+    @Override
+    public Pair<RealVector, RealMatrix> value(RealVector point) {
+      final double[] value = new double[size];
+      final double[][] jacobian = new double[size][3];
+      final double y = point.getEntry(0);
+      final double b = point.getEntry(1);
+      final double tau = point.getEntry(2);
+      // f(t) = y + b exp(-tau * t)
+      // df_dy = 1
+      // df_db = exp(-tau * t)
+      // df_dtau = -b * t * exp(-tau * t)
+
+      // Here the variable n represents (n+1) but is used as an index to a pre-computed scale
+      for (int t = 0; t < size; t++) {
+        final double x = Math.exp(-tau * t);
+        value[t] = y + b * x;
+        jacobian[t][0] = 1;
+        jacobian[t][1] = x;
+        jacobian[t][2] = -b * t * x;
+      }
+      return new Pair<>(new ArrayRealVector(value, false),
+          new Array2DRowRealMatrix(jacobian, false));
+    }
+  }
+
+  // TODO
+  // Add fitting for the FRAP curve ...
 }
