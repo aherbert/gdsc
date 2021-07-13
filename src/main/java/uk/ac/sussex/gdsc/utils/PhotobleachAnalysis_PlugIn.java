@@ -37,6 +37,11 @@ import ij.process.ImageProcessor;
 import ij.process.LUT;
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
@@ -69,6 +74,7 @@ import uk.ac.sussex.gdsc.core.logging.Ticker;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 import uk.ac.sussex.gdsc.core.utils.DoubleEquality;
+import uk.ac.sussex.gdsc.core.utils.FileUtils;
 import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
 import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
@@ -121,6 +127,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     int bleachedBorder;
     boolean showBleachedRegions;
     boolean nestedModels;
+    String resultsDir;
 
     /**
      * Default constructor.
@@ -131,6 +138,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       significance = 10;
       minRegionSize = 100;
       bleachedBorder = 1;
+      resultsDir = "";
     }
 
     /**
@@ -150,6 +158,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       bleachedBorder = source.bleachedBorder;
       showBleachedRegions = source.showBleachedRegions;
       nestedModels = source.nestedModels;
+      resultsDir = source.resultsDir;
     }
 
     /**
@@ -212,6 +221,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     if (extraOptions) {
       gd.addCheckbox("Fit_nested_models", settings.nestedModels);
     }
+    gd.addDirectoryField("Results_dir", settings.resultsDir, 30);
     gd.showDialog();
     settings.save();
     if (gd.wasCanceled()) {
@@ -230,6 +240,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     if (extraOptions) {
       settings.nestedModels = gd.getNextBoolean();
     }
+    settings.resultsDir = gd.getNextString();
 
     if (gd.invalidNumber()) {
       IJ.error(TITLE, "Bad input number");
@@ -301,6 +312,9 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       }
     }
 
+    // Save curves
+    saveData(data, count);
+
     // Fit foreground to estimate the bleaching kinetics
     final double[] ffit = fitBleaching(data[n - 1]);
     if (ffit == null) {
@@ -331,7 +345,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       if (fit != null) {
         if (fit.length == 3) {
           plot.addPoints(Arrays.copyOfRange(x, bleachingEvent, x.length),
-              SimpleArrayUtils.toFloat(new SimpleRecoveryFunction(x.length)
+              SimpleArrayUtils.toFloat(new SimpleRecoveryFunction(x.length - bleachingEvent)
                   .value(new ArrayRealVector(fit, false)).getFirst().toArray()),
               null, Plot.DOT, null);
           ImageJUtils.log("Region [%d] recovery: f(t) = %s + %s(1 - exp(-%s t)); Half-life = %s", j,
@@ -339,7 +353,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
               MathUtils.rounded(LN2 / fit[2]));
         } else if (fit.length == 4) {
           plot.addPoints(Arrays.copyOfRange(x, bleachingEvent, x.length),
-              SimpleArrayUtils.toFloat(new RecoveryFunction(x.length)
+              SimpleArrayUtils.toFloat(new RecoveryFunction(x.length - bleachingEvent)
                   .value(new ArrayRealVector(fit, false)).getFirst().toArray()),
               null, Plot.DOT, null);
           ImageJUtils.log(
@@ -349,7 +363,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
               MathUtils.rounded(LN2 / fit[3]));
         } else {
           plot.addPoints(Arrays.copyOfRange(x, bleachingEvent, x.length),
-              SimpleArrayUtils.toFloat(new RecoveryFunctionB(x.length)
+              SimpleArrayUtils.toFloat(new RecoveryFunctionB(x.length - bleachingEvent)
                   .value(new ArrayRealVector(fit, false)).getFirst().toArray()),
               null, Plot.DOT, null);
           ImageJUtils.log(
@@ -712,6 +726,52 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       final Overlay o = new Overlay();
       rois.forEach(p -> o.add(p.getValue()));
       alignedImp.setOverlay(o);
+    }
+  }
+
+  /**
+   * Save data to a directory.
+   * 
+   * <p>The data of each region {@code n} in {@code data[n - 1]}. The final entry is the foreground.
+   * 
+   * <p>The size of each region {@code n} in {@code countHistogram[n]}.
+   *
+   * @param data the data
+   * @param countHistogram the count histogram
+   */
+  private void saveData(float[][] data, int[] countHistogram) {
+    if (!Files.isDirectory(Paths.get(settings.resultsDir))) {
+      return;
+    }
+    int n = data.length;
+    int size = data[0].length;
+    String[] frames = new String[size];
+    for (int t = 0; t < size; t++) {
+      frames[t] = (t + 1) + ",";
+    }
+
+    String prefix = FileUtils.removeExtension(imp.getTitle()).replace(' ', '_');
+
+    for (int i = 0; i < n; i++) {
+      Path path = i == n - 1 ? Paths.get(settings.resultsDir, prefix + "_foreground.csv")
+          : Paths.get(settings.resultsDir, prefix + "_region" + i + ".csv");
+      try (BufferedWriter out = Files.newBufferedWriter(path)) {
+        out.write("# Size = ");
+        out.write(Integer.toString(countHistogram[i + 1]));
+        out.newLine();
+
+        out.write("Frame,Mean");
+        out.newLine();
+
+        for (int t = 0; t < size; t++) {
+          out.write(frames[t]);
+          out.write(Float.toString(data[i][t]));
+          out.newLine();
+        }
+      } catch (IOException e) {
+        ImageJUtils.log("Failed to save data: " + e.getMessage());
+        break;
+      }
     }
   }
 
