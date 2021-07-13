@@ -103,7 +103,6 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
 
   private ImagePlus imp;
   private Rectangle intersect;
-  private boolean extraOptions;
 
   /** The current settings for the plugin instance. */
   private Settings settings;
@@ -195,7 +194,6 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       return DONE;
     }
     this.imp = imp;
-    extraOptions = ImageJUtils.isExtraOptions();
     return showDialog();
   }
 
@@ -218,9 +216,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     gd.addCheckbox("Show_bleaching_events", settings.showBleachingEvents);
     gd.addSlider("Bleach_border", 0, MAX_BORDER, settings.bleachedBorder);
     gd.addCheckbox("Show_bleached_regions", settings.showBleachedRegions);
-    if (extraOptions) {
-      gd.addCheckbox("Fit_nested_models", settings.nestedModels);
-    }
+    gd.addCheckbox("Fit_nested_models", settings.nestedModels);
     gd.addDirectoryField("Results_dir", settings.resultsDir, 30);
     gd.showDialog();
     settings.save();
@@ -237,9 +233,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     settings.showBleachingEvents = gd.getNextBoolean();
     settings.bleachedBorder = (int) gd.getNextNumber();
     settings.showBleachedRegions = gd.getNextBoolean();
-    if (extraOptions) {
-      settings.nestedModels = gd.getNextBoolean();
-    }
+    settings.nestedModels = gd.getNextBoolean();
     settings.resultsDir = gd.getNextString();
 
     if (gd.invalidNumber()) {
@@ -345,32 +339,24 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       if (fit != null) {
         if (fit.length == 3) {
           plot.addPoints(Arrays.copyOfRange(x, bleachingEvent, x.length),
-              SimpleArrayUtils.toFloat(new SimpleRecoveryFunction(x.length - bleachingEvent)
-                  .value(new ArrayRealVector(fit, false)).getFirst().toArray()),
+              SimpleArrayUtils
+                  .toFloat(new ReactionLimitedRecoveryFunction(x.length - bleachingEvent)
+                      .value(new ArrayRealVector(fit, false)).getFirst().toArray()),
               null, Plot.DOT, null);
           ImageJUtils.log("Region [%d] recovery: f(t) = %s + %s(1 - exp(-%s t)); Half-life = %s", j,
               MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]),
               MathUtils.rounded(LN2 / fit[2]));
-        } else if (fit.length == 4) {
+        } else if (fit.length == 5) {
           plot.addPoints(Arrays.copyOfRange(x, bleachingEvent, x.length),
-              SimpleArrayUtils.toFloat(new RecoveryFunction(x.length - bleachingEvent)
-                  .value(new ArrayRealVector(fit, false)).getFirst().toArray()),
+              SimpleArrayUtils
+                  .toFloat(new ReactionLimitedRecoveryFunctionB(x.length - bleachingEvent)
+                      .value(new ArrayRealVector(fit, false)).getFirst().toArray()),
               null, Plot.DOT, null);
           ImageJUtils.log(
-              "Region [%d] recovery: f(t) = %s + %s(1 - exp(-%s t))exp(-%s t); Half-life1 = %s; Half-life2 = %s",
-              j, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]),
-              MathUtils.rounded(fit[3]), MathUtils.rounded(LN2 / fit[2]),
-              MathUtils.rounded(LN2 / fit[3]));
-        } else {
-          plot.addPoints(Arrays.copyOfRange(x, bleachingEvent, x.length),
-              SimpleArrayUtils.toFloat(new RecoveryFunctionB(x.length - bleachingEvent)
-                  .value(new ArrayRealVector(fit, false)).getFirst().toArray()),
-              null, Plot.DOT, null);
-          ImageJUtils.log(
-              "Region [%d] recovery: f(t) = %s + %s(1 - exp(-%s t))exp(-%s t) + %s exp(-%s t); Half-life1 = %s; Half-life2 = %s",
-              j, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]),
-              MathUtils.rounded(fit[4]), MathUtils.rounded(fit[3]), MathUtils.rounded(fit[4]),
-              MathUtils.rounded(LN2 / fit[2]), MathUtils.rounded(LN2 / fit[4]));
+              "Region [%d] recovery: f(t) = %s + (%s + %s(1 - exp(-%s t))) * exp(-%s t); Half-life1 = %s; Half-life2 = %s",
+              j, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[3]), MathUtils.rounded(fit[1]),
+              MathUtils.rounded(fit[2]), MathUtils.rounded(fit[4]), MathUtils.rounded(LN2 / fit[2]),
+              MathUtils.rounded(LN2 / fit[4]));
         }
       }
     }
@@ -731,16 +717,17 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
 
   /**
    * Save data to a directory.
-   * 
+   *
    * <p>The data of each region {@code n} in {@code data[n - 1]}. The final entry is the foreground.
-   * 
+   *
    * <p>The size of each region {@code n} in {@code countHistogram[n]}.
    *
    * @param data the data
    * @param countHistogram the count histogram
    */
   private void saveData(float[][] data, int[] countHistogram) {
-    if (!Files.isDirectory(Paths.get(settings.resultsDir))) {
+    if (TextUtils.isNullOrEmpty(settings.resultsDir)
+        || !Files.isDirectory(Paths.get(settings.resultsDir))) {
       return;
     }
     int n = data.length;
@@ -776,10 +763,10 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Fit the bleaching curve {@code f(t) = y0 + B exp(-tau * t)}.
+   * Fit the bleaching curve {@code f(t) = y0 + B exp(-koff * t)}.
    *
    * @param y the data
-   * @return {y0, B, tau}
+   * @return {y0, B, koff}
    */
   private static double[] fitBleaching(float[] y) {
     // Initial estimates
@@ -791,11 +778,11 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     while (t < y.length && y[t] > half) {
       t++;
     }
-    // half-life (median of an exponential) = ln(2) / tau
-    // tau = ln(2) / half-life
-    final double tau = LN2 / t;
+    // half-life (median of an exponential) = ln(2) / koff
+    // koff = ln(2) / half-life
+    final double koff = LN2 / t;
     // Solve for B
-    final double b = (half - y0) / Math.exp(-tau * t);
+    final double b = (half - y0) / Math.exp(-koff * t);
 
     final LevenbergMarquardtOptimizer optimizer = new LevenbergMarquardtOptimizer();
     final RealVector observed = new ArrayRealVector(SimpleArrayUtils.toDouble(y), false);
@@ -803,7 +790,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
         current) -> DoubleEquality.relativeError(previous.getCost(), current.getCost()) < 1e-6;
 
     final MultivariateJacobianFunction model1 = new DecayFunction(y.length);
-    final RealVector start1 = new ArrayRealVector(new double[] {y0, b, tau}, false);
+    final RealVector start1 = new ArrayRealVector(new double[] {y0, b, koff}, false);
     final ParameterValidator paramValidator1 = point -> {
       // Do not use MIN_VALUE here to avoid sub-normal numbers
       for (int i = 0; i < 3; i++) {
@@ -832,16 +819,18 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Fit the bleaching curve {@code f(t) = A(1 - exp(-tau1 * t))(y0 + B exp(-tau2 * t)}.
+   * Fit the bleaching curve.
+   *
+   * <p>The returned fit parameters depend on the model chosen to best fit the data.
    *
    * @param region the region
    * @param y the data
-   * @param tau2 the initial estimate for the general image bleaching
+   * @param tau the initial estimate for the general image bleaching rate
    * @param bleachingEvent the index in y for the bleaching event (low point of curve)
-   * @return {A, tau1, y0, B, tau2}
+   * @return fit parameters
    */
-  private double[] fitRecovery(int region, float[] y, double tau2, int bleachingEvent) {
-    final boolean nested = extraOptions && settings.nestedModels;
+  private double[] fitRecovery(int region, float[] y, double tau, int bleachingEvent) {
+    final boolean nested = settings.nestedModels;
 
     // Initial estimates
     // @formatter:off
@@ -854,29 +843,35 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     //    |  /
     //    | /
     //    |/
+    //    I0
     //
-    // y0
+    //  ------------------------ B
     //
+    // B is background after al bleaching
     // A is the magnitude of the recovery.
-    // tau1 is the recovery rate.
-    // B is all the magnitude that will still bleach over time.
-    // y0 is the baseline for the intensity.
-    // tau2 is the bleaching rate over time.
+    // koff is the recovery rate.
+    // I0 is the baseline for the intensity.
+    // tau is the bleaching rate over time.
     // @formatter:on
 
     final double after = y[bleachingEvent];
     double a = y[y.length - 1] - after;
-    double y0 = after;
+    double I0 = after;
 
-    // Find point where the recovery is half
-    final float half = (float) (y0 + a / 2);
+    // Find point where the recovery is half.
+    // Use a simple rolling average of 3 to smooth the curve.
+    final double half = I0 + a / 2;
     int t = bleachingEvent + 1;
-    while (t < y.length && y[t] < half) {
+    while (t + 1 < y.length) {
+      double mean = ((double) y[t - 1] + y[t] + y[t + 1]) / 3.0;
+      if (mean > half) {
+        break;
+      }
       t++;
     }
-    // half-life (median of an exponential) = ln(2) / tau
-    // tau = ln(2) / half-life
-    double tau1 = LN2 / (t - bleachingEvent);
+    // half-life (median of an exponential) = ln(2) / koff
+    // koff = ln(2) / half-life
+    double koff = LN2 / (t - bleachingEvent);
 
     // Extract curve to fit
     final double[] yy = new double[y.length - bleachingEvent];
@@ -889,9 +884,9 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     final ConvergenceChecker<Evaluation> checker = (iteration, previous,
         current) -> DoubleEquality.relativeError(previous.getCost(), current.getCost()) < 1e-6;
 
-    // Fit the simple version too (which ignores residual bleaching): y0 + A(1 - exp(-tau1 * t))
-    final MultivariateJacobianFunction model1 = new SimpleRecoveryFunction(yy.length);
-    final RealVector start1 = new ArrayRealVector(new double[] {y0, a, tau1}, false);
+    // Fit the simple version too (which ignores residual bleaching): y0 + A(1 - exp(-koff * t))
+    final MultivariateJacobianFunction model1 = new ReactionLimitedRecoveryFunction(yy.length);
+    final RealVector start1 = new ArrayRealVector(new double[] {I0, a, koff}, false);
     final ParameterValidator paramValidator = point -> {
       // Do not use MIN_VALUE here to avoid sub-normal numbers
       for (int i = point.getDimension(); i-- > 0;) {
@@ -925,13 +920,17 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
 
     if (nested) {
       // Use the fit as the start point for nested models
-      y0 = best.getPoint().getEntry(0);
+      I0 = best.getPoint().getEntry(0);
       a = best.getPoint().getEntry(1);
-      tau1 = best.getPoint().getEntry(2);
+      koff = best.getPoint().getEntry(2);
 
       // Fit the simple version but with a general decay of the recovered signal.
-      final MultivariateJacobianFunction model2 = new RecoveryFunction(yy.length);
-      final RealVector start2 = new ArrayRealVector(new double[] {y0, a, tau1, tau2}, false);
+      // B can be initialised to the camera offset. Here use a small value.
+      final double b = I0 / 100;
+      I0 -= b;
+
+      final MultivariateJacobianFunction model2 = new ReactionLimitedRecoveryFunctionB(yy.length);
+      final RealVector start2 = new ArrayRealVector(new double[] {I0, a, koff, b, tau}, false);
 
       final LeastSquaresProblem problem2 = LeastSquaresFactory.create(model2, observed, start2,
           weightMatrix, checker, maxEvaluations, maxIterations, lazyEvaluation, paramValidator);
@@ -954,55 +953,10 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
         // Optionally log no improvement here...
         final double[] fit = lvmSolution.getPoint().toArray();
         ImageJUtils.log(
-            "  Region [%d] recovery: f(t) = %s + %s(1 - exp(-%s t))exp(-%s t); Half-life1 = %s; Half-life2 = %s",
-            region, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]),
-            MathUtils.rounded(fit[3]), MathUtils.rounded(LN2 / fit[2]),
-            MathUtils.rounded(LN2 / fit[3]));
-        ImageJUtils.log("  Region [%d] : rss1=%s, rss2=%s, p(F-Test=%s) = %s; ", region,
-            MathUtils.rounded(rss1), MathUtils.rounded(rss2), MathUtils.rounded(f),
-            MathUtils.rounded(pValue));
-        if (pValue < 0.01) {
-          // reject null hypothesis that model 2 is not better
-          best = lvmSolution;
-        }
-      } catch (TooManyIterationsException | ConvergenceException ex) {
-        ImageJUtils.log("Failed to fit recovery curve: ", ex.getMessage());
-      }
-
-      // Fit the simple version but with a general decay of the recovered signal and any signal
-      // not bleached in the bleaching event.
-      // Initialise with a small amount of the baseline as residual unbleached intensity.
-      final double b = y0 / 100;
-      y0 -= b;
-
-      final MultivariateJacobianFunction model3 = new RecoveryFunctionB(yy.length);
-      final RealVector start3 = new ArrayRealVector(new double[] {y0, a, tau1, b, tau2}, false);
-
-      final LeastSquaresProblem problem3 = LeastSquaresFactory.create(model3, observed, start3,
-          weightMatrix, checker, maxEvaluations, maxIterations, lazyEvaluation, paramValidator);
-      try {
-        final Optimum lvmSolution = optimizer.optimize(problem3);
-        // Check for model improvement
-        final double rss1 = getResidualSumOfSquares(best);
-        final double rss2 = getResidualSumOfSquares(lvmSolution);
-        double pValue;
-        double f;
-        if (rss1 < rss2) {
-          f = 0;
-          pValue = 1;
-        } else {
-          f = RegressionUtils.residualsFStatistic(rss1, best.getPoint().getDimension(), rss2,
-              start3.getDimension(), yy.length);
-          pValue = RegressionUtils.residualsFTest(rss1, start1.getDimension(), rss2,
-              start3.getDimension(), yy.length);
-        }
-        // Optionally log no improvement here...
-        final double[] fit = lvmSolution.getPoint().toArray();
-        ImageJUtils.log(
-            "  Region [%d] recovery: f(t) = %s + %s(1 - exp(-%s t))exp(-%s t) + %s exp(-%s t); Half-life1 = %s; Half-life2 = %s",
-            region, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]),
-            MathUtils.rounded(fit[4]), MathUtils.rounded(fit[3]), MathUtils.rounded(fit[4]),
-            MathUtils.rounded(LN2 / fit[2]), MathUtils.rounded(LN2 / fit[4]));
+            "  Region [%d] recovery: f(t) = %s + (%s + %s(1 - exp(-%s t))) * exp(-%s t); Half-life1 = %s; Half-life2 = %s",
+            region, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[3]), MathUtils.rounded(fit[1]),
+            MathUtils.rounded(fit[2]), MathUtils.rounded(fit[4]), MathUtils.rounded(LN2 / fit[2]),
+            MathUtils.rounded(LN2 / fit[4]));
         ImageJUtils.log("  Region [%d] : rss1=%s, rss2=%s, p(F-Test=%s) = %s; ", region,
             MathUtils.rounded(rss1), MathUtils.rounded(rss2), MathUtils.rounded(f),
             MathUtils.rounded(pValue));
@@ -1030,7 +984,15 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Exponential decay function {@code f(t) = y0 + B exp(-tau * t)}.
+   * Exponential decay function.
+   *
+   * <pre>
+   * f(t) = B + A exp(-koff * t)
+   *
+   * B = Background level after bleaching (e.g. camera offset value)
+   * A = scaling factor (initial intensity - B)
+   * koff = exponential decay rate of the bleaching
+   * </pre>
    */
   @VisibleForTesting
   static final class DecayFunction implements MultivariateJacobianFunction {
@@ -1046,26 +1008,26 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     /**
      * {@inheritDoc}
      *
-     * @param point {y0, B, tau}
+     * @param point {B, A, koff}
      */
     @Override
     public Pair<RealVector, RealMatrix> value(RealVector point) {
       final double[] value = new double[size];
       final double[][] jacobian = new double[size][3];
-      final double y = point.getEntry(0);
-      final double b = point.getEntry(1);
-      final double tau = point.getEntry(2);
-      // f(t) = y + b exp(-tau * t)
-      // df_dy = 1
-      // df_db = exp(-tau * t)
-      // df_dtau = -b * t * exp(-tau * t)
+      final double b = point.getEntry(0);
+      final double a = point.getEntry(1);
+      final double koff = point.getEntry(2);
+      // f(t) = b + a exp(-koff * t)
+      // df_db = 1
+      // df_da = exp(-koff * t)
+      // df_dkoff = -a * t * exp(-koff * t)
 
       for (int t = 0; t < size; t++) {
-        final double x = Math.exp(-tau * t);
-        value[t] = y + b * x;
+        final double x = Math.exp(-koff * t);
+        value[t] = b + a * x;
         jacobian[t][0] = 1;
         jacobian[t][1] = x;
-        jacobian[t][2] = -b * t * x;
+        jacobian[t][2] = -a * t * x;
       }
       return new Pair<>(new ArrayRealVector(value, false),
           new Array2DRowRealMatrix(jacobian, false));
@@ -1073,40 +1035,48 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Exponential recovery function {@code f(t) = y0 + A(1 - exp(-tau * t))}.
+   * Reaction limited recovery function.
+   *
+   * <pre>
+   * f(t) = I0 + A(1 - exp(-koff * t))
+   *
+   * I0 = Intensity immediately after the bleaching
+   * A = scaling factor (recovered intensity - intensity immediately after bleaching)
+   * koff = offrate of binding
+   * </pre>
    */
   @VisibleForTesting
-  static final class SimpleRecoveryFunction implements MultivariateJacobianFunction {
+  static final class ReactionLimitedRecoveryFunction implements MultivariateJacobianFunction {
     private final int size;
 
     /**
      * @param size the size
      */
-    SimpleRecoveryFunction(int size) {
+    ReactionLimitedRecoveryFunction(int size) {
       this.size = size;
     }
 
     /**
      * {@inheritDoc}
      *
-     * @param point {y0, A, tau}
+     * @param point {I0, A, koff}
      */
     @Override
     public Pair<RealVector, RealMatrix> value(RealVector point) {
       final double[] value = new double[size];
       final double[][] jacobian = new double[size][3];
-      final double y = point.getEntry(0);
+      final double i0 = point.getEntry(0);
       final double a = point.getEntry(1);
-      final double tau = point.getEntry(2);
-      // f(t) = y0 + A(1 - exp(-tau * t))
+      final double koff = point.getEntry(2);
+      // f(t) = I0 + A(1 - exp(-koff * t))
       //
-      // df_dy = 1
-      // df_dA = (1 - exp(-tau * t))
-      // df_dtau = A * (t * exp(-tau * t))
+      // df_dI0 = 1
+      // df_dA = (1 - exp(-koff * t))
+      // df_dkoff = A * (t * exp(-koff * t))
 
       for (int t = 0; t < size; t++) {
-        final double x1 = Math.exp(-tau * t);
-        value[t] = y + a * (1 - x1);
+        final double x1 = Math.exp(-koff * t);
+        value[t] = i0 + a * (1 - x1);
         jacobian[t][0] = 1;
         jacobian[t][1] = (1 - x1);
         jacobian[t][2] = a * (t * x1);
@@ -1117,171 +1087,67 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Exponential recovery function {@code f(t) = y0 + A(1 - exp(-tau1 * t))exp(-tau2 * t)}.
+   * Reaction limited recovery with an exponential bleaching component.
+   *
+   * <pre>
+   * f(t) = B + (I0 + A(1 - exp(-koff * t))) * exp(-tau * t)
+   *
+   * B = Background level after bleaching (e.g. camera offset value)
+   * A = scaling factor (recovered intensity - intensity immediately after bleaching)
+   * koff = offrate of binding
+   * I0 = Intensity immediately after the bleaching - B
+   * tau = exponential decay rate of the bleaching
+   * </pre>
    */
   @VisibleForTesting
-  static final class RecoveryFunction implements MultivariateJacobianFunction {
+  static final class ReactionLimitedRecoveryFunctionB implements MultivariateJacobianFunction {
     private final int size;
 
     /**
      * @param size the size
      */
-    RecoveryFunction(int size) {
+    ReactionLimitedRecoveryFunctionB(int size) {
       this.size = size;
     }
 
     /**
      * {@inheritDoc}
      *
-     * @param point {y0, A, tau1, tau2}
-     */
-    @Override
-    public Pair<RealVector, RealMatrix> value(RealVector point) {
-      final double[] value = new double[size];
-      final double[][] jacobian = new double[size][4];
-      final double y = point.getEntry(0);
-      final double a = point.getEntry(1);
-      final double tau1 = point.getEntry(2);
-      final double tau2 = point.getEntry(3);
-      // f(t) = y0 + A(1 - exp(-tau1 * t))exp(-tau2 * t)
-      //
-      // f(t) = u(t) * v(t)
-      // f'(t) = u'(t) * v(t) + u(t) * v'(t)
-      //
-      // df_dy = 1
-      // df_dA = (1 - exp(-tau1 * t))exp(-tau2 * t)
-      // df_dtau1 = A * (t * exp(-tau1 * t)) * exp(-tau2 * t)
-      // df_dtau2 = A(1 - exp(-tau1 * t)) * -t * exp(-tau2 * t) - B * t * exp(-tau2 * t)
-
-      for (int t = 0; t < size; t++) {
-        final double x1 = Math.exp(-tau1 * t);
-        final double x2 = Math.exp(-tau2 * t);
-        final double ut = a * (1 - x1);
-        value[t] = y + ut * x2;
-        jacobian[t][0] = 1;
-        jacobian[t][1] = (1 - x1) * x2;
-        jacobian[t][2] = a * t * x1 * x2;
-        jacobian[t][3] = ut * -t * x2;
-      }
-      return new Pair<>(new ArrayRealVector(value, false),
-          new Array2DRowRealMatrix(jacobian, false));
-    }
-  }
-
-  /**
-   * Exponential recovery function
-   * {@code f(t) = y0 + A(1 - exp(-tau1 * t))exp(-tau2 * t) + B exp(-tau2 * t)}.
-   */
-  @VisibleForTesting
-  static final class RecoveryFunctionB implements MultivariateJacobianFunction {
-    private final int size;
-
-    /**
-     * @param size the size
-     */
-    RecoveryFunctionB(int size) {
-      this.size = size;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param point {y0, A, tau1, B, tau2}
+     * @param point {I0, A, koff, B, tau}
      */
     @Override
     public Pair<RealVector, RealMatrix> value(RealVector point) {
       final double[] value = new double[size];
       final double[][] jacobian = new double[size][5];
-      final double y = point.getEntry(0);
+      final double i0 = point.getEntry(0);
       final double a = point.getEntry(1);
-      final double tau1 = point.getEntry(2);
+      final double koff = point.getEntry(2);
       final double b = point.getEntry(3);
-      final double tau2 = point.getEntry(4);
-      // f(t) = y0 + A(1 - exp(-tau1 * t))exp(-tau2 * t) + B exp(-tau2 * t)
+      final double tau = point.getEntry(4);
+      // f(t) = B + (I0 + A(1 - exp(-koff * t))) * exp(-tau * t)
       //
-      // f(t) = u(t) * v(t)
-      // f'(t) = u'(t) * v(t) + u(t) * v'(t)
-      //
-      // df_dy = 1
-      // df_dA = (1 - exp(-tau1 * t))exp(-tau2 * t)
-      // df_dtau1 = A * (t * exp(-tau1 * t)) * exp(-tau2 * t)
-      // df_dB = exp(-tau2 * t)
-      // df_dtau2 = A(1 - exp(-tau1 * t)) * -t * exp(-tau2 * t) - B * t * exp(-tau2 * t)
+      // df_dI0 = exp(-tau * t)
+      // df_dA = (1 - exp(-koff * t)) * exp(-tau * t)
+      // df_dkoff = A * (t * exp(-koff * t)) * exp(-tau * t)
+      // df_dB = 1
+      // df_dtau = (I0 + A(1 - exp(-koff * t))) * -t * exp(-tau * t)
 
       for (int t = 0; t < size; t++) {
-        final double x1 = Math.exp(-tau1 * t);
-        final double x2 = Math.exp(-tau2 * t);
+        final double x1 = Math.exp(-koff * t);
+        final double x2 = Math.exp(-tau * t);
         final double ut = a * (1 - x1);
-        value[t] = y + ut * x2 + b * x2;
-        jacobian[t][0] = 1;
+        value[t] = b + (i0 + ut) * x2;
+        jacobian[t][0] = x2;
         jacobian[t][1] = (1 - x1) * x2;
         jacobian[t][2] = a * t * x1 * x2;
-        jacobian[t][3] = x2;
-        jacobian[t][4] = ut * -t * x2 - b * t * x2;
+        jacobian[t][3] = 1;
+        jacobian[t][4] = (i0 + ut) * -t * x2;
       }
       return new Pair<>(new ArrayRealVector(value, false),
           new Array2DRowRealMatrix(jacobian, false));
     }
   }
 
-  /**
-   * Exponential recovery function {@code f(t) = A(1 - exp(-tau1 * t))(y0 + B exp(-tau2 * t)}.
-   *
-   * <p>This does not seem correct to include y0 in the product of the recovery curve.
-   *
-   * @see <a href="https://www.embl.de/eamnet/downloads/courses/FRAP2004/frap_intro_miura.pdf">FRAP
-   *      intro</a>
-   */
-  @VisibleForTesting
-  static final class RecoveryFunction1 implements MultivariateJacobianFunction {
-    private final int size;
-
-    /**
-     * @param size the size
-     */
-    RecoveryFunction1(int size) {
-      this.size = size;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param point {y0, A, tau1, B, tau2}
-     */
-    @Override
-    public Pair<RealVector, RealMatrix> value(RealVector point) {
-      final double[] value = new double[size];
-      final double[][] jacobian = new double[size][5];
-      final double y = point.getEntry(0);
-      final double a = point.getEntry(1);
-      final double tau1 = point.getEntry(2);
-      final double b = point.getEntry(3);
-      final double tau2 = point.getEntry(4);
-      // f(t) = A(1 - exp(-tau1 * t))(y0 + B exp(-tau2 * t)
-      //
-      // f(t) = u(t) * v(t)
-      // f'(t) = u'(t) * v(t) + u(t) * v'(t)
-      //
-      // df_dy = A(1 - exp(-tau1 * t))
-      // df_dA = (1 - exp(-tau1 * t))(y0 + B exp(-tau2 * t)
-      // df_dtau1 = A * (t * exp(-tau1 * t)) * vt
-      // df_dB = A(1 - exp(-tau1 * t)) * exp(-tau2 * t)
-      // df_dtau2 = A(1 - exp(-tau1 * t)) * (-B * t * exp(-tau2 * t))
-
-      for (int t = 0; t < size; t++) {
-        final double x1 = Math.exp(-tau1 * t);
-        final double x2 = Math.exp(-tau2 * t);
-        final double ut = a * (1 - x1);
-        final double vt = y + b * x2;
-        value[t] = ut * vt;
-        jacobian[t][0] = ut;
-        jacobian[t][1] = (1 - x1) * vt;
-        jacobian[t][2] = a * (t * x1) * vt;
-        jacobian[t][3] = ut * x2;
-        jacobian[t][4] = ut * (-b * t * x2);
-      }
-      return new Pair<>(new ArrayRealVector(value, false),
-          new Array2DRowRealMatrix(jacobian, false));
-    }
-  }
+  // TODO:
+  // Diffusion limited recovery
 }
