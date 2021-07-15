@@ -34,6 +34,7 @@ import ij.plugin.ZProjector;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
+import ij.process.FloodFiller;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import java.awt.Color;
@@ -737,11 +738,55 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       bp.erode(1, 0);
       // Remove speckles
       bp.erode(8, 0);
+      // Fill holes
+      fill(bp);
 
       events.addSlice(bp);
     }
 
     return events;
+  }
+
+  /**
+   * Fill the image processor closed regions.
+   *
+   * @param bp image
+   */
+  private static void fill(ByteProcessor bp) {
+    // Adapted from ij.plugin.binary.Binary.fill(...)
+    final int width = bp.getWidth();
+    final int height = bp.getHeight();
+    final FloodFiller ff = new FloodFiller(bp);
+    bp.setColor(127);
+    // Fill from the x-edges (left + right)
+    for (int y = 0; y < height; y++) {
+      if (bp.get(0, y) == 0) {
+        ff.fill(0, y);
+      }
+      if (bp.get(width - 1, y) == 0) {
+        ff.fill(width - 1, y);
+      }
+    }
+    // Fill from the y-edges (top + bottom)
+    for (int x = 0; x < width; x++) {
+      if (bp.get(x, 0) == 0) {
+        ff.fill(x, 0);
+      }
+      if (bp.get(x, height - 1) == 0) {
+        ff.fill(x, height - 1);
+      }
+    }
+    // Anything not filled must be foreground
+    final byte[] pixels = (byte[]) bp.getPixels();
+    final int n = width * height;
+    final byte foreground = (byte) 255;
+    for (int i = 0; i < n; i++) {
+      if (pixels[i] == 127) {
+        pixels[i] = 0;
+      } else {
+        pixels[i] = foreground;
+      }
+    }
   }
 
   private LocalList<Pair<Integer, Roi>> extractBleachedRegions(final ImageStack events) {
