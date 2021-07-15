@@ -876,6 +876,9 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       final Overlay o = new Overlay();
       rois.forEach(p -> o.add(p.getValue()));
       alignedImp.setOverlay(o);
+      // Set the stack to the slice for the first ROI
+      final int first = rois.get(0).getFirst();
+      alignedImp.setSlice(first + 1);
     }
   }
 
