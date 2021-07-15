@@ -94,8 +94,8 @@ import uk.ac.sussex.gdsc.foci.ObjectAnalyzer.ObjectCentre;
  *      href="https://en.wikipedia.org/wiki/Fluorescence_recovery_after_photobleaching">Fluorescence
  *      recovery after photobleaching</a>
  */
-public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
-  private static final String TITLE = "Photobleach Analysis";
+public class FrapAnalysis_PlugIn implements PlugInFilter {
+  private static final String TITLE = "FRAP Analysis";
   private static final int MAX_BORDER = 5;
   private static final double LN2 = Math.log(2);
 

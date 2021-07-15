@@ -34,12 +34,12 @@ import org.junit.jupiter.api.Test;
 import uk.ac.sussex.gdsc.test.api.TestAssertions;
 import uk.ac.sussex.gdsc.test.api.TestHelper;
 import uk.ac.sussex.gdsc.test.api.function.DoubleDoubleBiPredicate;
-import uk.ac.sussex.gdsc.utils.PhotobleachAnalysis_PlugIn.Bessel;
-import uk.ac.sussex.gdsc.utils.PhotobleachAnalysis_PlugIn.DecayFunction;
-import uk.ac.sussex.gdsc.utils.PhotobleachAnalysis_PlugIn.DiffusionLimitedRecoveryFunction;
-import uk.ac.sussex.gdsc.utils.PhotobleachAnalysis_PlugIn.DiffusionLimitedRecoveryFunctionB;
-import uk.ac.sussex.gdsc.utils.PhotobleachAnalysis_PlugIn.ReactionLimitedRecoveryFunction;
-import uk.ac.sussex.gdsc.utils.PhotobleachAnalysis_PlugIn.ReactionLimitedRecoveryFunctionB;
+import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.Bessel;
+import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.DecayFunction;
+import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.DiffusionLimitedRecoveryFunction;
+import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.DiffusionLimitedRecoveryFunctionB;
+import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.ReactionLimitedRecoveryFunction;
+import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.ReactionLimitedRecoveryFunctionB;
 
 @SuppressWarnings({"javadoc"})
 class PhotobleachAnalysis_PluginTest {
