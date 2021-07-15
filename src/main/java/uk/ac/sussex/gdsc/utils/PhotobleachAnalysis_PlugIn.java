@@ -60,6 +60,7 @@ import org.apache.commons.math3.linear.DiagonalMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.optim.ConvergenceChecker;
+import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Pair;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
@@ -126,6 +127,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     int bleachedBorder;
     boolean showBleachedRegions;
     boolean nestedModels;
+    double diffusionCoefficient;
     String resultsDir;
 
     /**
@@ -138,6 +140,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       minRegionSize = 100;
       bleachedBorder = 1;
       resultsDir = "";
+      diffusionCoefficient = 1;
     }
 
     /**
@@ -158,6 +161,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       showBleachedRegions = source.showBleachedRegions;
       nestedModels = source.nestedModels;
       resultsDir = source.resultsDir;
+      diffusionCoefficient = source.diffusionCoefficient;
     }
 
     /**
@@ -218,6 +222,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     gd.addCheckbox("Show_bleached_regions", settings.showBleachedRegions);
     gd.addCheckbox("Fit_nested_models", settings.nestedModels);
     gd.addDirectoryField("Results_dir", settings.resultsDir, 30);
+    gd.addNumericField("Diffusion_coefficient", settings.diffusionCoefficient, -3);
     gd.showDialog();
     settings.save();
     if (gd.wasCanceled()) {
@@ -235,6 +240,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     settings.showBleachedRegions = gd.getNextBoolean();
     settings.nestedModels = gd.getNextBoolean();
     settings.resultsDir = gd.getNextString();
+    settings.diffusionCoefficient = gd.getNextNumber();
 
     if (gd.invalidNumber()) {
       IJ.error(TITLE, "Bad input number");
@@ -248,9 +254,12 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
   public void run(ImageProcessor ip) {
     final ImageStack aligned = alignImage(imp);
 
+    final String title = TITLE + " : " + imp.getTitle();
+    ImageJUtils.log(title);
+
     ImagePlus alignedImp = null;
     if (settings.showAlignedImage) {
-      alignedImp = ImageJUtils.display("Aligned", aligned);
+      alignedImp = ImageJUtils.display(title + " Aligned", aligned);
     }
 
     final ByteProcessor mask = createMask(aligned);
@@ -260,7 +269,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     final LocalList<Pair<Integer, Roi>> rois = detectBleachedRegions(events);
 
     if (settings.showBleachingEvents) {
-      ImageJUtils.display("Events", events);
+      ImageJUtils.display(title + " Events", events);
     }
 
     if (rois.isEmpty()) {
@@ -320,7 +329,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
 
     // Plot the mean over time.
     final float[] x = SimpleArrayUtils.newArray(aligned.size(), 1f, 1f);
-    final Plot plot = new Plot(TITLE, "Frame", "Mean Intensity");
+    final Plot plot = new Plot(title, "Frame", "Mean Intensity");
     plot.addPoints(x, data[n - 1], null, Plot.LINE, "Foreground");
 
     // Add fitted curve
@@ -335,27 +344,44 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       plot.addPoints(x, data[j - 1], null, Plot.LINE, "Region" + j);
       // Fit each region FRAP curve
       final int bleachingEvent = rois.unsafeGet(j - 1).getFirst();
-      final double[] fit = fitRecovery(j, data[j - 1], ffit[2], bleachingEvent);
-      if (fit != null) {
-        if (fit.length == 3) {
-          plot.addPoints(Arrays.copyOfRange(x, bleachingEvent, x.length),
-              SimpleArrayUtils
-                  .toFloat(new ReactionLimitedRecoveryFunction(x.length - bleachingEvent)
-                      .value(new ArrayRealVector(fit, false)).getFirst().toArray()),
-              null, Plot.DOT, null);
-          ImageJUtils.log("Region [%d] recovery: f(t) = %s + %s(1 - exp(-%s t)); Half-life = %s", j,
-              MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]),
-              MathUtils.rounded(LN2 / fit[2]));
-        } else if (fit.length == 5) {
-          plot.addPoints(Arrays.copyOfRange(x, bleachingEvent, x.length),
-              SimpleArrayUtils
-                  .toFloat(new ReactionLimitedRecoveryFunctionB(x.length - bleachingEvent)
-                      .value(new ArrayRealVector(fit, false)).getFirst().toArray()),
-              null, Plot.DOT, null);
+      final Pair<FrapFunction, Optimum> fitResult =
+          fitRecovery(j, data[j - 1], ffit[2], bleachingEvent, count[j]);
+      if (fitResult != null) {
+        final FrapFunction fun = fitResult.getFirst();
+        final double[] fit = fitResult.getSecond().getPoint().toArray();
+        plot.addPoints(Arrays.copyOfRange(x, bleachingEvent, x.length),
+            SimpleArrayUtils
+                .toFloat(fun.value(fitResult.getSecond().getPoint()).getFirst().toArray()),
+            null, Plot.DOT, null);
+        if (fun instanceof ReactionLimitedRecoveryFunction) {
           ImageJUtils.log(
-              "Region [%d] recovery: f(t) = %s + (%s + %s(1 - exp(-%s t))) * exp(-%s t); Half-life1 = %s; Half-life2 = %s",
-              j, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[3]), MathUtils.rounded(fit[1]),
+              "Region [%d] reaction limited recovery: f(t) = %s + %s(1 - exp(-%s t)); Half-life = %s",
+              j, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]),
+              MathUtils.rounded(LN2 / fit[2]));
+        } else if (fun instanceof ReactionLimitedRecoveryFunctionB) {
+          ImageJUtils.log(
+              "Region [%d] reaction limited recovery: f(t) = %s + (%s + %s(1 - exp(-%s t))) * exp(-%s t); Half-life1 = %s; Half-life2 = %s",
+              j, MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]),
               MathUtils.rounded(fit[2]), MathUtils.rounded(fit[4]), MathUtils.rounded(LN2 / fit[2]),
+              MathUtils.rounded(LN2 / fit[4]));
+        } else if (fun instanceof DiffusionLimitedRecoveryFunction) {
+          final String dT = MathUtils.rounded(fit[2]);
+          // tD = w^2 / 4D
+          final double w2 = count[j] / Math.PI;
+          final double dc = w2 / (4 * fit[2]);
+          ImageJUtils.log(
+              "Region [%d] diffusion limited recovery: f(t) = %s + %s(exp(-2*%s/t) * (I0(2*%s/t) + I1(2*%s/t)); D = %s",
+              j, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), dT, dT, dT,
+              MathUtils.rounded(dc));
+        } else if (fun instanceof DiffusionLimitedRecoveryFunctionB) {
+          final String dT = MathUtils.rounded(fit[2]);
+          // tD = w^2 / 4D
+          final double w2 = count[j] / Math.PI;
+          final double dc = w2 / (4 * fit[2]);
+          ImageJUtils.log(
+              "Region [%d] diffusion limited recovery: f(t) = %s + (%s + %s(exp(-2*%s/t) * (I0(2*%s/t) + I1(2*%s/t))) * exp(-%s t); D = %s; Half-life2 = %s",
+              j, MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]),
+              dT, dT, dT, MathUtils.rounded(fit[4]), MathUtils.round(dc),
               MathUtils.rounded(LN2 / fit[4]));
         }
       }
@@ -730,17 +756,17 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
         || !Files.isDirectory(Paths.get(settings.resultsDir))) {
       return;
     }
-    int n = data.length;
-    int size = data[0].length;
-    String[] frames = new String[size];
+    final int n = data.length;
+    final int size = data[0].length;
+    final String[] frames = new String[size];
     for (int t = 0; t < size; t++) {
       frames[t] = (t + 1) + ",";
     }
 
-    String prefix = FileUtils.removeExtension(imp.getTitle()).replace(' ', '_');
+    final String prefix = FileUtils.removeExtension(imp.getTitle()).replace(' ', '_');
 
     for (int i = 0; i < n; i++) {
-      Path path = i == n - 1 ? Paths.get(settings.resultsDir, prefix + "_foreground.csv")
+      final Path path = i == n - 1 ? Paths.get(settings.resultsDir, prefix + "_foreground.csv")
           : Paths.get(settings.resultsDir, prefix + "_region" + i + ".csv");
       try (BufferedWriter out = Files.newBufferedWriter(path)) {
         out.write("# Size = ");
@@ -755,7 +781,7 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
           out.write(Float.toString(data[i][t]));
           out.newLine();
         }
-      } catch (IOException e) {
+      } catch (final IOException e) {
         ImageJUtils.log("Failed to save data: " + e.getMessage());
         break;
       }
@@ -827,9 +853,11 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
    * @param y the data
    * @param tau the initial estimate for the general image bleaching rate
    * @param bleachingEvent the index in y for the bleaching event (low point of curve)
-   * @return fit parameters
+   * @param size the size of the region
+   * @return fit function and result
    */
-  private double[] fitRecovery(int region, float[] y, double tau, int bleachingEvent) {
+  private Pair<FrapFunction, Optimum> fitRecovery(int region, float[] y, double tau,
+      int bleachingEvent, int size) {
     final boolean nested = settings.nestedModels;
 
     // Initial estimates
@@ -843,27 +871,27 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     //    |  /
     //    | /
     //    |/
-    //    I0
+    //    i0
     //
     //  ------------------------ B
     //
     // B is background after al bleaching
     // A is the magnitude of the recovery.
     // koff is the recovery rate.
-    // I0 is the baseline for the intensity.
+    // i0 is the baseline for the intensity.
     // tau is the bleaching rate over time.
     // @formatter:on
 
     final double after = y[bleachingEvent];
     double a = y[y.length - 1] - after;
-    double I0 = after;
+    double i0 = after;
 
     // Find point where the recovery is half.
     // Use a simple rolling average of 3 to smooth the curve.
-    final double half = I0 + a / 2;
+    final double half = i0 + a / 2;
     int t = bleachingEvent + 1;
     while (t + 1 < y.length) {
-      double mean = ((double) y[t - 1] + y[t] + y[t + 1]) / 3.0;
+      final double mean = ((double) y[t - 1] + y[t] + y[t + 1]) / 3.0;
       if (mean > half) {
         break;
       }
@@ -885,8 +913,8 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
         current) -> DoubleEquality.relativeError(previous.getCost(), current.getCost()) < 1e-6;
 
     // Fit the simple version too (which ignores residual bleaching): y0 + A(1 - exp(-koff * t))
-    final MultivariateJacobianFunction model1 = new ReactionLimitedRecoveryFunction(yy.length);
-    final RealVector start1 = new ArrayRealVector(new double[] {I0, a, koff}, false);
+    final FrapFunction model1 = new ReactionLimitedRecoveryFunction(yy.length);
+    final RealVector start1 = new ArrayRealVector(new double[] {i0, a, koff}, false);
     final ParameterValidator paramValidator = point -> {
       // Do not use MIN_VALUE here to avoid sub-normal numbers
       for (int i = point.getDimension(); i-- > 0;) {
@@ -904,40 +932,39 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
 
     final LeastSquaresProblem problem1 = LeastSquaresFactory.create(model1, observed, start1,
         weightMatrix, checker, maxEvaluations, maxIterations, lazyEvaluation, paramValidator);
-    Optimum best;
+    Optimum best1 = null;
+    FrapFunction fun1 = model1;
     try {
-      best = optimizer.optimize(problem1);
-      final double[] fit = best.getPoint().toArray();
-      if (nested) {
-        ImageJUtils.log("  Region [%d] recovery: f(t) = %s + %s(1 - exp(-%s t)); Half-life = %s",
-            region, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]),
-            MathUtils.rounded(LN2 / fit[2]));
-      }
+      best1 = optimizer.optimize(problem1);
+      final double[] fit = best1.getPoint().toArray();
+      ImageJUtils.log(
+          "  Region [%d] reaction limited recovery (ss=%s): f(t) = %s + %s(1 - exp(-%s t)); Half-life = %s",
+          region, MathUtils.rounded(getResidualSumOfSquares(best1)), MathUtils.rounded(fit[0]),
+          MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]), MathUtils.rounded(LN2 / fit[2]));
     } catch (TooManyIterationsException | ConvergenceException ex) {
-      ImageJUtils.log("Failed to fit simple recovery curve: ", ex.getMessage());
-      return null;
+      ImageJUtils.log("Failed to fit reaction limited recovery curve: ", ex.getMessage());
     }
 
-    if (nested) {
+    if (best1 != null && nested) {
       // Use the fit as the start point for nested models
-      I0 = best.getPoint().getEntry(0);
-      a = best.getPoint().getEntry(1);
-      koff = best.getPoint().getEntry(2);
+      i0 = best1.getPoint().getEntry(0);
+      a = best1.getPoint().getEntry(1);
+      koff = best1.getPoint().getEntry(2);
 
       // Fit the simple version but with a general decay of the recovered signal.
       // B can be initialised to the camera offset. Here use a small value.
-      final double b = I0 / 100;
-      I0 -= b;
+      final double b = i0 / 100;
+      i0 -= b;
 
-      final MultivariateJacobianFunction model2 = new ReactionLimitedRecoveryFunctionB(yy.length);
-      final RealVector start2 = new ArrayRealVector(new double[] {I0, a, koff, b, tau}, false);
+      final FrapFunction model2 = new ReactionLimitedRecoveryFunctionB(yy.length);
+      final RealVector start2 = new ArrayRealVector(new double[] {i0, a, koff, b, tau}, false);
 
       final LeastSquaresProblem problem2 = LeastSquaresFactory.create(model2, observed, start2,
           weightMatrix, checker, maxEvaluations, maxIterations, lazyEvaluation, paramValidator);
       try {
         final Optimum lvmSolution = optimizer.optimize(problem2);
         // Check for model improvement
-        final double rss1 = getResidualSumOfSquares(best);
+        final double rss1 = getResidualSumOfSquares(best1);
         final double rss2 = getResidualSumOfSquares(lvmSolution);
         double pValue;
         double f;
@@ -953,23 +980,122 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
         // Optionally log no improvement here...
         final double[] fit = lvmSolution.getPoint().toArray();
         ImageJUtils.log(
-            "  Region [%d] recovery: f(t) = %s + (%s + %s(1 - exp(-%s t))) * exp(-%s t); Half-life1 = %s; Half-life2 = %s",
-            region, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[3]), MathUtils.rounded(fit[1]),
-            MathUtils.rounded(fit[2]), MathUtils.rounded(fit[4]), MathUtils.rounded(LN2 / fit[2]),
-            MathUtils.rounded(LN2 / fit[4]));
+            "  Region [%d] reaction limited recovery (ss=%s): f(t) = %s + (%s + %s(1 - exp(-%s t))) * exp(-%s t); Half-life1 = %s; Half-life2 = %s",
+            region, MathUtils.rounded(rss2), MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]),
+            MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]), MathUtils.rounded(fit[4]),
+            MathUtils.rounded(LN2 / fit[2]), MathUtils.rounded(LN2 / fit[4]));
         ImageJUtils.log("  Region [%d] : rss1=%s, rss2=%s, p(F-Test=%s) = %s; ", region,
             MathUtils.rounded(rss1), MathUtils.rounded(rss2), MathUtils.rounded(f),
             MathUtils.rounded(pValue));
         if (pValue < 0.01) {
           // reject null hypothesis that model 2 is not better
-          best = lvmSolution;
+          fun1 = model2;
+          best1 = lvmSolution;
         }
       } catch (TooManyIterationsException | ConvergenceException ex) {
-        ImageJUtils.log("Failed to fit recovery curve: ", ex.getMessage());
+        ImageJUtils.log("Failed to fit reaction limited recovery curve with decay: ",
+            ex.getMessage());
       }
     }
 
-    return best.getPoint().toArray();
+    // Fit a diffusion limited model.
+    // Estimate characteristic diffusion time using the region area and given diffusion coefficient.
+    // tD = w^2 / 4D
+    // D = w^2 / 4tD
+    // Assume the region is a circle
+    final double w2 = size / Math.PI;
+    double dt =
+        w2 / (4 * ((settings.diffusionCoefficient > 0) ? settings.diffusionCoefficient : 1));
+    final FrapFunction model3 = new DiffusionLimitedRecoveryFunction(yy.length);
+    final RealVector start3 = new ArrayRealVector(new double[] {i0, a, dt}, false);
+
+    final LeastSquaresProblem problem3 = LeastSquaresFactory.create(model3, observed, start3,
+        weightMatrix, checker, maxEvaluations, maxIterations, lazyEvaluation, paramValidator);
+    Optimum best2 = null;
+    FrapFunction fun2 = model3;
+    try {
+      best2 = optimizer.optimize(problem3);
+      final double[] fit = best2.getPoint().toArray();
+      final String dT = MathUtils.rounded(fit[2]);
+      ImageJUtils.log(
+          "  Region [%d] diffusion limited recovery (ss=%s): f(t) = %s + %s(exp(-2*%s/t) * (I0(2*%s/t) + I1(2*%s/t)); D = %s",
+          region, MathUtils.rounded(getResidualSumOfSquares(best2)), MathUtils.rounded(fit[0]),
+          MathUtils.rounded(fit[1]), dT, dT, dT, MathUtils.round(w2 / (4 * fit[2])));
+    } catch (TooManyIterationsException | ConvergenceException ex) {
+      ImageJUtils.log("Failed to fit diffusion limited recovery curve: ", ex.getMessage());
+    }
+
+    if (best2 != null && nested) {
+      // Use the fit as the start point for nested models
+      i0 = best2.getPoint().getEntry(0);
+      a = best2.getPoint().getEntry(1);
+      dt = best2.getPoint().getEntry(2);
+
+      // Fit the simple version but with a general decay of the recovered signal.
+      // B can be initialised to the camera offset. Here use a small value.
+      final double b = i0 / 100;
+      i0 -= b;
+
+      final FrapFunction model4 = new DiffusionLimitedRecoveryFunctionB(yy.length);
+      final RealVector start4 = new ArrayRealVector(new double[] {i0, a, dt, b, tau}, false);
+
+      final LeastSquaresProblem problem4 = LeastSquaresFactory.create(model4, observed, start4,
+          weightMatrix, checker, maxEvaluations, maxIterations, lazyEvaluation, paramValidator);
+      try {
+        final Optimum lvmSolution = optimizer.optimize(problem4);
+        // Check for model improvement
+        final double rss1 = getResidualSumOfSquares(best2);
+        final double rss2 = getResidualSumOfSquares(lvmSolution);
+        double pValue;
+        double f;
+        if (rss1 < rss2) {
+          f = 0;
+          pValue = 1;
+        } else {
+          f = RegressionUtils.residualsFStatistic(rss1, start3.getDimension(), rss2,
+              start4.getDimension(), yy.length);
+          pValue = RegressionUtils.residualsFTest(rss1, start3.getDimension(), rss2,
+              start4.getDimension(), yy.length);
+        }
+        // Optionally log no improvement here...
+        final double[] fit = lvmSolution.getPoint().toArray();
+        final String dT = MathUtils.rounded(fit[2]);
+        ImageJUtils.log(
+            "  Region [%d] diffusion limited recovery (ss=%s): f(t) = %s + (%s + %s(exp(-2*%s/t) * (I0(2*%s/t) + I1(2*%s/t))) * exp(-%s t); D = %s; Half-life2 = %s",
+            region, MathUtils.rounded(rss2), MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]),
+            MathUtils.rounded(fit[1]), dT, dT, dT, MathUtils.rounded(fit[4]),
+            MathUtils.round(w2 / (4 * fit[2])), MathUtils.rounded(LN2 / fit[4]));
+        ImageJUtils.log("  Region [%d] : rss1=%s, rss2=%s, p(F-Test=%s) = %s; ", region,
+            MathUtils.rounded(rss1), MathUtils.rounded(rss2), MathUtils.rounded(f),
+            MathUtils.rounded(pValue));
+        if (pValue < 0.01) {
+          // reject null hypothesis that model 2 is not better
+          fun2 = model4;
+          best2 = lvmSolution;
+        }
+      } catch (TooManyIterationsException | ConvergenceException ex) {
+        ImageJUtils.log("Failed to fit diffusion limited recovery curve with decay: ",
+            ex.getMessage());
+      }
+    }
+
+    if (best1 != null) {
+      if (best2 != null) {
+        // Return the best. These are not nested models so we cannot use an F-test.
+        final double rss1 = getResidualSumOfSquares(best1);
+        final double rss2 = getResidualSumOfSquares(best2);
+        if (rss2 < rss1) {
+          fun1 = fun2;
+          best1 = best2;
+        }
+      }
+      return Pair.create(fun1, best1);
+    } else if (best2 != null) {
+      return Pair.create(fun2, best2);
+    }
+
+    // No model
+    return null;
   }
 
   /**
@@ -984,6 +1110,21 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
   }
 
   /**
+   * Base class for FRAP function.
+   */
+  private abstract static class FrapFunction implements MultivariateJacobianFunction {
+    /** The size. */
+    protected final int size;
+
+    /**
+     * @param size the size
+     */
+    FrapFunction(int size) {
+      this.size = size;
+    }
+  }
+
+  /**
    * Exponential decay function.
    *
    * <pre>
@@ -995,14 +1136,12 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
    * </pre>
    */
   @VisibleForTesting
-  static final class DecayFunction implements MultivariateJacobianFunction {
-    private final int size;
-
+  static final class DecayFunction extends FrapFunction {
     /**
      * @param size the size
      */
     DecayFunction(int size) {
-      this.size = size;
+      super(size);
     }
 
     /**
@@ -1022,7 +1161,12 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       // df_da = exp(-koff * t)
       // df_dkoff = -a * t * exp(-koff * t)
 
-      for (int t = 0; t < size; t++) {
+      // Special case when t=0
+      value[0] = b + a;
+      jacobian[0][0] = 1;
+      jacobian[0][1] = 1;
+
+      for (int t = 1; t < size; t++) {
         final double x = Math.exp(-koff * t);
         value[t] = b + a * x;
         jacobian[t][0] = 1;
@@ -1038,28 +1182,26 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
    * Reaction limited recovery function.
    *
    * <pre>
-   * f(t) = I0 + A(1 - exp(-koff * t))
+   * f(t) = i0 + A(1 - exp(-koff * t))
    *
-   * I0 = Intensity immediately after the bleaching
+   * i0 = Intensity immediately after the bleaching
    * A = scaling factor (recovered intensity - intensity immediately after bleaching)
    * koff = offrate of binding
    * </pre>
    */
   @VisibleForTesting
-  static final class ReactionLimitedRecoveryFunction implements MultivariateJacobianFunction {
-    private final int size;
-
+  static final class ReactionLimitedRecoveryFunction extends FrapFunction {
     /**
      * @param size the size
      */
     ReactionLimitedRecoveryFunction(int size) {
-      this.size = size;
+      super(size);
     }
 
     /**
      * {@inheritDoc}
      *
-     * @param point {I0, A, koff}
+     * @param point {i0, A, koff}
      */
     @Override
     public Pair<RealVector, RealMatrix> value(RealVector point) {
@@ -1068,13 +1210,17 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       final double i0 = point.getEntry(0);
       final double a = point.getEntry(1);
       final double koff = point.getEntry(2);
-      // f(t) = I0 + A(1 - exp(-koff * t))
+      // f(t) = i0 + A(1 - exp(-koff * t))
       //
       // df_dI0 = 1
       // df_dA = (1 - exp(-koff * t))
       // df_dkoff = A * (t * exp(-koff * t))
 
-      for (int t = 0; t < size; t++) {
+      // Special case when t=0
+      value[0] = i0;
+      jacobian[0][0] = 1;
+
+      for (int t = 1; t < size; t++) {
         final double x1 = Math.exp(-koff * t);
         value[t] = i0 + a * (1 - x1);
         jacobian[t][0] = 1;
@@ -1090,30 +1236,28 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
    * Reaction limited recovery with an exponential bleaching component.
    *
    * <pre>
-   * f(t) = B + (I0 + A(1 - exp(-koff * t))) * exp(-tau * t)
+   * f(t) = B + (i0 + A(1 - exp(-koff * t))) * exp(-tau * t)
    *
    * B = Background level after bleaching (e.g. camera offset value)
+   * i0 = Intensity immediately after the bleaching - B
    * A = scaling factor (recovered intensity - intensity immediately after bleaching)
    * koff = offrate of binding
-   * I0 = Intensity immediately after the bleaching - B
    * tau = exponential decay rate of the bleaching
    * </pre>
    */
   @VisibleForTesting
-  static final class ReactionLimitedRecoveryFunctionB implements MultivariateJacobianFunction {
-    private final int size;
-
+  static final class ReactionLimitedRecoveryFunctionB extends FrapFunction {
     /**
      * @param size the size
      */
     ReactionLimitedRecoveryFunctionB(int size) {
-      this.size = size;
+      super(size);
     }
 
     /**
      * {@inheritDoc}
      *
-     * @param point {I0, A, koff, B, tau}
+     * @param point {i0, A, koff, B, tau}
      */
     @Override
     public Pair<RealVector, RealMatrix> value(RealVector point) {
@@ -1124,15 +1268,20 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
       final double koff = point.getEntry(2);
       final double b = point.getEntry(3);
       final double tau = point.getEntry(4);
-      // f(t) = B + (I0 + A(1 - exp(-koff * t))) * exp(-tau * t)
+      // f(t) = B + (i0 + A(1 - exp(-koff * t))) * exp(-tau * t)
       //
       // df_dI0 = exp(-tau * t)
       // df_dA = (1 - exp(-koff * t)) * exp(-tau * t)
       // df_dkoff = A * (t * exp(-koff * t)) * exp(-tau * t)
       // df_dB = 1
-      // df_dtau = (I0 + A(1 - exp(-koff * t))) * -t * exp(-tau * t)
+      // df_dtau = (i0 + A(1 - exp(-koff * t))) * -t * exp(-tau * t)
 
-      for (int t = 0; t < size; t++) {
+      // Special case when t=0
+      value[0] = b + i0;
+      jacobian[0][0] = 1;
+      jacobian[0][3] = 1;
+
+      for (int t = 1; t < size; t++) {
         final double x1 = Math.exp(-koff * t);
         final double x2 = Math.exp(-tau * t);
         final double ut = a * (1 - x1);
@@ -1148,6 +1297,229 @@ public class PhotobleachAnalysis_PlugIn implements PlugInFilter {
     }
   }
 
-  // TODO:
-  // Diffusion limited recovery
+  /**
+   * Diffusion limited recovery function of Soumpasis (1983).
+   *
+   * <pre>
+   * f(t) = i0 + A(exp(-2tD/t) * (I0(2tD/t) + I1(2tD/t)))
+   *
+   * i0 = Intensity immediately after the bleaching
+   * tD = Characteristic timescale for diffusion
+   * A = scaling factor (recovered intensity - intensity immediately after bleaching)
+   * </pre>
+   *
+   * <p>I0(x) and I1(x) are modified Bessel functions of the first kind. The diffusion timescale for
+   * a bleached spot of radius w is tD = w^2 / 4D with D the diffusion coefficient.
+   *
+   * @see <a href="https://doi.org/10.1016%2FS0006-3495%2883%2984410-5">Soumpasis, D (1983).
+   *      "Theoretical analysis of fluorescence photobleaching recovery experiments". Biophysical
+   *      Journal. 41 (1): 95–7</a>
+   */
+  @VisibleForTesting
+  static final class DiffusionLimitedRecoveryFunction extends FrapFunction {
+    /**
+     * @param size the size
+     */
+    DiffusionLimitedRecoveryFunction(int size) {
+      super(size);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param point {i0, A, tD}
+     */
+    @Override
+    public Pair<RealVector, RealMatrix> value(RealVector point) {
+      final double[] value = new double[size];
+      final double[][] jacobian = new double[size][3];
+      final double i0 = point.getEntry(0);
+      final double a = point.getEntry(1);
+      final double tD = point.getEntry(2);
+      // @formatter:off
+      // f(t) = i0 + A(exp(-2tD/t) * (I0(2tD/t) + I1(2tD/t)))
+      //
+      // f(t) = u(t) * v(t)
+      // f'(t) = u'(t) * v(t) + u(t) * v'(t)
+      //
+      // df_dI0 = 1
+      // df_dA = exp(-2tD/t) * (I0(2tD/t) + I1(2tD/t)))
+      // df_dtD = A * (-2/t * exp(-2tD/t) * (I0(2tD/t + I1(2tD/t)) +
+      //              exp(-2tD/t) * 2/t * (I1(2tD/t) + I0(2tD/t) - I1(2tD/t) / (2tD/t)))
+      // Terms cancel:
+      //        = A * 2/t * exp(-2tD/t) * -I1(2tD/t) / 2tD/t
+      //        = -A * exp(-2tD/t) * I1(2tD/t) / tD
+      // I0'(x) = I1(x)
+      // I1'(x) = I0(x) - I1(x) / x
+      // @formatter:on
+
+      // Special case when t=0
+      value[0] = i0;
+      jacobian[0][0] = 1;
+
+      for (int t = 1; t < size; t++) {
+        final double x = 2.0 * tD / t;
+        final double bi0 = Bessel.i0(x);
+        final double bi1 = Bessel.i1(x);
+        final double x1 = Math.exp(-x);
+        jacobian[t][0] = 1;
+        jacobian[t][1] = x1 * (bi0 + bi1);
+        jacobian[t][2] = -a * x1 * bi1 / tD;
+        value[t] = i0 + a * jacobian[t][1];
+      }
+      return new Pair<>(new ArrayRealVector(value, false),
+          new Array2DRowRealMatrix(jacobian, false));
+    }
+  }
+
+  /**
+   * Diffusion limited recovery function of Soumpasis (1983) with an exponential bleaching
+   * component.
+   *
+   * <pre>
+   * f(t) = B + (i0 + A(exp(-2tD/t) * (I0(2tD/t) + I1(2tD/t)))) * exp(-tau * t)
+   *
+   * B = Background level after bleaching (e.g. camera offset value)
+   * i0 = Intensity immediately after the bleaching - B
+   * tD = Characteristic timescale for diffusion
+   * A = scaling factor (recovered intensity - intensity immediately after bleaching)
+   * tau = exponential decay rate of the bleaching
+   * </pre>
+   *
+   * <p>I0(x) and I1(x) are modified Bessel functions of the first kind. The diffusion timescale for
+   * a bleached spot of radius w is tD = w^2 / 4D with D the diffusion coefficient.
+   *
+   * @see <a href="https://doi.org/10.1016%2FS0006-3495%2883%2984410-5">Soumpasis, D (1983).
+   *      "Theoretical analysis of fluorescence photobleaching recovery experiments". Biophysical
+   *      Journal. 41 (1): 95–7</a>
+   */
+  @VisibleForTesting
+  static final class DiffusionLimitedRecoveryFunctionB extends FrapFunction {
+    /**
+     * @param size the size
+     */
+    DiffusionLimitedRecoveryFunctionB(int size) {
+      super(size);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param point {i0, A, tD, B, tau}
+     */
+    @Override
+    public Pair<RealVector, RealMatrix> value(RealVector point) {
+      final double[] value = new double[size];
+      final double[][] jacobian = new double[size][5];
+      final double i0 = point.getEntry(0);
+      final double a = point.getEntry(1);
+      final double tD = point.getEntry(2);
+      final double b = point.getEntry(3);
+      final double tau = point.getEntry(4);
+      // @formatter:off
+      // f(t) = B + (i0 + A(exp(-2tD/t) * (I0(2tD/t) + I1(2tD/t)))) * exp(-tau * t)
+      //
+      // f(t) = u(t) * v(t)
+      // f'(t) = u'(t) * v(t) + u(t) * v'(t)
+      //
+      // df_dI0 = exp(-tau * t)
+      // df_dA = (exp(-2tD/t) * (I0(2tD/t) + I1(2tD/t))) * exp(-tau * t)
+      // df_dtD = A * (-2/t * exp(-2tD/t) * (I0(2tD/t + I1(2tD/t)) +
+      //              exp(-2tD/t) * 2/t * (I1(2tD/t) + I0(2tD/t) - I1(2tD/t) / (2tD/t))) * exp(-tau * t)
+      // Terms cancel:
+      //        = A * exp(-tau * t) * 2/t * exp(-2tD/t) * -I1(2tD/t) / 2tD/t
+      //        = -A * exp(-tau * t) * exp(-2tD/t) * I1(2tD/t) / tD
+      // df_dB = 1
+      // df_dtau = (i0 + A(exp(-2tD/t) * (I0(2tD/t) + I1(2tD/t)))) * -t * exp(-tau * t)
+      // I0'(x) = I1(x)
+      // I1'(x) = I0(x) - I1(x) / x
+      // @formatter:on
+
+      // Special case when t=0
+      value[0] = b + i0;
+      jacobian[0][0] = 1;
+      jacobian[0][3] = 1;
+
+      for (int t = 1; t < size; t++) {
+        final double x = 2.0 * tD / t;
+        final double bi0 = Bessel.i0(x);
+        final double bi1 = Bessel.i1(x);
+        final double x1 = Math.exp(-x);
+        final double x2 = Math.exp(-tau * t);
+        final double x3 = x1 * (bi0 + bi1);
+        final double x4 = (i0 + a * x3) * x2;
+        value[t] = b + x4;
+        jacobian[t][0] = x2;
+        jacobian[t][1] = x3 * x2;
+        jacobian[t][2] = -a * x2 * x1 * bi1 / tD;
+        jacobian[t][3] = 1;
+        jacobian[t][4] = -x4 * t;
+      }
+      return new Pair<>(new ArrayRealVector(value, false),
+          new Array2DRowRealMatrix(jacobian, false));
+    }
+  }
+  /**
+   * Class for computing various Bessel functions
+   *
+   * <p>The implementation is based upon that presented in: Numerical Recipes in C++, The Art of
+   * Scientific Computing, Second Edition, W.H. Press, S.A. Teukolsky, W.T. Vetterling, B.P.
+   * Flannery (Cambridge University Press, Cambridge, 2002).
+   */
+  static final class Bessel {
+    /**
+     * No public constructor.
+     */
+    private Bessel() {}
+
+    /**
+     * Compute the zero th order modified Bessel function of the first kind.
+     *
+     * @param x the x value
+     * @return the modified Bessel function I0
+     */
+    static double i0(final double x) {
+      double ax;
+      double ans;
+      double y;
+      if ((ax = Math.abs(x)) < 3.75) {
+        y = x / 3.75;
+        y *= y;
+        ans = 1.0 + y * (3.5156229 + y
+            * (3.0899424 + y * (1.2067492 + y * (0.2659732 + y * (0.360768e-1 + y * 0.45813e-2)))));
+      } else {
+        y = 3.75 / ax;
+        ans = (FastMath.exp(ax) / Math.sqrt(ax)) * (0.39894228
+            + y * (0.1328592e-1 + y * (0.225319e-2 + y * (-0.157565e-2 + y * (0.916281e-2 + y
+                * (-0.2057706e-1 + y * (0.2635537e-1 + y * (-0.1647633e-1 + y * 0.392377e-2))))))));
+      }
+      return ans;
+    }
+
+    /**
+     * Compute the first order modified Bessel function of the first kind.
+     *
+     * @param x the x value
+     * @return the modified Bessel function I1
+     */
+    static double i1(final double x) {
+      double ax;
+      double ans;
+      double y;
+
+      if ((ax = Math.abs(x)) < 3.75) {
+        y = x / 3.75;
+        y *= y;
+        ans = ax * (0.5 + y * (0.87890594 + y * (0.51498869
+            + y * (0.15084934 + y * (0.2658733e-1 + y * (0.301532e-2 + y * 0.32411e-3))))));
+      } else {
+        y = 3.75 / ax;
+        ans = 0.2282967e-1 + y * (-0.2895312e-1 + y * (0.1787654e-1 - y * 0.420059e-2));
+        ans = 0.39894228 + y * (-0.3988024e-1
+            + y * (-0.362018e-2 + y * (0.163801e-2 + y * (-0.1031555e-1 + y * ans))));
+        ans *= (FastMath.exp(ax) / Math.sqrt(ax));
+      }
+      return x < 0.0 ? -ans : ans;
+    }
+  }
 }
