@@ -214,8 +214,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     gd.addNumericField("Max_shift", settings.maxShift, 0);
     gd.addCheckbox("Show_alignment_offsets", settings.showAlignmentOffsets);
     gd.addCheckbox("Show_aligned", settings.showAlignedImage);
-    gd.addSlider("Window_size", 3, 20, settings.significance);
-    gd.addSlider("Significance", 5, 15, settings.emaWindowSize);
+    gd.addSlider("Window_size", 3, 20, settings.emaWindowSize);
+    gd.addSlider("Significance", 5, 20, settings.significance);
     gd.addNumericField("Min_region_size", settings.minRegionSize, 0);
     gd.addCheckbox("Show_bleaching_events", settings.showBleachingEvents);
     gd.addSlider("Bleach_border", 0, MAX_BORDER, settings.bleachedBorder);
@@ -497,7 +497,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
     // Align to the average intensity projection
     final ZProjector projector = new ZProjector(new ImagePlus(null, stack));
-    projector.setMethod(ZProjector.AVG_METHOD);
+    projector.setMethod(ZProjector.MAX_METHOD);
     projector.doProjection();
 
     final ImageProcessor ip = projector.getProjection().getProcessor().convertToShortProcessor();
