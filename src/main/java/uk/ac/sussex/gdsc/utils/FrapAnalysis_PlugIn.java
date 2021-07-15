@@ -222,7 +222,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     gd.addCheckbox("Show_bleached_regions", settings.showBleachedRegions);
     gd.addCheckbox("Fit_nested_models", settings.nestedModels);
     gd.addDirectoryField("Results_dir", settings.resultsDir, 30);
-    gd.addNumericField("Diffusion_coefficient", settings.diffusionCoefficient, -3);
+    gd.addNumericField("Diffusion_coefficient", settings.diffusionCoefficient, -3, 6, "px^2/frame");
     gd.showDialog();
     settings.save();
     if (gd.wasCanceled()) {
@@ -356,13 +356,13 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
         if (fun instanceof ReactionLimitedRecoveryFunction) {
           ImageJUtils.log(
               "Region [%d] reaction limited recovery: f(t) = %s + %s(1 - exp(-%s t)); "
-                  + "Half-life = %s",
+                  + "Half-life = %s frames",
               j, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]),
               MathUtils.rounded(LN2 / fit[2]));
         } else if (fun instanceof ReactionLimitedRecoveryFunctionB) {
           ImageJUtils.log(
               "Region [%d] reaction limited recovery: f(t) = %s + (%s + %s(1 - exp(-%s t))) * "
-                  + "exp(-%s t); Half-life1 = %s; Half-life2 = %s",
+                  + "exp(-%s t); Half-life1 = %s frames; Half-life2 = %s frames",
               j, MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]),
               MathUtils.rounded(fit[2]), MathUtils.rounded(fit[4]), MathUtils.rounded(LN2 / fit[2]),
               MathUtils.rounded(LN2 / fit[4]));
@@ -373,7 +373,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
           final double dc = w2 / (4 * fit[2]);
           ImageJUtils.log(
               "Region [%d] diffusion limited recovery: f(t) = %s + %s(exp(-2*%s/t) * (I0(2*%s/t) + "
-                  + "I1(2*%s/t)); D = %s",
+                  + "I1(2*%s/t)); D = %s px^2/frame",
               j, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), dT, dT, dT,
               MathUtils.rounded(dc));
         } else if (fun instanceof DiffusionLimitedRecoveryFunctionB) {
@@ -383,7 +383,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
           final double dc = w2 / (4 * fit[2]);
           ImageJUtils.log(
               "Region [%d] diffusion limited recovery: f(t) = %s + (%s + %s(exp(-2*%s/t) * "
-                  + "(I0(2*%s/t) + I1(2*%s/t))) * exp(-%s t); D = %s; Half-life2 = %s",
+                  + "(I0(2*%s/t) + I1(2*%s/t))) * exp(-%s t); D = %s px^2/frame; Half-life2 = %s frames",
               j, MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]),
               dT, dT, dT, MathUtils.rounded(fit[4]), MathUtils.round(dc),
               MathUtils.rounded(LN2 / fit[4]));
@@ -726,7 +726,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     }
 
     if (settings.showBleachedRegions) {
-      final ImagePlus regionsImp = ImageJUtils.display("Regions", regions);
+      final ImagePlus regionsImp =
+          ImageJUtils.display(TITLE + " : " + imp.getTitle() + " Regions", regions);
       regionsImp.setDisplayRange(0, n);
       regionsImp.updateAndDraw();
     }
