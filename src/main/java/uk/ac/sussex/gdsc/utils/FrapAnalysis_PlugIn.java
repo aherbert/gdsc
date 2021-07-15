@@ -355,12 +355,14 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
             null, Plot.DOT, null);
         if (fun instanceof ReactionLimitedRecoveryFunction) {
           ImageJUtils.log(
-              "Region [%d] reaction limited recovery: f(t) = %s + %s(1 - exp(-%s t)); Half-life = %s",
+              "Region [%d] reaction limited recovery: f(t) = %s + %s(1 - exp(-%s t)); "
+                  + "Half-life = %s",
               j, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]),
               MathUtils.rounded(LN2 / fit[2]));
         } else if (fun instanceof ReactionLimitedRecoveryFunctionB) {
           ImageJUtils.log(
-              "Region [%d] reaction limited recovery: f(t) = %s + (%s + %s(1 - exp(-%s t))) * exp(-%s t); Half-life1 = %s; Half-life2 = %s",
+              "Region [%d] reaction limited recovery: f(t) = %s + (%s + %s(1 - exp(-%s t))) * "
+                  + "exp(-%s t); Half-life1 = %s; Half-life2 = %s",
               j, MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]),
               MathUtils.rounded(fit[2]), MathUtils.rounded(fit[4]), MathUtils.rounded(LN2 / fit[2]),
               MathUtils.rounded(LN2 / fit[4]));
@@ -370,7 +372,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
           final double w2 = count[j] / Math.PI;
           final double dc = w2 / (4 * fit[2]);
           ImageJUtils.log(
-              "Region [%d] diffusion limited recovery: f(t) = %s + %s(exp(-2*%s/t) * (I0(2*%s/t) + I1(2*%s/t)); D = %s",
+              "Region [%d] diffusion limited recovery: f(t) = %s + %s(exp(-2*%s/t) * (I0(2*%s/t) + "
+                  + "I1(2*%s/t)); D = %s",
               j, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), dT, dT, dT,
               MathUtils.rounded(dc));
         } else if (fun instanceof DiffusionLimitedRecoveryFunctionB) {
@@ -379,7 +382,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
           final double w2 = count[j] / Math.PI;
           final double dc = w2 / (4 * fit[2]);
           ImageJUtils.log(
-              "Region [%d] diffusion limited recovery: f(t) = %s + (%s + %s(exp(-2*%s/t) * (I0(2*%s/t) + I1(2*%s/t))) * exp(-%s t); D = %s; Half-life2 = %s",
+              "Region [%d] diffusion limited recovery: f(t) = %s + (%s + %s(exp(-2*%s/t) * "
+                  + "(I0(2*%s/t) + I1(2*%s/t))) * exp(-%s t); D = %s; Half-life2 = %s",
               j, MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]),
               dT, dT, dT, MathUtils.rounded(fit[4]), MathUtils.round(dc),
               MathUtils.rounded(LN2 / fit[4]));
@@ -604,11 +608,11 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    * @param trace the trace
    * @param alpha the alpha used to update the EMA
    * @param eps (1 - alpha)
-   * @param k the number of steps to use as the 'spin-up' interval for the moving average
+   * @param steps the number of steps to use as the 'spin-up' interval for the moving average
    * @param scoreThreshold the score threshold for (x-mean)^2 / variance
    * @return the index of the bleaching event (or -1)
    */
-  private static int detectBleachingEvent(float[] trace, double alpha, double eps, int k,
+  private static int detectBleachingEvent(float[] trace, double alpha, double eps, int steps,
       double scoreThreshold) {
     // Compute an exponential moving average (EMA).
     // https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
@@ -633,7 +637,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       final double delta = trace[end - i] - ema;
       final double delta2 = delta * delta;
       // Check for significant positive deviations from the mean (after the spin-up interval)
-      if (i > k && delta > 0) {
+      if (i > steps && delta > 0) {
         if (delta2 / var > scoreThreshold) {
           return end - i + 1;
         }
@@ -938,7 +942,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       best1 = optimizer.optimize(problem1);
       final double[] fit = best1.getPoint().toArray();
       ImageJUtils.log(
-          "  Region [%d] reaction limited recovery (ss=%s): f(t) = %s + %s(1 - exp(-%s t)); Half-life = %s",
+          "  Region [%d] reaction limited recovery (ss=%s): f(t) = %s + %s(1 - exp(-%s t)); "
+              + "Half-life = %s",
           region, MathUtils.rounded(getResidualSumOfSquares(best1)), MathUtils.rounded(fit[0]),
           MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]), MathUtils.rounded(LN2 / fit[2]));
     } catch (TooManyIterationsException | ConvergenceException ex) {
@@ -966,28 +971,29 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
         // Check for model improvement
         final double rss1 = getResidualSumOfSquares(best1);
         final double rss2 = getResidualSumOfSquares(lvmSolution);
-        double pValue;
+        double pvalue;
         double f;
         if (rss1 < rss2) {
           f = 0;
-          pValue = 1;
+          pvalue = 1;
         } else {
           f = RegressionUtils.residualsFStatistic(rss1, start1.getDimension(), rss2,
               start2.getDimension(), yy.length);
-          pValue = RegressionUtils.residualsFTest(rss1, start1.getDimension(), rss2,
+          pvalue = RegressionUtils.residualsFTest(rss1, start1.getDimension(), rss2,
               start2.getDimension(), yy.length);
         }
         // Optionally log no improvement here...
         final double[] fit = lvmSolution.getPoint().toArray();
         ImageJUtils.log(
-            "  Region [%d] reaction limited recovery (ss=%s): f(t) = %s + (%s + %s(1 - exp(-%s t))) * exp(-%s t); Half-life1 = %s; Half-life2 = %s",
+            "  Region [%d] reaction limited recovery (ss=%s): f(t) = %s + "
+                + "(%s + %s(1 - exp(-%s t))) * exp(-%s t); Half-life1 = %s; Half-life2 = %s",
             region, MathUtils.rounded(rss2), MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]),
             MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]), MathUtils.rounded(fit[4]),
             MathUtils.rounded(LN2 / fit[2]), MathUtils.rounded(LN2 / fit[4]));
         ImageJUtils.log("  Region [%d] : rss1=%s, rss2=%s, p(F-Test=%s) = %s; ", region,
             MathUtils.rounded(rss1), MathUtils.rounded(rss2), MathUtils.rounded(f),
-            MathUtils.rounded(pValue));
-        if (pValue < 0.01) {
+            MathUtils.rounded(pvalue));
+        if (pvalue < 0.01) {
           // reject null hypothesis that model 2 is not better
           fun1 = model2;
           best1 = lvmSolution;
@@ -1018,7 +1024,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       final double[] fit = best2.getPoint().toArray();
       final String dT = MathUtils.rounded(fit[2]);
       ImageJUtils.log(
-          "  Region [%d] diffusion limited recovery (ss=%s): f(t) = %s + %s(exp(-2*%s/t) * (I0(2*%s/t) + I1(2*%s/t)); D = %s",
+          "  Region [%d] diffusion limited recovery (ss=%s): f(t) = %s + "
+              + "%s(exp(-2*%s/t) * (I0(2*%s/t) + I1(2*%s/t)); D = %s",
           region, MathUtils.rounded(getResidualSumOfSquares(best2)), MathUtils.rounded(fit[0]),
           MathUtils.rounded(fit[1]), dT, dT, dT, MathUtils.round(w2 / (4 * fit[2])));
     } catch (TooManyIterationsException | ConvergenceException ex) {
@@ -1046,29 +1053,31 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
         // Check for model improvement
         final double rss1 = getResidualSumOfSquares(best2);
         final double rss2 = getResidualSumOfSquares(lvmSolution);
-        double pValue;
+        double pvalue;
         double f;
         if (rss1 < rss2) {
           f = 0;
-          pValue = 1;
+          pvalue = 1;
         } else {
           f = RegressionUtils.residualsFStatistic(rss1, start3.getDimension(), rss2,
               start4.getDimension(), yy.length);
-          pValue = RegressionUtils.residualsFTest(rss1, start3.getDimension(), rss2,
+          pvalue = RegressionUtils.residualsFTest(rss1, start3.getDimension(), rss2,
               start4.getDimension(), yy.length);
         }
         // Optionally log no improvement here...
         final double[] fit = lvmSolution.getPoint().toArray();
         final String dT = MathUtils.rounded(fit[2]);
         ImageJUtils.log(
-            "  Region [%d] diffusion limited recovery (ss=%s): f(t) = %s + (%s + %s(exp(-2*%s/t) * (I0(2*%s/t) + I1(2*%s/t))) * exp(-%s t); D = %s; Half-life2 = %s",
+            "  Region [%d] diffusion limited recovery (ss=%s): f(t) = %s + "
+                + "(%s + %s(exp(-2*%s/t) * (I0(2*%s/t) + I1(2*%s/t))) * exp(-%s t); D = %s; "
+                + "Half-life2 = %s",
             region, MathUtils.rounded(rss2), MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]),
             MathUtils.rounded(fit[1]), dT, dT, dT, MathUtils.rounded(fit[4]),
             MathUtils.round(w2 / (4 * fit[2])), MathUtils.rounded(LN2 / fit[4]));
         ImageJUtils.log("  Region [%d] : rss1=%s, rss2=%s, p(F-Test=%s) = %s; ", region,
             MathUtils.rounded(rss1), MathUtils.rounded(rss2), MathUtils.rounded(f),
-            MathUtils.rounded(pValue));
-        if (pValue < 0.01) {
+            MathUtils.rounded(pvalue));
+        if (pvalue < 0.01) {
           // reject null hypothesis that model 2 is not better
           fun2 = model4;
           best2 = lvmSolution;
@@ -1117,6 +1126,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     protected final int size;
 
     /**
+     * Create an instance.
+     *
      * @param size the size
      */
     FrapFunction(int size) {
@@ -1138,6 +1149,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
   @VisibleForTesting
   static final class DecayFunction extends FrapFunction {
     /**
+     * Create an instance.
+     *
      * @param size the size
      */
     DecayFunction(int size) {
@@ -1192,6 +1205,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
   @VisibleForTesting
   static final class ReactionLimitedRecoveryFunction extends FrapFunction {
     /**
+     * Create an instance.
+     *
      * @param size the size
      */
     ReactionLimitedRecoveryFunction(int size) {
@@ -1248,6 +1263,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
   @VisibleForTesting
   static final class ReactionLimitedRecoveryFunctionB extends FrapFunction {
     /**
+     * Create an instance.
+     *
      * @param size the size
      */
     ReactionLimitedRecoveryFunctionB(int size) {
@@ -1318,6 +1335,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
   @VisibleForTesting
   static final class DiffusionLimitedRecoveryFunction extends FrapFunction {
     /**
+     * Create an instance.
+     *
      * @param size the size
      */
     DiffusionLimitedRecoveryFunction(int size) {
@@ -1396,6 +1415,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
   @VisibleForTesting
   static final class DiffusionLimitedRecoveryFunctionB extends FrapFunction {
     /**
+     * Create an instance.
+     *
      * @param size the size
      */
     DiffusionLimitedRecoveryFunctionB(int size) {
@@ -1425,7 +1446,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       // df_dI0 = exp(-tau * t)
       // df_dA = (exp(-2tD/t) * (I0(2tD/t) + I1(2tD/t))) * exp(-tau * t)
       // df_dtD = A * (-2/t * exp(-2tD/t) * (I0(2tD/t + I1(2tD/t)) +
-      //              exp(-2tD/t) * 2/t * (I1(2tD/t) + I0(2tD/t) - I1(2tD/t) / (2tD/t))) * exp(-tau * t)
+      //              exp(-2tD/t) * 2/t * (I1(2tD/t) + I0(2tD/t) - I1(2tD/t) / (2tD/t)))
+      //              * exp(-tau * t)
       // Terms cancel:
       //        = A * exp(-tau * t) * 2/t * exp(-2tD/t) * -I1(2tD/t) / 2tD/t
       //        = -A * exp(-tau * t) * exp(-2tD/t) * I1(2tD/t) / tD
@@ -1459,6 +1481,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
           new Array2DRowRealMatrix(jacobian, false));
     }
   }
+
   /**
    * Class for computing various Bessel functions
    *
