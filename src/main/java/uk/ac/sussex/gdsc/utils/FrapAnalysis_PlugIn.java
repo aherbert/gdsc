@@ -33,6 +33,7 @@ import ij.gui.Roi;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import java.awt.Color;
@@ -81,6 +82,7 @@ import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.RegressionUtils;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
+import uk.ac.sussex.gdsc.core.utils.Statistics;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.foci.ObjectAnalyzer;
 import uk.ac.sussex.gdsc.foci.ObjectAnalyzer.ObjectCentre;
@@ -121,8 +123,9 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     boolean showAlignmentOffsets;
     boolean showAlignedImage;
     int emaWindowSize;
-    double significance;
+    double scoreThreshold;
     int minRegionSize;
+    boolean showBleachingScores;
     boolean showBleachingEvents;
     int bleachedBorder;
     boolean showBleachedRegions;
@@ -135,10 +138,11 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
      */
     Settings() {
       maxShift = 40;
+      showAlignedImage = true;
       emaWindowSize = 10;
-      significance = 10;
+      scoreThreshold = 7;
       minRegionSize = 100;
-      bleachedBorder = 1;
+      bleachedBorder = 3;
       resultsDir = "";
       diffusionCoefficient = 1;
     }
@@ -154,14 +158,15 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       showAlignmentOffsets = source.showAlignmentOffsets;
       showAlignedImage = source.showAlignedImage;
       emaWindowSize = source.emaWindowSize;
-      significance = source.significance;
+      scoreThreshold = source.scoreThreshold;
       minRegionSize = source.minRegionSize;
+      showBleachingScores = source.showBleachingScores;
       showBleachingEvents = source.showBleachingEvents;
       bleachedBorder = source.bleachedBorder;
       showBleachedRegions = source.showBleachedRegions;
       nestedModels = source.nestedModels;
-      resultsDir = source.resultsDir;
       diffusionCoefficient = source.diffusionCoefficient;
+      resultsDir = source.resultsDir;
     }
 
     /**
@@ -207,16 +212,17 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
     gd.addMessage("Analyses an image stack to detect pixel regions that have been photobleached.\n"
         + "The stack is aligned to correct drift.\n"
-        + "A sliding window moving average is used to detect significant jumps in intensity\n"
-        + "using a jump of n * StdDev (i.e. bleaching events).\n"
+        + "Bleaching events are detected using significant jumps in intensity\n"
+        + "using the standard score (number of standard deviations from the mean).\n"
         + "A plot of the intensity of each bleached region is created over time.");
     gd.addSlider("Alignment_slice", 0, imp.getStackSize(), settings.alignmentSlice);
     gd.addNumericField("Max_shift", settings.maxShift, 0);
     gd.addCheckbox("Show_alignment_offsets", settings.showAlignmentOffsets);
     gd.addCheckbox("Show_aligned", settings.showAlignedImage);
-    gd.addSlider("Window_size", 3, 20, settings.emaWindowSize);
-    gd.addSlider("Significance", 5, 20, settings.significance);
+    // gd.addSlider("Window_size", 3, 20, settings.emaWindowSize);
+    gd.addSlider("Score_threshold", 5, 20, settings.scoreThreshold);
     gd.addNumericField("Min_region_size", settings.minRegionSize, 0);
+    gd.addCheckbox("Show_bleaching_scores", settings.showBleachingScores);
     gd.addCheckbox("Show_bleaching_events", settings.showBleachingEvents);
     gd.addSlider("Bleach_border", 0, MAX_BORDER, settings.bleachedBorder);
     gd.addCheckbox("Show_bleached_regions", settings.showBleachedRegions);
@@ -232,9 +238,10 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     settings.maxShift = (int) gd.getNextNumber();
     settings.showAlignmentOffsets = gd.getNextBoolean();
     settings.showAlignedImage = gd.getNextBoolean();
-    settings.emaWindowSize = (int) gd.getNextNumber();
-    settings.significance = gd.getNextNumber();
+    // settings.emaWindowSize = (int) gd.getNextNumber();
+    settings.scoreThreshold = gd.getNextNumber();
     settings.minRegionSize = (int) gd.getNextNumber();
+    settings.showBleachingScores = gd.getNextBoolean();
     settings.showBleachingEvents = gd.getNextBoolean();
     settings.bleachedBorder = (int) gd.getNextNumber();
     settings.showBleachedRegions = gd.getNextBoolean();
@@ -264,13 +271,17 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
     final ByteProcessor mask = createMask(aligned);
 
-    final ImageStack events = detectBleachingEvents(aligned, mask);
+    final ImageStack scores = detectBleachingScores(aligned, mask);
+    if (settings.showBleachingScores) {
+      ImageJUtils.display(title + " Scores", scores);
+    }
 
-    final LocalList<Pair<Integer, Roi>> rois = detectBleachedRegions(events);
-
+    final ImageStack events = createBleachedRegions(scores);
     if (settings.showBleachingEvents) {
       ImageJUtils.display(title + " Events", events);
     }
+
+    final LocalList<Pair<Integer, Roi>> rois = extractBleachedRegions(events);
 
     if (rois.isEmpty()) {
       return;
@@ -383,7 +394,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
           final double dc = w2 / (4 * fit[2]);
           ImageJUtils.log(
               "Region [%d] diffusion limited recovery: f(t) = %s + (%s + %s(exp(-2*%s/t) * "
-                  + "(I0(2*%s/t) + I1(2*%s/t))) * exp(-%s t); D = %s px^2/frame; Half-life2 = %s frames",
+                  + "(I0(2*%s/t) + I1(2*%s/t))) * exp(-%s t); D = %s px^2/frame; "
+                  + "Half-life2 = %s frames",
               j, MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]),
               dT, dT, dT, MathUtils.rounded(fit[4]), MathUtils.round(dc),
               MathUtils.rounded(LN2 / fit[4]));
@@ -506,26 +518,18 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     return ip.convertToByteProcessor(false);
   }
 
-  private ImageStack detectBleachingEvents(final ImageStack aligned, final ByteProcessor mask) {
+  private ImageStack detectBleachingScores(final ImageStack aligned, final ByteProcessor mask) {
     // For each pixel create an intensity trace over time.
     IJ.showStatus("!Detecting bleaching events...");
     final IntFunction<float[]> traceFunction = createTraceFunction(aligned);
 
-    // Detect bleaching events in the image using an exponential moving average (EMA).
-    // This down-weights the history in favour of the most recent observations.
-    // The following code computes the alpha weighting factor to cover k observations
-    // with 99.9% of the total weight.
-
-    final int k = settings.emaWindowSize;
-    final double alpha = 1 - Math.exp(Math.log(0.001) / k);
-    final double eps = 1 - alpha;
-
     // The number of standard deviations from the mean for a significant jump.
     // This is squared for convenience during processing.
-    final double scoreThreshold = MathUtils.pow2(settings.significance);
+    // Use a low threshold as the raw scores are later filtered.
+    final double scoreThreshold = MathUtils.pow2(Math.min(1, settings.scoreThreshold / 4));
 
     // Create a mask stack with bleaching events marked on it
-    final ImageStack events = IJ.createImage("Events", "8-bit black", aligned.getWidth(),
+    final ImageStack events2 = IJ.createImage("Events2", "32-bit black", aligned.getWidth(),
         aligned.getHeight(), aligned.getSize()).getImageStack();
 
     final int size = aligned.getWidth() * aligned.getHeight();
@@ -536,14 +540,15 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       }
       final float[] trace = traceFunction.apply(i);
       // Detect large drops in intensity as a bleaching event.
-      // Try using a top-hat filter and detecting
-      final int event = detectBleachingEvent(trace, alpha, eps, k, scoreThreshold);
-      if (event != -1) {
-        events.getProcessor(event + 1).set(i, 255);
+      final double[] event2 = detectBleachingEvent(trace, scoreThreshold);
+      if (event2 != null) {
+        final int index = (int) event2[0] + 1;
+        events2.getProcessor(index).setf(i, (float) event2[1]);
       }
+
       ticker.tick();
     }
-    return events;
+    return events2;
   }
 
   /**
@@ -610,9 +615,10 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    * @param eps (1 - alpha)
    * @param steps the number of steps to use as the 'spin-up' interval for the moving average
    * @param scoreThreshold the score threshold for (x-mean)^2 / variance
-   * @return the index of the bleaching event (or -1)
+   * @return {index, magnitude} (or null)
    */
-  private static int detectBleachingEvent(float[] trace, double alpha, double eps, int steps,
+  @SuppressWarnings("unused")
+  private static double[] detectBleachingEvent(float[] trace, double alpha, double eps, int steps,
       double scoreThreshold) {
     // Compute an exponential moving average (EMA).
     // https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
@@ -639,7 +645,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       // Check for significant positive deviations from the mean (after the spin-up interval)
       if (i > steps && delta > 0) {
         if (delta2 / var > scoreThreshold) {
-          return end - i + 1;
+          final int index = end - i + 1;
+          return new double[] {index, Math.sqrt(delta2 / var)};
         }
       }
       // Update
@@ -648,20 +655,101 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     }
 
     // Nothing significant
-    return -1;
+    return null;
   }
 
-  private LocalList<Pair<Integer, Roi>> detectBleachedRegions(final ImageStack events) {
-    // Post-process the events to join contiguous regions and remove speckles
-    IJ.showStatus("!Detecting bleached regions...");
-    final LocalList<Pair<Integer, Roi>> rois = new LocalList<>();
-    for (int i = 1; i <= events.size(); i++) {
-      final ByteProcessor bp = (ByteProcessor) events.getProcessor(i);
+  /**
+   * Detect a bleaching event using a Laplacian filter to detect large changes. The bleaching event
+   * is the largest difference in the Laplacian of the trace intensity. A large positive difference
+   * in the Laplacian indicates a big drop in the signal. The magnitude of the Laplacian at the drop
+   * (x) is compared to the mean of the rest of the Laplacian values using the standard score.
+   *
+   * <p>The event is returned as the frame where the intensity of the pixel has dropped.
+   *
+   * @param trace the trace
+   * @param scoreThreshold the score threshold for (x-mean)^2 / variance
+   * @return {index, magnitude} (or null)
+   */
+  private static double[] detectBleachingEvent(float[] trace, double scoreThreshold) {
+    final int end = trace.length - 1;
+    // Compute a Laplacian of the trace using the [1 -2 1] filter.
+    final double[] laplacian = new double[trace.length];
+    // Ends by mirroring
+    laplacian[0] = -2.0 * trace[0] + 2.0 * trace[1];
+    laplacian[end] = -2.0 * trace[end] + 2.0 * trace[end - 1];
+    for (int i = 1; i < end; i++) {
+      laplacian[i] = -2.0 * trace[i] + trace[i - 1] + trace[i + 1];
+    }
+
+    // Detect the biggest difference in the Laplacian.
+    // A large positive is due to a big drop in the trace signal.
+    double max = 0;
+    int maxi = 0;
+    for (int i = 1; i < end; i++) {
+      if (max < laplacian[i] - laplacian[i - 1]) {
+        max = laplacian[i] - laplacian[i - 1];
+        maxi = i;
+      }
+    }
+
+    // For all other values compute the mean and SD of the Laplacian
+    final Statistics stats = new Statistics();
+    for (int i = maxi + 1; i < end; i++) {
+      stats.add(laplacian[i]);
+    }
+    for (int i = 1; i < maxi; i++) {
+      stats.add(laplacian[i - 1]);
+    }
+
+    // Get the standard score of the mean magnitude of the Laplacian at the big drop
+    final double s = MathUtils.pow2(max * 0.5 - stats.getMean()) / stats.getVariance();
+    if (s > scoreThreshold) {
+      return new double[] {maxi, Math.sqrt(s)};
+    }
+
+    // Nothing significant
+    return null;
+  }
+
+  private ImageStack createBleachedRegions(final ImageStack scores) {
+    // Post-process the scores to join contiguous regions and remove speckles
+    IJ.showStatus("!Creating bleached regions...");
+    final ImageStack events = new ImageStack(scores.getWidth(), scores.getHeight());
+    final float threshold = (float) settings.scoreThreshold;
+    for (int i = 1; i <= scores.size(); i++) {
+      final FloatProcessor fp = (FloatProcessor) scores.getProcessor(i);
+
+      // TODO:
+      // Smooth the raw scores?
+
+      // Create binary processor from score above the threshold
+      final ByteProcessor bp = new ByteProcessor(scores.getWidth(), scores.getHeight());
+      for (int j = bp.getPixelCount(); j-- > 0;) {
+        if (fp.getf(j) >= threshold) {
+          bp.set(j, 255);
+        }
+      }
+
+      // Some filtering to smooth the region.
+
       // Like the close- command
       bp.dilate(1, 0);
       bp.erode(1, 0);
       // Remove speckles
       bp.erode(8, 0);
+
+      events.addSlice(bp);
+    }
+
+    return events;
+  }
+
+  private LocalList<Pair<Integer, Roi>> extractBleachedRegions(final ImageStack events) {
+    // Post-process the events to join contiguous regions and remove speckles
+    IJ.showStatus("!Extracting bleached regions...");
+    final LocalList<Pair<Integer, Roi>> rois = new LocalList<>();
+    for (int i = 1; i <= events.size(); i++) {
+      final ByteProcessor bp = (ByteProcessor) events.getProcessor(i);
 
       // Find objects in each frame
       final ObjectAnalyzer oa = new ObjectAnalyzer(bp);
