@@ -42,7 +42,7 @@ import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.ReactionLimitedRecoveryFuncti
 import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.ReactionLimitedRecoveryFunctionB;
 
 @SuppressWarnings({"javadoc"})
-class PhotobleachAnalysisPluginTest {
+class FrapAnalysisPluginTest {
   @Test
   void canComputeDecayFunction() {
     final double delta = 0x1.0p-30;
