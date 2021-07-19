@@ -30,6 +30,7 @@ import ij.ImageStack;
 import ij.gui.Overlay;
 import ij.gui.Plot;
 import ij.gui.Roi;
+import ij.plugin.Duplicator;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
@@ -201,6 +202,15 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     UsageTracker.recordPlugin(this.getClass(), arg);
     if (imp == null) {
       IJ.noImage();
+      return DONE;
+    }
+    if (imp.getStackSize() == 1) {
+      IJ.error(TITLE, "Require multiple time frames in stack");
+      return DONE;
+    }
+    // Check dimensions
+    if (imp.isHyperStack() && imp.getNFrames() == 1) {
+      IJ.error(TITLE, "Require multiple time frames in hyperstack");
       return DONE;
     }
     this.imp = imp;
@@ -413,7 +423,13 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
   private ImageStack alignImage(ImagePlus imp) {
     // Support cropped analysis as global drift correction is not perfect for live cells
     final Roi roi = imp.getRoi();
-    final ImagePlus imp2 = imp.crop("stack");
+    final ImagePlus imp2;
+    if (imp.isHyperStack()) {
+      imp2 = new Duplicator().run(imp, imp.getChannel(), imp.getChannel(), imp.getSlice(),
+          imp.getSlice(), 1, imp.getNFrames());
+    } else {
+      imp2 = imp.crop("stack");
+    }
 
     // Initialise output stack
     final int w = imp2.getWidth();
