@@ -69,7 +69,6 @@ import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
-import uk.ac.sussex.gdsc.core.ij.ImageJTrackProgress;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
@@ -122,6 +121,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
     int alignmentSlice;
     int maxShift;
+    int alignmentIterations;
+    boolean subPixelAlignement;
     boolean showAlignmentOffsets;
     boolean showAlignedImage;
     int emaWindowSize;
@@ -140,6 +141,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
      */
     Settings() {
       maxShift = 40;
+      alignmentIterations = 2;
       showAlignedImage = true;
       emaWindowSize = 10;
       scoreThreshold = 7;
@@ -157,6 +159,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     private Settings(Settings source) {
       alignmentSlice = source.alignmentSlice;
       maxShift = source.maxShift;
+      alignmentIterations = source.alignmentIterations;
+      subPixelAlignement = source.subPixelAlignement;
       showAlignmentOffsets = source.showAlignmentOffsets;
       showAlignedImage = source.showAlignedImage;
       emaWindowSize = source.emaWindowSize;
@@ -228,6 +232,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
         + "A plot of the intensity of each bleached region is created over time.");
     gd.addSlider("Alignment_slice", 0, imp.getStackSize(), settings.alignmentSlice);
     gd.addNumericField("Max_shift", settings.maxShift, 0);
+    gd.addSlider("Alignment_iterations", 1, 5, settings.alignmentIterations);
+    gd.addCheckbox("Subpixel_alignment", settings.subPixelAlignement);
     gd.addCheckbox("Show_alignment_offsets", settings.showAlignmentOffsets);
     gd.addCheckbox("Show_aligned", settings.showAlignedImage);
     // gd.addSlider("Window_size", 3, 20, settings.emaWindowSize);
@@ -247,6 +253,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     }
     settings.alignmentSlice = (int) gd.getNextNumber();
     settings.maxShift = (int) gd.getNextNumber();
+    settings.alignmentIterations = Math.max(1, (int) gd.getNextNumber());
+    settings.subPixelAlignement = gd.getNextBoolean();
     settings.showAlignmentOffsets = gd.getNextBoolean();
     settings.showAlignedImage = gd.getNextBoolean();
     // settings.emaWindowSize = (int) gd.getNextNumber();
@@ -270,10 +278,10 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
   @Override
   public void run(ImageProcessor ip) {
-    final ImageStack aligned = alignImage(imp);
-
     final String title = TITLE + " : " + imp.getTitle();
     ImageJUtils.log(title);
+
+    final ImageStack aligned = alignImage(imp);
 
     ImagePlus alignedImp = null;
     if (settings.showAlignedImage) {
@@ -421,6 +429,9 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
   }
 
   private ImageStack alignImage(ImagePlus imp) {
+    IJ.showStatus("!Aligning image");
+    IJ.log("Aligning image");
+
     // Support cropped analysis as global drift correction is not perfect for live cells
     final Roi roi = imp.getRoi();
     final ImagePlus imp2;
@@ -436,26 +447,10 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     final int h = imp2.getHeight();
     ImageStack aligned = new ImageStack(w, h);
 
-    // Set-up alignment
+    // Set-up initial alignment
     final AlignImagesFft align = new AlignImagesFft();
-    align.setProgress(new ImageJTrackProgress());
     final int shift = settings.maxShift;
     final Rectangle bounds = shift > 0 ? new Rectangle(-shift, -shift, 2 * shift, 2 * shift) : null;
-
-    IJ.showStatus("!Creating projection...");
-
-    // TODO:
-    // Alignment can be iterated. Align to centre.
-    // Create stack.
-    // Align to avg. project of the aligned stack.
-    // Repeat.
-
-    // // Average intensity
-    // final ZProjector projector = new ZProjector(imp2);
-    // projector.setMethod(ZProjector.AVG_METHOD);
-    // projector.doProjection();
-    // align.initialiseReference(projector.getProjection().getProcessor(), WindowMethod.TUKEY,
-    // true);
 
     // Center if the slice is not set.
     // Note that indices are 1-based so add 1 to the stack size for the middle.
@@ -463,39 +458,82 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
         settings.alignmentSlice == 0 ? (imp2.getStackSize() + 1) / 2 : settings.alignmentSlice;
     align.initialiseReference(imp2.getImageStack().getProcessor(middle), WindowMethod.TUKEY, true);
 
-    IJ.showStatus("!Aligning image");
-
     // Align the rest of the stack
     // Save the maximum shift.
-    int minx = 0;
-    int miny = 0;
-    int maxx = 0;
-    int maxy = 0;
+    double minx = 0;
+    double miny = 0;
+    double maxx = 0;
+    double maxy = 0;
+    final SubPixelMethod subPixelMethod =
+        settings.subPixelAlignement ? SubPixelMethod.CUBIC : SubPixelMethod.NONE;
+    final int interpolation =
+        settings.subPixelAlignement ? ImageProcessor.BILINEAR : ImageProcessor.NONE;
+
     final ImageStack stack = imp2.getImageStack();
-    final Ticker ticker = ImageJUtils.createTicker(stack.getSize(), 1);
-    for (int slice = 1; slice <= stack.getSize(); slice++) {
-      final ImageProcessor ip = stack.getProcessor(slice).duplicate();
-      final double[] offset = align.align(ip, WindowMethod.TUKEY, bounds, SubPixelMethod.NONE);
-      final int x = (int) offset[0];
-      final int y = (int) offset[1];
-      ip.setInterpolationMethod(ImageProcessor.NONE);
-      ip.translate(x, y);
-      if (settings.showAlignmentOffsets) {
-        ImageJUtils.log("  [%d] %d,%d", slice, x, y);
+
+    // Store the offset for each slice. Stop when converged.
+    final double[] dx = new double[stack.getSize()];
+    final double[] dy = new double[stack.getSize()];
+    double ss = 0;
+
+    // Alignment can be iterated.
+
+    for (int iter = 1; iter <= settings.alignmentIterations; iter++) {
+      IJ.showStatus("!Aligning image: Iteration " + iter);
+      final Ticker ticker = ImageJUtils.createTicker(stack.getSize(), 1);
+      final double ssPrev = ss;
+      ss = 0;
+      for (int slice = 1; slice <= stack.getSize(); slice++) {
+        final ImageProcessor ip = stack.getProcessor(slice).duplicate();
+        final double[] offset = align.align(ip, WindowMethod.TUKEY, bounds, subPixelMethod);
+        final double x = offset[0];
+        final double y = offset[1];
+        final double sx = x - dx[slice - 1];
+        final double sy = y - dy[slice - 1];
+        dx[slice - 1] = x;
+        dy[slice - 1] = y;
+        ss += sx * sx + sy * sy;
+        ip.setInterpolationMethod(interpolation);
+        ip.translate(x, y);
+        if (settings.showAlignmentOffsets) {
+          ImageJUtils.log("  [%d][%d] %s,%s", iter, slice, MathUtils.rounded(x),
+              MathUtils.rounded(y));
+        }
+        aligned.addSlice(ip);
+        // Save translation limit
+        if (minx > x) {
+          minx = x;
+        } else if (maxx < x) {
+          maxx = x;
+        }
+        if (miny > y) {
+          miny = y;
+        } else if (maxy < y) {
+          maxy = y;
+        }
+        ticker.tick();
       }
-      aligned.addSlice(ip);
-      // Save translation limit
-      if (minx > x) {
-        minx = x;
-      } else if (maxx < x) {
-        maxx = x;
+
+      final double relative = DoubleEquality.relativeError(ss, ssPrev);
+      ImageJUtils.log("  [%d] RMSD %s", iter, MathUtils.rounded(Math.sqrt(ss / stack.getSize())));
+
+      // Check convergence
+      if (relative < 1e-3) {
+        ImageJUtils.log("  [%d] Alignement converged within %s", iter, MathUtils.round(relative));
+        break;
       }
-      if (miny > y) {
-        miny = y;
-      } else if (maxy < y) {
-        maxy = y;
+
+      // Prepare for the next iteration
+      if (iter < settings.alignmentIterations) {
+        // Align to max intensity projection. Average will have effects from photobleached regions.
+        final ZProjector projector = new ZProjector(new ImagePlus(null, aligned));
+        projector.setMethod(ZProjector.MAX_METHOD);
+        projector.doProjection();
+        align.initialiseReference(projector.getProjection().getProcessor(), WindowMethod.TUKEY,
+            true);
+        minx = miny = maxx = maxy = 0;
+        aligned = new ImageStack(w, h);
       }
-      ticker.tick();
     }
 
     if (settings.maxShift == MathUtils.max(maxx, maxy, -miny, -minx)) {
@@ -503,8 +541,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     }
 
     // Create an ROI for the intersect of all shifted frames (i.e. exclude black border).
-    intersect = new Rectangle(w, h).intersection(new Rectangle(minx, miny, w, h))
-        .intersection(new Rectangle(maxx, maxy, w, h));
+    intersect = new Rectangle(w, h).intersection(new Rectangle((int) minx, (int) miny, w, h))
+        .intersection(new Rectangle((int) Math.ceil(maxx), (int) Math.ceil(maxy), w, h));
     aligned = aligned.crop(intersect.x, intersect.y, 0, intersect.width, intersect.height,
         aligned.getSize());
     // Add the origin offset back the crop region bounds
