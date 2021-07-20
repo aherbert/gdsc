@@ -963,17 +963,22 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     for (int i = 0; i < n; i++) {
       final Path path = i == n - 1 ? Paths.get(settings.resultsDir, prefix + "_foreground.csv")
           : Paths.get(settings.resultsDir, prefix + "_region" + i + ".csv");
+      float[] limits = MathUtils.limits(data[i]);
+      float min = limits[0];
+      float range = limits[1] - min;
       try (BufferedWriter out = Files.newBufferedWriter(path)) {
         out.write("# Size = ");
         out.write(Integer.toString(countHistogram[i + 1]));
         out.newLine();
 
-        out.write("Frame,Mean");
+        out.write("Frame,Mean,Norm");
         out.newLine();
 
         for (int t = 0; t < size; t++) {
           out.write(frames[t]);
           out.write(Float.toString(data[i][t]));
+          out.write(',');
+          out.write(Float.toString((data[i][t] - min) / range));
           out.newLine();
         }
       } catch (final IOException e) {
