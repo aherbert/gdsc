@@ -146,6 +146,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     boolean nestedModels;
     double diffusionCoefficient;
     String resultsDir;
+    int backgroundSize;
 
     /**
      * Default constructor.
@@ -161,6 +162,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       bleachedBorder = 3;
       resultsDir = "";
       diffusionCoefficient = 1;
+      backgroundSize = 20;
     }
 
     /**
@@ -186,6 +188,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       nestedModels = source.nestedModels;
       diffusionCoefficient = source.diffusionCoefficient;
       resultsDir = source.resultsDir;
+      backgroundSize = source.backgroundSize;
     }
 
     /**
@@ -260,6 +263,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     gd.addCheckbox("Fit_nested_models", settings.nestedModels);
     gd.addDirectoryField("Results_dir", settings.resultsDir, 30);
     gd.addNumericField("Diffusion_coefficient", settings.diffusionCoefficient, -3, 6, "px^2/frame");
+    gd.addNumericField("Background_size", settings.backgroundSize, 0);
     gd.showDialog();
     settings.save();
     if (gd.wasCanceled()) {
@@ -282,6 +286,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     settings.nestedModels = gd.getNextBoolean();
     settings.resultsDir = gd.getNextString();
     settings.diffusionCoefficient = gd.getNextNumber();
+    settings.backgroundSize = (int) gd.getNextNumber();
 
     if (gd.invalidNumber()) {
       IJ.error(TITLE, "Bad input number");
@@ -298,7 +303,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
     getCalibration();
 
-    final ImageStack aligned = alignImage(imp);
+    final Pair<ImageStack, double[][]> alignment = alignImage(imp);
+    final ImageStack aligned = alignment.getFirst();
 
     ImagePlus alignedImp = null;
     if (settings.showAlignedImage) {
@@ -362,8 +368,10 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       }
     }
 
+    final float[] background = extractBackground(alignment.getSecond());
+
     // Save curves
-    saveData(data, count);
+    saveData(data, background, count);
 
     // Fit foreground to estimate the bleaching kinetics
     final double[] ffit = fitBleaching(data[n - 1], timeScale);
@@ -379,6 +387,9 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
         SimpleArrayUtils.toFloat(SimpleArrayUtils.newArray(aligned.size(), 0, timeScale));
     final Plot plot = new Plot(title, "Time (" + timeUnit + ")", "Mean Intensity");
     plot.addPoints(x, data[n - 1], null, Plot.LINE, "Foreground");
+    if (background != null) {
+      plot.addPoints(x, background, null, Plot.CIRCLE, "Background");
+    }
 
     // Add fitted curve
     plot.setColor(Color.GRAY);
@@ -464,7 +475,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     }
   }
 
-  private ImageStack alignImage(ImagePlus imp) {
+  private Pair<ImageStack, double[][]> alignImage(ImagePlus imp) {
     IJ.showStatus("!Aligning image");
     IJ.log("Aligning image");
 
@@ -586,7 +597,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       intersect.x += roi.getXBase();
       intersect.y += roi.getYBase();
     }
-    return aligned;
+    return Pair.create(aligned, new double[][] {dx, dy});
   }
 
   /**
@@ -1041,16 +1052,181 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
   }
 
   /**
+   * Extract the background. This identifies the darkest part of the image and outputs a plot of the
+   * mean over time.
+   *
+   * @param offsets the offsets for each frame
+   * @return the background
+   */
+  private float[] extractBackground(double[][] offsets) {
+    if (settings.backgroundSize < 1) {
+      return null;
+    }
+    final int size = 2 * settings.backgroundSize + 1;
+    final int w = imp.getWidth() - size;
+    final int h = imp.getHeight() - size;
+    // Find max offset.
+    // The background must be within this so no clipping occurs.
+    final double[] dx = offsets[0];
+    final double[] dy = offsets[1];
+    final double[] limitsx = MathUtils.limits(dx);
+    final double[] limitsy = MathUtils.limits(dy);
+    final Rectangle region = new Rectangle(w, h)
+        .intersection(new Rectangle((int) limitsx[0], (int) limitsy[0], w, h)).intersection(
+            new Rectangle((int) Math.ceil(limitsx[1]), (int) Math.ceil(limitsy[1]), w, h));
+    if (region.isEmpty()) {
+      ImageJUtils.log(
+          "Unable to create region to search for background. "
+              + "Max drift (%d,%d to %d,%d) prevents creation of %dx%d rectangle inside the image.",
+          (int) limitsx[0], (int) limitsy[0], (int) Math.ceil(limitsx[1]),
+          (int) Math.ceil(limitsy[1]), size, size);
+      return null;
+    }
+    region.x += settings.backgroundSize;
+    region.y += settings.backgroundSize;
+    // Find the lowest region
+    final ImageStack stack = imp.getImageStack();
+    final IntFunction<FloatProcessor> getProcessor = imp.isHyperStack() ? i -> {
+      return stack.getProcessor(imp.getStackIndex(imp.getChannel(), imp.getSlice(), i))
+          .convertToFloatProcessor();
+    } : i -> {
+      return stack.getProcessor(i).convertToFloatProcessor();
+    };
+    FloatProcessor fp = getProcessor.apply(1);
+    final float[] data = ((float[]) fp.getPixels()).clone();
+    rollingBlockFilterNxNInternal(data, fp.getWidth(), fp.getHeight(), settings.backgroundSize);
+    float min = Float.POSITIVE_INFINITY;
+    int mini = 0;
+    for (int y = 0; y < region.height; y++) {
+      int index = (y + region.y) * fp.getWidth() + region.x;
+      for (int x = 0; x < region.width; x++) {
+        if (data[index] < min) {
+          min = data[index];
+          mini = index;
+        }
+        index++;
+      }
+    }
+    // Find centre
+    int x = mini % fp.getWidth();
+    int y = mini / fp.getWidth();
+    ImageJUtils.log("Background region on slice 1 centred at: %d,%d", x, y);
+    // Offset for first aligned slice. Offset includes half the region size
+    x -= (settings.backgroundSize + (int) dx[0]);
+    y -= (settings.backgroundSize + (int) dy[0]);
+    // Get mean of the background for all frames
+    final float[] mean = new float[imp.isHyperStack() ? imp.getNFrames() : stack.getSize()];
+    for (int i = 0; i < mean.length; i++) {
+      fp = getProcessor.apply(i + 1);
+      // Translate the region. Subtract this because the image is translated the other way.
+      final int x2 = x - (int) dx[i];
+      final int y2 = y - (int) dy[i];
+      double sum = 0;
+      for (int yy = 0; yy < size; yy++) {
+        final int index = (yy + y2) * fp.getWidth() + x2;
+        for (int xx = 0; xx < size; xx++) {
+          sum += fp.getf(index);
+        }
+      }
+      mean[i] = (float) (sum / (size * size));
+    }
+    return mean;
+  }
+
+  /**
+   * Compute the filter within a 2n+1 size block around each point. Only pixels with a full block
+   * are processed. Pixels within border regions are unchanged.
+   *
+   * <p>Note: the input data is destructively modified
+   *
+   * @param data The input/output data (packed in YX order)
+   * @param maxx The width of the data
+   * @param maxy The height of the data
+   * @param n The block size
+   */
+  void rollingBlockFilterNxNInternal(float[] data, final int maxx, final int maxy, final int n) {
+    final int blockSize = 2 * n + 1;
+
+    final float[] buffer = new float[data.length];
+
+    // X-direction
+    for (int y = 0; y < maxy; y++) {
+      // Initialise the rolling sum
+      double sum = 0;
+
+      int endIndex = y * maxx;
+      int x = 0;
+      while (x < blockSize) {
+        sum += data[endIndex];
+        endIndex++;
+        x++;
+      }
+
+      // Rolling sum over the X-direction
+      int startIndex = y * maxx;
+      int centreIndex = startIndex + n;
+
+      buffer[centreIndex] = (float) sum;
+
+      while (x < maxx) {
+        centreIndex++;
+
+        sum += data[endIndex] - data[startIndex];
+
+        buffer[centreIndex] = (float) sum;
+
+        x++;
+        startIndex++;
+        endIndex++;
+      }
+    }
+
+    // Y-direction.
+    // Only sweep over the interior
+    for (int x = n; x < maxx - n; x++) {
+      // Initialise the rolling sum
+      double sum = 0;
+
+      int endIndex = x;
+      int y = 0;
+      while (y < blockSize) {
+        sum += buffer[endIndex];
+        endIndex += maxx;
+        y++;
+      }
+
+      // Rolling sum over the Y-direction
+      int startIndex = x;
+      int centreIndex = startIndex + n * maxx;
+
+      data[centreIndex] = (float) sum;
+
+      while (y < maxy) {
+        centreIndex += maxx;
+
+        sum += buffer[endIndex] - buffer[startIndex];
+
+        data[centreIndex] = (float) sum;
+
+        y++;
+        startIndex += maxx;
+        endIndex += maxx;
+      }
+    }
+  }
+
+  /**
    * Save data to a directory.
    *
    * <p>The data of each region {@code n} in {@code data[n - 1]}. The final entry is the foreground.
    *
    * <p>The size of each region {@code n} in {@code countHistogram[n]}.
    *
-   * @param data the data
+   * @param data the background
+   * @param background the background
    * @param countHistogram the count histogram
    */
-  private void saveData(float[][] data, int[] countHistogram) {
+  private void saveData(float[][] data, float[] background, int[] countHistogram) {
     if (TextUtils.isNullOrEmpty(settings.resultsDir)
         || !Files.isDirectory(Paths.get(settings.resultsDir))) {
       return;
@@ -1088,6 +1264,26 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       } catch (final IOException e) {
         ImageJUtils.log("Failed to save data: " + e.getMessage());
         break;
+      }
+    }
+    if (background != null) {
+      final Path path = Paths.get(settings.resultsDir, prefix + "_background.csv");
+      try (BufferedWriter out = Files.newBufferedWriter(path)) {
+        out.write("# Size = ");
+        final int width = 2 * settings.backgroundSize + 1;
+        out.write(Integer.toString(width * width));
+        out.newLine();
+
+        out.write("Time (" + timeUnit + "),Mean");
+        out.newLine();
+
+        for (int t = 0; t < size; t++) {
+          out.write(frames[t]);
+          out.write(Float.toString(background[t]));
+          out.newLine();
+        }
+      } catch (final IOException e) {
+        ImageJUtils.log("Failed to save background data: " + e.getMessage());
       }
     }
   }
@@ -1151,7 +1347,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
   /**
    * Fit the bleaching curve.
-   * 
+   *
    * <p>The returned fit parameters depend on the model chosen to best fit the data.
    *
    * @param region the region
