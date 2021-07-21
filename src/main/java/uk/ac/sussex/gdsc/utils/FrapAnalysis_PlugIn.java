@@ -464,10 +464,10 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     timeUnit = cal.getTimeUnit();
     // Try and map to micrometers (um) and seconds
     if (distanceUnit.equals("nm") || distanceUnit.startsWith("nanomet")) {
-      distanceUnit = "\u00B5m";
+      distanceUnit = "μm";
       distanceScale /= 1000;
     } else if (distanceUnit.startsWith("micron") || distanceUnit.startsWith("micromet")) {
-      distanceUnit = "\u00B5m";
+      distanceUnit = "μm";
     }
     // Default calibration has distance as 1 pixel but time as 0 sec.
     if (timeScale == 0) {
@@ -1151,10 +1151,11 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    * @param data The input/output data (packed in YX order)
    * @param maxx The width of the data
    * @param maxy The height of the data
-   * @param n The block size
+   * @param blockSize The block size
    */
-  void rollingBlockFilterNxNInternal(float[] data, final int maxx, final int maxy, final int n) {
-    final int blockSize = 2 * n + 1;
+  void rollingBlockFilterNxNInternal(float[] data, final int maxx, final int maxy,
+      final int blockSize) {
+    final int size = 2 * blockSize + 1;
 
     final float[] buffer = new float[data.length];
 
@@ -1165,7 +1166,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
       int endIndex = y * maxx;
       int x = 0;
-      while (x < blockSize) {
+      while (x < size) {
         sum += data[endIndex];
         endIndex++;
         x++;
@@ -1173,7 +1174,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
       // Rolling sum over the X-direction
       int startIndex = y * maxx;
-      int centreIndex = startIndex + n;
+      int centreIndex = startIndex + blockSize;
 
       buffer[centreIndex] = (float) sum;
 
@@ -1192,13 +1193,13 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
     // Y-direction.
     // Only sweep over the interior
-    for (int x = n; x < maxx - n; x++) {
+    for (int x = blockSize; x < maxx - blockSize; x++) {
       // Initialise the rolling sum
       double sum = 0;
 
       int endIndex = x;
       int y = 0;
-      while (y < blockSize) {
+      while (y < size) {
         sum += buffer[endIndex];
         endIndex += maxx;
         y++;
@@ -1206,7 +1207,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
       // Rolling sum over the Y-direction
       int startIndex = x;
-      int centreIndex = startIndex + n * maxx;
+      int centreIndex = startIndex + blockSize * maxx;
 
       data[centreIndex] = (float) sum;
 
@@ -1516,10 +1517,10 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     // D = w^2 / 4tD
     // Assume the region is a circle
     final double w2 = distanceScale * distanceScale * size / Math.PI;
-    double tD = w2 / (4 * timeScale
+    double td = w2 / (4 * timeScale
         * ((settings.diffusionCoefficient > 0) ? settings.diffusionCoefficient : 1));
     final FrapFunction model3 = new DiffusionLimitedRecoveryFunction(yy.length, timeScale);
-    final RealVector start3 = new ArrayRealVector(new double[] {i0, a, tD}, false);
+    final RealVector start3 = new ArrayRealVector(new double[] {i0, a, td}, false);
 
     final LeastSquaresProblem problem3 = LeastSquaresFactory.create(model3, observed, start3,
         weightMatrix, checker, maxEvaluations, maxIterations, lazyEvaluation, paramValidator);
@@ -1542,7 +1543,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       // Use the fit as the start point for nested models
       i0 = best2.getPoint().getEntry(0);
       a = best2.getPoint().getEntry(1);
-      tD = best2.getPoint().getEntry(2);
+      td = best2.getPoint().getEntry(2);
 
       // Fit the simple version but with a general decay of the recovered signal.
       // B can be initialised to the camera offset. Here use a small value.
@@ -1550,7 +1551,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       i0 -= b;
 
       final FrapFunction model4 = new DiffusionLimitedRecoveryFunctionB(yy.length, timeScale);
-      final RealVector start4 = new ArrayRealVector(new double[] {i0, a, tD, b, tau}, false);
+      final RealVector start4 = new ArrayRealVector(new double[] {i0, a, td, b, tau}, false);
 
       final LeastSquaresProblem problem4 = LeastSquaresFactory.create(model4, observed, start4,
           weightMatrix, checker, maxEvaluations, maxIterations, lazyEvaluation, paramValidator);
