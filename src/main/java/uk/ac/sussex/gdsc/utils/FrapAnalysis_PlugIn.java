@@ -451,10 +451,12 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     distanceUnit = cal.getUnit();
     timeScale = cal.frameInterval;
     timeUnit = cal.getTimeUnit();
-    // Try and map to micrometers and seconds
-    if (distanceUnit.equals("nm")) {
+    // Try and map to micrometers (um) and seconds
+    if (distanceUnit.equals("nm") || distanceUnit.startsWith("nanomet")) {
       distanceUnit = "\u00B5m";
       distanceScale /= 1000;
+    } else if (distanceUnit.startsWith("micron") || distanceUnit.startsWith("micromet")) {
+      distanceUnit = "\u00B5m";
     }
     if (timeUnit.equals("msec")) {
       timeUnit = "sec";
