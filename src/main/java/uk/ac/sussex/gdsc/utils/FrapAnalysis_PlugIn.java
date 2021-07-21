@@ -27,11 +27,13 @@ package uk.ac.sussex.gdsc.utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.gui.OvalRoi;
 import ij.gui.Overlay;
 import ij.gui.Plot;
 import ij.gui.Roi;
 import ij.plugin.Duplicator;
 import ij.plugin.ZProjector;
+import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
@@ -67,6 +69,7 @@ import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Pair;
 import uk.ac.sussex.gdsc.UsageTracker;
 import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
+import uk.ac.sussex.gdsc.core.filters.NonMaximumSuppression;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
@@ -74,6 +77,7 @@ import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper.LutColour;
 import uk.ac.sussex.gdsc.core.logging.Ticker;
+import uk.ac.sussex.gdsc.core.math.RadialStatisticsUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 import uk.ac.sussex.gdsc.core.utils.DoubleEquality;
@@ -127,6 +131,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     boolean showAlignedImage;
     int emaWindowSize;
     double scoreThreshold;
+    boolean circularRegion;
     int minRegionSize;
     boolean showBleachingScores;
     boolean showBleachingEvents;
@@ -145,6 +150,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       showAlignedImage = true;
       emaWindowSize = 10;
       scoreThreshold = 7;
+      circularRegion = true;
       minRegionSize = 100;
       bleachedBorder = 3;
       resultsDir = "";
@@ -165,6 +171,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       showAlignedImage = source.showAlignedImage;
       emaWindowSize = source.emaWindowSize;
       scoreThreshold = source.scoreThreshold;
+      circularRegion = source.circularRegion;
       minRegionSize = source.minRegionSize;
       showBleachingScores = source.showBleachingScores;
       showBleachingEvents = source.showBleachingEvents;
@@ -238,6 +245,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     gd.addCheckbox("Show_aligned", settings.showAlignedImage);
     // gd.addSlider("Window_size", 3, 20, settings.emaWindowSize);
     gd.addSlider("Score_threshold", 5, 20, settings.scoreThreshold);
+    gd.addCheckbox("Circular_region", settings.circularRegion);
     gd.addNumericField("Min_region_size", settings.minRegionSize, 0);
     gd.addCheckbox("Show_bleaching_scores", settings.showBleachingScores);
     gd.addCheckbox("Show_bleaching_events", settings.showBleachingEvents);
@@ -259,6 +267,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     settings.showAlignedImage = gd.getNextBoolean();
     // settings.emaWindowSize = (int) gd.getNextNumber();
     settings.scoreThreshold = gd.getNextNumber();
+    settings.circularRegion = gd.getNextBoolean();
     settings.minRegionSize = (int) gd.getNextNumber();
     settings.showBleachingScores = gd.getNextBoolean();
     settings.showBleachingEvents = gd.getNextBoolean();
@@ -771,30 +780,98 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     IJ.showStatus("!Creating bleached regions...");
     final ImageStack events = new ImageStack(scores.getWidth(), scores.getHeight());
     final float threshold = (float) settings.scoreThreshold;
+    final double minRadius = Math.max(2, Math.sqrt(settings.minRegionSize / Math.PI));
     for (int i = 1; i <= scores.size(); i++) {
-      final FloatProcessor fp = (FloatProcessor) scores.getProcessor(i);
-
-      // TODO:
-      // Smooth the raw scores?
-
-      // Create binary processor from score above the threshold
+      FloatProcessor fp = (FloatProcessor) scores.getProcessor(i);
       final ByteProcessor bp = new ByteProcessor(scores.getWidth(), scores.getHeight());
-      for (int j = bp.getPixelCount(); j-- > 0;) {
-        if (fp.getf(j) >= threshold) {
-          bp.set(j, 255);
+
+      if (settings.circularRegion) {
+        bp.setValue(255);
+
+        // Smooth the raw scores.
+        final GaussianBlur gb = new GaussianBlur();
+        fp = (FloatProcessor) fp.duplicate();
+        gb.blurGaussian(fp, 2);
+        // Find maxima above the threshold.
+        final NonMaximumSuppression nms = new NonMaximumSuppression();
+        final int[] maxima =
+            nms.blockFind((float[]) fp.getPixels(), fp.getWidth(), fp.getHeight(), (int) minRadius);
+        // For each maxima
+        for (final int index : maxima) {
+          // Must be above the threshold
+          if (fp.getf(index) < threshold) {
+            continue;
+          }
+          final int x = index % fp.getWidth();
+          final int y = index / fp.getWidth();
+          // Compute approximate radial mean using 4 directions to give a size estimate.
+          int minx = x - 1;
+          while (fp.getPixelValue(minx, y) >= threshold) {
+            minx--;
+          }
+          int miny = y - 1;
+          while (fp.getPixelValue(x, miny) >= threshold) {
+            miny--;
+          }
+          int maxx = x + 1;
+          while (fp.getPixelValue(maxx, y) >= threshold) {
+            maxx++;
+          }
+          int maxy = y + 1;
+          while (fp.getPixelValue(x, maxy) >= threshold) {
+            maxy++;
+          }
+          int radius = MathUtils.max(x - minx, y - miny, maxx - x, maxy - y);
+
+          radius = (radius * 3) >>> 1;
+          for (;;) {
+            // Extract the image sub-region.
+            final int size = 2 * radius + 1;
+            final FloatProcessor fp2 = new FloatProcessor(size, size);
+            fp2.insert(fp, radius - x, radius - y);
+
+            // Compute true radial mean out from the maximum.
+            final double[][] result =
+                RadialStatisticsUtils.radialSumAndCount(size, (float[]) fp2.getPixels());
+
+            // Stop when radial mean is below the threshold.
+            final double[] sum = result[0];
+            final double[] count = result[1];
+            for (radius = 1; radius < sum.length; radius++) {
+              if (sum[radius] / count[radius] < threshold) {
+                radius--;
+                break;
+              }
+            }
+            // Check if a big enough region was extracted
+            if (radius == size / 2) {
+              radius *= 2;
+            } else {
+              break;
+            }
+          }
+
+          final int size = 2 * radius + 1;
+          bp.fill(new OvalRoi(x - radius, y - radius, size, size));
         }
+      } else {
+        // Create binary processor from score above the threshold
+        for (int j = bp.getPixelCount(); j-- > 0;) {
+          if (fp.getf(j) >= threshold) {
+            bp.set(j, 255);
+          }
+        }
+
+        // Some filtering to smooth the region.
+
+        // Like the close- command
+        bp.dilate(1, 0);
+        bp.erode(1, 0);
+        // Remove speckles
+        bp.erode(8, 0);
+        // Fill holes
+        fill(bp);
       }
-
-      // Some filtering to smooth the region.
-
-      // Like the close- command
-      bp.dilate(1, 0);
-      bp.erode(1, 0);
-      // Remove speckles
-      bp.erode(8, 0);
-      // Fill holes
-      fill(bp);
-
       events.addSlice(bp);
     }
 
@@ -963,9 +1040,9 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     for (int i = 0; i < n; i++) {
       final Path path = i == n - 1 ? Paths.get(settings.resultsDir, prefix + "_foreground.csv")
           : Paths.get(settings.resultsDir, prefix + "_region" + i + ".csv");
-      float[] limits = MathUtils.limits(data[i]);
-      float min = limits[0];
-      float range = limits[1] - min;
+      final float[] limits = MathUtils.limits(data[i]);
+      final float min = limits[0];
+      final float range = limits[1] - min;
       try (BufferedWriter out = Files.newBufferedWriter(path)) {
         out.write("# Size = ");
         out.write(Integer.toString(countHistogram[i + 1]));
