@@ -1086,8 +1086,11 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
           (int) Math.ceil(limitsy[1]), size, size);
       return null;
     }
-    region.x += settings.backgroundSize;
-    region.y += settings.backgroundSize;
+    // Offset the search region. This includes the offset for the first aligned slice.
+    int ox = settings.backgroundSize - (int) dx[0];
+    int oy = settings.backgroundSize - (int) dy[0];
+    region.x += ox;
+    region.y += oy;
     // Find the lowest region
     final ImageStack stack = imp.getImageStack();
     final IntFunction<FloatProcessor> getProcessor = imp.isHyperStack() ? i -> {
@@ -1114,10 +1117,10 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     // Find centre
     int x = mini % fp.getWidth();
     int y = mini / fp.getWidth();
-    ImageJUtils.log("Background region on slice 1 centred at: %d,%d", x, y);
-    // Offset for first aligned slice. Offset includes half the region size
-    x -= (settings.backgroundSize + (int) dx[0]);
-    y -= (settings.backgroundSize + (int) dy[0]);
+    // Reverse the offset to create the 'neutral' region for the background.
+    // This is shifted for each slice.
+    x -= ox;
+    y -= ox;
     // Get mean of the background for all frames
     final float[] mean = new float[imp.isHyperStack() ? imp.getNFrames() : stack.getSize()];
     for (int i = 0; i < mean.length; i++) {
@@ -1134,6 +1137,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       }
       mean[i] = (float) (sum / (size * size));
     }
+    ImageJUtils.log("Background region %dx%d centred at %d,%d (slice 1). Mean = %s", size, size,
+        x + ox, y + ox, MathUtils.round(MathUtils.sum(mean) / mean.length));
     return mean;
   }
 
