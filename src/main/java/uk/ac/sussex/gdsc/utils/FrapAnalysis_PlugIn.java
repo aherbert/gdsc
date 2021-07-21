@@ -1064,7 +1064,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
     for (int i = 0; i < n; i++) {
       final Path path = i == n - 1 ? Paths.get(settings.resultsDir, prefix + "_foreground.csv")
-          : Paths.get(settings.resultsDir, prefix + "_region" + i + ".csv");
+          : Paths.get(settings.resultsDir, prefix + "_region" + (i + 1) + ".csv");
       final float[] limits = MathUtils.limits(data[i]);
       final float min = limits[0];
       final float range = limits[1] - min;
