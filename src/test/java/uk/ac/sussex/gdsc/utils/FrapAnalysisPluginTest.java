@@ -50,7 +50,7 @@ class FrapAnalysisPluginTest {
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
-      final MultivariateJacobianFunction f = new DecayFunction(size);
+      final MultivariateJacobianFunction f = new DecayFunction(size, 1);
       for (final double b : new double[] {5, 10}) {
         for (final double a : new double[] {20, 30}) {
           for (final double tau : new double[] {0.5 / size, 1.0 / size, 2.0 / size}) {
@@ -106,7 +106,7 @@ class FrapAnalysisPluginTest {
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
-      final MultivariateJacobianFunction f = new ReactionLimitedRecoveryFunction(size);
+      final MultivariateJacobianFunction f = new ReactionLimitedRecoveryFunction(size, 1);
       for (final double i0 : new double[] {20, 30}) {
         for (final double a : new double[] {5, 10}) {
           for (final double koff : new double[] {0.5 / size, 1.0 / size, 2.0 / size}) {
@@ -162,7 +162,7 @@ class FrapAnalysisPluginTest {
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
-      final MultivariateJacobianFunction f = new ReactionLimitedRecoveryFunctionB(size);
+      final MultivariateJacobianFunction f = new ReactionLimitedRecoveryFunctionB(size, 1);
       for (final double i0 : new double[] {20, 30}) {
         for (final double a : new double[] {5, 10}) {
           for (final double koff : new double[] {0.5 / size, 1.0 / size, 2.0 / size}) {
@@ -242,7 +242,7 @@ class FrapAnalysisPluginTest {
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
-      final MultivariateJacobianFunction f = new DiffusionLimitedRecoveryFunction(size);
+      final MultivariateJacobianFunction f = new DiffusionLimitedRecoveryFunction(size, 1);
       for (final double i0 : new double[] {20, 30}) {
         for (final double a : new double[] {5, 10}) {
           for (final double tD : new double[] {0.5 / size, 1.0 / size, 2.0 / size}) {
@@ -301,7 +301,7 @@ class FrapAnalysisPluginTest {
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
-      final MultivariateJacobianFunction f = new DiffusionLimitedRecoveryFunctionB(size);
+      final MultivariateJacobianFunction f = new DiffusionLimitedRecoveryFunctionB(size, 1);
       for (final double i0 : new double[] {20, 30}) {
         for (final double a : new double[] {5, 10}) {
           for (final double tD : new double[] {0.5 / size, 1.0 / size, 2.0 / size}) {
