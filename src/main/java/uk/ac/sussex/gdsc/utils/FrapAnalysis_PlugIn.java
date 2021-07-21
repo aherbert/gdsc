@@ -31,6 +31,7 @@ import ij.gui.OvalRoi;
 import ij.gui.Overlay;
 import ij.gui.Plot;
 import ij.gui.Roi;
+import ij.measure.Calibration;
 import ij.plugin.Duplicator;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.GaussianBlur;
@@ -111,6 +112,11 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
   private ImagePlus imp;
   private Rectangle intersect;
+
+  private double distanceScale;
+  private String distanceUnit;
+  private double timeScale;
+  private String timeUnit;
 
   /** The current settings for the plugin instance. */
   private Settings settings;
@@ -290,6 +296,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     final String title = TITLE + " : " + imp.getTitle();
     ImageJUtils.log(title);
 
+    getCalibration();
+
     final ImageStack aligned = alignImage(imp);
 
     ImagePlus alignedImp = null;
@@ -358,7 +366,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     saveData(data, count);
 
     // Fit foreground to estimate the bleaching kinetics
-    final double[] ffit = fitBleaching(data[n - 1]);
+    final double[] ffit = fitBleaching(data[n - 1], timeScale);
     if (ffit == null) {
       return;
     }
@@ -367,15 +375,15 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
         MathUtils.rounded(LN2 / ffit[2]));
 
     // Plot the mean over time.
-    final float[] x = SimpleArrayUtils.newArray(aligned.size(), 1f, 1f);
-    final Plot plot = new Plot(title, "Frame", "Mean Intensity");
+    final float[] x =
+        SimpleArrayUtils.toFloat(SimpleArrayUtils.newArray(aligned.size(), 0, timeScale));
+    final Plot plot = new Plot(title, "Time (" + timeUnit + ")", "Mean Intensity");
     plot.addPoints(x, data[n - 1], null, Plot.LINE, "Foreground");
 
     // Add fitted curve
     plot.setColor(Color.GRAY);
-    plot.addPoints(x, SimpleArrayUtils.toFloat(
-        new DecayFunction(x.length).value(new ArrayRealVector(ffit, false)).getFirst().toArray()),
-        null, Plot.DOT, null);
+    plot.addPoints(x, SimpleArrayUtils.toFloat(new DecayFunction(x.length, timeScale)
+        .value(new ArrayRealVector(ffit, false)).getFirst().toArray()), null, Plot.DOT, null);
 
     final LUT lut = LutHelper.createLut(LutColour.RED_BLUE);
     for (int j = 1; j < n; j++) {
@@ -395,38 +403,38 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
         if (fun instanceof ReactionLimitedRecoveryFunction) {
           ImageJUtils.log(
               "Region [%d] reaction limited recovery: f(t) = %s + %s(1 - exp(-%s t)); "
-                  + "Half-life = %s frames",
+                  + "Half-life = %s %ss",
               j, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]),
-              MathUtils.rounded(LN2 / fit[2]));
+              MathUtils.rounded(LN2 / fit[2]), timeUnit);
         } else if (fun instanceof ReactionLimitedRecoveryFunctionB) {
           ImageJUtils.log(
               "Region [%d] reaction limited recovery: f(t) = %s + (%s + %s(1 - exp(-%s t))) * "
-                  + "exp(-%s t); Half-life1 = %s frames; Half-life2 = %s frames",
+                  + "exp(-%s t); Half-life1 = %s %ss; Half-life2 = %s %ss",
               j, MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]),
               MathUtils.rounded(fit[2]), MathUtils.rounded(fit[4]), MathUtils.rounded(LN2 / fit[2]),
-              MathUtils.rounded(LN2 / fit[4]));
+              timeUnit, MathUtils.rounded(LN2 / fit[4]), timeUnit);
         } else if (fun instanceof DiffusionLimitedRecoveryFunction) {
           final String dT = MathUtils.rounded(fit[2]);
           // tD = w^2 / 4D
-          final double w2 = count[j] / Math.PI;
-          final double dc = w2 / (4 * fit[2]);
+          final double w2 = distanceScale * distanceScale * count[j] / Math.PI;
+          final double dc = w2 / (4 * timeScale * fit[2]);
           ImageJUtils.log(
               "Region [%d] diffusion limited recovery: f(t) = %s + %s(exp(-2*%s/t) * (I0(2*%s/t) + "
-                  + "I1(2*%s/t)); D = %s px^2/frame",
+                  + "I1(2*%s/t)); D = %s %s^2/%s",
               j, MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]), dT, dT, dT,
-              MathUtils.rounded(dc));
+              MathUtils.rounded(dc), distanceUnit, timeUnit);
         } else if (fun instanceof DiffusionLimitedRecoveryFunctionB) {
           final String dT = MathUtils.rounded(fit[2]);
           // tD = w^2 / 4D
-          final double w2 = count[j] / Math.PI;
-          final double dc = w2 / (4 * fit[2]);
+          final double w2 = distanceScale * distanceScale * count[j] / Math.PI;
+          final double dc = w2 / (4 * timeScale * fit[2]);
           ImageJUtils.log(
               "Region [%d] diffusion limited recovery: f(t) = %s + (%s + %s(exp(-2*%s/t) * "
-                  + "(I0(2*%s/t) + I1(2*%s/t))) * exp(-%s t); D = %s px^2/frame; "
-                  + "Half-life2 = %s frames",
+                  + "(I0(2*%s/t) + I1(2*%s/t))) * exp(-%s t); D = %s %s^2/%s; "
+                  + "Half-life2 = %s %ss",
               j, MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]), MathUtils.rounded(fit[1]),
-              dT, dT, dT, MathUtils.rounded(fit[4]), MathUtils.round(dc),
-              MathUtils.rounded(LN2 / fit[4]));
+              dT, dT, dT, MathUtils.rounded(fit[4]), MathUtils.round(dc), distanceUnit, timeUnit,
+              MathUtils.rounded(LN2 / fit[4]), timeUnit);
         }
       }
     }
@@ -435,6 +443,23 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     plot.addLegend(null, "");
     ImageJUtils.display(plot.getTitle(), plot);
     plot.setLimitsToFit(true); // Seems to only work after drawing
+  }
+
+  private void getCalibration() {
+    final Calibration cal = imp.getCalibration();
+    distanceScale = cal.pixelWidth;
+    distanceUnit = cal.getUnit();
+    timeScale = cal.frameInterval;
+    timeUnit = cal.getTimeUnit();
+    // Try and map to micrometers and seconds
+    if (distanceUnit.equals("nm")) {
+      distanceUnit = "\u00B5m";
+      distanceScale /= 1000;
+    }
+    if (timeUnit.equals("msec")) {
+      timeUnit = "sec";
+      timeScale /= 1000;
+    }
   }
 
   private ImageStack alignImage(ImagePlus imp) {
@@ -1032,7 +1057,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     final int size = data[0].length;
     final String[] frames = new String[size];
     for (int t = 0; t < size; t++) {
-      frames[t] = (t + 1) + ",";
+      frames[t] = MathUtils.rounded(t * timeScale) + ",";
     }
 
     final String prefix = FileUtils.removeExtension(imp.getTitle()).replace(' ', '_');
@@ -1048,7 +1073,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
         out.write(Integer.toString(countHistogram[i + 1]));
         out.newLine();
 
-        out.write("Frame,Mean,Norm");
+        out.write("Time (" + timeUnit + "),Mean,Norm");
         out.newLine();
 
         for (int t = 0; t < size; t++) {
@@ -1069,9 +1094,10 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    * Fit the bleaching curve {@code f(t) = y0 + B exp(-koff * t)}.
    *
    * @param y the data
+   * @param interval the time interval
    * @return {y0, B, koff}
    */
-  private static double[] fitBleaching(float[] y) {
+  private static double[] fitBleaching(float[] y, double interval) {
     // Initial estimates
     final float[] limits = MathUtils.limits(y);
     final double y0 = limits[0];
@@ -1092,7 +1118,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     final ConvergenceChecker<Evaluation> checker = (iteration, previous,
         current) -> DoubleEquality.relativeError(previous.getCost(), current.getCost()) < 1e-6;
 
-    final MultivariateJacobianFunction model1 = new DecayFunction(y.length);
+    final MultivariateJacobianFunction model1 = new DecayFunction(y.length, interval);
     final RealVector start1 = new ArrayRealVector(new double[] {y0, b, koff}, false);
     final ParameterValidator paramValidator1 = point -> {
       // Do not use MIN_VALUE here to avoid sub-normal numbers
@@ -1123,7 +1149,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
   /**
    * Fit the bleaching curve.
-   *
+   * 
    * <p>The returned fit parameters depend on the model chosen to best fit the data.
    *
    * @param region the region
@@ -1190,7 +1216,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
         current) -> DoubleEquality.relativeError(previous.getCost(), current.getCost()) < 1e-6;
 
     // Fit the simple version too (which ignores residual bleaching): y0 + A(1 - exp(-koff * t))
-    final FrapFunction model1 = new ReactionLimitedRecoveryFunction(yy.length);
+    final FrapFunction model1 = new ReactionLimitedRecoveryFunction(yy.length, timeScale);
     final RealVector start1 = new ArrayRealVector(new double[] {i0, a, koff}, false);
     final ParameterValidator paramValidator = point -> {
       // Do not use MIN_VALUE here to avoid sub-normal numbers
@@ -1234,7 +1260,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       final double b = i0 / 100;
       i0 -= b;
 
-      final FrapFunction model2 = new ReactionLimitedRecoveryFunctionB(yy.length);
+      final FrapFunction model2 = new ReactionLimitedRecoveryFunctionB(yy.length, timeScale);
       final RealVector start2 = new ArrayRealVector(new double[] {i0, a, koff, b, tau}, false);
 
       final LeastSquaresProblem problem2 = LeastSquaresFactory.create(model2, observed, start2,
@@ -1282,11 +1308,11 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     // tD = w^2 / 4D
     // D = w^2 / 4tD
     // Assume the region is a circle
-    final double w2 = size / Math.PI;
-    double dt =
-        w2 / (4 * ((settings.diffusionCoefficient > 0) ? settings.diffusionCoefficient : 1));
-    final FrapFunction model3 = new DiffusionLimitedRecoveryFunction(yy.length);
-    final RealVector start3 = new ArrayRealVector(new double[] {i0, a, dt}, false);
+    final double w2 = distanceScale * distanceScale * size / Math.PI;
+    double tD = w2 / (4 * timeScale
+        * ((settings.diffusionCoefficient > 0) ? settings.diffusionCoefficient : 1));
+    final FrapFunction model3 = new DiffusionLimitedRecoveryFunction(yy.length, timeScale);
+    final RealVector start3 = new ArrayRealVector(new double[] {i0, a, tD}, false);
 
     final LeastSquaresProblem problem3 = LeastSquaresFactory.create(model3, observed, start3,
         weightMatrix, checker, maxEvaluations, maxIterations, lazyEvaluation, paramValidator);
@@ -1300,7 +1326,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
           "  Region [%d] diffusion limited recovery (ss=%s): f(t) = %s + "
               + "%s(exp(-2*%s/t) * (I0(2*%s/t) + I1(2*%s/t)); D = %s",
           region, MathUtils.rounded(getResidualSumOfSquares(best2)), MathUtils.rounded(fit[0]),
-          MathUtils.rounded(fit[1]), dT, dT, dT, MathUtils.round(w2 / (4 * fit[2])));
+          MathUtils.rounded(fit[1]), dT, dT, dT, MathUtils.round(w2 / (4 * timeScale * fit[2])));
     } catch (TooManyIterationsException | ConvergenceException ex) {
       ImageJUtils.log("Failed to fit diffusion limited recovery curve: ", ex.getMessage());
     }
@@ -1309,15 +1335,15 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       // Use the fit as the start point for nested models
       i0 = best2.getPoint().getEntry(0);
       a = best2.getPoint().getEntry(1);
-      dt = best2.getPoint().getEntry(2);
+      tD = best2.getPoint().getEntry(2);
 
       // Fit the simple version but with a general decay of the recovered signal.
       // B can be initialised to the camera offset. Here use a small value.
       final double b = i0 / 100;
       i0 -= b;
 
-      final FrapFunction model4 = new DiffusionLimitedRecoveryFunctionB(yy.length);
-      final RealVector start4 = new ArrayRealVector(new double[] {i0, a, dt, b, tau}, false);
+      final FrapFunction model4 = new DiffusionLimitedRecoveryFunctionB(yy.length, timeScale);
+      final RealVector start4 = new ArrayRealVector(new double[] {i0, a, tD, b, tau}, false);
 
       final LeastSquaresProblem problem4 = LeastSquaresFactory.create(model4, observed, start4,
           weightMatrix, checker, maxEvaluations, maxIterations, lazyEvaluation, paramValidator);
@@ -1346,7 +1372,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
                 + "Half-life2 = %s",
             region, MathUtils.rounded(rss2), MathUtils.rounded(fit[3]), MathUtils.rounded(fit[0]),
             MathUtils.rounded(fit[1]), dT, dT, dT, MathUtils.rounded(fit[4]),
-            MathUtils.round(w2 / (4 * fit[2])), MathUtils.rounded(LN2 / fit[4]));
+            MathUtils.round(w2 / (4 * timeScale * fit[2])), MathUtils.rounded(LN2 / fit[4]));
         ImageJUtils.log("  Region [%d] : rss1=%s, rss2=%s, p(F-Test=%s) = %s; ", region,
             MathUtils.rounded(rss1), MathUtils.rounded(rss2), MathUtils.rounded(f),
             MathUtils.rounded(pvalue));
@@ -1395,16 +1421,20 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    * Base class for FRAP function.
    */
   private abstract static class FrapFunction implements MultivariateJacobianFunction {
-    /** The size. */
+    /** The size (number of time units). */
     protected final int size;
+    /** The time interval. */
+    protected final double interval;
 
     /**
      * Create an instance.
      *
      * @param size the size
+     * @param interval the interval
      */
-    FrapFunction(int size) {
+    FrapFunction(int size, double interval) {
       this.size = size;
+      this.interval = interval;
     }
   }
 
@@ -1421,13 +1451,15 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    */
   @VisibleForTesting
   static final class DecayFunction extends FrapFunction {
+
     /**
      * Create an instance.
      *
      * @param size the size
+     * @param interval the interval
      */
-    DecayFunction(int size) {
-      super(size);
+    DecayFunction(int size, double interval) {
+      super(size, interval);
     }
 
     /**
@@ -1452,12 +1484,13 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       jacobian[0][0] = 1;
       jacobian[0][1] = 1;
 
-      for (int t = 1; t < size; t++) {
+      for (int i = 1; i < size; i++) {
+        final double t = i * interval;
         final double x = Math.exp(-koff * t);
-        value[t] = b + a * x;
-        jacobian[t][0] = 1;
-        jacobian[t][1] = x;
-        jacobian[t][2] = -a * t * x;
+        value[i] = b + a * x;
+        jacobian[i][0] = 1;
+        jacobian[i][1] = x;
+        jacobian[i][2] = -a * t * x;
       }
       return new Pair<>(new ArrayRealVector(value, false),
           new Array2DRowRealMatrix(jacobian, false));
@@ -1477,13 +1510,15 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    */
   @VisibleForTesting
   static final class ReactionLimitedRecoveryFunction extends FrapFunction {
+
     /**
      * Create an instance.
      *
      * @param size the size
+     * @param interval the interval
      */
-    ReactionLimitedRecoveryFunction(int size) {
-      super(size);
+    ReactionLimitedRecoveryFunction(int size, double interval) {
+      super(size, interval);
     }
 
     /**
@@ -1508,12 +1543,13 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       value[0] = i0;
       jacobian[0][0] = 1;
 
-      for (int t = 1; t < size; t++) {
+      for (int i = 1; i < size; i++) {
+        final double t = i * interval;
         final double x1 = Math.exp(-koff * t);
-        value[t] = i0 + a * (1 - x1);
-        jacobian[t][0] = 1;
-        jacobian[t][1] = (1 - x1);
-        jacobian[t][2] = a * (t * x1);
+        value[i] = i0 + a * (1 - x1);
+        jacobian[i][0] = 1;
+        jacobian[i][1] = (1 - x1);
+        jacobian[i][2] = a * (t * x1);
       }
       return new Pair<>(new ArrayRealVector(value, false),
           new Array2DRowRealMatrix(jacobian, false));
@@ -1535,13 +1571,15 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    */
   @VisibleForTesting
   static final class ReactionLimitedRecoveryFunctionB extends FrapFunction {
+
     /**
      * Create an instance.
      *
      * @param size the size
+     * @param interval the interval
      */
-    ReactionLimitedRecoveryFunctionB(int size) {
-      super(size);
+    ReactionLimitedRecoveryFunctionB(int size, double interval) {
+      super(size, interval);
     }
 
     /**
@@ -1571,16 +1609,17 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       jacobian[0][0] = 1;
       jacobian[0][3] = 1;
 
-      for (int t = 1; t < size; t++) {
+      for (int i = 1; i < size; i++) {
+        final double t = i * interval;
         final double x1 = Math.exp(-koff * t);
         final double x2 = Math.exp(-tau * t);
         final double ut = a * (1 - x1);
-        value[t] = b + (i0 + ut) * x2;
-        jacobian[t][0] = x2;
-        jacobian[t][1] = (1 - x1) * x2;
-        jacobian[t][2] = a * t * x1 * x2;
-        jacobian[t][3] = 1;
-        jacobian[t][4] = (i0 + ut) * -t * x2;
+        value[i] = b + (i0 + ut) * x2;
+        jacobian[i][0] = x2;
+        jacobian[i][1] = (1 - x1) * x2;
+        jacobian[i][2] = a * t * x1 * x2;
+        jacobian[i][3] = 1;
+        jacobian[i][4] = (i0 + ut) * -t * x2;
       }
       return new Pair<>(new ArrayRealVector(value, false),
           new Array2DRowRealMatrix(jacobian, false));
@@ -1607,13 +1646,15 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    */
   @VisibleForTesting
   static final class DiffusionLimitedRecoveryFunction extends FrapFunction {
+
     /**
      * Create an instance.
      *
      * @param size the size
+     * @param interval the interval
      */
-    DiffusionLimitedRecoveryFunction(int size) {
-      super(size);
+    DiffusionLimitedRecoveryFunction(int size, double interval) {
+      super(size, interval);
     }
 
     /**
@@ -1649,15 +1690,16 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       value[0] = i0;
       jacobian[0][0] = 1;
 
-      for (int t = 1; t < size; t++) {
+      for (int i = 1; i < size; i++) {
+        final double t = i * interval;
         final double x = 2.0 * tD / t;
         final double bi0 = Bessel.i0(x);
         final double bi1 = Bessel.i1(x);
         final double x1 = Math.exp(-x);
-        jacobian[t][0] = 1;
-        jacobian[t][1] = x1 * (bi0 + bi1);
-        jacobian[t][2] = -a * x1 * bi1 / tD;
-        value[t] = i0 + a * jacobian[t][1];
+        jacobian[i][0] = 1;
+        jacobian[i][1] = x1 * (bi0 + bi1);
+        jacobian[i][2] = -a * x1 * bi1 / tD;
+        value[i] = i0 + a * jacobian[i][1];
       }
       return new Pair<>(new ArrayRealVector(value, false),
           new Array2DRowRealMatrix(jacobian, false));
@@ -1687,13 +1729,15 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    */
   @VisibleForTesting
   static final class DiffusionLimitedRecoveryFunctionB extends FrapFunction {
+
     /**
      * Create an instance.
      *
      * @param size the size
+     * @param interval the interval
      */
-    DiffusionLimitedRecoveryFunctionB(int size) {
-      super(size);
+    DiffusionLimitedRecoveryFunctionB(int size, double interval) {
+      super(size, interval);
     }
 
     /**
@@ -1735,7 +1779,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       jacobian[0][0] = 1;
       jacobian[0][3] = 1;
 
-      for (int t = 1; t < size; t++) {
+      for (int i = 1; i < size; i++) {
+        final double t = i * interval;
         final double x = 2.0 * tD / t;
         final double bi0 = Bessel.i0(x);
         final double bi1 = Bessel.i1(x);
@@ -1743,12 +1788,12 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
         final double x2 = Math.exp(-tau * t);
         final double x3 = x1 * (bi0 + bi1);
         final double x4 = (i0 + a * x3) * x2;
-        value[t] = b + x4;
-        jacobian[t][0] = x2;
-        jacobian[t][1] = x3 * x2;
-        jacobian[t][2] = -a * x2 * x1 * bi1 / tD;
-        jacobian[t][3] = 1;
-        jacobian[t][4] = -x4 * t;
+        value[i] = b + x4;
+        jacobian[i][0] = x2;
+        jacobian[i][1] = x3 * x2;
+        jacobian[i][2] = -a * x2 * x1 * bi1 / tD;
+        jacobian[i][3] = 1;
+        jacobian[i][4] = -x4 * t;
       }
       return new Pair<>(new ArrayRealVector(value, false),
           new Array2DRowRealMatrix(jacobian, false));
