@@ -469,7 +469,11 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     } else if (distanceUnit.startsWith("micron") || distanceUnit.startsWith("micromet")) {
       distanceUnit = "\u00B5m";
     }
-    if (timeUnit.equals("msec")) {
+    // Default calibration has distance as 1 pixel but time as 0 sec.
+    if (timeScale == 0) {
+      timeScale = 1;
+      timeUnit = "frame";
+    } else if (timeUnit.equals("msec")) {
       timeUnit = "sec";
       timeScale /= 1000;
     }
