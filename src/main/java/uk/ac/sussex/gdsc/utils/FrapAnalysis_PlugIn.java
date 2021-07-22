@@ -393,8 +393,10 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
     // Add fitted curve
     plot.setColor(Color.GRAY);
-    plot.addPoints(x, SimpleArrayUtils.toFloat(new DecayFunction(x.length, timeScale)
-        .value(new ArrayRealVector(ffit, false)).getFirst().toArray()), null, Plot.DOT, null);
+    plot.addPoints(x,
+        SimpleArrayUtils.toFloat(
+            new DecayFunction(x.length, timeScale).values(new ArrayRealVector(ffit, false))),
+        null, Plot.DOT, null);
 
     final LUT lut = LutHelper.createLut(LutColour.RED_BLUE);
     for (int j = 1; j < n; j++) {
@@ -408,9 +410,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
         final FrapFunction fun = fitResult.getFirst();
         final double[] fit = fitResult.getSecond().getPoint().toArray();
         plot.addPoints(Arrays.copyOfRange(x, bleachingEvent, x.length),
-            SimpleArrayUtils
-                .toFloat(fun.value(fitResult.getSecond().getPoint()).getFirst().toArray()),
-            null, Plot.DOT, null);
+            SimpleArrayUtils.toFloat(fun.values(fitResult.getSecond().getPoint())), null, Plot.DOT,
+            null);
         if (fun instanceof ReactionLimitedRecoveryFunction) {
           ImageJUtils.log(
               "Region [%d] reaction limited recovery: f(t) = %s + %s(1 - exp(-%s t)); "
@@ -1628,7 +1629,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
   /**
    * Base class for FRAP function.
    */
-  private abstract static class FrapFunction implements MultivariateJacobianFunction {
+  @VisibleForTesting
+  abstract static class FrapFunction implements MultivariateJacobianFunction {
     /** The size (number of time units). */
     protected final int size;
     /** The time interval. */
@@ -1644,6 +1646,14 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       this.size = size;
       this.interval = interval;
     }
+
+    /**
+     * Compute the values of the function.
+     *
+     * @param point the point
+     * @return the values
+     */
+    abstract double[] values(RealVector point);
   }
 
   /**
@@ -1703,6 +1713,29 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       return new Pair<>(new ArrayRealVector(value, false),
           new Array2DRowRealMatrix(jacobian, false));
     }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param point {B, A, koff}
+     */
+    @Override
+    public double[] values(RealVector point) {
+      final double[] value = new double[size];
+      final double b = point.getEntry(0);
+      final double a = point.getEntry(1);
+      final double koff = point.getEntry(2);
+
+      // Special case when t=0
+      value[0] = b + a;
+
+      for (int i = 1; i < size; i++) {
+        final double t = i * interval;
+        final double x = Math.exp(-koff * t);
+        value[i] = b + a * x;
+      }
+      return value;
+    }
   }
 
   /**
@@ -1761,6 +1794,29 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       }
       return new Pair<>(new ArrayRealVector(value, false),
           new Array2DRowRealMatrix(jacobian, false));
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param point {i0, A, koff}
+     */
+    @Override
+    public double[] values(RealVector point) {
+      final double[] value = new double[size];
+      final double i0 = point.getEntry(0);
+      final double a = point.getEntry(1);
+      final double koff = point.getEntry(2);
+
+      // Special case when t=0
+      value[0] = i0;
+
+      for (int i = 1; i < size; i++) {
+        final double t = i * interval;
+        final double x1 = Math.exp(-koff * t);
+        value[i] = i0 + a * (1 - x1);
+      }
+      return value;
     }
   }
 
@@ -1831,6 +1887,33 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       }
       return new Pair<>(new ArrayRealVector(value, false),
           new Array2DRowRealMatrix(jacobian, false));
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param point {i0, A, koff, B, tau}
+     */
+    @Override
+    public double[] values(RealVector point) {
+      final double[] value = new double[size];
+      final double i0 = point.getEntry(0);
+      final double a = point.getEntry(1);
+      final double koff = point.getEntry(2);
+      final double b = point.getEntry(3);
+      final double tau = point.getEntry(4);
+
+      // Special case when t=0
+      value[0] = b + i0;
+
+      for (int i = 1; i < size; i++) {
+        final double t = i * interval;
+        final double x1 = Math.exp(-koff * t);
+        final double x2 = Math.exp(-tau * t);
+        final double ut = a * (1 - x1);
+        value[i] = b + (i0 + ut) * x2;
+      }
+      return value;
     }
   }
 
@@ -1911,6 +1994,32 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       }
       return new Pair<>(new ArrayRealVector(value, false),
           new Array2DRowRealMatrix(jacobian, false));
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param point {i0, A, tD}
+     */
+    @Override
+    public double[] values(RealVector point) {
+      final double[] value = new double[size];
+      final double i0 = point.getEntry(0);
+      final double a = point.getEntry(1);
+      final double tD = point.getEntry(2);
+
+      // Special case when t=0
+      value[0] = i0;
+
+      for (int i = 1; i < size; i++) {
+        final double t = i * interval;
+        final double x = 2.0 * tD / t;
+        final double bi0 = Bessel.i0(x);
+        final double bi1 = Bessel.i1(x);
+        final double x1 = Math.exp(-x);
+        value[i] = i0 + a * (x1 * (bi0 + bi1));
+      }
+      return value;
     }
   }
 
@@ -2005,6 +2114,37 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       }
       return new Pair<>(new ArrayRealVector(value, false),
           new Array2DRowRealMatrix(jacobian, false));
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param point {i0, A, tD, B, tau}
+     */
+    @Override
+    public double[] values(RealVector point) {
+      final double[] value = new double[size];
+      final double i0 = point.getEntry(0);
+      final double a = point.getEntry(1);
+      final double tD = point.getEntry(2);
+      final double b = point.getEntry(3);
+      final double tau = point.getEntry(4);
+
+      // Special case when t=0
+      value[0] = b + i0;
+
+      for (int i = 1; i < size; i++) {
+        final double t = i * interval;
+        final double x = 2.0 * tD / t;
+        final double bi0 = Bessel.i0(x);
+        final double bi1 = Bessel.i1(x);
+        final double x1 = Math.exp(-x);
+        final double x2 = Math.exp(-tau * t);
+        final double x3 = x1 * (bi0 + bi1);
+        final double x4 = (i0 + a * x3) * x2;
+        value[i] = b + x4;
+      }
+      return value;
     }
   }
 

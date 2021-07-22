@@ -24,7 +24,6 @@
 
 package uk.ac.sussex.gdsc.utils;
 
-import org.apache.commons.math3.fitting.leastsquares.MultivariateJacobianFunction;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
@@ -38,6 +37,7 @@ import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.Bessel;
 import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.DecayFunction;
 import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.DiffusionLimitedRecoveryFunction;
 import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.DiffusionLimitedRecoveryFunctionB;
+import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.FrapFunction;
 import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.ReactionLimitedRecoveryFunction;
 import uk.ac.sussex.gdsc.utils.FrapAnalysis_PlugIn.ReactionLimitedRecoveryFunctionB;
 
@@ -50,7 +50,7 @@ class FrapAnalysisPluginTest {
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
-      final MultivariateJacobianFunction f = new DecayFunction(size, 1);
+      final FrapFunction f = new DecayFunction(size, 1);
       for (final double b : new double[] {5, 10}) {
         for (final double a : new double[] {20, 30}) {
           for (final double tau : new double[] {0.5 / size, 1.0 / size, 2.0 / size}) {
@@ -64,6 +64,8 @@ class FrapAnalysisPluginTest {
               final double ft = b + a * Math.exp(-tau * t);
               TestAssertions.assertTest(ft, value[t], test, "value");
             }
+            Assertions.assertArrayEquals(value, f.values(point));
+
             // Columns of the Jacobian
             final double[] dfda1 = p.getSecond().getColumn(0);
             final double[] dfdb1 = p.getSecond().getColumn(1);
@@ -106,7 +108,7 @@ class FrapAnalysisPluginTest {
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
-      final MultivariateJacobianFunction f = new ReactionLimitedRecoveryFunction(size, 1);
+      final FrapFunction f = new ReactionLimitedRecoveryFunction(size, 1);
       for (final double i0 : new double[] {20, 30}) {
         for (final double a : new double[] {5, 10}) {
           for (final double koff : new double[] {0.5 / size, 1.0 / size, 2.0 / size}) {
@@ -120,6 +122,8 @@ class FrapAnalysisPluginTest {
               final double ft = i0 + a * (1 - Math.exp(-koff * t));
               TestAssertions.assertTest(ft, value[t], test, "value");
             }
+            Assertions.assertArrayEquals(value, f.values(point));
+
             // Columns of the Jacobian
             final double[] dfda1 = p.getSecond().getColumn(0);
             final double[] dfdb1 = p.getSecond().getColumn(1);
@@ -162,7 +166,7 @@ class FrapAnalysisPluginTest {
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
-      final MultivariateJacobianFunction f = new ReactionLimitedRecoveryFunctionB(size, 1);
+      final FrapFunction f = new ReactionLimitedRecoveryFunctionB(size, 1);
       for (final double i0 : new double[] {20, 30}) {
         for (final double a : new double[] {5, 10}) {
           for (final double koff : new double[] {0.5 / size, 1.0 / size, 2.0 / size}) {
@@ -179,6 +183,8 @@ class FrapAnalysisPluginTest {
                   final double ft = b + (i0 + a * (1 - Math.exp(-koff * t))) * Math.exp(-tau * t);
                   TestAssertions.assertTest(ft, value[t], test, "value");
                 }
+                Assertions.assertArrayEquals(value, f.values(point));
+
                 // Columns of the Jacobian
                 final double[] dfda1 = p.getSecond().getColumn(0);
                 final double[] dfdb1 = p.getSecond().getColumn(1);
@@ -242,7 +248,7 @@ class FrapAnalysisPluginTest {
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
-      final MultivariateJacobianFunction f = new DiffusionLimitedRecoveryFunction(size, 1);
+      final FrapFunction f = new DiffusionLimitedRecoveryFunction(size, 1);
       for (final double i0 : new double[] {20, 30}) {
         for (final double a : new double[] {5, 10}) {
           for (final double tD : new double[] {0.5 / size, 1.0 / size, 2.0 / size}) {
@@ -258,6 +264,8 @@ class FrapAnalysisPluginTest {
               final double ft = i0 + a * (Math.exp(-x) * (Bessel.i0(x) + Bessel.i1(x)));
               TestAssertions.assertTest(ft, value[t], test, "value");
             }
+            Assertions.assertArrayEquals(value, f.values(point));
+
             // Columns of the Jacobian
             final double[] dfda1 = p.getSecond().getColumn(0);
             final double[] dfdb1 = p.getSecond().getColumn(1);
@@ -293,7 +301,6 @@ class FrapAnalysisPluginTest {
     }
   }
 
-
   @Test
   void canComputeDiffusionLimitedRecoveryFunctionB() {
     final double delta = 0x1.0p-30;
@@ -301,7 +308,7 @@ class FrapAnalysisPluginTest {
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
-      final MultivariateJacobianFunction f = new DiffusionLimitedRecoveryFunctionB(size, 1);
+      final FrapFunction f = new DiffusionLimitedRecoveryFunctionB(size, 1);
       for (final double i0 : new double[] {20, 30}) {
         for (final double a : new double[] {5, 10}) {
           for (final double tD : new double[] {0.5 / size, 1.0 / size, 2.0 / size}) {
@@ -321,6 +328,8 @@ class FrapAnalysisPluginTest {
                       * Math.exp(-tau * t);
                   TestAssertions.assertTest(ft, value[t], test, "value");
                 }
+                Assertions.assertArrayEquals(value, f.values(point));
+
                 // Columns of the Jacobian
                 final double[] dfda1 = p.getSecond().getColumn(0);
                 final double[] dfdb1 = p.getSecond().getColumn(1);
