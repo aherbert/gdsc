@@ -51,6 +51,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
+import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.exception.ConvergenceException;
 import org.apache.commons.math3.exception.TooManyIterationsException;
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresFactory;
@@ -66,6 +67,14 @@ import org.apache.commons.math3.linear.DiagonalMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.optim.ConvergenceChecker;
+import org.apache.commons.math3.optim.MaxEval;
+import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
+import org.apache.commons.math3.optim.univariate.BracketFinder;
+import org.apache.commons.math3.optim.univariate.BrentOptimizer;
+import org.apache.commons.math3.optim.univariate.SearchInterval;
+import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
+import org.apache.commons.math3.optim.univariate.UnivariateOptimizer;
+import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Pair;
 import uk.ac.sussex.gdsc.UsageTracker;
@@ -262,7 +271,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     gd.addCheckbox("Show_bleached_regions", settings.showBleachedRegions);
     gd.addCheckbox("Fit_nested_models", settings.nestedModels);
     gd.addDirectoryField("Results_dir", settings.resultsDir, 30);
-    gd.addNumericField("Diffusion_coefficient", settings.diffusionCoefficient, -3, 6, "px^2/frame");
+    // gd.addNumericField("Diffusion_coefficient", settings.diffusionCoefficient, -3, 6,
+    // "px^2/frame");
     gd.addNumericField("Background_size", settings.backgroundSize, 0);
     gd.showDialog();
     settings.save();
@@ -285,7 +295,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     settings.showBleachedRegions = gd.getNextBoolean();
     settings.nestedModels = gd.getNextBoolean();
     settings.resultsDir = gd.getNextString();
-    settings.diffusionCoefficient = gd.getNextNumber();
+    // settings.diffusionCoefficient = gd.getNextNumber();
     settings.backgroundSize = (int) gd.getNextNumber();
 
     if (gd.invalidNumber()) {
@@ -1088,8 +1098,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       return null;
     }
     // Offset the search region. This includes the offset for the first aligned slice.
-    int ox = settings.backgroundSize - (int) dx[0];
-    int oy = settings.backgroundSize - (int) dy[0];
+    final int ox = settings.backgroundSize - (int) dx[0];
+    final int oy = settings.backgroundSize - (int) dy[0];
     region.x += ox;
     region.y += oy;
     // Find the lowest region
@@ -1518,8 +1528,10 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     // D = w^2 / 4tD
     // Assume the region is a circle
     final double w2 = distanceScale * distanceScale * size / Math.PI;
-    double td = w2 / (4 * timeScale
-        * ((settings.diffusionCoefficient > 0) ? settings.diffusionCoefficient : 1));
+
+    // Estimate td using the current fit for i0 and a
+    double td = estimateTd(yy, i0, a);
+
     final FrapFunction model3 = new DiffusionLimitedRecoveryFunction(yy.length, timeScale);
     final RealVector start3 = new ArrayRealVector(new double[] {i0, a, td}, false);
 
@@ -1613,6 +1625,51 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
     // No model
     return null;
+  }
+
+  /**
+   * Estimate tD (time coefficient of diffusion). This optimises the tD component of the
+   * DiffusionLimitedRecoveryFunction.
+   *
+   * @param yy the target values
+   * @param i0 the baseline for the intensity
+   * @param a the magnitude of the recovery
+   * @return tD
+   */
+  private double estimateTd(double[] yy, double i0, double a) {
+    // Optimise the tD component of the DiffusionLimitedRecoveryFunction
+    final UnivariateFunction func = new UnivariateFunction() {
+      RealVector point = new ArrayRealVector(new double[] {i0, a, 0});
+      DiffusionLimitedRecoveryFunction fun =
+          new DiffusionLimitedRecoveryFunction(yy.length, timeScale);
+
+      @Override
+      public double value(double x) {
+        point.setEntry(2, x);
+        double ss = 0;
+        final double[] y = fun.values(point);
+        for (int i = 0; i < y.length; i++) {
+          ss += MathUtils.pow2(yy[i] - y[i]);
+        }
+        return ss;
+      }
+    };
+    try {
+      final BracketFinder bracket = new BracketFinder();
+      bracket.search(func, GoalType.MINIMIZE, 0.05, 5);
+      final UnivariateOptimizer optimiser = new BrentOptimizer(1e-5, 1e-8);
+      final UnivariatePointValuePair next = optimiser.optimize(GoalType.MINIMIZE, new MaxEval(3000),
+          new SearchInterval(bracket.getLo(), bracket.getHi(), bracket.getMid()),
+          new UnivariateObjectiveFunction(func));
+      if (next == null) {
+        return bracket.getMid();
+      }
+      return next.getPoint();
+    } catch (final Exception ex) {
+      // If we cannot find a value by bracketing and then optimisation then it is unlikely
+      // any fitting of the function will work. Just return 1 so the next stage can go ahead.
+      return 1;
+    }
   }
 
   /**
