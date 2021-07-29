@@ -144,7 +144,6 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     boolean subPixelAlignement;
     boolean showAlignmentOffsets;
     boolean showAlignedImage;
-    int emaWindowSize;
     double scoreThreshold;
     boolean circularRegion;
     int minRegionSize;
@@ -153,8 +152,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     int bleachedBorder;
     boolean showBleachedRegions;
     boolean nestedModels;
-    double diffusionCoefficient;
     String resultsDir;
+    boolean saveIndividualFiles;
     int backgroundSize;
 
     /**
@@ -164,13 +163,11 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       maxShift = 40;
       alignmentIterations = 2;
       showAlignedImage = true;
-      emaWindowSize = 10;
       scoreThreshold = 7;
       circularRegion = true;
       minRegionSize = 100;
       bleachedBorder = 3;
       resultsDir = "";
-      diffusionCoefficient = 1;
       backgroundSize = 20;
     }
 
@@ -186,7 +183,6 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       subPixelAlignement = source.subPixelAlignement;
       showAlignmentOffsets = source.showAlignmentOffsets;
       showAlignedImage = source.showAlignedImage;
-      emaWindowSize = source.emaWindowSize;
       scoreThreshold = source.scoreThreshold;
       circularRegion = source.circularRegion;
       minRegionSize = source.minRegionSize;
@@ -195,8 +191,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       bleachedBorder = source.bleachedBorder;
       showBleachedRegions = source.showBleachedRegions;
       nestedModels = source.nestedModels;
-      diffusionCoefficient = source.diffusionCoefficient;
       resultsDir = source.resultsDir;
+      saveIndividualFiles = source.saveIndividualFiles;
       backgroundSize = source.backgroundSize;
     }
 
@@ -261,7 +257,6 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     gd.addCheckbox("Subpixel_alignment", settings.subPixelAlignement);
     gd.addCheckbox("Show_alignment_offsets", settings.showAlignmentOffsets);
     gd.addCheckbox("Show_aligned", settings.showAlignedImage);
-    // gd.addSlider("Window_size", 3, 20, settings.emaWindowSize);
     gd.addSlider("Score_threshold", 5, 20, settings.scoreThreshold);
     gd.addCheckbox("Circular_region", settings.circularRegion);
     gd.addNumericField("Min_region_size", settings.minRegionSize, 0);
@@ -271,8 +266,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     gd.addCheckbox("Show_bleached_regions", settings.showBleachedRegions);
     gd.addCheckbox("Fit_nested_models", settings.nestedModels);
     gd.addDirectoryField("Results_dir", settings.resultsDir, 30);
-    // gd.addNumericField("Diffusion_coefficient", settings.diffusionCoefficient, -3, 6,
-    // "px^2/frame");
+    gd.addCheckbox("Save_individual_files", settings.saveIndividualFiles);
     gd.addNumericField("Background_size", settings.backgroundSize, 0);
     gd.showDialog();
     settings.save();
@@ -285,7 +279,6 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     settings.subPixelAlignement = gd.getNextBoolean();
     settings.showAlignmentOffsets = gd.getNextBoolean();
     settings.showAlignedImage = gd.getNextBoolean();
-    // settings.emaWindowSize = (int) gd.getNextNumber();
     settings.scoreThreshold = gd.getNextNumber();
     settings.circularRegion = gd.getNextBoolean();
     settings.minRegionSize = (int) gd.getNextNumber();
@@ -295,7 +288,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     settings.showBleachedRegions = gd.getNextBoolean();
     settings.nestedModels = gd.getNextBoolean();
     settings.resultsDir = gd.getNextString();
-    // settings.diffusionCoefficient = gd.getNextNumber();
+    settings.saveIndividualFiles = gd.getNextBoolean();
     settings.backgroundSize = (int) gd.getNextNumber();
 
     if (gd.invalidNumber()) {
@@ -1253,6 +1246,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       return;
     }
     final int n = data.length;
+    final int nm1 = n - 1;
     final int size = data[0].length;
     final String[] frames = new String[size];
     for (int t = 0; t < size; t++) {
@@ -1261,50 +1255,95 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
     final String prefix = FileUtils.removeExtension(imp.getTitle()).replace(' ', '_');
 
-    for (int i = 0; i < n; i++) {
-      final Path path = i == n - 1 ? Paths.get(settings.resultsDir, prefix + "_foreground.csv")
-          : Paths.get(settings.resultsDir, prefix + "_region" + (i + 1) + ".csv");
-      final float[] limits = MathUtils.limits(data[i]);
-      final float min = limits[0];
-      final float range = limits[1] - min;
-      try (BufferedWriter out = Files.newBufferedWriter(path)) {
-        out.write("# Size = ");
-        out.write(Integer.toString(countHistogram[i + 1]));
+    // Save combined raw data file
+    Path path = Paths.get(settings.resultsDir, prefix + ".csv");
+    try (BufferedWriter out = Files.newBufferedWriter(path)) {
+      out.write("# Foreground size = ");
+      out.write(Integer.toString(countHistogram[n]));
+      out.newLine();
+      out.write("# Background size = ");
+      out.write(Integer.toString(MathUtils.pow2(2 * settings.backgroundSize + 1)));
+      out.newLine();
+      for (int i = 1; i < n; i++) {
+        out.write("# Region ");
+        out.write(Integer.toString(i));
+        out.write(" size = ");
+        out.write(Integer.toString(countHistogram[i]));
         out.newLine();
-
-        out.write("Time (" + timeUnit + "),Mean,Norm");
-        out.newLine();
-
-        for (int t = 0; t < size; t++) {
-          out.write(frames[t]);
-          out.write(Float.toString(data[i][t]));
-          out.write(',');
-          out.write(Float.toString((data[i][t] - min) / range));
-          out.newLine();
-        }
-      } catch (final IOException e) {
-        ImageJUtils.log("Failed to save data: " + e.getMessage());
-        break;
       }
-    }
-    if (background != null) {
-      final Path path = Paths.get(settings.resultsDir, prefix + "_background.csv");
-      try (BufferedWriter out = Files.newBufferedWriter(path)) {
-        out.write("# Size = ");
-        final int width = 2 * settings.backgroundSize + 1;
-        out.write(Integer.toString(width * width));
-        out.newLine();
 
-        out.write("Time (" + timeUnit + "),Mean");
-        out.newLine();
+      out.write("Time (" + timeUnit + "),foreground,background");
+      for (int i = 1; i < n; i++) {
+        out.write(",region");
+        out.write(Integer.toString(i));
+      }
+      out.newLine();
 
-        for (int t = 0; t < size; t++) {
-          out.write(frames[t]);
-          out.write(Float.toString(background[t]));
-          out.newLine();
+      final float[] fg = data[nm1];
+      final float[] bg = background != null ? background : new float[fg.length];
+
+      for (int t = 0; t < size; t++) {
+        out.write(frames[t]);
+        out.write(Float.toString(fg[t]));
+        out.write(',');
+        out.write(Float.toString(bg[t]));
+        for (int i = 0; i < nm1; i++) {
+          out.write(',');
+          out.write(Float.toString(data[i][t]));
         }
-      } catch (final IOException e) {
-        ImageJUtils.log("Failed to save background data: " + e.getMessage());
+        out.newLine();
+      }
+    } catch (final IOException e) {
+      ImageJUtils.log("Failed to save combined data: " + e.getMessage());
+      return;
+    }
+
+    if (settings.saveIndividualFiles) {
+      for (int i = 0; i < n; i++) {
+        path = i == nm1 ? Paths.get(settings.resultsDir, prefix + "_foreground.csv")
+            : Paths.get(settings.resultsDir, prefix + "_region" + (i + 1) + ".csv");
+        final float[] limits = MathUtils.limits(data[i]);
+        final float min = limits[0];
+        final float range = limits[1] - min;
+        try (BufferedWriter out = Files.newBufferedWriter(path)) {
+          out.write("# Size = ");
+          out.write(Integer.toString(countHistogram[i + 1]));
+          out.newLine();
+
+          out.write("Time (" + timeUnit + "),Mean,Norm");
+          out.newLine();
+
+          for (int t = 0; t < size; t++) {
+            out.write(frames[t]);
+            out.write(Float.toString(data[i][t]));
+            out.write(',');
+            out.write(Float.toString((data[i][t] - min) / range));
+            out.newLine();
+          }
+        } catch (final IOException e) {
+          ImageJUtils.log("Failed to save region data: " + e.getMessage());
+          break;
+        }
+      }
+      if (background != null) {
+        path = Paths.get(settings.resultsDir, prefix + "_background.csv");
+        try (BufferedWriter out = Files.newBufferedWriter(path)) {
+          out.write("# Size = ");
+          final int width = 2 * settings.backgroundSize + 1;
+          out.write(Integer.toString(width * width));
+          out.newLine();
+
+          out.write("Time (" + timeUnit + "),Mean");
+          out.newLine();
+
+          for (int t = 0; t < size; t++) {
+            out.write(frames[t]);
+            out.write(Float.toString(background[t]));
+            out.newLine();
+          }
+        } catch (final IOException e) {
+          ImageJUtils.log("Failed to save background data: " + e.getMessage());
+        }
       }
     }
   }
