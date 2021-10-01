@@ -131,10 +131,6 @@ Software for microscopy image analysis
     </dependency>
     <dependency>
       <groupId>sc.fiji</groupId>
-      <artifactId>TrackMate_</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>sc.fiji</groupId>
       <artifactId>3D_Viewer</artifactId>
     </dependency>
 
