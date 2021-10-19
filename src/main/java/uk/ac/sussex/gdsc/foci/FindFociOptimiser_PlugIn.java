@@ -197,10 +197,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   // For the multi-image mode
   private boolean multiMode;
 
-  @SuppressWarnings("rawtypes")
-  private Vector checkbox;
-  @SuppressWarnings("rawtypes")
-  private Vector choice;
+  private Vector<Checkbox> checkbox;
+  private Vector<Choice> choice;
 
   // The number of combinations
   private int combinations;
@@ -1432,65 +1430,66 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     // Check if a sub-optimal best result was obtained at the limit of the optimisation range
     if (result.results.get(0).metrics[Result.F1] < 1.0) {
       final StringBuilder sb = new StringBuilder();
-      @SuppressWarnings("resource")
-      final Formatter formatter = new Formatter(sb);
-
-      final FindFociProcessorOptions processorOptions = bestOptions.processorOptions;
-      if (backgroundMethodHasParameter(processorOptions.getBackgroundMethod())) {
-        if (processorOptions.getBackgroundParameter() == backgroundParameterMin) {
-          append(formatter, "- Background parameter @ lower limit (%g)\n",
-              processorOptions.getBackgroundParameter());
-        } else if (processorOptions.getBackgroundParameter()
-            + backgroundParameterInterval > backgroundParameterMax) {
-          append(formatter, "- Background parameter @ upper limit (%g)\n",
-              processorOptions.getBackgroundParameter());
+      try (Formatter formatter = new Formatter(sb)) {
+        final FindFociProcessorOptions processorOptions = bestOptions.processorOptions;
+        if (backgroundMethodHasParameter(processorOptions.getBackgroundMethod())) {
+          if (processorOptions.getBackgroundParameter() == backgroundParameterMin) {
+            append(formatter, "- Background parameter @ lower limit (%g)\n",
+                processorOptions.getBackgroundParameter());
+          } else if (processorOptions.getBackgroundParameter()
+              + backgroundParameterInterval > backgroundParameterMax) {
+            append(formatter, "- Background parameter @ upper limit (%g)\n",
+                processorOptions.getBackgroundParameter());
+          }
         }
-      }
-      if (searchMethodHasParameter(processorOptions.getSearchMethod())) {
-        if (processorOptions.getSearchParameter() == searchParameterMin && searchParameterMin > 0) {
-          append(formatter, "- Search parameter @ lower limit (%g)\n",
-              processorOptions.getSearchParameter());
-        } else if (processorOptions.getSearchParameter()
-            + searchParameterInterval > searchParameterMax && searchParameterMax < 1) {
-          append(formatter, "- Search parameter @ upper limit (%g)\n",
-              processorOptions.getSearchParameter());
+        if (searchMethodHasParameter(processorOptions.getSearchMethod())) {
+          if (processorOptions.getSearchParameter() == searchParameterMin
+              && searchParameterMin > 0) {
+            append(formatter, "- Search parameter @ lower limit (%g)\n",
+                processorOptions.getSearchParameter());
+          } else if (processorOptions.getSearchParameter()
+              + searchParameterInterval > searchParameterMax && searchParameterMax < 1) {
+            append(formatter, "- Search parameter @ upper limit (%g)\n",
+                processorOptions.getSearchParameter());
+          }
         }
-      }
-      if (processorOptions.getMinSize() == minSizeMin && minSizeMin > 1) {
-        append(formatter, "- Min Size @ lower limit (%d)\n", processorOptions.getMinSize());
-      } else if (processorOptions.getMinSize() + minSizeInterval > minSizeMax) {
-        append(formatter, "- Min Size @ upper limit (%d)\n", processorOptions.getMinSize());
-      }
+        if (processorOptions.getMinSize() == minSizeMin && minSizeMin > 1) {
+          append(formatter, "- Min Size @ lower limit (%d)\n", processorOptions.getMinSize());
+        } else if (processorOptions.getMinSize() + minSizeInterval > minSizeMax) {
+          append(formatter, "- Min Size @ upper limit (%d)\n", processorOptions.getMinSize());
+        }
 
-      if (processorOptions.getPeakParameter() == peakParameterMin && peakParameterMin > 0) {
-        append(formatter, "- Peak parameter @ lower limit (%g)\n",
-            processorOptions.getPeakParameter());
-      } else if (processorOptions.getPeakParameter() + peakParameterInterval > peakParameterMax
-          && peakParameterMax < 1) {
-        append(formatter, "- Peak parameter @ upper limit (%g)\n",
-            processorOptions.getPeakParameter());
-      }
+        if (processorOptions.getPeakParameter() == peakParameterMin && peakParameterMin > 0) {
+          append(formatter, "- Peak parameter @ lower limit (%g)\n",
+              processorOptions.getPeakParameter());
+        } else if (processorOptions.getPeakParameter() + peakParameterInterval > peakParameterMax
+            && peakParameterMax < 1) {
+          append(formatter, "- Peak parameter @ upper limit (%g)\n",
+              processorOptions.getPeakParameter());
+        }
 
-      if (processorOptions.getGaussianBlur() == blurArray[0] && blurArray[0] > 0) {
-        append(formatter, "- Gaussian blur @ lower limit (%g)\n",
-            processorOptions.getGaussianBlur());
-      } else if (processorOptions.getGaussianBlur() == blurArray[blurArray.length - 1]) {
-        append(formatter, "- Gaussian blur @ upper limit (%g)\n",
-            processorOptions.getGaussianBlur());
-      }
+        if (processorOptions.getGaussianBlur() == blurArray[0] && blurArray[0] > 0) {
+          append(formatter, "- Gaussian blur @ lower limit (%g)\n",
+              processorOptions.getGaussianBlur());
+        } else if (processorOptions.getGaussianBlur() == blurArray[blurArray.length - 1]) {
+          append(formatter, "- Gaussian blur @ upper limit (%g)\n",
+              processorOptions.getGaussianBlur());
+        }
 
-      if (processorOptions.getMaxPeaks() == result.results.get(0).count) {
-        append(formatter, "- Total peaks == Maximum Peaks (%d)\n", processorOptions.getMaxPeaks());
-      }
+        if (processorOptions.getMaxPeaks() == result.results.get(0).count) {
+          append(formatter, "- Total peaks == Maximum Peaks (%d)\n",
+              processorOptions.getMaxPeaks());
+        }
 
-      if (sb.length() > 0) {
-        sb.insert(0,
-            "Optimal result ("
-                + IJ.d2s(result.results.get(0).metrics[getSortIndex(settings.resultsSortMethod)], 4)
-                + ") for " + imp.getShortTitle() + " obtained at the following limits:\n");
-        sb.append("You may want to increase the optimisation space.");
+        if (sb.length() > 0) {
+          sb.insert(0,
+              "Optimal result (" + IJ
+                  .d2s(result.results.get(0).metrics[getSortIndex(settings.resultsSortMethod)], 4)
+                  + ") for " + imp.getShortTitle() + " obtained at the following limits:\n");
+          sb.append("You may want to increase the optimisation space.");
 
-        showIncreaseSpaceMessage(sb.toString());
+          showIncreaseSpaceMessage(sb.toString());
+        }
       }
     }
   }
@@ -2190,6 +2189,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     return false;
   }
 
+  // Required to handle ImageJ Vector rawtypes
+  @SuppressWarnings("unchecked")
   private boolean showDialog(ImagePlus imp) {
     // Ensure the Dialog options are recorded. These are used later to write to file.
     final boolean recorderOn = Recorder.record;
@@ -3604,6 +3605,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
    *
    * @param gd the dialog
    */
+  // Required to handle ImageJ Vector rawtypes
+  @SuppressWarnings("unchecked")
   private void addListeners(GenericDialog gd) {
     // Add a listener to all the dialog fields
     final TextListener tl = event -> dialogItemChanged(gd, event);
@@ -3627,6 +3630,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     }
   }
 
+  // Required to handle ImageJ Vector rawtypes
+  @SuppressWarnings("unchecked")
   private boolean dialogItemChanged(GenericDialog gd, AWTEvent event) {
     if (event == null || event.getSource() == null || !lock.acquire()) {
       return true;
@@ -3635,7 +3640,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     try {
       // Check if this is the settings checkbox
       if (event.getSource() == choice.get(0)) {
-        final Choice thisChoice = (Choice) choice.get(0);
+        final Choice thisChoice = choice.get(0);
 
         // If the choice is currently custom save the current values so they can be restored
         if (custom) {
@@ -3658,7 +3663,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
         // A change to any other field makes this a custom setting
         // => Set the settings drop-down to custom
-        final Choice thisChoice = (Choice) choice.get(0);
+        final Choice thisChoice = choice.get(0);
         if (thisChoice.getSelectedIndex() != 0) {
           custom = true;
           thisChoice.select(0);
@@ -3671,9 +3676,9 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
           if (cb.getState()) {
             // Only checkbox 1 & 2 are complementary
             if (cb.equals(checkbox.get(0))) {
-              ((Checkbox) checkbox.get(1)).setState(false);
+              checkbox.get(1).setState(false);
             } else if (cb.equals(checkbox.get(1))) {
-              ((Checkbox) checkbox.get(0)).setState(false);
+              checkbox.get(0).setState(false);
             }
           }
         }
@@ -3684,6 +3689,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     return true;
   }
 
+  // Required to handle ImageJ Vector rawtypes
+  @SuppressWarnings("unchecked")
   private void saveCustomSettings(GenericDialog gd) {
     final DialogSettings s = presetSettings.get(0);
     s.text.clear();
@@ -3707,6 +3714,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     }
   }
 
+  // Required to handle ImageJ Vector rawtypes
+  @SuppressWarnings("unchecked")
   private void applySettings(GenericDialog gd, DialogSettings settings) {
     lastTime = System.currentTimeMillis();
     int index = 0;
