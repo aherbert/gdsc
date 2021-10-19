@@ -37,6 +37,9 @@ import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.io.Opener;
 import ij.io.RoiEncoder;
+import ij.macro.ExtensionDescriptor;
+import ij.macro.Functions;
+import ij.macro.MacroExtension;
 import ij.plugin.FolderOpener;
 import ij.plugin.PlugIn;
 import ij.process.ColorProcessor;
@@ -121,7 +124,7 @@ import uk.ac.sussex.gdsc.utils.GaussianFit_PlugIn;
  * <p>Stopping criteria for region growing routines are partly based on the options in PRIISM
  * (http://www.msg.ucsf.edu/IVE/index.html).
  */
-public class FindFoci_PlugIn implements PlugIn {
+public class FindFoci_PlugIn implements PlugIn, MacroExtension {
   /** Get the title of the ImageJ plugin. */
   public static final String TITLE = "FindFoci";
 
@@ -930,6 +933,11 @@ public class FindFoci_PlugIn implements PlugIn {
 
     if ("settings".equals(arg)) {
       showSettingsDialog();
+      return;
+    }
+
+    if ("ext".equals(arg)) {
+      setupExtensions();
       return;
     }
 
@@ -2581,5 +2589,55 @@ public class FindFoci_PlugIn implements PlugIn {
    */
   public void setOptimisedProcessor(boolean optimisedProcessor) {
     this.optimisedProcessor = optimisedProcessor;
+  }
+
+  private void setupExtensions() {
+    Functions.registerExtensions(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String handleExtension(String name, Object[] args) {
+    if (name == null) {
+      return "";
+    }
+    if (name.equals("getNumberOfPeaks")) {
+      return getNumberOfPeaks(args);
+    }
+    return "";
+  }
+
+  /**
+   * Macro extension function.
+   *
+   * <p>Gets the number of results from the last call of FindFoci.
+   *
+   * @param args An array of output variables.
+   *
+   *        <ul>
+   *
+   *        <li>[0]: Double[1] - output: the number of species
+   *
+   *        </ul>
+   * @return Empty string
+   */
+  private static String getNumberOfPeaks(Object[] args) {
+    int peaks = 0;
+    final FindFociPluginResult lastResult = lastResults.get();
+    if (lastResult != null) {
+      peaks = lastResult.results.size();
+    }
+    final Double[] array = (Double[]) args[0];
+    array[0] = Double.valueOf(peaks);
+    return "";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ExtensionDescriptor[] getExtensionFunctions() {
+    final LocalList<ExtensionDescriptor> list = new LocalList<>();
+    list.add(ExtensionDescriptor.newDescriptor("getNumberOfPeaks", this,
+        MacroExtension.ARG_NUMBER + MacroExtension.ARG_OUTPUT));
+    return list.toArray(new ExtensionDescriptor[0]);
   }
 }
