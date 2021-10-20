@@ -461,128 +461,130 @@ public class SpotDensity_PlugIn implements PlugIn {
   }
 
   private static TextWindow createResultsWindow() {
-    return ImageJUtils.refresh(resultsWindowRef, () -> {
-      final TextWindow resultsWindow =
-          new TextWindow(TITLE + " Summary", createResultsHeader(), "", 700, 300);
+    return ImageJUtils.refresh(resultsWindowRef, SpotDensity_PlugIn::newResultsWindow);
+  }
 
-      // Allow clicking multiple results in the window to show a combined curve
-      resultsWindow.getTextPanel().addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseClicked(MouseEvent event) {
-          TextPanel tp = null;
-          if (event.getSource() instanceof TextPanel) {
-            tp = (TextPanel) event.getSource();
-          } else if (event.getSource() instanceof Canvas
-              && ((Canvas) event.getSource()).getParent() instanceof TextPanel) {
-            tp = (TextPanel) ((Canvas) event.getSource()).getParent();
-          } else {
-            return;
-          }
+  private static TextWindow newResultsWindow() {
+    final TextWindow resultsWindow =
+        new TextWindow(TITLE + " Summary", createResultsHeader(), "", 700, 300);
 
-          // Atomically get the current size of the results
-          int resultsSize;
-          synchronized (results1) {
-            resultsSize = results1.size();
-          }
+    // Allow clicking multiple results in the window to show a combined curve
+    resultsWindow.getTextPanel().addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent event) {
+        TextPanel tp = null;
+        if (event.getSource() instanceof TextPanel) {
+          tp = (TextPanel) event.getSource();
+        } else if (event.getSource() instanceof Canvas
+            && ((Canvas) event.getSource()).getParent() instanceof TextPanel) {
+          tp = (TextPanel) ((Canvas) event.getSource()).getParent();
+        } else {
+          return;
+        }
 
-          final int[] ids = new int[resultsSize];
-          int count = 0;
-          for (int i = tp.getSelectionStart(); i <= tp.getSelectionEnd(); i++) {
-            final String line = tp.getLine(i);
-            try {
-              final String sid = line.substring(0, line.indexOf('\t'));
-              final int id = Integer.parseInt(sid);
-              if (id > 0 && id <= resultsSize) {
-                ids[count++] = id;
-              }
-            } catch (final IndexOutOfBoundsException | NumberFormatException ex) {
-              // Ignore for now
+        // Atomically get the current size of the results
+        int resultsSize;
+        synchronized (results1) {
+          resultsSize = results1.size();
+        }
+
+        final int[] ids = new int[resultsSize];
+        int count = 0;
+        for (int i = tp.getSelectionStart(); i <= tp.getSelectionEnd(); i++) {
+          final String line = tp.getLine(i);
+          try {
+            final String sid = line.substring(0, line.indexOf('\t'));
+            final int id = Integer.parseInt(sid);
+            if (id > 0 && id <= resultsSize) {
+              ids[count++] = id;
             }
+          } catch (final IndexOutOfBoundsException | NumberFormatException ex) {
+            // Ignore for now
           }
+        }
 
-          if (count > 2) {
-            // Ask the user which curves to combine since we may want to ignore some
-            // between start and end
-            final GenericDialog gd = new GenericDialog(TITLE);
-            gd.addMessage("Select which curves to combine");
+        if (count > 2) {
+          // Ask the user which curves to combine since we may want to ignore some
+          // between start and end
+          final GenericDialog gd = new GenericDialog(TITLE);
+          gd.addMessage("Select which curves to combine");
 
-            int count2 = 0;
-            final int rowLimit = 20;
-            if (count <= rowLimit) {
-              // Use checkboxes
-              for (int i = 0; i < count; i++) {
-                gd.addCheckbox("ID_" + ids[i], true);
-              }
-              gd.showDialog();
-              if (gd.wasCanceled()) {
-                return;
-              }
-              for (int i = 0; i < count; i++) {
-                if (gd.getNextBoolean()) {
-                  ids[count2++] = ids[i];
-                }
-              }
-            } else {
-              // Use a text area
-              final StringBuilder sb = new StringBuilder(Integer.toString(ids[0]));
-              for (int i = 1; i < count; i++) {
-                sb.append("\n").append(ids[i]);
-              }
-              gd.addTextAreas(sb.toString(), null, rowLimit, 10);
-              gd.showDialog();
-              if (gd.wasCanceled()) {
-                return;
-              }
-              for (final String token : gd.getNextText().split("[ \t\n\r]+")) {
-                try {
-                  final int id = Integer.parseInt(token);
-                  if (id > 0 && id <= resultsSize) {
-                    ids[count2++] = id;
-                  }
-                } catch (final Exception ex) {
-                  // Ignore for now
-                }
-              }
+          int count2 = 0;
+          final int rowLimit = 20;
+          if (count <= rowLimit) {
+            // Use checkboxes
+            for (int i = 0; i < count; i++) {
+              gd.addCheckbox("ID_" + ids[i], true);
             }
-            count = count2;
-          }
-
-          if (count == 0) {
-            return;
-          }
-
-          // Check all curves are the same size and build an average
-          PairCorrelation pairCorrelation = getPairCorrelation(ids[0]);
-          final int length = pairCorrelation.radii.length;
-          int size = pairCorrelation.numberOfPoints;
-          int area = pairCorrelation.area;
-          final double[] radii = pairCorrelation.radii;
-          final double[] pcf = pairCorrelation.pc.clone();
-          for (int i = 1; i < count; i++) {
-            pairCorrelation = getPairCorrelation(ids[i]);
-            if (length != pairCorrelation.radii.length) {
+            gd.showDialog();
+            if (gd.wasCanceled()) {
               return;
             }
-            size += pairCorrelation.numberOfPoints;
-            area += pairCorrelation.area;
-            for (int j = 0; j < length; j++) {
-              // Distance scale must be the same!
-              if (radii[j] != pairCorrelation.radii[j]) {
-                return;
+            for (int i = 0; i < count; i++) {
+              if (gd.getNextBoolean()) {
+                ids[count2++] = ids[i];
               }
-              pcf[j] += pairCorrelation.pc[j];
+            }
+          } else {
+            // Use a text area
+            final StringBuilder sb = new StringBuilder(Integer.toString(ids[0]));
+            for (int i = 1; i < count; i++) {
+              sb.append("\n").append(ids[i]);
+            }
+            gd.addTextAreas(sb.toString(), null, rowLimit, 10);
+            gd.showDialog();
+            if (gd.wasCanceled()) {
+              return;
+            }
+            for (final String token : gd.getNextText().split("[ \t\n\r]+")) {
+              try {
+                final int id = Integer.parseInt(token);
+                if (id > 0 && id <= resultsSize) {
+                  ids[count2++] = id;
+                }
+              } catch (final Exception ex) {
+                // Ignore for now
+              }
             }
           }
-          for (int j = 0; j < length; j++) {
-            pcf[j] /= count;
-          }
-
-          showPairCorrelation(new PairCorrelation(size, area, radii, pcf));
+          count = count2;
         }
-      });
 
-      return resultsWindow;
+        if (count == 0) {
+          return;
+        }
+
+        // Check all curves are the same size and build an average
+        PairCorrelation pairCorrelation = getPairCorrelation(ids[0]);
+        final int length = pairCorrelation.radii.length;
+        int size = pairCorrelation.numberOfPoints;
+        int area = pairCorrelation.area;
+        final double[] radii = pairCorrelation.radii;
+        final double[] pcf = pairCorrelation.pc.clone();
+        for (int i = 1; i < count; i++) {
+          pairCorrelation = getPairCorrelation(ids[i]);
+          if (length != pairCorrelation.radii.length) {
+            return;
+          }
+          size += pairCorrelation.numberOfPoints;
+          area += pairCorrelation.area;
+          for (int j = 0; j < length; j++) {
+            // Distance scale must be the same!
+            if (radii[j] != pairCorrelation.radii[j]) {
+              return;
+            }
+            pcf[j] += pairCorrelation.pc[j];
+          }
+        }
+        for (int j = 0; j < length; j++) {
+          pcf[j] /= count;
+        }
+
+        showPairCorrelation(new PairCorrelation(size, area, radii, pcf));
+      }
     });
+
+    return resultsWindow;
   }
 
   /**
