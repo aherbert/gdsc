@@ -469,7 +469,7 @@ public class ObjectAnalyzer {
       }
       final int value = objectMask[index];
       if (outlines[value] == null) {
-        outlines[value] = outliner.traceOutline(index);
+        outlines[value] = outliner.outline(index);
       }
       // Skip this processed object
       index++;
