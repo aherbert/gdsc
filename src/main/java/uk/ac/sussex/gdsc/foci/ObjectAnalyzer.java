@@ -31,6 +31,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.util.Arrays;
+import uk.ac.sussex.gdsc.core.ij.gui.ObjectOutliner;
 import uk.ac.sussex.gdsc.core.utils.MemoryUtils;
 
 /**
