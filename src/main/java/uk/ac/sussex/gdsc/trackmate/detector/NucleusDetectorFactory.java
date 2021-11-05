@@ -29,7 +29,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
-import fiji.plugin.trackmate.gui.ConfigurationPanel;
+import fiji.plugin.trackmate.gui.components.ConfigurationPanel;
 import fiji.plugin.trackmate.io.IOUtils;
 import fiji.plugin.trackmate.util.TMUtils;
 import java.util.ArrayList;
@@ -38,11 +38,11 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.ImageIcon;
 import net.imagej.ImgPlus;
+import net.imagej.axis.Axes;
+import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
-import net.imglib2.RandomAccessible;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.view.Views;
 import org.jdom2.Element;
 import org.scijava.plugin.Plugin;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
@@ -116,6 +116,9 @@ public class NucleusDetectorFactory<T extends RealType<T> & NativeType<T>>
   /** The image to operate on. Multiple frames, single channel. */
   private ImgPlus<T> img;
 
+  /** The image interval to operate on. The channel information has been removed. */
+  private Interval updatedInterval;
+
   @Override
   public String getInfoText() {
     return INFO_TEXT;
@@ -138,7 +141,9 @@ public class NucleusDetectorFactory<T extends RealType<T> & NativeType<T>>
 
   @Override
   public boolean setTarget(final ImgPlus<T> img, final Map<String, Object> settings) {
+    // The input image here has all dimensions XYZCT if present in the ImageJ image.
     this.img = img;
+    updatedInterval = null;
     calibration = TMUtils.getSpatialCalibration(img);
     if (checkSettings(settings)) {
       // Convert to zero-based index
@@ -221,40 +226,91 @@ public class NucleusDetectorFactory<T extends RealType<T> & NativeType<T>>
 
   @Override
   public SpotDetector<T> getDetector(final Interval interval, final int frame) {
-    final RandomAccessible<T> imFrame1 = prepareFrameImg(frame, targetChannel);
-    final RandomAccessible<T> imFrame2 = prepareFrameImg(frame, analysisChannel);
-    return new NucleusDetector<>(detectorSettings, imFrame1, imFrame2, interval, calibration);
+    final ImgPlus<T> imFrame1 = prepareFrameImg(frame, targetChannel);
+    final ImgPlus<T> imFrame2 = prepareFrameImg(frame, analysisChannel);
+
+    // The interval is prepared in:
+    // TMUtils.getInterval( final ImgPlus< ? > img, final Settings settings )
+    // It will have XY dimensions, Z if present, C if present but no time.
+    // The interval encapsulates the pixels to process in the specified frame.
+    //
+    // The NucleusDetector requires a 2/3D image for one or two channels.
+    // This is prepared for the configured frame **and** channel.
+    //
+    // A 2D image with multiple channels will have an interval of 3 dimensions but the
+    // prepared image will have only 2 dimensions.
+    // So we must update the interval that contains channel information to remove it.
+    // The updated interval can be cached for each call to setTarget.
+
+    Interval newInterval = updatedInterval;
+    if (updatedInterval == null) {
+      if (imFrame1.numDimensions() != interval.numDimensions()) {
+        // Discover the indices for the XYZC interval
+        final int[] xyzc = new int[4];
+        xyzc[0] = img.dimensionIndex(Axes.X);
+        xyzc[1] = img.dimensionIndex(Axes.Y);
+        xyzc[2] = img.dimensionIndex(Axes.Z);
+        xyzc[3] = img.dimensionIndex(Axes.CHANNEL);
+
+        // TrackMate will remove the Time dimension if present and all other indices are
+        // reduced if they were higher.
+        final int tindex = img.dimensionIndex(Axes.TIME);
+        if (tindex >= 0) {
+          for (int i = 0; i < 4; i++) {
+            if (xyzc[i] > tindex) {
+              xyzc[i]--;
+            }
+          }
+        }
+
+        // Get the current interval
+        final long[] min = new long[interval.numDimensions()];
+        final long[] max = new long[interval.numDimensions()];
+        interval.min(min);
+        interval.max(max);
+
+        // Drop the channel to create the final interval
+        final int cindex = xyzc[3];
+        assert cindex >= 0 : "Expected dimension mismatch from channel information in the interval";
+        final long[] nmin = new long[imFrame1.numDimensions()];
+        final long[] nmax = new long[imFrame1.numDimensions()];
+        int nindex = -1;
+        for (int d = 0; d < min.length; d++) {
+          if (d == cindex) {
+            continue;
+          }
+
+          nindex++;
+          nmin[nindex] = min[d];
+          nmax[nindex] = max[d];
+        }
+        newInterval = new FinalInterval(nmin, nmax);
+      } else {
+        newInterval = interval;
+      }
+      // Store for reuse.
+      updatedInterval = newInterval;
+    }
+
+    return new NucleusDetector<>(detectorSettings, imFrame1, imFrame2, newInterval, calibration);
   }
 
   /**
    * Prepare a single frame, single channel view of the image.
    *
+   * <p>The output image will have XY and Z dimensions if available.
+   *
    * @param frame the frame
    * @param channel the channel
    * @return the single frame (or null if the channel is negative)
    */
-  private RandomAccessible<T> prepareFrameImg(final int frame, final int channel) {
+  private ImgPlus<T> prepareFrameImg(final int frame, final int channel) {
     if (channel < 0) {
       return null;
     }
-    RandomAccessible<T> imFrame;
-    final int cDim = TMUtils.findCAxisIndex(img);
-    if (cDim < 0) {
-      imFrame = img;
-    } else {
-      // In ImgLib2, dimensions are 0-based.
-      imFrame = Views.hyperSlice(img, cDim, channel);
-    }
 
-    int timeDim = TMUtils.findTAxisIndex(img);
-    if (timeDim >= 0) {
-      if (cDim >= 0 && timeDim > cDim) {
-        timeDim--;
-      }
-      imFrame = Views.hyperSlice(imFrame, timeDim, frame);
-    }
-
-    return imFrame;
+    // The image here has all dimensions XYZCT if present in the ImageJ image.
+    return TMUtils.hyperSlice(img, channel, frame);
   }
 
   @Override

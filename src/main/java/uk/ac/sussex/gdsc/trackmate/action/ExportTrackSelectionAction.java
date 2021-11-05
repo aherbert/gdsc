@@ -35,10 +35,11 @@ import fiji.plugin.trackmate.action.TrackMateActionFactory;
 import fiji.plugin.trackmate.graph.ConvexBranchesDecomposition;
 import fiji.plugin.trackmate.graph.ConvexBranchesDecomposition.TrackBranchDecomposition;
 import fiji.plugin.trackmate.graph.TimeDirectedNeighborIndex;
-import fiji.plugin.trackmate.gui.TrackMateGUIController;
+import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
 import gnu.trove.set.hash.TIntHashSet;
 import ij.Prefs;
 import ij.text.TextWindow;
+import java.awt.Frame;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -79,11 +80,6 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
     }
     featuresRef.set(list);
   }
-
-  /** The model. */
-  private final Model model;
-  /** The selection model. */
-  private final SelectionModel selectionModel;
 
   /**
    * A factory for creating {@link ExportTrackSelectionAction} objects.
@@ -127,9 +123,8 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
     }
 
     @Override
-    public TrackMateAction create(final TrackMateGUIController controller) {
-      return new ExportTrackSelectionAction(controller.getPlugin().getModel(),
-          controller.getSelectionModel());
+    public TrackMateAction create() {
+      return new ExportTrackSelectionAction();
     }
   }
 
@@ -161,25 +156,16 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
     }
   }
 
-  /**
-   * Instantiates a new track data action.
-   *
-   * @param model the model
-   * @param selectionModel the selection model
-   */
-  public ExportTrackSelectionAction(final Model model, final SelectionModel selectionModel) {
-    this.model = model;
-    this.selectionModel = selectionModel;
-  }
-
   @Override
-  public void execute(final TrackMate trackmate) {
+  public void execute(TrackMate trackmate, SelectionModel selectionModel,
+      DisplaySettings displaySettings, Frame frame) {
     // Q. Support selecting only spots or also use edges?
     final Set<Spot> spotSelection = selectionModel.getSpotSelection();
     // final Set<DefaultWeightedEdge> edgeSelection = selectionModel.getEdgeSelection();
     logger.log("Exporting " + TextUtils.pleural(spotSelection.size(), "spot"));
 
     // Get track Ids of the selection
+    final Model model = trackmate.getModel();
     final TrackModel trackModel = model.getTrackModel();
     final TIntHashSet trackIds = getTrackIds(spotSelection, trackModel);
     logger.log(". " + TextUtils.pleural(trackIds.size(), "track id"));
@@ -209,7 +195,7 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
 
     Collections.sort(tracks, Track::compare);
 
-    displayTracks(tracks);
+    displayTracks(model, tracks);
     logger.log(". Done.\n");
   }
 
@@ -318,10 +304,10 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
     return predecessor;
   }
 
-  private void displayTracks(List<Track> tracks) {
-    final List<Pair<String, Boolean>> features = createFeaturesList();
+  private static void displayTracks(Model model, List<Track> tracks) {
+    final List<Pair<String, Boolean>> features = createFeaturesList(model);
     final StringBuilder sb = new StringBuilder();
-    try (BufferedTextWindow table = new BufferedTextWindow(createResultsTable(features))) {
+    try (BufferedTextWindow table = new BufferedTextWindow(createResultsTable(model, features))) {
       int id = 0;
       int lastTrackId = 0;
       for (final Track track : tracks) {
@@ -358,7 +344,7 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
     }
   }
 
-  private List<Pair<String, Boolean>> createFeaturesList() {
+  private static List<Pair<String, Boolean>> createFeaturesList(Model model) {
     final List<Pair<String, Boolean>> list = new ArrayList<>();
     final Map<String, Boolean> isInt = model.getFeatureModel().getSpotFeatureIsInt();
     for (final String feature : featuresRef.get()) {
@@ -367,7 +353,7 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
     return list;
   }
 
-  private TextWindow createResultsTable(List<Pair<String, Boolean>> features) {
+  private static TextWindow createResultsTable(Model model, List<Pair<String, Boolean>> features) {
     return ImageJUtils.refresh(resultsRef, () -> {
       final StringBuilder sb = new StringBuilder("Track Id\tSub-track\tParent\tSpot Id");
       final Map<String, String> map = model.getFeatureModel().getSpotFeatureNames();

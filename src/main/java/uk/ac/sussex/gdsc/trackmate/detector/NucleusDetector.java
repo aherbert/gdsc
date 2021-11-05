@@ -25,14 +25,18 @@
 package uk.ac.sussex.gdsc.trackmate.detector;
 
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotRoi;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import ij.ImagePlus;
+import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.ColorProcessor;
+import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
+import net.imagej.ImgPlus;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
 import net.imglib2.img.display.imagej.ImageJFunctions;
@@ -45,7 +49,6 @@ import uk.ac.sussex.gdsc.foci.NucleiOutline_PlugIn;
 import uk.ac.sussex.gdsc.foci.NucleiOutline_PlugIn.Nucleus;
 import uk.ac.sussex.gdsc.foci.NucleiOutline_PlugIn.Settings;
 import uk.ac.sussex.gdsc.foci.ObjectAnalyzer;
-import uk.ac.sussex.gdsc.foci.ObjectAnalyzer.ObjectCentre;
 import uk.ac.sussex.gdsc.foci.ObjectEroder;
 import uk.ac.sussex.gdsc.foci.ObjectExpander;
 
@@ -66,9 +69,9 @@ public class NucleusDetector<T extends RealType<T> & NativeType<T>> implements S
   /** The detector settings. */
   private final Settings detectorSettings;
   /** The image. */
-  private final RandomAccessible<T> img;
+  private final ImgPlus<T> img;
   /** The analysis image. */
-  private final RandomAccessible<T> analysisImg;
+  private final ImgPlus<T> analysisImg;
   /** The interval. */
   private final Interval interval;
   /** The pixel sizes in the 3 dimensions. */
@@ -86,11 +89,11 @@ public class NucleusDetector<T extends RealType<T> & NativeType<T>> implements S
    * @param detectorSettings the detector settings
    * @param img the image
    * @param analysisImg the analysis image (can be null)
-   * @param interval the interval defining the region to process (currently ignored)
+   * @param interval the interval defining the region to process
    * @param calibration the pixel sizes in the 3 dimensions
    */
-  public NucleusDetector(Settings detectorSettings, RandomAccessible<T> img,
-      RandomAccessible<T> analysisImg, Interval interval, double[] calibration) {
+  public NucleusDetector(Settings detectorSettings, ImgPlus<T> img, ImgPlus<T> analysisImg,
+      Interval interval, double[] calibration) {
     this.detectorSettings = detectorSettings;
     this.img = img;
     this.analysisImg = analysisImg;
@@ -148,29 +151,73 @@ public class NucleusDetector<T extends RealType<T> & NativeType<T>> implements S
     spots = new ArrayList<>(nuclei.length);
     for (int i = 0; i < nuclei.length; i++) {
       final Nucleus nucleus = nuclei[i];
-      final ObjectCentre centre = nucleus.getObjectCentre();
-      // Shift to the crop position and convert to image coordinates
-      final double x = (centre.getCentreX() + min[0]) * calibration[0];
-      final double y = (centre.getCentreY() + min[1]) * calibration[1];
-      final double radius = nucleus.getEstimatedRadius() * calibration[0];
-      // Q. Add a metric that can be used for filtering?
-      final double quality = 1;
-      // We cannot store anything in the Spot other than Double so specialise to extra information.
+      // As of TrackMate 7 the spot can be represented entirely using a polygon ROI.
+      // Convert the Roi to a Spot assuming image coordinates.
       final Roi roi = nucleus.getRoi();
-      final Rectangle bounds = roi.getBounds();
-      roi.setLocation(bounds.x + (int) min[0], bounds.y + (int) min[1]);
-      final NucleusSpot spot = new NucleusSpot(x, y, z, radius, quality, roi);
+      final Spot spot = convertRoi(roi, min, calibration);
       if (meanInside != null) {
         spot.putFeature(NUCLEUS_MEAN_INSIDE, meanInside[i + 1]);
       }
       if (meanOutside != null) {
         spot.putFeature(NUCLEUS_MEAN_OUTSIDE, meanOutside[i + 1]);
       }
+      if (z != 0) {
+        spot.putFeature(Spot.POSITION_Z, z);
+      }
       spots.add(spot);
     }
 
     this.processingTime = System.currentTimeMillis() - start;
     return true;
+  }
+
+  /**
+   * Convert the roi in pixel coordinates to a Spot in physical units.
+   *
+   * @param roi the roi
+   * @param min the min bounds of the crop position
+   * @param calibration the image calibration
+   * @return the spot roi
+   */
+  private static Spot convertRoi(Roi roi, long[] min, double[] calibration) {
+    // single pixel -> plain Roi
+    // rectangle -> plain Roi
+    // traced outline -> PolygonRoi
+
+    // XY are in physical units
+    int n;
+    double[] x;
+    double[] y;
+    if (roi instanceof PolygonRoi) {
+      final PolygonRoi pr = (PolygonRoi) roi;
+      final FloatPolygon fp = pr.getFloatPolygon();
+      n = fp.npoints;
+      x = new double[n];
+      y = new double[n];
+      for (int i = 0; i < n; i++) {
+        x[i] = fp.xpoints[i] + min[0];
+        y[i] = fp.ypoints[i] + min[1];
+      }
+    } else {
+      final Rectangle bounds = roi.getBounds();
+      n = 4;
+      final double ox = bounds.x + min[0];
+      final double oy = bounds.y + min[1];
+      final int w = bounds.width;
+      final int h = bounds.height;
+      // Q. What winding rule is required for the polygon?
+      x = new double[] {ox, ox + w, ox + w, ox};
+      y = new double[] {oy, oy, oy + h, oy + h};
+    }
+
+    // XY are in physical units
+    for (int i = 0; i < n; i++) {
+      x[i] *= calibration[0];
+      y[i] *= calibration[1];
+    }
+
+    // This creates a centre and radius from the polygon CoM and area
+    return SpotRoi.createSpot(x, y, 1.0);
   }
 
   /**

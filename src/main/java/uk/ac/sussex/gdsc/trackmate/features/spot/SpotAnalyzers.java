@@ -31,7 +31,7 @@ import fiji.plugin.trackmate.Spot;
  */
 class SpotAnalyzers {
   /** Zero as a Double. */
-  private static final Double ZERO = Double.valueOf(0.0);
+  private static final Double ZERO = Double.valueOf(0);
 
   /**
    * Sets the feature if missing.

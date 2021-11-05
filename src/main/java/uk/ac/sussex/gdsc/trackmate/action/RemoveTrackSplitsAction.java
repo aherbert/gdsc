@@ -32,9 +32,10 @@ import fiji.plugin.trackmate.TrackModel;
 import fiji.plugin.trackmate.action.AbstractTMAction;
 import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.action.TrackMateActionFactory;
-import fiji.plugin.trackmate.gui.TrackMateGUIController;
+import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
 import gnu.trove.set.hash.TIntHashSet;
 import ij.Prefs;
+import java.awt.Frame;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -64,9 +65,6 @@ public class RemoveTrackSplitsAction extends AbstractTMAction {
   private static final String KEY_CHILD2_CATEGORY =
       "gdsc.tm.action.remove_track_splits.child_2_category";
   private static final String KEY_DRY_RUN = "gdsc.tm.action.remove_track_splits.dry_run";
-
-  /** The selection model. Used to select the identified spots and edges in dry-run mode. */
-  private final SelectionModel selectionModel;
 
   /**
    * A factory for creating {@link RemoveTrackSplitsAction} objects.
@@ -105,8 +103,8 @@ public class RemoveTrackSplitsAction extends AbstractTMAction {
     }
 
     @Override
-    public TrackMateAction create(final TrackMateGUIController controller) {
-      return new RemoveTrackSplitsAction(controller.getSelectionModel());
+    public TrackMateAction create() {
+      return new RemoveTrackSplitsAction();
     }
   }
 
@@ -131,19 +129,9 @@ public class RemoveTrackSplitsAction extends AbstractTMAction {
     }
   }
 
-  /**
-   * Create an instance.
-   *
-   * <p>The selection model is used to select the edges that will be removed during a dry-run.
-   *
-   * @param selectionModel the selection model
-   */
-  public RemoveTrackSplitsAction(SelectionModel selectionModel) {
-    this.selectionModel = selectionModel;
-  }
-
   @Override
-  public void execute(final TrackMate trackmate) {
+  public void execute(TrackMate trackmate, SelectionModel selectionModel,
+      DisplaySettings displaySettings, Frame frame) {
     // Get the options
     String parentCat = Prefs.get(KEY_PARENT_CATEGORY, "1");
     String child1Cat = Prefs.get(KEY_CHILD1_CATEGORY, "1");

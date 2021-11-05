@@ -30,7 +30,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
-import fiji.plugin.trackmate.gui.ConfigurationPanel;
+import fiji.plugin.trackmate.gui.components.ConfigurationPanel;
 import fiji.plugin.trackmate.io.IOUtils;
 import fiji.plugin.trackmate.util.TMUtils;
 import ij.Prefs;
@@ -80,7 +80,7 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     + "<li>Define Frame column.</li>"
     + "<li>Define XYZ columns.</li>"
     + "<li>Define Radius column.</li>"
-    + "<li>Define optional Categroy column.</li>"
+    + "<li>Define optional Category column.</li>"
     + "</ul><p>The category file has one category per line. Numbers are assigned to each unique "
     + "category in encountered order.</p></html>";
   // @formatter:on
@@ -368,15 +368,10 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
       String line;
       while ((line = input.readLine()) != null) {
         // Skip header
-        if (headerLines-- > 0) {
-          continue;
-        }
         // Skip empty lines
-        if (line.length() == 0) {
-          continue;
-        }
         // Skip comments
-        if (hasComment && line.startsWith(commentChar)) {
+        if ((headerLines-- > 0) || (line.length() == 0)
+            || (hasComment && line.startsWith(commentChar))) {
           continue;
         }
 

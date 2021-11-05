@@ -31,7 +31,6 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackModel;
 import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +42,6 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.ImageIcon;
 import org.apache.commons.lang3.concurrent.ConcurrentRuntimeException;
 import org.scijava.plugin.Plugin;
-import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
  * Declare features related to the image border. Currently computes the mean and minimum distance to
@@ -109,14 +107,20 @@ public class BorderFeatureAnalyzer implements TrackAnalyzer {
     // But we do not have access to the current TrackMate instance or Settings.
     // Find the bounds of the Spots as a rough approximation to the edge of the region.
     // The results will be in the calibrated units (not pixels).
-    final Map<String, double[]> values =
-        model.getSpots().collectValues(Arrays.asList(Spot.POSITION_X, Spot.POSITION_Y), false);
-    final double[] limitsx = MathUtils.limits(values.get(Spot.POSITION_X));
-    final double[] limitsy = MathUtils.limits(values.get(Spot.POSITION_Y));
-    final double minx = limitsx[0];
-    final double maxx = limitsx[1];
-    final double miny = limitsy[0];
-    final double maxy = limitsy[1];
+    final double[] limits = {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
+        Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY};
+    model.getSpots().iterable(false).forEach(spot -> {
+      final double x = spot.getDoublePosition(0);
+      final double y = spot.getDoublePosition(1);
+      limits[0] = x < limits[0] ? x : limits[0];
+      limits[1] = x > limits[1] ? x : limits[1];
+      limits[2] = y < limits[2] ? y : limits[2];
+      limits[3] = y > limits[3] ? y : limits[3];
+    });
+    final double minx = limits[0];
+    final double maxx = limits[1];
+    final double miny = limits[2];
+    final double maxy = limits[3];
 
     final ExecutorService executor = Executors.newFixedThreadPool(numThreads);
     final FeatureModel fm = model.getFeatureModel();

@@ -25,11 +25,13 @@
 package uk.ac.sussex.gdsc.trackmate.action;
 
 import fiji.plugin.trackmate.FeatureModel;
+import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.action.AbstractTMAction;
 import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.action.TrackMateActionFactory;
-import fiji.plugin.trackmate.gui.TrackMateGUIController;
+import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
+import java.awt.Frame;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -80,13 +82,14 @@ public class ExportTrackSelectionOptionsAction extends AbstractTMAction {
     }
 
     @Override
-    public TrackMateAction create(final TrackMateGUIController controller) {
+    public TrackMateAction create() {
       return new ExportTrackSelectionOptionsAction();
     }
   }
 
   @Override
-  public void execute(final TrackMate trackmate) {
+  public void execute(TrackMate trackmate, SelectionModel selectionModel,
+      DisplaySettings displaySettings, Frame frame) {
     final FeatureModel featureModel = trackmate.getModel().getFeatureModel();
     Collection<String> features = featureModel.getSpotFeatures();
     logger.log("Configuring from " + TextUtils.pleural(features.size(), "feature"));

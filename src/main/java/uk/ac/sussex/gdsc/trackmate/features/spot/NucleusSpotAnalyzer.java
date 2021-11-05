@@ -25,15 +25,12 @@
 package uk.ac.sussex.gdsc.trackmate.features.spot;
 
 import fiji.plugin.trackmate.Dimension;
-import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.swing.ImageIcon;
@@ -50,53 +47,12 @@ import uk.ac.sussex.gdsc.trackmate.detector.NucleusDetector;
  * @param <T> the pixels type
  */
 public class NucleusSpotAnalyzer<T> implements SpotAnalyzer<T> {
-  /** The model. */
-  private final Model model;
-  /** The frame. */
-  private final int frame;
-  /** The processing time. */
-  private long processingTime;
-
-  /**
-   * Create a new instance.
-   *
-   * @param model the model
-   * @param frame the frame
-   */
-  public NucleusSpotAnalyzer(final Model model, final int frame) {
-    this.model = model;
-    this.frame = frame;
-  }
-
   @Override
-  public boolean checkInput() {
-    return true;
-  }
-
-  @Override
-  public boolean process() {
-    final long start = System.currentTimeMillis();
-    final SpotCollection sc = model.getSpots();
-    final Iterator<Spot> spotIt = sc.iterator(frame, false);
-
-    while (spotIt.hasNext()) {
-      final Spot spot = spotIt.next();
+  public void process(Iterable<Spot> spots) {
+    spots.forEach(spot -> {
       SpotAnalyzers.setFeatureIfMissing(spot, NucleusDetector.NUCLEUS_MEAN_INSIDE);
       SpotAnalyzers.setFeatureIfMissing(spot, NucleusDetector.NUCLEUS_MEAN_OUTSIDE);
-    }
-
-    processingTime = System.currentTimeMillis() - start;
-    return true;
-  }
-
-  @Override
-  public String getErrorMessage() {
-    return "";
-  }
-
-  @Override
-  public long getProcessingTime() {
-    return processingTime;
+    });
   }
 
   /**
@@ -195,9 +151,8 @@ public class NucleusSpotAnalyzer<T> implements SpotAnalyzer<T> {
     }
 
     @Override
-    public SpotAnalyzer<T> getAnalyzer(final Model model, final ImgPlus<T> img, final int frame,
-        final int channel) {
-      return new NucleusSpotAnalyzer<>(model, frame);
+    public SpotAnalyzer<T> getAnalyzer(ImgPlus<T> img, int frame, int channel) {
+      return new NucleusSpotAnalyzer<>();
     }
   }
 }

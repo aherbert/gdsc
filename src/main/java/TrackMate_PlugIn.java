@@ -23,13 +23,13 @@
  * #L%
  */
 
-import fiji.plugin.trackmate.LoadTrackMatePlugIn_;
-import fiji.plugin.trackmate.TrackMatePlugIn_;
+import fiji.plugin.trackmate.LoadTrackMatePlugIn;
+import fiji.plugin.trackmate.TrackMateRunner;
 import ij.IJ;
 import ij.plugin.PlugIn;
 
 /**
- * ImageJ plugin (no Java package) to run the {@link TrackMatePlugIn_} plugin.
+ * ImageJ plugin (no Java package) to run the {@link TrackMateRunner} plugin.
  *
  * <p><strong>This class is not included in the packaged uk.ac.sussex.gdsc jar.</strong>
  */
@@ -38,9 +38,9 @@ public class TrackMate_PlugIn implements PlugIn {
   @Override
   public void run(String arg) {
     if (IJ.shiftKeyDown()) {
-      new LoadTrackMatePlugIn_().run("");
+      new LoadTrackMatePlugIn().run("");
     } else {
-      new TrackMatePlugIn_().run("");
+      new TrackMateRunner().run("");
     }
   }
 }

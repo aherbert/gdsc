@@ -25,7 +25,7 @@
 package uk.ac.sussex.gdsc.trackmate.gui;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.gui.TrackMateWizard;
+import fiji.plugin.trackmate.gui.Fonts;
 import java.awt.Color;
 import javax.swing.JLabel;
 
@@ -45,7 +45,7 @@ public class HtmlJLabelLogger extends JLabel {
    */
   public HtmlJLabelLogger() {
     this.logger = new MyLogger(this);
-    setFont(TrackMateWizard.SMALL_FONT);
+    setFont(Fonts.SMALL_FONT);
   }
 
   /**

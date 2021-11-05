@@ -24,9 +24,9 @@
 
 package uk.ac.sussex.gdsc.trackmate.detector;
 
-import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
-import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
-import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
+import static fiji.plugin.trackmate.gui.Fonts.BIG_FONT;
+import static fiji.plugin.trackmate.gui.Fonts.FONT;
+import static fiji.plugin.trackmate.gui.Fonts.SMALL_FONT;
 
 import com.google.common.collect.Streams;
 import fiji.plugin.trackmate.Logger;
@@ -37,9 +37,8 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
-import fiji.plugin.trackmate.gui.ConfigurationPanel;
-import fiji.plugin.trackmate.gui.TrackMateGUIController;
-import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
+import fiji.plugin.trackmate.gui.Icons;
+import fiji.plugin.trackmate.gui.components.ConfigurationPanel;
 import fiji.util.NumberParser;
 import ij.ImagePlus;
 import java.awt.BorderLayout;
@@ -56,12 +55,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
@@ -73,24 +71,22 @@ import uk.ac.sussex.gdsc.trackmate.gui.HtmlJLabelLogger;
  */
 public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
   private static final long serialVersionUID = 1L;
-  private static final ImageIcon ICON_PREVIEW =
-      new ImageIcon(TrackMateGUIController.class.getResource("images/flag_checked.png"));
 
   private JButton btnPreview;
 
   private JComboBox<Integer> comboChannel;
   private JComboBox<Integer> comboAnalysisChannel;
 
-  private JTextField textFieldBlur1;
-  private JTextField textFieldBlur2;
+  private JFormattedTextField textFieldBlur1;
+  private JFormattedTextField textFieldBlur2;
   private JComboBox<AutoThreshold.Method> comboMethod;
-  private JTextField textFieldOutlierRadius;
-  private JTextField textFieldOutlierThreshold;
-  private JTextField textFieldMaxNucleusSize;
-  private JTextField textFieldMinNucleusSize;
-  private JTextField textFieldErosion;
-  private JTextField textFieldExpansionInner;
-  private JTextField textFieldExpansion;
+  private JFormattedTextField textFieldOutlierRadius;
+  private JFormattedTextField textFieldOutlierThreshold;
+  private JFormattedTextField textFieldMaxNucleusSize;
+  private JFormattedTextField textFieldMinNucleusSize;
+  private JFormattedTextField textFieldErosion;
+  private JFormattedTextField textFieldExpansionInner;
+  private JFormattedTextField textFieldExpansion;
 
   private final transient Model model;
   private final transient ImagePlus imp;
@@ -208,7 +204,7 @@ public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
 
       // Make them visible
       for (final Spot spot : spotsToCopy) {
-        spot.putFeature(SpotCollection.VISIBLITY, SpotCollection.ONE);
+        spot.putFeature(SpotCollection.VISIBILITY, SpotCollection.ONE);
       }
 
       // Generate event for listener to reflect changes.
@@ -278,7 +274,7 @@ public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
       addFields(contentPanel, "Expansion Inner", textFieldExpansionInner, row++, units);
       textFieldExpansion = createNumericTextField();
       addFields(contentPanel, "Expansion", textFieldExpansion, row++, units);
-      btnPreview = new JButton("Preview", ICON_PREVIEW);
+      btnPreview = new JButton("Preview", Icons.PREVIEW_ICON);
       btnPreview.setToolTipText("Preview the current settings on the current frame.");
       btnPreview.setFont(SMALL_FONT);
       btnPreview.addActionListener(e -> preview());
@@ -292,10 +288,12 @@ public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
     }
   }
 
-  private static JNumericTextField createNumericTextField() {
-    final JNumericTextField textField = new JNumericTextField();
+  private static JFormattedTextField createNumericTextField() {
+    final JFormattedTextField textField = new JFormattedTextField();
     textField.setHorizontalAlignment(SwingConstants.CENTER);
     textField.setColumns(5);
+    // Used to initialise the field to format floating-point numbers
+    textField.setValue(0.0);
     return textField;
   }
 

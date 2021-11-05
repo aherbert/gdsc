@@ -24,9 +24,9 @@
 
 package uk.ac.sussex.gdsc.trackmate.detector;
 
-import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
-import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
-import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
+import static fiji.plugin.trackmate.gui.Fonts.BIG_FONT;
+import static fiji.plugin.trackmate.gui.Fonts.FONT;
+import static fiji.plugin.trackmate.gui.Fonts.SMALL_FONT;
 
 import com.google.common.collect.Streams;
 import fiji.plugin.trackmate.Logger;
@@ -36,9 +36,8 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
-import fiji.plugin.trackmate.gui.ConfigurationPanel;
-import fiji.plugin.trackmate.gui.TrackMateGUIController;
-import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
+import fiji.plugin.trackmate.gui.Icons;
+import fiji.plugin.trackmate.gui.components.ConfigurationPanel;
 import fiji.util.NumberParser;
 import ij.ImagePlus;
 import java.awt.BorderLayout;
@@ -52,8 +51,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -68,22 +67,20 @@ import uk.ac.sussex.gdsc.trackmate.gui.HtmlJLabelLogger;
  */
 public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
   private static final long serialVersionUID = 1L;
-  private static final ImageIcon ICON_PREVIEW =
-      new ImageIcon(TrackMateGUIController.class.getResource("images/flag_checked.png"));
 
   private JButton btnPreview;
 
   private JTextField textFieldInputFile;
-  private JTextField textFieldHeaderLines;
+  private JFormattedTextField textFieldHeaderLines;
   private JTextField textFieldCommentChar;
   private JTextField textFieldDelimiter;
-  private JTextField textFieldColumnId;
-  private JTextField textFieldColumnFrame;
-  private JTextField textFieldColumnX;
-  private JTextField textFieldColumnY;
-  private JTextField textFieldColumnZ;
-  private JTextField textFieldRadius;
-  private JTextField textFieldCategory;
+  private JFormattedTextField textFieldColumnId;
+  private JFormattedTextField textFieldColumnFrame;
+  private JFormattedTextField textFieldColumnX;
+  private JFormattedTextField textFieldColumnY;
+  private JFormattedTextField textFieldColumnZ;
+  private JFormattedTextField textFieldRadius;
+  private JFormattedTextField textFieldCategory;
   private JTextField textFieldCategoryFile;
 
   private final transient Model model;
@@ -203,7 +200,7 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
 
         // Make them visible
         for (final Spot spot : spotsToCopy) {
-          spot.putFeature(SpotCollection.VISIBLITY, SpotCollection.ONE);
+          spot.putFeature(SpotCollection.VISIBILITY, SpotCollection.ONE);
         }
 
         // Generate event for listener to reflect changes.
@@ -298,7 +295,7 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
       });
       contentPanel.add(btnCategorySelect, createConstraints(1, 1, row++));
 
-      btnPreview = new JButton("Preview", ICON_PREVIEW);
+      btnPreview = new JButton("Preview", Icons.PREVIEW_ICON);
       btnPreview.setToolTipText("Preview the current settings on the current frame.");
       btnPreview.setFont(SMALL_FONT);
       btnPreview.addActionListener(e -> preview());
@@ -319,11 +316,12 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
     return textField;
   }
 
-  private static JNumericTextField createIntegerTextField() {
-    final JNumericTextField textField = new JNumericTextField();
+  private static JFormattedTextField createIntegerTextField() {
+    final JFormattedTextField textField = new JFormattedTextField();
     textField.setHorizontalAlignment(SwingConstants.CENTER);
     textField.setColumns(5);
-    textField.setFormat("%.0f");
+    // Used to initialise the field to format integers
+    textField.setValue(0);
     return textField;
   }
 
