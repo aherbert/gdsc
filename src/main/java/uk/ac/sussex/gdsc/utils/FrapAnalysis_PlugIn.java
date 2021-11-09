@@ -1672,13 +1672,13 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    *
    * @param yy the target values
    * @param i0 the baseline for the intensity
-   * @param a the magnitude of the recovery
+   * @param magnitude the magnitude of the recovery (a)
    * @return tD
    */
-  private double estimateTd(double[] yy, double i0, double a) {
+  private double estimateTd(double[] yy, double i0, double magnitude) {
     // Optimise the tD component of the DiffusionLimitedRecoveryFunction
     final UnivariateFunction func = new UnivariateFunction() {
-      RealVector point = new ArrayRealVector(new double[] {i0, a, 0});
+      RealVector point = new ArrayRealVector(new double[] {i0, magnitude, 0});
       DiffusionLimitedRecoveryFunction fun =
           new DiffusionLimitedRecoveryFunction(yy.length, timeScale);
 
