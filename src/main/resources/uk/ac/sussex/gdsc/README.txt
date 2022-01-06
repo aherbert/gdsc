@@ -7,7 +7,7 @@ GDSC Plugins for ImageJ: a collection of ImageJ plugins including:
 -- Difference of Gaussians for contrast enhancement
 -- Image/Stack alignment using correlation
 
-Copyright (C) 2011-2019 Alex Herbert
+Copyright (C) 2011-2022 Alex Herbert
 MRC Genome Damage and Stability Centre
 University of Sussex, UK
 
