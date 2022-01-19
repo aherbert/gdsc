@@ -2244,18 +2244,37 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     }
   }
 
+  // All Bessel code has been ported from the Boost C++ implementation and is subject to
+  // the terms of the Boost Software Licence:
+
+  // Copyright (c) 2006 Xiaogang Zhang
+  // Copyright (c) 2017 John Maddock
+  // Use, modification and distribution are subject to the
+  // Boost Software License, Version 1.0. (See accompanying file
+  // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
   /**
    * Class for computing various Bessel functions
    *
-   * <p>The implementation is based upon that presented in: Numerical Recipes in C++, The Art of
-   * Scientific Computing, Second Edition, W.H. Press, S.A. Teukolsky, W.T. Vetterling, B.P.
-   * Flannery (Cambridge University Press, Cambridge, 2002).
+   * <p>The implementation is based upon the Boost C++ implementation.
+   *
+   * @see <a
+   *      href="https://www.boost.org/doc/libs/1_77_0/libs/math/doc/html/math_toolkit/bessel.html">
+   *      Boost C++ Bessel functions</a>
    */
   static final class Bessel {
-    /**
-     * No public constructor.
-     */
+    /** No public constructor. */
     private Bessel() {}
+
+    // Implementation notes
+    //
+    // Polynomials in the Bessel I functions have been unrolled using
+    // a second order Horner's rule.
+    //
+    // The functions are only called in Boost with a positive argument.
+    // An explicit check for negative x is now performed and the functions
+    // computed with abs(x) and the result returned appropriately for
+    // odd/even functions
 
     /**
      * Compute the zero th order modified Bessel function of the first kind.
@@ -2263,22 +2282,93 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
      * @param x the x value
      * @return the modified Bessel function I0
      */
-    static double i0(final double x) {
-      double ax;
-      double ans;
-      double y;
-      if ((ax = Math.abs(x)) < 3.75) {
-        y = x / 3.75;
-        y *= y;
-        ans = 1.0 + y * (3.5156229 + y
-            * (3.0899424 + y * (1.2067492 + y * (0.2659732 + y * (0.360768e-1 + y * 0.45813e-2)))));
-      } else {
-        y = 3.75 / ax;
-        ans = (FastMath.exp(ax) / Math.sqrt(ax)) * (0.39894228
-            + y * (0.1328592e-1 + y * (0.225319e-2 + y * (-0.157565e-2 + y * (0.916281e-2 + y
-                * (-0.2057706e-1 + y * (0.2635537e-1 + y * (-0.1647633e-1 + y * 0.392377e-2))))))));
+    public static double i0(double x) {
+      // even function
+      if (x <= 0) {
+        if (x == 0) {
+          return 1;
+        }
+        x = -x;
       }
-      return ans;
+
+      // boost/math/special_functions/detail/bessel_i0.hpp
+
+      // Modified Bessel function of the first kind of order zero
+      // we use the approximating forms derived in:
+      // "Rational Approximations for the Modified Bessel Function of the First Kind - I0(x) for
+      // Computations with Double Precision" by Pavel Holoborodko, see
+      // http://www.advanpix.com/2015/11/11/rational-approximations-for-the-modified-bessel-function-of-the-first-kind-i0-computations-double-precision
+      // The actual coefficients used are our own, and extend Pavel's work to precision's other than
+      // double.
+
+      if (x < 7.75) {
+        // Bessel I0 over[10 ^ -16, 7.75]
+        // Max error in interpolated form : 3.042e-18
+        // Max Error found at double precision = Poly : 5.106609e-16 Cheb : 5.239199e-16
+        final double a = x * x / 4;
+        final double a2 = a * a;
+        double p0;
+        double p1;
+        p0 = 9.07926920085624812e-25 * a2 + 2.63417742690109154e-20;
+        p1 = 1.13943037744822825e-22 * a2 + 4.34709704153272287e-18;
+        p0 = p0 * a2 + 6.27767773636292611e-16;
+        p1 = p1 * a2 + 7.59389793369836367e-14;
+        p0 = p0 * a2 + 7.59407002058973446e-12;
+        p1 = p1 * a2 + 6.15118672704439289e-10;
+        p0 = p0 * a2 + 3.93675991102510739e-08;
+        p1 = p1 * a2 + 1.92901234513219920e-06;
+        p0 = p0 * a2 + 6.94444444453352521e-05;
+        p1 = p1 * a2 + 1.73611111111023792e-03;
+        p0 = p0 * a2 + 2.77777777777782257e-02;
+        p1 = p1 * a2 + 2.49999999999999909e-01;
+        p0 = p0 * a2 + 1.00000000000000000e+00;
+        final double p = p0 + p1 * a;
+        return a * p + 1;
+      } else if (x < 500) {
+        // Max error in interpolated form : 1.685e-16
+        // Max Error found at double precision = Poly : 2.575063e-16 Cheb : 2.247615e+00
+        final double a = 1 / x;
+        final double a2 = a * a;
+        double p0;
+        double p1;
+        p0 = 2.17587543863819074e+15 * a2 + 2.02391097391687777e+15;
+        p1 = -3.08675715295370878e+15 * a2 + -8.13426467865659318e+14;
+        p0 = p0 * a2 + 2.24155239966958995e+14;
+        p1 = p1 * a2 + -4.49034849696138065e+13;
+        p0 = p0 * a2 + 6.76825737854096565e+12;
+        p1 = p1 * a2 + -7.84261082124811106e+11;
+        p0 = p0 * a2 + 7.08029243015109113e+10;
+        p1 = p1 * a2 + -5.01883999713777929e+09;
+        p0 = p0 * a2 + 2.80231938155267516e+08;
+        p1 = p1 * a2 + -1.23157028595698731e+07;
+        p0 = p0 * a2 + 4.24057674317867331e+05;
+        p1 = p1 * a2 + -1.13366350697172355e+04;
+        p0 = p0 * a2 + 2.33025711583514727e+02;
+        p1 = p1 * a2 + -3.35052280231727022e+00;
+        p0 = p0 * a2 + 1.30970574605856719e-01;
+        p1 = p1 * a2 + 4.44207299493659561e-02;
+        p0 = p0 * a2 + 2.92211225166047873e-02;
+        p1 = p1 * a2 + 2.80506233928312623e-02;
+        p0 = p0 * a2 + 4.98677850604961985e-02;
+        p1 = p1 * a2 + 3.98942280401425088e-01;
+        final double p = p0 * a + p1;
+        return FastMath.exp(x) * p / Math.sqrt(x);
+      } else {
+        // Max error in interpolated form : 2.437e-18
+        // Max Error found at double precision = Poly : 1.216719e-16
+        final double a = 1 / x;
+        final double a2 = a * a;
+        double p0;
+        double p1;
+        p0 = 4.53371208762579442e-02 * a2 + 2.80506308916506102e-02;
+        p1 = 2.92179096853915176e-02 * a2 + 4.98677850491434560e-02;
+        p0 = p0 * a2 + 3.98942280401432905e-01;
+        final double p = p0 + p1 * a;
+        final double ex = FastMath.exp(x / 2);
+        double result = ex * p / Math.sqrt(x);
+        result *= ex;
+        return result;
+      }
     }
 
     /**
@@ -2287,24 +2377,93 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
      * @param x the x value
      * @return the modified Bessel function I1
      */
-    static double i1(final double x) {
-      double ax;
-      double ans;
-      double y;
-
-      if ((ax = Math.abs(x)) < 3.75) {
-        y = x / 3.75;
-        y *= y;
-        ans = ax * (0.5 + y * (0.87890594 + y * (0.51498869
-            + y * (0.15084934 + y * (0.2658733e-1 + y * (0.301532e-2 + y * 0.32411e-3))))));
+    public static double i1(double x) {
+      // odd function
+      double s;
+      if (x <= 0) {
+        if (x == 0) {
+          return x;
+        }
+        x = -x;
+        s = -1;
       } else {
-        y = 3.75 / ax;
-        ans = 0.2282967e-1 + y * (-0.2895312e-1 + y * (0.1787654e-1 - y * 0.420059e-2));
-        ans = 0.39894228 + y * (-0.3988024e-1
-            + y * (-0.362018e-2 + y * (0.163801e-2 + y * (-0.1031555e-1 + y * ans))));
-        ans *= (FastMath.exp(ax) / Math.sqrt(ax));
+        s = 1;
       }
-      return x < 0.0 ? -ans : ans;
+
+      // boost/math/special_functions/detail/bessel_i1.hpp
+
+      // Modified Bessel function of the first kind of order one
+      // minimax rational approximations on intervals, see
+      // Blair and Edwards, Chalk River Report AECL-4928, 1974
+      if (x < 7.75) {
+        // Bessel I0 over[10 ^ -16, 7.75]
+        // Max error in interpolated form: 5.639e-17
+        // Max Error found at double precision = Poly: 1.795559e-16
+
+        final double a = x * x / 4;
+        final double a2 = a * a;
+        double p0;
+        double p1;
+        p0 = 1.332898928162290861e-23 * a2 + 3.410720494727771276e-19;
+        p1 = 1.625212890947171108e-21 * a2 + 5.220157095351373194e-17;
+        p0 = p0 * a2 + 6.904822652741917551e-15;
+        p1 = p1 * a2 + 7.593969849687574339e-13;
+        p0 = p0 * a2 + 6.834657311305621830e-11;
+        p1 = p1 * a2 + 4.920949692800671435e-09;
+        p0 = p0 * a2 + 2.755731926254790268e-07;
+        p1 = p1 * a2 + 1.157407407354987232e-05;
+        p0 = p0 * a2 + 3.472222222225921045e-04;
+        p1 = p1 * a2 + 6.944444444444341983e-03;
+        p0 = p0 * a2 + 8.333333333333333803e-02;
+        final double p = p0 + p1 * a;
+        final double q = 1 + (0.5 + p * a) * a;
+        return s * x * q / 2;
+      } else if (x < 500) {
+        // Max error in interpolated form: 1.796e-16
+        // Max Error found at double precision = Poly: 2.898731e-16
+
+        final double a = 1 / x;
+        final double a2 = a * a;
+        double p0;
+        double p1;
+        p0 = -2.213318202179221945e+15 * a2 + -2.067285045778906105e+15;
+        p1 = 3.146401654361325073e+15 * a2 + 8.325554073334618015e+14;
+        p0 = p0 * a2 + -2.298849639457172489e+14;
+        p1 = p1 * a2 + 4.614040809616582764e+13;
+        p0 = p0 * a2 + -6.967602516005787001e+12;
+        p1 = p1 * a2 + 8.087824484994859552e+11;
+        p0 = p0 * a2 + -7.313784438967834057e+10;
+        p1 = p1 * a2 + 5.192386898222206474e+09;
+        p0 = p0 * a2 + -2.903390398236656519e+08;
+        p1 = p1 * a2 + 1.277677779341446497e+07;
+        p0 = p0 * a2 + -4.404655582443487334e+05;
+        p1 = p1 * a2 + 1.178785865993440669e+04;
+        p0 = p0 * a2 + -2.426181371595021021e+02;
+        p1 = p1 * a2 + 3.458284470977172076e+00;
+        p0 = p0 * a2 + -1.528189554374492735e-01;
+        p1 = p1 * a2 + -5.719036414430205390e-02;
+        p0 = p0 * a2 + -4.090895951581637791e-02;
+        p1 = p1 * a2 + -4.675104253598537322e-02;
+        p0 = p0 * a2 + -1.496033551613111533e-01;
+        p1 = p1 * a2 + 3.989422804014406054e-01;
+        final double p = p0 * a + p1;
+        return s * FastMath.exp(x) * p / Math.sqrt(x);
+      } else {
+        // Max error in interpolated form: 1.320e-19
+        // Max Error found at double precision = Poly: 7.065357e-17
+        final double a = 1 / x;
+        final double a2 = a * a;
+        double p0;
+        double p1;
+        p0 = -5.843630344778927582e-02 * a2 + -4.675105322571775911e-02;
+        p1 = -4.090421597376992892e-02 * a2 + -1.496033551467584157e-01;
+        p0 = p0 * a2 + 3.989422804014314820e-01;
+        final double p = p0 + p1 * a;
+        final double ex = FastMath.exp(x / 2);
+        double result = ex * p / Math.sqrt(x);
+        result *= ex;
+        return s * result;
+      }
     }
   }
 }
