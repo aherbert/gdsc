@@ -27,7 +27,7 @@
 
 <suppressions>
   <suppress checks="MissingJavadocType" files=".*[\\/]test[\\/].*" />
-  <suppress checks=".*" files="uk.ac.sussex.gdsc.ij.plugin.filter.ParticleAnalyzerCopy.java" />
-  <suppress checks=".*" files="uk.ac.sussex.gdsc.ij.plugin.ZProjectorCopy.java" />
-  <suppress checks=".*" files="uk.ac.sussex.gdsc.foci.FindFociLegacy.java" />
+  <suppress checks=".*" files="uk.ac.sussex.gdsc.ij.ext.plugin.filter.ParticleAnalyzerCopy.java" />
+  <suppress checks=".*" files="uk.ac.sussex.gdsc.ij.ext.plugin.ZProjectorCopy.java" />
+  <suppress checks=".*" files="uk.ac.sussex.gdsc.ij.foci.FindFociLegacy.java" />
 </suppressions>

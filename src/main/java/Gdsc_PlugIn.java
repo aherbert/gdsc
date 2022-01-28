@@ -24,12 +24,12 @@
  */
 
 import ij.plugin.PlugIn;
-import uk.ac.sussex.gdsc.About_PlugIn;
+import uk.ac.sussex.gdsc.ij.About_PlugIn;
 
 /**
  * Default ImageJ plugin (no Java package) to run the {@link About_PlugIn} plugin.
  *
- * <p><strong>This class is not included in the packaged uk.ac.sussex.gdsc jar.</strong>
+ * <p><strong>This class is not included in the packaged uk.ac.sussex.gdsc.ij.ext jar.</strong>
  *
  * <p>This class allows the project to be run in debug mode from an IDE (e.g. Eclipse). The Maven
  * output directory will be target/classes. Create a symbolic link to that directory from the

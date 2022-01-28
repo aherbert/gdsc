@@ -31,7 +31,7 @@ import ij.plugin.PlugIn;
 /**
  * ImageJ plugin (no Java package) to run the {@link TrackMateRunner} plugin.
  *
- * <p><strong>This class is not included in the packaged uk.ac.sussex.gdsc jar.</strong>
+ * <p><strong>This class is not included in the packaged uk.ac.sussex.gdsc.ij.ext jar.</strong>
  */
 public class TrackMate_PlugIn implements PlugIn {
   /** {@inheritDoc} */

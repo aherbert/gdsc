@@ -23,12 +23,9 @@
  */
 
 /**
- * Extend the functionality of the <a href="https://imagej.nih.gov/ij/">ImageJ</a> {@code ij}
- * package.
- *
- * <p>The sub package tree matches that of the {@code ij} package.
+ * Provides <a href="https://imagej.nih.gov/ij/">ImageJ</a> plugins.
  *
  * @see <a href="https://imagej.nih.gov/ij/">ImageJ</a>
- * @since 1.3.0
+ * @since 2.0
  */
 package uk.ac.sussex.gdsc.ij;

@@ -29,7 +29,7 @@
     xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/spotbugs/3.1.0/spotbugs/etc/findbugsfilter.xsd">
 
   <Match>
-    <Class name="uk.ac.sussex.gdsc.colocalisation.cda.Cda_PlugIn" />
+    <Class name="uk.ac.sussex.gdsc.ij.colocalisation.cda.Cda_PlugIn" />
     <!-- NP: Unshifted result cannot be null. -->
     <Method name="runCda" />
     <Bug code="NP" />
@@ -37,11 +37,11 @@
 
   <Match>
     <Or>
-      <Class name="uk.ac.sussex.gdsc.foci.FindFociBaseProcessor$ResultComparator" />
-      <Class name="uk.ac.sussex.gdsc.foci.FindFociBaseProcessor$ResultAscComparator" />
-      <Class name="uk.ac.sussex.gdsc.foci.FindFociBaseProcessor$ResultDescComparator" />
-      <Class name="uk.ac.sussex.gdsc.foci.FindFociOptimiser_PlugIn$ResultComparator" />
-      <Class name="uk.ac.sussex.gdsc.foci.FindFociSaddle" />
+      <Class name="uk.ac.sussex.gdsc.ij.foci.FindFociBaseProcessor$ResultComparator" />
+      <Class name="uk.ac.sussex.gdsc.ij.foci.FindFociBaseProcessor$ResultAscComparator" />
+      <Class name="uk.ac.sussex.gdsc.ij.foci.FindFociBaseProcessor$ResultDescComparator" />
+      <Class name="uk.ac.sussex.gdsc.ij.foci.FindFociOptimiser_PlugIn$ResultComparator" />
+      <Class name="uk.ac.sussex.gdsc.ij.foci.FindFociSaddle" />
     </Or>
     <!-- Allow incorrect float comparison. This will allow -0,0 to be sorted incorrectly if present. NaNs are still detected. -->
     <Method name="compare" />
@@ -50,8 +50,8 @@
 
   <Match>
     <Or>
-      <Class name="uk.ac.sussex.gdsc.foci.ObjectAnalyzer" />
-      <Class name="uk.ac.sussex.gdsc.foci.ObjectAnalyzer3D" />
+      <Class name="uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer" />
+      <Class name="uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer3D" />
     </Or>
     <!-- This is documented as returning a reference -->
     <Method name="getObjectMask" />
@@ -59,21 +59,21 @@
   </Match>
 
   <Match>
-    <Class name="uk.ac.sussex.gdsc.foci.ObjectAnalyzer3D" />
+    <Class name="uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer3D" />
     <!-- The constructor deliberately wraps the array. -->
     <Method name="&lt;init&gt;" />
     <Bug pattern="EI_EXPOSE_REP2" />
   </Match>
 
   <Match>
-    <Class name="uk.ac.sussex.gdsc.utils.CellOutliner_PlugIn" />
+    <Class name="uk.ac.sussex.gdsc.ij.utils.CellOutliner_PlugIn" />
     <!-- It is intended to divide the kernel width by 2 using integer division -->
     <Method name="getCellRange" />
     <Bug pattern="ICAST_IDIV_CAST_TO_DOUBLE" />
   </Match>
 
   <Match>
-    <Class name="uk.ac.sussex.gdsc.foci.FindFociBaseProcessor" />
+    <Class name="uk.ac.sussex.gdsc.ij.foci.FindFociBaseProcessor" />
     <!-- Unused method left for debugging -->
     <Method name="findHighestSaddle" />
     <Bug pattern="UPM_UNCALLED_PRIVATE_METHOD" />
@@ -81,12 +81,12 @@
 
   <!-- These all intend to compare floating point numbers using == -->
   <Match>
-    <Class name="uk.ac.sussex.gdsc.colocalisation.ColocalisationThreshold" />
+    <Class name="uk.ac.sussex.gdsc.ij.colocalisation.ColocalisationThreshold" />
     <Method name="correlate" />
     <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
   </Match>
   <Match>
-    <Class name="uk.ac.sussex.gdsc.ij.plugin.filter.ParticleAnalyzerCopy" />
+    <Class name="uk.ac.sussex.gdsc.ij.ij.plugin.filter.ParticleAnalyzerCopy" />
     <Or>
       <Method name="showDialog" />
       <Method name="eraseOutsideRoi" />
@@ -94,12 +94,12 @@
     <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
   </Match>
   <Match>
-    <Class name="uk.ac.sussex.gdsc.threshold.MultiOtsuThreshold_PlugIn" />
+    <Class name="uk.ac.sussex.gdsc.ij.threshold.MultiOtsuThreshold_PlugIn" />
     <Method name="findMaxSigma" />
     <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
   </Match>
   <Match>
-    <Class name="uk.ac.sussex.gdsc.utils.AlignImages_PlugIn" />
+    <Class name="uk.ac.sussex.gdsc.ij.utils.AlignImages_PlugIn" />
     <Or>
       <Method name="alignImages" />
       <Method name="calculateScore" />
@@ -109,17 +109,17 @@
 
   <!-- A copy of an ImageJ class that has not been fixed for thread safety. -->
   <Match>
-    <Class name="uk.ac.sussex.gdsc.ij.plugin.filter.ParticleAnalyzerCopy" />
+    <Class name="uk.ac.sussex.gdsc.ij.ij.plugin.filter.ParticleAnalyzerCopy" />
     <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD" />
   </Match>
 
   <Match>
-    <Class name="uk.ac.sussex.gdsc.foci.FindFociOptimiser_PlugIn" />
+    <Class name="uk.ac.sussex.gdsc.ij.foci.FindFociOptimiser_PlugIn" />
     <Method name="runOptimiser" />
     <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE" />
   </Match>
   <Match>
-    <Class name="uk.ac.sussex.gdsc.foci.controller.FindFociRunner" />
+    <Class name="uk.ac.sussex.gdsc.ij.foci.controller.FindFociRunner" />
     <Method name="runFindFoci" />
     <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE" />
   </Match>
