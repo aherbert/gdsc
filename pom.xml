@@ -176,7 +176,7 @@ Software for microscopy image analysis
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <excludes>Gdsc_PlugIn*</excludes>
+          <excludes>Gdsc_PlugIn*,TrackMate_PlugIn*</excludes>
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
