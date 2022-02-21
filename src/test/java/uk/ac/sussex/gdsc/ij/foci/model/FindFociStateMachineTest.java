@@ -32,9 +32,9 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
-import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
 import uk.ac.sussex.gdsc.test.rng.RngUtils;
+import uk.ac.sussex.gdsc.test.utils.RandomSeed;
 import uk.ac.sussex.gdsc.test.utils.TestLogUtils;
 
 @SuppressWarnings({"javadoc"})
@@ -77,7 +77,7 @@ class FindFociStateMachineTest {
 
     final FindFociStateMachine sm = new FindFociStateMachine();
     final String[] propertyNames = sm.getObservedProperties().toArray(new String[0]);
-    final UniformRandomProvider rand = RngUtils.create(seed.getSeed());
+    final UniformRandomProvider rand = RngUtils.create(seed.get());
     final Integer oldValue = new Integer(0);
     final Integer newValue = new Integer(1);
 

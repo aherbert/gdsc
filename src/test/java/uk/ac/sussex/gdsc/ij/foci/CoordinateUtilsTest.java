@@ -31,15 +31,15 @@ import org.apache.commons.rng.UniformRandomProvider;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
-import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
 import uk.ac.sussex.gdsc.test.rng.RngUtils;
+import uk.ac.sussex.gdsc.test.utils.RandomSeed;
 
 @SuppressWarnings({"javadoc"})
 class CoordinateUtilsTest {
   @SeededTest
   void canGetSquaredDistanceFunction(RandomSeed seed) {
-    final UniformRandomProvider rng = RngUtils.create(seed.getSeed());
+    final UniformRandomProvider rng = RngUtils.create(seed.get());
     final Coordinate[] coords = IntStream.range(0, 5)
         .mapToObj(i -> new uk.ac.sussex.gdsc.core.match.BasePoint(rng.nextInt(32), rng.nextInt(32),
             rng.nextInt(32)))

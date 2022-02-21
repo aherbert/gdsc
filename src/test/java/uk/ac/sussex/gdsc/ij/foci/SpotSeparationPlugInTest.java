@@ -31,8 +31,8 @@ import java.awt.Rectangle;
 import org.apache.commons.rng.core.source64.SplitMix64;
 import org.junit.jupiter.api.Assertions;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
-import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
+import uk.ac.sussex.gdsc.test.utils.RandomSeed;
 
 @SuppressWarnings({"javadoc"})
 class SpotSeparationPlugInTest {
@@ -48,7 +48,7 @@ class SpotSeparationPlugInTest {
     final int peakId = 255;
     spotIp.setValue(peakId);
     spotIp.fill();
-    final double degrees = new SplitMix64(seed.getSeedAsLong()).nextDouble() * 180;
+    final double degrees = new SplitMix64(seed.getAsLong()).nextDouble() * 180;
     spotIp.setInterpolationMethod(ImageProcessor.NONE);
     spotIp.rotate(degrees);
 

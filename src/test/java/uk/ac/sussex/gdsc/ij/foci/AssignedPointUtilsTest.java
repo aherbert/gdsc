@@ -41,9 +41,9 @@ import org.apache.commons.rng.UniformRandomProvider;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.ac.sussex.gdsc.core.match.BasePoint;
-import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
 import uk.ac.sussex.gdsc.test.rng.RngUtils;
+import uk.ac.sussex.gdsc.test.utils.RandomSeed;
 
 @SuppressWarnings({"javadoc"})
 class AssignedPointUtilsTest {
@@ -57,7 +57,7 @@ class AssignedPointUtilsTest {
     // Handle null
     AssignedPointUtils.savePoints(null, filename.toString());
 
-    final UniformRandomProvider rng = RngUtils.create(seed.getSeed());
+    final UniformRandomProvider rng = RngUtils.create(seed.get());
     final int width = 256;
     final int height = 128;
     final int depth = 5;
@@ -101,7 +101,7 @@ class AssignedPointUtilsTest {
     Assertions.assertArrayEquals(new AssignedPoint[0], AssignedPointUtils
         .extractRoiPoints(new PolygonRoi(new int[10], new int[10], 10, Roi.POLYGON)));
 
-    final UniformRandomProvider rng = RngUtils.create(seed.getSeed());
+    final UniformRandomProvider rng = RngUtils.create(seed.get());
     final int[] x = new int[10];
     final int[] y = new int[x.length];
     for (int i = 0; i < x.length; i++) {
@@ -153,7 +153,7 @@ class AssignedPointUtilsTest {
     imp.setRoi(new PolygonRoi(new int[] {1, 2, 1}, new int[] {1, 1, 2}, 3, Roi.POLYGON));
     Assertions.assertArrayEquals(new AssignedPoint[0], AssignedPointUtils.extractRoiPoints(imp));
 
-    final UniformRandomProvider rng = RngUtils.create(seed.getSeed());
+    final UniformRandomProvider rng = RngUtils.create(seed.get());
     final int[] x = new int[10];
     final int[] y = new int[x.length];
     for (int i = 0; i < x.length; i++) {
@@ -255,7 +255,7 @@ class AssignedPointUtilsTest {
 
   @SeededTest
   void canCreateRoiFromCoordinates(RandomSeed seed) {
-    final UniformRandomProvider rng = RngUtils.create(seed.getSeed());
+    final UniformRandomProvider rng = RngUtils.create(seed.get());
 
     final int width = 256;
     final int height = 128;
@@ -312,7 +312,7 @@ class AssignedPointUtilsTest {
 
   @SeededTest
   void canCreateRoiFromAssignedPoint(RandomSeed seed) {
-    final UniformRandomProvider rng = RngUtils.create(seed.getSeed());
+    final UniformRandomProvider rng = RngUtils.create(seed.get());
 
     final int width = 256;
     final int height = 128;

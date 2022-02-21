@@ -33,9 +33,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.ac.sussex.gdsc.core.trees.DoubleDistanceFunction;
 import uk.ac.sussex.gdsc.ij.foci.AssignedFindFociResultSearchIndex.SearchMode;
-import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
 import uk.ac.sussex.gdsc.test.rng.RngUtils;
+import uk.ac.sussex.gdsc.test.utils.RandomSeed;
 
 @SuppressWarnings({"javadoc"})
 class AssignedFindFociResultSearchIndexTest {
@@ -109,7 +109,7 @@ class AssignedFindFociResultSearchIndexTest {
   private static void testDistanceFunction(RandomSeed seed, int width, int height, int depth,
       double sx, double sy, double sz) {
     final ArrayList<FindFociResult> results = new ArrayList<>();
-    final UniformRandomProvider rng = RngUtils.create(seed.getSeed());
+    final UniformRandomProvider rng = RngUtils.create(seed.get());
     final IntSupplier z = depth == 0 ? () -> 0 : () -> rng.nextInt(depth);
     final int range = 10;
     for (int i = 0; i < 10; i++) {
@@ -132,7 +132,7 @@ class AssignedFindFociResultSearchIndexTest {
 
   @SeededTest
   void canForEach(RandomSeed seed) {
-    final UniformRandomProvider rng = RngUtils.create(seed.getSeed());
+    final UniformRandomProvider rng = RngUtils.create(seed.get());
     final int w = 32;
     final int h = 32;
     final int d = 32;
@@ -150,7 +150,7 @@ class AssignedFindFociResultSearchIndexTest {
 
   @SeededTest
   void canSetAssigned(RandomSeed seed) {
-    final UniformRandomProvider rng = RngUtils.create(seed.getSeed());
+    final UniformRandomProvider rng = RngUtils.create(seed.get());
     final ArrayList<FindFociResult> results = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
       results.add(createResult(i, i, i, i));
@@ -191,7 +191,7 @@ class AssignedFindFociResultSearchIndexTest {
 
   private static void canFindPoints(RandomSeed seed, int width, int height, int depth, double sx,
       double sy, double sz) {
-    final UniformRandomProvider rng = RngUtils.create(seed.getSeed());
+    final UniformRandomProvider rng = RngUtils.create(seed.get());
     final int range = 10;
     final ArrayList<FindFociResult> results = new ArrayList<>();
     // Results should be unique for xyz so use a random set of the possible XYZ indices

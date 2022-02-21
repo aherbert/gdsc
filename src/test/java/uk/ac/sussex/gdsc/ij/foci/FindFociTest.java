@@ -57,10 +57,10 @@ import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.ThresholdMethod;
 import uk.ac.sussex.gdsc.test.api.TestAssertions;
 import uk.ac.sussex.gdsc.test.api.TestHelper;
 import uk.ac.sussex.gdsc.test.api.function.DoubleDoubleBiPredicate;
-import uk.ac.sussex.gdsc.test.junit5.RandomSeed;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
 import uk.ac.sussex.gdsc.test.junit5.SpeedTag;
 import uk.ac.sussex.gdsc.test.rng.RngUtils;
+import uk.ac.sussex.gdsc.test.utils.RandomSeed;
 import uk.ac.sussex.gdsc.test.utils.TestComplexity;
 import uk.ac.sussex.gdsc.test.utils.TestLogUtils;
 import uk.ac.sussex.gdsc.test.utils.TestSettings;
@@ -708,7 +708,7 @@ class FindFociTest {
   }
 
   private ImagePlus[] createData(RandomSeed seed) {
-    final UniformRandomProvider rg = RngUtils.create(seed.getSeed());
+    final UniformRandomProvider rg = RngUtils.create(seed.get());
     final ImagePlus[] images = new ImagePlus[NUMBER_OF_TEST_IMAGES_2D + NUMBER_OF_TEST_IMAGES_3D];
     int index = 0;
     for (int i = 0; i < NUMBER_OF_TEST_IMAGES_2D; i++) {
