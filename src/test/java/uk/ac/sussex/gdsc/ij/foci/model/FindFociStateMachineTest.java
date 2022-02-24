@@ -29,13 +29,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.rng.UniformRandomProvider;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
 import uk.ac.sussex.gdsc.test.rng.RngUtils;
 import uk.ac.sussex.gdsc.test.utils.RandomSeed;
 import uk.ac.sussex.gdsc.test.utils.TestLogUtils;
+import uk.ac.sussex.gdsc.test.utils.TestLogUtils.TestLevel;
 
 @SuppressWarnings({"javadoc"})
 class FindFociStateMachineTest {
@@ -72,14 +72,14 @@ class FindFociStateMachineTest {
    */
   @SeededTest
   void timeStateTransitions(RandomSeed seed) {
-    final Level level = Level.INFO;
-    Assumptions.assumeTrue(logger.isLoggable(level));
+    final Level level = TestLevel.TEST_INFO;
+    final int steps = logger.isLoggable(level) ? 1000000 : 100;
 
     final FindFociStateMachine sm = new FindFociStateMachine();
     final String[] propertyNames = sm.getObservedProperties().toArray(new String[0]);
     final UniformRandomProvider rand = RngUtils.create(seed.get());
-    final Integer oldValue = new Integer(0);
-    final Integer newValue = new Integer(1);
+    final Integer oldValue = Integer.valueOf(0);
+    final Integer newValue = Integer.valueOf(1);
 
     final String[] randomNames = new String[propertyNames.length * 10];
     for (int j = 0, x = 0; j < 10; j++) {
@@ -92,14 +92,17 @@ class FindFociStateMachineTest {
         new UpdateablePropertyChangeEvent(this, "", oldValue, newValue);
 
     final long start = System.nanoTime();
-    long steps = 0;
-    while (steps < 1000000) {
+    int c = 0;
+    OUTER:
+    for (;;) {
       for (int j = 0, x = 0; j < 10; j++) {
         for (int i = 0; i < propertyNames.length; i++) {
-          steps++;
           event.name = randomNames[x++];
           sm.propertyChange(event);
           // sm.propertyChange(new PropertyChangeEvent(this, randomNames[x++], oldValue, newValue));
+          if (++c == steps) {
+            break OUTER;
+          }
         }
         sm.setState(FindFociState.COMPLETE);
       }

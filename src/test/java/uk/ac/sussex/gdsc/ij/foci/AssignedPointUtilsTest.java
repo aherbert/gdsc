@@ -37,6 +37,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.rng.UniformRandomProvider;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -86,7 +88,11 @@ class AssignedPointUtilsTest {
     }
 
     // Should not throw. It will log an exception
+    final Logger logger = Logger.getLogger(AssignedPointUtils.class.getName());
+    final Level level = logger.getLevel();
+    logger.setLevel(Level.OFF);
     in = AssignedPointUtils.loadPoints(filename.toString());
+    logger.setLevel(level);
     Assertions.assertArrayEquals(new AssignedPoint[0], in);
 
     Files.delete(filename);
@@ -189,9 +195,9 @@ class AssignedPointUtilsTest {
     }
 
     // Set into the ROI in bulk
-    int[] cpositions = new int[imp.getStackSize()];
+    final int[] cpositions = new int[imp.getStackSize()];
     int[] zpositions = new int[imp.getStackSize()];
-    int[] tpositions = new int[imp.getStackSize()];
+    final int[] tpositions = new int[imp.getStackSize()];
     int[] counters = new int[zpositions.length];
     for (int i = 0; i < zpositions.length; i++) {
       final int channel = 1 + rng.nextInt(imp.getNChannels());

@@ -263,7 +263,8 @@ class FindFociTest {
     }
     final List<FindFociResult> results1 = r1.results;
     final List<FindFociResult> results2 = r2.results;
-    // logger.info(FunctionUtils.getSupplier("N1=%d, N2=%d", results1.size(), results2.size());
+    // logger.log(TestLevel.TEST_INFO, FunctionUtils.getSupplier("N1=%d, N2=%d", results1.size(),
+    // results2.size());
     Assertions.assertEquals(results1.size(), results2.size(), setName + " Results Size");
     int counter = 0;
     final int offset = (negativeValues) ? OFFSET : 0;
@@ -273,7 +274,8 @@ class FindFociTest {
         counter = i;
         final FindFociResult o1 = results1.get(i);
         final FindFociResult o2 = results2.get(i);
-        // logger.info(FunctionUtils.getSupplier("[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d", i,
+        // logger.log(TestLevel.TEST_INFO, FunctionUtils.getSupplier(
+        // "[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d", i,
         // o1.x, o1.y, o1.maxValue, o1.count, o1.saddleNeighbourId,
         // o2.x, o2.y, o2.maxValue, o2.count, o2.saddleNeighbourId);
         Assertions.assertEquals(o1.x, o2.x, "X");
