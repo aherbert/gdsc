@@ -35,13 +35,11 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 import org.apache.commons.rng.UniformRandomProvider;
 import org.apache.commons.rng.sampling.distribution.PoissonSampler;
 import org.apache.commons.rng.sampling.distribution.SharedStateContinuousSampler;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
@@ -58,19 +56,13 @@ import uk.ac.sussex.gdsc.test.api.TestAssertions;
 import uk.ac.sussex.gdsc.test.api.TestHelper;
 import uk.ac.sussex.gdsc.test.api.function.DoubleDoubleBiPredicate;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
-import uk.ac.sussex.gdsc.test.junit5.SpeedTag;
 import uk.ac.sussex.gdsc.test.rng.RngUtils;
 import uk.ac.sussex.gdsc.test.utils.RandomSeed;
-import uk.ac.sussex.gdsc.test.utils.TestComplexity;
-import uk.ac.sussex.gdsc.test.utils.TestLogUtils;
-import uk.ac.sussex.gdsc.test.utils.TestSettings;
 import uk.ac.sussex.gdsc.test.utils.TestUtils;
-import uk.ac.sussex.gdsc.test.utils.TimingResult;
 import uk.ac.sussex.gdsc.test.utils.functions.FunctionUtils;
 
 @SuppressWarnings({"javadoc"})
 class FindFociTest {
-  private static Logger logger;
   static ConcurrentHashMap<RandomSeed, ImagePlus[]> dataCache;
 
   /**
@@ -78,7 +70,6 @@ class FindFociTest {
    */
   @BeforeAll
   public static void beforeAll() {
-    logger = Logger.getLogger(FindFociTest.class.getName());
     dataCache = new ConcurrentHashMap<>();
   }
 
@@ -89,7 +80,6 @@ class FindFociTest {
   public static void afterAll() {
     dataCache.clear();
     dataCache = null;
-    logger = null;
   }
 
   private static final int BIAS = 500;
@@ -99,9 +89,6 @@ class FindFociTest {
   private static final int OFFSET = 1024;
   private static final int NUMBER_OF_TEST_IMAGES_2D = 2;
   private static final int NUMBER_OF_TEST_IMAGES_3D = 2;
-
-  /** Number of loops for speed testing. */
-  private static final int LOOPS = 20;
 
   // Allow testing different settings.
   // Note that the float processor must use absolute values as the relative ones are converted to
@@ -255,138 +242,6 @@ class FindFociTest {
         }
       }
     }
-  }
-
-  @SpeedTag
-  @SeededTest
-  void isFasterUsingOptimisedIntProcessor(RandomSeed seed) {
-    Assumptions.assumeTrue(TestSettings.allow(TestComplexity.LOW));
-
-    // Get settings to try for the speed test
-    final int[] indices = new int[] {1};
-
-    // Warm up
-    final ImagePlus[] data = dataCache.computeIfAbsent(seed, this::createData);
-    // runInt(data[0], indices[0], false);
-    // runInt(data[0], indices[0], true);
-
-    long time1 = Long.MAX_VALUE;
-    for (int n = LOOPS; n-- > 0;) {
-      start();
-      for (final ImagePlus imp : data) {
-        for (final int i : indices) {
-          for (final boolean nonContiguous : new boolean[] {true, false}) {
-            runInt(imp, i, false, nonContiguous);
-          }
-        }
-      }
-      time1 = stop(time1);
-    }
-    long time2 = Long.MAX_VALUE;
-    for (int n = LOOPS; n-- > 0;) {
-      start();
-      for (final ImagePlus imp : data) {
-        for (final int i : indices) {
-          for (final boolean nonContiguous : new boolean[] {true, false}) {
-            runInt(imp, i, true, nonContiguous);
-          }
-        }
-      }
-      time2 = stop(time2);
-    }
-    logger.log(TestLogUtils.getTimingRecord(new TimingResult("Int", time1),
-        new TimingResult("Opt Int", time2)));
-    Assertions.assertTrue(time2 < time1);
-  }
-
-  @SpeedTag
-  @SeededTest
-  void isNotSlowerthanLegacyUsingOptimisedIntProcessor(RandomSeed seed) {
-    Assumptions.assumeTrue(TestSettings.allow(TestComplexity.MEDIUM));
-
-    // Get settings to try for the speed test
-    final int[] indices = new int[] {1};
-
-    // Warm up
-    final ImagePlus[] data = dataCache.computeIfAbsent(seed, this::createData);
-    // runLegacy(data[0], indices[0]);
-    // runInt(data[0], indices[0], true);
-
-    long time1 = Long.MAX_VALUE;
-    for (int n = LOOPS; n-- > 0;) {
-      start();
-      for (final ImagePlus imp : data) {
-        for (final int i : indices) {
-          runLegacy(imp, i);
-        }
-      }
-      time1 = stop(time1);
-    }
-    long time2 = Long.MAX_VALUE;
-    for (int n = LOOPS; n-- > 0;) {
-      start();
-      for (final ImagePlus imp : data) {
-        for (final int i : indices) {
-          runInt(imp, i, true, true);
-        }
-      }
-      time2 = stop(time2);
-    }
-
-    // Comment out this assertion as it sometimes fails when running all the tests.
-    // When running all the tests the legacy code gets run more and so
-    // the JVM has had time to optimise it. When running the test alone the two are comparable.
-    // I am not worried the new code has worse performance.
-
-    // Assertions.assertTrue(time2 < time1 * 1.4); // Allow some discretion over the legacy method
-    logger.log(TestLogUtils.getTimingRecord(new TimingResult("Legacy", time1),
-        new TimingResult("Opt Int", time2)));
-  }
-
-  @SeededTest
-  void isFasterUsingOptimisedIntProcessorOverFloatProcessor(RandomSeed seed) {
-    Assumptions.assumeTrue(TestSettings.allow(TestComplexity.LOW));
-
-    // Get settings to try for the speed test
-    final int[] indices = new int[] {1};
-
-    // Warm up
-    final ImagePlus[] data = dataCache.computeIfAbsent(seed, this::createData);
-    // runFloat(data[0], indices[0], true, false);
-    // runInt(data[0], indices[0], true);
-
-    final ImagePlus[] data2 = new ImagePlus[data.length];
-    for (int i = 0; i < data.length; i++) {
-      data2[i] = toFloat(data[i], false);
-    }
-
-    long time1 = Long.MAX_VALUE;
-    for (int n = LOOPS; n-- > 0;) {
-      start();
-      for (final ImagePlus imp : data2) {
-        for (final int i : indices) {
-          for (final boolean nonContiguous : new boolean[] {true, false}) {
-            runFloat(imp, i, false, nonContiguous);
-          }
-        }
-      }
-      time1 = stop(time1);
-    }
-    long time2 = Long.MAX_VALUE;
-    for (int n = LOOPS; n-- > 0;) {
-      start();
-      for (final ImagePlus imp : data) {
-        for (final int i : indices) {
-          for (final boolean nonContiguous : new boolean[] {true, false}) {
-            runInt(imp, i, true, nonContiguous);
-          }
-        }
-      }
-      time2 = stop(time2);
-    }
-    logger.log(TestLogUtils.getTimingRecord(new TimingResult("Opt Float", time1),
-        new TimingResult("Opt Int", time2)));
-    Assertions.assertTrue(time2 < time1);
   }
 
   private static void isEqual(boolean legacy, FindFociResults r1, FindFociResults r2, int set,
