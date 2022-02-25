@@ -144,6 +144,10 @@ Software for microscopy image analysis
       <groupId>sc.fiji</groupId>
       <artifactId>3D_Viewer</artifactId>
     </dependency>
+    <dependency>
+      <groupId>it.unimi.dsi</groupId>
+      <artifactId>fastutil-core</artifactId>
+    </dependency>
 
     <!-- TESTING -->
     <dependency>
