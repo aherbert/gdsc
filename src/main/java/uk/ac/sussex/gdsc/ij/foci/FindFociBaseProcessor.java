@@ -25,13 +25,13 @@
 package uk.ac.sussex.gdsc.ij.foci;
 
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.set.hash.TIntHashSet;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
 import ij.plugin.filter.GaussianBlur;
 import ij.process.ImageProcessor;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import java.awt.Rectangle;
 import java.awt.geom.RoundRectangle2D;
 import java.io.Serializable;
@@ -4490,7 +4490,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
       final boolean setMerge = size > 1; // Determine when the sort becomes too expensive
 
       if (setMerge) {
-        final TIntHashSet set = new TIntHashSet(size);
+        final IntOpenHashSet set = new IntOpenHashSet(size);
         for (int i = 0; i < size; i++) {
           if (!set.add(newPeakSaddles[i].id)) {
             continue;

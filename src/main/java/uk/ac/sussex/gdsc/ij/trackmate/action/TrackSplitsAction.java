@@ -36,8 +36,8 @@ import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.action.TrackMateActionFactory;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
 import fiji.plugin.trackmate.util.TMUtils;
-import gnu.trove.map.hash.TIntIntHashMap;
 import ij.gui.Plot;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import java.awt.Frame;
 import java.util.HashSet;
 import java.util.Set;
@@ -102,7 +102,7 @@ public class TrackSplitsAction extends AbstractTMAction {
     // Visible tracks only
     final Set<Integer> trackIds = trackModel.unsortedTrackIDs(true);
     logger.log("Analysing " + TextUtils.pleural(trackIds.size(), "track id"));
-    final TIntIntHashMap counts = countSplitsPerFrame(trackModel, trackIds);
+    final Int2IntOpenHashMap counts = countSplitsPerFrame(trackModel, trackIds);
 
     // Plot the splits across the entire time series used in the analysis.
     final Settings settings = trackmate.getSettings();
@@ -128,9 +128,9 @@ public class TrackSplitsAction extends AbstractTMAction {
    * @param trackIds the track ids
    * @return map of splits per frame
    */
-  public static TIntIntHashMap countSplitsPerFrame(final TrackModel trackModel,
+  public static Int2IntOpenHashMap countSplitsPerFrame(final TrackModel trackModel,
       final Set<Integer> trackIds) {
-    final TIntIntHashMap counts = new TIntIntHashMap(trackIds.size() * 2);
+    final Int2IntOpenHashMap counts = new Int2IntOpenHashMap(trackIds.size() * 2);
     trackIds.forEach(trackId -> {
       final Set<Spot> spots = trackModel.trackSpots(trackId);
       spots.forEach(spot -> {
@@ -161,7 +161,7 @@ public class TrackSplitsAction extends AbstractTMAction {
         // Note: If earlier is above 1 then this is a complex spot.
         if (later > 1 && earlier <= 1) {
           // Store the frame
-          counts.adjustOrPutValue(t1, 1, 1);
+          counts.addTo(t1, 1);
         }
       });
     });
@@ -178,15 +178,17 @@ public class TrackSplitsAction extends AbstractTMAction {
    * @param dt the time scaling factor
    * @return {time, frequency}
    */
-  public static float[][] convertSplits(TIntIntHashMap counts, int tstart, int tend, double dt) {
+  public static float[][] convertSplits(Int2IntOpenHashMap counts, int tstart, int tend,
+      double dt) {
     final float[] time = SimpleArrayUtils.newArray(tend - tstart + 1, tstart, 1f);
     SimpleArrayUtils.multiply(time, dt);
     final float[] frequency = new float[time.length];
-    counts.forEachEntry((t, c) -> {
+    counts.int2IntEntrySet().fastForEach(e -> {
+      final int t = e.getIntKey();
+      final int c = e.getIntValue();
       if (t >= tstart && t <= tend) {
         frequency[t - tstart] = c;
       }
-      return true;
     });
     return new float[][] {time, frequency};
   }

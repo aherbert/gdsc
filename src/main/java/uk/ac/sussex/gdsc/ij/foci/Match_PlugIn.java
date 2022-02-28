@@ -26,7 +26,6 @@ package uk.ac.sussex.gdsc.ij.foci;
 
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TIntObjectHashMap;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -40,6 +39,7 @@ import ij.plugin.PlugIn;
 import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.awt.Color;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -603,7 +603,7 @@ public class Match_PlugIn implements PlugIn {
   public static PointRoi[] createRoi(final ImagePlus imp, List<? extends Coordinate> array,
       double scaleX, double scaleY, double scaleZ) {
     // We have to create an overlay per z-slice using the calibration scale
-    final TIntObjectHashMap<TIntArrayList> xpoints = new TIntObjectHashMap<>();
+    final Int2ObjectOpenHashMap<TIntArrayList> xpoints = new Int2ObjectOpenHashMap<>();
     TIntArrayList nextlist = new TIntArrayList();
 
     for (final Coordinate point : array) {
@@ -626,8 +626,9 @@ public class Match_PlugIn implements PlugIn {
     final boolean isHyperStack = imp.isDisplayedHyperStack();
 
     final LocalList<PointRoi> rois = new LocalList<>(xpoints.size());
-    xpoints.forEachEntry((z, b) -> {
-      final int[] data = b.toArray();
+    xpoints.int2ObjectEntrySet().fastForEach(e -> {
+      final int z = e.getIntKey();
+      final int[] data = e.getValue().toArray();
       final float[] x = new float[data.length / 2];
       final float[] y = new float[x.length];
       for (int i = 0, j = 0; j < x.length; j++) {
@@ -641,7 +642,6 @@ public class Match_PlugIn implements PlugIn {
         roi.setPosition(imp.getStackIndex(channel, z, frame));
       }
       rois.add(roi);
-      return true;
     });
 
     return rois.toArray(new PointRoi[0]);

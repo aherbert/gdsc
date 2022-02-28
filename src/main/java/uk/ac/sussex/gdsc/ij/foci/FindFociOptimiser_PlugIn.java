@@ -24,10 +24,6 @@
 
 package uk.ac.sussex.gdsc.ij.foci;
 
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
-import gnu.trove.set.hash.TDoubleHashSet;
-import gnu.trove.set.hash.TIntHashSet;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -45,6 +41,10 @@ import ij.plugin.frame.Recorder;
 import ij.process.ImageProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
+import it.unimi.dsi.fastutil.doubles.DoubleOpenHashSet;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
 import java.awt.Choice;
@@ -203,8 +203,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   // The number of combinations
   private int combinations;
 
-  private final TObjectIntHashMap<String> idMap = new TObjectIntHashMap<>();
-  private final TIntObjectHashMap<Parameters> optionsMap = new TIntObjectHashMap<>();
+  private final Object2IntOpenHashMap<String> idMap = new Object2IntOpenHashMap<>();
+  private final Int2ObjectOpenHashMap<Parameters> optionsMap = new Int2ObjectOpenHashMap<>();
 
   private final SoftLock lock = new SoftLock();
 
@@ -1117,7 +1117,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
      * @return the ID
      */
     private int getId(String parameters) {
-      int id = idMap.get(parameters);
+      int id = idMap.getInt(parameters);
       if (id == 0) {
         synchronized (idMap) {
           id = createId(parameters);
@@ -1134,7 +1134,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
      */
     private int createId(String parameters) {
       // Check again in case another thread just created it
-      int id = idMap.get(parameters);
+      int id = idMap.getInt(parameters);
       if (id == 0) {
         id = idMap.size() + 1;
         // Ensure we have options for every ID
@@ -2752,7 +2752,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
   private SortMethod[] createSortArray() {
     final double[] values = splitValues(settings.sortMethod);
-    final TIntHashSet set = new TIntHashSet(values.length);
+    final IntOpenHashSet set = new IntOpenHashSet(values.length);
     for (final double v : values) {
       final int method = (int) v;
       if (method >= 0 && method <= SortMethod.AVERAGE_INTENSITY_MINUS_MIN.ordinal()) {
@@ -2765,10 +2765,9 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       return new SortMethod[] {SortMethod.INTENSITY}; // Default
     }
     final SortMethod[] array = new SortMethod[set.size()];
-    final int[] index = new int[1];
+    final int[] index = {0};
     set.forEach(method -> {
       array[index[0]++] = SortMethod.fromOrdinal(method);
-      return true;
     });
     Arrays.sort(array, (o1, o2) -> Integer.compare(o1.ordinal(), o2.ordinal()));
     return array;
@@ -2776,7 +2775,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
   private double[] createBlurArray() {
     final double[] values = splitValues(settings.gaussianBlur);
-    final TDoubleHashSet set = new TDoubleHashSet(values.length);
+    final DoubleOpenHashSet set = new DoubleOpenHashSet(values.length);
     for (final double v : values) {
       if (v >= 0) {
         set.add(v);
@@ -2786,14 +2785,14 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       ImageJUtils.log("%s Warning : Gaussian blur : No values, setting to default 0", TITLE);
       return new double[] {0}; // Default
     }
-    final double[] array = set.toArray();
+    final double[] array = set.toDoubleArray();
     Arrays.sort(array);
     return array;
   }
 
   private CentreMethod[] createCentreArray() {
     final double[] values = splitValues(settings.centreMethod);
-    final TIntHashSet set = new TIntHashSet(values.length);
+    final IntOpenHashSet set = new IntOpenHashSet(values.length);
     for (final double v : values) {
       final int method = (int) v;
       if (method >= 0 && method <= CentreMethod.GAUSSIAN_ORIGINAL.ordinal()) {
@@ -2806,10 +2805,9 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       return new CentreMethod[] {CentreMethod.MAX_VALUE_SEARCH}; // Default
     }
     final CentreMethod[] array = new CentreMethod[set.size()];
-    final int[] index = new int[1];
+    final int[] index = {0};
     set.forEach(method -> {
       array[index[0]++] = CentreMethod.fromOrdinal(method);
-      return true;
     });
     Arrays.sort(array, (o1, o2) -> Integer.compare(o1.ordinal(), o2.ordinal()));
     return array;

@@ -24,8 +24,6 @@
 
 package uk.ac.sussex.gdsc.ij.ext.plugin.filter;
 
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.map.hash.TDoubleObjectHashMap;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Macro;
@@ -44,6 +42,9 @@ import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
+import it.unimi.dsi.fastutil.doubles.Double2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.doubles.Double2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.doubles.DoubleSortedSet;
 import java.awt.Frame;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -51,7 +52,6 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -80,7 +80,7 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
 public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
   private ImagePlus restoreRedirectImp;
   private BufferedWriter out;
-  private HashMap<Double, int[]> summaryHistogram;
+  private Double2ObjectOpenHashMap<int[]> summaryHistogram;
 
   private boolean useGetPixelValue;
   private float[] image;
@@ -267,7 +267,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       settings.redirectTitle = list[index];
       settings.particleSummary = gd.getNextBoolean();
       if (settings.particleSummary) {
-        summaryHistogram = new HashMap<>();
+        summaryHistogram = new Double2ObjectOpenHashMap<>();
       }
       settings.saveHistogram = gd.getNextBoolean();
       if (settings.saveHistogram) {
@@ -472,19 +472,17 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       out = writeHistogram(out, rt.getCounter(), particleValue, hist);
       if (settings.particleSummary) {
         // Create and store a cumulative histogram if we are summarising the particles
-        if (summaryHistogram.containsKey(particleValue)) {
-          int[] hist2 = summaryHistogram.get(particleValue);
-          if (hist.length < hist2.length) {
-            final int[] tmp = hist;
-            hist = hist2;
-            hist2 = tmp;
+        summaryHistogram.merge(particleValue, hist, (h1, h2) -> {
+          if (h1.length < h2.length) {
+            final int[] tmp = h1;
+            h1 = h2;
+            h2 = tmp;
           }
-          for (int i = 0; i < hist2.length; i++) {
-            hist[i] += hist2[i];
+          for (int i = 0; i < h2.length; i++) {
+            h1[i] += h2[i];
           }
-        }
-
-        summaryHistogram.put(particleValue, hist);
+          return h1;
+        });
       }
     }
 
@@ -556,8 +554,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     }
 
     // Map all particles to a single result
-    final TDoubleObjectHashMap<double[]> map = new TDoubleObjectHashMap<>();
-    final TDoubleArrayList order = new TDoubleArrayList();
+    final Double2ObjectLinkedOpenHashMap<double[]> map = new Double2ObjectLinkedOpenHashMap<>();
 
     // Now summarise
     for (int r = 0; r < nRows; r++) {
@@ -602,8 +599,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       data[9] = 1;
 
       // Find the record for the summary
-      if (map.containsKey(particle)) {
-        final double[] record = map.get(particle);
+      map.merge(particle, data, (record, x) -> {
         // AREA => sum this
         record[0] += data[0];
         // MEAN => multiply by nPixels and sum, divide at end by nPixels
@@ -624,10 +620,9 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
         record[8] += data[8];
         // nParticles
         record[9] += data[9];
-      } else {
-        map.put(particle, data);
-        order.add(particle);
-      }
+
+        return record;
+      });
     }
 
     // Produce summary
@@ -635,13 +630,14 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     if (summary.getColumnHeading(ResultsTable.LAST_HEADING) == null) {
       summary.setDefaultHeadings();
     }
-    order.forEach(particle -> {
+    map.double2ObjectEntrySet().fastForEach(e -> {
+      final double particle = e.getDoubleKey();
+      final double[] data = e.getValue();
       summary.incrementCounter();
       if (label != null) {
         summary.addLabel(label);
       }
 
-      final double[] data = map.get(particle);
       final double n = data[8];
       // AREA => sum this
       if (values[0] != null) {
@@ -680,8 +676,6 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       summary.addValue("Particle Value", particle);
       summary.addValue("Pixels", data[8]);
       summary.addValue("Particles", data[9]);
-
-      return true;
     });
 
     final String windowTitle = "Particle Summary";
@@ -732,24 +726,23 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
 
     // Optionally save summary histogram to file
     if (settings.saveHistogram) {
-      saveSummaryHistogram(order);
+      saveSummaryHistogram(map.keySet());
     }
   }
 
   @SuppressWarnings("resource")
-  private void saveSummaryHistogram(TDoubleArrayList order) {
+  private void saveSummaryHistogram(DoubleSortedSet doubleSortedSet) {
     if (summaryHistogram.isEmpty()) {
       return;
     }
     final String summaryFilename = createSummaryFilename(settings.histogramFile);
-    BufferedWriter histogramWriter = createOutput(summaryFilename);
-    int id = 1;
-    for (int i = 0; i < order.size(); i++) {
-      final double particleValue = order.getQuick(i);
-      histogramWriter =
-          writeHistogram(histogramWriter, id++, particleValue, summaryHistogram.get(particleValue));
-    }
-    close(histogramWriter);
+    final BufferedWriter[] histogramWriter = {createOutput(summaryFilename)};
+    final int[] id = {1};
+    doubleSortedSet.forEach(particleValue -> {
+      histogramWriter[0] = writeHistogram(histogramWriter[0], id[0]++, particleValue,
+          summaryHistogram.get(particleValue));
+    });
+    close(histogramWriter[0]);
   }
 
   private static String createSummaryFilename(String filename) {

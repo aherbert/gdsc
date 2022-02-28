@@ -25,7 +25,6 @@
 package uk.ac.sussex.gdsc.ij.utils;
 
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TIntObjectHashMap;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -48,6 +47,7 @@ import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Point;
@@ -106,8 +106,8 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
   private int[] ypoints;
   private final TIntArrayList rotationAngles = new TIntArrayList();
 
-  private TIntObjectHashMap<float[]> kernels;
-  private TIntObjectHashMap<FloatProcessor> convolved;
+  private Int2ObjectOpenHashMap<float[]> kernels;
+  private Int2ObjectOpenHashMap<FloatProcessor> convolved;
   private int halfWidth;
   private double maxDistance2;
 
@@ -747,8 +747,8 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
    *
    * @return the convolution kernels
    */
-  private TIntObjectHashMap<float[]> createKernels() {
-    final TIntObjectHashMap<float[]> newKernels = new TIntObjectHashMap<>();
+  private Int2ObjectOpenHashMap<float[]> createKernels() {
+    final Int2ObjectOpenHashMap<float[]> newKernels = new Int2ObjectOpenHashMap<>();
     rotationAngles.clear();
 
     // Used to weight the kernel from the distance to the centre
@@ -900,9 +900,9 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     fp.putPixelValue(x, y, value + weight);
   }
 
-  private TIntObjectHashMap<FloatProcessor> convolveImage(ImageProcessor ip,
-      TIntObjectHashMap<float[]> kernels) {
-    final TIntObjectHashMap<FloatProcessor> newConvolved = new TIntObjectHashMap<>();
+  private Int2ObjectOpenHashMap<FloatProcessor> convolveImage(ImageProcessor ip,
+      Int2ObjectOpenHashMap<float[]> kernels) {
+    final Int2ObjectOpenHashMap<FloatProcessor> newConvolved = new Int2ObjectOpenHashMap<>();
 
     // Convolve image with each
     final boolean ok = rotationAngles.forEach(rotation -> {
@@ -929,7 +929,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
    * @param convolved the convolved
    */
   @SuppressWarnings("unused")
-  private void showConvolvedImages(TIntObjectHashMap<FloatProcessor> convolved) {
+  private void showConvolvedImages(Int2ObjectOpenHashMap<FloatProcessor> convolved) {
     final ImageProcessor ip = convolved.get(0);
     final ImageStack stack = new ImageStack(ip.getWidth(), ip.getHeight());
     rotationAngles.forEach(rotation -> {
@@ -979,7 +979,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     return angle;
   }
 
-  private FloatProcessor computeEdgeProjection(TIntObjectHashMap<FloatProcessor> convolved,
+  private FloatProcessor computeEdgeProjection(Int2ObjectOpenHashMap<FloatProcessor> convolved,
       Rectangle pointBounds, FloatProcessor angle) {
     final float[] a = (float[]) angle.getPixels();
 

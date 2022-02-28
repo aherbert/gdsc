@@ -36,9 +36,9 @@ import fiji.plugin.trackmate.graph.ConvexBranchesDecomposition;
 import fiji.plugin.trackmate.graph.ConvexBranchesDecomposition.TrackBranchDecomposition;
 import fiji.plugin.trackmate.graph.TimeDirectedNeighborIndex;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
-import gnu.trove.set.hash.TIntHashSet;
 import ij.Prefs;
 import ij.text.TextWindow;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import java.awt.Frame;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -167,7 +167,7 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
     // Get track Ids of the selection
     final Model model = trackmate.getModel();
     final TrackModel trackModel = model.getTrackModel();
-    final TIntHashSet trackIds = getTrackIds(spotSelection, trackModel);
+    final IntOpenHashSet trackIds = getTrackIds(spotSelection, trackModel);
     logger.log(". " + TextUtils.pleural(trackIds.size(), "track id"));
 
     // For each track traverse the track and output spot data for only the selected region.
@@ -188,7 +188,6 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
       // Only output those selected spots
       branchGraph.vertexSet()
           .forEach(branch -> convertToTracks(spotSelection, trackId, trackModel, branch, tracks));
-      return true;
     });
 
     logger.log(". " + TextUtils.pleural(tracks.size(), "sub-track"));
@@ -199,8 +198,8 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
     logger.log(". Done.\n");
   }
 
-  private static TIntHashSet getTrackIds(Set<Spot> spotSelection, TrackModel trackModel) {
-    final TIntHashSet trackIds = new TIntHashSet();
+  private static IntOpenHashSet getTrackIds(Set<Spot> spotSelection, TrackModel trackModel) {
+    final IntOpenHashSet trackIds = new IntOpenHashSet();
     for (final Spot spot : spotSelection) {
       final Integer trackId = trackModel.trackIDOf(spot);
       if (trackId != null) {

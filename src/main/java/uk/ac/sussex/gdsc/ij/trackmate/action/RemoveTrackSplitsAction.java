@@ -33,8 +33,8 @@ import fiji.plugin.trackmate.action.AbstractTMAction;
 import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.action.TrackMateActionFactory;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
-import gnu.trove.set.hash.TIntHashSet;
 import ij.Prefs;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import java.awt.Frame;
 import java.util.Arrays;
 import java.util.Collection;
@@ -157,9 +157,9 @@ public class RemoveTrackSplitsAction extends AbstractTMAction {
     Prefs.set(KEY_CHILD2_CATEGORY, child2Cat);
     Prefs.set(KEY_DRY_RUN, dryRun);
     // Check inputs
-    final TIntHashSet parentCategories = parseSet(parentCat);
-    final TIntHashSet child1Categories = parseSet(child1Cat);
-    final TIntHashSet child2Categories = parseSet(child2Cat);
+    final IntOpenHashSet parentCategories = parseSet(parentCat);
+    final IntOpenHashSet child1Categories = parseSet(child1Cat);
+    final IntOpenHashSet child2Categories = parseSet(child2Cat);
     if (parentCategories.isEmpty() || child1Categories.isEmpty() || child2Categories.isEmpty()) {
       logger.log("Invalid categories.\n");
       return;
@@ -235,8 +235,8 @@ public class RemoveTrackSplitsAction extends AbstractTMAction {
    * @param categories the categories
    * @return the int set
    */
-  private TIntHashSet parseSet(String categories) {
-    final TIntHashSet set = new TIntHashSet();
+  private IntOpenHashSet parseSet(String categories) {
+    final IntOpenHashSet set = new IntOpenHashSet();
     try {
       Arrays.stream(categories.split(",")).mapToInt(Integer::parseInt).forEach(set::add);
     } catch (final NumberFormatException ex) {
@@ -258,7 +258,8 @@ public class RemoveTrackSplitsAction extends AbstractTMAction {
    * @return the list of splits
    */
   private static List<TrackSplit> findSplits(TrackModel trackModel, Set<Integer> trackIds,
-      TIntHashSet parentCategories, TIntHashSet child1Categories, TIntHashSet child2Categories) {
+      IntOpenHashSet parentCategories, IntOpenHashSet child1Categories,
+      IntOpenHashSet child2Categories) {
     final LocalList<TrackSplit> list = new LocalList<>(trackIds.size() * 2);
     trackIds.forEach(trackId -> {
       final Set<Spot> spots = trackModel.trackSpots(trackId);

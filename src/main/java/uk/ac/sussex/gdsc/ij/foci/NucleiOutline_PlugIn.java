@@ -26,7 +26,6 @@ package uk.ac.sussex.gdsc.ij.foci;
 
 import com.google.common.util.concurrent.Futures;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TIntIntHashMap;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -50,6 +49,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.text.TextWindow;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import java.awt.AWTEvent;
 import java.awt.Color;
 import java.util.List;
@@ -99,7 +99,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
   private static AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
 
   private ImagePlus imp;
-  private TIntIntHashMap slices;
+  private Int2IntOpenHashMap slices;
   private boolean inPreview;
   private int ch;
 
@@ -603,7 +603,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
 
     // Get the stack slices to process
     final int frames = imp.getNFrames();
-    slices = new TIntIntHashMap(frames);
+    slices = new Int2IntOpenHashMap(frames);
     ch = imp.getChannel();
     final int slice = imp.getZ();
     for (int frame = 1; frame <= frames; frame++) {
@@ -718,7 +718,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
 
   private void addPreviewOverlay(int slice) {
     // Only process correct slices
-    if (!slices.contains(slice)) {
+    if (!slices.containsKey(slice)) {
       return;
     }
     queue.insert(new PreviewSettings(settings.copy(), slice));
@@ -1025,7 +1025,9 @@ public class NucleiOutline_PlugIn implements PlugIn {
     final ImageStack stack = imp.getImageStack();
     final double pixelArea = getPixelArea(imp);
 
-    slices.forEachEntry((index, frame) -> {
+    slices.int2IntEntrySet().fastForEach(e -> {
+      final int index = e.getIntKey();
+      final int frame = e.getIntValue();
       futures.add(executor.submit(() -> {
         final Nucleus[] nuclei =
             analyseImage(settings, pixelArea, stack.getProcessor(index).duplicate());
@@ -1033,7 +1035,6 @@ public class NucleiOutline_PlugIn implements PlugIn {
         ticker.tick();
         return Pair.of(frame, nuclei);
       }));
-      return true;
     });
 
     ConcurrencyUtils.waitForCompletionUncheckedT(futures);

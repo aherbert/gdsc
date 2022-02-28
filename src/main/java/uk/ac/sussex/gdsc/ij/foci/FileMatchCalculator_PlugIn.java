@@ -25,7 +25,6 @@
 package uk.ac.sussex.gdsc.ij.foci;
 
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.set.hash.TIntHashSet;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -37,6 +36,7 @@ import ij.io.OpenDialog;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.TextField;
@@ -483,14 +483,14 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
   }
 
   private int[] getTimepoints(TimeValuedPoint[] points, TimeValuedPoint[] points2) {
-    final TIntHashSet set = new TIntHashSet();
+    final IntOpenHashSet set = new IntOpenHashSet(Math.max(points.length, points2.length));
     for (final TimeValuedPoint p : points) {
       set.add(p.getTime());
     }
     for (final TimeValuedPoint p : points2) {
       set.add(p.getTime());
     }
-    final int[] data = set.toArray();
+    final int[] data = set.toIntArray();
     if (settings.showPairs) {
       // Sort so the table order is nice
       Arrays.sort(data);
