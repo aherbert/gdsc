@@ -24,7 +24,6 @@
 
 package uk.ac.sussex.gdsc.ij.foci;
 
-import gnu.trove.list.array.TIntArrayList;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -36,6 +35,7 @@ import ij.io.OpenDialog;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import java.awt.Color;
 import java.awt.Point;
@@ -775,7 +775,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     // Produce a composite for each time point.
     // The input list will have pairs in order of time.
     // So move through the list noting each new time.
-    final TIntArrayList upper = new TIntArrayList();
+    final IntArrayList upper = new IntArrayList();
 
     int time = -1;
     final IdTimeValuedPoint[] p1 = new IdTimeValuedPoint[pairs.size()];
@@ -809,7 +809,8 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     final Color colorc = Match_PlugIn.MATCH;
 
     int low = 0;
-    for (final int high : upper.toArray()) {
+    for (int i = 0; i < upper.size(); i++) {
+      final int high = upper.getInt(i);
       frames++;
       time = (p1[low] != null) ? p1[low].time : p2[low].time;
       if (singleFrame) {
@@ -926,7 +927,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
 
         // Find blocks in the same slice
         int low = 0;
-        final TIntArrayList upper = new TIntArrayList(size);
+        final IntArrayList upper = new IntArrayList(size);
         for (int i = 0; i < size; i++) {
           if (data[low][0] != data[i][0]) {
             upper.add(i);
@@ -937,7 +938,8 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
 
         // Process each block
         low = 0;
-        for (final int high : upper.toArray()) {
+        for (int k = 0; k < upper.size(); k++) {
+          final int high = upper.getInt(k);
           final int npoints = high - low;
           for (int i = low, j = 0; i < high; i++, j++) {
             x[j] = data[i][1];

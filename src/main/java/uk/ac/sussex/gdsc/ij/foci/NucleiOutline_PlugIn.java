@@ -25,7 +25,6 @@
 package uk.ac.sussex.gdsc.ij.foci;
 
 import com.google.common.util.concurrent.Futures;
-import gnu.trove.list.array.TIntArrayList;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -50,6 +49,7 @@ import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.text.TextWindow;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.awt.AWTEvent;
 import java.awt.Color;
 import java.util.List;
@@ -940,7 +940,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
     final ObjectCentre[] objectData = oa.getObjectCentres();
 
     // Divide those that are too large
-    final TIntArrayList toDivide = new TIntArrayList();
+    final IntArrayList toDivide = new IntArrayList();
     for (int i = 1; i <= maxObject; i++) {
       if (objectData[i].getSize() > maxPixelCount) {
         toDivide.add(i);
@@ -960,7 +960,6 @@ public class NucleiOutline_PlugIn implements PlugIn {
             tmp[i] = (byte) 255;
           }
         }
-        return true;
       });
 
       // Watershed the new temp image

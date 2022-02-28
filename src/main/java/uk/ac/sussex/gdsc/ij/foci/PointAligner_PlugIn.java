@@ -24,7 +24,6 @@
 
 package uk.ac.sussex.gdsc.ij.foci;
 
-import gnu.trove.list.array.TFloatArrayList;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -36,6 +35,7 @@ import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.text.TextWindow;
+import it.unimi.dsi.fastutil.floats.FloatArrays;
 import java.awt.Color;
 import java.io.File;
 import java.nio.file.Files;
@@ -661,11 +661,12 @@ public class PointAligner_PlugIn implements PlugIn {
     return missed;
   }
 
-  private TFloatArrayList findMissedHeights(List<FindFociResult> resultsArray, int[] assigned,
+  private float[] findMissedHeights(List<FindFociResult> resultsArray, int[] assigned,
       double heightThreshold) {
     // List maxima above the minimum height that have not been picked
     final ImageStack maskStack = getMaskStack();
-    final TFloatArrayList missed = new TFloatArrayList();
+    float[] missed = new float[10];
+    int size = 0;
     for (int maximaId = 0; maximaId < resultsArray.size(); maximaId++) {
       final FindFociResult result = resultsArray.get(maximaId);
       if (assigned[maximaId] < 0 && result.maxValue > heightThreshold) {
@@ -679,10 +680,12 @@ public class PointAligner_PlugIn implements PlugIn {
           continue;
         }
 
-        missed.add(result.maxValue);
+        missed = FloatArrays.grow(missed, size + 1);
+        missed[size++] = result.maxValue;
       }
     }
-    missed.sort();
+    missed = FloatArrays.setLength(missed, size);
+    Arrays.sort(missed);
     return missed;
   }
 
@@ -696,15 +699,17 @@ public class PointAligner_PlugIn implements PlugIn {
    */
   private float getThresholdHeight(AssignedPoint[] points, int[] assigned,
       List<FindFociResult> resultsArray) {
-    final TFloatArrayList heightList = new TFloatArrayList(points.length);
+    float[] heights = new float[points.length];
+    int size = 0;
     for (int maximaId = 0; maximaId < assigned.length; maximaId++) {
       if (assigned[maximaId] >= 0) {
         final FindFociResult result = resultsArray.get(maximaId);
-        heightList.add(result.maxValue);
+        heights = FloatArrays.grow(heights, size + 1);
+        heights[size++] = result.maxValue;
       }
     }
 
-    if (heightList.isEmpty()) {
+    if (size == 0) {
       return 0;
     }
 
@@ -719,9 +724,9 @@ public class PointAligner_PlugIn implements PlugIn {
     // - one standard deviation above and below the mean of the data
     // - 2nd/9th percentile etc.
 
-    heightList.sort();
+    heights = FloatArrays.setLength(heights, size);
+    Arrays.sort(heights);
 
-    final float[] heights = heightList.toArray();
     double heightThreshold = heights[0];
 
     switch (settings.limitMethod) {
@@ -765,10 +770,8 @@ public class PointAligner_PlugIn implements PlugIn {
       case 4:
         // Number of missed points is a factor below picked points,
         // i.e. the number of potential maxima is a fraction of the number of assigned maxima.
-        final TFloatArrayList missedHeights =
-            findMissedHeights(resultsArray, assigned, heightThreshold);
+        final float[] missedHeights = findMissedHeights(resultsArray, assigned, heightThreshold);
         final double fraction = settings.factor / 100;
-        final int size = heights.length;
         for (int pointId = 0; pointId < size; pointId++) {
           heightThreshold = heights[pointId];
           // Count points
@@ -813,20 +816,20 @@ public class PointAligner_PlugIn implements PlugIn {
    * @param height the height
    * @return The count
    */
-  private static int countPoints(TFloatArrayList missedHeights, double height) {
+  private static int countPoints(float[] missedHeights, double height) {
     // Note: Avoid a binary search as we expect the height (initialised to the lowest
     // assigned maxima) to be below the missed heights (all unassigned maxima above
     // the lowest assigned maxima).
 
-    final int[] count = {missedHeights.size()};
-    missedHeights.forEach(h -> {
+    int count = missedHeights.length;
+    for (float h : missedHeights) {
       if (h < height) {
-        count[0]--;
-        return true;
+        count--;
+      } else {
+        break;
       }
-      return false;
-    });
-    return count[0];
+    }
+    return count;
   }
 
   /**

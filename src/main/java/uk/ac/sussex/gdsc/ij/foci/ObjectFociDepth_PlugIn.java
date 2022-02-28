@@ -29,7 +29,6 @@ import customnode.CustomLineMesh;
 import customnode.CustomMesh;
 import customnode.CustomMeshNode;
 import customnode.CustomPointMesh;
-import gnu.trove.list.array.TIntArrayList;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -50,6 +49,7 @@ import ij3d.ContentInstant;
 import ij3d.DefaultUniverse;
 import ij3d.Image3DUniverse;
 import ij3d.ImageWindow3D;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.awt.Color;
 import java.util.Arrays;
 import java.util.List;
@@ -442,8 +442,8 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     final int maxx_maxy = maxx * maxy;
 
     // Create indices for the outside of each hull.
-    final TIntArrayList[] indices = IntStream.rangeClosed(0, oa.getMaxObject())
-        .mapToObj(i -> new TIntArrayList()).toArray(TIntArrayList[]::new);
+    final IntArrayList[] indices = IntStream.rangeClosed(0, oa.getMaxObject())
+        .mapToObj(i -> new IntArrayList()).toArray(IntArrayList[]::new);
     indices[0] = null;
     for (int i = 0; i < oa.getMaxZ(); i++) {
       scanImageOutline(mask, i * maxx_maxy, maxx, maxy, indices);
@@ -458,7 +458,6 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       final ConvexHull3d.Builder builder = ConvexHull3d.newBuilder().setTriangulate(true);
       l.forEach(index -> {
         builder.add(toCoords.apply(index));
-        return true;
       });
       return builder.build();
     }).toArray(Hull3d[]::new);
@@ -478,8 +477,8 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     final int maxy = oa.getHeight();
 
     // Create indices for the outside of each hull.
-    final TIntArrayList[] indices = IntStream.rangeClosed(0, oa.getMaxObject())
-        .mapToObj(i -> new TIntArrayList()).toArray(TIntArrayList[]::new);
+    final IntArrayList[] indices = IntStream.rangeClosed(0, oa.getMaxObject())
+        .mapToObj(i -> new IntArrayList()).toArray(IntArrayList[]::new);
     indices[0] = null;
     scanImageOutline(mask, 0, maxx, maxy, indices);
 
@@ -491,7 +490,6 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       final ConvexHull2d.Builder builder = ConvexHull2d.newBuilder();
       l.forEach(index -> {
         builder.add(toCoords.apply(index));
-        return true;
       });
       return builder.build();
     }).toArray(Hull2d[]::new);
@@ -508,7 +506,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
    * @param indices the list of indices for each object
    */
   private static void scanImageOutline(int[] mask, int start, int maxx, int maxy,
-      TIntArrayList[] indices) {
+      IntArrayList[] indices) {
     int index = start;
     for (int y = 0; y < maxy; y++) {
       int current = 0;
@@ -525,8 +523,10 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     }
   }
 
-  private static void addToList(TIntArrayList indices, int object, int index) {
-    if (object != 0 && (indices.isEmpty() || indices.getQuick(indices.size() - 1) != index)) {
+  private static void addToList(IntArrayList indices, int object, int index) {
+    final int[] e = indices.elements();
+    final int size = indices.size();
+    if (object != 0 && (size == 0 || e[size - 1] != index)) {
       indices.add(index);
     }
   }

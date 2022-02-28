@@ -24,7 +24,6 @@
 
 package uk.ac.sussex.gdsc.ij.threshold;
 
-import gnu.trove.list.array.TIntArrayList;
 import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
@@ -42,6 +41,7 @@ import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.awt.AWTEvent;
 import java.awt.Color;
 import java.util.Arrays;
@@ -435,7 +435,7 @@ public class ThresholdOutliner_PlugIn implements ExtendedPlugInFilter, DialogLis
       hb = ConvexHull2d.newBuilder();
     }
 
-    final TIntArrayList pixels = new TIntArrayList(100);
+    final IntArrayList pixels = new IntArrayList(100);
 
     int end = 0;
     for (int object = 1; object <= maxObject; object++) {
@@ -464,7 +464,7 @@ public class ThresholdOutliner_PlugIn implements ExtendedPlugInFilter, DialogLis
       }
 
       // Any pixel above the threshold is to be extracted into a coordinate
-      pixels.resetQuick();
+      pixels.clear();
       for (int i = start; i < end; i++) {
         final int index = indices[i];
         if (ip.get(index) > threshold) {
@@ -483,8 +483,9 @@ public class ThresholdOutliner_PlugIn implements ExtendedPlugInFilter, DialogLis
 
       // Build hull
       hb.clear();
+      final int[] e = pixels.elements();
       for (int i = 0; i < pixels.size(); i++) {
-        final int index = pixels.getQuick(i);
+        final int index = e[i];
         // Test if an outlier
         if (scores == null || scores[i] <= settings.outlierThreshold) {
           foreground.accept(index);
@@ -513,7 +514,7 @@ public class ThresholdOutliner_PlugIn implements ExtendedPlugInFilter, DialogLis
     return list;
   }
 
-  private double[] runLoop(TIntArrayList pixels, int maxx) {
+  private double[] runLoop(IntArrayList pixels, int maxx) {
     final int size = pixels.size();
     if (size <= 1) {
       // No neighbours for single (or zero) point
@@ -521,8 +522,9 @@ public class ThresholdOutliner_PlugIn implements ExtendedPlugInFilter, DialogLis
     }
     final float[] x = new float[size];
     final float[] y = new float[size];
+    final int[] elements = pixels.elements();
     for (int i = 0; i < pixels.size(); i++) {
-      final int index = pixels.getQuick(i);
+      final int index = elements[i];
       x[i] = index % maxx;
       y[i] = index / maxx;
     }

@@ -24,7 +24,6 @@
 
 package uk.ac.sussex.gdsc.ij.colocalisation;
 
-import gnu.trove.list.array.TDoubleArrayList;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.ImageListener;
@@ -36,6 +35,7 @@ import ij.plugin.PlugIn;
 import ij.plugin.frame.Recorder;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import java.awt.Checkbox;
 import java.awt.Choice;
 import java.util.concurrent.atomic.AtomicReference;
@@ -406,7 +406,7 @@ public class ColocatedMask_PlugIn implements PlugIn {
     }
 
     // Get the thresholds
-    final TDoubleArrayList list = new TDoubleArrayList(index[0] * 2);
+    final DoubleArrayList list = new DoubleArrayList(index[0] * 2);
     for (int channel = 1; channel <= index[0]; channel++) {
       list.add(getMin(imp1, channel));
       list.add(getMin(imp2, channel));
@@ -427,9 +427,10 @@ public class ColocatedMask_PlugIn implements PlugIn {
         IJ.createHyperStack(TITLE, width, height, index[0], index[1], index[2], 8);
     final ImageStack outputStack = imp.getStack();
 
+    final double[] e = list.elements();
     for (int channel = 1, next = 0; channel <= index[0]; channel++) {
-      final double min1 = list.getQuick(next++);
-      final double min2 = list.getQuick(next++);
+      final double min1 = e[next++];
+      final double min2 = e[next++];
 
       for (int slice = 1; slice <= index[1]; slice++) {
         for (int frame = 1; frame <= index[2]; frame++) {

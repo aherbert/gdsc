@@ -24,7 +24,6 @@
 
 package uk.ac.sussex.gdsc.ij.colocalisation.cda;
 
-import gnu.trove.list.array.TIntArrayList;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -46,6 +45,7 @@ import ij.process.LUT;
 import ij.process.ShortProcessor;
 import ij.text.TextWindow;
 import ij.util.Tools;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Checkbox;
@@ -679,7 +679,7 @@ public class Cda_PlugIn extends PlugInFrame {
     // Count the number of permutations
     final int maximumRadius2 = maximumRadius * maximumRadius;
     final int minimumRadius2 = minimumRadius * minimumRadius;
-    final TIntArrayList list = new TIntArrayList(512);
+    final IntArrayList list = new IntArrayList(512);
     for (int i = -maximumRadius; i <= maximumRadius; ++i) {
       for (int j = -maximumRadius; j <= maximumRadius; ++j) {
         // Int is big enough to hold 256^2 * 2
@@ -704,14 +704,15 @@ public class Cda_PlugIn extends PlugInFrame {
       final int[] sample =
           RandomUtils.sample(permutations, list.size(), UniformRandomProviders.create());
       final int[] indices = new int[permutations];
+      final int[] e = list.elements();
       for (int i = 0; i < permutations; i++) {
-        indices[i] = list.getQuick(sample[i]);
+        indices[i] = e[sample[i]];
       }
       return indices;
     }
 
     // No sub-selection
-    return list.toArray();
+    return list.toIntArray();
   }
 
   /**

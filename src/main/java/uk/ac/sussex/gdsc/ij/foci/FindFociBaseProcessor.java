@@ -24,13 +24,13 @@
 
 package uk.ac.sussex.gdsc.ij.foci;
 
-import gnu.trove.list.array.TIntArrayList;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
 import ij.plugin.filter.GaussianBlur;
 import ij.process.ImageProcessor;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import java.awt.Rectangle;
 import java.awt.geom.RoundRectangle2D;
@@ -1830,7 +1830,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
       float globalMin, float threshold) {
     final ArrayList<Coordinate> maxpoints = new ArrayList<>(500);
     // working list for expanding local plateaus
-    final TIntArrayList pointList = new TIntArrayList();
+    final IntArrayList pointList = new IntArrayList();
 
     int id = 0;
     final int[] xyz = new int[3];
@@ -2022,12 +2022,12 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
    * @return True if this is a true plateau, false if the plateau reaches a higher point
    */
   protected boolean expandMaximum(int[] maxima, byte[] types, float globalMin, float threshold,
-      int index0, float v0, int id, ArrayList<Coordinate> maxpoints, TIntArrayList pointList) {
+      int index0, float v0, int id, ArrayList<Coordinate> maxpoints, IntArrayList pointList) {
     types[index0] |= LISTED | PLATEAU; // mark first point as listed
     int listI = 0; // index of current search element in the list
 
     // we create a list of connected points and start the list at the current maximum
-    pointList.resetQuick();
+    pointList.clear();
     pointList.add(index0);
 
     // Calculate the center of plateau
@@ -2036,7 +2036,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
     if (is2D()) {
       do {
-        final int index1 = pointList.getQuick(listI);
+        final int index1 = pointList.getInt(listI);
         getXy(index1, xyz);
         final int x1 = xyz[0];
         final int y1 = xyz[1];
@@ -2073,7 +2073,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
       } while (listI < pointList.size() && isPlateau);
     } else {
       do {
-        final int index1 = pointList.getQuick(listI);
+        final int index1 = pointList.getInt(listI);
         getXyz(index1, xyz);
         final int x1 = xyz[0];
         final int y1 = xyz[1];
@@ -2114,8 +2114,9 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
     }
 
     // reset attributes no longer needed
+    final int[] e = pointList.elements();
     for (int i = pointList.size(); i-- > 0;) {
-      final int index = pointList.getQuick(i);
+      final int index = e[i];
       types[index] &= ~LISTED;
     }
 
@@ -2129,7 +2130,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
     double cy = 0;
     double cz = 0;
     for (int i = pointList.size(); i-- > 0;) {
-      getXyz(pointList.getQuick(i), xyz);
+      getXyz(e[i], xyz);
       cx += xyz[0];
       cy += xyz[1];
       cz += xyz[2];
@@ -2143,7 +2144,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
     // Calculate the maxima origin as the closest pixel to the centre-of-mass
     for (int i = pointList.size(); i-- > 0;) {
-      final int index = pointList.getQuick(i);
+      final int index = e[i];
 
       getXyz(index, xyz);
       final int x = xyz[0];
@@ -2162,7 +2163,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
     }
 
     // Assign the maximum
-    final int index = pointList.getQuick(maxIndex);
+    final int index = e[maxIndex];
     types[index] |= MAXIMUM;
     maxpoints.add(new Coordinate(index, id, v0));
 

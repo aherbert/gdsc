@@ -24,8 +24,6 @@
 
 package uk.ac.sussex.gdsc.ij.foci;
 
-import gnu.trove.list.array.TFloatArrayList;
-import gnu.trove.list.array.TIntArrayList;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -40,6 +38,7 @@ import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.awt.Color;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -603,18 +602,18 @@ public class Match_PlugIn implements PlugIn {
   public static PointRoi[] createRoi(final ImagePlus imp, List<? extends Coordinate> array,
       double scaleX, double scaleY, double scaleZ) {
     // We have to create an overlay per z-slice using the calibration scale
-    final Int2ObjectOpenHashMap<TIntArrayList> xpoints = new Int2ObjectOpenHashMap<>();
-    TIntArrayList nextlist = new TIntArrayList();
+    final Int2ObjectOpenHashMap<IntArrayList> xpoints = new Int2ObjectOpenHashMap<>();
+    IntArrayList nextlist = new IntArrayList();
 
     for (final Coordinate point : array) {
       final int x = (int) Math.round(point.getX() / scaleX);
       final int y = (int) Math.round(point.getY() / scaleY);
       final int z = (int) Math.round(point.getZ() / scaleZ);
 
-      TIntArrayList list = xpoints.putIfAbsent(z, nextlist);
+      IntArrayList list = xpoints.putIfAbsent(z, nextlist);
       if (list == null) {
         list = nextlist;
-        nextlist = new TIntArrayList();
+        nextlist = new IntArrayList();
       }
 
       list.add(x);
@@ -628,8 +627,8 @@ public class Match_PlugIn implements PlugIn {
     final LocalList<PointRoi> rois = new LocalList<>(xpoints.size());
     xpoints.int2ObjectEntrySet().fastForEach(e -> {
       final int z = e.getIntKey();
-      final int[] data = e.getValue().toArray();
-      final float[] x = new float[data.length / 2];
+      final int[] data = e.getValue().elements();
+      final float[] x = new float[e.getValue().size() / 2];
       final float[] y = new float[x.length];
       for (int i = 0, j = 0; j < x.length; j++) {
         x[j] = data[i++];
@@ -890,12 +889,13 @@ public class Match_PlugIn implements PlugIn {
     nonDuplicates.addAll(Arrays.asList(actualPoints));
     nonDuplicates.addAll(Arrays.asList(predictedPoints));
 
-    final TFloatArrayList heights = new TFloatArrayList(nonDuplicates.size());
+    final float[] a = new float[nonDuplicates.size()];
+    int index = 0;
     for (final TimeValuedPoint p : nonDuplicates) {
-      heights.add(p.getValue());
+      a[index++] = p.getValue();
     }
-    heights.sort();
-    return heights.toArray();
+    Arrays.sort(a);
+    return a;
   }
 
   /**
@@ -1120,16 +1120,17 @@ public class Match_PlugIn implements PlugIn {
     }
 
     // Extract the heights of the matched points. Use the average height of each match.
-    final TFloatArrayList heights = new TFloatArrayList(matches.size());
+    final float[] heights = new float[matches.size()];
+    int index = 0;
     for (final PointPair pair : matches) {
       final TimeValuedPoint p1 = (TimeValuedPoint) pair.getPoint1();
       final TimeValuedPoint p2 = (TimeValuedPoint) pair.getPoint2();
-      heights.add((p1.getValue() + p2.getValue()) / 2f);
+      heights[index++] = (p1.getValue() + p2.getValue()) * 0.5f;
     }
-    heights.sort();
+    Arrays.sort(heights);
 
     // Get the quartile ranges
-    final float[] quartiles = getQuartiles(heights.toArray());
+    final float[] quartiles = getQuartiles(heights);
 
     // Extract the valued points
     final TimeValuedPoint[] actualPoints = extractValuedPoints(falseNegatives);

@@ -24,9 +24,9 @@
 
 package uk.ac.sussex.gdsc.ij.utils;
 
-import gnu.trove.list.array.TIntArrayList;
 import ij.ImagePlus;
 import ij.ImageStack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import uk.ac.sussex.gdsc.core.ij.PixelUtils;
 
 /**
@@ -39,7 +39,7 @@ public class SliceCollection {
   private final int indexC;
   private final int indexZ;
   private final int indexT;
-  private final TIntArrayList slices = new TIntArrayList();
+  private final IntArrayList slices = new IntArrayList();
 
   private String sliceName;
 
@@ -77,7 +77,7 @@ public class SliceCollection {
    * @return the stack index
    */
   public int get(int offset) {
-    return slices.get(offset);
+    return slices.getInt(offset);
   }
 
   /**
@@ -123,7 +123,6 @@ public class SliceCollection {
     final ImageStack imageStack = new ImageStack(stack.getWidth(), stack.getHeight());
     slices.forEach(slice -> {
       imageStack.addSlice(Integer.toString(slice), PixelUtils.copyPixels(stack.getPixels(slice)));
-      return true;
     });
     return imageStack;
   }

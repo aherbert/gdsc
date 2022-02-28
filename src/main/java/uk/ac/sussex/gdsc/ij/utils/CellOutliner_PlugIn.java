@@ -24,7 +24,6 @@
 
 package uk.ac.sussex.gdsc.ij.utils;
 
-import gnu.trove.list.array.TIntArrayList;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -48,6 +47,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Point;
@@ -104,7 +104,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
   private PointRoi roi;
   private int[] xpoints;
   private int[] ypoints;
-  private final TIntArrayList rotationAngles = new TIntArrayList();
+  private final IntArrayList rotationAngles = new IntArrayList();
 
   private Int2ObjectOpenHashMap<float[]> kernels;
   private Int2ObjectOpenHashMap<FloatProcessor> convolved;
@@ -775,7 +775,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     }
 
     // Copy the kernels for the second half of the circle
-    for (final int rotation : rotationAngles.toArray()) {
+    for (final int rotation : rotationAngles.toIntArray()) {
       rotationAngles.add(rotation + 180);
       FloatProcessor fp = new FloatProcessor(settings.kernelWidth, settings.kernelWidth,
           newKernels.get(rotation), null);
@@ -905,7 +905,9 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     final Int2ObjectOpenHashMap<FloatProcessor> newConvolved = new Int2ObjectOpenHashMap<>();
 
     // Convolve image with each
-    final boolean ok = rotationAngles.forEach(rotation -> {
+    boolean stop = false;
+    for (int i = 0; i < rotationAngles.size(); i++) {
+      final int rotation = rotationAngles.getInt(i);
       if (!this.buildMaskOutput) {
         IJ.showStatus("Convolving " + rotation);
       }
@@ -914,13 +916,15 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
           (ip instanceof FloatProcessor) ? (FloatProcessor) ip.duplicate() : ip.toFloat(0, null);
       fp.convolve(kernel, settings.kernelWidth, settings.kernelWidth);
       newConvolved.put(rotation, fp);
-      return !ImageJUtils.isInterrupted();
-    });
+      if (ImageJUtils.isInterrupted()) {
+        stop = true;
+      }
+    }
     if (!this.buildMaskOutput) {
       // Convolver modifies the progress tracker
       ImageJUtils.finished();
     }
-    return (ok) ? newConvolved : null;
+    return stop ? null : newConvolved;
   }
 
   /**
@@ -934,7 +938,6 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     final ImageStack stack = new ImageStack(ip.getWidth(), ip.getHeight());
     rotationAngles.forEach(rotation -> {
       stack.addSlice("Rotation " + rotation, convolved.get(rotation));
-      return true;
     });
 
     final ImagePlus filterImp = new ImagePlus("Membrane filter", stack);
@@ -986,7 +989,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     // Do a projection of all membrane filters
     final float[][] stack = new float[rotationAngles.size()][];
     for (int i = 0; i < rotationAngles.size(); i++) {
-      final int rotation = rotationAngles.get(i);
+      final int rotation = rotationAngles.getInt(i);
       FloatProcessor fp = (FloatProcessor) convolved.get(rotation).duplicate();
       fp.setRoi(pointBounds);
       fp = (FloatProcessor) fp.crop();

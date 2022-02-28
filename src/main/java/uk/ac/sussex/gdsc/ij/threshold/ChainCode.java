@@ -24,7 +24,7 @@
 
 package uk.ac.sussex.gdsc.ij.threshold;
 
-import gnu.trove.list.array.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import uk.ac.sussex.gdsc.core.utils.ValidationUtils;
 
 /**
@@ -57,7 +57,7 @@ public class ChainCode {
   private int x;
   private int y;
 
-  private final TIntArrayList run = new TIntArrayList();
+  private final IntArrayList run = new IntArrayList();
   private float length;
   private String toString;
 
@@ -128,8 +128,7 @@ public class ChainCode {
           // Note:
           // even number chain codes are 4n connected and have length 1
           // odd number chain codes are diagonal and have length sqrt(2)
-          count[code % 2]++;
-          return true;
+          count[code & 0x1]++;
         });
         len = length = (float) (count[0] + count[1] * ROOT2);
       }
@@ -152,7 +151,7 @@ public class ChainCode {
    * @return the run
    */
   public int[] getRun() {
-    return run.toArray();
+    return run.toIntArray();
   }
 
   /** {@inheritDoc} */
@@ -163,7 +162,6 @@ public class ChainCode {
       sb.append(x).append(",").append(y);
       run.forEach(code -> {
         sb.append(":").append(DIR_X_OFFSET[code]).append(",").append(DIR_Y_OFFSET[code]);
-        return true;
       });
       toString = sb.toString();
     }
@@ -207,8 +205,9 @@ public class ChainCode {
     int endx = this.x;
     int endy = this.y;
 
+    final int[] e = run.elements();
     for (int i = 0; i < run.size(); i++) {
-      final int code = run.getQuick(i);
+      final int code = e[i];
       endx += DIR_X_OFFSET[code];
       endy += DIR_Y_OFFSET[code];
     }
@@ -227,8 +226,9 @@ public class ChainCode {
 
     // Do in descending order
     final ChainCode reverse = new ChainCode(endx, endy);
+    final int[] e = run.elements();
     for (int i = run.size() - 1; i >= 0; i--) {
-      final int code = run.getQuick(i);
+      final int code = e[i];
       endx += DIR_X_OFFSET[code];
       endy += DIR_Y_OFFSET[code];
       // Invert the chain code

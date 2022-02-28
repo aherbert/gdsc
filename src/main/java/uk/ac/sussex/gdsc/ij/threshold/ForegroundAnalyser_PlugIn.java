@@ -24,17 +24,16 @@
 
 package uk.ac.sussex.gdsc.ij.threshold;
 
-import gnu.trove.list.array.TFloatArrayList;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
-import uk.ac.sussex.gdsc.core.data.procedures.FValueProcedure;
 import uk.ac.sussex.gdsc.core.data.procedures.IValueProcedure;
 import uk.ac.sussex.gdsc.core.data.utils.Rounder;
 import uk.ac.sussex.gdsc.core.data.utils.RounderUtils;
@@ -154,13 +153,16 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
     final Roi roi = imp.getRoi();
     if (imp.getBitDepth() == 32) {
       // Get the pixel values
-      final TFloatArrayList data = new TFloatArrayList(ip.getPixelCount());
-      final FValueProcedure procedure = data::add;
-      RoiHelper.forEach(roi, stack, procedure);
+      final IntArrayList data = new IntArrayList(ip.getPixelCount());
+      RoiHelper.forEach(roi, stack, (float v) -> data.add(Float.floatToRawIntBits(v)));
 
       // Count values
-      final float[] values = data.toArray();
-      numberOfValues = values.length;
+      numberOfValues = data.size();
+      final float[] values = new float[numberOfValues];
+      final int[] e = data.elements();
+      for (int i = 0; i < numberOfValues; i++) {
+        values[i] = Float.floatToIntBits(e[i]);
+      }
 
       // Threshold
       Arrays.sort(values);

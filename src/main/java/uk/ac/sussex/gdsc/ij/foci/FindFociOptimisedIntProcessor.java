@@ -24,8 +24,8 @@
 
 package uk.ac.sussex.gdsc.ij.foci;
 
-import gnu.trove.list.array.TIntArrayList;
 import ij.IJ;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,7 +68,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
       float globalMin, float threshold) {
     final ArrayList<Coordinate> maxpoints = new ArrayList<>(500);
     // working list for expanding local plateaus
-    final TIntArrayList pointList = new TIntArrayList();
+    final IntArrayList pointList = new IntArrayList();
 
     // Int processing
     final int valueMin = (int) globalMin;
@@ -247,12 +247,12 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
    * @return True if this is a true plateau, false if the plateau reaches a higher point
    */
   protected boolean expandMaximum(int[] maxima, byte[] types, int globalMin, int threshold,
-      int index0, int v0, int id, ArrayList<Coordinate> maxpoints, TIntArrayList pointList) {
+      int index0, int v0, int id, ArrayList<Coordinate> maxpoints, IntArrayList pointList) {
     types[index0] |= LISTED | PLATEAU; // mark first point as listed
     int listI = 0; // index of current search element in the list
 
     // we create a list of connected points and start the list at the current maximum
-    pointList.resetQuick();
+    pointList.clear();
     pointList.add(index0);
 
     // Calculate the center of plateau
@@ -261,7 +261,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
     if (is2D()) {
       do {
-        final int index1 = pointList.getQuick(listI);
+        final int index1 = pointList.getInt(listI);
         getXy(index1, xyz);
         final int x1 = xyz[0];
         final int y1 = xyz[1];
@@ -298,7 +298,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
       } while (listI < pointList.size() && isPlateau);
     } else {
       do {
-        final int index1 = pointList.getQuick(listI);
+        final int index1 = pointList.getInt(listI);
         getXyz(index1, xyz);
         final int x1 = xyz[0];
         final int y1 = xyz[1];
@@ -339,8 +339,9 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
     }
 
     // reset attributes no longer needed
+    final int[] e = pointList.elements();
     for (int i = pointList.size(); i-- > 0;) {
-      final int index = pointList.getQuick(i);
+      final int index = e[i];
       types[index] &= ~LISTED;
     }
 
@@ -354,7 +355,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
     double cy = 0;
     double cz = 0;
     for (int i = pointList.size(); i-- > 0;) {
-      getXyz(pointList.getQuick(i), xyz);
+      getXyz(e[i], xyz);
       cx += xyz[0];
       cy += xyz[1];
       cz += xyz[2];
@@ -368,7 +369,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
     // Calculate the maxima origin as the closest pixel to the centre-of-mass
     for (int i = pointList.size(); i-- > 0;) {
-      final int index = pointList.getQuick(i);
+      final int index = e[i];
 
       getXyz(index, xyz);
       final int x = xyz[0];
@@ -387,7 +388,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
     }
 
     // Assign the maximum
-    final int index = pointList.getQuick(maxIndex);
+    final int index = e[maxIndex];
     types[index] |= MAXIMUM;
     maxpoints.add(new Coordinate(index, id, v0));
 
