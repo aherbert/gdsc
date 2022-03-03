@@ -143,6 +143,7 @@ Software for microscopy image analysis
     <dependency>
       <groupId>it.unimi.dsi</groupId>
       <artifactId>fastutil-core</artifactId>
+      <version>8.5.6</version>
     </dependency>
 
     <!-- TESTING -->
