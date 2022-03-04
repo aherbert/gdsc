@@ -34,7 +34,6 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
-import uk.ac.sussex.gdsc.core.data.procedures.IValueProcedure;
 import uk.ac.sussex.gdsc.core.data.utils.Rounder;
 import uk.ac.sussex.gdsc.core.data.utils.RounderUtils;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
@@ -179,8 +178,7 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
     } else {
       // Integer histogram
       final int[] data = new int[(imp.getBitDepth() == 8) ? 256 : 65336];
-      final IValueProcedure procedure = value -> data[value]++;
-      RoiHelper.forEach(roi, stack, procedure);
+      RoiHelper.forEach(roi, stack, (int value) -> data[value]++);
 
       // Count values
       numberOfValues = 0;
