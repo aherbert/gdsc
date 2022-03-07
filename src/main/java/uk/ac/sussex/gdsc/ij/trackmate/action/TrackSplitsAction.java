@@ -37,7 +37,6 @@ import fiji.plugin.trackmate.action.TrackMateActionFactory;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
 import fiji.plugin.trackmate.util.TMUtils;
 import ij.gui.Plot;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import java.awt.Frame;
 import java.util.HashSet;
 import java.util.Set;
@@ -45,6 +44,7 @@ import javax.swing.ImageIcon;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.scijava.plugin.Plugin;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.utils.OpenHashMaps.CustomInt2IntOpenHashMap;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
@@ -102,7 +102,7 @@ public class TrackSplitsAction extends AbstractTMAction {
     // Visible tracks only
     final Set<Integer> trackIds = trackModel.unsortedTrackIDs(true);
     logger.log("Analysing " + TextUtils.pleural(trackIds.size(), "track id"));
-    final Int2IntOpenHashMap counts = countSplitsPerFrame(trackModel, trackIds);
+    final CustomInt2IntOpenHashMap counts = countSplitsPerFrame(trackModel, trackIds);
 
     // Plot the splits across the entire time series used in the analysis.
     final Settings settings = trackmate.getSettings();
@@ -128,9 +128,9 @@ public class TrackSplitsAction extends AbstractTMAction {
    * @param trackIds the track ids
    * @return map of splits per frame
    */
-  public static Int2IntOpenHashMap countSplitsPerFrame(final TrackModel trackModel,
+  public static CustomInt2IntOpenHashMap countSplitsPerFrame(final TrackModel trackModel,
       final Set<Integer> trackIds) {
-    final Int2IntOpenHashMap counts = new Int2IntOpenHashMap(trackIds.size() * 2);
+    final CustomInt2IntOpenHashMap counts = new CustomInt2IntOpenHashMap(trackIds.size() * 2);
     trackIds.forEach(trackId -> {
       final Set<Spot> spots = trackModel.trackSpots(trackId);
       spots.forEach(spot -> {
@@ -178,14 +178,12 @@ public class TrackSplitsAction extends AbstractTMAction {
    * @param dt the time scaling factor
    * @return {time, frequency}
    */
-  public static float[][] convertSplits(Int2IntOpenHashMap counts, int tstart, int tend,
+  public static float[][] convertSplits(CustomInt2IntOpenHashMap counts, int tstart, int tend,
       double dt) {
     final float[] time = SimpleArrayUtils.newArray(tend - tstart + 1, tstart, 1f);
     SimpleArrayUtils.multiply(time, dt);
     final float[] frequency = new float[time.length];
-    counts.int2IntEntrySet().fastForEach(e -> {
-      final int t = e.getIntKey();
-      final int c = e.getIntValue();
+    counts.forEach((int t, int c) -> {
       if (t >= tstart && t <= tend) {
         frequency[t - tstart] = c;
       }

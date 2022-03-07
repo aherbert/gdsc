@@ -48,7 +48,6 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.text.TextWindow;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.awt.AWTEvent;
 import java.awt.Color;
@@ -69,6 +68,7 @@ import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
+import uk.ac.sussex.gdsc.core.utils.OpenHashMaps.CustomInt2IntOpenHashMap;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrentMonoStack;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
@@ -99,7 +99,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
   private static AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
 
   private ImagePlus imp;
-  private Int2IntOpenHashMap slices;
+  private CustomInt2IntOpenHashMap slices;
   private boolean inPreview;
   private int ch;
 
@@ -603,7 +603,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
 
     // Get the stack slices to process
     final int frames = imp.getNFrames();
-    slices = new Int2IntOpenHashMap(frames);
+    slices = new CustomInt2IntOpenHashMap(frames);
     ch = imp.getChannel();
     final int slice = imp.getZ();
     for (int frame = 1; frame <= frames; frame++) {
@@ -1024,9 +1024,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
     final ImageStack stack = imp.getImageStack();
     final double pixelArea = getPixelArea(imp);
 
-    slices.int2IntEntrySet().fastForEach(e -> {
-      final int index = e.getIntKey();
-      final int frame = e.getIntValue();
+    slices.forEach((int index, int frame) -> {
       futures.add(executor.submit(() -> {
         final Nucleus[] nuclei =
             analyseImage(settings, pixelArea, stack.getProcessor(index).duplicate());
