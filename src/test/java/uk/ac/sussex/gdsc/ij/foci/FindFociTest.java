@@ -52,14 +52,14 @@ import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.PeakMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SearchMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SortMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.ThresholdMethod;
+import uk.ac.sussex.gdsc.test.api.Predicates;
 import uk.ac.sussex.gdsc.test.api.TestAssertions;
-import uk.ac.sussex.gdsc.test.api.TestHelper;
 import uk.ac.sussex.gdsc.test.api.function.DoubleDoubleBiPredicate;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
-import uk.ac.sussex.gdsc.test.rng.RngUtils;
+import uk.ac.sussex.gdsc.test.rng.RngFactory;
+import uk.ac.sussex.gdsc.test.utils.AssertionErrors;
 import uk.ac.sussex.gdsc.test.utils.RandomSeed;
-import uk.ac.sussex.gdsc.test.utils.TestUtils;
-import uk.ac.sussex.gdsc.test.utils.functions.FunctionUtils;
+import uk.ac.sussex.gdsc.test.utils.functions.FormatSupplier;
 
 @SuppressWarnings({"javadoc"})
 class FindFociTest {
@@ -263,18 +263,18 @@ class FindFociTest {
     }
     final List<FindFociResult> results1 = r1.results;
     final List<FindFociResult> results2 = r2.results;
-    // logger.log(TestLevel.TEST_INFO, FunctionUtils.getSupplier("N1=%d, N2=%d", results1.size(),
+    // logger.log(TestLevel.TEST_INFO, Lambdas.getSupplier("N1=%d, N2=%d", results1.size(),
     // results2.size());
     Assertions.assertEquals(results1.size(), results2.size(), setName + " Results Size");
     int counter = 0;
     final int offset = (negativeValues) ? OFFSET : 0;
-    final DoubleDoubleBiPredicate predictate = TestHelper.doublesAreClose(1e-9, 1e-16);
+    final DoubleDoubleBiPredicate predictate = Predicates.doublesAreClose(1e-9, 1e-16);
     try {
       for (int i = 0; i < results1.size(); i++) {
         counter = i;
         final FindFociResult o1 = results1.get(i);
         final FindFociResult o2 = results2.get(i);
-        // logger.log(TestLevel.TEST_INFO, FunctionUtils.getSupplier(
+        // logger.log(TestLevel.TEST_INFO, Lambdas.getSupplier(
         // "[%d] %d,%d %f (%d) %d vs %d,%d %f (%d) %d", i,
         // o1.x, o1.y, o1.maxValue, o1.count, o1.saddleNeighbourId,
         // o2.x, o2.y, o2.maxValue, o2.count, o2.saddleNeighbourId);
@@ -314,8 +314,7 @@ class FindFociTest {
             "Intensity > Saddle");
       }
     } catch (final AssertionFailedError ex) {
-      TestUtils.wrapAssertionFailedError(ex,
-          FunctionUtils.getSupplier("%s [%d]", setName, counter));
+      AssertionErrors.prependMessage(ex, FormatSupplier.getSupplier("%s [%d]", setName, counter));
     }
   }
 
@@ -565,7 +564,7 @@ class FindFociTest {
   }
 
   private ImagePlus[] createData(RandomSeed seed) {
-    final UniformRandomProvider rg = RngUtils.create(seed.get());
+    final UniformRandomProvider rg = RngFactory.create(seed.get());
     final ImagePlus[] images = new ImagePlus[NUMBER_OF_TEST_IMAGES_2D + NUMBER_OF_TEST_IMAGES_3D];
     int index = 0;
     for (int i = 0; i < NUMBER_OF_TEST_IMAGES_2D; i++) {

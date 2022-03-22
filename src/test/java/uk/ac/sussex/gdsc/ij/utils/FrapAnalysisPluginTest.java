@@ -37,8 +37,8 @@ import uk.ac.sussex.gdsc.ij.utils.FrapAnalysis_PlugIn.DiffusionLimitedRecoveryFu
 import uk.ac.sussex.gdsc.ij.utils.FrapAnalysis_PlugIn.FrapFunction;
 import uk.ac.sussex.gdsc.ij.utils.FrapAnalysis_PlugIn.ReactionLimitedRecoveryFunction;
 import uk.ac.sussex.gdsc.ij.utils.FrapAnalysis_PlugIn.ReactionLimitedRecoveryFunctionB;
+import uk.ac.sussex.gdsc.test.api.Predicates;
 import uk.ac.sussex.gdsc.test.api.TestAssertions;
-import uk.ac.sussex.gdsc.test.api.TestHelper;
 import uk.ac.sussex.gdsc.test.api.function.DoubleDoubleBiPredicate;
 
 @SuppressWarnings({"javadoc"})
@@ -46,7 +46,7 @@ class FrapAnalysisPluginTest {
   @Test
   void canComputeDecayFunction() {
     final double delta = 0x1.0p-30;
-    final DoubleDoubleBiPredicate test = TestHelper.doublesAreClose(1e-3);
+    final DoubleDoubleBiPredicate test = Predicates.doublesAreRelativelyClose(1e-3);
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
@@ -104,7 +104,7 @@ class FrapAnalysisPluginTest {
   @Test
   void canComputeReactionLimitedRecoveryFunction() {
     final double delta = 0x1.0p-30;
-    final DoubleDoubleBiPredicate test = TestHelper.doublesAreClose(1e-3);
+    final DoubleDoubleBiPredicate test = Predicates.doublesAreRelativelyClose(1e-3);
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
@@ -162,7 +162,7 @@ class FrapAnalysisPluginTest {
   @Test
   void canComputeReactionLimitedRecoveryFunctionB() {
     final double delta = 0x1.0p-30;
-    final DoubleDoubleBiPredicate test = TestHelper.doublesAreClose(1e-3);
+    final DoubleDoubleBiPredicate test = Predicates.doublesAreRelativelyClose(1e-3);
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
@@ -244,7 +244,7 @@ class FrapAnalysisPluginTest {
   @Test
   void canComputeDiffusionLimitedRecoveryFunction() {
     final double delta = 0x1.0p-30;
-    final DoubleDoubleBiPredicate test = TestHelper.doublesAreClose(1e-3);
+    final DoubleDoubleBiPredicate test = Predicates.doublesAreRelativelyClose(1e-3);
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {
@@ -304,7 +304,7 @@ class FrapAnalysisPluginTest {
   @Test
   void canComputeDiffusionLimitedRecoveryFunctionB() {
     final double delta = 0x1.0p-30;
-    final DoubleDoubleBiPredicate test = TestHelper.doublesAreClose(1e-3);
+    final DoubleDoubleBiPredicate test = Predicates.doublesAreRelativelyClose(1e-3);
     RealVector v1;
     RealVector v2;
     for (final int size : new int[] {10, 50}) {

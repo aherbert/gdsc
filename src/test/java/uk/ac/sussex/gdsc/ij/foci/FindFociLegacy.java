@@ -1815,8 +1815,6 @@ public class FindFociLegacy {
     int id = 0;
     final int[] xyz = new int[3];
 
-    // int pCount = 0;
-
     for (int i = image.length; i-- > 0;) {
       if ((types[i] & (EXCLUDED | MAX_AREA | PLATEAU)) != 0) {
         continue;
@@ -1888,9 +1886,6 @@ public class FindFociLegacy {
         }
       }
     }
-
-    // if (pCount > 0)
-    // logger.fine(FunctionUtils.getSupplier("Plateau count = %d\n", pCount));
 
     if (ImageJUtils.isInterrupted()) {
       return null;
@@ -2265,7 +2260,7 @@ public class FindFociLegacy {
     } // for pixel i
 
     // if (nUnchanged > 0)
-    // logger.fine(FunctionUtils.getSupplier("nUnchanged = %d\n", nUnchanged));
+    // logger.fine(Lambdas.getSupplier("nUnchanged = %d\n", nUnchanged));
 
     return nChanged;
   }// processLevel

@@ -32,10 +32,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.test.junit5.SeededTest;
-import uk.ac.sussex.gdsc.test.rng.RngUtils;
+import uk.ac.sussex.gdsc.test.rng.RngFactory;
 import uk.ac.sussex.gdsc.test.utils.RandomSeed;
-import uk.ac.sussex.gdsc.test.utils.TestLogUtils;
-import uk.ac.sussex.gdsc.test.utils.TestLogUtils.TestLevel;
+import uk.ac.sussex.gdsc.test.utils.TestLogging;
+import uk.ac.sussex.gdsc.test.utils.TestLogging.TestLevel;
 
 @SuppressWarnings({"javadoc"})
 class FindFociStateMachineTest {
@@ -77,7 +77,7 @@ class FindFociStateMachineTest {
 
     final FindFociStateMachine sm = new FindFociStateMachine();
     final String[] propertyNames = sm.getObservedProperties().toArray(new String[0]);
-    final UniformRandomProvider rand = RngUtils.create(seed.get());
+    final UniformRandomProvider rand = RngFactory.create(seed.get());
     final Integer oldValue = Integer.valueOf(0);
     final Integer newValue = Integer.valueOf(1);
 
@@ -108,7 +108,7 @@ class FindFociStateMachineTest {
       }
     }
 
-    logger.log(TestLogUtils.getRecord(level, "%d steps : %s", steps,
+    logger.log(TestLogging.getRecord(level, "%d steps : %s", steps,
         TextUtils.nanosToString(System.nanoTime() - start)));
   }
 }
