@@ -46,7 +46,7 @@ public class Version {
     final Manifest manifest = loadManifest(Version.class);
     if (manifest != null) {
       final Attributes attributes = manifest.getMainAttributes();
-      versionNumber = attributes.getValue("Specification-Version");
+      versionNumber = attributes.getValue("Implementation-Version");
       buildDate = attributes.getValue("Implementation-Date");
       buildNumber = attributes.getValue("Implementation-Build");
     }
@@ -79,7 +79,10 @@ public class Version {
   /**
    * Get the GDSC version.
    *
-   * @return The uk.ac.sussex.gdsc.ij.ext package version
+   * <p>This uses the 'Implementation-Version' entry in the manifest. It will have the full project
+   * version including any suffix, for example SNAPSHOT, RC1, etc.
+   *
+   * @return The uk.ac.sussex.gdsc.ij package version
    */
   public static String getVersion() {
     return versionNumber;
@@ -88,7 +91,7 @@ public class Version {
   /**
    * Get the GDSC package build date.
    *
-   * @return The uk.ac.sussex.gdsc.ij.ext package build date
+   * @return The uk.ac.sussex.gdsc.ij package build date
    */
   public static String getBuildDate() {
     return buildDate;
@@ -97,7 +100,7 @@ public class Version {
   /**
    * Get the GDSC package build number.
    *
-   * @return The uk.ac.sussex.gdsc.ij.ext package build number
+   * @return The uk.ac.sussex.gdsc.ij package build number
    */
   public static String getBuildNumber() {
     return buildNumber;
