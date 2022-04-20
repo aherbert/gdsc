@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 /**
  * Show the version information contained in the source jar manifest.
  */
-public class Version {
+public final class Version {
   /** Constant for the string "unknown". */
   public static final String UNKNOWN = "";
   private static String versionNumber;
@@ -61,6 +61,9 @@ public class Version {
       buildNumber = UNKNOWN;
     }
   }
+
+  /** No instances. */
+  private Version() {}
 
   /**
    * The main method. Output the version and build date.
