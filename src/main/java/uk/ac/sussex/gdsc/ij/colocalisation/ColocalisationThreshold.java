@@ -34,6 +34,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 
 /**
@@ -93,9 +94,8 @@ public class ColocalisationThreshold {
   }
 
   private void init(ImagePlus imp1, ImagePlus imp2, int roiIndex) {
-    if (imp1 == null || imp2 == null) {
-      throw new NullPointerException("Input images must not be null");
-    }
+    Objects.requireNonNull(imp1, "Image 1");
+    Objects.requireNonNull(imp2, "Image 2");
     if (imp1.getWidth() != imp2.getWidth() || imp1.getHeight() != imp2.getHeight()) {
       throw new IllegalArgumentException("Input images must have the same dimensions");
     }
