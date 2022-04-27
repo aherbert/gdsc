@@ -224,7 +224,6 @@ public class FindFociOptions {
     return new FindFociOptions(this);
   }
 
-
   /**
    * Gets the results directory.
    *

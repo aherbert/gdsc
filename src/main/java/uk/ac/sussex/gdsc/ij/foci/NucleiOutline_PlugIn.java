@@ -896,7 +896,6 @@ public class NucleiOutline_PlugIn implements PlugIn {
     binary.run(bp);
   }
 
-
   /**
    * Removes the outliers.
    *

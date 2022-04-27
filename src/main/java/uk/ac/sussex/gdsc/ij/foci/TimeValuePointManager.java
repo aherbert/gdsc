@@ -275,7 +275,6 @@ public class TimeValuePointManager {
     }
   }
 
-
   /**
    * Loads the points from the file.
    *

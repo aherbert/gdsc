@@ -375,7 +375,6 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       }
     }
 
-
     final TextWindow window = createWindow(distancesWindowRef, "Distances",
         "Image\tObject\tFoci\tChannel\tFrame\tS0\tUnits\tS1\tUnits\tx\ty\tz\tdx\tdy\tdz\t"
             + "Distance (px)\tDistance\tUnits");
@@ -462,7 +461,6 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       return builder.build();
     }).toArray(Hull3d[]::new);
   }
-
 
   /**
    * Creates the 3D hull for each mask object.
