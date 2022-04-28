@@ -38,7 +38,7 @@ public class UsageTracker implements PlugIn {
   private static final String TITLE = "Usage Tracker";
 
   /** A flag used when the dialog is shown. */
-  private static final AtomicBoolean dialogShown = new AtomicBoolean();
+  private static final AtomicBoolean DIALOG_SHOWN = new AtomicBoolean();
 
   static {
     // This ensures all GDSC loggers redirect from the console to the ImageJ log window.
@@ -139,9 +139,9 @@ public class UsageTracker implements PlugIn {
   @Override
   public void run(String arg) {
     // If this is the first plugin to call recordPlugin(...) then the dialog may be shown.
-    dialogShown.set(false);
+    DIALOG_SHOWN.set(false);
     recordPlugin(this.getClass(), arg);
-    if (!dialogShown.get()) {
+    if (!DIALOG_SHOWN.get()) {
       showDialog(false);
     }
   }
@@ -153,7 +153,7 @@ public class UsageTracker implements PlugIn {
    *        status is unknown
    */
   static void showDialog(boolean autoMessage) {
-    dialogShown.set(true);
+    DIALOG_SHOWN.set(true);
     ImageJAnalyticsUtils.showDialog(TITLE, autoMessage, null);
   }
 }
