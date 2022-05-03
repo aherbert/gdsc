@@ -27,12 +27,20 @@ package uk.ac.sussex.gdsc.ij;
 import ij.plugin.PlugIn;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import uk.ac.sussex.gdsc.core.ij.ImageJAnalyticsUtils;
 import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 
 /**
  * Provide methods to track code usage within ImageJ.
+ *
+ * <p>Note:
+ *
+ * <p>This class currently does not record any tracking information.
+ * Previous versions recorded a plugin execution as the equivalent of
+ * a page view on a website. Analytics could be used to understand
+ * the usage of the different plugins in the GDSC library.
  */
 public class UsageTracker implements PlugIn {
   private static final String TITLE = "Usage Tracker";
@@ -50,28 +58,19 @@ public class UsageTracker implements PlugIn {
   /**
    * Initialise on demand the analytics code.
    *
-   * <p>This is used to avoid synchronisation during initialisation.
+   * <p>This is a placeholder for initialisation of an analytics provider.
    *
    * <a href="https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom">Initialisation on
    * demand</a>
    */
   private static class LazyAnalyticsHolder {
-    static {
-      // Record the version of the GDSC plugins
-      ImageJAnalyticsUtils.addCustomDimension(6, Version.getVersion());
-      // Prompt the user to opt-in/out of analytics if the status is unknown
-      if (ImageJAnalyticsUtils.unknownStatus()) {
-        showDialog(true);
-      }
-    }
-
     /**
      * Checks if is disabled.
      *
      * @return true, if is disabled
      */
     static boolean isDisabled() {
-      return ImageJAnalyticsUtils.isDisabled();
+      return true;
     }
   }
 
@@ -83,14 +82,17 @@ public class UsageTracker implements PlugIn {
    * <a href="https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom">Initialisation on
    * demand</a>
    */
+  // The plugins config input stream is closed in the buildPluginMap method
+  @SuppressWarnings("resource")
   private static class LazyMapHolder {
-    private static final HashMap<String, String[]> map;
+    /** The plugin map. */
+    static final Map<String, String[]> MAP;
 
     static {
       final HashMap<String, String[]> localMap = new HashMap<>();
       ImageJAnalyticsUtils.buildPluginMap(localMap, About_PlugIn.getPluginsConfig(),
           StandardCharsets.UTF_8);
-      map = localMap;
+      MAP = localMap;
     }
   }
 
@@ -107,7 +109,7 @@ public class UsageTracker implements PlugIn {
     }
 
     final String[] pair =
-        LazyMapHolder.map.get(ImageJAnalyticsUtils.getKey(clazz.getName(), argument));
+        LazyMapHolder.MAP.get(ImageJAnalyticsUtils.getKey(clazz.getName(), argument));
     if (pair == null) {
       recordPlugin(clazz.getName().replace('.', '/'), argument);
     } else {
@@ -135,10 +137,10 @@ public class UsageTracker implements PlugIn {
     ImageJAnalyticsUtils.pageview(pageUrl, pageTitle);
   }
 
-  /** {@inheritDoc} */
   @Override
   public void run(String arg) {
-    // If this is the first plugin to call recordPlugin(...) then the dialog may be shown.
+    // If this is the first plugin to call recordPlugin(...) then the dialog may be shown
+    // automatically if the opt-in/out status is unknown.
     DIALOG_SHOWN.set(false);
     recordPlugin(this.getClass(), arg);
     if (!DIALOG_SHOWN.get()) {
@@ -147,7 +149,7 @@ public class UsageTracker implements PlugIn {
   }
 
   /**
-   * Show a dialog allowing users to opt in/out of Google Analytics.
+   * Show a dialog allowing users to opt in/out of analytics.
    *
    * @param autoMessage Set to true to display the message about automatically showing when the
    *        status is unknown
