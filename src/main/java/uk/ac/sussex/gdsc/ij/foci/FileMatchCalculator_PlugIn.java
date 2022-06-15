@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.MatchResult;
@@ -266,13 +267,12 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     final ArrayList<String> newImageList = buildMaskList();
     final boolean haveImages = !newImageList.isEmpty();
 
-    final GenericDialog gd = new GenericDialog(TITLE);
+    final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
     settings = Settings.load();
-    gd.addMessage("Compare the points in two files\nand compute the match statistics\n"
-        + "(Double click input fields to use a file chooser)");
-    gd.addStringField("Input_1", settings.title1, 30);
-    gd.addStringField("Input_2", settings.title2, 30);
+    gd.addMessage("Compare the points in two files\nand compute the match statistics");
+    gd.addFilenameField("Input_1", settings.title1, 30);
+    gd.addFilenameField("Input_2", settings.title2, 30);
     if (haveImages) {
       final ArrayList<String> maskImageList = new ArrayList<>(newImageList.size() + 1);
       maskImageList.add("[None]");
@@ -292,36 +292,6 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
       gd.addChoice("Image_1", items, settings.image1);
       gd.addChoice("Image_2", items, settings.image2);
       gd.addCheckbox("Use_slice_position", settings.useSlicePosition);
-    }
-
-    // Dialog to allow double click to select files using a file chooser
-    if (!java.awt.GraphicsEnvironment.isHeadless()) {
-      text1 = (TextField) gd.getStringFields().get(0);
-      text2 = (TextField) gd.getStringFields().get(1);
-      final MouseAdapter ma = new MouseAdapter() {
-        @Override
-        public void mouseClicked(MouseEvent event) {
-          if (event.getClickCount() > 1) {
-            // Double-click
-            TextField text;
-            String title;
-            if (event.getSource() == text1) {
-              text = text1;
-              title = "Coordinate_file_1";
-            } else {
-              text = text2;
-              title = "Coordinate_file_2";
-            }
-            final String[] path = decodePath(text.getText());
-            final OpenDialog chooser = new OpenDialog(title, path[0], path[1]);
-            if (chooser.getFileName() != null) {
-              text.setText(chooser.getDirectory() + chooser.getFileName());
-            }
-          }
-        }
-      };
-      text1.addMouseListener(ma);
-      text2.addMouseListener(ma);
     }
 
     gd.showDialog();
