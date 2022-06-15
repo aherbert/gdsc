@@ -707,12 +707,11 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
   }
 
   private static String getFilename(String title, String filename) {
-    final String[] path = ImageJUtils.decodePath(filename);
-    final OpenDialog chooser = new OpenDialog(title, path[0], path[1]);
-    if (chooser.getFileName() == null) {
+    filename = ImageJUtils.getFilename(title, filename);
+    if (filename == null) {
       return null;
     }
-    return FileUtils.replaceExtension(chooser.getDirectory() + chooser.getFileName(), ".xls");
+    return FileUtils.replaceExtension(filename, ".xls");
   }
 
   private static String[] decodePath(String path) {

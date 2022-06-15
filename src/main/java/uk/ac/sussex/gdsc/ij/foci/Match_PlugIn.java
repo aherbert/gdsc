@@ -31,7 +31,6 @@ import ij.gui.Overlay;
 import ij.gui.Plot;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
-import ij.io.OpenDialog;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import ij.plugin.ZProjector;
@@ -1227,15 +1226,13 @@ public class Match_PlugIn implements PlugIn {
       return;
     }
 
-    final String[] path = ImageJUtils.decodePath(settings.filename);
-    final OpenDialog chooser = new OpenDialog("matches_file", path[0], path[1]);
-    if (chooser.getFileName() == null) {
+    final String filename = ImageJUtils.getFilename("matches_file", settings.filename);
+    if (filename == null) {
       return;
     }
+    settings.filename = filename;
 
-    settings.filename = chooser.getDirectory() + chooser.getFileName();
-
-    try (final BufferedWriter out = Files.newBufferedWriter(Paths.get(settings.filename))) {
+    try (final BufferedWriter out = Files.newBufferedWriter(Paths.get(filename))) {
       final StringBuilder sb = new StringBuilder();
       final String newLine = System.lineSeparator();
       sb.append("# Image 1   = ").append(t1).append(newLine);
