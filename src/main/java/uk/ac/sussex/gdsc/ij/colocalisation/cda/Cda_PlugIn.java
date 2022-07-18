@@ -34,7 +34,6 @@ import ij.gui.GenericDialog;
 import ij.gui.Plot;
 import ij.gui.PlotWindow;
 import ij.gui.Roi;
-import ij.macro.MacroRunner;
 import ij.plugin.frame.PlugInFrame;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -1762,7 +1761,6 @@ public class Cda_PlugIn extends PlugInFrame {
     mainPanel.add(createCheckboxPanel(setResultsOptionsCheckbox, CHOICE_SET_OPTIONS, false));
     setResultsOptionsCheckbox.addItemListener(itemListener);
 
-    @SuppressWarnings("unused")
     final ActionListener actionListener = event -> {
       final Object actioner = event.getSource();
 
@@ -1779,9 +1777,7 @@ public class Cda_PlugIn extends PlugInFrame {
           thread.start();
         }
       } else if ((Button) actioner == helpButton) {
-        final String macro =
-            "run('URL...', 'url=" + uk.ac.sussex.gdsc.ij.help.Urls.COLOCALISATION + "');";
-        new MacroRunner(macro);
+        ImageJUtils.showUrl(uk.ac.sussex.gdsc.ij.help.Urls.COLOCALISATION);
       }
     };
 

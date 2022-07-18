@@ -33,7 +33,6 @@ import ij.gui.GUI;
 import ij.gui.GenericDialog;
 import ij.gui.Plot;
 import ij.gui.Roi;
-import ij.macro.MacroRunner;
 import ij.plugin.frame.PlugInFrame;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -257,7 +256,6 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
     fillImagesList();
   }
 
-  @SuppressWarnings("unused")
   private synchronized void actionPerformed(ActionEvent event) {
     final Object actioner = event.getSource();
 
@@ -275,9 +273,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
       thread.start();
     }
     if ((Button) actioner == helpButton) {
-      final String macro =
-          "run('URL...', 'url=" + uk.ac.sussex.gdsc.ij.help.Urls.COLOCALISATION + "');";
-      new MacroRunner(macro);
+      ImageJUtils.showUrl(uk.ac.sussex.gdsc.ij.help.Urls.COLOCALISATION);
     }
 
     super.notifyAll();

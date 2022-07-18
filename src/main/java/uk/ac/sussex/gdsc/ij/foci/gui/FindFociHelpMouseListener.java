@@ -24,10 +24,10 @@
 
 package uk.ac.sussex.gdsc.ij.foci.gui;
 
-import ij.macro.MacroRunner;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.ij.help.Urls;
 
 /**
@@ -44,10 +44,8 @@ class FindFociHelpMouseListener extends MouseAdapter {
    */
   private FindFociHelpMouseListener() {}
 
-  @SuppressWarnings("unused")
   @Override
   public void mouseClicked(MouseEvent event) {
-    final String macro = "run('URL...', 'url=" + Urls.FIND_FOCI + "');";
-    new MacroRunner(macro);
+    ImageJUtils.showUrl(Urls.FIND_FOCI);
   }
 }

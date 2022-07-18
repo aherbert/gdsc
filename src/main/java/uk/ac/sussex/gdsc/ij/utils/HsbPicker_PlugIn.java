@@ -30,7 +30,6 @@ import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.GUI;
 import ij.gui.Toolbar;
-import ij.macro.MacroRunner;
 import ij.plugin.MacroInstaller;
 import ij.plugin.frame.PlugInFrame;
 import ij.process.ImageProcessor;
@@ -47,6 +46,7 @@ import java.awt.Scrollbar;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JPanel;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 
@@ -298,9 +298,7 @@ public class HsbPicker_PlugIn extends PlugInFrame {
     okButton.addActionListener(event -> close());
     final Button helpButton = new Button("Help");
     helpButton.addActionListener(event -> {
-      final String macro =
-          "run('URL...', 'url=" + uk.ac.sussex.gdsc.ij.help.Urls.UTILITY + "');";
-      new MacroRunner(macro);
+      ImageJUtils.showUrl(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
     });
 
     final JPanel buttonPanel = new JPanel();
