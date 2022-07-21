@@ -67,7 +67,7 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.ij.trackmate.gui.HtmlJLabelLogger;
 
 /**
- * Collect the options for the the {@link NucleusDetector}.
+ * Collect the options for the {@link NucleusDetector}.
  */
 public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
   private static final long serialVersionUID = 1L;

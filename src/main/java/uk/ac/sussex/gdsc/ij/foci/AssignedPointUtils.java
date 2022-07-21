@@ -127,7 +127,7 @@ public final class AssignedPointUtils {
 
   /**
    * Extracts the points from the given Point ROI. Uses the ROI Z-position (if it has a hyperstack
-   * position) or the the stack position. If neither are set the z position will be zero.
+   * position) or the stack position. If neither are set the z position will be zero.
    *
    * @param roi the roi
    * @return The list of points (can be zero length)

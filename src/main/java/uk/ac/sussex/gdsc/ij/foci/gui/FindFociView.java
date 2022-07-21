@@ -379,7 +379,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
       @Override
       public void mousePressed(MouseEvent event) {
         // Quick check to see if images have been closed since
-        // the the windowActivated event does fire if the plugin window
+        // the windowActivated event does fire if the plugin window
         // was already active when an image was closed.
         if (controller.getImageCount() != comboImageList.getItemCount()) {
           controller.updateImageList();

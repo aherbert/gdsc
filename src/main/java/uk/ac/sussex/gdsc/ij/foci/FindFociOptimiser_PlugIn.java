@@ -3088,7 +3088,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   /**
    * Extract the points for the given image. If a file exists in the same directory as the image
    * with the suffix .csv, .xyz, or .txt then the program will attempt to load 3D coordinates from
-   * file. Otherwise the points are taken from the the ROI.
+   * file. Otherwise the points are taken from the ROI.
    *
    * <p>The points are then filtered to include only those within the mask region (if the mask
    * dimensions match those of the image).

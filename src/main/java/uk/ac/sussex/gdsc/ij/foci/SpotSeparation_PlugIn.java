@@ -695,7 +695,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Test if the the value is in the values, searching from 0 to max.
+   * Test if the value is in the values, searching from 0 to max.
    *
    * @param values the values
    * @param max the max

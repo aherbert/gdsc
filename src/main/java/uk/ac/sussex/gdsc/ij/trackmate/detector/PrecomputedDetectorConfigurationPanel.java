@@ -63,7 +63,7 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.ij.trackmate.gui.HtmlJLabelLogger;
 
 /**
- * Collect the options for the the {@link PrecomputedDetector}.
+ * Collect the options for the {@link PrecomputedDetector}.
  */
 public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
   private static final long serialVersionUID = 1L;
