@@ -54,21 +54,21 @@ Installation from source
 
 The source code is accessed using git and built using Maven.
 
-The code depends on the gdsc-analytics, gdsc-test and gdsc-core artifacts so
+The code depends on the gdsc-test, gdsc-ij-parent and gdsc-core artifacts so
 you will have to install these to your local Maven repository before building:
 
 1. Clone the required repositories
 
-        git clone https://github.com/aherbert/gdsc-analytics.git
         git clone https://github.com/aherbert/gdsc-test.git
+        git clone https://github.com/aherbert/gdsc-ij-parent.git
         git clone https://github.com/aherbert/gdsc-core.git
         git clone https://github.com/aherbert/gdsc.git
 
 2. Build the code and install using Maven
 
-        cd gdsc-analytics
-        mvn install
         cd ../gdsc-test
+        mvn install
+        cd ../gdsc-ij-parent
         mvn install
         cd ../gdsc-core
         mvn install
@@ -86,7 +86,6 @@ the target/dependencies directory even if they are not required by the SMLM code
 (it does not check what functions are actually used by the code). The libraries
 you will need are:
 
-        gdsc-analytics
         gdsc-core
         commons-rng-client-api
         commons-rng-core
