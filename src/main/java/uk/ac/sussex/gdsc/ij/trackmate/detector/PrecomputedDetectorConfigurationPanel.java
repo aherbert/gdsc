@@ -170,8 +170,7 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
     btnPreview.setEnabled(false);
     CompletableFuture.runAsync(() -> {
       try {
-        final Settings lSettings = new Settings();
-        lSettings.setFrom(imp);
+        final Settings lSettings = new Settings(imp);
         final int frame = imp.getFrame() - 1;
         lSettings.tstart = frame;
         lSettings.tend = frame;

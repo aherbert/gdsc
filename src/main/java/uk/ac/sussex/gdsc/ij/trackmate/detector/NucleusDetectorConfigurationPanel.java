@@ -171,8 +171,7 @@ public class NucleusDetectorConfigurationPanel extends ConfigurationPanel {
   private void preview() {
     btnPreview.setEnabled(false);
     CompletableFuture.runAsync(() -> {
-      final Settings lSettings = new Settings();
-      lSettings.setFrom(imp);
+      final Settings lSettings = new Settings(imp);
       final int frame = imp.getFrame() - 1;
       lSettings.tstart = frame;
       lSettings.tend = frame;

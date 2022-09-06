@@ -30,6 +30,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.detection.SpotDetectorFactoryBase;
 import fiji.plugin.trackmate.gui.components.ConfigurationPanel;
 import fiji.plugin.trackmate.io.IOUtils;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -496,5 +497,15 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
   public ConfigurationPanel getDetectorConfigurationPanel(final Settings settings,
       final Model model) {
     return new PrecomputedDetectorConfigurationPanel(settings, model);
+  }
+
+  @Override
+  public SpotDetectorFactoryBase<T> copy() {
+    // Method added in TM v7.2.1
+    // It is not clear if the copy requires a fresh instance, shallow copy or deep copy.
+    // The method is used in fiji.plugin.trackmate.Settings.copyOn(ImagePlus) where it is
+    // documented to copy the settings but configured to run on a new image. In this case
+    // any cache is not relevant and we return a fresh instance.
+    return new PrecomputedDetectorFactory<>();
   }
 }
