@@ -6,8 +6,9 @@ analysis programs for microscopy images including colocalisation analysis and
 peak finding.
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Build Status](https://travis-ci.com/aherbert/gdsc.svg?branch=master)](https://travis-ci.com/aherbert/gdsc)
-[![Coverage Status](https://coveralls.io/repos/github/aherbert/gdsc/badge.svg?branch=master)](https://coveralls.io/github/aherbert/gdsc?branch=master)
+[![Build Status](https://github.com/aherbert/gdsc/actions/workflows/build.yml/badge.svg)](https://github.com/aherbert/gdsc/actions/workflows/build.yml)
+[![Coverage Status](https://codecov.io/gh/aherbert/gdsc/branch/master/graph/badge.svg)](https://app.codecov.io/gh/aherbert/gdsc)
+
 
 Find Foci
 ---------
