@@ -23,24 +23,30 @@
  * #L%
  */
 
+import java.io.File;
+import java.net.URISyntaxException;
+
+import ij.IJ;
+import ij.ImageJ;
 import ij.plugin.PlugIn;
 import uk.ac.sussex.gdsc.ij.About_PlugIn;
 
 /**
  * Default ImageJ plugin (no Java package) to run the {@link About_PlugIn} plugin.
  *
- * <p><strong>This class is not included in the packaged uk.ac.sussex.gdsc.ij.ext jar.</strong>
+ * <p><strong>This class is not included in the packaged uk.ac.sussex.gdsc.ij jar.</strong>
  *
- * <p>This class allows the project to be run in debug mode from an IDE (e.g. Eclipse). The Maven
- * output directory will be target/classes. Create a symbolic link to that directory from the
- * project root and name it plugins. Optionally create a link to the macros directory to allow the
- * toolset to be loaded:
+ * <p>This class can run ImageJ and load all the GDSC SMLM plugins using the {@link #main(String[])}
+ * function to launch a Java application.
+ *
+ * <p>Alternatively this class allows the project to be run in from an IDE (e.g. Eclipse) using
+ * ImageJ's detection of classes in the plugins folder. The Maven output directory will be
+ * target/classes. Create a symbolic link to that directory from the project root and name it
+ * plugins. Optionally create a link to the macros directory to allow the toolset to be loaded:
  *
  * <pre>
- * {@code
- * ${root}/plugins -> ${root}/target/classes
- * ${root}/macros -> ${root}/target/classes/macros
- * }
+ * ${root}/plugins -&gt; ${root}/target/classes
+ * ${root}/macros -&gt; ${root}/target/classes/macros
  * </pre>
  *
  * <p>Set the project to run ij.ImageJ as the main class and use the root directory as the ImageJ
@@ -50,7 +56,8 @@ import uk.ac.sussex.gdsc.ij.About_PlugIn;
  * ij.ImageJ -ijpath ${root}
  * </pre>
  *
- * <p>ImageJ will load this class from the plugins directory. This class can call all other plugins.
+ * <p>ImageJ will load this class from the plugins directory. This class will install all the
+ * other plugins if the JRE system property {@code about-install} is set to {@code true}.
  */
 public class Gdsc_PlugIn implements PlugIn {
   /** {@inheritDoc} */
@@ -58,5 +65,34 @@ public class Gdsc_PlugIn implements PlugIn {
   public void run(String arg) {
     // Show the About plugin
     About_PlugIn.showAbout();
+  }
+
+  /**
+   * Main method for debugging.
+   *
+   * For debugging, it is convenient to have a method that starts ImageJ and calls the plugin, e.g.
+   * after setting breakpoints.
+   *
+   * @param args unused
+   * @throws URISyntaxException if the URL cannot be converted to a URI
+   */
+  public static void main(String[] args) throws URISyntaxException {
+    // Set the base directory for plugins
+    // see: https://stackoverflow.com/a/7060464/1207769
+    Class<Gdsc_PlugIn> clazz = Gdsc_PlugIn.class;
+    java.net.URL url = clazz.getProtectionDomain().getCodeSource().getLocation();
+    File file = new File(url.toURI());
+    // Note: This returns the base path. ImageJ will find plugins in here that have an
+    // underscore in the name. But it will not search recursively through the
+    // package structure to find plugins. Adding this at least puts it on ImageJ's
+    // classpath so plugins not satisfying these requirements can be loaded.
+    System.setProperty("plugins.dir", file.getAbsolutePath());
+
+    // Start ImageJ and exit when closed
+    ImageJ imagej = new ImageJ();
+    imagej.exitWhenQuitting(true);
+
+    // Run the plugin
+    IJ.runPlugIn(clazz.getName(), "");
   }
 }

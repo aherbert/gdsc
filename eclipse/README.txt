@@ -49,25 +49,18 @@ then do a manual install:
    Eclipse project
 ---
 
-Create a symbolic link on the filesystem to set-up the folders that are expected by ImageJ.
+To run the code execute the 'main' function in the Gdsc_PlugIn. This will:
 
-Windows:
+- Configure the ImageJ plugins path to the build path
+- Run ImageJ
+- Register all the GDSC plugins in ImageJ if the JRE system property about-install is true.
 
-    GDSC>mklink /D plugins target\classes
-    symbolic link created for plugins <<===>> target\classes
-    
-    GDSC>mklink /D macros target\classes\gdsc\macros
-    symbolic link created for macros <<===>> target\classes\gdsc\macros
-
-Linux:
-
-    [GDSC] % ln -s target/classes plugins
-    [GDSC] % ln -s target/classes/gdsc/macros
 
 Create a new Run configuration.
 
-Select ij.ImageJ as the main class.
-Add -Dabout-install=true to the VM arguments.
+Select Gdsc_PlugIn as the main class.
+
+Set the VM arguments to '-Dabout-install=true'.
 
 Run the code.
 
