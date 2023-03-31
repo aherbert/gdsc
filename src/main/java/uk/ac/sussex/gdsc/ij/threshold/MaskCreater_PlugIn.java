@@ -873,7 +873,7 @@ public class MaskCreater_PlugIn implements PlugIn {
 
     final short[] newMask = new short[maxx * maxy];
     for (int i = 0; i < newMask.length; i++) {
-      newMask[i] = (short) mask[i++];
+      newMask[i] = (short) mask[i];
     }
 
     return new ShortProcessor(maxx, maxy, newMask, null);
