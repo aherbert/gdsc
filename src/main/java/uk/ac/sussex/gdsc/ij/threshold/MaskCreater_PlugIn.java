@@ -38,6 +38,7 @@ import ij.process.ShortProcessor;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.Consumer;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
@@ -82,6 +83,7 @@ public class MaskCreater_PlugIn implements PlugIn {
   private static String selectedImage = "";
   private static int selectedOption = OPTION_THRESHOLD;
   private static String selectedThresholdMethod = AutoThreshold.Method.OTSU.toString();
+  private static boolean selectedClearOutside;
   private static int selectedChannel;
   private static int selectedSlice;
   private static int selectedFrame;
@@ -94,6 +96,7 @@ public class MaskCreater_PlugIn implements PlugIn {
   private ImagePlus imp;
   private int option;
   private String thresholdMethod;
+  private boolean clearOutside;
   private int channel;
   private int slice;
   private int frame;
@@ -146,6 +149,7 @@ public class MaskCreater_PlugIn implements PlugIn {
     gd.addChoice("Image", imageList.toArray(new String[0]), selectedImage);
     gd.addChoice("Option", options, options[selectedOption]);
     gd.addChoice("Threshold_Method", methods, selectedThresholdMethod);
+    gd.addCheckbox("Clear_outside_ROI", selectedClearOutside);
     gd.addNumericField("Channel", selectedChannel, 0);
     gd.addNumericField("Slice", selectedSlice, 0);
     gd.addNumericField("Frame", selectedFrame, 0);
@@ -164,6 +168,7 @@ public class MaskCreater_PlugIn implements PlugIn {
     selectedImage = gd.getNextChoice();
     selectedOption = gd.getNextChoiceIndex();
     selectedThresholdMethod = gd.getNextChoice();
+    selectedClearOutside = gd.getNextBoolean();
     selectedChannel = (int) gd.getNextNumber();
     selectedSlice = (int) gd.getNextNumber();
     selectedFrame = (int) gd.getNextNumber();
@@ -176,6 +181,7 @@ public class MaskCreater_PlugIn implements PlugIn {
     maskCreater.setImp(WindowManager.getImage(selectedImage));
     maskCreater.setOption(selectedOption);
     maskCreater.setThresholdMethod(selectedThresholdMethod);
+    maskCreater.setClearOutside(selectedClearOutside);
     maskCreater.setChannel(selectedChannel);
     maskCreater.setSlice(selectedSlice);
     maskCreater.setFrame(selectedFrame);
@@ -264,6 +270,18 @@ public class MaskCreater_PlugIn implements PlugIn {
       // - all pixels above the minimum display value
       result = new ImageStack(imp.getWidth(), imp.getHeight(), nChannels * nSlices * nFrames);
 
+      Consumer<ImageProcessor> clearOutsideRoiAction = bp -> {};
+      if (clearOutside) {
+        // Use the ROI from the ROI image
+        final Roi roi = imp.getRoi();
+        if (roi != null) {
+          clearOutsideRoiAction = bp -> {
+            bp.setValue(0);
+            bp.fillOutside(roi);
+          };
+        }
+      }
+
       for (int frIndex = 0; frIndex < frames.length; frIndex++) {
         final int fr = frames[frIndex];
         for (int chIndex = 0; chIndex < channels.length; chIndex++) {
@@ -308,6 +326,7 @@ public class MaskCreater_PlugIn implements PlugIn {
               }
             }
 
+            clearOutsideRoiAction.accept(ip);
             channelStack.addSlice(null, ip);
           }
 
@@ -659,6 +678,24 @@ public class MaskCreater_PlugIn implements PlugIn {
    */
   public String getThresholdMethod() {
     return thresholdMethod;
+  }
+
+  /**
+   * Sets the option to clear the mask outside the ROI on the source image.
+   *
+   * @param clearOutside the new clear outside
+   */
+  public void setClearOutside(boolean clearOutside) {
+    this.clearOutside = clearOutside;
+  }
+
+  /**
+   * Checks if clearing the mask outside the original ROI on the source image.
+   *
+   * @return true, if clear outside
+   */
+  public boolean isClearOutside() {
+    return clearOutside;
   }
 
   /**
