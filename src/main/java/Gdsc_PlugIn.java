@@ -56,8 +56,8 @@ import uk.ac.sussex.gdsc.ij.About_PlugIn;
  * ij.ImageJ -ijpath ${root}
  * </pre>
  *
- * <p>ImageJ will load this class from the plugins directory. This class will install all the
- * other plugins if the JRE system property {@code about-install} is set to {@code true}.
+ * <p>ImageJ will load this class from the plugins directory. This class will install all the other
+ * plugins if the JRE system property {@code about-install} is set to {@code true}.
  */
 public class Gdsc_PlugIn implements PlugIn {
   /** {@inheritDoc} */
@@ -70,8 +70,8 @@ public class Gdsc_PlugIn implements PlugIn {
   /**
    * Main method for debugging.
    *
-   * For debugging, it is convenient to have a method that starts ImageJ and calls the plugin, e.g.
-   * after setting breakpoints.
+   * <p>For debugging, it is convenient to have a method that starts ImageJ and calls the plugin,
+   * e.g. after setting breakpoints.
    *
    * @param args unused
    * @throws URISyntaxException if the URL cannot be converted to a URI
