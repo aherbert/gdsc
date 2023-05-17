@@ -388,10 +388,10 @@ class AssignedPointUtilsTest {
     final AssignedPoint[] actual = AssignedPointUtils.eliminateDuplicates(new AssignedPoint[] {
         new AssignedPoint(2, 2, 3, 1), new AssignedPoint(1, 2, 3, 2), new AssignedPoint(1, 2, 3, 3),
         new AssignedPoint(1, 1, 3, 4), new AssignedPoint(1, 1, 1, 5), new AssignedPoint(1, 1, 1, 6),
-        new AssignedPoint(1, 2, 1, 7), new AssignedPoint(2, 1, 1, 8),});
+        new AssignedPoint(1, 2, 1, 7), new AssignedPoint(2, 1, 1, 8)});
     final AssignedPoint[] expected = new AssignedPoint[] {new AssignedPoint(1, 1, 1, 0),
         new AssignedPoint(1, 2, 1, 1), new AssignedPoint(2, 1, 1, 2), new AssignedPoint(1, 1, 3, 3),
-        new AssignedPoint(1, 2, 3, 4), new AssignedPoint(2, 2, 3, 5),};
+        new AssignedPoint(1, 2, 3, 4), new AssignedPoint(2, 2, 3, 5)};
     Assertions.assertArrayEquals(expected, actual);
   }
 

@@ -143,7 +143,7 @@ public class CreateColocalisedImages_PlugIn implements PlugIn {
     settings = Settings.load();
 
     final GenericDialog gd = new GenericDialog(TITLE, IJ.getInstance());
-    final String[] bitDepthChoice = {"8bit", "12bit", "16bit"};// bit depth of images
+    final String[] bitDepthChoice = {"8bit", "12bit", "16bit"}; // bit depth of images
     gd.addChoice("Create ...", bitDepthChoice, bitDepthChoice[settings.bitDepth]);
     gd.addCheckbox("Create masks", settings.createMasks);
     gd.showDialog();

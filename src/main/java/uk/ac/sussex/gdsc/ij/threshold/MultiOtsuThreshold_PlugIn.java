@@ -164,7 +164,7 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
 
     final GenericDialog gd = new GenericDialog(TITLE);
     gd.addMessage("Multi-level Otsu thresholding on image stack");
-    final String[] items = {"2", "3", "4", "5",};
+    final String[] items = {"2", "3", "4", "5"};
     gd.addChoice("Levels", items, items[settings.levels - 2]);
     if (imp.getStackSize() > 1) {
       gd.addCheckbox("Do_stack", settings.doStack);

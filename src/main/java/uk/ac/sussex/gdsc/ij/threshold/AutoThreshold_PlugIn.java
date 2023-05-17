@@ -397,7 +397,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
           final Object[] result = exec(imp, method, settings.noWhite, settings.noBlack,
               settings.doIwhite, settings.doIset, settings.doIlog, settings.doIstackHistogram);
           if (((Integer) result[0]) == -1) {
-            success = false;// the threshold existed
+            success = false; // the threshold existed
           }
         }
         if (success && imp.getBitDepth() == 16) {

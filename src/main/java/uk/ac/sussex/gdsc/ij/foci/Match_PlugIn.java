@@ -1400,7 +1400,7 @@ public class Match_PlugIn implements PlugIn {
         //.append('\t').append(r.round(p.getZ()))
         .append('\t').append((int) Math.round(p.getZ() / scaleZ))
         .append('\t');
-        //@formatter:on
+      //@formatter:on
     } else {
       sb.append("-\t-\t-\t-\t-\t");
     }
