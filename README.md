@@ -49,6 +49,9 @@ instructions [How_to_follow_a_3rd_party_update_site](http://fiji.sc/How_to_follo
 and add the GDSC update site. All the plugins will appear under the
 'Plugins > GDSC' menu.
 
+Some plugins require on the following 3rd party updates sites:
+3D_Viewer; ImageScience; TrackMate
+
 
 Installation from source
 ------------------------
@@ -76,8 +79,10 @@ you will have to install these to your local Maven repository before building:
         cd ../gdsc
         mvn package
 
-	This will produce a gdsc_-[VERSION].jar file in the target directory. All
-	dependencies are copied into the target/dependencies directory.
+This will produce a gdsc_-[VERSION].jar file in the target directory. Dependencies
+can be copied into the target/dependencies directory using:
+
+        mvn dependency:copy-dependencies
 
 3. Copy the gdsc_* jar into the plugins directory of ImageJ.
 
@@ -88,21 +93,25 @@ the target/dependencies directory even if they are not required by the SMLM code
 you will need are:
 
         gdsc-core
+        gdsc-core-ij
         commons-rng-client-api
         commons-rng-core
         commons-rng-simple
         commons-rng-sampling
         beansbinding
+        fastutil-core
 
-Libraries required if not using the Fiji distribution of ImageJ. Note that the ImageScience library
-can be installed using the ImageScience ImageJ update site:
+Core libraries required if not using the Fiji distribution of ImageJ:
 
         commons-math3
         commons-lang3
-        trove4j
-        guava
         imagescience
         Image_5D
+
+This excludes the 3D_Viewer and TrackMate functionality. View the dependencies of
+these using:
+
+        mvn dependency:tree
 
 5. The plugins will now appear under the 'Plugins > GDSC' menu in ImageJ.
 
