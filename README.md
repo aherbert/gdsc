@@ -50,7 +50,7 @@ and add the GDSC update site. All the plugins will appear under the
 'Plugins > GDSC' menu.
 
 Some plugins require on the following 3rd party updates sites:
-3D_Viewer; ImageScience; TrackMate
+ImageScience; TrackMate
 
 
 Installation from source
