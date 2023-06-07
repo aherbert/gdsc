@@ -68,7 +68,7 @@ you will have to install these to your local Maven repository before building:
         git clone https://github.com/aherbert/gdsc-core.git
         git clone https://github.com/aherbert/gdsc.git
 
-2. Build the code and install using Maven
+1. Build the code and install using Maven
 
         cd ../gdsc-test
         mvn install
@@ -79,37 +79,44 @@ you will have to install these to your local Maven repository before building:
         cd ../gdsc
         mvn package
 
-This will produce a gdsc_-[VERSION].jar file in the target directory. Dependencies
-can be copied into the target/dependencies directory using:
+   This will produce a gdsc_-[VERSION].jar file in the target directory. Dependencies
+   can be copied into the target/dependencies directory using:
 
         mvn dependency:copy-dependencies
 
-3. Copy the gdsc_* jar into the plugins directory of ImageJ.
+1. Installation into a Fiji/ImageJ2 install can be performed using the scijava
+maven goal to populate the application:
 
-4. Copy the dependencies into the plugins directory (or onto the Java
-classpath). Note that the Maven package routine puts all dependencies into
-the target/dependencies directory even if they are not required by the SMLM code
-(it does not check what functions are actually used by the code). The libraries
-you will need are:
+        cd gdsc-smlm-ij
+        mvn scijava:populate-app -Dscijava.app.directory=/usr/local/fiji
+        cd ..
+
+   where `/usr/local/fiji` is the root directory of the ImageJ install.
+
+1. Manual installation must copy the gdsc-smlm-ij_* jar into the plugins
+directory of ImageJ.
+
+   Copy the dependencies into the plugins directory (or onto the Java
+   classpath). Note that the Maven package routine puts all dependencies into
+   the target/dependencies directory even if they are not required by the SMLM code
+   (it does not check what functions are actually used by the code). The libraries
+   you will need are:
 
         gdsc-core
         gdsc-core-ij
+        beansbinding
+        commons-math3
+        commons-lang3
         commons-rng-client-api
         commons-rng-core
         commons-rng-simple
         commons-rng-sampling
-        beansbinding
-        fastutil-core
-
-Core libraries required if not using the Fiji distribution of ImageJ:
-
-        commons-math3
-        commons-lang3
         imagescience
         Image_5D
+        fastutil-core
 
-This excludes the 3D_Viewer and TrackMate functionality. View the dependencies of
-these using:
+   This excludes the 3D_Viewer and TrackMate functionality. View the dependencies of
+   these using:
 
         mvn dependency:tree
 
@@ -130,6 +137,15 @@ project's ImageJ plugins.config file.
 Note: This file is normally detected by ImageJ when loading plugin jar files to identify the
 available plugins. The default plugin has been written to duplicate this functionality by reading
 the configuration and populating the ImageJ menu.
+
+
+Modifying the source
+--------------------
+
+The gdsc-smlm code was developed using the [Eclipse IDE](https://eclipse.org/).
+
+Details of how to open the source code with Eclipse can be found in the eclipse
+folder.
 
 
 Legal
