@@ -108,7 +108,7 @@ Software for microscopy image analysis
 
     <!-- Dependency versions -->
     <beansbinding.version>1.2.1</beansbinding.version>
-    <gdsc.core.version>2.1-SNAPSHOT</gdsc.core.version>
+    <gdsc.core.version>2.1</gdsc.core.version>
     <imagescience.version>3.0.0</imagescience.version>
 
   </properties>
