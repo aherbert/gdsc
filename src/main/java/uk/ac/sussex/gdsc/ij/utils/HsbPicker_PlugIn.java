@@ -45,7 +45,8 @@ import java.awt.Point;
 import java.awt.Scrollbar;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JPanel;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.commons.statistics.descriptive.DoubleStatistics;
+import org.apache.commons.statistics.descriptive.Statistic;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
@@ -70,18 +71,16 @@ public class HsbPicker_PlugIn extends PlugInFrame {
   private GridBagConstraints constraints;
   private int row;
 
-  private final SummaryStatistics[] stats;
+  private final DoubleStatistics[] stats;
 
   /**
    * Constructor.
    */
   public HsbPicker_PlugIn() {
     super(PLUGIN_TITLE);
-    stats = new SummaryStatistics[3];
+    stats = new DoubleStatistics[3];
     statsLabel = new Label[3];
-    for (int i = 0; i < stats.length; i++) {
-      stats[i] = new SummaryStatistics();
-    }
+    clearStats();
   }
 
   /** {@inheritDoc} */
@@ -204,7 +203,7 @@ public class HsbPicker_PlugIn extends PlugInFrame {
         ip.getPixel(x + point.x, y + point.y, iArray);
         Color.RGBtoHSB(iArray[0], iArray[1], iArray[2], hsbvals);
         for (int i = 0; i < 3; i++) {
-          stats[i].addValue(hsbvals[i]);
+          stats[i].accept(hsbvals[i]);
         }
       }
     }
@@ -213,27 +212,31 @@ public class HsbPicker_PlugIn extends PlugInFrame {
   }
 
   private void clear() {
-    for (final SummaryStatistics s : stats) {
-      s.clear();
-    }
+    clearStats();
     updateDisplayedStatistics();
   }
 
+  private void clearStats() {
+    for (int i = 0; i < stats.length; i++) {
+      stats[i] = DoubleStatistics.of(Statistic.MEAN, Statistic.STANDARD_DEVIATION);
+    }
+  }
+
   private void runFilter() {
-    if (stats[0].getN() < 2) {
+    if (stats[0].getCount() < 2) {
       IJ.log("Not enough samples to run the filter");
       return;
     }
     // Use the SD to set a 95% interval for the width
     final double scale = scaleSlider.getValue() / SCALE;
-    final float hWidth = (float) (stats[0].getStandardDeviation() * scale);
-    final float sWidth = (float) (stats[1].getStandardDeviation() * scale);
-    final float bWidth = (float) (stats[2].getStandardDeviation() * scale);
-    final float hue = clip(stats[0].getMean());
+    final float hWidth = (float) (stats[0].getAsDouble(Statistic.STANDARD_DEVIATION) * scale);
+    final float sWidth = (float) (stats[1].getAsDouble(Statistic.STANDARD_DEVIATION) * scale);
+    final float bWidth = (float) (stats[2].getAsDouble(Statistic.STANDARD_DEVIATION) * scale);
+    final float hue = clip(stats[0].getAsDouble(Statistic.MEAN));
     final float hueWidth = clip(hWidth);
-    final float saturation = clip(stats[1].getMean());
+    final float saturation = clip(stats[1].getAsDouble(Statistic.MEAN));
     final float saturationWidth = clip(sWidth);
-    final float brightness = clip(stats[2].getMean());
+    final float brightness = clip(stats[2].getAsDouble(Statistic.MEAN));
     final float brightnessWidth = clip(bWidth);
     HsbFilter_PlugIn.saveSettings(hue, hueWidth, saturation, saturationWidth, brightness,
         brightnessWidth);
@@ -245,14 +248,15 @@ public class HsbPicker_PlugIn extends PlugInFrame {
   }
 
   private void updateDisplayedStatistics() {
-    pixelCountLabel.setText(Long.toString(stats[0].getN()));
+    pixelCountLabel.setText(Long.toString(stats[0].getCount()));
     for (int i = 0; i < 3; i++) {
       statsLabel[i].setText(summary(stats[i]));
     }
   }
 
-  private static String summary(SummaryStatistics stats) {
-    return String.format("%.3f +/- %.4f", stats.getMean(), stats.getStandardDeviation());
+  private static String summary(DoubleStatistics stats) {
+    return String.format("%.3f +/- %.4f", stats.getAsDouble(Statistic.MEAN),
+        stats.getAsDouble(Statistic.STANDARD_DEVIATION));
   }
 
   /** {@inheritDoc} */

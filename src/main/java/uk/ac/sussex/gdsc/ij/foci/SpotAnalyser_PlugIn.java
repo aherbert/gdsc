@@ -40,17 +40,19 @@ import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.awt.AWTEvent;
 import java.awt.Label;
+import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import org.apache.commons.math3.exception.NumberIsTooSmallException;
-import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.apache.commons.math3.stat.inference.TestUtils;
+import org.apache.commons.statistics.descriptive.IntStatistics;
+import org.apache.commons.statistics.descriptive.Statistic;
+import org.apache.commons.statistics.inference.TTest;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
+import uk.ac.sussex.gdsc.core.utils.FastCorrelator;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.BackgroundMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.CentreMethod;
@@ -432,8 +434,12 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     particlesIp.copyBits(spotsIp, 0, 0, Blitter.SUBTRACT);
 
     // Create a statistical summary for [channel][inside/outside][particle]
-    final DescriptiveStatistics[][][] stats =
-        new DescriptiveStatistics[imp.getNChannels() + 1][2][noOfParticles + 1];
+    final IntStatistics[][][] stats =
+        new IntStatistics[imp.getNChannels() + 1][2][noOfParticles + 1];
+    final IntArrayList[][][] values =
+        new IntArrayList[imp.getNChannels() + 1][2][noOfParticles + 1];
+    final EnumSet<Statistic> s =
+        EnumSet.of(Statistic.MEAN, Statistic.SUM, Statistic.STANDARD_DEVIATION);
 
     final ImageStack stack = imp.getImageStack();
     for (int channel = 1; channel <= imp.getNChannels(); channel++) {
@@ -441,15 +447,19 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
       final ImageProcessor channelIp = stack.getProcessor(index);
 
       for (int particle = 0; particle <= noOfParticles; particle++) {
-        stats[channel][INSIDE][particle] = new DescriptiveStatistics();
-        stats[channel][OUTSIDE][particle] = new DescriptiveStatistics();
+        stats[channel][INSIDE][particle] = IntStatistics.of(s);
+        stats[channel][OUTSIDE][particle] = IntStatistics.of(s);
+        values[channel][INSIDE][particle] = new IntArrayList();
+        values[channel][OUTSIDE][particle] = new IntArrayList();
       }
 
       for (int i = 0; i < mask.length; i++) {
         if (mask[i] != 0) {
           final int v = channelIp.get(i);
-          stats[channel][INSIDE][spotsIp.get(i)].addValue(v);
-          stats[channel][OUTSIDE][particlesIp.get(i)].addValue(v);
+          stats[channel][INSIDE][spotsIp.get(i)].accept(v);
+          stats[channel][OUTSIDE][particlesIp.get(i)].accept(v);
+          values[channel][INSIDE][spotsIp.get(i)].add(v);
+          values[channel][OUTSIDE][particlesIp.get(i)].add(v);
         }
       }
     }
@@ -459,14 +469,14 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     // Add the counts inside and outside
     for (int particle = 1; particle <= noOfParticles; particle++) {
       // Just choose the first channel (all are the same)
-      addResult(output, particle, stats[1][INSIDE][particle].getN(),
-          stats[1][OUTSIDE][particle].getN());
+      addResult(output, particle, stats[1][INSIDE][particle].getCount(),
+          stats[1][OUTSIDE][particle].getCount());
     }
 
     // Add the statistics inside and outside for each channel
     for (int channel = 1; channel <= imp.getNChannels(); channel++) {
       for (int particle = 1; particle <= noOfParticles; particle++) {
-        addResult(output, channel, particle, stats);
+        addResult(output, channel, particle, stats, values);
       }
     }
   }
@@ -524,25 +534,25 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
   }
 
   private void addResult(Consumer<String> output, int channel, int particle,
-      DescriptiveStatistics[][][] stats) {
+      IntStatistics[][][] stats, IntArrayList[][][] values) {
     final StringBuilder sb = new StringBuilder();
     sb.append(imp.getTitle()).append('\t');
     sb.append(channel).append('\t');
     sb.append(particle).append('\t');
 
-    final double sx = stats[channel][INSIDE][particle].getSum();
-    final double sd = stats[channel][INSIDE][particle].getStandardDeviation();
-    final long n = stats[channel][INSIDE][particle].getN();
-    final double av = sx / n;
-    final double sx2 = stats[channel][OUTSIDE][particle].getSum();
-    final double sd2 = stats[channel][OUTSIDE][particle].getStandardDeviation();
-    final long n2 = stats[channel][OUTSIDE][particle].getN();
-    final double av2 = sx2 / n2;
+    final double sx = stats[channel][INSIDE][particle].getAsDouble(Statistic.SUM);
+    final double sd = stats[channel][INSIDE][particle].getAsDouble(Statistic.STANDARD_DEVIATION);
+    final long n = stats[channel][INSIDE][particle].getCount();
+    final double av = stats[channel][INSIDE][particle].getAsDouble(Statistic.MEAN);
+    final double sx2 = stats[channel][OUTSIDE][particle].getAsDouble(Statistic.SUM);
+    final double sd2 = stats[channel][OUTSIDE][particle].getAsDouble(Statistic.STANDARD_DEVIATION);
+    final long n2 = stats[channel][OUTSIDE][particle].getCount();
+    final double av2 = stats[channel][OUTSIDE][particle].getAsDouble(Statistic.MEAN);
 
     double pvalue = 0;
     try {
-      pvalue = TestUtils.tTest(stats[channel][INSIDE][particle], stats[channel][OUTSIDE][particle]);
-    } catch (final NumberIsTooSmallException ex) {
+      pvalue = TTest.withDefaults().test(av, sd * sd, n, av2, sd2 * sd2, n2).getPValue();
+    } catch (final IllegalArgumentException ex) {
       // Ignore
     }
 
@@ -552,11 +562,9 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     if (channel != spotChannel) {
       // Principle channel => No test required
       correlation1 =
-          new PearsonsCorrelation().correlation(stats[channel][INSIDE][particle].getValues(),
-              stats[spotChannel][INSIDE][particle].getValues());
+          correlation(values[channel][INSIDE][particle], values[spotChannel][INSIDE][particle]);
       correlation2 =
-          new PearsonsCorrelation().correlation(stats[channel][OUTSIDE][particle].getValues(),
-              stats[spotChannel][OUTSIDE][particle].getValues());
+          correlation(values[channel][OUTSIDE][particle], values[spotChannel][OUTSIDE][particle]);
     }
 
     sb.append(IJ.d2s(sx, 0)).append('\t').append(IJ.d2s(av, 2)).append('\t').append(IJ.d2s(sd, 2))
@@ -567,5 +575,14 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     sb.append(uk.ac.sussex.gdsc.core.utils.MathUtils.rounded(pvalue, 3));
 
     output.accept(sb.toString());
+  }
+
+  private static double correlation(IntArrayList l1, IntArrayList l2) {
+    final FastCorrelator c = new FastCorrelator();
+    final int size = l1.size();
+    for (int i = 0; i < size; i++) {
+      c.add(l1.getInt(i), l2.getInt(i));
+    }
+    return c.getCorrelation();
   }
 }

@@ -156,6 +156,14 @@ Software for microscopy image analysis
       <groupId>it.unimi.dsi</groupId>
       <artifactId>fastutil-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-statistics-descriptive</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-statistics-inference</artifactId>
+    </dependency>
 
     <!-- TESTING -->
     <dependency>

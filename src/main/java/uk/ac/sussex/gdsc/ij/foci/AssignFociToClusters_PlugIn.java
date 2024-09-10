@@ -45,10 +45,13 @@ import java.awt.Point;
 import java.awt.image.ColorModel;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.statistics.descriptive.DoubleStatistics;
+import org.apache.commons.statistics.descriptive.IntStatistics;
+import org.apache.commons.statistics.descriptive.Statistic;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.clustering.Cluster;
 import uk.ac.sussex.gdsc.core.clustering.ClusterPoint;
@@ -606,8 +609,9 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     // Show the results
     final String title = (imp != null) ? imp.getTitle() : "Result " + resultId.incrementAndGet();
     final StringBuilder sb = new StringBuilder();
-    final DescriptiveStatistics stats = new DescriptiveStatistics();
-    final DescriptiveStatistics stats2 = new DescriptiveStatistics();
+    final EnumSet<Statistic> s = EnumSet.of(Statistic.MIN, Statistic.MAX, Statistic.MEAN);
+    final IntStatistics stats = IntStatistics.of(s);
+    final DoubleStatistics stats2 = DoubleStatistics.of(s);
     for (int i = 0; i < filteredClusters.size(); i++) {
       final Cluster cluster = filteredClusters.get(i);
       sb.append(title).append('\t');
@@ -616,8 +620,8 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       sb.append(MathUtils.rounded(cluster.getY())).append('\t');
       sb.append(MathUtils.rounded(cluster.getSize())).append('\t');
       sb.append(MathUtils.rounded(cluster.getSumOfWeights())).append('\t');
-      stats.addValue(cluster.getSize());
-      stats2.addValue(cluster.getSumOfWeights());
+      stats.accept(cluster.getSize());
+      stats2.accept(cluster.getSumOfWeights());
       sb.append('\n');
 
       // Auto-width adjustment is only performed when number of rows is less than 10
@@ -634,12 +638,12 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     sb.append(MathUtils.rounded(settings.radius)).append('\t');
     sb.append(results.size()).append('\t');
     sb.append(filteredClusters.size()).append('\t');
-    sb.append((int) stats.getMin()).append('\t');
-    sb.append((int) stats.getMax()).append('\t');
-    sb.append(MathUtils.rounded(stats.getMean())).append('\t');
-    sb.append(MathUtils.rounded(stats2.getMin())).append('\t');
-    sb.append(MathUtils.rounded(stats2.getMax())).append('\t');
-    sb.append(MathUtils.rounded(stats2.getMean())).append('\t');
+    sb.append(stats.getAsInt(Statistic.MIN)).append('\t');
+    sb.append(stats.getAsInt(Statistic.MAX)).append('\t');
+    sb.append(MathUtils.rounded(stats.getAsDouble(Statistic.MEAN))).append('\t');
+    sb.append(MathUtils.rounded(stats2.getAsDouble(Statistic.MIN))).append('\t');
+    sb.append(MathUtils.rounded(stats2.getAsDouble(Statistic.MAX))).append('\t');
+    sb.append(MathUtils.rounded(stats2.getAsDouble(Statistic.MEAN))).append('\t');
     summaryOutput.append(sb.toString());
 
     if (matchResult != null) {

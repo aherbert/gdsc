@@ -41,7 +41,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.statistics.descriptive.IntStatistics;
+import org.apache.commons.statistics.descriptive.IntSum;
+import org.apache.commons.statistics.descriptive.Median;
+import org.apache.commons.statistics.descriptive.Statistic;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
@@ -263,8 +266,9 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     showMask(oa, found, idMap);
 
     // Show the results
-    final DescriptiveStatistics stats = new DescriptiveStatistics();
-    final DescriptiveStatistics stats2 = new DescriptiveStatistics();
+    final IntStatistics stats = IntStatistics.of(Statistic.SUM, Statistic.MIN, Statistic.MAX,
+        Statistic.MEAN, Statistic.STANDARD_DEVIATION);
+    final IntSum stats2 = IntSum.create();
     final StringBuilder sb = new StringBuilder();
     for (int i = 1, j = 0; i < count.length; i++) {
       sb.append(imp.getTitle());
@@ -275,11 +279,11 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
       if (idMap[i] > 0) {
         // Include this object
         sb.append("\tTrue");
-        stats.addValue(count[i]);
+        stats.accept(count[i]);
       } else {
         // Exclude this object
         sb.append("\tFalse");
-        stats2.addValue(count[i]);
+        stats2.accept(count[i]);
       }
       sb.append('\t').append(count[i]);
       sb.append('\n');
@@ -294,7 +298,7 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
 
     // Histogram the count
     if (settings.showHistogram) {
-      final int max = (int) stats.getMax();
+      final int max = stats.getAsInt(Statistic.MAX);
       final double[] xvalues = new double[max + 1];
       final double[] yvalues = new double[xvalues.length];
       for (int i = 1; i < count.length; i++) {
@@ -313,11 +317,12 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
       final Plot plot = new Plot(title, "Count", "Frequency");
       plot.addPoints(xvalues, yvalues, Plot.LINE);
       plot.setLimits(0, xvalues[xvalues.length - 1], 0, ymax);
-      plot.addLabel(0, 0, String.format("N = %d, Mean = %s", (int) stats.getSum(),
-          MathUtils.rounded(stats.getMean())));
+      final double mean = stats.getAsDouble(Statistic.MEAN);
+      plot.addLabel(0, 0, String.format("N = %d, Mean = %s", stats.getAsInt(Statistic.SUM),
+          MathUtils.rounded(mean)));
       plot.draw();
       plot.setColor(Color.RED);
-      plot.drawLine(stats.getMean(), 0, stats.getMean(), ymax);
+      plot.drawLine(mean, 0, mean, ymax);
       ImageJUtils.display(title, plot);
     }
 
@@ -325,16 +330,16 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     sb.setLength(0);
     sb.append(imp.getTitle());
     sb.append('\t').append(oa.getMaxObject());
-    sb.append('\t').append(stats.getN());
+    sb.append('\t').append(stats.getCount());
     sb.append('\t').append(results.size());
-    sb.append('\t').append((int) stats.getSum());
-    sb.append('\t').append((int) stats2.getSum());
-    sb.append('\t').append(results.size() - (int) (stats.getSum() + stats2.getSum()));
-    sb.append('\t').append(stats.getMin());
-    sb.append('\t').append(stats.getMax());
-    sb.append('\t').append(MathUtils.rounded(stats.getMean()));
-    sb.append('\t').append(MathUtils.rounded(stats.getPercentile(50)));
-    sb.append('\t').append(MathUtils.rounded(stats.getStandardDeviation()));
+    sb.append('\t').append(stats.getAsInt(Statistic.SUM));
+    sb.append('\t').append(stats2.getAsInt());
+    sb.append('\t').append(results.size() - (stats.getAsInt(Statistic.SUM) + stats2.getAsInt()));
+    sb.append('\t').append(stats.getAsInt(Statistic.MIN));
+    sb.append('\t').append(stats.getAsInt(Statistic.MAX));
+    sb.append('\t').append(MathUtils.rounded(stats.getAsDouble(Statistic.MEAN)));
+    sb.append('\t').append(MathUtils.rounded(getMedian(idMap, count)));
+    sb.append('\t').append(MathUtils.rounded(stats.getAsDouble(Statistic.STANDARD_DEVIATION)));
     summaryWindow.append(sb.toString());
 
     if (!settings.showDistances) {
@@ -621,5 +626,29 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     roi.setFillColor(color);
     roi.setStrokeColor(color);
     ooverlay.add(roi);
+  }
+
+  /**
+   * Gets the median of all counts in [1, n) where the id map is strictly positive.
+   *
+   * <p>Warning: The count is destructively modified.
+   *
+   * @param idMap the id map
+   * @param count the count
+   * @return the median
+   */
+  private double getMedian(int[] idMap, int[] count) {
+    int end = count.length;
+    // i in [1, end)
+    for (int i = end; --i > 0; ) {
+      if (idMap[i] <= 0) {
+        // Copy valid count into position to ignore
+        count[i] = count[--end];
+      }
+    }
+    if (end == 1) {
+      return Double.NaN;
+    }
+    return Median.withDefaults().evaluate(Arrays.copyOfRange(count, 1, end));
   }
 }

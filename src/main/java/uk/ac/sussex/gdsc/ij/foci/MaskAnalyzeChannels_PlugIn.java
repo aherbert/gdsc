@@ -47,7 +47,7 @@ import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
-import org.apache.commons.math3.stat.descriptive.rank.Percentile;
+import org.apache.commons.statistics.descriptive.Quantile;
 import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
@@ -419,8 +419,7 @@ public class MaskAnalyzeChannels_PlugIn implements PlugInFilter {
       }
     }
 
-    final double threshold =
-        new Percentile(settings.backgroundFraction * 100).evaluate(backgroundPixels);
+    final double threshold = Quantile.withDefaults().evaluate(backgroundPixels, settings.backgroundFraction);
     final int[] j = {0};
     nonObjects.intStream().forEach(i -> {
       if (backgroundPixels[j[0]++] <= threshold) {
