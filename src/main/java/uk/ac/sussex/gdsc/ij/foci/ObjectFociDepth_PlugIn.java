@@ -50,7 +50,6 @@ import ij3d.DefaultUniverse;
 import ij3d.Image3DUniverse;
 import ij3d.ImageWindow3D;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import java.awt.Color;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -58,13 +57,13 @@ import java.util.function.IntFunction;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.scijava.java3d.Appearance;
-import org.scijava.java3d.ColoringAttributes;
-import org.scijava.java3d.LineAttributes;
-import org.scijava.java3d.PolygonAttributes;
-import org.scijava.java3d.View;
-import org.scijava.vecmath.Color3f;
-import org.scijava.vecmath.Point3f;
+import org.jogamp.java3d.Appearance;
+import org.jogamp.java3d.ColoringAttributes;
+import org.jogamp.java3d.LineAttributes;
+import org.jogamp.java3d.PolygonAttributes;
+import org.jogamp.java3d.View;
+import org.jogamp.vecmath.Color3f;
+import org.jogamp.vecmath.Point3f;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
@@ -1354,7 +1353,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       final float z = (float) ((r.getZint() - 1) * sz);
       return new Point3f(x, y, z);
     }).collect(LocalCollectors.toLocalList());
-    final CustomPointMesh pmesh = new CustomPointMesh(pointMesh, new Color3f(Color.GREEN), 0);
+    final CustomPointMesh pmesh = new CustomPointMesh(pointMesh, new Color3f(0, 1, 0), 0);
     pmesh.setPointSize(2.0f);
     pmesh.getAppearance().getPointAttributes().setPointAntialiasingEnable(true);
     univ.addCustomMesh(pmesh, "Foci").setLocked(true);
@@ -1370,7 +1369,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       return Stream.of(p1, p2);
     }).collect(LocalCollectors.toLocalList());
     final CustomLineMesh lmesh =
-        new CustomLineMesh(lineMesh, CustomLineMesh.PAIRWISE, new Color3f(Color.YELLOW), 0.3f);
+        new CustomLineMesh(lineMesh, CustomLineMesh.PAIRWISE, new Color3f(1, 1, 0), 0.3f);
     final LineAttributes la = lmesh.getAppearance().getLineAttributes();
     la.setLinePattern(LineAttributes.PATTERN_USER_DEFINED);
     // (2-on, 2-off) x 4
@@ -1390,7 +1389,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         .map(v -> new Point3f((float) v[0], (float) v[1], (float) v[2])).toArray(Point3f[]::new);
     final int[] faces = Arrays.stream(hull.getFaces()).flatMapToInt(Arrays::stream).toArray();
     final CustomIndexedTriangleMesh mesh =
-        new CustomIndexedTriangleMesh(vertices, faces, new Color3f(Color.RED), 0.5f);
+        new CustomIndexedTriangleMesh(vertices, faces, new Color3f(1, 0, 0), 0.5f);
 
     // Already set
     // mesh.setShaded(true);

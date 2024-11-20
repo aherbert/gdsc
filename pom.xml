@@ -219,15 +219,6 @@ Software for microscopy image analysis
         <configuration>
           <excludes>Gdsc_PlugIn*,TrackMate_PlugIn*</excludes>
         </configuration>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>jar-no-fork</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
