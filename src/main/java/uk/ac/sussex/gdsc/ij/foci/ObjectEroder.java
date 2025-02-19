@@ -209,8 +209,9 @@ public class ObjectEroder {
   @VisibleForTesting
   static boolean isDifferent(int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8,
       int p9) {
-    return p1 != p5 || p2 != p5 || p3 != p5 || p4 != p5 || p6 != p5 || p7 != p5 || p8 != p5
-        || p9 != p5;
+    // Favour 8-connected over 4-connected comparisons
+    return p1 != p5 || p3 != p5 || p7 != p5 || p9 != p5 || p2 != p5 || p4 != p5 || p6 != p5
+        || p8 != p5;
   }
 
   /**
