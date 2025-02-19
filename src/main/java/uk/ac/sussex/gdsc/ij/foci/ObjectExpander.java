@@ -25,7 +25,6 @@
 package uk.ac.sussex.gdsc.ij.foci;
 
 import ij.process.ImageProcessor;
-import java.util.Arrays;
 import org.apache.commons.lang3.ArrayUtils;
 import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
 
@@ -108,7 +107,7 @@ public class ObjectExpander {
       values[5] = p7;
       values[6] = p8;
       values[7] = p9;
-      Arrays.sort(values);
+      sort8(values);
 
       // Skip zeros
       final int i1 = ArrayUtils.indexOf(values, 0);
@@ -142,6 +141,124 @@ public class ObjectExpander {
       }
 
       return maxCount <= count ? current : max;
+    }
+
+
+    /**
+     * Sorts the array of length 8.
+     *
+     * @param data Data array.
+     */
+    static void sort8(int[] data) {
+      // Uses an optimal sorting network from Knuth's Art of Computer Programming.
+      // 19 comparisons.
+      // Order pairs:
+      // [(0,2),(1,3),(4,6),(5,7)]
+      // [(0,4),(1,5),(2,6),(3,7)]
+      // [(0,1),(2,3),(4,5),(6,7)]
+      // [(2,4),(3,5)]
+      // [(1,4),(3,6)]
+      // [(1,2),(3,4),(5,6)]
+      if (data[7] < data[5]) {
+        final int u = data[7];
+        data[7] = data[5];
+        data[5] = u;
+      }
+      if (data[6] < data[4]) {
+        final int v = data[6];
+        data[6] = data[4];
+        data[4] = v;
+      }
+      if (data[3] < data[1]) {
+        final int w = data[3];
+        data[3] = data[1];
+        data[1] = w;
+      }
+      if (data[2] < data[0]) {
+        final int x = data[2];
+        data[2] = data[0];
+        data[0] = x;
+      }
+
+      if (data[7] < data[3]) {
+        final int u = data[7];
+        data[7] = data[3];
+        data[3] = u;
+      }
+      if (data[6] < data[2]) {
+        final int v = data[6];
+        data[6] = data[2];
+        data[2] = v;
+      }
+      if (data[5] < data[1]) {
+        final int w = data[5];
+        data[5] = data[1];
+        data[1] = w;
+      }
+      if (data[4] < data[0]) {
+        final int x = data[4];
+        data[4] = data[0];
+        data[0] = x;
+      }
+
+      if (data[7] < data[6]) {
+        final int u = data[7];
+        data[7] = data[6];
+        data[6] = u;
+      }
+      if (data[5] < data[4]) {
+        final int v = data[5];
+        data[5] = data[4];
+        data[4] = v;
+      }
+      if (data[3] < data[2]) {
+        final int w = data[3];
+        data[3] = data[2];
+        data[2] = w;
+      }
+      if (data[1] < data[0]) {
+        final int x = data[1];
+        data[1] = data[0];
+        data[0] = x;
+      }
+
+      if (data[5] < data[3]) {
+        final int u = data[5];
+        data[5] = data[3];
+        data[3] = u;
+      }
+      if (data[4] < data[2]) {
+        final int v = data[4];
+        data[4] = data[2];
+        data[2] = v;
+      }
+
+      if (data[6] < data[3]) {
+        final int u = data[6];
+        data[6] = data[3];
+        data[3] = u;
+      }
+      if (data[4] < data[1]) {
+        final int v = data[4];
+        data[4] = data[1];
+        data[1] = v;
+      }
+
+      if (data[6] < data[5]) {
+        final int u = data[6];
+        data[6] = data[5];
+        data[5] = u;
+      }
+      if (data[4] < data[3]) {
+        final int v = data[4];
+        data[4] = data[3];
+        data[3] = v;
+      }
+      if (data[2] < data[1]) {
+        final int w = data[2];
+        data[2] = data[1];
+        data[1] = w;
+      }
     }
   }
 

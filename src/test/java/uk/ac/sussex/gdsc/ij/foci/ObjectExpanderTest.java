@@ -25,9 +25,14 @@
 package uk.ac.sussex.gdsc.ij.foci;
 
 import ij.process.ByteProcessor;
+import java.util.Arrays;
+import org.apache.commons.rng.UniformRandomProvider;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.ac.sussex.gdsc.ij.foci.ObjectExpander.FrequencySelecter;
+import uk.ac.sussex.gdsc.test.junit5.SeededTest;
+import uk.ac.sussex.gdsc.test.rng.RngFactory;
+import uk.ac.sussex.gdsc.test.utils.RandomSeed;
 
 @SuppressWarnings({"javadoc"})
 class ObjectExpanderTest {
@@ -41,6 +46,18 @@ class ObjectExpanderTest {
     Assertions.assertEquals(1, selecter.select(-1, -1, -1, -1, p5, 1, 1, 1, 1));
     Assertions.assertEquals(-1, selecter.select(-1, -1, -1, -1, p5, 1, 1, 1, 0));
     Assertions.assertEquals(3, selecter.select(1, 1, 2, 0, p5, 0, 3, 3, 3));
+  }
+
+  @SeededTest
+  void checkSort8(RandomSeed seed) {
+    final UniformRandomProvider rng = RngFactory.create(seed.get());
+    for (int i = 0; i < 100; i++) {
+      final int[] v1 = rng.ints(8).toArray();
+      final int[] v2 = v1.clone();
+      Arrays.sort(v1);
+      FrequencySelecter.sort8(v2);
+      Assertions.assertArrayEquals(v1, v2);
+    }
   }
 
   // To allow pixel array layouts to be custom formatted
