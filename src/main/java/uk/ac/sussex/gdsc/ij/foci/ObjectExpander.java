@@ -84,12 +84,12 @@ public class ObjectExpander {
       // Note: Ignore p5 and zeros.
       // The fast path for touching no objects or a single object is handled first.
 
-      // Find min.
-      final int min = minNonZero(p1, p2, p3, p4, p6, p7, p8, p9);
-      if (min == 0) {
+      if ((p1 | p2 | p3 | p4 | p6 | p7 | p8 | p9) == 0) {
         // No non-zero neighbours
         return 0;
       }
+
+      final int min = minNonZero(p1, p2, p3, p4, p6, p7, p8, p9);
       int max = maxNonZero(p1, p2, p3, p4, p6, p7, p8, p9);
 
       // If the same non-zero value then assign that value.
