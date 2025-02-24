@@ -148,11 +148,11 @@ public class MaskToRoi_PlugIn implements PlugInFilter {
       final ImageStack stack = imp.getImageStack();
       final SimpleImageJTrackProgress progress = SimpleImageJTrackProgress.getInstance();
       final int total = stack.getSize();
-      final int count = 0;
+      int count = 0;
       for (int c = 1; c <= nc; c++) {
         for (int z = 1; z <= nz; z++) {
           for (int t = 1; t <= nt; t++) {
-            progress.progress(count, total);
+            progress.progress(count++, total);
             // 1-based stack index
             // See ImagePlus.getStackIndex(c, z, t);
             final int i = (t - 1) * nc * nz + (z - 1) * nc + c;
