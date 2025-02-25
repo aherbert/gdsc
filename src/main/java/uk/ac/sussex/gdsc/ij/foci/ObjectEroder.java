@@ -149,7 +149,7 @@ public class ObjectEroder {
    */
   private void erode(int width, int height, int length, int x, int y, int xinc, int yinc) {
     for (int i = 0; i < length; i++) {
-      final int p5 = getEdgePixel(width, height, x, y);
+      final int p5 = ip.get(x + y * width);
       if (p5 != 0) {
         final int p1 = getEdgePixel(width, height, x - 1, y - 1);
         final int p2 = getEdgePixel(width, height, x, y - 1);
