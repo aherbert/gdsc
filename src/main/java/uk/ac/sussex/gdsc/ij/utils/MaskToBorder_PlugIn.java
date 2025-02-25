@@ -57,6 +57,7 @@ public class MaskToBorder_PlugIn implements ExtendedPlugInFilter, DialogListener
 
     int outer = 0;
     int inner = 1;
+    boolean extend;
 
     /**
      * Default constructor.
@@ -73,6 +74,7 @@ public class MaskToBorder_PlugIn implements ExtendedPlugInFilter, DialogListener
     private Settings(Settings source) {
       outer = source.outer;
       inner = source.inner;
+      extend = source.extend;
     }
 
     /**
@@ -134,6 +136,7 @@ public class MaskToBorder_PlugIn implements ExtendedPlugInFilter, DialogListener
 
     gd.addSlider("inner", 0, 10, settings.inner);
     gd.addSlider("outer", 0, 10, settings.outer);
+    gd.addCheckbox("extend_outside", settings.extend);
 
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);
@@ -159,6 +162,7 @@ public class MaskToBorder_PlugIn implements ExtendedPlugInFilter, DialogListener
     if (gd.invalidNumber()) {
       return false;
     }
+    settings.extend = gd.getNextBoolean();
     return settings.inner > 0 || settings.outer > 0;
   }
 
@@ -173,7 +177,7 @@ public class MaskToBorder_PlugIn implements ExtendedPlugInFilter, DialogListener
     final ImageProcessor ip1 = ip.duplicate();
     final ImageProcessor ip2 = ip.duplicate();
     new ObjectExpander(ip1).expand(settings.outer);
-    new ObjectEroder(ip2, true).erode(settings.inner);
+    new ObjectEroder(ip2, settings.extend).erode(settings.inner);
     for (int i = ip.getPixelCount(); i-- > 0;) {
       if (ip1.get(i) > ip2.get(i)) {
         ip.set(i, ip1.get(i));
