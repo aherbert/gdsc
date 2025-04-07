@@ -27,6 +27,6 @@ jobs:
     - name: Build
       run: mvn -V -B --no-transfer-progress -P jacoco checkstyle:check verify jacoco:report
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         files: ./gdsc/target/site/jacoco/jacoco.xml
