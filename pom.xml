@@ -240,7 +240,6 @@ Software for microscopy image analysis
         <configuration>
           <!-- Resource on the classpath. -->
           <configFile>eclipse/eclipse-code-format.xml</configFile>
-          <overrideConfigCompilerVersion>true</overrideConfigCompilerVersion>
         </configuration>
       </plugin>
       <plugin>
