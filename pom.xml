@@ -111,6 +111,9 @@ Software for microscopy image analysis
     <gdsc.core.version>2.2-SNAPSHOT</gdsc.core.version>
     <imagescience.version>3.0.0</imagescience.version>
 
+    <!-- Downgrade spotbugs version for Java 8 compatibility -->
+    <spotbugs-maven-plugin.version>4.7.3.5</spotbugs-maven-plugin.version>
+
   </properties>
 
   <dependencies>
