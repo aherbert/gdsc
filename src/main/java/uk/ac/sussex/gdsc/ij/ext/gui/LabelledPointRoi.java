@@ -60,7 +60,7 @@ public class LabelledPointRoi extends PointRoi {
   }
 
   /**
-   * Creates a new PointRoi2 using the specified float arrays of offscreen coordinates.
+   * Creates a new instance using the specified float arrays of offscreen coordinates.
    *
    * @param ox the ox
    * @param oy the oy
@@ -71,7 +71,7 @@ public class LabelledPointRoi extends PointRoi {
   }
 
   /**
-   * Creates a new PointRoi2 from a FloatPolygon.
+   * Creates a new instance from a FloatPolygon.
    *
    * @param poly the polygon
    */
@@ -80,7 +80,7 @@ public class LabelledPointRoi extends PointRoi {
   }
 
   /**
-   * Creates a new PointRoi2 from a Polygon.
+   * Creates a new instance from a Polygon.
    *
    * @param poly the polygon
    */
@@ -89,7 +89,7 @@ public class LabelledPointRoi extends PointRoi {
   }
 
   /**
-   * Creates a new PointRoi2 using the specified offscreen int coordinates.
+   * Creates a new instance using the specified offscreen int coordinates.
    *
    * @param ox the ox
    * @param oy the oy
@@ -99,7 +99,7 @@ public class LabelledPointRoi extends PointRoi {
   }
 
   /**
-   * Creates a new PointRoi2 using the specified offscreen double coordinates.
+   * Creates a new instance using the specified offscreen double coordinates.
    *
    * @param ox the ox
    * @param oy the oy
@@ -109,7 +109,7 @@ public class LabelledPointRoi extends PointRoi {
   }
 
   /**
-   * Creates a new PointRoi2 using the specified screen coordinates.
+   * Creates a new instance using the specified screen coordinates.
    *
    * @param sx the sx
    * @param sy the sy
