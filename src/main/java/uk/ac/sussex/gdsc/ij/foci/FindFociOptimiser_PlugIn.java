@@ -84,7 +84,6 @@ import java.util.regex.Pattern;
 import javax.swing.WindowConstants;
 import org.apache.commons.lang3.ArrayUtils;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
-import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
 import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.SimpleImageJTrackProgress;
@@ -139,7 +138,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
    */
   private static final int SORT_RMSD = 8;
 
-  private static final Pattern TAB_PATTERN = Pattern.compile("\t");
+  static final Pattern TAB_PATTERN = Pattern.compile("\t");
   private static final Pattern POINTS_PATTERN = Pattern.compile("[, \t]+");
   /** The maximum errors when reading a file. */
   private static final int MAX_ERROR = 5;
@@ -204,7 +203,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   private int combinations;
 
   private final Object2IntOpenHashMap<String> idMap = new Object2IntOpenHashMap<>();
-  private final Int2ObjectOpenHashMap<Parameters> optionsMap = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectOpenHashMap<FindFociParameters> optionsMap = new Int2ObjectOpenHashMap<>();
 
   private final SoftLock lock = new SoftLock();
 
@@ -559,7 +558,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     static final int RMSD = 9;
 
     int id;
-    Parameters options;
+    FindFociParameters options;
     int count;
     int tp;
     int fp;
@@ -567,7 +566,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     long time;
     double[] metrics = new double[10];
 
-    Result(int id, Parameters options, int count, int tp, int fp, int fn, long time, double beta,
+    Result(int id, FindFociParameters options, int count, int tp, int fp, int fn, long time, double beta,
         double rmsd) {
       this.id = id;
       this.options = options;
@@ -758,179 +757,6 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     private static <T extends Enum<?>> int compare(T value1, T value2, int[] result) {
       result[0] = Integer.compare(value1.ordinal(), value2.ordinal());
       return result[0];
-    }
-  }
-
-  /**
-   * A class to allow conversion of optimised parameters to and from a {@link String}.
-   */
-  @VisibleForTesting
-  static class Parameters {
-    private static final String SPACER = " : ";
-
-    /** The processor options. */
-    final FindFociProcessorOptions processorOptions;
-    /** The cached parameter string. */
-    private String parameterString;
-
-    /**
-     * Instantiates a new parameters.
-     *
-     * @param processorOptions the processor options
-     */
-    Parameters(FindFociProcessorOptions processorOptions) {
-      this.processorOptions = processorOptions.copy();
-    }
-
-    /**
-     * Creates the string representation of the parameters (the value is computed once and cached).
-     *
-     * @return the string representation of the parameters.
-     */
-    @Override
-    public String toString() {
-      String result = parameterString;
-      if (result == null) {
-        parameterString = result = createParametersString();
-      }
-      return result;
-    }
-
-    /**
-     * Convert the FindFoci parameters into a text representation.
-     *
-     * @return the string
-     */
-    String createParametersString() {
-      // Output results
-      final StringBuilder sb = new StringBuilder();
-      // Field 1
-      sb.append(processorOptions.getGaussianBlur()).append('\t');
-      // Field 2
-      sb.append(processorOptions.getBackgroundMethod().getDescription());
-      if (backgroundMethodHasStatisticsMode(processorOptions.getBackgroundMethod())) {
-        sb.append(" (").append(processorOptions.getStatisticsMethod().getDescription())
-            .append(") ");
-      }
-      sb.append(SPACER);
-      if (backgroundMethodHasParameter(processorOptions.getBackgroundMethod())) {
-        sb.append(IJ.d2s(processorOptions.getBackgroundParameter(), 2));
-      } else {
-        sb.append(processorOptions.getThresholdMethod().getDescription());
-      }
-      sb.append('\t');
-      // Field 3
-      sb.append(processorOptions.getMaxPeaks()).append('\t');
-      // Field 4
-      sb.append(processorOptions.getMinSize());
-      if (processorOptions.isOption(AlgorithmOption.MINIMUM_ABOVE_SADDLE)) {
-        sb.append(" >saddle");
-        if (processorOptions.isOption(AlgorithmOption.CONTIGUOUS_ABOVE_SADDLE)) {
-          sb.append(" conn");
-        }
-      }
-      sb.append('\t');
-      // Field 5
-      sb.append(processorOptions.getSearchMethod().getDescription());
-      if (searchMethodHasParameter(processorOptions.getSearchMethod())) {
-        sb.append(SPACER).append(IJ.d2s(processorOptions.getSearchParameter(), 2));
-      }
-      sb.append('\t');
-      // Field 6
-      sb.append(processorOptions.getPeakMethod().getDescription()).append(SPACER);
-      sb.append(IJ.d2s(processorOptions.getPeakParameter(), 2)).append('\t');
-      // Field 7
-      sb.append(processorOptions.getSortMethod().getDescription()).append('\t');
-      // Field 8
-      sb.append(processorOptions.getCentreMethod().getDescription());
-      if (centreMethodHasParameter(processorOptions.getCentreMethod())) {
-        sb.append(SPACER).append(IJ.d2s(processorOptions.getCentreParameter(), 2));
-      }
-      sb.append('\t');
-      return sb.toString();
-    }
-
-    /**
-     * Convert the FindFoci text representation into Parameters.
-     *
-     * @param text the parameters text
-     * @return the options
-     * @throws IllegalArgumentException if the argument could not be parsed
-     */
-    static Parameters fromString(String text) {
-      final String[] fields = TAB_PATTERN.split(text);
-      try {
-        final FindFociProcessorOptions processorOptions = new FindFociProcessorOptions(true);
-        // Field 1
-        processorOptions.setGaussianBlur(Double.parseDouble(fields[0]));
-        // Field 2 - Divided by a spacer
-        int index = fields[1].indexOf(SPACER);
-        final String backgroundMethod = fields[1].substring(0, index);
-        final String backgroundOption = fields[1].substring(index + SPACER.length());
-        index = backgroundMethod.indexOf('(');
-        if (index != -1) {
-          final int first = index + 1;
-          final int last = backgroundMethod.indexOf(')', first);
-          processorOptions.setBackgroundMethod(
-              BackgroundMethod.fromDescription(backgroundMethod.substring(0, index - 1)));
-          processorOptions.setStatisticsMethod(
-              StatisticsMethod.fromDescription(backgroundMethod.substring(first, last)));
-        } else {
-          processorOptions.setBackgroundMethod(BackgroundMethod.fromDescription(backgroundMethod));
-        }
-        if (backgroundMethodHasParameter(processorOptions.getBackgroundMethod())) {
-          processorOptions.setBackgroundParameter(Double.parseDouble(backgroundOption));
-        } else {
-          processorOptions.setThresholdMethod(ThresholdMethod.fromDescription(backgroundOption));
-        }
-        // Field 3
-        processorOptions.setMaxPeaks(Integer.parseInt(fields[2]));
-        // Field 4
-        index = fields[3].indexOf(' ');
-        if (index > 0) {
-          processorOptions.setOption(AlgorithmOption.MINIMUM_ABOVE_SADDLE, true);
-          if (fields[3].contains("conn")) {
-            processorOptions.setOption(AlgorithmOption.CONTIGUOUS_ABOVE_SADDLE, true);
-          }
-          fields[3] = fields[3].substring(0, index);
-        }
-        processorOptions.setMinSize(Integer.parseInt(fields[3]));
-        // Field 5
-        index = fields[4].indexOf(SPACER);
-        if (index != -1) {
-          processorOptions
-              .setSearchParameter(Double.parseDouble(fields[4].substring(index + SPACER.length())));
-          fields[4] = fields[4].substring(0, index);
-        }
-        processorOptions.setSearchMethod(SearchMethod.fromDescription(fields[4]));
-        // Field 6
-        index = fields[5].indexOf(SPACER);
-        processorOptions.setPeakMethod(PeakMethod.fromDescription(fields[5].substring(0, index)));
-        processorOptions
-            .setPeakParameter(Double.parseDouble(fields[5].substring(index + SPACER.length())));
-        // Field 7
-        processorOptions.setSortMethod(SortMethod.fromDescription(fields[6]));
-        // Field 8
-        index = fields[7].indexOf(SPACER);
-        if (index != -1) {
-          processorOptions
-              .setCentreParameter(Double.parseDouble(fields[7].substring(index + SPACER.length())));
-          fields[7] = fields[7].substring(0, index);
-        }
-        processorOptions.setCentreMethod(CentreMethod.fromDescription(fields[7]));
-
-        return new Parameters(processorOptions);
-      } catch (final NullPointerException | NumberFormatException | IndexOutOfBoundsException ex) {
-        // NPE will be thrown if the enum cannot parse the description because null
-        // will be passed to the setter.
-        throw new IllegalArgumentException(
-            "Error converting parameters to FindFoci options: " + text, ex);
-      }
-    }
-
-    private static boolean centreMethodHasParameter(CentreMethod centreMethod) {
-      return (centreMethod == CentreMethod.CENTRE_OF_MASS_SEARCH
-          || centreMethod == CentreMethod.GAUSSIAN_SEARCH);
     }
   }
 
@@ -1138,7 +964,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       if (id == 0) {
         id = idMap.size() + 1;
         // Ensure we have options for every ID
-        optionsMap.put(id, Parameters.fromString(parameters));
+        optionsMap.put(id, FindFociParameters.fromString(parameters));
         idMap.put(parameters, id);
       }
       return id;
@@ -1354,7 +1180,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       IJ.log("Top result = "
           + IJ.d2s(results.get(0).metrics[getSortIndex(settings.resultsSortMethod)], 4));
 
-      final Parameters bestOptions = results.get(0).options;
+      final FindFociParameters bestOptions = results.get(0).options;
 
       final AssignedPoint[] predictedPoints = showResult(imp, mask, bestOptions,
           settings.showScoreImages, settings.matchSearchMethod, settings.matchSearchDistance);
@@ -1415,7 +1241,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
    * @param imp the imp
    */
   private void checkOptimisationSpace(OptimiserResult result, ImagePlus imp) {
-    final Parameters bestOptions = result.results.get(0).options;
+    final FindFociParameters bestOptions = result.results.get(0).options;
     if (bestOptions == null) {
       return;
     }
@@ -1796,7 +1622,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
                               // Get the results
                               // The analysis time is not included in the speed-up factor
                               final long start = System.nanoTime();
-                              final Parameters runOptions = new Parameters(processorOptions);
+                              final FindFociParameters runOptions = new FindFociParameters(processorOptions);
                               final Result result = analyseResults(id, roiPoints,
                                   peakResults.results, distanceThreshold, runOptions, time,
                                   settings.beta, distanceFunction);
@@ -1880,7 +1706,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       return;
     }
 
-    final Parameters bestOptions = results.get(0).options;
+    final FindFociParameters bestOptions = results.get(0).options;
 
     final FindFociOptions options = new FindFociOptions();
     options.getOptions().clear();
@@ -1937,7 +1763,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     }
   }
 
-  private static synchronized void addFindFociCommand(BufferedWriter out, Parameters bestOptions,
+  private static synchronized void addFindFociCommand(BufferedWriter out, FindFociParameters bestOptions,
       String maskTitle) throws IOException {
     if (bestOptions == null) {
       return;
@@ -2023,7 +1849,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   }
 
   @Nullable
-  private static AssignedPoint[] showResult(ImagePlus imp, ImagePlus mask, Parameters parameters,
+  private static AssignedPoint[] showResult(ImagePlus imp, ImagePlus mask, FindFociParameters parameters,
       boolean showScoreImages, int matchSearchMethod, double matchSearchDistance) {
     if (imp == null) {
       return null;
@@ -2675,12 +2501,12 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
         : backgroundParameterMax;
   }
 
-  private static boolean backgroundMethodHasStatisticsMode(BackgroundMethod backgroundMethod) {
+  static boolean backgroundMethodHasStatisticsMode(BackgroundMethod backgroundMethod) {
     return backgroundMethod != BackgroundMethod.NONE
         && backgroundMethod != BackgroundMethod.ABSOLUTE;
   }
 
-  private static boolean backgroundMethodHasParameter(BackgroundMethod backgroundMethod) {
+  static boolean backgroundMethodHasParameter(BackgroundMethod backgroundMethod) {
     return !EnumSet
         .of(BackgroundMethod.NONE, BackgroundMethod.MEAN, BackgroundMethod.AUTO_THRESHOLD)
         .contains(backgroundMethod);
@@ -2730,7 +2556,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     return searchMethodHasParameter(searchMethod) ? searchParameterMin : searchParameterMax;
   }
 
-  private static boolean searchMethodHasParameter(SearchMethod searchMethod) {
+  static boolean searchMethodHasParameter(SearchMethod searchMethod) {
     return searchMethod != SearchMethod.ABOVE_BACKGROUND;
   }
 
@@ -2965,7 +2791,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     return bw;
   }
 
-  private BufferedWriter createResultsFile(Parameters bestOptions, ImagePlus imp, ImagePlus mask,
+  private BufferedWriter createResultsFile(FindFociParameters bestOptions, ImagePlus imp, ImagePlus mask,
       String resultFile) {
     BufferedWriter out = null;
     try {
@@ -3054,7 +2880,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   }
 
   private static Result analyseResults(int id, AssignedPoint[] roiPoints,
-      List<FindFociResult> resultsArray, double distanceThreshold, Parameters options, long time,
+      List<FindFociResult> resultsArray, double distanceThreshold, FindFociParameters options, long time,
       double beta, ToDoubleBiFunction<Coordinate, Coordinate> edges) {
     // Extract results for analysis
     final Coordinate[] predictedPoints = extractedPredictedPoints(resultsArray);

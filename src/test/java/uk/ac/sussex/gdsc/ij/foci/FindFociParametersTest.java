@@ -26,7 +26,6 @@ package uk.ac.sussex.gdsc.ij.foci;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import uk.ac.sussex.gdsc.ij.foci.FindFociOptimiser_PlugIn.Parameters;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.AlgorithmOption;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.BackgroundMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.CentreMethod;
@@ -37,13 +36,13 @@ import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.StatisticsMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.ThresholdMethod;
 
 @SuppressWarnings({"javadoc"})
-class FindFociOptimiserPlugInTest {
+class FindFociParametersTest {
 
   @Test
-  void checkTheParameterToFromString() {
+  void checkToFromString() {
 
     Assertions.assertThrows(IllegalArgumentException.class,
-        () -> Parameters.fromString("89\t8989\t"), "Bad string should not be parsed");
+        () -> FindFociParameters.fromString("89\t8989\t"), "Bad string should not be parsed");
 
     final FindFociProcessorOptions processorOptions = new FindFociProcessorOptions(true);
     checkTheParameterToFromString(processorOptions);
@@ -77,14 +76,14 @@ class FindFociOptimiserPlugInTest {
   }
 
   private static void checkTheParameterToFromString(FindFociProcessorOptions processorOptions) {
-    final Parameters parameters = new Parameters(processorOptions);
+    final FindFociParameters parameters = new FindFociParameters(processorOptions);
 
     final String text = parameters.toString();
     // Should be cached
     Assertions.assertSame(text, parameters.toString(), "toString is not cached");
 
     // Convert from and then back again
-    final Parameters parameters2 = Parameters.fromString(text);
+    final FindFociParameters parameters2 = FindFociParameters.fromString(text);
     Assertions.assertNotNull(parameters2, () -> "Failed to parse string: " + text);
     Assertions.assertEquals(text, parameters2.toString(), "Convert from and then to is different");
   }
