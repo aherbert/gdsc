@@ -27,13 +27,16 @@ package uk.ac.sussex.gdsc.ij.foci;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.Prefs;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.measure.Calibration;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
+import ij.process.LUT;
 import ij.text.TextWindow;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -107,6 +110,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     private static final String SETTING_PROCESSOR = "gdsc.foci.neighbours.processor";
     private static final String SETTING_DIGITS = "gdsc.foci.neighbours.digits";
     private static final String SETTING_LABEL_OPTION = "gdsc.foci.neighbours.labelOption";
+    private static final String SETTING_MASK_OPTION = "gdsc.foci.neighbours.mask";
 
     /** The last settings used by the plugin. This should be updated after plugin execution. */
     private static final AtomicReference<Settings> lastSettings =
@@ -119,6 +123,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     private final Int2ObjectOpenHashMap<FindFociProcessorOptions> options;
     int digits;
     int labelOption;
+    boolean[] maskChannels;
 
     /**
      * Default constructor.
@@ -126,18 +131,13 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     Settings() {
       // Do nothing
       primaryChannel = (int) Prefs.get(SETTING_PR_CHANNEL, 1);
+      secondaryChannels = toBooleanArray(Prefs.get(SETTING_SE_CHANNEL, ""));
       distance = Prefs.get(SETTING_DISTANCE, 1);
       resultsDirectory = Prefs.get(SETTING_RESULT_DIR, "");
       options = new Int2ObjectOpenHashMap<>();
       digits = (int) Prefs.get(SETTING_DIGITS, 4);
       labelOption = (int) Prefs.get(SETTING_LABEL_OPTION, LABEL_NEIGHBOURS);
-
-      // Convert chars to boolean
-      final String se = Prefs.get(SETTING_SE_CHANNEL, "");
-      secondaryChannels = new boolean[se.length()];
-      for (int i = 0; i < secondaryChannels.length; i++) {
-        secondaryChannels[i] = se.charAt(i) == '1';
-      }
+      maskChannels = toBooleanArray(Prefs.get(SETTING_MASK_OPTION, ""));
     }
 
     /**
@@ -153,6 +153,23 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       options = source.options.clone();
       digits = source.digits;
       labelOption = source.labelOption;
+      maskChannels = source.maskChannels.clone();
+    }
+
+    private static boolean[] toBooleanArray(String se) {
+      final boolean[] a = new boolean[se.length()];
+      for (int i = 0; i < a.length; i++) {
+        a[i] = se.charAt(i) == '1';
+      }
+      return a;
+    }
+
+    private static String toString(boolean[] a) {
+      final char[] c = new char[a.length];
+      for (int i = 0; i < c.length; i++) {
+        c[i] = a[i] ? '1' : '0';
+      }
+      return new String(c);
     }
 
     /**
@@ -179,13 +196,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     void save() {
       lastSettings.set(this);
       Prefs.set(SETTING_PR_CHANNEL, primaryChannel);
-
-      // Convert boolean array to string
-      final char[] c = new char[secondaryChannels.length];
-      for (int i = 0; i < c.length; i++) {
-        c[i] = secondaryChannels[i] ? '1' : '0';
-      }
-      Prefs.set(SETTING_SE_CHANNEL, new String(c));
+      Prefs.set(SETTING_SE_CHANNEL, toString(secondaryChannels));
     }
 
     /**
@@ -196,6 +207,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       Prefs.set(SETTING_RESULT_DIR, resultsDirectory);
       Prefs.set(SETTING_DIGITS, digits);
       Prefs.set(SETTING_LABEL_OPTION, labelOption);
+      Prefs.set(SETTING_MASK_OPTION, toString(maskChannels));
     }
 
     FindFociProcessorOptions getOptions(int channel) {
@@ -215,7 +227,8 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       // TODO: Set defaults
       processorOptions.setMaxPeaks(10000);
       processorOptions.setMinSize(50);
-      processorOptions.setMaskMethod(MaskMethod.NONE);
+      // TODO: Should this be configurable for each channel?
+      processorOptions.setMaskMethod(MaskMethod.PEAKS_ABOVE_SADDLE);
       return processorOptions;
     }
 
@@ -331,8 +344,17 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     final Calibration cal = imp.getCalibration();
     gd.addNumericField("Distance", settings.distance, 2, 6, cal.scaled() ? cal.getUnit() : "px");
     gd.addDirectoryField("Results_directory", settings.resultsDirectory);
-    gd.addSlider("Table_Digits", 2, 10, settings.digits);
+    gd.addSlider("Table_digits", 2, 10, settings.digits);
     gd.addChoice("Label_option", Settings.LABEL_OPTIONS, settings.labelOption);
+
+    // Add output options for each channel
+    final int max = MathUtils.maxDefault(settings.primaryChannel, secondaryChannels);
+    final boolean[] maskOptions = Arrays.copyOf(settings.maskChannels, max + 1);
+    gd.addCheckbox("Mask_channel_" + settings.primaryChannel, maskOptions[settings.primaryChannel]);
+    for (final int ch : secondaryChannels) {
+      gd.addCheckbox("Mask_channel_" + ch, maskOptions[ch]);
+    }
+    settings.maskChannels = maskOptions;
 
     // Add dialogs to control FindFoci settings for each channel
     addFindFociSettings(gd, settings.primaryChannel);
@@ -466,6 +488,10 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     settings.resultsDirectory = gd.getNextString();
     settings.digits = (int) gd.getNextNumber();
     settings.labelOption = gd.getNextChoiceIndex();
+    settings.maskChannels[settings.primaryChannel] = gd.getNextBoolean();
+    for (final int ch : secondaryChannels) {
+      settings.maskChannels[ch] = gd.getNextBoolean();
+    }
     settings.saveAnalysisOptions();
     return settings.distance > 0;
   }
@@ -532,7 +558,9 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
 
     showResults(pResults, allNeighbours);
 
-    overlayResults(pResults, allNeighbours);
+    labelResults(pResults, allNeighbours);
+
+    maskResults(pResults, chResults);
   }
 
   private Function<FindFociResult, double[]> createCoordinateFunction() {
@@ -618,9 +646,9 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     return sb.toString();
   }
 
-  private void overlayResults(FindFociResults pResults,
+  private void labelResults(FindFociResults pResults,
       List<Int2ObjectOpenHashMap<List<FindFociResult>>> allNeighbours) {
-    IntPredicate display = createMatchPredicate(allNeighbours);
+    final IntPredicate display = createMatchPredicate(allNeighbours);
     if (display == null) {
       return;
     }
@@ -652,5 +680,55 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       return i -> allNeighbours.stream().anyMatch(m -> m.containsKey(i));
     }
     return null;
+  }
+
+  private void maskResults(FindFociResults pResults,
+      Int2ObjectOpenHashMap<FindFociResults> chResults) {
+    // Build binary mask for each result.
+    final List<ImageStack> masks = new LocalList<>();
+    if (settings.maskChannels[settings.primaryChannel]) {
+      masks.add(createMask(pResults));
+    }
+    for (final int ch : secondaryChannels) {
+      if (settings.maskChannels[ch]) {
+        masks.add(createMask(chResults.get(ch)));
+      }
+    }
+
+    // TODO:
+    // Colour using the same LUT as the image channel.
+    // Combine all channels into a ColorProcessor (use additive combination).
+    // Add as stack overlay.
+
+    // Collect colours for each channel.
+    final LUT[] luts = imp.getLuts();
+
+
+    int c = 0;
+    if (settings.maskChannels[settings.primaryChannel]) {
+      ImageJUtils.display("mask " + settings.primaryChannel, masks.get(c++))
+          .setLut(luts[settings.primaryChannel - 1]);
+    }
+    for (final int ch : secondaryChannels) {
+      if (settings.maskChannels[ch]) {
+        ImageJUtils.display("mask " + ch, masks.get(c++)).setLut(luts[ch - 1]);
+      }
+    }
+  }
+
+  private ImageStack createMask(FindFociResults pResults) {
+    final ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
+    final ImageStack mask = pResults.getMask().getImageStack();
+    for (int n = 1; n <= mask.getSize(); n++) {
+      final ImageProcessor ip = mask.getProcessor(n);
+      final ByteProcessor bp = new ByteProcessor(imp.getWidth(), imp.getHeight());
+      for (int i = ip.getPixelCount(); --i >= 0;) {
+        if (ip.get(i) != 0) {
+          bp.set(i, -1);
+        }
+      }
+      stack.addSlice(bp);
+    }
+    return stack;
   }
 }
