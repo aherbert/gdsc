@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.IntPredicate;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
@@ -96,12 +97,16 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
    * Contains the settings that are the re-usable state of the plugin.
    */
   private static class Settings {
+    static final String[] LABEL_OPTIONS = {"None", "Neighbours", "All"};
+    static final int LABEL_NEIGHBOURS = 1;
+    static final int LABEL_ALL = 2;
     private static final String SETTING_PR_CHANNEL = "gdsc.foci.neighbours.primaryChannel";
     private static final String SETTING_SE_CHANNEL = "gdsc.foci.neighbours.secondaryChannel";
     private static final String SETTING_DISTANCE = "gdsc.foci.neighbours.distance";
     private static final String SETTING_RESULT_DIR = "gdsc.foci.neighbours.resultsDirectory";
     private static final String SETTING_PROCESSOR = "gdsc.foci.neighbours.processor";
     private static final String SETTING_DIGITS = "gdsc.foci.neighbours.digits";
+    private static final String SETTING_LABEL_OPTION = "gdsc.foci.neighbours.labelOption";
 
     /** The last settings used by the plugin. This should be updated after plugin execution. */
     private static final AtomicReference<Settings> lastSettings =
@@ -113,6 +118,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     String resultsDirectory;
     private final Int2ObjectOpenHashMap<FindFociProcessorOptions> options;
     int digits;
+    int labelOption;
 
     /**
      * Default constructor.
@@ -123,7 +129,8 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       distance = Prefs.get(SETTING_DISTANCE, 1);
       resultsDirectory = Prefs.get(SETTING_RESULT_DIR, "");
       options = new Int2ObjectOpenHashMap<>();
-      digits = 4;
+      digits = (int) Prefs.get(SETTING_DIGITS, 4);
+      labelOption = (int) Prefs.get(SETTING_LABEL_OPTION, LABEL_NEIGHBOURS);
 
       // Convert chars to boolean
       final String se = Prefs.get(SETTING_SE_CHANNEL, "");
@@ -145,6 +152,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       resultsDirectory = source.resultsDirectory;
       options = source.options.clone();
       digits = source.digits;
+      labelOption = source.labelOption;
     }
 
     /**
@@ -187,6 +195,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       Prefs.set(SETTING_DISTANCE, distance);
       Prefs.set(SETTING_RESULT_DIR, resultsDirectory);
       Prefs.set(SETTING_DIGITS, digits);
+      Prefs.set(SETTING_LABEL_OPTION, labelOption);
     }
 
     FindFociProcessorOptions getOptions(int channel) {
@@ -323,6 +332,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     gd.addNumericField("Distance", settings.distance, 2, 6, cal.scaled() ? cal.getUnit() : "px");
     gd.addDirectoryField("Results_directory", settings.resultsDirectory);
     gd.addSlider("Table_Digits", 2, 10, settings.digits);
+    gd.addChoice("Label_option", Settings.LABEL_OPTIONS, settings.labelOption);
 
     // Add dialogs to control FindFoci settings for each channel
     addFindFociSettings(gd, settings.primaryChannel);
@@ -455,6 +465,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     settings.distance = gd.getNextNumber();
     settings.resultsDirectory = gd.getNextString();
     settings.digits = (int) gd.getNextNumber();
+    settings.labelOption = gd.getNextChoiceIndex();
     settings.saveAnalysisOptions();
     return settings.distance > 0;
   }
@@ -609,13 +620,17 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
 
   private void overlayResults(FindFociResults pResults,
       List<Int2ObjectOpenHashMap<List<FindFociResult>>> allNeighbours) {
+    IntPredicate display = createMatchPredicate(allNeighbours);
+    if (display == null) {
+      return;
+    }
     final int[] x = new int[pResults.results.size()];
     final int[] y = new int[x.length];
     final int[] id = new int[x.length];
     int c = 0;
     for (final FindFociResult r : pResults.results) {
-      // Check for any neighbours
-      if (allNeighbours.stream().anyMatch(m -> m.containsKey(r.id))) {
+      // Check for display
+      if (display.test(r.id)) {
         x[c] = r.x;
         y[c] = r.y;
         id[c] = r.id;
@@ -626,5 +641,16 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     roi.setLabels(id);
     roi.setShowLabels(true);
     imp.setRoi(roi);
+  }
+
+  private IntPredicate
+      createMatchPredicate(List<Int2ObjectOpenHashMap<List<FindFociResult>>> allNeighbours) {
+    if (settings.labelOption == Settings.LABEL_ALL) {
+      return i -> true;
+    }
+    if (settings.labelOption == Settings.LABEL_NEIGHBOURS) {
+      return i -> allNeighbours.stream().anyMatch(m -> m.containsKey(i));
+    }
+    return null;
   }
 }
