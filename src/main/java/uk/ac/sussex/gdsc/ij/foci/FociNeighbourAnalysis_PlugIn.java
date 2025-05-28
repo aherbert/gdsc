@@ -927,8 +927,25 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
         combined.addSlice(null, pixels);
       }
 
-      // TODO: Add each additional channel
-
+      // Add each additional channel
+      for (int j = 3; j < masks.size(); j++) {
+        final int r1 = luts[channels[j] - 1].getRed(255);
+        final int g1 = luts[channels[j] - 1].getGreen(255);
+        final int b1 = luts[channels[j] - 1].getBlue(255);
+        for (int n = 1; n <= s1.getSize(); n++) {
+          final byte[] m1 = (byte[]) masks.get(j).getPixels(n);
+          final int[] pixels = (int[]) combined.getPixels(n);
+          for (int i = 0; i < m1.length; i++) {
+            if (m1[i] != 0) {
+              final int c = pixels[i];
+              final int r = (c >>> 16) & 0xff;
+              final int g = (c >>> 8) & 0xff;
+              final int b = c & 0xff;
+              pixels[i] = toColour(r + r1, g + g1, b + b1);
+            }
+          }
+        }
+      }
     }
 
     // Add as stack overlay.
