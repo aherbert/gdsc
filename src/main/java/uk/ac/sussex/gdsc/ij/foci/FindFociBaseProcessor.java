@@ -450,7 +450,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
     return new FindFociResults(outImp, resultsArray, stats);
   }
 
-  private static float getThreshold(ThresholdMethod thresholdMethod, Histogram histogram) {
+  static float getThreshold(ThresholdMethod thresholdMethod, Histogram histogram) {
     if (histogram instanceof FloatHistogram) {
       // Convert to a smaller histogram
       // Use the limit for 16-bit integer data. This ensure compatibility
@@ -4982,7 +4982,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
   /**
    * Initialises the global width, height and depth variables. Creates the direction offset tables.
    */
-  private void initialise(ImagePlus imp) {
+  void initialise(ImagePlus imp) {
     maxx = imp.getWidth();
     maxy = imp.getHeight();
     maxz = imp.getNSlices();
