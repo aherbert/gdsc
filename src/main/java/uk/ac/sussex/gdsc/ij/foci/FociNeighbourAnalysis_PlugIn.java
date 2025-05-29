@@ -94,7 +94,10 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
   private static AtomicReference<TextWindow> RESULTS_TABLE = new AtomicReference<>();
 
   private ImagePlus imp;
-  /** Original position of the image hyperstack. Defines the time frame for analysis. */
+  /**
+   * Original position CZT of the image hyperstack. Defines the time frame for analysis. Current
+   * view of C and Z may change.
+   */
   private int[] position;
   private int[] secondaryChannels;
   private Logger logger;
@@ -640,6 +643,10 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
    * Perform the foci neighbour analysis.
    */
   private void doAnalysis() {
+    // Update hyperstack position
+    position[0] = imp.getC();
+    position[1] = imp.getZ();
+
     final ImagePlus mask = createInputMask();
 
     // Run FindFoci on each channel
