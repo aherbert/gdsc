@@ -640,7 +640,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
    * Perform the foci neighbour analysis.
    */
   private void doAnalysis() {
-    final ImagePlus mask = createMask();
+    final ImagePlus mask = createInputMask();
 
     // Run FindFoci on each channel
     logger.info(() -> String.format("Finding foci in primary channel %d", settings.primaryChannel));
@@ -699,9 +699,9 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     maskResults(pResults, chResults);
   }
 
-  private ImagePlus createMask() {
+  private ImagePlus createInputMask() {
     if (settings.maskOption == Settings.MASK_IMAGE) {
-      logger.info(() -> String.format("Using mask %d", settings.maskImage));
+      logger.info(() -> String.format("Using mask %s", settings.maskImage));
       return WindowManager.getImage(settings.maskImage);
     }
     if (settings.maskOption == Settings.MASK_CHANNEL) {
