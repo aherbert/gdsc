@@ -50,7 +50,9 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -90,6 +92,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
   private static final String TITLE = "Foci Neighbour Analysis";
   private static final int FLAGS =
       DOES_8G + DOES_16 + DOES_32 + FINAL_PROCESSING + KEEP_PREVIEW + NO_CHANGES;
+  private static final String SPACER = " : ";
 
   private static AtomicReference<TextWindow> RESULTS_TABLE = new AtomicReference<>();
 
@@ -101,6 +104,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
   private int[] position;
   private int[] secondaryChannels;
   private Logger logger;
+  private final Map<FindFociResultsKey, FindFociResults> map = new ConcurrentHashMap<>();
 
   /** The current settings for the plugin instance. */
   private Settings settings;
@@ -115,7 +119,6 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     static final String[] MASK_OPTIONS = {"None", "Image", "Channel"};
     static final int MASK_IMAGE = 1;
     static final int MASK_CHANNEL = 2;
-    private static final String SPACER = " : ";
     private static final String SETTING_PR_CHANNEL = "gdsc.foci.neighbours.primaryChannel";
     private static final String SETTING_SE_CHANNEL = "gdsc.foci.neighbours.secondaryChannel";
     private static final String SETTING_DISTANCE = "gdsc.foci.neighbours.distance";
@@ -272,49 +275,85 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       return processorOptions;
     }
 
-    void setOptions(int channel, FindFociProcessorOptions processorOptions) {
-      this.options.put(channel, processorOptions);
-      Prefs.set(SETTING_PROCESSOR + channel, new FindFociParameters(processorOptions).toString());
-      Prefs.set(SETTING_PROCESSOR_OPTIONS + channel, toExtraString(processorOptions));
+    void setOptions(FindFociResultsKey key) {
+      final int channel = key.channel;
+      this.options.put(channel, key.processorOptions);
+      Prefs.set(SETTING_PROCESSOR + channel, key.options);
+      Prefs.set(SETTING_PROCESSOR_OPTIONS + channel, key.extraOptions);
+    }
+  }
+
+  /**
+   * A key to store FindFociResults.
+   */
+  private static class FindFociResultsKey {
+    int channel;
+    FindFociProcessorOptions processorOptions;
+    String options;
+    String extraOptions;
+
+    FindFociResultsKey(int channel, FindFociProcessorOptions processorOptions) {
+      this.channel = channel;
+      this.processorOptions = processorOptions;
+      options = new FindFociParameters(processorOptions).toString();
+      extraOptions = toExtraString(processorOptions);
     }
 
+    @Override
+    public int hashCode() {
+      return Objects.hash(channel, options, extraOptions);
+    }
 
-    private static void fromExtraString(FindFociProcessorOptions processorOptions, String text) {
-      final String[] fields = FindFociOptimiser_PlugIn.TAB_PATTERN.split(text);
-      try {
-        // Fields have been added incrementally so always check for non-empty
-        // Field 1
-        if (!fields[0].isEmpty()) {
-          final int index = fields[0].indexOf(SPACER);
-          if (index != -1) {
-            processorOptions.setFractionParameter(
-                Double.parseDouble(fields[0].substring(index + SPACER.length())));
-            fields[0] = fields[0].substring(0, index);
-          }
-          processorOptions.setMaskMethod(MaskMethod.fromDescription(fields[0]));
-        }
-      } catch (final NullPointerException | NumberFormatException | IndexOutOfBoundsException ex) {
-        // NPE will be thrown if the enum cannot parse the description because null
-        // will be passed to the setter.
-        throw new IllegalArgumentException(
-            "Error converting parameters to FindFoci options: " + text, ex);
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
       }
+      if (obj instanceof FindFociResultsKey) {
+        final FindFociResultsKey other = (FindFociResultsKey) obj;
+        return channel == other.channel && options.equals(other.options)
+            && extraOptions.equals(other.extraOptions);
+      }
+      return false;
     }
+  }
 
-    private String toExtraString(FindFociProcessorOptions processorOptions) {
-      final StringBuilder sb = new StringBuilder();
+
+  private static void fromExtraString(FindFociProcessorOptions processorOptions, String text) {
+    final String[] fields = FindFociOptimiser_PlugIn.TAB_PATTERN.split(text);
+    try {
+      // Fields have been added incrementally so always check for non-empty
       // Field 1
-      sb.append(processorOptions.getMaskMethod().getDescription());
-      if (maskMethodHasParameter(processorOptions.getMaskMethod())) {
-        sb.append(SPACER).append(IJ.d2s(processorOptions.getFractionParameter(), 2));
+      if (!fields[0].isEmpty()) {
+        final int index = fields[0].indexOf(SPACER);
+        if (index != -1) {
+          processorOptions.setFractionParameter(
+              Double.parseDouble(fields[0].substring(index + SPACER.length())));
+          fields[0] = fields[0].substring(0, index);
+        }
+        processorOptions.setMaskMethod(MaskMethod.fromDescription(fields[0]));
       }
-      return sb.toString();
+    } catch (final NullPointerException | NumberFormatException | IndexOutOfBoundsException ex) {
+      // NPE will be thrown if the enum cannot parse the description because null
+      // will be passed to the setter.
+      throw new IllegalArgumentException("Error converting parameters to FindFoci options: " + text,
+          ex);
     }
+  }
 
-    private static boolean maskMethodHasParameter(MaskMethod maskMethod) {
-      return (maskMethod == MaskMethod.FRACTION_OF_HEIGHT
-          || maskMethod == MaskMethod.FRACTION_OF_INTENSITY);
+  private static String toExtraString(FindFociProcessorOptions processorOptions) {
+    final StringBuilder sb = new StringBuilder();
+    // Field 1
+    sb.append(processorOptions.getMaskMethod().getDescription());
+    if (maskMethodHasParameter(processorOptions.getMaskMethod())) {
+      sb.append(SPACER).append(IJ.d2s(processorOptions.getFractionParameter(), 2));
     }
+    return sb.toString();
+  }
+
+  private static boolean maskMethodHasParameter(MaskMethod maskMethod) {
+    return (maskMethod == MaskMethod.FRACTION_OF_HEIGHT
+        || maskMethod == MaskMethod.FRACTION_OF_INTENSITY);
   }
 
   /** {@inheritDoc} */
@@ -608,7 +647,10 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
         processorOptions = Settings.defaultOptions();
       }
 
-      settings.setOptions(channel, processorOptions);
+      final FindFociResultsKey key = new FindFociResultsKey(channel, processorOptions);
+      settings.setOptions(key);
+      // Invalidate results
+      map.remove(key);
 
       // Trigger an event to read the dialog and run the preview if applicable
       parentGd
@@ -751,10 +793,13 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
   }
 
   private FindFociResults runFindFoci(int channel, ImagePlus mask) {
-    final FindFoci_PlugIn ff = new FindFoci_PlugIn();
     final FindFociProcessorOptions processorOptions = settings.getOptions(channel);
-    imp.setPositionWithoutUpdate(channel, 1, position[2]);
-    return ff.createFindFociProcessor(imp).findMaxima(imp, mask, processorOptions);
+    final FindFociResultsKey key = new FindFociResultsKey(channel, processorOptions);
+    return map.computeIfAbsent(key, s -> {
+      final FindFoci_PlugIn ff = new FindFoci_PlugIn();
+      imp.setPositionWithoutUpdate(channel, 1, position[2]);
+      return ff.createFindFociProcessor(imp).findMaxima(imp, mask, processorOptions);
+    });
   }
 
   /**
