@@ -36,6 +36,7 @@ import ij.plugin.PlugIn;
 import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.awt.Color;
 import java.io.BufferedWriter;
@@ -62,7 +63,6 @@ import uk.ac.sussex.gdsc.core.match.MatchResult;
 import uk.ac.sussex.gdsc.core.match.PointPair;
 import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
-import uk.ac.sussex.gdsc.core.utils.OpenHashMaps.CustomInt2ObjectOpenHashMap;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 
 /**
@@ -601,7 +601,7 @@ public class Match_PlugIn implements PlugIn {
   public static PointRoi[] createRoi(final ImagePlus imp, List<? extends Coordinate> array,
       double scaleX, double scaleY, double scaleZ) {
     // We have to create an overlay per z-slice using the calibration scale
-    final CustomInt2ObjectOpenHashMap<IntArrayList> xpoints = new CustomInt2ObjectOpenHashMap<>();
+    final Int2ObjectOpenHashMap<IntArrayList> xpoints = new Int2ObjectOpenHashMap<>();
     IntArrayList nextlist = new IntArrayList();
 
     for (final Coordinate point : array) {

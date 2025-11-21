@@ -48,6 +48,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.text.TextWindow;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.awt.AWTEvent;
 import java.awt.Color;
@@ -99,7 +100,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
   private static AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
 
   private ImagePlus imp;
-  private CustomInt2IntOpenHashMap slices;
+  private Int2IntOpenHashMap slices;
   private boolean inPreview;
   private int ch;
 
@@ -603,7 +604,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
 
     // Get the stack slices to process
     final int frames = imp.getNFrames();
-    slices = new CustomInt2IntOpenHashMap(frames);
+    slices = new Int2IntOpenHashMap(frames);
     ch = imp.getChannel();
     final int slice = imp.getZ();
     for (int frame = 1; frame <= frames; frame++) {
