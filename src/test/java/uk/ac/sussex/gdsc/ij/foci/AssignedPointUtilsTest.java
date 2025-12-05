@@ -232,8 +232,9 @@ class AssignedPointUtilsTest {
       Assertions.assertEquals(x[i], points[i].x);
       Assertions.assertEquals(y[i], points[i].y);
       Assertions.assertEquals(pos, points[i].z);
-      Assertions.assertEquals(0, points[i].getChannel());
-      Assertions.assertEquals(0, points[i].getFrame());
+      // PointRoi positions are converted to 1-indexed channel and frame for a z-stack
+      Assertions.assertEquals(1, points[i].getChannel());
+      Assertions.assertEquals(1, points[i].getFrame());
     }
 
     // Set into the ROI in bulk
