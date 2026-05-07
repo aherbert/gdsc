@@ -733,12 +733,12 @@ public class PointAligner_PlugIn implements PlugIn {
       case 1:
         // Factor of inter-quartile range
         final float q1 = getQuartileBoundary(heights, 0.25);
-        final float q2 = getQuartileBoundary(heights, 0.5);
+        final float q3 = getQuartileBoundary(heights, 0.75);
 
-        heightThreshold = q1 - settings.factor * (q2 - q1);
+        heightThreshold = q1 - settings.factor * (q3 - q1);
         if (settings.logAlignments) {
           log("Limiting peaks %s: %s - %s * %s = %s", Settings.limitMethods[settings.limitMethod],
-              MathUtils.rounded(q1), MathUtils.rounded(settings.factor), MathUtils.rounded(q2 - q1),
+              MathUtils.rounded(q1), MathUtils.rounded(settings.factor), MathUtils.rounded(q3 - q1),
               MathUtils.rounded(heightThreshold));
         }
 
