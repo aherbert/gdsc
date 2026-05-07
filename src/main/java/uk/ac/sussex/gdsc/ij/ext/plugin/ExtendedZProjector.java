@@ -36,6 +36,8 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import java.util.Arrays;
+import java.util.function.ToDoubleFunction;
+import org.apache.commons.statistics.descriptive.Median;
 
 /**
  * Extend the ZProjector to support mode intensity projection.
@@ -153,7 +155,8 @@ public class ExtendedZProjector extends ZProjectorCopy {
     float value(float[] values);
   }
 
-  private ImagePlus doProjection(String name, Projector projector) {
+  private ImagePlus doProjection(String name, Projector projector,
+      ToDoubleFunction<double[]> doubleProjector) {
     IJ.showStatus("Calculating " + name + "...");
     final ImageStack stack = imp.getStack();
     // Check not an RGB stack
@@ -175,31 +178,39 @@ public class ExtendedZProjector extends ZProjectorCopy {
     }
     ImageProcessor ip2 = slices[0].duplicate();
     ip2 = ip2.convertToFloat();
-    final float[] values = new float[sliceCount];
     final int width = ip2.getWidth();
     final int height = ip2.getHeight();
     final int inc = Math.max(height / 30, 1);
-    for (int y = 0, k = 0; y < height; y++) {
-      if (y % inc == 0) {
-        IJ.showProgress(y, height - 1);
-      }
-      for (int x = 0; x < width; x++, k++) {
-        for (int i = 0; i < sliceCount; i++) {
-          values[i] = slices[i].getf(k);
+    if (doubleProjector != null) {
+      final double[] values = new double[sliceCount];
+      for (int y = 0, k = 0; y < height; y++) {
+        if (y % inc == 0) {
+          IJ.showProgress(y, height - 1);
         }
-        ip2.setf(k, projector.value(values));
+        for (int x = 0; x < width; x++, k++) {
+          for (int i = 0; i < sliceCount; i++) {
+            values[i] = slices[i].getf(k);
+          }
+          ip2.setf(k, (float) doubleProjector.applyAsDouble(values));
+        }
+      }
+    } else {
+      final float[] values = new float[sliceCount];
+      for (int y = 0, k = 0; y < height; y++) {
+        if (y % inc == 0) {
+          IJ.showProgress(y, height - 1);
+        }
+        for (int x = 0; x < width; x++, k++) {
+          for (int i = 0; i < sliceCount; i++) {
+            values[i] = slices[i].getf(k);
+          }
+          ip2.setf(k, projector.value(values));
+        }
       }
     }
     final ImagePlus projImage = makeOutputImage(imp, (FloatProcessor) ip2, ptype);
     IJ.showProgress(1, 1);
     return projImage;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  protected ImagePlus doMedianProjection() {
-    // Override to change the method for accessing pixel values to getf()
-    return doProjection("median", this::median);
   }
 
   /**
@@ -209,7 +220,14 @@ public class ExtendedZProjector extends ZProjectorCopy {
    * @return the image plus
    */
   protected ImagePlus doModeProjection(final boolean ignoreZero) {
-    return doProjection("mode", values -> getMode(values, ignoreZero));
+    return doProjection("mode", values -> getMode(values, ignoreZero), null);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected ImagePlus doMedianProjection() {
+    // Override to change the method for accessing pixel values to getf()
+    return doProjection("median", null, Median.withDefaults()::evaluate);
   }
 
   /**

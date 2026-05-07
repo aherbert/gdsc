@@ -40,6 +40,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.util.Arrays;
+import org.apache.commons.statistics.descriptive.Median;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 
 /**
@@ -582,10 +583,11 @@ public class ZProjectorCopy implements PlugIn {
     }
     ImageProcessor ip2 = slices[0].duplicate();
     ip2 = ip2.convertToFloat();
-    final float[] values = new float[sliceCount];
+    final double[] values = new double[sliceCount];
     final int width = ip2.getWidth();
     final int height = ip2.getHeight();
     final int inc = Math.max(height / 30, 1);
+    final Median m = Median.withDefaults();
     for (int y = 0; y < height; y++) {
       if (y % inc == 0) {
         IJ.showProgress(y, height - 1);
@@ -594,7 +596,7 @@ public class ZProjectorCopy implements PlugIn {
         for (int i = 0; i < sliceCount; i++) {
           values[i] = slices[i].getPixelValue(x, y);
         }
-        ip2.putPixelValue(x, y, median(values));
+        ip2.putPixelValue(x, y, m.evaluate(values));
       }
     }
     if (imp.getBitDepth() == 8) {
@@ -602,21 +604,6 @@ public class ZProjectorCopy implements PlugIn {
     }
     IJ.showProgress(1, 1);
     return new ImagePlus(makeTitle(), ip2);
-  }
-
-  /**
-   * Compute the median.
-   *
-   * @param a the data
-   * @return the float
-   */
-  protected float median(float[] a) {
-    Arrays.sort(a);
-    final int middle = a.length / 2;
-    if ((a.length & 1) == 0) {
-      return (a[middle - 1] + a[middle]) / 2f;
-    }
-    return a[middle];
   }
 
   /**
