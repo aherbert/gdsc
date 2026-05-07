@@ -649,6 +649,6 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     if (end == 1) {
       return Double.NaN;
     }
-    return Median.withDefaults().evaluate(Arrays.copyOfRange(count, 1, end));
+    return Median.withDefaults().evaluateRange(count, 1, end);
   }
 }
