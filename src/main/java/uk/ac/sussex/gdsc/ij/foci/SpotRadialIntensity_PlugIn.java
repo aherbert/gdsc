@@ -39,12 +39,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
 import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
+import uk.ac.sussex.gdsc.core.utils.Statistics;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 
 /**
@@ -376,6 +378,8 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     final int w = imp.getWidth();
     final int upperx = imp.getWidth() - 1;
     final int uppery = imp.getHeight() - 1;
+    final Statistics[] stats =
+        IntStream.range(0, maxBin).mapToObj(i -> new Statistics()).toArray(Statistics[]::new);
     for (int ii = 0; ii < foci.length; ii++) {
       final Foci f = foci[ii];
 
@@ -396,6 +400,8 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
         sum[i] = 0;
       }
 
+      final float b = background[f.object];
+
       // For all pixels
       for (int y = miny; y <= maxy; y++) {
         final int dy2 = MathUtils.pow2(f.y - y);
@@ -415,6 +421,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
               }
               count[bin]++;
               sum[bin] += pixels[i];
+              stats[bin].add(pixels[i] - b);
             }
           }
         }
@@ -426,12 +433,11 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
         sb.append(prefix);
         sb.append('\t').append(f.id);
         sb.append('\t').append(f.object);
-        final float b = background[f.object];
         sb.append('\t').append(MathUtils.rounded(b));
         sb.append('\t').append(f.x);
         sb.append('\t').append(f.y);
         for (int i = 0; i < maxBin; i++) {
-          final double v = sum[i] / count[i] - b * count[i];
+          final double v = sum[i] / count[i] - b;
           yAxis[i] = v;
           sb.append('\t').append(MathUtils.rounded(v));
         }
@@ -461,14 +467,37 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     }
 
     if (plot != null) {
+      plot.setColor(Color.blue);
+      final double[] yError = new double[xAxis.length];
+      for (int i = 0; i < maxBin; i++) {
+        yAxis[i] = stats[i].getMean();
+        yError[i] = stats[i].getConfidenceInterval(0.95);
+      }
+      plot.addPoints(xAxis, yAxis, yError, Plot.LINE);
+
       plot.setColor(Color.BLACK);
       ImageJUtils.display(TITLE, plot);
       plot.setLimitsToFit(true); // Seems to only work after drawing
     }
+
+    if (tw != null) {
+      sb.setLength(0);
+      sb.append(prefix);
+      sb.append("\t0\t0\t0\t0\t0");
+      for (int i = 0; i < maxBin; i++) {
+        sb.append('\t').append(MathUtils.rounded(stats[i].getMean()));
+      }
+      for (int i = 0; i < maxBin; i++) {
+        sb.append('\t').append(MathUtils.rounded(stats[i].getN()));
+      }
+
+      tw.append(sb.toString());
+    }
   }
 
   /**
-   * Gets the background using a 3x3 block mean.
+   * Gets the background using a 3x3 block mean filter. The lowest value in each filtered object is
+   * the background.
    *
    * @param objects the objects
    * @return the background
