@@ -30,6 +30,7 @@ import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.Plot;
 import ij.gui.PointRoi;
+import ij.gui.Roi;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
@@ -73,6 +74,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     private static final AtomicReference<Settings> lastSettings =
         new AtomicReference<>(new Settings());
 
+    boolean useRoi;
     String resultsName = "";
     String maskImage = "";
     int distance = 10;
@@ -95,6 +97,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
      * @param source the source
      */
     private Settings(Settings source) {
+      useRoi = source.useRoi;
       resultsName = source.resultsName;
       maskImage = source.maskImage;
       distance = source.distance;
@@ -150,17 +153,22 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
   public void run(String arg) {
     UsageTracker.recordPlugin(this.getClass(), arg);
 
-    // List the foci results
-    final String[] names = FindFoci_PlugIn.getResultsNames();
-    if (names == null || names.length == 0) {
-      IJ.error(TITLE,
-          "Spots must be stored in memory using the " + FindFoci_PlugIn.TITLE + " plugin");
-      return;
-    }
-
     imp = WindowManager.getCurrentImage();
     if (imp == null) {
       IJ.noImage();
+      return;
+    }
+
+    Roi imageRoi = imp.getRoi();
+    if (imageRoi != null && imageRoi.getType() != Roi.POINT) {
+      imageRoi = null;
+    }
+
+    // List the foci results
+    final String[] names = FindFoci_PlugIn.getResultsNames();
+    if (imageRoi == null && names.length == 0) {
+      IJ.error(TITLE, "Spots must be point ROI or stored in memory using the "
+          + FindFoci_PlugIn.TITLE + " plugin");
       return;
     }
 
@@ -178,7 +186,12 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     gd.addMessage("Analyses spots within a mask region\n"
         + "and computes radial intensity within the mask object region.");
 
-    gd.addChoice("Resultsettings.name", names, settings.resultsName);
+    if (imageRoi != null && names.length != 0) {
+      gd.addCheckbox("Use_roi", settings.useRoi);
+    }
+    if (names.length != 0) {
+      gd.addChoice("Results_name", names, settings.resultsName);
+    }
     gd.addChoice("Mask", maskImageList, settings.maskImage);
     gd.addNumericField("Distance", settings.distance, 0, 6, "pixels");
     gd.addNumericField("Interval", settings.interval, 2, 6, "pixels");
@@ -197,7 +210,12 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     final int distance = settings.distance;
     final double interval = settings.interval;
 
-    settings.resultsName = gd.getNextChoice();
+    if (imageRoi != null && names.length != 0) {
+      settings.useRoi = gd.getNextBoolean();
+    }
+    if (names.length != 0) {
+      settings.resultsName = gd.getNextChoice();
+    }
     settings.maskImage = gd.getNextChoice();
     settings.distance = (int) gd.getNextNumber();
     settings.interval = gd.getNextNumber();
@@ -230,7 +248,12 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     }
 
     // Get the foci
-    final Foci[] foci = getFoci(settings.resultsName, objects);
+    Foci[] foci;
+    if (imageRoi != null && (settings.useRoi || names.length == 0)) {
+      foci = getFoci(imageRoi, objects);
+    } else {
+      foci = getFoci(settings.resultsName, objects);
+    }
     if (foci == null) {
       return;
     }
@@ -285,6 +308,37 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     return new ObjectAnalyzer(maskImp.getProcessor());
   }
 
+
+  /**
+   * Gets the FindFoci results that are within objects.
+   *
+   * @param roi the roi
+   * @param objects the objects
+   * @return the foci
+   */
+  @Nullable
+  private Foci[] getFoci(Roi roi, ObjectAnalyzer objects) {
+    roi = (PointRoi) imp.getRoi();
+    final int[] xpoints = roi.getPolygon().xpoints;
+    final int[] ypoints = roi.getPolygon().ypoints;
+    final int[] mask = objects.getObjectMask();
+    final int maxx = imp.getWidth();
+    final LocalList<Foci> foci = new LocalList<>(xpoints.length);
+    for (int i = 0, id = 1; i < xpoints.length; i++) {
+      final int x = xpoints[i];
+      final int y = ypoints[i];
+      final int object = mask[y * maxx + x];
+      if (object != 0) {
+        foci.add(new Foci(id++, object, x, y));
+      }
+    }
+    if (foci.isEmpty()) {
+      IJ.error(TITLE, "Zero foci in the results within mask objects");
+      return null;
+    }
+    return foci.toArray(new Foci[foci.size()]);
+  }
+
   /**
    * Gets the FindFoci results that are within objects.
    *
@@ -318,7 +372,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       IJ.error(TITLE, "Zero foci in the results within mask objects");
       return null;
     }
-    return foci.toArray(new Foci[foci.size()]);
+    return foci.toArray(new Foci[0]);
   }
 
   /**
