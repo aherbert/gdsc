@@ -423,17 +423,21 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     // Table of dx^2
     final int[] dx2 = new int[2 * distance + 1];
 
-    // Plot of each radial intensity
-    final Plot plot = (settings.showPlot) ? new Plot(TITLE, "Distance", "Average") : null;
-    final double[] xAxis = SimpleArrayUtils.newArray(maxBin, 0, settings.interval);
-    final double[] yAxis = new double[xAxis.length];
-    final LUT lut = LutHelper.createLut(LutHelper.LutColour.FIRE_GLOW);
-
     final int w = imp.getWidth();
     final int upperx = imp.getWidth() - 1;
     final int uppery = imp.getHeight() - 1;
-    final Statistics[] stats =
-        IntStream.range(0, maxBin).mapToObj(i -> new Statistics()).toArray(Statistics[]::new);
+
+    // Note:
+    // Foci may be within the max radius * 2, i.e. the circles overlap.
+    // Each pixel that will be counted must first be assigned to its
+    // closest foci to avoid double counting. In the event of a tie
+    // we have options: ignore; assign to both; assign to first.
+    // Here we assign to the first. If foci are sorted by intensity it
+    // will create more data for the brightest foci.
+    final int[] assigned = new int[mask.length];
+    final int[] assignedDistance = new int[mask.length];
+    Arrays.fill(assignedDistance, Integer.MAX_VALUE);
+
     for (int ii = 0; ii < foci.length; ii++) {
       final Foci f = foci[ii];
 
@@ -448,6 +452,43 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
         dx2[j] = MathUtils.pow2(f.x - x);
       }
 
+      // For all pixels
+      for (int y = miny; y <= maxy; y++) {
+        final int dy2 = MathUtils.pow2(f.y - y);
+        for (int x = minx, i = y * w + minx, j = 0; x <= maxx; x++, i++, j++) {
+          // If correct object
+          if (mask[i] == f.object) {
+            // Get distance squared
+            final int d2 = dy2 + dx2[j];
+            if (d2 < limit && d2 < assignedDistance[i]) {
+              assignedDistance[i] = d2;
+              assigned[i] = f.object;
+            }
+          }
+        }
+      }
+    }
+
+    // Plot of each radial intensity
+    final Plot plot = (settings.showPlot) ? new Plot(TITLE, "Distance", "Average") : null;
+    final double[] xAxis = SimpleArrayUtils.newArray(maxBin, 0, settings.interval);
+    final double[] yAxis = new double[xAxis.length];
+    final LUT lut = LutHelper.createLut(LutHelper.LutColour.FIRE_GLOW);
+
+    final Statistics[] stats =
+        IntStream.range(0, maxBin).mapToObj(i -> new Statistics()).toArray(Statistics[]::new);
+    // Here we already have the distances for each foci. We could single pass through the
+    // asiigned array. But we still process each foci so we can output the plot and results
+    // table per foci.
+    for (int ii = 0; ii < foci.length; ii++) {
+      final Foci f = foci[ii];
+
+      // Find limits && clip
+      final int minx = Math.max(0, f.x - distance);
+      final int maxx = Math.min(upperx, f.x + distance);
+      final int miny = Math.max(0, f.y - distance);
+      final int maxy = Math.min(uppery, f.y + distance);
+
       // Reset radial stats
       for (int i = 0, len = count.length; i < len; i++) {
         count[i] = 0;
@@ -458,25 +499,22 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
 
       // For all pixels
       for (int y = miny; y <= maxy; y++) {
-        final int dy2 = MathUtils.pow2(f.y - y);
-        for (int x = minx, i = y * w + minx, j = 0; x <= maxx; x++, i++, j++) {
+        for (int x = minx, i = y * w + minx; x <= maxx; x++, i++) {
           // If correct object
-          if (mask[i] == f.object) {
+          if (assigned[i] == f.object) {
             // Get distance squared
-            final int d2 = dy2 + dx2[j];
-            if (d2 < limit) {
-              // Put in radial stats
-              // int bin = (int) (Math.sqrt(d2) / interval)
-              // Q. Faster than sqrt?
-              int bin = Arrays.binarySearch(distances, d2);
-              if (bin < 0) {
-                // The bin is the (insertion point)-1 => -(bin+1) - 1
-                bin = -(bin + 1) - 1;
-              }
-              count[bin]++;
-              sum[bin] += pixels[i];
-              stats[bin].add(pixels[i] - b);
+            final int d2 = assignedDistance[i];
+            // Put in radial stats
+            // int bin = (int) (Math.sqrt(d2) / interval)
+            // Q. Faster than sqrt?
+            int bin = Arrays.binarySearch(distances, d2);
+            if (bin < 0) {
+              // The bin is the (insertion point)-1 => -(bin+1) - 1
+              bin = -(bin + 1) - 1;
             }
+            count[bin]++;
+            sum[bin] += pixels[i];
+            stats[bin].add(pixels[i] - b);
           }
         }
       }
@@ -491,9 +529,14 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
         sb.append('\t').append(f.x);
         sb.append('\t').append(f.y);
         for (int i = 0; i < maxBin; i++) {
-          final double v = sum[i] / count[i] - b;
-          yAxis[i] = v;
-          sb.append('\t').append(MathUtils.rounded(v));
+          if (count[i] == 0) {
+            yAxis[i] = 0;
+            sb.append("\t0");
+          } else {
+            final double v = sum[i] / count[i] - b;
+            yAxis[i] = v;
+            sb.append('\t').append(MathUtils.rounded(v));
+          }
         }
         for (int i = 0; i < maxBin; i++) {
           sb.append('\t').append(count[i]);
