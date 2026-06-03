@@ -56,12 +56,13 @@ class FindFociParameters {
     sb.append(processorOptions.getGaussianBlur()).append('\t');
     // Field 2
     sb.append(processorOptions.getBackgroundMethod().getDescription());
-    if (FindFociOptimiser_PlugIn.backgroundMethodHasStatisticsMode(processorOptions.getBackgroundMethod())) {
-      sb.append(" (").append(processorOptions.getStatisticsMethod().getDescription())
-          .append(") ");
+    if (FindFociOptimiser_PlugIn
+        .backgroundMethodHasStatisticsMode(processorOptions.getBackgroundMethod())) {
+      sb.append(" (").append(processorOptions.getStatisticsMethod().getDescription()).append(") ");
     }
     sb.append(SPACER);
-    if (FindFociOptimiser_PlugIn.backgroundMethodHasParameter(processorOptions.getBackgroundMethod())) {
+    if (FindFociOptimiser_PlugIn
+        .backgroundMethodHasParameter(processorOptions.getBackgroundMethod())) {
       sb.append(IJ.d2s(processorOptions.getBackgroundParameter(), 2));
     } else {
       sb.append(processorOptions.getThresholdMethod().getDescription());
@@ -126,7 +127,8 @@ class FindFociParameters {
       } else {
         processorOptions.setBackgroundMethod(BackgroundMethod.fromDescription(backgroundMethod));
       }
-      if (FindFociOptimiser_PlugIn.backgroundMethodHasParameter(processorOptions.getBackgroundMethod())) {
+      if (FindFociOptimiser_PlugIn
+          .backgroundMethodHasParameter(processorOptions.getBackgroundMethod())) {
         processorOptions.setBackgroundParameter(Double.parseDouble(backgroundOption));
       } else {
         processorOptions.setThresholdMethod(ThresholdMethod.fromDescription(backgroundOption));
@@ -171,8 +173,8 @@ class FindFociParameters {
     } catch (final NullPointerException | NumberFormatException | IndexOutOfBoundsException ex) {
       // NPE will be thrown if the enum cannot parse the description because null
       // will be passed to the setter.
-      throw new IllegalArgumentException(
-          "Error converting parameters to FindFoci options: " + text, ex);
+      throw new IllegalArgumentException("Error converting parameters to FindFoci options: " + text,
+          ex);
     }
   }
 

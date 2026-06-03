@@ -419,7 +419,8 @@ public class MaskAnalyzeChannels_PlugIn implements PlugInFilter {
       }
     }
 
-    final double threshold = Quantile.withDefaults().evaluate(backgroundPixels, settings.backgroundFraction);
+    final double threshold =
+        Quantile.withDefaults().evaluate(backgroundPixels, settings.backgroundFraction);
     final int[] j = {0};
     nonObjects.intStream().forEach(i -> {
       if (backgroundPixels[j[0]++] <= threshold) {

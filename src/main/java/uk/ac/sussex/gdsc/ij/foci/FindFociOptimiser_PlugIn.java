@@ -203,7 +203,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   private int combinations;
 
   private final Object2IntOpenHashMap<String> idMap = new Object2IntOpenHashMap<>();
-  private final Int2ObjectOpenHashMap<FindFociParameters> optionsMap = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectOpenHashMap<FindFociParameters> optionsMap =
+      new Int2ObjectOpenHashMap<>();
 
   private final SoftLock lock = new SoftLock();
 
@@ -566,8 +567,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     long time;
     double[] metrics = new double[10];
 
-    Result(int id, FindFociParameters options, int count, int tp, int fp, int fn, long time, double beta,
-        double rmsd) {
+    Result(int id, FindFociParameters options, int count, int tp, int fp, int fn, long time,
+        double beta, double rmsd) {
       this.id = id;
       this.options = options;
       this.count = count;
@@ -1622,7 +1623,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
                               // Get the results
                               // The analysis time is not included in the speed-up factor
                               final long start = System.nanoTime();
-                              final FindFociParameters runOptions = new FindFociParameters(processorOptions);
+                              final FindFociParameters runOptions =
+                                  new FindFociParameters(processorOptions);
                               final Result result = analyseResults(id, roiPoints,
                                   peakResults.results, distanceThreshold, runOptions, time,
                                   settings.beta, distanceFunction);
@@ -1763,8 +1765,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     }
   }
 
-  private static synchronized void addFindFociCommand(BufferedWriter out, FindFociParameters bestOptions,
-      String maskTitle) throws IOException {
+  private static synchronized void addFindFociCommand(BufferedWriter out,
+      FindFociParameters bestOptions, String maskTitle) throws IOException {
     if (bestOptions == null) {
       return;
     }
@@ -1849,8 +1851,9 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   }
 
   @Nullable
-  private static AssignedPoint[] showResult(ImagePlus imp, ImagePlus mask, FindFociParameters parameters,
-      boolean showScoreImages, int matchSearchMethod, double matchSearchDistance) {
+  private static AssignedPoint[] showResult(ImagePlus imp, ImagePlus mask,
+      FindFociParameters parameters, boolean showScoreImages, int matchSearchMethod,
+      double matchSearchDistance) {
     if (imp == null) {
       return null;
     }
@@ -2791,8 +2794,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     return bw;
   }
 
-  private BufferedWriter createResultsFile(FindFociParameters bestOptions, ImagePlus imp, ImagePlus mask,
-      String resultFile) {
+  private BufferedWriter createResultsFile(FindFociParameters bestOptions, ImagePlus imp,
+      ImagePlus mask, String resultFile) {
     BufferedWriter out = null;
     try {
       final String filename = resultFile + RESULTS_SUFFIX;
@@ -2880,8 +2883,8 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   }
 
   private static Result analyseResults(int id, AssignedPoint[] roiPoints,
-      List<FindFociResult> resultsArray, double distanceThreshold, FindFociParameters options, long time,
-      double beta, ToDoubleBiFunction<Coordinate, Coordinate> edges) {
+      List<FindFociResult> resultsArray, double distanceThreshold, FindFociParameters options,
+      long time, double beta, ToDoubleBiFunction<Coordinate, Coordinate> edges) {
     // Extract results for analysis
     final Coordinate[] predictedPoints = extractedPredictedPoints(resultsArray);
 
