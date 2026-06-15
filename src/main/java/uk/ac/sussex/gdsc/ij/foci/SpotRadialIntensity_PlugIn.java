@@ -480,6 +480,11 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
         dx2[j] = MathUtils.pow2(f.x - x);
       }
 
+      // Assign foci centre. This overcomes the issue when the segment
+      // triangle base does not capture the foci due to floating-point error.
+      assignedDistance[f.y * w + f.x] = 0;
+      assigned[f.y * w + f.x] = f.id;
+
       // For all pixels
       for (int y = miny; y <= maxy; y++) {
         final int dy2 = MathUtils.pow2(f.y - y);
@@ -490,7 +495,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
             final int d2 = dy2 + dx2[j];
             if (d2 < limit && d2 < assignedDistance[i]) {
               assignedDistance[i] = d2;
-              assigned[i] = f.object;
+              assigned[i] = f.id;
             }
           }
         }
@@ -539,7 +544,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       for (int y = miny; y <= maxy; y++) {
         for (int x = minx, i = y * w + minx; x <= maxx; x++, i++) {
           // If correct object
-          if (assigned[i] == f.object) {
+          if (assigned[i] == f.id) {
             // Get distance squared
             final int d2 = assignedDistance[i];
             // Put in radial stats
