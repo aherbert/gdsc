@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
+import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper.LutColour;
@@ -65,6 +66,7 @@ import uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer.ObjectCentre;
 public class SpotRadialIntensity_PlugIn implements PlugIn {
   private static final String TITLE = "Spot Radial Intensity";
   private static final AtomicReference<TextWindow> resultsWindow = new AtomicReference<>();
+  private static final AtomicReference<TextWindow> objectsWindow = new AtomicReference<>();
 
   private ImagePlus imp;
   private String prefix;
@@ -421,7 +423,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
    *
    * @param foci the foci
    * @param objects the objects
-   * @param roi the roi
+   * @param roi the roi (used to show ROI on a radii image)
    */
   private void analyse(Foci[] foci, ObjectAnalyzer objects, PointRoi roi) {
     final TextWindow tw = (settings.showTable) ? createResultsWindow() : null;
@@ -429,6 +431,11 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
 
     final int[] mask = objects.getObjectMask();
     final float[] background = getBackground(objects);
+
+    // Show a table of objects: ID, Cx, Cy, Size, Intensity, Mean, Background
+    if (settings.showTable) {
+      summariseObjects(objects, background);
+    }
 
     // Optionally segment the mask objects using segments of the specified width
     if (settings.segment) {
@@ -749,5 +756,34 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       sb.append("-").append(MathUtils.rounded(high));
     }
     return sb.toString();
+  }
+
+  private void summariseObjects(ObjectAnalyzer objects, float[] background) {
+    final TextWindow tw = createObjectWindow();
+    final StringBuilder sb = new StringBuilder(256);
+    final ObjectCentre[] centres = objects.getObjectCentres();
+    final int[] mask = objects.getObjectMask();
+    final double[] intensities = new double[centres.length];
+    final ImageProcessor ip = imp.getProcessor().duplicate();
+    for (int i = 0, len = ip.getWidth() * ip.getHeight(); i < len; i++) {
+      intensities[mask[i]] += ip.getf(i);
+    }
+    try (BufferedTextWindow bw = new BufferedTextWindow(tw)) {
+      for (int i = 1; i < centres.length; i++) {
+        sb.setLength(0);
+        sb.append(prefix).append('\t').append(i).append('\t')
+            .append(String.format("%.2f", centres[i].getCentreX())).append('\t')
+            .append(String.format("%.2f", centres[i].getCentreY())).append('\t')
+            .append(centres[i].getSize()).append('\t').append(intensities[i]).append('\t')
+            .append(String.format("%.2f", intensities[i] / centres[i].getSize())).append('\t')
+            .append(background[i]);
+        bw.append(sb.toString());
+      }
+    }
+  }
+
+  private static TextWindow createObjectWindow() {
+    return ImageJUtils.refresh(objectsWindow, () -> new TextWindow(TITLE + " Objects",
+        "Image\tObject\tx\ty\tn\tIntensity\tMean\tBackground", "", 700, 300));
   }
 }
