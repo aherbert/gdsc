@@ -27,7 +27,6 @@ package uk.ac.sussex.gdsc.ij.foci;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.gui.Plot;
 import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
@@ -48,6 +47,7 @@ import java.util.stream.IntStream;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper;
 import uk.ac.sussex.gdsc.core.ij.process.LutHelper.LutColour;
 import uk.ac.sussex.gdsc.core.utils.LocalList;
@@ -67,6 +67,8 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
   private static final String TITLE = "Spot Radial Intensity";
   private static final AtomicReference<TextWindow> resultsWindow = new AtomicReference<>();
   private static final AtomicReference<TextWindow> objectsWindow = new AtomicReference<>();
+  private static final int MODE_MASK = 1;
+  private static final int MODE_EXCLUSIVE_MASK = 2;
 
   private ImagePlus imp;
   private String prefix;
@@ -87,7 +89,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     String maskImage = "";
     int distance = 10;
     double interval = 1;
-    boolean segment;
+    int segmentMode;
     double segmentWidth = 3;
     boolean showFoci;
     boolean showObjects;
@@ -113,7 +115,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       maskImage = source.maskImage;
       distance = source.distance;
       interval = source.interval;
-      segment = source.segment;
+      segmentMode = source.segmentMode;
       segmentWidth = source.segmentWidth;
       showFoci = source.showFoci;
       showObjects = source.showObjects;
@@ -195,7 +197,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
 
     settings = Settings.load();
 
-    final GenericDialog gd = new GenericDialog(TITLE);
+    final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
     gd.addMessage("Analyses spots within a mask region\n"
         + "and computes radial intensity within the mask object region.");
@@ -209,7 +211,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     gd.addChoice("Mask", maskImageList, settings.maskImage);
     gd.addNumericField("Distance", settings.distance, 0, 6, "pixels");
     gd.addNumericField("Interval", settings.interval, 2, 6, "pixels");
-    gd.addCheckbox("Segment", settings.segment);
+    gd.addChoice("Segment", new String[] {"None", "Mask", "Exclusive Mask"}, settings.segmentMode);
     gd.addNumericField("Segment_width", settings.segmentWidth, 2, 6, "pixels");
     gd.addCheckbox("Show_foci", settings.showFoci);
     gd.addCheckbox("Show_objects", settings.showObjects);
@@ -236,7 +238,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     settings.maskImage = gd.getNextChoice();
     settings.distance = (int) gd.getNextNumber();
     settings.interval = gd.getNextNumber();
-    settings.segment = gd.getNextBoolean();
+    settings.segmentMode = gd.getNextChoiceIndex();
     settings.segmentWidth = gd.getNextNumber();
     settings.showFoci = gd.getNextBoolean();
     settings.showObjects = gd.getNextBoolean();
@@ -252,7 +254,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       IJ.error(TITLE, "No valid distances using the given interval");
       return;
     }
-    if (settings.segment && settings.segmentWidth < 1) {
+    if (settings.segmentMode != 1 && settings.segmentWidth < 1) {
       IJ.error(TITLE, "Invalid segment width: " + settings.segmentWidth);
       return;
     }
@@ -429,17 +431,20 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     final TextWindow tw = (settings.showTable) ? createResultsWindow() : null;
     final StringBuilder sb = new StringBuilder();
 
+    final ObjectCentre[] centres = settings.showTable || settings.segmentMode != 0 ?
+        objects.getObjectCentres() : null;
+
     final int[] mask = objects.getObjectMask();
     final float[] background = getBackground(objects);
 
     // Show a table of objects: ID, Cx, Cy, Size, Intensity, Mean, Background
     if (settings.showTable) {
-      summariseObjects(objects, background);
+      summariseObjects(objects, centres, background);
     }
 
     // Optionally segment the mask objects using segments of the specified width
-    if (settings.segment) {
-      segmentMask(mask, objects, foci);
+    if (settings.segmentMode == MODE_MASK) {
+      segmentMask(mask, objects, centres, foci);
     }
 
     // For radial intensity
@@ -492,12 +497,18 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       assignedDistance[f.y * w + f.x] = 0;
       assigned[f.y * w + f.x] = f.id;
 
+      Roi segment = null;
+      if (settings.segmentMode == MODE_EXCLUSIVE_MASK) {
+        // Only use pixels within the segment
+        segment = createSegmentRoi(f, centres[f.object]);
+      }
+
       // For all pixels
       for (int y = miny; y <= maxy; y++) {
         final int dy2 = MathUtils.pow2(f.y - y);
         for (int x = minx, i = y * w + minx, j = 0; x <= maxx; x++, i++, j++) {
-          // If correct object
-          if (mask[i] == f.object) {
+          // If correct object (and segment)
+          if (mask[i] == f.object && (segment == null || segment.contains(x, y))) {
             // Get distance squared
             final int d2 = dy2 + dx2[j];
             if (d2 < limit && d2 < assignedDistance[i]) {
@@ -687,43 +698,48 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
    *
    * @param mask the mask
    * @param objects the objects
+   * @param centres the centres
    * @param foci the foci
    */
-  private void segmentMask(int[] mask, ObjectAnalyzer objects, Foci[] foci) {
+  private void segmentMask(int[] mask, ObjectAnalyzer objects, ObjectCentre[] centres,
+      Foci[] foci) {
     // Note: Object centres use the top-left corner of the pixel as (0,0).
     // Add 0.5 to position the segments around the pixel centre.
-    final ObjectCentre[] centres = objects.getObjectCentres();
     final byte[] within = new byte[mask.length];
     final ByteProcessor ip = new ByteProcessor(objects.getWidth(), objects.getHeight(), within);
     ip.setColor(255);
     for (int ii = 0; ii < foci.length; ii++) {
       final Foci f = foci[ii];
       final ObjectCentre c = centres[f.object];
-      // Construct triangle segment.
-      double dx = c.getCentreX() - f.x;
-      double dy = c.getCentreY() - f.y;
-      // Normalise
-      final double norm = Math.hypot(dx, dy);
-      if (norm == 0) {
-        ImageJUtils.log("Foci (%d,%d) located in object %d centre", f.x, f.y, f.object);
-        continue;
-      }
-      // Create base using half the segment width in each direction
-      dx = 0.5 * settings.segmentWidth * dx / norm;
-      dy = 0.5 * settings.segmentWidth * dy / norm;
-      // Orthogonal vectpr is:
-      // clockwise = dy, -dx
-      // anticlockwise = -dy, dx
-      final double px = f.x + 0.5;
-      final double py = f.y + 0.5;
-      final float[] x = {(float) (c.getCentreX() + 0.5), (float) (px + dy), (float) (px - dy)};
-      final float[] y = {(float) (c.getCentreY() + 0.5), (float) (py - dx), (float) (py + dx)};
-      final PolygonRoi roi = new PolygonRoi(x, y, Roi.POLYGON);
+      final Roi roi = createSegmentRoi(f, c);
       ip.fill(roi);
     }
     for (int i = 0; i < mask.length; i++) {
       mask[i] &= within[i];
     }
+  }
+
+  private Roi createSegmentRoi(Foci f, ObjectCentre c) {
+    // Construct triangle segment.
+    double dx = c.getCentreX() - f.x;
+    double dy = c.getCentreY() - f.y;
+    // Normalise
+    final double norm = Math.hypot(dx, dy);
+    if (norm == 0) {
+      ImageJUtils.log("Foci (%d,%d) located in object %d centre", f.x, f.y, f.object);
+      return null;
+    }
+    // Create base using half the segment width in each direction
+    dx = 0.5 * settings.segmentWidth * dx / norm;
+    dy = 0.5 * settings.segmentWidth * dy / norm;
+    // Orthogonal vectpr is:
+    // clockwise = dy, -dx
+    // anticlockwise = -dy, dx
+    final double px = f.x + 0.5;
+    final double py = f.y + 0.5;
+    final float[] x = {(float) (c.getCentreX() + 0.5), (float) (px + dy), (float) (px - dy)};
+    final float[] y = {(float) (c.getCentreY() + 0.5), (float) (py - dx), (float) (py + dx)};
+    return new PolygonRoi(x, y, Roi.POLYGON);
   }
 
   private TextWindow createResultsWindow() {
@@ -758,10 +774,10 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     return sb.toString();
   }
 
-  private void summariseObjects(ObjectAnalyzer objects, float[] background) {
+  private void summariseObjects(ObjectAnalyzer objects, ObjectCentre[] centres,
+      float[] background) {
     final TextWindow tw = createObjectWindow();
     final StringBuilder sb = new StringBuilder(256);
-    final ObjectCentre[] centres = objects.getObjectCentres();
     final int[] mask = objects.getObjectMask();
     final double[] intensities = new double[centres.length];
     final ImageProcessor ip = imp.getProcessor().duplicate();
