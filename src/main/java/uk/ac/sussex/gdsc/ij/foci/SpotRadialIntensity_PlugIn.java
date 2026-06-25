@@ -96,6 +96,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     boolean showTable = true;
     boolean showPlot = true;
     boolean showRadii;
+    boolean plotDistanceAverages = true;
 
     /**
      * Default constructor.
@@ -122,6 +123,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       showTable = source.showTable;
       showPlot = source.showPlot;
       showRadii = source.showRadii;
+      plotDistanceAverages = source.plotDistanceAverages;
     }
 
     /**
@@ -218,6 +220,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     gd.addCheckbox("Show_table", settings.showTable);
     gd.addCheckbox("Show_plot", settings.showPlot);
     gd.addCheckbox("Show_radii", settings.showRadii);
+    gd.addCheckbox("Plot_average_distances", settings.plotDistanceAverages);
     gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
 
     gd.showDialog();
@@ -245,6 +248,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     settings.showTable = gd.getNextBoolean();
     settings.showPlot = gd.getNextBoolean();
     settings.showRadii = gd.getNextBoolean();
+    settings.plotDistanceAverages = gd.getNextBoolean();
 
     settings.save();
 
@@ -428,11 +432,11 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
    * @param roi the roi (used to show ROI on a radii image)
    */
   private void analyse(Foci[] foci, ObjectAnalyzer objects, PointRoi roi) {
-    final TextWindow tw = (settings.showTable) ? createResultsWindow() : null;
+    final TextWindow tw = settings.showTable ? createResultsWindow() : null;
     final StringBuilder sb = new StringBuilder();
 
-    final ObjectCentre[] centres = settings.showTable || settings.segmentMode != 0 ?
-        objects.getObjectCentres() : null;
+    final ObjectCentre[] centres =
+        settings.showTable || settings.segmentMode != 0 ? objects.getObjectCentres() : null;
 
     final int[] mask = objects.getObjectMask();
     final float[] background = getBackground(objects);
@@ -454,6 +458,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     final int maxBin = (int) (distance / settings.interval);
     final int[] count = new int[maxBin];
     final double[] sum = new double[maxBin];
+    final double[] sumD = new double[maxBin];
     // The lower limit of the squared distance for each bin
     final double[] distances = new double[maxBin];
     for (int i = 0; i < distances.length; i++) {
@@ -538,6 +543,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
 
     final Statistics[] stats =
         IntStream.range(0, maxBin).mapToObj(i -> new Statistics()).toArray(Statistics[]::new);
+    final double[] allD = new double[maxBin];
     // Here we already have the distances for each foci. We could single pass through the
     // asiigned array. But we still process each foci so we can output the plot and results
     // table per foci.
@@ -554,6 +560,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       for (int i = 0, len = count.length; i < len; i++) {
         count[i] = 0;
         sum[i] = 0;
+        sumD[i] = 0;
       }
 
       final float b = background[f.object];
@@ -575,10 +582,14 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
             }
             count[bin]++;
             sum[bin] += pixels[i];
+            sumD[bin] += Math.sqrt(d2);
             stats[bin].add(pixels[i] - b);
             ip.set(i, bin + 1);
           }
         }
+      }
+      for (int i = 0, len = allD.length; i < len; i++) {
+        allD[i] += sumD[i];
       }
 
       if (tw != null) {
@@ -603,36 +614,52 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
         for (int i = 0; i < maxBin; i++) {
           sb.append('\t').append(count[i]);
         }
+        for (int i = 0; i < maxBin; i++) {
+          if (count[i] != 0) {
+            sb.append('\t').append(MathUtils.rounded(sumD[i] / count[i]));
+          } else {
+            sb.append("\t-");
+          }
+        }
 
         tw.append(sb.toString());
       }
 
       // Add to plot
+      // Use observed average bin distance
+      double[] x = xAxis.clone();
       if (plot != null) {
         int xlimit = 0;
         for (int i = 0; i < maxBin; i++) {
           if (count[i] != 0) {
             xlimit = i + 1;
+            x[i] = sumD[i] / count[i];
           }
         }
 
+        x = settings.plotDistanceAverages ? x : xAxis;
         plot.setColor(LutHelper.getColour(lut, ii + 1, 0, foci.length));
         if (xlimit < xAxis.length) {
-          plot.addPoints(Arrays.copyOf(xAxis, xlimit), Arrays.copyOf(yAxis, xlimit), Plot.LINE);
+          plot.addPoints(Arrays.copyOf(x, xlimit), Arrays.copyOf(yAxis, xlimit), Plot.LINE);
         } else {
-          plot.addPoints(xAxis, yAxis, Plot.LINE);
+          plot.addPoints(x, yAxis, Plot.LINE);
         }
       }
     }
 
     if (plot != null) {
       plot.setColor(Color.blue);
+      double[] x = xAxis.clone();
       final double[] yError = new double[xAxis.length];
       for (int i = 0; i < maxBin; i++) {
+        if (stats[i].getN() != 0) {
+          x[i] = allD[i] / stats[i].getN();
+        }
         yAxis[i] = stats[i].getMean();
         yError[i] = stats[i].getConfidenceInterval(0.95);
       }
-      plot.addPoints(xAxis, yAxis, yError, Plot.LINE);
+      x = settings.plotDistanceAverages ? x : xAxis;
+      plot.addPoints(x, yAxis, yError, Plot.LINE);
 
       plot.setColor(Color.BLACK);
       ImageJUtils.display(TITLE, plot);
@@ -647,7 +674,14 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
         sb.append('\t').append(MathUtils.rounded(stats[i].getMean()));
       }
       for (int i = 0; i < maxBin; i++) {
-        sb.append('\t').append(MathUtils.rounded(stats[i].getN()));
+        sb.append('\t').append(stats[i].getN());
+      }
+      for (int i = 0; i < maxBin; i++) {
+        if (stats[i].getN() != 0) {
+          sb.append('\t').append(MathUtils.rounded(allD[i] / stats[i].getN()));
+        } else {
+          sb.append("\t-");
+        }
       }
 
       tw.append(sb.toString());
@@ -769,6 +803,12 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       final double low = settings.interval * i;
       final double high = settings.interval * (i + 1);
       sb.append("\tN ").append(MathUtils.rounded(low));
+      sb.append("-").append(MathUtils.rounded(high));
+    }
+    for (int i = 0; i < maxBin; i++) {
+      final double low = settings.interval * i;
+      final double high = settings.interval * (i + 1);
+      sb.append("\tD ").append(MathUtils.rounded(low));
       sb.append("-").append(MathUtils.rounded(high));
     }
     return sb.toString();
