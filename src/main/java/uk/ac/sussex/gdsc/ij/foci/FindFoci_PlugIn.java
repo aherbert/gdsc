@@ -321,7 +321,7 @@ public class FindFoci_PlugIn implements PlugIn, MacroExtension {
     private static final String KEY_SEARCH_CAPACITY = "findfoci.searchCapacity";
     private static final String KEY_EMPTY_FIELD = "findfoci.emptyField";
 
-    private static final GlobalSettings INSTANCE = new GlobalSettings();
+    static final GlobalSettings INSTANCE = new GlobalSettings();
 
     /**
      * The search capacity. This is the maximum number of potential maxima for the algorithm. The
@@ -354,7 +354,7 @@ public class FindFoci_PlugIn implements PlugIn, MacroExtension {
    */
   private static class BatchSettings {
     /** The last settings used by the plugin. This should be updated after plugin execution. */
-    private static final AtomicReference<BatchSettings> lastSettings =
+    private static final AtomicReference<BatchSettings> LAST_SETTINGS =
         new AtomicReference<>(new BatchSettings());
 
     private static final String KEY_BATCH_INPUT_DIRECTORY = "findfoci.batchInputDirectory";
@@ -413,14 +413,14 @@ public class FindFoci_PlugIn implements PlugIn, MacroExtension {
      * @return the settings
      */
     static BatchSettings load() {
-      return lastSettings.get().copy();
+      return LAST_SETTINGS.get().copy();
     }
 
     /**
      * Save the settings.
      */
     void save() {
-      lastSettings.set(this);
+      LAST_SETTINGS.set(this);
       // Store in preferences for next time
       Prefs.set(KEY_BATCH_INPUT_DIRECTORY, inputDirectory);
       Prefs.set(KEY_BATCH_MASK_DIRECTORY, maskDirectory);
