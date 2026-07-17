@@ -1282,7 +1282,7 @@ public class FindFociProcessorOptions {
       peakMethod = PeakMethod.RELATIVE_ABOVE_BACKGROUND;
       peakParameter = 0.5;
       sortMethod = SortMethod.INTENSITY;
-      maxPeaks = 50;
+      maxPeaks = 500;
       maskMethod = MaskMethod.PEAKS_ABOVE_SADDLE;
       centreMethod = CentreMethod.MAX_VALUE_SEARCH;
       centreParameter = 2;
