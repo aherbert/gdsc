@@ -1303,12 +1303,12 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
 
     final Plot plot = new Plot(CORRELATION_VALUES_TITLE, "Threshold", "R");
     plot.setLimits(threshold[0], threshold[threshold.length - 1], ymin, ymax);
-    plot.addPoints(threshold, r1, Plot.LINE);
     plot.setColor(Color.BLUE);
-    plot.draw();
+    plot.addPoints(threshold, r1, Plot.LINE);
     plot.setColor(Color.RED);
     plot.addPoints(threshold, r2, Plot.CROSS);
     plot.setColor(Color.BLACK);
     plot.addLabel(0, 0, "Blue=C1+C2 above threshold; Red=Ch1/Ch2 below threshold");
+    ImageJUtils.display(CORRELATION_VALUES_TITLE, plot);
   }
 }
