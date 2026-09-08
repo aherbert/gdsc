@@ -31,7 +31,6 @@ import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.detection.SpotDetectorFactoryBase;
 import fiji.plugin.trackmate.gui.components.ConfigurationPanel;
-import fiji.plugin.trackmate.io.IOUtils;
 import fiji.plugin.trackmate.util.TMUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,7 +43,6 @@ import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import org.jdom2.Element;
 import org.scijava.plugin.Plugin;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 
@@ -102,9 +100,6 @@ public class NucleusDetectorFactory<T extends RealType<T> & NativeType<T>>
   /** The pixel sizes in the 3 dimensions. */
   private double[] calibration;
 
-  /** The message from the last error. */
-  private String errorMessage;
-
   /** The target channel to find the nuclei. */
   private int targetChannel;
 
@@ -141,33 +136,6 @@ public class NucleusDetectorFactory<T extends RealType<T> & NativeType<T>>
   }
 
   @Override
-  public boolean setTarget(final ImgPlus<T> img, final Map<String, Object> settings) {
-    // The input image here has all dimensions XYZCT if present in the ImageJ image.
-    this.img = img;
-    updatedInterval = null;
-    calibration = TMUtils.getSpatialCalibration(img);
-    if (checkSettings(settings)) {
-      // Convert to zero-based index
-      targetChannel = (Integer) settings.get(DetectorKeys.KEY_TARGET_CHANNEL) - 1;
-      analysisChannel = (Integer) settings.getOrDefault(SETTING_ANALYSIS_CHANNEL, 0) - 1;
-      // Convert settings from the generic map
-      detectorSettings = new uk.ac.sussex.gdsc.ij.foci.NucleiOutline_PlugIn.Settings();
-      detectorSettings.setBlur1((Double) settings.get(SETTING_BLUR1));
-      detectorSettings.setBlur2((Double) settings.get(SETTING_BLUR2));
-      detectorSettings.setMethod((AutoThreshold.Method) settings.get(SETTING_METHOD));
-      detectorSettings.setOutlierRadius((Double) settings.get(SETTING_OUTLIER_RADIUS));
-      detectorSettings.setOutlierThreshold((Double) settings.get(SETTING_OUTLIER_THRESHOLD));
-      detectorSettings.setMaxNucleusSize((Double) settings.get(SETTING_MAX_NUCLEUS_SIZE));
-      detectorSettings.setMinNucleusSize((Double) settings.get(SETTING_MIN_NUCLEUS_SIZE));
-      detectorSettings.setErosion((Integer) settings.get(SETTING_EROSION));
-      detectorSettings.setExpansionInner((Integer) settings.get(SETTING_EXPANSION_INNER));
-      detectorSettings.setExpansion((Integer) settings.get(SETTING_EXPANSION));
-      return true;
-    }
-    return false;
-  }
-
-  @Override
   public Map<String, Object> getDefaultSettings() {
     final uk.ac.sussex.gdsc.ij.foci.NucleiOutline_PlugIn.Settings settings =
         uk.ac.sussex.gdsc.ij.foci.NucleiOutline_PlugIn.Settings.load();
@@ -177,7 +145,7 @@ public class NucleusDetectorFactory<T extends RealType<T> & NativeType<T>>
     // Convert settings to a map
     map.put(SETTING_BLUR1, settings.getBlur1());
     map.put(SETTING_BLUR2, settings.getBlur2());
-    map.put(SETTING_METHOD, settings.getMethod());
+    map.put(SETTING_METHOD, settings.getMethod().toString());
     map.put(SETTING_OUTLIER_RADIUS, settings.getOutlierRadius());
     map.put(SETTING_OUTLIER_THRESHOLD, settings.getOutlierThreshold());
     map.put(SETTING_MAX_NUCLEUS_SIZE, settings.getMaxNucleusSize());
@@ -189,13 +157,13 @@ public class NucleusDetectorFactory<T extends RealType<T> & NativeType<T>>
   }
 
   @Override
-  public boolean checkSettings(final Map<String, Object> settings) {
+  public String checkSettings(final Map<String, Object> settings) {
     final StringBuilder errorHolder = new StringBuilder();
     TMUtils.checkParameter(settings, DetectorKeys.KEY_TARGET_CHANNEL, Integer.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_ANALYSIS_CHANNEL, Integer.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_BLUR1, Double.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_BLUR2, Double.class, errorHolder);
-    TMUtils.checkParameter(settings, SETTING_METHOD, AutoThreshold.Method.class, errorHolder);
+    TMUtils.checkParameter(settings, SETTING_METHOD, String.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_OUTLIER_RADIUS, Double.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_OUTLIER_THRESHOLD, Double.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_MAX_NUCLEUS_SIZE, Double.class, errorHolder);
@@ -218,15 +186,35 @@ public class NucleusDetectorFactory<T extends RealType<T> & NativeType<T>>
     mandatoryKeys.add(SETTING_EXPANSION_INNER);
     mandatoryKeys.add(SETTING_EXPANSION);
     TMUtils.checkMapKeys(settings, mandatoryKeys, null, errorHolder);
-    if (errorHolder.length() != 0) {
-      errorMessage = errorHolder.toString();
-      return false;
-    }
-    return true;
+    return errorHolder.length() != 0 ? errorHolder.toString() : null;
   }
 
   @Override
-  public SpotDetector<T> getDetector(final Interval interval, final int frame) {
+  public SpotDetector<T> getDetector(ImgPlus<T> img, Map<String, Object> settings,
+      Interval interval, int frame) {
+
+    // The input image here has all dimensions XYZCT if present in the ImageJ image.
+    this.img = img;
+    updatedInterval = null;
+    calibration = TMUtils.getSpatialCalibration(img);
+
+    // Assume TrackMate has called checkSettings
+    // Convert to zero-based index
+    targetChannel = (Integer) settings.get(DetectorKeys.KEY_TARGET_CHANNEL) - 1;
+    analysisChannel = (Integer) settings.getOrDefault(SETTING_ANALYSIS_CHANNEL, 0) - 1;
+    // Convert settings from the generic map
+    detectorSettings = new uk.ac.sussex.gdsc.ij.foci.NucleiOutline_PlugIn.Settings();
+    detectorSettings.setBlur1((Double) settings.get(SETTING_BLUR1));
+    detectorSettings.setBlur2((Double) settings.get(SETTING_BLUR2));
+    detectorSettings.setMethod(AutoThreshold.getMethod((String) settings.get(SETTING_METHOD)));
+    detectorSettings.setOutlierRadius((Double) settings.get(SETTING_OUTLIER_RADIUS));
+    detectorSettings.setOutlierThreshold((Double) settings.get(SETTING_OUTLIER_THRESHOLD));
+    detectorSettings.setMaxNucleusSize((Double) settings.get(SETTING_MAX_NUCLEUS_SIZE));
+    detectorSettings.setMinNucleusSize((Double) settings.get(SETTING_MIN_NUCLEUS_SIZE));
+    detectorSettings.setErosion((Integer) settings.get(SETTING_EROSION));
+    detectorSettings.setExpansionInner((Integer) settings.get(SETTING_EXPANSION_INNER));
+    detectorSettings.setExpansion((Integer) settings.get(SETTING_EXPANSION));
+
     final ImgPlus<T> imFrame1 = prepareFrameImg(frame, targetChannel);
     final ImgPlus<T> imFrame2 = prepareFrameImg(frame, analysisChannel);
 
@@ -315,90 +303,6 @@ public class NucleusDetectorFactory<T extends RealType<T> & NativeType<T>>
   }
 
   @Override
-  public String getErrorMessage() {
-    return errorMessage;
-  }
-
-  @Override
-  public boolean marshall(final Map<String, Object> settings, final Element element) {
-    // This may not be needed. It is not present in the TrackMate source files but is
-    // mentioned on the tutorials.
-    element.setAttribute(DetectorKeys.XML_ATTRIBUTE_DETECTOR_NAME, getKey());
-
-    final StringBuilder errorHolder = new StringBuilder();
-    IOUtils.writeAttribute(settings, element, DetectorKeys.KEY_TARGET_CHANNEL, Integer.class,
-        errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_ANALYSIS_CHANNEL, Integer.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_BLUR1, Double.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_BLUR2, Double.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_METHOD, AutoThreshold.Method.class,
-        errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_OUTLIER_RADIUS, Double.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_OUTLIER_THRESHOLD, Double.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_MAX_NUCLEUS_SIZE, Double.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_MIN_NUCLEUS_SIZE, Double.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_EROSION, Integer.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_EXPANSION_INNER, Integer.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_EXPANSION, Integer.class, errorHolder);
-    if (errorHolder.length() != 0) {
-      errorMessage = errorHolder.toString();
-      return false;
-    }
-    return true;
-  }
-
-  @Override
-  public boolean unmarshall(final Element element, final Map<String, Object> settings) {
-    settings.clear();
-    final StringBuilder errorHolder = new StringBuilder();
-    IOUtils.readIntegerAttribute(element, settings, DetectorKeys.KEY_TARGET_CHANNEL, errorHolder);
-    IOUtils.readIntegerAttribute(element, settings, SETTING_ANALYSIS_CHANNEL, errorHolder);
-    IOUtils.readDoubleAttribute(element, settings, SETTING_BLUR1, errorHolder);
-    IOUtils.readDoubleAttribute(element, settings, SETTING_BLUR2, errorHolder);
-    readMethodAttribute(element, settings, SETTING_METHOD, errorHolder);
-    IOUtils.readDoubleAttribute(element, settings, SETTING_OUTLIER_RADIUS, errorHolder);
-    IOUtils.readDoubleAttribute(element, settings, SETTING_OUTLIER_THRESHOLD, errorHolder);
-    IOUtils.readDoubleAttribute(element, settings, SETTING_MAX_NUCLEUS_SIZE, errorHolder);
-    IOUtils.readDoubleAttribute(element, settings, SETTING_MIN_NUCLEUS_SIZE, errorHolder);
-    IOUtils.readIntegerAttribute(element, settings, SETTING_EROSION, errorHolder);
-    IOUtils.readIntegerAttribute(element, settings, SETTING_EXPANSION_INNER, errorHolder);
-    IOUtils.readIntegerAttribute(element, settings, SETTING_EXPANSION, errorHolder);
-    if (errorHolder.length() != 0) {
-      errorMessage = errorHolder.toString();
-      return false;
-    }
-    return checkSettings(settings);
-  }
-
-  /**
-   * Read the Method attribute.
-   *
-   * @param element the element
-   * @param settings the settings
-   * @param parameterKey the parameter key
-   * @param errorHolder the error holder
-   * @return true, if successful
-   */
-  private static final boolean readMethodAttribute(final Element element,
-      final Map<String, Object> settings, final String parameterKey,
-      final StringBuilder errorHolder) {
-    final String str = element.getAttributeValue(parameterKey);
-    if (null == str) {
-      errorHolder.append("Attribute " + parameterKey + " could not be found in XML element.\n");
-      return false;
-    }
-    try {
-      final AutoThreshold.Method val = AutoThreshold.getMethod(str);
-      settings.put(parameterKey, val);
-    } catch (final NumberFormatException nfe) {
-      errorHolder.append(
-          "Could not read " + parameterKey + " attribute as a double value. Got " + str + ".\n");
-      return false;
-    }
-    return true;
-  }
-
-  @Override
   public ConfigurationPanel getDetectorConfigurationPanel(final Settings settings,
       final Model model) {
     return new NucleusDetectorConfigurationPanel(settings, model);
@@ -411,6 +315,6 @@ public class NucleusDetectorFactory<T extends RealType<T> & NativeType<T>>
     // The method is used in fiji.plugin.trackmate.Settings.copyOn(ImagePlus) where it is
     // documented to copy the settings but configured to run on a new image. In this case
     // any cache is not relevant and we return a fresh instance.
-    return new PrecomputedDetectorFactory<>();
+    return new NucleusDetectorFactory<>();
   }
 }

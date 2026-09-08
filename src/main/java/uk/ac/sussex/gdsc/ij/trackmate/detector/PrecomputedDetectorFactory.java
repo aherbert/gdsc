@@ -27,12 +27,10 @@ package uk.ac.sussex.gdsc.ij.trackmate.detector;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.detection.SpotDetectorFactoryBase;
 import fiji.plugin.trackmate.gui.components.ConfigurationPanel;
-import fiji.plugin.trackmate.io.IOUtils;
 import fiji.plugin.trackmate.util.TMUtils;
 import ij.Prefs;
 import java.io.BufferedReader;
@@ -54,7 +52,6 @@ import net.imagej.axis.Axes;
 import net.imglib2.Interval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import org.jdom2.Element;
 import org.scijava.plugin.Plugin;
 import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
@@ -136,8 +133,8 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
   /** The pixel sizes in the 3 dimensions. */
   private double[] calibration;
 
-  /** The message from the last error. */
   private String errorMessage;
+  private ImgPlus<T> lastImg;
 
   /** The data. */
   private Map<Integer, List<RawSpot>> data;
@@ -193,8 +190,16 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     return NAME;
   }
 
-  @Override
-  public boolean setTarget(final ImgPlus<T> img, final Map<String, Object> settings) {
+  /**
+   * Sets the target. This was a TrackMate 7 method in the SpotDetectorFactory. TrackMate 8 now
+   * passes the image and settings to the {@link #getDetector(ImgPlus, Map, Interval, int)} method.
+   * The method is kept here and called from getDetector if the image is different.
+   *
+   * @param img the img
+   * @param settings the settings
+   * @return true, if successful
+   */
+  private boolean setTarget(final ImgPlus<T> img, final Map<String, Object> settings) {
     // Reset
     calibration = null;
     errorMessage = null;
@@ -204,7 +209,7 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
       errorMessage = "Image must have XY axes";
       return false;
     }
-    if (!checkSettings(settings)) {
+    if (checkSettings(settings) != null) {
       return false;
     }
 
@@ -263,7 +268,7 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
   }
 
   @Override
-  public boolean checkSettings(final Map<String, Object> settings) {
+  public String checkSettings(final Map<String, Object> settings) {
     final StringBuilder errorHolder = new StringBuilder();
     TMUtils.checkParameter(settings, SETTING_INPUT_FILE, String.class, errorHolder);
     TMUtils.checkParameter(settings, SETTING_HEADER_LINES, Integer.class, errorHolder);
@@ -285,9 +290,9 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
     TMUtils.checkMapKeys(settings, mandatoryKeys, null, errorHolder);
     if (errorHolder.length() != 0) {
       errorMessage = errorHolder.toString();
-      return false;
+      return errorMessage;
     }
-    return true;
+    return null;
   }
 
   /**
@@ -408,89 +413,21 @@ public class PrecomputedDetectorFactory<T extends RealType<T> & NativeType<T>>
   }
 
   @Override
-  public SpotDetector<T> getDetector(final Interval interval, final int frame) {
-    // This should only be called after setTarget.
+  public SpotDetector<T> getDetector(ImgPlus<T> img, Map<String, Object> settings,
+      Interval interval, int frame) {
+    // Assume that TrackMate has called checkSettings.
+    // Reset if the image has changed.
+    if (lastImg != img) {
+      setTarget(img, settings);
+      lastImg = img;
+    }
+
     // If we have no data then return a dummy detector that will return the error message.
     if (data == null) {
       return new FailedSpotDetector();
     }
     return new PrecomputedDetector<>(data.getOrDefault(frame, Collections.emptyList()), interval,
         calibration);
-  }
-
-  @Override
-  public String getErrorMessage() {
-    return errorMessage;
-  }
-
-  @Override
-  public boolean marshall(final Map<String, Object> settings, final Element element) {
-    // This may not be needed. It is not present in the TrackMate source files but is
-    // mentioned on the tutorials.
-    element.setAttribute(DetectorKeys.XML_ATTRIBUTE_DETECTOR_NAME, getKey());
-
-    final StringBuilder errorHolder = new StringBuilder();
-    IOUtils.writeAttribute(settings, element, SETTING_INPUT_FILE, String.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_HEADER_LINES, Integer.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_COMMENT_CHAR, String.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_DELIMITER, String.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_COLUMN_ID, Integer.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_COLUMN_FRAME, Integer.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_COLUMN_X, Integer.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_COLUMN_Y, Integer.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_COLUMN_Z, Integer.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_COLUMN_RADIUS, Integer.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_COLUMN_CATEGORY, Integer.class, errorHolder);
-    IOUtils.writeAttribute(settings, element, SETTING_CATEGORY_FILE, String.class, errorHolder);
-    if (errorHolder.length() != 0) {
-      errorMessage = errorHolder.toString();
-      return false;
-    }
-    return true;
-  }
-
-  @Override
-  public boolean unmarshall(final Element element, final Map<String, Object> settings) {
-    settings.clear();
-    final StringBuilder errorHolder = new StringBuilder();
-    readStringAttribute(element, settings, SETTING_INPUT_FILE, errorHolder);
-    IOUtils.readIntegerAttribute(element, settings, SETTING_HEADER_LINES, errorHolder);
-    readStringAttribute(element, settings, SETTING_COMMENT_CHAR, errorHolder);
-    readStringAttribute(element, settings, SETTING_DELIMITER, errorHolder);
-    IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_ID, errorHolder);
-    IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_FRAME, errorHolder);
-    IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_X, errorHolder);
-    IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_Y, errorHolder);
-    IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_Z, errorHolder);
-    IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_RADIUS, errorHolder);
-    IOUtils.readIntegerAttribute(element, settings, SETTING_COLUMN_CATEGORY, errorHolder);
-    readStringAttribute(element, settings, SETTING_CATEGORY_FILE, errorHolder);
-    if (errorHolder.length() != 0) {
-      errorMessage = errorHolder.toString();
-      return false;
-    }
-    return checkSettings(settings);
-  }
-
-  /**
-   * Read the String attribute.
-   *
-   * @param element the element
-   * @param settings the settings
-   * @param parameterKey the parameter key
-   * @param errorHolder the error holder
-   * @return true, if successful
-   */
-  private static final boolean readStringAttribute(final Element element,
-      final Map<String, Object> settings, final String parameterKey,
-      final StringBuilder errorHolder) {
-    final String str = element.getAttributeValue(parameterKey);
-    if (null == str) {
-      errorHolder.append("Attribute " + parameterKey + " could not be found in XML element.\n");
-      return false;
-    }
-    settings.put(parameterKey, str);
-    return true;
   }
 
   @Override
