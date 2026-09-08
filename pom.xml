@@ -91,6 +91,8 @@ Software for microscopy image analysis
   </contributors>
 
   <properties>
+    <!-- Required for Trackmate 8.0 -->
+    <scijava.jvm.version>11</scijava.jvm.version>
     <license.licenseName>gpl_v3</license.licenseName>
     <license.copyrightOwners>Alex Herbert</license.copyrightOwners>
 
@@ -218,6 +220,13 @@ Software for microscopy image analysis
       </plugin>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <!-- Build java 8 javadocs.
+            Java 11 is only required to build with scijava managed dependencies
+            but not all dependencies support JPMS javadocs:
+            imagescience -> Image_5D with an invalid module name Image.5D -->
+          <legacyMode>True</legacyMode>
+        </configuration>
         <executions>
           <execution>
             <id>attach-javadocs</id>
