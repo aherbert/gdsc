@@ -70,6 +70,11 @@ Software for microscopy image analysis
         <enabled>true</enabled>
       </snapshots>
     </repository>
+    <!-- Required for Trackmate dependencies -->
+    <repository>
+      <id>scijava.public</id>
+      <url>https://maven.scijava.org/content/groups/public</url>
+    </repository>
   </repositories>
 
   <developers>
