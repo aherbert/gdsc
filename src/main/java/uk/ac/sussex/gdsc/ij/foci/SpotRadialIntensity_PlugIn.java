@@ -689,11 +689,11 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
 
     if (settings.showRadii) {
       final ImagePlus imp = ImageJUtils.display(TITLE + " radii", ip);
+      imp.setLut(LutHelper.createLut(LutColour.FIRE_LIGHT, true));
+      imp.setDisplayRange(0, maxBin);
+      imp.updateAndDraw();
       if (settings.showFoci) {
         imp.setRoi(roi);
-        imp.setLut(LutHelper.createLut(LutColour.FIRE_LIGHT, true));
-        imp.setDisplayRange(0, maxBin);
-        imp.updateAndDraw();
       }
     }
   }
