@@ -268,10 +268,6 @@ Software for microscopy image analysis
   <profiles>
     <profile>
       <id>release</id>
-      <properties>
-        <gpg.executable>gpg</gpg.executable>
-        <gpg.keyname>${env.GPG_KEYNAME}</gpg.keyname>
-      </properties>
       <build>
         <plugins>
           <!-- Release to central requires javadoc -->
