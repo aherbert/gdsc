@@ -5,7 +5,7 @@
   <parent>
     <groupId>uk.ac.sussex.gdsc</groupId>
     <artifactId>gdsc-ij-parent</artifactId>
-    <version>4.0-SNAPSHOT</version>
+    <version>4.0</version>
     <relativePath>../gdsc-ij-parent</relativePath>
   </parent>
 
@@ -264,5 +264,36 @@ Software for microscopy image analysis
       </resource>
     </resources>
   </build>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <properties>
+        <gpg.executable>gpg</gpg.executable>
+        <gpg.keyname>${env.GPG_KEYNAME}</gpg.keyname>
+      </properties>
+      <build>
+        <plugins>
+          <!-- Release to central requires javadoc -->
+          <plugin>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>create-javadoc-jar</id>
+                <goals>
+                  <goal>javadoc</goal>
+                  <goal>jar</goal>
+                </goals>
+                <phase>package</phase>
+              </execution>
+            </executions>
+            <configuration>
+              <source>${maven.compiler.source}</source>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>
