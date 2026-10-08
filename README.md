@@ -44,8 +44,8 @@ Install
 
 The GDSC plugins are distributed using an ImageJ2/Fiji update site.
 
-To install the plugins using Fiji (an ImageJ distribution) just follow the
-instructions [How_to_follow_a_3rd_party_update_site](http://fiji.sc/How_to_follow_a_3rd_party_update_site)
+To install the plugins using Fiji (an ImageJ distribution) just use the
+instructions [Following an update site](https://imagej.net/update-sites/following)
 and add the GDSC update site. All the plugins will appear under the
 'Plugins > GDSC' menu.
 
@@ -161,6 +161,3 @@ Alex Herbert
 
 ###### Institution ######
 [Genome Damage and Stability Centre, University of Sussex](http://www.sussex.ac.uk/gdsc/)
-
-###### URL ######
-[GDSC ImageJ plugins](http://www.sussex.ac.uk/gdsc/intranet/microscopy/UserSupport/AnalysisProtocol/imagej/gdsc_plugins/)
