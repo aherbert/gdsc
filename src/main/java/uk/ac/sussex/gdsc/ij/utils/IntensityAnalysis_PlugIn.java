@@ -411,7 +411,7 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
         }
 
         if (r.getN() > 0) {
-          // Do linear regression to get diffusion rate
+          // Linear regression
           final double[] init = {r.getIntercept(), r.getSlope()}; // a + b x
           final PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2).withStartPoint(init);
           final double[] fit = fitter.fit(obs.toList());
