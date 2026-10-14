@@ -10,3 +10,5 @@ GDSC Plugins for ImageJ: a collection of ImageJ plugins including:
 Copyright (C) 2011-2026 Alex Herbert
 MRC Genome Damage and Stability Centre
 University of Sussex, UK
+
+https://gdsc-imagej.readthedocs.io/
