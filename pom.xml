@@ -110,6 +110,7 @@ Software for microscopy image analysis
     <beansbinding.version>1.2.1</beansbinding.version>
     <gdsc.core.version>2.3</gdsc.core.version>
     <imagescience.version>3.0.0</imagescience.version>
+    <jsoup.version>1.23.2</jsoup.version>
 
     <!-- Downgrade spotbugs version for Java 8 compatibility -->
     <spotbugs-maven-plugin.version>4.7.3.5</spotbugs-maven-plugin.version>
@@ -197,6 +198,12 @@ Software for microscopy image analysis
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-rng-sampling</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+      <version>${jsoup.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
