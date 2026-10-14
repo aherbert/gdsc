@@ -15,18 +15,16 @@ GDSC ImageJ Plugins
     :target: https://www.gnu.org/licenses/gpl-3.0
     :alt: License: GPL v3
 
-The Genome Damage and Stability Centre (GDSC) plugins are a collection of
-analysis programs for microscopy images including colocalisation analysis and
-peak finding.
+The GDSC ImageJ plugins are a collection of analysis programs for microscopy images including colocalisation analysis and peak finding. These run as plugins within `ImageJ <https://imagej.net/ij/index.html>`_, an image processing and analysis program using Java.
 
 The tools are easily :ref:`installed <installation:Installation>` into ``ImageJ``.
 The library works for Java 11+. This is the java specification used by `SciJava <https://scijava.org/>`_ for participating projects as of 2026 (see `org.scijava:pom-scijava <https://mvnrepository.com/artifact/org.scijava/pom-scijava>`_). It is recommended that all ``ImageJ`` plugins use this specification to maximise compatibility.
 
-The code is hosted on GitHub_.
+The code was developed at the `Genome Damage and Stability Centre <https://www.sussex.ac.uk/research/centres/genome-damage-and-stability-centre/>`_ at the University of Sussex, UK. The source code is hosted on GitHub_.
 
 The plugins can be incorporated into ``ImageJ`` macros to allow automation of image analysis workflows.
 
-The following plugins are available using the order presented on the ``Plugins > GDSC`` menu:
+The following plugins are available using the order presented on the ``ImageJ > Plugins > GDSC`` menu:
 
 
 Cell Plugins
