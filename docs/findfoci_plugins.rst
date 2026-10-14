@@ -105,8 +105,16 @@ Computes the match statistics between two images marked with point ROIs. This us
 File Match Calculator
 ---------------------
 
-TODO
+Compares the coordinates in two files and computes the match statistics.
 
+Can read QuickPALM xls files; STORMJ xls files; and a generic CSV file.
+
+The generic CSV file has records of the following::
+
+    ID,T,X,Y,Z,Value
+
+Z and Value can be missing. The generic file can also be tab delimited.
+ 
 .. index:: ! Point Aligner
 
 Point Aligner
@@ -151,7 +159,7 @@ Overlay a mask on an image and segregate into two classes. For each unique pixel
 Double Mask Segregator
 ----------------------
 
-TODO
+Compares two masks created using the Mask Segregator with pixels of AB and A'B' and creates a new mask with pixels of AA' AB' BA' BB'.
 
 .. index:: ! Mask Analyze Particles
 
@@ -167,7 +175,7 @@ This plugin works is useful on masks where each object region has a unique value
 Mask Analyze Channels...
 -------------------------
 
-TODO
+For each unique pixel value in the mask (defining an object), analyse the pixels values for each channel of a target image. Estimate the background of the channel using non-mask pixels.
 
 .. index:: ! Spot Density
 
@@ -213,7 +221,9 @@ Find translocations using markers for colocalisation using 3 ``FindFoci`` result
 Translocation Finder Tool
 -------------------------
 
-TODO
+Provide a tool on the ImageJ toolbar that responds to a user clicking repeatedly on the same image to identify foci for potential translocations. 3 consecutive clicks are required to mark 3 channels for analysis.
+
+Analysis options can be set for the the tool.
 
 .. index:: ! Spot Radial Intensity
 
@@ -241,7 +251,7 @@ Finds objects in an image using contiguous pixels of the same value. Computes th
 Foci Neighbour Analysis
 -----------------------
 
-TODO
+Identifies foci in a primary channel and computes summary statistics of the neighbouring foci in secondary channels.
 
 
 .. _GitHub: https://github.com/aherbert/gdsc/
