@@ -57,8 +57,8 @@ import uk.ac.sussex.gdsc.ij.UsageTracker;
  * analyse the pixels values from the image and segregate the objects into two classes. Objects must
  * be contiguous pixels, allowing segregation of ordinary binary masks.
  */
-public class MaskSegregator_PlugIn implements ExtendedPlugInFilter, DialogListener {
-  private static final String TITLE = "Mask Segregator";
+public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener {
+  private static final String TITLE = "Mask Divider";
 
   private static final int FLAGS = DOES_16 + DOES_8G + FINAL_PROCESSING;
   private ImagePlus imp;

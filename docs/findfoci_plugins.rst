@@ -147,19 +147,19 @@ Spot Pairs
 
 ``ImageJ`` plugin that analyses marked ROI points in an image. Find the closest pairs within a set distance of each other. Supports a preview of the pairs and saves results to a table
 
-.. index:: ! Mask Segregator
+.. index:: ! Mask Divider
 
-Mask Segregator
----------------
+Mask Divider
+------------
 
-Overlay a mask on an image and segregate into two classes. For each unique pixel value in the mask (defining an object), obtain the mean pixel value of the object and then segregate the objects into two classes, either by auto-thresholding or interactively.
+Overlay a mask on an image and divide into two classes. For each unique pixel value in the mask (defining an object), obtain the mean pixel value of the object and then divide the objects into two classes, either by auto-thresholding or interactively.
 
-.. index:: ! Double Mask Segregator
+.. index:: ! Double Mask Divider
 
-Double Mask Segregator
-----------------------
+Double Mask Divider
+-------------------
 
-Compares two masks created using the Mask Segregator with pixels of AB and A'B' and creates a new mask with pixels of AA' AB' BA' BB'.
+Compares two masks created using the ``Mask Divider`` with pixels of AB and A'B' and creates a new mask with pixels of AA' AB' BA' BB'.
 
 .. index:: ! Mask Analyze Particles
 

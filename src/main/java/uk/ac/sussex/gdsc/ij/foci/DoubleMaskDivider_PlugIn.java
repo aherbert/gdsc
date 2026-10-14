@@ -38,11 +38,11 @@ import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 
 /**
- * Compares two masks created using the Mask Segregator with pixels of AB and A'B' and creates a new
+ * Compares two masks created using the Mask Divider with pixels of AB and A'B' and creates a new
  * mask with pixels of AA' AB' BA' BB'.
  */
-public class DoubleMaskSegregator_PlugIn implements PlugIn {
-  private static final String TITLE = "Double Mask Segregator";
+public class DoubleMaskDivider_PlugIn implements PlugIn {
+  private static final String TITLE = "Double Mask Divider";
 
   private static String title1 = "";
   private static String title2 = "";
@@ -64,7 +64,7 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
     analyse();
   }
 
-  private static boolean showDialog(DoubleMaskSegregator_PlugIn plugin) {
+  private static boolean showDialog(DoubleMaskDivider_PlugIn plugin) {
     final String[] items = ImageJUtils.getImageList(ImageJUtils.GREY_8_16, null);
 
     if (items.length < 2) {
@@ -160,7 +160,7 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
         max = range;
       }
     }
-    final int blockSize = MaskSegregator_PlugIn.getBonus(max + 1);
+    final int blockSize = MaskDivider_PlugIn.getBonus(max + 1);
 
     if ((b1.size() * b2.size() - 1) * blockSize + max > 65535) {
       IJ.error(TITLE, String.format("Unable to create %d classes with a separation of %d",
@@ -215,7 +215,7 @@ public class DoubleMaskSegregator_PlugIn implements PlugIn {
 
     // Optionally outline each object
     if (overlayOutline) {
-      MaskSegregator_PlugIn.addOutline(imp);
+      MaskDivider_PlugIn.addOutline(imp);
     }
   }
 
