@@ -25,7 +25,7 @@ Difference of Gaussians
 
 Performs a difference of Gaussians filter for local contrast enhancement. The filter performs subtraction of one blurred version of an image from another, less blurred version of the original. The result is an image containing only the information contained within the spatial frequency between the two blurred images.
 
-.. index:: ! Laplacian of Gaussians
+.. index:: ! Laplacian of Gaussian
 
 Laplacian of Gaussians
 ----------------------
@@ -123,8 +123,8 @@ Allows analysis of regions using the ROI selection tools and respects manual thr
 
 .. index:: ! Z-Project extra
 
-Z-Project2 extra...
--------------------
+Z-Project extra...
+------------------
 
 Extends the ``ImageJ`` Z-Project command to add the a ``Mode`` projection option. The mode can be calculated with or without ignoring zero values.
 

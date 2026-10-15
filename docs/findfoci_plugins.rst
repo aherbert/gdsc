@@ -20,10 +20,10 @@ Full details of the ``FindFoci`` plugins can be found in the ``FindFoci User Man
 The plugins are described in the following sections using the order presented on the
 ``Plugins > GDSC > Find Foci`` menu.
 
-.. index:: ! Find Foci
+.. index:: ! FindFoci
 
-Find Foci
----------
+FindFoci
+--------
 
 A standard ``ImageJ`` plugin filter that operates on an opened image. Results are presented as a mask image, shown in tabular format and/or saved to file.
 
