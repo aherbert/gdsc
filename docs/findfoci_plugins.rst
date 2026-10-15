@@ -95,7 +95,7 @@ Registers functions that can be used in the ``ImageJ`` macro language.
 Match Calculator
 ----------------
 
-Computes the match statistics between two images marked with point ROIs. This uses the same match scores as the ``FindFoci Optimiser``: Number of matchs; True positives; False positives; False negatives;
+Computes the match statistics between two images marked with point ROIs. This uses the same match scores as the ``FindFoci Optimiser``: Number of matches; True positives; False positives; False negatives;
 `Jaccard <http://en.wikipedia.org/wiki/Jaccard_index>`_;
 `Precision; Recall <https://en.wikipedia.org/wiki/Precision_and_recall#Definition>`_;
 `F-score <http://en.wikipedia.org/wiki/Precision_and_recall#F-measure>`_. It can be used to compare the peak identification performed by two methods, including manual assignment
