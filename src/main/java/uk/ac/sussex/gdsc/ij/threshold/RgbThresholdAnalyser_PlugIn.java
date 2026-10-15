@@ -26,6 +26,7 @@ package uk.ac.sussex.gdsc.ij.threshold;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -110,14 +111,17 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
     UsageTracker.recordPlugin(this.getClass(), arg);
 
     final Settings settings = Settings.load();
-    settings.dir1 = ImageJUtils.getDirectory("RGB_Directory", settings.dir1);
-    if (settings.dir1 == null) {
+    final GenericDialog gd = new GenericDialog(TITLE + " Tool Options");
+    // Currently this plugin is not deployed
+    // gd.addHelp(HelpUrls.getUrl("rgb-threshold-analyzer"));
+    gd.addDirectoryField("RGB_Directory", settings.dir1);
+    gd.addDirectoryField("Image_Directory", settings.dir2);
+    gd.showDialog();
+    if (gd.wasCanceled()) {
       return;
     }
-    settings.dir2 = ImageJUtils.getDirectory("Image_Directory", settings.dir2);
-    if (settings.dir2 == null) {
-      return;
-    }
+    settings.dir1 = gd.getNextString();
+    settings.dir2 = gd.getNextString();
     settings.save();
 
     final File[] fileList = (new File(settings.dir1)).listFiles((dir, name) -> {
