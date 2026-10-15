@@ -44,6 +44,7 @@ import uk.ac.sussex.gdsc.core.utils.FileUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * For all particles in a mask (defined by their unique pixel value), count the overlap with a
@@ -135,6 +136,7 @@ public class ParticleOverlap_PlugIn implements PlugIn {
 
   private boolean showDialog() {
     final GenericDialog gd = new GenericDialog(TITLE);
+    gd.addHelp(HelpUrls.getUrl("particle-overlap"));
 
     gd.addMessage("For each particle in a mask (defined by unique pixel value)\n"
         + "count the overlap and Manders coefficient with a second mask image");

@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Compares two masks created using the Mask Divider with pixels of AB and A'B' and creates a new
@@ -84,7 +85,7 @@ public class DoubleMaskDivider_PlugIn implements PlugIn {
     gd.addCheckbox("Apply_LUT", applyLUT);
     gd.addCheckbox("Overlay_outline", overlayOutline);
 
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("double-mask-divider"));
 
     // If the current selection is the same then try and
     // make the dialog choose two different images.

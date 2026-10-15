@@ -41,6 +41,7 @@ import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Extracts the ROI points from an image to file.
@@ -268,6 +269,7 @@ public class PointExtractor_PlugIn implements PlugInFilter {
     final String[] list = ImageJUtils.getImageList(ImageJUtils.NO_IMAGE, null);
 
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
+    gd.addHelp(HelpUrls.getUrl("point-extractor"));
 
     gd.addMessage("Extracts the ROI points to file");
     gd.addChoice("Mask", list, mask);

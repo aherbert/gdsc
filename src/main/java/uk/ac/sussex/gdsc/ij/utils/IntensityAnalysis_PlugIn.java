@@ -49,6 +49,7 @@ import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.plugin.WindowOrganiser;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Analyses the ROI across a stack of exposures. Exposures must be set within the slice labels.
@@ -199,6 +200,7 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
 
     // Get the user options
     final GenericDialog gd = new GenericDialog(TITLE);
+    gd.addHelp(HelpUrls.getUrl("intensity-analysis"));
     gd.addMessage("Calculate the normalised intensity within an ROI.\n"
         + "Images should have a linear response with respect to exposure.");
     gd.addSlider("Window", 3, stack.getSize(), settings.window);

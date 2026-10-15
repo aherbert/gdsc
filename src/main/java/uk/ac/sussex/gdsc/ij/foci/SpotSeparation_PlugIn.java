@@ -55,7 +55,7 @@ import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SearchMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SortMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.StatisticsMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.ThresholdMethod;
-import uk.ac.sussex.gdsc.ij.help.Urls;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 import uk.ac.sussex.gdsc.ij.threshold.ThreadAnalyser_PlugIn;
 
 /**
@@ -350,7 +350,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
   private boolean showDialog() {
     settings = Settings.load();
     final GenericDialog gd = new GenericDialog(TITLE);
-    gd.addHelp(Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("spot-separation"));
 
     gd.addMessage("Analyse line profiles between spots within a separation distance");
 

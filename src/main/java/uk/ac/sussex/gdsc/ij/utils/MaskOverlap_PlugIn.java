@@ -43,6 +43,7 @@ import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.match.Matchings;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Relabels mask image using overlap between z and/or t dimensions.
@@ -140,6 +141,7 @@ public class MaskOverlap_PlugIn implements PlugIn {
 
   private boolean showDialog() {
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
+    gd.addHelp(HelpUrls.getUrl("mask-overlap"));
 
     gd.addMessage("Relabels mask image using overlap between z and/or t dimensions.");
 

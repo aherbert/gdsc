@@ -28,7 +28,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
-import uk.ac.sussex.gdsc.ij.help.Urls;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Simple {@link MouseListener} that can be used to show the FindFoci help page for the
@@ -36,16 +36,20 @@ import uk.ac.sussex.gdsc.ij.help.Urls;
  */
 class FindFociHelpMouseListener extends MouseAdapter {
 
-  /** The instance. */
-  public static final FindFociHelpMouseListener INSTANCE = new FindFociHelpMouseListener();
+  /** Help key. */
+  private final String key;
 
   /**
-   * No public construction.
+   * Create an instance
+   *
+   * @param key help key
    */
-  private FindFociHelpMouseListener() {}
+  FindFociHelpMouseListener(String key) {
+    this.key = key;
+  }
 
   @Override
   public void mouseClicked(MouseEvent event) {
-    ImageJUtils.showUrl(Urls.FIND_FOCI);
+    ImageJUtils.showUrl(HelpUrls.getUrl(key));
   }
 }

@@ -93,6 +93,7 @@ import uk.ac.sussex.gdsc.core.utils.rng.UniformRandomProviders;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.colocalisation.cda.engine.CalculationResult;
 import uk.ac.sussex.gdsc.ij.colocalisation.cda.engine.CdaEngine;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Test for significant colocalisation within images using the Confined Displacement Algorithm
@@ -1777,7 +1778,7 @@ public class Cda_PlugIn extends PlugInFrame {
           thread.start();
         }
       } else if ((Button) actioner == helpButton) {
-        ImageJUtils.showUrl(uk.ac.sussex.gdsc.ij.help.Urls.COLOCALISATION);
+        ImageJUtils.showUrl(HelpUrls.getUrl("cda"));
       }
     };
 
@@ -2056,6 +2057,7 @@ public class Cda_PlugIn extends PlugInFrame {
     }
 
     final GenericDialog gd = new GenericDialog(PLUGIN_TITLE);
+    ImageJUtils.showUrl(HelpUrls.getUrl("cda-macro"));
 
     gd.addChoice(CHOICE_CHANNEL1.replace(" ", "_"), images, getTitle(images, channel1Index));
     gd.addChoice(CHOICE_CHANNEL2.replace(" ", "_"), images, getTitle(images, channel2Index));

@@ -60,6 +60,7 @@ import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 import uk.ac.sussex.gdsc.ij.utils.ImageScienceUtils;
 
 /**
@@ -321,7 +322,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("edge-mask"));
     gd.showDialog();
 
     final boolean cancelled = gd.wasCanceled() || !dialogItemChanged(gd, null);

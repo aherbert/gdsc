@@ -167,7 +167,7 @@ public class OptimiserView extends JFrame {
     contentPane.add(panel, gbc_panel);
 
     btnHelp = new JButton("Help");
-    btnHelp.addMouseListener(FindFociHelpMouseListener.INSTANCE);
+    btnHelp.addMouseListener(new FindFociHelpMouseListener("findfoci-optimiser-gui"));
     panel.add(btnHelp);
 
     btnRun = new JButton("Run");

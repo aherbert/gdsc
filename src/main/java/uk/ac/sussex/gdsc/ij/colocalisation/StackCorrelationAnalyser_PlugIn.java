@@ -37,6 +37,7 @@ import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.Correlator;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 import uk.ac.sussex.gdsc.ij.utils.SliceCollection;
 
 /**
@@ -203,7 +204,7 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
     gd.addCheckbox("Log thresholds", logThresholds);
     gd.addCheckbox("Show mask", showMask);
     gd.addCheckbox("Subtract threshold", subtractThreshold);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.COLOCALISATION);
+    gd.addHelp(HelpUrls.getUrl("stack-correlation-analyser"));
 
     gd.showDialog();
     if (gd.wasCanceled()) {

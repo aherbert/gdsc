@@ -111,6 +111,7 @@ import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SortMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.StatisticsMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.ThresholdMethod;
 import uk.ac.sussex.gdsc.ij.foci.gui.OptimiserView;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Runs the FindFoci plugin with various settings and compares the results to the reference image
@@ -2100,7 +2101,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
           + "set of results in the table.");
     }
 
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("findfoci-optimiser"));
 
     if (!java.awt.GraphicsEnvironment.isHeadless()) {
       checkbox = gd.getCheckboxes();
@@ -2235,7 +2236,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
     gd.addChoice("Score_conversion", SCORING_MODES, SCORING_MODES[batchSettings.scoringMode]);
     gd.addCheckbox("Re-use_results", batchSettings.reuseResults);
 
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("findfoci-optimiser-multi-image"));
     gd.showDialog();
     if (gd.wasCanceled()) {
       return false;

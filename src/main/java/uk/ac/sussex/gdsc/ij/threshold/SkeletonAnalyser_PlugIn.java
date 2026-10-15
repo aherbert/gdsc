@@ -50,6 +50,7 @@ import java.util.function.Consumer;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Skeletonise a mask image. Then produce a set of lines connecting node points on the skeleton.
@@ -286,6 +287,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
     settings = Settings.load();
 
     final GenericDialog gd = new GenericDialog(TITLE);
+    gd.addHelp(HelpUrls.getUrl("skeleton-analyser"));
 
     gd.addCheckbox("Prune_junctions", settings.pruneJunctions);
     gd.addNumericField("Min_length", settings.minLength, 0);

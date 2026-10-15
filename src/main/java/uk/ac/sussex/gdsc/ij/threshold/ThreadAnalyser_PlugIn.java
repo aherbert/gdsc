@@ -57,6 +57,7 @@ import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.FileUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Analyses an image using a given mask.
@@ -252,7 +253,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     gd.addCheckbox("Show_skeleton_EDM", showSkeletonEDM);
     gd.addCheckbox("Show_object_image", showObjectImage);
     gd.addCheckbox("Label_threads", labelThreads);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("thread-analyser"));
 
     gd.showDialog();
 

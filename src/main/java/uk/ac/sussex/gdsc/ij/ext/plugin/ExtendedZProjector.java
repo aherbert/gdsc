@@ -38,6 +38,7 @@ import ij.process.ShortProcessor;
 import java.util.Arrays;
 import java.util.function.ToDoubleFunction;
 import org.apache.commons.statistics.descriptive.Median;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Extend the ZProjector to support mode intensity projection.
@@ -98,7 +99,7 @@ public class ExtendedZProjector extends ZProjectorCopy {
     if (isHyperstack && imp.getNFrames() > 1 && imp.getNSlices() > 1) {
       gd.addCheckbox("All time frames", allTimeFrames);
     }
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("z-project-extra"));
     return gd;
   }
 

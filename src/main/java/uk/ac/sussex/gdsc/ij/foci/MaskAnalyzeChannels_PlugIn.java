@@ -57,6 +57,7 @@ import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer.ObjectCentre;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * For each unique pixel value in the mask (defining an object), analyse the pixels values for each
@@ -164,7 +165,7 @@ public class MaskAnalyzeChannels_PlugIn implements PlugInFilter {
     gd.addCheckbox("Show_labels", settings.showLabels);
     gd.addCheckbox("Show_background", settings.showBackground);
 
-    // gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("mask-analyze-channels"));
     gd.showDialog();
 
     if (gd.wasCanceled()) {

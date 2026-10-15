@@ -56,6 +56,7 @@ import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.PointPair;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Find translocations using markers for colocalisation.
@@ -199,7 +200,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     gd.addNumericField("Min_distance", settings.minDistance, 2, 6, "pixels");
     gd.addNumericField("Factor", settings.factor, 2);
     gd.addCheckbox("Show_matches", settings.showMatches);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("translocation-finder"));
 
     gd.showDialog();
     if (!gd.wasOKed()) {
@@ -778,6 +779,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     public void showOptionsDialog() {
       final Settings settings = Settings.load();
       final GenericDialog gd = new GenericDialog(TITLE + " Tool Options");
+      gd.addHelp(HelpUrls.getUrl("translocation-finder-tool"));
       gd.addNumericField("Min_distance", settings.minDistance, 2, 6, "pixels");
       gd.addNumericField("Factor", settings.factor, 2);
       gd.addCheckbox("Show_record_dialog", prompt);

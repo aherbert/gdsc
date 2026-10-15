@@ -61,6 +61,7 @@ import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.PeakMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SearchMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SortMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.StatisticsMethod;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Analyses the intensity of each channel within the brightest spot of the selected channel.
@@ -224,7 +225,7 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     gd.addMessage("");
     label = (Label) gd.getMessage();
 
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("spot-analyser"));
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);
     gd.showDialog();

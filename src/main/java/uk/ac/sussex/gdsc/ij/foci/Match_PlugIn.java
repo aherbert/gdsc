@@ -64,6 +64,7 @@ import uk.ac.sussex.gdsc.core.match.PointPair;
 import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Compares the ROI points on two images and computes the match statistics.
@@ -734,7 +735,9 @@ public class Match_PlugIn implements PlugIn {
       }
     }
 
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+    // Note: This plugin is different in file mode than the file-match-calculator
+    final String key = memoryMode ? "findfoci-match-calculator" : "match-calculator";
+    gd.addHelp(HelpUrls.getUrl(key));
     gd.showDialog();
 
     if (gd.wasCanceled()) {

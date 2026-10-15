@@ -63,6 +63,7 @@ import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.PeakMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SearchMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SortMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.ThresholdMethod;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Output the distances between spots within a mask region.
@@ -347,7 +348,7 @@ public class SpotDistance_PlugIn implements PlugIn {
       gd.addCheckbox("Pixel_distances", settings.pixelDistances);
       gd.addCheckbox("Calibrated_distances", settings.calibratedDistances);
       gd.addCheckbox("Track_objects", settings.trackObjects);
-      gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+      gd.addHelp(HelpUrls.getUrl("spot-distance"));
 
       gd.showDialog();
       if (!gd.wasOKed()) {

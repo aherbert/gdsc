@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
-import uk.ac.sussex.gdsc.ij.help.Urls;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Analyses marked ROI points in an image. Find the closest pairs within a set distance of each
@@ -582,7 +582,7 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
   @Override
   public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
     final GenericDialog gd = new GenericDialog(TITLE);
-    gd.addHelp(Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("spot-pairs"));
 
     gd.addMessage("Find the closest pairs of marked ROI points");
 

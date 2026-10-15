@@ -60,6 +60,7 @@ import uk.ac.sussex.gdsc.core.utils.FileUtils;
 import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Compares the coordinates in two files and computes the match statistics.
@@ -265,6 +266,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     final boolean haveImages = !newImageList.isEmpty();
 
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
+    ImageJUtils.showUrl(HelpUrls.getUrl("file-match-calculator"));
 
     settings = Settings.load();
     gd.addMessage("Compare the points in two files\nand compute the match statistics");

@@ -74,6 +74,7 @@ import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrentMonoStack;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer.ObjectCentre;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Outline nuclei across multiple frames. Performs the following:
@@ -646,6 +647,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
 
     // Get the user options
     NonBlockingExtendedGenericDialog gd = new NonBlockingExtendedGenericDialog(TITLE);
+    gd.addHelp(HelpUrls.getUrl("nuclei-outline"));
     gd.addMessage("Track nuclei across frames");
     gd.addSlider("Blur", 0, 4.5, settings.getBlur1());
     gd.addSlider("Blur2", 0, 20, settings.getBlur2());

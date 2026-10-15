@@ -35,6 +35,7 @@ import java.awt.AWTEvent;
 import java.awt.Color;
 import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Allows an RGB image to be filtered using HSB limits.
@@ -153,7 +154,7 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
     gd.addSlider("Brightness", 0.01, 1, settings.brightness);
     gd.addSlider("Brightness_width", 0.01, 1, settings.brightnessWidth);
 
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("hsb-filter"));
 
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);

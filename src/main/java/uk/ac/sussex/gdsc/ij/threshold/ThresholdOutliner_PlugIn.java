@@ -70,6 +70,7 @@ import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.SortUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Outlines foreground pixel regions using a concave hull. Foreground pixel regions can be auto or
@@ -584,7 +585,7 @@ public class ThresholdOutliner_PlugIn implements ExtendedPlugInFilter, DialogLis
 
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("threshold-outliner"));
 
     // Do not lock the image to allow slider update during the preview
     imp.unlock();

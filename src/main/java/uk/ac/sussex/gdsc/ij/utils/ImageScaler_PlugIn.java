@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Scales all planes in an image to the given maximum.
@@ -70,7 +71,7 @@ public class ImageScaler_PlugIn implements PlugInFilter {
     gd.addMessage("List file containing full image path, one image per line.");
     gd.addStringField("List file", listFile);
     gd.showDialog();
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("image-scaler"));
 
     if (gd.wasCanceled()) {
       return false;

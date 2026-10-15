@@ -64,6 +64,7 @@ import javax.swing.JPanel;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Compares two images for correlated pixel intensities. If the two images are correlated a search
@@ -273,7 +274,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
       thread.start();
     }
     if ((Button) actioner == helpButton) {
-      ImageJUtils.showUrl(uk.ac.sussex.gdsc.ij.help.Urls.COLOCALISATION);
+      ImageJUtils.showUrl(HelpUrls.getUrl("colocalisation-threshold"));
     }
 
     super.notifyAll();

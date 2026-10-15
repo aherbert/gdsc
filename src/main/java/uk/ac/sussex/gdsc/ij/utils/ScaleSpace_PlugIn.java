@@ -51,6 +51,7 @@ import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.concurrent.ConcurrencyUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Create a scale-space representation of an image using a 2D Gaussian filter at different scales.
@@ -155,7 +156,7 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
     gd.addNumericField("Max_scale", settings.maxScale, 2);
     gd.addChoice("Output", Settings.OUTPUT_OPTIONS, settings.outputOption);
     gd.addNumericField("Sub_interval_steps", settings.subIntervals, 0);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("scale-space"));
     gd.showDialog();
     settings.save();
     if (gd.wasCanceled()) {

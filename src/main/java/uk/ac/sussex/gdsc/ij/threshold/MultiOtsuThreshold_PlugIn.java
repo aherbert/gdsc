@@ -36,6 +36,7 @@ import java.awt.Color;
 import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.core.data.ComputationException;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Calculate multiple Otsu thresholds on the given image.
@@ -174,7 +175,7 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     gd.addCheckbox("Show_regions", settings.showRegions);
     gd.addCheckbox("Show_masks", settings.showMasks);
     gd.addCheckbox("Log_thresholds", settings.logMessages);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("multi-threshold"));
     gd.showDialog();
     if (gd.wasCanceled()) {
       return;

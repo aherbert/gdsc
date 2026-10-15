@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import uk.ac.sussex.gdsc.core.ij.SimpleImageJTrackProgress;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Traces each object in a mask image.
@@ -118,6 +119,7 @@ public class MaskToRoi_PlugIn implements PlugInFilter {
     settings = Settings.load();
 
     final GenericDialog gd = new GenericDialog(TITLE);
+    gd.addHelp(HelpUrls.getUrl("mask-to-roi"));
     gd.addMessage("Trace all mask objects and add to the ROI Manager");
     final boolean isStack = imp.getNDimensions() > 2;
     gd.addCheckbox("8-connected", settings.eightConnected);

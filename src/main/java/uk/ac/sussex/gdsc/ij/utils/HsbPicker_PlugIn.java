@@ -50,6 +50,7 @@ import org.apache.commons.statistics.descriptive.Statistic;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Alows an RGB image to be filtered using HSB limits.
@@ -302,7 +303,7 @@ public class HsbPicker_PlugIn extends PlugInFrame {
     okButton.addActionListener(event -> close());
     final Button helpButton = new Button("Help");
     helpButton.addActionListener(event -> {
-      ImageJUtils.showUrl(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+      ImageJUtils.showUrl(HelpUrls.getUrl("hsb-picker"));
     });
 
     final JPanel buttonPanel = new JPanel();

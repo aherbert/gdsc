@@ -51,6 +51,7 @@ import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Output the density around spots within a mask region. Spots are defined using FindFoci results
@@ -215,7 +216,7 @@ public class SpotDensity_PlugIn implements PlugIn {
     gd.addChoice("Mask", maskImageList, settings.maskImage);
     gd.addNumericField("Distance", settings.distance, 2, 6, "pixels");
     gd.addNumericField("Interval", settings.interval, 2, 6, "pixels");
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("spot-density"));
 
     gd.showDialog();
     if (!gd.wasOKed()) {

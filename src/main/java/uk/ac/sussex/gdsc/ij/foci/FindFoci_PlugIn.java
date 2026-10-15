@@ -106,6 +106,7 @@ import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SearchMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SortMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.StatisticsMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.ThresholdMethod;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 import uk.ac.sussex.gdsc.ij.utils.GaussianFit_PlugIn;
 
 /**
@@ -1012,7 +1013,7 @@ public class FindFoci_PlugIn implements PlugIn, MacroExtension {
     gd.addNumericField(OPTION_GAUSSIAN_BLUR, processorOptions.getGaussianBlur(), 1);
     gd.addChoice(OPTION_CENTRE_METHOD, centreMethods, processorOptions.getCentreMethod().ordinal());
     gd.addNumericField(OPTION_CENTRE_PARAMETER, processorOptions.getCentreParameter(), 0);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("findfoci"));
 
     gd.showDialog();
     if (gd.wasCanceled()) {
@@ -2115,6 +2116,7 @@ public class FindFoci_PlugIn implements PlugIn, MacroExtension {
 
   private static boolean showBatchDialog(BatchSettings batchSettings) {
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
+    ImageJUtils.showUrl(HelpUrls.getUrl("findfoci-batch"));
     gd.addMessage("Run " + TITLE
         + " on a set of images.\n \nAll images in a directory will be processed.\n \n"
         + "Optional mask images in the input directory should be named:\n"
@@ -2521,6 +2523,7 @@ public class FindFoci_PlugIn implements PlugIn, MacroExtension {
 
   private static boolean showSettingsDialog() {
     final GenericDialog gd = new GenericDialog(TITLE + " Settings");
+    gd.addHelp(HelpUrls.getUrl("findfoci-settings"));
     int searchCapacity = GlobalSettings.INSTANCE.searchCapacity.get();
     String emptyField = GlobalSettings.INSTANCE.emptyField.get();
     //@formatter:off

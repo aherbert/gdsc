@@ -47,6 +47,7 @@ import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer3D;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * For all particles in a mask (defined by their unique pixel value), sum the pixel intensity in two
@@ -149,6 +150,7 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
 
   private boolean showDialog() {
     GenericDialog gd = new GenericDialog(TITLE);
+    gd.addHelp(HelpUrls.getUrl("particle-correlation"));
 
     gd.addMessage("For each particle in a mask (defined by unique pixel value)\n"
         + "sum the pixel intensity in two different images and correlate");

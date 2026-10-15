@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.foci.ObjectEroder;
 import uk.ac.sussex.gdsc.ij.foci.ObjectExpander;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Creates a border around each object in a mask image.
@@ -140,7 +141,7 @@ public class MaskToBorder_PlugIn implements ExtendedPlugInFilter, DialogListener
 
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("mask-to-border"));
     gd.showDialog();
 
     final boolean cancelled = gd.wasCanceled() || !dialogItemChanged(gd, null);

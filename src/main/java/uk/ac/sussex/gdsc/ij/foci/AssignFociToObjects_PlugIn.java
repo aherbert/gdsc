@@ -51,7 +51,7 @@ import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer.ObjectCentre;
-import uk.ac.sussex.gdsc.ij.help.Urls;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Finds objects in an image using contiguous pixels of the same value. Locates the closest object
@@ -393,7 +393,7 @@ public class AssignFociToObjects_PlugIn implements PlugInFilter {
     }
 
     final GenericDialog gd = new GenericDialog(TITLE);
-    gd.addHelp(Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("assign-foci-to-objects"));
 
     String[] options = new String[2];
     int count = 0;

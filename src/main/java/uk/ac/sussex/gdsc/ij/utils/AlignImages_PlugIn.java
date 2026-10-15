@@ -39,6 +39,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 //@formatter:off
 /**
@@ -173,7 +174,7 @@ public class AlignImages_PlugIn implements PlugIn {
     gd.addChoice("Interpolation", methods, methods[interpolationMethod]);
     gd.addCheckbox("Show_correlation_image", showCorrelationImage);
     gd.addCheckbox("Clip_output", clipOutput);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("align-images"));
 
     gd.showDialog();
 

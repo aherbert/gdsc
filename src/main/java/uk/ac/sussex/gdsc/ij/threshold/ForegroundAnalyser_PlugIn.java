@@ -44,6 +44,7 @@ import uk.ac.sussex.gdsc.core.threshold.FloatHistogram;
 import uk.ac.sussex.gdsc.core.threshold.IntHistogram;
 import uk.ac.sussex.gdsc.core.utils.Statistics;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Analyses the foreground pixels in an image.
@@ -109,7 +110,7 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
     if (is32bit) {
       gd.addChoice("Histogram_bins", bins, histogramBins);
     }
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("foreground-analyser"));
 
     gd.showDialog();
 

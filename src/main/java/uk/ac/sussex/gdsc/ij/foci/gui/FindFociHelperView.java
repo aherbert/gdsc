@@ -522,7 +522,7 @@ public class FindFociHelperView extends JFrame
     contentPane.add(tglbtnOverlay, gbc_tglbtnOverlay);
 
     btnHelp = new JButton("Help");
-    btnHelp.addMouseListener(FindFociHelpMouseListener.INSTANCE);
+    btnHelp.addMouseListener(new FindFociHelpMouseListener("findfoci-helper"));
     final GridBagConstraints gbc_btnHelp = new GridBagConstraints();
     gbc_btnHelp.gridx = 3;
     gbc_btnHelp.gridy = 11;

@@ -70,6 +70,7 @@ import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Outlines a circular cell using the optimal path through a membrane scoring map.
@@ -234,7 +235,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       debug = false;
     }
 
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("cell-outliner"));
 
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);

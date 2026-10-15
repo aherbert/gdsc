@@ -51,6 +51,7 @@ import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Overlay a mask on the channel. For each unique pixel value in the mask (defining an object),
@@ -202,7 +203,7 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
     cutoffSlider = (Scrollbar) gd.getSliders().get(0);
     cutoffText = (TextField) gd.getNumericFields().get(0);
 
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("mask-divider"));
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);
     gd.showDialog();

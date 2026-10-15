@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Create a mask from a source image and apply it to a target image. All pixels outside the mask
@@ -110,7 +111,7 @@ public class ApplyMask_PlugIn implements PlugInFilter {
     gd.addNumericField("Channel", selectedChannel, 0);
     gd.addNumericField("Slice", selectedSlice, 0);
     gd.addNumericField("Frame", selectedFrame, 0);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("apply-mask"));
     gd.showDialog();
 
     if (gd.wasCanceled()) {

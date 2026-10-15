@@ -41,6 +41,7 @@ import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 // Autothreshold segmentation
 // Following the guidelines at http://pacific.mpi-cbg.de/wiki/index.php/PlugIn_Design_Guidelines
@@ -225,7 +226,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
             + "For 16 bit images, results of \'Try all\' and single slices\nof a stack are shown "
             + "in white [65535] in 16 bits.\n"
             + "Unsuccessfully thresholded images are left unchanged.");
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("global-threshold"));
 
     gd.showDialog();
     if (gd.wasCanceled()) {

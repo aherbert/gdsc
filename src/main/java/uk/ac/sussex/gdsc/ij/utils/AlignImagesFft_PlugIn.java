@@ -39,6 +39,7 @@ import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Aligns an image stack to a reference image using XY translation to maximise the correlation.
@@ -231,7 +232,7 @@ public class AlignImagesFft_PlugIn implements PlugIn {
     gd.addCheckbox("Show_correlation_image", showCorrelationImage);
     gd.addCheckbox("Show_normalised_image", showNormalisedImage);
     gd.addCheckbox("Clip_output", clipOutput);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("align-images-fft"));
 
     gd.showDialog();
 

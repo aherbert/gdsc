@@ -46,6 +46,7 @@ import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.colocalisation.cda.Cda_PlugIn;
 import uk.ac.sussex.gdsc.ij.colocalisation.cda.TwinStackShifter;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 import uk.ac.sussex.gdsc.ij.utils.SliceCollection;
 
 /**
@@ -333,7 +334,7 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     gd.addNumericField("Minimum_shift", settings.minimumRadius, 0);
     gd.addNumericField("Maximum_shift", settings.maximumRadius, 0);
     gd.addNumericField("Significance", settings.significance, 3);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.COLOCALISATION);
+    gd.addHelp(HelpUrls.getUrl("stack-colocalisation-analyser"));
 
     gd.showDialog();
     if (gd.wasCanceled()) {

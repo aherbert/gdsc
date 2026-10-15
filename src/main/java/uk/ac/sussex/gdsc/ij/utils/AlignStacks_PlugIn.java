@@ -44,6 +44,7 @@ import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Aligns open image stacks to a reference stack using XY translation to maximise the correlation.
@@ -170,7 +171,7 @@ public class AlignStacks_PlugIn implements PlugIn {
     gd.addChoice("Sub-pixel_method", subPixelMethods, subPixelMethods[subPixelMethod]);
     gd.addChoice("Interpolation", interpolationMethods, interpolationMethods[interpolationMethod]);
     gd.addCheckbox("Clip_output", clipOutput);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("align-stacks"));
 
     gd.showDialog();
 

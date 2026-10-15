@@ -41,6 +41,7 @@ import java.awt.Checkbox;
 import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Run a 2D Laplacian of Gaussian filter.
@@ -195,7 +196,7 @@ public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
     gd.addDialogListener(this::dialogItemChanged);
     previewCheckbox = gd.getPreviewCheckbox();
     preview = previewCheckbox.getState();
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("laplacian-of-gaussian"));
     gd.showDialog();
     final boolean cancelled = gd.wasCanceled();
     settings.save();

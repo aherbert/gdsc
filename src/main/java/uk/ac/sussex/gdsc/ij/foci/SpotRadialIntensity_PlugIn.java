@@ -56,6 +56,7 @@ import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
 import uk.ac.sussex.gdsc.core.utils.Statistics;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer.ObjectCentre;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Output the radial intensity around spots within a mask region. Spots are defined using FindFoci
@@ -221,7 +222,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     gd.addCheckbox("Show_plot", settings.showPlot);
     gd.addCheckbox("Show_radii", settings.showRadii);
     gd.addCheckbox("Plot_average_distances", settings.plotDistanceAverages);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("spot-radial-intensity"));
 
     gd.showDialog();
     if (!gd.wasOKed()) {

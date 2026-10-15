@@ -42,6 +42,7 @@ import java.awt.TextField;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * This plug-in filter implements the Difference of Gaussians method for image enhancement. The
@@ -218,7 +219,7 @@ public class DifferenceOfGaussians extends GaussianBlur {
     sigma2field = (TextField) fields.elementAt(1);
     previewCheckbox = gd.getPreviewCheckbox();
     preview = previewCheckbox.getState();
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("difference-of-gaussians"));
     gd.showDialog(); // input by the user (or macro) happens here
     final boolean cancelled = gd.wasCanceled();
     settings.save();

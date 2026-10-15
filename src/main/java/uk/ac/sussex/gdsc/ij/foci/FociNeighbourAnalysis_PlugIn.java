@@ -83,6 +83,7 @@ import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SearchMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SortMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.StatisticsMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.ThresholdMethod;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Identifies foci in a primary channel and computes summary statistics of the neighbouring foci in
@@ -455,6 +456,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
   @Override
   public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
     final NonBlockingExtendedGenericDialog gd = new NonBlockingExtendedGenericDialog(TITLE);
+    gd.addHelp(HelpUrls.getUrl("foci-neighbour-analysis"));
     gd.addMessage(TextUtils.wrap("Identifies foci in a primary channel and computes summary "
         + "statistics of the neighbouring foci in secondary channels.", 80));
 

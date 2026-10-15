@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import uk.ac.sussex.gdsc.core.ij.ImageJAnalyticsUtils;
 import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Provide methods to track code usage within ImageJ.
@@ -156,6 +157,6 @@ public class UsageTracker implements PlugIn {
    */
   static void showDialog(boolean autoMessage) {
     DIALOG_SHOWN.set(true);
-    ImageJAnalyticsUtils.showDialog(TITLE, autoMessage, null);
+    ImageJAnalyticsUtils.showDialog(TITLE, autoMessage, HelpUrls.getUrl("usage-tracker"));
   }
 }

@@ -46,6 +46,7 @@ import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.NonBlockingExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.utils.SettingsList;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Create a colocated mask from two source images using the threshold or minimum display value from
@@ -232,7 +233,7 @@ public class ColocatedMask_PlugIn implements PlugIn {
     }
     gd.addChoice("Mask_mode", MASK_MODE, MASK_MODE[settings.maskMode]);
     gd.addChoice("Colocated_mode", COLOCATED_MODE, COLOCATED_MODE[settings.colocatedMode]);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("colocated-mask"));
 
     ImageListener imageListener = null;
     if (dynamic) {

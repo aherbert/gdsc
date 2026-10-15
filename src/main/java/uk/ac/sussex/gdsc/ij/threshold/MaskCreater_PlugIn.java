@@ -45,6 +45,7 @@ import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer;
 import uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer3D;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Create a mask from an image.
@@ -158,7 +159,7 @@ public class MaskCreater_PlugIn implements PlugIn {
     gd.addCheckbox("Stack_histogram", selectedStackHistogram);
     gd.addCheckbox("Assign_objects", selectedAssignObjects);
     gd.addCheckbox("Eight_connected", selectedEightConnected);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.UTILITY);
+    gd.addHelp(HelpUrls.getUrl("mask-creater"));
     gd.showDialog();
 
     if (gd.wasCanceled()) {

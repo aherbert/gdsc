@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.core.ij.ThresholdUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 import uk.ac.sussex.gdsc.ij.utils.SliceCollection;
 
 /**
@@ -214,7 +215,7 @@ public class StackThreshold_PlugIn implements PlugInFilter {
       gd.addCheckbox("Composite_colour", settings.compositeColour);
     }
     gd.addCheckbox("New_image", settings.newImage);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("stack-threshold"));
 
     gd.showDialog();
     if (gd.wasCanceled()) {

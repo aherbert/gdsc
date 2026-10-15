@@ -38,11 +38,13 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.WindowConstants;
+import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.foci.controller.FindFociController;
 import uk.ac.sussex.gdsc.ij.foci.controller.ImageJController;
 import uk.ac.sussex.gdsc.ij.foci.gui.FindFociView;
 import uk.ac.sussex.gdsc.ij.foci.model.FindFociModel;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Provides a permanent form front-end for the FindFoci plugin filter.
@@ -164,6 +166,7 @@ public class FindFociGui_PlugIn implements PlugIn {
       if (view.isVisible()) {
         // Ask if the user would like a second instance
         final GenericDialog gd = new GenericDialog(FindFoci_PlugIn.TITLE);
+        ImageJUtils.showUrl(HelpUrls.getUrl("findfoci-gui"));
         gd.enableYesNoCancel();
         gd.addMessage(FindFoci_PlugIn.TITLE
             + " is already open.\n \nDo you want to create another instance?");

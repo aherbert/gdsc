@@ -100,6 +100,7 @@ import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer;
 import uk.ac.sussex.gdsc.ij.foci.ObjectAnalyzer.ObjectCentre;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Analyses an image stack to detect pixel regions that have been photobleached. A plot of the
@@ -245,6 +246,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     settings = Settings.load();
 
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
+    gd.addHelp(HelpUrls.getUrl("frap-analysis"));
     gd.addMessage("Analyses an image stack to detect pixel regions that have been photobleached.\n"
         + "The stack is aligned to correct drift.\n"
         + "Bleaching events are detected using significant jumps in intensity\n"

@@ -81,7 +81,7 @@ import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.ext.ij3d.CustomContent;
 import uk.ac.sussex.gdsc.ij.ext.ij3d.ImageJ3DViewerUtils;
 import uk.ac.sussex.gdsc.ij.foci.FindFoci_PlugIn.FindFociPluginResult;
-import uk.ac.sussex.gdsc.ij.help.Urls;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Finds objects in an image using contiguous pixels of the same value. Computes the distance of
@@ -1021,7 +1021,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     }
 
     final GenericDialog gd = new GenericDialog(TITLE);
-    gd.addHelp(Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("object-foci-depth"));
 
     final LocalList<String> options = new LocalList<>(3);
 

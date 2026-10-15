@@ -34,7 +34,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
-import uk.ac.sussex.gdsc.ij.help.Urls;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Contains help dialogs for the GDSC ImageJ plugins.
@@ -42,7 +42,6 @@ import uk.ac.sussex.gdsc.ij.help.Urls;
 public class About_PlugIn implements PlugIn {
   /** The title of the plugin. */
   private static final String TITLE = "GDSC ImageJ Plugins";
-  private static final String HELP_URL = Urls.BASE_URL;
   private static final String YEAR = "2022";
   private static final String PLUGINS = "Plugins";
 
@@ -92,7 +91,7 @@ public class About_PlugIn implements PlugIn {
     final InputStream readmeStream = About_PlugIn.class.getResourceAsStream("README.txt");
 
     StringBuilder msg = new StringBuilder();
-    String helpUrl = HELP_URL;
+    String helpUrl = HelpUrls.getUrl();
 
     // Read the contents of the README file
     try (final BufferedReader input =

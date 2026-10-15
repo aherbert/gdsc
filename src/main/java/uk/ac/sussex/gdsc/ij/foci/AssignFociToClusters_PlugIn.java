@@ -67,7 +67,7 @@ import uk.ac.sussex.gdsc.core.match.PointPair;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
-import uk.ac.sussex.gdsc.ij.help.Urls;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Performs clustering on the latest Find Foci result held in memory. Optionally can draw the
@@ -356,7 +356,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
     settings = Settings.load();
 
     final GenericDialog gd = new GenericDialog(TITLE);
-    gd.addHelp(Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("assign-foci-to-clusters"));
     gd.addMessage(TextUtils.pleural(results.size(), "result"));
 
     gd.addSlider("Radius", 5, 500, settings.radius);

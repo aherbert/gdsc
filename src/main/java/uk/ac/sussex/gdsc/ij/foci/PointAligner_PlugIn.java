@@ -61,6 +61,7 @@ import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.MaskMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.PeakMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SearchMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.SortMethod;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Analyses the image using the FindFoci algorithm to identify and assign pixels to maxima. Realigns
@@ -311,7 +312,7 @@ public class PointAligner_PlugIn implements PlugIn {
     gd.addCheckbox("Show_unaligned", settings.showUnaligned);
     gd.addNumericField("Unaligned_border", settings.unalignedBorder, 0);
     gd.addStringField("Results_directory", settings.resultsDirectory, 30);
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("point-aligner"));
 
     gd.showDialog();
 

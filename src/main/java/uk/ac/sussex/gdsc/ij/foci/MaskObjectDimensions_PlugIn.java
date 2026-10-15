@@ -42,6 +42,7 @@ import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * For each unique pixel value in the mask (defining an object), analyse the pixels values and
@@ -217,7 +218,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     gd.addCheckbox("Show_vectors", settings.showVectors);
     gd.addChoice("Sort_method", Settings.sortMethods, settings.sortMethod);
 
-    gd.addHelp(uk.ac.sussex.gdsc.ij.help.Urls.FIND_FOCI);
+    gd.addHelp(HelpUrls.getUrl("mask-object-dimensions"));
     gd.showDialog();
 
     if (gd.wasCanceled()) {

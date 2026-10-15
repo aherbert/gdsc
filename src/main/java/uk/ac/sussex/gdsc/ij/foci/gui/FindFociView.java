@@ -1009,7 +1009,7 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
     });
 
     btnHelp = new JButton("Help");
-    btnHelp.addMouseListener(FindFociHelpMouseListener.INSTANCE);
+    btnHelp.addMouseListener(new FindFociHelpMouseListener("findfoci-gui"));
     panel.add(btnHelp);
     panel.add(btnAdvancedOptions);
 
