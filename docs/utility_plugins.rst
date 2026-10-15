@@ -27,10 +27,10 @@ Performs a difference of Gaussians filter for local contrast enhancement. The fi
 
 .. index:: ! Laplacian of Gaussian
 
-Laplacian of Gaussians
-----------------------
+Laplacian of Gaussian
+---------------------
 
-Performs a Laplacian of Gaussians filter for local contrast enhancement.
+Performs a Laplacian of Gaussian filter for local contrast enhancement.
 
 Requires the ``Image Science`` library (see :ref:`installation:Installation` instructions).
 
