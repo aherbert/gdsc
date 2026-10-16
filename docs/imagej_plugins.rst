@@ -18,7 +18,7 @@ The plugins have been divided into the following sub-sets:
    * - Set
      - Description
 
-   * - :ref:`Cell <cell_plugins:Cell Plugins>`
+   * - :ref:`Cell <cells_plugins:Cells Plugins>`
      - Tools for analysis of cells from microscopy images.
 
    * - :ref:`Colocalisation <colocalisation_plugins:Colocalisation Plugins>`

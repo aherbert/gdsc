@@ -27,10 +27,10 @@ The plugins can be incorporated into ``ImageJ`` macros to allow automation of im
 The following plugins are available using the order presented on the ``ImageJ > Plugins > GDSC`` menu:
 
 
-Cell Plugins
-------------
+Cells Plugins
+-------------
 
-The :ref:`cell_plugins:Cell Plugins`
+The :ref:`cells_plugins:Cells Plugins`
 provide tools for analysis of cells from microscopy images.
 
 Colocalisation Analysis
@@ -80,7 +80,7 @@ Contents
 
     installation
     imagej_plugins
-    cell_plugins
+    cells_plugins
     colocalisation_plugins
     findfoci_plugins
     thresholding_plugins

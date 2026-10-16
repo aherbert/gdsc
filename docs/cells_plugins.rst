@@ -1,12 +1,12 @@
-.. index:: ! Cell Plugins
+.. index:: ! Cells Plugins
 
-Cell Plugins
-============
+Cells Plugins
+=============
 
 The GDSC plugins provide various tools for analysis of cells from microscopy images.
 
 The plugins are described in the following sections using the order presented on the
-``Plugins > GDSC > Cell`` menu.
+``Plugins > GDSC > Cells`` menu.
 
 .. index:: ! Cell Outliner
 
