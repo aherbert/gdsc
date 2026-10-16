@@ -37,6 +37,7 @@ import ij.measure.Calibration;
 import ij.plugin.MacroInstaller;
 import ij.plugin.frame.PlugInFrame;
 import ij.text.TextWindow;
+import java.awt.Button;
 import java.awt.Checkbox;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
@@ -49,6 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Measures the distance between two consecutive points in XYZ.
@@ -330,6 +332,12 @@ public class Measure3D_PlugIn extends PlugInFrame {
 
     overlayCheckbox = new Checkbox("Overlay", true);
     add(overlayCheckbox, 0, 1);
+    row++;
+
+    // Add help button
+    final Button helpButton = new Button("Help");
+    helpButton.addActionListener(e -> ImageJUtils.showUrl(HelpUrls.getUrl("measure-3d")));
+    add(helpButton, 1, 1);
   }
 
   private void createLabelPanel(Label labelField, String label, String value) {

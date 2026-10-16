@@ -51,6 +51,7 @@ import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
+import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
  * Output the distances between the pair of spots from two channels at a user selected position.
@@ -124,6 +125,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
     @Override
     public synchronized void showOptionsDialog() {
       final GenericDialog gd = new GenericDialog(TITLE + " Tool Options");
+      gd.addHelp(HelpUrls.getUrl("spot-pair-distance"));
       //@formatter:off
       gd.addMessage(
           TextUtils.wrap(
