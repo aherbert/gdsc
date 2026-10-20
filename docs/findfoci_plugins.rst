@@ -53,21 +53,21 @@ Finds the best parameters for the ``FindFoci`` algorithm using the maxima marked
 FindFoci Optimiser GUI
 ----------------------
 
-A convenience plugin that provides an ``ImageJ`` window with a selection list of all images available for the ``FindFoci`` Optimiser
+A convenience plugin that provides an ``ImageJ`` window with a selection list of all images available for the ``FindFoci Optimiser``.
 
 .. index:: ! FindFoci Optimiser Multi-Image
 
 FindFoci Optimiser Multi-Image
 ------------------------------
 
-Allows the ``FindFoci`` Optimiser to be run on a directory of reference images to find the best parameters across the dataset. The results for each image are saved to an output directory and can be reloaded allowing the parameters to be ranked using different scoring methods
+Allows the ``FindFoci Optimiser`` to be run on a directory of reference images to find the best parameters across the dataset. The results for each image are saved to an output directory and can be reloaded allowing the parameters to be ranked using different scoring methods
 
 .. index:: ! FindFoci Helper
 
 FindFoci Helper
 ---------------
 
-An interactive plugin that aligns the manually added point Regions of Interest (ROIs) with the peaks found by the ``FindFoci`` algorithm. The plugin intercepts user clicks with the multi-point ROI tool and assigns the marked points to the closest/highest peak within a search radius
+An interactive plugin that aligns the manually added point Regions of Interest (ROIs) with the peaks found by the ``FindFoci`` algorithm. The plugin intercepts user clicks with the multi-point ROI tool and assigns the marked points to the closest/highest peak within a search radius.
 
 .. index:: ! FindFoci Settings
 
@@ -98,7 +98,7 @@ Match Calculator
 Computes the match statistics between two images marked with point ROIs. This uses the same match scores as the ``FindFoci Optimiser``: Number of matches; True positives; False positives; False negatives;
 `Jaccard <http://en.wikipedia.org/wiki/Jaccard_index>`_;
 `Precision; Recall <https://en.wikipedia.org/wiki/Precision_and_recall#Definition>`_;
-`F-score <http://en.wikipedia.org/wiki/Precision_and_recall#F-measure>`_. It can be used to compare the peak identification performed by two methods, including manual assignment
+`F-score <http://en.wikipedia.org/wiki/Precision_and_recall#F-measure>`_. It can be used to compare the peak identification performed by two methods, including manual assignment.
 
 .. index:: ! File Match Calculator
 
@@ -114,7 +114,7 @@ The generic CSV file has records of the following::
     ID,T,X,Y,Z,Value
 
 Z and Value can be missing. The generic file can also be tab delimited.
- 
+
 .. index:: ! Point Aligner
 
 Point Aligner
@@ -168,7 +168,7 @@ Mask Analyze Particles...
 
 Extend the ``ImageJ`` ``Particle Analyser`` to allow the particles to be obtained using contiguous pixels with a unique value. If blank pixels exist between two pixels with the same value then they will be treated as separate objects.
 
-This plugin works is useful on masks where each object region has a unique value, for example the output mask created by ``FindFoci``.
+This plugin is useful on masks where each object region has a unique value, for example the output mask created by ``FindFoci``.
 
 .. index:: ! Mask Analyze Channels
 
@@ -221,7 +221,7 @@ Find translocations using markers for colocalisation using 3 ``FindFoci`` result
 Translocation Finder Tool
 -------------------------
 
-Provide a tool on the ImageJ toolbar that responds to a user clicking repeatedly on the same image to identify foci for potential translocations. 3 consecutive clicks are required to mark 3 channels for analysis.
+Provide a tool on the ``ImageJ`` toolbar that responds to a user clicking repeatedly on the same image to identify foci for potential translocations. 3 consecutive clicks are required to mark 3 channels for analysis.
 
 Analysis options can be set for the the tool.
 

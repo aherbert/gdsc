@@ -17,15 +17,14 @@ GDSC ImageJ Plugins
 
 The GDSC ImageJ plugins are a collection of analysis programs for microscopy images including colocalisation analysis and peak finding. These run as plugins within `ImageJ <https://imagej.net/ij/index.html>`_, an image processing and analysis program using Java.
 
-The tools are easily :ref:`installed <installation:Installation>` into ``ImageJ``.
+The plugins are easily :ref:`installed <installation:Installation>` into ``ImageJ``.
 The library works for Java 11+. This is the java specification used by `SciJava <https://scijava.org/>`_ for participating projects as of 2026 (see `org.scijava:pom-scijava <https://mvnrepository.com/artifact/org.scijava/pom-scijava>`_). It is recommended that all ``ImageJ`` plugins use this specification to maximise compatibility.
 
-The code was developed at the `Genome Damage and Stability Centre <https://www.sussex.ac.uk/research/centres/genome-damage-and-stability-centre/>`_ at the University of Sussex, UK. The source code is hosted on GitHub_.
+The pluginsa were developed at the `Genome Damage and Stability Centre <https://www.sussex.ac.uk/research/centres/genome-damage-and-stability-centre/>`_ at the University of Sussex, UK. The source code is hosted on GitHub_.
 
 The plugins can be incorporated into ``ImageJ`` macros to allow automation of image analysis workflows.
 
 The following plugins are available using the order presented on the ``ImageJ > Plugins > GDSC`` menu:
-
 
 Cells Plugins
 -------------
@@ -38,20 +37,24 @@ Colocalisation Analysis
 
 The :ref:`colocalisation_plugins:Colocalisation Plugins`
 provide various tools to perform colocalisation
-analysis. The tools provide: thresholding for N-dimensional images for signal
-identification; correlation and overlap coefficient analysis; and
-colocalisation significance testing.
+analysis. The tools include:
 
+- Thresholding for N-dimensional images for signal identification
+- Correlation and overlap coefficient analysis
+- Colocalisation significance testing
 
 Find Foci
 ---------
 
 The :ref:`findfoci_plugins:Find Foci Plugins`
 allow the identification of peak intensity regions within
-2D and 3D images. The tools provide: the automated and semi-automated labelling
-of peaks; comparison of marked points between images; optimisation of algorithm
-parameters; batch analysis of images; and alignment of manually
-marked points to peak maxima.
+2D and 3D images. The tools include:
+
+- Automated and semi-automated labelling of peaks
+- Comparison of marked points between images
+- Optimisation of algorithm parameters
+- Batch analysis of images
+- Alignment of manually marked points to peak maxima
 
 Thresholding Plugins
 --------------------
@@ -64,9 +67,11 @@ Utility Plugins
 
 The :ref:`utility_plugins:Utility Plugins`
 provide various utility tools for image analysis. The tools
-include: difference of Gaussians for
-contrast enhancement; stack synchronisation for simultaneous image viewing;
-and image alignment.
+include:
+
+- Difference of Gaussians for contrast enhancement
+- Stack synchronisation for simultaneous image viewing
+- Image alignment
 
 ..
   No index

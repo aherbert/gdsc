@@ -18,20 +18,20 @@ The plugins have been divided into the following sub-sets:
    * - Set
      - Description
 
-   * - :ref:`Cell <cells_plugins:Cells Plugins>`
-     - Tools for analysis of cells from microscopy images.
+   * - :ref:`Cells <cells_plugins:Cells Plugins>`
+     - Tools for analysis of cells from microscopy images
 
    * - :ref:`Colocalisation <colocalisation_plugins:Colocalisation Plugins>`
-     - Tools to perform colocalisation analysis.
+     - Tools to perform colocalisation analysis
 
    * - :ref:`Find Foci <findfoci_plugins:Find Foci Plugins>`
-     - Identification of peak intensity regions within 2D and 3D images.
+     - Identification of peak intensity regions within 2D and 3D images
 
    * - :ref:`Thresholding <thresholding_plugins:Thresholding Plugins>`
-     - Tools for thresholding and mask generation.
+     - Tools for thresholding and mask generation
 
    * - :ref:`Utility <utility_plugins:Utility Plugins>`
-     - Utility tools for image analysis.
+     - Utility tools for image analysis
 
 .. index:: ! Usage Tracking
 

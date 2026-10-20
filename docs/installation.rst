@@ -31,7 +31,7 @@ The plugin is designed to run within ``ImageJ``. You can obtain the latest versi
 
 * https://imagej.net/ij/download.html
 
-To get the plugins you can download the latest Jar files from the update site and put them in your ``ImageJ`` plugins folder. The jars can be found here:
+To get the plugins you can download the latest ``jar`` files from the update site and put them in your ``ImageJ`` plugins folder. The jars can be found here:
 
 * https://sites.imagej.net/GDSC/
 
@@ -60,9 +60,6 @@ Place all of the following ``jar`` files into the ``ImageJ`` plugins directory:
 
    * - commons-statistics-*
      - Contains statistics routines.
-
-   * - gdsc-analytics
-     - Contains the GDSC analytics library.
 
    * - gdsc-core
      - Contains the GDSC core library.

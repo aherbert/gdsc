@@ -4,9 +4,11 @@ Utility Plugins
 ===============
 
 The GDSC plugins provide various utility tools for image analysis. The tools
-include: difference of Gaussians for
-contrast enhancement; stack synchronisation for simultaneous image viewing;
-and image alignment.
+include:
+
+- Difference of Gaussians for contrast enhancement
+- Stack synchronisation for simultaneous image viewing
+- Image alignment
 
 The plugins are described in the following sections using the order presented on the
 ``Plugins > GDSC > Utility`` menu.
@@ -16,7 +18,7 @@ The plugins are described in the following sections using the order presented on
 Contrast Enhancer
 -----------------
 
-Runs the ``ImageJ`` contrast enhancer (see Image > Adjust > Brightness/Contrast) on all the open images. This allows a one-click adjustment of all the open images for optimal viewing
+Runs the ``ImageJ`` contrast enhancer (see ``Image > Adjust > Brightness/Contrast``) on all the open images. This allows a one-click adjustment of all the open images for optimal viewing.
 
 .. index:: ! Difference of Gaussians
 
@@ -39,18 +41,22 @@ Requires the ``Image Science`` library (see :ref:`installation:Installation` ins
 Align Images
 ------------
 
-Aligns an image stack to a reference image using XY translation to maximise the normalised correlation. Outputs a new stack with the best alignment with optional sub-pixel accuracy (performed using a Gaussian fit or Cubic spline fit).
+Aligns an image stack to a reference image using XY translation to maximise the normalised correlation. Outputs a new stack with the best alignment with optional sub-pixel accuracy (performed using a Gaussian fit or cubic spline fit).
 
-Contains options to: restrict the translation space; provide a mask image to specify which pixels to include in the analysis; and clip the bicubic interpolated output to fit within the min-max of the original image.
+Contains options to:
+
+- Restrict the translation space
+- Provide a mask image to specify which pixels to include in the analysis
+- Clip the bicubic interpolated output to fit within the min-max of the original image
 
 .. index:: ! Align Images FFT
 
 Align Images FFT
 ----------------
 
-Aligns an image stack to a reference image using XY translation to maximise the normalised correlation. The correlation is computed in the Frequency domain using Fast Fourier Transforms. Edge artifacts of the Frequency domain are reduced by using a window function on the image (gradually reducing the edge pixels to zero).
+Aligns an image stack to a reference image using XY translation to maximise the normalised correlation. The correlation is computed in the frequency domain using a fast Fourier transform (FFT). Edge artifacts of the frequency domain are reduced by using a window function on the image (gradually reducing the edge pixels to zero).
 
-Outputs a new stack with the best alignment with optional sub-pixel accuracy (performed using a Gaussian fit or Cubic spline fit).
+Outputs a new stack with the best alignment with optional sub-pixel accuracy (performed using a Gaussian fit or cubic spline fit).
 
 Contains options to restrict the translation space.
 
@@ -88,7 +94,7 @@ HSB Picker
 
 Installs a tool into the menu that allows Hue-Saturation-Brightness (HSB) values to be sampled from an RGB image by mouse click. Pixels are sampled using a radius around the clicked position. The average HSB values and the standard deviations from all sampled pixels are shown in a frame.
 
-Provides the ability to call the HSB Filter. The filter values are set using the averages and the widths using the scaled standard deviations (e.g. av +/- scale * std.dev.).
+Provides the ability to call the ``HSB Filter``. The filter values are set using the averages and the widths using the scaled standard deviations (e.g. av +/- scale * std.dev.).
 
 .. index:: ! HSB Filter
 
@@ -97,7 +103,7 @@ HSB Filter
 
 Provides the ability to filter pixels in an RGB image using Hue-Saturation-Brightness (HSB) values. All pixels not within the specified width of the given values are set to zero.
 
-Note that Hue is a continuous property where values are wrapped around from 1 to 0.
+Note that hue is a continuous property where values are wrapped around from 1 to 0.
 
 .. index:: ! Spot Separation
 
@@ -113,20 +119,19 @@ Allows analysis of regions using the ROI selection tools and respects manual thr
 Z-Project extra...
 ------------------
 
-Extends the ``ImageJ`` Z-Project command to add the a ``Mode`` projection option. The mode can be calculated with or without ignoring zero values.
+Extends the ``ImageJ`` ``Z-Project`` command to add the a ``Mode`` projection option. The mode can be calculated with or without ignoring zero values.
 
 This plugin is useful for projecting 3D masks, for example those created by the
 :ref:`findfoci_plugins:Find Foci Plugins`.
-Intensity Analysis  Analyses the mean value within an ROI across a stack of exposures. Exposures must be set within the slice labels. Saturated pixels within an ROI remove that slice from analysis. A linear fit is made of the mean verses exposure using a rolling window and the gradient reported for the best fit. The gradient is a measure of the pixel intensity within the ROI.
-
-This plugin assumes images are taken of the same object at different exposure times on a camera with a linear response curve. Thus doubling the exposure should double the pixel value. The plugin allows analysis of images with a large dynamic range by capturing each object with a suitable exposure. Drift should be minimal for the best results.
 
 .. index:: ! Intensity Analysis
 
 Intensity Analysis
 ------------------
 
-Calculate the normalised intensity within an ROI using a stack of exposures (different imaging times). Exposures must be set within the slice labels. Images should have a linear response with respect to exposure.
+Calculate the normalised intensity within an ROI using a stack of exposures (different imaging times). Exposures must be set within the slice labels. Saturated pixels within an ROI remove that slice from analysis. A linear fit is made of the mean verses exposure using a rolling window and the gradient reported for the best fit. The gradient is a measure of the pixel intensity within the ROI.
+
+This plugin assumes images are taken of the same object at different exposure times on a camera with a linear response curve. Thus doubling the exposure should double the pixel value. The plugin allows analysis of images with a large dynamic range by capturing each object with a suitable exposure. Drift should be minimal for the best results.
 
 .. index:: ! Measure 3D
 
@@ -170,4 +175,4 @@ Creates a border around each object in a mask image using variable width inside 
 Mask Overlap
 ------------
 
-Relabels mask image using overlap between z and/or t dimensions.
+Relabels a mask image using overlap between z and/or t dimensions. Allows mapping the same object through z and/or t dimensions with the same mask value.

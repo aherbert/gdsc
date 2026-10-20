@@ -14,7 +14,7 @@ The plugins are described in the following sections using the order presented on
 Global Threshold
 ----------------
 
-Provides methods to threshold an image into foreground and background pixels. This is a modified version of the ``Auto_Threshold`` plugin developed by Gabriel Landini. An additional method had been added that sets the threshold as the image average plus a factor of the standard deviation. This is a fast method that can be used within the :ref:`findfoci_plugins:Find Foci` algorithm.
+Provides methods to threshold an image into foreground and background pixels. This is a modified version of the ``Auto_Threshold`` plugin developed by Gabriel Landini. An additional method had been added that sets the threshold as the image average plus a factor of the standard deviation. This is a fast method that can be used within the :ref:`findfoci_plugins:FindFoci` algorithm.
 
 .. index:: ! Multi Threshold
 
@@ -51,7 +51,7 @@ Requires the ``Image Science`` library (see :ref:`installation:Installation` ins
 Apply Mask
 ----------
 
-Create a mask from a source image using the Mask Creater and apply it to a target image. All pixels outside the mask in the target image will be set to zero.
+Create a mask from a source image using the ``Mask Creater`` and apply it to a target image. All pixels outside the mask in the target image will be set to zero.
 
 .. index:: ! Skeleton Analyser
 
@@ -79,4 +79,4 @@ Threshold pixels inside an ROI and analyse foreground pixels (count; mean; and s
 Threshold Outliner
 ------------------
 
-Analyses an image using a given mask. Skeletonises the mask image and extracts a set of lines connecting node points on the skeleton. Output statistics about each of the lines using the original image and the Euclidian Distance Map (EDM) of the mask.
+Outlines foreground pixel regions using a concave hull. Foreground pixel regions can be auto or manually thresholded.

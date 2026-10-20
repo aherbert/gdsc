@@ -4,9 +4,11 @@ Colocalisation Plugins
 ======================
 
 The GDSC Colocalisation plugins provide various tools to perform colocalisation
-analysis. The tools provide: thresholding for N-dimensional images for signal
-identification; correlation and overlap coefficient analysis; and
-colocalisation significance testing.
+analysis. The tools include:
+
+- Thresholding for N-dimensional images for signal identification
+- Correlation and overlap coefficient analysis
+- Colocalisation significance testing
 
 Full details of the Colocalisation plugins can be found in the ``Colocalisation User Manual`` on GitHub_.
 
