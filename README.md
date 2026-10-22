@@ -8,7 +8,9 @@ peak finding.
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Build Status](https://github.com/aherbert/gdsc/actions/workflows/build.yml/badge.svg)](https://github.com/aherbert/gdsc/actions/workflows/build.yml)
 [![Coverage Status](https://codecov.io/gh/aherbert/gdsc/branch/master/graph/badge.svg)](https://app.codecov.io/gh/aherbert/gdsc)
-
+[![Documentation Status](https://readthedocs.org/projects/gdsc-imagej/badge/?version=latest)](https://gdsc-imagej.readthedocs.io/en/latest/)
+[![Maven Central](https://img.shields.io/maven-central/v/uk.ac.sussex.gdsc/gdsc-ij_)](https://search.maven.org/artifact/uk.ac.sussex.gdsc/gdsc-ij_/)
+[![Javadocs](https://javadoc.io/badge2/uk.ac.sussex.gdsc/gdsc-ij_/javadoc.svg)](https://javadoc.io/doc/uk.ac.sussex.gdsc/gdsc-ij_)
 
 Find Foci
 ---------
