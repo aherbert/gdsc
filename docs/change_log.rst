@@ -4,6 +4,12 @@ Change Log
 .. contents::
    :local:
 
+Version 2.1
+-----------
+
+Minor release of GDSC ImageJ Plugins.
+
+
 Version 2.0
 -----------
 
