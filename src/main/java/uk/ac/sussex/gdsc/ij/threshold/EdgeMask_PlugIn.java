@@ -77,7 +77,7 @@ import uk.ac.sussex.gdsc.ij.utils.ImageScienceUtils;
  *      "http://www.imagescience.org/meijering/software/featurej">http://www.imagescience.org/meijering/software/featurej/</a>
  */
 public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
-  private static final String TITLE = "Edge Mask Creator";
+  private static final String TITLE = "Edge Mask";
 
   private static final String[] METHODS =
       {"Above background", "Laplacian edges", "Gradient edges", "Maximum gradient edges"};
