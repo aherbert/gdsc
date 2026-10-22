@@ -19,4 +19,4 @@ Major release of GDSC ImageJ Plugins.
   ImageJ/Fiji July 2026.
 * Update to GDSC Core 2.3.
 
-Requires Java 8.
+Requires Java 11.

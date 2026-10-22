@@ -69,7 +69,7 @@ Align Stacks
 
 Aligns open image stacks to a reference image using XY translation to maximise the normalised correlation. Accepts multi-dimensional stacks. The self-align mode aligns all timepoints within a stack to the current frame.
 
-For each timepoint a maximum/average intensity projection is performed per channel. The projection is thresholded to extract the signal, normalised to 0-255 and the resulting channel images are tiled to a composite image. The composite is then aligned using the maximum correlation between the images. Using a composite ensures each channel contributes equally to the aligment. The translation is applied to the entire stack for that timepoint.
+For each timepoint a maximum/average intensity projection is performed per channel. The projection is thresholded to extract the signal, normalised to 0-255 and the resulting channel images are tiled to a composite image. The composite is then aligned using the maximum correlation between the images. Using a composite ensures each channel contributes equally to the alignment. The translation is applied to the entire stack for that timepoint.
 
 .. index:: ! Image Scaler
 
@@ -119,7 +119,7 @@ Allows analysis of regions using the ROI selection tools and respects manual thr
 Z-Project extra...
 ------------------
 
-Extends the ``ImageJ`` ``Z-Project`` command to add the a ``Mode`` projection option. The mode can be calculated with or without ignoring zero values.
+Extends the ``ImageJ`` ``Z-Project`` command to add a ``Mode`` projection option. The mode can be calculated with or without ignoring zero values.
 
 This plugin is useful for projecting 3D masks, for example those created by the
 :ref:`findfoci_plugins:Find Foci Plugins`.
@@ -129,7 +129,7 @@ This plugin is useful for projecting 3D masks, for example those created by the
 Intensity Analysis
 ------------------
 
-Calculate the normalised intensity within an ROI using a stack of exposures (different imaging times). Exposures must be set within the slice labels. Saturated pixels within an ROI remove that slice from analysis. A linear fit is made of the mean verses exposure using a rolling window and the gradient reported for the best fit. The gradient is a measure of the pixel intensity within the ROI.
+Calculate the normalised intensity within an ROI using a stack of exposures (different imaging times). Exposures must be set within the slice labels. Saturated pixels within an ROI remove that slice from analysis. A linear fit is made of the mean versus exposure using a rolling window and the gradient reported for the best fit. The gradient is a measure of the pixel intensity within the ROI.
 
 This plugin assumes images are taken of the same object at different exposure times on a camera with a linear response curve. Thus doubling the exposure should double the pixel value. The plugin allows analysis of images with a large dynamic range by capturing each object with a suitable exposure. Drift should be minimal for the best results.
 

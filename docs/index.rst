@@ -20,7 +20,7 @@ The GDSC ImageJ plugins are a collection of analysis programs for microscopy ima
 The plugins are easily :ref:`installed <installation:Installation>` into ``ImageJ``.
 The library works for Java 11+. This is the java specification used by `SciJava <https://scijava.org/>`_ for participating projects as of 2026 (see `org.scijava:pom-scijava <https://mvnrepository.com/artifact/org.scijava/pom-scijava>`_). It is recommended that all ``ImageJ`` plugins use this specification to maximise compatibility.
 
-The pluginsa were developed at the `Genome Damage and Stability Centre <https://www.sussex.ac.uk/research/centres/genome-damage-and-stability-centre/>`_ at the University of Sussex, UK. The source code is hosted on GitHub_.
+The plugins were developed at the `Genome Damage and Stability Centre <https://www.sussex.ac.uk/research/centres/genome-damage-and-stability-centre/>`_ at the University of Sussex, UK. The source code is hosted on GitHub_.
 
 The plugins can be incorporated into ``ImageJ`` macros to allow automation of image analysis workflows.
 

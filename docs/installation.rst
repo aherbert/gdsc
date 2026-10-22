@@ -19,7 +19,7 @@ Add the ``GDSC`` update site. ``Fiji`` will automatically check for a new versio
 
 All the plugins will appear under the ``Plugins > GDSC`` menu.
 
-The ``Edge Mask Creator``, ``Laplacian of Gaussians`` and ``Scale Space`` plugins depends on the ``Image Science`` library. If you wish to use these then you must also enable the ``ImageScience`` update site. This was previously installed by default within Fiji but changed to an optional component in August 2016.
+The ``Edge Mask``, ``Laplacian of Gaussians`` and ``Scale Space`` plugins depend on the ``Image Science`` library. If you wish to use these then you must also enable the ``ImageScience`` update site. This was previously installed by default within Fiji but changed to an optional component in August 2016.
 
 
 .. index:: ! Install using ImageJ version 1

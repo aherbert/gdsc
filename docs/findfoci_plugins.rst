@@ -12,7 +12,7 @@ Details of the benefits of training an algorithm on multiple images can be found
 | *PLoS ONE* 9(12) 2014, **e114749**
 
 .. image:: https://img.shields.io/badge/doi-10.1371%2Fjournal.pone.0114749-blue
-    :target: http://dx.plos.org/10.1371/journal.pone.0114749
+    :target: https://doi.org/10.1371/journal.pone.0114749
     :alt: DOI 10.1371/journal.pone.0114749
 
 Full details of the ``FindFoci`` plugins can be found in the ``FindFoci User Manual`` on GitHub_.
@@ -32,21 +32,21 @@ A standard ``ImageJ`` plugin filter that operates on an opened image. Results ar
 FindFoci GUI
 ------------
 
-Opens a permanent window frame within ``ImageJ`` and allows selection of different images. It runs the ``FindFoci`` plugin to perform the processing work. A preview option allows the parameters to be interactively updated
+Opens a permanent window frame within ``ImageJ`` and allows selection of different images. It runs the ``FindFoci`` plugin to perform the processing work. A preview option allows the parameters to be interactively updated.
 
 .. index:: ! FindFoci Batch
 
 FindFoci Batch
 --------------
 
-Allows a set of parameters for the ``FindFoci`` algorithm to be applied to all the images in a directory. The algorithm is run on each image in turn and the results are saved to an output directory
+Allows a set of parameters for the ``FindFoci`` algorithm to be applied to all the images in a directory. The algorithm is run on each image in turn and the results are saved to an output directory.
 
 .. index:: ! FindFoci Optimiser
 
 FindFoci Optimiser
 ------------------
 
-Finds the best parameters for the ``FindFoci`` algorithm using the maxima marked on a representative image. It iterates through thousands of combinations and identifies the best parameters to find the desired peak regions. These parameters can then be easily applied to other images of the same type using the ``ImageJ`` scripting tools or the ``FindFoci Batch`` plugin
+Finds the best parameters for the ``FindFoci`` algorithm using the maxima marked on a representative image. It iterates through thousands of combinations and identifies the best parameters to find the desired peak regions. These parameters can then be easily applied to other images of the same type using the ``ImageJ`` scripting tools or the ``FindFoci Batch`` plugin.
 
 .. index:: ! FindFoci Optimiser GUI
 
@@ -60,7 +60,7 @@ A convenience plugin that provides an ``ImageJ`` window with a selection list of
 FindFoci Optimiser Multi-Image
 ------------------------------
 
-Allows the ``FindFoci Optimiser`` to be run on a directory of reference images to find the best parameters across the dataset. The results for each image are saved to an output directory and can be reloaded allowing the parameters to be ranked using different scoring methods
+Allows the ``FindFoci Optimiser`` to be run on a directory of reference images to find the best parameters across the dataset. The results for each image are saved to an output directory and can be reloaded allowing the parameters to be ranked using different scoring methods.
 
 .. index:: ! FindFoci Helper
 
@@ -96,9 +96,9 @@ Match Calculator
 ----------------
 
 Computes the match statistics between two images marked with point ROIs. This uses the same match scores as the ``FindFoci Optimiser``: Number of matches; True positives; False positives; False negatives;
-`Jaccard <http://en.wikipedia.org/wiki/Jaccard_index>`_;
+`Jaccard <https://en.wikipedia.org/wiki/Jaccard_index>`_;
 `Precision; Recall <https://en.wikipedia.org/wiki/Precision_and_recall#Definition>`_;
-`F-score <http://en.wikipedia.org/wiki/Precision_and_recall#F-measure>`_. It can be used to compare the peak identification performed by two methods, including manual assignment.
+`F-score <https://en.wikipedia.org/wiki/F-score>`_. It can be used to compare the peak identification performed by two methods, including manual assignment.
 
 .. index:: ! File Match Calculator
 
@@ -136,16 +136,16 @@ Spot Distance
 
 Detects spots within a mask/ROI region. The mask can define multiple regions using a different pixel value for each. Outputs a table of spot positions and a summary table of the number of spots with min/max/average distances.
 
-Spots are detected using the maxima within a difference of Gaussians image. The ``Smoothing`` parameter controls the removal of image noise. The ``Feature Size`` parameter controls the expected size of the spots; contrast changes (edges) much larger than the ``Feature Size`` will be removed from the image. (Set the ``Feature Size`` to zero to disable the difference of Guassians; spots will be detected using peaks on the smoothed image.) Optionally spots can be removed if they fail a circularity threshold.
+Spots are detected using the maxima within a difference of Gaussians image. The ``Smoothing`` parameter controls the removal of image noise. The ``Feature Size`` parameter controls the expected size of the spots; contrast changes (edges) much larger than the ``Feature Size`` will be removed from the image. (Set the ``Feature Size`` to zero to disable the difference of Gaussians; spots will be detected using peaks on the smoothed image.) Optionally spots can be removed if they fail a circularity threshold.
 
-Provides options to process the current frame or all frames in the stack. The last identified spots can be shown on the image as an overlay. The region counter is incremented for each run of the plugin allowing regions to be separated in the results
+Provides options to process the current frame or all frames in the stack. The last identified spots can be shown on the image as an overlay. The region counter is incremented for each run of the plugin allowing regions to be separated in the results.
 
 .. index:: ! Spot Pairs
 
 Spot Pairs
 ----------
 
-``ImageJ`` plugin that analyses marked ROI points in an image. Find the closest pairs within a set distance of each other. Supports a preview of the pairs and saves results to a table
+``ImageJ`` plugin that analyses marked ROI points in an image. Find the closest pairs within a set distance of each other. Supports a preview of the pairs and saves results to a table.
 
 .. index:: ! Mask Divider
 
@@ -223,7 +223,7 @@ Translocation Finder Tool
 
 Provide a tool on the ``ImageJ`` toolbar that responds to a user clicking repeatedly on the same image to identify foci for potential translocations. 3 consecutive clicks are required to mark 3 channels for analysis.
 
-Analysis options can be set for the the tool.
+Analysis options can be set for the tool.
 
 .. index:: ! Spot Radial Intensity
 
