@@ -34,9 +34,9 @@ Compares two images for correlated pixel intensities. If the two images are corr
 CDA
 ---
 
-Uses the Confined Displacement Algorithm (CDA) to compute the significance of colocalisation metrics (Manders coefficient and correlation coefficient).
+Uses the Confined Displacement Algorithm (CDA) to compute the significance of colocalisation metrics (Manders coefficients M1 and M2, and Pearson's correlation coefficient R).
 
-This is a modified version of the original ``ImageJ`` CDA plugin by Maria Osorio-Reich (see :ref:`references:References`). The code to translate images was reimplemented to allow efficient parallel execution extending support for larger maximum shifts with the same run time.
+This is a modified version of the original ``ImageJ`` CDA plugin by Maria Osorio-Reich (see :ref:`references:References`). The code to translate images was reimplemented to allow efficient parallel execution. A fixed number of shifts (``Permutations``) is randomly sampled from all the shifts within the maximum radius, allowing larger maximum shifts with the same run time.
 
 .. index:: ! CDA (Macro)
 
@@ -52,8 +52,8 @@ Stack Correlation Analyser
 
 Processes a stack image with multiple channels. Extracts all the channels and frames and performs:
 
-- Thresholding to create a mask for each channel+frame
-- All-vs-all channel correlation within the union/intersect of the channel masks
+- Thresholding to create a mask for each channel+frame (or for each z-slice if the ``Aggregate Z-stack`` option is disabled)
+- All-vs-all channel correlation within the union/intersect of the channel masks. When using the intersect the Manders coefficients M1 and M2 are also reported
 
 .. index:: ! Stack Colocalisation Analyser
 
@@ -63,7 +63,7 @@ Stack Colocalisation Analyser
 Processes a stack image with multiple channels. Each frame is processed separately. Extracts all the channels (collating z-stacks) and performs:
 
 - Thresholding to create a mask for each channel
-- CDA analysis of channel 1-vs-channel 2, optionally within the region defined by channel 3
+- CDA analysis of the selected first and second channels, optionally within a region defined by a third channel or the union of the first two channel masks (``Combine 1+2``)
 
 .. index:: ! Particle Overlap
 

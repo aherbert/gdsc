@@ -15,7 +15,7 @@ Cell Outliner
 
 Find cell edges using marked seed points. Best suited to identify round cells with edge pixels either lighter or darker than the cell.
 
-For each point ROI the plugin uses a curved edge filter to find edges within a range of an expected radius. The minimum/maximum size is set using the radius +/- tolerance. Edge detection is performed using an approximation to the Laplacian-of-Gaussian (LoG) and the kernel size and smoothing can be controlled.
+For each point ROI the plugin uses a curved edge filter to find edges within a range of an expected radius. The search region around each point extends to the radius multiplied by (1 + tolerance). Edge detection is performed using an approximation to the Laplacian-of-Gaussian (LoG) and the kernel size and smoothing can be controlled.
 
 The edge detection is weighted using the distance to the current outline of the cell (initially a circle of the specified radius around the point). A polygon outline is constructed using the highest edge value in each 10 degree segment around the centre. This is fitted using an oval shape of two ellipses back-to-back and the process iterated using the new cell outline. The final outline can be output as the polygon shape or the elliptical fit. This can be dilated to expand the outline to encompass the entire cell.
 
@@ -28,9 +28,9 @@ Nuclei Outline
 
 Outline nuclei across multiple frames. Performs the following:
 
-- Filter the image (Gaussian blur)
+- Filter the image (Gaussian blur, or a difference of Gaussians if a second blur is configured)
 - Mask all the nuclei using thresholding
 - Fill holes and filter outliers
 - Remove small nuclei based on size
 - Divide large nuclei based on size using watershed
-- Provides save options: ``Overlay ROI``; and ``Results Table``
+- Provides output options: ``Results overlay`` (ROIs); and ``Results table``
