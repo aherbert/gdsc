@@ -91,7 +91,7 @@ import uk.ac.sussex.gdsc.ij.help.HelpUrls;
  *
  * <li>Divide large nuclei based on size using watershed.
  *
- * <li>Provides save options: Overlay ROI; Save to memory; and Results Table
+ * <li>Provides save options: Overlay ROI; and Results Table
  *
  * </ul>
  */
