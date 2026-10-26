@@ -174,6 +174,11 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
       int index = Arrays.binarySearch(values, threshold);
       if (index < 0) {
         index = -(index + 1);
+      } else {
+        // The search may return any of multiple equal values. Step back to the first.
+        while (index > 0 && values[index - 1] == threshold) {
+          index--;
+        }
       }
       stats.add(values, index, values.length);
     } else {
