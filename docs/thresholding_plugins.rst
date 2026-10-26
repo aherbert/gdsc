@@ -23,9 +23,9 @@ Multi-Threshold
 
 Thresholds an image into levels using multiple thresholds. Based on the ``Multi Threshold`` plugin developed by Yasunari Tosa; the modifications allow processing 16-bit images and further output options.
 
-.. index:: ! Mask Creater
+.. index:: ! Mask Creator
 
-Mask Creater
+Mask Creator
 ------------
 
 Creates a mask from an image with the following options:
@@ -51,7 +51,7 @@ Requires the ``Image Science`` library (see :ref:`installation:Installation` ins
 Apply Mask
 ----------
 
-Create a mask from a source image using the ``Mask Creater`` and apply it to a target image. All pixels outside the mask in the target image will be set to zero.
+Create a mask from a source image using the ``Mask Creator`` and apply it to a target image. All pixels outside the mask in the target image will be set to zero.
 
 .. index:: ! Skeleton Analyser
 

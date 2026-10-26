@@ -4,10 +4,13 @@ Change Log
 .. contents::
    :local:
 
-Version 2.1
+Version 3.0
 -----------
 
-Minor release of GDSC ImageJ Plugins.
+Major release of GDSC ImageJ Plugins.
+
+* Rename the ``Mask Creater`` plugin to :ref:`thresholding_plugins:Mask Creator`. Macros using
+  ``run("Mask Creater", ...)`` must be updated to use the new name.
 
 
 Version 2.0

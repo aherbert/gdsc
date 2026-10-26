@@ -48,7 +48,7 @@ public class ApplyMask_PlugIn implements PlugInFilter {
   private static final String TITLE = "Apply Mask";
 
   private static String selectedImage = "";
-  private static int selectedOption = MaskCreater_PlugIn.OPTION_MASK;
+  private static int selectedOption = MaskCreator_PlugIn.OPTION_MASK;
   private static String selectedThresholdMethod = AutoThreshold.Method.OTSU.toString();
   private static int selectedChannel;
   private static int selectedSlice;
@@ -105,7 +105,7 @@ public class ApplyMask_PlugIn implements PlugInFilter {
     gd.addMessage("Create a mask from a source image and apply it.\n"
         + "Pixels outside the mask will be set to zero.");
     gd.addChoice("Mask_Image", imageList.toArray(new String[0]), selectedImage);
-    final String[] options = MaskCreater_PlugIn.getOptions();
+    final String[] options = MaskCreator_PlugIn.getOptions();
     gd.addChoice("Option", options, options[selectedOption]);
     gd.addChoice("Threshold_Method", AutoThreshold.getMethods(), selectedThresholdMethod);
     gd.addNumericField("Channel", selectedChannel, 0);
@@ -143,7 +143,7 @@ public class ApplyMask_PlugIn implements PlugInFilter {
    * Instantiates a new apply mask.
    */
   public ApplyMask_PlugIn() {
-    initialise(null, MaskCreater_PlugIn.OPTION_MASK);
+    initialise(null, MaskCreator_PlugIn.OPTION_MASK);
   }
 
   /**
@@ -152,7 +152,7 @@ public class ApplyMask_PlugIn implements PlugInFilter {
    * @param imp the image
    */
   public ApplyMask_PlugIn(ImagePlus imp) {
-    initialise(imp, MaskCreater_PlugIn.OPTION_MASK);
+    initialise(imp, MaskCreator_PlugIn.OPTION_MASK);
   }
 
   /**
@@ -185,7 +185,7 @@ public class ApplyMask_PlugIn implements PlugInFilter {
       return;
     }
 
-    final MaskCreater_PlugIn mc = new MaskCreater_PlugIn();
+    final MaskCreator_PlugIn mc = new MaskCreator_PlugIn();
     mc.setImp(maskImp);
     mc.setOption(selectedOption);
     mc.setThresholdMethod(selectedThresholdMethod);

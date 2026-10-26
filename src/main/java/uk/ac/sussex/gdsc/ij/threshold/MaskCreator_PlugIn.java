@@ -50,7 +50,7 @@ import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 /**
  * Create a mask from an image.
  */
-public class MaskCreater_PlugIn implements PlugIn {
+public class MaskCreator_PlugIn implements PlugIn {
   private static final String TITLE = "Mask Creator";
 
   /** The options string. */
@@ -130,7 +130,7 @@ public class MaskCreater_PlugIn implements PlugIn {
     }
   }
 
-  private static boolean showDialog(MaskCreater_PlugIn maskCreater) {
+  private static boolean showDialog(MaskCreator_PlugIn maskCreator) {
     final ArrayList<String> imageList = new ArrayList<>();
 
     for (final int id : ImageJUtils.getIdList()) {
@@ -159,7 +159,7 @@ public class MaskCreater_PlugIn implements PlugIn {
     gd.addCheckbox("Stack_histogram", selectedStackHistogram);
     gd.addCheckbox("Assign_objects", selectedAssignObjects);
     gd.addCheckbox("Eight_connected", selectedEightConnected);
-    gd.addHelp(HelpUrls.getUrl("mask-creater"));
+    gd.addHelp(HelpUrls.getUrl("mask-creator"));
     gd.showDialog();
 
     if (gd.wasCanceled()) {
@@ -179,45 +179,45 @@ public class MaskCreater_PlugIn implements PlugIn {
     selectedAssignObjects = gd.getNextBoolean();
     selectedEightConnected = gd.getNextBoolean();
 
-    maskCreater.setImp(WindowManager.getImage(selectedImage));
-    maskCreater.setOption(selectedOption);
-    maskCreater.setThresholdMethod(selectedThresholdMethod);
-    maskCreater.setClearOutside(selectedClearOutside);
-    maskCreater.setChannel(selectedChannel);
-    maskCreater.setSlice(selectedSlice);
-    maskCreater.setFrame(selectedFrame);
-    maskCreater.setRemoveEdgeParticles(selectedRemoveEdgeParticles);
-    maskCreater.setMinParticleSize(selectedMinParticleSize);
-    maskCreater.setStackHistogram(selectedStackHistogram);
-    maskCreater.setAssignObjects(selectedAssignObjects);
-    maskCreater.setEightConnected(selectedEightConnected);
+    maskCreator.setImp(WindowManager.getImage(selectedImage));
+    maskCreator.setOption(selectedOption);
+    maskCreator.setThresholdMethod(selectedThresholdMethod);
+    maskCreator.setClearOutside(selectedClearOutside);
+    maskCreator.setChannel(selectedChannel);
+    maskCreator.setSlice(selectedSlice);
+    maskCreator.setFrame(selectedFrame);
+    maskCreator.setRemoveEdgeParticles(selectedRemoveEdgeParticles);
+    maskCreator.setMinParticleSize(selectedMinParticleSize);
+    maskCreator.setStackHistogram(selectedStackHistogram);
+    maskCreator.setAssignObjects(selectedAssignObjects);
+    maskCreator.setEightConnected(selectedEightConnected);
 
     return true;
   }
 
   /**
-   * Instantiates a new mask creater.
+   * Instantiates a new mask creator.
    */
-  public MaskCreater_PlugIn() {
+  public MaskCreator_PlugIn() {
     init(null, OPTION_MASK);
   }
 
   /**
-   * Instantiates a new mask creater.
+   * Instantiates a new mask creator.
    *
    * @param imp the image
    */
-  public MaskCreater_PlugIn(ImagePlus imp) {
+  public MaskCreator_PlugIn(ImagePlus imp) {
     init(imp, OPTION_MASK);
   }
 
   /**
-   * Instantiates a new mask creater.
+   * Instantiates a new mask creator.
    *
    * @param imp the image
    * @param option the option
    */
-  public MaskCreater_PlugIn(ImagePlus imp, int option) {
+  public MaskCreator_PlugIn(ImagePlus imp, int option) {
     init(imp, option);
   }
 
