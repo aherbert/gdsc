@@ -9,5 +9,5 @@ macro 'Translocation Finder Action Tool - Cf00o4233C0f0o6933C00foa644' {
                                                                                                                                      
 macro 'Add Translocation Finder Tool Action Tool - Cf00o4233C0f0o6933C00foa644C000Ta508MC0f0L00f7Lf70fL000f' {
     // Ensure the manual tool has been initialised 
-    call('gdsc.foci.TranslocationFinder.addPluginTool');
+    call('uk.ac.sussex.gdsc.ij.foci.TranslocationFinder_PlugIn.addPluginTool');
 };

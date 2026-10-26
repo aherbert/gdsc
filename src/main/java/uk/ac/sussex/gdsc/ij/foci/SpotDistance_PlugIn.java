@@ -32,7 +32,6 @@ import ij.gui.GenericDialog;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.measure.Calibration;
-import ij.plugin.MacroInstaller;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.ThresholdToSelection;
 import ij.process.ImageProcessor;
@@ -1643,20 +1642,6 @@ public class SpotDistance_PlugIn implements PlugIn {
     }
     distancesWindow.append(sb.toString());
     allowUndo.set(true);
-  }
-
-  /**
-   * Install the Spot Distance tool.
-   */
-  static void installTool() {
-    final StringBuilder sb = new StringBuilder();
-    sb.append("macro 'Spot Distance Action Tool - C00fo4233o6922oa644Cf00O00ff' {\n");
-    sb.append("   call('").append(SpotDistance_PlugIn.class.getName()).append(".run');\n");
-    sb.append("};\n");
-    sb.append("macro 'Spot Distance Action Tool Options' {\n");
-    sb.append("   call('").append(SpotDistance_PlugIn.class.getName()).append(".setOptions');\n");
-    sb.append("};\n");
-    new MacroInstaller().install(sb.toString());
   }
 
   /**
