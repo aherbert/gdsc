@@ -90,7 +90,7 @@ Can accept a list file of images allowing a set of images to be scaled together.
 Spot Analyser
 -------------
 
-Identifies particles (e.g. cells) using a Gaussian blur and thresholding, and excludes small particles based on pixel count and particles touching the image edge. Spots are identified within each particle using the ``FindFoci`` algorithm; each spot region is defined using a fraction of the spot height. The average intensity of each channel inside and outside the spot regions is then compared using a t-test to identify increases in signal within spot regions.
+Identifies particles (e.g. cells) using a Gaussian blur and thresholding, and excludes small particles based on pixel count and particles touching the image edge. The top N spots (``Max peaks``) are identified within each particle using the ``FindFoci`` algorithm; each spot region is defined using a fraction of the spot height. The average intensity of each channel inside and outside the spot regions is then compared using a t-test to identify increases in signal within spot regions.
 
 .. index:: ! HSB Picker
 
