@@ -382,7 +382,7 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     processorOptions.setBackgroundMethod(BackgroundMethod.MEAN);
     processorOptions.setBackgroundParameter(0);
     processorOptions.setSearchMethod(SearchMethod.ABOVE_BACKGROUND);
-    processorOptions.setMaxPeaks(33000);
+    processorOptions.setMaxPeaks(settings.maxPeaks);
     processorOptions.setMinSize(5);
     processorOptions.setPeakMethod(PeakMethod.RELATIVE_ABOVE_BACKGROUND);
     processorOptions.setPeakParameter(0.5);
