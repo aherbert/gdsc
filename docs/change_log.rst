@@ -11,6 +11,11 @@ Major release of GDSC ImageJ Plugins.
 
 * Rename the ``Mask Creater`` plugin to :ref:`thresholding_plugins:Mask Creator`. Macros using
   ``run("Mask Creater", ...)`` must be updated to use the new name.
+* Correct dialog labels in the :ref:`findfoci_plugins:Spot Distance` plugin (``Circularity limit``,
+  ``Process frames``) and the :ref:`findfoci_plugins:Translocation Finder` plugin
+  (``Results name 1/2/3``). Macros using the previous option keys (``ciruclarity_limit``,
+  ``processettings.frames``, ``resultsettings.name_1/2/3``) must be updated to use the new keys
+  (``circularity_limit``, ``process_frames``, ``results_name_1/2/3``).
 
 
 Version 2.0

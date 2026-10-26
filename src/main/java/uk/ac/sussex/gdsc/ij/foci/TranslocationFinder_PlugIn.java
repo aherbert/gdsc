@@ -192,9 +192,9 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     gd.addMessage(
         "Analyses spots within a mask/ROI region\nand computes density and closest distances.");
 
-    gd.addChoice("Resultsettings.name_1", names, settings.resultsName1);
-    gd.addChoice("Resultsettings.name_2", names, settings.resultsName2);
-    gd.addChoice("Resultsettings.name_3", names, settings.resultsName3);
+    gd.addChoice("Results_name_1", names, settings.resultsName1);
+    gd.addChoice("Results_name_2", names, settings.resultsName2);
+    gd.addChoice("Results_name_3", names, settings.resultsName3);
     gd.addChoice("Overlay_on_image", imageList, settings.image);
     gd.addNumericField("Distance", settings.distance, 2, 6, "pixels");
     gd.addNumericField("Min_distance", settings.minDistance, 2, 6, "pixels");

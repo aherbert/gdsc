@@ -330,10 +330,10 @@ public class SpotDistance_PlugIn implements PlugIn {
         gd.addNumericField("Min_peak_height", settings.minPeakHeight, 2);
         gd.addNumericField("Max_peaks", settings.maxPeaks, 2);
       }
-      gd.addNumericField("Ciruclarity_limit", settings.circularityLimit, 2);
+      gd.addNumericField("Circularity_limit", settings.circularityLimit, 2);
       gd.addNumericField("Max_distance", settings.maxDistance, 2, 6, "pixels");
       if (imp.getNFrames() != 1) {
-        gd.addCheckbox("Processettings.frames", settings.processFrames);
+        gd.addCheckbox("Process_frames", settings.processFrames);
       }
       if (imp.getNChannels() != 1) {
         gd.addCheckbox("Dual_channel", settings.dualChannel);
