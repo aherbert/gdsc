@@ -69,9 +69,9 @@ The :ref:`utility_plugins:Utility Plugins`
 provide various utility tools for image analysis. The tools
 include:
 
-- Difference of Gaussians for contrast enhancement
-- Stack synchronisation for simultaneous image viewing
+- Difference of Gaussians and Laplacian of Gaussian filters for contrast enhancement
 - Image alignment
+- Mask conversion and measurement tools
 
 ..
   No index

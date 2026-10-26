@@ -19,7 +19,7 @@ Add the ``GDSC`` update site. ``Fiji`` will automatically check for a new versio
 
 All the plugins will appear under the ``Plugins > GDSC`` menu.
 
-The ``Edge Mask``, ``Laplacian of Gaussians`` and ``Scale Space`` plugins depend on the ``Image Science`` library. If you wish to use these then you must also enable the ``ImageScience`` update site. This was previously installed by default within Fiji but changed to an optional component in August 2016.
+The ``Edge Mask`` and ``Laplacian of Gaussian`` plugins, and the ``Laplacian of Gaussian`` output of the ``Scale Space`` plugin, depend on the ``Image Science`` library. If you wish to use these then you must also enable the ``ImageScience`` update site. This was previously installed by default within Fiji but changed to an optional component in August 2016.
 
 
 .. index:: ! Install using ImageJ version 1
@@ -35,10 +35,11 @@ To get the plugins you can download the latest ``jar`` files from the update sit
 
 * https://sites.imagej.net/GDSC/
 
-You will also need to install the additional Apache Commons Math 3 library. This is already included in ``Fiji`` so is not on the update site. A few plugins require the Image Science 3 library. You can get the files here:
+You will also need to install the additional libraries listed in the table below. These are already included in ``Fiji`` so are not on the update site. A few plugins require the Image Science 3 library. The libraries can be obtained from Maven Central; for example:
 
 * `Apache Commons Math 3 <https://repo.maven.apache.org/maven2/org/apache/commons/commons-math3/3.6.1/>`_
 * `Image Science 3 <https://imagescience.org/meijering/software/imagescience/>`_
+* `Maven Central <https://repo.maven.apache.org/maven2/>`_
 
 Place all of the following ``jar`` files into the ``ImageJ`` plugins directory:
 
@@ -48,6 +49,12 @@ Place all of the following ``jar`` files into the ``ImageJ`` plugins directory:
 
    * - Jar File
      - Description
+
+   * - beansbinding
+     - Contains routines to bind Java bean properties (used by the ``FindFoci`` GUI).
+
+   * - commons-lang3
+     - Contains Java language utility routines.
 
    * - commons-math3
      - Contains math routines.
@@ -69,6 +76,9 @@ Place all of the following ``jar`` files into the ``ImageJ`` plugins directory:
 
    * - fastutil-core
      - Library for type-specific Java collections.
+
+   * - guava, failureaccess
+     - Contains Google core libraries for Java.
 
    * - imagescience
      - Contains image analysis routines.

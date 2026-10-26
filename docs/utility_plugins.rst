@@ -6,9 +6,9 @@ Utility Plugins
 The GDSC plugins provide various utility tools for image analysis. The tools
 include:
 
-- Difference of Gaussians for contrast enhancement
-- Stack synchronisation for simultaneous image viewing
+- Difference of Gaussians and Laplacian of Gaussian filters for contrast enhancement
 - Image alignment
+- Mask conversion and measurement tools
 
 The plugins are described in the following sections using the order presented on the
 ``Plugins > GDSC > Utils`` menu.
@@ -18,7 +18,7 @@ The plugins are described in the following sections using the order presented on
 Contrast Enhancer
 -----------------
 
-Runs the ``ImageJ`` contrast enhancer (see ``Image > Adjust > Brightness/Contrast``) on all the open images. This allows a one-click adjustment of all the open images for optimal viewing.
+Runs the ``ImageJ`` contrast enhancer (see ``Process > Enhance Contrast``) on all the open images using 0.35% saturated pixels. This allows a one-click adjustment of all the open images for optimal viewing.
 
 .. index:: ! Difference of Gaussians
 
@@ -56,9 +56,14 @@ Align Images FFT
 
 Aligns an image stack to a reference image using XY translation to maximise the normalised correlation. The correlation is computed in the frequency domain using a fast Fourier transform (FFT). Edge artifacts of the frequency domain are reduced by using a window function on the image (gradually reducing the edge pixels to zero).
 
-Outputs a new stack with the best alignment with optional sub-pixel accuracy (performed using a Gaussian fit or cubic spline fit).
+Outputs a new stack with the best alignment with optional sub-pixel accuracy (performed using a cubic spline fit).
 
-Contains options to restrict the translation space.
+Contains options to:
+
+- Restrict the translation space
+- Normalise the correlation
+- Show the correlation and normalised images
+- Clip the interpolated output to fit within the min-max of the original image
 
 Note: This plugin is faster than the 'Align Images' plugin for large images and/or a large translation space. Note that the results will differ slightly due to the use of different correlation methods.
 
@@ -69,30 +74,30 @@ Align Stacks
 
 Aligns open image stacks to a reference image using XY translation to maximise the normalised correlation. Accepts multi-dimensional stacks. The self-align mode aligns all timepoints within a stack to the current frame.
 
-For each timepoint a maximum/average intensity projection is performed per channel. The projection is thresholded to extract the signal, normalised to 0-255 and the resulting channel images are tiled to a composite image. The composite is then aligned using the maximum correlation between the images. Using a composite ensures each channel contributes equally to the alignment. The translation is applied to the entire stack for that timepoint.
+For each timepoint a z-projection (e.g. maximum or average intensity) is performed per channel. The projection is thresholded using the Otsu method to extract the signal, normalised to 0-255 and the resulting channel images are tiled to a composite image. The composite is then aligned using the maximum correlation between the images computed using a fast Fourier transform (FFT) with an optional window function. Using a composite ensures each channel contributes equally to the alignment. The translation is applied to the entire stack for that timepoint.
 
 .. index:: ! Image Scaler
 
 Image Scaler
 ------------
 
-Scales all images in a stack so that the maximum of the image is set to the specified value. For example this can be used to scale a floating point image so that the maximum is 255 for correct display.
+Scales all images in a stack by a single factor so that the maximum of the stack is set to the specified value. For example this can be used to scale a floating point image so that the maximum is 255 for correct display.
 
-Can accept a list file of images allowing a set of images to be scaled together. The maximum of the entire set of images is used to calculate the scale factor applied to each image.
+Can accept a list file of images allowing a set of images to be scaled together. The maximum of the entire set of images is used to calculate the scale factor applied to each image. Note that in this mode each image file is overwritten with the scaled image.
 
 .. index:: ! Spot Analyser
 
 Spot Analyser
 -------------
 
-Identifies particles (e.g. cells) using thresholding and excludes small particles based on pixel count. The average intensity of each channel inside and outside the spot are then compared for the top N spots to identify increases in signal within spot regions.
+Identifies particles (e.g. cells) using a Gaussian blur and thresholding, and excludes small particles based on pixel count and particles touching the image edge. Spots are identified within each particle using the ``FindFoci`` algorithm; each spot region is defined using a fraction of the spot height. The average intensity of each channel inside and outside the spot regions is then compared using a t-test to identify increases in signal within spot regions.
 
 .. index:: ! HSB Picker
 
 HSB Picker
 ----------
 
-Installs a tool into the menu that allows Hue-Saturation-Brightness (HSB) values to be sampled from an RGB image by mouse click. Pixels are sampled using a radius around the clicked position. The average HSB values and the standard deviations from all sampled pixels are shown in a frame.
+Installs a tool into the ``ImageJ`` toolbar that allows Hue-Saturation-Brightness (HSB) values to be sampled from an RGB image by mouse click. Pixels are sampled using a radius around the clicked position. The average HSB values and the standard deviations from all sampled pixels are shown in a frame.
 
 Provides the ability to call the ``HSB Filter``. The filter values are set using the averages and the widths using the scaled standard deviations (e.g. av +/- scale * std.dev.).
 
@@ -138,23 +143,23 @@ This plugin assumes images are taken of the same object at different exposure ti
 Measure 3D
 ----------
 
-Installs a tool into the menu that allows distances to be measured in 3D. Distance is measured between two successive mouse clicks on the same channel and time frame of an image. Results are recorded to a table.
+Installs a tool into the ``ImageJ`` toolbar that allows distances to be measured in 3D. Distance is measured between two successive mouse clicks on the same channel and time frame of an image. Results are recorded to a table.
 
 .. index:: ! Scale Space
 
 Scale Space
 -----------
 
-Create a scale-space representation of an image using a 2D Gaussian filter at different scales.
+Create a scale-space representation of an image using a 2D Gaussian filter at different scales. The output can be the Gaussian, Difference of Gaussians or Laplacian of Gaussian.
 
-Requires the ``Image Science`` library (see :ref:`installation:Installation` instructions).
+The ``Laplacian of Gaussian`` output requires the ``Image Science`` library (see :ref:`installation:Installation` instructions).
 
 .. index:: ! FRAP Analysis
 
 FRAP Analysis
 -------------
 
-Analyses an image stack to detect pixel regions that have been photobleached. A plot of the intensity of the region is created over time. This can be saved to file for fitting with Fluorescence Recovery After Photobleaching (FRAP) models.
+Analyses an image stack to detect pixel regions that have been photobleached. The stack is first aligned to correct for drift. A plot of the intensity of each region is created over time and Fluorescence Recovery After Photobleaching (FRAP) models (exponential and diffusion-limited recovery) are fitted to each region. The results can optionally be saved to a directory.
 
 .. index:: ! Mask to ROI
 
