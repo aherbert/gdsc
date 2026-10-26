@@ -87,3 +87,26 @@ Place all of the following ``jar`` files into the ``ImageJ`` plugins directory:
      - A java implementation of the QuickHull algorithm.
 
 The plugins will be visible under the ``Plugins > GDSC`` menu.
+
+
+.. index:: ! Toolsets
+
+Toolsets
+--------
+
+The plugins jar contains ``ImageJ`` macro toolsets that add buttons to the ``ImageJ`` toolbar to run some of the plugins. The toolset files are not installed automatically. To use a toolset, extract the file from the plugins jar (using an archiving utility; the jar is a zip file) and place it in the ``ImageJ/macros/toolsets`` directory. The toolset can then be selected using the ``More Tools`` menu button (``>>``, the last button on the ``ImageJ`` toolbar).
+
+The toolset files are located in the jar in the directory ``uk/ac/sussex/gdsc/ij/macros/toolsets``:
+
+.. list-table::
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Toolset
+     - Description
+
+   * - Spot Distance Tools.txt
+     - Buttons to run the :ref:`findfoci_plugins:Spot Distance` plugin; run the plugin with extra options; redo the analysis using the same parameters; and undo the last analysis (delete the last result).
+
+   * - Translocation Finder Tools.txt
+     - Buttons to run the :ref:`findfoci_plugins:Translocation Finder` plugin; and to add the :ref:`findfoci_plugins:Translocation Finder (Tool)` to the toolbar.
