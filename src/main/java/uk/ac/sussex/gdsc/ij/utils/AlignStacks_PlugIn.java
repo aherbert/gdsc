@@ -28,7 +28,6 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.plugin.HyperStackReducer;
 import ij.plugin.PlugIn;
 import ij.plugin.ZProjector;
@@ -40,6 +39,7 @@ import java.util.ArrayList;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft;
 import uk.ac.sussex.gdsc.core.ij.AlignImagesFft.SubPixelMethod;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold.Method;
 import uk.ac.sussex.gdsc.core.utils.ImageWindow.WindowMethod;
@@ -71,7 +71,7 @@ public class AlignStacks_PlugIn implements PlugIn {
   private static int minYShift = -20;
   private static int maxYShift = 20;
   private static final String[] subPixelMethods = AlignImagesFft_PlugIn.getSubPixelMethods();
-  private static int subPixelMethod = 2;
+  private static int subPixelMethod = 1;
   private static final String[] interpolationMethods =
       AlignImagesFft_PlugIn.getInterpolationMethods();
   private static int interpolationMethod = ImageProcessor.NONE;
@@ -137,7 +137,7 @@ public class AlignStacks_PlugIn implements PlugIn {
   }
 
   private static boolean showDialog(String[] imageList, boolean selfAlignMode) {
-    final GenericDialog gd = new GenericDialog(TITLE);
+    final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
     if (selfAlignMode) {
       if (WindowManager.getCurrentImage() != null) {
@@ -168,7 +168,7 @@ public class AlignStacks_PlugIn implements PlugIn {
     gd.addNumericField("Max_X_translation", maxXShift, 0);
     gd.addNumericField("Min_Y_translation", minYShift, 0);
     gd.addNumericField("Max_Y_translation", maxYShift, 0);
-    gd.addChoice("Sub-pixel_method", subPixelMethods, subPixelMethods[subPixelMethod]);
+    gd.addChoice("Sub-pixel_method", subPixelMethods, subPixelMethod);
     gd.addChoice("Interpolation", interpolationMethods, interpolationMethods[interpolationMethod]);
     gd.addCheckbox("Clip_output", clipOutput);
     gd.addHelp(HelpUrls.getUrl("align-stacks"));
