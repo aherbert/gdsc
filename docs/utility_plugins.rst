@@ -119,7 +119,7 @@ Allows analysis of regions using the ROI selection tools and respects manual thr
 Z Project extra...
 ------------------
 
-Extends the ``ImageJ`` ``Z-Project`` command to add a ``Mode`` projection option. The mode can be calculated with or without ignoring zero values.
+Extends the ``ImageJ`` ``Z Project`` command to add a ``Mode`` projection option. The mode can be calculated with or without ignoring zero values.
 
 This plugin is useful for projecting 3D masks, for example those created by the
 :ref:`findfoci_plugins:Find Foci Plugins`.
