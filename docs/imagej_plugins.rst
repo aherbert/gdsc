@@ -147,4 +147,4 @@ The code used the Analytics Measurement Protocol. This allows any web connected 
 
 Data was sent using a secure HTTP connection. All information sent was non-personal however Google may have stored an IP address associated with the data.
 
-Data used Google's Universal Analytics. This service stopped processing data in `July 2023 <https://support.google.com/analytics/answer/11583528>`_. It is currently unknown when the data will be made inaccessible.
+Data used Google's Universal Analytics. This service stopped processing data in `July 2023 <https://support.google.com/analytics/answer/11583528>`_. Access to Universal Analytics data ended, and the data was deleted, from July 2024.
