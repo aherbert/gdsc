@@ -16,9 +16,9 @@ Global Threshold
 
 Provides methods to threshold an image into foreground and background pixels. This is a modified version of the ``Auto_Threshold`` plugin developed by Gabriel Landini. An additional method has been added that sets the threshold as the image average plus a factor of the standard deviation. This is a fast method that can be used within the :ref:`findfoci_plugins:FindFoci` algorithm.
 
-.. index:: ! Multi Threshold
+.. index:: ! Multi-Threshold
 
-Multi Threshold
+Multi-Threshold
 ---------------
 
 Thresholds an image into levels using multiple thresholds. Based on the ``Multi Threshold`` plugin developed by Yasunari Tosa; the modifications allow processing 16-bit images and further output options.
@@ -65,7 +65,7 @@ Skeletonise (reduce to single pixel lines) a mask image. Then produce a set of l
 Thread Analyser
 ---------------
 
-Analyses an image using a given mask. Skeletonises the mask image and extracts a set of lines connecting node points on the skeleton. Output statistics about each of the lines using the original image and the Euclidian Distance Map (EDM) of the mask.
+Analyses an image using a given mask. Skeletonises the mask image and extracts a set of lines connecting node points on the skeleton. Output statistics about each of the lines using the original image and the Euclidean Distance Map (EDM) of the mask.
 
 .. index:: ! Foreground Analyser
 

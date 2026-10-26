@@ -625,7 +625,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
   }
 
   /**
-   * Draw the current elliptical cell. Then create an Euclidian Distance Map to use as the weights
+   * Draw the current elliptical cell. Then create an Euclidean Distance Map to use as the weights
    * within the provided range. All other points a zeros.
    *
    * @param pointBounds the point bounds

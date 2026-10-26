@@ -119,7 +119,7 @@ import uk.ac.sussex.gdsc.ij.utils.GaussianFit_PlugIn;
  *
  * <p>This plugin was based on {@link ij.plugin.filter.MaximumFinder}. Options have been changed to
  * only support greyscale 2D images and 3D stacks and to perform region growing using configurable
- * thresholds. Support for Watershed, Previewing, and Euclidian Distance Map (EDM) have been
+ * thresholds. Support for Watershed, Previewing, and Euclidean Distance Map (EDM) have been
  * removed.
  *
  * <p>Stopping criteria for region growing routines are partly based on the options in PRIISM

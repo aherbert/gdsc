@@ -63,7 +63,7 @@ import uk.ac.sussex.gdsc.ij.help.HelpUrls;
  * Analyses an image using a given mask.
  *
  * <p>Skeletonises the mask image and extracts a set of lines connecting node points on the
- * skeleton. Output statistics about each of the lines using the original image and the Euclidian
+ * skeleton. Output statistics about each of the lines using the original image and the Euclidean
  * Distance Map (EDM) of the mask.
  */
 public class ThreadAnalyser_PlugIn implements PlugIn {
@@ -328,7 +328,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
   }
 
   /**
-   * Create a Euclidian Distance Map (EDM) of the mask.
+   * Create a Euclidean Distance Map (EDM) of the mask.
    *
    * @param bp the mask
    * @return the EDM float processor

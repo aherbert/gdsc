@@ -18,7 +18,7 @@ Details of the benefits of training an algorithm on multiple images can be found
 Full details of the ``FindFoci`` plugins can be found in the ``FindFoci User Manual`` on GitHub_.
 
 The plugins are described in the following sections using the order presented on the
-``Plugins > GDSC > Find Foci`` menu.
+``Plugins > GDSC > FindFoci`` menu.
 
 .. index:: ! FindFoci
 
@@ -216,10 +216,10 @@ Translocation Finder
 
 Find translocations using markers for colocalisation using 3 ``FindFoci`` results sets stored in memory. Find triplets where the two markers from channel 2 & 3 matching a foci in channel 1 are also a matching pair. Output a guess for a translocation where channel 13 distance ``<< 12|23``, no translocation where ``12 << 13|23``.
 
-.. index:: ! Translocation Finder Tool
+.. index:: ! Translocation Finder (Tool)
 
-Translocation Finder Tool
--------------------------
+Translocation Finder (Tool)
+---------------------------
 
 Provide a tool on the ``ImageJ`` toolbar that responds to a user clicking repeatedly on the same image to identify foci for potential translocations. 3 consecutive clicks are required to mark 3 channels for analysis.
 

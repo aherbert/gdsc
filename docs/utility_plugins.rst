@@ -11,7 +11,7 @@ include:
 - Image alignment
 
 The plugins are described in the following sections using the order presented on the
-``Plugins > GDSC > Utility`` menu.
+``Plugins > GDSC > Utils`` menu.
 
 .. index:: ! Contrast Enhancer
 
@@ -114,9 +114,9 @@ Finds spots in an image. Locates the closest neighbour spot within a radius and 
 
 Allows analysis of regions using the ROI selection tools and respects manual thresholding to identify spots.
 
-.. index:: ! Z-Project extra
+.. index:: ! Z Project extra
 
-Z-Project extra...
+Z Project extra...
 ------------------
 
 Extends the ``ImageJ`` ``Z-Project`` command to add a ``Mode`` projection option. The mode can be calculated with or without ignoring zero values.

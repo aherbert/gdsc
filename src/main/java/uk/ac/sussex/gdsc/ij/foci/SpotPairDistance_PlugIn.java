@@ -203,7 +203,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
 
     // Mouse released
     // - Compute relative orientation
-    // - Output Euclidian distance and relative XY distance
+    // - Output Euclidean distance and relative XY distance
 
     // Mouse clicked with modifier key
     // - Find Overlay components within the region and remove from Overlay and table
@@ -436,7 +436,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
           }
         }
 
-        // - Output Euclidian distance and relative XY distance
+        // - Output Euclidean distance and relative XY distance
         if (showDistances) {
           // For relative orientation
           double angle = 0;
