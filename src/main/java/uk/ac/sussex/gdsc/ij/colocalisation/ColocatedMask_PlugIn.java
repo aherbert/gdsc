@@ -436,10 +436,10 @@ public class ColocatedMask_PlugIn implements PlugIn {
       for (int slice = 1; slice <= index[1]; slice++) {
         for (int frame = 1; frame <= index[2]; frame++) {
           final ImageProcessor ip1 =
-              imageStack1.getProcessor(imp1.getStackIndex(frame, slice, frame));
+              imageStack1.getProcessor(imp1.getStackIndex(channel, slice, frame));
           final ImageProcessor ip2 =
-              imageStack2.getProcessor(imp2.getStackIndex(frame, slice, frame));
-          final byte[] b = (byte[]) outputStack.getPixels(imp1.getStackIndex(frame, slice, frame));
+              imageStack2.getProcessor(imp2.getStackIndex(channel, slice, frame));
+          final byte[] b = (byte[]) outputStack.getPixels(imp.getStackIndex(channel, slice, frame));
 
           if (settings.colocatedMode == 0) {
             // AND
