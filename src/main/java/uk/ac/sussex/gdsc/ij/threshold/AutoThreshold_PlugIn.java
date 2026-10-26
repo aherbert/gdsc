@@ -505,11 +505,10 @@ public class AutoThreshold_PlugIn implements PlugIn {
       data[data.length - 1] = 0;
     }
 
-    // This static property will have concurrency issues
-    final double m = AutoThreshold.getStdDevMultiplier();
-    AutoThreshold.setStdDevMultiplier(stdDevMultiplier);
-    final int threshold = AutoThreshold.getThreshold(method, data);
-    AutoThreshold.setStdDevMultiplier(m);
+    // Avoid concurrency issues
+    final int threshold = method == AutoThreshold.Method.MEAN_PLUS_STD_DEV
+        ? new AutoThreshold().meanPlusStdDev(data, stdDevMultiplier)
+        : AutoThreshold.getThreshold(method, data);
 
     // show threshold in log window if required
     if (doIlog) {
