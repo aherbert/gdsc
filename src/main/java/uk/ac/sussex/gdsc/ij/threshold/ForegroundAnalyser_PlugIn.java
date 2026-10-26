@@ -183,7 +183,7 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
       stats.add(values, index, values.length);
     } else {
       // Integer histogram
-      final int[] data = new int[(imp.getBitDepth() == 8) ? 256 : 65336];
+      final int[] data = new int[(imp.getBitDepth() == 8) ? 256 : 65536];
       RoiHelper.forEach(roi, stack, (int value) -> data[value]++);
 
       // Count values

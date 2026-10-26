@@ -420,7 +420,7 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
   private int getAutoCutoff() {
     if (defaultCutoff < 0) {
       // Build a histogram using the average pixel values per object
-      final int[] h = new int[65336];
+      final int[] h = new int[65536];
       for (int i = 0; i < objects.length; i++) {
         final int count = (int) objects[i][1];
         final int av = (int) Math.round(objects[i][2]);
