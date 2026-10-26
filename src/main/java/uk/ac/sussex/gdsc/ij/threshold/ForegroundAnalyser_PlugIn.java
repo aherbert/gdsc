@@ -170,7 +170,7 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
 
       threshold = histogram.getThreshold(AutoThreshold.getMethod(method), getHistogramBins());
 
-      // Analyse all pixels above the threshold
+      // Analyse all pixels at or above the threshold
       int index = Arrays.binarySearch(values, threshold);
       if (index < 0) {
         index = -(index + 1);
@@ -192,7 +192,7 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
 
       threshold = histogram.getThreshold(AutoThreshold.getMethod(method));
 
-      // Analyse all pixels above the threshold
+      // Analyse all pixels at or above the threshold
       for (int i = (int) threshold; i < data.length; i++) {
         final int c = data[i];
         if (c != 0) {
@@ -276,7 +276,7 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
         final byte[] pixels = new byte[numberOfPixels];
         final ImageProcessor ip = stack.getProcessor(slice);
         for (int i = 0; i < numberOfPixels; i++) {
-          if (ip.getf(i) > threshold) {
+          if (ip.getf(i) >= threshold) {
             pixels[i] = -1;
           }
         }
@@ -296,7 +296,7 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
           final ImageProcessor ip = stack.getProcessor(slice);
           for (int y = 0; y < rheight; y++) {
             for (int x = 0, i = (y + yOffset) * maxx + xOffset; x < rwidth; x++, i++) {
-              if (ip.getf(i) > threshold) {
+              if (ip.getf(i) >= threshold) {
                 pixels[i] = -1;
               }
             }
@@ -309,7 +309,7 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
           final ImageProcessor ip = stack.getProcessor(slice);
           for (int y = 0, j = 0; y < rheight; y++) {
             for (int x = 0, i = (y + yOffset) * maxx + xOffset; x < rwidth; x++, i++, j++) {
-              if (ip.getf(i) > threshold && mask.get(j) != 0) {
+              if (ip.getf(i) >= threshold && mask.get(j) != 0) {
                 pixels[i] = -1;
               }
             }
