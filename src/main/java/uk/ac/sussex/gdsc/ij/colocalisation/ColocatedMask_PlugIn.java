@@ -360,7 +360,7 @@ public class ColocatedMask_PlugIn implements PlugIn {
     // Check the dimensions
     final int width = imp1.getWidth();
     final int height = imp1.getHeight();
-    if (width != imp2.getWidth() || width != imp2.getHeight()) {
+    if (width != imp2.getWidth() || height != imp2.getHeight()) {
       if (preview) {
         IJ.log(TITLE + ": Images must have same XY dimensions");
       } else {
