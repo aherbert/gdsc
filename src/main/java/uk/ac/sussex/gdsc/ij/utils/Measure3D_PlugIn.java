@@ -179,7 +179,7 @@ public class Measure3D_PlugIn extends PlugInFrame {
       double dx = (double) x - lastX;
       double dy = (double) y - lastY;
       double dz = (double) z - lastZ;
-      final double distance = Math.sqrt(dx * dx + dy * dy + dz + dz);
+      final double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
       // Compute calibrated distance
       final Calibration cal = imp.getCalibration();
@@ -191,7 +191,7 @@ public class Measure3D_PlugIn extends PlugInFrame {
         dx *= cal.pixelWidth;
         dy *= cal.pixelHeight;
         dz *= cal.pixelDepth;
-        calibratedDistance = Math.sqrt(dx * dx + dy * dy + dz + dz);
+        calibratedDistance = Math.sqrt(dx * dx + dy * dy + dz * dz);
         units = cal.getXUnit();
       }
 
