@@ -25,7 +25,7 @@ The plugins are described in the following sections using the order presented on
 FindFoci
 --------
 
-A standard ``ImageJ`` plugin filter that operates on an opened image. Results are presented as a mask image, shown in tabular format and/or saved to file.
+A standard ``ImageJ`` plugin that operates on the currently selected image. Results are presented as a mask image, shown in tabular format and/or saved to file.
 
 .. index:: ! FindFoci GUI
 
@@ -107,13 +107,15 @@ File Match Calculator
 
 Compares the coordinates in two files and computes the match statistics.
 
-Can read QuickPALM xls files; STORMJ xls files; and a generic CSV file.
+Can read ``FindFoci`` results files; QuickPALM xls files; STORMJ xls files; and a generic CSV file.
 
-The generic CSV file has records of the following::
+The generic CSV file has records using one of the following formats::
 
     ID,T,X,Y,Z,Value
+    ID,T,X,Y
+    X,Y,Z
 
-Z and Value can be missing. The generic file can also be tab delimited.
+The generic file can also be tab delimited.
 
 .. index:: ! Point Aligner
 
@@ -138,7 +140,9 @@ Detects spots within a mask/ROI region. The mask can define multiple regions usi
 
 Spots are detected using the maxima within a difference of Gaussians image. The ``Smoothing`` parameter controls the removal of image noise. The ``Feature Size`` parameter controls the expected size of the spots; contrast changes (edges) much larger than the ``Feature Size`` will be removed from the image. (Set the ``Feature Size`` to zero to disable the difference of Gaussians; spots will be detected using peaks on the smoothed image.) Optionally spots can be removed if they fail a circularity threshold.
 
-Provides options to process the current frame or all frames in the stack. The last identified spots can be shown on the image as an overlay. The region counter is incremented for each run of the plugin allowing regions to be separated in the results.
+Provides options to process the current frame or all frames in the stack. The last identified spots can be shown on the image as an overlay. When the region is defined using an area ROI, each separate region is labelled using the region counter. The counter is incremented for each region and retained between runs of the plugin allowing regions to be separated in the results.
+
+For multi-channel images the ``Dual channel`` option detects spots in two selected channels and the summary reports the distances between spots in the first channel and spots in the second channel. When processing multiple frames the ``Track objects`` option assigns spot IDs using closest-distance matching to the spots in the previous frame, allowing the same spot to be followed through time.
 
 .. index:: ! Spot Pairs
 
@@ -152,7 +156,7 @@ Spot Pairs
 Mask Divider
 ------------
 
-Overlay a mask on an image and divide into two classes. For each unique pixel value in the mask (defining an object), obtain the mean pixel value of the object and then divide the objects into two classes, either by auto-thresholding or interactively.
+Overlay a mask on an image and divide into two classes. For each object in the mask (contiguous pixels with the same value; optionally 8-connected), obtain the mean pixel value of the object and then divide the objects into two classes, either by auto-thresholding or interactively.
 
 .. index:: ! Double Mask Divider
 
@@ -175,14 +179,14 @@ This plugin is useful on masks where each object region has a unique value, for 
 Mask Analyze Channels...
 -------------------------
 
-For each unique pixel value in the mask (defining an object), analyse the pixels values for each channel of a target image. Estimate the background of the channel using non-mask pixels.
+For each object in the mask (contiguous pixels with the same value), analyse the pixels values for each channel of a target image. Estimate the background of each channel using the lowest intensity non-object pixels within the convex hull of the objects.
 
 .. index:: ! Spot Density
 
 Spot Density
 ------------
 
-Calculate the density around spots defined using ``FindFoci`` results loaded from memory. Only spots within a mask region are processed. Any foci within the maximum analysis distance from the edge are excluded from analysis. Analysis is performed in 2D only.
+Calculate the density of spots from a second ``FindFoci`` results set around the spots from a first results set (the sets can be the same); both are loaded from memory. Only spots within a mask region are processed. Any foci within the maximum analysis distance from the edge are excluded from analysis. Analysis is performed in 2D only.
 
 Outputs histograms of the closest distances between spots and the density of particles around the spots (i.e. the `Pair Correlation <https://en.wikipedia.org/wiki/Radial_distribution_function>`_ function).
 
@@ -195,12 +199,14 @@ Identify the inertia tensor (principle rotation axes around the centre-of-mass) 
 
 Objects are identified using unique pixel values (can be non-contiguous), for example the output mask created by FindFoci.
 
+Optionally objects with centres within a merge distance (in pixels) can be iteratively joined before the dimensions are computed.
+
 .. index:: ! Assign Foci to Objects
 
 Assign Foci to Objects
 ----------------------
 
-Finds objects in an image using contiguous pixels of the same value. Locates the closest object to each ``FindFoci`` result held in memory and summarises the counts. Analysis is performed in 2D only.
+Finds objects in an image using contiguous pixels of the same value. Locates the closest object within a search radius to each focus and summarises the counts. Foci are taken from the last ``FindFoci`` result held in memory or from point ROIs. Analysis is performed in 2D only.
 
 .. index:: ! Assign Foci to Clusters
 
@@ -230,7 +236,7 @@ Analysis options can be set for the tool.
 Spot Radial Intensity
 ---------------------
 
-Output the radial intensity around spots within a mask region. Spots are defined using ``FindFoci`` results held in memory.
+Output the radial intensity around spots within a mask region. Spots are defined using ``FindFoci`` results held in memory or a point ROI.
 
 .. index:: ! Spot Pair Distance
 
