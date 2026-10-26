@@ -161,7 +161,7 @@ public class ForegroundAnalyser_PlugIn implements PlugInFilter {
       final float[] values = new float[numberOfValues];
       final int[] e = data.elements();
       for (int i = 0; i < numberOfValues; i++) {
-        values[i] = Float.floatToIntBits(e[i]);
+        values[i] = Float.intBitsToFloat(e[i]);
       }
 
       // Threshold
