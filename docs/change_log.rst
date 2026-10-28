@@ -20,6 +20,9 @@ Major release of GDSC ImageJ Plugins.
   parameters file. Previously the option was ignored and the mask overlay was always saved.
 * The :ref:`findfoci_plugins:FindFoci Optimiser` ``Sort method`` and ``Centre method`` fields
   accept method names as well as method numbers.
+* The :ref:`findfoci_plugins:FindFoci Optimiser Multi-Image` plugin ``Rank`` score conversion
+  ranks the parameters with the best (lowest) average rank first. Previously the worst
+  parameters were ranked first.
 
 
 Version 2.0

@@ -1143,8 +1143,10 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       }
     }
 
-    // Now sort the results using the combined scores. Check is the scored metric is lowest first
-    final boolean lowestFirst = settings.resultsSortMethod == SORT_RMSD;
+    // Now sort the results using the combined scores. Check if the scored metric is lowest first.
+    // The RMSD and the rank (1 is the best result) are lowest first.
+    final boolean lowestFirst =
+        settings.resultsSortMethod == SORT_RMSD || scoringMode == SCORE_RANK;
     sortResultsByScore(results, lowestFirst);
 
     // Output the combined results
