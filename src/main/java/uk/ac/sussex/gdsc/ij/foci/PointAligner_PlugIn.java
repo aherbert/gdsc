@@ -311,7 +311,7 @@ public class PointAligner_PlugIn implements PlugIn {
     gd.addCheckbox("Update_overlay", settings.updateOverlay);
     gd.addCheckbox("Show_unaligned", settings.showUnaligned);
     gd.addNumericField("Unaligned_border", settings.unalignedBorder, 0);
-    gd.addStringField("Results_directory", settings.resultsDirectory, 30);
+    gd.addDirectoryField("Results_directory", settings.resultsDirectory, 30);
     gd.addHelp(HelpUrls.getUrl("point-aligner"));
 
     gd.showDialog();
