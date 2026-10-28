@@ -2117,7 +2117,7 @@ public class FindFoci_PlugIn implements PlugIn, MacroExtension {
 
   private static boolean showBatchDialog(BatchSettings batchSettings) {
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
-    ImageJUtils.showUrl(HelpUrls.getUrl("findfoci-batch"));
+    gd.addHelp(HelpUrls.getUrl("findfoci-batch"));
     gd.addMessage("Run " + TITLE
         + " on a set of images.\n \nAll images in a directory will be processed.\n \n"
         + "Optional mask images in the input directory should be named:\n"

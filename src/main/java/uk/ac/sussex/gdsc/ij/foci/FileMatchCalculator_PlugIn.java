@@ -266,7 +266,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     final boolean haveImages = !newImageList.isEmpty();
 
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
-    ImageJUtils.showUrl(HelpUrls.getUrl("file-match-calculator"));
+    gd.addHelp(HelpUrls.getUrl("file-match-calculator"));
 
     settings = Settings.load();
     gd.addMessage("Compare the points in two files\nand compute the match statistics");

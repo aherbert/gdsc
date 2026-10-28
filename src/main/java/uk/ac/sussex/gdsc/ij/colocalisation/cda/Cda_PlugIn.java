@@ -2057,7 +2057,7 @@ public class Cda_PlugIn extends PlugInFrame {
     }
 
     final GenericDialog gd = new GenericDialog(PLUGIN_TITLE);
-    ImageJUtils.showUrl(HelpUrls.getUrl("cda-macro"));
+    gd.addHelp(HelpUrls.getUrl("cda-macro"));
 
     gd.addChoice(CHOICE_CHANNEL1.replace(" ", "_"), images, getTitle(images, channel1Index));
     gd.addChoice(CHOICE_CHANNEL2.replace(" ", "_"), images, getTitle(images, channel2Index));

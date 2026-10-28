@@ -166,7 +166,7 @@ public class FindFociGui_PlugIn implements PlugIn {
       if (view.isVisible()) {
         // Ask if the user would like a second instance
         final GenericDialog gd = new GenericDialog(FindFoci_PlugIn.TITLE);
-        ImageJUtils.showUrl(HelpUrls.getUrl("findfoci-gui"));
+        gd.addHelp(HelpUrls.getUrl("findfoci-gui"));
         gd.enableYesNoCancel();
         gd.addMessage(FindFoci_PlugIn.TITLE
             + " is already open.\n \nDo you want to create another instance?");
