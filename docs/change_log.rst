@@ -31,6 +31,15 @@ Major release of GDSC ImageJ Plugins.
   (:ref:`findfoci_plugins:FindFoci`), ``Peak ID`` (:ref:`utility_plugins:Spot Separation`),
   ``ID`` (:ref:`findfoci_plugins:FindFoci Helper`), ``Exp. ID`` (:ref:`colocalisation_plugins:CDA`)
   and ``Track ID``/``Spot ID`` (TrackMate track selection export).
+* Fix the :ref:`findfoci_plugins:FindFoci Match Calculator` failing when the images used to
+  create the results are closed. Height analysis and the overlay are skipped with a log message.
+* The :ref:`findfoci_plugins:Match Calculator` reports the heights of 32-bit images. Previously
+  the raw bits of the float pixel value were used.
+* The :ref:`findfoci_plugins:Match Calculator` match table and saved matches file report the X
+  and Y coordinates as integer pixels, and the heights without rounding. Previously calibrated
+  coordinates were reported for calibrated
+  :ref:`findfoci_plugins:FindFoci Match Calculator` results and values were rounded to 4
+  significant digits.
 
 
 Version 2.0

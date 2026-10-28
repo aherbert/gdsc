@@ -47,14 +47,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.ToDoubleBiFunction;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
-import uk.ac.sussex.gdsc.core.data.utils.Rounder;
-import uk.ac.sussex.gdsc.core.data.utils.RounderUtils;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
@@ -279,15 +276,28 @@ public class Match_PlugIn implements PlugIn {
       imp1 = WindowManager.getImage(m1.getImageId());
       imp2 = WindowManager.getImage(m2.getImageId());
 
-      final boolean canExtractHeights = canExtractHeights(imp1, imp2);
+      final boolean needHeights = settings.quartiles || settings.scatter
+          || settings.unmatchedDistribution || settings.matchTable;
+      boolean canExtractHeights = false;
+      if (needHeights) {
+        if (imp1 == null || imp2 == null) {
+          IJ.log(TITLE + ": Heights require the images for the results to be open");
+        } else {
+          canExtractHeights = canExtractHeights(imp1, imp2);
+        }
+      }
       doQuartiles = settings.quartiles && canExtractHeights;
       doScatter = settings.scatter && canExtractHeights;
       doUnmatched = settings.unmatchedDistribution && canExtractHeights;
 
-      if (doQuartiles || doScatter || doUnmatched || settings.matchTable) {
+      if (canExtractHeights) {
         // Extract the heights for each point
         actualPoints = extractPoints(imp1, actualPoints, settings.channel1, settings.frame1);
         predictedPoints = extractPoints(imp2, predictedPoints, settings.channel2, settings.frame2);
+      } else if (settings.matchTable) {
+        // The match table requires valued points. Use a height of zero.
+        actualPoints = createValuedPoints(actualPoints);
+        predictedPoints = createValuedPoints(predictedPoints);
       }
     } else if (fileMode) {
       try {
@@ -347,28 +357,7 @@ public class Match_PlugIn implements PlugIn {
     final MatchResult result = (MatchResult) points[4];
 
     if (settings.overlay > 0 && (imageMode || memoryMode)) {
-      // Imp2 is the predicted, show the overlay on this
-      Objects.requireNonNull(imp2, "Image2 is null");
-      imp2.setOverlay(null);
-      imp2.saveRoi();
-      imp2.killRoi();
-      Color match;
-      Color unmatch1;
-      Color unmatch2;
-      if (settings.overlay == 2) {
-        // Use colour blind friendly colours
-        match = MATCH;
-        unmatch1 = UNMATCH1;
-        unmatch2 = UNMATCH2;
-      } else {
-        match = Color.YELLOW;
-        unmatch1 = Color.RED;
-        unmatch2 = Color.GREEN;
-      }
-      addOverlay(imp2, truePositives, match, scaleX, scaleY, scaleZ);
-      addOverlay(imp2, falseNegatives, unmatch1, scaleX, scaleY, scaleZ);
-      addOverlay(imp2, falsePositives, unmatch2, scaleX, scaleY, scaleZ);
-      imp2.updateAndDraw();
+      showOverlay(imp2, truePositives, falsePositives, falseNegatives);
     }
 
     // Output a scatter plot of actual vs predicted
@@ -389,6 +378,43 @@ public class Match_PlugIn implements PlugIn {
       addIntensityFromFindFoci(matches, falsePositives, falseNegatives);
       showMatches(matches, falsePositives, falseNegatives);
     }
+  }
+
+  /**
+   * Show the matched and unmatched points as an overlay on image 2.
+   *
+   * @param imp2 the image 2 (can be null)
+   * @param truePositives the true positives
+   * @param falsePositives the false positives
+   * @param falseNegatives the false negatives
+   */
+  private void showOverlay(@Nullable ImagePlus imp2, List<Coordinate> truePositives,
+      List<Coordinate> falsePositives, List<Coordinate> falseNegatives) {
+    if (imp2 == null) {
+      IJ.log(TITLE + ": The overlay requires the image for results 2 to be open");
+      return;
+    }
+    // Imp2 is the predicted, show the overlay on this
+    imp2.setOverlay(null);
+    imp2.saveRoi();
+    imp2.killRoi();
+    Color match;
+    Color unmatch1;
+    Color unmatch2;
+    if (settings.overlay == 2) {
+      // Use colour blind friendly colours
+      match = MATCH;
+      unmatch1 = UNMATCH1;
+      unmatch2 = UNMATCH2;
+    } else {
+      match = Color.YELLOW;
+      unmatch1 = Color.RED;
+      unmatch2 = Color.GREEN;
+    }
+    addOverlay(imp2, truePositives, match, scaleX, scaleY, scaleZ);
+    addOverlay(imp2, falseNegatives, unmatch1, scaleX, scaleY, scaleZ);
+    addOverlay(imp2, falsePositives, unmatch2, scaleX, scaleY, scaleZ);
+    imp2.updateAndDraw();
   }
 
   private static FindFociMemoryResults getFindFociMemoryResults(String resultsName) {
@@ -527,6 +553,21 @@ public class Match_PlugIn implements PlugIn {
     return result;
   }
 
+  /**
+   * Creates the valued points with a value of zero. The ID is stored as the time.
+   *
+   * @param points the points
+   * @return the valued points
+   */
+  private static TimeValuedPoint[] createValuedPoints(Coordinate[] points) {
+    final TimeValuedPoint[] newPoints = new TimeValuedPoint[points.length];
+    for (int i = 0; i < newPoints.length; i++) {
+      newPoints[i] =
+          new TimeValuedPoint(points[i].getX(), points[i].getY(), points[i].getZ(), i + 1, 0);
+    }
+    return newPoints;
+  }
+
   private TimeValuedPoint[] extractPoints(ImagePlus imp, Coordinate[] actualPoints, int channel,
       int frame) {
     // Use maximum intensity projection
@@ -537,7 +578,8 @@ public class Match_PlugIn implements PlugIn {
     for (int i = 0; i < newPoints.length; i++) {
       final int x = (int) Math.round(actualPoints[i].getX() / scaleX);
       final int y = (int) Math.round(actualPoints[i].getY() / scaleY);
-      final int value = ip.get(x, y);
+      // Use getf to support 32-bit float images
+      final float value = ip.getf(x, y);
       newPoints[i] = new TimeValuedPoint(actualPoints[i].getX(), actualPoints[i].getY(),
           actualPoints[i].getZ(), i + 1, value);
     }
@@ -1255,8 +1297,6 @@ public class Match_PlugIn implements PlugIn {
           .append(newLine);
       sb.append("# X1\tY1\tV1\tX2\tY2\tV2").append(newLine);
 
-      final Rounder r = RounderUtils.create(4);
-
       out.write(sb.toString());
 
       for (final PointPair pair : matches) {
@@ -1270,8 +1310,8 @@ public class Match_PlugIn implements PlugIn {
           v1 = p1.getValue(); // Actual
           v2 = p2.getValue(); // Predicted
         }
-        out.write(String.format("%s\t%s\t%s\t%s\t%s\t%s%s", r.round(c1.getX()), r.round(c1.getY()),
-            r.round(v1), r.round(c2.getX()), r.round(c2.getY()), r.round(v2), newLine));
+        out.write(String.format("%d\t%d\t%s\t%d\t%d\t%s%s", pixelX(c1), pixelY(c1),
+            formatValue(v1), pixelX(c2), pixelY(c2), formatValue(v2), newLine));
       }
       // Actual
       for (final Coordinate c : falseNegatives) {
@@ -1280,8 +1320,8 @@ public class Match_PlugIn implements PlugIn {
           final TimeValuedPoint p = (TimeValuedPoint) c;
           v1 = p.getValue();
         }
-        out.write(String.format("%s\t%s\t%.0f\t0\t0\t0%s", r.round(c.getX()), r.round(c.getY()),
-            r.round(v1), newLine));
+        out.write(String.format("%d\t%d\t%s\t0\t0\t0%s", pixelX(c), pixelY(c), formatValue(v1),
+            newLine));
       }
       // Predicted
       for (final Coordinate c : falsePositives) {
@@ -1290,8 +1330,8 @@ public class Match_PlugIn implements PlugIn {
           final TimeValuedPoint p = (TimeValuedPoint) c;
           v1 = p.getValue();
         }
-        out.write(String.format("0\t0\t0\t%s\t%s\t%.0f%s", r.round(c.getX()), r.round(c.getY()),
-            r.round(v1), newLine));
+        out.write(String.format("0\t0\t0\t%d\t%d\t%s%s", pixelX(c), pixelY(c), formatValue(v1),
+            newLine));
       }
     } catch (final IOException ex) {
       IJ.log("Unable to save the matches to file: " + ex.getMessage());
@@ -1391,18 +1431,47 @@ public class Match_PlugIn implements PlugIn {
     output.accept(sb.toString());
   }
 
+  /**
+   * Format the pixel value. Integer values are formatted without a decimal point.
+   *
+   * @param value the value
+   * @return the string
+   */
+  private static String formatValue(float value) {
+    final int intValue = (int) value;
+    return intValue == value ? Integer.toString(intValue) : Float.toString(value);
+  }
+
+  /**
+   * Gets the X pixel coordinate. Converts calibrated coordinates to pixels.
+   *
+   * @param point the point
+   * @return the pixel coordinate
+   */
+  private int pixelX(Coordinate point) {
+    return (int) Math.round(point.getX() / scaleX);
+  }
+
+  /**
+   * Gets the Y pixel coordinate. Converts calibrated coordinates to pixels.
+   *
+   * @param point the point
+   * @return the pixel coordinate
+   */
+  private int pixelY(Coordinate point) {
+    return (int) Math.round(point.getY() / scaleY);
+  }
+
   private void addPoint(StringBuilder sb, String title, Coordinate point) {
     if (point != null) {
       final TimeValuedPoint p = (TimeValuedPoint) point;
-      final Rounder r = RounderUtils.create(4);
       //@formatter:off
       sb.append(title)
           .append('\t').append(p.getTime())
-          .append('\t').append(r.round(p.getX()))
-          .append('\t').append(r.round(p.getY()))
-        //.append('\t').append(r.round(p.getZ()))
-        .append('\t').append((int) Math.round(p.getZ() / scaleZ))
-        .append('\t');
+          .append('\t').append(pixelX(p))
+          .append('\t').append(pixelY(p))
+          .append('\t').append((int) Math.round(p.getZ() / scaleZ))
+          .append('\t');
       //@formatter:on
     } else {
       sb.append("-\t-\t-\t-\t-\t");
