@@ -35,7 +35,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.WindowConstants;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.foci.gui.FindFociHelperView;
-import uk.ac.sussex.gdsc.ij.foci.gui.OptimiserView;
 
 /**
  * Create a window that allows the user to pick ROI points and have them mapped to the closest
@@ -75,7 +74,7 @@ public class FindFociHelper_PlugIn implements PlugIn {
       view.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
       instance.set(view);
 
-      IJ.register(OptimiserView.class);
+      IJ.register(FindFociHelperView.class);
 
       showInstance();
       IJ.showStatus("FindFoci Helper ready");
