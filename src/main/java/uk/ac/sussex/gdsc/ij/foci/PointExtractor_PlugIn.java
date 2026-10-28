@@ -47,7 +47,7 @@ import uk.ac.sussex.gdsc.ij.help.HelpUrls;
  * Extracts the ROI points from an image to file.
  */
 public class PointExtractor_PlugIn implements PlugInFilter {
-  private static final String TITLE = "Point Extracter";
+  private static final String TITLE = "Point Extractor";
   private static final String SETTING_FILENAME = "gdsc.foci.pointextractor.filename";
 
   private static String mask = "";
