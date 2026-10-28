@@ -16,6 +16,8 @@ Major release of GDSC ImageJ Plugins.
   (``Results name 1/2/3``). Macros using the previous option keys (``ciruclarity_limit``,
   ``processettings.frames``, ``resultsettings.name_1/2/3``) must be updated to use the new keys
   (``circularity_limit``, ``process_frames``, ``results_name_1/2/3``).
+* The :ref:`findfoci_plugins:FindFoci Batch` plugin reads the ``Overlay_mask`` option from the
+  parameters file. Previously the option was ignored and the mask overlay was always saved.
 
 
 Version 2.0

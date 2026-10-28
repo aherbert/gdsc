@@ -626,6 +626,7 @@ public class FindFoci_PlugIn implements PlugIn, MacroExtension {
       processorOptions.setSortMethod(findEnum(OPTION_SORT_METHOD, SortMethod::fromDescription));
       processorOptions.setMaxPeaks(findInteger(OPTION_MAXIMUM_PEAKS));
       processorOptions.setMaskMethod(findEnum(OPTION_SHOW_MASK, MaskMethod::fromDescription));
+      options.setOption(OutputOption.OVERLAY_MASK, findBoolean(OPTION_OVERLAY_MASK));
       processorOptions.setFractionParameter(findDouble(OPTION_FRACTION_PARAMETER));
       options.setOption(OutputOption.ROI_SELECTION, findBoolean(OPTION_MARK_MAXIMA));
       options.setOption(OutputOption.MASK_ROI_SELECTION, findBoolean(OPTION_MARK_PEAK_MAXIMA));
