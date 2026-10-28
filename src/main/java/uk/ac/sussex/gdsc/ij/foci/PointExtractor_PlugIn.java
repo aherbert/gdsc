@@ -218,7 +218,8 @@ public class PointExtractor_PlugIn implements PlugInFilter {
   private AssignedPoint[] getPoints() {
     AssignedPoint[] roiPoints;
 
-    if (isManagerAvailable() && useManager) {
+    // Use the manager if there is no image
+    if (isManagerAvailable() && (useManager || imp == null)) {
       final HashSet<Xyz> points = new HashSet<>();
       for (final PointRoi roi : pointRois) {
         // Note:

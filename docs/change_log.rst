@@ -40,6 +40,9 @@ Major release of GDSC ImageJ Plugins.
   coordinates were reported for calibrated
   :ref:`findfoci_plugins:FindFoci Match Calculator` results and values were rounded to 4
   significant digits.
+* Fix the :ref:`findfoci_plugins:Point Extractor` failing when there is no image and the
+  ``Use manager ROIs`` option is not selected. The ROI Manager is always used when there is no
+  image.
 
 
 Version 2.0
