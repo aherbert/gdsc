@@ -1322,7 +1322,7 @@ public class Match_PlugIn implements PlugIn {
     }
 
     // Show a result table
-    String header = "Image 1\tId\tX\tY\tSlice\tImage 2\tId\tX\tY\tSlice\tDistance";
+    String header = "Image 1\tID\tX\tY\tSlice\tImage 2\tID\tX\tY\tSlice\tDistance";
     if (settings.findFociImageIndex > 0) {
       header += "\tImage " + settings.findFociImageIndex + ": "
           + Settings.findFociResult[settings.findFociResultChoiceIndex];
