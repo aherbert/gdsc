@@ -1019,7 +1019,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
     // Check the maxima can be displayed
     if (maxValue > MAXIMA_CAPCITY) {
-      log(() -> "The number of maxima exceeds the 16-bit capacity used for diplay: "
+      log(() -> "The number of maxima exceeds the 16-bit capacity used for display: "
           + MAXIMA_CAPCITY);
       return null;
     }
@@ -5576,7 +5576,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
     if (createObjectMask) {
       // Check we do not exceed capcity
       if (id > MAXIMA_CAPCITY) {
-        log(() -> "The number of objects exceeds the 16-bit capacity used for diplay: "
+        log(() -> "The number of objects exceeds the 16-bit capacity used for display: "
             + MAXIMA_CAPCITY);
         return null;
       }
