@@ -23,6 +23,10 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`findfoci_plugins:FindFoci Optimiser Multi-Image` plugin ``Rank`` score conversion
   ranks the parameters with the best (lowest) average rank first. Previously the worst
   parameters were ranked first.
+* Fix the :ref:`findfoci_plugins:FindFoci Helper` ``Show Overlay`` button failing when the image
+  has no ROI.
+* The :ref:`findfoci_plugins:FindFoci Helper` results table reports the ``Height`` of 32-bit
+  images. Previously the raw bits of the float pixel value were reported.
 
 
 Version 2.0

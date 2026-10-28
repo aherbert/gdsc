@@ -1368,7 +1368,8 @@ public class FindFociHelperView extends JFrame
         final int x = p.getXint();
         final int y = p.getYint();
         final int z = p.getZint();
-        final int height = impStack.getProcessor(z).get(x, y);
+        // Use getf to support 32-bit float images
+        final float height = impStack.getProcessor(z).getf(x, y);
         final boolean assigned = (p.getAssignedId() != -1);
         // Note: ImageJ reports the current z-slice in the status bar
         // using 0-based indexing so we do the same here to make mouse over
@@ -1413,7 +1414,7 @@ public class FindFociHelperView extends JFrame
   }
 
   private static void createResult(final StringBuilder sb, int index, int x, int y, int z,
-      double xx, double yy, double zz, int height, boolean assigned) {
+      double xx, double yy, double zz, float height, boolean assigned) {
     sb.setLength(0);
     sb.append(index).append('\t');
     sb.append(x).append('\t');
@@ -1422,7 +1423,14 @@ public class FindFociHelperView extends JFrame
     sb.append(MathUtils.rounded(xx)).append('\t');
     sb.append(MathUtils.rounded(yy)).append('\t');
     sb.append(MathUtils.rounded(zz)).append('\t');
-    sb.append(height).append('\t');
+    // Integer images have integer heights
+    final int intHeight = (int) height;
+    if (intHeight == height) {
+      sb.append(intHeight);
+    } else {
+      sb.append(height);
+    }
+    sb.append('\t');
     sb.append(assigned);
   }
 
@@ -1450,11 +1458,11 @@ public class FindFociHelperView extends JFrame
 
     // Save the ROI and remove it
     savedRoi = activeImp.getRoi();
-    if (savedRoi != null && savedRoi.getType() != Roi.POINT) {
-      savedRoi = null;
-    } else {
+    if (savedRoi != null && savedRoi.getType() == Roi.POINT) {
       // Clone this so killRoi does not delete the position counters
       savedRoi = (Roi) savedRoi.clone();
+    } else {
+      savedRoi = null;
     }
     activeImp.killRoi();
   }
