@@ -18,6 +18,8 @@ Major release of GDSC ImageJ Plugins.
   (``circularity_limit``, ``process_frames``, ``results_name_1/2/3``).
 * The :ref:`findfoci_plugins:FindFoci Batch` plugin reads the ``Overlay_mask`` option from the
   parameters file. Previously the option was ignored and the mask overlay was always saved.
+* The :ref:`findfoci_plugins:FindFoci Optimiser` ``Sort method`` and ``Centre method`` fields
+  accept method names as well as method numbers.
 
 
 Version 2.0

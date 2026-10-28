@@ -43,7 +43,6 @@ import ij.text.TextPanel;
 import ij.text.TextWindow;
 import it.unimi.dsi.fastutil.doubles.DoubleOpenHashSet;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
@@ -79,6 +78,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.ToDoubleBiFunction;
 import java.util.regex.Pattern;
 import javax.swing.WindowConstants;
@@ -2330,7 +2330,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
   private static String createSortOptions() {
     final StringBuilder sb = new StringBuilder();
-    sb.append("Sort options (comma-delimited). Use if total peaks > max peaks:\n");
+    sb.append("Sort options (comma-delimited names or numbers). Use if total peaks > max peaks:\n");
     addSortOption(sb, SortMethod.COUNT).append("; ");
     addSortOption(sb, SortMethod.INTENSITY).append("; ");
     addSortOption(sb, SortMethod.MAX_VALUE).append("; ");
@@ -2350,7 +2350,7 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
 
   private static String createCentreOptions() {
     final StringBuilder sb = new StringBuilder();
-    sb.append("Centre options (comma-delimited):\n");
+    sb.append("Centre options (comma-delimited names or numbers):\n");
     final CentreMethod[] methods = CentreMethod.values();
     // Ignore the final two on the assumption these are the Gaussian fit methods
     for (int method = 0; method < methods.length - 2; method++) {
@@ -2581,26 +2581,48 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   }
 
   private SortMethod[] createSortArray() {
-    final double[] values = splitValues(settings.sortMethod);
-    final IntOpenHashSet set = new IntOpenHashSet(values.length);
-    for (final double v : values) {
-      final int method = (int) v;
-      if (method >= 0 && method <= SortMethod.AVERAGE_INTENSITY_MINUS_MIN.ordinal()) {
-        set.add(method);
-      }
-    }
+    final EnumSet<SortMethod> set =
+        parseMethods(settings.sortMethod, SortMethod.class, SortMethod::fromDescription);
     if (set.isEmpty()) {
       ImageJUtils.log("%s Warning : Sort method : No values, setting to default %s", TITLE,
           SortMethod.INTENSITY);
       return new SortMethod[] {SortMethod.INTENSITY}; // Default
     }
-    final SortMethod[] array = new SortMethod[set.size()];
-    final int[] index = {0};
-    set.forEach(method -> {
-      array[index[0]++] = SortMethod.fromOrdinal(method);
-    });
-    Arrays.sort(array, (o1, o2) -> Integer.compare(o1.ordinal(), o2.ordinal()));
-    return array;
+    return set.toArray(new SortMethod[0]);
+  }
+
+  /**
+   * Parse the methods from the delimited text. Each method can be specified using the
+   * description or the number (the enum ordinal). Unrecognised values are ignored.
+   *
+   * @param <T> the method type
+   * @param text the text
+   * @param type the method type
+   * @param fromDescription the function to convert a description to the method
+   * @return the methods (in ordinal order)
+   */
+  private static <T extends Enum<T>> EnumSet<T> parseMethods(String text, Class<T> type,
+      Function<String, T> fromDescription) {
+    final T[] values = type.getEnumConstants();
+    final EnumSet<T> set = EnumSet.noneOf(type);
+    for (final String token : text.split("\\s*;\\s*|\\s*,\\s*|\\s*:\\s*")) {
+      final String value = token.trim();
+      T method = fromDescription.apply(value);
+      if (method == null) {
+        try {
+          final int ordinal = (int) Double.parseDouble(value);
+          if (ordinal >= 0 && ordinal < values.length) {
+            method = values[ordinal];
+          }
+        } catch (final NumberFormatException ex) {
+          // Ignore - not a method
+        }
+      }
+      if (method != null) {
+        set.add(method);
+      }
+    }
+    return set;
   }
 
   private double[] createBlurArray() {
@@ -2621,26 +2643,14 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
   }
 
   private CentreMethod[] createCentreArray() {
-    final double[] values = splitValues(settings.centreMethod);
-    final IntOpenHashSet set = new IntOpenHashSet(values.length);
-    for (final double v : values) {
-      final int method = (int) v;
-      if (method >= 0 && method <= CentreMethod.GAUSSIAN_ORIGINAL.ordinal()) {
-        set.add(method);
-      }
-    }
+    final EnumSet<CentreMethod> set =
+        parseMethods(settings.centreMethod, CentreMethod.class, CentreMethod::fromDescription);
     if (set.isEmpty()) {
       ImageJUtils.log("%s Warning : Centre method : No values, setting to default %s", TITLE,
           CentreMethod.MAX_VALUE_SEARCH);
       return new CentreMethod[] {CentreMethod.MAX_VALUE_SEARCH}; // Default
     }
-    final CentreMethod[] array = new CentreMethod[set.size()];
-    final int[] index = {0};
-    set.forEach(method -> {
-      array[index[0]++] = CentreMethod.fromOrdinal(method);
-    });
-    Arrays.sort(array, (o1, o2) -> Integer.compare(o1.ordinal(), o2.ordinal()));
-    return array;
+    return set.toArray(new CentreMethod[0]);
   }
 
   private void parseCentreLimits() {
@@ -3300,9 +3310,9 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       "0, 0.6, 0.2", // Search_parameter
       "0, 0.6, 0.2", // Peak_parameter
       "3, 9, 2", // Minimum_size
-      "1", // Sort_method
+      SortMethod.INTENSITY.getDescription(), // Sort_method
       "1", // Gaussian_blur
-      "0", // Centre_method
+      CentreMethod.MAX_VALUE_SEARCH.getDescription(), // Centre_method
       "2", // Centre_parameter
       // Choices
       "-", // Mask
@@ -3324,9 +3334,9 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       "0, 0.6, 0.2", // Search_parameter
       "0, 0.6, 0.2", // Peak_parameter
       "1, 9, 2", // Minimum_size
-      "1", // Sort_method
+      SortMethod.INTENSITY.getDescription(), // Sort_method
       "0, 0.5, 1", // Gaussian_blur
-      "0", // Centre_method
+      CentreMethod.MAX_VALUE_SEARCH.getDescription(), // Centre_method
       "2", // Centre_parameter
       // Choices
       "-", // Mask
@@ -3349,9 +3359,9 @@ public class FindFociOptimiser_PlugIn implements PlugIn {
       "0, 0.8, 0.1", // Search_parameter
       "0, 0.8, 0.1", // Peak_parameter
       "1, 9, 2", // Minimum_size
-      "1", // Sort_method
+      SortMethod.INTENSITY.getDescription(), // Sort_method
       "0, 0.5, 1, 2", // Gaussian_blur
-      "0", // Centre_method
+      CentreMethod.MAX_VALUE_SEARCH.getDescription(), // Centre_method
       "2", // Centre_parameter
       // Choices
       "-", // Mask
