@@ -170,7 +170,7 @@ public class RemoveTrackSplitsAction extends AbstractTMAction {
 
     // Visible tracks only
     final Set<Integer> trackIds = trackModel.unsortedTrackIDs(true);
-    logger.log("Analysing " + TextUtils.pleural(trackIds.size(), "track id") + ".\n");
+    logger.log("Analysing " + TextUtils.pleural(trackIds.size(), "track ID") + ".\n");
     final List<TrackSplit> splits =
         findSplits(trackModel, trackIds, parentCategories, child1Categories, child2Categories);
     logger.log("Found " + TextUtils.pleural(splits.size(), "track split") + ".\n");

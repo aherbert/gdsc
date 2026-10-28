@@ -1826,7 +1826,7 @@ public class FindFoci_PlugIn implements PlugIn, MacroExtension {
     sb.append("Max\t");
     sb.append("Total\t");
     sb.append("Saddle value\t");
-    sb.append("Saddle Id\t");
+    sb.append("Saddle ID\t");
     sb.append("Abs.Height\t");
     sb.append("Rel.Height (>Bg)\t");
     sb.append("Size > saddle\t");

@@ -168,7 +168,7 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
     final Model model = trackmate.getModel();
     final TrackModel trackModel = model.getTrackModel();
     final IntOpenHashSet trackIds = getTrackIds(spotSelection, trackModel);
-    logger.log(". " + TextUtils.pleural(trackIds.size(), "track id"));
+    logger.log(". " + TextUtils.pleural(trackIds.size(), "track ID"));
 
     // For each track traverse the track and output spot data for only the selected region.
     // This is done using TrackMate's convex branch decomposition which creates tracks of
@@ -354,7 +354,7 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
 
   private static TextWindow createResultsTable(Model model, List<Pair<String, Boolean>> features) {
     return ImageJUtils.refresh(resultsRef, () -> {
-      final StringBuilder sb = new StringBuilder("Track Id\tSub-track\tParent\tSpot Id");
+      final StringBuilder sb = new StringBuilder("Track ID\tSub-track\tParent\tSpot ID");
       final Map<String, String> map = model.getFeatureModel().getSpotFeatureNames();
       for (final Pair<String, Boolean> feature : features) {
         sb.append('\t').append(map.get(feature.getKey()));

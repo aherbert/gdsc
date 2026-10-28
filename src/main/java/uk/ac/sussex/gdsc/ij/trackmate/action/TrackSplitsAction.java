@@ -101,7 +101,7 @@ public class TrackSplitsAction extends AbstractTMAction {
 
     // Visible tracks only
     final Set<Integer> trackIds = trackModel.unsortedTrackIDs(true);
-    logger.log("Analysing " + TextUtils.pleural(trackIds.size(), "track id"));
+    logger.log("Analysing " + TextUtils.pleural(trackIds.size(), "track ID"));
     final Int2IntOpenHashMap counts = countSplitsPerFrame(trackModel, trackIds);
 
     // Plot the splits across the entire time series used in the analysis.

@@ -1359,7 +1359,7 @@ public class Cda_PlugIn extends PlugInFrame {
 
   private static void createHeading(StringBuilder heading) {
     if (heading.length() == 0) {
-      addField(heading, "Exp. Id");
+      addField(heading, "Exp. ID");
       addField(heading, CHOICE_CHANNEL1);
       addField(heading, CHOICE_CHANNEL2);
       addField(heading, "ROI 1");

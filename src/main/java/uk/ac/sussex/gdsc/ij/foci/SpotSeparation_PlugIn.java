@@ -595,7 +595,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
     final StringBuilder sb = new StringBuilder();
     sb.append("Image\t");
     sb.append("Units\t");
-    sb.append("Peak Id\t");
+    sb.append("Peak ID\t");
     sb.append("Type\t");
     sb.append("Width1\t");
     sb.append("Width2\t");
@@ -675,7 +675,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
         }
         minD[maxCount - 1] = xValues[xValues.length - 1];
 
-        ImageJUtils.log("Multiple peak in a single spot: Peak Id %d = %d peaks", id, maxCount);
+        ImageJUtils.log("Multiple peak in a single spot: Peak ID %d = %d peaks", id, maxCount);
 
         // TODO - Perform a better table output if there are more than 2 peaks.
         try (Formatter formatter = new Formatter(sb)) {

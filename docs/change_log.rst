@@ -27,6 +27,10 @@ Major release of GDSC ImageJ Plugins.
   has no ROI.
 * The :ref:`findfoci_plugins:FindFoci Helper` results table reports the ``Height`` of 32-bit
   images. Previously the raw bits of the float pixel value were reported.
+* Standardise ``Id`` to ``ID`` in results table headings: ``Saddle ID``
+  (:ref:`findfoci_plugins:FindFoci`), ``Peak ID`` (:ref:`utility_plugins:Spot Separation`),
+  ``ID`` (:ref:`findfoci_plugins:FindFoci Helper`), ``Exp. ID`` (:ref:`colocalisation_plugins:CDA`)
+  and ``Track ID``/``Spot ID`` (TrackMate track selection export).
 
 
 Version 2.0

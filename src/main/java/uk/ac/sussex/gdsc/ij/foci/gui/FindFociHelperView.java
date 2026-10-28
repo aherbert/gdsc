@@ -1404,7 +1404,7 @@ public class FindFociHelperView extends JFrame
   private String createResultsHeader() {
     final Calibration cal = activeImp.getCalibration();
     final StringBuilder sb = new StringBuilder();
-    sb.append("Id\tX\tY\tZ\t");
+    sb.append("ID\tX\tY\tZ\t");
     sb.append("X (").append(cal.getXUnit()).append(")\t");
     sb.append("Y (").append(cal.getYUnit()).append(")\t");
     sb.append("Z (").append(cal.getZUnit()).append(")\t");
