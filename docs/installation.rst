@@ -83,8 +83,14 @@ Place all of the following ``jar`` files into the ``ImageJ`` plugins directory:
    * - imagescience
      - Contains image analysis routines.
 
+   * - Image_5D
+     - Contains routines for 5D images (used by ``imagescience``).
+
    * - quickhull3d
      - A java implementation of the QuickHull algorithm.
+
+   * - slf4j-api
+     - Contains the Simple Logging Facade for Java (used by ``quickhull3d``).
 
 The plugins will be visible under the ``Plugins > GDSC`` menu.
 

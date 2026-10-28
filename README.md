@@ -20,7 +20,7 @@ The Find Foci plugins allow the identification of peak intensity regions within
 of peaks; comparison of marked points between images; and alignment of manually
 marked points to peak maxima.
 
-See the [FindFoci User Manual](FindFoci.odt) for full details.
+See the [FindFoci documentation](https://gdsc-imagej.readthedocs.io/en/latest/findfoci_plugins.html) for full details.
 
 Colocalisation Analysis
 -----------------------
@@ -30,7 +30,8 @@ analysis. The tools provide: thresholding for N-dimensional images for signal
 identification; correlation and overlap coefficient analysis; and
 colocalisation significance testing.
 
-See the [Colocalisation User Manual](Colocalisation.odt) for full details.
+See the [Colocalisation documentation](https://gdsc-imagej.readthedocs.io/en/latest/colocalisation_plugins.html) and the
+[Colocalisation User Manual](Colocalisation.odt) for full details.
 
 Utility Plugins
 ---------------
@@ -39,6 +40,8 @@ The GDSC plugins provide various utility tools for image analysis. The tools
 include: thresholding and mask generation; difference of Gaussians for
 contrast enhancement; stack synchronisation for simultaneous image viewing;
 and image alignment.
+
+See the [Utility documentation](https://gdsc-imagej.readthedocs.io/en/latest/utility_plugins.html) for full details.
 
 
 Install
@@ -51,7 +54,7 @@ instructions [Following an update site](https://imagej.net/update-sites/followin
 and add the GDSC update site. All the plugins will appear under the
 'Plugins > GDSC' menu.
 
-Some plugins require on the following 3rd party updates sites:
+Some plugins require the following 3rd party update sites:
 ImageScience; TrackMate
 
 
@@ -81,7 +84,7 @@ you will have to install these to your local Maven repository before building:
         cd ../gdsc
         mvn package
 
-   This will produce a gdsc_-[VERSION].jar file in the target directory. Dependencies
+   This will produce a gdsc-ij_-[VERSION].jar file in the target directory. Dependencies
    can be copied into the target/dependencies directory using:
 
         mvn dependency:copy-dependencies
@@ -89,18 +92,16 @@ you will have to install these to your local Maven repository before building:
 1. Installation into a Fiji/ImageJ2 install can be performed using the scijava
 maven goal to populate the application:
 
-        cd gdsc-smlm-ij
         mvn scijava:populate-app -Dscijava.app.directory=/usr/local/fiji
-        cd ..
 
    where `/usr/local/fiji` is the root directory of the ImageJ install.
 
-1. Manual installation must copy the gdsc-smlm-ij_* jar into the plugins
+1. Manual installation must copy the gdsc-ij_* jar into the plugins
 directory of ImageJ.
 
    Copy the dependencies into the plugins directory (or onto the Java
    classpath). Note that the Maven package routine puts all dependencies into
-   the target/dependencies directory even if they are not required by the SMLM code
+   the target/dependencies directory even if they are not required by the GDSC code
    (it does not check what functions are actually used by the code). The libraries
    you will need are:
 
@@ -109,13 +110,26 @@ directory of ImageJ.
         beansbinding
         commons-math3
         commons-lang3
+        commons-numbers-arrays
+        commons-numbers-combinatorics
+        commons-numbers-core
+        commons-numbers-fraction
+        commons-numbers-gamma
+        commons-numbers-rootfinder
         commons-rng-client-api
         commons-rng-core
         commons-rng-simple
-        commons-rng-sampling
+        commons-statistics-descriptive
+        commons-statistics-distribution
+        commons-statistics-inference
+        commons-statistics-ranking
         imagescience
         Image_5D
         fastutil-core
+        quickhull3d
+        slf4j-api
+        guava
+        failureaccess
 
    This excludes the 3D_Viewer and TrackMate functionality. View the dependencies of
    these using:
@@ -144,7 +158,7 @@ the configuration and populating the ImageJ menu.
 Modifying the source
 --------------------
 
-The gdsc-smlm code was developed using the [Eclipse IDE](https://eclipse.org/).
+The GDSC code was developed using the [Eclipse IDE](https://eclipse.org/).
 
 Details of how to open the source code with Eclipse can be found in the eclipse
 folder.
