@@ -700,7 +700,7 @@ public class AssignFociToClusters_PlugIn implements ExtendedPlugInFilter, Dialog
       if (top < i) {
         return;
       }
-      for (int y = border, i1 = border * width + i, i2 = border * width + top; y < width - border;
+      for (int y = border, i1 = border * width + i, i2 = border * width + top; y < height - border;
           y++, i1 += width, i2 += width) {
         if (ip.get(i1) != 0) {
           edge[ip.get(i1)] = true;

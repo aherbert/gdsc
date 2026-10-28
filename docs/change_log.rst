@@ -43,6 +43,9 @@ Major release of GDSC ImageJ Plugins.
 * Fix the :ref:`findfoci_plugins:Point Extractor` failing when there is no image and the
   ``Use manager ROIs`` option is not selected. The ROI Manager is always used when there is no
   image.
+* Fix the :ref:`findfoci_plugins:Assign Foci to Clusters` ``Eliminate edge clusters`` option for
+  non-square images. Previously the left and right edges were checked using the image width
+  instead of the height, causing an error for wide images and missed edges for tall images.
 
 
 Version 2.0
