@@ -283,9 +283,9 @@ public class PlotResults {
 
   private static String testSignificance(double[] limits, double sampleValue) {
     String outputString = "";
-    if (sampleValue >= limits[1]) {
+    if (sampleValue > limits[1]) {
       outputString = " Value is significant! (colocalised)";
-    } else if (sampleValue <= limits[0]) {
+    } else if (sampleValue < limits[0]) {
       outputString = " Value is significant! (not colocalised)";
     } else {
       outputString = " Value is NOT significant! ";
