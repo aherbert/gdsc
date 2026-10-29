@@ -358,12 +358,15 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
     settings.significance = gd.getNextNumber();
     settings.save();
 
-    // Check parameters
-    if (settings.minimumRadius > settings.maximumRadius) {
-      return failed("Minimum radius cannot be above maximum radius");
+    // Check parameters. Require a range of shifts for the significance test.
+    if (settings.minimumRadius < 0) {
+      return failed("Minimum shift cannot be negative");
+    }
+    if (settings.minimumRadius >= settings.maximumRadius) {
+      return failed("Minimum shift must be below the maximum shift");
     }
     if (settings.maximumRadius > 255) {
-      return failed("Maximum radius cannot be above 255");
+      return failed("Maximum shift cannot be above 255");
     }
     if (settings.significance < 0 || settings.significance > 1) {
       return failed("Significance must be between 0-1");

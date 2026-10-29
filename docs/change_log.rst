@@ -72,6 +72,9 @@ Major release of GDSC ImageJ Plugins.
   the ``None`` method with the ``Subtract threshold`` option. Previously 1 was added to each pixel.
 * The :ref:`colocalisation_plugins:Stack Colocalisation Analyser` reports ``None`` in the ``Ch3``
   column when no confined region is used. Previously the column was empty.
+* Fix the :ref:`colocalisation_plugins:Stack Colocalisation Analyser` failing when the
+  ``Minimum shift`` is equal to the ``Maximum shift``, or is negative. These values are now
+  rejected.
 
 
 Version 2.0
