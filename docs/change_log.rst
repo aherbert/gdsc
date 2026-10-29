@@ -68,6 +68,8 @@ Major release of GDSC ImageJ Plugins.
 * Rename the :ref:`colocalisation_plugins:Colocalisation Threshold` ``Search tolerance`` option to
   ``Minimum total correlation``. The option is the minimum correlation of all the pixels required
   to perform the threshold search; it does not control the convergence of the search.
+* Fix the :ref:`colocalisation_plugins:Stack Correlation Analyser` Manders coefficients when using
+  the ``None`` method with the ``Subtract threshold`` option. Previously 1 was added to each pixel.
 
 
 Version 2.0

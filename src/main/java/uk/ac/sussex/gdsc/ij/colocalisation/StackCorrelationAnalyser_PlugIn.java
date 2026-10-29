@@ -375,10 +375,13 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
       long sum2A = s2.sum;
 
       if (subtractThreshold) {
-        sum1 -= correlator.getN() * s1.threshold;
-        sum1A -= s1.count * s1.threshold;
-        sum2 -= correlator.getN() * s2.threshold;
-        sum2A -= s2.count * s2.threshold;
+        // The threshold is negative when no thresholding method is used
+        final int t1 = Math.max(0, s1.threshold);
+        final int t2 = Math.max(0, s2.threshold);
+        sum1 -= correlator.getN() * t1;
+        sum1A -= s1.count * t1;
+        sum2 -= correlator.getN() * t2;
+        sum2A -= s2.count * t2;
       }
 
       m1 = (double) sum1 / sum1A;
