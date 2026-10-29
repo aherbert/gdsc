@@ -2103,8 +2103,11 @@ public class Cda_PlugIn extends PlugInFrame {
     // Get the images
     final ImagePlus imp1 = WindowManager.getImage(images[channel1Index]);
     final ImagePlus imp2 = WindowManager.getImage(images[channel2Index]);
-    final ImagePlus roi1 = WindowManager.getImage(images2[segmented1Index]);
-    final ImagePlus roi2 = WindowManager.getImage(images2[segmented2Index]);
+    // The first option is the channel image
+    final ImagePlus roi1 =
+        (segmented1Index == 0) ? imp1 : WindowManager.getImage(images2[segmented1Index]);
+    final ImagePlus roi2 =
+        (segmented2Index == 0) ? imp2 : WindowManager.getImage(images2[segmented2Index]);
     final ImagePlus roi = WindowManager.getImage(images[confinedIndex]);
 
     runCda(imp1, imp2, roi1, roi2, roi);

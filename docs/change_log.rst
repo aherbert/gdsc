@@ -49,6 +49,8 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.
+* Fix the :ref:`colocalisation_plugins:CDA (macro)` plugin ignoring the ``(Channel image)`` option
+  for the ``ROI for channel 1/2`` image. Previously all the pixels of the channel were used.
 
 
 Version 2.0
