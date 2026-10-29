@@ -275,7 +275,12 @@ public class PlotResults {
 
   private double[] computeProbabilityLimits(double[] sample) {
     final double[] limits = new double[2];
-    final int pCut = (int) Math.ceil(sample.length * pvalue);
+    if (sample.length == 0) {
+      limits[0] = limits[1] = Double.NaN;
+      return limits;
+    }
+    // Limit the cut so the lower limit is not above the upper limit
+    final int pCut = Math.min((int) Math.ceil(sample.length * pvalue), (sample.length - 1) / 2);
     limits[0] = sample[pCut];
     limits[1] = sample[(sample.length - pCut - 1)];
     return limits;

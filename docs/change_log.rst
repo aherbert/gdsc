@@ -58,6 +58,8 @@ Major release of GDSC ImageJ Plugins.
   preferences. Previously the option was reset when ``ImageJ`` was restarted.
 * The :ref:`colocalisation_plugins:CDA` statistics window reports a value equal to a significance
   limit as not significant, matching the results table.
+* Fix the :ref:`colocalisation_plugins:CDA` plugin failing to compute the significance limits for
+  a large ``p-Value`` relative to the number of random samples.
 
 
 Version 2.0
