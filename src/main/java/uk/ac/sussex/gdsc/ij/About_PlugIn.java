@@ -219,7 +219,7 @@ public class About_PlugIn implements PlugIn {
   }
 
   private static void addPlugin(String commandName, final String command) {
-    // Disect the ImageJ plugins.config string, e.g.:
+    // Dissect the ImageJ plugins.config string, e.g.:
     // Plugins>GDSC, "FindFoci", uk.ac.sussex.gdsc.ij.ext.foci.FindFoci
 
     commandName = commandName.replaceAll("\"", "");

@@ -444,7 +444,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
           double relY = 0;
           if (line != null) {
             // - Compute relative orientation
-            // Both vectors are are centred on com1. The drag end point
+            // Both vectors are centred on com1. The drag end point
             // specifies the vector direction origin not the end.
             final double[] v1 = createVector(line[2], line[3], line[0], line[1]);
             final double[] v2 = createVector(com2[0], com2[1], com1[0], com1[1]);

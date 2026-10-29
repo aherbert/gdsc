@@ -734,7 +734,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
   /**
    * The results list is a sorted reference to the all the results in the results array. When that
-   * is cloned the resultsList has to be updated with new refeneces.
+   * is cloned the resultsList has to be updated with new references.
    *
    * @param resultsArray the results array
    * @return The new result list
@@ -5574,7 +5574,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
     // Show the object mask
     ImagePlus maskImp = null;
     if (createObjectMask) {
-      // Check we do not exceed capcity
+      // Check we do not exceed capacity
       if (id > MAXIMA_CAPCITY) {
         log(() -> "The number of objects exceeds the 16-bit capacity used for display: "
             + MAXIMA_CAPCITY);

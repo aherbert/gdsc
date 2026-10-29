@@ -99,7 +99,7 @@ public class ExportTrackSelectionOptionsAction extends AbstractTMAction {
     // Note:
     // The "key" of the feature will be in the ExportTrackSelectionAction class.
     // The dialog will show the "nice" name of the feature. This is done using
-    // a function to convert the text for diplay.
+    // a function to convert the text for display.
     final ArrayList<String> items = new ArrayList<>(features);
     final MultiDialog md = new MultiDialog("Select features", items);
     md.setSelected(ExportTrackSelectionAction.getFeatures());

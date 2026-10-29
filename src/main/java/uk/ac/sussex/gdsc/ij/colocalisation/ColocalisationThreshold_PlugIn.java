@@ -801,7 +801,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
     final double m1threshold = (double) sumCh1WhereCh2gtT / sumCh1;
     final double m2threshold = (double) sumCh2WhereCh1gtT / sumCh2;
 
-    // as in Coste's paper
+    // as in the Costes paper
     // [i.e. E(ch1 > ch1threshold) / E(ch1total)]
     // This appears to be wrong when compared to other plug-ins
     // m1threshold = (double) sumCh1gtT / sumCh1

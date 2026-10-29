@@ -319,7 +319,7 @@ public class ExportTrackSelectionAction extends AbstractTMAction {
         sb.append(++id).append('\t');
         final String prefix = sb.toString();
 
-        // First spot predeccesor may be multiple so this is outside a loop
+        // First spot predecessor may be multiple so this is outside a loop
         for (int i = 0; i < track.predecessor.size(); i++) {
           if (i != 0) {
             sb.append(", ");

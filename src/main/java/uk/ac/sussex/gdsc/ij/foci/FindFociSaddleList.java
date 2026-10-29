@@ -240,7 +240,7 @@ public class FindFociSaddleList {
       }
     }
     clear(newSize);
-    // Rstore the desired order
+    // Restore the desired order
     if (maintain) {
       sort(OrderSaddleComparator.INSTANCE);
     } else {

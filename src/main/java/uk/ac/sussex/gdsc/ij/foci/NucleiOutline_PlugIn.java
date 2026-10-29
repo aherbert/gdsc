@@ -96,7 +96,7 @@ import uk.ac.sussex.gdsc.ij.help.HelpUrls;
  * </ul>
  */
 public class NucleiOutline_PlugIn implements PlugIn {
-  private static final String TITLE = "Nuceli Outline";
+  private static final String TITLE = "Nuclei Outline";
 
   private static AtomicReference<TextWindow> resultsRef = new AtomicReference<>();
 

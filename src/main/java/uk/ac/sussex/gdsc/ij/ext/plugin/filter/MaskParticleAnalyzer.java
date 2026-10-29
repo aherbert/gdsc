@@ -488,7 +488,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       }
     }
 
-    // Copy the superclass methods using the super-class variables obtained from relfection
+    // Copy the superclass methods using the super-class variables obtained from reflection
     if (addToManager) {
       if (roiManager == null) {
         if (Macro.getOptions() != null && Interpreter.isBatchMode()) {

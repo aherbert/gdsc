@@ -193,7 +193,7 @@ public class FindFoci_PlugIn implements PlugIn, MacroExtension {
   public static final String OPTION_RESULTS_DIRECTORY = "Results_directory";
   /** The option name for the Gaussian blur. */
   public static final String OPTION_GAUSSIAN_BLUR = "Gaussian_blur";
-  /** The option name for the centre metho. */
+  /** The option name for the centre method. */
   public static final String OPTION_CENTRE_METHOD = "Centre_method";
   /** The option name for the centre parameter. */
   public static final String OPTION_CENTRE_PARAMETER = "Centre_parameter";

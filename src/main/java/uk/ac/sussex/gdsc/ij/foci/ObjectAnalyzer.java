@@ -69,7 +69,7 @@ public class ObjectAnalyzer {
      * Instantiates a new object centre.
      *
      * @param cx the x-centre
-     * @param cy the y-cntre
+     * @param cy the y-centre
      * @param size the size
      */
     public ObjectCentre(double cx, double cy, int size) {

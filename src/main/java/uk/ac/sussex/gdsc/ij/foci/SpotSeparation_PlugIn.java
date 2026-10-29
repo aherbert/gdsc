@@ -159,7 +159,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
       return;
     }
 
-    // XXX - Add some options to be able to preview the spots using a ExtendedPluginFilter
+    // XXX - Add some options to be able to preview the spots using an ExtendedPluginFilter
 
     FindFociResults results = runFindFoci(ip);
 
@@ -624,7 +624,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
           min = yValues[i];
         }
       }
-      // Set the minimum height for a maxima using a a fraction of the plot range
+      // Set the minimum height for a maxima using a fraction of the plot range
       final float height = (max - min) * 0.1f;
 
       int maxCount = 1;

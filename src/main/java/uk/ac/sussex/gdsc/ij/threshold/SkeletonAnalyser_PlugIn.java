@@ -63,7 +63,7 @@ import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 public class SkeletonAnalyser_PlugIn implements PlugInFilter {
   private static final String TITLE = "Skeleton Analyser";
   private static AtomicReference<TextWindow> resultsWindow = new AtomicReference<>();
-  /** The write header falg. This is used in headless mode to write the header once. */
+  /** The write header flag. This is used in headless mode to write the header once. */
   private static AtomicBoolean writeHeader = new AtomicBoolean(true);
 
   /** The constant for a line terminus (end). */
@@ -187,7 +187,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
      * Compare the lines by start point (ascending).
      *
      * @param o1 the first line
-     * @param o2 the second ine
+     * @param o2 the second line
      * @return the result [-1, 0, 1]
      */
     static int compare(Line o1, Line o2) {
@@ -345,7 +345,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Skeltonise the image processor. Must be a binary image.
+   * Skeletonise the image processor. Must be a binary image.
    *
    * @param ip the image
    * @param trim Eliminate redundant 4-connected pixels if possible.

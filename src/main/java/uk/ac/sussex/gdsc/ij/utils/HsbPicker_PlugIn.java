@@ -53,7 +53,7 @@ import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 
 /**
- * Alows an RGB image to be filtered using HSB limits.
+ * Allows an RGB image to be filtered using HSB limits.
  */
 public class HsbPicker_PlugIn extends PlugInFrame {
   private static final long serialVersionUID = 5755638798388461612L;

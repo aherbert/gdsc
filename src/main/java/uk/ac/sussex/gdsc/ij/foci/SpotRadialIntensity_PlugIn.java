@@ -546,7 +546,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
         IntStream.range(0, maxBin).mapToObj(i -> new Statistics()).toArray(Statistics[]::new);
     final double[] allD = new double[maxBin];
     // Here we already have the distances for each foci. We could single pass through the
-    // asiigned array. But we still process each foci so we can output the plot and results
+    // assigned array. But we still process each foci so we can output the plot and results
     // table per foci.
     for (int ii = 0; ii < foci.length; ii++) {
       final Foci f = foci[ii];
@@ -767,7 +767,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     // Create base using half the segment width in each direction
     dx = 0.5 * settings.segmentWidth * dx / norm;
     dy = 0.5 * settings.segmentWidth * dy / norm;
-    // Orthogonal vectpr is:
+    // Orthogonal vector is:
     // clockwise = dy, -dx
     // anticlockwise = -dy, dx
     final double px = f.x + 0.5;

@@ -655,7 +655,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
         pixelSet = ((types[index + offset[d]] & TYPE_EDGE) == TYPE_EDGE
             && (types[index + offset[d]] & TYPE_SINGLE) != TYPE_SINGLE);
       } else {
-        // Outside of boundary - count as foreground so lines touching the egde are not pruned.
+        // Outside of boundary - count as foreground so lines touching the edge are not pruned.
         pixelSet = true;
       }
       if (pixelSet && !prevPixelSet) {

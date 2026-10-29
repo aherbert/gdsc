@@ -42,7 +42,7 @@ import uk.ac.sussex.gdsc.ij.UsageTracker;
  * Create some dummy images to test for colocalisation.
  */
 public class CreateColocalisedImages_PlugIn implements PlugIn {
-  private static final String TITLE = "Colocalisaed Images";
+  private static final String TITLE = "Colocalised Images";
   private static final int NUMBER_OF_POINTS = 20;
 
   private static final int WIDTH = 256;

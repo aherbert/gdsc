@@ -350,7 +350,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       IJ.error(TITLE, "No foreground (entire image is bleached regions)");
       return;
     }
-    ImageJUtils.log("Foregound = %s pixels", count[n]);
+    ImageJUtils.log("Foreground = %s pixels", count[n]);
 
     // Process the image stack.
     // For each frame get the mean of the region.
@@ -575,7 +575,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
 
       // Check convergence
       if (relative < 1e-3) {
-        ImageJUtils.log("  [%d] Alignement converged within %s", iter, MathUtils.round(relative));
+        ImageJUtils.log("  [%d] Alignment converged within %s", iter, MathUtils.round(relative));
         break;
       }
 

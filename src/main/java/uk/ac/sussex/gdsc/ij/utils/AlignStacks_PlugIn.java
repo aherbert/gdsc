@@ -153,7 +153,7 @@ public class AlignStacks_PlugIn implements PlugIn {
     msg += "\nZ stacks per time frame are projected and multiple channels\n"
         + "are tiled to a single image used to define the offset for\nthe frame.\n";
     if (!selfAlignMode) {
-      msg += "Optionally align a single stack to the currect frame";
+      msg += "Optionally align a single stack to the current frame";
     }
     gd.addMessage(msg);
 

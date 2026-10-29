@@ -132,7 +132,7 @@ public class FindFociRunner implements Runnable {
       }
     } catch (final InterruptedException ex) {
       if (running) {
-        IJ.log("FindPeakRunner interupted: " + ex.getLocalizedMessage());
+        IJ.log("FindPeakRunner interrupted: " + ex.getLocalizedMessage());
       }
       Thread.currentThread().interrupt();
     } catch (final Exception thrown) {

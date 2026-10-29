@@ -172,7 +172,7 @@ public class PointAligner_PlugIn implements PlugIn {
   }
 
   /**
-   * Formmater for coordinates.
+   * Formatter for coordinates.
    */
   private enum CoordinateFormatter {
     TWOD {
@@ -692,7 +692,7 @@ public class PointAligner_PlugIn implements PlugIn {
   }
 
   /**
-   * Analyse the assigned heights and attempt to identify any errornous points.
+   * Analyse the assigned heights and attempt to identify any erroneous points.
    *
    * @param points the points
    * @param assigned the assigned

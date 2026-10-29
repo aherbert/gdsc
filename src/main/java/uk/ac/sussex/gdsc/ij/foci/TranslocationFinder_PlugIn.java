@@ -64,7 +64,7 @@ import uk.ac.sussex.gdsc.ij.help.HelpUrls;
  * <p>Run a pairwise analysis of 3 channels. Find triplets where the two markers from channel 2
  * &amp; 3 matching a foci in channel 1 are also a matching pair. Draw a bounding box round the
  * triplet and output the distances between the centres. Output a guess for a translocation where
- * channel 13 distance &lt;&lt; 12|23, no transolcation where 12 &lt;&lt; 13|23.
+ * channel 13 distance &lt;&lt; 12|23, no translocation where 12 &lt;&lt; 13|23.
  */
 public class TranslocationFinder_PlugIn implements PlugIn {
   private static final String TITLE = "Translocation Finder";

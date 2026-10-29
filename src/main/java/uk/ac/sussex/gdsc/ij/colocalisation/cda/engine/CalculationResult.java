@@ -46,7 +46,7 @@ public class CalculationResult {
    * @param distance the shift distance
    * @param m1 The first Mander's coefficient
    * @param m2 The second Mander's coefficient
-   * @param correlation the corrrelation
+   * @param correlation the correlation
    */
   public CalculationResult(double distance, double m1, double m2, double correlation) {
     this.distance = distance;
