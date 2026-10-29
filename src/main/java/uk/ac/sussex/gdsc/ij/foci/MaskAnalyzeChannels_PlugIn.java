@@ -149,7 +149,7 @@ public class MaskAnalyzeChannels_PlugIn implements PlugInFilter {
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
 
     gd.addMessage(TextUtils.wrap("For each object defined with a unique pixel value, "
-        + "analyze the channels in a target image.", 80));
+        + "analyse the channels in a target image.", 80));
 
     settings = Settings.load();
     final String[] images = ImageJUtils.getImageList(0);

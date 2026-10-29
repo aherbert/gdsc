@@ -508,7 +508,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     final int shift = settings.maxShift;
     final Rectangle bounds = shift > 0 ? new Rectangle(-shift, -shift, 2 * shift, 2 * shift) : null;
 
-    // Center if the slice is not set.
+    // Centre if the slice is not set.
     // Note that indices are 1-based so add 1 to the stack size for the middle.
     final int middle =
         settings.alignmentSlice == 0 ? (imp2.getStackSize() + 1) / 2 : settings.alignmentSlice;

@@ -203,16 +203,16 @@ public class ThresholdOutliner_PlugIn implements ExtendedPlugInFilter, DialogLis
   }
 
   /**
-   * Provide lazy loading of the colors.
+   * Provide lazy loading of the colours.
    */
   private static class ColorHolder {
     /**
-     * The color names.
+     * The colour names.
      */
     static final String[] COLOR_NAMES = {"Red", "Green", "Blue", "Cyan", "Magenta", "Yellow"};
 
     /**
-     * The colors.
+     * The colours.
      */
     static final Color[] COLORS =
         {Color.RED, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA, Color.YELLOW};

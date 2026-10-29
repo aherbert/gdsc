@@ -255,7 +255,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
     pointList.clear();
     pointList.add(index0);
 
-    // Calculate the center of plateau
+    // Calculate the centre of plateau
     boolean isPlateau = true;
     final int[] xyz = new int[3];
 

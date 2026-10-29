@@ -237,7 +237,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
    *
    * @param imp the image
    * @param list the list
-   * @param color the color
+   * @param color the colour
    */
   public static void addOverlay(ImagePlus imp, List<? extends Coordinate> list, Color color) {
     if (list.isEmpty()) {

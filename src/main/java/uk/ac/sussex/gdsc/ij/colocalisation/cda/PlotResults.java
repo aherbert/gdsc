@@ -60,7 +60,7 @@ public class PlotResults {
    * @param sampleValue the sample value
    * @param bins the bins
    * @param sampleData the sample data
-   * @param color the color
+   * @param color the colour
    */
   public PlotResults(double sampleValue, int bins, double[] sampleData, Color color) {
     createHistogram(sampleData, bins);

@@ -130,7 +130,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       gd.addMessage(
           TextUtils.wrap(
           "Click on a multi-channel image and the distance between the " +
-          "center-of-mass of spots in two channels will be measured. " +
+          "centre-of-mass of spots in two channels will be measured. " +
           "Drag from the clicked point to create an orientation for " +
           "relative XY distance.", 80));
       //@formatter:on

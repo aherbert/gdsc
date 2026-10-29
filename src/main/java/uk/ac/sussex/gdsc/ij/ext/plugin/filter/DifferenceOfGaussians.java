@@ -64,7 +64,7 @@ public class DifferenceOfGaussians extends GaussianBlur {
   private ImagePlus imp;
   /** Whether the image has an x&y scale. */
   private boolean hasScale;
-  /** The number of passes (filter directions * color channels * stack slices). */
+  /** The number of passes (filter directions * colour channels * stack slices). */
   private int passes = 1;
   private int pass; // Current pass
 

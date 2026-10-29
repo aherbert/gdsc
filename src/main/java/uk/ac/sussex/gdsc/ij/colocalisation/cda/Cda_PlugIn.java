@@ -1036,7 +1036,7 @@ public class Cda_PlugIn extends PlugInFrame {
   }
 
   private static int getDisplayRangeMin(ImagePlus imp, int channel) {
-    // Composite images can have a display range for each color channel
+    // Composite images can have a display range for each colour channel
     final LUT[] luts = imp.getLuts();
     if (luts != null && channel <= luts.length && channel > 0) {
       return (int) luts[channel - 1].min;
@@ -1568,7 +1568,7 @@ public class Cda_PlugIn extends PlugInFrame {
       final ImagePlus imp = WindowManager.getImage(channel1List.getSelectedItem());
       if (imp == null || (imp.getNChannels() + imp.getNFrames() < 3)) {
         IJ.showMessage(PLUGIN_TITLE, "Requires 2 images or a multi-channel/frame stack. "
-            + "Images must be 8-bit or 16-bit grayscale.");
+            + "Images must be 8-bit or 16-bit greyscale.");
         return false;
       }
     }
@@ -2048,7 +2048,7 @@ public class Cda_PlugIn extends PlugInFrame {
       final ImagePlus imp = (imageList.isEmpty()) ? null : WindowManager.getImage(imageList.get(0));
       if (imp == null || (imp.getNChannels() + imp.getNFrames() < 3)) {
         IJ.showMessage(PLUGIN_TITLE, "Requires 2 images or a multi-channel/frame stack. "
-            + "Images must be 8-bit or 16-bit grayscale.");
+            + "Images must be 8-bit or 16-bit greyscale.");
         return;
       }
     }

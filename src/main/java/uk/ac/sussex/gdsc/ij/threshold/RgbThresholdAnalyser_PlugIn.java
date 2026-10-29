@@ -195,7 +195,7 @@ public class RgbThresholdAnalyser_PlugIn implements PlugIn {
     // Get the histogram for the channel
     final int[] h = new int[(ip instanceof ByteProcessor) ? 256 : 65536];
 
-    // Get the manual threshold within the color channel mask
+    // Get the manual threshold within the colour channel mask
     int manual = Integer.MAX_VALUE;
     for (int i = 0; i < mask.length; i++) {
       if (maskIp.get(i) != 0) {

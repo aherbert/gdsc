@@ -80,7 +80,7 @@ public class FindFociHelper_PlugIn implements PlugIn {
       IJ.showStatus("FindFoci Helper ready");
     } catch (final ExceptionInInitializerError ex) {
       exception = ex;
-      errorMessage = "Failed to initialize class: " + ex.getMessage();
+      errorMessage = "Failed to initialise class: " + ex.getMessage();
     } catch (final LinkageError ex) {
       exception = ex;
       errorMessage = "Failed to link class: " + ex.getMessage();

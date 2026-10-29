@@ -592,7 +592,7 @@ public class Match_PlugIn implements PlugIn {
    *
    * @param imp the image
    * @param list the list
-   * @param color the color
+   * @param color the colour
    */
   public static void addOverlay(ImagePlus imp, List<? extends Coordinate> list, Color color) {
     addOverlay(imp, list, color, 1, 1, 1);
@@ -603,7 +603,7 @@ public class Match_PlugIn implements PlugIn {
    *
    * @param imp the image
    * @param list the list
-   * @param color the color
+   * @param color the colour
    * @param scaleX the scale X
    * @param scaleY the scale Y
    * @param scaleZ the scale Z

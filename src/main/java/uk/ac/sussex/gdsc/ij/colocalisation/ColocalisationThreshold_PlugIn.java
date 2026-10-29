@@ -408,7 +408,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
     // This should not be a problem but leave it in for now
     if ((imp1.getType() != ImagePlus.GRAY8 && imp1.getType() != ImagePlus.GRAY16)
         || (imp2.getType() != ImagePlus.GRAY8 && imp2.getType() != ImagePlus.GRAY16)) {
-      IJ.showMessage(PLUGIN_TITLE, "Images must be 8-bit or 16-bit grayscale.");
+      IJ.showMessage(PLUGIN_TITLE, "Images must be 8-bit or 16-bit greyscale.");
       return;
     }
 
@@ -1095,7 +1095,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
   private boolean parametersReady() {
     if (channel1List.getItemCount() == 0) {
       IJ.showMessage(PLUGIN_TITLE,
-          "No available images. Images must be 8-bit or 16-bit grayscale.");
+          "No available images. Images must be 8-bit or 16-bit greyscale.");
       return false;
     }
 

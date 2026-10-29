@@ -378,7 +378,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
    * Search the skeleton and create a node map of the skeleton points. Points can be either:
    * TERMINUS, EDGE or JUNCTION. Points not on the skeleton are set to zero.
    *
-   * @param ip Skeletonized image
+   * @param ip Skeletonised image
    * @return The skeleton node map (or null if not a binary processor)
    */
   @Nullable
@@ -1031,7 +1031,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
   // ------------------------------------
   // Adapted from ij.plugin.filter.Binary
   /**
-   * Skeletonize.
+   * Skeletonise.
    *
    * @param ip the image
    * @param trim the trim
@@ -1161,7 +1161,7 @@ public class SkeletonAnalyser_PlugIn implements PlugInFilter {
           }
         }
 
-        // analyze 4 flat-edge neighbours
+        // analyse 4 flat-edge neighbours
         for (int d = 0; d < 8; d += 2) {
           if ((edgesSet[d] && edgesSet[(d + 2) % 8])
               && !(edgesSet[(d + 5) % 8] || (edgesSet[(d + 4) % 8] && edgesSet[(d + 6) % 8]))) {

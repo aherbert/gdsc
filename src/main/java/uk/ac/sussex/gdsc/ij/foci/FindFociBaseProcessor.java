@@ -316,7 +316,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
     if (isLogging) {
       log(() -> "Number of potential maxima = " + maxpoints.length);
     }
-    showStatus("Analyzing maxima...");
+    showStatus("Analysing maxima...");
 
     final FindFociResult[] initialResultsArray = assignMaxima(maxima, maxpoints, stats);
 
@@ -1216,7 +1216,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
         final boolean[] edgesSet = new boolean[8];
         for (int d = 8; d-- > 0;) {
-          // analyze 4 flat-edge neighbours
+          // analyse 4 flat-edge neighbours
           if (isInner || isWithinXy(x, y, d)) {
             edgesSet[d] = ((types[index + offset[d]] & SADDLE_POINT) != 0);
           }
@@ -1295,7 +1295,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
   }
 
   /**
-   * Analyze the neighbors of a pixel (x, y) in a byte image; pixels <255 ("non-white") are
+   * Analyse the neighbours of a pixel (x, y) in a byte image; pixels <255 ("non-white") are
    * considered foreground. Edge pixels are considered foreground.
    *
    * @param types The byte image
@@ -1818,7 +1818,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
   /**
    * Find all local maxima (irrespective whether they finally qualify as maxima or not).
    *
-   * @param pixels The image to be analyzed
+   * @param pixels The image to be analysed
    * @param maxima the maxima
    * @param types A byte image, same size as ip, where the maximum points are marked as MAXIMUM
    * @param globalMin The image global minimum
@@ -2030,7 +2030,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
     pointList.clear();
     pointList.add(index0);
 
-    // Calculate the center of plateau
+    // Calculate the centre of plateau
     boolean isPlateau = true;
     final int[] xyz = new int[3];
 

@@ -228,7 +228,7 @@ public class CustomContentInstant extends ContentInstant {
     // Adjust the landmark point size properly
     plShape.setRadius((float) min.distance(max) / 100f);
 
-    // Initialize child mask of the switch
+    // Initialise child mask of the switch
     setSwitchValue(BS, selected);
     setSwitchValue(CS, coordVisible);
     setSwitchValue(CO, visible);

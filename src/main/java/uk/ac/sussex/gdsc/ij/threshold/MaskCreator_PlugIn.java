@@ -462,7 +462,7 @@ public class MaskCreator_PlugIn implements PlugIn {
   }
 
   private static int getDisplayRangeMin(ImagePlus imp, int channel) {
-    // Composite images can have a display range for each color channel
+    // Composite images can have a display range for each colour channel
     final LUT[] luts = imp.getLuts();
     if (luts != null && channel <= luts.length) {
       return (int) luts[channel - 1].min;

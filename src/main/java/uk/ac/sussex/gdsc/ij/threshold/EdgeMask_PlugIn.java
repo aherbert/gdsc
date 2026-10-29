@@ -633,7 +633,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
   }
 
   /**
-   * Analyze the neighbors of a pixel (x, y) in a byte image; pixels != 0 are considered foreground.
+   * Analyse the neighbours of a pixel (x, y) in a byte image; pixels != 0 are considered foreground.
    * Edge pixels are considered foreground.
    *
    * @param types the byte image
