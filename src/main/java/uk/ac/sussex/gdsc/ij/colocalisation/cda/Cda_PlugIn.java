@@ -2027,6 +2027,7 @@ public class Cda_PlugIn extends PlugInFrame {
     Prefs.set(KEY_SHOW_MERGED_SEGMENTED_DISPLACEMENT_RGB, showMergedSegmentedDisplacementRgb);
     Prefs.set(KEY_SHOW_M1_PLOT_WINDOW, showM1PlotWindow);
     Prefs.set(KEY_SHOW_M2_PLOT_WINDOW, showM2PlotWindow);
+    Prefs.set(KEY_SHOW_R_PLOT_WINDOW, showRPlotWindow);
     Prefs.set(KEY_SHOW_M1_STATISTICS, showM1Statistics);
     Prefs.set(KEY_SHOW_M2_STATISTICS, showM2Statistics);
     Prefs.set(KEY_SHOW_R_STATISTICS, showRStatistics);

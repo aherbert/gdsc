@@ -54,6 +54,8 @@ Major release of GDSC ImageJ Plugins.
 * Fix the :ref:`colocalisation_plugins:CDA` ``Save results`` option failing when the
   ``Show merged channel`` or ``Show merged ROI`` options are not selected. The merged images are
   always saved.
+* The :ref:`colocalisation_plugins:CDA` plugin saves the ``Show R plot`` option to the
+  preferences. Previously the option was reset when ``ImageJ`` was restarted.
 
 
 Version 2.0
