@@ -63,6 +63,8 @@ Major release of GDSC ImageJ Plugins.
 * Fix the :ref:`colocalisation_plugins:Colocalisation Threshold` results options
   ``Show linear regression solution`` and ``Show thresholds``. Previously each option controlled
   the other column in the results table.
+* The :ref:`colocalisation_plugins:Colocalisation Threshold` ``Close windows on exit`` option closes
+  the ``R-values`` plot.
 
 
 Version 2.0

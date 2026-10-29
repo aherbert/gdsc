@@ -198,6 +198,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
   private int segmented1Rgb;
   private int segmented2Rgb;
   private int mixChannel;
+  private int correlationValuesPlot;
 
   // Store the channels and frames to use from image stacks
   private final int[] sliceOptions = new int[4];
@@ -339,6 +340,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
       closeImagePlus(segmented2Rgb);
       closeImagePlus(mixChannel);
       closeImagePlus(scatterPlot);
+      closeImagePlus(correlationValuesPlot);
 
       final TextWindow window = textWindowRef.get();
       if (ImageJUtils.isShowing(window)) {
@@ -842,7 +844,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
     }
 
     if (plotRValues) {
-      plotResults(ct.getResults());
+      correlationValuesPlot = plotResults(ct.getResults());
     }
 
     IJ.selectWindow(resultsTitle);
@@ -1260,9 +1262,15 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
     return panel;
   }
 
-  private static void plotResults(List<ColocalisationThreshold.ThresholdResult> results) {
+  /**
+   * Plot the correlation results.
+   *
+   * @param results the results
+   * @return the image ID of the plot (or 0 if no plot is shown)
+   */
+  private static int plotResults(List<ColocalisationThreshold.ThresholdResult> results) {
     if (results == null) {
-      return;
+      return 0;
     }
 
     final double[] threshold = new double[results.size()];
@@ -1310,6 +1318,6 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
     plot.addPoints(threshold, r2, Plot.CROSS);
     plot.setColor(Color.BLACK);
     plot.addLabel(0, 0, "Blue=C1+C2 above threshold; Red=Ch1/Ch2 below threshold");
-    ImageJUtils.display(CORRELATION_VALUES_TITLE, plot);
+    return ImageJUtils.display(CORRELATION_VALUES_TITLE, plot).getImagePlus().getID();
   }
 }
