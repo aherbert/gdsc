@@ -74,6 +74,7 @@ public class StackCorrelationAnalyser_PlugIn implements PlugInFilter {
     UsageTracker.recordPlugin(this.getClass(), arg);
 
     if (imp == null) {
+      IJ.noImage();
       return DONE;
     }
 
