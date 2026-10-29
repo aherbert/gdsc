@@ -75,6 +75,8 @@ Major release of GDSC ImageJ Plugins.
 * Fix the :ref:`colocalisation_plugins:Stack Colocalisation Analyser` failing when the
   ``Minimum shift`` is equal to the ``Maximum shift``, or is negative. These values are now
   rejected.
+* Remove the empty last column from the :ref:`colocalisation_plugins:Particle Overlap` results
+  table and file.
 
 
 Version 2.0

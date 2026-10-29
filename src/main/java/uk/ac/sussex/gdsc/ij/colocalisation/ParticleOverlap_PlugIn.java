@@ -345,7 +345,7 @@ public class ParticleOverlap_PlugIn implements PlugIn {
     sb.append(MathUtils.rounded(MathUtils.div0(100.0 * no1, n1))).append('\t');
     sb.append(s1).append('\t');
     sb.append(so1).append('\t');
-    sb.append(MathUtils.rounded(MathUtils.div0(so1, s1), 5)).append('\t');
+    sb.append(MathUtils.rounded(MathUtils.div0(so1, s1), 5));
 
     recordResult(textWindow, sb.toString());
   }
