@@ -79,6 +79,10 @@ Major release of GDSC ImageJ Plugins.
   table and file.
 * Fix the :ref:`colocalisation_plugins:Particle Correlation` plugin failing when there are fewer
   than 3 particles. The correlations are reported as ``NaN``.
+* Fix the :ref:`thresholding_plugins:Thread Analyser` ignoring the ``Threshold method`` option.
+  Previously the ``Otsu`` method was always used.
+* The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin saves the ``Opacity`` option to the
+  preferences. Previously the option was reset when ``ImageJ`` was restarted.
 
 
 Version 2.0

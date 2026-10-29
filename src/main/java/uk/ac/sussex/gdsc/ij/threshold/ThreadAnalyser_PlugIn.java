@@ -264,6 +264,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     image = gd.getNextChoice();
     maskImage = gd.getNextChoice();
     objectImage = gd.getNextChoice();
+    method = gd.getNextChoice();
     resultDirectory = gd.getNextString();
     minLength = (int) gd.getNextNumber();
     showSkeleton = gd.getNextBoolean();

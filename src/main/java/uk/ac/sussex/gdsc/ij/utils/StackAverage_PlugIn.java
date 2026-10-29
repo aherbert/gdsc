@@ -69,14 +69,14 @@ public class StackAverage_PlugIn implements PlugInFilter {
       for (final ImagePlus imp2 : images) {
         final ImageProcessor ip2 = imp2.getStack().getProcessor(n);
         for (int i = sum.length; i-- > 0;) {
-          sum[i] += ip2.get(i);
+          sum[i] += ip2.getf(i);
         }
       }
 
       // Average
       final ImageProcessor ip2 = result.getProcessor(n);
       for (int i = sum.length; i-- > 0;) {
-        ip2.set(i, (int) (sum[i] / count));
+        ip2.setf(i, (float) (sum[i] / count));
       }
     }
 

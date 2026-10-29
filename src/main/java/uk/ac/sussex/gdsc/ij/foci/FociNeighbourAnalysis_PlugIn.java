@@ -247,6 +247,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       Prefs.set(SETTING_DIGITS, digits);
       Prefs.set(SETTING_LABEL_OPTION, labelOption);
       Prefs.set(SETTING_MASK_OPTION, toString(maskChannels));
+      Prefs.set(SETTING_OPACITY, opacity);
       Prefs.set(SETTING_INPUT_MASK, maskOption);
       Prefs.set(SETTING_MASK_IMAGE, maskImage);
       Prefs.set(SETTING_MASK_CHANNEL, maskChannel);
