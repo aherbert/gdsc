@@ -309,8 +309,8 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
         return;
       }
 
-      showThresholds = gd.getNextBoolean();
       showLinearRegression = gd.getNextBoolean();
+      showThresholds = gd.getNextBoolean();
       showRTotal = gd.getNextBoolean();
       showRForGtT = gd.getNextBoolean();
       showRForLtT = gd.getNextBoolean();

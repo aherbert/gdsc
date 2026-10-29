@@ -60,6 +60,9 @@ Major release of GDSC ImageJ Plugins.
   limit as not significant, matching the results table.
 * Fix the :ref:`colocalisation_plugins:CDA` plugin failing to compute the significance limits for
   a large ``p-Value`` relative to the number of random samples.
+* Fix the :ref:`colocalisation_plugins:Colocalisation Threshold` results options
+  ``Show linear regression solution`` and ``Show thresholds``. Previously each option controlled
+  the other column in the results table.
 
 
 Version 2.0
