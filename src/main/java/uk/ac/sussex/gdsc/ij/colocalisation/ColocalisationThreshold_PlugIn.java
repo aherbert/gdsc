@@ -271,7 +271,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
         synchronized (ColocalisationThreshold_PlugIn.this) {
           super.notifyAll();
         }
-      }, "ColicalisationThreshold_Plugin");
+      }, "ColocalisationThreshold_Plugin");
       thread.start();
     }
     if ((Button) actioner == helpButton) {
@@ -405,7 +405,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
     // This should not be a problem but leave it in for now
     if ((imp1.getType() != ImagePlus.GRAY8 && imp1.getType() != ImagePlus.GRAY16)
         || (imp2.getType() != ImagePlus.GRAY8 && imp2.getType() != ImagePlus.GRAY16)) {
-      IJ.showMessage("Image Correlator", "Images must be 8-bit or 16-bit grayscale.");
+      IJ.showMessage(PLUGIN_TITLE, "Images must be 8-bit or 16-bit grayscale.");
       return;
     }
 
