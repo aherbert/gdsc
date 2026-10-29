@@ -30,8 +30,7 @@ analysis. The tools provide: thresholding for N-dimensional images for signal
 identification; correlation and overlap coefficient analysis; and
 colocalisation significance testing.
 
-See the [Colocalisation documentation](https://gdsc-imagej.readthedocs.io/en/latest/colocalisation_plugins.html) and the
-[Colocalisation User Manual](Colocalisation.odt) for full details.
+See the [Colocalisation documentation](https://gdsc-imagej.readthedocs.io/en/latest/colocalisation_plugins.html) for full details.
 
 Utility Plugins
 ---------------
