@@ -38,7 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.FileUtils;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
@@ -366,8 +366,8 @@ public class ParticleOverlap_PlugIn implements PlugIn {
 
   private void logErrorAndCloseResultsFile(Exception ex) {
     if (ex != null) {
-      Logger.getLogger(getClass().getName()).log(Level.WARNING, "Error writing to the result file",
-          ex);
+      ImageJPluginLoggerHelper.getLogger(getClass()).log(Level.WARNING,
+          "Error writing to the result file", ex);
     }
     closeResultsFile();
   }
