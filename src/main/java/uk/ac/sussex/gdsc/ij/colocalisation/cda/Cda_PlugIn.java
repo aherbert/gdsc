@@ -427,7 +427,9 @@ public class Cda_PlugIn extends PlugInFrame {
       permutations = 0;
     }
 
-    checkResultsDirectory();
+    if (saveResults) {
+      checkResultsDirectory();
+    }
   }
 
   private boolean checkResultsDirectory() {
