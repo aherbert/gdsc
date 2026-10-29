@@ -56,7 +56,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -75,6 +74,7 @@ import org.jdesktop.beansbinding.Bindings;
 import org.jdesktop.swingbinding.JComboBoxBinding;
 import org.jdesktop.swingbinding.SwingBindings;
 import uk.ac.sussex.gdsc.core.ij.BufferedTextWindow;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
@@ -216,7 +216,7 @@ public class FindFociHelperView extends JFrame
         final FindFociHelperView frame = new FindFociHelperView();
         frame.setVisible(true);
       } catch (final Exception ex) {
-        Logger.getLogger(FindFociHelperView.class.getName()).log(Level.SEVERE,
+        ImageJPluginLoggerHelper.getLogger(FindFociHelperView.class).log(Level.SEVERE,
             "Error showing the frame", ex);
       }
     });

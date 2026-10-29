@@ -58,6 +58,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
 import uk.ac.sussex.gdsc.ij.trackmate.gui.HtmlJLabelLogger;
@@ -303,7 +304,7 @@ public class PrecomputedDetectorConfigurationPanel extends ConfigurationPanel {
       contentPanel.add(labelLogger, createConstraints(2, 0, row));
       localLogger = labelLogger.getLogger();
     } catch (final Exception ex) {
-      java.util.logging.Logger.getLogger(PrecomputedDetector.class.getSimpleName())
+      ImageJPluginLoggerHelper.getLogger(PrecomputedDetector.class)
           .log(Level.WARNING, "Failed to create configuration panel", ex);
     }
   }

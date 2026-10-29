@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import org.apache.commons.rng.UniformRandomProvider;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 import uk.ac.sussex.gdsc.core.utils.rng.UniformRandomProviders;
 import uk.ac.sussex.gdsc.ij.foci.model.FindFociModel;
 
@@ -36,7 +37,7 @@ import uk.ac.sussex.gdsc.ij.foci.model.FindFociModel;
  * {@link uk.ac.sussex.gdsc.ij.foci.gui.FindFociView}.
  */
 public class NullController extends FindFociController {
-  private static Logger logger = Logger.getLogger(NullController.class.getName());
+  private static Logger logger = ImageJPluginLoggerHelper.getLogger(NullController.class);
 
   private int lowerLimit = 15;
   private int upperLimit = 220;

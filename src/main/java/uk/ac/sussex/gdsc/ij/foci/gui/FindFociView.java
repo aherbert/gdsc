@@ -43,7 +43,6 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -64,6 +63,7 @@ import org.jdesktop.beansbinding.Bindings;
 import org.jdesktop.beansbinding.ELProperty;
 import org.jdesktop.swingbinding.JComboBoxBinding;
 import org.jdesktop.swingbinding.SwingBindings;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.BackgroundMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.MaskMethod;
 import uk.ac.sussex.gdsc.ij.foci.FindFociProcessorOptions.PeakMethod;
@@ -204,8 +204,8 @@ public class FindFociView extends JFrame implements PropertyChangeListener, Mess
         final FindFociView frame = new FindFociView();
         frame.setVisible(true);
       } catch (final Exception ex) {
-        Logger.getLogger(FindFociView.class.getName()).log(Level.SEVERE, "Failed to show the frame",
-            ex);
+        ImageJPluginLoggerHelper.getLogger(FindFociView.class).log(Level.SEVERE,
+            "Failed to show the frame", ex);
       }
     });
   }

@@ -54,7 +54,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.utils.FileUtils;
 import uk.ac.sussex.gdsc.core.utils.TextUtils;
@@ -108,7 +108,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       // Reflection has failed
       firstParticle = lastParticle = null;
       if (IJ.debugMode) {
-        Logger.getLogger(MaskParticleAnalyzer.class.getName()).log(Level.WARNING,
+        ImageJPluginLoggerHelper.getLogger(MaskParticleAnalyzer.class).log(Level.WARNING,
             "Reflection failed", ex);
       }
     }
@@ -294,7 +294,8 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
           restoreRedirectImp = WindowManager.getImage(redirectTarget);
         } catch (final ExceptionInInitializerError | Exception ex) {
           if (IJ.debugMode) {
-            Logger.getLogger(getClass().getName()).log(Level.WARNING, "Reflection failed", ex);
+            ImageJPluginLoggerHelper.getLogger(getClass()).log(Level.WARNING,
+                "Reflection failed", ex);
           }
         }
       }
@@ -358,7 +359,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
         out.write(Integer.toString(histogram[i]));
         out.newLine();
       } catch (final IOException ex) {
-        Logger.getLogger(MaskParticleAnalyzer.class.getName())
+        ImageJPluginLoggerHelper.getLogger(MaskParticleAnalyzer.class)
             .warning(() -> "Failed to write histogram data: " + ex.getMessage());
         close(out);
         return null;

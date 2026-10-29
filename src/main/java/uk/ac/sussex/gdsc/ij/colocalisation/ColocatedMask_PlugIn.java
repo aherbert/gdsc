@@ -40,8 +40,8 @@ import java.awt.Checkbox;
 import java.awt.Choice;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import uk.ac.sussex.gdsc.core.ij.ImageAdapter;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.NonBlockingExtendedGenericDialog;
 import uk.ac.sussex.gdsc.core.utils.SettingsList;
@@ -280,7 +280,8 @@ public class ColocatedMask_PlugIn implements PlugIn {
           thread.interrupt();
         } catch (final SecurityException ex) {
           // We should have permission to interrupt this thread.
-          Logger.getLogger(getClass().getName()).log(Level.WARNING, "Thread shutdown failed", ex);
+          ImageJPluginLoggerHelper.getLogger(getClass()).log(Level.WARNING,
+              "Thread shutdown failed", ex);
         }
       } else {
         worker.stop = true;
@@ -290,7 +291,8 @@ public class ColocatedMask_PlugIn implements PlugIn {
         try {
           thread.join(0);
         } catch (final InterruptedException ex) {
-          Logger.getLogger(getClass().getName()).log(Level.WARNING, "Unexpected interruption", ex);
+          ImageJPluginLoggerHelper.getLogger(getClass()).log(Level.WARNING,
+              "Unexpected interruption", ex);
           Thread.currentThread().interrupt();
         }
       }

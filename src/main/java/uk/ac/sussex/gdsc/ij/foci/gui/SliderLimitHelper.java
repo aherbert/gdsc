@@ -38,7 +38,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
@@ -47,6 +46,7 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 
 /**
  * Dialog that can be used to reconfigure the minimum and maximum limits for a JSlider.
@@ -73,7 +73,7 @@ public class SliderLimitHelper extends JDialog implements ActionListener {
       dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       dialog.setVisible(true);
     } catch (final Exception ex) {
-      Logger.getLogger(SliderLimitHelper.class.getName()).log(Level.SEVERE,
+      ImageJPluginLoggerHelper.getLogger(SliderLimitHelper.class).log(Level.SEVERE,
           "Error showing the dialog", ex);
     }
   }

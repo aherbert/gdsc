@@ -46,7 +46,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.Group;
 import org.jogamp.java3d.Node;
@@ -62,6 +61,7 @@ import org.jogamp.vecmath.Vector3d;
 import orthoslice.MultiOrthoGroup;
 import orthoslice.OrthoGroup;
 import surfaceplot.SurfacePlotGroup;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import vib.PointList;
 import voltex.VoltexGroup;
@@ -344,7 +344,8 @@ public class CustomContentInstant extends ContentInstant {
       displayedDataSwapfile = path.toString();
     } catch (IOException ex) {
       // This is not a critical failure so allow null to be returned
-      Logger.getLogger(getClass().getName()).log(Level.WARNING, "Failed to create swap file", ex);
+      ImageJPluginLoggerHelper.getLogger(getClass()).log(Level.WARNING,
+          "Failed to create swap file", ex);
     }
     return displayedDataSwapfile;
   }

@@ -34,7 +34,6 @@ import java.awt.Rectangle;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
 import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 import uk.ac.sussex.gdsc.core.utils.SimpleArrayUtils;
@@ -137,7 +136,7 @@ public class GaussianFit_PlugIn implements PlugInFilter {
     } catch (final ExceptionInInitializerError | RuntimeException | ClassNotFoundException
         | NoSuchMethodException | IllegalAccessException | InvocationTargetException
         | InstantiationException ex) {
-      Logger.getLogger(getClass().getName()).log(Level.WARNING,
+      ImageJPluginLoggerHelper.getLogger(getClass()).log(Level.WARNING,
           () -> "Fitting failed: " + ex.getMessage());
       return null;
     }

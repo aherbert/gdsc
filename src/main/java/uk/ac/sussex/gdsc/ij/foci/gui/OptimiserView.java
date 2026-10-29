@@ -35,7 +35,6 @@ import java.awt.event.WindowEvent;
 import java.io.Serializable;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -48,6 +47,7 @@ import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
 import org.jdesktop.swingbinding.JComboBoxBinding;
 import org.jdesktop.swingbinding.SwingBindings;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 import uk.ac.sussex.gdsc.ij.foci.controller.OptimiserController;
 import uk.ac.sussex.gdsc.ij.foci.converter.ValidImagesConverter;
 import uk.ac.sussex.gdsc.ij.foci.model.FindFociModel;
@@ -96,8 +96,8 @@ public class OptimiserView extends JFrame {
         final OptimiserView frame = new OptimiserView();
         frame.setVisible(true);
       } catch (final Exception ex) {
-        Logger.getLogger(OptimiserView.class.getName()).log(Level.SEVERE, "Error showing the frame",
-            ex);
+        ImageJPluginLoggerHelper.getLogger(OptimiserView.class).log(Level.SEVERE,
+            "Error showing the frame", ex);
       }
     });
   }

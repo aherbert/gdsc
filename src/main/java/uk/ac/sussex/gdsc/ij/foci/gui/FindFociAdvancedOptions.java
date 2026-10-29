@@ -34,7 +34,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -52,6 +51,7 @@ import org.jdesktop.beansbinding.AutoBinding;
 import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.ij.foci.FindFoci_PlugIn;
 import uk.ac.sussex.gdsc.ij.foci.converter.CentreMethodConverter;
@@ -114,7 +114,7 @@ public class FindFociAdvancedOptions extends JDialog {
       dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       dialog.setVisible(true);
     } catch (final Exception ex) {
-      Logger.getLogger(FindFociAdvancedOptions.class.getName()).log(Level.SEVERE,
+      ImageJPluginLoggerHelper.getLogger(FindFociAdvancedOptions.class).log(Level.SEVERE,
           "Failed to show the frame", ex);
     }
   }

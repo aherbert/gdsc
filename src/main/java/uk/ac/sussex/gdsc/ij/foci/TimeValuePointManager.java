@@ -32,7 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.function.Predicate;
-import java.util.logging.Logger;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 import uk.ac.sussex.gdsc.core.utils.FileUtils;
 
 /**
@@ -261,7 +261,7 @@ public class TimeValuePointManager {
             }
             points.add(new TimeValuedPoint(xpos, ypos, zpos, (int) time, value));
           } catch (final NumberFormatException ex) {
-            Logger.getLogger(getClass().getName())
+            ImageJPluginLoggerHelper.getLogger(getClass())
                 .warning(() -> "Invalid numbers on line: " + lineCount);
             if (++errors > 10) {
               break;

@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.TreeSet;
 import java.util.function.IntUnaryOperator;
-import java.util.logging.Logger;
+import uk.ac.sussex.gdsc.core.ij.ImageJPluginLoggerHelper;
 import uk.ac.sussex.gdsc.core.match.Coordinate;
 import uk.ac.sussex.gdsc.core.utils.FileUtils;
 
@@ -114,7 +114,7 @@ public final class AssignedPointUtils {
               points.add(new AssignedPoint(x, y, z, points.size() + 1));
             } catch (final NumberFormatException ex) {
               final int lineNumber = lineCount;
-              Logger.getLogger(AssignedPointUtils.class.getName())
+              ImageJPluginLoggerHelper.getLogger(AssignedPointUtils.class)
                   .warning(() -> "Invalid numbers on line: " + lineNumber);
             }
           }
