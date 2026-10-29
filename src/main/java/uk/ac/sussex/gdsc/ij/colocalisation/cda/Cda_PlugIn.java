@@ -453,7 +453,6 @@ public class Cda_PlugIn extends PlugInFrame {
       closeImagePlus(segmented2Rgb);
       closeImagePlus(mergedChannelRgb);
       closeImagePlus(mergedSegmentedRgb);
-      closeImagePlus(mergedSegmentedRgb);
       closeImagePlus(mergedSegmentedDisplacementRgb);
       closeImagePlus(mergedChannelDisplacementRgb);
 
