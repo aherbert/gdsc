@@ -66,7 +66,7 @@ public class ColocalisationThreshold {
   private double correlationAboveThreshold;
   private double correlationThreshold;
   private double convergenceTolerance = 0.001;
-  private double searchTolerance = 0.05;
+  private double minimumTotalCorrelation = 0.05;
   private int ch1Max;
   private int ch2Max;
   private int ch1Min = Integer.MAX_VALUE;
@@ -236,7 +236,7 @@ public class ColocalisationThreshold {
 
     IJ.log("R = " + IJ.d2s(correlationTotal, 4));
 
-    if (correlationTotal < Math.max(searchTolerance, correlationThreshold)) {
+    if (correlationTotal < Math.max(minimumTotalCorrelation, correlationThreshold)) {
       return noCorrelationResult();
     }
 
@@ -981,22 +981,22 @@ public class ColocalisationThreshold {
   }
 
   /**
-   * Set the tolerance for performing a search. The search will not start if the total correlation
-   * for the pixels below this threshold.
+   * Set the minimum total correlation for performing a search. The search will not start if the
+   * correlation for all the pixels is below this value (or the correlation threshold).
    *
-   * @param searchTolerance the new search tolerance
+   * @param minimumTotalCorrelation the new minimum total correlation
    */
-  public void setSearchTolerance(double searchTolerance) {
-    this.searchTolerance = searchTolerance;
+  public void setMinimumTotalCorrelation(double minimumTotalCorrelation) {
+    this.minimumTotalCorrelation = minimumTotalCorrelation;
   }
 
   /**
-   * Gets the search tolerance.
+   * Gets the minimum total correlation for performing a search.
    *
-   * @return the search tolerance
+   * @return the minimum total correlation
    */
-  public double getSearchTolerance() {
-    return searchTolerance;
+  public double getMinimumTotalCorrelation() {
+    return minimumTotalCorrelation;
   }
 
   /**

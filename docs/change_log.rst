@@ -65,6 +65,9 @@ Major release of GDSC ImageJ Plugins.
   the other column in the results table.
 * The :ref:`colocalisation_plugins:Colocalisation Threshold` ``Close windows on exit`` option closes
   the ``R-values`` plot.
+* Rename the :ref:`colocalisation_plugins:Colocalisation Threshold` ``Search tolerance`` option to
+  ``Minimum total correlation``. The option is the minimum correlation of all the pixels required
+  to perform the threshold search; it does not control the convergence of the search.
 
 
 Version 2.0

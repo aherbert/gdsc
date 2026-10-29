@@ -84,7 +84,8 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
   private static final String KEY_CHANNEL2_INDEX = "CT.channel2SelectedIndex";
   private static final String KEY_ROI_INDEX = "CT.roiIndex";
   private static final String KEY_R_THRESHOLD = "CT.rThreshold";
-  private static final String KEY_SEARCH_TOLERANCE = "CT.searchTolerance";
+  // Key retained from the previous name (Search tolerance) to load existing preferences
+  private static final String KEY_MIN_TOTAL_CORRELATION = "CT.searchTolerance";
   private static final String KEY_SHOW_COLOCALISED = "CT.showColocalised";
   private static final String KEY_USE_CONSTANT_INTENSITY = "CT.useConstantIntensity";
   private static final String KEY_SHOW_SCATTER_PLOT = "CT.showScatterPlot";
@@ -109,7 +110,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
   private static final String KEY_MAX_ITERATIONS = "CT.maxIterations";
 
   private static final double DEFAULT_R_LIMIT = 0;
-  private static final double DEFAULT_SEARCH_TOLERANCE = 0.05;
+  private static final double DEFAULT_MIN_TOTAL_CORRELATION = 0.05;
   private static final int FONT_WIDTH = 12;
   private static final Font MONO_FONT = new Font("Monospaced", 0, FONT_WIDTH);
 
@@ -130,7 +131,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
   private static final String CHOICE_CHANNEL2 = "Channel 2";
   private static final String CHOICE_USE_ROI = "Use ROI";
   private static final String CHOICE_CORRELATION_THRESHOLD = "Correlation limit";
-  private static final String CHOICE_SEARCG_TOLERANCE = "Search tolerance";
+  private static final String CHOICE_MIN_TOTAL_CORRELATION = "Minimum total correlation";
   private static final String CHOICE_SHOW_COLOCALISED = "Show colocalised pixels";
   private static final String CHOICE_USE_CONSTANCE_INTENSITY =
       "Use constant intensity for colocalised pixels";
@@ -151,7 +152,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
   private Choice channel2List;
   private Choice roiList;
   private TextField correlationThresholdTextField;
-  private TextField searchToleranceTextField;
+  private TextField minTotalCorrelationTextField;
   private Checkbox showColocalisedCheckbox;
   private Checkbox useConstantIntensityCheckbox;
   private Checkbox showScatterPlotCheckbox;
@@ -165,7 +166,8 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
   private int channel2SelectedIndex = (int) Prefs.get(KEY_CHANNEL2_INDEX, 0);
   private int roiIndex = (int) Prefs.get(KEY_ROI_INDEX, 0);
   private double correlationThreshold = Prefs.get(KEY_R_THRESHOLD, DEFAULT_R_LIMIT);
-  private double searchTolerance = Prefs.get(KEY_SEARCH_TOLERANCE, DEFAULT_SEARCH_TOLERANCE);
+  private double minTotalCorrelation =
+      Prefs.get(KEY_MIN_TOTAL_CORRELATION, DEFAULT_MIN_TOTAL_CORRELATION);
   private boolean showColocalised = Prefs.get(KEY_SHOW_COLOCALISED, false);
   private boolean useConstantIntensity = Prefs.get(KEY_USE_CONSTANT_INTENSITY, false);
   private boolean showScatterPlot = Prefs.get(KEY_SHOW_SCATTER_PLOT, false);
@@ -377,7 +379,8 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
     channel2SelectedIndex = channel2List.getSelectedIndex();
     roiIndex = roiList.getSelectedIndex();
     correlationThreshold = getDouble(correlationThresholdTextField.getText(), DEFAULT_R_LIMIT);
-    searchTolerance = getDouble(searchToleranceTextField.getText(), DEFAULT_SEARCH_TOLERANCE);
+    minTotalCorrelation =
+        getDouble(minTotalCorrelationTextField.getText(), DEFAULT_MIN_TOTAL_CORRELATION);
     showColocalised = showColocalisedCheckbox.getState();
     useConstantIntensity = useConstantIntensityCheckbox.getState();
     showScatterPlot = showScatterPlotCheckbox.getState();
@@ -568,9 +571,9 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
       ct.setMaxIterations(maxIterations);
       ct.setExhaustiveSearch(exhaustiveSearch);
       ct.setCorrelationThreshold(correlationThreshold);
-      ct.setSearchTolerance(searchTolerance);
+      ct.setMinimumTotalCorrelation(minTotalCorrelation);
       if (!ct.correlate()) {
-        IJ.showMessage(PLUGIN_TITLE, "No correlation found above tolerance. Ending");
+        IJ.showMessage(PLUGIN_TITLE, "No correlation found above the minimum total correlation. Ending");
         IJ.showStatus("Done");
         return;
       }
@@ -1064,7 +1067,7 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
     Prefs.set(KEY_CHANNEL2_INDEX, channel2SelectedIndex);
     Prefs.set(KEY_ROI_INDEX, roiIndex);
     Prefs.set(KEY_R_THRESHOLD, correlationThreshold);
-    Prefs.set(KEY_SEARCH_TOLERANCE, searchTolerance);
+    Prefs.set(KEY_MIN_TOTAL_CORRELATION, minTotalCorrelation);
     Prefs.set(KEY_SHOW_COLOCALISED, showColocalised);
     Prefs.set(KEY_USE_CONSTANT_INTENSITY, useConstantIntensity);
     Prefs.set(KEY_SHOW_SCATTER_PLOT, showScatterPlot);
@@ -1180,9 +1183,9 @@ public class ColocalisationThreshold_PlugIn extends PlugInFrame {
     roiList.add(CHOICE_CHANNEL1);
     roiList.add(CHOICE_CHANNEL2);
 
-    searchToleranceTextField = new TextField();
-    mainPanel.add(createTextPanel(searchToleranceTextField, CHOICE_SEARCG_TOLERANCE,
-        String.valueOf(searchTolerance)));
+    minTotalCorrelationTextField = new TextField();
+    mainPanel.add(createTextPanel(minTotalCorrelationTextField, CHOICE_MIN_TOTAL_CORRELATION,
+        String.valueOf(minTotalCorrelation)));
 
     correlationThresholdTextField = new TextField();
     mainPanel.add(createTextPanel(correlationThresholdTextField, CHOICE_CORRELATION_THRESHOLD,
