@@ -46,6 +46,9 @@ Major release of GDSC ImageJ Plugins.
 * Fix the :ref:`findfoci_plugins:Assign Foci to Clusters` ``Eliminate edge clusters`` option for
   non-square images. Previously the left and right edges were checked using the image width
   instead of the height, causing an error for wide images and missed edges for tall images.
+* The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
+  using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
+  all points were marked in yellow.
 
 
 Version 2.0

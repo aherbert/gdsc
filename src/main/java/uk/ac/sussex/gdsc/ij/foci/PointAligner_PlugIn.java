@@ -527,7 +527,8 @@ public class PointAligner_PlugIn implements PlugIn {
                 MathUtils.rounded(distance), MathUtils.rounded(thresholdHeight));
           }
           noAlign.add(point);
-          extractPoint(impStack, "below_threshold", pointId + 1, x, y, z, newX, newY, newZ);
+          extractPoint(impStack, "below_threshold", pointId + 1, x, y, z, newX, newY, newZ,
+              Match_PlugIn.UNMATCH2);
           newPoint = null; // remove unaligned points from the updated ROI
         } else {
           final float v = result.maxValue;
@@ -561,7 +562,7 @@ public class PointAligner_PlugIn implements PlugIn {
             conflict.add(point);
 
             // Output an image showing the pixels
-            extractPoint(impStack, "conflict", pointId + 1, x, y, z, newX, newY, newZ);
+            extractPoint(impStack, "conflict", pointId + 1, x, y, z, newX, newY, newZ, Color.red);
           }
         }
       } else {
@@ -570,7 +571,7 @@ public class PointAligner_PlugIn implements PlugIn {
               MathUtils.rounded(pointHeight[pointId]), cf.format(x, y, z));
         }
         noAlign.add(point);
-        extractPoint(impStack, "noalign", pointId + 1, x, y, z, x, y, z);
+        extractPoint(impStack, "noalign", pointId + 1, x, y, z, x, y, z, Match_PlugIn.UNMATCH2);
         newPoint = null; // remove unaligned points from the updated ROI
       }
 
@@ -900,7 +901,7 @@ public class PointAligner_PlugIn implements PlugIn {
   }
 
   private void extractPoint(ImageStack impStack, String type, int id, int x, int y, int z, int newX,
-      int newY, int newZ) {
+      int newY, int newZ, Color color) {
     if (settings.unalignedBorder <= 0) {
       return;
     }
@@ -941,7 +942,7 @@ public class PointAligner_PlugIn implements PlugIn {
       }
       final List<BasePoint> conflict =
           Collections.singletonList(new BasePoint(x - minX, y - minY, z));
-      Match_PlugIn.addOverlay(pointImp, conflict, Match_PlugIn.UNMATCH1);
+      Match_PlugIn.addOverlay(pointImp, conflict, color);
       pointImp.updateAndDraw();
 
       if (saveResults) {
