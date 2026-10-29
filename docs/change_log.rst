@@ -77,6 +77,8 @@ Major release of GDSC ImageJ Plugins.
   rejected.
 * Remove the empty last column from the :ref:`colocalisation_plugins:Particle Overlap` results
   table and file.
+* Fix the :ref:`colocalisation_plugins:Particle Correlation` plugin failing when there are fewer
+  than 3 particles. The correlations are reported as ``NaN``.
 
 
 Version 2.0

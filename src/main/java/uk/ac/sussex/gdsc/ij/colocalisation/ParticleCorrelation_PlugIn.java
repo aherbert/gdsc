@@ -420,6 +420,16 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
   }
 
   private void addSummary(String title, double[] sum1, double[] sum2) {
+    final StringBuilder sb = new StringBuilder(title);
+    sb.append(sum1.length).append('\t');
+
+    // The correlation p-values require at least 3 observations
+    if (sum1.length < 3) {
+      sb.append("NaN\tNaN\tNaN\tNaN");
+      twSummary.append(sb.toString());
+      return;
+    }
+
     final BlockRealMatrix rm = new BlockRealMatrix(sum1.length, 2);
     rm.setColumn(0, sum1);
     rm.setColumn(1, sum2);
@@ -428,8 +438,6 @@ public class ParticleCorrelation_PlugIn implements PlugIn {
     final PearsonsCorrelation p1 = sr.getRankCorrelation();
     final PearsonsCorrelation p2 = new PearsonsCorrelation(rm);
 
-    final StringBuilder sb = new StringBuilder(title);
-    sb.append(sum1.length).append('\t');
     sb.append(MathUtils.rounded(p1.getCorrelationMatrix().getEntry(0, 1))).append('\t');
     sb.append(MathUtils.rounded(p1.getCorrelationPValues().getEntry(0, 1))).append('\t');
     sb.append(MathUtils.rounded(p2.getCorrelationMatrix().getEntry(0, 1))).append('\t');
