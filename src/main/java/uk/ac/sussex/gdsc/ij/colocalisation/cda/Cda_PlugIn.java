@@ -2046,6 +2046,7 @@ public class Cda_PlugIn extends PlugInFrame {
       if (imp == null || (imp.getNChannels() + imp.getNFrames() < 3)) {
         IJ.showMessage(PLUGIN_TITLE, "Requires 2 images or a multi-channel/frame stack. "
             + "Images must be 8-bit or 16-bit grayscale.");
+        return;
       }
     }
 
