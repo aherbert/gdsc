@@ -104,11 +104,11 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         for (int d = 8; d-- > 0;) {
           if (isInnerXy || isWithinXy(x, y, d)) {
-            final int vNeighbor = image[i + offset[d]];
-            if (vNeighbor > v) {
+            final int vNeighbour = image[i + offset[d]];
+            if (vNeighbour > v) {
               isMax = false;
               break;
-            } else if (vNeighbor == v) {
+            } else if (vNeighbour == v) {
               // Neighbour is equal, this is a potential plateau maximum
               equalNeighbour = true;
             } else {
@@ -167,11 +167,11 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         for (int d = 26; d-- > 0;) {
           if (isInnerXyz || (isInnerXy && isWithinZ(z, d)) || isWithinXyz(x, y, z, d)) {
-            final int vNeighbor = image[i + offset[d]];
-            if (vNeighbor > v) {
+            final int vNeighbour = image[i + offset[d]];
+            if (vNeighbour > v) {
               isMax = false;
               break;
-            } else if (vNeighbor == v) {
+            } else if (vNeighbour == v) {
               // Neighbour is equal, this is a potential plateau maximum
               equalNeighbour = true;
             } else {
@@ -533,15 +533,15 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
         for (int d = 8; d-- > 0;) {
           if (isInnerXy || isWithinXy(x, y, d)) {
             final int index2 = index + offset[d];
-            final int vNeighbor = image[index2];
-            if (maxValue < vNeighbor) {
+            final int vNeighbour = image[index2];
+            if (maxValue < vNeighbour) {
               // Higher neighbour
-              maxValue = vNeighbor;
+              maxValue = vNeighbour;
               maxDirection = d;
-            } else if (maxValue == vNeighbor) {
+            } else if (maxValue == vNeighbour) {
               // Check if the neighbour is higher than this point (i.e. an equal higher neighbour
               // has been found)
-              if (value != vNeighbor) {
+              if (value != vNeighbour) {
                 // Favour flat edges over diagonals in the case of equal neighbours
                 if (flatEdge[d]) {
                   maxDirection = d;
@@ -601,15 +601,15 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
         for (int d = 26; d-- > 0;) {
           if (isInnerXyz || (isInnerXy && isWithinZ(z, d)) || isWithinXyz(x, y, z, d)) {
             final int index2 = index + offset[d];
-            final int vNeighbor = image[index2];
-            if (maxValue < vNeighbor) {
+            final int vNeighbour = image[index2];
+            if (maxValue < vNeighbour) {
               // Higher neighbour
-              maxValue = vNeighbor;
+              maxValue = vNeighbour;
               maxDirection = d;
-            } else if (maxValue == vNeighbor) {
+            } else if (maxValue == vNeighbour) {
               // Check if the neighbour is higher than this point (i.e. an equal higher neighbour
               // has been found)
-              if (value != vNeighbor) {
+              if (value != vNeighbour) {
                 // Favour flat edges over diagonals in the case of equal neighbours
                 if (flatEdge[d]) {
                   maxDirection = d;
