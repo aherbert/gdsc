@@ -51,6 +51,9 @@ Major release of GDSC ImageJ Plugins.
   all points were marked in yellow.
 * Fix the :ref:`colocalisation_plugins:CDA (macro)` plugin ignoring the ``(Channel image)`` option
   for the ``ROI for channel 1/2`` image. Previously all the pixels of the channel were used.
+* Fix the :ref:`colocalisation_plugins:CDA` ``Save results`` option failing when the
+  ``Show merged channel`` or ``Show merged ROI`` options are not selected. The merged images are
+  always saved.
 
 
 Version 2.0

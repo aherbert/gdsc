@@ -1168,10 +1168,11 @@ public class Cda_PlugIn extends PlugInFrame {
     final int w = imageStack1.getWidth();
     final int h = imageStack1.getHeight();
     final int slices = imageStack1.getSize();
-    if (showMergedChannelRgb) {
+    // The merged images are saved with the results even if they are not shown
+    if (showMergedChannelRgb || isSaveResults) {
       mergedChannelIp = new ImageStack(w, h, slices);
     }
-    if (showMergedSegmentedRgb) {
+    if (showMergedSegmentedRgb || isSaveResults) {
       mergedSegmentedRgbIp = new ImageStack(w, h, slices);
     }
     if (showMergedChannelDisplacementRgb) {
@@ -1300,9 +1301,9 @@ public class Cda_PlugIn extends PlugInFrame {
         return;
       }
       final String directory = directoryPath.toString();
-      IJ.save(WindowManager.getImage(mergedSegmentedRgb),
+      IJ.save(new ImagePlus(MERGED_SEGMENTED_TITLE, mergedSegmentedRgbIp),
           directory + File.separatorChar + "MergedROI.tif");
-      IJ.save(WindowManager.getImage(mergedChannelRgb),
+      IJ.save(new ImagePlus(MERGED_CHANNEL_TITLE, mergedChannelIp),
           directory + File.separatorChar + "MergedChannel.tif");
 
       try (
