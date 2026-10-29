@@ -70,6 +70,8 @@ Major release of GDSC ImageJ Plugins.
   to perform the threshold search; it does not control the convergence of the search.
 * Fix the :ref:`colocalisation_plugins:Stack Correlation Analyser` Manders coefficients when using
   the ``None`` method with the ``Subtract threshold`` option. Previously 1 was added to each pixel.
+* The :ref:`colocalisation_plugins:Stack Colocalisation Analyser` reports ``None`` in the ``Ch3``
+  column when no confined region is used. Previously the column was empty.
 
 
 Version 2.0

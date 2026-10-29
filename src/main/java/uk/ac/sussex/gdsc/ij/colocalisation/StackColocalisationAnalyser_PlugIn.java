@@ -243,6 +243,8 @@ public class StackColocalisationAnalyser_PlugIn implements PlugInFilter {
           if (settings.channel3 == 0) {
             // Combine the two masks
             combineMasksAndCreateOutputMask(method, maskImage, 3, t, s1, s2, s3);
+          } else {
+            s3.overrideName = NONE;
           }
         }
 
