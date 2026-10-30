@@ -100,6 +100,11 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`utility_plugins:Mask to ROI` plugin traces every object with the same value, for
   example all the objects in a binary mask. Previously only the first object with each value was
   traced.
+* The :ref:`utility_plugins:Scale Space` dialog describes the limit of the maximum scale: a
+  Gaussian standard deviation of a quarter of the minimum image dimension. Previously the dialog
+  stated scales up to the minimum image dimension were computed.
+* The :ref:`utility_plugins:Scale Space` ``Difference of Gaussians`` output shows an error if
+  fewer than 2 scales are computed. Previously the single Gaussian image was output.
 
 
 Version 2.0

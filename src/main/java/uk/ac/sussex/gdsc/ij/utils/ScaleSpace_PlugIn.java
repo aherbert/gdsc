@@ -151,7 +151,8 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
 
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
     gd.addMessage("Computes a scale-space representation of an image.\n"
-        + "All scales up to the minimum image dimension in X or Y are computed.");
+        + "Scales are limited to a Gaussian standard deviation of a quarter\n"
+        + "of the minimum image dimension in X or Y.");
     gd.addNumericField("Min_scale", settings.minScale, 2);
     gd.addNumericField("Max_scale", settings.maxScale, 2);
     gd.addChoice("Output", Settings.OUTPUT_OPTIONS, settings.outputOption);
@@ -201,13 +202,19 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
     // If max is 0 use the computed max for auto-range
     final double maxT =
         MathUtils.clip(minT, limitT, (settings.maxScale > 0 ? settings.maxScale : limitT));
+    final long steps = countSteps(minT, maxT);
+    if (settings.outputOption == Settings.OPT_DOG && steps < 2) {
+      IJ.error(TITLE, "Difference of Gaussians requires at least 2 scales.\n"
+          + "Increase the scale range or the sub interval steps.");
+      return;
+    }
 
     // Multi-thread
     final ExecutorService executor = Executors.newFixedThreadPool(Prefs.getThreads());
     final List<Future<Pair<Double, ImageProcessor>>> futures = new LocalList<>();
 
     final BiFunction<ImageProcessor, Double, ImageProcessor> fun = createFunction();
-    final Ticker ticker = ImageJUtils.createTicker(countSteps(minT, maxT), 2, "Computing ...");
+    final Ticker ticker = ImageJUtils.createTicker(steps, 2, "Computing ...");
 
     for (double scaleT = minT; scaleT <= maxT; scaleT *= 2) {
       final double step = scaleT / (settings.subIntervals + 1);
@@ -236,7 +243,7 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
 
     String suffix;
     ImageStack outputStack;
-    if (settings.outputOption == Settings.OPT_DOG && stack.getSize() > 1) {
+    if (settings.outputOption == Settings.OPT_DOG) {
       suffix = "Difference of Gaussians";
       outputStack = new ImageStack(width, height);
       float[] pixels2 = (float[]) stack.getPixels(1);
