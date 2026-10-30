@@ -199,15 +199,19 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
       return;
     }
 
-    // Run on whole stack
-    if (settings.doStack) {
-      run(imp, settings.levels);
-    } else {
-      final ImagePlus newImp = imp.createImagePlus();
-      newImp.setTitle(String.format("%s (c%d,z%d,t%d)", imp.getTitle(), imp.getChannel(),
-          imp.getSlice(), imp.getFrame()));
-      newImp.setProcessor(imp.getProcessor());
-      run(newImp, settings.levels);
+    try {
+      // Run on whole stack
+      if (settings.doStack) {
+        run(imp, settings.levels);
+      } else {
+        final ImagePlus newImp = imp.createImagePlus();
+        newImp.setTitle(String.format("%s (c%d,z%d,t%d)", imp.getTitle(), imp.getChannel(),
+            imp.getSlice(), imp.getFrame()));
+        newImp.setProcessor(imp.getProcessor());
+        run(newImp, settings.levels);
+      }
+    } catch (final ComputationException ex) {
+      IJ.error(TITLE, ex.getMessage());
     }
   }
 
@@ -369,7 +373,7 @@ public class MultiOtsuThreshold_PlugIn implements PlugInFilter {
     // Bracket the histogram to the range that holds data to make it quicker
     int minbin = 0;
     int maxbin = data.length - 1;
-    while (data[minbin] == 0 && minbin < data.length) {
+    while (minbin < data.length && data[minbin] == 0) {
       minbin++;
     }
     while (data[maxbin] == 0 && maxbin > 0) {
