@@ -479,13 +479,14 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
   @SuppressWarnings("resource")
   private static void reportResults(ImageProcessor ip, FloatProcessor floatEdm,
       List<ChainCode> chainCodes, ImageProcessor skeletonMap, ByteProcessor objectIp) {
+    // Optionally show the results table. The threads are always processed to create the
+    // skeleton map.
+    boolean showTable = true;
     if (chainCodes.size() > 1000) {
       final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), TITLE,
           "Do you want to show all " + chainCodes.size() + " results?");
       d.setVisible(true);
-      if (!d.yesPressed()) {
-        return;
-      }
+      showTable = d.yesPressed();
     }
 
     final FloatProcessor floatImage = ip.toFloat(1, null);
@@ -496,7 +497,7 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
 
     BufferedWriter out = createResultsFile();
 
-    final Consumer<String> output = createResultsWindow();
+    final Consumer<String> output = showTable ? createResultsWindow() : null;
     final StringBuilder sb = new StringBuilder();
 
     int id = 1;
@@ -549,7 +550,9 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
         out = saveResult(out, "Object Maxima", objectMaximaDistances);
       }
 
-      addResult(output, sb, id, line, maxima, objectMaxima, imageStats, edmStats);
+      if (output != null) {
+        addResult(output, sb, id, line, maxima, objectMaxima, imageStats, edmStats);
+      }
 
       id++;
     }
