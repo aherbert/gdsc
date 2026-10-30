@@ -222,6 +222,25 @@ public class MaskOverlap_PlugIn implements PlugIn {
       }
       progress.progress(1);
     }
+
+    updateDisplay(stack);
+  }
+
+  /**
+   * Update the display of the relabelled mask. The display range is set to the range of the mask
+   * values in the entire stack.
+   *
+   * @param stack the image stack
+   */
+  private void updateDisplay(ImageStack stack) {
+    int max = 0;
+    for (int i = 1; i <= stack.getSize(); i++) {
+      for (final short value : (short[]) stack.getPixels(i)) {
+        max = Math.max(max, value & 0xffff);
+      }
+    }
+    imp.setDisplayRange(0, max);
+    imp.updateAndDraw();
   }
 
   /**

@@ -92,6 +92,9 @@ Major release of GDSC ImageJ Plugins.
   independent of the ``ImageJ`` ``Black background`` binary option. Previously outlier removal
   filled small gaps in the background, instead of removing small nuclei, when the option was not
   selected. This also applies to the TrackMate ``Nucleus detector``.
+* The :ref:`utility_plugins:Mask Overlap` plugin updates the display of the relabelled mask and
+  sets the display range to the range of the object values. Previously the changes were not
+  shown until the image was redrawn.
 
 
 Version 2.0
