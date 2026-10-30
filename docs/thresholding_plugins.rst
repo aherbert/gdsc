@@ -327,6 +327,83 @@ Skeleton Analyser
 
 Skeletonise (reduce to single pixel lines) a mask image. Then produce a set of lines connecting node points on the skeleton.
 
+The plugin requires a binary 8-bit image (pixels of 0 and 255). The foreground is defined using the ``ImageJ`` ``Black background`` binary option. The skeleton is created using the ``ImageJ`` skeletonise method with extra corner pixels removed so the lines are a single pixel wide.
+
+Each skeleton pixel is classified as a node or edge using the number of lines leaving the pixel:
+
+* Terminus: the end of a line (one line) or an isolated pixel.
+* Edge: a pixel within a line (two lines).
+* Junction: a pixel where lines meet (three or more lines).
+
+The skeleton is divided into lines between nodes. Closed loops are also extracted as lines. The lines are sorted by length, longest first.
+
+.. index:: Skeleton Analyser Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Skeleton Analyser`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Prune junctions
+     - Remove the shortest line from each junction that ends in a terminus, until no junctions remain. This removes short branches from the skeleton.
+
+   * - Min length
+     - The minimum length (in pixels) of a line to report in the table and overlay.
+
+   * - Show node map
+     - Show a colour image of the skeleton: terminus pixels are blue; edge pixels are red; and junction pixels are green.
+
+   * - Show overlay
+     - Label the start of each line on the node map. Only used with ``Show node map``.
+
+   * - Show table
+     - Show a table of the lines.
+
+.. index:: Skeleton Analyser Output
+
+Output
+~~~~~~
+
+The input image is replaced with the skeleton. The change can be reverted using ``Edit > Undo``. For a stack image ``ImageJ`` asks if all the image planes should be processed.
+
+The node map is named using the image title with the suffix ``SkeletonNodeMap``.
+
+The ``Skeleton Analyser Results`` table contains a row for each line with the following information:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - ID
+     - The line ID. The lines are sorted by length, longest first.
+
+   * - StartX, StartY
+     - The start of the line.
+
+   * - EndX, EndY
+     - The end of the line.
+
+   * - Length (px)
+     - The length of the line in pixels. Diagonal steps have a length of :math:`\sqrt{2}`.
+
+   * - Length
+     - The length of the line in calibrated units.
+
+   * - Unit
+     - The calibrated unit.
+
+If there are more than 1000 lines then the plugin asks to confirm the table should be shown.
+
 .. index:: ! Thread Analyser
 
 Thread Analyser
@@ -334,12 +411,191 @@ Thread Analyser
 
 Analyses an image using a given mask. Skeletonises the mask image and extracts a set of lines connecting node points on the skeleton. Output statistics about each of the lines using the original image and the Euclidean Distance Map (EDM) of the mask.
 
+The plugin processes 8-bit or 16-bit images. The mask image is thresholded unless it is already a mask (all non-zero pixels have the same value). The mask is skeletonised and divided into lines (threads) using the same method as the :ref:`thresholding_plugins:Skeleton Analyser`. For each thread the plugin extracts the profile of the image intensity and the EDM along the line and counts the maxima of the image intensity. An optional object image can be used to count objects along each thread.
+
+.. index:: Thread Analyser Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Thread Analyser`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Image
+     - The image used to measure the intensity along the threads.
+
+   * - Mask
+     - The image defining the threads.
+
+   * - Objects
+     - An optional image defining objects on the threads. The image is thresholded unless it is already a mask.
+
+   * - Threshold method
+     - The threshold method used to create the mask and object images.
+
+   * - Result directory
+     - The directory used to save the thread profiles. Leave empty to not save the profiles.
+
+   * - Min length
+     - The minimum length (in pixels) of a thread.
+
+   * - Show skeleton
+     - Show the skeleton node map (see :ref:`thresholding_plugins:Skeleton Analyser`).
+
+   * - Show skeleton map
+     - Show an image of the threads. Each thread has the value of its ID.
+
+   * - Show skeleton image
+     - Show the image intensity on the skeleton pixels. All other pixels are zero.
+
+   * - Show skeleton EDM
+     - Show the Euclidean Distance Map of the mask. The value of each pixel is the distance to the background.
+
+   * - Show object image
+     - Show the object mask.
+
+   * - Label threads
+     - Label the threads on the output images with their ID.
+
+If an image has multiple channels then a second dialog is shown to select the channel of each image.
+
+.. index:: Thread Analyser Results Table
+
+Results Table
+~~~~~~~~~~~~~
+
+The ``Thread Analyser Results`` table contains a row for each thread with the following information:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - ID
+     - The thread ID. The threads are sorted by length, shortest first.
+
+   * - StartX, StartY
+     - The start of the thread.
+
+   * - EndX, EndY
+     - The end of the thread.
+
+   * - Length
+     - The length of the thread in pixels.
+
+   * - Maxima
+     - The number of maxima of the image intensity along the thread.
+
+   * - InnerMaxima
+     - The number of maxima that are not at the ends of the thread.
+
+   * - Objects
+     - The number of objects along the thread.
+
+   * - InnerObjects
+     - The number of objects that are not at the ends of the thread.
+
+   * - Img Min, Img Max, Img Av, Img SD
+     - The minimum, maximum, mean and standard deviation of the image intensity along the thread.
+
+   * - EDM Min, EDM Max, EDM Av, EDM SD
+     - The minimum, maximum, mean and standard deviation of the EDM along the thread. The EDM is a measure of the thread width.
+
+If there are more than 1000 threads then the plugin asks to confirm the table should be shown. The output images and the result file are created even if the table is not shown.
+
+**Result file**
+
+If a ``Result directory`` is specified then the profile of each thread is saved to a comma-separated file named using the image and mask titles, e.g. ``image.tif_mask.tif.threads.csv``. For each thread the file contains the thread line (ID, start, end and length), then the profiles: ``Distance`` along the thread, ``Image Intensity``, ``EDM Intensity``, ``Objects``, and the distances of the ``Image Maxima`` and ``Object Maxima``.
+
+**Output images**
+
+The output images are named using the mask title with the suffix ``EDM``, ``SkeletonNodeMap`` or ``SkeletonMap``, the image title with the suffix ``Threads``, and the object image title with the suffix ``Objects``.
+
 .. index:: ! Foreground Analyser
 
 Foreground Analyser
 -------------------
 
 Threshold pixels inside an ROI and analyse foreground pixels (count; sum; mean; and standard deviation). Optionally the analysis can use the entire stack and the foreground pixels can be shown as a mask.
+
+The plugin processes an 8-bit, 16-bit or 32-bit image. The threshold is computed from the histogram of the pixels inside the ROI (or the entire image). Pixels above the threshold are foreground. The image is not changed.
+
+.. index:: Foreground Analyser Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Foreground Analyser`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Threshold method
+     - The threshold method.
+
+   * - Show mask
+     - Show a mask of the foreground pixels.
+
+   * - Do stack
+     - Analyse all the z-slices of the current channel and frame. If not selected then only the current image plane is analysed. Only shown for an image with multiple z-slices.
+
+   * - Histogram bins
+     - The number of histogram bins used to threshold a 32-bit image. Only shown for a 32-bit image.
+
+.. index:: Foreground Analyser Results Table
+
+Results Table
+~~~~~~~~~~~~~
+
+The ``Foreground Analyser Results`` table contains a row for each analysis with the following information:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title.
+
+   * - C, Z, T
+     - The channel, z-slice and frame. For the entire stack the z-slice is the range, e.g. ``1-10``.
+
+   * - Roi
+     - The bounds of the ROI: ``x,y widthxheight``.
+
+   * - Pixels
+     - The number of pixels analysed.
+
+   * - Threshold
+     - The threshold.
+
+   * - Sum
+     - The sum of the foreground pixels.
+
+   * - N
+     - The number of foreground pixels.
+
+   * - Mean
+     - The mean of the foreground pixels.
+
+   * - SD
+     - The standard deviation of the foreground pixels.
+
+The mask image is named ``Foreground Analyser``. Foreground pixels have the value 255.
 
 .. index:: ! Threshold Outliner
 
