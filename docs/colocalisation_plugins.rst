@@ -1521,6 +1521,61 @@ Create a colocated mask from two source images using the threshold or minimum di
 
 Supports a live preview to allow interactively setting the threshold on the source images with live mask update.
 
+The plugin performs the following steps:
+
+#. Create a mask for each image. A pixel is in the mask if its value is at or above a limit. The limit is the lower threshold of the image (set using ``Image > Adjust > Threshold...``) or the minimum of the display range (set using ``Image > Adjust > Brightness/Contrast...``). When using the threshold, if an image has no threshold then all of its pixels are in the mask.
+#. Combine the two masks. The ``And`` mode includes pixels that are in both masks (the colocated pixels). The ``Or`` mode includes pixels that are in either mask.
+
+For a multi-channel image a different limit can be used for each channel. The minimum display value is read from each channel of the image. The threshold is read from each channel of a composite image; otherwise the threshold of the current channel is used for all channels.
+
+.. index:: Colocated Mask Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Colocated Mask`` plugin uses a non-blocking dialog. This allows the threshold or display range of the images to be adjusted while the dialog is open. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Image 1
+     - The first image.
+
+   * - Image 2
+     - The second image. This must have the same width and height as the first image.
+
+   * - Mask mode
+     - The method used to define the mask of each image:
+
+       * ``Threshold``: Use the lower threshold of the image.
+       * ``Minimum display value``: Use the minimum of the display range of the image.
+
+   * - Colocated mode
+     - The method used to combine the two masks:
+
+       * ``And``: Pixels in both masks.
+       * ``Or``: Pixels in either mask.
+
+   * - Preview
+     - Show the mask while the dialog is open. The mask is updated when the parameters are changed, or when either image is updated, for example by changing the threshold or the display range.
+
+**Input images**
+
+The images can be hyperstacks. Each of the channel, z-slice and frame dimensions must be the same for both images, or be 1 for one of the images. If a dimension is 1 then the single plane of that image is used for all positions in the dimension. Any difference in the dimensions is recorded in the ``ImageJ`` log.
+
+.. index:: Colocated Mask Output
+
+Output
+~~~~~~
+
+The plugin creates an 8-bit mask image named ``Colocated Mask``. Pixels in the mask have a value of 255; all other pixels are zero. If an image with this name is open then it is replaced.
+
+The mask has the largest channel, z-slice and frame dimensions of the two images.
+
 
 .. _colocalisation_batch_processing:
 
