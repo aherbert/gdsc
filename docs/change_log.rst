@@ -132,6 +132,9 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`utility_plugins:Image Scaler` dialog shows the ``Help`` button. The plugin shows an
   error if there is no image or list file, the list file does not exist, or the images have no
   range of values. Previously the plugin stopped without a message.
+* Rename the :ref:`utility_plugins:Spot Analyser` ROI mask option to ``Mask option``. The option
+  used the same ``Threshold_Channel`` macro key as the threshold channel option, preventing the
+  options being set in a macro. Macros must use the key ``mask_option``.
 
 
 Version 2.0

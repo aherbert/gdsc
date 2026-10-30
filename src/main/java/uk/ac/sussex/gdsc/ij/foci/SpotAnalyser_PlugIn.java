@@ -199,7 +199,7 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
     final Roi roi = imp.getRoi();
     if (roi != null && roi.isArea()) {
       containsRoiMask = true;
-      gd.addChoice("Threshold_Channel", maskOptions, maskOptions[settings.maskOption]);
+      gd.addChoice("Mask_option", maskOptions, maskOptions[settings.maskOption]);
 
       // Set up the mask using the ROI
       maskIp = new ByteProcessor(imp.getWidth(), imp.getHeight());
