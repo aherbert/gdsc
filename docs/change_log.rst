@@ -135,6 +135,10 @@ Major release of GDSC ImageJ Plugins.
 * Rename the :ref:`utility_plugins:Spot Analyser` ROI mask option to ``Mask option``. The option
   used the same ``Threshold_Channel`` macro key as the threshold channel option, preventing the
   options being set in a macro. Macros must use the key ``mask_option``.
+* Fix the :ref:`utility_plugins:Spot Separation` line profile of a single spot. The check that
+  the spot centre of mass is within the spot used the X coordinate for both X and Y.
+* The :ref:`utility_plugins:Spot Separation` results report the ``Peak ID`` of a pair using the
+  first spot. Previously the second spot was used.
 
 
 Version 2.0

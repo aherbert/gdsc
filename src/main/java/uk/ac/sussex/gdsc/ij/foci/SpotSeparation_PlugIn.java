@@ -215,7 +215,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
         // Draw line profile through the centre calculated from the moments. This will fail if
         // the object has a hollow centre (e.g. a horseshoe) so check if it is in the mask.
 
-        if (!isInPeak(spotIp, com[0], com[0], peakId)) {
+        if (!isInPeak(spotIp, com[0], com[1], peakId)) {
           com[0] = points[i].x;
           com[1] = points[i].y;
         }
@@ -321,7 +321,8 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
         yvalues = profileValues[1];
 
         final float offset = sortValues(xvalues, yvalues);
-        addPairResult(resultsWindow, peakId, xvalues, yvalues, distance, offset);
+        // Report the pair using the first spot
+        addPairResult(resultsWindow, points[i].id, xvalues, yvalues, distance, offset);
       }
 
       showLineProfile(xvalues, yvalues, profileTitle);
