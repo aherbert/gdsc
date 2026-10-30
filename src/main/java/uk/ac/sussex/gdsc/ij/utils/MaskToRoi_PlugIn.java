@@ -158,13 +158,15 @@ public class MaskToRoi_PlugIn implements PlugInFilter {
             // 1-based stack index
             // See ImagePlus.getStackIndex(c, z, t);
             final int i = (t - 1) * nc * nz + (z - 1) * nc + c;
-            traceObjects(stack.getProcessor(i), createAction(c, z, t, i));
+            traceObjects(stack.getProcessor(i), settings.eightConnected,
+                createAction(c, z, t, i));
           }
         }
       }
       progress.progress(1);
     } else {
-      traceObjects(ip, createAction(imp.getC(), imp.getZ(), imp.getT(), imp.getCurrentSlice()));
+      traceObjects(ip, settings.eightConnected,
+          createAction(imp.getC(), imp.getZ(), imp.getT(), imp.getCurrentSlice()));
     }
   }
 
@@ -186,33 +188,63 @@ public class MaskToRoi_PlugIn implements PlugInFilter {
     return action.andThen(RoiManager.getInstance()::addRoi);
   }
 
-  private void traceObjects(ImageProcessor ip, Consumer<Roi> action) {
-    final BitSet processed = new BitSet();
+  /**
+   * Trace each object in the mask. An object is a connected region of pixels with the same
+   * non-zero value. Each object is traced once using its first pixel in scan order.
+   *
+   * @param ip the mask
+   * @param eightConnected Set to true to use 8-connected pixels; otherwise 4-connected
+   * @param action the action to perform on each traced object
+   */
+  static void traceObjects(ImageProcessor ip, boolean eightConnected, Consumer<Roi> action) {
+    final int width = ip.getWidth();
+    final int height = ip.getHeight();
+    final int size = ip.getPixelCount();
+    // Pixels that are part of a traced object
+    final BitSet traced = new BitSet(size);
+    // Work queue for the flood fill
+    final int[] queue = new int[size];
 
     final Wand wand = new Wand(ip);
-    final int mode = settings.eightConnected ? Wand.EIGHT_CONNECTED : Wand.FOUR_CONNECTED;
+    final int mode = eightConnected ? Wand.EIGHT_CONNECTED : Wand.FOUR_CONNECTED;
 
-    int index = 0;
-    final int size = ip.getPixelCount();
-    while (index < size) {
-      // Scan for next object
-      while (index < size && ip.get(index) == 0) {
-        index++;
-      }
-      if (index == size) {
-        break;
-      }
+    for (int index = 0; index < size; index++) {
       final int value = ip.get(index);
-      if (!processed.get(value)) {
-        processed.set(value);
-        wand.autoOutline(index % ip.getWidth(), index / ip.getWidth(), 0.0, mode);
-        action.accept(new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.TRACED_ROI));
+      if (value == 0 || traced.get(index)) {
+        continue;
       }
-      // Skip this processed object
-      index++;
-      while (index < size && ip.get(index) == value) {
-        index++;
+      // Mark the connected pixels with the same value as traced
+      traced.set(index);
+      queue[0] = index;
+      int head = 0;
+      int tail = 1;
+      while (head < tail) {
+        final int current = queue[head++];
+        final int x = current % width;
+        final int y = current / width;
+        for (int dy = -1; dy <= 1; dy++) {
+          final int yy = y + dy;
+          if (yy < 0 || yy >= height) {
+            continue;
+          }
+          for (int dx = -1; dx <= 1; dx++) {
+            final int xx = x + dx;
+            // Skip the centre, out-of-bounds and (if 4-connected) diagonal pixels
+            if ((dx == 0 && dy == 0) || xx < 0 || xx >= width
+                || (!eightConnected && dx != 0 && dy != 0)) {
+              continue;
+            }
+            final int next = yy * width + xx;
+            if (!traced.get(next) && ip.get(next) == value) {
+              traced.set(next);
+              queue[tail++] = next;
+            }
+          }
+        }
       }
+      // The first pixel in scan order is on the outline of the object
+      wand.autoOutline(index % width, index / width, 0.0, mode);
+      action.accept(new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.TRACED_ROI));
     }
   }
 }

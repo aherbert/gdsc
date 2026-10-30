@@ -97,6 +97,9 @@ Major release of GDSC ImageJ Plugins.
   shown until the image was redrawn.
 * The :ref:`utility_plugins:Mask Overlap` plugin only matches objects that overlap. Previously
   an ``IoU threshold`` of zero could match objects with no overlap.
+* The :ref:`utility_plugins:Mask to ROI` plugin traces every object with the same value, for
+  example all the objects in a binary mask. Previously only the first object with each value was
+  traced.
 
 
 Version 2.0
