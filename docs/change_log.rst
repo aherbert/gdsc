@@ -129,6 +129,9 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`utility_plugins:HSB Filter` plugin measures the hue difference around the colour
   circle when the hue range extends below zero. Previously the hue was only wrapped when the
   range extended above one.
+* The :ref:`utility_plugins:Image Scaler` dialog shows the ``Help`` button. The plugin shows an
+  error if there is no image or list file, the list file does not exist, or the images have no
+  range of values. Previously the plugin stopped without a message.
 
 
 Version 2.0

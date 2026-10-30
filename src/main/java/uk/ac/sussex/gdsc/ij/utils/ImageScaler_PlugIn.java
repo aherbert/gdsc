@@ -70,8 +70,8 @@ public class ImageScaler_PlugIn implements PlugInFilter {
     gd.addNumericField("Max", maxValue, 2);
     gd.addMessage("List file containing full image path, one image per line.");
     gd.addStringField("List file", listFile);
-    gd.showDialog();
     gd.addHelp(HelpUrls.getUrl("image-scaler"));
+    gd.showDialog();
 
     if (gd.wasCanceled()) {
       return false;
@@ -88,6 +88,7 @@ public class ImageScaler_PlugIn implements PlugInFilter {
   public void run(ImageProcessor inputProcessor) {
     final boolean listExists = (listFile != null && !listFile.equals(""));
     if (imp == null && !listExists) {
+      IJ.error(TITLE, "No image or list file");
       return;
     }
 
@@ -111,6 +112,7 @@ public class ImageScaler_PlugIn implements PlugInFilter {
     }
 
     if (!new File(listFile).exists()) {
+      IJ.error(TITLE, "List file does not exist: " + listFile);
       return;
     }
 
@@ -134,6 +136,7 @@ public class ImageScaler_PlugIn implements PlugInFilter {
     }
 
     if (limits[1] <= limits[0]) {
+      IJ.error(TITLE, "The image(s) have no range of values");
       return;
     }
 
@@ -172,6 +175,7 @@ public class ImageScaler_PlugIn implements PlugInFilter {
     }
 
     if (limits[1] <= limits[0]) {
+      IJ.error(TITLE, "The image(s) have no range of values");
       return;
     }
 
