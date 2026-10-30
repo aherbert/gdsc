@@ -291,6 +291,11 @@ public class ThresholdOutliner_PlugIn implements ExtendedPlugInFilter, DialogLis
     final boolean doesStacks = ((flags2 & DOES_STACKS) != 0);
 
     final ImagePlus maskImp = WindowManager.getImage(settings.maskImage);
+    if (maskImp == null) {
+      imp.setOverlay(null);
+      IJ.error(TITLE, "The mask image has been closed: " + settings.maskImage);
+      return;
+    }
     final int channel = imp.getChannel();
     final int frame = imp.getFrame();
 
@@ -339,6 +344,11 @@ public class ThresholdOutliner_PlugIn implements ExtendedPlugInFilter, DialogLis
     // This only runs when in the preview.
     // Identify objects in the image mask
     final ImagePlus maskImp = WindowManager.getImage(settings.maskImage);
+    if (maskImp == null) {
+      // The mask image has been closed
+      imp.setOverlay(null);
+      return;
+    }
     final int[][] objects =
         identifyObjects(maskImp, imp.getChannel(), imp.getSlice(), imp.getFrame());
 
