@@ -160,32 +160,82 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     }
 
     // Try to determine the common prefix to the slice labels
-    final String master = stack.getSliceLabel(1);
-    // Find the first index where the labels are different
-    int index = 0;
-    while (index < master.length()) {
-      final char ch = master.charAt(index);
-      if (!commonSliceLabelCharacter(stack, index, ch)) {
-        break;
+    final String[] labels = new String[stack.getSize()];
+    for (int i = 0; i < labels.length; i++) {
+      labels[i] = stack.getSliceLabel(i + 1);
+      if (labels[i] == null) {
+        IJ.error(TITLE, "Missing slice label: " + (i + 1));
+        return DONE;
       }
-      index++;
     }
-    if (index == master.length()) {
-      IJ.error(TITLE, "Unable to determine common prefix within slice labels");
+    if (Arrays.stream(labels).allMatch(labels[0]::equals)) {
+      IJ.error(TITLE, "Unable to determine exposures: slice labels are identical");
       return DONE;
     }
-    commonIndex = index;
+    commonIndex = getCommonPrefixLength(labels);
 
     return FLAGS;
   }
 
-  private static boolean commonSliceLabelCharacter(ImageStack stack, int index, char ch) {
-    for (int i = 2; i <= stack.getSize(); i++) {
-      if (ch != stack.getSliceLabel(i).charAt(index)) {
-        return false;
+  /**
+   * Gets the length of the common prefix of the labels. The prefix does not end within a number,
+   * e.g. the labels {@code exp_100ms} and {@code exp_150ms} have the common prefix {@code exp_}.
+   *
+   * @param labels the labels
+   * @return the length
+   */
+  static int getCommonPrefixLength(String[] labels) {
+    final String master = labels[0];
+    int length = master.length();
+    for (int i = 1; i < labels.length; i++) {
+      final String label = labels[i];
+      final int max = Math.min(length, label.length());
+      int index = 0;
+      while (index < max && master.charAt(index) == label.charAt(index)) {
+        index++;
       }
+      length = index;
     }
-    return true;
+    // Do not split a number: move back to the start of a number at the end of the prefix
+    while (length > 0 && isNumberCharacter(master.charAt(length - 1))) {
+      length--;
+    }
+    return length;
+  }
+
+  /**
+   * Checks if the character is part of a decimal number.
+   *
+   * @param ch the character
+   * @return true if a digit or decimal point
+   */
+  private static boolean isNumberCharacter(char ch) {
+    return ch == '.' || Character.isDigit(ch);
+  }
+
+  /**
+   * Gets the exposure from the label. This is the first number in the label after the start index.
+   *
+   * @param label the label
+   * @param startIndex the start index
+   * @return the exposure
+   * @throws NumberFormatException if no number is found
+   */
+  static float getExposure(String label, int startIndex) {
+    // Find the first digit
+    int start = startIndex;
+    while (start < label.length() && !Character.isDigit(label.charAt(start))) {
+      start++;
+    }
+    if (start == label.length()) {
+      throw new NumberFormatException("No exposure in label: " + label);
+    }
+    // Move along until no more characters that could be a float value are found
+    int end = start + 1;
+    while (end < label.length() && isFloatCharacter(label.charAt(end))) {
+      end++;
+    }
+    return Float.parseFloat(label.substring(start, end));
   }
 
   /** {@inheritDoc} */
@@ -225,25 +275,8 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     exposures = new float[stack.getSize()];
     for (int i = 1; i <= stack.getSize(); i++) {
       final String label = stack.getSliceLabel(i);
-      // Find the first digit
-      int startIndex = commonIndex;
-      while (startIndex < label.length()) {
-        if (Character.isDigit(label.charAt(startIndex))) {
-          break;
-        }
-        startIndex++;
-      }
-      if (startIndex == label.length()) {
-        IJ.error(TITLE, "Unable to determine exposure for slice label: " + label);
-        return DONE;
-      }
-      // Move along until no more characters that could be a float value are found
-      int endIndex = startIndex + 1;
-      while (endIndex < label.length() && isFloatCharacter(label.charAt(endIndex))) {
-        endIndex++;
-      }
       try {
-        exposures[i - 1] = Float.parseFloat(label.substring(startIndex, endIndex));
+        exposures[i - 1] = getExposure(label, commonIndex);
       } catch (final NumberFormatException ex) {
         IJ.error(TITLE, "Unable to determine exposure for slice label: " + label);
         return DONE;

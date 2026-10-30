@@ -142,6 +142,9 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`utility_plugins:Intensity Analysis` results report the ``Start`` and ``End`` of the
   best fit window as slice numbers. Previously the position in the list of unsaturated slices was
   reported.
+* Fix the :ref:`utility_plugins:Intensity Analysis` exposures read from slice labels where the
+  exposures start with the same digits, e.g. ``img_100ms`` and ``img_150ms``. Previously the
+  common digits were removed from the exposures. Slice labels of different lengths are supported.
 
 
 Version 2.0
