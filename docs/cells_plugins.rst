@@ -86,7 +86,7 @@ Hold the ``Shift`` key when running the plugin to show the ``Debug`` option. Thi
 
 **Stacks**
 
-If the image has multiple z-slices or frames then a second dialog is shown after the parameters are set. The ``All frames`` and ``All slices`` options select to process all the frames and/or z-slices of the current channel; otherwise only the current frame and z-slice are processed. The same point ROI is used for every image plane.
+If the image has multiple z-slices or frames then a second dialog is shown after the parameters are set. Select ``Yes`` to process the selected dimensions: the ``All frames`` and ``All slices`` options select to process all the frames and/or z-slices of the current channel; otherwise only the current frame and z-slice are processed. Select ``No`` to process only the current frame and z-slice. The same point ROI is used for every image plane.
 
 .. index:: Cell Outliner Output
 

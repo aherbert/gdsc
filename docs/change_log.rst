@@ -85,6 +85,9 @@ Major release of GDSC ImageJ Plugins.
   preferences. Previously the option was reset when ``ImageJ`` was restarted.
 * The :ref:`cells_plugins:Nuclei Outline` dialog describes the analysis of all frames of the
   current channel and z-slice. Previously the dialog stated the nuclei were tracked across frames.
+* The :ref:`cells_plugins:Cell Outliner` stack dialog ``No`` button processes only the current
+  frame and z-slice. Previously the button processed the selected dimensions, the same as the
+  ``Yes`` button.
 
 
 Version 2.0

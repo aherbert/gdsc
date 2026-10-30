@@ -323,11 +323,14 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
       if (gd.wasCanceled()) {
         return false;
       }
+      // Yes: process the selected dimensions; No: process only the current plane.
+      // Note: A macro is always OKed and uses the selected dimensions.
+      final boolean yes = gd.wasOKed();
       if (imp.getNFrames() > 1) {
-        processAllFrames = gd.getNextBoolean();
+        processAllFrames = gd.getNextBoolean() && yes;
       }
       if (imp.getNSlices() > 1) {
-        processAllSlices = gd.getNextBoolean();
+        processAllSlices = gd.getNextBoolean() && yes;
       }
     }
     return true;
