@@ -593,7 +593,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     }
 
     if (settings.maxShift == MathUtils.max(maxx, maxy, -miny, -minx)) {
-      ImageJUtils.log("Maximum shift limit reached: %d,%d to %d,%d", minx, miny, maxx, maxy);
+      ImageJUtils.log("Maximum shift limit reached: %s,%s to %s,%s", MathUtils.rounded(minx),
+          MathUtils.rounded(miny), MathUtils.rounded(maxx), MathUtils.rounded(maxy));
     }
 
     // Create an ROI for the intersect of all shifted frames (i.e. exclude black border).

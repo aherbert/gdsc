@@ -153,6 +153,8 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`utility_plugins:FRAP Analysis` plugin records the bleaching score of a pixel if it is
   above a quarter of the ``Score threshold`` (minimum 1). Previously the scores were recorded
   above a fixed threshold of 1. This can change the detected bleached regions.
+* Fix the :ref:`utility_plugins:FRAP Analysis` plugin failing when the alignment reaches the
+  ``Max shift`` limit. The log message used an invalid number format.
 
 
 Version 2.0
