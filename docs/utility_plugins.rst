@@ -394,6 +394,54 @@ Installs a tool into the ``ImageJ`` toolbar that allows Hue-Saturation-Brightnes
 
 Provides the ability to call the ``HSB Filter``. The filter values are set using the averages and the widths using the scaled standard deviations (e.g. av +/- scale * std.dev.).
 
+The plugin opens the ``HSB Picker`` window and selects the ``HSB Picker Tool`` in the ``ImageJ`` toolbar. Each click on an RGB image with the tool adds the pixels around the clicked position to the sample. Clicks on other image types are ignored. Hue, saturation and brightness are each in the range 0 to 1.
+
+.. index:: HSB Picker Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``HSB Picker`` window has the following controls:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Control
+     - Description
+
+   * - Sample radius
+     - The radius (in pixels) of the circle around the clicked position used to sample pixels. Use zero to sample only the clicked pixel.
+
+   * - Pixels
+     - The number of sampled pixels.
+
+   * - Hue
+     - The mean and standard deviation of the hue of the sampled pixels.
+
+   * - Saturation
+     - The mean and standard deviation of the saturation of the sampled pixels.
+
+   * - Brightness
+     - The mean and standard deviation of the brightness of the sampled pixels.
+
+   * - Reset
+     - Clear the sampled pixels.
+
+   * - Filter scale
+     - The factor used to convert the standard deviation to the width of the filter.
+
+   * - HSB Filter
+     - Run the :ref:`utility_plugins:HSB Filter` plugin on the current image. Each filter value is set to the mean of the sampled pixels and the width to the standard deviation multiplied by the ``Filter scale``. At least 2 pixels must be sampled.
+
+   * - Close
+     - Close the window.
+
+   * - Help
+     - Show this documentation.
+
+The position of the window is saved when it is closed. If the window is open then running the plugin brings it to the front.
+
 .. index:: ! HSB Filter
 
 HSB Filter
@@ -402,6 +450,50 @@ HSB Filter
 Provides the ability to filter pixels in an RGB image using Hue-Saturation-Brightness (HSB) values. All pixels not within the specified width of the given values are set to zero.
 
 Note that hue is a continuous property where values are wrapped around from 1 to 0.
+
+Each pixel is converted to HSB values in the range 0 to 1. A pixel is kept if its hue, saturation and brightness are each within the width of the configured value, i.e. in the range ``value - width`` to ``value + width``. The hue difference is measured around the colour circle, for example a hue of 0.98 is 0.07 from a hue of 0.05. All other pixels are set to black. The values can be set using the :ref:`utility_plugins:HSB Picker`.
+
+.. index:: HSB Filter Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``HSB Filter`` plugin uses a standard ``ImageJ`` dialog. The plugin processes the current image which must be an RGB image. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Hue
+     - The hue of the pixels to keep.
+
+   * - Hue width
+     - The allowed difference from the hue.
+
+   * - Saturation
+     - The saturation of the pixels to keep.
+
+   * - Saturation width
+     - The allowed difference from the saturation.
+
+   * - Brightness
+     - The brightness of the pixels to keep.
+
+   * - Brightness width
+     - The allowed difference from the brightness.
+
+   * - Preview
+     - Show the filtered image. The preview is updated when the parameters are changed.
+
+.. index:: HSB Filter Output
+
+Output
+~~~~~~
+
+The filtered image replaces the pixels of the input image. The change can be reverted using ``Edit > Undo``. Only the current image plane is processed.
 
 .. index:: ! Spot Separation
 
