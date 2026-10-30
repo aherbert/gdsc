@@ -206,23 +206,17 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /** {@inheritDoc} */
   @Override
   public void run(ImageProcessor inputProcessor) {
-    final float minH = settings.hue - settings.hueWidth;
-    final float maxH = settings.hue + settings.hueWidth;
+    final float hue = settings.hue;
+    final float hueWidth = settings.hueWidth;
     final float minS = settings.saturation - settings.saturationWidth;
     final float maxS = settings.saturation + settings.saturationWidth;
     final float minB = settings.brightness - settings.brightnessWidth;
     final float maxB = settings.brightness + settings.brightnessWidth;
     for (int i = 0; i < saturations.length; i++) {
-      float hh = hues[i];
       final float ss = saturations[i];
       final float bb = brightnesses[i];
-
-      // Hue wraps around from 0 to 1 so if below the limit check it is above the limit
-      // after wrapping
-      if (hh < minH) {
-        hh += 1;
-      }
-      if ((hh > maxH) || (ss < minS || ss > maxS) || (bb < minB || bb > maxB)) {
+      if (hueDistance(hues[i], hue) > hueWidth || (ss < minS || ss > maxS)
+          || (bb < minB || bb > maxB)) {
         inputProcessor.set(i, 0);
       }
     }
@@ -238,6 +232,21 @@ public class HsbFilter_PlugIn implements ExtendedPlugInFilter, DialogListener {
    * @param brightness the brightness
    * @param brightnessWidth the brightness width
    */
+  /**
+   * Compute the distance between two hues. Hue is a circular property in the range [0, 1) where
+   * values wrap around from 1 to 0. The distance is the shortest distance around the circle in
+   * the range [0, 0.5].
+   *
+   * @param hue1 the first hue
+   * @param hue2 the second hue
+   * @return the distance
+   */
+  static float hueDistance(float hue1, float hue2) {
+    // Map the difference to [0, 1)
+    final float d = Math.abs(hue1 - hue2) % 1f;
+    return Math.min(d, 1 - d);
+  }
+
   static void saveSettings(float hue, float hueWidth, float saturation, float saturationWidth,
       float brightness, float brightnessWidth) {
     final Settings newSettings = new Settings();

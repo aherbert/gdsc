@@ -126,6 +126,9 @@ Major release of GDSC ImageJ Plugins.
   reported as an error.
 * Fix the :ref:`utility_plugins:HSB Picker` failing when the image is clicked with the HSB
   Picker tool. The ``Sample radius`` slider was not initialised.
+* The :ref:`utility_plugins:HSB Filter` plugin measures the hue difference around the colour
+  circle when the hue range extends below zero. Previously the hue was only wrapped when the
+  range extended above one.
 
 
 Version 2.0
