@@ -213,6 +213,63 @@ Create an edge mask from an image. The mask can be created using pixels above a 
 
 Requires the ``Image Science`` library (see :ref:`installation:Installation` instructions).
 
+The plugin processes an 8-bit, 16-bit or 32-bit image. The dialog shows the ``Otsu`` threshold of the image as a guide for the background level. If the image has an area ROI then the mask is cleared outside the ROI.
+
+.. index:: Edge Mask Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Edge Mask`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Method
+     - The method used to create the mask:
+
+       * ``Above background``: Pixels at or above the background level.
+       * ``Laplacian edges``: The zero-crossings of the Laplacian of the image.
+       * ``Gradient edges``: Pixels with a high gradient magnitude.
+       * ``Maximum gradient edges``: Pixels with a high gradient magnitude that are the maximum across the edge (non-maximum suppression). This creates thin edges.
+
+   * - Background
+     - The background level. Pixels in the smoothed image below the background are excluded from the mask.
+
+   * - Smooth
+     - The standard deviation of the Gaussian blur applied to the image before comparison to the background. This is also the scale used to compute the Laplacian and gradient; a value of zero uses a scale of 1.
+
+   * - Lower percentile
+     - The lower percentile of the gradient magnitude used to select gradient edges.
+
+   * - Upper percentile
+     - The upper percentile of the gradient magnitude used to select gradient edges.
+
+       If both percentiles are above zero then edges are selected using hysteresis thresholding: pixels above the upper limit, and connected pixels above the lower limit. If only one percentile is above zero then pixels above that limit are selected.
+
+   * - Prune
+     - For edge methods, remove lines that are not part of a closed loop, and isolated points.
+
+   * - Fill
+     - For ``Laplacian edges``, fill closed loops on the inside of the edge (the negative side of the Laplacian) to create a mask.
+
+   * - Replace image
+     - Replace the input image with the mask. If not selected then a new image is created.
+
+   * - Preview
+     - Show the mask on the image. The preview is updated when the parameters are changed.
+
+.. index:: Edge Mask Output
+
+Output
+~~~~~~
+
+The mask is an 8-bit image with mask pixels set to 255. If ``Replace image`` is not selected then the mask is shown as a new image named using the image title with the suffix ``Edge Mask``. For a stack image ``ImageJ`` asks if all the image planes should be processed.
+
 .. index:: ! Apply Mask
 
 Apply Mask
@@ -290,3 +347,69 @@ Threshold Outliner
 ------------------
 
 Outlines objects defined in a mask image. The pixels of each object are thresholded using an auto-threshold method or a manual percentile. Optionally outliers are removed using local outlier probability (LoOP). The remaining pixels are outlined using a convex or concave hull. Creates an ROI overlay of the outlines and a new mask image.
+
+The plugin processes the current channel and frame of an 8-bit or 16-bit image. The objects are defined in a mask image: each object is a connected region of non-zero pixels with the same value. For each object the plugin:
+
+#. Thresholds the image pixels inside the object using the histogram of the object pixels. Pixels above the threshold are kept.
+#. Optionally removes outlier pixels using local outlier probability (LoOP). The LoOP score of a pixel is the probability that it is an outlier from its nearest neighbour pixels.
+#. Creates a polygon outline around the kept pixels using a hull.
+
+.. index:: Threshold Outliner Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Threshold Outliner`` plugin uses a non-blocking dialog. This allows the current z-slice of the image to be changed during the preview. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Mask image
+     - The image defining the objects. Only 8-bit or 16-bit images with the same width and height as the image, and a single z-slice or the same number of z-slices, are listed.
+
+   * - Threshold method
+     - The threshold method applied to the pixels of each object. ``Manual percentile`` uses the ``Percentile`` parameter.
+
+   * - Percentile
+     - The fraction (0 to 1) of the object pixels below the threshold for the ``Manual percentile`` method. For example 0.9 keeps the brightest 10% of the pixels.
+
+   * - Outlier neighbours
+     - The number of nearest neighbours used to compute the local outlier probability.
+
+   * - Outlier threshold
+     - The local outlier probability above which a pixel is removed. Use 1 to disable outlier removal.
+
+   * - Hull method
+     - The method used to outline the pixels:
+
+       * ``Convex``: The convex hull.
+       * ``Digging concave``: A concave hull created by digging into the convex hull. A smaller ``Digging threshold`` creates a more concave outline.
+       * ``Knn concave``: A concave hull created using the ``K neighbours`` nearest neighbours. A smaller number creates a more concave outline.
+
+   * - Digging threshold
+     - The threshold for the ``Digging concave`` hull.
+
+   * - K neighbours
+     - The number of nearest neighbours for the ``Knn concave`` hull.
+
+   * - Colour
+     - The colour of the outlines and the preview pixels.
+
+   * - Opacity
+     - The opacity of the coloured pixels shown in the preview.
+
+   * - Preview
+     - Show the pixels above the threshold (coloured) and the outlines on the image. The preview is updated when the parameters or the z-slice are changed.
+
+.. index:: Threshold Outliner Output
+
+Output
+~~~~~~
+
+The outlines are added to the image as an overlay. Any existing overlay is replaced. For a stack ``ImageJ`` asks if all the z-slices of the current channel and frame should be processed.
+
+A mask image is created named using the image title with the suffix ``Mask``. Each outline is filled with the value 255. The mask has a slice for each processed z-slice.
