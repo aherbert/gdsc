@@ -382,7 +382,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     if (ffit == null) {
       return;
     }
-    ImageJUtils.log("Foregound decay: f(t) = %s + %s * exp(-%s t); Half-life = %s",
+    ImageJUtils.log("Foreground decay: f(t) = %s + %s * exp(-%s t); Half-life = %s",
         MathUtils.rounded(ffit[0]), MathUtils.rounded(ffit[1]), MathUtils.rounded(ffit[2]),
         MathUtils.rounded(LN2 / ffit[2]));
 
@@ -610,7 +610,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Creates the mask from the foreground pixels of the average intensity projection.
+   * Creates the mask from the foreground pixels of the maximum intensity projection.
    *
    * @param stack the stack
    * @return the mask
@@ -618,7 +618,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
   private static ByteProcessor createMask(ImageStack stack) {
     IJ.showStatus("!Creating mask...");
 
-    // Align to the average intensity projection
+    // Threshold the maximum intensity projection
     final ZProjector projector = new ZProjector(new ImagePlus(null, stack));
     projector.setMethod(ZProjector.MAX_METHOD);
     projector.doProjection();
@@ -1370,7 +1370,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    * @param interval the time interval
    * @return {y0, B, koff}
    */
-  private static double[] fitBleaching(float[] y, double interval) {
+  @VisibleForTesting
+  static double[] fitBleaching(float[] y, double interval) {
     // Initial estimates
     final float[] limits = MathUtils.limits(y);
     final double y0 = limits[0];
@@ -1382,9 +1383,11 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     }
     // half-life (median of an exponential) = ln(2) / koff
     // koff = ln(2) / half-life
-    final double koff = LN2 / t;
+    // Note: The model uses time t = frame * interval
+    final double halfLife = t * interval;
+    final double koff = LN2 / halfLife;
     // Solve for B
-    final double b = (half - y0) / Math.exp(-koff * t);
+    final double b = (half - y0) / Math.exp(-koff * halfLife);
 
     final LevenbergMarquardtOptimizer optimizer = new LevenbergMarquardtOptimizer();
     final RealVector observed = new ArrayRealVector(SimpleArrayUtils.toDouble(y), false);
@@ -1415,7 +1418,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       final RealVector fit1 = lvmSolution1.getPoint();
       return fit1.toArray();
     } catch (TooManyIterationsException | ConvergenceException ex) {
-      ImageJUtils.log("Failed to fit bleaching curve: ", ex.getMessage());
+      ImageJUtils.log("Failed to fit bleaching curve: %s", ex.getMessage());
       return null;
     }
   }
@@ -1475,7 +1478,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     }
     // half-life (median of an exponential) = ln(2) / koff
     // koff = ln(2) / half-life
-    double koff = LN2 / (t - bleachingEvent);
+    // Note: The model uses time t = frame * interval
+    double koff = LN2 / ((t - bleachingEvent) * timeScale);
 
     // Extract curve to fit
     final double[] yy = new double[y.length - bleachingEvent];
@@ -1519,7 +1523,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
           region, MathUtils.rounded(getResidualSumOfSquares(best1)), MathUtils.rounded(fit[0]),
           MathUtils.rounded(fit[1]), MathUtils.rounded(fit[2]), MathUtils.rounded(LN2 / fit[2]));
     } catch (TooManyIterationsException | ConvergenceException ex) {
-      ImageJUtils.log("Failed to fit reaction limited recovery curve: ", ex.getMessage());
+      ImageJUtils.log("Failed to fit reaction limited recovery curve: %s", ex.getMessage());
     }
 
     if (best1 != null && nested) {
@@ -1571,7 +1575,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
           best1 = lvmSolution;
         }
       } catch (TooManyIterationsException | ConvergenceException ex) {
-        ImageJUtils.log("Failed to fit reaction limited recovery curve with decay: ",
+        ImageJUtils.log("Failed to fit reaction limited recovery curve with decay: %s",
             ex.getMessage());
       }
     }
@@ -1603,7 +1607,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
           region, MathUtils.rounded(getResidualSumOfSquares(best2)), MathUtils.rounded(fit[0]),
           MathUtils.rounded(fit[1]), dT, dT, dT, MathUtils.round(w2 / (4 * timeScale * fit[2])));
     } catch (TooManyIterationsException | ConvergenceException ex) {
-      ImageJUtils.log("Failed to fit diffusion limited recovery curve: ", ex.getMessage());
+      ImageJUtils.log("Failed to fit diffusion limited recovery curve: %s", ex.getMessage());
     }
 
     if (best2 != null && nested) {
@@ -1657,7 +1661,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
           best2 = lvmSolution;
         }
       } catch (TooManyIterationsException | ConvergenceException ex) {
-        ImageJUtils.log("Failed to fit diffusion limited recovery curve with decay: ",
+        ImageJUtils.log("Failed to fit diffusion limited recovery curve with decay: %s",
             ex.getMessage());
       }
     }

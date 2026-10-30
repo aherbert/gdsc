@@ -419,4 +419,22 @@ class FrapAnalysisPluginTest {
         FrapAnalysis_PlugIn.extractBackground(imp, n, new double[][] {dx, dy});
     Assertions.assertArrayEquals(new float[] {3, 3, 3}, background, 1e-6f);
   }
+
+  @Test
+  void canFitBleachingWithFrameInterval() {
+    // f(t) = y0 + B exp(-koff * t) with time t = frame * interval
+    final double y0 = 10;
+    final double b = 50;
+    final double koff = 0.5;
+    final double interval = 0.1;
+    final float[] y = new float[100];
+    for (int i = 0; i < y.length; i++) {
+      y[i] = (float) (y0 + b * Math.exp(-koff * i * interval));
+    }
+    final double[] fit = FrapAnalysis_PlugIn.fitBleaching(y, interval);
+    Assertions.assertNotNull(fit);
+    Assertions.assertEquals(y0, fit[0], 1e-3);
+    Assertions.assertEquals(b, fit[1], 1e-3);
+    Assertions.assertEquals(koff, fit[2], 1e-4);
+  }
 }

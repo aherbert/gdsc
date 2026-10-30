@@ -148,6 +148,8 @@ Major release of GDSC ImageJ Plugins.
 * Fix the :ref:`utility_plugins:FRAP Analysis` background intensity. The background block was
   positioned using the X offset for the Y coordinate, and the mean used only the first column of
   the block.
+* The :ref:`utility_plugins:FRAP Analysis` plugin logs the reason a curve fit failed. The initial
+  estimates for the bleaching and recovery rates use the calibrated time of the frames.
 
 
 Version 2.0
