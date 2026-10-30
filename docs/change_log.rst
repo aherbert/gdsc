@@ -119,6 +119,11 @@ Major release of GDSC ImageJ Plugins.
   :ref:`utility_plugins:Align Stacks` plugins report that a greyscale image (8-bit, 16-bit or
   32-bit) is required if no suitable image is open. Previously the message stated only 8-bit and
   16-bit images were supported.
+* The :ref:`utility_plugins:Align Images FFT` and :ref:`utility_plugins:Align Stacks`
+  ``Restrict translation`` option includes the maximum X and Y translation in the search.
+  Previously the maximum translation was excluded, and a range with equal minimum and maximum
+  did not search any translation. A maximum translation below the minimum translation is
+  reported as an error.
 
 
 Version 2.0

@@ -103,6 +103,10 @@ public class AlignStacks_PlugIn implements PlugIn {
 
     Rectangle bounds = null;
     if (restrictTranslation) {
+      if (!AlignImagesFft_PlugIn.isValidTranslation(TITLE, minXShift, maxXShift, minYShift,
+          maxYShift)) {
+        return;
+      }
       bounds = createBounds(minXShift, maxXShift, minYShift, maxYShift);
     }
 
@@ -333,18 +337,17 @@ public class AlignStacks_PlugIn implements PlugIn {
   }
 
   /**
-   * Creates the bounds for the shift.
+   * Creates the bounds for the shift. The bounds include the min and max shift.
    *
    * @param minXShift the min X shift
    * @param maxXShift the max X shift
    * @param minYShift the min Y shift
    * @param maxYShift the max Y shift
    * @return the rectangle
+   * @see AlignImagesFft_PlugIn#createBounds(int, int, int, int)
    */
   public static Rectangle createBounds(int minXShift, int maxXShift, int minYShift, int maxYShift) {
-    final int w = maxXShift - minXShift;
-    final int h = maxYShift - minYShift;
-    return new Rectangle(minXShift, minYShift, w, h);
+    return AlignImagesFft_PlugIn.createBounds(minXShift, maxXShift, minYShift, maxYShift);
   }
 
   private static boolean isValid(ImagePlus refImp, ImagePlus targetImp) {

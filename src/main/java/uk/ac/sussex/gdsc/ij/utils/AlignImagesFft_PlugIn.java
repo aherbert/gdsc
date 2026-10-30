@@ -148,6 +148,9 @@ public class AlignImagesFft_PlugIn implements PlugIn {
 
     Rectangle bounds = null;
     if (restrictTranslation) {
+      if (!isValidTranslation(TITLE, myMinXShift, myMaxXShift, myMinYShift, myMaxYShift)) {
+        return;
+      }
       bounds = createBounds(myMinXShift, myMaxXShift, myMinYShift, myMaxYShift);
     }
 
@@ -268,7 +271,7 @@ public class AlignImagesFft_PlugIn implements PlugIn {
   }
 
   /**
-   * Creates the bounds for alignment.
+   * Creates the bounds for alignment. The bounds include the min and max shift.
    *
    * @param minXShift the min X shift
    * @param maxXShift the max X shift
@@ -277,8 +280,28 @@ public class AlignImagesFft_PlugIn implements PlugIn {
    * @return the rectangle
    */
   public static Rectangle createBounds(int minXShift, int maxXShift, int minYShift, int maxYShift) {
-    final int w = maxXShift - minXShift;
-    final int h = maxYShift - minYShift;
+    // The rectangle is used as a half-open interval [x, x + width) so add 1 to include the max
+    final int w = maxXShift - minXShift + 1;
+    final int h = maxYShift - minYShift + 1;
     return new Rectangle(minXShift, minYShift, w, h);
+  }
+
+  /**
+   * Check the translation range is valid. Shows an error if the max shift is below the min shift.
+   *
+   * @param title the title for the error
+   * @param minXShift the min X shift
+   * @param maxXShift the max X shift
+   * @param minYShift the min Y shift
+   * @param maxYShift the max Y shift
+   * @return true if valid
+   */
+  static boolean isValidTranslation(String title, int minXShift, int maxXShift, int minYShift,
+      int maxYShift) {
+    if (maxXShift < minXShift || maxYShift < minYShift) {
+      IJ.error(title, "The maximum translation must not be below the minimum translation");
+      return false;
+    }
+    return true;
   }
 }
