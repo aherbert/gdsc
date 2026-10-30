@@ -145,6 +145,9 @@ Major release of GDSC ImageJ Plugins.
 * Fix the :ref:`utility_plugins:Intensity Analysis` exposures read from slice labels where the
   exposures start with the same digits, e.g. ``img_100ms`` and ``img_150ms``. Previously the
   common digits were removed from the exposures. Slice labels of different lengths are supported.
+* Fix the :ref:`utility_plugins:FRAP Analysis` background intensity. The background block was
+  positioned using the X offset for the Y coordinate, and the mean used only the first column of
+  the block.
 
 
 Version 2.0

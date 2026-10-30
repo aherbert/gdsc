@@ -24,6 +24,9 @@
 
 package uk.ac.sussex.gdsc.ij.utils;
 
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.FloatProcessor;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
@@ -384,5 +387,36 @@ class FrapAnalysisPluginTest {
         }
       }
     }
+  }
+
+  @Test
+  void canExtractBackground() {
+    // A stack with a dark block that drifts with the frames.
+    // The alignment offsets differ in X and Y.
+    final int n = 2;
+    final int size = 2 * n + 1;
+    final double[] dx = {2, 3, 1};
+    final double[] dy = {0, 1, -1};
+    // Top-left of the block in the neutral (aligned) frame
+    final int x = 15;
+    final int y = 20;
+    final ImageStack stack = new ImageStack(40, 40);
+    for (int i = 0; i < dx.length; i++) {
+      final FloatProcessor fp = new FloatProcessor(40, 40);
+      fp.add(100);
+      // The block values vary across the block. The mean is 3.
+      final int x2 = x - (int) dx[i];
+      final int y2 = y - (int) dy[i];
+      for (int yy = 0; yy < size; yy++) {
+        for (int xx = 0; xx < size; xx++) {
+          fp.setf(x2 + xx, y2 + yy, 1 + xx);
+        }
+      }
+      stack.addSlice(fp);
+    }
+    final ImagePlus imp = new ImagePlus("test", stack);
+    final float[] background =
+        FrapAnalysis_PlugIn.extractBackground(imp, n, new double[][] {dx, dy});
+    Assertions.assertArrayEquals(new float[] {3, 3, 3}, background, 1e-6f);
   }
 }

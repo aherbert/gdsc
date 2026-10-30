@@ -1068,10 +1068,24 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    * @return the background
    */
   private float[] extractBackground(double[][] offsets) {
-    if (settings.backgroundSize < 1) {
+    return extractBackground(imp, settings.backgroundSize, offsets);
+  }
+
+  /**
+   * Extract the background. This identifies the darkest part of the image and outputs a plot of the
+   * mean over time.
+   *
+   * @param imp the image
+   * @param backgroundSize the background size (the half-width of the square block)
+   * @param offsets the offsets for each frame
+   * @return the background
+   */
+  @VisibleForTesting
+  static float[] extractBackground(ImagePlus imp, int backgroundSize, double[][] offsets) {
+    if (backgroundSize < 1) {
       return null;
     }
-    final int size = 2 * settings.backgroundSize + 1;
+    final int size = 2 * backgroundSize + 1;
     final int w = imp.getWidth() - size;
     final int h = imp.getHeight() - size;
     // Find max offset.
@@ -1092,8 +1106,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       return null;
     }
     // Offset the search region. This includes the offset for the first aligned slice.
-    final int ox = settings.backgroundSize - (int) dx[0];
-    final int oy = settings.backgroundSize - (int) dy[0];
+    final int ox = backgroundSize - (int) dx[0];
+    final int oy = backgroundSize - (int) dy[0];
     region.x += ox;
     region.y += oy;
     // Find the lowest region
@@ -1106,7 +1120,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     };
     FloatProcessor fp = getProcessor.apply(1);
     final float[] data = ((float[]) fp.getPixels()).clone();
-    rollingBlockFilterNxNInternal(data, fp.getWidth(), fp.getHeight(), settings.backgroundSize);
+    rollingBlockFilterNxNInternal(data, fp.getWidth(), fp.getHeight(), backgroundSize);
     float min = Float.POSITIVE_INFINITY;
     int mini = 0;
     for (int y = 0; y < region.height; y++) {
@@ -1125,7 +1139,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     // Reverse the offset to create the 'neutral' region for the background.
     // This is shifted for each slice.
     x -= ox;
-    y -= ox;
+    y -= oy;
     // Get mean of the background for all frames
     final float[] mean = new float[imp.isHyperStack() ? imp.getNFrames() : stack.getSize()];
     for (int i = 0; i < mean.length; i++) {
@@ -1137,13 +1151,13 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
       for (int yy = 0; yy < size; yy++) {
         final int index = (yy + y2) * fp.getWidth() + x2;
         for (int xx = 0; xx < size; xx++) {
-          sum += fp.getf(index);
+          sum += fp.getf(index + xx);
         }
       }
       mean[i] = (float) (sum / (size * size));
     }
     ImageJUtils.log("Background region %dx%d centred at %d,%d (slice 1). Mean = %s", size, size,
-        x + ox, y + ox, MathUtils.round(MathUtils.sum(mean) / mean.length));
+        x + ox, y + oy, MathUtils.round(MathUtils.sum(mean) / mean.length));
     return mean;
   }
 
@@ -1158,7 +1172,7 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
    * @param maxy The height of the data
    * @param blockSize The block size
    */
-  void rollingBlockFilterNxNInternal(float[] data, final int maxx, final int maxy,
+  static void rollingBlockFilterNxNInternal(float[] data, final int maxx, final int maxy,
       final int blockSize) {
     final int size = 2 * blockSize + 1;
 
