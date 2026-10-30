@@ -378,12 +378,142 @@ Scales all images in a stack by a single factor so that the maximum of the stack
 
 Can accept a list file of images allowing a set of images to be scaled together. The maximum of the entire set of images is used to calculate the scale factor applied to each image. Note that in this mode each image file is overwritten with the scaled image.
 
+.. index:: Image Scaler Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Image Scaler`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Max
+     - The new maximum value of the image(s).
+
+   * - List file
+     - A text file containing the full path of an image file on each line. Lines that are not the path of an existing file are ignored. If specified then the images in the list file are scaled; otherwise the current image is scaled.
+
+**Output**
+
+The pixel values are multiplied by the scale factor in place. For an image list each scaled image is saved, replacing the original file. This cannot be undone.
+
+The image type is not changed. An 8-bit or 16-bit image is limited to the maximum value of the type, e.g. 255 for an 8-bit image.
+
+An error is shown if there is no image or list file, if the list file does not exist, or if the images have no range of values.
+
 .. index:: ! Spot Analyser
 
 Spot Analyser
 -------------
 
 Identifies particles (e.g. cells) using a Gaussian blur and thresholding, and excludes small particles based on pixel count and particles touching the image edge. The top N spots (``Max peaks``) are identified within each particle using the ``FindFoci`` algorithm; each spot region is defined using a fraction of the spot height. The average intensity of each channel inside and outside the spot regions is then compared using a t-test to identify increases in signal within spot regions.
+
+The plugin analyses the current z-slice and frame of an 8-bit or 16-bit image. The image can have multiple channels.
+
+.. index:: Spot Analyser Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Spot Analyser`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Mask option
+     - Only shown if the image has an area ROI. ``Threshold``: Identify the particles using thresholding; ``Use ROI``: Use the ROI as a single particle.
+
+   * - Threshold Channel
+     - The channel used to identify the particles.
+
+   * - Blur
+     - The standard deviation of the Gaussian blur applied to the threshold channel before thresholding.
+
+   * - Threshold method
+     - The automatic threshold method used to identify the particles.
+
+   * - Spot Channel
+     - The channel used to identify the spots.
+
+   * - Min size
+     - The minimum size of a particle (in pixels). Particles touching the image edge are excluded.
+
+   * - Show particles
+     - Show an image of the particles. Each particle has a unique value.
+
+   * - Max peaks
+     - The maximum number of spots to identify in each particle. The highest spots are used.
+
+   * - Fraction
+     - The fraction of the spot height used to define the spot region. A higher fraction creates a smaller spot region around the spot maximum.
+
+   * - Show spots
+     - Show an image of the spot regions. Each spot region has the value of its particle.
+
+   * - Preview
+     - Show the particles on the image and the number of particles in the dialog.
+
+.. index:: Spot Analyser Results Table
+
+Results Table
+~~~~~~~~~~~~~
+
+The ``Spot Analyser Results`` table contains two sets of rows. The first set has a row for each particle with the number of pixels inside and outside the spot regions (in the ``Inside Sum`` and ``Outside Sum`` columns). The second set has a row for each channel and particle with the following information:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title.
+
+   * - Channel
+     - The channel.
+
+   * - Particle
+     - The particle number.
+
+   * - Inside Sum
+     - The sum of the pixels inside the spot regions of the particle.
+
+   * - Av
+     - The mean of the pixels inside the spot regions.
+
+   * - SD
+     - The standard deviation of the pixels inside the spot regions.
+
+   * - R
+     - The correlation of the pixels inside the spot regions with the spot channel. This is 1 for the spot channel.
+
+   * - Outside Sum
+     - The sum of the pixels in the particle outside the spot regions.
+
+   * - Av
+     - The mean of the pixels outside the spot regions.
+
+   * - SD
+     - The standard deviation of the pixels outside the spot regions.
+
+   * - R
+     - The correlation of the pixels outside the spot regions with the spot channel.
+
+   * - Increase
+     - The ratio of the mean inside the spot regions to the mean outside the spot regions.
+
+   * - p-value
+     - The p-value of a t-test that the means inside and outside the spot regions are the same.
 
 .. index:: ! HSB Picker
 
@@ -504,6 +634,75 @@ Finds spots in an image. Locates the closest neighbour spot within a radius and 
 
 Allows analysis of regions using the ROI selection tools and respects manual thresholding to identify spots.
 
+The plugin analyses the current image plane of an 8-bit or 16-bit image. The spots are identified using the :ref:`findfoci_plugins:FindFoci` algorithm with a Gaussian blur of 1.5 pixels. If the image has a threshold then the minimum threshold is used as the background level; otherwise the background is set using a threshold method. Only spots with a maximum inside the image ROI are analysed.
+
+Spots are paired with the closest other spot within the radius. Pairs are assigned using the closest distance first and each spot can only be in one pair. For a pair the line profile is drawn between the spot maxima and extended to the edge of each spot. For a single spot the line profile is drawn through the centre of the spot along its longest axis.
+
+.. index:: Spot Separation Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Spot Separation`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Threshold method
+     - The threshold method used to set the background level of the image. This is not used if the image has a threshold.
+
+   * - Radius
+     - The maximum distance (in pixels) between two spots to be analysed as a pair.
+
+   * - Show spot image
+     - Show the ``Spot Separation Spots`` image of the spot regions. Each spot has a unique value.
+
+   * - Show line profiles
+     - Show a plot of the line profile of each pair and each single spot.
+
+.. index:: Spot Separation Results Table
+
+Results Table
+~~~~~~~~~~~~~
+
+The ``Spot Separation Positions`` table contains a row for each pair and each single spot with the following information:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title. For a stack the z-slice, channel and frame are included.
+
+   * - Units
+     - The units of the image calibration.
+
+   * - Peak ID
+     - The spot ID. This matches the value of the spot in the spot image. For a pair this is the first spot.
+
+   * - Type
+     - ``Pair`` or ``Single``.
+
+   * - Width1
+     - Pair: The width of the first spot, from the start of the line profile to the minimum between the two spot maxima. Single: The width of the spot along the line profile.
+
+   * - Width2
+     - Pair: The width of the second spot, from the minimum between the two spot maxima to the end of the line profile.
+
+   * - Distance
+     - Pair: The distance between the two spot maxima.
+
+The widths and distances use the calibrated units of the image.
+
+If the line profile of a single spot contains multiple maxima then a message is written to the ``ImageJ`` log and the spot is reported using the widths of the first two maxima and the distance between them.
+
 .. index:: ! Z Project extra
 
 Z Project extra...
@@ -523,12 +722,124 @@ Calculate the normalised intensity within an ROI using a stack of exposures (dif
 
 This plugin assumes images are taken of the same object at different exposure times on a camera with a linear response curve. Thus doubling the exposure should double the pixel value. The plugin allows analysis of images with a large dynamic range by capturing each object with a suitable exposure. Drift should be minimal for the best results.
 
+The image must be an 8-bit or 16-bit stack (not a hyperstack) with an area ROI. The exposure of each slice is read from the slice label: all the labels must share a common prefix and the exposure is the first number after the prefix. For example the labels ``image_10ms``, ``image_20ms`` and ``image_40ms`` have exposures 10, 20 and 40. The slices should be ordered by exposure.
+
+The plugin computes the mean of the ROI in each slice. A slice is saturated if any pixel in the ROI is at the maximum value of the bit depth. A straight line is fitted to the mean against the exposure using each window of consecutive unsaturated slices. The fit with the lowest sum of squared residuals is reported.
+
+.. index:: Intensity Analysis Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Intensity Analysis`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Window
+     - The number of consecutive unsaturated slices used for each fit.
+
+   * - Bit depth
+     - The bit depth of the camera. A pixel value of :math:`2^{bits} - 1` is saturated. For example a 12-bit camera saturates at 4095.
+
+   * - Debug
+     - Write the exposures, saturated slices and each fit to the ``ImageJ`` log.
+
+.. index:: Intensity Analysis Results
+
+Results
+~~~~~~~
+
+The plugin shows a plot of the mean against the exposure for all slices, with the best fit shown as a line. The ``Intensity Analysis Summary`` table contains a row for each analysis with the following information:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title.
+
+   * - x, y, w, h
+     - The bounds of the ROI.
+
+   * - N
+     - The number of pixels in the ROI.
+
+   * - Start
+     - The first slice of the best fit window.
+
+   * - End
+     - The last slice of the best fit window. If saturated slices are excluded within the window then the window spans more slices than the window size.
+
+   * - E1
+     - The exposure at the start of the window.
+
+   * - E2
+     - The exposure at the end of the window.
+
+   * - SS
+     - The sum of squared residuals of the fit.
+
+   * - Intercept
+     - The intercept of the fitted line.
+
+   * - Gradient
+     - The gradient of the fitted line. This is the measure of the intensity within the ROI.
+
+If there are fewer unsaturated slices than the window size then an error is shown and the fit columns are empty.
+
 .. index:: ! Measure 3D
 
 Measure 3D
 ----------
 
 Installs a tool into the ``ImageJ`` toolbar that allows distances to be measured in 3D. Distance is measured between two successive mouse clicks on the same channel and time frame of an image. Results are recorded to a table.
+
+The plugin opens the ``Measure 3D`` window and selects the ``Measure 3D Tool`` in the ``ImageJ`` toolbar. The first click on an image records a point; the window shows the image, the X and Y coordinates and the z-slice, channel and frame of the point. A second click on the same image, channel and frame, but any z-slice, measures the distance to the first point. A click on a different image, channel or frame starts a new measurement.
+
+The ``Overlay`` option in the window shows the first point and the measured line on the image. This replaces any existing overlay on the image.
+
+.. index:: Measure 3D Results Table
+
+Results Table
+~~~~~~~~~~~~~
+
+The ``Measure 3D`` table contains a row for each measurement with the following information:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title.
+
+   * - c, t
+     - The channel and frame.
+
+   * - x1, y1, z1
+     - The first point. The z coordinate is the z-slice.
+
+   * - x2, y2, z2
+     - The second point.
+
+   * - D (px)
+     - The distance in pixels.
+
+   * - D
+     - The calibrated distance. This is only computed if the X and Z calibration use the same units.
+
+   * - Units
+     - The units of the calibrated distance.
 
 .. index:: ! Scale Space
 
