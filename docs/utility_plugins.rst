@@ -900,6 +900,128 @@ FRAP Analysis
 
 Analyses an image stack to detect pixel regions that have been photobleached. The stack is first aligned to correct for drift. A plot of the intensity of each region is created over time and Fluorescence Recovery After Photobleaching (FRAP) models (exponential and diffusion-limited recovery) are fitted to each region. The results can optionally be saved to a directory.
 
+The image must be an 8-bit, 16-bit or 32-bit stack with multiple frames. For a hyperstack the current channel and z-slice are analysed for all frames. For a stack the analysis can be restricted to a region of the image using an area ROI; the bounding rectangle of the ROI is used.
+
+The time and distance units are taken from the image calibration. The time between frames is the frame interval; if the frame interval is not set then the time unit is frames. Milliseconds are converted to seconds and nanometres to micrometres.
+
+.. index:: FRAP Analysis Method
+
+Method
+~~~~~~
+
+The plugin performs the following steps:
+
+#. Align the stack to correct for drift. Each frame is aligned to a reference frame using the maximum correlation computed using a fast Fourier transform (FFT). The alignment can be iterated: each further iteration aligns the frames to the maximum intensity projection of the previously aligned stack. The aligned stack is cropped to the area that is present in all the frames.
+#. Create a mask of the foreground (the cells) by thresholding the maximum intensity projection of the aligned stack using the ``Otsu`` method.
+#. Detect bleaching events. For each foreground pixel the intensity over time is analysed to find the largest drop in intensity. The size of the drop is scored as the number of standard deviations from the mean of the rest of the intensity changes (the standard score). The score is recorded on the frame of the drop if it is above a quarter of the ``Score threshold`` (minimum 1).
+#. Create bleached regions. In each frame, regions of pixels with a score above the ``Score threshold`` are joined into bleached regions. Regions smaller than the ``Min region size`` are removed.
+#. Measure the mean intensity of each bleached region and of the remaining foreground in each frame. A border around each bleached region is excluded from the foreground. The background is measured using the darkest square block of the image.
+#. Fit the foreground intensity with a bleaching curve. This measures the loss of signal due to imaging:
+
+   .. math::
+
+      f(t) = y_0 + B e^{-k t}
+
+#. Fit the intensity of each bleached region from the bleaching event with recovery curves:
+
+   * Reaction limited recovery:
+
+     .. math::
+
+        f(t) = i_0 + A (1 - e^{-k t})
+
+   * Diffusion limited recovery:
+
+     .. math::
+
+        f(t) = i_0 + A e^{-2 t_D / t} \left( I_0(2 t_D / t) + I_1(2 t_D / t) \right)
+
+     where :math:`I_0` and :math:`I_1` are modified Bessel functions of the first kind. The diffusion coefficient is :math:`D = w^2 / 4 t_D` where :math:`w` is the radius of a circle with the area of the region.
+
+   Each model can optionally be extended with a decay of the recovered signal due to imaging (see ``Fit nested models``). The model with the lowest sum of squared residuals is reported.
+
+A half-life is the time for half of the decay (bleaching) or recovery: :math:`\ln(2) / k`.
+
+.. index:: FRAP Analysis Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``FRAP Analysis`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Alignment slice
+     - The frame used as the reference for the first alignment. Use zero for the middle frame.
+
+   * - Max shift
+     - The maximum shift (in pixels) in X and Y used to align each frame. Use zero for the default limit: at least half of the image must overlap the reference.
+
+   * - Alignment iterations
+     - The maximum number of alignment iterations. The alignment stops if the change in the alignment offsets is small.
+
+   * - Subpixel alignment
+     - Align the frames with sub-pixel accuracy. The frames are translated using bilinear interpolation. If not selected then the frames are aligned to the nearest pixel.
+
+   * - Show alignment offsets
+     - Write the alignment offset of each frame to the ``ImageJ`` log.
+
+   * - Show aligned
+     - Show the aligned stack. The bleached regions are shown as an overlay.
+
+   * - Score threshold
+     - The standard score required for a bleaching event.
+
+   * - Circular region
+     - Create circular bleached regions. A circle is created around each local maximum of the smoothed scores using the distance where the mean score falls below the threshold. If not selected then the regions are the pixels with a score above the threshold with small holes filled and small speckles removed.
+
+   * - Min region size
+     - The minimum size of a bleached region (in pixels).
+
+   * - Show bleaching scores
+     - Show a stack of the bleaching scores. Each pixel score is shown on the frame of its bleaching event. Scores below a quarter of the ``Score threshold`` (minimum 1) are not recorded.
+
+   * - Show bleaching events
+     - Show a stack of the bleached regions on the frame of the bleaching event.
+
+   * - Bleach border
+     - The width (in pixels) of the border around each bleached region excluded from the foreground. This prevents the foreground including partially bleached pixels. The maximum is 5.
+
+   * - Show bleached regions
+     - Show an image of the bleached regions. Each region has a unique value and the foreground has the highest value.
+
+   * - Fit nested models
+     - Also fit each recovery model with a decay of the recovered signal: :math:`f(t) = B + (i_0 + \text{recovery}(t)) e^{-\tau t}`. The extended model is used if it is a significantly better fit (F-test p-value below 0.01).
+
+   * - Results dir
+     - The directory used to save the results. Leave empty to not save the results.
+
+   * - Save individual files
+     - Save a file for each region, the foreground and the background in addition to the combined results file.
+
+   * - Background size
+     - The half-width (in pixels) of the square block used to measure the background. The block size is :math:`2n + 1`. Use zero to not measure the background.
+
+.. index:: FRAP Analysis Results
+
+Results
+~~~~~~~
+
+The plugin writes the progress of the analysis to the ``ImageJ`` log. This includes the bleached regions detected on each frame, the size of the foreground, the location of the background, and the fitted bleaching and recovery curves with their parameters.
+
+The plugin shows a plot of the mean intensity of the foreground, the background and each bleached region against time. The fitted bleaching and recovery curves are shown as dotted lines.
+
+If a ``Results dir`` is specified then the plugin saves a comma-separated file named using the image title, e.g. ``image.csv``. The file starts with comment lines (starting with ``#``) containing the size of the foreground, the background and each region. The data has a row for each frame with the columns ``Time``, ``foreground``, ``background`` and ``region1``, ``region2``, etc.
+
+If ``Save individual files`` is selected then the plugin also saves files with the suffix ``_foreground``, ``_background`` and ``_region1``, ``_region2``, etc. Each file contains the ``Time`` and ``Mean`` intensity. The foreground and region files also contain the mean normalised to the range 0 to 1 (``Norm``).
+
+The analysis supports up to 254 bleached regions.
+
 .. index:: ! Mask to ROI
 
 Mask to ROI
