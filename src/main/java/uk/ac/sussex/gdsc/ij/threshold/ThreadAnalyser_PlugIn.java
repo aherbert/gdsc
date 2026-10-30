@@ -172,7 +172,8 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     }
   }
 
-  private static ByteProcessor getMask(ImageProcessor ip) {
+  @VisibleForTesting
+  static ByteProcessor getMask(ImageProcessor ip) {
     if (ip == null) {
       return null;
     }
@@ -195,16 +196,28 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
       }
     }
 
-    ip = ip.duplicate();
-    if (!isMask) {
-      final int[] data = ip.getHistogram();
-      final int level = AutoThreshold.getThreshold(method, data);
-      ip.threshold(level);
-      if (!Prefs.blackBackground) {
-        ip.invert();
+    if (isMask) {
+      // Create a binary mask (0 and 255) of the non-zero pixels
+      final ByteProcessor bp = new ByteProcessor(ip.getWidth(), ip.getHeight());
+      for (int i = ip.getPixelCount(); i-- > 0;) {
+        if (ip.get(i) != 0) {
+          bp.set(i, 255);
+        }
       }
+      // Set the mask as the foreground for binary processing
+      if (!Prefs.blackBackground) {
+        bp.invert();
+      }
+      return bp;
     }
 
+    ip = ip.duplicate();
+    final int[] data = ip.getHistogram();
+    final int level = AutoThreshold.getThreshold(method, data);
+    ip.threshold(level);
+    if (!Prefs.blackBackground) {
+      ip.invert();
+    }
     return (ByteProcessor) ip.convertToByte(false);
   }
 

@@ -175,6 +175,9 @@ Major release of GDSC ImageJ Plugins.
   label away from the middle of the thread.
 * Fix the :ref:`thresholding_plugins:Thread Analyser` output images being empty when the table of
   more than 1000 threads is not shown. The result file is also saved.
+* Fix the :ref:`thresholding_plugins:Thread Analyser` using a mask image that is already a mask.
+  Previously a mask with a value other than 255 caused an error, and a mask was processed as the
+  background if the ``ImageJ`` ``Black background`` binary option was not selected.
 * The :ref:`utility_plugins:FRAP Analysis` plugin records the bleaching score of a pixel if it is
   above a quarter of the ``Score threshold`` (minimum 1). Previously the scores were recorded
   above a fixed threshold of 1. This can change the detected bleached regions.

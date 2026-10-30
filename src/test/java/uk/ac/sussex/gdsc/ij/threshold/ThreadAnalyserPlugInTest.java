@@ -24,11 +24,17 @@
 
 package uk.ac.sussex.gdsc.ij.threshold;
 
+import ij.Prefs;
 import ij.gui.Roi;
+import ij.process.ByteProcessor;
+import ij.process.ShortProcessor;
 import java.awt.Polygon;
 import java.util.Arrays;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 @SuppressWarnings({"javadoc"})
 class ThreadAnalyserPlugInTest {
@@ -51,5 +57,37 @@ class ThreadAnalyserPlugInTest {
     Assertions.assertEquals(10, p.ypoints[0]);
     Assertions.assertEquals(20, p.xpoints[1]);
     Assertions.assertEquals(8, p.ypoints[1]);
+  }
+
+  @ParameterizedTest
+  @CsvSource({"1, true", "1, false", "255, true", "255, false"})
+  void testGetMaskFromExistingMask(int value, boolean blackBackground) {
+    // A horizontal bar 3 pixels thick with a single non-zero value
+    final ShortProcessor ip = new ShortProcessor(40, 20);
+    for (int y = 9; y <= 11; y++) {
+      for (int x = 5; x < 35; x++) {
+        ip.set(x, y, value);
+      }
+    }
+    final boolean previous = Prefs.blackBackground;
+    try {
+      Prefs.blackBackground = blackBackground;
+      final ByteProcessor mask = ThreadAnalyser_PlugIn.getMask(ip);
+      Assertions.assertTrue(mask.isBinary(), "Mask should be binary");
+      // The bar is skeletonised to a single line
+      final SkeletonAnalyser_PlugIn sa = new SkeletonAnalyser_PlugIn();
+      Assertions.assertTrue(sa.skeletonise(mask, true));
+      final byte[] map = sa.findNodes(mask);
+      Assertions.assertNotNull(map);
+      final List<float[]> lines = sa.extractLines(map);
+      Assertions.assertEquals(1, lines.size(), "Number of lines");
+      // The line is within the bar (not around the bar)
+      final float[] line = lines.get(0);
+      Assertions.assertTrue(line[1] >= 9 && line[1] <= 11, () -> "Start y " + line[1]);
+      Assertions.assertTrue(line[3] >= 9 && line[3] <= 11, () -> "End y " + line[3]);
+      Assertions.assertTrue(line[4] < 32, () -> "Length " + line[4]);
+    } finally {
+      Prefs.blackBackground = previous;
+    }
   }
 }
