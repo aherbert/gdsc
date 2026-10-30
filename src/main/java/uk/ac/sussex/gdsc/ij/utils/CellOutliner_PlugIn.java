@@ -759,7 +759,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
     halfWidth = settings.kernelWidth / 2;
     maxDistance2 = halfWidth * halfWidth * 2.0;
 
-    // Build a set convolution kernels at 6 degree intervals
+    // Build a set of convolution kernels at 12 degree intervals
     final int cx = halfWidth;
     final int cy = halfWidth;
     for (int rotation = 0; rotation < 180; rotation += 12) {
@@ -1655,7 +1655,7 @@ public class CellOutliner_PlugIn implements ExtendedPlugInFilter, DialogListener
 
     // Find first pixel
     int startIndex = 0;
-    while (data[startIndex] == 0 && startIndex < data.length) {
+    while (startIndex < data.length && data[startIndex] == 0) {
       startIndex++;
     }
     if (startIndex == data.length) {
