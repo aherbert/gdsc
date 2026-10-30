@@ -155,6 +155,8 @@ Major release of GDSC ImageJ Plugins.
   processing the whole stack. Previously the option converted a single 16-bit image to 8-bit,
   set the threshold of only the current slice of a stack, and prevented the ``Try all`` results
   being thresholded.
+* The :ref:`thresholding_plugins:Global Threshold` plugin remembers the ``StdDev multiplier``
+  option. Previously the option was reset to 3.
 * The :ref:`utility_plugins:FRAP Analysis` plugin records the bleaching score of a pixel if it is
   above a quarter of the ``Score threshold`` (minimum 1). Previously the scores were recorded
   above a fixed threshold of 1. This can change the detected bleached regions.

@@ -118,6 +118,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
       doIlog = source.doIlog;
       doIstack = source.doIstack;
       doIstackHistogram = source.doIstackHistogram;
+      stdDevMultiplier = source.stdDevMultiplier;
     }
 
     /**
