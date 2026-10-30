@@ -112,6 +112,24 @@ public class MaskCreator_PlugIn implements PlugIn {
    *
    * @return the options
    */
+  /**
+   * Remove objects above the maximum value for a 16-bit image (65535).
+   *
+   * @param mask the object mask
+   */
+  private static void removeExcessObjects(int[] mask) {
+    boolean removed = false;
+    for (int i = 0; i < mask.length; i++) {
+      if (mask[i] > 65535) {
+        mask[i] = 0;
+        removed = true;
+      }
+    }
+    if (removed) {
+      IJ.log(TITLE + ": Too many objects. Objects above 65535 have been removed.");
+    }
+  }
+
   static String[] getOptions() {
     return options.clone();
   }
@@ -909,7 +927,9 @@ public class MaskCreator_PlugIn implements PlugIn {
       }
     }
 
-    if (!assignObjects) {
+    if (assignObjects) {
+      removeExcessObjects(mask);
+    } else {
       // Create a binary mask
       for (int i = 0; i < mask.length; i++) {
         if (mask[i] != 0) {
@@ -995,7 +1015,9 @@ public class MaskCreator_PlugIn implements PlugIn {
       }
     }
 
-    if (!assignObjects) {
+    if (assignObjects) {
+      removeExcessObjects(mask);
+    } else {
       // Create a binary mask
       for (int i = 0; i < mask.length; i++) {
         if (mask[i] != 0) {

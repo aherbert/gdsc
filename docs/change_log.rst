@@ -163,6 +163,9 @@ Major release of GDSC ImageJ Plugins.
   :ref:`thresholding_plugins:Mask Creator`, including the multi-level Otsu methods; the ``None``
   method is removed. The change to a single image can be undone. The plugin uses the mask
   settings set using the Java API; previously the settings of the last dialog were used.
+* The :ref:`thresholding_plugins:Mask Creator` ``Assign objects`` option removes objects above
+  the 16-bit limit of 65535 and logs a warning. Previously the object values above the limit were
+  wrapped to duplicate lower values.
 * The :ref:`utility_plugins:FRAP Analysis` plugin records the bleaching score of a pixel if it is
   above a quarter of the ``Score threshold`` (minimum 1). Previously the scores were recorded
   above a fixed threshold of 1. This can change the detected bleached regions.
