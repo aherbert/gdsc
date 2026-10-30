@@ -27,6 +27,49 @@ Difference of Gaussians
 
 Performs a difference of Gaussians filter for local contrast enhancement. The filter performs subtraction of one blurred version of an image from another, less blurred version of the original. The result is an image containing only the information contained within the spatial frequency between the two blurred images.
 
+The image is blurred using a Gaussian filter with a large standard deviation (``Sigma1``) and a small standard deviation (``Sigma2``). The large blur is subtracted from the small blur. The large blur removes the local background and the small blur removes the noise, leaving features with a size between the two scales.
+
+The filter supports all image types. A colour image is filtered in each colour channel. The filtered image is written to the input image type; for an 8-bit or 16-bit image any negative values are set to zero. Convert the image to 32-bit to keep negative values.
+
+.. index:: Difference of Gaussians Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Difference of Gaussians`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Sigma1 (Radius)
+     - The standard deviation of the large Gaussian blur. This defines the scale of the local contrast to remove. This must be larger than ``Sigma2``.
+
+   * - Sigma2 (Radius)
+     - The standard deviation of the small Gaussian blur. This defines the scale of the noise to remove.
+
+   * - Maintain Ratio
+     - If selected then changing one sigma updates the other sigma to keep the same ratio between them.
+
+   * - Scaled Units
+     - If selected then the sigma values are in the calibrated units of the image; otherwise they are in pixels. This option is only shown if the image is calibrated.
+
+   * - Enhance Contrast
+     - Set the display range of the filtered image using 0.35% saturated pixels.
+
+   * - Preview
+     - Show the filtered image. The preview is updated when the parameters are changed.
+
+.. index:: Difference of Gaussians Output
+
+Output
+~~~~~~
+
+The filtered image replaces the pixels of the input image. The change can be reverted using ``Edit > Undo``. If the image has an area ROI then only the pixels within the ROI are filtered. For a stack image ``ImageJ`` asks if all the image planes should be processed.
+
 .. index:: ! Laplacian of Gaussian
 
 Laplacian of Gaussian
@@ -34,7 +77,50 @@ Laplacian of Gaussian
 
 Performs a Laplacian of Gaussian filter for local contrast enhancement.
 
+The Laplacian is the sum of the second derivatives of the image in the X and Y directions. The derivatives are computed after smoothing the image with a Gaussian filter. The filter has a strong response for round features (blobs) with a radius of approximately 1.41 times the Gaussian standard deviation. A bright blob has a negative response; a dark blob has a positive response.
+
 Requires the ``Image Science`` library (see :ref:`installation:Installation` instructions).
+
+The filter supports 8-bit, 16-bit and 32-bit images. The filtered image is written to the input image type; for an 8-bit or 16-bit image any negative values are set to zero. Convert the image to 32-bit to keep negative values, or use the ``Negate`` option to show bright blobs.
+
+.. index:: Laplacian of Gaussian Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Laplacian of Gaussian`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Sigma (Radius)
+     - The standard deviation of the Gaussian filter. Use a value of the expected feature radius divided by 1.41.
+
+   * - Scaled Units
+     - If selected then the sigma is in the calibrated units of the image; otherwise it is in pixels. This option is only shown if the image is calibrated.
+
+   * - Scale normalised
+     - Multiply the result by the square of the sigma. This allows the response of filters with different sigma to be compared.
+
+   * - Negate
+     - Negate the result. Bright blobs have a positive response.
+
+   * - Enhance Contrast
+     - Set the display range of the filtered image using 0.35% saturated pixels.
+
+   * - Preview
+     - Show the filtered image. The preview is updated when the parameters are changed.
+
+.. index:: Laplacian of Gaussian Output
+
+Output
+~~~~~~
+
+The filtered image replaces the pixels of the input image. The change can be reverted using ``Edit > Undo``. For a stack image ``ImageJ`` asks if all the image planes should be processed.
 
 .. index:: ! Align Images
 
@@ -153,6 +239,49 @@ Scale Space
 Create a scale-space representation of an image using a 2D Gaussian filter at different scales. The output can be the Gaussian, Difference of Gaussians or Laplacian of Gaussian.
 
 The ``Laplacian of Gaussian`` output requires the ``Image Science`` library (see :ref:`installation:Installation` instructions).
+
+A scale-space represents an image at a series of increasing amounts of blurring. The scale (:math:`t`) is the variance of the Gaussian filter, i.e. the square of the standard deviation: :math:`t = \sigma^2`. The scale is doubled at each level (an octave); this increases the standard deviation by a factor of :math:`\sqrt{2}`. Additional levels can be added within each octave.
+
+The plugin processes the current image plane.
+
+.. index:: Scale Space Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Scale Space`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Min scale
+     - The minimum scale (the Gaussian variance). The minimum allowed scale is 0.25.
+
+   * - Max scale
+     - The maximum scale (the Gaussian variance). Use zero for the maximum allowed scale. The maximum allowed scale is limited so that the Gaussian standard deviation is a quarter of the smallest image dimension in X or Y.
+
+   * - Output
+     - The output image:
+
+       * ``Gaussian``: The image blurred at each scale.
+       * ``Difference of Gaussians``: The difference between the Gaussian images at consecutive scales. Features with a size between the two scales have a strong response. At least 2 scales are required.
+       * ``Laplacian of Gaussian``: The scale-normalised Laplacian of Gaussian at each scale. The result is negated so that bright blobs have a positive response.
+
+   * - Sub interval steps
+     - The number of additional scales within each octave. The scales are spaced so that the ratio between consecutive scales is constant. For example with 1 step the scales are :math:`t`, :math:`\sqrt{2}t`, :math:`2t`, ... Use zero for only the octave scales.
+
+.. index:: Scale Space Output
+
+Output
+~~~~~~
+
+The plugin creates a new stack named using the input image title and the output, for example ``Image.tif Laplacian of Gaussian``. The ``Gaussian`` output is named using the suffix ``Scale Space``.
+
+Each slice is labelled using its scale (``t=<scale>``). The ``Gaussian`` output starts with the input image at a scale of zero and has the type of the input image. The ``Difference of Gaussians`` slices are labelled using the two scales of the difference and are 32-bit images. The ``Laplacian of Gaussian`` output is a 32-bit image.
 
 .. index:: ! FRAP Analysis
 
