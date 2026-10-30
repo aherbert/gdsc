@@ -168,6 +168,35 @@ Mask to ROI
 
 Traces each object in a mask image and adds them to the ROI Manager.
 
+The mask must be an 8-bit or 16-bit image. An object is a connected region of pixels with the same non-zero value. This supports a binary mask and a labelled mask where each object has a different value, for example the mask image created by the :ref:`findfoci_plugins:FindFoci` plugin. The outline of each object is traced; any holes inside an object are included in the outline.
+
+.. index:: Mask to ROI Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Mask to ROI`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - 8-connected
+     - Trace the outline of objects using 8-connected pixels, i.e. pixels touching diagonally are part of the same object. If not selected then objects use 4-connected pixels.
+
+   * - Stack
+     - Trace the objects in every image plane of the stack. If not selected then only the current image plane is traced. This option is only shown for a stack image.
+
+.. index:: Mask to ROI Output
+
+Output
+~~~~~~
+
+Each traced object is added to the ROI Manager. For a stack image the ROI position is set to the image plane (the channel, z-slice and frame for a hyperstack) containing the object.
+
 .. index:: ! Mask to Border
 
 Mask to Border
@@ -175,9 +204,104 @@ Mask to Border
 
 Creates a border around each object in a mask image using variable width inside and outside the mask. Used to create a ring ROI of each mask object.
 
+The mask must be an 8-bit or 16-bit image. Objects are defined by their pixel value. The border of each object has the same value as the object; all other pixels are set to zero. The border is created by:
+
+#. Expanding the objects outwards by the ``outer`` width. Each expansion adds a 1 pixel layer to the outside of each object. Where expanding objects meet, a pixel is assigned to the object with the most contact.
+#. Eroding the objects inwards by the ``inner`` width. Each erosion removes a 1 pixel layer from the edge of each object.
+#. The border is the region of the expanded object that is not in the eroded object.
+
+.. index:: Mask to Border Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Mask to Border`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - inner
+     - The width of the border inside the object (in pixels). Use zero for a border only outside the object.
+
+   * - outer
+     - The width of the border outside the object (in pixels). Use zero for a border only inside the object.
+
+       At least one of ``inner`` or ``outer`` must be above zero.
+
+   * - extend outside
+     - Treat the area outside the image as a continuation of the edge pixels. Objects touching the image edge are not eroded at the edge and the border does not follow the image edge. If not selected then the image edge is treated as the edge of the object.
+
+   * - Preview
+     - Show the border on the image. The preview is updated when the parameters are changed.
+
+.. index:: Mask to Border Output
+
+Output
+~~~~~~
+
+The border replaces the pixels of the input image. The change can be reverted using ``Edit > Undo``. For a stack image ``ImageJ`` asks if all the image planes should be processed.
+
 .. index:: ! Mask Overlap
 
 Mask Overlap
 ------------
 
 Relabels a mask image using overlap between z and/or t dimensions. Allows mapping the same object through z and/or t dimensions with the same mask value.
+
+The mask must be a 16-bit image with multiple z-slices or frames. Each object in an image plane must have a unique non-zero value. The values do not have to match between image planes. The plugin changes the values so that the same object has the same value in every image plane.
+
+The plugin compares each image plane with the previous plane:
+
+#. Compute the overlap of each object with the objects in the previous plane. The overlap is measured using the Intersection over Union (IoU): the number of pixels in both objects divided by the number of pixels in either object.
+#. Match objects to objects in the previous plane with an IoU at or above a threshold. A matched object is assigned the value of the object in the previous plane.
+#. Assign any unmatched object a new value that is not used by any other object.
+
+For z overlap each z-slice is compared with the previous z-slice. For t overlap each frame is compared with the previous frame using all the z-slices of the frame. If both options are selected then the z overlap is performed first.
+
+.. index:: Mask Overlap Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Mask Overlap`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Mask
+     - The mask image. Only 16-bit images with multiple z-slices or frames are listed.
+
+   * - All channels
+     - Process all the channels independently. If not selected then only the current channel is processed.
+
+   * - Z overlap
+     - Relabel the objects using the overlap between z-slices.
+
+   * - T overlap
+     - Relabel the objects using the overlap between frames.
+
+   * - IoU threshold
+     - The minimum Intersection over Union (IoU) for objects to be matched. Objects must overlap to be matched; a threshold of zero matches objects with any overlap.
+
+   * - Method
+     - The method used to match the objects:
+
+       * ``Nearest Neighbour``: Match the pairs of objects with the highest overlap first.
+       * ``Minimum Distance``: Find the matching that maximises the total overlap of all matched objects.
+
+.. index:: Mask Overlap Output
+
+Output
+~~~~~~
+
+The object values in the mask image are changed. This cannot be undone. The maximum number of objects is 65535; an error is raised if more unique values are required.
+
+The display range of the mask is set from zero to the maximum object value in the stack.
