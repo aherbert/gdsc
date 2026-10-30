@@ -168,6 +168,9 @@ Major release of GDSC ImageJ Plugins.
   wrapped to duplicate lower values.
 * Fix the :ref:`thresholding_plugins:Threshold Outliner` plugin failing when the mask image is
   closed while the dialog is open. An error message is shown.
+* Fix the :ref:`thresholding_plugins:Edge Mask` plugin for 32-bit images. Previously the pixel
+  values were compared to the background using the raw bits of the float value, and the mask was
+  not created.
 * The :ref:`utility_plugins:FRAP Analysis` plugin records the bleaching score of a pixel if it is
   above a quarter of the ``Score threshold`` (minimum 1). Previously the scores were recorded
   above a fixed threshold of 1. This can change the detected bleached regions.

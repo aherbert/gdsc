@@ -464,9 +464,9 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       final ImageProcessor maskIp = gradientIp.convertToByte(false);
 
       // Keep objects above a threshold value
-      final int threshold = (int) settings.background;
+      final double threshold = getBackground(ip);
       for (int i = ip.getPixelCount(); i-- > 0;) {
-        if (smoothIp.get(i) < threshold) {
+        if (smoothIp.getf(i) < threshold) {
           maskIp.set(i, 0);
         }
       }
@@ -474,7 +474,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       markExtraLines(maskIp, settings.prune);
 
       for (int i = ip.getPixelCount(); i-- > 0;) {
-        ip.set(i, (maskIp.get(i) > 0) ? 255 : 0);
+        ip.setf(i, (maskIp.get(i) > 0) ? 255 : 0);
       }
     } else if (settings.method == 1) {
       // Compute the Laplacian zero-crossing image using the ImageScience library
@@ -500,9 +500,9 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       final ImageProcessor maskIp = newimg.imageplus().getProcessor().convertToByte(false);
 
       // Keep objects above a threshold value
-      final int threshold = (int) settings.background;
+      final double threshold = getBackground(ip);
       for (int i = ip.getPixelCount(); i-- > 0;) {
-        if (smoothIp.get(i) < threshold) {
+        if (smoothIp.getf(i) < threshold) {
           maskIp.set(i, 0);
         }
       }
@@ -515,15 +515,15 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
       }
 
       for (int i = ip.getPixelCount(); i-- > 0;) {
-        ip.set(i, (maskIp.get(i) > 0) ? 255 : 0);
+        ip.setf(i, (maskIp.get(i) > 0) ? 255 : 0);
       }
     } else {
       // Simple mask using the background level
-      final int threshold = (int) settings.background;
+      final double threshold = getBackground(ip);
 
       // Keep objects above a threshold value
       for (int i = ip.getPixelCount(); i-- > 0;) {
-        ip.set(i, (smoothIp.get(i) >= threshold) ? 255 : 0);
+        ip.setf(i, (smoothIp.getf(i) >= threshold) ? 255 : 0);
       }
     }
 
@@ -541,7 +541,7 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
           int index = (roi.y + y) * maxx + roi.x;
           for (int x = 0; x < roi.width; x++, index++) {
             if (mask[maskIndex] == 0) {
-              ip.set(index, 0);
+              ip.setf(index, 0);
             }
             maskIndex++;
           }
@@ -550,6 +550,19 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
     }
 
     ip.setMinAndMax(0, 255);
+  }
+
+  /**
+   * Gets the background level. Integer images use an integer level.
+   *
+   * <p>Note: Pixel values must be read using {@link ImageProcessor#getf(int)} to support float
+   * images.
+   *
+   * @param ip the image
+   * @return the background level
+   */
+  private double getBackground(ImageProcessor ip) {
+    return ip instanceof FloatProcessor ? settings.background : (int) settings.background;
   }
 
   private static double getLimit(float[] data, double percentile) {
@@ -688,18 +701,18 @@ public class EdgeMask_PlugIn implements ExtendedPlugInFilter, DialogListener {
     final FloodFiller ff = new FloodFiller(maskIp);
     maskIp.setColor(TYPE_FILL);
     for (int y = 0; y < height; y++) {
-      if (maskIp.get(0, y) == tyepBackground && laplacianIp.get(0, y) < 0) {
+      if (maskIp.get(0, y) == tyepBackground && laplacianIp.getf(0, y) < 0) {
         ff.fill(0, y);
       }
-      if (maskIp.get(width - 1, y) == tyepBackground && laplacianIp.get(width - 1, y) < 0) {
+      if (maskIp.get(width - 1, y) == tyepBackground && laplacianIp.getf(width - 1, y) < 0) {
         ff.fill(width - 1, y);
       }
     }
     for (int x = 0; x < width; x++) {
-      if (maskIp.get(x, 0) == tyepBackground && laplacianIp.get(x, 0) < 0) {
+      if (maskIp.get(x, 0) == tyepBackground && laplacianIp.getf(x, 0) < 0) {
         ff.fill(x, 0);
       }
-      if (maskIp.get(x, height - 1) == tyepBackground && laplacianIp.get(x, height - 1) < 0) {
+      if (maskIp.get(x, height - 1) == tyepBackground && laplacianIp.getf(x, height - 1) < 0) {
         ff.fill(x, height - 1);
       }
     }
