@@ -155,6 +155,9 @@ Major release of GDSC ImageJ Plugins.
   above a fixed threshold of 1. This can change the detected bleached regions.
 * Fix the :ref:`utility_plugins:FRAP Analysis` plugin failing when the alignment reaches the
   ``Max shift`` limit. The log message used an invalid number format.
+* The :ref:`utility_plugins:FRAP Analysis` alignment includes the positive ``Max shift`` in the
+  search. Previously the maximum positive shift was one pixel less than the maximum negative
+  shift.
 
 
 Version 2.0

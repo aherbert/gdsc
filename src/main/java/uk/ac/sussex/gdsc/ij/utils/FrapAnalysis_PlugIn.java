@@ -506,7 +506,9 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     // Set-up initial alignment
     final AlignImagesFft align = new AlignImagesFft();
     final int shift = settings.maxShift;
-    final Rectangle bounds = shift > 0 ? new Rectangle(-shift, -shift, 2 * shift, 2 * shift) : null;
+    // Bounds include the max shift
+    final Rectangle bounds =
+        shift > 0 ? AlignImagesFft_PlugIn.createBounds(-shift, shift, -shift, shift) : null;
 
     // Centre if the slice is not set.
     // Note that indices are 1-based so add 1 to the stack size for the middle.
