@@ -50,6 +50,8 @@ import uk.ac.sussex.gdsc.ij.help.HelpUrls;
  */
 public class MaskOverlap_PlugIn implements PlugIn {
   private static final String TITLE = "Mask Overlap";
+  /** The distance between objects with no overlap. This is above the maximum distance of 1. */
+  private static final double NO_OVERLAP_DISTANCE = 2;
   private ImagePlus imp;
   /** The current settings for the plugin instance. */
   private Settings settings;
@@ -344,6 +346,12 @@ public class MaskOverlap_PlugIn implements PlugIn {
     // b = mask2 index
     final ToDoubleBiFunction<Integer, Integer> edges = (a, b) -> {
       final int intersection = overlap[a - min1][b];
+      if (intersection == 0) {
+        // No overlap. Return a distance above the maximum threshold distance of 1 to prevent
+        // a match when the IoU threshold is zero. Note: Infinity is not used as the
+        // minimum distance matching requires a finite range of distances.
+        return NO_OVERLAP_DISTANCE;
+      }
       final double union = (double) h1[a] + h2[b] - intersection;
       final double iou = intersection / union;
       return 1 - iou;

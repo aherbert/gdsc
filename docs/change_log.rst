@@ -95,6 +95,8 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`utility_plugins:Mask Overlap` plugin updates the display of the relabelled mask and
   sets the display range to the range of the object values. Previously the changes were not
   shown until the image was redrawn.
+* The :ref:`utility_plugins:Mask Overlap` plugin only matches objects that overlap. Previously
+  an ``IoU threshold`` of zero could match objects with no overlap.
 
 
 Version 2.0
