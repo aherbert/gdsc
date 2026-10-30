@@ -637,7 +637,8 @@ public class FrapAnalysis_PlugIn implements PlugInFilter {
     // The number of standard deviations from the mean for a significant jump.
     // This is squared for convenience during processing.
     // Use a low threshold as the raw scores are later filtered.
-    final double scoreThreshold = MathUtils.pow2(Math.min(1, settings.scoreThreshold / 4));
+    // The raw threshold is a quarter of the score threshold (minimum of 1).
+    final double scoreThreshold = MathUtils.pow2(Math.max(1, settings.scoreThreshold / 4));
 
     // Create a mask stack with bleaching events marked on it
     final ImageStack events2 = IJ.createImage("Events2", "32-bit black", aligned.getWidth(),

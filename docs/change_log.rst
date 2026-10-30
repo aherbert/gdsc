@@ -150,6 +150,9 @@ Major release of GDSC ImageJ Plugins.
   the block.
 * The :ref:`utility_plugins:FRAP Analysis` plugin logs the reason a curve fit failed. The initial
   estimates for the bleaching and recovery rates use the calibrated time of the frames.
+* The :ref:`utility_plugins:FRAP Analysis` plugin records the bleaching score of a pixel if it is
+  above a quarter of the ``Score threshold`` (minimum 1). Previously the scores were recorded
+  above a fixed threshold of 1. This can change the detected bleached regions.
 
 
 Version 2.0
