@@ -64,6 +64,10 @@ public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
   private ImagePlus imp;
   /** Whether the image has an x&y scale. */
   private boolean hasScale;
+  /** The pixel width of the image calibration. */
+  private double pixelWidth = 1;
+  /** The pixel height of the image calibration. */
+  private double pixelHeight = 1;
   /** The number of passes (filter directions * colour channels * stack slices). */
   private int passes = 1;
   private int pass; // Current pass
@@ -184,6 +188,9 @@ public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
     gd.addSlider("Sigma (Radius)", 0.5, 20, settings.sigma);
     if (imp.getCalibration() != null && !imp.getCalibration().getUnits().equals("pixels")) {
       hasScale = true;
+      // Store the calibration. The image reference is removed for the final run.
+      pixelWidth = imp.getCalibration().pixelWidth;
+      pixelHeight = imp.getCalibration().pixelHeight;
       gd.addCheckbox("Scaled Units (" + imp.getCalibration().getUnits() + ")",
           settings.sigmaScaled);
     } else {
@@ -259,10 +266,8 @@ public class LaplacianOfGaussian_PlugIn implements ExtendedPlugInFilter {
       pass = 1;
     }
 
-    final double sigmaX =
-        settings.sigmaScaled ? settings.sigma / imp.getCalibration().pixelWidth : settings.sigma;
-    final double sigmaY =
-        settings.sigmaScaled ? settings.sigma / imp.getCalibration().pixelHeight : settings.sigma;
+    final double sigmaX = settings.sigmaScaled ? settings.sigma / pixelWidth : settings.sigma;
+    final double sigmaY = settings.sigmaScaled ? settings.sigma / pixelHeight : settings.sigma;
 
     // Recompute only if necessary
     // Compute the LoG image using the ImageScience library.

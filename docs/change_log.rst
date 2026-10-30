@@ -105,6 +105,8 @@ Major release of GDSC ImageJ Plugins.
   stated scales up to the minimum image dimension were computed.
 * The :ref:`utility_plugins:Scale Space` ``Difference of Gaussians`` output shows an error if
   fewer than 2 scales are computed. Previously the single Gaussian image was output.
+* Fix the :ref:`utility_plugins:Laplacian of Gaussian` plugin failing when using the
+  ``Scaled Units`` option. The preview worked but the final filter raised an error.
 
 
 Version 2.0
