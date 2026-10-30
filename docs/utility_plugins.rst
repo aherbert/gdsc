@@ -1106,6 +1106,14 @@ Output
 
 The border replaces the pixels of the input image. The change can be reverted using ``Edit > Undo``. For a stack image ``ImageJ`` asks if all the image planes should be processed.
 
+An example of a mask before and after creating a border is shown in :numref:`Figure %s <fig_mask_border_example>`.
+
+.. _fig_mask_border_example:
+.. figure:: images/mask_border_example.png
+    :align: center
+
+    Mask to Border input mask (left) and output border (right) using an ``inner`` width of 4 and an ``outer`` width of 0
+
 .. index:: ! Mask Overlap
 
 Mask Overlap
