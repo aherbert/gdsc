@@ -27,6 +27,7 @@ package uk.ac.sussex.gdsc.ij.threshold;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Undo;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
@@ -107,7 +108,8 @@ public class ApplyMask_PlugIn implements PlugInFilter {
     gd.addChoice("Mask_Image", imageList.toArray(new String[0]), selectedImage);
     final String[] options = MaskCreator_PlugIn.getOptions();
     gd.addChoice("Option", options, options[selectedOption]);
-    gd.addChoice("Threshold_Method", AutoThreshold.getMethods(), selectedThresholdMethod);
+    gd.addChoice("Threshold_Method", MaskCreator_PlugIn.getThresholdMethods(),
+        selectedThresholdMethod);
     gd.addNumericField("Channel", selectedChannel, 0);
     gd.addNumericField("Slice", selectedSlice, 0);
     gd.addNumericField("Frame", selectedFrame, 0);
@@ -174,6 +176,7 @@ public class ApplyMask_PlugIn implements PlugInFilter {
   private void initialise(ImagePlus imp, int option) {
     this.imp = imp;
     this.option = option;
+    thresholdMethod = AutoThreshold.Method.OTSU.toString();
   }
 
   /**
@@ -187,11 +190,11 @@ public class ApplyMask_PlugIn implements PlugInFilter {
 
     final MaskCreator_PlugIn mc = new MaskCreator_PlugIn();
     mc.setImp(maskImp);
-    mc.setOption(selectedOption);
-    mc.setThresholdMethod(selectedThresholdMethod);
-    mc.setChannel(selectedChannel);
-    mc.setSlice(selectedSlice);
-    mc.setFrame(selectedFrame);
+    mc.setOption(option);
+    mc.setThresholdMethod(thresholdMethod);
+    mc.setChannel(channel);
+    mc.setSlice(slice);
+    mc.setFrame(frame);
     maskImp = mc.createMask();
 
     // Check the mask has the correct dimensions
@@ -225,6 +228,12 @@ public class ApplyMask_PlugIn implements PlugInFilter {
     }
     if (sb != null) {
       IJ.log(sb.toString());
+    }
+
+    // Support undo of a single image
+    if (imp.getStackSize() == 1) {
+      imp.getProcessor().snapshot();
+      Undo.setup(Undo.FILTER, imp);
     }
 
     // Apply the mask to the correct stack dimensions

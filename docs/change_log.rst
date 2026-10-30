@@ -159,6 +159,10 @@ Major release of GDSC ImageJ Plugins.
   option. Previously the option was reset to 3.
 * Fix the :ref:`thresholding_plugins:Multi-Threshold` plugin failing when the histogram has no
   values, e.g. an empty image using the ``Ignore zero`` option. An error message is shown.
+* The :ref:`thresholding_plugins:Apply Mask` plugin uses the same threshold methods as the
+  :ref:`thresholding_plugins:Mask Creator`, including the multi-level Otsu methods; the ``None``
+  method is removed. The change to a single image can be undone. The plugin uses the mask
+  settings set using the Java API; previously the settings of the last dialog were used.
 * The :ref:`utility_plugins:FRAP Analysis` plugin records the bleaching score of a pixel if it is
   above a quarter of the ``Score threshold`` (minimum 1). Previously the scores were recorded
   above a fixed threshold of 1. This can change the detected bleached regions.

@@ -116,6 +116,15 @@ public class MaskCreator_PlugIn implements PlugIn {
     return options.clone();
   }
 
+  /**
+   * Gets the threshold methods.
+   *
+   * @return the threshold methods
+   */
+  static String[] getThresholdMethods() {
+    return methods.clone();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(String arg) {
