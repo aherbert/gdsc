@@ -346,6 +346,8 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
     int valid = 0;
     float[] means2 = new float[means.length];
     float[] exposures2 = new float[means.length];
+    // The slice number of each unsaturated slice
+    final int[] slices2 = new int[means.length];
     for (int i = 0; i < means.length; i++) {
       if (means[i] < 0) {
         debug("Saturated pixels in slice %d : %s", i + 1, stack.getShortSliceLabel(i + 1));
@@ -353,6 +355,7 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
       } else {
         means2[valid] = means[i];
         exposures2[valid] = exposures[i];
+        slices2[valid] = i + 1;
         valid++;
       }
     }
@@ -447,8 +450,9 @@ public class IntensityAnalysis_PlugIn implements ExtendedPlugInFilter {
         plot.drawLine(x1, y1, x2, y2);
         ImageJUtils.display(title, plot);
 
-        sb.append('\t').append(bestStart + 1);
-        sb.append('\t').append(bestStart + settings.window);
+        // Report the slice numbers of the window
+        sb.append('\t').append(slices2[bestStart]);
+        sb.append('\t').append(slices2[bestStart + settings.window - 1]);
         sb.append('\t').append(MathUtils.rounded(x1));
         sb.append('\t').append(MathUtils.rounded(x2));
         sb.append('\t').append(MathUtils.rounded(bestSumOfSquares));

@@ -139,6 +139,9 @@ Major release of GDSC ImageJ Plugins.
   the spot centre of mass is within the spot used the X coordinate for both X and Y.
 * The :ref:`utility_plugins:Spot Separation` results report the ``Peak ID`` of a pair using the
   first spot. Previously the second spot was used.
+* The :ref:`utility_plugins:Intensity Analysis` results report the ``Start`` and ``End`` of the
+  best fit window as slice numbers. Previously the position in the list of unsaturated slices was
+  reported.
 
 
 Version 2.0
