@@ -120,7 +120,7 @@ Each frame is processed to:
 #. Filter the image using a Gaussian blur. If a second, larger blur is configured then a difference-of-Gaussians filter is used: the image with the larger blur (the local background) is subtracted from the image with the smaller blur.
 #. Mask all the nuclei using an automatic threshold method.
 #. Fill holes in the mask.
-#. Remove outliers from the mask using a rank filter. A pixel is replaced by the median of the surrounding pixels if it is brighter than the median by more than a threshold.
+#. Remove outliers from the mask using a rank filter. A nucleus pixel is removed if the median of the surrounding pixels is background. This removes small foreground regions, for example noise, and smooths the outline of the nuclei.
 #. Identify each nucleus as a region of 4-connected pixels. Remove nuclei below the minimum size.
 #. Divide nuclei above the maximum size using a watershed. Any new nuclei below the minimum size are removed.
 
@@ -153,7 +153,7 @@ The ``Nuclei Outline`` plugin uses a non-blocking dialog. This allows the curren
      - The radius (in pixels) of the rank filter used to remove outliers from the mask. Use zero to disable outlier removal.
 
    * - Outlier threshold
-     - The threshold of the rank filter used to remove outliers from the mask. A pixel is replaced by the median of the surrounding pixels if it is brighter than the median by more than the threshold. The mask uses values of 0 and 255.
+     - The threshold of the rank filter used to remove outliers from the mask. A pixel is replaced by the median of the surrounding pixels if it is brighter than the median by more than the threshold. The mask uses values of 0 for the background and 255 for the nuclei; any threshold below 255 removes nucleus pixels where the median is background.
 
    * - Max nucleus size
      - The maximum size of a nucleus (in calibrated units squared). Larger nuclei are divided using a watershed.

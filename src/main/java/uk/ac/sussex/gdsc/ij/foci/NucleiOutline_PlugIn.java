@@ -808,12 +808,14 @@ public class NucleiOutline_PlugIn implements PlugIn {
 
     fillHoles(bp);
 
-    removeOutliers(settings, bp);
-
     // Reset for the ObjectAnalyzer which requires background=0
     if (invert) {
       bp.invert();
     }
+
+    // Remove bright outliers with the nuclei as foreground (255). This is independent of the
+    // ImageJ binary processing settings.
+    removeOutliers(settings, bp);
 
     // Note:
     // Step here to create a distance map, optionally blur, then threshold again.

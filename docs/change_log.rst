@@ -88,6 +88,10 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`cells_plugins:Cell Outliner` stack dialog ``No`` button processes only the current
   frame and z-slice. Previously the button processed the selected dimensions, the same as the
   ``Yes`` button.
+* The :ref:`cells_plugins:Nuclei Outline` plugin removes outliers from the mask of the nuclei
+  independent of the ``ImageJ`` ``Black background`` binary option. Previously outlier removal
+  filled small gaps in the background, instead of removing small nuclei, when the option was not
+  selected. This also applies to the TrackMate ``Nucleus detector``.
 
 
 Version 2.0
