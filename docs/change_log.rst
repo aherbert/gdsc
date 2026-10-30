@@ -110,6 +110,15 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`utility_plugins:Scale Space` ``Sub interval steps`` use a constant ratio between
   consecutive scales within each octave. Previously the scales were evenly spaced. This changes
   the scales computed when using sub interval steps.
+* The :ref:`utility_plugins:Align Images` plugin names the aligned image using the suffix
+  ``Aligned``. Previously the suffix ``Aligned Correlation`` was used.
+* The :ref:`utility_plugins:Align Images` plugin shows an error for invalid input: a reference
+  mask with a different size to the reference image; or a maximum translation below the minimum
+  translation. Previously the plugin stopped without a message.
+* The :ref:`utility_plugins:Align Images`, :ref:`utility_plugins:Align Images FFT` and
+  :ref:`utility_plugins:Align Stacks` plugins report that a greyscale image (8-bit, 16-bit or
+  32-bit) is required if no suitable image is open. Previously the message stated only 8-bit and
+  16-bit images were supported.
 
 
 Version 2.0

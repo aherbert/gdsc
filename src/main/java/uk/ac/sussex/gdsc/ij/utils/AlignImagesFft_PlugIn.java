@@ -135,7 +135,7 @@ public class AlignImagesFft_PlugIn implements PlugIn {
     final String[] imageList = getImagesList();
 
     if (imageList.length < 1) {
-      IJ.showMessage("Error", "Only 8-bit and 16-bit images are supported");
+      IJ.showMessage(TITLE, "Requires an open greyscale image (8-bit, 16-bit or 32-bit)");
       return;
     }
 
@@ -174,7 +174,7 @@ public class AlignImagesFft_PlugIn implements PlugIn {
     for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList()) {
       final ImagePlus imp = WindowManager.getImage(id);
 
-      // Image must be 8-bit/16-bit
+      // Image must be greyscale: 8-bit, 16-bit or 32-bit
       if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16
           || imp.getType() == ImagePlus.GRAY32)) {
         // Check it is not one the result images

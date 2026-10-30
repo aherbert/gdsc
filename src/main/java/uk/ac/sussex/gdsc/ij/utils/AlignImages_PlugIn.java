@@ -93,7 +93,7 @@ public class AlignImages_PlugIn implements PlugIn {
     final String[] imageList = getImagesList();
 
     if (imageList.length < 1) {
-      IJ.showMessage("Error", "Only 8-bit and 16-bit images are supported");
+      IJ.showMessage(TITLE, "Requires an open greyscale image (8-bit, 16-bit or 32-bit)");
       return;
     }
 
@@ -110,7 +110,7 @@ public class AlignImages_PlugIn implements PlugIn {
             subPixelMethod, interpolationMethod, showCorrelationImage, clipOutput);
 
     if (alignedImp != null) {
-      ImageJUtils.display(alignedImp.getTitle() + " Correlation", alignedImp.getImageStack());
+      ImageJUtils.display(alignedImp.getTitle(), alignedImp.getImageStack());
     }
   }
 
@@ -129,7 +129,7 @@ public class AlignImages_PlugIn implements PlugIn {
     for (final int id : uk.ac.sussex.gdsc.core.ij.ImageJUtils.getIdList()) {
       final ImagePlus imp = WindowManager.getImage(id);
 
-      // Image must be 8-bit/16-bit
+      // Image must be greyscale: 8-bit, 16-bit or 32-bit
       if (imp != null && (imp.getType() == ImagePlus.GRAY8 || imp.getType() == ImagePlus.GRAY16
           || imp.getType() == ImagePlus.GRAY32)) {
         // Check it is not one the result images
@@ -225,7 +225,7 @@ public class AlignImages_PlugIn implements PlugIn {
   public ImagePlus exec(ImagePlus refImp, ImageProcessor maskIp, ImagePlus targetImp, int minXShift,
       int maxXShift, int minYShift, int maxYShift, int subPixelMethod, int interpolationMethod,
       boolean showCorrelationImage, boolean clipOutput) {
-    final ImageProcessor refIp = refImp.getProcessor();
+    final ImageProcessor refIp = (refImp == null) ? null : refImp.getProcessor();
     if (targetImp == null) {
       targetImp = refImp;
     }
@@ -235,6 +235,7 @@ public class AlignImages_PlugIn implements PlugIn {
       return null;
     }
     if (maxXShift < minXShift || maxYShift < minYShift) {
+      IJ.error(TITLE, "The maximum translation must not be below the minimum translation");
       return null;
     }
 
@@ -270,10 +271,13 @@ public class AlignImages_PlugIn implements PlugIn {
 
   private static boolean isValid(ImageProcessor refIp, ImageProcessor maskIp, ImagePlus targetImp) {
     if (refIp == null || targetImp == null) {
+      IJ.error(TITLE, "No reference or target image");
       return false;
     }
-    if (maskIp != null) {
-      return refIp.getWidth() == maskIp.getWidth() && refIp.getHeight() == maskIp.getHeight();
+    if (maskIp != null
+        && (refIp.getWidth() != maskIp.getWidth() || refIp.getHeight() != maskIp.getHeight())) {
+      IJ.error(TITLE, "The reference mask must have the same width and height as the reference");
+      return false;
     }
     return true;
   }
