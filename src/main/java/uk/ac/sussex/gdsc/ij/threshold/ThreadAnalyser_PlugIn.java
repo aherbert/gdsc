@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import uk.ac.sussex.gdsc.core.data.VisibleForTesting;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
 import uk.ac.sussex.gdsc.core.utils.FileUtils;
@@ -387,7 +388,8 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
     return ip;
   }
 
-  private static Roi createLabels(List<ChainCode> chainCodes) {
+  @VisibleForTesting
+  static Roi createLabels(List<ChainCode> chainCodes) {
     int npoints = 0;
     final int[] xpoints = new int[chainCodes.size()];
     final int[] ypoints = new int[xpoints.length];
@@ -397,8 +399,8 @@ public class ThreadAnalyser_PlugIn implements PlugIn {
       final int[] run = code.getRun();
       // Run along half of the chain
       for (int i = 0; i < run.length / 2; i++) {
-        xpos += ChainCode.getXDirection(i);
-        ypos += ChainCode.getYDirection(i);
+        xpos += ChainCode.getXDirection(run[i]);
+        ypos += ChainCode.getYDirection(run[i]);
       }
       xpoints[npoints] = xpos;
       ypoints[npoints] = ypos;

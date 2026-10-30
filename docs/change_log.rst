@@ -171,6 +171,8 @@ Major release of GDSC ImageJ Plugins.
 * Fix the :ref:`thresholding_plugins:Edge Mask` plugin for 32-bit images. Previously the pixel
   values were compared to the background using the raw bits of the float value, and the mask was
   not created.
+* Fix the :ref:`thresholding_plugins:Thread Analyser` ``Label threads`` option positioning the
+  label away from the middle of the thread.
 * The :ref:`utility_plugins:FRAP Analysis` plugin records the bleaching score of a pixel if it is
   above a quarter of the ``Score threshold`` (minimum 1). Previously the scores were recorded
   above a fixed threshold of 1. This can change the detected bleached regions.
