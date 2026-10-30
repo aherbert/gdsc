@@ -124,6 +124,8 @@ Major release of GDSC ImageJ Plugins.
   Previously the maximum translation was excluded, and a range with equal minimum and maximum
   did not search any translation. A maximum translation below the minimum translation is
   reported as an error.
+* Fix the :ref:`utility_plugins:HSB Picker` failing when the image is clicked with the HSB
+  Picker tool. The ``Sample radius`` slider was not initialised.
 
 
 Version 2.0

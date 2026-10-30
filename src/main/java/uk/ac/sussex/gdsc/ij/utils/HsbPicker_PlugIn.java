@@ -275,8 +275,8 @@ public class HsbPicker_PlugIn extends PlugInFrame {
 
     setLayout(mainGrid);
 
-    createSliderPanel(new Scrollbar(Scrollbar.HORIZONTAL, 2, 1, 0, 15), "Sample radius",
-        new Label("0"), 1);
+    sampleSlider = new Scrollbar(Scrollbar.HORIZONTAL, 2, 1, 0, 15);
+    createSliderPanel(sampleSlider, "Sample radius", new Label("0"), 1);
 
     pixelCountLabel = new Label();
     for (int i = 0; i < 3; i++) {
