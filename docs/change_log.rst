@@ -83,6 +83,8 @@ Major release of GDSC ImageJ Plugins.
   Previously the ``Otsu`` method was always used.
 * The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin saves the ``Opacity`` option to the
   preferences. Previously the option was reset when ``ImageJ`` was restarted.
+* The :ref:`cells_plugins:Nuclei Outline` dialog describes the analysis of all frames of the
+  current channel and z-slice. Previously the dialog stated the nuclei were tracked across frames.
 
 
 Version 2.0

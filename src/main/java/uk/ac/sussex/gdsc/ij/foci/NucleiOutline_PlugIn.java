@@ -648,7 +648,7 @@ public class NucleiOutline_PlugIn implements PlugIn {
     // Get the user options
     NonBlockingExtendedGenericDialog gd = new NonBlockingExtendedGenericDialog(TITLE);
     gd.addHelp(HelpUrls.getUrl("nuclei-outline"));
-    gd.addMessage("Track nuclei across frames");
+    gd.addMessage("Outline nuclei in all frames of the current channel and z-slice");
     gd.addSlider("Blur", 0, 4.5, settings.getBlur1());
     gd.addSlider("Blur2", 0, 20, settings.getBlur2());
     gd.addChoice("Threshold_method", AutoThreshold.getMethods(true),
