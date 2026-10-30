@@ -107,6 +107,9 @@ Major release of GDSC ImageJ Plugins.
   fewer than 2 scales are computed. Previously the single Gaussian image was output.
 * Fix the :ref:`utility_plugins:Laplacian of Gaussian` plugin failing when using the
   ``Scaled Units`` option. The preview worked but the final filter raised an error.
+* The :ref:`utility_plugins:Scale Space` ``Sub interval steps`` use a constant ratio between
+  consecutive scales within each octave. Previously the scales were evenly spaced. This changes
+  the scales computed when using sub interval steps.
 
 
 Version 2.0

@@ -216,10 +216,16 @@ public class ScaleSpace_PlugIn implements PlugInFilter {
     final BiFunction<ImageProcessor, Double, ImageProcessor> fun = createFunction();
     final Ticker ticker = ImageJUtils.createTicker(steps, 2, "Computing ...");
 
+    // Sub intervals within each octave use a log-uniform spacing: t * 2^(i / n).
+    // This creates a constant ratio between consecutive scales.
+    final int n = settings.subIntervals + 1;
+    final double[] factors = new double[n];
+    for (int i = 0; i < n; i++) {
+      factors[i] = Math.pow(2, (double) i / n);
+    }
     for (double scaleT = minT; scaleT <= maxT; scaleT *= 2) {
-      final double step = scaleT / (settings.subIntervals + 1);
-      for (int i = 0; i <= settings.subIntervals; i++) {
-        final Double t = scaleT + i * step;
+      for (final double factor : factors) {
+        final Double t = scaleT * factor;
         futures.add(executor.submit(() -> {
           // Since it is 2D use sqrt(t) for each dimension
           final Double sigma = Math.sqrt(t);
