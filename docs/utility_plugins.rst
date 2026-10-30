@@ -135,6 +135,78 @@ Contains options to:
 - Provide a mask image to specify which pixels to include in the analysis
 - Clip the bicubic interpolated output to fit within the min-max of the original image
 
+Each image in the target stack is compared to the reference image at every translation within the configured range. The score is the Pearson correlation of the overlapping pixels. Pixels with a value of zero, or a saturated value (the maximum of an 8-bit, 10-bit, 12-bit or 16-bit image), are ignored. The translation with the highest score is used to align the target image.
+
+This plugin computes the correlation directly at each translation. It is slow for a large translation range; in this case use the :ref:`utility_plugins:Align Images FFT` plugin.
+
+.. index:: Align Images Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Align Images`` plugin uses a standard ``ImageJ`` dialog. The images must be greyscale (8-bit, 16-bit or 32-bit). The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Reference image
+     - The reference image. The current image plane is used.
+
+   * - Reference mask
+     - An optional mask image. Only pixels in the reference image where the mask is non-zero are used to compute the correlation. The mask must have the same width and height as the reference image.
+
+   * - Target image
+     - The image stack to align. Each image plane is aligned to the reference. Use ``[None]`` to align the reference image stack.
+
+   * - Min X translation
+     - The minimum translation in the X direction (in pixels).
+
+   * - Max X translation
+     - The maximum translation in the X direction (in pixels).
+
+   * - Min Y translation
+     - The minimum translation in the Y direction (in pixels).
+
+   * - Max Y translation
+     - The maximum translation in the Y direction (in pixels).
+
+   * - Sub-pixel method
+     - The method used to refine the translation with sub-pixel accuracy:
+
+       * ``None``: Use the integer translation with the highest score.
+       * ``Cubic``: Search a cubic spline interpolation of the scores around the best translation.
+       * ``Gaussian``: Fit a Gaussian to the scores around the best translation.
+
+   * - Interpolation
+     - The interpolation method used to translate the image by a sub-pixel offset: ``None``; ``Bilinear``; or ``Bicubic``. Integer offsets do not use interpolation.
+
+   * - Clip output
+     - Bicubic interpolation can create values above the maximum of the original image. If selected then these values are set to the maximum of the original image.
+
+   * - Show correlation image
+     - Show a stack of the scores for each translation. The image has a pixel for each translation in the range, starting from the minimum translation.
+
+.. index:: Align Images Output
+
+Output
+~~~~~~
+
+The aligned stack is shown as a new image named using the target image title with the suffix ``Aligned``. The optional correlation image uses the suffix ``Correlation``. If an image with the same name is open then it is replaced.
+
+The plugin records the best translation for each image plane to the ``ImageJ`` log:
+
+.. code-block:: text
+
+    Best Slice 1  x 2.08  y -1.13 = 0.948 (interpolated score 0.951)
+
+The ``x`` and ``y`` values are the translation; the score is the correlation at the best integer translation. If a sub-pixel method is used then the score is also estimated at the sub-pixel translation. The text ``Best Slice***`` marks a translation at the limit of the range; in this case the range should be increased.
+
+If the inputs are invalid, for example the mask is a different size to the reference, then an error is shown and no output is created.
+
 .. index:: ! Align Images FFT
 
 Align Images FFT
@@ -144,14 +216,81 @@ Aligns an image stack to a reference image using XY translation to maximise the 
 
 Outputs a new stack with the best alignment with optional sub-pixel accuracy (performed using a cubic spline fit).
 
-Contains options to:
+Note: This plugin is faster than the :ref:`utility_plugins:Align Images` plugin for large images and/or a large translation space. Note that the results will differ slightly due to the use of different correlation methods.
 
-- Restrict the translation space
-- Normalise the correlation
-- Show the correlation and normalised images
-- Clip the interpolated output to fit within the min-max of the original image
+The images are padded to a square with a power of 2 size for the FFT. By default the translation is restricted so that at least half of the smaller image overlaps the larger image.
 
-Note: This plugin is faster than the 'Align Images' plugin for large images and/or a large translation space. Note that the results will differ slightly due to the use of different correlation methods.
+.. index:: Align Images FFT Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Align Images FFT`` plugin uses a standard ``ImageJ`` dialog. The images must be greyscale (8-bit, 16-bit or 32-bit). The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Reference image
+     - The reference image. The current image plane is used.
+
+   * - Target image
+     - The image stack to align. Each image plane is aligned to the reference. Use ``[Reference stack]`` to align the reference image stack.
+
+   * - Window function
+     - The window function applied to the images before the correlation is computed: ``None``; ``Hanning``; ``Cosine``; or ``Tukey``. The window function gradually reduces the edge pixels to zero to reduce edge artifacts in the frequency domain.
+
+   * - Restrict translation
+     - Restrict the translation to the configured range. If not selected then the translation is restricted so that at least half of the smaller image overlaps the larger image.
+
+   * - Min X translation
+     - The minimum translation in the X direction (in pixels).
+
+   * - Max X translation
+     - The maximum translation in the X direction (in pixels).
+
+   * - Min Y translation
+     - The minimum translation in the Y direction (in pixels).
+
+   * - Max Y translation
+     - The maximum translation in the Y direction (in pixels).
+
+   * - Sub-pixel method
+     - The method used to refine the translation with sub-pixel accuracy:
+
+       * ``None``: Use the integer translation with the highest score.
+       * ``Cubic``: Search a cubic spline interpolation of the scores around the best translation.
+
+   * - Interpolation
+     - The interpolation method used to translate the image by a sub-pixel offset: ``None``; ``Bilinear``; or ``Bicubic``. Integer offsets do not use interpolation.
+
+   * - Clip output
+     - Bicubic interpolation can create values above the maximum of the original image. If selected then these values are set to the maximum of the original image.
+
+   * - Normalised
+     - Normalise the correlation using the intensity of the reference image under the target image at each translation. The score is in the range -1 to 1. If not selected then the correlation is not normalised and bright regions of the reference image can dominate the alignment.
+
+   * - Show correlation image
+     - Show a stack of the correlation scores.
+
+   * - Show normalised image
+     - Show the reference and target images after the window function and padding are applied.
+
+.. index:: Align Images FFT Output
+
+Output
+~~~~~~
+
+The aligned stack is shown as a new image named using the target image title with the suffix ``Aligned``. The optional images use the suffixes ``Correlation``, ``Normalised Ref`` and ``Normalised Target``. If an image with the same name is open then it is replaced.
+
+The plugin records the best translation for each image plane to the ``ImageJ`` log:
+
+.. code-block:: text
+
+    Best Slice 1  x 2.08  y -1.13 = 0.948 (interpolated score 0.951)
 
 .. index:: ! Align Stacks
 
@@ -161,6 +300,74 @@ Align Stacks
 Aligns open image stacks to a reference image using XY translation to maximise the normalised correlation. Accepts multi-dimensional stacks. The self-align mode aligns all timepoints within a stack to the current frame.
 
 For each timepoint a z-projection (e.g. maximum or average intensity) is performed per channel. The projection is thresholded using the Otsu method to extract the signal, normalised to 0-255 and the resulting channel images are tiled to a composite image. The composite is then aligned using the maximum correlation between the images computed using a fast Fourier transform (FFT) with an optional window function. Using a composite ensures each channel contributes equally to the alignment. The translation is applied to the entire stack for that timepoint.
+
+The plugin has two modes:
+
+* Align other stacks: All open images with the same type and dimensions as the reference image are aligned. If the reference has a single frame then each frame of the other images is aligned to the reference; only the width, height and channels must match. If the reference has multiple frames then each frame of the other images is aligned to the same frame of the reference; all the dimensions must match.
+* Self-align: Each frame of the reference image is aligned to its current frame.
+
+The aligned images are modified in place. This cannot be undone. The reference image is not modified, except in the self-align mode.
+
+.. index:: Align Stacks Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Align Stacks`` plugin uses a standard ``ImageJ`` dialog. The images must be greyscale (8-bit, 16-bit or 32-bit). The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Reference image
+     - The reference image.
+
+   * - Self-align
+     - Align all the frames of the reference image to its current frame.
+
+   * - Projection
+     - The z-projection method used to create a single image for each channel of a frame.
+
+   * - Window function
+     - The window function applied to the images before the correlation is computed: ``None``; ``Hanning``; ``Cosine``; or ``Tukey``. The window function gradually reduces the edge pixels to zero to reduce edge artifacts in the frequency domain.
+
+   * - Restrict translation
+     - Restrict the translation to the configured range. If not selected then the translation is restricted so that at least half of the image overlaps the reference.
+
+   * - Min X translation
+     - The minimum translation in the X direction (in pixels).
+
+   * - Max X translation
+     - The maximum translation in the X direction (in pixels).
+
+   * - Min Y translation
+     - The minimum translation in the Y direction (in pixels).
+
+   * - Max Y translation
+     - The maximum translation in the Y direction (in pixels).
+
+   * - Sub-pixel method
+     - The method used to refine the translation with sub-pixel accuracy:
+
+       * ``None``: Use the integer translation with the highest score.
+       * ``Cubic``: Search a cubic spline interpolation of the scores around the best translation.
+
+   * - Interpolation
+     - The interpolation method used to translate the image by a sub-pixel offset: ``None``; ``Bilinear``; or ``Bicubic``. Integer offsets do not use interpolation.
+
+   * - Clip output
+     - Bicubic interpolation can create values above the maximum of the original image. If selected then these values are set to the maximum of the original image.
+
+The self-align mode can be run from a macro using:
+
+.. code::
+
+    call('uk.ac.sussex.gdsc.ij.utils.AlignStacks_PlugIn.selfAlign');
+
+This shows the dialog with the self-align mode selected for the current image.
 
 .. index:: ! Image Scaler
 
