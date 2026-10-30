@@ -22,16 +22,15 @@ The plugin requires a greyscale image (8-bit, 16-bit or 32-bit) with a point ROI
 Method
 ~~~~~~
 
-The plugin performs the following steps:
+The plugin performs the following steps for each point:
 
-#. The image is convolved with a set of edge detection kernels. Each kernel is a 1D Difference-of-Gaussians (DoG) profile, an approximation to the Laplacian-of-Gaussian (LoG), drawn along an arc with the curvature of a circle of the expected cell radius. The kernels are rotated at 12 degree intervals around the full circle. The kernel size and smoothing can be configured.
-#. For each point, an edge projection is created within the search region around the point. The search region extends from the point to the cell radius multiplied by (1 + tolerance), plus half the kernel width. Each pixel is assigned the maximum edge response of the kernels orientated within 30 degrees of the direction from the point to the pixel. This selects edges that are perpendicular to a line from the centre.
-#. The edge projection is weighted using the distance to the current outline of the cell. The outline is initialised as a circle of the specified radius around the point. Pixels close to the outline have a high weight; the weight falls to zero at a distance of 0.9 times the cell radius from the outline.
-#. A polygon outline is constructed using the highest weighted edge value in each 10 degree segment around the centre. The polygon coordinates can be smoothed.
-#. The polygon is fitted using an elliptical shape of two half-ellipses placed back-to-back. The two halves share the minor axis and have different major axes allowing egg-like shapes. The fitted shape is used as the current outline of the cell and the process repeats from step 3 for the configured number of iterations.
-#. The final outline is the polygon or, optionally, the elliptical fit. The outline can be dilated to expand it to encompass the entire cell.
+#. Search for edges around the point at the expected cell radius. The search looks for edges that curve around the point, like the edge of a round cell.
+#. Start with a circle of the expected radius as the outline of the cell.
+#. Find the strongest edge in each direction around the point, favouring edges close to the current outline. Join these edges to make a new outline (a polygon).
+#. Fit an oval shape (an elliptical fit) to the new outline. The oval can be egg-shaped. Use this as the current outline and repeat from step 3 to refine the outline.
+#. Output the final outline, or the fitted oval shape. The outline can be expanded to cover the entire cell.
 
-If the elliptical fit fails then a message is written to the ``ImageJ`` log and the polygon outline is used.
+If an oval shape cannot be fitted then a message is written to the ``ImageJ`` log and the polygon outline is used.
 
 .. index:: Cell Outliner Plugin Interface
 
@@ -230,7 +229,7 @@ The ``Nuclei Outline Summary`` table contains a row for each nucleus with the fo
      - The frame.
 
    * - Centre X
-     - The X coordinate of the centre of the nucleus (in pixels). This is the mean of the pixel coordinates.
+     - The X coordinate of the centre of the nucleus (in pixels).
 
    * - Centre Y
      - The Y coordinate of the centre of the nucleus (in pixels).
