@@ -255,8 +255,14 @@ public class AutoThreshold_PlugIn implements PlugIn {
 
     settings.save();
 
+    // Set the threshold (instead of thresholding the pixels) only when thresholding a single
+    // image or a single slice of a stack. Ignore the option for 'Try all' and the whole stack.
+    final boolean tryAll = settings.method.equals("Try all");
+    final boolean setThreshold =
+        settings.doIset && !tryAll && !(stackSize > 1 && settings.doIstack);
+
     // 4 - Execute!
-    if (settings.method.equals("Try all")) {
+    if (tryAll) {
       ImageProcessor ip = imp.getProcessor();
       final int xe = ip.getWidth();
       final int ye = ip.getHeight();
@@ -290,7 +296,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
             imp2 = new ImagePlus(TITLE, tstack);
             imp2.updateAndDraw();
             final Object[] result = exec(imp2, MethodHolder.METHODS[k], settings.noWhite,
-                settings.noBlack, settings.doIwhite, settings.doIset, settings.doIlog,
+                settings.noBlack, settings.doIwhite, setThreshold, settings.doIlog,
                 settings.doIstackHistogram, settings.stdDevMultiplier);
             for (int j = 1; j <= stackSize; j++) {
               tstack.setSliceLabel(tstack.getSliceLabel(j) + " = " + result[0], j);
@@ -326,7 +332,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
             for (int k = 1; k < ml; k++) {
               imp2.setSlice(k);
               final Object[] result = exec(imp2, MethodHolder.METHODS[k], settings.noWhite,
-                  settings.noBlack, settings.doIwhite, settings.doIset, settings.doIlog,
+                  settings.noBlack, settings.doIwhite, setThreshold, settings.doIlog,
                   settings.doIstackHistogram, settings.stdDevMultiplier);
               tstack.setSliceLabel(tstack.getSliceLabel(k) + " = " + result[0], k);
             }
@@ -363,7 +369,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
         imp2.setSlice(k);
         final long start = System.currentTimeMillis();
         final Object[] result = exec(imp2, MethodHolder.METHODS[k], settings.noWhite,
-            settings.noBlack, settings.doIwhite, settings.doIset, settings.doIlog,
+            settings.noBlack, settings.doIwhite, setThreshold, settings.doIlog,
             settings.doIstackHistogram, settings.stdDevMultiplier);
         IJ.log("  " + MethodHolder.METHOD_NAMES[k] + " = " + result[0] + " ("
             + IJ.d2s((System.currentTimeMillis() - start) / 1000.0, 4) + "s)");
@@ -387,7 +393,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
     if (stackSize > 1 && (settings.doIstack || settings.doIstackHistogram)) { // whole stack
       if (settings.doIstackHistogram) { // one global histogram
         final Object[] result = exec(imp, method, settings.noWhite, settings.noBlack,
-            settings.doIwhite, settings.doIset, settings.doIlog, settings.doIstackHistogram,
+            settings.doIwhite, setThreshold, settings.doIlog, settings.doIstackHistogram,
             settings.stdDevMultiplier);
         if (((Integer) result[0]) != -1 && imp.getBitDepth() == 16) {
           new StackConverter(imp).convertToGray8();
@@ -397,7 +403,7 @@ public class AutoThreshold_PlugIn implements PlugIn {
         for (int k = 1; k <= stackSize; k++) {
           imp.setSlice(k);
           final Object[] result = exec(imp, method, settings.noWhite, settings.noBlack,
-              settings.doIwhite, settings.doIset, settings.doIlog, settings.doIstackHistogram,
+              settings.doIwhite, setThreshold, settings.doIlog, settings.doIstackHistogram,
               settings.stdDevMultiplier);
           if (((Integer) result[0]) == -1) {
             success = false; // the threshold existed
@@ -410,9 +416,12 @@ public class AutoThreshold_PlugIn implements PlugIn {
       imp.setSlice(1);
     } else { // just one slice, leave as it is
       final Object[] result =
-          exec(imp, method, settings.noWhite, settings.noBlack, settings.doIwhite, settings.doIset,
+          exec(imp, method, settings.noWhite, settings.noBlack, settings.doIwhite, setThreshold,
               settings.doIlog, settings.doIstackHistogram, settings.stdDevMultiplier);
-      if (((Integer) result[0]) != -1 && stackSize == 1 && imp.getBitDepth() == 16) {
+      // Convert a thresholded 16-bit image to 8-bit. The image is unchanged if the threshold
+      // was set instead of thresholding the pixels.
+      if (((Integer) result[0]) != -1 && stackSize == 1 && imp.getBitDepth() == 16
+          && !setThreshold) {
         imp.setDisplayRange(0, 65535);
         imp.setProcessor(null, imp.getProcessor().convertToByte(true));
       }

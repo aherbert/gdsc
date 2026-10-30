@@ -150,6 +150,11 @@ Major release of GDSC ImageJ Plugins.
   the block.
 * The :ref:`utility_plugins:FRAP Analysis` plugin logs the reason a curve fit failed. The initial
   estimates for the bleaching and recovery rates use the calibrated time of the frames.
+* The :ref:`thresholding_plugins:Global Threshold` ``SetThreshold instead of Threshold`` option
+  does not convert a 16-bit image to 8-bit. The option is ignored for ``Try all`` and when
+  processing the whole stack. Previously the option converted a single 16-bit image to 8-bit,
+  set the threshold of only the current slice of a stack, and prevented the ``Try all`` results
+  being thresholded.
 * The :ref:`utility_plugins:FRAP Analysis` plugin records the bleaching score of a pixel if it is
   above a quarter of the ``Score threshold`` (minimum 1). Previously the scores were recorded
   above a fixed threshold of 1. This can change the detected bleached regions.
