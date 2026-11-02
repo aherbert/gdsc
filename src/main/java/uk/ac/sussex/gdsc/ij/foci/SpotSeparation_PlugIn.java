@@ -61,7 +61,7 @@ import uk.ac.sussex.gdsc.ij.threshold.ThreadAnalyser_PlugIn;
 /**
  * Finds spots in an image. Locates the closest neighbour spot within a radius and produces a line
  * profile through the spots. If no neighbour is present produces a line profile through the
- * principle axis.
+ * principal axis.
  */
 public class SpotSeparation_PlugIn implements PlugInFilter {
   /** The plugin title. */
@@ -192,7 +192,7 @@ public class SpotSeparation_PlugIn implements PlugInFilter {
       String profileTitle;
 
       if (assigned[i] < 0) {
-        // For single spots assign principle axis and produce a line
+        // For single spots assign principal axis and produce a line
         // profile
 
         float xpos = points[i].x;

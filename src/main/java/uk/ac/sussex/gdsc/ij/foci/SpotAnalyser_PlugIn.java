@@ -557,11 +557,11 @@ public class SpotAnalyser_PlugIn implements ExtendedPlugInFilter, DialogListener
       // Ignore
     }
 
-    // Correlate inside & outside spot with the principle channel
+    // Correlate inside & outside spot with the principal channel
     double correlation1 = 1;
     double correlation2 = 1;
     if (channel != spotChannel) {
-      // Principle channel => No test required
+      // Principal channel => No test required
       correlation1 =
           correlation(values[channel][INSIDE][particle], values[spotChannel][INSIDE][particle]);
       correlation2 =
