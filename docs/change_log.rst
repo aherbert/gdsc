@@ -53,6 +53,9 @@ Major release of GDSC ImageJ Plugins.
 * Fix the :ref:`findfoci_plugins:Mask Divider` failing when the dialog is closed with the
   ``Preview`` option selected, or when the mask image is closed. A mask with no objects is
   reported as an error.
+* Fix the :ref:`findfoci_plugins:Double Mask Divider` failing when the highest output value is
+  65536, and the numbering of objects when a class has a multiple of 1000 consecutive mask values.
+  Previously the last object of the class was numbered in the next block of output values.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

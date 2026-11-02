@@ -127,11 +127,44 @@ public class DoubleMaskDivider_PlugIn implements PlugIn {
     final int[] i1 = getPixels(imp1.getProcessor());
     final int[] i2 = getPixels(imp2.getProcessor());
 
+    final int[] out;
+    try {
+      out = combineMasks(i1, i2);
+    } catch (final IllegalArgumentException ex) {
+      IJ.error(TITLE, ex.getMessage());
+      return;
+    }
+
+    // Display
+    final ShortProcessor sp = new ShortProcessor(imp1.getWidth(), imp1.getHeight());
+    for (int i = 0; i < out.length; i++) {
+      sp.set(i, out[i]);
+    }
+    if (applyLUT) {
+      sp.setLut(createLut());
+    }
+    final ImagePlus imp = ImageJUtils.display(TITLE, sp);
+
+    // Optionally outline each object
+    if (overlayOutline) {
+      MaskDivider_PlugIn.addOutline(imp);
+    }
+  }
+
+  /**
+   * Combine the masks. The classes in each mask are identified using continuous mask values. Each
+   * combination of a class from mask 1 and mask 2 is assigned a block of output values.
+   *
+   * @param i1 the mask 1 pixels
+   * @param i2 the mask 2 pixels
+   * @return the combined mask pixels
+   * @throws IllegalArgumentException if the masks cannot be combined
+   */
+  static int[] combineMasks(int[] i1, int[] i2) {
     // Check the same pixels are non zero
     for (int i = 0; i < i1.length; i++) {
       if (i1[i] == 0 && i2[i] != 0 || i1[i] != 0 && i2[i] == 0) {
-        IJ.error(TITLE, "Masks must have the same non-zero pixels");
-        return;
+        throw new IllegalArgumentException("Masks must have the same non-zero pixels");
       }
     }
 
@@ -143,8 +176,8 @@ public class DoubleMaskDivider_PlugIn implements PlugIn {
       // This should only happen when both are empty since the check above ensures one cannot be
       // empty
       // without the other
-      IJ.error(TITLE, String.format("Unable to combine %d and %d classes", b1.size(), b2.size()));
-      return;
+      throw new IllegalArgumentException(
+          String.format("Unable to combine %d and %d classes", b1.size(), b2.size()));
     }
 
     // Find the block size required to separate blocks
@@ -161,12 +194,13 @@ public class DoubleMaskDivider_PlugIn implements PlugIn {
         max = range;
       }
     }
-    final int blockSize = MaskDivider_PlugIn.getBonus(max + 1);
+    // Values within a block are numbered from 1 to (range + 1) and must be below the block size
+    final int blockSize = MaskDivider_PlugIn.getBonus(max + 2);
 
-    if ((b1.size() * b2.size() - 1) * blockSize + max > 65535) {
-      IJ.error(TITLE, String.format("Unable to create %d classes with a separation of %d",
-          b1.size() * b2.size(), blockSize));
-      return;
+    if ((b1.size() * b2.size() - 1) * blockSize + max + 1 > 65535) {
+      throw new IllegalArgumentException(
+          String.format("Unable to create %d classes with a separation of %d",
+              b1.size() * b2.size(), blockSize));
     }
 
     // Create a map to find the block for each pixel value
@@ -203,21 +237,10 @@ public class DoubleMaskDivider_PlugIn implements PlugIn {
         h[i] = block * blockSize + object[block];
       }
     }
-
-    // Display
-    final ShortProcessor sp = new ShortProcessor(imp1.getWidth(), imp1.getHeight());
     for (int i = 0; i < out.length; i++) {
-      sp.set(i, h[out[i]]);
+      out[i] = h[out[i]];
     }
-    if (applyLUT) {
-      sp.setLut(createLut());
-    }
-    final ImagePlus imp = ImageJUtils.display(TITLE, sp);
-
-    // Optionally outline each object
-    if (overlayOutline) {
-      MaskDivider_PlugIn.addOutline(imp);
-    }
+    return out;
   }
 
   private static int[] getPixels(ImageProcessor ip) {
