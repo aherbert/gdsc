@@ -148,6 +148,9 @@ public class DoubleMaskDivider_PlugIn implements PlugIn {
     // Optionally outline each object
     if (overlayOutline) {
       MaskDivider_PlugIn.addOutline(imp);
+    } else {
+      // Remove any outline from a replaced image
+      imp.setOverlay(null);
     }
   }
 

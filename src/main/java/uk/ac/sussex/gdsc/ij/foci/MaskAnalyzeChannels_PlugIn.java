@@ -95,6 +95,7 @@ public class MaskAnalyzeChannels_PlugIn implements PlugInFilter {
     Settings() {
       input = "";
       ignoreChannels = "";
+      ignoreBackgroundChannels = "";
       backgroundFraction = 0.1;
     }
 
@@ -180,6 +181,11 @@ public class MaskAnalyzeChannels_PlugIn implements PlugInFilter {
     settings.showLabels = gd.getNextBoolean();
     settings.showBackground = gd.getNextBoolean();
     settings.save();
+
+    if (!(settings.backgroundFraction >= 0 && settings.backgroundFraction <= 1)) {
+      IJ.error(TITLE, "Background fraction must be in the interval [0, 1]");
+      return false;
+    }
 
     return true;
   }

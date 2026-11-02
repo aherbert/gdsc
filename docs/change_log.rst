@@ -67,6 +67,11 @@ Major release of GDSC ImageJ Plugins.
   components that sum to zero, e.g. a 45 degree diagonal. Previously the length was zero.
 * Fix the :ref:`findfoci_plugins:Mask Object Dimensions` plugin failing for a mask with no objects,
   and the results table columns when the ``Show vectors`` option is changed.
+* The :ref:`findfoci_plugins:Mask Divider` and :ref:`findfoci_plugins:Double Mask Divider`
+  plugins remove the outline from a replaced output image when the ``Overlay outline`` option is
+  not selected.
+* The :ref:`findfoci_plugins:Mask Analyze Channels...` plugin reports an error for a
+  ``Background fraction`` outside the interval [0, 1]. Previously the plugin failed.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

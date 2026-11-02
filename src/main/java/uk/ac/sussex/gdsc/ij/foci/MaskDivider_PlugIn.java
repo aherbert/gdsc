@@ -524,6 +524,9 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
 
       if (settings.overlayOutline) {
         addOutline(segImp);
+      } else {
+        // Remove any outline from a replaced image
+        segImp.setOverlay(null);
       }
     }
   }
