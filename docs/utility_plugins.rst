@@ -630,7 +630,7 @@ The filtered image replaces the pixels of the input image. The change can be rev
 Spot Separation
 ---------------
 
-Finds spots in an image. Locates the closest neighbour spot within a radius and produces a line profile through the spots. If no neighbour is present produces a line profile through the principle axis. Outputs the separation between the spot maxima to a table.
+Finds spots in an image. Locates the closest neighbour spot within a radius and produces a line profile through the spots. If no neighbour is present produces a line profile through the principal axis. Outputs the separation between the spot maxima to a table.
 
 Allows analysis of regions using the ROI selection tools and respects manual thresholding to identify spots.
 

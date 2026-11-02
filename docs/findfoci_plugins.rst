@@ -2718,12 +2718,121 @@ Mask Divider
 
 Overlay a mask on an image and divide into two classes. For each object in the mask (contiguous pixels with the same value; optionally 8-connected), obtain the mean pixel value of the object and then divide the objects into two classes, either by auto-thresholding or interactively.
 
+The plugin runs on the current 8-bit or 16-bit image. The mask must be a different open 8-bit or 16-bit image with the same width and height as the image. Only the current slice of the image and the current slice of the mask are used.
+
+The plugin performs the following steps:
+
+#. Identify the objects in the mask. An object is a set of contiguous non-zero pixels with the same value. Pixels are connected using their 4 edge neighbours, or all 8 neighbours if ``8-connected`` is selected. Separate regions with the same mask value are different objects. Zero is the background.
+#. Compute the mean image value of the pixels in each object.
+#. Divide the objects into two classes using a cut-off. Objects with a mean below the cut-off are excluded; objects with a mean at or above the cut-off are included. The cut-off can be set automatically using the Otsu threshold of a histogram of the object means, where each object contributes its pixel count to the histogram bin of its rounded mean value.
+#. Create a new mask image (or images) containing the two classes of objects.
+
+When the ``Preview`` option is selected the classes are shown on the image as a semi-transparent overlay: included objects are green and excluded objects are red. The dialog also shows the number of objects and the minimum, maximum and average of the object means (``N``, ``Min``, ``Max``, ``Av``), and the number of included and excluded objects. If the mask image is closed or has no objects then this is shown in the dialog. The range of the ``Cut-off`` slider is updated to cover the range of the object means. If the ``Cut-off`` is changed during the preview then the ``Auto cutoff`` option is selected only if the value matches the automatic cut-off. Any overlay on the image is removed when the plugin finishes or is cancelled.
+
+.. index:: Mask Divider Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Mask Divider`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Mask
+     - The mask image. Only 8-bit and 16-bit images with the same width and height as the input image are listed (excluding the input image). If no images are available an error is shown.
+
+   * - Auto cutoff
+     - Set the cut-off automatically using the Otsu threshold of the object means. If selected the ``Cut-off`` value is ignored.
+
+   * - 8-connected
+     - Use 8-connected pixels to define objects. If not selected then 4-connected pixels are used.
+
+   * - Cut-off
+     - The cut-off used to divide the objects when ``Auto cutoff`` is not selected. The value is truncated to an integer. Objects with a mean image value below the cut-off are excluded.
+
+   * - Split mask
+     - Create two output masks, one for the included objects and one for the excluded objects. If not selected a single mask is created containing both classes.
+
+   * - Overlay outline
+     - Add an outline of the objects as an overlay on the output mask. Only applies when ``Split mask`` is not selected.
+
+   * - Preview
+     - Show the classes of objects on the image as an overlay.
+
+.. index:: Mask Divider Output
+
+Output
+~~~~~~
+
+The input image and the mask are not modified. The output depends on the ``Split mask`` option. If an image with the output name is open then it is replaced.
+
+If ``Split mask`` is selected the plugin creates two images with the same type as the mask, named using the mask title with the suffix ``Include`` and ``Exclude``. Each image contains the original mask values for the pixels of the included or excluded objects; all other pixels are zero.
+
+If ``Split mask`` is not selected the plugin creates a 16-bit image named using the mask title with the suffix ``Segregated``. The objects are renumbered: excluded objects are numbered consecutively from 1, and included objects are numbered consecutively from 1 after an offset that is a multiple of 1000 above the highest excluded object number, e.g. from 1001 if there are fewer than 1001 excluded objects. The display range is set from zero to just above the highest excluded object number. If ``Overlay outline`` is selected an outline of the non-zero pixels is added to the image as an overlay.
+
+Two ``Segregated`` masks can be combined using the :ref:`findfoci_plugins:Double Mask Divider` plugin.
+
 .. index:: ! Double Mask Divider
 
 Double Mask Divider
 -------------------
 
 Compares two masks created using the ``Mask Divider`` with pixels of AB and A'B' and creates a new mask with pixels of AA' AB' BA' BB'.
+
+The input masks are two open 8-bit or 16-bit images with the same width and height. Only the current slice of each mask is used. The two masks must have the same non-zero pixels, i.e. the same objects divided into classes in different ways. This is the case for two ``Segregated`` masks created by the :ref:`findfoci_plugins:Mask Divider` from the same input mask, for example by dividing the objects using the intensity in two different channels.
+
+The plugin performs the following steps:
+
+#. Identify the classes in each mask. A class is a block of continuous non-zero mask values, i.e. a range of values with no unused value in the range. For example a ``Segregated`` mask with values 1 to 20 and 1001 to 1015 has two classes.
+#. Assign each non-zero pixel to the combination of its class in mask 1 and its class in mask 2. Any number of classes is supported; two masks with two classes create four combinations.
+#. Create a new mask where each combination is assigned a block of values. The combination number is computed as (class in mask 2) x (number of classes in mask 1) + (class in mask 1), counting classes from zero in ascending order of value. The block size is the smallest multiple of 1000 that is larger than the number of values in the largest class. Within each block the objects are numbered consecutively from 1 in ascending order of their value in mask 1.
+
+For example combining two masks with two classes using a block size of 1000 creates objects with values starting at 1 (class 1 in both masks), 1001 (class 2 in mask 1, class 1 in mask 2), 2001 (class 1 in mask 1, class 2 in mask 2) and 3001 (class 2 in both masks).
+
+.. index:: Double Mask Divider Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Double Mask Divider`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Input 1
+     - The first mask. Only 8-bit and 16-bit images are listed. At least two images are required.
+
+   * - Input 2
+     - The second mask. Only 8-bit and 16-bit images are listed. If the dialog would select the same image as ``Input 1`` then a different image is selected.
+
+   * - Apply LUT
+     - Apply a colour look-up table (LUT) to the output mask to help show the classes. The LUT is the ``ImageJ`` ``ice`` LUT with zero shown as black.
+
+   * - Overlay outline
+     - Add an outline of the objects as an overlay on the output mask.
+
+.. index:: Double Mask Divider Output
+
+Output
+~~~~~~
+
+The input masks are not modified. The plugin creates a 16-bit image named ``Double Mask Divider``. If an image with this name is open then it is replaced. The background is zero. If ``Overlay outline`` is selected an outline of the non-zero pixels is added to the image as an overlay.
+
+An error is shown if:
+
+* The masks are not the same size.
+* The masks do not have the same non-zero pixels.
+* The masks are empty.
+* The output values would exceed the maximum value of a 16-bit image (65535).
 
 .. index:: ! Mask Analyze Particles
 
@@ -2741,6 +2850,78 @@ Mask Analyze Channels...
 
 For each object in the mask (contiguous pixels with the same value), analyse the pixels values for each channel of a target image. Estimate the background of each channel using the lowest intensity non-object pixels within the convex hull of the objects.
 
+The plugin runs on the current image which must be an 8-bit or 16-bit mask. Only the current slice of the mask is used. The target image is selected from the open images and must have the same width and height as the mask; otherwise an error is shown. The current z-slice and frame of the target image are analysed.
+
+The plugin performs the following steps:
+
+#. Identify the objects in the mask. An object is a set of contiguous non-zero pixels with the same value; pixels are connected using all 8 neighbours. Separate regions with the same mask value are different objects. Objects are numbered from 1 in the order they are found scanning the mask from the top-left. An error is shown if the mask contains no objects.
+#. Compute the convex hull of all the object pixels. The hull encloses the entire area of each object pixel.
+#. Compute the mean value of each object in each analysed channel of the target image.
+#. Estimate the background using the non-object pixels with a centre inside the convex hull. For each background channel the pixel values are normalised to the range [0, 1] using the minimum and maximum of the non-object pixels; the normalised values are summed across the background channels. The pixels with the lowest combined values are selected as the background pixels: a pixel is selected if the combined value is at or below the quantile of the combined values defined by the ``Background fraction``.
+#. Compute the mean value of the background pixels in each analysed channel.
+
+.. index:: Mask Analyze Channels Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Mask Analyze Channels`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Input
+     - The target image to analyse. All open images are listed.
+
+   * - Ignore channels
+     - The channels to ignore. Specify channel numbers separated by any non-digit characters, e.g. ``1,3``. All other channels are analysed. An error is shown if no channels remain.
+
+   * - Background fraction
+     - The fraction of the non-object pixels inside the convex hull to use as the background pixels.
+
+   * - Ignore background channels
+     - The channels to ignore when selecting the background pixels. Uses the same format as ``Ignore channels``. An error is shown if no channels remain. Note that the background value is reported for all the analysed channels.
+
+   * - Show hull
+     - Show the convex hull of the objects on the mask as an overlay.
+
+   * - Show labels
+     - Show the object numbers on the mask as an overlay. Each label is placed at the centre of the object.
+
+   * - Show background
+     - Show the background pixels on the mask as a semi-transparent yellow overlay.
+
+.. index:: Mask Analyze Channels Results Table
+
+Results Table
+~~~~~~~~~~~~~
+
+The results are shown in the ``Mask Analyze Channels Results`` table. The table is cleared each time the plugin is run. The first row contains the background; the following rows contain each object. The table contains the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Object
+     - The object number, or ``Background`` for the background row.
+
+   * - Size
+     - The number of pixels in the object, or the number of background pixels.
+
+   * - <channel>
+     - A column for each analysed channel, named using the channel number. Contains the mean pixel value of the object or of the background pixels. Object values are not background subtracted.
+
+If there are no non-object pixels inside the convex hull then the background has a size of zero and a value of zero.
+
+If any of the ``Show`` options are selected then the overlay on the mask is replaced; otherwise the mask is not changed.
+
 .. index:: ! Spot Density
 
 Spot Density
@@ -2755,11 +2936,106 @@ Outputs histograms of the closest distances between spots and the density of par
 Mask Object Dimensions
 ----------------------
 
-Identify the inertia tensor (principle rotation axes around the centre-of-mass) for each object and computes the minimum and maximum pixel along each axis that is inside the object. Draws the axes on the image and produces a results table. Can be used to estimate dimensions of objects in 2/3D. The plugin works best on objects that are spherical.
+Identify the inertia tensor (principal rotation axes around the centre-of-mass) for each object and computes the minimum and maximum pixel along each axis that is inside the object. Draws the axes on the image and produces a results table. Can be used to estimate dimensions of objects in 2/3D. The plugin works best on objects that are spherical.
 
 Objects are identified using unique pixel values (can be non-contiguous), for example the output mask created by FindFoci.
 
 Optionally objects with centres within a merge distance (in pixels) can be iteratively joined before the dimensions are computed.
+
+The plugin runs on the current image which must be an 8-bit or 16-bit mask. All the z-slices of the current channel and frame are analysed as a 3D volume. Each non-zero pixel value defines an object; zero is the background. An error is shown if the mask contains no objects.
+
+The plugin performs the following steps:
+
+#. Compute the centre-of-mass of each object.
+#. If the ``Merge distance`` is above zero then repeatedly find the two objects with the closest centres. If the distance between the centres is within the ``Merge distance`` then the smaller object is merged into the larger object, and the centre is updated using the size-weighted average of the two centres. Merging stops when no pair of objects is within the ``Merge distance``. The distance is computed in pixels and uses the z-slice index for the z dimension.
+#. Compute the inertia tensor of each object around its centre-of-mass. The eigenvectors of the tensor define three orthogonal axes. The axes are ordered by their moment of inertia from smallest to largest; the axis with the smallest moment is the longest axis of the object.
+#. For each axis, move from the centre-of-mass along the axis in both directions in steps of up to 1 pixel until the position is outside the bounding box of the object. The furthest pixel inside the object in each direction defines the end of the axis. The length of the axis is the distance between the centres of the two end pixels.
+
+Note that the search finds the furthest object pixel along the axis even if the line leaves the object and re-enters it. For a 2D image the axis perpendicular to the image has a length of zero.
+
+.. index:: Mask Object Dimensions Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Mask Object Dimensions`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Merge distance
+     - The distance (in pixels) between object centres for objects to be merged. Set to zero to disable merging.
+
+   * - Show overlay
+     - Draw the axes of each object on the image as an overlay. The overlay replaces any existing overlay. The lines are drawn using the XY coordinates of the axis end points.
+
+   * - Clear table
+     - Clear the results table before adding the results. If not selected the results are appended to the table.
+
+   * - Show vectors
+     - Add the coordinates of the end points of each axis to the results table. Changing this option changes the table columns and clears the table.
+
+   * - Sort method
+     - The order of the objects in the results table:
+
+       * ``Value``: Ascending mask value.
+       * ``Area``: Ascending object size.
+       * ``CoM``: Ascending centre-of-mass using the X, then Y, then Z coordinate.
+
+.. index:: Mask Object Dimensions Results Table
+
+Results Table
+~~~~~~~~~~~~~
+
+The results are shown in the ``Mask Object Dimensions Results`` table. The table contains a row for each object with the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title.
+
+   * - Units
+     - The calibrated units. If the X, Y and Z units of the image calibration are not the same then the calibration is ignored and the units are ``px``.
+
+   * - Object
+     - The mask value of the object, e.g. ``[3]``. If objects were merged this lists all the mask values, e.g. ``[3, 7]``.
+
+   * - Area
+     - The number of pixels (voxels for a 3D image) in the object.
+
+   * - cx
+     - The X coordinate of the centre-of-mass (in pixels). The centre of a pixel is at an offset of 0.5.
+
+   * - cy
+     - The Y coordinate of the centre-of-mass (in pixels).
+
+   * - cz
+     - The Z coordinate of the centre-of-mass (in pixels). This is 0.5 for a 2D image.
+
+   * - v1 lx; v1 ly; v1 lz
+     - The coordinates of one end of axis 1 (in pixels). Only shown if ``Show vectors`` is selected.
+
+   * - v1 ux; v1 uy; v1 uz
+     - The coordinates of the other end of axis 1 (in pixels). Only shown if ``Show vectors`` is selected.
+
+   * - v1 len (px)
+     - The length of axis 1 (in pixels).
+
+   * - v1 len (units)
+     - The length of axis 1 (in calibrated units).
+
+Axis 1 is the axis with the smallest moment of inertia (the longest axis). The same columns are repeated for axis 2 (``v2``) and axis 3 (``v3``).
+
+The mask pixels are not modified.
 
 .. index:: ! Assign Foci to Objects
 
