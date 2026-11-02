@@ -192,6 +192,11 @@ public class MaskAnalyzeChannels_PlugIn implements PlugInFilter {
       IJ.error(TITLE, "No image: " + settings.input);
       return;
     }
+    if (imp.getWidth() != inputProcessor.getWidth()
+        || imp.getHeight() != inputProcessor.getHeight()) {
+      IJ.error(TITLE, "Image dimensions do not match the mask: " + settings.input);
+      return;
+    }
 
     final int[] channels = getChannels(imp, settings.ignoreChannels);
     if (channels.length == 0) {
@@ -307,33 +312,42 @@ public class MaskAnalyzeChannels_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Creates a convex hull containing all the objects.
+   * Creates a convex hull containing all the objects. The hull contains the entire area of each
+   * object pixel.
    *
    * @param oa the object analyzer
    * @return the convex hull
    */
-  private static FloatPolygon createConvexHull(ObjectAnalyzer oa) {
+  static FloatPolygon createConvexHull(ObjectAnalyzer oa) {
     final int[] mask = oa.getObjectMask();
     final int w = oa.getWidth();
     final int h = oa.getHeight();
-    // Create a FloatPolygon using the min/max x value for each y in the mask
+    // Create a FloatPolygon using the corners of the min/max x pixel for each y in the mask
     final IntArrayList xp = new IntArrayList();
     final IntArrayList yp = new IntArrayList();
     for (int y = 0; y < h; y++) {
-      int i = y * w;
-      for (int x = 0; x < w; x++, i++) {
-        if (mask[i] != 0) {
-          yp.add(y);
-          xp.add(x);
-          for (int j = i - x + w - 1; j >= i; j--) {
-            if (mask[j] != 0) {
-              yp.add(y);
-              xp.add(j - i + x);
-            }
-          }
-          break;
-        }
+      final int i = y * w;
+      int min = 0;
+      while (min < w && mask[i + min] == 0) {
+        min++;
       }
+      if (min == w) {
+        continue;
+      }
+      int max = w - 1;
+      while (mask[i + max] == 0) {
+        max--;
+      }
+      // Pixel corners
+      max++;
+      xp.add(min);
+      yp.add(y);
+      xp.add(min);
+      yp.add(y + 1);
+      xp.add(max);
+      yp.add(y);
+      xp.add(max);
+      yp.add(y + 1);
     }
     return new FloatPolygon(toFloatArray(xp), toFloatArray(yp)).getConvexHull();
   }
@@ -353,14 +367,15 @@ public class MaskAnalyzeChannels_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Find the indices of objects and non-objects within the ROI.
+   * Find the indices of objects and non-objects within the ROI. The ROI must contain all the object
+   * pixels.
    *
    * @param oa the object analyzer
    * @param roi the roi
    * @param objects the indices of the objects
    * @param nonObjects the indices of the non objects
    */
-  private static void findIndices(ObjectAnalyzer oa, Roi roi, IntArrayList objects,
+  static void findIndices(ObjectAnalyzer oa, Roi roi, IntArrayList objects,
       IntArrayList nonObjects) {
     final int[] mask = oa.getObjectMask();
     final int w = oa.getWidth();
@@ -374,12 +389,10 @@ public class MaskAnalyzeChannels_PlugIn implements PlugInFilter {
     for (int y = 0; y < bh; y++) {
       int i = (y + bounds.y) * w + bounds.x;
       for (int x = 0; x < bw; x++, i++) {
-        if (bp.get(i) != 0) {
-          if (mask[i] == 0) {
-            nonObjects.add(i);
-          } else {
-            objects.add(i);
-          }
+        if (mask[i] != 0) {
+          objects.add(i);
+        } else if (bp.get(i) != 0) {
+          nonObjects.add(i);
         }
       }
     }
