@@ -263,10 +263,11 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     // Calculate the objects (non-zero pixels)
     int min = 1;
     int max = histogram.length - 1;
-    while (histogram[min] == 0 && min <= max) {
+    while (min <= max && histogram[min] == 0) {
       min++;
     }
     if (min > max) {
+      IJ.error(TITLE, "No objects in mask");
       return;
     }
     while (histogram[max] == 0) {
@@ -530,50 +531,10 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
       // The minor moment of inertia will be around the longest axis of the object, so start
       // downwards
       for (int axis = 3; axis-- > 0;) {
-        final double epsilon = 1e-6;
-        final double[] direction = eigenVectors[axis];
-        double sum = 0;
-        double longest = 0; // Used to normalise the longest dimension to 1
-        for (int i = 0; i < 3; i++) {
-          final double v = Math.abs(direction[i]);
-          if (v < epsilon) {
-            direction[i] = 0;
-          }
-          if (longest < v) {
-            longest = v;
-          }
-          sum += direction[i];
-        }
         final double[] direction1 = com.clone();
         final double[] direction2 = com.clone();
-        if (sum != 0) {
-          // Assuming unit vector then moving in increments of 1 should never skip pixels
-          // in any dimension. Normalise to 1 in the longest dimension should still be OK.
-          for (int i = 0; i < 3; i++) {
-            direction[i] /= longest;
-            if (direction[i] > 1) {
-              direction[i] = 1;
-            }
-          }
-
-          final double[] pos = new double[3];
-
-          // Move one way, then the other
-          for (final int dir : new int[] {-1, 1}) {
-            final double[] tmp = (dir == 1) ? direction1 : direction2;
-            for (int n = dir;; n += dir) {
-              if (updatePosition(com, n, direction, mind, maxd, pos)) {
-                break;
-              }
-              final int index = ((int) pos[2]) * size + ((int) pos[1]) * maxx + ((int) pos[0]);
-              // Check if we are inside the object
-              if (image[index] != objectValue) {
-                continue;
-              }
-              System.arraycopy(pos, 0, tmp, 0, pos.length);
-            }
-          }
-        }
+        findAxisEnds(image, maxx, maxy, objectValue, com, eigenVectors[axis], mind, maxd,
+            direction1, direction2);
 
         // Round to half pixels (since that is our accuracy during the pixel search)
         for (int i = 0; i < 3; i++) {
@@ -620,6 +581,63 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
   }
 
   /**
+   * Find the furthest pixels in the object along the axis from the centre-of-mass. The end
+   * positions are only updated if a pixel inside the object is found.
+   *
+   * @param image the image
+   * @param maxx the image width
+   * @param maxy the image height
+   * @param objectValue the object value
+   * @param com the centre-of-mass
+   * @param axis the axis direction
+   * @param mind the minimum for each dimension
+   * @param maxd the maximum (exclusive) for each dimension
+   * @param end1 the end position in the positive direction
+   * @param end2 the end position in the negative direction
+   */
+  static void findAxisEnds(int[] image, int maxx, int maxy, int objectValue, double[] com,
+      double[] axis, int[] mind, int[] maxd, double[] end1, double[] end2) {
+    final double epsilon = 1e-6;
+    final double[] direction = new double[3];
+    double longest = 0; // Used to normalise the longest dimension to 1
+    for (int i = 0; i < 3; i++) {
+      final double v = Math.abs(axis[i]);
+      if (v >= epsilon) {
+        direction[i] = axis[i];
+        if (longest < v) {
+          longest = v;
+        }
+      }
+    }
+    if (longest == 0) {
+      return;
+    }
+    // Assuming unit vector then moving in increments of 1 should never skip pixels
+    // in any dimension. Normalise to 1 in the longest dimension should still be OK.
+    for (int i = 0; i < 3; i++) {
+      direction[i] /= longest;
+    }
+
+    final int size = maxx * maxy;
+    final double[] pos = new double[3];
+
+    // Move one way, then the other
+    for (final int dir : new int[] {-1, 1}) {
+      final double[] tmp = (dir == 1) ? end1 : end2;
+      for (int n = dir;; n += dir) {
+        if (updatePosition(com, n, direction, mind, maxd, pos)) {
+          break;
+        }
+        final int index = ((int) pos[2]) * size + ((int) pos[1]) * maxx + ((int) pos[0]);
+        // Check if we are inside the object
+        if (image[index] == objectValue) {
+          System.arraycopy(pos, 0, tmp, 0, pos.length);
+        }
+      }
+    }
+  }
+
+  /**
    * Update the position by moving from the centre-of-mass n steps in the given direction.
    *
    * <p>Check if the move results in exceeding the bounds.
@@ -645,8 +663,14 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
   }
 
   private TextWindow createResultsWindow() {
-    return ImageJUtils.refresh(resultsWindowRef,
-        () -> new TextWindow(TITLE + " Results", createResultsHeader(), "", 900, 300));
+    final String header = createResultsHeader();
+    final TextWindow tw = ImageJUtils.refresh(resultsWindowRef,
+        () -> new TextWindow(TITLE + " Results", header, "", 900, 300));
+    // The columns change with the show vectors option. This clears the table.
+    if (!header.equals(tw.getTextPanel().getColumnHeadings())) {
+      tw.getTextPanel().setColumnHeadings(header);
+    }
+    return tw;
   }
 
   private String createResultsHeader() {
@@ -672,12 +696,13 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Vector sorting routine for 3x3 set of vectors.
+   * Vector sorting routine for 3x3 set of vectors. The vectors are sorted by weight in descending
+   * order.
    *
    * @param weights Vector weights
    * @param vectors Vectors
    */
-  private static void eigenSort3x3(double[] weights, double[][] vectors) {
+  static void eigenSort3x3(double[] weights, double[][] vectors) {
     for (int i = 3; i-- > 0;) {
       int minIndex = i;
       double minWeight = weights[minIndex];
@@ -690,11 +715,9 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
       if (minIndex != i) {
         weights[minIndex] = weights[i];
         weights[i] = minWeight;
-        for (int j = 3; j-- > 0;) {
-          minWeight = vectors[j][i];
-          vectors[j][i] = vectors[j][minIndex];
-          vectors[j][minIndex] = minWeight;
-        }
+        final double[] tmp = vectors[i];
+        vectors[i] = vectors[minIndex];
+        vectors[minIndex] = tmp;
       }
     }
   }

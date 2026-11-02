@@ -60,6 +60,13 @@ Major release of GDSC ImageJ Plugins.
   pixels on the right and bottom edges of the convex hull of the objects were excluded from the
   objects. A target image that does not match the mask dimensions is reported as an error;
   previously the plugin failed or analysed the wrong pixels.
+* Fix the :ref:`findfoci_plugins:Mask Object Dimensions` axes when the inertia tensor has equal
+  eigenvalues. Previously the sort of the eigenvectors swapped vector components and the axes
+  could be wrong, e.g. a horizontal line had a longest axis length of zero.
+* Fix the :ref:`findfoci_plugins:Mask Object Dimensions` axis length for an axis with direction
+  components that sum to zero, e.g. a 45 degree diagonal. Previously the length was zero.
+* Fix the :ref:`findfoci_plugins:Mask Object Dimensions` plugin failing for a mask with no objects,
+  and the results table columns when the ``Show vectors`` option is changed.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.
