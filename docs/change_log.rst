@@ -46,6 +46,13 @@ Major release of GDSC ImageJ Plugins.
 * Fix the :ref:`findfoci_plugins:Assign Foci to Clusters` ``Eliminate edge clusters`` option for
   non-square images. Previously the left and right edges were checked using the image width
   instead of the height, causing an error for wide images and missed edges for tall images.
+* Fix the :ref:`findfoci_plugins:Mask Divider` numbering of included objects in the
+  ``Segregated`` mask when there are more than 1000 excluded objects. The included objects are
+  numbered from an offset that is a multiple of 1000 above the highest excluded object number.
+  Previously the offset was always 1000 and the numbers could match excluded objects.
+* Fix the :ref:`findfoci_plugins:Mask Divider` failing when the dialog is closed with the
+  ``Preview`` option selected, or when the mask image is closed. A mask with no objects is
+  reported as an error.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

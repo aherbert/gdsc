@@ -270,7 +270,8 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
 
     // Check if this is a change to the settings during a preview and update the
     // auto threshold property
-    if (isPreview && event.getSource() != null && event.getSource() != autoCheckbox
+    if (isPreview && event != null && event.getSource() != null
+        && event.getSource() != autoCheckbox
         && event.getSource() != gd.getPreviewCheckbox()
         // Check we have computed the threshold
         && defaultCutoff >= 0) {
@@ -291,6 +292,12 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
   @Override
   public void run(ImageProcessor inputIp) {
     analyseObjects();
+    if (objects == null || objects.length == 0) {
+      imp.setOverlay(null);
+      label.setText(objects == null ? "No mask: " + settings.maskTitle : "No objects in mask");
+      label2.setText("");
+      return;
+    }
 
     label.setText(String.format("N = %d, Min = %.2f, Max = %.2f, Av = %.2f", objects.length,
         stats[0], stats[1], stats[2]));
@@ -348,6 +355,8 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
     // Get the mask
     final ImagePlus maskImp = WindowManager.getImage(settings.maskTitle);
     if (maskImp == null) {
+      objects = null;
+      lastMaskTitle = null;
       return;
     }
 
@@ -382,6 +391,11 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
       }
     }
     objects = tmpObjects.toArray(new double[0][0]);
+    lastMaskTitle = settings.maskTitle;
+    lastEightConnected = settings.eightConnected;
+    if (objects.length == 0) {
+      return;
+    }
 
     // Get the min, max and average pixel value
     double min = Double.POSITIVE_INFINITY;
@@ -402,15 +416,13 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
 
     final int minimum = (int) min;
     final int maximum = (int) Math.ceil(max) + 1;
-    int value = cutoffSlider.getValue();
-    if (value < minimum) {
-      value = minimum;
+    if (cutoffSlider != null) {
+      int value = cutoffSlider.getValue();
+      if (value < minimum) {
+        value = minimum;
+      }
+      cutoffSlider.setValues(value, 1, minimum, maximum);
     }
-
-    cutoffSlider.setValues(value, 1, minimum, maximum);
-
-    lastMaskTitle = settings.maskTitle;
-    lastEightConnected = settings.eightConnected;
   }
 
   private int getCutoff() {
@@ -451,6 +463,11 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
     // Create a new mask using the segregated objects
     analyseObjects();
     if (objects == null) {
+      IJ.error(TITLE, "No mask: " + settings.maskTitle);
+      return;
+    }
+    if (objects.length == 0) {
+      IJ.error(TITLE, "No objects in mask: " + settings.maskTitle);
       return;
     }
 
@@ -491,24 +508,8 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
       ImageJUtils.display(settings.maskTitle + " Include", includeIp);
       ImageJUtils.display(settings.maskTitle + " Exclude", excludeIp);
     } else {
-      // Create a lookup table for the new mask objects.
-      // Q. Should we maintain the old mask value? This version uses new numbering.
-      final int[] newMaskValue = new int[maxObject + 1];
-      int include = -1;
-      int exclude = 1;
-      for (int i = 0; i < objects.length; i++) {
-        final int maskValue = (int) objects[i][0];
-        final double av = objects[i][2];
-        newMaskValue[maskValue] = (av < cutoff) ? exclude++ : include--;
-      }
-
-      // Add the bonus to the new mask value for the include objects
-      final int bonus = getBonus(include);
-      for (int i = 1; i < newMaskValue.length; i++) {
-        if (newMaskValue[i] < 0) {
-          newMaskValue[i] = bonus - newMaskValue[i];
-        }
-      }
+      final int[] excluded = {0};
+      final int[] newMaskValue = createSegregatedValues(objects, maxObject, cutoff, excluded);
 
       final ImageProcessor ip = new ShortProcessor(maxx, maxy);
       for (int i = 0; i < objectMask.length; i++) {
@@ -517,7 +518,7 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
           ip.set(i, newMaskValue[maskValue]);
         }
       }
-      ip.setMinAndMax(0, exclude);
+      ip.setMinAndMax(0, excluded[0] + 1.0);
 
       final ImagePlus segImp = ImageJUtils.display(settings.maskTitle + " Segregated", ip);
 
@@ -525,6 +526,41 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
         addOutline(segImp);
       }
     }
+  }
+
+  /**
+   * Create a lookup table for the new mask objects. Objects with a mean below the cut-off are
+   * excluded and numbered consecutively from 1. Included objects are numbered consecutively from 1
+   * after an offset that is a multiple of 1000 above the highest excluded object number.
+   *
+   * @param objects the objects (mask value, count, mean)
+   * @param maxObject the maximum mask value
+   * @param cutoff the cutoff
+   * @param exclude the number of excluded objects (output)
+   * @return the new mask value for each mask value
+   */
+  static int[] createSegregatedValues(double[][] objects, int maxObject, int cutoff,
+      int[] exclude) {
+    // Q. Should we maintain the old mask value? This version uses new numbering.
+    final int[] newMaskValue = new int[maxObject + 1];
+    int include = 0;
+    int excluded = 0;
+    for (int i = 0; i < objects.length; i++) {
+      final int maskValue = (int) objects[i][0];
+      final double av = objects[i][2];
+      newMaskValue[maskValue] = (av < cutoff) ? ++excluded : --include;
+    }
+    exclude[0] = excluded;
+
+    // Add the bonus to the new mask value for the include objects.
+    // The bonus must be at least the highest exclude object number.
+    final int bonus = getBonus(excluded);
+    for (int i = 1; i < newMaskValue.length; i++) {
+      if (newMaskValue[i] < 0) {
+        newMaskValue[i] = bonus - newMaskValue[i];
+      }
+    }
+    return newMaskValue;
   }
 
   /**
