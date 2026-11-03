@@ -24,9 +24,12 @@
 
 package uk.ac.sussex.gdsc.ij.foci;
 
+import java.util.Arrays;
 import java.util.SplittableRandom;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import uk.ac.sussex.gdsc.ij.foci.MaskObjectDimensions_PlugIn.MaskObject;
 
 @SuppressWarnings({"javadoc"})
@@ -84,6 +87,108 @@ class MaskObjectDimensionsPlugInTest {
       Assertions.assertEquals(cx / count + 0.5, o.cx);
       Assertions.assertEquals(cy / count + 0.5, o.cy);
       Assertions.assertEquals(cz / count + 0.5, o.cz);
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(doubles = {0.5, 1.5, 3, 6, 100})
+  void testMergeObjects(double mergeDistance) {
+    // Random image with many object values
+    final int maxx = 40;
+    final int maxy = 30;
+    final int maxz = 4;
+    final int[] image = new int[maxx * maxy * maxz];
+    final SplittableRandom rng = new SplittableRandom(678);
+    final int[] histogram = new int[65536];
+    for (int i = 0; i < image.length; i++) {
+      // Mostly background
+      image[i] = rng.nextInt(10) == 0 ? 1 + rng.nextInt(300) * 3 : 0;
+      histogram[image[i]]++;
+    }
+    final MaskObject[] objects =
+        MaskObjectDimensions_PlugIn.createObjects(image, histogram, maxx, maxy, maxz);
+    final MaskObject[] expected =
+        MaskObjectDimensions_PlugIn.createObjects(image, histogram, maxx, maxy, maxz);
+    final int[] expectedImage = image.clone();
+
+    MaskObjectDimensions_PlugIn.mergeObjects(objects, image, mergeDistance);
+    mergeObjects(expected, expectedImage, mergeDistance);
+
+    Assertions.assertArrayEquals(expectedImage, image, "image");
+    int count = 0;
+    for (int i = 0; i < objects.length; i++) {
+      final MaskObject o1 = expected[i];
+      final MaskObject o2 = objects[i];
+      Assertions.assertEquals(o1.size, o2.size, "size");
+      if (o1.size != 0) {
+        count++;
+        Assertions.assertEquals(o1.cx, o2.cx, 1e-10, "cx");
+        Assertions.assertEquals(o1.cy, o2.cy, 1e-10, "cy");
+        Assertions.assertEquals(o1.cz, o2.cz, 1e-10, "cz");
+        Arrays.sort(o1.values);
+        Arrays.sort(o2.values);
+        Assertions.assertArrayEquals(o1.values, o2.values, "values");
+      }
+    }
+    // Check some objects were merged (except the smallest distance)
+    if (mergeDistance > 1) {
+      Assertions.assertTrue(count < objects.length, "No merges");
+    }
+  }
+
+  /**
+   * Iteratively join closest objects. This is the original brute force algorithm.
+   */
+  private static void mergeObjects(MaskObject[] objects, int[] image, double mergeDistance) {
+    for (;;) {
+      // Find closest pairs
+      int ii = -1;
+      int jj = -1;
+      double minDistance = Double.POSITIVE_INFINITY;
+      for (int i = 1; i < objects.length; i++) {
+        // Skip empty objects
+        if (objects[i].size == 0) {
+          continue;
+        }
+        for (int j = 0; j < i; j++) {
+          // Skip empty objects
+          if (objects[j].size == 0) {
+            continue;
+          }
+          final double distance = objects[i].distance2(objects[j]);
+          if (minDistance > distance) {
+            minDistance = distance;
+            ii = i;
+            jj = j;
+          }
+        }
+      }
+
+      if (ii < 0 || Math.sqrt(minDistance) > mergeDistance) {
+        break;
+      }
+
+      // Merge
+      MaskObject big;
+      MaskObject small;
+      if (objects[jj].size < objects[ii].size) {
+        big = objects[ii];
+        small = objects[jj];
+      } else {
+        big = objects[jj];
+        small = objects[ii];
+      }
+
+      big.merge(small);
+
+      // If we merge an object then its image pixels must be updated with the new object value
+      final int oldValue = small.getValue();
+      final int newValue = big.getValue();
+      for (int i = 0; i < image.length; i++) {
+        if (image[i] == oldValue) {
+          image[i] = newValue;
+        }
+      }
     }
   }
 

@@ -40,6 +40,10 @@ import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.commons.math3.linear.RealVector;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.ij.gui.ExtendedGenericDialog;
+import uk.ac.sussex.gdsc.core.trees.DoubleDistanceFunctions;
+import uk.ac.sussex.gdsc.core.trees.KdTrees;
+import uk.ac.sussex.gdsc.core.trees.ObjDoubleKdTree;
+import uk.ac.sussex.gdsc.core.utils.LocalList;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.help.HelpUrls;
@@ -273,56 +277,7 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
 
     // Iteratively join closest objects
     if (settings.mergeDistance > 0) {
-      for (;;) {
-        // Find closest pairs
-        int ii = -1;
-        int jj = -1;
-        double minDistance = Double.POSITIVE_INFINITY;
-        for (int i = 1; i < objects.length; i++) {
-          // Skip empty objects
-          if (objects[i].size == 0) {
-            continue;
-          }
-          for (int j = 0; j < i; j++) {
-            // Skip empty objects
-            if (objects[j].size == 0) {
-              continue;
-            }
-            final double distance = objects[i].distance2(objects[j]);
-            if (minDistance > distance) {
-              minDistance = distance;
-              ii = i;
-              jj = j;
-            }
-          }
-        }
-
-        if (ii < 0 || Math.sqrt(minDistance) > settings.mergeDistance) {
-          break;
-        }
-
-        // Merge
-        MaskObject big;
-        MaskObject small;
-        if (objects[jj].size < objects[ii].size) {
-          big = objects[ii];
-          small = objects[jj];
-        } else {
-          big = objects[jj];
-          small = objects[ii];
-        }
-
-        big.merge(small);
-
-        // If we merge an object then its image pixels must be updated with the new object value
-        final int oldValue = small.getValue();
-        final int newValue = big.getValue();
-        for (int i = 0; i < image.length; i++) {
-          if (image[i] == oldValue) {
-            image[i] = newValue;
-          }
-        }
-      }
+      mergeObjects(objects, image, settings.mergeDistance);
     }
 
     // Remove merged objects and map the value to the new index
@@ -548,6 +503,134 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     if (settings.showOverlay) {
       imp.setOverlay(overlay);
     }
+  }
+
+  /**
+   * A node in the tree of object centres.
+   */
+  private static class Node {
+    final MaskObject object;
+    final double[] centre;
+    boolean active = true;
+    /** The nearest active neighbour. */
+    Node neighbour;
+    /** The squared distance to the nearest active neighbour. */
+    double distance;
+
+    Node(MaskObject object) {
+      this.object = object;
+      centre = new double[] {object.cx, object.cy, object.cz};
+    }
+  }
+
+  /**
+   * Iteratively merge the closest pair of objects if the distance between their centres is within
+   * the merge distance. The smaller object is merged into the larger object; objects of the same
+   * size are merged into the object with the lower value. Merged objects have a size of zero. The
+   * image values of a merged object are updated to the value of the object it was merged into.
+   *
+   * @param objects the objects
+   * @param image the image
+   * @param mergeDistance the merge distance
+   */
+  static void mergeObjects(MaskObject[] objects, int[] image, double mergeDistance) {
+    final ObjDoubleKdTree<Node> tree = KdTrees.newObjDoubleKdTree(3);
+    final LocalList<Node> nodes = new LocalList<>(objects.length * 2);
+    int maxValue = 0;
+    for (final MaskObject o : objects) {
+      final Node node = new Node(o);
+      nodes.add(node);
+      tree.add(node.centre, node);
+      maxValue = Math.max(maxValue, o.getValue());
+    }
+    nodes.forEach(node -> findNeighbour(tree, node));
+
+    // The value of the object each value was merged into
+    final int[] parent = new int[maxValue + 1];
+    boolean merged = false;
+    for (;;) {
+      // Find the closest pair
+      Node best = null;
+      for (int i = 0; i < nodes.size(); i++) {
+        final Node node = nodes.unsafeGet(i);
+        if (node.active && node.neighbour != null
+            && (best == null || node.distance < best.distance)) {
+          best = node;
+        }
+      }
+
+      if (best == null || Math.sqrt(best.distance) > mergeDistance) {
+        break;
+      }
+
+      // Merge
+      final Node a = best;
+      final Node b = best.neighbour;
+      a.active = false;
+      b.active = false;
+      MaskObject big = a.object;
+      MaskObject small = b.object;
+      if (small.size > big.size || (small.size == big.size && small.getValue() < big.getValue())) {
+        big = b.object;
+        small = a.object;
+      }
+      parent[small.getValue()] = big.getValue();
+      big.merge(small);
+      merged = true;
+
+      // Add the merged object to the tree
+      final Node c = new Node(big);
+      tree.add(c.centre, c);
+      findNeighbour(tree, c);
+      // Update the neighbours of the remaining objects
+      for (int i = 0; i < nodes.size(); i++) {
+        final Node node = nodes.unsafeGet(i);
+        if (!node.active) {
+          continue;
+        }
+        if (node.neighbour == a || node.neighbour == b) {
+          findNeighbour(tree, node);
+        } else {
+          final double d = DoubleDistanceFunctions.SQUARED_EUCLIDEAN_3D.distance(node.centre,
+              c.centre);
+          if (node.neighbour == null || d < node.distance) {
+            node.neighbour = c;
+            node.distance = d;
+          }
+        }
+      }
+      nodes.add(c);
+    }
+
+    if (merged) {
+      // Map each value to the final object value
+      final int[] map = new int[parent.length];
+      for (int value = 1; value < map.length; value++) {
+        int root = value;
+        while (parent[root] != 0) {
+          root = parent[root];
+        }
+        map[value] = root;
+      }
+      for (int i = 0; i < image.length; i++) {
+        image[i] = map[image[i]];
+      }
+    }
+  }
+
+  /**
+   * Find the nearest active neighbour of the node.
+   *
+   * @param tree the tree
+   * @param node the node
+   */
+  private static void findNeighbour(ObjDoubleKdTree<Node> tree, Node node) {
+    node.neighbour = null;
+    tree.nearestNeighbour(node.centre, DoubleDistanceFunctions.SQUARED_EUCLIDEAN_3D,
+        n -> n.active && n != node, (n, d) -> {
+          node.neighbour = n;
+          node.distance = d;
+        });
   }
 
   /**
