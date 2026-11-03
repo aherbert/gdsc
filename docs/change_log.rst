@@ -101,6 +101,15 @@ Major release of GDSC ImageJ Plugins.
   counted as inside the region and spots from set 1 were not excluded as near the edge.
 * The :ref:`findfoci_plugins:Spot Density` plugin reports an error for an ``Interval`` that is
   not above zero or is above the ``Distance``. Previously the plugin failed.
+* Fix the :ref:`findfoci_plugins:Spot Pair Distance` ``Relative Angle`` of 180 degrees.
+  Previously the angle was reported as zero.
+* Fix the :ref:`findfoci_plugins:Spot Pair Distance` calibrated distance when the pixel width and
+  height are different. Previously the value had a trailing apostrophe.
+* Fix the :ref:`findfoci_plugins:Spot Pair Distance` orientation line replacing the overlay
+  created by the same click when the ``Add to overlay`` option is not selected.
+* Fix the :ref:`findfoci_plugins:Spot Pair Distance` centre-of-mass region for images narrower
+  than the region. Previously the region could extend outside the image and cause an error.
+  The tool is disabled if a channel is below 1.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

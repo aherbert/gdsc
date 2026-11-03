@@ -78,7 +78,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
    * All the work for this plugin is done with the plugin tool. It handles mouse click events from
    * an image.
    */
-  private static class SpotPairDistancePluginTool extends PlugInTool {
+  static class SpotPairDistancePluginTool extends PlugInTool {
     private static final SpotPairDistancePluginTool toolInstance = new SpotPairDistancePluginTool();
 
     private static AtomicReference<TextWindow> distancesWindow = new AtomicReference<>();
@@ -95,7 +95,10 @@ public class SpotPairDistance_PlugIn implements PlugIn {
     private boolean showOrientationLine = Prefs.get(KEY_SHOW_ORIENTATION_LINE, true);
     private boolean addToOverlay = Prefs.get(KEY_ADD_TO_OVERLAY, true);
 
-    boolean active = true;
+    boolean active = isActive();
+
+    /** Set to true if the overlay was set in the mouse pressed event. */
+    boolean overlaySet;
 
     /** Flag set in mouse pressed and released in mouse released. */
     AtomicInteger dragging = new AtomicInteger();
@@ -165,8 +168,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       showLine = gd.getNextBoolean();
       showOrientationLine = gd.getNextBoolean();
       addToOverlay = gd.getNextBoolean();
-      active = (channel1 != channel2 && searchRange > 0
-          && (showDistances || showSearchRegion || showComRegion || showLine));
+      active = isActive();
       Prefs.set(KEY_CHANNEL_1, channel1);
       Prefs.set(KEY_CHANNEL_2, channel2);
       Prefs.set(KEY_SEARCH_RANGE, searchRange);
@@ -178,6 +180,17 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       Prefs.set(KEY_SHOW_LINE, showLine);
       Prefs.set(KEY_SHOW_ORIENTATION_LINE, showOrientationLine);
       Prefs.set(KEY_ADD_TO_OVERLAY, addToOverlay);
+    }
+
+    /**
+     * Checks if the tool is active. This requires two different valid channels, a positive search
+     * range and an output option.
+     *
+     * @return true if active
+     */
+    private boolean isActive() {
+      return channel1 > 0 && channel2 > 0 && channel1 != channel2 && searchRange > 0
+          && (showDistances || showSearchRegion || showComRegion || showLine);
     }
 
     private static boolean hasMultiChannelImage() {
@@ -268,8 +281,8 @@ public class SpotPairDistance_PlugIn implements PlugIn {
         }
 
         // Find centre-of-mass around each maxima
-        com1 = com(ip1, m1, r1);
-        com2 = com(ip2, m2, r2);
+        com1 = com(ip1, m1, comRange, r1);
+        com2 = com(ip2, m2, comRange, r2);
 
         // Store the actual pixel position so it is clear when the mouse has
         // been dragged to a new position.
@@ -277,7 +290,8 @@ public class SpotPairDistance_PlugIn implements PlugIn {
         origY = event.getY();
 
         // Add the overlay visuals
-        if (showSearchRegion || showComRegion || showLine) {
+        overlaySet = showSearchRegion || showComRegion || showLine;
+        if (overlaySet) {
           Overlay overlay = null;
           if (addToOverlay) {
             overlay = imp.getOverlay();
@@ -308,39 +322,39 @@ public class SpotPairDistance_PlugIn implements PlugIn {
       return event.isAltDown() || event.isShiftDown() || event.isControlDown();
     }
 
-    private double[] com(ImageProcessor ip, int index, Rectangle rectangle) {
+    /**
+     * Compute the centre-of-mass around the index. The region is reduced at the image edge so the
+     * region is centred on the index.
+     *
+     * @param ip the image
+     * @param index the index
+     * @param comRange the centre-of-mass range
+     * @param rectangle the rectangle (updated with the region)
+     * @return the centre-of-mass
+     */
+    static double[] com(ImageProcessor ip, int index, int comRange, Rectangle rectangle) {
       final int x = index % ip.getWidth();
       final int y = index / ip.getWidth();
 
       // Make range +/- equal
-      int rx = comRange;
-      if (x + comRange >= ip.getWidth()) {
-        rx = ip.getWidth() - x - 1;
-      } else if (x - comRange < 0) {
-        rx = x;
-      }
-      int ry = comRange;
-      if (y + comRange >= ip.getHeight()) {
-        ry = ip.getHeight() - y - 1;
-      } else if (y - comRange < 0) {
-        ry = y;
-      }
+      final int rx = Math.min(comRange, Math.min(x, ip.getWidth() - x - 1));
+      final int ry = Math.min(comRange, Math.min(y, ip.getHeight() - y - 1));
       final int mx = x - rx;
-      rx = 2 * rx + 1;
+      final int width = 2 * rx + 1;
       final int my = y - ry;
-      ry = 2 * ry + 1;
+      final int height = 2 * ry + 1;
 
       rectangle.x = mx;
-      rectangle.width = rx;
+      rectangle.width = width;
       rectangle.y = my;
-      rectangle.height = ry;
+      rectangle.height = height;
 
       double cx = 0;
       double cy = 0;
       double sum = 0;
-      for (int ys = 0; ys < ry; ys++) {
+      for (int ys = 0; ys < height; ys++) {
         double sumX = 0;
-        for (int xs = 0, i = (ys + my) * ip.getWidth() + mx; xs < rx; xs++, i++) {
+        for (int xs = 0, i = (ys + my) * ip.getWidth() + mx; xs < width; xs++, i++) {
           final float f = ip.getf(i);
           sumX += f;
           cx += f * xs;
@@ -425,7 +439,8 @@ public class SpotPairDistance_PlugIn implements PlugIn {
 
           if (showOrientationLine) {
             Overlay overlay = null;
-            if (addToOverlay) {
+            // Add to the overlay created in the mouse pressed event
+            if (addToOverlay || overlaySet) {
               overlay = imp.getOverlay();
             }
             if (overlay == null) {
@@ -443,35 +458,58 @@ public class SpotPairDistance_PlugIn implements PlugIn {
           double relX = 0;
           double relY = 0;
           if (line != null) {
-            // - Compute relative orientation
-            // Both vectors are centred on com1. The drag end point
-            // specifies the vector direction origin not the end.
-            final double[] v1 = createVector(line[2], line[3], line[0], line[1]);
-            final double[] v2 = createVector(com2[0], com2[1], com1[0], com1[1]);
-
-            // Requires the vectors to have a length.
-            final double l1 = normalise(v1);
-            final double l2 = normalise(v2);
-            if (l1 != 0 && l2 != 0) {
-              final double dot = v1[0] * v2[0] + v1[1] * v2[1];
-              angle = Math.toDegrees(Math.acos(dot));
-              // Scalar projection of v2 in direction of v1.
-              // This is the relative X component
-              relX = dot * l2;
-              // The relative Y component is determined using Pythagoras' rule
-              relY = Math.sqrt(l2 * l2 - relX * relX);
-              // Compute sign to get an orientation
-              if (angle != 0) {
-                final double sign = Math.signum(v1[0] * v2[1] - v1[1] * v2[0]);
-                angle *= sign;
-                relY *= -sign; // Positive rotation makes y below the x-axis direction
-              }
-            }
+            final double[] rel = computeRelativeOrientation(line, com1, com2);
+            angle = rel[0];
+            relX = rel[1];
+            relY = rel[2];
           }
 
           addDistanceResult(imp, slice, frame, bounds, com1, com2, angle, relX, relY);
         }
       }
+    }
+
+    /**
+     * Compute the orientation of the vector from centre 1 to centre 2 relative to the orientation
+     * line.
+     *
+     * @param line the orientation line [startX,startY,endX,endY]
+     * @param com1 the centre 1
+     * @param com2 the centre 2
+     * @return [angle (degrees), relative X, relative Y]
+     */
+    static double[] computeRelativeOrientation(double[] line, double[] com1, double[] com2) {
+      // Both vectors are centred on com1. The drag end point
+      // specifies the vector direction origin not the end.
+      final double[] v1 = createVector(line[2], line[3], line[0], line[1]);
+      final double[] v2 = createVector(com2[0], com2[1], com1[0], com1[1]);
+
+      double angle = 0;
+      double relX = 0;
+      double relY = 0;
+      // Requires the vectors to have a length.
+      final double l1 = normalise(v1);
+      final double l2 = normalise(v2);
+      if (l1 != 0 && l2 != 0) {
+        // Clip rounding error for collinear vectors
+        final double dot = MathUtils.clip(-1, 1, v1[0] * v2[0] + v1[1] * v2[1]);
+        angle = Math.toDegrees(Math.acos(dot));
+        // Scalar projection of v2 in direction of v1.
+        // This is the relative X component
+        relX = dot * l2;
+        // The relative Y component is determined using Pythagoras' rule
+        relY = Math.sqrt(Math.max(0, l2 * l2 - relX * relX));
+        // Compute sign to get an orientation. A zero cross product is collinear:
+        // the angle is 0 or 180 and the relative Y is zero.
+        final double sign = Math.signum(v1[0] * v2[1] - v1[1] * v2[0]);
+        if (sign != 0) {
+          angle *= sign;
+          relY *= -sign; // Positive rotation makes y below the x-axis direction
+        } else {
+          relY = 0;
+        }
+      }
+      return new double[] {angle, relX, relY};
     }
 
     private static double[] createVector(double x1, double y1, double x2, double y2) {
@@ -577,7 +615,7 @@ public class SpotPairDistance_PlugIn implements PlugIn {
           sb.append('\t').append(MathUtils.rounded(relX * cal.pixelWidth));
           sb.append('\t').append(MathUtils.rounded(relY * cal.pixelWidth));
         } else {
-          sb.append("'\t-\t-");
+          sb.append("\t-\t-");
         }
         sb.append('\t').append(unit);
       }
