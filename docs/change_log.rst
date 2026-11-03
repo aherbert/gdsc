@@ -90,6 +90,9 @@ Major release of GDSC ImageJ Plugins.
   ``Distance``.
 * Fix the :ref:`findfoci_plugins:Spot Radial Intensity` plugin failing for ``FindFoci`` results
   outside the image. Spots outside the image are ignored.
+* Fix the :ref:`findfoci_plugins:Spot Pairs` point IDs. Points are numbered from 1; previously
+  the first point had an ID of 2. A new results table is created if the calibrated units of the
+  image do not match the table distance units.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

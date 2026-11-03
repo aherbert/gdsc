@@ -132,7 +132,7 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /**
    * Used to store information about a cluster in the clustering analysis.
    */
-  private static class Cluster {
+  static class Cluster {
     double x;
     double y;
     double sumx;
@@ -259,7 +259,7 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /**
    * Used to store information about a point in the clustering analysis.
    */
-  private static class ClusterPoint {
+  static class ClusterPoint {
     double x;
     double y;
     int id;
@@ -357,8 +357,15 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
   }
 
   private static TextWindow createResultsWindow(Calibration cal) {
-    return ImageJUtils.refresh(resultsWindowRef,
-        () -> new TextWindow(TITLE, createResultsHeader(cal), "", 600, 500));
+    final String header = createResultsHeader(cal);
+    TextWindow tw = ImageJUtils.refresh(resultsWindowRef,
+        () -> new TextWindow(TITLE, header, "", 600, 500));
+    if (!header.equals(tw.getTextPanel().getColumnHeadings())) {
+      // The calibrated units have changed. Create a new table.
+      tw = new TextWindow(TITLE, header, "", 600, 500);
+      resultsWindowRef.set(tw);
+    }
+    return tw;
   }
 
   private static String createResultsHeader(Calibration cal) {
@@ -391,7 +398,7 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /** {@inheritDoc} */
   @Override
   public void run(ImageProcessor ip) {
-    candidates = findPairs();
+    candidates = findPairs(points, settings.radius);
 
     if (settings.addOverlay) {
       final Overlay overlay = new Overlay();
@@ -424,14 +431,21 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
     }
   }
 
-  private ArrayList<Cluster> findPairs() {
+  /**
+   * Find the pairs of points within the radius distance.
+   *
+   * @param points the points
+   * @param radius the radius
+   * @return the clusters (pairs and single points)
+   */
+  static ArrayList<Cluster> findPairs(AssignedPoint[] points, double radius) {
     // NOTE:
     // This code has been adapted from the GDSC SMLM plugins from the PCPALMClusters class.
     // This was the fastest way of implementing this.
 
     final ArrayList<Cluster> newCandidates = new ArrayList<>(points.length);
     for (final AssignedPoint p : points) {
-      final Cluster c = new Cluster(new ClusterPoint(p.id + 1, p.x, p.y));
+      final Cluster c = new Cluster(new ClusterPoint(p.id, p.x, p.y));
       newCandidates.add(c);
     }
 
@@ -455,8 +469,8 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
     // Assign to a grid
     final int maxBins = 500;
-    final double xBinWidth = Math.max(settings.radius, (maxx - minx) / maxBins);
-    final double yBinWidth = Math.max(settings.radius, (maxy - miny) / maxBins);
+    final double xBinWidth = Math.max(radius, (maxx - minx) / maxBins);
+    final double yBinWidth = Math.max(radius, (maxy - miny) / maxBins);
     final int nxbins = 1 + (int) ((maxx - minx) / xBinWidth);
     final int nybins = 1 + (int) ((maxy - miny) / yBinWidth);
     final Cluster[][] grid = new Cluster[nxbins][nybins];
@@ -468,7 +482,7 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
       grid[xbin][ybin] = c;
     }
 
-    final double r2 = settings.radius * settings.radius;
+    final double r2 = radius * radius;
 
     // Sweep the all-vs-all clusters and make potential links between clusters.
     // If a link can be made to a closer cluster then break the link and rejoin.
