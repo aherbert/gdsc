@@ -68,6 +68,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
   private static final String TITLE = "Spot Radial Intensity";
   private static final AtomicReference<TextWindow> resultsWindow = new AtomicReference<>();
   private static final AtomicReference<TextWindow> objectsWindow = new AtomicReference<>();
+  private static final int MODE_NONE = 0;
   private static final int MODE_MASK = 1;
   private static final int MODE_EXCLUSIVE_MASK = 2;
 
@@ -153,7 +154,10 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     }
   }
 
-  private static class Foci {
+  /**
+   * A spot within a mask object.
+   */
+  static class Foci {
     final int id;
     final int object;
     final int x;
@@ -230,8 +234,8 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     }
 
     // Check if these change
-    final int distance = settings.distance;
-    final double interval = settings.interval;
+    final int previousDistance = settings.distance;
+    final double previousInterval = settings.interval;
 
     if (imageRoi != null && names.length != 0) {
       settings.useRoi = gd.getNextBoolean();
@@ -254,12 +258,11 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     settings.save();
 
     // Validate options
-    if (!Double.isFinite(distance) || !Double.isFinite(interval) || distance <= 0 || interval <= 0
-        || (int) (distance / interval) <= 1) {
+    if (!isValidDistance(settings.distance, settings.interval)) {
       IJ.error(TITLE, "No valid distances using the given interval");
       return;
     }
-    if (settings.segmentMode != 1 && settings.segmentWidth < 1) {
+    if (settings.segmentMode != MODE_NONE && !(settings.segmentWidth >= 1)) {
       IJ.error(TITLE, "Invalid segment width: " + settings.segmentWidth);
       return;
     }
@@ -268,7 +271,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       return;
     }
 
-    if (distance != settings.distance || interval != settings.interval) {
+    if (previousDistance != settings.distance || previousInterval != settings.interval) {
       resultsWindow.set(null); // Create a new window
     }
 
@@ -299,6 +302,18 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     }
 
     analyse(foci, objects, roi);
+  }
+
+  /**
+   * Checks the distance and interval define at least 2 radial bins.
+   *
+   * @param distance the distance
+   * @param interval the interval
+   * @return true if valid
+   */
+  static boolean isValidDistance(int distance, double interval) {
+    return distance > 0 && interval > 0 && Double.isFinite(interval)
+        && (int) (distance / interval) > 1;
   }
 
   /**
@@ -352,15 +367,12 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     roi = imp.getRoi();
     final int[] xpoints = roi.getPolygon().xpoints;
     final int[] ypoints = roi.getPolygon().ypoints;
-    final int[] mask = objects.getObjectMask();
-    final int maxx = imp.getWidth();
     final LocalList<Foci> foci = new LocalList<>(xpoints.length);
     for (int i = 0, id = 1; i < xpoints.length; i++) {
-      final int x = xpoints[i];
-      final int y = ypoints[i];
-      final int object = mask[y * maxx + x];
-      if (object != 0) {
-        foci.add(new Foci(id++, object, x, y));
+      final Foci f = createFoci(objects, id, xpoints[i], ypoints[i]);
+      if (f != null) {
+        foci.add(f);
+        id++;
       }
     }
     if (foci.isEmpty()) {
@@ -389,14 +401,13 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       IJ.error(TITLE, "Zero foci in the results with the name " + resultsName);
       return null;
     }
-    final int[] mask = objects.getObjectMask();
-    final int maxx = imp.getWidth();
     final LocalList<Foci> foci = new LocalList<>(results.size());
     for (int i = 0, id = 1; i < results.size(); i++) {
       final FindFociResult result = results.get(i);
-      final int object = mask[result.y * maxx + result.x];
-      if (object != 0) {
-        foci.add(new Foci(id++, object, result.x, result.y));
+      final Foci f = createFoci(objects, id, result.x, result.y);
+      if (f != null) {
+        foci.add(f);
+        id++;
       }
     }
     if (foci.isEmpty()) {
@@ -404,6 +415,24 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       return null;
     }
     return foci.toArray(new Foci[0]);
+  }
+
+  /**
+   * Creates the foci if the position is within a mask object.
+   *
+   * @param objects the objects
+   * @param id the id
+   * @param x the x
+   * @param y the y
+   * @return the foci (or null)
+   */
+  @Nullable
+  static Foci createFoci(ObjectAnalyzer objects, int id, int x, int y) {
+    if (x < 0 || x >= objects.getWidth() || y < 0 || y >= objects.getHeight()) {
+      return null;
+    }
+    final int object = objects.getObjectMask()[y * objects.getWidth() + x];
+    return object == 0 ? null : new Foci(id, object, x, y);
   }
 
   /**
@@ -449,7 +478,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
 
     // Optionally segment the mask objects using segments of the specified width
     if (settings.segmentMode == MODE_MASK) {
-      segmentMask(mask, objects, centres, foci);
+      segmentMask(mask, objects, centres, foci, settings.segmentWidth);
     }
 
     // For radial intensity
@@ -506,7 +535,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       Roi segment = null;
       if (settings.segmentMode == MODE_EXCLUSIVE_MASK) {
         // Only use pixels within the segment
-        segment = createSegmentRoi(f, centres[f.object]);
+        segment = createSegmentRoi(f, centres[f.object], settings.segmentWidth);
       }
 
       // For all pixels
@@ -593,6 +622,10 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
         allD[i] += sumD[i];
       }
 
+      for (int i = 0; i < maxBin; i++) {
+        yAxis[i] = count[i] == 0 ? 0 : sum[i] / count[i] - b;
+      }
+
       if (tw != null) {
         // Table of results
         sb.setLength(0);
@@ -604,12 +637,9 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
         sb.append('\t').append(f.y);
         for (int i = 0; i < maxBin; i++) {
           if (count[i] == 0) {
-            yAxis[i] = 0;
             sb.append("\t0");
           } else {
-            final double v = sum[i] / count[i] - b;
-            yAxis[i] = v;
-            sb.append('\t').append(MathUtils.rounded(v));
+            sb.append('\t').append(MathUtils.rounded(yAxis[i]));
           }
         }
         for (int i = 0; i < maxBin; i++) {
@@ -735,9 +765,10 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
    * @param objects the objects
    * @param centres the centres
    * @param foci the foci
+   * @param segmentWidth the segment width
    */
-  private void segmentMask(int[] mask, ObjectAnalyzer objects, ObjectCentre[] centres,
-      Foci[] foci) {
+  static void segmentMask(int[] mask, ObjectAnalyzer objects, ObjectCentre[] centres,
+      Foci[] foci, double segmentWidth) {
     // Note: Object centres use the top-left corner of the pixel as (0,0).
     // Add 0.5 to position the segments around the pixel centre.
     final byte[] within = new byte[mask.length];
@@ -746,15 +777,25 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     for (int ii = 0; ii < foci.length; ii++) {
       final Foci f = foci[ii];
       final ObjectCentre c = centres[f.object];
-      final Roi roi = createSegmentRoi(f, c);
-      ip.fill(roi);
+      final Roi roi = createSegmentRoi(f, c, segmentWidth);
+      if (roi == null) {
+        // No segment: do not restrict the object
+        for (int i = 0; i < mask.length; i++) {
+          if (mask[i] == f.object) {
+            within[i] = (byte) 255;
+          }
+        }
+      } else {
+        ip.fill(roi);
+      }
     }
     for (int i = 0; i < mask.length; i++) {
       mask[i] &= within[i];
     }
   }
 
-  private Roi createSegmentRoi(Foci f, ObjectCentre c) {
+  @Nullable
+  private static Roi createSegmentRoi(Foci f, ObjectCentre c, double segmentWidth) {
     // Construct triangle segment.
     double dx = c.getCentreX() - f.x;
     double dy = c.getCentreY() - f.y;
@@ -765,8 +806,8 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       return null;
     }
     // Create base using half the segment width in each direction
-    dx = 0.5 * settings.segmentWidth * dx / norm;
-    dy = 0.5 * settings.segmentWidth * dy / norm;
+    dx = 0.5 * segmentWidth * dx / norm;
+    dy = 0.5 * segmentWidth * dy / norm;
     // Orthogonal vector is:
     // clockwise = dy, -dx
     // anticlockwise = -dy, dx
@@ -786,6 +827,17 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
   }
 
   private String createResultsHeader() {
+    return createResultsHeader(settings.distance, settings.interval);
+  }
+
+  /**
+   * Creates the results header. The final bin extends to the distance.
+   *
+   * @param distance the distance
+   * @param interval the interval
+   * @return the header
+   */
+  static String createResultsHeader(int distance, double interval) {
     final StringBuilder sb = new StringBuilder();
     sb.append("Image");
     sb.append("\tID");
@@ -793,24 +845,17 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     sb.append("\tBackground");
     sb.append("\tx");
     sb.append("\ty");
-    final int maxBin = (int) (settings.distance / settings.interval);
+    final int maxBin = (int) (distance / interval);
+    final String[] ranges = new String[maxBin];
     for (int i = 0; i < maxBin; i++) {
-      final double low = settings.interval * i;
-      final double high = settings.interval * (i + 1);
-      sb.append("\tAv ").append(MathUtils.rounded(low));
-      sb.append("-").append(MathUtils.rounded(high));
+      final double low = interval * i;
+      final double high = i == maxBin - 1 ? distance : interval * (i + 1);
+      ranges[i] = MathUtils.rounded(low) + "-" + MathUtils.rounded(high);
     }
-    for (int i = 0; i < maxBin; i++) {
-      final double low = settings.interval * i;
-      final double high = settings.interval * (i + 1);
-      sb.append("\tN ").append(MathUtils.rounded(low));
-      sb.append("-").append(MathUtils.rounded(high));
-    }
-    for (int i = 0; i < maxBin; i++) {
-      final double low = settings.interval * i;
-      final double high = settings.interval * (i + 1);
-      sb.append("\tD ").append(MathUtils.rounded(low));
-      sb.append("-").append(MathUtils.rounded(high));
+    for (final String type : new String[] {"Av ", "N ", "D "}) {
+      for (final String range : ranges) {
+        sb.append('\t').append(type).append(range);
+      }
     }
     return sb.toString();
   }

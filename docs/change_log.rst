@@ -76,6 +76,20 @@ Major release of GDSC ImageJ Plugins.
   single pass of the image, and merges objects using a KD-tree of the object centres. Previously the
   image was scanned for every value in the range of the mask values, and for every merge, which was
   slow for masks with sparse values or many objects.
+* Fix the :ref:`findfoci_plugins:Spot Radial Intensity` validation of the ``Distance`` and
+  ``Interval``. Previously the values from the previous run were validated and invalid values
+  could cause an error. The ``Segment width`` is validated when using the ``Mask`` segment mode;
+  previously it was validated for the ``None`` mode instead.
+* Fix the :ref:`findfoci_plugins:Spot Radial Intensity` plot of each spot when the ``Show table``
+  option is not selected. Previously the values were all zero.
+* Fix the :ref:`findfoci_plugins:Spot Radial Intensity` ``Mask`` segment mode when a spot is at
+  the centre of its object. Previously segmentation was disabled for all the objects; the object
+  containing the spot is now not restricted.
+* Fix the :ref:`findfoci_plugins:Spot Radial Intensity` summary table column names for the last
+  ring when the ``Distance`` is not a multiple of the ``Interval``. The last ring ends at the
+  ``Distance``.
+* Fix the :ref:`findfoci_plugins:Spot Radial Intensity` plugin failing for ``FindFoci`` results
+  outside the image. Spots outside the image are ignored.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.
