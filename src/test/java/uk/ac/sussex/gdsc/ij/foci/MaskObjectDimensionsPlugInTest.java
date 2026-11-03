@@ -24,11 +24,69 @@
 
 package uk.ac.sussex.gdsc.ij.foci;
 
+import java.util.SplittableRandom;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import uk.ac.sussex.gdsc.ij.foci.MaskObjectDimensions_PlugIn.MaskObject;
 
 @SuppressWarnings({"javadoc"})
 class MaskObjectDimensionsPlugInTest {
+  @Test
+  void testCreateObjectsWithNoObjects() {
+    final int[] image = new int[24];
+    final int[] histogram = new int[256];
+    histogram[0] = image.length;
+    Assertions.assertEquals(0,
+        MaskObjectDimensions_PlugIn.createObjects(image, histogram, 4, 3, 2).length);
+  }
+
+  @Test
+  void testCreateObjectsWithSparseValues() {
+    final int maxx = 13;
+    final int maxy = 11;
+    final int maxz = 3;
+    final int[] image = new int[maxx * maxy * maxz];
+    final int[] values = {0, 1, 7, 300, 60000, 65535};
+    final SplittableRandom rng = new SplittableRandom(12345);
+    final int[] histogram = new int[65536];
+    for (int i = 0; i < image.length; i++) {
+      // Value 300 is not used
+      final int v = values[rng.nextInt(values.length)];
+      image[i] = v == 300 ? 0 : v;
+      histogram[image[i]]++;
+    }
+    final MaskObject[] objects =
+        MaskObjectDimensions_PlugIn.createObjects(image, histogram, maxx, maxy, maxz);
+    final int[] expectedValues = {1, 7, 60000, 65535};
+    Assertions.assertEquals(expectedValues.length, objects.length);
+    for (int k = 0; k < expectedValues.length; k++) {
+      final int object = expectedValues[k];
+      // Brute force Centre-of-Mass
+      double cx = 0;
+      double cy = 0;
+      double cz = 0;
+      int count = 0;
+      for (int z = 0, i = 0; z < maxz; z++) {
+        for (int y = 0; y < maxy; y++) {
+          for (int x = 0; x < maxx; x++, i++) {
+            if (image[i] == object) {
+              cx += x;
+              cy += y;
+              cz += z;
+              count++;
+            }
+          }
+        }
+      }
+      final MaskObject o = objects[k];
+      Assertions.assertEquals(object, o.getValue());
+      Assertions.assertEquals(count, o.size);
+      Assertions.assertEquals(cx / count + 0.5, o.cx);
+      Assertions.assertEquals(cy / count + 0.5, o.cy);
+      Assertions.assertEquals(cz / count + 0.5, o.cz);
+    }
+  }
+
   @Test
   void testEigenSort3x3() {
     final double[] weights = {0, 1, 2};

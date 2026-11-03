@@ -72,6 +72,9 @@ Major release of GDSC ImageJ Plugins.
   not selected.
 * The :ref:`findfoci_plugins:Mask Analyze Channels...` plugin reports an error for a
   ``Background fraction`` outside the interval [0, 1]. Previously the plugin failed.
+* The :ref:`findfoci_plugins:Mask Object Dimensions` plugin computes the object centres in a
+  single pass of the image. Previously the image was scanned for every value in the range of the
+  mask values, which was slow for masks with sparse values.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

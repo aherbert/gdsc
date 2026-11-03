@@ -116,7 +116,10 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     }
   }
 
-  private static class MaskObject {
+  /**
+   * Define an object in the mask.
+   */
+  static class MaskObject {
     double cx;
     double cy;
     double cz;
@@ -261,45 +264,12 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     }
 
     // Calculate the objects (non-zero pixels)
-    int min = 1;
-    int max = histogram.length - 1;
-    while (min <= max && histogram[min] == 0) {
-      min++;
-    }
-    if (min > max) {
+    MaskObject[] objects = createObjects(image, histogram, maxx, maxy, maxz);
+    if (objects.length == 0) {
       IJ.error(TITLE, "No objects in mask");
       return;
     }
-    while (histogram[max] == 0) {
-      max--;
-    }
-
-    // For each object
-    MaskObject[] objects = new MaskObject[max - min + 1];
-    for (int object = min; object <= max; object++) {
-      // Find the Centre-of-Mass
-      double cx = 0;
-      double cy = 0;
-      double cz = 0;
-      int count = 0;
-      for (int z = 0, i = 0; z < maxz; z++) {
-        for (int y = 0; y < maxy; y++) {
-          for (int x = 0; x < maxx; x++, i++) {
-            if (image[i] == object) {
-              cx += x;
-              cy += y;
-              cz += z;
-              count++;
-            }
-          }
-        }
-      }
-      // Set 0.5 as the centre of the voxel mass
-      cx = cx / count + 0.5;
-      cy = cy / count + 0.5;
-      cz = cz / count + 0.5;
-      objects[object - min] = new MaskObject(cx, cy, cz, count, object);
-    }
+    final int max = objects[objects.length - 1].getValue();
 
     // Iteratively join closest objects
     if (settings.mergeDistance > 0) {
@@ -578,6 +548,57 @@ public class MaskObjectDimensions_PlugIn implements PlugInFilter {
     if (settings.showOverlay) {
       imp.setOverlay(overlay);
     }
+  }
+
+  /**
+   * Create the objects using the unique non-zero values in the image. The objects are in ascending
+   * order of value. The centre-of-mass is computed in a single pass of the image.
+   *
+   * @param image the image
+   * @param histogram the histogram of the image values
+   * @param maxx the image width
+   * @param maxy the image height
+   * @param maxz the image depth
+   * @return the objects
+   */
+  static MaskObject[] createObjects(int[] image, int[] histogram, int maxx, int maxy, int maxz) {
+    // Map the values to consecutive labels starting from 1
+    final int[] label = new int[histogram.length];
+    final int[] values = new int[histogram.length];
+    int count = 0;
+    for (int value = 1; value < histogram.length; value++) {
+      if (histogram[value] != 0) {
+        label[value] = ++count;
+        values[count] = value;
+      }
+    }
+
+    // Sum the coordinates of each object
+    final long[] sx = new long[count + 1];
+    final long[] sy = new long[count + 1];
+    final long[] sz = new long[count + 1];
+    final int[] n = new int[count + 1];
+    for (int z = 0, i = 0; z < maxz; z++) {
+      for (int y = 0; y < maxy; y++) {
+        for (int x = 0; x < maxx; x++, i++) {
+          final int l = label[image[i]];
+          sx[l] += x;
+          sy[l] += y;
+          sz[l] += z;
+          n[l]++;
+        }
+      }
+    }
+
+    // Find the Centre-of-Mass. Set 0.5 as the centre of the voxel mass.
+    final MaskObject[] objects = new MaskObject[count];
+    for (int l = 1; l <= count; l++) {
+      final double cx = (double) sx[l] / n[l] + 0.5;
+      final double cy = (double) sy[l] / n[l] + 0.5;
+      final double cz = (double) sz[l] / n[l] + 0.5;
+      objects[l - 1] = new MaskObject(cx, cy, cz, n[l], values[l]);
+    }
+    return objects;
   }
 
   /**
