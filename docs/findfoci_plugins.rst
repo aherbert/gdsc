@@ -2711,6 +2711,87 @@ Spot Pairs
 
 ``ImageJ`` plugin that analyses marked ROI points in an image. Find the closest pairs within a set distance of each other. Supports a preview of the pairs and saves results to a table.
 
+The plugin runs on the current image which must have a multi-point ROI with at least two points; otherwise an error is shown. Any image type is supported. Only the XY coordinates of the points are used; the image pixels are not analysed. Points can be marked using the ``ImageJ`` ``Multi-point`` tool.
+
+The plugin performs the following steps:
+
+#. Number the points from 1 in the order they occur in the ROI.
+#. Link each point to its closest neighbouring point. Only neighbours closer than the ``Radius`` (in pixels) are considered.
+#. Join two points as a pair if they are linked to each other. Each point can be in only one pair. A point is not paired if it has no neighbour within the ``Radius``.
+
+The links are made in a single pass over the points. If the closest neighbour of a point is linked to a different point then the point may be linked to another neighbour or left unpaired; the result can depend on the order of the points in the ROI.
+
+If the ``Kill ROI`` option is used the point ROI is removed from the image. The ROI is stored so that if the plugin is run again on the same image without an ROI then the stored ROI is restored to the image and analysed.
+
+.. index:: Spot Pairs Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Spot Pairs`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Radius
+     - The distance (in pixels) used to find pairs. Points must be closer than this distance to be paired.
+
+   * - Add overlay
+     - Show the results on the image as an overlay. The overlay contains the points (orange outline with a white fill) and a magenta line between the points of each pair. The overlay replaces any existing overlay. If not selected then any existing overlay on the image is removed.
+
+   * - Kill ROI
+     - Remove the point ROI from the image after the analysis. This allows the overlay to be seen.
+
+   * - Preview
+     - Show the pairs on the image while the parameters are adjusted. If the dialog is cancelled then any overlay added by the preview is removed.
+
+.. index:: Spot Pairs Results Table
+
+Results Table
+~~~~~~~~~~~~~
+
+The results are appended to the ``Spot Pairs`` table. If the calibrated units of the image are different from the table then a new table is created. Each run first adds a row containing the image title in the ``Image`` column. This is followed by a row for each pair, and then a row for each point that is not paired. Pairs are listed in ascending order of the first point ID; unpaired points are listed in ascending order of ID. The table contains the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title. This is only set on the first row added for the image.
+
+   * - Id1
+     - The ID of the first point. For a pair this is the lower ID.
+
+   * - X1
+     - The X coordinate of the first point (in pixels).
+
+   * - Y1
+     - The Y coordinate of the first point (in pixels).
+
+   * - Id2
+     - The ID of the second point of a pair. Empty for an unpaired point.
+
+   * - X2
+     - The X coordinate of the second point (in pixels). Empty for an unpaired point.
+
+   * - Y2
+     - The Y coordinate of the second point (in pixels). Empty for an unpaired point.
+
+   * - Distance
+     - The distance between the points of a pair (in pixels). Empty for an unpaired point.
+
+   * - Distance (<units>)
+     - The distance between the points of a pair in calibrated units, e.g. ``Distance (µm)``. The distance is converted using the pixel width of the image calibration. Empty for an unpaired point.
+
+The image pixels are not modified.
+
 .. index:: ! Mask Divider
 
 Mask Divider
@@ -2927,9 +3008,126 @@ If any of the ``Show`` options are selected then the overlay on the mask is repl
 Spot Density
 ------------
 
-Calculate the density of spots from a second ``FindFoci`` results set around the spots from a first results set (the sets can be the same); both are loaded from memory. Only spots within a mask region are processed. Any foci within the maximum analysis distance from the edge are excluded from analysis. Analysis is performed in 2D only.
+Calculate the density of spots from a second ``FindFoci`` results set around the spots from a first results set (the sets can be the same); both are loaded from memory. Only spots within a mask region are processed. Any foci from the first set within the maximum analysis distance from the edge are excluded from analysis. Analysis is performed in 2D only.
 
 Outputs histograms of the closest distances between spots and the density of particles around the spots (i.e. the `Pair Correlation <https://en.wikipedia.org/wiki/Radial_distribution_function>`_ function).
+
+The spots are taken from ``FindFoci`` results saved to memory using the ``Save to memory`` option of the :ref:`findfoci_plugins:FindFoci` plugin. If no results are in memory then an error is shown. Only the XY coordinates of the spots are used.
+
+The analysis region can be defined using an area ROI on the current image, or using a mask image. Any open 8-bit or 16-bit image can be used as the mask; all non-zero pixels of the current slice of the mask are inside the region. If there is no area ROI on the current image and no mask images are open then an error is shown.
+
+The plugin performs the following steps:
+
+#. Compute the distance of each pixel in the region to the edge of the region. The edge of the image is treated as outside the region.
+#. Select the spots from set 2 that are inside the region. Spots outside the mask image are outside the region.
+#. Select the spots from set 1 that are at least the ``Distance`` from the edge of the region. These are the internal spots. Spots from set 1 closer to the edge are excluded since the circle around the spot used for analysis would extend outside the region.
+#. For each internal spot from set 1, compute the distance to all the selected spots from set 2. If the two sets are the same then the spot is not compared to itself. Distances below the ``Distance`` are counted in a histogram of concentric rings around the spot with a width of the ``Interval``. If the ``Interval`` is not a factor of the ``Distance`` then the final ring is narrower and ends at the ``Distance``. A final ring with a width of 0.001 pixels or less is merged into the previous ring. The closest distance to a spot from set 2 is recorded.
+#. Compute the pair correlation for each ring. This is the count of spots in the ring divided by the number of internal spots and by the area of the ring. The result is normalised by dividing by the average density of the set 2 spots in the region (the number of selected spots from set 2 divided by the region area in pixels). A pair correlation of 1 indicates the spots are randomly distributed; above 1 indicates clustering at that distance.
+
+.. index:: Spot Density Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Spot Density`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Results name 1
+     - The ``FindFoci`` results in memory used for the first set of spots. Results are named using the image title and the channel and frame used for the analysis, e.g. ``Image (c1,t1)``.
+
+   * - Results name 2
+     - The ``FindFoci`` results in memory used for the second set of spots. This can be the same as ``Results name 1``.
+
+   * - Mask
+     - The mask defining the analysis region. Select ``[ROI]`` to use the area ROI on the current image; this option is only available if the current image has an area ROI. Otherwise select an open 8-bit or 16-bit image.
+
+   * - Distance
+     - The maximum distance (in pixels) for the analysis. This is the radius of the outer ring around each spot, and the minimum distance from the edge of the region for a spot from set 1 to be analysed.
+
+   * - Interval
+     - The width (in pixels) of each ring around the spot. Must be above zero and not more than the ``Distance``.
+
+.. index:: Spot Density Output
+
+Output
+~~~~~~
+
+The plugin creates two plots. If a plot with the same title is open then it is replaced.
+
+* ``Spot Density Min Distance``: A histogram of the closest distance from each internal spot from set 1 to a spot from set 2. Only distances below the ``Distance`` are included. The X-axis is the start distance of each histogram bin.
+* ``Spot Density Pair Correlation``: The pair correlation function g(r) plotted against the start distance of each ring (r). A red line is drawn at g(r) = 1. The plot is labelled with the average density of the set 2 spots in the region (``Av.Density``).
+
+.. index:: Spot Density Summary Table
+
+Summary Table
+~~~~~~~~~~~~~
+
+The results are appended to the ``Spot Density Summary`` table. The table contains a row for each run of the plugin with the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - ID
+     - The ID of the analysis. This is incremented each time the plugin is run.
+
+   * - N1
+     - The number of spots in set 1.
+
+   * - N1_internal
+     - The number of spots in set 1 that are at least the ``Distance`` from the edge of the region.
+
+   * - N2
+     - The number of spots in set 2.
+
+   * - N2_selection
+     - The number of spots in set 2 that are inside the region.
+
+   * - Distance
+     - The analysis distance.
+
+   * - Interval
+     - The ring interval.
+
+   * - Area
+     - The area of the region (in pixels).
+
+   * - Av. Density
+     - The average density of the set 2 spots in the region (``N2_selection`` / ``Area``).
+
+   * - Max g(r)
+     - The maximum of the pair correlation function.
+
+   * - r
+     - The start distance of the ring with the maximum of the pair correlation function.
+
+   * - Count Distances
+     - The number of internal spots from set 1 that have a closest spot from set 2.
+
+   * - Av. Distance
+     - The average closest distance from the internal spots in set 1 to a spot in set 2. This uses all the closest distances, including those above the ``Distance``.
+
+.. index:: Spot Density Combining Results
+
+Combining Results
+~~~~~~~~~~~~~~~~~
+
+The pair correlation curves from multiple analyses can be combined by selecting rows in the ``Spot Density Summary`` table using the mouse. When the mouse is clicked the curves for the selected rows are combined and shown in the ``Spot Density Pair Correlation`` plot. Selecting a single row shows the curve for that analysis.
+
+If more than 2 rows are selected then a dialog is shown to select which curves to combine. If there are 20 or fewer curves the dialog has a checkbox for each ID; otherwise the dialog has a text area containing the IDs, which can be edited to remove IDs.
+
+The combined curve is the average of the pair correlation curves. The average density label uses the total number of selected set 2 spots divided by the total area. The curves can only be combined if they have the same rings, i.e. the same ``Distance`` and ``Interval``; otherwise no plot is shown.
+
+The analysis results are stored in memory for the lifetime of the ``ImageJ`` session.
 
 .. index:: ! Mask Object Dimensions
 
@@ -3479,12 +3677,311 @@ Spot Radial Intensity
 
 Output the radial intensity around spots within a mask region. Spots are defined using ``FindFoci`` results held in memory or a point ROI.
 
+The plugin runs on the current image which must be an 8-bit, 16-bit or 32-bit image; RGB images are not supported. Only the current image plane (channel, z-slice and frame) is analysed. The mask must be an open 8-bit or 16-bit image with the same width and height as the image; only the current slice of the mask is used. If no mask images are available then an error is shown.
+
+The spots can be defined using a point ROI on the current image, or using ``FindFoci`` results saved to memory using the ``Save to memory`` option of the :ref:`findfoci_plugins:FindFoci` plugin. If there is no point ROI and no results in memory then an error is shown. Only the XY coordinates of the spots are used.
+
+The plugin performs the following steps:
+
+#. Identify the objects in the mask. An object is a set of contiguous non-zero pixels with the same value; pixels are connected using their 4 edge neighbours. Separate regions with the same mask value are different objects. Zero is the background.
+#. Select the spots that are inside an object. Spots outside the objects are ignored. The selected spots are numbered from 1 in the order of the input spots. An error is shown if no spots are inside an object.
+#. Compute the background of each object. The image is smoothed using a 3x3 mean filter and the background is the lowest smoothed value inside the object.
+#. Optionally restrict the pixels around each spot using a segment (see ``Segment``).
+#. Assign the pixels around each spot to the spot. A pixel is assigned if it is in the same object as the spot and the distance from the spot is below the ``Distance``. If a pixel is within range of more than one spot in the same object it is assigned to the closest spot; if the distances are equal it is assigned to the spot with the lowest number.
+#. For each spot, divide the assigned pixels into rings using the ``Interval``. Compute the average pixel value in each ring and subtract the object background.
+
+.. index:: Spot Radial Intensity Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Spot Radial Intensity`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Use roi
+     - Use the point ROI on the image as the spots. If not selected then the ``FindFoci`` results are used. Only shown if the image has a point ROI and there are ``FindFoci`` results in memory. If there are no results in memory then the point ROI is used.
+
+   * - Results name
+     - The ``FindFoci`` results in memory used for the spots. Results are named using the image title and the channel and frame used for the analysis, e.g. ``Image (c1,t1)``. Only shown if there are ``FindFoci`` results in memory.
+
+   * - Mask
+     - The mask image. Only 8-bit and 16-bit images with the same width and height as the image are listed.
+
+   * - Distance
+     - The maximum distance (in pixels) from the spot to include pixels. The value is truncated to an integer.
+
+   * - Interval
+     - The width (in pixels) of each ring around the spot. The ``Distance`` divided by the ``Interval`` (truncated to an integer) is the number of rings; this must be at least 2 otherwise an error is shown.
+
+   * - Segment
+     - Restrict the pixels around each spot using a segment. A segment is a triangle with the base centred on the spot and the third vertex at the centre of the object. The segment covers the pixels from the spot towards the centre of the object.
+
+       * ``None``: Do not use segments.
+       * ``Mask``: Restrict each object to the pixels inside the segments of all the spots in the object. Pixels in the segment of a different spot can be assigned to a spot if they are closer to it.
+       * ``Exclusive Mask``: Each spot can only be assigned the pixels inside its own segment.
+
+       If a spot is at the centre of the object then a segment cannot be created and a message is written to the ``ImageJ`` log. Using ``Mask`` the object containing the spot is not restricted; using ``Exclusive Mask`` the pixels assigned to the spot are not restricted.
+
+   * - Segment width
+     - The length (in pixels) of the base of the segment. Must be at least 1 when using a segment.
+
+   * - Show foci
+     - Show the spots as a point ROI on the image, labelled with the spot number. This replaces any existing ROI on the image.
+
+   * - Show objects
+     - Show the objects in an image named ``Spot Radial Intensity Objects``. Each object pixel has the value of the object number. The spots are added to the image as a point ROI.
+
+   * - Show table
+     - Show the results tables.
+
+   * - Show plot
+     - Show the radial intensity plot.
+
+   * - Show radii
+     - Show an image of the rings around each spot.
+
+   * - Plot average distances
+     - Plot the average for each ring at the average distance of the pixels in the ring from the spot. If not selected the average is plotted at the start distance of the ring.
+
+At least one of ``Show table`` or ``Show plot`` must be selected otherwise an error is shown.
+
+.. index:: Spot Radial Intensity Output
+
+Output
+~~~~~~
+
+If ``Show table`` is selected then two tables are created: the ``Spot Radial Intensity Objects`` table containing a summary of the mask objects; and the ``Spot Radial Intensity Summary`` table containing the radial intensity of each spot.
+
+If ``Show plot`` is selected then the ``Spot Radial Intensity`` plot is created. If a plot with this title is open then it is replaced. The plot shows the background subtracted average pixel value against the distance for each spot; each spot is plotted using a different colour. Each line ends at the last ring containing pixels. The average for all spots is plotted in blue with error bars showing the 95% confidence interval. This is the average of all the assigned pixels in the ring after subtracting the background of the object.
+
+If ``Show radii`` is selected then an image named ``Spot Radial Intensity radii`` is created. Each pixel assigned to a spot has the value of the ring number (starting at 1); all other pixels are zero. If ``Show foci`` is selected then the spots are added to the image as a point ROI.
+
+The image pixels are not modified.
+
+.. index:: Spot Radial Intensity Objects Table
+
+Objects Table
+~~~~~~~~~~~~~
+
+The results are appended to the ``Spot Radial Intensity Objects`` table. The table contains a row for each mask object with the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title and the analysed channel, z-slice and frame, e.g. ``Image (C=1,Z=1,T=1)``.
+
+   * - Object
+     - The object number.
+
+   * - x
+     - The X coordinate of the centre-of-mass of the object pixels (in pixels).
+
+   * - y
+     - The Y coordinate of the centre-of-mass of the object pixels (in pixels).
+
+   * - n
+     - The number of pixels in the object.
+
+   * - Intensity
+     - The sum of the image pixel values in the object.
+
+   * - Mean
+     - The mean of the image pixel values in the object.
+
+   * - Background
+     - The background of the object.
+
+.. index:: Spot Radial Intensity Summary Table
+
+Summary Table
+~~~~~~~~~~~~~
+
+The results are appended to the ``Spot Radial Intensity Summary`` table. If the ``Distance`` or ``Interval`` have changed since the last run then a new table window is created. The table contains a row for each spot. A final row with an ``ID`` of zero contains the results for all the spots; the ``Object``, ``Background``, ``x`` and ``y`` are zero. The table contains the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title and the analysed channel, z-slice and frame, e.g. ``Image (C=1,Z=1,T=1)``.
+
+   * - ID
+     - The spot number.
+
+   * - Object
+     - The object containing the spot.
+
+   * - Background
+     - The background of the object.
+
+   * - x
+     - The X coordinate of the spot (in pixels).
+
+   * - y
+     - The Y coordinate of the spot (in pixels).
+
+   * - Av <a>-<b>
+     - A column for each ring, named using the start and end distance of the ring, e.g. ``Av 0.0-1.0``. The last ring ends at the ``Distance``. Contains the average pixel value in the ring after subtracting the object background. Zero if the ring has no pixels.
+
+   * - N <a>-<b>
+     - A column for each ring containing the number of pixels in the ring.
+
+   * - D <a>-<b>
+     - A column for each ring containing the average distance of the pixels in the ring from the spot. Set to ``-`` if the ring has no pixels.
+
 .. index:: ! Spot Pair Distance
 
 Spot Pair Distance
 ------------------
 
 Output the distances between the pair of spots from two channels at a user selected position. Functions using a plugin action tool added to the ``ImageJ`` toolbar.
+
+Running the plugin adds the ``Spot Pair Distance Tool`` to the ``ImageJ`` toolbar and shows the tool options dialog. The options dialog is not shown if the ``ImageJ`` window is not visible, for example when ``Fiji`` restores the toolbar from the last session. The tool icon is a magenta line between a red and a blue spot. The options dialog can be shown at any time by double-clicking the tool icon. The options are saved in the ``ImageJ`` preferences.
+
+The tool works on multi-channel images; clicks on single-channel images are ignored. If the image has fewer channels than the selected channels then an error is written to the ``ImageJ`` log. Only the current z-slice and frame of the image are analysed.
+
+When the image is clicked using the tool the following steps are performed:
+
+#. Define a square search region centred on the clicked pixel. The region extends ``Search range`` pixels in each direction and is clipped to the image.
+#. Find the maximum pixel in the search region in each of the two channels.
+#. Compute the centre-of-mass of the pixel values in a square region centred on each maximum. The region extends ``Centre of mass range`` pixels in each direction. At the image edge the range is reduced so that the region remains centred on the maximum. The centre of a pixel is at an offset of 0.5. If the sum of the pixel values is zero then the centre of the maximum pixel is used.
+#. Add the search region, centre-of-mass regions and the line between the two centres to the image overlay (see the ``Show`` options).
+#. Optionally drag the mouse to define an orientation. A yellow line is shown from the channel 1 centre to the mouse position. When the mouse is released the orientation line is added to the overlay (if ``Show orientation line`` is selected).
+#. When the mouse is released the distance between the two centres is added to the results table (if ``Show distances`` is selected). If the mouse was dragged then the position of the channel 2 centre relative to the orientation line is also computed.
+
+Results can be removed by clicking the image while holding the ``Alt``, ``Shift`` or ``Control`` key. A search region is defined around the clicked pixel using the ``Search range``. All overlay ROIs with bounds that intersect the search region are removed; lines are removed if either end is inside the search region. Note that this applies to any ROI in the overlay, not just those added by the tool. All the rows in the results table for the image with a ``Region`` that intersects the search region are removed.
+
+.. index:: Spot Pair Distance Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Spot Pair Distance Tool Options`` dialog is a standard ``ImageJ`` dialog. A warning is shown in the dialog if no multi-channel images are open. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Channel 1
+     - The first channel.
+
+   * - Channel 2
+     - The second channel. Must be different from ``Channel 1``.
+
+   * - Search range
+     - The distance (in pixels) around the clicked position to search for the maximum pixel. Must be at least 1.
+
+   * - Centre of mass range
+     - The distance (in pixels) around the maximum pixel used to compute the centre-of-mass. The value is clipped to the range 0 to ``Search range``.
+
+   * - Reverse orientation line
+     - Reverse the direction of the orientation line. The line is drawn from the channel 1 centre in the opposite direction to the mouse position.
+
+   * - Show distances
+     - Add the distances to the results table.
+
+   * - Show search region
+     - Add the search region to the overlay as a magenta rectangle.
+
+   * - Show com region
+     - Add the centre-of-mass regions to the overlay as rectangles. Channel 1 is red and channel 2 is blue.
+
+   * - Show line
+     - Add a magenta line between the two centres to the overlay.
+
+   * - Show orientation line
+     - Add the orientation line to the overlay as a yellow line. Only applies if the mouse was dragged.
+
+   * - Add to overlay
+     - Add the ROIs to the existing overlay on the image. If not selected the ROIs from each click replace the existing overlay.
+
+The tool is disabled (clicks on the image are ignored) if ``Channel 1`` or ``Channel 2`` is below 1, the channels are the same, the ``Search range`` is below 1, or none of ``Show distances``, ``Show search region``, ``Show com region`` and ``Show line`` are selected.
+
+.. index:: Spot Pair Distance Results Table
+
+Results Table
+~~~~~~~~~~~~~
+
+The results are appended to the ``Spot Pair Distance Distances`` table. The table contains a row for each click with the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title.
+
+   * - Ch 1
+     - The first channel.
+
+   * - Ch 2
+     - The second channel.
+
+   * - Z
+     - The z-slice.
+
+   * - T
+     - The frame.
+
+   * - Region
+     - The search region in the format ``x,y wxh``.
+
+   * - X1 (px); Y1 (px)
+     - The centre-of-mass of the spot in channel 1 (in pixels).
+
+   * - X2 (px); Y2 (px)
+     - The centre-of-mass of the spot in channel 2 (in pixels).
+
+   * - Distance (px)
+     - The distance between the two centres (in pixels).
+
+   * - Relative Angle
+     - The angle (in degrees) between the orientation line and the line from the channel 1 centre to the channel 2 centre. The angle is in the range -180 to 180 and is positive for a clockwise rotation from the orientation line as shown on the image. Zero if the mouse was not dragged.
+
+   * - Rel X (px)
+     - The distance (in pixels) of the channel 2 centre from the channel 1 centre along the orientation line. Negative if the channel 2 centre is behind the channel 1 centre. Zero if the mouse was not dragged.
+
+   * - Rel Y (px)
+     - The distance (in pixels) of the channel 2 centre from the orientation line. Positive if the channel 2 centre is anticlockwise from the orientation line as shown on the image, i.e. to the left looking along the line; negative if clockwise. Zero if the mouse was not dragged.
+
+   * - X1; Y1
+     - The centre-of-mass of the spot in channel 1 in calibrated units.
+
+   * - X2; Y2
+     - The centre-of-mass of the spot in channel 2 in calibrated units.
+
+   * - Distance
+     - The distance between the two centres in calibrated units.
+
+   * - Rel X; Rel Y
+     - The relative position of the channel 2 centre in calibrated units. Only computed if the pixel width and height are the same; otherwise set to ``-``.
+
+   * - Units
+     - The calibrated units.
+
+The calibrated columns are only computed if the image calibration uses the same units for X and Y, and the pixel width or height is not 1.
+
+If the mouse is dragged the image ROI is replaced by the orientation line; the ROI is removed when the mouse is released. The image pixels are not modified.
 
 .. index:: ! Object Foci Depth
 
