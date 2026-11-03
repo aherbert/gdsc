@@ -2773,7 +2773,7 @@ The input image and the mask are not modified. The output depends on the ``Split
 
 If ``Split mask`` is selected the plugin creates two images with the same type as the mask, named using the mask title with the suffix ``Include`` and ``Exclude``. Each image contains the original mask values for the pixels of the included or excluded objects; all other pixels are zero.
 
-If ``Split mask`` is not selected the plugin creates a 16-bit image named using the mask title with the suffix ``Segregated``. The objects are renumbered: excluded objects are numbered consecutively from 1, and included objects are numbered consecutively from 1 after an offset that is a multiple of 1000 above the highest excluded object number, e.g. from 1001 if there are fewer than 1001 excluded objects. The display range is set from zero to just above the highest excluded object number. If ``Overlay outline`` is selected an outline of the non-zero pixels is added to the image as an overlay.
+If ``Split mask`` is not selected the plugin creates a 16-bit image named using the mask title with the suffix ``Segregated``. The objects are renumbered: excluded objects are numbered consecutively from 1, and included objects are numbered consecutively from 1 after an offset that is a multiple of 1000 above the highest excluded object number, e.g. from 1001 if there are fewer than 1001 excluded objects. The display range is set from zero to just above the highest excluded object number. If ``Overlay outline`` is selected an outline of the non-zero pixels is added to the image as an overlay. Otherwise any overlay on a replaced image is removed.
 
 Two ``Segregated`` masks can be combined using the :ref:`findfoci_plugins:Double Mask Divider` plugin.
 
@@ -2825,7 +2825,7 @@ The ``Double Mask Divider`` plugin uses a standard ``ImageJ`` dialog. The follow
 Output
 ~~~~~~
 
-The input masks are not modified. The plugin creates a 16-bit image named ``Double Mask Divider``. If an image with this name is open then it is replaced. The background is zero. If ``Overlay outline`` is selected an outline of the non-zero pixels is added to the image as an overlay.
+The input masks are not modified. The plugin creates a 16-bit image named ``Double Mask Divider``. If an image with this name is open then it is replaced. The background is zero. If ``Overlay outline`` is selected an outline of the non-zero pixels is added to the image as an overlay. Otherwise any overlay on a replaced image is removed.
 
 An error is shown if:
 
@@ -2881,7 +2881,7 @@ The ``Mask Analyze Channels`` plugin uses a standard ``ImageJ`` dialog. The foll
      - The channels to ignore. Specify channel numbers separated by any non-digit characters, e.g. ``1,3``. All other channels are analysed. An error is shown if no channels remain.
 
    * - Background fraction
-     - The fraction of the non-object pixels inside the convex hull to use as the background pixels.
+     - The fraction of the non-object pixels inside the convex hull to use as the background pixels. The fraction must be in the interval [0, 1].
 
    * - Ignore background channels
      - The channels to ignore when selecting the background pixels. Uses the same format as ``Ignore channels``. An error is shown if no channels remain. Note that the background value is reported for all the analysed channels.
