@@ -188,6 +188,12 @@ public class SpotDensity_PlugIn implements PlugIn {
       return;
     }
 
+    if (!(settings.interval > 0 && settings.distance >= settings.interval
+        && Double.isFinite(settings.distance))) {
+      IJ.error(TITLE, "The distance must be at least the interval, and the interval above zero");
+      return;
+    }
+
     final FloatProcessor fp = createDistanceMap(imp, settings.maskImage);
     if (fp == null) {
       return;
@@ -250,7 +256,7 @@ public class SpotDensity_PlugIn implements PlugIn {
       // Build a mask image using the input image ROI
       final Roi roi = (imp == null) ? null : imp.getRoi();
       if (roi == null || !roi.isArea()) {
-        IJ.error("No region defined (use an area ROI or an input mask)");
+        IJ.error(TITLE, "No region defined (use an area ROI or an input mask)");
         return null;
       }
       bp = new ByteProcessor(imp.getWidth(), imp.getHeight());
@@ -305,7 +311,7 @@ public class SpotDensity_PlugIn implements PlugIn {
    * @param map the map containing the distance to the edge of the mask (analysis) region
    */
   private void analyse(Foci[] foci1, Foci[] foci2, boolean identical, FloatProcessor map) {
-    final int nbins = (int) (settings.distance / settings.interval) + 1;
+    final int nbins = getNumberOfBins(settings.distance, settings.interval);
     final double maxDistance2 = settings.distance * settings.distance;
     final int[] h1 = new int[nbins];
     final int[] h2 = new int[nbins];
@@ -317,7 +323,7 @@ public class SpotDensity_PlugIn implements PlugIn {
     int n2 = 0;
     for (int j = 0; j < foci2.length; j++) {
       final Foci m2 = foci2[j];
-      if (map.getPixelValue(m2.x, m2.y) != 0) {
+      if (getEdgeDistance(map, m2.x, m2.y) != 0) {
         foci2[n2++] = m2;
       }
     }
@@ -326,7 +332,7 @@ public class SpotDensity_PlugIn implements PlugIn {
     for (int i = foci1.length; i-- > 0;) {
       final Foci m = foci1[i];
       // Ignore molecules that are near the edge of the analysis region
-      if (map.getPixelValue(m.x, m.y) < settings.distance) {
+      if (getEdgeDistance(map, m.x, m.y) < settings.distance) {
         continue;
       }
       n1++;
@@ -341,7 +347,7 @@ public class SpotDensity_PlugIn implements PlugIn {
 
         final double d2 = m.distance2(m2);
         if (d2 < maxDistance2) {
-          h1[(int) (Math.sqrt(d2) / settings.interval)]++;
+          h1[getBin(Math.sqrt(d2), settings.interval, nbins)]++;
         }
         if (d2 < min) {
           min = d2;
@@ -351,28 +357,23 @@ public class SpotDensity_PlugIn implements PlugIn {
       if (min != Double.POSITIVE_INFINITY) {
         min = Math.sqrt(min);
         if (min < settings.distance) {
-          h2[(int) (min / settings.interval)]++;
+          h2[getBin(min, settings.interval, nbins)]++;
         }
         distances[count++] = min;
       }
     }
 
     double[] radii = new double[nbins + 1];
-    for (int i = 0; i <= nbins; i++) {
+    for (int i = 0; i < nbins; i++) {
       radii[i] = i * settings.interval;
     }
-    double[] pc = new double[nbins];
+    // The final ring is truncated at the distance
+    radii[nbins] = settings.distance;
+    final double[] pc = computePairCorrelation(h1, n1, radii);
     final double[] dMin = new double[nbins];
-    if (n1 > 0) {
-      final double n1pi = n1 * Math.PI;
-      for (int i = 0; i < nbins; i++) {
-        // Pair-correlation is the count at the given distance divided by N (the number of items
-        // analysed) and the area at distance ri:
-        // H[i] / (N x (pi x (r_i+1)^2 - pi x r_i^2))
-        pc[i] = h1[i] / (n1pi * (radii[i + 1] * radii[i + 1] - radii[i] * radii[i]));
-        // Convert to double for plotting
-        dMin[i] = h2[i];
-      }
+    for (int i = 0; i < nbins; i++) {
+      // Convert to double for plotting
+      dMin[i] = h2[i];
     }
 
     // Truncate the unused r for the plot
@@ -380,13 +381,6 @@ public class SpotDensity_PlugIn implements PlugIn {
     final Plot plot1 = new Plot(TITLE + " Min Distance", "Distance (px)", "Frequency");
     plot1.addPoints(radii, dMin, Plot.LINE);
     final PlotWindow pw1 = ImageJUtils.display(TITLE + " Min Distance", plot1);
-
-    // The final bin may be empty if the correlation interval was a factor of the correlation
-    // distance
-    if (pc[pc.length - 1] == 0) {
-      radii = Arrays.copyOf(radii, nbins - 1);
-      pc = Arrays.copyOf(pc, nbins - 1);
-    }
 
     // Get the pixels in the entire mask
     int area = 0;
@@ -447,6 +441,71 @@ public class SpotDensity_PlugIn implements PlugIn {
     sb.append('\t').append(IJ.d2s(MathUtils.div0(sum, count), 2));
 
     createResultsWindow().append(sb.toString());
+  }
+
+  /**
+   * Gets the distance to the edge of the analysis region. Returns zero outside the map.
+   *
+   * @param map the map
+   * @param x the x
+   * @param y the y
+   * @return the edge distance
+   */
+  static float getEdgeDistance(FloatProcessor map, int x, int y) {
+    if (x < 0 || x >= map.getWidth() || y < 0 || y >= map.getHeight()) {
+      return 0;
+    }
+    return map.getf(x, y);
+  }
+
+  /**
+   * Gets the number of bins. Each bin is a ring of the given interval that starts below the
+   * distance. The final bin ends at the distance and must have a width above 1e-3; otherwise it is
+   * merged into the previous bin.
+   *
+   * @param distance the distance
+   * @param interval the interval
+   * @return the number of bins
+   */
+  static int getNumberOfBins(double distance, double interval) {
+    final int n = (int) Math.ceil(distance / interval);
+    // Width of the final bin
+    if (n > 1 && distance - (n - 1) * interval <= 1e-3) {
+      return n - 1;
+    }
+    return n;
+  }
+
+  /**
+   * Gets the bin for a distance below the maximum distance.
+   *
+   * @param distance the distance
+   * @param interval the interval
+   * @param nbins the number of bins
+   * @return the bin
+   */
+  static int getBin(double distance, double interval, int nbins) {
+    return Math.min(nbins - 1, (int) (distance / interval));
+  }
+
+  /**
+   * Compute the pair correlation. This is the count in each ring divided by N (the number of items
+   * analysed) and the area of the ring: H[i] / (N x (pi x r_(i+1)^2 - pi x r_i^2)).
+   *
+   * @param counts the counts in each ring
+   * @param n the number of items analysed
+   * @param radii the radii of the ring edges (length = counts.length + 1)
+   * @return the pair correlation
+   */
+  static double[] computePairCorrelation(int[] counts, int n, double[] radii) {
+    final double[] pc = new double[counts.length];
+    if (n > 0) {
+      final double npi = n * Math.PI;
+      for (int i = 0; i < pc.length; i++) {
+        pc[i] = counts[i] / (npi * (radii[i + 1] * radii[i + 1] - radii[i] * radii[i]));
+      }
+    }
+    return pc;
   }
 
   private static PlotWindow showPairCorrelation(PairCorrelation pc) {

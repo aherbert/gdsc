@@ -93,6 +93,14 @@ Major release of GDSC ImageJ Plugins.
 * Fix the :ref:`findfoci_plugins:Spot Pairs` point IDs. Points are numbered from 1; previously
   the first point had an ID of 2. A new results table is created if the calibrated units of the
   image do not match the table distance units.
+* Fix the :ref:`findfoci_plugins:Spot Density` pair correlation of the final ring when the
+  ``Interval`` is not a factor of the ``Distance``. The ring area is truncated at the
+  ``Distance``; previously the full ring area was used and the value was too low.
+* Fix the :ref:`findfoci_plugins:Spot Density` plugin using spots outside the mask image. Spots
+  outside the mask image are outside the analysis region. Previously spots from set 2 were
+  counted as inside the region and spots from set 1 were not excluded as near the edge.
+* The :ref:`findfoci_plugins:Spot Density` plugin reports an error for an ``Interval`` that is
+  not above zero or is above the ``Distance``. Previously the plugin failed.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.
