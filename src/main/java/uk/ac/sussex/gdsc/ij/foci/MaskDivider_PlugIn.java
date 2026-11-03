@@ -46,6 +46,7 @@ import java.awt.Scrollbar;
 import java.awt.TextField;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.threshold.AutoThreshold;
@@ -190,6 +191,7 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
 
     gd.addChoice("Mask", names, settings.maskTitle);
     gd.addMessage("");
+    // Messages and components are not created when running headless
     label = (Label) gd.getMessage();
     gd.addMessage("");
     label2 = (Label) gd.getMessage();
@@ -199,9 +201,13 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
     gd.addCheckbox("Split_mask", settings.splitMask);
     gd.addCheckbox("Overlay_outline", settings.overlayOutline);
 
-    autoCheckbox = (Checkbox) gd.getCheckboxes().get(0);
-    cutoffSlider = (Scrollbar) gd.getSliders().get(0);
-    cutoffText = (TextField) gd.getNumericFields().get(0);
+    autoCheckbox = (Checkbox) getFirst(gd.getCheckboxes());
+    cutoffSlider = (Scrollbar) getFirst(gd.getSliders());
+    cutoffText = (TextField) getFirst(gd.getNumericFields());
+    if (cutoffSlider == null || cutoffText == null) {
+      cutoffSlider = null;
+      cutoffText = null;
+    }
 
     gd.addHelp(HelpUrls.getUrl("mask-divider"));
     gd.addPreviewCheckbox(pfr);
@@ -257,8 +263,7 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
     if (!isPreview) {
       // Turn off the preview
       imp.setOverlay(null);
-      label.setText("");
-      label2.setText("");
+      setLabels("", "");
     }
 
     settings.maskTitle = gd.getNextChoice();
@@ -276,7 +281,9 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
         // Check we have computed the threshold
         && defaultCutoff >= 0) {
       settings.autoCutoff = (settings.cutoff == defaultCutoff);
-      autoCheckbox.setState(settings.autoCutoff);
+      if (autoCheckbox != null) {
+        autoCheckbox.setState(settings.autoCutoff);
+      }
     }
 
     return true;
@@ -294,13 +301,12 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
     analyseObjects();
     if (objects == null || objects.length == 0) {
       imp.setOverlay(null);
-      label.setText(objects == null ? "No mask: " + settings.maskTitle : "No objects in mask");
-      label2.setText("");
+      setLabels(objects == null ? "No mask: " + settings.maskTitle : "No objects in mask", "");
       return;
     }
 
-    label.setText(String.format("N = %d, Min = %.2f, Max = %.2f, Av = %.2f", objects.length,
-        stats[0], stats[1], stats[2]));
+    final String summary = String.format("N = %d, Min = %.2f, Max = %.2f, Av = %.2f",
+        objects.length, stats[0], stats[1], stats[2]);
 
     final int localCutoff = getCutoff();
 
@@ -320,7 +326,7 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
       }
     }
     final int included = objects.length - excluded;
-    label2.setText(String.format("Include = %d, Exclude = %d", included, excluded));
+    setLabels(summary, String.format("Include = %d, Exclude = %d", included, excluded));
 
     final ColorProcessor cp = new ColorProcessor(inputIp.getWidth(), inputIp.getHeight());
     for (int i = 0; i < objectMask.length; i++) {
@@ -337,6 +343,31 @@ public class MaskDivider_PlugIn implements ExtendedPlugInFilter, DialogListener 
     final Overlay overlay = new Overlay();
     overlay.add(roi);
     imp.setOverlay(overlay);
+  }
+
+  /**
+   * Gets the first item from the list.
+   *
+   * @param list the list (can be null)
+   * @return the first item (or null)
+   */
+  private static Object getFirst(List<?> list) {
+    return list == null || list.isEmpty() ? null : list.get(0);
+  }
+
+  /**
+   * Sets the text of the dialog labels. Labels are null when running headless.
+   *
+   * @param text the text
+   * @param text2 the text for the second label
+   */
+  private void setLabels(String text, String text2) {
+    if (label != null) {
+      label.setText(text);
+    }
+    if (label2 != null) {
+      label2.setText(text2);
+    }
   }
 
   private static int getRgb(int red, int green, int blue) {

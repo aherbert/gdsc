@@ -181,6 +181,10 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       IJ.noImage();
       return;
     }
+    if (imp.getBitDepth() == 24) {
+      IJ.error(TITLE, "RGB images are not supported");
+      return;
+    }
 
     Roi imageRoi = imp.getRoi();
     if (imageRoi != null && imageRoi.getType() != Roi.POINT) {

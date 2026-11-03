@@ -110,6 +110,11 @@ Major release of GDSC ImageJ Plugins.
 * Fix the :ref:`findfoci_plugins:Spot Pair Distance` centre-of-mass region for images narrower
   than the region. Previously the region could extend outside the image and cause an error.
   The tool is disabled if a channel is below 1.
+* The :ref:`findfoci_plugins:Spot Radial Intensity` plugin reports an error for an RGB image.
+  Previously the radial intensity used the red channel and the object background and intensity
+  used the packed RGB value.
+* The :ref:`findfoci_plugins:Mask Divider` plugin checks the dialog labels and components exist
+  before use. These are not created when running headless.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.
