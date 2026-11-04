@@ -139,6 +139,10 @@ Major release of GDSC ImageJ Plugins.
   edge in pixels. Previously the y and z offsets were scaled relative to the pixel width when the
   pixels were not square, and the overlay lines were misplaced.
 * The :ref:`findfoci_plugins:Object Foci Depth` plugin 2D object perimeter uses the pixel height.
+* The :ref:`findfoci_plugins:Spot Distance` plugin ``Track objects`` option tracks the spots of
+  each region and channel between frames and shows the spot ID in the positions table.
+  Previously the spots in the first frame had no ID, spots were matched to the previously
+  processed region, and the ID was not shown.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

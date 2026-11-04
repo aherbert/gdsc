@@ -38,6 +38,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -117,9 +118,9 @@ public class SpotDistance_PlugIn implements PlugIn {
   private Rectangle bounds = new Rectangle();
   private Rectangle cachedBlurBounds;
 
-  // Store the last frame results to allow primitive tracking
-  private ArrayList<DistanceResult> prevResultsArray;
-  private ArrayList<DistanceResult> prevResultsArray2;
+  // Store the last frame results for each region to allow primitive tracking
+  private Int2ObjectOpenHashMap<Tracker> trackers;
+  private Int2ObjectOpenHashMap<Tracker> trackers2;
 
   // Used for a particle search
   private int maxx;
@@ -233,7 +234,7 @@ public class SpotDistance_PlugIn implements PlugIn {
   /**
    * Used to store results and cache XYZ output formatting.
    */
-  private class DistanceResult extends BasePoint {
+  static class DistanceResult extends BasePoint {
     int id;
     double circularity;
     String pixelXyz;
@@ -251,7 +252,7 @@ public class SpotDistance_PlugIn implements PlugIn {
       return pixelXyz;
     }
 
-    String getCalXyz() {
+    String getCalXyz(Calibration cal) {
       if (calXyz == null) {
         calXyz = String.format("%s\t%s\t%s", MathUtils.rounded(x * cal.pixelWidth),
             MathUtils.rounded(y * cal.pixelHeight), MathUtils.rounded(z * cal.pixelDepth));
@@ -269,6 +270,43 @@ public class SpotDistance_PlugIn implements PlugIn {
     public int hashCode() {
       // Ignore the additional fields in the hash code
       return super.hashCode();
+    }
+  }
+
+  /**
+   * Track the spots in a region between frames using closest distance matching.
+   */
+  static class Tracker {
+    /** The results from the previous frame. */
+    private List<DistanceResult> previous = Collections.emptyList();
+    /** The maximum ID assigned. */
+    private int maxId;
+
+    /**
+     * Assign an ID to each result. Results are matched to the closest result from the previous
+     * frame within the distance and use the same ID. Results that are not matched are assigned a
+     * new ID. The results are sorted by ID.
+     *
+     * @param results the results
+     * @param distance the maximum distance for a match
+     */
+    void assignIds(List<DistanceResult> results, double distance) {
+      if (!previous.isEmpty() && !results.isEmpty()) {
+        final List<PointPair> matches = new ArrayList<>();
+        MatchCalculator.analyseResults3D(previous.toArray(new DistanceResult[0]),
+            results.toArray(new DistanceResult[0]), distance, null, null, null, matches);
+        for (final PointPair match : matches) {
+          ((DistanceResult) match.getPoint2()).id = ((DistanceResult) match.getPoint1()).id;
+        }
+      }
+      // Assign those that could not be tracked
+      for (final DistanceResult r : results) {
+        if (r.id == 0) {
+          r.id = ++maxId;
+        }
+      }
+      results.sort((o1, o2) -> Integer.compare(o1.id, o2.id));
+      previous = results;
     }
   }
 
@@ -564,6 +602,8 @@ public class SpotDistance_PlugIn implements PlugIn {
 
   private void initialise() {
     regions = null;
+    trackers = new Int2ObjectOpenHashMap<>();
+    trackers2 = new Int2ObjectOpenHashMap<>();
     regionImp = null;
     bounds = new Rectangle();
     allowUndo.set(false);
@@ -752,6 +792,9 @@ public class SpotDistance_PlugIn implements PlugIn {
     sb.append("Frame\t");
     sb.append("Channel\t");
     sb.append("Region\t");
+    if (settings.trackObjects) {
+      sb.append("ID\t");
+    }
     if (settings.pixelDistances) {
       sb.append("x (px)\t");
       sb.append("y (px)\t");
@@ -937,20 +980,13 @@ public class SpotDistance_PlugIn implements PlugIn {
       }
 
       final ArrayList<DistanceResult> resultsArray =
-          analyseResults(prevResultsArray, croppedImp, ffp, ffResult, frame, channel, overlay);
+          analyseResults(getTracker(trackers, region), croppedImp, ffp, ffResult, frame, channel,
+              overlay);
       for (final DistanceResult result : resultsArray) {
         addResult(frame, channel, region, result);
       }
 
-      if (settings.trackObjects) {
-        prevResultsArray = resultsArray;
-      }
-
       if (s1b == null) {
-        if (settings.trackObjects) {
-          prevResultsArray2 = null;
-        }
-
         // Single channel analysis
         final String ch = Integer.toString(channel);
 
@@ -1035,14 +1071,11 @@ public class SpotDistance_PlugIn implements PlugIn {
           return;
         }
 
-        final ArrayList<DistanceResult> resultsArray2 = analyseResults(prevResultsArray2,
-            croppedImp2, ffp, results2, frame, settings.c2, overlay2);
+        final ArrayList<DistanceResult> resultsArray2 =
+            analyseResults(getTracker(trackers2, region), croppedImp2, ffp, results2, frame,
+                settings.c2, overlay2);
         for (final DistanceResult result : resultsArray2) {
           addResult(frame, settings.c2, region, result);
-        }
-
-        if (settings.trackObjects) {
-          prevResultsArray2 = resultsArray2;
         }
 
         final String ch = channel + " + " + settings.c2;
@@ -1418,6 +1451,17 @@ public class SpotDistance_PlugIn implements PlugIn {
    * @param bounds the bounds
    * @return the image plus
    */
+  /**
+   * Gets the tracker for the region if tracking objects.
+   *
+   * @param trackers the trackers
+   * @param region the region
+   * @return the tracker (or null)
+   */
+  private Tracker getTracker(Int2ObjectOpenHashMap<Tracker> trackers, int region) {
+    return settings.trackObjects ? trackers.computeIfAbsent(region, k -> new Tracker()) : null;
+  }
+
   private static ImagePlus crop(ImagePlus imp, Rectangle bounds) {
     imp.setRoi(bounds);
     return imp.duplicate();
@@ -1426,7 +1470,7 @@ public class SpotDistance_PlugIn implements PlugIn {
   /**
    * Check the peak circularity. Add an overlay of the spots if requested.
    *
-   * @param prev the prev
+   * @param tracker the tracker (can be null)
    * @param croppedImp the cropped imp
    * @param ffp the FindFociProcessor that generated the results
    * @param ffResult the ff result
@@ -1435,7 +1479,7 @@ public class SpotDistance_PlugIn implements PlugIn {
    * @param overlay the overlay
    * @return the results
    */
-  private ArrayList<DistanceResult> analyseResults(ArrayList<DistanceResult> prev,
+  private ArrayList<DistanceResult> analyseResults(Tracker tracker,
       ImagePlus croppedImp, FindFociBaseProcessor ffp, FindFociResults ffResult, int frame,
       int channel, Overlay overlay) {
     if (ffResult == null) {
@@ -1490,35 +1534,12 @@ public class SpotDistance_PlugIn implements PlugIn {
       newResultsArray.add(new DistanceResult(x, y, z, circularity));
     }
 
-    if (prev != null && !prev.isEmpty() && !newResultsArray.isEmpty()) {
-      // If we have results from a previous frame then try and assign an ID to each
-      // result using closest distance tracking.
+    if (tracker != null) {
+      // Assign an ID to each result using closest distance tracking to the previous frame.
       final double d = Math.sqrt((double) croppedImp.getWidth() * croppedImp.getWidth()
           + croppedImp.getHeight() * croppedImp.getHeight()
           + croppedImp.getNSlices() * croppedImp.getNSlices());
-      final List<PointPair> matches = new ArrayList<>();
-      MatchCalculator.analyseResults3D(prev.toArray(new DistanceResult[0]),
-          newResultsArray.toArray(new DistanceResult[0]), d, null, null, null, matches);
-
-      for (final PointPair match : matches) {
-        ((DistanceResult) match.getPoint2()).id = ((DistanceResult) match.getPoint1()).id;
-      }
-
-      // Find max ID
-      int id = 0;
-      for (final DistanceResult r : newResultsArray) {
-        if (id < r.id) {
-          id = r.id;
-        }
-      }
-      // Assign those that could not be tracked
-      for (final DistanceResult r : newResultsArray) {
-        if (r.id == 0) {
-          r.id = ++id;
-        }
-      }
-      // Sort
-      Collections.sort(newResultsArray, (o1, o2) -> Integer.compare(o1.id, o2.id));
+      tracker.assignIds(newResultsArray, d);
     }
 
     return newResultsArray;
@@ -1575,11 +1596,14 @@ public class SpotDistance_PlugIn implements PlugIn {
     sb.append(frame).append('\t');
     sb.append(channel).append('\t');
     sb.append(region).append('\t');
+    if (settings.trackObjects) {
+      sb.append(result.id).append('\t');
+    }
     if (settings.pixelDistances) {
       sb.append(result.getPixelXyz()).append('\t');
     }
     if (settings.calibratedDistances) {
-      sb.append(result.getCalXyz()).append('\t');
+      sb.append(result.getCalXyz(cal)).append('\t');
     }
     sb.append(MathUtils.rounded(result.circularity));
     resultsWindow.append(sb.toString());
@@ -1636,8 +1660,8 @@ public class SpotDistance_PlugIn implements PlugIn {
       sb.append('\t').append(MathUtils.rounded(distance));
     }
     if (settings.calibratedDistances) {
-      sb.append('\t').append(r1.getCalXyz());
-      sb.append('\t').append(r2.getCalXyz());
+      sb.append('\t').append(r1.getCalXyz(cal));
+      sb.append('\t').append(r2.getCalXyz(cal));
       sb.append('\t').append(MathUtils.rounded(calibratedDistance));
     }
     distancesWindow.append(sb.toString());
