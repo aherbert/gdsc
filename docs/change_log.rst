@@ -128,6 +128,17 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`findfoci_plugins:Translocation Finder` results table can change a classification
   when only one of the plugin or the :ref:`findfoci_plugins:Translocation Finder (Tool)` has been
   used. Previously this caused an error. The plugin dialog message describes the plugin.
+* The :ref:`findfoci_plugins:Object Foci Depth` plugin can use the convex hull. Previously this
+  always caused an error. A 2D object too small to create a hull has a distance of zero.
+* The :ref:`findfoci_plugins:Object Foci Depth` plugin only checks the foci z coordinate for 3D
+  processing. Previously ROI foci on a single slice image caused an error.
+* The :ref:`findfoci_plugins:Object Foci Depth` plugin remembers the ``ROI image``.
+* The :ref:`findfoci_plugins:Object Foci Depth` plugin finds the closest edge pixel of the
+  object. Previously the search could miss a closer edge pixel and over-estimate the distance.
+* The :ref:`findfoci_plugins:Object Foci Depth` plugin reports the convex hull offsets to the
+  edge in pixels. Previously the y and z offsets were scaled relative to the pixel width when the
+  pixels were not square, and the overlay lines were misplaced.
+* The :ref:`findfoci_plugins:Object Foci Depth` plugin 2D object perimeter uses the pixel height.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

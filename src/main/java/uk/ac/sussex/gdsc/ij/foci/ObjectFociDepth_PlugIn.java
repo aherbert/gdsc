@@ -106,7 +106,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
   /**
    * Contains the settings that are the re-usable state of the plugin.
    */
-  private static class Settings {
+  static class Settings {
     /** The last settings used by the plugin. This should be updated after plugin execution. */
     private static final AtomicReference<Settings> lastSettings =
         new AtomicReference<>(new Settings());
@@ -132,6 +132,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       showObjects = source.showObjects;
       useHull = source.useHull;
       showLines = source.showLines;
+      sourceImage = source.sourceImage;
       showHull3d = source.showHull3d;
     }
 
@@ -159,7 +160,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
   /**
    * Store the distance to the edge of the object.
    */
-  private static class Distance {
+  static class Distance {
     final AssignedPoint point;
     final int id;
     final double dx;
@@ -181,7 +182,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
   /**
    * Define a 2D distance function.
    */
-  private interface Distance2D {
+  interface Distance2D {
     /**
      * Get the distance.
      *
@@ -195,7 +196,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
   /**
    * Define a 3D distance function.
    */
-  private interface Distance3D {
+  interface Distance3D {
     /**
      * Get the distance.
      *
@@ -284,7 +285,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
 
         final double[][][] planes = new double[hulls.length][][];
         results.stream()
-            .map(r -> search3d(r, objectMask, maxx, maxy, maxz, toCoords, hulls, planes))
+            .map(r -> search3d(r, objectMask, maxx, maxy, maxz, toCoords, sy, sz, hulls, planes))
             .filter(d -> d != null).sequential().forEach(distances::add);
 
         // Make this optional
@@ -348,7 +349,8 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         size0 = toDouble(hulls, h -> h.getLength() * cal.pixelWidth);
 
         final double[][][] planes = new double[hulls.length][][];
-        results.stream().map(r -> search2d(r, objectMask, maxx, maxy, toCoords, hulls, planes))
+        results.stream()
+            .map(r -> search2d(r, objectMask, maxx, maxy, toCoords, sy, hulls, planes))
             .filter(d -> d != null).sequential().forEach(distances::add);
       } else {
         mask = showMask(oa, null, 0);
@@ -357,7 +359,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         final double scale = cal.pixelWidth * cal.pixelHeight;
         size1 = toDouble(oa.getObjectCentres(), c -> c.getSize() * scale);
         // Perimeter
-        size0 = toDouble(oa.getObjectOutlines(), c -> c.getLength() * cal.pixelWidth);
+        size0 = getPerimeters(oa, imp);
 
         Distance2D df;
         if (cal.pixelWidth == cal.pixelHeight) {
@@ -433,7 +435,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
    * @param toCoords the function to convert mask index to coordinates
    * @return the hulls
    */
-  private static Hull3d[] createHulls(ObjectAnalyzer3D oa, IntFunction<double[]> toCoords) {
+  static Hull3d[] createHulls(ObjectAnalyzer3D oa, IntFunction<double[]> toCoords) {
     final int[] mask = oa.getObjectMask();
     final int maxx = oa.getMaxX();
     final int maxy = oa.getMaxY();
@@ -468,7 +470,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
    * @param toCoords the function to convert mask index to coordinates
    * @return the hulls
    */
-  private static Hull2d[] createHulls(ObjectAnalyzer oa, IntFunction<double[]> toCoords) {
+  static Hull2d[] createHulls(ObjectAnalyzer oa, IntFunction<double[]> toCoords) {
     final int[] mask = oa.getObjectMask();
     final int maxx = oa.getWidth();
     final int maxy = oa.getHeight();
@@ -510,22 +512,46 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       for (int x = 0; x < maxx; x++, index++) {
         final int next = mask[index];
         if (next != current) {
-          addToList(indices[current], current, index - 1);
-          addToList(indices[next], next, index);
+          addToList(indices, current, index - 1);
+          addToList(indices, next, index);
           current = next;
         }
       }
       // End of the line
-      addToList(indices[current], current, index - 1);
+      addToList(indices, current, index - 1);
     }
   }
 
-  private static void addToList(IntArrayList indices, int object, int index) {
-    final int[] e = indices.elements();
-    final int size = indices.size();
-    if (object != 0 && (size == 0 || e[size - 1] != index)) {
-      indices.add(index);
+  /**
+   * Adds the index to the list for the object. The background (object 0) is ignored.
+   *
+   * @param indices the list of indices for each object
+   * @param object the object
+   * @param index the index
+   */
+  private static void addToList(IntArrayList[] indices, int object, int index) {
+    if (object == 0) {
+      return;
     }
+    final IntArrayList list = indices[object];
+    final int size = list.size();
+    if (size == 0 || list.getInt(size - 1) != index) {
+      list.add(index);
+    }
+  }
+
+  /**
+   * Gets the perimeter of the outline of each object. The length uses the calibration of the image.
+   *
+   * @param oa the object analyser
+   * @param imp the image
+   * @return the perimeters
+   */
+  static double[] getPerimeters(ObjectAnalyzer oa, ImagePlus imp) {
+    return toDouble(oa.getObjectOutlines(), c -> {
+      c.setImage(imp);
+      return c.getLength();
+    });
   }
 
   /**
@@ -558,7 +584,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
    * @param df the distance function
    * @return the distance (or null)
    */
-  private static Distance search2d(AssignedPoint point, int[] objectMask, int maxx, int maxy,
+  static Distance search2d(AssignedPoint point, int[] objectMask, int maxx, int maxy,
       Distance2D df) {
     final int x = point.getXint();
     final int y = point.getYint();
@@ -589,62 +615,67 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         df.distance(0, sy2),
     };
     // @formatter:on
-    // Find the closest pixel not from the object inside the bounding box.
+    // The end of each scan is an edge pixel. Use the closest as the initial edge.
     double dmin = MathUtils.min(distances);
-    int imin = -1;
+    int ix;
+    int iy;
+    // @formatter:off
+    switch (SimpleArrayUtils.findMinIndex(distances)) {
+      case 0:  ix = -sx1; iy = 0; break;
+      case 1:  ix = sx2; iy = 0; break;
+      case 2:  ix = 0; iy = -sy1; break;
+      default: ix = 0; iy = sy2; break;
+    }
+    // @formatter:on
+    // Find the closest edge pixel from the object inside the bounding box.
     // Only need to search the minimum bounding box.
     // Treat dimensions separately as they may be scaled (i.e. do not take minimum of sx and sy).
     final int sx = Math.min(sx1, sx2);
     final int sy = Math.min(sy1, sy2);
     for (int dy = -sy; dy <= sy; dy++) {
+      if (df.distance(0, dy) >= dmin) {
+        continue;
+      }
       index = (y + dy) * maxx + x;
       for (int dx = -sx; dx <= sx; dx++) {
-        if (objectId != objectMask[index + dx]) {
-          final double d = df.distance(dx, dy);
-          if (d < dmin) {
-            dmin = d;
-            imin = index + dx;
-          }
-        }
-      }
-    }
-
-    // If not found then the closest point is from the initial the bounding box
-    if (imin == -1) {
-      // @formatter:off
-      switch (SimpleArrayUtils.findMinIndex(distances)) {
-        case 0:  return new Distance(point, objectId, -sx1,  0, 0, dmin);
-        case 1:  return new Distance(point, objectId,  sx2,  0, 0, dmin);
-        case 2:  return new Distance(point, objectId,  0, -sy1, 0, dmin);
-        default: return new Distance(point, objectId,  0,  sy2, 0, dmin);
-      }
-      // @formatter:on
-    }
-
-    // Find the closest pixel from the object touching that non-object pixel.
-    int iy = imin / maxx;
-    int ix = imin % maxx;
-    // Compute offsets to points inside the image
-    final int ox1 = Math.max(0, ix - 1) - x;
-    final int ox2 = Math.min(maxx - 1, ix + 1) - x;
-    final int oy1 = Math.max(0, iy - 1) - y;
-    final int oy2 = Math.min(maxy - 1, iy + 1) - y;
-    for (int dy = oy1; dy <= oy2; dy++) {
-      for (int dx = ox1; dx <= ox2; dx++) {
         final double d = df.distance(dx, dy);
-        if (d < dmin) {
-          // Closer so check if the correct object
-          index = (y + dy) * maxx + x + dx;
-          if (objectId == objectMask[index]) {
-            dmin = d;
-            ix = dx;
-            iy = dy;
-          }
+        if (d < dmin && objectId == objectMask[index + dx]
+            && isEdge(objectMask, objectId, x + dx, y + dy, maxx, maxy)) {
+          dmin = d;
+          ix = dx;
+          iy = dy;
         }
       }
     }
 
     return new Distance(point, objectId, ix, iy, 0, dmin);
+  }
+
+  /**
+   * Checks if the pixel is an edge pixel of the object. This is true if any of the 8-connected
+   * neighbours are not in the object or are outside the image.
+   *
+   * @param objectMask the object mask
+   * @param objectId the object id
+   * @param x the x
+   * @param y the y
+   * @param maxx the max x dimension of the mask
+   * @param maxy the max y dimension of the mask
+   * @return true if an edge pixel
+   */
+  static boolean isEdge(int[] objectMask, int objectId, int x, int y, int maxx, int maxy) {
+    if (x == 0 || y == 0 || x == maxx - 1 || y == maxy - 1) {
+      return true;
+    }
+    for (int yy = y - 1; yy <= y + 1; yy++) {
+      final int index = yy * maxx + x;
+      for (int dx = -1; dx <= 1; dx++) {
+        if (objectMask[index + dx] != objectId) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -659,8 +690,8 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
    * @param hullPlanes the hull planes
    * @return the distance (or null)
    */
-  private static Distance search2d(AssignedPoint point, int[] objectMask, int maxx, int maxy,
-      IntFunction<double[]> toCoords, Hull2d[] hulls, double[][][] hullPlanes) {
+  static Distance search2d(AssignedPoint point, int[] objectMask, int maxx, int maxy,
+      IntFunction<double[]> toCoords, double sy, Hull2d[] hulls, double[][][] hullPlanes) {
     final int x = point.getXint();
     final int y = point.getYint();
     // Check within the image
@@ -673,6 +704,12 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     if (objectId == 0) {
       // Not within an object
       return null;
+    }
+
+    if (hulls[objectId] == null) {
+      // Invalid hull.
+      // Assume the object is too small to create a hull and return zero distance.
+      return new Distance(point, objectId, 0, 0, 0, 0);
     }
 
     // Get the planes for the hull lines
@@ -708,8 +745,9 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     final double sd = x0 * a + y0 * b + c;
 
     // The offset is the distance multiplied by the plane normal.
+    // The offset is converted from x-dimension pixel units to pixels.
     // The distance is squared.
-    return new Distance(point, objectId, -sd * a, -sd * b, 0, sd * sd);
+    return new Distance(point, objectId, -sd * a, -sd * b / sy, 0, sd * sd);
   }
 
   /**
@@ -723,7 +761,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
    * @param df the distance function
    * @return the distance (or null)
    */
-  private static Distance search3d(AssignedPoint point, int[] objectMask, int maxx, int maxy,
+  static Distance search3d(AssignedPoint point, int[] objectMask, int maxx, int maxy,
       int maxz, Distance3D df) {
     final int x = point.getXint();
     final int y = point.getYint();
@@ -761,74 +799,83 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
         df.distance(0, 0, sz2),
     };
     // @formatter:on
-    // Find the closest pixel not from the object inside the bounding box.
+    // The end of each scan is an edge pixel. Use the closest as the initial edge.
     double dmin = MathUtils.min(distances);
-    int imin = -1;
+    int ix = 0;
+    int iy = 0;
+    int iz = 0;
+    // @formatter:off
+    switch (SimpleArrayUtils.findMinIndex(distances)) {
+      case 0:  ix = -sx1; break;
+      case 1:  ix = sx2; break;
+      case 2:  iy = -sy1; break;
+      case 3:  iy = sy2; break;
+      case 4:  iz = -sz1; break;
+      default: iz = sz2; break;
+    }
+    // @formatter:on
+    // Find the closest edge pixel from the object inside the bounding box.
     // Only need to search the minimum bounding box.
     // Treat dimensions separately as they may be scaled (i.e. do not take minimum of sx and sy).
     final int sx = Math.min(sx1, sx2);
     final int sy = Math.min(sy1, sy2);
     final int sz = Math.min(sz1, sz2);
     for (int dz = -sz; dz <= sz; dz++) {
+      if (df.distance(0, 0, dz) >= dmin) {
+        continue;
+      }
       for (int dy = -sy; dy <= sy; dy++) {
+        if (df.distance(0, dy, dz) >= dmin) {
+          continue;
+        }
         index = (z + dz) * maxx_maxy + (y + dy) * maxx + x;
         for (int dx = -sx; dx <= sx; dx++) {
-          if (objectId != objectMask[index + dx]) {
-            final double d = df.distance(dx, dy, dz);
-            if (d < dmin) {
-              dmin = d;
-              imin = index + dx;
-            }
-          }
-        }
-      }
-    }
-
-    // If not found then the closest point is from the initial the bounding box
-    if (imin == -1) {
-      // @formatter:off
-      switch (SimpleArrayUtils.findMinIndex(distances)) {
-        case 0:  return new Distance(point, objectId, -sx1,  0, 0, dmin);
-        case 1:  return new Distance(point, objectId,  sx2,  0, 0, dmin);
-        case 2:  return new Distance(point, objectId,  0, -sy1, 0, dmin);
-        case 3:  return new Distance(point, objectId,  0,  sy2, 0, dmin);
-        case 4:  return new Distance(point, objectId,  0, 0, -sz1, dmin);
-        default: return new Distance(point, objectId,  0, 0,  sz2, dmin);
-      }
-      // @formatter:on
-    }
-
-    // Find the closest pixel from the object touching that non-object pixel.
-    int iz = imin / maxx_maxy;
-    imin %= maxx_maxy;
-    int iy = imin / maxx;
-    int ix = imin % maxx;
-    // Compute offsets to points inside the image
-    final int ox1 = Math.max(0, ix - 1) - x;
-    final int ox2 = Math.min(maxx - 1, ix + 1) - x;
-    final int oy1 = Math.max(0, iy - 1) - y;
-    final int oy2 = Math.min(maxy - 1, iy + 1) - y;
-    final int oz1 = Math.max(0, iz - 1) - z;
-    final int oz2 = Math.min(maxz - 1, iz + 1) - z;
-    for (int dz = oz1; dz <= oz2; dz++) {
-      for (int dy = oy1; dy <= oy2; dy++) {
-        for (int dx = ox1; dx <= ox2; dx++) {
           final double d = df.distance(dx, dy, dz);
-          if (d < dmin) {
-            // Closer so check if the correct object
-            index = (z + dz) * maxx_maxy + (y + dy) * maxx + x + dx;
-            if (objectId == objectMask[index]) {
-              dmin = d;
-              ix = dx;
-              iy = dy;
-              iz = dz;
-            }
+          if (d < dmin && objectId == objectMask[index + dx]
+              && isEdge(objectMask, objectId, x + dx, y + dy, z + dz, maxx, maxy, maxz)) {
+            dmin = d;
+            ix = dx;
+            iy = dy;
+            iz = dz;
           }
         }
       }
     }
 
     return new Distance(point, objectId, ix, iy, iz, dmin);
+  }
+
+  /**
+   * Checks if the pixel is an edge pixel of the object. This is true if any of the 26-connected
+   * neighbours are not in the object or are outside the image.
+   *
+   * @param objectMask the object mask
+   * @param objectId the object id
+   * @param x the x
+   * @param y the y
+   * @param z the z
+   * @param maxx the max x dimension of the mask
+   * @param maxy the max y dimension of the mask
+   * @param maxz the max z dimension of the mask
+   * @return true if an edge pixel
+   */
+  static boolean isEdge(int[] objectMask, int objectId, int x, int y, int z, int maxx, int maxy,
+      int maxz) {
+    if (x == 0 || y == 0 || z == 0 || x == maxx - 1 || y == maxy - 1 || z == maxz - 1) {
+      return true;
+    }
+    final int maxx_maxy = maxx * maxy;
+    for (int zz = z - 1; zz <= z + 1; zz++) {
+      for (int yy = y - 1; yy <= y + 1; yy++) {
+        final int index = zz * maxx_maxy + yy * maxx + x;
+        for (int dx = -1; dx <= 1; dx++) {
+          if (objectMask[index + dx] != objectId) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -844,8 +891,9 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
    * @param hullPlanes the hull planes
    * @return the distance (or null)
    */
-  private static Distance search3d(AssignedPoint point, int[] objectMask, int maxx, int maxy,
-      int maxz, IntFunction<double[]> toCoords, Hull3d[] hulls, double[][][] hullPlanes) {
+  static Distance search3d(AssignedPoint point, int[] objectMask, int maxx, int maxy,
+      int maxz, IntFunction<double[]> toCoords, double sy, double sz, Hull3d[] hulls,
+      double[][][] hullPlanes) {
     final int x = point.getXint();
     final int y = point.getYint();
     // Check within the image
@@ -904,8 +952,9 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
     final double sd = x0 * a + y0 * b + z0 * c + d;
 
     // The offset is the distance multiplied by the plane normal.
+    // The offset is converted from x-dimension pixel units to pixels.
     // The distance is squared.
-    return new Distance(point, objectId, -sd * a, -sd * b, -sd * c, sd * sd);
+    return new Distance(point, objectId, -sd * a, -sd * b / sy, -sd * c / sz, sd * sd);
   }
 
   /**
@@ -1098,7 +1147,7 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       return false;
     }
 
-    if (settings.is3d && !checkZ(imp.getNSlices(), results)) {
+    if (!checkZ(imp.getNSlices(), settings.is3d, results)) {
       IJ.error(TITLE, "3D processing requested but foci contain invalid z coordinates that\n"
           + "do not fit in the z-stack");
       return false;
@@ -1150,13 +1199,18 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
   }
 
   /**
-   * Check the Z coordinate is within the number of slices.
+   * Check the Z coordinate is within the number of slices. This is only required for 3D
+   * processing which requires more than 1 slice.
    *
    * @param slices the number of slices
+   * @param use3d set to true to use 3D processing
    * @param results the results
    * @return true, if successful
    */
-  private static boolean checkZ(int slices, List<AssignedPoint> results) {
+  static boolean checkZ(int slices, boolean use3d, List<AssignedPoint> results) {
+    if (slices == 1 || !use3d) {
+      return true;
+    }
     for (final Coordinate r : results) {
       if (r.getZint() > slices || r.getZint() < 1) {
         return false;
@@ -1365,7 +1419,8 @@ public class ObjectFociDepth_PlugIn implements PlugInFilter {
       final double y = r.getYint() * sy;
       final double z = (r.getZint() - 1) * sz;
       final Point3f p1 = new Point3f((float) x, (float) y, (float) z);
-      final Point3f p2 = new Point3f((float) (x + d.dx), (float) (y + d.dy), (float) (z + d.dz));
+      final Point3f p2 =
+          new Point3f((float) (x + d.dx), (float) (y + d.dy * sy), (float) (z + d.dz * sz));
       return Stream.of(p1, p2);
     }).collect(LocalCollectors.toLocalList());
     final CustomLineMesh lmesh =
