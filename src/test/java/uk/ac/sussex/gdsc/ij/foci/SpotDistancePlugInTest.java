@@ -24,12 +24,19 @@
 
 package uk.ac.sussex.gdsc.ij.foci;
 
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ShortProcessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.ac.sussex.gdsc.ij.foci.SpotDistance_PlugIn.DistanceResult;
+import uk.ac.sussex.gdsc.ij.foci.SpotDistance_PlugIn.Settings;
 import uk.ac.sussex.gdsc.ij.foci.SpotDistance_PlugIn.Tracker;
 
 @SuppressWarnings({"javadoc"})
@@ -67,6 +74,88 @@ class SpotDistancePlugInTest {
     tracker.assignIds(frame3, 10);
     // Nothing to track from the empty frame
     assertIds(frame3, new int[][] {{10, 10, 2}});
+  }
+
+  @Test
+  void testValidateSettings() {
+    final Settings settings = new Settings();
+    Assertions.assertNull(SpotDistance_PlugIn.validateSettings(settings));
+    settings.featureSize = 0;
+    Assertions.assertNull(SpotDistance_PlugIn.validateSettings(settings));
+    settings.smoothingSize = 0;
+    Assertions.assertNull(SpotDistance_PlugIn.validateSettings(settings));
+
+    assertInvalid(s -> s.smoothingSize = -1);
+    assertInvalid(s -> s.featureSize = -1);
+    assertInvalid(s -> s.featureSize = s.smoothingSize);
+    assertInvalid(s -> s.featureSize = s.smoothingSize * 0.5);
+    assertInvalid(s -> s.maxPeaks = 0);
+    assertInvalid(s -> s.regionCounter = 0);
+    assertInvalid(s -> s.regionCounter = 65536);
+    final Settings s2 = new Settings();
+    s2.regionCounter = 65535;
+    Assertions.assertNull(SpotDistance_PlugIn.validateSettings(s2));
+  }
+
+  private static void assertInvalid(java.util.function.Consumer<Settings> action) {
+    final Settings settings = new Settings();
+    action.accept(settings);
+    Assertions.assertNotNull(SpotDistance_PlugIn.validateSettings(settings));
+  }
+
+  @Test
+  void testIsValidDualChannel() {
+    Assertions.assertTrue(SpotDistance_PlugIn.isValidDualChannel(1, 2, 2));
+    Assertions.assertTrue(SpotDistance_PlugIn.isValidDualChannel(3, 1, 3));
+    Assertions.assertFalse(SpotDistance_PlugIn.isValidDualChannel(1, 1, 2));
+    Assertions.assertFalse(SpotDistance_PlugIn.isValidDualChannel(1, 2, 1));
+    Assertions.assertFalse(SpotDistance_PlugIn.isValidDualChannel(0, 2, 2));
+  }
+
+  @Test
+  void testIsValidMask() {
+    final ImagePlus imp = new ImagePlus("image", new ShortProcessor(10, 8));
+    Assertions.assertTrue(
+        SpotDistance_PlugIn.isValidMask(imp, new ImagePlus("m", new ByteProcessor(10, 8))));
+    Assertions.assertTrue(
+        SpotDistance_PlugIn.isValidMask(imp, new ImagePlus("m", new ShortProcessor(10, 8))));
+    Assertions.assertFalse(
+        SpotDistance_PlugIn.isValidMask(imp, new ImagePlus("m", new FloatProcessor(10, 8))));
+    Assertions.assertFalse(
+        SpotDistance_PlugIn.isValidMask(imp, new ImagePlus("m", new ColorProcessor(10, 8))));
+    Assertions.assertFalse(
+        SpotDistance_PlugIn.isValidMask(imp, new ImagePlus("m", new ByteProcessor(11, 8))));
+    Assertions.assertFalse(
+        SpotDistance_PlugIn.isValidMask(imp, new ImagePlus("m", new ByteProcessor(10, 9))));
+  }
+
+  @Test
+  void testLabelRegions() {
+    final ShortProcessor ip = createTwoRegions();
+    Assertions.assertEquals(65536, new SpotDistance_PlugIn().labelRegions(ip, 65534));
+    Assertions.assertEquals(65534, ip.get(1, 1));
+    Assertions.assertEquals(65535, ip.get(6, 6));
+    // The second region would be 65536
+    Assertions.assertEquals(-1, new SpotDistance_PlugIn().labelRegions(createTwoRegions(), 65535));
+  }
+
+  private static ShortProcessor createTwoRegions() {
+    final ShortProcessor ip = new ShortProcessor(10, 10);
+    ip.set(1, 1, 1);
+    ip.set(6, 6, 1);
+    return ip;
+  }
+
+  @Test
+  void testScaleImageWithNegativeValues() {
+    final ImageStack stack = new ImageStack(3, 1);
+    stack.addSlice(new FloatProcessor(3, 1, new float[] {-4, -3, -2}));
+    final float scale = SpotDistance_PlugIn.scaleImage(stack, false);
+    Assertions.assertEquals(65535f / 2, scale);
+    final ShortProcessor ip = (ShortProcessor) stack.getProcessor(1);
+    Assertions.assertEquals(0, ip.get(0));
+    Assertions.assertEquals(32768, ip.get(1));
+    Assertions.assertEquals(65535, ip.get(2));
   }
 
   private static List<DistanceResult> create(int[][] xy) {

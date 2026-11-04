@@ -143,6 +143,26 @@ Major release of GDSC ImageJ Plugins.
   each region and channel between frames and shows the spot ID in the positions table.
   Previously the spots in the first frame had no ID, spots were matched to the previously
   processed region, and the ID was not shown.
+* The :ref:`findfoci_plugins:Spot Distance` plugin only uses dual channel analysis for a
+  multi-channel image, and reports an error if the same channel is selected twice. Previously a
+  setting from a multi-channel image was reused for a single-channel image, and selecting the
+  same channel analysed the current channel.
+* The :ref:`findfoci_plugins:Spot Distance` plugin checks the ``Smoothing``, ``Feature size``,
+  ``Max peaks`` and ``Region counter`` parameters, and that the area ROI regions do not exceed the
+  maximum region number. Previously a region could be numbered zero and ignored.
+* The :ref:`findfoci_plugins:Spot Distance` plugin uses the ``Max peaks`` parameter and does not
+  round the ``Min peak height``. Previously these were fixed at 33000 and truncated to an integer.
+* The :ref:`findfoci_plugins:Spot Distance` plugin summary reports zero distances when no pairs are
+  within the ``Max distance``. Previously this was reported as infinite or not a number.
+* The :ref:`findfoci_plugins:Spot Distance` plugin creates new result tables if they are closed,
+  and undo removes the results from a table that was empty before the last run.
+* The :ref:`findfoci_plugins:Spot Distance` plugin only allows 8-bit and 16-bit mask images with the
+  same width and height as the image, including when repeating the analysis. Previously 32-bit and
+  RGB masks were listed but did not identify the regions.
+* The :ref:`findfoci_plugins:Spot Distance` plugin rescales 32-bit images using the full 16-bit
+  range and supports negative values in the rescaling and the projection.
+* The :ref:`findfoci_plugins:Spot Distance` plugin dual channel projection slice labels match the
+  frames, and a spot with no outline on the slice of the centre does not cause an error.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

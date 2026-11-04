@@ -78,6 +78,8 @@ import uk.ac.sussex.gdsc.ij.help.HelpUrls;
 public class SpotDistance_PlugIn implements PlugIn {
   /** The plugin title. */
   private static final String TITLE = "Spot Distance";
+  /** The maximum region number for a region defined using an area ROI. */
+  private static final int MAX_REGION = 65535;
 
   private static final int[] DIR_X_OFFSET = {0, 1, 1, 1, 0, -1, -1, -1};
   private static final int[] DIR_Y_OFFSET = {-1, -1, 0, 1, 1, 1, 0, -1};
@@ -134,7 +136,7 @@ public class SpotDistance_PlugIn implements PlugIn {
   /**
    * Contains the settings that are the re-usable state of the plugin.
    */
-  private static class Settings {
+  static class Settings {
     /** The last settings used by the plugin. This should be updated after plugin execution. */
     private static final AtomicReference<Settings> lastSettings =
         new AtomicReference<>(new Settings());
@@ -147,7 +149,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     double stdDevAboveBackground = 3;
     int minPeakSize = 15;
     double minPeakHeight = 5;
-    int maxPeaks = 50;
+    int maxPeaks = 33000;
 
     double circularityLimit = 0.7;
     int showOverlay = 2;
@@ -365,7 +367,7 @@ public class SpotDistance_PlugIn implements PlugIn {
         gd.addNumericField("Background (SD > Av)", settings.stdDevAboveBackground, 1);
         gd.addNumericField("Min_peak_size", settings.minPeakSize, 0);
         gd.addNumericField("Min_peak_height", settings.minPeakHeight, 2);
-        gd.addNumericField("Max_peaks", settings.maxPeaks, 2);
+        gd.addNumericField("Max_peaks", settings.maxPeaks, 0);
       }
       gd.addNumericField("Circularity_limit", settings.circularityLimit, 2);
       gd.addNumericField("Max_distance", settings.maxDistance, 2, 6, "pixels");
@@ -399,7 +401,7 @@ public class SpotDistance_PlugIn implements PlugIn {
         settings.autoThreshold = gd.getNextBoolean();
         settings.stdDevAboveBackground = gd.getNextNumber();
         settings.minPeakSize = (int) gd.getNextNumber();
-        settings.minPeakHeight = (int) gd.getNextNumber();
+        settings.minPeakHeight = gd.getNextNumber();
         settings.maxPeaks = (int) gd.getNextNumber();
       }
       settings.circularityLimit = gd.getNextNumber();
@@ -427,6 +429,12 @@ public class SpotDistance_PlugIn implements PlugIn {
       }
 
       settings.save();
+
+      final String error = validateSettings(settings);
+      if (error != null) {
+        IJ.error(TITLE, error);
+        return;
+      }
     }
 
     maskImp = checkMask(imp, settings.maskImage);
@@ -462,9 +470,19 @@ public class SpotDistance_PlugIn implements PlugIn {
       settings.c1 = gd.getNextChoiceIndex() + 1;
       settings.c2 = gd.getNextChoiceIndex() + 1;
 
-      doDualChannel = settings.c1 != settings.c2;
+      if (settings.c1 == settings.c2) {
+        IJ.error(TITLE, "Dual channel analysis requires two different channels");
+        return;
+      }
+      doDualChannel = true;
     } else {
-      doDualChannel = settings.dualChannel;
+      // The dual channel option is only shown for a multi-channel image
+      doDualChannel = settings.dualChannel && imp.getNChannels() > 1;
+      if (doDualChannel && !isValidDualChannel(settings.c1, settings.c2, imp.getNChannels())) {
+        IJ.error(TITLE, "Invalid channels for dual channel analysis: " + settings.c1 + " & "
+            + settings.c2);
+        return;
+      }
     }
 
     initialise();
@@ -539,6 +557,43 @@ public class SpotDistance_PlugIn implements PlugIn {
     }
   }
 
+  /**
+   * Validate the settings.
+   *
+   * @param settings the settings
+   * @return the error message (or null)
+   */
+  static String validateSettings(Settings settings) {
+    if (settings.smoothingSize < 0) {
+      return "Smoothing must be positive";
+    }
+    if (settings.featureSize < 0) {
+      return "Feature size must be positive";
+    }
+    if (settings.featureSize > 0 && settings.featureSize <= settings.smoothingSize) {
+      return "Feature size must be larger than the smoothing";
+    }
+    if (settings.maxPeaks < 1) {
+      return "Max peaks must be strictly positive";
+    }
+    if (settings.regionCounter < 1 || settings.regionCounter > MAX_REGION) {
+      return "Region counter must be in the range 1-" + MAX_REGION;
+    }
+    return null;
+  }
+
+  /**
+   * Checks if the channels are valid for dual channel analysis.
+   *
+   * @param c1 the first channel
+   * @param c2 the second channel
+   * @param channels the number of channels
+   * @return true if valid
+   */
+  static boolean isValidDualChannel(int c1, int c2, int channels) {
+    return c1 != c2 && c1 >= 1 && c2 >= 1 && c1 <= channels && c2 <= channels;
+  }
+
   // Helper methods for macros
 
   /**
@@ -586,8 +641,15 @@ public class SpotDistance_PlugIn implements PlugIn {
     }
   }
 
+  /**
+   * Removes the lines from the window after the specified line. Use a negative line to ignore the
+   * window.
+   *
+   * @param windowRef the window reference
+   * @param line the line
+   */
   private static void removeAfterLine(AtomicReference<TextWindow> windowRef, int line) {
-    if (line > 0) {
+    if (line >= 0) {
       final TextWindow window = windowRef.get();
       if (window != null) {
         final TextPanel tp = window.getTextPanel();
@@ -634,11 +696,10 @@ public class SpotDistance_PlugIn implements PlugIn {
 
     final ImageStack stack = imp.createEmptyStack();
     final ImageProcessor ip = imp.getProcessor();
+    // Hyperstack order is channel then frame
     for (final int f : frames) {
       stack.addSlice("Frame " + f, ip.createProcessor(ip.getWidth(), ip.getHeight()));
-    }
-    if (dualChannel) {
-      for (final int f : frames) {
+      if (dualChannel) {
         stack.addSlice("Frame " + f, ip.createProcessor(ip.getWidth(), ip.getHeight()));
       }
     }
@@ -668,8 +729,7 @@ public class SpotDistance_PlugIn implements PlugIn {
       // - Not be the same image
       // - Match XY dimensions of the input image
       // - Math Z dimensions of input or else be a single image
-      if (maskImp != null && maskImp.getID() != imp.getID() && maskImp.getWidth() == imp.getWidth()
-          && maskImp.getHeight() == imp.getHeight()
+      if (maskImp != null && maskImp.getID() != imp.getID() && isValidMask(imp, maskImp)
           && (maskImp.getNSlices() == imp.getNSlices() || maskImp.getNSlices() == 1)
           && (maskImp.getNChannels() == imp.getNChannels() || maskImp.getNChannels() == 1)
           && (maskImp.getNFrames() == imp.getNFrames() || maskImp.getNFrames() == 1)) {
@@ -680,8 +740,29 @@ public class SpotDistance_PlugIn implements PlugIn {
     return newImageList.toArray(new String[0]);
   }
 
+  /**
+   * Checks if the mask is valid for the image. The mask must be an 8-bit or 16-bit image with the
+   * same XY dimensions as the image.
+   *
+   * @param imp the image
+   * @param mask the mask
+   * @return true if valid
+   */
+  static boolean isValidMask(ImagePlus imp, ImagePlus mask) {
+    return (mask.getBitDepth() == 8 || mask.getBitDepth() == 16)
+        && mask.getWidth() == imp.getWidth() && mask.getHeight() == imp.getHeight();
+  }
+
   private ImagePlus checkMask(ImagePlus imp, String maskImage) {
     ImagePlus mask = WindowManager.getImage(maskImage);
+
+    // The mask is selected from a list of valid images. Check again in case the
+    // image has changed or the analysis is repeated on a different image.
+    if (mask != null && (mask.getID() == imp.getID() || !isValidMask(imp, mask))) {
+      IJ.error(TITLE, "Mask image must be an 8-bit or 16-bit image with the same width and\n"
+          + "height as the input image: " + maskImage);
+      return null;
+    }
 
     if (mask == null) {
       // Build a mask image using the input image ROI
@@ -696,7 +777,12 @@ public class SpotDistance_PlugIn implements PlugIn {
       ip.fill(roi);
 
       // Label each separate region with a different number
-      labelRegions(ip);
+      final int counter = labelRegions(ip, settings.regionCounter);
+      if (counter < 0) {
+        IJ.error(TITLE, "Region counter exceeds the maximum of " + MAX_REGION);
+        return null;
+      }
+      settings.regionCounter = counter;
 
       mask = new ImagePlus("Mask", ip);
     }
@@ -735,7 +821,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     // Store the line number for each text window
     setLastLineCount(resultsWindow.getTextPanel().getLineCount(),
         summaryWindow.getTextPanel().getLineCount(),
-        (distancesWindow != null) ? distancesWindow.getTextPanel().getLineCount() : 0);
+        (distancesWindow != null) ? distancesWindow.getTextPanel().getLineCount() : -1);
 
     // Create the image result prefix
     final StringBuilder sb = new StringBuilder();
@@ -757,8 +843,8 @@ public class SpotDistance_PlugIn implements PlugIn {
   private static TextWindow createTextWindow(String header,
       AtomicReference<TextWindow> windowReference, String titleSuffix, TextWindow parent) {
     return ConcurrencyUtils.refresh(windowReference,
-        // Window must have the same header
-        window -> sameHeader(window, header),
+        // Window must be showing and have the same header
+        window -> ImageJUtils.isShowing(window) && sameHeader(window, header),
         // Create a new window
         () -> {
           final TextWindow window = new TextWindow(TITLE + titleSuffix, header, "", 700, 300);
@@ -917,7 +1003,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     processorOptions.setBackgroundParameter(settings.stdDevAboveBackground);
     processorOptions.setThresholdMethod(ThresholdMethod.OTSU);
     processorOptions.setSearchMethod(SearchMethod.ABOVE_BACKGROUND);
-    processorOptions.setMaxPeaks(33000);
+    processorOptions.setMaxPeaks(settings.maxPeaks);
     processorOptions.setMinSize(settings.minPeakSize);
     processorOptions.setPeakMethod(PeakMethod.ABSOLUTE);
     processorOptions.setPeakParameter(0);
@@ -955,17 +1041,17 @@ public class SpotDistance_PlugIn implements PlugIn {
       final ImagePlus croppedImp = crop(spotImp, bounds);
       ImagePlus croppedImp2 = null;
       final ImageStack stack = croppedImp.getImageStack();
-      final float scale = scaleImage(stack);
+      final float scale = scaleImage(stack, settings.debug);
       croppedImp.setStack(stack); // Updates the image bit depth
-      processorOptions.setPeakParameter(Math.round(settings.minPeakHeight * scale));
+      processorOptions.setPeakParameter(settings.minPeakHeight * scale);
       double peakParameter2 = 0;
 
       if (s1b != null) {
         croppedImp2 = crop(spotImp2, bounds);
         final ImageStack stack2 = croppedImp2.getImageStack();
-        final float scale2 = scaleImage(stack2);
+        final float scale2 = scaleImage(stack2, settings.debug);
         croppedImp2.setStack(stack2); // Updates the image bit depth
-        peakParameter2 = Math.round(settings.minPeakHeight * scale2);
+        peakParameter2 = settings.minPeakHeight * scale2;
       }
 
       if (settings.debug) {
@@ -1058,8 +1144,13 @@ public class SpotDistance_PlugIn implements PlugIn {
           }
         }
 
-        addSummaryResult(frame, ch, region, resultsArray.size(), minD, maxD, sumD / count, minD2,
-            maxD2, sumD2 / count);
+        if (count == 0) {
+          // No pairs within the maximum distance
+          addSummaryResult(frame, ch, region, resultsArray.size());
+        } else {
+          addSummaryResult(frame, ch, region, resultsArray.size(), minD, maxD, sumD / count, minD2,
+              maxD2, sumD2 / count);
+        }
       } else {
         // Dual channel analysis.
         // Analyse the second channel
@@ -1146,8 +1237,13 @@ public class SpotDistance_PlugIn implements PlugIn {
           }
         }
 
-        addSummaryResult(frame, ch, region, resultsArray.size() + resultsArray2.size(), minD, maxD,
-            MathUtils.div0(sumD, count), minD2, maxD2, MathUtils.div0(sumD2, count));
+        if (count == 0) {
+          // No pairs within the maximum distance
+          addSummaryResult(frame, ch, region, resultsArray.size() + resultsArray2.size());
+        } else {
+          addSummaryResult(frame, ch, region, resultsArray.size() + resultsArray2.size(), minD,
+              maxD, sumD / count, minD2, maxD2, sumD2 / count);
+        }
       }
     }
 
@@ -1199,8 +1295,8 @@ public class SpotDistance_PlugIn implements PlugIn {
     for (int n = 2; n <= s1.getSize(); n++) {
       final ImageProcessor ip = s1.getProcessor(n);
       for (int i = 0; i < ip.getPixelCount(); i++) {
-        if (max.get(i) < ip.get(i)) {
-          max.set(i, ip.get(i));
+        if (max.getf(i) < ip.getf(i)) {
+          max.setf(i, ip.getf(i));
         }
       }
     }
@@ -1253,7 +1349,7 @@ public class SpotDistance_PlugIn implements PlugIn {
     overlay = overlay.duplicate();
     final Roi[] rois = overlay.toArray();
     for (final Roi roi : rois) {
-      if (settings.dualChannel) {
+      if (projectionImp.getNChannels() > 1) {
         roi.setPosition(channel, 1, frame);
       } else {
         roi.setPosition(frame);
@@ -1270,16 +1366,17 @@ public class SpotDistance_PlugIn implements PlugIn {
    * converted to a ShortProcessor.
    *
    * @param s1 The image
+   * @param debug set to true to log the scaling
    * @return The scale
    */
-  private float scaleImage(ImageStack s1) {
+  static float scaleImage(ImageStack s1, boolean debug) {
     if (!(s1.getPixels(1) instanceof float[])) {
       return 1;
     }
 
     // Find the range
-    float min = Float.MAX_VALUE;
-    float max = 0;
+    float min = Float.POSITIVE_INFINITY;
+    float max = Float.NEGATIVE_INFINITY;
     for (int n = 1; n <= s1.getSize(); n++) {
       final float[] pixels = (float[]) s1.getPixels(n);
       for (final float f : pixels) {
@@ -1294,8 +1391,8 @@ public class SpotDistance_PlugIn implements PlugIn {
 
     // Convert pixels to short[]
     final float range = max - min;
-    final float scale = (range > 0) ? 65334 / range : 1;
-    if (settings.debug) {
+    final float scale = (range > 0) ? 65535 / range : 1;
+    if (debug) {
       IJ.log(String.format("Scaling transformed image by %f (range: %f - %f)", scale, min, max));
     }
     for (int n = 1; n <= s1.getSize(); n++) {
@@ -1515,7 +1612,8 @@ public class SpotDistance_PlugIn implements PlugIn {
       final int peakId = result.id;
       final int maskId = resultsArray.size() - peakId + 1;
       final Roi roi = extractSelection(maskIp, maskId, channel, z + 1, frame);
-      final double perimeter = roi.getLength();
+      // The peak may have no pixels on the slice of the centre
+      final double perimeter = (roi == null) ? 0 : roi.getLength();
       final double area = getArea(maskIp, maskId);
 
       final double circularity =
@@ -1527,7 +1625,7 @@ public class SpotDistance_PlugIn implements PlugIn {
         continue;
       }
 
-      if (overlay != null) {
+      if (overlay != null && roi != null) {
         overlay.add(roi);
       }
 
@@ -1550,6 +1648,9 @@ public class SpotDistance_PlugIn implements PlugIn {
     maskIp.setThreshold(maskId, maskId, ImageProcessor.NO_LUT_UPDATE);
     final ThresholdToSelection ts = new ThresholdToSelection();
     final Roi roi = ts.convert(maskIp);
+    if (roi == null) {
+      return null;
+    }
     if (imp.getStackSize() == 1) {
       roi.setPosition(0);
     } else if (imp.isDisplayedHyperStack()) {
@@ -1669,9 +1770,14 @@ public class SpotDistance_PlugIn implements PlugIn {
   }
 
   /**
-   * Convert the binary mask to labelled regions, each with a unique number.
+   * Convert the binary mask to labelled regions, each with a unique number starting from the
+   * region counter.
+   *
+   * @param ip the mask
+   * @param regionCounter the region counter
+   * @return the next region number; or -1 if the region number exceeds the maximum
    */
-  private void labelRegions(ShortProcessor ip) {
+  int labelRegions(ShortProcessor ip, int regionCounter) {
     maxx = ip.getWidth();
 
     xlimit = maxx - 1;
@@ -1693,15 +1799,21 @@ public class SpotDistance_PlugIn implements PlugIn {
     }
 
     // Find particles
+    int counter = regionCounter;
     for (int i = 0; i < binaryMask.length; i++) {
       if (binaryMask[i]) {
-        expandParticle(binaryMask, mask, pointList, i, (short) settings.regionCounter);
-        settings.regionCounter++;
+        if (counter > MAX_REGION) {
+          counter = -1;
+          break;
+        }
+        expandParticle(binaryMask, mask, pointList, i, (short) counter);
+        counter++;
       }
     }
 
     // Free memory
     offset = null;
+    return counter;
   }
 
   /**
