@@ -48,6 +48,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
@@ -80,7 +81,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
   /**
    * Contains the settings that are the re-usable state of the plugin.
    */
-  private static class Settings {
+  static class Settings {
     /** The last settings used by the plugin. This should be updated after plugin execution. */
     private static final AtomicReference<Settings> lastSettings =
         new AtomicReference<>(new Settings());
@@ -103,17 +104,18 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     /** Image to draw overlay. */
     ImagePlus imp;
     /** Current set of triplets. */
-    ArrayList<int[]> triplets;
+    List<int[]> triplets;
     /** Image to draw overlay for the manual triplets. */
     ImagePlus manualImp;
     /** Current set of manual triplets. */
-    ArrayList<AssignedPoint[]> manualTriplets;
+    List<AssignedPoint[]> manualTriplets;
 
     /**
      * Default constructor.
      */
     Settings() {
-      // Do nothing
+      triplets = Collections.emptyList();
+      manualTriplets = Collections.emptyList();
     }
 
     /**
@@ -190,7 +192,7 @@ public class TranslocationFinder_PlugIn implements PlugIn {
     final GenericDialog gd = new GenericDialog(TITLE);
 
     gd.addMessage(
-        "Analyses spots within a mask/ROI region\nand computes density and closest distances.");
+        "Finds triplets of matched foci from 3 results sets\nand classifies translocations.");
 
     gd.addChoice("Results_name_1", names, settings.resultsName1);
     gd.addChoice("Results_name_2", names, settings.resultsName2);

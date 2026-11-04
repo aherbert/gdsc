@@ -125,6 +125,9 @@ Major release of GDSC ImageJ Plugins.
   pairs table.
 * The :ref:`findfoci_plugins:File Match Calculator` plugin reports an error for a composite image
   with no points, and clears the pairs table when the columns change.
+* The :ref:`findfoci_plugins:Translocation Finder` results table can change a classification
+  when only one of the plugin or the :ref:`findfoci_plugins:Translocation Finder (Tool)` has been
+  used. Previously this caused an error. The plugin dialog message describes the plugin.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.
