@@ -2245,6 +2245,253 @@ The generic CSV file has records using one of the following formats::
 
 The generic file can also be tab delimited.
 
+The plugin is a file-based version of the :ref:`findfoci_plugins:Match Calculator`. The points are matched using the same nearest-neighbour algorithm (see :ref:`findfoci_plugins:Match Algorithm`) and the same match scores are computed (see :numref:`{number}: {name} <binary_scoring_statistics>`). The points from ``Input 1`` are treated as the actual (reference) points and the points from ``Input 2`` as the predicted points.
+
+The plugin performs the following steps:
+
+#. Read the points from each file. The file format is identified automatically (see below). If the format is not recognised then no points are read from the file.
+#. Optionally remove the points that are outside a mask (see the ``mask`` parameter).
+#. Divide the points into time points. Points are only matched to points in the same time point.
+#. For each time point match the points from the two files using the ``Distance`` threshold. Distances are computed in 3D if the points do not all have the same z coordinate, otherwise in 2D. Distances use the units of the file coordinates; no scaling is applied to the z dimension.
+#. Combine the matches from all the time points and add the match statistics to the results table.
+#. Optionally show and save the matched and unmatched points (the pairs), and display the points on a composite image.
+
+Differences to the :ref:`findfoci_plugins:Match Calculator` plugin:
+
+* The points are read from files rather than from point ROIs on images.
+* The points are matched separately for each time point.
+* The ``Distance`` is always an absolute distance; there is no relative distance option.
+* There is no height analysis (quartiles, scatter plot or unmatched distribution) and no overlay on the input images. The points can instead be shown on a composite image.
+* The results table reports the precision and recall, the RMSD of the matches, and F-scores using a configurable ``Beta``.
+* The plugin uses the same dialog title as the :ref:`findfoci_plugins:Match Calculator` and its results are shown in a separate table with the same title (``Match Calculator Results``) but different columns.
+
+.. index:: File Match Calculator File Formats
+
+File Formats
+~~~~~~~~~~~~
+
+The file format is identified using the first lines of the file. Header lines starting with ``#`` are ignored. Each point has an X, Y and Z coordinate, a time point and a value. If the file does not contain the field then the time point is 1, and the z coordinate and value are 0.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Format
+     - Description
+
+   * - ``FindFoci`` results
+     - A results file saved by the :ref:`findfoci_plugins:FindFoci` plugin. Identified by the tab-delimited header line starting with ``Peak #`` and ``Mask Value``. The X, Y and Z columns are used for the coordinates. The ``Object`` column is used for the time point; points are only matched to points in the same mask object (see the ``Object analysis`` option of the :ref:`findfoci_plugins:FindFoci` plugin). The value is the ``Size`` of the foci.
+
+   * - QuickPALM
+     - A QuickPALM xls results file. Identified by the text ``Up-Height`` on the first line. The frame is used for the time point. The z coordinate is converted from nm to pixels.
+
+   * - STORMJ
+     - A STORMJ xls results file. Identified by a header line starting with ``#`` that contains ``origX``. The frame is used for the time point. There is no z coordinate.
+
+   * - Generic tab delimited
+     - A line with 5 or more tabs is read as ``ID,T,X,Y,Z,Value``; with 3 or 4 tabs as ``ID,T,X,Y``; and with 2 tabs as ``X,Y,Z``.
+
+   * - Generic CSV
+     - A line with 5 or more commas is read as ``ID,T,X,Y,Z,Value``; with 3 or 4 commas as ``ID,T,X,Y``; and with 2 commas as ``X,Y,Z``.
+
+For the generic formats the ``ID`` field is ignored; points are numbered in the order they are read. The time point is truncated to an integer. Lines with too few fields are ignored. Lines that contain invalid numbers (for example a column header line) are ignored and a warning is logged; reading stops after more than 10 invalid lines.
+
+.. index:: File Match Calculator Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``File Match Calculator`` plugin uses a standard ``ImageJ`` dialog (titled ``Match Calculator``). The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Input 1
+     - The first file. These are the reference (actual) points. Use the ``...`` button to select the file.
+
+   * - Input 2
+     - The second file. These are the predicted points.
+
+   * - mask
+     - A mask used to filter the points. Only shown if there are open images that are not RGB. Select ``[None]`` to use all the points; otherwise points are only used if the pixel in the mask at the point XY coordinates (rounded down to integers) is above zero. Points outside the mask image are removed. Only the current slice of the mask is used.
+
+   * - Distance
+     - The maximum distance allowed for a matched pair of points. This uses the units of the file coordinates.
+
+   * - Beta
+     - The weighting used to compute the ``F-beta`` score. A beta above 1 weights recall higher than precision; a beta below 1 weights precision higher than recall.
+
+   * - Show pairs
+     - Show a table of the matched and unmatched points (see below).
+
+   * - Save pairs
+     - Save the pairs table to file. A file selection dialog is shown to choose the file. The file extension is changed to ``.xls``. Any existing file is overwritten.
+
+   * - Save pairs single file
+     - Save the pairs table to a single file. A file selection dialog is shown to choose the file. The file extension is changed to ``.xls``. If the file exists and is not empty then the pairs are appended to the file; otherwise a header line is written first. This allows the pairs from multiple runs to be collected into a single file.
+
+   * - Show composite image
+     - Show the points on a composite image created from two open images (see below). Only shown if there are open images that are not RGB.
+
+   * - Ignore file frames
+     - Show the points from all the time points on a single frame of the composite image. Only applies if the two images have a single frame and the files have multiple time points. Only shown if there are open images that are not RGB.
+
+   * - Image 1
+     - The image used for the first channel of the composite image. Only shown if there are open images that are not RGB.
+
+   * - Image 2
+     - The image used for the second channel of the composite image. Only shown if there are open images that are not RGB.
+
+   * - Use slice position
+     - Position the points on the z-slice of the composite image using the z coordinate of the point. Otherwise the points are shown on all z-slices. Only shown if there are open images that are not RGB.
+
+If a file cannot be read then an error is shown.
+
+.. index:: File Match Calculator Results Table
+
+Results Table
+~~~~~~~~~~~~~
+
+The results are appended to the ``Match Calculator Results`` table. The table contains a row for each run of the plugin with the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image 1
+     - The first file.
+
+   * - Image 2
+     - The second file.
+
+   * - Distance (px)
+     - The distance threshold.
+
+   * - N
+     - The number of points from ``Input 2`` (TP + FP).
+
+   * - TP
+     - True positives: the number of matched points.
+
+   * - FP
+     - False positives: the number of points from ``Input 2`` that do not match a point from ``Input 1``.
+
+   * - FN
+     - False negatives: the number of points from ``Input 1`` that do not match a point from ``Input 2``.
+
+   * - Jaccard
+     - The Jaccard score: TP / (TP + FP + FN).
+
+   * - RMSD
+     - The root mean squared distance between the matched points.
+
+   * - Precision
+     - The proportion of points from ``Input 2`` that are matched: TP / (TP + FP).
+
+   * - Recall
+     - The proportion of points from ``Input 1`` that are matched: TP / (TP + FN).
+
+   * - F0.5
+     - The F-score using a beta of 0.5.
+
+   * - F1
+     - The F-score using a beta of 1, i.e. the harmonic mean of the precision and recall.
+
+   * - F2
+     - The F-score using a beta of 2.
+
+   * - F-beta
+     - The F-score using the ``Beta`` parameter.
+
+The statistics are computed using the matches from all the time points.
+
+If ``ImageJ`` is running in headless mode the results are written to the ``ImageJ`` log.
+
+.. index:: File Match Calculator Pairs Table
+
+Pairs Table
+~~~~~~~~~~~
+
+If ``Show pairs`` is selected the pairs are appended to the ``Match Calculator Pairs`` table. The table is cleared if the columns change (see ``Value`` below). The same columns are used when saving the pairs to file. The table contains the matched pairs followed by the unmatched points from ``Input 1`` and then the unmatched points from ``Input 2``; this is repeated for each time point in ascending order. The fields for a missing point are empty.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image 1
+     - The first file.
+
+   * - Image 2
+     - The second file.
+
+   * - T
+     - The time point.
+
+   * - ID1
+     - The ID of the point from ``Input 1``. Points are numbered from 1 within each time point in the order they are read from the file (after any filtering using the ``mask``).
+
+   * - X1; Y1; Z1
+     - The coordinates of the point from ``Input 1`` truncated to integers.
+
+   * - Value
+     - The value of the point from ``Input 1``. Only present if the points from both files have values (i.e. at least one non-zero value in each file).
+
+   * - ID2
+     - The ID of the point from ``Input 2``.
+
+   * - X2; Y2; Z2
+     - The coordinates of the point from ``Input 2`` truncated to integers.
+
+   * - Value
+     - The value of the point from ``Input 2``. Only present if the points from both files have values.
+
+   * - Distance
+     - The distance between the matched points. Empty for unmatched points.
+
+   * - Outcome
+     - The outcome: ``C`` for a matched (colocalised) pair; ``F`` for an unmatched point from the first file; ``S`` for an unmatched point from the second file.
+
+.. index:: File Match Calculator Composite Image
+
+Composite Image
+~~~~~~~~~~~~~~~
+
+If ``Show composite image`` is selected then the points are shown on a composite image named ``Match Composite``. The composite image is a hyperstack with a channel for ``Image 1``, ``Image 2`` and, if a ``mask`` is selected, the mask. The images must have the same width, height and number of z-slices, otherwise an error is shown; the mask must have the same width and height. The composite uses the current channel of each input image and the bit depth of the input image with the highest bit depth.
+
+The composite image has a frame for each time point in ascending order. If there are no points then an error is shown. The image frame used for each time point is the time point of the points, limited to the number of frames in the image. If ``Ignore file frames`` is selected and both images have a single frame then a single frame is created containing the points from all the time points.
+
+The points are shown using a point overlay that is displayed on all channels:
+
+.. list-table::
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Point
+     - Colour
+
+   * - Matched
+     - Green. The point is drawn at the midpoint of the matched pair.
+
+   * - Unmatched ``Input 1``
+     - Yellow.
+
+   * - Unmatched ``Input 2``
+     - Blue.
+
+The colours match the ``Colour safe`` colours used by the :ref:`findfoci_plugins:Match Calculator` overlay. If a ``Match Composite`` hyperstack is already open then it is replaced.
+
+The pairs table and composite image are not shown if ``ImageJ`` is running in headless mode. The input images and files are not modified.
+
 .. index:: ! Point Aligner
 
 Point Aligner
@@ -3661,6 +3908,139 @@ Translocation Finder
 
 Find translocations using markers for colocalisation using 3 ``FindFoci`` results sets stored in memory. Find triplets where the two markers from channel 2 & 3 matching a foci in channel 1 are also a matching pair. Output a guess for a translocation where channel 13 distance ``<< 12|23``, no translocation where ``12 << 13|23``.
 
+The foci are taken from ``FindFoci`` results saved to memory using the ``Save to memory`` option of the :ref:`findfoci_plugins:FindFoci` plugin. At least 3 results sets must be in memory, otherwise an error is shown. The plugin is designed for results from 3 channels of the same image: channel 1 contains the foci of interest and channels 2 and 3 contain the markers. The same results set can be selected more than once. If a selected results set contains no foci then an error is shown.
+
+The plugin performs the following steps:
+
+#. Match the foci between each pair of results sets (1 & 2; 1 & 3; and 2 & 3) using the nearest-neighbour algorithm of the :ref:`findfoci_plugins:Match Calculator` (see :ref:`findfoci_plugins:Match Algorithm`). Pairs are only matched if they are within the ``Distance`` threshold, and each focus is matched at most once in each pairing. Distances are computed in 3D if the foci in any of the results sets do not all have the same z-slice, otherwise in 2D. The z coordinate is the slice number; no calibration scaling is applied.
+#. Find the triplets: a focus from channel 1 that is matched to a focus in channel 2 and a focus in channel 3, where the channel 2 and channel 3 foci are also matched to each other.
+#. Compute the distances between the foci in each triplet: D12, D13 and D23. Distances use the XYZ coordinates (in pixels and slices).
+#. Classify each triplet (see below) and add it to the results table.
+#. Optionally draw the triplets on an image as an overlay.
+
+The classification of each triplet uses the ``Factor`` and ``Min distance`` parameters and is computed as follows:
+
+#. ``No translocation`` if D13 / D12 > ``Factor`` and D23 / D12 > ``Factor``. The channel 1 and 2 foci are close together and the channel 3 focus is separated from both.
+#. Otherwise ``Translocation`` if D12 / D13 > ``Factor`` and D23 / D13 > ``Factor``, and both D12 and D23 are above the ``Min distance``. The channel 1 and 3 foci are close together and the channel 2 focus is separated from both.
+#. Otherwise ``Unknown``.
+
+The classification can be changed manually using the results table (see below).
+
+.. index:: Translocation Finder Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Translocation Finder`` plugin uses a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Results name 1
+     - The ``FindFoci`` results in memory used for channel 1 (the foci). Results are named using the image title and the channel and frame used for the analysis, e.g. ``Image (c1,t1)``.
+
+   * - Results name 2
+     - The ``FindFoci`` results in memory used for channel 2 (the first marker).
+
+   * - Results name 3
+     - The ``FindFoci`` results in memory used for channel 3 (the second marker).
+
+   * - Overlay on image
+     - The image used to show the triplets as an overlay. Select ``[None]`` for no overlay. Only 8-bit and 16-bit images are listed.
+
+   * - Distance
+     - The maximum distance (in pixels) between two foci for them to be matched.
+
+   * - Min distance
+     - The minimum distance (in pixels) for D12 and D23 for a triplet to be classified as a ``Translocation``.
+
+   * - Factor
+     - The factor by which the distance between the close pair of foci must be smaller than the distances to the third focus. See the classification rules above.
+
+   * - Show matches
+     - Show an image of the pairwise matches. Only applies if an image is selected for ``Overlay on image``. See below.
+
+The ``Min distance`` and ``Factor`` are shared with the :ref:`findfoci_plugins:Translocation Finder (Tool)`.
+
+.. index:: Translocation Finder Results Table
+
+Results Table
+~~~~~~~~~~~~~
+
+The triplets are appended to the ``Translocation Finder Results`` table. The table contains a row for each triplet with the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Name
+     - The name of the analysis. This is ``Results name 1`` followed by the parts of ``Results name 2`` and ``Results name 3`` that differ from ``Results name 1``. The common part of the names stops at the first ``(`` character; e.g. ``Image (c1,t1); (c2,t1); (c3,t1)``. For triplets marked using the :ref:`findfoci_plugins:Translocation Finder (Tool)` this is the image title followed by ``(Manual)``.
+
+   * - 1x; 1y; 1z
+     - The coordinates of the channel 1 focus. The z coordinate is the slice number (starting from 1).
+
+   * - 2x; 2y; 2z
+     - The coordinates of the channel 2 focus.
+
+   * - 3x; 3y; 3z
+     - The coordinates of the channel 3 focus.
+
+   * - D12
+     - The distance between the channel 1 and 2 foci.
+
+   * - D13
+     - The distance between the channel 1 and 3 foci.
+
+   * - D23
+     - The distance between the channel 2 and 3 foci.
+
+   * - Mode
+     - ``Auto`` if the classification was computed; ``Manual`` if the classification was set by the user.
+
+   * - Class
+     - The classification: ``Unknown``; ``No translocation``; or ``Translocation``.
+
+   * - Label
+     - The label of the triplet. This is the triplet number followed by the first letter of the classification, e.g. ``1T``. Triplets found by the plugin are numbered from 1 each time the plugin is run. Triplets marked using the tool have negative numbers, e.g. ``-1N``.
+
+The classification of a triplet can be changed by double-clicking the row in the table. A dialog is shown to select the new ``Class``. The ``Mode`` of the row is changed to ``Manual`` and the ``Class`` and ``Label`` are updated. If the classification has changed and the row is from the latest analysis (or the current set of triplets marked using the tool) then the overlay is updated.
+
+.. index:: Translocation Finder Output
+
+Output
+~~~~~~
+
+If an image is selected for ``Overlay on image`` then the triplets are drawn on the image using an overlay. Any existing overlay is replaced. Each triplet is drawn as a triangle joining the three foci, labelled with the triplet ``Label``. The colour shows the classification:
+
+.. list-table::
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Classification
+     - Colour
+
+   * - Unknown
+     - Yellow
+
+   * - No translocation
+     - Magenta
+
+   * - Translocation
+     - Cyan
+
+If triplets have been marked on the same image using the :ref:`findfoci_plugins:Translocation Finder (Tool)` then they are also drawn on the overlay.
+
+If ``Show matches`` is selected then an image named ``Translocation Finder`` is created with the same width and height as the overlay image. The image has 3 blank slices named ``12``, ``13`` and ``23``. Each slice has an overlay of lines joining the matched foci for the pairing. If the image is already open then it is replaced.
+
+The input images are not modified, other than the overlay.
+
 .. index:: ! Translocation Finder (Tool)
 
 Translocation Finder (Tool)
@@ -3669,6 +4049,82 @@ Translocation Finder (Tool)
 Provide a tool on the ``ImageJ`` toolbar that responds to a user clicking repeatedly on the same image to identify foci for potential translocations. 3 consecutive clicks are required to mark 3 channels for analysis.
 
 Analysis options can be set for the tool.
+
+The tool allows triplets of foci to be marked manually and classified using the same rules as the :ref:`findfoci_plugins:Translocation Finder` plugin. The results are added to the same results table.
+
+Running the plugin adds the ``Manual Translocation Finder Tool`` to the ``ImageJ`` toolbar. The tool icon is a red, a green and a blue circle with the letter ``M``. The tool can also be added using the ``Translocation Finder Tools`` toolset (see :ref:`installation:Toolsets`).
+
+To use the tool select it on the toolbar and click on an image. The clicks are used as follows:
+
+#. Click on the focus in channel 1. The point is shown as a point ROI labelled ``1``.
+#. Click on the marker in channel 2. The points are shown as a point ROI labelled ``1`` and ``2``.
+#. Click on the marker in channel 3. The point ROI is removed. If ``Show record dialog`` is selected then a dialog is shown to record the triplet (see below); if the dialog is cancelled then the triplet is discarded.
+#. The triplet is classified, added to the ``Translocation Finder Results`` table and drawn on the image overlay.
+
+The tool does not change or record the channel. The clicks must be made in the order channel 1, 2 and 3. Each point uses the clicked pixel and the current z-slice of the image. If a click is made on a different image then the triplet is restarted using the click as the first point.
+
+The classification uses the distances between the three points: D12, D13 and D23. Distances use the XYZ coordinates (in pixels and slices). The triplet is classified as follows:
+
+#. ``No translocation`` if D13 / D12 > ``Factor`` and D23 / D12 > ``Factor``.
+#. Otherwise ``Translocation`` if D12 / D13 > ``Factor`` and D23 / D13 > ``Factor``, and both D12 and D23 are above the ``Min distance``.
+#. Otherwise ``Unknown``.
+
+.. index:: Translocation Finder (Tool) Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The tool options dialog is shown by double-clicking the tool icon on the toolbar. The ``Translocation Finder Tool Options`` dialog is a standard ``ImageJ`` dialog. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Min distance
+     - The minimum distance (in pixels) for D12 and D23 for a triplet to be classified as a ``Translocation``.
+
+   * - Factor
+     - The factor by which the distance between the close pair of foci must be smaller than the distances to the third focus.
+
+   * - Show record dialog
+     - Show a dialog after the third click to record the triplet. If not selected then the triplet is recorded using the automatic classification.
+
+The ``Min distance`` and ``Factor`` are shared with the :ref:`findfoci_plugins:Translocation Finder` plugin. The options are kept for the current ``ImageJ`` session.
+
+Record Dialog
+^^^^^^^^^^^^^
+
+If ``Show record dialog`` is selected then the ``Translocation Finder Tool`` dialog is shown after the third click. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Class
+     - The classification of the triplet: ``Unknown``; ``No translocation``; ``Translocation``; or ``Auto``. Use ``Auto`` to compute the classification using the distances.
+
+   * - Min distance
+     - The minimum distance used for the ``Auto`` classification. Changes are saved to the tool options.
+
+   * - Factor
+     - The factor used for the ``Auto`` classification. Changes are saved to the tool options.
+
+.. index:: Translocation Finder (Tool) Output
+
+Output
+~~~~~~
+
+Each triplet is appended to the ``Translocation Finder Results`` table (see :ref:`findfoci_plugins:Translocation Finder` for the columns). The ``Name`` is the image title followed by ``(Manual)``. The ``Mode`` is ``Auto`` if the classification was computed, otherwise ``Manual``. The triplets are numbered using negative numbers in the order they are marked on the image, e.g. a ``Label`` of ``-1T``. The classification can be changed by double-clicking the row in the results table.
+
+The triplets marked on the image are drawn as an overlay. Each triplet is drawn as a triangle joining the three points, labelled with the triplet ``Label``. The colour shows the classification: yellow for ``Unknown``; magenta for ``No translocation``; and cyan for ``Translocation``. Any existing overlay is replaced. If the image is also used for the overlay of the :ref:`findfoci_plugins:Translocation Finder` plugin then the triplets from the plugin are included in the overlay.
+
+The tool records the triplets for one image at a time. If triplets are marked on a different image then the numbering is restarted and the overlay on the new image only shows the triplets marked on that image. The image pixels are not modified.
 
 .. index:: ! Spot Radial Intensity
 
@@ -3989,6 +4445,142 @@ Object Foci Depth
 -----------------
 
 Finds objects in an image using contiguous pixels of the same value. Computes the distance of each foci inside an object to the edge/surface (the foci depth).
+
+The plugin runs on the current image which must be an 8-bit or 16-bit greyscale image. The image should be a mask image where each object is labelled with a different non-zero value (or all objects have the same value and are not touching); zero is the background. If the current image slice has many different pixel values (8 or more for an 8-bit image; 64 or more for a 16-bit image) then a dialog is shown asking if the image is a mask image; selecting ``No`` ends the plugin.
+
+The foci can be taken from:
+
+* The results of the last run of the :ref:`findfoci_plugins:FindFoci` plugin.
+* A point ROI on the current image.
+* A point ROI on another open image.
+
+If no foci are available from any of these sources then an error is shown.
+
+The plugin performs the following steps:
+
+#. Find the objects in the image. An object is a set of connected pixels with the same non-zero value. Each object is assigned an ID number starting from 1. Analysis can be in 2D using the current image slice, or in 3D using the z-stack for the current channel and frame.
+#. Compute the size of each object: the area and perimeter in 2D; or the volume and surface area in 3D.
+#. For each focus find the object that contains the focus. Foci that are outside the image or not inside an object are ignored.
+#. Compute the distance from the focus to the edge of the object. The edge of the image is treated as an edge of the object. Distances are computed in pixels; if the pixel height (and depth for 3D) is different from the pixel width then the y (and z) distances are scaled relative to the pixel width.
+#. Add the distances to the results table.
+
+The distance to the edge can be computed using the object pixels or a convex hull around the object:
+
+* Object pixels: The distance is to the nearest pixel in the same object that is touching the edge of the object. This is a pixel where any of the 8 surrounding pixels (26 in 3D) is not part of the object or is outside the image. The distance is zero if the focus is on an edge pixel.
+* Convex hull: The convex hull of the object is computed. The distance is to the nearest line (2D) or face (3D) of the hull. If a hull cannot be created for the object (for example a 2D object with fewer than 3 outline pixels, or a 3D object within a single z-slice) then the distance is zero.
+
+.. index:: Object Foci Depth Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Object Foci Depth`` plugin uses a standard ``ImageJ`` dialog. The dialog shows the number of foci available from each source. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Foci
+     - The source of the foci. Only the available sources are listed:
+
+       * ``Find Foci``: The results from the last run of the :ref:`findfoci_plugins:FindFoci` plugin. The results do not have to be saved to memory.
+       * ``ROI``: The point ROI on the current image.
+       * ``ROI Image``: The point ROI on the image selected using the ``ROI image`` parameter.
+
+   * - ROI image
+     - The image with the point ROI used when the ``Foci`` is ``ROI Image``. Only shown if there are open images with a point ROI.
+
+   * - 3D
+     - Find objects and compute distances in 3D using the z-stack. Only shown if the image has more than one z-slice; otherwise the analysis is in 2D. 3D processing may produce shorter distances than 2D processing as neighbouring slices may have closer edges.
+
+       In 3D the z coordinate of each focus must be a valid slice of the image, otherwise an error is shown. In 2D the objects are found in the current image slice and the z coordinate of the foci is ignored.
+
+   * - Use convex hull
+     - Compute the distance to the convex hull of the object. Otherwise compute the distance to the nearest edge pixel of the object. The convex hull is also used to compute the object size.
+
+   * - Eight connected
+     - Use 8-connected pixels to find objects. In 3D this uses 26-connected pixels. The default is 4-connected pixels (6-connected in 3D).
+
+   * - Show objects
+     - Show an image of the objects (see below).
+
+   * - Show lines
+     - Add lines from each focus to the closest edge point to the overlay of the objects image. Only applies if ``Show objects`` is selected.
+
+   * - Show hull 3d
+     - Show the convex hulls in the ``ImageJ 3D Viewer``. Only applies to 3D analysis using a convex hull. If ``Java 3D`` is not available then an error is shown.
+
+.. index:: Object Foci Depth Results Table
+
+Results Table
+~~~~~~~~~~~~~
+
+The results are appended to the ``Object Foci Depth Distances`` table. The table contains a row for each focus that is inside an object with the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title.
+
+   * - Object
+     - The ID of the object containing the focus.
+
+   * - Foci
+     - The ID of the focus. ``FindFoci`` results are numbered from 1 in the order of the results; ROI points are numbered from 1 in the order of the points in the ROI.
+
+   * - Channel
+     - The channel of the focus. For ``FindFoci`` results this is the channel used for the analysis; for ROI points this is taken from the ROI position (zero if not available).
+
+   * - Frame
+     - The frame of the focus. For ``FindFoci`` results this is the frame used for the analysis; for ROI points this is taken from the ROI position (zero if not available).
+
+   * - S0
+     - The size of the object boundary: the perimeter in 2D; the surface area in 3D. If using a convex hull this is the size of the hull.
+
+   * - Units
+     - The units of ``S0``.
+
+   * - S1
+     - The size of the object: the area in 2D; the volume in 3D. If using a convex hull this is the size of the hull.
+
+   * - Units
+     - The units of ``S1``.
+
+   * - x; y; z
+     - The coordinates of the focus. The z coordinate is the slice number (starting from 1) in 3D; it is zero in 2D.
+
+   * - dx; dy; dz
+     - The offset (in pixels) from the focus to the closest edge point. The ``dz`` is zero in 2D.
+
+   * - Distance (px)
+     - The distance to the edge (in pixels).
+
+   * - Distance
+     - The distance to the edge in calibrated units.
+
+   * - Units
+     - The calibrated units.
+
+Sizes and distances use the image calibration. Distances in pixels use the pixel width as the unit length. In 2D without a convex hull the perimeter is the length of the traced outline of the object. In 3D without a convex hull the surface area is computed by counting the exposed faces of the object voxels.
+
+.. index:: Object Foci Depth Output
+
+Output
+~~~~~~
+
+If ``Show objects`` is selected then an image named ``Object Foci Depth Objects`` is shown. The image has the same dimensions as the analysed image (a single slice in 2D; a z-stack in 3D) and each pixel is set to the ID of the object. The image is 8-bit if there are 255 or fewer objects, otherwise 16-bit. If the image is already open then it is replaced. If using a convex hull the outline of each hull is added to the image overlay; in 3D the outline is the cross-section of the hull on each slice. If ``Show lines`` is selected a line is added to the overlay from each focus to the closest edge point; in 3D the line is shown on the slice of the focus.
+
+If ``Show hull 3d`` is selected then the hulls are shown in a new ``ImageJ 3D Viewer`` window. Each hull is drawn as a red transparent surface. All the foci are drawn as green points, and the distances as yellow dashed lines from the focus to the closest point on the hull.
+
+The input image is not modified.
 
 .. index:: ! Foci Neighbour Analysis
 
