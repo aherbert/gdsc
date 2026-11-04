@@ -1788,7 +1788,13 @@ public class FindFoci_PlugIn implements PlugIn, MacroExtension {
     }
   }
 
-  private static String createResultsHeader(String newLine) {
+  /**
+   * Creates the results header.
+   *
+   * @param newLine the new line
+   * @return the header
+   */
+  static String createResultsHeader(String newLine) {
     return createResultsHeader(null, null, null, newLine);
   }
 

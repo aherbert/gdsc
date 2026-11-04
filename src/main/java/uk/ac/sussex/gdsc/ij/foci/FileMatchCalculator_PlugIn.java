@@ -222,10 +222,22 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     compareCoordinates(actualPoints, predictedPoints, settings.distanceThreshold);
   }
 
-  private static TimeValuedPoint[] filter(TimeValuedPoint[] points, ImageProcessor processor) {
+  /**
+   * Filter the points to those inside the mask (non-zero pixels). Points outside the image are
+   * removed.
+   *
+   * @param points the points
+   * @param processor the mask
+   * @return the points inside the mask
+   */
+  static TimeValuedPoint[] filter(TimeValuedPoint[] points, ImageProcessor processor) {
+    final int width = processor.getWidth();
+    final int height = processor.getHeight();
     int ok = 0;
     for (int i = 0; i < points.length; i++) {
-      if (processor.get(points[i].getXint(), points[i].getYint()) > 0) {
+      final int x = (int) Math.floor(points[i].getX());
+      final int y = (int) Math.floor(points[i].getY());
+      if (x >= 0 && x < width && y >= 0 && y < height && processor.getf(x, y) > 0) {
         points[ok++] = points[i];
       }
     }
@@ -407,6 +419,10 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
           window.setLocation(p);
           return window;
         });
+        // The value columns are optional. This clears the table.
+        if (!header.equals(pairsWindow.getTextPanel().getColumnHeadings())) {
+          pairsWindow.getTextPanel().setColumnHeadings(header);
+        }
         for (final PointPair pair : pairs) {
           addPairResult(pair, is3D);
         }
@@ -451,7 +467,14 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     return false;
   }
 
-  private int[] getTimepoints(TimeValuedPoint[] points, TimeValuedPoint[] points2) {
+  /**
+   * Gets the time points in ascending order.
+   *
+   * @param points the points
+   * @param points2 the second set of points
+   * @return the time points
+   */
+  static int[] getTimepoints(TimeValuedPoint[] points, TimeValuedPoint[] points2) {
     final IntOpenHashSet set = new IntOpenHashSet(Math.max(points.length, points2.length));
     for (final TimeValuedPoint p : points) {
       set.add(p.getTime());
@@ -460,10 +483,8 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
       set.add(p.getTime());
     }
     final int[] data = set.toIntArray();
-    if (settings.showPairs) {
-      // Sort so the table order is nice
-      Arrays.sort(data);
-    }
+    // Sort so the pairs are output in time order
+    Arrays.sort(data);
     return data;
   }
 
@@ -705,6 +726,10 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     }
     if (myImage1 == null || myImage2 == null) {
       IJ.error(TITLE, "No images specified for composite");
+      return;
+    }
+    if (pairs.isEmpty()) {
+      IJ.error(TITLE, "No points for composite");
       return;
     }
     final ImagePlus imp1 = WindowManager.getImage(myImage1);

@@ -115,6 +115,16 @@ Major release of GDSC ImageJ Plugins.
   used the packed RGB value.
 * The :ref:`findfoci_plugins:Mask Divider` plugin checks the dialog labels and components exist
   before use. These are not created when running headless.
+* The :ref:`findfoci_plugins:File Match Calculator` plugin reads the time point of a FindFoci
+  results file from the ``Object`` column. Previously a fixed column was used that is now the
+  ``% Signal (>Bg)`` column.
+* The :ref:`findfoci_plugins:File Match Calculator` plugin removes points outside the mask image.
+  Previously these used a pixel from the next row or caused an error.
+* The :ref:`findfoci_plugins:File Match Calculator` plugin outputs the pairs and composite image
+  frames in ascending time order. Previously the time points were only sorted when showing the
+  pairs table.
+* The :ref:`findfoci_plugins:File Match Calculator` plugin reports an error for a composite image
+  with no points, and clears the pairs table when the columns change.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

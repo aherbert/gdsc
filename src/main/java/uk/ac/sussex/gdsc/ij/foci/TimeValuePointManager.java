@@ -294,8 +294,8 @@ public class TimeValuePointManager {
     switch (type) {
       case FIND_FOCI:
         delimiter = "\t";
-        // Store the object field in T
-        fields = new int[] {0, 20, 2, 3, 4, 5};
+        // Store the object field in T. The column is found from the header.
+        fields = new int[] {0, -1, 2, 3, 4, 5};
         break;
 
       case QUICK_PALM:
@@ -383,7 +383,27 @@ public class TimeValuePointManager {
     // Read until no comment character
     do {
       readLine(input);
+      if (type == FileType.FIND_FOCI && line != null && line.startsWith("Peak #")) {
+        setFindFociObjectField(line);
+      }
     } while (line != null && headerTest.test(line));
+  }
+
+  /**
+   * Sets the field for the object from the FindFoci header. The column has moved as columns were
+   * added to the FindFoci results. If there is no object column all points use the same time.
+   *
+   * @param header the header
+   */
+  private void setFindFociObjectField(String header) {
+    final String[] tokens = header.split(delimiter);
+    for (int i = 0; i < tokens.length; i++) {
+      if ("Object".equals(tokens[i])) {
+        fields[1] = i;
+        maxField = Math.max(maxField, i);
+        return;
+      }
+    }
   }
 
   private void readLine(BufferedReader input) throws IOException {
