@@ -34,21 +34,25 @@ import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.gui.ImageRoi;
 import ij.gui.Overlay;
+import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.ByteProcessor;
+import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.text.TextWindow;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.awt.AWTEvent;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -106,6 +110,14 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
   private int[] secondaryChannels;
   private Logger logger;
   private final Map<FindFociResultsKey, FindFociResults> map = new ConcurrentHashMap<>();
+  /** The input used to create the cached FindFoci results. */
+  private List<Object> inputState;
+  /** The area ROI used for the analysis. */
+  private Roi analysisRoi;
+  /** The ROI used to label the results. */
+  private Roi labelRoi;
+  /** The overlay used to show the masks. */
+  private Overlay maskOverlay;
 
   /** The current settings for the plugin instance. */
   private Settings settings;
@@ -113,7 +125,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
   /**
    * Contains the settings that are the re-usable state of the plugin.
    */
-  private static class Settings {
+  static class Settings {
     static final String[] LABEL_OPTIONS = {"None", "Neighbours", "All"};
     static final int LABEL_NEIGHBOURS = 1;
     static final int LABEL_ALL = 2;
@@ -126,6 +138,8 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     private static final String SETTING_RESULT_DIR = "gdsc.foci.neighbours.resultsDirectory";
     private static final String SETTING_PROCESSOR = "gdsc.foci.neighbours.processor";
     private static final String SETTING_PROCESSOR_OPTIONS = "gdsc.foci.neighbours.processorOptions";
+    private static final String SETTING_PROCESSOR_SETTINGS =
+        "gdsc.foci.neighbours.processorSettings";
     private static final String SETTING_DIGITS = "gdsc.foci.neighbours.digits";
     private static final String SETTING_LABEL_OPTION = "gdsc.foci.neighbours.labelOption";
     private static final String SETTING_MASK_OPTION = "gdsc.foci.neighbours.mask";
@@ -259,6 +273,11 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     }
 
     private static FindFociProcessorOptions loadOptions(int channel) {
+      final String text = Prefs.get(SETTING_PROCESSOR_SETTINGS + channel, "");
+      if (!text.isEmpty()) {
+        return fromSettingsString(text);
+      }
+      // Legacy format. This is lossy and is only read for backwards compatibility.
       final String opt = Prefs.get(SETTING_PROCESSOR + channel, "");
       if (opt.isEmpty()) {
         return defaultOptions();
@@ -280,30 +299,29 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     void setOptions(FindFociResultsKey key) {
       final int channel = key.channel;
       this.options.put(channel, key.processorOptions);
-      Prefs.set(SETTING_PROCESSOR + channel, key.options);
-      Prefs.set(SETTING_PROCESSOR_OPTIONS + channel, key.extraOptions);
+      // The options for the channel are saved immediately
+      lastSettings.get().options.put(channel, key.processorOptions);
+      Prefs.set(SETTING_PROCESSOR_SETTINGS + channel, key.options);
     }
   }
 
   /**
    * A key to store FindFociResults.
    */
-  private static class FindFociResultsKey {
+  static class FindFociResultsKey {
     int channel;
     FindFociProcessorOptions processorOptions;
     String options;
-    String extraOptions;
 
     FindFociResultsKey(int channel, FindFociProcessorOptions processorOptions) {
       this.channel = channel;
       this.processorOptions = processorOptions;
-      options = new FindFociParameters(processorOptions).toString();
-      extraOptions = toExtraString(processorOptions);
+      options = toSettingsString(processorOptions);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(channel, options, extraOptions);
+      return Objects.hash(channel, options);
     }
 
     @Override
@@ -313,8 +331,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       }
       if (obj instanceof FindFociResultsKey) {
         final FindFociResultsKey other = (FindFociResultsKey) obj;
-        return channel == other.channel && options.equals(other.options)
-            && extraOptions.equals(other.extraOptions);
+        return channel == other.channel && options.equals(other.options);
       }
       return false;
     }
@@ -343,19 +360,143 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     }
   }
 
-  private static String toExtraString(FindFociProcessorOptions processorOptions) {
-    final StringBuilder sb = new StringBuilder();
-    // Field 1
-    sb.append(processorOptions.getMaskMethod().getDescription());
-    if (maskMethodHasParameter(processorOptions.getMaskMethod())) {
-      sb.append(SPACER).append(IJ.d2s(processorOptions.getFractionParameter(), 2));
+  /**
+   * Convert the processor options to a string. All fields are stored and numbers are stored exactly.
+   *
+   * @param processorOptions the processor options
+   * @return the string
+   * @see #fromSettingsString(String)
+   */
+  static String toSettingsString(FindFociProcessorOptions processorOptions) {
+    final StringBuilder sb = new StringBuilder(512);
+    final BiConsumer<String, Object> append =
+        (name, value) -> sb.append(name).append('=').append(value).append(';');
+    append.accept("backgroundMethod", processorOptions.getBackgroundMethod().name());
+    append.accept("backgroundParameter", processorOptions.getBackgroundParameter());
+    append.accept("thresholdMethod", processorOptions.getThresholdMethod().name());
+    append.accept("statisticsMethod", processorOptions.getStatisticsMethod().name());
+    append.accept("searchMethod", processorOptions.getSearchMethod().name());
+    append.accept("searchParameter", processorOptions.getSearchParameter());
+    append.accept("minSize", processorOptions.getMinSize());
+    append.accept("maxSize", processorOptions.getMaxSize());
+    append.accept("peakMethod", processorOptions.getPeakMethod().name());
+    append.accept("peakParameter", processorOptions.getPeakParameter());
+    append.accept("sortMethod", processorOptions.getSortMethod().name());
+    append.accept("maxPeaks", processorOptions.getMaxPeaks());
+    append.accept("maskMethod", processorOptions.getMaskMethod().name());
+    append.accept("gaussianBlur", processorOptions.getGaussianBlur());
+    append.accept("centreMethod", processorOptions.getCentreMethod().name());
+    append.accept("centreParameter", processorOptions.getCentreParameter());
+    append.accept("fractionParameter", processorOptions.getFractionParameter());
+    // Use a fixed order for the options
+    final StringBuilder options = new StringBuilder();
+    for (final AlgorithmOption option : AlgorithmOption.values()) {
+      if (processorOptions.isOption(option)) {
+        if (options.length() != 0) {
+          options.append(',');
+        }
+        options.append(option.name());
+      }
     }
+    append.accept("options", options);
     return sb.toString();
   }
 
-  private static boolean maskMethodHasParameter(MaskMethod maskMethod) {
-    return (maskMethod == MaskMethod.FRACTION_OF_HEIGHT
-        || maskMethod == MaskMethod.FRACTION_OF_INTENSITY);
+  /**
+   * Convert the string to processor options. Fields that are missing or cannot be parsed use the
+   * default value.
+   *
+   * @param text the text
+   * @return the processor options
+   * @see #toSettingsString(FindFociProcessorOptions)
+   */
+  static FindFociProcessorOptions fromSettingsString(String text) {
+    final FindFociProcessorOptions processorOptions = Settings.defaultOptions();
+    for (final String field : text.split(";")) {
+      final int index = field.indexOf('=');
+      if (index < 0) {
+        continue;
+      }
+      try {
+        setField(processorOptions, field.substring(0, index), field.substring(index + 1));
+      } catch (final IllegalArgumentException ex) {
+        // Ignore invalid values (includes NumberFormatException)
+      }
+    }
+    return processorOptions;
+  }
+
+  private static void setField(FindFociProcessorOptions processorOptions, String name,
+      String value) {
+    switch (name) {
+      case "backgroundMethod":
+        processorOptions.setBackgroundMethod(BackgroundMethod.valueOf(value));
+        break;
+      case "backgroundParameter":
+        processorOptions.setBackgroundParameter(Double.parseDouble(value));
+        break;
+      case "thresholdMethod":
+        processorOptions.setThresholdMethod(ThresholdMethod.valueOf(value));
+        break;
+      case "statisticsMethod":
+        processorOptions.setStatisticsMethod(StatisticsMethod.valueOf(value));
+        break;
+      case "searchMethod":
+        processorOptions.setSearchMethod(SearchMethod.valueOf(value));
+        break;
+      case "searchParameter":
+        processorOptions.setSearchParameter(Double.parseDouble(value));
+        break;
+      case "minSize":
+        processorOptions.setMinSize(Integer.parseInt(value));
+        break;
+      case "maxSize":
+        processorOptions.setMaxSize(Integer.parseInt(value));
+        break;
+      case "peakMethod":
+        processorOptions.setPeakMethod(PeakMethod.valueOf(value));
+        break;
+      case "peakParameter":
+        processorOptions.setPeakParameter(Double.parseDouble(value));
+        break;
+      case "sortMethod":
+        processorOptions.setSortMethod(SortMethod.valueOf(value));
+        break;
+      case "maxPeaks":
+        processorOptions.setMaxPeaks(Integer.parseInt(value));
+        break;
+      case "maskMethod":
+        processorOptions.setMaskMethod(MaskMethod.valueOf(value));
+        break;
+      case "gaussianBlur":
+        processorOptions.setGaussianBlur(Double.parseDouble(value));
+        break;
+      case "centreMethod":
+        processorOptions.setCentreMethod(CentreMethod.valueOf(value));
+        break;
+      case "centreParameter":
+        processorOptions.setCentreParameter(Double.parseDouble(value));
+        break;
+      case "fractionParameter":
+        processorOptions.setFractionParameter(Double.parseDouble(value));
+        break;
+      case "options":
+        setAlgorithmOptions(processorOptions, value);
+        break;
+      default:
+        // Ignore unknown fields
+    }
+  }
+
+  private static void setAlgorithmOptions(FindFociProcessorOptions processorOptions,
+      String value) {
+    final EnumSet<AlgorithmOption> options = EnumSet.noneOf(AlgorithmOption.class);
+    for (final String option : value.split(",")) {
+      if (!option.isEmpty()) {
+        options.add(AlgorithmOption.valueOf(option));
+      }
+    }
+    processorOptions.setOptions(options);
   }
 
   /** {@inheritDoc} */
@@ -385,6 +526,13 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     }
 
     settings = Settings.load();
+    // The remembered channels may be from an image with more channels
+    if (settings.primaryChannel > channels) {
+      settings.primaryChannel = 1;
+    }
+    if (settings.maskChannel > channels) {
+      settings.maskChannel = 1;
+    }
 
     // Select the channels
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
@@ -414,7 +562,8 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       settings.secondaryChannels = secondaryChannels;
     }
 
-    settings.save();
+    // Save a copy. The analysis options are saved when the analysis dialog is accepted.
+    settings.copy().save();
 
     // Check number of secondary channels
     final IntArrayList ch = new IntArrayList(channels);
@@ -429,12 +578,24 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       return DONE;
     }
 
-    this.imp = imp;
-    this.position = new int[] {imp.getC(), imp.getZ(), imp.getT()};
-    this.secondaryChannels = ch.toIntArray();
-    logger = ImageJPluginLoggerHelper.getLogger(this.getClass());
+    initialise(imp, settings, ch.toIntArray());
 
     return FLAGS;
+  }
+
+  /**
+   * Initialise the plugin for analysis of the image.
+   *
+   * @param imp the image
+   * @param settings the settings
+   * @param secondaryChannels the secondary channels
+   */
+  void initialise(ImagePlus imp, Settings settings, int[] secondaryChannels) {
+    this.imp = imp;
+    this.settings = settings;
+    this.position = new int[] {imp.getC(), imp.getZ(), imp.getT()};
+    this.secondaryChannels = secondaryChannels;
+    logger = ImageJPluginLoggerHelper.getLogger(this.getClass());
   }
 
   private void finalProcessing(ImagePlus imp) {
@@ -502,6 +663,9 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
 
           private boolean collectOptions(boolean silent) {
             final int option = settings.maskOption;
+            if (option != Settings.MASK_IMAGE && option != Settings.MASK_CHANNEL) {
+              return false;
+            }
             final ExtendedGenericDialog egd = new ExtendedGenericDialog("Mask options", null);
             if (option == Settings.MASK_IMAGE) {
               final String[] images = FindFoci_PlugIn.buildMaskList(imp).toArray(new String[0]);
@@ -522,7 +686,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
             if (option == Settings.MASK_IMAGE) {
               final String old = settings.maskImage;
               settings.maskImage = egd.getNextChoice();
-              changed = Objects.equals(settings.maskImage, old);
+              changed = !Objects.equals(settings.maskImage, old);
             } else {
               final int c = settings.maskChannel;
               final ThresholdMethod m = settings.maskMethod;
@@ -555,6 +719,11 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     if (cancelled) {
       return DONE;
     }
+    // Record or read the mask options for macros
+    gd.collectOptions();
+
+    settings.save();
+    settings.saveAnalysisOptions();
 
     return FLAGS;
   }
@@ -674,7 +843,6 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     }
     settings.opacity = gd.getNextNumber();
     settings.maskOption = gd.getNextChoiceIndex();
-    settings.saveAnalysisOptions();
     return settings.distance > 0;
   }
 
@@ -688,27 +856,11 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
    * Perform the foci neighbour analysis.
    */
   private void doAnalysis() {
-    // Update hyperstack position
-    position[0] = imp.getC();
-    position[1] = imp.getZ();
-
-    final ImagePlus mask = createInputMask();
-
-    // Run FindFoci on each channel
-    logger.info(() -> String.format("Finding foci in primary channel %d", settings.primaryChannel));
-    final FindFociResults pResults = runFindFoci(settings.primaryChannel, mask);
-    logger.info(() -> String.format("Primary channel %d: %d foci", settings.primaryChannel,
-        pResults.results.size()));
-
-    final Int2ObjectOpenHashMap<FindFociResults> chResults =
-        new Int2ObjectOpenHashMap<>(secondaryChannels.length);
-    for (final int ch : secondaryChannels) {
-      logger.info(() -> String.format("Finding foci in secondary channel %d", ch));
-      final FindFociResults r = runFindFoci(ch, mask);
-      chResults.put(ch, r);
-      logger.info(() -> String.format("Secondary channel %d: %d foci", ch, r.results.size()));
+    final Int2ObjectOpenHashMap<FindFociResults> chResults = findFoci();
+    if (chResults == null) {
+      return;
     }
-    imp.setPositionWithoutUpdate(position[0], position[1], position[2]);
+    final FindFociResults pResults = chResults.get(settings.primaryChannel);
 
     // TODO: Combine primary channel foci?
     // At present it is assumed FindFoci will do this correctly.
@@ -749,6 +901,96 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     labelResults(pResults, allNeighbours);
 
     maskResults(pResults, chResults);
+  }
+
+  /**
+   * Run FindFoci on the primary and secondary channels. Uses cached results if the input has not
+   * changed.
+   *
+   * @return the results for each channel (or null if FindFoci failed)
+   */
+  Int2ObjectOpenHashMap<FindFociResults> findFoci() {
+    // Update hyperstack position
+    position[0] = imp.getC();
+    position[1] = imp.getZ();
+
+    updateAnalysisRoi();
+    final ImagePlus mask = createInputMask();
+
+    // The cached results are only valid for the same input mask and ROI
+    final List<Object> state = createInputState(mask);
+    if (!state.equals(inputState)) {
+      map.clear();
+      inputState = state;
+    }
+
+    // FindFoci uses the area ROI on the image
+    imp.setRoi(analysisRoi, false);
+
+    final Int2ObjectOpenHashMap<FindFociResults> chResults =
+        new Int2ObjectOpenHashMap<>(secondaryChannels.length + 1);
+    try {
+      final int[] channels = new int[secondaryChannels.length + 1];
+      channels[0] = settings.primaryChannel;
+      System.arraycopy(secondaryChannels, 0, channels, 1, secondaryChannels.length);
+      for (int i = 0; i < channels.length; i++) {
+        final int ch = channels[i];
+        final String type = i == 0 ? "primary" : "secondary";
+        final String name = i == 0 ? "Primary" : "Secondary";
+        logger.info(() -> String.format("Finding foci in %s channel %d", type, ch));
+        final FindFociResults r = runFindFoci(ch, mask);
+        if (r == null) {
+          logger.warning(() -> String.format("No foci results for %s channel %d", type, ch));
+          return null;
+        }
+        chResults.put(ch, r);
+        logger.info(() -> String.format("%s channel %d: %d foci", name, ch, r.results.size()));
+      }
+    } finally {
+      imp.setPositionWithoutUpdate(position[0], position[1], position[2]);
+    }
+    return chResults;
+  }
+
+  /**
+   * Update the area ROI used for the analysis. The ROI used to label the results is ignored.
+   */
+  private void updateAnalysisRoi() {
+    final Roi roi = imp.getRoi();
+    if (roi == null || roi != labelRoi) {
+      analysisRoi = (roi != null && roi.isArea()) ? roi : null;
+    }
+  }
+
+  /**
+   * Creates the state of the input used to create the FindFoci results: the input mask and the
+   * analysis ROI.
+   *
+   * @param mask the mask
+   * @return the state
+   */
+  private List<Object> createInputState(ImagePlus mask) {
+    Object maskState = null;
+    if (mask != null) {
+      maskState = settings.maskOption == Settings.MASK_IMAGE ? mask.getID()
+          : Arrays.asList(settings.maskChannel, settings.maskMethod);
+    }
+    return Arrays.asList(maskState, getRoiState(analysisRoi));
+  }
+
+  /**
+   * Gets the state of the ROI.
+   *
+   * @param roi the roi
+   * @return the state
+   */
+  static Object getRoiState(Roi roi) {
+    if (roi == null) {
+      return null;
+    }
+    final FloatPolygon p = roi.getFloatPolygon();
+    return Arrays.asList(roi.getType(), Arrays.toString(Arrays.copyOf(p.xpoints, p.npoints)),
+        Arrays.toString(Arrays.copyOf(p.ypoints, p.npoints)));
   }
 
   private ImagePlus createInputMask() {
@@ -841,7 +1083,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
           final List<FindFociResult> neighbours =
               allNeighbours.get(i).getOrDefault(r.id, Collections.emptyList());
           if (neighbours.isEmpty()) {
-            sb.append("\t0\t0\t0.0");
+            sb.append("\t0\t0\t0");
           } else {
             long size = 0;
             double intensity = 0;
@@ -859,8 +1101,8 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     }
   }
 
-  private String createHeader() {
-    final StringBuilder sb = new StringBuilder("Ch ").append(settings.primaryChannel)
+  String createHeader() {
+    final StringBuilder sb = new StringBuilder("Ch").append(settings.primaryChannel)
         .append(" ID\tX\tY\tZ\tSize\tIntensity");
     for (final int ch : secondaryChannels) {
       final String prefix = "\tCh" + ch + " ";
@@ -871,10 +1113,13 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     return sb.toString();
   }
 
-  private void labelResults(FindFociResults pResults,
+  void labelResults(FindFociResults pResults,
       List<Int2ObjectOpenHashMap<List<FindFociResult>>> allNeighbours) {
     final IntPredicate display = createMatchPredicate(allNeighbours);
     if (display == null) {
+      // Show the analysis ROI
+      labelRoi = null;
+      imp.setRoi(analysisRoi);
       return;
     }
     final int[] x = new int[pResults.results.size()];
@@ -893,6 +1138,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     final LabelledPointRoi roi = new LabelledPointRoi(x, y, c);
     roi.setLabels(id);
     roi.setShowLabels(true);
+    labelRoi = roi;
     imp.setRoi(roi);
   }
 
@@ -926,12 +1172,17 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       }
     }
     if (masks.isEmpty()) {
+      // Remove the previous mask overlay
+      if (maskOverlay != null && imp.getOverlay() == maskOverlay) {
+        imp.setOverlay(null);
+      }
+      maskOverlay = null;
       return;
     }
 
     // Get channels for the masks and their colours
     final int[] channels = channelsList.elements();
-    final LUT[] luts = imp.getLuts();
+    final LUT[] luts = getLuts(imp);
 
     // Colour using the same LUT as the image channel.
     // Combine all channels into a ColorProcessor (use additive combination).
@@ -1013,7 +1264,28 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       roi.setPosition(0, n, position[2]);
       overlay.add(roi);
     }
+    maskOverlay = overlay;
     imp.setOverlay(overlay);
+  }
+
+  /**
+   * Gets the LUT for each channel. A composite image uses the channel LUTs. Otherwise the LUTs use
+   * the default colours of a composite image.
+   *
+   * @param imp the image
+   * @return the LUTs
+   */
+  static LUT[] getLuts(ImagePlus imp) {
+    if (imp.isComposite()) {
+      return imp.getLuts();
+    }
+    final Color[] colours =
+        {Color.red, Color.green, Color.blue, Color.white, Color.cyan, Color.magenta, Color.yellow};
+    final LUT[] luts = new LUT[imp.getNChannels()];
+    for (int i = 0; i < luts.length; i++) {
+      luts[i] = LUT.createLutFromColor(colours[i % colours.length]);
+    }
+    return luts;
   }
 
   private ImageStack createMask(FindFociResults results) {

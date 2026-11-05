@@ -163,6 +163,29 @@ Major release of GDSC ImageJ Plugins.
   range and supports negative values in the rescaling and the projection.
 * The :ref:`findfoci_plugins:Spot Distance` plugin dual channel projection slice labels match the
   frames, and a spot with no outline on the slice of the centre does not cause an error.
+* The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin recomputes the cached ``FindFoci``
+  results when the input mask or the area ROI changes, and refreshes the preview when a new mask
+  image is selected. The area ROI is used for the analysis after the foci are labelled with a
+  point ROI.
+* The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin writes a warning to the log if
+  ``FindFoci`` fails for a channel. Previously this caused an error.
+* The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin mask overlay uses the default channel
+  colours for an image that is not a composite image. Previously this caused an error for channels
+  above 1.
+* The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin selects channel 1 if the remembered
+  primary or mask channel is not in the image. Previously a primary channel above the number of
+  channels caused an error.
+* The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin removes the label ROI and mask overlay
+  from a previous preview when the output is turned off.
+* The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin records the ``Mask options`` in
+  macros, and only saves the settings when the analysis dialog is accepted.
+* The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin results table primary ID column is
+  named ``ChP ID`` (e.g. ``Ch1 ID``) to match the secondary channel columns. A primary focus with
+  no neighbours has an intensity of ``0``.
+* The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin saves all the ``FindFoci`` settings
+  for a channel exactly. Previously ``Remove edge maxima`` and ``Maximum size`` were not saved,
+  parameters were rounded to 2 decimal places, and changing ``Remove edge maxima`` or
+  ``Maximum size`` did not recompute the cached results.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.
