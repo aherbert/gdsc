@@ -644,7 +644,8 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
 
     // Add output options for each channel
     final int max = MathUtils.maxDefault(settings.primaryChannel, secondaryChannels);
-    final boolean[] maskOptions = Arrays.copyOf(settings.maskChannels, max + 1);
+    // Preserve additional unused channels from previous settings
+    final boolean[] maskOptions = ensureLength(settings.maskChannels, max + 1);
     gd.addCheckbox("Overlay_mask_channel_" + settings.primaryChannel,
         maskOptions[settings.primaryChannel]);
     for (final int ch : secondaryChannels) {
@@ -772,6 +773,17 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     channels[0] = settings.primaryChannel;
     System.arraycopy(secondaryChannels, 0, channels, 1, secondaryChannels.length);
     return channels;
+  }
+
+  /**
+   * Ensure the array has at least the specified length. Existing values are preserved.
+   *
+   * @param array the array
+   * @param length the minimum length
+   * @return the array (or a larger copy)
+   */
+  static boolean[] ensureLength(boolean[] array, int length) {
+    return array.length < length ? Arrays.copyOf(array, length) : array;
   }
 
   private void addFindFociSettings(ExtendedGenericDialog parentGd, int channel) {

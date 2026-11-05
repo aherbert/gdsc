@@ -357,4 +357,14 @@ class FociNeighbourAnalysisPlugInTest {
       Recorder.resetCommandOptions();
     }
   }
+
+  @Test
+  void testEnsureLength() {
+    final boolean[] a = {false, true, false, true};
+    // Unused channels are preserved
+    Assertions.assertArrayEquals(new boolean[] {false, true, false, true},
+        FociNeighbourAnalysis_PlugIn.ensureLength(a, 3));
+    Assertions.assertArrayEquals(new boolean[] {false, true, false, true, false, false},
+        FociNeighbourAnalysis_PlugIn.ensureLength(a, 6));
+  }
 }
