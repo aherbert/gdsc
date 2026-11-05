@@ -3217,10 +3217,10 @@ The plugin runs on the current image which must have a multi-point ROI with at l
 The plugin performs the following steps:
 
 #. Number the points from 1 in the order they occur in the ROI.
-#. Link each point to its closest neighbouring point. Only neighbours closer than the ``Radius`` (in pixels) are considered.
-#. Join two points as a pair if they are linked to each other. Each point can be in only one pair. A point is not paired if it has no neighbour within the ``Radius``.
+#. Find the closest neighbouring point of each point. Only neighbours closer than the ``Radius`` (in pixels) are considered. If two neighbours are the same distance then the neighbour with the lowest ID is used.
+#. Join two points as a pair if each point is the closest neighbour of the other. Each point can be in only one pair. A point is not paired if it has no neighbour within the ``Radius``, or if its closest neighbour is closer to a different point.
 
-The links are made in a single pass over the points. If the closest neighbour of a point is linked to a different point then the point may be linked to another neighbour or left unpaired; the result can depend on the order of the points in the ROI.
+The pairs do not depend on the order of the points in the ROI.
 
 If the ``Kill ROI`` option is used the point ROI is removed from the image. The ROI is stored so that if the plugin is run again on the same image without an ROI then the stored ROI is restored to the image and analysed.
 
