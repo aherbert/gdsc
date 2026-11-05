@@ -4519,7 +4519,7 @@ The results are appended to the ``Spot Radial Intensity Objects`` table. The tab
 Summary Table
 ~~~~~~~~~~~~~
 
-The results are appended to the ``Spot Radial Intensity Summary`` table. If the ``Distance`` or ``Interval`` have changed since the last run then a new table window is created. The table contains a row for each spot. A final row with an ``ID`` of zero contains the results for all the spots; the ``Object``, ``Background``, ``x`` and ``y`` are zero. The table contains the following columns:
+The results are appended to a summary table for the ``Distance`` and ``Interval`` as these define the columns of the table. The table is named using the settings, e.g. ``Spot Radial Intensity Summary (Distance=10, Interval=1.0)``. Runs using the same settings append to the same table; a new table is created for new settings. If a table is closed then a new table is created when the settings are next used. The table contains a row for each spot. A final row with an ``ID`` of zero contains the results for all the spots; the ``Object``, ``Background``, ``x`` and ``y`` are zero. The table contains the following columns:
 
 .. list-table::
    :widths: 20 80
