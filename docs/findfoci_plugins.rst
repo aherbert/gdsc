@@ -1874,9 +1874,9 @@ The following settings are available:
      - Description
 
    * - Capacity
-     - This sets the limit on the number of potential maxima for the ``FindFoci`` algorithm. When the algorithm runs each pixel that is higher than all the surrounding pixels is labelled as a potential maxima. If the number of potential maxima reaches the capacity then the algorithm stops without results and a message is written to the ``ImageJ`` log. This prompts the user to adjust the ``FindFoci`` parameters to be more suitable, for example by smoothing the image using a Gaussian blur, or to increase the capacity.
+     - This sets the limit on the number of potential maxima for the ``FindFoci`` algorithm. When the algorithm runs each pixel that is higher than all the surrounding pixels is labelled as a potential maxima. If the number of potential maxima exceeds the capacity then the algorithm stops without results and a message is written to the ``ImageJ`` log. This prompts the user to adjust the ``FindFoci`` parameters to be more suitable, for example by smoothing the image using a Gaussian blur, or to increase the capacity.
 
-       The legacy capacity for the algorithm was that set by a signed 16-bit number, 32767. This is the default limit to retain backwards compatibility. This limit may be too low when analysing large images. The algorithm now uses 32-bit integers to support a capacity up to 2147483647 candidate maxima. A negative value is converted to positive and the minimum is 1. If the value is above the maximum then the dialog is closed without changing any settings.
+       The legacy capacity for the algorithm was that set by a signed 16-bit number, 32767. This is the default limit to retain backwards compatibility. This limit may be too low when analysing large images. The algorithm now uses 32-bit integers to support a capacity up to 2147483647 candidate maxima. A negative value is converted to positive and the minimum is 1. A value above the maximum uses the maximum. If the value is not a valid number then the capacity is not changed.
 
        Note that the output mask labels each final maxima with a 16-bit value. If a mask is requested and the mask values for the final maxima are above the 16-bit limit (65535) then an error is shown and no mask is created; the results are still produced.
 
