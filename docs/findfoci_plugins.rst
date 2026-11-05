@@ -4174,9 +4174,11 @@ The plugin performs the following steps:
 
 The classification of each triplet uses the ``Factor`` and ``Min distance`` parameters and is computed as follows:
 
-#. ``No translocation`` if D13 / D12 > ``Factor`` and D23 / D12 > ``Factor``. The channel 1 and 2 foci are close together and the channel 3 focus is separated from both.
-#. Otherwise ``Translocation`` if D12 / D13 > ``Factor`` and D23 / D13 > ``Factor``, and both D12 and D23 are above the ``Min distance``. The channel 1 and 3 foci are close together and the channel 2 focus is separated from both.
+#. ``No translocation`` if D13 > ``Factor`` x D12 and D23 > ``Factor`` x D12. The channel 1 and 2 foci are close together and the channel 3 focus is separated from both.
+#. Otherwise ``Translocation`` if D12 > ``Factor`` x D13 and D23 > ``Factor`` x D13, and both D12 and D23 are above the ``Min distance``. The channel 1 and 3 foci are close together and the channel 2 focus is separated from both.
 #. Otherwise ``Unknown``.
+
+If the close pair of foci are at the same position (a distance of zero) then the third focus is separated if it is at a different position.
 
 The classification can be changed manually using the results table (see below).
 
