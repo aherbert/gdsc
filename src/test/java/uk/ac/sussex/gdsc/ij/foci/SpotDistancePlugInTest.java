@@ -31,12 +31,14 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ShortProcessor;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.ac.sussex.gdsc.ij.foci.SpotDistance_PlugIn.DistanceResult;
+import uk.ac.sussex.gdsc.ij.foci.SpotDistance_PlugIn.RegionMask;
 import uk.ac.sussex.gdsc.ij.foci.SpotDistance_PlugIn.Settings;
 import uk.ac.sussex.gdsc.ij.foci.SpotDistance_PlugIn.Tracker;
 
@@ -218,5 +220,110 @@ class SpotDistancePlugInTest {
     Assertions.assertEquals(9 + 16 + 36, SpotDistance_PlugIn.distance2(diff, scale), 1e-9);
     // The diff is not modified
     Assertions.assertArrayEquals(new double[] {3, 4, 2}, diff);
+  }
+
+  @Test
+  void testGetMaskStack() {
+    // Mask with 2 channels, 3 slices and 2 frames. Value = 100 * c + 10 * z + t
+    final ImageStack stack = new ImageStack(4, 3);
+    for (int t = 1; t <= 2; t++) {
+      for (int z = 1; z <= 3; z++) {
+        for (int c = 1; c <= 2; c++) {
+          final ByteProcessor bp = new ByteProcessor(4, 3);
+          bp.set(100 * c + 10 * z + t);
+          stack.addSlice(bp);
+        }
+      }
+    }
+    final ImagePlus mask = new ImagePlus("mask", stack);
+    mask.setDimensions(2, 3, 2);
+    for (int c = 1; c <= 2; c++) {
+      for (int t = 1; t <= 2; t++) {
+        final ImageStack s2 = SpotDistance_PlugIn.getMaskStack(mask, c, t);
+        Assertions.assertEquals(3, s2.getSize());
+        for (int z = 1; z <= 3; z++) {
+          Assertions.assertEquals(100 * c + 10 * z + t, s2.getProcessor(z).get(0));
+        }
+      }
+    }
+    // A single channel and frame mask is used for all channels and frames
+    final ImagePlus mask2 = new ImagePlus("mask", new ByteProcessor(4, 3));
+    mask2.getProcessor().set(7);
+    Assertions.assertEquals(7,
+        SpotDistance_PlugIn.getMaskStack(mask2, 2, 3).getProcessor(1).get(0));
+  }
+
+  @Test
+  void testRegionMask() {
+    final ShortProcessor sp = new ShortProcessor(10, 8);
+    sp.set(1, 2, 3);
+    sp.set(2, 3, 3);
+    sp.set(6, 5, 5);
+    final ImageStack stack = new ImageStack(10, 8);
+    stack.addSlice(sp);
+    final RegionMask mask = new RegionMask(stack);
+    Assertions.assertArrayEquals(new int[] {3, 5}, mask.regions);
+    Assertions.assertEquals(new Rectangle(1, 2, 6, 4), mask.blurBounds);
+    final Rectangle bounds = new Rectangle();
+    final ImagePlus region = mask.getRegion(3, bounds);
+    Assertions.assertEquals(new Rectangle(1, 2, 2, 2), bounds);
+    Assertions.assertEquals(2, region.getWidth());
+    Assertions.assertEquals(1, region.getProcessor().get(0, 0));
+    Assertions.assertEquals(0, region.getProcessor().get(1, 0));
+    Assertions.assertEquals(1, region.getProcessor().get(1, 1));
+    Assertions.assertNull(mask.getRegion(4, bounds));
+
+    // Single region
+    final ShortProcessor sp2 = new ShortProcessor(10, 8);
+    sp2.set(6, 5, 5);
+    final ImageStack stack2 = new ImageStack(10, 8);
+    stack2.addSlice(sp2);
+    final RegionMask mask2 = new RegionMask(stack2);
+    Assertions.assertArrayEquals(new int[] {5}, mask2.regions);
+    Assertions.assertEquals(new Rectangle(6, 5, 1, 1), mask2.blurBounds);
+    final Rectangle bounds2 = new Rectangle();
+    final ImagePlus region2 = mask2.getRegion(5, bounds2);
+    Assertions.assertEquals(new Rectangle(6, 5, 1, 1), bounds2);
+    Assertions.assertSame(region2, mask2.getRegion(5, new Rectangle()));
+    Assertions.assertNull(mask2.getRegion(3, bounds2));
+
+    // No regions
+    final ImageStack stack3 = new ImageStack(10, 8);
+    stack3.addSlice(new ShortProcessor(10, 8));
+    final RegionMask mask3 = new RegionMask(stack3);
+    Assertions.assertArrayEquals(new int[0], mask3.regions);
+    Assertions.assertNull(mask3.blurBounds);
+  }
+
+  @Test
+  void testUnion() {
+    Assertions.assertArrayEquals(new int[] {1, 2, 3, 5},
+        SpotDistance_PlugIn.union(new int[] {1, 3, 5}, new int[] {2, 3}));
+    Assertions.assertArrayEquals(new int[] {2, 3},
+        SpotDistance_PlugIn.union(new int[0], new int[] {2, 3}));
+  }
+
+  @Test
+  void testCrop() {
+    final ImageStack stack = new ImageStack(10, 8);
+    for (int z = 1; z <= 2; z++) {
+      final ShortProcessor sp = new ShortProcessor(10, 8);
+      for (int i = 0; i < sp.getPixelCount(); i++) {
+        sp.set(i, i + 100 * z);
+      }
+      stack.addSlice(sp);
+    }
+    final ImagePlus imp = new ImagePlus(null, stack);
+    final ImagePlus cropped = SpotDistance_PlugIn.crop(imp, new Rectangle(2, 3, 4, 5));
+    Assertions.assertEquals(4, cropped.getWidth());
+    Assertions.assertEquals(5, cropped.getHeight());
+    Assertions.assertEquals(2, cropped.getStackSize());
+    for (int z = 1; z <= 2; z++) {
+      Assertions.assertEquals(3 * 10 + 2 + 100 * z,
+          cropped.getImageStack().getProcessor(z).get(0, 0));
+    }
+    // The source is not changed
+    Assertions.assertNull(imp.getRoi());
+    Assertions.assertEquals(10, imp.getWidth());
   }
 }

@@ -43,11 +43,13 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
 import uk.ac.sussex.gdsc.core.match.MatchCalculator;
 import uk.ac.sussex.gdsc.core.match.PointPair;
@@ -107,6 +109,59 @@ public class SpotDistance_PlugIn implements PlugIn {
   private static ImagePlus debugSpotImp;
   private static ImagePlus debugSpotImp2;
   private static ImagePlus debugMaskImp;
+  private static ImagePlus debugMaskImp2;
+
+  /**
+   * The regions of a mask.
+   */
+  static class RegionMask {
+    /** The mask. */
+    final ImageStack stack;
+    /** The region values in ascending order. */
+    final int[] regions;
+    /** The bounds of all the regions (null if there are no regions). */
+    final Rectangle blurBounds;
+    /** The region image if the mask has a single region. */
+    private ImagePlus singleRegionImp;
+
+    /**
+     * Create an instance.
+     *
+     * @param stack the mask
+     */
+    RegionMask(ImageStack stack) {
+      this.stack = stack;
+      regions = findRegions(stack);
+      if (regions.length == 1) {
+        // Cache the cropped mask if it has only one region
+        final Rectangle bounds = new Rectangle();
+        singleRegionImp = crop(extractRegion(stack, regions[0], bounds), bounds);
+        blurBounds = bounds;
+      } else if (regions.length > 1) {
+        blurBounds = findBounds(stack);
+      } else {
+        blurBounds = null;
+      }
+    }
+
+    /**
+     * Gets the region image cropped to the bounds of the region.
+     *
+     * @param region the region
+     * @param bounds the bounds of the region (output)
+     * @return the region image (null if the region is not in the mask)
+     */
+    ImagePlus getRegion(int region, Rectangle bounds) {
+      if (Arrays.binarySearch(regions, region) < 0) {
+        return null;
+      }
+      if (singleRegionImp != null) {
+        bounds.setBounds(blurBounds);
+        return singleRegionImp;
+      }
+      return crop(extractRegion(stack, region, bounds), bounds);
+    }
+  }
 
   private ImagePlus imp;
   private ImagePlus maskImp;
@@ -119,11 +174,9 @@ public class SpotDistance_PlugIn implements PlugIn {
   private double[] filterScale;
   private double maxDistance2;
 
-  // Used to cache the mask region
-  private int[] regions;
-  private ImagePlus regionImp;
-  private Rectangle bounds = new Rectangle();
-  private Rectangle cachedBlurBounds;
+  // The mask regions for each channel. The second channel can use the same mask.
+  private RegionMask regionMask;
+  private RegionMask regionMask2;
 
   // Store the last frame results for each region to allow primitive tracking
   private Int2ObjectOpenHashMap<Tracker> trackers;
@@ -502,10 +555,6 @@ public class SpotDistance_PlugIn implements PlugIn {
 
     final int channel = (doDualChannel) ? settings.c1 : imp.getChannel();
     final ImageStack imageStack = imp.getImageStack();
-    final ImageStack maskStack = maskImp.getImageStack();
-
-    // Cache the mask image. Only recreate the mask if using multiple frames
-    ImageStack s2 = null;
 
     final int[] frames = buildFrameList();
 
@@ -531,36 +580,24 @@ public class SpotDistance_PlugIn implements PlugIn {
         }
       }
 
-      if (s2 == null) {
-        s2 = new ImageStack(imp.getWidth(), imp.getHeight(), maskImp.getNSlices());
-
-        // Only create a mask with 1 slice if necessary
-        for (int slice = 1; slice <= maskImp.getNSlices(); slice++) {
-          final int maskChannel = (maskImp.getNChannels() > 1) ? channel : 1;
-          final int maskFrame = (maskImp.getNFrames() > 1) ? frame : 1;
-          final int maskSlice = (maskImp.getNSlices() > 1) ? slice : 1;
-
-          final int maskStackIndex = maskImp.getStackIndex(maskChannel, maskSlice, maskFrame);
-          final ImageProcessor maskIp = maskStack.getProcessor(maskStackIndex);
-
-          s2.setPixels(maskIp.getPixels(), slice);
-        }
+      // Cache the mask regions. Only recreate the mask if using multiple frames.
+      if (regionMask == null || maskImp.getNFrames() > 1) {
+        regionMask = new RegionMask(getMaskStack(maskImp, channel, frame));
+        // The second channel uses the matching mask channel if available
+        regionMask2 = (doDualChannel && maskImp.getNChannels() > 1)
+            ? new RegionMask(getMaskStack(maskImp, settings.c2, frame))
+            : regionMask;
       }
 
       if (ImageJUtils.isInterrupted()) {
         return;
       }
 
-      exec(frame, channel, s1, s1b, s2);
+      exec(frame, channel, s1, s1b);
       IJ.showProgress(i + 1, frames.length);
 
       if (ImageJUtils.isInterrupted()) {
         return;
-      }
-
-      // Recreate the mask if using multiple frames
-      if (maskImp.getNFrames() > 1) {
-        s2 = null;
       }
     }
     resultsWindow.append("");
@@ -794,11 +831,10 @@ public class SpotDistance_PlugIn implements PlugIn {
   }
 
   private void initialise() {
-    regions = null;
+    regionMask = null;
+    regionMask2 = null;
     trackers = new Int2ObjectOpenHashMap<>();
     trackers2 = new Int2ObjectOpenHashMap<>();
-    regionImp = null;
-    bounds = new Rectangle();
     allowUndo.set(false);
     maxDistance2 = settings.maxDistance * settings.maxDistance;
     filterScale = getFilterScale(calScale);
@@ -1076,29 +1112,13 @@ public class SpotDistance_PlugIn implements PlugIn {
     return sb.toString();
   }
 
-  private void exec(int frame, int channel, ImageStack s1, ImageStack s1b, ImageStack s2) {
-    // Check the mask we are using.
-    // We can use a ROI bounds for the Gaussian blur to increase speed.
-    Rectangle blurBounds = cachedBlurBounds;
-    if (regions == null) {
-      regions = findRegions(s2);
-    }
+  private void exec(int frame, int channel, ImageStack s1, ImageStack s1b) {
+    // Process all the regions in either mask
+    final int[] regions =
+        (s1b == null) ? regionMask.regions : union(regionMask.regions, regionMask2.regions);
     if (regions.length == 0) {
       return; // Q. Should anything be reported?
     }
-
-    if (regions.length == 1) {
-      if (regionImp == null) {
-        regionImp = extractRegion(s2, regions[0], bounds);
-        regionImp = crop(regionImp, bounds);
-      }
-      blurBounds = bounds;
-    } else if (blurBounds == null) {
-      // Create the bounds using the min and max of all the regions
-      blurBounds = findBounds(s2);
-    }
-
-    cachedBlurBounds = blurBounds;
 
     if (settings.showProjection) {
       // Do Z-projection into the current image processor of the stack
@@ -1108,18 +1128,13 @@ public class SpotDistance_PlugIn implements PlugIn {
       }
     }
 
-    // Perform Difference of Gaussians to enhance the spot features if two radii are provided
-    if (settings.featureSize > 0) {
-      s1 = runDifferenceOfGaussians(s1, blurBounds);
-      if (s1b != null) {
-        s1b = runDifferenceOfGaussians(s1b, blurBounds);
-      }
-    } else if (settings.smoothingSize > 0) {
-      // Just perform image smoothing
-      s1 = runGaussianBlur(s1, blurBounds);
-      if (s1b != null) {
-        s1b = runGaussianBlur(s1b, blurBounds);
-      }
+    // Filter to enhance the spot features. Filtering is limited to the bounds of the mask regions.
+    // The image is not used if the mask has no regions.
+    if (regionMask.regions.length != 0) {
+      s1 = filterImage(s1, regionMask.blurBounds);
+    }
+    if (s1b != null && regionMask2.regions.length != 0) {
+      s1b = filterImage(s1b, regionMask2.blurBounds);
     }
 
     final ImagePlus spotImp = new ImagePlus(null, s1);
@@ -1164,46 +1179,11 @@ public class SpotDistance_PlugIn implements PlugIn {
     }
 
     for (final int region : regions) {
-      // Cache the cropped mask if it has only one region
-      if (regions.length != 1) {
-        regionImp = null;
-      }
-
-      if (regionImp == null) {
-        regionImp = extractRegion(s2, region, bounds);
-        regionImp = crop(regionImp, bounds);
-      }
-
-      final ImagePlus croppedImp = crop(spotImp, bounds);
-      ImagePlus croppedImp2 = null;
-      final ImageStack stack = croppedImp.getImageStack();
-      final float scale = scaleImage(stack, settings.debug);
-      croppedImp.setStack(stack); // Updates the image bit depth
-      processorOptions.setPeakParameter(settings.minPeakHeight * scale);
-      double peakParameter2 = 0;
-
-      if (s1b != null) {
-        croppedImp2 = crop(spotImp2, bounds);
-        final ImageStack stack2 = croppedImp2.getImageStack();
-        final float scale2 = scaleImage(stack2, settings.debug);
-        croppedImp2.setStack(stack2); // Updates the image bit depth
-        peakParameter2 = settings.minPeakHeight * scale2;
-      }
-
-      if (settings.debug) {
-        showSpotImage(croppedImp, croppedImp2, regionImp, cal);
-      }
-
-      FindFociBaseProcessor ffp = ff.createFindFociProcessor(croppedImp);
-      final FindFociResults ffResult = ffp.findMaxima(croppedImp, regionImp, processorOptions);
-
-      if (ImageJUtils.isInterrupted()) {
+      final ArrayList<DistanceResult> resultsArray = findSpots(regionMask, region, spotImp, ff,
+          processorOptions, getTracker(trackers, region), frame, channel, overlay, false);
+      if (resultsArray == null) {
         return;
       }
-
-      final ArrayList<DistanceResult> resultsArray =
-          analyseResults(getTracker(trackers, region), croppedImp, ffp, ffResult, frame, channel,
-              overlay);
       for (final DistanceResult result : resultsArray) {
         addResult(frame, channel, region, result);
       }
@@ -1279,17 +1259,12 @@ public class SpotDistance_PlugIn implements PlugIn {
       } else {
         // Dual channel analysis.
         // Analyse the second channel
-        processorOptions.setPeakParameter(peakParameter2);
-        ffp = ff.createFindFociProcessor(croppedImp2);
-        final FindFociResults results2 = ffp.findMaxima(croppedImp2, regionImp, processorOptions);
-
-        if (ImageJUtils.isInterrupted()) {
+        final ArrayList<DistanceResult> resultsArray2 = findSpots(regionMask2, region, spotImp2,
+            ff, processorOptions, getTracker(trackers2, region), frame, settings.c2, overlay2,
+            true);
+        if (resultsArray2 == null) {
           return;
         }
-
-        final ArrayList<DistanceResult> resultsArray2 =
-            analyseResults(getTracker(trackers2, region), croppedImp2, ffp, results2, frame,
-                settings.c2, overlay2);
         for (final DistanceResult result : resultsArray2) {
           addResult(frame, settings.c2, region, result);
         }
@@ -1392,13 +1367,101 @@ public class SpotDistance_PlugIn implements PlugIn {
       projectionImp.setOverlay(projOverlay);
       projectionImp.updateAndDraw();
     }
+  }
 
-    // Cache the mask only if it has one frame
-    if (maskImp.getNFrames() > 1) {
-      regions = null;
-      regionImp = null;
-      cachedBlurBounds = null;
+  /**
+   * Gets the mask stack for the channel and frame. The mask channel and frame are only used if the
+   * mask has more than one channel or frame.
+   *
+   * @param maskImp the mask image
+   * @param channel the channel
+   * @param frame the frame
+   * @return the mask stack
+   */
+  static ImageStack getMaskStack(ImagePlus maskImp, int channel, int frame) {
+    final ImageStack maskStack = maskImp.getImageStack();
+    final ImageStack s2 =
+        new ImageStack(maskImp.getWidth(), maskImp.getHeight(), maskImp.getNSlices());
+    final int maskChannel = (maskImp.getNChannels() > 1) ? channel : 1;
+    final int maskFrame = (maskImp.getNFrames() > 1) ? frame : 1;
+    for (int slice = 1; slice <= maskImp.getNSlices(); slice++) {
+      final int maskStackIndex = maskImp.getStackIndex(maskChannel, slice, maskFrame);
+      s2.setPixels(maskStack.getPixels(maskStackIndex), slice);
     }
+    return s2;
+  }
+
+  /**
+   * Get the union of the two sorted arrays.
+   *
+   * @param a the first array
+   * @param b the second array
+   * @return the sorted union
+   */
+  static int[] union(int[] a, int[] b) {
+    return IntStream.concat(Arrays.stream(a), Arrays.stream(b)).distinct().sorted().toArray();
+  }
+
+  /**
+   * Filter the image using a Difference of Gaussians if two radii are provided, otherwise a
+   * Gaussian blur if the smoothing is provided.
+   *
+   * @param s1 the image
+   * @param blurBounds the bounds to filter
+   * @return the filtered image
+   */
+  private ImageStack filterImage(ImageStack s1, Rectangle blurBounds) {
+    if (settings.featureSize > 0) {
+      return runDifferenceOfGaussians(s1, blurBounds);
+    }
+    if (settings.smoothingSize > 0) {
+      return runGaussianBlur(s1, blurBounds);
+    }
+    return s1;
+  }
+
+  /**
+   * Find the spots in the region of the mask.
+   *
+   * @param mask the mask
+   * @param region the region
+   * @param spotImp the spot image
+   * @param ff the FindFoci plugin
+   * @param processorOptions the processor options
+   * @param tracker the tracker (can be null)
+   * @param frame the frame
+   * @param channel the channel
+   * @param overlay the overlay (can be null)
+   * @param secondChannel true if this is the second channel (used for debug images)
+   * @return the results (null if interrupted)
+   */
+  private ArrayList<DistanceResult> findSpots(RegionMask mask, int region, ImagePlus spotImp,
+      FindFoci_PlugIn ff, FindFociProcessorOptions processorOptions, Tracker tracker, int frame,
+      int channel, Overlay overlay, boolean secondChannel) {
+    final Rectangle bounds = new Rectangle();
+    final ImagePlus regionImp = mask.getRegion(region, bounds);
+    if (regionImp == null) {
+      // The region is not in the mask for this channel
+      return new ArrayList<>(0);
+    }
+    final ImagePlus croppedImp = crop(spotImp, bounds);
+    final ImageStack stack = croppedImp.getImageStack();
+    final float scale = scaleImage(stack, settings.debug);
+    croppedImp.setStack(stack); // Updates the image bit depth
+    processorOptions.setPeakParameter(settings.minPeakHeight * scale);
+
+    if (settings.debug) {
+      showSpotImage(croppedImp, regionImp, secondChannel, cal);
+    }
+
+    final FindFociBaseProcessor ffp = ff.createFindFociProcessor(croppedImp);
+    final FindFociResults ffResult = ffp.findMaxima(croppedImp, regionImp, processorOptions);
+
+    if (ImageJUtils.isInterrupted()) {
+      return null;
+    }
+
+    return analyseResults(tracker, croppedImp, ffp, ffResult, frame, channel, overlay, bounds);
   }
 
   private void runZProjection(int frame, int channel, ImageStack s1) {
@@ -1520,13 +1583,15 @@ public class SpotDistance_PlugIn implements PlugIn {
     return scale;
   }
 
-  private static synchronized void showSpotImage(ImagePlus croppedImp, ImagePlus croppedImp2,
-      ImagePlus regionImp, Calibration cal) {
-    debugSpotImp = createImage(croppedImp, debugSpotImp, TITLE + " Pixels", 0, cal);
-    if (croppedImp2 != null) {
-      debugSpotImp2 = createImage(croppedImp2, debugSpotImp2, TITLE + " Pixels B", 0, cal);
+  private static synchronized void showSpotImage(ImagePlus croppedImp, ImagePlus regionImp,
+      boolean secondChannel, Calibration cal) {
+    if (secondChannel) {
+      debugSpotImp2 = createImage(croppedImp, debugSpotImp2, TITLE + " Pixels B", 0, cal);
+      debugMaskImp2 = createImage(regionImp, debugMaskImp2, TITLE + " Region B", 1, cal);
+    } else {
+      debugSpotImp = createImage(croppedImp, debugSpotImp, TITLE + " Pixels", 0, cal);
+      debugMaskImp = createImage(regionImp, debugMaskImp, TITLE + " Region", 1, cal);
     }
-    debugMaskImp = createImage(regionImp, debugMaskImp, TITLE + " Region", 1, cal);
   }
 
   private static ImagePlus createImage(ImagePlus sourceImp, ImagePlus debugImp, String title,
@@ -1552,10 +1617,10 @@ public class SpotDistance_PlugIn implements PlugIn {
     debugImp.show();
   }
 
-  private int[] findRegions(ImageStack s2) {
+  private static int[] findRegions(ImageStack s2) {
     // Build a histogram. Any non-zero value defines a region.
     final int[] histogram = s2.getProcessor(1).getHistogram();
-    for (int slice = 2; slice <= maskImp.getNSlices(); slice++) {
+    for (int slice = 2; slice <= s2.getSize(); slice++) {
       final int[] tmp = s2.getProcessor(slice).getHistogram();
       for (int i = 1; i < tmp.length; i++) {
         histogram[i] += tmp[i];
@@ -1656,13 +1721,6 @@ public class SpotDistance_PlugIn implements PlugIn {
   }
 
   /**
-   * Crop by duplication within the bounds.
-   *
-   * @param imp the image
-   * @param bounds the bounds
-   * @return the image plus
-   */
-  /**
    * Gets the tracker for the region if tracking objects.
    *
    * @param trackers the trackers
@@ -1673,9 +1731,19 @@ public class SpotDistance_PlugIn implements PlugIn {
     return settings.trackObjects ? trackers.computeIfAbsent(region, k -> new Tracker()) : null;
   }
 
-  private static ImagePlus crop(ImagePlus imp, Rectangle bounds) {
-    imp.setRoi(bounds);
-    return imp.duplicate();
+  /**
+   * Crop all the slices of the image to the bounds.
+   *
+   * <p>Note: ImagePlus.duplicate() ignores the ROI so cannot be used to crop.
+   *
+   * @param imp the image
+   * @param bounds the bounds
+   * @return the cropped image
+   */
+  static ImagePlus crop(ImagePlus imp, Rectangle bounds) {
+    final ImageStack stack = imp.getImageStack();
+    return new ImagePlus(null, stack.crop(bounds.x, bounds.y, 0, bounds.width, bounds.height,
+        stack.getSize()));
   }
 
   /**
@@ -1688,11 +1756,12 @@ public class SpotDistance_PlugIn implements PlugIn {
    * @param frame the frame
    * @param channel the channel
    * @param overlay the overlay
+   * @param bounds the bounds of the cropped image
    * @return the results
    */
   private ArrayList<DistanceResult> analyseResults(Tracker tracker,
       ImagePlus croppedImp, FindFociBaseProcessor ffp, FindFociResults ffResult, int frame,
-      int channel, Overlay overlay) {
+      int channel, Overlay overlay, Rectangle bounds) {
     if (ffResult == null) {
       return new ArrayList<>(0);
     }
@@ -1725,7 +1794,7 @@ public class SpotDistance_PlugIn implements PlugIn {
 
       final int peakId = result.id;
       final int maskId = resultsArray.size() - peakId + 1;
-      final Roi roi = extractSelection(maskIp, maskId, channel, z + 1, frame);
+      final Roi roi = extractSelection(maskIp, maskId, channel, z + 1, frame, bounds);
       // The peak may have no pixels on the slice of the centre
       final double perimeter = (roi == null) ? 0 : roi.getLength();
       final double area = getArea(maskIp, maskId);
@@ -1758,7 +1827,7 @@ public class SpotDistance_PlugIn implements PlugIn {
   }
 
   private Roi extractSelection(ImageProcessor maskIp, int maskId, int channel, int slice,
-      int frame) {
+      int frame, Rectangle bounds) {
     maskIp.setThreshold(maskId, maskId, ImageProcessor.NO_LUT_UPDATE);
     final ThresholdToSelection ts = new ThresholdToSelection();
     final Roi roi = ts.convert(maskIp);
@@ -1780,19 +1849,6 @@ public class SpotDistance_PlugIn implements PlugIn {
     final Rectangle roiBounds = roi.getBounds();
     roi.setLocation(bounds.x + roiBounds.x, bounds.y + roiBounds.y);
     return roi;
-  }
-
-  @SuppressWarnings("unused")
-  private double getPerimeter(ImageProcessor maskIp, int maskId, Overlay overlay, int z) {
-    maskIp.setThreshold(maskId, maskId, ImageProcessor.NO_LUT_UPDATE);
-    final ThresholdToSelection ts = new ThresholdToSelection();
-    final Roi roi = ts.convert(maskIp);
-    if (overlay != null) {
-      roi.setPosition(z);
-      roi.setLocation(bounds.x, bounds.y);
-      overlay.add(roi);
-    }
-    return roi.getLength();
   }
 
   private static double getArea(ImageProcessor maskIp, int maskId) {

@@ -198,6 +198,12 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`findfoci_plugins:Spot Distance` plugin ``Max distance`` scales the y and z distances
   by the pixel height and z-slice spacing relative to the pixel width. Previously the z distance
   used the slice index.
+* The :ref:`findfoci_plugins:Spot Distance` plugin uses the mask channel matching the second
+  channel for dual channel analysis. Previously the mask for the first channel was used for both
+  channels.
+* The :ref:`findfoci_plugins:Spot Distance` plugin reports the correct spot positions for a region
+  that does not start at the image origin. Previously the region was not cropped and the positions
+  and overlay were shifted by the region offset.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.
