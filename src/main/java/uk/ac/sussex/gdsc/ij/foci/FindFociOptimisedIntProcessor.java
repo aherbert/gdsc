@@ -120,7 +120,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         if (isMax) {
           id++;
-          if (id >= searchCapacity) {
+          if (id > searchCapacity) {
             IJ.log("The number of potential maxima exceeds the search capacity: " + searchCapacity
                 + ". Try using a denoising/smoothing filter or increase the capacity.");
             return null;
@@ -183,7 +183,7 @@ public class FindFociOptimisedIntProcessor extends FindFociIntProcessor {
 
         if (isMax) {
           id++;
-          if (id >= searchCapacity) {
+          if (id > searchCapacity) {
             IJ.log("The number of potential maxima exceeds the search capacity: " + searchCapacity
                 + ". Try using a denoising/smoothing filter or increase the capacity.");
             return null;

@@ -215,6 +215,11 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`findfoci_plugins:Spot Radial Intensity` plugin uses a summary table for each
   ``Distance`` and ``Interval`` named using the settings. Previously changing the settings created
   another table with the same name, and returning to earlier settings did not reuse their table.
+* The ``FindFoci`` algorithm allows the number of potential maxima to equal the search capacity.
+  Previously the limit was one below the capacity.
+* The :ref:`findfoci_plugins:FindFoci Settings` plugin uses the maximum capacity for a larger
+  value, and keeps the current capacity for an invalid number. Previously a larger value closed
+  the dialog without saving any settings, and an invalid number set the capacity to 1.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

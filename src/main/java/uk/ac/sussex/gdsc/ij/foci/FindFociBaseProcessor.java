@@ -1877,7 +1877,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
         if (isMax) {
           id++;
-          if (id >= searchCapacity) {
+          if (id > searchCapacity) {
             log(() -> "The number of potential maxima exceeds the search capacity: "
                 + searchCapacity
                 + ". Try using a denoising/smoothing filter or increase the capacity.");
@@ -1941,7 +1941,7 @@ public abstract class FindFociBaseProcessor implements FindFociStagedProcessor {
 
         if (isMax) {
           id++;
-          if (id >= searchCapacity) {
+          if (id > searchCapacity) {
             log(() -> "The number of potential maxima exceeds the search capacity: "
                 + searchCapacity
                 + ". Try using a denoising/smoothing filter or increase the capacity.");

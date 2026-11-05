@@ -2555,11 +2555,7 @@ public class FindFoci_PlugIn implements PlugIn, MacroExtension {
       return false;
     }
 
-    final double d = Math.abs(gd.getNextNumber());
-    if (d > Integer.MAX_VALUE) {
-      return false;
-    }
-    searchCapacity = Math.max(1, (int) d);
+    searchCapacity = toSearchCapacity(gd.getNextNumber(), searchCapacity);
 
     emptyField = gd.getNextString();
     if (emptyField == null) {
@@ -2571,6 +2567,22 @@ public class FindFoci_PlugIn implements PlugIn, MacroExtension {
     GlobalSettings.INSTANCE.save();
 
     return true;
+  }
+
+  /**
+   * Convert the value to a search capacity. The absolute value is used and clipped to the range
+   * [1, {@link Integer#MAX_VALUE}]. An invalid number uses the current capacity.
+   *
+   * @param value the value
+   * @param current the current capacity
+   * @return the search capacity
+   */
+  static int toSearchCapacity(double value, int current) {
+    if (Double.isNaN(value)) {
+      return current;
+    }
+    // Casting to an int clips to the maximum value
+    return Math.max(1, (int) Math.abs(value));
   }
 
   /**
