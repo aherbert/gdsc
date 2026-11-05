@@ -1860,7 +1860,7 @@ FindFoci Settings
 
 Configure settings for the ``FindFoci`` algorithm, e.g. the limit on the number of potential maxima for the ``FindFoci`` algorithm.
 
-The current settings are displayed in the dialog. If the ``OK`` button is clicked then the settings are immediately updated for use in all the plugins that use the ``FindFoci`` algorithm.
+The current settings are displayed in the dialog. If the ``OK`` button is clicked then the settings are immediately updated for use in all the plugins that use the ``FindFoci`` algorithm, for example the :ref:`findfoci_plugins:FindFoci` plugin and ``FindFoci GUI``, the :ref:`findfoci_plugins:FindFoci Batch` and :ref:`findfoci_plugins:FindFoci Optimiser` plugins, and the plugins that detect spots using the algorithm such as :ref:`findfoci_plugins:Spot Distance` and :ref:`findfoci_plugins:Foci Neighbour Analysis`. A :ref:`findfoci_plugins:FindFoci Batch` run uses the capacity at the start of the run for all the images.
 
 The settings are saved to the ``ImageJ`` preferences when ``ImageJ`` exits so that they will be applied for all future ``ImageJ`` sessions.
 
@@ -1874,14 +1874,18 @@ The following settings are available:
      - Description
 
    * - Capacity
-     - This sets the limit on the number of potential maxima for the ``FindFoci`` algorithm. When the algorithm runs each pixel that is higher than all the surrounding pixels is labelled as a potential maxima. If the number of potential maxima exceeds the capacity then the algorithm will not run. This prompts the user to adjust the ``FindFoci`` parameters to be more suitable, for example by smoothing the image using a Gaussian blur.
+     - This sets the limit on the number of potential maxima for the ``FindFoci`` algorithm. When the algorithm runs each pixel that is higher than all the surrounding pixels is labelled as a potential maxima. If the number of potential maxima reaches the capacity then the algorithm stops without results and a message is written to the ``ImageJ`` log. This prompts the user to adjust the ``FindFoci`` parameters to be more suitable, for example by smoothing the image using a Gaussian blur, or to increase the capacity.
 
-       The legacy capacity for the algorithm was that set by a signed 16-bit number, 32767. This is the default limit to retain backwards compatibility. This limit may be too low when analysing large images. The algorithm now uses 32-bit integers to support up to 2147483647 candidate maxima.
+       The legacy capacity for the algorithm was that set by a signed 16-bit number, 32767. This is the default limit to retain backwards compatibility. This limit may be too low when analysing large images. The algorithm now uses 32-bit integers to support a capacity up to 2147483647 candidate maxima. A negative value is converted to positive and the minimum is 1. If the value is above the maximum then the dialog is closed without changing any settings.
+
+       Note that the output mask labels each final maxima with a 16-bit value. If a mask is requested and the mask values for the final maxima are above the 16-bit limit (65535) then an error is shown and no mask is created; the results are still produced.
 
    * - Empty Field
      - When processing multiple files using the :ref:`findfoci_plugins:FindFoci Batch` plugin, each input image has a record written to the batch results file containing all the results (``all.xls``). This is true even if no foci were found. This allows the results file to be processed for all images, even those with no results.
 
        In the event of no foci, the record written to the results file will contain the image ID, the image title and then an empty record. All the fields in the empty record will contain the contents of the ``Empty Field`` setting. By default this is empty but you may require a value within the results file, for example zero (0).
+
+       When using the ``Object analysis`` option a record is also written for each mask object that contains no foci. All the fields of the record contain the ``Empty Field`` setting except the object number and the object state.
 
 .. index:: ! FindFoci Match Calculator
 
@@ -1890,9 +1894,10 @@ FindFoci Match Calculator
 
 Allows two sets of ``FindFoci`` results to be compared. The ``FindFoci`` analysis must have been saved to memory using the ``Save to memory`` option.
 
-Two results sets are required. The plugin will present a dialog allowing the results to be selected. Analysis is performed as per the :ref:`findfoci_plugins:Match Calculator` plugin with the following differences:
+Two results sets are required; if fewer are in memory a message is shown. The plugin will present a dialog allowing the results to be selected (``Input 1`` and ``Input 2``). The results selected on the last run are used if they are still in memory. Analysis is performed as per the :ref:`findfoci_plugins:Match Calculator` plugin with the following differences:
 
-* The ``Unit`` parameter sets the distance between matching points in ``Pixel`` or ``Calibrated`` units. Calibrated units require both results to have a calibration with the same unit in each dimension. The ``Distance`` is an absolute distance in the chosen units.
+* The ``Unit`` parameter sets the distance between matching points in ``Pixel`` or ``Calibrated`` units. Calibrated units require both results to have a calibration with the same unit in each dimension and the same unit as each other; otherwise an error is shown. The ``Distance`` is an absolute distance in the chosen units. The ``Distance`` is remembered separately from the :ref:`findfoci_plugins:Match Calculator` plugin; the default is 5.
+* Each results set must contain at least one focus; otherwise an error is shown.
 * Height analysis, the overlay, and the match table heights require the images used to create the results to be open. If the images are closed then a message is written to the ``ImageJ`` log; the match table is still produced but without heights.
 * The ``FindFoci image`` and ``FindFoci result`` extra parameters are not available.
 
@@ -1914,7 +1919,7 @@ The functions can be accessed using the ``Ext`` prefix for macro extensions.
 getNumberOfPeaks
 ~~~~~~~~~~~~~~~~
 
-Get the number of peaks from the last call to ``FindFoci``.
+Get the number of peaks from the last call to ``FindFoci`` in the current ``ImageJ`` session. This is the last run of the :ref:`findfoci_plugins:FindFoci` plugin, including a run from the ``FindFoci GUI`` and the run of the best parameters by the :ref:`findfoci_plugins:FindFoci Optimiser`. The number is zero if ``FindFoci`` has not been run, or if the last run did not complete (for example if it was cancelled or the search capacity was exceeded). Runs of the :ref:`findfoci_plugins:FindFoci Batch` plugin and the preview of the ``FindFoci GUI`` do not change the result.
 
 .. list-table::
    :widths: 20 10 60
@@ -3424,6 +3429,103 @@ Mask Analyze Particles...
 Extend the ``ImageJ`` ``Particle Analyser`` to allow the particles to be obtained using contiguous pixels with a unique value. If blank pixels exist between two pixels with the same value then they will be treated as separate objects.
 
 This plugin is useful on masks where each object region has a unique value, for example the output mask created by ``FindFoci``.
+
+The plugin runs on the current image. Each particle is a set of contiguous pixels with the same value that are within the image threshold. Touching regions with different values are separate particles. The particles are traced and measured using the ``ImageJ`` ``Analyze Particles`` command (``Analyze > Analyze Particles...``); all of the options of that command are available. If the image is an 8-bit binary mask (only values 0 and 255) the result is the same as the ``ImageJ`` command.
+
+The image threshold defines the pixels that can be part of a particle:
+
+* If the image has a threshold (``Image > Adjust > Threshold``) then only pixels within the threshold are used.
+* If the image has no threshold and is not an 8-bit binary mask then a warning is shown in the dialog. The threshold is set using the minimum and maximum of the non-zero pixels in the current slice. The threshold is removed and the display range is restored when the plugin finishes.
+
+The measurements of each particle can be taken from a different image (the redirect image). This allows the mask to define the particles and the measurements to use the pixel values of the original image.
+
+.. index:: Mask Analyze Particles Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The plugin first shows a dialog with the following parameters:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Redirect image
+     - The image used for the measurements. Any open image with the same width and height as the input image can be selected (excluding the input image). Use ``[None]`` to measure the input image. The redirect image of the ``ImageJ`` ``Set Measurements`` command is set for the analysis and restored when the plugin finishes.
+
+   * - Particle summary
+     - Show a ``Particle Summary`` table that combines all the particles with the same value (see below).
+
+   * - Save histogram
+     - Save the histogram of the measured pixels of each particle to a file. A file chooser is shown to select the histogram file; the extension ``.txt`` is added if the file has no extension.
+
+The ``ImageJ`` ``Analyze Particles`` dialog is then shown. See the ``ImageJ`` documentation for the details of the options (`Analyze Particles <https://imagej.net/ij/docs/menus/analyze.html#ap>`_). The measurements are configured using ``Analyze > Set Measurements...``.
+
+.. index:: Mask Analyze Particles Results
+
+Results
+~~~~~~~
+
+The particles are measured using the ``ImageJ`` ``Analyze Particles`` command and the measurements are added to the ``ImageJ`` ``Results`` table. Two columns are added after the configured measurements:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Column
+     - Description
+
+   * - Particle Value
+     - The pixel value of the particle in the input image.
+
+   * - Pixels
+     - The number of pixels in the particle.
+
+If ``Particle summary`` is selected then the particles in the ``Results`` table are combined by ``Particle Value`` into a ``Particle Summary`` table with a row for each value (in the order the values are first found). If the table is open then it is replaced. The table contains the following columns if the measurement is in the ``Results`` table:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Column
+     - Description
+
+   * - Label
+     - The label of the first row of the ``Results`` table (if present).
+
+   * - Area
+     - The total area of the particles.
+
+   * - Mean
+     - The mean of the particles weighted by the number of pixels.
+
+   * - Min; Max
+     - The minimum and maximum of the particles.
+
+   * - XM; YM
+     - The centre of mass of the particles weighted by the number of pixels.
+
+   * - IntDen
+     - The total area multiplied by the mean.
+
+   * - RawIntDen
+     - The total of the raw integrated density of the particles.
+
+   * - Particle Value
+     - The pixel value of the particles.
+
+   * - Pixels
+     - The total number of pixels in the particles.
+
+   * - Particles
+     - The number of particles.
+
+Note that the summary uses all the rows in the ``Results`` table. Use the ``Clear results`` option of the ``Analyze Particles`` dialog to summarise only the current analysis.
+
+If ``Save histogram`` is selected then the histogram file contains a record for each non-zero histogram bin of each particle with the fields: ``Histogram`` (the row number of the particle in the ``Results`` table); ``Particle Value``; ``Pixel Value`` (the histogram bin); and ``Count``. The histogram is the histogram of the measured image within the particle: for 8-bit and 16-bit images each bin is a pixel value; for 32-bit images the histogram has 256 bins covering the range of the pixel values. If ``Particle summary`` is also selected then the histograms of the particles with the same value are combined and saved to a second file with ``.summary`` inserted before the file extension; the ``Histogram`` field is numbered from 1 for each particle value.
 
 .. index:: ! Mask Analyze Channels
 
