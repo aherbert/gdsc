@@ -40,4 +40,22 @@ class TranslocationFinderPlugInTest {
     Assertions.assertNotNull(settings.manualTriplets);
     Assertions.assertTrue(settings.manualTriplets.isEmpty());
   }
+
+  @Test
+  void testIsSeparated() {
+    final double factor = 2;
+    Assertions.assertTrue(TranslocationFinder_PlugIn.isSeparated(1, 3, 3, factor));
+    Assertions.assertFalse(TranslocationFinder_PlugIn.isSeparated(1, 2, 3, factor));
+    Assertions.assertFalse(TranslocationFinder_PlugIn.isSeparated(1, 3, 2, factor));
+    // Zero distance
+    Assertions.assertTrue(TranslocationFinder_PlugIn.isSeparated(0, 1, 1, factor));
+    Assertions.assertFalse(TranslocationFinder_PlugIn.isSeparated(0, 0, 1, factor));
+    Assertions.assertFalse(TranslocationFinder_PlugIn.isSeparated(0, 0, 0, factor));
+    // Min distance
+    Assertions.assertTrue(TranslocationFinder_PlugIn.isSeparated(1, 9, 9, 8, factor));
+    Assertions.assertFalse(TranslocationFinder_PlugIn.isSeparated(1, 8, 9, 8, factor));
+    Assertions.assertFalse(TranslocationFinder_PlugIn.isSeparated(1, 9, 8, 8, factor));
+    Assertions.assertTrue(TranslocationFinder_PlugIn.isSeparated(0, 9, 9, 8, factor));
+    Assertions.assertFalse(TranslocationFinder_PlugIn.isSeparated(5, 9, 9, 8, factor));
+  }
 }

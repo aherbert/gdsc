@@ -655,8 +655,10 @@ public class TranslocationFinder_PlugIn implements PlugIn {
    * @param factor the factor
    * @return true, if successful
    */
-  private static boolean isSeparated(double d12, double d13, double d23, double factor) {
-    return d13 / d12 > factor && d23 / d12 > factor;
+  static boolean isSeparated(double d12, double d13, double d23, double factor) {
+    // Use multiplication to avoid a non-finite ratio when d12 is zero
+    final double limit = d12 * factor;
+    return d13 > limit && d23 > limit;
   }
 
   /**
@@ -671,9 +673,9 @@ public class TranslocationFinder_PlugIn implements PlugIn {
    * @param factor the factor
    * @return true, if successful
    */
-  private static boolean isSeparated(double d12, double d13, double d23, double minDistance,
+  static boolean isSeparated(double d12, double d13, double d23, double minDistance,
       double factor) {
-    return d13 > minDistance && d23 > minDistance && d13 / d12 > factor && d23 / d12 > factor;
+    return d13 > minDistance && d23 > minDistance && isSeparated(d12, d13, d23, factor);
   }
 
   /**
