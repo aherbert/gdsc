@@ -28,6 +28,7 @@ import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Macro;
 import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.DialogListener;
@@ -38,6 +39,7 @@ import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
+import ij.plugin.frame.Recorder;
 import ij.process.ByteProcessor;
 import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
@@ -98,6 +100,8 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
   private static final int FLAGS =
       DOES_8G + DOES_16 + DOES_32 + FINAL_PROCESSING + KEEP_PREVIEW + NO_CHANGES;
   private static final String SPACER = " : ";
+  /** The macro option prefix for the FindFoci options of a channel. */
+  private static final String OPTION_FIND_FOCI_CHANNEL = "FindFoci_channel_";
 
   private static AtomicReference<TextWindow> RESULTS_TABLE = new AtomicReference<>();
 
@@ -296,6 +300,16 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       return processorOptions;
     }
 
+    /**
+     * Sets the options for the channel. The options are not saved to the preferences.
+     *
+     * @param channel the channel
+     * @param processorOptions the processor options
+     */
+    void putOptions(int channel, FindFociProcessorOptions processorOptions) {
+      options.put(channel, processorOptions);
+    }
+
     void setOptions(FindFociResultsKey key) {
       final int channel = key.channel;
       this.options.put(channel, key.processorOptions);
@@ -398,7 +412,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
         options.append(option.name());
       }
     }
-    append.accept("options", options);
+    append.accept("algorithmOptions", options);
     return sb.toString();
   }
 
@@ -480,7 +494,7 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
       case "fractionParameter":
         processorOptions.setFractionParameter(Double.parseDouble(value));
         break;
-      case "options":
+      case "algorithmOptions":
         setAlgorithmOptions(processorOptions, value);
         break;
       default:
@@ -721,11 +735,48 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
     }
     // Record or read the mask options for macros
     gd.collectOptions();
+    collectFindFociOptions(Macro.getOptions());
 
     settings.save();
     settings.saveAnalysisOptions();
 
     return FLAGS;
+  }
+
+  /**
+   * Read the FindFoci options for each channel from the macro options, or record them if the
+   * recorder is on. Options read from a macro are not saved to the preferences.
+   *
+   * @param macroOptions the macro options (null if not running in a macro)
+   */
+  void collectFindFociOptions(String macroOptions) {
+    final int[] channels = getChannels();
+    if (macroOptions != null) {
+      for (final int channel : channels) {
+        final String text =
+            Macro.getValue(macroOptions, OPTION_FIND_FOCI_CHANNEL + channel, null);
+        if (text != null) {
+          settings.putOptions(channel, fromSettingsString(text));
+        }
+      }
+    } else if (Recorder.record) {
+      for (final int channel : channels) {
+        Recorder.recordOption(OPTION_FIND_FOCI_CHANNEL + channel,
+            toSettingsString(settings.getOptions(channel)));
+      }
+    }
+  }
+
+  /**
+   * Gets the primary channel and the secondary channels.
+   *
+   * @return the channels
+   */
+  private int[] getChannels() {
+    final int[] channels = new int[secondaryChannels.length + 1];
+    channels[0] = settings.primaryChannel;
+    System.arraycopy(secondaryChannels, 0, channels, 1, secondaryChannels.length);
+    return channels;
   }
 
   private void addFindFociSettings(ExtendedGenericDialog parentGd, int channel) {

@@ -27,8 +27,10 @@ package uk.ac.sussex.gdsc.ij.foci;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Macro;
 import ij.Prefs;
 import ij.gui.Roi;
+import ij.plugin.frame.Recorder;
 import ij.process.FloatProcessor;
 import ij.process.LUT;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -261,7 +263,7 @@ class FociNeighbourAnalysisPlugInTest {
     final FindFociProcessorOptions expected = Settings.defaultOptions();
     expected.setMaxSize(42);
     final FindFociProcessorOptions options = FociNeighbourAnalysis_PlugIn.fromSettingsString(
-        "maxSize=42;minSize=abc;sortMethod=UNKNOWN;unknown=1;options=BAD;nothing;");
+        "maxSize=42;minSize=abc;sortMethod=UNKNOWN;unknown=1;algorithmOptions=BAD;nothing;");
     assertOptionsEquals(expected, options);
   }
 
@@ -316,5 +318,43 @@ class FociNeighbourAnalysisPlugInTest {
     final FindFociProcessorOptions options4 = options.copy();
     options4.setPeakParameter(options.getPeakParameter() + 1e-6);
     Assertions.assertNotEquals(key, new FindFociResultsKey(1, options4));
+  }
+
+  @Test
+  void testFindFociOptionsReadFromMacro() {
+    final ImagePlus imp = createImage();
+    final Settings settings = createSettings();
+    final FociNeighbourAnalysis_PlugIn plugin = createPlugin(imp, settings);
+    final FindFociProcessorOptions options = createNonDefaultOptions();
+    plugin.collectFindFociOptions("distance=5 findfoci_channel_2="
+        + FociNeighbourAnalysis_PlugIn.toSettingsString(options) + " opacity=0.5");
+    assertOptionsEquals(Settings.defaultOptions(), settings.getOptions(1));
+    assertOptionsEquals(options, settings.getOptions(2));
+    // Not saved to the preferences
+    assertOptionsEquals(Settings.defaultOptions(), new Settings().getOptions(2));
+  }
+
+  @Test
+  void testFindFociOptionsRecorded() {
+    final ImagePlus imp = createImage();
+    final Settings settings = createSettings();
+    final FindFociProcessorOptions options = createNonDefaultOptions();
+    settings.putOptions(2, options);
+    final FociNeighbourAnalysis_PlugIn plugin = createPlugin(imp, settings);
+    final boolean record = Recorder.record;
+    try {
+      Recorder.record = true;
+      Recorder.resetCommandOptions();
+      plugin.collectFindFociOptions(null);
+      final String recorded = Recorder.getCommandOptions();
+      Assertions.assertEquals(
+          FociNeighbourAnalysis_PlugIn.toSettingsString(Settings.defaultOptions()),
+          Macro.getValue(recorded, "findfoci_channel_1", null));
+      Assertions.assertEquals(FociNeighbourAnalysis_PlugIn.toSettingsString(options),
+          Macro.getValue(recorded, "findfoci_channel_2", null));
+    } finally {
+      Recorder.record = record;
+      Recorder.resetCommandOptions();
+    }
   }
 }

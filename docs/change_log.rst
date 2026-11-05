@@ -186,6 +186,8 @@ Major release of GDSC ImageJ Plugins.
   for a channel exactly. Previously ``Remove edge maxima`` and ``Maximum size`` were not saved,
   parameters were rounded to 2 decimal places, and changing ``Remove edge maxima`` or
   ``Maximum size`` did not recompute the cached results.
+* The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin records the ``FindFoci`` settings
+  for each channel in macros, and reads them from macro options named ``findfoci_channel_N``.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.
