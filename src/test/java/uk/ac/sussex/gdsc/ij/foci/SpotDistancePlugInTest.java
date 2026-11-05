@@ -326,4 +326,18 @@ class SpotDistancePlugInTest {
     Assertions.assertNull(imp.getRoi());
     Assertions.assertEquals(10, imp.getWidth());
   }
+
+  @Test
+  void testSaveRegionCounter() {
+    final int counter = Settings.load().regionCounter;
+    try {
+      // The counter is saved even if the settings are a copy that is not saved
+      final Settings settings = Settings.load();
+      settings.regionCounter = counter + 10;
+      Settings.saveRegionCounter(settings.regionCounter);
+      Assertions.assertEquals(counter + 10, Settings.load().regionCounter);
+    } finally {
+      Settings.saveRegionCounter(counter);
+    }
+  }
 }

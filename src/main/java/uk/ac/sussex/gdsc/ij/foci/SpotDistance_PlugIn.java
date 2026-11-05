@@ -289,6 +289,16 @@ public class SpotDistance_PlugIn implements PlugIn {
     void save() {
       lastSettings.set(this);
     }
+
+    /**
+     * Save the region counter to the last settings. This allows the counter to be updated when
+     * the settings are not saved (e.g. when repeating the analysis).
+     *
+     * @param regionCounter the region counter
+     */
+    static void saveRegionCounter(int regionCounter) {
+      lastSettings.get().regionCounter = regionCounter;
+    }
   }
 
   /**
@@ -955,6 +965,7 @@ public class SpotDistance_PlugIn implements PlugIn {
         return null;
       }
       settings.regionCounter = counter;
+      Settings.saveRegionCounter(counter);
 
       mask = new ImagePlus("Mask", ip);
     }

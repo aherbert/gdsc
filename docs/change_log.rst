@@ -204,6 +204,8 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`findfoci_plugins:Spot Distance` plugin reports the correct spot positions for a region
   that does not start at the image origin. Previously the region was not cropped and the positions
   and overlay were shifted by the region offset.
+* The :ref:`findfoci_plugins:Spot Distance` plugin updates the ``Region counter`` when the last
+  analysis is repeated using the toolset. Previously each repeat reused the same region numbers.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.
