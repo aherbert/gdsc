@@ -26,6 +26,7 @@ package uk.ac.sussex.gdsc.ij.foci;
 
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.measure.Calibration;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
@@ -170,5 +171,52 @@ class SpotDistancePlugInTest {
     final int[][] actual = results.stream().map(r -> new int[] {r.getXint(), r.getYint(), r.id})
         .toArray(int[][]::new);
     Assertions.assertArrayEquals(expected, actual, () -> Arrays.deepToString(actual));
+  }
+
+  @Test
+  void testGetUnitConversion() {
+    Assertions.assertEquals(1, SpotDistance_PlugIn.getUnitConversion("pixel", "pixel"));
+    Assertions.assertEquals(1, SpotDistance_PlugIn.getUnitConversion("Micron", "micron"));
+    Assertions.assertEquals(1, SpotDistance_PlugIn.getUnitConversion("micron", "\u00b5m"));
+    Assertions.assertEquals(1, SpotDistance_PlugIn.getUnitConversion("um", "microns"));
+    Assertions.assertEquals(1e-3, SpotDistance_PlugIn.getUnitConversion("nm", "\u00b5m"), 1e-15);
+    Assertions.assertEquals(1e3, SpotDistance_PlugIn.getUnitConversion("mm", "micron"), 1e-9);
+    Assertions.assertEquals(1e-6, SpotDistance_PlugIn.getUnitConversion("nm", "mm"), 1e-18);
+    Assertions.assertEquals(Double.NaN, SpotDistance_PlugIn.getUnitConversion("pixel", "nm"));
+    Assertions.assertEquals(Double.NaN, SpotDistance_PlugIn.getUnitConversion("nm", "sec"));
+  }
+
+  @Test
+  void testGetCalibratedScale() {
+    final Calibration cal = new Calibration();
+    Assertions.assertArrayEquals(new double[] {1, 1, 1},
+        SpotDistance_PlugIn.getCalibratedScale(cal));
+    cal.pixelWidth = 0.1;
+    cal.pixelHeight = 0.2;
+    cal.pixelDepth = 300;
+    cal.setXUnit("\u00b5m");
+    cal.setYUnit("micron");
+    cal.setZUnit("nm");
+    final double[] scale = SpotDistance_PlugIn.getCalibratedScale(cal);
+    Assertions.assertArrayEquals(new double[] {0.1, 0.2, 0.3}, scale, 1e-12);
+    Assertions.assertArrayEquals(new double[] {1, 2, 3}, SpotDistance_PlugIn.getFilterScale(scale),
+        1e-12);
+    // Units that cannot be converted
+    cal.setZUnit("slice");
+    Assertions.assertNull(SpotDistance_PlugIn.getCalibratedScale(cal));
+    Assertions.assertArrayEquals(new double[] {1, 1, 1}, SpotDistance_PlugIn.getFilterScale(null));
+  }
+
+  @Test
+  void testDistance2() {
+    final double[] diff = {3, 4, 2};
+    Assertions.assertEquals(29, SpotDistance_PlugIn.distance2(diff, new double[] {1, 1, 1}));
+    // Pixel width 0.1, height 0.1, depth 0.3 (relative z = 3)
+    final double[] scale = SpotDistance_PlugIn
+        .getFilterScale(new double[] {0.1, 0.1, 0.3});
+    // The z difference of 2 slices is 6 pixels
+    Assertions.assertEquals(9 + 16 + 36, SpotDistance_PlugIn.distance2(diff, scale), 1e-9);
+    // The diff is not modified
+    Assertions.assertArrayEquals(new double[] {3, 4, 2}, diff);
   }
 }

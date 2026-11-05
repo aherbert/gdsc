@@ -192,6 +192,12 @@ Major release of GDSC ImageJ Plugins.
   that preview is not available on composite images.
 * The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin remembers the
   ``Overlay mask channel`` options for channels above the highest analysed channel.
+* The :ref:`findfoci_plugins:Spot Distance` plugin converts the y and z calibration units to the
+  x unit for calibrated distances, and shows an error if the units cannot be converted.
+  Previously the pixel sizes were combined without conversion.
+* The :ref:`findfoci_plugins:Spot Distance` plugin ``Max distance`` scales the y and z distances
+  by the pixel height and z-slice spacing relative to the pixel width. Previously the z distance
+  used the slice index.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

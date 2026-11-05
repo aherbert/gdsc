@@ -45,6 +45,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
@@ -112,6 +113,10 @@ public class SpotDistance_PlugIn implements PlugIn {
   private ImagePlus projectionImp;
   private String resultEntry;
   private Calibration cal;
+  /** The size of a pixel in x, y and z in the x calibration unit (null if not available). */
+  private double[] calScale;
+  /** The size of a pixel in x, y and z relative to the pixel width. */
+  private double[] filterScale;
   private double maxDistance2;
 
   // Used to cache the mask region
@@ -437,6 +442,14 @@ public class SpotDistance_PlugIn implements PlugIn {
       }
     }
 
+    calScale = getCalibratedScale(imp.getCalibration());
+    if (calScale == null && settings.calibratedDistances) {
+      final Calibration c = imp.getCalibration();
+      IJ.error(TITLE, "Calibrated distances require x, y and z units that can be converted to\n"
+          + "the same unit: " + c.getXUnit() + ", " + c.getYUnit() + ", " + c.getZUnit());
+      return;
+    }
+
     maskImp = checkMask(imp, settings.maskImage);
 
     if (maskImp == null) {
@@ -662,6 +675,124 @@ public class SpotDistance_PlugIn implements PlugIn {
     }
   }
 
+  /**
+   * Gets the size of a pixel in x, y and z in the x calibration unit. The y and z pixel sizes are
+   * converted to the x unit if the units are different.
+   *
+   * @param cal the calibration
+   * @return the scale (null if the units cannot be converted)
+   */
+  static double[] getCalibratedScale(Calibration cal) {
+    final String unit = cal.getXUnit();
+    final double fy = getUnitConversion(cal.getYUnit(), unit);
+    final double fz = getUnitConversion(cal.getZUnit(), unit);
+    if (Double.isNaN(fy) || Double.isNaN(fz)) {
+      return null;
+    }
+    return new double[] {cal.pixelWidth, cal.pixelHeight * fy, cal.pixelDepth * fz};
+  }
+
+  /**
+   * Gets the size of a pixel in x, y and z relative to the pixel width. If the calibrated scale
+   * is not available then all the sizes are 1 (pixel and z-slice index).
+   *
+   * @param calScale the calibrated scale (can be null)
+   * @return the scale
+   */
+  static double[] getFilterScale(double[] calScale) {
+    if (calScale == null) {
+      return new double[] {1, 1, 1};
+    }
+    return new double[] {1, calScale[1] / calScale[0], calScale[2] / calScale[0]};
+  }
+
+  /**
+   * Gets the conversion factor to convert a length in the unit to the target unit.
+   *
+   * @param unit the unit
+   * @param target the target unit
+   * @return the conversion factor (NaN if the units cannot be converted)
+   */
+  static double getUnitConversion(String unit, String target) {
+    if (unit.equalsIgnoreCase(target)) {
+      return 1;
+    }
+    return getUnitLength(unit) / getUnitLength(target);
+  }
+
+  /**
+   * Gets the length of the unit in metres.
+   *
+   * @param unit the unit
+   * @return the length (NaN if unknown)
+   */
+  private static double getUnitLength(String unit) {
+    switch (unit.trim().toLowerCase(Locale.ROOT)) {
+      case "pm":
+        return 1e-12;
+      case "\u00e5":
+      case "angstrom":
+      case "angstroms":
+        return 1e-10;
+      case "nm":
+      case "nanometer":
+      case "nanometers":
+      case "nanometre":
+      case "nanometres":
+        return 1e-9;
+      case "um":
+      case "\u00b5m":
+      case "\u03bcm":
+      case "micron":
+      case "microns":
+      case "micrometer":
+      case "micrometers":
+      case "micrometre":
+      case "micrometres":
+        return 1e-6;
+      case "mm":
+      case "millimeter":
+      case "millimeters":
+      case "millimetre":
+      case "millimetres":
+        return 1e-3;
+      case "cm":
+      case "centimeter":
+      case "centimeters":
+      case "centimetre":
+      case "centimetres":
+        return 1e-2;
+      case "m":
+      case "meter":
+      case "meters":
+      case "metre":
+      case "metres":
+        return 1;
+      case "km":
+        return 1e3;
+      case "in":
+      case "inch":
+      case "inches":
+        return 0.0254;
+      default:
+        return Double.NaN;
+    }
+  }
+
+  /**
+   * Compute the squared distance using the scale for each dimension.
+   *
+   * @param diff the difference in x, y and z
+   * @param scale the scale for x, y and z
+   * @return the squared distance
+   */
+  static double distance2(double[] diff, double[] scale) {
+    final double dx = diff[0] * scale[0];
+    final double dy = diff[1] * scale[1];
+    final double dz = diff[2] * scale[2];
+    return dx * dx + dy * dy + dz * dz;
+  }
+
   private void initialise() {
     regions = null;
     trackers = new Int2ObjectOpenHashMap<>();
@@ -670,6 +801,11 @@ public class SpotDistance_PlugIn implements PlugIn {
     bounds = new Rectangle();
     allowUndo.set(false);
     maxDistance2 = settings.maxDistance * settings.maxDistance;
+    filterScale = getFilterScale(calScale);
+    if (calScale == null && maxDistance2 != 0) {
+      ImageJUtils.log("%s : Pixel spacing units cannot be converted; the max distance uses the "
+          + "pixel and z-slice index", TITLE);
+    }
     if (settings.showOverlay > 0) {
       imp.setOverlay(null);
     }
@@ -1096,12 +1232,8 @@ public class SpotDistance_PlugIn implements PlugIn {
             final double[] diff = new double[] {(r1.x - r2.x), (r1.y - r2.y), (r1.z - r2.z)};
 
             // Ignore distances above the maximum
-            double diff2 = -1;
-            if (maxDistance2 != 0) {
-              diff2 = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
-              if (diff2 > maxDistance2) {
-                continue;
-              }
+            if (maxDistance2 != 0 && distance2(diff, filterScale) > maxDistance2) {
+              continue;
             }
 
             count++;
@@ -1109,10 +1241,7 @@ public class SpotDistance_PlugIn implements PlugIn {
             double distance = 0;
             double calibratedDistance = 0;
             if (settings.pixelDistances) {
-              if (diff2 == -1) {
-                diff2 = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
-              }
-              distance = Math.sqrt(diff2);
+              distance = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
               if (distance < minD) {
                 minD = distance;
               }
@@ -1123,12 +1252,8 @@ public class SpotDistance_PlugIn implements PlugIn {
             }
 
             if (settings.calibratedDistances) {
-              diff[0] *= cal.pixelWidth;
-              diff[1] *= cal.pixelHeight;
-              diff[2] *= cal.pixelDepth;
-              // TODO - This will not be valid if the units are not the same for all dimensions
-              calibratedDistance =
-                  Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
+              // Distance in the x calibration unit
+              calibratedDistance = Math.sqrt(distance2(diff, calScale));
               if (calibratedDistance < minD2) {
                 minD2 = calibratedDistance;
               }
@@ -1189,12 +1314,8 @@ public class SpotDistance_PlugIn implements PlugIn {
             final double[] diff = new double[] {(r1.x - r2.x), (r1.y - r2.y), (r1.z - r2.z)};
 
             // Ignore distances above the maximum
-            double diff2 = -1;
-            if (maxDistance2 != 0) {
-              diff2 = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
-              if (diff2 > maxDistance2) {
-                continue;
-              }
+            if (maxDistance2 != 0 && distance2(diff, filterScale) > maxDistance2) {
+              continue;
             }
 
             count++;
@@ -1202,10 +1323,7 @@ public class SpotDistance_PlugIn implements PlugIn {
             double distance = 0;
             double calibratedDistance = 0;
             if (settings.pixelDistances) {
-              if (diff2 == -1) {
-                diff2 = diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
-              }
-              distance = Math.sqrt(diff2);
+              distance = Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
               if (distance < minD) {
                 minD = distance;
               }
@@ -1216,12 +1334,8 @@ public class SpotDistance_PlugIn implements PlugIn {
             }
 
             if (settings.calibratedDistances) {
-              diff[0] *= cal.pixelWidth;
-              diff[1] *= cal.pixelHeight;
-              diff[2] *= cal.pixelDepth;
-              // TODO - This will not be valid if the units are not the same for all dimensions
-              calibratedDistance =
-                  Math.sqrt(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
+              // Distance in the x calibration unit
+              calibratedDistance = Math.sqrt(distance2(diff, calScale));
               if (calibratedDistance < minD2) {
                 minD2 = calibratedDistance;
               }
