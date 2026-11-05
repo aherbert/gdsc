@@ -387,6 +387,40 @@ public class TimeValuePointManager {
         setFindFociObjectField(line);
       }
     } while (line != null && headerTest.test(line));
+
+    // The generic formats may have a column header line, e.g. ID,T,X,Y,Z,Value
+    if (isGenericType(type) && line != null && isColumnHeader(line)) {
+      readLine(input);
+    }
+  }
+
+  /**
+   * Checks if the type is a generic delimited format.
+   *
+   * @param type the type
+   * @return true if a generic format
+   */
+  private static boolean isGenericType(FileType type) {
+    return type != FileType.FIND_FOCI && type != FileType.QUICK_PALM && type != FileType.STORMJ;
+  }
+
+  /**
+   * Checks if the line is a column header. This is true if the line has enough fields and the X
+   * field is not a number.
+   *
+   * @param text the text
+   * @return true if a column header
+   */
+  private boolean isColumnHeader(String text) {
+    final String[] tokens = text.split(delimiter);
+    if (tokens.length > maxField) {
+      try {
+        Float.parseFloat(tokens[fields[2]]);
+      } catch (final NumberFormatException ex) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

@@ -503,7 +503,7 @@ public class FileMatchCalculator_PlugIn implements PlugIn {
     final StringBuilder sb = new StringBuilder();
     sb.append("Image 1\t");
     sb.append("Image 2\t");
-    sb.append("Distance (px)\t");
+    sb.append("Distance\t");
     sb.append("N\t");
     sb.append("TP\t");
     sb.append("FP\t");

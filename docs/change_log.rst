@@ -206,6 +206,9 @@ Major release of GDSC ImageJ Plugins.
   and overlay were shifted by the region offset.
 * The :ref:`findfoci_plugins:Spot Distance` plugin updates the ``Region counter`` when the last
   analysis is repeated using the toolset. Previously each repeat reused the same region numbers.
+* The :ref:`findfoci_plugins:File Match Calculator` plugin ignores the column header line of a
+  points file without logging a warning, and the results table ``Distance`` column no longer
+  states the units as pixels.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.
