@@ -209,6 +209,9 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`findfoci_plugins:File Match Calculator` plugin ignores the column header line of a
   points file without logging a warning, and the results table ``Distance`` column no longer
   states the units as pixels.
+* The :ref:`findfoci_plugins:Spot Pairs` plugin pairs points that are mutual closest neighbours.
+  Previously the pairs could depend on the order of the ROI points, and a point could be paired
+  with a neighbour although its own closest neighbour was paired with a different point.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

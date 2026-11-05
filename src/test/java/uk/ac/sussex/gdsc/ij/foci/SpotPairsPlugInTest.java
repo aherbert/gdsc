@@ -29,6 +29,7 @@ import ij.gui.PointRoi;
 import ij.process.ByteProcessor;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.ac.sussex.gdsc.ij.foci.SpotPairs_PlugIn.Cluster;
@@ -53,5 +54,83 @@ class SpotPairsPlugInTest {
       return a;
     }).sorted((a, b) -> Integer.compare(a[0], b[0])).toArray(int[][]::new);
     Assertions.assertArrayEquals(new int[][] {{1, 3}, {2}}, ids);
+  }
+
+  /**
+   * Find the pairs and return the point IDs of each cluster. IDs are sorted within the cluster and
+   * the clusters are sorted by the first ID.
+   */
+  private static int[][] findPairIds(AssignedPoint[] points, double radius) {
+    return SpotPairs_PlugIn.findPairs(points, radius).stream().map(c -> {
+      final int[] a = new int[c.size];
+      int i = 0;
+      for (ClusterPoint p = c.head; p != null; p = p.next) {
+        a[i++] = p.id;
+      }
+      Arrays.sort(a);
+      return a;
+    }).sorted((a, b) -> Integer.compare(a[0], b[0])).toArray(int[][]::new);
+  }
+
+  /** Call the action with every permutation of the points. */
+  private static void forEachPermutation(AssignedPoint[] points, int k,
+      java.util.function.Consumer<AssignedPoint[]> action) {
+    if (k == points.length) {
+      action.accept(points.clone());
+      return;
+    }
+    for (int i = k; i < points.length; i++) {
+      swap(points, k, i);
+      forEachPermutation(points, k + 1, action);
+      swap(points, k, i);
+    }
+  }
+
+  private static void swap(AssignedPoint[] a, int i, int j) {
+    final AssignedPoint t = a[i];
+    a[i] = a[j];
+    a[j] = t;
+  }
+
+  private static void assertPairs(int[][] expected, AssignedPoint[] points, double radius) {
+    final List<String> errors = new java.util.ArrayList<>();
+    forEachPermutation(points, 0, p -> {
+      final int[][] ids = findPairIds(p, radius);
+      if (!Arrays.deepEquals(expected, ids)) {
+        errors.add(Arrays.deepToString(ids));
+      }
+    });
+    Assertions.assertEquals(List.of(), errors);
+  }
+
+  @Test
+  void testFindPairsUsesMutualNearestNeighbours() {
+    // X and Y are a pair. C is closest to X; Z is closest to C. C and Z are not paired.
+    // Point IDs: X=1, Y=2, C=3, Z=4
+    assertPairs(new int[][] {{1, 2}, {3}, {4}}, new AssignedPoint[] {
+        new AssignedPoint(10, 10, 1), new AssignedPoint(8, 10, 2), new AssignedPoint(14, 10, 3),
+        new AssignedPoint(14, 15, 4)}, 10);
+    // Mirror in x
+    assertPairs(new int[][] {{1, 2}, {3}, {4}}, new AssignedPoint[] {
+        new AssignedPoint(20, 20, 1), new AssignedPoint(22, 20, 2), new AssignedPoint(16, 20, 3),
+        new AssignedPoint(16, 15, 4)}, 10);
+  }
+
+  @Test
+  void testFindPairsTieUsesLowestId() {
+    // Point 1 is the same distance from 2 and 3
+    assertPairs(new int[][] {{1, 2}, {3}}, new AssignedPoint[] {new AssignedPoint(10, 10, 1),
+        new AssignedPoint(13, 10, 2), new AssignedPoint(7, 10, 3)}, 10);
+  }
+
+  @Test
+  void testFindPairsRadius() {
+    final AssignedPoint[] points = {new AssignedPoint(10, 10, 1), new AssignedPoint(13, 14, 2)};
+    // Distance is 5
+    Assertions.assertArrayEquals(new int[][] {{1}, {2}}, findPairIds(points, 5));
+    Assertions.assertArrayEquals(new int[][] {{1, 2}}, findPairIds(points, 5.01));
+    // Same position
+    final AssignedPoint[] points2 = {new AssignedPoint(10, 10, 1), new AssignedPoint(10, 10, 2)};
+    Assertions.assertArrayEquals(new int[][] {{1, 2}}, findPairIds(points2, 0.5));
   }
 }

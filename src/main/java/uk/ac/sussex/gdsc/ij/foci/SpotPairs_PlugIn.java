@@ -43,6 +43,9 @@ import java.util.Collections;
 import java.util.Formatter;
 import java.util.concurrent.atomic.AtomicReference;
 import uk.ac.sussex.gdsc.core.ij.ImageJUtils;
+import uk.ac.sussex.gdsc.core.trees.DoubleDistanceFunctions;
+import uk.ac.sussex.gdsc.core.trees.IntDoubleKdTree;
+import uk.ac.sussex.gdsc.core.trees.KdTrees;
 import uk.ac.sussex.gdsc.core.utils.MathUtils;
 import uk.ac.sussex.gdsc.ij.UsageTracker;
 import uk.ac.sussex.gdsc.ij.help.HelpUrls;
@@ -139,13 +142,6 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
     double sumy;
     int size;
 
-    // Used to construct a single linked list of clusters
-    Cluster next;
-
-    // Used to store potential clustering links
-    Cluster closest;
-    double distance;
-
     // Used to construct a single linked list of cluster points
     ClusterPoint head;
 
@@ -155,12 +151,6 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
       this.x = sumx = point.x;
       this.y = sumy = point.y;
       size = 1;
-    }
-
-    double distance2(Cluster other) {
-      final double dx = x - other.x;
-      final double dy = y - other.y;
-      return dx * dx + dy * dy;
     }
 
     void add(Cluster other) {
@@ -200,43 +190,8 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
 
     private void clear() {
       head = null;
-      closest = null;
       size = 0;
-      x = y = sumx = sumy = distance = 0;
-    }
-
-    /**
-     * Link the two clusters as potential merge candidates only if the squared distance is smaller
-     * than the other clusters current closest.
-     *
-     * @param other the other
-     * @param d2 the squared distance
-     */
-    void link(Cluster other, double d2) {
-      // Check if the other cluster has a closer candidate
-      if (other.closest != null && other.distance < d2) {
-        return;
-      }
-
-      other.closest = this;
-      other.distance = d2;
-
-      this.closest = other;
-      this.distance = d2;
-    }
-
-    /**
-     * True if the closest cluster links back to this cluster.
-     *
-     * @return True if the closest cluster links back to this cluster.
-     */
-    boolean validLink() {
-      // Check if the other cluster has an updated link to another candidate
-      if (closest != null) {
-        // Valid if the other cluster links back to this cluster
-        return closest.closest == this;
-      }
-      return false;
+      x = y = sumx = sumy = 0;
     }
 
     /**
@@ -434,162 +389,59 @@ public class SpotPairs_PlugIn implements ExtendedPlugInFilter, DialogListener {
   /**
    * Find the pairs of points within the radius distance.
    *
+   * <p>Two points are paired if each point is the closest point to the other and the distance is
+   * below the radius. Ties in the distance to the closest point are resolved using the lowest point
+   * ID. The result is independent of the order of the points.
+   *
    * @param points the points
    * @param radius the radius
    * @return the clusters (pairs and single points)
    */
   static ArrayList<Cluster> findPairs(AssignedPoint[] points, double radius) {
-    // NOTE:
-    // This code has been adapted from the GDSC SMLM plugins from the PCPALMClusters class.
-    // This was the fastest way of implementing this.
-
-    final ArrayList<Cluster> newCandidates = new ArrayList<>(points.length);
-    for (final AssignedPoint p : points) {
-      final Cluster c = new Cluster(new ClusterPoint(p.id, p.x, p.y));
-      newCandidates.add(c);
+    final int n = points.length;
+    final IntDoubleKdTree tree = KdTrees.newIntDoubleKdTree(2);
+    for (int i = 0; i < n; i++) {
+      tree.add(new double[] {points[i].x, points[i].y}, i);
     }
 
-    // Find the bounds of the candidates
-    double minx = newCandidates.get(0).x;
-    double miny = newCandidates.get(0).y;
-    double maxx = minx;
-    double maxy = miny;
-    for (final Cluster c : newCandidates) {
-      if (minx > c.x) {
-        minx = c.x;
-      } else if (maxx < c.x) {
-        maxx = c.x;
-      }
-      if (miny > c.y) {
-        miny = c.y;
-      } else if (maxy < c.y) {
-        maxy = c.y;
-      }
-    }
-
-    // Assign to a grid
-    final int maxBins = 500;
-    final double xBinWidth = Math.max(radius, (maxx - minx) / maxBins);
-    final double yBinWidth = Math.max(radius, (maxy - miny) / maxBins);
-    final int nxbins = 1 + (int) ((maxx - minx) / xBinWidth);
-    final int nybins = 1 + (int) ((maxy - miny) / yBinWidth);
-    final Cluster[][] grid = new Cluster[nxbins][nybins];
-    for (final Cluster c : newCandidates) {
-      final int xbin = (int) ((c.x - minx) / xBinWidth);
-      final int ybin = (int) ((c.y - miny) / yBinWidth);
-      // Build a single linked list
-      c.next = grid[xbin][ybin];
-      grid[xbin][ybin] = c;
-    }
-
+    // Find the closest point within the radius for each point
     final double r2 = radius * radius;
-
-    // Sweep the all-vs-all clusters and make potential links between clusters.
-    // If a link can be made to a closer cluster then break the link and rejoin.
-    // Then join all the links into clusters.
-    if (findLinks(grid, nxbins, nybins, r2)) {
-      joinLinks(grid, nxbins, nybins, newCandidates);
+    final int[] closest = new int[n];
+    final double[] min = new double[1];
+    for (int i = 0; i < n; i++) {
+      final int index = i;
+      closest[i] = -1;
+      min[0] = r2;
+      tree.findNeighbours(new double[] {points[i].x, points[i].y}, r2,
+          DoubleDistanceFunctions.SQUARED_EUCLIDEAN_2D, (j, d2) -> {
+            if (j == index) {
+              return;
+            }
+            if (d2 < min[0]
+                || (d2 == min[0] && closest[index] >= 0 && points[j].id < points[closest[index]].id)) {
+              min[0] = d2;
+              closest[index] = j;
+            }
+          });
     }
-    return newCandidates;
-  }
 
-  /**
-   * Search for potential links between clusters that are below the squared radius distance. Store
-   * if the clusters have any neighbours within 2*r^2.
-   *
-   * @param grid the grid
-   * @param nxbins the number of X bins
-   * @param nybins the number of Y bins
-   * @param r2 The squared radius distance
-   * @return True if any links were made
-   */
-  private static boolean findLinks(Cluster[][] grid, final int nxbins, final int nybins,
-      final double r2) {
-    final Cluster[] neighbours = new Cluster[5];
-    boolean linked = false;
-    for (int ybin = 0; ybin < nybins; ybin++) {
-      for (int xbin = 0; xbin < nxbins; xbin++) {
-        for (Cluster c1 = grid[xbin][ybin]; c1 != null; c1 = c1.next) {
-          // Build a list of which cells to compare up to a maximum of 5
-          // @formatter:off
-          //      | 0,0 | 1,0
-          // ------------+-----
-          // -1,1 | 0,1 | 1,1
-          // @formatter:on
-
-          int count = 0;
-          neighbours[count++] = c1.next;
-
-          if (ybin < nybins - 1) {
-            neighbours[count++] = grid[xbin][ybin + 1];
-            if (xbin > 0) {
-              neighbours[count++] = grid[xbin - 1][ybin + 1];
-            }
-          }
-          if (xbin < nxbins - 1) {
-            neighbours[count++] = grid[xbin + 1][ybin];
-            if (ybin < nybins - 1) {
-              neighbours[count++] = grid[xbin + 1][ybin + 1];
-            }
-          }
-
-          // Compare to neighbours and find the closest.
-          // Use either the radius threshold or the current closest distance
-          // which may have been set by an earlier comparison.
-          double min = (c1.closest == null) ? r2 : c1.distance;
-          Cluster other = null;
-          while (count-- > 0) {
-            for (Cluster c2 = neighbours[count]; c2 != null; c2 = c2.next) {
-              final double d2 = c1.distance2(c2);
-              if (d2 < min) {
-                min = d2;
-                other = c2;
-              }
-            }
-          }
-
-          if (other != null) {
-            // Store the potential link between the two clusters
-            c1.link(other, min);
-            linked = true;
-          }
-        }
+    // Pair mutual closest points
+    final ArrayList<Cluster> clusters = new ArrayList<>(n);
+    for (int i = 0; i < n; i++) {
+      final int j = closest[i];
+      if (j < 0 || closest[j] != i) {
+        clusters.add(createCluster(points[i]));
+      } else if (i < j) {
+        final Cluster c = createCluster(points[i]);
+        c.add(createCluster(points[j]));
+        clusters.add(c);
       }
     }
-    return linked;
+    return clusters;
   }
 
-  /**
-   * Join valid links between clusters. Resets the link candidates.
-   *
-   * @param grid the grid
-   * @param nxbins the number of X bins
-   * @param nybins the number of Y bins
-   * @param candidates Re-populate will all the remaining clusters
-   */
-  private static void joinLinks(Cluster[][] grid, int nxbins, int nybins,
-      ArrayList<Cluster> candidates) {
-    candidates.clear();
-
-    for (int ybin = 0; ybin < nybins; ybin++) {
-      for (int xbin = 0; xbin < nxbins; xbin++) {
-        for (Cluster c1 = grid[xbin][ybin]; c1 != null; c1 = c1.next) {
-          if (c1.validLink()) {
-            c1.add(c1.closest);
-          }
-          // Reset the link candidates
-          c1.closest = null;
-
-          // Store all remaining clusters
-          if (c1.size != 0) {
-            candidates.add(c1);
-          }
-        }
-
-        // Reset the grid
-        grid[xbin][ybin] = null;
-      }
-    }
+  private static Cluster createCluster(AssignedPoint p) {
+    return new Cluster(new ClusterPoint(p.id, p.x, p.y));
   }
 
   /** {@inheritDoc} */
