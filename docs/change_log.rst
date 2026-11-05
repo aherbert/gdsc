@@ -220,6 +220,10 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`findfoci_plugins:FindFoci Settings` plugin uses the maximum capacity for a larger
   value, and keeps the current capacity for an invalid number. Previously a larger value closed
   the dialog without saving any settings, and an invalid number set the capacity to 1.
+* The :ref:`findfoci_plugins:Match Calculator` and
+  :ref:`findfoci_plugins:FindFoci Match Calculator` plugins select a different default for each
+  input when only one of the previous inputs is available. Previously both inputs could default to
+  the same image or results.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

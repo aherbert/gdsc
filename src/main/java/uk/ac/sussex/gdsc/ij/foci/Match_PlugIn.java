@@ -687,6 +687,34 @@ public class Match_PlugIn implements PlugIn {
     return rois.toArray(new PointRoi[0]);
   }
 
+  /**
+   * Select the initial titles for the two inputs. The previous titles are used if they are in the
+   * list. Otherwise a title is selected from the list that is different from the other input.
+   *
+   * @param items the items (must have at least 2 items)
+   * @param title1 the previous title for input 1
+   * @param title2 the previous title for input 2
+   * @return the titles
+   */
+  static String[] selectTitles(List<String> items, String title1, String title2) {
+    final boolean has1 = items.contains(title1);
+    final boolean has2 = items.contains(title2);
+    final String t1 = has1 ? title1 : firstOther(items, has2 ? title2 : null);
+    final String t2 = has2 ? title2 : firstOther(items, t1);
+    return new String[] {t1, t2};
+  }
+
+  /**
+   * Get the first item that is not equal to the excluded item.
+   *
+   * @param items the items (must have at least 2 items)
+   * @param excluded the excluded item (can be null)
+   * @return the item
+   */
+  private static String firstOther(List<String> items, String excluded) {
+    return items.get(0).equals(excluded) ? items.get(1) : items.get(0);
+  }
+
   private boolean showDialog() {
     settings = Settings.load();
 
@@ -702,11 +730,9 @@ public class Match_PlugIn implements PlugIn {
         return false;
       }
 
-      final List<String> imageList = Arrays.asList(items);
-      int index = 0;
-      initialTitle1 =
-          (imageList.contains(settings.name1) ? settings.name1 : imageList.get(index++));
-      initialTitle2 = (imageList.contains(settings.name2) ? settings.name2 : imageList.get(index));
+      final String[] titles = selectTitles(Arrays.asList(items), settings.name1, settings.name2);
+      initialTitle1 = titles[0];
+      initialTitle2 = titles[1];
       initialDistanceThreshold = settings.memoryThreshold;
     }
     if (imageMode) {
@@ -729,11 +755,9 @@ public class Match_PlugIn implements PlugIn {
       }
 
       items = imageList.toArray(new String[0]);
-      int index = 0;
-      initialTitle1 =
-          (imageList.contains(settings.title1) ? settings.title1 : imageList.get(index++));
-      initialTitle2 =
-          (imageList.contains(settings.title2) ? settings.title2 : imageList.get(index));
+      final String[] titles = selectTitles(imageList, settings.title1, settings.title2);
+      initialTitle1 = titles[0];
+      initialTitle2 = titles[1];
     }
 
     final ExtendedGenericDialog gd = new ExtendedGenericDialog(TITLE);
