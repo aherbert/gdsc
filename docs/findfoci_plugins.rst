@@ -1894,7 +1894,7 @@ FindFoci Match Calculator
 
 Allows two sets of ``FindFoci`` results to be compared. The ``FindFoci`` analysis must have been saved to memory using the ``Save to memory`` option.
 
-Two results sets are required; if fewer are in memory a message is shown. The plugin will present a dialog allowing the results to be selected (``Input 1`` and ``Input 2``). The results selected on the last run are used if they are still in memory. Analysis is performed as per the :ref:`findfoci_plugins:Match Calculator` plugin with the following differences:
+Two results sets are required; if fewer are in memory a message is shown. The plugin will present a dialog allowing the results to be selected (``Input 1`` and ``Input 2``). The results selected on the last run are used if they are still in memory; otherwise a different result is selected for each input. Analysis is performed as per the :ref:`findfoci_plugins:Match Calculator` plugin with the following differences:
 
 * The ``Unit`` parameter sets the distance between matching points in ``Pixel`` or ``Calibrated`` units. Calibrated units require both results to have a calibration with the same unit in each dimension and the same unit as each other; otherwise an error is shown. The ``Distance`` is an absolute distance in the chosen units. The ``Distance`` is remembered separately from the :ref:`findfoci_plugins:Match Calculator` plugin; the default is 5.
 * Each results set must contain at least one focus; otherwise an error is shown.
