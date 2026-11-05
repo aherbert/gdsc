@@ -24,7 +24,6 @@
 
 package uk.ac.sussex.gdsc.ij.foci;
 
-import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -716,10 +715,6 @@ public class FociNeighbourAnalysis_PlugIn implements ExtendedPlugInFilter, Dialo
             return changed;
           }
         });
-
-    if (imp != null && imp.isComposite() && ((CompositeImage) imp).getMode() == IJ.COMPOSITE) {
-      logger.warning("Preview not available on composite images");
-    }
 
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);

@@ -188,6 +188,8 @@ Major release of GDSC ImageJ Plugins.
   ``Maximum size`` did not recompute the cached results.
 * The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin records the ``FindFoci`` settings
   for each channel in macros, and reads them from macro options named ``findfoci_channel_N``.
+* The :ref:`findfoci_plugins:Foci Neighbour Analysis` plugin no longer logs an incorrect warning
+  that preview is not available on composite images.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.
