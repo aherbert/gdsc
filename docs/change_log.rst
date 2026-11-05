@@ -212,6 +212,9 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`findfoci_plugins:Spot Pairs` plugin pairs points that are mutual closest neighbours.
   Previously the pairs could depend on the order of the ROI points, and a point could be paired
   with a neighbour although its own closest neighbour was paired with a different point.
+* The :ref:`findfoci_plugins:Spot Radial Intensity` plugin uses a summary table for each
+  ``Distance`` and ``Interval`` named using the settings. Previously changing the settings created
+  another table with the same name, and returning to earlier settings did not reuse their table.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

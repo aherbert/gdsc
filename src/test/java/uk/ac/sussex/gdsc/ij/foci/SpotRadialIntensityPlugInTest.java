@@ -103,4 +103,14 @@ class SpotRadialIntensityPlugInTest {
     final int size2 = count2;
     Assertions.assertTrue(size2 > 0 && size2 < 25, () -> "Object 2 size " + size2);
   }
+
+  @Test
+  void testCreateResultsTitle() {
+    Assertions.assertEquals("Spot Radial Intensity Summary (Distance=10, Interval=1.0)",
+        SpotRadialIntensity_PlugIn.createResultsTitle(10, 1));
+    Assertions.assertEquals("Spot Radial Intensity Summary (Distance=10, Interval=2.5)",
+        SpotRadialIntensity_PlugIn.createResultsTitle(10, 2.5));
+    Assertions.assertNotEquals(SpotRadialIntensity_PlugIn.createResultsTitle(10, 1),
+        SpotRadialIntensity_PlugIn.createResultsTitle(20, 1));
+  }
 }

@@ -42,6 +42,8 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 import uk.ac.sussex.gdsc.core.annotation.Nullable;
@@ -66,7 +68,9 @@ import uk.ac.sussex.gdsc.ij.help.HelpUrls;
  */
 public class SpotRadialIntensity_PlugIn implements PlugIn {
   private static final String TITLE = "Spot Radial Intensity";
-  private static final AtomicReference<TextWindow> resultsWindow = new AtomicReference<>();
+  /** The results windows for each table title. The title contains the distance and interval. */
+  private static final Map<String, AtomicReference<TextWindow>> resultsWindows =
+      new ConcurrentHashMap<>();
   private static final AtomicReference<TextWindow> objectsWindow = new AtomicReference<>();
   private static final int MODE_NONE = 0;
   private static final int MODE_MASK = 1;
@@ -237,10 +241,6 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       return;
     }
 
-    // Check if these change
-    final int previousDistance = settings.distance;
-    final double previousInterval = settings.interval;
-
     if (imageRoi != null && names.length != 0) {
       settings.useRoi = gd.getNextBoolean();
     }
@@ -273,10 +273,6 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     if (!(settings.showTable || settings.showPlot)) {
       IJ.error(TITLE, "No output option");
       return;
-    }
-
-    if (previousDistance != settings.distance || previousInterval != settings.interval) {
-      resultsWindow.set(null); // Create a new window
     }
 
     // Get the objects
@@ -823,11 +819,32 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
   }
 
   private TextWindow createResultsWindow() {
-    final TextWindow textWindow = ImageJUtils.refresh(resultsWindow,
-        () -> new TextWindow(TITLE + " Summary", createResultsHeader(), "", 700, 300));
+    // Use a table for each distance and interval as these define the columns
+    final String title = createResultsTitle(settings.distance, settings.interval);
+    final String header = createResultsHeader();
+    final TextWindow textWindow =
+        ImageJUtils.refresh(resultsWindows.computeIfAbsent(title, k -> new AtomicReference<>()),
+            () -> new TextWindow(title, header, "", 700, 300));
+    // The title uses a rounded interval. Check the columns match for intervals that round to the
+    // same value. This clears the table.
+    if (!header.equals(textWindow.getTextPanel().getColumnHeadings())) {
+      textWindow.getTextPanel().setColumnHeadings(header);
+    }
     prefix = String.format("%s (C=%d,Z=%d,T=%d)", imp.getTitle(), imp.getChannel(), imp.getSlice(),
         imp.getFrame());
     return textWindow;
+  }
+
+  /**
+   * Creates the results title.
+   *
+   * @param distance the distance
+   * @param interval the interval
+   * @return the title
+   */
+  static String createResultsTitle(int distance, double interval) {
+    return TITLE + " Summary (Distance=" + distance + ", Interval=" + MathUtils.rounded(interval)
+        + ")";
   }
 
   private String createResultsHeader() {
