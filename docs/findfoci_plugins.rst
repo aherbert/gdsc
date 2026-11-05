@@ -2294,7 +2294,7 @@ The file format is identified using the first lines of the file. Header lines st
    * - Generic CSV
      - A line with 5 or more commas is read as ``ID,T,X,Y,Z,Value``; with 3 or 4 commas as ``ID,T,X,Y``; and with 2 commas as ``X,Y,Z``.
 
-For the generic formats the ``ID`` field is ignored; points are numbered in the order they are read. The time point is truncated to an integer. Lines with too few fields are ignored. Lines that contain invalid numbers (for example a column header line) are ignored and a warning is logged; reading stops after more than 10 invalid lines.
+For the generic formats the ``ID`` field is ignored; points are numbered in the order they are read. The time point is truncated to an integer. Lines with too few fields are ignored. A column header line (e.g. ``ID,T,X,Y,Z,Value``) after any ``#`` header lines is ignored; it is identified by a non-numeric X field. Other lines that contain invalid numbers are ignored and a warning is logged; reading stops after more than 10 invalid lines.
 
 .. index:: File Match Calculator Plugin Interface
 
@@ -2371,8 +2371,8 @@ The results are appended to the ``Match Calculator Results`` table. The table co
    * - Image 2
      - The second file.
 
-   * - Distance (px)
-     - The distance threshold.
+   * - Distance
+     - The distance threshold (in the units of the file coordinates).
 
    * - N
      - The number of points from ``Input 2`` (TP + FP).
