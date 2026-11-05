@@ -2943,13 +2943,267 @@ The following is a suggested workflow for creating 3D coordinate files via the R
 Spot Distance
 -------------
 
-Detects spots within a mask/ROI region. The mask can define multiple regions using a different pixel value for each. Outputs a table of spot positions and a summary table of the number of spots with min/max/average distances.
+Detects spots within a mask/ROI region. The mask can define multiple regions using a different pixel value for each. Outputs a table of spot positions and a summary table of the number of spots with min/max/average distances between the spots in each region.
 
-Spots are detected using the maxima within a difference of Gaussians image. The ``Smoothing`` parameter controls the removal of image noise. The ``Feature Size`` parameter controls the expected size of the spots; contrast changes (edges) much larger than the ``Feature Size`` will be removed from the image. (Set the ``Feature Size`` to zero to disable the difference of Gaussians; spots will be detected using peaks on the smoothed image.) Optionally spots can be removed if they fail a circularity threshold.
+Spots are detected using the maxima within a difference of Gaussians image. The ``Smoothing`` parameter controls the removal of image noise. The ``Feature size`` parameter controls the expected size of the spots; contrast changes (edges) much larger than the ``Feature size`` will be removed from the image. (Set the ``Feature size`` to zero to disable the difference of Gaussians; spots will be detected using peaks on the smoothed image.) Optionally spots can be removed if they fail a circularity threshold.
 
-Provides options to process the current frame or all frames in the stack. The last identified spots can be shown on the image as an overlay. When the region is defined using an area ROI, each separate region is labelled using the region counter. The counter is incremented for each region and retained between runs of the plugin allowing regions to be separated in the results.
+Provides options to process the current frame or all frames in the stack. The identified spots can be shown on the image as an overlay. When the region is defined using an area ROI, each separate region is labelled using the region counter. The counter is incremented for each region and retained between runs of the plugin allowing regions to be separated in the results.
 
-For multi-channel images the ``Dual channel`` option detects spots in two selected channels and the summary reports the distances between spots in the first channel and spots in the second channel. When processing multiple frames the ``Track objects`` option assigns spot IDs using closest-distance matching to the spots in the previous frame, allowing the same spot to be followed through time.
+For multi-channel images the ``Dual channel`` option detects spots in two selected channels and the summary reports the distances between spots in the first channel and spots in the second channel.
+
+The plugin runs on the current image which must be an 8-bit, 16-bit or 32-bit greyscale image; otherwise an error is shown. All the z-slices of the image are analysed; spots are detected in 3D if the image has more than one z-slice. In a multi-channel image the current channel is analysed (or the two channels selected for dual channel analysis). In a multi-frame image the current frame is analysed, or all frames if ``Process frames`` is selected.
+
+The analysis region can be defined using:
+
+* An area ROI on the image. The ROI is converted to a mask where each separate (8-connected) part of the ROI is a different region. The regions are numbered using the ``Region counter``; the counter is increased by 1 for each region. The ROI mask is applied to all z-slices, channels and frames.
+* A mask image. Any other open 8-bit or 16-bit image with the same width and height as the input image can be selected. The mask must have either 1 z-slice or the same number of z-slices as the image; the same rule applies to the channels and frames. Each non-zero pixel value in the mask is a different region and the region is identified using the pixel value. A region can span multiple z-slices. If the mask has multiple channels then the mask channel matching the analysed channel is used; for dual channel analysis each channel uses its own mask channel. A region is analysed if it is present in the mask of either channel; spots are only detected in a channel if the region is present in the mask for that channel. If the mask has multiple frames then the mask frame matching the analysed frame is used.
+
+If there are no suitable mask images and the image does not have an area ROI then an error is shown.
+
+The plugin performs the following steps for each frame:
+
+#. Find the regions in the mask. If there are no regions then nothing is reported for the frame.
+#. Filter the image. If the ``Feature size`` is above zero then a difference of Gaussians is computed: the image is blurred using a Gaussian with a standard deviation of the ``Smoothing`` and the image blurred using a Gaussian with a standard deviation of the ``Feature size`` is subtracted. If the ``Feature size`` is zero (or below) and the ``Smoothing`` is above zero then the image is only blurred using the ``Smoothing``. Otherwise the image is not filtered. Each z-slice is filtered independently in 2D. Filtering is limited to the bounding rectangle of the mask regions.
+#. For each region crop the filtered image to the bounding rectangle of the region. If the cropped image is floating point (a filtered image, or an unfiltered 32-bit image) it is rescaled to the range 0 to 65535 and converted to 16-bit since the spot detection uses integer values.
+#. Detect the spots inside the region using the ``FindFoci`` algorithm (see :ref:`findfoci_plugins:FindFoci`). The background level is computed using all the pixels in the cropped image (both inside and outside the region): either the ``Otsu`` threshold (``Auto threshold`` is selected), or the mean plus a multiple of the standard deviation (``Background (SD > Av)``). Peaks are found above the background. A peak must have at least ``Min peak size`` pixels above the highest saddle to a neighbouring peak, and the maximum must be at least ``Min peak height`` above the saddle; smaller peaks are merged with the neighbour. The ``Min peak height`` is in the units of the filtered image before rescaling and is scaled by the same factor as the image.
+#. The position of each spot is the centre-of-mass of the peak pixels above the saddle within 2 pixels of the maximum (computed on the filtered image), rounded to the nearest whole pixel.
+#. Compute the circularity of each spot as ``4 pi Area / Perimeter^2``. The area and perimeter are from the outline of the peak pixels above the saddle in the z-slice of the spot. The perimeter is the length of the traced outline using the ``ImageJ`` corner-corrected length; small spots can have a circularity above 1. Spots with a circularity below the ``Circularity limit`` are excluded and a message is written to the ``ImageJ`` log.
+#. Compute the distance between all pairs of spots in the region. In dual channel analysis the distances are computed between each spot in the first channel and each spot in the second channel. Pairs with a distance above the ``Max distance`` are ignored (see below).
+#. Add the results to the tables.
+
+Distances in pixels use the pixel coordinates where z is the slice index; the z-slice spacing is not used. Calibrated distances scale the x, y and z coordinate differences using the pixel width, height and depth of the image and are in the x unit of the image calibration. If the y or z unit is different from the x unit it is converted to the x unit, e.g. a z-slice spacing in nm is converted to µm. Common length units from picometres to kilometres, and inches, can be converted. If the units cannot be converted and ``Calibrated distances`` is selected then an error is shown.
+
+The ``Max distance`` is in pixels. The pair distance compared to the ``Max distance`` scales the y and z coordinate differences by the pixel height and z-slice spacing relative to the pixel width, so it is the true distance in units of the pixel width. For an image with square pixels and no z-stack this is the same as the distance in pixels. If the units of the image calibration cannot be converted then the pixel coordinates are used with z as the slice index and a message is written to the ``ImageJ`` log.
+
+.. index:: Spot Distance Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The ``Spot Distance`` plugin uses a standard ``ImageJ`` dialog. Additional options are shown if the ``Shift`` key is held down when the plugin is run. The following parameters can be configured:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Mask
+     - The mask defining the analysis regions. Select ``[None]`` to use the area ROI on the image; if the image does not have an area ROI an error is shown. Otherwise select an open image with matching dimensions (see above).
+
+   * - Smoothing
+     - The standard deviation (in pixels) of the Gaussian used to smooth the image. The default is 1.5.
+
+   * - Feature size
+     - The standard deviation (in pixels) of the Gaussian used to compute the background that is subtracted in the difference of Gaussians. Set to zero to disable the difference of Gaussians; otherwise this must be larger than the ``Smoothing``. The default is 4.5.
+
+   * - Auto threshold
+     - Use the ``Otsu`` threshold of the cropped image as the background level. Otherwise use the mean plus ``Background (SD > Av)`` standard deviations. Only shown with the extra options. The default is selected.
+
+   * - Background (SD > Av)
+     - The number of standard deviations above the mean used for the background level when ``Auto threshold`` is not selected. Only shown with the extra options. The default is 3.
+
+   * - Min peak size
+     - The minimum number of pixels in a peak above the highest saddle. Only shown with the extra options. The default is 15.
+
+   * - Min peak height
+     - The minimum height of a peak above the highest saddle (in the units of the filtered image). Only shown with the extra options. The default is 5.
+
+   * - Max peaks
+     - The maximum number of spots in each region. The spots with the highest maxima are used. Only shown with the extra options. The default is 33000.
+
+   * - Circularity limit
+     - The minimum circularity of a spot. Use zero to disable the filter. The default is 0.7.
+
+   * - Max distance
+     - The maximum distance (in pixels) between two spots for the pair to be included in the distance analysis. The y and z distances are scaled by the pixel height and z-slice spacing relative to the pixel width (see above). Use zero for no limit. The default is 0.
+
+   * - Process frames
+     - Process all the frames of the image. Otherwise process the current frame. Only shown if the image has more than one frame.
+
+   * - Dual channel
+     - Detect spots in two channels and compute the distances between the spots in the two channels. Only shown if the image has more than one channel. A second dialog is shown to select ``Channel 1`` and ``Channel 2``. The two channels must be different, otherwise an error is shown.
+
+   * - Show projection
+     - Show a maximum intensity z-projection of the analysed channel(s) with the spots as an overlay (see below).
+
+   * - Show distances
+     - Show the distance for each pair of spots in the ``Spot Distance Distances`` table.
+
+   * - Show overlay
+     - Add the outline of the spots to the image overlay:
+
+       * ``None``: Do not show an overlay.
+       * ``Slice position``: Show each spot on the z-slice of the spot centre.
+       * ``Entire stack``: Show each spot on all the z-slices of the spot channel and frame. This is only possible if the image is displayed as a hyperstack; otherwise each spot is shown on the z-slice of the spot centre.
+
+       The default is ``Entire stack``.
+
+   * - Region counter
+     - The number of the first region when using an area ROI. The counter is increased by 1 for each region found in the ROI and the new value is shown in the dialog on the next run. The counter must be in the range 1 to 65535; if the ROI has too many regions for the remaining numbers then an error is shown. Not used when a mask image is selected. The default is 1.
+
+   * - Show spot image (debugging)
+     - Show the cropped and rescaled filtered image (``Spot Distance Pixels``; ``Spot Distance Pixels B`` for the second channel) and the region mask (``Spot Distance Region``; ``Spot Distance Region B`` for the second channel) used to find the spots. The images are replaced for each region so show the last region processed. The image rescaling factor is written to the ``ImageJ`` log. Only shown with the extra options.
+
+   * - Pixel distances
+     - Report the coordinates and distances in pixels.
+
+   * - Calibrated distances
+     - Report the coordinates and distances in calibrated units. If neither ``Pixel distances`` or ``Calibrated distances`` is selected then ``Calibrated distances`` is used.
+
+   * - Track objects
+     - Assign an ID to each spot to follow the spots through the frames. The IDs are assigned separately for each region and channel. The spots in the first frame are numbered from 1. In the next frame each spot is matched to the closest spot from the same region in the previous frame and uses the same ID; spots that are not matched are given a new ID. An ID is not reused if the spot is lost. The spots are listed in order of the ID and the ID is shown in the ``Spot Distance Positions`` table.
+
+The settings are stored in memory and used as the defaults the next time the plugin is run.
+
+The plugin can also be run using the ``Spot Distance Tools`` toolset (see :ref:`installation:Toolsets`). This adds buttons to the ``ImageJ`` toolbar to:
+
+* Run the plugin.
+* Run the plugin showing the extra options.
+* Repeat the last analysis on the current image using the same parameters. No dialog is shown. The ``Region counter`` continues from the last run.
+* Undo the last analysis. This removes the rows added by the last run from the result tables.
+
+.. index:: Spot Distance Positions Table
+
+Positions Table
+~~~~~~~~~~~~~~~
+
+The spots are added to the ``Spot Distance Positions`` table. The table contains a row for each spot that passes the circularity filter. The spots for each region are listed in order of x, then y, then z (or by the ID if using ``Track objects``). An empty row is added at the end of each run. The table has the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title.
+
+   * - Units
+     - The units of the calibrated values taken from the image calibration (``pixel`` for an uncalibrated image). If the y or z units are different from the x units then the x, y and z units are listed. This is ``pixels`` if ``Calibrated distances`` is not selected.
+
+   * - Frame
+     - The frame.
+
+   * - Channel
+     - The channel of the spot.
+
+   * - Region
+     - The region number. This is the mask pixel value, or the region counter value if using an area ROI.
+
+   * - ID
+     - The ID of the spot. Only shown if ``Track objects`` is selected.
+
+   * - x (px); y (px); z (px)
+     - The spot position in pixels. The z position is the slice index starting from 0. Only shown if ``Pixel distances`` is selected.
+
+   * - X; Y; Z
+     - The spot position in calibrated units (the pixel position multiplied by the pixel width, height and depth). Only shown if ``Calibrated distances`` is selected.
+
+   * - Circularity
+     - The circularity of the spot.
+
+.. index:: Spot Distance Summary Table
+
+Summary Table
+~~~~~~~~~~~~~
+
+The ``Spot Distance Summary`` table contains a row for each region in each frame with the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title.
+
+   * - Units
+     - The units of the calibrated values (see the ``Spot Distance Positions`` table).
+
+   * - Frame
+     - The frame.
+
+   * - Channel
+     - The channel. For dual channel analysis this is the two channels, e.g. ``1 + 2``.
+
+   * - Region
+     - The region number.
+
+   * - Spots
+     - The number of spots in the region. For dual channel analysis this is the total of the spots in both channels.
+
+   * - Min (px); Max (px); Av (px)
+     - The minimum, maximum and average distance (in pixels) between pairs of spots. Only pairs within the ``Max distance`` are included. Only shown if ``Pixel distances`` is selected.
+
+   * - Min; Max; Av
+     - The minimum, maximum and average distance in the x calibration unit. Only shown if ``Calibrated distances`` is selected.
+
+If no distances can be computed (fewer than 2 spots; for dual channel analysis no spots in one of the channels; or no pairs within the ``Max distance``) then the distances are zero.
+
+.. index:: Spot Distance Distances Table
+
+Distances Table
+~~~~~~~~~~~~~~~
+
+If ``Show distances`` is selected then the distance for each pair of spots within the ``Max distance`` is added to the ``Spot Distance Distances`` table with the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - Image
+     - The image title.
+
+   * - Units
+     - The units of the calibrated values (see the ``Spot Distance Positions`` table).
+
+   * - Frame
+     - The frame.
+
+   * - Channel
+     - The channel. For dual channel analysis this is the two channels, e.g. ``1 + 2``.
+
+   * - Region
+     - The region number.
+
+   * - X1 (px); Y1 (px); Z1 (px)
+     - The position of the first spot in pixels. For dual channel analysis this is the spot from the first channel. Only shown if ``Pixel distances`` is selected.
+
+   * - X2 (px); Y2 (px); Z2 (px)
+     - The position of the second spot in pixels. For dual channel analysis this is the spot from the second channel. Only shown if ``Pixel distances`` is selected.
+
+   * - Distance (px)
+     - The distance between the spots in pixels. Only shown if ``Pixel distances`` is selected.
+
+   * - X1; Y1; Z1
+     - The position of the first spot in calibrated units. Only shown if ``Calibrated distances`` is selected.
+
+   * - X2; Y2; Z2
+     - The position of the second spot in calibrated units. Only shown if ``Calibrated distances`` is selected.
+
+   * - Distance
+     - The distance between the spots in the x calibration unit. Only shown if ``Calibrated distances`` is selected.
+
+The tables are reused by subsequent runs of the plugin if they are open and the columns are the same; changing the ``Pixel distances`` or ``Calibrated distances`` options creates new tables. New tables are positioned below the previous table: ``Summary`` below ``Positions``, and ``Distances`` below ``Summary``.
+
+.. index:: Spot Distance Output
+
+Output
+~~~~~~
+
+If ``Show overlay`` is not ``None`` then the existing overlay on the image is removed and the outline of each spot (the peak pixels above the saddle in the z-slice of the spot) is added to the overlay. Spots from the first channel are filled magenta; spots from the second channel in dual channel analysis are filled yellow. Each spot is positioned on the channel and frame of the analysis.
+
+If ``Show projection`` is selected then an image named ``<image title> Spots Projection`` is shown. If the image is already open then it is replaced. The image contains the maximum intensity z-projection of the unfiltered pixels of each analysed frame; for dual channel analysis the image has two channels. The spot outlines are added to the overlay of the projection (on the matching channel and frame).
+
+The input image pixels are not modified.
 
 .. index:: ! Spot Pairs
 
@@ -4588,6 +4842,175 @@ Foci Neighbour Analysis
 -----------------------
 
 Identifies foci in a primary channel and computes summary statistics of the neighbouring foci in secondary channels.
+
+The plugin runs on the current image which must be a multi-channel 8-bit, 16-bit or 32-bit greyscale image. If the image has a single channel the error ``Multiple channels required`` is shown; an RGB image shows the error ``Greyscale image required``.
+
+The foci are identified in each channel using the :ref:`findfoci_plugins:FindFoci` algorithm. Each channel has its own ``FindFoci`` settings. If the image has more than one z-slice then the foci are identified in 3D using the z-stack of the channel. Only one frame is analysed: this is the frame that was current when the plugin was started.
+
+The plugin performs the following steps:
+
+#. Optionally create an input mask (see ``Input mask``). The mask is passed to ``FindFoci`` for all the channels.
+#. Run ``FindFoci`` on the primary channel and on each secondary channel. If ``FindFoci`` fails for a channel (for example the search capacity is exceeded) then a warning is written to the ``ImageJ`` log and the analysis stops.
+#. Convert the coordinates of each focus to calibrated units using the image pixel width, height and depth. The z coordinate is the zero-based slice index.
+#. For each secondary channel, assign each secondary focus to the nearest primary focus if the 3D distance between them is less than the ``Distance``. Each secondary focus is assigned to at most one primary focus; a primary focus can have many neighbours. Secondary foci with no primary focus within the ``Distance`` are ignored.
+#. For each primary focus, count the neighbours from each secondary channel and sum their size and intensity. The results are shown in a table (see the ``Results Table`` section below).
+#. Optionally label the primary foci on the image using a point ROI, and overlay the foci masks on the image (see the ``Output`` section below).
+
+Progress messages are written to the ``ImageJ`` log. These include the number of foci found in each channel and a line for each matched secondary focus in the format ``Ch c: x,y,z (size) -> x,y,z (size)`` giving the secondary focus and the primary focus it was assigned to (z is the zero-based slice index).
+
+.. index:: Foci Neighbour Analysis Plugin Interface
+
+Plugin Interface
+~~~~~~~~~~~~~~~~
+
+The plugin first shows a dialog to select the channels:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Primary Channel
+     - The channel used to identify the primary foci. If the remembered channel is not in the image then channel 1 is selected.
+
+   * - Secondary Channel N
+     - A checkbox for each channel of the image. Select the channels used to identify the neighbouring foci. The primary channel is ignored if selected. If no secondary channels are selected then the error ``Require at least 1 secondary channel`` is shown.
+
+The analysis options are then shown in a non-blocking dialog. This allows the image to be manipulated while the dialog is open, for example to change the displayed channel or z-slice. The dialog supports a ``Preview`` checkbox to run the analysis when the options are changed.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Distance
+     - The maximum distance between a secondary focus and a primary focus for the foci to be neighbours. Foci are neighbours if the distance is strictly less than this value. The distance is in the calibrated units of the image (shown next to the field), or pixels (``px``) if the image is not calibrated. The distance is computed in 3D using the pixel width, height and depth.
+
+       The distance must be above zero; otherwise the ``OK`` button and ``Preview`` checkbox are disabled.
+
+   * - Results directory
+     - The directory used to save the results table. The ``...`` button opens a directory chooser. If the directory is empty or does not exist the results are not saved (see the ``Results Table`` section below).
+
+   * - Table digits
+     - The number of significant digits used for the intensity values in the results table. The range is 2 to 10.
+
+   * - Label option
+     - Label the primary foci on the image using a point ROI:
+
+       * ``None``: Do not label the foci.
+       * ``Neighbours``: Label the primary foci that have at least one neighbour in any secondary channel.
+       * ``All``: Label all the primary foci.
+
+   * - Overlay mask channel N
+     - Add the ``FindFoci`` mask of the foci for the channel to the image overlay. A checkbox is shown for the primary channel and each secondary channel. The mask is created using the ``Show mask`` option of the ``FindFoci`` settings for the channel; if this is ``None`` then no mask is shown for the channel.
+
+   * - Opacity
+     - The opacity of the mask overlay. The range is 0.1 to 1.
+
+   * - FindFoci Channel N
+     - A button for the primary channel and each secondary channel. Opens a dialog to configure the ``FindFoci`` settings for the channel (see below).
+
+   * - Input mask
+     - A mask used to restrict the region analysed by ``FindFoci``:
+
+       * ``None``: No mask.
+       * ``Image``: Use an open image as the mask.
+       * ``Channel``: Create a mask by thresholding a channel of the image.
+
+       The ``...`` button opens the ``Mask options`` dialog to configure the selected mask (see below). The button has no effect when the option is ``None``.
+
+The ``FindFoci Channel N`` button opens the ``Foci Options: Channel N`` dialog. This contains a subset of the parameters of the :ref:`findfoci_plugins:FindFoci` plugin (see :numref:`{number}: {name} <findfoci_plugin_interface>`):
+
+* Background: ``Background method``; ``Background parameter``; ``Auto threshold``; ``Statistics mode``.
+* Search: ``Search method``; ``Search parameter``.
+* Merge: ``Minimum peak height``; ``Peak parameter``; ``Minimum size``; ``Minimum above saddle``; ``Connected above saddle``.
+* Results: ``Sort method``; ``Maximum peaks``; ``Show mask``; ``Fraction parameter``; ``Remove edge maxima``; ``Maximum size``.
+* Advanced: ``Gaussian blur``; ``Centre method``; ``Centre parameter``.
+
+The dialog has the buttons ``OK``, ``Reset`` and ``Cancel``. ``OK`` stores the settings for the channel; ``Reset`` restores the default settings for the channel; ``Cancel`` leaves the settings unchanged. The default settings are the default ``FindFoci`` settings with the exception of ``Minimum size`` of 50, ``Maximum peaks`` of 10000, and ``Show mask`` of ``Peaks above saddle``. The ``Sort method`` defines the order of the foci and their ID numbers. The ``Show mask`` and ``Fraction parameter`` only affect the mask overlay.
+
+The ``Mask options`` dialog contains the following parameters:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+
+   * - Mask image
+     - The image to use as the mask. Only shown if ``Input mask`` is ``Image``. Any non-zero pixel is included in the analysis. The list contains ``(None)`` and the open images that have the same width and height as the input image and either 1 z-slice or the same number of z-slices as the input image. The input image and images with a title ending in ``FindFoci`` are not listed. If the selected image is not open when the analysis is run then no mask is used.
+
+   * - Mask channel
+     - The channel of the input image used to create the mask. Only shown if ``Input mask`` is ``Channel``.
+
+   * - Threshold method
+     - The method used to threshold the ``Mask channel``. Only shown if ``Input mask`` is ``Channel``. The threshold is computed from the histogram of all the pixels in the z-stack of the mask channel for the analysed frame. Pixels with a value above the threshold are included in the mask. The default is ``Otsu``.
+
+If the image has an area ROI then ``FindFoci`` only analyses the pixels inside the ROI. The point ROI used to label the foci replaces the area ROI on the image but the area ROI is still used for the analysis. A new area ROI drawn on the image is used for the next analysis.
+
+The ``FindFoci`` results for each channel are cached while the dialog is open. The results for a channel are only recomputed when the ``FindFoci`` settings for the channel are changed, or when the input mask or the area ROI are changed. A new cache is used each time the plugin is run.
+
+All the settings are saved in the ``ImageJ`` preferences. The ``FindFoci`` settings are stored for each channel number and are used for that channel on any image. The analysis settings are saved when the dialog is closed using ``OK``. The ``FindFoci`` settings for a channel are saved when the ``Foci Options`` dialog is closed using ``OK`` or ``Reset``.
+
+The ``Mask options`` can be recorded and set in a macro. The ``FindFoci`` settings for each analysed channel are recorded using a macro option named ``findfoci_channel_`` plus the channel number, e.g. ``findfoci_channel_2``. The value lists every ``FindFoci`` setting as ``name=value;`` pairs; any setting that is missing or cannot be read uses the default value. The value is easiest to create by recording a run of the plugin. If the option for a channel is not present in a macro then the saved settings for the channel are used. Settings set by a macro are not saved to the ``ImageJ`` preferences.
+
+.. index:: Foci Neighbour Analysis Results Table
+
+Results Table
+~~~~~~~~~~~~~
+
+The results are shown in the ``Foci Neighbour Analysis Results`` table. The table is cleared on each analysis (including each preview) and contains a row for each primary focus with the following columns:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Result
+     - Description
+
+   * - ChP ID
+     - The ID of the primary focus, where ``P`` is the primary channel. The foci are numbered from 1 in the order defined by the ``FindFoci`` ``Sort method``.
+
+   * - X; Y
+     - The coordinates of the primary focus maximum (in pixels).
+
+   * - Z
+     - The z-slice of the primary focus maximum. This is the zero-based slice index (the first slice is 0).
+
+   * - Size
+     - The number of pixels in the primary focus.
+
+   * - Intensity
+     - The total intensity of the primary focus. This is the sum of the pixel values of the focus in the original image (i.e. not using the ``Gaussian blur``).
+
+   * - ChN N
+     - The number of foci in secondary channel ``N`` assigned to the primary focus. A set of three columns is added for each secondary channel.
+
+   * - ChN Size
+     - The sum of the number of pixels of the foci in secondary channel ``N`` assigned to the primary focus.
+
+   * - ChN Intensity
+     - The sum of the total intensity of the foci in secondary channel ``N`` assigned to the primary focus.
+
+The intensity values are rounded to the number of significant digits set by the ``Table digits``.
+
+When the plugin finishes, if the ``Results directory`` is set to an existing directory then the table is saved as a comma-delimited file named using the image title with the suffix ``.csv``, e.g. ``image.tif.csv``. Any existing file is overwritten. The path of the saved file is written to the ``ImageJ`` log.
+
+.. index:: Foci Neighbour Analysis Output
+
+Output
+~~~~~~
+
+If the ``Label option`` is not ``None`` then the image ROI is replaced with a point ROI marking the XY position of the selected primary foci. If there is more than one point then each point is labelled with the ``ChP ID`` of the focus. The point ROI is not associated with a z-slice and is shown on all slices. If the ``Label option`` is ``None`` then the area ROI used for the analysis (if any) is shown.
+
+If any ``Overlay mask channel`` is selected then the image overlay is replaced with the masks of the foci from the selected channels. Each mask contains all the non-zero pixels of the ``FindFoci`` mask for the channel. The mask pixels are coloured using the colour of the channel lookup table (LUT) at the maximum value. If the image is not a composite image then the default channel colours of a composite image are used: red, green, blue, white, cyan, magenta and yellow. Where the masks of different channels overlap the colours are added (each RGB component is limited to 255). Pixels outside the masks are transparent; the mask pixels use the ``Opacity``. The overlay contains an image for each z-slice of the analysed frame and is shown for all channels. If no channel has a mask then the mask overlay from a previous analysis is removed.
+
+The image pixels are not modified.
 
 
 .. _binary_scoring_statistics:
