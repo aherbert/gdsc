@@ -86,14 +86,6 @@
     <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
   </Match>
   <Match>
-    <Class name="uk.ac.sussex.gdsc.ij.ij.plugin.filter.ParticleAnalyzerCopy" />
-    <Or>
-      <Method name="showDialog" />
-      <Method name="eraseOutsideRoi" />
-    </Or>
-    <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
-  </Match>
-  <Match>
     <Class name="uk.ac.sussex.gdsc.ij.threshold.MultiOtsuThreshold_PlugIn" />
     <Method name="findMaxSigma" />
     <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
@@ -107,10 +99,9 @@
     <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
   </Match>
 
-  <!-- A copy of an ImageJ class that has not been fixed for thread safety. -->
+  <!-- A copy of an ImageJ class. -->
   <Match>
-    <Class name="uk.ac.sussex.gdsc.ij.ij.plugin.filter.ParticleAnalyzerCopy" />
-    <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD" />
+    <Class name="uk.ac.sussex.gdsc.ij.ext.plugin.filter.ParticleAnalyzerCopy" />
   </Match>
 
   <Match>
@@ -125,7 +116,7 @@
   </Match>
 
   <Match>
-    <Class name="~uk.ac.sussex.gdsc.foci.FindFoci.*Results" />
+    <Class name="~uk\.ac\.sussex\.gdsc\.ij\.foci\.FindFoci.*Results" />
     <!-- Allow direct storage of mutable results. -->
     <Bug pattern="EI_EXPOSE_REP2" />
   </Match>
