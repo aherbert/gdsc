@@ -224,6 +224,15 @@ Major release of GDSC ImageJ Plugins.
   :ref:`findfoci_plugins:FindFoci Match Calculator` plugins select a different default for each
   input when only one of the previous inputs is available. Previously both inputs could default to
   the same image or results.
+* The :ref:`findfoci_plugins:Mask Analyze Particles...` plugin threshold for an image without a
+  threshold uses the minimum and maximum of all the non-zero pixels. Previously the first pixel
+  was ignored, and the maximum was invalid if each non-zero pixel was lower than the previous
+  non-zero pixels (e.g. a single non-zero pixel).
+* The :ref:`findfoci_plugins:Mask Analyze Particles...` plugin restores the image threshold, the
+  measurement redirect image and closes the histogram file if the ``Analyze Particles`` dialog is
+  cancelled.
+* The :ref:`findfoci_plugins:Mask Analyze Particles...` plugin stops if the histogram file chooser
+  is cancelled. Previously this caused an error when creating a particle summary.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

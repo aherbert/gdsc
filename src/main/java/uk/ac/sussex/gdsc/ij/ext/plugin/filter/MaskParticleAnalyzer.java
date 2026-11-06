@@ -214,13 +214,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     final int flags = FINAL_PROCESSING;
     if (imp != null) {
       if ("final".equals(arg)) {
-        if (noThreshold) {
-          imp.getProcessor().resetThreshold();
-          imp.setDisplayRange(dmin, dmax);
-          imp.updateAndDraw();
-        }
-        Analyzer.setRedirectImage(restoreRedirectImp);
-        close(out);
+        restore(imp);
         if (settings.particleSummary) {
           createSummary();
         }
@@ -272,10 +266,13 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       }
       settings.saveHistogram = gd.getNextBoolean();
       if (settings.saveHistogram) {
-        settings.histogramFile = ImageJUtils.getFilename("Histogram_file", settings.histogramFile);
-        if (settings.histogramFile != null) {
-          settings.histogramFile = FileUtils.addExtensionIfAbsent(settings.histogramFile, ".txt");
+        final String filename =
+            ImageJUtils.getFilename("Histogram_file", settings.histogramFile);
+        if (filename == null) {
+          // Cancelled
+          return DONE;
         }
+        settings.histogramFile = FileUtils.addExtensionIfAbsent(filename, ".txt");
       }
       settings.save();
       if (settings.saveHistogram && TextUtils.isNotEmpty(settings.histogramFile)) {
@@ -308,26 +305,61 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
 
       if (noThreshold) {
         cache(imp.getProcessor());
-        float min = Float.POSITIVE_INFINITY;
-        float max = Float.NEGATIVE_INFINITY;
-        for (int i = 1; i < image.length; i++) {
-          if (image[i] != 0) {
-            if (min > image[i]) {
-              min = image[i];
-            } else if (max < image[i]) {
-              max = image[i];
-            }
-          }
-        }
-        if (min == Float.POSITIVE_INFINITY) {
+        final float[] range = findNonZeroRange(image);
+        if (range == null) {
           IJ.error("The image has no values");
+          restore(imp);
           return DONE;
         }
-        imp.getProcessor().setThreshold(min, max, ImageProcessor.NO_LUT_UPDATE);
+        imp.getProcessor().setThreshold(range[0], range[1], ImageProcessor.NO_LUT_UPDATE);
       }
     }
 
-    return super.setup(arg, imp) + flags;
+    final int superFlags = super.setup(arg, imp);
+    if ((superFlags & DONE) != 0) {
+      // The final processing is not called so restore the image and analyzer state
+      if (imp != null) {
+        restore(imp);
+      }
+      return superFlags;
+    }
+    return superFlags + flags;
+  }
+
+  /**
+   * Restore the image threshold and display range, and the analyzer redirect image. Close the
+   * histogram output.
+   *
+   * @param imp the image
+   */
+  private void restore(ImagePlus imp) {
+    if (noThreshold) {
+      imp.getProcessor().resetThreshold();
+      imp.setDisplayRange(dmin, dmax);
+      imp.updateAndDraw();
+    }
+    Analyzer.setRedirectImage(restoreRedirectImp);
+    close(out);
+    out = null;
+  }
+
+  /**
+   * Find the minimum and maximum of the non-zero values. NaN values are ignored.
+   *
+   * @param values the values
+   * @return the range [min, max] (or null if there are no non-zero values)
+   */
+  static float[] findNonZeroRange(float[] values) {
+    float min = Float.POSITIVE_INFINITY;
+    float max = Float.NEGATIVE_INFINITY;
+    for (final float v : values) {
+      // Ignore zero and NaN
+      if (Math.abs(v) > 0) {
+        min = Math.min(min, v);
+        max = Math.max(max, v);
+      }
+    }
+    return min <= max ? new float[] {min, max} : null;
   }
 
   private static BufferedWriter createOutput(String filename) {
