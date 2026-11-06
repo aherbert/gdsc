@@ -242,6 +242,9 @@ Major release of GDSC ImageJ Plugins.
   zero-valued background is not analysed when the threshold is set automatically. When holes are
   included and there is no redirect image, the holes are measured using their pixel values
   (previously zero). The analysis no longer processes the entire image for each particle.
+* The :ref:`findfoci_plugins:Mask Analyze Particles...` plugin particle summary uses only the
+  particles from the analysis. Previously all the rows in the ``Results`` table were used, including
+  earlier analyses, and the summary histogram file did not match the summary table.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

@@ -45,7 +45,6 @@ import ij.text.TextPanel;
 import ij.text.TextWindow;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.doubles.DoubleSortedSet;
 import java.awt.Frame;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -86,6 +85,8 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
 
   private boolean useGetPixelValue;
   private float value;
+  /** The first row of the results table for the analysis. */
+  private int firstRow = -1;
   private boolean noThreshold;
   private double dmin;
   private double dmax;
@@ -525,6 +526,9 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
   @Override
   protected void saveResults(ImageStatistics stats, Roi roi) {
     analyzer.saveResults(stats, roi);
+    if (firstRow < 0) {
+      firstRow = rt.getCounter() - 1;
+    }
     if (recordStarts) {
       rt.addValue("XStart", stats.xstart);
       rt.addValue("YStart", stats.ystart);
@@ -591,13 +595,82 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
   }
 
   private void createSummary() {
-    final int nRows = rt.getCounter();
-    final String label = (nRows > 0) ? rt.getLabel(0) : null;
+    // Summarise the particles from this analysis
+    final ResultsTable summary =
+        createSummaryTable(rt, firstRow < 0 ? rt.getCounter() : firstRow);
 
-    // The second last column is the particle value
-    // The last column is the number of pixels
-    final double[] particles = rt.getColumnAsDoubles(rt.getLastColumn() - 1);
-    final double[] nPixels = rt.getColumnAsDoubles(rt.getLastColumn());
+
+    final String windowTitle = "Particle Summary";
+
+    // This method does not work on my JRE as closing a results window throws an exception
+    // leaving the frame still in memory but not visible
+    // summary.show(windowTitle)
+
+    TextWindow win = null;
+    final String tableHeadings = summary.getColumnHeadings();
+    boolean newWindow = false;
+
+    // Find the results table if visible
+    for (final Frame frame : WindowManager.getNonImageWindows()) {
+      if (frame instanceof TextWindow && frame.isVisible()
+          && windowTitle.equals(frame.getTitle())) {
+        win = (TextWindow) frame;
+        break;
+      }
+    }
+    if (win == null) {
+      // Create a new window matching the size of the "Results" table
+      final int w = (int) Prefs.get(TextWindow.WIDTH_KEY, 800);
+      final int h = (int) Prefs.get(TextWindow.HEIGHT_KEY, 250);
+      win = new TextWindow(windowTitle, tableHeadings, "", w, h);
+      newWindow = true;
+    }
+    final TextPanel tp = win.getTextPanel();
+    if (!newWindow) {
+      // Setting columns headings forces the table to be reset
+      tp.setColumnHeadings(tableHeadings);
+    }
+    tp.setResultsTable(summary);
+    final int n = summary.getCounter();
+    if (n > 0) {
+      if (tp.getLineCount() > 0) {
+        tp.clear();
+      }
+      final StringBuilder sb = new StringBuilder(n * tableHeadings.length());
+      for (int i = 0; i < n; i++) {
+        sb.append(summary.getRowAsString(i)).append("\n");
+      }
+      // Adding all the data in one go does not auto-adjust column width
+      tp.append(sb.toString());
+    }
+    // Forces auto column width calculation
+    tp.scrollToTop();
+
+    // Optionally save summary histogram to file
+    if (settings.saveHistogram && n > 0) {
+      saveSummaryHistogram(summary.getColumn("Particle Value"));
+    }
+  }
+
+  /**
+   * Creates a summary table of the particles in the results table from the start row. Particles
+   * with the same value are combined.
+   *
+   * @param rt the results table
+   * @param start the start row
+   * @return the summary table
+   */
+  static ResultsTable createSummaryTable(ResultsTable rt, int start) {
+    final ResultsTable summary = new ResultsTable();
+    summary.setDefaultHeadings();
+    final int nRows = rt.getCounter();
+    if (start >= nRows) {
+      return summary;
+    }
+    final String label = rt.getLabel(start);
+
+    final double[] particles = rt.getColumn("Particle Value");
+    final double[] nPixels = rt.getColumn("Pixels");
 
     // Summarise only certain columns:
     final int[] toProcess = new int[] {ResultsTable.AREA, ResultsTable.MEAN, ResultsTable.MIN,
@@ -625,7 +698,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     final Double2ObjectLinkedOpenHashMap<double[]> map = new Double2ObjectLinkedOpenHashMap<>();
 
     // Now summarise
-    for (int r = 0; r < nRows; r++) {
+    for (int r = start; r < nRows; r++) {
       final double particle = particles[r];
       final double n = nPixels[r];
 
@@ -694,10 +767,6 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     }
 
     // Produce summary
-    final ResultsTable summary = new ResultsTable();
-    if (summary.getColumnHeading(ResultsTable.LAST_HEADING) == null) {
-      summary.setDefaultHeadings();
-    }
     map.double2ObjectEntrySet().fastForEach(e -> {
       final double particle = e.getDoubleKey();
       final double[] data = e.getValue();
@@ -746,71 +815,22 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       summary.addValue("Particles", data[9]);
     });
 
-    final String windowTitle = "Particle Summary";
-
-    // This method does not work on my JRE as closing a results window throws an exception
-    // leaving the frame still in memory but not visible
-    // summary.show(windowTitle)
-
-    TextWindow win = null;
-    final String tableHeadings = summary.getColumnHeadings();
-    boolean newWindow = false;
-
-    // Find the results table if visible
-    for (final Frame frame : WindowManager.getNonImageWindows()) {
-      if (frame instanceof TextWindow && frame.isVisible()
-          && windowTitle.equals(frame.getTitle())) {
-        win = (TextWindow) frame;
-        break;
-      }
-    }
-    if (win == null) {
-      // Create a new window matching the size of the "Results" table
-      final int w = (int) Prefs.get(TextWindow.WIDTH_KEY, 800);
-      final int h = (int) Prefs.get(TextWindow.HEIGHT_KEY, 250);
-      win = new TextWindow(windowTitle, tableHeadings, "", w, h);
-      newWindow = true;
-    }
-    final TextPanel tp = win.getTextPanel();
-    if (!newWindow) {
-      // Setting columns headings forces the table to be reset
-      tp.setColumnHeadings(tableHeadings);
-    }
-    tp.setResultsTable(summary);
-    final int n = summary.getCounter();
-    if (n > 0) {
-      if (tp.getLineCount() > 0) {
-        tp.clear();
-      }
-      final StringBuilder sb = new StringBuilder(n * tableHeadings.length());
-      for (int i = 0; i < n; i++) {
-        sb.append(summary.getRowAsString(i)).append("\n");
-      }
-      // Adding all the data in one go does not auto-adjust column width
-      tp.append(sb.toString());
-    }
-    // Forces auto column width calculation
-    tp.scrollToTop();
-
-    // Optionally save summary histogram to file
-    if (settings.saveHistogram) {
-      saveSummaryHistogram(map.keySet());
-    }
+    return summary;
   }
 
   @SuppressWarnings("resource")
-  private void saveSummaryHistogram(DoubleSortedSet doubleSortedSet) {
+  private void saveSummaryHistogram(double[] particleValues) {
     if (summaryHistogram.isEmpty()) {
       return;
     }
     final String summaryFilename = createSummaryFilename(settings.histogramFile);
-    final BufferedWriter[] histogramWriter = {createOutput(summaryFilename)};
-    final int[] id = {1};
-    doubleSortedSet.forEach(particleValue -> {
-      histogramWriter[0] = writeHistogram(histogramWriter[0], id[0]++, particleValue,
-          summaryHistogram.get(particleValue));
-    });
-    close(histogramWriter[0]);
+    BufferedWriter histogramWriter = createOutput(summaryFilename);
+    int id = 1;
+    for (final double particleValue : particleValues) {
+      histogramWriter =
+          writeHistogram(histogramWriter, id++, particleValue, summaryHistogram.get(particleValue));
+    }
+    close(histogramWriter);
   }
 
   private static String createSummaryFilename(String filename) {

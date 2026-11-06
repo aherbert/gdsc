@@ -120,6 +120,34 @@ class MaskParticleAnalyzerTest {
     assertParticles(new ImagePlus("negative", fp), new double[] {-3, 2, 7}, new double[] {4, 3, 1});
   }
 
+  @Test
+  void testCreateSummaryTable() {
+    final ResultsTable rt = new ResultsTable();
+    // An earlier analysis
+    addRow(rt, "old", 1, 7);
+    addRow(rt, "old", 3, 2);
+    // The current analysis
+    addRow(rt, "a", 1, 3);
+    addRow(rt, "a", 2, 4);
+    addRow(rt, "b", 1, 5);
+    final ResultsTable summary = MaskParticleAnalyzer.createSummaryTable(rt, 2);
+    Assertions.assertEquals(2, summary.getCounter());
+    Assertions.assertEquals("a", summary.getLabel(0));
+    Assertions.assertArrayEquals(new double[] {1, 2}, summary.getColumn("Particle Value"));
+    Assertions.assertArrayEquals(new double[] {8, 4}, summary.getColumn("Pixels"));
+    Assertions.assertArrayEquals(new double[] {8, 4}, summary.getColumn("Area"));
+    Assertions.assertArrayEquals(new double[] {2, 1}, summary.getColumn("Particles"));
+    Assertions.assertEquals(0, MaskParticleAnalyzer.createSummaryTable(rt, 5).getCounter());
+  }
+
+  private static void addRow(ResultsTable rt, String label, double value, double pixels) {
+    rt.incrementCounter();
+    rt.addLabel(label);
+    rt.addValue(ResultsTable.AREA, pixels);
+    rt.addValue("Particle Value", value);
+    rt.addValue("Pixels", pixels);
+  }
+
   private static MaskParticleAnalyzer createAnalyzer() {
     return new MaskParticleAnalyzer(0, Measurements.AREA, new ResultsTable());
   }
