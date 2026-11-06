@@ -26,6 +26,7 @@ package uk.ac.sussex.gdsc.ij.ext.plugin.filter;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.Macro;
 import ij.Prefs;
 import ij.WindowManager;
@@ -84,7 +85,6 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
   private Double2ObjectOpenHashMap<int[]> summaryHistogram;
 
   private boolean useGetPixelValue;
-  private float[] image;
   private float value;
   private boolean noThreshold;
   private double dmin;
@@ -173,6 +173,25 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     void save() {
       lastSettings.set(this);
     }
+  }
+
+  /**
+   * Default constructor.
+   */
+  public MaskParticleAnalyzer() {
+    // Do nothing
+  }
+
+  /**
+   * Create an instance to analyse particles of any size with default settings.
+   *
+   * @param options the options
+   * @param measurements the measurements
+   * @param rt the results table
+   */
+  MaskParticleAnalyzer(int options, int measurements, ResultsTable rt) {
+    super(options, measurements, rt, 0, Double.POSITIVE_INFINITY);
+    settings = new Settings();
   }
 
   /**
@@ -301,17 +320,11 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       Analyzer.setRedirectImage(redirectImp);
 
       useGetPixelValue = imp.getProcessor() instanceof ColorProcessor;
-      image = new float[imp.getWidth() * imp.getHeight()];
 
-      if (noThreshold) {
-        cache(imp.getProcessor());
-        final float[] range = findNonZeroRange(image);
-        if (range == null) {
-          IJ.error("The image has no values");
-          restore(imp);
-          return DONE;
-        }
-        imp.getProcessor().setThreshold(range[0], range[1], ImageProcessor.NO_LUT_UPDATE);
+      if (noThreshold && !setNonZeroThreshold(imp)) {
+        IJ.error("The image has no values");
+        restore(imp);
+        return DONE;
       }
     }
 
@@ -341,6 +354,36 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     Analyzer.setRedirectImage(restoreRedirectImp);
     close(out);
     out = null;
+  }
+
+  /**
+   * Sets the threshold of the image using the minimum and maximum of the non-zero pixels in all the
+   * slices. Pixels with a value of zero are not analysed as particles.
+   *
+   * @param imp the image
+   * @return true if successful; false if there are no non-zero pixels
+   */
+  boolean setNonZeroThreshold(ImagePlus imp) {
+    final ImageStack stack = imp.getImageStack();
+    final boolean getPixelValue = imp.getProcessor() instanceof ColorProcessor;
+    final float[] image = new float[imp.getWidth() * imp.getHeight()];
+    float[] range = null;
+    for (int n = 1; n <= stack.getSize(); n++) {
+      cache(stack.getProcessor(n), getPixelValue, image);
+      final float[] sliceRange = findNonZeroRange(image);
+      if (range == null) {
+        range = sliceRange;
+      } else if (sliceRange != null) {
+        range[0] = Math.min(range[0], sliceRange[0]);
+        range[1] = Math.max(range[1], sliceRange[1]);
+      }
+    }
+    if (range == null) {
+      return false;
+    }
+    noThreshold = true;
+    imp.getProcessor().setThreshold(range[0], range[1], ImageProcessor.NO_LUT_UPDATE);
+    return true;
   }
 
   /**
@@ -410,42 +453,49 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     }
   }
 
-  private static boolean isNoThreshold(ImagePlus imp) {
-    boolean noThreshold = false;
+  /**
+   * Checks if the image has no threshold and is not an 8-bit binary image. All the slices of a
+   * stack are checked.
+   *
+   * @param imp the image
+   * @return true if the image has no threshold and is not binary
+   */
+  static boolean isNoThreshold(ImagePlus imp) {
     final ImageProcessor ip = imp.getProcessor();
-    final double t1 = ip.getMinThreshold();
-    int imageType;
-    if (ip instanceof ShortProcessor) {
-      imageType = SHORT;
-    } else if (ip instanceof FloatProcessor) {
-      imageType = FLOAT;
-    } else {
-      imageType = BYTE;
+    if (ip.getMinThreshold() != ImageProcessor.NO_THRESHOLD) {
+      return false;
     }
-    if (t1 == ImageProcessor.NO_THRESHOLD) {
-      final ImageStatistics stats = imp.getStatistics();
-      if (imageType != BYTE || (stats.histogram[0] + stats.histogram[255] != stats.pixelCount)) {
-        noThreshold = true;
+    if (ip instanceof ShortProcessor || ip instanceof FloatProcessor) {
+      return true;
+    }
+    if (imp.getStackSize() == 1) {
+      return !isBinary(imp.getStatistics());
+    }
+    final ImageStack stack = imp.getImageStack();
+    final Roi roi = imp.getRoi();
+    for (int n = 1; n <= stack.getSize(); n++) {
+      final ImageProcessor ip2 = stack.getProcessor(n);
+      ip2.setRoi(roi != null && roi.isArea() ? roi : null);
+      if (!isBinary(ip2.getStats())) {
+        return true;
       }
     }
-    return noThreshold;
+    return false;
   }
 
-  private void cache(ImageProcessor ip) {
+  private static boolean isBinary(ImageStatistics stats) {
+    return stats.histogram[0] + stats.histogram[255] == stats.pixelCount;
+  }
+
+  private static void cache(ImageProcessor ip, boolean getPixelValue, float[] image) {
     // Cache a floating-point copy of the image
     final int w = ip.getWidth();
     final int h = ip.getHeight();
     for (int y = 0, i = 0; y < h; y++) {
       for (int x = 0; x < w; x++, i++) {
-        image[i] = (useGetPixelValue) ? ip.getPixelValue(x, y) : ip.getf(i);
+        image[i] = (getPixelValue) ? ip.getPixelValue(x, y) : ip.getf(i);
       }
     }
-  }
-
-  @Override
-  public void run(ImageProcessor ip) {
-    cache(ip);
-    super.run(ip);
   }
 
   @Override
@@ -453,35 +503,19 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     // x,y - the position the particle was first found
     // imp - the particle image
     // ip - the current processor from the particle image
-
-    // We need to perform the same work as the super-class but instead of outlining using the
-    // configured thresholds in the particle image we just use the position's current value.
-    // Do this by zeroing all pixels that are not the same value and then calling the super-class
-    // method.
-    final ImageProcessor originalIp = ip.duplicate();
     value = (useGetPixelValue) ? ip.getPixelValue(x, y) : ip.getf(x, y);
-    for (int i = 0; i < image.length; i++) {
-      if (image[i] != value) {
-        ip.set(i, 0);
-      }
+    if (noThreshold && value == 0) {
+      // The automatic threshold includes zero if there are negative values
+      return;
     }
-
-    final ImageProcessor particleIp = ip.duplicate();
     super.analyzeParticle(x, y, imp, ip);
+  }
 
-    // At the end of processing the analyser fills the image processor to prevent
-    // re-processing this object's pixels.
-    // We must copy back the filled pixel values.
-    final int newValue = ip.get(x, y);
-    for (int i = 0; i < image.length; i++) {
-      // Check if different from the input particle
-      if (ip.get(i) != particleIp.get(i)) {
-        // Change to the reset value
-        originalIp.set(i, newValue);
-      }
-      // Now copy back all the pixels from the original processor
-      ip.set(i, originalIp.get(i));
-    }
+  @Override
+  protected double[] getParticleLevels(int x, int y, ImageProcessor ip) {
+    // Instead of outlining using the configured thresholds use the particle value.
+    // This outlines contiguous pixels with the same value.
+    return new double[] {value, value};
   }
 
   /**

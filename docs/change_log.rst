@@ -233,6 +233,15 @@ Major release of GDSC ImageJ Plugins.
   cancelled.
 * The :ref:`findfoci_plugins:Mask Analyze Particles...` plugin stops if the histogram file chooser
   is cancelled. Previously this caused an error when creating a particle summary.
+* The :ref:`findfoci_plugins:Mask Analyze Particles...` plugin threshold for an image without a
+  threshold uses all the slices of a stack. Previously only the current slice was used and
+  particles with values outside its range were ignored in the other slices.
+* The :ref:`findfoci_plugins:Mask Analyze Particles...` plugin outlines each particle using its
+  pixel value. Previously all other pixels were set to zero, so if the threshold included zero
+  (e.g. a 32-bit image with negative values) particles were joined to the surrounding pixels. The
+  zero-valued background is not analysed when the threshold is set automatically. When holes are
+  included and there is no redirect image, the holes are measured using their pixel values
+  (previously zero). The analysis no longer processes the entire image for each particle.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

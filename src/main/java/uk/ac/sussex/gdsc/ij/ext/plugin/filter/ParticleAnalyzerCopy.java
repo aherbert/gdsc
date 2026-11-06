@@ -1094,6 +1094,19 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
   int counter;
 
   /**
+   * Gets the threshold levels used to trace the outline of the particle at the specified position.
+   * The default is the threshold levels of the image.
+   *
+   * @param x the x
+   * @param y the y
+   * @param ip the image
+   * @return the levels [lower, upper]
+   */
+  protected double[] getParticleLevels(int x, int y, ImageProcessor ip) {
+    return new double[] {level1, level2};
+  }
+
+  /**
    * Analyze particle.
    *
    * @param x the x
@@ -1103,7 +1116,8 @@ public class ParticleAnalyzerCopy implements PlugInFilter, Measurements {
    */
   protected void analyzeParticle(int x, int y, ImagePlus imp, ImageProcessor ip) {
     final ImageProcessor ip2 = redirectIP != null ? redirectIP : ip;
-    wand.autoOutline(x, y, level1, level2, wandMode);
+    final double[] levels = getParticleLevels(x, y, ip);
+    wand.autoOutline(x, y, levels[0], levels[1], wandMode);
     if (wand.npoints == 0) {
       IJ.log("wand error: " + x + " " + y);
       return;
