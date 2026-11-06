@@ -3434,8 +3434,8 @@ The plugin runs on the current image. Each particle is a set of contiguous pixel
 
 The image threshold defines the pixels that can be part of a particle:
 
-* If the image has a threshold (``Image > Adjust > Threshold``) then only pixels within the threshold are used.
-* If the image has no threshold and is not an 8-bit binary mask then a warning is shown in the dialog. The threshold is set using the minimum and maximum of the non-zero pixels in the current slice. The threshold is removed and the display range is restored when the plugin finishes.
+* If the image has a threshold (``Image > Adjust > Threshold``) then only pixels within the threshold are used. If the threshold includes zero then pixels with a value of zero are particles.
+* If the image has no threshold and is not an 8-bit binary mask (all the slices of a stack are checked) then a warning is shown in the dialog. The threshold is set using the minimum and maximum of the non-zero pixels in all the slices (NaN values are ignored); if there are no non-zero pixels an error is shown. Pixels with a value of zero are not particles, even if the threshold includes zero (e.g. a 32-bit image with negative values). The threshold is removed and the display range is restored when the plugin finishes or is cancelled.
 
 The measurements of each particle can be taken from a different image (the redirect image). This allows the mask to define the particles and the measurements to use the pixel values of the original image.
 
@@ -3454,13 +3454,13 @@ The plugin first shows a dialog with the following parameters:
      - Description
 
    * - Redirect image
-     - The image used for the measurements. Any open image with the same width and height as the input image can be selected (excluding the input image). Use ``[None]`` to measure the input image. The redirect image of the ``ImageJ`` ``Set Measurements`` command is set for the analysis and restored when the plugin finishes.
+     - The image used for the measurements. Any open image with the same width and height as the input image can be selected (excluding the input image). Use ``[None]`` to measure the input image. The redirect image of the ``ImageJ`` ``Set Measurements`` command is set for the analysis and restored when the plugin finishes or is cancelled.
 
    * - Particle summary
      - Show a ``Particle Summary`` table that combines all the particles with the same value (see below).
 
    * - Save histogram
-     - Save the histogram of the measured pixels of each particle to a file. A file chooser is shown to select the histogram file; the extension ``.txt`` is added if the file has no extension.
+     - Save the histogram of the measured pixels of each particle to a file. A file chooser is shown to select the histogram file; the extension ``.txt`` is added if the file has no extension. If the file chooser is cancelled then the plugin stops.
 
 The ``ImageJ`` ``Analyze Particles`` dialog is then shown. See the ``ImageJ`` documentation for the details of the options (`Analyze Particles <https://imagej.net/ij/docs/menus/analyze.html#ap>`_). The measurements are configured using ``Analyze > Set Measurements...``.
 
@@ -3484,7 +3484,7 @@ The particles are measured using the ``ImageJ`` ``Analyze Particles`` command an
    * - Pixels
      - The number of pixels in the particle.
 
-If ``Particle summary`` is selected then the particles in the ``Results`` table are combined by ``Particle Value`` into a ``Particle Summary`` table with a row for each value (in the order the values are first found). If the table is open then it is replaced. The table contains the following columns if the measurement is in the ``Results`` table:
+If ``Particle summary`` is selected then the particles from the analysis in the ``Results`` table (all the slices of a stack) are combined by ``Particle Value`` into a ``Particle Summary`` table with a row for each value (in the order the values are first found). If the table is open then it is replaced. The table contains the following columns if the measurement is in the ``Results`` table:
 
 .. list-table::
    :widths: 20 80
@@ -3494,7 +3494,7 @@ If ``Particle summary`` is selected then the particles in the ``Results`` table 
      - Description
 
    * - Label
-     - The label of the first row of the ``Results`` table (if present).
+     - The label of the first particle of the analysis (if present).
 
    * - Area
      - The total area of the particles.
@@ -3522,8 +3522,6 @@ If ``Particle summary`` is selected then the particles in the ``Results`` table 
 
    * - Particles
      - The number of particles.
-
-Note that the summary uses all the rows in the ``Results`` table. Use the ``Clear results`` option of the ``Analyze Particles`` dialog to summarise only the current analysis.
 
 If ``Save histogram`` is selected then the histogram file contains a record for each non-zero histogram bin of each particle with the fields: ``Histogram`` (the row number of the particle in the ``Results`` table); ``Particle Value``; ``Pixel Value`` (the histogram bin); and ``Count``. The histogram is the histogram of the measured image within the particle: for 8-bit and 16-bit images each bin is a pixel value; for 32-bit images the histogram has 256 bins covering the range of the pixel values. If ``Particle summary`` is also selected then the histograms of the particles with the same value are combined and saved to a second file with ``.summary`` inserted before the file extension; the ``Histogram`` field is numbered from 1 for each particle value.
 
