@@ -4570,7 +4570,7 @@ Output
 
 If ``Show table`` is selected then two tables are created: the ``Spot Radial Intensity Objects`` table containing a summary of the mask objects; and the ``Spot Radial Intensity Summary`` table containing the radial intensity of each spot.
 
-If ``Show plot`` is selected then the ``Spot Radial Intensity`` plot is created. If a plot with this title is open then it is replaced. The plot shows the background subtracted average pixel value against the distance for each spot; each spot is plotted using a different colour. Each line ends at the last ring containing pixels. The average for all spots is plotted in blue with error bars showing the 95% confidence interval. This is the average of all the assigned pixels in the ring after subtracting the background of the object.
+If ``Show plot`` is selected then the ``Spot Radial Intensity`` plot is created. If a plot with this title is open then it is replaced. The plot shows the background subtracted average pixel value against the distance for each spot; each spot is plotted using a different colour. Each line ends at the last ring containing pixels. The average for all spots is plotted in blue with error bars showing the 95% confidence interval; no error bar is shown for a ring with fewer than 2 pixels. This is the average of all the assigned pixels in the ring after subtracting the background of the object.
 
 If ``Show radii`` is selected then an image named ``Spot Radial Intensity radii`` is created. Each pixel assigned to a spot has the value of the ring number (starting at 1); all other pixels are zero. If ``Show foci`` is selected then the spots are added to the image as a point ROI.
 
