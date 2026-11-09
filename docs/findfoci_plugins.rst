@@ -3430,11 +3430,11 @@ Extend the ``ImageJ`` ``Particle Analyser`` to allow the particles to be obtaine
 
 This plugin is useful on masks where each object region has a unique value, for example the output mask created by ``FindFoci``.
 
-The plugin runs on the current image. Each particle is a set of contiguous pixels with the same value that are within the image threshold. Touching regions with different values are separate particles. The particles are traced and measured using the ``ImageJ`` ``Analyze Particles`` command (``Analyze > Analyze Particles...``); all of the options of that command are available. If the image is an 8-bit binary mask (only values 0 and 255) the result is the same as the ``ImageJ`` command.
+The plugin runs on the current image. Each particle is a set of contiguous pixels with the same value that are within the image threshold. Touching regions with different values are separate particles. The particles are traced and measured using the ``ImageJ`` ``Analyze Particles`` command (``Analyze > Analyze Particles...``); all of the options of that command are available (the plugin uses a copy of the command from ``ImageJ`` 1.54p). If the image is an 8-bit binary mask (only values 0 and 255) the result is the same as the ``ImageJ`` command.
 
 The image threshold defines the pixels that can be part of a particle:
 
-* If the image has a threshold (``Image > Adjust > Threshold``) then only pixels within the threshold are used. If the threshold includes zero then pixels with a value of zero are particles.
+* If the image has a threshold (``Image > Adjust > Threshold``) then only pixels within the threshold are used. If the threshold includes zero then pixels with a value of zero are particles. The threshold of an 8-bit or 16-bit image must exclude zero or the maximum pixel value (255 or 65535) otherwise an error is shown; a value outside the threshold is required to mark the analysed particles.
 * If the image has no threshold and is not an 8-bit binary mask (all the slices of a stack are checked) then a warning is shown in the dialog. The threshold is set using the minimum and maximum of the non-zero pixels in all the slices (NaN values are ignored); if there are no non-zero pixels an error is shown. Pixels with a value of zero are not particles, even if the threshold includes zero (e.g. a 32-bit image with negative values). The threshold is removed and the display range is restored when the plugin finishes or is cancelled.
 
 The measurements of each particle can be taken from a different image (the redirect image). This allows the mask to define the particles and the measurements to use the pixel values of the original image.
