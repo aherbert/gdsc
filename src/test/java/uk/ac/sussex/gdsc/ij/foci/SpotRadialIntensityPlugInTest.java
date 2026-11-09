@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import uk.ac.sussex.gdsc.core.utils.Statistics;
 import uk.ac.sussex.gdsc.ij.foci.SpotRadialIntensity_PlugIn.Foci;
 
 @SuppressWarnings({"javadoc"})
@@ -102,6 +103,15 @@ class SpotRadialIntensityPlugInTest {
     // Object 2 is restricted to the segment
     final int size2 = count2;
     Assertions.assertTrue(size2 > 0 && size2 < 25, () -> "Object 2 size " + size2);
+  }
+
+  @Test
+  void testGetMean() {
+    final Statistics stats = new Statistics();
+    Assertions.assertEquals(0, SpotRadialIntensity_PlugIn.getMean(stats));
+    stats.add(2);
+    stats.add(-5);
+    Assertions.assertEquals(-1.5, SpotRadialIntensity_PlugIn.getMean(stats));
   }
 
   @Test

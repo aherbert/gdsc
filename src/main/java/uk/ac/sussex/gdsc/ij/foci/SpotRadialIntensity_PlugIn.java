@@ -685,9 +685,11 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       for (int i = 0; i < maxBin; i++) {
         if (stats[i].getN() != 0) {
           x[i] = allD[i] / stats[i].getN();
+          if (stats[i].getN() > 1) {
+            yError[i] = stats[i].getConfidenceInterval(0.95);
+          }
         }
-        yAxis[i] = stats[i].getMean();
-        yError[i] = stats[i].getConfidenceInterval(0.95);
+        yAxis[i] = getMean(stats[i]);
       }
       x = settings.plotDistanceAverages ? x : xAxis;
       plot.addPoints(x, yAxis, yError, Plot.LINE);
@@ -702,7 +704,7 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
       sb.append(prefix);
       sb.append("\t0\t0\t0\t0\t0");
       for (int i = 0; i < maxBin; i++) {
-        sb.append('\t').append(MathUtils.rounded(stats[i].getMean()));
+        sb.append('\t').append(MathUtils.rounded(getMean(stats[i])));
       }
       for (int i = 0; i < maxBin; i++) {
         sb.append('\t').append(stats[i].getN());
@@ -833,6 +835,16 @@ public class SpotRadialIntensity_PlugIn implements PlugIn {
     prefix = String.format("%s (C=%d,Z=%d,T=%d)", imp.getTitle(), imp.getChannel(), imp.getSlice(),
         imp.getFrame());
     return textWindow;
+  }
+
+  /**
+   * Gets the mean of the statistics. Returns zero if there are no values.
+   *
+   * @param stats the statistics
+   * @return the mean
+   */
+  static double getMean(Statistics stats) {
+    return stats.getN() == 0 ? 0 : stats.getMean();
   }
 
   /**

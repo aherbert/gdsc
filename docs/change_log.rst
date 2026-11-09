@@ -90,6 +90,9 @@ Major release of GDSC ImageJ Plugins.
   ``Distance``.
 * Fix the :ref:`findfoci_plugins:Spot Radial Intensity` plugin failing for ``FindFoci`` results
   outside the image. Spots outside the image are ignored.
+* Fix the :ref:`findfoci_plugins:Spot Radial Intensity` summary row and plot average for a ring
+  with no pixels. The average is zero, the same as the spots; previously it was NaN. The plot
+  error bar is not shown for a ring with fewer than 2 pixels; previously it was infinite.
 * Fix the :ref:`findfoci_plugins:Spot Pairs` point IDs. Points are numbered from 1; previously
   the first point had an ID of 2. A new results table is created if the calibrated units of the
   image do not match the table distance units.
