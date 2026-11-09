@@ -245,6 +245,13 @@ Major release of GDSC ImageJ Plugins.
 * The :ref:`findfoci_plugins:Mask Analyze Particles...` plugin particle summary uses only the
   particles from the analysis. Previously all the rows in the ``Results`` table were used, including
   earlier analyses, and the summary histogram file did not match the summary table.
+* The :ref:`findfoci_plugins:Mask Analyze Particles...` plugin uses a copy of the ``ImageJ``
+  1.54p ``Analyze Particles`` command. Previously the copy was from 2015. This adds the
+  ``Overlay`` and ``Composite ROIs`` options, a summary results table, ROI positions for stacks
+  and hyperstacks, and the ``ImageJ`` fixes since 2015.
+* The :ref:`findfoci_plugins:Mask Analyze Particles...` plugin shows an error if the threshold of
+  an 8-bit or 16-bit image includes all the pixel values. Previously the analysed particles could
+  not be marked and the results contained invalid particles.
 * The :ref:`findfoci_plugins:Point Aligner` unaligned point sub-image marks the unaligned point
   using the colours of the image overlay: red for a conflict point, otherwise blue. Previously
   all points were marked in yellow.

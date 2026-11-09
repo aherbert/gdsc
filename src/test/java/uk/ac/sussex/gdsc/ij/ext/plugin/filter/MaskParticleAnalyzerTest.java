@@ -112,6 +112,34 @@ class MaskParticleAnalyzerTest {
   }
 
   @Test
+  void testAnalyzeEnclosedLabel() {
+    // Label 1 surrounds label 2. The holes are excluded from label 1.
+    final ShortProcessor sp = new ShortProcessor(3, 3);
+    sp.setIntArray(new int[][] {{1, 1, 1}, {1, 2, 1}, {1, 1, 1}});
+    assertParticles(new ImagePlus("labels", sp), new double[] {1, 2}, new double[] {8, 1});
+  }
+
+  @Test
+  void testIsFullRangeThreshold() {
+    final ByteProcessor bp = new ByteProcessor(3, 2);
+    Assertions.assertFalse(MaskParticleAnalyzer.isFullRangeThreshold(bp));
+    bp.setThreshold(0, 255, ImageProcessor.NO_LUT_UPDATE);
+    Assertions.assertTrue(MaskParticleAnalyzer.isFullRangeThreshold(bp));
+    bp.setThreshold(1, 255, ImageProcessor.NO_LUT_UPDATE);
+    Assertions.assertFalse(MaskParticleAnalyzer.isFullRangeThreshold(bp));
+    bp.setThreshold(0, 254, ImageProcessor.NO_LUT_UPDATE);
+    Assertions.assertFalse(MaskParticleAnalyzer.isFullRangeThreshold(bp));
+    final ShortProcessor sp = new ShortProcessor(3, 2);
+    sp.setThreshold(0, 65535, ImageProcessor.NO_LUT_UPDATE);
+    Assertions.assertTrue(MaskParticleAnalyzer.isFullRangeThreshold(sp));
+    sp.setThreshold(0, 255, ImageProcessor.NO_LUT_UPDATE);
+    Assertions.assertFalse(MaskParticleAnalyzer.isFullRangeThreshold(sp));
+    final FloatProcessor fp = new FloatProcessor(3, 2);
+    fp.setThreshold(-1000, 1000, ImageProcessor.NO_LUT_UPDATE);
+    Assertions.assertFalse(MaskParticleAnalyzer.isFullRangeThreshold(fp));
+  }
+
+  @Test
   void testAnalyzeNegativeValues() {
     // The automatic threshold [-3, 7] includes the zero background
     final FloatProcessor fp = new FloatProcessor(6, 3);

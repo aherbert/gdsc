@@ -27,15 +27,13 @@ package uk.ac.sussex.gdsc.ij.ext.plugin.filter;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.Macro;
 import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.Roi;
-import ij.macro.Interpreter;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.Analyzer;
-import ij.plugin.frame.RoiManager;
+import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -327,6 +325,11 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
         restore(imp);
         return DONE;
       }
+      if (isFullRangeThreshold(imp.getProcessor())) {
+        IJ.error("The threshold must exclude zero or the maximum pixel value");
+        restore(imp);
+        return DONE;
+      }
     }
 
     final int superFlags = super.setup(arg, imp);
@@ -385,6 +388,26 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     noThreshold = true;
     imp.getProcessor().setThreshold(range[0], range[1], ImageProcessor.NO_LUT_UPDATE);
     return true;
+  }
+
+  /**
+   * Checks if the threshold of an 8-bit or 16-bit image includes all the pixel values. In this case
+   * there is no value outside the threshold to mark the analysed particles.
+   *
+   * @param ip the image
+   * @return true if the threshold includes all the pixel values
+   */
+  static boolean isFullRangeThreshold(ImageProcessor ip) {
+    final double max;
+    if (ip instanceof ByteProcessor) {
+      max = 255;
+    } else if (ip instanceof ShortProcessor) {
+      max = 65535;
+    } else {
+      return false;
+    }
+    final double t1 = ip.getMinThreshold();
+    return t1 != ImageProcessor.NO_THRESHOLD && t1 <= 0 && ip.getMaxThreshold() >= max;
   }
 
   /**
@@ -470,7 +493,7 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
       return true;
     }
     if (imp.getStackSize() == 1) {
-      return !isBinary(imp.getStatistics());
+      return !isBinary(imp.getRawStatistics());
     }
     final ImageStack stack = imp.getImageStack();
     final Roi roi = imp.getRoi();
@@ -519,26 +542,16 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
     return new double[] {value, value};
   }
 
-  /**
-   * Saves statistics for one particle in a results table. This is a method subclasses may want to
-   * override.
-   */
   @Override
-  protected void saveResults(ImageStatistics stats, Roi roi) {
-    analyzer.saveResults(stats, roi);
+  protected void saveAdditionalResults(ImageStatistics stats, Roi roi) {
     if (firstRow < 0) {
       firstRow = rt.getCounter() - 1;
     }
-    if (recordStarts) {
-      rt.addValue("XStart", stats.xstart);
-      rt.addValue("YStart", stats.ystart);
-    }
-
     rt.addValue("Particle Value", value);
     rt.addValue("Pixels", stats.pixelCount);
 
     // Optionally save histogram to file
-    int[] hist = (stats.histogram16 != null) ? stats.histogram16 : stats.histogram;
+    final int[] hist = (stats.histogram16 != null) ? stats.histogram16 : stats.histogram;
     if (hist != null) {
       final double particleValue = value;
       out = writeHistogram(out, rt.getCounter(), particleValue, hist);
@@ -556,41 +569,6 @@ public class MaskParticleAnalyzer extends ParticleAnalyzerCopy {
           return h1;
         });
       }
-    }
-
-    // Copy the superclass methods using the super-class variables obtained from reflection
-    if (addToManager) {
-      if (roiManager == null) {
-        if (Macro.getOptions() != null && Interpreter.isBatchMode()) {
-          roiManager = Interpreter.getBatchModeRoiManager();
-        }
-        if (roiManager == null) {
-          Frame frame = WindowManager.getFrame("ROI Manager");
-          if (frame == null) {
-            IJ.run("ROI Manager...");
-          }
-          frame = WindowManager.getFrame("ROI Manager");
-          if (!(frame instanceof RoiManager)) {
-            addToManager = false;
-            return;
-          }
-          roiManager = (RoiManager) frame;
-        }
-        if (resetCounter) {
-          roiManager.runCommand("reset");
-        }
-      }
-      if (imp.getStackSize() > 1) {
-        roi.setPosition(imp.getCurrentSlice());
-      }
-      if (lineWidth != 1) {
-        roi.setStrokeWidth(lineWidth);
-      }
-      roiManager.add(imp, roi, rt.getCounter());
-    }
-
-    if (showResultsWindow && showResults) {
-      rt.addResults();
     }
   }
 
